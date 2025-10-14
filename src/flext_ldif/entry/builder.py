@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import json
-from typing import Any, cast, override
+from typing import override
 
 from flext_core import FlextCore
 
@@ -71,10 +71,8 @@ class FlextLdifEntryBuilder(FlextCore.Service[FlextLdifModels.Entry]):
 
         # Create entry
         return FlextLdifModels.Entry.create(
-            data={
-                FlextLdifConstants.DictKeys.DN: dn,
-                FlextLdifConstants.DictKeys.ATTRIBUTES: attributes,
-            }
+            dn=dn,
+            attributes=attributes,
         )
 
     def build_group_entry(
@@ -108,12 +106,10 @@ class FlextLdifEntryBuilder(FlextCore.Service[FlextLdifModels.Entry]):
                 if key not in attributes:
                     attributes[key] = values
 
-        entry_data: FlextLdifTypes.Dict = {
-            FlextLdifConstants.DictKeys.DN: dn,
-            FlextLdifConstants.DictKeys.ATTRIBUTES: attributes,
-        }
+        # Create entry directly with typed variables (no cast needed)
         result: FlextCore.Result[FlextLdifModels.Entry] = FlextLdifModels.Entry.create(
-            entry_data
+            dn=dn,
+            attributes=attributes,
         )
 
         if result.is_success and self.logger:
@@ -146,12 +142,10 @@ class FlextLdifEntryBuilder(FlextCore.Service[FlextLdifModels.Entry]):
                 if key not in attributes:
                     attributes[key] = values
 
-        entry_data: FlextLdifTypes.Dict = {
-            FlextLdifConstants.DictKeys.DN: dn,
-            FlextLdifConstants.DictKeys.ATTRIBUTES: attributes,
-        }
+        # Create entry directly with typed variables (no cast needed)
         result: FlextCore.Result[FlextLdifModels.Entry] = FlextLdifModels.Entry.create(
-            entry_data
+            dn=dn,
+            attributes=attributes,
         )
 
         if result.is_success and self.logger:
@@ -176,14 +170,10 @@ class FlextLdifEntryBuilder(FlextCore.Service[FlextLdifModels.Entry]):
                 f"Validation requested for objectClasses: {objectclasses}"
             )
 
-        entry_data: FlextLdifTypes.Dict = {
-            FlextLdifConstants.DictKeys.DN: dn,
-            FlextLdifConstants.DictKeys.ATTRIBUTES: cast(
-                "FlextLdifTypes.Dict", entry_attrs
-            ),
-        }
+        # Create entry directly with typed variables (no cast needed)
         result: FlextCore.Result[FlextLdifModels.Entry] = FlextLdifModels.Entry.create(
-            entry_data
+            dn=dn,
+            attributes=entry_attrs,
         )
 
         if result.is_success and self.logger:
@@ -230,12 +220,18 @@ class FlextLdifEntryBuilder(FlextCore.Service[FlextLdifModels.Entry]):
                     else:
                         normalized_attrs[key] = [str(value)]
 
-                entry_data = {
-                    FlextLdifConstants.DictKeys.DN: dn,
-                    FlextLdifConstants.DictKeys.ATTRIBUTES: normalized_attrs,
-                }
+                # Type narrow DN from dict.get()
+                if not isinstance(dn, str):
+                    return FlextCore.Result[list[FlextLdifModels.Entry]].fail(
+                        f"DN must be a string, got {type(dn).__name__}"
+                    )
+
+                # Create entry directly with typed variables (no cast needed)
                 entry_result: FlextCore.Result[FlextLdifModels.Entry] = (
-                    FlextLdifModels.Entry.create(entry_data)
+                    FlextLdifModels.Entry.create(
+                        dn=dn,
+                        attributes=normalized_attrs,
+                    )
                 )
 
                 if entry_result.is_failure:
@@ -259,7 +255,7 @@ class FlextLdifEntryBuilder(FlextCore.Service[FlextLdifModels.Entry]):
             )
 
     def build_entries_from_dict(
-        self, data: list[dict[str, Any]]
+        self, data: list[dict[str, object]]
     ) -> FlextCore.Result[list[FlextLdifModels.Entry]]:
         """Build entries from dictionary data."""
         entries: list[FlextLdifModels.Entry] = []
@@ -286,12 +282,18 @@ class FlextLdifEntryBuilder(FlextCore.Service[FlextLdifModels.Entry]):
                     else:
                         normalized_attrs[key] = [str(value)]
 
-            entry_data: FlextLdifTypes.Dict = {
-                FlextLdifConstants.DictKeys.DN: dn,
-                FlextLdifConstants.DictKeys.ATTRIBUTES: normalized_attrs,
-            }
+            # Type narrow DN from dict.get()
+            if not isinstance(dn, str):
+                return FlextCore.Result[list[FlextLdifModels.Entry]].fail(
+                    f"DN must be a string, got {type(dn).__name__}"
+                )
+
+            # Create entry directly with typed variables (no cast needed)
             entry_result: FlextCore.Result[FlextLdifModels.Entry] = (
-                FlextLdifModels.Entry.create(entry_data)
+                FlextLdifModels.Entry.create(
+                    dn=dn,
+                    attributes=normalized_attrs,
+                )
             )
 
             if entry_result.is_failure:

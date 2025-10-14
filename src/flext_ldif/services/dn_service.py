@@ -35,10 +35,12 @@ class DnService(FlextCore.Service[FlextCore.Types.Dict]):
         >>> dn_service = DnService()
         >>>
         >>> # Parse DN into components
-        >>> result = dn_service.parse_components("cn=Smith\\, John,ou=People,dc=example,dc=com")
+        >>> result = dn_service.parse_components(
+        ...     "cn=Smith\\, John,ou=People,dc=example,dc=com"
+        ... )
         >>> if result.is_success:
         >>>     components = result.unwrap()
-        >>>     # Returns: [("cn", "Smith, John", "cn=Smith\\, John"), ...]
+        >>> # Returns: [("cn", "Smith, John", "cn=Smith\\, John"), ...]
         >>>
         >>> # Validate DN format
         >>> result = dn_service.validate_format("cn=test,dc=example,dc=com")
@@ -71,9 +73,7 @@ class DnService(FlextCore.Service[FlextCore.Types.Dict]):
             "library": "ldap3",
         })
 
-    def parse_components(
-        self, dn: str
-    ) -> FlextCore.Result[list[tuple[str, str, str]]]:
+    def parse_components(self, dn: str) -> FlextCore.Result[list[tuple[str, str, str]]]:
         r"""Parse DN into RFC 4514 compliant components using ldap3.
 
         Uses ldap3.utils.dn.parse_dn() for proper RFC 4514 parsing that handles:
@@ -98,7 +98,7 @@ class DnService(FlextCore.Service[FlextCore.Types.Dict]):
             >>> result = service.parse_components("cn=test,dc=example,dc=com")
             >>> if result.is_success:
             >>>     components = result.unwrap()
-            >>>     # [("cn", "test", "cn=test"), ("dc", "example", "dc=example"), ...]
+            >>> # [("cn", "test", "cn=test"), ("dc", "example", "dc=example"), ...]
 
         """
         try:
@@ -163,8 +163,8 @@ class DnService(FlextCore.Service[FlextCore.Types.Dict]):
             >>> result = service.normalize("CN=Admin,DC=Example,DC=Com")
             >>> if result.is_success:
             >>>     normalized = result.unwrap()
-            >>>     # Returns: "cn=Admin,dc=Example,dc=Com"
-            >>>     # Note: Attribute names lowercased, values preserved
+            >>> # Returns: "cn=Admin,dc=Example,dc=Com"
+            >>> # Note: Attribute names lowercased, values preserved
 
         """
         try:
@@ -172,9 +172,7 @@ class DnService(FlextCore.Service[FlextCore.Types.Dict]):
             normalized = safe_dn(dn)
             return FlextCore.Result[str].ok(normalized)
         except Exception as e:
-            return FlextCore.Result[str].fail(
-                f"Failed to normalize DN (RFC 4514): {e}"
-            )
+            return FlextCore.Result[str].fail(f"Failed to normalize DN (RFC 4514): {e}")
 
 
 __all__ = ["DnService"]

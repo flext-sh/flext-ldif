@@ -444,7 +444,12 @@ class TestErrorHandling:
         oid: FlextLdifQuirksServersOid,
     ) -> None:
         """Test that invalid data type returns error."""
-        result = matrix.convert(oud, oid, "invalid_type", "test")
+        result = matrix.convert(
+            oud,
+            oid,
+            "invalid_type",
+            "test",
+        )
 
         assert result.is_failure
         assert result.error is not None

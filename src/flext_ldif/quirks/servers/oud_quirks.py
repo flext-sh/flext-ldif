@@ -9,7 +9,7 @@ Provides OUD-specific quirks for schema, ACL, and entry processing.
 from __future__ import annotations
 
 import re
-from typing import Any, ClassVar
+from typing import ClassVar
 
 from flext_core import FlextCore
 from pydantic import Field
@@ -755,7 +755,7 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
                         oudacl_data["bind_rules"] = bind_rules
 
                 # Preserve original format in metadata with extensions
-                metadata_extensions: dict[str, Any] = {}
+                metadata_extensions: dict[str, object] = {}
                 if line_breaks:
                     metadata_extensions["line_breaks"] = line_breaks
                     metadata_extensions["is_multiline"] = True
@@ -777,7 +777,7 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
                     FlextLdifModels.QuirkMetadata.create_for_quirk(
                         quirk_type="oud",
                         original_format=acl_line,
-                        **metadata_extensions,
+                        extensions=metadata_extensions,
                     )
                 )
 
@@ -1112,7 +1112,7 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
                 processed_entry.update(attributes)
 
                 # Preserve metadata for DN quirks and attribute ordering
-                metadata_extensions: dict[str, Any] = {}
+                metadata_extensions: dict[str, object] = {}
 
                 # Detect DN spaces quirk (spaces after commas)
                 if ", " in entry_dn:
@@ -1130,7 +1130,7 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
                     )
                     oc_values = attributes[oc_key]
                     if isinstance(oc_values, list):
-                        oracle_ocs: list[Any] = [
+                        oracle_ocs: list[object] = [
                             oc
                             for oc in oc_values
                             if any(
@@ -1143,7 +1143,7 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
 
                 processed_entry["_metadata"] = (
                     FlextLdifModels.QuirkMetadata.create_for_quirk(
-                        quirk_type="oud", **metadata_extensions
+                        quirk_type="oud", extensions=metadata_extensions
                     )
                 )
 
@@ -1240,7 +1240,8 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
                         )
 
                 # Determine attribute iteration order
-                if attr_order:
+                # Type narrowing: ensure attr_order is list before iteration
+                if attr_order is not None and isinstance(attr_order, list):
                     # Use preserved ordering
                     attrs_to_process = [
                         (key, entry_data[key])

@@ -309,8 +309,8 @@ class QuirksConversionMatrix:
         source_quirk: object,
         target_quirk: object,
         data_type: Literal["attribute", "objectclass", "acl", "entry"],
-        data: str | dict[str, Any],
-    ) -> FlextCore.Result[str | dict[str, Any]]:
+        data: str | dict[str, object],
+    ) -> FlextCore.Result[str | dict[str, object]]:
         """Convert data from source quirk format to target quirk format via RFC.
 
         Args:
@@ -329,8 +329,8 @@ class QuirksConversionMatrix:
         source_quirk: object,
         target_quirk: object,
         data_type: Literal["attribute", "objectclass", "acl", "entry"],
-        data_batch: Sequence[str | dict[str, Any]],
-    ) -> FlextCore.Result[Sequence[str | dict[str, Any]]]:
+        data_batch: Sequence[str | dict[str, object]],
+    ) -> FlextCore.Result[Sequence[str | dict[str, object]]]:
         """Convert batch of data from source to target quirk format via RFC.
 
         Args:
@@ -353,7 +353,7 @@ class QuirksConversionMatrix:
         """
 
     def validate_oud_conversion(
-        self, converted_data: Sequence[str | dict[str, Any]]
+        self, converted_data: Sequence[str | dict[str, object]]
     ) -> FlextCore.Result[bool]:
         """Validate converted data for OUD compatibility.
 

@@ -19,7 +19,6 @@ from __future__ import annotations
 
 from io import BytesIO
 from pathlib import Path
-from typing import cast
 
 from flext_core import FlextCore
 from ldif3 import LDIFParser
@@ -93,25 +92,34 @@ class FlextLdifRfcLdifParser(FlextCore.Service[FlextCore.Types.Dict]):
         """
         try:
             # Check for content parameter first (direct string parsing)
-            content = self._params.get("content")
-            if content:
-                parse_changes = self._params.get("parse_changes", False)
+            content_raw = self._params.get("content")
+            if content_raw:
+                # Type narrow content to string
+                if not isinstance(content_raw, str):
+                    return FlextCore.Result[FlextCore.Types.Dict].fail(
+                        f"content must be string, got {type(content_raw).__name__}"
+                    )
+                content: str = content_raw
+
+                # Type narrow parse_changes to bool
+                parse_changes_raw = self._params.get("parse_changes", False)
+                if not isinstance(parse_changes_raw, bool):
+                    return FlextCore.Result[FlextCore.Types.Dict].fail(
+                        f"parse_changes must be bool, got {type(parse_changes_raw).__name__}"
+                    )
+                parse_changes: bool = parse_changes_raw
 
                 if self.logger is not None:
                     self.logger.info(
                         "Parsing LDIF content string (RFC 2849 via ldif3)",
                         extra={
-                            "content_length": (
-                                len(content) if isinstance(content, str) else 0
-                            ),
+                            "content_length": len(content),
                             "parse_changes": parse_changes,
                         },
                     )
 
                 # Use parse_content method for string parsing
-                parse_result = self.parse_content(
-                    cast("str", content), parse_changes=cast("bool", parse_changes)
-                )
+                parse_result = self.parse_content(content, parse_changes=parse_changes)
 
                 if parse_result.is_failure:
                     return FlextCore.Result[FlextCore.Types.Dict].fail(
@@ -149,14 +157,33 @@ class FlextLdifRfcLdifParser(FlextCore.Service[FlextCore.Types.Dict]):
                     "Either 'file_path' or 'content' parameter is required"
                 )
 
-            file_path = Path(cast("str", file_path_str))
+            # Type narrow file_path to string
+            if not isinstance(file_path_str, str):
+                return FlextCore.Result[FlextCore.Types.Dict].fail(
+                    f"file_path must be string, got {type(file_path_str).__name__}"
+                )
+
+            file_path = Path(file_path_str)
             if not file_path.exists():
                 return FlextCore.Result[FlextCore.Types.Dict].fail(
                     f"LDIF file not found: {file_path}"
                 )
 
-            parse_changes = self._params.get("parse_changes", False)
-            encoding = self._params.get("encoding", "utf-8")
+            # Type narrow parse_changes to bool
+            parse_changes_raw = self._params.get("parse_changes", False)
+            if not isinstance(parse_changes_raw, bool):
+                return FlextCore.Result[FlextCore.Types.Dict].fail(
+                    f"parse_changes must be bool, got {type(parse_changes_raw).__name__}"
+                )
+            parse_changes: bool = parse_changes_raw
+
+            # Type narrow encoding to string
+            encoding_raw = self._params.get("encoding", "utf-8")
+            if not isinstance(encoding_raw, str):
+                return FlextCore.Result[FlextCore.Types.Dict].fail(
+                    f"encoding must be string, got {type(encoding_raw).__name__}"
+                )
+            encoding: str = encoding_raw
 
             if self.logger is not None:
                 self.logger.info(
@@ -171,8 +198,8 @@ class FlextLdifRfcLdifParser(FlextCore.Service[FlextCore.Types.Dict]):
             # Parse LDIF file using ldif3
             file_parse_result = self.parse_ldif_file(
                 file_path,
-                parse_changes=cast("bool", parse_changes),
-                encoding=cast("str", encoding),
+                parse_changes=parse_changes,
+                encoding=encoding,
             )
 
             if file_parse_result.is_failure:
@@ -351,15 +378,24 @@ class FlextLdifRfcLdifParser(FlextCore.Service[FlextCore.Types.Dict]):
             FlextCore.Result with Entry model
 
         """
-        # Extract dn and attributes from entry_data
-        dn = entry_data.get(FlextLdifConstants.DictKeys.DN, "")
-        attributes = entry_data.get(FlextLdifConstants.DictKeys.ATTRIBUTES, {})
+        # Extract and type narrow dn
+        dn_raw = entry_data.get(FlextLdifConstants.DictKeys.DN, "")
+        if not isinstance(dn_raw, str):
+            return FlextCore.Result[FlextLdifModels.Entry].fail(
+                f"DN must be string, got {type(dn_raw).__name__}"
+            )
+        dn: str = dn_raw
+
+        # Extract and type narrow attributes
+        attributes_raw = entry_data.get(FlextLdifConstants.DictKeys.ATTRIBUTES, {})
+        if not isinstance(attributes_raw, dict):
+            return FlextCore.Result[FlextLdifModels.Entry].fail(
+                f"attributes must be dict, got {type(attributes_raw).__name__}"
+            )
+        attributes: dict[str, FlextCore.Types.StringList] = attributes_raw
 
         # Use Entry.create() with separate parameters
-        return FlextLdifModels.Entry.create(
-            dn=cast("str", dn),
-            attributes=cast("dict[str, FlextCore.Types.StringList]", attributes),
-        )
+        return FlextLdifModels.Entry.create(dn=dn, attributes=attributes)
 
 
 __all__ = ["FlextLdifRfcLdifParser"]

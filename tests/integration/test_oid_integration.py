@@ -126,10 +126,10 @@ class TestOidEntryIntegration:
 
         # Count entries with Oracle ACLs
         entries_with_orclaci = sum(
-            1 for entry in entries if "orclaci" in entry.attributes
+            1 for entry in entries if "orclaci" in entry.attributes.attributes
         )
         entries_with_orclentrylevelaci = sum(
-            1 for entry in entries if "orclentrylevelaci" in entry.attributes
+            1 for entry in entries if "orclentrylevelaci" in entry.attributes.attributes
         )
 
         assert entries_with_orclaci > 0, "No entries with orclaci found"
@@ -154,7 +154,7 @@ class TestOidEntryIntegration:
 
         for attr_name in oracle_attr_patterns:
             entries_with_attr = sum(
-                1 for entry in entries if attr_name in entry.attributes
+                1 for entry in entries if attr_name in entry.attributes.attributes
             )
             assert entries_with_attr > 0, f"No entries with {attr_name} found"
 

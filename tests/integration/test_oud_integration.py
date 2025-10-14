@@ -118,7 +118,9 @@ class TestOudAclIntegration:
         entries = result.unwrap()
 
         # Count entries with ACI attributes
-        entries_with_aci = sum(1 for entry in entries if "aci" in entry.attributes)
+        entries_with_aci = sum(
+            1 for entry in entries if "aci" in entry.attributes.attributes
+        )
 
         assert entries_with_aci > 0, "No entries with aci found"
 

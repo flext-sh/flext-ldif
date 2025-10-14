@@ -84,7 +84,11 @@ class ValidationService(FlextCore.Service[FlextCore.Types.Dict]):
             "service": "ValidationService",
             "status": "operational",
             "rfc_compliance": "RFC 2849, RFC 4512",
-            "validation_types": ["attribute_name", "objectclass_name", "attribute_value"],
+            "validation_types": [
+                "attribute_name",
+                "objectclass_name",
+                "attribute_value",
+            ],
         })
 
     def validate_attribute_name(self, name: str) -> FlextCore.Result[bool]:
@@ -198,7 +202,9 @@ class ValidationService(FlextCore.Service[FlextCore.Types.Dict]):
                 return FlextCore.Result[bool].ok(True)
 
             # Check length
-            max_len = max_length if max_length is not None else self._MAX_ATTR_VALUE_LENGTH
+            max_len = (
+                max_length if max_length is not None else self._MAX_ATTR_VALUE_LENGTH
+            )
             if len(value) > max_len:
                 return FlextCore.Result[bool].ok(False)
 
@@ -243,9 +249,7 @@ class ValidationService(FlextCore.Service[FlextCore.Types.Dict]):
             return FlextCore.Result[bool].ok(True)
 
         except Exception as e:
-            return FlextCore.Result[bool].fail(
-                f"Failed to validate DN component: {e}"
-            )
+            return FlextCore.Result[bool].fail(f"Failed to validate DN component: {e}")
 
 
 __all__ = ["ValidationService"]

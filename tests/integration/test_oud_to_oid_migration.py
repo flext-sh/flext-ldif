@@ -399,19 +399,23 @@ class TestOudToOidFullMigration:
 
         # Migrate each entry from OUD to OID
         migrated_count = 0
+        failures: list[str] = []
         for entry_dn, entry_attrs in entries[:5]:  # Test first 5 entries
             # Step 1: Process with OUD
             oud_result = oud_entry_quirk.process_entry(entry_dn, entry_attrs)
             if not oud_result.is_success:
+                failures.append(f"OUD process failed for {entry_dn}: {oud_result.error}")
                 continue
 
             # Step 2: Convert OUD → RFC → OID
             rfc_result = oud_entry_quirk.convert_entry_to_rfc(oud_result.unwrap())
             if not rfc_result.is_success:
+                failures.append(f"OUD→RFC failed for {entry_dn}: {rfc_result.error}")
                 continue
 
             oid_result = oid_entry_quirk.convert_entry_from_rfc(rfc_result.unwrap())
             if not oid_result.is_success:
+                failures.append(f"RFC→OID failed for {entry_dn}: {oid_result.error}")
                 continue
 
             # Step 3: Write OID LDIF
@@ -424,11 +428,14 @@ class TestOudToOidFullMigration:
                     f"DN RDN not preserved for {entry_dn}"
                 )
                 migrated_count += 1
+            else:
+                failures.append(f"Write failed for {entry_dn}: {write_result.error}")
 
         # At least 80% of entries should migrate successfully
         success_rate = migrated_count / min(len(entries), 5)
         assert success_rate >= 0.8, (
-            f"Low entry migration success rate: {success_rate:.1%}"
+            f"Low entry migration success rate: {success_rate:.1%}\n"
+            f"Failures:\n" + "\n".join(failures)
         )
 
     def test_migration_preserves_metadata(

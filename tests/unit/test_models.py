@@ -945,63 +945,6 @@ class TestFlextLdifModelsAcl:
         assert acl.name == "test_acl"
 
 
-class TestFlextLdifModelsCommands:
-    """Test suite for command models."""
-
-    def test_parse_query_creation(self) -> None:
-        """Test creating a ParseQuery."""
-        query = FlextLdifModels.ParseQuery(
-            source="dn: cn=test\ncn: test",
-            format="rfc",
-            encoding="utf-8",
-            strict=True,
-        )
-
-        assert query.source == "dn: cn=test\ncn: test"
-        assert query.format == "rfc"
-        assert query.encoding == "utf-8"
-        assert query.strict is True
-
-    def test_write_command_creation(self) -> None:
-        """Test creating a WriteCommand."""
-        entries: FlextCore.Types.List = [
-            {
-                "dn": "cn=test,dc=example,dc=com",
-                "attributes": {"cn": ["test"]},
-            }
-        ]
-
-        command = FlextLdifModels.WriteCommand(
-            entries=entries,
-            format="rfc",
-            output="test.ldif",
-            line_width=76,
-        )
-
-        assert len(command.entries) == 1
-        assert command.format == "rfc"
-        assert command.output == "test.ldif"
-
-    def test_analyze_query_creation(self) -> None:
-        """Test creating an AnalyzeQuery."""
-        ldif_content = """dn: cn=test,dc=example,dc=com
-cn: test
-objectClass: person
-"""
-
-        query = FlextLdifModels.AnalyzeQuery(
-            ldif_content=ldif_content,
-            analysis_types=["statistics", "validation"],
-            metrics={"object_class_count": True},
-            include_patterns=True,
-        )
-
-        assert query.ldif_content == ldif_content
-        assert query.analysis_types == ["statistics", "validation"]
-        assert query.metrics == {"object_class_count": True}
-        assert query.include_patterns is True
-
-
 class TestFlextLdifModelsNamespace:
     """Test suite for the FlextLdifModels namespace class."""
 

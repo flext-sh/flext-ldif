@@ -147,18 +147,18 @@ class FlextLdifFixtures:
         def load_all(
             self, server_type: FlextLdifFixtures.ServerType
         ) -> dict[FlextLdifFixtures.FixtureType, str]:
-            """Load all available fixtures for a server type.
+            """Load all fixtures for a server type.
 
             Args:
-                server_type: LDAP server type
+                server_type: Server type to load fixtures for
 
             Returns:
-                dict: Mapping of fixture type to LDIF content
+                Dict mapping fixture types to their content strings
 
             """
             fixtures: dict[FlextLdifFixtures.FixtureType, str] = {}
 
-            for fixture_type in list(FlextLdifFixtures.FixtureType):
+            for fixture_type in FlextLdifFixtures.FixtureType.__members__.values():
                 try:
                     fixtures[fixture_type] = self.load(server_type, fixture_type)
                 except FileNotFoundError:
@@ -176,7 +176,7 @@ class FlextLdifFixtures:
             """
             available: list[FlextLdifFixtures.ServerType] = []
 
-            for server_type in FlextLdifFixtures.ServerType:
+            for server_type in FlextLdifFixtures.ServerType.__members__.values():
                 server_dir = self.fixtures_root / server_type.value
                 if server_dir.exists() and server_dir.is_dir():
                     available.append(server_type)
@@ -197,7 +197,7 @@ class FlextLdifFixtures:
             """
             available: list[FlextLdifFixtures.FixtureType] = []
 
-            for fixture_type in list(FlextLdifFixtures.FixtureType):
+            for fixture_type in FlextLdifFixtures.FixtureType.__members__.values():
                 try:
                     self._get_fixture_path(server_type, fixture_type)
                     available.append(fixture_type)

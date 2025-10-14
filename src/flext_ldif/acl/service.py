@@ -26,6 +26,7 @@ class FlextLdifAclService(FlextCore.Service[FlextLdifTypes.Dict]):
         @override
         def __init__(self, rule_type: str = "base") -> None:
             """Initialize ACL rule."""
+            super().__init__()
             self._rule_type = rule_type
 
         def evaluate(self, context: FlextLdifTypes.Dict) -> FlextCore.Result[bool]:
@@ -435,8 +436,8 @@ class FlextLdifAclService(FlextCore.Service[FlextLdifTypes.Dict]):
             return FlextCore.Result[list[FlextLdifModels.Acl]].fail(error_msg)
 
         acl_attribute = acl_attr_result.value
-        acl_values: FlextLdifTypes.StringList = (
-            entry.attributes.get_attribute(acl_attribute) or []
+        acl_values: FlextLdifTypes.StringList = entry.get_attribute_values(
+            acl_attribute
         )
 
         if not acl_values:
@@ -453,7 +454,9 @@ class FlextLdifAclService(FlextCore.Service[FlextLdifTypes.Dict]):
         return FlextCore.Result[list[FlextLdifModels.Acl]].ok(acls)
 
     def _parse_acl_with_rules(
-        self, acl_string: str, server_type: str
+        self,
+        acl_string: str,
+        server_type: str,
     ) -> FlextCore.Result[FlextLdifModels.Acl]:
         """Parse ACL string using composite rule pattern.
 
@@ -465,6 +468,10 @@ class FlextLdifAclService(FlextCore.Service[FlextLdifTypes.Dict]):
             FlextCore.Result containing unified ACL with composite rules
 
         """
+        # Parameters are reserved for future server-specific parsing
+        _ = acl_string  # Reserved for future use
+        _ = server_type  # Reserved for future use
+
         # Create ACL components directly - Pydantic handles validation
         target = FlextLdifModels.AclTarget(target_dn="*", attributes=[])
         subject = FlextLdifModels.AclSubject(subject_type="*", subject_value="*")
@@ -472,12 +479,9 @@ class FlextLdifAclService(FlextCore.Service[FlextLdifTypes.Dict]):
 
         # Create unified ACL directly
         acl = FlextLdifModels.Acl(
-            name="parsed_acl",
             target=target,
             subject=subject,
             permissions=perms,
-            server_type=server_type,
-            raw_acl=acl_string,
         )
         return FlextCore.Result[FlextLdifModels.Acl].ok(acl)
 

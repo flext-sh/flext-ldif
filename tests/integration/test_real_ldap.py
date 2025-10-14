@@ -30,7 +30,7 @@ import base64
 import os
 from collections.abc import Generator
 from pathlib import Path
-from typing import Any, cast
+from typing import cast
 
 import pytest
 from ldap3 import (
@@ -368,7 +368,7 @@ jpegPhoto:: {encoded_photo}
 
         # Import to LDAP
         attrs_dict = cast(
-            "dict[str, Any]", entry.attributes.to_ldap3(exclude=["objectClass"])
+            "dict[str, object]", entry.attributes.to_ldap3(exclude=["objectClass"])
         )
 
         # Handle binary attribute - ldap3 accepts bytes for binary attributes

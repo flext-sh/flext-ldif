@@ -56,7 +56,9 @@ class TestParseComponents:
         """Test parsing DN with escaped comma (RFC 4514)."""
         service = DnService()
         # DN with escaped comma in value
-        result = service.parse_components(r"cn=Smith\, John,ou=People,dc=example,dc=com")
+        result = service.parse_components(
+            r"cn=Smith\, John,ou=People,dc=example,dc=com"
+        )
 
         assert result.is_success
         components = result.unwrap()
@@ -70,7 +72,9 @@ class TestParseComponents:
         """Test parsing DN with escaped quotes (RFC 4514)."""
         service = DnService()
         # In RFC 4514, quotes within values must be escaped
-        result = service.parse_components(r'cn=Smith\, John,ou=People,dc=example,dc=com')
+        result = service.parse_components(
+            r"cn=Smith\, John,ou=People,dc=example,dc=com"
+        )
 
         assert result.is_success
         components = result.unwrap()
@@ -148,7 +152,7 @@ class TestValidateFormat:
     def test_validate_dn_with_escaped_comma_value(self) -> None:
         """Test validation of DN with escaped comma in value."""
         service = DnService()
-        result = service.validate_format(r'cn=Smith\, John,ou=People,dc=example,dc=com')
+        result = service.validate_format(r"cn=Smith\, John,ou=People,dc=example,dc=com")
 
         assert result.is_success
         assert result.unwrap() is True
@@ -180,7 +184,7 @@ class TestValidateFormat:
     def test_validate_non_string_returns_false(self) -> None:
         """Test validation of non-string returns False."""
         service = DnService()
-        result = service.validate_format(None)  # type: ignore[arg-type]
+        result = service.validate_format(None)
 
         assert result.is_success
         assert result.unwrap() is False
@@ -230,7 +234,7 @@ class TestNormalize:
     def test_normalize_dn_with_escaped_value(self) -> None:
         """Test normalization of DN with escaped comma in value."""
         service = DnService()
-        result = service.normalize(r'cn=Smith\, John,ou=People,dc=example,dc=com')
+        result = service.normalize(r"cn=Smith\, John,ou=People,dc=example,dc=com")
 
         assert result.is_success
         normalized = result.unwrap()

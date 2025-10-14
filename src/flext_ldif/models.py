@@ -8,7 +8,7 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 
 Type Checking Notes:
-- ANN401: **extensions uses Any for flexible quirk-specific data
+- ANN401: **extensions uses object for flexible quirk-specific data
 - pyrefly: import errors for pydantic/dependency_injector (searches wrong site-packages path)
 - pyright: configured with extraPaths to resolve imports (see pyrightconfig.json)
 - mypy: passes with strict mode (0 errors)
@@ -16,6 +16,9 @@ Type Checking Notes:
 """
 
 from __future__ import annotations
+
+import re
+from typing import ClassVar
 
 from flext_core import FlextCore
 from pydantic import Field, field_validator
@@ -37,43 +40,92 @@ class FlextLdifModels(FlextCore.Models):
     class DistinguishedName(FlextCore.Models.Value):
         """Distinguished Name value object."""
 
-        value: str = Field(..., description="DN string value", min_length=1, max_length=2048)
+        value: str = Field(
+            ..., description="DN string value", min_length=1, max_length=2048
+        )
         metadata: dict[str, str] | None = Field(
             default=None,
             description="Quirk-specific metadata for preserving original format",
         )
 
+        # Basic DN pattern for validation (RFC 4514 simplified)
+        _DN_COMPONENT_PATTERN: ClassVar[re.Pattern[str]] = re.compile(
+            r"^[a-zA-Z][a-zA-Z0-9-]*=.*",  # attribute=value format
+            re.IGNORECASE,
+        )
+
         @field_validator("value", mode="before")
         @classmethod
-        def normalize_dn(cls, v: str) -> str:
-            r"""Normalize DN value using RFC 4514 compliant normalization via ldap3.
+        def validate_dn_format(cls, v: str) -> str:
+            """Validate DN format - Basic validation without infrastructure dependencies.
 
-            Uses ldap3.utils.dn.safe_dn() for proper RFC 4514 normalization:
-            - Handles escaped characters (\\, \\2C, etc.)
-            - Handles quoted values ("Smith, John")
-            - Handles special characters (+, =, <, >, #, ;)
-            - Handles UTF-8 encoding
-            - Lowercases attribute names
-            - Preserves case in attribute values
+            Domain Rule: Validate basic DN structure without external dependencies.
+            Full RFC 4514 normalization (lowercasing, escaping) is done by
+            infrastructure layer adapters (services/dn_service.py uses ldap3).
+
+            Validates:
+            - DN is not empty
+            - DN components follow attribute=value format
+            - Attribute names start with letter
+            - No invalid characters in basic structure
 
             Args:
-                v: DN string to normalize
+                v: DN string to validate
 
             Returns:
-                Normalized DN string per RFC 4514
+                Validated DN string (NOT normalized - validation only)
 
             Raises:
-                ValueError: If DN format is invalid per RFC 4514
+                ValueError: If DN format is invalid
 
             """
-            try:
-                from ldap3.utils.dn import safe_dn
+            if not v or not v.strip():
+                msg = "DN cannot be empty"
+                raise ValueError(msg)
 
-                # Use ldap3 for RFC 4514 compliant normalization
-                return safe_dn(v)
+            dn_value = v.strip()
+
+            # Validate basic DN structure: attribute=value pairs
+            # Split by comma (simple validation, full RFC 4514 parsing is in infrastructure)
+            components = dn_value.split(",")
+
+            for comp in components:
+                stripped_comp = comp.strip()
+                if not stripped_comp:
+                    msg = f"DN contains empty component: {dn_value}"
+                    raise ValueError(msg)
+
+                # Validate attribute=value format
+                if "=" not in stripped_comp:
+                    msg = f"DN component missing '=' separator: {stripped_comp}"
+                    raise ValueError(msg)
+
+                # Validate attribute name starts with letter (RFC 4512 rule)
+                attr_name = stripped_comp.split("=", 1)[0].strip()
+                if not cls._DN_COMPONENT_PATTERN.match(f"{attr_name}=x"):
+                    msg = f"DN attribute name invalid (must start with letter): {attr_name}"
+                    raise ValueError(msg)
+
+            return dn_value
+
+        @classmethod
+        def create(
+            cls, dn_string: str
+        ) -> FlextCore.Result[FlextLdifModels.DistinguishedName]:
+            """Create a DistinguishedName instance."""
+            try:
+                return FlextCore.Result[FlextLdifModels.DistinguishedName].ok(
+                    cls(value=dn_string)
+                )
             except Exception as e:
-                error_msg = f"Invalid DN format (RFC 4514): {e}"
-                raise ValueError(error_msg) from e
+                return FlextCore.Result[FlextLdifModels.DistinguishedName].fail(
+                    f"Failed to create DistinguishedName: {e}"
+                )
+
+        @property
+        def components(self) -> list[str]:
+            """Get DN components as a list."""
+            return [comp.strip() for comp in self.value.split(",") if comp.strip()]
 
     class AttributeName(FlextCore.Models.Value):
         """LDIF attribute name value object."""
@@ -124,6 +176,23 @@ class FlextLdifModels(FlextCore.Models):
             default_factory=dict, description="Additional custom data for future quirks"
         )
 
+        @classmethod
+        def create_for_quirk(
+            cls,
+            quirk_type: str,
+            original_format: str | None = None,
+            extensions: dict[str, object] | None = None,
+            custom_data: dict[str, object] | None = None,
+        ) -> FlextLdifModels.QuirkMetadata:
+            """Create QuirkMetadata for a specific quirk type."""
+            return cls(
+                quirk_type=quirk_type,
+                original_format=original_format,
+                extensions=extensions or {},
+                custom_data=custom_data or {},
+                parsed_timestamp=None,  # Will be set by caller if needed
+            )
+
     class AclPermissions(FlextCore.Models.Value):
         """ACL permissions for LDAP operations."""
 
@@ -136,6 +205,52 @@ class FlextLdifModels(FlextCore.Models):
         self_write: bool = Field(default=False, description="Self-write permission")
         proxy: bool = Field(default=False, description="Proxy permission")
 
+        @classmethod
+        def create(
+            cls, data: dict[str, object]
+        ) -> FlextCore.Result[FlextLdifModels.AclPermissions]:
+            """Create an AclPermissions instance from data."""
+            try:
+                # Handle permissions list format from tests
+                if "permissions" in data:
+                    perms_list = data.get("permissions", [])
+                    if isinstance(perms_list, list):
+                        # Convert list of permissions to individual boolean fields
+                        for perm in perms_list:
+                            if isinstance(perm, str):
+                                data[perm] = True
+                        data.pop("permissions", None)
+
+                return FlextCore.Result[FlextLdifModels.AclPermissions].ok(
+                    cls.model_validate(data)
+                )
+            except Exception as e:
+                return FlextCore.Result[FlextLdifModels.AclPermissions].fail(
+                    f"Failed to create AclPermissions: {e}"
+                )
+
+        @property
+        def permissions(self) -> list[str]:
+            """Get permissions as a list of strings."""
+            perms = []
+            if self.read:
+                perms.append("read")
+            if self.write:
+                perms.append("write")
+            if self.add:
+                perms.append("add")
+            if self.delete:
+                perms.append("delete")
+            if self.search:
+                perms.append("search")
+            if self.compare:
+                perms.append("compare")
+            if self.self_write:
+                perms.append("self_write")
+            if self.proxy:
+                perms.append("proxy")
+            return perms
+
     class AclTarget(FlextCore.Models.Value):
         """ACL target specification."""
 
@@ -144,11 +259,39 @@ class FlextLdifModels(FlextCore.Models):
             default_factory=list, description="Target attributes"
         )
 
+        @classmethod
+        def create(
+            cls, data: dict[str, object]
+        ) -> FlextCore.Result[FlextLdifModels.AclTarget]:
+            """Create an AclTarget instance from data."""
+            try:
+                return FlextCore.Result[FlextLdifModels.AclTarget].ok(
+                    cls.model_validate(data)
+                )
+            except Exception as e:
+                return FlextCore.Result[FlextLdifModels.AclTarget].fail(
+                    f"Failed to create AclTarget: {e}"
+                )
+
     class AclSubject(FlextCore.Models.Value):
         """ACL subject specification."""
 
         subject_type: str = Field(..., description="Subject type (user, group, etc.)")
         subject_value: str = Field(..., description="Subject value/pattern")
+
+        @classmethod
+        def create(
+            cls, data: dict[str, object]
+        ) -> FlextCore.Result[FlextLdifModels.AclSubject]:
+            """Create an AclSubject instance from data."""
+            try:
+                return FlextCore.Result[FlextLdifModels.AclSubject].ok(
+                    cls.model_validate(data)
+                )
+            except Exception as e:
+                return FlextCore.Result[FlextLdifModels.AclSubject].fail(
+                    f"Failed to create AclSubject: {e}"
+                )
 
     class Acl(FlextCore.Models.Value):
         """Unified ACL representation."""
@@ -159,9 +302,30 @@ class FlextLdifModels(FlextCore.Models):
             ..., description="ACL permissions"
         )
 
+        @classmethod
+        def create(
+            cls, data: dict[str, object]
+        ) -> FlextCore.Result[FlextLdifModels.Acl]:
+            """Create an Acl instance from data."""
+            try:
+                return FlextCore.Result[FlextLdifModels.Acl].ok(
+                    cls.model_validate(data)
+                )
+            except Exception as e:
+                return FlextCore.Result[FlextLdifModels.Acl].fail(
+                    f"Failed to create Acl: {e}"
+                )
+
+        @property
+        def name(self) -> str:
+            """Get ACL name for compatibility with tests."""
+            return f"{self.target.target_dn}_{self.subject.subject_type}"
+
     # =========================================================================
     # DTO MODELS - Data transfer objects
     # =========================================================================
+    # NOTE: CQRS classes (ParseLdifCommand, WriteLdifCommand, etc.) are
+    # exported from flext_ldif.__init__.py to avoid circular imports.
 
     class LdifValidationResult(FlextCore.Models.Value):
         """Result of LDIF validation operations."""
@@ -254,20 +418,22 @@ class FlextLdifModels(FlextCore.Models):
             description="Items that are identical in both datasets",
         )
 
+        @property
         def has_changes(self) -> bool:
             """Check if there are any differences."""
             return bool(self.added or self.removed or self.modified)
 
+        @property
         def total_changes(self) -> int:
             """Total number of changes (added + removed + modified)."""
             return len(self.added) + len(self.removed) + len(self.modified)
 
-        def get_summary(self) -> str:
+        def summary(self) -> str:
             """Get human-readable summary of changes."""
-            if not self.has_changes():
+            if not self.has_changes:
                 return "No differences found"
 
-            parts: list[object] = []
+            parts: list[str] = []
             if self.added:
                 parts.append(f"{len(self.added)} added")
             if self.removed:
@@ -277,7 +443,7 @@ class FlextLdifModels(FlextCore.Models):
             if self.unchanged:
                 parts.append(f"{len(self.unchanged)} unchanged")
 
-            return ", ".join(str(part) for part in parts)
+            return ", ".join(parts)
 
     class FilterCriteria(FlextCore.Models.Value):
         """Criteria for filtering LDIF entries.
@@ -382,6 +548,17 @@ class FlextLdifModels(FlextCore.Models):
             default_factory=list, description="Entries that don't match any category"
         )
 
+        @classmethod
+        def create_empty(cls) -> FlextLdifModels.CategorizedEntries:
+            """Create an empty CategorizedEntries instance."""
+            return cls(
+                users=[],
+                groups=[],
+                containers=[],
+                uncategorized=[],
+                summary={"users": 0, "groups": 0, "containers": 0, "uncategorized": 0},
+            )
+
     class SchemaDiscoveryResult(FlextCore.Models.Value):
         """Result of schema discovery operations."""
 
@@ -410,6 +587,9 @@ class FlextLdifModels(FlextCore.Models):
         no_user_modification: bool = Field(
             default=False, description="Whether users can modify this attribute"
         )
+        metadata: FlextLdifModels.QuirkMetadata | None = Field(
+            default=None, description="Quirk-specific metadata"
+        )
 
     class SchemaObjectClass(FlextCore.Models.Value):
         """LDAP schema object class definition model.
@@ -435,6 +615,23 @@ class FlextLdifModels(FlextCore.Models):
         abstract: bool = Field(
             default=False, description="Whether this is an abstract object class"
         )
+        metadata: FlextLdifModels.QuirkMetadata | None = Field(
+            default=None, description="Quirk-specific metadata"
+        )
+
+        @classmethod
+        def create(
+            cls, oc_data: dict[str, object]
+        ) -> FlextCore.Result[FlextLdifModels.SchemaObjectClass]:
+            """Create a SchemaObjectClass instance from data."""
+            try:
+                return FlextCore.Result[FlextLdifModels.SchemaObjectClass].ok(
+                    cls.model_validate(oc_data)
+                )
+            except Exception as e:
+                return FlextCore.Result[FlextLdifModels.SchemaObjectClass].fail(
+                    f"Failed to create SchemaObjectClass: {e}"
+                )
 
     class Entry(FlextCore.Models.Entity):
         """LDIF entry domain model."""
@@ -470,11 +667,36 @@ class FlextLdifModels(FlextCore.Models):
 
             """
             try:
+                # Convert string DN to DistinguishedName if needed
+                dn_obj: FlextLdifModels.DistinguishedName
+                if isinstance(dn, str):
+                    dn_result = FlextLdifModels.DistinguishedName.create(dn)
+                    if not dn_result.is_success:
+                        return FlextCore.Result[FlextLdifModels.Entry].fail(
+                            f"Failed to create Entry: {dn_result.error}"
+                        )
+                    dn_obj = dn_result.unwrap()
+                else:
+                    dn_obj = dn
+
+                # Convert dict to LdifAttributes if needed
+                attrs_obj: FlextLdifModels.LdifAttributes
+                if isinstance(attributes, dict):
+                    # Build AttributeValues for each attribute
+                    attrs_dict: dict[str, FlextLdifModels.AttributeValues] = {}
+                    for attr_name, attr_values in attributes.items():
+                        attrs_dict[attr_name] = FlextLdifModels.AttributeValues(
+                            values=attr_values
+                        )
+                    attrs_obj = FlextLdifModels.LdifAttributes(attributes=attrs_dict)
+                else:
+                    attrs_obj = attributes
+
                 # Use model_validate to ensure Pydantic handles default_factory fields
                 # Entity fields (id, version, created_at, updated_at, domain_events) have defaults
                 entry_data = {
-                    "dn": dn,
-                    "attributes": attributes,
+                    "dn": dn_obj,
+                    "attributes": attrs_obj,
                     "metadata": metadata,
                 }
                 return FlextCore.Result[FlextLdifModels.Entry].ok(
@@ -545,6 +767,20 @@ class FlextLdifModels(FlextCore.Models):
             if key in self.attributes:
                 return self.attributes[key].values
             return default
+
+        @classmethod
+        def create(
+            cls, attrs_data: dict[str, object]
+        ) -> FlextCore.Result[FlextLdifModels.LdifAttributes]:
+            """Create an LdifAttributes instance from data."""
+            try:
+                return FlextCore.Result[FlextLdifModels.LdifAttributes].ok(
+                    cls.model_validate(attrs_data)
+                )
+            except Exception as e:
+                return FlextCore.Result[FlextLdifModels.LdifAttributes].fail(
+                    f"Failed to create LdifAttributes: {e}"
+                )
 
     class EntryParsedEvent(FlextCore.Models.DomainEvent):
         """Event emitted when an entry is successfully parsed."""

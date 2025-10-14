@@ -13,7 +13,6 @@ from __future__ import annotations
 from collections.abc import Callable
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import cast
 
 from flext_core import FlextCore
 from pydantic import PrivateAttr
@@ -25,6 +24,9 @@ from flext_ldif.migration_pipeline import FlextLdifMigrationPipeline
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.quirks.base import (
     FlextLdifQuirksBase,
+    FlextLdifQuirksBaseAclQuirk,
+    FlextLdifQuirksBaseEntryQuirk,
+    FlextLdifQuirksBaseSchemaQuirk,
 )
 from flext_ldif.quirks.registry import FlextLdifQuirksRegistry
 from flext_ldif.quirks.servers import (
@@ -89,7 +91,7 @@ class FlextLdifClient(FlextCore.Service[FlextLdifTypes.Dict]):
         """
         # Initialize private attributes that parent's __init__ may access
         self._config = getattr(self, "_init_config_value", None) or FlextLdifConfig()
-        self._container = cast("FlextCore.Container", FlextCore.Container.get_global())
+        self._container = FlextCore.Container.get_global()
         # Convert config to dict for JSON-serializable FlextCore.Context
         self._context = FlextCore.Context({"config": self._config.model_dump()})
         self._bus = FlextCore.Bus()
@@ -295,7 +297,14 @@ class FlextLdifClient(FlextCore.Service[FlextLdifTypes.Dict]):
             return FlextCore.Result[list[FlextLdifModels.Entry]].fail(
                 f"Failed to get RFC parser: {parser_result.error}"
             )
-        parser = cast("FlextLdifRfcLdifParser", parser_result.unwrap())
+
+        # Type narrow parser from unwrap()
+        parser_obj: object = parser_result.unwrap()
+        if not isinstance(parser_obj, FlextLdifRfcLdifParser):
+            return FlextCore.Result[list[FlextLdifModels.Entry]].fail(
+                "RFC parser has unexpected type"
+            )
+        parser: FlextLdifRfcLdifParser = parser_obj
 
         # Call parser directly
         # Note: server_type parameter is reserved for future quirk-based parsing
@@ -339,7 +348,12 @@ class FlextLdifClient(FlextCore.Service[FlextLdifTypes.Dict]):
             return FlextCore.Result[str].fail(
                 f"Failed to get RFC writer: {writer_result.error}"
             )
-        writer = cast("FlextLdifRfcLdifWriter", writer_result.unwrap())
+
+        # Type narrow writer from unwrap()
+        writer_obj: object = writer_result.unwrap()
+        if not isinstance(writer_obj, FlextLdifRfcLdifWriter):
+            return FlextCore.Result[str].fail("RFC writer has unexpected type")
+        writer: FlextLdifRfcLdifWriter = writer_obj
 
         # Write to string first
         content_result = writer.write_entries_to_string(entries)
@@ -384,7 +398,14 @@ class FlextLdifClient(FlextCore.Service[FlextLdifTypes.Dict]):
             return FlextCore.Result[FlextLdifTypes.Dict].fail(
                 f"Failed to get schema validator: {validator_result.error}"
             )
-        validator = cast("FlextLdifSchemaValidator", validator_result.unwrap())
+
+        # Type narrow validator from unwrap()
+        validator_obj: object = validator_result.unwrap()
+        if not isinstance(validator_obj, FlextLdifSchemaValidator):
+            return FlextCore.Result[FlextLdifTypes.Dict].fail(
+                "Schema validator has unexpected type"
+            )
+        validator: FlextLdifSchemaValidator = validator_obj
 
         # Call validator directly
         result = validator.validate_entries(entries)
@@ -429,11 +450,17 @@ class FlextLdifClient(FlextCore.Service[FlextLdifTypes.Dict]):
                 f"Failed to get migration pipeline: {pipeline_result.error}"
             )
 
-        # The container.get returns a lambda, so we need to call it with params
-        pipeline_factory = cast(
-            "Callable[[dict[str, str] | None], FlextLdifMigrationPipeline]",
-            pipeline_result.unwrap(),
-        )
+        # Type narrow pipeline factory from unwrap()
+        # The container.get returns a lambda callable
+        pipeline_factory_obj: object = pipeline_result.unwrap()
+        if not callable(pipeline_factory_obj):
+            return FlextCore.Result[FlextLdifTypes.Dict].fail(
+                "Migration pipeline factory is not callable"
+            )
+        pipeline_factory: Callable[
+            [dict[str, str] | None], FlextLdifMigrationPipeline
+        ] = pipeline_factory_obj
+
         pipeline = pipeline_factory({
             "source_server_type": from_server,
             "target_server_type": to_server,
@@ -528,9 +555,8 @@ class FlextLdifClient(FlextCore.Service[FlextLdifTypes.Dict]):
         total_entries = len(entries)
 
         for entry in entries:
-            object_classes = (
-                entry.attributes.get_attribute(FlextLdifConstants.DictKeys.OBJECTCLASS)
-                or []
+            object_classes = entry.get_attribute_values(
+                FlextLdifConstants.DictKeys.OBJECTCLASS
             )
             if object_classes:
                 for obj_class in object_classes:
@@ -712,6 +738,10 @@ class FlextLdifClient(FlextCore.Service[FlextLdifTypes.Dict]):
                         )
                     else:
                         # Preserve existing extensions and add exclusion_info
+                        # Type narrowing: item.metadata is guaranteed non-None here
+                        if item.metadata is None:
+                            msg = "Metadata unexpectedly None after check"
+                            raise RuntimeError(msg)
                         new_extensions = {**item.metadata.extensions}
                         new_extensions["exclusion_info"] = exclusion_info.model_dump()
                         new_metadata = FlextLdifModels.QuirkMetadata(
@@ -798,7 +828,7 @@ class FlextLdifClient(FlextCore.Service[FlextLdifTypes.Dict]):
         """Categorize entries into users, groups, containers, and uncategorized.
 
         Categorizes entries based on their objectClass attributes. Checks categories
-        in priority order: users first, then groups, then containers. Any entry not
+        in priority order: users first, then groups, then containers. object entry not
         matching these categories is marked as uncategorized.
 
         Args:
@@ -945,9 +975,7 @@ class FlextLdifClient(FlextCore.Service[FlextLdifTypes.Dict]):
             return FlextCore.Result[bool].ok(True)
 
         except Exception as e:
-            return FlextCore.Result[bool].fail(
-                f"Failed to validate LDIF syntax: {e}"
-            )
+            return FlextCore.Result[bool].fail(f"Failed to validate LDIF syntax: {e}")
 
     def count_ldif_entries(self, content: str) -> FlextCore.Result[int]:
         r"""Count number of LDIF entries in content.
@@ -985,9 +1013,7 @@ class FlextLdifClient(FlextCore.Service[FlextLdifTypes.Dict]):
             return FlextCore.Result[int].ok(count)
 
         except Exception as e:
-            return FlextCore.Result[int].fail(
-                f"Failed to count LDIF entries: {e}"
-            )
+            return FlextCore.Result[int].fail(f"Failed to count LDIF entries: {e}")
 
     # =========================================================================
     # QUIRKS MANAGEMENT
@@ -1020,21 +1046,36 @@ class FlextLdifClient(FlextCore.Service[FlextLdifTypes.Dict]):
             return FlextCore.Result[None].fail(
                 f"Failed to get quirk registry: {registry_result.error}"
             )
-        registry = cast("FlextLdifQuirksRegistry", registry_result.unwrap())
 
-        # Call appropriate registration method based on type
+        # Type narrow registry from unwrap()
+        registry_obj: object = registry_result.unwrap()
+        if not isinstance(registry_obj, FlextLdifQuirksRegistry):
+            return FlextCore.Result[None].fail("Quirk registry has unexpected type")
+        registry: FlextLdifQuirksRegistry = registry_obj
+
+        # Type narrow quirk parameter and call appropriate registration method
+        # Use actual class names (not type aliases) for isinstance checks
         if quirk_type == "schema":
-            return registry.register_schema_quirk(
-                cast("FlextLdifQuirksBase.BaseSchemaQuirk", quirk)
-            )
+            if not isinstance(quirk, FlextLdifQuirksBaseSchemaQuirk):
+                return FlextCore.Result[None].fail(
+                    f"Quirk must be FlextLdifQuirksBaseSchemaQuirk, got {type(quirk).__name__}"
+                )
+            return registry.register_schema_quirk(quirk)
+
         if quirk_type == "acl":
-            return registry.register_acl_quirk(
-                cast("FlextLdifQuirksBase.BaseAclQuirk", quirk)
-            )
+            if not isinstance(quirk, FlextLdifQuirksBaseAclQuirk):
+                return FlextCore.Result[None].fail(
+                    f"Quirk must be FlextLdifQuirksBaseAclQuirk, got {type(quirk).__name__}"
+                )
+            return registry.register_acl_quirk(quirk)
+
         if quirk_type == "entry":
-            return registry.register_entry_quirk(
-                cast("FlextLdifQuirksBase.BaseEntryQuirk", quirk)
-            )
+            if not isinstance(quirk, FlextLdifQuirksBaseEntryQuirk):
+                return FlextCore.Result[None].fail(
+                    f"Quirk must be FlextLdifQuirksBaseEntryQuirk, got {type(quirk).__name__}"
+                )
+            return registry.register_entry_quirk(quirk)
+
         return FlextCore.Result[None].fail(f"Unsupported quirk type: {quirk_type}")
 
     # =========================================================================
@@ -1064,9 +1105,7 @@ class FlextLdifClient(FlextCore.Service[FlextLdifTypes.Dict]):
     def container(self) -> FlextCore.Container:
         """Access to dependency injection container with lazy initialization."""
         if self._container is None:
-            self._container = cast(
-                "FlextCore.Container", FlextCore.Container.get_global()
-            )
+            self._container = FlextCore.Container.get_global()
         return self._container
 
     @property
@@ -1082,7 +1121,11 @@ class FlextLdifClient(FlextCore.Service[FlextLdifTypes.Dict]):
         """Access to event bus with lazy initialization."""
         if self._bus is None:
             self._bus = FlextCore.Bus()
-        return cast("FlextCore.Bus", self._bus)
+        # Type narrowing: _bus is guaranteed to be FlextCore.Bus after initialization
+        if not isinstance(self._bus, FlextCore.Bus):
+            msg = "Bus initialization failed unexpectedly"
+            raise TypeError(msg)
+        return self._bus
 
 
 __all__ = ["FlextLdifClient"]

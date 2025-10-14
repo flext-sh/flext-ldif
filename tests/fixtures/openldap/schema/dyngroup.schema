@@ -59,7 +59,7 @@ objectIdentifier DynGroupOC	DynGroupBase:2
 
 attributetype ( NetscapeLDAPattributeType:198
 	NAME 'memberURL'
-	DESC 'Identifies an URL associated with each member of a group. Any type of labeled URL can be used.'
+	DESC 'Identifies an URL associated with each member of a group. object type of labeled URL can be used.'
 	SUP labeledURI )
 
 attributetype ( DynGroupAttr:1

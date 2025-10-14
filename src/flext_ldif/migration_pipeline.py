@@ -15,7 +15,6 @@ Architecture:
 from __future__ import annotations
 
 from pathlib import Path
-from typing import cast
 
 from flext_core import FlextCore
 
@@ -231,7 +230,10 @@ class FlextLdifMigrationPipeline(FlextCore.Service[FlextLdifTypes.Dict]):
 
             for entry in entries:
                 # Step 1: Normalize source entry to RFC format using source quirks
-                entry_dict = cast("FlextCore.Types.Dict", entry)
+                # Type narrow entry to dict
+                if not isinstance(entry, dict):
+                    continue  # Skip non-dict entries
+                entry_dict: FlextCore.Types.Dict = entry
                 normalized_entry = entry_dict.copy()
 
                 if source_entry_quirks:
@@ -297,9 +299,8 @@ class FlextLdifMigrationPipeline(FlextCore.Service[FlextLdifTypes.Dict]):
                     },
                 )
 
-            return FlextCore.Result[FlextCore.Types.List].ok(
-                cast("FlextCore.Types.List", migrated_entries)
-            )
+            # migrated_entries is already a list[dict]
+            return FlextCore.Result[FlextCore.Types.List].ok(migrated_entries)
 
         except Exception as e:
             error_msg = f"Entry migration failed: {e}"
@@ -334,8 +335,18 @@ class FlextLdifMigrationPipeline(FlextCore.Service[FlextLdifTypes.Dict]):
                     "output_dir parameter is required"
                 )
 
-            input_dir = Path(cast("str", input_dir_str))
-            output_dir = Path(cast("str", output_dir_str))
+            # Type narrow directory paths
+            if not isinstance(input_dir_str, str):
+                return FlextCore.Result[FlextLdifTypes.Dict].fail(
+                    f"input_dir must be string, got {type(input_dir_str).__name__}"
+                )
+            if not isinstance(output_dir_str, str):
+                return FlextCore.Result[FlextLdifTypes.Dict].fail(
+                    f"output_dir must be string, got {type(output_dir_str).__name__}"
+                )
+
+            input_dir = Path(input_dir_str)
+            output_dir = Path(output_dir_str)
 
             if not input_dir.exists():
                 return FlextCore.Result[FlextLdifTypes.Dict].fail(
@@ -509,13 +520,19 @@ class FlextLdifMigrationPipeline(FlextCore.Service[FlextLdifTypes.Dict]):
                 )
 
             if self.logger:
-                attributes: FlextCore.Types.Dict = cast(
-                    "FlextCore.Types.Dict",
-                    schema_data.get(FlextLdifConstants.DictKeys.ATTRIBUTES, {}),
+                # Type narrow schema data
+                attributes_raw: object = schema_data.get(
+                    FlextLdifConstants.DictKeys.ATTRIBUTES, {}
                 )
-                objectclasses: FlextCore.Types.Dict = cast(
-                    "FlextCore.Types.Dict", schema_data.get("objectclasses", {})
+                attributes: FlextCore.Types.Dict = (
+                    attributes_raw if isinstance(attributes_raw, dict) else {}
                 )
+
+                objectclasses_raw: object = schema_data.get("objectclasses", {})
+                objectclasses: FlextCore.Types.Dict = (
+                    objectclasses_raw if isinstance(objectclasses_raw, dict) else {}
+                )
+
                 self.logger.info(
                     "Schema migration completed",
                     extra={
@@ -558,7 +575,8 @@ class FlextLdifMigrationPipeline(FlextCore.Service[FlextLdifTypes.Dict]):
                     self.logger.warning("No entry files found in input directory")
                 return FlextCore.Result[FlextCore.Types.List].ok([])
 
-            all_entries: list[FlextLdifTypes.Dict] = []
+            # Use FlextCore.Types.List for compatibility with Result.ok
+            all_entries: FlextCore.Types.List = []
 
             for entry_file in entry_files:
                 if self.logger:
@@ -618,9 +636,8 @@ class FlextLdifMigrationPipeline(FlextCore.Service[FlextLdifTypes.Dict]):
                     },
                 )
 
-            return FlextCore.Result[FlextCore.Types.List].ok(
-                cast("FlextCore.Types.List", all_entries)
-            )
+            # all_entries is already typed as list[FlextLdifTypes.Dict]
+            return FlextCore.Result[FlextCore.Types.List].ok(all_entries)
 
         except Exception as e:
             return FlextCore.Result[FlextCore.Types.List].fail(
