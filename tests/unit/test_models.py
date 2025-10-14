@@ -2,6 +2,7 @@
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
+
 """
 
 from __future__ import annotations
@@ -468,11 +469,14 @@ class TestFlextLdifModelsEntry:
 
         result = FlextLdifModels.Entry.create(
             dn="cn=test,dc=example,dc=com",
-            attributes={
-                "objectClass": ["inetOrgPerson"],
-                "cn": ["Test User"],
-                "userCertificate;binary": [binary_data],
-            },
+            attributes=cast(
+                "dict[str, list[str]]",
+                {
+                    "objectClass": ["inetOrgPerson"],
+                    "cn": ["Test User"],
+                    "userCertificate;binary": [binary_data],
+                },
+            ),
         )
 
         assert result.is_success
@@ -565,7 +569,9 @@ class TestFlextLdifModelsLdifAttributes:
             ),
         }
 
-        result = FlextLdifModels.LdifAttributes.create(attrs_data)
+        result = FlextLdifModels.LdifAttributes.create(
+            cast("dict[str, object]", attrs_data)
+        )
 
         assert result.is_success
         attrs = result.unwrap()
@@ -591,7 +597,9 @@ class TestFlextLdifModelsLdifAttributes:
             ),
         }
 
-        result = FlextLdifModels.LdifAttributes.create(attrs_data)
+        result = FlextLdifModels.LdifAttributes.create(
+            cast("dict[str, object]", attrs_data)
+        )
 
         assert result.is_success
         attrs = result.unwrap()
@@ -614,7 +622,9 @@ class TestFlextLdifModelsSchemaObjectClass:
             "optional_attributes": ["description", "telephoneNumber", "mail"],
         }
 
-        result = FlextLdifModels.SchemaObjectClass.create(oc_data)
+        result = FlextLdifModels.SchemaObjectClass.create(
+            cast("dict[str, object]", oc_data)
+        )
 
         assert result.is_success
         oc = result.unwrap()
@@ -633,7 +643,9 @@ class TestFlextLdifModelsSchemaObjectClass:
             "structural": True,
         }
 
-        result = FlextLdifModels.SchemaObjectClass.create(valid_data)
+        result = FlextLdifModels.SchemaObjectClass.create(
+            cast("dict[str, object]", valid_data)
+        )
         assert result.is_success
 
     def test_computed_fields(self) -> None:
@@ -645,7 +657,9 @@ class TestFlextLdifModelsSchemaObjectClass:
             "optional_attributes": ["mail", "telephoneNumber"],
         }
 
-        result = FlextLdifModels.SchemaObjectClass.create(oc_data)
+        result = FlextLdifModels.SchemaObjectClass.create(
+            cast("dict[str, object]", oc_data)
+        )
         assert result.is_success
         oc = result.unwrap()
         assert isinstance(oc, FlextLdifModels.SchemaObjectClass)
@@ -665,7 +679,9 @@ class TestFlextLdifModelsAclTarget:
             "attributes": ["cn", "sn"],
         }
 
-        result = FlextLdifModels.AclTarget.create(target_data)
+        result = FlextLdifModels.AclTarget.create(
+            cast("dict[str, object]", target_data)
+        )
 
         assert result.is_success
         target = result.unwrap()
@@ -684,7 +700,9 @@ class TestFlextLdifModelsAclSubject:
             "subject_value": "cn=admin,dc=example,dc=com",
         }
 
-        result = FlextLdifModels.AclSubject.create(subject_data)
+        result = FlextLdifModels.AclSubject.create(
+            cast("dict[str, object]", subject_data)
+        )
 
         assert result.is_success
         subject = result.unwrap()
@@ -702,7 +720,9 @@ class TestFlextLdifModelsAclPermissions:
             "scope": "entry",
         }
 
-        result = FlextLdifModels.AclPermissions.create(perms_data)
+        result = FlextLdifModels.AclPermissions.create(
+            cast("dict[str, object]", perms_data)
+        )
 
         assert result.is_success
         perms = result.unwrap()
@@ -742,7 +762,7 @@ class TestFlextLdifModelsAcl:
             "server_type": "oracle_oud",
         }
 
-        result = FlextLdifModels.Acl.create(acl_data)
+        result = FlextLdifModels.Acl.create(cast("dict[str, object]", acl_data))
 
         assert result.is_success
         acl = result.unwrap()

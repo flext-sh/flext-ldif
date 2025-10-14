@@ -5,6 +5,7 @@ using real services and FlextTests infrastructure.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
+
 """
 
 from __future__ import annotations
@@ -996,11 +997,14 @@ class TestRfcLdifWriterComprehensive:
         binary_data = b"binary content for testing"
         entry_result = FlextLdifModels.Entry.create(
             dn="cn=Binary Test,dc=example,dc=com",
-            attributes={
-                "cn": ["Binary Test"],
-                "objectClass": ["person"],
-                "userCertificate;binary": [binary_data],
-            },
+            attributes=cast(
+                "dict[str, list[str]]",
+                {
+                    "cn": ["Binary Test"],
+                    "objectClass": ["person"],
+                    "userCertificate;binary": [binary_data],
+                },
+            ),
         )
         entry = entry_result.unwrap()
 
@@ -1186,7 +1190,7 @@ class TestRfcLdifWriterComprehensive:
         )
 
         # This should not crash - intentionally testing invalid input
-        result = writer.write_entries_to_string(None)
+        result = writer.write_entries_to_string(cast("list[FlextLdifModels.Entry]", None))
 
         assert result.is_failure
 

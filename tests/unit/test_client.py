@@ -8,6 +8,7 @@ without requiring full client initialization. The methods themselves are tested 
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
+
 """
 
 from __future__ import annotations
@@ -500,6 +501,7 @@ class TestParseLdif:
             result = client.parse_ldif("dn: cn=test,dc=example,dc=com\n")
 
             assert result.is_failure
+            assert result.error is not None
             assert "Failed to get RFC parser" in result.error
 
 
@@ -587,6 +589,7 @@ class TestWriteLdif:
             result = client.write_ldif(entries)
 
             assert result.is_failure
+            assert result.error is not None
             assert "Failed to get RFC writer" in result.error
 
 
@@ -642,7 +645,7 @@ class TestValidateEntries:
             assert report["total_entries"] == 1
             assert report["valid_entries"] == 1
             assert report["invalid_entries"] == 0
-            assert len(report["errors"]) == 0
+            assert len(cast("list[str]", report["errors"])) == 0
 
     def test_validate_entries_validator_not_available(
         self, mock_client: FlextLdifClient
@@ -678,6 +681,7 @@ class TestValidateEntries:
             result = client.validate_entries(entries)
 
             assert result.is_failure
+            assert result.error is not None
             assert "Failed to get schema validator" in result.error
 
 

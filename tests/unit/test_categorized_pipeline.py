@@ -4,6 +4,7 @@ Tests for Phase 2 Day 2: Categorization logic with 6-directory output structure.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
+
 """
 
 from __future__ import annotations

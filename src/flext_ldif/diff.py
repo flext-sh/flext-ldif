@@ -7,12 +7,12 @@ Provides semantic comparison of:
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
+
 """
 
 from __future__ import annotations
 
 from flext_core import FlextCore
-from pydantic import BaseModel
 
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.typings import FlextLdifTypes
@@ -21,7 +21,7 @@ from flext_ldif.typings import FlextLdifTypes
 DiffResult = FlextLdifModels.DiffResult
 
 
-class FlextLdifDiff(BaseModel):
+class FlextLdifDiff:
     """LDIF diff utility for semantic comparison across any quirk types.
 
     Compares parsed LDIF data at semantic level, not string comparison.
@@ -81,38 +81,58 @@ class FlextLdifDiff(BaseModel):
             # Find added and modified attributes
             for key, target_attr in target_map.items():
                 if key not in source_map:
-                    added.append({
-                        "oid": target_attr.get("oid"),
-                        "name": target_attr.get("name"),
-                        "desc": target_attr.get("desc"),
-                        "syntax": target_attr.get("syntax"),
-                    })
+                    added.append(
+                        FlextLdifModels.DiffItem(
+                            key=f"oid_{target_attr.get('oid')}",
+                            value={
+                                "oid": target_attr.get("oid"),
+                                "name": target_attr.get("name"),
+                                "desc": target_attr.get("desc"),
+                                "syntax": target_attr.get("syntax"),
+                            },
+                        )
+                    )
                 else:
                     source_attr = source_map[key]
                     if self._attributes_differ(source_attr, target_attr):
-                        modified.append({
-                            "oid": target_attr.get("oid"),
-                            "name": target_attr.get("name"),
-                            "source": source_attr,
-                            "target": target_attr,
-                            "changes": self._get_attribute_changes(
-                                source_attr, target_attr
-                            ),
-                        })
+                        modified.append(
+                            FlextLdifModels.DiffItem(
+                                key=f"oid_{target_attr.get('oid')}",
+                                value={
+                                    "oid": target_attr.get("oid"),
+                                    "name": target_attr.get("name"),
+                                    "source": source_attr,
+                                    "target": target_attr,
+                                    "changes": self._get_attribute_changes(
+                                        source_attr, target_attr
+                                    ),
+                                },
+                            )
+                        )
                     else:
-                        unchanged.append({
-                            "oid": target_attr.get("oid"),
-                            "name": target_attr.get("name"),
-                        })
+                        unchanged.append(
+                            FlextLdifModels.DiffItem(
+                                key=f"oid_{target_attr.get('oid')}",
+                                value={
+                                    "oid": target_attr.get("oid"),
+                                    "name": target_attr.get("name"),
+                                },
+                            )
+                        )
 
             # Find removed attributes
             for key, source_attr in source_map.items():
                 if key not in target_map:
-                    removed.append({
-                        "oid": source_attr.get("oid"),
-                        "name": source_attr.get("name"),
-                        "desc": source_attr.get("desc"),
-                    })
+                    removed.append(
+                        FlextLdifModels.DiffItem(
+                            key=f"oid_{source_attr.get('oid')}",
+                            value={
+                                "oid": source_attr.get("oid"),
+                                "name": source_attr.get("name"),
+                                "desc": source_attr.get("desc"),
+                            },
+                        )
+                    )
 
             return FlextCore.Result[FlextLdifModels.DiffResult].ok(
                 DiffResult(
@@ -159,38 +179,58 @@ class FlextLdifDiff(BaseModel):
             # Find added and modified objectClasses
             for key, target_oc in target_map.items():
                 if key not in source_map:
-                    added.append({
-                        "oid": target_oc.get("oid"),
-                        "name": target_oc.get("name"),
-                        "kind": target_oc.get("kind"),
-                        "sup": target_oc.get("sup"),
-                    })
+                    added.append(
+                        FlextLdifModels.DiffItem(
+                            key=f"oid_{target_oc.get('oid')}",
+                            value={
+                                "oid": target_oc.get("oid"),
+                                "name": target_oc.get("name"),
+                                "kind": target_oc.get("kind"),
+                                "sup": target_oc.get("sup"),
+                            },
+                        )
+                    )
                 else:
                     source_oc = source_map[key]
                     if self._objectclasses_differ(source_oc, target_oc):
-                        modified.append({
-                            "oid": target_oc.get("oid"),
-                            "name": target_oc.get("name"),
-                            "source": source_oc,
-                            "target": target_oc,
-                            "changes": self._get_objectclass_changes(
-                                source_oc, target_oc
-                            ),
-                        })
+                        modified.append(
+                            FlextLdifModels.DiffItem(
+                                key=f"oid_{target_oc.get('oid')}",
+                                value={
+                                    "oid": target_oc.get("oid"),
+                                    "name": target_oc.get("name"),
+                                    "source": source_oc,
+                                    "target": target_oc,
+                                    "changes": self._get_objectclass_changes(
+                                        source_oc, target_oc
+                                    ),
+                                },
+                            )
+                        )
                     else:
-                        unchanged.append({
-                            "oid": target_oc.get("oid"),
-                            "name": target_oc.get("name"),
-                        })
+                        unchanged.append(
+                            FlextLdifModels.DiffItem(
+                                key=f"oid_{target_oc.get('oid')}",
+                                value={
+                                    "oid": target_oc.get("oid"),
+                                    "name": target_oc.get("name"),
+                                },
+                            )
+                        )
 
             # Find removed objectClasses
             for key, source_oc in source_map.items():
                 if key not in target_map:
-                    removed.append({
-                        "oid": source_oc.get("oid"),
-                        "name": source_oc.get("name"),
-                        "kind": source_oc.get("kind"),
-                    })
+                    removed.append(
+                        FlextLdifModels.DiffItem(
+                            key=f"oid_{source_oc.get('oid')}",
+                            value={
+                                "oid": source_oc.get("oid"),
+                                "name": source_oc.get("name"),
+                                "kind": source_oc.get("kind"),
+                            },
+                        )
+                    )
 
             return FlextCore.Result[FlextLdifModels.DiffResult].ok(
                 DiffResult(
@@ -258,20 +298,52 @@ class FlextLdifDiff(BaseModel):
             oc_diff = oc_result.unwrap()
 
             combined_added = [
-                {"type": "attribute", **item} for item in attr_diff.added
-            ] + [{"type": "objectclass", **item} for item in oc_diff.added]
+                FlextLdifModels.DiffItem(
+                    key=item.key, value={"type": "attribute", **item.value}
+                )
+                for item in attr_diff.added
+            ] + [
+                FlextLdifModels.DiffItem(
+                    key=item.key, value={"type": "objectclass", **item.value}
+                )
+                for item in oc_diff.added
+            ]
 
             combined_removed = [
-                {"type": "attribute", **item} for item in attr_diff.removed
-            ] + [{"type": "objectclass", **item} for item in oc_diff.removed]
+                FlextLdifModels.DiffItem(
+                    key=item.key, value={"type": "attribute", **item.value}
+                )
+                for item in attr_diff.removed
+            ] + [
+                FlextLdifModels.DiffItem(
+                    key=item.key, value={"type": "objectclass", **item.value}
+                )
+                for item in oc_diff.removed
+            ]
 
             combined_modified = [
-                {"type": "attribute", **item} for item in attr_diff.modified
-            ] + [{"type": "objectclass", **item} for item in oc_diff.modified]
+                FlextLdifModels.DiffItem(
+                    key=item.key, value={"type": "attribute", **item.value}
+                )
+                for item in attr_diff.modified
+            ] + [
+                FlextLdifModels.DiffItem(
+                    key=item.key, value={"type": "objectclass", **item.value}
+                )
+                for item in oc_diff.modified
+            ]
 
             combined_unchanged = [
-                {"type": "attribute", **item} for item in attr_diff.unchanged
-            ] + [{"type": "objectclass", **item} for item in oc_diff.unchanged]
+                FlextLdifModels.DiffItem(
+                    key=item.key, value={"type": "attribute", **item.value}
+                )
+                for item in attr_diff.unchanged
+            ] + [
+                FlextLdifModels.DiffItem(
+                    key=item.key, value={"type": "objectclass", **item.value}
+                )
+                for item in oc_diff.unchanged
+            ]
 
             return FlextCore.Result[FlextLdifModels.DiffResult].ok(
                 DiffResult(
@@ -325,22 +397,29 @@ class FlextLdifDiff(BaseModel):
             # Find added and modified ACLs
             for sig, target_acl in target_map.items():
                 if sig not in source_map:
-                    added.append(target_acl)
+                    added.append(FlextLdifModels.DiffItem(key=sig, value=target_acl))
                 else:
                     source_acl = source_map[sig]
                     if self._acls_differ(source_acl, target_acl):
-                        modified.append({
-                            "signature": sig,
-                            "source": source_acl,
-                            "target": target_acl,
-                        })
+                        modified.append(
+                            FlextLdifModels.DiffItem(
+                                key=sig,
+                                value={
+                                    "signature": sig,
+                                    "source": source_acl,
+                                    "target": target_acl,
+                                },
+                            )
+                        )
                     else:
-                        unchanged.append(target_acl)
+                        unchanged.append(
+                            FlextLdifModels.DiffItem(key=sig, value=target_acl)
+                        )
 
             # Find removed ACLs
             for sig, source_acl in source_map.items():
                 if sig not in target_map:
-                    removed.append(source_acl)
+                    removed.append(FlextLdifModels.DiffItem(key=sig, value=source_acl))
 
             return FlextCore.Result[FlextLdifModels.DiffResult].ok(
                 DiffResult(
@@ -392,31 +471,50 @@ class FlextLdifDiff(BaseModel):
             # Find added and modified entries
             for dn, target_entry in target_map.items():
                 if dn not in source_map:
-                    added.append({
-                        "dn": target_entry.get("dn"),
-                        "objectClass": target_entry.get("objectClass"),
-                    })
+                    added.append(
+                        FlextLdifModels.DiffItem(
+                            key=dn,
+                            value={
+                                "dn": target_entry.get("dn"),
+                                "objectClass": target_entry.get("objectClass"),
+                            },
+                        )
+                    )
                 else:
                     source_entry = source_map[dn]
                     if self._entries_differ(source_entry, target_entry):
-                        modified.append({
-                            "dn": target_entry.get("dn"),
-                            "source": source_entry,
-                            "target": target_entry,
-                            "changes": self._get_entry_changes(
-                                source_entry, target_entry
-                            ),
-                        })
+                        modified.append(
+                            FlextLdifModels.DiffItem(
+                                key=dn,
+                                value={
+                                    "dn": target_entry.get("dn"),
+                                    "source": source_entry,
+                                    "target": target_entry,
+                                    "changes": self._get_entry_changes(
+                                        source_entry, target_entry
+                                    ),
+                                },
+                            )
+                        )
                     else:
-                        unchanged.append({"dn": target_entry.get("dn")})
+                        unchanged.append(
+                            FlextLdifModels.DiffItem(
+                                key=dn, value={"dn": target_entry.get("dn")}
+                            )
+                        )
 
             # Find removed entries
             for dn, source_entry in source_map.items():
                 if dn not in target_map:
-                    removed.append({
-                        "dn": source_entry.get("dn"),
-                        "objectClass": source_entry.get("objectClass"),
-                    })
+                    removed.append(
+                        FlextLdifModels.DiffItem(
+                            key=dn,
+                            value={
+                                "dn": source_entry.get("dn"),
+                                "objectClass": source_entry.get("objectClass"),
+                            },
+                        )
+                    )
 
             return FlextCore.Result[FlextLdifModels.DiffResult].ok(
                 DiffResult(

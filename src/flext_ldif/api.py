@@ -6,6 +6,7 @@ a clean, unified interface that delegates to the FlextLdifClient implementation.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
+
 """
 
 from __future__ import annotations
@@ -146,9 +147,10 @@ class FlextLdif(FlextCore.Service[FlextCore.Types.Dict]):
                    uses global singleton instance.
 
         """
+        # Call super().__init__() FIRST for Pydantic model initialization
         super().__init__()
 
-        # Initialize Flext ecosystem components
+        # Initialize Flext ecosystem components AFTER super().__init__()
         # Type narrow container from get_global() which may return None or subclass
         container_raw = FlextCore.Container.get_global()
         if not isinstance(container_raw, FlextCore.Container):

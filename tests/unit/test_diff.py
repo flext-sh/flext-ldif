@@ -4,6 +4,7 @@ Tests semantic comparison of ACLs, schemas, and entries across quirk types.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
+
 """
 
 from __future__ import annotations
@@ -14,6 +15,7 @@ import pytest
 from flext_core import FlextCore
 
 from flext_ldif.diff import DiffResult, FlextLdifDiff
+from flext_ldif.models import FlextLdifModels
 
 
 class TestDiffResultDataclass:
@@ -29,10 +31,14 @@ class TestDiffResultDataclass:
     def test_diff_with_changes(self) -> None:
         """Test diff result with changes."""
         result = DiffResult(
-            added=[{"oid": "1.2.3"}],
-            removed=[{"oid": "4.5.6"}],
-            modified=[{"oid": "7.8.9"}],
-            unchanged=[{"oid": "10.11.12"}],
+            added=[FlextLdifModels.DiffItem(key="oid_1.2.3", value={"oid": "1.2.3"})],
+            removed=[FlextLdifModels.DiffItem(key="oid_4.5.6", value={"oid": "4.5.6"})],
+            modified=[
+                FlextLdifModels.DiffItem(key="oid_7.8.9", value={"oid": "7.8.9"})
+            ],
+            unchanged=[
+                FlextLdifModels.DiffItem(key="oid_10.11.12", value={"oid": "10.11.12"})
+            ],
         )
         assert result.has_changes
         assert result.total_changes == 3  # added + removed + modified
@@ -93,8 +99,8 @@ class TestAttributeDiff:
         assert result.is_success
         diff = result.unwrap()
         assert len(diff.added) == 1
-        assert diff.added[0]["oid"] == "2.16.840.1.113894.1.1.1"
-        assert diff.added[0]["name"] == "orclguid"
+        assert diff.added[0].value["oid"] == "2.16.840.1.113894.1.1.1"
+        assert diff.added[0].value["name"] == "orclguid"
 
     def test_removed_attribute(self, diff_tool: FlextLdifDiff) -> None:
         """Test detection of removed attribute."""
@@ -114,7 +120,7 @@ class TestAttributeDiff:
         assert result.is_success
         diff = result.unwrap()
         assert len(diff.removed) == 1
-        assert diff.removed[0]["oid"] == "2.16.840.1.113894.1.1.1"
+        assert diff.removed[0].value["oid"] == "2.16.840.1.113894.1.1.1"
 
     def test_modified_attribute(self, diff_tool: FlextLdifDiff) -> None:
         """Test detection of modified attribute."""
@@ -142,7 +148,7 @@ class TestAttributeDiff:
         assert result.is_success
         diff = result.unwrap()
         assert len(diff.modified) == 1
-        assert "desc:" in diff.modified[0]["changes"][0]
+        assert "desc:" in diff.modified[0].value["changes"][0]
 
 
 class TestObjectClassDiff:
@@ -172,7 +178,10 @@ class TestObjectClassDiff:
             "must": ["cn"],
         }
 
-        result = diff_tool.diff_objectclasses([oc1], [oc2])
+        result = diff_tool.diff_objectclasses(
+            cast("list[FlextCore.Types.Dict]", [oc1]),
+            cast("list[FlextCore.Types.Dict]", [oc2])
+        )
         assert result.is_success
         diff = result.unwrap()
         assert not diff.has_changes
@@ -189,11 +198,14 @@ class TestObjectClassDiff:
             }
         ]
 
-        result = diff_tool.diff_objectclasses(source_ocs, target_ocs)
+        result = diff_tool.diff_objectclasses(
+            cast("list[FlextCore.Types.Dict]", source_ocs),
+            cast("list[FlextCore.Types.Dict]", target_ocs)
+        )
         assert result.is_success
         diff = result.unwrap()
         assert len(diff.added) == 1
-        assert diff.added[0]["name"] == "orclContainer"
+        assert diff.added[0].value["name"] == "orclContainer"
 
     def test_modified_objectclass(self, diff_tool: FlextLdifDiff) -> None:
         """Test detection of modified objectClass."""
@@ -214,7 +226,10 @@ class TestObjectClassDiff:
             }
         ]
 
-        result = diff_tool.diff_objectclasses(source_ocs, target_ocs)
+        result = diff_tool.diff_objectclasses(
+            cast("list[FlextCore.Types.Dict]", source_ocs),
+            cast("list[FlextCore.Types.Dict]", target_ocs)
+        )
         assert result.is_success
         diff = result.unwrap()
         assert len(diff.modified) == 1
@@ -243,7 +258,10 @@ class TestAclDiff:
             "by_clauses": [{"subject": "*", "permissions": ["read", "browse"]}],
         }
 
-        result = diff_tool.diff_acls([acl1], [acl2])
+        result = diff_tool.diff_acls(
+            cast("list[FlextCore.Types.Dict]", [acl1]),
+            cast("list[FlextCore.Types.Dict]", [acl2])
+        )
         assert result.is_success
         diff = result.unwrap()
         # Should be detected as semantically similar
@@ -260,7 +278,10 @@ class TestAclDiff:
             }
         ]
 
-        result = diff_tool.diff_acls(source_acls, target_acls)
+        result = diff_tool.diff_acls(
+            source_acls,
+            cast("list[FlextCore.Types.Dict]", target_acls)
+        )
         assert result.is_success
         diff = result.unwrap()
         assert len(diff.added) == 1
@@ -276,7 +297,10 @@ class TestAclDiff:
         ]
         target_acls: list[FlextCore.Types.Dict] = []
 
-        result = diff_tool.diff_acls(source_acls, target_acls)
+        result = diff_tool.diff_acls(
+            cast("list[FlextCore.Types.Dict]", source_acls),
+            target_acls
+        )
         assert result.is_success
         diff = result.unwrap()
         assert len(diff.removed) == 1
@@ -294,7 +318,10 @@ class TestAclDiff:
             "by_clauses": [{"subject": "*", "permissions": ["write"]}],
         }
 
-        result = diff_tool.diff_acls([acl1], [acl2])
+        result = diff_tool.diff_acls(
+            cast("list[FlextCore.Types.Dict]", [acl1]),
+            cast("list[FlextCore.Types.Dict]", [acl2])
+        )
         assert result.is_success
         diff = result.unwrap()
         # Should detect as different ACLs (removed acl1, added acl2)
@@ -322,7 +349,10 @@ class TestEntryDiff:
             "objectClass": ["person"],
         }
 
-        result = diff_tool.diff_entries([entry1], [entry2])
+        result = diff_tool.diff_entries(
+            cast("list[FlextCore.Types.Dict]", [entry1]),
+            cast("list[FlextCore.Types.Dict]", [entry2])
+        )
         assert result.is_success
         diff = result.unwrap()
         assert not diff.has_changes
@@ -339,11 +369,14 @@ class TestEntryDiff:
             }
         ]
 
-        result = diff_tool.diff_entries(source_entries, target_entries)
+        result = diff_tool.diff_entries(
+            source_entries,
+            cast("list[FlextCore.Types.Dict]", target_entries)
+        )
         assert result.is_success
         diff = result.unwrap()
         assert len(diff.added) == 1
-        assert diff.added[0]["dn"] == "cn=test,dc=example,dc=com"
+        assert diff.added[0].value["dn"] == "cn=test,dc=example,dc=com"
 
     def test_removed_entry(self, diff_tool: FlextLdifDiff) -> None:
         """Test detection of removed entry."""
@@ -356,7 +389,10 @@ class TestEntryDiff:
         ]
         target_entries: list[FlextCore.Types.Dict] = []
 
-        result = diff_tool.diff_entries(source_entries, target_entries)
+        result = diff_tool.diff_entries(
+            cast("list[FlextCore.Types.Dict]", source_entries),
+            target_entries
+        )
         assert result.is_success
         diff = result.unwrap()
         assert len(diff.removed) == 1
@@ -378,11 +414,14 @@ class TestEntryDiff:
             }
         ]
 
-        result = diff_tool.diff_entries(source_entries, target_entries)
+        result = diff_tool.diff_entries(
+            cast("list[FlextCore.Types.Dict]", source_entries),
+            cast("list[FlextCore.Types.Dict]", target_entries)
+        )
         assert result.is_success
         diff = result.unwrap()
         assert len(diff.modified) == 1
-        assert "mail:" in diff.modified[0]["changes"][0]
+        assert "mail:" in diff.modified[0].value["changes"][0]
 
     def test_dn_normalization(self, diff_tool: FlextLdifDiff) -> None:
         """Test that DN normalization handles case and spaces."""
@@ -395,7 +434,10 @@ class TestEntryDiff:
             "cn": ["test"],
         }
 
-        result = diff_tool.diff_entries([entry1], [entry2])
+        result = diff_tool.diff_entries(
+            cast("list[FlextCore.Types.Dict]", [entry1]),
+            cast("list[FlextCore.Types.Dict]", [entry2])
+        )
         assert result.is_success
         diff = result.unwrap()
         # Should be detected as same entry despite DN formatting differences
@@ -438,12 +480,15 @@ class TestSchemaDiff:
             "objectclasses": [{"oid": "4.5.6", "name": "oc1", "kind": "STRUCTURAL"}],
         }
 
-        result = diff_tool.diff_schemas(source_schema, target_schema)
+        result = diff_tool.diff_schemas(
+            cast("FlextCore.Types.Dict", source_schema),
+            cast("FlextCore.Types.Dict", target_schema)
+        )
         assert result.is_success
         diff = result.unwrap()
         assert len(diff.added) == 1  # One new attribute
-        assert diff.added[0]["type"] == "attribute"
-        assert diff.added[0]["name"] == "attr2"
+        assert diff.added[0].value["type"] == "attribute"
+        assert diff.added[0].value["name"] == "attr2"
 
 
 __all__ = [
