@@ -95,9 +95,7 @@ class FlextLdifMigrationPipeline(FlextCore.Service[FlextLdifTypes.Dict]):
 
         # RFC-First Architecture: ALWAYS use RFC parser with quirks
         # Quirks handle server-specific behavior (OID, OUD, OpenLDAP, etc.)
-        self._ldif_parser_class: type[FlextCore.Service[FlextLdifTypes.Dict]] = (
-            FlextLdifRfcLdifParser
-        )
+        self._ldif_parser_class = FlextLdifRfcLdifParser
         self._schema_parser_class: type[FlextLdifRfcSchemaParser] = (
             FlextLdifRfcSchemaParser
         )

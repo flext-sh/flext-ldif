@@ -444,10 +444,12 @@ class TestErrorHandling:
         oid: FlextLdifQuirksServersOid,
     ) -> None:
         """Test that invalid data type returns error."""
+        # Use a variable to bypass literal type checking
+        invalid_data_type: str = "invalid_type"
         result = matrix.convert(
             oud,
             oid,
-            "invalid_type",
+            invalid_data_type,
             "test",
         )
 

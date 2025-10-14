@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from flext_core import FlextCore
+
 from flext_ldif.constants import FlextLdifConstants
 
 # Use constants for FLEXT compliance - ZERO module-level constants
@@ -9,7 +11,7 @@ __version__ = FlextLdifConstants.LDIF_VERSION
 __version_info__ = FlextLdifConstants.LDIF_VERSION_INFO
 
 
-class FlextLdifVersion:
+class FlextLdifVersion(FlextCore.Models.Value):
     """Simple version class for flext-ldif."""
 
     def __init__(self, version: str, version_info: tuple[int | str, ...]) -> None:
@@ -20,6 +22,7 @@ class FlextLdifVersion:
             version_info: Tuple of version components
 
         """
+        super().__init__()
         self.version = version
         self.version_info = version_info
 

@@ -17,6 +17,7 @@ This parser uses ldif3 library for RFC 2849 compliance.
 
 from __future__ import annotations
 
+import base64
 from io import BytesIO
 from pathlib import Path
 
@@ -25,6 +26,11 @@ from ldif3 import LDIFParser
 
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
+
+# Python 3.13 compatibility: ldif3 uses deprecated base64.decodestring
+# Monkey-patch base64 module to provide decodestring as alias to decodebytes
+if not hasattr(base64, "decodestring"):
+    setattr(base64, "decodestring", base64.decodebytes)
 
 
 class FlextLdifRfcLdifParser(FlextCore.Service[FlextCore.Types.Dict]):
@@ -107,19 +113,21 @@ class FlextLdifRfcLdifParser(FlextCore.Service[FlextCore.Types.Dict]):
                     return FlextCore.Result[FlextCore.Types.Dict].fail(
                         f"parse_changes must be bool, got {type(parse_changes_raw).__name__}"
                     )
-                parse_changes: bool = parse_changes_raw
+                content_parse_changes: bool = parse_changes_raw
 
                 if self.logger is not None:
                     self.logger.info(
                         "Parsing LDIF content string (RFC 2849 via ldif3)",
                         extra={
                             "content_length": len(content),
-                            "parse_changes": parse_changes,
+                            "parse_changes": content_parse_changes,
                         },
                     )
 
                 # Use parse_content method for string parsing
-                parse_result = self.parse_content(content, parse_changes=parse_changes)
+                parse_result = self.parse_content(
+                    content, parse_changes=content_parse_changes
+                )
 
                 if parse_result.is_failure:
                     return FlextCore.Result[FlextCore.Types.Dict].fail(
@@ -175,7 +183,7 @@ class FlextLdifRfcLdifParser(FlextCore.Service[FlextCore.Types.Dict]):
                 return FlextCore.Result[FlextCore.Types.Dict].fail(
                     f"parse_changes must be bool, got {type(parse_changes_raw).__name__}"
                 )
-            parse_changes: bool = parse_changes_raw
+            file_parse_changes: bool = parse_changes_raw
 
             # Type narrow encoding to string
             encoding_raw = self._params.get("encoding", "utf-8")
@@ -190,7 +198,7 @@ class FlextLdifRfcLdifParser(FlextCore.Service[FlextCore.Types.Dict]):
                     f"Parsing LDIF file (RFC 2849 via ldif3): {file_path}",
                     extra={
                         "file_path": str(file_path),
-                        "parse_changes": parse_changes,
+                        "parse_changes": file_parse_changes,
                         "encoding": encoding,
                     },
                 )
@@ -198,7 +206,7 @@ class FlextLdifRfcLdifParser(FlextCore.Service[FlextCore.Types.Dict]):
             # Parse LDIF file using ldif3
             file_parse_result = self.parse_ldif_file(
                 file_path,
-                parse_changes=parse_changes,
+                parse_changes=file_parse_changes,
                 encoding=encoding,
             )
 

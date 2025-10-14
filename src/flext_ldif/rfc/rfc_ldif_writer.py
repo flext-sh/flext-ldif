@@ -14,6 +14,7 @@ PYREFLY TYPE INFERENCE ISSUES (expected):
 
 from __future__ import annotations
 
+import base64
 from io import StringIO
 from pathlib import Path
 from typing import TYPE_CHECKING, TextIO
@@ -325,21 +326,26 @@ class FlextLdifRfcLdifWriter(FlextCore.Service[FlextCore.Types.Dict]):
         try:
             output = StringIO()
 
-            for idx, entry in enumerate(entries):
+            # Write RFC 2849 version header only if there are entries
+            # (empty LDIF files don't need version header)
+            if entries:
+                output.write("version: 1\n")
+
+            for entry in entries:
                 # Write DN
                 dn_line = f"dn: {entry.dn.value}"
                 output.write(dn_line + "\n")
 
-                # Write attributes
+                # Write attributes with RFC 2849 compliant encoding
                 for attr_name, attr_values in entry.attributes.attributes.items():
                     # attr_values is AttributeValues, need to access .values property
                     for value in attr_values.values:
-                        attr_line = f"{attr_name}: {value}"
+                        # Format value according to RFC 2849 (base64 if needed)
+                        attr_line = self._format_attribute_value(attr_name, value)
                         output.write(attr_line + "\n")
 
-                # Add blank line between entries (except after last entry)
-                if idx < len(entries) - 1:
-                    output.write("\n")
+                # Add blank line after each entry (including last for RFC 2849 compliance)
+                output.write("\n")
 
             ldif_string = output.getvalue()
             return FlextCore.Result[str].ok(ldif_string)
@@ -398,7 +404,7 @@ class FlextLdifRfcLdifWriter(FlextCore.Service[FlextCore.Types.Dict]):
 
         Args:
             file_handle: Open text file handle for writing
-            schema: Schema dict with 'attributes' and 'objectclasses'
+            schema: Schema dict[str, object] with 'attributes' and 'objectclasses'
 
         Returns:
             FlextCore.Result with stats dict
@@ -492,12 +498,12 @@ class FlextLdifRfcLdifWriter(FlextCore.Service[FlextCore.Types.Dict]):
             lines_written = 0
 
             for entry in entries:
-                # Handle both dict and Entry object formats
+                # Handle both dict[str, object] and Entry object formats
                 if isinstance(entry, FlextLdifModels.Entry):
                     dn = entry.dn.value
-                    # Convert Entry attributes to dict format for processing
-                    # dict() builtin already returns correct type
-                    attributes_normalized: FlextCore.Types.Dict = dict(
+                    # Convert Entry attributes to dict[str, object] format for processing
+                    # dict[str, object]() builtin already returns correct type
+                    attributes_normalized: FlextCore.Types.Dict = dict[str, object](
                         entry.attributes.attributes.items()
                     )
                 else:
@@ -701,6 +707,68 @@ class FlextLdifRfcLdifWriter(FlextCore.Service[FlextCore.Types.Dict]):
         if isinstance(raw_acl, list):
             return [str(item) for item in raw_acl]
         return []
+
+    def _needs_base64_encoding(self, value: str) -> bool:
+        r"""Check if attribute value needs base64 encoding per RFC 2849.
+
+        RFC 2849 Section 2: A value must be base64-encoded if it:
+        - Contains NULL byte (\\x00)
+        - Starts with space, colon, or less-than (<)
+        - Ends with space
+        - Contains non-ASCII characters (> 127)
+        - Contains newline (\\n) or carriage return (\\r)
+
+        Args:
+            value: Attribute value to check
+
+        Returns:
+            True if value needs base64 encoding
+
+        """
+        if not value:
+            return False
+
+        # Check for NULL byte
+        if "\x00" in value:
+            return True
+
+        # Check start characters
+        if value[0] in {" ", ":", "<"}:
+            return True
+
+        # Check trailing space
+        if value.endswith(" "):
+            return True
+
+        # Check for newlines or carriage returns (actual characters, not escaped)
+        if "\n" in value or "\r" in value:
+            return True
+
+        # Check for non-ASCII characters
+        try:
+            value.encode("ascii")
+        except UnicodeEncodeError:
+            return True
+
+        return False
+
+    def _format_attribute_value(self, attr_name: str, value: str) -> str:
+        """Format attribute value according to RFC 2849.
+
+        Args:
+            attr_name: Attribute name
+            value: Attribute value
+
+        Returns:
+            Formatted LDIF attribute line (without trailing newline)
+
+        """
+        if self._needs_base64_encoding(value):
+            # Base64 encode and use :: separator per RFC 2849
+            encoded = base64.b64encode(value.encode("utf-8")).decode("ascii")
+            return f"{attr_name}:: {encoded}"
+
+        return f"{attr_name}: {value}"
 
 
 __all__ = ["FlextLdifRfcLdifWriter"]

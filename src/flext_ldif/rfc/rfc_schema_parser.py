@@ -55,36 +55,40 @@ class FlextLdifRfcSchemaParser(FlextCore.Service[FlextCore.Types.Dict]):
 
     # RFC 4512: AttributeType definition regex
     ATTRIBUTE_TYPE_PATTERN: ClassVar[re.Pattern[str]] = re.compile(
-        r"\(\s*"  # Opening parenthesis
-        r"(?P<oid>[\d\.]+)\s+"  # OID (numeric)
-        r"(?:NAME\s+'(?P<name>[^']+)'\s+)?"  # Optional NAME
-        r"(?:DESC\s+'(?P<desc>[^']+)'\s+)?"  # Optional DESC
-        r"(?:OBSOLETE\s+)?"  # Optional OBSOLETE
-        r"(?:SUP\s+(?P<sup>\w+)\s+)?"  # Optional SUP
-        r"(?:EQUALITY\s+(?P<equality>\w+)\s+)?"  # Optional EQUALITY
-        r"(?:ORDERING\s+(?P<ordering>\w+)\s+)?"  # Optional ORDERING
-        r"(?:SUBSTR\s+(?P<substr>\w+)\s+)?"  # Optional SUBSTR
-        r"(?:SYNTAX\s+'(?P<syntax>[\d\.]+)'(?:\{(?P<length>\d+)\})?\s+)?"  # Optional SYNTAX
-        r"(?:SINGLE-VALUE\s+)?"  # Optional SINGLE-VALUE
-        r"(?:COLLECTIVE\s+)?"  # Optional COLLECTIVE
-        r"(?:NO-USER-MODIFICATION\s+)?"  # Optional NO-USER-MODIFICATION
-        r"(?:USAGE\s+(?P<usage>\w+)\s+)?"  # Optional USAGE
-        r"\)",  # Closing parenthesis
+        (
+            r"\(\s*"  # Opening parenthesis
+            r"(?P<oid>[\d\.]+)\s+"  # OID (numeric)
+            r"(?:NAME\s+'(?P<name>[^']+)'\s+)?"  # Optional NAME
+            r"(?:DESC\s+'(?P<desc>[^']+)'\s+)?"  # Optional DESC
+            r"(?:OBSOLETE\s+)?"  # Optional OBSOLETE
+            r"(?:SUP\s+(?P<sup>\w+)\s+)?"  # Optional SUP
+            r"(?:EQUALITY\s+(?P<equality>\w+)\s+)?"  # Optional EQUALITY
+            r"(?:ORDERING\s+(?P<ordering>\w+)\s+)?"  # Optional ORDERING
+            r"(?:SUBSTR\s+(?P<substr>\w+)\s+)?"  # Optional SUBSTR
+            r"(?:SYNTAX\s+'(?P<syntax>[\d\.]+)'(?:\{(?P<length>\d+)\})?\s+)?"  # Optional SYNTAX
+            r"(?:SINGLE-VALUE\s+)?"  # Optional SINGLE-VALUE
+            r"(?:COLLECTIVE\s+)?"  # Optional COLLECTIVE
+            r"(?:NO-USER-MODIFICATION\s+)?"  # Optional NO-USER-MODIFICATION
+            r"(?:USAGE\s+(?P<usage>\w+)\s+)?"  # Optional USAGE
+            r"\)"  # Closing parenthesis
+        ),
         re.VERBOSE,
     )
 
     # RFC 4512: ObjectClass definition regex
     OBJECT_CLASS_PATTERN: ClassVar[re.Pattern[str]] = re.compile(
-        r"\(\s*"  # Opening parenthesis
-        r"(?P<oid>[\d\.]+)\s+"  # OID (numeric)
-        r"(?:NAME\s+'(?P<name>[^']+)'\s+)?"  # Optional NAME
-        r"(?:DESC\s+'(?P<desc>[^']+)'\s+)?"  # Optional DESC
-        r"(?:OBSOLETE\s+)?"  # Optional OBSOLETE
-        r"(?:SUP\s+(?P<sup>[\w\$]+)\s+)?"  # Optional SUP
-        r"(?:(?P<kind>STRUCTURAL|AUXILIARY|ABSTRACT)\s+)?"  # Optional kind
-        r"(?:MUST\s+(?:\((?P<must_list>[^\)]+)\)|(?P<must_single>\w+))\s+)?"  # Optional MUST (single or list)
-        r"(?:MAY\s+(?:\((?P<may_list>[^\)]+)\)|(?P<may_single>\w+))\s+)?"  # Optional MAY (single or list)
-        r"\)",  # Closing parenthesis
+        (
+            r"\(\s*"  # Opening parenthesis
+            r"(?P<oid>[\d\.]+)\s+"  # OID (numeric)
+            r"(?:NAME\s+'(?P<name>[^']+)'\s+)?"  # Optional NAME
+            r"(?:DESC\s+'(?P<desc>[^']+)'\s+)?"  # Optional DESC
+            r"(?:OBSOLETE\s+)?"  # Optional OBSOLETE
+            r"(?:SUP\s+(?P<sup>[\w\$]+)\s+)?"  # Optional SUP
+            r"(?:(?P<kind>STRUCTURAL|AUXILIARY|ABSTRACT)\s+)?"  # Optional kind
+            r"(?:MUST\s+(?:\((?P<must_list>[^\)]+)\)|(?P<must_single>\w+))\s+)?"  # Optional MUST (single or list)
+            r"(?:MAY\s+(?:\((?P<may_list>[^\)]+)\)|(?P<may_single>\w+))\s+)?"  # Optional MAY (single or list)
+            r"\)"  # Closing parenthesis
+        ),
         re.VERBOSE,
     )
 

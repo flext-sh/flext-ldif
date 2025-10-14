@@ -154,9 +154,11 @@ member: cn=Alice Johnson,ou=People,dc=example,dc=com
         return
 
     validation_report = validation_result.unwrap()
-    # Type validation for dict access
+    # Type validation for dict[str, object] access
     if not isinstance(validation_report, dict):
-        print(f"ERROR: Expected dict validation_report, got {type(validation_report)}")
+        print(
+            f"ERROR: Expected dict[str, object] validation_report, got {type(validation_report)}"
+        )
         return
 
     if not validation_report.get("is_valid", False):
@@ -502,9 +504,11 @@ cn: test
         return
 
     validation_report = validation_result.unwrap()
-    # Type validation for dict access
+    # Type validation for dict[str, object] access
     if not isinstance(validation_report, dict):
-        print(f"ERROR: Expected dict validation_report, got {type(validation_report)}")
+        print(
+            f"ERROR: Expected dict[str, object] validation_report, got {type(validation_report)}"
+        )
         return
 
     if not validation_report.get("is_valid", False):

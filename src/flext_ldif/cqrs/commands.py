@@ -13,6 +13,8 @@ from pathlib import Path
 
 from pydantic import BaseModel, Field
 
+from flext_ldif.models import FlextLdifModels
+
 
 class ParseLdifCommand(BaseModel):
     r"""Command to parse LDIF file or content string.
@@ -68,7 +70,9 @@ class WriteLdifCommand(BaseModel):
 
     """
 
-    entries: list  # FlextLdifModels.Entry - avoid circular import
+    entries: list[
+        FlextLdifModels.Entry
+    ]  # FlextLdifModels.Entry - avoid circular import
     output_path: Path | None = Field(
         default=None,
         description="Optional output file path (None returns LDIF string)",

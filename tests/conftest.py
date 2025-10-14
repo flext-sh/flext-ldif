@@ -86,19 +86,19 @@ def ldif_processor_config() -> FlextCore.Types.Dict:
 
 
 @pytest.fixture
-def real_ldif_api() -> dict:
+def real_ldif_api() -> dict[str, object]:
     """Real LDIF API services for functional testing (RFC-first)."""
     return RealServiceFactory.create_api()
 
 
 @pytest.fixture
-def strict_ldif_api() -> dict:
+def strict_ldif_api() -> dict[str, object]:
     """Strict LDIF API services for validation testing (RFC-first)."""
     return RealServiceFactory.create_strict_api()
 
 
 @pytest.fixture
-def lenient_ldif_api() -> dict:
+def lenient_ldif_api() -> dict[str, object]:
     """Lenient LDIF API services for error recovery testing (RFC-first)."""
     return RealServiceFactory.create_lenient_api()
 

@@ -157,8 +157,10 @@ class FlextLdifSchemaValidator(FlextCore.Service[FlextLdifTypes.Dict]):
                 req_attrs: object = oc_def.get("required_attributes", [])
                 if isinstance(req_attrs, list):
                     issues.extend(
-                        f"Missing required attribute '{req_attr}' "
-                        f"for objectClass '{oc_name}'"
+                        (
+                            f"Missing required attribute '{req_attr}' "
+                            f"for objectClass '{oc_name}'"
+                        )
                         for req_attr in req_attrs
                         if req_attr not in entry_attrs
                     )

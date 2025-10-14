@@ -12,6 +12,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from flext_core import FlextCore
+from pydantic import ConfigDict
 
 from flext_ldif.quirks.base import (
     FlextLdifQuirksBase,
@@ -28,7 +29,7 @@ if TYPE_CHECKING:
     EntryQuirkType = FlextLdifQuirksBaseEntryQuirk
 
 
-class FlextLdifQuirksRegistry:
+class FlextLdifQuirksRegistry(FlextCore.Models.Value):
     """Centralized registry for LDIF/LDAP quirks.
 
     Manages discovery, registration, and composition of server-specific quirks.
@@ -52,8 +53,12 @@ class FlextLdifQuirksRegistry:
 
     """
 
+    # Allow mutation for internal registry management
+    model_config = ConfigDict(frozen=False)
+
     def __init__(self) -> None:
         """Initialize quirk registry with empty registries."""
+        super().__init__()
         self._schema_quirks: dict[str, list[SchemaQuirkType]] = {}
         self._acl_quirks: dict[str, list[AclQuirkType]] = {}
         self._entry_quirks: dict[str, list[EntryQuirkType]] = {}

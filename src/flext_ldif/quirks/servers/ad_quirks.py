@@ -583,7 +583,7 @@ class FlextLdifQuirksServersAd(FlextLdifQuirksBaseSchemaQuirk):
         ) -> FlextCore.Result[FlextLdifTypes.Dict]:
             """Strip AD-only metadata before handing control to RFC logic."""
             try:
-                normalized_entry = dict(entry_data)
+                normalized_entry = dict[str, object](entry_data)
                 normalized_entry.pop(FlextLdifConstants.DictKeys.SERVER_TYPE, None)
                 normalized_entry.pop(FlextLdifConstants.DictKeys.IS_CONFIG_ENTRY, None)
                 normalized_entry.pop(

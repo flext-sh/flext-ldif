@@ -216,8 +216,8 @@ class FlextLdifDiff(BaseModel):
         Provides high-level schema comparison including both attributes and objectClasses.
 
         Args:
-            source_schema: Parsed schema dict with 'attributes' and 'objectclasses' keys
-            target_schema: Parsed schema dict with 'attributes' and 'objectclasses' keys
+            source_schema: Parsed schema dict[str, object] with 'attributes' and 'objectclasses' keys
+            target_schema: Parsed schema dict[str, object] with 'attributes' and 'objectclasses' keys
 
         Returns:
             FlextCore.Result[DiffResult] with combined comparison results

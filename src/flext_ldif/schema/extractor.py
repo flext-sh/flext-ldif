@@ -45,15 +45,15 @@ class FlextLdifSchemaExtractor(FlextCore.Service["FlextLdifConfig"]):
 
         try:
             attributes: dict[str, dict[str, str]] = {}
-            object_classes: dict[str, dict[str, str]] = {}
+            objectclasses: dict[str, dict[str, str]] = {}
 
             for entry in entries:
                 for attr_name, attr_values in entry.attributes.attributes.items():
                     if attr_name.lower() == "objectclass":
                         # Handle object classes specially
                         for oc_name in attr_values:
-                            if oc_name not in object_classes:
-                                object_classes[str(oc_name)] = {
+                            if oc_name not in objectclasses:
+                                objectclasses[str(oc_name)] = {
                                     "name": str(oc_name),
                                     "oid": f"1.3.6.1.4.1.{hash(oc_name) % 1000000}",
                                     "description": f"Auto-discovered object class {oc_name}",
@@ -71,23 +71,22 @@ class FlextLdifSchemaExtractor(FlextCore.Service["FlextLdifConfig"]):
             # Cast to match SchemaDiscoveryResult type expectations
             # Type narrowing: dict[str, dict[str, str]] -> dict[str, FlextCore.Types.Dict]
             attributes_obj: dict[str, FlextCore.Types.Dict] = {
-                k: dict(v.items()) for k, v in attributes.items()
+                k: dict[str, object](v.items()) for k, v in attributes.items()
             }
-            object_classes_obj: dict[str, FlextCore.Types.Dict] = {
-                k: dict(v.items()) for k, v in object_classes.items()
+            objectclasses_obj: dict[str, FlextCore.Types.Dict] = {
+                k: dict[str, object](v.items()) for k, v in objectclasses.items()
             }
 
             result = FlextLdifModels.SchemaDiscoveryResult(
                 attributes=attributes_obj,
-                objectclasses=object_classes_obj,
+                objectclasses=objectclasses_obj,
                 total_attributes=len(attributes),
-                total_objectclasses=len(object_classes),
+                total_objectclasses=len(objectclasses),
             )
 
             if self.logger:
                 self.logger.info(
-                    f"Extracted schema: {len(attributes)} attributes, "
-                    f"{len(object_classes)} objectClasses from {len(entries)} entries"
+                    f"Extracted schema: {len(attributes)} attributes, {len(objectclasses)} objectClasses from {len(entries)} entries"
                 )
 
             return FlextCore.Result[FlextLdifModels.SchemaDiscoveryResult].ok(result)

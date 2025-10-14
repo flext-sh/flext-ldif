@@ -15,6 +15,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from flext_core import FlextCore
+from flext_core.container import FlextContainer
 from pydantic import PrivateAttr
 
 from flext_ldif.config import FlextLdifConfig
@@ -64,7 +65,7 @@ class FlextLdifClient(FlextCore.Service[FlextLdifTypes.Dict]):
 
     # Pydantic v2 private attributes (CRITICAL for Pydantic model initialization)
     # These MUST be declared at class level for Pydantic to handle them correctly
-    _container: FlextCore.Container | None = PrivateAttr(default=None)
+    _container: FlextContainer | None = PrivateAttr(default=None)
     _context: FlextCore.Context | None = PrivateAttr(default=None)
     _bus: object | None = PrivateAttr(default=None)
     _handlers: FlextLdifTypes.Dict = PrivateAttr(default_factory=dict)
@@ -92,8 +93,9 @@ class FlextLdifClient(FlextCore.Service[FlextLdifTypes.Dict]):
         # Initialize private attributes that parent's __init__ may access
         self._config = getattr(self, "_init_config_value", None) or FlextLdifConfig()
         self._container = FlextCore.Container.get_global()
-        # Convert config to dict for JSON-serializable FlextCore.Context
-        self._context = FlextCore.Context({"config": self._config.model_dump()})
+        # Convert config to dict[str, object] for JSON-serializable FlextCore.Context
+        config_dict = self._config.model_dump() if self._config is not None else {}
+        self._context = FlextCore.Context({"config": config_dict})
         self._bus = FlextCore.Bus()
         self._handlers = {}
 
@@ -166,14 +168,18 @@ class FlextLdifClient(FlextCore.Service[FlextLdifTypes.Dict]):
         container.register("schema_validator", FlextLdifSchemaValidator())
 
         # Register migration pipeline (params provided at call time by handlers)
-        container.register(
-            "migration_pipeline",
-            lambda params=None, source="oid", target="oud": FlextLdifMigrationPipeline(
-                params=params or {},
-                source_server_type=source,
-                target_server_type=target,
-            ),
-        )
+        def migration_pipeline_factory(
+            params: dict[str, object] | None,
+        ) -> FlextLdifMigrationPipeline:
+            if params is None:
+                params = {}
+            return FlextLdifMigrationPipeline(
+                params=params,
+                source_server_type=str(params.get("source_server_type", "oid")),
+                target_server_type=str(params.get("target_server_type", "oud")),
+            )
+
+        container.register("migration_pipeline", migration_pipeline_factory)
 
     def _register_default_quirks(self) -> None:
         """Auto-register all default server quirks."""
@@ -452,7 +458,7 @@ class FlextLdifClient(FlextCore.Service[FlextLdifTypes.Dict]):
 
         # Type narrow pipeline factory from unwrap()
         # The container.get returns a lambda callable
-        pipeline_factory_obj: object = pipeline_result.unwrap()
+        pipeline_factory_obj = pipeline_result.unwrap()
         if not callable(pipeline_factory_obj):
             return FlextCore.Result[FlextLdifTypes.Dict].fail(
                 "Migration pipeline factory is not callable"
@@ -1102,17 +1108,20 @@ class FlextLdifClient(FlextCore.Service[FlextLdifTypes.Dict]):
         return self._handlers
 
     @property
-    def container(self) -> FlextCore.Container:
+    def container(self) -> FlextContainer:
         """Access to dependency injection container with lazy initialization."""
         if self._container is None:
             self._container = FlextCore.Container.get_global()
+        if self._container is None:
+            msg = "FlextCore.Container must be initialized"
+            raise RuntimeError(msg)
         return self._container
 
     @property
     def context(self) -> FlextCore.Context:
         """Access to execution context with lazy initialization."""
         if self._context is None:
-            # Convert config to dict for JSON-serializable FlextCore.Context
+            # Convert config to dict[str, object] for JSON-serializable FlextCore.Context
             self._context = FlextCore.Context({"config": self.config.model_dump()})
         return self._context
 

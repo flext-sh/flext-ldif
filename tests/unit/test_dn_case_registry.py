@@ -634,9 +634,9 @@ class TestEdgeCases:
     def test_normalize_dn_references_with_non_dict_data(self) -> None:
         """Test that normalizing non-dict data fails gracefully."""
         registry = DnCaseRegistry()
-        # Pass empty dict instead of None to avoid type error
+        # Pass empty dict[str, object] instead of None to avoid type error
         result = registry.normalize_dn_references({}, ["dn"])
-        assert result.is_success  # Empty dict succeeds
+        assert result.is_success  # Empty dict[str, object] succeeds
 
     def test_normalize_dn_references_with_non_list_non_string_value(
         self,

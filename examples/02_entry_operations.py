@@ -136,7 +136,7 @@ def convert_formats_pipeline() -> None:
     """Convert entries to/from formats using railway composition."""
     api = FlextLdif.get_instance()
 
-    # Build entry → convert to dict → convert to JSON (chained)
+    # Build entry → convert to dict[str, object] → convert to JSON (chained)
     result = (
         api.build_person_entry(
             cn="Convert Test", sn="Test", base_dn="ou=People,dc=example,dc=com"
