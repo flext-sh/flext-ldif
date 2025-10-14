@@ -127,6 +127,10 @@ class FlextLdifModels(FlextCore.Models):
             """Get DN components as a list."""
             return [comp.strip() for comp in self.value.split(",") if comp.strip()]
 
+        def __str__(self) -> str:
+            """Return the DN string value for proper str() conversion."""
+            return self.value
+
     class AttributeName(FlextCore.Models.StrictArbitraryTypesModel):
         """LDIF attribute name value object."""
 

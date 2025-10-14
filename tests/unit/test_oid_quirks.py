@@ -5,9 +5,12 @@ using real OID fixtures from tests/fixtures/oid/.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
+
 """
 
 from __future__ import annotations
+
+from typing import cast
 
 import pytest
 from flext_core import FlextCore
@@ -587,7 +590,7 @@ class TestOidEntryQuirks:
         integration_content = oid_fixtures.integration()
 
         # Parse entries from LDIF content
-        current_dn = None
+        current_dn: str | None = None
         current_attrs: FlextCore.Types.Dict = {}
         processed_count = 0
 
@@ -619,7 +622,7 @@ class TestOidEntryQuirks:
                 if attr_name not in current_attrs:
                     current_attrs[attr_name] = []
                 # Cast to list since we just initialized it
-                attr_list: FlextCore.Types.StringList = current_attrs[attr_name]
+                attr_list: FlextCore.Types.StringList = cast("list[str]", current_attrs[attr_name])
                 attr_list.append(attr_value)
 
         # Process last entry

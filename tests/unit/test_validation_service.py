@@ -4,9 +4,12 @@ Tests entry, attribute, and object class validation using RFC standards.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
+
 """
 
 from __future__ import annotations
+
+from typing import cast
 
 import pytest
 
@@ -129,7 +132,7 @@ class TestValidateAttributeName:
     def test_reject_non_string_attribute_name(self) -> None:
         """Test rejection of non-string attribute name."""
         service = ValidationService()
-        result = service.validate_attribute_name(123)
+        result = service.validate_attribute_name(cast("str", 123))
 
         assert result.is_success
         assert result.unwrap() is False
@@ -289,7 +292,7 @@ class TestValidateAttributeValue:
     def test_reject_non_string_attribute_value(self) -> None:
         """Test rejection of non-string attribute value."""
         service = ValidationService()
-        result = service.validate_attribute_value(123)
+        result = service.validate_attribute_value(cast("str", 123))
 
         assert result.is_success
         assert result.unwrap() is False
@@ -333,7 +336,7 @@ class TestValidateDnComponent:
     def test_reject_dn_component_with_non_string_value(self) -> None:
         """Test rejection of DN component with non-string value."""
         service = ValidationService()
-        result = service.validate_dn_component("cn", 123)
+        result = service.validate_dn_component("cn", cast("str", 123))
 
         assert result.is_success
         assert result.unwrap() is False

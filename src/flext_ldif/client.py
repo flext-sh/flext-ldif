@@ -6,6 +6,7 @@ for parsing, writing, validation, migration, and analysis operations.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
+
 """
 
 from __future__ import annotations
@@ -13,6 +14,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import cast
 
 from flext_core import FlextCore
 from flext_core.container import FlextContainer
@@ -463,9 +465,13 @@ class FlextLdifClient(FlextCore.Service[FlextLdifTypes.Dict]):
             return FlextCore.Result[FlextLdifTypes.Dict].fail(
                 "Migration pipeline factory is not callable"
             )
+        # Use cast after runtime callable check to satisfy type checker
         pipeline_factory: Callable[
-            [dict[str, str] | None], FlextLdifMigrationPipeline
-        ] = pipeline_factory_obj
+            [dict[str, object] | None], FlextLdifMigrationPipeline
+        ] = cast(
+            "Callable[[dict[str, object] | None], FlextLdifMigrationPipeline]",
+            pipeline_factory_obj,
+        )
 
         pipeline = pipeline_factory({
             "source_server_type": from_server,

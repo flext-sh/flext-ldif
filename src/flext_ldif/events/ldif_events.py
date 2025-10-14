@@ -5,6 +5,7 @@ in the LDIF processing domain. Events are published after successful operations.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
+
 """
 
 from __future__ import annotations

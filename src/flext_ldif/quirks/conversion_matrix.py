@@ -12,6 +12,7 @@ This creates an N×N translation matrix with only 2×N implementations
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
+
 """
 # Expected issues:
 # - ANN401: source_quirk/target_quirk are dynamically typed quirk objects

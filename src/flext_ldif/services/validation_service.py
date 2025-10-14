@@ -10,6 +10,7 @@ RFC 4512: Lightweight Directory Access Protocol (LDAP): Directory Information Mo
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
+
 """
 
 from __future__ import annotations
