@@ -116,6 +116,62 @@ class FlextLdifQuirksBaseSchemaQuirk(ABC, FlextCore.Models.Value):
 
         """
 
+    @abstractmethod
+    def convert_attribute_from_rfc(
+        self, rfc_data: FlextCore.Types.Dict
+    ) -> FlextCore.Result[FlextCore.Types.Dict]:
+        """Convert RFC-compliant attribute to server-specific format.
+
+        Args:
+            rfc_data: RFC-compliant attribute data
+
+        Returns:
+            FlextCore.Result with server-specific attribute data
+
+        """
+
+    @abstractmethod
+    def convert_objectclass_from_rfc(
+        self, rfc_data: FlextCore.Types.Dict
+    ) -> FlextCore.Result[FlextCore.Types.Dict]:
+        """Convert RFC-compliant objectClass to server-specific format.
+
+        Args:
+            rfc_data: RFC-compliant objectClass data
+
+        Returns:
+            FlextCore.Result with server-specific objectClass data
+
+        """
+
+    @abstractmethod
+    def write_attribute_to_rfc(
+        self, attr_data: FlextCore.Types.Dict
+    ) -> FlextCore.Result[str]:
+        """Write attribute data to RFC-compliant string format.
+
+        Args:
+            attr_data: Attribute data dictionary
+
+        Returns:
+            FlextCore.Result with RFC-compliant attribute string
+
+        """
+
+    @abstractmethod
+    def write_objectclass_to_rfc(
+        self, oc_data: FlextCore.Types.Dict
+    ) -> FlextCore.Result[str]:
+        """Write objectClass data to RFC-compliant string format.
+
+        Args:
+            oc_data: ObjectClass data dictionary
+
+        Returns:
+            FlextCore.Result with RFC-compliant objectClass string
+
+        """
+
 
 class FlextLdifQuirksBaseAclQuirk(ABC, FlextCore.Models.Value):
     """Base class for ACL quirks.
@@ -181,6 +237,18 @@ class FlextLdifQuirksBaseAclQuirk(ABC, FlextCore.Models.Value):
 
         Returns:
             FlextCore.Result with server-specific ACL data
+
+        """
+
+    @abstractmethod
+    def write_acl_to_rfc(self, acl_data: FlextCore.Types.Dict) -> FlextCore.Result[str]:
+        """Write ACL data to RFC-compliant string format.
+
+        Args:
+            acl_data: ACL data dictionary
+
+        Returns:
+            FlextCore.Result with RFC-compliant ACL string
 
         """
 

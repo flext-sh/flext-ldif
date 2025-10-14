@@ -323,6 +323,150 @@ class FlextLdifQuirksServersOpenldap(FlextLdifQuirksBaseSchemaQuirk):
                 f"OpenLDAP 2.x→RFC conversion failed: {e}"
             )
 
+    def convert_attribute_from_rfc(
+        self, rfc_data: FlextLdifTypes.Dict
+    ) -> FlextCore.Result[FlextLdifTypes.Dict]:
+        """Convert RFC-compliant attribute to OpenLDAP 2.x-specific format.
+
+        OpenLDAP 2.x attributes are already RFC-compliant, so minimal conversion needed.
+
+        Args:
+            rfc_data: RFC-compliant attribute data
+
+        Returns:
+            FlextCore.Result with OpenLDAP 2.x attribute data
+
+        """
+        try:
+            # OpenLDAP 2.x uses RFC format, just add server_type marker
+            openldap_data = {
+                **rfc_data,
+                FlextLdifConstants.DictKeys.SERVER_TYPE: "openldap2",
+            }
+
+            return FlextCore.Result[FlextLdifTypes.Dict].ok(openldap_data)
+
+        except Exception as e:
+            return FlextCore.Result[FlextLdifTypes.Dict].fail(
+                f"RFC→OpenLDAP 2.x attribute conversion failed: {e}"
+            )
+
+    def convert_objectclass_from_rfc(
+        self, rfc_data: FlextLdifTypes.Dict
+    ) -> FlextCore.Result[FlextLdifTypes.Dict]:
+        """Convert RFC-compliant objectClass to OpenLDAP 2.x-specific format.
+
+        OpenLDAP 2.x objectClasses are already RFC-compliant, so minimal conversion needed.
+
+        Args:
+            rfc_data: RFC-compliant objectClass data
+
+        Returns:
+            FlextCore.Result with OpenLDAP 2.x objectClass data
+
+        """
+        try:
+            # OpenLDAP 2.x uses RFC format, just add server_type marker
+            openldap_data = {
+                **rfc_data,
+                FlextLdifConstants.DictKeys.SERVER_TYPE: "openldap2",
+            }
+
+            return FlextCore.Result[FlextLdifTypes.Dict].ok(openldap_data)
+
+        except Exception as e:
+            return FlextCore.Result[FlextLdifTypes.Dict].fail(
+                f"RFC→OpenLDAP 2.x objectClass conversion failed: {e}"
+            )
+
+    def write_attribute_to_rfc(
+        self, attr_data: FlextLdifTypes.Dict
+    ) -> FlextCore.Result[str]:
+        """Write attribute data to RFC-compliant string format.
+
+        Args:
+            attr_data: Attribute data dictionary
+
+        Returns:
+            FlextCore.Result with RFC-compliant attribute string
+
+        """
+        try:
+            # Build RFC 4512 compliant attribute definition
+            oid = attr_data.get("oid", "")
+            name = attr_data.get("name", "")
+            desc = attr_data.get("desc", "")
+            syntax = attr_data.get("syntax", "")
+            equality = attr_data.get("equality", "")
+            single_value = attr_data.get("single_value", False)
+
+            # Build attribute string
+            attr_str = f"( {oid}"
+            if name:
+                attr_str += f" NAME '{name}'"
+            if desc:
+                attr_str += f" DESC '{desc}'"
+            if syntax:
+                attr_str += f" SYNTAX {syntax}"
+            if equality:
+                attr_str += f" EQUALITY {equality}"
+            if single_value:
+                attr_str += " SINGLE-VALUE"
+            attr_str += " )"
+
+            return FlextCore.Result[str].ok(attr_str)
+
+        except Exception as e:
+            return FlextCore.Result[str].fail(
+                f"OpenLDAP 2.x attribute write failed: {e}"
+            )
+
+    def write_objectclass_to_rfc(
+        self, oc_data: FlextLdifTypes.Dict
+    ) -> FlextCore.Result[str]:
+        """Write objectClass data to RFC-compliant string format.
+
+        Args:
+            oc_data: ObjectClass data dictionary
+
+        Returns:
+            FlextCore.Result with RFC-compliant objectClass string
+
+        """
+        try:
+            # Build RFC 4512 compliant objectClass definition
+            oid = oc_data.get("oid", "")
+            name = oc_data.get("name", "")
+            desc = oc_data.get("desc", "")
+            sup = oc_data.get("sup", "")
+            kind = oc_data.get("kind", "STRUCTURAL")
+            must = oc_data.get("must", [])
+            may = oc_data.get("may", [])
+
+            # Build objectClass string
+            oc_str = f"( {oid}"
+            if name:
+                oc_str += f" NAME '{name}'"
+            if desc:
+                oc_str += f" DESC '{desc}'"
+            if sup:
+                oc_str += f" SUP {sup}"
+            oc_str += f" {kind}"
+            if must and isinstance(must, list):
+                must_attrs = " $ ".join(must)
+                oc_str += f" MUST ( {must_attrs} )"
+            if may and isinstance(may, list):
+                may_attrs = " $ ".join(may)
+                oc_str += f" MAY ( {may_attrs} )"
+            oc_str += " )"
+
+            return FlextCore.Result[str].ok(oc_str)
+
+        except Exception as e:
+            return FlextCore.Result[str].fail(
+                f"OpenLDAP 2.x objectClass write failed: {e}"
+            )
+
     class AclQuirk(FlextLdifQuirksBaseAclQuirk):
         """OpenLDAP 2.x ACL quirk (nested).
 

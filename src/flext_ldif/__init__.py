@@ -134,9 +134,11 @@ from flext_ldif.protocols import FlextLdifProtocols
 from flext_ldif.quirks.conversion_matrix import QuirksConversionMatrix
 from flext_ldif.quirks.registry import FlextLdifQuirksRegistry
 from flext_ldif.schema_whitelist import FlextLdifSchemaWhitelistService
+from flext_ldif.services.dn_service import DnService
+from flext_ldif.services.validation_service import ValidationService
 from flext_ldif.typings import FlextLdifTypes
 
-# Main facade already exported above via: from flext_ldif.api import FlextLdif
+__email__ = "dev@flext.com"
 
 __all__ = [
     "AnalyzeEntriesQuery",
@@ -151,6 +153,7 @@ __all__ = [
     "ConvertEntriesToDictsQueryHandler",
     "ConvertEntryToDictQuery",
     "ConvertEntryToDictQueryHandler",
+    "DnService",
     "ExtractAclsQuery",
     "ExtractAclsQueryHandler",
     "FilterEntriesQuery",
@@ -182,11 +185,10 @@ __all__ = [
     "QuirksConversionMatrix",
     "ValidateEntriesQuery",
     "ValidateEntriesQueryHandler",
+    "ValidationService",
     "WriteLdifCommand",
     "WriteLdifCommandHandler",
     "__version__",
     "__version_info__",
     "flext_ldif_container",
 ]
-
-__email__ = "dev@flext.com"

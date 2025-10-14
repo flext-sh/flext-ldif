@@ -166,7 +166,7 @@ def convert_formats_pipeline() -> None:
         print(f"Converted {len(entry_dicts)} entries to dicts")
 
         # Batch: dicts → entries (NEW - eliminates manual loops!)
-        dict_data = [
+        dict_data: list[dict[str, object]] = [
             {
                 "dn": "cn=FromDict,ou=People,dc=example,dc=com",
                 "objectClass": ["person"],

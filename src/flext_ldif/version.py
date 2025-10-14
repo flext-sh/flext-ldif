@@ -12,24 +12,18 @@ __version_info__ = FlextLdifConstants.LDIF_VERSION_INFO
 
 
 class FlextLdifVersion(FlextCore.Models.Value):
-    """Simple version class for flext-ldif."""
+    """Simple version class for flext-ldif.
 
-    def __init__(self, version: str, version_info: tuple[int | str, ...]) -> None:
-        """Initialize version object.
+    This is a Pydantic Value Object (frozen/immutable) following flext-core patterns.
+    """
 
-        Args:
-            version: Version string (e.g., "1.0.0")
-            version_info: Tuple of version components
-
-        """
-        super().__init__()
-        self.version = version
-        self.version_info = version_info
+    version: str
+    version_info: tuple[int | str, ...]
 
     @classmethod
     def current(cls) -> FlextLdifVersion:
         """Return current version."""
-        return cls(__version__, __version_info__)
+        return cls(version=__version__, version_info=__version_info__)
 
 
 VERSION = FlextLdifVersion.current()

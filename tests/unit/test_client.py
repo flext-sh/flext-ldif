@@ -17,6 +17,7 @@ from typing import cast
 from unittest.mock import patch
 
 import pytest
+from flext_core.result import FlextCore
 
 from flext_ldif.client import FlextLdifClient
 
@@ -390,8 +391,6 @@ class TestParseLdif:
         """Test parsing LDIF from content string."""
         from unittest.mock import MagicMock, PropertyMock
 
-        from flext_core import FlextCore
-
         from flext_ldif.models import FlextLdifModels
         from flext_ldif.rfc.rfc_ldif_parser import FlextLdifRfcLdifParser
 
@@ -435,8 +434,6 @@ class TestParseLdif:
         """Test parsing LDIF from Path object."""
         from pathlib import Path
         from unittest.mock import MagicMock, PropertyMock
-
-        from flext_core import FlextCore
 
         from flext_ldif.models import FlextLdifModels
         from flext_ldif.rfc.rfc_ldif_parser import FlextLdifRfcLdifParser
@@ -482,8 +479,6 @@ class TestParseLdif:
         """Test parse_ldif fails when parser not available."""
         from unittest.mock import MagicMock, PropertyMock
 
-        from flext_core import FlextCore
-
         client = mock_client
 
         # Mock container returning failure
@@ -511,8 +506,6 @@ class TestWriteLdif:
     def test_write_ldif_to_string(self, mock_client: FlextLdifClient) -> None:
         """Test writing LDIF to string (output_path=None)."""
         from unittest.mock import MagicMock, PropertyMock
-
-        from flext_core import FlextCore
 
         from flext_ldif.models import FlextLdifModels
         from flext_ldif.rfc.rfc_ldif_writer import FlextLdifRfcLdifWriter
@@ -561,8 +554,6 @@ class TestWriteLdif:
         """Test write_ldif fails when writer not available."""
         from unittest.mock import MagicMock, PropertyMock
 
-        from flext_core import FlextCore
-
         from flext_ldif.models import FlextLdifModels
 
         client = mock_client
@@ -599,8 +590,6 @@ class TestValidateEntries:
     def test_validate_entries_all_valid(self, mock_client: FlextLdifClient) -> None:
         """Test validation with all valid entries."""
         from unittest.mock import MagicMock, PropertyMock
-
-        from flext_core import FlextCore
 
         from flext_ldif.models import FlextLdifModels
         from flext_ldif.schema.validator import FlextLdifSchemaValidator
@@ -652,8 +641,6 @@ class TestValidateEntries:
     ) -> None:
         """Test validate_entries fails when validator not available."""
         from unittest.mock import MagicMock, PropertyMock
-
-        from flext_core import FlextCore
 
         from flext_ldif.models import FlextLdifModels
 

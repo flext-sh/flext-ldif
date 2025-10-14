@@ -133,7 +133,7 @@ class DnService(FlextCore.Service[FlextCore.Types.Dict]):
             >>>     is_valid = result.unwrap()  # False
 
         """
-        if not dn or not isinstance(dn, str):
+        if not dn:
             return FlextCore.Result[bool].ok(False)
 
         try:
@@ -171,7 +171,7 @@ class DnService(FlextCore.Service[FlextCore.Types.Dict]):
         try:
             # Use ldap3 for RFC 4514 compliant normalization
             normalized = safe_dn(dn)
-            return FlextCore.Result[str].ok(normalized)
+            return FlextCore.Result[str].ok(str(normalized))
         except Exception as e:
             return FlextCore.Result[str].fail(f"Failed to normalize DN (RFC 4514): {e}")
 

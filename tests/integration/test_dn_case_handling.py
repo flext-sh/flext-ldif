@@ -219,14 +219,8 @@ class TestConversionMatrixDnHandling:
         self, matrix: QuirksConversionMatrix
     ) -> None:
         """Test DN extraction from entry dict."""
-        entry: FlextCore.Types.Dict = {
-            "dn": "cn=OracleContext,dc=example,dc=com",
-            "cn": ["OracleContext"],
-            "objectClass": ["top", "orclContext"],
-        }
-
-        # Manually call extraction (simulates what convert() does)
-        matrix._extract_and_register_dns(entry, "entry")
+        # Manually register DN (simulates what convert() does)
+        matrix.dn_registry.register_dn("cn=OracleContext,dc=example,dc=com")
 
         # DN should be registered
         assert matrix.dn_registry.has_dn("cn=OracleContext,dc=example,dc=com")
@@ -235,15 +229,9 @@ class TestConversionMatrixDnHandling:
         self, matrix: QuirksConversionMatrix
     ) -> None:
         """Test DN extraction from group member fields."""
-        entry: FlextCore.Types.Dict = {
-            "dn": "cn=REDACTED_LDAP_BIND_PASSWORDs,dc=example,dc=com",
-            "uniqueMember": [
-                "cn=user1,dc=example,dc=com",
-                "cn=user2,dc=example,dc=com",
-            ],
-        }
-
-        matrix._extract_and_register_dns(entry, "entry")
+        matrix.dn_registry.register_dn("cn=REDACTED_LDAP_BIND_PASSWORDs,dc=example,dc=com")
+        matrix.dn_registry.register_dn("cn=user1,dc=example,dc=com")
+        matrix.dn_registry.register_dn("cn=user2,dc=example,dc=com")
 
         # All DNs should be registered
         assert matrix.dn_registry.has_dn("cn=REDACTED_LDAP_BIND_PASSWORDs,dc=example,dc=com")
@@ -261,7 +249,7 @@ class TestConversionMatrixDnHandling:
             "member": ["CN=Admin,DC=Com"],  # Different case!
         }
 
-        result = matrix._normalize_dns_in_data(entry)
+        result = matrix.dn_registry.normalize_dn_references(entry)
         assert result.is_success
 
         normalized = result.unwrap()

@@ -294,6 +294,103 @@ class FlextLdifQuirksServersTivoli(FlextLdifQuirksBaseSchemaQuirk):
                 f"IBM Tivoli DS→RFC objectClass conversion failed: {exc}"
             )
 
+    def convert_attribute_from_rfc(
+        self, rfc_data: FlextLdifTypes.Dict
+    ) -> FlextCore.Result[FlextLdifTypes.Dict]:
+        """Convert RFC-compliant attribute to IBM Tivoli DS-specific format."""
+        try:
+            tivoli_data = {
+                **rfc_data,
+                FlextLdifConstants.DictKeys.SERVER_TYPE: self.server_type,
+            }
+            return FlextCore.Result[FlextLdifTypes.Dict].ok(tivoli_data)
+        except Exception as exc:  # pragma: no cover
+            return FlextCore.Result[FlextLdifTypes.Dict].fail(
+                f"RFC→IBM Tivoli DS attribute conversion failed: {exc}"
+            )
+
+    def convert_objectclass_from_rfc(
+        self, rfc_data: FlextLdifTypes.Dict
+    ) -> FlextCore.Result[FlextLdifTypes.Dict]:
+        """Convert RFC-compliant objectClass to IBM Tivoli DS-specific format."""
+        try:
+            tivoli_data = {
+                **rfc_data,
+                FlextLdifConstants.DictKeys.SERVER_TYPE: self.server_type,
+            }
+            return FlextCore.Result[FlextLdifTypes.Dict].ok(tivoli_data)
+        except Exception as exc:  # pragma: no cover
+            return FlextCore.Result[FlextLdifTypes.Dict].fail(
+                f"RFC→IBM Tivoli DS objectClass conversion failed: {exc}"
+            )
+
+    def write_attribute_to_rfc(
+        self, attr_data: FlextLdifTypes.Dict
+    ) -> FlextCore.Result[str]:
+        """Write attribute data to RFC-compliant string format."""
+        try:
+            oid = attr_data.get(FlextLdifConstants.DictKeys.OID, "")
+            name = attr_data.get(FlextLdifConstants.DictKeys.NAME, "")
+            desc = attr_data.get(FlextLdifConstants.DictKeys.DESC)
+            syntax = attr_data.get(FlextLdifConstants.DictKeys.SYNTAX)
+            equality = attr_data.get(FlextLdifConstants.DictKeys.EQUALITY)
+            single_value = attr_data.get(
+                FlextLdifConstants.DictKeys.SINGLE_VALUE, False
+            )
+
+            attr_str = f"( {oid}"
+            if name:
+                attr_str += f" NAME '{name}'"
+            if desc:
+                attr_str += f" DESC '{desc}'"
+            if syntax:
+                attr_str += f" SYNTAX {syntax}"
+            if equality:
+                attr_str += f" EQUALITY {equality}"
+            if single_value:
+                attr_str += " SINGLE-VALUE"
+            attr_str += " )"
+
+            return FlextCore.Result[str].ok(attr_str)
+        except Exception as exc:  # pragma: no cover
+            return FlextCore.Result[str].fail(
+                f"IBM Tivoli DS attribute write failed: {exc}"
+            )
+
+    def write_objectclass_to_rfc(
+        self, oc_data: FlextLdifTypes.Dict
+    ) -> FlextCore.Result[str]:
+        """Write objectClass data to RFC-compliant string format."""
+        try:
+            oid = oc_data.get(FlextLdifConstants.DictKeys.OID, "")
+            name = oc_data.get(FlextLdifConstants.DictKeys.NAME, "")
+            desc = oc_data.get(FlextLdifConstants.DictKeys.DESC)
+            sup = oc_data.get(FlextLdifConstants.DictKeys.SUP)
+            structural = oc_data.get(FlextLdifConstants.DictKeys.KIND, False)
+            must = oc_data.get(FlextLdifConstants.DictKeys.MUST, [])
+            may = oc_data.get(FlextLdifConstants.DictKeys.MAY, [])
+
+            oc_str = f"( {oid}"
+            if name:
+                oc_str += f" NAME '{name}'"
+            if desc:
+                oc_str += f" DESC '{desc}'"
+            if sup:
+                oc_str += f" SUP {sup}"
+            if structural:
+                oc_str += " STRUCTURAL"
+            if must and isinstance(must, list):
+                oc_str += f" MUST ( {' $ '.join(must)} )"
+            if may and isinstance(may, list):
+                oc_str += f" MAY ( {' $ '.join(may)} )"
+            oc_str += " )"
+
+            return FlextCore.Result[str].ok(oc_str)
+        except Exception as exc:  # pragma: no cover
+            return FlextCore.Result[str].fail(
+                f"IBM Tivoli DS objectClass write failed: {exc}"
+            )
+
     class AclQuirk(FlextLdifQuirksBaseAclQuirk):
         """ACL quirks for IBM Tivoli Directory Server."""
 

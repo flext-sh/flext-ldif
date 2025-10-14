@@ -9,6 +9,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import cast
+
 import pytest
 
 from flext_ldif.services.dn_service import DnService
@@ -185,7 +187,7 @@ class TestValidateFormat:
     def test_validate_non_string_returns_false(self) -> None:
         """Test validation of non-string returns False."""
         service = DnService()
-        result = service.validate_format(None)
+        result = service.validate_format(cast("str", None))
 
         assert result.is_success
         assert result.unwrap() is False

@@ -622,7 +622,9 @@ class TestOidEntryQuirks:
                 if attr_name not in current_attrs:
                     current_attrs[attr_name] = []
                 # Cast to list since we just initialized it
-                attr_list: FlextCore.Types.StringList = cast("list[str]", current_attrs[attr_name])
+                attr_list: FlextCore.Types.StringList = cast(
+                    "list[str]", current_attrs[attr_name]
+                )
                 attr_list.append(attr_value)
 
         # Process last entry

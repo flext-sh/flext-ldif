@@ -780,15 +780,14 @@ class FlextLdif(FlextCore.Service[FlextCore.Types.Dict]):
                 errors.extend([f"Entry {entry.dn}: {entry_result.error}"])
             else:
                 entry_validation = entry_result.unwrap()
-                if isinstance(entry_validation, dict):
-                    if "issues" in entry_validation and isinstance(
-                        entry_validation["issues"], list
-                    ):
-                        errors.extend(entry_validation["issues"])
-                    if "warnings" in entry_validation and isinstance(
-                        entry_validation["warnings"], list
-                    ):
-                        warnings.extend(entry_validation["warnings"])
+                if "issues" in entry_validation and isinstance(
+                    entry_validation["issues"], list
+                ):
+                    errors.extend(entry_validation["issues"])
+                if "warnings" in entry_validation and isinstance(
+                    entry_validation["warnings"], list
+                ):
+                    warnings.extend(entry_validation["warnings"])
 
         # Also run general validation
         general_result = validator.validate_entries(entries)

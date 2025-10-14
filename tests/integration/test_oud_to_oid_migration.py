@@ -366,7 +366,7 @@ class TestOudToOidFullMigration:
 
         # Parse entries manually (simple LDIF parsing)
         entries = []
-        current_dn = None
+        current_dn: str | None = None
         current_attrs: dict[str, FlextCore.Types.StringList] = {}
 
         for raw_line in entries_content.splitlines():

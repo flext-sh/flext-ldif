@@ -5,7 +5,7 @@ following FLEXT patterns with FlextCore.Service base class.
 
 Services follow Single Responsibility Principle:
 - Each service handles one domain concern
-- Returns FlextResult for composable error handling
+- Returns FlextCore.Result for composable error handling
 - Uses ldap3/ldif3 for RFC compliance
 - Type-safe with Python 3.13+ annotations
 

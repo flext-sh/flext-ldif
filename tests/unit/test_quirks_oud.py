@@ -523,7 +523,7 @@ class TestOudEntryQuirks:
         integration_content = oud_fixtures.integration()
 
         # Parse entries from LDIF content
-        current_dn = None
+        current_dn: str | None = None
         current_attrs: dict[str, FlextCore.Types.StringList] = {}
 
         for raw_line in integration_content.splitlines():

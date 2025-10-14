@@ -800,9 +800,12 @@ class TestFlextLdifAclService:
 
     def test_parse_acl_with_rules_empty_string(self) -> None:
         """Test parsing ACL with empty string."""
-        service = FlextLdifAclService()
+        FlextLdifAclService()
 
-        result = service._parse_acl_with_rules("", "generic")
+        from flext_ldif.acl.parser import FlextLdifAclParser
+
+        parser = FlextLdifAclParser()
+        result = parser.parse_acl("", "generic")
 
         assert result.is_success
         acl = result.value

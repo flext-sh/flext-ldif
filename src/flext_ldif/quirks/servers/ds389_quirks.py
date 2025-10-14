@@ -296,6 +296,104 @@ class FlextLdifQuirksServersDs389(FlextLdifQuirksBaseSchemaQuirk):
                 f"389 Directory Server→RFC objectClass conversion failed: {exc}"
             )
 
+    def convert_attribute_from_rfc(
+        self, rfc_data: FlextLdifTypes.Dict
+    ) -> FlextCore.Result[FlextLdifTypes.Dict]:
+        """Convert RFC-compliant attribute to 389 DS-specific format."""
+        try:
+            ds389_data = {
+                **rfc_data,
+                FlextLdifConstants.DictKeys.SERVER_TYPE: self.server_type,
+            }
+            return FlextCore.Result[FlextLdifTypes.Dict].ok(ds389_data)
+        except Exception as exc:  # pragma: no cover
+            return FlextCore.Result[FlextLdifTypes.Dict].fail(
+                f"RFC→389 Directory Server attribute conversion failed: {exc}"
+            )
+
+    def convert_objectclass_from_rfc(
+        self, rfc_data: FlextLdifTypes.Dict
+    ) -> FlextCore.Result[FlextLdifTypes.Dict]:
+        """Convert RFC-compliant objectClass to 389 DS-specific format."""
+        try:
+            ds389_data = {
+                **rfc_data,
+                FlextLdifConstants.DictKeys.SERVER_TYPE: self.server_type,
+            }
+            return FlextCore.Result[FlextLdifTypes.Dict].ok(ds389_data)
+        except Exception as exc:  # pragma: no cover
+            return FlextCore.Result[FlextLdifTypes.Dict].fail(
+                f"RFC→389 Directory Server objectClass conversion failed: {exc}"
+            )
+
+    def write_attribute_to_rfc(
+        self, attr_data: FlextLdifTypes.Dict
+    ) -> FlextCore.Result[str]:
+        """Write attribute data to RFC-compliant string format."""
+        try:
+            oid = attr_data.get(FlextLdifConstants.DictKeys.OID, "")
+            name = attr_data.get(FlextLdifConstants.DictKeys.NAME, "")
+            desc = attr_data.get(FlextLdifConstants.DictKeys.DESC)
+            syntax = attr_data.get(FlextLdifConstants.DictKeys.SYNTAX)
+            equality = attr_data.get(FlextLdifConstants.DictKeys.EQUALITY)
+            single_value = attr_data.get(
+                FlextLdifConstants.DictKeys.SINGLE_VALUE, False
+            )
+
+            attr_str = f"( {oid}"
+            if name:
+                attr_str += f" NAME '{name}'"
+            if desc:
+                attr_str += f" DESC '{desc}'"
+            if syntax:
+                attr_str += f" SYNTAX {syntax}"
+            if equality:
+                attr_str += f" EQUALITY {equality}"
+            if single_value:
+                attr_str += " SINGLE-VALUE"
+            attr_str += " )"
+
+            return FlextCore.Result[str].ok(attr_str)
+        except Exception as exc:  # pragma: no cover
+            return FlextCore.Result[str].fail(
+                f"389 Directory Server attribute write failed: {exc}"
+            )
+
+    def write_objectclass_to_rfc(
+        self, oc_data: FlextLdifTypes.Dict
+    ) -> FlextCore.Result[str]:
+        """Write objectClass data to RFC-compliant string format."""
+        try:
+            oid = oc_data.get(FlextLdifConstants.DictKeys.OID, "")
+            name = oc_data.get(FlextLdifConstants.DictKeys.NAME, "")
+            desc = oc_data.get(FlextLdifConstants.DictKeys.DESC)
+            sup = oc_data.get(FlextLdifConstants.DictKeys.SUP)
+            kind = oc_data.get(FlextLdifConstants.DictKeys.KIND, "STRUCTURAL")
+            must = oc_data.get(FlextLdifConstants.DictKeys.MUST, [])
+            may = oc_data.get(FlextLdifConstants.DictKeys.MAY, [])
+
+            oc_str = f"( {oid}"
+            if name:
+                oc_str += f" NAME '{name}'"
+            if desc:
+                oc_str += f" DESC '{desc}'"
+            if sup:
+                oc_str += f" SUP {sup}"
+            oc_str += f" {kind}"
+            if must and isinstance(must, list):
+                must_attrs = " $ ".join(must)
+                oc_str += f" MUST ( {must_attrs} )"
+            if may and isinstance(may, list):
+                may_attrs = " $ ".join(may)
+                oc_str += f" MAY ( {may_attrs} )"
+            oc_str += " )"
+
+            return FlextCore.Result[str].ok(oc_str)
+        except Exception as exc:  # pragma: no cover
+            return FlextCore.Result[str].fail(
+                f"389 Directory Server objectClass write failed: {exc}"
+            )
+
     class AclQuirk(FlextLdifQuirksBaseAclQuirk):
         """389 Directory Server ACI quirk."""
 
