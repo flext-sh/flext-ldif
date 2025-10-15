@@ -17,7 +17,6 @@ from pathlib import Path
 from typing import cast
 
 from flext_core import FlextCore
-from flext_core.container import FlextContainer
 from pydantic import PrivateAttr
 
 from flext_ldif.config import FlextLdifConfig
@@ -67,7 +66,10 @@ class FlextLdifClient(FlextCore.Service[FlextLdifTypes.Dict]):
 
     # Pydantic v2 private attributes (CRITICAL for Pydantic model initialization)
     # These MUST be declared at class level for Pydantic to handle them correctly
-    _container: FlextContainer | None = PrivateAttr(default=None)
+    # Type annotation uses Protocol, but default_factory returns concrete implementation
+    _container: FlextCore.Container = PrivateAttr(
+        default_factory=FlextCore.Container.get_global
+    )
     _context: FlextCore.Context | None = PrivateAttr(default=None)
     _bus: object | None = PrivateAttr(default=None)
     _handlers: FlextLdifTypes.Dict = PrivateAttr(default_factory=dict)
@@ -94,7 +96,6 @@ class FlextLdifClient(FlextCore.Service[FlextLdifTypes.Dict]):
         """
         # Initialize private attributes that parent's __init__ may access
         self._config = getattr(self, "_init_config_value", None) or FlextLdifConfig()
-        self._container = FlextCore.Container.get_global()
         # Convert config to dict[str, object] for JSON-serializable FlextCore.Context
         config_dict = self._config.model_dump() if self._config is not None else {}
         self._context = FlextCore.Context({"config": config_dict})
@@ -321,7 +322,7 @@ class FlextLdifClient(FlextCore.Service[FlextLdifTypes.Dict]):
             )
 
         # Writer is already correctly typed from unwrap()
-        writer = writer_result.unwrap()
+        writer = cast("FlextLdifRfcLdifWriter", writer_result.unwrap())
 
         # Write to string first
         content_result = writer.write_entries_to_string(entries)
@@ -1058,7 +1059,7 @@ class FlextLdifClient(FlextCore.Service[FlextLdifTypes.Dict]):
                 getattr(self, "_init_config_value", None) or FlextLdifConfig()
             )
         # Type narrowing: _config is guaranteed non-None after initialization
-        return self._config
+        return cast("FlextLdifConfig", self._config)
 
     @property
     def handlers(self) -> FlextLdifTypes.Dict:
@@ -1066,10 +1067,8 @@ class FlextLdifClient(FlextCore.Service[FlextLdifTypes.Dict]):
         return self._handlers
 
     @property
-    def container(self) -> FlextContainer:
-        """Access to dependency injection container with lazy initialization."""
-        if self._container is None:
-            self._container = FlextCore.Container.get_global()
+    def container(self) -> FlextCore.Container:
+        """Access to dependency injection container."""
         if self._container is None:
             msg = "FlextCore.Container must be initialized"
             raise RuntimeError(msg)
@@ -1090,7 +1089,7 @@ class FlextLdifClient(FlextCore.Service[FlextLdifTypes.Dict]):
         if self._bus is None:
             self._bus = FlextCore.Bus()
         # Type narrowing: _bus is guaranteed to be FlextCore.Bus after initialization
-        return self._bus
+        return cast("FlextCore.Bus", self._bus)
 
 
 __all__ = ["FlextLdifClient"]

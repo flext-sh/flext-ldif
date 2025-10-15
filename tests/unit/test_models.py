@@ -404,6 +404,7 @@ class TestFlextLdifModels:
         assert obj_class.name == "organizationalUnit"
         assert obj_class.oid == "2.5.6.5"
         assert obj_class.required_attributes == ["ou"]
+        assert obj_class.optional_attributes == []
 
     def test_schema_discovery_result_creation(self) -> None:
         """Test SchemaDiscoveryResult model creation."""

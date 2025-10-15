@@ -288,14 +288,14 @@ class TestFlextLdifConfig:
 
     def test_configuration_immutability(self) -> None:
         """Test that configuration values are properly validated."""
-        # Test that invalid values are rejected
-        with pytest.raises((ValidationError, ValueError)):
+        # Test that invalid values are rejected (intentional type mismatches for validation testing)
+        with pytest.raises(ValidationError):
             FlextLdifConfig(ldif_max_line_length="invalid")
 
-        with pytest.raises((ValidationError, ValueError)):
+        with pytest.raises(ValidationError):
             FlextLdifConfig(max_workers="invalid")
 
-        with pytest.raises((ValidationError, ValueError)):
+        with pytest.raises(ValidationError):
             FlextLdifConfig(ldif_encoding=123)
 
     # =========================================================================

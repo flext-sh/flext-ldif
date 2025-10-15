@@ -5,6 +5,8 @@ Tests CQRS Query and Command models for LDIF processing.
 
 from __future__ import annotations
 
+from typing import cast
+
 import pytest
 from flext_core import FlextCore
 from pydantic import ValidationError
@@ -55,7 +57,7 @@ def test_validate_query_creation() -> None:
     from flext_ldif.models import FlextLdifModels
 
     entries = [FlextLdifModels.Entry.create("cn=test,dc=example,dc=com", {}).unwrap()]
-    query = ValidateQuery(entries=entries)
+    query = ValidateQuery(entries=cast("FlextCore.Types.List", entries))
     assert query.entries == entries
     assert query.schema_config is None  # default
     assert query.strict is True  # default
@@ -67,7 +69,11 @@ def test_validate_query_with_schema_config() -> None:
 
     entries = [FlextLdifModels.Entry.create("cn=test", {}).unwrap()]
     schema_config: FlextCore.Types.Dict = {"validate_objectclasses": True}
-    query = ValidateQuery(entries=entries, schema_config=schema_config, strict=False)
+    query = ValidateQuery(
+        entries=cast("FlextCore.Types.List", entries),
+        schema_config=schema_config,
+        strict=False,
+    )
     assert query.entries == entries
     assert query.schema_config == schema_config
     assert query.strict is False
@@ -107,7 +113,7 @@ def test_write_command_creation() -> None:
     from flext_ldif.commands_processing import WriteCommand
 
     entries = [FlextLdifModels.Entry.create("cn=test", {}).unwrap()]
-    command = WriteCommand(entries=entries)
+    command = WriteCommand(entries=cast("FlextCore.Types.List", entries))
     assert command.entries == entries
     assert command.format == "rfc"  # default
     assert command.output is None  # default
@@ -120,7 +126,7 @@ def test_write_command_with_all_fields() -> None:
 
     entries = [FlextLdifModels.Entry.create("cn=test", {}).unwrap()]
     command = WriteCommand(
-        entries=entries,
+        entries=cast("FlextCore.Types.List", entries),
         format="standard",
         output="/path/to/output.ldif",
         line_width=80,
@@ -136,22 +142,23 @@ def test_write_command_line_width_validation() -> None:
 
     # Valid range: 40-120
     entries = [FlextLdifModels.Entry.create("cn=test", {}).unwrap()]
+    entries_typed = cast("FlextCore.Types.List", entries)
 
     # Test minimum
-    command = WriteCommand(entries=entries, line_width=40)
+    command = WriteCommand(entries=entries_typed, line_width=40)
     assert command.line_width == 40
 
     # Test maximum
-    command = WriteCommand(entries=entries, line_width=120)
+    command = WriteCommand(entries=entries_typed, line_width=120)
     assert command.line_width == 120
 
     # Test below minimum
     with pytest.raises(ValidationError):
-        WriteCommand(entries=entries, line_width=39)
+        WriteCommand(entries=entries_typed, line_width=39)
 
     # Test above maximum
     with pytest.raises(ValidationError):
-        WriteCommand(entries=entries, line_width=121)
+        WriteCommand(entries=entries_typed, line_width=121)
 
 
 def test_migrate_command_creation() -> None:
@@ -160,7 +167,7 @@ def test_migrate_command_creation() -> None:
 
     entries = [FlextLdifModels.Entry.create("cn=test", {}).unwrap()]
     command = MigrateCommand(
-        entries=entries,
+        entries=cast("FlextCore.Types.List", entries),
         source_format="oid",
         target_format="oud",
     )
@@ -177,7 +184,7 @@ def test_migrate_command_with_options() -> None:
     entries = [FlextLdifModels.Entry.create("cn=test", {}).unwrap()]
     options: FlextCore.Types.Dict = {"preserve_timestamps": True, "convert_acls": True}
     command = MigrateCommand(
-        entries=entries,
+        entries=cast("FlextCore.Types.List", entries),
         source_format="openldap",
         target_format="ad",
         options=options,

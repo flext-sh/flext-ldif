@@ -31,8 +31,10 @@ import base64
 import os
 from collections.abc import Generator
 from pathlib import Path
+from typing import cast
 
 import pytest
+from flext_core import FlextCore
 from ldap3 import ALL, MODIFY_ADD, MODIFY_REPLACE, Connection, Server
 
 from flext_ldif import FlextLdif
@@ -163,10 +165,13 @@ class TestRealLdapExport:
         # Convert to FlextLdif entry
         entry_result = flext_api.models.Entry.create(
             dn=ldap_entry.entry_dn,
-            attributes={
-                attr: list(ldap_entry[attr].values)
-                for attr in ldap_entry.entry_attributes
-            },
+            attributes=cast(
+                "dict[str, FlextCore.Types.StringList]",
+                {
+                    attr: list(ldap_entry[attr].values)
+                    for attr in ldap_entry.entry_attributes
+                },
+            ),
         )
         assert entry_result.is_success
         flext_entry = entry_result.unwrap()
@@ -216,9 +221,10 @@ class TestRealLdapExport:
         for entry in ldap_connection.entries:
             result = flext_api.models.Entry.create(
                 dn=entry.entry_dn,
-                attributes={
-                    attr: list(entry[attr].values) for attr in entry.entry_attributes
-                },
+                attributes=cast(
+                    "dict[str, FlextCore.Types.StringList]",
+                    {attr: list(entry[attr].values) for attr in entry.entry_attributes},
+                ),
             )
             assert result.is_success
             flext_entries.append(result.unwrap())
@@ -275,9 +281,10 @@ class TestRealLdapExport:
         for entry in ldap_connection.entries:
             result = flext_api.models.Entry.create(
                 dn=entry.entry_dn,
-                attributes={
-                    attr: list(entry[attr].values) for attr in entry.entry_attributes
-                },
+                attributes=cast(
+                    "dict[str, FlextCore.Types.StringList]",
+                    {attr: list(entry[attr].values) for attr in entry.entry_attributes},
+                ),
             )
             assert result.is_success
             flext_entries.append(result.unwrap())
@@ -331,8 +338,8 @@ mail: import@example.com
             str(entry.dn), "(objectClass=*)", search_scope="BASE", attributes=["*"]
         )
         imported_entry = ldap_connection.entries[0]
-        assert imported_entry.cn.value == "Import Test"
-        assert imported_entry.mail.value == "import@example.com"
+        assert imported_entry["cn"].value == "Import Test"
+        assert imported_entry["mail"].value == "import@example.com"
 
     def test_import_with_binary_attributes(
         self,
@@ -378,7 +385,7 @@ jpegPhoto:: {encoded_photo}
             str(entry.dn), "(objectClass=*)", search_scope="BASE", attributes=["*"]
         )
         imported_entry = ldap_connection.entries[0]
-        assert imported_entry.jpegPhoto.value == binary_data
+        assert imported_entry["jpegPhoto"].value == binary_data
 
 
 class TestRealLdapRoundtrip:
@@ -413,10 +420,13 @@ class TestRealLdapRoundtrip:
 
         entry_result = flext_api.models.Entry.create(
             dn=ldap_entry.entry_dn,
-            attributes={
-                attr: list(ldap_entry[attr].values)
-                for attr in ldap_entry.entry_attributes
-            },
+            attributes=cast(
+                "dict[str, FlextCore.Types.StringList]",
+                {
+                    attr: list(ldap_entry[attr].values)
+                    for attr in ldap_entry.entry_attributes
+                },
+            ),
         )
         assert entry_result.is_success
         flext_entry = entry_result.unwrap()
@@ -450,9 +460,9 @@ class TestRealLdapRoundtrip:
         reimported = ldap_connection.entries[0]
 
         # Verify attributes preserved
-        assert reimported.sn.value == original_attrs["sn"]
-        assert reimported.mail.value == original_attrs["mail"]
-        assert set(reimported.telephoneNumber.values) == set(
+        assert reimported["sn"].value == original_attrs["sn"]
+        assert reimported["mail"].value == original_attrs["mail"]
+        assert set(reimported["telephoneNumber"].values) == set(
             original_attrs["telephoneNumber"]
         )
 
@@ -540,10 +550,13 @@ class TestRealLdapModify:
 
         entry_result = flext_api.models.Entry.create(
             dn=ldap_entry.entry_dn,
-            attributes={
-                attr: list(ldap_entry[attr].values)
-                for attr in ldap_entry.entry_attributes
-            },
+            attributes=cast(
+                "dict[str, FlextCore.Types.StringList]",
+                {
+                    attr: list(ldap_entry[attr].values)
+                    for attr in ldap_entry.entry_attributes
+                },
+            ),
         )
         assert entry_result.is_success
         flext_entry = entry_result.unwrap()
@@ -592,7 +605,7 @@ telephoneNumber: +1-555-9999
         # Verify
         assert ldap_connection.search(entry_dn, "(objectClass=*)", attributes=["*"])
         modified_entry = ldap_connection.entries[0]
-        assert "+1-555-9999" in modified_entry.telephoneNumber.values
+        assert "+1-555-9999" in modified_entry["telephoneNumber"].values
 
 
 class TestRealLdapAnalytics:
@@ -629,9 +642,10 @@ class TestRealLdapAnalytics:
         for entry in ldap_connection.entries:
             result = flext_api.models.Entry.create(
                 dn=entry.entry_dn,
-                attributes={
-                    attr: list(entry[attr].values) for attr in entry.entry_attributes
-                },
+                attributes=cast(
+                    "dict[str, FlextCore.Types.StringList]",
+                    {attr: list(entry[attr].values) for attr in entry.entry_attributes},
+                ),
             )
             assert result.is_success
             flext_entries.append(result.unwrap())
@@ -672,10 +686,13 @@ class TestRealLdapFileOperations:
 
         entry_result = flext_api.models.Entry.create(
             dn=ldap_entry.entry_dn,
-            attributes={
-                attr: list(ldap_entry[attr].values)
-                for attr in ldap_entry.entry_attributes
-            },
+            attributes=cast(
+                "dict[str, FlextCore.Types.StringList]",
+                {
+                    attr: list(ldap_entry[attr].values)
+                    for attr in ldap_entry.entry_attributes
+                },
+            ),
         )
         assert entry_result.is_success
         flext_entry = entry_result.unwrap()
@@ -729,7 +746,7 @@ mail: import@example.com
             str(entry.dn), "(objectClass=*)", search_scope="BASE", attributes=["*"]
         )
         imported = ldap_connection.entries[0]
-        assert imported.cn.value == "File Import"
+        assert imported["cn"].value == "File Import"
 
 
 class TestRealLdapCRUD:
@@ -768,7 +785,7 @@ class TestRealLdapCRUD:
         )
         assert len(ldap_connection.entries) == 1
         read_entry = ldap_connection.entries[0]
-        assert read_entry.mail.value == "crud@example.com"
+        assert read_entry["mail"].value == "crud@example.com"
 
         # UPDATE: Modify via LDIF
         ldap_connection.modify(
@@ -781,7 +798,7 @@ class TestRealLdapCRUD:
             str(person_entry.dn), "(objectClass=*)", attributes=["*"]
         )
         updated_entry = ldap_connection.entries[0]
-        assert updated_entry.mail.value == "updated_crud@example.com"
+        assert updated_entry["mail"].value == "updated_crud@example.com"
 
         # DELETE: Remove entry
         ldap_connection.delete(str(person_entry.dn))
@@ -839,9 +856,10 @@ class TestRealLdapBatchOperations:
         for entry in ldap_connection.entries:
             result = flext_api.models.Entry.create(
                 dn=entry.entry_dn,
-                attributes={
-                    attr: list(entry[attr].values) for attr in entry.entry_attributes
-                },
+                attributes=cast(
+                    "dict[str, FlextCore.Types.StringList]",
+                    {attr: list(entry[attr].values) for attr in entry.entry_attributes},
+                ),
             )
             assert result.is_success
             flext_entries.append(result.unwrap())
@@ -889,9 +907,10 @@ class TestRealLdapBatchOperations:
         for entry in ldap_connection.entries:
             result = flext_api.models.Entry.create(
                 dn=entry.entry_dn,
-                attributes={
-                    attr: list(entry[attr].values) for attr in entry.entry_attributes
-                },
+                attributes=cast(
+                    "dict[str, FlextCore.Types.StringList]",
+                    {attr: list(entry[attr].values) for attr in entry.entry_attributes},
+                ),
             )
             assert result.is_success
             flext_entries.append(result.unwrap())
@@ -975,10 +994,13 @@ class TestRealLdapRailwayComposition:
 
         entry_result = flext_api.models.Entry.create(
             dn=ldap_entry.entry_dn,
-            attributes={
-                attr: list(ldap_entry[attr].values)
-                for attr in ldap_entry.entry_attributes
-            },
+            attributes=cast(
+                "dict[str, FlextCore.Types.StringList]",
+                {
+                    attr: list(ldap_entry[attr].values)
+                    for attr in ldap_entry.entry_attributes
+                },
+            ),
         )
         assert entry_result.is_success
         flext_entry = entry_result.unwrap()

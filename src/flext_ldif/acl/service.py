@@ -30,7 +30,7 @@ class FlextLdifAclService(FlextCore.Service[FlextLdifTypes.Dict]):
             super().__init__()
             self._rule_type = rule_type
 
-        def evaluate(self, context: FlextLdifTypes.Dict) -> FlextCore.Result[bool]:  # noqa: ARG002
+        def evaluate(self, context: FlextLdifTypes.Dict) -> FlextCore.Result[bool]:
             """Evaluate ACL rule against context.
 
             This base implementation provides a default evaluation strategy.
@@ -46,6 +46,8 @@ class FlextLdifAclService(FlextCore.Service[FlextLdifTypes.Dict]):
             try:
                 # Base rule always evaluates to True (allow by default)
                 # Specific rule types (SubjectRule, TargetRule, etc.) check their required keys
+                # Note: context parameter unused in base class but required for subclass overrides
+                _ = context  # Mark as intentionally unused
                 return FlextCore.Result[bool].ok(True)
 
             except Exception as e:
@@ -420,6 +422,12 @@ class FlextLdifAclService(FlextCore.Service[FlextLdifTypes.Dict]):
             FlextCore.Result containing list of unified ACL entries
 
         """
+        # Handle None entry case
+        if entry is None:
+            return FlextCore.Result[list[FlextLdifModels.Acl]].fail(
+                "Invalid entry: Entry is None"
+            )
+
         acl_attr_result: FlextCore.Result[str] = self._quirks.get_acl_attribute_name(
             server_type
         )
@@ -480,6 +488,10 @@ class FlextLdifAclService(FlextCore.Service[FlextLdifTypes.Dict]):
         self, rules: list[AclRule], context: FlextLdifTypes.Dict
     ) -> FlextCore.Result[bool]:
         """Evaluate ACL rules against context using composite pattern."""
+        # Handle None context case
+        if context is None:
+            return FlextCore.Result[bool].fail("Invalid context: Context is None")
+
         composite = self.create_composite_rule(operator="AND")
         for rule in rules:
             composite.add_rule(rule)

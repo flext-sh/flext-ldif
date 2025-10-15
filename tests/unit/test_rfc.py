@@ -114,7 +114,9 @@ class TestRfcLdifWriterService:
         assert real_writer_service is not None
 
     def test_write_basic_entry(
-        self, real_writer_service: FlextLdifRfcLdifWriter, ldif_test_entries: list
+        self,
+        real_writer_service: FlextLdifRfcLdifWriter,
+        ldif_test_entries: list[dict[str, object]],
     ) -> None:
         """Test writing basic LDIF entry."""
         if not hasattr(real_writer_service, "write_entries_to_string"):
@@ -127,7 +129,7 @@ class TestRfcLdifWriterService:
     def test_write_to_file(
         self,
         real_writer_service: FlextLdifRfcLdifWriter,
-        ldif_test_entries: list,
+        ldif_test_entries: list[dict[str, object]],
         tmp_path: Path,
     ) -> None:
         """Test writing LDIF to file."""
@@ -142,7 +144,9 @@ class TestRfcLdifWriterService:
         assert result.is_success or result.is_failure
 
     def test_write_multiple_entries(
-        self, real_writer_service: FlextLdifRfcLdifWriter, ldif_test_entries: list
+        self,
+        real_writer_service: FlextLdifRfcLdifWriter,
+        ldif_test_entries: list[dict[str, object]],
     ) -> None:
         """Test writing multiple entries."""
         if not hasattr(real_writer_service, "write_entries_to_string"):

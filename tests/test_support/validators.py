@@ -22,18 +22,20 @@ class TestValidators:
     """Validators for testing LDIF functionality."""
 
     @staticmethod
-    def validate_ldif_entry(entry: FlextLdifModels.Entry) -> dict[str, bool]:
+    def validate_ldif_entry(
+        entry: FlextLdifModels.Entry,
+    ) -> dict[str, bool]:
         """Validate a real LDIF entry object."""
-        validations = {
+        validations: dict[str, bool] = {
             "has_dn": bool(entry.dn and str(entry.dn).strip()),
             "has_attributes": bool(
                 entry.attributes and len(entry.attributes.attributes) > 0
             ),
-            "has_object_class": (
+            "has_object_class": bool(
                 entry.attributes and "objectClass" in entry.attributes.attributes
             ),
             "dn_format_valid": bool(
-                entry.dn and "=" in str(entry.dn) and "," in str(entry.dn),
+                entry.dn and "=" in str(entry.dn) and "," in str(entry.dn)
             ),
         }
 
@@ -208,9 +210,10 @@ class TestValidators:
             return {**base_validation, "entries_valid": False}
 
         entries = result.value if hasattr(result, "value") else []
-        entry_validations_list: list[dict[str, bool | int | str | None]] = []
+        entry_validations_list: list[dict[str, object]] = []
         entries_validation: dict[
-            str, bool | int | list[dict[str, bool | int | str | None]]
+            str,
+            bool | int | list[dict[str, object]],
         ] = {
             "count_matches": len(entries) == expected_count,
             "actual_count": len(entries),

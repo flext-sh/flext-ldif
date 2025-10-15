@@ -7,7 +7,9 @@ from pydantic import Field
 class ParseQuery(FlextCore.Models.Query):
     """Query for parsing LDIF content."""
 
-    source: str = Field(..., description="LDIF source content, file path, or lines")
+    source: str = Field(
+        ..., min_length=1, description="LDIF source content, file path, or lines"
+    )
     format: str = Field(default="auto", description="LDIF format to use for parsing")
     encoding: str = Field(
         default="utf-8", description="Character encoding for LDIF content"

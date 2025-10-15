@@ -805,12 +805,12 @@ class TestFlextLdifAclService:
         from flext_ldif.acl.parser import FlextLdifAclParser
 
         parser = FlextLdifAclParser()
-        result = parser.parse_acl("", "generic")
+        result = parser.parse_acl("", "openldap")
 
         assert result.is_success
         acl = result.value
-        assert acl.name == "parsed_acl"
-        assert acl.server_type == "generic"
+        assert acl.name == "openldap_acl"
+        assert acl.server_type == "openldap"
         assert not acl.raw_acl
 
     def test_rule_types_inheritance(self) -> None:
