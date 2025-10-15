@@ -595,6 +595,43 @@ class FlextLdifQuirksServersOpenldap1(FlextLdifQuirksBaseSchemaQuirk):
                     f"RFC→OpenLDAP 1.x ACL conversion failed: {e}"
                 )
 
+        def write_acl_to_rfc(
+            self, acl_data: FlextLdifTypes.Dict
+        ) -> FlextCore.Result[str]:
+            """Write ACL data to RFC-compliant string format.
+
+            OpenLDAP 1.x ACL format: access to <what> by <who> <access>
+
+            Args:
+                acl_data: ACL data dictionary
+
+            Returns:
+                FlextCore.Result with ACL string in OpenLDAP 1.x format
+
+            """
+            try:
+                # OpenLDAP 1.x ACLs don't have direct RFC equivalent
+                # Return generic ACL representation
+                what = acl_data.get("what", "*")
+                by_clauses_raw = acl_data.get("by_clauses", [])
+
+                # Explicit type checking for by_clauses iteration
+                by_clauses: list[FlextCore.Types.Dict] = (
+                    by_clauses_raw if isinstance(by_clauses_raw, list) else []
+                )
+
+                acl_parts = [f"access to {what}"]
+                for clause in by_clauses:
+                    who = clause.get("who", "*")
+                    access = clause.get(FlextLdifConstants.DictKeys.ACCESS, "none")
+                    acl_parts.append(f"by {who} {access}")
+
+                acl_str = " ".join(acl_parts)
+                return FlextCore.Result[str].ok(acl_str)
+
+            except Exception as e:
+                return FlextCore.Result[str].fail(f"OpenLDAP 1.x ACL write failed: {e}")
+
     class EntryQuirk(FlextLdifQuirksBaseEntryQuirk):
         """OpenLDAP 1.x entry quirk (nested).
 

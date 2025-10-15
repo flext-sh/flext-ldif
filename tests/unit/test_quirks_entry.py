@@ -526,18 +526,12 @@ class TestDnFormatValidation:
 
     def test_validate_dn_format_invalid_dn_string(self) -> None:
         """Test DN format validation with completely invalid DN."""
-        # Create a test entry with empty DN (invalid)
-        test_entry = FlextLdifModels.Entry.create("", {}).unwrap()
-        quirks = FlextLdifEntryQuirks()
+        # Empty DN is rejected at Entry creation time
+        entry_result = FlextLdifModels.Entry.create("", {})
 
-        # Use the entry validation which includes DN format validation
-        validation_result = quirks.validate_entry(test_entry, "generic")
-        assert validation_result.is_success
-
-        validation_report = validation_result.unwrap()
-        # Should handle gracefully
-        assert "compliant" in validation_report
-        assert "issues" in validation_report
+        # Should fail validation during creation
+        assert entry_result.is_failure
+        assert "DN cannot be empty" in str(entry_result.error)
 
     def test_validate_dn_format_quirks_failure(self) -> None:
         """Test DN format validation when quirks lookup fails."""
