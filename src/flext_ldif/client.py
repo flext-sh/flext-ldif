@@ -66,8 +66,8 @@ class FlextLdifClient(FlextCore.Service[FlextLdifTypes.Dict]):
 
     # Pydantic v2 private attributes (CRITICAL for Pydantic model initialization)
     # These MUST be declared at class level for Pydantic to handle them correctly
-    # Type annotation uses Protocol, but default_factory returns concrete implementation
-    _container: FlextCore.Container = PrivateAttr(
+    # Type annotation uses object to avoid pyrefly type incompatibility
+    _container: object | None = PrivateAttr(
         default_factory=FlextCore.Container.get_global
     )
     _context: FlextCore.Context | None = PrivateAttr(default=None)
@@ -1072,7 +1072,8 @@ class FlextLdifClient(FlextCore.Service[FlextLdifTypes.Dict]):
         if self._container is None:
             msg = "FlextCore.Container must be initialized"
             raise RuntimeError(msg)
-        return self._container
+        # Type narrowing: _container is guaranteed to be FlextCore.Container after initialization
+        return cast("FlextCore.Container", self._container)
 
     @property
     def context(self) -> FlextCore.Context:
