@@ -6,27 +6,22 @@ Handles schema entries, regular entries, and ACLs.
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 
-PYREFLY TYPE INFERENCE ISSUES (expected):
-- Lines 580-598: Type inference breaks with cycles when analyzing modified_acls list
-  Pyrefly reports "Iterable[Unknown] | FlextCore.Types.StringList" but it's actually FlextCore.Types.StringList
-  All other type checkers (ruff, mypy, pyright) verify this is correct.
 """
 
 from __future__ import annotations
 
 import base64
+from collections.abc import Sequence
 from io import StringIO
 from pathlib import Path
-from typing import TYPE_CHECKING, TextIO
+from typing import TextIO, cast
 
 from flext_core import FlextCore
 
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
+from flext_ldif.quirks.registry import FlextLdifQuirksRegistry
 from flext_ldif.typings import FlextLdifTypes
-
-if TYPE_CHECKING:
-    from flext_ldif.quirks.registry import FlextLdifQuirksRegistry
 
 
 class FlextLdifRfcLdifWriter(FlextCore.Service[FlextCore.Types.Dict]):
@@ -112,8 +107,9 @@ class FlextLdifRfcLdifWriter(FlextCore.Service[FlextCore.Types.Dict]):
             schema: FlextCore.Types.Dict = (
                 schema_raw if isinstance(schema_raw, dict) else {}
             )
-            acls: list[FlextCore.Types.Dict] = (
-                acls_raw if isinstance(acls_raw, list) else []
+            acls: list[FlextCore.Types.Dict] = cast(
+                "list[FlextCore.Types.Dict]",
+                acls_raw if isinstance(acls_raw, list) else [],
             )
 
             if not entries and not schema and not acls:
@@ -312,12 +308,12 @@ class FlextLdifRfcLdifWriter(FlextCore.Service[FlextCore.Types.Dict]):
 
     def write_entries_to_string(
         self,
-        entries: list[FlextLdifModels.Entry],
+        entries: Sequence[object],
     ) -> FlextCore.Result[str]:
         """Write entries to LDIF string format.
 
         Args:
-            entries: List of LDIF entries to write
+            entries: Sequence of LDIF entries to write
 
         Returns:
             FlextCore.Result containing LDIF string or error
@@ -332,17 +328,43 @@ class FlextLdifRfcLdifWriter(FlextCore.Service[FlextCore.Types.Dict]):
                 output.write("version: 1\n")
 
             for entry in entries:
-                # Write DN
-                dn_line = f"dn: {entry.dn.value}"
-                output.write(dn_line + "\n")
+                if isinstance(entry, dict):
+                    # Handle dictionary entries
+                    dn_line = f"dn: {entry['dn']}"
+                    output.write(dn_line + "\n")
 
-                # Write attributes with RFC 2849 compliant encoding
-                for attr_name, attr_values in entry.attributes.attributes.items():
-                    # attr_values is AttributeValues, need to access .values property
-                    for value in attr_values.values:
-                        # Format value according to RFC 2849 (base64 if needed)
-                        attr_line = self._format_attribute_value(attr_name, value)
-                        output.write(attr_line + "\n")
+                    # Write attributes
+                    attributes = entry["attributes"]
+                    if isinstance(attributes, dict):
+                        for attr_name, attr_values in attributes.items():
+                            if isinstance(attr_values, list):
+                                for value in attr_values:
+                                    # Format value according to RFC 2849 (base64 if needed)
+                                    attr_line = self._format_attribute_value(
+                                        attr_name, str(value)
+                                    )
+                                    output.write(attr_line + "\n")
+                # Handle Entry objects
+                elif hasattr(entry, "dn") and hasattr(entry, "attributes"):
+                    # This is an Entry object
+                    entry_obj = cast("FlextLdifModels.Entry", entry)
+                    dn_line = f"dn: {entry_obj.dn.value}"
+                    output.write(dn_line + "\n")
+
+                    # Write attributes with RFC 2849 compliant encoding
+                    for (
+                        attr_name,
+                        attr_values,
+                    ) in entry_obj.attributes.attributes.items():
+                        # attr_values is AttributeValues, need to access .values property
+                        for value in attr_values.values:
+                            # Format value according to RFC 2849 (base64 if needed)
+                            attr_line = self._format_attribute_value(attr_name, value)
+                            output.write(attr_line + "\n")
+                else:
+                    # Fallback - shouldn't happen with proper usage
+                    msg = f"Unsupported entry type: {type(entry)}"
+                    raise ValueError(msg)
 
                 # Add blank line after each entry (including last for RFC 2849 compliance)
                 output.write("\n")
@@ -355,13 +377,13 @@ class FlextLdifRfcLdifWriter(FlextCore.Service[FlextCore.Types.Dict]):
 
     def write_entries_to_file(
         self,
-        entries: list[FlextLdifModels.Entry],
+        entries: Sequence[object],
         output_file: Path,
     ) -> FlextCore.Result[None]:
         """Write entries to LDIF file.
 
         Args:
-            entries: List of LDIF entries to write
+            entries: Sequence of LDIF entries to write
             output_file: Path to output file
 
         Returns:
@@ -377,16 +399,39 @@ class FlextLdifRfcLdifWriter(FlextCore.Service[FlextCore.Types.Dict]):
                 f.write("version: 1\n")
 
                 for idx, entry in enumerate(entries):
-                    # Write DN
-                    dn_line = f"dn: {entry.dn.value}"
-                    f.write(dn_line + "\n")
+                    if isinstance(entry, dict):
+                        # Handle dictionary entries
+                        dn_line = f"dn: {entry['dn']}"
+                        f.write(dn_line + "\n")
 
-                    # Write attributes
-                    for attr_name, attr_values in entry.attributes.attributes.items():
-                        # attr_values is AttributeValues, need to access .values property
-                        for value in attr_values.values:
-                            attr_line = f"{attr_name}: {value}"
-                            f.write(attr_line + "\n")
+                        # Write attributes
+                        attributes = entry["attributes"]
+                        if isinstance(attributes, dict):
+                            for attr_name, attr_values in attributes.items():
+                                if isinstance(attr_values, list):
+                                    for value in attr_values:
+                                        attr_line = f"{attr_name}: {value}"
+                                        f.write(attr_line + "\n")
+                    # Handle Entry objects
+                    elif hasattr(entry, "dn") and hasattr(entry, "attributes"):
+                        # This is an Entry object
+                        entry_obj = cast("FlextLdifModels.Entry", entry)
+                        dn_line = f"dn: {entry_obj.dn.value}"
+                        f.write(dn_line + "\n")
+
+                        # Write attributes
+                        for (
+                            attr_name,
+                            attr_values,
+                        ) in entry_obj.attributes.attributes.items():
+                            # attr_values is AttributeValues, need to access .values property
+                            for value in attr_values.values:
+                                attr_line = f"{attr_name}: {value}"
+                                f.write(attr_line + "\n")
+                    else:
+                        # Fallback - shouldn't happen with proper usage
+                        msg = f"Unsupported entry type: {type(entry)}"
+                        raise ValueError(msg)
 
                     # Add blank line between entries (except after last entry)
                     if idx < len(entries) - 1:
@@ -601,7 +646,7 @@ class FlextLdifRfcLdifWriter(FlextCore.Service[FlextCore.Types.Dict]):
                 if not dn:
                     continue
 
-                raw_acl = acl_entry.get("acl", [])
+                raw_acl: object = acl_entry.get("acl", [])
                 acl_definitions: FlextCore.Types.StringList = (
                     self._extract_acl_definitions(raw_acl)
                 )

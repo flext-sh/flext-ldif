@@ -24,36 +24,36 @@ def build_basic_schema() -> None:
     api = FlextLdif.get_instance()
 
     # Access SchemaBuilder through API
-    builder = api.SchemaBuilder(server_type="rfc")
+    builder = api.schema_builder
 
     # Add attribute definitions
     builder.add_attribute(
         name="cn",
         description="Common Name",
-        syntax="1.3.6.1.4.1.1466.115.121.1.15",  # DirectoryString
         single_value=False,
+        syntax="1.3.6.1.4.1.1466.115.121.1.15",  # DirectoryString
     )
 
     builder.add_attribute(
         name="sn",
         description="Surname",
-        syntax="1.3.6.1.4.1.1466.115.121.1.15",
         single_value=False,
+        syntax="1.3.6.1.4.1.1466.115.121.1.15",
     )
 
     builder.add_attribute(
         name="mail",
         description="Email Address",
-        syntax="1.3.6.1.4.1.1466.115.121.1.26",  # IA5String
         single_value=False,
+        syntax="1.3.6.1.4.1.1466.115.121.1.26",  # IA5String
     )
 
     # Add objectClass definition
     builder.add_object_class(
         name="person",
         description="Person object class",
-        superior="top",
         structural=True,
+        superior="top",
         required_attributes=["cn", "sn"],
         optional_attributes=["mail"],
     )
@@ -62,7 +62,7 @@ def build_basic_schema() -> None:
     schema_result = builder.build()
 
     if schema_result.is_success:
-        schema = schema_result.unwrap()
+        schema: dict[str, object] = schema_result.unwrap()
         attributes = schema.get("attributes", {})
         object_classes = schema.get("object_classes", {})
         _ = (attributes, object_classes)
@@ -72,7 +72,7 @@ def build_standard_person_schema() -> None:
     """Build standard person schema using helper method."""
     api = FlextLdif.get_instance()
 
-    builder = api.SchemaBuilder(server_type="rfc")
+    builder = api.schema_builder
 
     # Use standard person schema builder
     schema_result = builder.build_standard_person_schema()
@@ -87,7 +87,7 @@ def build_standard_group_schema() -> None:
     """Build standard group schema using helper method."""
     api = FlextLdif.get_instance()
 
-    builder = api.SchemaBuilder(server_type="rfc")
+    builder = api.schema_builder
 
     # Use standard group schema builder
     schema_result = builder.build_standard_group_schema()
@@ -102,29 +102,29 @@ def build_custom_schema() -> None:
     """Build a custom schema with multiple objectClasses."""
     api = FlextLdif.get_instance()
 
-    builder = api.SchemaBuilder(server_type="rfc")
+    builder = api.schema_builder
 
     # Add custom attributes
     builder.add_attribute(
         name="employeeNumber",
         description="Employee Identifier",
-        syntax="1.3.6.1.4.1.1466.115.121.1.15",
         single_value=True,
+        syntax="1.3.6.1.4.1.1466.115.121.1.15",
     )
 
     builder.add_attribute(
         name="department",
         description="Department Name",
-        syntax="1.3.6.1.4.1.1466.115.121.1.15",
         single_value=False,
+        syntax="1.3.6.1.4.1.1466.115.121.1.15",
     )
 
     # Add custom objectClass
     builder.add_object_class(
         name="employee",
         description="Employee object class",
-        superior="person",
         structural=True,
+        superior="person",
         required_attributes=["employeeNumber"],
         optional_attributes=["department"],
     )
@@ -219,14 +219,14 @@ def validate_single_entry_against_schema() -> None:
         },
     )
 
-    # Validate single entry
+    # Validate single entry against schema
     validation_result = validator.validate_entry_against_schema(entry, schema)
 
     if validation_result.is_success:
-        result = validation_result.unwrap()
+        result: dict[str, object] = validation_result.unwrap()
 
-        is_valid = result.get("is_valid", False)
-        errors = result.get("errors", [])
+        is_valid = result["is_valid"]
+        errors = result["errors"]
 
         _ = (is_valid, errors)
 
@@ -236,7 +236,7 @@ def schema_building_pipeline() -> None:
     api = FlextLdif.get_instance()
 
     # Build schema
-    builder = api.SchemaBuilder(server_type="rfc")
+    builder = api.schema_builder
     schema_result = builder.build_standard_person_schema()
 
     if schema_result.is_failure:
@@ -275,11 +275,12 @@ def work_with_schema_models() -> None:
     # Example: api.models.SchemaAttribute, api.models.SchemaObjectClass
 
     # Build schema using builder (recommended approach)
-    builder = api.SchemaBuilder(server_type="rfc")
+    builder = api.schema_builder
 
     builder.add_attribute(
         name="testAttr",
         description="Test attribute",
+        single_value=False,
         syntax="1.3.6.1.4.1.1466.115.121.1.15",
     )
 
@@ -288,19 +289,21 @@ def work_with_schema_models() -> None:
     if schema_result.is_success:
         schema = schema_result.unwrap()
         # Schema contains attribute definitions
-        _ = schema.get("attributes", {})
+        schema_dict: dict[str, object] = schema
+        _ = schema_dict.get("attributes", {})
 
 
 def reset_and_rebuild_schema() -> None:
     """Demonstrate schema builder reset functionality."""
     api = FlextLdif.get_instance()
 
-    builder = api.SchemaBuilder(server_type="rfc")
+    builder = api.schema_builder
 
     # Build first schema
     builder.add_attribute(
         name="attr1",
         description="First attribute",
+        single_value=False,
         syntax="1.3.6.1.4.1.1466.115.121.1.15",
     )
 
@@ -308,7 +311,10 @@ def reset_and_rebuild_schema() -> None:
 
     if first_schema_result.is_success:
         first_schema = first_schema_result.unwrap()
-        _ = len(first_schema.get("attributes", {}))
+        first_schema_dict: dict[str, object] = first_schema
+        attributes = first_schema_dict.get("attributes", {})
+        if isinstance(attributes, dict):
+            _ = len(attributes)
 
     # Reset builder
     builder.reset()
@@ -317,6 +323,7 @@ def reset_and_rebuild_schema() -> None:
     builder.add_attribute(
         name="attr2",
         description="Second attribute",
+        single_value=False,
         syntax="1.3.6.1.4.1.1466.115.121.1.15",
     )
 
@@ -325,4 +332,7 @@ def reset_and_rebuild_schema() -> None:
     if second_schema_result.is_success:
         second_schema = second_schema_result.unwrap()
         # Second schema only contains attr2
-        _ = len(second_schema.get("attributes", {}))
+        second_schema_dict: dict[str, object] = second_schema
+        attributes = second_schema_dict.get("attributes", {})
+        if isinstance(attributes, dict):
+            _ = len(attributes)

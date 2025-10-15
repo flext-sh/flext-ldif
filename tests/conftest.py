@@ -19,9 +19,15 @@ from flext_core import FlextCore
 from flext_ldif.quirks.registry import FlextLdifQuirksRegistry
 from flext_ldif.rfc.rfc_ldif_parser import FlextLdifRfcLdifParser
 from flext_ldif.rfc.rfc_ldif_writer import FlextLdifRfcLdifWriter
-from tests.fixtures.loader import FlextLdifFixtures
+from tests.fixtures import FlextLdifFixtures
+from tests.test_support import (
+    FileManager,
+    LdifTestData,
+    RealServiceFactory,
+    TestValidators,
+)
 
-from .test_support import FileManager, LdifTestData, RealServiceFactory, TestValidators
+from .fixtures import loader
 
 
 class TestFileManager:
@@ -29,6 +35,7 @@ class TestFileManager:
 
     def __init__(self, temp_dir: Path) -> None:
         """Initialize with temp directory."""
+        super().__init__()
         self.temp_dir = temp_dir
 
     def create_file(self, filename: str, content: str) -> Path:
@@ -456,7 +463,7 @@ def flext_matchers() -> LocalTestMatchers:
 
 # LDIF-specific test data using FlextTests patterns
 @pytest.fixture
-def ldif_test_entries() -> list[FlextCore.Types.Dict]:
+def ldif_test_entries() -> list[dict[str, object]]:
     """Generate LDIF test entries using FlextTests domain patterns."""
     # Create realistic LDIF entries using domain patterns
     # Create test users using FlextTestsDomains patterns
@@ -468,7 +475,7 @@ def ldif_test_entries() -> list[FlextCore.Types.Dict]:
     entries: list[FlextCore.Types.Dict] = []
 
     for i, user in enumerate(users):
-        entry: FlextCore.Types.Dict = {
+        entry: dict[str, object] = {
             "dn": f"uid={user.get('name', 'testuser')}{i},ou=people,dc=example,dc=com",
             "attributes": {
                 "objectClass": ["inetOrgPerson", "person"],
@@ -487,13 +494,16 @@ def ldif_test_entries() -> list[FlextCore.Types.Dict]:
         entries.append(entry)
 
     # Add a group entry
-    group_entry: FlextCore.Types.Dict = {
+    group_entry: dict[str, object] = {
         "dn": "cn=testgroup,ou=groups,dc=example,dc=com",
         "attributes": {
             "objectClass": ["groupOfNames"],
             "cn": ["Test Group"],
             "description": ["Test group for LDIF processing"],
-            "member": [entry["dn"] for entry in entries],
+            "member": [
+                f"uid={user.get('name', 'testuser')}{i},ou=people,dc=example,dc=com"
+                for i, user in enumerate(users)
+            ],
         },
     }
     entries.append(group_entry)
@@ -502,7 +512,7 @@ def ldif_test_entries() -> list[FlextCore.Types.Dict]:
 
 
 @pytest.fixture
-def ldif_test_content(ldif_test_entries: list[FlextCore.Types.Dict]) -> str:
+def ldif_test_content(ldif_test_entries: list[dict[str, object]]) -> str:
     """Generate LDIF content string from test entries."""
     content_lines: FlextCore.Types.StringList = []
 
@@ -620,20 +630,18 @@ def ldif_test_constants() -> LDIFTestConstants:
 
 
 @pytest.fixture
-def fixtures_loader() -> FlextLdifFixtures.Loader:
+def fixtures_loader() -> loader.FlextLdifFixtures.Loader:
     """Generic fixture loader for all LDAP servers.
 
     Returns:
         FlextLdifFixtures.Loader: Generic fixture loader instance
 
     """
-    from tests.fixtures import FlextLdifFixtures
-
-    return FlextLdifFixtures.Loader()
+    return loader.FlextLdifFixtures.Loader()
 
 
 @pytest.fixture
-def oid_fixtures() -> FlextLdifFixtures.OID:
+def oid_fixtures() -> loader.FlextLdifFixtures.OID:
     """Oracle Internet Directory fixture loader.
 
     Returns:
@@ -645,13 +653,11 @@ def oid_fixtures() -> FlextLdifFixtures.OID:
             assert "orclUser" in schema
 
     """
-    from tests.fixtures import FlextLdifFixtures
-
-    return FlextLdifFixtures.OID()
+    return loader.FlextLdifFixtures.OID()
 
 
 @pytest.fixture
-def oid_schema(oid_fixtures: FlextLdifFixtures.OID) -> str:
+def oid_schema(oid_fixtures: loader.FlextLdifFixtures.OID) -> str:
     """OID schema fixtures content.
 
     Returns:
@@ -695,26 +701,22 @@ def oid_integration(oid_fixtures: FlextLdifFixtures.OID) -> str:
 
 
 @pytest.fixture
-def oud_fixtures() -> FlextLdifFixtures.OUD:
+def oud_fixtures() -> loader.FlextLdifFixtures.OUD:
     """Oracle Unified Directory fixture loader.
 
     Returns:
         FlextLdifFixtures.OUD: OUD-specific fixture loader instance
 
     """
-    from tests.fixtures import FlextLdifFixtures
-
-    return FlextLdifFixtures.OUD()
+    return loader.FlextLdifFixtures.OUD()
 
 
 @pytest.fixture
-def openldap_fixtures() -> FlextLdifFixtures.OpenLDAP:
+def openldap_fixtures() -> loader.FlextLdifFixtures.OpenLDAP:
     """OpenLDAP fixture loader.
 
     Returns:
         FlextLdifFixtures.OpenLDAP: OpenLDAP-specific fixture loader instance
 
     """
-    from tests.fixtures import FlextLdifFixtures
-
-    return FlextLdifFixtures.OpenLDAP()
+    return loader.FlextLdifFixtures.OpenLDAP()

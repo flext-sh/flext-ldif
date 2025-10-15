@@ -42,7 +42,7 @@ aci: (target="ldap:///ou=People,dc=example,dc=com")(targetattr="*")(version 3.0;
     entry = entries[0]
 
     # Access AclService through API
-    acl_service = api.AclService()
+    acl_service = api.acl_service
 
     # Extract ACLs from entry
     acl_result = acl_service.extract_acls_from_entry(entry)
@@ -57,7 +57,7 @@ def create_acl_rules() -> None:
     """Create different types of ACL rules."""
     api = FlextLdif.get_instance()
 
-    acl_service = api.AclService()
+    acl_service = api.acl_service
 
     # Create permission rule (single permission)
     _permission_rule = acl_service.create_permission_rule(
@@ -106,7 +106,7 @@ aci: (target="ldap:///ou=People,dc=example,dc=com")(targetattr="*")(version 3.0;
 
     entry = entries[0]
 
-    acl_service = api.AclService()
+    acl_service = api.acl_service
 
     # Extract and parse ACLs
     acl_result = acl_service.extract_acls_from_entry(entry)
@@ -126,7 +126,7 @@ def work_with_acl_components() -> None:
     """Work with ACL components (helper classes)."""
     api = FlextLdif.get_instance()
 
-    acl_service = api.AclService()
+    acl_service = api.acl_service
 
     # Create permission rule with specific permission
     _permission = acl_service.create_permission_rule(
@@ -185,7 +185,7 @@ sn: test
 
     entries = parse_result.unwrap()
 
-    acl_service = api.AclService()
+    acl_service = api.acl_service
 
     # Process each entry for ACLs
     for entry in entries:
@@ -210,9 +210,11 @@ def execute_acl_service() -> None:
             "objectClass": ["organizationalUnit"],
             "ou": ["Test"],
             "aci": [
-                '(target="ldap:///ou=Test,dc=example,dc=com")'
-                '(targetattr="*")'
-                '(version 3.0; acl "Test ACL"; allow (read) userdn="ldap:///anyone";)'
+                (
+                    '(target="ldap:///ou=Test,dc=example,dc=com")'
+                    '(targetattr="*")'
+                    '(version 3.0; acl "Test ACL"; allow (read) userdn="ldap:///anyone";)'
+                )
             ],
         },
     )
@@ -221,7 +223,7 @@ def execute_acl_service() -> None:
         return
     entry_result.unwrap()
 
-    acl_service = api.AclService()
+    acl_service = api.acl_service
 
     # Execute service (no parameters needed)
     exec_result = acl_service.execute()
@@ -256,7 +258,7 @@ aci: (target="ldap:///ou=Pipeline,dc=example,dc=com")(targetattr="*")(version 3.
     entry = entries[0]
 
     # Extract ACLs
-    acl_service = api.AclService()
+    acl_service = api.acl_service
     acl_result = acl_service.extract_acls_from_entry(entry)
 
     if acl_result.is_failure:
@@ -306,7 +308,7 @@ sn: test
     entries = parse_result.unwrap()
 
     # Find entries with ACL attributes
-    acl_service = api.AclService()
+    acl_service = api.acl_service
     entries_with_acls = []
 
     for entry in entries:

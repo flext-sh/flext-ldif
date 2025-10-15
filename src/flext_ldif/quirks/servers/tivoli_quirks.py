@@ -493,7 +493,7 @@ class FlextLdifQuirksServersTivoli(FlextLdifQuirksBaseSchemaQuirk):
                     FlextLdifConstants.DictKeys.TARGET_FORMAT: "ibm-slapdaccesscontrol",
                     FlextLdifConstants.DictKeys.DATA: acl_data,
                 }
-                return FlextCore.Result[FlextLdifTypes.Dict].ok(tivoli_acl)
+                return FlextCore.Result[FlextCore.Types.Dict].ok(tivoli_acl)
 
             except Exception as exc:  # pragma: no cover
                 return FlextCore.Result[FlextLdifTypes.Dict].fail(

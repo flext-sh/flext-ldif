@@ -17,7 +17,7 @@ from flext_ldif.quirks.manager import FlextLdifQuirksManager
 from flext_ldif.typings import FlextLdifTypes
 
 
-class FlextLdifEntryQuirks(FlextCore.Service[FlextCore.Types.Dict]):
+class FlextLdifEntryQuirks(FlextCore.Service[FlextLdifTypes.Dict]):
     """Entry adaptation and validation for server-specific quirks."""
 
     @override

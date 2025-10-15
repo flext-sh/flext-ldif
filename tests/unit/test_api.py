@@ -13,7 +13,8 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from tests.test_support.ldif_data import LdifTestData
+from flext_core import FlextCore
+from tests.test_support import LdifTestData
 
 from flext_ldif import FlextLdif
 from flext_ldif.models import FlextLdifModels

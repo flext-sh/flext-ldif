@@ -16,8 +16,6 @@ Original: 246 lines | Optimized: ~130 lines (47% reduction)
 
 from __future__ import annotations
 
-from typing import cast
-
 from flext_core import FlextCore
 
 from flext_ldif import FlextLdif
@@ -55,10 +53,22 @@ def validate_entries_example() -> None:
         return
 
     report = validation_result.unwrap()
+    errors_count = 0
+    if report.get("errors"):
+        errors_list = report.get("errors", [])
+        if isinstance(errors_list, list):
+            errors_count = len(errors_list)
+
+    warnings_count = 0
+    if report.get("warnings"):
+        warnings_list = report.get("warnings", [])
+        if isinstance(warnings_list, list):
+            warnings_count = len(warnings_list)
+
     result_msg = (
         f"Valid: {report.get('is_valid', False)}, "
-        f"Errors: {report.get('error_count', 0)}, "
-        f"Warnings: {report.get('warning_count', 0)}"
+        f"Errors: {errors_count}, "
+        f"Warnings: {warnings_count}"
     )
     print(result_msg)
 
@@ -198,16 +208,18 @@ member: cn=Person1,ou=People,dc=example,dc=com
 
     if result.is_success:
         stats = result.unwrap()
-        objectclass_dist = cast(
-            "dict[str, int]", stats.get("objectclass_distribution", {})
-        )
+        objectclass_dist_raw = stats.get("objectclass_distribution", {})
+        if isinstance(objectclass_dist_raw, dict):
+            objectclass_dist = objectclass_dist_raw
 
-        # Parse once, filter multiple times - library handles iteration
-        entries = api.parse(ldif_content).unwrap_or([])
-        for objectclass in objectclass_dist:
-            objectclass_str = str(objectclass)
-            filtered = api.filter_by_objectclass(entries, objectclass_str).unwrap_or([])
-            print(f"{objectclass_str}: {len(filtered)} entries")
+            # Parse once, filter multiple times - library handles iteration
+            entries = api.parse(ldif_content).unwrap_or([])
+            for objectclass in objectclass_dist:
+                objectclass_str = str(objectclass)
+                filtered = api.filter_by_objectclass(
+                    entries, objectclass_str
+                ).unwrap_or([])
+                print(f"{objectclass_str}: {len(filtered)} entries")
 
 
 if __name__ == "__main__":

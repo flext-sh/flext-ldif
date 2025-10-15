@@ -23,6 +23,8 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import Literal, cast
 
+from flext_core import FlextCore
+
 from flext_ldif.quirks.base import (
     FlextLdifQuirksBaseAclQuirk,
     FlextLdifQuirksBaseSchemaQuirk,

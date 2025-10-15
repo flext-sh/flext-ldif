@@ -153,9 +153,9 @@ member: cn=Alice Johnson,ou=People,dc=example,dc=com
         _ = validation_result.error
         return
 
-    validation_report = validation_result.unwrap()
+    validation_report: dict[str, object] = validation_result.unwrap()
 
-    if not validation_report.get("is_valid", False):
+    if not validation_report.get("is_valid"):
         _ = validation_report.get("errors", [])
         return
 
@@ -167,7 +167,8 @@ member: cn=Alice Johnson,ou=People,dc=example,dc=com
         return
 
     stats = analysis_result.unwrap()
-    _ = stats.get("total_entries", 0)
+    stats_dict: dict[str, object] = stats
+    _ = stats_dict.get("total_entries", 0)
 
     # Step 4: Write validated entries to file
     output_path = Path("examples/workflow_output.ldif")
@@ -226,7 +227,7 @@ mail: migration@example.com
         _ = migration_result.error
         return
 
-    migration_stats = migration_result.unwrap()
+    migration_stats: dict[str, object] = migration_result.unwrap()
 
     # Step 4: Verify migrated data
     migrated_files = migration_stats.get("output_files", [])
@@ -498,9 +499,9 @@ cn: test
         _ = validation_result.error
         return
 
-    validation_report = validation_result.unwrap()
+    validation_report: dict[str, object] = validation_result.unwrap()
 
-    if not validation_report.get("is_valid", False):
+    if not validation_report.get("is_valid"):
         # Handle validation errors and attempt recovery by fixing entries
         for entry in entries:
             # Add missing required attribute
@@ -518,7 +519,8 @@ cn: test
 
         if retry_result.is_success:
             retry_report = retry_result.unwrap()
-            _ = retry_report.get("is_valid", False)
-    else:
-        # All entries valid
-        _ = entries
+            retry_report_dict: dict[str, object] = retry_report
+            _ = retry_report_dict.get("is_valid", False)
+        else:
+            # All entries valid
+            _ = entries

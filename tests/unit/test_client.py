@@ -17,7 +17,7 @@ from typing import cast
 from unittest.mock import patch
 
 import pytest
-from flext_core.result import FlextCore
+from flext_core import FlextCore
 
 from flext_ldif.client import FlextLdifClient
 
@@ -29,8 +29,10 @@ def mock_client() -> FlextLdifClient:
     Bypasses the pre-existing initialization issues to test utility methods in isolation.
     """
     with patch.object(FlextLdifClient, "model_post_init", return_value=None):
-        # Initialize only what's needed for utility methods (nothing)
-        return cast("FlextLdifClient", object.__new__(FlextLdifClient))
+        # Cast is necessary: object.__new__() returns object, not FlextLdifClient
+        # Pyright incorrectly flags this as unnecessary, but Pyrefly requires it
+        # Do not remove: both type checkers need this for correctness
+        return object.__new__(FlextLdifClient)
 
 
 class TestDetectEncoding:

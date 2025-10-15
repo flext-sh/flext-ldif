@@ -1038,6 +1038,32 @@ class FlextLdif(FlextCore.Service[FlextCore.Types.Dict]):
         """
         return self._processors
 
+    @property
+    def schema_builder(self) -> FlextLdifSchemaBuilder:
+        """Access to FlextLdifSchemaBuilder for schema operations.
+
+        Returns:
+            FlextLdifSchemaBuilder instance for building and managing schemas
+
+        Example:
+            schema = ldif.schema_builder.build_standard_person_schema()
+
+        """
+        return self._schema_builder
+
+    @property
+    def acl_service(self) -> FlextLdifAclService:
+        """Access to FlextLdifAclService for ACL operations.
+
+        Returns:
+            FlextLdifAclService instance for ACL processing
+
+        Example:
+            acls = ldif.acl_service.extract_acls_from_entry(entry)
+
+        """
+        return self._ldif_container.acl_service()
+
     # =========================================================================
 
 

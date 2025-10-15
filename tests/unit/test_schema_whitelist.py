@@ -16,7 +16,7 @@ from typing import Final
 import pytest
 from flext_core import FlextCore
 
-from flext_ldif.filters import matches_oid_pattern
+from flext_ldif.filters import FlextLdifFilters
 from flext_ldif.quirks.manager import FlextLdifQuirksManager
 from flext_ldif.schema_whitelist import FlextLdifSchemaWhitelistService
 
@@ -339,7 +339,7 @@ class TestWhitelistRules:
 class TestOidPatternMatching:
     """Test OID pattern matching logic with wildcards."""
 
-    def test_matches_oid_pattern_exact_match(
+    def test_flext_ldif_filters_matches_oid_pattern_exact_match(
         self, temp_schema_file: Path, whitelist_rules: FlextCore.Types.Dict
     ) -> None:
         """Test exact OID matching."""
@@ -348,12 +348,12 @@ class TestOidPatternMatching:
             whitelist_rules=whitelist_rules,
         )
 
-        from flext_ldif.filters import matches_oid_pattern
-
-        matches = matches_oid_pattern("2.5.4.3", ["2.5.4.3", "2.5.4.4"])
+        matches = FlextLdifFilters.matches_oid_pattern(
+            "2.5.4.3", ["2.5.4.3", "2.5.4.4"]
+        )
         assert matches is True
 
-    def test_matches_oid_pattern_wildcard_match(
+    def test_flext_ldif_filters_matches_oid_pattern_wildcard_match(
         self, temp_schema_file: Path, whitelist_rules: FlextCore.Types.Dict
     ) -> None:
         """Test wildcard OID pattern matching."""
@@ -362,13 +362,13 @@ class TestOidPatternMatching:
             whitelist_rules=whitelist_rules,
         )
 
-        matches = matches_oid_pattern("2.5.4.3", ["2.5.4.*"])
+        matches = FlextLdifFilters.matches_oid_pattern("2.5.4.3", ["2.5.4.*"])
         assert matches is True
 
-        matches = matches_oid_pattern("2.5.4.999", ["2.5.4.*"])
+        matches = FlextLdifFilters.matches_oid_pattern("2.5.4.999", ["2.5.4.*"])
         assert matches is True
 
-    def test_matches_oid_pattern_no_match(
+    def test_flext_ldif_filters_matches_oid_pattern_no_match(
         self, temp_schema_file: Path, whitelist_rules: FlextCore.Types.Dict
     ) -> None:
         """Test OID pattern no match."""
@@ -377,10 +377,12 @@ class TestOidPatternMatching:
             whitelist_rules=whitelist_rules,
         )
 
-        matches = matches_oid_pattern("9.9.9.9", ["2.5.4.*", "2.5.6.*"])
+        matches = FlextLdifFilters.matches_oid_pattern(
+            "9.9.9.9", ["2.5.4.*", "2.5.6.*"]
+        )
         assert matches is False
 
-    def test_matches_oid_pattern_partial_wildcard(
+    def test_flext_ldif_filters_matches_oid_pattern_partial_wildcard(
         self, temp_schema_file: Path, whitelist_rules: FlextCore.Types.Dict
     ) -> None:
         """Test partial wildcard OID pattern matching."""
@@ -389,28 +391,26 @@ class TestOidPatternMatching:
             whitelist_rules=whitelist_rules,
         )
 
-        from flext_ldif.filters import matches_oid_pattern
-
         # 2.5.4.3 should NOT match 2.5.* because it requires full prefix
-        matches = matches_oid_pattern("2.5.4.3", ["2.5.*"])
+        matches = FlextLdifFilters.matches_oid_pattern("2.5.4.3", ["2.5.*"])
         assert matches is True
 
         # But 2.6.4.3 should NOT match 2.5.*
-        matches = matches_oid_pattern("2.6.4.3", ["2.5.*"])
+        matches = FlextLdifFilters.matches_oid_pattern("2.6.4.3", ["2.5.*"])
         assert matches is False
 
-    def test_matches_oid_pattern_empty_patterns(
-        self, temp_schema_file: Path, whitelist_rules: FlextCore.Types.Dict
+    def test_flext_ldif_filters_matches_oid_pattern_empty_patterns(
+        self, temp_schema_file: Path
     ) -> None:
         """Test OID pattern matching with empty patterns list."""
+        # Create a basic whitelist service for testing
+        basic_whitelist: FlextCore.Types.Dict = {"attributes": {}, "objectclasses": {}}
         FlextLdifSchemaWhitelistService(
             schema_file=temp_schema_file,
-            whitelist_rules=whitelist_rules,
+            whitelist_rules=basic_whitelist,
         )
 
-        from flext_ldif.filters import matches_oid_pattern
-
-        matches = matches_oid_pattern("2.5.4.3", [])
+        matches = FlextLdifFilters.matches_oid_pattern("2.5.4.3", [])
         assert matches is False
 
 
