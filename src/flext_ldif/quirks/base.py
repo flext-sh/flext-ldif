@@ -55,7 +55,7 @@ class FlextLdifQuirksBaseSchemaQuirk(ABC, FlextModels.Value):
         if not hasattr(cls, "__abstractmethods__") or not cls.__abstractmethods__:
             try:
                 # Import here to avoid circular dependency
-                from flext_ldif.quirks.registry import (  # noqa: PLC0415
+                from flext_ldif.quirks.registry import (
                     FlextLdifQuirksRegistry,
                 )
 
@@ -70,7 +70,7 @@ class FlextLdifQuirksBaseSchemaQuirk(ABC, FlextModels.Value):
 
                 registry = FlextLdifQuirksRegistry.get_global_instance()
                 registry.register_schema_quirk(quirk_instance)
-            except Exception:  # noqa: S110
+            except Exception:
                 # Intentionally silent: Class definition should never fail
                 # Registration is optional during class creation
                 pass
@@ -239,7 +239,7 @@ class FlextLdifQuirksBaseAclQuirk(ABC, FlextModels.Value):
         if not hasattr(cls, "__abstractmethods__") or not cls.__abstractmethods__:
             try:
                 # Import here to avoid circular dependency
-                from flext_ldif.quirks.registry import (  # noqa: PLC0415
+                from flext_ldif.quirks.registry import (
                     FlextLdifQuirksRegistry,
                 )
 
@@ -254,7 +254,7 @@ class FlextLdifQuirksBaseAclQuirk(ABC, FlextModels.Value):
 
                 registry = FlextLdifQuirksRegistry.get_global_instance()
                 registry.register_acl_quirk(quirk_instance)
-            except Exception:  # noqa: S110
+            except Exception:
                 # Intentionally silent: Class definition should never fail
                 # Registration is optional during class creation
                 pass
@@ -359,7 +359,7 @@ class FlextLdifQuirksBaseEntryQuirk(ABC, FlextModels.Value):
         if not hasattr(cls, "__abstractmethods__") or not cls.__abstractmethods__:
             try:
                 # Import here to avoid circular dependency
-                from flext_ldif.quirks.registry import (  # noqa: PLC0415
+                from flext_ldif.quirks.registry import (
                     FlextLdifQuirksRegistry,
                 )
 
@@ -374,7 +374,7 @@ class FlextLdifQuirksBaseEntryQuirk(ABC, FlextModels.Value):
 
                 registry = FlextLdifQuirksRegistry.get_global_instance()
                 registry.register_entry_quirk(quirk_instance)
-            except Exception:  # noqa: S110
+            except Exception:
                 # Intentionally silent: Class definition should never fail
                 # Registration is optional during class creation
                 pass

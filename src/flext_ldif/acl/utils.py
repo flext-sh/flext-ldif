@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from flext_core import FlextResult, FlextUtilities
 
+from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 
 
@@ -87,8 +88,10 @@ class FlextLdifAclUtils(FlextUtilities):
             permissions: FlextLdifModels.AclPermissions,
             server_type: str,
             raw_acl: str,
-        ) -> FlextResult[FlextLdifModels.Acl]:
+        ) -> FlextResult[FlextLdifModels.AclBase]:
             """Create unified ACL with proper validation using railway pattern.
+
+            Uses discriminated union pattern to route to correct ACL subtype based on server_type.
 
             Args:
                 name: ACL name
@@ -99,11 +102,25 @@ class FlextLdifAclUtils(FlextUtilities):
                 raw_acl: Original ACL string
 
             Returns:
-                FlextResult containing Acl on success, failure otherwise.
+                FlextResult containing _AclBase subtype on success, failure otherwise.
 
             """
-            acl_result = FlextResult.ok(
-                FlextLdifModels.Acl(
+            try:
+                # Map server_type to correct ACL subclass
+                acl_class_map = {
+                    FlextLdifConstants.LdapServers.OPENLDAP: FlextLdifModels.OpenLdapAcl,
+                    FlextLdifConstants.LdapServers.OPENLDAP_2: FlextLdifModels.OpenLdap2Acl,
+                    FlextLdifConstants.LdapServers.OPENLDAP_1: FlextLdifModels.OpenLdap1Acl,
+                    FlextLdifConstants.LdapServers.ORACLE_OID: FlextLdifModels.OracleOidAcl,
+                    FlextLdifConstants.LdapServers.ORACLE_OUD: FlextLdifModels.OracleOudAcl,
+                    FlextLdifConstants.LdapServers.DS_389: FlextLdifModels.Ds389Acl,
+                }
+
+                # Default to OpenLDAP for generic/unknown server types
+                acl_class = acl_class_map.get(server_type, FlextLdifModels.OpenLdapAcl)
+
+                # Create ACL using the determined subclass
+                unified_acl = acl_class(
                     name=name,
                     target=target,
                     subject=subject,
@@ -111,16 +128,16 @@ class FlextLdifAclUtils(FlextUtilities):
                     server_type=server_type,
                     raw_acl=raw_acl,
                 )
-            )
 
-            if acl_result.is_failure:
-                return FlextResult.fail(f"Failed to create Acl: {acl_result.error}")
+                # Verify created instance is correct type
+                if not isinstance(unified_acl, FlextLdifModels.AclBase):
+                    return FlextResult[FlextLdifModels.AclBase].fail(
+                        "Created object is not an AclBase instance"
+                    )
 
-            unified_acl = acl_result.unwrap()
-            if not isinstance(unified_acl, FlextLdifModels.Acl):
-                return FlextResult.fail("Created object is not a Acl instance")
-
-            return FlextResult.ok(unified_acl)
+                return FlextResult[FlextLdifModels.AclBase].ok(unified_acl)
+            except Exception as e:  # pragma: no cover
+                return FlextResult[FlextLdifModels.AclBase].fail(f"Failed to create ACL: {e}")
 
 
 __all__ = ["FlextLdifAclUtils"]

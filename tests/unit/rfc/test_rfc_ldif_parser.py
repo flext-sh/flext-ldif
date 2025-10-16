@@ -1646,21 +1646,21 @@ class TestRfcLdifWriterAclSupport:
 
     def test_execute_with_acl_entries(self, tmp_path: Path) -> None:
         """Test execute() writing ACL entries."""
-        acl_entry = FlextLdifModels.Acl(
+        acl = FlextLdifModels.OpenLdapAcl(
             name="test_acl",
             target=FlextLdifModels.AclTarget(target_dn="dc=example,dc=com"),
             subject=FlextLdifModels.AclSubject(
                 subject_type="user", subject_value="cn=admin"
             ),
             permissions=FlextLdifModels.AclPermissions(read=True, write=True),
-            server_type="generic",
+            server_type="openldap",
             raw_acl="access to * by * read",
         )
 
         output_file = tmp_path / "acls.ldif"
         registry = FlextLdifQuirksRegistry()
         params: FlextTypes.Dict = {
-            "acls": [acl_entry],
+            "acls": [acl],
             "output_file": str(output_file),
         }
         writer = FlextLdifRfcLdifWriter(params=params, quirk_registry=registry)

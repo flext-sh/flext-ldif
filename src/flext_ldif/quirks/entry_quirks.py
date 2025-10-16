@@ -7,7 +7,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Any, override
+from typing import override
 
 from flext_core import FlextResult, FlextService, FlextTypes
 
@@ -33,7 +33,7 @@ class FlextLdifEntryQuirks(FlextService[FlextLdifTypes.Dict]):
         self._quirks = quirks_manager or FlextLdifQuirksManager()
 
     @override
-    def execute(self: Any) -> FlextResult[FlextTypes.Dict]:
+    def execute(self) -> FlextResult[FlextTypes.Dict]:
         """Execute entry quirks service."""
         return FlextResult[FlextTypes.Dict].ok({
             "service": FlextLdifEntryQuirks,
@@ -140,7 +140,7 @@ class FlextLdifEntryQuirks(FlextService[FlextLdifTypes.Dict]):
         ldif_attributes = FlextLdifModels.LdifAttributes(attributes=adapted_attrs)
 
         # Type narrowing: Extract DN with proper type (stored on line 77 as DistinguishedName)
-        dn_value: Any = adapted_data[FlextLdifConstants.DictKeys.DN]
+        dn_value: object = adapted_data[FlextLdifConstants.DictKeys.DN]
         if not isinstance(dn_value, (FlextLdifModels.DistinguishedName, str)):
             return FlextResult[FlextLdifModels.Entry].fail(
                 f"Invalid DN type in adapted_data: {type(dn_value).__name__}"
@@ -249,7 +249,7 @@ class FlextLdifEntryQuirks(FlextService[FlextLdifTypes.Dict]):
             if isinstance(dn_issues, list):
                 issues.extend(dn_issues)
 
-        obj_classes_raw: Any = entry.get_attribute_values(
+        obj_classes_raw: object = entry.get_attribute_values(
             FlextLdifConstants.DictKeys.OBJECTCLASS
         )
         obj_classes: FlextLdifTypes.StringList = (
@@ -365,27 +365,45 @@ class FlextLdifEntryQuirks(FlextService[FlextLdifTypes.Dict]):
         # Normalize server type for matching (case-insensitive)
         server_lower = server_type.lower()
 
-        # Add server-specific operational attributes
+        # Add server-specific operational attributes using ServerTypes constants
         # Check more specific patterns first to avoid substring matches
-        if "openldap" in server_lower:
+        # Use ServerTypes constants instead of string literals
+        if (
+            server_lower == FlextLdifConstants.ServerTypes.OPENLDAP.lower()
+            or server_lower == FlextLdifConstants.ServerTypes.OPENLDAP1.lower()
+            or server_lower == FlextLdifConstants.ServerTypes.OPENLDAP2.lower()
+            or FlextLdifConstants.LdapServers.OPENLDAP in server_lower
+        ):
             operational_attrs |= (
                 FlextLdifConstants.OperationalAttributes.OPENLDAP_SPECIFIC
             )
-        elif "oracle_oid" in server_lower or server_lower == "oid":
+        elif (
+            server_lower == FlextLdifConstants.ServerTypes.OID.lower()
+            or FlextLdifConstants.LdapServers.ORACLE_OID in server_lower
+        ):
             operational_attrs |= FlextLdifConstants.OperationalAttributes.OID_SPECIFIC
-        elif "oracle_oud" in server_lower or server_lower == "oud":
+        elif (
+            server_lower == FlextLdifConstants.ServerTypes.OUD.lower()
+            or FlextLdifConstants.LdapServers.ORACLE_OUD in server_lower
+        ):
             operational_attrs |= FlextLdifConstants.OperationalAttributes.OUD_SPECIFIC
-        elif "389" in server_lower or "ds_389" in server_lower:
+        elif (
+            server_lower == FlextLdifConstants.ServerTypes.DS_389.lower()
+            or FlextLdifConstants.LdapServers.DS_389 in server_lower
+        ):
             operational_attrs |= (
                 FlextLdifConstants.OperationalAttributes.DS_389_SPECIFIC
             )
-        elif "active_directory" in server_lower or server_lower == "ad":
+        elif (
+            server_lower == FlextLdifConstants.ServerTypes.AD.lower()
+            or FlextLdifConstants.LdapServers.ACTIVE_DIRECTORY in server_lower
+        ):
             operational_attrs |= FlextLdifConstants.OperationalAttributes.AD_SPECIFIC
-        elif "novell" in server_lower or "edirectory" in server_lower:
+        elif FlextLdifConstants.LdapServers.NOVELL_EDIRECTORY in server_lower:
             operational_attrs |= (
                 FlextLdifConstants.OperationalAttributes.NOVELL_SPECIFIC
             )
-        elif "ibm" in server_lower or "tivoli" in server_lower:
+        elif FlextLdifConstants.LdapServers.IBM_TIVOLI in server_lower:
             operational_attrs |= (
                 FlextLdifConstants.OperationalAttributes.IBM_TIVOLI_SPECIFIC
             )

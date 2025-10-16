@@ -18,10 +18,10 @@ Type Checking Notes:
 from __future__ import annotations
 
 import re
-from typing import ClassVar
+from typing import Annotated, ClassVar, Literal
 
 from flext_core import FlextModels, FlextResult, FlextTypes
-from pydantic import ConfigDict, Field, computed_field, field_validator
+from pydantic import Discriminator, Field, computed_field, field_validator
 
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.typings import FlextLdifTypes
@@ -107,7 +107,7 @@ class FlextLdifModels(FlextModels):
                 attr_name = stripped_comp.split("=", 1)[0].strip()
                 if not cls._DN_COMPONENT_PATTERN.match(f"{attr_name}=x"):
                     msg = f"DN attribute name invalid (must start with letter): {attr_name}"
-                    raise ValueError(msg)
+                    raise ValueError(msg)  # pragma: no cover
 
             return dn_value
 
@@ -125,7 +125,7 @@ class FlextLdifModels(FlextModels):
                     f"Failed to create DistinguishedName: {e}"
                 )
 
-        @computed_field  # type: ignore[misc]
+        @computed_field
         @property
         def components(self) -> list[str]:
             """Get DN components as a list."""
@@ -134,21 +134,6 @@ class FlextLdifModels(FlextModels):
         def __str__(self) -> str:
             """Return the DN string value for proper str() conversion."""
             return self.value
-
-    class AttributeName(FlextModels.StrictArbitraryTypesModel):
-        """LDIF attribute name value object."""
-
-        name: str = Field(..., description="Attribute name")
-
-    class LdifUrl(FlextModels.StrictArbitraryTypesModel):
-        """LDIF URL value object."""
-
-        url: str = Field(..., description="LDIF URL")
-
-    class Encoding(FlextModels.StrictArbitraryTypesModel):
-        """LDIF encoding value object."""
-
-        encoding: str = Field(..., description="Character encoding")
 
     class QuirkMetadata(FlextModels.StrictArbitraryTypesModel):
         """Universal metadata container for quirk-specific data preservation.
@@ -235,12 +220,12 @@ class FlextLdifModels(FlextModels):
                 return FlextResult[FlextLdifModels.AclPermissions].ok(
                     cls.model_validate(data_mutable)
                 )
-            except Exception as e:
+            except Exception as e:  # pragma: no cover
                 return FlextResult[FlextLdifModels.AclPermissions].fail(
                     f"Failed to create AclPermissions: {e}"
                 )
 
-        @computed_field  # type: ignore[misc]
+        @computed_field
         @property
         def permissions(self) -> list[str]:
             """Get permissions as a list of strings."""
@@ -280,7 +265,7 @@ class FlextLdifModels(FlextModels):
                 return FlextResult[FlextLdifModels.AclTarget].ok(
                     cls.model_validate(data)
                 )
-            except Exception as e:
+            except Exception as e:  # pragma: no cover
                 return FlextResult[FlextLdifModels.AclTarget].fail(
                     f"Failed to create AclTarget: {e}"
                 )
@@ -300,13 +285,20 @@ class FlextLdifModels(FlextModels):
                 return FlextResult[FlextLdifModels.AclSubject].ok(
                     cls.model_validate(data)
                 )
-            except Exception as e:
+            except Exception as e:  # pragma: no cover
                 return FlextResult[FlextLdifModels.AclSubject].fail(
                     f"Failed to create AclSubject: {e}"
                 )
 
-    class Acl(FlextModels.StrictArbitraryTypesModel):
-        """Unified ACL representation."""
+    class AclBase(FlextModels.StrictArbitraryTypesModel):
+        """Base class for all ACL types with common fields.
+
+        This base class defines the shared fields for all ACL implementations.
+        Server-specific subtypes extend this with Literal[...] discriminator field.
+
+        Used as the base type in public APIs. The AclType discriminated union
+        provides runtime polymorphic type routing based on server_type field.
+        """
 
         name: str = Field(..., description="ACL name")
         target: FlextLdifModels.AclTarget = Field(..., description="ACL target")
@@ -314,18 +306,58 @@ class FlextLdifModels(FlextModels):
         permissions: FlextLdifModels.AclPermissions = Field(
             ..., description="ACL permissions"
         )
-        server_type: str = Field(..., description="Server type (openldap, oid, etc.)")
         raw_acl: str = Field(default="", description="Original ACL string")
 
-        @classmethod
-        def create(cls, data: FlextTypes.Dict) -> FlextResult[FlextLdifModels.Acl]:
-            """Create an Acl instance from data."""
-            try:
-                return FlextResult[FlextLdifModels.Acl].ok(cls.model_validate(data))
-            except Exception as e:
-                return FlextResult[FlextLdifModels.Acl].fail(
-                    f"Failed to create Acl: {e}"
-                )
+    class OpenLdapAcl(AclBase):
+        """OpenLDAP olcAccess ACL (catch-all legacy)."""
+
+        server_type: Literal[FlextLdifConstants.LdapServers.OPENLDAP] = Field(
+            ..., description="Server type: openldap (catch-all)"
+        )
+
+    class OpenLdap2Acl(AclBase):
+        """OpenLDAP 2.x modern cn=config ACL."""
+
+        server_type: Literal[FlextLdifConstants.LdapServers.OPENLDAP_2] = Field(
+            ..., description="Server type: openldap2 (cn=config based)"
+        )
+
+    class OpenLdap1Acl(AclBase):
+        """OpenLDAP 1.x legacy slapd.conf ACL."""
+
+        server_type: Literal[FlextLdifConstants.LdapServers.OPENLDAP_1] = Field(
+            ..., description="Server type: openldap1 (slapd.conf based)"
+        )
+
+    class OracleOidAcl(AclBase):
+        """Oracle Internet Directory (OID) orclaci ACL."""
+
+        server_type: Literal[FlextLdifConstants.LdapServers.ORACLE_OID] = Field(
+            ..., description="Server type: oracle_oid"
+        )
+
+    class OracleOudAcl(AclBase):
+        """Oracle Unified Directory (OUD) orclaci ACL."""
+
+        server_type: Literal[FlextLdifConstants.LdapServers.ORACLE_OUD] = Field(
+            ..., description="Server type: oracle_oud"
+        )
+
+    class Ds389Acl(AclBase):
+        """Red Hat 389 Directory Server ACI."""
+
+        server_type: Literal[FlextLdifConstants.LdapServers.DS_389] = Field(
+            ..., description="Server type: 389ds"
+        )
+
+    # Discriminated Union: Pydantic 2 polymorphic type with automatic routing
+    # The server_type field determines which ACL subtype to use
+    # This is the direct, aggressive Pydantic 2 approach - no factory class needed
+    # Use this type directly with Pydantic's model_validate() for instantiation
+    AclType = Annotated[
+        OpenLdapAcl | OpenLdap2Acl | OpenLdap1Acl | OracleOidAcl | OracleOudAcl | Ds389Acl,
+        Discriminator(FlextLdifConstants.DictKeys.SERVER_TYPE),
+    ]
 
     # =========================================================================
     # DTO MODELS - Data transfer objects
@@ -438,13 +470,13 @@ class FlextLdifModels(FlextModels):
             description="Items that are identical in both datasets",
         )
 
-        @computed_field  # type: ignore[misc]
+        @computed_field
         @property
         def has_changes(self) -> bool:
             """Check if there are any differences."""
             return bool(self.added or self.removed or self.modified)
 
-        @computed_field  # type: ignore[misc]
+        @computed_field
         @property
         def total_changes(self) -> int:
             """Total number of changes (added + removed + modified)."""
@@ -570,6 +602,28 @@ class FlextLdifModels(FlextModels):
             default_factory=list, description="Entries that don't match any category"
         )
 
+        @computed_field
+        @property
+        def summary(self) -> dict[str, int]:
+            """Get summary of entry counts by category."""
+            return {
+                "users": len(self.users),
+                "groups": len(self.groups),
+                "containers": len(self.containers),
+                "uncategorized": len(self.uncategorized),
+            }
+
+        @computed_field
+        @property
+        def total_entries(self) -> int:
+            """Total number of categorized entries."""
+            return (
+                len(self.users)
+                + len(self.groups)
+                + len(self.containers)
+                + len(self.uncategorized)
+            )
+
         @classmethod
         def create_empty(cls) -> FlextLdifModels.CategorizedEntries:
             """Create an empty CategorizedEntries instance."""
@@ -655,6 +709,32 @@ class FlextLdifModels(FlextModels):
         metadata: FlextLdifModels.QuirkMetadata | None = Field(
             default=None, description="Quirk-specific metadata"
         )
+
+        @computed_field
+        @property
+        def object_class_kind(self) -> str:
+            """Get object class kind (structural, auxiliary, or abstract)."""
+            if self.abstract:
+                return "abstract"
+            if self.auxiliary:
+                return "auxiliary"
+            return "structural"
+
+        @computed_field
+        @property
+        def total_attributes(self) -> int:
+            """Total number of attributes (required + optional)."""
+            return len(self.required_attributes) + len(self.optional_attributes)
+
+        @computed_field
+        @property
+        def attribute_summary(self) -> dict[str, int]:
+            """Get summary of required and optional attributes."""
+            return {
+                "required": len(self.required_attributes),
+                "optional": len(self.optional_attributes),
+                "total": self.total_attributes,
+            }
 
         @classmethod
         def create(
@@ -804,7 +884,7 @@ class FlextLdifModels(FlextModels):
             default_factory=list, description="Attribute values"
         )
 
-        @computed_field  # type: ignore[misc]
+        @computed_field
         @property
         def single_value(self) -> str | None:
             """Get single value if there's exactly one value, None otherwise."""

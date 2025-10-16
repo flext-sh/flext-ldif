@@ -79,8 +79,8 @@ class QuirksConversionMatrix:
 
     def convert(
         self,
-        source_quirk: Any,  # noqa: ANN401
-        target_quirk: Any,  # noqa: ANN401
+        source_quirk: Any,
+        target_quirk: Any,
         data_type: DataType,
         data: str | FlextLdifTypes.Dict,
     ) -> FlextResult[str | FlextLdifTypes.Dict]:
@@ -188,8 +188,8 @@ class QuirksConversionMatrix:
 
     def _convert_attribute(
         self,
-        source_quirk: Any,  # noqa: ANN401
-        target_quirk: Any,  # noqa: ANN401
+        source_quirk: Any,
+        target_quirk: Any,
         data: str | FlextLdifTypes.Dict,
     ) -> FlextResult[str | FlextLdifTypes.Dict]:
         """Convert attribute from source to target quirk via RFC.
@@ -264,8 +264,8 @@ class QuirksConversionMatrix:
 
     def _convert_objectclass(
         self,
-        source_quirk: Any,  # noqa: ANN401
-        target_quirk: Any,  # noqa: ANN401
+        source_quirk: Any,
+        target_quirk: Any,
         data: str | FlextLdifTypes.Dict,
     ) -> FlextResult[str | FlextLdifTypes.Dict]:
         """Convert objectClass from source to target quirk via RFC.
@@ -340,8 +340,8 @@ class QuirksConversionMatrix:
 
     def _convert_acl(
         self,
-        source_quirk: Any,  # noqa: ANN401
-        target_quirk: Any,  # noqa: ANN401
+        source_quirk: Any,
+        target_quirk: Any,
         data: str | FlextLdifTypes.Dict,
     ) -> FlextResult[str | FlextLdifTypes.Dict]:
         """Convert ACL from source to target quirk via RFC.
@@ -429,8 +429,8 @@ class QuirksConversionMatrix:
 
     def _convert_entry(
         self,
-        source_quirk: Any,  # noqa: ANN401
-        target_quirk: Any,  # noqa: ANN401
+        source_quirk: Any,
+        target_quirk: Any,
         data: str | FlextLdifTypes.Dict,
     ) -> FlextResult[str | FlextLdifTypes.Dict]:
         """Convert entry from source to target quirk via RFC.
@@ -505,8 +505,8 @@ class QuirksConversionMatrix:
 
     def batch_convert(
         self,
-        source_quirk: Any,  # noqa: ANN401
-        target_quirk: Any,  # noqa: ANN401
+        source_quirk: Any,
+        target_quirk: Any,
         data_type: DataType,
         data_list: Sequence[str | FlextLdifTypes.Dict],
     ) -> FlextResult[list[str | FlextLdifTypes.Dict]]:
@@ -597,7 +597,7 @@ class QuirksConversionMatrix:
         """
         self.dn_registry.clear()
 
-    def get_supported_conversions(self, quirk: Any) -> dict[str, bool]:  # noqa: ANN401
+    def get_supported_conversions(self, quirk: Any) -> dict[str, bool]:
         """Check which data types a quirk supports for conversion.
 
         Args:

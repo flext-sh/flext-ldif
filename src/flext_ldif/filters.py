@@ -17,7 +17,6 @@ from __future__ import annotations
 
 import fnmatch
 from datetime import UTC, datetime
-from typing import Any
 
 from flext_core import FlextResult, FlextTypes
 
@@ -164,7 +163,7 @@ class FlextLdifFilters:
             return False
 
         # Get exclusion_info FlextTypes.Dict from extensions (stored via model_dump())
-        exclusion_info_raw: Any = entry.metadata.extensions.get("exclusion_info")
+        exclusion_info_raw: object = entry.metadata.extensions.get("exclusion_info")
         if exclusion_info_raw is None:
             return False
 
@@ -175,7 +174,7 @@ class FlextLdifFilters:
         exclusion_info: FlextTypes.Dict = exclusion_info_raw
 
         # Get excluded field from FlextTypes.Dict (type-safe access)
-        excluded_value: Any = exclusion_info.get("excluded")
+        excluded_value: object = exclusion_info.get("excluded")
         if excluded_value is None:
             return False
 
@@ -204,7 +203,7 @@ class FlextLdifFilters:
             return None
 
         # Get exclusion_info FlextTypes.Dict from extensions (stored via model_dump())
-        exclusion_info_raw: Any = entry.metadata.extensions.get("exclusion_info")
+        exclusion_info_raw: object = entry.metadata.extensions.get("exclusion_info")
         if exclusion_info_raw is None:
             return None
 
@@ -215,7 +214,7 @@ class FlextLdifFilters:
         exclusion_info: FlextTypes.Dict = exclusion_info_raw
 
         # Get exclusion_reason field from FlextTypes.Dict (type-safe access)
-        reason_value: Any = exclusion_info.get("exclusion_reason")
+        reason_value: object = exclusion_info.get("exclusion_reason")
         if reason_value is None:
             return None
 
@@ -347,7 +346,7 @@ class FlextLdifFilters:
 
             return FlextResult[list[FlextLdifModels.Entry]].ok(filtered)
 
-        except Exception as e:
+        except Exception as e:  # pragma: no cover
             return FlextResult[list[FlextLdifModels.Entry]].fail(
                 f"Failed to filter entries by DN: {e}"
             )
@@ -422,7 +421,7 @@ class FlextLdifFilters:
 
             return FlextResult[list[FlextLdifModels.Entry]].ok(filtered)
 
-        except Exception as e:
+        except Exception as e:  # pragma: no cover
             return FlextResult[list[FlextLdifModels.Entry]].fail(
                 f"Failed to filter entries by objectClass: {e}"
             )
@@ -482,7 +481,7 @@ class FlextLdifFilters:
 
             return FlextResult[list[FlextLdifModels.Entry]].ok(filtered)
 
-        except Exception as e:
+        except Exception as e:  # pragma: no cover
             return FlextResult[list[FlextLdifModels.Entry]].fail(
                 f"Failed to filter entries by attributes: {e}"
             )

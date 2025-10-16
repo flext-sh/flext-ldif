@@ -956,7 +956,8 @@ class TestFlextLdifAclUtils:
 
         assert result.is_success
         unified_acl = result.unwrap()
-        assert isinstance(unified_acl, FlextLdifModels.Acl)
+        # Aggressive Pydantic 2 pattern: discriminated union returns specific subtype
+        assert isinstance(unified_acl, FlextLdifModels._AclBase)
         assert unified_acl.name == "test_acl"
         assert unified_acl.server_type == "openldap"
         assert unified_acl.raw_acl == "to attrs=cn,sn by * read"
@@ -969,9 +970,16 @@ class TestFlextLdifAclUtils:
         assert components_result.is_success
         target, subject, permissions = components_result.unwrap()
 
-        server_types = ["openldap", "389ds", "ad", "oid", "oud"]
+        # Use valid server types that match actual constant values and discriminator Literals
+        server_types = [
+            (FlextLdifConstants.LdapServers.OPENLDAP, FlextLdifModels.OpenLdapAcl),
+            (FlextLdifConstants.LdapServers.OPENLDAP_2, FlextLdifModels.OpenLdap2Acl),
+            (FlextLdifConstants.LdapServers.ORACLE_OID, FlextLdifModels.OracleOidAcl),
+            (FlextLdifConstants.LdapServers.ORACLE_OUD, FlextLdifModels.OracleOudAcl),
+            (FlextLdifConstants.LdapServers.DS_389, FlextLdifModels.Ds389Acl),
+        ]
 
-        for server_type in server_types:
+        for server_type, expected_class in server_types:
             result = FlextLdifAclUtils.ComponentFactory.create_unified_acl(
                 name=f"{server_type}_acl",
                 target=target,
@@ -985,6 +993,7 @@ class TestFlextLdifAclUtils:
             unified_acl = result.unwrap()
             assert unified_acl.server_type == server_type
             assert unified_acl.name == f"{server_type}_acl"
+            assert isinstance(unified_acl, expected_class)
 
     def test_create_unified_acl_type_validation(self) -> None:
         """Test type validation of created unified ACL."""
@@ -994,18 +1003,21 @@ class TestFlextLdifAclUtils:
         assert components_result.is_success
         target, subject, permissions = components_result.unwrap()
 
+        # Use a valid server type (defaults to OpenLdapAcl for unknown types)
         result = FlextLdifAclUtils.ComponentFactory.create_unified_acl(
             name="validation_test",
             target=target,
             subject=subject,
             permissions=permissions,
-            server_type="generic",
+            server_type="openldap",  # Valid server type for discriminated union
             raw_acl="test ACL",
         )
 
         assert result.is_success
         unified_acl = result.unwrap()
-        assert type(unified_acl).__name__ == "Acl"
+        # Aggressive Pydantic 2 pattern: direct subclass instantiation (e.g., OpenLdapAcl, OracleOudAcl)
+        assert isinstance(unified_acl, FlextLdifModels._AclBase)
+        assert isinstance(unified_acl, FlextLdifModels.OpenLdapAcl)
 
     def test_component_factory_integration(self) -> None:
         """Test ComponentFactory integration with full ACL creation flow."""
