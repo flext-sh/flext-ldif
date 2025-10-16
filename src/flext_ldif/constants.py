@@ -20,11 +20,11 @@ from __future__ import annotations
 from enum import StrEnum
 from typing import Final, Literal
 
-from flext_core import FlextCore
+from flext_core import FlextConstants
 
 
-class FlextLdifConstants(FlextCore.Constants):
-    """LDIF domain constants extending flext-core FlextCore.Constants.
+class FlextLdifConstants(FlextConstants):
+    """LDIF domain constants extending flext-core FlextConstants.
 
     Contains ONLY constant values, no implementations.
     """
@@ -188,7 +188,7 @@ class FlextLdifConstants(FlextCore.Constants):
     # UTILITY CONSTANTS
     # =============================================================================
 
-    # Utilities constants are inherited from parent FlextCore.Constants
+    # Utilities constants are inherited from parent FlextConstants
 
     # =============================================================================
     # VALIDATION CONSTANTS
@@ -238,16 +238,20 @@ class FlextLdifConstants(FlextCore.Constants):
     class ObjectClasses:
         """LDAP object class definitions."""
 
-        LDAP_PERSON_CLASSES: Final[frozenset[str]] = frozenset([
-            "person",
-            "organizationalperson",
-            "inetorgperson",
-        ])
+        LDAP_PERSON_CLASSES: Final[frozenset[str]] = frozenset(
+            [
+                "person",
+                "organizationalperson",
+                "inetorgperson",
+            ]
+        )
 
-        LDAP_GROUP_CLASSES: Final[frozenset[str]] = frozenset([
-            "groupofnames",
-            "groupofuniquenames",
-        ])
+        LDAP_GROUP_CLASSES: Final[frozenset[str]] = frozenset(
+            [
+                "groupofnames",
+                "groupofuniquenames",
+            ]
+        )
 
     # =============================================================================
     # ERROR MESSAGE CONSTANTS
@@ -536,15 +540,17 @@ class FlextLdifConstants(FlextCore.Constants):
         ENCODING_SAMPLE_SIZE: Final[int] = 1024
 
         # Supported encodings for LDIF processing
-        SUPPORTED_ENCODINGS: Final[frozenset[str]] = frozenset([
-            UTF8,
-            LATIN1,
-            ASCII,
-            UTF16,
-            UTF32,
-            CP1252,
-            ISO_8859_1,
-        ])
+        SUPPORTED_ENCODINGS: Final[frozenset[str]] = frozenset(
+            [
+                UTF8,
+                LATIN1,
+                ASCII,
+                UTF16,
+                UTF32,
+                CP1252,
+                ISO_8859_1,
+            ]
+        )
 
     # =============================================================================
     # LDAP SERVER CONSTANTS
@@ -569,93 +575,111 @@ class FlextLdifConstants(FlextCore.Constants):
         DS_389: Final[str] = "389ds"
 
         # Supported server types list
-        SUPPORTED_TYPES: Final[frozenset[str]] = frozenset([
-            ACTIVE_DIRECTORY,
-            OPENLDAP,
-            OPENLDAP_2,
-            OPENLDAP_1,
-            APACHE_DIRECTORY,
-            NOVELL_EDIRECTORY,
-            IBM_TIVOLI,
-            GENERIC,
-            ORACLE_OID,
-            ORACLE_OUD,
-            DS_389,
-        ])
+        SUPPORTED_TYPES: Final[frozenset[str]] = frozenset(
+            [
+                ACTIVE_DIRECTORY,
+                OPENLDAP,
+                OPENLDAP_2,
+                OPENLDAP_1,
+                APACHE_DIRECTORY,
+                NOVELL_EDIRECTORY,
+                IBM_TIVOLI,
+                GENERIC,
+                ORACLE_OID,
+                ORACLE_OUD,
+                DS_389,
+            ]
+        )
 
         # Server-specific DN patterns
-        AD_DN_PATTERNS: Final[frozenset[str]] = frozenset([
-            "CN=",
-            "OU=",
-            "DC=",
-            "O=",
-            "L=",
-            "ST=",
-            "C=",
-        ])
+        AD_DN_PATTERNS: Final[frozenset[str]] = frozenset(
+            [
+                "CN=",
+                "OU=",
+                "DC=",
+                "O=",
+                "L=",
+                "ST=",
+                "C=",
+            ]
+        )
 
-        OPENLDAP_DN_PATTERNS: Final[frozenset[str]] = frozenset([
-            "cn=",
-            "ou=",
-            "dc=",
-            "o=",
-            "l=",
-            "st=",
-            "c=",
-            "uid=",
-        ])
+        OPENLDAP_DN_PATTERNS: Final[frozenset[str]] = frozenset(
+            [
+                "cn=",
+                "ou=",
+                "dc=",
+                "o=",
+                "l=",
+                "st=",
+                "c=",
+                "uid=",
+            ]
+        )
 
         # OpenLDAP 2.x detection patterns (cn=config based)
-        OPENLDAP_2_ATTRIBUTES: Final[frozenset[str]] = frozenset([
-            "olcAccess",
-            "olcAttributeTypes",
-            "olcObjectClasses",
-            "olcDatabase",
-            "olcBackend",
-            "olcOverlay",
-            "olcRootDN",
-            "olcRootPW",
-            "olcSuffix",
-        ])
+        OPENLDAP_2_ATTRIBUTES: Final[frozenset[str]] = frozenset(
+            [
+                "olcAccess",
+                "olcAttributeTypes",
+                "olcObjectClasses",
+                "olcDatabase",
+                "olcBackend",
+                "olcOverlay",
+                "olcRootDN",
+                "olcRootPW",
+                "olcSuffix",
+            ]
+        )
 
-        OPENLDAP_2_OBJECTCLASSES: Final[frozenset[str]] = frozenset([
-            "olcConfig",
-            "olcDatabase",
-            "olcBackendConfig",
-            "olcOverlayConfig",
-            "olcSchemaConfig",
-        ])
+        OPENLDAP_2_OBJECTCLASSES: Final[frozenset[str]] = frozenset(
+            [
+                "olcConfig",
+                "olcDatabase",
+                "olcBackendConfig",
+                "olcOverlayConfig",
+                "olcSchemaConfig",
+            ]
+        )
 
-        OPENLDAP_2_DN_PATTERNS: Final[frozenset[str]] = frozenset([
-            "cn=config",
-            "olcDatabase=",
-            "olcOverlay=",
-        ])
+        OPENLDAP_2_DN_PATTERNS: Final[frozenset[str]] = frozenset(
+            [
+                "cn=config",
+                "olcDatabase=",
+                "olcOverlay=",
+            ]
+        )
 
         # OpenLDAP 1.x detection patterns (traditional slapd.conf)
-        OPENLDAP_1_ATTRIBUTES: Final[frozenset[str]] = frozenset([
-            "attributetype",
-            "objectclass",
-            "access",
-            "rootdn",
-            "rootpw",
-            "suffix",
-        ])
+        OPENLDAP_1_ATTRIBUTES: Final[frozenset[str]] = frozenset(
+            [
+                "attributetype",
+                "objectclass",
+                "access",
+                "rootdn",
+                "rootpw",
+                "suffix",
+            ]
+        )
 
         # Server-specific object classes
-        AD_REQUIRED_CLASSES: Final[frozenset[str]] = frozenset([
-            "top",
-            "person",
-            "organizationalPerson",
-            "user",
-        ])
+        AD_REQUIRED_CLASSES: Final[frozenset[str]] = frozenset(
+            [
+                "top",
+                "person",
+                "organizationalPerson",
+                "user",
+            ]
+        )
 
-        OPENLDAP_REQUIRED_CLASSES: Final[frozenset[str]] = frozenset([
-            "top",
-            "person",
-            "organizationalPerson",
-            "inetOrgPerson",
-        ])
+        OPENLDAP_REQUIRED_CLASSES: Final[frozenset[str]] = frozenset(
+            [
+                "top",
+                "person",
+                "organizationalPerson",
+                "inetOrgPerson",
+            ]
+        )
 
     # =============================================================================
     # RFC 2849 COMPLIANCE CONSTANTS
@@ -669,22 +693,26 @@ class FlextLdifConstants(FlextCore.Constants):
         LINE_WITH_NEWLINE: Final[int] = LINE_LENGTH_LIMIT + 1  # 77
 
         # Required RFC 2849 features
-        REQUIRED_FEATURES: Final[frozenset[str]] = frozenset([
-            "base64_encoding",
-            "line_continuation",
-            "change_records",
-            "url_references",
-            "attribute_options",
-            "comments",
-            "version_control",
-        ])
+        REQUIRED_FEATURES: Final[frozenset[str]] = frozenset(
+            [
+                "base64_encoding",
+                "line_continuation",
+                "change_records",
+                "url_references",
+                "attribute_options",
+                "comments",
+                "version_control",
+            ]
+        )
 
         # Optional RFC 2849 features
-        OPTIONAL_FEATURES: Final[frozenset[str]] = frozenset([
-            "language_tags",
-            "binary_data",
-            "large_entries",
-        ])
+        OPTIONAL_FEATURES: Final[frozenset[str]] = frozenset(
+            [
+                "language_tags",
+                "binary_data",
+                "large_entries",
+            ]
+        )
 
         # Validation strictness levels
         STRICT: Final[str] = "strict"
@@ -752,75 +780,91 @@ class FlextLdifConstants(FlextCore.Constants):
 
         # Common operational attributes across all LDAP servers
         # These are defined in RFC 4512 and generated by directory servers
-        COMMON: Final[frozenset[str]] = frozenset([
-            "createTimestamp",
-            "modifyTimestamp",
-            "creatorsName",
-            "modifiersName",
-            "entryUUID",
-            "entryDN",
-            "entryCSN",
-            "subschemaSubentry",
-            "hasSubordinates",
-            "numSubordinates",
-            "subordinateCount",
-        ])
+        COMMON: Final[frozenset[str]] = frozenset(
+            [
+                "createTimestamp",
+                "modifyTimestamp",
+                "creatorsName",
+                "modifiersName",
+                "entryUUID",
+                "entryDN",
+                "entryCSN",
+                "subschemaSubentry",
+                "hasSubordinates",
+                "numSubordinates",
+                "subordinateCount",
+            ]
+        )
 
         # Oracle OID specific operational attributes
-        OID_SPECIFIC: Final[frozenset[str]] = frozenset([
-            "orclGUID",
-            "orclOracleGUID",
-            "orclPassword",
-            "orclPasswordChangedTime",
-            "orclIsEnabled",
-        ])
+        OID_SPECIFIC: Final[frozenset[str]] = frozenset(
+            [
+                "orclGUID",
+                "orclOracleGUID",
+                "orclPassword",
+                "orclPasswordChangedTime",
+                "orclIsEnabled",
+            ]
+        )
 
         # Oracle OUD specific operational attributes
-        OUD_SPECIFIC: Final[frozenset[str]] = frozenset([
-            "ds-sync-hist",
-            "ds-sync-state",
-            "ds-pwp-account-disabled",
-            "ds-cfg-backend-id",
-            "entryUUID",  # OUD specific version
-        ])
+        OUD_SPECIFIC: Final[frozenset[str]] = frozenset(
+            [
+                "ds-sync-hist",
+                "ds-sync-state",
+                "ds-pwp-account-disabled",
+                "ds-cfg-backend-id",
+                "entryUUID",  # OUD specific version
+            ]
+        )
 
         # OpenLDAP specific operational attributes
-        OPENLDAP_SPECIFIC: Final[frozenset[str]] = frozenset([
-            "structuralObjectClass",
-            "contextCSN",
-            "entryCSN",
-        ])
+        OPENLDAP_SPECIFIC: Final[frozenset[str]] = frozenset(
+            [
+                "structuralObjectClass",
+                "contextCSN",
+                "entryCSN",
+            ]
+        )
 
         # 389 Directory Server specific operational attributes
-        DS_389_SPECIFIC: Final[frozenset[str]] = frozenset([
-            "nsUniqueId",
-            "nscpEntryDN",
-            "nsds5ReplConflict",
-        ])
+        DS_389_SPECIFIC: Final[frozenset[str]] = frozenset(
+            [
+                "nsUniqueId",
+                "nscpEntryDN",
+                "nsds5ReplConflict",
+            ]
+        )
 
         # Active Directory specific operational attributes
-        AD_SPECIFIC: Final[frozenset[str]] = frozenset([
-            "objectGUID",
-            "objectSid",
-            "whenCreated",
-            "whenChanged",
-            "uSNCreated",
-            "uSNChanged",
-            "dSCorePropagationData",
-        ])
+        AD_SPECIFIC: Final[frozenset[str]] = frozenset(
+            [
+                "objectGUID",
+                "objectSid",
+                "whenCreated",
+                "whenChanged",
+                "uSNCreated",
+                "uSNChanged",
+                "dSCorePropagationData",
+            ]
+        )
 
         # Novell eDirectory specific operational attributes
-        NOVELL_SPECIFIC: Final[frozenset[str]] = frozenset([
-            "GUID",
-            "createTimestamp",
-            "modifyTimestamp",
-        ])
+        NOVELL_SPECIFIC: Final[frozenset[str]] = frozenset(
+            [
+                "GUID",
+                "createTimestamp",
+                "modifyTimestamp",
+            ]
+        )
 
         # IBM Tivoli specific operational attributes
-        IBM_TIVOLI_SPECIFIC: Final[frozenset[str]] = frozenset([
-            "ibm-entryUUID",
-            "ibm-entryChecksum",
-        ])
+        IBM_TIVOLI_SPECIFIC: Final[frozenset[str]] = frozenset(
+            [
+                "ibm-entryUUID",
+                "ibm-entryChecksum",
+            ]
+        )
 
     # =============================================================================
     # DICTIONARY KEYS - Standardize all dict[str, object] key strings
@@ -1053,25 +1097,31 @@ class FlextLdifConstants(FlextCore.Constants):
         OLCOVERLAY_PREFIX: Final[str] = "olcOverlay="
 
         # All schema subentry patterns
-        SCHEMA_SUBENTRY_PATTERNS: Final[frozenset[str]] = frozenset([
-            CN_SCHEMA,
-            CN_SUBSCHEMA,
-            CN_SUBSCHEMA_SUBENTRY,
-            CN_SCHEMA_CN_CONFIG,
-        ])
+        SCHEMA_SUBENTRY_PATTERNS: Final[frozenset[str]] = frozenset(
+            [
+                CN_SCHEMA,
+                CN_SUBSCHEMA,
+                CN_SUBSCHEMA_SUBENTRY,
+                CN_SCHEMA_CN_CONFIG,
+            ]
+        )
 
         # All config DN patterns
-        CONFIG_DN_PATTERNS: Final[frozenset[str]] = frozenset([
-            CN_CONFIG,
-            CN_SCHEMA_CN_CONFIG,
-        ])
+        CONFIG_DN_PATTERNS: Final[frozenset[str]] = frozenset(
+            [
+                CN_CONFIG,
+                CN_SCHEMA_CN_CONFIG,
+            ]
+        )
 
         # All Oracle DN patterns
-        ORACLE_DN_PATTERNS: Final[frozenset[str]] = frozenset([
-            CN_ORCL,
-            OU_ORACLE,
-            DC_ORACLE,
-        ])
+        ORACLE_DN_PATTERNS: Final[frozenset[str]] = frozenset(
+            [
+                CN_ORCL,
+                OU_ORACLE,
+                DC_ORACLE,
+            ]
+        )
 
     # =============================================================================
     # ACL FORMATS - ACL format identifiers
@@ -1131,11 +1181,13 @@ class FlextLdifConstants(FlextCore.Constants):
         # Mapping between short and long server types
         ORACLE_OID_VARIANTS: Final[frozenset[str]] = frozenset(["oid", "oracle_oid"])
         ORACLE_OUD_VARIANTS: Final[frozenset[str]] = frozenset(["oud", "oracle_oud"])
-        OPENLDAP_VARIANTS: Final[frozenset[str]] = frozenset([
-            "openldap",
-            "openldap1",
-            "openldap2",
-        ])
+        OPENLDAP_VARIANTS: Final[frozenset[str]] = frozenset(
+            [
+                "openldap",
+                "openldap1",
+                "openldap2",
+            ]
+        )
 
     # =============================================================================
     # REGEX PATTERNS - All regex patterns centralized
@@ -1215,45 +1267,55 @@ class FlextLdifConstants(FlextCore.Constants):
         """
 
         # String validation rules
-        VALID_ENCODINGS_RULE: Final[frozenset[str]] = frozenset([
-            "utf-8",
-            "latin-1",
-            "ascii",
-            "utf-16",
-            "utf-32",
-            "cp1252",
-            "iso-8859-1",
-        ])
+        VALID_ENCODINGS_RULE: Final[frozenset[str]] = frozenset(
+            [
+                "utf-8",
+                "latin-1",
+                "ascii",
+                "utf-16",
+                "utf-32",
+                "cp1252",
+                "iso-8859-1",
+            ]
+        )
 
-        VALID_VALIDATION_LEVELS_RULE: Final[frozenset[str]] = frozenset([
-            "strict",
-            "moderate",
-            "lenient",
-        ])
+        VALID_VALIDATION_LEVELS_RULE: Final[frozenset[str]] = frozenset(
+            [
+                "strict",
+                "moderate",
+                "lenient",
+            ]
+        )
 
-        VALID_SERVER_TYPES_RULE: Final[frozenset[str]] = frozenset([
-            "active_directory",
-            "openldap",
-            "apache_directory",
-            "novell_edirectory",
-            "ibm_tivoli",
-            "generic",
-            "oracle_oid",
-            "oracle_oud",
-            "389ds",
-        ])
+        VALID_SERVER_TYPES_RULE: Final[frozenset[str]] = frozenset(
+            [
+                "active_directory",
+                "openldap",
+                "apache_directory",
+                "novell_edirectory",
+                "ibm_tivoli",
+                "generic",
+                "oracle_oid",
+                "oracle_oud",
+                "389ds",
+            ]
+        )
 
-        VALID_ANALYTICS_LEVELS_RULE: Final[frozenset[str]] = frozenset([
-            "low",
-            "medium",
-            "high",
-        ])
+        VALID_ANALYTICS_LEVELS_RULE: Final[frozenset[str]] = frozenset(
+            [
+                "low",
+                "medium",
+                "high",
+            ]
+        )
 
-        VALID_ERROR_MODES_RULE: Final[frozenset[str]] = frozenset([
-            "continue",
-            "stop",
-            "skip",
-        ])
+        VALID_ERROR_MODES_RULE: Final[frozenset[str]] = frozenset(
+            [
+                "continue",
+                "stop",
+                "skip",
+            ]
+        )
 
         # Numeric validation rules
         MIN_WORKERS_PERFORMANCE_RULE: Final[int] = 4

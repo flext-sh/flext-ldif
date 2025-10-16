@@ -51,11 +51,11 @@ class QuirkBase(ABC):
         """Resolution priority (lower = higher priority)."""
 
     @abstractmethod
-    def to_rfc(self, data: str, data_type: str) -> FlextCore.Result[str]:
+    def to_rfc(self, data: str, data_type: str) -> FlextResult[str]:
         """Convert server format to RFC standard."""
 
     @abstractmethod
-    def from_rfc(self, data: str, data_type: str) -> FlextCore.Result[str]:
+    def from_rfc(self, data: str, data_type: str) -> FlextResult[str]:
         """Convert RFC standard to server format."""
 ```
 

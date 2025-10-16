@@ -17,7 +17,7 @@ This guide provides step-by-step instructions for installing and using FLEXT-LDI
 
 FLEXT-LDIF integrates with the broader FLEXT ecosystem:
 
-- **[flext-core](../flext-core/README.md)**: Foundation library providing FlextCore.Result, FlextCore.Container, and logging patterns
+- **[flext-core](../flext-core/README.md)**: Foundation library providing FlextResult, FlextContainer, and logging patterns
 - **Poetry**: Dependency management and virtual environment handling
 - **Python 3.13+**: Modern Python features including improved type annotations
 
@@ -93,7 +93,7 @@ objectClass: groupOfNames
 member: cn=John Doe,ou=People,dc=example,dc=com
 """
 
-# Parse LDIF content using FlextCore.Result patterns
+# Parse LDIF content using FlextResult patterns
 result = api.parse_string(sample_ldif)
 if result.is_success:
     entries = result.unwrap()

@@ -9,8 +9,8 @@ Order of Preference (Pydantic 2 Settings automatic behavior):
 4. Default values from FlextLdifConstants (lowest priority)
 
 Inheritance:
-- FlextLdifConfig → FlextCore.Config → BaseSettings
-- FlextCore.Config: FLEXT_ prefix, loads from .env
+- FlextLdifConfig → FlextConfig → BaseSettings
+- FlextConfig: FLEXT_ prefix, loads from .env
 - FlextLdifConfig: FLEXT_LDIF_ prefix, inherits .env loading
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -23,6 +23,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
+from flext_core import FlextConfig
 from pydantic import ValidationError
 
 from flext_ldif.config import FlextLdifConfig
@@ -56,7 +57,7 @@ class TestEnvVariableLoading:
     def test_env_variable_override(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test environment variables override defaults.
 
-        Note: max_workers is inherited from FlextCore.Config, so it uses FLEXT_MAX_WORKERS.
+        Note: max_workers is inherited from FlextConfig, so it uses FLEXT_MAX_WORKERS.
         LDIF-specific fields use FLEXT_LDIF_* environment variables.
         """
         # LDIF-specific fields use FLEXT_LDIF_ prefix
@@ -66,7 +67,7 @@ class TestEnvVariableLoading:
         monkeypatch.setenv("FLEXT_LDIF_STRICT_VALIDATION", "false")
         monkeypatch.setenv("FLEXT_LDIF_CHUNK_SIZE", "2000")
 
-        # Inherited field from FlextCore.Config uses FLEXT_ prefix
+        # Inherited field from FlextConfig uses FLEXT_ prefix
         monkeypatch.setenv("FLEXT_MAX_WORKERS", "8")
 
         config = FlextLdifConfig()
@@ -163,7 +164,7 @@ class TestEnvVariableLoading:
             FlextLdifConfig()
 
     def test_nested_delimiter_support(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        """Test nested delimiter __ for complex config (inherited from FlextCore.Config).
+        """Test nested delimiter __ for complex config (inherited from FlextConfig).
 
         Note: FlextLdifConfig uses env_prefix="FLEXT_" because field names have ldif_ prefix.
         This gives us FLEXT_LDIF_* environment variables (FLEXT_ + ldif_field_name).
@@ -234,24 +235,22 @@ FLEXT_LDIF_SKIP_COMMENTS=true
 
 
 class TestConfigInheritance:
-    """Test FlextCore.Config inheritance."""
+    """Test FlextConfig inheritance."""
 
     def test_inherits_from_flext_config(self) -> None:
-        """Test FlextLdifConfig inherits from FlextCore.Config."""
-        from flext_core import FlextCore
-
+        """Test FlextLdifConfig inherits from FlextConfig."""
         config = FlextLdifConfig()
 
         # Verify inheritance
-        assert isinstance(config, FlextCore.Config)
+        assert isinstance(config, FlextConfig)
 
-        # Verify FlextCore.Config fields are accessible
+        # Verify FlextConfig fields are accessible
         assert hasattr(config, "debug")
         assert hasattr(config, "log_level")
 
     def test_flext_config_env_prefix(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        """Test FlextCore.Config uses FLEXT_ prefix while FlextLdifConfig uses FLEXT_LDIF_."""
-        # FlextCore.Config field with FLEXT_ prefix
+        """Test FlextConfig uses FLEXT_ prefix while FlextLdifConfig uses FLEXT_LDIF_."""
+        # FlextConfig field with FLEXT_ prefix
         monkeypatch.setenv("FLEXT_DEBUG", "true")
 
         # FlextLdifConfig field with FLEXT_LDIF_ prefix
@@ -260,7 +259,7 @@ class TestConfigInheritance:
         config = FlextLdifConfig()
 
         # Both prefixes should work for their respective fields
-        assert config.debug is True  # from FlextCore.Config with FLEXT_
+        assert config.debug is True  # from FlextConfig with FLEXT_
         assert config.ldif_encoding == "utf-16"  # from FlextLdifConfig with FLEXT_LDIF_
 
 

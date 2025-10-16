@@ -6,7 +6,7 @@ import base64
 import re
 from typing import ClassVar
 
-from flext_core import FlextCore
+from flext_core import FlextResult, FlextTypes
 from pydantic import Field
 
 from flext_ldif.constants import FlextLdifConstants
@@ -32,17 +32,21 @@ class FlextLdifQuirksServersApache(FlextLdifQuirksBaseSchemaQuirk):
     APACHE_OID_PATTERN: ClassVar[re.Pattern[str]] = re.compile(
         r"\b1\.3\.6\.1\.4\.1\.18060\.", re.IGNORECASE
     )
-    APACHE_ATTRIBUTE_PREFIXES: ClassVar[frozenset[str]] = frozenset([
-        "ads-",
-        "apacheds",
-    ])
-    APACHE_OBJECTCLASS_NAMES: ClassVar[frozenset[str]] = frozenset([
-        "ads-directoryservice",
-        "ads-base",
-        "ads-server",
-        "ads-partition",
-        "ads-interceptor",
-    ])
+    APACHE_ATTRIBUTE_PREFIXES: ClassVar[frozenset[str]] = frozenset(
+        [
+            "ads-",
+            "apacheds",
+        ]
+    )
+    APACHE_OBJECTCLASS_NAMES: ClassVar[frozenset[str]] = frozenset(
+        [
+            "ads-directoryservice",
+            "ads-base",
+            "ads-server",
+            "ads-partition",
+            "ads-interceptor",
+        ]
+    )
 
     def model_post_init(self, _context: object, /) -> None:
         """Initialise ApacheDS schema quirk."""
@@ -64,14 +68,12 @@ class FlextLdifQuirksServersApache(FlextLdifQuirksBaseSchemaQuirk):
 
         return any(prefix in attr_lower for prefix in self.APACHE_ATTRIBUTE_PREFIXES)
 
-    def parse_attribute(
-        self, attr_definition: str
-    ) -> FlextCore.Result[FlextLdifTypes.Dict]:
+    def parse_attribute(self, attr_definition: str) -> FlextResult[FlextLdifTypes.Dict]:
         """Parse ApacheDS attribute definition."""
         try:
             oid_match = re.search(r"\(\s*([\d.]+)", attr_definition)
             if not oid_match:
-                return FlextCore.Result[FlextLdifTypes.Dict].fail(
+                return FlextResult[FlextLdifTypes.Dict].fail(
                     "ApacheDS attribute definition is missing an OID"
                 )
 
@@ -129,10 +131,10 @@ class FlextLdifQuirksServersApache(FlextLdifQuirksBaseSchemaQuirk):
             if name_tokens:
                 attr_data["aliases"] = name_tokens
 
-            return FlextCore.Result[FlextLdifTypes.Dict].ok(attr_data)
+            return FlextResult[FlextLdifTypes.Dict].ok(attr_data)
 
         except Exception as exc:  # pragma: no cover
-            return FlextCore.Result[FlextLdifTypes.Dict].fail(
+            return FlextResult[FlextLdifTypes.Dict].fail(
                 f"Apache Directory Server attribute parsing failed: {exc}"
             )
 
@@ -148,14 +150,12 @@ class FlextLdifQuirksServersApache(FlextLdifQuirksBaseSchemaQuirk):
             name.lower() in self.APACHE_OBJECTCLASS_NAMES for name in name_matches
         )
 
-    def parse_objectclass(
-        self, oc_definition: str
-    ) -> FlextCore.Result[FlextLdifTypes.Dict]:
+    def parse_objectclass(self, oc_definition: str) -> FlextResult[FlextLdifTypes.Dict]:
         """Parse ApacheDS objectClass definition."""
         try:
             oid_match = re.search(r"\(\s*([\d.]+)", oc_definition)
             if not oid_match:
-                return FlextCore.Result[FlextLdifTypes.Dict].fail(
+                return FlextResult[FlextLdifTypes.Dict].fail(
                     "ApacheDS objectClass definition is missing an OID"
                 )
 
@@ -207,17 +207,17 @@ class FlextLdifQuirksServersApache(FlextLdifQuirksBaseSchemaQuirk):
             if name_tokens:
                 oc_data["aliases"] = name_tokens
 
-            return FlextCore.Result[FlextLdifTypes.Dict].ok(oc_data)
+            return FlextResult[FlextLdifTypes.Dict].ok(oc_data)
 
         except Exception as exc:  # pragma: no cover
-            return FlextCore.Result[FlextLdifTypes.Dict].fail(
+            return FlextResult[FlextLdifTypes.Dict].fail(
                 f"Apache Directory Server objectClass parsing failed: {exc}"
             )
 
     def convert_attribute_to_rfc(
         self,
         attr_data: FlextLdifTypes.Dict,
-    ) -> FlextCore.Result[FlextLdifTypes.Dict]:
+    ) -> FlextResult[FlextLdifTypes.Dict]:
         """Convert ApacheDS attribute metadata to an RFC-friendly payload."""
         try:
             rfc_data = {
@@ -251,17 +251,17 @@ class FlextLdifQuirksServersApache(FlextLdifQuirksBaseSchemaQuirk):
                 ),
             }
 
-            return FlextCore.Result[FlextLdifTypes.Dict].ok(rfc_data)
+            return FlextResult[FlextLdifTypes.Dict].ok(rfc_data)
 
         except Exception as exc:  # pragma: no cover
-            return FlextCore.Result[FlextLdifTypes.Dict].fail(
+            return FlextResult[FlextLdifTypes.Dict].fail(
                 f"Apache Directory Server→RFC attribute conversion failed: {exc}"
             )
 
     def convert_objectclass_to_rfc(
         self,
         oc_data: FlextLdifTypes.Dict,
-    ) -> FlextCore.Result[FlextLdifTypes.Dict]:
+    ) -> FlextResult[FlextLdifTypes.Dict]:
         """Convert ApacheDS objectClass metadata to an RFC-friendly payload."""
         try:
             rfc_data = {
@@ -289,46 +289,46 @@ class FlextLdifQuirksServersApache(FlextLdifQuirksBaseSchemaQuirk):
                 ),
             }
 
-            return FlextCore.Result[FlextLdifTypes.Dict].ok(rfc_data)
+            return FlextResult[FlextLdifTypes.Dict].ok(rfc_data)
 
         except Exception as exc:  # pragma: no cover
-            return FlextCore.Result[FlextLdifTypes.Dict].fail(
+            return FlextResult[FlextLdifTypes.Dict].fail(
                 f"Apache Directory Server→RFC objectClass conversion failed: {exc}"
             )
 
     def convert_attribute_from_rfc(
         self, rfc_data: FlextLdifTypes.Dict
-    ) -> FlextCore.Result[FlextLdifTypes.Dict]:
+    ) -> FlextResult[FlextLdifTypes.Dict]:
         """Convert RFC-compliant attribute to ApacheDS-specific format."""
         try:
             apache_data = {
                 **rfc_data,
                 FlextLdifConstants.DictKeys.SERVER_TYPE: self.server_type,
             }
-            return FlextCore.Result[FlextLdifTypes.Dict].ok(apache_data)
+            return FlextResult[FlextLdifTypes.Dict].ok(apache_data)
         except Exception as exc:  # pragma: no cover
-            return FlextCore.Result[FlextLdifTypes.Dict].fail(
+            return FlextResult[FlextLdifTypes.Dict].fail(
                 f"RFC→Apache Directory Server attribute conversion failed: {exc}"
             )
 
     def convert_objectclass_from_rfc(
         self, rfc_data: FlextLdifTypes.Dict
-    ) -> FlextCore.Result[FlextLdifTypes.Dict]:
+    ) -> FlextResult[FlextLdifTypes.Dict]:
         """Convert RFC-compliant objectClass to ApacheDS-specific format."""
         try:
             apache_data = {
                 **rfc_data,
                 FlextLdifConstants.DictKeys.SERVER_TYPE: self.server_type,
             }
-            return FlextCore.Result[FlextLdifTypes.Dict].ok(apache_data)
+            return FlextResult[FlextLdifTypes.Dict].ok(apache_data)
         except Exception as exc:  # pragma: no cover
-            return FlextCore.Result[FlextLdifTypes.Dict].fail(
+            return FlextResult[FlextLdifTypes.Dict].fail(
                 f"RFC→Apache Directory Server objectClass conversion failed: {exc}"
             )
 
     def write_attribute_to_rfc(
         self, attr_data: FlextLdifTypes.Dict
-    ) -> FlextCore.Result[str]:
+    ) -> FlextResult[str]:
         """Write attribute data to RFC-compliant string format."""
         try:
             oid = attr_data.get(FlextLdifConstants.DictKeys.OID, "")
@@ -353,15 +353,15 @@ class FlextLdifQuirksServersApache(FlextLdifQuirksBaseSchemaQuirk):
                 attr_str += " SINGLE-VALUE"
             attr_str += " )"
 
-            return FlextCore.Result[str].ok(attr_str)
+            return FlextResult[str].ok(attr_str)
         except Exception as exc:  # pragma: no cover
-            return FlextCore.Result[str].fail(
+            return FlextResult[str].fail(
                 f"Apache Directory Server attribute write failed: {exc}"
             )
 
     def write_objectclass_to_rfc(
         self, oc_data: FlextLdifTypes.Dict
-    ) -> FlextCore.Result[str]:
+    ) -> FlextResult[str]:
         """Write objectClass data to RFC-compliant string format."""
         try:
             oid = oc_data.get(FlextLdifConstants.DictKeys.OID, "")
@@ -388,9 +388,9 @@ class FlextLdifQuirksServersApache(FlextLdifQuirksBaseSchemaQuirk):
                 oc_str += f" MAY ( {may_attrs} )"
             oc_str += " )"
 
-            return FlextCore.Result[str].ok(oc_str)
+            return FlextResult[str].ok(oc_str)
         except Exception as exc:  # pragma: no cover
-            return FlextCore.Result[str].fail(
+            return FlextResult[str].fail(
                 f"Apache Directory Server objectClass write failed: {exc}"
             )
 
@@ -405,10 +405,12 @@ class FlextLdifQuirksServersApache(FlextLdifQuirksBaseSchemaQuirk):
             default=15, description="Standard priority for ApacheDS ACL"
         )
 
-        ACI_ATTRIBUTE_NAMES: ClassVar[frozenset[str]] = frozenset([
-            "ads-aci",
-            FlextLdifConstants.DictKeys.ACI,
-        ])
+        ACI_ATTRIBUTE_NAMES: ClassVar[frozenset[str]] = frozenset(
+            [
+                "ads-aci",
+                FlextLdifConstants.DictKeys.ACI,
+            ]
+        )
         CLAUSE_PATTERN: ClassVar[re.Pattern[str]] = re.compile(r"\([^()]+\)")
 
         def model_post_init(self, _context: object, /) -> None:
@@ -426,7 +428,7 @@ class FlextLdifQuirksServersApache(FlextLdifQuirksBaseSchemaQuirk):
 
             return normalized.lower().startswith("(version")
 
-        def parse_acl(self, acl_line: str) -> FlextCore.Result[FlextLdifTypes.Dict]:
+        def parse_acl(self, acl_line: str) -> FlextResult[FlextLdifTypes.Dict]:
             """Parse ApacheDS ACI definition."""
             try:
                 attr_name, content = self._split_acl_line(acl_line)
@@ -444,17 +446,17 @@ class FlextLdifQuirksServersApache(FlextLdifQuirksBaseSchemaQuirk):
                         "attribute": attr_name,
                     },
                 }
-                return FlextCore.Result[FlextLdifTypes.Dict].ok(acl_payload)
+                return FlextResult[FlextLdifTypes.Dict].ok(acl_payload)
 
             except Exception as exc:  # pragma: no cover
-                return FlextCore.Result[FlextLdifTypes.Dict].fail(
+                return FlextResult[FlextLdifTypes.Dict].fail(
                     f"Apache Directory Server ACL parsing failed: {exc}"
                 )
 
         def convert_acl_to_rfc(
             self,
             acl_data: FlextLdifTypes.Dict,
-        ) -> FlextCore.Result[FlextLdifTypes.Dict]:
+        ) -> FlextResult[FlextLdifTypes.Dict]:
             """Wrap ApacheDS ACL into a generic RFC representation."""
             try:
                 # Type narrowing: rfc_acl is already FlextLdifTypes.Dict (dict[str, object])
@@ -464,17 +466,17 @@ class FlextLdifQuirksServersApache(FlextLdifQuirksBaseSchemaQuirk):
                     FlextLdifConstants.DictKeys.SOURCE_FORMAT: FlextLdifConstants.AclFormats.ACI,
                     FlextLdifConstants.DictKeys.DATA: acl_data,
                 }
-                return FlextCore.Result[FlextLdifTypes.Dict].ok(rfc_acl)
+                return FlextResult[FlextLdifTypes.Dict].ok(rfc_acl)
 
             except Exception as exc:  # pragma: no cover
-                return FlextCore.Result[FlextLdifTypes.Dict].fail(
+                return FlextResult[FlextLdifTypes.Dict].fail(
                     f"Apache Directory Server ACL→RFC conversion failed: {exc}"
                 )
 
         def convert_acl_from_rfc(
             self,
             acl_data: FlextLdifTypes.Dict,
-        ) -> FlextCore.Result[FlextLdifTypes.Dict]:
+        ) -> FlextResult[FlextLdifTypes.Dict]:
             """Repackage RFC ACL payload for ApacheDS."""
             try:
                 # Type narrowing: apache_acl is already FlextLdifTypes.Dict (dict[str, object])
@@ -483,11 +485,44 @@ class FlextLdifQuirksServersApache(FlextLdifQuirksBaseSchemaQuirk):
                     FlextLdifConstants.DictKeys.TARGET_FORMAT: FlextLdifConstants.DictKeys.ACI,
                     FlextLdifConstants.DictKeys.DATA: acl_data,
                 }
-                return FlextCore.Result[FlextLdifTypes.Dict].ok(apache_acl)
+                return FlextResult[FlextLdifTypes.Dict].ok(apache_acl)
 
             except Exception as exc:  # pragma: no cover
-                return FlextCore.Result[FlextLdifTypes.Dict].fail(
+                return FlextResult[FlextLdifTypes.Dict].fail(
                     f"RFC→Apache Directory Server ACL conversion failed: {exc}"
+                )
+
+        def write_acl_to_rfc(self, acl_data: FlextLdifTypes.Dict) -> FlextResult[str]:
+            """Write ACL data to RFC-compliant string format.
+
+            Apache Directory Server ACLs use ACI format.
+            """
+            try:
+                acl_attribute = acl_data.get(
+                    FlextLdifConstants.DictKeys.ACL_ATTRIBUTE,
+                    FlextLdifConstants.DictKeys.ACI,
+                )
+                data_raw = acl_data.get(FlextLdifConstants.DictKeys.DATA, {})
+                data: FlextLdifTypes.Dict = (
+                    data_raw if isinstance(data_raw, dict) else {}
+                )
+                content = data.get("content", "")
+                clauses_raw = data.get("clauses", [])
+                clauses: list[str] = (
+                    clauses_raw if isinstance(clauses_raw, list) else []
+                )
+
+                if content:
+                    acl_str = f"{acl_attribute}: {content}"
+                elif clauses:
+                    acl_str = f"{acl_attribute}: {' '.join(clauses)}"
+                else:
+                    acl_str = f"{acl_attribute}:"
+
+                return FlextResult[str].ok(acl_str)
+            except Exception as exc:
+                return FlextResult[str].fail(
+                    f"Apache Directory Server ACL write failed: {exc}"
                 )
 
         @staticmethod
@@ -507,16 +542,20 @@ class FlextLdifQuirksServersApache(FlextLdifQuirksBaseSchemaQuirk):
             default=15, description="Standard priority for ApacheDS entry handling"
         )
 
-        APACHE_DN_MARKERS: ClassVar[frozenset[str]] = frozenset([
-            "ou=config",
-            "ou=services",
-            "ou=system",
-            "ou=partitions",
-        ])
-        APACHE_ATTRIBUTE_PREFIXES: ClassVar[frozenset[str]] = frozenset([
-            "ads-",
-            "apacheds",
-        ])
+        APACHE_DN_MARKERS: ClassVar[frozenset[str]] = frozenset(
+            [
+                "ou=config",
+                "ou=services",
+                "ou=system",
+                "ou=partitions",
+            ]
+        )
+        APACHE_ATTRIBUTE_PREFIXES: ClassVar[frozenset[str]] = frozenset(
+            [
+                "ads-",
+                "apacheds",
+            ]
+        )
 
         def model_post_init(self, _context: object, /) -> None:
             """Initialise ApacheDS entry quirk."""
@@ -524,7 +563,7 @@ class FlextLdifQuirksServersApache(FlextLdifQuirksBaseSchemaQuirk):
         def can_handle_entry(
             self,
             entry_dn: str,
-            attributes: FlextCore.Types.Dict,
+            attributes: FlextTypes.Dict,
         ) -> bool:
             """Detect ApacheDS-specific entries."""
             dn_lower = entry_dn.lower()
@@ -559,8 +598,8 @@ class FlextLdifQuirksServersApache(FlextLdifQuirksBaseSchemaQuirk):
         def process_entry(
             self,
             entry_dn: str,
-            attributes: FlextCore.Types.Dict,
-        ) -> FlextCore.Result[FlextLdifTypes.Dict]:
+            attributes: FlextTypes.Dict,
+        ) -> FlextResult[FlextLdifTypes.Dict]:
             """Normalise ApacheDS entries and attach metadata."""
             try:
                 dn_lower = entry_dn.lower()
@@ -591,26 +630,26 @@ class FlextLdifQuirksServersApache(FlextLdifQuirksBaseSchemaQuirk):
                 }
                 processed_entry.update(processed_attributes)
 
-                return FlextCore.Result[FlextLdifTypes.Dict].ok(processed_entry)
+                return FlextResult[FlextLdifTypes.Dict].ok(processed_entry)
 
             except Exception as exc:  # pragma: no cover
-                return FlextCore.Result[FlextLdifTypes.Dict].fail(
+                return FlextResult[FlextLdifTypes.Dict].fail(
                     f"Apache Directory Server entry processing failed: {exc}"
                 )
 
         def convert_entry_to_rfc(
             self,
             entry_data: FlextLdifTypes.Dict,
-        ) -> FlextCore.Result[FlextLdifTypes.Dict]:
+        ) -> FlextResult[FlextLdifTypes.Dict]:
             """Strip ApacheDS metadata before RFC processing."""
             try:
                 normalized_entry = dict[str, object](entry_data)
                 normalized_entry.pop(FlextLdifConstants.DictKeys.SERVER_TYPE, None)
                 normalized_entry.pop(FlextLdifConstants.DictKeys.IS_CONFIG_ENTRY, None)
-                return FlextCore.Result[FlextLdifTypes.Dict].ok(normalized_entry)
+                return FlextResult[FlextLdifTypes.Dict].ok(normalized_entry)
 
             except Exception as exc:  # pragma: no cover
-                return FlextCore.Result[FlextLdifTypes.Dict].fail(
+                return FlextResult[FlextLdifTypes.Dict].fail(
                     f"Apache Directory Server entry→RFC conversion failed: {exc}"
                 )
 

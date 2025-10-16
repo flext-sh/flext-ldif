@@ -11,14 +11,14 @@ import fnmatch
 from datetime import UTC, datetime
 from typing import override
 
-from flext_core import FlextCore
+from flext_core import FlextResult, FlextService
 
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.quirks.manager import FlextLdifQuirksManager
 from flext_ldif.typings import FlextLdifTypes
 
 
-class FlextLdifAclService(FlextCore.Service[FlextLdifTypes.Dict]):
+class FlextLdifAclService(FlextService[FlextLdifTypes.Dict]):
     """Unified ACL management service using Composite pattern for rule composition."""
 
     class AclRule:
@@ -30,7 +30,7 @@ class FlextLdifAclService(FlextCore.Service[FlextLdifTypes.Dict]):
             super().__init__()
             self._rule_type = rule_type
 
-        def evaluate(self, context: FlextLdifTypes.Dict) -> FlextCore.Result[bool]:
+        def evaluate(self, context: FlextLdifTypes.Dict) -> FlextResult[bool]:
             """Evaluate ACL rule against context.
 
             This base implementation provides a default evaluation strategy.
@@ -40,7 +40,7 @@ class FlextLdifAclService(FlextCore.Service[FlextLdifTypes.Dict]):
                 context: Evaluation context containing subject, target, permissions, etc.
 
             Returns:
-                FlextCore.Result with boolean evaluation result
+                FlextResult with boolean evaluation result
 
             """
             try:
@@ -48,10 +48,10 @@ class FlextLdifAclService(FlextCore.Service[FlextLdifTypes.Dict]):
                 # Specific rule types (SubjectRule, TargetRule, etc.) check their required keys
                 # Note: context parameter unused in base class but required for subclass overrides
                 _ = context  # Mark as intentionally unused
-                return FlextCore.Result[bool].ok(True)
+                return FlextResult[bool].ok(True)
 
             except Exception as e:
-                return FlextCore.Result[bool].fail(f"ACL evaluation failed: {e}")
+                return FlextResult[bool].fail(f"ACL evaluation failed: {e}")
 
         def add_rule(self, rule: FlextLdifAclService.AclRule) -> None:
             """Add sub-rule (for composite rules)."""
@@ -72,10 +72,10 @@ class FlextLdifAclService(FlextCore.Service[FlextLdifTypes.Dict]):
             """Add sub-rule to composite."""
             self._rules.append(rule)
 
-        def evaluate(self, context: FlextLdifTypes.Dict) -> FlextCore.Result[bool]:
+        def evaluate(self, context: FlextLdifTypes.Dict) -> FlextResult[bool]:
             """Evaluate all rules with operator logic."""
             if not self._rules:
-                return FlextCore.Result[bool].ok(True)
+                return FlextResult[bool].ok(True)
 
             results: FlextLdifTypes.BoolList = []
             for rule in self._rules:
@@ -89,11 +89,9 @@ class FlextLdifAclService(FlextCore.Service[FlextLdifTypes.Dict]):
             elif self._operator == "OR":
                 final_result = any(results)
             else:
-                return FlextCore.Result[bool].fail(
-                    f"Unknown operator: {self._operator}"
-                )
+                return FlextResult[bool].fail(f"Unknown operator: {self._operator}")
 
-            return FlextCore.Result[bool].ok(final_result)
+            return FlextResult[bool].ok(final_result)
 
     class PermissionRule(AclRule):
         """Permission-based ACL rule."""
@@ -105,7 +103,7 @@ class FlextLdifAclService(FlextCore.Service[FlextLdifTypes.Dict]):
             self._permission = permission
             self._required = required
 
-        def evaluate(self, context: FlextLdifTypes.Dict) -> FlextCore.Result[bool]:
+        def evaluate(self, context: FlextLdifTypes.Dict) -> FlextResult[bool]:
             """Evaluate permission requirement.
 
             Checks if the required permission is present (or absent) in the context.
@@ -114,7 +112,7 @@ class FlextLdifAclService(FlextCore.Service[FlextLdifTypes.Dict]):
                 context: Evaluation context with permissions dict
 
             Returns:
-                FlextCore.Result with boolean evaluation result
+                FlextResult with boolean evaluation result
 
             """
             try:
@@ -134,12 +132,10 @@ class FlextLdifAclService(FlextCore.Service[FlextLdifTypes.Dict]):
 
                 # Check if permission matches requirement
                 result = has_perm == self._required
-                return FlextCore.Result[bool].ok(result)
+                return FlextResult[bool].ok(result)
 
             except Exception as e:
-                return FlextCore.Result[bool].fail(
-                    f"Permission rule evaluation failed: {e}"
-                )
+                return FlextResult[bool].fail(f"Permission rule evaluation failed: {e}")
 
     class SubjectRule(AclRule):
         """Subject-based ACL rule."""
@@ -150,7 +146,7 @@ class FlextLdifAclService(FlextCore.Service[FlextLdifTypes.Dict]):
             super().__init__(rule_type="subject")
             self._subject_dn = subject_dn
 
-        def evaluate(self, context: FlextLdifTypes.Dict) -> FlextCore.Result[bool]:
+        def evaluate(self, context: FlextLdifTypes.Dict) -> FlextResult[bool]:
             """Evaluate subject match.
 
             Checks if the subject DN matches the required DN, with support for
@@ -160,7 +156,7 @@ class FlextLdifAclService(FlextCore.Service[FlextLdifTypes.Dict]):
                 context: Evaluation context with subject_dn
 
             Returns:
-                FlextCore.Result with boolean evaluation result
+                FlextResult with boolean evaluation result
 
             """
             try:
@@ -169,10 +165,10 @@ class FlextLdifAclService(FlextCore.Service[FlextLdifTypes.Dict]):
 
                 # Handle different subject formats
                 if not subject_dn and not self._subject_dn:
-                    return FlextCore.Result[bool].ok(True)  # Both empty matches
+                    return FlextResult[bool].ok(True)  # Both empty matches
 
                 if not subject_dn or not self._subject_dn:
-                    return FlextCore.Result[bool].ok(False)  # One empty, no match
+                    return FlextResult[bool].ok(False)  # One empty, no match
 
                 # Normalize DNs for comparison (case insensitive, trimmed)
                 subject_normalized = subject_dn.lower().strip()
@@ -184,12 +180,10 @@ class FlextLdifAclService(FlextCore.Service[FlextLdifTypes.Dict]):
                 else:
                     result = subject_normalized == rule_normalized
 
-                return FlextCore.Result[bool].ok(result)
+                return FlextResult[bool].ok(result)
 
             except Exception as e:
-                return FlextCore.Result[bool].fail(
-                    f"Subject rule evaluation failed: {e}"
-                )
+                return FlextResult[bool].fail(f"Subject rule evaluation failed: {e}")
 
     class TargetRule(AclRule):
         """Target-based ACL rule."""
@@ -200,7 +194,7 @@ class FlextLdifAclService(FlextCore.Service[FlextLdifTypes.Dict]):
             super().__init__(rule_type="target")
             self._target_dn = target_dn
 
-        def evaluate(self, context: FlextLdifTypes.Dict) -> FlextCore.Result[bool]:
+        def evaluate(self, context: FlextLdifTypes.Dict) -> FlextResult[bool]:
             """Evaluate target match.
 
             Checks if the target DN matches the required DN, with support for
@@ -210,7 +204,7 @@ class FlextLdifAclService(FlextCore.Service[FlextLdifTypes.Dict]):
                 context: Evaluation context with target_dn
 
             Returns:
-                FlextCore.Result with boolean evaluation result
+                FlextResult with boolean evaluation result
 
             """
             try:
@@ -219,10 +213,10 @@ class FlextLdifAclService(FlextCore.Service[FlextLdifTypes.Dict]):
 
                 # Handle different target formats
                 if not target_dn and not self._target_dn:
-                    return FlextCore.Result[bool].ok(True)  # Both empty matches
+                    return FlextResult[bool].ok(True)  # Both empty matches
 
                 if not target_dn or not self._target_dn:
-                    return FlextCore.Result[bool].ok(False)  # One empty, no match
+                    return FlextResult[bool].ok(False)  # One empty, no match
 
                 # Normalize DNs for comparison (case insensitive, trimmed)
                 target_normalized = target_dn.lower().strip()
@@ -234,12 +228,10 @@ class FlextLdifAclService(FlextCore.Service[FlextLdifTypes.Dict]):
                 else:
                     result = target_normalized == rule_normalized
 
-                return FlextCore.Result[bool].ok(result)
+                return FlextResult[bool].ok(result)
 
             except Exception as e:
-                return FlextCore.Result[bool].fail(
-                    f"Target rule evaluation failed: {e}"
-                )
+                return FlextResult[bool].fail(f"Target rule evaluation failed: {e}")
 
     class TimeRule(AclRule):
         """Time-based ACL rule."""
@@ -259,7 +251,7 @@ class FlextLdifAclService(FlextCore.Service[FlextLdifTypes.Dict]):
             self._start_time = start_time
             self._end_time = end_time
 
-        def evaluate(self, context: FlextLdifTypes.Dict) -> FlextCore.Result[bool]:
+        def evaluate(self, context: FlextLdifTypes.Dict) -> FlextResult[bool]:
             """Evaluate time-based access.
 
             Checks if current time falls within the allowed time range.
@@ -268,7 +260,7 @@ class FlextLdifAclService(FlextCore.Service[FlextLdifTypes.Dict]):
                 context: Evaluation context (current time can be provided or auto-detected)
 
             Returns:
-                FlextCore.Result with boolean evaluation result
+                FlextResult with boolean evaluation result
 
             """
             try:
@@ -284,7 +276,7 @@ class FlextLdifAclService(FlextCore.Service[FlextLdifTypes.Dict]):
 
                 # If no time restrictions, always allow
                 if not self._start_time and not self._end_time:
-                    return FlextCore.Result[bool].ok(True)
+                    return FlextResult[bool].ok(True)
 
                 # Parse time bounds
                 start_minutes = (
@@ -309,10 +301,10 @@ class FlextLdifAclService(FlextCore.Service[FlextLdifTypes.Dict]):
                         or current_minutes <= end_minutes
                     )
 
-                return FlextCore.Result[bool].ok(result)
+                return FlextResult[bool].ok(result)
 
             except Exception as e:
-                return FlextCore.Result[bool].fail(f"Time rule evaluation failed: {e}")
+                return FlextResult[bool].fail(f"Time rule evaluation failed: {e}")
 
         def _parse_time_to_minutes(self, time_str: str) -> int:
             """Parse HH:MM time string to minutes since midnight.
@@ -337,7 +329,7 @@ class FlextLdifAclService(FlextCore.Service[FlextLdifTypes.Dict]):
             self._group_dn = group_dn
             self._member_required = member_required
 
-        def evaluate(self, context: FlextLdifTypes.Dict) -> FlextCore.Result[bool]:
+        def evaluate(self, context: FlextLdifTypes.Dict) -> FlextResult[bool]:
             """Evaluate group membership.
 
             Checks if the subject is a member of the required group.
@@ -346,7 +338,7 @@ class FlextLdifAclService(FlextCore.Service[FlextLdifTypes.Dict]):
                 context: Evaluation context with subject_groups list
 
             Returns:
-                FlextCore.Result with boolean evaluation result
+                FlextResult with boolean evaluation result
 
             """
             try:
@@ -365,16 +357,16 @@ class FlextLdifAclService(FlextCore.Service[FlextLdifTypes.Dict]):
                 is_member = required_group in normalized_groups
                 result = is_member == self._member_required
 
-                return FlextCore.Result[bool].ok(result)
+                return FlextResult[bool].ok(result)
 
             except Exception as e:
-                return FlextCore.Result[bool].fail(f"Group rule evaluation failed: {e}")
+                return FlextResult[bool].fail(f"Group rule evaluation failed: {e}")
 
     @override
     def __init__(self, quirks_manager: FlextLdifQuirksManager | None = None) -> None:
         """Initialize ACL service with composite pattern support and Phase 1 context enrichment."""
         super().__init__()
-        # Logger and container inherited from FlextCore.Service via FlextCore.Mixins
+        # Logger and container inherited from FlextService via FlextMixins
         self._quirks = quirks_manager or FlextLdifQuirksManager()
 
     def create_composite_rule(
@@ -411,7 +403,7 @@ class FlextLdifAclService(FlextCore.Service[FlextLdifTypes.Dict]):
 
     def extract_acls_from_entry(
         self, entry: FlextLdifModels.Entry, server_type: str | None = None
-    ) -> FlextCore.Result[list[FlextLdifModels.Acl]]:
+    ) -> FlextResult[list[FlextLdifModels.Acl]]:
         """Extract ACLs from LDIF entry using composite pattern.
 
         Args:
@@ -419,21 +411,21 @@ class FlextLdifAclService(FlextCore.Service[FlextLdifTypes.Dict]):
             server_type: Server type for ACL format detection
 
         Returns:
-            FlextCore.Result containing list of unified ACL entries
+            FlextResult containing list of unified ACL entries
 
         """
         # Handle None entry case
         if entry is None:
-            return FlextCore.Result[list[FlextLdifModels.Acl]].fail(
+            return FlextResult[list[FlextLdifModels.Acl]].fail(
                 "Invalid entry: Entry is None"
             )
 
-        acl_attr_result: FlextCore.Result[str] = self._quirks.get_acl_attribute_name(
+        acl_attr_result: FlextResult[str] = self._quirks.get_acl_attribute_name(
             server_type
         )
         if acl_attr_result.is_failure:
             error_msg = acl_attr_result.error or "Unknown ACL attribute error"
-            return FlextCore.Result[list[FlextLdifModels.Acl]].fail(error_msg)
+            return FlextResult[list[FlextLdifModels.Acl]].fail(error_msg)
 
         acl_attribute = acl_attr_result.value
         acl_values: FlextLdifTypes.StringList = entry.get_attribute_values(
@@ -441,23 +433,23 @@ class FlextLdifAclService(FlextCore.Service[FlextLdifTypes.Dict]):
         )
 
         if not acl_values:
-            return FlextCore.Result[list[FlextLdifModels.Acl]].ok([])
+            return FlextResult[list[FlextLdifModels.Acl]].ok([])
 
         acls: list[FlextLdifModels.Acl] = []
         for acl_value in acl_values:
-            parse_result: FlextCore.Result[FlextLdifModels.Acl] = (
-                self._parse_acl_with_rules(acl_value, server_type or "generic")
+            parse_result: FlextResult[FlextLdifModels.Acl] = self._parse_acl_with_rules(
+                acl_value, server_type or "generic"
             )
             if parse_result.is_success:
                 acls.append(parse_result.value)
 
-        return FlextCore.Result[list[FlextLdifModels.Acl]].ok(acls)
+        return FlextResult[list[FlextLdifModels.Acl]].ok(acls)
 
     def _parse_acl_with_rules(
         self,
         acl_string: str,
         server_type: str,
-    ) -> FlextCore.Result[FlextLdifModels.Acl]:
+    ) -> FlextResult[FlextLdifModels.Acl]:
         """Parse ACL string using composite rule pattern.
 
         Args:
@@ -465,7 +457,7 @@ class FlextLdifAclService(FlextCore.Service[FlextLdifTypes.Dict]):
             server_type: Server type for format detection
 
         Returns:
-            FlextCore.Result containing unified ACL with composite rules
+            FlextResult containing unified ACL with composite rules
 
         """
         # Create ACL components directly - Pydantic handles validation
@@ -482,15 +474,15 @@ class FlextLdifAclService(FlextCore.Service[FlextLdifTypes.Dict]):
             server_type=server_type,
             raw_acl=acl_string,
         )
-        return FlextCore.Result[FlextLdifModels.Acl].ok(acl)
+        return FlextResult[FlextLdifModels.Acl].ok(acl)
 
     def evaluate_acl_rules(
         self, rules: list[AclRule], context: FlextLdifTypes.Dict
-    ) -> FlextCore.Result[bool]:
+    ) -> FlextResult[bool]:
         """Evaluate ACL rules against context using composite pattern."""
         # Handle None context case
         if context is None:
-            return FlextCore.Result[bool].fail("Invalid context: Context is None")
+            return FlextResult[bool].fail("Invalid context: Context is None")
 
         composite = self.create_composite_rule(operator="AND")
         for rule in rules:
@@ -498,21 +490,23 @@ class FlextLdifAclService(FlextCore.Service[FlextLdifTypes.Dict]):
         return composite.evaluate(context)
 
     @override
-    def execute(self) -> FlextCore.Result[FlextLdifTypes.Dict]:
+    def execute(self) -> FlextResult[FlextLdifTypes.Dict]:
         """Execute ACL service health check.
 
         Returns:
-            FlextCore.Result containing service status and available patterns
+            FlextResult containing service status and available patterns
 
         """
-        return FlextCore.Result[FlextLdifTypes.Dict].ok({
-            "service": FlextLdifAclService,
-            "status": "ready",
-            "patterns": {
-                "composite": "Composite ACL rule evaluation",
-                "rule_evaluation": "Individual ACL rule processing",
-            },
-        })
+        return FlextResult[FlextLdifTypes.Dict].ok(
+            {
+                "service": FlextLdifAclService,
+                "status": "ready",
+                "patterns": {
+                    "composite": "Composite ACL rule evaluation",
+                    "rule_evaluation": "Individual ACL rule processing",
+                },
+            }
+        )
 
 
 __all__ = ["FlextLdifAclService"]

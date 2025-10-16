@@ -20,7 +20,7 @@ import binascii
 import re
 from typing import ClassVar
 
-from flext_core import FlextCore
+from flext_core import FlextResult, FlextTypes
 from pydantic import Field
 
 from flext_ldif.constants import FlextLdifConstants
@@ -47,35 +47,39 @@ class FlextLdifQuirksServersAd(FlextLdifQuirksBaseSchemaQuirk):
     )
 
     # Frequently encountered attribute/objectClass markers (stored lower-case).
-    AD_ATTRIBUTE_NAMES: ClassVar[frozenset[str]] = frozenset([
-        "samaccountname",
-        "objectguid",
-        "objectsid",
-        "userprincipalname",
-        "unicodepwd",
-        "useraccountcontrol",
-        "primarygroupid",
-        "logonhours",
-        "lockouttime",
-        "pwdlastset",
-        "memberof",
-        "msds-supportedencryptiontypes",
-        "serviceprincipalname",
-        "distinguishedname",
-    ])
-    AD_OBJECTCLASS_NAMES: ClassVar[frozenset[str]] = frozenset([
-        "user",
-        "computer",
-        "group",
-        "organizationalunit",
-        "organizationalperson",
-        "person",
-        "domain",
-        "domainpolicy",
-        "foreignsecurityprincipal",
-        "msds-groupmanagedserviceaccount",
-        "msds-managedserviceaccount",
-    ])
+    AD_ATTRIBUTE_NAMES: ClassVar[frozenset[str]] = frozenset(
+        [
+            "samaccountname",
+            "objectguid",
+            "objectsid",
+            "userprincipalname",
+            "unicodepwd",
+            "useraccountcontrol",
+            "primarygroupid",
+            "logonhours",
+            "lockouttime",
+            "pwdlastset",
+            "memberof",
+            "msds-supportedencryptiontypes",
+            "serviceprincipalname",
+            "distinguishedname",
+        ]
+    )
+    AD_OBJECTCLASS_NAMES: ClassVar[frozenset[str]] = frozenset(
+        [
+            "user",
+            "computer",
+            "group",
+            "organizationalunit",
+            "organizationalperson",
+            "person",
+            "domain",
+            "domainpolicy",
+            "foreignsecurityprincipal",
+            "msds-groupmanagedserviceaccount",
+            "msds-managedserviceaccount",
+        ]
+    )
 
     def model_post_init(self, _context: object, /) -> None:
         """Initialize Active Directory schema quirk."""
@@ -101,14 +105,12 @@ class FlextLdifQuirksServersAd(FlextLdifQuirksBaseSchemaQuirk):
 
         return any(marker in attr_lower for marker in self.AD_ATTRIBUTE_NAMES)
 
-    def parse_attribute(
-        self, attr_definition: str
-    ) -> FlextCore.Result[FlextLdifTypes.Dict]:
+    def parse_attribute(self, attr_definition: str) -> FlextResult[FlextLdifTypes.Dict]:
         """Parse an Active Directory attribute definition."""
         try:
             oid_match = re.search(r"\(\s*([\d.]+)", attr_definition)
             if not oid_match:
-                return FlextCore.Result[FlextLdifTypes.Dict].fail(
+                return FlextResult[FlextLdifTypes.Dict].fail(
                     "Active Directory attribute is missing an OID"
                 )
 
@@ -160,10 +162,10 @@ class FlextLdifQuirksServersAd(FlextLdifQuirksBaseSchemaQuirk):
                 FlextLdifConstants.DictKeys.SERVER_TYPE: self.server_type,
             }
 
-            return FlextCore.Result[FlextLdifTypes.Dict].ok(attr_data)
+            return FlextResult[FlextLdifTypes.Dict].ok(attr_data)
 
         except Exception as exc:
-            return FlextCore.Result[FlextLdifTypes.Dict].fail(
+            return FlextResult[FlextLdifTypes.Dict].fail(
                 f"Active Directory attribute parsing failed: {exc}"
             )
 
@@ -185,14 +187,12 @@ class FlextLdifQuirksServersAd(FlextLdifQuirksBaseSchemaQuirk):
             marker in oc_definition.lower() for marker in self.AD_OBJECTCLASS_NAMES
         )
 
-    def parse_objectclass(
-        self, oc_definition: str
-    ) -> FlextCore.Result[FlextLdifTypes.Dict]:
+    def parse_objectclass(self, oc_definition: str) -> FlextResult[FlextLdifTypes.Dict]:
         """Parse an Active Directory objectClass definition."""
         try:
             oid_match = re.search(r"\(\s*([\d.]+)", oc_definition)
             if not oid_match:
-                return FlextCore.Result[FlextLdifTypes.Dict].fail(
+                return FlextResult[FlextLdifTypes.Dict].fail(
                     "Active Directory objectClass is missing an OID"
                 )
 
@@ -241,10 +241,10 @@ class FlextLdifQuirksServersAd(FlextLdifQuirksBaseSchemaQuirk):
                 FlextLdifConstants.DictKeys.SERVER_TYPE: self.server_type,
             }
 
-            return FlextCore.Result[FlextLdifTypes.Dict].ok(oc_data)
+            return FlextResult[FlextLdifTypes.Dict].ok(oc_data)
 
         except Exception as exc:
-            return FlextCore.Result[FlextLdifTypes.Dict].fail(
+            return FlextResult[FlextLdifTypes.Dict].fail(
                 f"Active Directory objectClass parsing failed: {exc}"
             )
 
@@ -254,7 +254,7 @@ class FlextLdifQuirksServersAd(FlextLdifQuirksBaseSchemaQuirk):
     def convert_attribute_to_rfc(
         self,
         attr_data: FlextLdifTypes.Dict,
-    ) -> FlextCore.Result[FlextLdifTypes.Dict]:
+    ) -> FlextResult[FlextLdifTypes.Dict]:
         """Convert an AD attribute payload into a pure RFC representation."""
         try:
             rfc_data = {
@@ -288,17 +288,17 @@ class FlextLdifQuirksServersAd(FlextLdifQuirksBaseSchemaQuirk):
                 ),
             }
 
-            return FlextCore.Result[FlextLdifTypes.Dict].ok(rfc_data)
+            return FlextResult[FlextLdifTypes.Dict].ok(rfc_data)
 
         except Exception as exc:
-            return FlextCore.Result[FlextLdifTypes.Dict].fail(
+            return FlextResult[FlextLdifTypes.Dict].fail(
                 f"Active Directory→RFC attribute conversion failed: {exc}"
             )
 
     def convert_objectclass_to_rfc(
         self,
         oc_data: FlextLdifTypes.Dict,
-    ) -> FlextCore.Result[FlextLdifTypes.Dict]:
+    ) -> FlextResult[FlextLdifTypes.Dict]:
         """Convert an AD objectClass payload into RFC representation."""
         try:
             rfc_data = {
@@ -326,23 +326,23 @@ class FlextLdifQuirksServersAd(FlextLdifQuirksBaseSchemaQuirk):
                 ),
             }
 
-            return FlextCore.Result[FlextLdifTypes.Dict].ok(rfc_data)
+            return FlextResult[FlextLdifTypes.Dict].ok(rfc_data)
 
         except Exception as exc:
-            return FlextCore.Result[FlextLdifTypes.Dict].fail(
+            return FlextResult[FlextLdifTypes.Dict].fail(
                 f"Active Directory→RFC objectClass conversion failed: {exc}"
             )
 
     def convert_attribute_from_rfc(
         self, rfc_data: FlextLdifTypes.Dict
-    ) -> FlextCore.Result[FlextLdifTypes.Dict]:
+    ) -> FlextResult[FlextLdifTypes.Dict]:
         """Convert RFC-compliant attribute to Active Directory-specific format.
 
         Args:
             rfc_data: RFC-compliant attribute data
 
         Returns:
-            FlextCore.Result with Active Directory attribute data
+            FlextResult with Active Directory attribute data
 
         """
         try:
@@ -352,23 +352,23 @@ class FlextLdifQuirksServersAd(FlextLdifQuirksBaseSchemaQuirk):
                 FlextLdifConstants.DictKeys.SERVER_TYPE: self.server_type,
             }
 
-            return FlextCore.Result[FlextLdifTypes.Dict].ok(ad_data)
+            return FlextResult[FlextLdifTypes.Dict].ok(ad_data)
 
         except Exception as exc:
-            return FlextCore.Result[FlextLdifTypes.Dict].fail(
+            return FlextResult[FlextLdifTypes.Dict].fail(
                 f"RFC→Active Directory attribute conversion failed: {exc}"
             )
 
     def convert_objectclass_from_rfc(
         self, rfc_data: FlextLdifTypes.Dict
-    ) -> FlextCore.Result[FlextLdifTypes.Dict]:
+    ) -> FlextResult[FlextLdifTypes.Dict]:
         """Convert RFC-compliant objectClass to Active Directory-specific format.
 
         Args:
             rfc_data: RFC-compliant objectClass data
 
         Returns:
-            FlextCore.Result with Active Directory objectClass data
+            FlextResult with Active Directory objectClass data
 
         """
         try:
@@ -378,23 +378,23 @@ class FlextLdifQuirksServersAd(FlextLdifQuirksBaseSchemaQuirk):
                 FlextLdifConstants.DictKeys.SERVER_TYPE: self.server_type,
             }
 
-            return FlextCore.Result[FlextLdifTypes.Dict].ok(ad_data)
+            return FlextResult[FlextLdifTypes.Dict].ok(ad_data)
 
         except Exception as exc:
-            return FlextCore.Result[FlextLdifTypes.Dict].fail(
+            return FlextResult[FlextLdifTypes.Dict].fail(
                 f"RFC→Active Directory objectClass conversion failed: {exc}"
             )
 
     def write_attribute_to_rfc(
         self, attr_data: FlextLdifTypes.Dict
-    ) -> FlextCore.Result[str]:
+    ) -> FlextResult[str]:
         """Write attribute data to RFC-compliant string format.
 
         Args:
             attr_data: Attribute data dictionary
 
         Returns:
-            FlextCore.Result with RFC-compliant attribute string
+            FlextResult with RFC-compliant attribute string
 
         """
         try:
@@ -422,23 +422,23 @@ class FlextLdifQuirksServersAd(FlextLdifQuirksBaseSchemaQuirk):
                 attr_str += " SINGLE-VALUE"
             attr_str += " )"
 
-            return FlextCore.Result[str].ok(attr_str)
+            return FlextResult[str].ok(attr_str)
 
         except Exception as exc:
-            return FlextCore.Result[str].fail(
+            return FlextResult[str].fail(
                 f"Active Directory attribute write failed: {exc}"
             )
 
     def write_objectclass_to_rfc(
         self, oc_data: FlextLdifTypes.Dict
-    ) -> FlextCore.Result[str]:
+    ) -> FlextResult[str]:
         """Write objectClass data to RFC-compliant string format.
 
         Args:
             oc_data: ObjectClass data dictionary
 
         Returns:
-            FlextCore.Result with RFC-compliant objectClass string
+            FlextResult with RFC-compliant objectClass string
 
         """
         try:
@@ -468,10 +468,10 @@ class FlextLdifQuirksServersAd(FlextLdifQuirksBaseSchemaQuirk):
                 oc_str += f" MAY ( {may_attrs} )"
             oc_str += " )"
 
-            return FlextCore.Result[str].ok(oc_str)
+            return FlextResult[str].ok(oc_str)
 
         except Exception as exc:
-            return FlextCore.Result[str].fail(
+            return FlextResult[str].fail(
                 f"Active Directory objectClass write failed: {exc}"
             )
 
@@ -510,12 +510,12 @@ class FlextLdifQuirksServersAd(FlextLdifQuirksBaseSchemaQuirk):
 
             return bool(self.SDDL_PREFIX_PATTERN.match(normalized))
 
-        def parse_acl(self, acl_line: str) -> FlextCore.Result[FlextLdifTypes.Dict]:
+        def parse_acl(self, acl_line: str) -> FlextResult[FlextLdifTypes.Dict]:
             """Parse nTSecurityDescriptor values and expose best-effort SDDL."""
             try:
                 line = acl_line.strip()
                 if not line:
-                    return FlextCore.Result[FlextLdifTypes.Dict].fail(
+                    return FlextResult[FlextLdifTypes.Dict].fail(
                         "Empty ACL line cannot be parsed"
                     )
 
@@ -562,17 +562,17 @@ class FlextLdifQuirksServersAd(FlextLdifQuirksBaseSchemaQuirk):
                 if is_base64:
                     acl_payload[FlextLdifConstants.DictKeys.DATA] = raw_value
 
-                return FlextCore.Result[FlextLdifTypes.Dict].ok(acl_payload)
+                return FlextResult[FlextLdifTypes.Dict].ok(acl_payload)
 
             except Exception as exc:
-                return FlextCore.Result[FlextLdifTypes.Dict].fail(
+                return FlextResult[FlextLdifTypes.Dict].fail(
                     f"Active Directory ACL parsing failed: {exc}"
                 )
 
         def convert_acl_to_rfc(
             self,
             acl_data: FlextLdifTypes.Dict,
-        ) -> FlextCore.Result[FlextLdifTypes.Dict]:
+        ) -> FlextResult[FlextLdifTypes.Dict]:
             """Convert an AD ACL payload into the generic RFC representation."""
             try:
                 rfc_acl: FlextLdifTypes.Dict = {
@@ -582,17 +582,17 @@ class FlextLdifQuirksServersAd(FlextLdifQuirksBaseSchemaQuirk):
                     FlextLdifConstants.DictKeys.DATA: acl_data,
                 }
 
-                return FlextCore.Result[FlextLdifTypes.Dict].ok(rfc_acl)
+                return FlextResult[FlextLdifTypes.Dict].ok(rfc_acl)
 
             except Exception as exc:
-                return FlextCore.Result[FlextLdifTypes.Dict].fail(
+                return FlextResult[FlextLdifTypes.Dict].fail(
                     f"Active Directory ACL→RFC conversion failed: {exc}"
                 )
 
         def convert_acl_from_rfc(
             self,
             acl_data: FlextLdifTypes.Dict,
-        ) -> FlextCore.Result[FlextLdifTypes.Dict]:
+        ) -> FlextResult[FlextLdifTypes.Dict]:
             """Translate a generic ACL payload back into AD notation metadata."""
             try:
                 ad_acl: FlextLdifTypes.Dict = {
@@ -601,11 +601,49 @@ class FlextLdifQuirksServersAd(FlextLdifQuirksBaseSchemaQuirk):
                     FlextLdifConstants.DictKeys.DATA: acl_data,
                 }
 
-                return FlextCore.Result[FlextLdifTypes.Dict].ok(ad_acl)
+                return FlextResult[FlextLdifTypes.Dict].ok(ad_acl)
 
             except Exception as exc:
-                return FlextCore.Result[FlextLdifTypes.Dict].fail(
+                return FlextResult[FlextLdifTypes.Dict].fail(
                     f"RFC→Active Directory ACL conversion failed: {exc}"
+                )
+
+        def write_acl_to_rfc(self, acl_data: FlextLdifTypes.Dict) -> FlextResult[str]:
+            """Write ACL data to RFC-compliant string format.
+
+            Active Directory ACLs use nTSecurityDescriptor format.
+
+            Args:
+                acl_data: ACL data dictionary
+
+            Returns:
+                FlextResult with ACL string in AD nTSecurityDescriptor format
+
+            """
+            try:
+                # Get the parsed SDDL or raw value
+                parsed_sddl = acl_data.get(FlextLdifConstants.DictKeys.PARSED, "")
+                raw_value = acl_data.get(FlextLdifConstants.DictKeys.RAW, "")
+                acl_attribute = acl_data.get(
+                    FlextLdifConstants.DictKeys.ACL_ATTRIBUTE,
+                    FlextLdifConstants.DictKeys.NTSECURITYDESCRIPTOR,
+                )
+
+                # If we have parsed SDDL, use it; otherwise use raw value
+                sddl_value = parsed_sddl or raw_value
+
+                # Format as LDIF attribute line
+                # AD typically uses base64 encoding for nTSecurityDescriptor
+                if sddl_value:
+                    acl_str = f"{acl_attribute}: {sddl_value}"
+                else:
+                    acl_str = f"{acl_attribute}:"
+
+                return FlextResult[str].ok(acl_str)
+
+            except Exception as exc:
+                return FlextResult[str].fail(
+                    f"Active Directory ACL write failed: {exc}"
                 )
 
     # ===================================================================== #
@@ -620,24 +658,28 @@ class FlextLdifQuirksServersAd(FlextLdifQuirksBaseSchemaQuirk):
         )
         priority: int = Field(default=15, description="Standard priority for AD entry")
 
-        AD_DN_MARKERS: ClassVar[frozenset[str]] = frozenset([
-            "cn=users",
-            "cn=computers",
-            "cn=configuration",
-            "cn=system",
-            "ou=domain controllers",
-        ])
-        AD_ATTRIBUTE_MARKERS: ClassVar[frozenset[str]] = frozenset([
-            "objectguid",
-            "objectsid",
-            "samaccountname",
-            "userprincipalname",
-            "ntsecuritydescriptor",
-            "useraccountcontrol",
-            "serviceprincipalname",
-            "lastlogontimestamp",
-            "pwdlastset",
-        ])
+        AD_DN_MARKERS: ClassVar[frozenset[str]] = frozenset(
+            [
+                "cn=users",
+                "cn=computers",
+                "cn=configuration",
+                "cn=system",
+                "ou=domain controllers",
+            ]
+        )
+        AD_ATTRIBUTE_MARKERS: ClassVar[frozenset[str]] = frozenset(
+            [
+                "objectguid",
+                "objectsid",
+                "samaccountname",
+                "userprincipalname",
+                "ntsecuritydescriptor",
+                "useraccountcontrol",
+                "serviceprincipalname",
+                "lastlogontimestamp",
+                "pwdlastset",
+            ]
+        )
 
         def model_post_init(self, _context: object, /) -> None:
             """Initialize Active Directory entry quirk."""
@@ -645,7 +687,7 @@ class FlextLdifQuirksServersAd(FlextLdifQuirksBaseSchemaQuirk):
         def can_handle_entry(
             self,
             entry_dn: str,
-            attributes: FlextCore.Types.Dict,
+            attributes: FlextTypes.Dict,
         ) -> bool:
             """Detect Active Directory entries based on DN, attributes, or classes."""
             dn_lower = entry_dn.lower()
@@ -679,8 +721,8 @@ class FlextLdifQuirksServersAd(FlextLdifQuirksBaseSchemaQuirk):
         def process_entry(
             self,
             entry_dn: str,
-            attributes: FlextCore.Types.Dict,
-        ) -> FlextCore.Result[FlextLdifTypes.Dict]:
+            attributes: FlextTypes.Dict,
+        ) -> FlextResult[FlextLdifTypes.Dict]:
             """Normalise Active Directory entries and surface metadata."""
             try:
                 dn_lower = entry_dn.lower()
@@ -712,17 +754,17 @@ class FlextLdifQuirksServersAd(FlextLdifQuirksBaseSchemaQuirk):
                 }
                 processed_entry.update(processed_attributes)
 
-                return FlextCore.Result[FlextLdifTypes.Dict].ok(processed_entry)
+                return FlextResult[FlextLdifTypes.Dict].ok(processed_entry)
 
             except Exception as exc:
-                return FlextCore.Result[FlextLdifTypes.Dict].fail(
+                return FlextResult[FlextLdifTypes.Dict].fail(
                     f"Active Directory entry processing failed: {exc}"
                 )
 
         def convert_entry_to_rfc(
             self,
             entry_data: FlextLdifTypes.Dict,
-        ) -> FlextCore.Result[FlextLdifTypes.Dict]:
+        ) -> FlextResult[FlextLdifTypes.Dict]:
             """Strip AD-only metadata before handing control to RFC logic."""
             try:
                 normalized_entry = dict[str, object](entry_data)
@@ -731,10 +773,10 @@ class FlextLdifQuirksServersAd(FlextLdifQuirksBaseSchemaQuirk):
                 normalized_entry.pop(
                     FlextLdifConstants.DictKeys.IS_TRADITIONAL_DIT, None
                 )
-                return FlextCore.Result[FlextLdifTypes.Dict].ok(normalized_entry)
+                return FlextResult[FlextLdifTypes.Dict].ok(normalized_entry)
 
             except Exception as exc:
-                return FlextCore.Result[FlextLdifTypes.Dict].fail(
+                return FlextResult[FlextLdifTypes.Dict].fail(
                     f"Active Directory entry→RFC conversion failed: {exc}"
                 )
 

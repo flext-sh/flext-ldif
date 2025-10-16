@@ -13,11 +13,11 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 
-from flext_core import FlextCore
+from flext_core import FlextModels, FlextResult, FlextTypes
 from pydantic import Field
 
 
-class FlextLdifQuirksBaseSchemaQuirk(ABC, FlextCore.Models.Value):
+class FlextLdifQuirksBaseSchemaQuirk(ABC, FlextModels.Value):
     """Base class for schema quirks.
 
     Schema quirks extend RFC 4512 schema parsing with server-specific features.
@@ -36,6 +36,44 @@ class FlextLdifQuirksBaseSchemaQuirk(ABC, FlextCore.Models.Value):
         default=100, description="Quirk priority (lower = higher priority)"
     )
 
+    def __init_subclass__(cls) -> None:
+        """Automatic quirk registration - pure Python 3.13+ pattern.
+
+        Pure Python 3.13+ pattern - no wrappers, no helpers, no boilerplate.
+        Schema quirks transparently register in global registry when class is defined.
+
+        Example:
+            >>> class MyServerQuirk(FlextLdifQuirksBaseSchemaQuirk):
+            ...     server_type: str = "myserver"
+            ...     # Automatically registered in global FlextLdifQuirksRegistry
+
+        """
+        super().__init_subclass__()
+
+        # Only register concrete classes (not base classes or nested abstract classes)
+        if not hasattr(cls, "__abstractmethods__") or not cls.__abstractmethods__:
+            try:
+                # Import here to avoid circular dependency
+                from flext_ldif.quirks.registry import (  # noqa: PLC0415
+                    FlextLdifQuirksRegistry,
+                )
+
+                # Check if cls has all required fields with defaults
+                # Pydantic models can only be instantiated if all required fields have defaults
+                try:
+                    quirk_instance = cls()  # type: ignore[call-arg]
+                except TypeError:
+                    # Missing required fields (like server_type) - skip registration
+                    # This happens for abstract base classes
+                    return
+
+                registry = FlextLdifQuirksRegistry.get_global_instance()
+                registry.register_schema_quirk(quirk_instance)
+            except Exception:  # noqa: S110
+                # Intentionally silent: Class definition should never fail
+                # Registration is optional during class creation
+                pass
+
     @abstractmethod
     def can_handle_attribute(self, attr_definition: str) -> bool:
         """Check if this quirk can handle the attribute definition.
@@ -49,16 +87,14 @@ class FlextLdifQuirksBaseSchemaQuirk(ABC, FlextCore.Models.Value):
         """
 
     @abstractmethod
-    def parse_attribute(
-        self, attr_definition: str
-    ) -> FlextCore.Result[FlextCore.Types.Dict]:
+    def parse_attribute(self, attr_definition: str) -> FlextResult[FlextTypes.Dict]:
         """Parse server-specific attribute definition.
 
         Args:
             attr_definition: AttributeType definition string
 
         Returns:
-            FlextCore.Result with parsed attribute data
+            FlextResult with parsed attribute data
 
         """
 
@@ -75,105 +111,99 @@ class FlextLdifQuirksBaseSchemaQuirk(ABC, FlextCore.Models.Value):
         """
 
     @abstractmethod
-    def parse_objectclass(
-        self, oc_definition: str
-    ) -> FlextCore.Result[FlextCore.Types.Dict]:
+    def parse_objectclass(self, oc_definition: str) -> FlextResult[FlextTypes.Dict]:
         """Parse server-specific objectClass definition.
 
         Args:
             oc_definition: ObjectClass definition string
 
         Returns:
-            FlextCore.Result with parsed objectClass data
+            FlextResult with parsed objectClass data
 
         """
 
     @abstractmethod
     def convert_attribute_to_rfc(
-        self, attr_data: FlextCore.Types.Dict
-    ) -> FlextCore.Result[FlextCore.Types.Dict]:
+        self, attr_data: FlextTypes.Dict
+    ) -> FlextResult[FlextTypes.Dict]:
         """Convert server-specific attribute to RFC-compliant format.
 
         Args:
             attr_data: Server-specific attribute data
 
         Returns:
-            FlextCore.Result with RFC-compliant attribute data
+            FlextResult with RFC-compliant attribute data
 
         """
 
     @abstractmethod
     def convert_objectclass_to_rfc(
-        self, oc_data: FlextCore.Types.Dict
-    ) -> FlextCore.Result[FlextCore.Types.Dict]:
+        self, oc_data: FlextTypes.Dict
+    ) -> FlextResult[FlextTypes.Dict]:
         """Convert server-specific objectClass to RFC-compliant format.
 
         Args:
             oc_data: Server-specific objectClass data
 
         Returns:
-            FlextCore.Result with RFC-compliant objectClass data
+            FlextResult with RFC-compliant objectClass data
 
         """
 
     @abstractmethod
     def convert_attribute_from_rfc(
-        self, rfc_data: FlextCore.Types.Dict
-    ) -> FlextCore.Result[FlextCore.Types.Dict]:
+        self, rfc_data: FlextTypes.Dict
+    ) -> FlextResult[FlextTypes.Dict]:
         """Convert RFC-compliant attribute to server-specific format.
 
         Args:
             rfc_data: RFC-compliant attribute data
 
         Returns:
-            FlextCore.Result with server-specific attribute data
+            FlextResult with server-specific attribute data
 
         """
 
     @abstractmethod
     def convert_objectclass_from_rfc(
-        self, rfc_data: FlextCore.Types.Dict
-    ) -> FlextCore.Result[FlextCore.Types.Dict]:
+        self, rfc_data: FlextTypes.Dict
+    ) -> FlextResult[FlextTypes.Dict]:
         """Convert RFC-compliant objectClass to server-specific format.
 
         Args:
             rfc_data: RFC-compliant objectClass data
 
         Returns:
-            FlextCore.Result with server-specific objectClass data
+            FlextResult with server-specific objectClass data
 
         """
 
     @abstractmethod
-    def write_attribute_to_rfc(
-        self, attr_data: FlextCore.Types.Dict
-    ) -> FlextCore.Result[str]:
+    def write_attribute_to_rfc(self, attr_data: FlextTypes.Dict) -> FlextResult[str]:
         """Write attribute data to RFC-compliant string format.
 
         Args:
             attr_data: Attribute data dictionary
 
         Returns:
-            FlextCore.Result with RFC-compliant attribute string
+            FlextResult with RFC-compliant attribute string
 
         """
 
     @abstractmethod
-    def write_objectclass_to_rfc(
-        self, oc_data: FlextCore.Types.Dict
-    ) -> FlextCore.Result[str]:
+    def write_objectclass_to_rfc(self, oc_data: FlextTypes.Dict) -> FlextResult[str]:
         """Write objectClass data to RFC-compliant string format.
 
         Args:
             oc_data: ObjectClass data dictionary
 
         Returns:
-            FlextCore.Result with RFC-compliant objectClass string
+            FlextResult with RFC-compliant objectClass string
 
         """
 
 
-class FlextLdifQuirksBaseAclQuirk(ABC, FlextCore.Models.Value):
+class FlextLdifQuirksBaseAclQuirk(ABC, FlextModels.Value):
     """Base class for ACL quirks.
 
     ACL quirks extend RFC 4516 ACL parsing with server-specific formats.
@@ -188,6 +218,44 @@ class FlextLdifQuirksBaseAclQuirk(ABC, FlextCore.Models.Value):
     server_type: str = Field(description="Server type this quirk applies to")
     priority: int = Field(default=100, description="Quirk priority")
 
+    def __init_subclass__(cls) -> None:
+        """Automatic quirk registration - pure Python 3.13+ pattern.
+
+        Pure Python 3.13+ pattern - no wrappers, no helpers, no boilerplate.
+        ACL quirks transparently register in global registry when class is defined.
+
+        Example:
+            >>> class MyServerAclQuirk(FlextLdifQuirksBaseAclQuirk):
+            ...     server_type: str = "myserver"
+            ...     # Automatically registered in global FlextLdifQuirksRegistry
+
+        """
+        super().__init_subclass__()
+
+        # Only register concrete classes (not base classes or nested abstract classes)
+        if not hasattr(cls, "__abstractmethods__") or not cls.__abstractmethods__:
+            try:
+                # Import here to avoid circular dependency
+                from flext_ldif.quirks.registry import (  # noqa: PLC0415
+                    FlextLdifQuirksRegistry,
+                )
+
+                # Check if cls has all required fields with defaults
+                # Pydantic models can only be instantiated if all required fields have defaults
+                try:
+                    quirk_instance = cls()  # type: ignore[call-arg]
+                except TypeError:
+                    # Missing required fields (like server_type) - skip registration
+                    # This happens for abstract base classes
+                    return
+
+                registry = FlextLdifQuirksRegistry.get_global_instance()
+                registry.register_acl_quirk(quirk_instance)
+            except Exception:  # noqa: S110
+                # Intentionally silent: Class definition should never fail
+                # Registration is optional during class creation
+                pass
+
     @abstractmethod
     def can_handle_acl(self, acl_line: str) -> bool:
         """Check if this quirk can handle the ACL definition.
@@ -201,59 +269,59 @@ class FlextLdifQuirksBaseAclQuirk(ABC, FlextCore.Models.Value):
         """
 
     @abstractmethod
-    def parse_acl(self, acl_line: str) -> FlextCore.Result[FlextCore.Types.Dict]:
+    def parse_acl(self, acl_line: str) -> FlextResult[FlextTypes.Dict]:
         """Parse server-specific ACL definition.
 
         Args:
             acl_line: ACL definition line
 
         Returns:
-            FlextCore.Result with parsed ACL data
+            FlextResult with parsed ACL data
 
         """
 
     @abstractmethod
     def convert_acl_to_rfc(
-        self, acl_data: FlextCore.Types.Dict
-    ) -> FlextCore.Result[FlextCore.Types.Dict]:
+        self, acl_data: FlextTypes.Dict
+    ) -> FlextResult[FlextTypes.Dict]:
         """Convert server-specific ACL to RFC-compliant format.
 
         Args:
             acl_data: Server-specific ACL data
 
         Returns:
-            FlextCore.Result with RFC-compliant ACL data
+            FlextResult with RFC-compliant ACL data
 
         """
 
     @abstractmethod
     def convert_acl_from_rfc(
-        self, acl_data: FlextCore.Types.Dict
-    ) -> FlextCore.Result[FlextCore.Types.Dict]:
+        self, acl_data: FlextTypes.Dict
+    ) -> FlextResult[FlextTypes.Dict]:
         """Convert RFC-compliant ACL to server-specific format.
 
         Args:
             acl_data: RFC-compliant ACL data
 
         Returns:
-            FlextCore.Result with server-specific ACL data
+            FlextResult with server-specific ACL data
 
         """
 
     @abstractmethod
-    def write_acl_to_rfc(self, acl_data: FlextCore.Types.Dict) -> FlextCore.Result[str]:
+    def write_acl_to_rfc(self, acl_data: FlextTypes.Dict) -> FlextResult[str]:
         """Write ACL data to RFC-compliant string format.
 
         Args:
             acl_data: ACL data dictionary
 
         Returns:
-            FlextCore.Result with RFC-compliant ACL string
+            FlextResult with RFC-compliant ACL string
 
         """
 
 
-class FlextLdifQuirksBaseEntryQuirk(ABC, FlextCore.Models.Value):
+class FlextLdifQuirksBaseEntryQuirk(ABC, FlextModels.Value):
     """Base class for entry processing quirks.
 
     Entry quirks handle server-specific entry attributes and transformations.
@@ -268,8 +336,46 @@ class FlextLdifQuirksBaseEntryQuirk(ABC, FlextCore.Models.Value):
     server_type: str = Field(description="Server type this quirk applies to")
     priority: int = Field(default=100, description="Quirk priority")
 
+    def __init_subclass__(cls) -> None:
+        """Automatic quirk registration - pure Python 3.13+ pattern.
+
+        Pure Python 3.13+ pattern - no wrappers, no helpers, no boilerplate.
+        Entry quirks transparently register in global registry when class is defined.
+
+        Example:
+            >>> class MyServerEntryQuirk(FlextLdifQuirksBaseEntryQuirk):
+            ...     server_type: str = "myserver"
+            ...     # Automatically registered in global FlextLdifQuirksRegistry
+
+        """
+        super().__init_subclass__()
+
+        # Only register concrete classes (not base classes or nested abstract classes)
+        if not hasattr(cls, "__abstractmethods__") or not cls.__abstractmethods__:
+            try:
+                # Import here to avoid circular dependency
+                from flext_ldif.quirks.registry import (  # noqa: PLC0415
+                    FlextLdifQuirksRegistry,
+                )
+
+                # Check if cls has all required fields with defaults
+                # Pydantic models can only be instantiated if all required fields have defaults
+                try:
+                    quirk_instance = cls()  # type: ignore[call-arg]
+                except TypeError:
+                    # Missing required fields (like server_type) - skip registration
+                    # This happens for abstract base classes
+                    return
+
+                registry = FlextLdifQuirksRegistry.get_global_instance()
+                registry.register_entry_quirk(quirk_instance)
+            except Exception:  # noqa: S110
+                # Intentionally silent: Class definition should never fail
+                # Registration is optional during class creation
+                pass
+
     @abstractmethod
-    def can_handle_entry(self, entry_dn: str, attributes: FlextCore.Types.Dict) -> bool:
+    def can_handle_entry(self, entry_dn: str, attributes: FlextTypes.Dict) -> bool:
         """Check if this quirk can handle the entry.
 
         Args:
@@ -283,8 +389,8 @@ class FlextLdifQuirksBaseEntryQuirk(ABC, FlextCore.Models.Value):
 
     @abstractmethod
     def process_entry(
-        self, entry_dn: str, attributes: FlextCore.Types.Dict
-    ) -> FlextCore.Result[FlextCore.Types.Dict]:
+        self, entry_dn: str, attributes: FlextTypes.Dict
+    ) -> FlextResult[FlextTypes.Dict]:
         """Process entry with server-specific logic.
 
         Args:
@@ -292,21 +398,21 @@ class FlextLdifQuirksBaseEntryQuirk(ABC, FlextCore.Models.Value):
             attributes: Entry attributes
 
         Returns:
-            FlextCore.Result with processed entry data
+            FlextResult with processed entry data
 
         """
 
     @abstractmethod
     def convert_entry_to_rfc(
-        self, entry_data: FlextCore.Types.Dict
-    ) -> FlextCore.Result[FlextCore.Types.Dict]:
+        self, entry_data: FlextTypes.Dict
+    ) -> FlextResult[FlextTypes.Dict]:
         """Convert server-specific entry to RFC-compliant format.
 
         Args:
             entry_data: Server-specific entry data
 
         Returns:
-            FlextCore.Result with RFC-compliant entry data
+            FlextResult with RFC-compliant entry data
 
         """
 

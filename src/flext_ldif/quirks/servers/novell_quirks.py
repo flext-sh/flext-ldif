@@ -13,7 +13,7 @@ import base64
 import re
 from typing import ClassVar
 
-from flext_core import FlextCore
+from flext_core import FlextResult, FlextTypes
 from pydantic import Field
 
 from flext_ldif.constants import FlextLdifConstants
@@ -39,18 +39,22 @@ class FlextLdifQuirksServersNovell(FlextLdifQuirksBaseSchemaQuirk):
     NOVELL_OID_PATTERN: ClassVar[re.Pattern[str]] = re.compile(
         r"\b2\.16\.840\.1\.113719\.", re.IGNORECASE
     )
-    NOVELL_ATTRIBUTE_PREFIXES: ClassVar[frozenset[str]] = frozenset([
-        "nspm",
-        "login",
-        "dirxml-",
-    ])
-    NOVELL_OBJECTCLASS_NAMES: ClassVar[frozenset[str]] = frozenset([
-        "ndsperson",
-        "nspmpasswordpolicy",
-        "ndsserver",
-        "ndstree",
-        "ndsloginproperties",
-    ])
+    NOVELL_ATTRIBUTE_PREFIXES: ClassVar[frozenset[str]] = frozenset(
+        [
+            "nspm",
+            "login",
+            "dirxml-",
+        ]
+    )
+    NOVELL_OBJECTCLASS_NAMES: ClassVar[frozenset[str]] = frozenset(
+        [
+            "ndsperson",
+            "nspmpasswordpolicy",
+            "ndsserver",
+            "ndstree",
+            "ndsloginproperties",
+        ]
+    )
     ATTRIBUTE_NAME_REGEX: ClassVar[re.Pattern[str]] = re.compile(
         r"NAME\s+\(?\s*'([^']+)'", re.IGNORECASE
     )
@@ -73,14 +77,12 @@ class FlextLdifQuirksServersNovell(FlextLdifQuirksBaseSchemaQuirk):
 
         return any(prefix in attr_lower for prefix in self.NOVELL_ATTRIBUTE_PREFIXES)
 
-    def parse_attribute(
-        self, attr_definition: str
-    ) -> FlextCore.Result[FlextLdifTypes.Dict]:
+    def parse_attribute(self, attr_definition: str) -> FlextResult[FlextLdifTypes.Dict]:
         """Parse eDirectory attribute definition."""
         try:
             oid_match = re.search(r"\(\s*([\d.]+)", attr_definition)
             if not oid_match:
-                return FlextCore.Result[FlextLdifTypes.Dict].fail(
+                return FlextResult[FlextLdifTypes.Dict].fail(
                     "Novell eDirectory attribute definition is missing an OID"
                 )
 
@@ -136,10 +138,10 @@ class FlextLdifQuirksServersNovell(FlextLdifQuirksBaseSchemaQuirk):
             if name_tokens:
                 attr_data["aliases"] = name_tokens
 
-            return FlextCore.Result[FlextLdifTypes.Dict].ok(attr_data)
+            return FlextResult[FlextLdifTypes.Dict].ok(attr_data)
 
         except Exception as exc:  # pragma: no cover
-            return FlextCore.Result[FlextLdifTypes.Dict].fail(
+            return FlextResult[FlextLdifTypes.Dict].fail(
                 f"Novell eDirectory attribute parsing failed: {exc}"
             )
 
@@ -153,14 +155,12 @@ class FlextLdifQuirksServersNovell(FlextLdifQuirksBaseSchemaQuirk):
             name.lower() in self.NOVELL_OBJECTCLASS_NAMES for name in name_matches
         )
 
-    def parse_objectclass(
-        self, oc_definition: str
-    ) -> FlextCore.Result[FlextLdifTypes.Dict]:
+    def parse_objectclass(self, oc_definition: str) -> FlextResult[FlextLdifTypes.Dict]:
         """Parse eDirectory objectClass definition."""
         try:
             oid_match = re.search(r"\(\s*([\d.]+)", oc_definition)
             if not oid_match:
-                return FlextCore.Result[FlextLdifTypes.Dict].fail(
+                return FlextResult[FlextLdifTypes.Dict].fail(
                     "Novell eDirectory objectClass definition is missing an OID"
                 )
 
@@ -210,17 +210,17 @@ class FlextLdifQuirksServersNovell(FlextLdifQuirksBaseSchemaQuirk):
             if name_tokens:
                 oc_data["aliases"] = name_tokens
 
-            return FlextCore.Result[FlextLdifTypes.Dict].ok(oc_data)
+            return FlextResult[FlextLdifTypes.Dict].ok(oc_data)
 
         except Exception as exc:  # pragma: no cover
-            return FlextCore.Result[FlextLdifTypes.Dict].fail(
+            return FlextResult[FlextLdifTypes.Dict].fail(
                 f"Novell eDirectory objectClass parsing failed: {exc}"
             )
 
     def convert_attribute_to_rfc(
         self,
         attr_data: FlextLdifTypes.Dict,
-    ) -> FlextCore.Result[FlextLdifTypes.Dict]:
+    ) -> FlextResult[FlextLdifTypes.Dict]:
         """Convert eDirectory attribute metadata to RFC representation."""
         try:
             rfc_data = {
@@ -254,17 +254,17 @@ class FlextLdifQuirksServersNovell(FlextLdifQuirksBaseSchemaQuirk):
                 ),
             }
 
-            return FlextCore.Result[FlextLdifTypes.Dict].ok(rfc_data)
+            return FlextResult[FlextLdifTypes.Dict].ok(rfc_data)
 
         except Exception as exc:  # pragma: no cover
-            return FlextCore.Result[FlextLdifTypes.Dict].fail(
+            return FlextResult[FlextLdifTypes.Dict].fail(
                 f"Novell eDirectory→RFC attribute conversion failed: {exc}"
             )
 
     def convert_objectclass_to_rfc(
         self,
         oc_data: FlextLdifTypes.Dict,
-    ) -> FlextCore.Result[FlextLdifTypes.Dict]:
+    ) -> FlextResult[FlextLdifTypes.Dict]:
         """Convert eDirectory objectClass metadata to RFC representation."""
         try:
             rfc_data = {
@@ -292,46 +292,46 @@ class FlextLdifQuirksServersNovell(FlextLdifQuirksBaseSchemaQuirk):
                 ),
             }
 
-            return FlextCore.Result[FlextLdifTypes.Dict].ok(rfc_data)
+            return FlextResult[FlextLdifTypes.Dict].ok(rfc_data)
 
         except Exception as exc:  # pragma: no cover
-            return FlextCore.Result[FlextLdifTypes.Dict].fail(
+            return FlextResult[FlextLdifTypes.Dict].fail(
                 f"Novell eDirectory→RFC objectClass conversion failed: {exc}"
             )
 
     def convert_attribute_from_rfc(
         self, rfc_data: FlextLdifTypes.Dict
-    ) -> FlextCore.Result[FlextLdifTypes.Dict]:
+    ) -> FlextResult[FlextLdifTypes.Dict]:
         """Convert RFC-compliant attribute to Novell eDirectory-specific format."""
         try:
             novell_data = {
                 **rfc_data,
                 FlextLdifConstants.DictKeys.SERVER_TYPE: self.server_type,
             }
-            return FlextCore.Result[FlextLdifTypes.Dict].ok(novell_data)
+            return FlextResult[FlextLdifTypes.Dict].ok(novell_data)
         except Exception as exc:  # pragma: no cover
-            return FlextCore.Result[FlextLdifTypes.Dict].fail(
+            return FlextResult[FlextLdifTypes.Dict].fail(
                 f"RFC→Novell eDirectory attribute conversion failed: {exc}"
             )
 
     def convert_objectclass_from_rfc(
         self, rfc_data: FlextLdifTypes.Dict
-    ) -> FlextCore.Result[FlextLdifTypes.Dict]:
+    ) -> FlextResult[FlextLdifTypes.Dict]:
         """Convert RFC-compliant objectClass to Novell eDirectory-specific format."""
         try:
             novell_data = {
                 **rfc_data,
                 FlextLdifConstants.DictKeys.SERVER_TYPE: self.server_type,
             }
-            return FlextCore.Result[FlextLdifTypes.Dict].ok(novell_data)
+            return FlextResult[FlextLdifTypes.Dict].ok(novell_data)
         except Exception as exc:  # pragma: no cover
-            return FlextCore.Result[FlextLdifTypes.Dict].fail(
+            return FlextResult[FlextLdifTypes.Dict].fail(
                 f"RFC→Novell eDirectory objectClass conversion failed: {exc}"
             )
 
     def write_attribute_to_rfc(
         self, attr_data: FlextLdifTypes.Dict
-    ) -> FlextCore.Result[str]:
+    ) -> FlextResult[str]:
         """Write attribute data to RFC-compliant string format."""
         try:
             oid = attr_data.get(FlextLdifConstants.DictKeys.OID, "")
@@ -356,15 +356,15 @@ class FlextLdifQuirksServersNovell(FlextLdifQuirksBaseSchemaQuirk):
                 attr_str += " SINGLE-VALUE"
             attr_str += " )"
 
-            return FlextCore.Result[str].ok(attr_str)
+            return FlextResult[str].ok(attr_str)
         except Exception as exc:  # pragma: no cover
-            return FlextCore.Result[str].fail(
+            return FlextResult[str].fail(
                 f"Novell eDirectory attribute write failed: {exc}"
             )
 
     def write_objectclass_to_rfc(
         self, oc_data: FlextLdifTypes.Dict
-    ) -> FlextCore.Result[str]:
+    ) -> FlextResult[str]:
         """Write objectClass data to RFC-compliant string format."""
         try:
             oid = oc_data.get(FlextLdifConstants.DictKeys.OID, "")
@@ -391,9 +391,9 @@ class FlextLdifQuirksServersNovell(FlextLdifQuirksBaseSchemaQuirk):
                 oc_str += f" MAY ( {may_attrs} )"
             oc_str += " )"
 
-            return FlextCore.Result[str].ok(oc_str)
+            return FlextResult[str].ok(oc_str)
         except Exception as exc:  # pragma: no cover
-            return FlextCore.Result[str].fail(
+            return FlextResult[str].fail(
                 f"Novell eDirectory objectClass write failed: {exc}"
             )
 
@@ -408,10 +408,12 @@ class FlextLdifQuirksServersNovell(FlextLdifQuirksBaseSchemaQuirk):
             default=15, description="Standard priority for eDirectory ACL"
         )
 
-        ACL_ATTRIBUTE_NAMES: ClassVar[frozenset[str]] = frozenset([
-            "acl",
-            "inheritedacl",
-        ])
+        ACL_ATTRIBUTE_NAMES: ClassVar[frozenset[str]] = frozenset(
+            [
+                "acl",
+                "inheritedacl",
+            ]
+        )
 
         def model_post_init(self, _context: object, /) -> None:
             """Initialize eDirectory ACL quirk."""
@@ -425,7 +427,7 @@ class FlextLdifQuirksServersNovell(FlextLdifQuirksBaseSchemaQuirk):
             attr_name, _, _ = normalized.partition(":")
             return attr_name.strip().lower() in self.ACL_ATTRIBUTE_NAMES
 
-        def parse_acl(self, acl_line: str) -> FlextCore.Result[FlextLdifTypes.Dict]:
+        def parse_acl(self, acl_line: str) -> FlextResult[FlextLdifTypes.Dict]:
             """Parse eDirectory ACL definition."""
             try:
                 attr_name, content = self._split_acl_line(acl_line)
@@ -454,17 +456,17 @@ class FlextLdifQuirksServersNovell(FlextLdifQuirksBaseSchemaQuirk):
                         "content": content.strip(),
                     },
                 }
-                return FlextCore.Result[FlextLdifTypes.Dict].ok(acl_payload)
+                return FlextResult[FlextLdifTypes.Dict].ok(acl_payload)
 
             except Exception as exc:  # pragma: no cover
-                return FlextCore.Result[FlextLdifTypes.Dict].fail(
+                return FlextResult[FlextLdifTypes.Dict].fail(
                     f"Novell eDirectory ACL parsing failed: {exc}"
                 )
 
         def convert_acl_to_rfc(
             self,
             acl_data: FlextLdifTypes.Dict,
-        ) -> FlextCore.Result[FlextLdifTypes.Dict]:
+        ) -> FlextResult[FlextLdifTypes.Dict]:
             """Wrap eDirectory ACL into generic RFC representation."""
             try:
                 # Type narrowing: rfc_acl is already FlextLdifTypes.Dict (dict[str, object])
@@ -474,17 +476,17 @@ class FlextLdifQuirksServersNovell(FlextLdifQuirksBaseSchemaQuirk):
                     FlextLdifConstants.DictKeys.SOURCE_FORMAT: FlextLdifConstants.AclFormats.ACI,
                     FlextLdifConstants.DictKeys.DATA: acl_data,
                 }
-                return FlextCore.Result[FlextLdifTypes.Dict].ok(rfc_acl)
+                return FlextResult[FlextLdifTypes.Dict].ok(rfc_acl)
 
             except Exception as exc:  # pragma: no cover
-                return FlextCore.Result[FlextLdifTypes.Dict].fail(
+                return FlextResult[FlextLdifTypes.Dict].fail(
                     f"Novell eDirectory ACL→RFC conversion failed: {exc}"
                 )
 
         def convert_acl_from_rfc(
             self,
             acl_data: FlextLdifTypes.Dict,
-        ) -> FlextCore.Result[FlextLdifTypes.Dict]:
+        ) -> FlextResult[FlextLdifTypes.Dict]:
             """Repackage RFC ACL payload for eDirectory."""
             try:
                 # Type narrowing: ed_acl is already FlextLdifTypes.Dict (dict[str, object])
@@ -493,11 +495,70 @@ class FlextLdifQuirksServersNovell(FlextLdifQuirksBaseSchemaQuirk):
                     FlextLdifConstants.DictKeys.TARGET_FORMAT: "acl",
                     FlextLdifConstants.DictKeys.DATA: acl_data,
                 }
-                return FlextCore.Result[FlextLdifTypes.Dict].ok(ed_acl)
+                return FlextResult[FlextLdifTypes.Dict].ok(ed_acl)
 
             except Exception as exc:  # pragma: no cover
-                return FlextCore.Result[FlextLdifTypes.Dict].fail(
+                return FlextResult[FlextLdifTypes.Dict].fail(
                     f"RFC→Novell eDirectory ACL conversion failed: {exc}"
+                )
+
+        def write_acl_to_rfc(self, acl_data: FlextLdifTypes.Dict) -> FlextResult[str]:
+            """Write ACL data to RFC-compliant string format.
+
+            Novell eDirectory ACLs use "#" delimited segments:
+            scope#trustee#rights#...
+            """
+            try:
+                acl_attribute = acl_data.get(
+                    FlextLdifConstants.DictKeys.ACL_ATTRIBUTE,
+                    "acl",
+                )
+                data_raw = acl_data.get(FlextLdifConstants.DictKeys.DATA, {})
+                data: FlextLdifTypes.Dict = (
+                    data_raw if isinstance(data_raw, dict) else {}
+                )
+
+                # Check for existing content first
+                content = data.get("content", "")
+                if content:
+                    # Use existing content if available
+                    acl_str = f"{acl_attribute}: {content}"
+                else:
+                    # Build from structured segments
+                    segments_raw = data.get("segments", [])
+                    segments: list[str] = (
+                        segments_raw if isinstance(segments_raw, list) else []
+                    )
+
+                    if segments:
+                        # Use segments if available
+                        acl_content = "#".join(segments)
+                        acl_str = f"{acl_attribute}: {acl_content}"
+                    else:
+                        # Build from individual fields
+                        scope = data.get("scope", "")
+                        trustee = data.get("trustee", "")
+                        rights_raw = data.get("rights", [])
+                        rights: list[str] = (
+                            rights_raw if isinstance(rights_raw, list) else []
+                        )
+
+                        parts = [scope, trustee]
+                        parts.extend(rights)
+                        # Filter empty parts and ensure they're strings
+                        parts = [str(p) for p in parts if p]
+
+                        acl_content = "#".join(parts) if parts else ""
+                        acl_str = (
+                            f"{acl_attribute}: {acl_content}"
+                            if acl_content
+                            else f"{acl_attribute}:"
+                        )
+
+                return FlextResult[str].ok(acl_str)
+            except Exception as exc:
+                return FlextResult[str].fail(
+                    f"Novell eDirectory ACL write failed: {exc}"
                 )
 
         @staticmethod
@@ -517,17 +578,21 @@ class FlextLdifQuirksServersNovell(FlextLdifQuirksBaseSchemaQuirk):
             default=15, description="Standard priority for eDirectory entry"
         )
 
-        EDIR_DIRECTORY_MARKERS: ClassVar[frozenset[str]] = frozenset([
-            "ou=services",
-            "ou=apps",
-            "ou=system",
-        ])
-        EDIR_ATTRIBUTE_MARKERS: ClassVar[frozenset[str]] = frozenset([
-            "nspmpasswordpolicy",
-            "nspmpasswordpolicydn",
-            "logindisabled",
-            "loginexpirationtime",
-        ])
+        EDIR_DIRECTORY_MARKERS: ClassVar[frozenset[str]] = frozenset(
+            [
+                "ou=services",
+                "ou=apps",
+                "ou=system",
+            ]
+        )
+        EDIR_ATTRIBUTE_MARKERS: ClassVar[frozenset[str]] = frozenset(
+            [
+                "nspmpasswordpolicy",
+                "nspmpasswordpolicydn",
+                "logindisabled",
+                "loginexpirationtime",
+            ]
+        )
 
         def model_post_init(self, _context: object, /) -> None:
             """Initialize eDirectory entry quirk."""
@@ -535,7 +600,7 @@ class FlextLdifQuirksServersNovell(FlextLdifQuirksBaseSchemaQuirk):
         def can_handle_entry(
             self,
             entry_dn: str,
-            attributes: FlextCore.Types.Dict,
+            attributes: FlextTypes.Dict,
         ) -> bool:
             """Detect eDirectory-specific entries."""
             dn_lower = entry_dn.lower()
@@ -569,8 +634,8 @@ class FlextLdifQuirksServersNovell(FlextLdifQuirksBaseSchemaQuirk):
         def process_entry(
             self,
             entry_dn: str,
-            attributes: FlextCore.Types.Dict,
-        ) -> FlextCore.Result[FlextLdifTypes.Dict]:
+            attributes: FlextTypes.Dict,
+        ) -> FlextResult[FlextLdifTypes.Dict]:
             """Normalise eDirectory entries and expose metadata."""
             try:
                 object_classes_raw = attributes.get(
@@ -598,25 +663,25 @@ class FlextLdifQuirksServersNovell(FlextLdifQuirksBaseSchemaQuirk):
                 }
                 processed_entry.update(processed_attributes)
 
-                return FlextCore.Result[FlextLdifTypes.Dict].ok(processed_entry)
+                return FlextResult[FlextLdifTypes.Dict].ok(processed_entry)
 
             except Exception as exc:  # pragma: no cover
-                return FlextCore.Result[FlextLdifTypes.Dict].fail(
+                return FlextResult[FlextLdifTypes.Dict].fail(
                     f"Novell eDirectory entry processing failed: {exc}"
                 )
 
         def convert_entry_to_rfc(
             self,
             entry_data: FlextLdifTypes.Dict,
-        ) -> FlextCore.Result[FlextLdifTypes.Dict]:
+        ) -> FlextResult[FlextLdifTypes.Dict]:
             """Remove eDirectory metadata before RFC processing."""
             try:
                 normalized_entry = dict[str, object](entry_data)
                 normalized_entry.pop(FlextLdifConstants.DictKeys.SERVER_TYPE, None)
-                return FlextCore.Result[FlextLdifTypes.Dict].ok(normalized_entry)
+                return FlextResult[FlextLdifTypes.Dict].ok(normalized_entry)
 
             except Exception as exc:  # pragma: no cover
-                return FlextCore.Result[FlextLdifTypes.Dict].fail(
+                return FlextResult[FlextLdifTypes.Dict].fail(
                     f"Novell eDirectory entry→RFC conversion failed: {exc}"
                 )
 

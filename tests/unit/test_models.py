@@ -10,7 +10,7 @@ from __future__ import annotations
 from typing import cast
 
 import pytest
-from flext_core import FlextCore
+from flext_core import FlextModels, FlextResult
 from pydantic import ValidationError
 
 from flext_ldif.models import FlextLdifModels
@@ -247,7 +247,7 @@ class TestFlextLdifModels:
             )
 
     def test_model_inheritance(self) -> None:
-        """Test that models properly inherit from FlextCore.Models."""
+        """Test that models properly inherit from FlextModels."""
         # Test that all models are properly structured
         assert hasattr(FlextLdifModels, "DistinguishedName")
         assert hasattr(FlextLdifModels, "AttributeValues")
@@ -392,12 +392,14 @@ class TestFlextLdifModels:
 
     def test_schema_object_class_create_method(self) -> None:
         """Test SchemaObjectClass.create method."""
-        result = FlextLdifModels.SchemaObjectClass.create({
-            "name": "organizationalUnit",
-            "oid": "2.5.6.5",
-            "description": "Organizational unit",
-            "required_attributes": ["ou"],
-        })
+        result = FlextLdifModels.SchemaObjectClass.create(
+            {
+                "name": "organizationalUnit",
+                "oid": "2.5.6.5",
+                "description": "Organizational unit",
+                "required_attributes": ["ou"],
+            }
+        )
         assert result.is_success
         obj_class = result.unwrap()
         assert isinstance(obj_class, FlextLdifModels.SchemaObjectClass)
@@ -555,7 +557,7 @@ class TestFlextLdifModelsDistinguishedName:
         result = FlextLdifModels.DistinguishedName.create(invalid_dn)
 
         # Should still create but mark as invalid
-        assert isinstance(result, FlextCore.Result)
+        assert isinstance(result, FlextResult)
 
 
 class TestFlextLdifModelsLdifAttributes:
@@ -736,21 +738,27 @@ class TestFlextLdifModelsAcl:
     def test_unified_acl_creation(self) -> None:
         """Test creating a Acl instance."""
         # First create components
-        target_result = FlextLdifModels.AclTarget.create({
-            "target_dn": "dc=example,dc=com",
-            "attributes": ["cn"],
-        })
+        target_result = FlextLdifModels.AclTarget.create(
+            {
+                "target_dn": "dc=example,dc=com",
+                "attributes": ["cn"],
+            }
+        )
         assert target_result.is_success
 
-        subject_result = FlextLdifModels.AclSubject.create({
-            "subject_type": "user",
-            "subject_value": "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
-        })
+        subject_result = FlextLdifModels.AclSubject.create(
+            {
+                "subject_type": "user",
+                "subject_value": "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
+            }
+        )
         assert subject_result.is_success
 
-        perms_result = FlextLdifModels.AclPermissions.create({
-            "permissions": ["read", "write"],
-        })
+        perms_result = FlextLdifModels.AclPermissions.create(
+            {
+                "permissions": ["read", "write"],
+            }
+        )
         assert perms_result.is_success
 
         # Create unified ACL
@@ -791,8 +799,8 @@ class TestFlextLdifModelsNamespace:
         # FlextLdifModels is a namespace class, not a model with computed fields
         # Verify the class structure is properly organized
 
-        # Test that it inherits from FlextCore.Models
-        assert issubclass(FlextLdifModels, FlextCore.Models)
+        # Test that it inherits from FlextModels
+        assert issubclass(FlextLdifModels, FlextModels)
 
         # Test that key model classes are accessible
         assert hasattr(FlextLdifModels, "Entry")

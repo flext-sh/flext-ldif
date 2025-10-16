@@ -16,7 +16,7 @@ Original: 246 lines | Optimized: ~130 lines (47% reduction)
 
 from __future__ import annotations
 
-from flext_core import FlextCore
+from flext_core import FlextResult, FlextTypes
 
 from flext_ldif import FlextLdif
 
@@ -129,9 +129,7 @@ mail: pipeline@example.com
             lambda report: (
                 api.parse(ldif_content).flat_map(api.analyze)
                 if report.get("is_valid", False)
-                else FlextCore.Result[FlextCore.Types.Dict].fail(
-                    f"Validation failed: {report}"
-                )
+                else FlextResult[FlextTypes.Dict].fail(f"Validation failed: {report}")
             )
         )
     )
@@ -175,9 +173,7 @@ def validate_and_filter_pipeline() -> None:
             print(f"All {len(entries)} entries are valid")
         else:
             errors = report.get("errors", [])
-            errors_list: FlextCore.Types.List = (
-                errors if isinstance(errors, list) else []
-            )
+            errors_list: FlextTypes.List = errors if isinstance(errors, list) else []
             print(f"Found {len(errors_list)} validation errors")
 
 

@@ -34,7 +34,7 @@ from pathlib import Path
 from typing import cast
 
 import pytest
-from flext_core import FlextCore
+from flext_core import FlextTypes
 from ldap3 import ALL, MODIFY_ADD, MODIFY_REPLACE, Connection, Server
 
 from flext_ldif import FlextLdif
@@ -55,8 +55,15 @@ def ldap_connection() -> Generator[Connection]:
         server,
         user=LDAP_ADMIN_DN,
         password=LDAP_ADMIN_PASSWORD,
-        auto_bind=True,
     )
+
+    # Check if server is available
+    try:
+        if not conn.bind():
+            pytest.skip(f"LDAP server not available at {LDAP_HOST}:{LDAP_PORT}")
+    except Exception:
+        pytest.skip(f"LDAP server not available at {LDAP_HOST}:{LDAP_PORT}")
+
     yield conn
     conn.unbind()
 
@@ -166,7 +173,7 @@ class TestRealLdapExport:
         entry_result = flext_api.models.Entry.create(
             dn=ldap_entry.entry_dn,
             attributes=cast(
-                "dict[str, FlextCore.Types.StringList]",
+                "dict[str, FlextTypes.StringList]",
                 {
                     attr: list(ldap_entry[attr].values)
                     for attr in ldap_entry.entry_attributes
@@ -222,7 +229,7 @@ class TestRealLdapExport:
             result = flext_api.models.Entry.create(
                 dn=entry.entry_dn,
                 attributes=cast(
-                    "dict[str, FlextCore.Types.StringList]",
+                    "dict[str, FlextTypes.StringList]",
                     {attr: list(entry[attr].values) for attr in entry.entry_attributes},
                 ),
             )
@@ -282,7 +289,7 @@ class TestRealLdapExport:
             result = flext_api.models.Entry.create(
                 dn=entry.entry_dn,
                 attributes=cast(
-                    "dict[str, FlextCore.Types.StringList]",
+                    "dict[str, FlextTypes.StringList]",
                     {attr: list(entry[attr].values) for attr in entry.entry_attributes},
                 ),
             )
@@ -421,7 +428,7 @@ class TestRealLdapRoundtrip:
         entry_result = flext_api.models.Entry.create(
             dn=ldap_entry.entry_dn,
             attributes=cast(
-                "dict[str, FlextCore.Types.StringList]",
+                "dict[str, FlextTypes.StringList]",
                 {
                     attr: list(ldap_entry[attr].values)
                     for attr in ldap_entry.entry_attributes
@@ -551,7 +558,7 @@ class TestRealLdapModify:
         entry_result = flext_api.models.Entry.create(
             dn=ldap_entry.entry_dn,
             attributes=cast(
-                "dict[str, FlextCore.Types.StringList]",
+                "dict[str, FlextTypes.StringList]",
                 {
                     attr: list(ldap_entry[attr].values)
                     for attr in ldap_entry.entry_attributes
@@ -643,7 +650,7 @@ class TestRealLdapAnalytics:
             result = flext_api.models.Entry.create(
                 dn=entry.entry_dn,
                 attributes=cast(
-                    "dict[str, FlextCore.Types.StringList]",
+                    "dict[str, FlextTypes.StringList]",
                     {attr: list(entry[attr].values) for attr in entry.entry_attributes},
                 ),
             )
@@ -687,7 +694,7 @@ class TestRealLdapFileOperations:
         entry_result = flext_api.models.Entry.create(
             dn=ldap_entry.entry_dn,
             attributes=cast(
-                "dict[str, FlextCore.Types.StringList]",
+                "dict[str, FlextTypes.StringList]",
                 {
                     attr: list(ldap_entry[attr].values)
                     for attr in ldap_entry.entry_attributes
@@ -857,7 +864,7 @@ class TestRealLdapBatchOperations:
             result = flext_api.models.Entry.create(
                 dn=entry.entry_dn,
                 attributes=cast(
-                    "dict[str, FlextCore.Types.StringList]",
+                    "dict[str, FlextTypes.StringList]",
                     {attr: list(entry[attr].values) for attr in entry.entry_attributes},
                 ),
             )
@@ -908,7 +915,7 @@ class TestRealLdapBatchOperations:
             result = flext_api.models.Entry.create(
                 dn=entry.entry_dn,
                 attributes=cast(
-                    "dict[str, FlextCore.Types.StringList]",
+                    "dict[str, FlextTypes.StringList]",
                     {attr: list(entry[attr].values) for attr in entry.entry_attributes},
                 ),
             )
@@ -970,7 +977,7 @@ class TestRealLdapConfigurationFromEnv:
 
 
 class TestRealLdapRailwayComposition:
-    """Test railway-oriented FlextCore.Result composition with real LDAP."""
+    """Test railway-oriented FlextResult composition with real LDAP."""
 
     def test_railway_parse_validate_write_cycle(
         self,
@@ -979,7 +986,7 @@ class TestRealLdapRailwayComposition:
         flext_api: FlextLdif,
         tmp_path: Path,
     ) -> None:
-        """Test complete FlextCore.Result railway composition."""
+        """Test complete FlextResult railway composition."""
         # Create LDAP data
         person_dn = f"cn=Railway Test,{clean_test_ou}"
         ldap_connection.add(
@@ -995,7 +1002,7 @@ class TestRealLdapRailwayComposition:
         entry_result = flext_api.models.Entry.create(
             dn=ldap_entry.entry_dn,
             attributes=cast(
-                "dict[str, FlextCore.Types.StringList]",
+                "dict[str, FlextTypes.StringList]",
                 {
                     attr: list(ldap_entry[attr].values)
                     for attr in ldap_entry.entry_attributes

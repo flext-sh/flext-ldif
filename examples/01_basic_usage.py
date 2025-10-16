@@ -1,7 +1,7 @@
 """Example 1: Basic LDIF Usage - Optimized with Railway Pattern.
 
 Demonstrates core FlextLdif functionality with minimal code bloat:
-- Parsing/writing LDIF using FlextCore.Result monadic composition
+- Parsing/writing LDIF using FlextResult monadic composition
 - Railway-oriented error handling (no repetitive if/else)
 - Singleton pattern for API instance
 

@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import override
 
-from flext_core import FlextCore
+from flext_core import FlextResult, FlextService
 from pydantic import Field
 
 from flext_ldif.constants import FlextLdifConstants
@@ -17,7 +17,7 @@ from flext_ldif.models import FlextLdifModels
 from flext_ldif.typings import FlextLdifTypes
 
 
-class FlextLdifQuirksManager(FlextCore.Service[FlextLdifTypes.Dict]):
+class FlextLdifQuirksManager(FlextService[FlextLdifTypes.Dict]):
     """Unified quirks manager for all LDAP server types.
 
     Coordinates server-specific handling for schemas, ACLs, and entries
@@ -38,7 +38,7 @@ class FlextLdifQuirksManager(FlextCore.Service[FlextLdifTypes.Dict]):
 
         """
         super().__init__()
-        # Logger and container inherited from FlextCore.Service via FlextCore.Mixins
+        # Logger and container inherited from FlextService via FlextMixins
         self._server_type = server_type or FlextLdifConstants.LdapServers.GENERIC
         self._setup_quirks()
 
@@ -161,28 +161,30 @@ class FlextLdifQuirksManager(FlextCore.Service[FlextLdifTypes.Dict]):
         }
 
     @override
-    def execute(self) -> FlextCore.Result[FlextLdifTypes.Dict]:
+    def execute(self) -> FlextResult[FlextLdifTypes.Dict]:
         """Execute quirks manager service."""
-        return FlextCore.Result[FlextLdifTypes.Dict].ok({
-            "service": FlextLdifQuirksManager,
-            "server_type": self._server_type,
-            "quirks_loaded": len(self.quirks_registry),
-        })
+        return FlextResult[FlextLdifTypes.Dict].ok(
+            {
+                "service": FlextLdifQuirksManager,
+                "server_type": self._server_type,
+                "quirks_loaded": len(self.quirks_registry),
+            }
+        )
 
     def detect_server_type(
         self, entries: list[FlextLdifModels.Entry]
-    ) -> FlextCore.Result[str]:
+    ) -> FlextResult[str]:
         """Detect LDAP server type from entries.
 
         Args:
             entries: List of LDIF entries to analyze
 
         Returns:
-            FlextCore.Result containing detected server type
+            FlextResult containing detected server type
 
         """
         if not entries:
-            return FlextCore.Result[str].ok(FlextLdifConstants.LdapServers.GENERIC)
+            return FlextResult[str].ok(FlextLdifConstants.LdapServers.GENERIC)
 
         for entry in entries:
             object_classes_raw: object = entry.get_attribute_values(
@@ -194,33 +196,27 @@ class FlextLdifQuirksManager(FlextCore.Service[FlextLdifTypes.Dict]):
             dn_lower = entry.dn.value.lower()
 
             if "orclContainer" in object_classes or "orclUserV2" in object_classes:
-                return FlextCore.Result[str].ok(
-                    FlextLdifConstants.LdapServers.ORACLE_OID
-                )
+                return FlextResult[str].ok(FlextLdifConstants.LdapServers.ORACLE_OID)
 
             # OpenLDAP 2.x detection (cn=config with olc* attributes)
             if "olcConfig" in object_classes or "olcDatabase" in object_classes:
-                return FlextCore.Result[str].ok(
-                    FlextLdifConstants.LdapServers.OPENLDAP_2
-                )
+                return FlextResult[str].ok(FlextLdifConstants.LdapServers.OPENLDAP_2)
 
             # Check for olc* attributes indicating OpenLDAP 2.x
             has_olc_attrs = any(
                 attr.startswith("olc") for attr in entry.attributes.attributes
             )
             if has_olc_attrs:
-                return FlextCore.Result[str].ok(
-                    FlextLdifConstants.LdapServers.OPENLDAP_2
-                )
+                return FlextResult[str].ok(FlextLdifConstants.LdapServers.OPENLDAP_2)
 
             if "nsContainer" in object_classes or "nsPerson" in object_classes:
-                return FlextCore.Result[str].ok(FlextLdifConstants.LdapServers.DS_389)
+                return FlextResult[str].ok(FlextLdifConstants.LdapServers.DS_389)
 
             if any(
                 attr.startswith(("nsslapd-", "nsds"))
                 for attr in entry.attributes.attributes
             ):
-                return FlextCore.Result[str].ok(FlextLdifConstants.LdapServers.DS_389)
+                return FlextResult[str].ok(FlextLdifConstants.LdapServers.DS_389)
 
             if (
                 any(
@@ -230,7 +226,7 @@ class FlextLdifQuirksManager(FlextCore.Service[FlextLdifTypes.Dict]):
                 or any(oc.lower() == "ads-directoryservice" for oc in object_classes)
                 or any(marker in dn_lower for marker in ("ou=config", "ou=services"))
             ):
-                return FlextCore.Result[str].ok(
+                return FlextResult[str].ok(
                     FlextLdifConstants.LdapServers.APACHE_DIRECTORY
                 )
 
@@ -238,11 +234,11 @@ class FlextLdifQuirksManager(FlextCore.Service[FlextLdifTypes.Dict]):
                 FlextLdifConstants.DnPatterns.CN_SCHEMA
             ):
                 if "olc" in dn_lower:
-                    return FlextCore.Result[str].ok(
+                    return FlextResult[str].ok(
                         FlextLdifConstants.LdapServers.OPENLDAP_2
                     )
                 if "ds-cfg" in dn_lower:
-                    return FlextCore.Result[str].ok(
+                    return FlextResult[str].ok(
                         FlextLdifConstants.LdapServers.ORACLE_OUD
                     )
 
@@ -254,7 +250,7 @@ class FlextLdifQuirksManager(FlextCore.Service[FlextLdifTypes.Dict]):
                     for oc in object_classes
                 )
             ):
-                return FlextCore.Result[str].ok(
+                return FlextResult[str].ok(
                     FlextLdifConstants.LdapServers.NOVELL_EDIRECTORY
                 )
 
@@ -262,9 +258,7 @@ class FlextLdifQuirksManager(FlextCore.Service[FlextLdifTypes.Dict]):
                 attr.startswith(("ibm-", "ids-"))
                 for attr in entry.attributes.attributes
             ) or any(oc.lower().startswith("ibm-") for oc in object_classes):
-                return FlextCore.Result[str].ok(
-                    FlextLdifConstants.LdapServers.IBM_TIVOLI
-                )
+                return FlextResult[str].ok(FlextLdifConstants.LdapServers.IBM_TIVOLI)
 
             # Active Directory detection heuristics
             ad_attr_present = any(
@@ -291,50 +285,46 @@ class FlextLdifQuirksManager(FlextCore.Service[FlextLdifTypes.Dict]):
             dn_matches_ad = any(marker in dn_lower for marker in ad_dn_markers)
 
             if ad_attr_present or has_ad_classes or dn_matches_ad:
-                return FlextCore.Result[str].ok(
+                return FlextResult[str].ok(
                     FlextLdifConstants.LdapServers.ACTIVE_DIRECTORY
                 )
 
             # OpenLDAP 1.x detection (traditional attributes, no olc* prefix)
             if "attributetype" in str(entry.attributes).lower() and not has_olc_attrs:
-                return FlextCore.Result[str].ok(
-                    FlextLdifConstants.LdapServers.OPENLDAP_1
-                )
+                return FlextResult[str].ok(FlextLdifConstants.LdapServers.OPENLDAP_1)
 
-        return FlextCore.Result[str].ok(FlextLdifConstants.LdapServers.GENERIC)
+        return FlextResult[str].ok(FlextLdifConstants.LdapServers.GENERIC)
 
     def get_server_quirks(
         self, server_type: str | None = None
-    ) -> FlextCore.Result[FlextLdifTypes.Dict]:
+    ) -> FlextResult[FlextLdifTypes.Dict]:
         """Get quirks for specified server type.
 
         Args:
             server_type: Server type to get quirks for (uses instance default if None)
 
         Returns:
-            FlextCore.Result containing server quirks dictionary
+            FlextResult containing server quirks dictionary
 
         """
         target_server = server_type or self._server_type
 
         if target_server not in self.quirks_registry:
-            return FlextCore.Result[FlextLdifTypes.Dict].fail(
+            return FlextResult[FlextLdifTypes.Dict].fail(
                 f"Unknown server type: {target_server}"
             )
 
-        return FlextCore.Result[FlextLdifTypes.Dict].ok(
-            self.quirks_registry[target_server]
-        )
+        return FlextResult[FlextLdifTypes.Dict].ok(self.quirks_registry[target_server])
 
     def get_acl_attribute_name(
         self, server_type: str | None = None
-    ) -> FlextCore.Result[str]:
+    ) -> FlextResult[str]:
         """Get ACL attribute name for server type."""
-        quirks_result: FlextCore.Result[FlextLdifTypes.Dict] = self.get_server_quirks(
+        quirks_result: FlextResult[FlextLdifTypes.Dict] = self.get_server_quirks(
             server_type
         )
         if quirks_result.is_failure:
-            return FlextCore.Result[str].fail(
+            return FlextResult[str].fail(
                 quirks_result.error or "Failed to get server quirks"
             )
 
@@ -342,15 +332,15 @@ class FlextLdifQuirksManager(FlextCore.Service[FlextLdifTypes.Dict]):
         acl_attr = quirks_data.get(
             FlextLdifConstants.DictKeys.ACL_ATTRIBUTE, FlextLdifConstants.DictKeys.ACI
         )
-        return FlextCore.Result[str].ok(str(acl_attr))
+        return FlextResult[str].ok(str(acl_attr))
 
-    def get_acl_format(self, server_type: str | None = None) -> FlextCore.Result[str]:
+    def get_acl_format(self, server_type: str | None = None) -> FlextResult[str]:
         """Get ACL format for server type."""
-        quirks_result: FlextCore.Result[FlextLdifTypes.Dict] = self.get_server_quirks(
+        quirks_result: FlextResult[FlextLdifTypes.Dict] = self.get_server_quirks(
             server_type
         )
         if quirks_result.is_failure:
-            return FlextCore.Result[str].fail(
+            return FlextResult[str].fail(
                 quirks_result.error or "Failed to get server quirks"
             )
 
@@ -359,7 +349,7 @@ class FlextLdifQuirksManager(FlextCore.Service[FlextLdifTypes.Dict]):
             FlextLdifConstants.DictKeys.ACL_FORMAT,
             FlextLdifConstants.AclFormats.RFC_GENERIC,
         )
-        return FlextCore.Result[str].ok(str(acl_format))
+        return FlextResult[str].ok(str(acl_format))
 
 
 __all__ = ["FlextLdifQuirksManager"]

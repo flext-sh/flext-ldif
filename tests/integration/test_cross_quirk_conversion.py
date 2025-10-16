@@ -404,6 +404,7 @@ class TestQuirksConversionMatrixFacade:
 
         assert result.is_failure
         assert result.error is not None
+        assert result.error is not None
         assert "Invalid data_type" in result.error
 
 

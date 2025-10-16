@@ -49,7 +49,7 @@ Client -> Output: Write final LDIF file
 
 == Error Handling ==
 note over Validator, Transformer
-    All operations use FlextCore.Result[T]
+    All operations use FlextResult[T]
     Railway-oriented error composition
     Graceful failure with detailed error messages
 end note
