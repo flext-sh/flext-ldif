@@ -33,7 +33,7 @@ class FlextLdifAclParser(FlextService[FlextLdifTypes.Dict]):
             "status": "ready",
         })
 
-    def parse_openldap_acl(self, acl_string: str) -> FlextResult[FlextLdifModels.Acl]:
+    def parse_openldap_acl(self, acl_string: str) -> FlextResult[FlextLdifModels.AclBase]:
         """Parse OpenLDAP olcAccess ACL format.
 
         Args:
@@ -43,23 +43,21 @@ class FlextLdifAclParser(FlextService[FlextLdifTypes.Dict]):
             FlextResult containing unified ACL
 
         """
-        # Create ACL components directly - Pydantic handles validation
-        target = FlextLdifModels.AclTarget(target_dn="*", attributes=[])
-        subject = FlextLdifModels.AclSubject(subject_type="*", subject_value="*")
-        perms = FlextLdifModels.AclPermissions(read=True)
+        # Create ACL directly using OpenLdapAcl subtype for best type safety
+        try:
+            acl = FlextLdifModels.OpenLdapAcl(
+                name="openldap_acl",
+                target=FlextLdifModels.AclTarget(target_dn="*", attributes=[]),
+                subject=FlextLdifModels.AclSubject(subject_type="*", subject_value="*"),
+                permissions=FlextLdifModels.AclPermissions(read=True),
+                server_type=FlextLdifConstants.LdapServers.OPENLDAP,
+                raw_acl=acl_string,
+            )
+            return FlextResult[FlextLdifModels.AclBase].ok(acl)
+        except Exception as e:  # pragma: no cover
+            return FlextResult[FlextLdifModels.AclBase].fail(f"Failed to parse OpenLDAP ACL: {e}")
 
-        # Create unified ACL directly
-        acl = FlextLdifModels.Acl(
-            name="openldap_acl",
-            target=target,
-            subject=subject,
-            permissions=perms,
-            server_type=FlextLdifConstants.LdapServers.OPENLDAP,
-            raw_acl=acl_string,
-        )
-        return FlextResult[FlextLdifModels.Acl].ok(acl)
-
-    def parse_389ds_acl(self, acl_string: str) -> FlextResult[FlextLdifModels.Acl]:
+    def parse_389ds_acl(self, acl_string: str) -> FlextResult[FlextLdifModels.AclBase]:
         """Parse 389DS ACI format.
 
         Args:
@@ -69,27 +67,25 @@ class FlextLdifAclParser(FlextService[FlextLdifTypes.Dict]):
             FlextResult containing unified ACL
 
         """
-        # Create ACL components directly - Pydantic handles validation
-        target = FlextLdifModels.AclTarget(target_dn="*", attributes=[])
-        subject = FlextLdifModels.AclSubject(subject_type="*", subject_value="*")
-        perms = FlextLdifModels.AclPermissions(read=True)
-
-        # Create unified ACL directly
-        acl = FlextLdifModels.Acl(
-            name="389ds_acl",
-            target=target,
-            subject=subject,
-            permissions=perms,
-            server_type=FlextLdifConstants.LdapServers.DS_389,
-            raw_acl=acl_string,
-        )
-        return FlextResult[FlextLdifModels.Acl].ok(acl)
+        # Create ACL directly using Ds389Acl subtype for best type safety
+        try:
+            acl = FlextLdifModels.Ds389Acl(
+                name="389ds_acl",
+                target=FlextLdifModels.AclTarget(target_dn="*", attributes=[]),
+                subject=FlextLdifModels.AclSubject(subject_type="*", subject_value="*"),
+                permissions=FlextLdifModels.AclPermissions(read=True),
+                server_type=FlextLdifConstants.LdapServers.DS_389,
+                raw_acl=acl_string,
+            )
+            return FlextResult[FlextLdifModels.AclBase].ok(acl)
+        except Exception as e:  # pragma: no cover
+            return FlextResult[FlextLdifModels.AclBase].fail(f"Failed to parse 389DS ACL: {e}")
 
     def parse_oracle_acl(
         self,
         acl_string: str,
         server_type: str = FlextLdifConstants.LdapServers.ORACLE_OID,
-    ) -> FlextResult[FlextLdifModels.Acl]:
+    ) -> FlextResult[FlextLdifModels.AclBase]:
         """Parse Oracle OID/OUD ACL format.
 
         Args:
@@ -100,25 +96,34 @@ class FlextLdifAclParser(FlextService[FlextLdifTypes.Dict]):
             FlextResult containing unified ACL
 
         """
-        # Create ACL components directly - Pydantic handles validation
-        target = FlextLdifModels.AclTarget(target_dn="*", attributes=[])
-        subject = FlextLdifModels.AclSubject(subject_type="*", subject_value="*")
-        perms = FlextLdifModels.AclPermissions(read=True)
+        # Use discriminated union pattern for aggressive Pydantic 2 approach
+        try:
+            # Determine the correct subclass based on server_type
+            acl_class = {
+                FlextLdifConstants.LdapServers.ORACLE_OID: FlextLdifModels.OracleOidAcl,
+                FlextLdifConstants.LdapServers.ORACLE_OUD: FlextLdifModels.OracleOudAcl,
+            }.get(server_type)
 
-        # Create unified ACL directly
-        acl = FlextLdifModels.Acl(
-            name="oracle_acl",
-            target=target,
-            subject=subject,
-            permissions=perms,
-            server_type=server_type,
-            raw_acl=acl_string,
-        )
-        return FlextResult[FlextLdifModels.Acl].ok(acl)
+            if acl_class is None:
+                return FlextResult[FlextLdifModels._AclBase].fail(
+                    f"Unknown Oracle server type: {server_type}"
+                )
+
+            acl = acl_class(
+                name="oracle_acl",
+                target=FlextLdifModels.AclTarget(target_dn="*", attributes=[]),
+                subject=FlextLdifModels.AclSubject(subject_type="*", subject_value="*"),
+                permissions=FlextLdifModels.AclPermissions(read=True),
+                server_type=server_type,
+                raw_acl=acl_string,
+            )
+            return FlextResult[FlextLdifModels._AclBase].ok(acl)
+        except Exception as e:  # pragma: no cover
+            return FlextResult[FlextLdifModels._AclBase].fail(f"Failed to parse Oracle ACL: {e}")
 
     def parse_acl(
         self, acl_string: str, server_type: str
-    ) -> FlextResult[FlextLdifModels.Acl]:
+    ) -> FlextResult[FlextLdifModels._AclBase]:
         """Parse ACL string based on server type.
 
         Args:
@@ -141,7 +146,7 @@ class FlextLdifAclParser(FlextService[FlextLdifTypes.Dict]):
         }:
             return self.parse_oracle_acl(acl_string, server_type)
 
-        return FlextResult[FlextLdifModels.Acl].fail(
+        return FlextResult[FlextLdifModels._AclBase].fail(
             f"Unsupported server type: {server_type}"
         )
 

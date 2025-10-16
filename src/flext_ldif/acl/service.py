@@ -32,6 +32,7 @@ from typing import override
 
 from flext_core import FlextResult, FlextService
 
+from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.quirks.manager import FlextLdifQuirksManager
 from flext_ldif.typings import FlextLdifTypes
@@ -422,7 +423,7 @@ class FlextLdifAclService(FlextService[FlextLdifTypes.Dict]):
 
     def extract_acls_from_entry(
         self, entry: FlextLdifModels.Entry, server_type: str | None = None
-    ) -> FlextResult[list[FlextLdifModels.Acl]]:
+    ) -> FlextResult[list[FlextLdifModels.AclBase]]:
         """Extract ACLs from LDIF entry using composite pattern.
 
         Args:
@@ -435,7 +436,7 @@ class FlextLdifAclService(FlextService[FlextLdifTypes.Dict]):
         """
         # Handle None entry case
         if entry is None:
-            return FlextResult[list[FlextLdifModels.Acl]].fail(
+            return FlextResult[list[FlextLdifModels.AclBase]].fail(
                 "Invalid entry: Entry is None"
             )
 
@@ -444,7 +445,7 @@ class FlextLdifAclService(FlextService[FlextLdifTypes.Dict]):
         )
         if acl_attr_result.is_failure:
             error_msg = acl_attr_result.error or "Unknown ACL attribute error"
-            return FlextResult[list[FlextLdifModels.Acl]].fail(error_msg)
+            return FlextResult[list[FlextLdifModels.AclBase]].fail(error_msg)
 
         acl_attribute = acl_attr_result.value
         acl_values: FlextLdifTypes.StringList = entry.get_attribute_values(
@@ -452,23 +453,23 @@ class FlextLdifAclService(FlextService[FlextLdifTypes.Dict]):
         )
 
         if not acl_values:
-            return FlextResult[list[FlextLdifModels.Acl]].ok([])
+            return FlextResult[list[FlextLdifModels.AclBase]].ok([])
 
-        acls: list[FlextLdifModels.Acl] = []
+        acls: list[FlextLdifModels.AclBase] = []
         for acl_value in acl_values:
-            parse_result: FlextResult[FlextLdifModels.Acl] = self._parse_acl_with_rules(
+            parse_result: FlextResult[FlextLdifModels.AclBase] = self._parse_acl_with_rules(
                 acl_value, server_type or "generic"
             )
             if parse_result.is_success:
                 acls.append(parse_result.value)
 
-        return FlextResult[list[FlextLdifModels.Acl]].ok(acls)
+        return FlextResult[list[FlextLdifModels.AclBase]].ok(acls)
 
     def _parse_acl_with_rules(
         self,
         acl_string: str,
         server_type: str,
-    ) -> FlextResult[FlextLdifModels.Acl]:
+    ) -> FlextResult[FlextLdifModels.AclBase]:
         """Parse ACL string using composite rule pattern.
 
         Args:
@@ -479,21 +480,33 @@ class FlextLdifAclService(FlextService[FlextLdifTypes.Dict]):
             FlextResult containing unified ACL with composite rules
 
         """
-        # Create ACL components directly - Pydantic handles validation
-        target = FlextLdifModels.AclTarget(target_dn="*", attributes=[])
-        subject = FlextLdifModels.AclSubject(subject_type="*", subject_value="*")
-        perms = FlextLdifModels.AclPermissions(read=True)
+        # Use discriminated union pattern to route to correct subtype
+        try:
+            # Map server_type to correct ACL subclass
+            acl_class_map = {
+                FlextLdifConstants.LdapServers.OPENLDAP: FlextLdifModels.OpenLdapAcl,
+                FlextLdifConstants.LdapServers.OPENLDAP_2: FlextLdifModels.OpenLdap2Acl,
+                FlextLdifConstants.LdapServers.OPENLDAP_1: FlextLdifModels.OpenLdap1Acl,
+                FlextLdifConstants.LdapServers.ORACLE_OID: FlextLdifModels.OracleOidAcl,
+                FlextLdifConstants.LdapServers.ORACLE_OUD: FlextLdifModels.OracleOudAcl,
+                FlextLdifConstants.LdapServers.DS_389: FlextLdifModels.Ds389Acl,
+            }
 
-        # Create unified ACL directly with required fields
-        acl = FlextLdifModels.Acl(
-            name="parsed_acl",
-            target=target,
-            subject=subject,
-            permissions=perms,
-            server_type=server_type,
-            raw_acl=acl_string,
-        )
-        return FlextResult[FlextLdifModels.Acl].ok(acl)
+            # Default to OpenLDAP for generic/unknown server types
+            acl_class = acl_class_map.get(server_type, FlextLdifModels.OpenLdapAcl)
+
+            # Create ACL using the determined subclass
+            acl = acl_class(
+                name="parsed_acl",
+                target=FlextLdifModels.AclTarget(target_dn="*", attributes=[]),
+                subject=FlextLdifModels.AclSubject(subject_type="*", subject_value="*"),
+                permissions=FlextLdifModels.AclPermissions(read=True),
+                server_type=server_type,
+                raw_acl=acl_string,
+            )
+            return FlextResult[FlextLdifModels.AclBase].ok(acl)
+        except Exception as e:  # pragma: no cover
+            return FlextResult[FlextLdifModels.AclBase].fail(f"Failed to parse ACL: {e}")
 
     def evaluate_acl_rules(
         self, rules: list[AclRule], context: FlextLdifTypes.Dict

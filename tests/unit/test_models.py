@@ -753,21 +753,27 @@ class TestFlextLdifModelsAcl:
         })
         assert perms_result.is_success
 
-        # Create unified ACL
-        acl_data = {
-            "name": "test_acl",
-            "target": target_result.unwrap(),
-            "subject": subject_result.unwrap(),
-            "permissions": perms_result.unwrap(),
-            "server_type": "oracle_oud",
-        }
-
-        result = FlextLdifModels.Acl.create(cast("dict[str, object]", acl_data))
+        # Create unified ACL using direct instantiation of OracleOudAcl
+        # (aggressive Pydantic 2 direct usage pattern - no factory class)
+        try:
+            acl = FlextLdifModels.OracleOudAcl(
+                name="test_acl",
+                target=target_result.unwrap(),
+                subject=subject_result.unwrap(),
+                permissions=perms_result.unwrap(),
+                server_type="oracle_oud",
+            )
+            result = FlextResult[FlextLdifModels._AclBase].ok(acl)
+        except Exception as e:  # pragma: no cover
+            result = FlextResult[FlextLdifModels._AclBase].fail(str(e))
 
         assert result.is_success
         acl = result.unwrap()
-        assert isinstance(acl, FlextLdifModels.Acl)
+        # Discriminated union returns the specific subtype (OracleOudAcl in this case)
+        assert isinstance(acl, FlextLdifModels._AclBase)
+        assert isinstance(acl, FlextLdifModels.OracleOudAcl)
         assert acl.name == "test_acl"
+        assert acl.server_type == "oracle_oud"
 
 
 class TestFlextLdifModelsNamespace:
@@ -784,7 +790,10 @@ class TestFlextLdifModelsNamespace:
         assert hasattr(FlextLdifModels, "AclTarget")
         assert hasattr(FlextLdifModels, "AclSubject")
         assert hasattr(FlextLdifModels, "AclPermissions")
-        assert hasattr(FlextLdifModels, "Acl")
+        # Aggressive Pydantic 2 pattern: removed Acl factory class, using direct subclass instantiation
+        # Verify discriminated union subtypes are available instead
+        assert hasattr(FlextLdifModels, "OpenLdapAcl")
+        assert hasattr(FlextLdifModels, "OracleOudAcl")
 
     def test_computed_fields(self) -> None:
         """Test namespace structure."""
@@ -800,7 +809,9 @@ class TestFlextLdifModelsNamespace:
         assert hasattr(FlextLdifModels, "LdifAttributes")
         assert hasattr(FlextLdifModels, "AttributeValues")
         assert hasattr(FlextLdifModels, "SchemaObjectClass")
-        assert hasattr(FlextLdifModels, "Acl")
         assert hasattr(FlextLdifModels, "AclTarget")
         assert hasattr(FlextLdifModels, "AclSubject")
         assert hasattr(FlextLdifModels, "AclPermissions")
+        # Aggressive Pydantic 2 pattern: discriminated union subtypes for ACL
+        assert hasattr(FlextLdifModels, "_AclBase")
+        assert hasattr(FlextLdifModels, "OpenLdapAcl")

@@ -234,14 +234,73 @@ class FlextLdifConfig(FlextConfig):
 
     @field_validator("max_workers")
     @classmethod
-    def validate_max_workers(cls, v: int) -> int:
+    def validate_max_workers(cls, v: int | str) -> int:
         """Validate max workers configuration."""
+        if isinstance(v, str):
+            try:
+                v = int(v)
+            except ValueError as e:
+                msg = f"max_workers must be a valid integer, got '{v}'"
+                raise ValueError(msg) from e
+
         if v < FlextLdifConstants.LdifProcessing.MIN_WORKERS:
             msg = f"max_workers must be at least {FlextLdifConstants.LdifProcessing.MIN_WORKERS}"
             raise ValueError(msg)
         if v > FlextLdifConstants.LdifProcessing.MAX_WORKERS_LIMIT:
             msg = f"max_workers cannot exceed {FlextLdifConstants.LdifProcessing.MAX_WORKERS_LIMIT}"
             raise ValueError(msg)
+        return v
+
+    @field_validator("ldif_max_line_length", mode="before")
+    @classmethod
+    def validate_ldif_max_line_length(cls, v: int | str) -> int:
+        """Validate and convert ldif_max_line_length configuration."""
+        if isinstance(v, str):
+            try:
+                return int(v)
+            except ValueError as e:
+                msg = f"ldif_max_line_length must be a valid integer, got '{v}'"
+                raise ValueError(msg) from e
+        return v
+
+    @field_validator("ldif_skip_comments", mode="before")
+    @classmethod
+    def validate_ldif_skip_comments(cls, v: bool | str) -> bool:
+        """Validate and convert ldif_skip_comments configuration."""
+        if isinstance(v, str):
+            return v.lower() in {"true", "1", "yes", "on"}
+        return v
+
+    @field_validator("ldif_analytics_sample_rate", mode="before")
+    @classmethod
+    def validate_ldif_analytics_sample_rate(cls, v: float | str) -> float:
+        """Validate and convert ldif_analytics_sample_rate configuration."""
+        if isinstance(v, str):
+            try:
+                return float(v)
+            except ValueError as e:
+                msg = f"ldif_analytics_sample_rate must be a valid float, got '{v}'"
+                raise ValueError(msg) from e
+        return v
+
+    @field_validator("ldif_strict_validation", mode="before")
+    @classmethod
+    def validate_ldif_strict_validation(cls, v: bool | str) -> bool:
+        """Validate and convert ldif_strict_validation configuration."""
+        if isinstance(v, str):
+            return v.lower() in {"true", "1", "yes", "on"}
+        return v
+
+    @field_validator("ldif_chunk_size", mode="before")
+    @classmethod
+    def validate_ldif_chunk_size(cls, v: int | str) -> int:
+        """Validate and convert ldif_chunk_size configuration."""
+        if isinstance(v, str):
+            try:
+                return int(v)
+            except ValueError as e:
+                msg = f"ldif_chunk_size must be a valid integer, got '{v}'"
+                raise ValueError(msg) from e
         return v
 
     @field_validator("validation_level")

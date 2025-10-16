@@ -23,7 +23,7 @@ from pathlib import Path
 from typing import Any
 
 from flext_core import FlextResult, FlextService, FlextTypes
-from ldif3 import LDIFParser  # type: ignore[import-untyped]
+from ldif3 import LDIFParser
 
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
@@ -70,7 +70,7 @@ class FlextLdifRfcLdifParser(FlextService[FlextTypes.Dict]):
 
     """
 
-    def __init__(self, *, params: FlextTypes.Dict, quirk_registry: Any) -> None:  # noqa: ANN401
+    def __init__(self, *, params: FlextTypes.Dict, quirk_registry: Any) -> None:
         """Initialize generic LDIF parser.
 
         Args:
@@ -81,7 +81,10 @@ class FlextLdifRfcLdifParser(FlextService[FlextTypes.Dict]):
         super().__init__()
         self._params = params
         self._quirk_registry = quirk_registry
-        self._source_server = params.get("source_server", "rfc")
+        self._source_server = params.get(
+            FlextLdifConstants.DictKeys.SOURCE_SERVER,
+            FlextLdifConstants.ServerTypes.RFC,
+        )
         self._entry_quirks = FlextLdifEntryQuirks()
 
     def execute(self) -> FlextResult[FlextTypes.Dict]:
@@ -111,7 +114,9 @@ class FlextLdifRfcLdifParser(FlextService[FlextTypes.Dict]):
                 content: str = content_raw
 
                 # Type narrow parse_changes to bool
-                parse_changes_raw = self._params.get("parse_changes", False)
+                parse_changes_raw = self._params.get(
+                    FlextLdifConstants.DictKeys.PARSE_CHANGES, False
+                )
                 if not isinstance(parse_changes_raw, bool):
                     return FlextResult[FlextTypes.Dict].fail(
                         f"parse_changes must be bool, got {type(parse_changes_raw).__name__}"
@@ -139,13 +144,13 @@ class FlextLdifRfcLdifParser(FlextService[FlextTypes.Dict]):
 
                 # Build result structure matching file parsing output
                 data: FlextTypes.Dict = {
-                    "entries": entries,
-                    "changes": [],  # Changes tracked during parsing
-                    "comments": [],  # Comments tracked during parsing
-                    "stats": {
-                        "total_entries": len(entries),
-                        "total_changes": 0,
-                        "total_comments": 0,
+                    FlextLdifConstants.DictKeys.ENTRIES: entries,
+                    FlextLdifConstants.DictKeys.CHANGES: [],  # Changes tracked during parsing
+                    FlextLdifConstants.DictKeys.COMMENTS: [],  # Comments tracked during parsing
+                    FlextLdifConstants.DictKeys.STATS: {
+                        FlextLdifConstants.DictKeys.TOTAL_ENTRIES: len(entries),
+                        FlextLdifConstants.DictKeys.TOTAL_CHANGES: 0,
+                        FlextLdifConstants.DictKeys.TOTAL_COMMENTS: 0,
                     },
                 }
 
@@ -160,7 +165,7 @@ class FlextLdifRfcLdifParser(FlextService[FlextTypes.Dict]):
                 return FlextResult[FlextTypes.Dict].ok(data)
 
             # Fall back to file-based parsing
-            file_path_str = self._params.get("file_path", "")
+            file_path_str = self._params.get(FlextLdifConstants.DictKeys.FILE_PATH, "")
             if not file_path_str:
                 return FlextResult[FlextTypes.Dict].fail(
                     "Either 'file_path' or 'content' parameter is required"
@@ -179,7 +184,9 @@ class FlextLdifRfcLdifParser(FlextService[FlextTypes.Dict]):
                 )
 
             # Type narrow parse_changes to bool
-            parse_changes_raw = self._params.get("parse_changes", False)
+            parse_changes_raw = self._params.get(
+                FlextLdifConstants.DictKeys.PARSE_CHANGES, False
+            )
             if not isinstance(parse_changes_raw, bool):
                 return FlextResult[FlextTypes.Dict].fail(
                     f"parse_changes must be bool, got {type(parse_changes_raw).__name__}"
@@ -187,7 +194,9 @@ class FlextLdifRfcLdifParser(FlextService[FlextTypes.Dict]):
             file_parse_changes: bool = parse_changes_raw
 
             # Type narrow encoding to string
-            encoding_raw = self._params.get("encoding", "utf-8")
+            encoding_raw = self._params.get(
+                FlextLdifConstants.DictKeys.ENCODING, FlextLdifConstants.Encoding.UTF8
+            )
             if not isinstance(encoding_raw, str):
                 return FlextResult[FlextTypes.Dict].fail(
                     f"encoding must be string, got {type(encoding_raw).__name__}"
@@ -218,13 +227,13 @@ class FlextLdifRfcLdifParser(FlextService[FlextTypes.Dict]):
 
             # Build result structure
             data = {
-                "entries": entries,
-                "changes": [],
-                "comments": [],
-                "stats": {
-                    "total_entries": len(entries),
-                    "total_changes": 0,
-                    "total_comments": 0,
+                FlextLdifConstants.DictKeys.ENTRIES: entries,
+                FlextLdifConstants.DictKeys.CHANGES: [],
+                FlextLdifConstants.DictKeys.COMMENTS: [],
+                FlextLdifConstants.DictKeys.STATS: {
+                    FlextLdifConstants.DictKeys.TOTAL_ENTRIES: len(entries),
+                    FlextLdifConstants.DictKeys.TOTAL_CHANGES: 0,
+                    FlextLdifConstants.DictKeys.TOTAL_COMMENTS: 0,
                 },
             }
 
@@ -238,7 +247,7 @@ class FlextLdifRfcLdifParser(FlextService[FlextTypes.Dict]):
 
             return FlextResult[FlextTypes.Dict].ok(data)
 
-        except Exception as e:
+        except Exception as e:  # pragma: no cover
             error_msg = f"Failed to execute RFC LDIF parser: {e}"
             if self.logger is not None:
                 self.logger.exception(error_msg)
@@ -265,7 +274,11 @@ class FlextLdifRfcLdifParser(FlextService[FlextTypes.Dict]):
         return self._parse_with_ldif3(content=content)
 
     def parse_ldif_file(
-        self, path: str | Path, *, parse_changes: bool = False, encoding: str = "utf-8"
+        self,
+        path: str | Path,
+        *,
+        parse_changes: bool = False,
+        encoding: str = FlextLdifConstants.Encoding.UTF8,
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Parse LDIF file using ldif3 library.
 
@@ -290,7 +303,7 @@ class FlextLdifRfcLdifParser(FlextService[FlextTypes.Dict]):
         self,
         content: str | None = None,
         file_path: Path | None = None,
-        encoding: str = "utf-8",
+        encoding: str = FlextLdifConstants.Encoding.UTF8,
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Parse LDIF using ldif3 library (RFC 2849 compliant).
 
@@ -382,7 +395,7 @@ class FlextLdifRfcLdifParser(FlextService[FlextTypes.Dict]):
 
             return FlextResult[list[FlextLdifModels.Entry]].ok(entries)
 
-        except Exception as e:
+        except Exception as e:  # pragma: no cover
             return FlextResult[list[FlextLdifModels.Entry]].fail(
                 f"Failed to parse LDIF with ldif3: {e}"
             )

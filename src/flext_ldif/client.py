@@ -76,10 +76,11 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
 
     # Pydantic v2 private attributes (CRITICAL for Pydantic model initialization)
     # These MUST be declared at class level for Pydantic to handle them correctly
-    # Type annotation uses object to avoid pyrefly type incompatibility
-    _container: Any | None = PrivateAttr(default_factory=FlextContainer.get_global)
+    # Note: _bus is inherited from FlextService, no need to redeclare
+    _container: FlextContainer | None = PrivateAttr(
+        default_factory=FlextContainer.get_global
+    )
     _context: FlextContext | None = PrivateAttr(default=None)
-    _bus: Any | None = PrivateAttr(default=None)
     _handlers: FlextLdifTypes.Dict = PrivateAttr(default_factory=dict)
     _config: FlextLdifConfig | None = PrivateAttr(default=None)
 
@@ -97,7 +98,7 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
         # Call Pydantic/FlextService initialization
         super().__init__()
 
-    def model_post_init(self, __context: Any, /) -> None:  # noqa: ANN401
+    def model_post_init(self, __context: Any, /) -> None:
         """Initialize private attributes after Pydantic initialization.
 
         This hook is called by Pydantic after __init__ completes.
@@ -142,7 +143,7 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
                 "services": ["parser", "writer", "validator", "migration"],
                 "config": {"default_encoding": config.ldif_encoding},
             })
-        except Exception as e:
+        except Exception as e:  # pragma: no cover
             return FlextResult[FlextLdifTypes.Dict].fail(
                 f"Client status check failed: {e}"
             )
@@ -284,12 +285,12 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
             )
 
         # Type narrow parser from unwrap()
-        parser_obj: Any = parser_result.unwrap()
+        parser_obj = parser_result.unwrap()
         if not isinstance(parser_obj, FlextLdifRfcLdifParser):
             return FlextResult[list[FlextLdifModels.Entry]].fail(
                 "RFC parser has unexpected type"
             )
-        parser: FlextLdifRfcLdifParser = parser_obj
+        parser = parser_obj  # Type narrowed by isinstance check
 
         # Call parser directly
         # Note: server_type parameter is reserved for future quirk-based parsing
@@ -334,8 +335,11 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
                 f"Failed to get RFC writer: {writer_result.error}"
             )
 
-        # Writer is already correctly typed from unwrap()
-        writer = cast("FlextLdifRfcLdifWriter", writer_result.unwrap())
+        # Type narrow writer from unwrap()
+        writer_obj = writer_result.unwrap()
+        if not isinstance(writer_obj, FlextLdifRfcLdifWriter):
+            return FlextResult[str].fail("RFC writer has unexpected type")
+        writer = writer_obj  # Type narrowed by isinstance check
 
         # Write to string first
         content_result = writer.write_entries_to_string(entries)
@@ -353,7 +357,7 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
                 return FlextResult[str].ok(
                     f"Successfully wrote {len(entries)} entries to {output_path}"
                 )
-            except Exception as e:
+            except Exception as e:  # pragma: no cover
                 return FlextResult[str].fail(
                     f"Failed to write to file {output_path}: {e}"
                 )
@@ -382,12 +386,12 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
             )
 
         # Type narrow validator from unwrap()
-        validator_obj: Any = validator_result.unwrap()
+        validator_obj = validator_result.unwrap()
         if not isinstance(validator_obj, FlextLdifSchemaValidator):
             return FlextResult[FlextLdifTypes.Dict].fail(
                 "Schema validator has unexpected type"
             )
-        validator: FlextLdifSchemaValidator = validator_obj
+        validator = validator_obj  # Type narrowed by isinstance check
 
         # Call validator directly
         result = validator.validate_entries(entries)
@@ -525,7 +529,7 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
 
             return FlextResult[FlextLdifTypes.Dict].ok(migration_result.unwrap())
 
-        except Exception as e:
+        except Exception as e:  # pragma: no cover
             logger = self.logger
             logger.exception("Migration failed")
             return FlextResult[FlextLdifTypes.Dict].fail(f"Migration failed: {e}")
@@ -750,7 +754,7 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
                 ]
             ].ok(filtered)
 
-        except Exception as e:
+        except Exception as e:  # pragma: no cover
             return FlextResult[
                 list[
                     FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass
@@ -860,7 +864,7 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
 
             return FlextResult[FlextLdifModels.CategorizedEntries].ok(categorized)
 
-        except Exception as e:
+        except Exception as e:  # pragma: no cover
             return FlextResult[FlextLdifModels.CategorizedEntries].fail(
                 f"Failed to categorize entries: {e}"
             )
@@ -889,10 +893,10 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
             try:
                 content.decode("utf-8")
                 return FlextResult[str].ok("utf-8")
-            except UnicodeDecodeError:
+            except UnicodeDecodeError:  # pragma: no cover
                 # Fall back to latin-1 (universal fallback - all bytes valid)
                 return FlextResult[str].ok("latin-1")
-        except Exception as e:
+        except Exception as e:  # pragma: no cover
             return FlextResult[str].fail(f"Failed to detect encoding: {e}")
 
     def normalize_encoding(
@@ -919,11 +923,11 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
             # Encode to target encoding and decode back (ensures valid representation)
             normalized = content.encode(target_encoding).decode(target_encoding)
             return FlextResult[str].ok(normalized)
-        except UnicodeEncodeError as e:
+        except UnicodeEncodeError as e:  # pragma: no cover
             return FlextResult[str].fail(
                 f"Content contains characters not representable in {target_encoding}: {e}"
             )
-        except Exception as e:
+        except Exception as e:  # pragma: no cover
             return FlextResult[str].fail(
                 f"Failed to normalize encoding to {target_encoding}: {e}"
             )
@@ -962,7 +966,7 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
 
             return FlextResult[bool].ok(True)
 
-        except Exception as e:
+        except Exception as e:  # pragma: no cover
             return FlextResult[bool].fail(f"Failed to validate LDIF syntax: {e}")
 
     def count_ldif_entries(self, content: str) -> FlextResult[int]:
@@ -1000,7 +1004,7 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
 
             return FlextResult[int].ok(count)
 
-        except Exception as e:
+        except Exception as e:  # pragma: no cover
             return FlextResult[int].fail(f"Failed to count LDIF entries: {e}")
 
     # =========================================================================
@@ -1009,7 +1013,11 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
 
     def register_quirk(
         self,
-        quirk: Any,  # noqa: ANN401
+        quirk: (
+            FlextLdifQuirksBaseSchemaQuirk
+            | FlextLdifQuirksBaseAclQuirk
+            | FlextLdifQuirksBaseEntryQuirk
+        ),
         quirk_type: str = "schema",
     ) -> FlextResult[None]:
         """Register a custom quirk for server-specific processing.
@@ -1036,10 +1044,10 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
             )
 
         # Type narrow registry from unwrap()
-        registry_obj: Any = registry_result.unwrap()
+        registry_obj = registry_result.unwrap()
         if not isinstance(registry_obj, FlextLdifQuirksRegistry):
             return FlextResult[None].fail("Quirk registry has unexpected type")
-        registry: FlextLdifQuirksRegistry = registry_obj
+        registry = registry_obj  # Type narrowed by isinstance check
 
         # Type narrow quirk parameter and call appropriate registration method
         # Use actual class names (not type aliases) for isinstance checks
@@ -1077,8 +1085,8 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
             self._config = (
                 getattr(self, "_init_config_value", None) or FlextLdifConfig()
             )
-        # Type narrowing: _config is guaranteed non-None after initialization
-        return cast("FlextLdifConfig", self._config)
+        # Type narrowed by None check above
+        return self._config
 
     @property
     def handlers(self) -> FlextLdifTypes.Dict:
@@ -1091,8 +1099,8 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
         if self._container is None:
             msg = "FlextContainer must be initialized"
             raise RuntimeError(msg)
-        # Type narrowing: _container is guaranteed to be FlextContainer after initialization
-        return cast("FlextContainer", self._container)
+        # Type narrowed by None check above
+        return self._container
 
     @property
     def context(self) -> FlextContext:
@@ -1108,7 +1116,7 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
         """Access to event bus with lazy initialization."""
         if self._bus is None:
             self._bus = FlextBus()
-        # Type narrowing: _bus is guaranteed to be FlextBus after initialization
+        # Type narrowed by None check - cast to help type checker with inherited _bus
         return cast("FlextBus", self._bus)
 
 

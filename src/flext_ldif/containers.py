@@ -10,8 +10,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Any
-
 from dependency_injector import containers, providers
 
 from flext_ldif.acl.parser import FlextLdifAclParser
@@ -108,7 +106,7 @@ class FlextLdifContainer(containers.DeclarativeContainer):
     # CONTAINER LIFECYCLE METHODS
     # =========================================================================
 
-    def get_service_providers(self) -> dict[str, providers.Provider[Any]]:
+    def get_service_providers(self) -> dict[str, object]:
         """Get all service providers for inspection.
 
         Returns:

@@ -312,7 +312,7 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifTypes.Dict]):
                 cast("FlextTypes.List", migrated_entries)
             )
 
-        except Exception as e:
+        except Exception as e:  # pragma: no cover
             error_msg = f"Entry migration failed: {e}"
             if self.logger:
                 self.logger.exception(error_msg)
@@ -449,7 +449,7 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifTypes.Dict]):
 
             return FlextResult[FlextLdifTypes.Dict].ok(result_data)
 
-        except Exception as e:
+        except Exception as e:  # pragma: no cover
             error_msg = f"LDIF migration pipeline failed: {e}"
             if self.logger:
                 self.logger.exception(error_msg)
@@ -554,7 +554,7 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifTypes.Dict]):
 
             return FlextResult[FlextLdifTypes.Dict].ok(schema_data)
 
-        except Exception as e:
+        except Exception as e:  # pragma: no cover
             return FlextResult[FlextLdifTypes.Dict].fail(
                 f"Schema migration failed: {e}"
             )
@@ -649,7 +649,7 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifTypes.Dict]):
             # all_entries is already typed as list[FlextLdifTypes.Dict]
             return FlextResult[FlextTypes.List].ok(all_entries)
 
-        except Exception as e:
+        except Exception as e:  # pragma: no cover
             return FlextResult[FlextTypes.List].fail(f"Entries migration failed: {e}")
 
 

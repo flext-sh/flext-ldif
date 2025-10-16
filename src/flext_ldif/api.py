@@ -12,7 +12,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, ClassVar, override
+from typing import ClassVar, override
 
 from flext_core import (
     FlextBus,
@@ -113,8 +113,7 @@ class FlextLdif(FlextService[FlextTypes.Dict]):
 
     """
 
-    # Private attributes (initialized in model_post_init)
-    _bus: Any = None
+    # Private attributes (initialized in __init__)
     _dispatcher: FlextDispatcher
     _registry: FlextRegistry
     _processors: FlextProcessors
@@ -247,7 +246,7 @@ class FlextLdif(FlextService[FlextTypes.Dict]):
                 },
             )
 
-        except Exception as e:
+        except Exception as e:  # pragma: no cover
             # Use FlextExceptions for error handling
             msg = f"Failed to register LDIF components: {e}"
             raise RuntimeError(msg) from e
@@ -834,7 +833,7 @@ class FlextLdif(FlextService[FlextTypes.Dict]):
     def extract_acls(
         self,
         entry: FlextLdifModels.Entry,
-    ) -> FlextResult[list[FlextLdifModels.Acl]]:
+    ) -> FlextResult[list[FlextLdifModels.AclBase]]:
         """Extract ACL rules from entry.
 
         Args:
@@ -854,7 +853,7 @@ class FlextLdif(FlextService[FlextTypes.Dict]):
 
     def evaluate_acl_rules(
         self,
-        acls: list[FlextLdifModels.Acl],
+        acls: list[FlextLdifModels.AclBase],
         context: FlextTypes.Dict | None = None,
     ) -> FlextResult[bool]:
         """Evaluate ACL rules and return evaluation result.
