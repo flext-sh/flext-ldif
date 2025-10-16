@@ -303,7 +303,7 @@ class TestTivoliSchemaQuirks:
             FlextLdifConstants.DictKeys.DESC: "LDAP server",
             FlextLdifConstants.DictKeys.SUP: "top",
             FlextLdifConstants.DictKeys.KIND: "STRUCTURAL",
-            FlextLdifConstants.DictKeys.MUST: ["cn", "objectClass"],
+            FlextLdifConstants.DictKeys.MUST: ["cn", "objectclass"],
             FlextLdifConstants.DictKeys.MAY: ["description", "seeAlso"],
         }
         result = quirk.write_objectclass_to_rfc(oc_data)
@@ -491,7 +491,7 @@ class TestTivoliEntryQuirks:
         entry_quirk = quirk.EntryQuirk()
         assert entry_quirk.can_handle_entry(
             "cn=ibm,cn=configuration,o=Example",
-            {"objectClass": ["top"]},
+            {FlextLdifConstants.DictKeys.OBJECTCLASS: ["top"]},
         )
 
     def test_can_handle_entry_tivoli_attribute(self) -> None:
@@ -500,7 +500,10 @@ class TestTivoliEntryQuirks:
         entry_quirk = quirk.EntryQuirk()
         assert entry_quirk.can_handle_entry(
             "cn=test,o=Example",
-            {"objectClass": ["top"], "ibm-entryUUID": ["123456"]},
+            {
+                FlextLdifConstants.DictKeys.OBJECTCLASS: ["top"],
+                "ibm-entryUUID": ["123456"],
+            },
         )
 
     def test_can_handle_entry_tivoli_objectclass(self) -> None:
@@ -509,7 +512,7 @@ class TestTivoliEntryQuirks:
         entry_quirk = quirk.EntryQuirk()
         assert entry_quirk.can_handle_entry(
             "cn=server,o=Example",
-            {"objectClass": ["top", "ibm-ldapserver"]},
+            {FlextLdifConstants.DictKeys.OBJECTCLASS: ["top", "ibm-ldapserver"]},
         )
 
     def test_can_handle_entry_non_tivoli(self) -> None:
@@ -518,7 +521,7 @@ class TestTivoliEntryQuirks:
         entry_quirk = quirk.EntryQuirk()
         assert not entry_quirk.can_handle_entry(
             "cn=test,dc=example,dc=com",
-            {"objectClass": ["person"], "cn": ["test"]},
+            {FlextLdifConstants.DictKeys.OBJECTCLASS: ["person"], "cn": ["test"]},
         )
 
     def test_process_entry_success(self) -> None:
@@ -527,7 +530,7 @@ class TestTivoliEntryQuirks:
         entry_quirk = quirk.EntryQuirk()
         entry_dn = "cn=server,o=Example"
         attributes: dict[str, object] = {
-            "objectClass": ["top", "ibm-ldapserver"],
+            "objectclass": ["top", "ibm-ldapserver"],
             "cn": ["server"],
             "ibm-serverVersion": ["8.5"],
         }
@@ -539,7 +542,7 @@ class TestTivoliEntryQuirks:
             processed[FlextLdifConstants.DictKeys.SERVER_TYPE]
             == FlextLdifConstants.LdapServers.IBM_TIVOLI
         )
-        assert "objectClass" in processed
+        assert "objectclass" in processed
 
     def test_process_entry_with_binary_data(self) -> None:
         """Test entry processing with binary data (base64 encoding)."""
@@ -548,7 +551,7 @@ class TestTivoliEntryQuirks:
         entry_dn = "cn=test,o=Example"
         binary_data = b"binary_content"
         attributes: dict[str, object] = {
-            "objectClass": ["top", "ibm-filterentry"],
+            "objectclass": ["top", "ibm-filterentry"],
             "cn": ["test"],
             "ibm-binaryAttr": binary_data,
         }
@@ -566,7 +569,7 @@ class TestTivoliEntryQuirks:
         entry_data: dict[str, object] = {
             FlextLdifConstants.DictKeys.DN: "cn=server,o=Example",
             FlextLdifConstants.DictKeys.SERVER_TYPE: FlextLdifConstants.LdapServers.IBM_TIVOLI,
-            "objectClass": ["top", "ibm-ldapserver"],
+            "objectclass": ["top", "ibm-ldapserver"],
             "cn": ["server"],
         }
         result = entry_quirk.convert_entry_to_rfc(entry_data)

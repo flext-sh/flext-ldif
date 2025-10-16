@@ -60,7 +60,7 @@ class TestFlextLdifEntryBuilder:
         assert result.is_success
         entry = result.value
         assert entry.dn.value == "cn=Test User,dc=example,dc=com"
-        object_class_attr = entry.attributes.attributes.get("objectClass")
+        object_class_attr = entry.attributes.attributes.get("objectclass")
         assert object_class_attr is not None
         assert "inetOrgPerson" in object_class_attr.values
         assert "person" in object_class_attr.values
@@ -130,7 +130,7 @@ class TestFlextLdifEntryBuilder:
         assert result.is_success
         entry = result.value
         assert entry.dn.value == "cn=Test Group,dc=example,dc=com"
-        object_class_attr = entry.attributes.attributes.get("objectClass")
+        object_class_attr = entry.attributes.attributes.get("objectclass")
         assert object_class_attr is not None
         assert "top" in object_class_attr.values
         assert "groupOfNames" in object_class_attr.values
@@ -199,7 +199,7 @@ class TestFlextLdifEntryBuilder:
         assert result.is_success
         entry = result.value
         assert entry.dn.value == "ou=TestOU,dc=example,dc=com"
-        object_class_attr = entry.attributes.attributes.get("objectClass")
+        object_class_attr = entry.attributes.attributes.get("objectclass")
         assert object_class_attr is not None
         assert "top" in object_class_attr.values
         assert "organizationalUnit" in object_class_attr.values
@@ -255,7 +255,7 @@ class TestFlextLdifEntryBuilder:
         assert result.is_success
         entry = result.value
         assert entry.dn.value == "cn=custom,dc=example,dc=com"
-        object_class_attr = entry.attributes.attributes.get("objectClass")
+        object_class_attr = entry.attributes.attributes.get("objectclass")
         assert object_class_attr is not None
         assert "top" in object_class_attr.values
         assert "customObject" in object_class_attr.values
@@ -285,26 +285,24 @@ class TestFlextLdifEntryBuilder:
         """Test building entries from valid JSON."""
         builder = FlextLdifEntryBuilder()
 
-        json_data = json.dumps(
-            [
-                {
-                    "dn": "cn=user1,dc=example,dc=com",
-                    "attributes": {
-                        "objectClass": ["person"],
-                        "cn": ["User 1"],
-                        "sn": ["One"],
-                    },
+        json_data = json.dumps([
+            {
+                "dn": "cn=user1,dc=example,dc=com",
+                "attributes": {
+                    "objectclass": ["person"],
+                    "cn": ["User 1"],
+                    "sn": ["One"],
                 },
-                {
-                    "dn": "cn=user2,dc=example,dc=com",
-                    "attributes": {
-                        "objectClass": ["person"],
-                        "cn": ["User 2"],
-                        "sn": ["Two"],
-                    },
+            },
+            {
+                "dn": "cn=user2,dc=example,dc=com",
+                "attributes": {
+                    "objectclass": ["person"],
+                    "cn": ["User 2"],
+                    "sn": ["Two"],
                 },
-            ]
-        )
+            },
+        ])
 
         result = builder.build_entries_from_json(json_data)
 
@@ -330,12 +328,10 @@ class TestFlextLdifEntryBuilder:
         """Test building entries from JSON that is not a list."""
         builder = FlextLdifEntryBuilder()
 
-        json_data = json.dumps(
-            {
-                "dn": "cn=user1,dc=example,dc=com",
-                "attributes": {"cn": ["User 1"]},
-            }
-        )
+        json_data = json.dumps({
+            "dn": "cn=user1,dc=example,dc=com",
+            "attributes": {"cn": ["User 1"]},
+        })
 
         result = builder.build_entries_from_json(json_data)
 
@@ -363,9 +359,9 @@ class TestFlextLdifEntryBuilder:
         """Test building entries from JSON with missing DN."""
         builder = FlextLdifEntryBuilder()
 
-        json_data = json.dumps(
-            [{"attributes": {"objectClass": ["person"], "cn": ["User 1"]}}]
-        )
+        json_data = json.dumps([
+            {"attributes": {"objectclass": ["person"], "cn": ["User 1"]}}
+        ])
 
         result = builder.build_entries_from_json(json_data)
 
@@ -379,17 +375,15 @@ class TestFlextLdifEntryBuilder:
         """Test building entries from JSON with string attribute values."""
         builder = FlextLdifEntryBuilder()
 
-        json_data = json.dumps(
-            [
-                {
-                    "dn": "cn=user1,dc=example,dc=com",
-                    "attributes": {
-                        "objectClass": "person",  # String instead of list
-                        "cn": "User 1",  # String instead of list
-                    },
-                }
-            ]
-        )
+        json_data = json.dumps([
+            {
+                "dn": "cn=user1,dc=example,dc=com",
+                "attributes": {
+                    "objectclass": "person",  # String instead of list
+                    "cn": "User 1",  # String instead of list
+                },
+            }
+        ])
 
         result = builder.build_entries_from_json(json_data)
 
@@ -397,7 +391,7 @@ class TestFlextLdifEntryBuilder:
         entries = result.value
         assert len(entries) == 1
         entry = entries[0]
-        object_class_attr = entry.attributes.attributes.get("objectClass")
+        object_class_attr = entry.attributes.attributes.get("objectclass")
         assert object_class_attr is not None
         assert object_class_attr.values == ["person"]
         cn_attr = entry.attributes.attributes.get("cn")
@@ -412,7 +406,7 @@ class TestFlextLdifEntryBuilder:
             {
                 "dn": "cn=user1,dc=example,dc=com",
                 "attributes": {
-                    "objectClass": ["person"],
+                    "objectclass": ["person"],
                     "cn": ["User 1"],
                     "sn": ["One"],
                 },
@@ -420,7 +414,7 @@ class TestFlextLdifEntryBuilder:
             {
                 "dn": "cn=user2,dc=example,dc=com",
                 "attributes": {
-                    "objectClass": ["person"],
+                    "objectclass": ["person"],
                     "cn": ["User 2"],
                     "sn": ["Two"],
                 },
@@ -440,7 +434,7 @@ class TestFlextLdifEntryBuilder:
         builder = FlextLdifEntryBuilder()
 
         data: list[FlextTypes.Dict] = [
-            {"attributes": {"objectClass": ["person"], "cn": ["User 1"]}}
+            {"attributes": {"objectclass": ["person"], "cn": ["User 1"]}}
         ]
 
         result = builder.build_entries_from_dict(data)
@@ -475,7 +469,7 @@ class TestFlextLdifEntryBuilder:
             {
                 "dn": "cn=user1,dc=example,dc=com",
                 "attributes": {
-                    "objectClass": "person",  # String
+                    "objectclass": "person",  # String
                     "cn": ["User 1"],  # List
                     "age": 25,  # Number
                 },
@@ -488,7 +482,7 @@ class TestFlextLdifEntryBuilder:
         entries = result.value
         assert len(entries) == 1
         entry = entries[0]
-        object_class_attr = entry.attributes.attributes.get("objectClass")
+        object_class_attr = entry.attributes.attributes.get("objectclass")
         assert object_class_attr is not None
         assert object_class_attr.values == ["person"]
         cn_attr = entry.attributes.attributes.get("cn")
@@ -615,7 +609,7 @@ class TestFlextLdifEntryBuilder:
         assert result.is_success
         entry = result.value
         # Verify standard object classes are present
-        object_class_attr = entry.attributes.attributes.get("objectClass")
+        object_class_attr = entry.attributes.attributes.get("objectclass")
         assert object_class_attr is not None
         assert "inetOrgPerson" in object_class_attr.values
         assert "person" in object_class_attr.values

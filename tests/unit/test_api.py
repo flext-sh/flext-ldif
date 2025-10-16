@@ -201,7 +201,7 @@ class TestFlextLdifWrite:
             attributes={
                 "cn": ["Test User"],
                 "sn": ["User"],
-                "objectClass": ["person", "organizationalPerson"],
+                "objectclass": ["person", "organizationalPerson"],
                 "mail": ["test@example.com"],
             },
         )
@@ -211,7 +211,7 @@ class TestFlextLdifWrite:
             attributes={
                 "cn": ["Another User"],
                 "sn": ["User"],
-                "objectClass": ["person"],
+                "objectclass": ["person"],
             },
         )
 
@@ -229,7 +229,7 @@ class TestFlextLdifWrite:
             ldif_string = result.unwrap()
             assert "cn=Test User,dc=example,dc=com" in ldif_string
             assert "cn=Another User,dc=example,dc=com" in ldif_string
-            assert "objectClass:" in ldif_string
+            assert "objectclass:" in ldif_string
         else:
             # Test framework limitation, not production code issue
             assert result.error is not None
@@ -272,7 +272,7 @@ class TestFlextLdifWrite:
             dn="cn=Single,dc=example,dc=com",
             attributes={
                 "cn": ["Single"],
-                "objectClass": ["person"],
+                "objectclass": ["person"],
             },
         )
         entry = entry_result.unwrap()
@@ -332,7 +332,7 @@ class TestFlextLdifValidate:
             attributes={
                 "cn": ["Valid"],
                 "sn": ["User"],
-                "objectClass": ["person"],
+                "objectclass": ["person"],
             },
         )
         return result.unwrap()
@@ -365,11 +365,11 @@ class TestFlextLdifValidate:
         """Test validating multiple entries."""
         entry1_result = FlextLdifModels.Entry.create(
             dn="cn=Entry1,dc=example,dc=com",
-            attributes={"cn": ["Entry1"], "objectClass": ["person"]},
+            attributes={"cn": ["Entry1"], "objectclass": ["person"]},
         )
         entry2_result = FlextLdifModels.Entry.create(
             dn="cn=Entry2,dc=example,dc=com",
-            attributes={"cn": ["Entry2"], "objectClass": ["person"]},
+            attributes={"cn": ["Entry2"], "objectclass": ["person"]},
         )
 
         entries = [entry1_result.unwrap(), entry2_result.unwrap()]

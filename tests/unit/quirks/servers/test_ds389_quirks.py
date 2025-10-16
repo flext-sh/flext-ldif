@@ -464,7 +464,7 @@ class TestDs389EntryQuirks:
         main_quirk = FlextLdifQuirksServersDs389()
         entry_quirk = main_quirk.EntryQuirk()
         entry_dn = "cn=config"
-        attributes: dict[str, object] = {"objectClass": ["nscontainer"]}
+        attributes: dict[str, object] = {"objectclass": ["nscontainer"]}
         assert entry_quirk.can_handle_entry(entry_dn, attributes) is True
 
     def test_can_handle_entry_with_cn_monitor(self) -> None:
@@ -472,7 +472,7 @@ class TestDs389EntryQuirks:
         main_quirk = FlextLdifQuirksServersDs389()
         entry_quirk = main_quirk.EntryQuirk()
         entry_dn = "cn=monitor"
-        attributes: dict[str, object] = {"objectClass": ["top"]}
+        attributes: dict[str, object] = {"objectclass": ["top"]}
         assert entry_quirk.can_handle_entry(entry_dn, attributes) is True
 
     def test_can_handle_entry_with_cn_changelog(self) -> None:
@@ -480,7 +480,7 @@ class TestDs389EntryQuirks:
         main_quirk = FlextLdifQuirksServersDs389()
         entry_quirk = main_quirk.EntryQuirk()
         entry_dn = "cn=changelog"
-        attributes: dict[str, object] = {"objectClass": ["top"]}
+        attributes: dict[str, object] = {"objectclass": ["top"]}
         assert entry_quirk.can_handle_entry(entry_dn, attributes) is True
 
     def test_can_handle_entry_with_nsslapd_attribute(self) -> None:
@@ -490,7 +490,7 @@ class TestDs389EntryQuirks:
         entry_dn = "cn=test,dc=example,dc=com"
         attributes: dict[str, object] = {
             "nsslapd-port": ["389"],
-            "objectClass": ["top"],
+            "objectclass": ["top"],
         }
         assert entry_quirk.can_handle_entry(entry_dn, attributes) is True
 
@@ -501,7 +501,7 @@ class TestDs389EntryQuirks:
         entry_dn = "cn=test,dc=example,dc=com"
         attributes: dict[str, object] = {
             "nsds5ReplicaId": ["1"],
-            "objectClass": ["top"],
+            "objectclass": ["top"],
         }
         assert entry_quirk.can_handle_entry(entry_dn, attributes) is True
 
@@ -512,7 +512,7 @@ class TestDs389EntryQuirks:
         entry_dn = "cn=test,dc=example,dc=com"
         attributes: dict[str, object] = {
             "nsuniqueid": ["12345"],
-            "objectClass": ["top"],
+            "objectclass": ["top"],
         }
         assert entry_quirk.can_handle_entry(entry_dn, attributes) is True
 
@@ -521,7 +521,7 @@ class TestDs389EntryQuirks:
         main_quirk = FlextLdifQuirksServersDs389()
         entry_quirk = main_quirk.EntryQuirk()
         entry_dn = "cn=test,dc=example,dc=com"
-        attributes: dict[str, object] = {"objectClass": ["top", "nscontainer"]}
+        attributes: dict[str, object] = {"objectclass": ["top", "nscontainer"]}
         assert entry_quirk.can_handle_entry(entry_dn, attributes) is True
 
     def test_can_handle_entry_negative(self) -> None:
@@ -529,7 +529,7 @@ class TestDs389EntryQuirks:
         main_quirk = FlextLdifQuirksServersDs389()
         entry_quirk = main_quirk.EntryQuirk()
         entry_dn = "cn=user,dc=example,dc=com"
-        attributes: dict[str, object] = {"objectClass": ["person"], "cn": ["user"]}
+        attributes: dict[str, object] = {"objectclass": ["person"], "cn": ["user"]}
         assert entry_quirk.can_handle_entry(entry_dn, attributes) is False
 
     def test_process_entry_config_entry(self) -> None:
@@ -538,7 +538,7 @@ class TestDs389EntryQuirks:
         entry_quirk = main_quirk.EntryQuirk()
         entry_dn = "cn=config"
         attributes: dict[str, object] = {
-            "objectClass": ["nscontainer"],
+            "objectclass": ["nscontainer"],
             "cn": ["config"],
             "nsslapd-port": ["389"],
         }
@@ -559,7 +559,7 @@ class TestDs389EntryQuirks:
         entry_quirk = main_quirk.EntryQuirk()
         entry_dn = "cn=test,dc=example,dc=com"
         attributes: dict[str, object] = {
-            "objectClass": ["top", "nscontainer"],
+            "objectclass": ["top", "nscontainer"],
             "cn": ["test"],
         }
         result = entry_quirk.process_entry(entry_dn, attributes)
@@ -575,7 +575,7 @@ class TestDs389EntryQuirks:
         entry_dn = "cn=test,dc=example,dc=com"
         binary_data = b"binary_value"
         attributes: dict[str, object] = {
-            "objectClass": ["top"],
+            "objectclass": ["top"],
             "cn": ["test"],
             "userCertificate": binary_data,
         }
@@ -596,7 +596,7 @@ class TestDs389EntryQuirks:
             FlextLdifConstants.DictKeys.DN: "cn=config",
             FlextLdifConstants.DictKeys.SERVER_TYPE: FlextLdifConstants.LdapServers.DS_389,
             FlextLdifConstants.DictKeys.IS_CONFIG_ENTRY: True,
-            "objectClass": ["nscontainer"],
+            "objectclass": ["nscontainer"],
             "cn": ["config"],
         }
         result = entry_quirk.convert_entry_to_rfc(entry_data)
@@ -606,4 +606,4 @@ class TestDs389EntryQuirks:
         assert FlextLdifConstants.DictKeys.SERVER_TYPE not in rfc_entry
         assert FlextLdifConstants.DictKeys.IS_CONFIG_ENTRY not in rfc_entry
         assert rfc_entry[FlextLdifConstants.DictKeys.DN] == "cn=config"
-        assert "objectClass" in rfc_entry
+        assert "objectclass" in rfc_entry

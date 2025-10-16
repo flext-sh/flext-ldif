@@ -486,7 +486,9 @@ class TestNovellEntryQuirks:
         main_quirk = FlextLdifQuirksServersNovell()
         entry_quirk = main_quirk.EntryQuirk()
         entry_dn = "ou=services,o=Example"
-        attributes: dict[str, object] = {"objectClass": ["organizationalUnit"]}
+        attributes: dict[str, object] = {
+            FlextLdifConstants.DictKeys.OBJECTCLASS: ["organizationalUnit"]
+        }
         assert entry_quirk.can_handle_entry(entry_dn, attributes) is True
 
     def test_can_handle_entry_with_ou_apps(self) -> None:
@@ -494,7 +496,9 @@ class TestNovellEntryQuirks:
         main_quirk = FlextLdifQuirksServersNovell()
         entry_quirk = main_quirk.EntryQuirk()
         entry_dn = "ou=apps,o=Example"
-        attributes: dict[str, object] = {"objectClass": ["organizationalUnit"]}
+        attributes: dict[str, object] = {
+            FlextLdifConstants.DictKeys.OBJECTCLASS: ["organizationalUnit"]
+        }
         assert entry_quirk.can_handle_entry(entry_dn, attributes) is True
 
     def test_can_handle_entry_with_ou_system(self) -> None:
@@ -502,7 +506,9 @@ class TestNovellEntryQuirks:
         main_quirk = FlextLdifQuirksServersNovell()
         entry_quirk = main_quirk.EntryQuirk()
         entry_dn = "ou=system,o=Example"
-        attributes: dict[str, object] = {"objectClass": ["organizationalUnit"]}
+        attributes: dict[str, object] = {
+            FlextLdifConstants.DictKeys.OBJECTCLASS: ["organizationalUnit"]
+        }
         assert entry_quirk.can_handle_entry(entry_dn, attributes) is True
 
     def test_can_handle_entry_with_password_policy_attribute(self) -> None:
@@ -512,7 +518,7 @@ class TestNovellEntryQuirks:
         entry_dn = "cn=user,o=Example"
         attributes: dict[str, object] = {
             "nspmpasswordpolicy": ["policy1"],
-            "objectClass": ["top"],
+            FlextLdifConstants.DictKeys.OBJECTCLASS: ["top"],
         }
         assert entry_quirk.can_handle_entry(entry_dn, attributes) is True
 
@@ -523,7 +529,7 @@ class TestNovellEntryQuirks:
         entry_dn = "cn=user,o=Example"
         attributes: dict[str, object] = {
             "logindisabled": ["TRUE"],
-            "objectClass": ["top"],
+            FlextLdifConstants.DictKeys.OBJECTCLASS: ["top"],
         }
         assert entry_quirk.can_handle_entry(entry_dn, attributes) is True
 
@@ -532,7 +538,9 @@ class TestNovellEntryQuirks:
         main_quirk = FlextLdifQuirksServersNovell()
         entry_quirk = main_quirk.EntryQuirk()
         entry_dn = "cn=user,o=Example"
-        attributes: dict[str, object] = {"objectClass": ["top", "ndsperson"]}
+        attributes: dict[str, object] = {
+            FlextLdifConstants.DictKeys.OBJECTCLASS: ["top", "ndsperson"]
+        }
         assert entry_quirk.can_handle_entry(entry_dn, attributes) is True
 
     def test_can_handle_entry_negative(self) -> None:
@@ -540,7 +548,10 @@ class TestNovellEntryQuirks:
         main_quirk = FlextLdifQuirksServersNovell()
         entry_quirk = main_quirk.EntryQuirk()
         entry_dn = "cn=user,dc=example,dc=com"
-        attributes: dict[str, object] = {"objectClass": ["person"], "cn": ["user"]}
+        attributes: dict[str, object] = {
+            FlextLdifConstants.DictKeys.OBJECTCLASS: ["person"],
+            "cn": ["user"],
+        }
         assert entry_quirk.can_handle_entry(entry_dn, attributes) is False
 
     def test_process_entry_success(self) -> None:
@@ -549,7 +560,7 @@ class TestNovellEntryQuirks:
         entry_quirk = main_quirk.EntryQuirk()
         entry_dn = "cn=user,o=Example"
         attributes: dict[str, object] = {
-            "objectClass": ["top", "ndsperson"],
+            "objectclass": ["top", "ndsperson"],
             "cn": ["user"],
             "loginDisabled": ["FALSE"],
         }
@@ -570,7 +581,7 @@ class TestNovellEntryQuirks:
         entry_dn = "cn=user,o=Example"
         binary_data = b"binary_value"
         attributes: dict[str, object] = {
-            "objectClass": ["top"],
+            "objectclass": ["top"],
             "cn": ["user"],
             "userCertificate": binary_data,
         }
@@ -590,7 +601,7 @@ class TestNovellEntryQuirks:
         entry_data: dict[str, object] = {
             FlextLdifConstants.DictKeys.DN: "cn=user,o=Example",
             FlextLdifConstants.DictKeys.SERVER_TYPE: FlextLdifConstants.LdapServers.NOVELL_EDIRECTORY,
-            "objectClass": ["top", "ndsperson"],
+            "objectclass": ["top", "ndsperson"],
             "cn": ["user"],
         }
         result = entry_quirk.convert_entry_to_rfc(entry_data)
@@ -599,4 +610,4 @@ class TestNovellEntryQuirks:
         rfc_entry = result.unwrap()
         assert FlextLdifConstants.DictKeys.SERVER_TYPE not in rfc_entry
         assert rfc_entry[FlextLdifConstants.DictKeys.DN] == "cn=user,o=Example"
-        assert "objectClass" in rfc_entry
+        assert "objectclass" in rfc_entry

@@ -420,7 +420,7 @@ class TestMigrateEntriesMethod:
             "dn": "cn=test,dc=example,dc=com",
             "attributes": {
                 "cn": ["test"],
-                "objectClass": ["person"],
+                "objectclass": ["person"],
             },
         }
 
@@ -459,7 +459,7 @@ class TestMigrateEntriesMethod:
                 "dn": f"cn=test{i},dc=example,dc=com",
                 "attributes": {
                     "cn": [f"test{i}"],
-                    "objectClass": ["person"],
+                    "objectclass": ["person"],
                 },
             }
             for i in range(5)
@@ -513,7 +513,7 @@ class TestMigrateEntriesMethod:
             "dn": "cn=test,dc=example,dc=com",
             "attributes": {
                 "cn": ["test"],
-                "objectClass": ["person"],
+                "objectclass": ["person"],
             },
         }
 

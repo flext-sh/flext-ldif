@@ -32,7 +32,7 @@ class TestValidators:
                 entry.attributes and len(entry.attributes.attributes) > 0
             ),
             "has_object_class": bool(
-                entry.attributes and "objectClass" in entry.attributes.attributes
+                entry.attributes and "objectclass" in entry.attributes.attributes
             ),
             "dn_format_valid": bool(
                 entry.dn and "=" in str(entry.dn) and "," in str(entry.dn)
@@ -41,7 +41,7 @@ class TestValidators:
 
         # Check for required attributes based on objectClass
         if validations["has_object_class"] and entry.attributes:
-            attr_values = entry.get_attribute_values("objectClass")
+            attr_values = entry.get_attribute_values("objectclass")
             # Convert AttributeValues to list of strings
             if attr_values and isinstance(attr_values, list):
                 object_classes_list: FlextTypes.StringList = attr_values

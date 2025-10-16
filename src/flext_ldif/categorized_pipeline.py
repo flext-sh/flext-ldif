@@ -22,6 +22,7 @@ from typing import override
 
 from flext_core import FlextResult, FlextService, FlextTypes
 
+from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.quirks.entry_quirks import FlextLdifEntryQuirks
 from flext_ldif.quirks.registry import FlextLdifQuirksRegistry
 from flext_ldif.quirks.servers import (
@@ -35,26 +36,36 @@ from flext_ldif.services.dn_service import DnService
 class FlextLdifCategorizedMigrationPipeline(FlextService[FlextTypes.Dict]):
     """Categorized LDIF migration with structured LDIF file output.
 
+    Enterprise-grade categorized LDIF migration with rule-based entry classification
+    and structured multi-file output for complex directory transformations.
+
     Features:
-    - Rule-based entry categorization
-    - 6-file LDIF output (00-schema.ldif through 05-rejected.ldif)
-    - Per-category quirks transformation
-    - Statistics and reporting
-    - Railway-Oriented Programming
+    - Rule-based entry categorization with regex pattern matching
+    - 6-file structured LDIF output (00-schema.ldif through 05-rejected.ldif)
+    - Per-category server-specific quirks transformation
+    - Schema whitelist filtering for controlled migrations
+    - Forbidden attributes filtering for security compliance
+    - Comprehensive statistics and rejection tracking
+    - Railway-Oriented Programming with FlextResult error handling
+    - Memory-efficient batch processing with configurable parameters
 
     Architecture:
-    - Uses FlextLdifParser for entry parsing
-    - Uses categorization rules for classification
-    - Uses FlextLdifQuirksManager for transformations
-    - Generates structured LDIF files
+    - Uses FlextLdifRfcLdifParser for RFC-compliant entry parsing
+    - Uses DnService for DN validation and case consistency
+    - Uses FlextLdifEntryQuirks for entry-level transformations
+    - Uses categorization rules for intelligent classification
+    - Generates structured LDIF files with proper ordering and naming
 
-    Output Structure (6 LDIF files):
-    - 00-schema.ldif: Schema definitions (attributeTypes, objectClasses)
-    - 01-hierarchy.ldif: Organizational structure (organization, ou, domain)
-    - 02-users.ldif: User entries (person, inetOrgPerson, etc.)
-    - 03-groups.ldif: Group entries (groupOfNames, etc.)
-    - 04-acl.ldif: Access Control Lists (entries with aci attributes)
-    - 05-rejected.ldif: Rejected entries with reasons
+    Output Structure (6 LDIF files in execution order):
+    - 00-schema.ldif: Schema definitions (attributeTypes, objectClasses) - loaded first
+    - 01-hierarchy.ldif: Organizational structure (organization, ou, domain) - directory foundation
+    - 02-users.ldif: User entries (person, inetOrgPerson, organizationalPerson) - user accounts
+    - 03-groups.ldif: Group entries (groupOfNames, groupOfUniqueNames) - group memberships
+    - 04-acl.ldif: Access Control Lists (entries with aci attributes) - security policies
+    - 05-rejected.ldif: Rejected entries with detailed reasons - review and remediation
+
+    Each output file contains properly formatted LDIF entries with server-specific
+    transformations applied according to the target server's quirks.
     """
 
     def __init__(
@@ -277,22 +288,24 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[FlextTypes.Dict]):
                 for entry_model in entries_raw:
                     # Extract data from Entry model
                     entry_dict: FlextTypes.Dict = {
-                        "dn": entry_model.dn.value,  # Get string value from DistinguishedName
-                        "attributes": {},
-                        "objectClass": [],
+                        FlextLdifConstants.DictKeys.DN: entry_model.dn.value,  # Get string value from DistinguishedName
+                        FlextLdifConstants.DictKeys.ATTRIBUTES: {},
+                        FlextLdifConstants.DictKeys.OBJECTCLASS: [],
                     }
 
                     # Type narrow attributes dict
-                    attrs_dict: dict[str, object] = {}
+                    attrs_dict: FlextTypes.Dict = {}
 
                     # Extract objectClass from attributes
                     for (
                         attr_name,
                         attr_values,
                     ) in entry_model.attributes.attributes.items():
-                        if attr_name.lower() == "objectclass":
+                        if attr_name.lower() == FlextLdifConstants.DictKeys.OBJECTCLASS:
                             # Add to objectClass list
-                            entry_dict["objectClass"] = attr_values.values
+                            entry_dict[FlextLdifConstants.DictKeys.OBJECTCLASS] = (
+                                attr_values.values
+                            )
                         # Add to attributes dict (multi-valued attributes stored as list or single value)
                         elif len(attr_values.values) == 1:
                             attrs_dict[attr_name] = attr_values.values[0]
@@ -300,7 +313,7 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[FlextTypes.Dict]):
                             attrs_dict[attr_name] = attr_values.values
 
                     # Set attributes after building the dict
-                    entry_dict["attributes"] = attrs_dict
+                    entry_dict[FlextLdifConstants.DictKeys.ATTRIBUTES] = attrs_dict
 
                     entries.append(entry_dict)
 
@@ -346,7 +359,7 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[FlextTypes.Dict]):
         if not isinstance(acl_attributes, list):
             return False
 
-        entry_attrs = entry.get("attributes", {})
+        entry_attrs = entry.get(FlextLdifConstants.DictKeys.ATTRIBUTES, {})
         if not isinstance(entry_attrs, dict):
             return False
 
@@ -382,10 +395,10 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[FlextTypes.Dict]):
 
         """
         # Get entry DN and objectClasses with proper type narrowing
-        dn_value = entry.get("dn", "")
+        dn_value = entry.get(FlextLdifConstants.DictKeys.DN, "")
         dn = dn_value if isinstance(dn_value, str) else ""
 
-        object_classes = entry.get("objectClass", [])
+        object_classes = entry.get(FlextLdifConstants.DictKeys.OBJECTCLASS, [])
         if not isinstance(object_classes, list):
             object_classes = []
 
@@ -416,7 +429,7 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[FlextTypes.Dict]):
             return ("schema", None)
 
         # Check for schema attributes (attributetypes, objectclasses as attributes, not DN)
-        entry_attrs = entry.get("attributes", {})
+        entry_attrs = entry.get(FlextLdifConstants.DictKeys.ATTRIBUTES, {})
         if isinstance(entry_attrs, dict):
             attrs_lower = {k.lower() for k in entry_attrs}
             if "attributetypes" in attrs_lower or "objectclasses" in attrs_lower:
@@ -515,8 +528,10 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[FlextTypes.Dict]):
             if acl_attrs and isinstance(acl_attrs, dict):
                 # Create separate ACL entry with same DN but only ACL attributes
                 acl_entry = {
-                    "dn": entry.get("dn"),
-                    "attributes": acl_attrs,
+                    FlextLdifConstants.DictKeys.DN: entry.get(
+                        FlextLdifConstants.DictKeys.DN
+                    ),
+                    FlextLdifConstants.DictKeys.ATTRIBUTES: acl_attrs,
                     "_from_metadata": True,  # Mark as coming from metadata
                 }
                 acl_list = categorized.get("acl", [])
@@ -538,24 +553,24 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[FlextTypes.Dict]):
 
             # Track rejection reasons with proper type narrowing
             if reason:
-                dn_value = processed_entry.get("dn")
+                dn_value = processed_entry.get(FlextLdifConstants.DictKeys.DN)
                 if isinstance(dn_value, str):
                     rejection_reasons[dn_value] = reason
 
         # Add rejection reasons to rejected entries
         for entry in categorized.get("rejected", []):
-            dn_value = entry.get("dn")
+            dn_value = entry.get(FlextLdifConstants.DictKeys.DN)
             if isinstance(dn_value, str) and dn_value in rejection_reasons:
-                attrs = entry.get("attributes", {})
+                attrs = entry.get(FlextLdifConstants.DictKeys.ATTRIBUTES, {})
                 if isinstance(attrs, dict):
                     attrs["rejectionReason"] = rejection_reasons[dn_value]
-                    entry["attributes"] = attrs
+                    entry[FlextLdifConstants.DictKeys.ATTRIBUTES] = attrs
 
         return FlextResult[dict[str, list[FlextTypes.Dict]]].ok(categorized)
 
     def _filter_forbidden_attributes(
-        self, attributes: dict[str, object]
-    ) -> dict[str, object]:
+        self, attributes: FlextTypes.Dict
+    ) -> FlextTypes.Dict:
         """Filter out forbidden attributes from entry.
 
         STRATEGY PATTERN: Business rules from client application (e.g., client-a-oud-mig)
@@ -579,7 +594,7 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[FlextTypes.Dict]):
 
         # Filter attributes
         # Check both exact match and case-insensitive match
-        filtered: dict[str, object] = {
+        filtered: FlextTypes.Dict = {
             attr_name: attr_value
             for attr_name, attr_value in attributes.items()
             if attr_name.lower() not in forbidden_lower
@@ -618,7 +633,9 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[FlextTypes.Dict]):
 
                 for entry in acl_entries:
                     transformed_entry = entry.copy()
-                    attributes = transformed_entry.get("attributes", {})
+                    attributes = transformed_entry.get(
+                        FlextLdifConstants.DictKeys.ATTRIBUTES, {}
+                    )
                     if not isinstance(attributes, dict):
                         transformed_acl.append(transformed_entry)
                         continue
@@ -693,7 +710,9 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[FlextTypes.Dict]):
                             new_attributes[attr_name] = attr_value
 
                     # Update entry with transformed attributes
-                    transformed_entry["attributes"] = new_attributes
+                    transformed_entry[FlextLdifConstants.DictKeys.ATTRIBUTES] = (
+                        new_attributes
+                    )
                     transformed_acl.append(transformed_entry)
 
                 # Replace ACL entries with transformed versions
@@ -705,13 +724,16 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[FlextTypes.Dict]):
                 for category, entries in categorized.items():
                     filtered_entries = []
                     for entry in entries:
-                        if isinstance(entry, dict) and "attributes" in entry:
+                        if (
+                            isinstance(entry, dict)
+                            and FlextLdifConstants.DictKeys.ATTRIBUTES in entry
+                        ):
                             filtered_entry = entry.copy()
-                            attrs = entry["attributes"]
+                            attrs = entry[FlextLdifConstants.DictKeys.ATTRIBUTES]
                             if isinstance(attrs, dict):
-                                filtered_entry["attributes"] = (
-                                    self._filter_forbidden_attributes(attrs)
-                                )
+                                filtered_entry[
+                                    FlextLdifConstants.DictKeys.ATTRIBUTES
+                                ] = self._filter_forbidden_attributes(attrs)
                             filtered_entries.append(filtered_entry)
                         else:
                             filtered_entries.append(entry)
@@ -723,7 +745,7 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[FlextTypes.Dict]):
                 ref_attrs = self._categorization_rules.get(
                     "dn_reference_attributes",
                     [
-                        "member",
+                        FlextLdifConstants.DictKeys.MEMBER,
                         "uniqueMember",
                         "owner",
                         "manager",
@@ -775,7 +797,7 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[FlextTypes.Dict]):
         for entries in categorized.values():
             for entry in entries:
                 if isinstance(entry, dict):
-                    dn_value = entry.get("dn")
+                    dn_value = entry.get(FlextLdifConstants.DictKeys.DN)
                     if isinstance(dn_value, str) and dn_value:
                         cleaned = DnService.clean_dn(dn_value)
                         if cleaned:
@@ -798,11 +820,11 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[FlextTypes.Dict]):
         Handles both str and list[str] attribute values.
         """
         normalized = entry.copy()
-        attrs = normalized.get("attributes", {})
+        attrs = normalized.get(FlextLdifConstants.DictKeys.ATTRIBUTES, {})
         if not isinstance(attrs, dict):
             return normalized
 
-        new_attrs: dict[str, object] = {}
+        new_attrs: FlextTypes.Dict = {}
         for attr_name, attr_value in attrs.items():
             if attr_name.lower() in ref_attrs_lower:
                 if isinstance(attr_value, list):
@@ -817,7 +839,7 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[FlextTypes.Dict]):
             else:
                 new_attrs[attr_name] = attr_value
 
-        normalized["attributes"] = new_attrs
+        normalized[FlextLdifConstants.DictKeys.ATTRIBUTES] = new_attrs
         return normalized
 
     def _normalize_aci_dn_references(
@@ -829,7 +851,7 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[FlextTypes.Dict]):
         replace them with canonical DNs.
         """
         try:
-            attrs = entry.get("attributes", {})
+            attrs = entry.get(FlextLdifConstants.DictKeys.ATTRIBUTES, {})
             if not isinstance(attrs, dict):
                 return entry
 
@@ -865,7 +887,7 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[FlextTypes.Dict]):
                 attrs["aci"] = normalize_in_text(aci_value)
 
             entry_out = entry.copy()
-            entry_out["attributes"] = attrs
+            entry_out[FlextLdifConstants.DictKeys.ATTRIBUTES] = attrs
             return entry_out
         except Exception:
             return entry
@@ -904,7 +926,7 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[FlextTypes.Dict]):
         processed_entries = []
 
         for entry in entries:
-            attributes = entry.get("attributes", {})
+            attributes = entry.get(FlextLdifConstants.DictKeys.ATTRIBUTES, {})
             if not isinstance(attributes, dict):
                 processed_entries.append(entry)
                 continue
@@ -958,16 +980,14 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[FlextTypes.Dict]):
                 new_attributes["objectclasses"] = sorted_obj_classes
 
             # Keep other attributes unchanged
-            new_attributes.update(
-                {
-                    key: value
-                    for key, value in attributes.items()
-                    if key not in {"attributetypes", "objectclasses"}
-                }
-            )
+            new_attributes.update({
+                key: value
+                for key, value in attributes.items()
+                if key not in {"attributetypes", "objectclasses"}
+            })
 
             processed_entry = entry.copy()
-            processed_entry["attributes"] = new_attributes
+            processed_entry[FlextLdifConstants.DictKeys.ATTRIBUTES] = new_attributes
             processed_entries.append(processed_entry)
 
         return processed_entries
@@ -985,15 +1005,23 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[FlextTypes.Dict]):
         """
 
         def sort_key(entry: FlextTypes.Dict) -> tuple[int, str]:
-            dn_value = entry.get("dn", "")
+            dn_value = entry.get(FlextLdifConstants.DictKeys.DN, "")
             dn = dn_value if isinstance(dn_value, str) else ""
             dn_clean = DnService.clean_dn(dn)
             depth = dn_clean.count(",") + (1 if dn_clean else 0)
             return (depth, dn_clean.lower())
 
         # Filter only entries with a DN string to avoid exceptions during sort
-        sortable = [e for e in entries if isinstance(e.get("dn", ""), str)]
-        nonsortable = [e for e in entries if not isinstance(e.get("dn", ""), str)]
+        sortable = [
+            e
+            for e in entries
+            if isinstance(e.get(FlextLdifConstants.DictKeys.DN, ""), str)
+        ]
+        nonsortable = [
+            e
+            for e in entries
+            if not isinstance(e.get(FlextLdifConstants.DictKeys.DN, ""), str)
+        ]
 
         # Sort sortable entries and keep any non-sortable at the end in original order
         return sorted(sortable, key=sort_key) + nonsortable
@@ -1039,7 +1067,7 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[FlextTypes.Dict]):
 
             for entry in entries:
                 # Get DN with proper type narrowing
-                dn_value = entry.get("dn", "")
+                dn_value = entry.get(FlextLdifConstants.DictKeys.DN, "")
                 if isinstance(dn_value, str) and dn_value:
                     dn = dn_value
                 else:
@@ -1047,7 +1075,7 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[FlextTypes.Dict]):
 
                 # For rejected entries, write rejection reason as LDIF comment
                 if is_rejected_category:
-                    attributes = entry.get("attributes", {})
+                    attributes = entry.get(FlextLdifConstants.DictKeys.ATTRIBUTES, {})
                     if isinstance(attributes, dict) and "rejectionReason" in attributes:
                         rejection_reason = attributes.get("rejectionReason", "")
                         if isinstance(rejection_reason, str):
@@ -1058,14 +1086,14 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[FlextTypes.Dict]):
                 ldif_content.append(f"dn: {dn}")
 
                 # Write objectClasses
-                object_classes = entry.get("objectClass", [])
+                object_classes = entry.get(FlextLdifConstants.DictKeys.OBJECTCLASS, [])
                 if isinstance(object_classes, list):
                     ldif_content.extend(
                         f"objectClass: {obj_class}" for obj_class in object_classes
                     )
 
                 # Write attributes (exclude rejectionReason for rejected entries)
-                attributes = entry.get("attributes", {})
+                attributes = entry.get(FlextLdifConstants.DictKeys.ATTRIBUTES, {})
                 if isinstance(attributes, dict):
                     for attr_name, attr_value in attributes.items():
                         # Skip rejectionReason attribute for rejected entries (already written as comment)
@@ -1103,7 +1131,7 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[FlextTypes.Dict]):
             categorized: Dictionary mapping category to entry list
 
         Returns:
-            FlextResult containing dict[str, object] of category to count written
+            FlextResult containing FlextTypes.Dict of category to count written
 
         """
         written_counts: dict[str, int] = {}
@@ -1157,7 +1185,7 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[FlextTypes.Dict]):
         rejection_reasons: list[str] = []
 
         for entry in rejected_entries:
-            attrs = entry.get("attributes", {})
+            attrs = entry.get(FlextLdifConstants.DictKeys.ATTRIBUTES, {})
             if isinstance(attrs, dict) and "rejectionReason" in attrs:
                 reason_value = attrs["rejectionReason"]
                 if (

@@ -57,7 +57,7 @@ class TestOperationalAttributesStripping:
             "cn=test,dc=client-a",
             {
                 "cn": ["test"],
-                "objectClass": ["person", "top"],
+                "objectclass": ["person", "top"],
                 "createTimestamp": ["20250113100000Z"],
                 "modifyTimestamp": ["20250113100000Z"],
                 "entryUUID": ["12345-67890-abcdef"],
@@ -72,7 +72,7 @@ class TestOperationalAttributesStripping:
 
         # User attributes should be preserved
         assert adapted.has_attribute("cn")
-        assert adapted.has_attribute("objectClass")
+        assert adapted.has_attribute("objectclass")
 
         # Operational attributes should be stripped
         assert not adapted.has_attribute("createTimestamp")
@@ -119,7 +119,7 @@ class TestOperationalAttributesStripping:
                 "mail": ["user@client-a.com"],
                 "uid": ["user123"],
                 "userPassword": ["{SSHA}abcdef"],
-                "objectClass": ["inetOrgPerson", "person", "top"],
+                "objectclass": ["inetOrgPerson", "person", "top"],
             },
         )
 
@@ -134,7 +134,7 @@ class TestOperationalAttributesStripping:
         assert adapted.has_attribute("mail")
         assert adapted.has_attribute("uid")
         assert adapted.has_attribute("userPassword")
-        assert adapted.has_attribute("objectClass")
+        assert adapted.has_attribute("objectclass")
 
     def test_case_insensitive_stripping(self) -> None:
         """Operational attributes should be stripped case-insensitively."""
@@ -176,7 +176,7 @@ class TestOperationalAttributesStripping:
                 "givenName": ["John"],
                 "mail": ["john.doe@ctbc.com.br"],
                 "uid": ["jdoe"],
-                "objectClass": [
+                "objectclass": [
                     "top",
                     "person",
                     "organizationalPerson",
@@ -202,7 +202,7 @@ class TestOperationalAttributesStripping:
         assert adapted.has_attribute("givenName")
         assert adapted.has_attribute("mail")
         assert adapted.has_attribute("uid")
-        assert adapted.has_attribute("objectClass")
+        assert adapted.has_attribute("objectclass")
 
         # All operational attributes stripped
         assert not adapted.has_attribute("orclGUID")
@@ -342,7 +342,7 @@ class TestOperationalAttributesStripping:
                 "cn": ["mixed"],
                 "sn": ["Test"],
                 "mail": ["test@client-a.com"],
-                "objectClass": ["inetOrgPerson", "person", "top"],
+                "objectclass": ["inetOrgPerson", "person", "top"],
                 # COMMON operational
                 "createTimestamp": ["20250113100000Z"],
                 "modifyTimestamp": ["20250113100000Z"],
@@ -366,7 +366,7 @@ class TestOperationalAttributesStripping:
         assert adapted.has_attribute("cn")
         assert adapted.has_attribute("sn")
         assert adapted.has_attribute("mail")
-        assert adapted.has_attribute("objectClass")
+        assert adapted.has_attribute("objectclass")
         assert adapted.has_attribute("telephoneNumber")
         assert adapted.has_attribute("title")
 

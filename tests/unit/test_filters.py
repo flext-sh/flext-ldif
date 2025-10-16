@@ -150,7 +150,7 @@ class TestEntryExclusionMarking:
         """Create sample entry for testing."""
         return create_test_entry(
             "cn=test,dc=example,dc=com",
-            {"cn": ["test"], "objectClass": ["person"]},
+            {"cn": ["test"], "objectclass": ["person"]},
         )
 
     def test_mark_entry_excluded_basic(
@@ -229,7 +229,7 @@ class TestHasObjectClass:
             "cn=test,dc=example,dc=com",
             {
                 "cn": ["test"],
-                "objectClass": ["person", "inetOrgPerson", "organizationalPerson"],
+                "objectclass": ["person", "inetOrgPerson", "organizationalPerson"],
             },
         )
 
@@ -277,7 +277,7 @@ class TestHasRequiredAttributes:
                 "cn": ["test"],
                 "sn": ["User"],
                 "mail": ["test@example.com"],
-                "objectClass": ["person"],
+                "objectclass": ["person"],
             },
         )
 
@@ -311,7 +311,7 @@ class TestCategorizeEntry:
         """Helper to create entry with specified objectClasses."""
         return create_test_entry(
             "cn=test,dc=example,dc=com",
-            {"cn": ["test"], "objectClass": objectclasses},
+            {"cn": ["test"], "objectclass": objectclasses},
         )
 
     def test_categorize_as_user(self) -> None:
@@ -388,7 +388,7 @@ class TestFilterEntriesByDn:
             cn_value = dn_str.split(",")[0].split("=")[1]
             entry = create_test_entry(
                 dn_str,
-                {"cn": [cn_value], "objectClass": ["person"]},
+                {"cn": [cn_value], "objectclass": ["person"]},
             )
             entries.append(entry)
 
@@ -453,7 +453,7 @@ class TestFilterEntriesByObjectClass:
         entries = []
         for idx, (objectclasses, attrs) in enumerate(test_data):
             attr_dict = {attr: [f"value{idx}"] for attr in attrs}
-            attr_dict["objectClass"] = objectclasses
+            attr_dict["objectclass"] = objectclasses
 
             entry = create_test_entry(f"cn=test{idx},dc=example,dc=com", attr_dict)
             entries.append(entry)
@@ -533,7 +533,7 @@ class TestFilterEntriesByAttributes:
 
         entries = []
         for idx, attrs in enumerate(test_data):
-            attrs["objectClass"] = ["person"]
+            attrs["objectclass"] = ["person"]
             entry = create_test_entry(f"cn=test{idx},dc=example,dc=com", attrs)
             entries.append(entry)
 

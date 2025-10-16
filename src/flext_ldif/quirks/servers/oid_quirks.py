@@ -458,7 +458,7 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
             FlextResult with RFC 4512 formatted objectClass definition string
 
         Example:
-            Input: {"oid": "2.16.840.1.113894.2.1.1", "name": "orclContainer", "kind": "STRUCTURAL", "must": ["cn"], "may": ["description"]}
+            Input: {"oid": "2.16.840.1.113894.2.1.1", "name": "orclContainer", "kind": "STRUCTURAL", "must": [FlextLdifConstants.DictKeys.CN], "may": ["description"]}
             Output: "( 2.16.840.1.113894.2.1.1 NAME 'orclContainer' STRUCTURAL MUST cn MAY description )"
 
         """
@@ -552,7 +552,7 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
             ldif_content: Raw LDIF content containing schema definitions
 
         Returns:
-            FlextResult with dict[str, object] containing 'attributes' and 'objectclasses' lists
+            FlextResult with FlextTypes.Dict containing FlextLdifConstants.DictKeys.ATTRIBUTES and 'objectclasses' lists
 
         """
         try:
@@ -577,12 +577,10 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                     if result.is_success:
                         objectclasses.append(result.unwrap())
 
-            return FlextResult[FlextLdifTypes.Dict].ok(
-                {
-                    "attributes": attributes,
-                    "objectclasses": objectclasses,
-                }
-            )
+            return FlextResult[FlextLdifTypes.Dict].ok({
+                FlextLdifConstants.DictKeys.ATTRIBUTES: attributes,
+                "objectclasses": objectclasses,
+            })
 
         except Exception as e:
             return FlextResult[FlextLdifTypes.Dict].fail(
@@ -604,7 +602,7 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
         try:
             # Oracle OID uses RFC-compliant schema format
             # Just ensure OID server type is set
-            oid_data = dict[str, object](rfc_data)
+            oid_data = dict(rfc_data)
             oid_data[FlextLdifConstants.DictKeys.SERVER_TYPE] = (
                 FlextLdifConstants.ServerTypes.OID
             )
@@ -631,7 +629,7 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
         try:
             # Oracle OID uses RFC-compliant schema format
             # Just ensure OID server type is set
-            oid_data = dict[str, object](rfc_data)
+            oid_data = dict(rfc_data)
             oid_data[FlextLdifConstants.DictKeys.SERVER_TYPE] = (
                 FlextLdifConstants.ServerTypes.OID
             )
@@ -743,12 +741,10 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                     subject = match.group(1).strip()
                     permissions = match.group(2).strip()
 
-                    by_clauses.append(
-                        {
-                            "subject": subject,
-                            "permissions": [p.strip() for p in permissions.split(",")],
-                        }
-                    )
+                    by_clauses.append({
+                        "subject": subject,
+                        "permissions": [p.strip() for p in permissions.split(",")],
+                    })
 
                 if by_clauses:
                     acl_data["by_clauses"] = by_clauses
@@ -1098,7 +1094,9 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                 # ACL attributes will be processed separately by pipeline
                 # CRITICAL: DN is NOT an attribute - it's the entry identifier
                 acl_attrs_oid = {"orclaci", "orclentrylevelaci", "aci"}
-                forbidden_attrs = {"dn"}  # DN cannot be a modifiable attribute
+                forbidden_attrs = {
+                    FlextLdifConstants.DictKeys.DN
+                }  # DN cannot be a modifiable attribute
                 acl_only_attrs = {}
                 regular_attrs = {}
 
@@ -1148,7 +1146,7 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
             try:
                 # Oracle OID entries are already RFC-compliant
                 # Remove Oracle-specific operational attributes if needed
-                rfc_data = dict[str, object](entry_data)
+                rfc_data = dict(entry_data)
 
                 # Optional: Remove OID-specific operational attributes
                 # that don't exist in standard LDAP
@@ -1186,7 +1184,7 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
             try:
                 # Oracle OID uses RFC-compliant format
                 # Just ensure OID server type is set
-                oid_entry = dict[str, object](entry_data)
+                oid_entry = dict(entry_data)
                 oid_entry[FlextLdifConstants.DictKeys.SERVER_TYPE] = (
                     FlextLdifConstants.ServerTypes.OID
                 )
@@ -1213,14 +1211,16 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                 FlextResult with LDIF formatted entry string
 
             Example:
-                Input: {"dn": "cn=test,dc=example,dc=com", "cn": ["test"], "objectClass": ["person"]}
+                Input: {FlextLdifConstants.DictKeys.DN: "cn=test,dc=example,dc=com", FlextLdifConstants.DictKeys.CN: ["test"], FlextLdifConstants.DictKeys.OBJECTCLASS: ["person"]}
                 Output: "dn: cn=test,dc=example,dc=com\ncn: test\nobjectClass: person\n"
 
             """
             try:
                 # Check for required DN field
                 if FlextLdifConstants.DictKeys.DN not in entry_data:
-                    return FlextResult[str].fail("Missing required 'dn' field")
+                    return FlextResult[str].fail(
+                        "Missing required FlextLdifConstants.DictKeys.DN field"
+                    )
 
                 dn = entry_data[FlextLdifConstants.DictKeys.DN]
                 ldif_lines = [f"dn: {dn}"]
@@ -1323,7 +1323,10 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                 for line in ldif_content.split("\n"):
                     # Empty line indicates end of entry
                     if not line.strip():
-                        if current_entry and "dn" in current_entry:
+                        if (
+                            current_entry
+                            and FlextLdifConstants.DictKeys.DN in current_entry
+                        ):
                             # Save last attribute if exists
                             if current_attr and current_values:
                                 if current_attr in current_entry:
@@ -1343,7 +1346,7 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                                     )
 
                             # Process entry
-                            dn = str(current_entry.pop("dn"))
+                            dn = str(current_entry.pop(FlextLdifConstants.DictKeys.DN))
                             result = self.process_entry(dn, current_entry)
                             if result.is_success:
                                 entries.append(result.unwrap())
@@ -1404,7 +1407,7 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                         current_values = [attr_value]
 
                 # Handle last entry if file doesn't end with blank line
-                if current_entry and "dn" in current_entry:
+                if current_entry and FlextLdifConstants.DictKeys.DN in current_entry:
                     if current_attr and current_values:
                         if current_attr in current_entry:
                             existing_value = current_entry[current_attr]
@@ -1422,7 +1425,7 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                                 else current_values[0]
                             )
 
-                    dn = str(current_entry.pop("dn"))
+                    dn = str(current_entry.pop(FlextLdifConstants.DictKeys.DN))
                     result = self.process_entry(dn, current_entry)
                     if result.is_success:
                         entries.append(result.unwrap())

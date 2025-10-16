@@ -1,4 +1,29 @@
-"""Schema validator module for LDIF processing."""
+"""Schema Validator Service - RFC 4512 Compliant LDIF Schema Validation.
+
+This module provides comprehensive schema validation for LDIF entries following RFC 4512
+(LDAP Directory Information Models). Validates attribute types, object classes, and entry
+structures against LDAP schema requirements with configurable strictness levels.
+
+Features:
+- RFC 4512 compliant attribute type validation
+- Object class hierarchy validation (structural, auxiliary, abstract)
+- MUST/MAY attribute presence checking
+- Entry structure validation with DN consistency
+- Configurable validation strictness (lenient vs strict mode)
+- Detailed error reporting with validation context
+- Integration with FlextLdifModels for type-safe validation
+
+Validation Rules:
+- Attribute names: RFC 4512 naming conventions (letters, digits, hyphens)
+- Object classes: Proper inheritance and structural constraints
+- Entry completeness: Required attributes present and correctly typed
+- DN consistency: Distinguished name format and component validation
+- Schema compliance: Against configured LDAP schema definitions
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+
+"""
 
 from __future__ import annotations
 
@@ -23,12 +48,10 @@ class FlextLdifSchemaValidator(FlextService[FlextLdifTypes.Dict]):
     @override
     def execute(self) -> FlextResult[FlextLdifTypes.Dict]:
         """Execute schema validator service."""
-        return FlextResult[FlextLdifTypes.Dict].ok(
-            {
-                "service": FlextLdifSchemaValidator,
-                "status": "ready",
-            }
-        )
+        return FlextResult[FlextLdifTypes.Dict].ok({
+            "service": FlextLdifSchemaValidator,
+            "status": "ready",
+        })
 
     def validate_entries(
         self,
@@ -72,9 +95,9 @@ class FlextLdifSchemaValidator(FlextService[FlextLdifTypes.Dict]):
             ):
                 # Check for required attributes based on objectClass
                 # This is a simplified check - full schema validation would be more complex
-                if not entry.get_attribute_values("cn"):
+                if not entry.get_attribute_values(FlextLdifConstants.DictKeys.CN):
                     errors.append(
-                        f"Entry {idx} ({entry.dn.value}): Missing required attribute 'cn' for person objectClass"
+                        f"Entry {idx} ({entry.dn.value}): Missing required attribute FlextLdifConstants.DictKeys.CN for person objectClass"
                     )
                 if not entry.get_attribute_values("sn"):
                     errors.append(

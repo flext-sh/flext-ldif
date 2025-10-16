@@ -184,7 +184,7 @@ class TestOudEntryIntegration:
         for entry in entries:
             objectclasses = (
                 entry.attributes.get("objectclass")
-                or entry.attributes.get("objectClass")
+                or entry.attributes.get("objectclass")
                 or []
             )
             for oc in objectclasses:

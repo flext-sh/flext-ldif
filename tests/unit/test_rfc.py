@@ -1164,7 +1164,7 @@ class TestRfcLdifWriterComprehensive:
             attributes={
                 "cn": ["Test User"],
                 "sn": ["User"],
-                "objectClass": ["person", "organizationalPerson"],
+                "objectclass": ["person", "organizationalPerson"],
                 "mail": ["test@example.com"],
             },
         )
@@ -1180,7 +1180,7 @@ class TestRfcLdifWriterComprehensive:
             attributes={
                 "cn": ["Another User"],
                 "sn": ["User"],
-                "objectClass": ["person"],
+                "objectclass": ["person"],
             },
         )
         return [sample_entry, entry2_result.unwrap()]
@@ -1263,7 +1263,7 @@ class TestRfcLdifWriterComprehensive:
             dn="cn=Binary Test,dc=example,dc=com",
             attributes={
                 "cn": ["Binary Test"],
-                "objectClass": ["person"],
+                "objectclass": ["person"],
                 "userCertificate;binary": [encoded_data],
             },
         )
@@ -1286,7 +1286,7 @@ class TestRfcLdifWriterComprehensive:
             attributes={
                 "cn": ["Tëst Üsër"],
                 "sn": ["Üsër"],
-                "objectClass": ["person"],
+                "objectclass": ["person"],
                 "description": ["Tëst dëscriptïon wïth Ünicödé"],
             },
         )
@@ -1309,7 +1309,7 @@ class TestRfcLdifWriterComprehensive:
             dn="cn=Long Line Test,dc=example,dc=com",
             attributes={
                 "cn": ["Long Line Test"],
-                "objectClass": ["person"],
+                "objectclass": ["person"],
                 "description": [long_value],
             },
         )
@@ -1484,11 +1484,11 @@ class TestRfcLdifWriterExecuteMethod:
         """Create sample entries for testing."""
         entry1 = FlextLdifModels.Entry.create(
             dn="cn=User1,dc=example,dc=com",
-            attributes={"cn": ["User1"], "sn": ["Test"], "objectClass": ["person"]},
+            attributes={"cn": ["User1"], "sn": ["Test"], "objectclass": ["person"]},
         ).unwrap()
         entry2 = FlextLdifModels.Entry.create(
             dn="cn=User2,dc=example,dc=com",
-            attributes={"cn": ["User2"], "sn": ["Test"], "objectClass": ["person"]},
+            attributes={"cn": ["User2"], "sn": ["Test"], "objectclass": ["person"]},
         ).unwrap()
         return [entry1, entry2]
 
@@ -1553,9 +1553,7 @@ class TestRfcLdifWriterExecuteMethod:
             "output_file": str(output_file),
             "append": True,
         }
-        writer = FlextLdifRfcLdifWriter(
-            params=params, quirk_registry=registry
-        )
+        writer = FlextLdifRfcLdifWriter(params=params, quirk_registry=registry)
 
         result = writer.execute()
 
@@ -1572,7 +1570,7 @@ class TestRfcLdifWriterFileOperations:
         """Test write_entries_to_file() with basic entries."""
         entry = FlextLdifModels.Entry.create(
             dn="cn=Test,dc=example,dc=com",
-            attributes={"cn": ["Test"], "objectClass": ["person"]},
+            attributes={"cn": ["Test"], "objectclass": ["person"]},
         ).unwrap()
 
         output_file = tmp_path / "test.ldif"

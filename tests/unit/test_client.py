@@ -371,11 +371,30 @@ class TestParseLdif:
         assert entries[0].dn.value == "cn=test,dc=example,dc=com"
         assert entries[0].attributes.get("cn") == ["test"]
 
-    def test_parse_ldif_parser_not_available(self, client: FlextLdifClient) -> None:
+    def test_parse_ldif_parser_not_available(
+        self, client: FlextLdifClient, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Test parse_ldif fails when parser not available."""
-        pytest.skip(
-            "Parser availability error handling test - real implementation works correctly"
-        )
+
+        # Mock the container.get method to return failure for rfc_parser
+        def mock_container_get(key: str) -> FlextResult[object]:
+            if key == "rfc_parser":
+                return FlextResult[object].fail("Parser not available")
+            # For other keys, try to get from the real container
+            service = client.container.services.get(key)
+            if service is not None:
+                return FlextResult[object].ok(service)
+            return FlextResult[object].fail(f"Service {key} not found")
+
+        monkeypatch.setattr(client.container, "get", mock_container_get)
+
+        # Try to parse LDIF - should fail due to parser not being available
+        result = client.parse_ldif("dn: cn=test,dc=example,dc=com\ncn: test\n")
+
+        # Should fail with parser error
+        assert result.is_failure
+        assert result.error is not None
+        assert "Failed to get RFC parser" in result.error
 
 
 class TestWriteLdif:
@@ -388,7 +407,7 @@ class TestWriteLdif:
         # Create test entry
         entry_result = FlextLdifModels.Entry.create(
             dn="cn=test,dc=example,dc=com",
-            attributes={"cn": ["test"], "objectClass": ["person"]},
+            attributes={"cn": ["test"], "objectclass": ["person"]},
         )
         entries = [entry_result.unwrap()]
 
@@ -400,7 +419,7 @@ class TestWriteLdif:
         assert "version: 1" in ldif_content
         assert "dn: cn=test,dc=example,dc=com" in ldif_content
         assert "cn: test" in ldif_content
-        assert "objectClass: person" in ldif_content
+        assert "objectclass: person" in ldif_content
 
     def test_write_ldif_writer_not_available(self, client: FlextLdifClient) -> None:
         """Test write_ldif fails when writer not available."""
@@ -447,7 +466,7 @@ class TestValidateEntries:
         # Create test entries
         entry_result = FlextLdifModels.Entry.create(
             dn="cn=test,dc=example,dc=com",
-            attributes={"cn": ["test"], "objectClass": ["person"]},
+            attributes={"cn": ["test"], "objectclass": ["person"]},
         )
         entries = [entry_result.unwrap()]
 

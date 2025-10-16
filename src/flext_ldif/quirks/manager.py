@@ -163,13 +163,11 @@ class FlextLdifQuirksManager(FlextService[FlextLdifTypes.Dict]):
     @override
     def execute(self) -> FlextResult[FlextLdifTypes.Dict]:
         """Execute quirks manager service."""
-        return FlextResult[FlextLdifTypes.Dict].ok(
-            {
-                "service": FlextLdifQuirksManager,
-                "server_type": self._server_type,
-                "quirks_loaded": len(self.quirks_registry),
-            }
-        )
+        return FlextResult[FlextLdifTypes.Dict].ok({
+            "service": FlextLdifQuirksManager,
+            "server_type": self._server_type,
+            "quirks_loaded": len(self.quirks_registry),
+        })
 
     def detect_server_type(
         self, entries: list[FlextLdifModels.Entry]

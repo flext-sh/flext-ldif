@@ -30,7 +30,8 @@ class FlextLdifQuirksBaseSchemaQuirk(ABC, FlextModels.Value):
     """
 
     server_type: str = Field(
-        description="Server type this quirk applies to (e.g., 'oid', 'oud', 'openldap')"
+        default="generic",
+        description="Server type this quirk applies to (e.g., 'oid', 'oud', 'openldap')",
     )
     priority: int = Field(
         default=100, description="Quirk priority (lower = higher priority)"
@@ -61,7 +62,7 @@ class FlextLdifQuirksBaseSchemaQuirk(ABC, FlextModels.Value):
                 # Check if cls has all required fields with defaults
                 # Pydantic models can only be instantiated if all required fields have defaults
                 try:
-                    quirk_instance = cls()  # type: ignore[call-arg]
+                    quirk_instance = cls()
                 except TypeError:
                     # Missing required fields (like server_type) - skip registration
                     # This happens for abstract base classes
@@ -215,7 +216,9 @@ class FlextLdifQuirksBaseAclQuirk(ABC, FlextModels.Value):
     - Active Directory: NT Security Descriptors
     """
 
-    server_type: str = Field(description="Server type this quirk applies to")
+    server_type: str = Field(
+        default="generic", description="Server type this quirk applies to"
+    )
     priority: int = Field(default=100, description="Quirk priority")
 
     def __init_subclass__(cls) -> None:
@@ -243,7 +246,7 @@ class FlextLdifQuirksBaseAclQuirk(ABC, FlextModels.Value):
                 # Check if cls has all required fields with defaults
                 # Pydantic models can only be instantiated if all required fields have defaults
                 try:
-                    quirk_instance = cls()  # type: ignore[call-arg]
+                    quirk_instance = cls()
                 except TypeError:
                     # Missing required fields (like server_type) - skip registration
                     # This happens for abstract base classes
@@ -333,7 +336,9 @@ class FlextLdifQuirksBaseEntryQuirk(ABC, FlextModels.Value):
     - Server-specific DN formats
     """
 
-    server_type: str = Field(description="Server type this quirk applies to")
+    server_type: str = Field(
+        default="generic", description="Server type this quirk applies to"
+    )
     priority: int = Field(default=100, description="Quirk priority")
 
     def __init_subclass__(cls) -> None:
@@ -361,7 +366,7 @@ class FlextLdifQuirksBaseEntryQuirk(ABC, FlextModels.Value):
                 # Check if cls has all required fields with defaults
                 # Pydantic models can only be instantiated if all required fields have defaults
                 try:
-                    quirk_instance = cls()  # type: ignore[call-arg]
+                    quirk_instance = cls()
                 except TypeError:
                     # Missing required fields (like server_type) - skip registration
                     # This happens for abstract base classes

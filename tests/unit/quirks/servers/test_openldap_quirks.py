@@ -417,7 +417,7 @@ class TestOpenLDAP2xEntryQuirks:
         entry_quirk = main_quirk.EntryQuirk()
 
         dn = "cn=schema,cn=config"
-        attributes: dict[str, object] = {"objectClass": ["olcSchemaConfig"]}
+        attributes: dict[str, object] = {"objectclass": ["olcSchemaConfig"]}
         assert entry_quirk.can_handle_entry(dn, attributes) is True
 
     def test_can_handle_entry_negative(self) -> None:
@@ -426,7 +426,7 @@ class TestOpenLDAP2xEntryQuirks:
         entry_quirk = main_quirk.EntryQuirk()
 
         dn = "cn=test,dc=example,dc=com"
-        attributes: dict[str, object] = {"cn": ["test"], "objectClass": ["person"]}
+        attributes: dict[str, object] = {"cn": ["test"], "objectclass": ["person"]}
         assert entry_quirk.can_handle_entry(dn, attributes) is False
 
     def test_process_entry_success(self) -> None:
@@ -435,7 +435,7 @@ class TestOpenLDAP2xEntryQuirks:
         entry_quirk = main_quirk.EntryQuirk()
 
         dn = "cn=config"
-        attributes: dict[str, object] = {"cn": ["config"], "objectClass": ["olcGlobal"]}
+        attributes: dict[str, object] = {"cn": ["config"], "objectclass": ["olcGlobal"]}
         result = entry_quirk.process_entry(dn, attributes)
 
         assert result.is_success
@@ -451,7 +451,7 @@ class TestOpenLDAP2xEntryQuirks:
         entry_quirk = main_quirk.EntryQuirk()
 
         dn = "cn=user,dc=example,dc=com"
-        attributes: dict[str, object] = {"cn": ["user"], "objectClass": ["person"]}
+        attributes: dict[str, object] = {"cn": ["user"], "objectclass": ["person"]}
         result = entry_quirk.process_entry(dn, attributes)
 
         assert result.is_success
@@ -466,7 +466,7 @@ class TestOpenLDAP2xEntryQuirks:
         entry_data: dict[str, object] = {
             "dn": "cn=config",
             "cn": ["config"],
-            "objectClass": ["olcGlobal"],
+            "objectclass": ["olcGlobal"],
         }
 
         result = entry_quirk.convert_entry_to_rfc(entry_data)

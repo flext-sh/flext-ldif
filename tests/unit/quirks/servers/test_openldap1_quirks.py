@@ -359,7 +359,7 @@ class TestOpenLDAP1xEntryQuirks:
         entry_quirk = main_quirk.EntryQuirk()
 
         dn = "cn=test,dc=example,dc=com"
-        attributes: dict[str, object] = {"cn": ["test"], "objectClass": ["person"]}
+        attributes: dict[str, object] = {"cn": ["test"], "objectclass": ["person"]}
         assert entry_quirk.can_handle_entry(dn, attributes) is True
 
     def test_can_handle_entry_rejects_config_dn(self) -> None:
@@ -388,7 +388,7 @@ class TestOpenLDAP1xEntryQuirks:
         dn = "cn=user,ou=people,dc=example,dc=com"
         attributes: dict[str, object] = {
             "cn": ["user"],
-            "objectClass": ["person", "inetOrgPerson"],
+            "objectclass": ["person", "inetOrgPerson"],
         }
         result = entry_quirk.process_entry(dn, attributes)
 
@@ -407,7 +407,7 @@ class TestOpenLDAP1xEntryQuirks:
         entry_data: dict[str, object] = {
             "dn": "cn=test,dc=example,dc=com",
             "cn": ["test"],
-            "objectClass": ["person"],
+            "objectclass": ["person"],
         }
 
         result = entry_quirk.convert_entry_to_rfc(entry_data)

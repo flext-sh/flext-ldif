@@ -171,8 +171,12 @@ class FlextLdifQuirksServersOpenldap1(FlextLdifQuirksBaseSchemaQuirk):
         try:
             # Remove objectclass prefix if present
             oc_content = oc_definition
-            if oc_definition.lower().startswith("objectclass"):
-                oc_content = oc_definition[len("objectclass") :].strip()
+            if oc_definition.lower().startswith(
+                FlextLdifConstants.DictKeys.OBJECTCLASS
+            ):
+                oc_content = oc_definition[
+                    len(FlextLdifConstants.DictKeys.OBJECTCLASS) :
+                ].strip()
 
             # Parse RFC 4512 compliant structure
             oid_match = re.search(r"^\s*\(\s*([\d.]+)", oc_content)

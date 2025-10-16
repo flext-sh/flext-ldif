@@ -451,7 +451,7 @@ class TestOudEntryQuirks:
         entry_dn = "cn=OracleContext,dc=example,dc=com"
         attributes: FlextTypes.Dict = {
             "cn": ["OracleContext"],
-            "objectClass": ["top", "orclContext"],
+            "objectclass": ["top", "orclContext"],
         }
 
         assert entry_quirk.can_handle_entry(entry_dn, attributes)
@@ -463,7 +463,7 @@ class TestOudEntryQuirks:
         entry_dn = "cn=test,dc=example,dc=com"
         attributes: FlextTypes.Dict = {
             "cn": ["test"],
-            "objectClass": ["person"],
+            "objectclass": ["person"],
         }
 
         result = entry_quirk.process_entry(entry_dn, attributes)
@@ -481,7 +481,7 @@ class TestOudEntryQuirks:
         entry_dn = "cn=OracleContext,dc=example,dc=com"
         attributes: FlextTypes.Dict = {
             "cn": ["OracleContext"],
-            "objectClass": ["top", "orclContext", "orclContextAux82"],
+            "objectclass": ["top", "orclContext", "orclContextAux82"],
             "orclVersion": ["90600"],
         }
 
@@ -500,7 +500,7 @@ class TestOudEntryQuirks:
         entry_dn = "cn=OracleContext,dc=example,dc=com"
         attributes: FlextTypes.Dict = {
             "cn": ["OracleContext"],
-            "objectClass": ["top", "orclContext"],
+            "objectclass": ["top", "orclContext"],
             "aci": [
                 '(targetattr="*")(version 3.0; acl "OracleContext accessible"; '
                 'allow (all) groupdn="ldap:///cn=OracleContextAdmins,cn=groups,cn=OracleContext,dc=example,dc=com";)'
@@ -567,7 +567,7 @@ class TestOudEntryQuirks:
         entry_dn = "cn=OracleDBSecurity,cn=Products,cn=OracleContext,dc=example,dc=com"
         attributes: FlextTypes.Dict = {
             "cn": ["OracleDBSecurity"],
-            "objectClass": ["top", "orclContainer", "orclDBSecConfig"],
+            "objectclass": ["top", "orclContainer", "orclDBSecConfig"],
             "orclDBOIDAuthentication": ["PASSWORD"],
             "orclDBVersionCompatibility": ["90000"],
             "orclVersion": ["102000"],
@@ -590,7 +590,7 @@ class TestOudEntryQuirks:
             FlextLdifConstants.DictKeys.DN: "cn=test,dc=example,dc=com",
             FlextLdifConstants.DictKeys.SERVER_TYPE: "oud",
             "cn": ["test"],
-            "objectClass": ["person"],
+            "objectclass": ["person"],
         }
 
         result = entry_quirk.convert_entry_to_rfc(oud_entry_data)
@@ -607,7 +607,7 @@ class TestOudEntryQuirks:
         original_dn = "cn=OracleContext,dc=example,dc=com"
         original_attrs: FlextTypes.Dict = {
             "cn": ["OracleContext"],
-            "objectClass": ["top", "orclContext"],
+            "objectclass": ["top", "orclContext"],
             "orclVersion": ["90600"],
         }
 
@@ -961,7 +961,7 @@ class TestOudEntryRoundTrip:
         entry_data: FlextLdifTypes.Dict = {
             FlextLdifConstants.DictKeys.DN: "cn=test,dc=example,dc=com",
             "cn": ["test"],
-            "objectClass": ["top", "person"],
+            "objectclass": ["top", "person"],
             "sn": ["Test User"],
         }
 
@@ -971,7 +971,7 @@ class TestOudEntryRoundTrip:
         ldif_string = result.unwrap()
         assert "dn: cn=test,dc=example,dc=com" in ldif_string
         assert "cn: test" in ldif_string
-        assert "objectClass: top" in ldif_string
+        assert "objectclass: top" in ldif_string
 
     def test_write_entry_preserves_attribute_order(
         self, entry_quirk: FlextLdifQuirksServersOud.EntryQuirk
@@ -982,11 +982,11 @@ class TestOudEntryRoundTrip:
         entry_data: FlextLdifTypes.Dict = {
             FlextLdifConstants.DictKeys.DN: "cn=test,dc=example,dc=com",
             "cn": ["test"],
-            "objectClass": ["person"],
+            "objectclass": ["person"],
             "sn": ["User"],
             "_metadata": FlextLdifModels.QuirkMetadata(
                 quirk_type="oud",
-                extensions={"attribute_order": ["cn", "objectClass", "sn"]},
+                extensions={"attribute_order": ["cn", "objectclass", "sn"]},
             ),
         }
 
@@ -999,7 +999,7 @@ class TestOudEntryRoundTrip:
         # Find attribute positions (skip dn line)
         cn_idx = next(i for i, line in enumerate(lines) if line.startswith("cn:"))
         oc_idx = next(
-            i for i, line in enumerate(lines) if line.startswith("objectClass:")
+            i for i, line in enumerate(lines) if line.startswith("objectclass:")
         )
         sn_idx = next(i for i, line in enumerate(lines) if line.startswith("sn:"))
 
@@ -1013,7 +1013,7 @@ class TestOudEntryRoundTrip:
         original_dn = "cn=OracleContext,dc=example,dc=com"
         original_attrs: FlextTypes.Dict = {
             "cn": ["OracleContext"],
-            "objectClass": ["top", "orclContext"],
+            "objectclass": ["top", "orclContext"],
             "orclVersion": ["90600"],
         }
 
