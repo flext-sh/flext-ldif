@@ -957,7 +957,7 @@ class TestFlextLdifAclUtils:
         assert result.is_success
         unified_acl = result.unwrap()
         # Aggressive Pydantic 2 pattern: discriminated union returns specific subtype
-        assert isinstance(unified_acl, FlextLdifModels._AclBase)
+        assert isinstance(unified_acl, FlextLdifModels.AclBase)
         assert unified_acl.name == "test_acl"
         assert unified_acl.server_type == "openldap"
         assert unified_acl.raw_acl == "to attrs=cn,sn by * read"
@@ -1016,7 +1016,7 @@ class TestFlextLdifAclUtils:
         assert result.is_success
         unified_acl = result.unwrap()
         # Aggressive Pydantic 2 pattern: direct subclass instantiation (e.g., OpenLdapAcl, OracleOudAcl)
-        assert isinstance(unified_acl, FlextLdifModels._AclBase)
+        assert isinstance(unified_acl, FlextLdifModels.AclBase)
         assert isinstance(unified_acl, FlextLdifModels.OpenLdapAcl)
 
     def test_component_factory_integration(self) -> None:

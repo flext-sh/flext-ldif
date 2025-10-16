@@ -102,7 +102,7 @@ class FlextLdifAclUtils(FlextUtilities):
                 raw_acl: Original ACL string
 
             Returns:
-                FlextResult containing _AclBase subtype on success, failure otherwise.
+                FlextResult containing AclBase subtype on success, failure otherwise.
 
             """
             try:
@@ -137,7 +137,9 @@ class FlextLdifAclUtils(FlextUtilities):
 
                 return FlextResult[FlextLdifModels.AclBase].ok(unified_acl)
             except Exception as e:  # pragma: no cover
-                return FlextResult[FlextLdifModels.AclBase].fail(f"Failed to create ACL: {e}")
+                return FlextResult[FlextLdifModels.AclBase].fail(
+                    f"Failed to create ACL: {e}"
+                )
 
 
 __all__ = ["FlextLdifAclUtils"]
