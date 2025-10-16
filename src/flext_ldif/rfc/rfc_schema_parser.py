@@ -271,17 +271,15 @@ class FlextLdifRfcSchemaParser(FlextService[FlextTypes.Dict]):
                         parse_objectclasses=parse_objectclasses,
                     )
 
-            return FlextResult[FlextTypes.Dict].ok(
-                {
-                    FlextLdifConstants.DictKeys.ATTRIBUTES: attributes,
-                    "objectclasses": objectclasses,
-                    "source_dn": source_dn,
-                    "stats": {
-                        "total_attributes": len(attributes),
-                        "total_objectclasses": len(objectclasses),
-                    },
-                }
-            )
+            return FlextResult[FlextTypes.Dict].ok({
+                FlextLdifConstants.DictKeys.ATTRIBUTES: attributes,
+                "objectclasses": objectclasses,
+                "source_dn": source_dn,
+                "stats": {
+                    "total_attributes": len(attributes),
+                    "total_objectclasses": len(objectclasses),
+                },
+            })
 
         except Exception as e:
             return FlextResult[FlextTypes.Dict].fail(

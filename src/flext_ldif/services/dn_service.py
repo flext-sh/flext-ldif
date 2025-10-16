@@ -42,7 +42,7 @@ class DnService(FlextService[FlextTypes.Dict]):
         ... )
         >>> if result.is_success:
         >>>     components = result.unwrap()
-        >>> # Returns: [("cn", "Smith, John", "cn=Smith\\, John"), ...]
+        >>> # Returns: [(FlextLdifConstants.DictKeys.CN, "Smith, John", "cn=Smith\\, John"), ...]
         >>>
         >>> # Validate DN format
         >>> result = dn_service.validate_format("cn=test,dc=example,dc=com")
@@ -68,14 +68,12 @@ class DnService(FlextService[FlextTypes.Dict]):
             FlextResult containing service status
 
         """
-        return FlextResult[FlextTypes.Dict].ok(
-            {
-                "service": "DnService",
-                "status": "operational",
-                "rfc_compliance": "RFC 4514",
-                "library": "ldap3",
-            }
-        )
+        return FlextResult[FlextTypes.Dict].ok({
+            "service": "DnService",
+            "status": "operational",
+            "rfc_compliance": "RFC 4514",
+            "library": "ldap3",
+        })
 
     def parse_components(self, dn: str) -> FlextResult[list[tuple[str, str, str]]]:
         r"""Parse DN into RFC 4514 compliant components using ldap3.
@@ -94,7 +92,7 @@ class DnService(FlextService[FlextTypes.Dict]):
         Returns:
             FlextResult containing list of (attr, value, rdn) tuples
             where:
-            - attr: Attribute name (e.g., "cn")
+            - attr: Attribute name (e.g., FlextLdifConstants.DictKeys.CN)
             - value: Attribute value (e.g., "John Smith")
             - rdn: Full RDN component (e.g., "cn=John Smith")
 
@@ -102,7 +100,7 @@ class DnService(FlextService[FlextTypes.Dict]):
             >>> result = service.parse_components("cn=test,dc=example,dc=com")
             >>> if result.is_success:
             >>>     components = result.unwrap()
-            >>> # [("cn", "test", "cn=test"), ("dc", "example", "dc=example"), ...]
+            >>> # [(FlextLdifConstants.DictKeys.CN, "test", "cn=test"), ("dc", "example", "dc=example"), ...]
 
         """
         try:

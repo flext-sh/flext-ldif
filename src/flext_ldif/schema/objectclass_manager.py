@@ -7,7 +7,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import override
+from typing import Any, override
 
 from flext_core import FlextResult, FlextService
 
@@ -25,14 +25,12 @@ class FlextLdifObjectClassManager(FlextService[FlextLdifTypes.Dict]):
         # Logger and container inherited from FlextService via FlextMixins
 
     @override
-    def execute(self: object) -> FlextResult[FlextLdifTypes.Dict]:
+    def execute(self: Any) -> FlextResult[FlextLdifTypes.Dict]:
         """Execute objectClass manager service."""
-        return FlextResult[FlextLdifTypes.Dict].ok(
-            {
-                "service": FlextLdifObjectClassManager,
-                "status": "ready",
-            }
-        )
+        return FlextResult[FlextLdifTypes.Dict].ok({
+            "service": FlextLdifObjectClassManager,
+            "status": "ready",
+        })
 
     def resolve_objectclass_hierarchy(
         self,
@@ -54,7 +52,7 @@ class FlextLdifObjectClassManager(FlextService[FlextLdifTypes.Dict]):
         if object_class in schema.objectclasses:
             oc_def = schema.objectclasses[object_class]
             if isinstance(oc_def, dict):
-                superior: object = oc_def.get("superior", [])
+                superior: Any = oc_def.get("superior", [])
             else:
                 # Assume it's a SchemaObjectClass model
                 superior = getattr(oc_def, "superior", [])
@@ -86,7 +84,7 @@ class FlextLdifObjectClassManager(FlextService[FlextLdifTypes.Dict]):
             if oc_name in schema.objectclasses:
                 oc_def = schema.objectclasses[oc_name]
                 if isinstance(oc_def, dict):
-                    req_attrs: object = oc_def.get("required_attributes", [])
+                    req_attrs: Any = oc_def.get("required_attributes", [])
                 else:
                     # Assume it's a SchemaObjectClass model
                     req_attrs = getattr(oc_def, "required_attributes", [])
@@ -116,7 +114,7 @@ class FlextLdifObjectClassManager(FlextService[FlextLdifTypes.Dict]):
             if oc_name in schema.objectclasses:
                 oc_def = schema.objectclasses[oc_name]
                 if isinstance(oc_def, dict):
-                    opt_attrs: object = oc_def.get("optional_attributes", [])
+                    opt_attrs: Any = oc_def.get("optional_attributes", [])
                 else:
                     # Assume it's a SchemaObjectClass model
                     opt_attrs = getattr(oc_def, "optional_attributes", [])

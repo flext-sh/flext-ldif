@@ -32,19 +32,15 @@ class FlextLdifQuirksServersTivoli(FlextLdifQuirksBaseSchemaQuirk):
     TIVOLI_OID_PATTERN: ClassVar[re.Pattern[str]] = re.compile(
         r"\b1\.3\.18\.", re.IGNORECASE
     )
-    TIVOLI_ATTRIBUTE_PREFIXES: ClassVar[frozenset[str]] = frozenset(
-        [
-            "ibm-",
-            "ids-",
-        ]
-    )
-    TIVOLI_OBJECTCLASS_NAMES: ClassVar[frozenset[str]] = frozenset(
-        [
-            "ibm-slapdaccesscontrolsubentry",
-            "ibm-ldapserver",
-            "ibm-filterentry",
-        ]
-    )
+    TIVOLI_ATTRIBUTE_PREFIXES: ClassVar[frozenset[str]] = frozenset([
+        "ibm-",
+        "ids-",
+    ])
+    TIVOLI_OBJECTCLASS_NAMES: ClassVar[frozenset[str]] = frozenset([
+        "ibm-slapdaccesscontrolsubentry",
+        "ibm-ldapserver",
+        "ibm-filterentry",
+    ])
 
     def model_post_init(self, _context: object, /) -> None:
         """Initialise Tivoli schema quirk."""
@@ -400,12 +396,10 @@ class FlextLdifQuirksServersTivoli(FlextLdifQuirksBaseSchemaQuirk):
             default=15, description="Standard priority for Tivoli ACL"
         )
 
-        ACL_ATTRIBUTE_NAMES: ClassVar[frozenset[str]] = frozenset(
-            [
-                "ibm-slapdaccesscontrol",
-                "ibm-slapdgroupacl",
-            ]
-        )
+        ACL_ATTRIBUTE_NAMES: ClassVar[frozenset[str]] = frozenset([
+            "ibm-slapdaccesscontrol",
+            "ibm-slapdgroupacl",
+        ])
 
         def model_post_init(self, _context: object, /) -> None:
             """Initialise Tivoli ACL quirk."""
@@ -468,7 +462,7 @@ class FlextLdifQuirksServersTivoli(FlextLdifQuirksBaseSchemaQuirk):
         ) -> FlextResult[FlextLdifTypes.Dict]:
             """Wrap Tivoli ACL into a generic RFC representation."""
             try:
-                # Type narrowing: rfc_acl is already FlextLdifTypes.Dict (dict[str, object])
+                # Type narrowing: rfc_acl is already FlextLdifTypes.Dict (FlextTypes.Dict)
                 rfc_acl: FlextLdifTypes.Dict = {
                     FlextLdifConstants.DictKeys.TYPE: FlextLdifConstants.DictKeys.ACL,
                     FlextLdifConstants.DictKeys.FORMAT: FlextLdifConstants.AclFormats.RFC_GENERIC,
@@ -565,19 +559,15 @@ class FlextLdifQuirksServersTivoli(FlextLdifQuirksBaseSchemaQuirk):
             default=15, description="Standard priority for Tivoli entry handling"
         )
 
-        TIVOLI_DN_MARKERS: ClassVar[frozenset[str]] = frozenset(
-            [
-                "cn=ibm",
-                "cn=plugins",
-                "cn=configuration",
-            ]
-        )
-        TIVOLI_ATTRIBUTE_PREFIXES: ClassVar[frozenset[str]] = frozenset(
-            [
-                "ibm-",
-                "ids-",
-            ]
-        )
+        TIVOLI_DN_MARKERS: ClassVar[frozenset[str]] = frozenset([
+            "cn=ibm",
+            "cn=plugins",
+            "cn=configuration",
+        ])
+        TIVOLI_ATTRIBUTE_PREFIXES: ClassVar[frozenset[str]] = frozenset([
+            "ibm-",
+            "ids-",
+        ])
 
         def model_post_init(self, _context: object, /) -> None:
             """Initialise Tivoli entry quirk."""
@@ -662,7 +652,7 @@ class FlextLdifQuirksServersTivoli(FlextLdifQuirksBaseSchemaQuirk):
         ) -> FlextResult[FlextLdifTypes.Dict]:
             """Strip Tivoli metadata before RFC processing."""
             try:
-                normalized_entry = dict[str, object](entry_data)
+                normalized_entry = dict(entry_data)
                 normalized_entry.pop(FlextLdifConstants.DictKeys.SERVER_TYPE, None)
                 return FlextResult[FlextLdifTypes.Dict].ok(normalized_entry)
 

@@ -20,9 +20,10 @@ from __future__ import annotations
 import base64
 from io import BytesIO
 from pathlib import Path
+from typing import Any
 
 from flext_core import FlextResult, FlextService, FlextTypes
-from ldif3 import LDIFParser  # pyright: ignore[reportAttributeAccessIssue]
+from ldif3 import LDIFParser  # type: ignore[import-untyped]
 
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
@@ -69,7 +70,7 @@ class FlextLdifRfcLdifParser(FlextService[FlextTypes.Dict]):
 
     """
 
-    def __init__(self, *, params: FlextTypes.Dict, quirk_registry: object) -> None:
+    def __init__(self, *, params: FlextTypes.Dict, quirk_registry: Any) -> None:  # noqa: ANN401
         """Initialize generic LDIF parser.
 
         Args:
@@ -359,13 +360,13 @@ class FlextLdifRfcLdifParser(FlextService[FlextTypes.Dict]):
                         cleaned_dn = self._entry_quirks.clean_dn(dn)
 
                         # Convert ldif3 format to our Entry format
-                        entry_data: FlextTypes.Dict = {
+                        file_entry_data: FlextTypes.Dict = {
                             FlextLdifConstants.DictKeys.DN: cleaned_dn,
                             FlextLdifConstants.DictKeys.ATTRIBUTES: entry_attrs,
                         }
 
                         # Create Entry model
-                        entry_result = self._create_entry(entry_data)
+                        entry_result = self._create_entry(file_entry_data)
                         if entry_result.is_success:
                             entries.append(entry_result.value)
                         # Log error but continue parsing
@@ -392,7 +393,7 @@ class FlextLdifRfcLdifParser(FlextService[FlextTypes.Dict]):
         """Create LDIF entry from parsed data.
 
         Args:
-            entry_data: Parsed entry data with 'dn' and 'attributes' keys
+            entry_data: Parsed entry data with FlextLdifConstants.DictKeys.DN and FlextLdifConstants.DictKeys.ATTRIBUTES keys
 
         Returns:
             FlextResult with Entry model

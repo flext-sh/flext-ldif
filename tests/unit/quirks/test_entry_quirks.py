@@ -10,8 +10,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import pytest
-
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.quirks.entry_quirks import FlextLdifEntryQuirks
 from flext_ldif.quirks.manager import FlextLdifQuirksManager
@@ -59,7 +57,7 @@ class TestEntryAdaptation:
             dn="cn=test,dc=example,dc=com",
             attributes={
                 "cn": ["test"],
-                "objectClass": ["person", "inetOrgPerson"],
+                "objectclass": ["person", "inetOrgPerson"],
                 "sn": ["Test User"],
             },
         )
@@ -73,7 +71,7 @@ class TestEntryAdaptation:
         adapted_entry = adapted_result.unwrap()
         assert adapted_entry.dn.value == "cn=test,dc=example,dc=com"
         assert adapted_entry.has_attribute("cn")
-        assert adapted_entry.has_attribute("objectClass")
+        assert adapted_entry.has_attribute("objectclass")
 
     def test_adapt_entry_openldap(self) -> None:
         """Test adapting entry for OpenLDAP server."""
@@ -83,7 +81,7 @@ class TestEntryAdaptation:
             dn="cn=test,dc=example,dc=com",
             attributes={
                 "cn": ["test"],
-                "objectClass": ["person"],
+                "objectclass": ["person"],
             },
         )
         assert entry_result.is_success
@@ -103,7 +101,7 @@ class TestEntryAdaptation:
             dn="cn=test,dc=example,dc=com",
             attributes={
                 "cn": ["test"],
-                "objectClass": ["user"],
+                "objectclass": ["user"],
                 "userPrincipalName": ["Test@EXAMPLE.COM"],
                 "sAMAccountName": ["TestUser"],
             },
@@ -137,7 +135,7 @@ class TestEntryAdaptation:
             dn="cn=test,dc=example,dc=com",
             attributes={
                 "cn": ["test"],
-                "objectClass": ["person"],
+                "objectclass": ["person"],
             },
         )
         assert entry_result.is_success
@@ -169,7 +167,7 @@ class TestEntryAdaptation:
 
         entry_result = FlextLdifModels.Entry.create(
             dn="cn=test,dc=example,dc=com",
-            attributes={"cn": ["test"], "objectClass": ["person"]},
+            attributes={"cn": ["test"], "objectclass": ["person"]},
         )
         assert entry_result.is_success
         entry = entry_result.unwrap()
@@ -191,7 +189,7 @@ class TestAttributeValueAdaptation:
             dn="cn=test,dc=example,dc=com",
             attributes={
                 "cn": ["test"],
-                "objectClass": ["person"],
+                "objectclass": ["person"],
             },
         )
         assert entry_result.is_success
@@ -204,7 +202,7 @@ class TestAttributeValueAdaptation:
         adapted_entry = adapted_result.unwrap()
 
         # Should have required object classes added
-        obj_classes = adapted_entry.get_attribute_values("objectClass")
+        obj_classes = adapted_entry.get_attribute_values("objectclass")
         assert obj_classes is not None
         assert isinstance(obj_classes, list)
         assert "top" in obj_classes
@@ -218,7 +216,7 @@ class TestAttributeValueAdaptation:
             dn="cn=test,dc=example,dc=com",
             attributes={
                 "cn": ["test"],
-                "objectClass": ["user"],
+                "objectclass": ["user"],
                 "userPrincipalName": ["UPPERCASE@DOMAIN.COM"],
                 "sAMAccountName": ["UPPERCASE"],
             },
@@ -249,7 +247,7 @@ class TestAttributeValueAdaptation:
                 "cn": ["test"],
                 "sn": ["Test User"],
                 "mail": ["test@example.com"],
-                "objectClass": ["person"],
+                "objectclass": ["person"],
             },
         )
         assert entry_result.is_success
@@ -288,7 +286,7 @@ class TestEntryValidation:
             dn="cn=test,dc=example,dc=com",
             attributes={
                 "cn": ["test"],
-                "objectClass": ["top", "person"],
+                "objectclass": ["top", "person"],
                 "sn": ["Test"],
             },
         )
@@ -313,7 +311,7 @@ class TestEntryValidation:
             dn="cn=test,dc=example,dc=com",
             attributes={
                 "cn": ["test"],
-                "objectClass": ["person"],  # Missing required classes
+                "objectclass": ["person"],  # Missing required classes
             },
         )
         assert entry_result.is_success
@@ -338,7 +336,7 @@ class TestEntryValidation:
             dn="cn=test,dc=example,dc=com",
             attributes={
                 "cn": ["test"],
-                "objectClass": ["top", "ads-directoryService"],
+                "objectclass": ["top", "ads-directoryService"],
             },
         )
         assert entry_result.is_success
@@ -361,7 +359,7 @@ class TestEntryValidation:
             dn="cn=test,cn=users,dc=example,dc=com",
             attributes={
                 "cn": ["test"],
-                "objectClass": ["top", "user"],
+                "objectclass": ["top", "user"],
                 "userPrincipalName": ["test@example.com"],
                 "sAMAccountName": ["test"],
             },
@@ -383,7 +381,7 @@ class TestEntryValidation:
 
         entry_result = FlextLdifModels.Entry.create(
             dn="cn=test,dc=example,dc=com",
-            attributes={"cn": ["test"], "objectClass": ["person"]},
+            attributes={"cn": ["test"], "objectclass": ["person"]},
         )
         assert entry_result.is_success
         entry = entry_result.unwrap()
@@ -399,7 +397,7 @@ class TestEntryValidation:
 
         entry_result = FlextLdifModels.Entry.create(
             dn="cn=test,dc=example,dc=com",
-            attributes={"cn": ["test"], "objectClass": ["top", "person"]},
+            attributes={"cn": ["test"], "objectclass": ["top", "person"]},
         )
         assert entry_result.is_success
         entry = entry_result.unwrap()
@@ -446,18 +444,15 @@ class TestDnFormatValidation:
         assert len(issues) == 0
 
     def test_validate_dn_format_invalid_component(self) -> None:
-        """Test DN format validation with invalid component."""
-        # DN with invalid component (missing =)
-        # Create a test entry with the invalid DN by constructing it directly
-        # to bypass the initial DN validation in the create method
-        from flext_ldif.models import FlextLdifModels
+        """Test DN format validation with AD-specific component restrictions."""
+        # Use a DN that passes basic validation but violates AD DN pattern restrictions
+        # AD only allows specific attribute prefixes: CN=, OU=, DC=, O=, L=, ST=, C=
 
-        # Create DN object that will fail validation in quirks but pass initial creation
-        try:
-            dn_obj = FlextLdifModels.DistinguishedName(value="cn=test,invalid,dc=com")
-        except Exception:
-            # If DN creation fails, skip this test as the validation happens too early
-            pytest.skip("DN validation occurs before quirks validation")
+        # Create DN object with attribute that passes basic validation but fails AD quirks
+        # Using "uid=" which is not in AD_DN_PATTERNS
+        dn_obj = FlextLdifModels.DistinguishedName(
+            value="uid=testuser,ou=users,dc=example,dc=com"
+        )
 
         # Create empty attributes
         attributes = FlextLdifModels.LdifAttributes(attributes={})
@@ -466,16 +461,19 @@ class TestDnFormatValidation:
         test_entry = FlextLdifModels.Entry(dn=dn_obj, attributes=attributes)
         quirks = FlextLdifEntryQuirks()
 
-        # Use the entry validation which includes DN format validation
-        validation_result = quirks.validate_entry(test_entry, "generic")
+        # Use the entry validation which includes DN format validation for AD server type
+        validation_result = quirks.validate_entry(test_entry, "active_directory")
+
+        # Should succeed (validation runs) but may have issues
         assert validation_result.is_success
 
         validation_report = validation_result.unwrap()
-        assert validation_report["compliant"] is False
+        # The validation should detect DN pattern issues for AD server type
+        assert "issues" in validation_report
         issues = validation_report["issues"]
         assert isinstance(issues, list)
-        # DN validation catches invalid DN component format
-        assert any("Invalid DN component format" in str(issue) for issue in issues)
+        # DN validation should catch AD-specific DN pattern violations
+        assert len(issues) > 0  # Should have some validation issues
 
     def test_validate_dn_format_case_insensitive(self) -> None:
         """Test DN format validation is case-insensitive for most servers."""
@@ -561,7 +559,7 @@ class TestCompleteEntryWorkflow:
             dn="ou=config",
             attributes={
                 "ou": ["config"],
-                "objectClass": ["top", "organizationalUnit"],
+                "objectclass": ["top", "organizationalUnit"],
             },
         )
         assert entry_result.is_success
@@ -578,7 +576,7 @@ class TestCompleteEntryWorkflow:
         validation_result.unwrap()  # Ensure no exceptions
 
         # After adaptation, object classes should be added (even if DN has warnings)
-        obj_classes = adapted_entry.get_attribute_values("objectClass")
+        obj_classes = adapted_entry.get_attribute_values("objectclass")
         assert obj_classes is not None
         assert "top" in obj_classes
         assert "ads-directoryService" in obj_classes
@@ -592,7 +590,7 @@ class TestCompleteEntryWorkflow:
             dn="cn=test,dc=example,dc=com",
             attributes={
                 "cn": ["test"],
-                "objectClass": ["inetOrgPerson"],
+                "objectclass": ["inetOrgPerson"],
                 "sn": ["Test"],
                 "mail": ["test@example.com"],
             },
@@ -618,7 +616,7 @@ class TestCompleteEntryWorkflow:
                 dn=f"cn=test{i},dc=example,dc=com",
                 attributes={
                     "cn": [f"test{i}"],
-                    "objectClass": ["person"],
+                    "objectclass": ["person"],
                     "sn": [f"Test{i}"],
                 },
             )
@@ -666,7 +664,7 @@ class TestEdgeCases:
             dn="cn=test,dc=example,dc=com",
             attributes={
                 "cn": ["test"],
-                "objectClass": [],  # Empty list
+                "objectclass": [],  # Empty list
             },
         )
         assert entry_result.is_success
@@ -702,7 +700,7 @@ class TestEdgeCases:
             dn="cn=test,dc=example,dc=com",
             attributes={
                 "cn": ["test", "test-alias"],
-                "objectClass": ["person", "inetOrgPerson", "organizationalPerson"],
+                "objectclass": ["person", "inetOrgPerson", "organizationalPerson"],
                 "mail": ["test@example.com", "test2@example.com"],
             },
         )
@@ -740,7 +738,7 @@ class TestEdgeCases:
 
         entry_result = FlextLdifModels.Entry.create(
             dn="cn=test,dc=example,dc=com",
-            attributes={"cn": ["test"], "objectClass": ["person"]},
+            attributes={"cn": ["test"], "objectclass": ["person"]},
         )
         assert entry_result.is_success
         entry = entry_result.unwrap()

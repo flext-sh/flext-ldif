@@ -8,6 +8,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.quirks.servers.ad_quirks import FlextLdifQuirksServersAd
 
 
@@ -441,7 +442,9 @@ class TestActiveDirectoryEntryQuirks:
         entry_quirk = main_quirk.EntryQuirk()
 
         dn = "cn=test,dc=example,dc=com"
-        attributes: dict[str, object] = {"objectClass": ["user", "person"]}
+        attributes: dict[str, object] = {
+            FlextLdifConstants.DictKeys.OBJECTCLASS: ["user", "person"]
+        }
 
         assert entry_quirk.can_handle_entry(dn, attributes) is True
 
@@ -451,7 +454,9 @@ class TestActiveDirectoryEntryQuirks:
         entry_quirk = main_quirk.EntryQuirk()
 
         dn = "cn=test,ou=people,dc=example,dc=com"
-        attributes: dict[str, object] = {"objectClass": ["inetOrgPerson"]}
+        attributes: dict[str, object] = {
+            FlextLdifConstants.DictKeys.OBJECTCLASS: ["inetOrgPerson"]
+        }
 
         assert entry_quirk.can_handle_entry(dn, attributes) is False
 
@@ -462,7 +467,7 @@ class TestActiveDirectoryEntryQuirks:
 
         dn = "cn=Administrator,cn=Users,dc=example,dc=com"
         attributes: dict[str, object] = {
-            "objectClass": ["user", "person"],
+            FlextLdifConstants.DictKeys.OBJECTCLASS: ["user", "person"],
             "cn": "Administrator",
             "sAMAccountName": "Administrator",
         }
@@ -481,7 +486,9 @@ class TestActiveDirectoryEntryQuirks:
         entry_quirk = main_quirk.EntryQuirk()
 
         dn = "cn=Schema,cn=Configuration,dc=example,dc=com"
-        attributes: dict[str, object] = {"objectClass": ["container"]}
+        attributes: dict[str, object] = {
+            FlextLdifConstants.DictKeys.OBJECTCLASS: ["container"]
+        }
 
         result = entry_quirk.process_entry(dn, attributes)
         assert result.is_success
@@ -494,7 +501,9 @@ class TestActiveDirectoryEntryQuirks:
         entry_quirk = main_quirk.EntryQuirk()
 
         dn = "cn=John,ou=Sales,dc=example,dc=com"
-        attributes: dict[str, object] = {"objectClass": ["user"]}
+        attributes: dict[str, object] = {
+            FlextLdifConstants.DictKeys.OBJECTCLASS: ["user"]
+        }
 
         result = entry_quirk.process_entry(dn, attributes)
         assert result.is_success
@@ -511,7 +520,7 @@ class TestActiveDirectoryEntryQuirks:
             "server_type": "active_directory",
             "is_config_entry": False,
             "is_traditional_dit": False,
-            "objectClass": ["user"],
+            FlextLdifConstants.DictKeys.OBJECTCLASS: ["user"],
             "cn": "test",
         }
 
@@ -524,4 +533,4 @@ class TestActiveDirectoryEntryQuirks:
         assert "is_traditional_dit" not in rfc_entry
         # Standard attributes should remain
         assert rfc_entry["dn"] == "cn=test,dc=example,dc=com"
-        assert rfc_entry["objectClass"] == ["user"]
+        assert rfc_entry[FlextLdifConstants.DictKeys.OBJECTCLASS] == ["user"]

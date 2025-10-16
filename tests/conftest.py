@@ -478,7 +478,7 @@ def ldif_test_entries() -> list[dict[str, object]]:
         entry: dict[str, object] = {
             "dn": f"uid={user.get('name', 'testuser')}{i},ou=people,dc=example,dc=com",
             "attributes": {
-                "objectClass": ["inetOrgPerson", "person"],
+                "objectclass": ["inetOrgPerson", "person"],
                 "cn": [user.get("name", "Test User")],
                 "sn": [
                     (
@@ -497,7 +497,7 @@ def ldif_test_entries() -> list[dict[str, object]]:
     group_entry: dict[str, object] = {
         "dn": "cn=testgroup,ou=groups,dc=example,dc=com",
         "attributes": {
-            "objectClass": ["groupOfNames"],
+            "objectclass": ["groupOfNames"],
             "cn": ["Test Group"],
             "description": ["Test group for LDIF processing"],
             "member": [

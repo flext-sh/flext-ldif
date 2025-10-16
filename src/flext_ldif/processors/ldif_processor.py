@@ -1,7 +1,23 @@
 """LDIF Batch and Parallel Processors.
 
-This module provides batch and parallel processing capabilities for LDIF entries
-using FlextProcessors infrastructure for efficient large-scale operations.
+This module provides enterprise-grade batch and parallel processing capabilities
+for LDIF entries using FlextProcessors infrastructure. Designed for efficient
+large-scale operations on directory data with memory-conscious batching and
+CPU-optimized parallel execution.
+
+Features:
+- LdifBatchProcessor: Memory-efficient batch processing for large datasets
+- LdifParallelProcessor: CPU-optimized parallel processing for compute-intensive operations
+- FlextProcessors integration: Leverages flext-core processing infrastructure
+- Type-safe generic processing with full Pydantic model support
+- Comprehensive error handling with FlextResult railway-oriented programming
+- Configurable batch sizes and worker counts for performance tuning
+
+Use Cases:
+- Large-scale LDIF validation across thousands of entries
+- CPU-intensive transformations (encryption, complex mappings)
+- Memory-bound operations on datasets larger than available RAM
+- Parallel schema validation and consistency checking
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT

@@ -44,7 +44,9 @@ class ValidationService(FlextService[FlextTypes.Dict]):
         >>> validation_service = ValidationService()
         >>>
         >>> # Validate attribute name
-        >>> result = validation_service.validate_attribute_name("cn")
+        >>> result = validation_service.validate_attribute_name(
+        ...     FlextLdifConstants.DictKeys.CN
+        ... )
         >>> if result.is_success:
         >>>     is_valid = result.unwrap()  # True
         >>>
@@ -81,18 +83,16 @@ class ValidationService(FlextService[FlextTypes.Dict]):
             FlextResult containing service status
 
         """
-        return FlextResult[FlextTypes.Dict].ok(
-            {
-                "service": "ValidationService",
-                "status": "operational",
-                "rfc_compliance": "RFC 2849, RFC 4512",
-                "validation_types": [
-                    "attribute_name",
-                    "objectclass_name",
-                    "attribute_value",
-                ],
-            }
-        )
+        return FlextResult[FlextTypes.Dict].ok({
+            "service": "ValidationService",
+            "status": "operational",
+            "rfc_compliance": "RFC 2849, RFC 4512",
+            "validation_types": [
+                "attribute_name",
+                "objectclass_name",
+                "attribute_value",
+            ],
+        })
 
     def validate_attribute_name(self, name: str) -> FlextResult[bool]:
         """Validate LDAP attribute name against RFC 4512 rules.
@@ -110,7 +110,7 @@ class ValidationService(FlextService[FlextTypes.Dict]):
             FlextResult containing True if valid, False otherwise
 
         Example:
-            >>> result = service.validate_attribute_name("cn")
+            >>> result = service.validate_attribute_name(FlextLdifConstants.DictKeys.CN)
             >>> is_valid = result.unwrap()  # True
             >>>
             >>> result = service.validate_attribute_name("2invalid")
@@ -231,7 +231,9 @@ class ValidationService(FlextService[FlextTypes.Dict]):
             FlextResult containing True if valid, False otherwise
 
         Example:
-            >>> result = service.validate_dn_component("cn", "John Smith")
+            >>> result = service.validate_dn_component(
+            ...     FlextLdifConstants.DictKeys.CN, "John Smith"
+            ... )
             >>> is_valid = result.unwrap()  # True
 
         """

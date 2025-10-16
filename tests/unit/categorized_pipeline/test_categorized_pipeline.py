@@ -205,7 +205,7 @@ class TestACLDetection:
         entry: FlextTypes.Dict = {
             "dn": "dc=example,dc=com",
             "attributes": {"aci": "(targetattr=*)(version 3.0; acl...)"},
-            "objectClass": ["top"],
+            "objectclass": ["top"],
         }
 
         assert pipeline._has_acl_attributes(entry)
@@ -226,7 +226,7 @@ class TestACLDetection:
         entry: FlextTypes.Dict = {
             "dn": "uid=jdoe,dc=example,dc=com",
             "attributes": {"cn": "John Doe"},
-            "objectClass": ["person"],
+            "objectclass": ["person"],
         }
 
         assert not pipeline._has_acl_attributes(entry)
@@ -245,7 +245,7 @@ class TestACLDetection:
         entry: FlextTypes.Dict = {
             "dn": "dc=example,dc=com",
             "attributes": {"aci": "(targetattr=*)"},
-            "objectClass": ["top"],
+            "objectclass": ["top"],
         }
 
         assert not pipeline._has_acl_attributes(entry)
@@ -268,7 +268,7 @@ class TestEntryCategorization:
         entry: FlextTypes.Dict = {
             "dn": "cn=schema",
             "attributes": {},
-            "objectClass": ["top", "subschema"],
+            "objectclass": ["top", "subschema"],
         }
 
         category, reason = pipeline._categorize_entry(entry)
@@ -291,7 +291,7 @@ class TestEntryCategorization:
         entry: FlextTypes.Dict = {
             "dn": "dc=example,dc=com",
             "attributes": {"aci": "(targetattr=*)"},
-            "objectClass": ["top", "domain"],
+            "objectclass": ["top", "domain"],
         }
 
         category, reason = pipeline._categorize_entry(entry)
@@ -314,7 +314,7 @@ class TestEntryCategorization:
         entry: FlextTypes.Dict = {
             "dn": "ou=users,dc=example,dc=com",
             "attributes": {"ou": "users"},
-            "objectClass": ["top", "organizationalUnit"],
+            "objectclass": ["top", "organizationalUnit"],
         }
 
         category, reason = pipeline._categorize_entry(entry)
@@ -338,7 +338,7 @@ class TestEntryCategorization:
         entry: FlextTypes.Dict = {
             "dn": "uid=jdoe,dc=example,dc=com",
             "attributes": {"cn": "John Doe", "sn": "Doe"},
-            "objectClass": ["top", "person", "inetOrgPerson"],
+            "objectclass": ["top", "person", "inetOrgPerson"],
         }
 
         category, reason = pipeline._categorize_entry(entry)
@@ -362,7 +362,7 @@ class TestEntryCategorization:
         entry: FlextTypes.Dict = {
             "dn": "cn=jdoe,dc=example,dc=com",  # No uid=
             "attributes": {"cn": "John Doe"},
-            "objectClass": ["top", "person"],
+            "objectclass": ["top", "person"],
         }
 
         category, reason = pipeline._categorize_entry(entry)
@@ -386,7 +386,7 @@ class TestEntryCategorization:
         entry: FlextTypes.Dict = {
             "dn": "cn=admins,dc=example,dc=com",
             "attributes": {"cn": "admins"},
-            "objectClass": ["top", "groupOfNames"],
+            "objectclass": ["top", "groupOfNames"],
         }
 
         category, reason = pipeline._categorize_entry(entry)
@@ -411,7 +411,7 @@ class TestEntryCategorization:
         entry: FlextTypes.Dict = {
             "dn": "cn=unknown,dc=example,dc=com",
             "attributes": {"cn": "unknown"},
-            "objectClass": ["top", "unknownClass"],
+            "objectclass": ["top", "unknownClass"],
         }
 
         category, reason = pipeline._categorize_entry(entry)
@@ -443,27 +443,27 @@ class TestCategoryBatchProcessing:
             {
                 "dn": "cn=schema",
                 "attributes": {},
-                "objectClass": ["subschema"],
+                "objectclass": ["subschema"],
             },
             {
                 "dn": "ou=users,dc=example,dc=com",
                 "attributes": {"ou": "users"},
-                "objectClass": ["organizationalUnit"],
+                "objectclass": ["organizationalUnit"],
             },
             {
                 "dn": "uid=jdoe,dc=example,dc=com",
                 "attributes": {"cn": "John Doe"},
-                "objectClass": ["person"],
+                "objectclass": ["person"],
             },
             {
                 "dn": "cn=admins,dc=example,dc=com",
                 "attributes": {"cn": "admins"},
-                "objectClass": ["groupOfNames"],
+                "objectclass": ["groupOfNames"],
             },
             {
                 "dn": "dc=example,dc=com",
                 "attributes": {"aci": "(targetattr=*)"},
-                "objectClass": ["domain"],
+                "objectclass": ["domain"],
             },
         ]
 
@@ -494,7 +494,7 @@ class TestCategoryBatchProcessing:
             {
                 "dn": "cn=unknown,dc=example,dc=com",
                 "attributes": {"cn": "unknown"},
-                "objectClass": ["unknownClass"],
+                "objectclass": ["unknownClass"],
             },
         ]
 
@@ -526,7 +526,7 @@ class TestCategoryTransformation:
 
         categorized: dict[str, list[FlextTypes.Dict]] = {
             "schema": [],
-            "hierarchy": [{"dn": "ou=test", "objectClass": ["organizationalUnit"]}],
+            "hierarchy": [{"dn": "ou=test", "objectclass": ["organizationalUnit"]}],
             "users": [],
             "groups": [],
             "acl": [],
@@ -591,7 +591,7 @@ class TestOutputWriting:
         entries: list[FlextTypes.Dict] = [
             {
                 "dn": "uid=jdoe,dc=example,dc=com",
-                "objectClass": ["top", "person", "inetOrgPerson"],
+                "objectclass": ["top", "person", "inetOrgPerson"],
                 "attributes": {
                     "cn": "John Doe",
                     "sn": "Doe",
@@ -600,7 +600,7 @@ class TestOutputWriting:
             },
             {
                 "dn": "uid=asmith,dc=example,dc=com",
-                "objectClass": ["top", "person"],
+                "objectclass": ["top", "person"],
                 "attributes": {"cn": "Alice Smith", "sn": "Smith"},
             },
         ]
@@ -664,16 +664,16 @@ class TestOutputWriting:
         entries: list[FlextTypes.Dict] = [
             {
                 "dn": "uid=jdoe,dc=example,dc=com",
-                "objectClass": ["person"],
+                "objectclass": ["person"],
                 "attributes": {"cn": "John Doe"},
             },
             {
                 "dn": "",  # Empty DN
-                "objectClass": ["person"],
+                "objectclass": ["person"],
                 "attributes": {"cn": "Invalid"},
             },
             {
-                "objectClass": ["person"],
+                "objectclass": ["person"],
                 "attributes": {"cn": "No DN"},
             },
         ]
@@ -709,35 +709,35 @@ class TestOutputWriting:
             "schema": [
                 {
                     "dn": "cn=schema",
-                    "objectClass": ["subschema"],
+                    "objectclass": ["subschema"],
                     "attributes": {},
                 },
             ],
             "hierarchy": [
                 {
                     "dn": "ou=users,dc=example,dc=com",
-                    "objectClass": ["organizationalUnit"],
+                    "objectclass": ["organizationalUnit"],
                     "attributes": {"ou": "users"},
                 },
             ],
             "users": [
                 {
                     "dn": "uid=jdoe,dc=example,dc=com",
-                    "objectClass": ["person"],
+                    "objectclass": ["person"],
                     "attributes": {"cn": "John Doe"},
                 },
             ],
             "groups": [
                 {
                     "dn": "cn=admins,dc=example,dc=com",
-                    "objectClass": ["groupOfNames"],
+                    "objectclass": ["groupOfNames"],
                     "attributes": {"cn": "admins"},
                 },
             ],
             "acl": [
                 {
                     "dn": "dc=example,dc=com",
-                    "objectClass": ["domain"],
+                    "objectclass": ["domain"],
                     "attributes": {"aci": "(targetattr=*)"},
                 },
             ],
@@ -782,7 +782,7 @@ class TestOutputWriting:
             "users": [
                 {
                     "dn": "uid=jdoe,dc=example,dc=com",
-                    "objectClass": ["person"],
+                    "objectclass": ["person"],
                     "attributes": {},
                 },
             ],
@@ -814,30 +814,30 @@ class TestStatisticsGeneration:
         )
 
         categorized: dict[str, list[FlextTypes.Dict]] = {
-            "schema": [{"dn": "cn=schema", "objectClass": [], "attributes": {}}],
+            "schema": [{"dn": "cn=schema", "objectclass": [], "attributes": {}}],
             "hierarchy": [
                 {
                     "dn": "ou=users,dc=example,dc=com",
-                    "objectClass": [],
+                    "objectclass": [],
                     "attributes": {},
                 },
                 {
                     "dn": "ou=groups,dc=example,dc=com",
-                    "objectClass": [],
+                    "objectclass": [],
                     "attributes": {},
                 },
             ],
             "users": [
                 {
                     "dn": "uid=jdoe,dc=example,dc=com",
-                    "objectClass": [],
+                    "objectclass": [],
                     "attributes": {},
                 },
             ],
             "groups": [
                 {
                     "dn": "cn=admins,dc=example,dc=com",
-                    "objectClass": [],
+                    "objectclass": [],
                     "attributes": {},
                 },
             ],
@@ -887,7 +887,7 @@ class TestStatisticsGeneration:
             "users": [
                 {
                     "dn": "uid=jdoe,dc=example,dc=com",
-                    "objectClass": [],
+                    "objectclass": [],
                     "attributes": {},
                 },
             ],
@@ -896,14 +896,14 @@ class TestStatisticsGeneration:
             "rejected": [
                 {
                     "dn": "cn=unknown,dc=example,dc=com",
-                    "objectClass": ["unknownClass"],
+                    "objectclass": ["unknownClass"],
                     "attributes": {
                         "rejectionReason": "No matching category for objectClasses: ['unknownClass']"
                     },
                 },
                 {
                     "dn": "cn=invalid,dc=example,dc=com",
-                    "objectClass": ["person"],
+                    "objectclass": ["person"],
                     "attributes": {
                         "rejectionReason": "User entry DN does not match expected patterns"
                     },
@@ -946,7 +946,7 @@ class TestStatisticsGeneration:
         )
 
         categorized: dict[str, list[FlextTypes.Dict]] = {
-            "schema": [{"dn": "cn=schema", "objectClass": [], "attributes": {}}],
+            "schema": [{"dn": "cn=schema", "objectclass": [], "attributes": {}}],
             "hierarchy": [],
             "users": [],
             "groups": [],
@@ -1034,17 +1034,17 @@ class TestRejectionTracking:
             "rejected": [
                 {
                     "dn": "cn=test1,dc=example,dc=com",
-                    "objectClass": [],
+                    "objectclass": [],
                     "attributes": {"rejectionReason": "Reason A"},
                 },
                 {
                     "dn": "cn=test2,dc=example,dc=com",
-                    "objectClass": [],
+                    "objectclass": [],
                     "attributes": {"rejectionReason": "Reason B"},
                 },
                 {
                     "dn": "cn=test3,dc=example,dc=com",
-                    "objectClass": [],
+                    "objectclass": [],
                     "attributes": {"rejectionReason": "Reason A"},  # Duplicate
                 },
             ],
@@ -1082,13 +1082,13 @@ class TestRejectionTracking:
         # Test case: 2 rejected out of 10 total = 20% rejection rate
         categorized: dict[str, list[FlextTypes.Dict]] = {
             "schema": [
-                {"dn": f"cn=schema{i}", "objectClass": [], "attributes": {}}
+                {"dn": f"cn=schema{i}", "objectclass": [], "attributes": {}}
                 for i in range(2)
             ],
             "hierarchy": [
                 {
                     "dn": f"ou=test{i},dc=example,dc=com",
-                    "objectClass": [],
+                    "objectclass": [],
                     "attributes": {},
                 }
                 for i in range(3)
@@ -1096,7 +1096,7 @@ class TestRejectionTracking:
             "users": [
                 {
                     "dn": f"uid=user{i},dc=example,dc=com",
-                    "objectClass": [],
+                    "objectclass": [],
                     "attributes": {},
                 }
                 for i in range(3)
@@ -1106,7 +1106,7 @@ class TestRejectionTracking:
             "rejected": [
                 {
                     "dn": f"cn=rejected{i},dc=example,dc=com",
-                    "objectClass": [],
+                    "objectclass": [],
                     "attributes": {"rejectionReason": f"Reason {i}"},
                 }
                 for i in range(2)
@@ -1150,7 +1150,7 @@ class TestOutputWritingEdgeCases:
         entries: list[FlextTypes.Dict] = [
             {
                 "dn": "uid=josé,dc=example,dc=com",
-                "objectClass": ["person"],
+                "objectclass": ["person"],
                 "attributes": {"cn": "José García", "description": "ñoño"},
             },
         ]
@@ -1188,7 +1188,7 @@ class TestOutputWritingEdgeCases:
             "hierarchy": [
                 {
                     "dn": "ou=users,dc=example,dc=com",
-                    "objectClass": ["organizationalUnit"],
+                    "objectclass": ["organizationalUnit"],
                     "attributes": {},
                 },
             ],
@@ -1228,12 +1228,12 @@ class TestQuirksIntegration:
 
         categorized: dict[str, list[FlextTypes.Dict]] = {
             "schema": [
-                {"dn": "cn=schema", "objectClass": ["subschema"], "attributes": {}}
+                {"dn": "cn=schema", "objectclass": ["subschema"], "attributes": {}}
             ],
             "hierarchy": [
                 {
                     "dn": "ou=test",
-                    "objectClass": ["organizationalUnit"],
+                    "objectclass": ["organizationalUnit"],
                     "attributes": {},
                 }
             ],
@@ -1271,19 +1271,19 @@ class TestQuirksIntegration:
             "users": [
                 {
                     "dn": "uid=user1,dc=example,dc=com",
-                    "objectClass": ["person"],
+                    "objectclass": ["person"],
                     "attributes": {},
                 },
                 {
                     "dn": "uid=user2,dc=example,dc=com",
-                    "objectClass": ["person"],
+                    "objectclass": ["person"],
                     "attributes": {},
                 },
             ],
             "groups": [
                 {
                     "dn": "cn=group1,dc=example,dc=com",
-                    "objectClass": ["groupOfNames"],
+                    "objectclass": ["groupOfNames"],
                     "attributes": {},
                 },
             ],

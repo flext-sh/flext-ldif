@@ -254,7 +254,7 @@ class TestOudToOidEntryMigration:
         entry_dn = "cn=OracleContext,dc=example,dc=com"
         entry_attrs: FlextTypes.Dict = {
             "cn": ["OracleContext"],
-            "objectClass": ["top", "orclContext", "orclContextAux82"],
+            "objectclass": ["top", "orclContext", "orclContextAux82"],
             "orclVersion": ["90600"],
         }
 
@@ -295,7 +295,7 @@ class TestOudToOidEntryMigration:
         entry_dn = "cn=OracleDASGroupPriv, cn=Groups,cn=OracleContext"
         entry_attrs: FlextTypes.Dict = {
             "cn": ["OracleDASGroupPriv"],
-            "objectClass": ["top", "groupOfUniqueNames", "orclPrivilegeGroup"],
+            "objectclass": ["top", "groupOfUniqueNames", "orclPrivilegeGroup"],
             "uniquemember": ["cn=orcladmin"],
         }
 

@@ -710,7 +710,7 @@ class TestFlextLdifAclService:
         # Create a simple entry without ACL attributes
         entry_result = FlextLdifModels.Entry.create(
             dn="cn=testuser,dc=example,dc=com",
-            attributes={"objectClass": ["person"], "cn": ["testuser"]},
+            attributes={"objectclass": ["person"], "cn": ["testuser"]},
         )
         assert entry_result.is_success
         entry = entry_result.value

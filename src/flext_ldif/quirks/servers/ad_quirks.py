@@ -47,39 +47,35 @@ class FlextLdifQuirksServersAd(FlextLdifQuirksBaseSchemaQuirk):
     )
 
     # Frequently encountered attribute/objectClass markers (stored lower-case).
-    AD_ATTRIBUTE_NAMES: ClassVar[frozenset[str]] = frozenset(
-        [
-            "samaccountname",
-            "objectguid",
-            "objectsid",
-            "userprincipalname",
-            "unicodepwd",
-            "useraccountcontrol",
-            "primarygroupid",
-            "logonhours",
-            "lockouttime",
-            "pwdlastset",
-            "memberof",
-            "msds-supportedencryptiontypes",
-            "serviceprincipalname",
-            "distinguishedname",
-        ]
-    )
-    AD_OBJECTCLASS_NAMES: ClassVar[frozenset[str]] = frozenset(
-        [
-            "user",
-            "computer",
-            "group",
-            "organizationalunit",
-            "organizationalperson",
-            "person",
-            "domain",
-            "domainpolicy",
-            "foreignsecurityprincipal",
-            "msds-groupmanagedserviceaccount",
-            "msds-managedserviceaccount",
-        ]
-    )
+    AD_ATTRIBUTE_NAMES: ClassVar[frozenset[str]] = frozenset([
+        "samaccountname",
+        "objectguid",
+        "objectsid",
+        "userprincipalname",
+        "unicodepwd",
+        "useraccountcontrol",
+        "primarygroupid",
+        "logonhours",
+        "lockouttime",
+        "pwdlastset",
+        "memberof",
+        "msds-supportedencryptiontypes",
+        "serviceprincipalname",
+        "distinguishedname",
+    ])
+    AD_OBJECTCLASS_NAMES: ClassVar[frozenset[str]] = frozenset([
+        "user",
+        "computer",
+        "group",
+        "organizationalunit",
+        "organizationalperson",
+        "person",
+        "domain",
+        "domainpolicy",
+        "foreignsecurityprincipal",
+        "msds-groupmanagedserviceaccount",
+        "msds-managedserviceaccount",
+    ])
 
     def model_post_init(self, _context: object, /) -> None:
         """Initialize Active Directory schema quirk."""
@@ -658,28 +654,24 @@ class FlextLdifQuirksServersAd(FlextLdifQuirksBaseSchemaQuirk):
         )
         priority: int = Field(default=15, description="Standard priority for AD entry")
 
-        AD_DN_MARKERS: ClassVar[frozenset[str]] = frozenset(
-            [
-                "cn=users",
-                "cn=computers",
-                "cn=configuration",
-                "cn=system",
-                "ou=domain controllers",
-            ]
-        )
-        AD_ATTRIBUTE_MARKERS: ClassVar[frozenset[str]] = frozenset(
-            [
-                "objectguid",
-                "objectsid",
-                "samaccountname",
-                "userprincipalname",
-                "ntsecuritydescriptor",
-                "useraccountcontrol",
-                "serviceprincipalname",
-                "lastlogontimestamp",
-                "pwdlastset",
-            ]
-        )
+        AD_DN_MARKERS: ClassVar[frozenset[str]] = frozenset([
+            "cn=users",
+            "cn=computers",
+            "cn=configuration",
+            "cn=system",
+            "ou=domain controllers",
+        ])
+        AD_ATTRIBUTE_MARKERS: ClassVar[frozenset[str]] = frozenset([
+            "objectguid",
+            "objectsid",
+            "samaccountname",
+            "userprincipalname",
+            "ntsecuritydescriptor",
+            "useraccountcontrol",
+            "serviceprincipalname",
+            "lastlogontimestamp",
+            "pwdlastset",
+        ])
 
         def model_post_init(self, _context: object, /) -> None:
             """Initialize Active Directory entry quirk."""
@@ -767,7 +759,7 @@ class FlextLdifQuirksServersAd(FlextLdifQuirksBaseSchemaQuirk):
         ) -> FlextResult[FlextLdifTypes.Dict]:
             """Strip AD-only metadata before handing control to RFC logic."""
             try:
-                normalized_entry = dict[str, object](entry_data)
+                normalized_entry = dict(entry_data)
                 normalized_entry.pop(FlextLdifConstants.DictKeys.SERVER_TYPE, None)
                 normalized_entry.pop(FlextLdifConstants.DictKeys.IS_CONFIG_ENTRY, None)
                 normalized_entry.pop(

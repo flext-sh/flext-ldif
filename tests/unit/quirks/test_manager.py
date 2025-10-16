@@ -96,7 +96,7 @@ class TestQuirksManagerDetectServerType:
             dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
             attributes=FlextLdifModels.LdifAttributes(
                 attributes={
-                    "objectClass": FlextLdifModels.AttributeValues(
+                    "objectclass": FlextLdifModels.AttributeValues(
                         values=["orclContainer"]
                     ),
                 }
@@ -114,7 +114,7 @@ class TestQuirksManagerDetectServerType:
             dn=FlextLdifModels.DistinguishedName(value="cn=user,dc=example,dc=com"),
             attributes=FlextLdifModels.LdifAttributes(
                 attributes={
-                    "objectClass": FlextLdifModels.AttributeValues(
+                    "objectclass": FlextLdifModels.AttributeValues(
                         values=["orclUserV2"]
                     ),
                 }
@@ -132,7 +132,7 @@ class TestQuirksManagerDetectServerType:
             dn=FlextLdifModels.DistinguishedName(value="cn=config"),
             attributes=FlextLdifModels.LdifAttributes(
                 attributes={
-                    "objectClass": FlextLdifModels.AttributeValues(
+                    "objectclass": FlextLdifModels.AttributeValues(
                         values=["olcConfig"]
                     ),
                 }
@@ -168,7 +168,7 @@ class TestQuirksManagerDetectServerType:
             dn=FlextLdifModels.DistinguishedName(value="cn=config"),
             attributes=FlextLdifModels.LdifAttributes(
                 attributes={
-                    "objectClass": FlextLdifModels.AttributeValues(
+                    "objectclass": FlextLdifModels.AttributeValues(
                         values=["nsContainer"]
                     ),
                 }
@@ -218,7 +218,7 @@ class TestQuirksManagerDetectServerType:
             dn=FlextLdifModels.DistinguishedName(value="ou=config"),
             attributes=FlextLdifModels.LdifAttributes(
                 attributes={
-                    "objectClass": FlextLdifModels.AttributeValues(values=["top"]),
+                    "objectclass": FlextLdifModels.AttributeValues(values=["top"]),
                 }
             ),
         )
@@ -234,7 +234,7 @@ class TestQuirksManagerDetectServerType:
             dn=FlextLdifModels.DistinguishedName(value="cn=schema,cn=ds-cfg"),
             attributes=FlextLdifModels.LdifAttributes(
                 attributes={
-                    "objectClass": FlextLdifModels.AttributeValues(values=["top"]),
+                    "objectclass": FlextLdifModels.AttributeValues(values=["top"]),
                 }
             ),
         )
@@ -268,7 +268,7 @@ class TestQuirksManagerDetectServerType:
             dn=FlextLdifModels.DistinguishedName(value="cn=user,dc=example,dc=com"),
             attributes=FlextLdifModels.LdifAttributes(
                 attributes={
-                    "objectClass": FlextLdifModels.AttributeValues(
+                    "objectclass": FlextLdifModels.AttributeValues(
                         values=["ndsperson"]
                     ),
                 }
@@ -304,7 +304,7 @@ class TestQuirksManagerDetectServerType:
             dn=FlextLdifModels.DistinguishedName(value="cn=config"),
             attributes=FlextLdifModels.LdifAttributes(
                 attributes={
-                    "objectClass": FlextLdifModels.AttributeValues(
+                    "objectclass": FlextLdifModels.AttributeValues(
                         values=["ibm-LDAPServer"]
                     ),
                 }

@@ -15,6 +15,7 @@ Architecture:
 from __future__ import annotations
 
 from pathlib import Path
+from typing import cast
 
 from flext_core import FlextResult, FlextService, FlextTypes
 
@@ -38,14 +39,23 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifTypes.Dict]):
 
     This service enables migrations between any LDAP server types by:
     1. Parsing source LDIF with RFC parsers + source quirks
-    2. Converting to RFC-compliant intermediate format
+    2. Converting to RFC-compliant intermediate format via universal conversion matrix
     3. Generating target LDIF with RFC parsers + target quirks
+    4. Tracking DN case consistency for OUD compatibility
+    5. Providing detailed statistics and error reporting
 
-    Supported patterns:
+    Supported migration patterns:
     - OID → OUD (Oracle Internet Directory to Unified Directory)
-    - OID → OpenLDAP
+    - OID → OpenLDAP (1.x and 2.x)
     - OpenLDAP → OUD
-    - object future server combination via quirk registration
+    - Any server combination via extensible quirk registration
+    - RFC → RFC (pure standards compliance transformations)
+
+    Features:
+    - Memory-efficient processing with configurable batch sizes
+    - Comprehensive error handling with detailed failure reporting
+    - Progress tracking and statistics collection
+    - Schema and entry processing with separate pipelines
 
     Example usage:
         params = {
@@ -297,8 +307,10 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifTypes.Dict]):
                     },
                 )
 
-            # migrated_entries is already a list[dict]
-            return FlextResult[FlextTypes.List].ok(migrated_entries)
+            # migrated_entries is already typed as list[FlextTypes.Dict]
+            return FlextResult[FlextTypes.List].ok(
+                cast("FlextTypes.List", migrated_entries)
+            )
 
         except Exception as e:
             error_msg = f"Entry migration failed: {e}"
@@ -462,12 +474,10 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifTypes.Dict]):
             if not schema_files:
                 if self.logger:
                     self.logger.warning("No schema files found in input directory")
-                return FlextResult[FlextLdifTypes.Dict].ok(
-                    {
-                        FlextLdifConstants.DictKeys.ATTRIBUTES: {},
-                        "objectclasses": {},
-                    }
-                )
+                return FlextResult[FlextLdifTypes.Dict].ok({
+                    FlextLdifConstants.DictKeys.ATTRIBUTES: {},
+                    "objectclasses": {},
+                })
 
             # Use the first schema file found
             schema_file = schema_files[0]

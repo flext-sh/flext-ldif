@@ -32,21 +32,17 @@ class FlextLdifQuirksServersDs389(FlextLdifQuirksBaseSchemaQuirk):
     DS389_OID_PATTERN: ClassVar[re.Pattern[str]] = re.compile(
         r"\b2\.16\.840\.1\.113730\.", re.IGNORECASE
     )
-    DS389_ATTRIBUTE_PREFIXES: ClassVar[frozenset[str]] = frozenset(
-        [
-            "nsslapd-",
-            "nsds",
-            "nsuniqueid",
-        ]
-    )
-    DS389_OBJECTCLASS_NAMES: ClassVar[frozenset[str]] = frozenset(
-        [
-            "nscontainer",
-            "nsperson",
-            "nsds5replica",
-            "nsds5replicationagreement",
-        ]
-    )
+    DS389_ATTRIBUTE_PREFIXES: ClassVar[frozenset[str]] = frozenset([
+        "nsslapd-",
+        "nsds",
+        "nsuniqueid",
+    ])
+    DS389_OBJECTCLASS_NAMES: ClassVar[frozenset[str]] = frozenset([
+        "nscontainer",
+        "nsperson",
+        "nsds5replica",
+        "nsds5replicationagreement",
+    ])
 
     def model_post_init(self, _context: object, /) -> None:
         """Initialise 389 DS schema quirk."""
@@ -481,7 +477,7 @@ class FlextLdifQuirksServersDs389(FlextLdifQuirksBaseSchemaQuirk):
         ) -> FlextResult[FlextLdifTypes.Dict]:
             """Wrap 389 DS ACL into a generic RFC representation."""
             try:
-                # Type narrowing: rfc_acl is already FlextLdifTypes.Dict (dict[str, object])
+                # Type narrowing: rfc_acl is already FlextLdifTypes.Dict (FlextTypes.Dict)
                 rfc_acl: FlextLdifTypes.Dict = {
                     FlextLdifConstants.DictKeys.TYPE: FlextLdifConstants.DictKeys.ACL,
                     FlextLdifConstants.DictKeys.FORMAT: FlextLdifConstants.AclFormats.RFC_GENERIC,
@@ -501,7 +497,7 @@ class FlextLdifQuirksServersDs389(FlextLdifQuirksBaseSchemaQuirk):
         ) -> FlextResult[FlextLdifTypes.Dict]:
             """Repackage RFC ACL payload for 389 DS."""
             try:
-                # Type narrowing: ds_acl is already FlextLdifTypes.Dict (dict[str, object])
+                # Type narrowing: ds_acl is already FlextLdifTypes.Dict (FlextTypes.Dict)
                 ds_acl: FlextLdifTypes.Dict = {
                     FlextLdifConstants.DictKeys.FORMAT: FlextLdifConstants.AclFormats.DS389_ACL,
                     FlextLdifConstants.DictKeys.TARGET_FORMAT: FlextLdifConstants.DictKeys.ACI,
@@ -591,20 +587,16 @@ class FlextLdifQuirksServersDs389(FlextLdifQuirksBaseSchemaQuirk):
             default=15, description="Standard priority for 389 DS entry handling"
         )
 
-        DS389_DN_MARKERS: ClassVar[frozenset[str]] = frozenset(
-            [
-                "cn=config",
-                "cn=monitor",
-                "cn=changelog",
-            ]
-        )
-        DS389_ATTRIBUTE_PREFIXES: ClassVar[frozenset[str]] = frozenset(
-            [
-                "nsslapd-",
-                "nsds",
-                "nsuniqueid",
-            ]
-        )
+        DS389_DN_MARKERS: ClassVar[frozenset[str]] = frozenset([
+            "cn=config",
+            "cn=monitor",
+            "cn=changelog",
+        ])
+        DS389_ATTRIBUTE_PREFIXES: ClassVar[frozenset[str]] = frozenset([
+            "nsslapd-",
+            "nsds",
+            "nsuniqueid",
+        ])
 
         def model_post_init(self, _context: object, /) -> None:
             """Initialise 389 DS entry quirk."""
@@ -692,7 +684,7 @@ class FlextLdifQuirksServersDs389(FlextLdifQuirksBaseSchemaQuirk):
         ) -> FlextResult[FlextLdifTypes.Dict]:
             """Strip 389 DS metadata before RFC processing."""
             try:
-                normalized_entry = dict[str, object](entry_data)
+                normalized_entry = dict(entry_data)
                 normalized_entry.pop(FlextLdifConstants.DictKeys.SERVER_TYPE, None)
                 normalized_entry.pop(FlextLdifConstants.DictKeys.IS_CONFIG_ENTRY, None)
                 return FlextResult[FlextLdifTypes.Dict].ok(normalized_entry)

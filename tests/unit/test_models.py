@@ -228,7 +228,7 @@ class TestFlextLdifModels:
             dn="cn=test,dc=example,dc=com",
             attributes={
                 "cn": ["test"],
-                "objectClass": ["person"],
+                "objectclass": ["person"],
             },
         )
 
@@ -392,14 +392,12 @@ class TestFlextLdifModels:
 
     def test_schema_object_class_create_method(self) -> None:
         """Test SchemaObjectClass.create method."""
-        result = FlextLdifModels.SchemaObjectClass.create(
-            {
-                "name": "organizationalUnit",
-                "oid": "2.5.6.5",
-                "description": "Organizational unit",
-                "required_attributes": ["ou"],
-            }
-        )
+        result = FlextLdifModels.SchemaObjectClass.create({
+            "name": "organizationalUnit",
+            "oid": "2.5.6.5",
+            "description": "Organizational unit",
+            "required_attributes": ["ou"],
+        })
         assert result.is_success
         obj_class = result.unwrap()
         assert isinstance(obj_class, FlextLdifModels.SchemaObjectClass)
@@ -454,7 +452,7 @@ class TestFlextLdifModelsEntry:
         result = FlextLdifModels.Entry.create(
             dn="cn=test,dc=example,dc=com",
             attributes={
-                "objectClass": ["inetOrgPerson", "person"],
+                "objectclass": ["inetOrgPerson", "person"],
                 "cn": ["Test User"],
                 "sn": ["User"],
             },
@@ -477,7 +475,7 @@ class TestFlextLdifModelsEntry:
         result = FlextLdifModels.Entry.create(
             dn="cn=test,dc=example,dc=com",
             attributes={
-                "objectClass": ["inetOrgPerson"],
+                "objectclass": ["inetOrgPerson"],
                 "cn": ["Test User"],
                 "userCertificate;binary": [encoded_data],
             },
@@ -493,14 +491,14 @@ class TestFlextLdifModelsEntry:
         # Valid entry
         result = FlextLdifModels.Entry.create(
             dn="cn=test,dc=example,dc=com",
-            attributes={"objectClass": ["person"], "cn": ["test"]},
+            attributes={"objectclass": ["person"], "cn": ["test"]},
         )
         assert result.is_success
 
         # Invalid entry - missing DN (empty string)
         result = FlextLdifModels.Entry.create(
             dn="",  # Empty DN should fail
-            attributes={"objectClass": ["person"], "cn": ["test"]},
+            attributes={"objectclass": ["person"], "cn": ["test"]},
         )
         assert result.is_failure
 
@@ -568,7 +566,7 @@ class TestFlextLdifModelsLdifAttributes:
         attrs_data = {
             "cn": FlextLdifModels.AttributeValues(values=["Test User"]),
             "sn": FlextLdifModels.AttributeValues(values=["User"]),
-            "objectClass": FlextLdifModels.AttributeValues(
+            "objectclass": FlextLdifModels.AttributeValues(
                 values=["inetOrgPerson", "person"]
             ),
         }
@@ -621,7 +619,7 @@ class TestFlextLdifModelsSchemaObjectClass:
             "oid": "2.16.840.1.113730.3.2.2",
             "description": "Internet Organizational Person",
             "structural": True,
-            "required_attributes": ["cn", "sn", "objectClass"],
+            "required_attributes": ["cn", "sn", "objectclass"],
             "optional_attributes": ["description", "telephoneNumber", "mail"],
         }
 
@@ -634,7 +632,7 @@ class TestFlextLdifModelsSchemaObjectClass:
         assert isinstance(oc, FlextLdifModels.SchemaObjectClass)
         assert oc.name == "inetOrgPerson"
         assert oc.oid == "2.16.840.1.113730.3.2.2"
-        assert oc.required_attributes == ["cn", "sn", "objectClass"]
+        assert oc.required_attributes == ["cn", "sn", "objectclass"]
         assert oc.optional_attributes == ["description", "telephoneNumber", "mail"]
 
     def test_objectclass_validation(self) -> None:
@@ -738,27 +736,21 @@ class TestFlextLdifModelsAcl:
     def test_unified_acl_creation(self) -> None:
         """Test creating a Acl instance."""
         # First create components
-        target_result = FlextLdifModels.AclTarget.create(
-            {
-                "target_dn": "dc=example,dc=com",
-                "attributes": ["cn"],
-            }
-        )
+        target_result = FlextLdifModels.AclTarget.create({
+            "target_dn": "dc=example,dc=com",
+            "attributes": ["cn"],
+        })
         assert target_result.is_success
 
-        subject_result = FlextLdifModels.AclSubject.create(
-            {
-                "subject_type": "user",
-                "subject_value": "cn=admin,dc=example,dc=com",
-            }
-        )
+        subject_result = FlextLdifModels.AclSubject.create({
+            "subject_type": "user",
+            "subject_value": "cn=admin,dc=example,dc=com",
+        })
         assert subject_result.is_success
 
-        perms_result = FlextLdifModels.AclPermissions.create(
-            {
-                "permissions": ["read", "write"],
-            }
-        )
+        perms_result = FlextLdifModels.AclPermissions.create({
+            "permissions": ["read", "write"],
+        })
         assert perms_result.is_success
 
         # Create unified ACL

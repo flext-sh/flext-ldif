@@ -39,22 +39,18 @@ class FlextLdifQuirksServersNovell(FlextLdifQuirksBaseSchemaQuirk):
     NOVELL_OID_PATTERN: ClassVar[re.Pattern[str]] = re.compile(
         r"\b2\.16\.840\.1\.113719\.", re.IGNORECASE
     )
-    NOVELL_ATTRIBUTE_PREFIXES: ClassVar[frozenset[str]] = frozenset(
-        [
-            "nspm",
-            "login",
-            "dirxml-",
-        ]
-    )
-    NOVELL_OBJECTCLASS_NAMES: ClassVar[frozenset[str]] = frozenset(
-        [
-            "ndsperson",
-            "nspmpasswordpolicy",
-            "ndsserver",
-            "ndstree",
-            "ndsloginproperties",
-        ]
-    )
+    NOVELL_ATTRIBUTE_PREFIXES: ClassVar[frozenset[str]] = frozenset([
+        "nspm",
+        "login",
+        "dirxml-",
+    ])
+    NOVELL_OBJECTCLASS_NAMES: ClassVar[frozenset[str]] = frozenset([
+        "ndsperson",
+        "nspmpasswordpolicy",
+        "ndsserver",
+        "ndstree",
+        "ndsloginproperties",
+    ])
     ATTRIBUTE_NAME_REGEX: ClassVar[re.Pattern[str]] = re.compile(
         r"NAME\s+\(?\s*'([^']+)'", re.IGNORECASE
     )
@@ -408,12 +404,10 @@ class FlextLdifQuirksServersNovell(FlextLdifQuirksBaseSchemaQuirk):
             default=15, description="Standard priority for eDirectory ACL"
         )
 
-        ACL_ATTRIBUTE_NAMES: ClassVar[frozenset[str]] = frozenset(
-            [
-                "acl",
-                "inheritedacl",
-            ]
-        )
+        ACL_ATTRIBUTE_NAMES: ClassVar[frozenset[str]] = frozenset([
+            "acl",
+            "inheritedacl",
+        ])
 
         def model_post_init(self, _context: object, /) -> None:
             """Initialize eDirectory ACL quirk."""
@@ -469,7 +463,7 @@ class FlextLdifQuirksServersNovell(FlextLdifQuirksBaseSchemaQuirk):
         ) -> FlextResult[FlextLdifTypes.Dict]:
             """Wrap eDirectory ACL into generic RFC representation."""
             try:
-                # Type narrowing: rfc_acl is already FlextLdifTypes.Dict (dict[str, object])
+                # Type narrowing: rfc_acl is already FlextLdifTypes.Dict (FlextTypes.Dict)
                 rfc_acl: FlextLdifTypes.Dict = {
                     FlextLdifConstants.DictKeys.TYPE: FlextLdifConstants.DictKeys.ACL,
                     FlextLdifConstants.DictKeys.FORMAT: FlextLdifConstants.AclFormats.RFC_GENERIC,
@@ -489,7 +483,7 @@ class FlextLdifQuirksServersNovell(FlextLdifQuirksBaseSchemaQuirk):
         ) -> FlextResult[FlextLdifTypes.Dict]:
             """Repackage RFC ACL payload for eDirectory."""
             try:
-                # Type narrowing: ed_acl is already FlextLdifTypes.Dict (dict[str, object])
+                # Type narrowing: ed_acl is already FlextLdifTypes.Dict (FlextTypes.Dict)
                 ed_acl: FlextLdifTypes.Dict = {
                     FlextLdifConstants.DictKeys.FORMAT: FlextLdifConstants.AclFormats.ACI,
                     FlextLdifConstants.DictKeys.TARGET_FORMAT: "acl",
@@ -546,9 +540,9 @@ class FlextLdifQuirksServersNovell(FlextLdifQuirksBaseSchemaQuirk):
                         parts = [scope, trustee]
                         parts.extend(rights)
                         # Filter empty parts and ensure they're strings
-                        parts = [str(p) for p in parts if p]
+                        string_parts: list[str] = [str(p) for p in parts if p]
 
-                        acl_content = "#".join(parts) if parts else ""
+                        acl_content = "#".join(string_parts) if string_parts else ""
                         acl_str = (
                             f"{acl_attribute}: {acl_content}"
                             if acl_content
@@ -578,21 +572,17 @@ class FlextLdifQuirksServersNovell(FlextLdifQuirksBaseSchemaQuirk):
             default=15, description="Standard priority for eDirectory entry"
         )
 
-        EDIR_DIRECTORY_MARKERS: ClassVar[frozenset[str]] = frozenset(
-            [
-                "ou=services",
-                "ou=apps",
-                "ou=system",
-            ]
-        )
-        EDIR_ATTRIBUTE_MARKERS: ClassVar[frozenset[str]] = frozenset(
-            [
-                "nspmpasswordpolicy",
-                "nspmpasswordpolicydn",
-                "logindisabled",
-                "loginexpirationtime",
-            ]
-        )
+        EDIR_DIRECTORY_MARKERS: ClassVar[frozenset[str]] = frozenset([
+            "ou=services",
+            "ou=apps",
+            "ou=system",
+        ])
+        EDIR_ATTRIBUTE_MARKERS: ClassVar[frozenset[str]] = frozenset([
+            "nspmpasswordpolicy",
+            "nspmpasswordpolicydn",
+            "logindisabled",
+            "loginexpirationtime",
+        ])
 
         def model_post_init(self, _context: object, /) -> None:
             """Initialize eDirectory entry quirk."""
@@ -676,7 +666,7 @@ class FlextLdifQuirksServersNovell(FlextLdifQuirksBaseSchemaQuirk):
         ) -> FlextResult[FlextLdifTypes.Dict]:
             """Remove eDirectory metadata before RFC processing."""
             try:
-                normalized_entry = dict[str, object](entry_data)
+                normalized_entry = dict(entry_data)
                 normalized_entry.pop(FlextLdifConstants.DictKeys.SERVER_TYPE, None)
                 return FlextResult[FlextLdifTypes.Dict].ok(normalized_entry)
 

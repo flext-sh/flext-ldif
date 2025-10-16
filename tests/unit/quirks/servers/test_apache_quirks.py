@@ -466,7 +466,9 @@ class TestApacheDirectoryEntryQuirks:
         main_quirk = FlextLdifQuirksServersApache()
         entry_quirk = main_quirk.EntryQuirk()
         entry_dn = "ou=config,dc=example,dc=com"
-        attributes: dict[str, object] = {"objectClass": ["organizationalUnit"]}
+        attributes: dict[str, object] = {
+            FlextLdifConstants.DictKeys.OBJECTCLASS: ["organizationalUnit"]
+        }
         assert entry_quirk.can_handle_entry(entry_dn, attributes) is True
 
     def test_can_handle_entry_with_ou_services(self) -> None:
@@ -474,7 +476,9 @@ class TestApacheDirectoryEntryQuirks:
         main_quirk = FlextLdifQuirksServersApache()
         entry_quirk = main_quirk.EntryQuirk()
         entry_dn = "ou=services,dc=example,dc=com"
-        attributes: dict[str, object] = {"objectClass": ["organizationalUnit"]}
+        attributes: dict[str, object] = {
+            FlextLdifConstants.DictKeys.OBJECTCLASS: ["organizationalUnit"]
+        }
         assert entry_quirk.can_handle_entry(entry_dn, attributes) is True
 
     def test_can_handle_entry_with_ou_system(self) -> None:
@@ -482,7 +486,9 @@ class TestApacheDirectoryEntryQuirks:
         main_quirk = FlextLdifQuirksServersApache()
         entry_quirk = main_quirk.EntryQuirk()
         entry_dn = "ou=system,dc=example,dc=com"
-        attributes: dict[str, object] = {"objectClass": ["organizationalUnit"]}
+        attributes: dict[str, object] = {
+            FlextLdifConstants.DictKeys.OBJECTCLASS: ["organizationalUnit"]
+        }
         assert entry_quirk.can_handle_entry(entry_dn, attributes) is True
 
     def test_can_handle_entry_with_ou_partitions(self) -> None:
@@ -490,7 +496,9 @@ class TestApacheDirectoryEntryQuirks:
         main_quirk = FlextLdifQuirksServersApache()
         entry_quirk = main_quirk.EntryQuirk()
         entry_dn = "ou=partitions,dc=example,dc=com"
-        attributes: dict[str, object] = {"objectClass": ["organizationalUnit"]}
+        attributes: dict[str, object] = {
+            FlextLdifConstants.DictKeys.OBJECTCLASS: ["organizationalUnit"]
+        }
         assert entry_quirk.can_handle_entry(entry_dn, attributes) is True
 
     def test_can_handle_entry_with_ads_attribute(self) -> None:
@@ -500,7 +508,7 @@ class TestApacheDirectoryEntryQuirks:
         entry_dn = "cn=test,dc=example,dc=com"
         attributes: dict[str, object] = {
             "ads-enabled": ["TRUE"],
-            "objectClass": ["top"],
+            FlextLdifConstants.DictKeys.OBJECTCLASS: ["top"],
         }
         assert entry_quirk.can_handle_entry(entry_dn, attributes) is True
 
@@ -511,7 +519,7 @@ class TestApacheDirectoryEntryQuirks:
         entry_dn = "cn=test,dc=example,dc=com"
         attributes: dict[str, object] = {
             "apachedsSystemId": ["test"],
-            "objectClass": ["top"],
+            FlextLdifConstants.DictKeys.OBJECTCLASS: ["top"],
         }
         assert entry_quirk.can_handle_entry(entry_dn, attributes) is True
 
@@ -520,7 +528,9 @@ class TestApacheDirectoryEntryQuirks:
         main_quirk = FlextLdifQuirksServersApache()
         entry_quirk = main_quirk.EntryQuirk()
         entry_dn = "cn=test,dc=example,dc=com"
-        attributes: dict[str, object] = {"objectClass": ["top", "ads-directoryService"]}
+        attributes: dict[str, object] = {
+            FlextLdifConstants.DictKeys.OBJECTCLASS: ["top", "ads-directoryService"]
+        }
         assert entry_quirk.can_handle_entry(entry_dn, attributes) is True
 
     def test_can_handle_entry_negative(self) -> None:
@@ -528,7 +538,10 @@ class TestApacheDirectoryEntryQuirks:
         main_quirk = FlextLdifQuirksServersApache()
         entry_quirk = main_quirk.EntryQuirk()
         entry_dn = "cn=user,dc=example,dc=com"
-        attributes: dict[str, object] = {"objectClass": ["person"], "cn": ["user"]}
+        attributes: dict[str, object] = {
+            FlextLdifConstants.DictKeys.OBJECTCLASS: ["person"],
+            "cn": ["user"],
+        }
         assert entry_quirk.can_handle_entry(entry_dn, attributes) is False
 
     def test_process_entry_config_entry(self) -> None:
@@ -537,7 +550,7 @@ class TestApacheDirectoryEntryQuirks:
         entry_quirk = main_quirk.EntryQuirk()
         entry_dn = "ou=config,dc=example,dc=com"
         attributes: dict[str, object] = {
-            "objectClass": ["organizationalUnit"],
+            FlextLdifConstants.DictKeys.OBJECTCLASS: ["organizationalUnit"],
             "ou": ["config"],
             "ads-enabled": ["TRUE"],
         }
@@ -558,7 +571,7 @@ class TestApacheDirectoryEntryQuirks:
         entry_quirk = main_quirk.EntryQuirk()
         entry_dn = "cn=test,ou=system,dc=example,dc=com"
         attributes: dict[str, object] = {
-            "objectClass": ["top", "ads-base"],
+            FlextLdifConstants.DictKeys.OBJECTCLASS: ["top", "ads-base"],
             "cn": ["test"],
         }
         result = entry_quirk.process_entry(entry_dn, attributes)
@@ -574,7 +587,7 @@ class TestApacheDirectoryEntryQuirks:
         entry_dn = "cn=test,ou=system,dc=example,dc=com"
         binary_data = b"binary_value"
         attributes: dict[str, object] = {
-            "objectClass": ["top"],
+            FlextLdifConstants.DictKeys.OBJECTCLASS: ["top"],
             "cn": ["test"],
             "userCertificate": binary_data,
         }
@@ -595,7 +608,7 @@ class TestApacheDirectoryEntryQuirks:
             FlextLdifConstants.DictKeys.DN: "ou=config,dc=example,dc=com",
             FlextLdifConstants.DictKeys.SERVER_TYPE: FlextLdifConstants.LdapServers.APACHE_DIRECTORY,
             FlextLdifConstants.DictKeys.IS_CONFIG_ENTRY: True,
-            "objectClass": ["organizationalUnit"],
+            FlextLdifConstants.DictKeys.OBJECTCLASS: ["organizationalUnit"],
             "ou": ["config"],
         }
         result = entry_quirk.convert_entry_to_rfc(entry_data)
@@ -607,4 +620,4 @@ class TestApacheDirectoryEntryQuirks:
         assert (
             rfc_entry[FlextLdifConstants.DictKeys.DN] == "ou=config,dc=example,dc=com"
         )
-        assert "objectClass" in rfc_entry
+        assert FlextLdifConstants.DictKeys.OBJECTCLASS in rfc_entry

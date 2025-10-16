@@ -151,7 +151,7 @@ class FlextLdifSchemaBuilder(FlextService[FlextLdifConfig]):
             FlextResult containing built schema
 
         """
-        # Type narrowing: result is already FlextTypes.Dict (dict[str, object])
+        # Type narrowing: result is already FlextTypes.Dict (FlextTypes.Dict)
         result: FlextTypes.Dict = {
             FlextLdifConstants.DictKeys.ATTRIBUTES: self._attributes,
             "object_classes": self._object_classes,
@@ -204,9 +204,19 @@ class FlextLdifSchemaBuilder(FlextService[FlextLdifConfig]):
                 "Top LDAP class",
                 [FlextLdifConstants.DictKeys.OBJECTCLASS],
             )
-            .add_object_class("person", "Person class", ["cn", "sn"])
-            .add_object_class("organizationalPerson", "Organizational Person", ["cn"])
-            .add_object_class("inetOrgPerson", "Internet Organizational Person", ["cn"])
+            .add_object_class(
+                "person", "Person class", [FlextLdifConstants.DictKeys.CN, "sn"]
+            )
+            .add_object_class(
+                "organizationalPerson",
+                "Organizational Person",
+                [FlextLdifConstants.DictKeys.CN],
+            )
+            .add_object_class(
+                "inetOrgPerson",
+                "Internet Organizational Person",
+                [FlextLdifConstants.DictKeys.CN],
+            )
             .set_server_type("generic")
             .build()
         )
@@ -236,9 +246,15 @@ class FlextLdifSchemaBuilder(FlextService[FlextLdifConfig]):
                 "Top LDAP class",
                 [FlextLdifConstants.DictKeys.OBJECTCLASS],
             )
-            .add_object_class("groupOfNames", "Group of Names", ["cn", "member"])
             .add_object_class(
-                "groupOfUniqueNames", "Group of Unique Names", ["cn", "uniqueMember"]
+                "groupOfNames",
+                "Group of Names",
+                [FlextLdifConstants.DictKeys.CN, FlextLdifConstants.DictKeys.MEMBER],
+            )
+            .add_object_class(
+                "groupOfUniqueNames",
+                "Group of Unique Names",
+                [FlextLdifConstants.DictKeys.CN, "uniqueMember"],
             )
             .set_server_type("generic")
             .build()

@@ -32,21 +32,17 @@ class FlextLdifQuirksServersApache(FlextLdifQuirksBaseSchemaQuirk):
     APACHE_OID_PATTERN: ClassVar[re.Pattern[str]] = re.compile(
         r"\b1\.3\.6\.1\.4\.1\.18060\.", re.IGNORECASE
     )
-    APACHE_ATTRIBUTE_PREFIXES: ClassVar[frozenset[str]] = frozenset(
-        [
-            "ads-",
-            "apacheds",
-        ]
-    )
-    APACHE_OBJECTCLASS_NAMES: ClassVar[frozenset[str]] = frozenset(
-        [
-            "ads-directoryservice",
-            "ads-base",
-            "ads-server",
-            "ads-partition",
-            "ads-interceptor",
-        ]
-    )
+    APACHE_ATTRIBUTE_PREFIXES: ClassVar[frozenset[str]] = frozenset([
+        "ads-",
+        "apacheds",
+    ])
+    APACHE_OBJECTCLASS_NAMES: ClassVar[frozenset[str]] = frozenset([
+        "ads-directoryservice",
+        "ads-base",
+        "ads-server",
+        "ads-partition",
+        "ads-interceptor",
+    ])
 
     def model_post_init(self, _context: object, /) -> None:
         """Initialise ApacheDS schema quirk."""
@@ -405,12 +401,10 @@ class FlextLdifQuirksServersApache(FlextLdifQuirksBaseSchemaQuirk):
             default=15, description="Standard priority for ApacheDS ACL"
         )
 
-        ACI_ATTRIBUTE_NAMES: ClassVar[frozenset[str]] = frozenset(
-            [
-                "ads-aci",
-                FlextLdifConstants.DictKeys.ACI,
-            ]
-        )
+        ACI_ATTRIBUTE_NAMES: ClassVar[frozenset[str]] = frozenset([
+            "ads-aci",
+            FlextLdifConstants.DictKeys.ACI,
+        ])
         CLAUSE_PATTERN: ClassVar[re.Pattern[str]] = re.compile(r"\([^()]+\)")
 
         def model_post_init(self, _context: object, /) -> None:
@@ -459,7 +453,7 @@ class FlextLdifQuirksServersApache(FlextLdifQuirksBaseSchemaQuirk):
         ) -> FlextResult[FlextLdifTypes.Dict]:
             """Wrap ApacheDS ACL into a generic RFC representation."""
             try:
-                # Type narrowing: rfc_acl is already FlextLdifTypes.Dict (dict[str, object])
+                # Type narrowing: rfc_acl is already FlextLdifTypes.Dict (FlextTypes.Dict)
                 rfc_acl: FlextLdifTypes.Dict = {
                     FlextLdifConstants.DictKeys.TYPE: FlextLdifConstants.DictKeys.ACL,
                     FlextLdifConstants.DictKeys.FORMAT: FlextLdifConstants.AclFormats.RFC_GENERIC,
@@ -479,7 +473,7 @@ class FlextLdifQuirksServersApache(FlextLdifQuirksBaseSchemaQuirk):
         ) -> FlextResult[FlextLdifTypes.Dict]:
             """Repackage RFC ACL payload for ApacheDS."""
             try:
-                # Type narrowing: apache_acl is already FlextLdifTypes.Dict (dict[str, object])
+                # Type narrowing: apache_acl is already FlextLdifTypes.Dict (FlextTypes.Dict)
                 apache_acl: FlextLdifTypes.Dict = {
                     FlextLdifConstants.DictKeys.FORMAT: FlextLdifConstants.AclFormats.ACI,
                     FlextLdifConstants.DictKeys.TARGET_FORMAT: FlextLdifConstants.DictKeys.ACI,
@@ -542,20 +536,16 @@ class FlextLdifQuirksServersApache(FlextLdifQuirksBaseSchemaQuirk):
             default=15, description="Standard priority for ApacheDS entry handling"
         )
 
-        APACHE_DN_MARKERS: ClassVar[frozenset[str]] = frozenset(
-            [
-                "ou=config",
-                "ou=services",
-                "ou=system",
-                "ou=partitions",
-            ]
-        )
-        APACHE_ATTRIBUTE_PREFIXES: ClassVar[frozenset[str]] = frozenset(
-            [
-                "ads-",
-                "apacheds",
-            ]
-        )
+        APACHE_DN_MARKERS: ClassVar[frozenset[str]] = frozenset([
+            "ou=config",
+            "ou=services",
+            "ou=system",
+            "ou=partitions",
+        ])
+        APACHE_ATTRIBUTE_PREFIXES: ClassVar[frozenset[str]] = frozenset([
+            "ads-",
+            "apacheds",
+        ])
 
         def model_post_init(self, _context: object, /) -> None:
             """Initialise ApacheDS entry quirk."""
@@ -643,7 +633,7 @@ class FlextLdifQuirksServersApache(FlextLdifQuirksBaseSchemaQuirk):
         ) -> FlextResult[FlextLdifTypes.Dict]:
             """Strip ApacheDS metadata before RFC processing."""
             try:
-                normalized_entry = dict[str, object](entry_data)
+                normalized_entry = dict(entry_data)
                 normalized_entry.pop(FlextLdifConstants.DictKeys.SERVER_TYPE, None)
                 normalized_entry.pop(FlextLdifConstants.DictKeys.IS_CONFIG_ENTRY, None)
                 return FlextResult[FlextLdifTypes.Dict].ok(normalized_entry)

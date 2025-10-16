@@ -21,10 +21,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import Literal, cast
+from typing import Any, Literal, cast
 
 from flext_core import FlextResult
 
+from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.quirks.base import (
     FlextLdifQuirksBaseAclQuirk,
     FlextLdifQuirksBaseSchemaQuirk,
@@ -78,8 +79,8 @@ class QuirksConversionMatrix:
 
     def convert(
         self,
-        source_quirk: object,
-        target_quirk: object,
+        source_quirk: Any,  # noqa: ANN401
+        target_quirk: Any,  # noqa: ANN401
         data_type: DataType,
         data: str | FlextLdifTypes.Dict,
     ) -> FlextResult[str | FlextLdifTypes.Dict]:
@@ -97,7 +98,7 @@ class QuirksConversionMatrix:
         Args:
             source_quirk: Source quirk instance (e.g., OUD, OID)
             target_quirk: Target quirk instance (e.g., OUD, OID)
-            data_type: Type of data - "attribute", "objectclass", "acl", or "entry"
+            data_type: Type of data - "attribute", FlextLdifConstants.DictKeys.OBJECTCLASS, "acl", or "entry"
             data: Data to convert (string or dict)
 
         Returns:
@@ -118,7 +119,7 @@ class QuirksConversionMatrix:
         """
         if data_type == "attribute":
             return self._convert_attribute(source_quirk, target_quirk, data)
-        if data_type == "objectclass":
+        if data_type == FlextLdifConstants.DictKeys.OBJECTCLASS:
             return self._convert_objectclass(source_quirk, target_quirk, data)
         if data_type == "acl":
             return self._convert_acl(source_quirk, target_quirk, data)
@@ -142,11 +143,13 @@ class QuirksConversionMatrix:
 
         """
         # Entry DN
-        if "dn" in data and isinstance(data["dn"], str):
-            self.dn_registry.register_dn(data["dn"])
+        if FlextLdifConstants.DictKeys.DN in data:
+            dn_value = data[FlextLdifConstants.DictKeys.DN]
+            if isinstance(dn_value, str):
+                self.dn_registry.register_dn(dn_value)
 
         # Group memberships
-        for field in ["member", "uniqueMember", "owner"]:
+        for field in [FlextLdifConstants.DictKeys.MEMBER, "uniqueMember", "owner"]:
             if field in data:
                 value = data[field]
                 if isinstance(value, str):
@@ -185,8 +188,8 @@ class QuirksConversionMatrix:
 
     def _convert_attribute(
         self,
-        source_quirk: object,
-        target_quirk: object,
+        source_quirk: Any,  # noqa: ANN401
+        target_quirk: Any,  # noqa: ANN401
         data: str | FlextLdifTypes.Dict,
     ) -> FlextResult[str | FlextLdifTypes.Dict]:
         """Convert attribute from source to target quirk via RFC.
@@ -261,8 +264,8 @@ class QuirksConversionMatrix:
 
     def _convert_objectclass(
         self,
-        source_quirk: object,
-        target_quirk: object,
+        source_quirk: Any,  # noqa: ANN401
+        target_quirk: Any,  # noqa: ANN401
         data: str | FlextLdifTypes.Dict,
     ) -> FlextResult[str | FlextLdifTypes.Dict]:
         """Convert objectClass from source to target quirk via RFC.
@@ -337,8 +340,8 @@ class QuirksConversionMatrix:
 
     def _convert_acl(
         self,
-        source_quirk: object,
-        target_quirk: object,
+        source_quirk: Any,  # noqa: ANN401
+        target_quirk: Any,  # noqa: ANN401
         data: str | FlextLdifTypes.Dict,
     ) -> FlextResult[str | FlextLdifTypes.Dict]:
         """Convert ACL from source to target quirk via RFC.
@@ -426,8 +429,8 @@ class QuirksConversionMatrix:
 
     def _convert_entry(
         self,
-        source_quirk: object,
-        target_quirk: object,
+        source_quirk: Any,  # noqa: ANN401
+        target_quirk: Any,  # noqa: ANN401
         data: str | FlextLdifTypes.Dict,
     ) -> FlextResult[str | FlextLdifTypes.Dict]:
         """Convert entry from source to target quirk via RFC.
@@ -485,7 +488,9 @@ class QuirksConversionMatrix:
             normalized_data = normalize_result.unwrap()
 
             # Step 6: Write target format
-            write_result = target_entry_quirk.write_entry_to_ldif(normalized_data)
+            write_result: FlextResult[str | FlextLdifTypes.Dict] = (
+                target_entry_quirk.write_entry_to_ldif(normalized_data)
+            )
             if write_result.is_failure:
                 return FlextResult[str | FlextLdifTypes.Dict].fail(
                     f"Failed to write target format: {write_result.error}"
@@ -500,8 +505,8 @@ class QuirksConversionMatrix:
 
     def batch_convert(
         self,
-        source_quirk: object,
-        target_quirk: object,
+        source_quirk: Any,  # noqa: ANN401
+        target_quirk: Any,  # noqa: ANN401
         data_type: DataType,
         data_list: Sequence[str | FlextLdifTypes.Dict],
     ) -> FlextResult[list[str | FlextLdifTypes.Dict]]:
@@ -592,7 +597,7 @@ class QuirksConversionMatrix:
         """
         self.dn_registry.clear()
 
-    def get_supported_conversions(self, quirk: object) -> dict[str, bool]:
+    def get_supported_conversions(self, quirk: Any) -> dict[str, bool]:  # noqa: ANN401
         """Check which data types a quirk supports for conversion.
 
         Args:
@@ -605,12 +610,12 @@ class QuirksConversionMatrix:
             >>> oud = FlextLdifQuirksServersOud()
             >>> supported = matrix.get_supported_conversions(oud)
             >>> print(supported)
-            {'attribute': True, 'objectclass': True, 'acl': True, 'entry': True}
+            {'attribute': True, FlextLdifConstants.DictKeys.OBJECTCLASS: True, 'acl': True, 'entry': True}
 
         """
         support = {
             "attribute": False,
-            "objectclass": False,
+            FlextLdifConstants.DictKeys.OBJECTCLASS: False,
             "acl": False,
             "entry": False,
         }
@@ -623,7 +628,7 @@ class QuirksConversionMatrix:
         if hasattr(quirk, "parse_objectclass") and hasattr(
             quirk, "convert_objectclass_to_rfc"
         ):
-            support["objectclass"] = True
+            support[FlextLdifConstants.DictKeys.OBJECTCLASS] = True
 
         # Check ACL support
         acl_quirk = getattr(quirk, "acl", None)

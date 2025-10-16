@@ -1,4 +1,23 @@
-"""FLEXT LDIF ACL Service.
+"""FLEXT LDIF ACL Service - Enterprise Access Control Management.
+
+This module provides comprehensive Access Control List (ACL) management for LDIF entries
+using a composite pattern for flexible rule composition and evaluation. Supports server-specific
+ACL syntaxes including Oracle OID/OUD ACI attributes and standard LDAP ACL formats.
+
+Features:
+- Composite pattern for complex ACL rule composition
+- Server-specific ACL syntax support (OID, OUD, OpenLDAP)
+- Context-aware ACL evaluation with subject/target/permission checking
+- Pattern-based matching with glob and regex support
+- Permission inheritance and precedence resolution
+- ACL parsing and validation with detailed error reporting
+- Integration with LDIF entry processing pipeline
+
+Architecture:
+- AclRule: Base class implementing composite pattern for rule composition
+- AclEvaluator: Context-aware evaluation engine with permission checking
+- AclParser: Server-specific ACL syntax parsing and normalization
+- Rule composition using logical operators (AND, OR, NOT)
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -497,16 +516,14 @@ class FlextLdifAclService(FlextService[FlextLdifTypes.Dict]):
             FlextResult containing service status and available patterns
 
         """
-        return FlextResult[FlextLdifTypes.Dict].ok(
-            {
-                "service": FlextLdifAclService,
-                "status": "ready",
-                "patterns": {
-                    "composite": "Composite ACL rule evaluation",
-                    "rule_evaluation": "Individual ACL rule processing",
-                },
-            }
-        )
+        return FlextResult[FlextLdifTypes.Dict].ok({
+            "service": FlextLdifAclService,
+            "status": "ready",
+            "patterns": {
+                "composite": "Composite ACL rule evaluation",
+                "rule_evaluation": "Individual ACL rule processing",
+            },
+        })
 
 
 __all__ = ["FlextLdifAclService"]

@@ -214,12 +214,14 @@ class FlextLdifEntryBuilder(FlextService[FlextLdifModels.Entry]):
 
                 normalized_attrs: dict[str, FlextLdifTypes.StringList] = {}
                 for key, value in attributes.items():
+                    # Normalize attribute names to lowercase (LDAP standard)
+                    normalized_key = key.lower()
                     if isinstance(value, str):
-                        normalized_attrs[key] = [value]
+                        normalized_attrs[normalized_key] = [value]
                     elif isinstance(value, list):
-                        normalized_attrs[key] = [str(v) for v in value]
+                        normalized_attrs[normalized_key] = [str(v) for v in value]
                     else:
-                        normalized_attrs[key] = [str(value)]
+                        normalized_attrs[normalized_key] = [str(value)]
 
                 # Type narrow DN from dict.get()
                 if not isinstance(dn, str):
@@ -254,7 +256,7 @@ class FlextLdifEntryBuilder(FlextService[FlextLdifModels.Entry]):
             )
 
     def build_entries_from_dict(
-        self, data: list[dict[str, object]]
+        self, data: list[FlextLdifTypes.Dict]
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Build entries from dictionary data."""
         entries: list[FlextLdifModels.Entry] = []
@@ -274,12 +276,14 @@ class FlextLdifEntryBuilder(FlextService[FlextLdifModels.Entry]):
             normalized_attrs: dict[str, FlextLdifTypes.StringList] = {}
             if isinstance(attributes, dict):
                 for key, value in attributes.items():
+                    # Normalize attribute names to lowercase (LDAP standard)
+                    normalized_key = key.lower()
                     if isinstance(value, str):
-                        normalized_attrs[key] = [value]
+                        normalized_attrs[normalized_key] = [value]
                     elif isinstance(value, list):
-                        normalized_attrs[key] = [str(v) for v in value]
+                        normalized_attrs[normalized_key] = [str(v) for v in value]
                     else:
-                        normalized_attrs[key] = [str(value)]
+                        normalized_attrs[normalized_key] = [str(value)]
 
             # Type narrow DN from dict.get()
             if not isinstance(dn, str):

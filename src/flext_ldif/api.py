@@ -12,7 +12,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pathlib import Path
-from typing import ClassVar, override
+from typing import Any, ClassVar, override
 
 from flext_core import (
     FlextBus,
@@ -53,11 +53,15 @@ class FlextLdif(FlextService[FlextTypes.Dict]):
 
     Provides unified access to:
     - RFC-compliant LDIF parsing and writing (RFC 2849/4512)
-    - Server-specific quirks and migrations (OID, OUD, OpenLDAP)
+    - Server-specific quirks and migrations (OID, OUD, OpenLDAP, AD, 389-DS, etc.)
     - Generic server-agnostic migration pipeline
+    - Categorized migration pipeline with structured LDIF output
+    - Batch and parallel processing for large-scale operations
+    - Event-driven architecture with domain events
     - Schema validation and ACL processing
     - Entry building and transformation
-    - All infrastructure (Models, Config, Constants, etc.)
+    - DN service and validation services
+    - All infrastructure (Models, Config, Constants, Events, Processors, etc.)
 
     This class follows the Facade pattern, providing a simplified interface
     to the complex subsystem of LDIF processing services by delegating
@@ -79,22 +83,38 @@ class FlextLdif(FlextService[FlextTypes.Dict]):
         # Write LDIF entries with structured error handling
         write_result = ldif.write(entries)
 
-        # Migrate between servers with event publishing
+        # Generic migration between servers
         migration_result = ldif.migrate(
-            entries=entries,
-            from_server=FlextLdifConstants.ServerTypes.OID,
-            to_server=FlextLdifConstants.ServerTypes.OUD
+            input_dir=Path("data/oid"),
+            output_dir=Path("data/oud"),
+            from_server="oid",
+            to_server="oud"
         )
+
+        # Categorized migration with structured output
+        categorized_result = ldif.categorize_and_migrate(
+            input_dir=Path("data/source"),
+            output_dir=Path("data/categorized"),
+            categorization_rules={"users": ["person"], "groups": ["groupOfNames"]},
+            from_server="oid",
+            to_server="oud"
+        )
+
+        # Batch processing for large datasets
+        batch_processor = ldif.create_batch_processor(batch_size=100)
+        processing_result = batch_processor.process_entries(entries, validate_entry)
 
         # Access complete infrastructure
         config = ldif.config
         models = ldif.models
         entry = ldif.models.Entry(dn="cn=test", attributes={})
+        events = ldif.events  # Domain events
+        processors = ldif.processors  # Processing utilities
 
     """
 
     # Private attributes (initialized in model_post_init)
-    _bus: object = None
+    _bus: Any = None
     _dispatcher: FlextDispatcher
     _registry: FlextRegistry
     _processors: FlextProcessors
@@ -288,13 +308,27 @@ class FlextLdif(FlextService[FlextTypes.Dict]):
             result = ldif.parse("dn: cn=test\ncn: test\n")
 
             # Parse from file
-            result = ldif.parse(Path("data.ldif"))
+            result = ldif.parse_ldif_file(Path("data.ldif"))
 
             # Parse with server-specific quirks
-            result = ldif.parse(Path("oid.ldif"), server_type=FlextLdifConstants.ServerTypes.OID)
+            result = ldif.parse_ldif_file(Path("oid.ldif"), server_type=FlextLdifConstants.ServerTypes.OID)
 
         """
         return self._client.parse_ldif(source, server_type)
+
+    def parse_ldif_file(
+        self,
+        path: Path | str,
+        server_type: str = "rfc",
+    ) -> FlextResult[list[FlextLdifModels.Entry]]:
+        """Parse LDIF content from a file path using RFC-compliant parser."""
+        file_path = Path(path)
+        if not file_path.exists():
+            return FlextResult[list[FlextLdifModels.Entry]].fail(
+                f"LDIF file not found: {file_path}",
+            )
+
+        return self.parse(file_path, server_type=server_type)
 
     def write(
         self,
@@ -559,7 +593,7 @@ class FlextLdif(FlextService[FlextTypes.Dict]):
         Example:
             result = api.build_custom_entry(
                 dn="cn=test,dc=example,dc=com",
-                attributes={FlextLdifConstants.DictKeys.OBJECTCLASS: ["top", "person"], "cn": ["test"]}
+                attributes={FlextLdifConstants.DictKeys.OBJECTCLASS: ["top", "person"], FlextLdifConstants.DictKeys.CN: ["test"]}
             )
 
         """
@@ -616,7 +650,7 @@ class FlextLdif(FlextService[FlextTypes.Dict]):
 
     def dicts_to_entries(
         self,
-        dicts: list[dict[str, object]],
+        dicts: list[FlextTypes.Dict],
     ) -> list[FlextLdifModels.Entry]:
         """Convert list of dictionaries to list of entries using FlextProcessors.
 
@@ -719,7 +753,7 @@ class FlextLdif(FlextService[FlextTypes.Dict]):
                 result = api.validate_with_schema(entries, schema)
 
         """
-        # Convert dict[str, object] schema to SchemaDiscoveryResult with type validation
+        # Convert FlextTypes.Dict schema to SchemaDiscoveryResult with type validation
         attributes_value = schema.get(FlextLdifConstants.DictKeys.ATTRIBUTES, {})
         if not isinstance(attributes_value, dict):
             return FlextResult[FlextLdifModels.LdifValidationResult].fail(

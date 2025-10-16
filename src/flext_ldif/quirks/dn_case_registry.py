@@ -20,6 +20,7 @@ from __future__ import annotations
 from flext_core import FlextModels, FlextResult, FlextTypes
 from pydantic import ConfigDict
 
+from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.typings import FlextLdifTypes
 
 type DN = str
@@ -218,14 +219,12 @@ class DnCaseRegistry(FlextModels.Value):
         for normalized_dn, variants in self._case_variants.items():
             if len(variants) > 1:
                 canonical = self._registry[normalized_dn]
-                inconsistencies.append(
-                    {
-                        "normalized_dn": normalized_dn,
-                        "canonical_case": canonical,
-                        "variants": list(variants),
-                        "variant_count": len(variants),
-                    }
-                )
+                inconsistencies.append({
+                    "normalized_dn": normalized_dn,
+                    "canonical_case": canonical,
+                    "variants": list(variants),
+                    "variant_count": len(variants),
+                })
 
         if inconsistencies:
             warning_msg = (
@@ -256,7 +255,7 @@ class DnCaseRegistry(FlextModels.Value):
 
         Args:
             data: Dictionary containing potential DN references
-            dn_fields: List of field names that contain DNs (e.g., ["dn", "member", "uniqueMember"])
+            dn_fields: List of field names that contain DNs (e.g., [FlextLdifConstants.DictKeys.DN, FlextLdifConstants.DictKeys.MEMBER, "uniqueMember"])
                       If None, uses default DN fields
 
         Returns:
@@ -266,18 +265,27 @@ class DnCaseRegistry(FlextModels.Value):
             >>> registry = DnCaseRegistry()
             >>> registry.register_dn("cn=admin,dc=com")
             >>>
-            >>> entry = {"dn": "CN=Admin,DC=Com", "member": ["cn=ADMIN,dc=com"]}
-            >>> result = registry.normalize_dn_references(entry, ["dn", "member"])
+            >>> entry = {
+            ...     FlextLdifConstants.DictKeys.DN: "CN=Admin,DC=Com",
+            ...     FlextLdifConstants.DictKeys.MEMBER: ["cn=ADMIN,dc=com"],
+            ... }
+            >>> result = registry.normalize_dn_references(
+            ...     entry,
+            ...     [
+            ...         FlextLdifConstants.DictKeys.DN,
+            ...         FlextLdifConstants.DictKeys.MEMBER,
+            ...     ],
+            ... )
             >>> normalized = result.unwrap()
             >>> normalized
-            {'dn': 'cn=admin,dc=com', 'member': ['cn=admin,dc=com']}
+            {FlextLdifConstants.DictKeys.DN: 'cn=admin,dc=com', FlextLdifConstants.DictKeys.MEMBER: ['cn=admin,dc=com']}
 
         """
         if dn_fields is None:
             # Default DN fields to normalize
             dn_fields = [
-                "dn",
-                "member",
+                FlextLdifConstants.DictKeys.DN,
+                FlextLdifConstants.DictKeys.MEMBER,
                 "uniqueMember",
                 "owner",
                 "seeAlso",

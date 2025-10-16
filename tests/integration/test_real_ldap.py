@@ -336,8 +336,8 @@ mail: import@example.com
         # Import to LDAP
         ldap_connection.add(
             str(entry.dn),
-            entry.get_attribute_values("objectClass"),
-            entry.attributes.to_ldap3(exclude=["objectClass"]),
+            entry.get_attribute_values("objectclass"),
+            entry.attributes.to_ldap3(exclude=["objectclass"]),
         )
 
         # Verify import
@@ -375,7 +375,7 @@ jpegPhoto:: {encoded_photo}
         entry = entries[0]
 
         # Import to LDAP
-        attrs_dict = entry.attributes.to_ldap3(exclude=["objectClass"])
+        attrs_dict = entry.attributes.to_ldap3(exclude=["objectclass"])
 
         # Handle binary attribute - ldap3 accepts bytes for binary attributes
         if "jpegPhoto" in attrs_dict:
@@ -383,7 +383,7 @@ jpegPhoto:: {encoded_photo}
 
         ldap_connection.add(
             str(entry.dn),
-            entry.get_attribute_values("objectClass"),
+            entry.get_attribute_values("objectclass"),
             attrs_dict,
         )
 
@@ -451,10 +451,10 @@ class TestRealLdapRoundtrip:
 
         reimport_entry = parsed_entries[0]
         # Change DN for reimport
-        reimport_attrs = reimport_entry.attributes.to_ldap3(exclude=["objectClass"])
+        reimport_attrs = reimport_entry.attributes.to_ldap3(exclude=["objectclass"])
         reimport_attrs["cn"] = "Roundtrip Test Copy"
 
-        obj_class_values = reimport_entry.attributes.get("objectClass", [])
+        obj_class_values = reimport_entry.attributes.get("objectclass", [])
         assert isinstance(obj_class_values, list)
         ldap_connection.add(
             reimport_dn,
@@ -744,8 +744,8 @@ mail: import@example.com
         # Import to LDAP
         ldap_connection.add(
             str(entry.dn),
-            entry.get_attribute_values("objectClass"),
-            entry.attributes.to_ldap3(exclude=["objectClass"]),
+            entry.get_attribute_values("objectclass"),
+            entry.attributes.to_ldap3(exclude=["objectclass"]),
         )
 
         # Verify
@@ -778,12 +778,12 @@ class TestRealLdapCRUD:
         person_entry = person_result.unwrap()
 
         # Write to LDAP
-        obj_class_values = person_entry.attributes.get("objectClass", [])
+        obj_class_values = person_entry.attributes.get("objectclass", [])
         assert isinstance(obj_class_values, list)
         ldap_connection.add(
             str(person_entry.dn),
             obj_class_values,
-            person_entry.attributes.to_ldap3(exclude=["objectClass"]),
+            person_entry.attributes.to_ldap3(exclude=["objectclass"]),
         )
 
         # READ: Export from LDAP via LDIF
@@ -845,8 +845,8 @@ class TestRealLdapBatchOperations:
         for entry in entries:
             ldap_connection.add(
                 str(entry.dn),
-                entry.get_attribute_values("objectClass"),
-                entry.attributes.to_ldap3(exclude=["objectClass"]),
+                entry.get_attribute_values("objectclass"),
+                entry.attributes.to_ldap3(exclude=["objectclass"]),
             )
 
         # Verify all created

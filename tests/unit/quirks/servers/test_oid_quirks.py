@@ -711,7 +711,7 @@ class TestOidEntryQuirks:
         entry_dn = "cn=OracleContext,dc=network,dc=example"
         attributes: FlextTypes.Dict = {
             "cn": ["OracleContext"],
-            "objectClass": ["top", "orclContext"],
+            "objectclass": ["top", "orclContext"],
         }
 
         assert entry_quirk.can_handle_entry(entry_dn, attributes)
@@ -723,7 +723,7 @@ class TestOidEntryQuirks:
         entry_dn = "cn=test,dc=network,dc=example"
         attributes: FlextTypes.Dict = {
             "cn": ["test"],
-            "objectClass": ["person"],
+            "objectclass": ["person"],
             "orclguid": ["12345678-1234-1234-1234-123456789012"],
         }
 
@@ -742,7 +742,7 @@ class TestOidEntryQuirks:
         entry_dn = "cn=OracleContext,dc=network,dc=example"
         attributes: FlextTypes.Dict = {
             "cn": ["OracleContext"],
-            "objectClass": ["top", "orclContext"],
+            "objectclass": ["top", "orclContext"],
             "orclguid": ["12345678-1234-1234-1234-123456789012"],
         }
 
@@ -761,7 +761,7 @@ class TestOidEntryQuirks:
         entry_dn = "cn=OracleContext,dc=network,dc=example"
         attributes: FlextTypes.Dict = {
             "cn": ["OracleContext"],
-            "objectClass": ["top", "orclContext"],
+            "objectclass": ["top", "orclContext"],
             "orclaci": [
                 'access to entry by group="cn=OracleContextAdmins,cn=Groups,cn=OracleContext" (browse,add,delete)',
                 'access to attr=(*) by group="cn=OracleContextAdmins,cn=Groups,cn=OracleContext" (read,search,write)',
@@ -843,7 +843,7 @@ class TestOidEntryQuirks:
         entry_dn = "cn=Products,cn=OracleContext,dc=network,dc=example"
         attributes: FlextTypes.Dict = {
             "cn": ["Products"],
-            "objectClass": ["top", "orclContainer"],
+            "objectclass": ["top", "orclContainer"],
             "orclguid": ["12345678-1234-1234-1234-123456789012"],
             "orclobjectguid": ["87654321-4321-4321-4321-210987654321"],
         }
@@ -864,7 +864,7 @@ class TestOidEntryQuirks:
             FlextLdifConstants.DictKeys.DN: "cn=test,dc=network,dc=example",
             FlextLdifConstants.DictKeys.SERVER_TYPE: "oid",
             "cn": ["test"],
-            "objectClass": ["person"],
+            "objectclass": ["person"],
             "orclguid": ["12345678-1234-1234-1234-123456789012"],
         }
 
@@ -885,7 +885,7 @@ class TestOidEntryQuirks:
         original_dn = "cn=OracleContext,dc=network,dc=example"
         original_attrs: FlextTypes.Dict = {
             "cn": ["OracleContext"],
-            "objectClass": ["top", "orclContext"],
+            "objectclass": ["top", "orclContext"],
             "orclguid": ["12345678-1234-1234-1234-123456789012"],
         }
 
