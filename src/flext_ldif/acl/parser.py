@@ -28,12 +28,16 @@ class FlextLdifAclParser(FlextService[FlextLdifTypes.Dict]):
     @override
     def execute(self) -> FlextResult[FlextLdifTypes.Dict]:
         """Execute parser service."""
-        return FlextResult[FlextLdifTypes.Dict].ok({
-            "service": FlextLdifAclParser,
-            "status": "ready",
-        })
+        return FlextResult[FlextLdifTypes.Dict].ok(
+            {
+                "service": FlextLdifAclParser,
+                "status": "ready",
+            }
+        )
 
-    def parse_openldap_acl(self, acl_string: str) -> FlextResult[FlextLdifModels.AclBase]:
+    def parse_openldap_acl(
+        self, acl_string: str
+    ) -> FlextResult[FlextLdifModels.AclBase]:
         """Parse OpenLDAP olcAccess ACL format.
 
         Args:
@@ -55,7 +59,9 @@ class FlextLdifAclParser(FlextService[FlextLdifTypes.Dict]):
             )
             return FlextResult[FlextLdifModels.AclBase].ok(acl)
         except Exception as e:  # pragma: no cover
-            return FlextResult[FlextLdifModels.AclBase].fail(f"Failed to parse OpenLDAP ACL: {e}")
+            return FlextResult[FlextLdifModels.AclBase].fail(
+                f"Failed to parse OpenLDAP ACL: {e}"
+            )
 
     def parse_389ds_acl(self, acl_string: str) -> FlextResult[FlextLdifModels.AclBase]:
         """Parse 389DS ACI format.
@@ -79,7 +85,9 @@ class FlextLdifAclParser(FlextService[FlextLdifTypes.Dict]):
             )
             return FlextResult[FlextLdifModels.AclBase].ok(acl)
         except Exception as e:  # pragma: no cover
-            return FlextResult[FlextLdifModels.AclBase].fail(f"Failed to parse 389DS ACL: {e}")
+            return FlextResult[FlextLdifModels.AclBase].fail(
+                f"Failed to parse 389DS ACL: {e}"
+            )
 
     def parse_oracle_acl(
         self,
@@ -105,7 +113,7 @@ class FlextLdifAclParser(FlextService[FlextLdifTypes.Dict]):
             }.get(server_type)
 
             if acl_class is None:
-                return FlextResult[FlextLdifModels._AclBase].fail(
+                return FlextResult[FlextLdifModels.AclBase].fail(
                     f"Unknown Oracle server type: {server_type}"
                 )
 
@@ -117,13 +125,15 @@ class FlextLdifAclParser(FlextService[FlextLdifTypes.Dict]):
                 server_type=server_type,
                 raw_acl=acl_string,
             )
-            return FlextResult[FlextLdifModels._AclBase].ok(acl)
+            return FlextResult[FlextLdifModels.AclBase].ok(acl)
         except Exception as e:  # pragma: no cover
-            return FlextResult[FlextLdifModels._AclBase].fail(f"Failed to parse Oracle ACL: {e}")
+            return FlextResult[FlextLdifModels.AclBase].fail(
+                f"Failed to parse Oracle ACL: {e}"
+            )
 
     def parse_acl(
         self, acl_string: str, server_type: str
-    ) -> FlextResult[FlextLdifModels._AclBase]:
+    ) -> FlextResult[FlextLdifModels.AclBase]:
         """Parse ACL string based on server type.
 
         Args:
@@ -146,7 +156,7 @@ class FlextLdifAclParser(FlextService[FlextLdifTypes.Dict]):
         }:
             return self.parse_oracle_acl(acl_string, server_type)
 
-        return FlextResult[FlextLdifModels._AclBase].fail(
+        return FlextResult[FlextLdifModels.AclBase].fail(
             f"Unsupported server type: {server_type}"
         )
 

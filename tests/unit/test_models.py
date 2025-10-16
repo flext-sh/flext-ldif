@@ -392,12 +392,14 @@ class TestFlextLdifModels:
 
     def test_schema_object_class_create_method(self) -> None:
         """Test SchemaObjectClass.create method."""
-        result = FlextLdifModels.SchemaObjectClass.create({
-            "name": "organizationalUnit",
-            "oid": "2.5.6.5",
-            "description": "Organizational unit",
-            "required_attributes": ["ou"],
-        })
+        result = FlextLdifModels.SchemaObjectClass.create(
+            {
+                "name": "organizationalUnit",
+                "oid": "2.5.6.5",
+                "description": "Organizational unit",
+                "required_attributes": ["ou"],
+            }
+        )
         assert result.is_success
         obj_class = result.unwrap()
         assert isinstance(obj_class, FlextLdifModels.SchemaObjectClass)
@@ -736,21 +738,27 @@ class TestFlextLdifModelsAcl:
     def test_unified_acl_creation(self) -> None:
         """Test creating a Acl instance."""
         # First create components
-        target_result = FlextLdifModels.AclTarget.create({
-            "target_dn": "dc=example,dc=com",
-            "attributes": ["cn"],
-        })
+        target_result = FlextLdifModels.AclTarget.create(
+            {
+                "target_dn": "dc=example,dc=com",
+                "attributes": ["cn"],
+            }
+        )
         assert target_result.is_success
 
-        subject_result = FlextLdifModels.AclSubject.create({
-            "subject_type": "user",
-            "subject_value": "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
-        })
+        subject_result = FlextLdifModels.AclSubject.create(
+            {
+                "subject_type": "user",
+                "subject_value": "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
+            }
+        )
         assert subject_result.is_success
 
-        perms_result = FlextLdifModels.AclPermissions.create({
-            "permissions": ["read", "write"],
-        })
+        perms_result = FlextLdifModels.AclPermissions.create(
+            {
+                "permissions": ["read", "write"],
+            }
+        )
         assert perms_result.is_success
 
         # Create unified ACL using direct instantiation of OracleOudAcl
@@ -763,14 +771,14 @@ class TestFlextLdifModelsAcl:
                 permissions=perms_result.unwrap(),
                 server_type="oracle_oud",
             )
-            result = FlextResult[FlextLdifModels._AclBase].ok(acl)
+            result = FlextResult[FlextLdifModels.AclBase].ok(acl)
         except Exception as e:  # pragma: no cover
-            result = FlextResult[FlextLdifModels._AclBase].fail(str(e))
+            result = FlextResult[FlextLdifModels.AclBase].fail(str(e))
 
         assert result.is_success
         acl = result.unwrap()
         # Discriminated union returns the specific subtype (OracleOudAcl in this case)
-        assert isinstance(acl, FlextLdifModels._AclBase)
+        assert isinstance(acl, FlextLdifModels.AclBase)
         assert isinstance(acl, FlextLdifModels.OracleOudAcl)
         assert acl.name == "test_acl"
         assert acl.server_type == "oracle_oud"
@@ -813,5 +821,5 @@ class TestFlextLdifModelsNamespace:
         assert hasattr(FlextLdifModels, "AclSubject")
         assert hasattr(FlextLdifModels, "AclPermissions")
         # Aggressive Pydantic 2 pattern: discriminated union subtypes for ACL
-        assert hasattr(FlextLdifModels, "_AclBase")
+        assert hasattr(FlextLdifModels, "AclBase")
         assert hasattr(FlextLdifModels, "OpenLdapAcl")
