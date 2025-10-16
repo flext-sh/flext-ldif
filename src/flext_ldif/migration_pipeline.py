@@ -388,8 +388,8 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifTypes.Dict]):
 
             # Initialize result data
             result_data: FlextLdifTypes.Dict = {
-                "schema": {},
-                "entries": [],
+                FlextLdifConstants.DictKeys.SCHEMA: {},
+                FlextLdifConstants.DictKeys.ENTRIES: [],
                 FlextLdifConstants.DictKeys.STATS: {
                     "total_schema_attributes": 0,
                     "total_schema_objectclasses": 0,
@@ -407,7 +407,7 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifTypes.Dict]):
                     )
 
                 schema_data = schema_result.unwrap()
-                result_data["schema"] = schema_data
+                result_data[FlextLdifConstants.DictKeys.SCHEMA] = schema_data
                 stats_dict = result_data[FlextLdifConstants.DictKeys.STATS]
                 if isinstance(stats_dict, dict):
                     attributes = schema_data.get(
@@ -428,7 +428,7 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifTypes.Dict]):
                     )
 
                 entries_data = entries_result.unwrap()
-                result_data["entries"] = entries_data
+                result_data[FlextLdifConstants.DictKeys.ENTRIES] = entries_data
                 stats_dict = result_data[FlextLdifConstants.DictKeys.STATS]
                 if isinstance(stats_dict, dict):
                     stats_dict[FlextLdifConstants.DictKeys.TOTAL_ENTRIES] = len(
