@@ -10,13 +10,13 @@ All examples showcase **library usage only** - no CLI patterns, no `main()` func
 
 ### 01_basic_usage.py - Core API Operations
 
-**Demonstrates**: `parse()`, `write()`, FlextCore.Result error handling
+**Demonstrates**: `parse()`, `write()`, FlextResult error handling
 
 Learn the fundamentals:
 
 - Parse LDIF from strings and files
 - Write LDIF to strings and files
-- Railway-oriented programming with FlextCore.Result
+- Railway-oriented programming with FlextResult
 - Entry model inspection
 
 **Key Functions**:
@@ -120,11 +120,11 @@ Process access control lists:
 
 ### 07_advanced_processing.py - Processors & Utilities
 
-**Demonstrates**: FlextCore.Processors, utility functions
+**Demonstrates**: FlextProcessors, utility functions
 
 Advanced processing capabilities:
 
-- Batch processing with FlextCore.Processors
+- Batch processing with FlextProcessors
 - Parallel processing for performance
 - DN, text, time, validation utilities
 - Encoding and file utilities
@@ -199,7 +199,7 @@ else:
 - **Library demonstrations** - Pure library API usage
 - **Reusable patterns** - Copy-paste friendly code
 - **Complete coverage** - All FlextLdif functionality
-- **Production-ready** - FlextCore.Result error handling
+- **Production-ready** - FlextResult error handling
 
 ### ❌ What These Examples Are NOT
 
@@ -281,7 +281,7 @@ Looking for specific features? Use this quick reference:
 
 ## 💡 Tips
 
-1. **Always use FlextCore.Result** - Check `is_success` before `unwrap()`
+1. **Always use FlextResult** - Check `is_success` before `unwrap()`
 2. **Access through API** - Use `api.*` properties, not direct imports
 3. **Railway-oriented** - Chain operations with early returns on failure
 4. **Type hints** - Examples show proper typing patterns
@@ -292,7 +292,7 @@ When adding examples:
 
 - Use FlextLdif (api.py) exclusively
 - No CLI patterns (main, print, argparse)
-- Include FlextCore.Result error handling
+- Include FlextResult error handling
 - Demonstrate specific functionality
 - Add clear docstrings
 

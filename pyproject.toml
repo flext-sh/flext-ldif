@@ -61,6 +61,7 @@
     skips = [
         "B101",
         "B601",
+        "B110",
     ]
 
 [tool.deptry]

@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from flext_core import FlextCore
+from flext_core import FlextModels, FlextResult, FlextTypes
 from pydantic import ConfigDict
 
 from flext_ldif.quirks.base import (
@@ -29,7 +29,7 @@ if TYPE_CHECKING:
     EntryQuirkType = FlextLdifQuirksBaseEntryQuirk
 
 
-class FlextLdifQuirksRegistry(FlextCore.Models.Value):
+class FlextLdifQuirksRegistry(FlextModels.Value):
     """Centralized registry for LDIF/LDAP quirks.
 
     Manages discovery, registration, and composition of server-specific quirks.
@@ -63,14 +63,14 @@ class FlextLdifQuirksRegistry(FlextCore.Models.Value):
         self._acl_quirks: dict[str, list[AclQuirkType]] = {}
         self._entry_quirks: dict[str, list[EntryQuirkType]] = {}
 
-    def register_schema_quirk(self, quirk: SchemaQuirkType) -> FlextCore.Result[None]:
+    def register_schema_quirk(self, quirk: SchemaQuirkType) -> FlextResult[None]:
         """Register a schema quirk for a server type.
 
         Args:
             quirk: Schema quirk instance to register
 
         Returns:
-            FlextCore.Result indicating success or failure
+            FlextResult indicating success or failure
 
         """
         try:
@@ -95,21 +95,21 @@ class FlextLdifQuirksRegistry(FlextCore.Models.Value):
                     },
                 )
 
-            return FlextCore.Result[None].ok(None)
+            return FlextResult[None].ok(None)
 
         except Exception as e:
-            return FlextCore.Result[None].fail(f"Failed to register schema quirk: {e}")
+            return FlextResult[None].fail(f"Failed to register schema quirk: {e}")
 
     def register_acl_quirk(
         self, quirk: FlextLdifQuirksBase.BaseAclQuirk
-    ) -> FlextCore.Result[None]:
+    ) -> FlextResult[None]:
         """Register an ACL quirk for a server type.
 
         Args:
             quirk: ACL quirk instance to register
 
         Returns:
-            FlextCore.Result indicating success or failure
+            FlextResult indicating success or failure
 
         """
         try:
@@ -133,21 +133,21 @@ class FlextLdifQuirksRegistry(FlextCore.Models.Value):
                     },
                 )
 
-            return FlextCore.Result[None].ok(None)
+            return FlextResult[None].ok(None)
 
         except Exception as e:
-            return FlextCore.Result[None].fail(f"Failed to register ACL quirk: {e}")
+            return FlextResult[None].fail(f"Failed to register ACL quirk: {e}")
 
     def register_entry_quirk(
         self, quirk: FlextLdifQuirksBase.BaseEntryQuirk
-    ) -> FlextCore.Result[None]:
+    ) -> FlextResult[None]:
         """Register an entry quirk for a server type.
 
         Args:
             quirk: Entry quirk instance to register
 
         Returns:
-            FlextCore.Result indicating success or failure
+            FlextResult indicating success or failure
 
         """
         try:
@@ -171,10 +171,10 @@ class FlextLdifQuirksRegistry(FlextCore.Models.Value):
                     },
                 )
 
-            return FlextCore.Result[None].ok(None)
+            return FlextResult[None].ok(None)
 
         except Exception as e:
-            return FlextCore.Result[None].fail(f"Failed to register entry quirk: {e}")
+            return FlextResult[None].fail(f"Failed to register entry quirk: {e}")
 
     def get_schema_quirks(
         self, server_type: str
@@ -296,7 +296,7 @@ class FlextLdifQuirksRegistry(FlextCore.Models.Value):
         return None
 
     def find_entry_quirk(
-        self, server_type: str, entry_dn: str, attributes: FlextCore.Types.Dict
+        self, server_type: str, entry_dn: str, attributes: FlextTypes.Dict
     ) -> FlextLdifQuirksBase.BaseEntryQuirk | None:
         """Find the first entry quirk that can handle an entry.
 

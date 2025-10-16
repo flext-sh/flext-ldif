@@ -41,7 +41,7 @@ rectangle "Reliability" as Reliability {
     }
 
     rectangle "Error Handling" as ErrorHandling {
-        - FlextCore.Result[T] composition
+        - FlextResult[T] composition
         - No exception-based flow control
         - Detailed error messages
         - Fail-safe defaults

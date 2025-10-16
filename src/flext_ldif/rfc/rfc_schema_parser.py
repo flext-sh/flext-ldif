@@ -19,14 +19,14 @@ import re
 from pathlib import Path
 from typing import ClassVar
 
-from flext_core import FlextCore
+from flext_core import FlextResult, FlextService, FlextTypes
 
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.quirks.registry import FlextLdifQuirksRegistry
 from flext_ldif.typings import FlextLdifTypes
 
 
-class FlextLdifRfcSchemaParser(FlextCore.Service[FlextCore.Types.Dict]):
+class FlextLdifRfcSchemaParser(FlextService[FlextTypes.Dict]):
     """RFC 4512 compliant schema parser service.
 
     Parses LDAP schema definitions strictly according to RFC 4512 specification.
@@ -95,7 +95,7 @@ class FlextLdifRfcSchemaParser(FlextCore.Service[FlextCore.Types.Dict]):
     def __init__(
         self,
         *,
-        params: FlextCore.Types.Dict,
+        params: FlextTypes.Dict,
         quirk_registry: FlextLdifQuirksRegistry,
         server_type: str | None = None,
     ) -> None:
@@ -112,11 +112,11 @@ class FlextLdifRfcSchemaParser(FlextCore.Service[FlextCore.Types.Dict]):
         self._quirk_registry = quirk_registry
         self._server_type = server_type
 
-    def execute(self) -> FlextCore.Result[FlextCore.Types.Dict]:
+    def execute(self) -> FlextResult[FlextTypes.Dict]:
         """Execute RFC-compliant schema parsing.
 
         Returns:
-            FlextCore.Result with parsed schema data containing:
+            FlextResult with parsed schema data containing:
                 - attributes: Dict of attribute definitions by name
                 - objectclasses: Dict of objectClass definitions by name
                 - source_dn: DN of schema subentry
@@ -127,26 +127,26 @@ class FlextLdifRfcSchemaParser(FlextCore.Service[FlextCore.Types.Dict]):
             # Extract parameters
             file_path_str = self._params.get("file_path", "")
             if not file_path_str:
-                return FlextCore.Result[FlextCore.Types.Dict].fail(
+                return FlextResult[FlextTypes.Dict].fail(
                     "file_path parameter is required"
                 )
 
             # Type narrow file_path to string
             if not isinstance(file_path_str, str):
-                return FlextCore.Result[FlextCore.Types.Dict].fail(
+                return FlextResult[FlextTypes.Dict].fail(
                     f"file_path must be string, got {type(file_path_str).__name__}"
                 )
 
             file_path = Path(file_path_str)
             if not file_path.exists():
-                return FlextCore.Result[FlextCore.Types.Dict].fail(
+                return FlextResult[FlextTypes.Dict].fail(
                     f"Schema file not found: {file_path}"
                 )
 
             # Type narrow parse_attributes to bool
             parse_attributes_raw = self._params.get("parse_attributes", True)
             if not isinstance(parse_attributes_raw, bool):
-                return FlextCore.Result[FlextCore.Types.Dict].fail(
+                return FlextResult[FlextTypes.Dict].fail(
                     f"parse_attributes must be bool, got {type(parse_attributes_raw).__name__}"
                 )
             parse_attributes: bool = parse_attributes_raw
@@ -154,7 +154,7 @@ class FlextLdifRfcSchemaParser(FlextCore.Service[FlextCore.Types.Dict]):
             # Type narrow parse_objectclasses to bool
             parse_objectclasses_raw = self._params.get("parse_objectclasses", True)
             if not isinstance(parse_objectclasses_raw, bool):
-                return FlextCore.Result[FlextCore.Types.Dict].fail(
+                return FlextResult[FlextTypes.Dict].fail(
                     f"parse_objectclasses must be bool, got {type(parse_objectclasses_raw).__name__}"
                 )
             parse_objectclasses: bool = parse_objectclasses_raw
@@ -177,19 +177,19 @@ class FlextLdifRfcSchemaParser(FlextCore.Service[FlextCore.Types.Dict]):
             )
 
             if parse_result.is_failure:
-                return FlextCore.Result[FlextCore.Types.Dict].fail(parse_result.error)
+                return FlextResult[FlextTypes.Dict].fail(parse_result.error)
 
             data = parse_result.value
 
             if self.logger is not None:
                 # Type narrow for logging
                 attributes_raw = data.get(FlextLdifConstants.DictKeys.ATTRIBUTES, {})
-                attributes_dict: FlextCore.Types.Dict = (
+                attributes_dict: FlextTypes.Dict = (
                     attributes_raw if isinstance(attributes_raw, dict) else {}
                 )
 
                 objectclasses_raw = data.get("objectclasses", {})
-                objectclasses_dict: FlextCore.Types.Dict = (
+                objectclasses_dict: FlextTypes.Dict = (
                     objectclasses_raw if isinstance(objectclasses_raw, dict) else {}
                 )
 
@@ -201,13 +201,13 @@ class FlextLdifRfcSchemaParser(FlextCore.Service[FlextCore.Types.Dict]):
                     },
                 )
 
-            return FlextCore.Result[FlextCore.Types.Dict].ok(data)
+            return FlextResult[FlextTypes.Dict].ok(data)
 
         except Exception as e:
             error_msg = f"Failed to execute RFC schema parser: {e}"
             if self.logger is not None:
                 self.logger.exception(error_msg)
-            return FlextCore.Result[FlextCore.Types.Dict].fail(error_msg)
+            return FlextResult[FlextTypes.Dict].fail(error_msg)
 
     def _parse_schema_file(
         self,
@@ -215,7 +215,7 @@ class FlextLdifRfcSchemaParser(FlextCore.Service[FlextCore.Types.Dict]):
         *,
         parse_attributes: bool,
         parse_objectclasses: bool,
-    ) -> FlextCore.Result[FlextCore.Types.Dict]:
+    ) -> FlextResult[FlextTypes.Dict]:
         """Parse schema file according to RFC 4512.
 
         Args:
@@ -224,7 +224,7 @@ class FlextLdifRfcSchemaParser(FlextCore.Service[FlextCore.Types.Dict]):
             parse_objectclasses: Parse objectClasses
 
         Returns:
-            FlextCore.Result with parsed schema data
+            FlextResult with parsed schema data
 
         """
         try:
@@ -271,18 +271,20 @@ class FlextLdifRfcSchemaParser(FlextCore.Service[FlextCore.Types.Dict]):
                         parse_objectclasses=parse_objectclasses,
                     )
 
-            return FlextCore.Result[FlextCore.Types.Dict].ok({
-                FlextLdifConstants.DictKeys.ATTRIBUTES: attributes,
-                "objectclasses": objectclasses,
-                "source_dn": source_dn,
-                "stats": {
-                    "total_attributes": len(attributes),
-                    "total_objectclasses": len(objectclasses),
-                },
-            })
+            return FlextResult[FlextTypes.Dict].ok(
+                {
+                    FlextLdifConstants.DictKeys.ATTRIBUTES: attributes,
+                    "objectclasses": objectclasses,
+                    "source_dn": source_dn,
+                    "stats": {
+                        "total_attributes": len(attributes),
+                        "total_objectclasses": len(objectclasses),
+                    },
+                }
+            )
 
         except Exception as e:
-            return FlextCore.Result[FlextCore.Types.Dict].fail(
+            return FlextResult[FlextTypes.Dict].fail(
                 f"Failed to parse schema file: {e}"
             )
 
@@ -327,7 +329,7 @@ class FlextLdifRfcSchemaParser(FlextCore.Service[FlextCore.Types.Dict]):
                     extra={"line": line[:100]},
                 )
 
-    def _parse_attribute_type(self, definition: str) -> FlextCore.Types.Dict | None:
+    def _parse_attribute_type(self, definition: str) -> FlextTypes.Dict | None:
         """Parse RFC 4512 AttributeType definition with quirks support.
 
         Args:
@@ -369,7 +371,7 @@ class FlextLdifRfcSchemaParser(FlextCore.Service[FlextCore.Types.Dict]):
             "usage": match.group("usage"),
         }
 
-    def _parse_object_class(self, definition: str) -> FlextCore.Types.Dict | None:
+    def _parse_object_class(self, definition: str) -> FlextTypes.Dict | None:
         """Parse RFC 4512 ObjectClass definition with quirks support.
 
         Args:

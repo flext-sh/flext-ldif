@@ -13,8 +13,8 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from flext_core import FlextCore
-from tests.test_support import LdifTestData
+from flext_core import FlextResult
+from tests.support import LdifTestData
 
 from flext_ldif import FlextLdif
 from flext_ldif.models import FlextLdifModels
@@ -551,7 +551,7 @@ objectClass: person
         result = ldif.parse(invalid_content)
 
         # Should handle gracefully - either fail or parse what it can
-        assert isinstance(result, FlextCore.Result)
+        assert isinstance(result, FlextResult)
 
     def test_parse_empty_content(self) -> None:
         """Test parsing empty LDIF content."""
@@ -572,7 +572,7 @@ objectClass: person
         # Test with different server types
         for server_type in ["rfc", "oid", "oud", "auto"]:
             result = ldif.parse(content, server_type=server_type)
-            assert isinstance(result, FlextCore.Result)
+            assert isinstance(result, FlextResult)
 
 
 class TestFlextLdifWriteComprehensive:
@@ -687,7 +687,7 @@ class TestFlextLdifMigrateComprehensive:
     #     # Test migration
     #     migrate_result = ldif.migrate(entries=entries, from_server="rfc", to_server="oid")
     #
-    #     assert isinstance(migrate_result, FlextCore.Result)
+    #     assert isinstance(migrate_result, FlextResult)
 
     # def test_migrate_same_format(self) -> None:
     #     """Test migration with same source and target format."""
@@ -706,7 +706,7 @@ class TestFlextLdifMigrateComprehensive:
     #     # Test migration with same format
     #     migrate_result = ldif.migrate(entries=entries, from_server="rfc", to_server="rfc")
     #
-    #     assert isinstance(migrate_result, FlextCore.Result)
+    #     assert isinstance(migrate_result, FlextResult)
 
 
 class TestFlextLdifAnalyzeComprehensive:

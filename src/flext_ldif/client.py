@@ -16,7 +16,14 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import cast
 
-from flext_core import FlextCore
+from flext_core import (
+    FlextBus,
+    FlextContainer,
+    FlextContext,
+    FlextResult,
+    FlextService,
+    FlextTypes,
+)
 from pydantic import PrivateAttr
 
 from flext_ldif.config import FlextLdifConfig
@@ -49,7 +56,7 @@ from flext_ldif.schema.validator import FlextLdifSchemaValidator
 from flext_ldif.typings import FlextLdifTypes
 
 
-class FlextLdifClient(FlextCore.Service[FlextLdifTypes.Dict]):
+class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
     """Main client implementation for LDIF processing operations.
 
     This class contains all the actual business logic for LDIF operations,
@@ -67,10 +74,8 @@ class FlextLdifClient(FlextCore.Service[FlextLdifTypes.Dict]):
     # Pydantic v2 private attributes (CRITICAL for Pydantic model initialization)
     # These MUST be declared at class level for Pydantic to handle them correctly
     # Type annotation uses object to avoid pyrefly type incompatibility
-    _container: object | None = PrivateAttr(
-        default_factory=FlextCore.Container.get_global
-    )
-    _context: FlextCore.Context | None = PrivateAttr(default=None)
+    _container: object | None = PrivateAttr(default_factory=FlextContainer.get_global)
+    _context: FlextContext | None = PrivateAttr(default=None)
     _bus: object | None = PrivateAttr(default=None)
     _handlers: FlextLdifTypes.Dict = PrivateAttr(default_factory=dict)
     _config: FlextLdifConfig | None = PrivateAttr(default=None)
@@ -86,7 +91,7 @@ class FlextLdifClient(FlextCore.Service[FlextLdifTypes.Dict]):
         # Store config for lazy initialization in properties
         object.__setattr__(self, "_init_config_value", config)
 
-        # Call Pydantic/FlextCore.Service initialization
+        # Call Pydantic/FlextService initialization
         super().__init__()
 
     def model_post_init(self, __context: object, /) -> None:
@@ -96,10 +101,9 @@ class FlextLdifClient(FlextCore.Service[FlextLdifTypes.Dict]):
         """
         # Initialize private attributes that parent's __init__ may access
         self._config = getattr(self, "_init_config_value", None) or FlextLdifConfig()
-        # Convert config to dict[str, object] for JSON-serializable FlextCore.Context
-        config_dict = self._config.model_dump() if self._config is not None else {}
-        self._context = FlextCore.Context({"config": config_dict})
-        self._bus = FlextCore.Bus()
+        # ✅ FIXED: Don't bind config to context - use _log_config_once() instead
+        self._context = FlextContext()  # Empty context, not bound to global
+        self._bus = FlextBus()
         self._handlers = {}
 
         # Ensure components are initialized
@@ -110,27 +114,35 @@ class FlextLdifClient(FlextCore.Service[FlextLdifTypes.Dict]):
         # Register default quirks for all servers
         self._register_default_quirks()
 
-        if self.logger:
-            self.logger.info(
-                "Initialized FlextLdif client with CQRS handlers and default quirks"
-            )
+        # ✅ Log config ONCE without binding to global context
+        if self.logger and self._config:
+            config_info: dict[str, object] = {
+                "ldif_encoding": self._config.ldif_encoding,
+                "strict_rfc_compliance": self._config.strict_rfc_compliance,
+                "ldif_chunk_size": self._config.ldif_chunk_size,
+                "max_workers": self._config.max_workers,
+            }
+            self._log_config_once(config_info, message="FlextLdif client initialized")
+            self.logger.debug("CQRS handlers and default quirks registered")
 
-    def execute(self) -> FlextCore.Result[FlextLdifTypes.Dict]:
+    def execute(self) -> FlextResult[FlextLdifTypes.Dict]:
         """Execute client self-check and return status.
 
         Returns:
-            FlextCore.Result containing client status and configuration
+            FlextResult containing client status and configuration
 
         """
         try:
             config = self.config
-            return FlextCore.Result[FlextLdifTypes.Dict].ok({
-                "status": "initialized",
-                "services": ["parser", "writer", "validator", "migration"],
-                "config": {"default_encoding": config.ldif_encoding},
-            })
+            return FlextResult[FlextLdifTypes.Dict].ok(
+                {
+                    "status": "initialized",
+                    "services": ["parser", "writer", "validator", "migration"],
+                    "config": {"default_encoding": config.ldif_encoding},
+                }
+            )
         except Exception as e:
-            return FlextCore.Result[FlextLdifTypes.Dict].fail(
+            return FlextResult[FlextLdifTypes.Dict].fail(
                 f"Client status check failed: {e}"
             )
 
@@ -250,7 +262,7 @@ class FlextLdifClient(FlextCore.Service[FlextLdifTypes.Dict]):
 
     def parse_ldif(
         self, source: str | Path, server_type: str = "rfc"
-    ) -> FlextCore.Result[list[FlextLdifModels.Entry]]:
+    ) -> FlextResult[list[FlextLdifModels.Entry]]:
         r"""Parse LDIF from file or content string.
 
         Args:
@@ -258,7 +270,7 @@ class FlextLdifClient(FlextCore.Service[FlextLdifTypes.Dict]):
             server_type: Server type for quirk selection ("rfc", "oid", "oud", etc.)
 
         Returns:
-            FlextCore.Result with list of parsed Entry models
+            FlextResult with list of parsed Entry models
 
         """
         container = self.container
@@ -266,14 +278,14 @@ class FlextLdifClient(FlextCore.Service[FlextLdifTypes.Dict]):
         # Get the RFC parser from container
         parser_result = container.get("rfc_parser")
         if parser_result.is_failure:
-            return FlextCore.Result[list[FlextLdifModels.Entry]].fail(
+            return FlextResult[list[FlextLdifModels.Entry]].fail(
                 f"Failed to get RFC parser: {parser_result.error}"
             )
 
         # Type narrow parser from unwrap()
         parser_obj: object = parser_result.unwrap()
         if not isinstance(parser_obj, FlextLdifRfcLdifParser):
-            return FlextCore.Result[list[FlextLdifModels.Entry]].fail(
+            return FlextResult[list[FlextLdifModels.Entry]].fail(
                 "RFC parser has unexpected type"
             )
         parser: FlextLdifRfcLdifParser = parser_obj
@@ -300,7 +312,7 @@ class FlextLdifClient(FlextCore.Service[FlextLdifTypes.Dict]):
         self,
         entries: list[FlextLdifModels.Entry],
         output_path: Path | None = None,
-    ) -> FlextCore.Result[str]:
+    ) -> FlextResult[str]:
         """Write entries to LDIF format string or file.
 
         Args:
@@ -308,7 +320,7 @@ class FlextLdifClient(FlextCore.Service[FlextLdifTypes.Dict]):
             output_path: Optional path to write LDIF file. If None, returns LDIF string.
 
         Returns:
-            FlextCore.Result containing LDIF content as string (if output_path is None)
+            FlextResult containing LDIF content as string (if output_path is None)
             or success message (if output_path provided)
 
         """
@@ -317,7 +329,7 @@ class FlextLdifClient(FlextCore.Service[FlextLdifTypes.Dict]):
         # Get the RFC writer from container
         writer_result = container.get("rfc_writer")
         if writer_result.is_failure:
-            return FlextCore.Result[str].fail(
+            return FlextResult[str].fail(
                 f"Failed to get RFC writer: {writer_result.error}"
             )
 
@@ -327,7 +339,7 @@ class FlextLdifClient(FlextCore.Service[FlextLdifTypes.Dict]):
         # Write to string first
         content_result = writer.write_entries_to_string(entries)
         if content_result.is_failure:
-            return FlextCore.Result[str].fail(
+            return FlextResult[str].fail(
                 f"Failed to write entries: {content_result.error}"
             )
 
@@ -337,26 +349,26 @@ class FlextLdifClient(FlextCore.Service[FlextLdifTypes.Dict]):
         if output_path:
             try:
                 output_path.write_text(content, encoding="utf-8")
-                return FlextCore.Result[str].ok(
+                return FlextResult[str].ok(
                     f"Successfully wrote {len(entries)} entries to {output_path}"
                 )
             except Exception as e:
-                return FlextCore.Result[str].fail(
+                return FlextResult[str].fail(
                     f"Failed to write to file {output_path}: {e}"
                 )
 
-        return FlextCore.Result[str].ok(content)
+        return FlextResult[str].ok(content)
 
     def validate_entries(
         self, entries: list[FlextLdifModels.Entry]
-    ) -> FlextCore.Result[FlextLdifTypes.Dict]:
+    ) -> FlextResult[FlextLdifTypes.Dict]:
         """Validate LDIF entries against RFC and business rules.
 
         Args:
             entries: List of entries to validate
 
         Returns:
-            FlextCore.Result containing validation report with details
+            FlextResult containing validation report with details
 
         """
         container = self.container
@@ -364,14 +376,14 @@ class FlextLdifClient(FlextCore.Service[FlextLdifTypes.Dict]):
         # Get the schema validator from container
         validator_result = container.get("schema_validator")
         if validator_result.is_failure:
-            return FlextCore.Result[FlextLdifTypes.Dict].fail(
+            return FlextResult[FlextLdifTypes.Dict].fail(
                 f"Failed to get schema validator: {validator_result.error}"
             )
 
         # Type narrow validator from unwrap()
         validator_obj: object = validator_result.unwrap()
         if not isinstance(validator_obj, FlextLdifSchemaValidator):
-            return FlextCore.Result[FlextLdifTypes.Dict].fail(
+            return FlextResult[FlextLdifTypes.Dict].fail(
                 "Schema validator has unexpected type"
             )
         validator: FlextLdifSchemaValidator = validator_obj
@@ -382,14 +394,16 @@ class FlextLdifClient(FlextCore.Service[FlextLdifTypes.Dict]):
         # Return validation result as dictionary for consistent API
         if result.is_success:
             validation_result = result.unwrap()
-            return FlextCore.Result[FlextLdifTypes.Dict].ok({
-                "is_valid": validation_result.is_valid,
-                "total_entries": len(entries),
-                "valid_entries": len(entries) - len(validation_result.errors),
-                "invalid_entries": len(validation_result.errors),
-                "errors": validation_result.errors,
-            })
-        return FlextCore.Result[FlextLdifTypes.Dict].fail(
+            return FlextResult[FlextLdifTypes.Dict].ok(
+                {
+                    "is_valid": validation_result.is_valid,
+                    "total_entries": len(entries),
+                    "valid_entries": len(entries) - len(validation_result.errors),
+                    "invalid_entries": len(validation_result.errors),
+                    "errors": validation_result.errors,
+                }
+            )
+        return FlextResult[FlextLdifTypes.Dict].fail(
             result.error or "Validation failed"
         )
 
@@ -398,7 +412,7 @@ class FlextLdifClient(FlextCore.Service[FlextLdifTypes.Dict]):
         entries: list[FlextLdifModels.Entry],
         from_server: str,
         to_server: str,
-    ) -> FlextCore.Result[FlextLdifTypes.Dict]:
+    ) -> FlextResult[FlextLdifTypes.Dict]:
         """Migrate LDIF entries between different server types.
 
         Args:
@@ -407,7 +421,7 @@ class FlextLdifClient(FlextCore.Service[FlextLdifTypes.Dict]):
             to_server: Target server type
 
         Returns:
-            FlextCore.Result containing migration statistics
+            FlextResult containing migration statistics
 
         """
         container = self.container
@@ -415,7 +429,7 @@ class FlextLdifClient(FlextCore.Service[FlextLdifTypes.Dict]):
         # Get migration pipeline from container
         pipeline_result = container.get("migration_pipeline")
         if pipeline_result.is_failure:
-            return FlextCore.Result[FlextLdifTypes.Dict].fail(
+            return FlextResult[FlextLdifTypes.Dict].fail(
                 f"Failed to get migration pipeline: {pipeline_result.error}"
             )
 
@@ -423,7 +437,7 @@ class FlextLdifClient(FlextCore.Service[FlextLdifTypes.Dict]):
         # The container.get returns a lambda callable
         pipeline_factory_obj = pipeline_result.unwrap()
         if not callable(pipeline_factory_obj):
-            return FlextCore.Result[FlextLdifTypes.Dict].fail(
+            return FlextResult[FlextLdifTypes.Dict].fail(
                 "Migration pipeline factory is not callable"
             )
         # Use cast after runtime callable check to satisfy type checker
@@ -434,10 +448,12 @@ class FlextLdifClient(FlextCore.Service[FlextLdifTypes.Dict]):
             pipeline_factory_obj,
         )
 
-        pipeline = pipeline_factory({
-            "source_server_type": from_server,
-            "target_server_type": to_server,
-        })
+        pipeline = pipeline_factory(
+            {
+                "source_server_type": from_server,
+                "target_server_type": to_server,
+            }
+        )
 
         # Call migrate_entries directly
         migration_result = pipeline.migrate_entries(
@@ -445,19 +461,19 @@ class FlextLdifClient(FlextCore.Service[FlextLdifTypes.Dict]):
         )
 
         if migration_result.is_failure:
-            return FlextCore.Result[FlextLdifTypes.Dict].fail(
+            return FlextResult[FlextLdifTypes.Dict].fail(
                 migration_result.error or "Migration failed"
             )
 
         migrated_entries = migration_result.unwrap()
-        stats: FlextCore.Types.Dict = {
+        stats: FlextTypes.Dict = {
             "total_entries": len(entries),
             "migrated_entries": len(migrated_entries),
             "from_server": from_server,
             "to_server": to_server,
             "success": True,
         }
-        return FlextCore.Result[FlextLdifTypes.Dict].ok(stats)
+        return FlextResult[FlextLdifTypes.Dict].ok(stats)
 
     def migrate_files(
         self,
@@ -468,7 +484,7 @@ class FlextLdifClient(FlextCore.Service[FlextLdifTypes.Dict]):
         *,
         process_schema: bool = True,
         process_entries: bool = True,
-    ) -> FlextCore.Result[FlextLdifTypes.Dict]:
+    ) -> FlextResult[FlextLdifTypes.Dict]:
         """Migrate LDIF data between different LDAP server types from files.
 
         Args:
@@ -480,11 +496,11 @@ class FlextLdifClient(FlextCore.Service[FlextLdifTypes.Dict]):
             process_entries: Whether to process entry files
 
         Returns:
-            FlextCore.Result containing migration statistics and output files
+            FlextResult containing migration statistics and output files
 
         """
         try:
-            params: FlextCore.Types.Dict = {
+            params: FlextTypes.Dict = {
                 "input_dir": str(input_dir),
                 "output_dir": str(output_dir),
                 "process_schema": process_schema,
@@ -500,27 +516,27 @@ class FlextLdifClient(FlextCore.Service[FlextLdifTypes.Dict]):
             migration_result = pipeline.execute()
 
             if migration_result.is_failure:
-                return FlextCore.Result[FlextLdifTypes.Dict].fail(
+                return FlextResult[FlextLdifTypes.Dict].fail(
                     migration_result.error or "Migration failed"
                 )
 
-            return FlextCore.Result[FlextLdifTypes.Dict].ok(migration_result.unwrap())
+            return FlextResult[FlextLdifTypes.Dict].ok(migration_result.unwrap())
 
         except Exception as e:
             logger = self.logger
             logger.exception("Migration failed")
-            return FlextCore.Result[FlextLdifTypes.Dict].fail(f"Migration failed: {e}")
+            return FlextResult[FlextLdifTypes.Dict].fail(f"Migration failed: {e}")
 
     def analyze_entries(
         self, entries: list[FlextLdifModels.Entry]
-    ) -> FlextCore.Result[FlextLdifTypes.Dict]:
+    ) -> FlextResult[FlextLdifTypes.Dict]:
         """Analyze LDIF entries and generate statistics.
 
         Args:
             entries: List of entries to analyze
 
         Returns:
-            FlextCore.Result containing analysis statistics
+            FlextResult containing analysis statistics
 
         """
         # Simple analysis - count object classes
@@ -539,21 +555,23 @@ class FlextLdifClient(FlextCore.Service[FlextLdifTypes.Dict]):
                     )
 
         # Return analytics result as dictionary for consistent API
-        return FlextCore.Result[FlextLdifTypes.Dict].ok({
-            "total_entries": total_entries,
-            "objectclass_distribution": object_class_distribution,
-            "patterns_detected": [],
-        })
+        return FlextResult[FlextLdifTypes.Dict].ok(
+            {
+                "total_entries": total_entries,
+                "objectclass_distribution": object_class_distribution,
+                "patterns_detected": [],
+            }
+        )
 
     def filter_by_objectclass(
         self,
         entries: list[FlextLdifModels.Entry],
         objectclass: str | tuple[str, ...],
-        required_attributes: FlextCore.Types.StringList | None = None,
+        required_attributes: FlextTypes.StringList | None = None,
         mode: str = "include",
         *,
         mark_excluded: bool = False,
-    ) -> FlextCore.Result[list[FlextLdifModels.Entry]]:
+    ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Filter entries by object class with optional required attributes.
 
         Enhanced version that supports:
@@ -570,7 +588,7 @@ class FlextLdifClient(FlextCore.Service[FlextLdifTypes.Dict]):
             mark_excluded: If True, mark excluded entries with metadata (keyword-only)
 
         Returns:
-            FlextCore.Result containing filtered entries
+            FlextResult containing filtered entries
 
         Example:
             >>> # Simple filtering (backward compatible)
@@ -594,14 +612,14 @@ class FlextLdifClient(FlextCore.Service[FlextLdifTypes.Dict]):
 
     def filter_persons(
         self, entries: list[FlextLdifModels.Entry]
-    ) -> FlextCore.Result[list[FlextLdifModels.Entry]]:
+    ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Filter entries to get only person entries.
 
         Args:
             entries: List of LDIF entries to filter
 
         Returns:
-            FlextCore.Result containing person entries
+            FlextResult containing person entries
 
         """
         return self.filter_by_objectclass(entries, "person")
@@ -613,7 +631,7 @@ class FlextLdifClient(FlextCore.Service[FlextLdifTypes.Dict]):
         mode: str = "include",
         *,
         mark_excluded: bool = True,
-    ) -> FlextCore.Result[list[FlextLdifModels.Entry]]:
+    ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Filter entries by DN wildcard pattern.
 
         Uses fnmatch for pattern matching. Supports wildcards:
@@ -629,7 +647,7 @@ class FlextLdifClient(FlextCore.Service[FlextLdifTypes.Dict]):
             mark_excluded: If True, mark excluded entries with metadata (keyword-only)
 
         Returns:
-            FlextCore.Result containing filtered entries
+            FlextResult containing filtered entries
 
         Example:
             >>> result = client.filter_by_dn_pattern(
@@ -649,10 +667,10 @@ class FlextLdifClient(FlextCore.Service[FlextLdifTypes.Dict]):
         schema_items: list[
             FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass
         ],
-        oid_whitelist: FlextCore.Types.StringList,
+        oid_whitelist: FlextTypes.StringList,
         *,
         mark_excluded: bool = True,
-    ) -> FlextCore.Result[
+    ) -> FlextResult[
         list[FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass]
     ]:
         """Filter schema attributes/objectClasses by OID pattern whitelist.
@@ -666,7 +684,7 @@ class FlextLdifClient(FlextCore.Service[FlextLdifTypes.Dict]):
             mark_excluded: If True, mark excluded items with metadata (keyword-only)
 
         Returns:
-            FlextCore.Result containing filtered schema items
+            FlextResult containing filtered schema items
 
         Example:
             >>> result = client.filter_schema_by_oid(
@@ -725,14 +743,14 @@ class FlextLdifClient(FlextCore.Service[FlextLdifTypes.Dict]):
                     updated_item = item.model_copy(update={"metadata": new_metadata})
                     filtered.append(updated_item)
 
-            return FlextCore.Result[
+            return FlextResult[
                 list[
                     FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass
                 ]
             ].ok(filtered)
 
         except Exception as e:
-            return FlextCore.Result[
+            return FlextResult[
                 list[
                     FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass
                 ]
@@ -741,12 +759,12 @@ class FlextLdifClient(FlextCore.Service[FlextLdifTypes.Dict]):
     def filter_by_attributes(
         self,
         entries: list[FlextLdifModels.Entry],
-        attributes: FlextCore.Types.StringList,
+        attributes: FlextTypes.StringList,
         mode: str = "include",
         *,
         match_all: bool = False,
         mark_excluded: bool = True,
-    ) -> FlextCore.Result[list[FlextLdifModels.Entry]]:
+    ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Filter entries by attribute presence.
 
         Args:
@@ -757,7 +775,7 @@ class FlextLdifClient(FlextCore.Service[FlextLdifTypes.Dict]):
             mark_excluded: If True, mark excluded entries with metadata (keyword-only)
 
         Returns:
-            FlextCore.Result containing filtered entries
+            FlextResult containing filtered entries
 
         Example:
             >>> result = client.filter_by_attributes(
@@ -793,7 +811,7 @@ class FlextLdifClient(FlextCore.Service[FlextLdifTypes.Dict]):
             "organization",
             "domain",
         ),
-    ) -> FlextCore.Result[FlextLdifModels.CategorizedEntries]:
+    ) -> FlextResult[FlextLdifModels.CategorizedEntries]:
         """Categorize entries into users, groups, containers, and uncategorized.
 
         Categorizes entries based on their objectClass attributes. Checks categories
@@ -807,7 +825,7 @@ class FlextLdifClient(FlextCore.Service[FlextLdifTypes.Dict]):
             container_objectclasses: Tuple of container objectClass names
 
         Returns:
-            FlextCore.Result containing CategorizedEntries with entries organized by category
+            FlextResult containing CategorizedEntries with entries organized by category
 
         Example:
             >>> from algar_oud_mig.constants import AlgarOudMigConstants
@@ -839,14 +857,14 @@ class FlextLdifClient(FlextCore.Service[FlextLdifTypes.Dict]):
                 else:
                     categorized.uncategorized.append(entry)
 
-            return FlextCore.Result[FlextLdifModels.CategorizedEntries].ok(categorized)
+            return FlextResult[FlextLdifModels.CategorizedEntries].ok(categorized)
 
         except Exception as e:
-            return FlextCore.Result[FlextLdifModels.CategorizedEntries].fail(
+            return FlextResult[FlextLdifModels.CategorizedEntries].fail(
                 f"Failed to categorize entries: {e}"
             )
 
-    def detect_encoding(self, content: bytes) -> FlextCore.Result[str]:
+    def detect_encoding(self, content: bytes) -> FlextResult[str]:
         """Detect encoding of LDIF content bytes.
 
         Attempts UTF-8 first (RFC 2849 standard), falls back to latin-1
@@ -856,7 +874,7 @@ class FlextLdifClient(FlextCore.Service[FlextLdifTypes.Dict]):
             content: Raw bytes to detect encoding from
 
         Returns:
-            FlextCore.Result containing detected encoding name ("utf-8" or "latin-1")
+            FlextResult containing detected encoding name ("utf-8" or "latin-1")
 
         Example:
             >>> with open("data.ldif", "rb") as f:
@@ -869,16 +887,16 @@ class FlextLdifClient(FlextCore.Service[FlextLdifTypes.Dict]):
             # Try UTF-8 first (RFC 2849 standard encoding)
             try:
                 content.decode("utf-8")
-                return FlextCore.Result[str].ok("utf-8")
+                return FlextResult[str].ok("utf-8")
             except UnicodeDecodeError:
                 # Fall back to latin-1 (universal fallback - all bytes valid)
-                return FlextCore.Result[str].ok("latin-1")
+                return FlextResult[str].ok("latin-1")
         except Exception as e:
-            return FlextCore.Result[str].fail(f"Failed to detect encoding: {e}")
+            return FlextResult[str].fail(f"Failed to detect encoding: {e}")
 
     def normalize_encoding(
         self, content: str, target_encoding: str = "utf-8"
-    ) -> FlextCore.Result[str]:
+    ) -> FlextResult[str]:
         """Normalize text content to target encoding.
 
         Encodes content to target encoding and decodes back to ensure
@@ -889,7 +907,7 @@ class FlextLdifClient(FlextCore.Service[FlextLdifTypes.Dict]):
             target_encoding: Target encoding (default: "utf-8")
 
         Returns:
-            FlextCore.Result containing normalized content string
+            FlextResult containing normalized content string
 
         Example:
             >>> result = client.normalize_encoding(content, "utf-8")
@@ -899,17 +917,17 @@ class FlextLdifClient(FlextCore.Service[FlextLdifTypes.Dict]):
         try:
             # Encode to target encoding and decode back (ensures valid representation)
             normalized = content.encode(target_encoding).decode(target_encoding)
-            return FlextCore.Result[str].ok(normalized)
+            return FlextResult[str].ok(normalized)
         except UnicodeEncodeError as e:
-            return FlextCore.Result[str].fail(
+            return FlextResult[str].fail(
                 f"Content contains characters not representable in {target_encoding}: {e}"
             )
         except Exception as e:
-            return FlextCore.Result[str].fail(
+            return FlextResult[str].fail(
                 f"Failed to normalize encoding to {target_encoding}: {e}"
             )
 
-    def validate_ldif_syntax(self, content: str) -> FlextCore.Result[bool]:
+    def validate_ldif_syntax(self, content: str) -> FlextResult[bool]:
         r"""Validate basic LDIF syntax structure.
 
         Performs basic validation checking for:
@@ -923,7 +941,7 @@ class FlextLdifClient(FlextCore.Service[FlextLdifTypes.Dict]):
             content: LDIF content string to validate
 
         Returns:
-            FlextCore.Result containing True if valid basic syntax, False otherwise
+            FlextResult containing True if valid basic syntax, False otherwise
 
         Example:
             >>> ldif_content = "dn: cn=test,dc=example,dc=com\\ncn: test\\n"
@@ -934,19 +952,19 @@ class FlextLdifClient(FlextCore.Service[FlextLdifTypes.Dict]):
         try:
             # Check non-empty
             if not content or not content.strip():
-                return FlextCore.Result[bool].ok(False)
+                return FlextResult[bool].ok(False)
 
             # Check for at least one "dn:" line (RFC 2849 requirement)
             # LDIF entries MUST start with "dn:" per RFC 2849
             if "dn:" not in content.lower():
-                return FlextCore.Result[bool].ok(False)
+                return FlextResult[bool].ok(False)
 
-            return FlextCore.Result[bool].ok(True)
+            return FlextResult[bool].ok(True)
 
         except Exception as e:
-            return FlextCore.Result[bool].fail(f"Failed to validate LDIF syntax: {e}")
+            return FlextResult[bool].fail(f"Failed to validate LDIF syntax: {e}")
 
-    def count_ldif_entries(self, content: str) -> FlextCore.Result[int]:
+    def count_ldif_entries(self, content: str) -> FlextResult[int]:
         r"""Count number of LDIF entries in content.
 
         Counts entries by counting empty lines between entries.
@@ -956,7 +974,7 @@ class FlextLdifClient(FlextCore.Service[FlextLdifTypes.Dict]):
             content: LDIF content string
 
         Returns:
-            FlextCore.Result containing entry count
+            FlextResult containing entry count
 
         Example:
             >>> ldif_content = (
@@ -971,7 +989,7 @@ class FlextLdifClient(FlextCore.Service[FlextLdifTypes.Dict]):
         """
         try:
             if not content or not content.strip():
-                return FlextCore.Result[int].ok(0)
+                return FlextResult[int].ok(0)
 
             # Count entries by counting "dn:" lines (RFC 2849: each entry starts with dn:)
             dn_count = content.lower().count("dn:")
@@ -979,10 +997,10 @@ class FlextLdifClient(FlextCore.Service[FlextLdifTypes.Dict]):
             # Ensure at least 1 entry if content exists
             count = max(1, dn_count) if content.strip() else 0
 
-            return FlextCore.Result[int].ok(count)
+            return FlextResult[int].ok(count)
 
         except Exception as e:
-            return FlextCore.Result[int].fail(f"Failed to count LDIF entries: {e}")
+            return FlextResult[int].fail(f"Failed to count LDIF entries: {e}")
 
     # =========================================================================
     # QUIRKS MANAGEMENT
@@ -992,7 +1010,7 @@ class FlextLdifClient(FlextCore.Service[FlextLdifTypes.Dict]):
         self,
         quirk: object,
         quirk_type: str = "schema",
-    ) -> FlextCore.Result[None]:
+    ) -> FlextResult[None]:
         """Register a custom quirk for server-specific processing.
 
         Args:
@@ -1000,52 +1018,52 @@ class FlextLdifClient(FlextCore.Service[FlextLdifTypes.Dict]):
             quirk_type: Type of quirk ("schema", "acl", "entry")
 
         Returns:
-            FlextCore.Result indicating success or failure
+            FlextResult indicating success or failure
 
         """
         # Validate quirk_type
         if quirk_type not in {"schema", "acl", "entry"}:
-            return FlextCore.Result[None].fail(f"Invalid quirk type: {quirk_type}")
+            return FlextResult[None].fail(f"Invalid quirk type: {quirk_type}")
 
         container = self.container
 
         # Get quirk registry from container
         registry_result = container.get("quirk_registry")
         if registry_result.is_failure:
-            return FlextCore.Result[None].fail(
+            return FlextResult[None].fail(
                 f"Failed to get quirk registry: {registry_result.error}"
             )
 
         # Type narrow registry from unwrap()
         registry_obj: object = registry_result.unwrap()
         if not isinstance(registry_obj, FlextLdifQuirksRegistry):
-            return FlextCore.Result[None].fail("Quirk registry has unexpected type")
+            return FlextResult[None].fail("Quirk registry has unexpected type")
         registry: FlextLdifQuirksRegistry = registry_obj
 
         # Type narrow quirk parameter and call appropriate registration method
         # Use actual class names (not type aliases) for isinstance checks
         if quirk_type == "schema":
             if not isinstance(quirk, FlextLdifQuirksBaseSchemaQuirk):
-                return FlextCore.Result[None].fail(
+                return FlextResult[None].fail(
                     f"Quirk must be FlextLdifQuirksBaseSchemaQuirk, got {type(quirk).__name__}"
                 )
             return registry.register_schema_quirk(quirk)
 
         if quirk_type == "acl":
             if not isinstance(quirk, FlextLdifQuirksBaseAclQuirk):
-                return FlextCore.Result[None].fail(
+                return FlextResult[None].fail(
                     f"Quirk must be FlextLdifQuirksBaseAclQuirk, got {type(quirk).__name__}"
                 )
             return registry.register_acl_quirk(quirk)
 
         if quirk_type == "entry":
             if not isinstance(quirk, FlextLdifQuirksBaseEntryQuirk):
-                return FlextCore.Result[None].fail(
+                return FlextResult[None].fail(
                     f"Quirk must be FlextLdifQuirksBaseEntryQuirk, got {type(quirk).__name__}"
                 )
             return registry.register_entry_quirk(quirk)
 
-        return FlextCore.Result[None].fail(f"Unsupported quirk type: {quirk_type}")
+        return FlextResult[None].fail(f"Unsupported quirk type: {quirk_type}")
 
     # =========================================================================
     # INFRASTRUCTURE ACCESS
@@ -1067,30 +1085,30 @@ class FlextLdifClient(FlextCore.Service[FlextLdifTypes.Dict]):
         return self._handlers
 
     @property
-    def container(self) -> FlextCore.Container:
+    def container(self) -> FlextContainer:
         """Access to dependency injection container."""
         if self._container is None:
-            msg = "FlextCore.Container must be initialized"
+            msg = "FlextContainer must be initialized"
             raise RuntimeError(msg)
-        # Type narrowing: _container is guaranteed to be FlextCore.Container after initialization
-        return cast("FlextCore.Container", self._container)
+        # Type narrowing: _container is guaranteed to be FlextContainer after initialization
+        return cast("FlextContainer", self._container)
 
     @property
-    def context(self) -> FlextCore.Context:
+    def context(self) -> FlextContext:
         """Access to execution context with lazy initialization."""
         if self._context is None:
-            # Convert config to dict[str, object] for JSON-serializable FlextCore.Context
-            self._context = FlextCore.Context({"config": self.config.model_dump()})
+            # ✅ FIXED: Don't bind config to context - prevents config repetition in logs
+            self._context = FlextContext()  # Empty context
         # Context is guaranteed non-None after initialization
         return self._context
 
     @property
-    def bus(self) -> FlextCore.Bus:
+    def bus(self) -> FlextBus:
         """Access to event bus with lazy initialization."""
         if self._bus is None:
-            self._bus = FlextCore.Bus()
-        # Type narrowing: _bus is guaranteed to be FlextCore.Bus after initialization
-        return cast("FlextCore.Bus", self._bus)
+            self._bus = FlextBus()
+        # Type narrowing: _bus is guaranteed to be FlextBus after initialization
+        return cast("FlextBus", self._bus)
 
 
 __all__ = ["FlextLdifClient"]

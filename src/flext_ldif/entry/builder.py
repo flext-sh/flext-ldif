@@ -13,7 +13,7 @@ from __future__ import annotations
 import json
 from typing import override
 
-from flext_core import FlextCore
+from flext_core import FlextResult, FlextService
 
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
@@ -21,7 +21,7 @@ from flext_ldif.schema import FlextLdifObjectClassManager
 from flext_ldif.typings import FlextLdifTypes
 
 
-class FlextLdifEntryBuilder(FlextCore.Service[FlextLdifModels.Entry]):
+class FlextLdifEntryBuilder(FlextService[FlextLdifModels.Entry]):
     """Entry builder service for creating LDIF entries."""
 
     @override
@@ -31,9 +31,9 @@ class FlextLdifEntryBuilder(FlextCore.Service[FlextLdifModels.Entry]):
         self._objectclass_manager = FlextLdifObjectClassManager()
 
     @override
-    def execute(self) -> FlextCore.Result[FlextLdifModels.Entry]:
+    def execute(self) -> FlextResult[FlextLdifModels.Entry]:
         """Execute entry builder service."""
-        return FlextCore.Result[FlextLdifModels.Entry].fail(
+        return FlextResult[FlextLdifModels.Entry].fail(
             "Use specific build methods (build_person_entry, etc.)"
         )
 
@@ -46,7 +46,7 @@ class FlextLdifEntryBuilder(FlextCore.Service[FlextLdifModels.Entry]):
         mail: str | None = None,
         given_name: str | None = None,
         additional_attrs: dict[str, FlextLdifTypes.StringList] | None = None,
-    ) -> FlextCore.Result[FlextLdifModels.Entry]:
+    ) -> FlextResult[FlextLdifModels.Entry]:
         """Build a person entry with standard attributes."""
         dn = f"cn={cn},{base_dn}"
 
@@ -83,7 +83,7 @@ class FlextLdifEntryBuilder(FlextCore.Service[FlextLdifModels.Entry]):
         members: FlextLdifTypes.StringList | None = None,
         description: str | None = None,
         additional_attrs: dict[str, FlextLdifTypes.StringList] | None = None,
-    ) -> FlextCore.Result[FlextLdifModels.Entry]:
+    ) -> FlextResult[FlextLdifModels.Entry]:
         """Build a group entry with standard attributes."""
         dn = f"cn={cn},{base_dn}"
         attributes: dict[str, FlextLdifTypes.StringList] = {
@@ -108,7 +108,7 @@ class FlextLdifEntryBuilder(FlextCore.Service[FlextLdifModels.Entry]):
                     attributes[key] = values
 
         # Create entry directly with typed variables (no cast needed)
-        result: FlextCore.Result[FlextLdifModels.Entry] = FlextLdifModels.Entry.create(
+        result: FlextResult[FlextLdifModels.Entry] = FlextLdifModels.Entry.create(
             dn=dn,
             attributes=attributes,
         )
@@ -124,7 +124,7 @@ class FlextLdifEntryBuilder(FlextCore.Service[FlextLdifModels.Entry]):
         base_dn: str,
         description: str | None = None,
         additional_attrs: dict[str, FlextLdifTypes.StringList] | None = None,
-    ) -> FlextCore.Result[FlextLdifModels.Entry]:
+    ) -> FlextResult[FlextLdifModels.Entry]:
         """Build an organizational unit entry with standard attributes."""
         dn = f"ou={ou},{base_dn}"
         attributes: dict[str, FlextLdifTypes.StringList] = {
@@ -144,7 +144,7 @@ class FlextLdifEntryBuilder(FlextCore.Service[FlextLdifModels.Entry]):
                     attributes[key] = values
 
         # Create entry directly with typed variables (no cast needed)
-        result: FlextCore.Result[FlextLdifModels.Entry] = FlextLdifModels.Entry.create(
+        result: FlextResult[FlextLdifModels.Entry] = FlextLdifModels.Entry.create(
             dn=dn,
             attributes=attributes,
         )
@@ -161,7 +161,7 @@ class FlextLdifEntryBuilder(FlextCore.Service[FlextLdifModels.Entry]):
         attributes: dict[str, FlextLdifTypes.StringList],
         *,
         validate: bool = True,
-    ) -> FlextCore.Result[FlextLdifModels.Entry]:
+    ) -> FlextResult[FlextLdifModels.Entry]:
         """Build a custom entry with specified object classes and attributes."""
         entry_attrs = attributes.copy()
         entry_attrs[FlextLdifConstants.DictKeys.OBJECTCLASS] = objectclasses
@@ -172,7 +172,7 @@ class FlextLdifEntryBuilder(FlextCore.Service[FlextLdifModels.Entry]):
             )
 
         # Create entry directly with typed variables (no cast needed)
-        result: FlextCore.Result[FlextLdifModels.Entry] = FlextLdifModels.Entry.create(
+        result: FlextResult[FlextLdifModels.Entry] = FlextLdifModels.Entry.create(
             dn=dn,
             attributes=entry_attrs,
         )
@@ -184,13 +184,13 @@ class FlextLdifEntryBuilder(FlextCore.Service[FlextLdifModels.Entry]):
 
     def build_entries_from_json(
         self, json_data: str
-    ) -> FlextCore.Result[list[FlextLdifModels.Entry]]:
+    ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Build entries from JSON data."""
         try:
             data: object = json.loads(json_data)
 
             if not isinstance(data, list):
-                return FlextCore.Result[list[FlextLdifModels.Entry]].fail(
+                return FlextResult[list[FlextLdifModels.Entry]].fail(
                     "JSON data must be a list of entry objects"
                 )
 
@@ -198,7 +198,7 @@ class FlextLdifEntryBuilder(FlextCore.Service[FlextLdifModels.Entry]):
 
             for item in data:
                 if not isinstance(item, dict):
-                    return FlextCore.Result[list[FlextLdifModels.Entry]].fail(
+                    return FlextResult[list[FlextLdifModels.Entry]].fail(
                         "Each item must be a dictionary"
                     )
 
@@ -208,7 +208,7 @@ class FlextLdifEntryBuilder(FlextCore.Service[FlextLdifModels.Entry]):
                 )
 
                 if not dn:
-                    return FlextCore.Result[list[FlextLdifModels.Entry]].fail(
+                    return FlextResult[list[FlextLdifModels.Entry]].fail(
                         f"Each entry must have a '{FlextLdifConstants.DictKeys.DN}' field"
                     )
 
@@ -223,12 +223,12 @@ class FlextLdifEntryBuilder(FlextCore.Service[FlextLdifModels.Entry]):
 
                 # Type narrow DN from dict.get()
                 if not isinstance(dn, str):
-                    return FlextCore.Result[list[FlextLdifModels.Entry]].fail(
+                    return FlextResult[list[FlextLdifModels.Entry]].fail(
                         f"DN must be a string, got {type(dn).__name__}"
                     )
 
                 # Create entry directly with typed variables (no cast needed)
-                entry_result: FlextCore.Result[FlextLdifModels.Entry] = (
+                entry_result: FlextResult[FlextLdifModels.Entry] = (
                     FlextLdifModels.Entry.create(
                         dn=dn,
                         attributes=normalized_attrs,
@@ -236,7 +236,7 @@ class FlextLdifEntryBuilder(FlextCore.Service[FlextLdifModels.Entry]):
                 )
 
                 if entry_result.is_failure:
-                    return FlextCore.Result[list[FlextLdifModels.Entry]].fail(
+                    return FlextResult[list[FlextLdifModels.Entry]].fail(
                         f"Failed to create entry for DN '{dn}': {entry_result.error}"
                     )
 
@@ -244,20 +244,18 @@ class FlextLdifEntryBuilder(FlextCore.Service[FlextLdifModels.Entry]):
 
             if self.logger:
                 self.logger.info(f"Created {len(entries)} entries from JSON")
-            return FlextCore.Result[list[FlextLdifModels.Entry]].ok(entries)
+            return FlextResult[list[FlextLdifModels.Entry]].ok(entries)
 
         except json.JSONDecodeError as e:
-            return FlextCore.Result[list[FlextLdifModels.Entry]].fail(
-                f"Invalid JSON: {e}"
-            )
+            return FlextResult[list[FlextLdifModels.Entry]].fail(f"Invalid JSON: {e}")
         except Exception as e:
-            return FlextCore.Result[list[FlextLdifModels.Entry]].fail(
+            return FlextResult[list[FlextLdifModels.Entry]].fail(
                 f"Failed to build entries from JSON: {e}"
             )
 
     def build_entries_from_dict(
         self, data: list[dict[str, object]]
-    ) -> FlextCore.Result[list[FlextLdifModels.Entry]]:
+    ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Build entries from dictionary data."""
         entries: list[FlextLdifModels.Entry] = []
 
@@ -269,7 +267,7 @@ class FlextLdifEntryBuilder(FlextCore.Service[FlextLdifModels.Entry]):
             )
 
             if not dn:
-                return FlextCore.Result[list[FlextLdifModels.Entry]].fail(
+                return FlextResult[list[FlextLdifModels.Entry]].fail(
                     f"Each entry must have a '{FlextLdifConstants.DictKeys.DN}' field"
                 )
 
@@ -285,12 +283,12 @@ class FlextLdifEntryBuilder(FlextCore.Service[FlextLdifModels.Entry]):
 
             # Type narrow DN from dict.get()
             if not isinstance(dn, str):
-                return FlextCore.Result[list[FlextLdifModels.Entry]].fail(
+                return FlextResult[list[FlextLdifModels.Entry]].fail(
                     f"DN must be a string, got {type(dn).__name__}"
                 )
 
             # Create entry directly with typed variables (no cast needed)
-            entry_result: FlextCore.Result[FlextLdifModels.Entry] = (
+            entry_result: FlextResult[FlextLdifModels.Entry] = (
                 FlextLdifModels.Entry.create(
                     dn=dn,
                     attributes=normalized_attrs,
@@ -298,7 +296,7 @@ class FlextLdifEntryBuilder(FlextCore.Service[FlextLdifModels.Entry]):
             )
 
             if entry_result.is_failure:
-                return FlextCore.Result[list[FlextLdifModels.Entry]].fail(
+                return FlextResult[list[FlextLdifModels.Entry]].fail(
                     f"Failed to create entry for DN '{dn}': {entry_result.error}"
                 )
 
@@ -306,11 +304,11 @@ class FlextLdifEntryBuilder(FlextCore.Service[FlextLdifModels.Entry]):
 
         if self.logger:
             self.logger.info(f"Created {len(entries)} entries from dictionary")
-        return FlextCore.Result[list[FlextLdifModels.Entry]].ok(entries)
+        return FlextResult[list[FlextLdifModels.Entry]].ok(entries)
 
     def convert_entry_to_dict(
         self, entry: FlextLdifModels.Entry
-    ) -> FlextCore.Result[FlextLdifTypes.Dict]:
+    ) -> FlextResult[FlextLdifTypes.Dict]:
         """Convert an entry to dictionary format."""
         attributes_dict: dict[str, FlextLdifTypes.StringList] = {
             name: attr.values for name, attr in entry.attributes.attributes.items()
@@ -321,21 +319,21 @@ class FlextLdifEntryBuilder(FlextCore.Service[FlextLdifModels.Entry]):
             FlextLdifConstants.DictKeys.ATTRIBUTES: attributes_dict,
         }
 
-        return FlextCore.Result[FlextLdifTypes.Dict].ok(entry_dict)
+        return FlextResult[FlextLdifTypes.Dict].ok(entry_dict)
 
     def convert_entries_to_json(
         self, entries: list[FlextLdifModels.Entry], indent: int = 2
-    ) -> FlextCore.Result[str]:
+    ) -> FlextResult[str]:
         """Convert entries to JSON format."""
         try:
             entries_data: list[FlextLdifTypes.Dict] = []
 
             for entry in entries:
-                entry_dict_result: FlextCore.Result[FlextLdifTypes.Dict] = (
+                entry_dict_result: FlextResult[FlextLdifTypes.Dict] = (
                     self.convert_entry_to_dict(entry)
                 )
                 if entry_dict_result.is_failure:
-                    return FlextCore.Result[str].fail(
+                    return FlextResult[str].fail(
                         f"Failed to convert entry: {entry_dict_result.error}"
                     )
                 entries_data.append(entry_dict_result.value)
@@ -343,10 +341,10 @@ class FlextLdifEntryBuilder(FlextCore.Service[FlextLdifModels.Entry]):
             json_str = json.dumps(entries_data, indent=indent)
             if self.logger:
                 self.logger.info(f"Converted {len(entries)} entries to JSON")
-            return FlextCore.Result[str].ok(json_str)
+            return FlextResult[str].ok(json_str)
 
         except Exception as e:
-            return FlextCore.Result[str].fail(f"Failed to convert entries to JSON: {e}")
+            return FlextResult[str].fail(f"Failed to convert entries to JSON: {e}")
 
 
 __all__ = ["FlextLdifEntryBuilder"]

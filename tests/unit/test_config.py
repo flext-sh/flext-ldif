@@ -7,6 +7,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import Any, cast
+
 import pytest
 from pydantic import ValidationError
 
@@ -290,13 +292,16 @@ class TestFlextLdifConfig:
         """Test that configuration values are properly validated."""
         # Test that invalid values are rejected (intentional type mismatches for validation testing)
         with pytest.raises(ValidationError):
-            FlextLdifConfig(ldif_max_line_length="invalid")
+            # Test validation with intentionally invalid types
+            FlextLdifConfig(ldif_max_line_length=cast("int", "invalid"))
 
         with pytest.raises(ValidationError):
-            FlextLdifConfig(max_workers="invalid")
+            # Test validation with intentionally invalid types
+            FlextLdifConfig(max_workers=cast("int", "invalid"))
 
         with pytest.raises(ValidationError):
-            FlextLdifConfig(ldif_encoding=123)
+            # Test validation with intentionally invalid types
+            FlextLdifConfig(ldif_encoding=cast("str", 123))
 
     # =========================================================================
     # VALIDATOR EDGE CASES - Complete coverage for all validators
@@ -325,7 +330,8 @@ class TestFlextLdifConfig:
     def test_validate_validation_level_invalid(self) -> None:
         """Test validation_level validator with invalid value."""
         with pytest.raises(ValidationError) as exc_info:
-            FlextLdifConfig(validation_level="invalid")
+            # Test validation with intentionally invalid enum value
+            FlextLdifConfig(validation_level=cast("Any", "invalid"))
         # Pydantic v2 error message format
         assert "Input should be" in str(exc_info.value) or "validation_level" in str(
             exc_info.value
@@ -334,7 +340,8 @@ class TestFlextLdifConfig:
     def test_validate_server_type_invalid(self) -> None:
         """Test server_type validator with invalid value."""
         with pytest.raises(ValidationError) as exc_info:
-            FlextLdifConfig(server_type="unknown_server")
+            # Test validation with intentionally invalid enum value
+            FlextLdifConfig(server_type=cast("Any", "unknown_server"))
         assert "Input should be" in str(exc_info.value) or "server_type" in str(
             exc_info.value
         )

@@ -60,7 +60,7 @@ UnicodeDecodeError: 'utf-8' codec can't decode byte 0xff in position 123
 **Solution**:
 
 ```python
-def handle_encoding_issues(file_path: str) -> FlextCore.Result[str]:
+def handle_encoding_issues(file_path: str) -> FlextResult[str]:
     """Handle various character encodings."""
     encodings_to_try = ['utf-8', 'latin-1', 'cp1252', 'iso-8859-1']
 
@@ -69,19 +69,19 @@ def handle_encoding_issues(file_path: str) -> FlextCore.Result[str]:
             with open(file_path, 'r', encoding=encoding) as f:
                 content = f.read()
             print(f"✓ Successfully read with {encoding} encoding")
-            return FlextCore.Result[str].ok(content)
+            return FlextResult[str].ok(content)
         except UnicodeDecodeError:
             print(f"✗ Failed with {encoding} encoding")
             continue
 
-    return FlextCore.Result[str].fail("Unable to decode file with any supported encoding")
+    return FlextResult[str].fail("Unable to decode file with any supported encoding")
 
 # Usage with custom encoding
-def parse_with_encoding_detection(file_path: str) -> FlextCore.Result[list]:
+def parse_with_encoding_detection(file_path: str) -> FlextResult[list]:
     """Parse LDIF with automatic encoding detection."""
     content_result = handle_encoding_issues(file_path)
     if content_result.is_failure:
-        return FlextCore.Result[list].fail(content_result.error)
+        return FlextResult[list].fail(content_result.error)
 
     api = FlextLdif()
     return api.parse_string(content_result.unwrap())
@@ -101,7 +101,7 @@ MemoryError: Unable to allocate array
 **Solution**:
 
 ```python
-def process_large_file_safely(file_path: str) -> FlextCore.Result[FlextCore.Types.Dict]:
+def process_large_file_safely(file_path: str) -> FlextResult[FlextTypes.Dict]:
     """Process large LDIF files with memory management."""
     import psutil
     import os
@@ -114,7 +114,7 @@ def process_large_file_safely(file_path: str) -> FlextCore.Result[FlextCore.Type
     print(f"Available memory: {available_memory_gb:.2f} GB")
 
     if file_size_gb > available_memory_gb * 0.5:
-        return FlextCore.Result[FlextCore.Types.Dict].fail(
+        return FlextResult[FlextTypes.Dict].fail(
             f"File too large for available memory. "
             f"File: {file_size_gb:.2f}GB, Available: {available_memory_gb:.2f}GB"
         )
@@ -128,7 +128,7 @@ def process_large_file_safely(file_path: str) -> FlextCore.Result[FlextCore.Type
     api = FlextLdif(config=config)
     return api.parse_file(file_path)
 
-def chunk_process_file(file_path: str, chunk_size: int = 10000) -> FlextCore.Result[FlextCore.Types.Dict]:
+def chunk_process_file(file_path: str, chunk_size: int = 10000) -> FlextResult[FlextTypes.Dict]:
     """Process file in chunks to manage memory."""
     results = {'total_entries': 0, 'processed_chunks': 0}
 
@@ -160,11 +160,11 @@ def chunk_process_file(file_path: str, chunk_size: int = 10000) -> FlextCore.Res
                     results['total_entries'] += len(current_chunk)
                     results['processed_chunks'] += 1
 
-        return FlextCore.Result[FlextCore.Types.Dict].ok(results)
+        return FlextResult[FlextTypes.Dict].ok(results)
     except Exception as e:
-        return FlextCore.Result[FlextCore.Types.Dict].fail(f"Chunk processing failed: {e}")
+        return FlextResult[FlextTypes.Dict].fail(f"Chunk processing failed: {e}")
 
-def process_chunk(chunk_entries: FlextCore.Types.StringList) -> FlextCore.Result[None]:
+def process_chunk(chunk_entries: FlextTypes.StringList) -> FlextResult[None]:
     """Process a chunk of LDIF entries."""
     chunk_content = '\n\n'.join(chunk_entries)
     api = FlextLdif()
@@ -186,7 +186,7 @@ result = api.validate_entries(entries)
 **Solution**:
 
 ```python
-def handle_validation_errors(entries: list) -> FlextCore.Result[list]:
+def handle_validation_errors(entries: list) -> FlextResult[list]:
     """Handle validation errors with detailed reporting."""
     # Try with strict validation first
     strict_config = FlextLdifModels.Config(strict_validation=True)
@@ -195,7 +195,7 @@ def handle_validation_errors(entries: list) -> FlextCore.Result[list]:
     strict_result = strict_api.validate_entries(entries)
     if strict_result.is_success:
         print("✓ All entries pass strict validation")
-        return FlextCore.Result[list].ok(entries)
+        return FlextResult[list].ok(entries)
 
     print(f"✗ Strict validation failed: {strict_result.error}")
 
@@ -210,9 +210,9 @@ def handle_validation_errors(entries: list) -> FlextCore.Result[list]:
     if permissive_result.is_success:
         print("✓ Entries pass permissive validation")
         print("⚠️  Consider reviewing data quality")
-        return FlextCore.Result[list].ok(entries)
+        return FlextResult[list].ok(entries)
 
-    return FlextCore.Result[list].fail(f"Validation failed: {permissive_result.error}")
+    return FlextResult[list].fail(f"Validation failed: {permissive_result.error}")
 
 def analyze_entry_issues(entries: list) -> None:
     """Analyze common entry validation issues."""
@@ -296,7 +296,7 @@ def optimize_processing_config() -> FlextLdifModels.Config:
         buffer_size=32768          # Larger buffer for I/O
     )
 
-def process_with_optimization(file_path: str) -> FlextCore.Result[FlextCore.Types.Dict]:
+def process_with_optimization(file_path: str) -> FlextResult[FlextTypes.Dict]:
     """Process LDIF with performance optimizations."""
     config = optimize_processing_config()
     api = FlextLdif(config=config)
@@ -312,13 +312,13 @@ def process_with_optimization(file_path: str) -> FlextCore.Result[FlextCore.Type
 
 ### Integration Issues
 
-#### FlextCore.Container Registration Problems
+#### FlextContainer Registration Problems
 
-**Symptom**: Services fail to register or retrieve from FlextCore.Container.
+**Symptom**: Services fail to register or retrieve from FlextContainer.
 
 ```python
 # Error: "Service registration failed"
-container = FlextCore.Container.get_global()
+container = FlextContainer.get_global()
 result = container.register("ldif_api", api)
 # result.is_failure == True
 ```
@@ -327,11 +327,11 @@ result = container.register("ldif_api", api)
 
 ```python
 def debug_container_issues() -> None:
-    """Debug FlextCore.Container registration issues."""
-    from flext_core import FlextCore
+    """Debug FlextContainer registration issues."""
+
     from flext_ldif import FlextLdif
 
-    container = FlextCore.Container.get_global()
+    container = FlextContainer.get_global()
 
     # Check container status
     print(f"Container type: {type(container)}")
@@ -353,9 +353,9 @@ def debug_container_issues() -> None:
     else:
         print(f"✗ Registration failed: {registration_result.error}")
 
-def safe_service_registration() -> FlextCore.Result[FlextLdif]:
+def safe_service_registration() -> FlextResult[FlextLdif]:
     """Safely register LDIF service with error handling."""
-    container = FlextCore.Container.get_global()
+    container = FlextContainer.get_global()
 
     # Create API instance
     api = FlextLdif()
@@ -363,21 +363,21 @@ def safe_service_registration() -> FlextCore.Result[FlextLdif]:
     # Attempt registration
     registration_result = container.register("ldif_api", api)
     if registration_result.is_failure:
-        return FlextCore.Result[FlextLdif].fail(
+        return FlextResult[FlextLdif].fail(
             f"Failed to register LDIF API: {registration_result.error}"
         )
 
     # Verify registration by retrieving
     retrieval_result = container.get("ldif_api")
     if retrieval_result.is_failure:
-        return FlextCore.Result[FlextLdif].fail(
+        return FlextResult[FlextLdif].fail(
             f"Failed to retrieve LDIF API: {retrieval_result.error}"
         )
 
-    return FlextCore.Result[FlextLdif].ok(retrieval_result.unwrap())
+    return FlextResult[FlextLdif].ok(retrieval_result.unwrap())
 ```
 
-#### FlextCore.Result Chain Errors
+#### FlextResult Chain Errors
 
 **Symptom**: Railway-oriented programming chains fail unexpectedly.
 
@@ -393,8 +393,8 @@ result = (
 **Solution**:
 
 ```python
-def correct_railway_chaining(file_path: str) -> FlextCore.Result[list]:
-    """Demonstrate correct FlextCore.Result chaining."""
+def correct_railway_chaining(file_path: str) -> FlextResult[list]:
+    """Demonstrate correct FlextResult chaining."""
     api = FlextLdif()
 
     return (
@@ -413,7 +413,7 @@ def correct_railway_chaining(file_path: str) -> FlextCore.Result[list]:
         .map_error(lambda error: f"Processing chain failed: {error}")
     )
 
-def debug_railway_chain(file_path: str) -> FlextCore.Result[list]:
+def debug_railway_chain(file_path: str) -> FlextResult[list]:
     """Debug railway-oriented programming chains."""
     api = FlextLdif()
 
@@ -432,7 +432,7 @@ def debug_railway_chain(file_path: str) -> FlextCore.Result[list]:
     validation_result = api.validate_entries(entries)
     if validation_result.is_failure:
         print(f"❌ Validation failed: {validation_result.error}")
-        return FlextCore.Result[list].fail(validation_result.error)
+        return FlextResult[list].fail(validation_result.error)
 
     print("✓ Validation passed")
 
@@ -446,7 +446,7 @@ def debug_railway_chain(file_path: str) -> FlextCore.Result[list]:
     persons = filter_result.unwrap()
     print(f"✓ Found {len(persons)} person entries")
 
-    return FlextCore.Result[list].ok(persons)
+    return FlextResult[list].ok(persons)
 ```
 
 ## Diagnostic Tools
@@ -466,7 +466,7 @@ def run_health_check() -> dict[str, object]:
     # Check imports
     try:
         from flext_ldif import FlextLdif, FlextLdifModels
-        from flext_core import FlextCore
+
         results['checks']['imports'] = '✓ All imports successful'
     except ImportError as e:
         results['checks']['imports'] = f'❌ Import failed: {e}'
@@ -500,7 +500,7 @@ objectClass: person
 
     # Check container integration
     try:
-        container = FlextCore.Container.get_global()
+        container = FlextContainer.get_global()
         reg_result = container.register("health_check_api", api)
         if reg_result.is_success:
             results['checks']['container_integration'] = '✓ Container integration works'
@@ -544,10 +544,10 @@ def print_health_check_report() -> None:
 ```python
 def enable_debug_mode() -> FlextLdif:
     """Enable comprehensive debug mode."""
-    from flext_core import FlextCore
+
 
     # Configure debug logging
-    logger = FlextCore.Logger(__name__)
+    logger = FlextLogger(__name__)
     logger.set_level('DEBUG')
 
     # Create debug configuration

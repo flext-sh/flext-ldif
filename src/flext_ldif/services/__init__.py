@@ -1,11 +1,11 @@
 """FLEXT-LDIF Services - Domain Services for LDIF Operations.
 
 This package contains domain services that implement business logic
-following FLEXT patterns with FlextCore.Service base class.
+following FLEXT patterns with FlextService base class.
 
 Services follow Single Responsibility Principle:
 - Each service handles one domain concern
-- Returns FlextCore.Result for composable error handling
+- Returns FlextResult for composable error handling
 - Uses ldap3/ldif3 for RFC compliance
 - Type-safe with Python 3.13+ annotations
 

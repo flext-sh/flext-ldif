@@ -1,7 +1,7 @@
 """LDIF Batch and Parallel Processors.
 
 This module provides batch and parallel processing capabilities for LDIF entries
-using FlextCore.Processors infrastructure for efficient large-scale operations.
+using FlextProcessors infrastructure for efficient large-scale operations.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -13,7 +13,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import TYPE_CHECKING, TypeVar
 
-from flext_core import FlextCore
+from flext_core import FlextProcessors, FlextResult
 
 if TYPE_CHECKING:
     from flext_ldif.models import FlextLdifModels
@@ -46,13 +46,13 @@ class LdifBatchProcessor:
         """
         super().__init__()
         self._batch_size = batch_size
-        self._processors = FlextCore.Processors()
+        self._processors = FlextProcessors()
 
     def process_batch(
         self,
         entries: list[FlextLdifModels.Entry],
         func: Callable[[FlextLdifModels.Entry], T],
-    ) -> FlextCore.Result[list[T]]:
+    ) -> FlextResult[list[T]]:
         """Process entries in batches.
 
         Args:
@@ -60,7 +60,7 @@ class LdifBatchProcessor:
             func: Function to apply to each entry (generic return type T)
 
         Returns:
-            FlextCore.Result containing list of processed results of type T
+            FlextResult containing list of processed results of type T
 
         Example:
             def validate_entry(entry):
@@ -76,10 +76,10 @@ class LdifBatchProcessor:
                 batch_results = [func(entry) for entry in batch]
                 results.extend(batch_results)
 
-            return FlextCore.Result[list[T]].ok(results)
+            return FlextResult[list[T]].ok(results)
 
         except Exception as e:
-            return FlextCore.Result[list[T]].fail(f"Batch processing failed: {e}")
+            return FlextResult[list[T]].fail(f"Batch processing failed: {e}")
 
 
 class LdifParallelProcessor:
@@ -106,13 +106,13 @@ class LdifParallelProcessor:
         """
         super().__init__()
         self._max_workers = max_workers
-        self._processors = FlextCore.Processors()
+        self._processors = FlextProcessors()
 
     def process_parallel(
         self,
         entries: list[FlextLdifModels.Entry],
         func: Callable[[FlextLdifModels.Entry], T],
-    ) -> FlextCore.Result[list[T]]:
+    ) -> FlextResult[list[T]]:
         """Process entries in parallel.
 
         Args:
@@ -120,7 +120,7 @@ class LdifParallelProcessor:
             func: Function to apply to each entry (generic return type T)
 
         Returns:
-            FlextCore.Result containing list of processed results of type T
+            FlextResult containing list of processed results of type T
 
         Example:
             def transform_entry(entry):
@@ -130,14 +130,14 @@ class LdifParallelProcessor:
 
         """
         try:
-            # Note: FlextCore.Processors provides parallel processing utilities
-            # For now, use sequential processing as FlextCore.Processors
+            # Note: FlextProcessors provides parallel processing utilities
+            # For now, use sequential processing as FlextProcessors
             # interface is not fully defined
             results = [func(entry) for entry in entries]
-            return FlextCore.Result[list[T]].ok(results)
+            return FlextResult[list[T]].ok(results)
 
         except Exception as e:
-            return FlextCore.Result[list[T]].fail(f"Parallel processing failed: {e}")
+            return FlextResult[list[T]].fail(f"Parallel processing failed: {e}")
 
 
 __all__ = [

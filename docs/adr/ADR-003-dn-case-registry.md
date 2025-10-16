@@ -36,7 +36,7 @@ class DnCaseRegistry:
     def get_canonical_dn(self, dn: str) -> str:
         """Get canonical case for any DN variant."""
 
-    def validate_oud_consistency(self) -> FlextCore.Result[bool]:
+    def validate_oud_consistency(self) -> FlextResult[bool]:
         """Validate no case conflicts exist for OUD compatibility."""
 ```
 

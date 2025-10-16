@@ -11,7 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
-from flext_core import FlextCore
+from flext_core import FlextTypes
 
 from flext_ldif.quirks.conversion_matrix import QuirksConversionMatrix
 from flext_ldif.quirks.dn_case_registry import DnCaseRegistry
@@ -122,7 +122,7 @@ class TestDnCaseRegistry:
         """Test normalizing single DN field."""
         registry.register_dn("cn=admin,dc=com")
 
-        data: FlextCore.Types.Dict = {"dn": "CN=Admin,DC=Com", "cn": ["admin"]}
+        data: FlextTypes.Dict = {"dn": "CN=Admin,DC=Com", "cn": ["admin"]}
         result = registry.normalize_dn_references(data, ["dn"])
 
         assert result.is_success
@@ -137,7 +137,7 @@ class TestDnCaseRegistry:
         registry.register_dn("cn=user1,dc=com")
         registry.register_dn("cn=user2,dc=com")
 
-        data: FlextCore.Types.Dict = {
+        data: FlextTypes.Dict = {
             "dn": "cn=group,dc=com",
             "member": ["CN=User1,DC=Com", "cn=USER2,dc=com"],
         }
@@ -151,7 +151,7 @@ class TestDnCaseRegistry:
         self, registry: DnCaseRegistry
     ) -> None:
         """Test that unregistered DNs are left unchanged."""
-        data: FlextCore.Types.Dict = {"dn": "cn=unknown,dc=com"}
+        data: FlextTypes.Dict = {"dn": "cn=unknown,dc=com"}
         result = registry.normalize_dn_references(data, ["dn"])
 
         assert result.is_success
@@ -244,7 +244,7 @@ class TestConversionMatrixDnHandling:
         matrix.dn_registry.register_dn("cn=admin,dc=com")
 
         # Entry with different case
-        entry: FlextCore.Types.Dict = {
+        entry: FlextTypes.Dict = {
             "dn": "cn=group,dc=com",
             "member": ["CN=Admin,DC=Com"],  # Different case!
         }

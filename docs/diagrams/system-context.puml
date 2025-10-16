@@ -8,7 +8,7 @@ Person(developer, "Application Developer", "Integrates LDIF processing into FLEX
 
 System(flext_ldif, "FLEXT-LDIF", "RFC-compliant LDIF processing library with server-specific quirks system")
 
-System_Ext(flext_core, "FLEXT-Core", "Foundation library providing FlextCore.Result, FlextCore.Container, FlextCore.Models")
+System_Ext(flext_core, "FLEXT-Core", "Foundation library providing FlextResult, FlextContainer, FlextModels")
 System_Ext(ldap_servers, "LDAP Directory Servers", "OID, OUD, OpenLDAP, Active Directory, Apache DS, 389 DS, Novell, Tivoli")
 System_Ext(flext_projects, "FLEXT Projects", "algar-oud-mig, flext-api, flext-ldap, flext-web, flext-auth")
 System_Ext(data_sources, "Data Sources", "LDIF files, LDAP exports, directory dumps, API responses")
@@ -19,7 +19,7 @@ System_Ext(enterprise_systems, "Enterprise Systems", "HR systems, identity manag
 Rel(user, flext_ldif, "Uses for", "LDIF processing and server migrations")
 Rel(developer, flext_ldif, "Integrates via", "FlextLdif facade API")
 
-Rel(flext_ldif, flext_core, "Depends on", "FlextCore.Result[T], FlextCore.Container, FlextCore.Models")
+Rel(flext_ldif, flext_core, "Depends on", "FlextResult[T], FlextContainer, FlextModels")
 Rel(flext_ldif, ldap_servers, "Processes data for/from", "RFC 2849/4512 compliant operations")
 Rel(flext_ldif, flext_projects, "Provides LDIF processing", "capabilities to ecosystem")
 Rel(flext_ldif, data_sources, "Reads/Writes", "LDIF format files and streams")

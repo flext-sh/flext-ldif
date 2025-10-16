@@ -30,7 +30,7 @@ FLEXT-LDIF is an enterprise-grade LDIF (LDAP Data Interchange Format) processing
 | **RFC-First Design**             | All operations must go through RFC parsers with quirks system | Ensures standards compliance and extensibility |
 | **Zero Bypass Paths**            | No direct parser access - all operations through facade       | Maintains architectural integrity              |
 | **Universal Conversion Matrix**  | N×N server conversions via RFC intermediate format            | Enables seamless server migrations             |
-| **Railway-Oriented Programming** | FlextCore.Result[T] error handling throughout                 | Functional error composition                   |
+| **Railway-Oriented Programming** | FlextResult[T] error handling throughout                      | Functional error composition                   |
 | **Library-Only Interface**       | No CLI dependencies, pure programmatic API                    | Ecosystem flexibility                          |
 
 ### Quality Attributes
@@ -64,7 +64,7 @@ Person(developer, "Application Developer", "Integrates LDIF processing into FLEX
 
 System(flext_ldif, "FLEXT-LDIF", "RFC-compliant LDIF processing library with server-specific quirks")
 
-System_Ext(flext_core, "FLEXT-Core", "Foundation library providing FlextCore.Result, FlextCore.Container, FlextCore.Models")
+System_Ext(flext_core, "FLEXT-Core", "Foundation library providing FlextResult, FlextContainer, FlextModels")
 System_Ext(ldap_servers, "LDAP Directory Servers", "OID, OUD, OpenLDAP, Active Directory, etc.")
 System_Ext(flext_projects, "FLEXT Projects", "algar-oud-mig, flext-api, flext-ldap, etc.")
 System_Ext(data_sources, "Data Sources", "LDIF files, LDAP exports, directory dumps")
@@ -127,7 +127,7 @@ Container_Ext(ldap_servers, "LDAP Directory Servers", "LDAP v3", "OID, OUD, Open
 Container_Ext(ldif_files, "LDIF Data Files", "File System", "RFC 2849 LDIF format files")
 Container_Ext(python_runtime, "Python Runtime", "CPython 3.13+", "Execution environment")
 
-Rel(flext_ldif_lib, flext_core, "Uses", "FlextCore.Result[T], FlextCore.Container, FlextCore.Models")
+Rel(flext_ldif_lib, flext_core, "Uses", "FlextResult[T], FlextContainer, FlextModels")
 Rel(algar_oud_mig, flext_ldif_lib, "Uses", "LDIF processing for Oracle migrations")
 Rel(flext_api, flext_ldif_lib, "Uses", "LDIF processing in API pipelines")
 Rel(flext_ldap, flext_ldif_lib, "Uses", "LDIF export/import operations")
@@ -298,10 +298,10 @@ src/flext_ldif/
 #### 1. Facade Pattern
 
 ```python
-class FlextLdif(FlextCore.Service[FlextCore.Types.Dict]):
+class FlextLdif(FlextService[FlextTypes.Dict]):
     """Unified facade for all LDIF operations."""
 
-    def parse(self, source: Path | str) -> FlextCore.Result[list[FlextLdifModels.Entry]]:
+    def parse(self, source: Path | str) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Parse LDIF data from file or string."""
         return self._client.parse(source)
 ```
@@ -313,11 +313,11 @@ class QuirkBase(ABC):
     """Base class for server-specific quirk implementations."""
 
     @abstractmethod
-    def to_rfc(self, data: str) -> FlextCore.Result[str]:
+    def to_rfc(self, data: str) -> FlextResult[str]:
         """Convert server-specific format to RFC standard."""
 
     @abstractmethod
-    def from_rfc(self, data: str) -> FlextCore.Result[str]:
+    def from_rfc(self, data: str) -> FlextResult[str]:
         """Convert RFC standard to server-specific format."""
 ```
 
@@ -341,10 +341,10 @@ class FlextLdifEntryBuilder:
     def with_dn(self, dn: str) -> Self:
         """Set distinguished name."""
 
-    def with_attributes(self, attrs: dict[str, FlextCore.Types.StringList]) -> Self:
+    def with_attributes(self, attrs: dict[str, FlextTypes.StringList]) -> Self:
         """Set entry attributes."""
 
-    def build(self) -> FlextCore.Result[FlextLdifModels.Entry]:
+    def build(self) -> FlextResult[FlextLdifModels.Entry]:
         """Build validated entry."""
 ```
 
@@ -389,12 +389,12 @@ class Entry(BaseModel):
 class DistinguishedName(BaseModel):
     """Parsed distinguished name with components."""
     value: str
-    components: FlextCore.Types.StringList
+    components: FlextTypes.StringList
     rdn: str
 
 class AttributeValues(BaseModel):
     """Typed attribute values with validation."""
-    values: FlextCore.Types.StringList
+    values: FlextTypes.StringList
 ```
 
 #### Data Processing Pipeline
@@ -481,7 +481,7 @@ if file_size_mb > 100:
 
 - **100% Test Coverage**: 1012/1012 tests passing
 - **Type Safety**: Pyrefly strict mode compliance
-- **Error Recovery**: FlextCore.Result-based error handling
+- **Error Recovery**: FlextResult-based error handling
 - **Validation**: Comprehensive input/output validation
 
 #### Reliability Metrics

@@ -4,36 +4,38 @@ from __future__ import annotations
 
 from typing import override
 
-from flext_core import FlextCore
+from flext_core import FlextResult, FlextService
 
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.typings import FlextLdifTypes
 
 
-class FlextLdifSchemaValidator(FlextCore.Service[FlextLdifTypes.Dict]):
+class FlextLdifSchemaValidator(FlextService[FlextLdifTypes.Dict]):
     """Schema validation service for LDIF entries."""
 
     @override
     def __init__(self) -> None:
         """Initialize schema validator with Phase 1 context enrichment."""
         super().__init__()
-        # Logger and container inherited from FlextCore.Service via FlextCore.Mixins
+        # Logger and container inherited from FlextService via FlextMixins
 
     @override
-    def execute(self) -> FlextCore.Result[FlextLdifTypes.Dict]:
+    def execute(self) -> FlextResult[FlextLdifTypes.Dict]:
         """Execute schema validator service."""
-        return FlextCore.Result[FlextLdifTypes.Dict].ok({
-            "service": FlextLdifSchemaValidator,
-            "status": "ready",
-        })
+        return FlextResult[FlextLdifTypes.Dict].ok(
+            {
+                "service": FlextLdifSchemaValidator,
+                "status": "ready",
+            }
+        )
 
     def validate_entries(
         self,
         entries: list[FlextLdifModels.Entry],
         *,
         strict: bool = False,
-    ) -> FlextCore.Result[FlextLdifModels.LdifValidationResult]:
+    ) -> FlextResult[FlextLdifModels.LdifValidationResult]:
         """Validate multiple LDIF entries.
 
         Args:
@@ -41,7 +43,7 @@ class FlextLdifSchemaValidator(FlextCore.Service[FlextLdifTypes.Dict]):
             strict: If True, apply strict validation rules
 
         Returns:
-            FlextCore.Result containing LdifValidationResult
+            FlextResult containing LdifValidationResult
 
         """
         errors: FlextLdifTypes.StringList = []
@@ -86,15 +88,13 @@ class FlextLdifSchemaValidator(FlextCore.Service[FlextLdifTypes.Dict]):
             warnings=warnings,
         )
 
-        return FlextCore.Result[FlextLdifModels.LdifValidationResult].ok(
-            validation_result
-        )
+        return FlextResult[FlextLdifModels.LdifValidationResult].ok(validation_result)
 
     def validate_entry_against_schema(
         self,
         entry: FlextLdifModels.Entry,
         schema: FlextLdifModels.SchemaDiscoveryResult,
-    ) -> FlextCore.Result[FlextLdifTypes.Dict]:
+    ) -> FlextResult[FlextLdifTypes.Dict]:
         """Validate entry against discovered schema.
 
         Args:
@@ -102,7 +102,7 @@ class FlextLdifSchemaValidator(FlextCore.Service[FlextLdifTypes.Dict]):
             schema: Discovered schema
 
         Returns:
-            FlextCore.Result containing validation report
+            FlextResult containing validation report
 
         """
         warnings: FlextLdifTypes.StringList = [
@@ -127,13 +127,13 @@ class FlextLdifSchemaValidator(FlextCore.Service[FlextLdifTypes.Dict]):
             FlextLdifConstants.DictKeys.DN: entry.dn.value,
         }
 
-        return FlextCore.Result[FlextLdifTypes.Dict].ok(validation_result)
+        return FlextResult[FlextLdifTypes.Dict].ok(validation_result)
 
     def validate_objectclass_requirements(
         self,
         entry: FlextLdifModels.Entry,
         schema: FlextLdifModels.SchemaDiscoveryResult,
-    ) -> FlextCore.Result[FlextLdifTypes.Dict]:
+    ) -> FlextResult[FlextLdifTypes.Dict]:
         """Validate objectClass requirements for entry.
 
         Args:
@@ -141,7 +141,7 @@ class FlextLdifSchemaValidator(FlextCore.Service[FlextLdifTypes.Dict]):
             schema: Discovered schema
 
         Returns:
-            FlextCore.Result containing validation report
+            FlextResult containing validation report
 
         """
         issues: FlextLdifTypes.StringList = []
@@ -171,7 +171,7 @@ class FlextLdifSchemaValidator(FlextCore.Service[FlextLdifTypes.Dict]):
             FlextLdifConstants.DictKeys.DN: entry.dn.value,
         }
 
-        return FlextCore.Result[FlextLdifTypes.Dict].ok(validation_result)
+        return FlextResult[FlextLdifTypes.Dict].ok(validation_result)
 
 
 __all__ = ["FlextLdifSchemaValidator"]

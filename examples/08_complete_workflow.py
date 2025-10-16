@@ -12,7 +12,7 @@ Demonstrates comprehensive FlextLdif integration with direct methods:
 NOTE: This example uses proper error handling instead of assert statements.
 All type validations are done with explicit checks and appropriate error messages,
 representing production-ready error handling patterns.
-- Railway-oriented programming with FlextCore.Result
+- Railway-oriented programming with FlextResult
 - Multi-step processing pipelines using direct API methods
 - Integration of all API functionality (no manual class instantiation!)
 - Real-world LDIF processing scenarios
@@ -43,7 +43,7 @@ from flext_ldif import FlextLdif, ValidationService
 
 
 def railway_oriented_composition() -> None:
-    """Demonstrate railway-oriented programming with FlextCore.Result composition.
+    """Demonstrate railway-oriented programming with FlextResult composition.
 
     Shows elegant chaining of operations with automatic error propagation.
     Uses .env configuration automatically via FlextLdifConfig.
@@ -59,7 +59,7 @@ mail: railway@example.com
 """
 
     # Railway-oriented composition - errors propagate automatically
-    # Each operation returns FlextCore.Result, enabling fluent chaining
+    # Each operation returns FlextResult, enabling fluent chaining
     result = (
         api.parse(ldif_content)
         .flat_map(lambda entries: api.validate_entries(entries).map(lambda _: entries))

@@ -4,7 +4,7 @@
 title FLEXT-LDIF Container Architecture (C4 Level 2)
 
 Container_Boundary(flext_ecosystem, "FLEXT Ecosystem") {
-    Container(flext_core, "FLEXT-Core", "Python", "Foundation patterns and utilities", "Provides FlextCore.Result[T], FlextCore.Container, FlextCore.Models")
+    Container(flext_core, "FLEXT-Core", "Python", "Foundation patterns and utilities", "Provides FlextResult[T], FlextContainer, FlextModels")
 
     Container_Boundary(flext_ldif, "FLEXT-LDIF Library") {
         Container(api_facade, "FlextLdif Facade", "Python Class", "Unified API entry point for all operations")

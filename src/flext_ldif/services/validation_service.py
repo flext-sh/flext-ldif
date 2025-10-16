@@ -18,10 +18,10 @@ from __future__ import annotations
 import re
 from typing import override
 
-from flext_core import FlextCore
+from flext_core import FlextResult, FlextService, FlextTypes
 
 
-class ValidationService(FlextCore.Service[FlextCore.Types.Dict]):
+class ValidationService(FlextService[FlextTypes.Dict]):
     """RFC 2849/4512 compliant validation service for LDIF entries.
 
     Provides methods for validating LDAP attribute names, object class names,
@@ -74,25 +74,27 @@ class ValidationService(FlextCore.Service[FlextCore.Types.Dict]):
         super().__init__()
 
     @override
-    def execute(self) -> FlextCore.Result[FlextCore.Types.Dict]:
+    def execute(self) -> FlextResult[FlextTypes.Dict]:
         """Execute validation service self-check.
 
         Returns:
-            FlextCore.Result containing service status
+            FlextResult containing service status
 
         """
-        return FlextCore.Result[FlextCore.Types.Dict].ok({
-            "service": "ValidationService",
-            "status": "operational",
-            "rfc_compliance": "RFC 2849, RFC 4512",
-            "validation_types": [
-                "attribute_name",
-                "objectclass_name",
-                "attribute_value",
-            ],
-        })
+        return FlextResult[FlextTypes.Dict].ok(
+            {
+                "service": "ValidationService",
+                "status": "operational",
+                "rfc_compliance": "RFC 2849, RFC 4512",
+                "validation_types": [
+                    "attribute_name",
+                    "objectclass_name",
+                    "attribute_value",
+                ],
+            }
+        )
 
-    def validate_attribute_name(self, name: str) -> FlextCore.Result[bool]:
+    def validate_attribute_name(self, name: str) -> FlextResult[bool]:
         """Validate LDAP attribute name against RFC 4512 rules.
 
         RFC 4512 Section 2.5: Attribute Type Definitions
@@ -105,7 +107,7 @@ class ValidationService(FlextCore.Service[FlextCore.Types.Dict]):
             name: Attribute name to validate
 
         Returns:
-            FlextCore.Result containing True if valid, False otherwise
+            FlextResult containing True if valid, False otherwise
 
         Example:
             >>> result = service.validate_attribute_name("cn")
@@ -121,28 +123,26 @@ class ValidationService(FlextCore.Service[FlextCore.Types.Dict]):
         try:
             # Check type
             if not isinstance(name, str):
-                return FlextCore.Result[bool].ok(False)
+                return FlextResult[bool].ok(False)
 
             # Check empty
             if not name:
-                return FlextCore.Result[bool].ok(False)
+                return FlextResult[bool].ok(False)
 
             # Check length (RFC 4512 typical limit)
             if len(name) > self._MAX_ATTR_NAME_LENGTH:
-                return FlextCore.Result[bool].ok(False)
+                return FlextResult[bool].ok(False)
 
             # Check pattern (RFC 4512: starts with letter, contains letters/digits/hyphens)
             if not self._ATTR_NAME_PATTERN.match(name):
-                return FlextCore.Result[bool].ok(False)
+                return FlextResult[bool].ok(False)
 
-            return FlextCore.Result[bool].ok(True)
+            return FlextResult[bool].ok(True)
 
         except Exception as e:
-            return FlextCore.Result[bool].fail(
-                f"Failed to validate attribute name: {e}"
-            )
+            return FlextResult[bool].fail(f"Failed to validate attribute name: {e}")
 
-    def validate_objectclass_name(self, name: str) -> FlextCore.Result[bool]:
+    def validate_objectclass_name(self, name: str) -> FlextResult[bool]:
         """Validate LDAP object class name against RFC 4512 rules.
 
         RFC 4512 Section 2.4: Object Class Definitions
@@ -155,7 +155,7 @@ class ValidationService(FlextCore.Service[FlextCore.Types.Dict]):
             name: Object class name to validate
 
         Returns:
-            FlextCore.Result containing True if valid, False otherwise
+            FlextResult containing True if valid, False otherwise
 
         Example:
             >>> result = service.validate_objectclass_name("person")
@@ -175,7 +175,7 @@ class ValidationService(FlextCore.Service[FlextCore.Types.Dict]):
         self,
         value: str,
         max_length: int | None = None,
-    ) -> FlextCore.Result[bool]:
+    ) -> FlextResult[bool]:
         """Validate LDAP attribute value length and format.
 
         Args:
@@ -183,7 +183,7 @@ class ValidationService(FlextCore.Service[FlextCore.Types.Dict]):
             max_length: Optional maximum length (default: 1MB)
 
         Returns:
-            FlextCore.Result containing True if valid, False otherwise
+            FlextResult containing True if valid, False otherwise
 
         Example:
             >>> result = service.validate_attribute_value("John Smith")
@@ -196,31 +196,29 @@ class ValidationService(FlextCore.Service[FlextCore.Types.Dict]):
         try:
             # Check if value is a string
             if not isinstance(value, str):
-                return FlextCore.Result[bool].ok(False)
+                return FlextResult[bool].ok(False)
 
             # Allow empty values (valid in LDAP)
             if not value:
-                return FlextCore.Result[bool].ok(True)
+                return FlextResult[bool].ok(True)
 
             # Check length
             max_len = (
                 max_length if max_length is not None else self._MAX_ATTR_VALUE_LENGTH
             )
             if len(value) > max_len:
-                return FlextCore.Result[bool].ok(False)
+                return FlextResult[bool].ok(False)
 
-            return FlextCore.Result[bool].ok(True)
+            return FlextResult[bool].ok(True)
 
         except Exception as e:
-            return FlextCore.Result[bool].fail(
-                f"Failed to validate attribute value: {e}"
-            )
+            return FlextResult[bool].fail(f"Failed to validate attribute value: {e}")
 
     def validate_dn_component(
         self,
         attr: str,
         value: str,
-    ) -> FlextCore.Result[bool]:
+    ) -> FlextResult[bool]:
         """Validate DN component (attribute=value pair).
 
         Validates both the attribute name and value for DN usage.
@@ -230,7 +228,7 @@ class ValidationService(FlextCore.Service[FlextCore.Types.Dict]):
             value: Attribute value
 
         Returns:
-            FlextCore.Result containing True if valid, False otherwise
+            FlextResult containing True if valid, False otherwise
 
         Example:
             >>> result = service.validate_dn_component("cn", "John Smith")
@@ -241,17 +239,17 @@ class ValidationService(FlextCore.Service[FlextCore.Types.Dict]):
             # Validate attribute name
             attr_result = self.validate_attribute_name(attr)
             if attr_result.is_failure or not attr_result.unwrap():
-                return FlextCore.Result[bool].ok(False)
+                return FlextResult[bool].ok(False)
 
             # Validate value - must be a string
             if not isinstance(value, str):
-                return FlextCore.Result[bool].ok(False)
+                return FlextResult[bool].ok(False)
 
             # DN values can be empty strings
-            return FlextCore.Result[bool].ok(True)
+            return FlextResult[bool].ok(True)
 
         except Exception as e:
-            return FlextCore.Result[bool].fail(f"Failed to validate DN component: {e}")
+            return FlextResult[bool].fail(f"Failed to validate DN component: {e}")
 
 
 __all__ = ["ValidationService"]

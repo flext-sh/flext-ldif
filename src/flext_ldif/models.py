@@ -1,7 +1,7 @@
 """FLEXT LDIF Models - Unified Namespace for LDIF Domain Models.
 
 This module provides a unified namespace class that aggregates all LDIF domain models
-from specialized sub-modules. It extends flext-core FlextCore.Models with LDIF-specific
+from specialized sub-modules. It extends flext-core FlextModels with LDIF-specific
 domain entities organized into focused modules.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -20,30 +20,30 @@ from __future__ import annotations
 import re
 from typing import ClassVar
 
-from flext_core import FlextCore
+from flext_core import FlextModels, FlextResult, FlextTypes
 from pydantic import Field, field_validator
 
 
-class FlextLdifModels(FlextCore.Models):
-    """LDIF domain models extending flext-core FlextCore.Models.
+class FlextLdifModels(FlextModels):
+    """LDIF domain models extending flext-core FlextModels.
 
     Unified namespace class that aggregates all LDIF domain models from specialized sub-modules.
     Provides a single access point for all LDIF models while maintaining modular organization.
 
-    This class extends flext-core FlextCore.Models and organizes LDIF-specific models into
+    This class extends flext-core FlextModels and organizes LDIF-specific models into
     focused sub-modules for better maintainability and reduced complexity.
     """
 
     # =========================================================================
     # DOMAIN MODELS - Core business entities
     # =========================================================================
-    class DistinguishedName(FlextCore.Models.StrictArbitraryTypesModel):
+    class DistinguishedName(FlextModels.StrictArbitraryTypesModel):
         """Distinguished Name value object."""
 
         value: str = Field(
             ..., description="DN string value", min_length=1, max_length=2048
         )
-        metadata: FlextCore.Types.StringDict | None = Field(
+        metadata: FlextTypes.StringDict | None = Field(
             default=None,
             description="Quirk-specific metadata for preserving original format",
         )
@@ -111,14 +111,14 @@ class FlextLdifModels(FlextCore.Models):
         @classmethod
         def create(
             cls, dn_string: str
-        ) -> FlextCore.Result[FlextLdifModels.DistinguishedName]:
+        ) -> FlextResult[FlextLdifModels.DistinguishedName]:
             """Create a DistinguishedName instance."""
             try:
-                return FlextCore.Result[FlextLdifModels.DistinguishedName].ok(
+                return FlextResult[FlextLdifModels.DistinguishedName].ok(
                     cls(value=dn_string)
                 )
             except Exception as e:
-                return FlextCore.Result[FlextLdifModels.DistinguishedName].fail(
+                return FlextResult[FlextLdifModels.DistinguishedName].fail(
                     f"Failed to create DistinguishedName: {e}"
                 )
 
@@ -131,22 +131,22 @@ class FlextLdifModels(FlextCore.Models):
             """Return the DN string value for proper str() conversion."""
             return self.value
 
-    class AttributeName(FlextCore.Models.StrictArbitraryTypesModel):
+    class AttributeName(FlextModels.StrictArbitraryTypesModel):
         """LDIF attribute name value object."""
 
         name: str = Field(..., description="Attribute name")
 
-    class LdifUrl(FlextCore.Models.StrictArbitraryTypesModel):
+    class LdifUrl(FlextModels.StrictArbitraryTypesModel):
         """LDIF URL value object."""
 
         url: str = Field(..., description="LDIF URL")
 
-    class Encoding(FlextCore.Models.StrictArbitraryTypesModel):
+    class Encoding(FlextModels.StrictArbitraryTypesModel):
         """LDIF encoding value object."""
 
         encoding: str = Field(..., description="Character encoding")
 
-    class QuirkMetadata(FlextCore.Models.StrictArbitraryTypesModel):
+    class QuirkMetadata(FlextModels.StrictArbitraryTypesModel):
         """Universal metadata container for quirk-specific data preservation.
 
         This model supports ANY quirk type and prevents data loss during RFC conversion.
@@ -197,7 +197,7 @@ class FlextLdifModels(FlextCore.Models):
                 parsed_timestamp=None,  # Will be set by caller if needed
             )
 
-    class AclPermissions(FlextCore.Models.StrictArbitraryTypesModel):
+    class AclPermissions(FlextModels.StrictArbitraryTypesModel):
         """ACL permissions for LDAP operations."""
 
         read: bool = Field(default=False, description="Read permission")
@@ -212,7 +212,7 @@ class FlextLdifModels(FlextCore.Models):
         @classmethod
         def create(
             cls, data: dict[str, object]
-        ) -> FlextCore.Result[FlextLdifModels.AclPermissions]:
+        ) -> FlextResult[FlextLdifModels.AclPermissions]:
             """Create an AclPermissions instance from data."""
             try:
                 # Handle permissions list format from tests
@@ -225,11 +225,11 @@ class FlextLdifModels(FlextCore.Models):
                                 data[perm] = True
                         data.pop("permissions", None)
 
-                return FlextCore.Result[FlextLdifModels.AclPermissions].ok(
+                return FlextResult[FlextLdifModels.AclPermissions].ok(
                     cls.model_validate(data)
                 )
             except Exception as e:
-                return FlextCore.Result[FlextLdifModels.AclPermissions].fail(
+                return FlextResult[FlextLdifModels.AclPermissions].fail(
                     f"Failed to create AclPermissions: {e}"
                 )
 
@@ -255,7 +255,7 @@ class FlextLdifModels(FlextCore.Models):
                 perms.append("proxy")
             return perms
 
-    class AclTarget(FlextCore.Models.StrictArbitraryTypesModel):
+    class AclTarget(FlextModels.StrictArbitraryTypesModel):
         """ACL target specification."""
 
         target_dn: str = Field(..., description="Target DN pattern")
@@ -266,18 +266,18 @@ class FlextLdifModels(FlextCore.Models):
         @classmethod
         def create(
             cls, data: dict[str, object]
-        ) -> FlextCore.Result[FlextLdifModels.AclTarget]:
+        ) -> FlextResult[FlextLdifModels.AclTarget]:
             """Create an AclTarget instance from data."""
             try:
-                return FlextCore.Result[FlextLdifModels.AclTarget].ok(
+                return FlextResult[FlextLdifModels.AclTarget].ok(
                     cls.model_validate(data)
                 )
             except Exception as e:
-                return FlextCore.Result[FlextLdifModels.AclTarget].fail(
+                return FlextResult[FlextLdifModels.AclTarget].fail(
                     f"Failed to create AclTarget: {e}"
                 )
 
-    class AclSubject(FlextCore.Models.StrictArbitraryTypesModel):
+    class AclSubject(FlextModels.StrictArbitraryTypesModel):
         """ACL subject specification."""
 
         subject_type: str = Field(..., description="Subject type (user, group, etc.)")
@@ -286,18 +286,18 @@ class FlextLdifModels(FlextCore.Models):
         @classmethod
         def create(
             cls, data: dict[str, object]
-        ) -> FlextCore.Result[FlextLdifModels.AclSubject]:
+        ) -> FlextResult[FlextLdifModels.AclSubject]:
             """Create an AclSubject instance from data."""
             try:
-                return FlextCore.Result[FlextLdifModels.AclSubject].ok(
+                return FlextResult[FlextLdifModels.AclSubject].ok(
                     cls.model_validate(data)
                 )
             except Exception as e:
-                return FlextCore.Result[FlextLdifModels.AclSubject].fail(
+                return FlextResult[FlextLdifModels.AclSubject].fail(
                     f"Failed to create AclSubject: {e}"
                 )
 
-    class Acl(FlextCore.Models.StrictArbitraryTypesModel):
+    class Acl(FlextModels.StrictArbitraryTypesModel):
         """Unified ACL representation."""
 
         name: str = Field(..., description="ACL name")
@@ -310,16 +310,12 @@ class FlextLdifModels(FlextCore.Models):
         raw_acl: str = Field(default="", description="Original ACL string")
 
         @classmethod
-        def create(
-            cls, data: dict[str, object]
-        ) -> FlextCore.Result[FlextLdifModels.Acl]:
+        def create(cls, data: dict[str, object]) -> FlextResult[FlextLdifModels.Acl]:
             """Create an Acl instance from data."""
             try:
-                return FlextCore.Result[FlextLdifModels.Acl].ok(
-                    cls.model_validate(data)
-                )
+                return FlextResult[FlextLdifModels.Acl].ok(cls.model_validate(data))
             except Exception as e:
-                return FlextCore.Result[FlextLdifModels.Acl].fail(
+                return FlextResult[FlextLdifModels.Acl].fail(
                     f"Failed to create Acl: {e}"
                 )
 
@@ -329,18 +325,18 @@ class FlextLdifModels(FlextCore.Models):
     # NOTE: CQRS classes (ParseLdifCommand, WriteLdifCommand, etc.) are
     # exported from flext_ldif.__init__.py to avoid circular imports.
 
-    class LdifValidationResult(FlextCore.Models.StrictArbitraryTypesModel):
+    class LdifValidationResult(FlextModels.StrictArbitraryTypesModel):
         """Result of LDIF validation operations."""
 
         is_valid: bool = Field(default=False, description="Whether validation passed")
-        errors: FlextCore.Types.StringList = Field(
+        errors: FlextTypes.StringList = Field(
             default_factory=list, description="List of validation errors"
         )
-        warnings: FlextCore.Types.StringList = Field(
+        warnings: FlextTypes.StringList = Field(
             default_factory=list, description="List of validation warnings"
         )
 
-    class AnalyticsResult(FlextCore.Models.StrictArbitraryTypesModel):
+    class AnalyticsResult(FlextModels.StrictArbitraryTypesModel):
         """Result of LDIF analytics operations."""
 
         total_entries: int = Field(
@@ -349,18 +345,18 @@ class FlextLdifModels(FlextCore.Models):
         object_class_distribution: dict[str, int] = Field(
             default_factory=dict, description="Distribution of object classes"
         )
-        patterns_detected: FlextCore.Types.StringList = Field(
+        patterns_detected: FlextTypes.StringList = Field(
             default_factory=list, description="Detected patterns in the data"
         )
 
-    class SearchConfig(FlextCore.Models.StrictArbitraryTypesModel):
+    class SearchConfig(FlextModels.StrictArbitraryTypesModel):
         """Configuration for LDAP search operations."""
 
         base_dn: str = Field(..., description="Base DN for the search")
         search_filter: str = Field(
             default="(objectClass=*)", description="LDAP search filter"
         )
-        attributes: FlextCore.Types.StringList = Field(
+        attributes: FlextTypes.StringList = Field(
             default_factory=list, description="Attributes to retrieve"
         )
         scope: str = Field(default="sub", description="Search scope (base, one, sub)")
@@ -391,7 +387,7 @@ class FlextLdifModels(FlextCore.Models):
                 raise ValueError(msg)
             return v.strip()
 
-    class DiffItem(FlextCore.Models.StrictArbitraryTypesModel):
+    class DiffItem(FlextModels.StrictArbitraryTypesModel):
         """Individual item in a diff operation result.
 
         Represents a single changed item with its metadata.
@@ -403,7 +399,7 @@ class FlextLdifModels(FlextCore.Models):
             default=None, description="Additional metadata about the change"
         )
 
-    class DiffResult(FlextCore.Models.StrictArbitraryTypesModel):
+    class DiffResult(FlextModels.StrictArbitraryTypesModel):
         """Result of a diff operation showing changes between two datasets.
 
         Value object for diff comparison results across LDAP data types:
@@ -461,7 +457,7 @@ class FlextLdifModels(FlextCore.Models):
 
             return ", ".join(parts)
 
-    class FilterCriteria(FlextCore.Models.StrictArbitraryTypesModel):
+    class FilterCriteria(FlextModels.StrictArbitraryTypesModel):
         """Criteria for filtering LDIF entries.
 
         Supports multiple filter types:
@@ -487,14 +483,14 @@ class FlextLdifModels(FlextCore.Models):
             default=None,
             description="Pattern for matching (supports wildcards with fnmatch)",
         )
-        whitelist: FlextCore.Types.StringList | None = Field(
+        whitelist: FlextTypes.StringList | None = Field(
             default=None,
             description="Whitelist of patterns to include (for OID filtering)",
         )
-        blacklist: FlextCore.Types.StringList | None = Field(
+        blacklist: FlextTypes.StringList | None = Field(
             default=None, description="Blacklist of patterns to exclude"
         )
-        required_attributes: FlextCore.Types.StringList | None = Field(
+        required_attributes: FlextTypes.StringList | None = Field(
             default=None, description="Required attributes for objectClass filtering"
         )
         mode: str = Field(
@@ -502,7 +498,7 @@ class FlextLdifModels(FlextCore.Models):
             description="Filter mode: 'include' to keep matches, 'exclude' to remove matches",
         )
 
-    class ExclusionInfo(FlextCore.Models.StrictArbitraryTypesModel):
+    class ExclusionInfo(FlextModels.StrictArbitraryTypesModel):
         """Metadata for excluded entries/schema items.
 
         Stored in QuirkMetadata.extensions['exclusion_info'] to track why
@@ -531,7 +527,7 @@ class FlextLdifModels(FlextCore.Models):
             ..., description="ISO 8601 timestamp when exclusion was marked"
         )
 
-    class CategorizedEntries(FlextCore.Models.StrictArbitraryTypesModel):
+    class CategorizedEntries(FlextModels.StrictArbitraryTypesModel):
         """Result of entry categorization by objectClass.
 
         Categorizes LDIF entries into users, groups, containers, and uncategorized
@@ -574,7 +570,7 @@ class FlextLdifModels(FlextCore.Models):
                 uncategorized=[],
             )
 
-    class SchemaDiscoveryResult(FlextCore.Models.StrictArbitraryTypesModel):
+    class SchemaDiscoveryResult(FlextModels.StrictArbitraryTypesModel):
         """Result of schema discovery operations."""
 
         attributes: dict[str, dict[str, object]] = Field(
@@ -602,7 +598,7 @@ class FlextLdifModels(FlextCore.Models):
             description="Number of entries used for schema discovery",
         )
 
-    class SchemaAttribute(FlextCore.Models.StrictArbitraryTypesModel):
+    class SchemaAttribute(FlextModels.StrictArbitraryTypesModel):
         """LDAP schema attribute definition model.
 
         Represents an LDAP attribute type definition from schema.
@@ -622,7 +618,7 @@ class FlextLdifModels(FlextCore.Models):
             default=None, description="Quirk-specific metadata"
         )
 
-    class SchemaObjectClass(FlextCore.Models.StrictArbitraryTypesModel):
+    class SchemaObjectClass(FlextModels.StrictArbitraryTypesModel):
         """LDAP schema object class definition model.
 
         Represents an LDAP object class definition from schema.
@@ -653,18 +649,18 @@ class FlextLdifModels(FlextCore.Models):
         @classmethod
         def create(
             cls, oc_data: dict[str, object]
-        ) -> FlextCore.Result[FlextLdifModels.SchemaObjectClass]:
+        ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
             """Create a SchemaObjectClass instance from data."""
             try:
-                return FlextCore.Result[FlextLdifModels.SchemaObjectClass].ok(
+                return FlextResult[FlextLdifModels.SchemaObjectClass].ok(
                     cls.model_validate(oc_data)
                 )
             except Exception as e:
-                return FlextCore.Result[FlextLdifModels.SchemaObjectClass].fail(
+                return FlextResult[FlextLdifModels.SchemaObjectClass].fail(
                     f"Failed to create SchemaObjectClass: {e}"
                 )
 
-    class Entry(FlextCore.Models.Entity):
+    class Entry(FlextModels.Entity):
         """LDIF entry domain model."""
 
         dn: FlextLdifModels.DistinguishedName = Field(
@@ -682,10 +678,10 @@ class FlextLdifModels(FlextCore.Models):
         def create(
             cls,
             dn: str | FlextLdifModels.DistinguishedName,
-            attributes: dict[str, FlextCore.Types.StringList]
+            attributes: dict[str, FlextTypes.StringList]
             | FlextLdifModels.LdifAttributes,
             metadata: FlextLdifModels.QuirkMetadata | None = None,
-        ) -> FlextCore.Result[FlextLdifModels.Entry]:
+        ) -> FlextResult[FlextLdifModels.Entry]:
             """Create a new Entry instance with validation.
 
             Args:
@@ -694,7 +690,7 @@ class FlextLdifModels(FlextCore.Models):
                 metadata: Optional quirk metadata
 
             Returns:
-                FlextCore.Result with Entry instance or validation error
+                FlextResult with Entry instance or validation error
 
             """
             try:
@@ -703,7 +699,7 @@ class FlextLdifModels(FlextCore.Models):
                 if isinstance(dn, str):
                     dn_result = FlextLdifModels.DistinguishedName.create(dn)
                     if not dn_result.is_success:
-                        return FlextCore.Result[FlextLdifModels.Entry].fail(
+                        return FlextResult[FlextLdifModels.Entry].fail(
                             f"Failed to create Entry: {dn_result.error}"
                         )
                     dn_obj = dn_result.unwrap()
@@ -730,17 +726,15 @@ class FlextLdifModels(FlextCore.Models):
                     "attributes": attrs_obj,
                     "metadata": metadata,
                 }
-                return FlextCore.Result[FlextLdifModels.Entry].ok(
+                return FlextResult[FlextLdifModels.Entry].ok(
                     cls.model_validate(entry_data)
                 )
             except Exception as e:
-                return FlextCore.Result[FlextLdifModels.Entry].fail(
+                return FlextResult[FlextLdifModels.Entry].fail(
                     f"Failed to create Entry: {e}"
                 )
 
-        def get_attribute_values(
-            self, attribute_name: str
-        ) -> FlextCore.Types.StringList:
+        def get_attribute_values(self, attribute_name: str) -> FlextTypes.StringList:
             """Get all values for a specific attribute.
 
             Args:
@@ -779,10 +773,10 @@ class FlextLdifModels(FlextCore.Models):
             object_class_values = self.get_attribute_values("objectClass")
             return object_class in object_class_values
 
-    class AttributeValues(FlextCore.Models.StrictArbitraryTypesModel):
+    class AttributeValues(FlextModels.StrictArbitraryTypesModel):
         """LDIF attribute values container."""
 
-        values: FlextCore.Types.StringList = Field(
+        values: FlextTypes.StringList = Field(
             default_factory=list, description="Attribute values"
         )
 
@@ -793,20 +787,20 @@ class FlextLdifModels(FlextCore.Models):
                 return self.values[0]
             return None
 
-    class LdifAttributes(FlextCore.Models.StrictArbitraryTypesModel):
+    class LdifAttributes(FlextModels.StrictArbitraryTypesModel):
         """LDIF attributes container with dict-like interface."""
 
         attributes: dict[str, FlextLdifModels.AttributeValues] = Field(
             default_factory=dict, description="Attribute name to values mapping"
         )
-        metadata: FlextCore.Types.StringDict | None = Field(
+        metadata: FlextTypes.StringDict | None = Field(
             default=None,
             description="Quirk-specific metadata for preserving attribute ordering and formats",
         )
 
         def get(
-            self, key: str, default: FlextCore.Types.StringList | None = None
-        ) -> FlextCore.Types.StringList | None:
+            self, key: str, default: FlextTypes.StringList | None = None
+        ) -> FlextTypes.StringList | None:
             """Dict-like get method for backward compatibility."""
             if key in self.attributes:
                 return self.attributes[key].values
@@ -867,28 +861,28 @@ class FlextLdifModels(FlextCore.Models):
         @classmethod
         def create(
             cls, attrs_data: dict[str, object]
-        ) -> FlextCore.Result[FlextLdifModels.LdifAttributes]:
+        ) -> FlextResult[FlextLdifModels.LdifAttributes]:
             """Create an LdifAttributes instance from data.
 
             Args:
                 attrs_data: Dictionary mapping attribute names to AttributeValues objects
 
             Returns:
-                FlextCore.Result with LdifAttributes instance or validation error
+                FlextResult with LdifAttributes instance or validation error
 
             """
             try:
                 # Wrap attrs_data in "attributes" key for Pydantic validation
                 # The LdifAttributes model has an "attributes" field that expects this structure
-                return FlextCore.Result[FlextLdifModels.LdifAttributes].ok(
+                return FlextResult[FlextLdifModels.LdifAttributes].ok(
                     cls.model_validate({"attributes": attrs_data})
                 )
             except Exception as e:
-                return FlextCore.Result[FlextLdifModels.LdifAttributes].fail(
+                return FlextResult[FlextLdifModels.LdifAttributes].fail(
                     f"Failed to create LdifAttributes: {e}"
                 )
 
-    class EntryParsedEvent(FlextCore.Models.DomainEvent):
+    class EntryParsedEvent(FlextModels.DomainEvent):
         """Event emitted when an entry is successfully parsed."""
 
         event_type: str = Field(..., description="Event type")
@@ -898,7 +892,7 @@ class FlextLdifModels(FlextCore.Models):
         format_detected: str = Field(..., description="Detected format")
         timestamp: str = Field(..., description="Event timestamp")
 
-    class EntriesValidatedEvent(FlextCore.Models.DomainEvent):
+    class EntriesValidatedEvent(FlextModels.DomainEvent):
         """Event emitted when entries are validated."""
 
         event_type: str = Field(..., description="Event type")
@@ -909,7 +903,7 @@ class FlextLdifModels(FlextCore.Models):
         strict_mode: bool = Field(..., description="Whether strict mode was used")
         timestamp: str = Field(..., description="Event timestamp")
 
-    class AnalyticsGeneratedEvent(FlextCore.Models.DomainEvent):
+    class AnalyticsGeneratedEvent(FlextModels.DomainEvent):
         """Event emitted when analytics are generated."""
 
         event_type: str = Field(..., description="Event type")
@@ -920,7 +914,7 @@ class FlextLdifModels(FlextCore.Models):
         )
         timestamp: str = Field(..., description="Event timestamp")
 
-    class EntriesWrittenEvent(FlextCore.Models.DomainEvent):
+    class EntriesWrittenEvent(FlextModels.DomainEvent):
         """Event emitted when entries are written."""
 
         event_type: str = Field(..., description="Event type")
@@ -933,7 +927,7 @@ class FlextLdifModels(FlextCore.Models):
         )
         timestamp: str = Field(..., description="Event timestamp")
 
-    class MigrationCompletedEvent(FlextCore.Models.DomainEvent):
+    class MigrationCompletedEvent(FlextModels.DomainEvent):
         """Event emitted when migration is completed."""
 
         event_type: str = Field(..., description="Event type")
@@ -943,7 +937,7 @@ class FlextLdifModels(FlextCore.Models):
         migration_type: str = Field(..., description="Type of migration performed")
         timestamp: str = Field(..., description="Event timestamp")
 
-    class QuirkRegisteredEvent(FlextCore.Models.DomainEvent):
+    class QuirkRegisteredEvent(FlextModels.DomainEvent):
         """Event emitted when a quirk is registered."""
 
         event_type: str = Field(..., description="Event type")

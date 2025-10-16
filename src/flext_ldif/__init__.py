@@ -10,18 +10,15 @@ The library features:
     - Server-specific quirks system (OID, OUD, OpenLDAP, etc.)
     - Generic server-agnostic migration pipeline
     - Type-safe Pydantic v2 models with validation
-    - CQRS pattern with FlextCore.Dispatcher and FlextCore.Registry
-    - FlextCore.Processors integration for batch and parallel processing
-    - Railway-oriented error handling with FlextCore.Result
+    - FlextProcessors integration for batch and parallel processing
+    - Railway-oriented error handling with FlextResult
 
 Full flext-core 1.0.0 Integration:
-    - FlextCore.Result for monadic error composition
-    - FlextCore.Dispatcher for CQRS orchestration
-    - FlextCore.Registry for handler registration
-    - FlextCore.Processors for data transformations
-    - FlextCore.Container for dependency injection
-    - FlextCore.Bus for domain event emission
-    - FlextCore.Logger for structured logging
+    - FlextResult for monadic error composition
+    - FlextProcessors for data transformations
+    - FlextContainer for dependency injection
+    - FlextBus for domain event emission
+    - FlextLogger for structured logging
 
 Args:
     None
@@ -89,51 +86,18 @@ from flext_ldif.categorized_pipeline import FlextLdifCategorizedMigrationPipelin
 from flext_ldif.client import FlextLdifClient
 from flext_ldif.config import FlextLdifConfig
 from flext_ldif.constants import FlextLdifConstants
-from flext_ldif.containers import (
-    FlextLdifContainer,
-    flext_ldif_container,
-)
-from flext_ldif.cqrs import (
-    AnalyzeEntriesQuery,
-    AnalyzeEntriesQueryHandler,
-    BuildGroupEntryCommand,
-    BuildGroupEntryCommandHandler,
-    BuildOrganizationalUnitCommand,
-    BuildOrganizationalUnitCommandHandler,
-    BuildPersonEntryCommand,
-    BuildPersonEntryCommandHandler,
-    ConvertEntriesToDictsQuery,
-    ConvertEntriesToDictsQueryHandler,
-    ConvertEntryToDictQuery,
-    ConvertEntryToDictQueryHandler,
-    ExtractAclsQuery,
-    ExtractAclsQueryHandler,
-    FilterEntriesQuery,
-    FilterEntriesQueryHandler,
-    MigrateLdifCommand,
-    MigrateLdifCommandHandler,
-    ParseLdifCommand,
-    ParseLdifCommandHandler,
-    ValidateEntriesQuery,
-    ValidateEntriesQueryHandler,
-    WriteLdifCommand,
-    WriteLdifCommandHandler,
-)
 from flext_ldif.events import (
     LdifMigratedEvent,
     LdifParsedEvent,
     LdifValidatedEvent,
     LdifWrittenEvent,
 )
-from flext_ldif.exceptions import FlextLdifExceptions
 from flext_ldif.filters import FlextLdifFilters
 from flext_ldif.migration_pipeline import FlextLdifMigrationPipeline
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.processors import LdifBatchProcessor, LdifParallelProcessor
-from flext_ldif.protocols import FlextLdifProtocols
 from flext_ldif.quirks.conversion_matrix import QuirksConversionMatrix
 from flext_ldif.quirks.registry import FlextLdifQuirksRegistry
-from flext_ldif.schema_whitelist import FlextLdifSchemaWhitelistService
 from flext_ldif.services.dn_service import DnService
 from flext_ldif.services.validation_service import ValidationService
 from flext_ldif.typings import FlextLdifTypes
@@ -141,36 +105,16 @@ from flext_ldif.typings import FlextLdifTypes
 __email__ = "dev@flext.com"
 
 __all__ = [
-    "AnalyzeEntriesQuery",
-    "AnalyzeEntriesQueryHandler",
-    "BuildGroupEntryCommand",
-    "BuildGroupEntryCommandHandler",
-    "BuildOrganizationalUnitCommand",
-    "BuildOrganizationalUnitCommandHandler",
-    "BuildPersonEntryCommand",
-    "BuildPersonEntryCommandHandler",
-    "ConvertEntriesToDictsQuery",
-    "ConvertEntriesToDictsQueryHandler",
-    "ConvertEntryToDictQuery",
-    "ConvertEntryToDictQueryHandler",
     "DnService",
-    "ExtractAclsQuery",
-    "ExtractAclsQueryHandler",
-    "FilterEntriesQuery",
-    "FilterEntriesQueryHandler",
     "FlextLdif",
     "FlextLdifCategorizedMigrationPipeline",
     "FlextLdifClient",
     "FlextLdifConfig",
     "FlextLdifConstants",
-    "FlextLdifContainer",
-    "FlextLdifExceptions",
     "FlextLdifFilters",
     "FlextLdifMigrationPipeline",
     "FlextLdifModels",
-    "FlextLdifProtocols",
     "FlextLdifQuirksRegistry",
-    "FlextLdifSchemaWhitelistService",
     "FlextLdifTypes",
     "LdifBatchProcessor",
     "LdifMigratedEvent",
@@ -178,17 +122,8 @@ __all__ = [
     "LdifParsedEvent",
     "LdifValidatedEvent",
     "LdifWrittenEvent",
-    "MigrateLdifCommand",
-    "MigrateLdifCommandHandler",
-    "ParseLdifCommand",
-    "ParseLdifCommandHandler",
     "QuirksConversionMatrix",
-    "ValidateEntriesQuery",
-    "ValidateEntriesQueryHandler",
     "ValidationService",
-    "WriteLdifCommand",
-    "WriteLdifCommandHandler",
     "__version__",
     "__version_info__",
-    "flext_ldif_container",
 ]

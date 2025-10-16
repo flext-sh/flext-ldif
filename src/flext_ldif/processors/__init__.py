@@ -1,7 +1,7 @@
 """Batch and Parallel Processors for FLEXT-LDIF.
 
 This package provides batch and parallel processing capabilities for LDIF entries
-using FlextCore.Processors infrastructure.
+using FlextProcessors infrastructure.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT

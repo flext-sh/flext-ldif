@@ -12,7 +12,7 @@ All functionality accessed through FlextLdif facade.
 
 from __future__ import annotations
 
-from flext_core import FlextCore
+from flext_core import FlextResult
 
 from flext_ldif import FlextLdif
 
@@ -269,7 +269,7 @@ aci: (target="ldap:///ou=Pipeline,dc=example,dc=com")(targetattr="*")(version 3.
     # Evaluate ACLs - need to convert Acl to AclRule and provide context
     # For this example, skip evaluation as it requires proper type conversion
     # eval_result = acl_service.evaluate_acl_rules(acls, {"user": "anonymous"})
-    eval_result = FlextCore.Result[bool].ok(True)  # Placeholder for example
+    eval_result = FlextResult[bool].ok(True)  # Placeholder for example
 
     if eval_result.is_success:
         evaluation = eval_result.unwrap()

@@ -56,14 +56,14 @@ class FlextLdif:
 Parse LDIF file into structured entries.
 
 ```python
-def parse_file(self, file_path: Path | str) -> FlextCore.Result[list[FlextLdifModels.Entry]]:
+def parse_file(self, file_path: Path | str) -> FlextResult[list[FlextLdifModels.Entry]]:
     """Parse LDIF file using railway-oriented programming.
 
     Args:
         file_path: Path to LDIF file to parse
 
     Returns:
-        FlextCore.Result containing list of parsed entries or error
+        FlextResult containing list of parsed entries or error
 
     Example:
         >>> api = FlextLdif()
@@ -79,14 +79,14 @@ def parse_file(self, file_path: Path | str) -> FlextCore.Result[list[FlextLdifMo
 Parse LDIF string content into structured entries.
 
 ```python
-def parse_string(self, content: str) -> FlextCore.Result[list[FlextLdifModels.Entry]]:
+def parse_string(self, content: str) -> FlextResult[list[FlextLdifModels.Entry]]:
     """Parse LDIF string content.
 
     Args:
         content: LDIF string content to parse
 
     Returns:
-        FlextCore.Result containing parsed entries or error
+        FlextResult containing parsed entries or error
 
     Example:
         >>> ldif_content = '''
@@ -104,14 +104,14 @@ def parse_string(self, content: str) -> FlextCore.Result[list[FlextLdifModels.En
 Validate LDIF entries against RFC 2849 and business rules.
 
 ```python
-def validate_entries(self, entries: list[FlextLdifModels.Entry]) -> FlextCore.Result[bool]:
+def validate_entries(self, entries: list[FlextLdifModels.Entry]) -> FlextResult[bool]:
     """Validate LDIF entries.
 
     Args:
         entries: List of LDIF entries to validate
 
     Returns:
-        FlextCore.Result[bool] indicating validation success
+        FlextResult[bool] indicating validation success
 
     Example:
         >>> entries = parse_result.unwrap()
@@ -130,7 +130,7 @@ def write_file(
     self,
     entries: list[FlextLdifModels.Entry],
     file_path: Path | str
-) -> FlextCore.Result[bool]:
+) -> FlextResult[bool]:
     """Write LDIF entries to file.
 
     Args:
@@ -138,7 +138,7 @@ def write_file(
         file_path: Output file path
 
     Returns:
-        FlextCore.Result[bool] indicating write success
+        FlextResult[bool] indicating write success
 
     Example:
         >>> entries = [...]
@@ -153,14 +153,14 @@ def write_file(
 Convert entries to LDIF string format.
 
 ```python
-def write(self, entries: list[FlextLdifModels.Entry]) -> FlextCore.Result[str]:
+def write(self, entries: list[FlextLdifModels.Entry]) -> FlextResult[str]:
     """Convert entries to LDIF string.
 
     Args:
         entries: List of entries to convert
 
     Returns:
-        FlextCore.Result containing LDIF string or error
+        FlextResult containing LDIF string or error
 
     Example:
         >>> result = api.write(entries)
@@ -177,14 +177,14 @@ def write(self, entries: list[FlextLdifModels.Entry]) -> FlextCore.Result[str]:
 Filter entries with person object class.
 
 ```python
-def filter_persons(self, entries: list[FlextLdifModels.Entry]) -> FlextCore.Result[list[FlextLdifModels.Entry]]:
+def filter_persons(self, entries: list[FlextLdifModels.Entry]) -> FlextResult[list[FlextLdifModels.Entry]]:
     """Filter person entries from entry list.
 
     Args:
         entries: List of entries to filter
 
     Returns:
-        FlextCore.Result containing filtered person entries
+        FlextResult containing filtered person entries
 
     Example:
         >>> result = api.filter_persons(all_entries)
@@ -199,14 +199,14 @@ def filter_persons(self, entries: list[FlextLdifModels.Entry]) -> FlextCore.Resu
 Filter entries with group object classes.
 
 ```python
-def filter_groups(self, entries: list[FlextLdifModels.Entry]) -> FlextCore.Result[list[FlextLdifModels.Entry]]:
+def filter_groups(self, entries: list[FlextLdifModels.Entry]) -> FlextResult[list[FlextLdifModels.Entry]]:
     """Filter group entries from entry list.
 
     Args:
         entries: List of entries to filter
 
     Returns:
-        FlextCore.Result containing filtered group entries
+        FlextResult containing filtered group entries
 
     Example:
         >>> groups_result = api.filter_groups(all_entries)
@@ -223,7 +223,7 @@ def filter_by_objectclass(
     self,
     entries: list[FlextLdifModels.Entry],
     object_class: str
-) -> FlextCore.Result[list[FlextLdifModels.Entry]]:
+) -> FlextResult[list[FlextLdifModels.Entry]]:
     """Filter entries by object class.
 
     Args:
@@ -231,7 +231,7 @@ def filter_by_objectclass(
         object_class: Object class to filter by
 
     Returns:
-        FlextCore.Result containing filtered entries
+        FlextResult containing filtered entries
 
     Example:
         >>> ou_result = api.filter_by_objectclass(entries, "organizationalUnit")
@@ -246,14 +246,14 @@ def filter_by_objectclass(
 Generate statistics about LDIF entries.
 
 ```python
-def get_entry_statistics(self, entries: list[FlextLdifModels.Entry]) -> FlextCore.Result[dict[str, int]]:
+def get_entry_statistics(self, entries: list[FlextLdifModels.Entry]) -> FlextResult[dict[str, int]]:
     """Get statistics about LDIF entries.
 
     Args:
         entries: List of entries to analyze
 
     Returns:
-        FlextCore.Result containing statistics dictionary
+        FlextResult containing statistics dictionary
 
     Example:
         >>> stats_result = api.get_entry_statistics(entries)
@@ -268,14 +268,14 @@ def get_entry_statistics(self, entries: list[FlextLdifModels.Entry]) -> FlextCor
 Perform comprehensive analysis of LDIF entries.
 
 ```python
-def analyze_entries(self, entries: list[FlextLdifModels.Entry]) -> FlextCore.Result[FlextCore.Types.Dict]:
+def analyze_entries(self, entries: list[FlextLdifModels.Entry]) -> FlextResult[FlextTypes.Dict]:
     """Perform comprehensive entry analysis.
 
     Args:
         entries: List of entries to analyze
 
     Returns:
-        FlextCore.Result containing analysis results
+        FlextResult containing analysis results
 
     Example:
         >>> analysis = api.analyze_entries(entries)
@@ -310,7 +310,7 @@ class QuirksConversionMatrix:
         target_quirk: object,
         data_type: Literal["attribute", "objectclass", "acl", "entry"],
         data: str | dict[str, object],
-    ) -> FlextCore.Result[str | dict[str, object]]:
+    ) -> FlextResult[str | dict[str, object]]:
         """Convert data from source quirk format to target quirk format via RFC.
 
         Args:
@@ -320,7 +320,7 @@ class QuirksConversionMatrix:
             data: Data to convert (string or dict)
 
         Returns:
-            FlextCore.Result containing converted data in target quirk format
+            FlextResult containing converted data in target quirk format
 
         """
 
@@ -330,7 +330,7 @@ class QuirksConversionMatrix:
         target_quirk: object,
         data_type: Literal["attribute", "objectclass", "acl", "entry"],
         data_batch: Sequence[str | dict[str, object]],
-    ) -> FlextCore.Result[Sequence[str | dict[str, object]]]:
+    ) -> FlextResult[Sequence[str | dict[str, object]]]:
         """Convert batch of data from source to target quirk format via RFC.
 
         Args:
@@ -340,11 +340,11 @@ class QuirksConversionMatrix:
             data_batch: Sequence of data items to convert
 
         Returns:
-            FlextCore.Result containing sequence of converted data items
+            FlextResult containing sequence of converted data items
 
         """
 
-    def get_supported_conversions(self) -> dict[str, FlextCore.Types.StringList]:
+    def get_supported_conversions(self) -> dict[str, FlextTypes.StringList]:
         """Get matrix of supported source→target conversions.
 
         Returns:
@@ -354,14 +354,14 @@ class QuirksConversionMatrix:
 
     def validate_oud_conversion(
         self, converted_data: Sequence[str | dict[str, object]]
-    ) -> FlextCore.Result[bool]:
+    ) -> FlextResult[bool]:
         """Validate converted data for OUD compatibility.
 
         Args:
             converted_data: Data converted for OUD target
 
         Returns:
-            FlextCore.Result[bool]: Success if OUD-compatible, failure with validation errors
+            FlextResult[bool]: Success if OUD-compatible, failure with validation errors
 
         """
 
@@ -416,11 +416,11 @@ class DnCaseRegistry:
 
         """
 
-    def validate_oud_consistency(self) -> FlextCore.Result[bool]:
+    def validate_oud_consistency(self) -> FlextResult[bool]:
         """Validate registry for OUD case-sensitive consistency.
 
         Returns:
-            FlextCore.Result[bool]: Success if no case conflicts, failure with conflicts
+            FlextResult[bool]: Success if no case conflicts, failure with conflicts
 
         """
 
@@ -455,15 +455,15 @@ class Entry(BaseModel):
     """LDIF entry domain model."""
 
     dn: str = Field(..., description="Distinguished Name")
-    attributes: dict[str, FlextCore.Types.StringList] = Field(
+    attributes: dict[str, FlextTypes.StringList] = Field(
         default_factory=dict,
         description="Entry attributes as key-value pairs"
     )
 
-    def get_object_classes(self) -> FlextCore.Types.StringList:
+    def get_object_classes(self) -> FlextTypes.StringList:
         """Get object class values for this entry."""
 
-    def get_attribute_values(self, attr_name: str) -> FlextCore.Types.StringList:
+    def get_attribute_values(self, attr_name: str) -> FlextTypes.StringList:
         """Get values for specific attribute."""
 
     def has_object_class(self, object_class: str) -> bool:
@@ -547,7 +547,7 @@ class Factory:
     """Factory for creating LDIF domain objects."""
 
     @staticmethod
-    def create(data: FlextCore.Types.Dict | str, attributes: dict[str, FlextCore.Types.StringList] | None = None) -> Entry:
+    def create(data: FlextTypes.Dict | str, attributes: dict[str, FlextTypes.StringList] | None = None) -> Entry:
         """Create LDIF entry with validation."""
 
     @staticmethod
@@ -567,7 +567,7 @@ class Factory:
     def create_group_entry(
         dn: str,
         cn: str,
-        members: FlextCore.Types.StringList,
+        members: FlextTypes.StringList,
         **additional_attrs
     ) -> Entry:
         """Create group entry with members."""
@@ -625,12 +625,31 @@ api = FlextLdif(config=instance_config)
 
 ## Error Handling
 
-### FlextCore.Result Integration
+### FlextResult Integration
 
-All API operations return FlextCore.Result for composable error handling:
+All API operations return FlextResult for composable error handling:
 
 ```python
-from flext_core import FlextCore
+from flext_core import FlextBus
+from flext_core import FlextConfig
+from flext_core import FlextConstants
+from flext_core import FlextContainer
+from flext_core import FlextContext
+from flext_core import FlextDecorators
+from flext_core import FlextDispatcher
+from flext_core import FlextExceptions
+from flext_core import FlextHandlers
+from flext_core import FlextLogger
+from flext_core import FlextMixins
+from flext_core import FlextModels
+from flext_core import FlextProcessors
+from flext_core import FlextProtocols
+from flext_core import FlextRegistry
+from flext_core import FlextResult
+from flext_core import FlextRuntime
+from flext_core import FlextService
+from flext_core import FlextTypes
+from flext_core import FlextUtilities
 
 # Successful operation
 result = api.parse_file("valid.ldif")
@@ -660,7 +679,6 @@ from flext_ldif import (
     FlextLdifError,           # Base LDIF error
     FlextLdifParseError,      # LDIF parsing errors
     FlextLdifValidationError, # Validation errors
-    FlextLdifExceptions       # Exception builder
 )
 
 # Exception builder pattern
@@ -723,7 +741,7 @@ if result.is_success:
 ### Pipeline Processing
 
 ```python
-def process_enterprise_directory(input_file: Path, output_file: Path) -> FlextCore.Result[FlextCore.Types.Dict]:
+def process_enterprise_directory(input_file: Path, output_file: Path) -> FlextResult[FlextTypes.Dict]:
     """Process enterprise directory with complete pipeline."""
     api = FlextLdif(FlextLdifModels.Config(strict_validation=True))
 
@@ -757,7 +775,7 @@ def process_enterprise_directory(input_file: Path, output_file: Path) -> FlextCo
 ### Batch Processing
 
 ```python
-def process_multiple_files(file_paths: list[Path]) -> FlextCore.Result[FlextCore.Types.Dict]:
+def process_multiple_files(file_paths: list[Path]) -> FlextResult[FlextTypes.Dict]:
     """Process multiple LDIF files in batch."""
     api = FlextLdif()
     all_entries = []
@@ -770,9 +788,9 @@ def process_multiple_files(file_paths: list[Path]) -> FlextCore.Result[FlextCore
             all_entries.extend(entries)
             processing_stats[str(file_path)] = len(entries)
         else:
-            return FlextCore.Result[FlextCore.Types.Dict].fail(f"Failed to process {file_path}: {result.error}")
+            return FlextResult[FlextTypes.Dict].fail(f"Failed to process {file_path}: {result.error}")
 
-    return FlextCore.Result[FlextCore.Types.Dict].ok({
+    return FlextResult[FlextTypes.Dict].ok({
         'total_entries': len(all_entries),
         'file_stats': processing_stats,
         'entries': all_entries
@@ -785,7 +803,7 @@ def process_multiple_files(file_paths: list[Path]) -> FlextCore.Result[FlextCore
 def filter_by_custom_criteria(
     api: FlextLdif,
     entries: list[FlextLdifModels.Entry]
-) -> FlextCore.Result[list[FlextLdifModels.Entry]]:
+) -> FlextResult[list[FlextLdifModels.Entry]]:
     """Apply custom filtering logic."""
 
     def matches_criteria(entry: FlextLdifModels.Entry) -> bool:
@@ -798,9 +816,9 @@ def filter_by_custom_criteria(
 
     try:
         filtered = [entry for entry in entries if matches_criteria(entry)]
-        return FlextCore.Result[list[FlextLdifModels.Entry]].ok(filtered)
+        return FlextResult[list[FlextLdifModels.Entry]].ok(filtered)
     except Exception as e:
-        return FlextCore.Result[list[FlextLdifModels.Entry]].fail(f"Filtering failed: {e}")
+        return FlextResult[list[FlextLdifModels.Entry]].fail(f"Filtering failed: {e}")
 ```
 
 ## RFC Schema Parser API
@@ -831,11 +849,11 @@ class RfcSchemaParserService:
             server_type: Optional server type to select specific quirks (None = pure RFC)
         """
 
-    def execute(self) -> FlextCore.Result[FlextCore.Types.Dict]:
+    def execute(self) -> FlextResult[FlextTypes.Dict]:
         """Execute RFC-compliant schema parsing with quirks.
 
         Returns:
-            FlextCore.Result with parsed schema data containing:
+            FlextResult with parsed schema data containing:
                 - attributes: Dict of attribute definitions by name
                 - objectclasses: Dict of objectClass definitions by name
                 - source_dn: DN of schema subentry
@@ -920,7 +938,7 @@ class FlextLdifMigrationService:
             target_server_type: Target server type (e.g., "oud", "openldap")
         """
 
-    def execute(self) -> FlextCore.Result[FlextCore.Types.Dict]:
+    def execute(self) -> FlextResult[FlextTypes.Dict]:
         """Execute migration pipeline.
 
         Generic transformation process:
@@ -930,7 +948,7 @@ class FlextLdifMigrationService:
         4. Write target LDIF files
 
         Returns:
-            FlextCore.Result with migration results containing:
+            FlextResult with migration results containing:
                 - entries_migrated: Number of entries migrated
                 - schema_files: List of schema files processed
                 - output_files: List of generated output files
@@ -1018,13 +1036,32 @@ openldap_acl_quirks = registry.get_acl_quirks("openldap")
 
 ## Integration with FLEXT Ecosystem
 
-### FlextCore.Container Usage
+### FlextContainer Usage
 
 ```python
-from flext_core import FlextCore
+from flext_core import FlextBus
+from flext_core import FlextConfig
+from flext_core import FlextConstants
+from flext_core import FlextContainer
+from flext_core import FlextContext
+from flext_core import FlextDecorators
+from flext_core import FlextDispatcher
+from flext_core import FlextExceptions
+from flext_core import FlextHandlers
+from flext_core import FlextLogger
+from flext_core import FlextMixins
+from flext_core import FlextModels
+from flext_core import FlextProcessors
+from flext_core import FlextProtocols
+from flext_core import FlextRegistry
+from flext_core import FlextResult
+from flext_core import FlextRuntime
+from flext_core import FlextService
+from flext_core import FlextTypes
+from flext_core import FlextUtilities
 
 # Access global container
-container = FlextCore.Container.get_global()
+container = FlextContainer.get_global()
 
 # Register LDIF API as service
 api = FlextLdif()
@@ -1036,13 +1073,32 @@ if api_result.is_success:
     ldif_api = api_result.unwrap()
 ```
 
-### FlextCore.Logger Integration
+### FlextLogger Integration
 
 ```python
-from flext_core import FlextCore
+from flext_core import FlextBus
+from flext_core import FlextConfig
+from flext_core import FlextConstants
+from flext_core import FlextContainer
+from flext_core import FlextContext
+from flext_core import FlextDecorators
+from flext_core import FlextDispatcher
+from flext_core import FlextExceptions
+from flext_core import FlextHandlers
+from flext_core import FlextLogger
+from flext_core import FlextMixins
+from flext_core import FlextModels
+from flext_core import FlextProcessors
+from flext_core import FlextProtocols
+from flext_core import FlextRegistry
+from flext_core import FlextResult
+from flext_core import FlextRuntime
+from flext_core import FlextService
+from flext_core import FlextTypes
+from flext_core import FlextUtilities
 
 # Structured logging in LDIF operations
-logger = FlextCore.Logger(__name__)
+logger = FlextLogger(__name__)
 
 # Log processing operations
 logger.info("Starting LDIF processing", extra={

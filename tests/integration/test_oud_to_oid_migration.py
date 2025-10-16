@@ -16,7 +16,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
-from flext_core import FlextCore
+from flext_core import FlextTypes
 
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.quirks.servers.oid_quirks import FlextLdifQuirksServersOid
@@ -252,7 +252,7 @@ class TestOudToOidEntryMigration:
         """Test migrating Oracle Context entry from OUD to OID."""
         # Sample Oracle Context entry from OUD
         entry_dn = "cn=OracleContext,dc=example,dc=com"
-        entry_attrs: FlextCore.Types.Dict = {
+        entry_attrs: FlextTypes.Dict = {
             "cn": ["OracleContext"],
             "objectClass": ["top", "orclContext", "orclContextAux82"],
             "orclVersion": ["90600"],
@@ -293,7 +293,7 @@ class TestOudToOidEntryMigration:
         """Test migrating entry with DN spaces quirk from OUD to OID."""
         # OUD entry with spaces after commas in DN
         entry_dn = "cn=OracleDASGroupPriv, cn=Groups,cn=OracleContext"
-        entry_attrs: FlextCore.Types.Dict = {
+        entry_attrs: FlextTypes.Dict = {
             "cn": ["OracleDASGroupPriv"],
             "objectClass": ["top", "groupOfUniqueNames", "orclPrivilegeGroup"],
             "uniquemember": ["cn=orcladmin"],
@@ -367,7 +367,7 @@ class TestOudToOidFullMigration:
         # Parse entries manually (simple LDIF parsing)
         entries = []
         current_dn: str | None = None
-        current_attrs: dict[str, FlextCore.Types.StringList] = {}
+        current_attrs: dict[str, FlextTypes.StringList] = {}
 
         for raw_line in entries_content.splitlines():
             line = raw_line.strip()

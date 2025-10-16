@@ -17,13 +17,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import re
 from typing import override
 
-from flext_core import FlextCore
+from flext_core import FlextResult, FlextService, FlextTypes
 from ldap3.utils.dn import parse_dn, safe_dn
 
 
-class DnService(FlextCore.Service[FlextCore.Types.Dict]):
+class DnService(FlextService[FlextTypes.Dict]):
     r"""RFC 4514 compliant DN operations using ldap3.
 
     Provides methods for DN parsing, validation, and normalization
@@ -60,21 +61,23 @@ class DnService(FlextCore.Service[FlextCore.Types.Dict]):
         super().__init__()
 
     @override
-    def execute(self) -> FlextCore.Result[FlextCore.Types.Dict]:
+    def execute(self) -> FlextResult[FlextTypes.Dict]:
         """Execute DN service self-check.
 
         Returns:
-            FlextCore.Result containing service status
+            FlextResult containing service status
 
         """
-        return FlextCore.Result[FlextCore.Types.Dict].ok({
-            "service": "DnService",
-            "status": "operational",
-            "rfc_compliance": "RFC 4514",
-            "library": "ldap3",
-        })
+        return FlextResult[FlextTypes.Dict].ok(
+            {
+                "service": "DnService",
+                "status": "operational",
+                "rfc_compliance": "RFC 4514",
+                "library": "ldap3",
+            }
+        )
 
-    def parse_components(self, dn: str) -> FlextCore.Result[list[tuple[str, str, str]]]:
+    def parse_components(self, dn: str) -> FlextResult[list[tuple[str, str, str]]]:
         r"""Parse DN into RFC 4514 compliant components using ldap3.
 
         Uses ldap3.utils.dn.parse_dn() for proper RFC 4514 parsing that handles:
@@ -89,7 +92,7 @@ class DnService(FlextCore.Service[FlextCore.Types.Dict]):
             dn: Distinguished name string to parse
 
         Returns:
-            FlextCore.Result containing list of (attr, value, rdn) tuples
+            FlextResult containing list of (attr, value, rdn) tuples
             where:
             - attr: Attribute name (e.g., "cn")
             - value: Attribute value (e.g., "John Smith")
@@ -105,13 +108,13 @@ class DnService(FlextCore.Service[FlextCore.Types.Dict]):
         try:
             # Use ldap3 for RFC 4514 compliant parsing
             components = parse_dn(dn, escape=False, strip=True)
-            return FlextCore.Result[list[tuple[str, str, str]]].ok(components)
+            return FlextResult[list[tuple[str, str, str]]].ok(components)
         except Exception as e:
-            return FlextCore.Result[list[tuple[str, str, str]]].fail(
+            return FlextResult[list[tuple[str, str, str]]].fail(
                 f"Invalid DN format (RFC 4514): {e}"
             )
 
-    def validate_format(self, dn: str) -> FlextCore.Result[bool]:
+    def validate_format(self, dn: str) -> FlextResult[bool]:
         """Validate DN format against RFC 4514 using ldap3.
 
         Uses ldap3.utils.dn.parse_dn() to validate DN syntax.
@@ -121,7 +124,7 @@ class DnService(FlextCore.Service[FlextCore.Types.Dict]):
             dn: Distinguished name string to validate
 
         Returns:
-            FlextCore.Result containing True if valid, False otherwise
+            FlextResult containing True if valid, False otherwise
 
         Example:
             >>> result = service.validate_format("cn=test,dc=example,dc=com")
@@ -134,16 +137,16 @@ class DnService(FlextCore.Service[FlextCore.Types.Dict]):
 
         """
         if not dn:
-            return FlextCore.Result[bool].ok(False)
+            return FlextResult[bool].ok(False)
 
         try:
             # Try parsing - if it succeeds, DN is valid per RFC 4514
             parse_dn(dn, escape=False, strip=True)
-            return FlextCore.Result[bool].ok(True)
+            return FlextResult[bool].ok(True)
         except Exception:
-            return FlextCore.Result[bool].ok(False)
+            return FlextResult[bool].ok(False)
 
-    def normalize(self, dn: str) -> FlextCore.Result[str]:
+    def normalize(self, dn: str) -> FlextResult[str]:
         """Normalize DN using RFC 4514 compliant normalization via ldap3.
 
         Uses ldap3.utils.dn.safe_dn() for proper RFC 4514 normalization:
@@ -158,7 +161,7 @@ class DnService(FlextCore.Service[FlextCore.Types.Dict]):
             dn: Distinguished name string to normalize
 
         Returns:
-            FlextCore.Result containing normalized DN string
+            FlextResult containing normalized DN string
 
         Example:
             >>> result = service.normalize("CN=Admin,DC=Example,DC=Com")
@@ -171,9 +174,56 @@ class DnService(FlextCore.Service[FlextCore.Types.Dict]):
         try:
             # Use ldap3 for RFC 4514 compliant normalization
             normalized = safe_dn(dn)
-            return FlextCore.Result[str].ok(str(normalized))
+            return FlextResult[str].ok(str(normalized))
         except Exception as e:
-            return FlextCore.Result[str].fail(f"Failed to normalize DN (RFC 4514): {e}")
+            return FlextResult[str].fail(f"Failed to normalize DN (RFC 4514): {e}")
+
+    @staticmethod
+    def clean_dn(dn: str) -> str:
+        r"""Clean a DN string to be RFC 4514 compliant.
+
+        This method fixes common DN formatting issues found in LDAP exports:
+        - Removes spaces around '=' in RDN components
+        - Fixes malformed backslash escapes
+        - Removes trailing backslash+space patterns
+        - Normalizes whitespace
+
+        Args:
+            dn: The original DN string
+
+        Returns:
+            Cleaned DN string
+
+        Example:
+            >>> DnService.clean_dn("cn = John, ou = Users")
+            'cn=John,ou=Users'
+            >>> DnService.clean_dn("cn=OIM-TEST\\ ,ou=Users")
+            'cn=OIM-TEST,ou=Users'
+
+        """
+        if not dn:
+            return dn
+
+        # Remove spaces around '=' in each RDN component
+        # Pattern: "cn = value" -> "cn=value"
+        cleaned = re.sub(r"\s*=\s*", "=", dn)
+
+        # Fix trailing backslash+space before commas
+        # Pattern: "cn=VALUE\ ," -> "cn=VALUE,"
+        # This is a common OID export issue where trailing spaces are escaped
+        cleaned = re.sub(r"\\\s+,", ",", cleaned)
+
+        # Normalize spaces around commas: ", cn=..." -> ",cn=..."
+        cleaned = re.sub(r",\s+", ",", cleaned)
+
+        # Fix malformed backslash escapes in middle of values (e.g., "\ " -> " ")
+        # Common in OID exports where spaces are unnecessarily escaped
+        cleaned = re.sub(r"\\\s+", " ", cleaned)
+
+        # Normalize multiple spaces to single space
+        cleaned = re.sub(r"\s+", " ", cleaned)
+
+        return cleaned.strip()
 
 
 __all__ = ["DnService"]

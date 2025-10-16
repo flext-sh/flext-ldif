@@ -1,0 +1,417 @@
+"""Tests for OpenLDAP 1.x server quirks.
+
+Comprehensive tests for OpenLDAP 1.x-specific LDIF processing quirks including
+schema, ACL, and entry handling for legacy slapd.conf-based configurations.
+"""
+# pyright: reportArgumentType=false, reportOperatorIssue=false, reportOptionalMemberAccess=false, reportIndexIssue=false
+
+from __future__ import annotations
+
+from flext_ldif.quirks.servers.openldap1_quirks import FlextLdifQuirksServersOpenldap1
+
+
+class TestOpenLDAP1xSchemaQuirks:
+    """Tests for OpenLDAP 1.x schema quirk handling."""
+
+    def test_initialization(self) -> None:
+        """Test OpenLDAP 1.x schema quirk initialization."""
+        quirk = FlextLdifQuirksServersOpenldap1()
+        assert quirk.server_type == "openldap1"
+        assert quirk.priority == 20  # Lower priority than OpenLDAP 2.x
+
+    def test_can_handle_attribute_with_attributetype_prefix(self) -> None:
+        """Test attribute detection with attributetype prefix."""
+        quirk = FlextLdifQuirksServersOpenldap1()
+
+        # Should handle attributetype (without olc)
+        attr_def = "attributetype ( 1.2.3.4 NAME 'test' )"
+        assert quirk.can_handle_attribute(attr_def) is True
+
+    def test_can_handle_attribute_with_olc_rejected(self) -> None:
+        """Test attribute detection rejects olc prefix (OpenLDAP 2.x)."""
+        quirk = FlextLdifQuirksServersOpenldap1()
+
+        # Should NOT handle olc* (that's OpenLDAP 2.x)
+        attr_def = "attributetype ( 1.2.3.4 NAME 'olcTest' )"
+        assert quirk.can_handle_attribute(attr_def) is False
+
+    def test_parse_attribute_success(self) -> None:
+        """Test successful attribute parsing."""
+        quirk = FlextLdifQuirksServersOpenldap1()
+
+        attr_def = "attributetype ( 1.2.3.4 NAME 'testAttr' DESC 'Test attribute' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 EQUALITY caseIgnoreMatch SINGLE-VALUE )"
+        result = quirk.parse_attribute(attr_def)
+
+        assert result.is_success
+        attr_data = result.unwrap()
+        assert attr_data["oid"] == "1.2.3.4"
+        assert attr_data["name"] == "testAttr"
+        assert attr_data["desc"] == "Test attribute"
+        assert attr_data["syntax"] == "1.3.6.1.4.1.1466.115.121.1.15"
+        assert attr_data["equality"] == "caseIgnoreMatch"
+        assert attr_data["single_value"] is True
+        assert attr_data["server_type"] == "openldap1"
+
+    def test_parse_attribute_no_oid(self) -> None:
+        """Test attribute parsing fails without OID."""
+        quirk = FlextLdifQuirksServersOpenldap1()
+
+        attr_def = "attributetype NAME 'testAttr'"
+        result = quirk.parse_attribute(attr_def)
+
+        assert result.is_failure
+        assert result.error is not None
+        assert result.error is not None
+        assert "No OID found" in result.error
+
+    def test_can_handle_objectclass_with_objectclass_prefix(self) -> None:
+        """Test objectClass detection with objectclass prefix."""
+        quirk = FlextLdifQuirksServersOpenldap1()
+
+        oc_def = "objectclass ( 1.2.3.4 NAME 'testClass' )"
+        assert quirk.can_handle_objectclass(oc_def) is True
+
+    def test_can_handle_objectclass_with_olc_rejected(self) -> None:
+        """Test objectClass detection rejects olc (OpenLDAP 2.x)."""
+        quirk = FlextLdifQuirksServersOpenldap1()
+
+        oc_def = "objectclass ( 1.2.3.4 NAME 'olcTestClass' )"
+        assert quirk.can_handle_objectclass(oc_def) is False
+
+    def test_parse_objectclass_success(self) -> None:
+        """Test successful objectClass parsing."""
+        quirk = FlextLdifQuirksServersOpenldap1()
+
+        oc_def = "objectclass ( 1.2.3.4 NAME 'testClass' DESC 'Test class' SUP top STRUCTURAL MUST ( cn $ sn ) MAY ( description ) )"
+        result = quirk.parse_objectclass(oc_def)
+
+        assert result.is_success
+        oc_data = result.unwrap()
+        assert isinstance(oc_data, dict)
+        assert oc_data["oid"] == "1.2.3.4"
+        assert oc_data["name"] == "testClass"
+        assert oc_data["desc"] == "Test class"
+        assert oc_data["sup"] == "top"
+        assert oc_data["kind"] == "STRUCTURAL"
+        must_attr = oc_data["must"]
+        assert isinstance(must_attr, list)
+        assert "cn" in must_attr
+        assert "sn" in must_attr
+        may_attr = oc_data["may"]
+        assert isinstance(may_attr, list)
+        assert "description" in may_attr
+        assert oc_data["server_type"] == "openldap1"
+
+    def test_parse_objectclass_auxiliary(self) -> None:
+        """Test parsing AUXILIARY objectClass."""
+        quirk = FlextLdifQuirksServersOpenldap1()
+
+        oc_def = "objectclass ( 1.2.3.5 NAME 'auxClass' AUXILIARY )"
+        result = quirk.parse_objectclass(oc_def)
+
+        assert result.is_success
+        oc_data = result.unwrap()
+        assert oc_data["kind"] == "AUXILIARY"
+
+    def test_parse_objectclass_abstract(self) -> None:
+        """Test parsing ABSTRACT objectClass."""
+        quirk = FlextLdifQuirksServersOpenldap1()
+
+        oc_def = "objectclass ( 1.2.3.6 NAME 'absClass' ABSTRACT )"
+        result = quirk.parse_objectclass(oc_def)
+
+        assert result.is_success
+        oc_data = result.unwrap()
+        assert oc_data["kind"] == "ABSTRACT"
+
+    def test_parse_objectclass_no_oid(self) -> None:
+        """Test objectClass parsing fails without OID."""
+        quirk = FlextLdifQuirksServersOpenldap1()
+
+        oc_def = "objectclass NAME 'testClass'"
+        result = quirk.parse_objectclass(oc_def)
+
+        assert result.is_failure
+        assert result.error is not None
+        assert result.error is not None
+        assert "No OID found" in result.error
+
+    def test_convert_attribute_to_rfc(self) -> None:
+        """Test attribute conversion to RFC format."""
+        quirk = FlextLdifQuirksServersOpenldap1()
+
+        attr_data: dict[str, object] = {
+            "oid": "1.2.3.4",
+            "name": "testAttr",
+            "desc": "Test",
+            "syntax": "1.3.6.1.4.1.1466.115.121.1.15",
+            "equality": "caseIgnoreMatch",
+            "single_value": True,
+        }
+
+        result = quirk.convert_attribute_to_rfc(attr_data)
+        assert result.is_success
+        rfc_data = result.unwrap()
+        assert rfc_data["oid"] == "1.2.3.4"
+        assert rfc_data["name"] == "testAttr"
+
+    def test_convert_objectclass_to_rfc(self) -> None:
+        """Test objectClass conversion to RFC format."""
+        quirk = FlextLdifQuirksServersOpenldap1()
+
+        oc_data: dict[str, object] = {
+            "oid": "1.2.3.4",
+            "name": "testClass",
+            "desc": "Test",
+            "sup": "top",
+            "kind": "STRUCTURAL",
+            "must": ["cn"],
+            "may": ["description"],
+        }
+
+        result = quirk.convert_objectclass_to_rfc(oc_data)
+        assert result.is_success
+        rfc_data = result.unwrap()
+        assert rfc_data["oid"] == "1.2.3.4"
+        assert rfc_data["kind"] == "STRUCTURAL"
+
+    def test_convert_attribute_from_rfc(self) -> None:
+        """Test attribute conversion from RFC format."""
+        quirk = FlextLdifQuirksServersOpenldap1()
+
+        rfc_data: dict[str, object] = {
+            "oid": "1.2.3.4",
+            "name": "testAttr",
+            "desc": "Test",
+        }
+
+        result = quirk.convert_attribute_from_rfc(rfc_data)
+        assert result.is_success
+        openldap_data = result.unwrap()
+        assert openldap_data["server_type"] == "openldap1"
+        assert openldap_data["oid"] == "1.2.3.4"
+
+    def test_convert_objectclass_from_rfc(self) -> None:
+        """Test objectClass conversion from RFC format."""
+        quirk = FlextLdifQuirksServersOpenldap1()
+
+        rfc_data: dict[str, object] = {
+            "oid": "1.2.3.4",
+            "name": "testClass",
+        }
+
+        result = quirk.convert_objectclass_from_rfc(rfc_data)
+        assert result.is_success
+        openldap_data = result.unwrap()
+        assert openldap_data["server_type"] == "openldap1"
+
+    def test_write_attribute_to_rfc(self) -> None:
+        """Test writing attribute to RFC string format with attributetype prefix."""
+        quirk = FlextLdifQuirksServersOpenldap1()
+
+        attr_data: dict[str, object] = {
+            "oid": "1.2.3.4",
+            "name": "testAttr",
+            "desc": "Test attribute",
+            "syntax": "1.3.6.1.4.1.1466.115.121.1.15",
+            "equality": "caseIgnoreMatch",
+            "single_value": True,
+        }
+
+        result = quirk.write_attribute_to_rfc(attr_data)
+        assert result.is_success
+        attr_str = result.unwrap()
+        assert "attributetype ( 1.2.3.4" in attr_str  # OpenLDAP 1.x prefix
+        assert "NAME 'testAttr'" in attr_str
+        assert "DESC 'Test attribute'" in attr_str
+        assert "SYNTAX 1.3.6.1.4.1.1466.115.121.1.15" in attr_str
+        assert "EQUALITY caseIgnoreMatch" in attr_str
+        assert "SINGLE-VALUE" in attr_str
+        assert ")" in attr_str
+
+    def test_write_objectclass_to_rfc(self) -> None:
+        """Test writing objectClass to RFC string format with objectclass prefix."""
+        quirk = FlextLdifQuirksServersOpenldap1()
+
+        oc_data: dict[str, object] = {
+            "oid": "1.2.3.4",
+            "name": "testClass",
+            "desc": "Test class",
+            "sup": "top",
+            "kind": "STRUCTURAL",
+            "must": ["cn", "sn"],
+            "may": ["description"],
+        }
+
+        result = quirk.write_objectclass_to_rfc(oc_data)
+        assert result.is_success
+        oc_str = result.unwrap()
+        assert "objectclass ( 1.2.3.4" in oc_str  # OpenLDAP 1.x prefix
+        assert "NAME 'testClass'" in oc_str
+        assert "SUP top" in oc_str
+        assert "STRUCTURAL" in oc_str
+        assert "MUST" in oc_str
+        assert "MAY" in oc_str
+
+
+class TestOpenLDAP1xAclQuirks:
+    """Tests for OpenLDAP 1.x ACL quirk handling."""
+
+    def test_acl_quirk_initialization(self) -> None:
+        """Test ACL quirk initialization."""
+        main_quirk = FlextLdifQuirksServersOpenldap1()
+        acl_quirk = main_quirk.AclQuirk()
+        assert acl_quirk.server_type == "openldap1"
+        assert acl_quirk.priority == 20  # Lower priority
+
+    def test_can_handle_acl_with_access_to(self) -> None:
+        """Test ACL detection with 'access to' prefix."""
+        main_quirk = FlextLdifQuirksServersOpenldap1()
+        acl_quirk = main_quirk.AclQuirk()
+
+        acl_line = "access to attrs=userPassword by self write by * auth"
+        assert acl_quirk.can_handle_acl(acl_line) is True
+
+    def test_can_handle_acl_negative(self) -> None:
+        """Test ACL detection returns false for non-OpenLDAP 1.x ACL."""
+        main_quirk = FlextLdifQuirksServersOpenldap1()
+        acl_quirk = main_quirk.AclQuirk()
+
+        acl_line = "random text"
+        assert acl_quirk.can_handle_acl(acl_line) is False
+
+    def test_parse_acl_success(self) -> None:
+        """Test successful ACL parsing."""
+        main_quirk = FlextLdifQuirksServersOpenldap1()
+        acl_quirk = main_quirk.AclQuirk()
+
+        acl_line = "access to attrs=userPassword by self write by * read"
+        result = acl_quirk.parse_acl(acl_line)
+
+        assert result.is_success
+        acl_data = result.unwrap()
+        assert isinstance(acl_data, dict)
+        assert acl_data["type"] == "openldap1_acl"
+        assert acl_data["what"] == "attrs=userPassword"
+        by_clauses = acl_data["by_clauses"]
+        assert isinstance(by_clauses, list)
+        assert len(by_clauses) == 2
+        first_clause = by_clauses[0]
+        assert isinstance(first_clause, dict)
+        assert first_clause["who"] == "self"
+        assert first_clause["access"] == "write"
+
+    def test_parse_acl_missing_to_clause(self) -> None:
+        """Test ACL parsing fails without 'to' clause."""
+        main_quirk = FlextLdifQuirksServersOpenldap1()
+        acl_quirk = main_quirk.AclQuirk()
+
+        acl_line = "access by * read"
+        result = acl_quirk.parse_acl(acl_line)
+
+        assert result.is_failure
+        assert result.error is not None
+        assert "missing 'to' clause" in result.error.lower()
+
+    def test_convert_acl_to_rfc(self) -> None:
+        """Test ACL conversion to RFC format."""
+        main_quirk = FlextLdifQuirksServersOpenldap1()
+        acl_quirk = main_quirk.AclQuirk()
+
+        acl_data: dict[str, object] = {
+            "type": "openldap1_acl",
+            "what": "*",
+            "by_clauses": [{"who": "*", "access": "read"}],
+        }
+
+        result = acl_quirk.convert_acl_to_rfc(acl_data)
+        assert result.is_success
+        rfc_data = result.unwrap()
+        assert rfc_data["type"] == "acl"
+        assert rfc_data["format"] == "rfc_generic"
+
+    def test_convert_acl_from_rfc(self) -> None:
+        """Test ACL conversion from RFC format."""
+        main_quirk = FlextLdifQuirksServersOpenldap1()
+        acl_quirk = main_quirk.AclQuirk()
+
+        acl_data: dict[str, object] = {"type": "acl", "format": "rfc_generic"}
+        result = acl_quirk.convert_acl_from_rfc(acl_data)
+
+        assert result.is_success
+        openldap_data = result.unwrap()
+        assert openldap_data["format"] == "openldap1"
+
+
+class TestOpenLDAP1xEntryQuirks:
+    """Tests for OpenLDAP 1.x entry quirk handling."""
+
+    def test_entry_quirk_initialization(self) -> None:
+        """Test entry quirk initialization."""
+        main_quirk = FlextLdifQuirksServersOpenldap1()
+        entry_quirk = main_quirk.EntryQuirk()
+        assert entry_quirk.server_type == "openldap1"
+        assert entry_quirk.priority == 20  # Lower priority
+
+    def test_can_handle_entry_traditional_dit(self) -> None:
+        """Test entry detection for traditional DIT (no cn=config)."""
+        main_quirk = FlextLdifQuirksServersOpenldap1()
+        entry_quirk = main_quirk.EntryQuirk()
+
+        dn = "cn=test,dc=example,dc=com"
+        attributes: dict[str, object] = {"cn": ["test"], "objectClass": ["person"]}
+        assert entry_quirk.can_handle_entry(dn, attributes) is True
+
+    def test_can_handle_entry_rejects_config_dn(self) -> None:
+        """Test entry detection rejects cn=config DNs (OpenLDAP 2.x)."""
+        main_quirk = FlextLdifQuirksServersOpenldap1()
+        entry_quirk = main_quirk.EntryQuirk()
+
+        dn = "cn=config"
+        attributes: dict[str, object] = {"cn": ["config"]}
+        assert entry_quirk.can_handle_entry(dn, attributes) is False
+
+    def test_can_handle_entry_rejects_olc_attributes(self) -> None:
+        """Test entry detection rejects olc* attributes (OpenLDAP 2.x)."""
+        main_quirk = FlextLdifQuirksServersOpenldap1()
+        entry_quirk = main_quirk.EntryQuirk()
+
+        dn = "cn=test,dc=example,dc=com"
+        attributes: dict[str, object] = {"olcDatabase": ["{1}mdb"]}
+        assert entry_quirk.can_handle_entry(dn, attributes) is False
+
+    def test_process_entry_success(self) -> None:
+        """Test successful entry processing."""
+        main_quirk = FlextLdifQuirksServersOpenldap1()
+        entry_quirk = main_quirk.EntryQuirk()
+
+        dn = "cn=user,ou=people,dc=example,dc=com"
+        attributes: dict[str, object] = {
+            "cn": ["user"],
+            "objectClass": ["person", "inetOrgPerson"],
+        }
+        result = entry_quirk.process_entry(dn, attributes)
+
+        assert result.is_success
+        entry_data = result.unwrap()
+        assert entry_data["dn"] == dn
+        assert entry_data["server_type"] == "openldap1"
+        assert entry_data["is_traditional_dit"] is True
+        assert entry_data["cn"] == ["user"]
+
+    def test_convert_entry_to_rfc(self) -> None:
+        """Test entry conversion to RFC format."""
+        main_quirk = FlextLdifQuirksServersOpenldap1()
+        entry_quirk = main_quirk.EntryQuirk()
+
+        entry_data: dict[str, object] = {
+            "dn": "cn=test,dc=example,dc=com",
+            "cn": ["test"],
+            "objectClass": ["person"],
+        }
+
+        result = entry_quirk.convert_entry_to_rfc(entry_data)
+        assert result.is_success
+        # OpenLDAP 1.x entries are RFC-compliant, so should return unchanged
+        rfc_data = result.unwrap()
+        assert rfc_data["dn"] == "cn=test,dc=example,dc=com"

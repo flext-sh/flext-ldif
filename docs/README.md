@@ -52,7 +52,7 @@ docs/
 - **Quirks System**: Priority-based server-specific extensions (4 complete, 5 stubs)
 - **Generic Migration Pipeline**: Source → RFC → Target transformation for ANY server
 - **CQRS Handlers**: Command/Query separation with RFC parser delegation
-- **FlextCore.Result Integration**: Railway-oriented programming patterns throughout
+- **FlextResult Integration**: Railway-oriented programming patterns throughout
 - **Type Safety**: Pyrefly strict mode with Pydantic v2 models
 
 ### 📚 API Reference (`api-reference.md`)
@@ -62,7 +62,7 @@ docs/
 - **FlextLdif**: Unified interface for all LDIF operations
 - **Service Classes**: Parser, validator, writer, repository, analytics services
 - **Models**: Entry, DN, Config, and other domain models
-- **Error Handling**: Exception hierarchy and FlextCore.Result patterns
+- **Error Handling**: Exception hierarchy and FlextResult patterns
 
 ### ⚙️ Configuration (`configuration.md`)
 
@@ -86,7 +86,7 @@ docs/
 
 **[integration.md](integration.md)** - FLEXT ecosystem integration:
 
-- **FLEXT Core Patterns**: FlextCore.Result, FlextCore.Container, FlextCore.Models usage
+- **FLEXT Core Patterns**: FlextResult, FlextContainer, FlextModels usage
 - **Project Integration**: Usage with algar-oud-mig, flext-api, other projects
 - **Service Registration**: Dependency injection and service discovery
 - **Error Handling**: Consistent error patterns across ecosystem
@@ -117,7 +117,7 @@ Working code examples organized by complexity:
 - **Generic Migration**: Server-agnostic transformation pipeline works with ANY LDAP server
 - **Type Safety**: 100% Pyrefly (MyPy successor) strict mode compliance
 - **Test Coverage**: 990/990 tests passing (100% pass rate)
-- **Railway-Oriented Programming**: FlextCore.Result patterns throughout
+- **Railway-Oriented Programming**: FlextResult patterns throughout
 - **FLEXT Integration**: Complete flext-core 1.0.0 pattern integration
 
 ### Known Limitations
@@ -161,7 +161,7 @@ Working code examples organized by complexity:
 ### FLEXT Ecosystem Integration
 
 - **Consistent Patterns**: Follows FLEXT-CORE architectural patterns
-- **Railway-Oriented Programming**: FlextCore.Result composition throughout examples
+- **Railway-Oriented Programming**: FlextResult composition throughout examples
 - **Type Safety Emphasis**: Complete type annotations in all documentation
 - **Quality Standards**: Maintains professional documentation standards
 
@@ -190,7 +190,7 @@ Working code examples organized by complexity:
 
 1. **[ARCHITECTURE.md](architecture/ARCHITECTURE.md)** - FLEXT integration patterns
 2. **[EXAMPLES.md](examples/EXAMPLES.md)** - Integration examples and patterns
-3. **[API.md](api/API.md)** - FlextCore.Result and service integration details
+3. **[API.md](api/API.md)** - FlextResult and service integration details
 
 ## 📊 Documentation Quality Standards
 
