@@ -214,7 +214,7 @@ class DnCaseRegistry(FlextModels.Value):
             >>> result.unwrap()  # False - multiple case variants
 
         """
-        inconsistencies: list[FlextTypes.Dict] = []
+        inconsistencies: list[dict[str, object]] = []
 
         for normalized_dn, variants in self._case_variants.items():
             if len(variants) > 1:
@@ -245,7 +245,7 @@ class DnCaseRegistry(FlextModels.Value):
     def normalize_dn_references(
         self,
         data: FlextLdifTypes.Dict,
-        dn_fields: FlextTypes.StringList | None = None,
+        dn_fields: list[str] | None = None,
     ) -> FlextResult[FlextLdifTypes.Dict]:
         """Normalize DN references in data to use canonical case.
 

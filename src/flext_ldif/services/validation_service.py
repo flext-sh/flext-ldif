@@ -18,10 +18,10 @@ from __future__ import annotations
 import re
 from typing import override
 
-from flext_core import FlextResult, FlextService, FlextTypes
+from flext_core import FlextResult, FlextService
 
 
-class ValidationService(FlextService[FlextTypes.Dict]):
+class ValidationService(FlextService[dict[str, object]]):
     """RFC 2849/4512 compliant validation service for LDIF entries.
 
     Provides methods for validating LDAP attribute names, object class names,
@@ -76,14 +76,14 @@ class ValidationService(FlextService[FlextTypes.Dict]):
         super().__init__()
 
     @override
-    def execute(self) -> FlextResult[FlextTypes.Dict]:
+    def execute(self) -> FlextResult[dict[str, object]]:
         """Execute validation service self-check.
 
         Returns:
             FlextResult containing service status
 
         """
-        return FlextResult[FlextTypes.Dict].ok({
+        return FlextResult[dict[str, object]].ok({
             "service": "ValidationService",
             "status": "operational",
             "rfc_compliance": "RFC 2849, RFC 4512",

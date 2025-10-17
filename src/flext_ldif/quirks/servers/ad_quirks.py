@@ -20,7 +20,7 @@ import binascii
 import re
 from typing import ClassVar
 
-from flext_core import FlextResult, FlextTypes
+from flext_core import FlextResult
 from pydantic import Field
 
 from flext_ldif.constants import FlextLdifConstants
@@ -679,7 +679,7 @@ class FlextLdifQuirksServersAd(FlextLdifQuirksBaseSchemaQuirk):
         def can_handle_entry(
             self,
             entry_dn: str,
-            attributes: FlextTypes.Dict,
+            attributes: dict[str, object],
         ) -> bool:
             """Detect Active Directory entries based on DN, attributes, or classes."""
             dn_lower = entry_dn.lower()
@@ -713,7 +713,7 @@ class FlextLdifQuirksServersAd(FlextLdifQuirksBaseSchemaQuirk):
         def process_entry(
             self,
             entry_dn: str,
-            attributes: FlextTypes.Dict,
+            attributes: dict[str, object],
         ) -> FlextResult[FlextLdifTypes.Dict]:
             """Normalise Active Directory entries and surface metadata."""
             try:

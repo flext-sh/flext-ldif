@@ -14,7 +14,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, cast
+from typing import cast
 
 from flext_core import (
     FlextBus,
@@ -22,7 +22,6 @@ from flext_core import (
     FlextContext,
     FlextResult,
     FlextService,
-    FlextTypes,
 )
 from pydantic import PrivateAttr
 
@@ -56,7 +55,7 @@ from flext_ldif.schema.validator import FlextLdifSchemaValidator
 from flext_ldif.typings import FlextLdifTypes
 
 
-class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
+class FlextLdifClient(FlextService[dict[str, object]]):
     """Main client implementation for LDIF processing operations.
 
     This class contains all the actual business logic for LDIF operations,
@@ -81,7 +80,7 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
         default_factory=FlextContainer.get_global
     )
     _context: FlextContext | None = PrivateAttr(default=None)
-    _handlers: FlextLdifTypes.Dict = PrivateAttr(default_factory=dict)
+    _handlers: dict[str, object] = PrivateAttr(default_factory=dict)
     _config: FlextLdifConfig | None = PrivateAttr(default=None)
 
     def __init__(self, config: FlextLdifConfig | None = None) -> None:
@@ -98,10 +97,14 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
         # Call Pydantic/FlextService initialization
         super().__init__()
 
-    def model_post_init(self, __context: Any, /) -> None:
+    def model_post_init(self, __context: dict[str, object] | None, /) -> None:
         """Initialize private attributes after Pydantic initialization.
 
         This hook is called by Pydantic after __init__ completes.
+
+        Args:
+            __context: Pydantic's validation context dictionary or None.
+
         """
         # Initialize private attributes that parent's __init__ may access
         self._config = getattr(self, "_init_config_value", None) or FlextLdifConfig()
@@ -120,7 +123,7 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
 
         # ✅ Log config ONCE without binding to global context
         if self.logger and self._config:
-            config_info: FlextTypes.Dict = {
+            config_info: dict[str, object] = {
                 "ldif_encoding": self._config.ldif_encoding,
                 "strict_rfc_compliance": self._config.strict_rfc_compliance,
                 "ldif_chunk_size": self._config.ldif_chunk_size,
@@ -129,7 +132,7 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
             self._log_config_once(config_info, message="FlextLdif client initialized")
             self.logger.debug("CQRS handlers and default quirks registered")
 
-    def execute(self) -> FlextResult[FlextLdifTypes.Dict]:
+    def execute(self) -> FlextResult[dict[str, object]]:
         """Execute client self-check and return status.
 
         Returns:
@@ -138,13 +141,13 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
         """
         try:
             config = self.config
-            return FlextResult[FlextLdifTypes.Dict].ok({
+            return FlextResult[dict[str, object]].ok({
                 "status": "initialized",
                 "services": ["parser", "writer", "validator", "migration"],
                 "config": {"default_encoding": config.ldif_encoding},
             })
         except Exception as e:  # pragma: no cover
-            return FlextResult[FlextLdifTypes.Dict].fail(
+            return FlextResult[dict[str, object]].fail(
                 f"Client status check failed: {e}"
             )
 
@@ -177,7 +180,7 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
 
         # Register migration pipeline (params provided at call time by handlers)
         def migration_pipeline_factory(
-            params: FlextTypes.Dict | None,
+            params: dict[str, object] | None,
         ) -> FlextLdifMigrationPipeline:
             if params is None:
                 params = {}
@@ -366,7 +369,7 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
 
     def validate_entries(
         self, entries: list[FlextLdifModels.Entry]
-    ) -> FlextResult[FlextLdifTypes.Dict]:
+    ) -> FlextResult[dict[str, object]]:
         """Validate LDIF entries against RFC and business rules.
 
         Args:
@@ -381,14 +384,14 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
         # Get the schema validator from container
         validator_result = container.get("schema_validator")
         if validator_result.is_failure:
-            return FlextResult[FlextLdifTypes.Dict].fail(
+            return FlextResult[dict[str, object]].fail(
                 f"Failed to get schema validator: {validator_result.error}"
             )
 
         # Type narrow validator from unwrap()
         validator_obj = validator_result.unwrap()
         if not isinstance(validator_obj, FlextLdifSchemaValidator):
-            return FlextResult[FlextLdifTypes.Dict].fail(
+            return FlextResult[dict[str, object]].fail(
                 "Schema validator has unexpected type"
             )
         validator = validator_obj  # Type narrowed by isinstance check
@@ -399,14 +402,14 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
         # Return validation result as dictionary for consistent API
         if result.is_success:
             validation_result = result.unwrap()
-            return FlextResult[FlextLdifTypes.Dict].ok({
+            return FlextResult[dict[str, object]].ok({
                 "is_valid": validation_result.is_valid,
                 "total_entries": len(entries),
                 "valid_entries": len(entries) - len(validation_result.errors),
                 "invalid_entries": len(validation_result.errors),
                 "errors": validation_result.errors,
             })
-        return FlextResult[FlextLdifTypes.Dict].fail(
+        return FlextResult[dict[str, object]].fail(
             result.error or "Validation failed"
         )
 
@@ -415,7 +418,7 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
         entries: list[FlextLdifModels.Entry],
         from_server: str,
         to_server: str,
-    ) -> FlextResult[FlextLdifTypes.Dict]:
+    ) -> FlextResult[dict[str, object]]:
         """Migrate LDIF entries between different server types.
 
         Args:
@@ -432,7 +435,7 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
         # Get migration pipeline from container
         pipeline_result = container.get("migration_pipeline")
         if pipeline_result.is_failure:
-            return FlextResult[FlextLdifTypes.Dict].fail(
+            return FlextResult[dict[str, object]].fail(
                 f"Failed to get migration pipeline: {pipeline_result.error}"
             )
 
@@ -440,14 +443,14 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
         # The container.get returns a lambda callable
         pipeline_factory_obj = pipeline_result.unwrap()
         if not callable(pipeline_factory_obj):
-            return FlextResult[FlextLdifTypes.Dict].fail(
+            return FlextResult[dict[str, object]].fail(
                 "Migration pipeline factory is not callable"
             )
         # Use cast after runtime callable check to satisfy type checker
         pipeline_factory: Callable[
-            [FlextTypes.Dict | None], FlextLdifMigrationPipeline
+            [dict[str, object] | None], FlextLdifMigrationPipeline
         ] = cast(
-            "Callable[[FlextTypes.Dict | None], FlextLdifMigrationPipeline]",
+            "Callable[[dict[str, object] | None], FlextLdifMigrationPipeline]",
             pipeline_factory_obj,
         )
 
@@ -457,9 +460,9 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
         })
 
         # Convert Entry objects to dict format for pipeline compatibility
-        # Use FlextTypes.List (list[object]) for type compatibility with migrate_entries
-        entries_as_dicts: FlextTypes.List = cast(
-            "FlextTypes.List", [entry.model_dump() for entry in entries]
+        # Use list[object] for type compatibility with migrate_entries
+        entries_as_dicts: list[object] = cast(
+            "list[object]", [entry.model_dump() for entry in entries]
         )
 
         # Call migrate_entries directly
@@ -468,19 +471,19 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
         )
 
         if migration_result.is_failure:
-            return FlextResult[FlextLdifTypes.Dict].fail(
+            return FlextResult[dict[str, object]].fail(
                 migration_result.error or "Migration failed"
             )
 
         migrated_entries = migration_result.unwrap()
-        stats: FlextTypes.Dict = {
+        stats: dict[str, object] = {
             "total_entries": len(entries),
             "migrated_entries": len(migrated_entries),
             "from_server": from_server,
             "to_server": to_server,
             "success": True,
         }
-        return FlextResult[FlextLdifTypes.Dict].ok(stats)
+        return FlextResult[dict[str, object]].ok(stats)
 
     def migrate_files(
         self,
@@ -491,7 +494,7 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
         *,
         process_schema: bool = True,
         process_entries: bool = True,
-    ) -> FlextResult[FlextLdifTypes.Dict]:
+    ) -> FlextResult[dict[str, object]]:
         """Migrate LDIF data between different LDAP server types from files.
 
         Args:
@@ -507,7 +510,7 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
 
         """
         try:
-            params: FlextTypes.Dict = {
+            params: dict[str, object] = {
                 "input_dir": str(input_dir),
                 "output_dir": str(output_dir),
                 "process_schema": process_schema,
@@ -523,20 +526,20 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
             migration_result = pipeline.execute()
 
             if migration_result.is_failure:
-                return FlextResult[FlextLdifTypes.Dict].fail(
+                return FlextResult[dict[str, object]].fail(
                     migration_result.error or "Migration failed"
                 )
 
-            return FlextResult[FlextLdifTypes.Dict].ok(migration_result.unwrap())
+            return FlextResult[dict[str, object]].ok(migration_result.unwrap())
 
         except Exception as e:  # pragma: no cover
             logger = self.logger
             logger.exception("Migration failed")
-            return FlextResult[FlextLdifTypes.Dict].fail(f"Migration failed: {e}")
+            return FlextResult[dict[str, object]].fail(f"Migration failed: {e}")
 
     def analyze_entries(
         self, entries: list[FlextLdifModels.Entry]
-    ) -> FlextResult[FlextLdifTypes.Dict]:
+    ) -> FlextResult[dict[str, object]]:
         """Analyze LDIF entries and generate statistics.
 
         Args:
@@ -562,7 +565,7 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
                     )
 
         # Return analytics result as dictionary for consistent API
-        return FlextResult[FlextLdifTypes.Dict].ok({
+        return FlextResult[dict[str, object]].ok({
             "total_entries": total_entries,
             "objectclass_distribution": object_class_distribution,
             "patterns_detected": [],
@@ -572,7 +575,7 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
         self,
         entries: list[FlextLdifModels.Entry],
         objectclass: str | tuple[str, ...],
-        required_attributes: FlextTypes.StringList | None = None,
+        required_attributes: list[str] | None = None,
         mode: str = "include",
         *,
         mark_excluded: bool = False,
@@ -672,7 +675,7 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
         schema_items: list[
             FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass
         ],
-        oid_whitelist: FlextTypes.StringList,
+        oid_whitelist: list[str],
         *,
         mark_excluded: bool = True,
     ) -> FlextResult[
@@ -764,7 +767,7 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
     def filter_by_attributes(
         self,
         entries: list[FlextLdifModels.Entry],
-        attributes: FlextTypes.StringList,
+        attributes: list[str],
         mode: str = "include",
         *,
         match_all: bool = False,
@@ -1089,7 +1092,7 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Dict]):
         return self._config
 
     @property
-    def handlers(self) -> FlextLdifTypes.Dict:
+    def handlers(self) -> dict[str, object]:
         """Access to initialized CQRS handlers."""
         return self._handlers
 

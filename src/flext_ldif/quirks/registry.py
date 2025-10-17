@@ -296,7 +296,7 @@ class FlextLdifQuirksRegistry(FlextModels.Value):
         return None
 
     def find_entry_quirk(
-        self, server_type: str, entry_dn: str, attributes: FlextTypes.Dict
+        self, server_type: str, entry_dn: str, attributes: dict[str, object]
     ) -> FlextLdifQuirksBase.BaseEntryQuirk | None:
         """Find the first entry quirk that can handle an entry.
 

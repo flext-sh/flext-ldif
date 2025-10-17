@@ -11,10 +11,13 @@ Quirks allow extending the RFC base without modifying core parser logic.
 
 from __future__ import annotations
 
+import logging
 from abc import ABC, abstractmethod
 
 from flext_core import FlextModels, FlextResult, FlextTypes
 from pydantic import Field
+
+logger = logging.getLogger(__name__)
 
 
 class FlextLdifQuirksBaseSchemaQuirk(ABC, FlextModels.Value):
@@ -53,12 +56,11 @@ class FlextLdifQuirksBaseSchemaQuirk(ABC, FlextModels.Value):
 
         # Only register concrete classes (not base classes or nested abstract classes)
         if not hasattr(cls, "__abstractmethods__") or not cls.__abstractmethods__:
-            try:
-                # Import here to avoid circular dependency
-                from flext_ldif.quirks.registry import (
-                    FlextLdifQuirksRegistry,
-                )
+            # Deferred import inside method to avoid circular dependency with registry
+            # This is an intentional pattern - FlextLdifQuirksRegistry imports from this module
+            import flext_ldif.quirks.registry as quirks_registry_module  # noqa: PLC0415
 
+            try:
                 # Check if cls has all required fields with defaults
                 # Pydantic models can only be instantiated if all required fields have defaults
                 try:
@@ -68,12 +70,15 @@ class FlextLdifQuirksBaseSchemaQuirk(ABC, FlextModels.Value):
                     # This happens for abstract base classes
                     return
 
-                registry = FlextLdifQuirksRegistry.get_global_instance()
+                registry = quirks_registry_module.FlextLdifQuirksRegistry.get_global_instance()
                 registry.register_schema_quirk(quirk_instance)
-            except Exception:
-                # Intentionally silent: Class definition should never fail
-                # Registration is optional during class creation
-                pass
+            except Exception as e:
+                # Registration failures are non-critical during class creation
+                # Log at debug level to avoid noise during module import
+                logger.debug(
+                    f"Failed to register schema quirk {cls.__name__}: {e}",
+                    exc_info=False,
+                )
 
     @abstractmethod
     def can_handle_attribute(self, attr_definition: str) -> bool:
@@ -88,7 +93,7 @@ class FlextLdifQuirksBaseSchemaQuirk(ABC, FlextModels.Value):
         """
 
     @abstractmethod
-    def parse_attribute(self, attr_definition: str) -> FlextResult[FlextTypes.Dict]:
+    def parse_attribute(self, attr_definition: str) -> FlextResult[dict[str, object]]:
         """Parse server-specific attribute definition.
 
         Args:
@@ -112,7 +117,7 @@ class FlextLdifQuirksBaseSchemaQuirk(ABC, FlextModels.Value):
         """
 
     @abstractmethod
-    def parse_objectclass(self, oc_definition: str) -> FlextResult[FlextTypes.Dict]:
+    def parse_objectclass(self, oc_definition: str) -> FlextResult[dict[str, object]]:
         """Parse server-specific objectClass definition.
 
         Args:
@@ -125,8 +130,8 @@ class FlextLdifQuirksBaseSchemaQuirk(ABC, FlextModels.Value):
 
     @abstractmethod
     def convert_attribute_to_rfc(
-        self, attr_data: FlextTypes.Dict
-    ) -> FlextResult[FlextTypes.Dict]:
+        self, attr_data: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         """Convert server-specific attribute to RFC-compliant format.
 
         Args:
@@ -139,8 +144,8 @@ class FlextLdifQuirksBaseSchemaQuirk(ABC, FlextModels.Value):
 
     @abstractmethod
     def convert_objectclass_to_rfc(
-        self, oc_data: FlextTypes.Dict
-    ) -> FlextResult[FlextTypes.Dict]:
+        self, oc_data: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         """Convert server-specific objectClass to RFC-compliant format.
 
         Args:
@@ -153,8 +158,8 @@ class FlextLdifQuirksBaseSchemaQuirk(ABC, FlextModels.Value):
 
     @abstractmethod
     def convert_attribute_from_rfc(
-        self, rfc_data: FlextTypes.Dict
-    ) -> FlextResult[FlextTypes.Dict]:
+        self, rfc_data: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         """Convert RFC-compliant attribute to server-specific format.
 
         Args:
@@ -167,8 +172,8 @@ class FlextLdifQuirksBaseSchemaQuirk(ABC, FlextModels.Value):
 
     @abstractmethod
     def convert_objectclass_from_rfc(
-        self, rfc_data: FlextTypes.Dict
-    ) -> FlextResult[FlextTypes.Dict]:
+        self, rfc_data: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         """Convert RFC-compliant objectClass to server-specific format.
 
         Args:
@@ -180,7 +185,7 @@ class FlextLdifQuirksBaseSchemaQuirk(ABC, FlextModels.Value):
         """
 
     @abstractmethod
-    def write_attribute_to_rfc(self, attr_data: FlextTypes.Dict) -> FlextResult[str]:
+    def write_attribute_to_rfc(self, attr_data: dict[str, object]) -> FlextResult[str]:
         """Write attribute data to RFC-compliant string format.
 
         Args:
@@ -192,7 +197,7 @@ class FlextLdifQuirksBaseSchemaQuirk(ABC, FlextModels.Value):
         """
 
     @abstractmethod
-    def write_objectclass_to_rfc(self, oc_data: FlextTypes.Dict) -> FlextResult[str]:
+    def write_objectclass_to_rfc(self, oc_data: dict[str, object]) -> FlextResult[str]:
         """Write objectClass data to RFC-compliant string format.
 
         Args:
@@ -237,12 +242,11 @@ class FlextLdifQuirksBaseAclQuirk(ABC, FlextModels.Value):
 
         # Only register concrete classes (not base classes or nested abstract classes)
         if not hasattr(cls, "__abstractmethods__") or not cls.__abstractmethods__:
-            try:
-                # Import here to avoid circular dependency
-                from flext_ldif.quirks.registry import (
-                    FlextLdifQuirksRegistry,
-                )
+            # Deferred import inside method to avoid circular dependency with registry
+            # This is an intentional pattern - FlextLdifQuirksRegistry imports from this module
+            import flext_ldif.quirks.registry as quirks_registry_module  # noqa: PLC0415
 
+            try:
                 # Check if cls has all required fields with defaults
                 # Pydantic models can only be instantiated if all required fields have defaults
                 try:
@@ -252,12 +256,15 @@ class FlextLdifQuirksBaseAclQuirk(ABC, FlextModels.Value):
                     # This happens for abstract base classes
                     return
 
-                registry = FlextLdifQuirksRegistry.get_global_instance()
+                registry = quirks_registry_module.FlextLdifQuirksRegistry.get_global_instance()
                 registry.register_acl_quirk(quirk_instance)
-            except Exception:
-                # Intentionally silent: Class definition should never fail
-                # Registration is optional during class creation
-                pass
+            except Exception as e:
+                # Registration failures are non-critical during class creation
+                # Log at debug level to avoid noise during module import
+                logger.debug(
+                    f"Failed to register ACL quirk {cls.__name__}: {e}",
+                    exc_info=False,
+                )
 
     @abstractmethod
     def can_handle_acl(self, acl_line: str) -> bool:
@@ -272,7 +279,7 @@ class FlextLdifQuirksBaseAclQuirk(ABC, FlextModels.Value):
         """
 
     @abstractmethod
-    def parse_acl(self, acl_line: str) -> FlextResult[FlextTypes.Dict]:
+    def parse_acl(self, acl_line: str) -> FlextResult[dict[str, object]]:
         """Parse server-specific ACL definition.
 
         Args:
@@ -285,8 +292,8 @@ class FlextLdifQuirksBaseAclQuirk(ABC, FlextModels.Value):
 
     @abstractmethod
     def convert_acl_to_rfc(
-        self, acl_data: FlextTypes.Dict
-    ) -> FlextResult[FlextTypes.Dict]:
+        self, acl_data: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         """Convert server-specific ACL to RFC-compliant format.
 
         Args:
@@ -299,8 +306,8 @@ class FlextLdifQuirksBaseAclQuirk(ABC, FlextModels.Value):
 
     @abstractmethod
     def convert_acl_from_rfc(
-        self, acl_data: FlextTypes.Dict
-    ) -> FlextResult[FlextTypes.Dict]:
+        self, acl_data: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         """Convert RFC-compliant ACL to server-specific format.
 
         Args:
@@ -312,7 +319,7 @@ class FlextLdifQuirksBaseAclQuirk(ABC, FlextModels.Value):
         """
 
     @abstractmethod
-    def write_acl_to_rfc(self, acl_data: FlextTypes.Dict) -> FlextResult[str]:
+    def write_acl_to_rfc(self, acl_data: dict[str, object]) -> FlextResult[str]:
         """Write ACL data to RFC-compliant string format.
 
         Args:
@@ -357,12 +364,11 @@ class FlextLdifQuirksBaseEntryQuirk(ABC, FlextModels.Value):
 
         # Only register concrete classes (not base classes or nested abstract classes)
         if not hasattr(cls, "__abstractmethods__") or not cls.__abstractmethods__:
-            try:
-                # Import here to avoid circular dependency
-                from flext_ldif.quirks.registry import (
-                    FlextLdifQuirksRegistry,
-                )
+            # Deferred import inside method to avoid circular dependency with registry
+            # This is an intentional pattern - FlextLdifQuirksRegistry imports from this module
+            import flext_ldif.quirks.registry as quirks_registry_module  # noqa: PLC0415
 
+            try:
                 # Check if cls has all required fields with defaults
                 # Pydantic models can only be instantiated if all required fields have defaults
                 try:
@@ -372,15 +378,18 @@ class FlextLdifQuirksBaseEntryQuirk(ABC, FlextModels.Value):
                     # This happens for abstract base classes
                     return
 
-                registry = FlextLdifQuirksRegistry.get_global_instance()
+                registry = quirks_registry_module.FlextLdifQuirksRegistry.get_global_instance()
                 registry.register_entry_quirk(quirk_instance)
-            except Exception:
-                # Intentionally silent: Class definition should never fail
-                # Registration is optional during class creation
-                pass
+            except Exception as e:
+                # Registration failures are non-critical during class creation
+                # Log at debug level to avoid noise during module import
+                logger.debug(
+                    f"Failed to register entry quirk {cls.__name__}: {e}",
+                    exc_info=False,
+                )
 
     @abstractmethod
-    def can_handle_entry(self, entry_dn: str, attributes: FlextTypes.Dict) -> bool:
+    def can_handle_entry(self, entry_dn: str, attributes: dict[str, object]) -> bool:
         """Check if this quirk can handle the entry.
 
         Args:
@@ -394,8 +403,8 @@ class FlextLdifQuirksBaseEntryQuirk(ABC, FlextModels.Value):
 
     @abstractmethod
     def process_entry(
-        self, entry_dn: str, attributes: FlextTypes.Dict
-    ) -> FlextResult[FlextTypes.Dict]:
+        self, entry_dn: str, attributes: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         """Process entry with server-specific logic.
 
         Args:
@@ -409,8 +418,8 @@ class FlextLdifQuirksBaseEntryQuirk(ABC, FlextModels.Value):
 
     @abstractmethod
     def convert_entry_to_rfc(
-        self, entry_data: FlextTypes.Dict
-    ) -> FlextResult[FlextTypes.Dict]:
+        self, entry_data: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         """Convert server-specific entry to RFC-compliant format.
 
         Args:

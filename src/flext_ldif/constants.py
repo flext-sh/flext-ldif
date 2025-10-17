@@ -823,14 +823,14 @@ class FlextLdifConstants(FlextConstants):
         ])
 
     # =============================================================================
-    # DICTIONARY KEYS - Standardize all FlextTypes.Dict key strings
+    # DICTIONARY KEYS - Standardize all dict[str, object] key strings
     # =============================================================================
 
     class DictKeys:
         """Standard dictionary keys used throughout flext-ldif.
 
-        ZERO TOLERANCE: All FlextTypes.Dict key strings MUST be defined here.
-        DO NOT use hard-coded strings as FlextTypes.Dict keys anywhere in the codebase.
+        ZERO TOLERANCE: All dict[str, object] key strings MUST be defined here.
+        DO NOT use hard-coded strings as dict[str, object] keys anywhere in the codebase.
         """
 
         # Server type keys

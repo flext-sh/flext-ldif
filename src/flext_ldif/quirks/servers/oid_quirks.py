@@ -18,7 +18,7 @@ from __future__ import annotations
 import re
 from typing import ClassVar
 
-from flext_core import FlextResult, FlextTypes
+from flext_core import FlextResult
 from pydantic import Field
 
 from flext_ldif.constants import FlextLdifConstants
@@ -552,7 +552,7 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
             ldif_content: Raw LDIF content containing schema definitions
 
         Returns:
-            FlextResult with FlextTypes.Dict containing FlextLdifConstants.DictKeys.ATTRIBUTES and 'objectclasses' lists
+            FlextResult with dict[str, object] containing FlextLdifConstants.DictKeys.ATTRIBUTES and 'objectclasses' lists
 
         """
         try:
@@ -926,7 +926,7 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
             """
             try:
                 acls = []
-                current_acl: FlextTypes.StringList = []
+                current_acl: list[str] = []
                 in_multiline_acl = False
 
                 for line in ldif_content.split("\n"):
@@ -1023,7 +1023,7 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
         def can_handle_entry(
             self,
             entry_dn: str,
-            attributes: FlextTypes.Dict,
+            attributes: dict[str, object],
         ) -> bool:
             """Check if this quirk should handle the entry.
 
@@ -1071,7 +1071,7 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
             return has_oid_attrs or has_oid_classes or has_oid_dn_pattern
 
         def process_entry(
-            self, entry_dn: str, attributes: FlextTypes.Dict
+            self, entry_dn: str, attributes: dict[str, object]
         ) -> FlextResult[FlextLdifTypes.Dict]:
             """Process entry for Oracle OID format.
 
@@ -1318,7 +1318,7 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                 entries = []
                 current_entry: FlextLdifTypes.Dict = {}
                 current_attr: str | None = None
-                current_values: FlextTypes.StringList = []
+                current_values: list[str] = []
 
                 for line in ldif_content.split("\n"):
                     # Empty line indicates end of entry
