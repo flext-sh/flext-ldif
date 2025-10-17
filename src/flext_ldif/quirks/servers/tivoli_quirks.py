@@ -6,7 +6,7 @@ import base64
 import re
 from typing import ClassVar
 
-from flext_core import FlextResult, FlextTypes
+from flext_core import FlextResult
 from pydantic import Field
 
 from flext_ldif.constants import FlextLdifConstants
@@ -462,7 +462,7 @@ class FlextLdifQuirksServersTivoli(FlextLdifQuirksBaseSchemaQuirk):
         ) -> FlextResult[FlextLdifTypes.Dict]:
             """Wrap Tivoli ACL into a generic RFC representation."""
             try:
-                # Type narrowing: rfc_acl is already FlextLdifTypes.Dict (FlextTypes.Dict)
+                # Type narrowing: rfc_acl is already FlextLdifTypes.Dict (dict[str, object])
                 rfc_acl: FlextLdifTypes.Dict = {
                     FlextLdifConstants.DictKeys.TYPE: FlextLdifConstants.DictKeys.ACL,
                     FlextLdifConstants.DictKeys.FORMAT: FlextLdifConstants.AclFormats.RFC_GENERIC,
@@ -482,12 +482,12 @@ class FlextLdifQuirksServersTivoli(FlextLdifQuirksBaseSchemaQuirk):
         ) -> FlextResult[FlextLdifTypes.Dict]:
             """Repackage RFC ACL payload for Tivoli."""
             try:
-                tivoli_acl: FlextTypes.Dict = {
+                tivoli_acl: dict[str, object] = {
                     FlextLdifConstants.DictKeys.FORMAT: FlextLdifConstants.AclFormats.RFC_GENERIC,
                     FlextLdifConstants.DictKeys.TARGET_FORMAT: "ibm-slapdaccesscontrol",
                     FlextLdifConstants.DictKeys.DATA: acl_data,
                 }
-                return FlextResult[FlextTypes.Dict].ok(tivoli_acl)
+                return FlextResult[dict[str, object]].ok(tivoli_acl)
 
             except Exception as exc:  # pragma: no cover
                 return FlextResult[FlextLdifTypes.Dict].fail(

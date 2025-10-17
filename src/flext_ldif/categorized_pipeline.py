@@ -20,7 +20,7 @@ import re
 from pathlib import Path
 from typing import override
 
-from flext_core import FlextResult, FlextService, FlextTypes
+from flext_core import FlextResult, FlextService
 
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.quirks.entry_quirks import FlextLdifEntryQuirks
@@ -33,7 +33,7 @@ from flext_ldif.rfc.rfc_ldif_parser import FlextLdifRfcLdifParser
 from flext_ldif.services.dn_service import DnService
 
 
-class FlextLdifCategorizedMigrationPipeline(FlextService[FlextTypes.Dict]):
+class FlextLdifCategorizedMigrationPipeline(FlextService[dict[str, object]]):
     """Categorized LDIF migration with structured LDIF file output.
 
     Enterprise-grade categorized LDIF migration with rule-based entry classification
@@ -127,7 +127,7 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[FlextTypes.Dict]):
         }
 
     @override
-    def execute(self) -> FlextResult[FlextTypes.Dict]:
+    def execute(self) -> FlextResult[dict[str, object]]:
         """Execute categorized migration pipeline.
 
         Returns:
@@ -144,7 +144,7 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[FlextTypes.Dict]):
         # Step 1: Create output directory (base directory only)
         create_result = self._create_output_directory()
         if create_result.is_failure:
-            return FlextResult[FlextTypes.Dict].fail(
+            return FlextResult[dict[str, object]].fail(
                 f"Failed to create output directory: {create_result.error}"
             )
 
@@ -153,7 +153,7 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[FlextTypes.Dict]):
         if parse_result.is_failure:
             # Return empty result with error for empty input (not a failure case)
             if "No LDIF files found" in str(parse_result.error):
-                result_dict: FlextTypes.Dict = {
+                result_dict: dict[str, object] = {
                     "total_entries": 0,
                     "categorized_counts": {},
                     "written_counts": {},
@@ -164,8 +164,8 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[FlextTypes.Dict]):
                     "source_server": self._source_server,
                     "target_server": self._target_server,
                 }
-                return FlextResult[FlextTypes.Dict].ok(result_dict)
-            return FlextResult[FlextTypes.Dict].fail(
+                return FlextResult[dict[str, object]].ok(result_dict)
+            return FlextResult[dict[str, object]].fail(
                 f"Failed to parse entries: {parse_result.error}"
             )
 
@@ -174,7 +174,7 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[FlextTypes.Dict]):
         # Step 3: Categorize entries using rules
         categorize_result = self._categorize_entries(entries)
         if categorize_result.is_failure:
-            return FlextResult[FlextTypes.Dict].fail(
+            return FlextResult[dict[str, object]].fail(
                 f"Failed to categorize entries: {categorize_result.error}"
             )
 
@@ -183,7 +183,7 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[FlextTypes.Dict]):
         # Step 4: Transform entries per category (quirks)
         transform_result = self._transform_categories(categorized)
         if transform_result.is_failure:
-            return FlextResult[FlextTypes.Dict].fail(
+            return FlextResult[dict[str, object]].fail(
                 f"Failed to transform categories: {transform_result.error}"
             )
 
@@ -192,7 +192,7 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[FlextTypes.Dict]):
         # Step 5: Write to structured output directories
         write_result = self._write_categorized_output(transformed_categorized)
         if write_result.is_failure:
-            return FlextResult[FlextTypes.Dict].fail(
+            return FlextResult[dict[str, object]].fail(
                 f"Failed to write output: {write_result.error}"
             )
 
@@ -201,7 +201,7 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[FlextTypes.Dict]):
         # Step 6: Generate comprehensive statistics
         statistics = self._generate_statistics(transformed_categorized, written_counts)
 
-        return FlextResult[FlextTypes.Dict].ok(statistics)
+        return FlextResult[dict[str, object]].ok(statistics)
 
     def _create_output_directory(self) -> FlextResult[None]:
         """Create base output directory for LDIF files.
@@ -217,7 +217,7 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[FlextTypes.Dict]):
         except (OSError, PermissionError) as e:
             return FlextResult[None].fail(f"Failed to create output directory: {e}")
 
-    def _parse_entries(self) -> FlextResult[list[FlextTypes.Dict]]:
+    def _parse_entries(self) -> FlextResult[list[dict[str, object]]]:
         """Parse all LDIF entries from input directory using RFC parser.
 
         Returns:
@@ -228,12 +228,12 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[FlextTypes.Dict]):
             Replaces 116 lines of custom parsing with battle-tested ldif3 library.
 
         """
-        entries: list[FlextTypes.Dict] = []
+        entries: list[dict[str, object]] = []
 
         try:
             # Get all LDIF files from input directory
             if not self._input_dir.exists():
-                return FlextResult[list[FlextTypes.Dict]].fail(
+                return FlextResult[list[dict[str, object]]].fail(
                     f"Input directory does not exist: {self._input_dir}"
                 )
 
@@ -246,14 +246,14 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[FlextTypes.Dict]):
                     if (self._input_dir / filename).exists()
                 ]
                 if not ldif_files:
-                    return FlextResult[list[FlextTypes.Dict]].fail(
+                    return FlextResult[list[dict[str, object]]].fail(
                         f"None of the specified input files found: {self._input_files}"
                     )
             else:
                 # Process all LDIF files (default behavior)
                 ldif_files = list(self._input_dir.glob("*.ldif"))
                 if not ldif_files:
-                    return FlextResult[list[FlextTypes.Dict]].fail(
+                    return FlextResult[list[dict[str, object]]].fail(
                         "No LDIF files found in input directory"
                     )
 
@@ -263,7 +263,7 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[FlextTypes.Dict]):
             # Parse each LDIF file using RFC parser
             for ldif_file in ldif_files:
                 # Use RFC parser for standards-compliant parsing
-                parser_params: FlextTypes.Dict = {
+                parser_params: dict[str, object] = {
                     "file_path": str(ldif_file),
                     "parse_changes": False,
                     "encoding": "utf-8",
@@ -274,7 +274,7 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[FlextTypes.Dict]):
                 parse_result = parser.execute()
 
                 if parse_result.is_failure:
-                    return FlextResult[list[FlextTypes.Dict]].fail(
+                    return FlextResult[list[dict[str, object]]].fail(
                         f"Failed to parse {ldif_file}: {parse_result.error}"
                     )
 
@@ -287,14 +287,14 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[FlextTypes.Dict]):
 
                 for entry_model in entries_raw:
                     # Extract data from Entry model
-                    entry_dict: FlextTypes.Dict = {
+                    entry_dict: dict[str, object] = {
                         FlextLdifConstants.DictKeys.DN: entry_model.dn.value,  # Get string value from DistinguishedName
                         FlextLdifConstants.DictKeys.ATTRIBUTES: {},
                         FlextLdifConstants.DictKeys.OBJECTCLASS: [],
                     }
 
                     # Type narrow attributes dict
-                    attrs_dict: FlextTypes.Dict = {}
+                    attrs_dict: dict[str, object] = {}
 
                     # Extract objectClass from attributes
                     for (
@@ -317,10 +317,10 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[FlextTypes.Dict]):
 
                     entries.append(entry_dict)
 
-            return FlextResult[list[FlextTypes.Dict]].ok(entries)
+            return FlextResult[list[dict[str, object]]].ok(entries)
 
         except (OSError, UnicodeDecodeError) as e:
-            return FlextResult[list[FlextTypes.Dict]].fail(
+            return FlextResult[list[dict[str, object]]].fail(
                 f"Failed to parse entries: {e}"
             )
 
@@ -345,7 +345,7 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[FlextTypes.Dict]):
 
         return False
 
-    def _has_acl_attributes(self, entry: FlextTypes.Dict) -> bool:
+    def _has_acl_attributes(self, entry: dict[str, object]) -> bool:
         """Check if entry has ACL-related attributes.
 
         Args:
@@ -369,7 +369,7 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[FlextTypes.Dict]):
 
         return any(acl_attr in entry_attrs_lower for acl_attr in acl_attributes_lower)
 
-    def _categorize_entry(self, entry: FlextTypes.Dict) -> tuple[str, str | None]:
+    def _categorize_entry(self, entry: dict[str, object]) -> tuple[str, str | None]:
         """Categorize a single entry based on rules.
 
         Args:
@@ -498,8 +498,8 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[FlextTypes.Dict]):
         return ("rejected", f"No matching category for objectClasses: {object_classes}")
 
     def _categorize_entries(
-        self, entries: list[FlextTypes.Dict]
-    ) -> FlextResult[dict[str, list[FlextTypes.Dict]]]:
+        self, entries: list[dict[str, object]]
+    ) -> FlextResult[dict[str, list[dict[str, object]]]]:
         """Categorize all entries into structured categories.
 
         Args:
@@ -509,7 +509,7 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[FlextTypes.Dict]):
             FlextResult containing dictionary mapping category to entry list
 
         """
-        categorized: dict[str, list[FlextTypes.Dict]] = {
+        categorized: dict[str, list[dict[str, object]]] = {
             "schema": [],
             "hierarchy": [],
             "users": [],
@@ -566,11 +566,11 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[FlextTypes.Dict]):
                     attrs["rejectionReason"] = rejection_reasons[dn_value]
                     entry[FlextLdifConstants.DictKeys.ATTRIBUTES] = attrs
 
-        return FlextResult[dict[str, list[FlextTypes.Dict]]].ok(categorized)
+        return FlextResult[dict[str, list[dict[str, object]]]].ok(categorized)
 
     def _filter_forbidden_attributes(
-        self, attributes: FlextTypes.Dict
-    ) -> FlextTypes.Dict:
+        self, attributes: dict[str, object]
+    ) -> dict[str, object]:
         """Filter out forbidden attributes from entry.
 
         STRATEGY PATTERN: Business rules from client application (e.g., client-a-oud-mig)
@@ -594,7 +594,7 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[FlextTypes.Dict]):
 
         # Filter attributes
         # Check both exact match and case-insensitive match
-        filtered: FlextTypes.Dict = {
+        filtered: dict[str, object] = {
             attr_name: attr_value
             for attr_name, attr_value in attributes.items()
             if attr_name.lower() not in forbidden_lower
@@ -603,8 +603,8 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[FlextTypes.Dict]):
         return filtered
 
     def _transform_categories(
-        self, categorized: dict[str, list[FlextTypes.Dict]]
-    ) -> FlextResult[dict[str, list[FlextTypes.Dict]]]:
+        self, categorized: dict[str, list[dict[str, object]]]
+    ) -> FlextResult[dict[str, list[dict[str, object]]]]:
         """Apply per-category transformations using quirks system.
 
         Implements proper OID→RFC→OUD transformation using quirks:
@@ -641,7 +641,7 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[FlextTypes.Dict]):
                         continue
 
                     # Create new attributes dict for transformed entry
-                    new_attributes: FlextTypes.Dict = {}
+                    new_attributes: dict[str, object] = {}
 
                     # Process each attribute
                     for attr_name, attr_value in attributes.items():
@@ -759,7 +759,7 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[FlextTypes.Dict]):
                 for category, entries in categorized.items():
                     if category == "schema":
                         continue
-                    normalized_entries: list[FlextTypes.Dict] = []
+                    normalized_entries: list[dict[str, object]] = []
                     for entry in entries:
                         if not isinstance(entry, dict):
                             normalized_entries.append(entry)
@@ -778,15 +778,15 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[FlextTypes.Dict]):
             ) as e:  # Safety net: do not fail migration if normalization fails
                 self.logger.warning(f"DN reference normalization skipped: {e}")
 
-            return FlextResult[dict[str, list[FlextTypes.Dict]]].ok(categorized)
+            return FlextResult[dict[str, list[dict[str, object]]]].ok(categorized)
 
         except Exception as e:
-            return FlextResult[dict[str, list[FlextTypes.Dict]]].fail(
+            return FlextResult[dict[str, list[dict[str, object]]]].fail(
                 f"ACL transformation failed: {e}"
             )
 
     def _build_canonical_dn_map(
-        self, categorized: dict[str, list[FlextTypes.Dict]]
+        self, categorized: dict[str, list[dict[str, object]]]
     ) -> dict[str, str]:
         """Build a mapping of lowercase(cleaned DN) -> canonical cleaned DN.
 
@@ -811,10 +811,10 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[FlextTypes.Dict]):
 
     def _normalize_dn_references_for_entry(
         self,
-        entry: FlextTypes.Dict,
+        entry: dict[str, object],
         dn_map: dict[str, str],
         ref_attrs_lower: set[str],
-    ) -> FlextTypes.Dict:
+    ) -> dict[str, object]:
         """Normalize DN-valued attributes in an entry according to dn_map.
 
         Handles both str and list[str] attribute values.
@@ -824,7 +824,7 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[FlextTypes.Dict]):
         if not isinstance(attrs, dict):
             return normalized
 
-        new_attrs: FlextTypes.Dict = {}
+        new_attrs: dict[str, object] = {}
         for attr_name, attr_value in attrs.items():
             if attr_name.lower() in ref_attrs_lower:
                 if isinstance(attr_value, list):
@@ -843,8 +843,8 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[FlextTypes.Dict]):
         return normalized
 
     def _normalize_aci_dn_references(
-        self, entry: FlextTypes.Dict, dn_map: dict[str, str]
-    ) -> FlextTypes.Dict:
+        self, entry: dict[str, object], dn_map: dict[str, str]
+    ) -> dict[str, object]:
         """Normalize DNs embedded in ACI attribute strings using dn_map.
 
         Attempts to detect DN substrings in common OUD ACI patterns and
@@ -893,8 +893,8 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[FlextTypes.Dict]):
             return entry
 
     def _process_schema_entries(
-        self, entries: list[FlextTypes.Dict]
-    ) -> list[FlextTypes.Dict]:
+        self, entries: list[dict[str, object]]
+    ) -> list[dict[str, object]]:
         """Process schema entries: apply whitelist filtering and sort by OID.
 
         RFC-COMPLIANT: Works with RFC 4512 schema format (attributetypes/objectclasses).
@@ -993,8 +993,8 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[FlextTypes.Dict]):
         return processed_entries
 
     def _sort_entries_by_hierarchy_and_name(
-        self, entries: list[FlextTypes.Dict]
-    ) -> list[FlextTypes.Dict]:
+        self, entries: list[dict[str, object]]
+    ) -> list[dict[str, object]]:
         """Sort entries by DN hierarchy depth, then case-insensitive DN.
 
         Ordering rules:
@@ -1004,7 +1004,7 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[FlextTypes.Dict]):
         This ensures deterministic ordering across 01-05 categories.
         """
 
-        def sort_key(entry: FlextTypes.Dict) -> tuple[int, str]:
+        def sort_key(entry: dict[str, object]) -> tuple[int, str]:
             dn_value = entry.get(FlextLdifConstants.DictKeys.DN, "")
             dn = dn_value if isinstance(dn_value, str) else ""
             dn_clean = DnService.clean_dn(dn)
@@ -1027,7 +1027,7 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[FlextTypes.Dict]):
         return sorted(sortable, key=sort_key) + nonsortable
 
     def _write_category_file(
-        self, category: str, entries: list[FlextTypes.Dict], category_filename: str
+        self, category: str, entries: list[dict[str, object]], category_filename: str
     ) -> FlextResult[int]:
         """Write entries for a single category to LDIF file.
 
@@ -1123,7 +1123,7 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[FlextTypes.Dict]):
             return FlextResult[int].fail(f"Failed to write {category} file: {e}")
 
     def _write_categorized_output(
-        self, categorized: dict[str, list[FlextTypes.Dict]]
+        self, categorized: dict[str, list[dict[str, object]]]
     ) -> FlextResult[dict[str, int]]:
         """Write categorized entries to structured LDIF files.
 
@@ -1131,7 +1131,7 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[FlextTypes.Dict]):
             categorized: Dictionary mapping category to entry list
 
         Returns:
-            FlextResult containing FlextTypes.Dict of category to count written
+            FlextResult containing dict[str, object] of category to count written
 
         """
         written_counts: dict[str, int] = {}
@@ -1158,9 +1158,9 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[FlextTypes.Dict]):
 
     def _generate_statistics(
         self,
-        categorized: dict[str, list[FlextTypes.Dict]],
+        categorized: dict[str, list[dict[str, object]]],
         written_counts: dict[str, int],
-    ) -> FlextTypes.Dict:
+    ) -> dict[str, object]:
         """Generate comprehensive statistics for categorized migration.
 
         Args:
@@ -1175,7 +1175,7 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[FlextTypes.Dict]):
         total_entries = sum(len(entries) for entries in categorized.values())
 
         # Build categorized counts
-        categorized_counts: FlextTypes.Dict = {}
+        categorized_counts: dict[str, object] = {}
         for category, entries in categorized.items():
             categorized_counts[category] = len(entries)
 
@@ -1198,7 +1198,7 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[FlextTypes.Dict]):
         rejection_rate = rejection_count / total_entries if total_entries > 0 else 0.0
 
         # Build output files info (LDIF files, not directories)
-        output_files: FlextTypes.Dict = {}
+        output_files: dict[str, object] = {}
         for category in written_counts:
             filename_obj = self._output_files.get(category, f"{category}.ldif")
             category_filename = (
@@ -1208,7 +1208,7 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[FlextTypes.Dict]):
             output_files[category] = str(output_path)
 
         # Build comprehensive statistics
-        stats: FlextTypes.Dict = {
+        stats: dict[str, object] = {
             "total_entries": total_entries,
             "categorized_counts": categorized_counts,
             "written_counts": written_counts,

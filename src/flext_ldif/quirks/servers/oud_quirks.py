@@ -11,7 +11,7 @@ from __future__ import annotations
 import re
 from typing import ClassVar
 
-from flext_core import FlextResult, FlextTypes
+from flext_core import FlextResult
 from pydantic import Field
 
 from flext_ldif.constants import FlextLdifConstants
@@ -569,7 +569,7 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
             ldif_content: Raw LDIF content containing schema definitions
 
         Returns:
-            FlextResult with FlextTypes.Dict containing FlextLdifConstants.DictKeys.ATTRIBUTES and 'objectclasses' lists
+            FlextResult with dict[str, object] containing FlextLdifConstants.DictKeys.ATTRIBUTES and 'objectclasses' lists
 
         """
         try:
@@ -749,7 +749,7 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
                         oudacl_data["bind_rules"] = bind_rules
 
                 # Preserve original format in metadata with extensions
-                metadata_extensions: FlextTypes.Dict = {}
+                metadata_extensions: dict[str, object] = {}
                 if line_breaks:
                     metadata_extensions["line_breaks"] = line_breaks
                     metadata_extensions["is_multiline"] = True
@@ -916,7 +916,7 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
                         )
 
                 # Build permission rules
-                permission_lines: FlextTypes.StringList = []
+                permission_lines: list[str] = []
                 if permissions and bind_rules:
                     # Match permissions with bind rules
                     if isinstance(permissions, list) and isinstance(bind_rules, list):
@@ -1065,7 +1065,7 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
         def model_post_init(self, _context: object, /) -> None:
             """Initialize OUD entry quirk."""
 
-        def can_handle_entry(self, entry_dn: str, attributes: FlextTypes.Dict) -> bool:
+        def can_handle_entry(self, entry_dn: str, attributes: dict[str, object]) -> bool:
             """Check if this quirk should handle the entry.
 
             Args:
@@ -1098,7 +1098,7 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
         }
 
         def process_entry(
-            self, entry_dn: str, attributes: dict[str, list[str]] | FlextTypes.Dict
+            self, entry_dn: str, attributes: dict[str, list[str]] | dict[str, object]
         ) -> FlextResult[FlextLdifTypes.Dict]:
             """Process entry for OUD format with metadata preservation.
 
@@ -1152,7 +1152,7 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
                         processed_entry[attr_name] = attr_values
 
                 # Preserve metadata for DN quirks and attribute ordering
-                metadata_extensions: FlextTypes.Dict = {}
+                metadata_extensions: dict[str, object] = {}
 
                 # Detect DN spaces quirk (spaces after commas)
                 if ", " in entry_dn:
@@ -1160,7 +1160,7 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
 
                 # Preserve attribute ordering
                 if attributes:
-                    attr_order: FlextTypes.StringList = list(attributes.keys())
+                    attr_order: list[str] = list(attributes.keys())
                     metadata_extensions["attribute_order"] = attr_order
 
                 # Detect Oracle-specific objectClasses
@@ -1346,7 +1346,7 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
                 entries = []
                 current_entry: FlextLdifTypes.Dict = {}
                 current_attr: str | None = None
-                current_values: FlextTypes.StringList = []
+                current_values: list[str] = []
 
                 for line in ldif_content.split("\n"):
                     # Empty line indicates end of entry

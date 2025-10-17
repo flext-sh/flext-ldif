@@ -18,7 +18,7 @@ from __future__ import annotations
 import re
 from typing import ClassVar
 
-from flext_core import FlextResult, FlextTypes
+from flext_core import FlextResult
 from pydantic import Field
 
 from flext_ldif.constants import FlextLdifConstants
@@ -610,7 +610,7 @@ class FlextLdifQuirksServersOpenldap1(FlextLdifQuirksBaseSchemaQuirk):
                 by_clauses_raw = acl_data.get("by_clauses", [])
 
                 # Explicit type checking for by_clauses iteration
-                by_clauses: list[FlextTypes.Dict] = (
+                by_clauses: list[dict[str, object]] = (
                     by_clauses_raw if isinstance(by_clauses_raw, list) else []
                 )
 
@@ -651,7 +651,7 @@ class FlextLdifQuirksServersOpenldap1(FlextLdifQuirksBaseSchemaQuirk):
         def model_post_init(self, _context: object, /) -> None:
             """Initialize OpenLDAP 1.x entry quirk."""
 
-        def can_handle_entry(self, entry_dn: str, attributes: FlextTypes.Dict) -> bool:
+        def can_handle_entry(self, entry_dn: str, attributes: dict[str, object]) -> bool:
             """Check if this quirk should handle the entry.
 
             Args:
@@ -670,7 +670,7 @@ class FlextLdifQuirksServersOpenldap1(FlextLdifQuirksBaseSchemaQuirk):
             return not is_config_dn and not has_olc_attrs
 
         def process_entry(
-            self, entry_dn: str, attributes: FlextTypes.Dict
+            self, entry_dn: str, attributes: dict[str, object]
         ) -> FlextResult[FlextLdifTypes.Dict]:
             """Process entry for OpenLDAP 1.x format.
 

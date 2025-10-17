@@ -17,7 +17,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import cast
 
-from flext_core import FlextResult, FlextService, FlextTypes
+from flext_core import FlextResult, FlextService
 
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.quirks.registry import FlextLdifQuirksRegistry
@@ -31,7 +31,7 @@ from flext_ldif.rfc.rfc_schema_parser import FlextLdifRfcSchemaParser
 from flext_ldif.typings import FlextLdifTypes
 
 
-class FlextLdifMigrationPipeline(FlextService[FlextLdifTypes.Dict]):
+class FlextLdifMigrationPipeline(FlextService[dict[str, object]]):
     """Generic LDIF Migration Pipeline Service.
 
     Provides server-agnostic LDIF migration using RFC-compliant base parsers
@@ -78,7 +78,7 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifTypes.Dict]):
     def __init__(
         self,
         *,
-        params: FlextTypes.Dict,
+        params: dict[str, object],
         source_server_type: str,
         target_server_type: str,
         quirk_registry: FlextLdifQuirksRegistry | None = None,
@@ -191,11 +191,11 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifTypes.Dict]):
     def migrate_entries(
         self,
         *,
-        entries: FlextTypes.List,
+        entries: list[object],
         source_format: str,
         target_format: str,
-        _quirks: FlextLdifTypes.StringList | None = None,
-    ) -> FlextResult[FlextTypes.List]:
+        _quirks: list[str] | None = None,
+    ) -> FlextResult[list[object]]:
         """Migrate entries between formats using quirk-based transformation.
 
         This is a convenience method for migrating in-memory entries without
@@ -218,7 +218,7 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifTypes.Dict]):
         """
         try:
             if not entries:
-                return FlextResult[FlextTypes.List].ok([])
+                return FlextResult[list[object]].ok([])
 
             if self.logger:
                 self.logger.info(
@@ -241,7 +241,7 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifTypes.Dict]):
                 # Type narrow entry to dict
                 if not isinstance(entry, dict):
                     continue  # Skip non-dict entries
-                entry_dict: FlextTypes.Dict = entry
+                entry_dict: dict[str, object] = entry
                 normalized_entry = entry_dict.copy()
 
                 if source_entry_quirks:
@@ -307,18 +307,18 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifTypes.Dict]):
                     },
                 )
 
-            # migrated_entries is already typed as list[FlextTypes.Dict]
-            return FlextResult[FlextTypes.List].ok(
-                cast("FlextTypes.List", migrated_entries)
+            # migrated_entries is already typed as list[dict[str, object]]
+            return FlextResult[list[object]].ok(
+                cast("list[object]", migrated_entries)
             )
 
         except Exception as e:  # pragma: no cover
             error_msg = f"Entry migration failed: {e}"
             if self.logger:
                 self.logger.exception(error_msg)
-            return FlextResult[FlextTypes.List].fail(error_msg)
+            return FlextResult[list[object]].fail(error_msg)
 
-    def execute(self) -> FlextResult[FlextLdifTypes.Dict]:
+    def execute(self) -> FlextResult[dict[str, object]]:
         """Execute generic LDIF migration pipeline.
 
         Returns:
@@ -333,7 +333,7 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifTypes.Dict]):
             # Validate parameters
             input_dir_str = self._params.get(FlextLdifConstants.DictKeys.INPUT_DIR, "")
             if not input_dir_str:
-                return FlextResult[FlextLdifTypes.Dict].fail(
+                return FlextResult[dict[str, object]].fail(
                     "input_dir parameter is required"
                 )
 
@@ -341,17 +341,17 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifTypes.Dict]):
                 FlextLdifConstants.DictKeys.OUTPUT_DIR, ""
             )
             if not output_dir_str:
-                return FlextResult[FlextLdifTypes.Dict].fail(
+                return FlextResult[dict[str, object]].fail(
                     "output_dir parameter is required"
                 )
 
             # Type narrow directory paths
             if not isinstance(input_dir_str, str):
-                return FlextResult[FlextLdifTypes.Dict].fail(
+                return FlextResult[dict[str, object]].fail(
                     f"input_dir must be string, got {type(input_dir_str).__name__}"
                 )
             if not isinstance(output_dir_str, str):
-                return FlextResult[FlextLdifTypes.Dict].fail(
+                return FlextResult[dict[str, object]].fail(
                     f"output_dir must be string, got {type(output_dir_str).__name__}"
                 )
 
@@ -359,7 +359,7 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifTypes.Dict]):
             output_dir = Path(output_dir_str)
 
             if not input_dir.exists():
-                return FlextResult[FlextLdifTypes.Dict].fail(
+                return FlextResult[dict[str, object]].fail(
                     f"Input directory not found: {input_dir}"
                 )
 
@@ -387,7 +387,7 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifTypes.Dict]):
                 )
 
             # Initialize result data
-            result_data: FlextLdifTypes.Dict = {
+            result_data: dict[str, object] = {
                 FlextLdifConstants.DictKeys.SCHEMA: {},
                 FlextLdifConstants.DictKeys.ENTRIES: [],
                 FlextLdifConstants.DictKeys.STATS: {
@@ -402,7 +402,7 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifTypes.Dict]):
             if process_schema:
                 schema_result = self._process_schema_migration(input_dir, output_dir)
                 if schema_result.is_failure:
-                    return FlextResult[FlextLdifTypes.Dict].fail(
+                    return FlextResult[dict[str, object]].fail(
                         f"Schema migration failed: {schema_result.error}"
                     )
 
@@ -423,7 +423,7 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifTypes.Dict]):
             if process_entries:
                 entries_result = self._process_entries_migration(input_dir, output_dir)
                 if entries_result.is_failure:
-                    return FlextResult[FlextLdifTypes.Dict].fail(
+                    return FlextResult[dict[str, object]].fail(
                         f"Entries migration failed: {entries_result.error}"
                     )
 
@@ -447,17 +447,17 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifTypes.Dict]):
                     },
                 )
 
-            return FlextResult[FlextLdifTypes.Dict].ok(result_data)
+            return FlextResult[dict[str, object]].ok(result_data)
 
         except Exception as e:  # pragma: no cover
             error_msg = f"LDIF migration pipeline failed: {e}"
             if self.logger:
                 self.logger.exception(error_msg)
-            return FlextResult[FlextLdifTypes.Dict].fail(error_msg)
+            return FlextResult[dict[str, object]].fail(error_msg)
 
     def _process_schema_migration(
         self, input_dir: Path, output_dir: Path
-    ) -> FlextResult[FlextLdifTypes.Dict]:
+    ) -> FlextResult[dict[str, object]]:
         """Process schema migration using RFC parsers with quirks.
 
         Args:
@@ -474,7 +474,7 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifTypes.Dict]):
             if not schema_files:
                 if self.logger:
                     self.logger.warning("No schema files found in input directory")
-                return FlextResult[FlextLdifTypes.Dict].ok({
+                return FlextResult[dict[str, object]].ok({
                     FlextLdifConstants.DictKeys.ATTRIBUTES: {},
                     "objectclasses": {},
                 })
@@ -503,7 +503,7 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifTypes.Dict]):
             parse_result = parser.execute()
 
             if parse_result.is_failure:
-                return FlextResult[FlextLdifTypes.Dict].fail(
+                return FlextResult[dict[str, object]].fail(
                     f"RFC schema parsing failed: {parse_result.error}"
                 )
 
@@ -525,7 +525,7 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifTypes.Dict]):
 
             write_result = writer.execute()
             if write_result.is_failure:
-                return FlextResult[FlextLdifTypes.Dict].fail(
+                return FlextResult[dict[str, object]].fail(
                     f"Schema writing failed: {write_result.error}"
                 )
 
@@ -534,12 +534,12 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifTypes.Dict]):
                 attributes_raw: object = schema_data.get(
                     FlextLdifConstants.DictKeys.ATTRIBUTES, {}
                 )
-                attributes: FlextTypes.Dict = (
+                attributes: dict[str, object] = (
                     attributes_raw if isinstance(attributes_raw, dict) else {}
                 )
 
                 objectclasses_raw: object = schema_data.get("objectclasses", {})
-                objectclasses: FlextTypes.Dict = (
+                objectclasses: dict[str, object] = (
                     objectclasses_raw if isinstance(objectclasses_raw, dict) else {}
                 )
 
@@ -552,16 +552,16 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifTypes.Dict]):
                     },
                 )
 
-            return FlextResult[FlextLdifTypes.Dict].ok(schema_data)
+            return FlextResult[dict[str, object]].ok(schema_data)
 
         except Exception as e:  # pragma: no cover
-            return FlextResult[FlextLdifTypes.Dict].fail(
+            return FlextResult[dict[str, object]].fail(
                 f"Schema migration failed: {e}"
             )
 
     def _process_entries_migration(
         self, input_dir: Path, output_dir: Path
-    ) -> FlextResult[FlextTypes.List]:
+    ) -> FlextResult[list[object]]:
         """Process entries migration using RFC parsers with quirks.
 
         Args:
@@ -583,10 +583,10 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifTypes.Dict]):
             if not entry_files:
                 if self.logger:
                     self.logger.warning("No entry files found in input directory")
-                return FlextResult[FlextTypes.List].ok([])
+                return FlextResult[list[object]].ok([])
 
-            # Use FlextTypes.List for compatibility with Result.ok
-            all_entries: FlextTypes.List = []
+            # Use list[object] for compatibility with Result.ok
+            all_entries: list[object] = []
 
             for entry_file in entry_files:
                 if self.logger:
@@ -608,7 +608,7 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifTypes.Dict]):
                 parse_result = parser.execute()
 
                 if parse_result.is_failure:
-                    return FlextResult[FlextTypes.List].fail(
+                    return FlextResult[list[object]].fail(
                         f"RFC LDIF parsing failed: {parse_result.error}"
                     )
 
@@ -633,7 +633,7 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifTypes.Dict]):
 
             write_result = writer.execute()
             if write_result.is_failure:
-                return FlextResult[FlextTypes.List].fail(
+                return FlextResult[list[object]].fail(
                     f"Entries writing failed: {write_result.error}"
                 )
 
@@ -646,11 +646,11 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifTypes.Dict]):
                     },
                 )
 
-            # all_entries is already typed as list[FlextLdifTypes.Dict]
-            return FlextResult[FlextTypes.List].ok(all_entries)
+            # all_entries is already typed as list[object]
+            return FlextResult[list[object]].ok(all_entries)
 
         except Exception as e:  # pragma: no cover
-            return FlextResult[FlextTypes.List].fail(f"Entries migration failed: {e}")
+            return FlextResult[list[object]].fail(f"Entries migration failed: {e}")
 
 
 __all__ = ["FlextLdifMigrationPipeline"]

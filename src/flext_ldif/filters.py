@@ -18,7 +18,7 @@ from __future__ import annotations
 import fnmatch
 from datetime import UTC, datetime
 
-from flext_core import FlextResult, FlextTypes
+from flext_core import FlextResult
 
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
@@ -63,7 +63,7 @@ class FlextLdifFilters:
         return fnmatch.fnmatch(dn.lower(), pattern.lower())
 
     @staticmethod
-    def matches_oid_pattern(oid: str, patterns: FlextTypes.StringList) -> bool:
+    def matches_oid_pattern(oid: str, patterns: list[str]) -> bool:
         """Check if OID matches any pattern in list.
 
         Uses fnmatch for pattern matching. Supports wildcards in OID patterns.
@@ -127,8 +127,8 @@ class FlextLdifFilters:
             )
         else:
             # Preserve existing extensions and add exclusion_info
-            new_extensions: FlextTypes.Dict = {**entry.metadata.extensions}
-            # model_dump() returns dict[str, Any] which is compatible with FlextTypes.Dict
+            new_extensions: dict[str, object] = {**entry.metadata.extensions}
+            # model_dump() returns dict[str, object] which is compatible with dict[str, object]
             new_extensions["exclusion_info"] = exclusion_info.model_dump()
             updated_metadata: FlextLdifModels.QuirkMetadata = (
                 FlextLdifModels.QuirkMetadata(
@@ -162,18 +162,18 @@ class FlextLdifFilters:
         if entry.metadata is None:
             return False
 
-        # Get exclusion_info FlextTypes.Dict from extensions (stored via model_dump())
+        # Get exclusion_info dict[str, object] from extensions (stored via model_dump())
         exclusion_info_raw: object = entry.metadata.extensions.get("exclusion_info")
         if exclusion_info_raw is None:
             return False
 
-        # Type narrowing: exclusion_info is a FlextTypes.Dict from model_dump()
+        # Type narrowing: exclusion_info is a dict[str, object] from model_dump()
         if not isinstance(exclusion_info_raw, dict):
             return False
 
-        exclusion_info: FlextTypes.Dict = exclusion_info_raw
+        exclusion_info: dict[str, object] = exclusion_info_raw
 
-        # Get excluded field from FlextTypes.Dict (type-safe access)
+        # Get excluded field from dict[str, object] (type-safe access)
         excluded_value: object = exclusion_info.get("excluded")
         if excluded_value is None:
             return False
@@ -202,18 +202,18 @@ class FlextLdifFilters:
         if entry.metadata is None:
             return None
 
-        # Get exclusion_info FlextTypes.Dict from extensions (stored via model_dump())
+        # Get exclusion_info dict[str, object] from extensions (stored via model_dump())
         exclusion_info_raw: object = entry.metadata.extensions.get("exclusion_info")
         if exclusion_info_raw is None:
             return None
 
-        # Type narrowing: exclusion_info is a FlextTypes.Dict from model_dump()
+        # Type narrowing: exclusion_info is a dict[str, object] from model_dump()
         if not isinstance(exclusion_info_raw, dict):
             return None
 
-        exclusion_info: FlextTypes.Dict = exclusion_info_raw
+        exclusion_info: dict[str, object] = exclusion_info_raw
 
-        # Get exclusion_reason field from FlextTypes.Dict (type-safe access)
+        # Get exclusion_reason field from dict[str, object] (type-safe access)
         reason_value: object = exclusion_info.get("exclusion_reason")
         if reason_value is None:
             return None
@@ -253,7 +253,7 @@ class FlextLdifFilters:
 
     @staticmethod
     def has_required_attributes(
-        entry: FlextLdifModels.Entry, required_attributes: FlextTypes.StringList
+        entry: FlextLdifModels.Entry, required_attributes: list[str]
     ) -> bool:
         """Check if entry has all required attributes.
 
@@ -355,7 +355,7 @@ class FlextLdifFilters:
     def filter_entries_by_objectclass(
         entries: list[FlextLdifModels.Entry],
         objectclass: str | tuple[str, ...],
-        required_attributes: FlextTypes.StringList | None = None,
+        required_attributes: list[str] | None = None,
         mode: str = "include",
         *,
         mark_excluded: bool = True,
@@ -429,7 +429,7 @@ class FlextLdifFilters:
     @staticmethod
     def filter_entries_by_attributes(
         entries: list[FlextLdifModels.Entry],
-        attributes: FlextTypes.StringList,
+        attributes: list[str],
         mode: str = "include",
         *,
         match_all: bool = False,

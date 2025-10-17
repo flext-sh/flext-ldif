@@ -60,7 +60,7 @@ Example:
     >>> # Use processors for batch operations
     >>> processors = ldif.Processors.create_processor()
     >>>
-    >>> def validate_entry(entry: dict) -> FlextTypes.Dict:
+    >>> def validate_entry(entry: dict) -> dict[str, object]:
     >>>     return entry
     >>>
     >>> reg_result = ldif.Processors.register_processor(

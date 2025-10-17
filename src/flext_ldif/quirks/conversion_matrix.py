@@ -15,25 +15,33 @@ SPDX-License-Identifier: MIT
 
 """
 
-# Expected issues:
-# - ANN401: source_quirk/target_quirk are dynamically typed quirk objects
-#   (different implementations per server type, no common base class yet)
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import Any, Literal, cast
+from typing import Literal, cast
 
 from flext_core import FlextResult
 
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.quirks.base import (
     FlextLdifQuirksBaseAclQuirk,
+    FlextLdifQuirksBaseEntryQuirk,
     FlextLdifQuirksBaseSchemaQuirk,
 )
 from flext_ldif.quirks.dn_case_registry import DnCaseRegistry
 from flext_ldif.typings import FlextLdifTypes
 
 DataType = Literal["attribute", "objectclass", "acl", "entry"]
+
+# Type alias for polymorphic quirk instances that can handle multiple data types
+# These are server-specific implementations (e.g., OUD, OID, OpenLDAP) that may support
+# schema, ACL, and/or entry processing capabilities
+QuirkInstance = (
+    FlextLdifQuirksBaseSchemaQuirk
+    | FlextLdifQuirksBaseAclQuirk
+    | FlextLdifQuirksBaseEntryQuirk
+    | object
+)
 
 
 class QuirksConversionMatrix:
@@ -79,8 +87,8 @@ class QuirksConversionMatrix:
 
     def convert(
         self,
-        source_quirk: Any,
-        target_quirk: Any,
+        source_quirk: QuirkInstance,
+        target_quirk: QuirkInstance,
         data_type: DataType,
         data: str | FlextLdifTypes.Dict,
     ) -> FlextResult[str | FlextLdifTypes.Dict]:
@@ -188,8 +196,8 @@ class QuirksConversionMatrix:
 
     def _convert_attribute(
         self,
-        source_quirk: Any,
-        target_quirk: Any,
+        source_quirk: QuirkInstance,
+        target_quirk: QuirkInstance,
         data: str | FlextLdifTypes.Dict,
     ) -> FlextResult[str | FlextLdifTypes.Dict]:
         """Convert attribute from source to target quirk via RFC.
@@ -264,8 +272,8 @@ class QuirksConversionMatrix:
 
     def _convert_objectclass(
         self,
-        source_quirk: Any,
-        target_quirk: Any,
+        source_quirk: QuirkInstance,
+        target_quirk: QuirkInstance,
         data: str | FlextLdifTypes.Dict,
     ) -> FlextResult[str | FlextLdifTypes.Dict]:
         """Convert objectClass from source to target quirk via RFC.
@@ -340,8 +348,8 @@ class QuirksConversionMatrix:
 
     def _convert_acl(
         self,
-        source_quirk: Any,
-        target_quirk: Any,
+        source_quirk: QuirkInstance,
+        target_quirk: QuirkInstance,
         data: str | FlextLdifTypes.Dict,
     ) -> FlextResult[str | FlextLdifTypes.Dict]:
         """Convert ACL from source to target quirk via RFC.
@@ -429,8 +437,8 @@ class QuirksConversionMatrix:
 
     def _convert_entry(
         self,
-        source_quirk: Any,
-        target_quirk: Any,
+        source_quirk: QuirkInstance,
+        target_quirk: QuirkInstance,
         data: str | FlextLdifTypes.Dict,
     ) -> FlextResult[str | FlextLdifTypes.Dict]:
         """Convert entry from source to target quirk via RFC.
@@ -505,8 +513,8 @@ class QuirksConversionMatrix:
 
     def batch_convert(
         self,
-        source_quirk: Any,
-        target_quirk: Any,
+        source_quirk: QuirkInstance,
+        target_quirk: QuirkInstance,
         data_type: DataType,
         data_list: Sequence[str | FlextLdifTypes.Dict],
     ) -> FlextResult[list[str | FlextLdifTypes.Dict]]:
@@ -597,7 +605,7 @@ class QuirksConversionMatrix:
         """
         self.dn_registry.clear()
 
-    def get_supported_conversions(self, quirk: Any) -> dict[str, bool]:
+    def get_supported_conversions(self, quirk: QuirkInstance) -> dict[str, bool]:
         """Check which data types a quirk supports for conversion.
 
         Args:
