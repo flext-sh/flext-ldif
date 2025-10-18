@@ -33,9 +33,10 @@ from flext_ldif.entry.builder import FlextLdifEntryBuilder
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.schema.builder import FlextLdifSchemaBuilder
 from flext_ldif.schema.validator import FlextLdifSchemaValidator
+from flext_ldif.typings import FlextLdifTypes
 
 
-class FlextLdif(FlextService[dict[str, object]]):
+class FlextLdif(FlextService[FlextLdifTypes.Models.CustomDataDict]):
     r"""Unified LDIF processing facade with complete Flext ecosystem integration.
 
     This service inherits from FlextService and integrates the complete Flext ecosystem:
@@ -280,7 +281,7 @@ class FlextLdif(FlextService[dict[str, object]]):
         )
 
     @override
-    def execute(self) -> FlextResult[dict[str, object]]:
+    def execute(self) -> FlextResult[FlextLdifTypes.Models.CustomDataDict]:
         """Execute facade self-check and return status.
 
         Returns:
@@ -357,7 +358,7 @@ class FlextLdif(FlextService[dict[str, object]]):
 
     def validate_entries(
         self, entries: list[FlextLdifModels.Entry]
-    ) -> FlextResult[dict[str, object]]:
+    ) -> FlextResult[FlextLdifTypes.Models.CustomDataDict]:
         """Validate LDIF entries against RFC and business rules.
 
         Args:
@@ -385,7 +386,7 @@ class FlextLdif(FlextService[dict[str, object]]):
         *,
         process_schema: bool = True,
         process_entries: bool = True,
-    ) -> FlextResult[dict[str, object]]:
+    ) -> FlextResult[FlextLdifTypes.Models.CustomDataDict]:
         """Migrate LDIF data between different LDAP server types.
 
         Args:
@@ -424,7 +425,7 @@ class FlextLdif(FlextService[dict[str, object]]):
 
     def analyze(
         self, entries: list[FlextLdifModels.Entry]
-    ) -> FlextResult[dict[str, object]]:
+    ) -> FlextResult[FlextLdifTypes.Models.CustomDataDict]:
         """Analyze LDIF entries and generate statistics.
 
         Args:
@@ -484,7 +485,7 @@ class FlextLdif(FlextService[dict[str, object]]):
         uid: str | None = None,
         mail: str | None = None,
         given_name: str | None = None,
-        additional_attrs: dict[str, list[str]] | None = None,
+        additional_attrs: FlextLdifTypes.CommonDict.AttributeDict | None = None,
     ) -> FlextResult[FlextLdifModels.Entry]:
         """Build a person entry with common attributes.
 
@@ -519,7 +520,7 @@ class FlextLdif(FlextService[dict[str, object]]):
         base_dn: str,
         members: list[str] | None = None,
         description: str | None = None,
-        additional_attrs: dict[str, list[str]] | None = None,
+        additional_attrs: FlextLdifTypes.CommonDict.AttributeDict | None = None,
     ) -> FlextResult[FlextLdifModels.Entry]:
         """Build a group entry with members.
 
@@ -550,7 +551,7 @@ class FlextLdif(FlextService[dict[str, object]]):
         ou: str,
         base_dn: str,
         description: str | None = None,
-        additional_attrs: dict[str, list[str]] | None = None,
+        additional_attrs: FlextLdifTypes.CommonDict.AttributeDict | None = None,
     ) -> FlextResult[FlextLdifModels.Entry]:
         """Build an organizational unit entry.
 
@@ -577,7 +578,7 @@ class FlextLdif(FlextService[dict[str, object]]):
     def build_custom_entry(
         self,
         dn: str,
-        attributes: dict[str, list[str]],
+        attributes: FlextLdifTypes.CommonDict.AttributeDict,
     ) -> FlextResult[FlextLdifModels.Entry]:
         """Build a custom entry with arbitrary attributes.
 
@@ -601,7 +602,7 @@ class FlextLdif(FlextService[dict[str, object]]):
     def entry_to_dict(
         self,
         entry: FlextLdifModels.Entry,
-    ) -> FlextResult[dict[str, object]]:
+    ) -> FlextResult[FlextLdifTypes.Models.CustomDataDict]:
         """Convert entry to dictionary format.
 
         Args:
@@ -625,7 +626,7 @@ class FlextLdif(FlextService[dict[str, object]]):
     def entries_to_dicts(
         self,
         entries: list[FlextLdifModels.Entry],
-    ) -> list[dict[str, object]]:
+    ) -> list[FlextLdifTypes.Models.CustomDataDict]:
         """Convert list of entries to list of dictionaries.
 
         Args:
@@ -648,7 +649,7 @@ class FlextLdif(FlextService[dict[str, object]]):
 
     def dicts_to_entries(
         self,
-        dicts: list[dict[str, object]],
+        dicts: list[FlextLdifTypes.Models.CustomDataDict],
     ) -> list[FlextLdifModels.Entry]:
         """Convert list of dictionaries to list of entries using FlextProcessors.
 
@@ -712,7 +713,7 @@ class FlextLdif(FlextService[dict[str, object]]):
     # SCHEMA BUILDER OPERATIONS
     # =========================================================================
 
-    def build_person_schema(self) -> FlextResult[dict[str, object]]:
+    def build_person_schema(self) -> FlextResult[FlextLdifTypes.Models.CustomDataDict]:
         """Build standard person schema definition.
 
         Returns:
@@ -733,7 +734,7 @@ class FlextLdif(FlextService[dict[str, object]]):
     def validate_with_schema(
         self,
         entries: list[FlextLdifModels.Entry],
-        schema: dict[str, object],
+        schema: FlextLdifTypes.Models.CustomDataDict,
     ) -> FlextResult[FlextLdifModels.LdifValidationResult]:
         """Validate entries against schema definition.
 
@@ -751,7 +752,7 @@ class FlextLdif(FlextService[dict[str, object]]):
                 result = api.validate_with_schema(entries, schema)
 
         """
-        # Convert dict[str, object] schema to SchemaDiscoveryResult with type validation
+        # Convert FlextLdifTypes.Models.CustomDataDict schema to SchemaDiscoveryResult with type validation
         attributes_value = schema.get(FlextLdifConstants.DictKeys.ATTRIBUTES, {})
         if not isinstance(attributes_value, dict):
             return FlextResult[FlextLdifModels.LdifValidationResult].fail(
@@ -853,7 +854,7 @@ class FlextLdif(FlextService[dict[str, object]]):
     def evaluate_acl_rules(
         self,
         acls: list[FlextLdifModels.AclBase],
-        context: dict[str, object] | None = None,
+        context: FlextLdifTypes.Models.CustomDataDict | None = None,
     ) -> FlextResult[bool]:
         """Evaluate ACL rules and return evaluation result.
 
@@ -892,7 +893,7 @@ class FlextLdif(FlextService[dict[str, object]]):
         self,
         processor_name: str,
         entries: list[FlextLdifModels.Entry],
-    ) -> FlextResult[list[dict[str, object]]]:
+    ) -> FlextResult[list[FlextLdifTypes.Models.CustomDataDict]]:
         """Process entries in batch mode using FlextProcessors.
 
         Args:
@@ -919,7 +920,7 @@ class FlextLdif(FlextService[dict[str, object]]):
         self,
         processor_name: str,
         entries: list[FlextLdifModels.Entry],
-    ) -> FlextResult[list[dict[str, object]]]:
+    ) -> FlextResult[list[FlextLdifTypes.Models.CustomDataDict]]:
         """Process entries in parallel mode using FlextProcessors.
 
         Args:

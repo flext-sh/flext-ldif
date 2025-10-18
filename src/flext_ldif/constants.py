@@ -238,6 +238,13 @@ class FlextLdifConstants(FlextConstants):
     class ObjectClasses:
         """LDAP object class definitions."""
 
+        # Individual objectClass attribute names (used by flext-ldap and domain code)
+        TOP: Final[str] = "top"
+        PERSON: Final[str] = "person"
+        INET_ORG_PERSON: Final[str] = "inetOrgPerson"
+        GROUP_OF_NAMES: Final[str] = "groupOfNames"
+        GROUP_OF_UNIQUE_NAMES: Final[str] = "groupOfUniqueNames"
+
         LDAP_PERSON_CLASSES: Final[frozenset[str]] = frozenset([
             "person",
             "organizationalperson",
@@ -830,7 +837,7 @@ class FlextLdifConstants(FlextConstants):
         """Standard dictionary keys used throughout flext-ldif.
 
         ZERO TOLERANCE: All dict[str, object] key strings MUST be defined here.
-        DO NOT use hard-coded strings as dict[str, object] keys anywhere in the codebase.
+        DO NOT use hard-coded strings as dict keys anywhere in the codebase.
         """
 
         # Server type keys
@@ -850,6 +857,7 @@ class FlextLdifConstants(FlextConstants):
 
         # Schema keys
         SCHEMA: Final[str] = "schema"
+        OBJECTCLASSES: Final[str] = "objectclasses"
         OID: Final[str] = "oid"
         NAME: Final[str] = "name"
         DESC: Final[str] = "desc"
@@ -862,6 +870,8 @@ class FlextLdifConstants(FlextConstants):
         MAY: Final[str] = "may"
         KIND: Final[str] = "kind"
         SINGLE_VALUE: Final[str] = "single_value"
+        # High-frequency schema field (8 occurrences)
+        ALIASES: Final[str] = "aliases"
 
         # ACL keys
         ACL: Final[str] = "acl"
@@ -874,6 +884,7 @@ class FlextLdifConstants(FlextConstants):
         TYPE: Final[str] = "type"
         FORMAT: Final[str] = "format"
         DATA: Final[str] = "data"
+        DEFINITION: Final[str] = "definition"
 
         # Statistics/Analytics keys
         STATS: Final[str] = "stats"
@@ -902,11 +913,20 @@ class FlextLdifConstants(FlextConstants):
         DESCRIPTION: Final[str] = "description"
         QUIRK_REGISTRY: Final[str] = "quirk_registry"
 
+        # Internal metadata and special pattern keys
+        # High-frequency internal metadata tracking (16 occurrences)
+        METADATA: Final[str] = "_metadata"
+        # High-frequency wildcard pattern (15 occurrences)
+        WILDCARD: Final[str] = "*"
+
         # File operation keys
         FILE_PATH: Final[str] = "file_path"
         INPUT_DIR: Final[str] = "input_dir"
         OUTPUT_DIR: Final[str] = "output_dir"
         OUTPUT_FILE: Final[str] = "output_file"
+        OUTPUT_FILES: Final[str] = "output_files"
+        APPEND: Final[str] = "append"
+        CONTENT: Final[str] = "content"
 
         # Quirks keys
         SUPPORTS_OPERATIONAL_ATTRS: Final[str] = "supports_operational_attrs"
@@ -927,6 +947,9 @@ class FlextLdifConstants(FlextConstants):
         PROCESS_ENTRIES: Final[str] = "process_entries"
         PARSE_CHANGES: Final[str] = "parse_changes"
         PARSE_ATTRIBUTES: Final[str] = "parse_attributes"
+        PARSE_OBJECTCLASSES: Final[str] = "parse_objectclasses"
+        ATTRIBUTES_COUNT: Final[str] = "attributes_count"
+        OBJECTCLASSES_COUNT: Final[str] = "objectclasses_count"
 
         # OpenLDAP-specific keys
         OLCACCESS: Final[str] = "olcAccess"
@@ -997,6 +1020,28 @@ class FlextLdifConstants(FlextConstants):
         SKIP: Final[str] = "skip"
         AFTER: Final[str] = "after"
         MEDIUM: Final[str] = "medium"
+        # High-frequency status tracking (21 occurrences)
+        FAILED: Final[str] = "failed"
+        # High-frequency status tracking (14 occurrences)
+        SYNCED: Final[str] = "synced"
+        # Medium-frequency status tracking (5 occurrences)
+        SKIPPED: Final[str] = "skipped"
+        # Medium-frequency status tracking (5 occurrences)
+        RESOLVED: Final[str] = "resolved"
+        # Status indicator for data loading
+        LOADED: Final[str] = "loaded"
+        # Medium-frequency ACL permissions (7 occurrences)
+        PERMISSIONS: Final[str] = "permissions"
+        # Medium-frequency ACL target (6 occurrences)
+        TARGET: Final[str] = "target"
+        # Medium-frequency schema constraint (6 occurrences)
+        SYNTAX_LENGTH: Final[str] = "syntax_length"
+        # Medium-frequency format tracking (6 occurrences)
+        ORIGINAL_FORMAT: Final[str] = "original_format"
+        # Medium-frequency metadata version (5 occurrences)
+        VERSION: Final[str] = "version"
+        # Medium-frequency metadata summary (5 occurrences)
+        SUMMARY: Final[str] = "summary"
 
         # Class/Component name keys
         FLEXT_LDIF_QUIRKS_REGISTRY: Final[str] = "FlextLdifQuirksRegistry"

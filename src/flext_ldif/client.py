@@ -14,7 +14,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import cast
+from typing import TypeVar, cast
 
 from flext_core import (
     FlextBus,
@@ -54,8 +54,11 @@ from flext_ldif.rfc.rfc_schema_parser import FlextLdifRfcSchemaParser
 from flext_ldif.schema.validator import FlextLdifSchemaValidator
 from flext_ldif.typings import FlextLdifTypes
 
+# TypeVar for generic service retrieval with type narrowing
+ServiceT = TypeVar("ServiceT")
 
-class FlextLdifClient(FlextService[dict[str, object]]):
+
+class FlextLdifClient(FlextService[FlextLdifTypes.Models.CustomDataDict]):
     """Main client implementation for LDIF processing operations.
 
     This class contains all the actual business logic for LDIF operations,
@@ -80,7 +83,7 @@ class FlextLdifClient(FlextService[dict[str, object]]):
         default_factory=FlextContainer.get_global
     )
     _context: FlextContext | None = PrivateAttr(default=None)
-    _handlers: dict[str, object] = PrivateAttr(default_factory=dict)
+    _handlers: FlextLdifTypes.Models.CustomDataDict = PrivateAttr(default_factory=dict)
     _config: FlextLdifConfig | None = PrivateAttr(default=None)
 
     def __init__(self, config: FlextLdifConfig | None = None) -> None:
@@ -97,7 +100,9 @@ class FlextLdifClient(FlextService[dict[str, object]]):
         # Call Pydantic/FlextService initialization
         super().__init__()
 
-    def model_post_init(self, __context: dict[str, object] | None, /) -> None:
+    def model_post_init(
+        self, __context: FlextLdifTypes.Models.CustomDataDict | None, /
+    ) -> None:
         """Initialize private attributes after Pydantic initialization.
 
         This hook is called by Pydantic after __init__ completes.
@@ -123,7 +128,7 @@ class FlextLdifClient(FlextService[dict[str, object]]):
 
         # ✅ Log config ONCE without binding to global context
         if self.logger and self._config:
-            config_info: dict[str, object] = {
+            config_info: FlextLdifTypes.Models.CustomDataDict = {
                 "ldif_encoding": self._config.ldif_encoding,
                 "strict_rfc_compliance": self._config.strict_rfc_compliance,
                 "ldif_chunk_size": self._config.ldif_chunk_size,
@@ -132,7 +137,7 @@ class FlextLdifClient(FlextService[dict[str, object]]):
             self._log_config_once(config_info, message="FlextLdif client initialized")
             self.logger.debug("CQRS handlers and default quirks registered")
 
-    def execute(self) -> FlextResult[dict[str, object]]:
+    def execute(self) -> FlextResult[FlextLdifTypes.Models.CustomDataDict]:
         """Execute client self-check and return status.
 
         Returns:
@@ -141,13 +146,13 @@ class FlextLdifClient(FlextService[dict[str, object]]):
         """
         try:
             config = self.config
-            return FlextResult[dict[str, object]].ok({
+            return FlextResult[FlextLdifTypes.Models.CustomDataDict].ok({
                 "status": "initialized",
                 "services": ["parser", "writer", "validator", "migration"],
                 "config": {"default_encoding": config.ldif_encoding},
             })
         except Exception as e:  # pragma: no cover
-            return FlextResult[dict[str, object]].fail(
+            return FlextResult[FlextLdifTypes.Models.CustomDataDict].fail(
                 f"Client status check failed: {e}"
             )
 
@@ -156,7 +161,7 @@ class FlextLdifClient(FlextService[dict[str, object]]):
     # =========================================================================
 
     def _setup_services(self) -> None:
-        """Register all services in the dependency injection container with instances."""
+        """Register all services in the dependency injection container."""
         container = self.container
 
         # Register quirk registry FIRST (required by RFC parsers/writers)
@@ -180,7 +185,7 @@ class FlextLdifClient(FlextService[dict[str, object]]):
 
         # Register migration pipeline (params provided at call time by handlers)
         def migration_pipeline_factory(
-            params: dict[str, object] | None,
+            params: FlextLdifTypes.Models.CustomDataDict | None,
         ) -> FlextLdifMigrationPipeline:
             if params is None:
                 params = {}
@@ -197,16 +202,11 @@ class FlextLdifClient(FlextService[dict[str, object]]):
         container = self.container
         logger = self.logger
 
-        # Get quirk registry from container
-        registry_result = container.get("quirk_registry")
-        if registry_result.is_failure:
-            logger.warning(
-                "Quirk registry not available, skipping default quirk registration"
-            )
-            return
-
-        registry = registry_result.unwrap()
-        if not isinstance(registry, FlextLdifQuirksRegistry):
+        # Get quirk registry from container using helper
+        registry = self._get_service_typed(
+            container, "quirk_registry", FlextLdifQuirksRegistry
+        )
+        if registry is None:
             logger.warning(
                 "Quirk registry not available, skipping default quirk registration"
             )
@@ -253,11 +253,43 @@ class FlextLdifClient(FlextService[dict[str, object]]):
                 logger.error(f"Failed to register schema quirk: {schema_result.error}")
                 continue
 
-            # Note: Schema quirks don't have nested ACL/Entry quirks in base implementation
+            # Note: Schema quirks don't have nested ACL/Entry quirks
 
+        complete_count = len(complete_quirks)
+        stub_count = len(stub_quirks)
         logger.info(
-            f"Registered {len(complete_quirks)} complete quirks and {len(stub_quirks)} stub quirks"
+            f"Registered {complete_count} complete quirks and {stub_count} stub quirks"
         )
+
+    def _get_service_typed(
+        self,
+        container: FlextContainer,
+        service_name: str,
+        expected_type: type[ServiceT],
+    ) -> ServiceT | None:
+        """Helper to retrieve and type-narrow services from container.
+
+        Consolidates service retrieval pattern: get → unwrap → type check.
+
+        Args:
+            container: The dependency injection container
+            service_name: Name of the service to retrieve
+            expected_type: Expected type for type narrowing
+
+        Returns:
+            Service instance if found and correct type, None otherwise
+
+        """
+        service_result = container.get(service_name)
+        if service_result.is_failure:
+            return None
+
+        service_obj = service_result.unwrap()
+        # Type narrowing via isinstance - MyPy recognizes this pattern
+        if isinstance(service_obj, expected_type):
+            return service_obj
+
+        return None
 
     # Handler initialization removed - using direct service calls
 
@@ -280,20 +312,14 @@ class FlextLdifClient(FlextService[dict[str, object]]):
         """
         container = self.container
 
-        # Get the RFC parser from container
-        parser_result = container.get("rfc_parser")
-        if parser_result.is_failure:
+        # Get the RFC parser from container using helper
+        parser = self._get_service_typed(
+            container, "rfc_parser", FlextLdifRfcLdifParser
+        )
+        if not isinstance(parser, FlextLdifRfcLdifParser):
             return FlextResult[list[FlextLdifModels.Entry]].fail(
-                f"Failed to get RFC parser: {parser_result.error}"
+                "Failed to retrieve RFC parser"
             )
-
-        # Type narrow parser from unwrap()
-        parser_obj = parser_result.unwrap()
-        if not isinstance(parser_obj, FlextLdifRfcLdifParser):
-            return FlextResult[list[FlextLdifModels.Entry]].fail(
-                "RFC parser has unexpected type"
-            )
-        parser = parser_obj  # Type narrowed by isinstance check
 
         # Call parser directly
         # Note: server_type parameter is reserved for future quirk-based parsing
@@ -331,18 +357,12 @@ class FlextLdifClient(FlextService[dict[str, object]]):
         """
         container = self.container
 
-        # Get the RFC writer from container
-        writer_result = container.get("rfc_writer")
-        if writer_result.is_failure:
-            return FlextResult[str].fail(
-                f"Failed to get RFC writer: {writer_result.error}"
-            )
-
-        # Type narrow writer from unwrap()
-        writer_obj = writer_result.unwrap()
-        if not isinstance(writer_obj, FlextLdifRfcLdifWriter):
-            return FlextResult[str].fail("RFC writer has unexpected type")
-        writer = writer_obj  # Type narrowed by isinstance check
+        # Get the RFC writer from container using helper
+        writer = self._get_service_typed(
+            container, "rfc_writer", FlextLdifRfcLdifWriter
+        )
+        if not isinstance(writer, FlextLdifRfcLdifWriter):
+            return FlextResult[str].fail("Failed to retrieve RFC writer")
 
         # Write to string first
         content_result = writer.write_entries_to_string(entries)
@@ -369,7 +389,7 @@ class FlextLdifClient(FlextService[dict[str, object]]):
 
     def validate_entries(
         self, entries: list[FlextLdifModels.Entry]
-    ) -> FlextResult[dict[str, object]]:
+    ) -> FlextResult[FlextLdifTypes.Models.CustomDataDict]:
         """Validate LDIF entries against RFC and business rules.
 
         Args:
@@ -381,20 +401,14 @@ class FlextLdifClient(FlextService[dict[str, object]]):
         """
         container = self.container
 
-        # Get the schema validator from container
-        validator_result = container.get("schema_validator")
-        if validator_result.is_failure:
-            return FlextResult[dict[str, object]].fail(
-                f"Failed to get schema validator: {validator_result.error}"
+        # Get the schema validator from container using helper
+        validator = self._get_service_typed(
+            container, "schema_validator", FlextLdifSchemaValidator
+        )
+        if not isinstance(validator, FlextLdifSchemaValidator):
+            return FlextResult[FlextLdifTypes.Models.CustomDataDict].fail(
+                "Failed to retrieve schema validator"
             )
-
-        # Type narrow validator from unwrap()
-        validator_obj = validator_result.unwrap()
-        if not isinstance(validator_obj, FlextLdifSchemaValidator):
-            return FlextResult[dict[str, object]].fail(
-                "Schema validator has unexpected type"
-            )
-        validator = validator_obj  # Type narrowed by isinstance check
 
         # Call validator directly
         result = validator.validate_entries(entries)
@@ -402,14 +416,14 @@ class FlextLdifClient(FlextService[dict[str, object]]):
         # Return validation result as dictionary for consistent API
         if result.is_success:
             validation_result = result.unwrap()
-            return FlextResult[dict[str, object]].ok({
+            return FlextResult[FlextLdifTypes.Models.CustomDataDict].ok({
                 "is_valid": validation_result.is_valid,
                 "total_entries": len(entries),
                 "valid_entries": len(entries) - len(validation_result.errors),
                 "invalid_entries": len(validation_result.errors),
                 "errors": validation_result.errors,
             })
-        return FlextResult[dict[str, object]].fail(
+        return FlextResult[FlextLdifTypes.Models.CustomDataDict].fail(
             result.error or "Validation failed"
         )
 
@@ -418,7 +432,7 @@ class FlextLdifClient(FlextService[dict[str, object]]):
         entries: list[FlextLdifModels.Entry],
         from_server: str,
         to_server: str,
-    ) -> FlextResult[dict[str, object]]:
+    ) -> FlextResult[FlextLdifTypes.Models.CustomDataDict]:
         """Migrate LDIF entries between different server types.
 
         Args:
@@ -432,26 +446,17 @@ class FlextLdifClient(FlextService[dict[str, object]]):
         """
         container = self.container
 
-        # Get migration pipeline from container
-        pipeline_result = container.get("migration_pipeline")
-        if pipeline_result.is_failure:
-            return FlextResult[dict[str, object]].fail(
-                f"Failed to get migration pipeline: {pipeline_result.error}"
-            )
-
-        # Type narrow pipeline factory from unwrap()
-        # The container.get returns a lambda callable
-        pipeline_factory_obj = pipeline_result.unwrap()
+        # Get migration pipeline from container using helper
+        pipeline_factory_obj = self._get_service_typed(
+            container, "migration_pipeline", object
+        )
         if not callable(pipeline_factory_obj):
-            return FlextResult[dict[str, object]].fail(
+            return FlextResult[FlextLdifTypes.Models.CustomDataDict].fail(
                 "Migration pipeline factory is not callable"
             )
         # Use cast after runtime callable check to satisfy type checker
-        pipeline_factory: Callable[
-            [dict[str, object] | None], FlextLdifMigrationPipeline
-        ] = cast(
-            "Callable[[dict[str, object] | None], FlextLdifMigrationPipeline]",
-            pipeline_factory_obj,
+        pipeline_factory: Callable[..., FlextLdifMigrationPipeline] = cast(
+            "Callable[..., FlextLdifMigrationPipeline]", pipeline_factory_obj
         )
 
         pipeline = pipeline_factory({
@@ -459,8 +464,7 @@ class FlextLdifClient(FlextService[dict[str, object]]):
             "target_server_type": to_server,
         })
 
-        # Convert Entry objects to dict format for pipeline compatibility
-        # Use list[object] for type compatibility with migrate_entries
+        # Convert Entry objects to dict for pipeline compatibility
         entries_as_dicts: list[object] = cast(
             "list[object]", [entry.model_dump() for entry in entries]
         )
@@ -471,19 +475,19 @@ class FlextLdifClient(FlextService[dict[str, object]]):
         )
 
         if migration_result.is_failure:
-            return FlextResult[dict[str, object]].fail(
+            return FlextResult[FlextLdifTypes.Models.CustomDataDict].fail(
                 migration_result.error or "Migration failed"
             )
 
         migrated_entries = migration_result.unwrap()
-        stats: dict[str, object] = {
+        stats: FlextLdifTypes.Models.CustomDataDict = {
             "total_entries": len(entries),
             "migrated_entries": len(migrated_entries),
             "from_server": from_server,
             "to_server": to_server,
             "success": True,
         }
-        return FlextResult[dict[str, object]].ok(stats)
+        return FlextResult[FlextLdifTypes.Models.CustomDataDict].ok(stats)
 
     def migrate_files(
         self,
@@ -494,7 +498,7 @@ class FlextLdifClient(FlextService[dict[str, object]]):
         *,
         process_schema: bool = True,
         process_entries: bool = True,
-    ) -> FlextResult[dict[str, object]]:
+    ) -> FlextResult[FlextLdifTypes.Models.CustomDataDict]:
         """Migrate LDIF data between different LDAP server types from files.
 
         Args:
@@ -510,7 +514,7 @@ class FlextLdifClient(FlextService[dict[str, object]]):
 
         """
         try:
-            params: dict[str, object] = {
+            params: FlextLdifTypes.Models.CustomDataDict = {
                 "input_dir": str(input_dir),
                 "output_dir": str(output_dir),
                 "process_schema": process_schema,
@@ -526,20 +530,24 @@ class FlextLdifClient(FlextService[dict[str, object]]):
             migration_result = pipeline.execute()
 
             if migration_result.is_failure:
-                return FlextResult[dict[str, object]].fail(
+                return FlextResult[FlextLdifTypes.Models.CustomDataDict].fail(
                     migration_result.error or "Migration failed"
                 )
 
-            return FlextResult[dict[str, object]].ok(migration_result.unwrap())
+            return FlextResult[FlextLdifTypes.Models.CustomDataDict].ok(
+                migration_result.unwrap()
+            )
 
         except Exception as e:  # pragma: no cover
             logger = self.logger
             logger.exception("Migration failed")
-            return FlextResult[dict[str, object]].fail(f"Migration failed: {e}")
+            return FlextResult[FlextLdifTypes.Models.CustomDataDict].fail(
+                f"Migration failed: {e}"
+            )
 
     def analyze_entries(
         self, entries: list[FlextLdifModels.Entry]
-    ) -> FlextResult[dict[str, object]]:
+    ) -> FlextResult[FlextLdifTypes.Models.CustomDataDict]:
         """Analyze LDIF entries and generate statistics.
 
         Args:
@@ -565,7 +573,7 @@ class FlextLdifClient(FlextService[dict[str, object]]):
                     )
 
         # Return analytics result as dictionary for consistent API
-        return FlextResult[dict[str, object]].ok({
+        return FlextResult[FlextLdifTypes.Models.CustomDataDict].ok({
             "total_entries": total_entries,
             "objectclass_distribution": object_class_distribution,
             "patterns_detected": [],
@@ -591,9 +599,11 @@ class FlextLdifClient(FlextService[dict[str, object]]):
         Args:
             entries: List of LDIF entries to filter
             objectclass: Single objectClass string or tuple of objectClasses
-            required_attributes: Optional list of required attributes (all must be present)
+            required_attributes: Optional list of required attributes (all must
+                be present)
             mode: "include" to keep matching entries, "exclude" to remove them
-            mark_excluded: If True, mark excluded entries with metadata (keyword-only)
+            mark_excluded: If True, mark excluded entries with metadata
+                (keyword-only)
 
         Returns:
             FlextResult containing filtered entries
@@ -688,8 +698,10 @@ class FlextLdifClient(FlextService[dict[str, object]]):
 
         Args:
             schema_items: List of schema attributes or objectClasses
-            oid_whitelist: List of OID patterns to whitelist (e.g., ["1.3.6.1.4.1.111.*"])
-            mark_excluded: If True, mark excluded items with metadata (keyword-only)
+            oid_whitelist: List of OID patterns to whitelist
+                (e.g., ["1.3.6.1.4.1.111.*"])
+            mark_excluded: If True, mark excluded items with metadata
+                (keyword-only)
 
         Returns:
             FlextResult containing filtered schema items
@@ -778,9 +790,11 @@ class FlextLdifClient(FlextService[dict[str, object]]):
         Args:
             entries: List of LDIF entries to filter
             attributes: List of attribute names to check
-            mode: "include" to keep entries with attributes, "exclude" to remove them
-            match_all: If True, entry must have ALL attributes; if False, ANY attribute (keyword-only)
-            mark_excluded: If True, mark excluded entries with metadata (keyword-only)
+            mode: "include" to keep entries with attributes, "exclude" to remove
+            match_all: If True, entry must have ALL attributes; if False, ANY
+                (keyword-only)
+            mark_excluded: If True, mark excluded entries with metadata
+                (keyword-only)
 
         Returns:
             FlextResult containing filtered entries
@@ -927,9 +941,8 @@ class FlextLdifClient(FlextService[dict[str, object]]):
             normalized = content.encode(target_encoding).decode(target_encoding)
             return FlextResult[str].ok(normalized)
         except UnicodeEncodeError as e:  # pragma: no cover
-            return FlextResult[str].fail(
-                f"Content contains characters not representable in {target_encoding}: {e}"
-            )
+            msg = f"Content has characters not representable in {target_encoding}: {e}"
+            return FlextResult[str].fail(msg)
         except Exception as e:  # pragma: no cover
             return FlextResult[str].fail(
                 f"Failed to normalize encoding to {target_encoding}: {e}"
@@ -963,7 +976,7 @@ class FlextLdifClient(FlextService[dict[str, object]]):
                 return FlextResult[bool].ok(False)
 
             # Check for at least one "dn:" line (RFC 2849 requirement)
-            # LDIF entries MUST start with "dn:" per RFC 2849
+            # LDIF entries MUST start with "dn:"
             if "dn:" not in content.lower():
                 return FlextResult[bool].ok(False)
 
@@ -999,7 +1012,7 @@ class FlextLdifClient(FlextService[dict[str, object]]):
             if not content or not content.strip():
                 return FlextResult[int].ok(0)
 
-            # Count entries by counting "dn:" lines (RFC 2849: each entry starts with dn:)
+            # Count entries by counting "dn:" lines (RFC 2849: each starts with dn:)
             dn_count = content.lower().count("dn:")
 
             # Ensure at least 1 entry if content exists
@@ -1039,43 +1052,45 @@ class FlextLdifClient(FlextService[dict[str, object]]):
 
         container = self.container
 
-        # Get quirk registry from container
-        registry_result = container.get("quirk_registry")
-        if registry_result.is_failure:
-            return FlextResult[None].fail(
-                f"Failed to get quirk registry: {registry_result.error}"
-            )
+        # Get quirk registry from container using helper
+        registry = self._get_service_typed(
+            container, "quirk_registry", FlextLdifQuirksRegistry
+        )
+        if not isinstance(registry, FlextLdifQuirksRegistry):
+            return FlextResult[None].fail("Failed to retrieve quirk registry")
 
-        # Type narrow registry from unwrap()
-        registry_obj = registry_result.unwrap()
-        if not isinstance(registry_obj, FlextLdifQuirksRegistry):
-            return FlextResult[None].fail("Quirk registry has unexpected type")
-        registry = registry_obj  # Type narrowed by isinstance check
+        # Use dispatch dict pattern instead of if/elif chain
+        dispatch: dict[
+            str,
+            tuple[type, Callable[[FlextLdifQuirksRegistry, object], FlextResult[None]]],
+        ] = {
+            "schema": (
+                FlextLdifQuirksBaseSchemaQuirk,
+                lambda reg, q: reg.register_schema_quirk(
+                    cast("FlextLdifQuirksBaseSchemaQuirk", q)
+                ),
+            ),
+            "acl": (
+                FlextLdifQuirksBaseAclQuirk,
+                lambda reg, q: reg.register_acl_quirk(
+                    cast("FlextLdifQuirksBaseAclQuirk", q)
+                ),
+            ),
+            "entry": (
+                FlextLdifQuirksBaseEntryQuirk,
+                lambda reg, q: reg.register_entry_quirk(
+                    cast("FlextLdifQuirksBaseEntryQuirk", q)
+                ),
+            ),
+        }
 
-        # Type narrow quirk parameter and call appropriate registration method
-        # Use actual class names (not type aliases) for isinstance checks
-        if quirk_type == "schema":
-            if not isinstance(quirk, FlextLdifQuirksBaseSchemaQuirk):
-                return FlextResult[None].fail(
-                    f"Quirk must be FlextLdifQuirksBaseSchemaQuirk, got {type(quirk).__name__}"
-                )
-            return registry.register_schema_quirk(quirk)
+        expected_type, register_fn = dispatch[quirk_type]
+        if not isinstance(quirk, expected_type):
+            qname = type(quirk).__name__
+            expected_name = expected_type.__name__
+            return FlextResult[None].fail(f"Quirk must be {expected_name}, got {qname}")
 
-        if quirk_type == "acl":
-            if not isinstance(quirk, FlextLdifQuirksBaseAclQuirk):
-                return FlextResult[None].fail(
-                    f"Quirk must be FlextLdifQuirksBaseAclQuirk, got {type(quirk).__name__}"
-                )
-            return registry.register_acl_quirk(quirk)
-
-        if quirk_type == "entry":
-            if not isinstance(quirk, FlextLdifQuirksBaseEntryQuirk):
-                return FlextResult[None].fail(
-                    f"Quirk must be FlextLdifQuirksBaseEntryQuirk, got {type(quirk).__name__}"
-                )
-            return registry.register_entry_quirk(quirk)
-
-        return FlextResult[None].fail(f"Unsupported quirk type: {quirk_type}")
+        return register_fn(registry, quirk)
 
     # =========================================================================
     # INFRASTRUCTURE ACCESS
@@ -1092,7 +1107,7 @@ class FlextLdifClient(FlextService[dict[str, object]]):
         return self._config
 
     @property
-    def handlers(self) -> dict[str, object]:
+    def handlers(self) -> FlextLdifTypes.Models.CustomDataDict:
         """Access to initialized CQRS handlers."""
         return self._handlers
 
@@ -1109,7 +1124,7 @@ class FlextLdifClient(FlextService[dict[str, object]]):
     def context(self) -> FlextContext:
         """Access to execution context with lazy initialization."""
         if self._context is None:
-            # ✅ FIXED: Don't bind config to context - prevents config repetition in logs
+            # Don't bind config to context to prevent config repetition
             self._context = FlextContext()  # Empty context
         # Context is guaranteed non-None after initialization
         return self._context

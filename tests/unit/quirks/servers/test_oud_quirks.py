@@ -11,7 +11,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
-from flext_core import FlextTypes
 from tests.fixtures.loader import FlextLdifFixtures
 
 from flext_ldif.constants import FlextLdifConstants
@@ -449,7 +448,7 @@ class TestOudEntryQuirks:
         """Test entry handling detection."""
         # OUD entry quirk handles all entries for OUD target
         entry_dn = "cn=OracleContext,dc=example,dc=com"
-        attributes: FlextTypes.Dict = {
+        attributes: dict[str, object] = {
             "cn": ["OracleContext"],
             "objectclass": ["top", "orclContext"],
         }
@@ -461,7 +460,7 @@ class TestOudEntryQuirks:
     ) -> None:
         """Test processing basic OUD entry."""
         entry_dn = "cn=test,dc=example,dc=com"
-        attributes: FlextTypes.Dict = {
+        attributes: dict[str, object] = {
             "cn": ["test"],
             "objectclass": ["person"],
         }
@@ -479,7 +478,7 @@ class TestOudEntryQuirks:
     ) -> None:
         """Test processing Oracle Context entry with Oracle-specific attributes."""
         entry_dn = "cn=OracleContext,dc=example,dc=com"
-        attributes: FlextTypes.Dict = {
+        attributes: dict[str, object] = {
             "cn": ["OracleContext"],
             "objectclass": ["top", "orclContext", "orclContextAux82"],
             "orclVersion": ["90600"],
@@ -498,7 +497,7 @@ class TestOudEntryQuirks:
     ) -> None:
         """Test processing entry with ACL attribute."""
         entry_dn = "cn=OracleContext,dc=example,dc=com"
-        attributes: FlextTypes.Dict = {
+        attributes: dict[str, object] = {
             "cn": ["OracleContext"],
             "objectclass": ["top", "orclContext"],
             "aci": [
@@ -524,7 +523,7 @@ class TestOudEntryQuirks:
 
         # Parse entries from LDIF content
         current_dn: str | None = None
-        current_attrs: dict[str, FlextTypes.StringList] = {}
+        current_attrs: dict[str, list[str]] = {}
 
         for raw_line in integration_content.splitlines():
             line = raw_line.strip()
@@ -565,7 +564,7 @@ class TestOudEntryQuirks:
     ) -> None:
         """Test preservation of Oracle-specific attributes."""
         entry_dn = "cn=OracleDBSecurity,cn=Products,cn=OracleContext,dc=example,dc=com"
-        attributes: FlextTypes.Dict = {
+        attributes: dict[str, object] = {
             "cn": ["OracleDBSecurity"],
             "objectclass": ["top", "orclContainer", "orclDBSecConfig"],
             "orclDBOIDAuthentication": ["PASSWORD"],
@@ -605,7 +604,7 @@ class TestOudEntryQuirks:
     ) -> None:
         """Test entry roundtrip: process → convert to RFC → back."""
         original_dn = "cn=OracleContext,dc=example,dc=com"
-        original_attrs: FlextTypes.Dict = {
+        original_attrs: dict[str, object] = {
             "cn": ["OracleContext"],
             "objectclass": ["top", "orclContext"],
             "orclVersion": ["90600"],
@@ -1011,7 +1010,7 @@ class TestOudEntryRoundTrip:
     ) -> None:
         """Test complete round-trip: process → write → parse → process for entry."""
         original_dn = "cn=OracleContext,dc=example,dc=com"
-        original_attrs: FlextTypes.Dict = {
+        original_attrs: dict[str, object] = {
             "cn": ["OracleContext"],
             "objectclass": ["top", "orclContext"],
             "orclVersion": ["90600"],
@@ -1030,7 +1029,7 @@ class TestOudEntryRoundTrip:
         # Step 3: Parse LDIF back to entry dict[str, object] (simple parsing)
         lines = written_ldif.strip().split("\n")
         parsed_dn = None
-        parsed_attrs: dict[str, FlextTypes.StringList] = {}
+        parsed_attrs: dict[str, list[str]] = {}
 
         for line in lines:
             if line.startswith("dn:"):

@@ -44,7 +44,7 @@ class TestValidators:
             attr_values = entry.get_attribute_values("objectclass")
             # Convert AttributeValues to list of strings
             if attr_values and isinstance(attr_values, list):
-                object_classes_list: FlextTypes.StringList = attr_values
+                object_classes_list: list[str] = attr_values
             else:
                 object_classes_list = []
             if "person" in object_classes_list:
@@ -83,7 +83,7 @@ class TestValidators:
         return bool(re.match(attr_pattern, attr_name))
 
     @staticmethod
-    def validate_result_success(result: FlextResult[T]) -> FlextTypes.Dict:
+    def validate_result_success(result: FlextResult[T]) -> dict[str, object]:
         """Validate FlextResult success characteristics using flext-core patterns."""
         has_value = False
         value_type_name = None
@@ -108,7 +108,7 @@ class TestValidators:
         }
 
     @staticmethod
-    def validate_result_failure(result: FlextResult[T]) -> FlextTypes.Dict:
+    def validate_result_failure(result: FlextResult[T]) -> dict[str, object]:
         """Validate FlextResult failure characteristics using flext-core patterns."""
         return {
             "is_failure": result.is_failure,
@@ -127,7 +127,7 @@ class TestValidators:
         }
 
     @staticmethod
-    def validate_ldif_content(content: str) -> FlextTypes.Dict:
+    def validate_ldif_content(content: str) -> dict[str, object]:
         """Validate raw LDIF content format."""
         if not content:
             return {"is_valid": False, "reason": "Empty or non-string content"}
@@ -202,7 +202,7 @@ class TestValidators:
         cls,
         result: FlextResult[list[FlextLdifModels.Entry]],
         expected_count: int,
-    ) -> FlextTypes.Dict:
+    ) -> dict[str, object]:
         """Validate parsing result comprehensively."""
         base_validation = cls.validate_result_success(result)
 
@@ -259,7 +259,7 @@ class TestValidators:
     @staticmethod
     def validate_flext_result_composition(
         results: list[FlextResult[object]],
-    ) -> FlextTypes.Dict:
+    ) -> dict[str, object]:
         """Validate FlextResult composition patterns."""
         successes = [r for r in results if r.is_success]
         failures = [r for r in results if r.is_failure]
@@ -279,7 +279,7 @@ class TestValidators:
     @staticmethod
     def validate_flext_result_chain(
         results: list[FlextResult[object]],
-    ) -> FlextTypes.Dict:
+    ) -> dict[str, object]:
         """Validate FlextResult chain operations."""
         if not results:
             return {

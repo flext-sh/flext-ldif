@@ -30,7 +30,7 @@ import fnmatch
 from datetime import UTC, datetime
 from typing import override
 
-from flext_core import FlextResult, FlextService
+from flext_core import FlextDecorators, FlextResult, FlextService
 
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
@@ -457,8 +457,8 @@ class FlextLdifAclService(FlextService[FlextLdifTypes.Dict]):
 
         acls: list[FlextLdifModels.AclBase] = []
         for acl_value in acl_values:
-            parse_result: FlextResult[FlextLdifModels.AclBase] = self._parse_acl_with_rules(
-                acl_value, server_type or "generic"
+            parse_result: FlextResult[FlextLdifModels.AclBase] = (
+                self._parse_acl_with_rules(acl_value, server_type or "generic")
             )
             if parse_result.is_success:
                 acls.append(parse_result.value)
@@ -506,7 +506,9 @@ class FlextLdifAclService(FlextService[FlextLdifTypes.Dict]):
             )
             return FlextResult[FlextLdifModels.AclBase].ok(acl)
         except Exception as e:  # pragma: no cover
-            return FlextResult[FlextLdifModels.AclBase].fail(f"Failed to parse ACL: {e}")
+            return FlextResult[FlextLdifModels.AclBase].fail(
+                f"Failed to parse ACL: {e}"
+            )
 
     def evaluate_acl_rules(
         self, rules: list[AclRule], context: FlextLdifTypes.Dict
@@ -522,8 +524,15 @@ class FlextLdifAclService(FlextService[FlextLdifTypes.Dict]):
         return composite.evaluate(context)
 
     @override
+    @FlextDecorators.log_operation("acl_service_health_check")
+    @FlextDecorators.track_performance()
     def execute(self) -> FlextResult[FlextLdifTypes.Dict]:
         """Execute ACL service health check.
+
+        FlextDecorators automatically:
+        - Log operation start/completion/failure
+        - Track performance metrics
+        - Handle context propagation (correlation_id, operation_name)
 
         Returns:
             FlextResult containing service status and available patterns

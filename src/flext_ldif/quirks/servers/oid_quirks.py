@@ -210,12 +210,14 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
 
             # Extract SUP (superior objectClass)
             sup_match = re.search(
-                r"SUP\s+(?:\(\s*([\w\s$]+)\s*\)|(\w+))", oc_definition
+                r"SUP\s+(?:\(\s*([\w\s$]+)\s*\)|(\w+))",
+                oc_definition,
             )
             if sup_match:
                 sup_value = sup_match.group(1) or sup_match.group(2)
                 sup_value = sup_value.strip()
-                # Handle multiple superior classes like "organization $ organizationalUnit"
+                # Handle multiple superior classes like
+                # "organization $ organizationalUnit"
                 if "$" in sup_value:
                     parsed_data["sup"] = [s.strip() for s in sup_value.split("$")]
                 else:
@@ -364,8 +366,15 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
             FlextResult with RFC 4512 formatted attribute definition string
 
         Example:
-            Input: {"oid": "2.16.840.1.113894.1.1.1", "name": "orclguid", "syntax": "1.3.6.1.4.1.1466.115.121.1.15"}
-            Output: "( 2.16.840.1.113894.1.1.1 NAME 'orclguid' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
+            Input: {
+                "oid": "2.16.840.1.113894.1.1.1",
+                "name": "orclguid",
+                "syntax": "1.3.6.1.4.1.1466.115.121.1.15",
+            }
+            Output: (
+                "( 2.16.840.1.113894.1.1.1 NAME 'orclguid' "
+                "SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
+            )
 
         """
         try:
@@ -448,7 +457,8 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
     ) -> FlextResult[str]:
         """Write OID objectClass data to RFC 4512 compliant string format.
 
-        Converts parsed objectClass dictionary back to RFC 4512 schema definition format.
+        Converts parsed objectClass dictionary back to RFC 4512 schema
+        definition format.
         If metadata contains original_format, uses it for perfect round-trip.
 
         Args:
@@ -458,8 +468,17 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
             FlextResult with RFC 4512 formatted objectClass definition string
 
         Example:
-            Input: {"oid": "2.16.840.1.113894.2.1.1", "name": "orclContainer", "kind": "STRUCTURAL", "must": [FlextLdifConstants.DictKeys.CN], "may": ["description"]}
-            Output: "( 2.16.840.1.113894.2.1.1 NAME 'orclContainer' STRUCTURAL MUST cn MAY description )"
+            Input: {
+                "oid": "2.16.840.1.113894.2.1.1",
+                "name": "orclContainer",
+                "kind": "STRUCTURAL",
+                "must": ["cn"],
+                "may": ["description"],
+            }
+            Output: (
+                "( 2.16.840.1.113894.2.1.1 NAME 'orclContainer' "
+                "STRUCTURAL MUST cn MAY description )"
+            )
 
         """
         try:
@@ -545,16 +564,19 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
     ) -> FlextResult[FlextLdifTypes.Dict]:
         """Extract and parse all schema definitions from LDIF content.
 
-        Strategy pattern: OID-specific approach to extract attributeTypes and objectClasses
-        from cn=schema LDIF entries, handling OID's format variations.
+        Strategy pattern: OID-specific approach to extract attributeTypes
+        and objectClasses from cn=schema LDIF entries, handling OID's
+        format variations.
 
         Args:
             ldif_content: Raw LDIF content containing schema definitions
 
         Returns:
-            FlextResult with dict[str, object] containing FlextLdifConstants.DictKeys.ATTRIBUTES and 'objectclasses' lists
+            FlextResult containing extracted attributes and objectclasses
+            as a dictionary with ATTRIBUTES and OBJECTCLASSES lists.
 
         """
+        dk = FlextLdifConstants.DictKeys
         try:
             attributes = []
             objectclasses = []
@@ -578,7 +600,7 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                         objectclasses.append(result.unwrap())
 
             return FlextResult[FlextLdifTypes.Dict].ok({
-                FlextLdifConstants.DictKeys.ATTRIBUTES: attributes,
+                dk.ATTRIBUTES: attributes,
                 "objectclasses": objectclasses,
             })
 
@@ -682,8 +704,10 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
             """Parse Oracle OID ACL definition.
 
             Parses orclaci and orclentrylevelaci formats from real OID fixtures:
-            - orclaci: access to entry/attr=(...) [filter=(...)] by <subject> (<perms>) [by ...]
-            - orclentrylevelaci: access to entry by <subject> [added_object_constraint=(...)] (<perms>)
+            - orclaci: access to entry/attr=(...) [filter=(...)]
+              by <subject> (<perms>) [by ...]
+            - orclentrylevelaci: access to entry by <subject>
+              [added_object_constraint=(...)] (<perms>)
 
             Args:
                 acl_line: ACL definition line
@@ -692,6 +716,8 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                 FlextResult with parsed OID ACL data with metadata
 
             """
+            dk = FlextLdifConstants.DictKeys
+            af = FlextLdifConstants.AclFormats
             try:
                 # Determine ACL type
                 is_entry_level = acl_line.startswith("orclentrylevelaci:")
@@ -700,13 +726,9 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                 )
 
                 acl_data: FlextLdifTypes.Dict = {
-                    FlextLdifConstants.DictKeys.TYPE: (
-                        FlextLdifConstants.DictKeys.ENTRY_LEVEL
-                        if is_entry_level
-                        else FlextLdifConstants.DictKeys.STANDARD
-                    ),
-                    FlextLdifConstants.DictKeys.RAW: acl_line,
-                    FlextLdifConstants.DictKeys.FORMAT: FlextLdifConstants.AclFormats.OID_ACL,
+                    dk.TYPE: (dk.ENTRY_LEVEL if is_entry_level else dk.STANDARD),
+                    dk.RAW: acl_line,
+                    dk.FORMAT: af.OID_ACL,
                 }
 
                 # Extract target (entry or attr)
@@ -773,14 +795,16 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                 FlextResult with RFC-compliant ACL data
 
             """
+            dk = FlextLdifConstants.DictKeys
+            af = FlextLdifConstants.AclFormats
             try:
                 # Oracle OID ACLs don't have direct RFC equivalent
                 # Return generic ACL representation
                 rfc_data: FlextLdifTypes.Dict = {
-                    FlextLdifConstants.DictKeys.TYPE: FlextLdifConstants.DictKeys.ACL,
-                    FlextLdifConstants.DictKeys.FORMAT: FlextLdifConstants.AclFormats.RFC_GENERIC,
-                    FlextLdifConstants.DictKeys.SOURCE_FORMAT: FlextLdifConstants.AclFormats.OID_ACL,
-                    FlextLdifConstants.DictKeys.DATA: acl_data,
+                    dk.TYPE: dk.ACL,
+                    dk.FORMAT: af.RFC_GENERIC,
+                    dk.SOURCE_FORMAT: af.OID_ACL,
+                    dk.DATA: acl_data,
                 }
 
                 return FlextResult[FlextLdifTypes.Dict].ok(rfc_data)
@@ -802,13 +826,15 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                 FlextResult with OID ACL data
 
             """
+            dk = FlextLdifConstants.DictKeys
+            af = FlextLdifConstants.AclFormats
             try:
                 # Convert RFC ACL to Oracle OID format
                 # This is target-specific conversion for migrations
                 oid_data: FlextLdifTypes.Dict = {
-                    FlextLdifConstants.DictKeys.FORMAT: FlextLdifConstants.AclFormats.OID_ACL,
-                    FlextLdifConstants.DictKeys.TARGET_FORMAT: FlextLdifConstants.DictKeys.ORCLACI,
-                    FlextLdifConstants.DictKeys.DATA: acl_data,
+                    dk.FORMAT: af.OID_ACL,
+                    dk.TARGET_FORMAT: dk.ORCLACI,
+                    dk.DATA: acl_data,
                 }
 
                 return FlextResult[FlextLdifTypes.Dict].ok(oid_data)
@@ -945,7 +971,8 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                             current_acl = []
 
                         current_acl.append(stripped)
-                        # Check if ACL continues on next line (doesn't end with complete structure)
+                        # Check if ACL continues on next line
+                        # (doesn't end with complete structure)
                         in_multiline_acl = not stripped.rstrip().endswith(")")
 
                     # Continuation line for multiline ACL
@@ -998,12 +1025,14 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
             r"""Clean OID-specific DN formatting issues.
 
             STRATEGY PATTERN: Delegates to shared DnService for RFC 4514 compliance.
-            This ensures consistent DN handling across all flext-ldif and flext-ldap components.
+            This ensures consistent DN handling across all flext-ldif and
+            flext-ldap components.
 
             OID LDIF quirks handled by shared utility:
             - Removes leading/trailing whitespace from RDN components
             - Collapses spaces around '=' in RDNs
-            - Fixes malformed backslash escapes with trailing spaces (e.g., "\\ " -> " ")
+            - Fixes malformed backslash escapes with trailing spaces
+              (e.g., "\\ " -> " ")
             - Normalizes escaped characters in DN values
 
             Args:
@@ -1023,7 +1052,7 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
         def can_handle_entry(
             self,
             entry_dn: str,
-            attributes: dict[str, object],
+            attributes: FlextLdifTypes.Models.CustomDataDict,
         ) -> bool:
             """Check if this quirk should handle the entry.
 
@@ -1071,7 +1100,7 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
             return has_oid_attrs or has_oid_classes or has_oid_dn_pattern
 
         def process_entry(
-            self, entry_dn: str, attributes: dict[str, object]
+            self, entry_dn: str, attributes: FlextLdifTypes.Models.CustomDataDict
         ) -> FlextResult[FlextLdifTypes.Dict]:
             """Process entry for Oracle OID format.
 
@@ -1112,9 +1141,11 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
 
                 # Oracle OID entries converted to RFC format
                 # ACL attributes stored in metadata, not in main attributes
+                dk = FlextLdifConstants.DictKeys
+                st = FlextLdifConstants.ServerTypes
                 processed_entry: FlextLdifTypes.Dict = {
-                    FlextLdifConstants.DictKeys.DN: entry_dn,
-                    FlextLdifConstants.DictKeys.SERVER_TYPE: FlextLdifConstants.ServerTypes.OID,
+                    dk.DN: entry_dn,
+                    dk.SERVER_TYPE: st.OID,
                 }
 
                 # Add regular attributes (non-ACL)
@@ -1211,8 +1242,13 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                 FlextResult with LDIF formatted entry string
 
             Example:
-                Input: {FlextLdifConstants.DictKeys.DN: "cn=test,dc=example,dc=com", FlextLdifConstants.DictKeys.CN: ["test"], FlextLdifConstants.DictKeys.OBJECTCLASS: ["person"]}
-                Output: "dn: cn=test,dc=example,dc=com\ncn: test\nobjectClass: person\n"
+                Input: {
+                    FlextLdifConstants.DictKeys.DN: "cn=test,dc=example,dc=com",
+                    FlextLdifConstants.DictKeys.CN: ["test"],
+                    FlextLdifConstants.DictKeys.OBJECTCLASS: ["person"]
+                }
+                Output: "dn: cn=test,dc=example,dc=com\ncn: test\n
+                    objectClass: person\n"
 
             """
             try:

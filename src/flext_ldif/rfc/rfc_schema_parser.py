@@ -26,7 +26,7 @@ from flext_ldif.quirks.registry import FlextLdifQuirksRegistry
 from flext_ldif.typings import FlextLdifTypes
 
 
-class FlextLdifRfcSchemaParser(FlextService[dict[str, object]]):
+class FlextLdifRfcSchemaParser(FlextService[FlextLdifTypes.Models.CustomDataDict]):
     """RFC 4512 compliant schema parser service.
 
     Parses LDAP schema definitions strictly according to RFC 4512 specification.
@@ -95,7 +95,7 @@ class FlextLdifRfcSchemaParser(FlextService[dict[str, object]]):
     def __init__(
         self,
         *,
-        params: dict[str, object],
+        params: FlextLdifTypes.Models.CustomDataDict,
         quirk_registry: FlextLdifQuirksRegistry,
         server_type: str | None = None,
     ) -> None:
@@ -112,7 +112,7 @@ class FlextLdifRfcSchemaParser(FlextService[dict[str, object]]):
         self._quirk_registry = quirk_registry
         self._server_type = server_type
 
-    def execute(self) -> FlextResult[dict[str, object]]:
+    def execute(self) -> FlextResult[FlextLdifTypes.Models.CustomDataDict]:
         """Execute RFC-compliant schema parsing.
 
         Returns:
@@ -127,26 +127,26 @@ class FlextLdifRfcSchemaParser(FlextService[dict[str, object]]):
             # Extract parameters
             file_path_str = self._params.get("file_path", "")
             if not file_path_str:
-                return FlextResult[dict[str, object]].fail(
+                return FlextResult[FlextLdifTypes.Models.CustomDataDict].fail(
                     "file_path parameter is required"
                 )
 
             # Type narrow file_path to string
             if not isinstance(file_path_str, str):
-                return FlextResult[dict[str, object]].fail(
+                return FlextResult[FlextLdifTypes.Models.CustomDataDict].fail(
                     f"file_path must be string, got {type(file_path_str).__name__}"
                 )
 
             file_path = Path(file_path_str)
             if not file_path.exists():
-                return FlextResult[dict[str, object]].fail(
+                return FlextResult[FlextLdifTypes.Models.CustomDataDict].fail(
                     f"Schema file not found: {file_path}"
                 )
 
             # Type narrow parse_attributes to bool
             parse_attributes_raw = self._params.get("parse_attributes", True)
             if not isinstance(parse_attributes_raw, bool):
-                return FlextResult[dict[str, object]].fail(
+                return FlextResult[FlextLdifTypes.Models.CustomDataDict].fail(
                     f"parse_attributes must be bool, got {type(parse_attributes_raw).__name__}"
                 )
             parse_attributes: bool = parse_attributes_raw
@@ -154,7 +154,7 @@ class FlextLdifRfcSchemaParser(FlextService[dict[str, object]]):
             # Type narrow parse_objectclasses to bool
             parse_objectclasses_raw = self._params.get("parse_objectclasses", True)
             if not isinstance(parse_objectclasses_raw, bool):
-                return FlextResult[dict[str, object]].fail(
+                return FlextResult[FlextLdifTypes.Models.CustomDataDict].fail(
                     f"parse_objectclasses must be bool, got {type(parse_objectclasses_raw).__name__}"
                 )
             parse_objectclasses: bool = parse_objectclasses_raw
@@ -177,19 +177,21 @@ class FlextLdifRfcSchemaParser(FlextService[dict[str, object]]):
             )
 
             if parse_result.is_failure:
-                return FlextResult[dict[str, object]].fail(parse_result.error)
+                return FlextResult[FlextLdifTypes.Models.CustomDataDict].fail(
+                    parse_result.error
+                )
 
             data = parse_result.value
 
             if self.logger is not None:
                 # Type narrow for logging
                 attributes_raw = data.get(FlextLdifConstants.DictKeys.ATTRIBUTES, {})
-                attributes_dict: dict[str, object] = (
+                attributes_dict: FlextLdifTypes.Models.CustomDataDict = (
                     attributes_raw if isinstance(attributes_raw, dict) else {}
                 )
 
                 objectclasses_raw = data.get("objectclasses", {})
-                objectclasses_dict: dict[str, object] = (
+                objectclasses_dict: FlextLdifTypes.Models.CustomDataDict = (
                     objectclasses_raw if isinstance(objectclasses_raw, dict) else {}
                 )
 
@@ -201,13 +203,13 @@ class FlextLdifRfcSchemaParser(FlextService[dict[str, object]]):
                     },
                 )
 
-            return FlextResult[dict[str, object]].ok(data)
+            return FlextResult[FlextLdifTypes.Models.CustomDataDict].ok(data)
 
         except Exception as e:  # pragma: no cover
             error_msg = f"Failed to execute RFC schema parser: {e}"
             if self.logger is not None:
                 self.logger.exception(error_msg)
-            return FlextResult[dict[str, object]].fail(error_msg)
+            return FlextResult[FlextLdifTypes.Models.CustomDataDict].fail(error_msg)
 
     def _parse_schema_file(
         self,
@@ -215,7 +217,7 @@ class FlextLdifRfcSchemaParser(FlextService[dict[str, object]]):
         *,
         parse_attributes: bool,
         parse_objectclasses: bool,
-    ) -> FlextResult[dict[str, object]]:
+    ) -> FlextResult[FlextLdifTypes.Models.CustomDataDict]:
         """Parse schema file according to RFC 4512.
 
         Args:
@@ -271,7 +273,7 @@ class FlextLdifRfcSchemaParser(FlextService[dict[str, object]]):
                         parse_objectclasses=parse_objectclasses,
                     )
 
-            return FlextResult[dict[str, object]].ok({
+            return FlextResult[FlextLdifTypes.Models.CustomDataDict].ok({
                 FlextLdifConstants.DictKeys.ATTRIBUTES: attributes,
                 "objectclasses": objectclasses,
                 "source_dn": source_dn,
@@ -282,7 +284,7 @@ class FlextLdifRfcSchemaParser(FlextService[dict[str, object]]):
             })
 
         except Exception as e:  # pragma: no cover
-            return FlextResult[dict[str, object]].fail(
+            return FlextResult[FlextLdifTypes.Models.CustomDataDict].fail(
                 f"Failed to parse schema file: {e}"
             )
 
@@ -327,7 +329,9 @@ class FlextLdifRfcSchemaParser(FlextService[dict[str, object]]):
                     extra={"line": line[:100]},
                 )
 
-    def _parse_attribute_type(self, definition: str) -> dict[str, object] | None:
+    def _parse_attribute_type(
+        self, definition: str
+    ) -> FlextLdifTypes.Models.CustomDataDict | None:
         """Parse RFC 4512 AttributeType definition with quirks support.
 
         Args:
@@ -369,7 +373,9 @@ class FlextLdifRfcSchemaParser(FlextService[dict[str, object]]):
             "usage": match.group("usage"),
         }
 
-    def _parse_object_class(self, definition: str) -> dict[str, object] | None:
+    def _parse_object_class(
+        self, definition: str
+    ) -> FlextLdifTypes.Models.CustomDataDict | None:
         """Parse RFC 4512 ObjectClass definition with quirks support.
 
         Args:

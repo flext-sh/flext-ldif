@@ -897,7 +897,7 @@ objectClass: person
             base_dn="dc=example,dc=com",
             uid="testuser",
             mail="test@example.com",
-            given_name="Test"
+            given_name="Test",
         )
 
         assert result.is_success
@@ -932,9 +932,7 @@ objectClass: person
         ldif = FlextLdif()
 
         result = ldif.build_group_entry(
-            cn="Test Group",
-            base_dn="dc=example,dc=com",
-            description="Test group"
+            cn="Test Group", base_dn="dc=example,dc=com", description="Test group"
         )
 
         assert result.is_success
@@ -960,7 +958,7 @@ objectClass: person
         result = ldif.build_organizational_unit(
             ou="Test OU",
             base_dn="dc=example,dc=com",
-            description="Test organizational unit"
+            description="Test organizational unit",
         )
 
         assert result.is_success
@@ -985,9 +983,7 @@ objectClass: person
 
         # First create an entry
         result = ldif.build_person_entry(
-            cn="Test User",
-            sn="User",
-            base_dn="dc=example,dc=com"
+            cn="Test User", sn="User", base_dn="dc=example,dc=com"
         )
         assert result.is_success
         entry = result.unwrap()
@@ -1009,14 +1005,10 @@ objectClass: person
 
         # Create entries
         result1 = ldif.build_person_entry(
-            cn="User1",
-            sn="One",
-            base_dn="dc=example,dc=com"
+            cn="User1", sn="One", base_dn="dc=example,dc=com"
         )
         result2 = ldif.build_person_entry(
-            cn="User2",
-            sn="Two",
-            base_dn="dc=example,dc=com"
+            cn="User2", sn="Two", base_dn="dc=example,dc=com"
         )
         assert result1.is_success and result2.is_success
         entries = [result1.unwrap(), result2.unwrap()]
@@ -1042,8 +1034,8 @@ objectClass: person
             "attributes": {
                 "cn": ["Test User"],
                 "sn": ["User"],
-                "objectClass": ["person", "organizationalPerson"]
-            }
+                "objectClass": ["person", "organizationalPerson"],
+            },
         }
 
         # Convert back to entries
@@ -1061,9 +1053,7 @@ objectClass: person
 
         # Create an entry
         result = ldif.build_person_entry(
-            cn="Test User",
-            sn="User",
-            base_dn="dc=example,dc=com"
+            cn="Test User", sn="User", base_dn="dc=example,dc=com"
         )
         assert result.is_success
         entry = result.unwrap()
@@ -1076,6 +1066,7 @@ objectClass: person
         assert isinstance(json_str, str)
         # Should contain JSON
         import json
+
         parsed = json.loads(json_str)
         assert isinstance(parsed, list)
         assert len(parsed) == 1
@@ -1085,14 +1076,14 @@ objectClass: person
         ldif = FlextLdif()
 
         # Create JSON string
-        json_str = '''[{
+        json_str = """[{
             "dn": "cn=Test User,dc=example,dc=com",
             "attributes": {
                 "cn": ["Test User"],
                 "sn": ["User"],
                 "objectClass": ["person"]
             }
-        }]'''
+        }]"""
 
         # Convert back to entries
         entries_result = ldif.json_to_entries(json_str)
@@ -1128,9 +1119,7 @@ objectClass: person
 
         # Create an entry
         result = ldif.build_person_entry(
-            cn="Test User",
-            sn="User",
-            base_dn="dc=example,dc=com"
+            cn="Test User", sn="User", base_dn="dc=example,dc=com"
         )
         assert result.is_success
         entry = result.unwrap()
@@ -1155,7 +1144,9 @@ objectClass: person
         ldif = FlextLdif()
 
         # This method is not yet implemented - expect NotImplementedError
-        with pytest.raises(NotImplementedError, match="Acl evaluation not yet implemented"):
+        with pytest.raises(
+            NotImplementedError, match="Acl evaluation not yet implemented"
+        ):
             ldif.evaluate_acl_rules([])
 
     def test_process_batch(self) -> None:
@@ -1164,15 +1155,15 @@ objectClass: person
 
         # Create some entries
         result = ldif.build_person_entry(
-            cn="Batch User",
-            sn="User",
-            base_dn="dc=example,dc=com"
+            cn="Batch User", sn="User", base_dn="dc=example,dc=com"
         )
         assert result.is_success
         entries = [result.unwrap()]
 
         # Process batch - this raises NotImplementedError currently
-        with pytest.raises(NotImplementedError, match="Processor 'validate' not yet implemented"):
+        with pytest.raises(
+            NotImplementedError, match="Processor 'validate' not yet implemented"
+        ):
             ldif.process_batch("validate", entries)
 
     def test_process_parallel(self) -> None:
@@ -1181,13 +1172,13 @@ objectClass: person
 
         # Create some entries
         result = ldif.build_person_entry(
-            cn="Parallel User",
-            sn="User",
-            base_dn="dc=example,dc=com"
+            cn="Parallel User", sn="User", base_dn="dc=example,dc=com"
         )
         assert result.is_success
         entries = [result.unwrap()]
 
         # Process in parallel - this raises NotImplementedError currently
-        with pytest.raises(NotImplementedError, match="Processor 'validate' not yet implemented"):
+        with pytest.raises(
+            NotImplementedError, match="Processor 'validate' not yet implemented"
+        ):
             ldif.process_parallel("validate", entries)

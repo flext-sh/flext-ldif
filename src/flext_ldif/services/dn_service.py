@@ -20,11 +20,13 @@ from __future__ import annotations
 import re
 from typing import override
 
-from flext_core import FlextResult, FlextService
+from flext_core import FlextDecorators, FlextResult, FlextService
 from ldap3.utils.dn import parse_dn, safe_dn
 
+from flext_ldif.typings import FlextLdifTypes
 
-class DnService(FlextService[dict[str, object]]):
+
+class DnService(FlextService[FlextLdifTypes.Models.CustomDataDict]):
     r"""RFC 4514 compliant DN operations using ldap3.
 
     Provides methods for DN parsing, validation, and normalization
@@ -61,14 +63,21 @@ class DnService(FlextService[dict[str, object]]):
         super().__init__()
 
     @override
-    def execute(self) -> FlextResult[dict[str, object]]:
+    @FlextDecorators.log_operation("dn_service_check")
+    @FlextDecorators.track_performance()
+    def execute(self) -> FlextResult[FlextLdifTypes.Models.CustomDataDict]:
         """Execute DN service self-check.
+
+        FlextDecorators automatically:
+        - Log operation start/completion/failure
+        - Track performance metrics
+        - Handle context propagation (correlation_id, operation_name)
 
         Returns:
             FlextResult containing service status
 
         """
-        return FlextResult[dict[str, object]].ok({
+        return FlextResult[FlextLdifTypes.Models.CustomDataDict].ok({
             "service": "DnService",
             "status": "operational",
             "rfc_compliance": "RFC 4514",

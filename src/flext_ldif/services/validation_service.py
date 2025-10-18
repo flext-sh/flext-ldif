@@ -18,10 +18,12 @@ from __future__ import annotations
 import re
 from typing import override
 
-from flext_core import FlextResult, FlextService
+from flext_core import FlextDecorators, FlextResult, FlextService
+
+from flext_ldif.typings import FlextLdifTypes
 
 
-class ValidationService(FlextService[dict[str, object]]):
+class ValidationService(FlextService[FlextLdifTypes.Models.CustomDataDict]):
     """RFC 2849/4512 compliant validation service for LDIF entries.
 
     Provides methods for validating LDAP attribute names, object class names,
@@ -76,14 +78,21 @@ class ValidationService(FlextService[dict[str, object]]):
         super().__init__()
 
     @override
-    def execute(self) -> FlextResult[dict[str, object]]:
+    @FlextDecorators.log_operation("validation_service_check")
+    @FlextDecorators.track_performance()
+    def execute(self) -> FlextResult[FlextLdifTypes.Models.CustomDataDict]:
         """Execute validation service self-check.
+
+        FlextDecorators automatically:
+        - Log operation start/completion/failure
+        - Track performance metrics
+        - Handle context propagation (correlation_id, operation_name)
 
         Returns:
             FlextResult containing service status
 
         """
-        return FlextResult[dict[str, object]].ok({
+        return FlextResult[FlextLdifTypes.Models.CustomDataDict].ok({
             "service": "ValidationService",
             "status": "operational",
             "rfc_compliance": "RFC 2849, RFC 4512",

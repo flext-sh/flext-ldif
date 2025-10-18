@@ -25,7 +25,7 @@ from flext_ldif.services.dn_service import DnService
 from flext_ldif.typings import FlextLdifTypes
 
 
-class FlextLdifRfcLdifWriter(FlextService[dict[str, object]]):
+class FlextLdifRfcLdifWriter(FlextService[FlextLdifTypes.Models.CustomDataDict]):
     """RFC 2849 compliant LDIF writer with quirk support.
 
     Writes LDIF files according to RFC 2849 specification with support
@@ -58,7 +58,7 @@ class FlextLdifRfcLdifWriter(FlextService[dict[str, object]]):
     def __init__(
         self,
         *,
-        params: dict[str, object],
+        params: FlextLdifTypes.Models.CustomDataDict,
         quirk_registry: FlextLdifQuirksRegistry,
         target_server_type: str | None = None,
     ) -> None:
@@ -76,7 +76,7 @@ class FlextLdifRfcLdifWriter(FlextService[dict[str, object]]):
         self._target_server_type = target_server_type
         self._dn_service = DnService()  # RFC 4514 DN normalization
 
-    def execute(self) -> FlextResult[dict[str, object]]:
+    def execute(self) -> FlextResult[FlextLdifTypes.Models.CustomDataDict]:
         """Execute RFC LDIF writing.
 
         Supports both file-based and string-based output:
@@ -99,23 +99,25 @@ class FlextLdifRfcLdifWriter(FlextService[dict[str, object]]):
             entries_raw: Any = self._params.get(FlextLdifConstants.DictKeys.ENTRIES, [])
             schema_raw: Any = self._params.get(FlextLdifConstants.DictKeys.SCHEMA, {})
             acls_raw: Any = self._params.get(FlextLdifConstants.DictKeys.ACL, [])
-            append_mode = self._params.get("append", False)
+            append_mode = self._params.get(FlextLdifConstants.DictKeys.APPEND, False)
 
             # Type narrow parameters
             output_file_str: str = (
                 output_file_raw if isinstance(output_file_raw, str) else ""
             )
-            entries: list[dict[str, object] | FlextLdifModels.Entry] = (
-                entries_raw if isinstance(entries_raw, list) else []
+            entries: list[
+                FlextLdifTypes.Models.CustomDataDict | FlextLdifModels.Entry
+            ] = entries_raw if isinstance(entries_raw, list) else []
+            schema: FlextLdifTypes.Models.CustomDataDict = (
+                schema_raw if isinstance(schema_raw, dict) else {}
             )
-            schema: dict[str, object] = schema_raw if isinstance(schema_raw, dict) else {}
-            acls: list[dict[str, object]] = cast(
-                "list[dict[str, object]]",
+            acls: list[FlextLdifTypes.Models.CustomDataDict] = cast(
+                "list[FlextLdifTypes.Models.CustomDataDict]",
                 acls_raw if isinstance(acls_raw, list) else [],
             )
 
             if not entries and not schema and not acls:
-                return FlextResult[dict[str, object]].fail(
+                return FlextResult[FlextLdifTypes.Models.CustomDataDict].fail(
                     "At least one of entries, schema, or acls must be provided"
                 )
 
@@ -145,9 +147,9 @@ class FlextLdifRfcLdifWriter(FlextService[dict[str, object]]):
                     if schema:
                         schema_result = self._write_schema_entries(f, schema)
                         if schema_result.is_failure:
-                            return FlextResult[dict[str, object]].fail(
-                                schema_result.error
-                            )
+                            return FlextResult[
+                                FlextLdifTypes.Models.CustomDataDict
+                            ].fail(schema_result.error)
                         entries_written = schema_result.unwrap().get(
                             FlextLdifConstants.DictKeys.ENTRIES_WRITTEN, 0
                         )
@@ -169,9 +171,9 @@ class FlextLdifRfcLdifWriter(FlextService[dict[str, object]]):
                     if entries:
                         entries_result = self._write_entries(f, entries)
                         if entries_result.is_failure:
-                            return FlextResult[dict[str, object]].fail(
-                                entries_result.error
-                            )
+                            return FlextResult[
+                                FlextLdifTypes.Models.CustomDataDict
+                            ].fail(entries_result.error)
                         entries_written = entries_result.unwrap().get(
                             FlextLdifConstants.DictKeys.ENTRIES_WRITTEN, 0
                         )
@@ -193,7 +195,9 @@ class FlextLdifRfcLdifWriter(FlextService[dict[str, object]]):
                     if acls:
                         acls_result = self._write_acl_entries(f, acls)
                         if acls_result.is_failure:
-                            return FlextResult[dict[str, object]].fail(acls_result.error)
+                            return FlextResult[
+                                FlextLdifTypes.Models.CustomDataDict
+                            ].fail(acls_result.error)
                         entries_written = acls_result.unwrap().get(
                             FlextLdifConstants.DictKeys.ENTRIES_WRITTEN, 0
                         )
@@ -221,7 +225,7 @@ class FlextLdifRfcLdifWriter(FlextService[dict[str, object]]):
                         },
                     )
 
-                return FlextResult[dict[str, object]].ok({
+                return FlextResult[FlextLdifTypes.Models.CustomDataDict].ok({
                     FlextLdifConstants.DictKeys.OUTPUT_FILE: str(output_file),
                     FlextLdifConstants.DictKeys.ENTRIES_WRITTEN: total_entries,
                     FlextLdifConstants.DictKeys.LINES_WRITTEN: total_lines,
@@ -240,7 +244,9 @@ class FlextLdifRfcLdifWriter(FlextService[dict[str, object]]):
             if schema:
                 schema_result = self._write_schema_entries(output, schema)
                 if schema_result.is_failure:
-                    return FlextResult[dict[str, object]].fail(schema_result.error)
+                    return FlextResult[FlextLdifTypes.Models.CustomDataDict].fail(
+                        schema_result.error
+                    )
                 entries_written = schema_result.unwrap().get(
                     FlextLdifConstants.DictKeys.ENTRIES_WRITTEN, 0
                 )
@@ -260,7 +266,9 @@ class FlextLdifRfcLdifWriter(FlextService[dict[str, object]]):
             if entries:
                 entries_result = self._write_entries(output, entries)
                 if entries_result.is_failure:
-                    return FlextResult[dict[str, object]].fail(entries_result.error)
+                    return FlextResult[FlextLdifTypes.Models.CustomDataDict].fail(
+                        entries_result.error
+                    )
                 entries_written = entries_result.unwrap().get(
                     FlextLdifConstants.DictKeys.ENTRIES_WRITTEN, 0
                 )
@@ -280,7 +288,9 @@ class FlextLdifRfcLdifWriter(FlextService[dict[str, object]]):
             if acls:
                 acls_result = self._write_acl_entries(output, acls)
                 if acls_result.is_failure:
-                    return FlextResult[dict[str, object]].fail(acls_result.error)
+                    return FlextResult[FlextLdifTypes.Models.CustomDataDict].fail(
+                        acls_result.error
+                    )
                 entries_written = acls_result.unwrap().get(
                     FlextLdifConstants.DictKeys.ENTRIES_WRITTEN, 0
                 )
@@ -309,8 +319,8 @@ class FlextLdifRfcLdifWriter(FlextService[dict[str, object]]):
                     },
                 )
 
-            return FlextResult[dict[str, object]].ok({
-                "content": ldif_content,
+            return FlextResult[FlextLdifTypes.Models.CustomDataDict].ok({
+                FlextLdifConstants.DictKeys.CONTENT: ldif_content,
                 FlextLdifConstants.DictKeys.ENTRIES_WRITTEN: total_entries,
                 FlextLdifConstants.DictKeys.LINES_WRITTEN: total_lines,
             })
@@ -318,7 +328,9 @@ class FlextLdifRfcLdifWriter(FlextService[dict[str, object]]):
         except Exception as e:  # pragma: no cover
             if self.logger is not None:
                 self.logger.exception("LDIF write failed")
-            return FlextResult[dict[str, object]].fail(f"LDIF write failed: {e}")
+            return FlextResult[FlextLdifTypes.Models.CustomDataDict].fail(
+                f"LDIF write failed: {e}"
+            )
 
     def write_entries_to_string(
         self,
@@ -465,13 +477,13 @@ class FlextLdifRfcLdifWriter(FlextService[dict[str, object]]):
             return FlextResult[None].fail(f"Failed to write entries to file: {e}")
 
     def _write_schema_entries(
-        self, file_handle: TextIO, schema: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
+        self, file_handle: TextIO, schema: FlextLdifTypes.Models.CustomDataDict
+    ) -> FlextResult[FlextLdifTypes.Models.CustomDataDict]:
         """Write schema entries to LDIF file.
 
         Args:
             file_handle: Open text file handle for writing
-            schema: Schema dict[str, object] with FlextLdifConstants.DictKeys.ATTRIBUTES and 'objectclasses'
+            schema: Schema dictionary with FlextLdifConstants.DictKeys.ATTRIBUTES and 'objectclasses'
 
         Returns:
             FlextResult with stats dict
@@ -480,12 +492,14 @@ class FlextLdifRfcLdifWriter(FlextService[dict[str, object]]):
         try:
             # Type narrow schema fields
             attributes_raw: Any = schema.get(FlextLdifConstants.DictKeys.ATTRIBUTES, {})
-            attributes: dict[str, object] = (
+            attributes: FlextLdifTypes.Models.CustomDataDict = (
                 attributes_raw if isinstance(attributes_raw, dict) else {}
             )
 
-            objectclasses_raw: Any = schema.get("objectclasses", {})
-            objectclasses: dict[str, object] = (
+            objectclasses_raw: Any = schema.get(
+                FlextLdifConstants.DictKeys.OBJECTCLASSES, {}
+            )
+            objectclasses: FlextLdifTypes.Models.CustomDataDict = (
                 objectclasses_raw if isinstance(objectclasses_raw, dict) else {}
             )
 
@@ -538,19 +552,21 @@ class FlextLdifRfcLdifWriter(FlextService[dict[str, object]]):
                 lines_written += 1
                 entries_written = 1
 
-            return FlextResult[dict[str, object]].ok({
+            return FlextResult[FlextLdifTypes.Models.CustomDataDict].ok({
                 FlextLdifConstants.DictKeys.ENTRIES_WRITTEN: entries_written,
                 FlextLdifConstants.DictKeys.LINES_WRITTEN: lines_written,
             })
 
         except Exception as e:  # pragma: no cover
-            return FlextResult[dict[str, object]].fail(f"Schema writing failed: {e}")
+            return FlextResult[FlextLdifTypes.Models.CustomDataDict].fail(
+                f"Schema writing failed: {e}"
+            )
 
     def _write_entries(
         self,
         file_handle: TextIO,
-        entries: list[dict[str, object] | FlextLdifModels.Entry],
-    ) -> FlextResult[dict[str, object]]:
+        entries: list[FlextLdifTypes.Models.CustomDataDict | FlextLdifModels.Entry],
+    ) -> FlextResult[FlextLdifTypes.Models.CustomDataDict]:
         """Write regular entries to LDIF file.
 
         Args:
@@ -566,12 +582,12 @@ class FlextLdifRfcLdifWriter(FlextService[dict[str, object]]):
             lines_written = 0
 
             for entry in entries:
-                # Handle both dict[str, object] and Entry object formats
+                # Handle both FlextLdifTypes.Models.CustomDataDict and Entry object formats
                 if isinstance(entry, FlextLdifModels.Entry):
                     dn = entry.dn.value
-                    # Convert Entry attributes to dict[str, object] format for processing
+                    # Convert Entry attributes to CustomDataDict format for processing
                     # dict() builtin already returns correct type
-                    attributes_normalized: dict[str, object] = dict(
+                    attributes_normalized: FlextLdifTypes.Models.CustomDataDict = dict(
                         entry.attributes.attributes.items()
                     )
                 else:
@@ -580,7 +596,7 @@ class FlextLdifRfcLdifWriter(FlextService[dict[str, object]]):
                     entry_dn: str = dn_raw if isinstance(dn_raw, str) else ""
                     dn = entry_dn
 
-                    entry_attrs: dict[str, object] = {
+                    entry_attrs: FlextLdifTypes.Models.CustomDataDict = {
                         k: v
                         for k, v in entry.items()
                         if k != FlextLdifConstants.DictKeys.DN
@@ -639,17 +655,19 @@ class FlextLdifRfcLdifWriter(FlextService[dict[str, object]]):
                 lines_written += 1
                 entries_written += 1
 
-            return FlextResult[dict[str, object]].ok({
+            return FlextResult[FlextLdifTypes.Models.CustomDataDict].ok({
                 FlextLdifConstants.DictKeys.ENTRIES_WRITTEN: entries_written,
                 FlextLdifConstants.DictKeys.LINES_WRITTEN: lines_written,
             })
 
         except Exception as e:  # pragma: no cover
-            return FlextResult[dict[str, object]].fail(f"Entry writing failed: {e}")
+            return FlextResult[FlextLdifTypes.Models.CustomDataDict].fail(
+                f"Entry writing failed: {e}"
+            )
 
     def _write_acl_entries(
-        self, file_handle: TextIO, acls: list[dict[str, object]]
-    ) -> FlextResult[dict[str, object]]:
+        self, file_handle: TextIO, acls: list[FlextLdifTypes.Models.CustomDataDict]
+    ) -> FlextResult[FlextLdifTypes.Models.CustomDataDict]:
         """Write ACL entries to LDIF file.
 
         Args:
@@ -669,10 +687,8 @@ class FlextLdifRfcLdifWriter(FlextService[dict[str, object]]):
                 if not dn:
                     continue
 
-                raw_acl: Any = acl_entry.get("acl", [])
-                acl_definitions: list[str] = self._extract_acl_definitions(
-                    raw_acl
-                )
+                raw_acl: Any = acl_entry.get(FlextLdifConstants.DictKeys.ACL, [])
+                acl_definitions: list[str] = self._extract_acl_definitions(raw_acl)
 
                 # Apply target ACL quirks if available (convert FROM RFC to target format)
                 if self._quirk_registry and self._target_server_type:
@@ -696,9 +712,14 @@ class FlextLdifRfcLdifWriter(FlextService[dict[str, object]]):
                                         converted = convert_result.unwrap()
                                         if (
                                             isinstance(converted, dict)
-                                            and "definition" in converted
+                                            and FlextLdifConstants.DictKeys.DEFINITION
+                                            in converted
                                         ):
-                                            current_acl = str(converted["definition"])
+                                            current_acl = str(
+                                                converted[
+                                                    FlextLdifConstants.DictKeys.DEFINITION
+                                                ]
+                                            )
                                             break  # Use first successful transformation
                         transformed_acls.append(current_acl)
                     acl_definitions = transformed_acls
@@ -721,13 +742,15 @@ class FlextLdifRfcLdifWriter(FlextService[dict[str, object]]):
                 lines_written += 1
                 entries_written += 1
 
-            return FlextResult[dict[str, object]].ok({
+            return FlextResult[FlextLdifTypes.Models.CustomDataDict].ok({
                 FlextLdifConstants.DictKeys.ENTRIES_WRITTEN: entries_written,
                 FlextLdifConstants.DictKeys.LINES_WRITTEN: lines_written,
             })
 
         except Exception as e:  # pragma: no cover
-            return FlextResult[dict[str, object]].fail(f"ACL writing failed: {e}")
+            return FlextResult[FlextLdifTypes.Models.CustomDataDict].fail(
+                f"ACL writing failed: {e}"
+            )
 
     def _wrap_line(self, line: str) -> FlextLdifTypes.StringList:
         """Wrap LDIF line at 76 characters per RFC 2849.
@@ -761,9 +784,7 @@ class FlextLdifRfcLdifWriter(FlextService[dict[str, object]]):
 
         return lines
 
-    def _extract_acl_definitions(
-        self, raw_acl: list[object] | object
-    ) -> list[str]:
+    def _extract_acl_definitions(self, raw_acl: list[object] | object) -> list[str]:
         """Extract ACL definitions from raw ACL data.
 
         Args:

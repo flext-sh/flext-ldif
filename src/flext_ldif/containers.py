@@ -22,6 +22,7 @@ from flext_ldif.quirks.manager import FlextLdifQuirksManager
 from flext_ldif.quirks.registry import FlextLdifQuirksRegistry
 from flext_ldif.schema.builder import FlextLdifSchemaBuilder
 from flext_ldif.schema.validator import FlextLdifSchemaValidator
+from flext_ldif.typings import FlextLdifTypes
 
 
 class FlextLdifContainer(containers.DeclarativeContainer):
@@ -106,7 +107,7 @@ class FlextLdifContainer(containers.DeclarativeContainer):
     # CONTAINER LIFECYCLE METHODS
     # =========================================================================
 
-    def get_service_providers(self) -> dict[str, object]:
+    def get_service_providers(self) -> FlextLdifTypes.Models.CustomDataDict:
         """Get all service providers for inspection.
 
         Returns:

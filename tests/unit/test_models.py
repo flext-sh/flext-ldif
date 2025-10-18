@@ -144,6 +144,7 @@ class TestFlextLdifModels:
             attributes=FlextLdifModels.LdifAttributes(
                 attributes={
                     "cn": FlextLdifModels.AttributeValues(values=["test"]),
+                    "objectclass": FlextLdifModels.AttributeValues(values=["person"]),
                 }
             ),
         )
@@ -155,7 +156,11 @@ class TestFlextLdifModels:
         # Valid entry
         entry = FlextLdifModels.Entry(
             dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
-            attributes=FlextLdifModels.LdifAttributes(attributes={}),
+            attributes=FlextLdifModels.LdifAttributes(
+                attributes={
+                    "objectclass": FlextLdifModels.AttributeValues(values=["person"]),
+                }
+            ),
         )
         assert entry.dn.value == "cn=test,dc=example,dc=com"
 
@@ -212,6 +217,7 @@ class TestFlextLdifModels:
             attributes=FlextLdifModels.LdifAttributes(
                 attributes={
                     "cn": FlextLdifModels.AttributeValues(values=["test"]),
+                    "objectclass": FlextLdifModels.AttributeValues(values=["person"]),
                 }
             ),
         )
@@ -390,23 +396,21 @@ class TestFlextLdifModels:
         assert obj_class.optional_attributes == ["telephoneNumber", "seeAlso"]
         assert obj_class.structural is True
 
-    def test_schema_object_class_create_method(self) -> None:
-        """Test SchemaObjectClass.create method."""
-        result = FlextLdifModels.SchemaObjectClass.create(
-            {
-                "name": "organizationalUnit",
-                "oid": "2.5.6.5",
-                "description": "Organizational unit",
-                "required_attributes": ["ou"],
-            }
+    def test_schema_object_class_direct_instantiation(self) -> None:
+        """Test SchemaObjectClass direct instantiation."""
+        # Direct instantiation pattern - Pydantic 2 validates natively
+        obj_class = FlextLdifModels.SchemaObjectClass(
+            name="organizationalUnit",
+            oid="2.5.6.5",
+            description="Organizational unit",
+            required_attributes=["ou"],
         )
-        assert result.is_success
-        obj_class = result.unwrap()
         assert isinstance(obj_class, FlextLdifModels.SchemaObjectClass)
         assert obj_class.name == "organizationalUnit"
         assert obj_class.oid == "2.5.6.5"
         assert obj_class.required_attributes == ["ou"]
         assert obj_class.optional_attributes == []
+        assert obj_class.description == "Organizational unit"
 
     def test_schema_discovery_result_creation(self) -> None:
         """Test SchemaDiscoveryResult model creation."""
@@ -512,10 +516,9 @@ class TestFlextLdifModelsDistinguishedName:
         """Test creating a DistinguishedName instance."""
         dn_string = "cn=test,ou=users,dc=example,dc=com"
 
-        result = FlextLdifModels.DistinguishedName.create(dn_string)
+        # Direct instantiation pattern - Pydantic 2 validates via @field_validator
+        dn = FlextLdifModels.DistinguishedName(value=dn_string)
 
-        assert result.is_success
-        dn = result.unwrap()
         assert isinstance(dn, FlextLdifModels.DistinguishedName)
         assert dn.value == dn_string
 
@@ -528,10 +531,9 @@ class TestFlextLdifModelsDistinguishedName:
         """
         dn_string = "CN=test,OU=users,DC=example,DC=com"
 
-        result = FlextLdifModels.DistinguishedName.create(dn_string)
+        # Direct instantiation pattern - Pydantic 2 validates via @field_validator
+        dn = FlextLdifModels.DistinguishedName(value=dn_string)
 
-        assert result.is_success
-        dn = result.unwrap()
         assert isinstance(dn, FlextLdifModels.DistinguishedName)
         # Domain model preserves DN as-is (validation only, no normalization)
         assert dn.value == dn_string
@@ -540,10 +542,8 @@ class TestFlextLdifModelsDistinguishedName:
         """Test extracting DN components."""
         dn_string = "cn=test,ou=users,dc=example,dc=com"
 
-        result = FlextLdifModels.DistinguishedName.create(dn_string)
-
-        assert result.is_success
-        dn = result.unwrap()
+        # Direct instantiation pattern - Pydantic 2 validates via @field_validator
+        dn = FlextLdifModels.DistinguishedName(value=dn_string)
 
         # Test components field access
         assert hasattr(dn, "components")
@@ -554,10 +554,12 @@ class TestFlextLdifModelsDistinguishedName:
         """Test invalid DN handling."""
         invalid_dn = "invalid-dn-format"
 
-        result = FlextLdifModels.DistinguishedName.create(invalid_dn)
+        # Direct instantiation pattern - Pydantic 2 raises ValidationError on invalid DN
+        with pytest.raises(ValidationError) as exc_info:
+            FlextLdifModels.DistinguishedName(value=invalid_dn)
 
-        # Should still create but mark as invalid
-        assert isinstance(result, FlextResult)
+        # Verify the error is related to DN validation
+        assert "DN format" in str(exc_info.value) or "value" in str(exc_info.value)
 
 
 class TestFlextLdifModelsLdifAttributes:
@@ -616,21 +618,16 @@ class TestFlextLdifModelsSchemaObjectClass:
 
     def test_objectclass_creation(self) -> None:
         """Test creating a SchemaObjectClass instance."""
-        oc_data = {
-            "name": "inetOrgPerson",
-            "oid": "2.16.840.1.113730.3.2.2",
-            "description": "Internet Organizational Person",
-            "structural": True,
-            "required_attributes": ["cn", "sn", "objectclass"],
-            "optional_attributes": ["description", "telephoneNumber", "mail"],
-        }
-
-        result = FlextLdifModels.SchemaObjectClass.create(
-            cast("dict[str, object]", oc_data)
+        # Direct instantiation pattern - Pydantic 2 validates natively
+        oc = FlextLdifModels.SchemaObjectClass(
+            name="inetOrgPerson",
+            oid="2.16.840.1.113730.3.2.2",
+            description="Internet Organizational Person",
+            structural=True,
+            required_attributes=["cn", "sn", "objectclass"],
+            optional_attributes=["description", "telephoneNumber", "mail"],
         )
 
-        assert result.is_success
-        oc = result.unwrap()
         assert isinstance(oc, FlextLdifModels.SchemaObjectClass)
         assert oc.name == "inetOrgPerson"
         assert oc.oid == "2.16.840.1.113730.3.2.2"
@@ -639,32 +636,25 @@ class TestFlextLdifModelsSchemaObjectClass:
 
     def test_objectclass_validation(self) -> None:
         """Test object class validation."""
-        # Valid object class
-        valid_data = {
-            "name": "person",
-            "oid": "2.5.6.6",
-            "structural": True,
-        }
-
-        result = FlextLdifModels.SchemaObjectClass.create(
-            cast("dict[str, object]", valid_data)
+        # Valid object class - Direct instantiation pattern
+        oc = FlextLdifModels.SchemaObjectClass(
+            name="person",
+            oid="2.5.6.6",
+            description="Person object class",
+            structural=True,
         )
-        assert result.is_success
+        assert isinstance(oc, FlextLdifModels.SchemaObjectClass)
 
     def test_computed_fields(self) -> None:
         """Test computed fields on object class."""
-        oc_data = {
-            "name": "inetOrgPerson",
-            "oid": "2.16.840.1.113730.3.2.2",  # Required field
-            "required_attributes": ["cn", "sn"],
-            "optional_attributes": ["mail", "telephoneNumber"],
-        }
-
-        result = FlextLdifModels.SchemaObjectClass.create(
-            cast("dict[str, object]", oc_data)
+        # Direct instantiation pattern - Pydantic 2 validates natively
+        oc = FlextLdifModels.SchemaObjectClass(
+            name="inetOrgPerson",
+            oid="2.16.840.1.113730.3.2.2",
+            description="Internet Organizational Person",
+            required_attributes=["cn", "sn"],
+            optional_attributes=["mail", "telephoneNumber"],
         )
-        assert result.is_success
-        oc = result.unwrap()
         assert isinstance(oc, FlextLdifModels.SchemaObjectClass)
 
         # Test field access
@@ -677,17 +667,12 @@ class TestFlextLdifModelsAclTarget:
 
     def test_acl_target_creation(self) -> None:
         """Test creating an AclTarget instance."""
-        target_data = {
-            "target_dn": "dc=example,dc=com",
-            "attributes": ["cn", "sn"],
-        }
-
-        result = FlextLdifModels.AclTarget.create(
-            cast("dict[str, object]", target_data)
+        # Direct instantiation pattern - Pydantic 2 validates natively
+        target = FlextLdifModels.AclTarget(
+            target_dn="dc=example,dc=com",
+            attributes=["cn", "sn"],
         )
 
-        assert result.is_success
-        target = result.unwrap()
         assert isinstance(target, FlextLdifModels.AclTarget)
         assert target.target_dn == "dc=example,dc=com"
         assert target.attributes == ["cn", "sn"]
@@ -698,17 +683,12 @@ class TestFlextLdifModelsAclSubject:
 
     def test_acl_subject_creation(self) -> None:
         """Test creating an AclSubject instance."""
-        subject_data = {
-            "subject_type": "user",
-            "subject_value": "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
-        }
-
-        result = FlextLdifModels.AclSubject.create(
-            cast("dict[str, object]", subject_data)
+        # Direct instantiation pattern - Pydantic 2 validates natively
+        subject = FlextLdifModels.AclSubject(
+            subject_type="user",
+            subject_value="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
         )
 
-        assert result.is_success
-        subject = result.unwrap()
         assert isinstance(subject, FlextLdifModels.AclSubject)
         assert subject.subject_type == "user"
 
@@ -718,18 +698,25 @@ class TestFlextLdifModelsAclPermissions:
 
     def test_acl_permissions_creation(self) -> None:
         """Test creating an AclPermissions instance."""
-        perms_data = {
-            "permissions": ["read", "write"],
-        }
-
-        result = FlextLdifModels.AclPermissions.create(
-            cast("dict[str, object]", perms_data)
+        # Direct instantiation pattern - Pydantic 2 validates natively
+        # AclPermissions uses individual boolean fields, not a permissions list
+        perms = FlextLdifModels.AclPermissions(
+            read=True,
+            write=True,
         )
 
-        assert result.is_success
-        perms = result.unwrap()
         assert isinstance(perms, FlextLdifModels.AclPermissions)
-        assert perms.permissions == ["read", "write"]
+        # Test individual boolean fields
+        assert perms.read is True
+        assert perms.write is True
+        assert perms.add is False
+        assert perms.delete is False
+        # Test computed permissions field (derived from boolean fields)
+        permissions_list = perms.permissions
+        assert isinstance(permissions_list, list)
+        assert len(permissions_list) == 2
+        assert "read" in permissions_list
+        assert "write" in permissions_list
 
 
 class TestFlextLdifModelsAcl:
@@ -737,38 +724,30 @@ class TestFlextLdifModelsAcl:
 
     def test_unified_acl_creation(self) -> None:
         """Test creating a Acl instance."""
-        # First create components
-        target_result = FlextLdifModels.AclTarget.create(
-            {
-                "target_dn": "dc=example,dc=com",
-                "attributes": ["cn"],
-            }
+        # Create components using direct instantiation pattern
+        target = FlextLdifModels.AclTarget(
+            target_dn="dc=example,dc=com",
+            attributes=["cn"],
         )
-        assert target_result.is_success
 
-        subject_result = FlextLdifModels.AclSubject.create(
-            {
-                "subject_type": "user",
-                "subject_value": "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
-            }
+        subject = FlextLdifModels.AclSubject(
+            subject_type="user",
+            subject_value="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
         )
-        assert subject_result.is_success
 
-        perms_result = FlextLdifModels.AclPermissions.create(
-            {
-                "permissions": ["read", "write"],
-            }
+        perms = FlextLdifModels.AclPermissions(
+            read=True,
+            write=True,
         )
-        assert perms_result.is_success
 
         # Create unified ACL using direct instantiation of OracleOudAcl
         # (aggressive Pydantic 2 direct usage pattern - no factory class)
         try:
             acl = FlextLdifModels.OracleOudAcl(
                 name="test_acl",
-                target=target_result.unwrap(),
-                subject=subject_result.unwrap(),
-                permissions=perms_result.unwrap(),
+                target=target,
+                subject=subject,
+                permissions=perms,
                 server_type="oracle_oud",
             )
             result = FlextResult[FlextLdifModels.AclBase].ok(acl)

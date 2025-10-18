@@ -30,9 +30,12 @@ class TestOperationalAttributesStripping:
             Entry instance
 
         """
-        dn_result = FlextLdifModels.DistinguishedName.create(dn_string)
-        assert dn_result.is_success, f"Failed to create DN: {dn_result.error}"
-        dn = dn_result.unwrap()
+        # Direct instantiation pattern - Pydantic 2 validates via @field_validator
+        # If DN is invalid, ValidationError will be raised
+        try:
+            dn = FlextLdifModels.DistinguishedName(value=dn_string)
+        except Exception as e:
+            raise AssertionError(f"Failed to create DN: {e}") from e
 
         # Convert attributes to LdifAttributes format manually
         # Entry.create() doesn't automatically convert dict[str, list[str]] to AttributeValues
@@ -88,6 +91,7 @@ class TestOperationalAttributesStripping:
             "cn=test,dc=client-a",
             {
                 "cn": ["test"],
+                "objectclass": ["person"],
                 "orclGUID": ["ABC123"],
                 "orclPasswordChangedTime": ["20250113"],
             },
@@ -145,6 +149,7 @@ class TestOperationalAttributesStripping:
             "cn=test,dc=client-a",
             {
                 "cn": ["test"],
+                "objectclass": ["person"],
                 "CreateTimestamp": ["20250113100000Z"],  # Mixed case
                 "MODIFYTIMESTAMP": ["20250113100000Z"],  # Upper case
             },
@@ -220,6 +225,7 @@ class TestOperationalAttributesStripping:
             "cn=test,dc=client-a",
             {
                 "cn": ["test"],
+                "objectclass": ["person"],
                 "ds-sync-hist": ["sync-data"],
                 "ds-sync-state": ["active"],
                 "ds-pwp-account-disabled": ["false"],
@@ -248,6 +254,7 @@ class TestOperationalAttributesStripping:
             "cn=test,dc=client-a",
             {
                 "cn": ["test"],
+                "objectclass": ["person"],
                 "structuralObjectClass": ["person"],
                 "contextCSN": ["20250113100000.000000Z#000000#000#000000"],
                 "entryCSN": ["20250113100000.000000Z#000000#000#000000"],
@@ -276,6 +283,7 @@ class TestOperationalAttributesStripping:
             "cn=test,dc=client-a",
             {
                 "cn": ["test"],
+                "objectclass": ["person"],
                 "objectGUID": ["guid-12345"],
                 "objectSid": ["S-1-5-21-..."],
                 "whenCreated": ["20250113100000.0Z"],
@@ -310,6 +318,7 @@ class TestOperationalAttributesStripping:
             "cn=test,dc=client-a",
             {
                 "cn": ["test"],
+                "objectClass": ["person"],
                 "createTimestamp": ["20250113100000Z"],  # COMMON
                 "orclGUID": ["ABC123"],  # OID-specific - should NOT be stripped
             },

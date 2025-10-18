@@ -344,7 +344,9 @@ class TestParseLdif:
 
     def test_parse_ldif_from_content_string(self, client: FlextLdifClient) -> None:
         """Test parsing LDIF from content string."""
-        ldif_content = "dn: cn=test,dc=example,dc=com\ncn: test\n\n"
+        ldif_content = (
+            "dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test\n\n"
+        )
 
         result = client.parse_ldif(ldif_content)
 
@@ -359,7 +361,9 @@ class TestParseLdif:
     ) -> None:
         """Test parsing LDIF from Path object."""
         # Create test LDIF file
-        ldif_content = "dn: cn=test,dc=example,dc=com\ncn: test\n\n"
+        ldif_content = (
+            "dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test\n\n"
+        )
         test_file = tmp_path / "test.ldif"
         test_file.write_text(ldif_content)
 
@@ -394,7 +398,7 @@ class TestParseLdif:
         # Should fail with parser error
         assert result.is_failure
         assert result.error is not None
-        assert "Failed to get RFC parser" in result.error
+        assert "Failed to retrieve RFC parser" in result.error
 
 
 class TestWriteLdif:
@@ -430,7 +434,7 @@ class TestWriteLdif:
         # Create test entry
         entry_result = FlextLdifModels.Entry.create(
             dn="cn=test,dc=example,dc=com",
-            attributes={"cn": ["test"]},
+            attributes={"cn": ["test"], "objectclass": ["person"]},
         )
         entries = [entry_result.unwrap()]
 
@@ -450,7 +454,7 @@ class TestWriteLdif:
             assert result.error is not None
             assert result.error is not None
             assert result.error is not None
-        assert "Failed to get RFC writer" in result.error
+        assert "Failed to retrieve RFC writer" in result.error
 
 
 class TestValidateEntries:
@@ -514,7 +518,7 @@ class TestValidateEntries:
         # Create test entry
         entry_result = FlextLdifModels.Entry.create(
             dn="cn=test,dc=example,dc=com",
-            attributes={"cn": ["test"]},
+            attributes={"cn": ["test"], "objectclass": ["person"]},
         )
         entries = [entry_result.unwrap()]
 
@@ -536,7 +540,7 @@ class TestValidateEntries:
             assert result.error is not None
             assert result.error is not None
             assert result.error is not None
-        assert "Failed to get schema validator" in result.error
+        assert "Failed to retrieve schema validator" in result.error
 
 
 if __name__ == "__main__":

@@ -453,7 +453,7 @@ class FlextLdifQuirksServersApache(FlextLdifQuirksBaseSchemaQuirk):
         ) -> FlextResult[FlextLdifTypes.Dict]:
             """Wrap ApacheDS ACL into a generic RFC representation."""
             try:
-                # Type narrowing: rfc_acl is already FlextLdifTypes.Dict (dict[str, object])
+                # Type narrowing: rfc_acl is already FlextLdifTypes.Dict (FlextLdifTypes.Models.CustomDataDict)
                 rfc_acl: FlextLdifTypes.Dict = {
                     FlextLdifConstants.DictKeys.TYPE: FlextLdifConstants.DictKeys.ACL,
                     FlextLdifConstants.DictKeys.FORMAT: FlextLdifConstants.AclFormats.RFC_GENERIC,
@@ -473,7 +473,7 @@ class FlextLdifQuirksServersApache(FlextLdifQuirksBaseSchemaQuirk):
         ) -> FlextResult[FlextLdifTypes.Dict]:
             """Repackage RFC ACL payload for ApacheDS."""
             try:
-                # Type narrowing: apache_acl is already FlextLdifTypes.Dict (dict[str, object])
+                # Type narrowing: apache_acl is already FlextLdifTypes.Dict (FlextLdifTypes.Models.CustomDataDict)
                 apache_acl: FlextLdifTypes.Dict = {
                     FlextLdifConstants.DictKeys.FORMAT: FlextLdifConstants.AclFormats.ACI,
                     FlextLdifConstants.DictKeys.TARGET_FORMAT: FlextLdifConstants.DictKeys.ACI,
@@ -553,7 +553,7 @@ class FlextLdifQuirksServersApache(FlextLdifQuirksBaseSchemaQuirk):
         def can_handle_entry(
             self,
             entry_dn: str,
-            attributes: dict[str, object],
+            attributes: FlextLdifTypes.Models.CustomDataDict,
         ) -> bool:
             """Detect ApacheDS-specific entries."""
             dn_lower = entry_dn.lower()
@@ -588,7 +588,7 @@ class FlextLdifQuirksServersApache(FlextLdifQuirksBaseSchemaQuirk):
         def process_entry(
             self,
             entry_dn: str,
-            attributes: dict[str, object],
+            attributes: FlextLdifTypes.Models.CustomDataDict,
         ) -> FlextResult[FlextLdifTypes.Dict]:
             """Normalise ApacheDS entries and attach metadata."""
             try:

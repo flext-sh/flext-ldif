@@ -17,7 +17,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextModels, FlextResult, FlextTypes
+from flext_core import FlextModels, FlextResult
 from pydantic import ConfigDict
 
 from flext_ldif.constants import FlextLdifConstants
@@ -214,7 +214,7 @@ class DnCaseRegistry(FlextModels.Value):
             >>> result.unwrap()  # False - multiple case variants
 
         """
-        inconsistencies: list[dict[str, object]] = []
+        inconsistencies: list[FlextLdifTypes.Models.CustomDataDict] = []
 
         for normalized_dn, variants in self._case_variants.items():
             if len(variants) > 1:

@@ -7,8 +7,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextTypes
-
 from flext_ldif.migration_pipeline import FlextLdifMigrationPipeline
 from flext_ldif.quirks.registry import FlextLdifQuirksRegistry
 from flext_ldif.rfc.rfc_ldif_parser import FlextLdifRfcLdifParser
@@ -174,7 +172,7 @@ class FlextLdifTestServiceFactory:
     @classmethod
     def create_api(
         cls,
-        config: FlextTypes.Dict | None = None,
+        config: dict[str, object] | None = None,
         quirk_registry: FlextLdifQuirksRegistry | None = None,
     ) -> dict[str, object]:
         """Create unified service API for backward compatibility.
@@ -213,7 +211,7 @@ class FlextLdifTestServiceFactory:
     @classmethod
     def create_parser(
         cls,
-        config: FlextTypes.Dict | None = None,
+        config: dict[str, object] | None = None,
         quirk_registry: FlextLdifQuirksRegistry | None = None,
     ) -> FlextLdifRfcLdifParser:
         """Create parser service with quirk registry."""
@@ -222,7 +220,7 @@ class FlextLdifTestServiceFactory:
     @classmethod
     def create_validator(
         cls,
-        config: FlextTypes.Dict | None = None,
+        config: dict[str, object] | None = None,
         quirk_registry: FlextLdifQuirksRegistry | None = None,
     ) -> FlextLdifRfcSchemaParser:
         """Create validator service (schema parser) with quirk registry."""
@@ -231,7 +229,7 @@ class FlextLdifTestServiceFactory:
     @classmethod
     def create_writer(
         cls,
-        config: FlextTypes.Dict | None = None,
+        config: dict[str, object] | None = None,
         quirk_registry: FlextLdifQuirksRegistry | None = None,
     ) -> FlextLdifRfcLdifWriter:
         """Create writer service with quirk registry."""
@@ -306,7 +304,7 @@ class FlextLdifTestServiceFactory:
     @classmethod
     def services_for_integration_test(
         cls, quirk_registry: FlextLdifQuirksRegistry | None = None
-    ) -> FlextTypes.Dict:
+    ) -> dict[str, object]:
         """Create all services configured for integration testing."""
         config = cls.create_test_config()
 
@@ -325,7 +323,7 @@ class FlextLdifTestServiceFactory:
     @classmethod
     def minimal_services(
         cls, quirk_registry: FlextLdifQuirksRegistry | None = None
-    ) -> FlextTypes.Dict:
+    ) -> dict[str, object]:
         """Create minimal service set for basic testing."""
         if quirk_registry is None:
             quirk_registry = FlextLdifQuirksRegistry()

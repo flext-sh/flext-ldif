@@ -12,8 +12,6 @@ from __future__ import annotations
 from pathlib import Path
 from unittest.mock import MagicMock
 
-from flext_core import FlextTypes
-
 from flext_ldif import FlextLdifCategorizedMigrationPipeline
 
 
@@ -202,7 +200,7 @@ class TestACLDetection:
             writer_quirk=MagicMock(),
         )
 
-        entry: FlextTypes.Dict = {
+        entry: dict[str, object] = {
             "dn": "dc=example,dc=com",
             "attributes": {"aci": "(targetattr=*)(version 3.0; acl...)"},
             "objectclass": ["top"],
@@ -223,7 +221,7 @@ class TestACLDetection:
             writer_quirk=MagicMock(),
         )
 
-        entry: FlextTypes.Dict = {
+        entry: dict[str, object] = {
             "dn": "uid=jdoe,dc=example,dc=com",
             "attributes": {"cn": "John Doe"},
             "objectclass": ["person"],
@@ -242,7 +240,7 @@ class TestACLDetection:
             writer_quirk=MagicMock(),
         )
 
-        entry: FlextTypes.Dict = {
+        entry: dict[str, object] = {
             "dn": "dc=example,dc=com",
             "attributes": {"aci": "(targetattr=*)"},
             "objectclass": ["top"],
@@ -265,7 +263,7 @@ class TestEntryCategorization:
             writer_quirk=MagicMock(),
         )
 
-        entry: FlextTypes.Dict = {
+        entry: dict[str, object] = {
             "dn": "cn=schema",
             "attributes": {},
             "objectclass": ["top", "subschema"],
@@ -288,7 +286,7 @@ class TestEntryCategorization:
             writer_quirk=MagicMock(),
         )
 
-        entry: FlextTypes.Dict = {
+        entry: dict[str, object] = {
             "dn": "dc=example,dc=com",
             "attributes": {"aci": "(targetattr=*)"},
             "objectclass": ["top", "domain"],
@@ -311,7 +309,7 @@ class TestEntryCategorization:
             writer_quirk=MagicMock(),
         )
 
-        entry: FlextTypes.Dict = {
+        entry: dict[str, object] = {
             "dn": "ou=users,dc=example,dc=com",
             "attributes": {"ou": "users"},
             "objectclass": ["top", "organizationalUnit"],
@@ -335,7 +333,7 @@ class TestEntryCategorization:
             writer_quirk=MagicMock(),
         )
 
-        entry: FlextTypes.Dict = {
+        entry: dict[str, object] = {
             "dn": "uid=jdoe,dc=example,dc=com",
             "attributes": {"cn": "John Doe", "sn": "Doe"},
             "objectclass": ["top", "person", "inetOrgPerson"],
@@ -359,7 +357,7 @@ class TestEntryCategorization:
             writer_quirk=MagicMock(),
         )
 
-        entry: FlextTypes.Dict = {
+        entry: dict[str, object] = {
             "dn": "cn=jdoe,dc=example,dc=com",  # No uid=
             "attributes": {"cn": "John Doe"},
             "objectclass": ["top", "person"],
@@ -383,7 +381,7 @@ class TestEntryCategorization:
             writer_quirk=MagicMock(),
         )
 
-        entry: FlextTypes.Dict = {
+        entry: dict[str, object] = {
             "dn": "cn=REDACTED_LDAP_BIND_PASSWORDs,dc=example,dc=com",
             "attributes": {"cn": "REDACTED_LDAP_BIND_PASSWORDs"},
             "objectclass": ["top", "groupOfNames"],
@@ -408,7 +406,7 @@ class TestEntryCategorization:
             writer_quirk=MagicMock(),
         )
 
-        entry: FlextTypes.Dict = {
+        entry: dict[str, object] = {
             "dn": "cn=unknown,dc=example,dc=com",
             "attributes": {"cn": "unknown"},
             "objectclass": ["top", "unknownClass"],
@@ -439,7 +437,7 @@ class TestCategoryBatchProcessing:
             writer_quirk=MagicMock(),
         )
 
-        entries: list[FlextTypes.Dict] = [
+        entries: list[dict[str, object]] = [
             {
                 "dn": "cn=schema",
                 "attributes": {},
@@ -490,7 +488,7 @@ class TestCategoryBatchProcessing:
             writer_quirk=MagicMock(),
         )
 
-        entries: list[FlextTypes.Dict] = [
+        entries: list[dict[str, object]] = [
             {
                 "dn": "cn=unknown,dc=example,dc=com",
                 "attributes": {"cn": "unknown"},
@@ -524,7 +522,7 @@ class TestCategoryTransformation:
             writer_quirk=MagicMock(),
         )
 
-        categorized: dict[str, list[FlextTypes.Dict]] = {
+        categorized: dict[str, list[dict[str, object]]] = {
             "schema": [],
             "hierarchy": [{"dn": "ou=test", "objectclass": ["organizationalUnit"]}],
             "users": [],
@@ -588,7 +586,7 @@ class TestOutputWriting:
         output_dir = tmp_path / "output"
         output_dir.mkdir(parents=True, exist_ok=True)
 
-        entries: list[FlextTypes.Dict] = [
+        entries: list[dict[str, object]] = [
             {
                 "dn": "uid=jdoe,dc=example,dc=com",
                 "objectclass": ["top", "person", "inetOrgPerson"],
@@ -638,7 +636,7 @@ class TestOutputWriting:
         category_path = tmp_path / "output" / "03-groups"
         category_path.mkdir(parents=True)
 
-        entries: list[FlextTypes.Dict] = []
+        entries: list[dict[str, object]] = []
 
         result = pipeline._write_category_file("groups", entries, "03-groups")
 
@@ -661,7 +659,7 @@ class TestOutputWriting:
         output_dir = tmp_path / "output"
         output_dir.mkdir(parents=True, exist_ok=True)
 
-        entries: list[FlextTypes.Dict] = [
+        entries: list[dict[str, object]] = [
             {
                 "dn": "uid=jdoe,dc=example,dc=com",
                 "objectclass": ["person"],
@@ -705,7 +703,7 @@ class TestOutputWriting:
         # Create output directories
         pipeline._create_output_directory()
 
-        categorized: dict[str, list[FlextTypes.Dict]] = {
+        categorized: dict[str, list[dict[str, object]]] = {
             "schema": [
                 {
                     "dn": "cn=schema",
@@ -776,7 +774,7 @@ class TestOutputWriting:
         )
 
         # Don't create output directories to force failure
-        categorized: dict[str, list[FlextTypes.Dict]] = {
+        categorized: dict[str, list[dict[str, object]]] = {
             "schema": [],
             "hierarchy": [],
             "users": [
@@ -813,7 +811,7 @@ class TestStatisticsGeneration:
             writer_quirk=MagicMock(),
         )
 
-        categorized: dict[str, list[FlextTypes.Dict]] = {
+        categorized: dict[str, list[dict[str, object]]] = {
             "schema": [{"dn": "cn=schema", "objectclass": [], "attributes": {}}],
             "hierarchy": [
                 {
@@ -881,7 +879,7 @@ class TestStatisticsGeneration:
             writer_quirk=MagicMock(),
         )
 
-        categorized: dict[str, list[FlextTypes.Dict]] = {
+        categorized: dict[str, list[dict[str, object]]] = {
             "schema": [],
             "hierarchy": [],
             "users": [
@@ -945,7 +943,7 @@ class TestStatisticsGeneration:
             writer_quirk=MagicMock(),
         )
 
-        categorized: dict[str, list[FlextTypes.Dict]] = {
+        categorized: dict[str, list[dict[str, object]]] = {
             "schema": [{"dn": "cn=schema", "objectclass": [], "attributes": {}}],
             "hierarchy": [],
             "users": [],
@@ -985,7 +983,7 @@ class TestStatisticsGeneration:
             writer_quirk=MagicMock(),
         )
 
-        categorized: dict[str, list[FlextTypes.Dict]] = {
+        categorized: dict[str, list[dict[str, object]]] = {
             "schema": [],
             "hierarchy": [],
             "users": [],
@@ -1025,7 +1023,7 @@ class TestRejectionTracking:
             writer_quirk=MagicMock(),
         )
 
-        categorized: dict[str, list[FlextTypes.Dict]] = {
+        categorized: dict[str, list[dict[str, object]]] = {
             "schema": [],
             "hierarchy": [],
             "users": [],
@@ -1080,7 +1078,7 @@ class TestRejectionTracking:
         )
 
         # Test case: 2 rejected out of 10 total = 20% rejection rate
-        categorized: dict[str, list[FlextTypes.Dict]] = {
+        categorized: dict[str, list[dict[str, object]]] = {
             "schema": [
                 {"dn": f"cn=schema{i}", "objectclass": [], "attributes": {}}
                 for i in range(2)
@@ -1147,7 +1145,7 @@ class TestOutputWritingEdgeCases:
         output_dir = tmp_path / "output"
         output_dir.mkdir(parents=True, exist_ok=True)
 
-        entries: list[FlextTypes.Dict] = [
+        entries: list[dict[str, object]] = [
             {
                 "dn": "uid=josé,dc=example,dc=com",
                 "objectclass": ["person"],
@@ -1183,7 +1181,7 @@ class TestOutputWritingEdgeCases:
         # Create output directories
         pipeline._create_output_directory()
 
-        categorized: dict[str, list[FlextTypes.Dict]] = {
+        categorized: dict[str, list[dict[str, object]]] = {
             "schema": [],  # Empty
             "hierarchy": [
                 {
@@ -1226,7 +1224,7 @@ class TestQuirksIntegration:
             writer_quirk=MagicMock(),
         )
 
-        categorized: dict[str, list[FlextTypes.Dict]] = {
+        categorized: dict[str, list[dict[str, object]]] = {
             "schema": [
                 {"dn": "cn=schema", "objectclass": ["subschema"], "attributes": {}}
             ],
@@ -1265,7 +1263,7 @@ class TestQuirksIntegration:
             writer_quirk=MagicMock(),
         )
 
-        categorized: dict[str, list[FlextTypes.Dict]] = {
+        categorized: dict[str, list[dict[str, object]]] = {
             "schema": [],
             "hierarchy": [],
             "users": [

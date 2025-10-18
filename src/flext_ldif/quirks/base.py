@@ -14,8 +14,10 @@ from __future__ import annotations
 import logging
 from abc import ABC, abstractmethod
 
-from flext_core import FlextModels, FlextResult, FlextTypes
+from flext_core import FlextModels, FlextResult
 from pydantic import Field
+
+from flext_ldif.typings import FlextLdifTypes
 
 logger = logging.getLogger(__name__)
 
@@ -70,7 +72,9 @@ class FlextLdifQuirksBaseSchemaQuirk(ABC, FlextModels.Value):
                     # This happens for abstract base classes
                     return
 
-                registry = quirks_registry_module.FlextLdifQuirksRegistry.get_global_instance()
+                registry = (
+                    quirks_registry_module.FlextLdifQuirksRegistry.get_global_instance()
+                )
                 registry.register_schema_quirk(quirk_instance)
             except Exception as e:
                 # Registration failures are non-critical during class creation
@@ -93,7 +97,9 @@ class FlextLdifQuirksBaseSchemaQuirk(ABC, FlextModels.Value):
         """
 
     @abstractmethod
-    def parse_attribute(self, attr_definition: str) -> FlextResult[dict[str, object]]:
+    def parse_attribute(
+        self, attr_definition: str
+    ) -> FlextResult[FlextLdifTypes.Models.CustomDataDict]:
         """Parse server-specific attribute definition.
 
         Args:
@@ -117,7 +123,9 @@ class FlextLdifQuirksBaseSchemaQuirk(ABC, FlextModels.Value):
         """
 
     @abstractmethod
-    def parse_objectclass(self, oc_definition: str) -> FlextResult[dict[str, object]]:
+    def parse_objectclass(
+        self, oc_definition: str
+    ) -> FlextResult[FlextLdifTypes.Models.CustomDataDict]:
         """Parse server-specific objectClass definition.
 
         Args:
@@ -130,8 +138,8 @@ class FlextLdifQuirksBaseSchemaQuirk(ABC, FlextModels.Value):
 
     @abstractmethod
     def convert_attribute_to_rfc(
-        self, attr_data: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
+        self, attr_data: FlextLdifTypes.Models.CustomDataDict
+    ) -> FlextResult[FlextLdifTypes.Models.CustomDataDict]:
         """Convert server-specific attribute to RFC-compliant format.
 
         Args:
@@ -144,8 +152,8 @@ class FlextLdifQuirksBaseSchemaQuirk(ABC, FlextModels.Value):
 
     @abstractmethod
     def convert_objectclass_to_rfc(
-        self, oc_data: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
+        self, oc_data: FlextLdifTypes.Models.CustomDataDict
+    ) -> FlextResult[FlextLdifTypes.Models.CustomDataDict]:
         """Convert server-specific objectClass to RFC-compliant format.
 
         Args:
@@ -158,8 +166,8 @@ class FlextLdifQuirksBaseSchemaQuirk(ABC, FlextModels.Value):
 
     @abstractmethod
     def convert_attribute_from_rfc(
-        self, rfc_data: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
+        self, rfc_data: FlextLdifTypes.Models.CustomDataDict
+    ) -> FlextResult[FlextLdifTypes.Models.CustomDataDict]:
         """Convert RFC-compliant attribute to server-specific format.
 
         Args:
@@ -172,8 +180,8 @@ class FlextLdifQuirksBaseSchemaQuirk(ABC, FlextModels.Value):
 
     @abstractmethod
     def convert_objectclass_from_rfc(
-        self, rfc_data: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
+        self, rfc_data: FlextLdifTypes.Models.CustomDataDict
+    ) -> FlextResult[FlextLdifTypes.Models.CustomDataDict]:
         """Convert RFC-compliant objectClass to server-specific format.
 
         Args:
@@ -185,7 +193,9 @@ class FlextLdifQuirksBaseSchemaQuirk(ABC, FlextModels.Value):
         """
 
     @abstractmethod
-    def write_attribute_to_rfc(self, attr_data: dict[str, object]) -> FlextResult[str]:
+    def write_attribute_to_rfc(
+        self, attr_data: FlextLdifTypes.Models.CustomDataDict
+    ) -> FlextResult[str]:
         """Write attribute data to RFC-compliant string format.
 
         Args:
@@ -197,7 +207,9 @@ class FlextLdifQuirksBaseSchemaQuirk(ABC, FlextModels.Value):
         """
 
     @abstractmethod
-    def write_objectclass_to_rfc(self, oc_data: dict[str, object]) -> FlextResult[str]:
+    def write_objectclass_to_rfc(
+        self, oc_data: FlextLdifTypes.Models.CustomDataDict
+    ) -> FlextResult[str]:
         """Write objectClass data to RFC-compliant string format.
 
         Args:
@@ -256,7 +268,9 @@ class FlextLdifQuirksBaseAclQuirk(ABC, FlextModels.Value):
                     # This happens for abstract base classes
                     return
 
-                registry = quirks_registry_module.FlextLdifQuirksRegistry.get_global_instance()
+                registry = (
+                    quirks_registry_module.FlextLdifQuirksRegistry.get_global_instance()
+                )
                 registry.register_acl_quirk(quirk_instance)
             except Exception as e:
                 # Registration failures are non-critical during class creation
@@ -279,7 +293,9 @@ class FlextLdifQuirksBaseAclQuirk(ABC, FlextModels.Value):
         """
 
     @abstractmethod
-    def parse_acl(self, acl_line: str) -> FlextResult[dict[str, object]]:
+    def parse_acl(
+        self, acl_line: str
+    ) -> FlextResult[FlextLdifTypes.Models.CustomDataDict]:
         """Parse server-specific ACL definition.
 
         Args:
@@ -292,8 +308,8 @@ class FlextLdifQuirksBaseAclQuirk(ABC, FlextModels.Value):
 
     @abstractmethod
     def convert_acl_to_rfc(
-        self, acl_data: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
+        self, acl_data: FlextLdifTypes.Models.CustomDataDict
+    ) -> FlextResult[FlextLdifTypes.Models.CustomDataDict]:
         """Convert server-specific ACL to RFC-compliant format.
 
         Args:
@@ -306,8 +322,8 @@ class FlextLdifQuirksBaseAclQuirk(ABC, FlextModels.Value):
 
     @abstractmethod
     def convert_acl_from_rfc(
-        self, acl_data: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
+        self, acl_data: FlextLdifTypes.Models.CustomDataDict
+    ) -> FlextResult[FlextLdifTypes.Models.CustomDataDict]:
         """Convert RFC-compliant ACL to server-specific format.
 
         Args:
@@ -319,7 +335,9 @@ class FlextLdifQuirksBaseAclQuirk(ABC, FlextModels.Value):
         """
 
     @abstractmethod
-    def write_acl_to_rfc(self, acl_data: dict[str, object]) -> FlextResult[str]:
+    def write_acl_to_rfc(
+        self, acl_data: FlextLdifTypes.Models.CustomDataDict
+    ) -> FlextResult[str]:
         """Write ACL data to RFC-compliant string format.
 
         Args:
@@ -378,7 +396,9 @@ class FlextLdifQuirksBaseEntryQuirk(ABC, FlextModels.Value):
                     # This happens for abstract base classes
                     return
 
-                registry = quirks_registry_module.FlextLdifQuirksRegistry.get_global_instance()
+                registry = (
+                    quirks_registry_module.FlextLdifQuirksRegistry.get_global_instance()
+                )
                 registry.register_entry_quirk(quirk_instance)
             except Exception as e:
                 # Registration failures are non-critical during class creation
@@ -389,7 +409,9 @@ class FlextLdifQuirksBaseEntryQuirk(ABC, FlextModels.Value):
                 )
 
     @abstractmethod
-    def can_handle_entry(self, entry_dn: str, attributes: dict[str, object]) -> bool:
+    def can_handle_entry(
+        self, entry_dn: str, attributes: FlextLdifTypes.Models.CustomDataDict
+    ) -> bool:
         """Check if this quirk can handle the entry.
 
         Args:
@@ -403,8 +425,8 @@ class FlextLdifQuirksBaseEntryQuirk(ABC, FlextModels.Value):
 
     @abstractmethod
     def process_entry(
-        self, entry_dn: str, attributes: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
+        self, entry_dn: str, attributes: FlextLdifTypes.Models.CustomDataDict
+    ) -> FlextResult[FlextLdifTypes.Models.CustomDataDict]:
         """Process entry with server-specific logic.
 
         Args:
@@ -418,8 +440,8 @@ class FlextLdifQuirksBaseEntryQuirk(ABC, FlextModels.Value):
 
     @abstractmethod
     def convert_entry_to_rfc(
-        self, entry_data: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
+        self, entry_data: FlextLdifTypes.Models.CustomDataDict
+    ) -> FlextResult[FlextLdifTypes.Models.CustomDataDict]:
         """Convert server-specific entry to RFC-compliant format.
 
         Args:

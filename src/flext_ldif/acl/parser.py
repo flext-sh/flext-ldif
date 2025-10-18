@@ -28,12 +28,10 @@ class FlextLdifAclParser(FlextService[FlextLdifTypes.Dict]):
     @override
     def execute(self) -> FlextResult[FlextLdifTypes.Dict]:
         """Execute parser service."""
-        return FlextResult[FlextLdifTypes.Dict].ok(
-            {
-                "service": FlextLdifAclParser,
-                "status": "ready",
-            }
-        )
+        return FlextResult[FlextLdifTypes.Dict].ok({
+            "service": FlextLdifAclParser,
+            "status": "ready",
+        })
 
     def parse_openldap_acl(
         self, acl_string: str

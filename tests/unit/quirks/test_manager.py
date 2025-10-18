@@ -150,6 +150,9 @@ class TestQuirksManagerDetectServerType:
             dn=FlextLdifModels.DistinguishedName(value="cn=config"),
             attributes=FlextLdifModels.LdifAttributes(
                 attributes={
+                    "objectClass": FlextLdifModels.AttributeValues(
+                        values=["olcGlobal"]
+                    ),
                     "olcRootDN": FlextLdifModels.AttributeValues(
                         values=["cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com"]
                     ),
@@ -187,6 +190,7 @@ class TestQuirksManagerDetectServerType:
             attributes=FlextLdifModels.LdifAttributes(
                 attributes={
                     "nsslapd-port": FlextLdifModels.AttributeValues(values=["389"]),
+                    "objectClass": FlextLdifModels.AttributeValues(values=["top"]),
                 }
             ),
         )
@@ -203,6 +207,7 @@ class TestQuirksManagerDetectServerType:
             attributes=FlextLdifModels.LdifAttributes(
                 attributes={
                     "ads-enabled": FlextLdifModels.AttributeValues(values=["TRUE"]),
+                    "objectClass": FlextLdifModels.AttributeValues(values=["top"]),
                 }
             ),
         )
@@ -250,6 +255,7 @@ class TestQuirksManagerDetectServerType:
             dn=FlextLdifModels.DistinguishedName(value="cn=user,dc=example,dc=com"),
             attributes=FlextLdifModels.LdifAttributes(
                 attributes={
+                    "objectClass": FlextLdifModels.AttributeValues(values=["person"]),
                     "nspmPasswordPolicyDN": FlextLdifModels.AttributeValues(
                         values=["cn=policy"]
                     ),
@@ -286,6 +292,7 @@ class TestQuirksManagerDetectServerType:
             dn=FlextLdifModels.DistinguishedName(value="cn=config"),
             attributes=FlextLdifModels.LdifAttributes(
                 attributes={
+                    "objectclass": FlextLdifModels.AttributeValues(values=["top"]),
                     "ibm-slapdAccessControl": FlextLdifModels.AttributeValues(
                         values=["acl"]
                     ),
@@ -323,6 +330,7 @@ class TestQuirksManagerDetectServerType:
             attributes=FlextLdifModels.LdifAttributes(
                 attributes={
                     "objectGUID": FlextLdifModels.AttributeValues(values=["guid"]),
+                    "objectClass": FlextLdifModels.AttributeValues(values=["user"]),
                 }
             ),
         )
@@ -339,6 +347,7 @@ class TestQuirksManagerDetectServerType:
             attributes=FlextLdifModels.LdifAttributes(
                 attributes={
                     "sAMAccountName": FlextLdifModels.AttributeValues(values=["user"]),
+                    "objectClass": FlextLdifModels.AttributeValues(values=["user"]),
                 }
             ),
         )

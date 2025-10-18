@@ -630,7 +630,7 @@ class FlextLdifQuirksServersOpenldap(FlextLdifQuirksBaseSchemaQuirk):
                 # Return generic ACL representation
                 what = acl_data.get("what", "*")
                 by_clauses_raw = acl_data.get("by_clauses", [])
-                by_clauses: list[dict[str, object]] = (
+                by_clauses: list[FlextLdifTypes.Models.CustomDataDict] = (
                     by_clauses_raw if isinstance(by_clauses_raw, list) else []
                 )
 
@@ -671,7 +671,9 @@ class FlextLdifQuirksServersOpenldap(FlextLdifQuirksBaseSchemaQuirk):
         def model_post_init(self, _context: object, /) -> None:
             """Initialize OpenLDAP 2.x entry quirk."""
 
-        def can_handle_entry(self, entry_dn: str, attributes: dict[str, object]) -> bool:
+        def can_handle_entry(
+            self, entry_dn: str, attributes: FlextLdifTypes.Models.CustomDataDict
+        ) -> bool:
             """Check if this quirk should handle the entry.
 
             Args:
@@ -701,7 +703,7 @@ class FlextLdifQuirksServersOpenldap(FlextLdifQuirksBaseSchemaQuirk):
             return is_config_dn or has_olc_attrs or has_olc_classes
 
         def process_entry(
-            self, entry_dn: str, attributes: dict[str, object]
+            self, entry_dn: str, attributes: FlextLdifTypes.Models.CustomDataDict
         ) -> FlextResult[FlextLdifTypes.Dict]:
             """Process entry for OpenLDAP 2.x format.
 

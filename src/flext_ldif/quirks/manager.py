@@ -49,30 +49,36 @@ class FlextLdifQuirksManager(FlextService[FlextLdifTypes.Dict]):
 
     def _setup_quirks(self) -> None:
         """Setup server-specific quirks registry."""
+        # Use short names to reduce line lengths (not type aliases)
+        dk = FlextLdifConstants.DictKeys
+        ls = FlextLdifConstants.LdapServers
+        af = FlextLdifConstants.AclFormats
+        dn = FlextLdifConstants.DnPatterns
+
         self.quirks_registry = {
-            FlextLdifConstants.LdapServers.OPENLDAP_2: {
-                FlextLdifConstants.DictKeys.ACL_ATTRIBUTE: FlextLdifConstants.DictKeys.OLCACCESS,
-                FlextLdifConstants.DictKeys.ACL_FORMAT: FlextLdifConstants.AclFormats.OPENLDAP2_ACL,
-                FlextLdifConstants.DictKeys.SCHEMA_SUBENTRY: FlextLdifConstants.DnPatterns.CN_SUBSCHEMA,
-                FlextLdifConstants.DictKeys.SUPPORTS_OPERATIONAL_ATTRS: True,
+            ls.OPENLDAP_2: {
+                dk.ACL_ATTRIBUTE: dk.OLCACCESS,
+                dk.ACL_FORMAT: af.OPENLDAP2_ACL,
+                dk.SCHEMA_SUBENTRY: dn.CN_SUBSCHEMA,
+                dk.SUPPORTS_OPERATIONAL_ATTRS: True,
             },
-            FlextLdifConstants.LdapServers.OPENLDAP_1: {
-                FlextLdifConstants.DictKeys.ACL_ATTRIBUTE: FlextLdifConstants.DictKeys.ACCESS,
-                FlextLdifConstants.DictKeys.ACL_FORMAT: FlextLdifConstants.AclFormats.OPENLDAP1_ACL,
-                FlextLdifConstants.DictKeys.SCHEMA_SUBENTRY: FlextLdifConstants.DnPatterns.CN_SUBSCHEMA,
-                FlextLdifConstants.DictKeys.SUPPORTS_OPERATIONAL_ATTRS: True,
+            ls.OPENLDAP_1: {
+                dk.ACL_ATTRIBUTE: dk.ACCESS,
+                dk.ACL_FORMAT: af.OPENLDAP1_ACL,
+                dk.SCHEMA_SUBENTRY: dn.CN_SUBSCHEMA,
+                dk.SUPPORTS_OPERATIONAL_ATTRS: True,
             },
-            FlextLdifConstants.LdapServers.OPENLDAP: {
-                FlextLdifConstants.DictKeys.ACL_ATTRIBUTE: FlextLdifConstants.DictKeys.OLCACCESS,
-                FlextLdifConstants.DictKeys.ACL_FORMAT: FlextLdifConstants.AclFormats.OPENLDAP2_ACL,
-                FlextLdifConstants.DictKeys.SCHEMA_SUBENTRY: FlextLdifConstants.DnPatterns.CN_SUBSCHEMA,
-                FlextLdifConstants.DictKeys.SUPPORTS_OPERATIONAL_ATTRS: True,
+            ls.OPENLDAP: {
+                dk.ACL_ATTRIBUTE: dk.OLCACCESS,
+                dk.ACL_FORMAT: af.OPENLDAP2_ACL,
+                dk.SCHEMA_SUBENTRY: dn.CN_SUBSCHEMA,
+                dk.SUPPORTS_OPERATIONAL_ATTRS: True,
             },
-            FlextLdifConstants.LdapServers.APACHE_DIRECTORY: {
-                FlextLdifConstants.DictKeys.ACL_ATTRIBUTE: "ads-aci",
-                FlextLdifConstants.DictKeys.ACL_FORMAT: FlextLdifConstants.AclFormats.ACI,
-                FlextLdifConstants.DictKeys.SCHEMA_SUBENTRY: FlextLdifConstants.DnPatterns.CN_SUBSCHEMA,
-                FlextLdifConstants.DictKeys.SUPPORTS_OPERATIONAL_ATTRS: True,
+            ls.APACHE_DIRECTORY: {
+                dk.ACL_ATTRIBUTE: "ads-aci",
+                dk.ACL_FORMAT: af.ACI,
+                dk.SCHEMA_SUBENTRY: dn.CN_SUBSCHEMA,
+                dk.SUPPORTS_OPERATIONAL_ATTRS: True,
                 "dn_patterns": ["ou=config", "ou=services"],
                 "required_object_classes": ["top", "ads-directoryService"],
                 "special_attributes": [
@@ -82,25 +88,25 @@ class FlextLdifQuirksManager(FlextService[FlextLdifTypes.Dict]):
                 ],
                 "dn_case_sensitive": False,
             },
-            FlextLdifConstants.LdapServers.DS_389: {
-                FlextLdifConstants.DictKeys.ACL_ATTRIBUTE: FlextLdifConstants.DictKeys.ACI,
-                FlextLdifConstants.DictKeys.ACL_FORMAT: FlextLdifConstants.AclFormats.DS389_ACL,
-                FlextLdifConstants.DictKeys.SCHEMA_SUBENTRY: FlextLdifConstants.DnPatterns.CN_SCHEMA,
-                FlextLdifConstants.DictKeys.SUPPORTS_OPERATIONAL_ATTRS: True,
+            ls.DS_389: {
+                dk.ACL_ATTRIBUTE: dk.ACI,
+                dk.ACL_FORMAT: af.DS389_ACL,
+                dk.SCHEMA_SUBENTRY: dn.CN_SCHEMA,
+                dk.SUPPORTS_OPERATIONAL_ATTRS: True,
                 "dn_patterns": ["cn=config", "cn=monitor"],
                 "required_object_classes": ["top", "nsContainer"],
                 "special_attributes": [
                     "nsslapd-rootdn",
                     "nsslapd-suffix",
-                    FlextLdifConstants.DictKeys.ACI,
+                    dk.ACI,
                 ],
                 "dn_case_sensitive": False,
             },
-            FlextLdifConstants.LdapServers.NOVELL_EDIRECTORY: {
-                FlextLdifConstants.DictKeys.ACL_ATTRIBUTE: "acl",
-                FlextLdifConstants.DictKeys.ACL_FORMAT: FlextLdifConstants.AclFormats.ACI,
-                FlextLdifConstants.DictKeys.SCHEMA_SUBENTRY: FlextLdifConstants.DnPatterns.CN_SUBSCHEMA,
-                FlextLdifConstants.DictKeys.SUPPORTS_OPERATIONAL_ATTRS: True,
+            ls.NOVELL_EDIRECTORY: {
+                dk.ACL_ATTRIBUTE: "acl",
+                dk.ACL_FORMAT: af.ACI,
+                dk.SCHEMA_SUBENTRY: dn.CN_SUBSCHEMA,
+                dk.SUPPORTS_OPERATIONAL_ATTRS: True,
                 "dn_patterns": ["ou=services", "ou=system"],
                 "required_object_classes": ["top", "ndsperson"],
                 "special_attributes": [
@@ -110,11 +116,11 @@ class FlextLdifQuirksManager(FlextService[FlextLdifTypes.Dict]):
                 ],
                 "dn_case_sensitive": False,
             },
-            FlextLdifConstants.LdapServers.IBM_TIVOLI: {
-                FlextLdifConstants.DictKeys.ACL_ATTRIBUTE: "ibm-slapdAccessControl",
-                FlextLdifConstants.DictKeys.ACL_FORMAT: FlextLdifConstants.AclFormats.RFC_GENERIC,
-                FlextLdifConstants.DictKeys.SCHEMA_SUBENTRY: FlextLdifConstants.DnPatterns.CN_SCHEMA,
-                FlextLdifConstants.DictKeys.SUPPORTS_OPERATIONAL_ATTRS: True,
+            ls.IBM_TIVOLI: {
+                dk.ACL_ATTRIBUTE: "ibm-slapdAccessControl",
+                dk.ACL_FORMAT: af.RFC_GENERIC,
+                dk.SCHEMA_SUBENTRY: dn.CN_SCHEMA,
+                dk.SUPPORTS_OPERATIONAL_ATTRS: True,
                 "dn_patterns": ["cn=ibm", "cn=configuration"],
                 "required_object_classes": ["top", "ibm-LDAPServer"],
                 "special_attributes": [
@@ -123,40 +129,38 @@ class FlextLdifQuirksManager(FlextService[FlextLdifTypes.Dict]):
                 ],
                 "dn_case_sensitive": False,
             },
-            FlextLdifConstants.LdapServers.ORACLE_OID: {
-                FlextLdifConstants.DictKeys.ACL_ATTRIBUTE: FlextLdifConstants.DictKeys.ORCLACI,
-                FlextLdifConstants.DictKeys.ACL_FORMAT: FlextLdifConstants.AclFormats.OID_ACL,
-                FlextLdifConstants.DictKeys.SCHEMA_SUBENTRY: FlextLdifConstants.DnPatterns.CN_SUBSCHEMASUBENTRY,
-                FlextLdifConstants.DictKeys.SUPPORTS_OPERATIONAL_ATTRS: True,
+            ls.ORACLE_OID: {
+                dk.ACL_ATTRIBUTE: dk.ORCLACI,
+                dk.ACL_FORMAT: af.OID_ACL,
+                dk.SCHEMA_SUBENTRY: dn.CN_SUBSCHEMASUBENTRY,
+                dk.SUPPORTS_OPERATIONAL_ATTRS: True,
             },
-            FlextLdifConstants.LdapServers.ORACLE_OUD: {
-                FlextLdifConstants.DictKeys.ACL_ATTRIBUTE: FlextLdifConstants.DictKeys.DS_PRIVILEGE_NAME,
-                FlextLdifConstants.DictKeys.ACL_FORMAT: FlextLdifConstants.AclFormats.OID_ACL,
-                FlextLdifConstants.DictKeys.SCHEMA_SUBENTRY: FlextLdifConstants.DnPatterns.CN_SCHEMA,
-                FlextLdifConstants.DictKeys.SUPPORTS_OPERATIONAL_ATTRS: True,
+            ls.ORACLE_OUD: {
+                dk.ACL_ATTRIBUTE: dk.DS_PRIVILEGE_NAME,
+                dk.ACL_FORMAT: af.OID_ACL,
+                dk.SCHEMA_SUBENTRY: dn.CN_SCHEMA,
+                dk.SUPPORTS_OPERATIONAL_ATTRS: True,
             },
-            FlextLdifConstants.LdapServers.ACTIVE_DIRECTORY: {
-                FlextLdifConstants.DictKeys.ACL_ATTRIBUTE: FlextLdifConstants.DictKeys.NTSECURITYDESCRIPTOR,
-                FlextLdifConstants.DictKeys.ACL_FORMAT: FlextLdifConstants.AclFormats.AD_ACL,
-                FlextLdifConstants.DictKeys.SCHEMA_SUBENTRY: FlextLdifConstants.DnPatterns.CN_SCHEMA_CN_CONFIGURATION,
-                FlextLdifConstants.DictKeys.SUPPORTS_OPERATIONAL_ATTRS: False,
-                "dn_patterns": list(FlextLdifConstants.LdapServers.AD_DN_PATTERNS),
-                "required_object_classes": list(
-                    FlextLdifConstants.LdapServers.AD_REQUIRED_CLASSES
-                ),
+            ls.ACTIVE_DIRECTORY: {
+                dk.ACL_ATTRIBUTE: dk.NTSECURITYDESCRIPTOR,
+                dk.ACL_FORMAT: af.AD_ACL,
+                dk.SCHEMA_SUBENTRY: dn.CN_SCHEMA_CN_CONFIGURATION,
+                dk.SUPPORTS_OPERATIONAL_ATTRS: False,
+                "dn_patterns": list(ls.AD_DN_PATTERNS),
+                "required_object_classes": list(ls.AD_REQUIRED_CLASSES),
                 "special_attributes": [
                     "memberOf",
                     "userPrincipalName",
                     "sAMAccountName",
-                    FlextLdifConstants.DictKeys.NTSECURITYDESCRIPTOR,
+                    dk.NTSECURITYDESCRIPTOR,
                 ],
                 "dn_case_sensitive": False,
             },
-            FlextLdifConstants.LdapServers.GENERIC: {
-                FlextLdifConstants.DictKeys.ACL_ATTRIBUTE: FlextLdifConstants.DictKeys.ACI,
-                FlextLdifConstants.DictKeys.ACL_FORMAT: FlextLdifConstants.AclFormats.RFC_GENERIC,
-                FlextLdifConstants.DictKeys.SCHEMA_SUBENTRY: FlextLdifConstants.DnPatterns.CN_SUBSCHEMA,
-                FlextLdifConstants.DictKeys.SUPPORTS_OPERATIONAL_ATTRS: True,
+            ls.GENERIC: {
+                dk.ACL_ATTRIBUTE: dk.ACI,
+                dk.ACL_FORMAT: af.RFC_GENERIC,
+                dk.SCHEMA_SUBENTRY: dn.CN_SUBSCHEMA,
+                dk.SUPPORTS_OPERATIONAL_ATTRS: True,
             },
         }
 

@@ -679,7 +679,7 @@ class FlextLdifQuirksServersAd(FlextLdifQuirksBaseSchemaQuirk):
         def can_handle_entry(
             self,
             entry_dn: str,
-            attributes: dict[str, object],
+            attributes: FlextLdifTypes.Models.CustomDataDict,
         ) -> bool:
             """Detect Active Directory entries based on DN, attributes, or classes."""
             dn_lower = entry_dn.lower()
@@ -713,7 +713,7 @@ class FlextLdifQuirksServersAd(FlextLdifQuirksBaseSchemaQuirk):
         def process_entry(
             self,
             entry_dn: str,
-            attributes: dict[str, object],
+            attributes: FlextLdifTypes.Models.CustomDataDict,
         ) -> FlextResult[FlextLdifTypes.Dict]:
             """Normalise Active Directory entries and surface metadata."""
             try:

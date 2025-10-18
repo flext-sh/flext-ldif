@@ -610,7 +610,7 @@ class FlextLdifQuirksServersOpenldap1(FlextLdifQuirksBaseSchemaQuirk):
                 by_clauses_raw = acl_data.get("by_clauses", [])
 
                 # Explicit type checking for by_clauses iteration
-                by_clauses: list[dict[str, object]] = (
+                by_clauses: list[FlextLdifTypes.Models.CustomDataDict] = (
                     by_clauses_raw if isinstance(by_clauses_raw, list) else []
                 )
 
@@ -651,7 +651,9 @@ class FlextLdifQuirksServersOpenldap1(FlextLdifQuirksBaseSchemaQuirk):
         def model_post_init(self, _context: object, /) -> None:
             """Initialize OpenLDAP 1.x entry quirk."""
 
-        def can_handle_entry(self, entry_dn: str, attributes: dict[str, object]) -> bool:
+        def can_handle_entry(
+            self, entry_dn: str, attributes: FlextLdifTypes.Models.CustomDataDict
+        ) -> bool:
             """Check if this quirk should handle the entry.
 
             Args:
@@ -670,7 +672,7 @@ class FlextLdifQuirksServersOpenldap1(FlextLdifQuirksBaseSchemaQuirk):
             return not is_config_dn and not has_olc_attrs
 
         def process_entry(
-            self, entry_dn: str, attributes: dict[str, object]
+            self, entry_dn: str, attributes: FlextLdifTypes.Models.CustomDataDict
         ) -> FlextResult[FlextLdifTypes.Dict]:
             """Process entry for OpenLDAP 1.x format.
 
