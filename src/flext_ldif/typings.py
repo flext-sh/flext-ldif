@@ -15,8 +15,10 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Iterator, Mapping, Sequence
+from typing import Annotated
 
 from flext_core import FlextResult, FlextTypes
+from pydantic import Field
 
 from flext_ldif.constants import FlextLdifConstants
 
@@ -110,7 +112,7 @@ class FlextLdifTypes(FlextTypes):
             str, str | bool | FlextLdifTypes.StringList | dict[str, object]
         ]
         type ValidationReport = dict[str, int | bool | list[dict[str, object]]]
-        type BusinessRules = list[dict[str, str | bool | Callable[[object], bool]]]
+        type BusinessRules = list[dict[str, str | bool | FlextTypes.PredicateType]]
 
     # =========================================================================
     # LDIF PROCESSING TYPES - Complex processing operation types
@@ -134,7 +136,7 @@ class FlextLdifTypes(FlextTypes):
         type LdifProcessingResult = dict[
             str, bool | FlextLdifTypes.List | dict[str, FlextLdifTypes.JsonValue]
         ]
-        type TransformationRules = list[dict[str, str | Callable[[object], object]]]
+        type TransformationRules = list[dict[str, str | FlextTypes.MiddlewareType]]
 
     # =========================================================================
     # LDIF ANALYTICS TYPES - Complex analytics and reporting types
@@ -221,16 +223,16 @@ class FlextLdifTypes(FlextTypes):
 
         type ProcessorFunction = Callable[[object], FlextResult[object]]
         type ValidatorFunction = Callable[[object], FlextResult[bool]]
-        type TransformerFunction = Callable[[object], object]
+        type TransformerFunction = FlextTypes.MiddlewareType
         type AnalyzerFunction = Callable[
             [Sequence[object]], FlextResult[dict[str, FlextLdifTypes.JsonValue]]
         ]
         type WriterFunction = Callable[[Sequence[object]], FlextResult[str]]
-        type FilterFunction = Callable[[object], bool]
+        type FilterFunction = FlextTypes.PredicateType
 
         type CompositionPipeline = list[Callable[[object], FlextResult[object]]]
         type ValidationPipeline = list[Callable[[object], FlextResult[bool]]]
-        type TransformationPipeline = list[Callable[[object], object]]
+        type TransformationPipeline = list[FlextTypes.MiddlewareType]
 
     # =========================================================================
     # ITERATOR AND STREAMING TYPES - Memory-efficient processing
@@ -251,11 +253,292 @@ class FlextLdifTypes(FlextTypes):
         ]
 
     # =========================================================================
+    # LDIF MODEL TYPES - Pydantic model-specific type definitions
+    # =========================================================================
+
+    class Models:
+        """Type definitions for LDIF Pydantic models."""
+
+        # QuirkMetadata types
+        type QuirkExtensions = dict[str, bool | str | int | list[int] | None]
+        type CustomDataDict = dict[str, object]
+
+        # ACL types
+        type PermissionsData = dict[str, bool | str]
+        type TargetData = dict[str, str | list[str]]
+        type SubjectData = dict[str, str]
+
+        # DiffItem types
+        type ItemData = dict[str, object]
+        type ItemMetadata = dict[str, object]
+
+        # Schema types
+        type AttributesData = dict[str, dict[str, object]]
+        type ObjectClassesData = dict[str, dict[str, object]]
+        type ObjectClassData = dict[str, object]
+        type AttributesInputData = dict[str, object]
+
+        # Entry types (more specific than Entry.EntryCreateData)
+        type EntryDnValue = str
+        type EntryAttributesDict = dict[str, list[str] | object]
+
+        # Validation and Quirks types with semantic meaning
+        type ValidationReportData = dict[
+            str, str | bool | list[str] | int | dict[str, object]
+        ]
+        type DNValidationResult = dict[str, bool | list[str]]
+        type QuirksRulesData = dict[
+            str,
+            str | bool | int | list[str] | dict[str, str] | dict[str, object],
+        ]
+        type ServerQuirksData = dict[str, object]
+        type AttributeMappingsData = dict[str, str]
+        type EntryValidationResult = dict[str, str | bool | list[str] | int]
+
+        # =====================================================================
+        # QUIRKS SCHEMA TYPES - Semantic types for quirks-based schema parsing
+        # =====================================================================
+
+        # Parsed attribute definition with metadata and quirk extensions
+        # Note: Includes QuirkMetadata in "_metadata" key for tracking
+        type QuirkSchemaAttributeData = dict[
+            str,
+            str
+            | bool
+            | int
+            | list[str]
+            | object  # Allows QuirkMetadata and other objects
+            | None,
+        ]
+
+        # Parsed objectClass definition with metadata and quirk extensions
+        # Note: Includes QuirkMetadata in "_metadata" key for tracking
+        type QuirkSchemaObjectClassData = dict[
+            str,
+            str
+            | bool
+            | int
+            | list[str]
+            | object  # Allows QuirkMetadata and other objects
+            | None,
+        ]
+
+        # Extracted schema with attributes and objectClasses lists
+        type QuirkSchemaExtractedData = dict[
+            str,
+            list[dict[str, str | bool | int | list[str] | object | None]] | object,
+        ]
+
+        # =====================================================================
+        # QUIRKS ACL TYPES - Semantic types for ACL processing
+        # =====================================================================
+
+        # Parsed ACL permission entry
+        type QuirkAclPermission = dict[str, str | list[str]]
+
+        # Parsed ACL bind rule entry
+        type QuirkAclBindRule = dict[str, str]
+
+        # Complete ACL data with permissions, bind rules, and metadata
+        # Note: Includes QuirkMetadata in "_metadata" key
+        type QuirkAclData = dict[
+            str,
+            str
+            | bool
+            | int
+            | list[str]
+            | list[dict[str, str | list[str]]]
+            | object,  # Allows QuirkMetadata and dict values
+        ]
+
+        # =====================================================================
+        # QUIRKS ENTRY TYPES - Semantic types for entry quirks processing
+        # =====================================================================
+
+        # Processed entry data with attributes and metadata
+        # Note: Includes QuirkMetadata in "_metadata" key
+        type QuirkEntryData = dict[
+            str,
+            str
+            | bool
+            | int
+            | list[str]
+            | list[dict[str, str]]
+            | list[object]
+            | object,  # Allows QuirkMetadata and various value types
+        ]
+
+        # Server-specific conversion result
+        type QuirkConversionResult = dict[
+            str, str | int | bool | dict[str, object] | object
+        ]
+
+    # =========================================================================
+    # OPTIMIZED DIRECTORY TYPES - Consolidated high-frequency patterns
+    # =========================================================================
+    # Eliminates 50+ inline dict definitions across LDIF, LDAP, and migration modules
+
+    class CommonDict:
+        """Common dictionary patterns used in LDIF/LDAP operations."""
+
+        # Attribute dictionary: {attribute_name: [values]}
+        # Used 9+ times in LDIF/LDAP/migration modules
+        type AttributeDict = dict[str, list[str]]
+
+        # Comparison result: {attribute: (old_values, new_values)}
+        # Used 3+ times in diff/comparison operations
+        type ChangeDict = dict[str, tuple[list[str], list[str]]]
+
+        # Categorization pattern: {category_name: [items]}
+        # Used 2+ times in filtering and grouping operations
+        type CategorizedDict = dict[str, list[dict[str, object]]]
+
+        # Statistics/distribution: {key: count}
+        # Used 12+ times in metrics and analytics
+        type DistributionDict = dict[str, int]
+
+        # Tree/hierarchy: {parent_dn: [children_dns]}
+        # Used in DN organization and hierarchy mapping
+        type TreeDict = dict[str, list[str]]
+
+        # Nested hierarchy: {parent: {child_data}}
+        # Used in nested structure organization
+        type HierarchyDict = dict[str, dict[str, object]]
+
+    # =========================================================================
+    # ANNOTATED LDIF TYPES - Pydantic v2 Annotated types with validation
+    # =========================================================================
+
+    class AnnotatedLdif:
+        """LDIF-specific Annotated types with built-in validation constraints.
+
+        Provides reusable Annotated type definitions for LDIF-specific field patterns,
+        eliminating verbose Field() declarations in LDIF models and services.
+
+        Example:
+            from flext_ldif.typings import FlextLdifTypes
+            from pydantic import BaseModel
+
+            class LdifProcessingConfig(BaseModel):
+                input_ldif_path: FlextLdifTypes.AnnotatedLdif.LdifFilePath
+                encoding: FlextLdifTypes.AnnotatedLdif.EncodingType
+                max_entries: FlextLdifTypes.AnnotatedLdif.MaxEntries
+
+        """
+
+        # =====================================================================
+        # DN AND ATTRIBUTE TYPES
+        # =====================================================================
+
+        DistinguishedName = Annotated[str, Field(min_length=1, max_length=256)]
+        """LDAP Distinguished Name (DN) with length constraints."""
+
+        AttributeName = Annotated[
+            str,
+            Field(pattern=r"^[a-zA-Z]([a-zA-Z0-9\-]*;)?", min_length=1, max_length=64),
+        ]
+        """LDAP attribute name with format validation."""
+
+        ObjectClassName = Annotated[
+            str,
+            Field(pattern=r"^[a-zA-Z]([a-zA-Z0-9\-]*)?$", min_length=1, max_length=64),
+        ]
+        """LDAP objectClass name with format validation."""
+
+        # =====================================================================
+        # FILE PATH AND ENCODING TYPES
+        # =====================================================================
+
+        LdifFilePath = Annotated[str, Field(min_length=1)]
+        """Path to LDIF file with minimum length constraint."""
+
+        InputDirectory = Annotated[str, Field(min_length=1)]
+        """Path to input directory with minimum length constraint."""
+
+        OutputDirectory = Annotated[str, Field(min_length=1)]
+        """Path to output directory with minimum length constraint."""
+
+        EncodingFormat = Annotated[
+            str, Field(pattern=r"^(utf-8|latin-1|ascii|iso-8859-1)$")
+        ]
+        """Supported encoding formats for LDIF files."""
+
+        # =====================================================================
+        # SERVER AND COMPATIBILITY TYPES
+        # =====================================================================
+
+        ServerTypeName = Annotated[
+            str, Field(pattern=r"^(oid|oud|openldap|openldap1|rfc|generic)$")
+        ]
+        """LDIF server type selector."""
+
+        ServerHostname = Annotated[str, Field(min_length=1, max_length=256)]
+        """Server hostname or IP address."""
+
+        ServerPort = Annotated[int, Field(ge=1, le=65535)]
+        """Server port number (valid range: 1-65535)."""
+
+        LdapTimeout = Annotated[int, Field(ge=1, le=600)]
+        """LDAP timeout in seconds (1-600 seconds)."""
+
+        # =====================================================================
+        # PROCESSING AND VALIDATION TYPES
+        # =====================================================================
+
+        MaxEntries = Annotated[int, Field(ge=1, le=1000000)]
+        """Maximum number of entries to process (1-1000000)."""
+
+        BatchSize = Annotated[int, Field(ge=1, le=100000)]
+        """Batch processing size (1-100000 entries)."""
+
+        MaxWorkers = Annotated[int, Field(ge=1, le=50)]
+        """Maximum number of parallel workers (1-50)."""
+
+        MemoryLimit = Annotated[int, Field(ge=1, le=10000)]
+        """Memory limit in MB (1-10000 MB)."""
+
+        # =====================================================================
+        # VALIDATION LEVEL TYPES
+        # =====================================================================
+
+        ValidationLevel = Annotated[str, Field(pattern=r"^(strict|normal|lenient)$")]
+        """LDIF validation level (strict, normal, or lenient)."""
+
+        ValidationRuleCount = Annotated[int, Field(ge=0, le=1000)]
+        """Number of validation rules (0-1000)."""
+
+        # =====================================================================
+        # PROCESSING STAGE TYPES
+        # =====================================================================
+
+        ProcessingStage = Annotated[
+            str,
+            Field(pattern=r"^(parsing|validation|transformation|writing|complete)$"),
+        ]
+        """Current processing stage in LDIF pipeline."""
+
+        ProcessingTimeout = Annotated[int, Field(ge=10, le=3600)]
+        """Processing timeout in seconds (10-3600 seconds)."""
+
+        # =====================================================================
+        # STATISTICS AND METRICS TYPES
+        # =====================================================================
+
+        EntryCount = Annotated[int, Field(ge=0)]
+        """Number of LDIF entries processed."""
+
+        ErrorCount = Annotated[int, Field(ge=0)]
+        """Number of errors encountered."""
+
+        SuccessRate = Annotated[float, Field(ge=0.0, le=100.0)]
+        """Success percentage (0-100%)."""
+
+    # =========================================================================
     # LDIF PROJECT TYPES - Domain-specific project types extending FlextTypes
     # =========================================================================
 
-    class Project(FlextTypes.Project):
-        """LDIF-specific project types extending FlextTypes.Project.
+    class Project(FlextTypes):
+        """LDIF-specific project types extending FlextTypes.
 
         Adds LDIF/directory data processing-specific project types while inheriting
         generic types from FlextTypes. Follows domain separation principle:

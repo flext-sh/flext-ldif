@@ -22,6 +22,7 @@ from flext_core import FlextResult
 
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
+from flext_ldif.typings import FlextLdifTypes
 
 
 class FlextLdifFilters:
@@ -127,8 +128,10 @@ class FlextLdifFilters:
             )
         else:
             # Preserve existing extensions and add exclusion_info
-            new_extensions: dict[str, object] = {**entry.metadata.extensions}
-            # model_dump() returns dict[str, object] which is compatible with dict[str, object]
+            new_extensions: FlextLdifTypes.Models.CustomDataDict = {
+                **entry.metadata.extensions
+            }
+            # model_dump() returns FlextLdifTypes.Models.CustomDataDict which is compatible with FlextLdifTypes.Models.CustomDataDict
             new_extensions["exclusion_info"] = exclusion_info.model_dump()
             updated_metadata: FlextLdifModels.QuirkMetadata = (
                 FlextLdifModels.QuirkMetadata(
@@ -162,18 +165,18 @@ class FlextLdifFilters:
         if entry.metadata is None:
             return False
 
-        # Get exclusion_info dict[str, object] from extensions (stored via model_dump())
+        # Get exclusion_info FlextLdifTypes.Models.CustomDataDict from extensions (stored via model_dump())
         exclusion_info_raw: object = entry.metadata.extensions.get("exclusion_info")
         if exclusion_info_raw is None:
             return False
 
-        # Type narrowing: exclusion_info is a dict[str, object] from model_dump()
+        # Type narrowing: exclusion_info is a FlextLdifTypes.Models.CustomDataDict from model_dump()
         if not isinstance(exclusion_info_raw, dict):
             return False
 
-        exclusion_info: dict[str, object] = exclusion_info_raw
+        exclusion_info: FlextLdifTypes.Models.CustomDataDict = exclusion_info_raw
 
-        # Get excluded field from dict[str, object] (type-safe access)
+        # Get excluded field from FlextLdifTypes.Models.CustomDataDict (type-safe access)
         excluded_value: object = exclusion_info.get("excluded")
         if excluded_value is None:
             return False
@@ -202,18 +205,18 @@ class FlextLdifFilters:
         if entry.metadata is None:
             return None
 
-        # Get exclusion_info dict[str, object] from extensions (stored via model_dump())
+        # Get exclusion_info FlextLdifTypes.Models.CustomDataDict from extensions (stored via model_dump())
         exclusion_info_raw: object = entry.metadata.extensions.get("exclusion_info")
         if exclusion_info_raw is None:
             return None
 
-        # Type narrowing: exclusion_info is a dict[str, object] from model_dump()
+        # Type narrowing: exclusion_info is a FlextLdifTypes.Models.CustomDataDict from model_dump()
         if not isinstance(exclusion_info_raw, dict):
             return None
 
-        exclusion_info: dict[str, object] = exclusion_info_raw
+        exclusion_info: FlextLdifTypes.Models.CustomDataDict = exclusion_info_raw
 
-        # Get exclusion_reason field from dict[str, object] (type-safe access)
+        # Get exclusion_reason field from FlextLdifTypes.Models.CustomDataDict (type-safe access)
         reason_value: object = exclusion_info.get("exclusion_reason")
         if reason_value is None:
             return None

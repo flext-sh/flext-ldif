@@ -7,12 +7,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import Literal
+
 from flext_core import FlextConfig, FlextConstants
 from pydantic import Field, field_validator, model_validator
 from pydantic_settings import SettingsConfigDict
 
 from flext_ldif.constants import FlextLdifConstants
-from flext_ldif.typings import FlextLdifTypes
 
 
 class FlextLdifConfig(FlextConfig):
@@ -47,7 +48,9 @@ class FlextLdifConfig(FlextConfig):
     )
 
     # LDIF Format Configuration using FlextLdifConstants for defaults
-    ldif_encoding: str = Field(
+    ldif_encoding: Literal[
+        "utf-8", "latin-1", "ascii", "utf-16", "utf-32", "cp1252", "iso-8859-1"
+    ] = Field(  # type: ignore[assignment]
         default=FlextLdifConstants.Encoding.DEFAULT_ENCODING,
         description="Character encoding for LDIF files",
     )
@@ -133,7 +136,7 @@ class FlextLdifConfig(FlextConfig):
         description="Cache size for LDIF analytics",
     )
 
-    analytics_detail_level: str = Field(
+    analytics_detail_level: Literal["low", "medium", "high"] = Field(  # type: ignore[assignment]
         default=FlextLdifConstants.DictKeys.MEDIUM,
         description="Analytics detail level (low, medium, high)",
     )
@@ -186,8 +189,8 @@ class FlextLdifConfig(FlextConfig):
     )
 
     # Validation Configuration using FlextLdifConstants for defaults
-    validation_level: FlextLdifTypes.ValidationLevel = Field(
-        default="strict",  # First value from FlextLdifConstants.LiteralTypes.VALIDATION_LEVELS
+    validation_level: Literal["strict", "moderate", "lenient"] = Field(
+        default="strict",
         description="Validation strictness level",
     )
 
@@ -197,13 +200,25 @@ class FlextLdifConfig(FlextConfig):
     )
 
     # Server Configuration using FlextLdifConstants for defaults
-    server_type: FlextLdifTypes.ServerType = Field(
-        default="generic",  # Literal value for type safety (matches FlextLdifConstants.ServerTypes.GENERIC)
+    server_type: Literal[
+        "active_directory",
+        "openldap",
+        "openldap1",
+        "openldap2",
+        "apache_directory",
+        "novell_edirectory",
+        "ibm_tivoli",
+        "generic",
+        "oid",
+        "oud",
+        "rfc",
+    ] = Field(
+        default="generic",
         description="Target LDAP server type",
     )
 
     # Error Handling Configuration
-    error_recovery_mode: str = Field(
+    error_recovery_mode: Literal["continue", "stop", "skip"] = Field(  # type: ignore[assignment]
         default=FlextLdifConstants.ConfigDefaults.ERROR_RECOVERY_MODE_CONTINUE,
         description="Error recovery mode (continue, stop, skip)",
     )
@@ -220,124 +235,51 @@ class FlextLdifConfig(FlextConfig):
     )
 
     # Pydantic 2.11 field validators
-    @field_validator("ldif_encoding")
+    # Type coercion validators use FlextConfig's reusable validators
+    @field_validator(
+        "ldif_max_line_length",
+        "ldif_chunk_size",
+        mode="before",
+    )
     @classmethod
-    def validate_ldif_encoding(cls, v: str) -> str:
-        """Validate LDIF encoding is supported."""
-        if v not in FlextLdifConstants.ValidationRules.VALID_ENCODINGS_RULE:
-            supported = ", ".join(
-                FlextLdifConstants.ValidationRules.VALID_ENCODINGS_RULE
-            )
-            msg = f"Invalid encoding: {v}. Supported encodings: {supported}"
-            raise ValueError(msg)
-        return v.lower()
+    def validate_int_fields_ldif(cls, v: int | str) -> int:
+        """Coerce LDIF integer fields from environment variables.
 
-    @field_validator("max_workers")
+        Delegates to FlextConfig's validate_int_field for consistency.
+        """
+        return cls.validate_int_field(v)
+
+    @field_validator(
+        "ldif_skip_comments",
+        "ldif_strict_validation",
+        mode="before",
+    )
     @classmethod
-    def validate_max_workers(cls, v: int | str) -> int:
-        """Validate max workers configuration."""
-        if isinstance(v, str):
-            try:
-                v = int(v)
-            except ValueError as e:
-                msg = f"max_workers must be a valid integer, got '{v}'"
-                raise ValueError(msg) from e
+    def validate_bool_fields_ldif(cls, v: bool | str | int) -> bool:
+        """Coerce LDIF boolean fields from environment variables.
 
-        if v < FlextLdifConstants.LdifProcessing.MIN_WORKERS:
-            msg = f"max_workers must be at least {FlextLdifConstants.LdifProcessing.MIN_WORKERS}"
-            raise ValueError(msg)
-        if v > FlextLdifConstants.LdifProcessing.MAX_WORKERS_LIMIT:
-            msg = f"max_workers cannot exceed {FlextLdifConstants.LdifProcessing.MAX_WORKERS_LIMIT}"
-            raise ValueError(msg)
-        return v
-
-    @field_validator("ldif_max_line_length", mode="before")
-    @classmethod
-    def validate_ldif_max_line_length(cls, v: int | str) -> int:
-        """Validate and convert ldif_max_line_length configuration."""
-        if isinstance(v, str):
-            try:
-                return int(v)
-            except ValueError as e:
-                msg = f"ldif_max_line_length must be a valid integer, got '{v}'"
-                raise ValueError(msg) from e
-        return v
-
-    @field_validator("ldif_skip_comments", mode="before")
-    @classmethod
-    def validate_ldif_skip_comments(cls, v: bool | str) -> bool:
-        """Validate and convert ldif_skip_comments configuration."""
-        if isinstance(v, str):
-            return v.lower() in {"true", "1", "yes", "on"}
-        return v
+        Delegates to FlextConfig's validate_boolean_field for consistency.
+        """
+        return cls.validate_boolean_field(v)
 
     @field_validator("ldif_analytics_sample_rate", mode="before")
     @classmethod
-    def validate_ldif_analytics_sample_rate(cls, v: float | str) -> float:
-        """Validate and convert ldif_analytics_sample_rate configuration."""
-        if isinstance(v, str):
-            try:
-                return float(v)
-            except ValueError as e:
-                msg = f"ldif_analytics_sample_rate must be a valid float, got '{v}'"
-                raise ValueError(msg) from e
-        return v
+    def validate_float_fields_ldif(cls, v: float | str) -> float:
+        """Coerce LDIF float fields from environment variables.
 
-    @field_validator("ldif_strict_validation", mode="before")
-    @classmethod
-    def validate_ldif_strict_validation(cls, v: bool | str) -> bool:
-        """Validate and convert ldif_strict_validation configuration."""
-        if isinstance(v, str):
-            return v.lower() in {"true", "1", "yes", "on"}
-        return v
+        Delegates to FlextConfig's validate_float_field for consistency.
+        """
+        return cls.validate_float_field(v)
 
-    @field_validator("ldif_chunk_size", mode="before")
+    @field_validator("max_workers", mode="before")
     @classmethod
-    def validate_ldif_chunk_size(cls, v: int | str) -> int:
-        """Validate and convert ldif_chunk_size configuration."""
-        if isinstance(v, str):
-            try:
-                return int(v)
-            except ValueError as e:
-                msg = f"ldif_chunk_size must be a valid integer, got '{v}'"
-                raise ValueError(msg) from e
-        return v
+    def validate_max_workers(cls, v: int | str) -> int:
+        """Coerce max workers from string/int using FlextConfig's base validator.
 
-    @field_validator("validation_level")
-    @classmethod
-    def validate_validation_level(cls, v: str) -> str:
-        """Validate validation level."""
-        if v not in FlextLdifConstants.ValidationRules.VALID_VALIDATION_LEVELS_RULE:
-            msg = f"validation_level must be one of: {', '.join(FlextLdifConstants.ValidationRules.VALID_VALIDATION_LEVELS_RULE)}"
-            raise ValueError(msg)
-        return v
-
-    @field_validator("server_type")
-    @classmethod
-    def validate_server_type(cls, v: str) -> str:
-        """Validate server type."""
-        if v not in FlextLdifConstants.ValidationRules.VALID_SERVER_TYPES_RULE:
-            msg = f"Invalid server_type: {v}. Must be one of: {', '.join(FlextLdifConstants.ValidationRules.VALID_SERVER_TYPES_RULE)}"
-            raise ValueError(msg)
-        return v
-
-    @field_validator("analytics_detail_level")
-    @classmethod
-    def validate_analytics_detail_level(cls, v: str) -> str:
-        """Validate analytics detail level."""
-        if v not in FlextLdifConstants.ValidationRules.VALID_ANALYTICS_LEVELS_RULE:
-            msg = f"analytics_detail_level must be one of: {', '.join(FlextLdifConstants.ValidationRules.VALID_ANALYTICS_LEVELS_RULE)}"
-            raise ValueError(msg)
-        return v
-
-    @field_validator("error_recovery_mode")
-    @classmethod
-    def validate_error_recovery_mode(cls, v: str) -> str:
-        """Validate error recovery mode."""
-        if v not in FlextLdifConstants.ValidationRules.VALID_ERROR_MODES_RULE:
-            msg = f"error_recovery_mode must be one of: {', '.join(FlextLdifConstants.ValidationRules.VALID_ERROR_MODES_RULE)}"
-            raise ValueError(msg)
-        return v
+        Delegates to FlextConfig's validate_int_field for type conversion from environment variables.
+        Field constraints (ge/le) handle range validation automatically.
+        """
+        return cls.validate_int_field(v)
 
     @model_validator(mode="after")
     def validate_ldif_configuration_consistency(self) -> FlextLdifConfig:

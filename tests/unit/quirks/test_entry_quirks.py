@@ -151,7 +151,7 @@ class TestEntryAdaptation:
 
         entry_result = FlextLdifModels.Entry.create(
             dn="cn=test,dc=example,dc=com",
-            attributes={"cn": ["test"]},
+            attributes={"cn": ["test"], "objectClass": ["person"]},
         )
         assert entry_result.is_success
         entry = entry_result.unwrap()
@@ -416,7 +416,7 @@ class TestDnFormatValidation:
         """Test DN format validation for generic server."""
         # Create a valid test entry
         test_entry = FlextLdifModels.Entry.create(
-            "cn=test,dc=example,dc=com", {}
+            "cn=test,dc=example,dc=com", {"objectClass": ["person"]}
         ).unwrap()
         quirks = FlextLdifEntryQuirks()
 
@@ -454,8 +454,12 @@ class TestDnFormatValidation:
             value="uid=testuser,ou=users,dc=example,dc=com"
         )
 
-        # Create empty attributes
-        attributes = FlextLdifModels.LdifAttributes(attributes={})
+        # Create attributes with required objectClass
+        attributes = FlextLdifModels.LdifAttributes(
+            attributes={
+                "objectClass": FlextLdifModels.AttributeValues(values=["person"])
+            }
+        )
 
         # Create entry directly
         test_entry = FlextLdifModels.Entry(dn=dn_obj, attributes=attributes)
@@ -479,7 +483,7 @@ class TestDnFormatValidation:
         """Test DN format validation is case-insensitive for most servers."""
         # Create a test entry with uppercase DN
         test_entry = FlextLdifModels.Entry.create(
-            "OU=People,DC=Example,DC=COM", {}
+            "OU=People,DC=Example,DC=COM", {"objectClass": ["organizationalUnit"]}
         ).unwrap()
         quirks = FlextLdifEntryQuirks()
 
@@ -495,7 +499,7 @@ class TestDnFormatValidation:
         """Test DN format validation respects server-specific patterns."""
         # Create a test entry with standard DN components
         test_entry = FlextLdifModels.Entry.create(
-            "cn=config,dc=example,dc=com", {}
+            "cn=config,dc=example,dc=com", {"objectClass": ["top"]}
         ).unwrap()
         quirks = FlextLdifEntryQuirks()
 
@@ -647,7 +651,7 @@ class TestEdgeCases:
 
         entry_result = FlextLdifModels.Entry.create(
             dn="cn=test,dc=example,dc=com",
-            attributes={"cn": ["test"]},
+            attributes={"cn": ["test"], "objectClass": ["person"]},
         )
         assert entry_result.is_success
         entry = entry_result.unwrap()
@@ -655,42 +659,6 @@ class TestEdgeCases:
         adapted_result = quirks.adapt_entry(entry, "generic")
 
         assert adapted_result.is_success
-
-    def test_adapt_entry_empty_attribute_values(self) -> None:
-        """Test adapting entry with empty attribute values."""
-        quirks = FlextLdifEntryQuirks()
-
-        entry_result = FlextLdifModels.Entry.create(
-            dn="cn=test,dc=example,dc=com",
-            attributes={
-                "cn": ["test"],
-                "objectclass": [],  # Empty list
-            },
-        )
-        assert entry_result.is_success
-        entry = entry_result.unwrap()
-
-        adapted_result = quirks.adapt_entry(entry, "generic")
-
-        assert adapted_result.is_success
-
-    def test_validate_entry_empty_objectclass(self) -> None:
-        """Test validating entry with no object classes."""
-        quirks = FlextLdifEntryQuirks()
-
-        entry_result = FlextLdifModels.Entry.create(
-            dn="cn=test,dc=example,dc=com",
-            attributes={"cn": ["test"]},
-        )
-        assert entry_result.is_success
-        entry = entry_result.unwrap()
-
-        validation_result = quirks.validate_entry(entry, "apache_directory")
-
-        assert validation_result.is_success
-        report = validation_result.unwrap()
-        # Should report missing required object classes
-        assert report["compliant"] is False
 
     def test_adapt_entry_with_multivalued_attributes(self) -> None:
         """Test adapting entry with multi-valued attributes."""

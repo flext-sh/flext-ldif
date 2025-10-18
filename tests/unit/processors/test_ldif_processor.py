@@ -54,6 +54,7 @@ class TestLdifBatchProcessor:
             attributes=FlextLdifModels.LdifAttributes(
                 attributes={
                     "cn": FlextLdifModels.AttributeValues(values=["test"]),
+                    "objectClass": FlextLdifModels.AttributeValues(values=["person"]),
                 }
             ),
         )
@@ -80,6 +81,9 @@ class TestLdifBatchProcessor:
                 attributes=FlextLdifModels.LdifAttributes(
                     attributes={
                         "cn": FlextLdifModels.AttributeValues(values=[f"user{i}"]),
+                        "objectClass": FlextLdifModels.AttributeValues(
+                            values=["person"]
+                        ),
                     }
                 ),
             )
@@ -109,6 +113,9 @@ class TestLdifBatchProcessor:
                 attributes=FlextLdifModels.LdifAttributes(
                     attributes={
                         "cn": FlextLdifModels.AttributeValues(values=[f"user{i}"]),
+                        "objectClass": FlextLdifModels.AttributeValues(
+                            values=["person"]
+                        ),
                     }
                 ),
             )
@@ -122,7 +129,9 @@ class TestLdifBatchProcessor:
         assert result.is_success
         results = result.unwrap()
         assert len(results) == 10
-        assert all(count == 1 for count in results)  # Each entry has 1 attribute (cn)
+        assert all(
+            count == 2 for count in results
+        )  # Each entry has 2 attributes (cn, objectClass)
 
     def test_process_batch_exact_batch_boundary(self) -> None:
         """Test batch processing with exact batch size boundary."""
@@ -137,6 +146,9 @@ class TestLdifBatchProcessor:
                 attributes=FlextLdifModels.LdifAttributes(
                     attributes={
                         "cn": FlextLdifModels.AttributeValues(values=[f"user{i}"]),
+                        "objectClass": FlextLdifModels.AttributeValues(
+                            values=["person"]
+                        ),
                     }
                 ),
             )
@@ -166,6 +178,9 @@ class TestLdifBatchProcessor:
                         "cn": FlextLdifModels.AttributeValues(values=[f"user{i}"]),
                         "mail": FlextLdifModels.AttributeValues(
                             values=[f"user{i}@example.com"]
+                        ),
+                        "objectClass": FlextLdifModels.AttributeValues(
+                            values=["person"]
                         ),
                     }
                 ),
@@ -197,6 +212,7 @@ class TestLdifBatchProcessor:
             attributes=FlextLdifModels.LdifAttributes(
                 attributes={
                     "cn": FlextLdifModels.AttributeValues(values=["test"]),
+                    "objectClass": FlextLdifModels.AttributeValues(values=["person"]),
                 }
             ),
         )
@@ -250,6 +266,7 @@ class TestLdifParallelProcessor:
             attributes=FlextLdifModels.LdifAttributes(
                 attributes={
                     "cn": FlextLdifModels.AttributeValues(values=["test"]),
+                    "objectClass": FlextLdifModels.AttributeValues(values=["person"]),
                 }
             ),
         )
@@ -276,6 +293,9 @@ class TestLdifParallelProcessor:
                 attributes=FlextLdifModels.LdifAttributes(
                     attributes={
                         "cn": FlextLdifModels.AttributeValues(values=[f"user{i}"]),
+                        "objectClass": FlextLdifModels.AttributeValues(
+                            values=["person"]
+                        ),
                     }
                 ),
             )
@@ -306,6 +326,9 @@ class TestLdifParallelProcessor:
                     attributes={
                         "cn": FlextLdifModels.AttributeValues(values=[f"user{i}"]),
                         "uid": FlextLdifModels.AttributeValues(values=[str(1000 + i)]),
+                        "objectClass": FlextLdifModels.AttributeValues(
+                            values=["person"]
+                        ),
                     }
                 ),
             )
@@ -340,6 +363,9 @@ class TestLdifParallelProcessor:
                 attributes=FlextLdifModels.LdifAttributes(
                     attributes={
                         "cn": FlextLdifModels.AttributeValues(values=[f"user{i}"]),
+                        "objectClass": FlextLdifModels.AttributeValues(
+                            values=["person"]
+                        ),
                     }
                 ),
             )
@@ -366,6 +392,7 @@ class TestLdifParallelProcessor:
             attributes=FlextLdifModels.LdifAttributes(
                 attributes={
                     "cn": FlextLdifModels.AttributeValues(values=["test"]),
+                    "objectClass": FlextLdifModels.AttributeValues(values=["person"]),
                 }
             ),
         )
@@ -394,6 +421,9 @@ class TestLdifParallelProcessor:
                 attributes=FlextLdifModels.LdifAttributes(
                     attributes={
                         "cn": FlextLdifModels.AttributeValues(values=[f"user{i}"]),
+                        "objectClass": FlextLdifModels.AttributeValues(
+                            values=["person"]
+                        ),
                         "sn": FlextLdifModels.AttributeValues(values=[f"surname{i}"]),
                         "mail": FlextLdifModels.AttributeValues(
                             values=[f"user{i}@example.com"]
@@ -411,7 +441,7 @@ class TestLdifParallelProcessor:
         assert result.is_success
         results = result.unwrap()
         assert len(results) == 5
-        assert all(count == 3 for count in results)  # Each entry has 3 attributes
+        assert all(count == 4 for count in results)  # Each entry has 4 attributes
 
 
 class TestProcessorComparison:
@@ -430,6 +460,9 @@ class TestProcessorComparison:
                 attributes=FlextLdifModels.LdifAttributes(
                     attributes={
                         "cn": FlextLdifModels.AttributeValues(values=[f"user{i}"]),
+                        "objectClass": FlextLdifModels.AttributeValues(
+                            values=["person"]
+                        ),
                     }
                 ),
             )

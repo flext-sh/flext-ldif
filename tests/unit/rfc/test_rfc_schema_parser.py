@@ -13,8 +13,6 @@ from __future__ import annotations
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 
-from flext_core import FlextTypes
-
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.quirks.registry import FlextLdifQuirksRegistry
 from flext_ldif.rfc.rfc_schema_parser import FlextLdifRfcSchemaParser
@@ -26,7 +24,7 @@ class TestRfcSchemaParserInitialization:
     def test_initialization_with_registry(self) -> None:
         """Test parser initialization with quirks registry."""
         registry = FlextLdifQuirksRegistry()
-        params: FlextTypes.Dict = {"file_path": "/tmp/test.ldif"}
+        params: dict[str, object] = {"file_path": "/tmp/test.ldif"}
 
         parser = FlextLdifRfcSchemaParser(params=params, quirk_registry=registry)
 
@@ -37,7 +35,7 @@ class TestRfcSchemaParserInitialization:
     def test_initialization_with_server_type(self) -> None:
         """Test parser initialization with specific server type."""
         registry = FlextLdifQuirksRegistry()
-        params: FlextTypes.Dict = {"file_path": "/tmp/test.ldif"}
+        params: dict[str, object] = {"file_path": "/tmp/test.ldif"}
 
         parser = FlextLdifRfcSchemaParser(
             params=params, quirk_registry=registry, server_type="openldap"
@@ -68,7 +66,7 @@ objectclasses: ( 2.5.6.6 NAME 'person' DESC 'RFC2256: a person' SUP top STRUCTUR
 
         try:
             registry = FlextLdifQuirksRegistry()
-            params: FlextTypes.Dict = {"file_path": str(schema_file)}
+            params: dict[str, object] = {"file_path": str(schema_file)}
 
             parser = FlextLdifRfcSchemaParser(params=params, quirk_registry=registry)
             result = parser.execute()
@@ -97,7 +95,7 @@ objectclasses: ( 2.5.6.6 NAME 'person' DESC 'RFC2256: a person' SUP top STRUCTUR
     def test_parse_schema_file_missing_file(self) -> None:
         """Test parsing with non-existent file."""
         registry = FlextLdifQuirksRegistry()
-        params: FlextTypes.Dict = {"file_path": "/tmp/nonexistent_schema.ldif"}
+        params: dict[str, object] = {"file_path": "/tmp/nonexistent_schema.ldif"}
 
         parser = FlextLdifRfcSchemaParser(params=params, quirk_registry=registry)
         result = parser.execute()
@@ -108,7 +106,7 @@ objectclasses: ( 2.5.6.6 NAME 'person' DESC 'RFC2256: a person' SUP top STRUCTUR
     def test_parse_schema_file_no_file_path(self) -> None:
         """Test parsing with missing file_path parameter."""
         registry = FlextLdifQuirksRegistry()
-        params: FlextTypes.Dict = {}
+        params: dict[str, object] = {}
 
         parser = FlextLdifRfcSchemaParser(params=params, quirk_registry=registry)
         result = parser.execute()
@@ -134,7 +132,7 @@ attributetypes: ( 2.5.4.4 NAME 'sn' DESC 'Surname' SYNTAX '1.3.6.1.4.1.1466.115.
 
         try:
             registry = FlextLdifQuirksRegistry()
-            params: FlextTypes.Dict = {
+            params: dict[str, object] = {
                 "file_path": str(schema_file),
                 "parse_attributes": True,
             }
@@ -173,7 +171,7 @@ attributetypes: ( 2.5.4.35 NAME 'userPassword' DESC 'User Password' EQUALITY oct
 
         try:
             registry = FlextLdifQuirksRegistry()
-            params: FlextTypes.Dict = {"file_path": str(schema_file)}
+            params: dict[str, object] = {"file_path": str(schema_file)}
 
             parser = FlextLdifRfcSchemaParser(params=params, quirk_registry=registry)
             result = parser.execute()
@@ -205,7 +203,7 @@ attributetypes: ( 2.5.4.42 NAME 'givenName' DESC 'Given Name' SUP name SYNTAX '1
 
         try:
             registry = FlextLdifQuirksRegistry()
-            params: FlextTypes.Dict = {"file_path": str(schema_file)}
+            params: dict[str, object] = {"file_path": str(schema_file)}
 
             parser = FlextLdifRfcSchemaParser(params=params, quirk_registry=registry)
             result = parser.execute()
@@ -237,7 +235,7 @@ attributetypes: ( 1.2.3.4.5 NAME 'shortString' DESC 'Short String' SYNTAX '1.3.6
 
         try:
             registry = FlextLdifQuirksRegistry()
-            params: FlextTypes.Dict = {"file_path": str(schema_file)}
+            params: dict[str, object] = {"file_path": str(schema_file)}
 
             parser = FlextLdifRfcSchemaParser(params=params, quirk_registry=registry)
             result = parser.execute()
@@ -269,7 +267,7 @@ attributetypes: ( 2.5.4.3 NAME 'cn' DESC 'Common Name' SYNTAX '1.3.6.1.4.1.1466.
 
         try:
             registry = FlextLdifQuirksRegistry()
-            params: FlextTypes.Dict = {
+            params: dict[str, object] = {
                 "file_path": str(schema_file),
                 "parse_attributes": False,
             }
@@ -305,7 +303,7 @@ objectclasses: ( 2.5.6.6 NAME 'person' DESC 'Person class' SUP top STRUCTURAL MU
 
         try:
             registry = FlextLdifQuirksRegistry()
-            params: FlextTypes.Dict = {"file_path": str(schema_file)}
+            params: dict[str, object] = {"file_path": str(schema_file)}
 
             parser = FlextLdifRfcSchemaParser(params=params, quirk_registry=registry)
             result = parser.execute()
@@ -353,7 +351,7 @@ objectclasses: ( 2.5.6.0 NAME 'top' DESC 'Top class' ABSTRACT MUST objectClass )
 
         try:
             registry = FlextLdifQuirksRegistry()
-            params: FlextTypes.Dict = {"file_path": str(schema_file)}
+            params: dict[str, object] = {"file_path": str(schema_file)}
 
             parser = FlextLdifRfcSchemaParser(params=params, quirk_registry=registry)
             result = parser.execute()
@@ -385,7 +383,7 @@ objectclasses: ( 2.5.6.20 NAME 'simpleClass' DESC 'Simple' MUST cn )
 
         try:
             registry = FlextLdifQuirksRegistry()
-            params: FlextTypes.Dict = {"file_path": str(schema_file)}
+            params: dict[str, object] = {"file_path": str(schema_file)}
 
             parser = FlextLdifRfcSchemaParser(params=params, quirk_registry=registry)
             result = parser.execute()
@@ -418,7 +416,7 @@ objectclasses: ( 2.5.6.6 NAME 'person' DESC 'Person' SUP top STRUCTURAL MUST cn 
 
         try:
             registry = FlextLdifQuirksRegistry()
-            params: FlextTypes.Dict = {
+            params: dict[str, object] = {
                 "file_path": str(schema_file),
                 "parse_objectclasses": False,
             }
@@ -458,7 +456,7 @@ attributetypes: ( 2.5.4.3 NAME 'cn'
 
         try:
             registry = FlextLdifQuirksRegistry()
-            params: FlextTypes.Dict = {"file_path": str(schema_file)}
+            params: dict[str, object] = {"file_path": str(schema_file)}
 
             parser = FlextLdifRfcSchemaParser(params=params, quirk_registry=registry)
             result = parser.execute()
@@ -498,7 +496,7 @@ objectclasses: ( 2.5.6.6 NAME 'person'
 
         try:
             registry = FlextLdifQuirksRegistry()
-            params: FlextTypes.Dict = {"file_path": str(schema_file)}
+            params: dict[str, object] = {"file_path": str(schema_file)}
 
             parser = FlextLdifRfcSchemaParser(params=params, quirk_registry=registry)
             result = parser.execute()
@@ -541,7 +539,7 @@ attributetypes: ( 2.5.4.3 NAME 'cn' DESC 'Common Name' SYNTAX '1.3.6.1.4.1.1466.
 
         try:
             registry = FlextLdifQuirksRegistry()
-            params: FlextTypes.Dict = {"file_path": str(schema_file)}
+            params: dict[str, object] = {"file_path": str(schema_file)}
 
             parser = FlextLdifRfcSchemaParser(params=params, quirk_registry=registry)
             result = parser.execute()
@@ -574,7 +572,7 @@ attributetypes: ( 2.5.4.41 NAME 'name' DESC 'Name' SYNTAX '1.3.6.1.4.1.1466.115.
 
         try:
             registry = FlextLdifQuirksRegistry()
-            params: FlextTypes.Dict = {"file_path": str(schema_file)}
+            params: dict[str, object] = {"file_path": str(schema_file)}
 
             parser = FlextLdifRfcSchemaParser(params=params, quirk_registry=registry)
             result = parser.execute()
@@ -608,7 +606,7 @@ objectclasses: ( 2.5.6.7 NAME 'organizationalPerson' DESC 'Organizational Person
 
         try:
             registry = FlextLdifQuirksRegistry()
-            params: FlextTypes.Dict = {"file_path": str(schema_file)}
+            params: dict[str, object] = {"file_path": str(schema_file)}
 
             parser = FlextLdifRfcSchemaParser(params=params, quirk_registry=registry)
             result = parser.execute()
@@ -646,7 +644,7 @@ objectclasses: ( 2.5.6.6 NAME 'person' DESC 'Person' SUP top STRUCTURAL MUST ( s
 
         try:
             registry = FlextLdifQuirksRegistry()
-            params: FlextTypes.Dict = {"file_path": str(schema_file)}
+            params: dict[str, object] = {"file_path": str(schema_file)}
 
             parser = FlextLdifRfcSchemaParser(params=params, quirk_registry=registry)
             result = parser.execute()
@@ -685,7 +683,7 @@ objectclasses: also invalid
 
         try:
             registry = FlextLdifQuirksRegistry()
-            params: FlextTypes.Dict = {"file_path": str(schema_file)}
+            params: dict[str, object] = {"file_path": str(schema_file)}
 
             parser = FlextLdifRfcSchemaParser(params=params, quirk_registry=registry)
             result = parser.execute()
@@ -708,7 +706,7 @@ objectclasses: also invalid
 
         try:
             registry = FlextLdifQuirksRegistry()
-            params: FlextTypes.Dict = {"file_path": str(schema_file)}
+            params: dict[str, object] = {"file_path": str(schema_file)}
 
             parser = FlextLdifRfcSchemaParser(params=params, quirk_registry=registry)
             result = parser.execute()
@@ -751,7 +749,7 @@ objectclasses: ( 2.5.6.7 NAME 'organizationalPerson' DESC 'RFC2256: an organizat
 
         try:
             registry = FlextLdifQuirksRegistry()
-            params: FlextTypes.Dict = {"file_path": str(schema_file)}
+            params: dict[str, object] = {"file_path": str(schema_file)}
 
             parser = FlextLdifRfcSchemaParser(params=params, quirk_registry=registry)
             result = parser.execute()

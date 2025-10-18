@@ -463,7 +463,7 @@ class FlextLdifQuirksServersNovell(FlextLdifQuirksBaseSchemaQuirk):
         ) -> FlextResult[FlextLdifTypes.Dict]:
             """Wrap eDirectory ACL into generic RFC representation."""
             try:
-                # Type narrowing: rfc_acl is already FlextLdifTypes.Dict (dict[str, object])
+                # Type narrowing: rfc_acl is already FlextLdifTypes.Dict (FlextLdifTypes.Models.CustomDataDict)
                 rfc_acl: FlextLdifTypes.Dict = {
                     FlextLdifConstants.DictKeys.TYPE: FlextLdifConstants.DictKeys.ACL,
                     FlextLdifConstants.DictKeys.FORMAT: FlextLdifConstants.AclFormats.RFC_GENERIC,
@@ -483,7 +483,7 @@ class FlextLdifQuirksServersNovell(FlextLdifQuirksBaseSchemaQuirk):
         ) -> FlextResult[FlextLdifTypes.Dict]:
             """Repackage RFC ACL payload for eDirectory."""
             try:
-                # Type narrowing: ed_acl is already FlextLdifTypes.Dict (dict[str, object])
+                # Type narrowing: ed_acl is already FlextLdifTypes.Dict (FlextLdifTypes.Models.CustomDataDict)
                 ed_acl: FlextLdifTypes.Dict = {
                     FlextLdifConstants.DictKeys.FORMAT: FlextLdifConstants.AclFormats.ACI,
                     FlextLdifConstants.DictKeys.TARGET_FORMAT: "acl",
@@ -590,7 +590,7 @@ class FlextLdifQuirksServersNovell(FlextLdifQuirksBaseSchemaQuirk):
         def can_handle_entry(
             self,
             entry_dn: str,
-            attributes: dict[str, object],
+            attributes: FlextLdifTypes.Models.CustomDataDict,
         ) -> bool:
             """Detect eDirectory-specific entries."""
             dn_lower = entry_dn.lower()
@@ -624,7 +624,7 @@ class FlextLdifQuirksServersNovell(FlextLdifQuirksBaseSchemaQuirk):
         def process_entry(
             self,
             entry_dn: str,
-            attributes: dict[str, object],
+            attributes: FlextLdifTypes.Models.CustomDataDict,
         ) -> FlextResult[FlextLdifTypes.Dict]:
             """Normalise eDirectory entries and expose metadata."""
             try:

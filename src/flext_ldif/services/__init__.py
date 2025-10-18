@@ -22,8 +22,10 @@ from __future__ import annotations
 
 from flext_ldif.services.dn_service import DnService
 from flext_ldif.services.validation_service import ValidationService
+from flext_ldif.typings import FlextLdifTypes
 
 __all__ = [
     "DnService",
+    "FlextLdifTypes",
     "ValidationService",
 ]

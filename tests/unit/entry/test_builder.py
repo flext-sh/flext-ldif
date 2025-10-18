@@ -12,8 +12,6 @@ from __future__ import annotations
 
 import json
 
-from flext_core import FlextTypes
-
 from flext_ldif.entry.builder import FlextLdifEntryBuilder
 
 
@@ -402,7 +400,7 @@ class TestFlextLdifEntryBuilder:
         """Test building entries from valid dictionary data."""
         builder = FlextLdifEntryBuilder()
 
-        data: list[FlextTypes.Dict] = [
+        data: list[dict[str, object]] = [
             {
                 "dn": "cn=user1,dc=example,dc=com",
                 "attributes": {
@@ -433,7 +431,7 @@ class TestFlextLdifEntryBuilder:
         """Test building entries from dictionary with missing DN."""
         builder = FlextLdifEntryBuilder()
 
-        data: list[FlextTypes.Dict] = [
+        data: list[dict[str, object]] = [
             {"attributes": {"objectclass": ["person"], "cn": ["User 1"]}}
         ]
 
@@ -449,23 +447,26 @@ class TestFlextLdifEntryBuilder:
         """Test building entries from dictionary with non-dict attributes."""
         builder = FlextLdifEntryBuilder()
 
-        data: list[FlextTypes.Dict] = [
-            {"dn": "cn=user1,dc=example,dc=com", "attributes": "not a dict"}
+        data: list[dict[str, object]] = [
+            {
+                "dn": "cn=user1,dc=example,dc=com",
+                "attributes": "not a dict",
+            }
         ]
 
         result = builder.build_entries_from_dict(data)
 
-        assert result.is_success
-        entries = result.value
-        assert len(entries) == 1
-        entry = entries[0]
-        assert entry.dn.value == "cn=user1,dc=example,dc=com"
+        # When attributes is not a dict, it's converted to {}, which results
+        # in missing objectClass, so entry creation should fail
+        assert result.is_failure
+        assert result.error is not None
+        assert "must have objectClass" in result.error
 
     def test_build_entries_from_dict_mixed_value_types(self) -> None:
         """Test building entries from dictionary with mixed value types."""
         builder = FlextLdifEntryBuilder()
 
-        data: list[FlextTypes.Dict] = [
+        data: list[dict[str, object]] = [
             {
                 "dn": "cn=user1,dc=example,dc=com",
                 "attributes": {

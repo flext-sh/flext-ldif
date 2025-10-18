@@ -18,14 +18,13 @@ from __future__ import annotations
 from typing import cast
 
 import pytest
-from flext_core import FlextTypes
 
 from flext_ldif.filters import FlextLdifFilters
 from flext_ldif.models import FlextLdifModels
 
 
 def create_test_entry(
-    dn_str: str, attributes: dict[str, FlextTypes.StringList]
+    dn_str: str, attributes: dict[str, list[str]]
 ) -> FlextLdifModels.Entry:
     """Helper function to create test entries with proper attribute wrapping.
 
@@ -37,9 +36,8 @@ def create_test_entry(
         Properly constructed Entry instance
 
     """
-    dn_result = FlextLdifModels.DistinguishedName.create(dn_str)
-    assert dn_result.is_success
-    dn = dn_result.unwrap()
+    # Direct instantiation pattern - Pydantic 2 validates via @field_validator
+    dn = FlextLdifModels.DistinguishedName(value=dn_str)
 
     # Wrap all attribute values in AttributeValues objects
     wrapped_attrs = {
@@ -138,7 +136,7 @@ class TestOidPatternMatching:
     def test_empty_patterns(self) -> None:
         """Test with empty pattern list."""
         oid = "1.3.6.1.4.1.111.2.3"
-        patterns: FlextTypes.StringList = []
+        patterns: list[str] = []
         assert not FlextLdifFilters.matches_oid_pattern(oid, patterns)
 
 
@@ -305,9 +303,7 @@ class TestHasRequiredAttributes:
 class TestCategorizeEntry:
     """Test entry categorization logic."""
 
-    def _create_entry(
-        self, objectclasses: FlextTypes.StringList
-    ) -> FlextLdifModels.Entry:
+    def _create_entry(self, objectclasses: list[str]) -> FlextLdifModels.Entry:
         """Helper to create entry with specified objectClasses."""
         return create_test_entry(
             "cn=test,dc=example,dc=com",

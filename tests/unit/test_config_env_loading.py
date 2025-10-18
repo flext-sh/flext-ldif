@@ -153,7 +153,7 @@ class TestEnvVariableLoading:
         # Invalid encoding
         monkeypatch.setenv("FLEXT_LDIF_ENCODING", "invalid-encoding")
 
-        with pytest.raises(ValidationError, match="Invalid encoding"):
+        with pytest.raises(ValidationError, match="Input should be"):
             FlextLdifConfig()
 
         # Invalid max_workers (too high) - inherited field uses FLEXT_ prefix

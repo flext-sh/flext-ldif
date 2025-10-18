@@ -117,7 +117,7 @@ class FlextLdifSchemaValidator(FlextService[FlextLdifTypes.Dict]):
         self,
         entry: FlextLdifModels.Entry,
         schema: FlextLdifModels.SchemaDiscoveryResult,
-    ) -> FlextResult[FlextLdifTypes.Dict]:
+    ) -> FlextResult[FlextLdifTypes.Models.ValidationReportData]:
         """Validate entry against discovered schema.
 
         Args:
@@ -125,7 +125,7 @@ class FlextLdifSchemaValidator(FlextService[FlextLdifTypes.Dict]):
             schema: Discovered schema
 
         Returns:
-            FlextResult containing validation report
+            FlextResult containing validation report with typed structure
 
         """
         warnings: FlextLdifTypes.StringList = [
@@ -143,20 +143,22 @@ class FlextLdifSchemaValidator(FlextService[FlextLdifTypes.Dict]):
             if oc not in schema.objectclasses
         ]
 
-        validation_result: FlextLdifTypes.Dict = {
+        validation_result: FlextLdifTypes.Models.ValidationReportData = {
             FlextLdifConstants.DictKeys.VALID: len(issues) == 0,
             FlextLdifConstants.DictKeys.ISSUES: issues,
             "warnings": warnings,
             FlextLdifConstants.DictKeys.DN: entry.dn.value,
         }
 
-        return FlextResult[FlextLdifTypes.Dict].ok(validation_result)
+        return FlextResult[FlextLdifTypes.Models.ValidationReportData].ok(
+            validation_result
+        )
 
     def validate_objectclass_requirements(
         self,
         entry: FlextLdifModels.Entry,
         schema: FlextLdifModels.SchemaDiscoveryResult,
-    ) -> FlextResult[FlextLdifTypes.Dict]:
+    ) -> FlextResult[FlextLdifTypes.Models.ValidationReportData]:
         """Validate objectClass requirements for entry.
 
         Args:
@@ -164,7 +166,7 @@ class FlextLdifSchemaValidator(FlextService[FlextLdifTypes.Dict]):
             schema: Discovered schema
 
         Returns:
-            FlextResult containing validation report
+            FlextResult containing validation report with typed structure
 
         """
         issues: FlextLdifTypes.StringList = []
@@ -188,13 +190,15 @@ class FlextLdifSchemaValidator(FlextService[FlextLdifTypes.Dict]):
                         if req_attr not in entry_attrs
                     )
 
-        validation_result: FlextLdifTypes.Dict = {
+        validation_result: FlextLdifTypes.Models.ValidationReportData = {
             FlextLdifConstants.DictKeys.VALID: len(issues) == 0,
             FlextLdifConstants.DictKeys.ISSUES: issues,
             FlextLdifConstants.DictKeys.DN: entry.dn.value,
         }
 
-        return FlextResult[FlextLdifTypes.Dict].ok(validation_result)
+        return FlextResult[FlextLdifTypes.Models.ValidationReportData].ok(
+            validation_result
+        )
 
 
 __all__ = ["FlextLdifSchemaValidator"]

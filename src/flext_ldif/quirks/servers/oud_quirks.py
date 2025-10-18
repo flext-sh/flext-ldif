@@ -202,7 +202,8 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
             if sup_match:
                 sup_value = sup_match.group(1) or sup_match.group(2)
                 sup_value = sup_value.strip()
-                # Handle multiple superior classes like "organization $ organizationalUnit"
+                # Handle multiple superior classes like
+                # "organization $ organizationalUnit"
                 if "$" in sup_value:
                     parsed_data["sup"] = [s.strip() for s in sup_value.split("$")]
                 else:
@@ -335,8 +336,10 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
             FlextResult with RFC 4512 formatted attribute definition string
 
         Example:
-            Input: {"oid": "2.16.840.1.113894.1.1.1", "name": "orclGUID", "syntax": "1.3.6.1.4.1.1466.115.121.1.15"}
-            Output: "( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
+            Input: {"oid": "2.16.840.1.113894.1.1.1", "name": "orclGUID",
+                    "syntax": "1.3.6.1.4.1.1466.115.121.1.15"}
+            Output: "( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' SYNTAX
+                     1.3.6.1.4.1.1466.115.121.1.15 )"
 
         """
         try:
@@ -411,18 +414,21 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
     ) -> FlextResult[str]:
         """Write OUD objectClass data to RFC 4512 compliant string format.
 
-        Converts parsed objectClass dictionary back to RFC 4512 schema definition format.
-        If metadata contains original_format, uses it for perfect round-trip.
+        Converts parsed objectClass dictionary back to RFC 4512 schema
+        definition format. If metadata contains original_format, uses it
+        for perfect round-trip.
 
         Args:
             oc_data: Parsed OUD objectClass data dictionary
 
         Returns:
-            FlextResult with RFC 4512 formatted objectClass definition string
+            FlextResult with RFC 4512 formatted objectClass definition
 
         Example:
-            Input: {"oid": "2.16.840.1.113894.2.1.1", "name": "orclContext", "kind": "STRUCTURAL", "must": [FlextLdifConstants.DictKeys.CN], "may": ["description"]}
-            Output: "( 2.16.840.1.113894.2.1.1 NAME 'orclContext' STRUCTURAL MUST cn MAY description )"
+            Input: {"oid": "2.16.840.1.113894.2.1.1", "name":
+                    "orclContext", "kind": "STRUCTURAL"}
+            Output: "( 2.16.840.1.113894.2.1.1 NAME 'orclContext'
+                     STRUCTURAL MUST cn MAY description )"
 
         """
         try:
@@ -562,14 +568,16 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
     ) -> FlextResult[FlextLdifTypes.Dict]:
         """Extract and parse all schema definitions from LDIF content.
 
-        Strategy pattern: OUD-specific approach to extract attributeTypes and objectClasses
-        from cn=schema LDIF entries, handling OUD's case variations.
+        Strategy pattern: OUD-specific approach to extract attributeTypes
+        and objectClasses from cn=schema LDIF entries, handling OUD's
+        case variations.
 
         Args:
             ldif_content: Raw LDIF content containing schema definitions
 
         Returns:
-            FlextResult with dict[str, object] containing FlextLdifConstants.DictKeys.ATTRIBUTES and 'objectclasses' lists
+            FlextResult with CustomDataDict containing ATTRIBUTES and
+            objectclasses lists
 
         """
         try:
@@ -749,7 +757,7 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
                         oudacl_data["bind_rules"] = bind_rules
 
                 # Preserve original format in metadata with extensions
-                metadata_extensions: dict[str, object] = {}
+                metadata_extensions: FlextLdifTypes.Models.CustomDataDict = {}
                 if line_breaks:
                     metadata_extensions["line_breaks"] = line_breaks
                     metadata_extensions["is_multiline"] = True
@@ -796,11 +804,13 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
             """
             try:
                 # OUD ACLs don't have direct RFC equivalent
+                dk = FlextLdifConstants.DictKeys
+                af = FlextLdifConstants.AclFormats
                 rfc_data: FlextLdifTypes.Dict = {
-                    FlextLdifConstants.DictKeys.TYPE: FlextLdifConstants.DictKeys.ACL,
-                    FlextLdifConstants.DictKeys.FORMAT: FlextLdifConstants.AclFormats.RFC_GENERIC,
-                    FlextLdifConstants.DictKeys.SOURCE_FORMAT: FlextLdifConstants.AclFormats.OUD_ACL,
-                    FlextLdifConstants.DictKeys.DATA: acl_data,
+                    dk.TYPE: dk.ACL,
+                    dk.FORMAT: af.RFC_GENERIC,
+                    dk.SOURCE_FORMAT: af.OUD_ACL,
+                    dk.DATA: acl_data,
                 }
 
                 return FlextResult[FlextLdifTypes.Dict].ok(rfc_data)
@@ -824,10 +834,12 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
             """
             try:
                 # Convert RFC ACL to Oracle OUD format
+                dk = FlextLdifConstants.DictKeys
+                af = FlextLdifConstants.AclFormats
                 oud_data: FlextLdifTypes.Dict = {
-                    FlextLdifConstants.DictKeys.FORMAT: FlextLdifConstants.AclFormats.OUD_ACL,
-                    FlextLdifConstants.DictKeys.TARGET_FORMAT: "ds-cfg",
-                    FlextLdifConstants.DictKeys.DATA: acl_data,
+                    dk.FORMAT: af.OUD_ACL,
+                    dk.TARGET_FORMAT: "ds-cfg",
+                    dk.DATA: acl_data,
                 }
 
                 return FlextResult[FlextLdifTypes.Dict].ok(oud_data)
@@ -855,12 +867,12 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
                 FlextResult with ACI formatted string
 
             Example:
-                Input: {"targetattr": "*", "acl_name": "Test ACL", "permissions": [...]}
-                Output: '(targetattr="*")(version 3.0; acl "Test ACL"; allow (read,search) userdn="ldap:///anyone";)'
+                Input: {"targetattr": "*", "acl_name": "Test ACL"}
+                Output: '(targetattr="*")(version 3.0; acl "Test ACL")'
 
             """
             try:
-                # Check if we have metadata with original format for perfect round-trip
+                # Check if we have metadata with original format for round-trip
                 if "_metadata" in acl_data:
                     metadata = acl_data["_metadata"]
                     if (
@@ -876,7 +888,8 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
                     # ds-cfg format (different from ACI)
                     return FlextResult[str].ok(str(acl_data.get("raw", "")))
 
-                # Build ACI format: (targetattr="*")(version 3.0; acl "name"; permissions)
+                # Build ACI format:
+                # (targetattr="*")(version 3.0; acl "name"; permissions)
                 aci_parts = []
 
                 # Target attributes
@@ -934,7 +947,10 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
                                     rule_type = rule.get("type", "userdn")
                                     rule_value = rule.get("value", "")
 
-                                    permission_line = f'{action} ({ops_str}) {rule_type}="{rule_value}";'
+                                    permission_line = (
+                                        f"{action} ({ops_str}) "
+                                        f'{rule_type}="{rule_value}";'
+                                    )
                                     permission_lines.append(permission_line)
                 elif isinstance(permissions, list):
                     # Generic permission handling
@@ -1010,7 +1026,8 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
                             current_aci = []
 
                         current_aci.append(stripped)
-                        # Check if this ACI continues on next lines (no closing parenthesis)
+                        # Check if this ACI continues on next lines
+                        # (no closing parenthesis)
                         in_multiline_aci = not stripped.rstrip().endswith(")")
 
                     elif in_multiline_aci and stripped:
@@ -1065,7 +1082,9 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
         def model_post_init(self, _context: object, /) -> None:
             """Initialize OUD entry quirk."""
 
-        def can_handle_entry(self, entry_dn: str, attributes: dict[str, object]) -> bool:
+        def can_handle_entry(
+            self, entry_dn: str, attributes: FlextLdifTypes.Models.CustomDataDict
+        ) -> bool:
             """Check if this quirk should handle the entry.
 
             Args:
@@ -1098,7 +1117,10 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
         }
 
         def process_entry(
-            self, entry_dn: str, attributes: dict[str, list[str]] | dict[str, object]
+            self,
+            entry_dn: str,
+            attributes: FlextLdifTypes.CommonDict.AttributeDict
+            | FlextLdifTypes.Models.CustomDataDict,
         ) -> FlextResult[FlextLdifTypes.Dict]:
             """Process entry for OUD format with metadata preservation.
 
@@ -1152,7 +1174,7 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
                         processed_entry[attr_name] = attr_values
 
                 # Preserve metadata for DN quirks and attribute ordering
-                metadata_extensions: dict[str, object] = {}
+                metadata_extensions: FlextLdifTypes.Models.CustomDataDict = {}
 
                 # Detect DN spaces quirk (spaces after commas)
                 if ", " in entry_dn:
@@ -1253,8 +1275,10 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
                 FlextResult with LDIF formatted entry string
 
             Example:
-                Input: {FlextLdifConstants.DictKeys.DN: "cn=test,dc=example,dc=com", FlextLdifConstants.DictKeys.CN: ["test"], FlextLdifConstants.DictKeys.OBJECTCLASS: ["person"]}
-                Output: "dn: cn=test,dc=example,dc=com\\ncn: test\\nobjectClass: person\\n"
+                Input: {FlextLdifConstants.DictKeys.DN: "cn=test,dc=example",
+                        FlextLdifConstants.DictKeys.CN: ["test"],
+                        FlextLdifConstants.DictKeys.OBJECTCLASS: ["person"]}
+                Output: "dn: cn=test,dc=example\\ncn: test\\nobjectClass: person\\n"
 
             """
             try:

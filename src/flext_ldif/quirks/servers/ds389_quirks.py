@@ -477,7 +477,7 @@ class FlextLdifQuirksServersDs389(FlextLdifQuirksBaseSchemaQuirk):
         ) -> FlextResult[FlextLdifTypes.Dict]:
             """Wrap 389 DS ACL into a generic RFC representation."""
             try:
-                # Type narrowing: rfc_acl is already FlextLdifTypes.Dict (dict[str, object])
+                # Type narrowing: rfc_acl is already FlextLdifTypes.Dict (FlextLdifTypes.Models.CustomDataDict)
                 rfc_acl: FlextLdifTypes.Dict = {
                     FlextLdifConstants.DictKeys.TYPE: FlextLdifConstants.DictKeys.ACL,
                     FlextLdifConstants.DictKeys.FORMAT: FlextLdifConstants.AclFormats.RFC_GENERIC,
@@ -497,7 +497,7 @@ class FlextLdifQuirksServersDs389(FlextLdifQuirksBaseSchemaQuirk):
         ) -> FlextResult[FlextLdifTypes.Dict]:
             """Repackage RFC ACL payload for 389 DS."""
             try:
-                # Type narrowing: ds_acl is already FlextLdifTypes.Dict (dict[str, object])
+                # Type narrowing: ds_acl is already FlextLdifTypes.Dict (FlextLdifTypes.Models.CustomDataDict)
                 ds_acl: FlextLdifTypes.Dict = {
                     FlextLdifConstants.DictKeys.FORMAT: FlextLdifConstants.AclFormats.DS389_ACL,
                     FlextLdifConstants.DictKeys.TARGET_FORMAT: FlextLdifConstants.DictKeys.ACI,
@@ -604,7 +604,7 @@ class FlextLdifQuirksServersDs389(FlextLdifQuirksBaseSchemaQuirk):
         def can_handle_entry(
             self,
             entry_dn: str,
-            attributes: dict[str, object],
+            attributes: FlextLdifTypes.Models.CustomDataDict,
         ) -> bool:
             """Detect 389 DS-specific entries."""
             dn_lower = entry_dn.lower()
@@ -639,7 +639,7 @@ class FlextLdifQuirksServersDs389(FlextLdifQuirksBaseSchemaQuirk):
         def process_entry(
             self,
             entry_dn: str,
-            attributes: dict[str, object],
+            attributes: FlextLdifTypes.Models.CustomDataDict,
         ) -> FlextResult[FlextLdifTypes.Dict]:
             """Normalise 389 DS entries and attach metadata."""
             try:

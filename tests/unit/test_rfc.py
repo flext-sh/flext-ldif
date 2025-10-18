@@ -15,7 +15,6 @@ from pathlib import Path
 from typing import cast
 
 import pytest
-from flext_core import FlextTypes
 
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.quirks.registry import FlextLdifQuirksRegistry
@@ -1423,25 +1422,6 @@ class TestRfcLdifWriterComprehensive:
 
         assert result.is_success or result.is_failure
 
-    def test_writer_error_handling_invalid_entry(self) -> None:
-        """Test writer handles edge case entry with empty attributes."""
-        # Create an entry with valid DN but no attributes (edge case)
-        edge_case_entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
-            attributes=FlextLdifModels.LdifAttributes(attributes={}),
-        )
-
-        registry = FlextLdifQuirksRegistry()
-        writer = FlextLdifRfcLdifWriter(
-            params={},
-            quirk_registry=registry,
-        )
-
-        result = writer.write_entries_to_string([edge_case_entry])
-
-        # Writer should handle empty attributes gracefully
-        assert result.is_success or result.is_failure
-
     def test_writer_handles_none_input(self) -> None:
         """Test writer handles None input gracefully."""
         registry = FlextLdifQuirksRegistry()
@@ -1461,7 +1441,7 @@ class TestRfcLdifWriterComprehensive:
         """Test writer handles entries with empty attributes."""
         entry_result = FlextLdifModels.Entry.create(
             dn="cn=Empty Test,dc=example,dc=com",
-            attributes={},
+            attributes={"objectClass": ["person"]},
         )
         entry = entry_result.unwrap()
 
@@ -1497,7 +1477,7 @@ class TestRfcLdifWriterExecuteMethod:
     ) -> None:
         """Test execute() writing entries to string (no output_file)."""
         registry = FlextLdifQuirksRegistry()
-        params: FlextTypes.Dict = {"entries": sample_entries}
+        params: dict[str, object] = {"entries": sample_entries}
         writer = FlextLdifRfcLdifWriter(params=params, quirk_registry=registry)
 
         result = writer.execute()
@@ -1513,7 +1493,7 @@ class TestRfcLdifWriterExecuteMethod:
         """Test execute() writing entries to file."""
         output_file = tmp_path / "output.ldif"
         registry = FlextLdifQuirksRegistry()
-        params: FlextTypes.Dict = {
+        params: dict[str, object] = {
             "entries": sample_entries,
             "output_file": str(output_file),
         }
@@ -1588,7 +1568,7 @@ class TestRfcLdifWriterFileOperations:
         """Test write_entries_to_file() creates parent directories."""
         entry = FlextLdifModels.Entry.create(
             dn="cn=Test,dc=example,dc=com",
-            attributes={"cn": ["Test"]},
+            attributes={"cn": ["Test"], "objectClass": ["person"]},
         ).unwrap()
 
         output_file = tmp_path / "subdir" / "nested" / "test.ldif"
@@ -1629,7 +1609,7 @@ class TestRfcLdifWriterSchemaSupport:
 
         output_file = tmp_path / "schema.ldif"
         registry = FlextLdifQuirksRegistry()
-        params: FlextTypes.Dict = {
+        params: dict[str, object] = {
             "schema": schema,
             "output_file": str(output_file),
         }
@@ -1659,7 +1639,7 @@ class TestRfcLdifWriterAclSupport:
 
         output_file = tmp_path / "acls.ldif"
         registry = FlextLdifQuirksRegistry()
-        params: FlextTypes.Dict = {
+        params: dict[str, object] = {
             "acls": [acl],
             "output_file": str(output_file),
         }

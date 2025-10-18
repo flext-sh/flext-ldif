@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from flext_core import FlextModels, FlextResult, FlextTypes
+from flext_core import FlextModels, FlextResult
 from pydantic import ConfigDict
 
 from flext_ldif.quirks.base import (
@@ -296,7 +296,10 @@ class FlextLdifQuirksRegistry(FlextModels.Value):
         return None
 
     def find_entry_quirk(
-        self, server_type: str, entry_dn: str, attributes: dict[str, object]
+        self,
+        server_type: str,
+        entry_dn: str,
+        attributes: FlextLdifTypes.Models.CustomDataDict,
     ) -> FlextLdifQuirksBase.BaseEntryQuirk | None:
         """Find the first entry quirk that can handle an entry.
 
