@@ -79,7 +79,7 @@ class FlextLdifQuirksServersOpenldap(FlextLdifQuirksBaseSchemaQuirk):
         # Check for olc* prefix or olcAttributeTypes context
         return bool(self.OPENLDAP_OLC_PATTERN.search(attr_definition))
 
-    def parse_attribute(self, attr_definition: str) -> FlextResult[FlextLdifTypes.Dict]:
+    def parse_attribute(self, attr_definition: str) -> FlextResult[dict[str, object]]:
         """Parse OpenLDAP 2.x attribute definition.
 
         OpenLDAP 2.x uses RFC 4512 compliant schema format, so we can
@@ -123,11 +123,11 @@ class FlextLdifQuirksServersOpenldap(FlextLdifQuirksBaseSchemaQuirk):
             )
 
             if not oid_match:
-                return FlextResult[FlextLdifTypes.Dict].fail(
+                return FlextResult[dict[str, object]].fail(
                     "No OID found in attribute definition"
                 )
 
-            attr_data: FlextLdifTypes.Dict = {
+            attr_data: dict[str, object] = {
                 FlextLdifConstants.DictKeys.OID: oid_match.group(1),
                 FlextLdifConstants.DictKeys.NAME: name_match.group(1)
                 if name_match
@@ -145,10 +145,10 @@ class FlextLdifQuirksServersOpenldap(FlextLdifQuirksBaseSchemaQuirk):
                 FlextLdifConstants.DictKeys.SERVER_TYPE: "openldap2",
             }
 
-            return FlextResult[FlextLdifTypes.Dict].ok(attr_data)
+            return FlextResult[dict[str, object]].ok(attr_data)
 
         except Exception as e:  # pragma: no cover
-            return FlextResult[FlextLdifTypes.Dict].fail(
+            return FlextResult[dict[str, object]].fail(
                 f"OpenLDAP 2.x attribute parsing failed: {e}"
             )
 
@@ -164,7 +164,7 @@ class FlextLdifQuirksServersOpenldap(FlextLdifQuirksBaseSchemaQuirk):
         """
         return bool(self.OPENLDAP_OLC_PATTERN.search(oc_definition))
 
-    def parse_objectclass(self, oc_definition: str) -> FlextResult[FlextLdifTypes.Dict]:
+    def parse_objectclass(self, oc_definition: str) -> FlextResult[dict[str, object]]:
         """Parse OpenLDAP 2.x objectClass definition.
 
         OpenLDAP 2.x uses RFC 4512 compliant schema format.
@@ -226,11 +226,11 @@ class FlextLdifQuirksServersOpenldap(FlextLdifQuirksBaseSchemaQuirk):
                 kind = "STRUCTURAL"  # Default
 
             if not oid_match:
-                return FlextResult[FlextLdifTypes.Dict].fail(
+                return FlextResult[dict[str, object]].fail(
                     "No OID found in objectClass definition"
                 )
 
-            oc_data: FlextLdifTypes.Dict = {
+            oc_data: dict[str, object] = {
                 FlextLdifConstants.DictKeys.OID: oid_match.group(1),
                 FlextLdifConstants.DictKeys.NAME: name_match.group(1)
                 if name_match
@@ -247,16 +247,16 @@ class FlextLdifQuirksServersOpenldap(FlextLdifQuirksBaseSchemaQuirk):
                 FlextLdifConstants.DictKeys.SERVER_TYPE: "openldap2",
             }
 
-            return FlextResult[FlextLdifTypes.Dict].ok(oc_data)
+            return FlextResult[dict[str, object]].ok(oc_data)
 
         except Exception as e:  # pragma: no cover
-            return FlextResult[FlextLdifTypes.Dict].fail(
+            return FlextResult[dict[str, object]].fail(
                 f"OpenLDAP 2.x objectClass parsing failed: {e}"
             )
 
     def convert_attribute_to_rfc(
-        self, attr_data: FlextLdifTypes.Dict
-    ) -> FlextResult[FlextLdifTypes.Dict]:
+        self, attr_data: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         """Convert OpenLDAP 2.x attribute to RFC-compliant format.
 
         OpenLDAP 2.x attributes are already RFC-compliant.
@@ -279,16 +279,16 @@ class FlextLdifQuirksServersOpenldap(FlextLdifQuirksBaseSchemaQuirk):
                 "single_value": attr_data.get("single_value"),
             }
 
-            return FlextResult[FlextLdifTypes.Dict].ok(rfc_data)
+            return FlextResult[dict[str, object]].ok(rfc_data)
 
         except Exception as e:  # pragma: no cover
-            return FlextResult[FlextLdifTypes.Dict].fail(
+            return FlextResult[dict[str, object]].fail(
                 f"OpenLDAP 2.x→RFC conversion failed: {e}"
             )
 
     def convert_objectclass_to_rfc(
-        self, oc_data: FlextLdifTypes.Dict
-    ) -> FlextResult[FlextLdifTypes.Dict]:
+        self, oc_data: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         """Convert OpenLDAP 2.x objectClass to RFC-compliant format.
 
         OpenLDAP 2.x objectClasses are already RFC-compliant.
@@ -312,16 +312,16 @@ class FlextLdifQuirksServersOpenldap(FlextLdifQuirksBaseSchemaQuirk):
                 "may": oc_data.get("may"),
             }
 
-            return FlextResult[FlextLdifTypes.Dict].ok(rfc_data)
+            return FlextResult[dict[str, object]].ok(rfc_data)
 
         except Exception as e:  # pragma: no cover
-            return FlextResult[FlextLdifTypes.Dict].fail(
+            return FlextResult[dict[str, object]].fail(
                 f"OpenLDAP 2.x→RFC conversion failed: {e}"
             )
 
     def convert_attribute_from_rfc(
-        self, rfc_data: FlextLdifTypes.Dict
-    ) -> FlextResult[FlextLdifTypes.Dict]:
+        self, rfc_data: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         """Convert RFC-compliant attribute to OpenLDAP 2.x-specific format.
 
         OpenLDAP 2.x attributes are already RFC-compliant, so minimal conversion needed.
@@ -340,16 +340,16 @@ class FlextLdifQuirksServersOpenldap(FlextLdifQuirksBaseSchemaQuirk):
                 FlextLdifConstants.DictKeys.SERVER_TYPE: "openldap2",
             }
 
-            return FlextResult[FlextLdifTypes.Dict].ok(openldap_data)
+            return FlextResult[dict[str, object]].ok(openldap_data)
 
         except Exception as e:  # pragma: no cover
-            return FlextResult[FlextLdifTypes.Dict].fail(
+            return FlextResult[dict[str, object]].fail(
                 f"RFC→OpenLDAP 2.x attribute conversion failed: {e}"
             )
 
     def convert_objectclass_from_rfc(
-        self, rfc_data: FlextLdifTypes.Dict
-    ) -> FlextResult[FlextLdifTypes.Dict]:
+        self, rfc_data: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         """Convert RFC-compliant objectClass to OpenLDAP 2.x-specific format.
 
         OpenLDAP 2.x objectClasses are already RFC-compliant, so minimal conversion needed.
@@ -368,15 +368,15 @@ class FlextLdifQuirksServersOpenldap(FlextLdifQuirksBaseSchemaQuirk):
                 FlextLdifConstants.DictKeys.SERVER_TYPE: "openldap2",
             }
 
-            return FlextResult[FlextLdifTypes.Dict].ok(openldap_data)
+            return FlextResult[dict[str, object]].ok(openldap_data)
 
         except Exception as e:  # pragma: no cover
-            return FlextResult[FlextLdifTypes.Dict].fail(
+            return FlextResult[dict[str, object]].fail(
                 f"RFC→OpenLDAP 2.x objectClass conversion failed: {e}"
             )
 
     def write_attribute_to_rfc(
-        self, attr_data: FlextLdifTypes.Dict
+        self, attr_data: dict[str, object]
     ) -> FlextResult[str]:
         """Write attribute data to RFC-compliant string format.
 
@@ -416,7 +416,7 @@ class FlextLdifQuirksServersOpenldap(FlextLdifQuirksBaseSchemaQuirk):
             return FlextResult[str].fail(f"OpenLDAP 2.x attribute write failed: {e}")
 
     def write_objectclass_to_rfc(
-        self, oc_data: FlextLdifTypes.Dict
+        self, oc_data: dict[str, object]
     ) -> FlextResult[str]:
         """Write objectClass data to RFC-compliant string format.
 
@@ -498,7 +498,7 @@ class FlextLdifQuirksServersOpenldap(FlextLdifQuirksBaseSchemaQuirk):
                 re.match(r"^(\{\d+\})?\s*to\s+", acl_line, re.IGNORECASE)
             ) or acl_line.startswith(f"{FlextLdifConstants.DictKeys.OLCACCESS}:")
 
-        def parse_acl(self, acl_line: str) -> FlextResult[FlextLdifTypes.Dict]:
+        def parse_acl(self, acl_line: str) -> FlextResult[dict[str, object]]:
             """Parse OpenLDAP 2.x ACL definition.
 
             Format: to <what> by <who> <access>
@@ -528,7 +528,7 @@ class FlextLdifQuirksServersOpenldap(FlextLdifQuirksBaseSchemaQuirk):
                 # Parse "to <what>" clause
                 to_match = re.match(r"^to\s+(.+?)\s+by\s+", acl_content, re.IGNORECASE)
                 if not to_match:
-                    return FlextResult[FlextLdifTypes.Dict].fail(
+                    return FlextResult[dict[str, object]].fail(
                         "Invalid OpenLDAP ACL format: missing 'to' clause"
                     )
 
@@ -544,7 +544,7 @@ class FlextLdifQuirksServersOpenldap(FlextLdifQuirksBaseSchemaQuirk):
                     for match in by_pattern.finditer(acl_content)
                 ]
 
-                openldapacl_data: FlextLdifTypes.Dict = {
+                openldapacl_data: dict[str, object] = {
                     FlextLdifConstants.DictKeys.TYPE: FlextLdifConstants.AclFormats.OPENLDAP2_ACL,
                     FlextLdifConstants.DictKeys.FORMAT: FlextLdifConstants.DictKeys.OLCACCESS,
                     "index": index,
@@ -553,16 +553,16 @@ class FlextLdifQuirksServersOpenldap(FlextLdifQuirksBaseSchemaQuirk):
                     FlextLdifConstants.DictKeys.RAW: acl_line,
                 }
 
-                return FlextResult[FlextLdifTypes.Dict].ok(openldapacl_data)
+                return FlextResult[dict[str, object]].ok(openldapacl_data)
 
             except Exception as e:  # pragma: no cover  # pragma: no cover
-                return FlextResult[FlextLdifTypes.Dict].fail(
+                return FlextResult[dict[str, object]].fail(
                     f"OpenLDAP 2.x ACL parsing failed: {e}"
                 )
 
         def convert_acl_to_rfc(
-            self, acl_data: FlextLdifTypes.Dict
-        ) -> FlextResult[FlextLdifTypes.Dict]:
+            self, acl_data: dict[str, object]
+        ) -> FlextResult[dict[str, object]]:
             """Convert OpenLDAP 2.x ACL to RFC-compliant format.
 
             Args:
@@ -574,23 +574,23 @@ class FlextLdifQuirksServersOpenldap(FlextLdifQuirksBaseSchemaQuirk):
             """
             try:
                 # OpenLDAP ACLs don't have direct RFC equivalent
-                rfc_data: FlextLdifTypes.Dict = {
+                rfc_data: dict[str, object] = {
                     FlextLdifConstants.DictKeys.TYPE: FlextLdifConstants.DictKeys.ACL,
                     FlextLdifConstants.DictKeys.FORMAT: FlextLdifConstants.AclFormats.RFC_GENERIC,
                     FlextLdifConstants.DictKeys.SOURCE_FORMAT: "openldap2",
                     FlextLdifConstants.DictKeys.DATA: acl_data,
                 }
 
-                return FlextResult[FlextLdifTypes.Dict].ok(rfc_data)
+                return FlextResult[dict[str, object]].ok(rfc_data)
 
             except Exception as e:  # pragma: no cover  # pragma: no cover
-                return FlextResult[FlextLdifTypes.Dict].fail(
+                return FlextResult[dict[str, object]].fail(
                     f"OpenLDAP 2.x ACL→RFC conversion failed: {e}"
                 )
 
         def convert_acl_from_rfc(
-            self, acl_data: FlextLdifTypes.Dict
-        ) -> FlextResult[FlextLdifTypes.Dict]:
+            self, acl_data: dict[str, object]
+        ) -> FlextResult[dict[str, object]]:
             """Convert RFC ACL to OpenLDAP 2.x-specific format.
 
             Args:
@@ -602,20 +602,20 @@ class FlextLdifQuirksServersOpenldap(FlextLdifQuirksBaseSchemaQuirk):
             """
             try:
                 # Convert RFC ACL to OpenLDAP 2.x format
-                openldap_data: FlextLdifTypes.Dict = {
+                openldap_data: dict[str, object] = {
                     FlextLdifConstants.DictKeys.FORMAT: "openldap2",
                     FlextLdifConstants.DictKeys.TARGET_FORMAT: FlextLdifConstants.DictKeys.OLCACCESS,
                     FlextLdifConstants.DictKeys.DATA: acl_data,
                 }
 
-                return FlextResult[FlextLdifTypes.Dict].ok(openldap_data)
+                return FlextResult[dict[str, object]].ok(openldap_data)
 
             except Exception as e:  # pragma: no cover  # pragma: no cover
-                return FlextResult[FlextLdifTypes.Dict].fail(
+                return FlextResult[dict[str, object]].fail(
                     f"RFC→OpenLDAP 2.x ACL conversion failed: {e}"
                 )
 
-        def write_acl_to_rfc(self, acl_data: FlextLdifTypes.Dict) -> FlextResult[str]:
+        def write_acl_to_rfc(self, acl_data: dict[str, object]) -> FlextResult[str]:
             """Write ACL data to RFC-compliant string format.
 
             Args:
@@ -704,7 +704,7 @@ class FlextLdifQuirksServersOpenldap(FlextLdifQuirksBaseSchemaQuirk):
 
         def process_entry(
             self, entry_dn: str, attributes: FlextLdifTypes.Models.CustomDataDict
-        ) -> FlextResult[FlextLdifTypes.Dict]:
+        ) -> FlextResult[dict[str, object]]:
             """Process entry for OpenLDAP 2.x format.
 
             Args:
@@ -718,7 +718,7 @@ class FlextLdifQuirksServersOpenldap(FlextLdifQuirksBaseSchemaQuirk):
             try:
                 # OpenLDAP 2.x entries are RFC-compliant
                 # Add OpenLDAP-specific processing if needed
-                processed_entry: FlextLdifTypes.Dict = {
+                processed_entry: dict[str, object] = {
                     FlextLdifConstants.DictKeys.DN: entry_dn,
                     FlextLdifConstants.DictKeys.SERVER_TYPE: "openldap2",
                     FlextLdifConstants.DictKeys.IS_CONFIG_ENTRY: "cn=config"
@@ -726,16 +726,16 @@ class FlextLdifQuirksServersOpenldap(FlextLdifQuirksBaseSchemaQuirk):
                 }
                 processed_entry.update(attributes)
 
-                return FlextResult[FlextLdifTypes.Dict].ok(processed_entry)
+                return FlextResult[dict[str, object]].ok(processed_entry)
 
             except Exception as e:  # pragma: no cover  # pragma: no cover
-                return FlextResult[FlextLdifTypes.Dict].fail(
+                return FlextResult[dict[str, object]].fail(
                     f"OpenLDAP 2.x entry processing failed: {e}"
                 )
 
         def convert_entry_to_rfc(
-            self, entry_data: FlextLdifTypes.Dict
-        ) -> FlextResult[FlextLdifTypes.Dict]:
+            self, entry_data: dict[str, object]
+        ) -> FlextResult[dict[str, object]]:
             """Convert server-specific entry to RFC-compliant format.
 
             Args:
@@ -747,9 +747,9 @@ class FlextLdifQuirksServersOpenldap(FlextLdifQuirksBaseSchemaQuirk):
             """
             try:
                 # OpenLDAP 2.x entries are already RFC-compliant
-                return FlextResult[FlextLdifTypes.Dict].ok(entry_data)
+                return FlextResult[dict[str, object]].ok(entry_data)
             except Exception as e:  # pragma: no cover  # pragma: no cover
-                return FlextResult[FlextLdifTypes.Dict].fail(
+                return FlextResult[dict[str, object]].fail(
                     f"OpenLDAP 2.x entry→RFC conversion failed: {e}"
                 )
 

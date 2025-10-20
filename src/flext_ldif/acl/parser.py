@@ -13,10 +13,9 @@ from flext_core import FlextResult, FlextService
 
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
-from flext_ldif.typings import FlextLdifTypes
 
 
-class FlextLdifAclParser(FlextService[FlextLdifTypes.Dict]):
+class FlextLdifAclParser(FlextService[dict[str, object]]):
     """Multi-server ACL parser for different LDAP implementations."""
 
     @override
@@ -26,9 +25,9 @@ class FlextLdifAclParser(FlextService[FlextLdifTypes.Dict]):
         # Logger and container inherited from FlextService via FlextMixins
 
     @override
-    def execute(self) -> FlextResult[FlextLdifTypes.Dict]:
+    def execute(self) -> FlextResult[dict[str, object]]:
         """Execute parser service."""
-        return FlextResult[FlextLdifTypes.Dict].ok({
+        return FlextResult[dict[str, object]].ok({
             "service": FlextLdifAclParser,
             "status": "ready",
         })

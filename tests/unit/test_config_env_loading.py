@@ -252,15 +252,17 @@ class TestConfigInheritance:
         """Test FlextConfig uses FLEXT_ prefix while FlextLdifConfig uses FLEXT_LDIF_."""
         # FlextConfig field with FLEXT_ prefix
         monkeypatch.setenv("FLEXT_DEBUG", "true")
-
         # FlextLdifConfig field with FLEXT_LDIF_ prefix
         monkeypatch.setenv("FLEXT_LDIF_ENCODING", "utf-16")
 
-        config = FlextLdifConfig()
+        # Create config with valid parameters (debug mode compatible: max_workers=1, performance off)
+        config = FlextLdifConfig(max_workers=1, enable_performance_optimizations=False)
 
         # Both prefixes should work for their respective fields
-        assert config.debug is True  # from FlextConfig with FLEXT_
-        assert config.ldif_encoding == "utf-16"  # from FlextLdifConfig with FLEXT_LDIF_
+        assert config.debug is True  # from FlextConfig with FLEXT_ env var
+        assert config.max_workers == 1  # Direct parameter (complies with debug mode)
+        assert config.enable_performance_optimizations is False  # Direct parameter
+        assert config.ldif_encoding == "utf-16"  # from FlextLdifConfig with FLEXT_LDIF_ env var
 
 
 class TestOrderOfPrecedence:

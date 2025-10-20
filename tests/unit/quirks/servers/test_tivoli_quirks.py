@@ -17,7 +17,6 @@ from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.quirks.servers.tivoli_quirks import (
     FlextLdifQuirksServersTivoli,
 )
-from flext_ldif.typings import FlextLdifTypes
 
 
 class TestTivoliSchemaQuirks:
@@ -408,7 +407,7 @@ class TestTivoliAclQuirks:
         """Test ACL conversion from RFC format."""
         quirk = FlextLdifQuirksServersTivoli()
         acl_quirk = quirk.AclQuirk()
-        rfc_data: FlextLdifTypes.Dict = {
+        rfc_data: dict[str, object] = {
             FlextLdifConstants.DictKeys.TYPE: FlextLdifConstants.DictKeys.ACL,
             FlextLdifConstants.DictKeys.DATA: {
                 "access": "read",

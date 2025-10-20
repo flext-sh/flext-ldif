@@ -67,7 +67,7 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
         """
         return bool(self.ORACLE_OUD_PATTERN.search(attr_definition))
 
-    def parse_attribute(self, attr_definition: str) -> FlextResult[FlextLdifTypes.Dict]:
+    def parse_attribute(self, attr_definition: str) -> FlextResult[dict[str, object]]:
         """Parse Oracle OUD attribute definition.
 
         OUD uses RFC 4512 compliant schema format. Parses the definition
@@ -82,7 +82,7 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
         """
         try:
             # Parse RFC 4512 schema definition
-            parsed_data: FlextLdifTypes.Dict = {}
+            parsed_data: dict[str, object] = {}
 
             # Extract OID (first element after opening parenthesis)
             oid_match = re.match(r"\(\s*([0-9.]+)", attr_definition)
@@ -144,10 +144,10 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
                 quirk_type="oud", original_format=attr_definition.strip()
             )
 
-            return FlextResult[FlextLdifTypes.Dict].ok(parsed_data)
+            return FlextResult[dict[str, object]].ok(parsed_data)
 
         except Exception as e:  # pragma: no cover
-            return FlextResult[FlextLdifTypes.Dict].fail(
+            return FlextResult[dict[str, object]].fail(
                 f"OUD attribute parsing failed: {e}"
             )
 
@@ -163,7 +163,7 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
         """
         return bool(self.ORACLE_OUD_PATTERN.search(oc_definition))
 
-    def parse_objectclass(self, oc_definition: str) -> FlextResult[FlextLdifTypes.Dict]:
+    def parse_objectclass(self, oc_definition: str) -> FlextResult[dict[str, object]]:
         """Parse Oracle OUD objectClass definition.
 
         OUD uses RFC 4512 compliant schema format. Parses the definition
@@ -178,7 +178,7 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
         """
         try:
             # Parse RFC 4512 objectClass definition
-            parsed_data: FlextLdifTypes.Dict = {}
+            parsed_data: dict[str, object] = {}
 
             # Extract OID (first element after opening parenthesis)
             oid_match = re.match(r"\(\s*([0-9.]+)", oc_definition)
@@ -250,16 +250,16 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
                 quirk_type="oud", original_format=oc_definition.strip()
             )
 
-            return FlextResult[FlextLdifTypes.Dict].ok(parsed_data)
+            return FlextResult[dict[str, object]].ok(parsed_data)
 
         except Exception as e:  # pragma: no cover
-            return FlextResult[FlextLdifTypes.Dict].fail(
+            return FlextResult[dict[str, object]].fail(
                 f"OUD objectClass parsing failed: {e}"
             )
 
     def convert_attribute_to_rfc(
-        self, attr_data: FlextLdifTypes.Dict
-    ) -> FlextResult[FlextLdifTypes.Dict]:
+        self, attr_data: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         """Convert OUD attribute to RFC-compliant format.
 
         OUD attributes are already RFC-compliant, so minimal conversion needed.
@@ -281,16 +281,16 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
                 FlextLdifConstants.DictKeys.EQUALITY: attr_data.get("equality"),
             }
 
-            return FlextResult[FlextLdifTypes.Dict].ok(rfc_data)
+            return FlextResult[dict[str, object]].ok(rfc_data)
 
         except Exception as e:  # pragma: no cover
-            return FlextResult[FlextLdifTypes.Dict].fail(
+            return FlextResult[dict[str, object]].fail(
                 f"OUD→RFC conversion failed: {e}"
             )
 
     def convert_objectclass_to_rfc(
-        self, oc_data: FlextLdifTypes.Dict
-    ) -> FlextResult[FlextLdifTypes.Dict]:
+        self, oc_data: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         """Convert OUD objectClass to RFC-compliant format.
 
         OUD objectClasses are already RFC-compliant.
@@ -314,15 +314,15 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
                 "may": oc_data.get("may"),
             }
 
-            return FlextResult[FlextLdifTypes.Dict].ok(rfc_data)
+            return FlextResult[dict[str, object]].ok(rfc_data)
 
         except Exception as e:  # pragma: no cover
-            return FlextResult[FlextLdifTypes.Dict].fail(
+            return FlextResult[dict[str, object]].fail(
                 f"OUD→RFC conversion failed: {e}"
             )
 
     def write_attribute_to_rfc(
-        self, attr_data: FlextLdifTypes.Dict
+        self, attr_data: dict[str, object]
     ) -> FlextResult[str]:
         """Write OUD attribute data to RFC 4512 compliant string format.
 
@@ -394,7 +394,7 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
                 parts.append(f"SYNTAX {syntax_str}")
 
             # Add SINGLE-VALUE flag (optional)
-            if attr_data.get("single_value", False):
+            if attr_data.get("single_value"):
                 parts.append("SINGLE-VALUE")
 
             # Add X-ORIGIN (optional)
@@ -410,7 +410,7 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
             return FlextResult[str].fail(f"Failed to write attribute to RFC: {e}")
 
     def write_objectclass_to_rfc(
-        self, oc_data: FlextLdifTypes.Dict
+        self, oc_data: dict[str, object]
     ) -> FlextResult[str]:
         """Write OUD objectClass data to RFC 4512 compliant string format.
 
@@ -510,8 +510,8 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
             return FlextResult[str].fail(f"Failed to write objectClass to RFC: {e}")
 
     def convert_attribute_from_rfc(
-        self, rfc_data: FlextLdifTypes.Dict
-    ) -> FlextResult[FlextLdifTypes.Dict]:
+        self, rfc_data: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         """Convert RFC-compliant attribute to OUD-specific format.
 
         Args:
@@ -529,16 +529,16 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
                 FlextLdifConstants.ServerTypes.OUD
             )
 
-            return FlextResult[FlextLdifTypes.Dict].ok(oud_data)
+            return FlextResult[dict[str, object]].ok(oud_data)
 
         except Exception as e:  # pragma: no cover
-            return FlextResult[FlextLdifTypes.Dict].fail(
+            return FlextResult[dict[str, object]].fail(
                 f"RFC→OUD attribute conversion failed: {e}"
             )
 
     def convert_objectclass_from_rfc(
-        self, rfc_data: FlextLdifTypes.Dict
-    ) -> FlextResult[FlextLdifTypes.Dict]:
+        self, rfc_data: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         """Convert RFC-compliant objectClass to OUD-specific format.
 
         Args:
@@ -556,16 +556,16 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
                 FlextLdifConstants.ServerTypes.OUD
             )
 
-            return FlextResult[FlextLdifTypes.Dict].ok(oud_data)
+            return FlextResult[dict[str, object]].ok(oud_data)
 
         except Exception as e:  # pragma: no cover
-            return FlextResult[FlextLdifTypes.Dict].fail(
+            return FlextResult[dict[str, object]].fail(
                 f"RFC→OUD objectClass conversion failed: {e}"
             )
 
     def extract_schemas_from_ldif(
         self, ldif_content: str
-    ) -> FlextResult[FlextLdifTypes.Dict]:
+    ) -> FlextResult[dict[str, object]]:
         """Extract and parse all schema definitions from LDIF content.
 
         Strategy pattern: OUD-specific approach to extract attributeTypes
@@ -602,13 +602,13 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
                     if result.is_success:
                         objectclasses.append(result.unwrap())
 
-            return FlextResult[FlextLdifTypes.Dict].ok({
+            return FlextResult[dict[str, object]].ok({
                 FlextLdifConstants.DictKeys.ATTRIBUTES: attributes,
                 "objectclasses": objectclasses,
             })
 
         except Exception as e:  # pragma: no cover
-            return FlextResult[FlextLdifTypes.Dict].fail(
+            return FlextResult[dict[str, object]].fail(
                 f"OUD schema extraction failed: {e}"
             )
 
@@ -650,7 +650,7 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
             # OUD uses different ACL format than OID
             return acl_line.startswith(("ds-cfg-", "aci:"))
 
-        def parse_acl(self, acl_line: str) -> FlextResult[FlextLdifTypes.Dict]:
+        def parse_acl(self, acl_line: str) -> FlextResult[dict[str, object]]:
             """Parse Oracle OUD ACL definition with multi-line support.
 
             Parses ACI (Access Control Instruction) format used by OUD, extracting:
@@ -676,7 +676,7 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
             """
             try:
                 # Parse ACI format
-                oudacl_data: FlextLdifTypes.Dict = {
+                oudacl_data: dict[str, object] = {
                     FlextLdifConstants.DictKeys.TYPE: "oud_acl",
                     FlextLdifConstants.DictKeys.RAW: acl_line,
                     FlextLdifConstants.DictKeys.FORMAT: "ds-cfg"
@@ -783,16 +783,16 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
                     )
                 )
 
-                return FlextResult[FlextLdifTypes.Dict].ok(oudacl_data)
+                return FlextResult[dict[str, object]].ok(oudacl_data)
 
             except Exception as e:  # pragma: no cover
-                return FlextResult[FlextLdifTypes.Dict].fail(
+                return FlextResult[dict[str, object]].fail(
                     f"OUD ACL parsing failed: {e}"
                 )
 
         def convert_acl_to_rfc(
-            self, acl_data: FlextLdifTypes.Dict
-        ) -> FlextResult[FlextLdifTypes.Dict]:
+            self, acl_data: dict[str, object]
+        ) -> FlextResult[dict[str, object]]:
             """Convert OUD ACL to RFC-compliant format.
 
             Args:
@@ -806,23 +806,23 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
                 # OUD ACLs don't have direct RFC equivalent
                 dk = FlextLdifConstants.DictKeys
                 af = FlextLdifConstants.AclFormats
-                rfc_data: FlextLdifTypes.Dict = {
+                rfc_data: dict[str, object] = {
                     dk.TYPE: dk.ACL,
                     dk.FORMAT: af.RFC_GENERIC,
                     dk.SOURCE_FORMAT: af.OUD_ACL,
                     dk.DATA: acl_data,
                 }
 
-                return FlextResult[FlextLdifTypes.Dict].ok(rfc_data)
+                return FlextResult[dict[str, object]].ok(rfc_data)
 
             except Exception as e:  # pragma: no cover
-                return FlextResult[FlextLdifTypes.Dict].fail(
+                return FlextResult[dict[str, object]].fail(
                     f"OUD ACL→RFC conversion failed: {e}"
                 )
 
         def convert_acl_from_rfc(
-            self, acl_data: FlextLdifTypes.Dict
-        ) -> FlextResult[FlextLdifTypes.Dict]:
+            self, acl_data: dict[str, object]
+        ) -> FlextResult[dict[str, object]]:
             """Convert RFC ACL to OUD-specific format.
 
             Args:
@@ -836,20 +836,20 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
                 # Convert RFC ACL to Oracle OUD format
                 dk = FlextLdifConstants.DictKeys
                 af = FlextLdifConstants.AclFormats
-                oud_data: FlextLdifTypes.Dict = {
+                oud_data: dict[str, object] = {
                     dk.FORMAT: af.OUD_ACL,
                     dk.TARGET_FORMAT: "ds-cfg",
                     dk.DATA: acl_data,
                 }
 
-                return FlextResult[FlextLdifTypes.Dict].ok(oud_data)
+                return FlextResult[dict[str, object]].ok(oud_data)
 
             except Exception as e:  # pragma: no cover
-                return FlextResult[FlextLdifTypes.Dict].fail(
+                return FlextResult[dict[str, object]].fail(
                     f"RFC→OUD ACL conversion failed: {e}"
                 )
 
-        def write_acl_to_rfc(self, acl_data: FlextLdifTypes.Dict) -> FlextResult[str]:
+        def write_acl_to_rfc(self, acl_data: dict[str, object]) -> FlextResult[str]:
             """Write OUD ACL data to ACI string format with multi-line support.
 
             Converts parsed ACL dictionary back to ACI format string.
@@ -995,7 +995,7 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
 
         def extract_acls_from_ldif(
             self, ldif_content: str
-        ) -> FlextResult[list[FlextLdifTypes.Dict]]:
+        ) -> FlextResult[list[dict[str, object]]]:
             """Extract and parse all ACL definitions from LDIF content.
 
             Strategy pattern: OUD-specific approach to extract ACIs from LDIF entries.
@@ -1049,10 +1049,10 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
                     if result.is_success:
                         acls.append(result.unwrap())
 
-                return FlextResult[list[FlextLdifTypes.Dict]].ok(acls)
+                return FlextResult[list[dict[str, object]]].ok(acls)
 
             except Exception as e:  # pragma: no cover
-                return FlextResult[list[FlextLdifTypes.Dict]].fail(
+                return FlextResult[list[dict[str, object]]].fail(
                     f"OUD ACL extraction failed: {e}"
                 )
 
@@ -1102,6 +1102,7 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
             return True
 
         # Oracle OUD boolean attributes that expect TRUE/FALSE instead of 0/1
+        # This IS format-specific - OUD requires TRUE/FALSE, not 0/1
         BOOLEAN_ATTRIBUTES: ClassVar[set[str]] = {
             "pwdlockout",
             "pwdmustchange",
@@ -1121,11 +1122,14 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
             entry_dn: str,
             attributes: FlextLdifTypes.CommonDict.AttributeDict
             | FlextLdifTypes.Models.CustomDataDict,
-        ) -> FlextResult[FlextLdifTypes.Dict]:
+        ) -> FlextResult[dict[str, object]]:
             """Process entry for OUD format with metadata preservation.
 
-            Handles OUD-specific transformations:
-            - Boolean attributes: Convert 0/1 to TRUE/FALSE for OUD compatibility
+            Handles OUD-specific FORMAT transformations:
+            - Boolean attributes: Convert 0/1 to TRUE/FALSE (OUD format requirement)
+
+            NOTE: Attribute/objectClass FILTERING is business logic, NOT format handling.
+            Use FlextLdifFilters in migration service for filtering.
 
             Args:
                 entry_dn: Entry distinguished name
@@ -1137,15 +1141,15 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
             """
             try:
                 # OUD entries are RFC-compliant
-                # Add OUD-specific processing for boolean attributes
-                processed_entry: FlextLdifTypes.Dict = {
+                # Add OUD-specific FORMAT processing for boolean attributes
+                processed_entry: dict[str, object] = {
                     FlextLdifConstants.DictKeys.DN: entry_dn,
                     FlextLdifConstants.DictKeys.SERVER_TYPE: "oud",
                 }
 
-                # Process attributes with boolean conversion
+                # Process attributes with boolean conversion (FORMAT transformation)
                 for attr_name, attr_values in attributes.items():
-                    # Check if this is a boolean attribute that needs conversion
+                    # Check if this is a boolean attribute that needs FORMAT conversion
                     if attr_name.lower() in self.BOOLEAN_ATTRIBUTES:
                         # Convert 0/1 to TRUE/FALSE for OUD
                         if isinstance(attr_values, list):
@@ -1206,16 +1210,16 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
                     )
                 )
 
-                return FlextResult[FlextLdifTypes.Dict].ok(processed_entry)
+                return FlextResult[dict[str, object]].ok(processed_entry)
 
             except Exception as e:  # pragma: no cover
-                return FlextResult[FlextLdifTypes.Dict].fail(
+                return FlextResult[dict[str, object]].fail(
                     f"OUD entry processing failed: {e}"
                 )
 
         def convert_entry_to_rfc(
-            self, entry_data: FlextLdifTypes.Dict
-        ) -> FlextResult[FlextLdifTypes.Dict]:
+            self, entry_data: dict[str, object]
+        ) -> FlextResult[dict[str, object]]:
             """Convert server-specific entry to RFC-compliant format.
 
             Args:
@@ -1227,15 +1231,15 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
             """
             try:
                 # OUD entries are already RFC-compliant
-                return FlextResult[FlextLdifTypes.Dict].ok(entry_data)
+                return FlextResult[dict[str, object]].ok(entry_data)
             except Exception as e:  # pragma: no cover
-                return FlextResult[FlextLdifTypes.Dict].fail(
+                return FlextResult[dict[str, object]].fail(
                     f"OUD entry→RFC conversion failed: {e}"
                 )
 
         def convert_entry_from_rfc(
-            self, entry_data: FlextLdifTypes.Dict
-        ) -> FlextResult[FlextLdifTypes.Dict]:
+            self, entry_data: dict[str, object]
+        ) -> FlextResult[dict[str, object]]:
             """Convert RFC-compliant entry to OUD-specific format.
 
             Args:
@@ -1253,15 +1257,15 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
                     FlextLdifConstants.ServerTypes.OUD
                 )
 
-                return FlextResult[FlextLdifTypes.Dict].ok(oud_entry)
+                return FlextResult[dict[str, object]].ok(oud_entry)
 
             except Exception as e:  # pragma: no cover
-                return FlextResult[FlextLdifTypes.Dict].fail(
+                return FlextResult[dict[str, object]].fail(
                     f"RFC→OUD entry conversion failed: {e}"
                 )
 
         def write_entry_to_ldif(
-            self, entry_data: FlextLdifTypes.Dict
+            self, entry_data: dict[str, object]
         ) -> FlextResult[str]:
             r"""Write OUD entry data to standard LDIF string format.
 
@@ -1354,7 +1358,7 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
 
         def extract_entries_from_ldif(
             self, ldif_content: str
-        ) -> FlextResult[list[FlextLdifTypes.Dict]]:
+        ) -> FlextResult[list[dict[str, object]]]:
             """Extract and parse all directory entries from LDIF content.
 
             Strategy pattern: OUD-specific approach to extract entries from LDIF.
@@ -1368,7 +1372,7 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
             """
             try:
                 entries = []
-                current_entry: FlextLdifTypes.Dict = {}
+                current_entry: dict[str, object] = {}
                 current_attr: str | None = None
                 current_values: list[str] = []
 
@@ -1455,10 +1459,10 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
                         if result.is_success:
                             entries.append(result.unwrap())
 
-                return FlextResult[list[FlextLdifTypes.Dict]].ok(entries)
+                return FlextResult[list[dict[str, object]]].ok(entries)
 
             except Exception as e:  # pragma: no cover
-                return FlextResult[list[FlextLdifTypes.Dict]].fail(
+                return FlextResult[list[dict[str, object]]].fail(
                     f"OUD entry extraction failed: {e}"
                 )
 

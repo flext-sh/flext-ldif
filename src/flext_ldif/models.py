@@ -24,16 +24,101 @@ from typing import Annotated, ClassVar, Literal
 
 from flext_core import FlextModels, FlextResult
 from pydantic import (
+    BeforeValidator,
     ConfigDict,
     Discriminator,
     Field,
     computed_field,
-    field_validator,
     model_validator,
 )
 
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.typings import FlextLdifTypes
+
+# ===== LDAP VALIDATION FUNCTIONS (Pydantic v2 BeforeValidator) =====
+
+
+def _validate_object_class_name(v: str) -> str:
+    """Validate object class name format (Pydantic v2 BeforeValidator)."""
+    if not v or not v.strip():
+        msg = "Object class cannot be empty"
+        raise ValueError(msg)
+    normalized = v.strip().lower()
+    if not all(c.isalnum() or c == "-" for c in normalized):
+        msg = f"Invalid object class name: {v}"
+        raise ValueError(msg)
+    return normalized
+
+
+def _validate_attribute_name(v: str) -> str:
+    """Validate LDAP attribute name format (Pydantic v2 BeforeValidator)."""
+    if not v or not v.strip():
+        msg = "Attribute name cannot be empty"
+        raise ValueError(msg)
+    normalized = v.strip().lower()
+    if not all(c.isalnum() or c in "-_" for c in normalized):
+        msg = f"Invalid attribute name: {v}"
+        raise ValueError(msg)
+    return normalized
+
+
+def _validate_search_scope(v: str) -> str:
+    """Validate LDAP search scope (Pydantic v2 BeforeValidator)."""
+    valid_scopes = {"base", "one", "sub", "subordinate"}
+    normalized = v.strip().lower()
+    if normalized not in valid_scopes:
+        msg = f"Invalid search scope: {v}. Must be one of {valid_scopes}"
+        raise ValueError(msg)
+    return normalized
+
+
+def _validate_ldap_filter(v: str) -> str:
+    """Validate LDAP filter format (Pydantic v2 BeforeValidator)."""
+    if not v or not v.strip():
+        msg = "LDAP filter cannot be empty"
+        raise ValueError(msg)
+    trimmed = v.strip()
+    if not (trimmed.startswith("(") and trimmed.endswith(")")):
+        msg = f"Invalid LDAP filter format: {v}. Must be enclosed in parentheses"
+        raise ValueError(msg)
+    return trimmed
+
+
+def _validate_dn_format(v: str) -> str:
+    """Validate DN format - Basic validation only (Pydantic v2 BeforeValidator)."""
+    if not v or not v.strip():
+        msg = "DN cannot be empty"
+        raise ValueError(msg)
+    
+    dn_str = v.strip()
+    components = [c.strip() for c in dn_str.split(",")]
+    
+    for component in components:
+        if "=" not in component:
+            msg = f"Invalid DN component format: {component}. Expected attribute=value"
+            raise ValueError(msg)
+        
+        attr_part, _, value_part = component.partition("=")
+        attr_name = attr_part.strip()
+        
+        if not attr_name or not attr_name[0].isalpha():
+            msg = f"Invalid DN attribute: {attr_name}. Must start with letter"
+            raise ValueError(msg)
+        
+        if not value_part.strip():
+            msg = f"Invalid DN component: {component}. Value cannot be empty"
+            raise ValueError(msg)
+    
+    return dn_str
+
+
+def _validate_base_dn(v: str) -> str:
+    """Validate base DN format - cannot be empty (Pydantic v2 BeforeValidator)."""
+    if not v or not v.strip():
+        msg = "Base DN cannot be empty"
+        raise ValueError(msg)
+    dn_str = v.strip()
+    return _validate_dn_format(dn_str)
 
 
 class FlextLdifModels(FlextModels):
@@ -64,25 +149,11 @@ class FlextLdifModels(FlextModels):
         - Provides clear domain semantics vs raw strings
         """
 
-        value: str = Field(
+        value: Annotated[str, BeforeValidator(_validate_object_class_name)] = Field(
             min_length=1,
             description="Object class name with validation",
             examples=["inetOrgPerson", "groupOfNames", "organizationalUnit"],
         )
-
-        @field_validator("value")
-        @classmethod
-        def validate_object_class_name(cls, v: str) -> str:
-            """Validate object class name format."""
-            if not v or not v.strip():
-                msg = "Object class cannot be empty"
-                raise ValueError(msg)
-            # Object class names should be alphanumeric with hyphens (case-insensitive)
-            normalized = v.strip().lower()
-            if not all(c.isalnum() or c == "-" for c in normalized):
-                msg = f"Invalid object class name: {v}"
-                raise ValueError(msg)
-            return normalized
 
         @computed_field
         def display_name(self) -> str:
@@ -102,26 +173,11 @@ class FlextLdifModels(FlextModels):
         - Provides clear domain semantics vs raw strings
         """
 
-        value: str = Field(
+        value: Annotated[str, BeforeValidator(_validate_attribute_name)] = Field(
             min_length=1,
             description="Attribute name with validation",
             examples=["cn", "mail", "telephoneNumber", "objectClass"],
         )
-
-        @field_validator("value")
-        @classmethod
-        def validate_attribute_name(cls, v: str) -> str:
-            """Validate attribute name format."""
-            if not v or not v.strip():
-                msg = "Attribute name cannot be empty"
-                raise ValueError(msg)
-            # Attribute names alphanumeric with hyphens/underscores
-            # (case-insensitive)
-            normalized = v.strip().lower()
-            if not all(c.isalnum() or c in "-_" for c in normalized):
-                msg = f"Invalid attribute name: {v}"
-                raise ValueError(msg)
-            return normalized
 
         @computed_field
         def is_multivalued_hint(self) -> bool:
@@ -141,22 +197,10 @@ class FlextLdifModels(FlextModels):
         - Provides clear domain semantics vs raw strings
         """
 
-        value: str = Field(
+        value: Annotated[str, BeforeValidator(_validate_search_scope)] = Field(
             description="Search scope value with enum validation",
             examples=["base", "one", "sub", "subordinate"],
         )
-
-        @field_validator("value")
-        @classmethod
-        def validate_search_scope(cls, v: str) -> str:
-            """Validate search scope is one of allowed values."""
-            valid_scopes = {"base", "one", "sub", "subordinate"}
-            normalized = v.lower().strip()
-            if normalized not in valid_scopes:
-                scopes_str = ", ".join(sorted(valid_scopes))
-                msg = f"Invalid search scope: {v}. Must be: {scopes_str}"
-                raise ValueError(msg)
-            return normalized
 
         @computed_field
         def is_deep_search(self) -> bool:
@@ -175,31 +219,11 @@ class FlextLdifModels(FlextModels):
         - Provides clear domain semantics vs raw strings
         """
 
-        value: str = Field(
+        value: Annotated[str, BeforeValidator(_validate_ldap_filter)] = Field(
             min_length=1,
             description="LDAP search filter with validation",
             examples=["(objectClass=person)", "(|(cn=*)(mail=*))"],
         )
-
-        @field_validator("value")
-        @classmethod
-        def validate_ldap_filter(cls, v: str) -> str:
-            """Validate LDAP filter structure."""
-            if not v or not v.strip():
-                msg = "LDAP filter cannot be empty"
-                raise ValueError(msg)
-            filter_str = v.strip()
-            # Basic validation: must start with ( and end with ), balanced parentheses
-            if not filter_str.startswith("(") or not filter_str.endswith(")"):
-                msg = f"LDAP filter must start with '(' and end with ')': {v}"
-                raise ValueError(msg)
-            # Check balanced parentheses
-            open_count = filter_str.count("(")
-            close_count = filter_str.count(")")
-            if open_count != close_count:
-                msg = f"LDAP filter has unbalanced parentheses: {v}"
-                raise ValueError(msg)
-            return filter_str
 
         @computed_field
         def is_complex(self) -> bool:
@@ -218,7 +242,7 @@ class FlextLdifModels(FlextModels):
             validate_assignment=True,
         )
 
-        value: str = Field(
+        value: Annotated[str, BeforeValidator(_validate_dn_format)] = Field(
             ..., description="DN string value", min_length=1, max_length=2048
         )
         metadata: FlextLdifTypes.Models.CustomDataDict | None = Field(
@@ -231,62 +255,6 @@ class FlextLdifModels(FlextModels):
             r"^[a-zA-Z][a-zA-Z0-9-]*=.*",  # attribute=value format
             re.IGNORECASE,
         )
-
-        @field_validator("value", mode="before")
-        @classmethod
-        def validate_dn_format(cls, v: str) -> str:
-            """Validate DN format - Basic validation only.
-
-            Domain Rule: Validate basic DN structure without external
-            dependencies. Full RFC 4514 normalization is done by
-            infrastructure layer adapters (services/dn_service.py uses
-            ldap3).
-
-            Validates:
-            - DN is not empty
-            - DN components follow attribute=value format
-            - Attribute names start with letter
-            - No invalid characters in basic structure
-
-            Args:
-                v: DN string to validate
-
-            Returns:
-                Validated DN string (NOT normalized - validation only)
-
-            Raises:
-                ValueError: If DN format is invalid
-
-            """
-            if not v or not v.strip():
-                msg = "DN cannot be empty"
-                raise ValueError(msg)
-
-            dn_value = v.strip()
-
-            # Validate basic DN structure: attribute=value pairs
-            # Split by comma (simple validation, full RFC 4514 parsing in
-            # infrastructure layer)
-            components = dn_value.split(",")
-
-            for comp in components:
-                stripped_comp = comp.strip()
-                if not stripped_comp:
-                    msg = f"DN contains empty component: {dn_value}"
-                    raise ValueError(msg)  # pragma: no cover
-
-                # Validate attribute=value format
-                if "=" not in stripped_comp:
-                    msg = f"DN component missing '=' separator: {stripped_comp}"
-                    raise ValueError(msg)  # pragma: no cover
-
-                # Validate attribute name starts with letter (RFC 4512 rule)
-                attr_name = stripped_comp.split("=", 1)[0].strip()
-                if not cls._DN_COMPONENT_PATTERN.match(f"{attr_name}=x"):
-                    msg = f"DN attribute invalid (must start with letter): {attr_name}"
-                    raise ValueError(msg)  # pragma: no cover
-
-            return dn_value
 
         @computed_field
         def components(self) -> list[str]:
@@ -521,7 +489,7 @@ class FlextLdifModels(FlextModels):
     class SearchConfig(FlextModels.StrictArbitraryTypesModel):
         """Configuration for LDAP search operations."""
 
-        base_dn: str = Field(..., description="Base DN for the search")
+        base_dn: Annotated[str, BeforeValidator(_validate_base_dn)] = Field(..., description="Base DN for the search")
         search_filter: str = Field(
             default="(objectClass=*)", description="LDAP search filter"
         )
@@ -535,26 +503,6 @@ class FlextLdifModels(FlextModels):
         size_limit: int = Field(
             default=0, description="Size limit for search results (0 = no limit)"
         )
-
-        @field_validator("base_dn", mode="before")
-        @classmethod
-        def validate_base_dn(cls, v: str) -> str:
-            """Validate base DN is not empty.
-
-            Args:
-                v: Base DN to validate
-
-            Returns:
-                Validated base DN
-
-            Raises:
-                ValueError: If base DN is empty
-
-            """
-            if not v or not v.strip():
-                msg = "Base DN cannot be empty"
-                raise ValueError(msg)
-            return v.strip()
 
     class DiffItem(FlextModels.StrictArbitraryTypesModel):
         """Individual item in a diff operation result.
@@ -613,7 +561,7 @@ class FlextLdifModels(FlextModels):
 
         def summary(self) -> str:
             """Get human-readable summary of changes."""
-            if not self.has_changes:
+            if not self.has_changes():
                 return "No differences found"
 
             parts: list[str] = []

@@ -1,13 +1,13 @@
 """LDIF Batch and Parallel Processors.
 
 This module provides enterprise-grade batch and parallel processing capabilities
-for LDIF entries using FlextProcessors infrastructure. Designed for efficient
+for LDIF entries using concurrent.futures for true parallel execution. Designed for efficient
 large-scale operations on directory data with memory-conscious batching and
 CPU-optimized parallel execution.
 
 Features:
 - LdifBatchProcessor: Memory-efficient batch processing for large datasets
-- LdifParallelProcessor: CPU-optimized parallel processing for compute-intensive operations
+- LdifParallelProcessor: CPU-optimized parallel processing with ThreadPoolExecutor
 - FlextProcessors integration: Leverages flext-core processing infrastructure
 - Type-safe generic processing with full Pydantic model support
 - Comprehensive error handling with FlextResult railway-oriented programming
@@ -26,6 +26,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import concurrent.futures
 from collections.abc import Callable
 from typing import TYPE_CHECKING, TypeVar
 
@@ -129,7 +130,7 @@ class LdifParallelProcessor:
         entries: list[FlextLdifModels.Entry],
         func: Callable[[FlextLdifModels.Entry], T],
     ) -> FlextResult[list[T]]:
-        """Process entries in parallel.
+        """Process entries in parallel using ThreadPoolExecutor.
 
         Args:
             entries: List of LDIF entries to process
@@ -144,12 +145,33 @@ class LdifParallelProcessor:
 
             result = processor.process_parallel(entries, transform_entry)
 
+        Note:
+            Uses concurrent.futures.ThreadPoolExecutor for true parallel execution.
+            Results are returned in the order they complete (not input order).
+
         """
         try:
-            # Note: FlextProcessors provides parallel processing utilities
-            # For now, use sequential processing as FlextProcessors
-            # interface is not fully defined
-            results = [func(entry) for entry in entries]
+            if not entries:
+                return FlextResult[list[T]].ok([])
+
+            # Calculate optimal workers: min of configured max and entry count
+            max_workers = min(len(entries), self._max_workers)
+            results: list[T] = []
+
+            # Use ThreadPoolExecutor for true parallel processing
+            with concurrent.futures.ThreadPoolExecutor(
+                max_workers=max_workers
+            ) as executor:
+                # Submit all tasks for parallel execution
+                future_to_entry = {
+                    executor.submit(func, entry): entry for entry in entries
+                }
+
+                # Collect results as they complete
+                for future in concurrent.futures.as_completed(future_to_entry):
+                    result = future.result()
+                    results.append(result)
+
             return FlextResult[list[T]].ok(results)
 
         except Exception as e:

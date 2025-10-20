@@ -12,10 +12,9 @@ from typing import Any, override
 from flext_core import FlextResult, FlextService
 
 from flext_ldif.models import FlextLdifModels
-from flext_ldif.typings import FlextLdifTypes
 
 
-class FlextLdifObjectClassManager(FlextService[FlextLdifTypes.Dict]):
+class FlextLdifObjectClassManager(FlextService[dict[str, object]]):
     """ObjectClass hierarchy and validation management."""
 
     @override
@@ -25,9 +24,9 @@ class FlextLdifObjectClassManager(FlextService[FlextLdifTypes.Dict]):
         # Logger and container inherited from FlextService via FlextMixins
 
     @override
-    def execute(self: Any) -> FlextResult[FlextLdifTypes.Dict]:
+    def execute(self: Any) -> FlextResult[dict[str, object]]:
         """Execute objectClass manager service."""
-        return FlextResult[FlextLdifTypes.Dict].ok({
+        return FlextResult[dict[str, object]].ok({
             "service": FlextLdifObjectClassManager,
             "status": "ready",
         })
@@ -36,7 +35,7 @@ class FlextLdifObjectClassManager(FlextService[FlextLdifTypes.Dict]):
         self,
         object_class: str,
         schema: FlextLdifModels.SchemaDiscoveryResult,
-    ) -> FlextResult[FlextLdifTypes.StringList]:
+    ) -> FlextResult[list[str]]:
         """Resolve objectClass hierarchy.
 
         Args:
@@ -47,7 +46,7 @@ class FlextLdifObjectClassManager(FlextService[FlextLdifTypes.Dict]):
             FlextResult containing objectClass hierarchy
 
         """
-        hierarchy: FlextLdifTypes.StringList = [object_class]
+        hierarchy: list[str] = [object_class]
 
         if object_class in schema.objectclasses:
             oc_def = schema.objectclasses[object_class]
@@ -61,13 +60,13 @@ class FlextLdifObjectClassManager(FlextService[FlextLdifTypes.Dict]):
             elif isinstance(superior, list):
                 hierarchy.extend(superior)
 
-        return FlextResult[FlextLdifTypes.StringList].ok(hierarchy)
+        return FlextResult[list[str]].ok(hierarchy)
 
     def get_all_required_attributes(
         self,
-        object_classes: FlextLdifTypes.StringList,
+        object_classes: list[str],
         schema: FlextLdifModels.SchemaDiscoveryResult,
-    ) -> FlextResult[FlextLdifTypes.StringList]:
+    ) -> FlextResult[list[str]]:
         """Get all required attributes for objectClasses.
 
         Args:
@@ -91,13 +90,13 @@ class FlextLdifObjectClassManager(FlextService[FlextLdifTypes.Dict]):
                 if isinstance(req_attrs, list):
                     required_attrs.update(req_attrs)
 
-        return FlextResult[FlextLdifTypes.StringList].ok(list(required_attrs))
+        return FlextResult[list[str]].ok(list(required_attrs))
 
     def get_all_optional_attributes(
         self,
-        object_classes: FlextLdifTypes.StringList,
+        object_classes: list[str],
         schema: FlextLdifModels.SchemaDiscoveryResult,
-    ) -> FlextResult[FlextLdifTypes.StringList]:
+    ) -> FlextResult[list[str]]:
         """Get all optional attributes for objectClasses.
 
         Args:
@@ -121,13 +120,13 @@ class FlextLdifObjectClassManager(FlextService[FlextLdifTypes.Dict]):
                 if isinstance(opt_attrs, list):
                     optional_attrs.update(opt_attrs)
 
-        return FlextResult[FlextLdifTypes.StringList].ok(list(optional_attrs))
+        return FlextResult[list[str]].ok(list(optional_attrs))
 
     def validate_objectclass_combination(
         self,
-        object_classes: FlextLdifTypes.StringList,
+        object_classes: list[str],
         schema: FlextLdifModels.SchemaDiscoveryResult,
-    ) -> FlextResult[FlextLdifTypes.Dict]:
+    ) -> FlextResult[dict[str, object]]:
         """Validate objectClass combination.
 
         Args:
@@ -138,7 +137,7 @@ class FlextLdifObjectClassManager(FlextService[FlextLdifTypes.Dict]):
             FlextResult containing validation report
 
         """
-        issues: FlextLdifTypes.StringList = []
+        issues: list[str] = []
         structural_count = 0
 
         for oc_name in object_classes:
@@ -157,13 +156,13 @@ class FlextLdifObjectClassManager(FlextService[FlextLdifTypes.Dict]):
                 f"Multiple structural objectClasses found: {structural_count}"
             )
 
-        validation_result: FlextLdifTypes.Dict = {
+        validation_result: dict[str, object] = {
             "valid": len(issues) == 0,
             "issues": issues,
             "structural_count": structural_count,
         }
 
-        return FlextResult[FlextLdifTypes.Dict].ok(validation_result)
+        return FlextResult[dict[str, object]].ok(validation_result)
 
 
 __all__ = ["FlextLdifObjectClassManager"]

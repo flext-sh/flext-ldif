@@ -489,5 +489,147 @@ class FlextLdifFilters:
                 f"Failed to filter entries by attributes: {e}"
             )
 
+    @staticmethod
+    def filter_entry_attributes(
+        entry: FlextLdifModels.Entry,
+        blocked_attributes: list[str],
+    ) -> FlextResult[FlextLdifModels.Entry]:
+        """Remove specified attributes from entry.
+
+        Creates new Entry with blocked attributes removed. Entry objects are frozen,
+        so this returns a new instance.
+
+        Args:
+            entry: Entry to filter
+            blocked_attributes: List of attribute names to remove (case-insensitive)
+
+        Returns:
+            FlextResult with new Entry instance without blocked attributes
+
+        Example:
+            >>> entry = FlextLdifModels.Entry(
+            ...     dn="cn=test,dc=example",
+            ...     attributes={"cn": ["test"], "orclaci": ["access rule"]}
+            ... )
+            >>> result = FlextLdifFilters.filter_entry_attributes(
+            ...     entry, ["orclaci", "orclentrylevelaci"]
+            ... )
+            >>> filtered_entry = result.unwrap()
+            >>> "orclaci" in filtered_entry.attributes
+            False
+
+        """
+        try:
+            # Case-insensitive blocked attribute set
+            blocked_lower = {attr.lower() for attr in blocked_attributes}
+
+            # Filter attributes (keep only non-blocked)
+            # Note: entry.attributes is LdifAttributes, access underlying dict via .attributes
+            filtered_attrs_dict = {
+                key: value
+                for key, value in entry.attributes.attributes.items()
+                if key.lower() not in blocked_lower
+            }
+
+            # Create new LdifAttributes container
+            new_attributes = FlextLdifModels.LdifAttributes(
+                attributes=filtered_attrs_dict,
+                metadata=entry.attributes.metadata,
+            )
+
+            # Create new Entry (entries are frozen)
+            filtered_entry = FlextLdifModels.Entry(
+                dn=entry.dn,
+                attributes=new_attributes,
+                metadata=entry.metadata,  # Preserve metadata
+            )
+
+            return FlextResult[FlextLdifModels.Entry].ok(filtered_entry)
+
+        except Exception as e:  # pragma: no cover
+            return FlextResult[FlextLdifModels.Entry].fail(
+                f"Failed to filter entry attributes: {e}"
+            )
+
+    @staticmethod
+    def filter_entry_objectclasses(
+        entry: FlextLdifModels.Entry,
+        blocked_objectclasses: list[str],
+    ) -> FlextResult[FlextLdifModels.Entry]:
+        """Remove specified objectClasses from entry.
+
+        Filters objectClass attribute values, removing blocked classes.
+        Creates new Entry with filtered objectClass values.
+
+        Args:
+            entry: Entry to filter
+            blocked_objectclasses: List of objectClass names to remove (case-insensitive)
+
+        Returns:
+            FlextResult with new Entry instance without blocked objectClasses
+
+        Example:
+            >>> entry = FlextLdifModels.Entry(
+            ...     dn="cn=test,dc=example",
+            ...     attributes={"objectClass": ["top", "person", "orclContainerOC"]}
+            ... )
+            >>> result = FlextLdifFilters.filter_entry_objectclasses(
+            ...     entry, ["orclContainerOC", "orclService"]
+            ... )
+            >>> filtered_entry = result.unwrap()
+            >>> "orclContainerOC" in filtered_entry.get_attribute_values("objectClass")
+            False
+
+        """
+        try:
+            # Case-insensitive blocked objectClass set
+            blocked_lower = {oc.lower() for oc in blocked_objectclasses}
+
+            # Get objectClass values
+            oc_values = entry.get_attribute_values(
+                FlextLdifConstants.DictKeys.OBJECTCLASS
+            )
+            if not oc_values:
+                # No objectClass attribute - return entry unchanged
+                return FlextResult[FlextLdifModels.Entry].ok(entry)
+
+            # Filter objectClasses (keep only non-blocked)
+            filtered_ocs = [
+                oc for oc in oc_values if oc.lower() not in blocked_lower
+            ]
+
+            # If no objectClasses remain, fail
+            if not filtered_ocs:
+                return FlextResult[FlextLdifModels.Entry].fail(
+                    f"Entry {entry.dn}: All objectClasses would be removed"
+                )
+
+            # Create new attributes dict with filtered objectClasses
+            # Note: entry.attributes is LdifAttributes, access underlying dict via .attributes
+            new_attrs_dict = dict(entry.attributes.attributes)
+            # Update objectClass attribute with filtered values
+            if FlextLdifConstants.DictKeys.OBJECTCLASS in new_attrs_dict:
+                new_attrs_dict[FlextLdifConstants.DictKeys.OBJECTCLASS].values = filtered_ocs
+
+            # Create new LdifAttributes container
+            new_attributes = FlextLdifModels.LdifAttributes(
+                attributes=new_attrs_dict,
+                metadata=entry.attributes.metadata,
+            )
+
+            # Create new Entry (entries are frozen)
+            filtered_entry = FlextLdifModels.Entry(
+                dn=entry.dn,
+                attributes=new_attributes,
+                metadata=entry.metadata,  # Preserve metadata
+            )
+
+            return FlextResult[FlextLdifModels.Entry].ok(filtered_entry)
+
+        except Exception as e:  # pragma: no cover
+            return FlextResult[FlextLdifModels.Entry].fail(
+                f"Failed to filter entry objectClasses: {e}"
+            )
+
 
 __all__ = ["FlextLdifFilters"]

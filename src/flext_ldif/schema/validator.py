@@ -36,7 +36,7 @@ from flext_ldif.models import FlextLdifModels
 from flext_ldif.typings import FlextLdifTypes
 
 
-class FlextLdifSchemaValidator(FlextService[FlextLdifTypes.Dict]):
+class FlextLdifSchemaValidator(FlextService[dict[str, object]]):
     """Schema validation service for LDIF entries."""
 
     @override
@@ -46,9 +46,9 @@ class FlextLdifSchemaValidator(FlextService[FlextLdifTypes.Dict]):
         # Logger and container inherited from FlextService via FlextMixins
 
     @override
-    def execute(self) -> FlextResult[FlextLdifTypes.Dict]:
+    def execute(self) -> FlextResult[dict[str, object]]:
         """Execute schema validator service."""
-        return FlextResult[FlextLdifTypes.Dict].ok({
+        return FlextResult[dict[str, object]].ok({
             "service": FlextLdifSchemaValidator,
             "status": "ready",
         })
@@ -69,8 +69,8 @@ class FlextLdifSchemaValidator(FlextService[FlextLdifTypes.Dict]):
             FlextResult containing LdifValidationResult
 
         """
-        errors: FlextLdifTypes.StringList = []
-        warnings: FlextLdifTypes.StringList = []
+        errors: list[str] = []
+        warnings: list[str] = []
 
         for idx, entry in enumerate(entries):
             # Basic DN validation
@@ -128,16 +128,16 @@ class FlextLdifSchemaValidator(FlextService[FlextLdifTypes.Dict]):
             FlextResult containing validation report with typed structure
 
         """
-        warnings: FlextLdifTypes.StringList = [
+        warnings: list[str] = [
             f"Attribute '{attr_name}' not in discovered schema"
             for attr_name in entry.attributes.attributes
             if attr_name not in schema.attributes
         ]
 
-        entry_object_classes: FlextLdifTypes.StringList = entry.get_attribute_values(
+        entry_object_classes: list[str] = entry.get_attribute_values(
             FlextLdifConstants.DictKeys.OBJECTCLASS
         )
-        issues: FlextLdifTypes.StringList = [
+        issues: list[str] = [
             f"ObjectClass '{oc}' not in discovered schema"
             for oc in entry_object_classes
             if oc not in schema.objectclasses
@@ -169,9 +169,9 @@ class FlextLdifSchemaValidator(FlextService[FlextLdifTypes.Dict]):
             FlextResult containing validation report with typed structure
 
         """
-        issues: FlextLdifTypes.StringList = []
+        issues: list[str] = []
         entry_attrs = set(entry.attributes.attributes.keys())
-        entry_object_classes: FlextLdifTypes.StringList = entry.get_attribute_values(
+        entry_object_classes: list[str] = entry.get_attribute_values(
             FlextLdifConstants.DictKeys.OBJECTCLASS
         )
 

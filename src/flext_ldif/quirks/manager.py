@@ -7,17 +7,16 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import override
+from typing import cast, override
 
 from flext_core import FlextResult, FlextService
 from pydantic import Field
 
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
-from flext_ldif.typings import FlextLdifTypes
 
 
-class FlextLdifQuirksManager(FlextService[FlextLdifTypes.Dict]):
+class FlextLdifQuirksManager(FlextService[dict[str, object]]):
     """Unified quirks manager for all LDAP server types.
 
     Coordinates server-specific handling for schemas, ACLs, and entries
@@ -25,7 +24,7 @@ class FlextLdifQuirksManager(FlextService[FlextLdifTypes.Dict]):
     """
 
     # Declare Pydantic fields at class level
-    quirks_registry: FlextLdifTypes.NestedDict = Field(
+    quirks_registry: dict[str, object] = Field(
         default_factory=dict, description="Registry of server-specific quirks"
     )
 
@@ -165,9 +164,9 @@ class FlextLdifQuirksManager(FlextService[FlextLdifTypes.Dict]):
         }
 
     @override
-    def execute(self) -> FlextResult[FlextLdifTypes.Dict]:
+    def execute(self) -> FlextResult[dict[str, object]]:
         """Execute quirks manager service."""
-        return FlextResult[FlextLdifTypes.Dict].ok({
+        return FlextResult[dict[str, object]].ok({
             "service": FlextLdifQuirksManager,
             "server_type": self._server_type,
             "quirks_loaded": len(self.quirks_registry),
@@ -192,7 +191,7 @@ class FlextLdifQuirksManager(FlextService[FlextLdifTypes.Dict]):
             object_classes_raw: object = entry.get_attribute_values(
                 FlextLdifConstants.DictKeys.OBJECTCLASS
             )
-            object_classes: FlextLdifTypes.StringList = (
+            object_classes: list[str] = (
                 object_classes_raw if isinstance(object_classes_raw, list) else []
             )
             dn_lower = entry.dn.value.lower()
@@ -299,7 +298,7 @@ class FlextLdifQuirksManager(FlextService[FlextLdifTypes.Dict]):
 
     def get_server_quirks(
         self, server_type: str | None = None
-    ) -> FlextResult[FlextLdifTypes.Dict]:
+    ) -> FlextResult[dict[str, object]]:
         """Get quirks for specified server type.
 
         Args:
@@ -312,17 +311,19 @@ class FlextLdifQuirksManager(FlextService[FlextLdifTypes.Dict]):
         target_server = server_type or self._server_type
 
         if target_server not in self.quirks_registry:
-            return FlextResult[FlextLdifTypes.Dict].fail(
+            return FlextResult[dict[str, object]].fail(
                 f"Unknown server type: {target_server}"
             )
 
-        return FlextResult[FlextLdifTypes.Dict].ok(self.quirks_registry[target_server])
+        # Cast registry value from object to dict[str, object] for type safety
+        quirks = cast("dict[str, object]", self.quirks_registry[target_server])
+        return FlextResult[dict[str, object]].ok(quirks)
 
     def get_acl_attribute_name(
         self, server_type: str | None = None
     ) -> FlextResult[str]:
         """Get ACL attribute name for server type."""
-        quirks_result: FlextResult[FlextLdifTypes.Dict] = self.get_server_quirks(
+        quirks_result: FlextResult[dict[str, object]] = self.get_server_quirks(
             server_type
         )
         if quirks_result.is_failure:
@@ -338,7 +339,7 @@ class FlextLdifQuirksManager(FlextService[FlextLdifTypes.Dict]):
 
     def get_acl_format(self, server_type: str | None = None) -> FlextResult[str]:
         """Get ACL format for server type."""
-        quirks_result: FlextResult[FlextLdifTypes.Dict] = self.get_server_quirks(
+        quirks_result: FlextResult[dict[str, object]] = self.get_server_quirks(
             server_type
         )
         if quirks_result.is_failure:

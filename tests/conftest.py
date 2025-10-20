@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import cast
 
 import pytest
-from flext_core import FlextConstants, FlextResult, FlextTypes
+from flext_core import FlextConstants, FlextResult
 
 from flext_ldif.quirks.registry import FlextLdifQuirksRegistry
 from flext_ldif.rfc.rfc_ldif_parser import FlextLdifRfcLdifParser
@@ -244,11 +244,11 @@ def assert_result_failure(
 # Enhanced flext-core result validation fixtures
 @pytest.fixture
 def validate_flext_result_success() -> Callable[
-    [FlextResult[object]], FlextTypes.BoolDict
+    [FlextResult[object]], dict[str, bool]
 ]:
     """Validate FlextResult success characteristics using flext-core patterns."""
 
-    def validator(result: FlextResult[object]) -> FlextTypes.BoolDict:
+    def validator(result: FlextResult[object]) -> dict[str, bool]:
         return {
             "is_success": result.is_success,
             "has_value": result.is_success and result.value is not None,
@@ -262,11 +262,11 @@ def validate_flext_result_success() -> Callable[
 
 @pytest.fixture
 def validate_flext_result_failure() -> Callable[
-    [FlextResult[object]], FlextTypes.BoolDict
+    [FlextResult[object]], dict[str, bool]
 ]:
     """Validate FlextResult failure characteristics using flext-core patterns."""
 
-    def validator(result: FlextResult[object]) -> FlextTypes.BoolDict:
+    def validator(result: FlextResult[object]) -> dict[str, bool]:
         return {
             "is_failure": result.is_failure,
             "has_error": result.error is not None,

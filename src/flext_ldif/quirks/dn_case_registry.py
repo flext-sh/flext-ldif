@@ -244,9 +244,9 @@ class DnCaseRegistry(FlextModels.Value):
 
     def normalize_dn_references(
         self,
-        data: FlextLdifTypes.Dict,
+        data: dict[str, object],
         dn_fields: list[str] | None = None,
-    ) -> FlextResult[FlextLdifTypes.Dict]:
+    ) -> FlextResult[dict[str, object]]:
         """Normalize DN references in data to use canonical case.
 
         This method searches through a dictionary and normalizes any DN values
@@ -323,10 +323,10 @@ class DnCaseRegistry(FlextModels.Value):
                             normalized_list.append(item)
                     normalized_data[field] = normalized_list
 
-            return FlextResult[FlextLdifTypes.Dict].ok(normalized_data)
+            return FlextResult[dict[str, object]].ok(normalized_data)
 
         except Exception as e:
-            return FlextResult[FlextLdifTypes.Dict].fail(
+            return FlextResult[dict[str, object]].fail(
                 f"Failed to normalize DN references: {e}"
             )
 

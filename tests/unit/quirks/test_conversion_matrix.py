@@ -19,7 +19,6 @@ from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.quirks.conversion_matrix import QuirksConversionMatrix
 from flext_ldif.quirks.servers.oid_quirks import FlextLdifQuirksServersOid
 from flext_ldif.quirks.servers.oud_quirks import FlextLdifQuirksServersOud
-from flext_ldif.typings import FlextLdifTypes
 
 
 class TestConversionMatrixInitialization:
@@ -297,7 +296,7 @@ class TestBatchConversion:
         oid: FlextLdifQuirksServersOid,
     ) -> None:
         """Test batch conversion of multiple attributes."""
-        oud_attrs: list[str | FlextLdifTypes.Dict] = [
+        oud_attrs: list[str | dict[str, object]] = [
             "( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' SYNTAX 1.3.6.1.4.1.1466.115.121.1.40 )",
             "( 2.16.840.1.113894.1.1.2 NAME 'orclDBName' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )",
         ]
@@ -317,7 +316,7 @@ class TestBatchConversion:
         oid: FlextLdifQuirksServersOid,
     ) -> None:
         """Test batch conversion of multiple objectClasses."""
-        oud_ocs: list[str | FlextLdifTypes.Dict] = [
+        oud_ocs: list[str | dict[str, object]] = [
             "( 2.16.840.1.113894.1.2.1 NAME 'orclContext' SUP top STRUCTURAL MUST cn )",
             "( 2.16.840.1.113894.1.2.2 NAME 'orclContainer' SUP top STRUCTURAL MUST cn )",
         ]
@@ -337,7 +336,7 @@ class TestBatchConversion:
         oid: FlextLdifQuirksServersOid,
     ) -> None:
         """Test batch conversion handles malformed data with permissive parsing."""
-        mixed_attrs: list[str | FlextLdifTypes.Dict] = [
+        mixed_attrs: list[str | dict[str, object]] = [
             "( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' SYNTAX 1.3.6.1.4.1.1466.115.121.1.40 )",
             "invalid attribute definition",
             "( 2.16.840.1.113894.1.1.2 NAME 'orclDBName' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )",
@@ -549,7 +548,7 @@ class TestDnExtractionAndRegistration:
         self, matrix: QuirksConversionMatrix
     ) -> None:
         """Test extracting and registering entry DN."""
-        data: FlextLdifTypes.Dict = {"dn": "cn=test,dc=example,dc=com"}
+        data: dict[str, object] = {"dn": "cn=test,dc=example,dc=com"}
         matrix._extract_and_register_dns(data, "entry")
         # DN should be registered - we can't directly test registry state but no exception should be raised
 
@@ -557,7 +556,7 @@ class TestDnExtractionAndRegistration:
         self, matrix: QuirksConversionMatrix
     ) -> None:
         """Test extracting and registering group membership DNs."""
-        data: FlextLdifTypes.Dict = {
+        data: dict[str, object] = {
             "dn": "cn=group,dc=example,dc=com",
             "member": ["cn=user1,dc=example,dc=com", "cn=user2,dc=example,dc=com"],
             "uniqueMember": "cn=user3,dc=example,dc=com",
@@ -570,7 +569,7 @@ class TestDnExtractionAndRegistration:
         self, matrix: QuirksConversionMatrix
     ) -> None:
         """Test extracting DNs from ACL by clauses."""
-        data: FlextLdifTypes.Dict = {
+        data: dict[str, object] = {
             "dn": "cn=acl,dc=example,dc=com",
             "by_clauses": [
                 {"subject": "ldap:///cn=user1,dc=example,dc=com??sub?(cn=*)"},
@@ -584,7 +583,7 @@ class TestDnExtractionAndRegistration:
         self, matrix: QuirksConversionMatrix
     ) -> None:
         """Test DN registration handles mixed case properly."""
-        data: FlextLdifTypes.Dict = {"dn": "CN=Test,DC=Example,DC=Com"}
+        data: dict[str, object] = {"dn": "CN=Test,DC=Example,DC=Com"}
         matrix._extract_and_register_dns(data, "entry")
         # Mixed case DN should be registered without issues
 
@@ -592,7 +591,7 @@ class TestDnExtractionAndRegistration:
         self, matrix: QuirksConversionMatrix
     ) -> None:
         """Test DN extraction with empty data."""
-        data: FlextLdifTypes.Dict = {}
+        data: dict[str, object] = {}
         matrix._extract_and_register_dns(data, "entry")
         # Empty data should not cause issues
 
@@ -604,7 +603,7 @@ class TestDnExtractionAndRegistration:
         matrix.dn_registry.register_dn("cn=test,dc=example,dc=com")
         matrix.dn_registry.register_dn("cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com")
 
-        data: FlextLdifTypes.Dict = {
+        data: dict[str, object] = {
             "dn": "cn=test,dc=example,dc=com",
             "member": "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
         }
@@ -616,7 +615,7 @@ class TestDnExtractionAndRegistration:
 
     def test_normalize_dns_in_data_no_dns(self, matrix: QuirksConversionMatrix) -> None:
         """Test DN normalization with no DNs in data."""
-        data: FlextLdifTypes.Dict = {"cn": "test", "sn": "user"}
+        data: dict[str, object] = {"cn": "test", "sn": "user"}
         result = matrix._normalize_dns_in_data(data)
         assert result.is_success
 
@@ -685,21 +684,21 @@ class TestAttributeConversionErrorPaths:
         """Test attribute conversion fails when source quirk to_rfc fails."""
 
         class MockQuirk:
-            def parse_attribute(self, data: str) -> FlextResult[FlextLdifTypes.Dict]:
+            def parse_attribute(self, data: str) -> FlextResult[dict[str, object]]:
                 return FlextResult.ok({"name": "test"})
 
             def convert_attribute_to_rfc(
-                self, data: FlextLdifTypes.Dict
-            ) -> FlextResult[FlextLdifTypes.Dict]:
+                self, data: dict[str, object]
+            ) -> FlextResult[dict[str, object]]:
                 return FlextResult.fail("to_rfc failed")
 
             def convert_attribute_from_rfc(
-                self, data: FlextLdifTypes.Dict
-            ) -> FlextResult[FlextLdifTypes.Dict]:
+                self, data: dict[str, object]
+            ) -> FlextResult[dict[str, object]]:
                 return FlextResult.ok(data)
 
             def write_attribute_to_rfc(
-                self, data: FlextLdifTypes.Dict
+                self, data: dict[str, object]
             ) -> FlextResult[str]:
                 return FlextResult.ok("(test)")
 
@@ -718,41 +717,41 @@ class TestAttributeConversionErrorPaths:
         """Test attribute conversion fails when target quirk from_rfc fails."""
 
         class MockQuirk:
-            def parse_attribute(self, data: str) -> FlextResult[FlextLdifTypes.Dict]:
+            def parse_attribute(self, data: str) -> FlextResult[dict[str, object]]:
                 return FlextResult.ok({"name": "test"})
 
             def convert_attribute_to_rfc(
-                self, data: FlextLdifTypes.Dict
-            ) -> FlextResult[FlextLdifTypes.Dict]:
+                self, data: dict[str, object]
+            ) -> FlextResult[dict[str, object]]:
                 return FlextResult.ok(data)
 
             def convert_attribute_from_rfc(
-                self, data: FlextLdifTypes.Dict
-            ) -> FlextResult[FlextLdifTypes.Dict]:
+                self, data: dict[str, object]
+            ) -> FlextResult[dict[str, object]]:
                 return FlextResult.fail("from_rfc failed")
 
             def write_attribute_to_rfc(
-                self, data: FlextLdifTypes.Dict
+                self, data: dict[str, object]
             ) -> FlextResult[str]:
                 return FlextResult.ok("(test)")
 
         # Create a source quirk with parse support
         class SourceQuirk:
-            def parse_attribute(self, data: str) -> FlextResult[FlextLdifTypes.Dict]:
+            def parse_attribute(self, data: str) -> FlextResult[dict[str, object]]:
                 return FlextResult.ok({"name": "test"})
 
             def convert_attribute_to_rfc(
-                self, data: FlextLdifTypes.Dict
-            ) -> FlextResult[FlextLdifTypes.Dict]:
+                self, data: dict[str, object]
+            ) -> FlextResult[dict[str, object]]:
                 return FlextResult.ok(data)
 
             def convert_attribute_from_rfc(
-                self, data: FlextLdifTypes.Dict
-            ) -> FlextResult[FlextLdifTypes.Dict]:
+                self, data: dict[str, object]
+            ) -> FlextResult[dict[str, object]]:
                 return FlextResult.ok(data)
 
             def write_attribute_to_rfc(
-                self, data: FlextLdifTypes.Dict
+                self, data: dict[str, object]
             ) -> FlextResult[str]:
                 return FlextResult.ok("(test)")
 
@@ -776,21 +775,21 @@ class TestAttributeConversionErrorPaths:
         """Test attribute conversion fails when target quirk write fails."""
 
         class MockQuirk:
-            def parse_attribute(self, data: str) -> FlextResult[FlextLdifTypes.Dict]:
+            def parse_attribute(self, data: str) -> FlextResult[dict[str, object]]:
                 return FlextResult.ok({"name": "test"})
 
             def convert_attribute_to_rfc(
-                self, data: FlextLdifTypes.Dict
-            ) -> FlextResult[FlextLdifTypes.Dict]:
+                self, data: dict[str, object]
+            ) -> FlextResult[dict[str, object]]:
                 return FlextResult.ok(data)
 
             def convert_attribute_from_rfc(
-                self, data: FlextLdifTypes.Dict
-            ) -> FlextResult[FlextLdifTypes.Dict]:
+                self, data: dict[str, object]
+            ) -> FlextResult[dict[str, object]]:
                 return FlextResult.ok(data)
 
             def write_attribute_to_rfc(
-                self, data: FlextLdifTypes.Dict
+                self, data: dict[str, object]
             ) -> FlextResult[str]:
                 return FlextResult.fail("write failed")
 
@@ -814,7 +813,7 @@ class TestAttributeConversionErrorPaths:
         """Test attribute conversion handles unexpected exceptions."""
 
         class MockQuirk:
-            def parse_attribute(self, data: str) -> FlextResult[FlextLdifTypes.Dict]:
+            def parse_attribute(self, data: str) -> FlextResult[dict[str, object]]:
                 error_msg = "unexpected error"
                 raise RuntimeError(error_msg)
 
@@ -853,17 +852,17 @@ class TestObjectClassConversionErrorPaths:
 
         class MockQuirk:
             def convert_objectclass_to_rfc(
-                self, data: FlextLdifTypes.Dict
-            ) -> FlextResult[FlextLdifTypes.Dict]:
+                self, data: dict[str, object]
+            ) -> FlextResult[dict[str, object]]:
                 return FlextResult.ok(data)
 
             def convert_objectclass_from_rfc(
-                self, data: FlextLdifTypes.Dict
-            ) -> FlextResult[FlextLdifTypes.Dict]:
+                self, data: dict[str, object]
+            ) -> FlextResult[dict[str, object]]:
                 return FlextResult.ok(data)
 
             def write_objectclass_to_rfc(
-                self, data: FlextLdifTypes.Dict
+                self, data: dict[str, object]
             ) -> FlextResult[str]:
                 return FlextResult.ok("(test)")
 
@@ -896,21 +895,21 @@ class TestObjectClassConversionErrorPaths:
         """Test objectClass conversion fails when source quirk to_rfc fails."""
 
         class MockQuirk:
-            def parse_objectclass(self, data: str) -> FlextResult[FlextLdifTypes.Dict]:
+            def parse_objectclass(self, data: str) -> FlextResult[dict[str, object]]:
                 return FlextResult.ok({"name": "test"})
 
             def convert_objectclass_to_rfc(
-                self, data: FlextLdifTypes.Dict
-            ) -> FlextResult[FlextLdifTypes.Dict]:
+                self, data: dict[str, object]
+            ) -> FlextResult[dict[str, object]]:
                 return FlextResult.fail("to_rfc failed")
 
             def convert_objectclass_from_rfc(
-                self, data: FlextLdifTypes.Dict
-            ) -> FlextResult[FlextLdifTypes.Dict]:
+                self, data: dict[str, object]
+            ) -> FlextResult[dict[str, object]]:
                 return FlextResult.ok(data)
 
             def write_objectclass_to_rfc(
-                self, data: FlextLdifTypes.Dict
+                self, data: dict[str, object]
             ) -> FlextResult[str]:
                 return FlextResult.ok("(test)")
 
@@ -929,32 +928,32 @@ class TestObjectClassConversionErrorPaths:
         """Test objectClass conversion fails when target quirk from_rfc fails."""
 
         class MockQuirk:
-            def parse_objectclass(self, data: str) -> FlextResult[FlextLdifTypes.Dict]:
+            def parse_objectclass(self, data: str) -> FlextResult[dict[str, object]]:
                 return FlextResult.ok({"name": "test"})
 
             def convert_objectclass_to_rfc(
-                self, data: FlextLdifTypes.Dict
-            ) -> FlextResult[FlextLdifTypes.Dict]:
+                self, data: dict[str, object]
+            ) -> FlextResult[dict[str, object]]:
                 return FlextResult.ok(data)
 
             def convert_objectclass_from_rfc(
-                self, data: FlextLdifTypes.Dict
-            ) -> FlextResult[FlextLdifTypes.Dict]:
+                self, data: dict[str, object]
+            ) -> FlextResult[dict[str, object]]:
                 return FlextResult.fail("from_rfc failed")
 
             def write_objectclass_to_rfc(
-                self, data: FlextLdifTypes.Dict
+                self, data: dict[str, object]
             ) -> FlextResult[str]:
                 return FlextResult.ok("(test)")
 
         # Create a source quirk with parse support
         class SourceQuirk:
-            def parse_objectclass(self, data: str) -> FlextResult[FlextLdifTypes.Dict]:
+            def parse_objectclass(self, data: str) -> FlextResult[dict[str, object]]:
                 return FlextResult.ok({"name": "test"})
 
             def convert_objectclass_to_rfc(
-                self, data: FlextLdifTypes.Dict
-            ) -> FlextResult[FlextLdifTypes.Dict]:
+                self, data: dict[str, object]
+            ) -> FlextResult[dict[str, object]]:
                 return FlextResult.ok(data)
 
         source_quirk = SourceQuirk()
@@ -977,21 +976,21 @@ class TestObjectClassConversionErrorPaths:
         """Test objectClass conversion fails when target quirk write fails."""
 
         class MockQuirk:
-            def parse_objectclass(self, data: str) -> FlextResult[FlextLdifTypes.Dict]:
+            def parse_objectclass(self, data: str) -> FlextResult[dict[str, object]]:
                 return FlextResult.ok({"name": "test"})
 
             def convert_objectclass_to_rfc(
-                self, data: FlextLdifTypes.Dict
-            ) -> FlextResult[FlextLdifTypes.Dict]:
+                self, data: dict[str, object]
+            ) -> FlextResult[dict[str, object]]:
                 return FlextResult.ok(data)
 
             def convert_objectclass_from_rfc(
-                self, data: FlextLdifTypes.Dict
-            ) -> FlextResult[FlextLdifTypes.Dict]:
+                self, data: dict[str, object]
+            ) -> FlextResult[dict[str, object]]:
                 return FlextResult.ok(data)
 
             def write_objectclass_to_rfc(
-                self, data: FlextLdifTypes.Dict
+                self, data: dict[str, object]
             ) -> FlextResult[str]:
                 return FlextResult.fail("write failed")
 
@@ -1015,7 +1014,7 @@ class TestObjectClassConversionErrorPaths:
         """Test objectClass conversion handles unexpected exceptions."""
 
         class MockQuirk:
-            def parse_objectclass(self, data: str) -> FlextResult[FlextLdifTypes.Dict]:
+            def parse_objectclass(self, data: str) -> FlextResult[dict[str, object]]:
                 error_msg = "unexpected error"
                 raise RuntimeError(error_msg)
 
@@ -1068,34 +1067,34 @@ class TestAclConversion:
         """Test ACL conversion fails when source quirk lacks ACL support."""
 
         class MockQuirk:
-            def write_acl_to_rfc(self, data: FlextLdifTypes.Dict) -> FlextResult[str]:
+            def write_acl_to_rfc(self, data: dict[str, object]) -> FlextResult[str]:
                 return FlextResult.ok("test")
 
             def convert_acl_to_rfc(
-                self, data: FlextLdifTypes.Dict
-            ) -> FlextResult[FlextLdifTypes.Dict]:
+                self, data: dict[str, object]
+            ) -> FlextResult[dict[str, object]]:
                 return FlextResult.ok(data)
 
             def convert_acl_from_rfc(
-                self, data: FlextLdifTypes.Dict
-            ) -> FlextResult[FlextLdifTypes.Dict]:
+                self, data: dict[str, object]
+            ) -> FlextResult[dict[str, object]]:
                 return FlextResult.ok(data)
 
         source_quirk = MockQuirk()
         # Use OUD which has ACL support but we need to create a target with ACL writing support
 
         class TargetQuirk:
-            def write_acl_to_rfc(self, data: FlextLdifTypes.Dict) -> FlextResult[str]:
+            def write_acl_to_rfc(self, data: dict[str, object]) -> FlextResult[str]:
                 return FlextResult.ok("test")
 
             def convert_acl_to_rfc(
-                self, data: FlextLdifTypes.Dict
-            ) -> FlextResult[FlextLdifTypes.Dict]:
+                self, data: dict[str, object]
+            ) -> FlextResult[dict[str, object]]:
                 return FlextResult.ok(data)
 
             def convert_acl_from_rfc(
-                self, data: FlextLdifTypes.Dict
-            ) -> FlextResult[FlextLdifTypes.Dict]:
+                self, data: dict[str, object]
+            ) -> FlextResult[dict[str, object]]:
                 return FlextResult.ok(data)
 
         target_quirk = TargetQuirk()
@@ -1112,17 +1111,17 @@ class TestAclConversion:
         """Test ACL conversion fails when target quirk lacks write support."""
 
         class MockQuirk:
-            def parse_acl(self, data: str) -> FlextResult[FlextLdifTypes.Dict]:
+            def parse_acl(self, data: str) -> FlextResult[dict[str, object]]:
                 return FlextResult.ok({"name": "test"})
 
             def convert_acl_to_rfc(
-                self, data: FlextLdifTypes.Dict
-            ) -> FlextResult[FlextLdifTypes.Dict]:
+                self, data: dict[str, object]
+            ) -> FlextResult[dict[str, object]]:
                 return FlextResult.ok(data)
 
             def convert_acl_from_rfc(
-                self, data: FlextLdifTypes.Dict
-            ) -> FlextResult[FlextLdifTypes.Dict]:
+                self, data: dict[str, object]
+            ) -> FlextResult[dict[str, object]]:
                 return FlextResult.ok(data)
 
             # Missing write_acl_to_rfc method
@@ -1166,17 +1165,17 @@ class TestEntryConversion:
                 self.entry = self
 
             def convert_entry_to_rfc(
-                self, data: FlextLdifTypes.Dict
-            ) -> FlextResult[FlextLdifTypes.Dict]:
+                self, data: dict[str, object]
+            ) -> FlextResult[dict[str, object]]:
                 return FlextResult.ok(data)
 
             def convert_entry_from_rfc(
-                self, data: FlextLdifTypes.Dict
-            ) -> FlextResult[FlextLdifTypes.Dict]:
+                self, data: dict[str, object]
+            ) -> FlextResult[dict[str, object]]:
                 return FlextResult.ok(data)
 
             def write_entry_to_ldif(
-                self, data: FlextLdifTypes.Dict
+                self, data: dict[str, object]
             ) -> FlextResult[str]:
                 return FlextResult.ok("dn: cn=test,dc=example,dc=com\ncn: test")
 
@@ -1206,7 +1205,7 @@ sn: user"""
         source_quirk = MockQuirk()
         target_quirk = oid
 
-        entry_data: FlextLdifTypes.Dict = {"dn": "cn=test,dc=example,dc=com"}
+        entry_data: dict[str, object] = {"dn": "cn=test,dc=example,dc=com"}
         result = matrix.convert(source_quirk, target_quirk, "entry", entry_data)
         assert result.is_failure
         assert (
@@ -1224,7 +1223,7 @@ sn: user"""
         source_quirk = self.oud
         target_quirk = MockQuirk()
 
-        entry_data: FlextLdifTypes.Dict = {"dn": "cn=test,dc=example,dc=com"}
+        entry_data: dict[str, object] = {"dn": "cn=test,dc=example,dc=com"}
         result = matrix.convert(source_quirk, target_quirk, "entry", entry_data)
         assert result.is_failure
         assert (
@@ -1254,7 +1253,7 @@ class TestBatchConversionErrorHandling:
         """Test batch conversion handles all items failing."""
 
         class MockQuirk:
-            def parse_attribute(self, data: str) -> FlextResult[FlextLdifTypes.Dict]:
+            def parse_attribute(self, data: str) -> FlextResult[dict[str, object]]:
                 return FlextResult.fail("parse failed")
 
         source_quirk = MockQuirk()
@@ -1275,7 +1274,7 @@ class TestBatchConversionErrorHandling:
         """Test batch conversion truncates errors when more than MAX_ERRORS_TO_SHOW."""
 
         class MockQuirk:
-            def parse_attribute(self, data: str) -> FlextResult[FlextLdifTypes.Dict]:
+            def parse_attribute(self, data: str) -> FlextResult[dict[str, object]]:
                 return FlextResult.fail("parse failed")
 
         source_quirk = MockQuirk()
@@ -1296,7 +1295,7 @@ class TestBatchConversionErrorHandling:
         """Test batch conversion handles unexpected exceptions."""
 
         class MockQuirk:
-            def parse_attribute(self, data: str) -> FlextResult[FlextLdifTypes.Dict]:
+            def parse_attribute(self, data: str) -> FlextResult[dict[str, object]]:
                 error_msg = "unexpected error"
                 raise RuntimeError(error_msg)
 
@@ -1343,12 +1342,12 @@ class TestSupportCheckingEdgeCases:
         """Test support checking for quirk with partial functionality."""
 
         class PartialQuirk:
-            def parse_attribute(self, data: str) -> FlextResult[FlextLdifTypes.Dict]:
+            def parse_attribute(self, data: str) -> FlextResult[dict[str, object]]:
                 return FlextResult.ok({})
 
             def convert_attribute_to_rfc(
-                self, data: FlextLdifTypes.Dict
-            ) -> FlextResult[FlextLdifTypes.Dict]:
+                self, data: dict[str, object]
+            ) -> FlextResult[dict[str, object]]:
                 return FlextResult.ok(data)
 
         quirk = PartialQuirk()
@@ -1368,12 +1367,12 @@ class TestSupportCheckingEdgeCases:
             def __init__(self) -> None:
                 self.acl = self
 
-            def parse_acl(self, data: str) -> FlextResult[FlextLdifTypes.Dict]:
+            def parse_acl(self, data: str) -> FlextResult[dict[str, object]]:
                 return FlextResult.ok({})
 
             def convert_acl_to_rfc(
-                self, data: FlextLdifTypes.Dict
-            ) -> FlextResult[FlextLdifTypes.Dict]:
+                self, data: dict[str, object]
+            ) -> FlextResult[dict[str, object]]:
                 return FlextResult.ok(data)
 
         quirk = AclQuirk()
@@ -1394,8 +1393,8 @@ class TestSupportCheckingEdgeCases:
                 self.entry = self
 
             def convert_entry_to_rfc(
-                self, data: FlextLdifTypes.Dict
-            ) -> FlextResult[FlextLdifTypes.Dict]:
+                self, data: dict[str, object]
+            ) -> FlextResult[dict[str, object]]:
                 return FlextResult.ok(data)
 
         quirk = EntryQuirk()

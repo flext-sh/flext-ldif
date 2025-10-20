@@ -38,7 +38,7 @@ from flext_ldif.quirks.manager import FlextLdifQuirksManager
 from flext_ldif.typings import FlextLdifTypes
 
 
-class FlextLdifAclService(FlextService[FlextLdifTypes.Dict]):
+class FlextLdifAclService(FlextService[dict[str, object]]):
     """Unified ACL management service using Composite pattern for rule composition."""
 
     class AclRule:
@@ -50,7 +50,7 @@ class FlextLdifAclService(FlextService[FlextLdifTypes.Dict]):
             super().__init__()
             self._rule_type = rule_type
 
-        def evaluate(self, context: FlextLdifTypes.Dict) -> FlextResult[bool]:
+        def evaluate(self, context: dict[str, object]) -> FlextResult[bool]:
             """Evaluate ACL rule against context.
 
             This base implementation provides a default evaluation strategy.
@@ -92,7 +92,7 @@ class FlextLdifAclService(FlextService[FlextLdifTypes.Dict]):
             """Add sub-rule to composite."""
             self._rules.append(rule)
 
-        def evaluate(self, context: FlextLdifTypes.Dict) -> FlextResult[bool]:
+        def evaluate(self, context: dict[str, object]) -> FlextResult[bool]:
             """Evaluate all rules with operator logic."""
             if not self._rules:
                 return FlextResult[bool].ok(True)
@@ -123,7 +123,7 @@ class FlextLdifAclService(FlextService[FlextLdifTypes.Dict]):
             self._permission = permission
             self._required = required
 
-        def evaluate(self, context: FlextLdifTypes.Dict) -> FlextResult[bool]:
+        def evaluate(self, context: dict[str, object]) -> FlextResult[bool]:
             """Evaluate permission requirement.
 
             Checks if the required permission is present (or absent) in the context.
@@ -166,7 +166,7 @@ class FlextLdifAclService(FlextService[FlextLdifTypes.Dict]):
             super().__init__(rule_type="subject")
             self._subject_dn = subject_dn
 
-        def evaluate(self, context: FlextLdifTypes.Dict) -> FlextResult[bool]:
+        def evaluate(self, context: dict[str, object]) -> FlextResult[bool]:
             """Evaluate subject match.
 
             Checks if the subject DN matches the required DN, with support for
@@ -214,7 +214,7 @@ class FlextLdifAclService(FlextService[FlextLdifTypes.Dict]):
             super().__init__(rule_type="target")
             self._target_dn = target_dn
 
-        def evaluate(self, context: FlextLdifTypes.Dict) -> FlextResult[bool]:
+        def evaluate(self, context: dict[str, object]) -> FlextResult[bool]:
             """Evaluate target match.
 
             Checks if the target DN matches the required DN, with support for
@@ -271,7 +271,7 @@ class FlextLdifAclService(FlextService[FlextLdifTypes.Dict]):
             self._start_time = start_time
             self._end_time = end_time
 
-        def evaluate(self, context: FlextLdifTypes.Dict) -> FlextResult[bool]:
+        def evaluate(self, context: dict[str, object]) -> FlextResult[bool]:
             """Evaluate time-based access.
 
             Checks if current time falls within the allowed time range.
@@ -349,7 +349,7 @@ class FlextLdifAclService(FlextService[FlextLdifTypes.Dict]):
             self._group_dn = group_dn
             self._member_required = member_required
 
-        def evaluate(self, context: FlextLdifTypes.Dict) -> FlextResult[bool]:
+        def evaluate(self, context: dict[str, object]) -> FlextResult[bool]:
             """Evaluate group membership.
 
             Checks if the subject is a member of the required group.
@@ -448,7 +448,7 @@ class FlextLdifAclService(FlextService[FlextLdifTypes.Dict]):
             return FlextResult[list[FlextLdifModels.AclBase]].fail(error_msg)
 
         acl_attribute = acl_attr_result.value
-        acl_values: FlextLdifTypes.StringList = entry.get_attribute_values(
+        acl_values: list[str] = entry.get_attribute_values(
             acl_attribute
         )
 
@@ -511,7 +511,7 @@ class FlextLdifAclService(FlextService[FlextLdifTypes.Dict]):
             )
 
     def evaluate_acl_rules(
-        self, rules: list[AclRule], context: FlextLdifTypes.Dict
+        self, rules: list[AclRule], context: dict[str, object]
     ) -> FlextResult[bool]:
         """Evaluate ACL rules against context using composite pattern."""
         # Handle None context case
@@ -526,7 +526,7 @@ class FlextLdifAclService(FlextService[FlextLdifTypes.Dict]):
     @override
     @FlextDecorators.log_operation("acl_service_health_check")
     @FlextDecorators.track_performance()
-    def execute(self) -> FlextResult[FlextLdifTypes.Dict]:
+    def execute(self) -> FlextResult[dict[str, object]]:
         """Execute ACL service health check.
 
         FlextDecorators automatically:
@@ -538,7 +538,7 @@ class FlextLdifAclService(FlextService[FlextLdifTypes.Dict]):
             FlextResult containing service status and available patterns
 
         """
-        return FlextResult[FlextLdifTypes.Dict].ok({
+        return FlextResult[dict[str, object]].ok({
             "service": FlextLdifAclService,
             "status": "ready",
             "patterns": {

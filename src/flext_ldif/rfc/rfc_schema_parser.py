@@ -230,8 +230,8 @@ class FlextLdifRfcSchemaParser(FlextService[FlextLdifTypes.Models.CustomDataDict
 
         """
         try:
-            attributes: FlextLdifTypes.NestedDict = {}
-            objectclasses: FlextLdifTypes.NestedDict = {}
+            attributes: dict[str, object] = {}
+            objectclasses: dict[str, object] = {}
             source_dn = "cn=subschemasubentry"
 
             with file_path.open("r", encoding="utf-8") as f:
@@ -291,8 +291,8 @@ class FlextLdifRfcSchemaParser(FlextService[FlextLdifTypes.Models.CustomDataDict
     def _process_schema_line(
         self,
         line: str,
-        attributes: FlextLdifTypes.NestedDict,
-        objectclasses: FlextLdifTypes.NestedDict,
+        attributes: dict[str, object],
+        objectclasses: dict[str, object],
         *,
         parse_attributes: bool,
         parse_objectclasses: bool,

@@ -66,7 +66,12 @@ sn: Three
 
 
 def parallel_processing() -> None:
-    """Process entries in parallel using direct API method."""
+    """Process entries in parallel using direct API method.
+
+    Uses LdifParallelProcessor with ThreadPoolExecutor for true parallel execution.
+    Supports 'transform' (convert to dict) and 'validate' (validate entries).
+    Results may be in different order due to parallel execution.
+    """
     api = FlextLdif.get_instance()
 
     # Create larger dataset for parallel processing benefit
@@ -83,13 +88,13 @@ def parallel_processing() -> None:
         if result.is_success:
             entries.append(result.unwrap())
 
-    # Process in parallel - ONE LINE! (was 15+ lines)
-    # No processor creation, no manual conversion loops!
+    # Process in parallel using ThreadPoolExecutor
     parallel_result = api.process_parallel("validate", entries)
 
     if parallel_result.is_success:
         processed = parallel_result.unwrap()
         _ = len(processed)
+        # Note: Results may be in different order than input due to parallel execution
 
 
 def use_dn_utilities() -> None:

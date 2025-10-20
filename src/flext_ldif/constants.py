@@ -908,7 +908,7 @@ class FlextLdifConstants(FlextConstants):
 
         # Configuration keys
         CONFIG: Final[str] = "config"
-        DEFAULT_ENCODING: Final[str] = "default_encoding"
+        DEFAULT_ENCODING: Final[str] = "utf-8"
         ENCODING: Final[str] = "encoding"
         DESCRIPTION: Final[str] = "description"
         QUIRK_REGISTRY: Final[str] = "quirk_registry"
