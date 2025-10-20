@@ -62,12 +62,12 @@ class FlextLdifQuirksServersTivoli(FlextLdifQuirksBaseSchemaQuirk):
 
         return any(prefix in attr_lower for prefix in self.TIVOLI_ATTRIBUTE_PREFIXES)
 
-    def parse_attribute(self, attr_definition: str) -> FlextResult[FlextLdifTypes.Dict]:
+    def parse_attribute(self, attr_definition: str) -> FlextResult[dict[str, object]]:
         """Parse Tivoli DS attribute definition."""
         try:
             oid_match = re.search(r"\(\s*([\d.]+)", attr_definition)
             if not oid_match:
-                return FlextResult[FlextLdifTypes.Dict].fail(
+                return FlextResult[dict[str, object]].fail(
                     "IBM Tivoli DS attribute definition is missing an OID"
                 )
 
@@ -94,7 +94,7 @@ class FlextLdifQuirksServersTivoli(FlextLdifQuirksBaseSchemaQuirk):
                 re.search(r"\bSINGLE-VALUE\b", attr_definition, re.IGNORECASE)
             )
 
-            attr_data: FlextLdifTypes.Dict = {
+            attr_data: dict[str, object] = {
                 FlextLdifConstants.DictKeys.OID: oid_match.group(1),
                 FlextLdifConstants.DictKeys.NAME: primary_name,
                 FlextLdifConstants.DictKeys.DESC: desc_match.group(1)
@@ -125,10 +125,10 @@ class FlextLdifQuirksServersTivoli(FlextLdifQuirksBaseSchemaQuirk):
             if name_tokens:
                 attr_data["aliases"] = name_tokens
 
-            return FlextResult[FlextLdifTypes.Dict].ok(attr_data)
+            return FlextResult[dict[str, object]].ok(attr_data)
 
         except Exception as exc:  # pragma: no cover
-            return FlextResult[FlextLdifTypes.Dict].fail(
+            return FlextResult[dict[str, object]].fail(
                 f"IBM Tivoli DS attribute parsing failed: {exc}"
             )
 
@@ -144,12 +144,12 @@ class FlextLdifQuirksServersTivoli(FlextLdifQuirksBaseSchemaQuirk):
             name.lower() in self.TIVOLI_OBJECTCLASS_NAMES for name in name_matches
         )
 
-    def parse_objectclass(self, oc_definition: str) -> FlextResult[FlextLdifTypes.Dict]:
+    def parse_objectclass(self, oc_definition: str) -> FlextResult[dict[str, object]]:
         """Parse Tivoli DS objectClass definition."""
         try:
             oid_match = re.search(r"\(\s*([\d.]+)", oc_definition)
             if not oid_match:
-                return FlextResult[FlextLdifTypes.Dict].fail(
+                return FlextResult[dict[str, object]].fail(
                     "IBM Tivoli DS objectClass definition is missing an OID"
                 )
 
@@ -183,7 +183,7 @@ class FlextLdifQuirksServersTivoli(FlextLdifQuirksBaseSchemaQuirk):
             else:
                 kind = "STRUCTURAL"
 
-            oc_data: FlextLdifTypes.Dict = {
+            oc_data: dict[str, object] = {
                 FlextLdifConstants.DictKeys.OID: oid_match.group(1),
                 FlextLdifConstants.DictKeys.NAME: primary_name,
                 FlextLdifConstants.DictKeys.DESC: desc_match.group(1)
@@ -201,17 +201,17 @@ class FlextLdifQuirksServersTivoli(FlextLdifQuirksBaseSchemaQuirk):
             if name_tokens:
                 oc_data["aliases"] = name_tokens
 
-            return FlextResult[FlextLdifTypes.Dict].ok(oc_data)
+            return FlextResult[dict[str, object]].ok(oc_data)
 
         except Exception as exc:  # pragma: no cover
-            return FlextResult[FlextLdifTypes.Dict].fail(
+            return FlextResult[dict[str, object]].fail(
                 f"IBM Tivoli DS objectClass parsing failed: {exc}"
             )
 
     def convert_attribute_to_rfc(
         self,
-        attr_data: FlextLdifTypes.Dict,
-    ) -> FlextResult[FlextLdifTypes.Dict]:
+        attr_data: dict[str, object],
+    ) -> FlextResult[dict[str, object]]:
         """Convert Tivoli attribute metadata to an RFC-friendly payload."""
         try:
             rfc_data = {
@@ -245,17 +245,17 @@ class FlextLdifQuirksServersTivoli(FlextLdifQuirksBaseSchemaQuirk):
                 ),
             }
 
-            return FlextResult[FlextLdifTypes.Dict].ok(rfc_data)
+            return FlextResult[dict[str, object]].ok(rfc_data)
 
         except Exception as exc:  # pragma: no cover
-            return FlextResult[FlextLdifTypes.Dict].fail(
+            return FlextResult[dict[str, object]].fail(
                 f"IBM Tivoli DS→RFC attribute conversion failed: {exc}"
             )
 
     def convert_objectclass_to_rfc(
         self,
-        oc_data: FlextLdifTypes.Dict,
-    ) -> FlextResult[FlextLdifTypes.Dict]:
+        oc_data: dict[str, object],
+    ) -> FlextResult[dict[str, object]]:
         """Convert Tivoli objectClass metadata to an RFC-friendly payload."""
         try:
             rfc_data = {
@@ -283,45 +283,45 @@ class FlextLdifQuirksServersTivoli(FlextLdifQuirksBaseSchemaQuirk):
                 ),
             }
 
-            return FlextResult[FlextLdifTypes.Dict].ok(rfc_data)
+            return FlextResult[dict[str, object]].ok(rfc_data)
 
         except Exception as exc:  # pragma: no cover
-            return FlextResult[FlextLdifTypes.Dict].fail(
+            return FlextResult[dict[str, object]].fail(
                 f"IBM Tivoli DS→RFC objectClass conversion failed: {exc}"
             )
 
     def convert_attribute_from_rfc(
-        self, rfc_data: FlextLdifTypes.Dict
-    ) -> FlextResult[FlextLdifTypes.Dict]:
+        self, rfc_data: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         """Convert RFC-compliant attribute to IBM Tivoli DS-specific format."""
         try:
             tivoli_data = {
                 **rfc_data,
                 FlextLdifConstants.DictKeys.SERVER_TYPE: self.server_type,
             }
-            return FlextResult[FlextLdifTypes.Dict].ok(tivoli_data)
+            return FlextResult[dict[str, object]].ok(tivoli_data)
         except Exception as exc:  # pragma: no cover
-            return FlextResult[FlextLdifTypes.Dict].fail(
+            return FlextResult[dict[str, object]].fail(
                 f"RFC→IBM Tivoli DS attribute conversion failed: {exc}"
             )
 
     def convert_objectclass_from_rfc(
-        self, rfc_data: FlextLdifTypes.Dict
-    ) -> FlextResult[FlextLdifTypes.Dict]:
+        self, rfc_data: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         """Convert RFC-compliant objectClass to IBM Tivoli DS-specific format."""
         try:
             tivoli_data = {
                 **rfc_data,
                 FlextLdifConstants.DictKeys.SERVER_TYPE: self.server_type,
             }
-            return FlextResult[FlextLdifTypes.Dict].ok(tivoli_data)
+            return FlextResult[dict[str, object]].ok(tivoli_data)
         except Exception as exc:  # pragma: no cover
-            return FlextResult[FlextLdifTypes.Dict].fail(
+            return FlextResult[dict[str, object]].fail(
                 f"RFC→IBM Tivoli DS objectClass conversion failed: {exc}"
             )
 
     def write_attribute_to_rfc(
-        self, attr_data: FlextLdifTypes.Dict
+        self, attr_data: dict[str, object]
     ) -> FlextResult[str]:
         """Write attribute data to RFC-compliant string format."""
         try:
@@ -352,7 +352,7 @@ class FlextLdifQuirksServersTivoli(FlextLdifQuirksBaseSchemaQuirk):
             return FlextResult[str].fail(f"IBM Tivoli DS attribute write failed: {exc}")
 
     def write_objectclass_to_rfc(
-        self, oc_data: FlextLdifTypes.Dict
+        self, oc_data: dict[str, object]
     ) -> FlextResult[str]:
         """Write objectClass data to RFC-compliant string format."""
         try:
@@ -413,7 +413,7 @@ class FlextLdifQuirksServersTivoli(FlextLdifQuirksBaseSchemaQuirk):
             attr_name, _, _ = normalized.partition(":")
             return attr_name.strip().lower() in self.ACL_ATTRIBUTE_NAMES
 
-        def parse_acl(self, acl_line: str) -> FlextResult[FlextLdifTypes.Dict]:
+        def parse_acl(self, acl_line: str) -> FlextResult[dict[str, object]]:
             """Parse Tivoli ACL value."""
             try:
                 attr_name, content = self._split_acl_line(acl_line)
@@ -434,7 +434,7 @@ class FlextLdifQuirksServersTivoli(FlextLdifQuirksBaseSchemaQuirk):
                     r"userdn\s*=\s*\"([^\"]+)\"", trimmed, re.IGNORECASE
                 )
 
-                acl_payload: FlextLdifTypes.Dict = {
+                acl_payload: dict[str, object] = {
                     FlextLdifConstants.DictKeys.TYPE: FlextLdifConstants.DictKeys.ACL,
                     FlextLdifConstants.DictKeys.FORMAT: FlextLdifConstants.AclFormats.RFC_GENERIC,
                     FlextLdifConstants.DictKeys.ACL_ATTRIBUTE: attr_name,
@@ -449,37 +449,37 @@ class FlextLdifQuirksServersTivoli(FlextLdifQuirksBaseSchemaQuirk):
                         "content": trimmed,
                     },
                 }
-                return FlextResult[FlextLdifTypes.Dict].ok(acl_payload)
+                return FlextResult[dict[str, object]].ok(acl_payload)
 
             except Exception as exc:  # pragma: no cover
-                return FlextResult[FlextLdifTypes.Dict].fail(
+                return FlextResult[dict[str, object]].fail(
                     f"IBM Tivoli DS ACL parsing failed: {exc}"
                 )
 
         def convert_acl_to_rfc(
             self,
-            acl_data: FlextLdifTypes.Dict,
-        ) -> FlextResult[FlextLdifTypes.Dict]:
+            acl_data: dict[str, object],
+        ) -> FlextResult[dict[str, object]]:
             """Wrap Tivoli ACL into a generic RFC representation."""
             try:
-                # Type narrowing: rfc_acl is already FlextLdifTypes.Dict (FlextLdifTypes.Models.CustomDataDict)
-                rfc_acl: FlextLdifTypes.Dict = {
+                # Type narrowing: rfc_acl is already dict[str, object] (FlextLdifTypes.Models.CustomDataDict)
+                rfc_acl: dict[str, object] = {
                     FlextLdifConstants.DictKeys.TYPE: FlextLdifConstants.DictKeys.ACL,
                     FlextLdifConstants.DictKeys.FORMAT: FlextLdifConstants.AclFormats.RFC_GENERIC,
                     FlextLdifConstants.DictKeys.SOURCE_FORMAT: FlextLdifConstants.AclFormats.RFC_GENERIC,
                     FlextLdifConstants.DictKeys.DATA: acl_data,
                 }
-                return FlextResult[FlextLdifTypes.Dict].ok(rfc_acl)
+                return FlextResult[dict[str, object]].ok(rfc_acl)
 
             except Exception as exc:  # pragma: no cover
-                return FlextResult[FlextLdifTypes.Dict].fail(
+                return FlextResult[dict[str, object]].fail(
                     f"IBM Tivoli DS ACL→RFC conversion failed: {exc}"
                 )
 
         def convert_acl_from_rfc(
             self,
-            acl_data: FlextLdifTypes.Dict,
-        ) -> FlextResult[FlextLdifTypes.Dict]:
+            acl_data: dict[str, object],
+        ) -> FlextResult[dict[str, object]]:
             """Repackage RFC ACL payload for Tivoli."""
             try:
                 tivoli_acl: FlextLdifTypes.Models.CustomDataDict = {
@@ -490,11 +490,11 @@ class FlextLdifQuirksServersTivoli(FlextLdifQuirksBaseSchemaQuirk):
                 return FlextResult[FlextLdifTypes.Models.CustomDataDict].ok(tivoli_acl)
 
             except Exception as exc:  # pragma: no cover
-                return FlextResult[FlextLdifTypes.Dict].fail(
+                return FlextResult[dict[str, object]].fail(
                     f"RFC→IBM Tivoli DS ACL conversion failed: {exc}"
                 )
 
-        def write_acl_to_rfc(self, acl_data: FlextLdifTypes.Dict) -> FlextResult[str]:
+        def write_acl_to_rfc(self, acl_data: dict[str, object]) -> FlextResult[str]:
             """Write ACL data to RFC-compliant string format.
 
             IBM Tivoli DS ACLs use structured format with {} delimiters:
@@ -506,7 +506,7 @@ class FlextLdifQuirksServersTivoli(FlextLdifQuirksBaseSchemaQuirk):
                     "ibm-slapdaccesscontrol",
                 )
                 data_raw = acl_data.get(FlextLdifConstants.DictKeys.DATA, {})
-                data: FlextLdifTypes.Dict = (
+                data: dict[str, object] = (
                     data_raw if isinstance(data_raw, dict) else {}
                 )
 
@@ -575,7 +575,7 @@ class FlextLdifQuirksServersTivoli(FlextLdifQuirksBaseSchemaQuirk):
         def can_handle_entry(
             self,
             entry_dn: str,
-            attributes: FlextLdifTypes.Dict,
+            attributes: dict[str, object],
         ) -> bool:
             """Detect Tivoli-specific entries."""
             dn_lower = entry_dn.lower()
@@ -610,8 +610,8 @@ class FlextLdifQuirksServersTivoli(FlextLdifQuirksBaseSchemaQuirk):
         def process_entry(
             self,
             entry_dn: str,
-            attributes: FlextLdifTypes.Dict,
-        ) -> FlextResult[FlextLdifTypes.Dict]:
+            attributes: dict[str, object],
+        ) -> FlextResult[dict[str, object]]:
             """Normalise Tivoli entries."""
             try:
                 object_classes_raw = attributes.get(
@@ -623,7 +623,7 @@ class FlextLdifQuirksServersTivoli(FlextLdifQuirksBaseSchemaQuirk):
                     else [object_classes_raw]
                 )
 
-                processed_attributes: FlextLdifTypes.Dict = {}
+                processed_attributes: dict[str, object] = {}
                 for attr_name, attr_value in attributes.items():
                     if isinstance(attr_value, bytes):
                         processed_attributes[attr_name] = base64.b64encode(
@@ -632,32 +632,32 @@ class FlextLdifQuirksServersTivoli(FlextLdifQuirksBaseSchemaQuirk):
                     else:
                         processed_attributes[attr_name] = attr_value
 
-                processed_entry: FlextLdifTypes.Dict = {
+                processed_entry: dict[str, object] = {
                     FlextLdifConstants.DictKeys.DN: entry_dn,
                     FlextLdifConstants.DictKeys.SERVER_TYPE: FlextLdifConstants.LdapServers.IBM_TIVOLI,
                     FlextLdifConstants.DictKeys.OBJECTCLASS: object_classes,
                 }
                 processed_entry.update(processed_attributes)
 
-                return FlextResult[FlextLdifTypes.Dict].ok(processed_entry)
+                return FlextResult[dict[str, object]].ok(processed_entry)
 
             except Exception as exc:  # pragma: no cover
-                return FlextResult[FlextLdifTypes.Dict].fail(
+                return FlextResult[dict[str, object]].fail(
                     f"IBM Tivoli DS entry processing failed: {exc}"
                 )
 
         def convert_entry_to_rfc(
             self,
-            entry_data: FlextLdifTypes.Dict,
-        ) -> FlextResult[FlextLdifTypes.Dict]:
+            entry_data: dict[str, object],
+        ) -> FlextResult[dict[str, object]]:
             """Strip Tivoli metadata before RFC processing."""
             try:
                 normalized_entry = dict(entry_data)
                 normalized_entry.pop(FlextLdifConstants.DictKeys.SERVER_TYPE, None)
-                return FlextResult[FlextLdifTypes.Dict].ok(normalized_entry)
+                return FlextResult[dict[str, object]].ok(normalized_entry)
 
             except Exception as exc:  # pragma: no cover
-                return FlextResult[FlextLdifTypes.Dict].fail(
+                return FlextResult[dict[str, object]].fail(
                     f"IBM Tivoli DS entry→RFC conversion failed: {exc}"
                 )
 

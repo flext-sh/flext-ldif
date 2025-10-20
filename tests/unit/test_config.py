@@ -327,8 +327,8 @@ class TestFlextLdifConfig:
         """Test max_workers validator with value above maximum."""
         with pytest.raises(ValidationError) as exc_info:
             FlextLdifConfig(max_workers=999999)
-        # Pydantic v2 error message format
-        assert "Input should be less than or equal to 16" in str(exc_info.value)
+        # Pydantic v2 error message format - max_workers inherited from FlextConfig has le=256
+        assert "Input should be less than or equal to 256" in str(exc_info.value)
 
     def test_validate_validation_level_invalid(self) -> None:
         """Test validation_level validator with invalid value."""
@@ -397,10 +397,15 @@ class TestFlextLdifConfig:
         assert isinstance(result, bool)
 
     def test_is_development_optimized(self) -> None:
-        """Test is_development_optimized method."""
+        """Test is_development_optimized method.
+
+        Now uses inherited fields from FlextConfig:
+        - debug (replaces debug_mode)
+        - log_verbosity (replaces verbose_logging)
+        """
         dev_config = FlextLdifConfig(
-            debug_mode=True,
-            verbose_logging=True,
+            debug=True,  # Inherited from FlextConfig
+            log_verbosity="detailed",  # Inherited from FlextConfig ("detailed" or "full" for development)
             max_workers=2,  # Max for debug mode
             enable_performance_optimizations=False,  # Debug mode conflicts with performance mode
         )

@@ -17,7 +17,6 @@ from tests.fixtures.loader import FlextLdifFixtures
 
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.quirks.servers.oid_quirks import FlextLdifQuirksServersOid
-from flext_ldif.typings import FlextLdifTypes
 
 
 class TestOidSchemaQuirks:
@@ -262,7 +261,7 @@ class TestOidSchemaQuirks:
         self, oid_quirk: FlextLdifQuirksServersOid
     ) -> None:
         """Test converting OID attribute to RFC-compliant format."""
-        oid_attr_data: FlextLdifTypes.Dict = {
+        oid_attr_data: dict[str, object] = {
             "oid": "2.16.840.1.113894.1.1.1",
             "name": "orclguid",
             "desc": "Oracle GUID",
@@ -281,7 +280,7 @@ class TestOidSchemaQuirks:
         self, oid_quirk: FlextLdifQuirksServersOid
     ) -> None:
         """Test converting OID objectClass to RFC-compliant format."""
-        oid_oc_data: FlextLdifTypes.Dict = {
+        oid_oc_data: dict[str, object] = {
             "oid": "2.16.840.1.113894.2.1.1",
             "name": "orclContext",
             "desc": "Oracle Context",
@@ -603,7 +602,7 @@ class TestOidAclQuirks:
         self, acl_quirk: FlextLdifQuirksServersOid.AclQuirk
     ) -> None:
         """Test converting OID ACL to RFC-compliant format."""
-        oid_acl_data: FlextLdifTypes.Dict = {
+        oid_acl_data: dict[str, object] = {
             FlextLdifConstants.DictKeys.TYPE: FlextLdifConstants.DictKeys.STANDARD,
             FlextLdifConstants.DictKeys.RAW: 'orclaci: access to entry by group="cn=Admins" (browse,add,delete)',
         }
@@ -629,7 +628,7 @@ class TestOidAclQuirks:
         self, acl_quirk: FlextLdifQuirksServersOid.AclQuirk
     ) -> None:
         """Test converting RFC ACL to OID-specific format."""
-        rfc_acl_data: FlextLdifTypes.Dict = {
+        rfc_acl_data: dict[str, object] = {
             FlextLdifConstants.DictKeys.TYPE: FlextLdifConstants.DictKeys.ACL,
             FlextLdifConstants.DictKeys.FORMAT: FlextLdifConstants.AclFormats.RFC_GENERIC,
             "permissions": ["read", "search"],
@@ -857,7 +856,7 @@ class TestOidEntryQuirks:
         self, entry_quirk: FlextLdifQuirksServersOid.EntryQuirk
     ) -> None:
         """Test converting OID entry to RFC-compliant format."""
-        oid_entry_data: FlextLdifTypes.Dict = {
+        oid_entry_data: dict[str, object] = {
             FlextLdifConstants.DictKeys.DN: "cn=test,dc=network,dc=example",
             FlextLdifConstants.DictKeys.SERVER_TYPE: "oid",
             "cn": ["test"],
@@ -942,12 +941,12 @@ class TestOidEntryQuirks:
     ) -> None:
         """Test error handling in attribute to RFC conversion."""
         # Test with missing required fields
-        incomplete_attr: FlextLdifTypes.Dict = {"name": "test"}
+        incomplete_attr: dict[str, object] = {"name": "test"}
         result = oid_quirk.convert_attribute_to_rfc(incomplete_attr)
         assert result.is_success  # Should be permissive
 
         # Test with empty data
-        empty_attr: FlextLdifTypes.Dict = {}
+        empty_attr: dict[str, object] = {}
         result = oid_quirk.convert_attribute_to_rfc(empty_attr)
         assert result.is_success  # Should be permissive
 
@@ -956,12 +955,12 @@ class TestOidEntryQuirks:
     ) -> None:
         """Test error handling in objectClass to RFC conversion."""
         # Test with missing required fields
-        incomplete_oc: FlextLdifTypes.Dict = {"name": "test"}
+        incomplete_oc: dict[str, object] = {"name": "test"}
         result = oid_quirk.convert_objectclass_to_rfc(incomplete_oc)
         assert result.is_success  # Should be permissive
 
         # Test with empty data
-        empty_oc: FlextLdifTypes.Dict = {}
+        empty_oc: dict[str, object] = {}
         result = oid_quirk.convert_objectclass_to_rfc(empty_oc)
         assert result.is_success  # Should be permissive
 
@@ -970,12 +969,12 @@ class TestOidEntryQuirks:
     ) -> None:
         """Test error handling in attribute to RFC writing."""
         # Test with missing required fields
-        incomplete_attr: FlextLdifTypes.Dict = {"name": "test"}
+        incomplete_attr: dict[str, object] = {"name": "test"}
         result = oid_quirk.write_attribute_to_rfc(incomplete_attr)
         assert result.is_failure  # Should fail due to missing required fields
 
         # Test with empty data
-        empty_attr: FlextLdifTypes.Dict = {}
+        empty_attr: dict[str, object] = {}
         result = oid_quirk.write_attribute_to_rfc(empty_attr)
         assert result.is_failure  # Should fail due to missing required fields
 
@@ -984,12 +983,12 @@ class TestOidEntryQuirks:
     ) -> None:
         """Test error handling in objectClass to RFC writing."""
         # Test with missing required fields
-        incomplete_oc: FlextLdifTypes.Dict = {"name": "test"}
+        incomplete_oc: dict[str, object] = {"name": "test"}
         result = oid_quirk.write_objectclass_to_rfc(incomplete_oc)
         assert result.is_failure  # Should fail due to missing required fields
 
         # Test with empty data
-        empty_oc: FlextLdifTypes.Dict = {}
+        empty_oc: dict[str, object] = {}
         result = oid_quirk.write_objectclass_to_rfc(empty_oc)
         assert result.is_failure  # Should fail due to missing required fields
 

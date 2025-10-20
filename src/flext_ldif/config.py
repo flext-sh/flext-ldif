@@ -7,11 +7,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Literal
+from typing import Literal, cast
 
 from flext_core import FlextConfig, FlextConstants
 from pydantic import Field, field_validator, model_validator
-from pydantic_settings import SettingsConfigDict
 
 from flext_ldif.constants import FlextLdifConstants
 
@@ -31,27 +30,14 @@ class FlextLdifConfig(FlextConfig):
     eliminating duplication and ensuring consistency across the FLEXT ecosystem.
     """
 
-    model_config = SettingsConfigDict(
-        env_prefix="FLEXT_",  # Field names have "ldif_" prefix, so FLEXT_ + ldif_encoding = FLEXT_LDIF_ENCODING
-        case_sensitive=False,
-        extra="ignore",
-        # Pydantic 2.11+ Settings - Must include env_file (not inherited from parent)
-        env_file=FlextConstants.Platform.ENV_FILE_DEFAULT,
-        env_file_encoding=FlextConstants.Mixins.DEFAULT_ENCODING,
-        env_nested_delimiter=FlextConstants.Platform.ENV_NESTED_DELIMITER,
-        validate_assignment=True,
-        str_strip_whitespace=True,
-        json_schema_extra={
-            "title": "FLEXT LDIF Configuration",
-            "description": "Enterprise LDIF processing using FlextConfig as source",
-        },
-    )
+    # Inherit model_config from FlextConfig (includes debug, trace, all parent fields)
+    # NO model_config override - Pydantic v2 pattern for proper field inheritance
 
     # LDIF Format Configuration using FlextLdifConstants for defaults
     ldif_encoding: Literal[
         "utf-8", "latin-1", "ascii", "utf-16", "utf-32", "cp1252", "iso-8859-1"
-    ] = Field(  # type: ignore[assignment]
-        default=FlextLdifConstants.Encoding.DEFAULT_ENCODING,
+    ] = Field(
+        default="utf-8",
         description="Character encoding for LDIF files",
     )
 
@@ -92,12 +78,7 @@ class FlextLdifConfig(FlextConfig):
         description="Chunk size for LDIF processing",
     )
 
-    max_workers: int = Field(
-        default=FlextLdifConstants.LdifProcessing.PERFORMANCE_MIN_WORKERS,
-        ge=FlextLdifConstants.LdifProcessing.MIN_WORKERS,
-        le=FlextLdifConstants.LdifProcessing.MAX_WORKERS_LIMIT,
-        description="Maximum number of worker threads (inherited from FlextConfig, uses FLEXT_MAX_WORKERS)",
-    )
+    # max_workers inherited from FlextConfig (use self.max_workers)
 
     # Memory and Performance Configuration - Fix default value
     memory_limit_mb: int = Field(
@@ -136,8 +117,8 @@ class FlextLdifConfig(FlextConfig):
         description="Cache size for LDIF analytics",
     )
 
-    analytics_detail_level: Literal["low", "medium", "high"] = Field(  # type: ignore[assignment]
-        default=FlextLdifConstants.DictKeys.MEDIUM,
+    analytics_detail_level: Literal["low", "medium", "high"] = Field(
+        default="medium",
         description="Analytics detail level (low, medium, high)",
     )
 
@@ -218,68 +199,70 @@ class FlextLdifConfig(FlextConfig):
     )
 
     # Error Handling Configuration
-    error_recovery_mode: Literal["continue", "stop", "skip"] = Field(  # type: ignore[assignment]
-        default=FlextLdifConstants.ConfigDefaults.ERROR_RECOVERY_MODE_CONTINUE,
+    error_recovery_mode: Literal["continue", "stop", "skip"] = Field(
+        default="continue",
         description="Error recovery mode (continue, stop, skip)",
     )
 
     # Development and Debug Configuration
-    debug_mode: bool = Field(
-        default=FlextLdifConstants.ConfigDefaults.DEBUG_MODE,
-        description="Enable debug mode",
-    )
+    # debug, trace inherited from FlextConfig (use self.debug, self.trace)
+    # log_verbosity inherited from FlextConfig (use self.log_verbosity for detailed logging)
 
-    verbose_logging: bool = Field(
-        default=FlextLdifConstants.ConfigDefaults.VERBOSE_LOGGING,
-        description="Enable verbose logging",
-    )
-
-    # Pydantic 2.11 field validators
-    # Type coercion validators use FlextConfig's reusable validators
-    @field_validator(
-        "ldif_max_line_length",
-        "ldif_chunk_size",
-        mode="before",
-    )
-    @classmethod
-    def validate_int_fields_ldif(cls, v: int | str) -> int:
-        """Coerce LDIF integer fields from environment variables.
-
-        Delegates to FlextConfig's validate_int_field for consistency.
-        """
-        return cls.validate_int_field(v)
-
+    # Pydantic v2 field validators for environment variable type coercion
     @field_validator(
         "ldif_skip_comments",
+        "ldif_validate_dn_format",
         "ldif_strict_validation",
+        "enable_performance_optimizations",
+        "enable_parallel_processing",
+        "ldif_enable_analytics",
+        "ldif_fail_on_warnings",
+        "ldif_server_specific_quirks",
+        "strict_rfc_compliance",
         mode="before",
     )
     @classmethod
-    def validate_bool_fields_ldif(cls, v: bool | str | int) -> bool:
-        """Coerce LDIF boolean fields from environment variables.
+    def coerce_bool_from_env(cls, v: object) -> bool:
+        """Coerce environment variable strings to bool (strict mode compatible)."""
+        if isinstance(v, bool):
+            return v
+        if isinstance(v, str):
+            return v.lower() in {"true", "1", "yes", "on"}
+        if isinstance(v, int):
+            return v != 0
+        return bool(v)
 
-        Delegates to FlextConfig's validate_boolean_field for consistency.
-        """
-        return cls.validate_boolean_field(v)
+    @field_validator(
+        "ldif_max_line_length",
+        "ldif_max_entries",
+        "ldif_chunk_size",
+        "memory_limit_mb",
+        "parallel_threshold",
+        "ldif_analytics_cache_size",
+        "ldif_batch_size",
+        "ldif_analytics_max_entries",
+        mode="before",
+    )
+    @classmethod
+    def coerce_int_from_env(cls, v: object) -> int:
+        """Coerce environment variable strings to int (strict mode compatible)."""
+        if isinstance(v, int):
+            return v
+        if isinstance(v, str):
+            return int(v.strip())
+        # Cast to int-compatible type for Pyrefly
+        return int(cast("int | float", v))
 
     @field_validator("ldif_analytics_sample_rate", mode="before")
     @classmethod
-    def validate_float_fields_ldif(cls, v: float | str) -> float:
-        """Coerce LDIF float fields from environment variables.
-
-        Delegates to FlextConfig's validate_float_field for consistency.
-        """
-        return cls.validate_float_field(v)
-
-    @field_validator("max_workers", mode="before")
-    @classmethod
-    def validate_max_workers(cls, v: int | str) -> int:
-        """Coerce max workers from string/int using FlextConfig's base validator.
-
-        Delegates to FlextConfig's validate_int_field for type conversion from environment variables.
-        Field constraints (ge/le) handle range validation automatically.
-        """
-        return cls.validate_int_field(v)
+    def coerce_float_from_env(cls, v: object) -> float:
+        """Coerce environment variable strings to float (strict mode compatible)."""
+        if isinstance(v, float):
+            return v
+        if isinstance(v, (int, str)):
+            return float(v)
+        # Cast to float-compatible type for Pyrefly
+        return float(cast("int | float | str", v))
 
     @model_validator(mode="after")
     def validate_ldif_configuration_consistency(self) -> FlextLdifConfig:
@@ -306,9 +289,9 @@ class FlextLdifConfig(FlextConfig):
                 )
                 raise ValueError(msg)
 
-        # Validate debug mode consistency
+        # Validate debug mode consistency (use inherited self.debug from FlextConfig)
         if (
-            self.debug_mode
+            self.debug
             and self.max_workers
             > FlextLdifConstants.ValidationRules.MAX_WORKERS_DEBUG_RULE
         ):
@@ -397,10 +380,16 @@ class FlextLdifConfig(FlextConfig):
         )
 
     def is_development_optimized(self) -> bool:
-        """Check if configuration is optimized for development."""
+        """Check if configuration is optimized for development.
+
+        Uses inherited fields from FlextConfig:
+        - self.debug (replaces debug_mode)
+        - self.log_verbosity (replaces verbose_logging - checks for "detailed" or "full")
+        - self.max_workers
+        """
         return (
-            self.debug_mode
-            and self.verbose_logging
+            self.debug
+            and self.log_verbosity in {"detailed", "full"}
             and self.max_workers <= FlextLdifConstants.DEBUG_MAX_WORKERS
         )
 

@@ -8,7 +8,6 @@ import base64
 
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.quirks.servers.ds389_quirks import FlextLdifQuirksServersDs389
-from flext_ldif.typings import FlextLdifTypes
 
 
 class TestDs389SchemaQuirks:
@@ -376,7 +375,7 @@ class TestDs389AclQuirks:
         """Test converting RFC ACL to 389 DS format."""
         main_quirk = FlextLdifQuirksServersDs389()
         acl_quirk = main_quirk.AclQuirk()
-        rfc_acl: FlextLdifTypes.Dict = {
+        rfc_acl: dict[str, object] = {
             FlextLdifConstants.DictKeys.TYPE: FlextLdifConstants.DictKeys.ACL,
             FlextLdifConstants.DictKeys.DATA: {"version": "3.0"},
         }

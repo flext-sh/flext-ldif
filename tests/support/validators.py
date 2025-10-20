@@ -11,7 +11,7 @@ import re
 from pathlib import Path
 from typing import TypeVar
 
-from flext_core import FlextResult, FlextTypes
+from flext_core import FlextResult
 
 from flext_ldif.models import FlextLdifModels
 
@@ -173,7 +173,7 @@ class TestValidators:
     def validate_file_operations(
         file_path: Path,
         expected_content: str,
-    ) -> FlextTypes.BoolDict:
+    ) -> dict[str, bool]:
         """Validate file operations for LDIF files."""
         validations = {
             "file_exists": file_path.exists(),

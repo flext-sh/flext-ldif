@@ -8,7 +8,6 @@ import base64
 
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.quirks.servers.novell_quirks import FlextLdifQuirksServersNovell
-from flext_ldif.typings import FlextLdifTypes
 
 
 class TestNovellSchemaQuirks:
@@ -382,7 +381,7 @@ class TestNovellAclQuirks:
         """Test converting RFC ACL to Novell format."""
         main_quirk = FlextLdifQuirksServersNovell()
         acl_quirk = main_quirk.AclQuirk()
-        rfc_acl: FlextLdifTypes.Dict = {
+        rfc_acl: dict[str, object] = {
             FlextLdifConstants.DictKeys.TYPE: FlextLdifConstants.DictKeys.ACL,
             FlextLdifConstants.DictKeys.DATA: {
                 "scope": "[Entry Rights]",

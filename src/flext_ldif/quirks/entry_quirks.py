@@ -18,7 +18,7 @@ from flext_ldif.services.dn_service import DnService
 from flext_ldif.typings import FlextLdifTypes
 
 
-class FlextLdifEntryQuirks(FlextService[FlextLdifTypes.Dict]):
+class FlextLdifEntryQuirks(FlextService[dict[str, object]]):
     """Entry adaptation and validation for server-specific quirks."""
 
     @override
@@ -107,7 +107,7 @@ class FlextLdifEntryQuirks(FlextService[FlextLdifTypes.Dict]):
             return FlextResult[FlextLdifModels.Entry].fail(
                 f"attribute_mappings must be dict, got {type(attribute_mappings_raw).__name__}"
             )
-        attribute_mappings: FlextLdifTypes.StringDict = attribute_mappings_raw
+        attribute_mappings: dict[str, str] = attribute_mappings_raw
         adapted_attrs: dict[str, FlextLdifModels.AttributeValues] = {}
 
         # Strip operational attributes FIRST, then apply transformations
@@ -164,8 +164,8 @@ class FlextLdifEntryQuirks(FlextService[FlextLdifTypes.Dict]):
         return adapted_entry_result
 
     def _adapt_attribute_values(
-        self, attr_name: str, attr_values: FlextLdifTypes.StringList, server_type: str
-    ) -> FlextLdifTypes.StringList:
+        self, attr_name: str, attr_values: list[str], server_type: str
+    ) -> list[str]:
         """Adapt attribute values for specific server type.
 
         Args:
@@ -190,7 +190,7 @@ class FlextLdifEntryQuirks(FlextService[FlextLdifTypes.Dict]):
         if attr_name.lower() == FlextLdifConstants.DictKeys.OBJECTCLASS:
             required_classes_raw = rules.get("required_object_classes", [])
             # Type narrow with default for non-list types
-            required_classes: FlextLdifTypes.StringList = (
+            required_classes: list[str] = (
                 required_classes_raw if isinstance(required_classes_raw, list) else []
             )
             for required_class in required_classes:
@@ -238,8 +238,8 @@ class FlextLdifEntryQuirks(FlextService[FlextLdifTypes.Dict]):
             "warnings": [],
         }
 
-        issues: FlextLdifTypes.StringList = []
-        warnings: FlextLdifTypes.StringList = []
+        issues: list[str] = []
+        warnings: list[str] = []
 
         dn_validation = self._validate_dn_format(
             entry.dn.value, server_type or FlextLdifConstants.LdapServers.GENERIC
@@ -252,12 +252,12 @@ class FlextLdifEntryQuirks(FlextService[FlextLdifTypes.Dict]):
         obj_classes_raw: object = entry.get_attribute_values(
             FlextLdifConstants.DictKeys.OBJECTCLASS
         )
-        obj_classes: FlextLdifTypes.StringList = (
+        obj_classes: list[str] = (
             obj_classes_raw if isinstance(obj_classes_raw, list) else []
         )
         # Type narrow with default for non-list types
         required_classes_raw = rules.get("required_object_classes", [])
-        required_classes: FlextLdifTypes.StringList = (
+        required_classes: list[str] = (
             required_classes_raw if isinstance(required_classes_raw, list) else []
         )
 
@@ -269,7 +269,7 @@ class FlextLdifEntryQuirks(FlextService[FlextLdifTypes.Dict]):
 
         # Type narrow with default for non-list types
         special_attrs_raw = rules.get("special_attributes", [])
-        special_attrs: FlextLdifTypes.StringList = (
+        special_attrs: list[str] = (
             special_attrs_raw if isinstance(special_attrs_raw, list) else []
         )
         warnings.extend(
@@ -307,7 +307,7 @@ class FlextLdifEntryQuirks(FlextService[FlextLdifTypes.Dict]):
 
         # Type narrow with default for non-list types
         dn_patterns_raw = rules.get("dn_patterns", [])
-        dn_patterns: FlextLdifTypes.StringList = (
+        dn_patterns: list[str] = (
             dn_patterns_raw if isinstance(dn_patterns_raw, list) else []
         )
 
@@ -317,14 +317,14 @@ class FlextLdifEntryQuirks(FlextService[FlextLdifTypes.Dict]):
             case_sensitive_raw if isinstance(case_sensitive_raw, bool) else False
         )
 
-        issues: FlextLdifTypes.StringList = []
+        issues: list[str] = []
 
         # Use DistinguishedName Model for DN parsing
         try:
             dn_model = FlextLdifModels.DistinguishedName(value=dn)
             # components is a computed_field - access directly and type narrow
             # Avoid model_dump(computed_fields=True) due to type checker limitations
-            dn_components: list[str] = dn_model.components  # type: ignore[assignment]
+            dn_components = dn_model.components
             # components property returns the computed value
             if not isinstance(dn_components, list):
                 dn_components = []

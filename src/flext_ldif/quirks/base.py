@@ -19,6 +19,16 @@ from pydantic import Field
 
 from flext_ldif.typings import FlextLdifTypes
 
+# Deferred import to avoid circular dependency with registry
+# This is an intentional pattern - FlextLdifQuirksRegistry imports from this module
+try:
+    import flext_ldif.quirks.registry as quirks_registry_module
+
+    _QUIRKS_REGISTRY_AVAILABLE = True
+except ImportError:
+    quirks_registry_module = None
+    _QUIRKS_REGISTRY_AVAILABLE = False
+
 logger = logging.getLogger(__name__)
 
 
@@ -58,10 +68,6 @@ class FlextLdifQuirksBaseSchemaQuirk(ABC, FlextModels.Value):
 
         # Only register concrete classes (not base classes or nested abstract classes)
         if not hasattr(cls, "__abstractmethods__") or not cls.__abstractmethods__:
-            # Deferred import inside method to avoid circular dependency with registry
-            # This is an intentional pattern - FlextLdifQuirksRegistry imports from this module
-            import flext_ldif.quirks.registry as quirks_registry_module  # noqa: PLC0415
-
             try:
                 # Check if cls has all required fields with defaults
                 # Pydantic models can only be instantiated if all required fields have defaults
@@ -72,9 +78,10 @@ class FlextLdifQuirksBaseSchemaQuirk(ABC, FlextModels.Value):
                     # This happens for abstract base classes
                     return
 
-                registry = (
-                    quirks_registry_module.FlextLdifQuirksRegistry.get_global_instance()
-                )
+                if quirks_registry_module is not None:
+                    registry = quirks_registry_module.FlextLdifQuirksRegistry.get_global_instance()
+                else:
+                    return
                 registry.register_schema_quirk(quirk_instance)
             except Exception as e:
                 # Registration failures are non-critical during class creation
@@ -254,10 +261,6 @@ class FlextLdifQuirksBaseAclQuirk(ABC, FlextModels.Value):
 
         # Only register concrete classes (not base classes or nested abstract classes)
         if not hasattr(cls, "__abstractmethods__") or not cls.__abstractmethods__:
-            # Deferred import inside method to avoid circular dependency with registry
-            # This is an intentional pattern - FlextLdifQuirksRegistry imports from this module
-            import flext_ldif.quirks.registry as quirks_registry_module  # noqa: PLC0415
-
             try:
                 # Check if cls has all required fields with defaults
                 # Pydantic models can only be instantiated if all required fields have defaults
@@ -268,9 +271,10 @@ class FlextLdifQuirksBaseAclQuirk(ABC, FlextModels.Value):
                     # This happens for abstract base classes
                     return
 
-                registry = (
-                    quirks_registry_module.FlextLdifQuirksRegistry.get_global_instance()
-                )
+                if quirks_registry_module is not None:
+                    registry = quirks_registry_module.FlextLdifQuirksRegistry.get_global_instance()
+                else:
+                    return
                 registry.register_acl_quirk(quirk_instance)
             except Exception as e:
                 # Registration failures are non-critical during class creation
@@ -382,10 +386,6 @@ class FlextLdifQuirksBaseEntryQuirk(ABC, FlextModels.Value):
 
         # Only register concrete classes (not base classes or nested abstract classes)
         if not hasattr(cls, "__abstractmethods__") or not cls.__abstractmethods__:
-            # Deferred import inside method to avoid circular dependency with registry
-            # This is an intentional pattern - FlextLdifQuirksRegistry imports from this module
-            import flext_ldif.quirks.registry as quirks_registry_module  # noqa: PLC0415
-
             try:
                 # Check if cls has all required fields with defaults
                 # Pydantic models can only be instantiated if all required fields have defaults
@@ -396,9 +396,10 @@ class FlextLdifQuirksBaseEntryQuirk(ABC, FlextModels.Value):
                     # This happens for abstract base classes
                     return
 
-                registry = (
-                    quirks_registry_module.FlextLdifQuirksRegistry.get_global_instance()
-                )
+                if quirks_registry_module is not None:
+                    registry = quirks_registry_module.FlextLdifQuirksRegistry.get_global_instance()
+                else:
+                    return
                 registry.register_entry_quirk(quirk_instance)
             except Exception as e:
                 # Registration failures are non-critical during class creation

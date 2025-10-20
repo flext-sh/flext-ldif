@@ -310,8 +310,9 @@ class TestLdifParallelProcessor:
         assert result.is_success
         results = result.unwrap()
         assert len(results) == 10
-        # Results should be in order (sequential implementation)
-        assert results == [f"user{i}" for i in range(10)]
+        # Results may be in different order due to parallel execution
+        # Verify all expected values are present
+        assert set(results) == {f"user{i}" for i in range(10)}
 
     def test_process_parallel_with_complex_return_type(self) -> None:
         """Test parallel processing with complex return type (dict)."""
@@ -348,8 +349,11 @@ class TestLdifParallelProcessor:
         assert result.is_success
         results = result.unwrap()
         assert len(results) == 5
-        assert results[0]["cn"] == "user0"
-        assert results[0]["uid"] == "1000"
+        # Verify all expected values are present (order may vary due to parallel execution)
+        cns = {r["cn"] for r in results}
+        uids = {r["uid"] for r in results}
+        assert cns == {f"user{i}" for i in range(5)}
+        assert uids == {str(1000 + i) for i in range(5)}
 
     def test_process_parallel_model_dump(self) -> None:
         """Test parallel processing with model_dump (common use case)."""
@@ -481,4 +485,6 @@ class TestProcessorComparison:
         batch_results = batch_result.unwrap()
         parallel_results = parallel_result.unwrap()
 
-        assert batch_results == parallel_results
+        # Both should produce same results, but parallel may be in different order
+        assert set(batch_results) == set(parallel_results)
+        assert len(batch_results) == len(parallel_results)

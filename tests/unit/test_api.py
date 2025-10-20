@@ -1143,11 +1143,20 @@ objectClass: person
         """Test evaluating ACL rules."""
         ldif = FlextLdif()
 
-        # This method is not yet implemented - expect NotImplementedError
-        with pytest.raises(
-            NotImplementedError, match="Acl evaluation not yet implemented"
-        ):
-            ldif.evaluate_acl_rules([])
+        # ACL evaluation now works with empty ACL list (returns True - no restrictions)
+        result = ldif.evaluate_acl_rules([])
+        assert result.is_success
+        assert result.unwrap() is True
+
+        # Test with context (flat structure)
+        context = {
+            "subject_dn": "cn=admin,dc=example,dc=com",
+            "permissions_read": True,
+            "permissions_write": False,
+        }
+        result_with_context = ldif.evaluate_acl_rules([], context)
+        assert result_with_context.is_success
+        assert result_with_context.unwrap() is True
 
     def test_process_batch(self) -> None:
         """Test batch processing."""
@@ -1160,11 +1169,12 @@ objectClass: person
         assert result.is_success
         entries = [result.unwrap()]
 
-        # Process batch - this raises NotImplementedError currently
-        with pytest.raises(
-            NotImplementedError, match="Processor 'validate' not yet implemented"
-        ):
-            ldif.process_batch("validate", entries)
+        # Process batch - now works with "transform" and "validate"
+        batch_result = ldif.process_batch("validate", entries)
+        assert batch_result.is_success
+        processed = batch_result.unwrap()
+        assert len(processed) == 1
+        assert processed[0]["valid"] is True
 
     def test_process_parallel(self) -> None:
         """Test parallel processing."""
@@ -1177,8 +1187,9 @@ objectClass: person
         assert result.is_success
         entries = [result.unwrap()]
 
-        # Process in parallel - this raises NotImplementedError currently
-        with pytest.raises(
-            NotImplementedError, match="Processor 'validate' not yet implemented"
-        ):
-            ldif.process_parallel("validate", entries)
+        # Process in parallel - now works with "transform" and "validate"
+        parallel_result = ldif.process_parallel("validate", entries)
+        assert parallel_result.is_success
+        processed = parallel_result.unwrap()
+        assert len(processed) == 1
+        assert processed[0]["valid"] is True

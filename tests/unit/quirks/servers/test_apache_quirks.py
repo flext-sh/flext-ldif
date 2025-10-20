@@ -8,7 +8,6 @@ import base64
 
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.quirks.servers.apache_quirks import FlextLdifQuirksServersApache
-from flext_ldif.typings import FlextLdifTypes
 
 
 class TestApacheDirectorySchemaQuirks:
@@ -381,7 +380,7 @@ class TestApacheDirectoryAclQuirks:
         """Test converting RFC ACL to Apache DS format."""
         main_quirk = FlextLdifQuirksServersApache()
         acl_quirk = main_quirk.AclQuirk()
-        rfc_acl: FlextLdifTypes.Dict = {
+        rfc_acl: dict[str, object] = {
             FlextLdifConstants.DictKeys.TYPE: FlextLdifConstants.DictKeys.ACL,
             FlextLdifConstants.DictKeys.DATA: {"content": "( version 3.0 )"},
         }

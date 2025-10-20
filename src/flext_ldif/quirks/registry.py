@@ -317,7 +317,7 @@ class FlextLdifQuirksRegistry(FlextModels.Value):
                 return quirk
         return None
 
-    def list_registered_servers(self) -> FlextLdifTypes.StringList:
+    def list_registered_servers(self) -> list[str]:
         """List all server types that have registered quirks.
 
         Returns:
@@ -330,7 +330,7 @@ class FlextLdifQuirksRegistry(FlextModels.Value):
         server_types.update(self._entry_quirks.keys())
         return sorted(server_types)
 
-    def get_registry_stats(self) -> FlextLdifTypes.Dict:
+    def get_registry_stats(self) -> dict[str, object]:
         """Get statistics about registered quirks.
 
         Returns:

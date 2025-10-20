@@ -223,7 +223,7 @@ def validate_single_entry_against_schema() -> None:
     validation_result = validator.validate_entry_against_schema(entry, schema)
 
     if validation_result.is_success:
-        result: dict[str, object] = validation_result.unwrap()
+        result = validation_result.unwrap()
 
         is_valid = result["is_valid"]
         errors = result["errors"]

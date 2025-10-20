@@ -752,7 +752,7 @@ class FlextLdifRfcLdifWriter(FlextService[FlextLdifTypes.Models.CustomDataDict])
                 f"ACL writing failed: {e}"
             )
 
-    def _wrap_line(self, line: str) -> FlextLdifTypes.StringList:
+    def _wrap_line(self, line: str) -> list[str]:
         """Wrap LDIF line at 76 characters per RFC 2849.
 
         Args:

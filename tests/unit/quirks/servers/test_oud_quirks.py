@@ -15,7 +15,6 @@ from tests.fixtures.loader import FlextLdifFixtures
 
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.quirks.servers.oud_quirks import FlextLdifQuirksServersOud
-from flext_ldif.typings import FlextLdifTypes
 
 
 class TestOudSchemaQuirks:
@@ -163,7 +162,7 @@ class TestOudSchemaQuirks:
         self, oud_quirk: FlextLdifQuirksServersOud
     ) -> None:
         """Test converting OUD attribute to RFC-compliant format."""
-        oud_attr_data: FlextLdifTypes.Dict = {
+        oud_attr_data: dict[str, object] = {
             "oid": "2.16.840.1.113894.1.1.1",
             "name": "orclVersion",
             "desc": "Oracle version",
@@ -182,7 +181,7 @@ class TestOudSchemaQuirks:
         self, oud_quirk: FlextLdifQuirksServersOud
     ) -> None:
         """Test converting OUD objectClass to RFC-compliant format."""
-        oud_oc_data: FlextLdifTypes.Dict = {
+        oud_oc_data: dict[str, object] = {
             "oid": "2.16.840.1.113894.2.1.1",
             "name": "orclContext",
             "desc": "Oracle Context",
@@ -346,7 +345,7 @@ class TestOudAclQuirks:
         self, acl_quirk: FlextLdifQuirksServersOud.AclQuirk
     ) -> None:
         """Test converting OUD ACL to RFC-compliant format."""
-        oud_acl_data: FlextLdifTypes.Dict = {
+        oud_acl_data: dict[str, object] = {
             FlextLdifConstants.DictKeys.TYPE: "oud_acl",
             FlextLdifConstants.DictKeys.FORMAT: FlextLdifConstants.AclFormats.ACI,
             FlextLdifConstants.DictKeys.RAW: 'aci: (targetattr="*")(version 3.0; acl "test"; allow (read) userdn="ldap:///anyone";)',
@@ -373,7 +372,7 @@ class TestOudAclQuirks:
         self, acl_quirk: FlextLdifQuirksServersOud.AclQuirk
     ) -> None:
         """Test converting RFC ACL to OUD-specific format."""
-        rfc_acl_data: FlextLdifTypes.Dict = {
+        rfc_acl_data: dict[str, object] = {
             FlextLdifConstants.DictKeys.TYPE: FlextLdifConstants.DictKeys.ACL,
             FlextLdifConstants.DictKeys.FORMAT: FlextLdifConstants.AclFormats.RFC_GENERIC,
             "permissions": ["read", "search"],
@@ -585,7 +584,7 @@ class TestOudEntryQuirks:
         self, entry_quirk: FlextLdifQuirksServersOud.EntryQuirk
     ) -> None:
         """Test converting OUD entry to RFC-compliant format."""
-        oud_entry_data: FlextLdifTypes.Dict = {
+        oud_entry_data: dict[str, object] = {
             FlextLdifConstants.DictKeys.DN: "cn=test,dc=example,dc=com",
             FlextLdifConstants.DictKeys.SERVER_TYPE: "oud",
             "cn": ["test"],
@@ -716,7 +715,7 @@ class TestOudSchemaRoundTrip:
 
     def test_write_attribute_to_rfc(self, oud_quirk: FlextLdifQuirksServersOud) -> None:
         """Test writing attribute data to RFC 4512 format."""
-        attr_data: FlextLdifTypes.Dict = {
+        attr_data: dict[str, object] = {
             "oid": "2.16.840.1.113894.1.1.1",
             "name": "orclGUID",
             "desc": "Oracle GUID",
@@ -739,7 +738,7 @@ class TestOudSchemaRoundTrip:
         from flext_ldif.models import FlextLdifModels
 
         original_format = "( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
-        attr_data: FlextLdifTypes.Dict = {
+        attr_data: dict[str, object] = {
             "oid": "2.16.840.1.113894.1.1.1",
             "name": "orclGUID",
             "_metadata": FlextLdifModels.QuirkMetadata(
@@ -790,7 +789,7 @@ class TestOudSchemaRoundTrip:
         self, oud_quirk: FlextLdifQuirksServersOud
     ) -> None:
         """Test writing objectClass data to RFC 4512 format."""
-        oc_data: FlextLdifTypes.Dict = {
+        oc_data: dict[str, object] = {
             "oid": "2.16.840.1.113894.2.1.1",
             "name": "orclContext",
             "desc": "Oracle Context",
@@ -861,7 +860,7 @@ class TestOudAclRoundTrip:
         self, acl_quirk: FlextLdifQuirksServersOud.AclQuirk
     ) -> None:
         """Test writing simple ACL data to ACI format."""
-        acl_data: FlextLdifTypes.Dict = {
+        acl_data: dict[str, object] = {
             "targetattr": "*",
             "version": "3.0",
             "acl_name": "Test ACL",
@@ -889,7 +888,7 @@ class TestOudAclRoundTrip:
             '      allow (write) groupdn="ldap:///cn=Group2,dc=example,dc=com";)'
         )
 
-        acl_data: FlextLdifTypes.Dict = {
+        acl_data: dict[str, object] = {
             "targetattr": "*",
             "_metadata": FlextLdifModels.QuirkMetadata(
                 original_format=original_multiline,
@@ -957,7 +956,7 @@ class TestOudEntryRoundTrip:
         self, entry_quirk: FlextLdifQuirksServersOud.EntryQuirk
     ) -> None:
         """Test writing simple entry data to LDIF format."""
-        entry_data: FlextLdifTypes.Dict = {
+        entry_data: dict[str, object] = {
             FlextLdifConstants.DictKeys.DN: "cn=test,dc=example,dc=com",
             "cn": ["test"],
             "objectclass": ["top", "person"],
@@ -978,7 +977,7 @@ class TestOudEntryRoundTrip:
         """Test that writing entry preserves attribute ordering from metadata."""
         from flext_ldif.models import FlextLdifModels
 
-        entry_data: FlextLdifTypes.Dict = {
+        entry_data: dict[str, object] = {
             FlextLdifConstants.DictKeys.DN: "cn=test,dc=example,dc=com",
             "cn": ["test"],
             "objectclass": ["person"],

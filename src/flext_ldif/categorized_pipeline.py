@@ -122,6 +122,18 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[dict[str, object]]):
         self._entry_quirks = entry_quirks or FlextLdifEntryQuirks()
         self._forbidden_attributes = forbidden_attributes or []
 
+        # DN-valued attributes that need case normalization
+        # Phase 4: Attributes that contain DN references needing case normalization
+        self._dn_valued_attributes = [
+            "member",
+            "uniqueMember",
+            "owner",
+            "seeAlso",
+            "manager",
+            "secretary",
+            "target",  # ACL target attribute
+        ]
+
         # Use provided output filenames or generic defaults
         self._output_files: dict[str, str] = output_files or {
             "schema": "schema.ldif",
@@ -1386,6 +1398,96 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[dict[str, object]]):
 
         return processed_entries
 
+    def _create_oud_schema_entry(
+        self, processed_entries: list[dict[str, object]]
+    ) -> list[dict[str, object]]:
+        """Create OUD-compatible schema entry from processed schema entries.
+
+        OUD requires schema in a specific format:
+        - dn: cn=schema
+        - changetype: add
+        - objectclass: top, ldapSubentry, subschema
+        - attributetypes: (sorted by OID)
+        - objectclasses: (sorted by OID)
+
+        Args:
+            processed_entries: List of processed schema entries
+
+        Returns:
+            List containing single OUD-compatible schema entry
+
+        """
+        if not processed_entries:
+            return []
+
+        # Collect all attributetypes and objectclasses from processed entries
+        all_attributetypes: list[str] = []
+        all_objectclasses: list[str] = []
+
+        for entry in processed_entries:
+            attributes = entry.get("attributes", {})
+            if not isinstance(attributes, dict):
+                continue
+
+            # Get attributetypes
+            attr_types = attributes.get("attributetypes", [])
+            if isinstance(attr_types, list):
+                all_attributetypes.extend(attr_types)
+            elif attr_types:
+                all_attributetypes.append(str(attr_types))
+
+            # Get objectclasses
+            obj_classes = attributes.get("objectclasses", [])
+            if isinstance(obj_classes, list):
+                all_objectclasses.extend(obj_classes)
+            elif obj_classes:
+                all_objectclasses.append(str(obj_classes))
+
+        # Remove duplicates while preserving order
+        seen_attributetypes = set()
+        unique_attributetypes = []
+        for attr_type in all_attributetypes:
+            if attr_type not in seen_attributetypes:
+                unique_attributetypes.append(attr_type)
+                seen_attributetypes.add(attr_type)
+
+        seen_objectclasses = set()
+        unique_objectclasses = []
+        for obj_class in all_objectclasses:
+            if obj_class not in seen_objectclasses:
+                unique_objectclasses.append(obj_class)
+                seen_objectclasses.add(obj_class)
+
+        # Sort by OID
+        def extract_oid(schema_line: str) -> str:
+            """Extract OID from RFC 4512 schema definition."""
+            match = re.match(r"\(\s*([0-9.]+)", str(schema_line))
+            return match.group(1) if match else ""
+
+        sorted_attributetypes = sorted(unique_attributetypes, key=extract_oid)
+        sorted_objectclasses = sorted(unique_objectclasses, key=extract_oid)
+
+        # Create OUD schema entry
+        attributes_dict: dict[str, list[str]] = {
+            "changetype": ["add"],
+            "objectClass": ["top", "ldapSubentry", "subschema"],
+        }
+
+        # Add sorted attributetypes if any
+        if sorted_attributetypes:
+            attributes_dict["attributetypes"] = sorted_attributetypes
+
+        # Add sorted objectclasses if any
+        if sorted_objectclasses:
+            attributes_dict["objectclasses"] = sorted_objectclasses
+
+        schema_entry: dict[str, object] = {
+            "dn": "cn=schema",
+            "attributes": attributes_dict,
+        }
+
+        return [schema_entry]
+
     def _sort_entries_by_hierarchy_and_name(
         self, entries: list[dict[str, object]]
     ) -> list[dict[str, object]]:
@@ -1448,7 +1550,10 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[dict[str, object]]):
                 # Apply whitelist filtering and sorting to schema entries
                 processed_entries = self._process_schema_entries(entries)
                 if processed_entries:
-                    entries = processed_entries
+                    # Create OUD-compatible schema entry format
+                    entries = self._create_oud_schema_entry(processed_entries)
+                else:
+                    entries = []
             else:
                 # Apply hierarchy + name sorting for all non-schema categories (01-05)
                 entries = self._sort_entries_by_hierarchy_and_name(entries)

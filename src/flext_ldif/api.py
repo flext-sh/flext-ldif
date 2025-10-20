@@ -12,7 +12,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pathlib import Path
-from typing import ClassVar, override
+from typing import ClassVar, cast, override
 
 from flext_core import (
     FlextBus,
@@ -31,6 +31,10 @@ from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.containers import flext_ldif_container
 from flext_ldif.entry.builder import FlextLdifEntryBuilder
 from flext_ldif.models import FlextLdifModels
+from flext_ldif.processors.ldif_processor import (
+    LdifBatchProcessor,
+    LdifParallelProcessor,
+)
 from flext_ldif.schema.builder import FlextLdifSchemaBuilder
 from flext_ldif.schema.validator import FlextLdifSchemaValidator
 from flext_ldif.typings import FlextLdifTypes
@@ -854,36 +858,73 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.CustomDataDict]):
     def evaluate_acl_rules(
         self,
         acls: list[FlextLdifModels.AclBase],
-        context: FlextLdifTypes.Models.CustomDataDict | None = None,
+        context: object = None,
     ) -> FlextResult[bool]:
         """Evaluate ACL rules and return evaluation result.
 
         Args:
-            acls: List of ACL rules to evaluate (not yet implemented)
-            context: Evaluation context (not yet implemented)
+            acls: List of ACL models to evaluate
+            context: Evaluation context with subject_dn, target_dn, permissions, etc.
 
         Returns:
             FlextResult containing evaluation result (True if allowed)
 
         Example:
-            result = api.evaluate_acl_rules(acls)
+            acls = api.extract_acls(entry).unwrap()
+            context = {
+                "subject_dn": "cn=admin,dc=example,dc=com",
+                "permissions": {"read": True, "write": True}
+            }
+            result = api.evaluate_acl_rules(acls, context)
             if result.is_success:
                 is_allowed = result.unwrap()
 
         Note:
-            ACL evaluation not yet implemented.
-            Raises NotImplementedError for security - fail-safe approach.
-
-        Raises:
-            NotImplementedError: ACL evaluation not yet implemented
+            Converts AclBase models to AclRule objects and evaluates using FlextLdifAclService.
 
         """
-        # Security: Fail-safe - do NOT allow by default
-        msg = (
-            "Acl evaluation not yet implemented. "
-            "Use FlextLdifAclService.evaluate_acl_rules() for internal AclRule types."
-        )
-        raise NotImplementedError(msg)
+        try:
+            if not acls:
+                # No ACLs means no restrictions - allow by default
+                return FlextResult[bool].ok(True)
+
+            acl_service = self._ldif_container.acl_service()
+            eval_context = context or {}
+
+            # Create composite rule combining all ACLs
+            composite = acl_service.create_composite_rule(operator="AND")
+
+            # Convert each AclBase to evaluation rules
+            for acl in acls:
+                # Create permission rules from ACL permissions
+                if hasattr(acl, "permissions") and acl.permissions:
+                    perms = acl.permissions.model_dump()
+                    for perm_name, perm_value in perms.items():
+                        if perm_value:
+                            rule = acl_service.create_permission_rule(
+                                perm_name, required=True
+                            )
+                            composite.add_rule(rule)
+
+                # Add subject rule if present
+                if hasattr(acl, "subject") and acl.subject:
+                    subject_value = getattr(acl.subject, "subject_value", None)
+                    if subject_value and subject_value != "*":
+                        rule = acl_service.create_subject_rule(subject_value)
+                        composite.add_rule(rule)
+
+                # Add target rule if present
+                if hasattr(acl, "target") and acl.target:
+                    target_dn = getattr(acl.target, "target_dn", None)
+                    if target_dn and target_dn != "*":
+                        rule = acl_service.create_target_rule(target_dn)
+                        composite.add_rule(rule)
+
+            # Evaluate composite rule
+            return composite.evaluate(cast("dict[str, object]", eval_context))
+
+        except Exception as e:
+            return FlextResult[bool].fail(f"ACL evaluation failed: {e}")
 
     # =========================================================================
     # PROCESSOR OPERATIONS
@@ -894,54 +935,124 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.CustomDataDict]):
         processor_name: str,
         entries: list[FlextLdifModels.Entry],
     ) -> FlextResult[list[FlextLdifTypes.Models.CustomDataDict]]:
-        """Process entries in batch mode using FlextProcessors.
+        """Process entries in batch mode using LdifBatchProcessor.
 
         Args:
-            processor_name: Name of processor to use (not yet implemented)
+            processor_name: Name of processor function ("transform", "validate", etc.)
             entries: List of entries to process
 
         Returns:
             FlextResult containing processed results
 
         Example:
+            # Convert entries to dictionaries
             result = api.process_batch("transform", entries)
             if result.is_success:
                 processed = result.unwrap()
 
         Note:
-            Currently returns converted entries without processing.
-            Processor-based batch processing will be implemented in future version.
+            Uses LdifBatchProcessor for memory-efficient batch processing.
+            Currently supports "transform" (converts to dict) and "validate" (validates entries).
 
         """
-        msg = f"Processor '{processor_name}' not yet implemented. Batch processing will be available in future version."
-        raise NotImplementedError(msg)
+        try:
+            processor = LdifBatchProcessor(batch_size=100)
+
+            # Define processor functions
+            if processor_name == "transform":
+
+                def transform_func(
+                    entry: FlextLdifModels.Entry,
+                ) -> FlextLdifTypes.Models.CustomDataDict:
+                    return entry.model_dump()
+
+                return processor.process_batch(entries, transform_func)
+
+            if processor_name == "validate":
+
+                def validate_func(
+                    entry: FlextLdifModels.Entry,
+                ) -> FlextLdifTypes.Models.CustomDataDict:
+                    # Basic validation: entry has DN and attributes
+                    return {
+                        "dn": entry.dn.value,
+                        "valid": bool(entry.dn.value and entry.attributes),
+                        "attribute_count": len(entry.attributes.attributes),
+                    }
+
+                return processor.process_batch(entries, validate_func)
+
+            supported = "'transform', 'validate'"
+            return FlextResult[list[FlextLdifTypes.Models.CustomDataDict]].fail(
+                f"Unknown processor: '{processor_name}'. Supported: {supported}"
+            )
+
+        except Exception as e:
+            return FlextResult[list[FlextLdifTypes.Models.CustomDataDict]].fail(
+                f"Batch processing failed: {e}"
+            )
 
     def process_parallel(
         self,
         processor_name: str,
         entries: list[FlextLdifModels.Entry],
     ) -> FlextResult[list[FlextLdifTypes.Models.CustomDataDict]]:
-        """Process entries in parallel mode using FlextProcessors.
+        """Process entries in parallel mode using LdifParallelProcessor.
 
         Args:
-            processor_name: Name of processor to use (not yet implemented)
+            processor_name: Name of processor function ("transform", "validate", etc.)
             entries: List of entries to process
 
         Returns:
             FlextResult containing processed results
 
         Example:
+            # Convert entries to dictionaries in parallel
             result = api.process_parallel("validate", entries)
             if result.is_success:
                 processed = result.unwrap()
 
         Note:
-            Currently returns converted entries without processing.
-            Processor-based parallel processing will be implemented in future version.
+            Uses LdifParallelProcessor with ThreadPoolExecutor for true parallel execution.
+            Currently supports "transform" (converts to dict) and "validate" (validates entries).
 
         """
-        msg = f"Processor '{processor_name}' not yet implemented. Batch processing will be available in future version."
-        raise NotImplementedError(msg)
+        try:
+            processor = LdifParallelProcessor(max_workers=4)
+
+            # Define processor functions
+            if processor_name == "transform":
+
+                def transform_func(
+                    entry: FlextLdifModels.Entry,
+                ) -> FlextLdifTypes.Models.CustomDataDict:
+                    return entry.model_dump()
+
+                return processor.process_parallel(entries, transform_func)
+
+            if processor_name == "validate":
+
+                def validate_func(
+                    entry: FlextLdifModels.Entry,
+                ) -> FlextLdifTypes.Models.CustomDataDict:
+                    # Basic validation: entry has DN and attributes
+                    return {
+                        "dn": entry.dn.value,
+                        "valid": bool(entry.dn.value and entry.attributes),
+                        "attribute_count": len(entry.attributes.attributes),
+                    }
+
+                return processor.process_parallel(entries, validate_func)
+
+            supported = "'transform', 'validate'"
+            return FlextResult[list[FlextLdifTypes.Models.CustomDataDict]].fail(
+                f"Unknown processor: '{processor_name}'. Supported: {supported}"
+            )
+
+        except Exception as e:
+            return FlextResult[list[FlextLdifTypes.Models.CustomDataDict]].fail(
+                f"Parallel processing failed: {e}"
+            )
 
     # =========================================================================
     # INFRASTRUCTURE ACCESS (Properties)
