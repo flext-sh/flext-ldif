@@ -101,7 +101,9 @@ class FlextLdifQuirksServersAd(FlextLdifQuirksBaseSchemaQuirk):
 
         return any(marker in attr_lower for marker in self.AD_ATTRIBUTE_NAMES)
 
-    def parse_attribute(self, attr_definition: str) -> FlextResult[dict[str, object]]:
+    def parse_attribute(
+        self, attr_definition: str
+    ) -> FlextResult[FlextLdifTypes.Models.CustomDataDict]:
         """Parse an Active Directory attribute definition."""
         try:
             oid_match = re.search(r"\(\s*([\d.]+)", attr_definition)
@@ -335,10 +337,10 @@ class FlextLdifQuirksServersAd(FlextLdifQuirksBaseSchemaQuirk):
         """Convert RFC-compliant attribute to Active Directory-specific format.
 
         Args:
-            rfc_data: RFC-compliant attribute data
+        rfc_data: RFC-compliant attribute data
 
         Returns:
-            FlextResult with Active Directory attribute data
+        FlextResult with Active Directory attribute data
 
         """
         try:
@@ -361,10 +363,10 @@ class FlextLdifQuirksServersAd(FlextLdifQuirksBaseSchemaQuirk):
         """Convert RFC-compliant objectClass to Active Directory-specific format.
 
         Args:
-            rfc_data: RFC-compliant objectClass data
+        rfc_data: RFC-compliant objectClass data
 
         Returns:
-            FlextResult with Active Directory objectClass data
+        FlextResult with Active Directory objectClass data
 
         """
         try:
@@ -381,16 +383,14 @@ class FlextLdifQuirksServersAd(FlextLdifQuirksBaseSchemaQuirk):
                 f"RFC→Active Directory objectClass conversion failed: {exc}"
             )
 
-    def write_attribute_to_rfc(
-        self, attr_data: dict[str, object]
-    ) -> FlextResult[str]:
+    def write_attribute_to_rfc(self, attr_data: dict[str, object]) -> FlextResult[str]:
         """Write attribute data to RFC-compliant string format.
 
         Args:
-            attr_data: Attribute data dictionary
+        attr_data: Attribute data dictionary
 
         Returns:
-            FlextResult with RFC-compliant attribute string
+        FlextResult with RFC-compliant attribute string
 
         """
         try:
@@ -425,16 +425,14 @@ class FlextLdifQuirksServersAd(FlextLdifQuirksBaseSchemaQuirk):
                 f"Active Directory attribute write failed: {exc}"
             )
 
-    def write_objectclass_to_rfc(
-        self, oc_data: dict[str, object]
-    ) -> FlextResult[str]:
+    def write_objectclass_to_rfc(self, oc_data: dict[str, object]) -> FlextResult[str]:
         """Write objectClass data to RFC-compliant string format.
 
         Args:
-            oc_data: ObjectClass data dictionary
+        oc_data: ObjectClass data dictionary
 
         Returns:
-            FlextResult with RFC-compliant objectClass string
+        FlextResult with RFC-compliant objectClass string
 
         """
         try:
@@ -610,10 +608,10 @@ class FlextLdifQuirksServersAd(FlextLdifQuirksBaseSchemaQuirk):
             Active Directory ACLs use nTSecurityDescriptor format.
 
             Args:
-                acl_data: ACL data dictionary
+            acl_data: ACL data dictionary
 
             Returns:
-                FlextResult with ACL string in AD nTSecurityDescriptor format
+            FlextResult with ACL string in AD nTSecurityDescriptor format
 
             """
             try:

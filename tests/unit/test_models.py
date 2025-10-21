@@ -743,19 +743,19 @@ class TestFlextLdifModelsAcl:
         # Create unified ACL using direct instantiation of OracleOudAcl
         # (aggressive Pydantic 2 direct usage pattern - no factory class)
         try:
-            acl = FlextLdifModels.OracleOudAcl(
+            oud_acl = FlextLdifModels.OracleOudAcl(
                 name="test_acl",
                 target=target,
                 subject=subject,
                 permissions=perms,
                 server_type="oracle_oud",
             )
-            result = FlextResult[FlextLdifModels.AclBase].ok(acl)
+            result = FlextResult[FlextLdifModels.AclBase].ok(oud_acl)
         except Exception as e:  # pragma: no cover
             result = FlextResult[FlextLdifModels.AclBase].fail(str(e))
 
         assert result.is_success
-        acl = result.unwrap()
+        acl: FlextLdifModels.AclBase = result.unwrap()
         # Discriminated union returns the specific subtype (OracleOudAcl in this case)
         assert isinstance(acl, FlextLdifModels.AclBase)
         assert isinstance(acl, FlextLdifModels.OracleOudAcl)

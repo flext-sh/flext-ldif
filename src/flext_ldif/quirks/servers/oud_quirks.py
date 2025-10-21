@@ -59,10 +59,10 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
         """Check if this is an Oracle OUD attribute.
 
         Args:
-            attr_definition: AttributeType definition string
+        attr_definition: AttributeType definition string
 
         Returns:
-            True if this contains Oracle OUD namespace
+        True if this contains Oracle OUD namespace
 
         """
         return bool(self.ORACLE_OUD_PATTERN.search(attr_definition))
@@ -74,10 +74,10 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
         to extract OID, NAME, DESC, SYNTAX, and other RFC 4512 attributes.
 
         Args:
-            attr_definition: AttributeType definition string
+        attr_definition: AttributeType definition string
 
         Returns:
-            FlextResult with parsed OUD attribute data
+        FlextResult with parsed OUD attribute data
 
         """
         try:
@@ -155,10 +155,10 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
         """Check if this is an Oracle OUD objectClass.
 
         Args:
-            oc_definition: ObjectClass definition string
+        oc_definition: ObjectClass definition string
 
         Returns:
-            True if this contains Oracle OUD namespace
+        True if this contains Oracle OUD namespace
 
         """
         return bool(self.ORACLE_OUD_PATTERN.search(oc_definition))
@@ -170,10 +170,10 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
         to extract OID, NAME, DESC, SUP, KIND, MUST, and MAY attributes.
 
         Args:
-            oc_definition: ObjectClass definition string
+        oc_definition: ObjectClass definition string
 
         Returns:
-            FlextResult with parsed OUD objectClass data
+        FlextResult with parsed OUD objectClass data
 
         """
         try:
@@ -265,10 +265,10 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
         OUD attributes are already RFC-compliant, so minimal conversion needed.
 
         Args:
-            attr_data: OUD attribute data
+        attr_data: OUD attribute data
 
         Returns:
-            FlextResult with RFC-compliant attribute data
+        FlextResult with RFC-compliant attribute data
 
         """
         try:
@@ -296,10 +296,10 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
         OUD objectClasses are already RFC-compliant.
 
         Args:
-            oc_data: OUD objectClass data
+        oc_data: OUD objectClass data
 
         Returns:
-            FlextResult with RFC-compliant objectClass data
+        FlextResult with RFC-compliant objectClass data
 
         """
         try:
@@ -321,9 +321,7 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
                 f"OUD→RFC conversion failed: {e}"
             )
 
-    def write_attribute_to_rfc(
-        self, attr_data: dict[str, object]
-    ) -> FlextResult[str]:
+    def write_attribute_to_rfc(self, attr_data: dict[str, object]) -> FlextResult[str]:
         """Write OUD attribute data to RFC 4512 compliant string format.
 
         Converts parsed attribute dictionary back to RFC 4512 schema definition format.
@@ -409,9 +407,7 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
         except Exception as e:  # pragma: no cover
             return FlextResult[str].fail(f"Failed to write attribute to RFC: {e}")
 
-    def write_objectclass_to_rfc(
-        self, oc_data: dict[str, object]
-    ) -> FlextResult[str]:
+    def write_objectclass_to_rfc(self, oc_data: dict[str, object]) -> FlextResult[str]:
         """Write OUD objectClass data to RFC 4512 compliant string format.
 
         Converts parsed objectClass dictionary back to RFC 4512 schema
@@ -515,10 +511,10 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
         """Convert RFC-compliant attribute to OUD-specific format.
 
         Args:
-            rfc_data: RFC-compliant attribute data
+        rfc_data: RFC-compliant attribute data
 
         Returns:
-            FlextResult with OUD attribute data
+        FlextResult with OUD attribute data
 
         """
         try:
@@ -542,10 +538,10 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
         """Convert RFC-compliant objectClass to OUD-specific format.
 
         Args:
-            rfc_data: RFC-compliant objectClass data
+        rfc_data: RFC-compliant objectClass data
 
         Returns:
-            FlextResult with OUD objectClass data
+        FlextResult with OUD objectClass data
 
         """
         try:
@@ -573,11 +569,11 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
         case variations.
 
         Args:
-            ldif_content: Raw LDIF content containing schema definitions
+        ldif_content: Raw LDIF content containing schema definitions
 
         Returns:
-            FlextResult with CustomDataDict containing ATTRIBUTES and
-            objectclasses lists
+        FlextResult with CustomDataDict containing ATTRIBUTES and
+        objectclasses lists
 
         """
         try:
@@ -641,10 +637,10 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
             """Check if this is an Oracle OUD ACL.
 
             Args:
-                acl_line: ACL definition line
+            acl_line: ACL definition line
 
             Returns:
-                True if this is OUD ACL format
+            True if this is OUD ACL format
 
             """
             # OUD uses different ACL format than OID
@@ -668,10 +664,10 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
             - Multiple permission rules per ACI (4+ rules)
 
             Args:
-                acl_line: ACL definition line (may contain newlines for multi-line ACIs)
+            acl_line: ACL definition line (may contain newlines for multi-line ACIs)
 
             Returns:
-                FlextResult with parsed OUD ACL data including metadata
+            FlextResult with parsed OUD ACL data including metadata
 
             """
             try:
@@ -796,10 +792,10 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
             """Convert OUD ACL to RFC-compliant format.
 
             Args:
-                acl_data: OUD ACL data
+            acl_data: OUD ACL data
 
             Returns:
-                FlextResult with RFC-compliant ACL data
+            FlextResult with RFC-compliant ACL data
 
             """
             try:
@@ -826,10 +822,10 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
             """Convert RFC ACL to OUD-specific format.
 
             Args:
-                acl_data: RFC-compliant ACL data
+            acl_data: RFC-compliant ACL data
 
             Returns:
-                FlextResult with OUD ACL data
+            FlextResult with OUD ACL data
 
             """
             try:
@@ -1001,10 +997,10 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
             Strategy pattern: OUD-specific approach to extract ACIs from LDIF entries.
 
             Args:
-                ldif_content: Raw LDIF content containing ACL definitions
+            ldif_content: Raw LDIF content containing ACL definitions
 
             Returns:
-                FlextResult with list of parsed ACL dictionaries
+            FlextResult with list of parsed ACL dictionaries
 
             """
             try:
@@ -1088,11 +1084,11 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
             """Check if this quirk should handle the entry.
 
             Args:
-                entry_dn: Entry distinguished name
-                attributes: Entry attributes
+            entry_dn: Entry distinguished name
+            attributes: Entry attributes
 
             Returns:
-                True if this is an OUD-specific entry
+            True if this is an OUD-specific entry
 
             """
             # Handle all entries for OUD target
@@ -1132,11 +1128,11 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
             Use FlextLdifFilters in migration service for filtering.
 
             Args:
-                entry_dn: Entry distinguished name
-                attributes: Entry attributes
+            entry_dn: Entry distinguished name
+            attributes: Entry attributes
 
             Returns:
-                FlextResult with processed entry data including metadata
+            FlextResult with processed entry data including metadata
 
             """
             try:
@@ -1147,8 +1143,21 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
                     FlextLdifConstants.DictKeys.SERVER_TYPE: "oud",
                 }
 
+                # Preserve base64 encoding metadata from entry extraction
+                if "_base64_attrs" in attributes:
+                    processed_entry["_base64_attrs"] = attributes["_base64_attrs"]
+
+                # Preserve special LDIF modify markers for schema entries
+                if "_modify_add_attributetypes" in attributes:
+                    processed_entry["_modify_add_attributetypes"] = attributes["_modify_add_attributetypes"]
+                if "_modify_add_objectclasses" in attributes:
+                    processed_entry["_modify_add_objectclasses"] = attributes["_modify_add_objectclasses"]
+
                 # Process attributes with boolean conversion (FORMAT transformation)
                 for attr_name, attr_values in attributes.items():
+                    # Skip internal metadata attributes (except LDIF modify markers, already handled above)
+                    if attr_name.startswith("_"):
+                        continue
                     # Check if this is a boolean attribute that needs FORMAT conversion
                     if attr_name.lower() in self.BOOLEAN_ATTRIBUTES:
                         # Convert 0/1 to TRUE/FALSE for OUD
@@ -1223,10 +1232,10 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
             """Convert server-specific entry to RFC-compliant format.
 
             Args:
-                entry_data: Server-specific entry data
+            entry_data: Server-specific entry data
 
             Returns:
-                FlextResult with RFC-compliant entry data
+            FlextResult with RFC-compliant entry data
 
             """
             try:
@@ -1243,10 +1252,10 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
             """Convert RFC-compliant entry to OUD-specific format.
 
             Args:
-                entry_data: RFC-compliant entry data
+            entry_data: RFC-compliant entry data
 
             Returns:
-                FlextResult with OUD entry data
+            FlextResult with OUD entry data
 
             """
             try:
@@ -1295,58 +1304,101 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
                 dn = entry_data[FlextLdifConstants.DictKeys.DN]
                 ldif_lines = [f"dn: {dn}"]
 
-                # Get attribute ordering from metadata if available
-                attr_order = None
-                if "_metadata" in entry_data:
-                    metadata = entry_data["_metadata"]
-                    if isinstance(metadata, FlextLdifModels.QuirkMetadata):
-                        attr_order = metadata.extensions.get("attribute_order")
-                    elif isinstance(metadata, dict):
-                        attr_order = metadata.get("extensions", {}).get(
-                            "attribute_order"
-                        )
+                # Check if this is a schema modification entry (changetype: modify)
+                is_modify = False
+                changetype_list = entry_data.get("changetype", [])
+                if isinstance(changetype_list, list) and "modify" in changetype_list:
+                    is_modify = True
+                    ldif_lines.append("changetype: modify")
 
-                # Determine attribute iteration order
-                # Type narrowing: ensure attr_order is list before iteration
-                if attr_order is not None and isinstance(attr_order, list):
-                    # Use preserved ordering
-                    attrs_to_process = [
-                        (key, entry_data[key])
-                        for key in attr_order
-                        if key in entry_data
-                        and key
-                        not in {
-                            FlextLdifConstants.DictKeys.DN,
-                            "_metadata",
-                            FlextLdifConstants.DictKeys.SERVER_TYPE,
-                        }
-                    ]
+                # Handle LDIF modify format for schema additions
+                if is_modify and ("_modify_add_attributetypes" in entry_data or "_modify_add_objectclasses" in entry_data):
+                    # Write modify-add operations for attributetypes
+                    if "_modify_add_attributetypes" in entry_data:
+                        attr_types = entry_data["_modify_add_attributetypes"]
+                        if isinstance(attr_types, list) and attr_types:
+                            ldif_lines.append("add: attributetypes")
+                            ldif_lines.extend(f"attributetypes: {attr_type}" for attr_type in attr_types)
+                            ldif_lines.append("-")
+
+                    # Write modify-add operations for objectclasses
+                    if "_modify_add_objectclasses" in entry_data:
+                        obj_classes = entry_data["_modify_add_objectclasses"]
+                        if isinstance(obj_classes, list) and obj_classes:
+                            ldif_lines.append("add: objectclasses")
+                            ldif_lines.extend(f"objectclasses: {obj_class}" for obj_class in obj_classes)
+                            ldif_lines.append("-")
                 else:
-                    # Default ordering: filter out special keys
-                    attrs_to_process = [
-                        (key, value)
-                        for key, value in entry_data.items()
-                        if key
-                        not in {
-                            FlextLdifConstants.DictKeys.DN,
-                            "_metadata",
-                            FlextLdifConstants.DictKeys.SERVER_TYPE,
-                        }
-                    ]
+                    # Standard entry format (not a modify operation)
+                    # Get attribute ordering from metadata if available
+                    attr_order = None
+                    if "_metadata" in entry_data:
+                        metadata = entry_data["_metadata"]
+                        if isinstance(metadata, FlextLdifModels.QuirkMetadata):
+                            attr_order = metadata.extensions.get("attribute_order")
+                        elif isinstance(metadata, dict):
+                            attr_order = metadata.get("extensions", {}).get(
+                                "attribute_order"
+                            )
 
-                # Write attributes
-                # SAFETY: Filter out DN if it somehow appears in attributes
-                for attr_name, attr_value in attrs_to_process:
-                    # CRITICAL: DN is NOT an attribute - skip if present
-                    if attr_name.lower() == FlextLdifConstants.DictKeys.DN:
-                        continue
-                    # Handle both list and single values
-                    if isinstance(attr_value, list):
-                        ldif_lines.extend(
-                            f"{attr_name}: {value}" for value in attr_value
-                        )
+                    # Determine attribute iteration order
+                    # Type narrowing: ensure attr_order is list before iteration
+                    if attr_order is not None and isinstance(attr_order, list):
+                        # Use preserved ordering
+                        attrs_to_process = [
+                            (key, entry_data[key])
+                            for key in attr_order
+                            if key in entry_data
+                            and key
+                            not in {
+                                FlextLdifConstants.DictKeys.DN,
+                                "_metadata",
+                                FlextLdifConstants.DictKeys.SERVER_TYPE,
+                            }
+                        ]
                     else:
-                        ldif_lines.append(f"{attr_name}: {attr_value}")
+                        # Default ordering: filter out special keys
+                        attrs_to_process = [
+                            (key, value)
+                            for key, value in entry_data.items()
+                            if key
+                            not in {
+                                FlextLdifConstants.DictKeys.DN,
+                                "_metadata",
+                                FlextLdifConstants.DictKeys.SERVER_TYPE,
+                                "changetype",
+                            }
+                        ]
+
+                    # Extract base64 attributes metadata
+                    base64_attrs = set()
+                    if "_base64_attrs" in entry_data:
+                        base64_data = entry_data["_base64_attrs"]
+                        if isinstance(base64_data, set):
+                            base64_attrs = base64_data
+                        elif isinstance(base64_data, list):
+                            base64_attrs = set(base64_data)
+
+                    # Write attributes
+                    # SAFETY: Filter out DN if it somehow appears in attributes
+                    for attr_name, attr_value in attrs_to_process:
+                        # Critical: DN is NOT an attribute - skip if present
+                        if attr_name.lower() == FlextLdifConstants.DictKeys.DN:
+                            continue
+                        # Skip internal metadata attributes
+                        if attr_name.startswith("_"):
+                            continue
+                        # Check if this attribute should be base64-encoded
+                        is_base64 = attr_name in base64_attrs
+                        attr_prefix = f"{attr_name}::" if is_base64 else f"{attr_name}:"
+
+                        # Handle both list and single values
+                        if isinstance(attr_value, list):
+                            ldif_lines.extend(
+                                f"{attr_prefix} {value}" for value in attr_value
+                            )
+                        else:
+                            ldif_lines.append(f"{attr_prefix} {attr_value}")
 
                 # Join with newlines and add trailing newline
                 ldif_string = "\n".join(ldif_lines) + "\n"
@@ -1364,10 +1416,10 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
             Strategy pattern: OUD-specific approach to extract entries from LDIF.
 
             Args:
-                ldif_content: Raw LDIF content containing directory entries
+            ldif_content: Raw LDIF content containing directory entries
 
             Returns:
-                FlextResult with list of parsed entry dictionaries
+            FlextResult with list of parsed entry dictionaries
 
             """
             try:
@@ -1426,13 +1478,18 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
                         attr_name = attr_name.strip()
                         attr_value = attr_value.strip()
 
-                        # Handle base64 encoding (::)
+                        # Handle base64 encoding (::) - PRESERVE for writing
                         if attr_value.startswith(":"):
                             attr_value = attr_value[1:].strip()
-                            # Note: Not decoding base64 here, just storing raw
+                            # Mark this attribute as base64-encoded in metadata
+                            # We'll store this in _base64_attrs for write_entry_to_ldif
+                            if "_base64_attrs" not in current_entry:
+                                current_entry["_base64_attrs"] = set()
+                            if isinstance(current_entry["_base64_attrs"], set):
+                                current_entry["_base64_attrs"].add(attr_name)
 
                         # Check if this attribute already exists (multi-valued)
-                        if attr_name in current_entry:
+                        if attr_name in current_entry and attr_name != "_base64_attrs":
                             # Convert to list if needed
                             existing = current_entry[attr_name]
                             if not isinstance(existing, list):

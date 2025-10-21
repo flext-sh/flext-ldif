@@ -1,7 +1,6 @@
-"""Comprehensive tests for FlextLdif API functionality.
+"""Tests for FlextLdif API functionality.
 
-Tests all major API methods with real validation of functionality.
-Includes both basic and comprehensive test coverage.
+Tests major API methods with validation of functionality.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -475,7 +474,7 @@ objectClass: organizationalPerson
 
 
 class TestFlextLdifParseComprehensive:
-    """Comprehensive test suite for LDIF parsing functionality."""
+    """Test suite for LDIF parsing functionality."""
 
     def test_parse_string_basic(self) -> None:
         """Test parsing basic LDIF content from string."""
@@ -576,7 +575,7 @@ objectClass: person
 
 
 class TestFlextLdifWriteComprehensive:
-    """Comprehensive test suite for LDIF writing functionality."""
+    """Test suite for LDIF writing functionality."""
 
     def test_write_to_string(self, ldif_test_data: LdifTestData) -> None:
         """Test writing entries to LDIF string."""
@@ -634,7 +633,7 @@ objectClass: person
 
 
 class TestFlextLdifValidateComprehensive:
-    """Comprehensive test suite for LDIF validation functionality."""
+    """Test suite for LDIF validation functionality."""
 
     def test_validate_valid_entries(self) -> None:
         """Test validating valid LDIF entries."""
@@ -1135,9 +1134,33 @@ objectClass: person
 
     def test_extract_acls(self) -> None:
         """Test extracting ACLs from entries."""
-        # TODO: This test needs to be fixed - extract_acls has an issue with Entry vs dict handling
-        # This is unrelated to Phase 1 FlextTypes replacement
-        pytest.skip("Test needs fix for Entry vs dict handling")
+        ldif = FlextLdif()
+
+        # Create an entry with ACL data
+        entry = FlextLdifModels.Entry(
+            dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
+            attributes=FlextLdifModels.LdifAttributes(
+                attributes={
+                    "objectClass": FlextLdifModels.AttributeValues(
+                        values=["inetOrgPerson"]
+                    ),
+                    "cn": FlextLdifModels.AttributeValues(values=["test"]),
+                    "orclaci": FlextLdifModels.AttributeValues(
+                        values=["access to entry by * (browse)"]
+                    ),
+                }
+            ),
+        )
+
+        # Extract ACLs from the entry
+        result = ldif.extract_acls(entry)
+
+        # Verify the result
+        assert result.is_success
+        acls = result.unwrap()
+        assert isinstance(acls, list)
+        # The test should pass if ACL extraction works correctly
+        # Note: Actual ACL parsing depends on server type detection
 
     def test_evaluate_acl_rules(self) -> None:
         """Test evaluating ACL rules."""

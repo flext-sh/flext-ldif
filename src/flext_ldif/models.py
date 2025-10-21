@@ -1,20 +1,17 @@
-"""FLEXT LDIF Models - Unified Namespace for LDIF Domain Models.
+"""LDIF domain models and data structures.
 
-This module provides a unified namespace class that aggregates all LDIF domain models
-from specialized sub-modules. It extends flext-core FlextModels with LDIF-specific
-domain entities organized into focused modules.
+This module defines Pydantic models for LDIF data structures including entries,
+attributes, DNs, ACLs, and schema elements. Models provide validation and
+type safety for LDIF operations.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 
-Type Checking Notes:
-- ANN401: **extensions uses object for flexible quirk-specific data
-- pyrefly: import errors for pydantic/dependency_injector (wrong site-packages
-  path)
-- pyright: configured with extraPaths to resolve imports
-  (see pyrightconfig.json)
-- mypy: passes with strict mode (0 errors)
-- All 639 tests pass - code is correct, only infrastructure differs
+Notes:
+ - Uses object type in **extensions for server-specific quirk data
+ - Models follow Pydantic v2 patterns with computed fields and validators
+ - All models are immutable by default (frozen=True where applicable)
+
 """
 
 from __future__ import annotations
@@ -89,26 +86,26 @@ def _validate_dn_format(v: str) -> str:
     if not v or not v.strip():
         msg = "DN cannot be empty"
         raise ValueError(msg)
-    
+
     dn_str = v.strip()
     components = [c.strip() for c in dn_str.split(",")]
-    
+
     for component in components:
         if "=" not in component:
             msg = f"Invalid DN component format: {component}. Expected attribute=value"
             raise ValueError(msg)
-        
+
         attr_part, _, value_part = component.partition("=")
         attr_name = attr_part.strip()
-        
+
         if not attr_name or not attr_name[0].isalpha():
             msg = f"Invalid DN attribute: {attr_name}. Must start with letter"
             raise ValueError(msg)
-        
+
         if not value_part.strip():
             msg = f"Invalid DN component: {component}. Value cannot be empty"
             raise ValueError(msg)
-    
+
     return dn_str
 
 
@@ -438,7 +435,7 @@ class FlextLdifModels(FlextModels):
 
     # Discriminated Union: Pydantic 2 polymorphic type with automatic routing
     # The server_type field determines which ACL subtype to use
-    # This is the direct, aggressive Pydantic 2 approach - no factory class needed
+    # Direct Pydantic 2 approach - no factory class needed
     # Use this type directly with Pydantic's model_validate() for instantiation
     AclType = Annotated[
         OpenLdapAcl
@@ -453,7 +450,7 @@ class FlextLdifModels(FlextModels):
     # =========================================================================
     # DTO MODELS - Data transfer objects
     # =========================================================================
-    # NOTE: CQRS classes (ParseLdifCommand, WriteLdifCommand, etc.) are
+    # Note: CQRS classes (ParseLdifCommand, WriteLdifCommand, etc.) are
     # exported from flext_ldif.__init__.py to avoid circular imports.
 
     class LdifValidationResult(FlextModels.StrictArbitraryTypesModel):
@@ -489,7 +486,9 @@ class FlextLdifModels(FlextModels):
     class SearchConfig(FlextModels.StrictArbitraryTypesModel):
         """Configuration for LDAP search operations."""
 
-        base_dn: Annotated[str, BeforeValidator(_validate_base_dn)] = Field(..., description="Base DN for the search")
+        base_dn: Annotated[str, BeforeValidator(_validate_base_dn)] = Field(
+            ..., description="Base DN for the search"
+        )
         search_filter: str = Field(
             default="(objectClass=*)", description="LDAP search filter"
         )
@@ -525,10 +524,10 @@ class FlextLdifModels(FlextModels):
         attributes, objectClasses, ACLs, and directory entries.
 
         Attributes:
-            added: Items present in target but not in source
-            removed: Items present in source but not in target
-            modified: Items present in both but with different values
-            unchanged: Items that are identical in both datasets
+        added: Items present in target but not in source
+        removed: Items present in source but not in target
+        modified: Items present in both but with different values
+        unchanged: Items that are identical in both datasets
 
         """
 
@@ -840,10 +839,10 @@ class FlextLdifModels(FlextModels):
             - DN format consistency
 
             Returns:
-                Self (for method chaining)
+            Self (for method chaining)
 
             Raises:
-                ValueError: If validation fails
+            ValueError: If validation fails
 
             """
             # Ensure DN is not empty (already validated by DistinguishedName)
@@ -874,12 +873,12 @@ class FlextLdifModels(FlextModels):
             """Create a new Entry instance with validation.
 
             Args:
-                dn: Distinguished Name for the entry
-                attributes: Entry attributes as dict[str, list[str]] or LdifAttributes
-                metadata: Optional quirk metadata
+            dn: Distinguished Name for the entry
+            attributes: Entry attributes as dict[str, list[str]] or LdifAttributes
+            metadata: Optional quirk metadata
 
             Returns:
-                FlextResult with Entry instance or validation error
+            FlextResult with Entry instance or validation error
 
             """
             try:
@@ -925,10 +924,10 @@ class FlextLdifModels(FlextModels):
             LDAP attribute names are case-insensitive.
 
             Args:
-                attribute_name: Name of the attribute to retrieve
+            attribute_name: Name of the attribute to retrieve
 
             Returns:
-                List of attribute values, empty list if attribute doesn't exist
+            List of attribute values, empty list if attribute doesn't exist
 
             """
             # Case-insensitive attribute lookup (LDAP standard)
@@ -944,10 +943,10 @@ class FlextLdifModels(FlextModels):
             LDAP attribute names are case-insensitive.
 
             Args:
-                attribute_name: Name of the attribute to check
+            attribute_name: Name of the attribute to check
 
             Returns:
-                True if attribute exists with at least one value, False otherwise
+            True if attribute exists with at least one value, False otherwise
 
             """
             return len(self.get_attribute_values(attribute_name)) > 0
@@ -956,10 +955,10 @@ class FlextLdifModels(FlextModels):
             """Check if entry has specified object class.
 
             Args:
-                object_class: Name of the object class to check
+            object_class: Name of the object class to check
 
             Returns:
-                True if entry has the object class, False otherwise
+            True if entry has the object class, False otherwise
 
             """
             return object_class in self.get_attribute_values(
@@ -999,10 +998,10 @@ class FlextLdifModels(FlextModels):
             """Get AttributeValues for a specific attribute name.
 
             Args:
-                key: Attribute name
+            key: Attribute name
 
             Returns:
-                AttributeValues object or None if not found
+            AttributeValues object or None if not found
 
             """
             return self.attributes.get(key)
@@ -1011,8 +1010,8 @@ class FlextLdifModels(FlextModels):
             """Add or update an attribute with values.
 
             Args:
-                key: Attribute name
-                values: Single value or list of values
+            key: Attribute name
+            values: Single value or list of values
 
             """
             if isinstance(values, str):
@@ -1023,7 +1022,7 @@ class FlextLdifModels(FlextModels):
             """Remove an attribute if it exists.
 
             Args:
-                key: Attribute name
+            key: Attribute name
 
             """
             self.attributes.pop(key, None)
@@ -1034,10 +1033,10 @@ class FlextLdifModels(FlextModels):
             """Convert to ldap3-compatible attributes dict.
 
             Args:
-                exclude: List of attribute names to exclude from output
+            exclude: List of attribute names to exclude from output
 
             Returns:
-                Dict compatible with ldap3 library format
+            Dict compatible with ldap3 library format
 
             """
             exclude_set = set(exclude or [])
@@ -1056,10 +1055,10 @@ class FlextLdifModels(FlextModels):
             """Create an LdifAttributes instance from data.
 
             Args:
-                attrs_data: Dictionary mapping attribute names to values
+            attrs_data: Dictionary mapping attribute names to values
 
             Returns:
-                FlextResult with LdifAttributes instance or error
+            FlextResult with LdifAttributes instance or error
 
             """
             try:

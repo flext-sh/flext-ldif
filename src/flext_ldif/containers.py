@@ -111,7 +111,7 @@ class FlextLdifContainer(containers.DeclarativeContainer):
         """Get all service providers for inspection.
 
         Returns:
-            Dictionary mapping service names to provider instances.
+        Dictionary mapping service names to provider instances.
 
         """
         # All provider attributes are already providers.Provider instances
@@ -161,7 +161,7 @@ class FlextLdifContainer(containers.DeclarativeContainer):
         """Get the global flext-ldif container instance.
 
         Returns:
-            Global FlextLdifContainer instance.
+        Global FlextLdifContainer instance.
 
         """
         return flext_ldif_container

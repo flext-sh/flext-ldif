@@ -1,10 +1,10 @@
 # FLEXT-LDIF Examples
 
-This directory contains comprehensive examples demonstrating all functionality of the flext-ldif library.
+This directory contains examples demonstrating the functionality of the flext-ldif library.
 
-## 📚 Library-Only Examples
+## Library Usage Examples
 
-All examples showcase **library usage only** - no CLI patterns, no `main()` functions, no print statements. Each example demonstrates specific FlextLdif functionality through clean, reusable function patterns.
+All examples demonstrate library usage only - no CLI patterns, no `main()` functions, no print statements. Each example demonstrates specific functionality through reusable function patterns.
 
 ## 🎯 Example Overview
 
@@ -16,7 +16,7 @@ Learn the fundamentals:
 
 - Parse LDIF from strings and files
 - Write LDIF to strings and files
-- Railway-oriented programming with FlextResult
+- Error handling with FlextResult
 - Entry model inspection
 
 **Key Functions**:
@@ -198,8 +198,8 @@ else:
 
 - **Library demonstrations** - Pure library API usage
 - **Reusable patterns** - Copy-paste friendly code
-- **Complete coverage** - All FlextLdif functionality
-- **Production-ready** - FlextResult error handling
+- **API coverage** - FlextLdif functionality
+- **Error handling** - FlextResult pattern
 
 ### ❌ What These Examples Are NOT
 
@@ -283,7 +283,7 @@ Looking for specific features? Use this quick reference:
 
 1. **Always use FlextResult** - Check `is_success` before `unwrap()`
 2. **Access through API** - Use `api.*` properties, not direct imports
-3. **Railway-oriented** - Chain operations with early returns on failure
+3. **Error composition** - Chain operations with early returns on failure
 4. **Type hints** - Examples show proper typing patterns
 
 ## 🤝 Contributing
@@ -298,4 +298,4 @@ When adding examples:
 
 ---
 
-**FLEXT-LDIF** - RFC-compliant LDIF processing for the FLEXT ecosystem
+FLEXT-LDIF - RFC-compliant LDIF processing library

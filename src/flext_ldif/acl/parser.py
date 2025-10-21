@@ -7,12 +7,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import override
+from typing import cast, override
 
 from flext_core import FlextResult, FlextService
 
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
+from flext_ldif.typings import FlextLdifTypes
 
 
 class FlextLdifAclParser(FlextService[dict[str, object]]):
@@ -89,7 +90,7 @@ class FlextLdifAclParser(FlextService[dict[str, object]]):
     def parse_oracle_acl(
         self,
         acl_string: str,
-        server_type: str = FlextLdifConstants.LdapServers.ORACLE_OID,
+        server_type: FlextLdifTypes.AclServerType = FlextLdifConstants.LdapServers.ORACLE_OID,
     ) -> FlextResult[FlextLdifModels.AclBase]:
         """Parse Oracle OID/OUD ACL format.
 
@@ -151,7 +152,9 @@ class FlextLdifAclParser(FlextService[dict[str, object]]):
             FlextLdifConstants.LdapServers.ORACLE_OID,
             FlextLdifConstants.LdapServers.ORACLE_OUD,
         }:
-            return self.parse_oracle_acl(acl_string, server_type)
+            return self.parse_oracle_acl(
+                acl_string, cast("FlextLdifTypes.AclServerType", server_type)
+            )
 
         return FlextResult[FlextLdifModels.AclBase].fail(
             f"Unsupported server type: {server_type}"

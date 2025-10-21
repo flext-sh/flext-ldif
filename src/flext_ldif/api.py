@@ -41,35 +41,24 @@ from flext_ldif.typings import FlextLdifTypes
 
 
 class FlextLdif(FlextService[FlextLdifTypes.Models.CustomDataDict]):
-    r"""Unified LDIF processing facade with complete Flext ecosystem integration.
+    r"""Main API facade for LDIF processing operations.
 
-    This service inherits from FlextService and integrates the complete Flext ecosystem:
-    - FlextContainer: Dependency injection and service management
-    - FlextLogger: Structured logging with correlation tracking
-    - FlextContext: Request context and correlation ID management
-    - FlextConfig: Configuration management with validation
-    - FlextBus: Event publishing for domain events
-    - FlextDispatcher: Message dispatching for CQRS patterns
-    - FlextRegistry: Component registration and discovery
-    - FlextProcessors: Batch and parallel processing utilities
-    - FlextExceptions: Structured error handling with correlation
-    - FlextProtocols: Type-safe interfaces and contracts
+    This class provides a simplified interface for LDIF operations by delegating
+    to underlying service implementations. It inherits from FlextService to leverage
+    dependency injection, logging, and event publishing capabilities.
 
-    Provides unified access to:
-    - RFC-compliant LDIF parsing and writing (RFC 2849/4512)
-    - Server-specific quirks and migrations (OID, OUD, OpenLDAP, AD, 389-DS, etc.)
-    - Generic server-agnostic migration pipeline
-    - Categorized migration pipeline with structured LDIF output
-    - Batch and parallel processing for large-scale operations
-    - Event-driven architecture with domain events
-    - Schema validation and ACL processing
-    - Entry building and transformation
-    - DN service and validation services
-    - All infrastructure (Models, Config, Constants, Events, Processors, etc.)
+    Capabilities:
+        - Parse and write LDIF files according to RFC 2849 and RFC 4512
+        - Handle server-specific quirks (OID, OUD, OpenLDAP, AD, 389 DS)
+        - Migrate data between different LDAP server types
+        - Validate LDIF entries against LDAP schemas
+        - Process ACL (Access Control List) entries
+        - Batch and parallel processing for large datasets
 
-    This class follows the Facade pattern, providing a simplified interface
-    to the complex subsystem of LDIF processing services by delegating
-    all operations to the FlextLdifClient implementation.
+    Implementation:
+        This class follows the Facade pattern, delegating operations to
+        FlextLdifClient and other service classes while providing a consistent
+        interface for client code.
 
     Example:
         # Recommended: Use singleton instance
@@ -159,18 +148,17 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.CustomDataDict]):
         return cls._instance
 
     def __init__(self, config: FlextLdifConfig | None = None) -> None:
-        """Initialize LDIF facade with complete Flext ecosystem integration.
+        """Initialize LDIF facade.
 
-        Integrates all Flext components for comprehensive infrastructure support:
-        - FlextContainer: Global dependency injection container
-        - FlextLogger: Structured logging with correlation tracking
-        - FlextContext: Request context and correlation ID management
-        - FlextConfig: Configuration management with validation
-        - FlextBus: Event publishing for domain events
-        - FlextDispatcher: Message dispatching for CQRS patterns
-        - FlextRegistry: Component registration and discovery
-        - FlextProcessors: Batch and parallel processing utilities
-        - FlextExceptions: Structured error handling with correlation
+        Integrates Flext components for infrastructure support:
+            - FlextContainer: Dependency injection
+            - FlextLogger: Structured logging
+            - FlextContext: Request context management
+            - FlextConfig: Configuration with validation
+            - FlextBus: Event publishing
+            - FlextDispatcher: Message dispatching
+            - FlextRegistry: Component registration
+            - FlextProcessors: Batch and parallel processing
 
         Args:
             config: Optional LDIF configuration. If not provided,
@@ -289,7 +277,7 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.CustomDataDict]):
         """Execute facade self-check and return status.
 
         Returns:
-            FlextResult containing facade status and configuration
+        FlextResult containing facade status and configuration
 
         """
         return self._client.execute()
@@ -374,9 +362,7 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.CustomDataDict]):
         Example:
             result = ldif.validate_entries(entries)
             if result.is_success:
-                report = result.unwrap()
-                print(f"Valid: {report['is_valid']}")
-                print(f"Errors: {report['errors']}")
+                print(result.value)
 
         """
         return self._client.validate_entries(entries)
@@ -448,8 +434,9 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.CustomDataDict]):
         """
         return self._client.analyze_entries(entries)
 
+    @staticmethod
     def filter_by_objectclass(
-        self, entries: list[FlextLdifModels.Entry], objectclass: str
+        entries: list[FlextLdifModels.Entry], objectclass: str
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Filter entries by object class.
 
@@ -461,7 +448,8 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.CustomDataDict]):
             FlextResult containing filtered entries
 
         """
-        return self._client.filter_by_objectclass(entries, objectclass)
+        client = FlextLdifClient()
+        return client.filter_by_objectclass(entries, objectclass)
 
     def filter_persons(
         self, entries: list[FlextLdifModels.Entry]
@@ -475,7 +463,7 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.CustomDataDict]):
             FlextResult containing person entries
 
         """
-        return self.filter_by_objectclass(entries, "person")
+        return FlextLdif.filter_by_objectclass(entries, "person")
 
     # =========================================================================
     # ENTRY BUILDER OPERATIONS (Direct Methods)
@@ -910,15 +898,15 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.CustomDataDict]):
                 if hasattr(acl, "subject") and acl.subject:
                     subject_value = getattr(acl.subject, "subject_value", None)
                     if subject_value and subject_value != "*":
-                        rule = acl_service.create_subject_rule(subject_value)
-                        composite.add_rule(rule)
+                        subject_rule = acl_service.create_subject_rule(subject_value)
+                        composite.add_rule(subject_rule)
 
                 # Add target rule if present
                 if hasattr(acl, "target") and acl.target:
                     target_dn = getattr(acl.target, "target_dn", None)
                     if target_dn and target_dn != "*":
-                        rule = acl_service.create_target_rule(target_dn)
-                        composite.add_rule(rule)
+                        target_rule = acl_service.create_target_rule(target_dn)
+                        composite.add_rule(target_rule)
 
             # Evaluate composite rule
             return composite.evaluate(cast("dict[str, object]", eval_context))
@@ -1181,8 +1169,6 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.CustomDataDict]):
 
         """
         return self._ldif_container.acl_service()
-
-    # =========================================================================
 
 
 __all__ = ["FlextLdif"]

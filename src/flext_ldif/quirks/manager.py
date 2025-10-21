@@ -33,7 +33,7 @@ class FlextLdifQuirksManager(FlextService[dict[str, object]]):
         """Initialize quirks manager with Phase 1 context enrichment.
 
         Args:
-            server_type: LDAP server type (defaults to generic)
+        server_type: LDAP server type (defaults to generic)
 
         """
         super().__init__()
@@ -178,10 +178,10 @@ class FlextLdifQuirksManager(FlextService[dict[str, object]]):
         """Detect LDAP server type from entries.
 
         Args:
-            entries: List of LDIF entries to analyze
+        entries: List of LDIF entries to analyze
 
         Returns:
-            FlextResult containing detected server type
+        FlextResult containing detected server type
 
         """
         if not entries:
@@ -302,10 +302,10 @@ class FlextLdifQuirksManager(FlextService[dict[str, object]]):
         """Get quirks for specified server type.
 
         Args:
-            server_type: Server type to get quirks for (uses instance default if None)
+        server_type: Server type to get quirks for (uses instance default if None)
 
         Returns:
-            FlextResult containing server quirks dictionary
+        FlextResult containing server quirks dictionary
 
         """
         target_server = server_type or self._server_type

@@ -1,57 +1,54 @@
 # FLEXT-LDIF
 
-**Advanced LDIF processing library** for the FLEXT ecosystem, providing comprehensive LDAP data parsing, validation, and server-specific adaptations with full RFC 2849 compliance.
+LDIF processing library for the FLEXT ecosystem, providing LDAP data parsing, validation, and server-specific adaptations with RFC 2849 compliance.
 
-> **STATUS**: Version 0.9.0 - **LIBRARY-ONLY** with universal conversion matrix, DN case registry, categorized pipeline, and comprehensive server quirks system 🚀
+> **Version**: 0.9.0
 >
-> **Quality Gates**: ✅ Pyrefly (100%) | ✅ Ruff (100%) | ✅ Tests (1415/1415 - 100%) | ✅ Strict RFC Compliance (ZERO fallbacks)
+> **Status**: Library with conversion matrix, DN case registry, categorized pipeline, and server quirks system
 
 ---
 
-## 🎯 Purpose and Role in FLEXT Ecosystem
+## Purpose
 
-### **For the FLEXT Ecosystem**
+FLEXT-LDIF provides LDIF (LDAP Data Interchange Format) processing capabilities for the FLEXT platform. It handles LDIF file parsing, validation, and manipulation operations.
 
-FLEXT-LDIF provides LDIF (LDAP Data Interchange Format) processing capabilities for the FLEXT data integration platform. It handles LDIF file parsing, validation, and basic manipulation operations.
+### Key Capabilities
 
-### **Key Responsibilities**
-
-1. **RFC 2849 Compliance** - Full LDIF standard compliance with Base64 encoding, change records, and URL references
-2. **Server-Specific Adaptations** - Handle quirks from Active Directory, OpenLDAP, Apache Directory Server, and others
-3. **Advanced Parsing** - Multi-encoding support, line continuations, comments, and attribute options
-4. **Type Safety** - Pydantic v2 models for data validation with comprehensive error handling
+1. **RFC 2849 Compliance** - LDIF standard support with Base64 encoding, change records, and URL references
+2. **Server Adaptations** - Handle quirks from Active Directory, OpenLDAP, Apache DS, and other LDAP servers
+3. **Parsing** - Multi-encoding support, line continuations, comments, and attribute options
+4. **Type Safety** - Pydantic v2 models for data validation
 5. **Service Architecture** - Modular services for parsing, validation, writing, and server detection
 
-### **Integration Points**
+### Integration
 
-- **[flext-core](../flext-core/README.md)** → Foundation patterns (FlextResult, FlextContainer)
-- **[algar-oud-mig](../algar-oud-mig/README.md)** → Oracle Unified Directory migration project
-- **Projects requiring LDIF processing** → Directory data operations
+- **flext-core** - Foundation patterns (FlextResult, FlextContainer)
+- **algar-oud-mig** - Oracle Unified Directory migration project
+- **Other projects** - Directory data operations
 
 ---
 
-## 🚀 Advanced Features
+## Features
 
-### **RFC-First Design with Universal Conversion Matrix**
+### RFC-Compliant Design
 
-FLEXT-LDIF is built on a **generic RFC-compliant foundation** with a powerful **universal conversion matrix** for seamless server-to-server transformations:
+Built on RFC-compliant foundation with conversion matrix for server-to-server transformations:
 
-**Core Architecture**:
+**Core Components**:
 
-- **RFC 2849 (LDIF Format)** - Standard LDIF parsing foundation
-- **RFC 4512 (Schema)** - Standard LDAP schema parsing foundation
-- **Universal Conversion Matrix** - N×N server conversions via RFC intermediate format
-- **DN Case Registry** - Canonical DN case tracking for OUD compatibility
-- **Categorized Pipeline** - Rule-based entry categorization with structured LDIF output
-- **Batch & Parallel Processors** - Efficient processing for large-scale operations
-- **Event System** - Domain events for processing lifecycle tracking
-- **Enhanced Filters** - Advanced entry filtering and transformation utilities
-- **Quirks System** - Pluggable server-specific extensions that enhance RFC parsing
-- **Generic Transformation** - Source → RFC → Target pipeline works with any server
+- **RFC 2849 (LDIF Format)** - LDIF parsing
+- **RFC 4512 (Schema)** - LDAP schema parsing
+- **Conversion Matrix** - N×N server conversions via RFC intermediate format
+- **DN Case Registry** - DN case tracking for server compatibility
+- **Categorized Pipeline** - Entry categorization with structured output
+- **Batch & Parallel Processors** - Processing for large datasets
+- **Event System** - Processing lifecycle events
+- **Filters** - Entry filtering and transformation
+- **Quirks System** - Server-specific extensions
 
-### **Universal Conversion Matrix**
+### Conversion Matrix
 
-Seamless conversion between any LDAP server quirks using RFC as intermediate format:
+Converts between LDAP server quirks using RFC as intermediate format:
 
 **Conversion Pattern**:
 
@@ -59,12 +56,12 @@ Seamless conversion between any LDAP server quirks using RFC as intermediate for
 Source Format → Source.to_rfc() → RFC Format → Target.from_rfc() → Target Format
 ```
 
-**Benefits**:
+**Approach**:
 
-- **N×N Matrix**: Convert between any server pair with only 2×N implementations
-- **RFC Intermediate**: Uses standards-compliant intermediate representation
-- **DN Consistency**: Tracks canonical DN case for OUD compatibility
-- **Type Safety**: Full type annotations with FlextResult error handling
+- N×N Matrix: Convert between any server pair with 2×N implementations
+- RFC Intermediate: Standards-compliant intermediate representation
+- DN Consistency: Canonical DN case tracking
+- Type Safety: Type annotations with FlextResult error handling
 
 **Example**:
 
@@ -569,7 +566,7 @@ pytest --cov=src/flext_ldif             # Coverage report
 - **Memory Scaling**: **Memory usage scales linearly with file size** - no streaming or chunked processing
 - **No Graceful Degradation**: **No memory pressure detection or recovery mechanisms**
 - **Performance**: Single-threaded processing, memory-bound architecture unsuitable for large datasets
-- **Architecture**: Custom parser implementation contradicts 2025 industry best practices for LDIF processing
+- **Architecture**: Custom parser implementation
 - **Features**: Basic functionality focused on small to medium file processing
 
 **Technical Details**: The current implementation uses a custom `_ParserHelper` class that calls `content.splitlines()`, loading the entire file content into memory before processing begins. This design choice makes the library suitable only for files that fit comfortably in available system memory.

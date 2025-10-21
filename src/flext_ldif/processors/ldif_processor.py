@@ -1,23 +1,17 @@
-"""LDIF Batch and Parallel Processors.
+"""Batch and parallel processing for LDIF entries.
 
-This module provides enterprise-grade batch and parallel processing capabilities
-for LDIF entries using concurrent.futures for true parallel execution. Designed for efficient
-large-scale operations on directory data with memory-conscious batching and
-CPU-optimized parallel execution.
+This module provides batch and parallel processing capabilities for LDIF
+entries using concurrent.futures. Supports both memory-efficient batching
+and parallel execution with thread pools.
 
-Features:
-- LdifBatchProcessor: Memory-efficient batch processing for large datasets
-- LdifParallelProcessor: CPU-optimized parallel processing with ThreadPoolExecutor
-- FlextProcessors integration: Leverages flext-core processing infrastructure
-- Type-safe generic processing with full Pydantic model support
-- Comprehensive error handling with FlextResult railway-oriented programming
-- Configurable batch sizes and worker counts for performance tuning
+Components:
+ - LdifBatchProcessor: Batch processing for memory efficiency
+ - LdifParallelProcessor: Parallel processing with ThreadPoolExecutor
 
-Use Cases:
-- Large-scale LDIF validation across thousands of entries
-- CPU-intensive transformations (encryption, complex mappings)
-- Memory-bound operations on datasets larger than available RAM
-- Parallel schema validation and consistency checking
+Use cases:
+ - Processing large LDIF files with limited memory
+ - Parallel validation of multiple entries
+ - Bulk transformations and mappings
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -46,11 +40,11 @@ class LdifBatchProcessor:
     on large LDIF files.
 
     Attributes:
-        batch_size: Number of entries to process per batch
+    batch_size: Number of entries to process per batch
 
     Example:
-        processor = LdifBatchProcessor(batch_size=100)
-        result = processor.process_batch(entries, validate_entry)
+    processor = LdifBatchProcessor(batch_size=100)
+    result = processor.process_batch(entries, validate_entry)
 
     """
 
@@ -58,7 +52,7 @@ class LdifBatchProcessor:
         """Initialize batch processor.
 
         Args:
-            batch_size: Number of entries per batch (default: 100)
+        batch_size: Number of entries per batch (default: 100)
 
         """
         super().__init__()
@@ -73,17 +67,17 @@ class LdifBatchProcessor:
         """Process entries in batches.
 
         Args:
-            entries: List of LDIF entries to process
-            func: Function to apply to each entry (generic return type T)
+        entries: List of LDIF entries to process
+        func: Function to apply to each entry (generic return type T)
 
         Returns:
-            FlextResult containing list of processed results of type T
+        FlextResult containing list of processed results of type T
 
         Example:
-            def validate_entry(entry):
-                return entry.dn
+        def validate_entry(entry):
+        return entry.dn
 
-            result = processor.process_batch(entries, validate_entry)
+        result = processor.process_batch(entries, validate_entry)
 
         """
         try:
@@ -106,11 +100,11 @@ class LdifParallelProcessor:
     on large LDIF files.
 
     Attributes:
-        max_workers: Maximum number of parallel workers
+    max_workers: Maximum number of parallel workers
 
     Example:
-        processor = LdifParallelProcessor(max_workers=4)
-        result = processor.process_parallel(entries, transform_entry)
+    processor = LdifParallelProcessor(max_workers=4)
+    result = processor.process_parallel(entries, transform_entry)
 
     """
 
@@ -118,7 +112,7 @@ class LdifParallelProcessor:
         """Initialize parallel processor.
 
         Args:
-            max_workers: Maximum number of parallel workers (default: 4)
+        max_workers: Maximum number of parallel workers (default: 4)
 
         """
         super().__init__()
@@ -133,21 +127,21 @@ class LdifParallelProcessor:
         """Process entries in parallel using ThreadPoolExecutor.
 
         Args:
-            entries: List of LDIF entries to process
-            func: Function to apply to each entry (generic return type T)
+        entries: List of LDIF entries to process
+        func: Function to apply to each entry (generic return type T)
 
         Returns:
-            FlextResult containing list of processed results of type T
+        FlextResult containing list of processed results of type T
 
         Example:
-            def transform_entry(entry):
-                return entry.model_dump()
+        def transform_entry(entry):
+        return entry.model_dump()
 
-            result = processor.process_parallel(entries, transform_entry)
+        result = processor.process_parallel(entries, transform_entry)
 
         Note:
-            Uses concurrent.futures.ThreadPoolExecutor for true parallel execution.
-            Results are returned in the order they complete (not input order).
+        Uses concurrent.futures.ThreadPoolExecutor for true parallel execution.
+        Results are returned in the order they complete (not input order).
 
         """
         try:

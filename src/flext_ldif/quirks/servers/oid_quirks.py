@@ -67,10 +67,10 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
         """Check if this is an Oracle OID attribute.
 
         Args:
-            attr_definition: AttributeType definition string
+        attr_definition: AttributeType definition string
 
         Returns:
-            True if this contains Oracle OID namespace
+        True if this contains Oracle OID namespace
 
         """
         return bool(self.ORACLE_OID_PATTERN.search(attr_definition))
@@ -167,10 +167,10 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
         """Check if this is an Oracle OID objectClass.
 
         Args:
-            oc_definition: ObjectClass definition string
+        oc_definition: ObjectClass definition string
 
         Returns:
-            True if this contains Oracle OID namespace
+        True if this contains Oracle OID namespace
 
         """
         return bool(self.ORACLE_OID_PATTERN.search(oc_definition))
@@ -272,10 +272,10 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
         """Convert OID attribute to RFC-compliant format.
 
         Args:
-            attr_data: OID attribute data
+        attr_data: OID attribute data
 
         Returns:
-            FlextResult with RFC-compliant attribute data
+        FlextResult with RFC-compliant attribute data
 
         """
         try:
@@ -312,10 +312,10 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
         """Convert OID objectClass to RFC-compliant format.
 
         Args:
-            oc_data: OID objectClass data
+        oc_data: OID objectClass data
 
         Returns:
-            FlextResult with RFC-compliant objectClass data
+        FlextResult with RFC-compliant objectClass data
 
         """
         try:
@@ -351,9 +351,7 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                 f"OID→RFC conversion failed: {e}"
             )
 
-    def write_attribute_to_rfc(
-        self, attr_data: dict[str, object]
-    ) -> FlextResult[str]:
+    def write_attribute_to_rfc(self, attr_data: dict[str, object]) -> FlextResult[str]:
         """Write OID attribute data to RFC 4512 compliant string format.
 
         Converts parsed attribute dictionary back to RFC 4512 schema definition format.
@@ -452,9 +450,7 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
         except Exception as e:
             return FlextResult[str].fail(f"Failed to write OID attribute to RFC: {e}")
 
-    def write_objectclass_to_rfc(
-        self, oc_data: dict[str, object]
-    ) -> FlextResult[str]:
+    def write_objectclass_to_rfc(self, oc_data: dict[str, object]) -> FlextResult[str]:
         """Write OID objectClass data to RFC 4512 compliant string format.
 
         Converts parsed objectClass dictionary back to RFC 4512 schema
@@ -569,11 +565,11 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
         format variations.
 
         Args:
-            ldif_content: Raw LDIF content containing schema definitions
+        ldif_content: Raw LDIF content containing schema definitions
 
         Returns:
-            FlextResult containing extracted attributes and objectclasses
-            as a dictionary with ATTRIBUTES and OBJECTCLASSES lists.
+        FlextResult containing extracted attributes and objectclasses
+        as a dictionary with ATTRIBUTES and OBJECTCLASSES lists.
 
         """
         dk = FlextLdifConstants.DictKeys
@@ -615,10 +611,10 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
         """Convert RFC-compliant attribute to OID-specific format.
 
         Args:
-            rfc_data: RFC-compliant attribute data
+        rfc_data: RFC-compliant attribute data
 
         Returns:
-            FlextResult with OID attribute data
+        FlextResult with OID attribute data
 
         """
         try:
@@ -642,10 +638,10 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
         """Convert RFC-compliant objectClass to OID-specific format.
 
         Args:
-            rfc_data: RFC-compliant objectClass data
+        rfc_data: RFC-compliant objectClass data
 
         Returns:
-            FlextResult with OID objectClass data
+        FlextResult with OID objectClass data
 
         """
         try:
@@ -692,10 +688,10 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
             """Check if this is an Oracle OID ACL.
 
             Args:
-                acl_line: ACL definition line
+            acl_line: ACL definition line
 
             Returns:
-                True if this is orclaci or orclentrylevelaci
+            True if this is orclaci or orclentrylevelaci
 
             """
             return acl_line.startswith(("orclaci:", "orclentrylevelaci:"))
@@ -705,15 +701,15 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
 
             Parses orclaci and orclentrylevelaci formats from real OID fixtures:
             - orclaci: access to entry/attr=(...) [filter=(...)]
-              by <subject> (<perms>) [by ...]
+            by <subject> (<perms>) [by...]
             - orclentrylevelaci: access to entry by <subject>
-              [added_object_constraint=(...)] (<perms>)
+            [added_object_constraint=(...)] (<perms>)
 
             Args:
-                acl_line: ACL definition line
+            acl_line: ACL definition line
 
             Returns:
-                FlextResult with parsed OID ACL data with metadata
+            FlextResult with parsed OID ACL data with metadata
 
             """
             dk = FlextLdifConstants.DictKeys
@@ -789,10 +785,10 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
             """Convert OID ACL to RFC-compliant format.
 
             Args:
-                acl_data: OID ACL data
+            acl_data: OID ACL data
 
             Returns:
-                FlextResult with RFC-compliant ACL data
+            FlextResult with RFC-compliant ACL data
 
             """
             dk = FlextLdifConstants.DictKeys
@@ -820,10 +816,10 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
             """Convert RFC ACL to OID-specific format.
 
             Args:
-                acl_data: RFC-compliant ACL data
+            acl_data: RFC-compliant ACL data
 
             Returns:
-                FlextResult with OID ACL data
+            FlextResult with OID ACL data
 
             """
             dk = FlextLdifConstants.DictKeys
@@ -933,21 +929,21 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
             - orclentrylevelaci: for entry-level ACLs
 
             Args:
-                ldif_content: LDIF content containing ACL definitions
+            ldif_content: LDIF content containing ACL definitions
 
             Returns:
-                FlextResult containing list of parsed ACL dictionaries
+            FlextResult containing list of parsed ACL dictionaries
 
             Examples:
-                >>> ldif_text = '''
-                ... dn: cn=OracleContext,dc=example,dc=com
-                ... orclaci: access to entry by * (browse)
-                ... orclentrylevelaci: access to attr=userPassword by self (write)
-                ... '''
-                >>> result = oid_quirk.acl.extract_acls_from_ldif(ldif_text)
-                >>> acls = result.unwrap()
-                >>> len(acls)
-                2
+            >>> ldif_text = '''
+            ... dn: cn=OracleContext,dc=example,dc=com
+            ... orclaci: access to entry by * (browse)
+            ... orclentrylevelaci: access to attr=userPassword by self (write)
+            ... '''
+            >>> result = oid_quirk.acl.extract_acls_from_ldif(ldif_text)
+            >>> acls = result.unwrap()
+            >>> len(acls)
+            2
 
             """
             try:
@@ -1105,11 +1101,11 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
             """Process entry for Oracle OID format.
 
             Args:
-                entry_dn: Entry distinguished name
-                attributes: Entry attributes
+            entry_dn: Entry distinguished name
+            attributes: Entry attributes
 
             Returns:
-                FlextResult with processed entry data
+            FlextResult with processed entry data
 
             """
             try:
@@ -1121,7 +1117,7 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
 
                 # STRATEGY PATTERN: Extract ACL attributes to metadata (RFC format)
                 # ACL attributes will be processed separately by pipeline
-                # CRITICAL: DN is NOT an attribute - it's the entry identifier
+                # Critical: DN is NOT an attribute - it's the entry identifier
                 acl_attrs_oid = {"orclaci", "orclentrylevelaci", "aci"}
                 forbidden_attrs = {
                     FlextLdifConstants.DictKeys.DN
@@ -1168,10 +1164,10 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
             """Convert Oracle OID entry to RFC-compliant format.
 
             Args:
-                entry_data: Oracle OID entry data
+            entry_data: Oracle OID entry data
 
             Returns:
-                FlextResult with RFC-compliant entry data
+            FlextResult with RFC-compliant entry data
 
             """
             try:
@@ -1206,10 +1202,10 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
             """Convert RFC-compliant entry to Oracle OID format.
 
             Args:
-                entry_data: RFC-compliant entry data
+            entry_data: RFC-compliant entry data
 
             Returns:
-                FlextResult with OID entry data
+            FlextResult with OID entry data
 
             """
             try:
@@ -1328,26 +1324,26 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
             - OID-specific objectClasses and attributes
 
             Args:
-                ldif_content: LDIF content containing directory entries
+            ldif_content: LDIF content containing directory entries
 
             Returns:
-                FlextResult containing list of parsed entry dictionaries
+            FlextResult containing list of parsed entry dictionaries
 
             Examples:
-                >>> ldif_text = '''
-                ... dn: cn=OracleContext,dc=example,dc=com
-                ... objectClass: orclContext
-                ... orclVersion: 90600
-                ... cn: OracleContext
-                ...
-                ... dn: cn=users,cn=OracleContext,dc=example,dc=com
-                ... objectClass: organizationalUnit
-                ... cn: users
-                ... '''
-                >>> result = oid_quirk.entry.extract_entries_from_ldif(ldif_text)
-                >>> entries = result.unwrap()
-                >>> len(entries)
-                2
+            >>> ldif_text = '''
+            ... dn: cn=OracleContext,dc=example,dc=com
+            ... objectClass: orclContext
+            ... orclVersion: 90600
+            ... cn: OracleContext
+            ...
+            ... dn: cn=users,cn=OracleContext,dc=example,dc=com
+            ... objectClass: organizationalUnit
+            ... cn: users
+            ... '''
+            >>> result = oid_quirk.entry.extract_entries_from_ldif(ldif_text)
+            >>> entries = result.unwrap()
+            >>> len(entries)
+            2
 
             """
             try:

@@ -89,7 +89,7 @@ class ValidationService(FlextService[FlextLdifTypes.Models.CustomDataDict]):
         - Handle context propagation (correlation_id, operation_name)
 
         Returns:
-            FlextResult containing service status
+        FlextResult containing service status
 
         """
         return FlextResult[FlextLdifTypes.Models.CustomDataDict].ok({

@@ -339,10 +339,10 @@ class FlextLdifRfcLdifWriter(FlextService[FlextLdifTypes.Models.CustomDataDict])
         """Write entries to LDIF string format.
 
         Args:
-            entries: Sequence of LDIF entries to write
+        entries: Sequence of LDIF entries to write
 
         Returns:
-            FlextResult containing LDIF string or error
+        FlextResult containing LDIF string or error
 
         """
         try:
@@ -414,11 +414,11 @@ class FlextLdifRfcLdifWriter(FlextService[FlextLdifTypes.Models.CustomDataDict])
         """Write entries to LDIF file.
 
         Args:
-            entries: Sequence of LDIF entries to write
-            output_file: Path to output file
+        entries: Sequence of LDIF entries to write
+        output_file: Path to output file
 
         Returns:
-            FlextResult indicating success or failure
+        FlextResult indicating success or failure
 
         """
         try:
@@ -482,11 +482,11 @@ class FlextLdifRfcLdifWriter(FlextService[FlextLdifTypes.Models.CustomDataDict])
         """Write schema entries to LDIF file.
 
         Args:
-            file_handle: Open text file handle for writing
-            schema: Schema dictionary with FlextLdifConstants.DictKeys.ATTRIBUTES and 'objectclasses'
+        file_handle: Open text file handle for writing
+        schema: Schema dictionary with FlextLdifConstants.DictKeys.ATTRIBUTES and 'objectclasses'
 
         Returns:
-            FlextResult with stats dict
+        FlextResult with stats dict
 
         """
         try:
@@ -570,11 +570,11 @@ class FlextLdifRfcLdifWriter(FlextService[FlextLdifTypes.Models.CustomDataDict])
         """Write regular entries to LDIF file.
 
         Args:
-            file_handle: Open text file handle for writing
-            entries: List of entry dicts or Entry objects
+        file_handle: Open text file handle for writing
+        entries: List of entry dicts or Entry objects
 
         Returns:
-            FlextResult with stats dict
+        FlextResult with stats dict
 
         """
         try:
@@ -596,12 +596,25 @@ class FlextLdifRfcLdifWriter(FlextService[FlextLdifTypes.Models.CustomDataDict])
                     entry_dn: str = dn_raw if isinstance(dn_raw, str) else ""
                     dn = entry_dn
 
-                    entry_attrs: FlextLdifTypes.Models.CustomDataDict = {
-                        k: v
-                        for k, v in entry.items()
-                        if k != FlextLdifConstants.DictKeys.DN
-                    }
-                    attributes_normalized = entry_attrs
+                    # Extract attributes from entry dict structure
+                    # Entry format: {"dn": "...", "attributes": {...}, "objectclass": [...]}
+                    entry_attrs_raw = entry.get(FlextLdifConstants.DictKeys.ATTRIBUTES, {})
+                    entry_objectclass = entry.get(FlextLdifConstants.DictKeys.OBJECTCLASS, [])
+
+                    # Combine attributes and objectclass into flat dict for LDIF writing
+                    attributes_normalized: FlextLdifTypes.Models.CustomDataDict = {}
+                    if isinstance(entry_attrs_raw, dict):
+                        attributes_normalized.update(entry_attrs_raw)
+
+                    # Add objectclass as an attribute
+                    if entry_objectclass:
+                        oc_values = (
+                            entry_objectclass
+                            if isinstance(entry_objectclass, list)
+                            else [entry_objectclass]
+                        )
+                        if oc_values:
+                            attributes_normalized["objectclass"] = oc_values
 
                 if not dn:
                     continue
@@ -631,29 +644,66 @@ class FlextLdifRfcLdifWriter(FlextService[FlextLdifTypes.Models.CustomDataDict])
                                         if k != FlextLdifConstants.DictKeys.DN
                                     }
 
-                # Write DN (with RFC 4514 normalization)
-                normalized_dn = self._normalize_dn(dn)
-                dn_line = f"dn: {normalized_dn}\n"
-                file_handle.write(dn_line)
-                lines_written += 1
-
-                # Write attributes
-                for attr_name, attr_values in attributes_normalized.items():
-                    # Handle both single values and lists
-                    values = (
-                        attr_values if isinstance(attr_values, list) else [attr_values]
+                # Check if we have a target quirk with custom writer (for schema modify, etc.)
+                used_custom_writer = False
+                if self._quirk_registry and self._target_server_type:
+                    entry_quirks = self._quirk_registry.get_entry_quirks(
+                        self._target_server_type
                     )
+                    # Build full entry dict for quirk writer
+                    full_entry_dict: dict[str, object] = {FlextLdifConstants.DictKeys.DN: dn}
+                    full_entry_dict.update(attributes_normalized)
 
-                    for value in values:
-                        attr_line = f"{attr_name}: {value}\n"
-                        wrapped_lines = self._wrap_line(attr_line)
-                        file_handle.writelines(wrapped_lines)
-                        lines_written += len(wrapped_lines)
+                    for quirk in entry_quirks:
+                        # Check if quirk has custom writer and can handle this entry
+                        if (
+                            hasattr(quirk, "write_entry_to_ldif")
+                            and callable(getattr(quirk, "write_entry_to_ldif"))
+                            and quirk.can_handle_entry(dn, attributes_normalized)
+                        ):
+                            # Use quirk's custom LDIF writer
+                            write_method = getattr(quirk, "write_entry_to_ldif")
+                            write_result = write_method(full_entry_dict)
+                            if hasattr(write_result, "is_success") and write_result.is_success:
+                                ldif_string = write_result.unwrap()
+                                file_handle.write(ldif_string)
+                                # Add entry separator (blank line) if not already present
+                                if not ldif_string.endswith("\n\n"):
+                                    file_handle.write("\n")
+                                # Count lines in custom output
+                                custom_lines = ldif_string.count("\n") + (
+                                    0 if ldif_string.endswith("\n\n") else 1
+                                )
+                                lines_written += custom_lines
+                                entries_written += 1
+                                used_custom_writer = True
+                                break
 
-                # Entry separator
-                file_handle.write("\n")
-                lines_written += 1
-                entries_written += 1
+                # Standard RFC writing (if custom writer not used)
+                if not used_custom_writer:
+                    # Write DN (with RFC 4514 normalization)
+                    normalized_dn = self._normalize_dn(dn)
+                    dn_line = f"dn: {normalized_dn}\n"
+                    file_handle.write(dn_line)
+                    lines_written += 1
+
+                    # Write attributes
+                    for attr_name, attr_values in attributes_normalized.items():
+                        # Handle both single values and lists
+                        values = (
+                            attr_values if isinstance(attr_values, list) else [attr_values]
+                        )
+
+                        for value in values:
+                            attr_line = f"{attr_name}: {value}\n"
+                            wrapped_lines = self._wrap_line(attr_line)
+                            file_handle.writelines(wrapped_lines)
+                            lines_written += len(wrapped_lines)
+
+                    # Entry separator
+                    file_handle.write("\n")
+                    lines_written += 1
+                    entries_written += 1
 
             return FlextResult[FlextLdifTypes.Models.CustomDataDict].ok({
                 FlextLdifConstants.DictKeys.ENTRIES_WRITTEN: entries_written,
@@ -671,11 +721,11 @@ class FlextLdifRfcLdifWriter(FlextService[FlextLdifTypes.Models.CustomDataDict])
         """Write ACL entries to LDIF file.
 
         Args:
-            file_handle: Open text file handle for writing
-            acls: List of ACL entry dicts
+        file_handle: Open text file handle for writing
+        acls: List of ACL entry dicts
 
         Returns:
-            FlextResult with stats dict
+        FlextResult with stats dict
 
         """
         try:
@@ -756,10 +806,10 @@ class FlextLdifRfcLdifWriter(FlextService[FlextLdifTypes.Models.CustomDataDict])
         """Wrap LDIF line at 76 characters per RFC 2849.
 
         Args:
-            line: Line to wrap
+        line: Line to wrap
 
         Returns:
-            List of wrapped lines
+        List of wrapped lines
 
         """
         if len(line) <= FlextLdifConstants.RfcCompliance.LINE_WITH_NEWLINE:
@@ -788,10 +838,10 @@ class FlextLdifRfcLdifWriter(FlextService[FlextLdifTypes.Models.CustomDataDict])
         """Extract ACL definitions from raw ACL data.
 
         Args:
-            raw_acl: Raw ACL data from entry (list of objects or single object)
+        raw_acl: Raw ACL data from entry (list of objects or single object)
 
         Returns:
-            List of ACL definition strings
+        List of ACL definition strings
 
         """
         if isinstance(raw_acl, list):
@@ -805,10 +855,10 @@ class FlextLdifRfcLdifWriter(FlextService[FlextLdifTypes.Models.CustomDataDict])
         which fixes LDAPInvalidDnError issues with spaces and special characters.
 
         Args:
-            dn: Distinguished name to normalize
+        dn: Distinguished name to normalize
 
         Returns:
-            Normalized DN string (or original if normalization fails)
+        Normalized DN string (or original if normalization fails)
 
         """
         if not dn:
@@ -837,10 +887,10 @@ class FlextLdifRfcLdifWriter(FlextService[FlextLdifTypes.Models.CustomDataDict])
         - Contains newline (\\n) or carriage return (\\r)
 
         Args:
-            value: Attribute value to check
+        value: Attribute value to check
 
         Returns:
-            True if value needs base64 encoding
+        True if value needs base64 encoding
 
         """
         if not value:
@@ -874,11 +924,11 @@ class FlextLdifRfcLdifWriter(FlextService[FlextLdifTypes.Models.CustomDataDict])
         """Format attribute value according to RFC 2849.
 
         Args:
-            attr_name: Attribute name
-            value: Attribute value
+        attr_name: Attribute name
+        value: Attribute value
 
         Returns:
-            Formatted LDIF attribute line (without trailing newline)
+        Formatted LDIF attribute line (without trailing newline)
 
         """
         if self._needs_base64_encoding(value):

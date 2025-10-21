@@ -19,15 +19,8 @@ from flext_core import FlextConstants, FlextResult
 from flext_ldif.quirks.registry import FlextLdifQuirksRegistry
 from flext_ldif.rfc.rfc_ldif_parser import FlextLdifRfcLdifParser
 from flext_ldif.rfc.rfc_ldif_writer import FlextLdifRfcLdifWriter
-from tests.fixtures import FlextLdifFixtures
-from tests.support import (
-    FileManager,
-    LdifTestData,
-    RealServiceFactory,
-    TestValidators,
-)
-
-from .fixtures import loader
+from tests.fixtures import FlextLdifFixtures, loader
+from tests.support import FileManager, LdifTestData, RealServiceFactory, TestValidators
 
 
 class TestFileManager:
@@ -243,9 +236,7 @@ def assert_result_failure(
 
 # Enhanced flext-core result validation fixtures
 @pytest.fixture
-def validate_flext_result_success() -> Callable[
-    [FlextResult[object]], dict[str, bool]
-]:
+def validate_flext_result_success() -> Callable[[FlextResult[object]], dict[str, bool]]:
     """Validate FlextResult success characteristics using flext-core patterns."""
 
     def validator(result: FlextResult[object]) -> dict[str, bool]:
@@ -261,9 +252,7 @@ def validate_flext_result_success() -> Callable[
 
 
 @pytest.fixture
-def validate_flext_result_failure() -> Callable[
-    [FlextResult[object]], dict[str, bool]
-]:
+def validate_flext_result_failure() -> Callable[[FlextResult[object]], dict[str, bool]]:
     """Validate FlextResult failure characteristics using flext-core patterns."""
 
     def validator(result: FlextResult[object]) -> dict[str, bool]:

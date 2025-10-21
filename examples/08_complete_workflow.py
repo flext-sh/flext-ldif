@@ -95,7 +95,7 @@ def configuration_from_env_example() -> None:
     print(f"Encoding (from .env): {api.config.ldif_encoding}")
     print(f"Max Workers (from .env): {api.config.max_workers}")
     print(f"Strict Validation (from .env): {api.config.ldif_strict_validation}")
-    print(f"Debug Mode (from .env): {api.config.debug_mode}")
+    print(f"Debug Mode (from .env): {api.config.debug}")
 
     # Configuration affects behavior automatically
     entries_count = 1000

@@ -106,10 +106,10 @@ class FlextLdifQuirksRegistry(FlextModels.Value):
         """Register an ACL quirk for a server type.
 
         Args:
-            quirk: ACL quirk instance to register
+        quirk: ACL quirk instance to register
 
         Returns:
-            FlextResult indicating success or failure
+        FlextResult indicating success or failure
 
         """
         try:
@@ -144,10 +144,10 @@ class FlextLdifQuirksRegistry(FlextModels.Value):
         """Register an entry quirk for a server type.
 
         Args:
-            quirk: Entry quirk instance to register
+        quirk: Entry quirk instance to register
 
         Returns:
-            FlextResult indicating success or failure
+        FlextResult indicating success or failure
 
         """
         try:
@@ -182,10 +182,10 @@ class FlextLdifQuirksRegistry(FlextModels.Value):
         """Get all schema quirks for a server type.
 
         Args:
-            server_type: Server type (e.g., 'oid', 'oud', 'openldap')
+        server_type: Server type (e.g., 'oid', 'oud', 'openldap')
 
         Returns:
-            List of schema quirks in priority order
+        List of schema quirks in priority order
 
         """
         return self._schema_quirks.get(server_type, [])
@@ -196,10 +196,10 @@ class FlextLdifQuirksRegistry(FlextModels.Value):
         """Get all ACL quirks for a server type.
 
         Args:
-            server_type: Server type
+        server_type: Server type
 
         Returns:
-            List of ACL quirks in priority order
+        List of ACL quirks in priority order
 
         """
         return self._acl_quirks.get(server_type, [])
@@ -210,10 +210,10 @@ class FlextLdifQuirksRegistry(FlextModels.Value):
         """Get all entry quirks for a server type.
 
         Args:
-            server_type: Server type
+        server_type: Server type
 
         Returns:
-            List of entry quirks in priority order
+        List of entry quirks in priority order
 
         """
         return self._entry_quirks.get(server_type, [])
@@ -229,10 +229,10 @@ class FlextLdifQuirksRegistry(FlextModels.Value):
         """Get all quirks (schema, ACL, entry) for a server type.
 
         Args:
-            server_type: Server type
+        server_type: Server type
 
         Returns:
-            Dict with 'schema', 'acl', 'entry' quirk lists
+        Dict with 'schema', 'acl', 'entry' quirk lists
 
         """
         return {
@@ -247,11 +247,11 @@ class FlextLdifQuirksRegistry(FlextModels.Value):
         """Find the first schema quirk that can handle an attribute definition.
 
         Args:
-            server_type: Server type
-            attr_definition: AttributeType definition string
+        server_type: Server type
+        attr_definition: AttributeType definition string
 
         Returns:
-            First matching quirk or None
+        First matching quirk or None
 
         """
         for quirk in self.get_schema_quirks(server_type):
@@ -265,11 +265,11 @@ class FlextLdifQuirksRegistry(FlextModels.Value):
         """Find the first schema quirk that can handle an objectClass definition.
 
         Args:
-            server_type: Server type
-            oc_definition: ObjectClass definition string
+        server_type: Server type
+        oc_definition: ObjectClass definition string
 
         Returns:
-            First matching quirk or None
+        First matching quirk or None
 
         """
         for quirk in self.get_schema_quirks(server_type):
@@ -283,11 +283,11 @@ class FlextLdifQuirksRegistry(FlextModels.Value):
         """Find the first ACL quirk that can handle an ACL line.
 
         Args:
-            server_type: Server type
-            acl_line: ACL definition line
+        server_type: Server type
+        acl_line: ACL definition line
 
         Returns:
-            First matching quirk or None
+        First matching quirk or None
 
         """
         for quirk in self.get_acl_quirks(server_type):
@@ -304,12 +304,12 @@ class FlextLdifQuirksRegistry(FlextModels.Value):
         """Find the first entry quirk that can handle an entry.
 
         Args:
-            server_type: Server type
-            entry_dn: Entry distinguished name
-            attributes: Entry attributes
+        server_type: Server type
+        entry_dn: Entry distinguished name
+        attributes: Entry attributes
 
         Returns:
-            First matching quirk or None
+        First matching quirk or None
 
         """
         for quirk in self.get_entry_quirks(server_type):
@@ -321,7 +321,7 @@ class FlextLdifQuirksRegistry(FlextModels.Value):
         """List all server types that have registered quirks.
 
         Returns:
-            List of server type identifiers
+        List of server type identifiers
 
         """
         server_types: set[str] = set()
@@ -334,7 +334,7 @@ class FlextLdifQuirksRegistry(FlextModels.Value):
         """Get statistics about registered quirks.
 
         Returns:
-            Dict with quirk registration statistics
+        Dict with quirk registration statistics
 
         """
         return {
@@ -367,7 +367,7 @@ class FlextLdifQuirksRegistry(FlextModels.Value):
         """Get or create the global quirk registry instance.
 
         Returns:
-            Global FlextLdifQuirksRegistry instance
+        Global FlextLdifQuirksRegistry instance
 
         """
         return cls._GlobalAccess.get_instance()

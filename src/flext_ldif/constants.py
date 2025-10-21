@@ -1,14 +1,7 @@
-"""FLEXT LDIF Constants - Constants and enums ONLY.
+"""LDIF constants and enumerations.
 
-Contains ONLY:
-- Final constants (literals, strings, numbers)
-- Enum and StrEnum definitions
-- Frozenset constants
-
-NO types (→ typings.py)
-NO protocols (→ protocols.py)
-NO models (→ models.py)
-NO exceptions (→ exceptions.py)
+This module defines constant values and enumerations used throughout the
+LDIF library. Types, protocols, and models are defined in separate modules.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -138,7 +131,7 @@ class FlextLdifConstants(FlextConstants):
     class ConfigDefaults:
         """Default values for FlextLdifConfig fields.
 
-        ZERO TOLERANCE: All Field(default=...) values MUST be defined here.
+        Zero Tolerance: All Field(default=...) values MUST be defined here.
         """
 
         # Format Configuration Defaults
@@ -560,20 +553,20 @@ class FlextLdifConstants(FlextConstants):
     class LdapServers:
         """LDAP server implementation constants."""
 
-        # Server types
-        ACTIVE_DIRECTORY: Final[str] = "active_directory"
-        OPENLDAP: Final[str] = "openldap"  # Legacy catch-all
-        OPENLDAP_2: Final[str] = "openldap2"  # Modern cn=config based
-        OPENLDAP_1: Final[str] = "openldap1"  # Legacy slapd.conf based
-        APACHE_DIRECTORY: Final[str] = "apache_directory"
-        NOVELL_EDIRECTORY: Final[str] = "novell_edirectory"
-        IBM_TIVOLI: Final[str] = "ibm_tivoli"
-        GENERIC: Final[str] = "generic"
+        # Server types - using Literal types for ACL compatibility
+        ACTIVE_DIRECTORY: Final = "active_directory"
+        OPENLDAP: Final = "openldap"  # Legacy catch-all
+        OPENLDAP_2: Final = "openldap2"  # Modern cn=config based
+        OPENLDAP_1: Final = "openldap1"  # Legacy slapd.conf based
+        APACHE_DIRECTORY: Final = "apache_directory"
+        NOVELL_EDIRECTORY: Final = "novell_edirectory"
+        IBM_TIVOLI: Final = "ibm_tivoli"
+        GENERIC: Final = "generic"
         # Oracle server types
-        ORACLE_OID: Final[str] = "oracle_oid"
-        ORACLE_OUD: Final[str] = "oracle_oud"
+        ORACLE_OID: Final = "oracle_oid"
+        ORACLE_OUD: Final = "oracle_oud"
         # Additional server types
-        DS_389: Final[str] = "389ds"
+        DS_389: Final = "389ds"
 
         # Supported server types list
         SUPPORTED_TYPES: Final[frozenset[str]] = frozenset([
@@ -754,7 +747,7 @@ class FlextLdifConstants(FlextConstants):
         - Inconsistent state (OUD generates its own)
         - Sync conflicts (timestamp mismatches)
 
-        ZERO TOLERANCE: All operational attribute names MUST be defined here.
+        Zero Tolerance: All operational attribute names MUST be defined here.
         """
 
         # Common operational attributes across all LDAP servers
@@ -836,7 +829,7 @@ class FlextLdifConstants(FlextConstants):
     class DictKeys:
         """Standard dictionary keys used throughout flext-ldif.
 
-        ZERO TOLERANCE: All dict[str, object] key strings MUST be defined here.
+        Zero Tolerance: All dict[str, object] key strings MUST be defined here.
         DO NOT use hard-coded strings as dict keys anywhere in the codebase.
         """
 
@@ -1056,7 +1049,7 @@ class FlextLdifConstants(FlextConstants):
     class DnPatterns:
         """Standard DN patterns used in LDAP/LDIF processing.
 
-        ZERO TOLERANCE: All DN pattern strings MUST be defined here.
+        Zero Tolerance: All DN pattern strings MUST be defined here.
         DO NOT use hard-coded DN strings anywhere in the codebase.
         """
 
@@ -1125,7 +1118,7 @@ class FlextLdifConstants(FlextConstants):
     class AclFormats:
         """ACL format identifier constants.
 
-        ZERO TOLERANCE: All ACL format strings MUST be defined here.
+        Zero Tolerance: All ACL format strings MUST be defined here.
         """
 
         # OpenLDAP ACL formats
@@ -1155,7 +1148,7 @@ class FlextLdifConstants(FlextConstants):
     class ServerTypes:
         """Server type identifiers (short forms).
 
-        ZERO TOLERANCE: All server type identifier strings MUST be defined here.
+        Zero Tolerance: All server type identifier strings MUST be defined here.
         These are the SHORT identifiers used in quirks, config, and processing.
         Long names are in LdapServers class.
         """
@@ -1189,7 +1182,7 @@ class FlextLdifConstants(FlextConstants):
     class LdifPatterns:
         """Regex pattern constants for LDIF processing.
 
-        ZERO TOLERANCE: ALL regex patterns MUST be defined here.
+        Zero Tolerance: ALL regex patterns MUST be defined here.
         NO re.compile() or pattern strings outside this namespace.
         """
 
@@ -1255,7 +1248,7 @@ class FlextLdifConstants(FlextConstants):
     class ValidationRules:
         """Validation rule constants.
 
-        ZERO TOLERANCE: All validation logic constants MUST be defined here.
+        Zero Tolerance: All validation logic constants MUST be defined here.
         NO hard-coded validation strings in validators.
         """
 
