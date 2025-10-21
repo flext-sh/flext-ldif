@@ -1,24 +1,18 @@
-"""Real LDAP Integration Tests with flext-openldap-test container.
+"""Integration tests with live LDAP server.
 
-Tests FlextLdif against actual LDAP server operations:
-- LDIF export from real LDAP entries
-- LDIF import to LDAP server
-- Roundtrip validation (LDAP → LDIF → LDAP)
-- Schema extraction from live server
-- ACL processing with real entries
-- Comprehensive CRUD operations
-- Batch processing with real data
-- Server-specific quirk handling
-- Configuration from .env file
+Test suite verifying LDIF operations against an actual LDAP server:
+    - Parse and write LDIF from/to LDAP server
+    - Validate roundtrip data integrity (LDAP → LDIF → LDAP)
+    - Extract and process schema information
+    - Handle ACL entries
+    - Perform CRUD operations
+    - Process batches of entries
 
-Requires:
-- flext-openldap-test Docker container running on localhost:3390
-- Environment variables in .env file:
-  LDAP_HOST=localhost
-  LDAP_PORT=3390
-  LDAP_ADMIN_DN=cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local
-  LDAP_ADMIN_PASSWORD=REDACTED_LDAP_BIND_PASSWORD123
-  LDAP_BASE_DN=dc=flext,dc=local
+Requirements:
+    - OpenLDAP test container on localhost:3390
+    - Environment variables:
+        LDAP_HOST, LDAP_PORT, LDAP_ADMIN_DN,
+        LDAP_ADMIN_PASSWORD, LDAP_BASE_DN
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -336,7 +330,9 @@ mail: import@example.com
         ldap_connection.add(
             str(entry.dn),
             entry.get_attribute_values("objectclass"),
-            entry.attributes.to_ldap3(exclude=["objectclass"]),
+            cast(
+                "dict[str, object]", entry.attributes.to_ldap3(exclude=["objectclass"])
+            ),
         )
 
         # Verify import
@@ -386,7 +382,7 @@ jpegPhoto:: {encoded_photo}
         ldap_connection.add(
             str(entry.dn),
             entry.get_attribute_values("objectclass"),
-            ldap_attrs,
+            cast("dict[str, object]", ldap_attrs),
         )
 
         # Verify
@@ -398,7 +394,7 @@ jpegPhoto:: {encoded_photo}
 
 
 class TestRealLdapRoundtrip:
-    """Test complete LDAP → LDIF → LDAP roundtrip."""
+    """Test LDAP → LDIF → LDAP data roundtrip."""
 
     def test_roundtrip_preserves_data(
         self,
@@ -409,7 +405,7 @@ class TestRealLdapRoundtrip:
         """Verify LDAP → LDIF → LDAP preserves data integrity."""
         # Create original LDAP entry
         original_dn = f"cn=Roundtrip Test,{clean_test_ou}"
-        original_attrs = {
+        original_attrs: dict[str, object] = {
             "cn": "Roundtrip Test",
             "sn": "Test",
             "mail": "roundtrip@example.com",
@@ -462,7 +458,7 @@ class TestRealLdapRoundtrip:
         ldap_connection.add(
             reimport_dn,
             obj_class_values,
-            reimport_attrs,
+            cast("dict[str, object]", reimport_attrs),
         )
 
         # Verify reimported entry
@@ -473,7 +469,7 @@ class TestRealLdapRoundtrip:
         assert reimported["sn"].value == original_attrs["sn"]
         assert reimported["mail"].value == original_attrs["mail"]
         assert set(reimported["telephoneNumber"].values) == set(
-            original_attrs["telephoneNumber"]
+            cast("list[str]", original_attrs["telephoneNumber"])
         )
 
 
@@ -754,7 +750,9 @@ mail: import@example.com
         ldap_connection.add(
             str(entry.dn),
             entry.get_attribute_values("objectclass"),
-            entry.attributes.to_ldap3(exclude=["objectclass"]),
+            cast(
+                "dict[str, object]", entry.attributes.to_ldap3(exclude=["objectclass"])
+            ),
         )
 
         # Verify
@@ -766,7 +764,7 @@ mail: import@example.com
 
 
 class TestRealLdapCRUD:
-    """Test comprehensive CRUD operations with real LDAP server."""
+    """Test CRUD operations with LDAP server."""
 
     def test_complete_crud_cycle(
         self,
@@ -774,7 +772,7 @@ class TestRealLdapCRUD:
         clean_test_ou: str,
         flext_api: FlextLdif,
     ) -> None:
-        """Test complete Create→Read→Update→Delete cycle."""
+        """Test Create→Read→Update→Delete cycle."""
         # CREATE: Build entry using FlextLdif API
         person_result = flext_api.build_person_entry(
             cn="CRUD Test User",
@@ -792,7 +790,10 @@ class TestRealLdapCRUD:
         ldap_connection.add(
             str(person_entry.dn),
             obj_class_values,
-            person_entry.attributes.to_ldap3(exclude=["objectclass"]),
+            cast(
+                "dict[str, object]",
+                person_entry.attributes.to_ldap3(exclude=["objectclass"]),
+            ),
         )
 
         # READ: Export from LDAP via LDIF
@@ -855,7 +856,10 @@ class TestRealLdapBatchOperations:
             ldap_connection.add(
                 str(entry.dn),
                 entry.get_attribute_values("objectclass"),
-                entry.attributes.to_ldap3(exclude=["objectclass"]),
+                cast(
+                    "dict[str, object]",
+                    entry.attributes.to_ldap3(exclude=["objectclass"]),
+                ),
             )
 
         # Verify all created
@@ -869,12 +873,15 @@ class TestRealLdapBatchOperations:
 
         # Export all to LDIF
         flext_entries = []
-        for entry in ldap_connection.entries:
+        for ldap_entry in ldap_connection.entries:
             result = flext_api.models.Entry.create(
-                dn=entry.entry_dn,
+                dn=ldap_entry.entry_dn,
                 attributes=cast(
                     "dict[str, list[str]]",
-                    {attr: list(entry[attr].values) for attr in entry.entry_attributes},
+                    {
+                        attr: list(ldap_entry[attr].values)
+                        for attr in ldap_entry.entry_attributes
+                    },
                 ),
             )
             assert result.is_success
@@ -919,8 +926,8 @@ class TestRealLdapBatchOperations:
             attributes=["*"],
         )
 
-        # Test is robust: work with actual number of entries found
-        # (may be fewer due to LDAP server state or race conditions)
+        # Work with actual number of entries found
+        # (may vary based on LDAP server state)
         actual_count = len(ldap_connection.entries)
         assert actual_count > 0, "No entries found in LDAP"
 
@@ -1001,7 +1008,7 @@ class TestRealLdapRailwayComposition:
         flext_api: FlextLdif,
         tmp_path: Path,
     ) -> None:
-        """Test complete FlextResult railway composition."""
+        """Test FlextResult error handling composition."""
         # Create LDAP data
         person_dn = f"cn=Railway Test,{clean_test_ou}"
         ldap_connection.add(

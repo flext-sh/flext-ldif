@@ -322,9 +322,7 @@ class FlextLdifQuirksServersDs389(FlextLdifQuirksBaseSchemaQuirk):
                 f"RFC→389 Directory Server objectClass conversion failed: {exc}"
             )
 
-    def write_attribute_to_rfc(
-        self, attr_data: dict[str, object]
-    ) -> FlextResult[str]:
+    def write_attribute_to_rfc(self, attr_data: dict[str, object]) -> FlextResult[str]:
         """Write attribute data to RFC-compliant string format."""
         try:
             oid = attr_data.get(FlextLdifConstants.DictKeys.OID, "")
@@ -355,9 +353,7 @@ class FlextLdifQuirksServersDs389(FlextLdifQuirksBaseSchemaQuirk):
                 f"389 Directory Server attribute write failed: {exc}"
             )
 
-    def write_objectclass_to_rfc(
-        self, oc_data: dict[str, object]
-    ) -> FlextResult[str]:
+    def write_objectclass_to_rfc(self, oc_data: dict[str, object]) -> FlextResult[str]:
         """Write objectClass data to RFC-compliant string format."""
         try:
             oid = oc_data.get(FlextLdifConstants.DictKeys.OID, "")
@@ -521,9 +517,7 @@ class FlextLdifQuirksServersDs389(FlextLdifQuirksBaseSchemaQuirk):
                     FlextLdifConstants.DictKeys.ACI,
                 )
                 data_raw = acl_data.get(FlextLdifConstants.DictKeys.DATA, {})
-                data: dict[str, object] = (
-                    data_raw if isinstance(data_raw, dict) else {}
-                )
+                data: dict[str, object] = data_raw if isinstance(data_raw, dict) else {}
 
                 # Extract structured fields
                 version = data.get("version")

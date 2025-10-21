@@ -20,6 +20,7 @@ from pathlib import Path
 from flext_core import FlextResult, FlextService
 
 from flext_ldif.constants import FlextLdifConstants
+from flext_ldif.quirks.base import FlextLdifQuirksBaseEntryQuirk
 from flext_ldif.quirks.registry import FlextLdifQuirksRegistry
 from flext_ldif.quirks.servers import (
     FlextLdifQuirksServersOid,
@@ -45,8 +46,8 @@ class _QuirkRegistrationService:
         """Register all quirks (schema, ACL, entry) for a server type.
 
         Args:
-            registry: QuirkRegistry to register quirks with
-            server_type: Server type (oid, oud, etc.)
+        registry: QuirkRegistry to register quirks with
+        server_type: Server type (oid, oud, etc.)
 
         """
         if server_type == FlextLdifConstants.ServerTypes.OID:
@@ -84,16 +85,16 @@ class _QuirkIterationChain:
 
     @staticmethod
     def apply_source_quirks(
-        entry: dict[str, object], quirks: Sequence[object] | None
+        entry: dict[str, object], quirks: Sequence[FlextLdifQuirksBaseEntryQuirk] | None
     ) -> FlextResult[dict[str, object]]:
         """Apply source quirks to normalize entry to RFC format.
 
         Args:
-            entry: Entry dictionary to transform
-            quirks: List of source quirks to apply
+        entry: Entry dictionary to transform
+        quirks: List of source quirks to apply
 
         Returns:
-            FlextResult with normalized entry
+        FlextResult with normalized entry
 
         """
         normalized = entry.copy()
@@ -120,16 +121,16 @@ class _QuirkIterationChain:
 
     @staticmethod
     def apply_target_quirks(
-        entry: dict[str, object], quirks: Sequence[object] | None
+        entry: dict[str, object], quirks: Sequence[FlextLdifQuirksBaseEntryQuirk] | None
     ) -> FlextResult[dict[str, object]]:
         """Apply target quirks to transform entry from RFC format.
 
         Args:
-            entry: Entry dictionary to transform
-            quirks: List of target quirks to apply
+        entry: Entry dictionary to transform
+        quirks: List of target quirks to apply
 
         Returns:
-            FlextResult with target-formatted entry
+        FlextResult with target-formatted entry
 
         """
         target_entry = entry.copy()
@@ -166,9 +167,9 @@ class _EntryFileProcessing:
         """Initialize entry file processor.
 
         Args:
-            parser_class: LDIF parser class to use
-            quirk_registry: Registry with quirks
-            logger_obj: Optional logger instance
+        parser_class: LDIF parser class to use
+        quirk_registry: Registry with quirks
+        logger_obj: Optional logger instance
 
         """
         self._parser_class = parser_class
@@ -179,16 +180,17 @@ class _EntryFileProcessing:
         """Process single entry file and return entries.
 
         Args:
-            entry_file: Path to entry file
+        entry_file: Path to entry file
 
         Returns:
-            FlextResult with parsed entries
+        FlextResult with parsed entries
 
         """
         try:
             if self._logger and hasattr(self._logger, "info"):
                 dk = FlextLdifConstants.DictKeys
-                self._logger.info(
+                # Type narrowing: _logger has info method after hasattr check
+                getattr(self._logger, "info")(
                     f"Processing entry file: {entry_file.name}",
                     extra={dk.SOURCE_SERVER: "rfc"},
                 )
@@ -240,7 +242,7 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifTypes.Models.CustomDataDi
 
     Features:
     - Memory-efficient processing with configurable batch sizes
-    - Comprehensive error handling with detailed failure reporting
+    - Complete error handling with detailed failure reporting
     - Progress tracking and statistics collection
     - Schema and entry processing with separate pipelines
 
@@ -364,10 +366,10 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifTypes.Models.CustomDataDi
                 """Transform single entry through quirk pipeline.
 
                 Args:
-                    entry: Entry to transform
+                entry: Entry to transform
 
                 Returns:
-                    FlextResult with transformed entry
+                FlextResult with transformed entry
 
                 """
                 if not isinstance(entry, dict):
@@ -423,11 +425,11 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifTypes.Models.CustomDataDi
         """Execute generic LDIF migration pipeline.
 
         Returns:
-            FlextResult with migration results containing:
-                - schema: Migrated schema data
-                - entries: Migrated entry data
-                - stats: Migration statistics
-                - output_files: Generated output file paths
+        FlextResult with migration results containing:
+        - schema: Migrated schema data
+        - entries: Migrated entry data
+        - stats: Migration statistics
+        - output_files: Generated output file paths
 
         """
         try:
@@ -568,11 +570,11 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifTypes.Models.CustomDataDi
         """Process schema migration using RFC parsers with quirks.
 
         Args:
-            input_dir: Input directory containing schema files
-            output_dir: Output directory for migrated schema
+        input_dir: Input directory containing schema files
+        output_dir: Output directory for migrated schema
 
         Returns:
-            FlextResult with migrated schema data
+        FlextResult with migrated schema data
 
         """
         try:
@@ -680,11 +682,11 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifTypes.Models.CustomDataDi
         entry file handling via _EntryFileProcessing.
 
         Args:
-            input_dir: Input directory containing entry files
-            output_dir: Output directory for migrated entries
+        input_dir: Input directory containing entry files
+        output_dir: Output directory for migrated entries
 
         Returns:
-            FlextResult with migrated entries
+        FlextResult with migrated entries
 
         """
         try:

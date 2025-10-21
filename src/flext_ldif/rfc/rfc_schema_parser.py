@@ -102,9 +102,9 @@ class FlextLdifRfcSchemaParser(FlextService[FlextLdifTypes.Models.CustomDataDict
         """Initialize RFC schema parser with quirks integration.
 
         Args:
-            params: Parsing parameters (file_path, parse_attributes, parse_objectclasses)
-            quirk_registry: Quirk registry for server-specific extensions (MANDATORY)
-            server_type: Optional server type to select specific quirks
+        params: Parsing parameters (file_path, parse_attributes, parse_objectclasses)
+        quirk_registry: Quirk registry for server-specific extensions (MANDATORY)
+        server_type: Optional server type to select specific quirks
 
         """
         super().__init__()
@@ -116,11 +116,11 @@ class FlextLdifRfcSchemaParser(FlextService[FlextLdifTypes.Models.CustomDataDict
         """Execute RFC-compliant schema parsing.
 
         Returns:
-            FlextResult with parsed schema data containing:
-                - attributes: Dict of attribute definitions by name
-                - objectclasses: Dict of objectClass definitions by name
-                - source_dn: DN of schema subentry
-                - stats: Parsing statistics
+        FlextResult with parsed schema data containing:
+        - attributes: Dict of attribute definitions by name
+        - objectclasses: Dict of objectClass definitions by name
+        - source_dn: DN of schema subentry
+        - stats: Parsing statistics
 
         """
         try:
@@ -221,12 +221,12 @@ class FlextLdifRfcSchemaParser(FlextService[FlextLdifTypes.Models.CustomDataDict
         """Parse schema file according to RFC 4512.
 
         Args:
-            file_path: Path to schema LDIF file
-            parse_attributes: Parse attributeTypes
-            parse_objectclasses: Parse objectClasses
+        file_path: Path to schema LDIF file
+        parse_attributes: Parse attributeTypes
+        parse_objectclasses: Parse objectClasses
 
         Returns:
-            FlextResult with parsed schema data
+        FlextResult with parsed schema data
 
         """
         try:
@@ -300,11 +300,11 @@ class FlextLdifRfcSchemaParser(FlextService[FlextLdifTypes.Models.CustomDataDict
         """Process a single schema line.
 
         Args:
-            line: Complete schema line (after folding)
-            attributes: Dict to store parsed attributes
-            objectclasses: Dict to store parsed objectClasses
-            parse_attributes: Parse attributeTypes
-            parse_objectclasses: Parse objectClasses
+        line: Complete schema line (after folding)
+        attributes: Dict to store parsed attributes
+        objectclasses: Dict to store parsed objectClasses
+        parse_attributes: Parse attributeTypes
+        parse_objectclasses: Parse objectClasses
 
         """
         try:
@@ -335,10 +335,10 @@ class FlextLdifRfcSchemaParser(FlextService[FlextLdifTypes.Models.CustomDataDict
         """Parse RFC 4512 AttributeType definition with quirks support.
 
         Args:
-            definition: AttributeType definition string
+        definition: AttributeType definition string
 
         Returns:
-            Dict with attribute metadata or None if parsing fails
+        Dict with attribute metadata or None if parsing fails
 
         """
         # Try quirks first if available and server_type specified
@@ -379,10 +379,10 @@ class FlextLdifRfcSchemaParser(FlextService[FlextLdifTypes.Models.CustomDataDict
         """Parse RFC 4512 ObjectClass definition with quirks support.
 
         Args:
-            definition: ObjectClass definition string
+        definition: ObjectClass definition string
 
         Returns:
-            Dict with objectClass metadata or None if parsing fails
+        Dict with objectClass metadata or None if parsing fails
 
         """
         # Try quirks first if available and server_type specified

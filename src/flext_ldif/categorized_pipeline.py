@@ -23,52 +23,52 @@ from typing import override
 from flext_core import FlextResult, FlextService
 
 from flext_ldif.constants import FlextLdifConstants
+from flext_ldif.filters import FlextLdifFilters
+from flext_ldif.models import FlextLdifModels
+from flext_ldif.quirks.base import FlextLdifQuirksBaseAclQuirk
 from flext_ldif.quirks.entry_quirks import FlextLdifEntryQuirks
 from flext_ldif.quirks.registry import FlextLdifQuirksRegistry
-from flext_ldif.quirks.servers import (
-    FlextLdifQuirksServersOid,
-    FlextLdifQuirksServersOud,
-)
+from flext_ldif.quirks.servers.oud_quirks import FlextLdifQuirksServersOud
 from flext_ldif.rfc.rfc_ldif_parser import FlextLdifRfcLdifParser
+from flext_ldif.rfc.rfc_ldif_writer import FlextLdifRfcLdifWriter
 from flext_ldif.services.dn_service import DnService
 
 
 class FlextLdifCategorizedMigrationPipeline(FlextService[dict[str, object]]):
-    """Categorized LDIF migration with structured LDIF file output.
+    """LDIF migration pipeline with rule-based entry categorization.
 
-    Enterprise-grade categorized LDIF migration with rule-based entry classification
-    and structured multi-file output for complex directory transformations.
+    Processes LDIF entries and categorizes them into separate output files
+    based on configurable rules. Generates structured output across 6 files
+    (00-schema.ldif through 05-rejected.ldif).
 
-    Features:
-    - Rule-based entry categorization with regex pattern matching
-    - 6-file structured LDIF output (00-schema.ldif through 05-rejected.ldif)
-    - Per-category server-specific quirks transformation
-    - Schema whitelist filtering for controlled migrations
-    - Forbidden attributes filtering for security compliance
-    - Comprehensive statistics and rejection tracking
-    - Railway-Oriented Programming with FlextResult error handling
-    - Memory-efficient batch processing with configurable parameters
+    Capabilities:
+    - Rule-based entry categorization using regex patterns
+    - Multi-file structured output
+    - Server-specific quirks transformation per category
+    - Schema whitelist filtering
+    - Attribute filtering for security and compliance
+    - Statistics and rejection tracking
 
-    Architecture:
-    - Uses FlextLdifRfcLdifParser for RFC-compliant entry parsing
-    - Uses DnService for DN validation and case consistency
+    Implementation:
+    - Uses FlextLdifRfcLdifParser for RFC-compliant parsing
+    - Uses DnService for DN validation
     - Uses FlextLdifEntryQuirks for entry-level transformations
     - Uses categorization rules for intelligent classification
     - Generates structured LDIF files with proper ordering and naming
 
     Output Structure (6 LDIF files in execution order):
     - 00-schema.ldif: Schema definitions (attributeTypes, objectClasses)
-      Loaded first.
+    Loaded first.
     - 01-hierarchy.ldif: Organizational structure (organization, ou, domain)
-      Directory foundation.
+    Directory foundation.
     - 02-users.ldif: User entries (person, inetOrgPerson, organizationalPerson)
-      User accounts.
+    User accounts.
     - 03-groups.ldif: Group entries (groupOfNames, groupOfUniqueNames)
-      Group memberships.
+    Group memberships.
     - 04-acl.ldif: Access Control Lists (entries with aci attributes)
-      Security policies.
+    Security policies.
     - 05-rejected.ldif: Rejected entries with detailed reasons
-      Review and remediation.
+    Review and remediation.
 
     Each output file contains properly formatted LDIF entries with server-specific
     transformations applied according to the target server's quirks.
@@ -89,24 +89,28 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[dict[str, object]]):
         output_files: dict[str, str] | None = None,
         entry_quirks: FlextLdifEntryQuirks | None = None,
         forbidden_attributes: list[str] | None = None,
+        forbidden_objectclasses: list[str] | None = None,
     ) -> None:
         """Initialize categorized migration pipeline.
 
         Args:
-            input_dir: Input directory containing LDIF files
-            output_dir: Output directory for categorized LDIF files
-            categorization_rules: Dictionary containing categorization rules
-            parser_quirk: Quirk for parsing source server format
-            writer_quirk: Quirk for writing target server format
-            source_server: Source LDAP server type (optional)
-            target_server: Target LDAP server type (optional)
-            schema_whitelist_rules: Optional schema whitelist rules
-            input_files: Optional list of specific input files to process
-            output_files: Optional mapping of category names to output filenames
-            entry_quirks: Service for handling entry-level quirks
-            forbidden_attributes: List of attribute names (with optional subtypes)
-                to filter out during transformation. Examples: ['authPassword',
-                'authpassword;orclcommonpwd', 'authpassword;oid']
+        input_dir: Input directory containing LDIF files
+        output_dir: Output directory for categorized LDIF files
+        categorization_rules: Dictionary containing categorization rules
+        parser_quirk: Quirk for parsing source server format
+        writer_quirk: Quirk for writing target server format
+        source_server: Source LDAP server type (optional)
+        target_server: Target LDAP server type (optional)
+        schema_whitelist_rules: Optional schema whitelist rules
+        input_files: Optional list of specific input files to process
+        output_files: Optional mapping of category names to output filenames
+        entry_quirks: Service for handling entry-level quirks
+        forbidden_attributes: List of attribute names (with optional subtypes)
+        to filter out during transformation. Examples: ['authPassword',
+        'authpassword;orclcommonpwd', 'authpassword;oid']
+        forbidden_objectclasses: List of objectClass names to filter out
+        during transformation. Examples: ['orclContainerOC', 'orclService']
+        Uses STRATEGY PATTERN - business rules from client application.
 
         """
         super().__init__()
@@ -121,6 +125,7 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[dict[str, object]]):
         self._input_files = input_files
         self._entry_quirks = entry_quirks or FlextLdifEntryQuirks()
         self._forbidden_attributes = forbidden_attributes or []
+        self._forbidden_objectclasses = forbidden_objectclasses or []
 
         # DN-valued attributes that need case normalization
         # Phase 4: Attributes that contain DN references needing case normalization
@@ -149,14 +154,14 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[dict[str, object]]):
         """Execute categorized migration pipeline.
 
         Returns:
-            FlextResult containing categorized migration statistics
+        FlextResult containing categorized migration statistics
 
         Workflow:
-            1. Parse all entries from input directory
-            2. Categorize entries using rules
-            3. Transform entries per category (quirks)
-            4. Write to structured LDIF file output
-            5. Return comprehensive statistics
+        1. Parse all entries from input directory
+        2. Categorize entries using rules
+        3. Transform entries per category (quirks)
+        4. Write to structured LDIF file output
+        5. Return complete statistics
 
         """
         # Step 1: Create output directory (base directory only)
@@ -216,7 +221,7 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[dict[str, object]]):
 
         written_counts = write_result.unwrap()
 
-        # Step 6: Generate comprehensive statistics
+        # Step 6: Generate complete statistics
         statistics = self._generate_statistics(transformed_categorized, written_counts)
 
         return FlextResult[dict[str, object]].ok(statistics)
@@ -225,7 +230,7 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[dict[str, object]]):
         """Create base output directory for LDIF files.
 
         Returns:
-            FlextResult indicating success or failure
+        FlextResult indicating success or failure
 
         """
         try:
@@ -246,11 +251,11 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[dict[str, object]]):
             """Parse single LDIF file and convert entries to dictionaries.
 
             Args:
-                ldif_file: Path to LDIF file to parse
-                quirk_registry: Registry for RFC parser quirks
+            ldif_file: Path to LDIF file to parse
+            quirk_registry: Registry for RFC parser quirks
 
             Returns:
-                FlextResult containing list of entry dictionaries from file
+            FlextResult containing list of entry dictionaries from file
 
             """
             try:
@@ -321,11 +326,11 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[dict[str, object]]):
         """Parse all LDIF entries from input directory using RFC parser.
 
         Returns:
-            FlextResult containing list of parsed entry dictionaries
+        FlextResult containing list of parsed entry dictionaries
 
         Note:
-            Uses FlextLdifRfcLdifParser for RFC 2849 compliant parsing.
-            Consolidates file parsing with batch_process for functional composition.
+        Uses FlextLdifRfcLdifParser for RFC 2849 compliant parsing.
+        Consolidates file parsing with batch_process for functional composition.
 
         """
         try:
@@ -398,11 +403,11 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[dict[str, object]]):
         """Check if DN matches any of the provided regex patterns.
 
         Args:
-            dn: Distinguished Name to check
-            patterns: List of regex patterns to match against
+        dn: Distinguished Name to check
+        patterns: List of regex patterns to match against
 
         Returns:
-            True if DN matches any pattern, False otherwise
+        True if DN matches any pattern, False otherwise
 
         """
         for pattern in patterns:
@@ -419,10 +424,10 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[dict[str, object]]):
         """Check if entry has ACL-related attributes.
 
         Args:
-            entry: Entry dictionary to check
+        entry: Entry dictionary to check
 
         Returns:
-            True if entry has ACL attributes, False otherwise
+        True if entry has ACL attributes, False otherwise
 
         """
         acl_attributes = self._categorization_rules.get("acl_attributes", [])
@@ -443,21 +448,21 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[dict[str, object]]):
         """Categorize a single entry based on rules.
 
         Args:
-            entry: Entry dictionary to categorize
+        entry: Entry dictionary to categorize
 
         Returns:
-            Tuple of (category, rejection_reason)
-            Category is one of: schema, hierarchy, users, groups, acl, rejected
-            Rejection reason is None unless category is 'rejected'
+        Tuple of (category, rejection_reason)
+        Category is one of: schema, hierarchy, users, groups, acl, rejected
+        Rejection reason is None unless category is 'rejected'
 
         Categorization Logic:
-            0. Check for blocked objectClasses → rejected (client-a business rule)
-            1. Check for schema entries (attributeTypes, objectClasses)
-            2. Check for hierarchy objectClasses → hierarchy (BEFORE ACL!)
-            3. Check for user objectClasses → users
-            4. Check for group objectClasses → groups
-            5. Check for ACL attributes → acl (AFTER hierarchy/users/groups)
-            6. Otherwise → rejected
+        0. Check for blocked objectClasses → rejected (client-a business rule)
+        1. Check for schema entries (attributeTypes, objectClasses)
+        2. Check for hierarchy objectClasses → hierarchy (BEFORE ACL!)
+        3. Check for user objectClasses → users
+        4. Check for group objectClasses → groups
+        5. Check for ACL attributes → acl (AFTER hierarchy/users/groups)
+        6. Otherwise → rejected
 
         CRITICAL: Hierarchy check has HIGHER priority than ACL check. This ensures
         Oracle containers (orclcontainer, orclprivilegegroup) with ACL attributes go
@@ -538,7 +543,7 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[dict[str, object]]):
 
         # 2. Hierarchy entries
         # (organization, organizationalUnit, domain, Oracle containers)
-        # CRITICAL: Check hierarchy BEFORE ACL so Oracle containers go to hierarchy file
+        # Critical: Check hierarchy BEFORE ACL so Oracle containers go to hierarchy file
         # Oracle containers (orclcontainer, orclprivilegegroup) are structural parents
         # They may have ACL attributes but must be synced before children
         for obj_class_lower in object_classes_lower:
@@ -564,7 +569,7 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[dict[str, object]]):
                 return ("groups", None)
 
         # 5. ACL entries (have ACL attributes but no hierarchy/user/group objectClasses)
-        # NOTE: ACL check moved AFTER hierarchy/users/groups
+        # Note: ACL check moved AFTER hierarchy/users/groups
         # This gives priority to structural entries
         if self._has_acl_attributes(entry):
             return ("acl", None)
@@ -579,10 +584,10 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[dict[str, object]]):
         """Categorize all entries into structured categories.
 
         Args:
-            entries: List of parsed entry dictionaries
+        entries: List of parsed entry dictionaries
 
         Returns:
-            FlextResult containing dictionary mapping category to entry list
+        FlextResult containing dictionary mapping category to entry list
 
         """
         try:
@@ -698,13 +703,13 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[dict[str, object]]):
         determine which attributes to filter. This method provides generic filtering.
 
         Args:
-            attributes: Dictionary of attributes to filter
+        attributes: Dictionary of attributes to filter
 
         Returns:
-            Filtered attributes dictionary without forbidden attributes
+        Filtered attributes dictionary without forbidden attributes
 
         Example forbidden_attributes:
-            ['authPassword', 'authpassword;orclcommonpwd', 'authpassword;oid']
+        ['authPassword', 'authpassword;orclcommonpwd', 'authpassword;oid']
 
         """
         if not self._forbidden_attributes:
@@ -723,24 +728,67 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[dict[str, object]]):
 
         return filtered
 
+    def _filter_forbidden_objectclasses(self, entry: object) -> FlextResult[object]:
+        """Filter forbidden objectClasses from entry.
+
+        STRATEGY PATTERN: Business rules from client application (e.g., client-a-oud-mig)
+        determine which objectClasses to filter. This method provides generic filtering.
+
+        Args:
+        entry: FlextLdifModels.Entry object to filter
+
+        Returns:
+        FlextResult containing filtered Entry or error
+
+        Example forbidden_objectclasses:
+        ['orclContainerOC', 'orclService', 'orclcontextaux82']
+
+        Note:
+        Uses FlextLdifFilters.filter_entry_objectclasses for actual filtering.
+        Maintains entry metadata and DN during transformation.
+
+        """
+        if not self._forbidden_objectclasses:
+            # No filtering needed - return entry as-is
+            return FlextResult[object].ok(entry)
+
+        # Type guard - ensure we have an Entry object
+        if not isinstance(entry, FlextLdifModels.Entry):
+            return FlextResult[object].fail(
+                f"Expected FlextLdifModels.Entry, got {type(entry).__name__}"
+            )
+
+        # Delegate to FlextLdifFilters for actual filtering
+        # Type cast result to match return type
+        filter_result = FlextLdifFilters.filter_entry_objectclasses(
+            entry, self._forbidden_objectclasses
+        )
+
+        # Map FlextResult[FlextLdifModels.Entry] to FlextResult[object]
+        if filter_result.is_success:
+            return FlextResult[object].ok(filter_result.unwrap())
+        return FlextResult[object].fail(filter_result.error)
+
     class _AclTransformationChain:
         """ACL transformation helper methods using railway pattern."""
 
         @staticmethod
         def transform_acl_entry(
             entry: dict[str, object],
-            oid_acl_quirk: FlextLdifQuirksServersOid.AclQuirk,
-            oud_acl_quirk: FlextLdifQuirksServersOud.AclQuirk,
+            parser_acl_quirk: FlextLdifQuirksBaseAclQuirk | None,
+            writer_acl_quirk: FlextLdifQuirksBaseAclQuirk | None,
         ) -> FlextResult[dict[str, object]]:
-            """Transform single ACL entry from OID to OUD format.
+            """Transform single ACL entry using server-specific quirks.
+
+            GENERIC: Works with ANY server combination via provided quirks.
 
             Args:
-                entry: ACL entry dictionary to transform
-                oid_acl_quirk: OID ACL quirk for parsing
-                oud_acl_quirk: OUD ACL quirk for writing
+            entry: ACL entry dictionary to transform
+            parser_acl_quirk: Source server ACL quirk for parsing (or None)
+            writer_acl_quirk: Target server ACL quirk for writing (or None)
 
             Returns:
-                FlextResult with transformed entry
+            FlextResult with transformed entry
 
             """
             try:
@@ -749,6 +797,10 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[dict[str, object]]):
                     FlextLdifConstants.DictKeys.ATTRIBUTES, {}
                 )
                 if not isinstance(attributes, dict):
+                    return FlextResult[dict[str, object]].ok(transformed_entry)
+
+                # If no quirks provided, return entry as-is (no ACL transformation)
+                if parser_acl_quirk is None or writer_acl_quirk is None:
                     return FlextResult[dict[str, object]].ok(transformed_entry)
 
                 new_attributes: dict[str, object] = {}
@@ -762,26 +814,26 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[dict[str, object]]):
                         transformed_acis = []
                         for single_value in values_to_process:
                             acl_line = f"{attr_name}: {single_value}"
-                            parse_result = oid_acl_quirk.parse_acl(acl_line)
+                            parse_result = parser_acl_quirk.parse_acl(acl_line)
 
                             if parse_result.is_failure:
                                 continue
 
                             acl_data = parse_result.unwrap()
 
-                            rfc_result = oid_acl_quirk.convert_acl_to_rfc(acl_data)
+                            rfc_result = parser_acl_quirk.convert_acl_to_rfc(acl_data)
                             if rfc_result.is_failure:
                                 continue
 
                             rfc_data = rfc_result.unwrap()
 
-                            oud_result = oud_acl_quirk.convert_acl_from_rfc(rfc_data)
+                            oud_result = writer_acl_quirk.convert_acl_from_rfc(rfc_data)
                             if oud_result.is_failure:
                                 continue
 
                             oud_data = oud_result.unwrap()
 
-                            write_result = oud_acl_quirk.write_acl_to_rfc(oud_data)
+                            write_result = writer_acl_quirk.write_acl_to_rfc(oud_data)
                             if write_result.is_failure:
                                 continue
 
@@ -814,28 +866,28 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[dict[str, object]]):
                 )
 
     class _ForbiddenAttributesFilteringChain:
-        """Forbidden attributes filtering helper methods using railway pattern."""
+        """Forbidden attributes and objectClasses filtering helper methods using railway pattern."""
 
         @staticmethod
         def filter_entry(
             entry: dict[str, object],
             pipeline: object,  # FlextLdifCategorizedMigrationPipeline
         ) -> FlextResult[dict[str, object]]:
-            """Filter forbidden attributes from single entry.
+            """Filter forbidden attributes and objectClasses from single entry.
+
+            STRATEGY PATTERN: Business rules from client application determine
+            which attributes and objectClasses to filter.
 
             Args:
-                entry: Entry dictionary to filter
-                pipeline: Reference to pipeline instance for forbidden_attributes access
+            entry: Entry dictionary to filter
+            pipeline: Reference to pipeline instance for forbidden_attributes
+            and forbidden_objectclasses access
 
             Returns:
-                FlextResult containing filtered entry
+            FlextResult containing filtered entry
 
             """
             try:
-                # Type narrow pipeline to access forbidden_attributes
-                if not hasattr(pipeline, "_filter_forbidden_attributes"):
-                    return FlextResult[dict[str, object]].ok(entry)
-
                 # Check if entry is valid dictionary
                 if not isinstance(entry, dict):
                     return FlextResult[dict[str, object]].ok(entry)
@@ -852,18 +904,49 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[dict[str, object]]):
                 if not isinstance(attrs, dict):
                     return FlextResult[dict[str, object]].ok(filtered_entry)
 
-                # Filter forbidden attributes using pipeline method
-                filter_func = getattr(pipeline, "_filter_forbidden_attributes")
-                filtered_attrs = filter_func(attrs)
+                # Step 1: Filter forbidden attributes (if configured)
+                if hasattr(pipeline, "_filter_forbidden_attributes"):
+                    filter_attrs_func = getattr(
+                        pipeline, "_filter_forbidden_attributes"
+                    )
+                    attrs = filter_attrs_func(attrs)
+
+                # Step 2: Filter forbidden objectClasses (if configured)
+                if hasattr(pipeline, "_forbidden_objectclasses"):
+                    forbidden_ocs = getattr(pipeline, "_forbidden_objectclasses")
+                    if forbidden_ocs:
+                        # Get objectClass values
+                        oc_attr = FlextLdifConstants.DictKeys.OBJECTCLASS
+                        if oc_attr in attrs:
+                            oc_values = attrs[oc_attr]
+                            # Handle both list and single value formats
+                            if isinstance(oc_values, list):
+                                # Filter objectClasses case-insensitively
+                                forbidden_lower = {oc.lower() for oc in forbidden_ocs}
+                                filtered_ocs = [
+                                    oc
+                                    for oc in oc_values
+                                    if oc.lower() not in forbidden_lower
+                                ]
+
+                                # Ensure at least one objectClass remains
+                                if not filtered_ocs:
+                                    return FlextResult[dict[str, object]].fail(
+                                        f"Entry {entry.get('dn', 'unknown')}: "
+                                        "All objectClasses would be removed"
+                                    )
+
+                                # Update objectClass attribute
+                                attrs[oc_attr] = filtered_ocs
 
                 # Update entry with filtered attributes
-                filtered_entry[FlextLdifConstants.DictKeys.ATTRIBUTES] = filtered_attrs
+                filtered_entry[FlextLdifConstants.DictKeys.ATTRIBUTES] = attrs
 
                 return FlextResult[dict[str, object]].ok(filtered_entry)
 
             except Exception as e:
                 return FlextResult[dict[str, object]].fail(
-                    f"Forbidden attributes filtering failed: {e}"
+                    f"Forbidden filtering failed: {e}"
                 )
 
     class _EntryCategorizationChain:
@@ -877,11 +960,11 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[dict[str, object]]):
             """Categorize single entry with ACL metadata extraction and tracking.
 
             Args:
-                entry: Entry dictionary to categorize
-                pipeline: Reference to pipeline instance for categorization access
+            entry: Entry dictionary to categorize
+            pipeline: Reference to pipeline instance for categorization access
 
             Returns:
-                FlextResult containing result dict with category, entry, rejection_reason
+            FlextResult containing result dict with category, entry, rejection_reason
 
             """
             try:
@@ -949,11 +1032,11 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[dict[str, object]]):
             """Inject rejection reason into rejected entry if available.
 
             Args:
-                entry: Entry dictionary to inject rejection reason into
-                rejection_reasons_map: Dictionary mapping DN to rejection reason
+            entry: Entry dictionary to inject rejection reason into
+            rejection_reasons_map: Dictionary mapping DN to rejection reason
 
             Returns:
-                FlextResult containing updated entry
+            FlextResult containing updated entry
 
             """
             try:
@@ -1011,13 +1094,13 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[dict[str, object]]):
             2. Normalize DNs embedded in ACI attribute strings
 
             Args:
-                entry: Entry dictionary to normalize
-                dn_map: Map of normalized DN values for lookup
-                ref_attrs_lower: Set of lowercase DN reference attribute names
-                pipeline: Reference to pipeline instance for method access
+            entry: Entry dictionary to normalize
+            dn_map: Map of normalized DN values for lookup
+            ref_attrs_lower: Set of lowercase DN reference attribute names
+            pipeline: Reference to pipeline instance for method access
 
             Returns:
-                FlextResult containing normalized entry
+            FlextResult containing normalized entry
 
             """
             try:
@@ -1061,16 +1144,35 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[dict[str, object]]):
         5. Filter forbidden attributes (business rules from client)
 
         Args:
-            categorized: Dictionary mapping category to entry list
+        categorized: Dictionary mapping category to entry list
 
         Returns:
-            FlextResult containing transformed categorized entries
+        FlextResult containing transformed categorized entries
 
         """
         try:
-            # Initialize source and target quirks
-            oid_acl_quirk = FlextLdifQuirksServersOid.AclQuirk()
-            oud_acl_quirk = FlextLdifQuirksServersOud.AclQuirk()
+            # Get ACL quirks from provided parser/writer quirks
+            # Generic approach - works with ANY server combination
+            # Parser quirk handles source server ACL format
+            # Writer quirk handles target server ACL format
+            parser_acl_quirk: FlextLdifQuirksBaseAclQuirk | None = None
+            writer_acl_quirk: FlextLdifQuirksBaseAclQuirk | None = None
+
+            # Try to get ACL quirk from parser (source server)
+            if self._parser_quirk is not None and hasattr(
+                self._parser_quirk, "AclQuirk"
+            ):
+                acl_quirk_cls = getattr(self._parser_quirk, "AclQuirk", None)
+                if acl_quirk_cls is not None:
+                    parser_acl_quirk = acl_quirk_cls()
+
+            # Try to get ACL quirk from writer (target server)
+            if self._writer_quirk is not None and hasattr(
+                self._writer_quirk, "AclQuirk"
+            ):
+                acl_quirk_cls = getattr(self._writer_quirk, "AclQuirk", None)
+                if acl_quirk_cls is not None:
+                    writer_acl_quirk = acl_quirk_cls()
 
             # Transform ACL entries (category "acl") using batch processing
             # Delegates to helper method for railway-oriented error handling
@@ -1082,7 +1184,7 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[dict[str, object]]):
                 ) -> FlextResult[dict[str, object]]:
                     """Process single ACL entry with railway pattern."""
                     return self._AclTransformationChain.transform_acl_entry(
-                        entry, oid_acl_quirk, oud_acl_quirk
+                        entry, parser_acl_quirk, writer_acl_quirk
                     )
 
                 # Use batch_process for functional composition
@@ -1101,14 +1203,14 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[dict[str, object]]):
                 # Replace ACL entries with successfully transformed versions
                 categorized["acl"] = transformed_acl
 
-            # Step 2: Filter forbidden attributes from all categories using batch_process
+            # Step 2: Filter forbidden attributes and objectClasses from all categories
             # STRATEGY PATTERN: Business rules from client application
-            if self._forbidden_attributes:
+            if self._forbidden_attributes or self._forbidden_objectclasses:
                 # Define processor function for filtering single entry
                 def filter_entry_processor(
                     entry: dict[str, object],
                 ) -> FlextResult[dict[str, object]]:
-                    """Filter forbidden attributes from single entry."""
+                    """Filter forbidden attributes and objectClasses from single entry."""
                     return self._ForbiddenAttributesFilteringChain.filter_entry(
                         entry, self
                     )
@@ -1124,7 +1226,7 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[dict[str, object]]):
                     # Log failures if any (non-fatal, continue processing)
                     if filter_failures:
                         self.logger.warning(
-                            f"Forbidden attributes filtering for '{category}': "
+                            f"Forbidden filtering for '{category}': "
                             f"{len(filter_failures)} entries failed filtering"
                         )
 
@@ -1307,10 +1409,10 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[dict[str, object]]):
         Applies OID pattern matching from whitelist rules.
 
         Args:
-            entries: List of RFC format schema entries
+        entries: List of RFC format schema entries
 
         Returns:
-            Filtered and sorted schema entries
+        Filtered and sorted schema entries
 
         """
         if not entries or not self._schema_whitelist_rules:
@@ -1403,29 +1505,39 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[dict[str, object]]):
     ) -> list[dict[str, object]]:
         """Create OUD-compatible schema entry from processed schema entries.
 
-        OUD requires schema in a specific format:
+        OUD requires schema modifications in LDIF modify format:
         - dn: cn=schema
-        - changetype: add
-        - objectclass: top, ldapSubentry, subschema
-        - attributetypes: (sorted by OID)
-        - objectclasses: (sorted by OID)
+        - changetype: modify
+        - add: attributetypes / add: objectclasses directives
+        - Each add directive followed by the values and a '-' separator
+
+        This format is required because cn=schema already exists in OUD.
+        We're adding new schema elements to the existing entry.
 
         Args:
-            processed_entries: List of processed schema entries
+        processed_entries: List of processed schema entries
 
         Returns:
-            List containing single OUD-compatible schema entry
+        List containing single OUD-compatible schema entry
 
         """
         if not processed_entries:
             return []
+
+        # DEBUG: Log what we received
+        print(f"DEBUG _create_oud_schema_entry: Received {len(processed_entries)} entries")
+        if processed_entries:
+            print(f"DEBUG First entry keys: {list(processed_entries[0].keys())}")
+            print(f"DEBUG First entry sample: {str(processed_entries[0])[:500]}")
 
         # Collect all attributetypes and objectclasses from processed entries
         all_attributetypes: list[str] = []
         all_objectclasses: list[str] = []
 
         for entry in processed_entries:
-            attributes = entry.get("attributes", {})
+            # After quirk processing, attributes are at top level (flat dict)
+            # Check both nested "attributes" key and flat top-level attributes
+            attributes = entry.get("attributes", entry)
             if not isinstance(attributes, dict):
                 continue
 
@@ -1442,6 +1554,9 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[dict[str, object]]):
                 all_objectclasses.extend(obj_classes)
             elif obj_classes:
                 all_objectclasses.append(str(obj_classes))
+
+        # DEBUG: Log what we collected
+        print(f"DEBUG Collected {len(all_attributetypes)} attributetypes, {len(all_objectclasses)} objectclasses")
 
         # Remove duplicates while preserving order
         seen_attributetypes = set()
@@ -1467,25 +1582,38 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[dict[str, object]]):
         sorted_attributetypes = sorted(unique_attributetypes, key=extract_oid)
         sorted_objectclasses = sorted(unique_objectclasses, key=extract_oid)
 
-        # Create OUD schema entry
-        attributes_dict: dict[str, list[str]] = {
-            "changetype": ["add"],
-            "objectClass": ["top", "ldapSubentry", "subschema"],
-        }
+        # Create OUD schema entry with MODIFY changetype
+        # Format for LDIF modify operations:
+        # dn: cn=schema
+        # changetype: modify
+        # add: attributetypes
+        # attributetypes: (definition)
+        # attributetypes: (definition)
+        # -
+        # add: objectclasses
+        # objectclasses: (definition)
+        # objectclasses: (definition)
+        # -
 
-        # Add sorted attributetypes if any
-        if sorted_attributetypes:
-            attributes_dict["attributetypes"] = sorted_attributetypes
-
-        # Add sorted objectclasses if any
-        if sorted_objectclasses:
-            attributes_dict["objectclasses"] = sorted_objectclasses
-
+        # Build flat entry dict (no nested "attributes" wrapper for RFC writer)
         schema_entry: dict[str, object] = {
             "dn": "cn=schema",
-            "attributes": attributes_dict,
+            "changetype": ["modify"],
         }
 
+        # Mark this as a modify operation with add directives
+        # We'll use special keys to indicate LDIF modify format
+        if sorted_attributetypes:
+            # Store with special marker for modify-add operation
+            schema_entry["_modify_add_attributetypes"] = sorted_attributetypes
+            print(f"DEBUG Added {len(sorted_attributetypes)} sorted attributetypes to schema entry")
+
+        if sorted_objectclasses:
+            # Store with special marker for modify-add operation
+            schema_entry["_modify_add_objectclasses"] = sorted_objectclasses
+            print(f"DEBUG Added {len(sorted_objectclasses)} sorted objectclasses to schema entry")
+
+        print(f"DEBUG Final schema entry keys: {list(schema_entry.keys())}")
         return [schema_entry]
 
     def _sort_entries_by_hierarchy_and_name(
@@ -1525,7 +1653,11 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[dict[str, object]]):
     def _write_category_file(
         self, category: str, entries: list[dict[str, object]], category_filename: str
     ) -> FlextResult[int]:
-        """Write entries for a single category to LDIF file.
+        """Write entries for a single category to LDIF file using RFC writer with quirks.
+
+        CRITICAL: Uses FlextLdifRfcLdifWriter with quirks registry to ensure
+        proper server-specific transformations are applied during writing.
+        NO MANUAL LDIF CONSTRUCTION - all writing goes through quirks system.
 
         Args:
             category: Category name (schema, hierarchy, users, groups, acl, rejected)
@@ -1557,65 +1689,42 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[dict[str, object]]):
             else:
                 # Apply hierarchy + name sorting for all non-schema categories (01-05)
                 entries = self._sort_entries_by_hierarchy_and_name(entries)
+
             # Write directly to output directory (not subdirectory)
             output_file = self._output_dir / category_filename
 
-            # Generate LDIF content
-            ldif_content: list[str] = []
-            is_rejected_category = category == "rejected"
+            # Get quirk registry for proper RFC writing with quirks
+            # CRITICAL: Use RFC writer with quirks instead of manual LDIF construction
+            quirk_registry = FlextLdifQuirksRegistry()
 
-            for entry in entries:
-                # Get DN with proper type narrowing
-                dn_value = entry.get(FlextLdifConstants.DictKeys.DN, "")
-                if isinstance(dn_value, str) and dn_value:
-                    dn = dn_value
-                else:
-                    continue
+            # Register target server quirks for proper LDIF writing
+            # CRITICAL: Use self._target_server for registration to match retrieval key
+            if self._target_server in {"oud", "oracle_oud"}:
+                quirk_registry.register_schema_quirk(FlextLdifQuirksServersOud(server_type=self._target_server))
+                quirk_registry.register_acl_quirk(FlextLdifQuirksServersOud.AclQuirk(server_type=self._target_server))
+                quirk_registry.register_entry_quirk(FlextLdifQuirksServersOud.EntryQuirk(server_type=self._target_server))
 
-                # For rejected entries, write rejection reason as LDIF comment
-                if is_rejected_category:
-                    attributes = entry.get(FlextLdifConstants.DictKeys.ATTRIBUTES, {})
-                    if isinstance(attributes, dict) and "rejectionReason" in attributes:
-                        rejection_reason = attributes.get("rejectionReason", "")
-                        if isinstance(rejection_reason, str):
-                            # Write rejection reason as LDIF comment
-                            ldif_content.append(f"# Rejection: {rejection_reason}")
+            # Prepare writer parameters for RFC-compliant output with quirks
+            writer_params: dict[str, object] = {
+                FlextLdifConstants.DictKeys.OUTPUT_FILE: str(output_file),
+                FlextLdifConstants.DictKeys.ENTRIES: entries,
+                "encoding": "utf-8",
+            }
 
-                # Write DN
-                ldif_content.append(f"dn: {dn}")
+            # Use FlextLdifRfcLdifWriter with quirks for proper transformation
+            writer = FlextLdifRfcLdifWriter(
+                params=writer_params,
+                quirk_registry=quirk_registry,
+                target_server_type=self._target_server,
+            )
 
-                # Write objectClasses
-                object_classes = entry.get(FlextLdifConstants.DictKeys.OBJECTCLASS, [])
-                if isinstance(object_classes, list):
-                    ldif_content.extend(
-                        f"objectClass: {obj_class}" for obj_class in object_classes
-                    )
+            # Execute RFC-compliant writing with quirks applied
+            write_result = writer.execute()
 
-                # Write attributes (exclude rejectionReason for rejected entries)
-                attributes = entry.get(FlextLdifConstants.DictKeys.ATTRIBUTES, {})
-                if isinstance(attributes, dict):
-                    for attr_name, attr_value in attributes.items():
-                        # Skip rejectionReason attribute for rejected entries
-                        # (already written as comment)
-                        if is_rejected_category and attr_name == "rejectionReason":
-                            continue
-
-                        # Handle multi-valued attributes (lists)
-                        if isinstance(attr_value, list):
-                            # Write each value on its own line
-                            ldif_content.extend(
-                                f"{attr_name}: {value}" for value in attr_value
-                            )
-                        else:
-                            # Single value
-                            ldif_content.append(f"{attr_name}: {attr_value}")
-
-                # Add blank line between entries
-                ldif_content.append("")
-
-            # Write to file
-            with output_file.open("w", encoding="utf-8") as f:
-                f.write("\n".join(ldif_content))
+            if write_result.is_failure:
+                return FlextResult[int].fail(
+                    f"Failed to write {category} file: {write_result.error}"
+                )
 
             return FlextResult[int].ok(len(entries))
 
@@ -1628,10 +1737,10 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[dict[str, object]]):
         """Write categorized entries to structured LDIF files.
 
         Args:
-            categorized: Dictionary mapping category to entry list
+        categorized: Dictionary mapping category to entry list
 
         Returns:
-            FlextResult containing dict[str, object] of category to count written
+        FlextResult containing dict[str, object] of category to count written
 
         """
         written_counts: dict[str, int] = {}
@@ -1661,14 +1770,14 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[dict[str, object]]):
         categorized: dict[str, list[dict[str, object]]],
         written_counts: dict[str, int],
     ) -> dict[str, object]:
-        """Generate comprehensive statistics for categorized migration.
+        """Generate complete statistics for categorized migration.
 
         Args:
-            categorized: Dictionary mapping category to entry list
-            written_counts: Dictionary mapping category to count written
+        categorized: Dictionary mapping category to entry list
+        written_counts: Dictionary mapping category to count written
 
         Returns:
-            Statistics dictionary with counts, rejection info, and metadata
+        Statistics dictionary with counts, rejection info, and metadata
 
         """
         # Calculate total entries
@@ -1707,7 +1816,7 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[dict[str, object]]):
             output_path = self._output_dir / category_filename
             output_files[category] = str(output_path)
 
-        # Build comprehensive statistics
+        # Build complete statistics
         stats: dict[str, object] = {
             "total_entries": total_entries,
             "categorized_counts": categorized_counts,

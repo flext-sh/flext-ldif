@@ -22,7 +22,7 @@ class TestCategorizedPipelineInitialization:
         """Test pipeline initialization with required parameters."""
         input_dir = tmp_path / "input"
         output_dir = tmp_path / "output"
-        rules = {
+        rules: dict[str, list[str]] = {
             "hierarchy_objectclasses": ["organization"],
             "user_objectclasses": ["person"],
             "group_objectclasses": ["groupOfNames"],
@@ -47,7 +47,7 @@ class TestCategorizedPipelineInitialization:
         """Test pipeline initialization with custom server types."""
         input_dir = tmp_path / "input"
         output_dir = tmp_path / "output"
-        rules = {}
+        rules: dict[str, list[str]] = {}
 
         pipeline = FlextLdifCategorizedMigrationPipeline(
             input_dir=input_dir,
@@ -69,7 +69,7 @@ class TestOutputDirectories:
     def test_create_output_directories_success(self, tmp_path: Path) -> None:
         """Test successful creation of 6-directory structure."""
         output_dir = tmp_path / "output"
-        rules = {}
+        rules: dict[str, list[str]] = {}
 
         pipeline = FlextLdifCategorizedMigrationPipeline(
             input_dir=tmp_path / "input",
@@ -89,7 +89,7 @@ class TestOutputDirectories:
     def test_create_output_directories_idempotent(self, tmp_path: Path) -> None:
         """Test directory creation is idempotent."""
         output_dir = tmp_path / "output"
-        rules = {}
+        rules: dict[str, list[str]] = {}
 
         pipeline = FlextLdifCategorizedMigrationPipeline(
             input_dir=tmp_path / "input",
@@ -113,7 +113,7 @@ class TestDNPatternMatching:
 
     def test_matches_dn_pattern_single_match(self, tmp_path: Path) -> None:
         """Test DN matching with single pattern."""
-        rules = {}
+        rules: dict[str, list[str]] = {}
         pipeline = FlextLdifCategorizedMigrationPipeline(
             input_dir=tmp_path / "input",
             output_dir=tmp_path / "output",
@@ -127,7 +127,7 @@ class TestDNPatternMatching:
 
     def test_matches_dn_pattern_no_match(self, tmp_path: Path) -> None:
         """Test DN not matching any pattern."""
-        rules = {}
+        rules: dict[str, list[str]] = {}
         pipeline = FlextLdifCategorizedMigrationPipeline(
             input_dir=tmp_path / "input",
             output_dir=tmp_path / "output",
@@ -141,7 +141,7 @@ class TestDNPatternMatching:
 
     def test_matches_dn_pattern_case_insensitive(self, tmp_path: Path) -> None:
         """Test DN matching is case insensitive."""
-        rules = {}
+        rules: dict[str, list[str]] = {}
         pipeline = FlextLdifCategorizedMigrationPipeline(
             input_dir=tmp_path / "input",
             output_dir=tmp_path / "output",
@@ -155,7 +155,7 @@ class TestDNPatternMatching:
 
     def test_matches_dn_pattern_invalid_regex(self, tmp_path: Path) -> None:
         """Test DN matching handles invalid regex gracefully."""
-        rules = {}
+        rules: dict[str, list[str]] = {}
         pipeline = FlextLdifCategorizedMigrationPipeline(
             input_dir=tmp_path / "input",
             output_dir=tmp_path / "output",
@@ -169,7 +169,7 @@ class TestDNPatternMatching:
 
     def test_matches_dn_pattern_multiple_patterns(self, tmp_path: Path) -> None:
         """Test DN matching with multiple patterns."""
-        rules = {}
+        rules: dict[str, list[str]] = {}
         pipeline = FlextLdifCategorizedMigrationPipeline(
             input_dir=tmp_path / "input",
             output_dir=tmp_path / "output",
@@ -189,7 +189,7 @@ class TestACLDetection:
 
     def test_has_acl_attributes_with_aci(self, tmp_path: Path) -> None:
         """Test ACL detection with aci attribute."""
-        rules = {
+        rules: dict[str, list[str]] = {
             "acl_attributes": ["aci", "orclACI"],
         }
         pipeline = FlextLdifCategorizedMigrationPipeline(
@@ -210,7 +210,7 @@ class TestACLDetection:
 
     def test_has_acl_attributes_without_acl(self, tmp_path: Path) -> None:
         """Test ACL detection without ACL attributes."""
-        rules = {
+        rules: dict[str, list[str]] = {
             "acl_attributes": ["aci", "orclACI"],
         }
         pipeline = FlextLdifCategorizedMigrationPipeline(
@@ -231,7 +231,7 @@ class TestACLDetection:
 
     def test_has_acl_attributes_empty_rules(self, tmp_path: Path) -> None:
         """Test ACL detection with empty rules."""
-        rules = {}
+        rules: dict[str, list[str]] = {}
         pipeline = FlextLdifCategorizedMigrationPipeline(
             input_dir=tmp_path / "input",
             output_dir=tmp_path / "output",
@@ -254,7 +254,7 @@ class TestEntryCategorization:
 
     def test_categorize_entry_schema(self, tmp_path: Path) -> None:
         """Test categorization of schema entries."""
-        rules = {}
+        rules: dict[str, list[str]] = {}
         pipeline = FlextLdifCategorizedMigrationPipeline(
             input_dir=tmp_path / "input",
             output_dir=tmp_path / "output",
@@ -275,7 +275,7 @@ class TestEntryCategorization:
 
     def test_categorize_entry_acl(self, tmp_path: Path) -> None:
         """Test categorization of ACL entries."""
-        rules = {
+        rules: dict[str, list[str]] = {
             "acl_attributes": ["aci"],
         }
         pipeline = FlextLdifCategorizedMigrationPipeline(
@@ -298,7 +298,7 @@ class TestEntryCategorization:
 
     def test_categorize_entry_hierarchy(self, tmp_path: Path) -> None:
         """Test categorization of hierarchy entries."""
-        rules = {
+        rules: dict[str, list[str]] = {
             "hierarchy_objectclasses": ["organization", "organizationalUnit"],
         }
         pipeline = FlextLdifCategorizedMigrationPipeline(
@@ -321,7 +321,7 @@ class TestEntryCategorization:
 
     def test_categorize_entry_user(self, tmp_path: Path) -> None:
         """Test categorization of user entries."""
-        rules = {
+        rules: dict[str, list[str]] = {
             "user_objectclasses": ["person", "inetOrgPerson"],
             "user_dn_patterns": [r"uid=.+"],
         }
@@ -345,7 +345,7 @@ class TestEntryCategorization:
 
     def test_categorize_entry_user_rejected_dn(self, tmp_path: Path) -> None:
         """Test categorization rejects user with invalid DN pattern."""
-        rules = {
+        rules: dict[str, list[str]] = {
             "user_objectclasses": ["person"],
             "user_dn_patterns": [r"uid=.+"],
         }
@@ -370,7 +370,7 @@ class TestEntryCategorization:
 
     def test_categorize_entry_group(self, tmp_path: Path) -> None:
         """Test categorization of group entries."""
-        rules = {
+        rules: dict[str, list[str]] = {
             "group_objectclasses": ["groupOfNames"],
         }
         pipeline = FlextLdifCategorizedMigrationPipeline(
@@ -393,7 +393,7 @@ class TestEntryCategorization:
 
     def test_categorize_entry_rejected_no_match(self, tmp_path: Path) -> None:
         """Test categorization rejects entries with no matching category."""
-        rules = {
+        rules: dict[str, list[str]] = {
             "hierarchy_objectclasses": ["organization"],
             "user_objectclasses": ["person"],
             "group_objectclasses": ["groupOfNames"],
@@ -423,7 +423,7 @@ class TestCategoryBatchProcessing:
 
     def test_categorize_entries_multiple_categories(self, tmp_path: Path) -> None:
         """Test categorizing entries into multiple categories."""
-        rules = {
+        rules: dict[str, list[str]] = {
             "hierarchy_objectclasses": ["organizationalUnit"],
             "user_objectclasses": ["person"],
             "group_objectclasses": ["groupOfNames"],
@@ -477,7 +477,7 @@ class TestCategoryBatchProcessing:
 
     def test_categorize_entries_with_rejections(self, tmp_path: Path) -> None:
         """Test categorizing entries with rejections tracked."""
-        rules = {
+        rules: dict[str, list[str]] = {
             "user_objectclasses": ["person"],
         }
         pipeline = FlextLdifCategorizedMigrationPipeline(
@@ -513,7 +513,7 @@ class TestCategoryTransformation:
 
     def test_transform_categories_placeholder(self, tmp_path: Path) -> None:
         """Test transformation placeholder returns categories unchanged."""
-        rules = {}
+        rules: dict[str, list[str]] = {}
         pipeline = FlextLdifCategorizedMigrationPipeline(
             input_dir=tmp_path / "input",
             output_dir=tmp_path / "output",
@@ -548,7 +548,7 @@ class TestCategorizedPipelineIntegration:
         output_dir = tmp_path / "output"
         input_dir.mkdir()
 
-        rules = {}
+        rules: dict[str, list[str]] = {}
         pipeline = FlextLdifCategorizedMigrationPipeline(
             input_dir=input_dir,
             output_dir=output_dir,
@@ -573,7 +573,7 @@ class TestOutputWriting:
 
     def test_write_category_file_success(self, tmp_path: Path) -> None:
         """Test successful writing of category file."""
-        rules = {}
+        rules: dict[str, list[str]] = {}
         pipeline = FlextLdifCategorizedMigrationPipeline(
             input_dir=tmp_path / "input",
             output_dir=tmp_path / "output",
@@ -623,7 +623,7 @@ class TestOutputWriting:
 
     def test_write_category_file_empty_entries(self, tmp_path: Path) -> None:
         """Test writing empty category returns zero count."""
-        rules = {}
+        rules: dict[str, list[str]] = {}
         pipeline = FlextLdifCategorizedMigrationPipeline(
             input_dir=tmp_path / "input",
             output_dir=tmp_path / "output",
@@ -646,7 +646,7 @@ class TestOutputWriting:
 
     def test_write_category_file_missing_dn(self, tmp_path: Path) -> None:
         """Test writing entries with missing DN skips those entries."""
-        rules = {}
+        rules: dict[str, list[str]] = {}
         pipeline = FlextLdifCategorizedMigrationPipeline(
             input_dir=tmp_path / "input",
             output_dir=tmp_path / "output",
@@ -691,7 +691,7 @@ class TestOutputWriting:
 
     def test_write_categorized_output_all_categories(self, tmp_path: Path) -> None:
         """Test writing all categories to output directories."""
-        rules = {}
+        rules: dict[str, list[str]] = {}
         pipeline = FlextLdifCategorizedMigrationPipeline(
             input_dir=tmp_path / "input",
             output_dir=tmp_path / "output",
@@ -764,7 +764,7 @@ class TestOutputWriting:
 
     def test_write_categorized_output_failure_propagation(self, tmp_path: Path) -> None:
         """Test write failure propagates correctly."""
-        rules = {}
+        rules: dict[str, list[str]] = {}
         pipeline = FlextLdifCategorizedMigrationPipeline(
             input_dir=tmp_path / "input",
             output_dir=tmp_path / "output",
@@ -802,7 +802,7 @@ class TestStatisticsGeneration:
 
     def test_generate_statistics_comprehensive(self, tmp_path: Path) -> None:
         """Test comprehensive statistics generation."""
-        rules = {}
+        rules: dict[str, list[str]] = {}
         pipeline = FlextLdifCategorizedMigrationPipeline(
             input_dir=tmp_path / "input",
             output_dir=tmp_path / "output",
@@ -870,7 +870,7 @@ class TestStatisticsGeneration:
 
     def test_generate_statistics_with_rejections(self, tmp_path: Path) -> None:
         """Test statistics with rejection tracking."""
-        rules = {}
+        rules: dict[str, list[str]] = {}
         pipeline = FlextLdifCategorizedMigrationPipeline(
             input_dir=tmp_path / "input",
             output_dir=tmp_path / "output",
@@ -934,7 +934,7 @@ class TestStatisticsGeneration:
 
     def test_generate_statistics_output_directories(self, tmp_path: Path) -> None:
         """Test output directories info in statistics."""
-        rules = {}
+        rules: dict[str, list[str]] = {}
         pipeline = FlextLdifCategorizedMigrationPipeline(
             input_dir=tmp_path / "input",
             output_dir=tmp_path / "output",
@@ -974,7 +974,7 @@ class TestStatisticsGeneration:
 
     def test_generate_statistics_empty_categorized(self, tmp_path: Path) -> None:
         """Test statistics with no entries."""
-        rules = {}
+        rules: dict[str, list[str]] = {}
         pipeline = FlextLdifCategorizedMigrationPipeline(
             input_dir=tmp_path / "input",
             output_dir=tmp_path / "output",
@@ -1014,7 +1014,7 @@ class TestRejectionTracking:
 
     def test_rejection_reasons_extracted(self, tmp_path: Path) -> None:
         """Test rejection reasons are properly extracted."""
-        rules = {}
+        rules: dict[str, list[str]] = {}
         pipeline = FlextLdifCategorizedMigrationPipeline(
             input_dir=tmp_path / "input",
             output_dir=tmp_path / "output",
@@ -1068,7 +1068,7 @@ class TestRejectionTracking:
 
     def test_rejection_rate_calculation(self, tmp_path: Path) -> None:
         """Test rejection rate calculation accuracy."""
-        rules = {}
+        rules: dict[str, list[str]] = {}
         pipeline = FlextLdifCategorizedMigrationPipeline(
             input_dir=tmp_path / "input",
             output_dir=tmp_path / "output",
@@ -1132,7 +1132,7 @@ class TestOutputWritingEdgeCases:
 
     def test_write_category_file_unicode_content(self, tmp_path: Path) -> None:
         """Test writing entries with Unicode characters."""
-        rules = {}
+        rules: dict[str, list[str]] = {}
         pipeline = FlextLdifCategorizedMigrationPipeline(
             input_dir=tmp_path / "input",
             output_dir=tmp_path / "output",
@@ -1169,7 +1169,7 @@ class TestOutputWritingEdgeCases:
         self, tmp_path: Path
     ) -> None:
         """Test writing with some empty and some populated categories."""
-        rules = {}
+        rules: dict[str, list[str]] = {}
         pipeline = FlextLdifCategorizedMigrationPipeline(
             input_dir=tmp_path / "input",
             output_dir=tmp_path / "output",
@@ -1215,7 +1215,7 @@ class TestQuirksIntegration:
 
     def test_transform_categories_placeholder(self, tmp_path: Path) -> None:
         """Test transformation placeholder returns unchanged categories."""
-        rules = {}
+        rules: dict[str, list[str]] = {}
         pipeline = FlextLdifCategorizedMigrationPipeline(
             input_dir=tmp_path / "input",
             output_dir=tmp_path / "output",
@@ -1254,7 +1254,7 @@ class TestQuirksIntegration:
 
     def test_transform_categories_preserves_structure(self, tmp_path: Path) -> None:
         """Test transformation preserves category structure."""
-        rules = {}
+        rules: dict[str, list[str]] = {}
         pipeline = FlextLdifCategorizedMigrationPipeline(
             input_dir=tmp_path / "input",
             output_dir=tmp_path / "output",

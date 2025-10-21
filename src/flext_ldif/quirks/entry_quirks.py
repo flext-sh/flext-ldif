@@ -26,7 +26,7 @@ class FlextLdifEntryQuirks(FlextService[dict[str, object]]):
         """Initialize entry quirks handler.
 
         Args:
-            quirks_manager: Quirks manager for server-specific rules
+        quirks_manager: Quirks manager for server-specific rules
 
         """
         super().__init__()
@@ -169,12 +169,12 @@ class FlextLdifEntryQuirks(FlextService[dict[str, object]]):
         """Adapt attribute values for specific server type.
 
         Args:
-            attr_name: Attribute name
-            attr_values: Original attribute values
-            server_type: Target server type
+        attr_name: Attribute name
+        attr_values: Original attribute values
+        server_type: Target server type
 
         Returns:
-            Adapted attribute values
+        Adapted attribute values
 
         """
         adapted_values = attr_values.copy()
@@ -215,11 +215,11 @@ class FlextLdifEntryQuirks(FlextService[dict[str, object]]):
         """Validate entry compliance with server-specific rules.
 
         Args:
-            entry: Entry to validate
-            server_type: Server type to validate against
+        entry: Entry to validate
+        server_type: Server type to validate against
 
         Returns:
-            FlextResult containing validation report
+        FlextResult containing validation report
 
         """
         quirks_result: FlextResult[FlextLdifTypes.Models.CustomDataDict] = (
@@ -290,11 +290,11 @@ class FlextLdifEntryQuirks(FlextService[dict[str, object]]):
         """Validate DN format for specific server type.
 
         Args:
-            dn: DN to validate
-            server_type: Server type to validate against
+        dn: DN to validate
+        server_type: Server type to validate against
 
         Returns:
-            Validation result dictionary
+        Validation result dictionary
 
         """
         quirks_result: FlextResult[FlextLdifTypes.Models.CustomDataDict] = (
@@ -322,12 +322,14 @@ class FlextLdifEntryQuirks(FlextService[dict[str, object]]):
         # Use DistinguishedName Model for DN parsing
         try:
             dn_model = FlextLdifModels.DistinguishedName(value=dn)
-            # components is a computed_field - access directly and type narrow
-            # Avoid model_dump(computed_fields=True) due to type checker limitations
-            dn_components = dn_model.components
-            # components property returns the computed value
-            if not isinstance(dn_components, list):
-                dn_components = []
+            # components is a computed_field that returns list[str]
+            # Call it directly to get the actual list
+            dn_components_value = dn_model.components
+            # Ensure it's a list, not a callable
+            if callable(dn_components_value):
+                dn_components = dn_components_value()
+            else:
+                dn_components = dn_components_value
         except ValueError as e:
             issues.append(f"Invalid DN format: {e}")
             return {"valid": False, "issues": issues}
@@ -360,10 +362,10 @@ class FlextLdifEntryQuirks(FlextService[dict[str, object]]):
         Combines COMMON operational attributes with server-specific ones.
 
         Args:
-            server_type: Source LDAP server type (case-insensitive)
+        server_type: Source LDAP server type (case-insensitive)
 
         Returns:
-            List of operational attribute names to strip
+        List of operational attribute names to strip
 
         """
         # Start with common operational attributes

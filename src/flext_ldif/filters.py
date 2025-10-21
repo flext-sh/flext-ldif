@@ -152,10 +152,10 @@ class FlextLdifFilters:
         """Check if entry is marked as excluded.
 
         Args:
-            entry: Entry to check
+        entry: Entry to check
 
         Returns:
-            True if entry has exclusion metadata, False otherwise
+        True if entry has exclusion metadata, False otherwise
 
         """
         if entry.metadata is None:
@@ -192,10 +192,10 @@ class FlextLdifFilters:
         """Get exclusion reason from entry metadata.
 
         Args:
-            entry: Entry to check
+        entry: Entry to check
 
         Returns:
-            Exclusion reason string or None if not excluded
+        Exclusion reason string or None if not excluded
 
         """
         if entry.metadata is None:
@@ -236,11 +236,11 @@ class FlextLdifFilters:
         Case-insensitive comparison.
 
         Args:
-            entry: Entry to check
-            objectclasses: Tuple of objectClass names to check
+        entry: Entry to check
+        objectclasses: Tuple of objectClass names to check
 
         Returns:
-            True if entry has any of the objectClasses, False otherwise
+        True if entry has any of the objectClasses, False otherwise
 
         """
         entry_classes = entry.get_attribute_values(
@@ -261,11 +261,11 @@ class FlextLdifFilters:
         """Check if entry has all required attributes.
 
         Args:
-            entry: Entry to check
-            required_attributes: List of required attribute names
+        entry: Entry to check
+        required_attributes: List of required attribute names
 
         Returns:
-            True if entry has all required attributes, False otherwise
+        True if entry has all required attributes, False otherwise
 
         """
         return all(entry.has_attribute(attr) for attr in required_attributes)
@@ -509,7 +509,7 @@ class FlextLdifFilters:
         Example:
             >>> entry = FlextLdifModels.Entry(
             ...     dn="cn=test,dc=example",
-            ...     attributes={"cn": ["test"], "orclaci": ["access rule"]}
+            ...     attributes={"cn": ["test"], "orclaci": ["access rule"]},
             ... )
             >>> result = FlextLdifFilters.filter_entry_attributes(
             ...     entry, ["orclaci", "orclentrylevelaci"]
@@ -571,7 +571,7 @@ class FlextLdifFilters:
         Example:
             >>> entry = FlextLdifModels.Entry(
             ...     dn="cn=test,dc=example",
-            ...     attributes={"objectClass": ["top", "person", "orclContainerOC"]}
+            ...     attributes={"objectClass": ["top", "person", "orclContainerOC"]},
             ... )
             >>> result = FlextLdifFilters.filter_entry_objectclasses(
             ...     entry, ["orclContainerOC", "orclService"]
@@ -594,9 +594,7 @@ class FlextLdifFilters:
                 return FlextResult[FlextLdifModels.Entry].ok(entry)
 
             # Filter objectClasses (keep only non-blocked)
-            filtered_ocs = [
-                oc for oc in oc_values if oc.lower() not in blocked_lower
-            ]
+            filtered_ocs = [oc for oc in oc_values if oc.lower() not in blocked_lower]
 
             # If no objectClasses remain, fail
             if not filtered_ocs:
@@ -609,7 +607,9 @@ class FlextLdifFilters:
             new_attrs_dict = dict(entry.attributes.attributes)
             # Update objectClass attribute with filtered values
             if FlextLdifConstants.DictKeys.OBJECTCLASS in new_attrs_dict:
-                new_attrs_dict[FlextLdifConstants.DictKeys.OBJECTCLASS].values = filtered_ocs
+                new_attrs_dict[
+                    FlextLdifConstants.DictKeys.OBJECTCLASS
+                ].values = filtered_ocs
 
             # Create new LdifAttributes container
             new_attributes = FlextLdifModels.LdifAttributes(

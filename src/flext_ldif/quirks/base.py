@@ -13,6 +13,8 @@ from __future__ import annotations
 
 import logging
 from abc import ABC, abstractmethod
+from types import ModuleType
+from typing import TYPE_CHECKING
 
 from flext_core import FlextModels, FlextResult
 from pydantic import Field
@@ -21,13 +23,17 @@ from flext_ldif.typings import FlextLdifTypes
 
 # Deferred import to avoid circular dependency with registry
 # This is an intentional pattern - FlextLdifQuirksRegistry imports from this module
-try:
+if TYPE_CHECKING:
     import flext_ldif.quirks.registry as quirks_registry_module
+else:
+    quirks_registry_module: ModuleType | None
+    try:
+        import flext_ldif.quirks.registry as quirks_registry_module
 
-    _QUIRKS_REGISTRY_AVAILABLE = True
-except ImportError:
-    quirks_registry_module = None
-    _QUIRKS_REGISTRY_AVAILABLE = False
+        _QUIRKS_REGISTRY_AVAILABLE = True
+    except ImportError:
+        quirks_registry_module = None
+        _QUIRKS_REGISTRY_AVAILABLE = False
 
 logger = logging.getLogger(__name__)
 
@@ -96,10 +102,10 @@ class FlextLdifQuirksBaseSchemaQuirk(ABC, FlextModels.Value):
         """Check if this quirk can handle the attribute definition.
 
         Args:
-            attr_definition: AttributeType definition string
+        attr_definition: AttributeType definition string
 
         Returns:
-            True if this quirk can parse this attribute
+        True if this quirk can parse this attribute
 
         """
 
@@ -110,10 +116,10 @@ class FlextLdifQuirksBaseSchemaQuirk(ABC, FlextModels.Value):
         """Parse server-specific attribute definition.
 
         Args:
-            attr_definition: AttributeType definition string
+        attr_definition: AttributeType definition string
 
         Returns:
-            FlextResult with parsed attribute data
+        FlextResult with parsed attribute data
 
         """
 
@@ -122,10 +128,10 @@ class FlextLdifQuirksBaseSchemaQuirk(ABC, FlextModels.Value):
         """Check if this quirk can handle the objectClass definition.
 
         Args:
-            oc_definition: ObjectClass definition string
+        oc_definition: ObjectClass definition string
 
         Returns:
-            True if this quirk can parse this objectClass
+        True if this quirk can parse this objectClass
 
         """
 
@@ -136,10 +142,10 @@ class FlextLdifQuirksBaseSchemaQuirk(ABC, FlextModels.Value):
         """Parse server-specific objectClass definition.
 
         Args:
-            oc_definition: ObjectClass definition string
+        oc_definition: ObjectClass definition string
 
         Returns:
-            FlextResult with parsed objectClass data
+        FlextResult with parsed objectClass data
 
         """
 
@@ -150,10 +156,10 @@ class FlextLdifQuirksBaseSchemaQuirk(ABC, FlextModels.Value):
         """Convert server-specific attribute to RFC-compliant format.
 
         Args:
-            attr_data: Server-specific attribute data
+        attr_data: Server-specific attribute data
 
         Returns:
-            FlextResult with RFC-compliant attribute data
+        FlextResult with RFC-compliant attribute data
 
         """
 
@@ -164,10 +170,10 @@ class FlextLdifQuirksBaseSchemaQuirk(ABC, FlextModels.Value):
         """Convert server-specific objectClass to RFC-compliant format.
 
         Args:
-            oc_data: Server-specific objectClass data
+        oc_data: Server-specific objectClass data
 
         Returns:
-            FlextResult with RFC-compliant objectClass data
+        FlextResult with RFC-compliant objectClass data
 
         """
 
@@ -178,10 +184,10 @@ class FlextLdifQuirksBaseSchemaQuirk(ABC, FlextModels.Value):
         """Convert RFC-compliant attribute to server-specific format.
 
         Args:
-            rfc_data: RFC-compliant attribute data
+        rfc_data: RFC-compliant attribute data
 
         Returns:
-            FlextResult with server-specific attribute data
+        FlextResult with server-specific attribute data
 
         """
 
@@ -192,10 +198,10 @@ class FlextLdifQuirksBaseSchemaQuirk(ABC, FlextModels.Value):
         """Convert RFC-compliant objectClass to server-specific format.
 
         Args:
-            rfc_data: RFC-compliant objectClass data
+        rfc_data: RFC-compliant objectClass data
 
         Returns:
-            FlextResult with server-specific objectClass data
+        FlextResult with server-specific objectClass data
 
         """
 
@@ -206,10 +212,10 @@ class FlextLdifQuirksBaseSchemaQuirk(ABC, FlextModels.Value):
         """Write attribute data to RFC-compliant string format.
 
         Args:
-            attr_data: Attribute data dictionary
+        attr_data: Attribute data dictionary
 
         Returns:
-            FlextResult with RFC-compliant attribute string
+        FlextResult with RFC-compliant attribute string
 
         """
 
@@ -220,10 +226,10 @@ class FlextLdifQuirksBaseSchemaQuirk(ABC, FlextModels.Value):
         """Write objectClass data to RFC-compliant string format.
 
         Args:
-            oc_data: ObjectClass data dictionary
+        oc_data: ObjectClass data dictionary
 
         Returns:
-            FlextResult with RFC-compliant objectClass string
+        FlextResult with RFC-compliant objectClass string
 
         """
 
@@ -289,10 +295,10 @@ class FlextLdifQuirksBaseAclQuirk(ABC, FlextModels.Value):
         """Check if this quirk can handle the ACL definition.
 
         Args:
-            acl_line: ACL definition line
+        acl_line: ACL definition line
 
         Returns:
-            True if this quirk can parse this ACL
+        True if this quirk can parse this ACL
 
         """
 
@@ -303,10 +309,10 @@ class FlextLdifQuirksBaseAclQuirk(ABC, FlextModels.Value):
         """Parse server-specific ACL definition.
 
         Args:
-            acl_line: ACL definition line
+        acl_line: ACL definition line
 
         Returns:
-            FlextResult with parsed ACL data
+        FlextResult with parsed ACL data
 
         """
 
@@ -317,10 +323,10 @@ class FlextLdifQuirksBaseAclQuirk(ABC, FlextModels.Value):
         """Convert server-specific ACL to RFC-compliant format.
 
         Args:
-            acl_data: Server-specific ACL data
+        acl_data: Server-specific ACL data
 
         Returns:
-            FlextResult with RFC-compliant ACL data
+        FlextResult with RFC-compliant ACL data
 
         """
 
@@ -331,10 +337,10 @@ class FlextLdifQuirksBaseAclQuirk(ABC, FlextModels.Value):
         """Convert RFC-compliant ACL to server-specific format.
 
         Args:
-            acl_data: RFC-compliant ACL data
+        acl_data: RFC-compliant ACL data
 
         Returns:
-            FlextResult with server-specific ACL data
+        FlextResult with server-specific ACL data
 
         """
 
@@ -345,10 +351,10 @@ class FlextLdifQuirksBaseAclQuirk(ABC, FlextModels.Value):
         """Write ACL data to RFC-compliant string format.
 
         Args:
-            acl_data: ACL data dictionary
+        acl_data: ACL data dictionary
 
         Returns:
-            FlextResult with RFC-compliant ACL string
+        FlextResult with RFC-compliant ACL string
 
         """
 
@@ -416,11 +422,11 @@ class FlextLdifQuirksBaseEntryQuirk(ABC, FlextModels.Value):
         """Check if this quirk can handle the entry.
 
         Args:
-            entry_dn: Entry distinguished name
-            attributes: Entry attributes
+        entry_dn: Entry distinguished name
+        attributes: Entry attributes
 
         Returns:
-            True if this quirk should process this entry
+        True if this quirk should process this entry
 
         """
 
@@ -431,11 +437,11 @@ class FlextLdifQuirksBaseEntryQuirk(ABC, FlextModels.Value):
         """Process entry with server-specific logic.
 
         Args:
-            entry_dn: Entry distinguished name
-            attributes: Entry attributes
+        entry_dn: Entry distinguished name
+        attributes: Entry attributes
 
         Returns:
-            FlextResult with processed entry data
+        FlextResult with processed entry data
 
         """
 
@@ -446,10 +452,10 @@ class FlextLdifQuirksBaseEntryQuirk(ABC, FlextModels.Value):
         """Convert server-specific entry to RFC-compliant format.
 
         Args:
-            entry_data: Server-specific entry data
+        entry_data: Server-specific entry data
 
         Returns:
-            FlextResult with RFC-compliant entry data
+        FlextResult with RFC-compliant entry data
 
         """
 

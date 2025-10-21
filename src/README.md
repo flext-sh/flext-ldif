@@ -1,6 +1,6 @@
 # FLEXT-LDIF Source Code
 
-This directory contains the complete source code for the FLEXT-LDIF enterprise LDIF processing library, organized following Clean Architecture and Domain-Driven Design principles.
+This directory contains the source code for the FLEXT-LDIF library, organized following Clean Architecture and Domain-Driven Design principles.
 
 ## Architecture Overview
 
@@ -60,15 +60,15 @@ src/flext_ldif/
 
 ### Infrastructure Implementation
 
-- **`core.py`**: Low-level LDIF parsing and writing with performance optimization
-- **`config.py`**: Enterprise configuration management with environment variables
+- **`core.py`**: Low-level LDIF parsing and writing
+- **`config.py`**: Configuration management with environment variables
 - **`services.py`**: Domain service implementations and dependency injection
-- **`modernized_ldif.py`**: Extended LDIF format support and compatibility
+- **`modernized_ldif.py`**: Extended LDIF format support
 
 ### User Interfaces
 
-- **`cli.py`**: Comprehensive command-line interface with rich formatting
-- **`__init__.py`**: Public API exports and simplified interfaces
+- **`cli.py`**: Command-line interface
+- **`__init__.py`**: Public API exports
 
 ### Cross-cutting Concerns
 
@@ -78,23 +78,23 @@ src/flext_ldif/
 
 ### Code Quality Requirements
 
-- **Test Coverage**: 90%+ minimum across all modules
-- **Type Safety**: Strict MyPy validation with no untyped code
-- **Documentation**: Comprehensive docstrings following enterprise standards
-- **Linting**: Ruff with ALL rules enabled for maximum code quality
+- **Test Coverage**: 90%+ target across all modules
+- **Type Safety**: Strict MyPy validation
+- **Documentation**: Complete docstrings following PEP 257
+- **Linting**: Ruff with strict rules enabled
 
-### Enterprise Standards
+### Code Standards
 
-- **Error Handling**: FlextResult pattern for railway-oriented programming
+- **Error Handling**: FlextResult pattern for error composition
 - **Configuration**: Environment variable support with validation
-- **Logging**: Structured logging with correlation IDs and trace context
-- **Performance**: Memory-efficient processing with configurable limits
+- **Logging**: Structured logging with correlation IDs
+- **Performance**: Memory-efficient batch processing
 
-### Integration Standards
+### Integration
 
 - **Dependency Injection**: flext-core container for service resolution
-- **Observability**: Distributed tracing and metrics collection
-- **Configuration**: Enterprise-grade settings with validation and defaults
+- **Observability**: Distributed tracing and metrics
+- **Configuration**: Settings with validation and defaults
 
 ## Usage Examples
 

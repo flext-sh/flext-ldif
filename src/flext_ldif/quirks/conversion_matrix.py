@@ -1,11 +1,11 @@
-"""Quirks Conversion Matrix - Universal translation facade via RFC intermediate format.
+"""Quirks conversion matrix for LDAP server translation.
 
-This module provides the QuirksConversionMatrix facade that enables seamless
-conversion between any two LDAP server quirks (OUD, OID, OpenLDAP, etc.) by
-using RFC as a universal intermediate representation.
+This module provides the QuirksConversionMatrix facade that enables
+conversion between LDAP server quirks (OUD, OID, OpenLDAP, etc.) by
+using RFC as an intermediate representation.
 
 Conversion Pattern:
-    Source Format → Source.to_rfc() → RFC Format → Target.from_rfc() → Target Format
+ Source Format → Source.to_rfc() → RFC Format → Target.from_rfc() → Target Format
 
 This creates an N×N translation matrix with only 2×N implementations
 (to_rfc and from_rfc per quirk type).
@@ -145,8 +145,8 @@ class QuirksConversionMatrix:
         with the DN registry to ensure case consistency.
 
         Args:
-            data: Dictionary containing potential DN references
-            data_type: Type of data being processed
+        data: Dictionary containing potential DN references
+        data_type: Type of data being processed
 
         """
         # Entry DN
@@ -185,10 +185,10 @@ class QuirksConversionMatrix:
         """Normalize DN references in data to use canonical case.
 
         Args:
-            data: Dictionary with potential DN references
+        data: Dictionary with potential DN references
 
         Returns:
-            FlextResult with normalized data
+        FlextResult with normalized data
 
         """
         return self.dn_registry.normalize_dn_references(data)

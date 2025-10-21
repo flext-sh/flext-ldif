@@ -11,6 +11,7 @@ from flext_core import FlextResult, FlextUtilities
 
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
+from flext_ldif.typings import FlextLdifTypes
 
 
 class FlextLdifAclUtils(FlextUtilities):
@@ -46,7 +47,7 @@ class FlextLdifAclUtils(FlextUtilities):
             )
             perms_result = FlextResult.ok(FlextLdifModels.AclPermissions(read=True))
 
-            # Railway pattern: early return on first failure
+            # Early return on first failure
             if target_result.is_failure:
                 return FlextResult.fail(
                     f"Failed to create AclTarget: {target_result.error}"
@@ -86,7 +87,7 @@ class FlextLdifAclUtils(FlextUtilities):
             target: FlextLdifModels.AclTarget,
             subject: FlextLdifModels.AclSubject,
             permissions: FlextLdifModels.AclPermissions,
-            server_type: str,
+            server_type: FlextLdifTypes.AclServerType,
             raw_acl: str,
         ) -> FlextResult[FlextLdifModels.AclBase]:
             """Create unified ACL with proper validation using railway pattern.

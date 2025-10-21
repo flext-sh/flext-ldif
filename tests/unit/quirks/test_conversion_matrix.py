@@ -1174,9 +1174,7 @@ class TestEntryConversion:
             ) -> FlextResult[dict[str, object]]:
                 return FlextResult.ok(data)
 
-            def write_entry_to_ldif(
-                self, data: dict[str, object]
-            ) -> FlextResult[str]:
+            def write_entry_to_ldif(self, data: dict[str, object]) -> FlextResult[str]:
                 return FlextResult.ok("dn: cn=test,dc=example,dc=com\ncn: test")
 
         source_quirk = MockEntryQuirk()

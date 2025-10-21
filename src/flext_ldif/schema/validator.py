@@ -1,6 +1,6 @@
 """Schema Validator Service - RFC 4512 Compliant LDIF Schema Validation.
 
-This module provides comprehensive schema validation for LDIF entries following RFC 4512
+This module provides complete schema validation for LDIF entries following RFC 4512
 (LDAP Directory Information Models). Validates attribute types, object classes, and entry
 structures against LDAP schema requirements with configurable strictness levels.
 
@@ -62,11 +62,11 @@ class FlextLdifSchemaValidator(FlextService[dict[str, object]]):
         """Validate multiple LDIF entries.
 
         Args:
-            entries: List of entries to validate
-            strict: If True, apply strict validation rules
+        entries: List of entries to validate
+        strict: If True, apply strict validation rules
 
         Returns:
-            FlextResult containing LdifValidationResult
+        FlextResult containing LdifValidationResult
 
         """
         errors: list[str] = []
@@ -121,11 +121,11 @@ class FlextLdifSchemaValidator(FlextService[dict[str, object]]):
         """Validate entry against discovered schema.
 
         Args:
-            entry: Entry to validate
-            schema: Discovered schema
+        entry: Entry to validate
+        schema: Discovered schema
 
         Returns:
-            FlextResult containing validation report with typed structure
+        FlextResult containing validation report with typed structure
 
         """
         warnings: list[str] = [
@@ -162,11 +162,11 @@ class FlextLdifSchemaValidator(FlextService[dict[str, object]]):
         """Validate objectClass requirements for entry.
 
         Args:
-            entry: Entry to validate
-            schema: Discovered schema
+        entry: Entry to validate
+        schema: Discovered schema
 
         Returns:
-            FlextResult containing validation report with typed structure
+        FlextResult containing validation report with typed structure
 
         """
         issues: list[str] = []

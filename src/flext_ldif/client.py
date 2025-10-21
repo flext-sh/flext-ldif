@@ -1,8 +1,8 @@
-"""FLEXT-LDIF Client - Main Implementation for LDIF Operations.
+"""LDIF client implementation.
 
-This module contains the core implementation logic for LDIF processing,
-extracted from the thin facade API. It provides the actual business logic
-for parsing, writing, validation, migration, and analysis operations.
+This module implements the core business logic for LDIF operations including
+parsing, writing, validation, and migration. The FlextLdifClient class is
+used by the FlextLdif facade to perform actual operations.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -90,8 +90,8 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Models.CustomDataDict]):
         """Initialize LDIF client with optional configuration.
 
         Args:
-            config: Optional LDIF configuration. If not provided,
-                   uses global singleton instance.
+        config: Optional LDIF configuration. If not provided,
+        uses global singleton instance.
 
         """
         # Store config for lazy initialization in properties
@@ -108,12 +108,12 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Models.CustomDataDict]):
         This hook is called by Pydantic after __init__ completes.
 
         Args:
-            __context: Pydantic's validation context dictionary or None.
+        __context: Pydantic's validation context dictionary or None.
 
         """
         # Initialize private attributes that parent's __init__ may access
         self._config = getattr(self, "_init_config_value", None) or FlextLdifConfig()
-        # ✅ FIXED: Don't bind config to context - use _log_config_once() instead
+        # FIXED: Don't bind config to context - use _log_config_once() instead
         self._context = FlextContext()  # Empty context, not bound to global
         self._bus = FlextBus()
         self._handlers = {}
@@ -126,7 +126,7 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Models.CustomDataDict]):
         # Register default quirks for all servers
         self._register_default_quirks()
 
-        # ✅ Log config ONCE without binding to global context
+        # Log config ONCE without binding to global context
         if self.logger and self._config:
             config_info: FlextLdifTypes.Models.CustomDataDict = {
                 "ldif_encoding": self._config.ldif_encoding,
@@ -141,7 +141,7 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Models.CustomDataDict]):
         """Execute client self-check and return status.
 
         Returns:
-            FlextResult containing client status and configuration
+        FlextResult containing client status and configuration
 
         """
         try:
@@ -272,12 +272,12 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Models.CustomDataDict]):
         Consolidates service retrieval pattern: get → unwrap → type check.
 
         Args:
-            container: The dependency injection container
-            service_name: Name of the service to retrieve
-            expected_type: Expected type for type narrowing
+        container: The dependency injection container
+        service_name: Name of the service to retrieve
+        expected_type: Expected type for type narrowing
 
         Returns:
-            Service instance if found and correct type, None otherwise
+        Service instance if found and correct type, None otherwise
 
         """
         service_result = container.get(service_name)
@@ -347,12 +347,12 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Models.CustomDataDict]):
         """Write entries to LDIF format string or file.
 
         Args:
-            entries: List of LDIF entries to write
-            output_path: Optional path to write LDIF file. If None, returns LDIF string.
+        entries: List of LDIF entries to write
+        output_path: Optional path to write LDIF file. If None, returns LDIF string.
 
         Returns:
-            FlextResult containing LDIF content as string (if output_path is None)
-            or success message (if output_path provided)
+        FlextResult containing LDIF content as string (if output_path is None)
+        or success message (if output_path provided)
 
         """
         container = self.container
@@ -393,10 +393,10 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Models.CustomDataDict]):
         """Validate LDIF entries against RFC and business rules.
 
         Args:
-            entries: List of entries to validate
+        entries: List of entries to validate
 
         Returns:
-            FlextResult containing validation report with details
+        FlextResult containing validation report with details
 
         """
         container = self.container
@@ -551,10 +551,10 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Models.CustomDataDict]):
         """Analyze LDIF entries and generate statistics.
 
         Args:
-            entries: List of entries to analyze
+        entries: List of entries to analyze
 
         Returns:
-            FlextResult containing analysis statistics
+        FlextResult containing analysis statistics
 
         """
         # Simple analysis - count object classes
@@ -609,10 +609,10 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Models.CustomDataDict]):
             FlextResult containing filtered entries
 
         Example:
-            >>> # Simple filtering (backward compatible)
+            >>> # Simple filtering
             >>> result = client.filter_by_objectclass(entries, "inetOrgPerson")
             >>>
-            >>> # Advanced filtering with required attributes
+            >>> # Filtering with multiple required attributes
             >>> result = client.filter_by_objectclass(
             ...     entries,
             ...     objectclass=("inetOrgPerson", "person"),
@@ -841,22 +841,22 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Models.CustomDataDict]):
         matching these categories is marked as uncategorized.
 
         Args:
-            entries: List of LDIF entries to categorize
-            user_objectclasses: Tuple of user objectClass names
-            group_objectclasses: Tuple of group objectClass names
-            container_objectclasses: Tuple of container objectClass names
+        entries: List of LDIF entries to categorize
+        user_objectclasses: Tuple of user objectClass names
+        group_objectclasses: Tuple of group objectClass names
+        container_objectclasses: Tuple of container objectClass names
 
         Returns:
-            FlextResult containing CategorizedEntries with entries organized by category
+        FlextResult containing CategorizedEntries with entries organized by category
 
         Example:
-            >>> from client-a_oud_mig.constants import client-aOudMigConstants
-            >>> result = client.categorize_entries(
-            ...     entries,
-            ...     user_objectclasses=client-aOudMigConstants.USER_CLASSES,
-            ...     group_objectclasses=client-aOudMigConstants.GROUP_CLASSES,
-            ...     container_objectclasses=client-aOudMigConstants.ORG_UNIT_CLASSES,
-            ... )
+        >>> from client-a_oud_mig.constants import client-aOudMigConstants
+        >>> result = client.categorize_entries(
+        ...     entries,
+        ...     user_objectclasses=client-aOudMigConstants.USER_CLASSES,
+        ...     group_objectclasses=client-aOudMigConstants.GROUP_CLASSES,
+        ...     container_objectclasses=client-aOudMigConstants.ORG_UNIT_CLASSES,
+        ... )
 
         """
         try:
@@ -956,7 +956,7 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Models.CustomDataDict]):
         - Non-empty content
 
         Note: This is a basic syntax check. For full RFC 2849 validation,
-        use parse_ldif() which performs comprehensive parsing.
+        use parse_ldif() which performs complete parsing.
 
         Args:
             content: LDIF content string to validate
@@ -1103,7 +1103,10 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Models.CustomDataDict]):
             self._config = (
                 getattr(self, "_init_config_value", None) or FlextLdifConfig()
             )
-        # Type narrowed by None check above
+        # Type narrowing: _config cannot be None after initialization above
+        if self._config is None:  # pragma: no cover
+            msg = "Configuration initialization failed"
+            raise RuntimeError(msg)
         return self._config
 
     @property

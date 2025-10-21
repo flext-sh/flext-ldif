@@ -42,12 +42,12 @@ class FlextLdifRfcLdifParser(FlextService[FlextLdifTypes.Models.CustomDataDict])
     This is a GENERIC parser that can parse ANY LDIF data from any LDAP server.
     RFC 2849 compliance is guaranteed by the ldif3 library, with quirks for extensions.
 
-    **Architecture**:
+    Architecture:
     - GENERIC: Parses any LDIF data (OID, OUD, OpenLDAP, AD, etc.)
     - RFC-COMPLIANT: Uses ldif3 library for RFC 2849 compliance
     - EXTENSIBLE: Quirks configure parsing behavior for server-specific formats
 
-    **Features**:
+    Features:
     - Line folding (RFC 2849 Section 2) via ldif3
     - Base64 encoding (RFC 2849 Section 2) via ldif3
     - DN parsing (RFC 4514) via ldif3
@@ -55,7 +55,7 @@ class FlextLdifRfcLdifParser(FlextService[FlextLdifTypes.Models.CustomDataDict])
     - Change record parsing support
     - Lenient parsing (accepts non-RFC extensions)
 
-    **Example**:
+    Example:
         # RFC-compliant parsing with quirks (MANDATORY)
         from flext_ldif.quirks.registry import FlextLdifQuirksRegistry
 
@@ -269,15 +269,15 @@ class FlextLdifRfcLdifParser(FlextService[FlextLdifTypes.Models.CustomDataDict])
         """Parse LDIF content string using ldif3 library.
 
         Args:
-            content: LDIF content as string
-            parse_changes: Whether to parse change records (reserved for future use)
+        content: LDIF content as string
+        parse_changes: Whether to parse change records (reserved for future use)
 
         Returns:
-            FlextResult with list of parsed entries
+        FlextResult with list of parsed entries
 
         Note:
-            parse_changes parameter is reserved for future enhancement.
-            ldif3 library currently parses entries only, not change records.
+        parse_changes parameter is reserved for future enhancement.
+        ldif3 library currently parses entries only, not change records.
 
         """
         _ = parse_changes  # Reserved for future enhancement
@@ -293,16 +293,16 @@ class FlextLdifRfcLdifParser(FlextService[FlextLdifTypes.Models.CustomDataDict])
         """Parse LDIF file using ldif3 library.
 
         Args:
-            path: Path to LDIF file
-            parse_changes: Whether to parse change records (reserved for future use)
-            encoding: File encoding
+        path: Path to LDIF file
+        parse_changes: Whether to parse change records (reserved for future use)
+        encoding: File encoding
 
         Returns:
-            FlextResult with list of parsed entries
+        FlextResult with list of parsed entries
 
         Note:
-            parse_changes parameter is reserved for future enhancement.
-            ldif3 library currently parses entries only, not change records.
+        parse_changes parameter is reserved for future enhancement.
+        ldif3 library currently parses entries only, not change records.
 
         """
         _ = parse_changes  # Reserved for future enhancement
@@ -321,12 +321,12 @@ class FlextLdifRfcLdifParser(FlextService[FlextLdifTypes.Models.CustomDataDict])
         214 lines of naive parsing code with a battle-tested implementation.
 
         Args:
-            content: LDIF content string (mutually exclusive with file_path)
-            file_path: Path to LDIF file (mutually exclusive with content)
-            encoding: Character encoding (default: utf-8)
+        content: LDIF content string (mutually exclusive with file_path)
+        file_path: Path to LDIF file (mutually exclusive with content)
+        encoding: Character encoding (default: utf-8)
 
         Returns:
-            FlextResult with list of parsed entries
+        FlextResult with list of parsed entries
 
         """
         try:
@@ -416,10 +416,10 @@ class FlextLdifRfcLdifParser(FlextService[FlextLdifTypes.Models.CustomDataDict])
         """Create LDIF entry from parsed data.
 
         Args:
-            entry_data: Parsed entry data with FlextLdifConstants.DictKeys.DN and FlextLdifConstants.DictKeys.ATTRIBUTES keys
+        entry_data: Parsed entry data with FlextLdifConstants.DictKeys.DN and FlextLdifConstants.DictKeys.ATTRIBUTES keys
 
         Returns:
-            FlextResult with Entry model
+        FlextResult with Entry model
 
         """
         # Extract and type narrow dn

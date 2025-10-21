@@ -39,11 +39,11 @@ class FlextLdifObjectClassManager(FlextService[dict[str, object]]):
         """Resolve objectClass hierarchy.
 
         Args:
-            object_class: ObjectClass name
-            schema: Discovered schema
+        object_class: ObjectClass name
+        schema: Discovered schema
 
         Returns:
-            FlextResult containing objectClass hierarchy
+        FlextResult containing objectClass hierarchy
 
         """
         hierarchy: list[str] = [object_class]
@@ -70,11 +70,11 @@ class FlextLdifObjectClassManager(FlextService[dict[str, object]]):
         """Get all required attributes for objectClasses.
 
         Args:
-            object_classes: List of objectClass names
-            schema: Discovered schema
+        object_classes: List of objectClass names
+        schema: Discovered schema
 
         Returns:
-            FlextResult containing required attributes
+        FlextResult containing required attributes
 
         """
         required_attrs: set[str] = set()
@@ -100,11 +100,11 @@ class FlextLdifObjectClassManager(FlextService[dict[str, object]]):
         """Get all optional attributes for objectClasses.
 
         Args:
-            object_classes: List of objectClass names
-            schema: Discovered schema
+        object_classes: List of objectClass names
+        schema: Discovered schema
 
         Returns:
-            FlextResult containing optional attributes
+        FlextResult containing optional attributes
 
         """
         optional_attrs: set[str] = set()
@@ -130,11 +130,11 @@ class FlextLdifObjectClassManager(FlextService[dict[str, object]]):
         """Validate objectClass combination.
 
         Args:
-            object_classes: List of objectClass names
-            schema: Discovered schema
+        object_classes: List of objectClass names
+        schema: Discovered schema
 
         Returns:
-            FlextResult containing validation report
+        FlextResult containing validation report
 
         """
         issues: list[str] = []

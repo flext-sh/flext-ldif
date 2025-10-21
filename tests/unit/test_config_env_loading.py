@@ -262,7 +262,9 @@ class TestConfigInheritance:
         assert config.debug is True  # from FlextConfig with FLEXT_ env var
         assert config.max_workers == 1  # Direct parameter (complies with debug mode)
         assert config.enable_performance_optimizations is False  # Direct parameter
-        assert config.ldif_encoding == "utf-16"  # from FlextLdifConfig with FLEXT_LDIF_ env var
+        assert (
+            config.ldif_encoding == "utf-16"
+        )  # from FlextLdifConfig with FLEXT_LDIF_ env var
 
 
 class TestOrderOfPrecedence:

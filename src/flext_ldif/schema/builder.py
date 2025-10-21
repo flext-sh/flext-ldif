@@ -74,12 +74,12 @@ class FlextLdifSchemaBuilder(FlextService[FlextLdifConfig]):
         """Add attribute to schema (Fluent Builder pattern).
 
         Args:
-            name: Attribute name
-            description: Attribute description
-            single_value: Whether attribute is single-valued
+        name: Attribute name
+        description: Attribute description
+        single_value: Whether attribute is single-valued
 
         Returns:
-            Self for method chaining
+        Self for method chaining
 
         """
         attr_result: FlextLdifTypes.Models.CustomDataDict = {
@@ -108,13 +108,13 @@ class FlextLdifSchemaBuilder(FlextService[FlextLdifConfig]):
         """Add object class to schema (Fluent Builder pattern).
 
         Args:
-            name: Object class name
-            description: Object class description
-            required_attributes: List of required attribute names
-            optional_attributes: List of optional attribute names
+        name: Object class name
+        description: Object class description
+        required_attributes: List of required attribute names
+        optional_attributes: List of optional attribute names
 
         Returns:
-            Self for method chaining
+        Self for method chaining
 
         """
         object_class_data: FlextLdifTypes.Models.CustomDataDict = {
@@ -135,10 +135,10 @@ class FlextLdifSchemaBuilder(FlextService[FlextLdifConfig]):
         """Set server type (Fluent Builder pattern).
 
         Args:
-            server_type: Server type identifier
+        server_type: Server type identifier
 
         Returns:
-            Self for method chaining
+        Self for method chaining
 
         """
         self._server_type = server_type
@@ -148,7 +148,7 @@ class FlextLdifSchemaBuilder(FlextService[FlextLdifConfig]):
         """Build final schema (Builder pattern).
 
         Returns:
-            FlextResult containing built schema
+        FlextResult containing built schema
 
         """
         # Type narrowing: result is already FlextLdifTypes.Models.CustomDataDict (FlextLdifTypes.Models.CustomDataDict)
@@ -168,7 +168,7 @@ class FlextLdifSchemaBuilder(FlextService[FlextLdifConfig]):
         """Reset builder to initial state.
 
         Returns:
-            Self for method chaining
+        Self for method chaining
 
         """
         self._attributes = {}
@@ -183,7 +183,7 @@ class FlextLdifSchemaBuilder(FlextService[FlextLdifConfig]):
         """Build standard person schema using fluent builder.
 
         Returns:
-            FlextResult containing person schema
+        FlextResult containing person schema
 
         """
         # Use fluent builder pattern
@@ -229,7 +229,7 @@ class FlextLdifSchemaBuilder(FlextService[FlextLdifConfig]):
         """Build standard group schema using fluent builder.
 
         Returns:
-            FlextResult containing group schema
+        FlextResult containing group schema
 
         """
         # Use fluent builder pattern

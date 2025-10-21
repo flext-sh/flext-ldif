@@ -28,7 +28,7 @@ from __future__ import annotations
 
 import fnmatch
 from datetime import UTC, datetime
-from typing import override
+from typing import cast, override
 
 from flext_core import FlextDecorators, FlextResult, FlextService
 
@@ -448,9 +448,7 @@ class FlextLdifAclService(FlextService[dict[str, object]]):
             return FlextResult[list[FlextLdifModels.AclBase]].fail(error_msg)
 
         acl_attribute = acl_attr_result.value
-        acl_values: list[str] = entry.get_attribute_values(
-            acl_attribute
-        )
+        acl_values: list[str] = entry.get_attribute_values(acl_attribute)
 
         if not acl_values:
             return FlextResult[list[FlextLdifModels.AclBase]].ok([])
@@ -458,7 +456,10 @@ class FlextLdifAclService(FlextService[dict[str, object]]):
         acls: list[FlextLdifModels.AclBase] = []
         for acl_value in acl_values:
             parse_result: FlextResult[FlextLdifModels.AclBase] = (
-                self._parse_acl_with_rules(acl_value, server_type or "generic")
+                self._parse_acl_with_rules(
+                    acl_value,
+                    cast("FlextLdifTypes.AclServerType", server_type or "openldap"),
+                )
             )
             if parse_result.is_success:
                 acls.append(parse_result.value)
@@ -468,7 +469,7 @@ class FlextLdifAclService(FlextService[dict[str, object]]):
     def _parse_acl_with_rules(
         self,
         acl_string: str,
-        server_type: str,
+        server_type: FlextLdifTypes.AclServerType,
     ) -> FlextResult[FlextLdifModels.AclBase]:
         """Parse ACL string using composite rule pattern.
 

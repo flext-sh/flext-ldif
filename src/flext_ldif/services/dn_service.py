@@ -74,7 +74,7 @@ class DnService(FlextService[FlextLdifTypes.Models.CustomDataDict]):
         - Handle context propagation (correlation_id, operation_name)
 
         Returns:
-            FlextResult containing service status
+        FlextResult containing service status
 
         """
         return FlextResult[FlextLdifTypes.Models.CustomDataDict].ok({
@@ -122,7 +122,7 @@ class DnService(FlextService[FlextLdifTypes.Models.CustomDataDict]):
             )
 
     def validate_format(self, dn: str) -> FlextResult[bool]:
-        """Validate DN format against RFC 4514 using ldap3.
+        r"""Validate DN format against RFC 4514 using ldap3.
 
         Uses ldap3.utils.dn.parse_dn() to validate DN syntax.
         A valid DN must parse successfully according to RFC 4514.
@@ -154,7 +154,7 @@ class DnService(FlextService[FlextLdifTypes.Models.CustomDataDict]):
             return FlextResult[bool].ok(False)
 
     def normalize(self, dn: str) -> FlextResult[str]:
-        """Normalize DN using RFC 4514 compliant normalization via ldap3.
+        r"""Normalize DN using RFC 4514 compliant normalization via ldap3.
 
         Uses ldap3.utils.dn.safe_dn() for proper RFC 4514 normalization:
         - Lowercases attribute names

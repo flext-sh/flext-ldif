@@ -70,10 +70,10 @@ class FlextLdifQuirksServersOpenldap(FlextLdifQuirksBaseSchemaQuirk):
         """Check if this is an OpenLDAP 2.x attribute.
 
         Args:
-            attr_definition: AttributeType definition string
+        attr_definition: AttributeType definition string
 
         Returns:
-            True if this contains OpenLDAP 2.x markers
+        True if this contains OpenLDAP 2.x markers
 
         """
         # Check for olc* prefix or olcAttributeTypes context
@@ -86,10 +86,10 @@ class FlextLdifQuirksServersOpenldap(FlextLdifQuirksBaseSchemaQuirk):
         parse with RFC parser and add OpenLDAP-specific metadata.
 
         Args:
-            attr_definition: AttributeType definition string
+        attr_definition: AttributeType definition string
 
         Returns:
-            FlextResult with parsed OpenLDAP 2.x attribute data
+        FlextResult with parsed OpenLDAP 2.x attribute data
 
         """
         try:
@@ -156,10 +156,10 @@ class FlextLdifQuirksServersOpenldap(FlextLdifQuirksBaseSchemaQuirk):
         """Check if this is an OpenLDAP 2.x objectClass.
 
         Args:
-            oc_definition: ObjectClass definition string
+        oc_definition: ObjectClass definition string
 
         Returns:
-            True if this contains OpenLDAP 2.x markers
+        True if this contains OpenLDAP 2.x markers
 
         """
         return bool(self.OPENLDAP_OLC_PATTERN.search(oc_definition))
@@ -170,10 +170,10 @@ class FlextLdifQuirksServersOpenldap(FlextLdifQuirksBaseSchemaQuirk):
         OpenLDAP 2.x uses RFC 4512 compliant schema format.
 
         Args:
-            oc_definition: ObjectClass definition string
+        oc_definition: ObjectClass definition string
 
         Returns:
-            FlextResult with parsed OpenLDAP 2.x objectClass data
+        FlextResult with parsed OpenLDAP 2.x objectClass data
 
         """
         try:
@@ -262,10 +262,10 @@ class FlextLdifQuirksServersOpenldap(FlextLdifQuirksBaseSchemaQuirk):
         OpenLDAP 2.x attributes are already RFC-compliant.
 
         Args:
-            attr_data: OpenLDAP 2.x attribute data
+        attr_data: OpenLDAP 2.x attribute data
 
         Returns:
-            FlextResult with RFC-compliant attribute data
+        FlextResult with RFC-compliant attribute data
 
         """
         try:
@@ -294,10 +294,10 @@ class FlextLdifQuirksServersOpenldap(FlextLdifQuirksBaseSchemaQuirk):
         OpenLDAP 2.x objectClasses are already RFC-compliant.
 
         Args:
-            oc_data: OpenLDAP 2.x objectClass data
+        oc_data: OpenLDAP 2.x objectClass data
 
         Returns:
-            FlextResult with RFC-compliant objectClass data
+        FlextResult with RFC-compliant objectClass data
 
         """
         try:
@@ -327,10 +327,10 @@ class FlextLdifQuirksServersOpenldap(FlextLdifQuirksBaseSchemaQuirk):
         OpenLDAP 2.x attributes are already RFC-compliant, so minimal conversion needed.
 
         Args:
-            rfc_data: RFC-compliant attribute data
+        rfc_data: RFC-compliant attribute data
 
         Returns:
-            FlextResult with OpenLDAP 2.x attribute data
+        FlextResult with OpenLDAP 2.x attribute data
 
         """
         try:
@@ -355,10 +355,10 @@ class FlextLdifQuirksServersOpenldap(FlextLdifQuirksBaseSchemaQuirk):
         OpenLDAP 2.x objectClasses are already RFC-compliant, so minimal conversion needed.
 
         Args:
-            rfc_data: RFC-compliant objectClass data
+        rfc_data: RFC-compliant objectClass data
 
         Returns:
-            FlextResult with OpenLDAP 2.x objectClass data
+        FlextResult with OpenLDAP 2.x objectClass data
 
         """
         try:
@@ -375,16 +375,14 @@ class FlextLdifQuirksServersOpenldap(FlextLdifQuirksBaseSchemaQuirk):
                 f"RFC→OpenLDAP 2.x objectClass conversion failed: {e}"
             )
 
-    def write_attribute_to_rfc(
-        self, attr_data: dict[str, object]
-    ) -> FlextResult[str]:
+    def write_attribute_to_rfc(self, attr_data: dict[str, object]) -> FlextResult[str]:
         """Write attribute data to RFC-compliant string format.
 
         Args:
-            attr_data: Attribute data dictionary
+        attr_data: Attribute data dictionary
 
         Returns:
-            FlextResult with RFC-compliant attribute string
+        FlextResult with RFC-compliant attribute string
 
         """
         try:
@@ -415,16 +413,14 @@ class FlextLdifQuirksServersOpenldap(FlextLdifQuirksBaseSchemaQuirk):
         except Exception as e:  # pragma: no cover
             return FlextResult[str].fail(f"OpenLDAP 2.x attribute write failed: {e}")
 
-    def write_objectclass_to_rfc(
-        self, oc_data: dict[str, object]
-    ) -> FlextResult[str]:
+    def write_objectclass_to_rfc(self, oc_data: dict[str, object]) -> FlextResult[str]:
         """Write objectClass data to RFC-compliant string format.
 
         Args:
-            oc_data: ObjectClass data dictionary
+        oc_data: ObjectClass data dictionary
 
         Returns:
-            FlextResult with RFC-compliant objectClass string
+        FlextResult with RFC-compliant objectClass string
 
         """
         try:
@@ -487,10 +483,10 @@ class FlextLdifQuirksServersOpenldap(FlextLdifQuirksBaseSchemaQuirk):
             """Check if this is an OpenLDAP 2.x ACL.
 
             Args:
-                acl_line: ACL definition line
+            acl_line: ACL definition line
 
             Returns:
-                True if this is OpenLDAP 2.x ACL format
+            True if this is OpenLDAP 2.x ACL format
 
             """
             # OpenLDAP 2.x ACLs start with "to" or "{n}to"
@@ -505,10 +501,10 @@ class FlextLdifQuirksServersOpenldap(FlextLdifQuirksBaseSchemaQuirk):
             Example: to attrs=userPassword by self write by anonymous auth by * none
 
             Args:
-                acl_line: ACL definition line
+            acl_line: ACL definition line
 
             Returns:
-                FlextResult with parsed OpenLDAP 2.x ACL data
+            FlextResult with parsed OpenLDAP 2.x ACL data
 
             """
             try:
@@ -566,10 +562,10 @@ class FlextLdifQuirksServersOpenldap(FlextLdifQuirksBaseSchemaQuirk):
             """Convert OpenLDAP 2.x ACL to RFC-compliant format.
 
             Args:
-                acl_data: OpenLDAP 2.x ACL data
+            acl_data: OpenLDAP 2.x ACL data
 
             Returns:
-                FlextResult with RFC-compliant ACL data
+            FlextResult with RFC-compliant ACL data
 
             """
             try:
@@ -594,10 +590,10 @@ class FlextLdifQuirksServersOpenldap(FlextLdifQuirksBaseSchemaQuirk):
             """Convert RFC ACL to OpenLDAP 2.x-specific format.
 
             Args:
-                acl_data: RFC-compliant ACL data
+            acl_data: RFC-compliant ACL data
 
             Returns:
-                FlextResult with OpenLDAP 2.x ACL data
+            FlextResult with OpenLDAP 2.x ACL data
 
             """
             try:
@@ -619,10 +615,10 @@ class FlextLdifQuirksServersOpenldap(FlextLdifQuirksBaseSchemaQuirk):
             """Write ACL data to RFC-compliant string format.
 
             Args:
-                acl_data: ACL data dictionary
+            acl_data: ACL data dictionary
 
             Returns:
-                FlextResult with RFC-compliant ACL string
+            FlextResult with RFC-compliant ACL string
 
             """
             try:
@@ -677,11 +673,11 @@ class FlextLdifQuirksServersOpenldap(FlextLdifQuirksBaseSchemaQuirk):
             """Check if this quirk should handle the entry.
 
             Args:
-                entry_dn: Entry distinguished name
-                attributes: Entry attributes
+            entry_dn: Entry distinguished name
+            attributes: Entry attributes
 
             Returns:
-                True if this is an OpenLDAP 2.x-specific entry
+            True if this is an OpenLDAP 2.x-specific entry
 
             """
             # Check for cn=config DN or olc* attributes
@@ -708,11 +704,11 @@ class FlextLdifQuirksServersOpenldap(FlextLdifQuirksBaseSchemaQuirk):
             """Process entry for OpenLDAP 2.x format.
 
             Args:
-                entry_dn: Entry distinguished name
-                attributes: Entry attributes
+            entry_dn: Entry distinguished name
+            attributes: Entry attributes
 
             Returns:
-                FlextResult with processed entry data
+            FlextResult with processed entry data
 
             """
             try:
@@ -739,10 +735,10 @@ class FlextLdifQuirksServersOpenldap(FlextLdifQuirksBaseSchemaQuirk):
             """Convert server-specific entry to RFC-compliant format.
 
             Args:
-                entry_data: Server-specific entry data
+            entry_data: Server-specific entry data
 
             Returns:
-                FlextResult with RFC-compliant entry data
+            FlextResult with RFC-compliant entry data
 
             """
             try:

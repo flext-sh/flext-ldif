@@ -52,120 +52,122 @@
         Homepage = "https://github.com/flext-sh/flext"
         Repository = "https://github.com/flext-sh/flext"
 
-[tool.deptry]
-    known_first_party = [
-        "flext_ldif",
-    ]
-
-[tool.poetry]
-    [[tool.poetry.packages]]
-        from = "src"
-        include = "flext_ldif"
-
-    [tool.poetry.dependencies]
-        ldap3 = ">=2.9.1"
-        ldif3 = ">=3.2.2"
-        python = ">=3.13,<3.14"
-
-        [tool.poetry.dependencies.flext-cli]
-            develop = true
-            path = "../flext-cli"
-
-        [tool.poetry.dependencies.flext-ldap]
-            develop = true
-            path = "../flext-ldap"
-
-        [tool.poetry.dependencies.flext-observability]
-            develop = true
-            path = "../flext-observability"
-
-    [tool.poetry.group.dev.dependencies]
-        attrs = "^25.3.0"
-        autoflake = ">=2.3.1"
-        backoff = "^2.2.1"
-        black = ">=25.1.0"
-        codespell = ">=2.3.0"
-        commitizen = ">=4.8.3"
-        detect-secrets = ">=1.5.0"
-        isort = ">=6.0.1"
-        pre-commit = ">=4.0.1"
-        pylint = ">=3.3.0"
-        pyrefly = "^0.34.0"
-        pyupgrade = ">=3.19.0"
-        radon = ">=6.0.1"
-        ruff = ">=0.12.3"
-        structlog = "^25.4.0"
-        types-docker = "^7.1.0.20250916"
-        vulture = ">=2.13"
-
-    [tool.poetry.group.test.dependencies]
-        docker = ">=7.1.0"
-        factory-boy = ">=3.3.1"
-        faker = ">=37.4.0"
-        hypothesis = ">=6.125.0"
-        pytest = ">=8.4.0"
-        pytest-benchmark = ">=5.1.0"
-        pytest-clarity = ">=1.0.1"
-        pytest-cov = ">=6.2.0"
-        pytest-deadfixtures = ">=2.2.1"
-        pytest-env = ">=1.1.5"
-        pytest-mock = ">=3.14.0"
-        pytest-randomly = ">=3.16.0"
-        pytest-sugar = ">=1.0.0"
-        pytest-timeout = ">=2.4.0"
-        pytest-xdist = ">=3.8.0"
-        python-ldap = ">=3.4.4"
-
-    [tool.poetry.group.typings.dependencies]
-        types-psutil = ">=7.0.0"
-        types-python-dateutil = ">=2.9.0"
-        types-pyyaml = ">=6.0.12"
-        types-redis = ">=4.6.0"
-        types-requests = ">=2.32.4"
-        types-setuptools = ">=80.9.0"
-        types-toml = ">=0.10.8.20240310"
-
-    [tool.poetry.group.security.dependencies]
-        bandit = ">=1.8.0"
-        pip-audit = ">=2.7.3"
-
-[tool.pytest.ini_options]
-    addopts = [
-        "--maxfail=1",
-        "--strict-config",
-        "--strict-markers",
-        "--tb=short",
-        "-ra",
-    ]
-    filterwarnings = [
-        "ignore::DeprecationWarning:pyasn1(.*|$)",
-        "ignore::UserWarning:flext_core.loggings",
-    ]
-    markers = [
-        " tests",
-        "benchmark: Benchmark tests",
-        "complexity: Complexity tests",
-        "concurrency: Concurrency tests",
-        "e2e: End-to-end tests",
-        "integration: Integration tests",
-        "memory: Memory tests",
-        "memory_limit: Memory limit tests",
-        "performance: Performance tests",
-        "race_condition: Race condition tests",
-        "regression: Regression tests",
-        "slow: Slow tests",
-        "smoke: Smoke tests",
-        "timeout: Timeout tests",
-        "unit: Unit tests",
-    ]
-    minversion = "8.0"
-    testpaths = [
-        "tests",
-    ]
-[tool.ruff]
-    extend = "../ruff-shared.toml"
-
-    [tool.ruff.lint.isort]
-        known-first-party = [
+[tool]
+    [tool.deptry]
+        known_first_party = [
             "flext_ldif",
         ]
+
+    [tool.poetry]
+        [[tool.poetry.packages]]
+            from = "src"
+            include = "flext_ldif"
+
+        [tool.poetry.dependencies]
+            ldap3 = ">=2.9.1"
+            ldif3 = ">=3.2.2"
+            python = ">=3.13,<3.14"
+
+            [tool.poetry.dependencies.flext-cli]
+                develop = true
+                path = "../flext-cli"
+
+            [tool.poetry.dependencies.flext-ldap]
+                develop = true
+                path = "../flext-ldap"
+
+            [tool.poetry.dependencies.flext-observability]
+                develop = true
+                path = "../flext-observability"
+
+        [tool.poetry.group.dev.dependencies]
+            attrs = "^25.3.0"
+            autoflake = ">=2.3.1"
+            backoff = "^2.2.1"
+            black = ">=25.1.0"
+            codespell = ">=2.3.0"
+            commitizen = ">=4.8.3"
+            detect-secrets = ">=1.5.0"
+            isort = ">=6.0.1"
+            pre-commit = ">=4.0.1"
+            pylint = ">=3.3.0"
+            pyrefly = "^0.34.0"
+            pyupgrade = ">=3.19.0"
+            radon = ">=6.0.1"
+            ruff = ">=0.12.3"
+            structlog = "^25.4.0"
+            types-docker = "^7.1.0.20250916"
+            vulture = ">=2.13"
+
+        [tool.poetry.group.test.dependencies]
+            docker = ">=7.1.0"
+            factory-boy = ">=3.3.1"
+            faker = ">=37.4.0"
+            hypothesis = ">=6.125.0"
+            pytest = ">=8.4.0"
+            pytest-benchmark = ">=5.1.0"
+            pytest-clarity = ">=1.0.1"
+            pytest-cov = ">=6.2.0"
+            pytest-deadfixtures = ">=2.2.1"
+            pytest-env = ">=1.1.5"
+            pytest-mock = ">=3.14.0"
+            pytest-randomly = ">=3.16.0"
+            pytest-sugar = ">=1.0.0"
+            pytest-timeout = ">=2.4.0"
+            pytest-xdist = ">=3.8.0"
+            python-ldap = ">=3.4.4"
+
+        [tool.poetry.group.typings.dependencies]
+            types-psutil = ">=7.0.0"
+            types-python-dateutil = ">=2.9.0"
+            types-pyyaml = ">=6.0.12"
+            types-redis = ">=4.6.0"
+            types-requests = ">=2.32.4"
+            types-setuptools = ">=80.9.0"
+            types-toml = ">=0.10.8.20240310"
+
+        [tool.poetry.group.security.dependencies]
+            bandit = ">=1.8.0"
+            pip-audit = ">=2.7.3"
+
+    [tool.pytest.ini_options]
+        addopts = [
+            "--maxfail=1",
+            "--strict-config",
+            "--strict-markers",
+            "--tb=short",
+            "-ra",
+        ]
+        filterwarnings = [
+            "ignore::DeprecationWarning:pyasn1(.*|$)",
+            "ignore::UserWarning:flext_core.loggings",
+        ]
+        markers = [
+            " tests",
+            "benchmark: Benchmark tests",
+            "complexity: Complexity tests",
+            "concurrency: Concurrency tests",
+            "e2e: End-to-end tests",
+            "integration: Integration tests",
+            "memory: Memory tests",
+            "memory_limit: Memory limit tests",
+            "performance: Performance tests",
+            "race_condition: Race condition tests",
+            "regression: Regression tests",
+            "slow: Slow tests",
+            "smoke: Smoke tests",
+            "timeout: Timeout tests",
+            "unit: Unit tests",
+        ]
+        minversion = "8.0"
+        testpaths = [
+            "tests",
+        ]
+
+    [tool.ruff]
+        extend = "../ruff-shared.toml"
+
+        [tool.ruff.lint.isort]
+            known-first-party = [
+                "flext_ldif",
+            ]
