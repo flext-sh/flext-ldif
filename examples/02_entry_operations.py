@@ -12,7 +12,10 @@ Original: 235 lines | Optimized: ~120 lines (49% reduction)
 
 from __future__ import annotations
 
-from flext_ldif import FlextLdif
+from pathlib import Path
+from typing import cast
+
+from flext_ldif import FlextLdif, FlextLdifModels
 
 
 def build_entries_pipeline() -> None:
@@ -20,16 +23,21 @@ def build_entries_pipeline() -> None:
     api = FlextLdif.get_instance()
 
     # Build person - library handles all validation
-    person = api.build_person_entry(
+    person_result = api.build(
+        entry_type="person",
         cn="Alice Johnson",
         sn="Johnson",
         base_dn="ou=People,dc=example,dc=com",
         mail="alice.johnson@example.com",
         additional_attrs={"telephoneNumber": ["+1-555-0101"]},
     )
+    if not person_result.is_success:
+        print(f"Failed to build person: {person_result.error}")
+        return
 
     # Build group - library handles member validation
-    group = api.build_group_entry(
+    group_result = api.build(
+        entry_type="group",
         cn="Admins",
         base_dn="ou=Groups,dc=example,dc=com",
         members=[
@@ -38,16 +46,23 @@ def build_entries_pipeline() -> None:
         ],
         description="System REDACTED_LDAP_BIND_PASSWORDistrators group",
     )
+    if not group_result.is_success:
+        print(f"Failed to build group: {group_result.error}")
+        return
 
     # Build OU - library handles structure validation
-    ou = api.build_organizational_unit(
+    ou_result = api.build(
+        entry_type="ou",
         ou="People",
         base_dn="dc=example,dc=com",
         description="Container for person entries",
     )
+    if not ou_result.is_success:
+        print(f"Failed to build OU: {ou_result.error}")
+        return
 
     # Chain operations - auto error propagation
-    results = [person, group, ou]
+    results = [person_result, group_result, ou_result]
     successful = [r.unwrap() for r in results if r.is_success]
     print(f"Built {len(successful)}/{len(results)} entries")
 
@@ -56,7 +71,8 @@ def build_custom_entry_example() -> None:
     """Build custom entry - library validates structure."""
     api = FlextLdif.get_instance()
 
-    result = api.build_custom_entry(
+    result = api.build(
+        entry_type="custom",
         dn="cn=schema,cn=config",
         attributes={
             "objectClass": ["top", "ldapSubentry", "subschema"],
@@ -94,15 +110,30 @@ sn: Williams
 """
 
     # Railway pattern - parse → filter (auto error handling)
-    person_result = api.parse(ldif_content).flat_map(
-        lambda entries: api.filter_by_objectclass(entries, "person")
-    )
+    parse_result = api.parse(ldif_content)
+    if parse_result.is_success:
+        entries = cast("list[FlextLdifModels.Entry]", parse_result.unwrap())
+        person_result = api.filter(entries, objectclass="person")
+        if person_result.is_success:
+            filtered_entries = person_result.unwrap()
+            print(f"Found {len(filtered_entries)} person entries (direct filter)")
+        else:
+            print("Filter failed")
+    else:
+        print("Parse failed")
 
-    # Alternative: use convenience method
-    all_persons = api.parse(ldif_content).flat_map(api.filter_persons)
-
-    print(f"Found {len(person_result.unwrap_or([]))} person entries (direct filter)")
-    print(f"Found {len(all_persons.unwrap_or([]))} person entries (convenience)")
+    # Alternative: filter entries by objectclass
+    parse_result2 = api.parse(ldif_content)
+    if parse_result2.is_success:
+        entries2 = cast("list[FlextLdifModels.Entry]", parse_result2.unwrap())
+        all_persons_result = api.filter(entries2, objectclass="person")
+        if all_persons_result.is_success:
+            all_persons = all_persons_result.unwrap()
+            print(f"Found {len(all_persons)} person entries (convenience)")
+        else:
+            print("Filter failed")
+    else:
+        print("Parse failed")
 
 
 def entry_model_usage() -> None:
@@ -137,45 +168,55 @@ def convert_formats_pipeline() -> None:
     api = FlextLdif.get_instance()
 
     # Build entry → convert to dict[str, object] → convert to JSON (chained)
-    result = (
-        api.build_person_entry(
-            cn="Convert Test", sn="Test", base_dn="ou=People,dc=example,dc=com"
-        )
-        .flat_map(api.entry_to_dict)
-        .map(lambda entry_dict: f"DN: {entry_dict['dn']}")
+    build_result = api.build(
+        entry_type="person",
+        cn="Convert Test", sn="Test", base_dn="ou=People,dc=example,dc=com"
     )
-
-    print(result.unwrap_or("Conversion failed"))
+    if build_result.is_success:
+        entry = build_result.unwrap()
+        dict_result = api.get_entry_attributes(entry)
+        if dict_result.is_success:
+            entry_dict = dict_result.unwrap()
+            result = f"DN: {entry_dict.get('dn', 'unknown')}"
+            print(result)
+        else:
+            print("Dict conversion failed")
+    else:
+        print("Build failed")
 
     # Batch conversions - library eliminates manual loops!
-    person_result = api.build_person_entry(
+    person_result = api.build(
+        entry_type="person",
         cn="Batch Test", sn="Test", base_dn="ou=People,dc=example,dc=com"
     )
     person = person_result.unwrap() if person_result.is_success else None
 
     if person:
         # Batch: entries → JSON → entries (round-trip)
-        json_result = api.entries_to_json([person])
-        if json_result.is_success:
-            json_string = json_result.unwrap()
-            entries_from_json = api.json_to_entries(json_string).unwrap_or([])
-            print(f"Round-trip: {len(entries_from_json)} entries recovered")
+        write_result = api.write([person], Path("temp.json"))
+        if write_result.is_success:
+            parse_result = api.parse(Path("temp.json"))
+            if parse_result.is_success:
+                entries_from_json = cast("list[FlextLdifModels.Entry]", parse_result.unwrap())
+                print(f"Round-trip: {len(entries_from_json)} entries recovered")
 
         # Batch: entries → dicts (NEW - eliminates manual loops!)
-        entry_dicts = api.entries_to_dicts([person])
-        print(f"Converted {len(entry_dicts)} entries to dicts")
+        attrs_result = api.get_entry_attributes(person)
+        if attrs_result.is_success:
+            entry_dict = attrs_result.unwrap()
+            print(f"Converted entry to dict with {len(entry_dict)} attributes")
 
         # Batch: dicts → entries (NEW - eliminates manual loops!)
-        dict_data: list[dict[str, object]] = [
-            {
-                "dn": "cn=FromDict,ou=People,dc=example,dc=com",
+        entry_result = api.create_entry(
+            dn="cn=FromDict,ou=People,dc=example,dc=com",
+            attributes={
                 "objectClass": ["person"],
                 "cn": ["FromDict"],
                 "sn": ["Dict"],
             }
-        ]
-        entries_from_dicts = api.dicts_to_entries(dict_data)
-        print(f"Converted {len(entries_from_dicts)} dicts to entries")
+        )
+        if entry_result.is_success:
+            print("Converted dict to entry")
 
 
 if __name__ == "__main__":

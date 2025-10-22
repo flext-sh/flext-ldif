@@ -252,25 +252,14 @@ class FlextLdifConfig(FlextConfig):
                 )
                 raise ValueError(msg)
 
-        # Validate debug mode consistency (use inherited self.is_debug_enabled from FlextConfig)
-        if self.is_debug_enabled and self.enable_performance_optimizations:
+        # Validate debug mode consistency (use inherited debug fields from FlextConfig)
+        # NO environment-mode-specific behavior - log_level should NOT affect other parameters
+        if (self.debug or self.trace) and self.enable_performance_optimizations:
             # Debug mode conflicts with performance optimizations
-            # Disable performance mode and adjust workers for debugging
-            object.__setattr__(self, "enable_performance_optimizations", False)
-
-            if self.max_workers > FlextLdifConstants.ValidationRules.MAX_WORKERS_DEBUG_RULE:
-                object.__setattr__(
-                    self,
-                    "max_workers",
-                    FlextLdifConstants.ValidationRules.MAX_WORKERS_DEBUG_RULE
-                )
-        elif self.is_debug_enabled and self.max_workers > FlextLdifConstants.ValidationRules.MAX_WORKERS_DEBUG_RULE:
-            # Debug mode with high worker count - adjust for better debugging
-            object.__setattr__(
-                self,
-                "max_workers",
-                FlextLdifConstants.ValidationRules.MAX_WORKERS_DEBUG_RULE
-            )
+            # Disable performance mode only
+            self.enable_performance_optimizations = False
+        # max_workers is NOT affected by log_level or environment mode
+        # Only respect explicit debug/trace flags, NOT log_level
 
         # Validate analytics configuration
         if (

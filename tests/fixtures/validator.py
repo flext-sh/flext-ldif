@@ -11,7 +11,7 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Final
+from typing import Any, Final, cast
 
 from flext_core import FlextResult
 
@@ -55,7 +55,7 @@ class FixtureValidator:
                 if not oid:
                     invalid_ocs.append(oc[:50])
 
-            stats = {
+            stats: dict[str, object] = {
                 "attribute_count": len(attributes),
                 "objectclass_count": len(objectclasses),
                 "total_definitions": len(attributes) + len(objectclasses),
@@ -108,9 +108,13 @@ class FixtureValidator:
                 for entry in entries
                 if isinstance(entry.get("dn"), str)
             ]
-            invalid_dns = [dn for dn in dns if not dn or "=" not in dn]
+            invalid_dns = [
+                dn
+                for dn in dns
+                if not dn or "=" not in cast("str", dn)
+            ]
 
-            stats = {
+            stats: dict[str, object] = {
                 "entry_count": len(entries),
                 "entries_with_dn": len(entries) - invalid_entries,
                 "invalid_dns": len(invalid_dns),
@@ -192,7 +196,7 @@ class FixtureValidator:
                     f"NAME not preserved in roundtrip: {orig_name} → {back_name}"
                 )
 
-            stats = {
+            stats: dict[str, object] = {
                 "oid_preserved": orig_oid == back_oid,
                 "name_preserved": orig_name == back_name,
                 "roundtrip_valid": orig_oid == back_oid and orig_name == back_name,
@@ -209,12 +213,13 @@ class FixtureCoverageReport:
 
     @staticmethod
     def generate_summary(
-        fixtures_by_server: dict[str, dict[str, str]],
+        fixtures_by_server: dict[str, dict[object, str]],
     ) -> dict[str, object]:
         """Generate summary of fixture coverage across servers.
 
         Args:
             fixtures_by_server: Dict mapping server names to fixture content dicts
+                (keys can be strings or FixtureType enums)
 
         Returns:
             Coverage summary statistics
@@ -223,6 +228,9 @@ class FixtureCoverageReport:
         coverage: dict[str, object] = {}
 
         for server_name, fixtures in fixtures_by_server.items():
+            # Convert enum keys to strings for comparison
+            str_fixtures = {str(k): v for k, v in fixtures.items()}
+
             server_stats = {
                 "has_schema": False,
                 "has_entries": False,
@@ -234,8 +242,8 @@ class FixtureCoverageReport:
             }
 
             # Check schema fixture
-            if "schema" in fixtures:
-                schema_content = fixtures["schema"]
+            if "schema" in str_fixtures:
+                schema_content = str_fixtures["schema"]
                 if schema_content and schema_content.strip():
                     server_stats["has_schema"] = True
                     attrs = helpers.extract_attributes(schema_content)
@@ -244,22 +252,22 @@ class FixtureCoverageReport:
                     server_stats["schema_ocs"] = len(ocs)
 
             # Check entries fixture
-            if "entries" in fixtures:
-                entries_content = fixtures["entries"]
+            if "entries" in str_fixtures:
+                entries_content = str_fixtures["entries"]
                 if entries_content and entries_content.strip():
                     server_stats["has_entries"] = True
                     entry_count = helpers.count_entries(entries_content)
                     server_stats["entries"] = entry_count
 
             # Check ACL fixture
-            if "acl" in fixtures:
-                acl_content = fixtures["acl"]
+            if "acl" in str_fixtures:
+                acl_content = str_fixtures["acl"]
                 if acl_content and acl_content.strip():
                     server_stats["has_acl"] = True
 
             # Check integration fixture
-            if "integration" in fixtures:
-                integration_content = fixtures["integration"]
+            if "integration" in str_fixtures:
+                integration_content = str_fixtures["integration"]
                 if integration_content and integration_content.strip():
                     server_stats["has_integration"] = True
 
@@ -397,6 +405,7 @@ class FlextLdifFixtureDiscovery:
             metadata: Fixture metadata
 
         Returns:
+            Expected results dict or None if not found
             dict: Expected results as parsed JSON, or None if not available
 
         """
@@ -410,7 +419,8 @@ class FlextLdifFixtureDiscovery:
             return None
 
         try:
-            return json.loads(metadata.expected_path.read_text(encoding="utf-8"))
+            loaded_json = json.loads(metadata.expected_path.read_text(encoding="utf-8"))
+            return cast("dict[str, Any]", loaded_json)
         except (OSError, json.JSONDecodeError):
             return None
 
@@ -429,7 +439,7 @@ class FlextLdifFixtureDiscovery:
             dict: Comparison results with matches, differences, etc.
 
         """
-        result = {
+        result: dict[str, Any] = {
             "matches": True,
             "differences": [],
             "entry_count_matches": False,
@@ -443,7 +453,7 @@ class FlextLdifFixtureDiscovery:
         if actual_count == expected_count:
             result["entry_count_matches"] = True
         else:
-            result["differences"].append(
+            cast("list[str]", result["differences"]).append(
                 f"Entry count mismatch: actual={actual_count}, expected={expected_count}"
             )
             result["matches"] = False
@@ -472,7 +482,7 @@ class FlextLdifFixtureDiscovery:
                     expected_dn = expected_dn.get("value")
 
                 if actual_dn != expected_dn:
-                    result["differences"].append(
+                    cast("list[str]", result["differences"]).append(
                         f"Entry {i}: DN mismatch: {actual_dn} != {expected_dn}"
                     )
                     entries_match = False
@@ -489,7 +499,7 @@ class FlextLdifFixtureDiscovery:
                     expected_attrs = expected_attrs.get("attributes", {})
 
                 if actual_attrs != expected_attrs:
-                    result["differences"].append(
+                    cast("list[str]", result["differences"]).append(
                         f"Entry {i}: Attributes mismatch for {actual_dn}"
                     )
                     entries_match = False

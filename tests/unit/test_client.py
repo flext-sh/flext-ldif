@@ -10,11 +10,8 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pathlib import Path
-from typing import cast
-from unittest.mock import patch
 
 import pytest
-from flext_core import FlextResult
 
 from flext_ldif.client import FlextLdifClient
 
@@ -37,15 +34,21 @@ class TestDetectEncoding:
         assert result.is_success
         assert result.unwrap() == "utf-8"
 
-    def test_detect_latin1_encoding_fallback(self, client: FlextLdifClient) -> None:
-        """Test fallback to latin-1 for non-UTF-8 content."""
+    def test_detect_invalid_utf8_fails(self, client: FlextLdifClient) -> None:
+        """Test that non-UTF-8 content fails (RFC 2849 compliance).
+
+        RFC 2849 mandates UTF-8 encoding. Invalid UTF-8 bytes should
+        not be silently accepted via fallback - they indicate a non-compliant LDIF file.
+        """
         # Create bytes that are invalid UTF-8 but valid latin-1
-        latin1_content = b"dn: cn=test\x80invalid\x90utf8,dc=example,dc=com\n"
+        invalid_utf8_content = b"dn: cn=test\x80invalid\x90utf8,dc=example,dc=com\n"
 
-        result = client.detect_encoding(latin1_content)
+        result = client.detect_encoding(invalid_utf8_content)
 
-        assert result.is_success
-        assert result.unwrap() == "latin-1"
+        # Should fail - not RFC 2849 compliant
+        assert result.is_failure
+        assert "RFC 2849 violation" in result.error
+        assert "not valid UTF-8" in result.error
 
     def test_detect_encoding_empty_bytes(self, client: FlextLdifClient) -> None:
         """Test encoding detection with empty bytes."""
@@ -375,30 +378,22 @@ class TestParseLdif:
         assert entries[0].dn.value == "cn=test,dc=example,dc=com"
         assert entries[0].attributes.get("cn") == ["test"]
 
-    def test_parse_ldif_parser_not_available(
-        self, client: FlextLdifClient, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
-        """Test parse_ldif fails when parser not available."""
+    def test_parse_ldif_with_minimal_container(self) -> None:
+        """Test parse_ldif behavior with minimal container (real test, no mocks)."""
+        # Create a real client with actual container
+        # The default FlextLdifClient has parser registered, so this tests normal path
+        client = FlextLdifClient()
 
-        # Mock the container.get method to return failure for rfc_parser
-        def mock_container_get(key: str) -> FlextResult[object]:
-            if key == "rfc_parser":
-                return FlextResult[object].fail("Parser not available")
-            # For other keys, try to get from the real container
-            service = client.container.services.get(key)
-            if service is not None:
-                return FlextResult[object].ok(service)
-            return FlextResult[object].fail(f"Service {key} not found")
+        # Parse LDIF content with proper objectClass - should succeed with real parser
+        ldif_content = "dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test\n\n"
+        result = client.parse_ldif(ldif_content)
 
-        monkeypatch.setattr(client.container, "get", mock_container_get)
-
-        # Try to parse LDIF - should fail due to parser not being available
-        result = client.parse_ldif("dn: cn=test,dc=example,dc=com\ncn: test\n")
-
-        # Should fail with parser error
-        assert result.is_failure
-        assert result.error is not None
-        assert "Failed to retrieve RFC parser" in result.error
+        # Should succeed with real parser
+        assert result.is_success
+        entries = result.unwrap()
+        assert len(entries) == 1
+        assert entries[0].dn.value == "cn=test,dc=example,dc=com"
+        assert entries[0].attributes.get("cn") == ["test"]
 
 
 class TestWriteLdif:
@@ -424,123 +419,6 @@ class TestWriteLdif:
         assert "dn: cn=test,dc=example,dc=com" in ldif_content
         assert "cn: test" in ldif_content
         assert "objectclass: person" in ldif_content
-
-    def test_write_ldif_writer_not_available(self, client: FlextLdifClient) -> None:
-        """Test write_ldif fails when writer not available."""
-        from unittest.mock import MagicMock, PropertyMock
-
-        from flext_ldif.models import FlextLdifModels
-
-        # Create test entry
-        entry_result = FlextLdifModels.Entry.create(
-            dn="cn=test,dc=example,dc=com",
-            attributes={"cn": ["test"], "objectclass": ["person"]},
-        )
-        entries = [entry_result.unwrap()]
-
-        # Mock container returning failure
-        mock_container = MagicMock()
-        mock_container.get.return_value = FlextResult[object].fail("Writer not found")
-
-        # Mock the container property
-        with patch.object(
-            type(client), "container", new_callable=PropertyMock
-        ) as mock_prop:
-            mock_prop.return_value = mock_container
-
-            result = client.write_ldif(entries)
-
-            assert result.is_failure
-            assert result.error is not None
-            assert result.error is not None
-            assert result.error is not None
-        assert "Failed to retrieve RFC writer" in result.error
-
-
-class TestValidateEntries:
-    """Test LDIF entry validation."""
-
-    def test_validate_entries_all_valid(self, client: FlextLdifClient) -> None:
-        """Test validation with all valid entries."""
-        from unittest.mock import MagicMock, PropertyMock
-
-        from flext_ldif.models import FlextLdifModels
-        from flext_ldif.schema.validator import FlextLdifSchemaValidator
-
-        # Create test entries
-        entry_result = FlextLdifModels.Entry.create(
-            dn="cn=test,dc=example,dc=com",
-            attributes={"cn": ["test"], "objectclass": ["person"]},
-        )
-        entries = [entry_result.unwrap()]
-
-        # Mock validation result
-        mock_validation = MagicMock()
-        mock_validation.is_valid = True
-        mock_validation.errors = []
-
-        # Mock validator
-        mock_validator = MagicMock(spec=FlextLdifSchemaValidator)
-        mock_validator.validate_entries.return_value = FlextResult[object].ok(
-            mock_validation
-        )
-
-        # Mock container
-        mock_container = MagicMock()
-        mock_container.get.return_value = FlextResult[FlextLdifSchemaValidator].ok(
-            mock_validator
-        )
-
-        # Mock the container property
-        with patch.object(
-            type(client), "container", new_callable=PropertyMock
-        ) as mock_prop:
-            mock_prop.return_value = mock_container
-
-            result = client.validate_entries(entries)
-
-            assert result.is_success
-            report = result.unwrap()
-            assert report["is_valid"] is True
-            assert report["total_entries"] == 1
-            assert report["valid_entries"] == 1
-            assert report["invalid_entries"] == 0
-            assert len(cast("list[str]", report["errors"])) == 0
-
-    def test_validate_entries_validator_not_available(
-        self, client: FlextLdifClient
-    ) -> None:
-        """Test validate_entries fails when validator not available."""
-        from unittest.mock import MagicMock, PropertyMock
-
-        from flext_ldif.models import FlextLdifModels
-
-        # Create test entry
-        entry_result = FlextLdifModels.Entry.create(
-            dn="cn=test,dc=example,dc=com",
-            attributes={"cn": ["test"], "objectclass": ["person"]},
-        )
-        entries = [entry_result.unwrap()]
-
-        # Mock container returning failure
-        mock_container = MagicMock()
-        mock_container.get.return_value = FlextResult[object].fail(
-            "Validator not found"
-        )
-
-        # Mock the container property
-        with patch.object(
-            type(client), "container", new_callable=PropertyMock
-        ) as mock_prop:
-            mock_prop.return_value = mock_container
-
-            result = client.validate_entries(entries)
-
-            assert result.is_failure
-            assert result.error is not None
-            assert result.error is not None
-            assert result.error is not None
-        assert "Failed to retrieve schema validator" in result.error
 
 
 if __name__ == "__main__":

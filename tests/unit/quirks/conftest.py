@@ -1,133 +1,58 @@
-"""Shared pytest fixtures for LDAP quirks testing.
+"""Simple test quirk classes - no auto-registration."""
+from flext_core import FlextResult
+from pydantic import Field
 
-Provides session-level fixture loading and common test utilities.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
-
-from __future__ import annotations
-
-import pytest
-from tests.fixtures.loader import FlextLdifFixtures
-from tests.fixtures.validator import FixtureCoverageReport, FixtureValidator
+from flext_ldif.quirks.base import FlextLdifQuirksBaseSchemaQuirk
 
 
-@pytest.fixture(scope="session")
-def fixture_loader() -> FlextLdifFixtures.Loader:
-    """Session-scoped fixture loader for all quirk tests.
+class ObjectClassParseOnlyQuirk(FlextLdifQuirksBaseSchemaQuirk):
+    """Simple test quirk with parse and to_rfc only - NO AUTO-REGISTRATION."""
 
-    Returns:
-        FlextLdifFixtures.Loader instance
+    server_type: str = Field(default="test_parse_only_no_register")
+    priority: int = Field(default=100)
+    
+    def __init_subclass__(cls) -> None:
+        """Override to prevent auto-registration."""
+        # Do NOT call super() to avoid registration
+    
+    def model_post_init(self, _context: object, /) -> None:
+        pass
+    
+    def can_handle_attribute(self, attr_definition: str) -> bool:
+        return True
 
-    """
-    return FlextLdifFixtures.Loader()
+    def can_handle_objectclass(self, oc_definition: str) -> bool:
+        return True
 
+    def can_handle_acl(self, acl_definition: str) -> bool:
+        return True
+    
+    def parse_attribute(self, data: str) -> FlextResult[dict[str, object]]:
+        return FlextResult.ok({})
 
-@pytest.fixture(scope="session")
-def all_server_fixtures(
-    fixture_loader: FlextLdifFixtures.Loader,
-) -> dict[str, dict[str, str]]:
-    """Load ALL fixtures for 4 primary servers at session start.
+    def parse_objectclass(self, data: str) -> FlextResult[dict[str, object]]:
+        return FlextResult.ok({"name": "test"})
 
-    Returns:
-        Dict mapping server type to fixture content dicts
+    def parse_acl(self, data: str) -> FlextResult[dict[str, object]]:
+        return FlextResult.ok({})
+    
+    def convert_attribute_to_rfc(self, data: dict[str, object]) -> FlextResult[dict[str, object]]:
+        return FlextResult.ok(data)
 
-    """
-    fixtures: dict[str, dict[str, str]] = {}
+    def convert_objectclass_to_rfc(self, data: dict[str, object]) -> FlextResult[dict[str, object]]:
+        return FlextResult.ok(data)
 
-    servers = [
-        FlextLdifFixtures.ServerType.RFC,
-        FlextLdifFixtures.ServerType.OID,
-        FlextLdifFixtures.ServerType.OUD,
-        FlextLdifFixtures.ServerType.OPENLDAP,
-    ]
+    def convert_attribute_from_rfc(self, data: dict[str, object]) -> FlextResult[dict[str, object]]:
+        return FlextResult.ok(data)
 
-    for server in servers:
-        try:
-            fixtures[server.value] = fixture_loader.load_all(server)
-        except FileNotFoundError:
-            # Server fixtures may not all be available
-            fixtures[server.value] = {}
+    def convert_objectclass_from_rfc(self, data: dict[str, object]) -> FlextResult[dict[str, object]]:
+        return FlextResult.ok(data)
+    
+    def write_attribute_to_rfc(self, data: dict[str, object]) -> FlextResult[str]:
+        return FlextResult.ok("(test)")
 
-    return fixtures
-
-
-@pytest.fixture(scope="session")
-def fixture_coverage_report(
-    all_server_fixtures: dict[str, dict[str, str]],
-) -> dict[str, object]:
-    """Generate coverage report for all fixtures.
-
-    Returns:
-        Coverage report statistics
-
-    """
-    return FixtureCoverageReport.generate_summary(all_server_fixtures)
+    def write_objectclass_to_rfc(self, data: dict[str, object]) -> FlextResult[str]:
+        return FlextResult.ok("(test)")
 
 
-@pytest.fixture
-def fixture_validator() -> FixtureValidator:
-    """Validator instance for fixture operations.
-
-    Returns:
-        FixtureValidator instance
-
-    """
-    return FixtureValidator()
-
-
-@pytest.fixture
-def rfc_fixtures(all_server_fixtures: dict[str, dict[str, str]]) -> dict[str, str]:
-    """RFC fixture content.
-
-    Returns:
-        Dict with 'schema', 'entries', 'acl', 'integration' keys
-
-    """
-    return all_server_fixtures.get("rfc", {})
-
-
-@pytest.fixture
-def oid_fixtures(all_server_fixtures: dict[str, dict[str, str]]) -> dict[str, str]:
-    """OID fixture content.
-
-    Returns:
-        Dict with 'schema', 'entries', 'acl', 'integration' keys
-
-    """
-    return all_server_fixtures.get("oid", {})
-
-
-@pytest.fixture
-def oud_fixtures(all_server_fixtures: dict[str, dict[str, str]]) -> dict[str, str]:
-    """OUD fixture content.
-
-    Returns:
-        Dict with 'schema', 'entries', 'acl', 'integration' keys
-
-    """
-    return all_server_fixtures.get("oud", {})
-
-
-@pytest.fixture
-def openldap_fixtures(all_server_fixtures: dict[str, dict[str, str]]) -> dict[str, str]:
-    """OpenLDAP fixture content.
-
-    Returns:
-        Dict with 'schema', 'entries', 'acl', 'integration' keys
-
-    """
-    return all_server_fixtures.get("openldap", {})
-
-
-__all__ = [
-    "all_server_fixtures",
-    "fixture_coverage_report",
-    "fixture_loader",
-    "fixture_validator",
-    "oid_fixtures",
-    "openldap_fixtures",
-    "oud_fixtures",
-    "rfc_fixtures",
-]
+# Create similar quirks for other test cases...

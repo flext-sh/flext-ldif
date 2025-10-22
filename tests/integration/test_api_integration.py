@@ -17,7 +17,7 @@ import logging
 
 import pytest
 
-from flext_ldif import FlextLdif
+from flext_ldif import FlextLdif, FlextLdifModels
 
 logger = logging.getLogger(__name__)
 
@@ -55,7 +55,7 @@ objectClass: groupOfNames
 
         parse_result = ldif.parse(content)
         assert parse_result.is_success
-        entries = parse_result.unwrap()
+        entries: list[FlextLdifModels.Entry] = parse_result.unwrap()
 
         # Filter by objectclass
         result = ldif.filter(entries, objectclass="person")
@@ -78,7 +78,7 @@ objectClass: person
 
         parse_result = ldif.parse(content)
         assert parse_result.is_success
-        entries = parse_result.unwrap()
+        entries: list[FlextLdifModels.Entry] = parse_result.unwrap()
 
         # Filter by DN pattern
         result = ldif.filter(entries, dn_pattern="ou=People")
@@ -113,7 +113,7 @@ objectClass: person
 
         parse_result = ldif.parse(content)
         assert parse_result.is_success
-        entries = parse_result.unwrap()
+        entries: list[FlextLdifModels.Entry] = parse_result.unwrap()
 
         result = ldif.analyze(entries)
         assert result.is_success
@@ -131,7 +131,7 @@ objectClass: person
 
         parse_result = ldif.parse(content)
         assert parse_result.is_success
-        entries = parse_result.unwrap()
+        entries: list[FlextLdifModels.Entry] = parse_result.unwrap()
 
         result = ldif.validate_entries(entries)
         assert result.is_success
@@ -176,11 +176,11 @@ objectClass: person
 
         parse_result = ldif.parse(content)
         assert parse_result.is_success
-        entries = parse_result.unwrap()
+        entries: list[FlextLdifModels.Entry] = parse_result.unwrap()
         assert len(entries) == 3
 
         # Filter by DN and attributes
-        result = ldif.filter(entries, dn_pattern="ou=Admins", attributes=["mail"])
+        result = ldif.filter(entries, dn_pattern="ou=Admins", attributes={"mail": None})
         assert result.is_success
         filtered = result.unwrap()
         assert len(filtered) == 2
@@ -209,7 +209,7 @@ objectClass: person
 
         parse_result = ldif.parse(parse_content)
         assert parse_result.is_success
-        parsed_entries = parse_result.unwrap()
+        parsed_entries: list[FlextLdifModels.Entry] = parse_result.unwrap()
 
         # Step 2: Analyze
         analyze_result = ldif.analyze(parsed_entries)

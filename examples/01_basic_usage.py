@@ -12,8 +12,9 @@ Original: 195 lines | Optimized: ~60 lines (70% reduction)
 from __future__ import annotations
 
 from pathlib import Path
+from typing import cast
 
-from flext_ldif import FlextLdif
+from flext_ldif import FlextLdif, FlextLdifModels
 
 
 def parse_and_write_pipeline() -> None:
@@ -28,14 +29,18 @@ sn: Doe
 mail: john.doe@example.com
 """
 
-    # Railway pattern - chain operations, automatic error propagation
-    result = api.parse(ldif_content).flat_map(api.write)  # Auto-handles errors
-
-    # Single error check at end (vs repetitive if/else)
-    if result.is_success:
-        print(f"Success: {len(result.unwrap())} bytes written")
+    # Parse and write LDIF
+    parse_result = api.parse(ldif_content)
+    if parse_result.is_success:
+        entries = cast("list[FlextLdifModels.Entry]", parse_result.unwrap())
+        write_result = api.write(entries, Path("output.ldif"))
+        if write_result.is_success:
+            content = write_result.unwrap()
+            print(f"Success: {len(content)} bytes written")
+        else:
+            print(f"Write failed: {write_result.error}")
     else:
-        print(f"Failed: {result.error}")
+        print(f"Parse failed: {parse_result.error}")
 
 
 def parse_file_example() -> None:
@@ -46,7 +51,11 @@ def parse_file_example() -> None:
     if sample_file.exists():
         # Single operation - library handles opening, reading, closing
         result = api.parse(sample_file)
-        print(f"Parsed {len(result.unwrap_or([]))} entries")
+        if result.is_success:
+            entries = cast("list[FlextLdifModels.Entry]", result.unwrap())
+            print(f"Parsed {len(entries)} entries")
+        else:
+            print(f"Failed to parse: {result.error}")
 
 
 def write_file_example() -> None:
@@ -60,11 +69,13 @@ sn: User
 """
 
     # Compose operations - parse → write (automatic file handling)
-    result = api.parse(ldif_content).flat_map(
-        lambda entries: api.write(entries, Path("examples/output.ldif"))
-    )
-
-    print("Written" if result.is_success else f"Error: {result.error}")
+    parse_result = api.parse(ldif_content)
+    if parse_result.is_success:
+        entries = cast("list[FlextLdifModels.Entry]", parse_result.unwrap())
+        write_result = api.write(entries, Path("examples/output.ldif"))
+        print("Written" if write_result.is_success else f"Error: {write_result.error}")
+    else:
+        print(f"Parse error: {parse_result.error}")
 
 
 def inspect_entry_model() -> None:
@@ -77,10 +88,14 @@ cn: Inspect
 mail: inspect@example.com
 """)
 
-    # Use unwrap_or for safe access with default
-    for entry in result.unwrap_or([]):
-        print(f"DN: {entry.dn}")
-        print(f"Attributes: {list(entry.attributes.attributes.keys())}")
+    # Safe access with error handling
+    if result.is_success:
+        entries = cast("list[FlextLdifModels.Entry]", result.unwrap())
+        for entry in entries:
+            print(f"DN: {entry.dn}")
+            print(f"Attributes: {list(entry.attributes.attributes.keys())}")
+    else:
+        print(f"Failed to parse: {result.error}")
 
 
 if __name__ == "__main__":

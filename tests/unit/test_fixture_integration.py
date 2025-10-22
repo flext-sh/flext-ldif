@@ -27,8 +27,9 @@ class TestFixturesParsing:
         fixture = Path("tests/fixtures/rfc/rfc_entries_fixtures.ldif")
         result = ldif.parse(fixture)
         assert result.is_success
-        entries = result.unwrap()
-        assert len(entries) >= 45, f"Expected 45+ RFC entries, got {len(entries)}"
+        entries_raw = result.unwrap()
+        assert isinstance(entries_raw, list)
+        assert len(entries_raw) >= 45, f"Expected 45+ RFC entries, got {len(entries_raw)}"
 
     def test_rfc_fixture_validation(self, ldif: FlextLdif) -> None:
         """Test RFC fixture entries are valid."""
@@ -36,8 +37,9 @@ class TestFixturesParsing:
         parse_result = ldif.parse(fixture)
         assert parse_result.is_success
 
-        entries = parse_result.unwrap()
-        for entry in entries:
+        entries_raw = parse_result.unwrap()
+        assert isinstance(entries_raw, list)
+        for entry in entries_raw:
             assert entry.dn is not None
             assert len(entry.dn.value) > 0
 
@@ -46,24 +48,27 @@ class TestFixturesParsing:
         fixture = Path("tests/fixtures/oid/oid_entries_fixtures.ldif")
         result = ldif.parse(fixture)
         assert result.is_success
-        entries = result.unwrap()
-        assert len(entries) >= 1
+        entries_raw = result.unwrap()
+        assert isinstance(entries_raw, list)
+        assert len(entries_raw) >= 1
 
     def test_oud_fixture_parsing(self, ldif: FlextLdif) -> None:
         """Test parsing OUD fixture."""
         fixture = Path("tests/fixtures/oud/oud_entries_fixtures.ldif")
         result = ldif.parse(fixture)
         assert result.is_success
-        entries = result.unwrap()
-        assert len(entries) >= 1
+        entries_raw = result.unwrap()
+        assert isinstance(entries_raw, list)
+        assert len(entries_raw) >= 1
 
     def test_openldap2_fixture_parsing(self, ldif: FlextLdif) -> None:
         """Test parsing OpenLDAP2 fixture with 45+ entries."""
         fixture = Path("tests/fixtures/openldap2/openldap2_entries_fixtures.ldif")
         result = ldif.parse(fixture)
         assert result.is_success
-        entries = result.unwrap()
-        assert len(entries) >= 45, f"Expected 45+ OpenLDAP2 entries, got {len(entries)}"
+        entries_raw = result.unwrap()
+        assert isinstance(entries_raw, list)
+        assert len(entries_raw) >= 45, f"Expected 45+ OpenLDAP2 entries, got {len(entries_raw)}"
 
     def test_cross_server_fixture_parsing(self, ldif: FlextLdif) -> None:
         """Test parsing fixtures from all servers."""
@@ -77,8 +82,9 @@ class TestFixturesParsing:
         for fixture_path in fixtures:
             result = ldif.parse(Path(fixture_path))
             assert result.is_success, f"Failed to parse {fixture_path}: {result.error}"
-            entries = result.unwrap()
-            assert len(entries) >= 1, f"Expected at least 1 entry from {fixture_path}"
+            entries_raw = result.unwrap()
+            assert isinstance(entries_raw, list)
+            assert len(entries_raw) >= 1, f"Expected at least 1 entry from {fixture_path}"
 
 
 class TestFixturesStructure:
@@ -95,8 +101,9 @@ class TestFixturesStructure:
         result = ldif.parse(fixture)
         assert result.is_success
 
-        entries = result.unwrap()
-        for entry in entries:
+        entries_raw = result.unwrap()
+        assert isinstance(entries_raw, list)
+        for entry in entries_raw:
             # DN should follow RFC 4514 format
             dn_str = entry.dn.value
             assert len(dn_str) > 0
@@ -116,8 +123,9 @@ class TestFixturesStructure:
             result = ldif.parse(Path(fixture_path))
             assert result.is_success
 
-            entries = result.unwrap()
-            for entry in entries:
+            entries_raw = result.unwrap()
+            assert isinstance(entries_raw, list)
+            for entry in entries_raw:
                 # Check for objectClass (case-insensitive)
                 attrs = entry.attributes.attributes
                 has_oc = any(attr.lower() == "objectclass" for attr in attrs)

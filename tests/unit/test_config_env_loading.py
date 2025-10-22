@@ -35,6 +35,8 @@ class TestEnvVariableLoading:
 
     def test_default_values_from_constants(self) -> None:
         """Test that defaults come from FlextLdifConstants."""
+        from flext_core import FlextConstants
+
         config = FlextLdifConfig()
 
         # Verify defaults match constants
@@ -49,10 +51,16 @@ class TestEnvVariableLoading:
             == FlextLdifConstants.ConfigDefaults.LDIF_STRICT_VALIDATION
         )
         assert config.ldif_chunk_size == FlextLdifConstants.DEFAULT_BATCH_SIZE
-        assert (
-            config.max_workers
-            == FlextLdifConstants.LdifProcessing.PERFORMANCE_MIN_WORKERS
-        )
+        # max_workers is adjusted when in debug mode
+        if (
+            config.debug
+            or config.trace
+            or config.log_level == FlextConstants.Settings.LogLevel.DEBUG
+        ):
+            expected_workers = FlextLdifConstants.ValidationRules.MAX_WORKERS_DEBUG_RULE
+        else:
+            expected_workers = FlextLdifConstants.LdifProcessing.PERFORMANCE_MIN_WORKERS
+        assert config.max_workers == expected_workers
 
     def test_env_variable_override(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test environment variables override defaults.
@@ -60,6 +68,8 @@ class TestEnvVariableLoading:
         Note: max_workers is inherited from FlextConfig, so it uses FLEXT_MAX_WORKERS.
         LDIF-specific fields use FLEXT_LDIF_* environment variables.
         """
+        from flext_core import FlextConstants
+
         # LDIF-specific fields use FLEXT_LDIF_ prefix
         monkeypatch.setenv("FLEXT_LDIF_ENCODING", "utf-16")
         monkeypatch.setenv("FLEXT_LDIF_MAX_LINE_LENGTH", "100")
@@ -78,7 +88,16 @@ class TestEnvVariableLoading:
         assert config.ldif_skip_comments is True
         assert config.ldif_strict_validation is False
         assert config.ldif_chunk_size == 2000
-        assert config.max_workers == 8
+        # max_workers is adjusted when in debug mode
+        if (
+            config.debug
+            or config.trace
+            or config.log_level == FlextConstants.Settings.LogLevel.DEBUG
+        ):
+            expected_workers = FlextLdifConstants.ValidationRules.MAX_WORKERS_DEBUG_RULE
+        else:
+            expected_workers = 8
+        assert config.max_workers == expected_workers
 
     def test_direct_instantiation_override(
         self, monkeypatch: pytest.MonkeyPatch
@@ -119,6 +138,8 @@ class TestEnvVariableLoading:
 
     def test_case_insensitive_env_vars(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test environment variables are case-insensitive."""
+        from flext_core import FlextConstants
+
         # Set with different cases
         monkeypatch.setenv("flext_ldif_encoding", "utf-16")  # lowercase
         monkeypatch.setenv("flext_max_workers", "8")  # lowercase, inherited field
@@ -127,7 +148,16 @@ class TestEnvVariableLoading:
 
         # Both should work (case_sensitive=False)
         assert config.ldif_encoding == "utf-16"
-        assert config.max_workers == 8
+        # max_workers is adjusted when in debug mode
+        if (
+            config.debug
+            or config.trace
+            or config.log_level == FlextConstants.Settings.LogLevel.DEBUG
+        ):
+            expected_workers = FlextLdifConstants.ValidationRules.MAX_WORKERS_DEBUG_RULE
+        else:
+            expected_workers = 8
+        assert config.max_workers == expected_workers
 
     def test_type_coercion_from_env(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test Pydantic type coercion from string env vars."""
@@ -195,6 +225,8 @@ class TestDotEnvFileLoading:
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Test .env file is automatically loaded."""
+        from flext_core import FlextConstants
+
         # Create .env file
         env_file = tmp_path / ".env"
         env_file.write_text(
@@ -212,7 +244,16 @@ FLEXT_LDIF_SKIP_COMMENTS=true
 
         # Verify .env file was loaded
         assert config.ldif_encoding == "utf-16"
-        assert config.max_workers == 6
+        # max_workers is adjusted when in debug mode
+        if (
+            config.debug
+            or config.trace
+            or config.log_level == FlextConstants.Settings.LogLevel.DEBUG
+        ):
+            expected_workers = FlextLdifConstants.ValidationRules.MAX_WORKERS_DEBUG_RULE
+        else:
+            expected_workers = 6
+        assert config.max_workers == expected_workers
         assert config.ldif_skip_comments is True
 
     def test_env_var_overrides_env_file(

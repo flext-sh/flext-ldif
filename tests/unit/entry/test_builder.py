@@ -98,7 +98,7 @@ class TestFlextLdifEntryBuilder:
         """Test building a person entry with additional attributes."""
         builder = FlextLdifEntryBuilder()
 
-        additional_attrs = {
+        additional_attrs: dict[str, str | list[str]] = {
             "telephoneNumber": ["+1234567890"],
             "title": ["Software Engineer"],
         }
@@ -166,7 +166,7 @@ class TestFlextLdifEntryBuilder:
         """Test building a group entry with additional attributes."""
         builder = FlextLdifEntryBuilder()
 
-        additional_attrs = {
+        additional_attrs: dict[str, str | list[str]] = {
             "owner": ["cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com"],
             "seeAlso": ["cn=othergroup,dc=example,dc=com"],
         }
@@ -225,7 +225,10 @@ class TestFlextLdifEntryBuilder:
         """Test building an organizational unit entry with additional attributes."""
         builder = FlextLdifEntryBuilder()
 
-        additional_attrs = {"businessCategory": ["IT"], "st": ["California"]}
+        additional_attrs: dict[str, str | list[str]] = {
+            "businessCategory": ["IT"],
+            "st": ["California"],
+        }
 
         result = builder.build_organizational_unit_entry(
             ou="TestOU", base_dn="dc=example,dc=com", additional_attrs=additional_attrs

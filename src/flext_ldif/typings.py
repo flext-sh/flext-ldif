@@ -339,9 +339,11 @@ class FlextLdifTypes(FlextTypes):
     class CommonDict:
         """Common dictionary patterns used in LDIF/LDAP operations."""
 
-        # Attribute dictionary: {attribute_name: [values]}
+        # Attribute dictionary: {attribute_name: value(s)}
+        # Standardized type compatible with FlextLdap.add_entry()
+        # Single-valued attributes: string, Multi-valued: list[str]
         # Used 9+ times in LDIF/LDAP/migration modules
-        type AttributeDict = dict[str, list[str]]
+        type AttributeDict = dict[str, str | list[str]]
 
         # Comparison result: {attribute: (old_values, new_values)}
         # Used 3+ times in diff/comparison operations

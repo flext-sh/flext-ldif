@@ -286,7 +286,7 @@ def entry_building_and_processing_workflow() -> None:
         return
 
     # Step 3: Filter specific entry types
-    person_filter = api.filter_by_objectclass(entries, "person")
+    person_filter = api.filter(entries, objectclass="person")
 
     if person_filter.is_failure:
         return

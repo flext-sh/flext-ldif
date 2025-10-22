@@ -958,7 +958,7 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                 # Extract "by" clauses with subjects and permissions
                 # Pattern: by <subject> (<permissions>)
                 by_clauses = []
-                by_pattern = r'by\s+(group="[^"]+"|\*|[^\s(]+)\s+\(([^)]+)\)'
+                by_pattern = r'by\s+(group="[^"]+"|\\*|[^\\s(]+)\s+\(([^)]+)\)'
                 for match in re.finditer(by_pattern, acl_content):
                     subject = match.group(1).strip()
                     permissions = match.group(2).strip()
@@ -971,11 +971,13 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                 if by_clauses:
                     acl_data["by_clauses"] = by_clauses
 
-                # Add metadata for perfect round-trip preservation
+                # Store OID metadata - this is OID-parsed data, not converted yet
                 acl_data["_metadata"] = FlextLdifModels.QuirkMetadata.create_for_quirk(
-                    quirk_type="oid", original_format=acl_line
+                    quirk_type="oid", original_format=af.OID_ACL
                 )
 
+                # Return OID-parsed data (NOT converted to RFC)
+                # Conversion to RFC happens in convert_acl_to_rfc when needed
                 return FlextResult[dict[str, object]].ok(acl_data)
 
             except Exception as e:
@@ -986,26 +988,75 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
         def convert_acl_to_rfc(
             self, acl_data: dict[str, object]
         ) -> FlextResult[dict[str, object]]:
-            """Convert OID ACL to RFC-compliant format.
+            """Convert OID ACL DATA to RFC-compliant DATA (OID→RFC transformation).
+
+            Converts OID "by_clauses" structure to RFC "permissions" + "bind_rules" structure
+            that OUD quirk expects for writing aci strings.
 
             Args:
-            acl_data: OID ACL data
+            acl_data: OID ACL data with by_clauses
 
             Returns:
-            FlextResult with RFC-compliant ACL data
+            FlextResult with RFC-compliant ACL data (permissions + bind_rules)
 
             """
             dk = FlextLdifConstants.DictKeys
             af = FlextLdifConstants.AclFormats
             try:
-                # Oracle OID ACLs don't have direct RFC equivalent
-                # Return generic ACL representation
+                # Convert OID by_clauses to RFC permissions + bind_rules
+                by_clauses = acl_data.get("by_clauses", [])
+                permissions = []
+                bind_rules = []
+
+                if isinstance(by_clauses, list):
+                    for by_clause in by_clauses:
+                        if not isinstance(by_clause, dict):
+                            continue
+
+                        subject = by_clause.get("subject", "*")
+                        perms_list = by_clause.get("permissions", [])
+
+                        # Build permission dict
+                        permissions.append({
+                            "action": "allow",
+                            "operations": perms_list if isinstance(perms_list, list) else [perms_list]
+                        })
+
+                        # Convert OID subject to RFC bind rule
+                        if subject == "*":
+                            bind_rules.append({"type": "userdn", "value": "ldap:///*"})
+                        elif subject == "self":
+                            bind_rules.append({"type": "userdn", "value": "ldap:///self"})
+                        elif subject.startswith('group="'):
+                            dn = subject.split('"')[1]
+                            bind_rules.append({"type": "groupdn", "value": f"ldap:///{dn}"})
+                        elif subject.startswith('dnattr='):
+                            attr = subject.replace('dnattr=(', '').replace(')', '')
+                            bind_rules.append({"type": "userattr", "value": f"{attr}#LDAPURL"})
+                        elif subject.startswith('guidattr='):
+                            attr = subject.replace('guidattr=(', '').replace(')', '')
+                            bind_rules.append({"type": "userattr", "value": f"{attr}#USERDN"})
+                        elif subject.startswith('groupattr='):
+                            attr = subject.replace('groupattr=(', '').replace(')', '')
+                            bind_rules.append({"type": "userattr", "value": f"{attr}#GROUPDN"})
+                        else:
+                            bind_rules.append({"type": "userdn", "value": f"ldap:///{subject}"})
+
+                # Build RFC data structure
                 rfc_data: dict[str, object] = {
                     dk.TYPE: dk.ACL,
                     dk.FORMAT: af.RFC_GENERIC,
                     dk.SOURCE_FORMAT: af.OID_ACL,
-                    dk.DATA: acl_data,
+                    "permissions": permissions,
+                    "bind_rules": bind_rules,
+                    # Preserve target info
+                    "targetattr": acl_data.get("target_attrs", "*") if acl_data.get("target") == "attr" else "*",
+                    "acl_name": "Migrated from OID",
                 }
+
+                # Preserve filter if present
+                if "filter" in acl_data:
+                    rfc_data["targetfilter"] = acl_data["filter"]
 
                 return FlextResult[dict[str, object]].ok(rfc_data)
 
@@ -1045,80 +1096,106 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                 )
 
         def write_acl_to_rfc(self, acl_data: dict[str, object]) -> FlextResult[str]:
-            """Write OID ACL data to Oracle ACL string format.
+            """Write OID ACL to RFC ACI format (OID→RFC transformation).
 
-            Converts parsed ACL dictionary back to OID ACL format string.
-            If metadata contains original_format, uses it for perfect round-trip.
+            CRITICAL: Converts OID ACL format to RFC-compliant ACI format.
+            This is the OID→RFC transformation step.
+
+            OID format:  orclaci: access to entry by * (browse)
+            RFC format:  (targetattr="*")(version 3.0; acl "name"; allow (browse) userdn="ldap:///*";)
 
             Args:
                 acl_data: Parsed OID ACL data dictionary
 
             Returns:
-                FlextResult with OID ACL formatted string
+                FlextResult with RFC ACI formatted string
 
             Example:
-                Input: {"type": "standard", "target": "entry", "by_clauses": [...]}
-                Output: "orclaci: access to entry by * (browse)"
+                Input: {"target": "entry", "by_clauses": [{"subject": "*", "permissions": ["browse"]}]}
+                Output: '(targetattr="*")(version 3.0; acl "Migrated ACL"; allow (browse) userdn="ldap:///*";)'
 
             """
             try:
-                # Check if we have metadata with original format for perfect round-trip
-                if "_metadata" in acl_data:
-                    metadata = acl_data["_metadata"]
-                    if (
-                        isinstance(metadata, FlextLdifModels.QuirkMetadata)
-                        and metadata.original_format
-                    ):
-                        return FlextResult[str].ok(metadata.original_format)
-                    if isinstance(metadata, dict) and "original_format" in metadata:
-                        return FlextResult[str].ok(str(metadata["original_format"]))
+                aci_parts = []
 
-                # Build OID ACL from scratch
-                parts = []
-
-                # Determine ACL type prefix
-                is_entry_level = (
-                    acl_data.get(FlextLdifConstants.DictKeys.TYPE)
-                    == FlextLdifConstants.DictKeys.ENTRY_LEVEL
-                )
-                acl_prefix = "orclentrylevelaci:" if is_entry_level else "orclaci:"
-
-                # Build access clause
-                access_parts = ["access to"]
-
-                # Add target
+                # 1. Target attributes (targetattr)
                 target = acl_data.get("target", "entry")
                 if target == "attr" and "target_attrs" in acl_data:
-                    access_parts.append(f"attr=({acl_data['target_attrs']})")
+                    target_attrs = acl_data["target_attrs"]
+                    aci_parts.append(f'(targetattr="{target_attrs}")')
                 else:
-                    access_parts.append("entry")
+                    # "access to entry" → all attributes
+                    aci_parts.append('(targetattr="*")')
 
-                # Add filter (if present)
+                # 2. Target filter (optional)
                 if "filter" in acl_data:
-                    access_parts.append(f"filter={acl_data['filter']}")
+                    filter_value = acl_data["filter"]
+                    aci_parts.append(f'(targetfilter="{filter_value}")')
 
-                # Add added_object_constraint (for orclentrylevelaci)
-                if "added_object_constraint" in acl_data:
-                    access_parts.append(
-                        f"added_object_constraint={acl_data['added_object_constraint']}"
-                    )
+                # 3. Version and ACL name
+                version = "3.0"
+                acl_name = "Migrated from OID"
+                aci_parts.append(f'(version {version}; acl "{acl_name}";')
 
-                parts.append(" ".join(access_parts))
+                # 4. Permissions from "by" clauses
+                # OID: by group="cn=Admins" (read,write)
+                # RFC: allow (read,write) groupdn="ldap:///cn=Admins";
+                by_clauses = acl_data.get("by_clauses", [])
+                if isinstance(by_clauses, list) and by_clauses:
+                    for by_clause in by_clauses:
+                        if not isinstance(by_clause, dict):
+                            continue
 
-                # Add "by" clauses
-                by_clauses_raw = acl_data.get("by_clauses", [])
-                by_clauses = by_clauses_raw if isinstance(by_clauses_raw, list) else []
-                for by_clause in by_clauses:
-                    subject = by_clause.get("subject", "*")
-                    permissions = by_clause.get("permissions", [])
-                    perms_str = ",".join(permissions)
-                    parts.append(f"by {subject} ({perms_str})")
+                        subject = by_clause.get("subject", "*")
+                        permissions_list = by_clause.get("permissions", [])
+
+                        # Join permissions
+                        if isinstance(permissions_list, list):
+                            perms_str = ",".join(str(p) for p in permissions_list)
+                        else:
+                            perms_str = str(permissions_list)
+
+                        # Convert OID subject to RFC bind rule
+                        # "*" → userdn="ldap:///*"
+                        # group="cn=X" → groupdn="ldap:///cn=X"
+                        # self → userdn="ldap:///self"
+                        if subject == "*":
+                            bind_rule = 'userdn="ldap:///*"'
+                        elif subject == "self":
+                            bind_rule = 'userdn="ldap:///self"'
+                        elif subject.startswith('group="'):
+                            # Extract DN from group="dn"
+                            dn = subject.split('"')[1]
+                            bind_rule = f'groupdn="ldap:///{dn}"'
+                        elif subject.startswith('dnattr='):
+                            # dnattr=(attrname) → userattr="attrname#LDAPURL"
+                            attr = subject.replace('dnattr=(', '').replace(')', '')
+                            bind_rule = f'userattr="{attr}#LDAPURL"'
+                        elif subject.startswith('guidattr='):
+                            # guidattr=(attrname) → userattr="attrname#USERDN"
+                            attr = subject.replace('guidattr=(', '').replace(')', '')
+                            bind_rule = f'userattr="{attr}#USERDN"'
+                        elif subject.startswith('groupattr='):
+                            # groupattr=(attrname) → userattr="attrname#GROUPDN"
+                            attr = subject.replace('groupattr=(', '').replace(')', '')
+                            bind_rule = f'userattr="{attr}#GROUPDN"'
+                        else:
+                            # Default: treat as DN
+                            bind_rule = f'userdn="ldap:///{subject}"'
+
+                        # Build permission rule
+                        aci_parts.append(f' allow ({perms_str}) {bind_rule};')
+                else:
+                    # No by clauses → allow all for everyone
+                    aci_parts.append(' allow (all) userdn="ldap:///*";')
+
+                # Close the ACI
+                aci_parts.append(')')
 
                 # Combine all parts
-                acl_content = " ".join(parts)
-                acl_string = f"{acl_prefix} {acl_content}"
+                aci_string = "".join(aci_parts)
 
-                return FlextResult[str].ok(acl_string)
+                return FlextResult[str].ok(aci_string)
 
             except Exception as e:
                 return FlextResult[str].fail(f"Failed to write OID ACL to RFC: {e}")
@@ -1319,9 +1396,7 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                     if isinstance(val, str) and val.lower() in {"true", "false"}:
                         attributes["orclisvisible"] = val.upper()
 
-                # STRATEGY PATTERN: Extract ACL attributes to metadata (RFC format)
-                # ACL attributes will be processed separately by pipeline
-                # Critical: DN is NOT an attribute - it's the entry identifier
+                # Extract ACL attributes to metadata (pipeline handles conversion)
                 acl_attrs_oid = {"orclaci", "orclentrylevelaci", "aci"}
                 forbidden_attrs = {
                     FlextLdifConstants.DictKeys.DN
@@ -1339,8 +1414,7 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                     else:
                         regular_attrs[attr_name] = attr_value
 
-                # Oracle OID entries converted to RFC format
-                # ACL attributes stored in metadata, not in main attributes
+                # Oracle OID entries in RFC format
                 dk = FlextLdifConstants.DictKeys
                 st = FlextLdifConstants.ServerTypes
                 processed_entry: dict[str, object] = {
@@ -1351,7 +1425,7 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                 # Add regular attributes (non-ACL)
                 processed_entry.update(regular_attrs)
 
-                # Store ACL attributes in metadata if present
+                # Store ACL attributes in metadata for pipeline processing
                 if acl_only_attrs:
                     processed_entry["_acl_attributes"] = acl_only_attrs
 

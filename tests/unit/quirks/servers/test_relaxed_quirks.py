@@ -143,7 +143,7 @@ class TestRelaxedSchemaQuirks:
     ) -> None:
         """Test that writing attribute preserves original definition."""
         definition = "( 2.5.4.3 NAME 'cn' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
-        attr_data = {"definition": definition}
+        attr_data: dict[str, object] = {"definition": definition}
 
         result = relaxed_schema_quirk.write_attribute_to_rfc(attr_data)
         assert result.is_success
@@ -225,7 +225,7 @@ class TestRelaxedAclQuirks:
     ) -> None:
         """Test that writing ACL preserves raw content."""
         raw_acl = '(targetentry="cn=REDACTED_LDAP_BIND_PASSWORD")(version 3.0;acl "REDACTED_LDAP_BIND_PASSWORD";allow(all)'
-        acl_data = {"raw_acl": raw_acl}
+        acl_data: dict[str, object] = {"raw_acl": raw_acl}
 
         result = relaxed_acl_quirk.write_acl_to_rfc(acl_data)
         assert result.is_success
@@ -266,7 +266,7 @@ class TestRelaxedEntryQuirks:
     ) -> None:
         """Test parsing entry with malformed DN."""
         malformed_dn = "cn=test invalid format"
-        attributes = {"cn": ["test"]}
+        attributes: dict[str, object] = {"cn": ["test"]}
 
         result = relaxed_entry_quirk.parse_entry(malformed_dn, attributes)
         assert result.is_success
@@ -281,7 +281,7 @@ class TestRelaxedEntryQuirks:
     ) -> None:
         """Test that parsed entry preserves DN and attributes."""
         dn = "cn=test,dc=example,dc=com"
-        attributes = {"cn": ["test"], "objectClass": ["person"]}
+        attributes: dict[str, object] = {"cn": ["test"], "objectClass": ["person"]}
 
         result = relaxed_entry_quirk.parse_entry(dn, attributes)
         assert result.is_success

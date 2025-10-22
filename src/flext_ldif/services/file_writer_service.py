@@ -24,7 +24,6 @@ from flext_core import FlextResult
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.quirks.registry import FlextLdifQuirksRegistry
 from flext_ldif.rfc.rfc_ldif_writer import FlextLdifRfcLdifWriter
-from flext_ldif.utilities import FlextLdifUtilities
 
 if TYPE_CHECKING:
     from flext_ldif.quirks.base import (
@@ -138,9 +137,7 @@ class FlextLdifFileWriterService:
                     entries = []
             else:
                 # Apply hierarchy + name sorting for all non-schema categories
-                entries = FlextLdifUtilities.Sorter.sort_entries_by_hierarchy_and_name(
-                    entries
-                )
+                entries = self._sort_entries_by_hierarchy_and_name(entries)
 
             # Write directly to output directory
             output_file = self._output_dir / category_filename
@@ -329,19 +326,57 @@ class FlextLdifFileWriterService:
             if not isinstance(attributes, dict):
                 continue
 
-            # Get attributetypes
+            # Get attributetypes and filter using target quirk
             attr_types = attributes.get("attributetypes", [])
             if isinstance(attr_types, list):
-                all_attributetypes.extend(attr_types)
+                for attr_type in attr_types:
+                    # Filter OUT Oracle internal attributes using target schema quirk
+                    # E.g., OUD quirk filters changenumber, targetdn, etc.
+                    if self._target_schema_quirk and hasattr(
+                        self._target_schema_quirk, "should_filter_out_attribute"
+                    ):
+                        # Only include if NOT filtered out
+                        if not self._target_schema_quirk.should_filter_out_attribute(str(attr_type)):
+                            all_attributetypes.append(attr_type)
+                    else:
+                        # No filtering if quirk doesn't support it - include all
+                        all_attributetypes.append(attr_type)
             elif attr_types:
-                all_attributetypes.append(str(attr_types))
+                # Single attribute - check if it should be filtered
+                if self._target_schema_quirk and hasattr(
+                    self._target_schema_quirk, "should_filter_out_attribute"
+                ):
+                    # Only include if NOT filtered out
+                    if not self._target_schema_quirk.should_filter_out_attribute(str(attr_types)):
+                        all_attributetypes.append(str(attr_types))
+                else:
+                    all_attributetypes.append(str(attr_types))
 
-            # Get objectclasses
+            # Get objectclasses and filter using target quirk
             obj_classes = attributes.get("objectclasses", [])
             if isinstance(obj_classes, list):
-                all_objectclasses.extend(obj_classes)
+                for obj_class in obj_classes:
+                    # Filter OUT Oracle internal objectClasses using target schema quirk
+                    # E.g., OUD quirk filters changeLogEntry, orclchangesubscriber, etc.
+                    if self._target_schema_quirk and hasattr(
+                        self._target_schema_quirk, "should_filter_out_objectclass"
+                    ):
+                        # Only include if NOT filtered out
+                        if not self._target_schema_quirk.should_filter_out_objectclass(str(obj_class)):
+                            all_objectclasses.append(obj_class)
+                    else:
+                        # No filtering if quirk doesn't support it - include all
+                        all_objectclasses.append(obj_class)
             elif obj_classes:
-                all_objectclasses.append(str(obj_classes))
+                # Single objectClass - check if it should be filtered
+                if self._target_schema_quirk and hasattr(
+                    self._target_schema_quirk, "should_filter_out_objectclass"
+                ):
+                    # Only include if NOT filtered out
+                    if not self._target_schema_quirk.should_filter_out_objectclass(str(obj_classes)):
+                        all_objectclasses.append(str(obj_classes))
+                else:
+                    all_objectclasses.append(str(obj_classes))
 
         # Transform schema definitions via RFC canonical format
         transformed_attributetypes = self._transform_schema_via_rfc(
@@ -471,6 +506,47 @@ class FlextLdifFileWriterService:
                 transformed.append(str(schema_str))
 
         return transformed
+
+    def _sort_entries_by_hierarchy_and_name(
+        self, entries: list[dict[str, object]]
+    ) -> list[dict[str, object]]:
+        """Sort entries by DN hierarchy depth, then case-insensitive DN.
+
+        Ordering rules:
+        - First key: DN depth (fewer RDN components first)
+        - Second key: Case-insensitive DN string for stable ordering
+
+        This ensures deterministic ordering across all categories.
+
+        Args:
+            entries: List of entries to sort
+
+        Returns:
+            Sorted entries by hierarchy and name
+
+        """
+        def sort_key(entry: dict[str, object]) -> tuple[int, str]:
+            dn_value = entry.get(FlextLdifConstants.DictKeys.DN, "")
+            dn = dn_value if isinstance(dn_value, str) else ""
+            # Use simple string operations since this is just for sorting display
+            # The actual DN parsing happens elsewhere in the pipeline
+            depth = dn.count(",") + (1 if dn else 0)
+            return (depth, dn.lower())
+
+        # Filter only entries with a DN string to avoid exceptions during sort
+        sortable = [
+            e
+            for e in entries
+            if isinstance(e.get(FlextLdifConstants.DictKeys.DN, ""), str)
+        ]
+        nonsortable = [
+            e
+            for e in entries
+            if not isinstance(e.get(FlextLdifConstants.DictKeys.DN, ""), str)
+        ]
+
+        # Sort sortable entries and keep any non-sortable at the end in original order
+        return sorted(sortable, key=sort_key) + nonsortable
 
 
 __all__ = ["FlextLdifFileWriterService"]

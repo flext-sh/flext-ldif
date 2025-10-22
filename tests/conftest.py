@@ -19,7 +19,7 @@ from flext_core import FlextConstants, FlextResult
 from flext_ldif.quirks.registry import FlextLdifQuirksRegistry
 from flext_ldif.rfc.rfc_ldif_parser import FlextLdifRfcLdifParser
 from flext_ldif.rfc.rfc_ldif_writer import FlextLdifRfcLdifWriter
-from tests.fixtures import FlextLdifFixtures, loader
+from tests.fixtures import FlextLdifFixtures
 from tests.support import FileManager, LdifTestData, RealServiceFactory, TestValidators
 
 
@@ -42,8 +42,7 @@ class TestFileManager:
 @pytest.fixture(autouse=True)
 def set_test_environment() -> Generator[None]:
     """Set test environment variables."""
-    os.environ["FLEXT_ENV"] = "test"
-    os.environ["FLEXT_LOG_LEVEL"] = "debug"
+    # NO environment-specific modes - remove all dev/test/prod mode logic
     yield
     # Cleanup
     os.environ.pop("FLEXT_ENV", None)
@@ -619,18 +618,18 @@ def ldif_test_constants() -> LDIFTestConstants:
 
 
 @pytest.fixture
-def fixtures_loader() -> loader.FlextLdifFixtures.Loader:
+def fixtures_loader() -> FlextLdifFixtures.Loader:
     """Generic fixture loader for all LDAP servers.
 
     Returns:
         FlextLdifFixtures.Loader: Generic fixture loader instance
 
     """
-    return loader.FlextLdifFixtures.Loader()
+    return FlextLdifFixtures.Loader()
 
 
 @pytest.fixture
-def oid_fixtures() -> loader.FlextLdifFixtures.OID:
+def oid_fixtures() -> FlextLdifFixtures.OID:
     """Oracle Internet Directory fixture loader.
 
     Returns:
@@ -642,11 +641,11 @@ def oid_fixtures() -> loader.FlextLdifFixtures.OID:
             assert "orclUser" in schema
 
     """
-    return loader.FlextLdifFixtures.OID()
+    return FlextLdifFixtures.OID()
 
 
 @pytest.fixture
-def oid_schema(oid_fixtures: loader.FlextLdifFixtures.OID) -> str:
+def oid_schema(oid_fixtures: FlextLdifFixtures.OID) -> str:
     """OID schema fixtures content.
 
     Returns:
@@ -690,22 +689,22 @@ def oid_integration(oid_fixtures: FlextLdifFixtures.OID) -> str:
 
 
 @pytest.fixture
-def oud_fixtures() -> loader.FlextLdifFixtures.OUD:
+def oud_fixtures() -> FlextLdifFixtures.OUD:
     """Oracle Unified Directory fixture loader.
 
     Returns:
         FlextLdifFixtures.OUD: OUD-specific fixture loader instance
 
     """
-    return loader.FlextLdifFixtures.OUD()
+    return FlextLdifFixtures.OUD()
 
 
 @pytest.fixture
-def openldap_fixtures() -> loader.FlextLdifFixtures.OpenLDAP:
+def openldap_fixtures() -> FlextLdifFixtures.OpenLDAP:
     """OpenLDAP fixture loader.
 
     Returns:
         FlextLdifFixtures.OpenLDAP: OpenLDAP-specific fixture loader instance
 
     """
-    return loader.FlextLdifFixtures.OpenLDAP()
+    return FlextLdifFixtures.OpenLDAP()

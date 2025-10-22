@@ -57,7 +57,9 @@ objectClass: person
         result = api.parse(str(sample_ldif_file))
 
         assert result.is_success
-        entries = result.unwrap()
+        unwrapped = result.unwrap()
+        assert isinstance(unwrapped, list), "Expected list, not callable"
+        entries: list[FlextLdifModels.Entry] = unwrapped
         assert len(entries) == 2
         assert entries[0].dn.value == "cn=Test User,dc=example,dc=com"
         assert entries[1].dn.value == "cn=Another User,dc=example,dc=com"
@@ -69,7 +71,9 @@ objectClass: person
         result = api.parse(sample_ldif_file)
 
         assert result.is_success
-        entries = result.unwrap()
+        unwrapped = result.unwrap()
+        assert isinstance(unwrapped, list), "Expected list, not callable"
+        entries: list[FlextLdifModels.Entry] = unwrapped
         assert len(entries) == 2
         assert entries[0].dn.value == "cn=Test User,dc=example,dc=com"
 
@@ -80,7 +84,9 @@ objectClass: person
         result = api.parse(sample_ldif_content)
 
         assert result.is_success
-        entries = result.unwrap()
+        unwrapped = result.unwrap()
+        assert isinstance(unwrapped, list), "Expected list, not callable"
+        entries: list[FlextLdifModels.Entry] = unwrapped
         assert len(entries) == 2
         assert entries[0].dn.value == "cn=Test User,dc=example,dc=com"
 
@@ -91,7 +97,9 @@ objectClass: person
         result = api.parse(sample_ldif_content, server_type="rfc")
 
         assert result.is_success
-        entries = result.unwrap()
+        unwrapped = result.unwrap()
+        assert isinstance(unwrapped, list), "Expected list, not callable"
+        entries: list[FlextLdifModels.Entry] = unwrapped
         assert len(entries) == 2
 
     def test_parse_with_auto_server_type(
@@ -101,7 +109,9 @@ objectClass: person
         result = api.parse(sample_ldif_content, server_type="auto")
 
         assert result.is_success
-        entries = result.unwrap()
+        unwrapped = result.unwrap()
+        assert isinstance(unwrapped, list), "Expected list, not callable"
+        entries: list[FlextLdifModels.Entry] = unwrapped
         assert len(entries) == 2
 
     def test_parse_empty_content_returns_empty_list(self, api: FlextLdif) -> None:
@@ -109,7 +119,9 @@ objectClass: person
         result = api.parse("")
 
         assert result.is_success
-        entries = result.unwrap()
+        unwrapped = result.unwrap()
+        assert isinstance(unwrapped, list), "Expected list, not callable"
+        entries = unwrapped
         assert len(entries) == 0
 
     def test_parse_nonexistent_file_treats_as_content(self, api: FlextLdif) -> None:
@@ -130,7 +142,9 @@ objectClass: person
         result = api.parse(content)
 
         assert result.is_success
-        entries = result.unwrap()
+        unwrapped = result.unwrap()
+        assert isinstance(unwrapped, list), "Expected list, not callable"
+        entries = unwrapped
         assert len(entries) == 1
 
     def test_parse_with_line_folding(self, api: FlextLdif) -> None:
@@ -144,7 +158,9 @@ objectClass: person
         result = api.parse(content)
 
         assert result.is_success
-        entries = result.unwrap()
+        unwrapped = result.unwrap()
+        assert isinstance(unwrapped, list), "Expected list, not callable"
+        entries = unwrapped
         assert len(entries) == 1
 
     def test_parse_with_comments(self, api: FlextLdif) -> None:
@@ -158,7 +174,9 @@ objectClass: person
         result = api.parse(content)
 
         assert result.is_success
-        entries = result.unwrap()
+        unwrapped = result.unwrap()
+        assert isinstance(unwrapped, list), "Expected list, not callable"
+        entries = unwrapped
         assert len(entries) == 1
 
     def test_parse_multiple_entries_separated_by_blank_lines(
@@ -180,7 +198,9 @@ objectClass: person
         result = api.parse(content)
 
         assert result.is_success
-        entries = result.unwrap()
+        unwrapped = result.unwrap()
+        assert isinstance(unwrapped, list), "Expected list, not callable"
+        entries = unwrapped
         assert len(entries) == 3
 
 
@@ -407,7 +427,9 @@ objectClass: person
 """
         parse_result = api.parse(content)
         assert parse_result.is_success
-        entries = parse_result.unwrap()
+        unwrapped = parse_result.unwrap()
+        assert isinstance(unwrapped, list), "Expected list, not callable"
+        entries = unwrapped
 
         # Validate
         validate_result = api.validate_entries(entries)
@@ -434,7 +456,9 @@ objectClass: organizationalPerson
         # Parse
         parse_result = api.parse(original_content)
         assert parse_result.is_success
-        entries = parse_result.unwrap()
+        unwrapped = parse_result.unwrap()
+        assert isinstance(unwrapped, list), "Expected list, not callable"
+        entries = unwrapped
 
         # Write
         output_file = tmp_path / "preserve_output.ldif"
@@ -462,8 +486,12 @@ objectClass: organizationalPerson
 
         assert result1.is_success
         assert result2.is_success
-        entries1 = result1.unwrap()
-        entries2 = result2.unwrap()
+        unwrapped1 = result1.unwrap()
+        assert isinstance(unwrapped1, list), "Expected list, not callable"
+        entries1 = unwrapped1
+        unwrapped2 = result2.unwrap()
+        assert isinstance(unwrapped2, list), "Expected list, not callable"
+        entries2 = unwrapped2
 
         assert len(entries1) == 1
         assert len(entries2) == 1
@@ -495,7 +523,9 @@ objectClass: person
         result = ldif.parse(content)
 
         assert result.is_success
-        entries = result.unwrap()
+        unwrapped = result.unwrap()
+        assert isinstance(unwrapped, list), "Expected list, not callable"
+        entries = unwrapped
         assert isinstance(entries, list)
         assert len(entries) == 2
 
@@ -519,7 +549,9 @@ objectClass: person
         result = ldif.parse(content)
 
         assert result.is_success
-        entries = result.unwrap()
+        unwrapped = result.unwrap()
+        assert isinstance(unwrapped, list), "Expected list, not callable"
+        entries = unwrapped
         assert isinstance(entries, list)
 
     def test_parse_file(self, tmp_path: Path) -> None:
@@ -538,7 +570,9 @@ objectClass: person
         result = ldif.parse(test_file)
 
         assert result.is_success
-        entries = result.unwrap()
+        unwrapped = result.unwrap()
+        assert isinstance(unwrapped, list), "Expected list, not callable"
+        entries = unwrapped
         assert isinstance(entries, list)
         assert len(entries) == 1
 
@@ -559,7 +593,9 @@ objectClass: person
         result = ldif.parse("")
 
         assert result.is_success
-        entries = result.unwrap()
+        unwrapped = result.unwrap()
+        assert isinstance(unwrapped, list), "Expected list, not callable"
+        entries = unwrapped
         assert isinstance(entries, list)
         assert len(entries) == 0
 
@@ -585,7 +621,9 @@ class TestFlextLdifWriteComprehensive:
         content = ldif_test_data.basic_entries().content
         parse_result = ldif.parse(content)
         assert parse_result.is_success
-        entries = parse_result.unwrap()
+        unwrapped = parse_result.unwrap()
+        assert isinstance(unwrapped, list), "Expected list, not callable"
+        entries = unwrapped
 
         # Now write back to string
         write_result = ldif.write(entries)
@@ -608,7 +646,9 @@ objectClass: person
 """
         parse_result = ldif.parse(content)
         assert parse_result.is_success
-        entries = parse_result.unwrap()
+        unwrapped = parse_result.unwrap()
+        assert isinstance(unwrapped, list), "Expected list, not callable"
+        entries = unwrapped
 
         # Write to file
         output_file = tmp_path / "output.ldif"
@@ -647,7 +687,9 @@ objectClass: person
 """
         parse_result = ldif.parse(content)
         assert parse_result.is_success
-        entries = parse_result.unwrap()
+        unwrapped = parse_result.unwrap()
+        assert isinstance(unwrapped, list), "Expected list, not callable"
+        entries = unwrapped
 
         validate_result = ldif.validate_entries(entries)
 
@@ -723,7 +765,9 @@ objectClass: person
 """
         parse_result = ldif.parse(content)
         assert parse_result.is_success
-        entries = parse_result.unwrap()
+        unwrapped = parse_result.unwrap()
+        assert isinstance(unwrapped, list), "Expected list, not callable"
+        entries = unwrapped
 
         analyze_result = ldif.analyze(entries)
 
@@ -762,7 +806,9 @@ objectClass: groupOfNames
 """
         parse_result = ldif.parse(content)
         assert parse_result.is_success
-        entries = parse_result.unwrap()
+        unwrapped = parse_result.unwrap()
+        assert isinstance(unwrapped, list), "Expected list, not callable"
+        entries = unwrapped
 
         filter_result = ldif.filter(entries, objectclass="inetOrgPerson")
 
@@ -788,7 +834,9 @@ objectClass: groupOfNames
 """
         parse_result = ldif.parse(content)
         assert parse_result.is_success
-        entries = parse_result.unwrap()
+        unwrapped = parse_result.unwrap()
+        assert isinstance(unwrapped, list), "Expected list, not callable"
+        entries = unwrapped
 
         filter_result = ldif.filter(entries, objectclass="person")
 
@@ -848,7 +896,9 @@ objectClass: person
         # Parse it
         parse_result = ldif.parse(original_content)
         assert parse_result.is_success
-        entries = parse_result.unwrap()
+        unwrapped = parse_result.unwrap()
+        assert isinstance(unwrapped, list), "Expected list, not callable"
+        entries = unwrapped
 
         # Write it back
         write_result = ldif.write(entries)
@@ -872,7 +922,9 @@ objectClass: person
 """
         parse_result = ldif.parse(content)
         assert parse_result.is_success
-        entries = parse_result.unwrap()
+        unwrapped = parse_result.unwrap()
+        assert isinstance(unwrapped, list), "Expected list, not callable"
+        entries = unwrapped
 
         # Validate
         validate_result = ldif.validate_entries(entries)

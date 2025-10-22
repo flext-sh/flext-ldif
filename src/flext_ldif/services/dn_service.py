@@ -33,6 +33,7 @@ from typing import override
 from flext_core import FlextDecorators, FlextResult, FlextService
 from ldap3.utils.dn import parse_dn, safe_dn
 
+from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.typings import FlextLdifTypes
 
 
@@ -241,6 +242,157 @@ class FlextLdifDnService(FlextService[FlextLdifTypes.Models.CustomDataDict]):
         cleaned = re.sub(r"\s+", " ", cleaned)
 
         return cleaned.strip()
+
+    def build_canonical_dn_map(
+        self, categorized: dict[str, list[dict[str, object]]]
+    ) -> FlextResult[dict[str, str]]:
+        """Build mapping of lowercase(cleaned DN) -> canonical cleaned DN.
+
+        Uses clean_dn to normalize formatting and ensures
+        case-consistent canonical values based on parsed entries.
+
+        Args:
+            categorized: Dictionary mapping category to entry list
+
+        Returns:
+            FlextResult containing dictionary mapping lowercase cleaned DN to canonical cleaned DN
+
+        """
+        dn_map: dict[str, str] = {}
+        for entries in categorized.values():
+            for entry in entries:
+                if isinstance(entry, dict):
+                    dn_value = entry.get(FlextLdifConstants.DictKeys.DN)
+                    if isinstance(dn_value, str) and dn_value:
+                        cleaned = self.clean_dn(dn_value)
+                        if cleaned:
+                            dn_map[cleaned.lower()] = cleaned
+        return FlextResult[dict[str, str]].ok(dn_map)
+
+    def normalize_dn_value(self, value: str, dn_map: dict[str, str]) -> str:
+        """Normalize a single DN value using canonical map, fallback to cleaned DN.
+
+        Args:
+            value: DN value to normalize
+            dn_map: Canonical DN mapping
+
+        Returns:
+            Normalized DN value
+
+        """
+        cleaned = self.clean_dn(value)
+        return dn_map.get(cleaned.lower(), cleaned)
+
+    def normalize_dn_references_for_entry(
+        self,
+        entry: dict[str, object],
+        dn_map: dict[str, str],
+        ref_attrs_lower: set[str],
+    ) -> FlextResult[dict[str, object]]:
+        """Normalize DN-valued attributes in an entry according to dn_map.
+
+        Handles both str and list[str] attribute values.
+
+        Args:
+            entry: Entry to normalize
+            dn_map: Canonical DN mapping
+            ref_attrs_lower: Set of lowercase DN reference attribute names
+
+        Returns:
+            FlextResult containing entry with normalized DN attributes
+
+        """
+        try:
+            normalized = entry.copy()
+            attrs = normalized.get(FlextLdifConstants.DictKeys.ATTRIBUTES, {})
+            if not isinstance(attrs, dict):
+                return FlextResult[dict[str, object]].ok(normalized)
+
+            new_attrs: dict[str, object] = {}
+            for attr_name, attr_value in attrs.items():
+                if attr_name.lower() in ref_attrs_lower:
+                    if isinstance(attr_value, list):
+                        new_attrs[attr_name] = [
+                            self.normalize_dn_value(v, dn_map)
+                            if isinstance(v, str)
+                            else v
+                            for v in attr_value
+                        ]
+                    elif isinstance(attr_value, str):
+                        new_attrs[attr_name] = self.normalize_dn_value(
+                            attr_value, dn_map
+                        )
+                    else:
+                        new_attrs[attr_name] = attr_value
+                else:
+                    new_attrs[attr_name] = attr_value
+
+            normalized[FlextLdifConstants.DictKeys.ATTRIBUTES] = new_attrs
+            return FlextResult[dict[str, object]].ok(normalized)
+        except Exception as e:
+            return FlextResult[dict[str, object]].fail(
+                f"Failed to normalize DN references: {e}"
+            )
+
+    def normalize_aci_dn_references(
+        self, entry: dict[str, object], dn_map: dict[str, str]
+    ) -> FlextResult[dict[str, object]]:
+        """Normalize DNs embedded in ACI attribute strings using dn_map.
+
+        Attempts to detect DN substrings in common OUD ACI patterns and
+        replace them with canonical DNs.
+
+        Args:
+            entry: Entry with ACI attributes to normalize
+            dn_map: Canonical DN mapping
+
+        Returns:
+            FlextResult containing entry with normalized ACI DN references
+
+        """
+        try:
+            attrs = entry.get(FlextLdifConstants.DictKeys.ATTRIBUTES, {})
+            if not isinstance(attrs, dict):
+                return FlextResult[dict[str, object]].ok(entry)
+
+            def normalize_in_text(text: str) -> str:
+                """Normalize DNs in ACI text."""
+
+                def repl_ldap(m: re.Match[str]) -> str:
+                    dn_part = m.group(1)
+                    norm = self.normalize_dn_value(dn_part, dn_map)
+                    return f"ldap:///{norm}"
+
+                text2 = re.sub(r"ldap:///([^\"]+?)", repl_ldap, text)
+
+                # Also handle bare quoted DN-like sequences (best-effort)
+                def repl_quoted(m: re.Match[str]) -> str:
+                    dn_part = m.group(1)
+                    norm = self.normalize_dn_value(dn_part, dn_map)
+                    return f'"{norm}"'
+
+                return re.sub(
+                    r'"((?:[a-zA-Z]+=[^,\";\)]+)(?:,[a-zA-Z]+=[^,\";\)]+)*)"',
+                    repl_quoted,
+                    text2,
+                )
+
+            aci_value = attrs.get("aci")
+            if isinstance(aci_value, list):
+                attrs["aci"] = [
+                    normalize_in_text(v) if isinstance(v, str) else v
+                    for v in aci_value
+                ]
+            elif isinstance(aci_value, str):
+                attrs["aci"] = normalize_in_text(aci_value)
+
+            entry_out = entry.copy()
+            entry_out[FlextLdifConstants.DictKeys.ATTRIBUTES] = attrs
+            return FlextResult[dict[str, object]].ok(entry_out)
+        except Exception as e:
+            return FlextResult[dict[str, object]].fail(
+                f"Failed to normalize ACI DN references: {e}"
+            )
 
 
 __all__ = ["FlextLdifDnService"]

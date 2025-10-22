@@ -282,14 +282,24 @@ class FlextLdifFilters:
         Returns:
             True if DN matches any pattern, False otherwise
 
+        Raises:
+            ValueError: If any pattern is invalid regex
+
         """
+        invalid_patterns = []
         for pattern in patterns:
             try:
                 if re.search(pattern, dn, re.IGNORECASE):
                     return True
-            except re.error:
-                # Invalid regex pattern - skip
-                continue
+            except re.error as e:
+                # Collect invalid patterns - do NOT skip silently
+                invalid_patterns.append(f"'{pattern}' ({e!s})")
+
+        # If invalid patterns were found, raise error (fail fast, not silent)
+        if invalid_patterns:
+            error_msg = f"Invalid regex patterns in DN filter: {', '.join(invalid_patterns)}"
+            raise ValueError(error_msg)
+
         return False
 
     @staticmethod

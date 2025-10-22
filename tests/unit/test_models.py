@@ -67,10 +67,13 @@ class TestFlextLdifModels:
     def test_attribute_values_single_value(self) -> None:
         """Test AttributeValues single value property."""
         values = FlextLdifModels.AttributeValues(values=["single_value"])
-        assert values.single_value == "single_value"
+        # Computed field from Pydantic v2
+        result: str | None = values.single_value  # type: ignore[assignment]
+        assert result == "single_value"
 
         empty_values = FlextLdifModels.AttributeValues(values=[])
-        assert empty_values.single_value is None
+        empty_result: str | None = empty_values.single_value  # type: ignore[assignment]
+        assert empty_result is None
 
     def test_attributes_creation(self) -> None:
         """Test Attributes model creation."""

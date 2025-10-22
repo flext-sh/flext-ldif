@@ -83,8 +83,8 @@ format: ## Format code
 	$(POETRY) run ruff format .
 
 .PHONY: type-check
-type-check: ## Run type checking with MyPy (ZERO TOLERANCE)
-	PYTHONPATH=$(SRC_DIR) $(POETRY) run python -m mypy $(SRC_DIR) --strict --ignore-missing-imports
+type-check: ## Run type checking with Pyrefly (ZERO TOLERANCE)
+	PYTHONPATH=$(SRC_DIR) $(POETRY) run pyrefly check $(SRC_DIR)
 
 .PHONY: security
 security: ## Run security scanning

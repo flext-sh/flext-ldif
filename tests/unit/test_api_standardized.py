@@ -44,7 +44,9 @@ mail: bob@example.com
         result = ldif.parse(content)
 
         assert result.is_success, f"Parse failed: {result.error}"
-        entries = result.unwrap()
+        unwrapped = result.unwrap()
+        assert isinstance(unwrapped, list), "Expected list, not callable"
+        entries = unwrapped
         assert len(entries) == 2
         assert entries[0].dn.value == "cn=Alice Johnson,ou=People,dc=example,dc=com"
         assert entries[1].dn.value == "cn=Bob Smith,ou=People,dc=example,dc=com"
@@ -69,7 +71,9 @@ member: cn=Test User,dc=example,dc=com
         result = ldif.parse(ldif_file)
 
         assert result.is_success
-        entries = result.unwrap()
+        unwrapped = result.unwrap()
+        assert isinstance(unwrapped, list), "Expected list, not callable"
+        entries = unwrapped
         assert len(entries) == 2
 
     def test_parse_from_path_string(self, test_ldif_dir: Path) -> None:
@@ -87,7 +91,9 @@ objectClass: person
         result = ldif.parse(str(ldif_file))
 
         assert result.is_success
-        entries = result.unwrap()
+        unwrapped = result.unwrap()
+        assert isinstance(unwrapped, list), "Expected list, not callable"
+        entries = unwrapped
         assert len(entries) == 1
 
     def test_parse_nonexistent_file(self) -> None:
@@ -96,7 +102,9 @@ objectClass: person
         result = ldif.parse(Path("/nonexistent/path/file.ldif"))
 
         assert result.is_failure
-        assert "not found" in result.error.lower()
+        error_msg = result.error
+        assert error_msg is not None
+        assert "not found" in error_msg.lower()
 
     def test_parse_with_server_type_quirks(self) -> None:
         """Test parse() applies server-specific quirks."""
@@ -116,8 +124,12 @@ objectClass: person
         assert result_oid.is_success
 
         # Both should parse successfully
-        assert len(result_rfc.unwrap()) == 1
-        assert len(result_oid.unwrap()) == 1
+        unwrapped_rfc = result_rfc.unwrap()
+        assert isinstance(unwrapped_rfc, list), "Expected list, not callable"
+        unwrapped_oid = result_oid.unwrap()
+        assert isinstance(unwrapped_oid, list), "Expected list, not callable"
+        assert len(unwrapped_rfc) == 1
+        assert len(unwrapped_oid) == 1
 
 
 class TestFilterEntriesMethods:
@@ -180,7 +192,9 @@ class TestFilterEntriesMethods:
         assert len(filtered) == 2
         for e in filtered:
             oc_attr = e.attributes.attributes.get("objectClass")
+            assert oc_attr is not None
             oc_values = oc_attr.values if hasattr(oc_attr, "values") else oc_attr
+            assert oc_values is not None
             assert "person" in oc_values
 
     def test_filter_entries_by_dn_pattern(
@@ -273,8 +287,8 @@ class TestParseBatchAndPagination:
         """Test parse_batch() with multiple files."""
         ldif = FlextLdif()
 
-        # Create multiple LDIF files
-        files = []
+        # Create multiple LDIF files with correct type annotation
+        files: list[str | Path] = []
         for i in range(3):
             content = f"""dn: cn=User{i},dc=example,dc=com
 cn: User{i}
@@ -287,7 +301,9 @@ objectClass: person
         result = ldif.parse(files, batch=True)
 
         assert result.is_success
-        entries = result.unwrap()
+        unwrapped = result.unwrap()
+        assert isinstance(unwrapped, list), "Expected list, not callable"
+        entries = unwrapped
         assert len(entries) == 3
         dns = [e.dn.value for e in entries]
         assert any("User0" in dn for dn in dns)
@@ -310,7 +326,9 @@ objectClass: person
 
         # Should still succeed with partial results
         assert result.is_success
-        entries = result.unwrap()
+        unwrapped = result.unwrap()
+        assert isinstance(unwrapped, list), "Expected list, not callable"
+        entries = unwrapped
         assert len(entries) == 1  # Only valid file parsed
 
     def test_parse_with_pagination_small_pages(self) -> None:
@@ -329,10 +347,12 @@ objectClass: person
         result = ldif.parse(content, paginate=True, page_size=3)
 
         assert result.is_success
-        get_next_page = result.unwrap()
+        unwrapped = result.unwrap()
+        assert callable(unwrapped), "Expected callable for paginated results"
+        get_next_page = unwrapped
 
         # Collect all pages
-        all_pages = []
+        all_pages: list[list[FlextLdifModels.Entry]] = []
         while True:
             page = get_next_page()
             if page is None:
@@ -361,7 +381,9 @@ objectClass: person
         result = ldif.parse(content, paginate=True, page_size=2)
 
         assert result.is_success
-        get_next_page = result.unwrap()
+        unwrapped = result.unwrap()
+        assert callable(unwrapped), "Expected callable for paginated results"
+        get_next_page = unwrapped
 
         first_page = get_next_page()
         assert first_page is not None
@@ -392,10 +414,13 @@ class TestBuildMethods:
         oc_attr = entry.attributes.attributes.get(
             "objectClass"
         ) or entry.attributes.attributes.get("objectclass")
+        assert oc_attr is not None
         oc_values = oc_attr.values if hasattr(oc_attr, "values") else oc_attr
+        assert oc_values is not None
         assert "person" in oc_values
         # Handle both raw lists and AttributeValues objects for mail
         mail_attr = entry.attributes.attributes.get("mail")
+        assert mail_attr is not None
         mail_values = mail_attr.values if hasattr(mail_attr, "values") else mail_attr
         assert mail_values == ["jdoe@example.com"]
 
@@ -419,10 +444,13 @@ class TestBuildMethods:
         oc_attr = entry.attributes.attributes.get(
             "objectClass"
         ) or entry.attributes.attributes.get("objectclass")
+        assert oc_attr is not None
         oc_values = oc_attr.values if hasattr(oc_attr, "values") else oc_attr
+        assert oc_values is not None
         assert "groupOfNames" in oc_values
         # Handle AttributeValues objects for member
         member_attr = entry.attributes.attributes.get("member")
+        assert member_attr is not None
         member_values = (
             member_attr.values if hasattr(member_attr, "values") else member_attr
         )
@@ -446,14 +474,17 @@ class TestBuildMethods:
         oc_attr = entry.attributes.attributes.get(
             "objectClass"
         ) or entry.attributes.attributes.get("objectclass")
+        assert oc_attr is not None
         oc_values = oc_attr.values if hasattr(oc_attr, "values") else oc_attr
+        assert oc_values is not None
         assert "organizationalUnit" in oc_values
 
     def test_build_custom_entry(self) -> None:
         """Test build_custom_entry() creates entries with arbitrary attributes."""
         ldif = FlextLdif()
 
-        attributes = {
+        # Type annotation to match expected signature
+        attributes: dict[str, str | list[str]] = {
             "objectClass": ["person"],
             "cn": ["Test User"],
             "mail": ["test@example.com"],
@@ -468,6 +499,7 @@ class TestBuildMethods:
         entry = result.unwrap()
         assert entry.dn.value == "cn=Test User,dc=example,dc=com"
         custom_attr = entry.attributes.attributes.get("custom_attr")
+        assert custom_attr is not None
         custom_values = (
             custom_attr.values if hasattr(custom_attr, "values") else custom_attr
         )
@@ -485,7 +517,9 @@ class TestValidateAndAnalyzeMethods:
         entry = FlextLdifModels.Entry.create(
             dn="cn=Test,dc=example,dc=com", attributes={"objectClass": ["person"]}
         )
-        entries = [entry] if isinstance(entry, FlextLdifModels.Entry) else []
+        entries: list[FlextLdifModels.Entry] = (
+            [entry] if isinstance(entry, FlextLdifModels.Entry) else []
+        )
 
         if entries:
             result = ldif.validate_entries(entries)
@@ -506,14 +540,14 @@ class TestValidateAndAnalyzeMethods:
             attributes={"objectClass": ["groupOfNames"]},
         )
 
-        entries = []
+        entries: list[FlextLdifModels.Entry] = []
         if isinstance(user_entry, FlextLdifModels.Entry):
             entries.append(user_entry)
         if isinstance(group_entry, FlextLdifModels.Entry):
             entries.append(group_entry)
 
         if entries:
-            result = ldif.analyze_entries(entries)
+            result = ldif.analyze(entries)
             assert result.is_success
             stats = result.unwrap()
             # Should have statistics about entries
@@ -571,7 +605,9 @@ member: cn=Alice Smith,ou=People,dc=example,dc=com
         result = ldif.parse(ldif_file)
 
         assert result.is_success
-        entries = result.unwrap()
+        unwrapped = result.unwrap()
+        assert isinstance(unwrapped, list), "Expected list, not callable"
+        entries = unwrapped
         assert len(entries) == 6
 
         # Verify structure
@@ -614,13 +650,17 @@ mail: testuser@example.com
         assert oid_result.is_success
 
         # Convert to OUD format
-        entries = oid_result.unwrap()
+        unwrapped = oid_result.unwrap()
+        assert isinstance(unwrapped, list), "Expected list, not callable"
+        entries = unwrapped
 
         # Should maintain data integrity
         assert len(entries) == 1
         assert "Test User" in str(entries[0].dn.value)
         oc_attr = entries[0].attributes.attributes.get("objectClass")
+        assert oc_attr is not None
         oc_values = oc_attr.values if hasattr(oc_attr, "values") else oc_attr
+        assert oc_values is not None
         assert "inetOrgPerson" in oc_values
 
 

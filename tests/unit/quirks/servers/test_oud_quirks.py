@@ -532,7 +532,8 @@ class TestOudEntryQuirks:
             if line.startswith("dn:"):
                 # Process previous entry if exists
                 if current_dn and current_attrs:
-                    result = entry_quirk.process_entry(current_dn, current_attrs)
+                    attrs_dict: dict[str, str | list[str]] = dict(current_attrs)
+                    result = entry_quirk.process_entry(current_dn, attrs_dict)
                     assert result.is_success, (
                         f"Failed to process entry {current_dn}: {result.error}"
                     )
@@ -555,7 +556,8 @@ class TestOudEntryQuirks:
 
         # Process last entry
         if current_dn and current_attrs:
-            result = entry_quirk.process_entry(current_dn, current_attrs)
+            attrs_dict_final: dict[str, str | list[str]] = dict(current_attrs)
+            result = entry_quirk.process_entry(current_dn, attrs_dict_final)
             assert result.is_success
 
     def test_preserve_oracle_attributes(
@@ -1043,7 +1045,8 @@ class TestOudEntryRoundTrip:
 
         # Step 4: Process again
         assert parsed_dn is not None
-        process2_result = entry_quirk.process_entry(parsed_dn, parsed_attrs)
+        parsed_attrs_dict: dict[str, str | list[str]] = dict(parsed_attrs)
+        process2_result = entry_quirk.process_entry(parsed_dn, parsed_attrs_dict)
         assert process2_result.is_success
         processed2 = process2_result.unwrap()
 

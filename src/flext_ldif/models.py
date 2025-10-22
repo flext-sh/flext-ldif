@@ -835,8 +835,10 @@ class FlextLdifModels(FlextModels):
                     # Build AttributeValues for each attribute
                     attrs_dict: dict[str, FlextLdifModels.AttributeValues] = {}
                     for attr_name, attr_values in attributes.items():
+                        # Normalize to list if string
+                        values_list: list[str] = [attr_values] if isinstance(attr_values, str) else attr_values
                         attrs_dict[attr_name] = FlextLdifModels.AttributeValues(
-                            values=attr_values
+                            values=values_list
                         )
                     attrs_obj = FlextLdifModels.LdifAttributes(attributes=attrs_dict)
                 else:
@@ -1152,7 +1154,7 @@ class FlextLdifModels(FlextModels):
             description="Entries organized by category",
         )
         statistics: FlextLdifModels.PipelineStatistics = Field(
-            default_factory=lambda: FlextLdifModels.PipelineStatistics(),  # noqa: PLW0108
+            default_factory=lambda: FlextLdifModels.PipelineStatistics(),  # noqa: PLW0108  # type: ignore[unbound-name]
             description="Pipeline execution statistics",
         )
         file_paths: dict[str, str] = Field(

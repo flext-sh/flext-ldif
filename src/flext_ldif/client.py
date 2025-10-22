@@ -217,7 +217,7 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Models.CustomDataDict]):
             return
 
         # Register complete implementations
-        complete_quirks = [
+        complete_quirks: list[FlextLdifQuirksBase.BaseSchemaQuirk] = [
             FlextLdifQuirksServersOid(server_type="oid", priority=10),
             FlextLdifQuirksServersOud(server_type="oud", priority=10),
             FlextLdifQuirksServersOpenldap(server_type="openldap2", priority=10),
@@ -863,33 +863,39 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Models.CustomDataDict]):
             )
 
     def detect_encoding(self, content: bytes) -> FlextResult[str]:
-        """Detect encoding of LDIF content bytes.
+        """Detect encoding of LDIF content bytes per RFC 2849.
 
-        Attempts UTF-8 first (RFC 2849 standard), falls back to latin-1
-        as a universal fallback (all byte sequences are valid latin-1).
+        RFC 2849 mandates UTF-8 encoding for LDIF files.
+        Returns error if UTF-8 decode fails (file is not RFC-compliant).
 
         Args:
             content: Raw bytes to detect encoding from
 
         Returns:
-            FlextResult containing detected encoding name ("utf-8" or "latin-1")
+            FlextResult containing "utf-8" on success
+            Failure if content is not valid UTF-8 (non-RFC compliant)
 
         Example:
             >>> with open("data.ldif", "rb") as f:
             ...     raw_bytes = f.read()
             >>> result = client.detect_encoding(raw_bytes)
-            >>> encoding = result.unwrap()  # "utf-8" or "latin-1"
+            >>> if result.is_success:
+            ...     encoding = result.unwrap()  # "utf-8"
+            ... else:
+            ...     print(f"Not RFC 2849 compliant: {result.error}")
 
         """
         try:
-            # Try UTF-8 first (RFC 2849 standard encoding)
-            try:
-                content.decode("utf-8")
-                return FlextResult[str].ok("utf-8")
-            except UnicodeDecodeError:  # pragma: no cover
-                # Fall back to latin-1 (universal fallback - all bytes valid)
-                return FlextResult[str].ok("latin-1")
-        except Exception as e:  # pragma: no cover
+            # RFC 2849 requires UTF-8 encoding
+            content.decode("utf-8")
+            return FlextResult[str].ok("utf-8")
+        except UnicodeDecodeError as e:
+            # File is not RFC 2849 compliant - report error don't hide it
+            return FlextResult[str].fail(
+                f"LDIF content is not valid UTF-8 (RFC 2849 violation): "
+                f"Invalid byte at position {e.start}: {e.reason}"
+            )
+        except Exception as e:
             return FlextResult[str].fail(f"Failed to detect encoding: {e}")
 
     def normalize_encoding(

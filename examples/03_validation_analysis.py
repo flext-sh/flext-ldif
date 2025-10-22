@@ -16,9 +16,11 @@ Original: 246 lines | Optimized: ~130 lines (47% reduction)
 
 from __future__ import annotations
 
+from typing import cast
+
 from flext_core import FlextResult
 
-from flext_ldif import FlextLdif
+from flext_ldif import FlextLdif, FlextLdifModels
 
 
 def validate_entries_example() -> None:
@@ -100,13 +102,19 @@ ou: People
 """
 
     # Railway pattern - parse → analyze (auto error handling)
-    result = api.parse(ldif_content).flat_map(api.analyze)
-
-    # Safe access with unwrap_or
-    stats = result.unwrap_or({})
-    print(f"Total entries: {stats.get('total_entries', 0)}")
-    print(f"Entry types: {stats.get('entry_types', {})}")
-    print(f"ObjectClass dist: {stats.get('objectclass_distribution', {})}")
+    parse_result = api.parse(ldif_content)
+    if parse_result.is_success:
+        entries = cast("list[FlextLdifModels.Entry]", parse_result.unwrap())
+        analyze_result = api.analyze(entries)
+        if analyze_result.is_success:
+            stats = analyze_result.unwrap()
+            print(f"Total entries: {stats.get('total_entries', 0)}")
+            print(f"Entry types: {stats.get('entry_types', {})}")
+            print(f"ObjectClass dist: {stats.get('objectclass_distribution', {})}")
+        else:
+            print("Analysis failed")
+    else:
+        print("Parse failed")
 
 
 def railway_validation_pipeline() -> None:
@@ -122,17 +130,21 @@ mail: pipeline@example.com
 """
 
     # Chain operations - parse → validate → analyze (auto error propagation)
-    result = (
-        api.parse(ldif_content)
-        .flat_map(api.validate_entries)
-        .flat_map(
-            lambda report: (
-                api.parse(ldif_content).flat_map(api.analyze)
-                if report.get("is_valid", False)
-                else FlextResult[dict[str, object]].fail(f"Validation failed: {report}")
-            )
-        )
-    )
+    parse_result = api.parse(ldif_content)
+    if parse_result.is_success:
+        entries = cast(list[FlextLdifModels.Entry], parse_result.unwrap())
+        validate_result = api.validate_entries(entries)
+        if validate_result.is_success:
+            validation_report = validate_result.unwrap()
+            if validation_report.get("is_valid", False):
+                analyze_result = api.analyze(entries)
+                result = analyze_result
+            else:
+                result = FlextResult[dict[str, object]].fail(f"Validation failed: {validation_report}")
+        else:
+            result = validate_result
+    else:
+        result = parse_result
 
     if result.is_success:
         stats = result.unwrap()
@@ -212,8 +224,8 @@ member: cn=Person1,ou=People,dc=example,dc=com
             entries = api.parse(ldif_content).unwrap_or([])
             for objectclass in objectclass_dist:
                 objectclass_str = str(objectclass)
-                filtered = api.filter_by_objectclass(
-                    entries, objectclass_str
+                filtered = api.filter(
+                    entries, objectclass=objectclass_str
                 ).unwrap_or([])
                 print(f"{objectclass_str}: {len(filtered)} entries")
 

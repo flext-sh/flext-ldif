@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from pathlib import Path
-from typing import TYPE_CHECKING, ClassVar, cast, override
+from typing import TYPE_CHECKING, Any, ClassVar, cast, override
 
 from flext_core import (
     FlextBus,
@@ -26,7 +26,9 @@ from flext_core import (
 )
 
 if TYPE_CHECKING:
-    from flext_ldap import FlextLdapModels
+    # Forward reference: flext_ldap is not a direct dependency
+    # Only used for type annotations to support interoperability
+    FlextLdapModels: Any
 
 from flext_ldif.acl.service import FlextLdifAclService
 from flext_ldif.client import FlextLdifClient
@@ -487,7 +489,7 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.CustomDataDict]):
         return self._client.write_ldif(entries, output_path)
 
     def get_entry_dn(
-        self, entry: FlextLdifModels.Entry | FlextLdapModels.Entry
+        self, entry: FlextLdifModels.Entry | FlextLdapModels.Entry  # noqa: F821
     ) -> FlextResult[str]:
         """Extract DN (Distinguished Name) from any entry type.
 
@@ -516,38 +518,41 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.CustomDataDict]):
                 return FlextResult[str].fail("Entry missing DN attribute")
 
             dn_value = entry.dn
-            if hasattr(dn_value, "value"):
-                return FlextResult[str].ok(str(dn_value.value))
+            # Handle both DistinguishedName objects (with .value) and plain strings
+            value_attr = getattr(dn_value, "value", None)
+            if value_attr is not None:
+                return FlextResult[str].ok(str(value_attr))
             return FlextResult[str].ok(str(dn_value))
 
         except Exception as e:
             return FlextResult[str].fail(f"Failed to extract DN: {e}")
 
     def get_entry_attributes(
-        self, entry: FlextLdifModels.Entry | FlextLdapModels.Entry
+        self, entry: FlextLdifModels.Entry | FlextLdapModels.Entry  # noqa: F821
     ) -> FlextResult[FlextLdifTypes.CommonDict.AttributeDict]:
         """Extract attributes from any entry type.
 
         Handles both FlextLdifModels.Entry (from LDIF files) and
         FlextLdapModels.Entry (from LDAP server operations).
 
-        Returns attributes as dict[str, list[str]] per FlextLdifTypes.CommonDict.AttributeDict.
-        All attribute values are returned as lists for consistency.
+        Returns attributes as dict[str, str | list[str]] per
+        FlextLdifTypes.CommonDict.AttributeDict.
+        Attribute values are returned as provided (str or list).
 
         Args:
             entry: LDIF or LDAP entry to extract attributes from
 
         Returns:
             FlextResult containing AttributeDict with attribute names mapped to
-            list[str] values. All values are lists for type consistency.
+            str | list[str] values matching FlextLdifTypes definition.
 
         Example:
             # Works with both LDIF and LDAP entries
             result = ldif.get_entry_attributes(entry)
             if result.is_success:
                 attrs = result.unwrap()
-                # Can pass directly to FlextLdap.add_entry()
-                ldap.add_entry(dn="...", attributes=attrs)
+                # Can pass directly to build operations
+                ldif.build("person", attributes=attrs)
 
         """
         try:
@@ -563,25 +568,25 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.CustomDataDict]):
             if isinstance(attrs_container, FlextLdifModels.LdifAttributes):
                 # Extract attributes from LdifAttributes container
                 for attr_name, attr_values in attrs_container.attributes.items():
-                    if hasattr(attr_values, "values"):
-                        # Always return as list for type consistency with AttributeDict
-                        result_dict[attr_name] = [str(v) for v in attr_values.values]
-                    elif isinstance(attr_values, list):
-                        # Always return as list for type consistency with AttributeDict
-                        result_dict[attr_name] = [str(v) for v in attr_values]
+                    # attr_values is AttributeValues with .values property
+                    values_list: list[str] = attr_values.values
+                    if len(values_list) == 1:
+                        result_dict[attr_name] = values_list[0]
                     else:
-                        # Single value - wrap in list for type consistency
-                        result_dict[attr_name] = [str(attr_values)]
+                        result_dict[attr_name] = values_list
             elif isinstance(attrs_container, dict):
                 # Handle dict representation (from model_validate with dict input)
                 attrs_dict = cast("dict[str, object]", attrs_container)
                 for attr_name, attr_val in attrs_dict.items():
                     if isinstance(attr_val, list):
-                        # Always return as list for type consistency with AttributeDict
-                        result_dict[attr_name] = [str(v) for v in attr_val]
+                        # Return list as-is or single item if length==1
+                        if len(attr_val) == 1:
+                            result_dict[attr_name] = attr_val[0]
+                        else:
+                            result_dict[attr_name] = attr_val
                     else:
-                        # Single value - wrap in list for type consistency
-                        result_dict[attr_name] = [str(attr_val)]
+                        # Single value - return as string
+                        result_dict[attr_name] = str(attr_val)
 
             return FlextResult[FlextLdifTypes.CommonDict.AttributeDict].ok(result_dict)
 
@@ -618,7 +623,7 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.CustomDataDict]):
         """
         try:
             # Normalize attributes to ensure all values are lists
-            normalized_attrs: dict[str, list[str]] = {}
+            normalized_attrs: FlextLdifTypes.CommonDict.AttributeDict = {}
             for key, value in attributes.items():
                 if isinstance(value, list):
                     normalized_attrs[key] = [str(v) for v in value]
@@ -646,7 +651,7 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.CustomDataDict]):
             )
 
     def get_entry_objectclasses(
-        self, entry: FlextLdifModels.Entry | FlextLdapModels.Entry
+        self, entry: FlextLdifModels.Entry | FlextLdapModels.Entry  # noqa: F821
     ) -> FlextResult[list[str]]:
         """Extract objectClass values from any entry type.
 
@@ -682,8 +687,8 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.CustomDataDict]):
                     return FlextResult[list[str]].ok(oc_values)
 
             # Fallback: try direct access to object_classes attribute (LDAP entries)
-            if hasattr(entry, "object_classes"):
-                oc_attr = entry.object_classes
+            oc_attr = getattr(entry, "object_classes", None)
+            if oc_attr is not None:
                 if isinstance(oc_attr, list):
                     return FlextResult[list[str]].ok([str(v) for v in oc_attr])
                 return FlextResult[list[str]].ok([str(oc_attr)])
@@ -720,8 +725,8 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.CustomDataDict]):
                 return FlextResult[list[str]].ok([])
 
             # Handle objects with .values property
-            if hasattr(attribute, "values"):
-                values = attribute.values
+            values = getattr(attribute, "values", None)
+            if values is not None:
                 if isinstance(values, list):
                     return FlextResult[list[str]].ok([str(v) for v in values])
                 return FlextResult[list[str]].ok([str(values)])
@@ -734,7 +739,9 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.CustomDataDict]):
             return FlextResult[list[str]].ok([str(attribute)])
 
         except Exception as e:
-            return FlextResult[list[str]].fail(f"Failed to extract attribute values: {e}")
+            return FlextResult[list[str]].fail(
+                f"Failed to extract attribute values: {e}"
+            )
 
     def parse_schema_ldif(
         self, file_path: Path, server_type: str | None = None
@@ -805,8 +812,14 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.CustomDataDict]):
                     }:
                         if "add" not in modifications:
                             modifications["add"] = []
-                        # Values are already lists (AttributeDict guarantees dict[str, list[str]])
-                        modifications["add"].append((attr_name, attr_values))
+                        # Normalize attr_values to list
+                        # (AttributeDict is dict[str, str | list[str]])
+                        # Convert to list if string, keep as-is otherwise
+                        if isinstance(attr_values, str):
+                            values_list = [attr_values]
+                        else:
+                            values_list = attr_values
+                        modifications["add"].append((attr_name, values_list))
 
             return FlextResult[dict[str, list[tuple[str, list[str]]]]].ok(modifications)
 
@@ -1016,39 +1029,71 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.CustomDataDict]):
                     f"Entry filtering with custom filter failed: {e}",
                 )
 
-        # No custom_filter - use client's unified filter with mark_excluded=False for clean results
-        if objectclass is not None:
-            filter_result = self._client.filter(
-                entries,
-                filter_type="objectclass",
-                objectclass=objectclass,
-                mark_excluded=False,
-            )
-            return cast("FlextResult[list[FlextLdifModels.Entry]]", filter_result)
+        # No custom_filter - chain multiple filters using same logic as custom_filter path
+        try:
+            # Apply objectclass filter if provided
+            if objectclass is not None:
+                filter_result = self._client.filter(
+                    entries,
+                    filter_type="objectclass",
+                    objectclass=objectclass,
+                    mark_excluded=False,
+                )
+                if not filter_result.is_success:
+                    return FlextResult[list[FlextLdifModels.Entry]].fail(
+                        f"Objectclass filter failed: {filter_result.error}"
+                    )
+                result_entries = cast(
+                    "list[FlextLdifModels.Entry]", filter_result.unwrap()
+                )
+                entries = result_entries
 
-        if dn_pattern is not None:
-            # Convert simple substring pattern to fnmatch pattern
-            fnmatch_pattern = f"*{dn_pattern}*" if "*" not in dn_pattern else dn_pattern
-            filter_result = self._client.filter(
-                entries,
-                filter_type="dn_pattern",
-                dn_pattern=fnmatch_pattern,
-                mark_excluded=False,
-            )
-            return cast("FlextResult[list[FlextLdifModels.Entry]]", filter_result)
+            # Apply dn_pattern filter if provided
+            if dn_pattern is not None:
+                # Convert simple substring pattern to fnmatch pattern
+                fnmatch_pattern = (
+                    f"*{dn_pattern}*" if "*" not in dn_pattern else dn_pattern
+                )
+                filter_result = self._client.filter(
+                    entries,
+                    filter_type="dn_pattern",
+                    dn_pattern=fnmatch_pattern,
+                    mark_excluded=False,
+                )
+                if not filter_result.is_success:
+                    return FlextResult[list[FlextLdifModels.Entry]].fail(
+                        f"DN pattern filter failed: {filter_result.error}"
+                    )
+                result_entries = cast(
+                    "list[FlextLdifModels.Entry]", filter_result.unwrap()
+                )
+                entries = result_entries
 
-        if attributes is not None:
-            attr_list = list(attributes.keys())
-            filter_result = self._client.filter(
-                entries,
-                filter_type="attributes",
-                attributes=attr_list,
-                mark_excluded=False,
-            )
-            return cast("FlextResult[list[FlextLdifModels.Entry]]", filter_result)
+            # Apply attributes filter if provided
+            if attributes is not None:
+                attr_list = list(attributes.keys())
+                filter_result = self._client.filter(
+                    entries,
+                    filter_type="attributes",
+                    attributes=attr_list,
+                    mark_excluded=False,
+                )
+                if not filter_result.is_success:
+                    return FlextResult[list[FlextLdifModels.Entry]].fail(
+                        f"Attributes filter failed: {filter_result.error}"
+                    )
+                result_entries = cast(
+                    "list[FlextLdifModels.Entry]", filter_result.unwrap()
+                )
+                entries = result_entries
 
-        # No filters provided - return all entries
-        return FlextResult[list[FlextLdifModels.Entry]].ok(entries)
+            # Return filtered entries (all criteria have been applied)
+            return FlextResult[list[FlextLdifModels.Entry]].ok(entries)
+
+        except Exception as e:
+            return FlextResult[list[FlextLdifModels.Entry]].fail(
+                f"Entry filtering failed: {e}",
+            )
 
     # =========================================================================
     # ENTRY BUILDER OPERATIONS (Unified Method)
@@ -1162,10 +1207,16 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.CustomDataDict]):
                 return FlextResult[FlextLdifModels.Entry].fail(
                     "Custom entry requires: dn, attributes"
                 )
-            objectclasses = attributes.get(
+            obj_classes = attributes.get(
                 FlextLdifConstants.DictKeys.OBJECTCLASS, ["top"]
             )
-            return self._entry_builder.build_custom_entry(dn, objectclasses, attributes)
+            # Normalize objectclasses to list
+            obj_classes_list = (
+                [obj_classes] if isinstance(obj_classes, str) else obj_classes
+            )
+            return self._entry_builder.build_custom_entry(
+                dn, obj_classes_list, attributes
+            )
 
         supported = "'person', 'group', 'ou', 'custom'"
         return FlextResult[FlextLdifModels.Entry].fail(
