@@ -82,7 +82,6 @@ from __future__ import annotations
 
 from flext_ldif.__version__ import __version__, __version_info__
 from flext_ldif.api import FlextLdif
-from flext_ldif.categorized_pipeline import FlextLdifCategorizedMigrationPipeline
 from flext_ldif.client import FlextLdifClient
 from flext_ldif.config import FlextLdifConfig
 from flext_ldif.constants import FlextLdifConstants
@@ -93,37 +92,43 @@ from flext_ldif.events import (
     LdifWrittenEvent,
 )
 from flext_ldif.filters import FlextLdifFilters
-from flext_ldif.migration_pipeline import FlextLdifMigrationPipeline
 from flext_ldif.models import FlextLdifModels
-from flext_ldif.processors import LdifBatchProcessor, LdifParallelProcessor
-from flext_ldif.quirks.conversion_matrix import QuirksConversionMatrix
+from flext_ldif.pipelines.categorized_pipeline import (
+    FlextLdifCategorizedMigrationPipeline,
+)
+from flext_ldif.pipelines.migration_pipeline import FlextLdifMigrationPipeline
+from flext_ldif.processors.ldif_processor import (
+    FlextLdifBatchProcessor,
+    FlextLdifParallelProcessor,
+)
+from flext_ldif.quirks.conversion_matrix import FlextLdifQuirksConversionMatrix
 from flext_ldif.quirks.registry import FlextLdifQuirksRegistry
-from flext_ldif.services.dn_service import DnService
-from flext_ldif.services.validation_service import ValidationService
+from flext_ldif.services.dn_service import FlextLdifDnService
+from flext_ldif.services.validation_service import FlextLdifValidationService
 from flext_ldif.typings import FlextLdifTypes
 
 __email__ = "dev@flext.com"
 
 __all__ = [
-    "DnService",
     "FlextLdif",
+    "FlextLdifBatchProcessor",
     "FlextLdifCategorizedMigrationPipeline",
     "FlextLdifClient",
     "FlextLdifConfig",
     "FlextLdifConstants",
+    "FlextLdifDnService",
     "FlextLdifFilters",
     "FlextLdifMigrationPipeline",
     "FlextLdifModels",
+    "FlextLdifParallelProcessor",
+    "FlextLdifQuirksConversionMatrix",
     "FlextLdifQuirksRegistry",
     "FlextLdifTypes",
-    "LdifBatchProcessor",
+    "FlextLdifValidationService",
     "LdifMigratedEvent",
-    "LdifParallelProcessor",
     "LdifParsedEvent",
     "LdifValidatedEvent",
     "LdifWrittenEvent",
-    "QuirksConversionMatrix",
-    "ValidationService",
     "__version__",
     "__version_info__",
 ]

@@ -9,72 +9,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Annotated, Literal, cast
+from typing import Literal
 
 from flext_core import FlextConfig, FlextConstants
 from pydantic import Field, model_validator
-from pydantic.functional_validators import BeforeValidator
 
 from flext_ldif.constants import FlextLdifConstants
-
-# =============================================================================
-# MODULE-LEVEL VALIDATORS (Pydantic 2.11+ BeforeValidator pattern)
-# =============================================================================
-
-
-def _coerce_bool_from_env(v: object) -> bool:
-    """Coerce environment variable strings to bool (strict mode compatible).
-
-    Args:
-    v: Value to coerce to bool
-
-    Returns:
-    Boolean value
-
-    """
-    if isinstance(v, bool):
-        return v
-    if isinstance(v, str):
-        return v.lower() in {"true", "1", "yes", "on"}
-    if isinstance(v, int):
-        return v != 0
-    return bool(v)
-
-
-def _coerce_int_from_env(v: object) -> int:
-    """Coerce environment variable strings to int (strict mode compatible).
-
-    Args:
-    v: Value to coerce to int
-
-    Returns:
-    Integer value
-
-    """
-    if isinstance(v, int):
-        return v
-    if isinstance(v, str):
-        return int(v.strip())
-    # Cast to int-compatible type for Pyrefly
-    return int(cast("int | float", v))
-
-
-def _coerce_float_from_env(v: object) -> float:
-    """Coerce environment variable strings to float (strict mode compatible).
-
-    Args:
-    v: Value to coerce to float
-
-    Returns:
-    Float value
-
-    """
-    if isinstance(v, float):
-        return v
-    if isinstance(v, (int, str)):
-        return float(v)
-    # Cast to float-compatible type for Pyrefly
-    return float(cast("int | float | str", v))
 
 
 class FlextLdifConfig(FlextConfig):
@@ -110,34 +50,30 @@ class FlextLdifConfig(FlextConfig):
         description="Maximum LDIF line length (RFC 2849 compliance)",
     )
 
-    ldif_skip_comments: Annotated[bool, BeforeValidator(_coerce_bool_from_env)] = Field(
+    ldif_skip_comments: bool = Field(
         default=FlextLdifConstants.ConfigDefaults.LDIF_SKIP_COMMENTS,
         description="Skip comment lines during parsing",
     )
 
-    ldif_validate_dn_format: Annotated[bool, BeforeValidator(_coerce_bool_from_env)] = (
-        Field(
-            default=FlextLdifConstants.ConfigDefaults.LDIF_VALIDATE_DN_FORMAT,
-            description="Validate DN format during parsing",
-        )
+    ldif_validate_dn_format: bool = Field(
+        default=FlextLdifConstants.ConfigDefaults.LDIF_VALIDATE_DN_FORMAT,
+        description="Validate DN format during parsing",
     )
 
-    ldif_strict_validation: Annotated[bool, BeforeValidator(_coerce_bool_from_env)] = (
-        Field(
-            default=FlextLdifConstants.ConfigDefaults.LDIF_STRICT_VALIDATION,
-            description="Enable strict LDIF validation",
-        )
+    ldif_strict_validation: bool = Field(
+        default=FlextLdifConstants.ConfigDefaults.LDIF_STRICT_VALIDATION,
+        description="Enable strict LDIF validation",
     )
 
     # Processing Configuration using FlextLdifConstants for defaults
-    ldif_max_entries: Annotated[int, BeforeValidator(_coerce_int_from_env)] = Field(
+    ldif_max_entries: int = Field(
         default=FlextLdifConstants.ConfigDefaults.LDIF_MAX_ENTRIES,
         ge=FlextConstants.Performance.BatchProcessing.DEFAULT_SIZE,
         le=FlextLdifConstants.MAX_ENTRIES_ABSOLUTE,
         description="Maximum number of entries to process",
     )
 
-    ldif_chunk_size: Annotated[int, BeforeValidator(_coerce_int_from_env)] = Field(
+    ldif_chunk_size: int = Field(
         default=FlextLdifConstants.DEFAULT_BATCH_SIZE,
         ge=FlextLdifConstants.LdifProcessing.MIN_CHUNK_SIZE,
         le=FlextLdifConstants.LdifProcessing.MAX_CHUNK_SIZE,
@@ -145,50 +81,43 @@ class FlextLdifConfig(FlextConfig):
     )
 
     # max_workers inherited from FlextConfig (use self.max_workers)
+    # Override to respect debug mode constraints
 
     # Memory and Performance Configuration - Fix default value
-    memory_limit_mb: Annotated[int, BeforeValidator(_coerce_int_from_env)] = Field(
+    memory_limit_mb: int = Field(
         default=FlextLdifConstants.MIN_MEMORY_MB,
         ge=FlextLdifConstants.MIN_MEMORY_MB,
         le=FlextLdifConstants.MAX_MEMORY_MB,
         description="Memory limit in MB",
     )
 
-    enable_performance_optimizations: Annotated[
-        bool, BeforeValidator(_coerce_bool_from_env)
-    ] = Field(
+    enable_performance_optimizations: bool = Field(
         default=FlextLdifConstants.ConfigDefaults.ENABLE_PERFORMANCE_OPTIMIZATIONS,
         description="Enable performance optimizations",
     )
 
-    enable_parallel_processing: Annotated[
-        bool, BeforeValidator(_coerce_bool_from_env)
-    ] = Field(
+    enable_parallel_processing: bool = Field(
         default=FlextLdifConstants.ConfigDefaults.ENABLE_PARALLEL_PROCESSING,
         description="Enable parallel processing",
     )
 
-    parallel_threshold: Annotated[int, BeforeValidator(_coerce_int_from_env)] = Field(
+    parallel_threshold: int = Field(
         default=FlextLdifConstants.SMALL_ENTRY_COUNT_THRESHOLD,
         ge=FlextLdifConstants.LdifProcessing.MIN_WORKERS,
         description="Threshold for enabling parallel processing",
     )
 
     # Analytics Configuration
-    ldif_enable_analytics: Annotated[bool, BeforeValidator(_coerce_bool_from_env)] = (
-        Field(
-            default=FlextLdifConstants.ConfigDefaults.LDIF_ENABLE_ANALYTICS,
-            description="Enable LDIF analytics collection",
-        )
+    ldif_enable_analytics: bool = Field(
+        default=FlextLdifConstants.ConfigDefaults.LDIF_ENABLE_ANALYTICS,
+        description="Enable LDIF analytics collection",
     )
 
-    ldif_analytics_cache_size: Annotated[int, BeforeValidator(_coerce_int_from_env)] = (
-        Field(
-            default=FlextLdifConstants.DEFAULT_BATCH_SIZE,
-            ge=FlextLdifConstants.MIN_ANALYTICS_CACHE_SIZE,
-            le=FlextLdifConstants.MAX_ANALYTICS_CACHE_SIZE,
-            description="Cache size for LDIF analytics",
-        )
+    ldif_analytics_cache_size: int = Field(
+        default=FlextLdifConstants.DEFAULT_BATCH_SIZE,
+        ge=FlextLdifConstants.MIN_ANALYTICS_CACHE_SIZE,
+        le=FlextLdifConstants.MAX_ANALYTICS_CACHE_SIZE,
+        description="Cache size for LDIF analytics",
     )
 
     analytics_detail_level: Literal["low", "medium", "high"] = Field(
@@ -207,32 +136,26 @@ class FlextLdifConfig(FlextConfig):
         description="LDIF version string",
     )
 
-    ldif_batch_size: Annotated[int, BeforeValidator(_coerce_int_from_env)] = Field(
+    ldif_batch_size: int = Field(
         default=FlextLdifConstants.DEFAULT_BATCH_SIZE,
         ge=FlextLdifConstants.MIN_BATCH_SIZE,
         le=FlextLdifConstants.MAX_BATCH_SIZE,
         description="Batch size for LDIF processing",
     )
 
-    ldif_fail_on_warnings: Annotated[bool, BeforeValidator(_coerce_bool_from_env)] = (
-        Field(
-            default=FlextLdifConstants.ConfigDefaults.LDIF_FAIL_ON_WARNINGS,
-            description="Fail processing on warnings",
-        )
+    ldif_fail_on_warnings: bool = Field(
+        default=FlextLdifConstants.ConfigDefaults.LDIF_FAIL_ON_WARNINGS,
+        description="Fail processing on warnings",
     )
 
-    ldif_analytics_sample_rate: Annotated[
-        float, BeforeValidator(_coerce_float_from_env)
-    ] = Field(
+    ldif_analytics_sample_rate: float = Field(
         default=FlextLdifConstants.ConfigDefaults.LDIF_ANALYTICS_SAMPLE_RATE,
         ge=FlextLdifConstants.MIN_SAMPLE_RATE,
         le=FlextLdifConstants.MAX_SAMPLE_RATE,
         description="Analytics sampling rate (0.0 to 1.0)",
     )
 
-    ldif_analytics_max_entries: Annotated[
-        int, BeforeValidator(_coerce_int_from_env)
-    ] = Field(
+    ldif_analytics_max_entries: int = Field(
         default=FlextLdifConstants.ConfigDefaults.LDIF_ANALYTICS_MAX_ENTRIES,
         ge=FlextLdifConstants.LdifProcessing.MIN_WORKERS,
         le=FlextLdifConstants.MAX_ANALYTICS_ENTRIES_ABSOLUTE,
@@ -244,11 +167,25 @@ class FlextLdifConfig(FlextConfig):
         description="Default server type for LDIF processing",
     )
 
-    ldif_server_specific_quirks: Annotated[
-        bool, BeforeValidator(_coerce_bool_from_env)
-    ] = Field(
+    ldif_server_specific_quirks: bool = Field(
         default=FlextLdifConstants.ConfigDefaults.LDIF_SERVER_SPECIFIC_QUIRKS,
         description="Enable server-specific quirk handling",
+    )
+
+    # Quirks Detection and Mode Configuration
+    quirks_detection_mode: Literal["auto", "manual", "disabled"] = Field(
+        default="auto",
+        description="Quirks detection mode: auto (detect server type), manual (use quirks_server_type), disabled (RFC only)",
+    )
+
+    quirks_server_type: str | None = Field(
+        default=None,
+        description="Override server type for quirks when detection_mode is 'manual'",
+    )
+
+    enable_relaxed_parsing: bool = Field(
+        default=False,
+        description="Enable relaxed mode for broken/non-compliant LDIF files",
     )
 
     # Validation Configuration using FlextLdifConstants for defaults
@@ -257,11 +194,9 @@ class FlextLdifConfig(FlextConfig):
         description="Validation strictness level",
     )
 
-    strict_rfc_compliance: Annotated[bool, BeforeValidator(_coerce_bool_from_env)] = (
-        Field(
-            default=FlextLdifConstants.ConfigDefaults.STRICT_RFC_COMPLIANCE,
-            description="Enable strict RFC 2849 compliance",
-        )
+    strict_rfc_compliance: bool = Field(
+        default=FlextLdifConstants.ConfigDefaults.STRICT_RFC_COMPLIANCE,
+        description="Enable strict RFC 2849 compliance",
     )
 
     # Server Configuration using FlextLdifConstants for defaults
@@ -317,18 +252,25 @@ class FlextLdifConfig(FlextConfig):
                 )
                 raise ValueError(msg)
 
-        # Validate debug mode consistency (use inherited self.debug from FlextConfig)
-        if (
-            self.debug
-            and self.max_workers
-            > FlextLdifConstants.ValidationRules.MAX_WORKERS_DEBUG_RULE
-        ):
-            msg = (
-                f"Debug mode should use <= "
-                f"{FlextLdifConstants.ValidationRules.MAX_WORKERS_DEBUG_RULE} workers "
-                f"for better debugging"
+        # Validate debug mode consistency (use inherited self.is_debug_enabled from FlextConfig)
+        if self.is_debug_enabled and self.enable_performance_optimizations:
+            # Debug mode conflicts with performance optimizations
+            # Disable performance mode and adjust workers for debugging
+            object.__setattr__(self, "enable_performance_optimizations", False)
+
+            if self.max_workers > FlextLdifConstants.ValidationRules.MAX_WORKERS_DEBUG_RULE:
+                object.__setattr__(
+                    self,
+                    "max_workers",
+                    FlextLdifConstants.ValidationRules.MAX_WORKERS_DEBUG_RULE
+                )
+        elif self.is_debug_enabled and self.max_workers > FlextLdifConstants.ValidationRules.MAX_WORKERS_DEBUG_RULE:
+            # Debug mode with high worker count - adjust for better debugging
+            object.__setattr__(
+                self,
+                "max_workers",
+                FlextLdifConstants.ValidationRules.MAX_WORKERS_DEBUG_RULE
             )
-            raise ValueError(msg)
 
         # Validate analytics configuration
         if (
@@ -348,6 +290,14 @@ class FlextLdifConfig(FlextConfig):
             msg = (
                 "Parallel threshold must be positive when parallel processing "
                 "is enabled"
+            )
+            raise ValueError(msg)
+
+        # Validate quirks configuration
+        if self.quirks_detection_mode == "manual" and not self.quirks_server_type:
+            msg = (
+                "quirks_server_type must be specified when "
+                "quirks_detection_mode is 'manual'"
             )
             raise ValueError(msg)
 

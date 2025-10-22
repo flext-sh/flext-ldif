@@ -580,7 +580,8 @@ class TestFlextLdifEntryBuilder:
 
         # The result fails because DN validation is strict per RFC 4514
         assert result.is_failure
-        assert "DN cannot be empty" in str(result.error)
+        # Pydantic v2 native error message for min_length=1 constraint
+        assert "String should have at least 1 character" in str(result.error)
 
     def test_logging_functionality(self) -> None:
         """Test that logging functionality works correctly."""

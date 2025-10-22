@@ -598,6 +598,7 @@ See TODO.md for detailed development priorities.
 
 ## 📚 Documentation
 
+- **[Architecture Standards](ARCHITECTURE_STANDARDS.md)** - LDIF operations responsibility, import rules, compliance verification
 - **[Getting Started](docs/getting-started.md)** - Installation and setup
 - **[Architecture](docs/architecture.md)** - Service design and patterns
 - **[API Reference](docs/api-reference.md)** - Complete API documentation

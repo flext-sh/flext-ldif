@@ -31,6 +31,7 @@ class FlextLdifConstants(FlextConstants):
     OID_FORMAT: Final[str] = "oid"
     AUTO_FORMAT: Final[str] = "auto"
     OUD_FORMAT: Final[str] = "oud"
+    RELAXED_FORMAT: Final[str] = "relaxed"
 
     class Format:
         """LDIF format specifications."""
@@ -1165,6 +1166,7 @@ class FlextLdifConstants(FlextConstants):
         RFC: Final[str] = "rfc"
         DS_389: Final[str] = "389ds"
         ORACLE: Final[str] = "oracle"
+        RELAXED: Final[str] = "relaxed"
 
         # Mapping between short and long server types
         ORACLE_OID_VARIANTS: Final[frozenset[str]] = frozenset(["oid", "oracle_oid"])

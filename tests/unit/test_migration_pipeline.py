@@ -15,7 +15,7 @@ from typing import cast
 
 import pytest
 
-from flext_ldif.migration_pipeline import FlextLdifMigrationPipeline
+from flext_ldif.pipelines.migration_pipeline import FlextLdifMigrationPipeline
 from flext_ldif.quirks.registry import FlextLdifQuirksRegistry
 
 

@@ -15,6 +15,7 @@ OID-specific features:
 
 from __future__ import annotations
 
+import logging
 import re
 from typing import ClassVar
 
@@ -28,22 +29,36 @@ from flext_ldif.quirks.base import (
     FlextLdifQuirksBaseEntryQuirk,
     FlextLdifQuirksBaseSchemaQuirk,
 )
-from flext_ldif.services.dn_service import DnService
+from flext_ldif.services.dn_service import FlextLdifDnService
 from flext_ldif.typings import FlextLdifTypes
+
+logger = logging.getLogger(__name__)
 
 
 class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
-    """Oracle OID schema quirk.
+    """Oracle OID schema quirk - implements FlextLdifProtocols.Quirks.SchemaQuirkProtocol.
 
     Extends RFC 4512 schema parsing with Oracle OID-specific features:
     - Oracle OID namespace (2.16.840.1.113894.*)
     - Oracle-specific syntaxes
     - Oracle attribute extensions
+    - OUD compatibility fixes (matching rules, syntax OIDs)
+
+    **Protocol Compliance**: Fully implements
+    FlextLdifProtocols.Quirks.SchemaQuirkProtocol through structural typing.
+    All methods match protocol signatures exactly for type safety.
+
+    **Validation**: Verify protocol compliance with:
+        from flext_ldif.protocols import FlextLdifProtocols
+        quirk = FlextLdifQuirksServersOid()
+        assert isinstance(quirk, FlextLdifProtocols.Quirks.SchemaQuirkProtocol)
 
     Example:
         quirk = FlextLdifQuirksServersOid(server_type="oid")
         if quirk.can_handle_attribute(attr_def):
             result = quirk.parse_attribute(attr_def)
+            if result.is_success:
+                parsed_attr = result.unwrap()
 
     """
 
@@ -60,20 +75,54 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
         r"2\.16\.840\.1\.113894\."
     )
 
+    # Fix invalid matching rules for OUD compatibility
+    # OUD doesn't support: caseIgnoreSubStringsMatch (wrong case), accessDirectiveMatch (OID-specific)
+    MATCHING_RULE_REPLACEMENTS: ClassVar[dict[str, str]] = {
+        "caseIgnoreSubStringsMatch": "caseIgnoreSubstringsMatch",  # Fix capitalization
+        "accessDirectiveMatch": "caseIgnoreMatch",  # Replace OID-specific with standard
+    }
+
+    # Replace unsupported/deprecated syntax OIDs with OUD-compatible ones
+    SYNTAX_OID_REPLACEMENTS: ClassVar[dict[str, str]] = {
+        "1.3.6.1.4.1.1466.115.121.1.1": "1.3.6.1.4.1.1466.115.121.1.15",  # ACI List → Directory String
+    }
+
+    # Attributes to skip in objectClass definitions (missing/incompatible with OUD)
+    SKIP_OBJECTCLASS_ATTRIBUTES: ClassVar[set[str]] = {
+        "orclaci",  # OID Access Control - incompatible with OUD
+        "orclentrylevelaci",  # OID Entry-Level ACI - incompatible with OUD
+        "orcldaslov",  # Missing from schema
+        "orcljaznjavaclass",  # Missing from schema
+    }
+
     def model_post_init(self, _context: object, /) -> None:
         """Initialize OID schema quirk."""
 
     def can_handle_attribute(self, attr_definition: str) -> bool:
-        """Check if this is an Oracle OID attribute.
+        """Check if this attribute should be processed by OID quirks.
+
+        Only handles Oracle OID-specific attributes (OID namespace 2.16.840.1.113894.*).
+        Standard RFC attributes are handled by the base RFC quirks.
 
         Args:
-        attr_definition: AttributeType definition string
+            attr_definition: AttributeType definition string
 
         Returns:
-        True if this contains Oracle OID namespace
+            True if attribute is Oracle OID-specific (namespace 2.16.840.1.113894.*)
 
         """
-        return bool(self.ORACLE_OID_PATTERN.search(attr_definition))
+        # Extract OID from definition
+        try:
+            # Find OID in parentheses at start: ( 2.16.840.1.113894.* ...
+            match = re.search(r"\(\s*([\d.]+)", attr_definition)
+            if not match:
+                return False
+
+            oid = match.group(1)
+            # Check if it's Oracle OID namespace
+            return oid.startswith("2.16.840.1.113894.")
+        except Exception:
+            return False
 
     def parse_attribute(self, attr_definition: str) -> FlextResult[dict[str, object]]:
         """Parse Oracle OID attribute definition.
@@ -164,16 +213,30 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
             )
 
     def can_handle_objectclass(self, oc_definition: str) -> bool:
-        """Check if this is an Oracle OID objectClass.
+        """Check if this objectClass should be processed by OID quirks.
+
+        Only handles Oracle OID-specific objectClasses (OID namespace 2.16.840.1.113894.*).
+        Standard RFC objectClasses are handled by the base RFC quirks.
 
         Args:
-        oc_definition: ObjectClass definition string
+            oc_definition: ObjectClass definition string
 
         Returns:
-        True if this contains Oracle OID namespace
+            True if objectClass is Oracle OID-specific (namespace 2.16.840.1.113894.*)
 
         """
-        return bool(self.ORACLE_OID_PATTERN.search(oc_definition))
+        # Extract OID from definition
+        try:
+            # Find OID in parentheses at start: ( 2.16.840.1.113894.* ...
+            match = re.search(r"\(\s*([\d.]+)", oc_definition)
+            if not match:
+                return False
+
+            oid = match.group(1)
+            # Check if it's Oracle OID namespace
+            return oid.startswith("2.16.840.1.113894.")
+        except Exception:
+            return False
 
     def parse_objectclass(self, oc_definition: str) -> FlextResult[dict[str, object]]:
         """Parse Oracle OID objectClass definition.
@@ -280,24 +343,71 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
         """
         try:
             # Oracle OID attributes can be represented in RFC format
-            # by removing Oracle-specific extensions
-            rfc_data = {
-                FlextLdifConstants.DictKeys.OID: attr_data.get(
-                    FlextLdifConstants.DictKeys.OID
-                ),
-                FlextLdifConstants.DictKeys.NAME: attr_data.get(
-                    FlextLdifConstants.DictKeys.NAME
-                ),
-                FlextLdifConstants.DictKeys.DESC: attr_data.get(
-                    FlextLdifConstants.DictKeys.DESC
-                ),
-                FlextLdifConstants.DictKeys.SYNTAX: attr_data.get(
-                    FlextLdifConstants.DictKeys.SYNTAX
-                ),
-                FlextLdifConstants.DictKeys.EQUALITY: attr_data.get(
-                    FlextLdifConstants.DictKeys.EQUALITY
-                ),
-            }
+            # by removing Oracle-specific extensions and fixing OUD-incompatible values
+
+            # Copy all fields from attr_data first
+            rfc_data = dict(attr_data)
+
+            # Fix NAME - remove ;binary suffix and replace underscores
+            name_value = rfc_data.get(FlextLdifConstants.DictKeys.NAME)
+            if name_value and isinstance(name_value, str):
+                modified = False
+                if ";binary" in name_value:
+                    name_value = name_value.replace(";binary", "")
+                    modified = True
+                    logger.debug(f"Removed ;binary from NAME: {name_value}")
+                if "_" in name_value:
+                    name_value = name_value.replace("_", "-")
+                    modified = True
+                    logger.debug(f"Replaced _ with - in NAME: {name_value}")
+                if modified:
+                    rfc_data[FlextLdifConstants.DictKeys.NAME] = name_value
+
+            # Fix EQUALITY - replace invalid matching rules or fix misused SUBSTR rules
+            equality_value = rfc_data.get(FlextLdifConstants.DictKeys.EQUALITY)
+            if equality_value and isinstance(equality_value, str):
+                # Check if EQUALITY is using a SUBSTR matching rule (common OID mistake)
+                # Handle both caseIgnoreSubStringsMatch (capital S) and caseIgnoreSubstringsMatch (lowercase)
+                if equality_value in {
+                    "caseIgnoreSubstringsMatch",
+                    "caseIgnoreSubStringsMatch",
+                }:
+                    # Move to SUBSTR and use proper EQUALITY
+                    rfc_data[FlextLdifConstants.DictKeys.EQUALITY] = "caseIgnoreMatch"
+                    rfc_data[FlextLdifConstants.DictKeys.SUBSTR] = (
+                        "caseIgnoreSubstringsMatch"
+                    )
+                    logger.debug(
+                        f"Fixed EQUALITY: moved {equality_value} to SUBSTR, using caseIgnoreMatch for EQUALITY"
+                    )
+                elif equality_value in self.MATCHING_RULE_REPLACEMENTS:
+                    # Standard replacement
+                    original = equality_value
+                    rfc_data[FlextLdifConstants.DictKeys.EQUALITY] = (
+                        self.MATCHING_RULE_REPLACEMENTS[equality_value]
+                    )
+                    logger.debug(
+                        f"Replaced matching rule {original} -> {rfc_data[FlextLdifConstants.DictKeys.EQUALITY]}"
+                    )
+
+            # Fix SYNTAX - remove quotes (OID uses 'OID' format, RFC 4512 uses OID without quotes)
+            syntax_value = rfc_data.get(FlextLdifConstants.DictKeys.SYNTAX)
+            if syntax_value and isinstance(syntax_value, str):
+                # Remove quotes if present
+                if syntax_value.startswith("'") and syntax_value.endswith("'"):
+                    syntax_value = syntax_value[1:-1]
+                    rfc_data[FlextLdifConstants.DictKeys.SYNTAX] = syntax_value
+                    logger.debug(f"Removed quotes from SYNTAX: {syntax_value}")
+
+                # Replace unsupported syntax OIDs
+                if syntax_value in self.SYNTAX_OID_REPLACEMENTS:
+                    original = syntax_value
+                    rfc_data[FlextLdifConstants.DictKeys.SYNTAX] = (
+                        self.SYNTAX_OID_REPLACEMENTS[syntax_value]
+                    )
+                    logger.debug(
+                        f"Replaced syntax OID {original} -> {rfc_data[FlextLdifConstants.DictKeys.SYNTAX]}"
+                    )
 
             return FlextResult[dict[str, object]].ok(rfc_data)
 
@@ -320,6 +430,68 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
         """
         try:
             # Convert Oracle OID objectClass to RFC format
+            # Filter out missing/incompatible attributes from MUST and MAY
+
+            # Filter MUST attributes
+            must_value = oc_data.get(FlextLdifConstants.DictKeys.MUST)
+            if must_value and isinstance(must_value, list):
+                filtered_must = [
+                    attr
+                    for attr in must_value
+                    if isinstance(attr, str)
+                    and attr.lower() not in self.SKIP_OBJECTCLASS_ATTRIBUTES
+                ]
+                must_value = filtered_must or None
+                if must_value is None:
+                    logger.debug("All MUST attributes filtered out")
+
+            # Filter MAY attributes
+            may_value = oc_data.get(FlextLdifConstants.DictKeys.MAY)
+            if may_value and isinstance(may_value, list):
+                filtered_may = [
+                    attr
+                    for attr in may_value
+                    if isinstance(attr, str)
+                    and attr.lower() not in self.SKIP_OBJECTCLASS_ATTRIBUTES
+                ]
+                if len(filtered_may) < len(may_value):
+                    removed = set(may_value) - set(filtered_may)
+                    logger.debug(f"Filtered MAY attributes: {removed}")
+                may_value = filtered_may or None
+
+            # Fix inheritance conflicts - OUD requires KIND to match superior class KIND
+            # Map of known problematic superior classes and their expected KINDs
+            kind_value = oc_data.get(FlextLdifConstants.DictKeys.KIND)
+            sup_value = oc_data.get(FlextLdifConstants.DictKeys.SUP)
+
+            if sup_value and kind_value:
+                # Known STRUCTURAL superior classes that cause conflicts
+                structural_superiors = {
+                    "orclpwdverifierprofile",
+                    "orclapplicationentity",
+                    "tombstone",
+                }
+                # Known AUXILIARY superior classes that cause conflicts
+                auxiliary_superiors = {"javanamingref", "javanamingReference"}
+
+                sup_lower = str(sup_value).lower() if isinstance(sup_value, str) else ""
+
+                # If SUP is STRUCTURAL but objectClass is AUXILIARY, change to STRUCTURAL
+                if sup_lower in structural_superiors and kind_value == "AUXILIARY":
+                    logger.debug(
+                        f"Changing {oc_data.get('name')} from AUXILIARY to STRUCTURAL "
+                        f"to match superior class {sup_value}"
+                    )
+                    kind_value = "STRUCTURAL"
+
+                # If SUP is AUXILIARY but objectClass is STRUCTURAL, change to AUXILIARY
+                elif sup_lower in auxiliary_superiors and kind_value == "STRUCTURAL":
+                    logger.debug(
+                        f"Changing {oc_data.get('name')} from STRUCTURAL to AUXILIARY "
+                        f"to match superior class {sup_value}"
+                    )
+                    kind_value = "AUXILIARY"
+
             rfc_data = {
                 FlextLdifConstants.DictKeys.OID: oc_data.get(
                     FlextLdifConstants.DictKeys.OID
@@ -336,12 +508,8 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                 FlextLdifConstants.DictKeys.KIND: oc_data.get(
                     FlextLdifConstants.DictKeys.KIND
                 ),
-                FlextLdifConstants.DictKeys.MUST: oc_data.get(
-                    FlextLdifConstants.DictKeys.MUST
-                ),
-                FlextLdifConstants.DictKeys.MAY: oc_data.get(
-                    FlextLdifConstants.DictKeys.MAY
-                ),
+                FlextLdifConstants.DictKeys.MUST: must_value,
+                FlextLdifConstants.DictKeys.MAY: may_value,
             }
 
             return FlextResult[dict[str, object]].ok(rfc_data)
@@ -395,9 +563,20 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                 return FlextResult[str].fail("Missing required 'oid' field")
             parts.append(f"( {attr_data['oid']}")
 
-            # Add NAME (required)
+            # Add NAME (required) - Fix invalid attribute names for OUD
             if "name" in attr_data:
-                parts.append(f"NAME '{attr_data['name']}'")
+                name = str(attr_data["name"])
+                # Remove ;binary suffix (not allowed in OUD attribute names)
+                if ";binary" in name:
+                    name = name.replace(";binary", "")
+                    logger.debug(f"Removed ;binary suffix from attribute name: {name}")
+                # Replace underscore with hyphen (OUD doesn't allow _ in names)
+                if "_" in name:
+                    name = name.replace("_", "-")
+                    logger.debug(
+                        f"Replaced underscore with hyphen in attribute name: {name}"
+                    )
+                parts.append(f"NAME '{name}'")
 
             # Add DESC (optional)
             if "desc" in attr_data:
@@ -407,9 +586,15 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
             if "sup" in attr_data:
                 parts.append(f"SUP {attr_data['sup']}")
 
-            # Add EQUALITY (optional)
+            # Add EQUALITY (optional) - Fix invalid matching rules for OUD
             if "equality" in attr_data:
-                parts.append(f"EQUALITY {attr_data['equality']}")
+                equality = str(attr_data["equality"])
+                # Replace invalid matching rules with OUD-compatible ones
+                if equality in self.MATCHING_RULE_REPLACEMENTS:
+                    original = equality
+                    equality = self.MATCHING_RULE_REPLACEMENTS[equality]
+                    logger.debug(f"Replaced matching rule {original} with {equality}")
+                parts.append(f"EQUALITY {equality}")
 
             # Add ORDERING (optional)
             if "ordering" in attr_data:
@@ -519,28 +704,47 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
             if "kind" in oc_data:
                 parts.append(str(oc_data["kind"]))
 
-            # Add MUST attributes (optional)
+            # Add MUST attributes (optional) - Filter out missing/incompatible attributes
             if oc_data.get("must"):
                 must_attrs = oc_data["must"]
-                if isinstance(must_attrs, list) and len(must_attrs) > 1:
-                    # Multiple required attributes: "MUST ( cn $ sn )"
-                    must_str = " $ ".join(must_attrs)
-                    parts.append(f"MUST ( {must_str} )")
-                elif isinstance(must_attrs, list) and len(must_attrs) == 1:
-                    parts.append(f"MUST {must_attrs[0]}")
-                else:
+                if isinstance(must_attrs, list):
+                    # Filter out attributes that don't exist in OUD
+                    filtered_must = [
+                        attr
+                        for attr in must_attrs
+                        if attr.lower() not in self.SKIP_OBJECTCLASS_ATTRIBUTES
+                    ]
+                    if len(filtered_must) > 1:
+                        # Multiple required attributes: "MUST ( cn $ sn )"
+                        must_str = " $ ".join(filtered_must)
+                        parts.append(f"MUST ( {must_str} )")
+                    elif len(filtered_must) == 1:
+                        parts.append(f"MUST {filtered_must[0]}")
+                    # If all filtered out, don't add MUST clause
+                elif str(must_attrs).lower() not in self.SKIP_OBJECTCLASS_ATTRIBUTES:
                     parts.append(f"MUST {must_attrs}")
 
-            # Add MAY attributes (optional)
+            # Add MAY attributes (optional) - Filter out missing/incompatible attributes
             if oc_data.get("may"):
                 may_attrs = oc_data["may"]
-                if isinstance(may_attrs, list) and len(may_attrs) > 1:
-                    # Multiple optional attributes: "MAY ( description $ seeAlso )"
-                    may_str = " $ ".join(may_attrs)
-                    parts.append(f"MAY ( {may_str} )")
-                elif isinstance(may_attrs, list) and len(may_attrs) == 1:
-                    parts.append(f"MAY {may_attrs[0]}")
-                else:
+                if isinstance(may_attrs, list):
+                    # Filter out attributes that don't exist in OUD
+                    filtered_may = [
+                        attr
+                        for attr in may_attrs
+                        if attr.lower() not in self.SKIP_OBJECTCLASS_ATTRIBUTES
+                    ]
+                    if len(filtered_may) > 1:
+                        # Multiple optional attributes: "MAY ( description $ seeAlso )"
+                        may_str = " $ ".join(filtered_may)
+                        parts.append(f"MAY ( {may_str} )")
+                    elif len(filtered_may) == 1:
+                        parts.append(f"MAY {filtered_may[0]}")
+                    # If all filtered out, don't add MAY clause
+                    if len(may_attrs) > len(filtered_may):
+                        removed = set(may_attrs) - set(filtered_may)
+                        logger.debug(f"Skipped missing attributes in MAY: {removed}")
+                elif str(may_attrs).lower() not in self.SKIP_OBJECTCLASS_ATTRIBUTES:
                     parts.append(f"MAY {may_attrs}")
 
             # Add X-ORIGIN (optional)
@@ -1043,7 +1247,7 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
 
             """
             # Use shared DN utility for consistent DN handling
-            return DnService.clean_dn(dn)
+            return FlextLdifDnService.clean_dn(dn)
 
         def can_handle_entry(
             self,

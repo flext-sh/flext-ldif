@@ -1,4 +1,4 @@
-"""Unit tests for QuirksConversionMatrix facade.
+"""Unit tests for FlextLdifQuirksConversionMatrix facade.
 
 Tests the universal translation matrix for converting LDAP data between
 different server quirks using RFC as intermediate format.
@@ -16,24 +16,24 @@ import pytest
 from flext_core import FlextResult
 
 from flext_ldif.constants import FlextLdifConstants
-from flext_ldif.quirks.conversion_matrix import QuirksConversionMatrix
+from flext_ldif.quirks.conversion_matrix import FlextLdifQuirksConversionMatrix
 from flext_ldif.quirks.servers.oid_quirks import FlextLdifQuirksServersOid
 from flext_ldif.quirks.servers.oud_quirks import FlextLdifQuirksServersOud
 
 
 class TestConversionMatrixInitialization:
-    """Test QuirksConversionMatrix initialization and basic setup."""
+    """Test FlextLdifQuirksConversionMatrix initialization and basic setup."""
 
     def test_matrix_instantiation(self) -> None:
         """Test that conversion matrix can be instantiated."""
-        matrix = QuirksConversionMatrix()
+        matrix = FlextLdifQuirksConversionMatrix()
         assert matrix is not None
         assert hasattr(matrix, "dn_registry")
         assert matrix.dn_registry is not None
 
     def test_matrix_has_conversion_methods(self) -> None:
         """Test that matrix has all required conversion methods."""
-        matrix = QuirksConversionMatrix()
+        matrix = FlextLdifQuirksConversionMatrix()
         assert hasattr(matrix, "convert")
         assert hasattr(matrix, "batch_convert")
         assert hasattr(matrix, "get_supported_conversions")
@@ -45,9 +45,9 @@ class TestGetSupportedConversions:
     """Test get_supported_conversions method."""
 
     @pytest.fixture
-    def matrix(self) -> QuirksConversionMatrix:
+    def matrix(self) -> FlextLdifQuirksConversionMatrix:
         """Create conversion matrix instance."""
-        return QuirksConversionMatrix()
+        return FlextLdifQuirksConversionMatrix()
 
     @pytest.fixture
     def oud(self) -> FlextLdifQuirksServersOud:
@@ -60,7 +60,7 @@ class TestGetSupportedConversions:
         return FlextLdifQuirksServersOid(server_type=FlextLdifConstants.ServerTypes.OID)
 
     def test_get_supported_conversions_oud(
-        self, matrix: QuirksConversionMatrix, oud: FlextLdifQuirksServersOud
+        self, matrix: FlextLdifQuirksConversionMatrix, oud: FlextLdifQuirksServersOud
     ) -> None:
         """Test checking supported conversions for OUD quirk."""
         supported = matrix.get_supported_conversions(oud)
@@ -76,7 +76,7 @@ class TestGetSupportedConversions:
         assert supported["objectclass"] is True
 
     def test_get_supported_conversions_oid(
-        self, matrix: QuirksConversionMatrix, oid: FlextLdifQuirksServersOid
+        self, matrix: FlextLdifQuirksConversionMatrix, oid: FlextLdifQuirksServersOid
     ) -> None:
         """Test checking supported conversions for OID quirk."""
         supported = matrix.get_supported_conversions(oid)
@@ -96,9 +96,9 @@ class TestAttributeConversion:
     """Test attribute conversion through the matrix."""
 
     @pytest.fixture
-    def matrix(self) -> QuirksConversionMatrix:
+    def matrix(self) -> FlextLdifQuirksConversionMatrix:
         """Create conversion matrix instance."""
-        return QuirksConversionMatrix()
+        return FlextLdifQuirksConversionMatrix()
 
     @pytest.fixture
     def oud(self) -> FlextLdifQuirksServersOud:
@@ -112,7 +112,7 @@ class TestAttributeConversion:
 
     def test_convert_attribute_oud_to_oid(
         self,
-        matrix: QuirksConversionMatrix,
+        matrix: FlextLdifQuirksConversionMatrix,
         oud: FlextLdifQuirksServersOud,
         oid: FlextLdifQuirksServersOid,
     ) -> None:
@@ -132,7 +132,7 @@ class TestAttributeConversion:
 
     def test_convert_attribute_oid_to_oud(
         self,
-        matrix: QuirksConversionMatrix,
+        matrix: FlextLdifQuirksConversionMatrix,
         oud: FlextLdifQuirksServersOud,
         oid: FlextLdifQuirksServersOid,
     ) -> None:
@@ -152,7 +152,7 @@ class TestAttributeConversion:
 
     def test_convert_attribute_with_complex_syntax(
         self,
-        matrix: QuirksConversionMatrix,
+        matrix: FlextLdifQuirksConversionMatrix,
         oud: FlextLdifQuirksServersOud,
         oid: FlextLdifQuirksServersOid,
     ) -> None:
@@ -174,7 +174,7 @@ class TestAttributeConversion:
 
     def test_convert_invalid_attribute_fails(
         self,
-        matrix: QuirksConversionMatrix,
+        matrix: FlextLdifQuirksConversionMatrix,
         oud: FlextLdifQuirksServersOud,
         oid: FlextLdifQuirksServersOid,
     ) -> None:
@@ -195,9 +195,9 @@ class TestObjectClassConversion:
     """Test objectClass conversion through the matrix."""
 
     @pytest.fixture
-    def matrix(self) -> QuirksConversionMatrix:
+    def matrix(self) -> FlextLdifQuirksConversionMatrix:
         """Create conversion matrix instance."""
-        return QuirksConversionMatrix()
+        return FlextLdifQuirksConversionMatrix()
 
     @pytest.fixture
     def oud(self) -> FlextLdifQuirksServersOud:
@@ -211,7 +211,7 @@ class TestObjectClassConversion:
 
     def test_convert_objectclass_oud_to_oid(
         self,
-        matrix: QuirksConversionMatrix,
+        matrix: FlextLdifQuirksConversionMatrix,
         oud: FlextLdifQuirksServersOud,
         oid: FlextLdifQuirksServersOid,
     ) -> None:
@@ -231,7 +231,7 @@ class TestObjectClassConversion:
 
     def test_convert_objectclass_oid_to_oud(
         self,
-        matrix: QuirksConversionMatrix,
+        matrix: FlextLdifQuirksConversionMatrix,
         oud: FlextLdifQuirksServersOud,
         oid: FlextLdifQuirksServersOid,
     ) -> None:
@@ -251,7 +251,7 @@ class TestObjectClassConversion:
 
     def test_convert_objectclass_with_may_attributes(
         self,
-        matrix: QuirksConversionMatrix,
+        matrix: FlextLdifQuirksConversionMatrix,
         oud: FlextLdifQuirksServersOud,
         oid: FlextLdifQuirksServersOid,
     ) -> None:
@@ -275,9 +275,9 @@ class TestBatchConversion:
     """Test batch conversion operations."""
 
     @pytest.fixture
-    def matrix(self) -> QuirksConversionMatrix:
+    def matrix(self) -> FlextLdifQuirksConversionMatrix:
         """Create conversion matrix instance."""
-        return QuirksConversionMatrix()
+        return FlextLdifQuirksConversionMatrix()
 
     @pytest.fixture
     def oud(self) -> FlextLdifQuirksServersOud:
@@ -291,7 +291,7 @@ class TestBatchConversion:
 
     def test_batch_convert_attributes(
         self,
-        matrix: QuirksConversionMatrix,
+        matrix: FlextLdifQuirksConversionMatrix,
         oud: FlextLdifQuirksServersOud,
         oid: FlextLdifQuirksServersOid,
     ) -> None:
@@ -311,7 +311,7 @@ class TestBatchConversion:
 
     def test_batch_convert_objectclasses(
         self,
-        matrix: QuirksConversionMatrix,
+        matrix: FlextLdifQuirksConversionMatrix,
         oud: FlextLdifQuirksServersOud,
         oid: FlextLdifQuirksServersOid,
     ) -> None:
@@ -331,7 +331,7 @@ class TestBatchConversion:
 
     def test_batch_convert_with_partial_failures(
         self,
-        matrix: QuirksConversionMatrix,
+        matrix: FlextLdifQuirksConversionMatrix,
         oud: FlextLdifQuirksServersOud,
         oid: FlextLdifQuirksServersOid,
     ) -> None:
@@ -356,9 +356,9 @@ class TestBidirectionalConversion:
     """Test bidirectional conversions OUD ↔ OID."""
 
     @pytest.fixture
-    def matrix(self) -> QuirksConversionMatrix:
+    def matrix(self) -> FlextLdifQuirksConversionMatrix:
         """Create conversion matrix instance."""
-        return QuirksConversionMatrix()
+        return FlextLdifQuirksConversionMatrix()
 
     @pytest.fixture
     def oud(self) -> FlextLdifQuirksServersOud:
@@ -372,7 +372,7 @@ class TestBidirectionalConversion:
 
     def test_attribute_roundtrip_oud_to_oid_to_oud(
         self,
-        matrix: QuirksConversionMatrix,
+        matrix: FlextLdifQuirksConversionMatrix,
         oud: FlextLdifQuirksServersOud,
         oid: FlextLdifQuirksServersOid,
     ) -> None:
@@ -398,7 +398,7 @@ class TestBidirectionalConversion:
 
     def test_objectclass_roundtrip_oid_to_oud_to_oid(
         self,
-        matrix: QuirksConversionMatrix,
+        matrix: FlextLdifQuirksConversionMatrix,
         oud: FlextLdifQuirksServersOud,
         oid: FlextLdifQuirksServersOid,
     ) -> None:
@@ -426,9 +426,9 @@ class TestErrorHandling:
     """Test error handling in conversion matrix."""
 
     @pytest.fixture
-    def matrix(self) -> QuirksConversionMatrix:
+    def matrix(self) -> FlextLdifQuirksConversionMatrix:
         """Create conversion matrix instance."""
-        return QuirksConversionMatrix()
+        return FlextLdifQuirksConversionMatrix()
 
     @pytest.fixture
     def oud(self) -> FlextLdifQuirksServersOud:
@@ -442,7 +442,7 @@ class TestErrorHandling:
 
     def test_invalid_data_type(
         self,
-        matrix: QuirksConversionMatrix,
+        matrix: FlextLdifQuirksConversionMatrix,
         oud: FlextLdifQuirksServersOud,
         oid: FlextLdifQuirksServersOid,
     ) -> None:
@@ -465,7 +465,7 @@ class TestErrorHandling:
 
     def test_malformed_attribute(
         self,
-        matrix: QuirksConversionMatrix,
+        matrix: FlextLdifQuirksConversionMatrix,
         oud: FlextLdifQuirksServersOud,
         oid: FlextLdifQuirksServersOid,
     ) -> None:
@@ -481,7 +481,7 @@ class TestErrorHandling:
 
     def test_empty_batch_conversion(
         self,
-        matrix: QuirksConversionMatrix,
+        matrix: FlextLdifQuirksConversionMatrix,
         oud: FlextLdifQuirksServersOud,
         oid: FlextLdifQuirksServersOid,
     ) -> None:
@@ -496,16 +496,18 @@ class TestDnCaseRegistryIntegration:
     """Test DN case registry integration."""
 
     @pytest.fixture
-    def matrix(self) -> QuirksConversionMatrix:
+    def matrix(self) -> FlextLdifQuirksConversionMatrix:
         """Create conversion matrix instance."""
-        return QuirksConversionMatrix()
+        return FlextLdifQuirksConversionMatrix()
 
-    def test_dn_registry_initialized(self, matrix: QuirksConversionMatrix) -> None:
+    def test_dn_registry_initialized(
+        self, matrix: FlextLdifQuirksConversionMatrix
+    ) -> None:
         """Test that DN registry is initialized."""
         assert hasattr(matrix, "dn_registry")
         assert matrix.dn_registry is not None
 
-    def test_reset_dn_registry(self, matrix: QuirksConversionMatrix) -> None:
+    def test_reset_dn_registry(self, matrix: FlextLdifQuirksConversionMatrix) -> None:
         """Test that DN registry can be reset."""
         # Register a DN
         matrix.dn_registry.register_dn("cn=test,dc=example,dc=com")
@@ -517,7 +519,9 @@ class TestDnCaseRegistryIntegration:
         # We can't directly test if it's empty, but reset should not raise
         assert True
 
-    def test_validate_oud_conversion(self, matrix: QuirksConversionMatrix) -> None:
+    def test_validate_oud_conversion(
+        self, matrix: FlextLdifQuirksConversionMatrix
+    ) -> None:
         """Test OUD conversion validation."""
         result = matrix.validate_oud_conversion()
 
@@ -530,9 +534,9 @@ class TestDnExtractionAndRegistration:
     """Test DN extraction and registration functionality."""
 
     @pytest.fixture
-    def matrix(self) -> QuirksConversionMatrix:
+    def matrix(self) -> FlextLdifQuirksConversionMatrix:
         """Create conversion matrix instance."""
-        return QuirksConversionMatrix()
+        return FlextLdifQuirksConversionMatrix()
 
     @pytest.fixture
     def oud(self) -> FlextLdifQuirksServersOud:
@@ -545,7 +549,7 @@ class TestDnExtractionAndRegistration:
         return FlextLdifQuirksServersOid(server_type=FlextLdifConstants.ServerTypes.OID)
 
     def test_extract_and_register_dns_entry_dn(
-        self, matrix: QuirksConversionMatrix
+        self, matrix: FlextLdifQuirksConversionMatrix
     ) -> None:
         """Test extracting and registering entry DN."""
         data: dict[str, object] = {"dn": "cn=test,dc=example,dc=com"}
@@ -553,7 +557,7 @@ class TestDnExtractionAndRegistration:
         # DN should be registered - we can't directly test registry state but no exception should be raised
 
     def test_extract_and_register_dns_group_members(
-        self, matrix: QuirksConversionMatrix
+        self, matrix: FlextLdifQuirksConversionMatrix
     ) -> None:
         """Test extracting and registering group membership DNs."""
         data: dict[str, object] = {
@@ -566,7 +570,7 @@ class TestDnExtractionAndRegistration:
         # Multiple DNs should be registered - no exception should be raised
 
     def test_extract_and_register_dns_acl_by_clauses(
-        self, matrix: QuirksConversionMatrix
+        self, matrix: FlextLdifQuirksConversionMatrix
     ) -> None:
         """Test extracting DNs from ACL by clauses."""
         data: dict[str, object] = {
@@ -580,7 +584,7 @@ class TestDnExtractionAndRegistration:
         # DN extraction from LDAP URLs should work - no exception should be raised
 
     def test_extract_and_register_dns_mixed_case(
-        self, matrix: QuirksConversionMatrix
+        self, matrix: FlextLdifQuirksConversionMatrix
     ) -> None:
         """Test DN registration handles mixed case properly."""
         data: dict[str, object] = {"dn": "CN=Test,DC=Example,DC=Com"}
@@ -588,7 +592,7 @@ class TestDnExtractionAndRegistration:
         # Mixed case DN should be registered without issues
 
     def test_extract_and_register_dns_empty_data(
-        self, matrix: QuirksConversionMatrix
+        self, matrix: FlextLdifQuirksConversionMatrix
     ) -> None:
         """Test DN extraction with empty data."""
         data: dict[str, object] = {}
@@ -596,7 +600,7 @@ class TestDnExtractionAndRegistration:
         # Empty data should not cause issues
 
     def test_normalize_dns_in_data_success(
-        self, matrix: QuirksConversionMatrix
+        self, matrix: FlextLdifQuirksConversionMatrix
     ) -> None:
         """Test DN normalization in data."""
         # First register some DNs
@@ -613,7 +617,9 @@ class TestDnExtractionAndRegistration:
         # Normalized data should be returned - exact format depends on registry implementation
         _ = result.unwrap()  # Consume result to avoid unused variable warning
 
-    def test_normalize_dns_in_data_no_dns(self, matrix: QuirksConversionMatrix) -> None:
+    def test_normalize_dns_in_data_no_dns(
+        self, matrix: FlextLdifQuirksConversionMatrix
+    ) -> None:
         """Test DN normalization with no DNs in data."""
         data: dict[str, object] = {"cn": "test", "sn": "user"}
         result = matrix._normalize_dns_in_data(data)
@@ -624,9 +630,9 @@ class TestAttributeConversionErrorPaths:
     """Test error paths in attribute conversion."""
 
     @pytest.fixture
-    def matrix(self) -> QuirksConversionMatrix:
+    def matrix(self) -> FlextLdifQuirksConversionMatrix:
         """Create conversion matrix instance."""
-        return QuirksConversionMatrix()
+        return FlextLdifQuirksConversionMatrix()
 
     @pytest.fixture
     def oud(self) -> FlextLdifQuirksServersOud:
@@ -639,7 +645,7 @@ class TestAttributeConversionErrorPaths:
         return FlextLdifQuirksServersOid(server_type=FlextLdifConstants.ServerTypes.OID)
 
     def test_convert_attribute_missing_parse_method(
-        self, matrix: QuirksConversionMatrix
+        self, matrix: FlextLdifQuirksConversionMatrix
     ) -> None:
         """Test attribute conversion fails when source quirk lacks parse method."""
 
@@ -666,7 +672,7 @@ class TestAttributeConversionErrorPaths:
 
     def test_convert_attribute_parse_failure(
         self,
-        matrix: QuirksConversionMatrix,
+        matrix: FlextLdifQuirksConversionMatrix,
         oud: FlextLdifQuirksServersOud,
         oid: FlextLdifQuirksServersOid,
     ) -> None:
@@ -679,7 +685,7 @@ class TestAttributeConversionErrorPaths:
         assert result.is_success
 
     def test_convert_attribute_to_rfc_failure(
-        self, matrix: QuirksConversionMatrix
+        self, matrix: FlextLdifQuirksConversionMatrix
     ) -> None:
         """Test attribute conversion fails when source quirk to_rfc fails."""
 
@@ -712,7 +718,7 @@ class TestAttributeConversionErrorPaths:
         )
 
     def test_convert_attribute_from_rfc_failure(
-        self, matrix: QuirksConversionMatrix
+        self, matrix: FlextLdifQuirksConversionMatrix
     ) -> None:
         """Test attribute conversion fails when target quirk from_rfc fails."""
 
@@ -770,7 +776,7 @@ class TestAttributeConversionErrorPaths:
         )
 
     def test_convert_attribute_write_failure(
-        self, matrix: QuirksConversionMatrix
+        self, matrix: FlextLdifQuirksConversionMatrix
     ) -> None:
         """Test attribute conversion fails when target quirk write fails."""
 
@@ -808,7 +814,7 @@ class TestAttributeConversionErrorPaths:
         )
 
     def test_convert_attribute_unexpected_exception(
-        self, matrix: QuirksConversionMatrix
+        self, matrix: FlextLdifQuirksConversionMatrix
     ) -> None:
         """Test attribute conversion handles unexpected exceptions."""
 
@@ -831,9 +837,9 @@ class TestObjectClassConversionErrorPaths:
     """Test error paths in objectClass conversion."""
 
     @pytest.fixture
-    def matrix(self) -> QuirksConversionMatrix:
+    def matrix(self) -> FlextLdifQuirksConversionMatrix:
         """Create conversion matrix instance."""
-        return QuirksConversionMatrix()
+        return FlextLdifQuirksConversionMatrix()
 
     @pytest.fixture
     def oud(self) -> FlextLdifQuirksServersOud:
@@ -846,7 +852,7 @@ class TestObjectClassConversionErrorPaths:
         return FlextLdifQuirksServersOid(server_type=FlextLdifConstants.ServerTypes.OID)
 
     def test_convert_objectclass_missing_parse_method(
-        self, matrix: QuirksConversionMatrix
+        self, matrix: FlextLdifQuirksConversionMatrix
     ) -> None:
         """Test objectClass conversion fails when source quirk lacks parse method."""
 
@@ -878,7 +884,7 @@ class TestObjectClassConversionErrorPaths:
 
     def test_convert_objectclass_parse_failure(
         self,
-        matrix: QuirksConversionMatrix,
+        matrix: FlextLdifQuirksConversionMatrix,
         oud: FlextLdifQuirksServersOud,
         oid: FlextLdifQuirksServersOid,
     ) -> None:
@@ -890,7 +896,7 @@ class TestObjectClassConversionErrorPaths:
         assert result.is_success
 
     def test_convert_objectclass_to_rfc_failure(
-        self, matrix: QuirksConversionMatrix
+        self, matrix: FlextLdifQuirksConversionMatrix
     ) -> None:
         """Test objectClass conversion fails when source quirk to_rfc fails."""
 
@@ -923,7 +929,7 @@ class TestObjectClassConversionErrorPaths:
         )
 
     def test_convert_objectclass_from_rfc_failure(
-        self, matrix: QuirksConversionMatrix
+        self, matrix: FlextLdifQuirksConversionMatrix
     ) -> None:
         """Test objectClass conversion fails when target quirk from_rfc fails."""
 
@@ -971,7 +977,7 @@ class TestObjectClassConversionErrorPaths:
         )
 
     def test_convert_objectclass_write_failure(
-        self, matrix: QuirksConversionMatrix
+        self, matrix: FlextLdifQuirksConversionMatrix
     ) -> None:
         """Test objectClass conversion fails when target quirk write fails."""
 
@@ -1009,7 +1015,7 @@ class TestObjectClassConversionErrorPaths:
         )
 
     def test_convert_objectclass_unexpected_exception(
-        self, matrix: QuirksConversionMatrix
+        self, matrix: FlextLdifQuirksConversionMatrix
     ) -> None:
         """Test objectClass conversion handles unexpected exceptions."""
 
@@ -1032,9 +1038,9 @@ class TestAclConversion:
     """Test ACL conversion functionality."""
 
     @pytest.fixture
-    def matrix(self) -> QuirksConversionMatrix:
+    def matrix(self) -> FlextLdifQuirksConversionMatrix:
         """Create conversion matrix instance."""
-        return QuirksConversionMatrix()
+        return FlextLdifQuirksConversionMatrix()
 
     @pytest.fixture
     def oud(self) -> FlextLdifQuirksServersOud:
@@ -1048,7 +1054,7 @@ class TestAclConversion:
 
     def test_convert_acl_oud_to_oid(
         self,
-        matrix: QuirksConversionMatrix,
+        matrix: FlextLdifQuirksConversionMatrix,
         oud: FlextLdifQuirksServersOud,
         oid: FlextLdifQuirksServersOid,
     ) -> None:
@@ -1062,7 +1068,7 @@ class TestAclConversion:
         assert result is not None
 
     def test_convert_acl_missing_parse_method(
-        self, matrix: QuirksConversionMatrix, oud: FlextLdifQuirksServersOud
+        self, matrix: FlextLdifQuirksConversionMatrix, oud: FlextLdifQuirksServersOud
     ) -> None:
         """Test ACL conversion fails when source quirk lacks ACL support."""
 
@@ -1106,7 +1112,7 @@ class TestAclConversion:
         )
 
     def test_convert_acl_missing_write_method(
-        self, matrix: QuirksConversionMatrix, oud: FlextLdifQuirksServersOud
+        self, matrix: FlextLdifQuirksConversionMatrix, oud: FlextLdifQuirksServersOud
     ) -> None:
         """Test ACL conversion fails when target quirk lacks write support."""
 
@@ -1140,9 +1146,9 @@ class TestEntryConversion:
     """Test entry conversion functionality."""
 
     @pytest.fixture
-    def matrix(self) -> QuirksConversionMatrix:
+    def matrix(self) -> FlextLdifQuirksConversionMatrix:
         """Create conversion matrix instance."""
-        return QuirksConversionMatrix()
+        return FlextLdifQuirksConversionMatrix()
 
     @pytest.fixture
     def oud(self) -> FlextLdifQuirksServersOud:
@@ -1155,7 +1161,7 @@ class TestEntryConversion:
         return FlextLdifQuirksServersOid(server_type=FlextLdifConstants.ServerTypes.OID)
 
     def test_convert_entry_string_input_fails(
-        self, matrix: QuirksConversionMatrix, oud: FlextLdifQuirksServersOud
+        self, matrix: FlextLdifQuirksConversionMatrix, oud: FlextLdifQuirksServersOud
     ) -> None:
         """Test entry conversion fails for string input (not yet supported)."""
 
@@ -1193,7 +1199,7 @@ sn: user"""
         )
 
     def test_convert_entry_missing_source_support(
-        self, matrix: QuirksConversionMatrix, oid: FlextLdifQuirksServersOid
+        self, matrix: FlextLdifQuirksConversionMatrix, oid: FlextLdifQuirksServersOid
     ) -> None:
         """Test entry conversion fails when source quirk lacks entry support."""
 
@@ -1211,7 +1217,7 @@ sn: user"""
         )
 
     def test_convert_entry_missing_target_support(
-        self, matrix: QuirksConversionMatrix, oud: FlextLdifQuirksServersOud
+        self, matrix: FlextLdifQuirksConversionMatrix, oud: FlextLdifQuirksServersOud
     ) -> None:
         """Test entry conversion fails when target quirk lacks entry support."""
 
@@ -1233,9 +1239,9 @@ class TestBatchConversionErrorHandling:
     """Test batch conversion error scenarios."""
 
     @pytest.fixture
-    def matrix(self) -> QuirksConversionMatrix:
+    def matrix(self) -> FlextLdifQuirksConversionMatrix:
         """Create conversion matrix instance."""
-        return QuirksConversionMatrix()
+        return FlextLdifQuirksConversionMatrix()
 
     @pytest.fixture
     def oud(self) -> FlextLdifQuirksServersOud:
@@ -1247,7 +1253,9 @@ class TestBatchConversionErrorHandling:
         """Create OID quirk instance."""
         return FlextLdifQuirksServersOid(server_type=FlextLdifConstants.ServerTypes.OID)
 
-    def test_batch_convert_all_items_fail(self, matrix: QuirksConversionMatrix) -> None:
+    def test_batch_convert_all_items_fail(
+        self, matrix: FlextLdifQuirksConversionMatrix
+    ) -> None:
         """Test batch conversion handles all items failing."""
 
         class MockQuirk:
@@ -1267,7 +1275,7 @@ class TestBatchConversionErrorHandling:
         )
 
     def test_batch_convert_error_truncation(
-        self, matrix: QuirksConversionMatrix
+        self, matrix: FlextLdifQuirksConversionMatrix
     ) -> None:
         """Test batch conversion truncates errors when more than MAX_ERRORS_TO_SHOW."""
 
@@ -1288,7 +1296,7 @@ class TestBatchConversionErrorHandling:
         )  # 8 - 5 = 3 more
 
     def test_batch_convert_unexpected_exception(
-        self, matrix: QuirksConversionMatrix
+        self, matrix: FlextLdifQuirksConversionMatrix
     ) -> None:
         """Test batch conversion handles unexpected exceptions."""
 
@@ -1314,12 +1322,12 @@ class TestSupportCheckingEdgeCases:
     """Test edge cases in support checking."""
 
     @pytest.fixture
-    def matrix(self) -> QuirksConversionMatrix:
+    def matrix(self) -> FlextLdifQuirksConversionMatrix:
         """Create conversion matrix instance."""
-        return QuirksConversionMatrix()
+        return FlextLdifQuirksConversionMatrix()
 
     def test_get_supported_conversions_minimal_quirk(
-        self, matrix: QuirksConversionMatrix
+        self, matrix: FlextLdifQuirksConversionMatrix
     ) -> None:
         """Test support checking for quirk with minimal functionality."""
 
@@ -1335,7 +1343,7 @@ class TestSupportCheckingEdgeCases:
         assert support["entry"] is False
 
     def test_get_supported_conversions_partial_quirk(
-        self, matrix: QuirksConversionMatrix
+        self, matrix: FlextLdifQuirksConversionMatrix
     ) -> None:
         """Test support checking for quirk with partial functionality."""
 
@@ -1357,7 +1365,7 @@ class TestSupportCheckingEdgeCases:
         assert support["entry"] is False
 
     def test_get_supported_conversions_acl_quirk(
-        self, matrix: QuirksConversionMatrix
+        self, matrix: FlextLdifQuirksConversionMatrix
     ) -> None:
         """Test support checking for quirk with ACL support."""
 
@@ -1382,7 +1390,7 @@ class TestSupportCheckingEdgeCases:
         assert support["entry"] is False
 
     def test_get_supported_conversions_entry_quirk(
-        self, matrix: QuirksConversionMatrix
+        self, matrix: FlextLdifQuirksConversionMatrix
     ) -> None:
         """Test support checking for quirk with entry support."""
 
@@ -1409,8 +1417,8 @@ class TestConversionMatrixConstants:
 
     def test_max_errors_to_show_constant(self) -> None:
         """Test that MAX_ERRORS_TO_SHOW constant exists."""
-        assert hasattr(QuirksConversionMatrix, "MAX_ERRORS_TO_SHOW")
-        assert QuirksConversionMatrix.MAX_ERRORS_TO_SHOW == 5
+        assert hasattr(FlextLdifQuirksConversionMatrix, "MAX_ERRORS_TO_SHOW")
+        assert FlextLdifQuirksConversionMatrix.MAX_ERRORS_TO_SHOW == 5
 
 
 __all__ = [

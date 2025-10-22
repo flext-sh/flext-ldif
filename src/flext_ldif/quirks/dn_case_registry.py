@@ -26,7 +26,7 @@ from flext_ldif.typings import FlextLdifTypes
 type DN = str
 
 
-class DnCaseRegistry(FlextModels.Value):
+class FlextLdifDnCaseRegistry(FlextModels.Value):
     """Registry for tracking canonical DN case during conversions.
 
     This class maintains a mapping of DNs in normalized form (lowercase, no spaces)
@@ -34,7 +34,7 @@ class DnCaseRegistry(FlextModels.Value):
     ensure DN case consistency, especially when converting to OUD.
 
     Examples:
-        >>> registry = DnCaseRegistry()
+        >>> registry = FlextLdifDnCaseRegistry()
         >>>
         >>> # Register canonical case
         >>> canonical = registry.register_dn("CN=Admin, DC=Example, DC=Com")
@@ -100,7 +100,7 @@ class DnCaseRegistry(FlextModels.Value):
             Canonical case DN string
 
         Examples:
-            >>> registry = DnCaseRegistry()
+            >>> registry = FlextLdifDnCaseRegistry()
             >>> registry.register_dn(
             ...     "CN=Admin,DC=Com"
             ... )  # First seen - becomes canonical
@@ -136,7 +136,7 @@ class DnCaseRegistry(FlextModels.Value):
             Canonical case DN string, or None if not registered
 
         Examples:
-            >>> registry = DnCaseRegistry()
+            >>> registry = FlextLdifDnCaseRegistry()
             >>> registry.register_dn("CN=Admin,DC=Com")
             >>> registry.get_canonical_dn("cn=ADMIN,dc=com")
             'CN=Admin,DC=Com'
@@ -157,7 +157,7 @@ class DnCaseRegistry(FlextModels.Value):
             True if DN is registered, False otherwise
 
         Examples:
-            >>> registry = DnCaseRegistry()
+            >>> registry = FlextLdifDnCaseRegistry()
             >>> registry.register_dn("CN=Admin,DC=Com")
             >>> registry.has_dn("cn=REDACTED_LDAP_BIND_PASSWORD,dc=com")
             True
@@ -178,7 +178,7 @@ class DnCaseRegistry(FlextModels.Value):
             Set of all case variants seen (including canonical)
 
         Examples:
-            >>> registry = DnCaseRegistry()
+            >>> registry = FlextLdifDnCaseRegistry()
             >>> registry.register_dn("CN=Admin,DC=Com")
             >>> registry.register_dn("cn=REDACTED_LDAP_BIND_PASSWORD,dc=com")
             >>> registry.register_dn("cn=ADMIN,dc=COM")
@@ -203,7 +203,7 @@ class DnCaseRegistry(FlextModels.Value):
                 - Failure if validation cannot be performed
 
         Examples:
-            >>> registry = DnCaseRegistry()
+            >>> registry = FlextLdifDnCaseRegistry()
             >>> registry.register_dn("cn=REDACTED_LDAP_BIND_PASSWORD,dc=com")
             >>> result = registry.validate_oud_consistency()
             >>> result.unwrap()  # True - only one case variant
@@ -262,7 +262,7 @@ class DnCaseRegistry(FlextModels.Value):
             FlextResult containing normalized data dictionary
 
         Examples:
-            >>> registry = DnCaseRegistry()
+            >>> registry = FlextLdifDnCaseRegistry()
             >>> registry.register_dn("cn=REDACTED_LDAP_BIND_PASSWORD,dc=com")
             >>>
             >>> entry = {
@@ -337,7 +337,7 @@ class DnCaseRegistry(FlextModels.Value):
         from previous conversions.
 
         Examples:
-            >>> registry = DnCaseRegistry()
+            >>> registry = FlextLdifDnCaseRegistry()
             >>> registry.register_dn("cn=REDACTED_LDAP_BIND_PASSWORD,dc=com")
             >>> registry.has_dn("cn=REDACTED_LDAP_BIND_PASSWORD,dc=com")
             True
@@ -356,7 +356,7 @@ class DnCaseRegistry(FlextModels.Value):
             Dictionary with registry statistics
 
         Examples:
-            >>> registry = DnCaseRegistry()
+            >>> registry = FlextLdifDnCaseRegistry()
             >>> registry.register_dn("cn=REDACTED_LDAP_BIND_PASSWORD,dc=com")
             >>> registry.register_dn("CN=Admin,DC=Com")
             >>> registry.get_stats()
@@ -379,4 +379,4 @@ class DnCaseRegistry(FlextModels.Value):
         }
 
 
-__all__ = ["DN", "DnCaseRegistry"]
+__all__ = ["DN", "FlextLdifDnCaseRegistry"]

@@ -5,8 +5,8 @@ entries using concurrent.futures. Supports both memory-efficient batching
 and parallel execution with thread pools.
 
 Components:
- - LdifBatchProcessor: Batch processing for memory efficiency
- - LdifParallelProcessor: Parallel processing with ThreadPoolExecutor
+ - FlextLdifBatchProcessor: Batch processing for memory efficiency
+ - FlextLdifParallelProcessor: Parallel processing with ThreadPoolExecutor
 
 Use cases:
  - Processing large LDIF files with limited memory
@@ -33,7 +33,7 @@ if TYPE_CHECKING:
 T = TypeVar("T")
 
 
-class LdifBatchProcessor:
+class FlextLdifBatchProcessor:
     """Batch processor for LDIF entries.
 
     Processes LDIF entries in batches for memory-efficient operations
@@ -43,7 +43,7 @@ class LdifBatchProcessor:
     batch_size: Number of entries to process per batch
 
     Example:
-    processor = LdifBatchProcessor(batch_size=100)
+    processor = FlextLdifBatchProcessor(batch_size=100)
     result = processor.process_batch(entries, validate_entry)
 
     """
@@ -93,7 +93,7 @@ class LdifBatchProcessor:
             return FlextResult[list[T]].fail(f"Batch processing failed: {e}")
 
 
-class LdifParallelProcessor:
+class FlextLdifParallelProcessor:
     """Parallel processor for LDIF entries.
 
     Processes LDIF entries in parallel for CPU-intensive operations
@@ -103,7 +103,7 @@ class LdifParallelProcessor:
     max_workers: Maximum number of parallel workers
 
     Example:
-    processor = LdifParallelProcessor(max_workers=4)
+    processor = FlextLdifParallelProcessor(max_workers=4)
     result = processor.process_parallel(entries, transform_entry)
 
     """
@@ -173,6 +173,6 @@ class LdifParallelProcessor:
 
 
 __all__ = [
-    "LdifBatchProcessor",
-    "LdifParallelProcessor",
+    "FlextLdifBatchProcessor",
+    "FlextLdifParallelProcessor",
 ]

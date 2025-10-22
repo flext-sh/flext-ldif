@@ -1,0 +1,42 @@
+{
+  "entries": [
+    {
+      "dn": "cn=config",
+      "attributes": {
+        "objectClass": ["olcConfig"],
+        "cn": ["config"]
+      }
+    },
+    {
+      "dn": "olcDatabase=mdb,cn=config",
+      "attributes": {
+        "objectClass": ["olcDatabaseConfig", "olcMdbConfig"],
+        "olcDatabase": ["mdb"],
+        "olcSuffix": ["dc=example,dc=com"],
+        "olcRootDN": ["cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com"],
+        "olcRootPW": ["{SSHA}TrustNo1"],
+        "olcDbDirectory": ["/var/lib/ldap"],
+        "olcDbMaxsize": ["1073741824"],
+        "olcDbIndex": ["objectClass eq", "cn pres,eq,sub", "mail pres,eq,sub"],
+        "olcAccess": ["to attrs=userPassword by self write by anonymous auth by * none", "to * by self write by users read by * none"]
+      }
+    },
+    {
+      "dn": "olcOverlay=syncprov,olcDatabase=mdb,cn=config",
+      "attributes": {
+        "objectClass": ["olcOverlayConfig", "olcSyncProvConfig"],
+        "olcOverlay": ["syncprov"],
+        "olcSpNoPresent": ["FALSE"],
+        "olcSpReloadHint": ["TRUE"]
+      }
+    }
+  ],
+  "count": 3,
+  "valid": true,
+  "server_type": "openldap",
+  "metadata": {
+    "type": "server_specific",
+    "server": "OpenLDAP 2.x",
+    "test_aspects": ["configuration_entries", "database_config", "access_control", "overlay_config", "replication_setup"]
+  }
+}

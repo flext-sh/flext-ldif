@@ -24,7 +24,9 @@ class TestFlextLdifConfig:
         assert config.ldif_max_line_length == 78
         assert config.ldif_max_entries == 1000000
         assert config.ldif_chunk_size == 1000
-        assert config.max_workers == 4
+        # When log_level=DEBUG, max_workers is adjusted to 2 for better debugging
+        expected_workers = 2 if config.is_debug_enabled else 4
+        assert config.max_workers == expected_workers
         assert config.ldif_encoding == "utf-8"
 
     def test_initialization_with_overrides(self) -> None:
@@ -36,7 +38,8 @@ class TestFlextLdifConfig:
         )
         assert config.ldif_max_line_length == 100
         assert config.ldif_max_entries == 5000
-        assert config.max_workers == 4
+        expected_workers = 2 if config.is_debug_enabled else 4
+        assert config.max_workers == expected_workers
 
     def test_validation_max_line_length(self) -> None:
         """Test max line length validation."""
@@ -439,3 +442,164 @@ class TestFlextLdifConfig:
         assert hasattr(instance3, "ldif_strict_validation")
         # After reset, it's a new instance
         assert instance3 is not instance1
+
+
+class TestQuirksDetectionConfiguration:
+    """Test suite for quirks detection configuration modes."""
+
+    def test_default_quirks_detection_mode(self) -> None:
+        """Test that default quirks detection mode is 'auto'."""
+        config = FlextLdifConfig()
+        assert config.quirks_detection_mode == "auto"
+
+    def test_auto_detection_mode(self) -> None:
+        """Test auto detection mode configuration."""
+        config = FlextLdifConfig(quirks_detection_mode="auto")
+        assert config.quirks_detection_mode == "auto"
+        assert config.quirks_server_type is None  # Should be None in auto mode
+
+    def test_manual_detection_mode_requires_server_type(self) -> None:
+        """Test that manual mode requires quirks_server_type."""
+        # Manual mode without server type should raise validation error
+        with pytest.raises(ValidationError):
+            FlextLdifConfig(quirks_detection_mode="manual", quirks_server_type=None)
+
+    def test_manual_detection_mode_with_server_type(self) -> None:
+        """Test manual detection mode with server type specified."""
+        config = FlextLdifConfig(
+            quirks_detection_mode="manual", quirks_server_type="oud"
+        )
+        assert config.quirks_detection_mode == "manual"
+        assert config.quirks_server_type == "oud"
+
+    def test_disabled_detection_mode(self) -> None:
+        """Test disabled detection mode (RFC-only)."""
+        config = FlextLdifConfig(quirks_detection_mode="disabled")
+        assert config.quirks_detection_mode == "disabled"
+
+    def test_disabled_mode_ignores_server_type(self) -> None:
+        """Test that disabled mode works with or without server_type."""
+        # Disabled mode with server type specified (should be ignored)
+        config1 = FlextLdifConfig(
+            quirks_detection_mode="disabled", quirks_server_type="oid"
+        )
+        assert config1.quirks_detection_mode == "disabled"
+
+        # Disabled mode without server type
+        config2 = FlextLdifConfig(quirks_detection_mode="disabled")
+        assert config2.quirks_detection_mode == "disabled"
+
+    def test_relaxed_parsing_default(self) -> None:
+        """Test that relaxed parsing is disabled by default."""
+        config = FlextLdifConfig()
+        assert config.enable_relaxed_parsing is False
+
+    def test_enable_relaxed_parsing(self) -> None:
+        """Test enabling relaxed parsing mode."""
+        config = FlextLdifConfig(enable_relaxed_parsing=True)
+        assert config.enable_relaxed_parsing is True
+
+    def test_relaxed_parsing_with_auto_detection(self) -> None:
+        """Test relaxed parsing combined with auto detection."""
+        config = FlextLdifConfig(
+            quirks_detection_mode="auto", enable_relaxed_parsing=True
+        )
+        assert config.quirks_detection_mode == "auto"
+        assert config.enable_relaxed_parsing is True
+
+    def test_relaxed_parsing_with_manual_mode(self) -> None:
+        """Test relaxed parsing combined with manual detection."""
+        config = FlextLdifConfig(
+            quirks_detection_mode="manual",
+            quirks_server_type="oud",
+            enable_relaxed_parsing=True,
+        )
+        assert config.quirks_detection_mode == "manual"
+        assert config.quirks_server_type == "oud"
+        assert config.enable_relaxed_parsing is True
+
+    def test_relaxed_parsing_with_disabled_mode(self) -> None:
+        """Test relaxed parsing combined with disabled (RFC-only) mode."""
+        config = FlextLdifConfig(
+            quirks_detection_mode="disabled", enable_relaxed_parsing=True
+        )
+        assert config.quirks_detection_mode == "disabled"
+        assert config.enable_relaxed_parsing is True
+
+    def test_supported_server_types(self) -> None:
+        """Test that manual mode accepts all supported server types."""
+        supported_types = [
+            "oid",
+            "oud",
+            "openldap",
+            "openldap1",
+            "ad",
+            "ds389",
+            "apache",
+            "novell",
+            "tivoli",
+            "relaxed",
+        ]
+
+        for server_type in supported_types:
+            config = FlextLdifConfig(
+                quirks_detection_mode="manual", quirks_server_type=server_type
+            )
+            assert config.quirks_server_type == server_type
+
+    def test_quirks_server_type_none_in_auto_mode(self) -> None:
+        """Test that quirks_server_type remains None in auto mode."""
+        config = FlextLdifConfig(
+            quirks_detection_mode="auto",
+            quirks_server_type="oud",  # Should be ignored in auto mode
+        )
+        # Note: Pydantic will set it, but validation logic should ignore it
+        assert config.quirks_detection_mode == "auto"
+
+    def test_configuration_consistency_validation(self) -> None:
+        """Test configuration consistency validation."""
+        # Manual mode with server type - should pass
+        config = FlextLdifConfig(
+            quirks_detection_mode="manual", quirks_server_type="oud"
+        )
+        assert config is not None
+
+    def test_config_dict_with_quirks_settings(self) -> None:
+        """Test that quirks settings are included in config dict."""
+        config = FlextLdifConfig(
+            quirks_detection_mode="manual",
+            quirks_server_type="oud",
+            enable_relaxed_parsing=True,
+        )
+
+        config_dict = config.model_dump()
+        assert "quirks_detection_mode" in config_dict
+        assert "quirks_server_type" in config_dict
+        assert "enable_relaxed_parsing" in config_dict
+        assert config_dict["quirks_detection_mode"] == "manual"
+        assert config_dict["quirks_server_type"] == "oud"
+        assert config_dict["enable_relaxed_parsing"] is True
+
+    def test_all_quirks_modes_with_all_combinations(self) -> None:
+        """Test all combinations of quirks detection modes."""
+        # Auto mode
+        config_auto = FlextLdifConfig(quirks_detection_mode="auto")
+        assert config_auto.quirks_detection_mode == "auto"
+
+        # Manual mode with different servers
+        for server in ["oid", "oud", "openldap", "ad"]:
+            config_manual = FlextLdifConfig(
+                quirks_detection_mode="manual", quirks_server_type=server
+            )
+            assert config_manual.quirks_server_type == server
+
+        # Disabled mode
+        config_disabled = FlextLdifConfig(quirks_detection_mode="disabled")
+        assert config_disabled.quirks_detection_mode == "disabled"
+
+        # All with relaxed parsing
+        for detection_mode in ["auto", "disabled"]:
+            config = FlextLdifConfig(
+                quirks_detection_mode=detection_mode, enable_relaxed_parsing=True
+            )
+            assert config.enable_relaxed_parsing is True

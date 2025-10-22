@@ -764,7 +764,7 @@ objectClass: groupOfNames
         assert parse_result.is_success
         entries = parse_result.unwrap()
 
-        filter_result = ldif.filter_by_objectclass(entries, "inetOrgPerson")
+        filter_result = ldif.filter(entries, objectclass="inetOrgPerson")
 
         assert filter_result.is_success
         filtered = filter_result.unwrap()
@@ -790,7 +790,7 @@ objectClass: groupOfNames
         assert parse_result.is_success
         entries = parse_result.unwrap()
 
-        filter_result = ldif.filter_persons(entries)
+        filter_result = ldif.filter(entries, objectclass="person")
 
         assert filter_result.is_success
         filtered = filter_result.unwrap()
@@ -890,7 +890,8 @@ objectClass: person
         """Test building a person entry."""
         ldif = FlextLdif()
 
-        result = ldif.build_person_entry(
+        result = ldif.build(
+            "person",
             cn="Test User",
             sn="User",
             base_dn="dc=example,dc=com",
@@ -930,8 +931,11 @@ objectClass: person
         """Test building a group entry."""
         ldif = FlextLdif()
 
-        result = ldif.build_group_entry(
-            cn="Test Group", base_dn="dc=example,dc=com", description="Test group"
+        result = ldif.build(
+            "group",
+            cn="Test Group",
+            base_dn="dc=example,dc=com",
+            description="Test group",
         )
 
         assert result.is_success
@@ -954,7 +958,8 @@ objectClass: person
         """Test building an organizational unit entry."""
         ldif = FlextLdif()
 
-        result = ldif.build_organizational_unit(
+        result = ldif.build(
+            "ou",
             ou="Test OU",
             base_dn="dc=example,dc=com",
             description="Test organizational unit",
@@ -981,14 +986,14 @@ objectClass: person
         ldif = FlextLdif()
 
         # First create an entry
-        result = ldif.build_person_entry(
-            cn="Test User", sn="User", base_dn="dc=example,dc=com"
+        result = ldif.build(
+            "person", cn="Test User", sn="User", base_dn="dc=example,dc=com"
         )
         assert result.is_success
         entry = result.unwrap()
 
         # Convert to dict
-        dict_result = ldif.entry_to_dict(entry)
+        dict_result = ldif.convert("entry_to_dict", entry=entry)
         assert dict_result.is_success
         entry_dict = dict_result.unwrap()
 
@@ -1003,17 +1008,19 @@ objectClass: person
         ldif = FlextLdif()
 
         # Create entries
-        result1 = ldif.build_person_entry(
-            cn="User1", sn="One", base_dn="dc=example,dc=com"
+        result1 = ldif.build(
+            "person", cn="User1", sn="One", base_dn="dc=example,dc=com"
         )
-        result2 = ldif.build_person_entry(
-            cn="User2", sn="Two", base_dn="dc=example,dc=com"
+        result2 = ldif.build(
+            "person", cn="User2", sn="Two", base_dn="dc=example,dc=com"
         )
         assert result1.is_success and result2.is_success
         entries = [result1.unwrap(), result2.unwrap()]
 
         # Convert to dicts
-        entries_dicts = ldif.entries_to_dicts(entries)
+        conversion_result = ldif.convert("entries_to_dicts", entries=entries)
+        assert conversion_result.is_success
+        entries_dicts = conversion_result.unwrap()
 
         assert isinstance(entries_dicts, list)
         assert len(entries_dicts) == 2
@@ -1038,7 +1045,9 @@ objectClass: person
         }
 
         # Convert back to entries
-        entries = ldif.dicts_to_entries([entry_dict])
+        conversion_result = ldif.convert("dicts_to_entries", dicts=[entry_dict])
+        assert conversion_result.is_success
+        entries = conversion_result.unwrap()
 
         assert isinstance(entries, list)
         assert len(entries) == 1
@@ -1051,14 +1060,14 @@ objectClass: person
         ldif = FlextLdif()
 
         # Create an entry
-        result = ldif.build_person_entry(
-            cn="Test User", sn="User", base_dn="dc=example,dc=com"
+        result = ldif.build(
+            "person", cn="Test User", sn="User", base_dn="dc=example,dc=com"
         )
         assert result.is_success
         entry = result.unwrap()
 
         # Convert to JSON
-        json_result = ldif.entries_to_json([entry])
+        json_result = ldif.convert("entries_to_json", entries=[entry])
         assert json_result.is_success
         json_str = json_result.unwrap()
 
@@ -1085,7 +1094,7 @@ objectClass: person
         }]"""
 
         # Convert back to entries
-        entries_result = ldif.json_to_entries(json_str)
+        entries_result = ldif.convert("json_to_entries", json_str=json_str)
         assert entries_result.is_success
         entries = entries_result.unwrap()
 
@@ -1117,8 +1126,8 @@ objectClass: person
         schema = schema_result.unwrap()
 
         # Create an entry
-        result = ldif.build_person_entry(
-            cn="Test User", sn="User", base_dn="dc=example,dc=com"
+        result = ldif.build(
+            "person", cn="Test User", sn="User", base_dn="dc=example,dc=com"
         )
         assert result.is_success
         entry = result.unwrap()
@@ -1186,14 +1195,14 @@ objectClass: person
         ldif = FlextLdif()
 
         # Create some entries
-        result = ldif.build_person_entry(
-            cn="Batch User", sn="User", base_dn="dc=example,dc=com"
+        result = ldif.build(
+            "person", cn="Batch User", sn="User", base_dn="dc=example,dc=com"
         )
         assert result.is_success
         entries = [result.unwrap()]
 
         # Process batch - now works with "transform" and "validate"
-        batch_result = ldif.process_batch("validate", entries)
+        batch_result = ldif.process("validate", entries, parallel=False)
         assert batch_result.is_success
         processed = batch_result.unwrap()
         assert len(processed) == 1
@@ -1204,14 +1213,14 @@ objectClass: person
         ldif = FlextLdif()
 
         # Create some entries
-        result = ldif.build_person_entry(
-            cn="Parallel User", sn="User", base_dn="dc=example,dc=com"
+        result = ldif.build(
+            "person", cn="Parallel User", sn="User", base_dn="dc=example,dc=com"
         )
         assert result.is_success
         entries = [result.unwrap()]
 
         # Process in parallel - now works with "transform" and "validate"
-        parallel_result = ldif.process_parallel("validate", entries)
+        parallel_result = ldif.process("validate", entries, parallel=True)
         assert parallel_result.is_success
         processed = parallel_result.unwrap()
         assert len(processed) == 1

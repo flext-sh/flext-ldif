@@ -528,12 +528,13 @@ class TestDnFormatValidation:
 
     def test_validate_dn_format_invalid_dn_string(self) -> None:
         """Test DN format validation with completely invalid DN."""
-        # Empty DN is rejected at Entry creation time
+        # Empty DN is rejected by Pydantic v2's min_length validation
         entry_result = FlextLdifModels.Entry.create("", {})
 
         # Should fail validation during creation
         assert entry_result.is_failure
-        assert "DN cannot be empty" in str(entry_result.error)
+        # Pydantic v2 native error: min_length constraint violation
+        assert "String should have at least 1 character" in str(entry_result.error)
 
     def test_validate_dn_format_quirks_failure(self) -> None:
         """Test DN format validation when quirks lookup fails."""

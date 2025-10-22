@@ -7,6 +7,25 @@ Defines base classes for implementing server-specific quirks that extend
 RFC-compliant LDIF/LDAP parsing with vendor-specific features.
 
 Quirks allow extending the RFC base without modifying core parser logic.
+
+ARCHITECTURE:
+    Base classes use Python 3.13+ abstract base classes (ABC) with @abstractmethod
+    decorators for explicit inheritance contracts, while also implementing all
+    methods required by FlextLdifProtocols for structural typing validation.
+
+    This dual approach provides:
+    - Explicit inheritance contracts through ABC
+    - Structural typing validation through protocols
+    - isinstance() checks for protocol compliance
+    - Type safety at development and runtime
+
+PROTOCOL COMPLIANCE:
+    All base classes and implementations MUST satisfy corresponding protocols:
+    - FlextLdifQuirksBaseSchemaQuirk → FlextLdifProtocols.Quirks.SchemaQuirkProtocol
+    - FlextLdifQuirksBaseAclQuirk → FlextLdifProtocols.Quirks.AclQuirkProtocol
+    - FlextLdifQuirksBaseEntryQuirk → FlextLdifProtocols.Quirks.EntryQuirkProtocol
+
+    All method signatures must match protocol definitions exactly for type safety.
 """
 
 from __future__ import annotations
@@ -20,6 +39,8 @@ from flext_core import FlextModels, FlextResult
 from pydantic import Field
 
 from flext_ldif.typings import FlextLdifTypes
+
+# Import protocols for validation and type hints
 
 # Deferred import to avoid circular dependency with registry
 # This is an intentional pattern - FlextLdifQuirksRegistry imports from this module
@@ -39,15 +60,24 @@ logger = logging.getLogger(__name__)
 
 
 class FlextLdifQuirksBaseSchemaQuirk(ABC, FlextModels.Value):
-    """Base class for schema quirks.
+    """Base class for schema quirks - satisfies FlextLdifProtocols.Quirks.SchemaQuirkProtocol.
 
-    Schema quirks extend RFC 4512 schema parsing with server-specific features.
+    Schema quirks extend RFC 4512 schema parsing with server-specific features
+    for attribute and objectClass processing.
+
+    **Protocol Compliance**: All implementations MUST satisfy
+    FlextLdifProtocols.Quirks.SchemaQuirkProtocol through structural typing.
+    This means all public methods must match protocol signatures exactly.
+
+    **Validation**: Use isinstance(quirk, FlextLdifProtocols.Quirks.SchemaQuirkProtocol)
+    to check protocol compliance at runtime.
 
     Example vendors:
     - Oracle OID: orclOID prefix, Oracle-specific syntaxes
     - Oracle OUD: Enhanced schema features
     - OpenLDAP: olc* configuration attributes
     - Active Directory: AD-specific schema extensions
+    - RFC: RFC 4512 compliant baseline (no extensions)
     """
 
     server_type: str = Field(
@@ -235,15 +265,24 @@ class FlextLdifQuirksBaseSchemaQuirk(ABC, FlextModels.Value):
 
 
 class FlextLdifQuirksBaseAclQuirk(ABC, FlextModels.Value):
-    """Base class for ACL quirks.
+    """Base class for ACL quirks - satisfies FlextLdifProtocols.Quirks.AclQuirkProtocol.
 
-    ACL quirks extend RFC 4516 ACL parsing with server-specific formats.
+    ACL quirks extend RFC 4516 ACL parsing with server-specific formats
+    for access control list processing.
+
+    **Protocol Compliance**: All implementations MUST satisfy
+    FlextLdifProtocols.Quirks.AclQuirkProtocol through structural typing.
+    This means all public methods must match protocol signatures exactly.
+
+    **Validation**: Use isinstance(quirk, FlextLdifProtocols.Quirks.AclQuirkProtocol)
+    to check protocol compliance at runtime.
 
     Example vendors:
     - Oracle OID: orclaci, orclentrylevelaci
     - Oracle OUD: Enhanced ACI format
     - OpenLDAP: olcAccess directives
     - Active Directory: NT Security Descriptors
+    - RFC: RFC 4516 compliant baseline
     """
 
     server_type: str = Field(
@@ -360,15 +399,24 @@ class FlextLdifQuirksBaseAclQuirk(ABC, FlextModels.Value):
 
 
 class FlextLdifQuirksBaseEntryQuirk(ABC, FlextModels.Value):
-    """Base class for entry processing quirks.
+    """Base class for entry processing quirks - satisfies FlextLdifProtocols.Quirks.EntryQuirkProtocol.
 
-    Entry quirks handle server-specific entry attributes and transformations.
+    Entry quirks handle server-specific entry attributes and transformations
+    for LDAP entry processing.
+
+    **Protocol Compliance**: All implementations MUST satisfy
+    FlextLdifProtocols.Quirks.EntryQuirkProtocol through structural typing.
+    This means all public methods must match protocol signatures exactly.
+
+    **Validation**: Use isinstance(quirk, FlextLdifProtocols.Quirks.EntryQuirkProtocol)
+    to check protocol compliance at runtime.
 
     Example use cases:
     - Oracle operational attributes
     - OpenLDAP configuration entries (cn=config)
     - Active Directory specific attributes
     - Server-specific DN formats
+    - RFC baseline entry handling
     """
 
     server_type: str = Field(

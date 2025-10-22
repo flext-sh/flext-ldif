@@ -11,6 +11,7 @@ Available server quirks:
 - OUD (Oracle Unified Directory) - Complete
 - OpenLDAP 2.x (cn=config) - Complete
 - OpenLDAP 1.x (slapd.conf legacy) - Complete
+- Relaxed Mode (lenient parsing for broken/non-compliant LDIF) - Complete
 - Active Directory (stub)
 - Apache Directory Server (stub)
 - 389 Directory Server (stub)
@@ -28,6 +29,11 @@ from flext_ldif.quirks.servers.oid_quirks import FlextLdifQuirksServersOid
 from flext_ldif.quirks.servers.openldap1_quirks import FlextLdifQuirksServersOpenldap1
 from flext_ldif.quirks.servers.openldap_quirks import FlextLdifQuirksServersOpenldap
 from flext_ldif.quirks.servers.oud_quirks import FlextLdifQuirksServersOud
+from flext_ldif.quirks.servers.relaxed_quirks import (
+    FlextLdifQuirksServersRelaxedAcl,
+    FlextLdifQuirksServersRelaxedEntry,
+    FlextLdifQuirksServersRelaxedSchema,
+)
 from flext_ldif.quirks.servers.tivoli_quirks import FlextLdifQuirksServersTivoli
 from flext_ldif.typings import FlextLdifTypes
 
@@ -40,6 +46,9 @@ __all__ = [
     "FlextLdifQuirksServersOpenldap",
     "FlextLdifQuirksServersOpenldap1",
     "FlextLdifQuirksServersOud",
+    "FlextLdifQuirksServersRelaxedAcl",
+    "FlextLdifQuirksServersRelaxedEntry",
+    "FlextLdifQuirksServersRelaxedSchema",
     "FlextLdifQuirksServersTivoli",
     "FlextLdifTypes",
 ]

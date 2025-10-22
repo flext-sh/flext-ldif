@@ -14,7 +14,7 @@ from flext_core import FlextResult, FlextService
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.quirks.manager import FlextLdifQuirksManager
-from flext_ldif.services.dn_service import DnService
+from flext_ldif.services.dn_service import FlextLdifDnService
 from flext_ldif.typings import FlextLdifTypes
 
 
@@ -59,7 +59,7 @@ class FlextLdifEntryQuirks(FlextService[dict[str, object]]):
 
         """
         # Use DN utils for proper RFC 4514 compliant cleaning
-        return DnService.clean_dn(dn)
+        return FlextLdifDnService.clean_dn(dn)
 
     def adapt_entry(
         self, entry: FlextLdifModels.Entry, target_server: str | None = None

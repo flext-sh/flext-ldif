@@ -28,7 +28,7 @@ from flext_ldif.quirks.base import (
     FlextLdifQuirksBaseEntryQuirk,
     FlextLdifQuirksBaseSchemaQuirk,
 )
-from flext_ldif.quirks.dn_case_registry import DnCaseRegistry
+from flext_ldif.quirks.dn_case_registry import FlextLdifDnCaseRegistry
 
 DataType = Literal["attribute", "objectclass", "acl", "entry"]
 
@@ -43,7 +43,7 @@ QuirkInstance = (
 )
 
 
-class QuirksConversionMatrix:
+class FlextLdifQuirksConversionMatrix:
     """Facade for universal quirk-to-quirk conversion via RFC intermediate format.
 
     This class provides a unified interface for converting LDAP data between
@@ -61,7 +61,7 @@ class QuirksConversionMatrix:
         >>> from flext_ldif.quirks.servers.oud_quirks import FlextLdifQuirksServersOud
         >>> from flext_ldif.quirks.servers.oid_quirks import FlextLdifQuirksServersOid
         >>>
-        >>> matrix = QuirksConversionMatrix()
+        >>> matrix = FlextLdifQuirksConversionMatrix()
         >>> oud = FlextLdifQuirksServersOud()
         >>> oid = FlextLdifQuirksServersOid()
         >>>
@@ -82,7 +82,7 @@ class QuirksConversionMatrix:
     def __init__(self) -> None:
         """Initialize conversion matrix with DN case registry."""
         super().__init__()
-        self.dn_registry = DnCaseRegistry()
+        self.dn_registry = FlextLdifDnCaseRegistry()
 
     def convert(
         self,
@@ -578,7 +578,7 @@ class QuirksConversionMatrix:
             FlextResult[bool]: Validation result with any inconsistencies in metadata
 
         Examples:
-            >>> matrix = QuirksConversionMatrix()
+            >>> matrix = FlextLdifQuirksConversionMatrix()
             >>> # ... perform conversions ...
             >>> result = matrix.validate_oud_conversion()
             >>> if result.unwrap():
@@ -596,7 +596,7 @@ class QuirksConversionMatrix:
         DN case pollution from previous conversions.
 
         Examples:
-            >>> matrix = QuirksConversionMatrix()
+            >>> matrix = FlextLdifQuirksConversionMatrix()
             >>> # ... convert some entries ...
             >>> matrix.reset_dn_registry()  # Start fresh
             >>> # ... convert different entries ...
@@ -654,4 +654,4 @@ class QuirksConversionMatrix:
         return support
 
 
-__all__ = ["DataType", "QuirksConversionMatrix"]
+__all__ = ["DataType", "FlextLdifQuirksConversionMatrix"]

@@ -17,7 +17,7 @@ from flext_ldif.acl.service import FlextLdifAclService
 from flext_ldif.client import FlextLdifClient
 from flext_ldif.config import FlextLdifConfig
 from flext_ldif.entry.builder import FlextLdifEntryBuilder
-from flext_ldif.migration_pipeline import FlextLdifMigrationPipeline
+from flext_ldif.pipelines.migration_pipeline import FlextLdifMigrationPipeline
 from flext_ldif.quirks.manager import FlextLdifQuirksManager
 from flext_ldif.quirks.registry import FlextLdifQuirksRegistry
 from flext_ldif.schema.builder import FlextLdifSchemaBuilder
