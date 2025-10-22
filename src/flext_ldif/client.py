@@ -28,8 +28,8 @@ from pydantic import PrivateAttr
 from flext_ldif.config import FlextLdifConfig
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.filters import FlextLdifFilters
-from flext_ldif.migration_pipeline import FlextLdifMigrationPipeline
 from flext_ldif.models import FlextLdifModels
+from flext_ldif.pipelines.migration_pipeline import FlextLdifMigrationPipeline
 from flext_ldif.quirks.base import (
     FlextLdifQuirksBase,
     FlextLdifQuirksBaseAclQuirk,
@@ -48,10 +48,14 @@ from flext_ldif.quirks.servers import (
     FlextLdifQuirksServersOud,
     FlextLdifQuirksServersTivoli,
 )
+from flext_ldif.quirks.servers.relaxed_quirks import (
+    FlextLdifQuirksServersRelaxedSchema,
+)
 from flext_ldif.rfc.rfc_ldif_parser import FlextLdifRfcLdifParser
 from flext_ldif.rfc.rfc_ldif_writer import FlextLdifRfcLdifWriter
 from flext_ldif.rfc.rfc_schema_parser import FlextLdifRfcSchemaParser
 from flext_ldif.schema.validator import FlextLdifSchemaValidator
+from flext_ldif.services.server_detector import FlextLdifServerDetector
 from flext_ldif.typings import FlextLdifTypes
 
 # TypeVar for generic service retrieval with type narrowing
@@ -82,7 +86,7 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Models.CustomDataDict]):
     _container: FlextContainer | None = PrivateAttr(
         default_factory=FlextContainer.get_global
     )
-    _context: FlextContext | None = PrivateAttr(default=None)
+    _context: dict[str, object] = PrivateAttr(default_factory=dict)
     _handlers: FlextLdifTypes.Models.CustomDataDict = PrivateAttr(default_factory=dict)
     _config: FlextLdifConfig | None = PrivateAttr(default=None)
 
@@ -113,8 +117,8 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Models.CustomDataDict]):
         """
         # Initialize private attributes that parent's __init__ may access
         self._config = getattr(self, "_init_config_value", None) or FlextLdifConfig()
-        # FIXED: Don't bind config to context - use _log_config_once() instead
-        self._context = FlextContext()  # Empty context, not bound to global
+        # Initialize context as empty dict (not bound to global)
+        self._context = {}
         self._bus = FlextBus()
         self._handlers = {}
 
@@ -240,6 +244,14 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Models.CustomDataDict]):
             ),
         ]
 
+        # Register relaxed mode quirks
+        relaxed_quirks = [
+            FlextLdifQuirksServersRelaxedSchema(
+                server_type=FlextLdifConstants.ServerTypes.RELAXED, priority=200
+            ),
+        ]
+        complete_quirks.extend(relaxed_quirks)
+
         # Register stub implementations (for future completion)
         stub_quirks: list[FlextLdifQuirksBase.BaseSchemaQuirk] = []
 
@@ -254,12 +266,6 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Models.CustomDataDict]):
                 continue
 
             # Note: Schema quirks don't have nested ACL/Entry quirks
-
-        complete_count = len(complete_quirks)
-        stub_count = len(stub_quirks)
-        logger.info(
-            f"Registered {complete_count} complete quirks and {stub_count} stub quirks"
-        )
 
     def _get_service_typed(
         self,
@@ -579,108 +585,123 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Models.CustomDataDict]):
             "patterns_detected": [],
         })
 
-    def filter_by_objectclass(
+    def filter(
         self,
         entries: list[FlextLdifModels.Entry],
-        objectclass: str | tuple[str, ...],
+        *,
+        filter_type: str = "objectclass",
+        objectclass: str | tuple[str, ...] | None = None,
+        dn_pattern: str | None = None,
+        attributes: list[str] | None = None,
+        schema_items: list[
+            FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass
+        ]
+        | None = None,
+        oid_whitelist: list[str] | None = None,
         required_attributes: list[str] | None = None,
         mode: str = "include",
-        *,
-        mark_excluded: bool = False,
-    ) -> FlextResult[list[FlextLdifModels.Entry]]:
-        """Filter entries by object class with optional required attributes.
-
-        Enhanced version that supports:
-        - Multiple objectClasses (tuple)
-        - Required attribute validation
-        - Include/exclude modes
-        - Exclusion metadata marking
-
-        Args:
-            entries: List of LDIF entries to filter
-            objectclass: Single objectClass string or tuple of objectClasses
-            required_attributes: Optional list of required attributes (all must
-                be present)
-            mode: "include" to keep matching entries, "exclude" to remove them
-            mark_excluded: If True, mark excluded entries with metadata
-                (keyword-only)
-
-        Returns:
-            FlextResult containing filtered entries
-
-        Example:
-            >>> # Simple filtering
-            >>> result = client.filter_by_objectclass(entries, "inetOrgPerson")
-            >>>
-            >>> # Filtering with multiple required attributes
-            >>> result = client.filter_by_objectclass(
-            ...     entries,
-            ...     objectclass=("inetOrgPerson", "person"),
-            ...     required_attributes=[FlextLdifConstants.DictKeys.CN, "sn", "mail"],
-            ... )
-
-        """
-        return FlextLdifFilters.filter_entries_by_objectclass(
-            entries=entries,
-            objectclass=objectclass,
-            required_attributes=required_attributes,
-            mode=mode,
-            mark_excluded=mark_excluded,
-        )
-
-    def filter_persons(
-        self, entries: list[FlextLdifModels.Entry]
-    ) -> FlextResult[list[FlextLdifModels.Entry]]:
-        """Filter entries to get only person entries.
-
-        Args:
-            entries: List of LDIF entries to filter
-
-        Returns:
-            FlextResult containing person entries
-
-        """
-        return self.filter_by_objectclass(entries, "person")
-
-    def filter_by_dn_pattern(
-        self,
-        entries: list[FlextLdifModels.Entry],
-        pattern: str,
-        mode: str = "include",
-        *,
+        match_all: bool = False,
         mark_excluded: bool = True,
-    ) -> FlextResult[list[FlextLdifModels.Entry]]:
-        """Filter entries by DN wildcard pattern.
+    ) -> FlextResult[
+        list[FlextLdifModels.Entry]
+        | list[FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass]
+    ]:
+        """Unified filter method consolidating all filter types via parameters.
 
-        Uses fnmatch for pattern matching. Supports wildcards:
-        - * (matches any sequence of characters)
-        - ? (matches any single character)
-        - [seq] (matches any character in seq)
-        - [!seq] (matches any character not in seq)
+        Replaces: filter_by_objectclass, filter_persons, filter_by_dn_pattern,
+        filter_by_attributes, and filter_schema_by_oid.
 
         Args:
-            entries: List of LDIF entries to filter
-            pattern: DN wildcard pattern (e.g., "*,ou=users,dc=example,dc=com")
-            mode: "include" to keep matching entries, "exclude" to remove them
-            mark_excluded: If True, mark excluded entries with metadata (keyword-only)
+            entries: List of entries to filter
+            filter_type: Type of filter ("objectclass", "dn_pattern", "attributes", "schema_oid")
+            objectclass: ObjectClass to filter by (for filter_type="objectclass")
+            dn_pattern: DN pattern to match (for filter_type="dn_pattern")
+            attributes: Attribute names to filter by (for filter_type="attributes")
+            schema_items: Schema items to filter (for filter_type="schema_oid")
+            oid_whitelist: OID patterns to whitelist (for filter_type="schema_oid")
+            required_attributes: Required attributes (for filter_type="objectclass")
+            mode: "include" or "exclude"
+            match_all: All attributes must match (for filter_type="attributes")
+            mark_excluded: Mark excluded items with metadata
 
         Returns:
-            FlextResult containing filtered entries
-
-        Example:
-            >>> result = client.filter_by_dn_pattern(
-            ...     entries, pattern="*,dc=ctbc,dc=com", mode="include"
-            ... )
+            FlextResult with filtered entries or schema items
 
         """
-        return FlextLdifFilters.filter_entries_by_dn(
-            entries=entries,
-            pattern=pattern,
-            mode=mode,
-            mark_excluded=mark_excluded,
+        filter_type_lower = filter_type.lower()
+
+        if filter_type_lower == "objectclass":
+            if objectclass is None:
+                return FlextResult.fail(
+                    "objectclass filter requires objectclass parameter"
+                )
+            entries_result = FlextLdifFilters.filter_entries_by_objectclass(
+                entries=entries,
+                objectclass=objectclass,
+                required_attributes=required_attributes,
+                mode=mode,
+                mark_excluded=mark_excluded,
+            )
+            return cast(
+                "FlextResult[list[FlextLdifModels.Entry] | list[FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass]]",
+                entries_result,
+            )
+
+        if filter_type_lower == "dn_pattern":
+            if dn_pattern is None:
+                return FlextResult.fail(
+                    "dn_pattern filter requires dn_pattern parameter"
+                )
+            dn_result = FlextLdifFilters.filter_entries_by_dn(
+                entries=entries,
+                pattern=dn_pattern,
+                mode=mode,
+                mark_excluded=mark_excluded,
+            )
+            return cast(
+                "FlextResult[list[FlextLdifModels.Entry] | list[FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass]]",
+                dn_result,
+            )
+
+        if filter_type_lower == "attributes":
+            if attributes is None:
+                return FlextResult.fail(
+                    "attributes filter requires attributes parameter"
+                )
+            attr_result = FlextLdifFilters.filter_entries_by_attributes(
+                entries=entries,
+                attributes=attributes,
+                mode=mode,
+                match_all=match_all,
+                mark_excluded=mark_excluded,
+            )
+            return cast(
+                "FlextResult[list[FlextLdifModels.Entry] | list[FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass]]",
+                attr_result,
+            )
+
+        if filter_type_lower == "schema_oid":
+            if schema_items is None or oid_whitelist is None:
+                return FlextResult.fail(
+                    "schema_oid filter requires schema_items and oid_whitelist parameters"
+                )
+            # Return schema filter result (cast type properly)
+            schema_result = self._filter_schema_by_oid_impl(
+                schema_items=schema_items,
+                oid_whitelist=oid_whitelist,
+                mark_excluded=mark_excluded,
+            )
+            return cast(
+                "FlextResult[list[FlextLdifModels.Entry] | list[FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass]]",
+                schema_result,
+            )
+
+        supported = "'objectclass', 'dn_pattern', 'attributes', 'schema_oid'"
+        return FlextResult.fail(
+            f"Unknown filter_type: '{filter_type}'. Supported: {supported}"
         )
 
-    def filter_schema_by_oid(
+    def _filter_schema_by_oid_impl(
         self,
         schema_items: list[
             FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass
@@ -691,28 +712,7 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Models.CustomDataDict]):
     ) -> FlextResult[
         list[FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass]
     ]:
-        """Filter schema attributes/objectClasses by OID pattern whitelist.
-
-        Uses fnmatch for OID pattern matching. Only items matching whitelist patterns
-        are included. Supports wildcards in OID patterns (e.g., "1.3.6.1.4.1.111.*").
-
-        Args:
-            schema_items: List of schema attributes or objectClasses
-            oid_whitelist: List of OID patterns to whitelist
-                (e.g., ["1.3.6.1.4.1.111.*"])
-            mark_excluded: If True, mark excluded items with metadata
-                (keyword-only)
-
-        Returns:
-            FlextResult containing filtered schema items
-
-        Example:
-            >>> result = client.filter_schema_by_oid(
-            ...     schema_attributes,
-            ...     oid_whitelist=["1.3.6.1.4.1.111.*", "2.16.840.1.113894.*"],
-            ... )
-
-        """
+        """Implementation of schema OID filtering."""
         try:
             filtered: list[
                 FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass
@@ -776,45 +776,6 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Models.CustomDataDict]):
                 ]
             ].fail(f"Failed to filter schema by OID: {e}")
 
-    def filter_by_attributes(
-        self,
-        entries: list[FlextLdifModels.Entry],
-        attributes: list[str],
-        mode: str = "include",
-        *,
-        match_all: bool = False,
-        mark_excluded: bool = True,
-    ) -> FlextResult[list[FlextLdifModels.Entry]]:
-        """Filter entries by attribute presence.
-
-        Args:
-            entries: List of LDIF entries to filter
-            attributes: List of attribute names to check
-            mode: "include" to keep entries with attributes, "exclude" to remove
-            match_all: If True, entry must have ALL attributes; if False, ANY
-                (keyword-only)
-            mark_excluded: If True, mark excluded entries with metadata
-                (keyword-only)
-
-        Returns:
-            FlextResult containing filtered entries
-
-        Example:
-            >>> result = client.filter_by_attributes(
-            ...     entries,
-            ...     attributes=["orclguid", "modifytimestamp"],
-            ...     mode="exclude",  # Remove entries with these attributes
-            ... )
-
-        """
-        return FlextLdifFilters.filter_entries_by_attributes(
-            entries=entries,
-            attributes=attributes,
-            mode=mode,
-            match_all=match_all,
-            mark_excluded=mark_excluded,
-        )
-
     def categorize_entries(
         self,
         entries: list[FlextLdifModels.Entry],
@@ -862,19 +823,34 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Models.CustomDataDict]):
         try:
             categorized = FlextLdifModels.CategorizedEntries.create_empty()
 
+            # Build categorization rules dict for the new API
+            categorization_rules: dict[str, list[str]] = {
+                "user_objectclasses": list(user_objectclasses),
+                "group_objectclasses": list(group_objectclasses),
+                "hierarchy_objectclasses": list(container_objectclasses),
+            }
+
             for entry in entries:
-                category = FlextLdifFilters.categorize_entry(
-                    entry,
-                    user_objectclasses=user_objectclasses,
-                    group_objectclasses=group_objectclasses,
-                    container_objectclasses=container_objectclasses,
+                # Convert entry model to dict if needed
+                if hasattr(entry, "model_dump") and callable(entry.model_dump):
+                    entry_dict: dict[str, object] = entry.model_dump()
+                else:
+                    entry_dict = cast("dict[str, object]", entry)
+
+                # categorize_entry returns tuple[str, str | None]
+                category, _rejection_reason = FlextLdifFilters.categorize_entry(
+                    entry_dict,
+                    categorization_rules=cast(
+                        "dict[str, object]", categorization_rules
+                    ),
                 )
 
-                if category == "user":
+                # Map new category names to old container structure
+                if category == "users":
                     categorized.users.append(entry)
-                elif category == "group":
+                elif category == "groups":
                     categorized.groups.append(entry)
-                elif category == "container":
+                elif category == "hierarchy":
                     categorized.containers.append(entry)
                 else:
                     categorized.uncategorized.append(entry)
@@ -1126,11 +1102,11 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Models.CustomDataDict]):
     @property
     def context(self) -> FlextContext:
         """Access to execution context with lazy initialization."""
-        if self._context is None:
-            # Don't bind config to context to prevent config repetition
-            self._context = FlextContext()  # Empty context
-        # Context is guaranteed non-None after initialization
-        return self._context
+        if not self._context:
+            # Initialize with empty dict
+            self._context = {}
+        # Return as FlextContext type (which is a dict-like context object)
+        return cast("FlextContext", self._context)
 
     @property
     def bus(self) -> FlextBus:
@@ -1139,6 +1115,88 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Models.CustomDataDict]):
             self._bus = FlextBus()
         # Type narrowed by None check - cast to help type checker with inherited _bus
         return cast("FlextBus", self._bus)
+
+    def get_effective_server_type(
+        self, ldif_path: Path | None = None
+    ) -> FlextResult[str]:
+        """Get the effective server type based on configuration.
+
+        Applies the following logic:
+        1. If enable_relaxed_parsing: return "relaxed"
+        2. If quirks_detection_mode == "manual": return quirks_server_type
+        3. If quirks_detection_mode == "auto": detect from LDIF content
+        4. Default: return server_type from config
+
+        Args:
+            ldif_path: Optional path for auto-detection
+
+        Returns:
+            FlextResult with effective server type
+
+        """
+        try:
+            config = self.config
+
+            # Relaxed mode takes precedence
+            if config.enable_relaxed_parsing:
+                return FlextResult[str].ok(FlextLdifConstants.ServerTypes.RELAXED)
+
+            # Manual mode uses specified server type
+            if config.quirks_detection_mode == "manual":
+                if config.quirks_server_type:
+                    return FlextResult[str].ok(config.quirks_server_type)
+                return FlextResult[str].fail(
+                    "Manual mode requires quirks_server_type to be set"
+                )
+
+            # Auto-detection mode
+            if config.quirks_detection_mode == "auto" and ldif_path:
+                detector = FlextLdifServerDetector()
+                detection_result = detector.detect_server_type(ldif_path=ldif_path)
+                if detection_result.is_success:
+                    detected_data = detection_result.unwrap()
+                    server_type_obj = detected_data.get(
+                        "detected_server_type", config.server_type
+                    )
+                    server_type = (
+                        str(server_type_obj) if server_type_obj else config.server_type
+                    )
+                    return FlextResult[str].ok(server_type)
+
+            # Default to configured server type
+            return FlextResult[str].ok(config.server_type)
+
+        except Exception as e:
+            return FlextResult[str].fail(f"Error determining server type: {e}")
+
+    def detect_server_type(
+        self,
+        ldif_path: Path | None = None,
+        ldif_content: str | None = None,
+    ) -> FlextResult[FlextLdifTypes.Models.CustomDataDict]:
+        """Detect LDAP server type from LDIF file or content.
+
+        Args:
+            ldif_path: Path to LDIF file
+            ldif_content: Raw LDIF content as string
+
+        Returns:
+            FlextResult with detection results including:
+            - detected_server_type: The detected server type
+            - confidence: Confidence score (0.0-1.0)
+            - is_confident: Whether detection confidence is high
+
+        """
+        try:
+            detector = FlextLdifServerDetector()
+            return detector.detect_server_type(
+                ldif_path=ldif_path,
+                ldif_content=ldif_content,
+            )
+        except Exception as e:
+            return FlextResult[FlextLdifTypes.Models.CustomDataDict].fail(
+                f"Server detection failed: {e}"
+            )
 
 
 __all__ = ["FlextLdifClient"]

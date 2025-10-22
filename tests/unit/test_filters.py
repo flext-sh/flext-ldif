@@ -19,6 +19,7 @@ from typing import cast
 
 import pytest
 
+from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.filters import FlextLdifFilters
 from flext_ldif.models import FlextLdifModels
 
@@ -301,69 +302,211 @@ class TestHasRequiredAttributes:
 
 
 class TestCategorizeEntry:
-    """Test entry categorization logic."""
+    """Test 6-category entry categorization logic."""
 
-    def _create_entry(self, objectclasses: list[str]) -> FlextLdifModels.Entry:
-        """Helper to create entry with specified objectClasses."""
-        return create_test_entry(
-            "cn=test,dc=example,dc=com",
-            {"cn": ["test"], "objectclass": objectclasses},
+    def _create_dict_entry(
+        self,
+        dn: str,
+        objectclasses: list[str],
+        attributes: dict[str, list[str]] | None = None,
+    ) -> dict[str, object]:
+        """Helper to create dict entry with specified objectClasses."""
+        entry: dict[str, object] = {
+            FlextLdifConstants.DictKeys.DN: dn,
+            FlextLdifConstants.DictKeys.OBJECTCLASS: objectclasses,
+        }
+        if attributes:
+            entry[FlextLdifConstants.DictKeys.ATTRIBUTES] = attributes
+        return entry
+
+    def test_categorize_as_schema(self) -> None:
+        """Test categorizing schema entries."""
+        entry = self._create_dict_entry(
+            "cn=schema",
+            ["subschema"],
+            {"attributeTypes": ["( 2.5.4.3 NAME 'cn' )"]},
         )
+        category, reason = FlextLdifFilters.categorize_entry(
+            entry,
+            categorization_rules={
+                "user_objectclasses": ["person"],
+                "group_objectclasses": ["groupOfNames"],
+                "hierarchy_objectclasses": ["organizationalUnit"],
+                "acl_attributes": [],
+            },
+        )
+        assert category == "schema"
+        assert reason is None
 
-    def test_categorize_as_user(self) -> None:
+    def test_categorize_as_hierarchy(self) -> None:
+        """Test categorizing hierarchy entries."""
+        entry = self._create_dict_entry(
+            "ou=users,dc=example,dc=com",
+            ["organizationalUnit", "top"],
+        )
+        category, reason = FlextLdifFilters.categorize_entry(
+            entry,
+            categorization_rules={
+                "user_objectclasses": ["person"],
+                "group_objectclasses": ["groupOfNames"],
+                "hierarchy_objectclasses": ["organizationalUnit", "organization"],
+                "acl_attributes": [],
+            },
+        )
+        assert category == "hierarchy"
+        assert reason is None
+
+    def test_categorize_as_users(self) -> None:
         """Test categorizing user entries."""
-        entry = self._create_entry(["person", "inetOrgPerson"])
-        category = FlextLdifFilters.categorize_entry(
-            entry,
-            user_objectclasses=("person", "inetOrgPerson"),
-            group_objectclasses=("groupOfNames",),
-            container_objectclasses=("organizationalUnit",),
+        entry = self._create_dict_entry(
+            "cn=jdoe,ou=users,dc=example,dc=com",
+            ["person", "inetOrgPerson"],
         )
-        assert category == "user"
+        category, reason = FlextLdifFilters.categorize_entry(
+            entry,
+            categorization_rules={
+                "user_objectclasses": ["person", "inetOrgPerson"],
+                "group_objectclasses": ["groupOfNames"],
+                "hierarchy_objectclasses": ["organizationalUnit"],
+                "acl_attributes": [],
+            },
+        )
+        assert category == "users"
+        assert reason is None
 
-    def test_categorize_as_group(self) -> None:
+    def test_categorize_as_groups(self) -> None:
         """Test categorizing group entries."""
-        entry = self._create_entry(["groupOfNames", "top"])
-        category = FlextLdifFilters.categorize_entry(
-            entry,
-            user_objectclasses=("person", "inetOrgPerson"),
-            group_objectclasses=("groupOfNames", "groupOfUniqueNames"),
-            container_objectclasses=("organizationalUnit",),
+        entry = self._create_dict_entry(
+            "cn=admins,ou=groups,dc=example,dc=com",
+            ["groupOfNames", "top"],
         )
-        assert category == "group"
+        category, reason = FlextLdifFilters.categorize_entry(
+            entry,
+            categorization_rules={
+                "user_objectclasses": ["person"],
+                "group_objectclasses": ["groupOfNames"],
+                "hierarchy_objectclasses": ["organizationalUnit"],
+                "acl_attributes": [],
+            },
+        )
+        assert category == "groups"
+        assert reason is None
 
-    def test_categorize_as_container(self) -> None:
-        """Test categorizing container entries."""
-        entry = self._create_entry(["organizationalUnit", "top"])
-        category = FlextLdifFilters.categorize_entry(
-            entry,
-            user_objectclasses=("person",),
-            group_objectclasses=("groupOfNames",),
-            container_objectclasses=("organizationalUnit", "organization"),
+    def test_categorize_as_acl(self) -> None:
+        """Test categorizing ACL entries."""
+        entry = self._create_dict_entry(
+            "cn=acl_entry,dc=example,dc=com",
+            ["top"],
+            {"orclPrivilege": ["entry"]},
         )
-        assert category == "container"
+        category, reason = FlextLdifFilters.categorize_entry(
+            entry,
+            categorization_rules={
+                "user_objectclasses": ["person"],
+                "group_objectclasses": ["groupOfNames"],
+                "hierarchy_objectclasses": ["organizationalUnit"],
+                "acl_attributes": ["orclPrivilege", "acl"],
+            },
+        )
+        assert category == "acl"
+        assert reason is None
 
-    def test_categorize_as_uncategorized(self) -> None:
-        """Test categorizing entries that don't match any category."""
-        entry = self._create_entry(["device", "top"])
-        category = FlextLdifFilters.categorize_entry(
-            entry,
-            user_objectclasses=("person",),
-            group_objectclasses=("groupOfNames",),
-            container_objectclasses=("organizationalUnit",),
+    def test_categorize_as_rejected(self) -> None:
+        """Test categorizing entries with no matching category."""
+        entry = self._create_dict_entry(
+            "cn=device1,dc=example,dc=com",
+            ["device", "top"],
         )
-        assert category == "uncategorized"
+        category, reason = FlextLdifFilters.categorize_entry(
+            entry,
+            categorization_rules={
+                "user_objectclasses": ["person"],
+                "group_objectclasses": ["groupOfNames"],
+                "hierarchy_objectclasses": ["organizationalUnit"],
+                "acl_attributes": [],
+            },
+        )
+        assert category == "rejected"
+        assert reason is not None
+        assert "No category match" in reason
 
-    def test_categorize_priority_user_over_group(self) -> None:
-        """Test that user category takes priority over group."""
-        entry = self._create_entry(["person", "groupOfNames"])
-        category = FlextLdifFilters.categorize_entry(
-            entry,
-            user_objectclasses=("person",),
-            group_objectclasses=("groupOfNames",),
-            container_objectclasses=("organizationalUnit",),
+    def test_categorize_hierarchy_priority_over_acl(self) -> None:
+        """Test that hierarchy has priority over ACL (critical for Oracle containers)."""
+        entry = self._create_dict_entry(
+            "cn=oraclcontainer,dc=example,dc=com",
+            ["orclContainer"],
+            {"orclPrivilege": ["entry"]},  # Has ACL attributes but is hierarchy
         )
-        assert category == "user"  # User has priority
+        category, reason = FlextLdifFilters.categorize_entry(
+            entry,
+            categorization_rules={
+                "user_objectclasses": ["person"],
+                "group_objectclasses": ["groupOfNames"],
+                "hierarchy_objectclasses": ["orclContainer"],
+                "acl_attributes": ["orclPrivilege"],
+            },
+        )
+        assert category == "hierarchy"  # Hierarchy takes priority over ACL
+        assert reason is None
+
+    def test_categorize_user_with_dn_pattern_match(self) -> None:
+        """Test user categorization with DN pattern validation."""
+        entry = self._create_dict_entry(
+            "cn=jdoe,ou=users,dc=example,dc=com",
+            ["person"],
+        )
+        category, reason = FlextLdifFilters.categorize_entry(
+            entry,
+            categorization_rules={
+                "user_objectclasses": ["person"],
+                "group_objectclasses": ["groupOfNames"],
+                "hierarchy_objectclasses": ["organizationalUnit"],
+                "user_dn_patterns": ["ou=users"],
+                "acl_attributes": [],
+            },
+        )
+        assert category == "users"
+        assert reason is None
+
+    def test_categorize_user_with_dn_pattern_mismatch(self) -> None:
+        """Test user categorization rejected when DN pattern doesn't match."""
+        entry = self._create_dict_entry(
+            "cn=jdoe,ou=accounts,dc=example,dc=com",
+            ["person"],
+        )
+        category, reason = FlextLdifFilters.categorize_entry(
+            entry,
+            categorization_rules={
+                "user_objectclasses": ["person"],
+                "group_objectclasses": ["groupOfNames"],
+                "hierarchy_objectclasses": ["organizationalUnit"],
+                "user_dn_patterns": ["ou=users"],
+                "acl_attributes": [],
+            },
+        )
+        assert category == "rejected"
+        assert reason is not None
+        assert "DN pattern mismatch" in reason
+
+    def test_categorize_blocked_objectclass(self) -> None:
+        """Test rejection of entries with blocked objectClasses (ALGAR rule)."""
+        entry = self._create_dict_entry(
+            "cn=oid_entry,dc=example,dc=com",
+            ["orclOracleUser"],  # OID-specific class
+        )
+        category, reason = FlextLdifFilters.categorize_entry(
+            entry,
+            categorization_rules={
+                "user_objectclasses": ["person"],
+                "group_objectclasses": ["groupOfNames"],
+                "hierarchy_objectclasses": ["organizationalUnit"],
+                "acl_attributes": [],
+            },
+            schema_whitelist_rules={"blocked_objectclasses": ["orclOracleUser"]},
+        )
+        assert category == "rejected"
+        assert reason is not None
+        assert "Blocked objectClass" in reason
 
 
 class TestFilterEntriesByDn:

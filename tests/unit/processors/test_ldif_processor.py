@@ -13,8 +13,8 @@ from __future__ import annotations
 
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.processors.ldif_processor import (
-    LdifBatchProcessor,
-    LdifParallelProcessor,
+    FlextLdifBatchProcessor,
+    FlextLdifParallelProcessor,
 )
 
 
@@ -23,19 +23,19 @@ class TestLdifBatchProcessor:
 
     def test_initialization_default(self) -> None:
         """Test batch processor initialization with defaults."""
-        processor = LdifBatchProcessor()
+        processor = FlextLdifBatchProcessor()
         assert processor is not None
-        assert isinstance(processor, LdifBatchProcessor)
+        assert isinstance(processor, FlextLdifBatchProcessor)
         assert processor._batch_size == 100  # Default batch size
 
     def test_initialization_custom_batch_size(self) -> None:
         """Test batch processor with custom batch size."""
-        processor = LdifBatchProcessor(batch_size=50)
+        processor = FlextLdifBatchProcessor(batch_size=50)
         assert processor._batch_size == 50
 
     def test_process_batch_empty_entries(self) -> None:
         """Test batch processing with empty entries list."""
-        processor = LdifBatchProcessor(batch_size=10)
+        processor = FlextLdifBatchProcessor(batch_size=10)
 
         def extract_dn(entry: FlextLdifModels.Entry) -> str:
             return entry.dn.value
@@ -47,7 +47,7 @@ class TestLdifBatchProcessor:
 
     def test_process_batch_single_entry(self) -> None:
         """Test batch processing with single entry."""
-        processor = LdifBatchProcessor(batch_size=10)
+        processor = FlextLdifBatchProcessor(batch_size=10)
 
         entry = FlextLdifModels.Entry(
             dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
@@ -70,7 +70,7 @@ class TestLdifBatchProcessor:
 
     def test_process_batch_multiple_entries_single_batch(self) -> None:
         """Test batch processing with multiple entries in single batch."""
-        processor = LdifBatchProcessor(batch_size=10)
+        processor = FlextLdifBatchProcessor(batch_size=10)
 
         # Create 5 entries (less than batch size)
         entries = [
@@ -102,7 +102,7 @@ class TestLdifBatchProcessor:
 
     def test_process_batch_multiple_batches(self) -> None:
         """Test batch processing with multiple batches."""
-        processor = LdifBatchProcessor(batch_size=3)
+        processor = FlextLdifBatchProcessor(batch_size=3)
 
         # Create 10 entries (will require 4 batches: 3, 3, 3, 1)
         entries = [
@@ -135,7 +135,7 @@ class TestLdifBatchProcessor:
 
     def test_process_batch_exact_batch_boundary(self) -> None:
         """Test batch processing with exact batch size boundary."""
-        processor = LdifBatchProcessor(batch_size=5)
+        processor = FlextLdifBatchProcessor(batch_size=5)
 
         # Create exactly 10 entries (2 full batches)
         entries = [
@@ -166,7 +166,7 @@ class TestLdifBatchProcessor:
 
     def test_process_batch_with_complex_return_type(self) -> None:
         """Test batch processing with complex return type (dict)."""
-        processor = LdifBatchProcessor(batch_size=5)
+        processor = FlextLdifBatchProcessor(batch_size=5)
 
         entries = [
             FlextLdifModels.Entry(
@@ -205,7 +205,7 @@ class TestLdifBatchProcessor:
 
     def test_process_batch_with_exception(self) -> None:
         """Test batch processing error handling."""
-        processor = LdifBatchProcessor(batch_size=10)
+        processor = FlextLdifBatchProcessor(batch_size=10)
 
         entry = FlextLdifModels.Entry(
             dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
@@ -235,19 +235,19 @@ class TestLdifParallelProcessor:
 
     def test_initialization_default(self) -> None:
         """Test parallel processor initialization with defaults."""
-        processor = LdifParallelProcessor()
+        processor = FlextLdifParallelProcessor()
         assert processor is not None
-        assert isinstance(processor, LdifParallelProcessor)
+        assert isinstance(processor, FlextLdifParallelProcessor)
         assert processor._max_workers == 4  # Default workers
 
     def test_initialization_custom_workers(self) -> None:
         """Test parallel processor with custom worker count."""
-        processor = LdifParallelProcessor(max_workers=8)
+        processor = FlextLdifParallelProcessor(max_workers=8)
         assert processor._max_workers == 8
 
     def test_process_parallel_empty_entries(self) -> None:
         """Test parallel processing with empty entries list."""
-        processor = LdifParallelProcessor(max_workers=2)
+        processor = FlextLdifParallelProcessor(max_workers=2)
 
         def extract_dn(entry: FlextLdifModels.Entry) -> str:
             return entry.dn.value
@@ -259,7 +259,7 @@ class TestLdifParallelProcessor:
 
     def test_process_parallel_single_entry(self) -> None:
         """Test parallel processing with single entry."""
-        processor = LdifParallelProcessor(max_workers=2)
+        processor = FlextLdifParallelProcessor(max_workers=2)
 
         entry = FlextLdifModels.Entry(
             dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
@@ -282,7 +282,7 @@ class TestLdifParallelProcessor:
 
     def test_process_parallel_multiple_entries(self) -> None:
         """Test parallel processing with multiple entries."""
-        processor = LdifParallelProcessor(max_workers=2)
+        processor = FlextLdifParallelProcessor(max_workers=2)
 
         # Create 10 entries
         entries = [
@@ -316,7 +316,7 @@ class TestLdifParallelProcessor:
 
     def test_process_parallel_with_complex_return_type(self) -> None:
         """Test parallel processing with complex return type (dict)."""
-        processor = LdifParallelProcessor(max_workers=4)
+        processor = FlextLdifParallelProcessor(max_workers=4)
 
         entries = [
             FlextLdifModels.Entry(
@@ -357,7 +357,7 @@ class TestLdifParallelProcessor:
 
     def test_process_parallel_model_dump(self) -> None:
         """Test parallel processing with model_dump (common use case)."""
-        processor = LdifParallelProcessor(max_workers=2)
+        processor = FlextLdifParallelProcessor(max_workers=2)
 
         entries = [
             FlextLdifModels.Entry(
@@ -389,7 +389,7 @@ class TestLdifParallelProcessor:
 
     def test_process_parallel_with_exception(self) -> None:
         """Test parallel processing error handling."""
-        processor = LdifParallelProcessor(max_workers=2)
+        processor = FlextLdifParallelProcessor(max_workers=2)
 
         entry = FlextLdifModels.Entry(
             dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
@@ -415,7 +415,7 @@ class TestLdifParallelProcessor:
 
     def test_process_parallel_attribute_counting(self) -> None:
         """Test parallel processing with attribute counting."""
-        processor = LdifParallelProcessor(max_workers=4)
+        processor = FlextLdifParallelProcessor(max_workers=4)
 
         entries = [
             FlextLdifModels.Entry(
@@ -453,8 +453,8 @@ class TestProcessorComparison:
 
     def test_batch_and_parallel_same_results(self) -> None:
         """Test that batch and parallel processors produce same results."""
-        batch_processor = LdifBatchProcessor(batch_size=3)
-        parallel_processor = LdifParallelProcessor(max_workers=2)
+        batch_processor = FlextLdifBatchProcessor(batch_size=3)
+        parallel_processor = FlextLdifParallelProcessor(max_workers=2)
 
         entries = [
             FlextLdifModels.Entry(

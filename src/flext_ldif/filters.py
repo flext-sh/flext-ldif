@@ -16,6 +16,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import fnmatch
+import re
 from datetime import UTC, datetime
 
 from flext_core import FlextResult
@@ -271,33 +272,189 @@ class FlextLdifFilters:
         return all(entry.has_attribute(attr) for attr in required_attributes)
 
     @staticmethod
-    def categorize_entry(
-        entry: FlextLdifModels.Entry,
-        user_objectclasses: tuple[str, ...],
-        group_objectclasses: tuple[str, ...],
-        container_objectclasses: tuple[str, ...],
-    ) -> str:
-        """Categorize entry based on objectClass.
-
-        Checks objectClasses in priority order: users, groups, containers, uncategorized.
+    def _matches_dn_pattern(dn: str, patterns: list[str]) -> bool:
+        """Check if DN matches any of the provided regex patterns.
 
         Args:
-            entry: Entry to categorize
-            user_objectclasses: Tuple of user objectClass names
-            group_objectclasses: Tuple of group objectClass names
-            container_objectclasses: Tuple of container objectClass names
+            dn: Distinguished Name to check
+            patterns: List of regex patterns to match against
 
         Returns:
-            Category string: "user", "group", "container", or "uncategorized"
+            True if DN matches any pattern, False otherwise
 
         """
-        if FlextLdifFilters.has_objectclass(entry, user_objectclasses):
-            return "user"
-        if FlextLdifFilters.has_objectclass(entry, group_objectclasses):
-            return "group"
-        if FlextLdifFilters.has_objectclass(entry, container_objectclasses):
-            return "container"
-        return "uncategorized"
+        for pattern in patterns:
+            try:
+                if re.search(pattern, dn, re.IGNORECASE):
+                    return True
+            except re.error:
+                # Invalid regex pattern - skip
+                continue
+        return False
+
+    @staticmethod
+    def _has_acl_attributes(
+        entry: dict[str, object],
+        acl_attributes: list[str],
+    ) -> bool:
+        """Check if entry has ACL-related attributes.
+
+        Args:
+            entry: Entry dictionary to check
+            acl_attributes: List of ACL attribute names to look for
+
+        Returns:
+            True if entry has ACL attributes, False otherwise
+
+        """
+        if not acl_attributes:
+            return False
+
+        entry_attrs = entry.get(FlextLdifConstants.DictKeys.ATTRIBUTES, {})
+        if not isinstance(entry_attrs, dict):
+            return False
+
+        # Case-insensitive attribute lookup (LDIF RFC compliance)
+        entry_attrs_lower = {k.lower(): v for k, v in entry_attrs.items()}
+        acl_attributes_lower = [attr.lower() for attr in acl_attributes]
+
+        return any(acl_attr in entry_attrs_lower for acl_attr in acl_attributes_lower)
+
+    @staticmethod
+    def categorize_entry(
+        entry: dict[str, object],
+        categorization_rules: dict[
+            str, object
+        ],  # Contains: hierarchy_objectclasses, user_objectclasses, group_objectclasses, acl_attributes, user_dn_patterns
+        schema_whitelist_rules: dict[str, object]
+        | None = None,  # Contains: blocked_objectclasses, allowed_attribute_oids, allowed_objectclass_oids
+    ) -> tuple[str, str | None]:
+        """Categorize entry with 6-category support (schema, hierarchy, users, groups, acl, rejected).
+
+        Categorization logic:
+        0. Check for blocked objectClasses (ALGAR business rule)
+        1. Check for schema entries (attributeTypes, objectClasses)
+        2. Check for hierarchy objectClasses → hierarchy (BEFORE ACL!)
+        3. Check for user objectClasses → users
+        4. Check for group objectClasses → groups
+        5. Check for ACL attributes → acl (AFTER hierarchy/users/groups)
+        6. Otherwise → rejected
+
+        CRITICAL: Hierarchy check has HIGHER priority than ACL check. This ensures
+        Oracle containers (orclcontainer, orclprivilegegroup) with ACL attributes go
+        to hierarchy file for proper parent-child sync order.
+
+        Args:
+            entry: Entry dictionary to categorize
+            categorization_rules: Dictionary with categorization configuration:
+                - hierarchy_objectclasses: list of hierarchy objectClass names
+                - user_objectclasses: list of user objectClass names
+                - group_objectclasses: list of group objectClass names
+                - user_dn_patterns: list of regex patterns for user DN validation
+                - acl_attributes: list of ACL attribute names to check
+            schema_whitelist_rules: Optional dictionary with schema whitelist configuration:
+                - blocked_objectclasses: list of objectClasses to reject (ALGAR rule)
+
+        Returns:
+            Tuple of (category, rejection_reason):
+            - category: one of "schema", "hierarchy", "users", "groups", "acl", "rejected"
+            - rejection_reason: None unless category is "rejected"
+
+        """
+        if schema_whitelist_rules is None:
+            schema_whitelist_rules = {}
+
+        # Get entry DN and objectClasses with proper type narrowing
+        dn_value = entry.get(FlextLdifConstants.DictKeys.DN, "")
+        dn = dn_value if isinstance(dn_value, str) else ""
+
+        object_classes = entry.get(FlextLdifConstants.DictKeys.OBJECTCLASS, [])
+        if not isinstance(object_classes, list):
+            object_classes = []
+
+        # Convert objectClasses to lowercase for case-insensitive matching per RFC 4512
+        object_classes_lower = [
+            oc.lower() if isinstance(oc, str) else oc for oc in object_classes
+        ]
+
+        # 0. Check for blocked objectClasses (ALGAR business rule)
+        blocked_ocs = schema_whitelist_rules.get("blocked_objectclasses", [])
+        if isinstance(blocked_ocs, list) and blocked_ocs:
+            blocked_ocs_lower = {
+                oc.lower() for oc in blocked_ocs if isinstance(oc, str)
+            }
+            for obj_class_lower in object_classes_lower:
+                if obj_class_lower in blocked_ocs_lower:
+                    return (
+                        "rejected",
+                        f"Blocked objectClass: {obj_class_lower} (OID-specific)",
+                    )
+
+        # 1. Schema entries (cn=schema, subschemasubentry, or has schema attributes)
+        if "cn=schema" in dn.lower() or "subschemasubentry" in dn.lower():
+            return ("schema", None)
+
+        entry_attrs = entry.get(FlextLdifConstants.DictKeys.ATTRIBUTES, {})
+        if isinstance(entry_attrs, dict):
+            attrs_lower = {k.lower() for k in entry_attrs}
+            if "attributetypes" in attrs_lower or "objectclasses" in attrs_lower:
+                return ("schema", None)
+
+        # Get categorization rules with type validation
+        hierarchy_classes = categorization_rules.get("hierarchy_objectclasses", [])
+        user_classes = categorization_rules.get("user_objectclasses", [])
+        group_classes = categorization_rules.get("group_objectclasses", [])
+        user_dn_patterns = categorization_rules.get("user_dn_patterns", [])
+        acl_attributes = categorization_rules.get("acl_attributes", [])
+
+        if not isinstance(hierarchy_classes, list):
+            hierarchy_classes = []
+        if not isinstance(user_classes, list):
+            user_classes = []
+        if not isinstance(group_classes, list):
+            group_classes = []
+        if not isinstance(user_dn_patterns, list):
+            user_dn_patterns = []
+        if not isinstance(acl_attributes, list):
+            acl_attributes = []
+
+        # Convert to lowercase sets for efficient lookup
+        hierarchy_classes_lower = {
+            oc.lower() for oc in hierarchy_classes if isinstance(oc, str)
+        }
+        user_classes_lower = {oc.lower() for oc in user_classes if isinstance(oc, str)}
+        group_classes_lower = {
+            oc.lower() for oc in group_classes if isinstance(oc, str)
+        }
+
+        # 2. Hierarchy entries (BEFORE ACL - critical for Oracle containers)
+        for obj_class_lower in object_classes_lower:
+            if obj_class_lower in hierarchy_classes_lower:
+                return ("hierarchy", None)
+
+        # 3. User entries (with optional DN pattern validation)
+        for obj_class_lower in object_classes_lower:
+            if obj_class_lower in user_classes_lower:
+                if user_dn_patterns and not FlextLdifFilters._matches_dn_pattern(
+                    dn, user_dn_patterns
+                ):
+                    return (
+                        "rejected",
+                        f"User DN pattern mismatch: {dn}",
+                    )
+                return ("users", None)
+
+        # 4. Group entries
+        for obj_class_lower in object_classes_lower:
+            if obj_class_lower in group_classes_lower:
+                return ("groups", None)
+
+        # 5. ACL entries (AFTER hierarchy/users/groups)
+        if FlextLdifFilters._has_acl_attributes(entry, acl_attributes):
+            return ("acl", None)
+
+        # 6. Rejected entries
+        return ("rejected", f"No category match for: {object_classes}")
 
     @staticmethod
     def filter_entries_by_dn(

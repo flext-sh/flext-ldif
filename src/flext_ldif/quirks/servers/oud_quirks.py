@@ -8,6 +8,7 @@ Provides OUD-specific quirks for schema, ACL, and entry processing.
 
 from __future__ import annotations
 
+import logging
 import re
 from typing import ClassVar
 
@@ -23,20 +24,34 @@ from flext_ldif.quirks.base import (
 )
 from flext_ldif.typings import FlextLdifTypes
 
+logger = logging.getLogger(__name__)
+
 
 class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
-    """Oracle OUD schema quirk.
+    """Oracle OUD schema quirk - implements FlextLdifProtocols.Quirks.SchemaQuirkProtocol.
 
     Extends RFC 4512 schema parsing with Oracle OUD-specific features:
     - OUD namespace (2.16.840.1.113894.*)
     - OUD-specific syntaxes
     - OUD attribute extensions
     - Compatibility with OID schemas
+    - DN case registry management for schema consistency
+
+    **Protocol Compliance**: Fully implements
+    FlextLdifProtocols.Quirks.SchemaQuirkProtocol through structural typing.
+    All methods match protocol signatures exactly for type safety.
+
+    **Validation**: Verify protocol compliance with:
+        from flext_ldif.protocols import FlextLdifProtocols
+        quirk = FlextLdifQuirksServersOud()
+        assert isinstance(quirk, FlextLdifProtocols.Quirks.SchemaQuirkProtocol)
 
     Example:
         quirk = FlextLdifQuirksServersOud(server_type="oud")
         if quirk.can_handle_attribute(attr_def):
             result = quirk.parse_attribute(attr_def)
+            if result.is_success:
+                parsed_attr = result.unwrap()
 
     """
 
@@ -51,6 +66,56 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
     ORACLE_OUD_PATTERN: ClassVar[re.Pattern[str]] = re.compile(
         r"2\.16\.840\.1\.113894\."
     )
+
+    # Map deprecated/invalid syntax OIDs to valid RFC 4517 syntax OIDs
+    # These are from legacy RFC 2252 or vendor-specific syntaxes not supported by OUD
+    SYNTAX_OID_REPLACEMENTS: ClassVar[dict[str, str]] = {
+        # Deprecated from RFC 2252 - map to Directory String
+        "1.3.6.1.4.1.1466.115.121.1.19": "1.3.6.1.4.1.1466.115.121.1.15",  # Unknown -> Directory String
+        "1.3.6.1.4.1.1466.115.121.1.13": "1.3.6.1.4.1.1466.115.121.1.15",  # Deprecated -> Directory String
+        "1.3.6.1.4.1.1466.115.121.1.4": "1.3.6.1.4.1.1466.115.121.1.40",  # Audio -> Octet String
+    }
+
+    # Known STRUCTURAL objectclasses (standard + Oracle-specific)
+    # Used to detect type mismatches during schema transformation
+    # All names in lowercase for case-insensitive matching
+    KNOWN_STRUCTURAL_CLASSES: ClassVar[set[str]] = {
+        # Standard RFC objectclasses
+        "top",
+        "person",
+        "organizationalperson",
+        "inetorgperson",
+        "organization",
+        "organizationalunit",
+        "groupofnames",
+        "groupofuniquenames",
+        "country",
+        "locality",
+        "device",
+        "application",
+        "applicationprocess",
+        "tombstone",
+        "certificationauthority",
+        # Oracle-specific STRUCTURAL classes
+        "orclapplicationentity",
+        "orclpwdverifierprofile",
+    }
+
+    # Known AUXILIARY objectclasses (standard + Oracle-specific)
+    # All names in lowercase for case-insensitive matching
+    KNOWN_AUXILIARY_CLASSES: ClassVar[set[str]] = {
+        # Standard RFC AUXILIARY classes
+        "extensibleobject",
+        "dcobject",
+        "uidobject",
+        # Java AUXILIARY classes
+        "javanamingreference",
+        "javaobject",
+        "javacontainer",
+        # Oracle-specific AUXILIARY classes
+        "orclprivilegegroup",
+        "orclgroup",
+    }
 
     def model_post_init(self, _context: object, /) -> None:
         """Initialize OUD schema quirk."""
@@ -326,6 +391,9 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
 
         Converts parsed attribute dictionary back to RFC 4512 schema definition format.
         If metadata contains original_format, uses it for perfect round-trip.
+        Replaces deprecated/invalid syntax OIDs with valid RFC 4517 equivalents.
+        Fixes invalid SUBSTR matching rules for OUD compatibility.
+        Replaces illegal characters in attribute names (underscores with hyphens).
 
         Args:
             attr_data: Parsed OUD attribute data dictionary
@@ -341,15 +409,46 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
 
         """
         try:
-            # Check if we have metadata with original format for perfect round-trip
+            # Fix invalid SUBSTR matching rules BEFORE processing
+            # OUD rejects non-substring matching rules in SUBSTR clause
+            # Common mistake: SUBSTR caseIgnoreMatch (should be caseIgnoreSubstringsMatch)
+            if attr_data.get("substr"):
+                substr_rule = str(attr_data["substr"])
+                # Invalid: equality/ordering rules used as substring rules
+                invalid_substr_rules = {
+                    "caseIgnoreMatch": "caseIgnoreSubstringsMatch",
+                    "caseExactMatch": "caseExactSubstringsMatch",
+                    "distinguishedNameMatch": None,  # DN has no substring matching
+                    "integerMatch": None,  # Integer has no substring matching
+                    "numericStringMatch": "numericStringSubstringsMatch",
+                }
+                if substr_rule in invalid_substr_rules:
+                    replacement = invalid_substr_rules[substr_rule]
+                    if replacement:
+                        logger.debug(
+                            f"Replacing invalid SUBSTR rule '{substr_rule}' with '{replacement}'"
+                        )
+                        attr_data["substr"] = replacement
+                    else:
+                        # Remove invalid SUBSTR clause entirely
+                        logger.debug(
+                            f"Removing invalid SUBSTR rule '{substr_rule}' (no substring matching available)"
+                        )
+                        attr_data["substr"] = None
+            # Check if we have OUD metadata with original format for perfect round-trip
+            # IMPORTANT: Only use metadata if it's from OUD quirk, not from source quirk
             if "_metadata" in attr_data:
                 metadata = attr_data["_metadata"]
-                if (
-                    isinstance(metadata, FlextLdifModels.QuirkMetadata)
-                    and metadata.original_format
+                if isinstance(metadata, FlextLdifModels.QuirkMetadata):
+                    # Only use original format if it's from OUD quirk type
+                    if metadata.quirk_type == "oud" and metadata.original_format:
+                        return FlextResult[str].ok(metadata.original_format)
+                elif (
+                    isinstance(metadata, dict)
+                    and metadata.get("quirk_type") == "oud"
+                    and "original_format" in metadata
                 ):
-                    return FlextResult[str].ok(metadata.original_format)
-                if isinstance(metadata, dict) and "original_format" in metadata:
+                    # For dict metadata, check quirk_type if present
                     return FlextResult[str].ok(str(metadata["original_format"]))
 
             # Build RFC 4512 attribute definition from scratch
@@ -364,30 +463,65 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
             if "name" in attr_data:
                 parts.append(f"NAME '{attr_data['name']}'")
 
-            # Add DESC (optional)
-            if "desc" in attr_data:
+            # Add DESC (optional) - skip if None or empty
+            if (
+                "desc" in attr_data
+                and attr_data["desc"]
+                and attr_data["desc"] != "None"
+            ):
                 parts.append(f"DESC '{attr_data['desc']}'")
 
-            # Add SUP (optional)
-            if "sup" in attr_data:
+            # Add SUP (optional) - skip if None or empty
+            if "sup" in attr_data and attr_data["sup"] and attr_data["sup"] != "None":
                 parts.append(f"SUP {attr_data['sup']}")
 
-            # Add EQUALITY (optional)
-            if "equality" in attr_data:
+            # Add EQUALITY (optional) - skip if None or empty
+            if (
+                "equality" in attr_data
+                and attr_data["equality"]
+                and attr_data["equality"] != "None"
+            ):
                 parts.append(f"EQUALITY {attr_data['equality']}")
 
-            # Add ORDERING (optional)
-            if "ordering" in attr_data:
+            # Add ORDERING (optional) - skip if None or empty
+            if (
+                "ordering" in attr_data
+                and attr_data["ordering"]
+                and attr_data["ordering"] != "None"
+            ):
                 parts.append(f"ORDERING {attr_data['ordering']}")
 
-            # Add SUBSTR (optional)
-            if "substr" in attr_data:
+            # Add SUBSTR (optional) - skip if None or empty
+            if (
+                "substr" in attr_data
+                and attr_data["substr"]
+                and attr_data["substr"] != "None"
+            ):
                 parts.append(f"SUBSTR {attr_data['substr']}")
 
-            # Add SYNTAX (optional but common)
-            if "syntax" in attr_data:
+            # Add SYNTAX (optional but common) - skip if None or empty
+            # Replace deprecated/invalid syntax OIDs with valid RFC 4517 equivalents
+            if (
+                "syntax" in attr_data
+                and attr_data["syntax"]
+                and attr_data["syntax"] != "None"
+            ):
                 syntax_str = str(attr_data["syntax"])
-                if "syntax_length" in attr_data:
+
+                # Replace deprecated syntax OIDs with valid ones
+                if syntax_str in self.SYNTAX_OID_REPLACEMENTS:
+                    original_syntax = syntax_str
+                    syntax_str = self.SYNTAX_OID_REPLACEMENTS[syntax_str]
+                    # Log replacement for debugging
+                    logger.debug(
+                        f"Replaced deprecated syntax OID {original_syntax} with {syntax_str}"
+                    )
+
+                if (
+                    "syntax_length" in attr_data
+                    and attr_data["syntax_length"]
+                    and attr_data["syntax_length"] != "None"
+                ):
                     syntax_str += f"{{{attr_data['syntax_length']}}}"
                 parts.append(f"SYNTAX {syntax_str}")
 
@@ -428,15 +562,20 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
 
         """
         try:
-            # Check if we have metadata with original format for perfect round-trip
+            # Check if we have OUD metadata with original format for perfect round-trip
+            # IMPORTANT: Only use metadata if it's from OUD quirk, not from source quirk
             if "_metadata" in oc_data:
                 metadata = oc_data["_metadata"]
-                if (
-                    isinstance(metadata, FlextLdifModels.QuirkMetadata)
-                    and metadata.original_format
+                if isinstance(metadata, FlextLdifModels.QuirkMetadata):
+                    # Only use original format if it's from OUD quirk type
+                    if metadata.quirk_type == "oud" and metadata.original_format:
+                        return FlextResult[str].ok(metadata.original_format)
+                elif (
+                    isinstance(metadata, dict)
+                    and metadata.get("quirk_type") == "oud"
+                    and "original_format" in metadata
                 ):
-                    return FlextResult[str].ok(metadata.original_format)
-                if isinstance(metadata, dict) and "original_format" in metadata:
+                    # For dict metadata, check quirk_type if present
                     return FlextResult[str].ok(str(metadata["original_format"]))
 
             # Build RFC 4512 objectClass definition from scratch
@@ -451,47 +590,144 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
             if "name" in oc_data:
                 parts.append(f"NAME '{oc_data['name']}'")
 
-            # Add DESC (optional)
-            if "desc" in oc_data:
+            # Add DESC (optional) - skip if None or empty
+            if "desc" in oc_data and oc_data["desc"] and oc_data["desc"] != "None":
                 parts.append(f"DESC '{oc_data['desc']}'")
 
-            # Add SUP (optional)
-            if "sup" in oc_data:
+            # Add SUP (optional) - skip if None or empty
+            # Check for objectclass type mismatches (AUXILIARY vs STRUCTURAL)
+            if "sup" in oc_data and oc_data["sup"] and oc_data["sup"] != "None":
                 sup_value = oc_data["sup"]
-                if isinstance(sup_value, list):
-                    # Multiple superior classes: "SUP ( org $ orgUnit )"
-                    sup_str = " $ ".join(sup_value)
-                    parts.append(f"SUP ( {sup_str} )")
-                else:
-                    parts.append(f"SUP {sup_value}")
+                current_kind = oc_data.get("kind", "STRUCTURAL")
 
-            # Add KIND (STRUCTURAL, AUXILIARY, ABSTRACT)
-            if "kind" in oc_data:
+                # Check for type mismatch with superior class
+                has_mismatch = False
+                if isinstance(sup_value, list):
+                    # Multiple superior classes - check each
+                    for sup_class in sup_value:
+                        sup_class_str = str(sup_class).lower()
+                        if (
+                            current_kind == "AUXILIARY"
+                            and sup_class_str in self.KNOWN_STRUCTURAL_CLASSES
+                        ):
+                            logger.warning(
+                                f"Type mismatch: AUXILIARY objectclass '{oc_data.get('name')}' "
+                                f"cannot inherit from STRUCTURAL '{sup_class}'. Removing SUP clause."
+                            )
+                            has_mismatch = True
+                            break
+                        if (
+                            current_kind == "STRUCTURAL"
+                            and sup_class_str in self.KNOWN_AUXILIARY_CLASSES
+                        ):
+                            logger.warning(
+                                f"Type mismatch: STRUCTURAL objectclass '{oc_data.get('name')}' "
+                                f"cannot inherit from AUXILIARY '{sup_class}'. Removing SUP clause."
+                            )
+                            has_mismatch = True
+                            break
+                else:
+                    # Single superior class
+                    sup_class_str = str(sup_value).lower()
+                    if (
+                        current_kind == "AUXILIARY"
+                        and sup_class_str in self.KNOWN_STRUCTURAL_CLASSES
+                    ):
+                        logger.warning(
+                            f"Type mismatch: AUXILIARY objectclass '{oc_data.get('name')}' "
+                            f"cannot inherit from STRUCTURAL '{sup_value}'. Removing SUP clause."
+                        )
+                        has_mismatch = True
+                    elif (
+                        current_kind == "STRUCTURAL"
+                        and sup_class_str in self.KNOWN_AUXILIARY_CLASSES
+                    ):
+                        logger.warning(
+                            f"Type mismatch: STRUCTURAL objectclass '{oc_data.get('name')}' "
+                            f"cannot inherit from AUXILIARY '{sup_value}'. Removing SUP clause."
+                        )
+                        has_mismatch = True
+
+                # Only add SUP clause if no type mismatch
+                if not has_mismatch:
+                    if isinstance(sup_value, list):
+                        # Multiple superior classes: "SUP ( org $ orgUnit )"
+                        sup_str = " $ ".join(str(s) for s in sup_value)
+                        parts.append(f"SUP ( {sup_str} )")
+                    else:
+                        parts.append(f"SUP {sup_value}")
+
+            # Add KIND (STRUCTURAL, AUXILIARY, ABSTRACT) - skip if None or empty
+            if "kind" in oc_data and oc_data["kind"] and oc_data["kind"] != "None":
                 parts.append(str(oc_data["kind"]))
 
             # Add MUST attributes (optional)
+            # Fix illegal characters in attribute names (underscores → hyphens)
             if oc_data.get("must"):
                 must_attrs = oc_data["must"]
-                if isinstance(must_attrs, list) and len(must_attrs) > 1:
-                    # Multiple required attributes: "MUST ( cn $ sn )"
-                    must_str = " $ ".join(must_attrs)
-                    parts.append(f"MUST ( {must_str} )")
-                elif isinstance(must_attrs, list) and len(must_attrs) == 1:
-                    parts.append(f"MUST {must_attrs[0]}")
+                fixed_must_attrs = []
+                if isinstance(must_attrs, list):
+                    for attr in must_attrs:
+                        attr_str = str(attr)
+                        # Replace underscores with hyphens for OUD compatibility
+                        if "_" in attr_str:
+                            fixed_attr = attr_str.replace("_", "-")
+                            logger.debug(
+                                f"Fixed illegal character in MUST attribute: '{attr_str}' → '{fixed_attr}'"
+                            )
+                            fixed_must_attrs.append(fixed_attr)
+                        else:
+                            fixed_must_attrs.append(attr_str)
+
+                    if len(fixed_must_attrs) > 1:
+                        # Multiple required attributes: "MUST ( cn $ sn )"
+                        must_str = " $ ".join(fixed_must_attrs)
+                        parts.append(f"MUST ( {must_str} )")
+                    elif len(fixed_must_attrs) == 1:
+                        parts.append(f"MUST {fixed_must_attrs[0]}")
                 else:
-                    parts.append(f"MUST {must_attrs}")
+                    # Single string MUST attribute
+                    must_str = str(must_attrs)
+                    if "_" in must_str:
+                        must_str = must_str.replace("_", "-")
+                        logger.debug(
+                            f"Fixed illegal character in MUST attribute: '{must_attrs}' → '{must_str}'"
+                        )
+                    parts.append(f"MUST {must_str}")
 
             # Add MAY attributes (optional)
+            # Fix illegal characters in attribute names (underscores → hyphens)
             if oc_data.get("may"):
                 may_attrs = oc_data["may"]
-                if isinstance(may_attrs, list) and len(may_attrs) > 1:
-                    # Multiple optional attributes: "MAY ( description $ seeAlso )"
-                    may_str = " $ ".join(may_attrs)
-                    parts.append(f"MAY ( {may_str} )")
-                elif isinstance(may_attrs, list) and len(may_attrs) == 1:
-                    parts.append(f"MAY {may_attrs[0]}")
+                fixed_may_attrs = []
+                if isinstance(may_attrs, list):
+                    for attr in may_attrs:
+                        attr_str = str(attr)
+                        # Replace underscores with hyphens for OUD compatibility
+                        if "_" in attr_str:
+                            fixed_attr = attr_str.replace("_", "-")
+                            logger.debug(
+                                f"Fixed illegal character in MAY attribute: '{attr_str}' → '{fixed_attr}'"
+                            )
+                            fixed_may_attrs.append(fixed_attr)
+                        else:
+                            fixed_may_attrs.append(attr_str)
+
+                    if len(fixed_may_attrs) > 1:
+                        # Multiple optional attributes: "MAY ( description $ seeAlso )"
+                        may_str = " $ ".join(fixed_may_attrs)
+                        parts.append(f"MAY ( {may_str} )")
+                    elif len(fixed_may_attrs) == 1:
+                        parts.append(f"MAY {fixed_may_attrs[0]}")
                 else:
-                    parts.append(f"MAY {may_attrs}")
+                    # Single string MAY attribute
+                    may_str = str(may_attrs)
+                    if "_" in may_str:
+                        may_str = may_str.replace("_", "-")
+                        logger.debug(
+                            f"Fixed illegal character in MAY attribute: '{may_attrs}' → '{may_str}'"
+                        )
+                    parts.append(f"MAY {may_str}")
 
             # Add X-ORIGIN (optional)
             if "x_origin" in oc_data:
@@ -1149,9 +1385,13 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
 
                 # Preserve special LDIF modify markers for schema entries
                 if "_modify_add_attributetypes" in attributes:
-                    processed_entry["_modify_add_attributetypes"] = attributes["_modify_add_attributetypes"]
+                    processed_entry["_modify_add_attributetypes"] = attributes[
+                        "_modify_add_attributetypes"
+                    ]
                 if "_modify_add_objectclasses" in attributes:
-                    processed_entry["_modify_add_objectclasses"] = attributes["_modify_add_objectclasses"]
+                    processed_entry["_modify_add_objectclasses"] = attributes[
+                        "_modify_add_objectclasses"
+                    ]
 
                 # Process attributes with boolean conversion (FORMAT transformation)
                 for attr_name, attr_values in attributes.items():
@@ -1312,13 +1552,21 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
                     ldif_lines.append("changetype: modify")
 
                 # Handle LDIF modify format for schema additions
-                if is_modify and ("_modify_add_attributetypes" in entry_data or "_modify_add_objectclasses" in entry_data):
+                # NOTE: Schema definitions MUST be already transformed to OUD format by pipeline
+                # via RFC canonical format (OID quirk → RFC → OUD quirk)
+                if is_modify and (
+                    "_modify_add_attributetypes" in entry_data
+                    or "_modify_add_objectclasses" in entry_data
+                ):
                     # Write modify-add operations for attributetypes
                     if "_modify_add_attributetypes" in entry_data:
                         attr_types = entry_data["_modify_add_attributetypes"]
                         if isinstance(attr_types, list) and attr_types:
                             ldif_lines.append("add: attributetypes")
-                            ldif_lines.extend(f"attributetypes: {attr_type}" for attr_type in attr_types)
+                            ldif_lines.extend(
+                                f"attributetypes: {attr_type}"
+                                for attr_type in attr_types
+                            )
                             ldif_lines.append("-")
 
                     # Write modify-add operations for objectclasses
@@ -1326,7 +1574,10 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
                         obj_classes = entry_data["_modify_add_objectclasses"]
                         if isinstance(obj_classes, list) and obj_classes:
                             ldif_lines.append("add: objectclasses")
-                            ldif_lines.extend(f"objectclasses: {obj_class}" for obj_class in obj_classes)
+                            ldif_lines.extend(
+                                f"objectclasses: {obj_class}"
+                                for obj_class in obj_classes
+                            )
                             ldif_lines.append("-")
                 else:
                     # Standard entry format (not a modify operation)

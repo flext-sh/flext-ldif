@@ -21,101 +21,16 @@ from typing import Annotated, ClassVar, Literal
 
 from flext_core import FlextModels, FlextResult
 from pydantic import (
-    BeforeValidator,
     ConfigDict,
     Discriminator,
     Field,
     computed_field,
+    field_validator,
     model_validator,
 )
 
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.typings import FlextLdifTypes
-
-# ===== LDAP VALIDATION FUNCTIONS (Pydantic v2 BeforeValidator) =====
-
-
-def _validate_object_class_name(v: str) -> str:
-    """Validate object class name format (Pydantic v2 BeforeValidator)."""
-    if not v or not v.strip():
-        msg = "Object class cannot be empty"
-        raise ValueError(msg)
-    normalized = v.strip().lower()
-    if not all(c.isalnum() or c == "-" for c in normalized):
-        msg = f"Invalid object class name: {v}"
-        raise ValueError(msg)
-    return normalized
-
-
-def _validate_attribute_name(v: str) -> str:
-    """Validate LDAP attribute name format (Pydantic v2 BeforeValidator)."""
-    if not v or not v.strip():
-        msg = "Attribute name cannot be empty"
-        raise ValueError(msg)
-    normalized = v.strip().lower()
-    if not all(c.isalnum() or c in "-_" for c in normalized):
-        msg = f"Invalid attribute name: {v}"
-        raise ValueError(msg)
-    return normalized
-
-
-def _validate_search_scope(v: str) -> str:
-    """Validate LDAP search scope (Pydantic v2 BeforeValidator)."""
-    valid_scopes = {"base", "one", "sub", "subordinate"}
-    normalized = v.strip().lower()
-    if normalized not in valid_scopes:
-        msg = f"Invalid search scope: {v}. Must be one of {valid_scopes}"
-        raise ValueError(msg)
-    return normalized
-
-
-def _validate_ldap_filter(v: str) -> str:
-    """Validate LDAP filter format (Pydantic v2 BeforeValidator)."""
-    if not v or not v.strip():
-        msg = "LDAP filter cannot be empty"
-        raise ValueError(msg)
-    trimmed = v.strip()
-    if not (trimmed.startswith("(") and trimmed.endswith(")")):
-        msg = f"Invalid LDAP filter format: {v}. Must be enclosed in parentheses"
-        raise ValueError(msg)
-    return trimmed
-
-
-def _validate_dn_format(v: str) -> str:
-    """Validate DN format - Basic validation only (Pydantic v2 BeforeValidator)."""
-    if not v or not v.strip():
-        msg = "DN cannot be empty"
-        raise ValueError(msg)
-
-    dn_str = v.strip()
-    components = [c.strip() for c in dn_str.split(",")]
-
-    for component in components:
-        if "=" not in component:
-            msg = f"Invalid DN component format: {component}. Expected attribute=value"
-            raise ValueError(msg)
-
-        attr_part, _, value_part = component.partition("=")
-        attr_name = attr_part.strip()
-
-        if not attr_name or not attr_name[0].isalpha():
-            msg = f"Invalid DN attribute: {attr_name}. Must start with letter"
-            raise ValueError(msg)
-
-        if not value_part.strip():
-            msg = f"Invalid DN component: {component}. Value cannot be empty"
-            raise ValueError(msg)
-
-    return dn_str
-
-
-def _validate_base_dn(v: str) -> str:
-    """Validate base DN format - cannot be empty (Pydantic v2 BeforeValidator)."""
-    if not v or not v.strip():
-        msg = "Base DN cannot be empty"
-        raise ValueError(msg)
-    dn_str = v.strip()
-    return _validate_dn_format(dn_str)
 
 
 class FlextLdifModels(FlextModels):
@@ -146,8 +61,9 @@ class FlextLdifModels(FlextModels):
         - Provides clear domain semantics vs raw strings
         """
 
-        value: Annotated[str, BeforeValidator(_validate_object_class_name)] = Field(
+        value: str = Field(
             min_length=1,
+            pattern=r"^[a-z0-9-]+$",
             description="Object class name with validation",
             examples=["inetOrgPerson", "groupOfNames", "organizationalUnit"],
         )
@@ -170,8 +86,9 @@ class FlextLdifModels(FlextModels):
         - Provides clear domain semantics vs raw strings
         """
 
-        value: Annotated[str, BeforeValidator(_validate_attribute_name)] = Field(
+        value: str = Field(
             min_length=1,
+            pattern=r"^[a-z0-9_-]+$",
             description="Attribute name with validation",
             examples=["cn", "mail", "telephoneNumber", "objectClass"],
         )
@@ -194,7 +111,7 @@ class FlextLdifModels(FlextModels):
         - Provides clear domain semantics vs raw strings
         """
 
-        value: Annotated[str, BeforeValidator(_validate_search_scope)] = Field(
+        value: Literal["base", "one", "sub", "subordinate"] = Field(
             description="Search scope value with enum validation",
             examples=["base", "one", "sub", "subordinate"],
         )
@@ -216,8 +133,9 @@ class FlextLdifModels(FlextModels):
         - Provides clear domain semantics vs raw strings
         """
 
-        value: Annotated[str, BeforeValidator(_validate_ldap_filter)] = Field(
+        value: str = Field(
             min_length=1,
+            pattern=r"^\(.*\)$",
             description="LDAP search filter with validation",
             examples=["(objectClass=person)", "(|(cn=*)(mail=*))"],
         )
@@ -239,7 +157,7 @@ class FlextLdifModels(FlextModels):
             validate_assignment=True,
         )
 
-        value: Annotated[str, BeforeValidator(_validate_dn_format)] = Field(
+        value: str = Field(
             ..., description="DN string value", min_length=1, max_length=2048
         )
         metadata: FlextLdifTypes.Models.CustomDataDict | None = Field(
@@ -253,6 +171,34 @@ class FlextLdifModels(FlextModels):
             re.IGNORECASE,
         )
 
+        @field_validator("value", mode="after")
+        @classmethod
+        def validate_dn_rfc4514_format(cls, v: str) -> str:
+            """Validate DN follows RFC 4514 format (domain validation, not Pydantic).
+
+            Each component must match: letter[letter|digit|hyphen]*=value
+
+            Args:
+                v: DN string (guaranteed non-empty by min_length constraint)
+
+            Returns:
+                DN value if valid
+
+            Raises:
+                ValueError: If DN format is invalid
+
+            """
+            # Split by comma to get components
+            components = [comp.strip() for comp in v.split(",") if comp.strip()]
+
+            # Validate each component matches RFC 4514 format
+            for comp in components:
+                if not cls._DN_COMPONENT_PATTERN.match(comp):
+                    msg = f"DN format invalid: component '{comp}' must match format 'attribute=value'"
+                    raise ValueError(msg)
+
+            return v
+
         @computed_field
         def components(self) -> list[str]:
             """Get DN components as a list."""
@@ -262,7 +208,7 @@ class FlextLdifModels(FlextModels):
             """Return the DN string value for proper str() conversion."""
             return self.value
 
-    class QuirkMetadata(FlextModels.StrictArbitraryTypesModel):
+    class QuirkMetadata(FlextModels.ArbitraryTypesModel):
         """Universal metadata container for quirk-specific data preservation.
 
         This model supports ANY quirk type and prevents data loss during RFC conversion.
@@ -313,7 +259,7 @@ class FlextLdifModels(FlextModels):
                 parsed_timestamp=None,  # Will be set by caller if needed
             )
 
-    class AclPermissions(FlextModels.StrictArbitraryTypesModel):
+    class AclPermissions(FlextModels.ArbitraryTypesModel):
         """ACL permissions for LDAP operations."""
 
         read: bool = Field(default=False, description="Read permission")
@@ -374,7 +320,7 @@ class FlextLdifModels(FlextModels):
                 perms.append("proxy")
             return perms
 
-    class AclTarget(FlextModels.StrictArbitraryTypesModel):
+    class AclTarget(FlextModels.ArbitraryTypesModel):
         """ACL target specification."""
 
         target_dn: str = Field(..., description="Target DN pattern")
@@ -382,13 +328,13 @@ class FlextLdifModels(FlextModels):
             default_factory=list, description="Target attributes"
         )
 
-    class AclSubject(FlextModels.StrictArbitraryTypesModel):
+    class AclSubject(FlextModels.ArbitraryTypesModel):
         """ACL subject specification."""
 
         subject_type: str = Field(..., description="Subject type (user, group, etc.)")
         subject_value: str = Field(..., description="Subject value/pattern")
 
-    class AclBase(FlextModels.StrictArbitraryTypesModel):
+    class AclBase(FlextModels.ArbitraryTypesModel):
         """Base class for all ACL types with common fields.
 
         This base class defines the shared fields for all ACL implementations.
@@ -453,7 +399,7 @@ class FlextLdifModels(FlextModels):
     # Note: CQRS classes (ParseLdifCommand, WriteLdifCommand, etc.) are
     # exported from flext_ldif.__init__.py to avoid circular imports.
 
-    class LdifValidationResult(FlextModels.StrictArbitraryTypesModel):
+    class LdifValidationResult(FlextModels.ArbitraryTypesModel):
         """Result of LDIF validation operations."""
 
         model_config = ConfigDict(
@@ -470,7 +416,7 @@ class FlextLdifModels(FlextModels):
             default_factory=list, description="List of validation warnings"
         )
 
-    class AnalyticsResult(FlextModels.StrictArbitraryTypesModel):
+    class AnalyticsResult(FlextModels.ArbitraryTypesModel):
         """Result of LDIF analytics operations."""
 
         total_entries: int = Field(
@@ -483,11 +429,11 @@ class FlextLdifModels(FlextModels):
             default_factory=list, description="Detected patterns in the data"
         )
 
-    class SearchConfig(FlextModels.StrictArbitraryTypesModel):
+    class SearchConfig(FlextModels.ArbitraryTypesModel):
         """Configuration for LDAP search operations."""
 
-        base_dn: Annotated[str, BeforeValidator(_validate_base_dn)] = Field(
-            ..., description="Base DN for the search"
+        base_dn: str = Field(
+            ..., min_length=1, description="Base DN for the search (cannot be empty)"
         )
         search_filter: str = Field(
             default="(objectClass=*)", description="LDAP search filter"
@@ -503,7 +449,7 @@ class FlextLdifModels(FlextModels):
             default=0, description="Size limit for search results (0 = no limit)"
         )
 
-    class DiffItem(FlextModels.StrictArbitraryTypesModel):
+    class DiffItem(FlextModels.ArbitraryTypesModel):
         """Individual item in a diff operation result.
 
         Represents a single changed item with its metadata.
@@ -517,7 +463,7 @@ class FlextLdifModels(FlextModels):
             default=None, description="Additional metadata about the change"
         )
 
-    class DiffResult(FlextModels.StrictArbitraryTypesModel):
+    class DiffResult(FlextModels.ArbitraryTypesModel):
         """Result of a diff operation showing changes between two datasets.
 
         Value object for diff comparison results across LDAP data types:
@@ -575,7 +521,7 @@ class FlextLdifModels(FlextModels):
 
             return ", ".join(parts)
 
-    class FilterCriteria(FlextModels.StrictArbitraryTypesModel):
+    class FilterCriteria(FlextModels.ArbitraryTypesModel):
         """Criteria for filtering LDIF entries.
 
         Supports multiple filter types:
@@ -616,7 +562,7 @@ class FlextLdifModels(FlextModels):
             description="Mode: 'include' keep, 'exclude' remove",
         )
 
-    class ExclusionInfo(FlextModels.StrictArbitraryTypesModel):
+    class ExclusionInfo(FlextModels.ArbitraryTypesModel):
         """Metadata for excluded entries/schema items.
 
         Stored in QuirkMetadata.extensions['exclusion_info'] to track why
@@ -647,7 +593,7 @@ class FlextLdifModels(FlextModels):
             ..., description="ISO 8601 timestamp when exclusion was marked"
         )
 
-    class CategorizedEntries(FlextModels.StrictArbitraryTypesModel):
+    class CategorizedEntries(FlextModels.ArbitraryTypesModel):
         """Result of entry categorization by objectClass.
 
         Categorizes LDIF entries into users, groups, containers, and uncategorized
@@ -710,7 +656,7 @@ class FlextLdifModels(FlextModels):
                 uncategorized=[],
             )
 
-    class SchemaDiscoveryResult(FlextModels.StrictArbitraryTypesModel):
+    class SchemaDiscoveryResult(FlextModels.ArbitraryTypesModel):
         """Result of schema discovery operations."""
 
         attributes: FlextLdifTypes.Models.AttributesData = Field(
@@ -738,7 +684,7 @@ class FlextLdifModels(FlextModels):
             description="Number of entries used for schema discovery",
         )
 
-    class SchemaAttribute(FlextModels.StrictArbitraryTypesModel):
+    class SchemaAttribute(FlextModels.ArbitraryTypesModel):
         """LDAP schema attribute definition model.
 
         Represents an LDAP attribute type definition from schema.
@@ -758,7 +704,7 @@ class FlextLdifModels(FlextModels):
             default=None, description="Quirk-specific metadata"
         )
 
-    class SchemaObjectClass(FlextModels.StrictArbitraryTypesModel):
+    class SchemaObjectClass(FlextModels.ArbitraryTypesModel):
         """LDAP schema object class definition model.
 
         Represents an LDAP object class definition from schema.
@@ -834,9 +780,7 @@ class FlextLdifModels(FlextModels):
             """Validate cross-field consistency in Entry model.
 
             Validates:
-            - DN and attributes are properly set
-            - ObjectClass attribute exists
-            - DN format consistency
+            - ObjectClass attribute exists (LDAP requirement)
 
             Returns:
             Self (for method chaining)
@@ -845,11 +789,6 @@ class FlextLdifModels(FlextModels):
             ValueError: If validation fails
 
             """
-            # Ensure DN is not empty (already validated by DistinguishedName)
-            if not self.dn.value:
-                msg = "Entry DN cannot be empty"
-                raise ValueError(msg)
-
             # Ensure entry has objectClass attribute (LDAP requirement)
             # Exception: schema entries (dn: cn=schema) contain schema
             # definitions, not directory objects
@@ -965,7 +904,7 @@ class FlextLdifModels(FlextModels):
                 FlextLdifConstants.DictKeys.OBJECTCLASS
             )
 
-    class AttributeValues(FlextModels.StrictArbitraryTypesModel):
+    class AttributeValues(FlextModels.ArbitraryTypesModel):
         """LDIF attribute values container."""
 
         values: list[str] = Field(default_factory=list, description="Attribute values")
@@ -977,7 +916,7 @@ class FlextLdifModels(FlextModels):
                 return self.values[0]
             return None
 
-    class LdifAttributes(FlextModels.StrictArbitraryTypesModel):
+    class LdifAttributes(FlextModels.ArbitraryTypesModel):
         """LDIF attributes container with dict-like interface."""
 
         attributes: dict[str, FlextLdifModels.AttributeValues] = Field(
@@ -1137,6 +1076,89 @@ class FlextLdifModels(FlextModels):
         server_type: str = Field(..., description="Server type")
         quirk_name: str = Field(..., description="Name of the registered quirk")
         timestamp: str = Field(..., description="Event timestamp")
+
+    class PipelineStatistics(FlextModels.ArbitraryTypesModel):
+        """Statistics for LDIF pipeline operations.
+
+        Tracks counts of entries processed, categorized, validated, and rejected
+        during pipeline execution for monitoring and troubleshooting.
+
+        Attributes:
+        total_entries: Total entries processed
+        processed_entries: Successfully processed entries
+        schema_entries: Entries categorized as schema
+        hierarchy_entries: Entries categorized as hierarchy
+        user_entries: Entries categorized as users
+        group_entries: Entries categorized as groups
+        acl_entries: Entries categorized as ACLs
+        rejected_entries: Entries rejected due to validation failures
+        rejected_reasons: Map of rejection reason to entry count
+        processing_duration: Time in seconds for processing
+
+        """
+
+        model_config = ConfigDict(
+            arbitrary_types_allowed=True,
+            validate_default=True,
+        )
+
+        total_entries: int = Field(
+            default=0, ge=0, description="Total entries encountered"
+        )
+        processed_entries: int = Field(
+            default=0, ge=0, description="Successfully processed entries"
+        )
+        schema_entries: int = Field(
+            default=0, ge=0, description="Schema entries categorized"
+        )
+        hierarchy_entries: int = Field(
+            default=0, ge=0, description="Hierarchy entries categorized"
+        )
+        user_entries: int = Field(
+            default=0, ge=0, description="User entries categorized"
+        )
+        group_entries: int = Field(
+            default=0, ge=0, description="Group entries categorized"
+        )
+        acl_entries: int = Field(default=0, ge=0, description="ACL entries categorized")
+        rejected_entries: int = Field(default=0, ge=0, description="Entries rejected")
+        rejected_reasons: dict[str, int] = Field(
+            default_factory=dict, description="Rejection reason distribution"
+        )
+        processing_duration: float = Field(
+            default=0.0, ge=0.0, description="Processing duration in seconds"
+        )
+
+    class PipelineExecutionResult(FlextModels.ArbitraryTypesModel):
+        """Result of pipeline execution containing categorized entries and statistics.
+
+        Contains the complete result of a pipeline execution including entries
+        organized by category, statistics, and output file paths.
+
+        Attributes:
+        entries_by_category: Entries organized by their categorization
+        statistics: Pipeline execution statistics
+        file_paths: Output file paths for each category
+
+        """
+
+        model_config = ConfigDict(
+            arbitrary_types_allowed=True,
+            validate_default=True,
+        )
+
+        entries_by_category: dict[str, list[FlextLdifModels.Entry]] = Field(
+            default_factory=dict,
+            description="Entries organized by category",
+        )
+        statistics: FlextLdifModels.PipelineStatistics = Field(
+            default_factory=lambda: FlextLdifModels.PipelineStatistics(),  # noqa: PLW0108
+            description="Pipeline execution statistics",
+        )
+        file_paths: dict[str, str] = Field(
+            default_factory=dict,
+            description="Output file paths for each category",
+        )
 
 
 __all__ = ["FlextLdifModels"]

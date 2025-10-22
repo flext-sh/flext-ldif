@@ -23,7 +23,7 @@ from flext_core import FlextDecorators, FlextResult, FlextService
 from flext_ldif.typings import FlextLdifTypes
 
 
-class ValidationService(FlextService[FlextLdifTypes.Models.CustomDataDict]):
+class FlextLdifValidationService(FlextService[FlextLdifTypes.Models.CustomDataDict]):
     """RFC 2849/4512 compliant validation service for LDIF entries.
 
     Provides methods for validating LDAP attribute names, object class names,
@@ -43,7 +43,7 @@ class ValidationService(FlextService[FlextLdifTypes.Models.CustomDataDict]):
     - Must match structural, auxiliary, or abstract class
 
     Example:
-        >>> validation_service = ValidationService()
+        >>> validation_service = FlextLdifValidationService()
         >>>
         >>> # Validate attribute name
         >>> result = validation_service.validate_attribute_name(
@@ -263,4 +263,4 @@ class ValidationService(FlextService[FlextLdifTypes.Models.CustomDataDict]):
             return FlextResult[bool].fail(f"Failed to validate DN component: {e}")
 
 
-__all__ = ["ValidationService"]
+__all__ = ["FlextLdifValidationService"]

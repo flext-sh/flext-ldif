@@ -1,0 +1,46 @@
+{
+  "valid": false,
+  "error": "Entry missing required attributes: sn",
+  "error_type": "SCHEMA_VIOLATION",
+  "strict_mode": {
+    "valid": false,
+    "should_fail": true,
+    "entries": [
+      {
+        "dn": "cn=incomplete,dc=example,dc=com",
+        "attributes": {
+          "objectClass": ["person"],
+          "cn": ["incomplete"]
+        },
+        "validation_errors": ["Missing required attribute 'sn' for objectClass 'person'"]
+      }
+    ]
+  },
+  "relaxed_mode": {
+    "valid": true,
+    "entries": [
+      {
+        "dn": "cn=incomplete,dc=example,dc=com",
+        "attributes": {
+          "objectClass": ["person"],
+          "cn": ["incomplete"]
+        },
+        "warnings": ["Missing required attribute 'sn' for objectClass 'person'"]
+      },
+      {
+        "dn": "cn=complete,dc=example,dc=com",
+        "attributes": {
+          "objectClass": ["person"],
+          "cn": ["complete"],
+          "sn": ["Complete"]
+        }
+      }
+    ],
+    "count": 2
+  },
+  "metadata": {
+    "type": "broken_fixture",
+    "issue_type": "schema_violation",
+    "test_aspects": ["error_handling", "strict_vs_relaxed_mode", "schema_validation"]
+  }
+}

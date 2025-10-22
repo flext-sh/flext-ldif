@@ -13,7 +13,7 @@ from typing import cast
 
 import pytest
 
-from flext_ldif.services.validation_service import ValidationService
+from flext_ldif.services.validation_service import FlextLdifValidationService
 
 
 class TestValidationServiceInitialization:
@@ -21,12 +21,12 @@ class TestValidationServiceInitialization:
 
     def test_init_creates_service(self) -> None:
         """Test validation service can be instantiated."""
-        service = ValidationService()
+        service = FlextLdifValidationService()
         assert service is not None
 
     def test_execute_returns_status(self) -> None:
         """Test execute returns service status."""
-        service = ValidationService()
+        service = FlextLdifValidationService()
         result = service.execute()
 
         assert result.is_success
@@ -47,7 +47,7 @@ class TestValidateAttributeName:
 
     def test_validate_simple_attribute_name(self) -> None:
         """Test validation of simple attribute name."""
-        service = ValidationService()
+        service = FlextLdifValidationService()
         result = service.validate_attribute_name("cn")
 
         assert result.is_success
@@ -55,7 +55,7 @@ class TestValidateAttributeName:
 
     def test_validate_attribute_name_with_hyphens(self) -> None:
         """Test validation of attribute name with hyphens (RFC 4512)."""
-        service = ValidationService()
+        service = FlextLdifValidationService()
         result = service.validate_attribute_name("user-name")
 
         assert result.is_success
@@ -63,7 +63,7 @@ class TestValidateAttributeName:
 
     def test_validate_attribute_name_with_digits(self) -> None:
         """Test validation of attribute name with digits."""
-        service = ValidationService()
+        service = FlextLdifValidationService()
         result = service.validate_attribute_name("attr123")
 
         assert result.is_success
@@ -71,7 +71,7 @@ class TestValidateAttributeName:
 
     def test_validate_mixed_case_attribute_name(self) -> None:
         """Test validation of mixed case attribute name."""
-        service = ValidationService()
+        service = FlextLdifValidationService()
         result = service.validate_attribute_name("userName")
 
         assert result.is_success
@@ -79,7 +79,7 @@ class TestValidateAttributeName:
 
     def test_reject_attribute_name_starting_with_digit(self) -> None:
         """Test rejection of attribute name starting with digit."""
-        service = ValidationService()
+        service = FlextLdifValidationService()
         result = service.validate_attribute_name("2invalid")
 
         assert result.is_success
@@ -87,7 +87,7 @@ class TestValidateAttributeName:
 
     def test_reject_attribute_name_with_spaces(self) -> None:
         """Test rejection of attribute name with spaces."""
-        service = ValidationService()
+        service = FlextLdifValidationService()
         result = service.validate_attribute_name("invalid name")
 
         assert result.is_success
@@ -95,7 +95,7 @@ class TestValidateAttributeName:
 
     def test_reject_attribute_name_with_special_chars(self) -> None:
         """Test rejection of attribute name with special characters."""
-        service = ValidationService()
+        service = FlextLdifValidationService()
         result = service.validate_attribute_name("invalid@name")
 
         assert result.is_success
@@ -103,7 +103,7 @@ class TestValidateAttributeName:
 
     def test_reject_empty_attribute_name(self) -> None:
         """Test rejection of empty attribute name."""
-        service = ValidationService()
+        service = FlextLdifValidationService()
         result = service.validate_attribute_name("")
 
         assert result.is_success
@@ -111,7 +111,7 @@ class TestValidateAttributeName:
 
     def test_reject_too_long_attribute_name(self) -> None:
         """Test rejection of attribute name exceeding RFC limit."""
-        service = ValidationService()
+        service = FlextLdifValidationService()
         # RFC 4512 typical limit is 127 characters
         long_name = "a" * 128
         result = service.validate_attribute_name(long_name)
@@ -121,7 +121,7 @@ class TestValidateAttributeName:
 
     def test_accept_max_length_attribute_name(self) -> None:
         """Test acceptance of attribute name at RFC limit."""
-        service = ValidationService()
+        service = FlextLdifValidationService()
         # RFC 4512 typical limit is 127 characters
         max_name = "a" * 127
         result = service.validate_attribute_name(max_name)
@@ -131,7 +131,7 @@ class TestValidateAttributeName:
 
     def test_reject_non_string_attribute_name(self) -> None:
         """Test rejection of non-string attribute name."""
-        service = ValidationService()
+        service = FlextLdifValidationService()
         result = service.validate_attribute_name(cast("str", 123))
 
         assert result.is_success
@@ -139,7 +139,7 @@ class TestValidateAttributeName:
 
     def test_validate_common_ldap_attributes(self) -> None:
         """Test validation of common LDAP attribute names."""
-        service = ValidationService()
+        service = FlextLdifValidationService()
         common_attrs = [
             "cn",
             "sn",
@@ -162,7 +162,7 @@ class TestValidateObjectClassName:
 
     def test_validate_simple_objectclass_name(self) -> None:
         """Test validation of simple object class name."""
-        service = ValidationService()
+        service = FlextLdifValidationService()
         result = service.validate_objectclass_name("person")
 
         assert result.is_success
@@ -170,7 +170,7 @@ class TestValidateObjectClassName:
 
     def test_validate_objectclass_name_with_camel_case(self) -> None:
         """Test validation of camel case object class name."""
-        service = ValidationService()
+        service = FlextLdifValidationService()
         result = service.validate_objectclass_name("inetOrgPerson")
 
         assert result.is_success
@@ -178,7 +178,7 @@ class TestValidateObjectClassName:
 
     def test_validate_objectclass_name_with_hyphens(self) -> None:
         """Test validation of object class name with hyphens."""
-        service = ValidationService()
+        service = FlextLdifValidationService()
         result = service.validate_objectclass_name("organization-unit")
 
         assert result.is_success
@@ -186,7 +186,7 @@ class TestValidateObjectClassName:
 
     def test_reject_objectclass_name_with_spaces(self) -> None:
         """Test rejection of object class name with spaces."""
-        service = ValidationService()
+        service = FlextLdifValidationService()
         result = service.validate_objectclass_name("invalid class")
 
         assert result.is_success
@@ -194,7 +194,7 @@ class TestValidateObjectClassName:
 
     def test_reject_objectclass_name_starting_with_digit(self) -> None:
         """Test rejection of object class name starting with digit."""
-        service = ValidationService()
+        service = FlextLdifValidationService()
         result = service.validate_objectclass_name("2person")
 
         assert result.is_success
@@ -202,7 +202,7 @@ class TestValidateObjectClassName:
 
     def test_reject_empty_objectclass_name(self) -> None:
         """Test rejection of empty object class name."""
-        service = ValidationService()
+        service = FlextLdifValidationService()
         result = service.validate_objectclass_name("")
 
         assert result.is_success
@@ -210,7 +210,7 @@ class TestValidateObjectClassName:
 
     def test_validate_common_ldap_objectclasses(self) -> None:
         """Test validation of common LDAP object class names."""
-        service = ValidationService()
+        service = FlextLdifValidationService()
         common_classes = [
             "top",
             "person",
@@ -233,7 +233,7 @@ class TestValidateAttributeValue:
 
     def test_validate_simple_attribute_value(self) -> None:
         """Test validation of simple attribute value."""
-        service = ValidationService()
+        service = FlextLdifValidationService()
         result = service.validate_attribute_value("John Smith")
 
         assert result.is_success
@@ -241,7 +241,7 @@ class TestValidateAttributeValue:
 
     def test_validate_empty_attribute_value(self) -> None:
         """Test validation of empty attribute value (allowed in LDAP)."""
-        service = ValidationService()
+        service = FlextLdifValidationService()
         result = service.validate_attribute_value("")
 
         assert result.is_success
@@ -249,7 +249,7 @@ class TestValidateAttributeValue:
 
     def test_validate_attribute_value_with_special_chars(self) -> None:
         """Test validation of attribute value with special characters."""
-        service = ValidationService()
+        service = FlextLdifValidationService()
         result = service.validate_attribute_value("user@example.com")
 
         assert result.is_success
@@ -257,7 +257,7 @@ class TestValidateAttributeValue:
 
     def test_validate_attribute_value_with_unicode(self) -> None:
         """Test validation of attribute value with Unicode."""
-        service = ValidationService()
+        service = FlextLdifValidationService()
         result = service.validate_attribute_value("José García")
 
         assert result.is_success
@@ -265,7 +265,7 @@ class TestValidateAttributeValue:
 
     def test_reject_attribute_value_exceeding_max_length(self) -> None:
         """Test rejection of attribute value exceeding max length."""
-        service = ValidationService()
+        service = FlextLdifValidationService()
         result = service.validate_attribute_value("test", max_length=2)
 
         assert result.is_success
@@ -273,7 +273,7 @@ class TestValidateAttributeValue:
 
     def test_accept_attribute_value_at_max_length(self) -> None:
         """Test acceptance of attribute value at max length."""
-        service = ValidationService()
+        service = FlextLdifValidationService()
         result = service.validate_attribute_value("te", max_length=2)
 
         assert result.is_success
@@ -281,7 +281,7 @@ class TestValidateAttributeValue:
 
     def test_validate_long_attribute_value(self) -> None:
         """Test validation of long attribute value (default 1MB limit)."""
-        service = ValidationService()
+        service = FlextLdifValidationService()
         # Create a reasonably large value (10KB)
         large_value = "x" * 10240
         result = service.validate_attribute_value(large_value)
@@ -291,7 +291,7 @@ class TestValidateAttributeValue:
 
     def test_reject_non_string_attribute_value(self) -> None:
         """Test rejection of non-string attribute value."""
-        service = ValidationService()
+        service = FlextLdifValidationService()
         result = service.validate_attribute_value(cast("str", 123))
 
         assert result.is_success
@@ -303,7 +303,7 @@ class TestValidateDnComponent:
 
     def test_validate_simple_dn_component(self) -> None:
         """Test validation of simple DN component."""
-        service = ValidationService()
+        service = FlextLdifValidationService()
         result = service.validate_dn_component("cn", "John Smith")
 
         assert result.is_success
@@ -311,7 +311,7 @@ class TestValidateDnComponent:
 
     def test_validate_dn_component_with_empty_value(self) -> None:
         """Test validation of DN component with empty value."""
-        service = ValidationService()
+        service = FlextLdifValidationService()
         result = service.validate_dn_component("cn", "")
 
         assert result.is_success
@@ -319,7 +319,7 @@ class TestValidateDnComponent:
 
     def test_validate_dn_component_with_special_chars(self) -> None:
         """Test validation of DN component with special characters."""
-        service = ValidationService()
+        service = FlextLdifValidationService()
         result = service.validate_dn_component("mail", "user@example.com")
 
         assert result.is_success
@@ -327,7 +327,7 @@ class TestValidateDnComponent:
 
     def test_reject_dn_component_with_invalid_attribute(self) -> None:
         """Test rejection of DN component with invalid attribute name."""
-        service = ValidationService()
+        service = FlextLdifValidationService()
         result = service.validate_dn_component("2invalid", "value")
 
         assert result.is_success
@@ -335,7 +335,7 @@ class TestValidateDnComponent:
 
     def test_reject_dn_component_with_non_string_value(self) -> None:
         """Test rejection of DN component with non-string value."""
-        service = ValidationService()
+        service = FlextLdifValidationService()
         result = service.validate_dn_component("cn", cast("str", 123))
 
         assert result.is_success
@@ -343,7 +343,7 @@ class TestValidateDnComponent:
 
     def test_validate_common_dn_components(self) -> None:
         """Test validation of common DN components."""
-        service = ValidationService()
+        service = FlextLdifValidationService()
         common_components = [
             ("cn", "John Smith"),
             ("ou", "People"),
@@ -363,7 +363,7 @@ class TestRFC4512Compliance:
 
     def test_attribute_names_case_insensitive_validation(self) -> None:
         """Test that attribute name validation is case-insensitive."""
-        service = ValidationService()
+        service = FlextLdifValidationService()
 
         # All these should be valid (case variations)
         variations = ["cn", "CN", "Cn", "cN"]
@@ -374,7 +374,7 @@ class TestRFC4512Compliance:
 
     def test_hyphenated_names_valid(self) -> None:
         """Test that hyphenated names are valid per RFC 4512."""
-        service = ValidationService()
+        service = FlextLdifValidationService()
         hyphenated_names = [
             "user-name",
             "organization-unit",
@@ -389,7 +389,7 @@ class TestRFC4512Compliance:
 
     def test_numeric_suffixes_valid(self) -> None:
         """Test that numeric suffixes in names are valid."""
-        service = ValidationService()
+        service = FlextLdifValidationService()
         numeric_names = ["attr1", "value2", "field99"]
 
         for name in numeric_names:
@@ -399,7 +399,7 @@ class TestRFC4512Compliance:
 
     def test_leading_digits_invalid(self) -> None:
         """Test that leading digits in names are invalid per RFC 4512."""
-        service = ValidationService()
+        service = FlextLdifValidationService()
         invalid_names = ["1attr", "2value", "9field"]
 
         for name in invalid_names:

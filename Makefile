@@ -64,7 +64,12 @@ setup: install-dev ## Complete project setup
 # =============================================================================
 
 .PHONY: validate
-validate: lint type-check security test ## Run all quality gates (MANDATORY ORDER)
+validate: lint type-check security audit-pydantic-v2 test ## Run all quality gates (MANDATORY ORDER)
+
+.PHONY: audit-pydantic-v2
+audit-pydantic-v2: ## Audit Pydantic v2 compliance
+	@echo "🔍 Auditing Pydantic v2 compliance..."
+	@python ../flext-core/docs/pydantic-v2-modernization/audit_pydantic_v2.py --project .
 
 .PHONY: check
 check: lint type-check ## Quick health check
@@ -78,8 +83,8 @@ format: ## Format code
 	$(POETRY) run ruff format .
 
 .PHONY: type-check
-type-check: ## Run type checking with Pyrefly (ZERO TOLERANCE)
-	PYTHONPATH=. $(POETRY) run pyrefly check $(SRC_DIR) $(TESTS_DIR)
+type-check: ## Run type checking with MyPy (ZERO TOLERANCE)
+	PYTHONPATH=$(SRC_DIR) $(POETRY) run python -m mypy $(SRC_DIR) --strict --ignore-missing-imports
 
 .PHONY: security
 security: ## Run security scanning

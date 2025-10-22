@@ -20,12 +20,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif.services.dn_service import DnService
-from flext_ldif.services.validation_service import ValidationService
+from flext_ldif.services.dn_service import FlextLdifDnService
+from flext_ldif.services.server_detector import FlextLdifServerDetector
+from flext_ldif.services.validation_service import FlextLdifValidationService
 from flext_ldif.typings import FlextLdifTypes
 
 __all__ = [
-    "DnService",
+    "FlextLdifDnService",
+    "FlextLdifServerDetector",
     "FlextLdifTypes",
-    "ValidationService",
+    "FlextLdifValidationService",
 ]

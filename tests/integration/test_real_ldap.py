@@ -774,7 +774,8 @@ class TestRealLdapCRUD:
     ) -> None:
         """Test Create→Read→Update→Delete cycle."""
         # CREATE: Build entry using FlextLdif API
-        person_result = flext_api.build_person_entry(
+        person_result = flext_api.build(
+            "person",
             cn="CRUD Test User",
             sn="User",
             base_dn=clean_test_ou,
@@ -840,7 +841,8 @@ class TestRealLdapBatchOperations:
         # Build 20 entries using API (no manual loops!)
         entries = []
         for i in range(20):
-            result = flext_api.build_person_entry(
+            result = flext_api.build(
+                "person",
                 cn=f"Batch User {i}",
                 sn=f"User{i}",
                 base_dn=clean_test_ou,

@@ -5,8 +5,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ---
 
 **LDIF Processing Library for FLEXT Ecosystem**
-**Version**: 0.9.9 | **Updated**: 2025-10-10
-**Status**: RFC-first LDIF processing with universal conversion matrix · Production-ready
+**Version**: 0.9.9 | **Updated**: 2025-10-22
+**Status**: RFC-first LDIF processing with auto-detection, relaxed mode, and universal conversion matrix · Production-ready
 
 ---
 
@@ -51,6 +51,9 @@ As defined in [../CLAUDE.md](../CLAUDE.md), all FLEXT development MUST use:
 
 - ✅ **RFC-First Design**: Full RFC 2849 (LDIF) and RFC 4512 (Schema) compliance
 - ✅ **Quirks System**: Pluggable server-specific extensions for OID, OUD, OpenLDAP, Active Directory, and more
+- ✅ **Auto-Detection**: Automatic LDAP server type detection from LDIF content using pattern matching
+- ✅ **Relaxed Mode**: Lenient parsing for broken/non-compliant LDIF files with best-effort recovery
+- ✅ **Configurable Detection**: Multiple quirks detection modes (auto/manual/disabled) with server override capability
 - ✅ **Universal Conversion Matrix**: N×N server conversions via RFC intermediate format (2×N implementations)
 - ✅ **DN Case Registry**: Canonical DN case tracking for OUD compatibility during conversions
 - ✅ **Generic Migration**: Server-agnostic transformation pipeline (Source → RFC → Target)
@@ -115,6 +118,9 @@ src/flext_ldif/
 ├── migration_pipeline.py       # Server migration orchestration
 ├── mixins.py                   # Shared behaviors
 │
+├── services/                   # Business logic services
+│   └── server_detector.py     # Auto-detect LDAP server type from LDIF content
+│
 ├── rfc/                        # RFC 2849/4512 foundation
 │   ├── rfc_ldif_parser.py     # Standard LDIF parsing
 │   ├── rfc_ldif_writer.py     # Standard LDIF writing
@@ -136,7 +142,8 @@ src/flext_ldif/
 │       ├── ds389_quirks.py    # Red Hat Directory Server
 │       ├── apache_quirks.py   # Apache Directory Server
 │       ├── novell_quirks.py   # Novell eDirectory
-│       └── tivoli_quirks.py   # IBM Tivoli Directory Server
+│       ├── tivoli_quirks.py   # IBM Tivoli Directory Server
+│       └── relaxed_quirks.py  # Lenient parsing for broken/non-compliant LDIF
 │
 ├── schema/                     # Schema processing
 │   ├── builder.py             # Schema construction
@@ -165,9 +172,10 @@ src/flext_ldif/
 
 **Supported Servers**:
 
-- **Fully Implemented**: OID, OUD, OpenLDAP 1.x/2.x
+- **Fully Implemented**: OID, OUD, OpenLDAP 1.x/2.x, Relaxed Mode (for broken/non-compliant LDIF)
 - **Stub Implementations**: Active Directory, Apache DS, 389 DS, Novell eDirectory, IBM Tivoli DS
 - **Generic RFC**: Works with any LDAP server using RFC baseline
+- **Auto-Detected**: Automatic server detection from LDIF content with 8+ server patterns supported
 
 **Adding New Server Support**:
 
@@ -186,6 +194,179 @@ class MyServerQuirks(QuirkBase):
     def normalize_dn(self, dn: str) -> str:
         """Normalize DN for MyServer."""
         return dn.lower()  # Example: MyServer uses lowercase DNs
+```
+
+### Auto-Detection Architecture
+
+**Purpose**: Automatically detect LDAP server type from LDIF content using pattern matching and confidence scoring.
+
+**How Auto-Detection Works**:
+
+1. **Pattern Matching**: Scans LDIF content for server-specific OIDs, attributes, and patterns
+2. **Weighted Scoring**: Each server type receives points based on pattern matches
+3. **Confidence Calculation**: Determines confidence score (0.0-1.0) based on match strength
+4. **Fallback Strategy**: Returns RFC if confidence is below threshold (0.6)
+
+**Supported Server Detection**:
+
+- **Oracle OID**: Pattern `2.16.840.1.113894.*` + OID-specific attributes (weight: 10)
+- **Oracle OUD**: Pattern `ds-sync-*`, `ds-pwp-*` attributes (weight: 10)
+- **OpenLDAP**: Pattern `olc*` configuration attributes (weight: 8)
+- **Active Directory**: Pattern `1.2.840.113556.*` + AD attributes (weight: 8)
+- **389 DS, Apache DS, Novell eDirectory, IBM Tivoli**: Specialized patterns (weight: 6 each)
+
+**Manual Auto-Detection**:
+
+```python
+from flext_ldif.services.server_detector import FlextLdifServerDetector
+from pathlib import Path
+
+detector = FlextLdifServerDetector()
+
+# Detect from LDIF file
+result = detector.detect_server_type(ldif_path=Path("directory.ldif"))
+if result.is_success:
+    detection = result.unwrap()
+    print(f"Detected: {detection['detected_server_type']}")
+    print(f"Confidence: {detection['confidence']}")
+    print(f"Patterns found: {detection['patterns_found']}")
+
+# Or from LDIF content string
+ldif_content = open("directory.ldif").read()
+result = detector.detect_server_type(ldif_content=ldif_content)
+```
+
+**Auto-Detection During Parsing**:
+
+```python
+from flext_ldif import FlextLdif
+from pathlib import Path
+
+ldif = FlextLdif()
+
+# Parser automatically detects server type when config mode is "auto"
+result = ldif.parse_with_auto_detection(Path("directory.ldif"))
+if result.is_success:
+    entries = result.unwrap()
+    print(f"Parsed with auto-detected server type")
+```
+
+### Relaxed Mode Architecture
+
+**Purpose**: Enable lenient parsing for broken, non-compliant, or malformed LDIF files with best-effort recovery.
+
+**How Relaxed Mode Works**:
+
+1. **Priority 200**: Relaxed quirks are lowest priority (applied only when other quirks can't handle)
+2. **Best-Effort Parsing**: Extracts what's possible instead of failing on errors
+3. **Warning Logging**: Reports parsing issues as warnings instead of errors
+4. **Fallback Patterns**: Permissive regex patterns for malformed OIDs and attributes
+5. **Pass-Through Conversion**: Relaxed mode preserves original data in conversions
+
+**Relaxed Quirks Classes**:
+
+- `FlextLdifQuirksServersRelaxedSchema`: Lenient schema attribute/objectClass parsing
+- `FlextLdifQuirksServersRelaxedAcl`: Flexible ACL line handling
+- `FlextLdifQuirksServersRelaxedEntry`: Tolerant entry and DN processing
+
+**Using Relaxed Mode**:
+
+```python
+from flext_ldif import FlextLdif
+from pathlib import Path
+
+ldif = FlextLdif()
+
+# Enable relaxed mode in configuration
+ldif.config.enable_relaxed_parsing = True
+
+# Parse broken LDIF files that would normally fail
+result = ldif.parse_relaxed(Path("broken_directory.ldif"))
+if result.is_success:
+    entries = result.unwrap()
+    print(f"Parsed {len(entries)} entries with relaxed mode")
+
+# Or use direct method
+result = ldif.parse(Path("broken_directory.ldif"))  # Automatically uses relaxed mode if enabled
+```
+
+**Relaxed Mode Example - Handling Malformed Attributes**:
+
+```python
+# Relaxed mode accepts malformed OIDs like:
+# ( incomplete-oid NAME 'attribute'    <- Missing closing paren
+# 1.2.3 NAME 'simple-oid'              <- Works
+# unknown-oid NAME 'broken'            <- Accepts unknown formats
+
+# All parsed with best-effort extraction and warning logs
+```
+
+### Configuration Modes
+
+**Quirks Detection Modes**: Control how server-specific quirks are selected during LDIF processing.
+
+**Three Detection Modes**:
+
+| Mode | Usage | Description |
+|------|-------|-------------|
+| **auto** (default) | Automatic detection | Detects server type from LDIF content, uses appropriate quirks |
+| **manual** | Override detection | Uses specified `quirks_server_type` from config, skips auto-detection |
+| **disabled** | RFC-only parsing | Uses only RFC 2849/4512, no server-specific quirks |
+
+**Configuration in FlextLdifConfig**:
+
+```python
+from flext_ldif import FlextLdifConfig
+
+# Auto-detection mode (default)
+config = FlextLdifConfig(
+    quirks_detection_mode="auto",  # Detects server from LDIF
+    enable_relaxed_parsing=False
+)
+
+# Manual mode - override detected type
+config = FlextLdifConfig(
+    quirks_detection_mode="manual",
+    quirks_server_type="oud",  # Force OUD quirks
+    enable_relaxed_parsing=False
+)
+
+# RFC-only mode - pure RFC compliance
+config = FlextLdifConfig(
+    quirks_detection_mode="disabled",  # No quirks, RFC only
+    enable_relaxed_parsing=False
+)
+
+# Combined: Manual mode + Relaxed parsing
+config = FlextLdifConfig(
+    quirks_detection_mode="manual",
+    quirks_server_type="oud",
+    enable_relaxed_parsing=True  # Use OUD quirks + relaxed mode for broken entries
+)
+```
+
+**Effective Server Type Resolution**:
+
+The API resolves effective server type with priority:
+
+1. **Relaxed Mode**: If `enable_relaxed_parsing=True` → use "relaxed"
+2. **Manual Override**: If `quirks_detection_mode="manual"` → use `quirks_server_type`
+3. **Auto-Detection**: If `quirks_detection_mode="auto"` → detect from content
+4. **Disabled**: If `quirks_detection_mode="disabled"` → use "rfc"
+
+**Method to Get Effective Server Type**:
+
+```python
+from flext_ldif import FlextLdif
+from pathlib import Path
+
+ldif = FlextLdif()
+
+# Get effective server type that will be used for parsing
+result = ldif.get_effective_server_type(Path("directory.ldif"))
+if result.is_success:
+    server_type = result.unwrap()
+    print(f"Will use {server_type} quirks for parsing")
 ```
 
 ### Migration Pipeline Architecture
@@ -557,6 +738,44 @@ if result.is_success:
         to_server="oud"
     )
 ```
+
+---
+
+## Pydantic v2 Compliance Standards
+
+**Status**: ✅ Fully Pydantic v2 Compliant
+**Verified**: October 22, 2025 (Phase 7 Ecosystem Audit)
+
+### Standards Applied
+
+This project adheres to FLEXT ecosystem Pydantic v2 standards:
+
+1. **Model Configuration**: All models use `model_config = ConfigDict()`
+2. **Validators**: All use `@field_validator` and `@model_validator` decorators
+3. **Serialization**: All use `.model_dump()` and `.model_dump_json()` methods
+4. **Deserialization**: All use `.model_validate()` and `.model_validate_json()` methods
+5. **Native Types**: Use Pydantic v2 native types (EmailStr, HttpUrl, PositiveInt)
+6. **Domain Types**: Use FLEXT domain types from flext-core (PortNumber, TimeoutSeconds)
+
+### Pydantic v1 Patterns (FORBIDDEN)
+
+- ❌ `class Config:` inner class (use `model_config = ConfigDict()`)
+- ❌ `.dict()` method (use `.model_dump()`)
+- ❌ `.json()` method (use `.model_dump_json()`)
+- ❌ `parse_obj()` method (use `.model_validate()`)
+- ❌ `@validator` decorator (use `@field_validator`)
+- ❌ `@root_validator` decorator (use `@model_validator`)
+
+### Verification
+
+```bash
+make audit-pydantic-v2     # Expected: Status: PASS, Violations: 0
+```
+
+### Reference Guide
+
+- **Complete Guide**: `flext-core/docs/pydantic-v2-modernization/PYDANTIC_V2_STANDARDS_GUIDE.md`
+- **Phase 7 Report**: `flext-core/docs/pydantic-v2-modernization/PHASE_7_COMPLETION_REPORT.md`
 
 ---
 

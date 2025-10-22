@@ -11,8 +11,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from pathlib import Path
-from typing import ClassVar, cast, override
+from typing import TYPE_CHECKING, ClassVar, cast, override
 
 from flext_core import (
     FlextBus,
@@ -24,6 +25,9 @@ from flext_core import (
     FlextService,
 )
 
+if TYPE_CHECKING:
+    from flext_ldap import FlextLdapModels
+
 from flext_ldif.acl.service import FlextLdifAclService
 from flext_ldif.client import FlextLdifClient
 from flext_ldif.config import FlextLdifConfig
@@ -32,8 +36,8 @@ from flext_ldif.containers import flext_ldif_container
 from flext_ldif.entry.builder import FlextLdifEntryBuilder
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.processors.ldif_processor import (
-    LdifBatchProcessor,
-    LdifParallelProcessor,
+    FlextLdifBatchProcessor,
+    FlextLdifParallelProcessor,
 )
 from flext_ldif.schema.builder import FlextLdifSchemaBuilder
 from flext_ldif.schema.validator import FlextLdifSchemaValidator
@@ -283,43 +287,177 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.CustomDataDict]):
         return self._client.execute()
 
     def parse(
-        self, source: str | Path, server_type: str = "rfc"
-    ) -> FlextResult[list[FlextLdifModels.Entry]]:
-        r"""Parse LDIF from file or content string.
+        self,
+        source: str | Path | list[str | Path],
+        server_type: str = "rfc",
+        *,
+        batch: bool = False,
+        paginate: bool = False,
+        page_size: int = 1000,
+    ) -> FlextResult[
+        list[FlextLdifModels.Entry] | Callable[[], list[FlextLdifModels.Entry] | None]
+    ]:
+        r"""Unified parse method for LDIF files and content with flexible options.
+
+        Consolidated LDIF parsing method supporting single/batch parsing with optional
+        pagination support for memory-efficient large file processing.
 
         Args:
-            source: Either a file path (Path object) or LDIF content string
+            source: Single source (str Path or content string) or list of sources
+                   for batch processing. Automatically detects file paths.
             server_type: Server type for quirk selection ("rfc", "oid", "oud", etc.)
+            batch: If True, expect list of sources and parse all. If False, expect
+                  single source. Default: False
+            paginate: If True, return a generator function instead of full list.
+                     Default: False. Ignored when batch=True.
+            page_size: Number of entries per page when paginate=True. Default: 1000
 
         Returns:
-            FlextResult with list of parsed Entry models
+            FlextResult containing:
+            - list[Entry] when paginate=False
+            - Callable[[], list[Entry] | None] when paginate=True (generator function)
+
+            Fails if file path does not exist or parsing encounters errors.
 
         Example:
-            # Parse from string
-            result = ldif.parse("dn: cn=test\ncn: test\n")
+            # Parse from string (LDIF content)
+            result = ldif.parse("dn: cn=test,dc=example,dc=com\ncn: test\n")
 
-            # Parse from file
-            result = ldif.parse_ldif_file(Path("data.ldif"))
+            # Parse from file path (automatically detected)
+            result = ldif.parse(Path("data.ldif"))
 
-            # Parse with server-specific quirks
-            result = ldif.parse_ldif_file(Path("oid.ldif"), server_type=FlextLdifConstants.ServerTypes.OID)
+            # Parse multiple files in batch
+            files = [Path("oid1.ldif"), Path("oid2.ldif")]
+            result = ldif.parse(files, batch=True, server_type="oid")
+
+            # Parse with pagination for large files
+            result = ldif.parse(
+                Path("large.ldif"),
+                paginate=True,
+                page_size=500
+            )
+            if result.is_success:
+                get_next_page = result.unwrap()
+                while (page := get_next_page()) is not None:
+                    # Process page...
 
         """
-        return self._client.parse_ldif(source, server_type)
+        # Handle batch parsing
+        if batch:
+            if not isinstance(source, list):
+                return FlextResult.fail(
+                    "batch=True requires source to be a list of sources"
+                )
+            try:
+                all_entries: list[FlextLdifModels.Entry] = []
+                errors: list[str] = []
 
-    def parse_ldif_file(
-        self,
-        path: Path | str,
-        server_type: str = "rfc",
-    ) -> FlextResult[list[FlextLdifModels.Entry]]:
-        """Parse LDIF content from a file path using RFC-compliant parser."""
-        file_path = Path(path)
-        if not file_path.exists():
-            return FlextResult[list[FlextLdifModels.Entry]].fail(
-                f"LDIF file not found: {file_path}",
+                for single_source in source:
+                    # Validate file existence if source is a path
+                    if isinstance(single_source, (Path, str)) and str(
+                        single_source
+                    ).endswith(".ldif"):
+                        file_path = Path(single_source)
+                        if not file_path.exists():
+                            errors.append(f"LDIF file not found: {file_path}")
+                            continue
+
+                    result = self._client.parse_ldif(single_source, server_type)
+                    if result.is_success:
+                        entries = result.unwrap()
+                        all_entries.extend(entries)
+                    else:
+                        errors.append(
+                            f"Failed to parse {single_source}: {result.error}"
+                        )
+
+                if errors:
+                    # Log errors but return partial success if any files parsed
+                    if all_entries:
+                        self._logger.warning(
+                            f"Batch parsing completed with {len(errors)} error(s)",
+                            extra={"errors": errors},
+                        )
+                    else:
+                        return FlextResult[
+                            list[FlextLdifModels.Entry]
+                            | Callable[[], list[FlextLdifModels.Entry] | None]
+                        ].fail(f"Batch parsing failed: {'; '.join(errors)}")
+
+                return cast(
+                    "FlextResult[list[FlextLdifModels.Entry] | Callable[[], list[FlextLdifModels.Entry] | None]]",
+                    FlextResult[list[FlextLdifModels.Entry]].ok(all_entries),
+                )
+
+            except Exception as e:
+                return FlextResult[
+                    list[FlextLdifModels.Entry]
+                    | Callable[[], list[FlextLdifModels.Entry] | None]
+                ].fail(
+                    f"Batch parsing failed: {e}",
+                )
+
+        # Handle pagination
+        if paginate:
+            if isinstance(source, list):
+                return FlextResult.fail(
+                    "paginate=True requires single source, not list. Use batch=True for multiple sources."
+                )
+            try:
+                # Parse entire file first
+                parse_result = self._client.parse_ldif(source, server_type)
+                if parse_result.is_failure:
+                    return FlextResult.fail(parse_result.error)
+
+                all_entries = parse_result.unwrap()
+                current_page_index = 0
+
+                def get_next_page() -> list[FlextLdifModels.Entry] | None:
+                    nonlocal current_page_index
+                    start = current_page_index * page_size
+                    end = start + page_size
+                    current_page_index += 1
+
+                    if start >= len(all_entries):
+                        return None
+
+                    return all_entries[start:end]
+
+                return FlextResult[
+                    list[FlextLdifModels.Entry]
+                    | Callable[[], list[FlextLdifModels.Entry] | None]
+                ].ok(get_next_page)
+
+            except Exception as e:
+                return FlextResult[
+                    list[FlextLdifModels.Entry]
+                    | Callable[[], list[FlextLdifModels.Entry] | None]
+                ].fail(f"Pagination setup failed: {e}")
+
+        # Handle single source parsing (default)
+        if isinstance(source, list):
+            return FlextResult[
+                list[FlextLdifModels.Entry]
+                | Callable[[], list[FlextLdifModels.Entry] | None]
+            ].fail(
+                "source is a list. Did you mean batch=True? Or provide a single source."
             )
 
-        return self.parse(file_path, server_type=server_type)
+        # Validate file existence if source is a path
+        if isinstance(source, (Path, str)) and str(source).endswith(".ldif"):
+            file_path = Path(source)
+            if not file_path.exists():
+                return FlextResult[
+                    list[FlextLdifModels.Entry]
+                    | Callable[[], list[FlextLdifModels.Entry] | None]
+                ].fail(
+                    f"LDIF file not found: {file_path}",
+                )
+
+        return cast(
+            "FlextResult[list[FlextLdifModels.Entry] | Callable[[], list[FlextLdifModels.Entry] | None]]",
+            self._client.parse_ldif(source, server_type),
+        )
 
     def write(
         self,
@@ -347,6 +485,335 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.CustomDataDict]):
 
         """
         return self._client.write_ldif(entries, output_path)
+
+    def get_entry_dn(
+        self, entry: FlextLdifModels.Entry | FlextLdapModels.Entry
+    ) -> FlextResult[str]:
+        """Extract DN (Distinguished Name) from any entry type.
+
+        Handles both FlextLdifModels.Entry (from LDIF files) and
+        FlextLdapModels.Entry (from LDAP server operations).
+
+        Args:
+            entry: LDIF or LDAP entry to extract DN from
+
+        Returns:
+            FlextResult containing DN as string
+
+        Example:
+            # Works with LDIF entries
+            result = ldif.get_entry_dn(ldif_entry)
+
+            # Works with LDAP entries from search
+            result = ldif.get_entry_dn(ldap_entry)
+
+            if result.is_success:
+                dn = result.unwrap()
+
+        """
+        try:
+            if not entry or not hasattr(entry, "dn"):
+                return FlextResult[str].fail("Entry missing DN attribute")
+
+            dn_value = entry.dn
+            if hasattr(dn_value, "value"):
+                return FlextResult[str].ok(str(dn_value.value))
+            return FlextResult[str].ok(str(dn_value))
+
+        except Exception as e:
+            return FlextResult[str].fail(f"Failed to extract DN: {e}")
+
+    def get_entry_attributes(
+        self, entry: FlextLdifModels.Entry | FlextLdapModels.Entry
+    ) -> FlextResult[FlextLdifTypes.CommonDict.AttributeDict]:
+        """Extract attributes from any entry type.
+
+        Handles both FlextLdifModels.Entry (from LDIF files) and
+        FlextLdapModels.Entry (from LDAP server operations).
+
+        Returns attributes as dict[str, list[str]] per FlextLdifTypes.CommonDict.AttributeDict.
+        All attribute values are returned as lists for consistency.
+
+        Args:
+            entry: LDIF or LDAP entry to extract attributes from
+
+        Returns:
+            FlextResult containing AttributeDict with attribute names mapped to
+            list[str] values. All values are lists for type consistency.
+
+        Example:
+            # Works with both LDIF and LDAP entries
+            result = ldif.get_entry_attributes(entry)
+            if result.is_success:
+                attrs = result.unwrap()
+                # Can pass directly to FlextLdap.add_entry()
+                ldap.add_entry(dn="...", attributes=attrs)
+
+        """
+        try:
+            if not entry or not hasattr(entry, "attributes"):
+                return FlextResult[FlextLdifTypes.CommonDict.AttributeDict].fail(
+                    "Entry missing attributes"
+                )
+
+            attrs_container = entry.attributes
+            result_dict: FlextLdifTypes.CommonDict.AttributeDict = {}
+
+            # Handle both LdifAttributes and dict-like access
+            if isinstance(attrs_container, FlextLdifModels.LdifAttributes):
+                # Extract attributes from LdifAttributes container
+                for attr_name, attr_values in attrs_container.attributes.items():
+                    if hasattr(attr_values, "values"):
+                        # Always return as list for type consistency with AttributeDict
+                        result_dict[attr_name] = [str(v) for v in attr_values.values]
+                    elif isinstance(attr_values, list):
+                        # Always return as list for type consistency with AttributeDict
+                        result_dict[attr_name] = [str(v) for v in attr_values]
+                    else:
+                        # Single value - wrap in list for type consistency
+                        result_dict[attr_name] = [str(attr_values)]
+            elif isinstance(attrs_container, dict):
+                # Handle dict representation (from model_validate with dict input)
+                attrs_dict = cast("dict[str, object]", attrs_container)
+                for attr_name, attr_val in attrs_dict.items():
+                    if isinstance(attr_val, list):
+                        # Always return as list for type consistency with AttributeDict
+                        result_dict[attr_name] = [str(v) for v in attr_val]
+                    else:
+                        # Single value - wrap in list for type consistency
+                        result_dict[attr_name] = [str(attr_val)]
+
+            return FlextResult[FlextLdifTypes.CommonDict.AttributeDict].ok(result_dict)
+
+        except Exception as e:
+            return FlextResult[FlextLdifTypes.CommonDict.AttributeDict].fail(
+                f"Failed to extract attributes: {e}"
+            )
+
+    def create_entry(
+        self,
+        dn: str,
+        attributes: dict[str, str | list[str]],
+        objectclasses: list[str] | None = None,
+    ) -> FlextResult[FlextLdifModels.Entry]:
+        """Create a new LDIF entry with validation.
+
+        Args:
+            dn: Distinguished Name for the entry
+            attributes: Dict mapping attribute names to values (string or list)
+            objectclasses: Optional list of objectClass values (added to attributes if provided)
+
+        Returns:
+            FlextResult containing new FlextLdifModels.Entry
+
+        Example:
+            result = ldif.create_entry(
+                dn="cn=John Doe,ou=Users,dc=example,dc=com",
+                attributes={"cn": "John Doe", "sn": "Doe", "mail": "john@example.com"},
+                objectclasses=["inetOrgPerson", "person", "top"]
+            )
+            if result.is_success:
+                entry = result.unwrap()
+
+        """
+        try:
+            # Normalize attributes to ensure all values are lists
+            normalized_attrs: dict[str, list[str]] = {}
+            for key, value in attributes.items():
+                if isinstance(value, list):
+                    normalized_attrs[key] = [str(v) for v in value]
+                else:
+                    normalized_attrs[key] = [str(value)]
+
+            # Add objectClass if provided
+            if objectclasses:
+                normalized_attrs["objectClass"] = [str(v) for v in objectclasses]
+
+            # Use FlextLdifModels.Entry.create() factory method
+            create_result = FlextLdifModels.Entry.create(
+                dn=dn, attributes=normalized_attrs
+            )
+
+            if create_result.is_success:
+                return create_result
+            return FlextResult[FlextLdifModels.Entry].fail(
+                f"Failed to create entry: {create_result.error}"
+            )
+
+        except Exception as e:
+            return FlextResult[FlextLdifModels.Entry].fail(
+                f"Failed to create entry: {e}"
+            )
+
+    def get_entry_objectclasses(
+        self, entry: FlextLdifModels.Entry | FlextLdapModels.Entry
+    ) -> FlextResult[list[str]]:
+        """Extract objectClass values from any entry type.
+
+        Handles both FlextLdifModels.Entry (from LDIF files) and
+        FlextLdapModels.Entry (from LDAP server operations).
+
+        Args:
+            entry: LDIF or LDAP entry to extract objectClasses from
+
+        Returns:
+            FlextResult containing list of objectClass values
+
+        Example:
+            # Works with both LDIF and LDAP entries
+            result = ldif.get_entry_objectclasses(entry)
+            if result.is_success:
+                object_classes = result.unwrap()
+                if "inetOrgPerson" in object_classes:
+                    print("Entry is a person")
+
+        """
+        try:
+            # First try to get objectClass from attributes
+            attrs_result = self.get_entry_attributes(entry)
+            if attrs_result.is_success:
+                attrs = attrs_result.unwrap()
+                # objectClass might be stored as "objectClass" or "objectclass"
+                oc_values = attrs.get("objectClass") or attrs.get("objectclass")
+                if oc_values:
+                    # Normalize to list (get_entry_attributes returns str | list[str])
+                    if isinstance(oc_values, str):
+                        return FlextResult[list[str]].ok([oc_values])
+                    return FlextResult[list[str]].ok(oc_values)
+
+            # Fallback: try direct access to object_classes attribute (LDAP entries)
+            if hasattr(entry, "object_classes"):
+                oc_attr = entry.object_classes
+                if isinstance(oc_attr, list):
+                    return FlextResult[list[str]].ok([str(v) for v in oc_attr])
+                return FlextResult[list[str]].ok([str(oc_attr)])
+
+            return FlextResult[list[str]].fail("Entry missing objectClass attribute")
+
+        except Exception as e:
+            return FlextResult[list[str]].fail(f"Failed to extract objectClasses: {e}")
+
+    def get_attribute_values(self, attribute: object) -> FlextResult[list[str]]:
+        """Extract values from an attribute value object.
+
+        Handles various attribute value formats from both LDIF and LDAP entries.
+
+        Args:
+            attribute: Attribute value object (could be LdifAttributeValue,
+                      LdapAttributeValue, list, or string)
+
+        Returns:
+            FlextResult containing list of attribute values as strings
+
+        Example:
+            # Extract values from attribute objects
+            result = ldif.get_attribute_values(attr_value_obj)
+            if result.is_success:
+                values = result.unwrap()
+                for value in values:
+                    print(f"Value: {value}")
+
+        """
+        try:
+            # Handle None
+            if attribute is None:
+                return FlextResult[list[str]].ok([])
+
+            # Handle objects with .values property
+            if hasattr(attribute, "values"):
+                values = attribute.values
+                if isinstance(values, list):
+                    return FlextResult[list[str]].ok([str(v) for v in values])
+                return FlextResult[list[str]].ok([str(values)])
+
+            # Handle lists directly
+            if isinstance(attribute, list):
+                return FlextResult[list[str]].ok([str(v) for v in attribute])
+
+            # Handle single values
+            return FlextResult[list[str]].ok([str(attribute)])
+
+        except Exception as e:
+            return FlextResult[list[str]].fail(f"Failed to extract attribute values: {e}")
+
+    def parse_schema_ldif(
+        self, file_path: Path, server_type: str | None = None
+    ) -> FlextResult[dict[str, list[tuple[str, list[str]]]]]:
+        """Parse schema LDIF file containing modify operations.
+
+        Extracts schema modifications (add/replace/delete operations) from LDIF
+        files that use changetype: modify format (typical for schema definitions).
+
+        Args:
+            file_path: Path to schema LDIF file
+            server_type: Optional server type for quirks handling
+
+        Returns:
+            FlextResult containing dict mapping operation types (add/replace/delete)
+            to lists of (attribute_name, values) tuples
+
+        Example:
+            result = ldif.parse_schema_ldif(Path("schema.ldif"), "oud")
+            if result.is_success:
+                modifications = result.unwrap()
+                for attr_name, values in modifications.get("add", []):
+                    print(f"Adding {attr_name}: {len(values)} definitions")
+
+        """
+        try:
+            if not file_path.exists():
+                return FlextResult[dict[str, list[tuple[str, list[str]]]]].fail(
+                    f"Schema file not found: {file_path}"
+                )
+
+            # Use standard parse() then extract modify operations
+            # Default to "rfc" if server_type not specified
+            effective_server_type = server_type or "rfc"
+            parse_result = self.parse(file_path, server_type=effective_server_type)
+
+            if not parse_result.is_success:
+                return FlextResult[dict[str, list[tuple[str, list[str]]]]].fail(
+                    f"Failed to parse schema file: {parse_result.error}"
+                )
+
+            entries = parse_result.unwrap()
+            if not isinstance(entries, list):
+                return FlextResult[dict[str, list[tuple[str, list[str]]]]].fail(
+                    "Parse result is not a list of entries"
+                )
+
+            # Extract modify operations from parsed entries
+            modifications: dict[str, list[tuple[str, list[str]]]] = {}
+
+            for entry in entries:
+                # Get attributes using our new method
+                attrs_result = self.get_entry_attributes(entry)
+                if not attrs_result.is_success:
+                    continue
+
+                attrs = attrs_result.unwrap()
+
+                # Schema entries typically have attributetypes, objectclasses, etc.
+                for attr_name, attr_values in attrs.items():
+                    # Assume "add" operation for schema attributes
+                    # (caller can override operation type as needed)
+                    if attr_name.lower() in {
+                        "attributetypes",
+                        "objectclasses",
+                        "ldapsyntaxes",
+                        "matchingrules",
+                    }:
+                        if "add" not in modifications:
+                            modifications["add"] = []
+                        # Values are already lists (AttributeDict guarantees dict[str, list[str]])
+                        modifications["add"].append((attr_name, attr_values))
+
+            return FlextResult[dict[str, list[tuple[str, list[str]]]]].ok(modifications)
+
+        except Exception as e:
+            return FlextResult[dict[str, list[tuple[str, list[str]]]]].fail(
+                f"Failed to parse schema LDIF: {e}"
+            )
 
     def validate_entries(
         self, entries: list[FlextLdifModels.Entry]
@@ -434,272 +901,402 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.CustomDataDict]):
         """
         return self._client.analyze_entries(entries)
 
-    @staticmethod
-    def filter_by_objectclass(
-        entries: list[FlextLdifModels.Entry], objectclass: str
-    ) -> FlextResult[list[FlextLdifModels.Entry]]:
-        """Filter entries by object class.
-
-        Args:
-            entries: List of LDIF entries to filter
-            objectclass: Object class to filter by
-
-        Returns:
-            FlextResult containing filtered entries
-
-        """
-        client = FlextLdifClient()
-        return client.filter_by_objectclass(entries, objectclass)
-
-    def filter_persons(
-        self, entries: list[FlextLdifModels.Entry]
-    ) -> FlextResult[list[FlextLdifModels.Entry]]:
-        """Filter entries to get only person entries.
-
-        Args:
-            entries: List of LDIF entries to filter
-
-        Returns:
-            FlextResult containing person entries
-
-        """
-        return FlextLdif.filter_by_objectclass(entries, "person")
-
-    # =========================================================================
-    # ENTRY BUILDER OPERATIONS (Direct Methods)
-    # =========================================================================
-
-    def build_person_entry(
+    def filter(
         self,
-        cn: str,
-        sn: str,
-        base_dn: str,
+        entries: list[FlextLdifModels.Entry],
+        objectclass: str | None = None,
+        dn_pattern: str | None = None,
+        attributes: dict[str, str | None] | None = None,
+        custom_filter: Callable[[FlextLdifModels.Entry], bool] | None = None,
+    ) -> FlextResult[list[FlextLdifModels.Entry]]:
+        """Unified filter method supporting multiple criteria for flexible entry filtering.
+
+        Consolidated filtering method supporting objectclass, DN pattern, attribute values,
+        and custom callback filters for maximum flexibility while maintaining simplicity.
+
+        Args:
+            entries: List of LDIF entries to filter.
+            objectclass: Optional objectclass filter (e.g., "person", "group").
+            dn_pattern: Optional regex pattern to match against entry DN.
+            attributes: Optional dict of attribute names and values to filter by.
+                       If value is None, checks attribute existence only.
+            custom_filter: Optional callable that receives Entry and returns bool.
+                          Useful for complex filtering logic.
+
+        Returns:
+            FlextResult containing filtered entries. Returns empty list if
+            no entries match the criteria.
+
+        Example:
+            # Filter by objectclass
+            result = ldif.filter(entries, objectclass="person")
+
+            # Filter by DN pattern
+            result = ldif.filter(entries, dn_pattern="ou=People")
+
+            # Filter with multiple criteria
+            result = ldif.filter(
+                entries,
+                objectclass="person",
+                dn_pattern="ou=People",
+                attributes={"uid": None}  # Has uid attribute
+            )
+
+            # Filter with custom callback
+            result = ldif.filter(
+                entries,
+                custom_filter=lambda e: "admin" in e.dn.value.lower()
+            )
+
+        """
+        # If custom_filter is provided, apply it along with other criteria
+        if custom_filter is not None:
+            try:
+                # First apply standard filters using client's unified filter
+                # Note: mark_excluded=False for clean filtering (public API behavior)
+                if objectclass is not None:
+                    filter_result = self._client.filter(
+                        entries,
+                        filter_type="objectclass",
+                        objectclass=objectclass,
+                        mark_excluded=False,
+                    )
+                    if not filter_result.is_success:
+                        return FlextResult[list[FlextLdifModels.Entry]].fail(
+                            f"Objectclass filter failed: {filter_result.error}"
+                        )
+                    result_entries = cast(
+                        "list[FlextLdifModels.Entry]", filter_result.unwrap()
+                    )
+                    entries = result_entries
+
+                if dn_pattern is not None:
+                    # Convert simple substring pattern to fnmatch pattern
+                    fnmatch_pattern = (
+                        f"*{dn_pattern}*" if "*" not in dn_pattern else dn_pattern
+                    )
+                    filter_result = self._client.filter(
+                        entries,
+                        filter_type="dn_pattern",
+                        dn_pattern=fnmatch_pattern,
+                        mark_excluded=False,
+                    )
+                    if not filter_result.is_success:
+                        return FlextResult[list[FlextLdifModels.Entry]].fail(
+                            f"DN pattern filter failed: {filter_result.error}"
+                        )
+                    result_entries = cast(
+                        "list[FlextLdifModels.Entry]", filter_result.unwrap()
+                    )
+                    entries = result_entries
+
+                if attributes is not None:
+                    attr_list = list(attributes.keys())
+                    filter_result = self._client.filter(
+                        entries,
+                        filter_type="attributes",
+                        attributes=attr_list,
+                        mark_excluded=False,
+                    )
+                    if not filter_result.is_success:
+                        return FlextResult[list[FlextLdifModels.Entry]].fail(
+                            f"Attributes filter failed: {filter_result.error}"
+                        )
+                    result_entries = cast(
+                        "list[FlextLdifModels.Entry]", filter_result.unwrap()
+                    )
+                    entries = result_entries
+
+                # Now apply custom_filter to the remaining entries
+                filtered_entries = [e for e in entries if custom_filter(e)]
+                return FlextResult[list[FlextLdifModels.Entry]].ok(filtered_entries)
+
+            except Exception as e:
+                return FlextResult[list[FlextLdifModels.Entry]].fail(
+                    f"Entry filtering with custom filter failed: {e}",
+                )
+
+        # No custom_filter - use client's unified filter with mark_excluded=False for clean results
+        if objectclass is not None:
+            filter_result = self._client.filter(
+                entries,
+                filter_type="objectclass",
+                objectclass=objectclass,
+                mark_excluded=False,
+            )
+            return cast("FlextResult[list[FlextLdifModels.Entry]]", filter_result)
+
+        if dn_pattern is not None:
+            # Convert simple substring pattern to fnmatch pattern
+            fnmatch_pattern = f"*{dn_pattern}*" if "*" not in dn_pattern else dn_pattern
+            filter_result = self._client.filter(
+                entries,
+                filter_type="dn_pattern",
+                dn_pattern=fnmatch_pattern,
+                mark_excluded=False,
+            )
+            return cast("FlextResult[list[FlextLdifModels.Entry]]", filter_result)
+
+        if attributes is not None:
+            attr_list = list(attributes.keys())
+            filter_result = self._client.filter(
+                entries,
+                filter_type="attributes",
+                attributes=attr_list,
+                mark_excluded=False,
+            )
+            return cast("FlextResult[list[FlextLdifModels.Entry]]", filter_result)
+
+        # No filters provided - return all entries
+        return FlextResult[list[FlextLdifModels.Entry]].ok(entries)
+
+    # =========================================================================
+    # ENTRY BUILDER OPERATIONS (Unified Method)
+    # =========================================================================
+
+    def build(
+        self,
+        entry_type: str,
+        *,
+        cn: str | None = None,
+        sn: str | None = None,
         uid: str | None = None,
         mail: str | None = None,
         given_name: str | None = None,
-        additional_attrs: FlextLdifTypes.CommonDict.AttributeDict | None = None,
-    ) -> FlextResult[FlextLdifModels.Entry]:
-        """Build a person entry with common attributes.
-
-        Args:
-            cn: Common name
-            sn: Surname
-            base_dn: Base DN for entry
-            uid: User ID (optional)
-            mail: Email address (optional)
-            given_name: Given name (optional)
-            additional_attrs: Additional attributes (optional)
-
-        Returns:
-            FlextResult containing the built Entry
-
-        Example:
-            result = api.build_person_entry(
-                cn="Alice Johnson",
-                sn="Johnson",
-                base_dn="ou=People,dc=example,dc=com",
-                mail="alice@example.com"
-            )
-
-        """
-        return self._entry_builder.build_person_entry(
-            cn, sn, base_dn, uid, mail, given_name, additional_attrs
-        )
-
-    def build_group_entry(
-        self,
-        cn: str,
-        base_dn: str,
+        ou: str | None = None,
+        dn: str | None = None,
         members: list[str] | None = None,
         description: str | None = None,
+        base_dn: str | None = None,
+        attributes: FlextLdifTypes.CommonDict.AttributeDict | None = None,
         additional_attrs: FlextLdifTypes.CommonDict.AttributeDict | None = None,
     ) -> FlextResult[FlextLdifModels.Entry]:
-        """Build a group entry with members.
+        """Unified entry builder supporting multiple entry types.
+
+        Consolidates build_person_entry(), build_group_entry(), build_ou_entry(),
+        and build_custom_entry() into a single flexible method with type-specific parameters.
 
         Args:
-            cn: Common name (group name)
-            base_dn: Base DN for entry
-            members: List of member DNs
-            description: Description (optional)
-            additional_attrs: Additional attributes (optional)
+            entry_type: Type of entry to build ("person", "group", "ou", "custom")
+            cn: Common name (for person, group)
+            sn: Surname (for person)
+            uid: User ID (for person, optional)
+            mail: Email address (for person, optional)
+            given_name: Given name (for person, optional)
+            ou: Organizational unit name (for ou)
+            dn: Distinguished name (for custom)
+            members: List of member DNs (for group, optional)
+            description: Description (for group, ou, optional)
+            base_dn: Base DN for entry (for person, group, ou)
+            attributes: Dictionary of attributes (for custom)
+            additional_attrs: Additional attributes (optional, all types)
 
         Returns:
             FlextResult containing the built Entry
 
         Example:
-            result = api.build_group_entry(
+            # Build person
+            result = api.build(
+                "person",
+                cn="Alice Johnson",
+                sn="Johnson",
+                mail="alice@example.com",
+                base_dn="ou=People,dc=example,dc=com"
+            )
+
+            # Build group
+            result = api.build(
+                "group",
                 cn="Admins",
-                base_dn="ou=Groups,dc=example,dc=com",
-                members=["cn=alice,ou=People,dc=example,dc=com"]
+                members=["cn=alice,ou=People,dc=example,dc=com"],
+                base_dn="ou=Groups,dc=example,dc=com"
             )
 
-        """
-        return self._entry_builder.build_group_entry(
-            cn, base_dn, members, description, additional_attrs
-        )
-
-    def build_organizational_unit(
-        self,
-        ou: str,
-        base_dn: str,
-        description: str | None = None,
-        additional_attrs: FlextLdifTypes.CommonDict.AttributeDict | None = None,
-    ) -> FlextResult[FlextLdifModels.Entry]:
-        """Build an organizational unit entry.
-
-        Args:
-            ou: Organizational unit name
-            base_dn: Base DN for entry
-            description: Description (optional)
-            additional_attrs: Additional attributes (optional)
-
-        Returns:
-            FlextResult containing the built Entry
-
-        Example:
-            result = api.build_organizational_unit(
+            # Build OU
+            result = api.build(
+                "ou",
                 ou="People",
-                base_dn="dc=example,dc=com"
+                base_dn="dc=example,dc=com",
+                description="People organizational unit"
+            )
+
+            # Build custom
+            result = api.build(
+                "custom",
+                dn="cn=test,dc=example,dc=com",
+                attributes={"cn": ["test"], "objectClass": ["person"]}
             )
 
         """
-        return self._entry_builder.build_organizational_unit_entry(
-            ou, base_dn, description, additional_attrs
+        entry_type_lower = entry_type.lower()
+
+        if entry_type_lower == "person":
+            if not cn or not sn or not base_dn:
+                return FlextResult[FlextLdifModels.Entry].fail(
+                    "Person entry requires: cn, sn, base_dn"
+                )
+            return self._entry_builder.build_person_entry(
+                cn, sn, base_dn, uid, mail, given_name, additional_attrs
+            )
+
+        if entry_type_lower == "group":
+            if not cn or not base_dn:
+                return FlextResult[FlextLdifModels.Entry].fail(
+                    "Group entry requires: cn, base_dn"
+                )
+            return self._entry_builder.build_group_entry(
+                cn, base_dn, members, description, additional_attrs
+            )
+
+        if entry_type_lower == "ou":
+            if not ou or not base_dn:
+                return FlextResult[FlextLdifModels.Entry].fail(
+                    "OU entry requires: ou, base_dn"
+                )
+            return self._entry_builder.build_organizational_unit_entry(
+                ou, base_dn, description, additional_attrs
+            )
+
+        if entry_type_lower == "custom":
+            if not dn or not attributes:
+                return FlextResult[FlextLdifModels.Entry].fail(
+                    "Custom entry requires: dn, attributes"
+                )
+            objectclasses = attributes.get(
+                FlextLdifConstants.DictKeys.OBJECTCLASS, ["top"]
+            )
+            return self._entry_builder.build_custom_entry(dn, objectclasses, attributes)
+
+        supported = "'person', 'group', 'ou', 'custom'"
+        return FlextResult[FlextLdifModels.Entry].fail(
+            f"Unknown entry_type: '{entry_type}'. Supported: {supported}"
         )
 
-    def build_custom_entry(
+    # =========================================================================
+    # UNIFIED CONVERSION OPERATIONS
+    # =========================================================================
+
+    def convert(
         self,
-        dn: str,
-        attributes: FlextLdifTypes.CommonDict.AttributeDict,
-    ) -> FlextResult[FlextLdifModels.Entry]:
-        """Build a custom entry with arbitrary attributes.
+        conversion_type: str,
+        *,
+        entry: FlextLdifModels.Entry | None = None,
+        entries: list[FlextLdifModels.Entry] | None = None,
+        dicts: list[FlextLdifTypes.Models.CustomDataDict] | None = None,
+        json_str: str | None = None,
+    ) -> FlextResult[
+        FlextLdifTypes.Models.CustomDataDict
+        | list[FlextLdifTypes.Models.CustomDataDict]
+        | list[FlextLdifModels.Entry]
+        | str
+    ]:
+        """Unified conversion method supporting multiple format conversions.
+
+        Consolidates entry_to_dict(), entries_to_dicts(), dicts_to_entries(),
+        entries_to_json(), and json_to_entries() into a single flexible method.
 
         Args:
-            dn: Distinguished name
-            attributes: Dictionary of attribute names to value lists
+            conversion_type: Type of conversion to perform
+                ("entry_to_dict", "entries_to_dicts", "dicts_to_entries",
+                 "entries_to_json", "json_to_entries")
+            entry: Single Entry (for entry_to_dict)
+            entries: List of Entries (for entries_to_dicts, entries_to_json)
+            dicts: List of dictionaries (for dicts_to_entries)
+            json_str: JSON string (for json_to_entries)
 
         Returns:
-            FlextResult containing the built Entry
+            FlextResult containing converted data:
+            - entry_to_dict: dict
+            - entries_to_dicts: list[dict]
+            - dicts_to_entries: list[Entry]
+            - entries_to_json: str
+            - json_to_entries: list[Entry]
 
         Example:
-            result = api.build_custom_entry(
-                dn="cn=test,dc=example,dc=com",
-                attributes={FlextLdifConstants.DictKeys.OBJECTCLASS: ["top", "person"], FlextLdifConstants.DictKeys.CN: ["test"]}
+            # Convert single entry to dict
+            result = api.convert("entry_to_dict", entry=entry)
+
+            # Convert entries to dicts
+            result = api.convert("entries_to_dicts", entries=entries)
+
+            # Convert dicts to entries
+            result = api.convert("dicts_to_entries", dicts=dicts)
+
+            # Convert entries to JSON
+            result = api.convert("entries_to_json", entries=entries)
+
+            # Convert JSON to entries
+            result = api.convert("json_to_entries", json_str=json_str)
+
+        """
+        conversion_type_lower = conversion_type.lower()
+
+        if conversion_type_lower == "entry_to_dict":
+            if entry is None:
+                return FlextResult.fail("entry_to_dict requires: entry parameter")
+            return cast(
+                "FlextResult[FlextLdifTypes.Models.CustomDataDict | list[FlextLdifTypes.Models.CustomDataDict] | list[FlextLdifModels.Entry] | str]",
+                self._entry_builder.convert_entry_to_dict(entry),
             )
 
-        """
-        objectclasses = attributes.get(FlextLdifConstants.DictKeys.OBJECTCLASS, ["top"])
-        return self._entry_builder.build_custom_entry(dn, objectclasses, attributes)
+        if conversion_type_lower == "entries_to_dicts":
+            if entries is None:
+                return FlextResult.fail("entries_to_dicts requires: entries parameter")
+            # Convert entries to dictionaries
+            results: list[FlextLdifTypes.Models.CustomDataDict] = []
+            for single_entry in entries:
+                dict_result = self._entry_builder.convert_entry_to_dict(single_entry)
+                if dict_result.is_success:
+                    results.append(dict_result.unwrap())
+            return cast(
+                "FlextResult[FlextLdifTypes.Models.CustomDataDict | list[FlextLdifTypes.Models.CustomDataDict] | list[FlextLdifModels.Entry] | str]",
+                FlextResult[list[FlextLdifTypes.Models.CustomDataDict]].ok(results),
+            )
 
-    def entry_to_dict(
-        self,
-        entry: FlextLdifModels.Entry,
-    ) -> FlextResult[FlextLdifTypes.Models.CustomDataDict]:
-        """Convert entry to dictionary format.
+        if conversion_type_lower == "dicts_to_entries":
+            if dicts is None:
+                return FlextResult.fail("dicts_to_entries requires: dicts parameter")
+            # Convert dictionaries to entries
+            convert_result = self._entry_builder.build_entries_from_dict(dicts)
+            if convert_result.is_failure:
+                empty_result: FlextResult[list[FlextLdifModels.Entry]] = FlextResult[
+                    list[FlextLdifModels.Entry]
+                ].ok([])
+                return cast(
+                    "FlextResult[FlextLdifTypes.Models.CustomDataDict | list[FlextLdifTypes.Models.CustomDataDict] | list[FlextLdifModels.Entry] | str]",
+                    empty_result,
+                )
+            ok_result: FlextResult[list[FlextLdifModels.Entry]] = FlextResult[
+                list[FlextLdifModels.Entry]
+            ].ok(convert_result.unwrap())
+            return cast(
+                "FlextResult[FlextLdifTypes.Models.CustomDataDict | list[FlextLdifTypes.Models.CustomDataDict] | list[FlextLdifModels.Entry] | str]",
+                ok_result,
+            )
 
-        Args:
-            entry: Entry model to convert
+        if conversion_type_lower == "entries_to_json":
+            if entries is None:
+                return FlextResult.fail("entries_to_json requires: entries parameter")
+            return cast(
+                "FlextResult[FlextLdifTypes.Models.CustomDataDict | list[FlextLdifTypes.Models.CustomDataDict] | list[FlextLdifModels.Entry] | str]",
+                self._entry_builder.convert_entries_to_json(entries),
+            )
 
-        Returns:
-            FlextResult containing dictionary representation
+        if conversion_type_lower == "json_to_entries":
+            if json_str is None:
+                return FlextResult.fail("json_to_entries requires: json_str parameter")
+            return cast(
+                "FlextResult[FlextLdifTypes.Models.CustomDataDict | list[FlextLdifTypes.Models.CustomDataDict] | list[FlextLdifModels.Entry] | str]",
+                self._entry_builder.build_entries_from_json(json_str),
+            )
 
-        Example:
-            result = api.entry_to_dict(entry)
-            if result.is_success:
-                entry_dict = result.unwrap()
-
-        """
-        return self._entry_builder.convert_entry_to_dict(entry)
-
-    # =========================================================================
-    # BATCH CONVERSION OPERATIONS
-    # =========================================================================
-
-    def entries_to_dicts(
-        self,
-        entries: list[FlextLdifModels.Entry],
-    ) -> list[FlextLdifTypes.Models.CustomDataDict]:
-        """Convert list of entries to list of dictionaries.
-
-        Args:
-            entries: List of Entry models
-
-        Returns:
-            List of dictionaries (only successful conversions)
-
-        Example:
-            dicts = api.entries_to_dicts(entries)
-
-        """
-        # Convert entries to dictionaries
-        results = []
-        for entry in entries:
-            result = self._entry_builder.convert_entry_to_dict(entry)
-            if result.is_success:
-                results.append(result.unwrap())
-        return results
-
-    def dicts_to_entries(
-        self,
-        dicts: list[FlextLdifTypes.Models.CustomDataDict],
-    ) -> list[FlextLdifModels.Entry]:
-        """Convert list of dictionaries to list of entries using FlextProcessors.
-
-        Args:
-            dicts: List of entry dictionaries
-
-        Returns:
-            List of Entry models (only successful conversions)
-
-        Example:
-            entries = api.dicts_to_entries(dicts)
-
-        """
-        # Convert dictionaries to entries
-        result = self._entry_builder.build_entries_from_dict(dicts)
-        if result.is_failure:
-            return []
-        return result.unwrap()
-
-    def entries_to_json(
-        self,
-        entries: list[FlextLdifModels.Entry],
-    ) -> FlextResult[str]:
-        """Convert list of entries to JSON string.
-
-        Args:
-            entries: List of Entry models
-
-        Returns:
-            FlextResult containing JSON string
-
-        Example:
-            result = api.entries_to_json(entries)
-            if result.is_success:
-                json_str = result.unwrap()
-
-        """
-        return self._entry_builder.convert_entries_to_json(entries)
-
-    def json_to_entries(
-        self,
-        json_str: str,
-    ) -> FlextResult[list[FlextLdifModels.Entry]]:
-        """Convert JSON string to list of entries.
-
-        Args:
-            json_str: JSON string representation of entries
-
-        Returns:
-            FlextResult containing list of Entry models
-
-        Example:
-            result = api.json_to_entries(json_str)
-            if result.is_success:
-                entries = result.unwrap()
-
-        """
-        return self._entry_builder.build_entries_from_json(json_str)
+        supported = (
+            "'entry_to_dict', 'entries_to_dicts', 'dicts_to_entries', "
+            "'entries_to_json', 'json_to_entries'"
+        )
+        return FlextResult.fail(
+            f"Unknown conversion_type: '{conversion_type}'. Supported: {supported}"
+        )
 
     # =========================================================================
     # SCHEMA BUILDER OPERATIONS
@@ -915,50 +1512,70 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.CustomDataDict]):
             return FlextResult[bool].fail(f"ACL evaluation failed: {e}")
 
     # =========================================================================
-    # PROCESSOR OPERATIONS
+    # UNIFIED PROCESSING OPERATIONS
     # =========================================================================
 
-    def process_batch(
+    def process(
         self,
         processor_name: str,
         entries: list[FlextLdifModels.Entry],
+        *,
+        parallel: bool = False,
+        batch_size: int = 100,
+        max_workers: int = 4,
     ) -> FlextResult[list[FlextLdifTypes.Models.CustomDataDict]]:
-        """Process entries in batch mode using LdifBatchProcessor.
+        """Unified processing method supporting batch and parallel modes.
+
+        Consolidates process_batch() and process_parallel() into a single flexible
+        method with an optional parallel execution mode.
 
         Args:
             processor_name: Name of processor function ("transform", "validate", etc.)
             entries: List of entries to process
+            parallel: If True, use parallel processing; if False, use batch. Default: False
+            batch_size: Number of entries per batch (only used when parallel=False). Default: 100
+            max_workers: Number of worker threads (only used when parallel=True). Default: 4
 
         Returns:
             FlextResult containing processed results
 
         Example:
-            # Convert entries to dictionaries
-            result = api.process_batch("transform", entries)
-            if result.is_success:
-                processed = result.unwrap()
+            # Batch processing (sequential)
+            result = api.process("transform", entries)
+
+            # Batch processing with custom batch size
+            result = api.process("transform", entries, batch_size=200)
+
+            # Parallel processing
+            result = api.process("transform", entries, parallel=True)
+
+            # Parallel processing with custom worker count
+            result = api.process("validate", entries, parallel=True, max_workers=8)
 
         Note:
-            Uses LdifBatchProcessor for memory-efficient batch processing.
-            Currently supports "transform" (converts to dict) and "validate" (validates entries).
+            Supported processors: "transform" (converts to dict), "validate" (validates entries).
+            Uses FlextLdifBatchProcessor for sequential processing.
+            Uses FlextLdifParallelProcessor for parallel processing with ThreadPoolExecutor.
 
         """
         try:
-            processor = LdifBatchProcessor(batch_size=100)
+            # Define processor function based on processor_name
+            processor_func: Callable[
+                [FlextLdifModels.Entry], FlextLdifTypes.Models.CustomDataDict
+            ]
 
-            # Define processor functions
             if processor_name == "transform":
 
-                def transform_func(
+                def _transform_func(
                     entry: FlextLdifModels.Entry,
                 ) -> FlextLdifTypes.Models.CustomDataDict:
                     return entry.model_dump()
 
-                return processor.process_batch(entries, transform_func)
+                processor_func = _transform_func
 
-            if processor_name == "validate":
+            elif processor_name == "validate":
 
-                def validate_func(
+                def _validate_func(
                     entry: FlextLdifModels.Entry,
                 ) -> FlextLdifTypes.Models.CustomDataDict:
                     # Basic validation: entry has DN and attributes
@@ -968,83 +1585,187 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.CustomDataDict]):
                         "attribute_count": len(entry.attributes.attributes),
                     }
 
-                return processor.process_batch(entries, validate_func)
+                processor_func = _validate_func
 
-            supported = "'transform', 'validate'"
-            return FlextResult[list[FlextLdifTypes.Models.CustomDataDict]].fail(
-                f"Unknown processor: '{processor_name}'. Supported: {supported}"
-            )
+            else:
+                supported = "'transform', 'validate'"
+                return FlextResult[list[FlextLdifTypes.Models.CustomDataDict]].fail(
+                    f"Unknown processor: '{processor_name}'. Supported: {supported}"
+                )
 
-        except Exception as e:
-            return FlextResult[list[FlextLdifTypes.Models.CustomDataDict]].fail(
-                f"Batch processing failed: {e}"
-            )
-
-    def process_parallel(
-        self,
-        processor_name: str,
-        entries: list[FlextLdifModels.Entry],
-    ) -> FlextResult[list[FlextLdifTypes.Models.CustomDataDict]]:
-        """Process entries in parallel mode using LdifParallelProcessor.
-
-        Args:
-            processor_name: Name of processor function ("transform", "validate", etc.)
-            entries: List of entries to process
-
-        Returns:
-            FlextResult containing processed results
-
-        Example:
-            # Convert entries to dictionaries in parallel
-            result = api.process_parallel("validate", entries)
-            if result.is_success:
-                processed = result.unwrap()
-
-        Note:
-            Uses LdifParallelProcessor with ThreadPoolExecutor for true parallel execution.
-            Currently supports "transform" (converts to dict) and "validate" (validates entries).
-
-        """
-        try:
-            processor = LdifParallelProcessor(max_workers=4)
-
-            # Define processor functions
-            if processor_name == "transform":
-
-                def transform_func(
-                    entry: FlextLdifModels.Entry,
-                ) -> FlextLdifTypes.Models.CustomDataDict:
-                    return entry.model_dump()
-
-                return processor.process_parallel(entries, transform_func)
-
-            if processor_name == "validate":
-
-                def validate_func(
-                    entry: FlextLdifModels.Entry,
-                ) -> FlextLdifTypes.Models.CustomDataDict:
-                    # Basic validation: entry has DN and attributes
-                    return {
-                        "dn": entry.dn.value,
-                        "valid": bool(entry.dn.value and entry.attributes),
-                        "attribute_count": len(entry.attributes.attributes),
-                    }
-
-                return processor.process_parallel(entries, validate_func)
-
-            supported = "'transform', 'validate'"
-            return FlextResult[list[FlextLdifTypes.Models.CustomDataDict]].fail(
-                f"Unknown processor: '{processor_name}'. Supported: {supported}"
-            )
+            # Execute processing based on mode
+            if parallel:
+                parallel_processor = FlextLdifParallelProcessor(max_workers=max_workers)
+                return parallel_processor.process_parallel(entries, processor_func)
+            batch_processor = FlextLdifBatchProcessor(batch_size=batch_size)
+            return batch_processor.process_batch(entries, processor_func)
 
         except Exception as e:
+            mode = "Parallel" if parallel else "Batch"
             return FlextResult[list[FlextLdifTypes.Models.CustomDataDict]].fail(
-                f"Parallel processing failed: {e}"
+                f"{mode} processing failed: {e}"
             )
 
     # =========================================================================
     # INFRASTRUCTURE ACCESS (Properties)
     # =========================================================================
+
+    # =========================================================================
+    # AUTO-DETECTION AND RELAXED MODE OPERATIONS
+    # =========================================================================
+
+    def detect_server_type(
+        self,
+        ldif_path: Path | None = None,
+        ldif_content: str | None = None,
+    ) -> FlextResult[FlextLdifTypes.Models.CustomDataDict]:
+        """Detect LDAP server type from LDIF file or content.
+
+        Analyzes LDIF content to identify the source LDAP server type
+        using pattern matching and heuristics.
+
+        Args:
+            ldif_path: Path to LDIF file
+            ldif_content: Raw LDIF content as string
+
+        Returns:
+            FlextResult with detection results:
+            {
+                "detected_server_type": "oid" | "oud" | "openldap" | ...,
+                "confidence": 0.0-1.0,
+                "scores": {server_type: score, ...},
+                "patterns_found": [pattern1, pattern2, ...],
+                "is_confident": bool,
+            }
+
+        Example:
+            result = api.detect_server_type(ldif_path=Path("data.ldif"))
+            if result.is_success:
+                detected = result.unwrap()
+                print(f"Server type: {detected['detected_server_type']}")
+                print(f"Confidence: {detected['confidence']:.2%}")
+
+        """
+        return self._client.detect_server_type(
+            ldif_path=ldif_path,
+            ldif_content=ldif_content,
+        )
+
+    def parse_with_auto_detection(
+        self, source: Path | str
+    ) -> FlextResult[list[FlextLdifModels.Entry]]:
+        """Parse LDIF with automatic server type detection.
+
+        Automatically detects the source server type and applies
+        the appropriate quirks during parsing.
+
+        Args:
+            source: Path to LDIF file or LDIF content as string
+
+        Returns:
+            FlextResult with list of parsed LDIF entries
+
+        Example:
+            # Parse with auto-detection
+            result = api.parse_with_auto_detection(Path("data.ldif"))
+            if result.is_success:
+                entries = result.unwrap()
+                print(f"Parsed {len(entries)} entries")
+
+        """
+        try:
+            # Convert string to Path if needed for auto-detection
+            if isinstance(source, str) and Path(source).exists():
+                ldif_path = Path(source)
+            else:
+                ldif_path = Path(source) if isinstance(source, str) else source
+
+            # Get effective server type with auto-detection
+            server_result = self._client.get_effective_server_type(ldif_path)
+            if server_result.is_failure:
+                return FlextResult[list[FlextLdifModels.Entry]].fail(
+                    f"Server detection failed: {server_result.error}"
+                )
+
+            # Parse with detected server type
+            server_type = server_result.unwrap()
+            return self._client.parse_ldif(source, server_type)
+
+        except Exception as e:
+            return FlextResult[list[FlextLdifModels.Entry]].fail(
+                f"Auto-detection parsing failed: {e}"
+            )
+
+    def parse_relaxed(
+        self, source: Path | str
+    ) -> FlextResult[list[FlextLdifModels.Entry]]:
+        """Parse LDIF with relaxed mode for broken/non-compliant files.
+
+        Enables lenient parsing that skips validation errors and
+        attempts best-effort parsing of malformed LDIF content.
+
+        Args:
+            source: Path to LDIF file or LDIF content as string
+
+        Returns:
+            FlextResult with list of parsed LDIF entries
+
+        Example:
+            # Parse broken LDIF with relaxed mode
+            result = api.parse_relaxed(Path("broken.ldif"))
+            if result.is_success:
+                entries = result.unwrap()
+                print(f"Parsed {len(entries)} entries (with relaxed mode)")
+
+        """
+        try:
+            # Create new config with relaxed mode enabled
+            relaxed_config = FlextLdifConfig(**{
+                **self.config.model_dump(),
+                "enable_relaxed_parsing": True,
+            })
+
+            # Create a temporary client with relaxed config
+            temp_client = type(self._client)(config=relaxed_config)
+
+            # Parse with relaxed configuration
+            if isinstance(source, str) and not Path(source).exists():
+                # String content
+                return temp_client.parse_ldif(source)
+            # File path
+            return temp_client.parse_ldif(source)
+
+        except Exception as e:
+            return FlextResult[list[FlextLdifModels.Entry]].fail(
+                f"Relaxed parsing failed: {e}"
+            )
+
+    def get_effective_server_type(
+        self, ldif_path: Path | None = None
+    ) -> FlextResult[str]:
+        """Get the effective LDAP server type that will be used for parsing.
+
+        Resolves the effective server type based on configuration priority:
+        1. Relaxed mode (if enabled)
+        2. Manual override (if detection_mode is "manual")
+        3. Auto-detection (if detection_mode is "auto")
+        4. RFC-only (if detection_mode is "disabled")
+
+        Args:
+            ldif_path: Optional path to LDIF file for auto-detection
+
+        Returns:
+            FlextResult with the server type string that will be used
+
+        Example:
+            # Get effective server type before parsing
+            result = api.get_effective_server_type(Path("directory.ldif"))
+            if result.is_success:
+                server_type = result.unwrap()
+                print(f"Will use {server_type} quirks")
+
+        """
+        return self._client.get_effective_server_type(ldif_path)
 
     @property
     def models(self) -> type[FlextLdifModels]:
@@ -1088,48 +1809,14 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.CustomDataDict]):
         """
         return FlextLdifConstants
 
-    @property
-    def bus(self) -> FlextBus:
-        """Access to FlextBus for event publishing.
+    # INTERNAL: bus property is hidden from public API
+    # Use models, config, constants for public access instead
 
-        Returns:
-            FlextBus instance for publishing domain events
+    # INTERNAL: dispatcher property is hidden from public API
+    # Use client methods for LDIF operations instead
 
-        Example:
-            ldif.bus.publish("ldif.parsed", {"entry_count": 10})
-
-        """
-        # Type narrow _bus to FlextBus (initialized in __init__)
-        if not isinstance(self._bus, FlextBus):
-            # Fallback: create new Bus if somehow not initialized
-            self._bus = FlextBus()
-        return self._bus
-
-    @property
-    def dispatcher(self) -> FlextDispatcher:
-        """Access to FlextDispatcher for message dispatching.
-
-        Returns:
-            FlextDispatcher instance for CQRS message routing
-
-        Example:
-            result = ldif.dispatcher.dispatch(command)
-
-        """
-        return self._dispatcher
-
-    @property
-    def registry(self) -> FlextRegistry:
-        """Access to FlextRegistry for component management.
-
-        Returns:
-            FlextRegistry instance for component registration and discovery
-
-        Example:
-            component = ldif.registry.get("my_component")
-
-        """
-        return self._registry
+    # INTERNAL: registry property is hidden from public API
+    # Use register_quirk() method for quirk management instead
 
     @property
     def processors(self) -> FlextProcessors:

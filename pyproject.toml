@@ -132,28 +132,36 @@
 
     [tool.pytest.ini_options]
         addopts = [
-            "--maxfail=1",
+            "--cov-report=term-missing",
+            "--cov=src/",
             "--strict-config",
             "--strict-markers",
             "--tb=short",
+            "-p no:sugar",
+            "-q",
             "-ra",
         ]
         filterwarnings = [
             "ignore::DeprecationWarning:pyasn1(.*|$)",
-            "ignore::UserWarning:flext_core.loggings",
         ]
         markers = [
             " tests",
             "benchmark: Benchmark tests",
             "complexity: Complexity tests",
             "concurrency: Concurrency tests",
+            "conversion: Quirk conversion operations",
             "e2e: End-to-end tests",
+            "fixtures: Tests using real LDIF fixtures",
             "integration: Integration tests",
             "memory: Memory tests",
             "memory_limit: Memory limit tests",
+            "operational: Operational tests with real data",
             "performance: Performance tests",
+            "quirks: LDAP server quirks tests",
             "race_condition: Race condition tests",
+            "real_data: Tests using real fixture data",
             "regression: Regression tests",
+            "roundtrip: Bidirectional conversion tests",
             "slow: Slow tests",
             "smoke: Smoke tests",
             "timeout: Timeout tests",

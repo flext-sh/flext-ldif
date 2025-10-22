@@ -1,0 +1,28 @@
+{
+  "entries": [
+    {
+      "dn": "cn=multivalue,dc=example,dc=com",
+      "attributes": {
+        "objectClass": ["person"],
+        "cn": ["multivalue"],
+        "sn": ["MultiValue"],
+        "mail": ["mv1@example.com", "mv2@example.com", "mv3@example.com", "mv4@example.com", "mv5@example.com", "mv6@example.com", "mv7@example.com", "mv8@example.com", "mv9@example.com", "mv10@example.com"],
+        "telephoneNumber": ["+1-555-001-0001", "+1-555-001-0002", "+1-555-001-0003", "+1-555-001-0004", "+1-555-001-0005", "+1-555-001-0006", "+1-555-001-0007", "+1-555-001-0008", "+1-555-001-0009", "+1-555-001-0010"],
+        "mobile": ["+1-555-002-0001", "+1-555-002-0002", "+1-555-002-0003", "+1-555-002-0004", "+1-555-002-0005"]
+      },
+      "attribute_value_counts": {
+        "mail": 10,
+        "telephoneNumber": 10,
+        "mobile": 5
+      }
+    }
+  ],
+  "count": 1,
+  "valid": true,
+  "metadata": {
+    "type": "edge_case",
+    "edge_case_type": "large_multivalue",
+    "max_values_per_attribute": 10,
+    "test_aspects": ["multi_valued_attributes", "large_attribute_sets", "attribute_parsing"]
+  }
+}

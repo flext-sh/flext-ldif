@@ -41,6 +41,7 @@ class FlextLdifFixtures:
     class ServerType(StrEnum):
         """Supported LDAP server types with quirks."""
 
+        RFC = "rfc"
         OID = "oid"
         OUD = "oud"
         OPENLDAP = "openldap"

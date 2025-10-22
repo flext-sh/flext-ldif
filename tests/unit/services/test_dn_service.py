@@ -13,7 +13,7 @@ from typing import cast
 
 import pytest
 
-from flext_ldif.services.dn_service import DnService
+from flext_ldif.services.dn_service import FlextLdifDnService
 
 
 class TestDnServiceInitialization:
@@ -21,12 +21,12 @@ class TestDnServiceInitialization:
 
     def test_init_creates_service(self) -> None:
         """Test DN service can be instantiated."""
-        service = DnService()
+        service = FlextLdifDnService()
         assert service is not None
 
     def test_execute_returns_status(self) -> None:
         """Test execute returns service status."""
-        service = DnService()
+        service = FlextLdifDnService()
         result = service.execute()
 
         assert result.is_success
@@ -42,7 +42,7 @@ class TestParseComponents:
 
     def test_parse_simple_dn(self) -> None:
         """Test parsing simple DN."""
-        service = DnService()
+        service = FlextLdifDnService()
         result = service.parse_components("cn=test,dc=example,dc=com")
 
         assert result.is_success
@@ -57,7 +57,7 @@ class TestParseComponents:
 
     def test_parse_dn_with_escaped_comma(self) -> None:
         """Test parsing DN with escaped comma (RFC 4514)."""
-        service = DnService()
+        service = FlextLdifDnService()
         # DN with escaped comma in value
         result = service.parse_components(
             r"cn=Smith\, John,ou=People,dc=example,dc=com"
@@ -73,7 +73,7 @@ class TestParseComponents:
 
     def test_parse_dn_with_quoted_value(self) -> None:
         """Test parsing DN with escaped quotes (RFC 4514)."""
-        service = DnService()
+        service = FlextLdifDnService()
         # In RFC 4514, quotes within values must be escaped
         result = service.parse_components(
             r"cn=Smith\, John,ou=People,dc=example,dc=com"
@@ -88,7 +88,7 @@ class TestParseComponents:
 
     def test_parse_dn_with_special_characters(self) -> None:
         """Test parsing DN with special characters (RFC 4514)."""
-        service = DnService()
+        service = FlextLdifDnService()
         result = service.parse_components("cn=John+ou=People,dc=example,dc=com")
 
         assert result.is_success
@@ -98,7 +98,7 @@ class TestParseComponents:
 
     def test_parse_dn_with_spaces(self) -> None:
         """Test parsing DN with spaces."""
-        service = DnService()
+        service = FlextLdifDnService()
         result = service.parse_components("cn=John Smith,ou=People,dc=example,dc=com")
 
         assert result.is_success
@@ -108,7 +108,7 @@ class TestParseComponents:
 
     def test_parse_invalid_dn_returns_failure(self) -> None:
         """Test parsing invalid DN returns failure."""
-        service = DnService()
+        service = FlextLdifDnService()
         result = service.parse_components("invalid dn without equals")
 
         assert result.is_failure
@@ -118,14 +118,14 @@ class TestParseComponents:
 
     def test_parse_empty_dn_returns_failure(self) -> None:
         """Test parsing empty DN returns failure."""
-        service = DnService()
+        service = FlextLdifDnService()
         result = service.parse_components("")
 
         assert result.is_failure
 
     def test_parse_dn_with_utf8(self) -> None:
         """Test parsing DN with UTF-8 characters."""
-        service = DnService()
+        service = FlextLdifDnService()
         result = service.parse_components("cn=José,ou=People,dc=example,dc=com")
 
         assert result.is_success
@@ -139,7 +139,7 @@ class TestValidateFormat:
 
     def test_validate_simple_dn(self) -> None:
         """Test validation of simple valid DN."""
-        service = DnService()
+        service = FlextLdifDnService()
         result = service.validate_format("cn=test,dc=example,dc=com")
 
         assert result.is_success
@@ -147,7 +147,7 @@ class TestValidateFormat:
 
     def test_validate_dn_with_escaped_comma(self) -> None:
         """Test validation of DN with escaped comma."""
-        service = DnService()
+        service = FlextLdifDnService()
         result = service.validate_format(r"cn=Smith\, John,ou=People,dc=example,dc=com")
 
         assert result.is_success
@@ -155,7 +155,7 @@ class TestValidateFormat:
 
     def test_validate_dn_with_escaped_comma_value(self) -> None:
         """Test validation of DN with escaped comma in value."""
-        service = DnService()
+        service = FlextLdifDnService()
         result = service.validate_format(r"cn=Smith\, John,ou=People,dc=example,dc=com")
 
         assert result.is_success
@@ -163,7 +163,7 @@ class TestValidateFormat:
 
     def test_validate_dn_with_special_characters(self) -> None:
         """Test validation of DN with special characters."""
-        service = DnService()
+        service = FlextLdifDnService()
         result = service.validate_format("cn=John+ou=People,dc=example,dc=com")
 
         assert result.is_success
@@ -171,7 +171,7 @@ class TestValidateFormat:
 
     def test_validate_invalid_dn_returns_false(self) -> None:
         """Test validation of invalid DN returns False."""
-        service = DnService()
+        service = FlextLdifDnService()
         result = service.validate_format("invalid dn without equals")
 
         assert result.is_success
@@ -179,7 +179,7 @@ class TestValidateFormat:
 
     def test_validate_empty_string_returns_false(self) -> None:
         """Test validation of empty string returns False."""
-        service = DnService()
+        service = FlextLdifDnService()
         result = service.validate_format("")
 
         assert result.is_success
@@ -187,7 +187,7 @@ class TestValidateFormat:
 
     def test_validate_non_string_returns_false(self) -> None:
         """Test validation of non-string returns False."""
-        service = DnService()
+        service = FlextLdifDnService()
         result = service.validate_format(cast("str", None))
 
         assert result.is_success
@@ -195,7 +195,7 @@ class TestValidateFormat:
 
     def test_validate_dn_with_utf8(self) -> None:
         """Test validation of DN with UTF-8 characters."""
-        service = DnService()
+        service = FlextLdifDnService()
         result = service.validate_format("cn=José,ou=People,dc=example,dc=com")
 
         assert result.is_success
@@ -207,7 +207,7 @@ class TestNormalize:
 
     def test_normalize_simple_dn(self) -> None:
         """Test normalization of simple DN."""
-        service = DnService()
+        service = FlextLdifDnService()
         result = service.normalize("CN=Test,DC=Example,DC=Com")
 
         assert result.is_success
@@ -218,7 +218,7 @@ class TestNormalize:
 
     def test_normalize_dn_with_spaces(self) -> None:
         """Test normalization of DN with spaces."""
-        service = DnService()
+        service = FlextLdifDnService()
         result = service.normalize("cn=John Smith,ou=People,dc=example,dc=com")
 
         assert result.is_success
@@ -227,7 +227,7 @@ class TestNormalize:
 
     def test_normalize_dn_with_escaped_comma(self) -> None:
         """Test normalization of DN with escaped comma."""
-        service = DnService()
+        service = FlextLdifDnService()
         result = service.normalize(r"cn=Smith\, John,ou=People,dc=example,dc=com")
 
         assert result.is_success
@@ -237,7 +237,7 @@ class TestNormalize:
 
     def test_normalize_dn_with_escaped_value(self) -> None:
         """Test normalization of DN with escaped comma in value."""
-        service = DnService()
+        service = FlextLdifDnService()
         result = service.normalize(r"cn=Smith\, John,ou=People,dc=example,dc=com")
 
         assert result.is_success
@@ -247,7 +247,7 @@ class TestNormalize:
 
     def test_normalize_invalid_dn_returns_failure(self) -> None:
         """Test normalization of invalid DN returns failure."""
-        service = DnService()
+        service = FlextLdifDnService()
         result = service.normalize("invalid dn without equals")
 
         assert result.is_failure
@@ -257,14 +257,14 @@ class TestNormalize:
 
     def test_normalize_empty_dn_returns_failure(self) -> None:
         """Test normalization of empty DN returns failure."""
-        service = DnService()
+        service = FlextLdifDnService()
         result = service.normalize("")
 
         assert result.is_failure
 
     def test_normalize_preserves_value_case(self) -> None:
         """Test normalization preserves attribute value case."""
-        service = DnService()
+        service = FlextLdifDnService()
         result = service.normalize("cn=TestUser,dc=Example,dc=Com")
 
         assert result.is_success
@@ -276,7 +276,7 @@ class TestNormalize:
 
     def test_normalize_dn_with_utf8(self) -> None:
         """Test normalization of DN with UTF-8 characters."""
-        service = DnService()
+        service = FlextLdifDnService()
         result = service.normalize("cn=José,ou=People,dc=example,dc=com")
 
         assert result.is_success
@@ -289,7 +289,7 @@ class TestRFC4514Compliance:
 
     def test_handles_hex_escaping(self) -> None:
         """Test handling of hex-escaped characters (RFC 4514)."""
-        service = DnService()
+        service = FlextLdifDnService()
         # Hex escaped value
         result = service.parse_components(r"cn=\23value,dc=example,dc=com")
 
@@ -299,7 +299,7 @@ class TestRFC4514Compliance:
 
     def test_handles_multiple_special_characters(self) -> None:
         """Test handling of multiple special characters."""
-        service = DnService()
+        service = FlextLdifDnService()
         result = service.validate_format("cn=user<test>,ou=People,dc=example,dc=com")
 
         # ldap3 should handle special characters per RFC 4514
@@ -307,7 +307,7 @@ class TestRFC4514Compliance:
 
     def test_parse_components_returns_three_tuple(self) -> None:
         """Test parse_components returns (attr, value, rdn) tuples."""
-        service = DnService()
+        service = FlextLdifDnService()
         result = service.parse_components("cn=test,dc=example,dc=com")
 
         assert result.is_success

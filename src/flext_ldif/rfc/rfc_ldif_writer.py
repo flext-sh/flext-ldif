@@ -21,7 +21,7 @@ from flext_core import FlextResult, FlextService
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.quirks.registry import FlextLdifQuirksRegistry
-from flext_ldif.services.dn_service import DnService
+from flext_ldif.services.dn_service import FlextLdifDnService
 from flext_ldif.typings import FlextLdifTypes
 
 
@@ -74,7 +74,7 @@ class FlextLdifRfcLdifWriter(FlextService[FlextLdifTypes.Models.CustomDataDict])
         self._params = params
         self._quirk_registry = quirk_registry
         self._target_server_type = target_server_type
-        self._dn_service = DnService()  # RFC 4514 DN normalization
+        self._dn_service = FlextLdifDnService()  # RFC 4514 DN normalization
 
     def execute(self) -> FlextResult[FlextLdifTypes.Models.CustomDataDict]:
         """Execute RFC LDIF writing.
@@ -583,13 +583,14 @@ class FlextLdifRfcLdifWriter(FlextService[FlextLdifTypes.Models.CustomDataDict])
 
             for entry in entries:
                 # Handle both FlextLdifTypes.Models.CustomDataDict and Entry object formats
+                # Declare type for attributes_normalized (will be assigned in branches below)
+                attributes_normalized: FlextLdifTypes.Models.CustomDataDict
+
                 if isinstance(entry, FlextLdifModels.Entry):
                     dn = entry.dn.value
                     # Convert Entry attributes to CustomDataDict format for processing
                     # dict() builtin already returns correct type
-                    attributes_normalized: FlextLdifTypes.Models.CustomDataDict = dict(
-                        entry.attributes.attributes.items()
-                    )
+                    attributes_normalized = dict(entry.attributes.attributes.items())
                 else:
                     # Type narrow DN from dict.get()
                     dn_raw: Any = entry.get(FlextLdifConstants.DictKeys.DN, "")
@@ -597,17 +598,33 @@ class FlextLdifRfcLdifWriter(FlextService[FlextLdifTypes.Models.CustomDataDict])
                     dn = entry_dn
 
                     # Extract attributes from entry dict structure
-                    # Entry format: {"dn": "...", "attributes": {...}, "objectclass": [...]}
-                    entry_attrs_raw = entry.get(FlextLdifConstants.DictKeys.ATTRIBUTES, {})
-                    entry_objectclass = entry.get(FlextLdifConstants.DictKeys.OBJECTCLASS, [])
+                    # Supports TWO formats:
+                    # 1. Nested: {"dn": "...", "attributes": {...}, "objectclass": [...]}
+                    # 2. Flat: {"dn": "...", "attr1": "val1", "attr2": "val2", ...}
+                    entry_attrs_raw = entry.get(FlextLdifConstants.DictKeys.ATTRIBUTES)
+
+                    # Initialize attributes_normalized before conditional assignment
+                    attributes_normalized = {}
 
                     # Combine attributes and objectclass into flat dict for LDIF writing
-                    attributes_normalized: FlextLdifTypes.Models.CustomDataDict = {}
-                    if isinstance(entry_attrs_raw, dict):
+                    if entry_attrs_raw is not None and isinstance(
+                        entry_attrs_raw, dict
+                    ):
+                        # Nested format: use "attributes" dict
                         attributes_normalized.update(entry_attrs_raw)
+                    else:
+                        # Flat format: use entire entry except "dn"
+                        attributes_normalized = {
+                            k: v
+                            for k, v in entry.items()
+                            if k != FlextLdifConstants.DictKeys.DN
+                        }
 
-                    # Add objectclass as an attribute
-                    if entry_objectclass:
+                    # Add objectclass from top-level key if present (for nested format)
+                    entry_objectclass = entry.get(
+                        FlextLdifConstants.DictKeys.OBJECTCLASS, []
+                    )
+                    if entry_objectclass and "objectclass" not in attributes_normalized:
                         oc_values = (
                             entry_objectclass
                             if isinstance(entry_objectclass, list)
@@ -651,7 +668,9 @@ class FlextLdifRfcLdifWriter(FlextService[FlextLdifTypes.Models.CustomDataDict])
                         self._target_server_type
                     )
                     # Build full entry dict for quirk writer
-                    full_entry_dict: dict[str, object] = {FlextLdifConstants.DictKeys.DN: dn}
+                    full_entry_dict: dict[str, object] = {
+                        FlextLdifConstants.DictKeys.DN: dn
+                    }
                     full_entry_dict.update(attributes_normalized)
 
                     for quirk in entry_quirks:
@@ -664,7 +683,10 @@ class FlextLdifRfcLdifWriter(FlextService[FlextLdifTypes.Models.CustomDataDict])
                             # Use quirk's custom LDIF writer
                             write_method = getattr(quirk, "write_entry_to_ldif")
                             write_result = write_method(full_entry_dict)
-                            if hasattr(write_result, "is_success") and write_result.is_success:
+                            if (
+                                hasattr(write_result, "is_success")
+                                and write_result.is_success
+                            ):
                                 ldif_string = write_result.unwrap()
                                 file_handle.write(ldif_string)
                                 # Add entry separator (blank line) if not already present
@@ -691,7 +713,9 @@ class FlextLdifRfcLdifWriter(FlextService[FlextLdifTypes.Models.CustomDataDict])
                     for attr_name, attr_values in attributes_normalized.items():
                         # Handle both single values and lists
                         values = (
-                            attr_values if isinstance(attr_values, list) else [attr_values]
+                            attr_values
+                            if isinstance(attr_values, list)
+                            else [attr_values]
                         )
 
                         for value in values:

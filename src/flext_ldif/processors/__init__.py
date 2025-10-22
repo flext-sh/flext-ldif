@@ -11,11 +11,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_ldif.processors.ldif_processor import (
-    LdifBatchProcessor,
-    LdifParallelProcessor,
+    FlextLdifBatchProcessor,
+    FlextLdifParallelProcessor,
 )
 
 __all__ = [
-    "LdifBatchProcessor",
-    "LdifParallelProcessor",
+    "FlextLdifBatchProcessor",
+    "FlextLdifParallelProcessor",
 ]

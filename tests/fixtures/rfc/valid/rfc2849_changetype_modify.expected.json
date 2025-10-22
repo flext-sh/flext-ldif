@@ -1,0 +1,37 @@
+{
+  "entries": [
+    {
+      "dn": "cn=Barbara Jensen,ou=Marketing,dc=airius,dc=com",
+      "changetype": "modify",
+      "operations": [
+        {
+          "operation": "add",
+          "attribute": "mail",
+          "values": ["bjensen@airius.com"]
+        },
+        {
+          "operation": "add",
+          "attribute": "cn",
+          "values": ["Barbara J Jensen"]
+        },
+        {
+          "operation": "add",
+          "attribute": "sn",
+          "values": ["Jensen"]
+        },
+        {
+          "operation": "delete",
+          "attribute": "description",
+          "values": []
+        }
+      ]
+    }
+  ],
+  "count": 1,
+  "valid": true,
+  "metadata": {
+    "type": "rfc_operation",
+    "operation_type": "modify",
+    "test_aspects": ["changetype_directive", "modify_operation", "add_operation", "delete_operation"]
+  }
+}

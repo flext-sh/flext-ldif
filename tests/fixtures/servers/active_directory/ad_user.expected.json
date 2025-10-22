@@ -1,0 +1,35 @@
+{
+  "entries": [
+    {
+      "dn": "cn=jsmith,cn=Users,dc=example,dc=com",
+      "attributes": {
+        "objectClass": ["person", "organizationalPerson", "user", "top"],
+        "cn": ["jsmith"],
+        "sn": ["Smith"],
+        "givenName": ["John"],
+        "displayName": ["John Smith"],
+        "mail": ["jsmith@example.com"],
+        "samAccountName": ["jsmith"],
+        "userAccountControl": ["512"],
+        "objectGUID": ["{12345678-1234-5678-1234-567812345678}"],
+        "userPrincipalName": ["jsmith@example.com"],
+        "distinguishedName": ["cn=jsmith,cn=Users,dc=example,dc=com"],
+        "instanceType": ["4"],
+        "whenCreated": ["20250101120000Z"],
+        "whenChanged": ["20250110120000Z"],
+        "pwdLastSet": ["132851820000000000"],
+        "lastLogonTimestamp": ["132851820000000000"],
+        "accountExpires": ["9223372036854775807"],
+        "msRTCSIP-PrimaryUserAddress": ["sip:jsmith@example.com"]
+      }
+    }
+  ],
+  "count": 1,
+  "valid": true,
+  "server_type": "active_directory",
+  "metadata": {
+    "type": "server_specific",
+    "server": "Active Directory",
+    "test_aspects": ["sam_account_name", "object_guid", "user_account_control", "timestamps", "sip_address", "binary_attributes"]
+  }
+}

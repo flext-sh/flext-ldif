@@ -1,5 +1,10 @@
 r"""DN Service - RFC 4514 Compliant Distinguished Name Operations.
 
+ARCHITECTURAL NOTE: This service uses ldap3.utils.dn for DN format parsing,
+which is appropriate as DN parsing is LDIF data format handling (RFC 4514
+string representation), NOT LDAP protocol operations. The DN utilities are
+data format utilities for processing LDIF files, not LDAP server communication.
+
 This service provides DN operations using ldap3 for RFC 4514 compliance.
 Replaces naive DN parsing from utilities.py with proper LDAP DN handling.
 
@@ -9,6 +14,11 @@ RFC 4514: LDAP Distinguished Names String Representation
 - Handles multi-valued RDNs (cn=user+ou=people)
 - Handles special characters (+, =, <, >, #, ;)
 - Handles UTF-8 encoding
+
+Standardization Architecture:
+- flext-ldif: Handles LDIF data format operations (including DN parsing)
+- flext-ldap: Handles LDAP protocol operations (server communication)
+- algar-oud-mig: Uses ONLY flext-ldif and flext-ldap, NO direct ldap3 imports
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -26,7 +36,7 @@ from ldap3.utils.dn import parse_dn, safe_dn
 from flext_ldif.typings import FlextLdifTypes
 
 
-class DnService(FlextService[FlextLdifTypes.Models.CustomDataDict]):
+class FlextLdifDnService(FlextService[FlextLdifTypes.Models.CustomDataDict]):
     r"""RFC 4514 compliant DN operations using ldap3.
 
     Provides methods for DN parsing, validation, and normalization
@@ -36,7 +46,7 @@ class DnService(FlextService[FlextLdifTypes.Models.CustomDataDict]):
     violated RFC 4514 by using simple string split operations.
 
     Example:
-        >>> dn_service = DnService()
+        >>> dn_service = FlextLdifDnService()
         >>>
         >>> # Parse DN into components
         >>> result = dn_service.parse_components(
@@ -233,4 +243,4 @@ class DnService(FlextService[FlextLdifTypes.Models.CustomDataDict]):
         return cleaned.strip()
 
 
-__all__ = ["DnService"]
+__all__ = ["FlextLdifDnService"]

@@ -16,25 +16,29 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import re
 from pathlib import Path
-from typing import override
+from typing import cast, override
 
 from flext_core import FlextResult, FlextService
 
+from flext_ldif.acl.service import FlextLdifAclService
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.filters import FlextLdifFilters
 from flext_ldif.models import FlextLdifModels
-from flext_ldif.quirks.base import FlextLdifQuirksBaseAclQuirk
-from flext_ldif.quirks.entry_quirks import FlextLdifEntryQuirks
+from flext_ldif.quirks.base import (
+    FlextLdifQuirksBaseAclQuirk,
+    FlextLdifQuirksBaseSchemaQuirk,
+)
 from flext_ldif.quirks.registry import FlextLdifQuirksRegistry
-from flext_ldif.quirks.servers.oud_quirks import FlextLdifQuirksServersOud
 from flext_ldif.rfc.rfc_ldif_parser import FlextLdifRfcLdifParser
-from flext_ldif.rfc.rfc_ldif_writer import FlextLdifRfcLdifWriter
-from flext_ldif.services.dn_service import DnService
+from flext_ldif.services.dn_service import FlextLdifDnService
+from flext_ldif.services.file_writer_service import FlextLdifFileWriterService
+from flext_ldif.utilities import FlextLdifUtilities
 
 
-class FlextLdifCategorizedMigrationPipeline(FlextService[dict[str, object]]):
+class FlextLdifCategorizedMigrationPipeline(
+    FlextService[FlextLdifModels.PipelineExecutionResult]
+):
     """LDIF migration pipeline with rule-based entry categorization.
 
     Processes LDIF entries and categorizes them into separate output files
@@ -84,12 +88,14 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[dict[str, object]]):
         *,
         source_server: str = "oracle_oid",
         target_server: str = "oracle_oud",
+        source_schema_quirk: FlextLdifQuirksBaseSchemaQuirk | None = None,
+        target_schema_quirk: FlextLdifQuirksBaseSchemaQuirk | None = None,
         schema_whitelist_rules: dict[str, list[str]] | None = None,
         input_files: list[str] | None = None,
         output_files: dict[str, str] | None = None,
-        entry_quirks: FlextLdifEntryQuirks | None = None,
         forbidden_attributes: list[str] | None = None,
         forbidden_objectclasses: list[str] | None = None,
+        base_dn: str | None = None,
     ) -> None:
         """Initialize categorized migration pipeline.
 
@@ -101,6 +107,8 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[dict[str, object]]):
         writer_quirk: Quirk for writing target server format
         source_server: Source LDAP server type (optional)
         target_server: Target LDAP server type (optional)
+        source_schema_quirk: Schema quirk for SOURCE server format (REQUIRED for schema transformation)
+        target_schema_quirk: Schema quirk for TARGET server format (REQUIRED for schema transformation)
         schema_whitelist_rules: Optional schema whitelist rules
         input_files: Optional list of specific input files to process
         output_files: Optional mapping of category names to output filenames
@@ -110,6 +118,9 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[dict[str, object]]):
         'authpassword;orclcommonpwd', 'authpassword;oid']
         forbidden_objectclasses: List of objectClass names to filter out
         during transformation. Examples: ['orclContainerOC', 'orclService']
+        base_dn: Optional base DN to filter entries. Only entries under this
+        base DN will be included in output files 01-04. Schema (00) is not
+        filtered. Example: 'dc=ctbc'
         Uses STRATEGY PATTERN - business rules from client application.
 
         """
@@ -121,14 +132,19 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[dict[str, object]]):
         self._writer_quirk = writer_quirk
         self._source_server = source_server
         self._target_server = target_server
+        self._source_schema_quirk = source_schema_quirk
+        self._target_schema_quirk = target_schema_quirk
         self._schema_whitelist_rules = schema_whitelist_rules
         self._input_files = input_files
-        self._entry_quirks = entry_quirks or FlextLdifEntryQuirks()
         self._forbidden_attributes = forbidden_attributes or []
         self._forbidden_objectclasses = forbidden_objectclasses or []
+        self._base_dn = base_dn.lower() if base_dn else None
+
+        # Initialize service dependencies (inject via container if needed)
+        self._acl_service = FlextLdifAclService()
+        self._dn_service = FlextLdifDnService()
 
         # DN-valued attributes that need case normalization
-        # Phase 4: Attributes that contain DN references needing case normalization
         self._dn_valued_attributes = [
             "member",
             "uniqueMember",
@@ -136,7 +152,7 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[dict[str, object]]):
             "seeAlso",
             "manager",
             "secretary",
-            "target",  # ACL target attribute
+            "target",
         ]
 
         # Use provided output filenames or generic defaults
@@ -150,7 +166,7 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[dict[str, object]]):
         }
 
     @override
-    def execute(self) -> FlextResult[dict[str, object]]:
+    def execute(self) -> FlextResult[FlextLdifModels.PipelineExecutionResult]:
         """Execute categorized migration pipeline.
 
         Returns:
@@ -167,7 +183,7 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[dict[str, object]]):
         # Step 1: Create output directory (base directory only)
         create_result = self._create_output_directory()
         if create_result.is_failure:
-            return FlextResult[dict[str, object]].fail(
+            return FlextResult[FlextLdifModels.PipelineExecutionResult].fail(
                 f"Failed to create output directory: {create_result.error}"
             )
 
@@ -176,19 +192,18 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[dict[str, object]]):
         if parse_result.is_failure:
             # Return empty result with error for empty input (not a failure case)
             if "No LDIF files found" in str(parse_result.error):
-                result_dict: dict[str, object] = {
-                    "total_entries": 0,
-                    "categorized_counts": {},
-                    "written_counts": {},
-                    "rejection_count": 0,
-                    "rejection_rate": 0.0,
-                    "rejection_reasons": [],
-                    "output_directories": {},
-                    "source_server": self._source_server,
-                    "target_server": self._target_server,
-                }
-                return FlextResult[dict[str, object]].ok(result_dict)
-            return FlextResult[dict[str, object]].fail(
+                empty_result = FlextLdifModels.PipelineExecutionResult(
+                    entries_by_category={},
+                    statistics=FlextLdifModels.PipelineStatistics(
+                        total_entries=0,
+                        processed_entries=0,
+                    ),
+                    file_paths={},
+                )
+                return FlextResult[FlextLdifModels.PipelineExecutionResult].ok(
+                    empty_result
+                )
+            return FlextResult[FlextLdifModels.PipelineExecutionResult].fail(
                 f"Failed to parse entries: {parse_result.error}"
             )
 
@@ -197,7 +212,7 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[dict[str, object]]):
         # Step 3: Categorize entries using rules
         categorize_result = self._categorize_entries(entries)
         if categorize_result.is_failure:
-            return FlextResult[dict[str, object]].fail(
+            return FlextResult[FlextLdifModels.PipelineExecutionResult].fail(
                 f"Failed to categorize entries: {categorize_result.error}"
             )
 
@@ -206,25 +221,226 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[dict[str, object]]):
         # Step 4: Transform entries per category (quirks)
         transform_result = self._transform_categories(categorized)
         if transform_result.is_failure:
-            return FlextResult[dict[str, object]].fail(
+            return FlextResult[FlextLdifModels.PipelineExecutionResult].fail(
                 f"Failed to transform categories: {transform_result.error}"
             )
 
         transformed_categorized = transform_result.unwrap()
 
         # Step 5: Write to structured output directories
-        write_result = self._write_categorized_output(transformed_categorized)
+        file_writer = FlextLdifFileWriterService(
+            output_dir=self._output_dir,
+            output_files=cast("dict[str, object]", self._output_files),
+            target_server=self._target_server,
+            target_schema_quirk=self._target_schema_quirk,
+            source_schema_quirk=self._source_schema_quirk,
+            schema_whitelist_rules=cast(
+                "dict[str, object] | None", self._schema_whitelist_rules
+            ),
+        )
+        write_result = file_writer.write_categorized_output(transformed_categorized)
         if write_result.is_failure:
-            return FlextResult[dict[str, object]].fail(
+            return FlextResult[FlextLdifModels.PipelineExecutionResult].fail(
                 f"Failed to write output: {write_result.error}"
             )
 
         written_counts = write_result.unwrap()
 
         # Step 6: Generate complete statistics
-        statistics = self._generate_statistics(transformed_categorized, written_counts)
+        stats_dict = FlextLdifUtilities.Statistics.generate_statistics(
+            transformed_categorized,
+            written_counts,
+            self._output_dir,
+            cast("dict[str, object]", self._output_files),
+        )
+        # Add server and input dir info from instance
+        stats_dict.update({
+            "source_server": self._source_server,
+            "target_server": self._target_server,
+            "input_dir": str(self._input_dir),
+            "output_dir": str(self._output_dir),
+        })
 
-        return FlextResult[dict[str, object]].ok(statistics)
+        # Convert statistics dict to PipelineStatistics model
+        total_entries_val = stats_dict.get("total_entries") or 0
+        pipeline_stats = FlextLdifModels.PipelineStatistics(
+            total_entries=int(total_entries_val)
+            if isinstance(total_entries_val, (int, str))
+            else 0,
+            processed_entries=sum(
+                len(entries) for entries in transformed_categorized.values()
+            ),
+            schema_entries=len(transformed_categorized.get("schema", [])),
+            hierarchy_entries=len(transformed_categorized.get("hierarchy", [])),
+            user_entries=len(transformed_categorized.get("users", [])),
+            group_entries=len(transformed_categorized.get("groups", [])),
+            acl_entries=len(transformed_categorized.get("acl", [])),
+            rejected_entries=len(transformed_categorized.get("rejected", [])),
+            rejected_reasons={},  # Will be populated from stats_dict if needed
+            processing_duration=0.0,  # Will be tracked if needed
+        )
+
+        # Convert dictionaries to proper Entry objects for the model
+        entries_by_category: dict[str, list[FlextLdifModels.Entry]] = {}
+        self.logger.info(
+            f"Converting entries for categories: {list(transformed_categorized.keys())}"
+        )
+
+        for category, entries in transformed_categorized.items():
+            self.logger.info(
+                f"Processing category: {category}, entries: {len(entries)}"
+            )
+            entry_objects = []
+            for i, entry_dict in enumerate(entries):
+                # Debug first entry in each category
+                if i == 0:
+                    self.logger.info(
+                        f"First entry in {category}: DN={entry_dict.get('dn')}, keys={list(entry_dict.keys())}"
+                    )
+                # Initialize dn and dn_value outside try block for exception handler
+                dn: FlextLdifModels.DistinguishedName | None = None
+                dn_value: object = entry_dict.get("dn", "")
+                try:
+                    # Convert dictionary to proper Entry object
+                    if isinstance(dn_value, str):
+                        dn = FlextLdifModels.DistinguishedName(value=dn_value)
+                    elif isinstance(dn_value, FlextLdifModels.DistinguishedName):
+                        # If it's already a DistinguishedName object, use it
+                        dn = dn_value
+                    else:
+                        # Convert to string and then to DistinguishedName
+                        dn = FlextLdifModels.DistinguishedName(value=str(dn_value))
+
+                    # Handle schema entries specially (cn=schema or cn=subschemasubentry)
+                    schema_attrs: dict[str, FlextLdifModels.AttributeValues] = {}
+                    dn_str = str(dn_value).lower()
+                    is_schema_entry = dn_str in {"cn=schema", "cn=subschemasubentry"}
+
+                    # Debug all entries to understand the structure
+                    self.logger.debug(
+                        f"Processing entry with DN: {dn_value}, keys: {list(entry_dict.keys())}"
+                    )
+
+                    if is_schema_entry:
+                        self.logger.info(f"Processing schema entry with DN: {dn_value}")
+                        self.logger.info(
+                            f"Schema entry keys: {list(entry_dict.keys())}"
+                        )
+                        attrs = entry_dict.get("attributes", {})
+                        attrs_keys: list[str] | str = (
+                            list(attrs.keys())
+                            if isinstance(attrs, dict)
+                            else "attributes is not dict"
+                        )
+                        self.logger.info(f"Schema entry attributes keys: {attrs_keys}")
+                        # For schema entries, handle special attributes as proper AttributeValues
+                        # Extract schema-specific attributes as proper AttributeValues
+                        # Check both direct entry_dict and entry_dict['attributes']
+                        attributes_source = entry_dict.get("attributes", entry_dict)
+
+                        # Process ALL attributes from attributes_source
+                        # Each attribute should be a SINGLE AttributeValues object containing all values
+                        if isinstance(attributes_source, dict):
+                            for key, value in attributes_source.items():
+                                if key in {"dn", "objectclass", "metadata"}:
+                                    continue
+
+                                # Convert value to list of strings
+                                if isinstance(value, list):
+                                    string_values = [str(item) for item in value]
+                                else:
+                                    string_values = [str(value)]
+
+                                # Create single AttributeValues object with all values
+                                schema_attrs[key] = FlextLdifModels.AttributeValues(
+                                    values=string_values
+                                )
+                    else:
+                        # For regular entries, extract attributes normally
+                        attrs_value = entry_dict.get("attributes", entry_dict)
+                        # Type narrow to dict[str, object]
+                        if isinstance(attrs_value, dict):
+                            attributes_dict: dict[str, object] = attrs_value
+                        else:
+                            attributes_dict = entry_dict.copy()
+
+                        # Remove non-attribute fields
+                        for key in ["dn", "objectclass", "metadata"]:
+                            if isinstance(attributes_dict, dict):
+                                attributes_dict.pop(key, None)
+
+                        # Convert all attribute values to proper AttributeValues objects
+                        # Each attribute should be a SINGLE AttributeValues object, not a list
+                        converted_attributes: dict[
+                            str, FlextLdifModels.AttributeValues
+                        ] = {}
+                        if isinstance(attributes_dict, dict):
+                            for key, value in attributes_dict.items():
+                                # Ensure value is a list of strings
+                                if isinstance(value, list):
+                                    # Flatten if nested lists exist
+                                    string_values = [str(item) for item in value]
+                                else:
+                                    string_values = [str(value)]
+
+                                # Create single AttributeValues object with all values
+                                converted_attributes[key] = (
+                                    FlextLdifModels.AttributeValues(
+                                        values=string_values
+                                    )
+                                )
+
+                        schema_attrs = converted_attributes
+
+                    # Extract objectClass and add it to schema_attrs BEFORE creating LdifAttributes
+                    # ObjectClass is stored as an attribute, not a separate Entry field
+                    objectclass_value = entry_dict.get("objectclass", [])
+                    if not isinstance(objectclass_value, list):
+                        objectclass_value = (
+                            [objectclass_value] if objectclass_value else []
+                        )
+                    # Convert to list of strings
+                    objectclass_list = [str(oc) for oc in objectclass_value]
+
+                    # Add objectClass to schema_attrs if present
+                    if objectclass_list:
+                        schema_attrs["objectClass"] = FlextLdifModels.AttributeValues(
+                            values=objectclass_list
+                        )
+
+                    # Create attributes with objectClass included
+                    attributes = FlextLdifModels.LdifAttributes(attributes=schema_attrs)
+
+                    # Extract metadata if present
+                    metadata_value = entry_dict.get("metadata")
+                    metadata = None
+                    if metadata_value is not None and isinstance(
+                        metadata_value, FlextLdifModels.QuirkMetadata
+                    ):
+                        metadata = metadata_value
+
+                    entry_obj = FlextLdifModels.Entry(
+                        dn=dn, attributes=attributes, metadata=metadata
+                    )
+                    entry_objects.append(entry_obj)
+                except Exception as e:
+                    # ABORT on conversion failure - do not continue with invalid data
+                    dn_for_error: str = dn.value if dn else str(dn_value)
+                    error_msg = f"Failed to convert entry to Entry object (DN: {dn_for_error}): {e}"
+                    self.logger.exception(error_msg)
+                    return FlextResult[FlextLdifModels.PipelineExecutionResult].fail(
+                        error_msg
+                    )
+
+            entries_by_category[category] = entry_objects
+
+        # Build PipelineExecutionResult with proper Entry objects
+        result = FlextLdifModels.PipelineExecutionResult(
+            entries_by_category=entries_by_category,
+            statistics=pipeline_stats,
+            file_paths=self._output_files,
+        )
+        return FlextResult[FlextLdifModels.PipelineExecutionResult].ok(result)
 
     def _create_output_directory(self) -> FlextResult[None]:
         """Create base output directory for LDIF files.
@@ -399,184 +615,51 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[dict[str, object]]):
                 f"Failed to parse entries: {e}"
             )
 
-    def _matches_dn_pattern(self, dn: str, patterns: list[str]) -> bool:
-        """Check if DN matches any of the provided regex patterns.
-
-        Args:
-        dn: Distinguished Name to check
-        patterns: List of regex patterns to match against
-
-        Returns:
-        True if DN matches any pattern, False otherwise
-
-        """
-        for pattern in patterns:
-            try:
-                if re.search(pattern, dn, re.IGNORECASE):
-                    return True
-            except re.error:
-                # Invalid regex pattern - skip
-                continue
-
-        return False
-
-    def _has_acl_attributes(self, entry: dict[str, object]) -> bool:
-        """Check if entry has ACL-related attributes.
-
-        Args:
-        entry: Entry dictionary to check
-
-        Returns:
-        True if entry has ACL attributes, False otherwise
-
-        """
-        acl_attributes = self._categorization_rules.get("acl_attributes", [])
-        if not isinstance(acl_attributes, list):
-            return False
-
-        entry_attrs = entry.get(FlextLdifConstants.DictKeys.ATTRIBUTES, {})
-        if not isinstance(entry_attrs, dict):
-            return False
-
-        # Case-insensitive attribute lookup (LDIF RFC compliance)
-        entry_attrs_lower = {k.lower(): v for k, v in entry_attrs.items()}
-        acl_attributes_lower = [attr.lower() for attr in acl_attributes]
-
-        return any(acl_attr in entry_attrs_lower for acl_attr in acl_attributes_lower)
-
     def _categorize_entry(self, entry: dict[str, object]) -> tuple[str, str | None]:
-        """Categorize a single entry based on rules.
+        """Delegate to FlextLdifFilters for 6-category entry categorization.
 
         Args:
-        entry: Entry dictionary to categorize
+            entry: Entry dictionary to categorize
 
         Returns:
-        Tuple of (category, rejection_reason)
-        Category is one of: schema, hierarchy, users, groups, acl, rejected
-        Rejection reason is None unless category is 'rejected'
-
-        Categorization Logic:
-        0. Check for blocked objectClasses → rejected (ALGAR business rule)
-        1. Check for schema entries (attributeTypes, objectClasses)
-        2. Check for hierarchy objectClasses → hierarchy (BEFORE ACL!)
-        3. Check for user objectClasses → users
-        4. Check for group objectClasses → groups
-        5. Check for ACL attributes → acl (AFTER hierarchy/users/groups)
-        6. Otherwise → rejected
-
-        CRITICAL: Hierarchy check has HIGHER priority than ACL check. This ensures
-        Oracle containers (orclcontainer, orclprivilegegroup) with ACL attributes go
-        to hierarchy file for proper parent-child sync order.
+            Tuple of (category, rejection_reason)
+            Category is one of: schema, hierarchy, users, groups, acl, rejected
 
         """
-        # Get entry DN and objectClasses with proper type narrowing
-        dn_value = entry.get(FlextLdifConstants.DictKeys.DN, "")
-        dn = dn_value if isinstance(dn_value, str) else ""
-
-        object_classes = entry.get(FlextLdifConstants.DictKeys.OBJECTCLASS, [])
-        if not isinstance(object_classes, list):
-            object_classes = []
-
-        # Convert objectClasses to lowercase for case-insensitive matching
-        # LDAP objectClasses are case-insensitive per RFC 4512
-        object_classes_lower = [
-            oc.lower() if isinstance(oc, str) else oc for oc in object_classes
-        ]
-
-        # 0. Check for blocked objectClasses (ALGAR business rule)
-        # Reject entries with OID-specific objectClasses that don't exist in OUD
-        if self._schema_whitelist_rules:
-            blocked_ocs = self._schema_whitelist_rules.get("blocked_objectclasses", [])
-            if isinstance(blocked_ocs, list) and blocked_ocs:
-                blocked_ocs_lower = {
-                    oc.lower() for oc in blocked_ocs if isinstance(oc, str)
-                }
-                for obj_class_lower in object_classes_lower:
-                    if obj_class_lower in blocked_ocs_lower:
-                        msg_fmt = (
-                            "Entry has blocked objectClass matching '{}' "
-                            "(OID-specific, not in OUD schema)"
-                        )
-                        return ("rejected", msg_fmt.format(obj_class_lower))
-
-        # 1. Schema entries (cn=schema, subschemasubentry, or has schema attributes)
-        # Check DN patterns
-        if "cn=schema" in dn.lower() or "subschemasubentry" in dn.lower():
-            return ("schema", None)
-
-        # Check for schema attributes (attributetypes, objectclasses as attributes)
-        # Not DN-based schema entries
-        entry_attrs = entry.get(FlextLdifConstants.DictKeys.ATTRIBUTES, {})
-        if isinstance(entry_attrs, dict):
-            attrs_lower = {k.lower() for k in entry_attrs}
-            if "attributetypes" in attrs_lower or "objectclasses" in attrs_lower:
-                return ("schema", None)
-
-        # Get categorization rules
-        # Convert to lowercase for case-insensitive matching
-        # LDAP objectClasses are case-insensitive per RFC 4512
-        hierarchy_classes = self._categorization_rules.get(
-            "hierarchy_objectclasses", []
+        return FlextLdifFilters.categorize_entry(
+            entry,
+            categorization_rules=cast("dict[str, object]", self._categorization_rules),
+            schema_whitelist_rules=cast(
+                "dict[str, object] | None", self._schema_whitelist_rules
+            ),
         )
-        user_classes = self._categorization_rules.get("user_objectclasses", [])
-        group_classes = self._categorization_rules.get("group_objectclasses", [])
-        user_dn_patterns = self._categorization_rules.get("user_dn_patterns", [])
 
-        if not isinstance(hierarchy_classes, list):
-            hierarchy_classes = []
-        if not isinstance(user_classes, list):
-            user_classes = []
-        if not isinstance(group_classes, list):
-            group_classes = []
-        if not isinstance(user_dn_patterns, list):
-            user_dn_patterns = []
+    def _is_entry_under_base_dn(self, entry: dict[str, object]) -> bool:
+        """Check if entry's DN is under the configured base_dn.
 
-        # Convert rule objectClasses to lowercase sets
-        # for efficient case-insensitive lookup
-        hierarchy_classes_lower = {
-            oc.lower() for oc in hierarchy_classes if isinstance(oc, str)
-        }
-        user_classes_lower = {oc.lower() for oc in user_classes if isinstance(oc, str)}
-        group_classes_lower = {
-            oc.lower() for oc in group_classes if isinstance(oc, str)
-        }
+        Args:
+            entry: Entry dictionary with 'dn' attribute
 
-        # 2. Hierarchy entries
-        # (organization, organizationalUnit, domain, Oracle containers)
-        # Critical: Check hierarchy BEFORE ACL so Oracle containers go to hierarchy file
-        # Oracle containers (orclcontainer, orclprivilegegroup) are structural parents
-        # They may have ACL attributes but must be synced before children
-        for obj_class_lower in object_classes_lower:
-            if obj_class_lower in hierarchy_classes_lower:
-                return ("hierarchy", None)
+        Returns:
+            True if entry is under base_dn or no base_dn is configured,
+            False otherwise
 
-        # 3. User entries (person, inetOrgPerson, etc.)
-        for obj_class_lower in object_classes_lower:
-            if obj_class_lower in user_classes_lower:
-                # Validate with DN patterns if provided
-                if user_dn_patterns and not self._matches_dn_pattern(
-                    dn, user_dn_patterns
-                ):
-                    return (
-                        "rejected",
-                        f"User entry DN does not match expected patterns: {dn}",
-                    )
-                return ("users", None)
+        """
+        # If no base_dn filter configured, include all entries
+        if not self._base_dn:
+            return True
 
-        # 4. Group entries (groupOfNames, etc.)
-        for obj_class_lower in object_classes_lower:
-            if obj_class_lower in group_classes_lower:
-                return ("groups", None)
+        # Extract DN from entry
+        dn = entry.get("dn")
+        if not dn or not isinstance(dn, str):
+            return False
 
-        # 5. ACL entries (have ACL attributes but no hierarchy/user/group objectClasses)
-        # Note: ACL check moved AFTER hierarchy/users/groups
-        # This gives priority to structural entries
-        if self._has_acl_attributes(entry):
-            return ("acl", None)
+        # Normalize DN to lowercase for comparison
+        dn_lower = dn.lower()
 
-        # 6. Rejected entries (no matching category)
-        # Use original objectClasses (not lowercase) for error message clarity
-        return ("rejected", f"No matching category for objectClasses: {object_classes}")
+        # Check if DN ends with base_dn (is under base_dn in LDAP hierarchy)
+        # Example: "ou=users,dc=ctbc" ends with "dc=ctbc"
+        return dn_lower.endswith(self._base_dn) or dn_lower == self._base_dn
 
     def _categorize_entries(
         self, entries: list[dict[str, object]]
@@ -639,6 +722,25 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[dict[str, object]]):
 
                 # Add entry to appropriate category
                 if isinstance(processed_entry, dict):
+                    # Apply base_dn filter for non-schema categories
+                    # Schema entries (00) are never filtered by base_dn
+                    is_under_base_dn = self._is_entry_under_base_dn(processed_entry)
+                    if category != "schema" and not is_under_base_dn:
+                        # Reject entry if not under base_dn
+                        dn_value = processed_entry.get(
+                            FlextLdifConstants.DictKeys.DN, "unknown"
+                        )
+                        base_dn_rejection = (
+                            f"Entry DN not under base_dn '{self._base_dn}'"
+                        )
+                        categorized["rejected"].append(processed_entry)
+                        if isinstance(dn_value, str):
+                            rejection_reasons_map[dn_value] = base_dn_rejection
+                        self.logger.debug(
+                            f"Filtered out entry not under base_dn: {dn_value}"
+                        )
+                        continue
+
                     categorized[category].append(processed_entry)
 
                     # Track rejection reason if present
@@ -648,7 +750,12 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[dict[str, object]]):
                             rejection_reasons_map[dn_value] = rejection_reason
 
                 # If entry has ACL metadata, create separate ACL entry
+                # Only if entry is under base_dn (already checked above)
                 if has_acl_metadata and isinstance(processed_entry, dict):
+                    # Double-check base_dn for ACL entries (skip if not under base_dn)
+                    if not self._is_entry_under_base_dn(processed_entry):
+                        continue
+
                     acl_metadata = result_item.get("acl_metadata")
                     if isinstance(acl_metadata, dict):
                         acl_entry = {
@@ -700,16 +807,15 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[dict[str, object]]):
         """Filter out forbidden attributes from entry.
 
         STRATEGY PATTERN: Business rules from client application (e.g., algar-oud-mig)
-        determine which attributes to filter. This method provides generic filtering.
+        determine which attributes to filter.
+
+        Delegates to FlextLdifFilters for filtering logic.
 
         Args:
-        attributes: Dictionary of attributes to filter
+            attributes: Dictionary of attributes to filter
 
         Returns:
-        Filtered attributes dictionary without forbidden attributes
-
-        Example forbidden_attributes:
-        ['authPassword', 'authpassword;orclcommonpwd', 'authpassword;oid']
+            Filtered attributes dictionary without forbidden attributes
 
         """
         if not self._forbidden_attributes:
@@ -718,8 +824,7 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[dict[str, object]]):
         # Create case-insensitive set of forbidden attributes
         forbidden_lower = {attr.lower() for attr in self._forbidden_attributes}
 
-        # Filter attributes
-        # Check both exact match and case-insensitive match
+        # Filter attributes using case-insensitive comparison
         filtered: dict[str, object] = {
             attr_name: attr_value
             for attr_name, attr_value in attributes.items()
@@ -865,90 +970,6 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[dict[str, object]]):
                     f"ACL transformation failed: {e}"
                 )
 
-    class _ForbiddenAttributesFilteringChain:
-        """Forbidden attributes and objectClasses filtering helper methods using railway pattern."""
-
-        @staticmethod
-        def filter_entry(
-            entry: dict[str, object],
-            pipeline: object,  # FlextLdifCategorizedMigrationPipeline
-        ) -> FlextResult[dict[str, object]]:
-            """Filter forbidden attributes and objectClasses from single entry.
-
-            STRATEGY PATTERN: Business rules from client application determine
-            which attributes and objectClasses to filter.
-
-            Args:
-            entry: Entry dictionary to filter
-            pipeline: Reference to pipeline instance for forbidden_attributes
-            and forbidden_objectclasses access
-
-            Returns:
-            FlextResult containing filtered entry
-
-            """
-            try:
-                # Check if entry is valid dictionary
-                if not isinstance(entry, dict):
-                    return FlextResult[dict[str, object]].ok(entry)
-
-                # Check if entry has attributes key
-                if FlextLdifConstants.DictKeys.ATTRIBUTES not in entry:
-                    return FlextResult[dict[str, object]].ok(entry)
-
-                # Make copy of entry
-                filtered_entry = entry.copy()
-                attrs = entry.get(FlextLdifConstants.DictKeys.ATTRIBUTES)
-
-                # Type narrow attributes to dict
-                if not isinstance(attrs, dict):
-                    return FlextResult[dict[str, object]].ok(filtered_entry)
-
-                # Step 1: Filter forbidden attributes (if configured)
-                if hasattr(pipeline, "_filter_forbidden_attributes"):
-                    filter_attrs_func = getattr(
-                        pipeline, "_filter_forbidden_attributes"
-                    )
-                    attrs = filter_attrs_func(attrs)
-
-                # Step 2: Filter forbidden objectClasses (if configured)
-                if hasattr(pipeline, "_forbidden_objectclasses"):
-                    forbidden_ocs = getattr(pipeline, "_forbidden_objectclasses")
-                    if forbidden_ocs:
-                        # Get objectClass values
-                        oc_attr = FlextLdifConstants.DictKeys.OBJECTCLASS
-                        if oc_attr in attrs:
-                            oc_values = attrs[oc_attr]
-                            # Handle both list and single value formats
-                            if isinstance(oc_values, list):
-                                # Filter objectClasses case-insensitively
-                                forbidden_lower = {oc.lower() for oc in forbidden_ocs}
-                                filtered_ocs = [
-                                    oc
-                                    for oc in oc_values
-                                    if oc.lower() not in forbidden_lower
-                                ]
-
-                                # Ensure at least one objectClass remains
-                                if not filtered_ocs:
-                                    return FlextResult[dict[str, object]].fail(
-                                        f"Entry {entry.get('dn', 'unknown')}: "
-                                        "All objectClasses would be removed"
-                                    )
-
-                                # Update objectClass attribute
-                                attrs[oc_attr] = filtered_ocs
-
-                # Update entry with filtered attributes
-                filtered_entry[FlextLdifConstants.DictKeys.ATTRIBUTES] = attrs
-
-                return FlextResult[dict[str, object]].ok(filtered_entry)
-
-            except Exception as e:
-                return FlextResult[dict[str, object]].fail(
-                    f"Forbidden filtering failed: {e}"
-                )
-
     class _EntryCategorizationChain:
         """Entry categorization helper methods using railway pattern."""
 
@@ -1077,60 +1098,6 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[dict[str, object]]):
                     f"Rejection reason injection failed: {e}"
                 )
 
-    class _DnNormalizationChain:
-        """DN reference normalization helper methods using railway pattern."""
-
-        @staticmethod
-        def normalize_dn_references(
-            entry: dict[str, object],
-            dn_map: dict[str, str],
-            ref_attrs_lower: set[str],
-            pipeline: object,  # FlextLdifCategorizedMigrationPipeline
-        ) -> FlextResult[dict[str, object]]:
-            """Normalize DN references in single entry with dual normalization.
-
-            Performs two sequential normalizations:
-            1. Normalize DN-valued attributes using dn_map
-            2. Normalize DNs embedded in ACI attribute strings
-
-            Args:
-            entry: Entry dictionary to normalize
-            dn_map: Map of normalized DN values for lookup
-            ref_attrs_lower: Set of lowercase DN reference attribute names
-            pipeline: Reference to pipeline instance for method access
-
-            Returns:
-            FlextResult containing normalized entry
-
-            """
-            try:
-                # Type narrow entry to dict
-                if not isinstance(entry, dict):
-                    return FlextResult[dict[str, object]].ok(entry)
-
-                # Step 1: Normalize DN-valued attributes
-                normalize_dn_func = getattr(
-                    pipeline, "_normalize_dn_references_for_entry", None
-                )
-                if normalize_dn_func:
-                    normalized_entry = normalize_dn_func(entry, dn_map, ref_attrs_lower)
-                else:
-                    normalized_entry = entry
-
-                # Step 2: Normalize DNs inside ACI strings
-                normalize_aci_func = getattr(
-                    pipeline, "_normalize_aci_dn_references", None
-                )
-                if normalize_aci_func:
-                    normalized_entry = normalize_aci_func(normalized_entry, dn_map)
-
-                return FlextResult[dict[str, object]].ok(normalized_entry)
-
-            except Exception as e:
-                return FlextResult[dict[str, object]].fail(
-                    f"DN reference normalization failed: {e}"
-                )
-
     def _transform_categories(
         self, categorized: dict[str, list[dict[str, object]]]
     ) -> FlextResult[dict[str, list[dict[str, object]]]]:
@@ -1211,14 +1178,65 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[dict[str, object]]):
                     entry: dict[str, object],
                 ) -> FlextResult[dict[str, object]]:
                     """Filter forbidden attributes and objectClasses from single entry."""
-                    return self._ForbiddenAttributesFilteringChain.filter_entry(
-                        entry, self
-                    )
+                    try:
+                        # Check if entry is valid dictionary
+                        if not isinstance(entry, dict):
+                            return FlextResult[dict[str, object]].ok(entry)
+
+                        # Check if entry has attributes key
+                        if FlextLdifConstants.DictKeys.ATTRIBUTES not in entry:
+                            return FlextResult[dict[str, object]].ok(entry)
+
+                        # Make copy of entry
+                        filtered_entry = entry.copy()
+                        attrs = entry.get(FlextLdifConstants.DictKeys.ATTRIBUTES)
+
+                        # Type narrow attributes to dict
+                        if not isinstance(attrs, dict):
+                            return FlextResult[dict[str, object]].ok(filtered_entry)
+
+                        # Step 1: Filter forbidden attributes
+                        filtered_attrs = self._filter_forbidden_attributes(attrs)
+
+                        # Step 2: Filter forbidden objectClasses
+                        if self._forbidden_objectclasses:
+                            oc_attr = FlextLdifConstants.DictKeys.OBJECTCLASS
+                            if oc_attr in filtered_attrs:
+                                oc_values = filtered_attrs[oc_attr]
+                                if isinstance(oc_values, list):
+                                    forbidden_lower = {
+                                        oc.lower()
+                                        for oc in self._forbidden_objectclasses
+                                    }
+                                    filtered_ocs = [
+                                        oc
+                                        for oc in oc_values
+                                        if oc.lower() not in forbidden_lower
+                                    ]
+
+                                    if not filtered_ocs:
+                                        return FlextResult[dict[str, object]].fail(
+                                            f"Entry {entry.get('dn', 'unknown')}: "
+                                            "All objectClasses would be removed"
+                                        )
+
+                                    filtered_attrs[oc_attr] = filtered_ocs
+
+                        # Update entry with filtered attributes
+                        filtered_entry[FlextLdifConstants.DictKeys.ATTRIBUTES] = (
+                            filtered_attrs
+                        )
+
+                        return FlextResult[dict[str, object]].ok(filtered_entry)
+
+                    except Exception as e:
+                        return FlextResult[dict[str, object]].fail(
+                            f"Forbidden filtering failed: {e}"
+                        )
 
                 # Apply filtering to each category using batch_process
                 for category, entries in categorized.items():
                     # Use batch_process for functional composition
-                    # Returns (successes, failures) tuple for statistics tracking
                     filtered_entries, filter_failures = FlextResult.batch_process(
                         entries, filter_entry_processor
                     )
@@ -1235,7 +1253,9 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[dict[str, object]]):
 
             # Step 3: Normalize DN references (groups and ACLs) using batch_process
             try:
-                dn_map = self._build_canonical_dn_map(categorized)
+                dn_map = FlextLdifUtilities.Normalizer.build_canonical_dn_map(
+                    categorized
+                )
                 ref_attrs = self._categorization_rules.get(
                     "dn_reference_attributes",
                     [
@@ -1255,9 +1275,12 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[dict[str, object]]):
                     entry: dict[str, object],
                 ) -> FlextResult[dict[str, object]]:
                     """Normalize DN references in single entry."""
-                    return self._DnNormalizationChain.normalize_dn_references(
-                        entry, dn_map, ref_attrs_lower, self
+                    normalized_entry = (
+                        FlextLdifUtilities.Normalizer.normalize_dn_references_for_entry(
+                            entry, dn_map, ref_attrs_lower
+                        )
                     )
+                    return FlextResult[dict[str, object]].ok(normalized_entry)
 
                 # Apply DN normalization to each category using batch_process
                 for category, entries in categorized.items():
@@ -1292,546 +1315,6 @@ class FlextLdifCategorizedMigrationPipeline(FlextService[dict[str, object]]):
             return FlextResult[dict[str, list[dict[str, object]]]].fail(
                 f"ACL transformation failed: {e}"
             )
-
-    def _build_canonical_dn_map(
-        self, categorized: dict[str, list[dict[str, object]]]
-    ) -> dict[str, str]:
-        """Build a mapping of lowercase(cleaned DN) -> canonical cleaned DN.
-
-        Uses DnService.clean_dn to normalize formatting and ensures
-        case-consistent canonical values based on parsed entries.
-        """
-        dn_map: dict[str, str] = {}
-        for entries in categorized.values():
-            for entry in entries:
-                if isinstance(entry, dict):
-                    dn_value = entry.get(FlextLdifConstants.DictKeys.DN)
-                    if isinstance(dn_value, str) and dn_value:
-                        cleaned = DnService.clean_dn(dn_value)
-                        if cleaned:
-                            dn_map[cleaned.lower()] = cleaned
-        return dn_map
-
-    def _normalize_dn_value(self, value: str, dn_map: dict[str, str]) -> str:
-        """Normalize a single DN value using canonical map, fallback to cleaned DN."""
-        cleaned = DnService.clean_dn(value)
-        return dn_map.get(cleaned.lower(), cleaned)
-
-    def _normalize_dn_references_for_entry(
-        self,
-        entry: dict[str, object],
-        dn_map: dict[str, str],
-        ref_attrs_lower: set[str],
-    ) -> dict[str, object]:
-        """Normalize DN-valued attributes in an entry according to dn_map.
-
-        Handles both str and list[str] attribute values.
-        """
-        normalized = entry.copy()
-        attrs = normalized.get(FlextLdifConstants.DictKeys.ATTRIBUTES, {})
-        if not isinstance(attrs, dict):
-            return normalized
-
-        new_attrs: dict[str, object] = {}
-        for attr_name, attr_value in attrs.items():
-            if attr_name.lower() in ref_attrs_lower:
-                if isinstance(attr_value, list):
-                    new_attrs[attr_name] = [
-                        self._normalize_dn_value(v, dn_map) if isinstance(v, str) else v
-                        for v in attr_value
-                    ]
-                elif isinstance(attr_value, str):
-                    new_attrs[attr_name] = self._normalize_dn_value(attr_value, dn_map)
-                else:
-                    new_attrs[attr_name] = attr_value
-            else:
-                new_attrs[attr_name] = attr_value
-
-        normalized[FlextLdifConstants.DictKeys.ATTRIBUTES] = new_attrs
-        return normalized
-
-    def _normalize_aci_dn_references(
-        self, entry: dict[str, object], dn_map: dict[str, str]
-    ) -> dict[str, object]:
-        """Normalize DNs embedded in ACI attribute strings using dn_map.
-
-        Attempts to detect DN substrings in common OUD ACI patterns and
-        replace them with canonical DNs.
-        """
-        try:
-            attrs = entry.get(FlextLdifConstants.DictKeys.ATTRIBUTES, {})
-            if not isinstance(attrs, dict):
-                return entry
-
-            def normalize_in_text(text: str) -> str:
-                # Fast path: replace occurrences after ldap:/// and within quotes
-                # Identify candidate DN segments and canonicalize
-
-                def repl_ldap(m: re.Match[str]) -> str:
-                    dn_part = m.group(1)
-                    norm = self._normalize_dn_value(dn_part, dn_map)
-                    return f"ldap:///{norm}"
-
-                text2 = re.sub(r"ldap:///([^\"]+?)", repl_ldap, text)
-
-                # Also handle bare quoted DN-like sequences (best-effort)
-                def repl_quoted(m: re.Match[str]) -> str:
-                    dn_part = m.group(1)
-                    norm = self._normalize_dn_value(dn_part, dn_map)
-                    return f'"{norm}"'
-
-                return re.sub(
-                    r'"((?:[a-zA-Z]+=[^,\";\)]+)(?:,[a-zA-Z]+=[^,\";\)]+)*)"',
-                    repl_quoted,
-                    text2,
-                )
-
-            aci_value = attrs.get("aci")
-            if isinstance(aci_value, list):
-                attrs["aci"] = [
-                    normalize_in_text(v) if isinstance(v, str) else v for v in aci_value
-                ]
-            elif isinstance(aci_value, str):
-                attrs["aci"] = normalize_in_text(aci_value)
-
-            entry_out = entry.copy()
-            entry_out[FlextLdifConstants.DictKeys.ATTRIBUTES] = attrs
-            return entry_out
-        except Exception:
-            return entry
-
-    def _process_schema_entries(
-        self, entries: list[dict[str, object]]
-    ) -> list[dict[str, object]]:
-        """Process schema entries: apply whitelist filtering and sort by OID.
-
-        RFC-COMPLIANT: Works with RFC 4512 schema format (attributetypes/objectclasses).
-        Applies OID pattern matching from whitelist rules.
-
-        Args:
-        entries: List of RFC format schema entries
-
-        Returns:
-        Filtered and sorted schema entries
-
-        """
-        if not entries or not self._schema_whitelist_rules:
-            return entries
-
-        # Get whitelist rules for OID patterns
-        allowed_attr_oids = self._schema_whitelist_rules.get(
-            "allowed_attribute_oids", []
-        )
-        allowed_obj_oids = self._schema_whitelist_rules.get(
-            "allowed_objectclass_oids", []
-        )
-
-        if not isinstance(allowed_attr_oids, list):
-            allowed_attr_oids = []
-        if not isinstance(allowed_obj_oids, list):
-            allowed_obj_oids = []
-
-        processed_entries = []
-
-        for entry in entries:
-            attributes = entry.get(FlextLdifConstants.DictKeys.ATTRIBUTES, {})
-            if not isinstance(attributes, dict):
-                processed_entries.append(entry)
-                continue
-
-            # Get attributetypes and objectclasses
-            attr_types = attributes.get("attributetypes", [])
-            obj_classes = attributes.get("objectclasses", [])
-
-            if not isinstance(attr_types, list):
-                attr_types = [attr_types] if attr_types else []
-            if not isinstance(obj_classes, list):
-                obj_classes = [obj_classes] if obj_classes else []
-
-            def extract_oid(schema_line: str) -> str:
-                """Extract OID from RFC 4512 schema definition."""
-                match = re.match(r"\(\s*([0-9.]+)", str(schema_line))
-                return match.group(1) if match else ""
-
-            def matches_pattern(oid: str, patterns: list[str]) -> bool:
-                """Check if OID matches any whitelist pattern (supports wildcards)."""
-                if not patterns:
-                    return True  # No restrictions
-
-                for pattern in patterns:
-                    pattern_str = str(pattern).replace("*", ".*")
-                    if re.match(f"^{pattern_str}$", oid):
-                        return True
-                return False
-
-            # Filter and sort attributetypes
-            filtered_attr_types = [
-                line
-                for line in attr_types
-                if matches_pattern(extract_oid(line), allowed_attr_oids)
-            ]
-            sorted_attr_types = sorted(filtered_attr_types, key=extract_oid)
-
-            # Filter and sort objectclasses
-            filtered_obj_classes = [
-                line
-                for line in obj_classes
-                if matches_pattern(extract_oid(line), allowed_obj_oids)
-            ]
-            sorted_obj_classes = sorted(filtered_obj_classes, key=extract_oid)
-
-            # Rebuild entry with filtered and sorted schema
-            new_attributes = {}
-            if sorted_attr_types:
-                new_attributes["attributetypes"] = sorted_attr_types
-            if sorted_obj_classes:
-                new_attributes["objectclasses"] = sorted_obj_classes
-
-            # Keep other attributes unchanged
-            new_attributes.update({
-                key: value
-                for key, value in attributes.items()
-                if key not in {"attributetypes", "objectclasses"}
-            })
-
-            processed_entry = entry.copy()
-            processed_entry[FlextLdifConstants.DictKeys.ATTRIBUTES] = new_attributes
-            processed_entries.append(processed_entry)
-
-        return processed_entries
-
-    def _create_oud_schema_entry(
-        self, processed_entries: list[dict[str, object]]
-    ) -> list[dict[str, object]]:
-        """Create OUD-compatible schema entry from processed schema entries.
-
-        OUD requires schema modifications in LDIF modify format:
-        - dn: cn=schema
-        - changetype: modify
-        - add: attributetypes / add: objectclasses directives
-        - Each add directive followed by the values and a '-' separator
-
-        This format is required because cn=schema already exists in OUD.
-        We're adding new schema elements to the existing entry.
-
-        Args:
-        processed_entries: List of processed schema entries
-
-        Returns:
-        List containing single OUD-compatible schema entry
-
-        """
-        if not processed_entries:
-            return []
-
-        # DEBUG: Log what we received
-        print(f"DEBUG _create_oud_schema_entry: Received {len(processed_entries)} entries")
-        if processed_entries:
-            print(f"DEBUG First entry keys: {list(processed_entries[0].keys())}")
-            print(f"DEBUG First entry sample: {str(processed_entries[0])[:500]}")
-
-        # Collect all attributetypes and objectclasses from processed entries
-        all_attributetypes: list[str] = []
-        all_objectclasses: list[str] = []
-
-        for entry in processed_entries:
-            # After quirk processing, attributes are at top level (flat dict)
-            # Check both nested "attributes" key and flat top-level attributes
-            attributes = entry.get("attributes", entry)
-            if not isinstance(attributes, dict):
-                continue
-
-            # Get attributetypes
-            attr_types = attributes.get("attributetypes", [])
-            if isinstance(attr_types, list):
-                all_attributetypes.extend(attr_types)
-            elif attr_types:
-                all_attributetypes.append(str(attr_types))
-
-            # Get objectclasses
-            obj_classes = attributes.get("objectclasses", [])
-            if isinstance(obj_classes, list):
-                all_objectclasses.extend(obj_classes)
-            elif obj_classes:
-                all_objectclasses.append(str(obj_classes))
-
-        # DEBUG: Log what we collected
-        print(f"DEBUG Collected {len(all_attributetypes)} attributetypes, {len(all_objectclasses)} objectclasses")
-
-        # Remove duplicates while preserving order
-        seen_attributetypes = set()
-        unique_attributetypes = []
-        for attr_type in all_attributetypes:
-            if attr_type not in seen_attributetypes:
-                unique_attributetypes.append(attr_type)
-                seen_attributetypes.add(attr_type)
-
-        seen_objectclasses = set()
-        unique_objectclasses = []
-        for obj_class in all_objectclasses:
-            if obj_class not in seen_objectclasses:
-                unique_objectclasses.append(obj_class)
-                seen_objectclasses.add(obj_class)
-
-        # Sort by OID
-        def extract_oid(schema_line: str) -> str:
-            """Extract OID from RFC 4512 schema definition."""
-            match = re.match(r"\(\s*([0-9.]+)", str(schema_line))
-            return match.group(1) if match else ""
-
-        sorted_attributetypes = sorted(unique_attributetypes, key=extract_oid)
-        sorted_objectclasses = sorted(unique_objectclasses, key=extract_oid)
-
-        # Create OUD schema entry with MODIFY changetype
-        # Format for LDIF modify operations:
-        # dn: cn=schema
-        # changetype: modify
-        # add: attributetypes
-        # attributetypes: (definition)
-        # attributetypes: (definition)
-        # -
-        # add: objectclasses
-        # objectclasses: (definition)
-        # objectclasses: (definition)
-        # -
-
-        # Build flat entry dict (no nested "attributes" wrapper for RFC writer)
-        schema_entry: dict[str, object] = {
-            "dn": "cn=schema",
-            "changetype": ["modify"],
-        }
-
-        # Mark this as a modify operation with add directives
-        # We'll use special keys to indicate LDIF modify format
-        if sorted_attributetypes:
-            # Store with special marker for modify-add operation
-            schema_entry["_modify_add_attributetypes"] = sorted_attributetypes
-            print(f"DEBUG Added {len(sorted_attributetypes)} sorted attributetypes to schema entry")
-
-        if sorted_objectclasses:
-            # Store with special marker for modify-add operation
-            schema_entry["_modify_add_objectclasses"] = sorted_objectclasses
-            print(f"DEBUG Added {len(sorted_objectclasses)} sorted objectclasses to schema entry")
-
-        print(f"DEBUG Final schema entry keys: {list(schema_entry.keys())}")
-        return [schema_entry]
-
-    def _sort_entries_by_hierarchy_and_name(
-        self, entries: list[dict[str, object]]
-    ) -> list[dict[str, object]]:
-        """Sort entries by DN hierarchy depth, then case-insensitive DN.
-
-        Ordering rules:
-        - First key: DN depth (fewer RDN components first)
-        - Second key: Case-insensitive DN string for stable ordering
-
-        This ensures deterministic ordering across 01-05 categories.
-        """
-
-        def sort_key(entry: dict[str, object]) -> tuple[int, str]:
-            dn_value = entry.get(FlextLdifConstants.DictKeys.DN, "")
-            dn = dn_value if isinstance(dn_value, str) else ""
-            dn_clean = DnService.clean_dn(dn)
-            depth = dn_clean.count(",") + (1 if dn_clean else 0)
-            return (depth, dn_clean.lower())
-
-        # Filter only entries with a DN string to avoid exceptions during sort
-        sortable = [
-            e
-            for e in entries
-            if isinstance(e.get(FlextLdifConstants.DictKeys.DN, ""), str)
-        ]
-        nonsortable = [
-            e
-            for e in entries
-            if not isinstance(e.get(FlextLdifConstants.DictKeys.DN, ""), str)
-        ]
-
-        # Sort sortable entries and keep any non-sortable at the end in original order
-        return sorted(sortable, key=sort_key) + nonsortable
-
-    def _write_category_file(
-        self, category: str, entries: list[dict[str, object]], category_filename: str
-    ) -> FlextResult[int]:
-        """Write entries for a single category to LDIF file using RFC writer with quirks.
-
-        CRITICAL: Uses FlextLdifRfcLdifWriter with quirks registry to ensure
-        proper server-specific transformations are applied during writing.
-        NO MANUAL LDIF CONSTRUCTION - all writing goes through quirks system.
-
-        Args:
-            category: Category name (schema, hierarchy, users, groups, acl, rejected)
-            entries: List of entries to write
-            category_filename: LDIF filename (e.g., "00-schema.ldif")
-
-        Returns:
-            FlextResult containing count of entries written
-
-        Note:
-            For rejected entries, rejection reasons are written as LDIF comments
-            (lines starting with #) above the entry, not as attributes.
-            For schema entries, applies whitelist filtering and OID sorting.
-
-        """
-        if not entries:
-            return FlextResult[int].ok(0)
-
-        try:
-            # Special handling for schema category
-            if category == "schema" and self._schema_whitelist_rules:
-                # Apply whitelist filtering and sorting to schema entries
-                processed_entries = self._process_schema_entries(entries)
-                if processed_entries:
-                    # Create OUD-compatible schema entry format
-                    entries = self._create_oud_schema_entry(processed_entries)
-                else:
-                    entries = []
-            else:
-                # Apply hierarchy + name sorting for all non-schema categories (01-05)
-                entries = self._sort_entries_by_hierarchy_and_name(entries)
-
-            # Write directly to output directory (not subdirectory)
-            output_file = self._output_dir / category_filename
-
-            # Get quirk registry for proper RFC writing with quirks
-            # CRITICAL: Use RFC writer with quirks instead of manual LDIF construction
-            quirk_registry = FlextLdifQuirksRegistry()
-
-            # Register target server quirks for proper LDIF writing
-            # CRITICAL: Use self._target_server for registration to match retrieval key
-            if self._target_server in {"oud", "oracle_oud"}:
-                quirk_registry.register_schema_quirk(FlextLdifQuirksServersOud(server_type=self._target_server))
-                quirk_registry.register_acl_quirk(FlextLdifQuirksServersOud.AclQuirk(server_type=self._target_server))
-                quirk_registry.register_entry_quirk(FlextLdifQuirksServersOud.EntryQuirk(server_type=self._target_server))
-
-            # Prepare writer parameters for RFC-compliant output with quirks
-            writer_params: dict[str, object] = {
-                FlextLdifConstants.DictKeys.OUTPUT_FILE: str(output_file),
-                FlextLdifConstants.DictKeys.ENTRIES: entries,
-                "encoding": "utf-8",
-            }
-
-            # Use FlextLdifRfcLdifWriter with quirks for proper transformation
-            writer = FlextLdifRfcLdifWriter(
-                params=writer_params,
-                quirk_registry=quirk_registry,
-                target_server_type=self._target_server,
-            )
-
-            # Execute RFC-compliant writing with quirks applied
-            write_result = writer.execute()
-
-            if write_result.is_failure:
-                return FlextResult[int].fail(
-                    f"Failed to write {category} file: {write_result.error}"
-                )
-
-            return FlextResult[int].ok(len(entries))
-
-        except (OSError, UnicodeEncodeError) as e:
-            return FlextResult[int].fail(f"Failed to write {category} file: {e}")
-
-    def _write_categorized_output(
-        self, categorized: dict[str, list[dict[str, object]]]
-    ) -> FlextResult[dict[str, int]]:
-        """Write categorized entries to structured LDIF files.
-
-        Args:
-        categorized: Dictionary mapping category to entry list
-
-        Returns:
-        FlextResult containing dict[str, object] of category to count written
-
-        """
-        written_counts: dict[str, int] = {}
-
-        # Write each category to its LDIF file (using provided output_files mapping)
-        for category, entries in categorized.items():
-            filename_obj = self._output_files.get(category, f"{category}.ldif")
-            category_filename = (
-                filename_obj if isinstance(filename_obj, str) else f"{category}.ldif"
-            )
-
-            write_result = self._write_category_file(
-                category, entries, category_filename
-            )
-
-            if write_result.is_failure:
-                return FlextResult[dict[str, int]].fail(
-                    f"Failed to write {category}: {write_result.error}"
-                )
-
-            written_counts[category] = write_result.unwrap()
-
-        return FlextResult[dict[str, int]].ok(written_counts)
-
-    def _generate_statistics(
-        self,
-        categorized: dict[str, list[dict[str, object]]],
-        written_counts: dict[str, int],
-    ) -> dict[str, object]:
-        """Generate complete statistics for categorized migration.
-
-        Args:
-        categorized: Dictionary mapping category to entry list
-        written_counts: Dictionary mapping category to count written
-
-        Returns:
-        Statistics dictionary with counts, rejection info, and metadata
-
-        """
-        # Calculate total entries
-        total_entries = sum(len(entries) for entries in categorized.values())
-
-        # Build categorized counts
-        categorized_counts: dict[str, object] = {}
-        for category, entries in categorized.items():
-            categorized_counts[category] = len(entries)
-
-        # Count rejections and gather reasons
-        rejected_entries = categorized.get("rejected", [])
-        rejection_count = len(rejected_entries)
-        rejection_reasons: list[str] = []
-
-        for entry in rejected_entries:
-            attrs = entry.get(FlextLdifConstants.DictKeys.ATTRIBUTES, {})
-            if isinstance(attrs, dict) and "rejectionReason" in attrs:
-                reason_value = attrs["rejectionReason"]
-                if (
-                    isinstance(reason_value, str)
-                    and reason_value not in rejection_reasons
-                ):
-                    rejection_reasons.append(reason_value)
-
-        # Calculate rejection rate
-        rejection_rate = rejection_count / total_entries if total_entries > 0 else 0.0
-
-        # Build output files info (LDIF files, not directories)
-        output_files: dict[str, object] = {}
-        for category in written_counts:
-            filename_obj = self._output_files.get(category, f"{category}.ldif")
-            category_filename = (
-                filename_obj if isinstance(filename_obj, str) else f"{category}.ldif"
-            )
-            output_path = self._output_dir / category_filename
-            output_files[category] = str(output_path)
-
-        # Build complete statistics
-        stats: dict[str, object] = {
-            "total_entries": total_entries,
-            "categorized_counts": categorized_counts,
-            "written_counts": written_counts,
-            "rejection_count": rejection_count,
-            "rejection_rate": rejection_rate,
-            "rejection_reasons": rejection_reasons,
-            "output_files": output_files,
-            "source_server": self._source_server,
-            "target_server": self._target_server,
-            "input_dir": str(self._input_dir),
-            "output_dir": str(self._output_dir),
-        }
-
-        return stats
 
 
 __all__ = ["FlextLdifCategorizedMigrationPipeline"]

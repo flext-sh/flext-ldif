@@ -1,0 +1,15 @@
+{
+  "entries": [
+    {
+      "dn": "cn=John Doe,ou=People,dc=example,dc=com",
+      "attributes": {
+        "cn": ["John Doe"],
+        "objectClass": ["inetOrgPerson"],
+        "sn": ["Doe"],
+        "mail": ["john@example.com"]
+      }
+    }
+  ],
+  "count": 1,
+  "valid": true
+}
