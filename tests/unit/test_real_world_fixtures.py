@@ -34,7 +34,9 @@ class TestRFCFixtures:
         result = self.ldif.parse(fixture_path)
         assert result.is_success, f"Failed to parse RFC fixtures: {result.error}"
 
-        entries = result.unwrap()
+        unwrapped = result.unwrap()
+        assert isinstance(unwrapped, list)
+        entries = unwrapped
         assert len(entries) >= 50, f"Expected 50+ RFC entries, got {len(entries)}"
 
     def test_rfc_entry_categories(self) -> None:
@@ -43,8 +45,12 @@ class TestRFCFixtures:
         result = self.ldif.parse(fixture_path)
         assert result.is_success
 
-        entries = result.unwrap()
-        categories = {
+        unwrapped = result.unwrap()
+        assert isinstance(unwrapped, list)
+        entries = unwrapped
+
+        from flext_ldif.models import FlextLdifModels
+        categories: dict[str, list[FlextLdifModels.Entry]] = {
             "domain": [],
             "organization": [],
             "organizational_unit": [],
@@ -56,6 +62,7 @@ class TestRFCFixtures:
 
         for entry in entries:
             object_classes = entry.attributes.get("objectClass", [])
+            assert isinstance(object_classes, list)
             if "domain" in object_classes:
                 categories["domain"].append(entry)
             elif "organization" in object_classes:
@@ -90,7 +97,11 @@ class TestRFCFixtures:
         result = self.ldif.parse(fixture_path)
         assert result.is_success
 
-        entries = result.unwrap()
+        unwrapped = result.unwrap()
+
+        assert isinstance(unwrapped, list)
+
+        entries = unwrapped
         for entry in entries:
             # All entries should have valid DNs
             assert entry.dn is not None
@@ -107,7 +118,9 @@ class TestRFCFixtures:
         result = self.ldif.parse(fixture_path)
         assert result.is_success
 
-        entries = result.unwrap()
+        unwrapped = result.unwrap()
+        assert isinstance(unwrapped, list)
+        entries = unwrapped
 
         # Find entry with multiple objectClass values (always multi-valued)
         multi_attr_entry = None
@@ -128,7 +141,9 @@ class TestRFCFixtures:
         result = self.ldif.parse(fixture_path)
         assert result.is_success
 
-        entries = result.unwrap()
+        unwrapped = result.unwrap()
+        assert isinstance(unwrapped, list)
+        entries = unwrapped
 
         # Verify DN components are properly formatted (attribute=value pairs)
         for entry in entries:
@@ -156,7 +171,11 @@ class TestOIDFixtures:
         result = self.ldif.parse(fixture_path)
         assert result.is_success, f"Failed to parse OID fixtures: {result.error}"
 
-        entries = result.unwrap()
+        unwrapped = result.unwrap()
+
+        assert isinstance(unwrapped, list)
+
+        entries = unwrapped
         assert len(entries) >= 1, "Should parse at least some OID entries"
 
     def test_oid_organizational_structure(self) -> None:
@@ -165,7 +184,9 @@ class TestOIDFixtures:
         result = self.ldif.parse(fixture_path)
         assert result.is_success
 
-        entries = result.unwrap()
+        unwrapped = result.unwrap()
+        assert isinstance(unwrapped, list)
+        entries = unwrapped
 
         # Verify entries parse successfully and have DN and objectClass
         for entry in entries:
@@ -182,11 +203,16 @@ class TestOIDFixtures:
         result = self.ldif.parse(fixture_path)
         assert result.is_success
 
-        entries = result.unwrap()
+        unwrapped = result.unwrap()
+        assert isinstance(unwrapped, list)
+        entries = unwrapped
 
         # Find user entries
         user_entries = [
-            e for e in entries if "inetOrgPerson" in e.attributes.get("objectClass", [])
+            e
+            for e in entries
+            if (oc := e.attributes.get("objectClass", [])) is not None
+            and "inetOrgPerson" in oc
         ]
 
         # User entries should have relevant attributes
@@ -194,7 +220,8 @@ class TestOIDFixtures:
             attrs = user.attributes
             # At least some users should have common attributes
             assert any(
-                attr in attrs for attr in ["mail", "cn", "sn", "telephoneNumber"]
+                attr in attrs.attributes
+                for attr in ["mail", "cn", "sn", "telephoneNumber"]
             )
 
 
@@ -212,7 +239,11 @@ class TestOUDFixtures:
         result = self.ldif.parse(fixture_path)
         assert result.is_success, f"Failed to parse OUD fixtures: {result.error}"
 
-        entries = result.unwrap()
+        unwrapped = result.unwrap()
+
+        assert isinstance(unwrapped, list)
+
+        entries = unwrapped
         assert len(entries) >= 1, "Should parse at least some OUD entries"
 
     def test_oud_oracle_container_entries(self) -> None:
@@ -221,16 +252,21 @@ class TestOUDFixtures:
         result = self.ldif.parse(fixture_path)
         assert result.is_success
 
-        entries = result.unwrap()
+        unwrapped = result.unwrap()
+        assert isinstance(unwrapped, list)
+        entries = unwrapped
 
         # OUD uses orclContainer for Oracle-specific groupings
         oracle_entries = [
-            e for e in entries if "orclContainer" in e.attributes.get("objectClass", [])
+            e
+            for e in entries
+            if (oc := e.attributes.get("objectClass", [])) is not None
+            and "orclContainer" in oc
         ]
 
         # Should have some oracle-specific entries (if any)
         if len(oracle_entries) > 0:
-            assert all("cn" in e.attributes for e in oracle_entries)
+            assert all("cn" in e.attributes.attributes for e in oracle_entries)
 
     def test_oud_oracle_specific_attributes(self) -> None:
         """Test OUD Oracle-specific attributes and objectClasses."""
@@ -238,7 +274,9 @@ class TestOUDFixtures:
         result = self.ldif.parse(fixture_path)
         assert result.is_success
 
-        entries = result.unwrap()
+        unwrapped = result.unwrap()
+        assert isinstance(unwrapped, list)
+        entries = unwrapped
 
         # Verify entries have expected structure
         assert len(entries) >= 1, "Should have at least one OUD entry"
@@ -260,7 +298,11 @@ class TestOpenLDAP2Fixtures:
         result = self.ldif.parse(fixture_path)
         assert result.is_success, f"Failed to parse OpenLDAP2 fixtures: {result.error}"
 
-        entries = result.unwrap()
+        unwrapped = result.unwrap()
+
+        assert isinstance(unwrapped, list)
+
+        entries = unwrapped
         assert len(entries) >= 50, f"Expected 50+ OpenLDAP2 entries, got {len(entries)}"
 
     def test_openldap2_posix_accounts(self) -> None:
@@ -269,11 +311,16 @@ class TestOpenLDAP2Fixtures:
         result = self.ldif.parse(fixture_path)
         assert result.is_success
 
-        entries = result.unwrap()
+        unwrapped = result.unwrap()
+        assert isinstance(unwrapped, list)
+        entries = unwrapped
 
         # Find posixAccount entries
         posix_accounts = [
-            e for e in entries if "posixAccount" in e.attributes.get("objectClass", [])
+            e
+            for e in entries
+            if (oc := e.attributes.get("objectClass", [])) is not None
+            and "posixAccount" in oc
         ]
         assert len(posix_accounts) >= 10, "Should have at least 10 posixAccount entries"
 
@@ -296,11 +343,16 @@ class TestOpenLDAP2Fixtures:
         result = self.ldif.parse(fixture_path)
         assert result.is_success
 
-        entries = result.unwrap()
+        unwrapped = result.unwrap()
+        assert isinstance(unwrapped, list)
+        entries = unwrapped
 
         # Find posixGroup entries
         posix_groups = [
-            e for e in entries if "posixGroup" in e.attributes.get("objectClass", [])
+            e
+            for e in entries
+            if (oc := e.attributes.get("objectClass", [])) is not None
+            and "posixGroup" in oc
         ]
         assert len(posix_groups) >= 2, "Should have at least 2 posixGroup entries"
 
@@ -322,13 +374,16 @@ class TestOpenLDAP2Fixtures:
         result = self.ldif.parse(fixture_path)
         assert result.is_success
 
-        entries = result.unwrap()
+        unwrapped = result.unwrap()
+        assert isinstance(unwrapped, list)
+        entries = unwrapped
 
         # Find service accounts (typically with nologin shell)
         service_accounts = [
             e
             for e in entries
-            if "posixAccount" in e.attributes.get("objectClass", [])
+            if (oc := e.attributes.get("objectClass", [])) is not None
+            and "posixAccount" in oc
             and "nologin" in str(e.attributes.get("loginShell", []))
         ]
 
@@ -340,7 +395,9 @@ class TestOpenLDAP2Fixtures:
         result = self.ldif.parse(fixture_path)
         assert result.is_success
 
-        entries = result.unwrap()
+        unwrapped = result.unwrap()
+        assert isinstance(unwrapped, list)
+        entries = unwrapped
 
         # Verify all entries parse without corruption (UTF-8 handling)
         # At minimum, entries with international characters should parse successfully
@@ -370,7 +427,11 @@ class TestCrossServerFixtures:
                 f"{server_name}: Failed to parse {fixture_path}: {result.error}"
             )
 
-            entries = result.unwrap()
+            unwrapped = result.unwrap()
+
+            assert isinstance(unwrapped, list)
+
+            entries = unwrapped
             assert len(entries) >= 1, f"{server_name}: Should parse at least 1 entry"
 
             # Verify entry structure
@@ -397,7 +458,9 @@ class TestCrossServerFixtures:
             result = self.ldif.parse(Path(fixture_path))
             assert result.is_success
 
-            entries = result.unwrap()
+            unwrapped = result.unwrap()
+            assert isinstance(unwrapped, list)
+            entries = unwrapped
 
             # Analyze DN structures
             dn_depths = [len(e.dn.value.split(",")) for e in entries if e.dn]
@@ -420,7 +483,9 @@ class TestCrossServerFixtures:
             result = self.ldif.parse(Path(fixture_path))
             assert result.is_success, f"{server_name} parse failed: {result.error}"
 
-            entries = result.unwrap()
+            unwrapped = result.unwrap()
+            assert isinstance(unwrapped, list)
+            entries = unwrapped
 
             # Validate each entry
             for entry in entries:
@@ -445,7 +510,9 @@ class TestFixtureEdgeCases:
         result = self.ldif.parse(fixture_path)
         assert result.is_success
 
-        entries = result.unwrap()
+        unwrapped = result.unwrap()
+        assert isinstance(unwrapped, list)
+        entries = unwrapped
 
         # Should handle entries with special characters
         assert len(entries) >= 48  # At least most entries should parse
@@ -456,7 +523,9 @@ class TestFixtureEdgeCases:
         result = self.ldif.parse(fixture_path)
         assert result.is_success
 
-        entries = result.unwrap()
+        unwrapped = result.unwrap()
+        assert isinstance(unwrapped, list)
+        entries = unwrapped
 
         # Find entries with multi-valued attributes
         multi_valued = []
@@ -478,7 +547,9 @@ class TestFixtureEdgeCases:
         result = self.ldif.parse(fixture_path)
         assert result.is_success
 
-        entries = result.unwrap()
+        unwrapped = result.unwrap()
+        assert isinstance(unwrapped, list)
+        entries = unwrapped
 
         # All entries should have valid attributes (no empty values)
         for entry in entries:

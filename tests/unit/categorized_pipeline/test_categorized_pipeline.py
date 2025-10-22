@@ -10,7 +10,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pathlib import Path
-from unittest.mock import MagicMock
 
 from flext_ldif import FlextLdifCategorizedMigrationPipeline
 
@@ -33,8 +32,8 @@ class TestCategorizedPipelineInitialization:
             input_dir=input_dir,
             output_dir=output_dir,
             categorization_rules=rules,
-            parser_quirk=MagicMock(),
-            writer_quirk=MagicMock(),
+            parser_quirk=None,
+            writer_quirk=None,
         )
 
         assert pipeline._input_dir == input_dir
@@ -53,8 +52,8 @@ class TestCategorizedPipelineInitialization:
             input_dir=input_dir,
             output_dir=output_dir,
             categorization_rules=rules,
-            parser_quirk=MagicMock(),
-            writer_quirk=MagicMock(),
+            parser_quirk=None,
+            writer_quirk=None,
             source_server="openldap",
             target_server="389ds",
         )
@@ -75,8 +74,8 @@ class TestOutputDirectories:
             input_dir=tmp_path / "input",
             output_dir=output_dir,
             categorization_rules=rules,
-            parser_quirk=MagicMock(),
-            writer_quirk=MagicMock(),
+            parser_quirk=None,
+            writer_quirk=None,
         )
 
         result = pipeline._create_output_directory()
@@ -95,8 +94,8 @@ class TestOutputDirectories:
             input_dir=tmp_path / "input",
             output_dir=output_dir,
             categorization_rules=rules,
-            parser_quirk=MagicMock(),
-            writer_quirk=MagicMock(),
+            parser_quirk=None,
+            writer_quirk=None,
         )
 
         # Create directories twice
@@ -118,8 +117,8 @@ class TestEntryCategorization:
             input_dir=tmp_path / "input",
             output_dir=tmp_path / "output",
             categorization_rules=rules,
-            parser_quirk=MagicMock(),
-            writer_quirk=MagicMock(),
+            parser_quirk=None,
+            writer_quirk=None,
         )
 
         entry: dict[str, object] = {
@@ -141,8 +140,8 @@ class TestEntryCategorization:
             input_dir=tmp_path / "input",
             output_dir=tmp_path / "output",
             categorization_rules=rules,
-            parser_quirk=MagicMock(),
-            writer_quirk=MagicMock(),
+            parser_quirk=None,
+            writer_quirk=None,
         )
 
         entry: dict[str, object] = {
@@ -164,8 +163,8 @@ class TestEntryCategorization:
             input_dir=tmp_path / "input",
             output_dir=tmp_path / "output",
             categorization_rules=rules,
-            parser_quirk=MagicMock(),
-            writer_quirk=MagicMock(),
+            parser_quirk=None,
+            writer_quirk=None,
         )
 
         entry: dict[str, object] = {
@@ -188,8 +187,8 @@ class TestEntryCategorization:
             input_dir=tmp_path / "input",
             output_dir=tmp_path / "output",
             categorization_rules=rules,
-            parser_quirk=MagicMock(),
-            writer_quirk=MagicMock(),
+            parser_quirk=None,
+            writer_quirk=None,
         )
 
         entry: dict[str, object] = {
@@ -212,8 +211,8 @@ class TestEntryCategorization:
             input_dir=tmp_path / "input",
             output_dir=tmp_path / "output",
             categorization_rules=rules,
-            parser_quirk=MagicMock(),
-            writer_quirk=MagicMock(),
+            parser_quirk=None,
+            writer_quirk=None,
         )
 
         entry: dict[str, object] = {
@@ -236,8 +235,8 @@ class TestEntryCategorization:
             input_dir=tmp_path / "input",
             output_dir=tmp_path / "output",
             categorization_rules=rules,
-            parser_quirk=MagicMock(),
-            writer_quirk=MagicMock(),
+            parser_quirk=None,
+            writer_quirk=None,
         )
 
         entry: dict[str, object] = {
@@ -261,8 +260,8 @@ class TestEntryCategorization:
             input_dir=tmp_path / "input",
             output_dir=tmp_path / "output",
             categorization_rules=rules,
-            parser_quirk=MagicMock(),
-            writer_quirk=MagicMock(),
+            parser_quirk=None,
+            writer_quirk=None,
         )
 
         entry: dict[str, object] = {
@@ -292,8 +291,8 @@ class TestCategoryBatchProcessing:
             input_dir=tmp_path / "input",
             output_dir=tmp_path / "output",
             categorization_rules=rules,
-            parser_quirk=MagicMock(),
-            writer_quirk=MagicMock(),
+            parser_quirk=None,
+            writer_quirk=None,
         )
 
         entries: list[dict[str, object]] = [
@@ -343,8 +342,8 @@ class TestCategoryBatchProcessing:
             input_dir=tmp_path / "input",
             output_dir=tmp_path / "output",
             categorization_rules=rules,
-            parser_quirk=MagicMock(),
-            writer_quirk=MagicMock(),
+            parser_quirk=None,
+            writer_quirk=None,
         )
 
         entries: list[dict[str, object]] = [
@@ -377,8 +376,8 @@ class TestCategoryTransformation:
             input_dir=tmp_path / "input",
             output_dir=tmp_path / "output",
             categorization_rules=rules,
-            parser_quirk=MagicMock(),
-            writer_quirk=MagicMock(),
+            parser_quirk=None,
+            writer_quirk=None,
         )
 
         categorized: dict[str, list[dict[str, object]]] = {
@@ -412,8 +411,8 @@ class TestCategorizedPipelineIntegration:
             input_dir=input_dir,
             output_dir=output_dir,
             categorization_rules=rules,
-            parser_quirk=MagicMock(),
-            writer_quirk=MagicMock(),
+            parser_quirk=None,
+            writer_quirk=None,
         )
 
         result = pipeline.execute()
@@ -437,8 +436,8 @@ class TestQuirksIntegration:
             input_dir=tmp_path / "input",
             output_dir=tmp_path / "output",
             categorization_rules=rules,
-            parser_quirk=MagicMock(),
-            writer_quirk=MagicMock(),
+            parser_quirk=None,
+            writer_quirk=None,
         )
 
         categorized: dict[str, list[dict[str, object]]] = {
@@ -476,8 +475,8 @@ class TestQuirksIntegration:
             input_dir=tmp_path / "input",
             output_dir=tmp_path / "output",
             categorization_rules=rules,
-            parser_quirk=MagicMock(),
-            writer_quirk=MagicMock(),
+            parser_quirk=None,
+            writer_quirk=None,
         )
 
         categorized: dict[str, list[dict[str, object]]] = {

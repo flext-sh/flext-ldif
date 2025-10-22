@@ -46,7 +46,7 @@ objectClass: person
         ldif = FlextLdif()
 
         with tempfile.NamedTemporaryFile(
-            mode='w', suffix='.ldif', delete=False, encoding='utf-8'
+            mode="w", suffix=".ldif", delete=False, encoding="utf-8"
         ) as f:
             f.write("""dn: cn=FileTest,dc=example,dc=com
 cn: FileTest
@@ -71,7 +71,7 @@ objectClass: person
         try:
             for i in range(3):
                 with tempfile.NamedTemporaryFile(
-                    mode='w', suffix='.ldif', delete=False, encoding='utf-8'
+                    mode="w", suffix=".ldif", delete=False, encoding="utf-8"
                 ) as f:
                     f.write(f"""dn: cn=User{i},dc=example,dc=com
 cn: User{i}
@@ -94,7 +94,7 @@ objectClass: person
         ldif = FlextLdif()
 
         with tempfile.NamedTemporaryFile(
-            mode='w', suffix='.ldif', delete=False, encoding='utf-8'
+            mode="w", suffix=".ldif", delete=False, encoding="utf-8"
         ) as f:
             f.write("""dn: cn=José García,dc=example,dc=com
 cn: José García

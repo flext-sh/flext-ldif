@@ -33,7 +33,7 @@ from flext_ldif.quirks.registry import FlextLdifQuirksRegistry
 from flext_ldif.rfc.rfc_ldif_parser import FlextLdifRfcLdifParser
 from flext_ldif.services.dn_service import FlextLdifDnService
 from flext_ldif.services.file_writer_service import FlextLdifFileWriterService
-from flext_ldif.utilities import FlextLdifUtilities
+from flext_ldif.services.statistics_service import FlextLdifStatisticsService
 
 
 class FlextLdifCategorizedMigrationPipeline(
@@ -247,12 +247,18 @@ class FlextLdifCategorizedMigrationPipeline(
         written_counts = write_result.unwrap()
 
         # Step 6: Generate complete statistics
-        stats_dict = FlextLdifUtilities.Statistics.generate_statistics(
+        stats_service = FlextLdifStatisticsService()
+        stats_result = stats_service.generate_statistics(
             transformed_categorized,
             written_counts,
             self._output_dir,
             cast("dict[str, object]", self._output_files),
         )
+        if stats_result.is_failure:
+            return FlextResult[FlextLdifModels.PipelineExecutionResult].fail(
+                f"Failed to generate statistics: {stats_result.error}"
+            )
+        stats_dict = stats_result.unwrap()
         # Add server and input dir info from instance
         stats_dict.update({
             "source_server": self._source_server,
@@ -1141,7 +1147,9 @@ class FlextLdifCategorizedMigrationPipeline(
                 if acl_quirk_cls is not None:
                     writer_acl_quirk = acl_quirk_cls()
 
-            # Transform ACL entries (category "acl") using batch processing
+            # Transform ACL entries (category "acl" ONLY) using batch processing
+            # CRITICAL: User requirement: "aci must only be migrated in 04, only, only, only"
+            # Phases 01-03 must NOT have aci attributes - only phase 04 (acl category)
             # Delegates to helper method for railway-oriented error handling
             acl_entries = categorized.get("acl", [])
             if acl_entries:
@@ -1253,9 +1261,13 @@ class FlextLdifCategorizedMigrationPipeline(
 
             # Step 3: Normalize DN references (groups and ACLs) using batch_process
             try:
-                dn_map = FlextLdifUtilities.Normalizer.build_canonical_dn_map(
-                    categorized
-                )
+                dn_service = FlextLdifDnService()
+                dn_map_result = dn_service.build_canonical_dn_map(categorized)
+                if dn_map_result.is_failure:
+                    return FlextResult[dict[str, list[dict[str, object]]]].fail(
+                        f"Failed to build DN map: {dn_map_result.error}"
+                    )
+                dn_map = dn_map_result.unwrap()
                 ref_attrs = self._categorization_rules.get(
                     "dn_reference_attributes",
                     [
@@ -1275,11 +1287,14 @@ class FlextLdifCategorizedMigrationPipeline(
                     entry: dict[str, object],
                 ) -> FlextResult[dict[str, object]]:
                     """Normalize DN references in single entry."""
-                    normalized_entry = (
-                        FlextLdifUtilities.Normalizer.normalize_dn_references_for_entry(
-                            entry, dn_map, ref_attrs_lower
-                        )
+                    normalized_result = dn_service.normalize_dn_references_for_entry(
+                        entry, dn_map, ref_attrs_lower
                     )
+                    if normalized_result.is_failure:
+                        return FlextResult[dict[str, object]].fail(
+                            f"Failed to normalize DN references: {normalized_result.error}"
+                        )
+                    normalized_entry = normalized_result.unwrap()
                     return FlextResult[dict[str, object]].ok(normalized_entry)
 
                 # Apply DN normalization to each category using batch_process

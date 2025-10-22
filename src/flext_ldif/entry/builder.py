@@ -18,6 +18,7 @@ from flext_core import FlextResult, FlextService
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.schema import FlextLdifObjectClassManager
+from flext_ldif.typings import FlextLdifTypes
 
 
 class FlextLdifEntryBuilder(FlextService[FlextLdifModels.Entry]):
@@ -28,6 +29,26 @@ class FlextLdifEntryBuilder(FlextService[FlextLdifModels.Entry]):
         """Initialize entry builder."""
         super().__init__()
         self._objectclass_manager = FlextLdifObjectClassManager()
+
+    def _normalize_attributes(
+        self, attributes: dict[str, str | list[str]]
+    ) -> dict[str, list[str]]:
+        """Normalize attributes dict to ensure all values are lists.
+        
+        Args:
+            attributes: Attributes dict with potentially str or list[str] values
+            
+        Returns:
+            Normalized dict[str, list[str]] where all values are lists
+
+        """
+        normalized: dict[str, list[str]] = {}
+        for key, value in attributes.items():
+            if isinstance(value, str):
+                normalized[key] = [value]
+            else:
+                normalized[key] = value
+        return normalized
 
     @override
     def execute(self) -> FlextResult[FlextLdifModels.Entry]:
@@ -44,13 +65,13 @@ class FlextLdifEntryBuilder(FlextService[FlextLdifModels.Entry]):
         uid: str | None = None,
         mail: str | None = None,
         given_name: str | None = None,
-        additional_attrs: dict[str, list[str]] | None = None,
+        additional_attrs: dict[str, str | list[str]] | None = None,
     ) -> FlextResult[FlextLdifModels.Entry]:
         """Build a person entry with standard attributes."""
         dn = f"cn={cn},{base_dn}"
 
         # Build basic attributes using FlextLdifConstants
-        attributes: dict[str, list[str]] = {
+        attributes: dict[str, str | list[str]] = {
             FlextLdifConstants.DictKeys.OBJECTCLASS: [
                 "inetOrgPerson",
                 FlextLdifConstants.DictKeys.PERSON,
@@ -81,11 +102,11 @@ class FlextLdifEntryBuilder(FlextService[FlextLdifModels.Entry]):
         base_dn: str,
         members: list[str] | None = None,
         description: str | None = None,
-        additional_attrs: dict[str, list[str]] | None = None,
+        additional_attrs: dict[str, str | list[str]] | None = None,
     ) -> FlextResult[FlextLdifModels.Entry]:
         """Build a group entry with standard attributes."""
         dn = f"cn={cn},{base_dn}"
-        attributes: dict[str, list[str]] = {
+        attributes: dict[str, str | list[str]] = {
             FlextLdifConstants.DictKeys.OBJECTCLASS: [
                 FlextLdifConstants.DictKeys.TOP,
                 FlextLdifConstants.DictKeys.GROUP_OF_NAMES,
@@ -122,11 +143,11 @@ class FlextLdifEntryBuilder(FlextService[FlextLdifModels.Entry]):
         ou: str,
         base_dn: str,
         description: str | None = None,
-        additional_attrs: dict[str, list[str]] | None = None,
+        additional_attrs: dict[str, str | list[str]] | None = None,
     ) -> FlextResult[FlextLdifModels.Entry]:
         """Build an organizational unit entry with standard attributes."""
         dn = f"ou={ou},{base_dn}"
-        attributes: dict[str, list[str]] = {
+        attributes: dict[str, str | list[str]] = {
             FlextLdifConstants.DictKeys.OBJECTCLASS: [
                 FlextLdifConstants.DictKeys.TOP,
                 FlextLdifConstants.DictKeys.ORGANIZATIONAL_UNIT,
@@ -157,7 +178,7 @@ class FlextLdifEntryBuilder(FlextService[FlextLdifModels.Entry]):
         self,
         dn: str,
         objectclasses: list[str],
-        attributes: dict[str, list[str]],
+        attributes: dict[str, str | list[str]],
         *,
         validate: bool = True,
     ) -> FlextResult[FlextLdifModels.Entry]:
@@ -207,11 +228,12 @@ class FlextLdifEntryBuilder(FlextService[FlextLdifModels.Entry]):
                 )
 
                 if not dn:
+                    dn_field = FlextLdifConstants.DictKeys.DN
                     return FlextResult[list[FlextLdifModels.Entry]].fail(
-                        f"Each entry must have a '{FlextLdifConstants.DictKeys.DN}' field"
+                        f"Each entry must have a '{dn_field}' field"
                     )
 
-                normalized_attrs: dict[str, list[str]] = {}
+                normalized_attrs: FlextLdifTypes.CommonDict.AttributeDict = {}
                 for key, value in attributes.items():
                     # Normalize attribute names to lowercase (LDAP standard)
                     normalized_key = key.lower()
@@ -228,7 +250,7 @@ class FlextLdifEntryBuilder(FlextService[FlextLdifModels.Entry]):
                         f"DN must be a string, got {type(dn).__name__}"
                     )
 
-                # Create entry directly with typed variables (no cast needed)
+                # Create entry directly with typed variables
                 entry_result: FlextResult[FlextLdifModels.Entry] = (
                     FlextLdifModels.Entry.create(
                         dn=dn,
@@ -272,7 +294,7 @@ class FlextLdifEntryBuilder(FlextService[FlextLdifModels.Entry]):
                     f"Each entry must have a '{FlextLdifConstants.DictKeys.DN}' field"
                 )
 
-            normalized_attrs: dict[str, list[str]] = {}
+            normalized_attrs: FlextLdifTypes.CommonDict.AttributeDict = {}
             if isinstance(attributes, dict):
                 for key, value in attributes.items():
                     # Normalize attribute names to lowercase (LDAP standard)
@@ -290,7 +312,7 @@ class FlextLdifEntryBuilder(FlextService[FlextLdifModels.Entry]):
                     f"DN must be a string, got {type(dn).__name__}"
                 )
 
-            # Create entry directly with typed variables (no cast needed)
+            # Create entry with AttributeDict type
             entry_result: FlextResult[FlextLdifModels.Entry] = (
                 FlextLdifModels.Entry.create(
                     dn=dn,

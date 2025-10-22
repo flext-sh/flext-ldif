@@ -9,6 +9,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import re
+from typing import cast
 
 
 def extract_attributes(ldif_content: str) -> list[str]:
@@ -86,7 +87,7 @@ def extract_entries(ldif_content: str) -> list[dict[str, object]]:
                     # Multi-valued attribute
                     if not isinstance(current_entry[attr_name], list):
                         current_entry[attr_name] = [current_entry[attr_name]]
-                    current_entry[attr_name].append(attr_value)
+                    cast("list[object]", current_entry[attr_name]).append(attr_value)
                 else:
                     current_entry[attr_name] = attr_value
 

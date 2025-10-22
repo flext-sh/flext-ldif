@@ -108,31 +108,31 @@ class TestFlextLdifConstants:
 
     def test_processing_stages_enum(self) -> None:
         """Test ProcessingStage enum."""
-        assert FlextLdifConstants.ProcessingStage.PARSING == "parsing"
-        assert FlextLdifConstants.ProcessingStage.VALIDATION == "validation"
-        assert FlextLdifConstants.ProcessingStage.ANALYTICS == "analytics"
-        assert FlextLdifConstants.ProcessingStage.WRITING == "writing"
+        assert FlextLdifConstants.ProcessingStage.PARSING.value == "parsing"
+        assert FlextLdifConstants.ProcessingStage.VALIDATION.value == "validation"
+        assert FlextLdifConstants.ProcessingStage.ANALYTICS.value == "analytics"
+        assert FlextLdifConstants.ProcessingStage.WRITING.value == "writing"
 
     def test_health_status_enum(self) -> None:
         """Test LdifHealthStatus enum."""
-        assert FlextLdifConstants.LdifHealthStatus.HEALTHY == "healthy"
-        assert FlextLdifConstants.LdifHealthStatus.DEGRADED == "degraded"
-        assert FlextLdifConstants.LdifHealthStatus.UNHEALTHY == "unhealthy"
+        assert FlextLdifConstants.LdifHealthStatus.HEALTHY.value == "healthy"
+        assert FlextLdifConstants.LdifHealthStatus.DEGRADED.value == "degraded"
+        assert FlextLdifConstants.LdifHealthStatus.UNHEALTHY.value == "unhealthy"
 
     def test_entry_type_enum(self) -> None:
         """Test EntryType enum."""
-        assert FlextLdifConstants.EntryType.PERSON == "person"
-        assert FlextLdifConstants.EntryType.GROUP == "group"
-        assert FlextLdifConstants.EntryType.ORGANIZATIONAL_UNIT == "organizationalunit"
-        assert FlextLdifConstants.EntryType.DOMAIN == "domain"
-        assert FlextLdifConstants.EntryType.OTHER == "other"
+        assert FlextLdifConstants.EntryType.PERSON.value == "person"
+        assert FlextLdifConstants.EntryType.GROUP.value == "group"
+        assert FlextLdifConstants.EntryType.ORGANIZATIONAL_UNIT.value == "organizationalunit"
+        assert FlextLdifConstants.EntryType.DOMAIN.value == "domain"
+        assert FlextLdifConstants.EntryType.OTHER.value == "other"
 
     def test_entry_modification_enum(self) -> None:
         """Test EntryModification enum."""
-        assert FlextLdifConstants.EntryModification.ADD == "add"
-        assert FlextLdifConstants.EntryModification.MODIFY == "modify"
-        assert FlextLdifConstants.EntryModification.DELETE == "delete"
-        assert FlextLdifConstants.EntryModification.MODRDN == "modrdn"
+        assert FlextLdifConstants.EntryModification.ADD.value == "add"
+        assert FlextLdifConstants.EntryModification.MODIFY.value == "modify"
+        assert FlextLdifConstants.EntryModification.DELETE.value == "delete"
+        assert FlextLdifConstants.EntryModification.MODRDN.value == "modrdn"
 
 
 class TestFlextLdifConstantsEncoding:

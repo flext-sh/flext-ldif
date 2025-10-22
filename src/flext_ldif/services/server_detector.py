@@ -138,11 +138,13 @@ class FlextLdifServerDetector(FlextService[FlextLdifTypes.Models.CustomDataDict]
                     return FlextResult[FlextLdifTypes.Models.CustomDataDict].fail(
                         "Either ldif_path or ldif_content must be provided"
                     )
+                # RFC 2849 mandates UTF-8 encoding - fail on invalid encoding
                 try:
                     ldif_content = ldif_path.read_text(encoding="utf-8")
-                except UnicodeDecodeError:
-                    # Try with latin-1 as fallback
-                    ldif_content = ldif_path.read_text(encoding="latin-1")
+                except UnicodeDecodeError as e:
+                    return FlextResult[FlextLdifTypes.Models.CustomDataDict].fail(
+                        f"LDIF file is not valid UTF-8 (RFC 2849 violation): {e}"
+                    )
 
             # Limit content for performance
             lines = ldif_content.split("\n")

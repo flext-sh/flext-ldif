@@ -30,10 +30,13 @@ class TestServerDetectorInitialization:
 
         assert result.is_success
         status = result.unwrap()
+        assert isinstance(status, dict)
         assert status["service"] == "FlextLdifServerDetector"
         assert status["status"] == "initialized"
         assert "capabilities" in status
-        assert "detect_server_type" in status["capabilities"]
+        capabilities = status.get("capabilities")
+        assert isinstance(capabilities, list)
+        assert "detect_server_type" in capabilities
 
 
 class TestOracleOidDetection:
@@ -52,9 +55,14 @@ attributeTypes: ( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' SYNTAX 1.3.6.1.4.1.146
         assert result.is_success
 
         detection = result.unwrap()
+        assert isinstance(detection, dict)
         assert detection["detected_server_type"] == "oid"
-        assert detection["confidence"] > 0.6
-        assert len(detection["patterns_found"]) > 0
+        confidence = detection.get("confidence")
+        assert isinstance(confidence, (int, float))
+        assert confidence > 0.6
+        patterns_found = detection.get("patterns_found")
+        assert isinstance(patterns_found, list)
+        assert len(patterns_found) > 0
 
     def test_detect_oracle_oid_by_attributes(self) -> None:
         """Test detection of Oracle OID by OID-specific attributes."""
@@ -83,7 +91,9 @@ orclaci: test
         assert result.is_success
 
         detection = result.unwrap()
-        patterns = detection["patterns_found"]
+        assert isinstance(detection, dict)
+        patterns = detection.get("patterns_found")
+        assert isinstance(patterns, list)
         assert any("Oracle OID" in p for p in patterns)
 
 
@@ -104,8 +114,11 @@ ds-pwp-account-disabled: TRUE
         assert result.is_success
 
         detection = result.unwrap()
+        assert isinstance(detection, dict)
         assert detection["detected_server_type"] == "oud"
-        assert detection["confidence"] > 0.6
+        confidence = detection.get("confidence")
+        assert isinstance(confidence, (int, float))
+        assert confidence > 0.6
 
     def test_detect_oud_by_entry_uuid(self) -> None:
         """Test detection of OUD by entryUUID attribute."""
@@ -141,8 +154,11 @@ olcAccess: to * by self write
         assert result.is_success
 
         detection = result.unwrap()
+        assert isinstance(detection, dict)
         assert detection["detected_server_type"] == "openldap"
-        assert detection["confidence"] > 0.6
+        confidence = detection.get("confidence")
+        assert isinstance(confidence, (int, float))
+        assert confidence > 0.6
 
     def test_openldap_detection_includes_patterns(self) -> None:
         """Test that OpenLDAP detection includes identified patterns."""
@@ -156,7 +172,9 @@ olcOverlay: syncprov
         assert result.is_success
 
         detection = result.unwrap()
-        patterns = detection["patterns_found"]
+        assert isinstance(detection, dict)
+        patterns = detection.get("patterns_found")
+        assert isinstance(patterns, list)
         assert any("OpenLDAP" in p for p in patterns)
 
 
@@ -231,8 +249,11 @@ orclaci: test
         assert result.is_success
 
         detection = result.unwrap()
+        assert isinstance(detection, dict)
         assert detection["detected_server_type"] == "oid"
-        assert detection["confidence"] > 0.8
+        confidence = detection.get("confidence")
+        assert isinstance(confidence, (int, float))
+        assert confidence > 0.8
 
     def test_confidence_score_in_result(self) -> None:
         """Test that confidence score is present in detection result."""
@@ -362,7 +383,9 @@ attributeTypes: ( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' )
         assert result.is_success
 
         detection = result.unwrap()
-        scores = detection["scores"]
+        assert isinstance(detection, dict)
+        scores = detection.get("scores")
+        assert isinstance(scores, dict)
         # Should have scores for all server types
         assert "oid" in scores
         assert "oud" in scores
@@ -399,7 +422,10 @@ objectClasses: ( 2.16.840.1.113894.1.0.1 NAME 'orclPerson' )
         assert result.is_success
 
         detection = result.unwrap()
-        if detection["confidence"] >= 0.6:
+        assert isinstance(detection, dict)
+        confidence = detection.get("confidence")
+        assert isinstance(confidence, (int, float))
+        if confidence >= 0.6:
             assert detection["is_confident"] is True
         else:
             assert detection["is_confident"] is False

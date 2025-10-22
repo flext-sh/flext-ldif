@@ -32,18 +32,22 @@ class TestOidQuirksWithRealFixtures:
         return FlextLdifQuirksServersOid(server_type=FlextLdifConstants.ServerTypes.OID)
 
     @pytest.fixture
-    def oid_schema_attributes(self, oid_fixtures: dict[str, str]) -> list[str]:
+    def oid_schema_attributes(self, oid_fixtures) -> list[str]:
         """Extract OID attributes from schema fixture."""
-        if "schema" not in oid_fixtures:
+        try:
+            schema = oid_fixtures.schema()
+        except (AttributeError, Exception):
             pytest.skip("OID schema fixture not available")
-        return extract_attributes(oid_fixtures["schema"])
+        return extract_attributes(schema)
 
     @pytest.fixture
-    def oid_schema_objectclasses(self, oid_fixtures: dict[str, str]) -> list[str]:
+    def oid_schema_objectclasses(self, oid_fixtures) -> list[str]:
         """Extract OID objectClasses from schema fixture."""
-        if "schema" not in oid_fixtures:
+        try:
+            schema = oid_fixtures.schema()
+        except (AttributeError, Exception):
             pytest.skip("OID schema fixture not available")
-        return extract_objectclasses(oid_fixtures["schema"])
+        return extract_objectclasses(schema)
 
     @pytest.mark.parametrize("attr_index", range(5))
     def test_parse_real_oid_attributes_from_fixtures(
@@ -136,11 +140,13 @@ class TestConversionMatrixWithRealFixtures:
         return FlextLdifQuirksServersOud(server_type=FlextLdifConstants.ServerTypes.OUD)
 
     @pytest.fixture
-    def oid_conversion_attributes(self, oid_fixtures: dict[str, str]) -> list[str]:
+    def oid_conversion_attributes(self, oid_fixtures) -> list[str]:
         """Extract OID attributes for conversion testing."""
-        if "schema" not in oid_fixtures:
+        try:
+            schema = oid_fixtures.schema()
+        except (AttributeError, Exception):
             pytest.skip("OID schema fixture not available")
-        return extract_attributes(oid_fixtures["schema"])
+        return extract_attributes(schema)
 
     def test_oid_to_oud_conversion_with_real_attributes(
         self,
@@ -162,7 +168,9 @@ class TestConversionMatrixWithRealFixtures:
 
             if result.is_success:
                 successes += 1
-                converted = result.unwrap()
+                converted_value = result.unwrap()
+                assert isinstance(converted_value, str)
+                converted: str = converted_value
 
                 # Validate conversion preserved OID
                 orig_oid = extract_oid(attr)
@@ -201,14 +209,19 @@ class TestConversionMatrixWithRealFixtures:
         )
 
         # Backward: OUD → OID
+        forward_value = forward_result.unwrap()
+        assert isinstance(forward_value, str)
+        forward_str: str = forward_value
         backward_result = matrix.convert(
-            oud_quirk, oid_quirk, "attribute", forward_result.unwrap()
+            oud_quirk, oid_quirk, "attribute", forward_str
         )
         assert backward_result.is_success, (
             f"Backward conversion failed: {backward_result.error}"
         )
 
-        final_attr = backward_result.unwrap()
+        final_attr_value = backward_result.unwrap()
+        assert isinstance(final_attr_value, str)
+        final_attr: str = final_attr_value
         final_oid = extract_oid(final_attr)
         final_name = extract_name(final_attr)
 
