@@ -165,10 +165,17 @@ class TestOidToOudAclConversion:
         # Verify parsed data structure contains expected fields
         assert parsed_data["type"] == "standard"  # OID ACL format uses "standard" type
         assert isinstance(parsed_data, dict)
-        assert "target" in parsed_data or "acl_name" in parsed_data  # Has identifying field
+        assert (
+            "target" in parsed_data or "acl_name" in parsed_data
+        )  # Has identifying field
 
         # Verify the parsed structure is valid
-        assert parsed_data["type"] in {"standard", "acl", "entry-level", "attribute-level"}
+        assert parsed_data["type"] in {
+            "standard",
+            "acl",
+            "entry-level",
+            "attribute-level",
+        }
 
     def test_oud_acl_parsing_and_roundtrip(
         self,

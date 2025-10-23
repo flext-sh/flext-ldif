@@ -123,7 +123,10 @@ class TestFlextLdifConstants:
         """Test EntryType enum."""
         assert FlextLdifConstants.EntryType.PERSON.value == "person"
         assert FlextLdifConstants.EntryType.GROUP.value == "group"
-        assert FlextLdifConstants.EntryType.ORGANIZATIONAL_UNIT.value == "organizationalunit"
+        assert (
+            FlextLdifConstants.EntryType.ORGANIZATIONAL_UNIT.value
+            == "organizationalunit"
+        )
         assert FlextLdifConstants.EntryType.DOMAIN.value == "domain"
         assert FlextLdifConstants.EntryType.OTHER.value == "other"
 

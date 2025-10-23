@@ -371,12 +371,8 @@ class TestCreateTargetSchemaEntry:
             {
                 FlextLdifConstants.DictKeys.DN: "cn=schema",
                 FlextLdifConstants.DictKeys.ATTRIBUTES: {
-                    "attributetypes": [
-                        "( 1.2.3.4 NAME 'test' )"
-                    ],
-                    "objectclasses": [
-                        "( 1.5.6.7 NAME 'testClass' )"
-                    ],
+                    "attributetypes": ["( 1.2.3.4 NAME 'test' )"],
+                    "objectclasses": ["( 1.5.6.7 NAME 'testClass' )"],
                 },
             }
         ]
@@ -706,9 +702,7 @@ class TestProcessSchemaEntriesAdvanced:
 
     def test_process_schema_with_wildcard_patterns(self, tmp_path: Path) -> None:
         """Test processing schema with wildcard OID patterns."""
-        rules: dict[str, object] = {
-            "allowed_attribute_oids": ["1.2.3.*", "2.*.4.*"]
-        }
+        rules: dict[str, object] = {"allowed_attribute_oids": ["1.2.3.*", "2.*.4.*"]}
         service = FlextLdifFileWriterService(
             output_dir=tmp_path,
             output_files={},
@@ -771,7 +765,9 @@ class TestProcessSchemaEntriesAdvanced:
 class TestCreateTargetSchemaEntryAdvanced:
     """Test advanced scenarios for create_target_schema_entry."""
 
-    def test_create_target_schema_with_non_dict_attributes(self, tmp_path: Path) -> None:
+    def test_create_target_schema_with_non_dict_attributes(
+        self, tmp_path: Path
+    ) -> None:
         """Test creating target schema entry with non-dict attributes."""
         service = FlextLdifFileWriterService(
             output_dir=tmp_path,
@@ -966,7 +962,9 @@ class TestSortEntriesEdgeCases:
         )
 
         entries: list[dict[str, object]] = [
-            {FlextLdifConstants.DictKeys.DN: "CN=L8,CN=L7,CN=L6,CN=L5,CN=L4,CN=L3,CN=L2,CN=L1,DC=Example,DC=Com"},
+            {
+                FlextLdifConstants.DictKeys.DN: "CN=L8,CN=L7,CN=L6,CN=L5,CN=L4,CN=L3,CN=L2,CN=L1,DC=Example,DC=Com"
+            },
             {FlextLdifConstants.DictKeys.DN: "CN=User,DC=Example,DC=Com"},
         ]
 
@@ -1021,9 +1019,7 @@ class TestSortEntriesEdgeCases:
 class TestWriteCategoryFileErrorHandling:
     """Test error handling in write_category_file."""
 
-    def test_write_category_file_with_invalid_output_path(
-        self, tmp_path: Path
-    ) -> None:
+    def test_write_category_file_with_invalid_output_path(self, tmp_path: Path) -> None:
         """Test write_category_file handles invalid output path gracefully."""
         # Use a path with invalid characters or permissions
         readonly_dir = tmp_path / "readonly"
@@ -1050,7 +1046,9 @@ class TestWriteCategoryFileErrorHandling:
         try:
             result = service.write_category_file("users", entries, "users.ldif")
             # Should fail gracefully
-            assert result.is_failure or result.is_success  # Either outcome is acceptable
+            assert (
+                result.is_failure or result.is_success
+            )  # Either outcome is acceptable
         finally:
             # Restore permissions for cleanup
             readonly_dir.chmod(0o755)

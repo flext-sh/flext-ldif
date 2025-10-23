@@ -836,7 +836,11 @@ class FlextLdifModels(FlextModels):
                     attrs_dict: dict[str, FlextLdifModels.AttributeValues] = {}
                     for attr_name, attr_values in attributes.items():
                         # Normalize to list if string
-                        values_list: list[str] = [attr_values] if isinstance(attr_values, str) else attr_values
+                        values_list: list[str] = (
+                            [attr_values]
+                            if isinstance(attr_values, str)
+                            else attr_values
+                        )
                         attrs_dict[attr_name] = FlextLdifModels.AttributeValues(
                             values=values_list
                         )

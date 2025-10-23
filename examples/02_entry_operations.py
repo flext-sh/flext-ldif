@@ -170,7 +170,9 @@ def convert_formats_pipeline() -> None:
     # Build entry → convert to dict[str, object] → convert to JSON (chained)
     build_result = api.build(
         entry_type="person",
-        cn="Convert Test", sn="Test", base_dn="ou=People,dc=example,dc=com"
+        cn="Convert Test",
+        sn="Test",
+        base_dn="ou=People,dc=example,dc=com",
     )
     if build_result.is_success:
         entry = build_result.unwrap()
@@ -187,7 +189,9 @@ def convert_formats_pipeline() -> None:
     # Batch conversions - library eliminates manual loops!
     person_result = api.build(
         entry_type="person",
-        cn="Batch Test", sn="Test", base_dn="ou=People,dc=example,dc=com"
+        cn="Batch Test",
+        sn="Test",
+        base_dn="ou=People,dc=example,dc=com",
     )
     person = person_result.unwrap() if person_result.is_success else None
 
@@ -197,7 +201,9 @@ def convert_formats_pipeline() -> None:
         if write_result.is_success:
             parse_result = api.parse(Path("temp.json"))
             if parse_result.is_success:
-                entries_from_json = cast("list[FlextLdifModels.Entry]", parse_result.unwrap())
+                entries_from_json = cast(
+                    "list[FlextLdifModels.Entry]", parse_result.unwrap()
+                )
                 print(f"Round-trip: {len(entries_from_json)} entries recovered")
 
         # Batch: entries → dicts (NEW - eliminates manual loops!)
@@ -213,7 +219,7 @@ def convert_formats_pipeline() -> None:
                 "objectClass": ["person"],
                 "cn": ["FromDict"],
                 "sn": ["Dict"],
-            }
+            },
         )
         if entry_result.is_success:
             print("Converted dict to entry")

@@ -359,7 +359,9 @@ class ObjectClassParseOnlyQuirk(FlextLdifQuirksBaseSchemaQuirk):
     def parse_acl(self, data: str) -> FlextResult[dict[str, object]]:
         return FlextResult.ok({})
 
-    def convert_attribute_to_rfc(self, data: dict[str, object]) -> FlextResult[dict[str, object]]:
+    def convert_attribute_to_rfc(
+        self, data: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         return FlextResult.ok(data)
 
     def convert_objectclass_to_rfc(
@@ -367,10 +369,14 @@ class ObjectClassParseOnlyQuirk(FlextLdifQuirksBaseSchemaQuirk):
     ) -> FlextResult[dict[str, object]]:
         return FlextResult.ok(data)
 
-    def convert_attribute_from_rfc(self, data: dict[str, object]) -> FlextResult[dict[str, object]]:
+    def convert_attribute_from_rfc(
+        self, data: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         return FlextResult.ok(data)
 
-    def convert_objectclass_from_rfc(self, data: dict[str, object]) -> FlextResult[dict[str, object]]:
+    def convert_objectclass_from_rfc(
+        self, data: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         return FlextResult.ok(data)
 
     def write_attribute_to_rfc(self, data: dict[str, object]) -> FlextResult[str]:

@@ -336,7 +336,9 @@ class FlextLdifFileWriterService:
                         self._target_schema_quirk, "should_filter_out_attribute"
                     ):
                         # Only include if NOT filtered out
-                        if not self._target_schema_quirk.should_filter_out_attribute(str(attr_type)):
+                        if not self._target_schema_quirk.should_filter_out_attribute(
+                            str(attr_type)
+                        ):
                             all_attributetypes.append(attr_type)
                     else:
                         # No filtering if quirk doesn't support it - include all
@@ -347,7 +349,9 @@ class FlextLdifFileWriterService:
                     self._target_schema_quirk, "should_filter_out_attribute"
                 ):
                     # Only include if NOT filtered out
-                    if not self._target_schema_quirk.should_filter_out_attribute(str(attr_types)):
+                    if not self._target_schema_quirk.should_filter_out_attribute(
+                        str(attr_types)
+                    ):
                         all_attributetypes.append(str(attr_types))
                 else:
                     all_attributetypes.append(str(attr_types))
@@ -362,7 +366,9 @@ class FlextLdifFileWriterService:
                         self._target_schema_quirk, "should_filter_out_objectclass"
                     ):
                         # Only include if NOT filtered out
-                        if not self._target_schema_quirk.should_filter_out_objectclass(str(obj_class)):
+                        if not self._target_schema_quirk.should_filter_out_objectclass(
+                            str(obj_class)
+                        ):
                             all_objectclasses.append(obj_class)
                     else:
                         # No filtering if quirk doesn't support it - include all
@@ -373,7 +379,9 @@ class FlextLdifFileWriterService:
                     self._target_schema_quirk, "should_filter_out_objectclass"
                 ):
                     # Only include if NOT filtered out
-                    if not self._target_schema_quirk.should_filter_out_objectclass(str(obj_classes)):
+                    if not self._target_schema_quirk.should_filter_out_objectclass(
+                        str(obj_classes)
+                    ):
                         all_objectclasses.append(str(obj_classes))
                 else:
                     all_objectclasses.append(str(obj_classes))
@@ -525,6 +533,7 @@ class FlextLdifFileWriterService:
             Sorted entries by hierarchy and name
 
         """
+
         def sort_key(entry: dict[str, object]) -> tuple[int, str]:
             dn_value = entry.get(FlextLdifConstants.DictKeys.DN, "")
             dn = dn_value if isinstance(dn_value, str) else ""

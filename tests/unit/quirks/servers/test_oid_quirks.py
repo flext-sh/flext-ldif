@@ -55,6 +55,19 @@ class TestOidSchemaQuirks:
         )
         assert not oid_quirk.can_handle_attribute(rfc_attr)
 
+    def test_can_handle_attribute_non_string_input(
+        self, oid_quirk: FlextLdifQuirksServersOid
+    ) -> None:
+        """Test can_handle_attribute with non-string input returns False."""
+        # Test with None
+        assert not oid_quirk.can_handle_attribute(None)  # type: ignore[arg-type]
+
+        # Test with integer
+        assert not oid_quirk.can_handle_attribute(123)  # type: ignore[arg-type]
+
+        # Test with list
+        assert not oid_quirk.can_handle_attribute([])  # type: ignore[arg-type]
+
     def test_parse_oracle_attribute_basic(
         self, oid_quirk: FlextLdifQuirksServersOid
     ) -> None:

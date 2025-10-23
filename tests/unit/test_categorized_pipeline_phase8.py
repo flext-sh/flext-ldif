@@ -545,7 +545,9 @@ class TestCategorizedPipelineExecution:
         )
         assert pipeline is not None
 
-    def test_pipeline_returns_execution_result_with_statistics(self, tmp_path: Path) -> None:
+    def test_pipeline_returns_execution_result_with_statistics(
+        self, tmp_path: Path
+    ) -> None:
         """Test pipeline returns proper PipelineExecutionResult structure."""
         input_dir = tmp_path / "input"
         output_dir = tmp_path / "output"
@@ -839,7 +841,12 @@ class TestCategorizedPipelineSchemaWhitelisting:
     def test_pipeline_with_objectclass_whitelist(self) -> None:
         """Test pipeline with schema objectClass whitelist."""
         whitelist = {
-            "objectclasses": ["person", "inetOrgPerson", "organizationalUnit", "organization"],
+            "objectclasses": [
+                "person",
+                "inetOrgPerson",
+                "organizationalUnit",
+                "organization",
+            ],
         }
         pipeline = FlextLdifCategorizedMigrationPipeline(
             input_dir="input",
@@ -912,7 +919,10 @@ class TestCategorizedPipelineComplexConfigurations:
         """Test pipeline with comprehensive configuration."""
         rules = {
             "schema": ["(cn=schema)"],
-            "hierarchy": ["(objectClass=organization)", "(objectClass=organizationalUnit)"],
+            "hierarchy": [
+                "(objectClass=organization)",
+                "(objectClass=organizationalUnit)",
+            ],
             "users": ["(objectClass=person)", "(objectClass=inetOrgPerson)"],
             "groups": ["(objectClass=groupOfNames)"],
             "acl": ["(aci=*)", "(orclaci=*)"],

@@ -268,7 +268,7 @@ class TestFlextLdifWrite:
 
         if result.is_success:
             assert output_file.exists()
-            content = output_file.read_text()
+            content = output_file.read_text(encoding="utf-8")
             assert "cn=Test User,dc=example,dc=com" in content
             assert "cn=Another User,dc=example,dc=com" in content
         else:
@@ -470,7 +470,7 @@ objectClass: organizationalPerson
 
         # If write succeeded, verify content
         if write_result.is_success and output_file.exists():
-            written_content = output_file.read_text()
+            written_content = output_file.read_text(encoding="utf-8")
             assert "cn=Preserve,dc=example,dc=com" in written_content
             assert "cn: Preserve" in written_content
             assert "sn: Test" in written_content

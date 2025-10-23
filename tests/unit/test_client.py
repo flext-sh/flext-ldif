@@ -385,7 +385,9 @@ class TestParseLdif:
         client = FlextLdifClient()
 
         # Parse LDIF content with proper objectClass - should succeed with real parser
-        ldif_content = "dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test\n\n"
+        ldif_content = (
+            "dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test\n\n"
+        )
         result = client.parse_ldif(ldif_content)
 
         # Should succeed with real parser

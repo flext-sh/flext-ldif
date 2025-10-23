@@ -149,14 +149,14 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
     def model_post_init(self, _context: object, /) -> None:
         """Initialize OUD schema quirk."""
 
-    def should_filter_out_attribute(self, attr_definition: str) -> bool:
+    def should_filter_out_attribute(self, _attr_definition: str) -> bool:
         """Check if this attribute should be filtered out during migration.
 
         Returns True ONLY for Oracle internal attributes that OUD already has built-in.
         Returns False for all other attributes (standard LDAP + Oracle custom).
 
         Args:
-            attr_definition: AttributeType definition string
+            _attr_definition: AttributeType definition string
 
         Returns:
             True if attribute should be filtered out (excluded from migration),
@@ -164,31 +164,30 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
 
         """
         # Only filter Oracle namespace attributes
-        if not self.ORACLE_OUD_PATTERN.search(attr_definition):
+        if not self.ORACLE_OUD_PATTERN.search(_attr_definition):
             return False  # Include non-Oracle (standard LDAP) attributes
 
         # Extract attribute name from definition
-        name_match = re.search(r"NAME\s+(?:\(\s*)?'([^']+)'", attr_definition)
+        name_match = re.search(r"NAME\s+(?:\(\s*)?'([^']+)'", _attr_definition)
         if name_match:
             attr_name = name_match.group(1).lower()
             # Filter out Oracle internal attributes only
             if attr_name in self.ORACLE_INTERNAL_ATTRIBUTES:
                 logger.info(
-                    f"Filtering Oracle internal attribute: {attr_name} "
-                    "(OUD built-in)"
+                    f"Filtering Oracle internal attribute: {attr_name} (OUD built-in)"
                 )
                 return True  # EXCLUDE internal attributes
 
         return False  # Include Oracle custom attributes
 
-    def should_filter_out_objectclass(self, oc_definition: str) -> bool:
+    def should_filter_out_objectclass(self, _oc_definition: str) -> bool:
         """Check if this objectClass should be filtered out during migration.
 
         Returns True ONLY for Oracle internal objectClasses that OUD already has built-in.
         Returns False for all other objectClasses (standard LDAP + Oracle custom).
 
         Args:
-            oc_definition: ObjectClass definition string
+            _oc_definition: ObjectClass definition string
 
         Returns:
             True if objectClass should be filtered out (excluded from migration),
@@ -196,18 +195,17 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
 
         """
         # Only filter Oracle namespace objectClasses
-        if not self.ORACLE_OUD_PATTERN.search(oc_definition):
+        if not self.ORACLE_OUD_PATTERN.search(_oc_definition):
             return False  # Include non-Oracle (standard LDAP) objectClasses
 
         # Extract objectClass name from definition
-        name_match = re.search(r"NAME\s+(?:\(\s*)?'([^']+)'", oc_definition)
+        name_match = re.search(r"NAME\s+(?:\(\s*)?'([^']+)'", _oc_definition)
         if name_match:
             oc_name = name_match.group(1).lower()
             # Filter out Oracle internal objectClasses only
             if oc_name in self.ORACLE_INTERNAL_OBJECTCLASSES:
                 logger.info(
-                    f"Filtering Oracle internal objectClass: {oc_name} "
-                    "(OUD built-in)"
+                    f"Filtering Oracle internal objectClass: {oc_name} (OUD built-in)"
                 )
                 return True  # EXCLUDE internal objectClasses
 
@@ -238,8 +236,7 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
             # Filter out Oracle internal attributes
             if attr_name in self.ORACLE_INTERNAL_ATTRIBUTES:
                 logger.info(
-                    f"Filtering Oracle internal attribute: {attr_name} "
-                    "(OUD built-in)"
+                    f"Filtering Oracle internal attribute: {attr_name} (OUD built-in)"
                 )
                 return False
 
@@ -354,8 +351,7 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
             # Filter out Oracle internal objectClasses
             if oc_name in self.ORACLE_INTERNAL_OBJECTCLASSES:
                 logger.info(
-                    f"Filtering Oracle internal objectClass: {oc_name} "
-                    "(OUD built-in)"
+                    f"Filtering Oracle internal objectClass: {oc_name} (OUD built-in)"
                 )
                 return False
 
@@ -1266,13 +1262,13 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
                 dk = FlextLdifConstants.DictKeys
                 if dk.DATA in acl_data and isinstance(acl_data[dk.DATA], dict):
                     # Unwrap the DATA field to get actual RFC ACL data
-                    actual_acl_data = acl_data[dk.DATA]
+                    actual_acl_data = cast("dict[str, object]", acl_data[dk.DATA])
                 else:
                     # Already unwrapped or no DATA field
                     actual_acl_data = acl_data
 
                 # Check if we have metadata with original format for round-trip
-                if "_metadata" in actual_acl_data:
+                if isinstance(actual_acl_data, dict) and "_metadata" in actual_acl_data:
                     metadata = actual_acl_data["_metadata"]
                     if (
                         isinstance(metadata, FlextLdifModels.QuirkMetadata)
@@ -1283,37 +1279,65 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
                         return FlextResult[str].ok(str(metadata["original_format"]))
 
                 # Build ACI from scratch
-                if actual_acl_data.get("format") == FlextLdifConstants.AclFormats.OUD_DS_CFG:
+                if (
+                    isinstance(actual_acl_data, dict)
+                    and actual_acl_data.get("format")
+                    == FlextLdifConstants.AclFormats.OUD_DS_CFG
+                ):
                     # ds-cfg format (different from ACI)
                     return FlextResult[str].ok(str(actual_acl_data.get("raw", "")))
 
                 # Build ACI format:
                 # (targetattr="*")(version 3.0; acl "name"; permissions)
-                aci_parts = []
+                aci_parts: list[str] = []
 
                 # Target attributes
-                if "targetattr" in actual_acl_data:
+                if (
+                    isinstance(actual_acl_data, dict)
+                    and "targetattr" in actual_acl_data
+                ):
                     targetattr_op = actual_acl_data.get("targetattr_op", "=")
+                    target_attr_value = actual_acl_data.get("targetattr", "*")
                     aci_parts.append(
-                        f'(targetattr{targetattr_op}"{actual_acl_data["targetattr"]}")'
+                        f'(targetattr{targetattr_op}"{target_attr_value}")'
                     )
 
                 # Target scope (optional)
-                if "targetscope" in actual_acl_data:
-                    aci_parts.append(f'(targetscope="{actual_acl_data["targetscope"]}")')
+                if (
+                    isinstance(actual_acl_data, dict)
+                    and "targetscope" in actual_acl_data
+                ):
+                    target_scope = actual_acl_data.get("targetscope", "subtree")
+                    aci_parts.append(f'(targetscope="{target_scope}")')
 
                 # Version and ACL name
-                version = actual_acl_data.get("version", "3.0")
-                acl_name = actual_acl_data.get("acl_name", "Generated ACL")
+                version = (
+                    actual_acl_data.get("version", "3.0")
+                    if isinstance(actual_acl_data, dict)
+                    else "3.0"
+                )
+                acl_name = (
+                    actual_acl_data.get("acl_name", "Generated ACL")
+                    if isinstance(actual_acl_data, dict)
+                    else "Generated ACL"
+                )
                 aci_parts.append(f'(version {version}; acl "{acl_name}";')
 
                 # Permissions and bind rules
-                permissions = actual_acl_data.get("permissions", [])
-                bind_rules = actual_acl_data.get("bind_rules", [])
+                permissions = (
+                    actual_acl_data.get("permissions", [])
+                    if isinstance(actual_acl_data, dict)
+                    else []
+                )
+                bind_rules = (
+                    actual_acl_data.get("bind_rules", [])
+                    if isinstance(actual_acl_data, dict)
+                    else []
+                )
 
                 # Check if this is a multi-line ACI
                 is_multiline = False
-                if "_metadata" in actual_acl_data:
+                if isinstance(actual_acl_data, dict) and "_metadata" in actual_acl_data:
                     metadata = actual_acl_data["_metadata"]
                     if isinstance(metadata, FlextLdifModels.QuirkMetadata):
                         multiline_value = metadata.extensions.get("is_multiline", False)
@@ -1564,14 +1588,21 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
                 # These are OID-specific attributes that cause objectClass violations in OUD
                 oud_filtered_attrs = {
                     # Operational attributes (OUD manages these automatically)
-                    "creatorsname", "modifiersname", "createtimestamp",
-                    "modifytimestamp", "entryuuid", "entrydn", "entrycsn",
+                    "creatorsname",
+                    "modifiersname",
+                    "createtimestamp",
+                    "modifytimestamp",
+                    "entryuuid",
+                    "entrydn",
+                    "entrycsn",
                     # OID-specific ACL attributes (will be in 04-acl.ldif)
-                    "orclaci", "orclentrylevelaci",
+                    "orclaci",
+                    "orclentrylevelaci",
                     # OID-specific password policy attributes
                     "pwdpolicysubentry",
                     # OID-specific attributes causing objectClass violations
-                    "tipousuario", "uniquemember",
+                    "tipousuario",
+                    "uniquemember",
                 }
 
                 # CRITICAL FIX: Handle multiple STRUCTURAL objectClasses
@@ -1580,7 +1611,9 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
                 # Note: self is EntryQuirk (nested class), parent is FlextLdifQuirksServersOud
                 known_structural = FlextLdifQuirksServersOud.KNOWN_STRUCTURAL_CLASSES
 
-                objectclass_attr = attributes.get("objectclass") or attributes.get("objectClass")
+                objectclass_attr = attributes.get("objectclass") or attributes.get(
+                    "objectClass"
+                )
                 if objectclass_attr:
                     # Explicitly narrow type for pyrefly: convert to list if string
                     oc_list: list[str | Any] = (
@@ -1591,7 +1624,9 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
                     oc_lower = [str(oc).lower() for oc in oc_list]
 
                     # Find STRUCTURAL objectClasses in this entry
-                    structural_classes = [oc for oc in oc_lower if oc in known_structural]
+                    structural_classes = [
+                        oc for oc in oc_lower if oc in known_structural
+                    ]
 
                     if len(structural_classes) > 1:
                         # Multiple STRUCTURAL - keep only the primary one based on entry type

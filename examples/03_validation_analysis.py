@@ -132,7 +132,7 @@ mail: pipeline@example.com
     # Chain operations - parse → validate → analyze (auto error propagation)
     parse_result = api.parse(ldif_content)
     if parse_result.is_success:
-        entries = cast(list[FlextLdifModels.Entry], parse_result.unwrap())
+        entries = cast("list[FlextLdifModels.Entry]", parse_result.unwrap())
         validate_result = api.validate_entries(entries)
         if validate_result.is_success:
             validation_report = validate_result.unwrap()
@@ -140,7 +140,9 @@ mail: pipeline@example.com
                 analyze_result = api.analyze(entries)
                 result = analyze_result
             else:
-                result = FlextResult[dict[str, object]].fail(f"Validation failed: {validation_report}")
+                result = FlextResult[dict[str, object]].fail(
+                    f"Validation failed: {validation_report}"
+                )
         else:
             result = validate_result
     else:

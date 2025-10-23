@@ -412,7 +412,7 @@ class FlextLdifQuirksServersTivoli(FlextLdifQuirksBaseSchemaQuirk):
         def parse_acl(self, acl_line: str) -> FlextResult[dict[str, object]]:
             """Parse Tivoli ACL value."""
             try:
-                attr_name, content = self._split_acl_line(acl_line)
+                attr_name, content = self._splitacl_line(acl_line)
                 trimmed = content.strip()
                 if trimmed.startswith("{") and trimmed.endswith("}"):
                     trimmed = trimmed[1:-1].strip()
@@ -537,7 +537,7 @@ class FlextLdifQuirksServersTivoli(FlextLdifQuirksBaseSchemaQuirk):
                 return FlextResult[str].fail(f"IBM Tivoli DS ACL write failed: {exc}")
 
         @staticmethod
-        def _split_acl_line(acl_line: str) -> tuple[str, str]:
+        def _splitacl_line(acl_line: str) -> tuple[str, str]:
             """Split an ACL line into attribute name and payload."""
             attr_name, _, remainder = acl_line.partition(":")
             return attr_name.strip(), remainder.strip()

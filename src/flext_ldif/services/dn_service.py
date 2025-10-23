@@ -380,8 +380,7 @@ class FlextLdifDnService(FlextService[FlextLdifTypes.Models.CustomDataDict]):
             aci_value = attrs.get("aci")
             if isinstance(aci_value, list):
                 attrs["aci"] = [
-                    normalize_in_text(v) if isinstance(v, str) else v
-                    for v in aci_value
+                    normalize_in_text(v) if isinstance(v, str) else v for v in aci_value
                 ]
             elif isinstance(aci_value, str):
                 attrs["aci"] = normalize_in_text(aci_value)

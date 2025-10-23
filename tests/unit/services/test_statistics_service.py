@@ -123,7 +123,11 @@ class TestGenerateStatisticsBasic:
         }
         written_counts: dict[str, int] = {"users": 2, "groups": 3, "roles": 1}
         output_dir = Path("/output")
-        output_files: dict[str, object] = {"users": "users.ldif", "groups": "groups.ldif", "roles": "roles.ldif"}
+        output_files: dict[str, object] = {
+            "users": "users.ldif",
+            "groups": "groups.ldif",
+            "roles": "roles.ldif",
+        }
 
         result = service.generate_statistics(
             categorized=categorized,
@@ -163,9 +167,7 @@ class TestGenerateStatisticsWithRejections:
             "rejected": [
                 {
                     "dn": "cn=invalid1,dc=example,dc=com",
-                    "attributes": {
-                        "rejectionReason": "Missing required attribute"
-                    },
+                    "attributes": {"rejectionReason": "Missing required attribute"},
                 },
                 {
                     "dn": "cn=invalid2,dc=example,dc=com",
@@ -175,7 +177,10 @@ class TestGenerateStatisticsWithRejections:
         }
         written_counts: dict[str, int] = {"valid": 2, "rejected": 0}
         output_dir = Path("/tmp/ldif")
-        output_files: dict[str, object] = {"valid": "valid.ldif", "rejected": "rejected.ldif"}
+        output_files: dict[str, object] = {
+            "valid": "valid.ldif",
+            "rejected": "rejected.ldif",
+        }
 
         result = service.generate_statistics(
             categorized=categorized,
@@ -219,7 +224,10 @@ class TestGenerateStatisticsWithRejections:
         }
         written_counts: dict[str, int] = {"valid": 4, "rejected": 0}
         output_dir = Path("/tmp/ldif")
-        output_files: dict[str, object] = {"valid": "valid.ldif", "rejected": "rejected.ldif"}
+        output_files: dict[str, object] = {
+            "valid": "valid.ldif",
+            "rejected": "rejected.ldif",
+        }
 
         result = service.generate_statistics(
             categorized=categorized,
@@ -336,7 +344,9 @@ class TestGenerateStatisticsRejectionReasons:
                 },
                 {
                     "dn": "cn=test3,dc=example,dc=com",
-                    "attributes": {"rejectionReason": ["list", "value"]},  # Non-string value
+                    "attributes": {
+                        "rejectionReason": ["list", "value"]
+                    },  # Non-string value
                 },
             ]
         }
@@ -411,7 +421,10 @@ class TestGenerateStatisticsOutputFiles:
         }
         written_counts: dict[str, int] = {"users": 1, "groups": 1}
         output_dir = Path("/output/ldif")
-        output_files: dict[str, object] = {"users": "users_export.ldif", "groups": "groups_export.ldif"}
+        output_files: dict[str, object] = {
+            "users": "users_export.ldif",
+            "groups": "groups_export.ldif",
+        }
 
         result = service.generate_statistics(
             categorized=categorized,
@@ -537,7 +550,10 @@ class TestGenerateStatisticsEdgeCases:
         """Test statistics with large number of rejected entries."""
         service = FlextLdifStatisticsService()
         categorized: dict[str, list[dict[str, object]]] = {
-            "valid": [{"dn": f"cn=user{i},dc=example,dc=com", "attributes": {}} for i in range(100)],
+            "valid": [
+                {"dn": f"cn=user{i},dc=example,dc=com", "attributes": {}}
+                for i in range(100)
+            ],
             "rejected": [
                 {
                     "dn": f"cn=invalid{i},dc=example,dc=com",

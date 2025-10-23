@@ -39,7 +39,6 @@ QuirkInstance = (
     FlextLdifQuirksBaseSchemaQuirk
     | FlextLdifQuirksBaseAclQuirk
     | FlextLdifQuirksBaseEntryQuirk
-    | object
 )
 
 
@@ -293,10 +292,9 @@ class FlextLdifQuirksConversionMatrix:
                 # Check if quirk declares it can't handle objectClass definitions at all
                 # Use a minimal valid Oracle definition for testing (recognized by all quirks)
                 test_oc_def = "( 2.16.840.1.113894.1.2.1 NAME 'orclTest' SUP top STRUCTURAL MUST cn )"
-                if (
-                    hasattr(source_quirk_schema, "can_handle_objectclass")
-                    and not source_quirk_schema.can_handle_objectclass(test_oc_def)
-                ):
+                if hasattr(
+                    source_quirk_schema, "can_handle_objectclass"
+                ) and not source_quirk_schema.can_handle_objectclass(test_oc_def):
                     # Quirk indicates it can't handle objectClass definitions
                     return FlextResult[str | dict[str, object]].fail(
                         "Source quirk does not support objectClass parsing"
@@ -642,16 +640,16 @@ class FlextLdifQuirksConversionMatrix:
         # Use Oracle OID namespace for testing (recognized by OID/OUD/OpenLDAP quirks)
         # This allows real quirks to return True while test quirks return based on capability
         test_attr_def = "( 2.16.840.1.113894.1.1.1 NAME 'orclTest' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
-        test_oc_def = "( 2.16.840.1.113894.1.2.1 NAME 'orclTest' SUP top STRUCTURAL MUST cn )"
+        test_oc_def = (
+            "( 2.16.840.1.113894.1.2.1 NAME 'orclTest' SUP top STRUCTURAL MUST cn )"
+        )
 
-        if (
-            hasattr(quirk, "can_handle_attribute")
-            and quirk.can_handle_attribute(test_attr_def)  # type: ignore[attr-defined]
+        if hasattr(quirk, "can_handle_attribute") and quirk.can_handle_attribute(
+            test_attr_def
         ):
             support["attribute"] = True
-        if (
-            hasattr(quirk, "can_handle_objectclass")
-            and quirk.can_handle_objectclass(test_oc_def)  # type: ignore[attr-defined]
+        if hasattr(quirk, "can_handle_objectclass") and quirk.can_handle_objectclass(
+            test_oc_def
         ):
             support[FlextLdifConstants.DictKeys.OBJECTCLASS] = True
 
@@ -661,7 +659,7 @@ class FlextLdifQuirksConversionMatrix:
         if (
             acl_quirk
             and hasattr(quirk, "can_handle_acl")
-            and quirk.can_handle_acl(test_acl_def)  # type: ignore[attr-defined]
+            and quirk.can_handle_acl(test_acl_def)
         ):
             support["acl"] = True
 

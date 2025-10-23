@@ -10,6 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
+from tests.fixtures import FlextLdifFixtures
 from tests.fixtures.helpers import (
     extract_attributes,
     extract_name,
@@ -32,7 +33,7 @@ class TestOidQuirksWithRealFixtures:
         return FlextLdifQuirksServersOid(server_type=FlextLdifConstants.ServerTypes.OID)
 
     @pytest.fixture
-    def oid_schema_attributes(self, oid_fixtures) -> list[str]:
+    def oid_schema_attributes(self, oid_fixtures: FlextLdifFixtures.OID) -> list[str]:
         """Extract OID attributes from schema fixture."""
         try:
             schema = oid_fixtures.schema()
@@ -41,7 +42,9 @@ class TestOidQuirksWithRealFixtures:
         return extract_attributes(schema)
 
     @pytest.fixture
-    def oid_schema_objectclasses(self, oid_fixtures) -> list[str]:
+    def oid_schema_objectclasses(
+        self, oid_fixtures: FlextLdifFixtures.OID
+    ) -> list[str]:
         """Extract OID objectClasses from schema fixture."""
         try:
             schema = oid_fixtures.schema()
@@ -140,7 +143,9 @@ class TestConversionMatrixWithRealFixtures:
         return FlextLdifQuirksServersOud(server_type=FlextLdifConstants.ServerTypes.OUD)
 
     @pytest.fixture
-    def oid_conversion_attributes(self, oid_fixtures) -> list[str]:
+    def oid_conversion_attributes(
+        self, oid_fixtures: FlextLdifFixtures.OID
+    ) -> list[str]:
         """Extract OID attributes for conversion testing."""
         try:
             schema = oid_fixtures.schema()
@@ -212,9 +217,7 @@ class TestConversionMatrixWithRealFixtures:
         forward_value = forward_result.unwrap()
         assert isinstance(forward_value, str)
         forward_str: str = forward_value
-        backward_result = matrix.convert(
-            oud_quirk, oid_quirk, "attribute", forward_str
-        )
+        backward_result = matrix.convert(oud_quirk, oid_quirk, "attribute", forward_str)
         assert backward_result.is_success, (
             f"Backward conversion failed: {backward_result.error}"
         )

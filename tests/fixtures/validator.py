@@ -108,11 +108,7 @@ class FixtureValidator:
                 for entry in entries
                 if isinstance(entry.get("dn"), str)
             ]
-            invalid_dns = [
-                dn
-                for dn in dns
-                if not dn or "=" not in cast("str", dn)
-            ]
+            invalid_dns = [dn for dn in dns if not dn or "=" not in cast("str", dn)]
 
             stats: dict[str, object] = {
                 "entry_count": len(entries),

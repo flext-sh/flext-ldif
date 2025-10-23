@@ -319,6 +319,32 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifTypes.Models.CustomDataDi
                 },
             )
 
+    @property
+    def input_dir(self) -> Path:
+        """Get pipeline input directory."""
+        input_dir_str = self._params.get("input_dir", "")
+        if not isinstance(input_dir_str, str):
+            input_dir_str = str(input_dir_str)
+        return Path(input_dir_str)
+
+    @property
+    def output_dir(self) -> Path:
+        """Get pipeline output directory."""
+        output_dir_str = self._params.get("output_dir", "")
+        if not isinstance(output_dir_str, str):
+            output_dir_str = str(output_dir_str)
+        return Path(output_dir_str)
+
+    @property
+    def source_server_type(self) -> str:
+        """Get source server type."""
+        return self._source_server_type
+
+    @property
+    def target_server_type(self) -> str:
+        """Get target server type."""
+        return self._target_server_type
+
     def migrate_entries(
         self,
         *,

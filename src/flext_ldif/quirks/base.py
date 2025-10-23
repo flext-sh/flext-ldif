@@ -256,12 +256,57 @@ class FlextLdifQuirksBaseSchemaQuirk(ABC, FlextModels.Value):
         """Write objectClass data to RFC-compliant string format.
 
         Args:
-        oc_data: ObjectClass data dictionary
+            oc_data: ObjectClass data dictionary
 
         Returns:
-        FlextResult with RFC-compliant objectClass string
+            FlextResult with RFC-compliant objectClass string
 
         """
+
+    def should_filter_out_attribute(self, _attr_definition: str) -> bool:
+        """Check if an attribute should be filtered out during export.
+
+        Schema quirks typically don't filter attributes, so default False.
+        Subclasses can override if they implement attribute filtering.
+
+        Args:
+            _attr_definition: Attribute definition string
+
+        Returns:
+            True if this attribute should be filtered out (removed from output)
+
+        """
+        return False
+
+    def should_filter_out_objectclass(self, _oc_definition: str) -> bool:
+        """Check if an objectClass should be filtered out during export.
+
+        Default implementation returns False (no filtering).
+        Subclasses can override to filter out server-specific objectClasses.
+
+        Args:
+            _oc_definition: ObjectClass definition string
+
+        Returns:
+            True if the objectClass should be filtered out
+
+        """
+        return False
+
+    def can_handle_acl(self, _acl_line: str) -> bool:
+        """Check if this quirk can handle the ACL definition.
+
+        Schema quirks typically don't handle ACLs, so default False.
+        Subclasses can override if they handle both schema and ACLs.
+
+        Args:
+            _acl_line: ACL definition line
+
+        Returns:
+            True if this quirk can parse this ACL
+
+        """
+        return False
 
 
 class FlextLdifQuirksBaseAclQuirk(ABC, FlextModels.Value):
@@ -390,12 +435,42 @@ class FlextLdifQuirksBaseAclQuirk(ABC, FlextModels.Value):
         """Write ACL data to RFC-compliant string format.
 
         Args:
-        acl_data: ACL data dictionary
+            acl_data: ACL data dictionary
 
         Returns:
-        FlextResult with RFC-compliant ACL string
+            FlextResult with RFC-compliant ACL string
 
         """
+
+    def can_handle_attribute(self, _attr_definition: str) -> bool:
+        """Check if this quirk can handle the attribute definition.
+
+        ACL quirks typically don't handle attributes, so default False.
+        Subclasses can override if they handle both ACL and attributes.
+
+        Args:
+            _attr_definition: AttributeType definition string
+
+        Returns:
+            True if this quirk can parse this attribute
+
+        """
+        return False
+
+    def can_handle_objectclass(self, _oc_definition: str) -> bool:
+        """Check if this quirk can handle the objectClass definition.
+
+        ACL quirks typically don't handle objectClasses, so default False.
+        Subclasses can override if they handle both ACL and objectClasses.
+
+        Args:
+            _oc_definition: ObjectClass definition string
+
+        Returns:
+            True if this quirk can parse this objectClass
+
+        """
+        return False
 
 
 class FlextLdifQuirksBaseEntryQuirk(ABC, FlextModels.Value):
@@ -500,12 +575,57 @@ class FlextLdifQuirksBaseEntryQuirk(ABC, FlextModels.Value):
         """Convert server-specific entry to RFC-compliant format.
 
         Args:
-        entry_data: Server-specific entry data
+            entry_data: Server-specific entry data
 
         Returns:
-        FlextResult with RFC-compliant entry data
+            FlextResult with RFC-compliant entry data
 
         """
+
+    def can_handle_attribute(self, _attr_definition: str) -> bool:
+        """Check if this quirk can handle the attribute definition.
+
+        Entry quirks typically don't handle attributes, so default False.
+        Subclasses can override if they handle both entry and attributes.
+
+        Args:
+            _attr_definition: AttributeType definition string
+
+        Returns:
+            True if this quirk can parse this attribute
+
+        """
+        return False
+
+    def can_handle_objectclass(self, _oc_definition: str) -> bool:
+        """Check if this quirk can handle the objectClass definition.
+
+        Entry quirks typically don't handle objectClasses, so default False.
+        Subclasses can override if they handle both entry and objectClasses.
+
+        Args:
+            _oc_definition: ObjectClass definition string
+
+        Returns:
+            True if this quirk can parse this objectClass
+
+        """
+        return False
+
+    def can_handle_acl(self, _acl_line: str) -> bool:
+        """Check if this quirk can handle the ACL definition.
+
+        Entry quirks typically don't handle ACLs, so default False.
+        Subclasses can override if they handle both entry and ACLs.
+
+        Args:
+            _acl_line: ACL definition line
+
+        Returns:
+            True if this quirk can parse this ACL
+
+        """
+        return False
 
 
 class FlextLdifQuirksBase:

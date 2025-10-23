@@ -39,9 +39,7 @@ class _MinimalSchemaQuirk:
     ) -> FlextResult[dict[str, object]]:
         return FlextResult[dict[str, object]].ok(rfc_data)
 
-    def write_attribute_to_rfc(
-        self, attr_data: dict[str, object]
-    ) -> FlextResult[str]:
+    def write_attribute_to_rfc(self, attr_data: dict[str, object]) -> FlextResult[str]:
         return FlextResult[str].ok("")
 
     def can_handle_objectclass(self, oc_definition: str) -> bool:
@@ -60,9 +58,7 @@ class _MinimalSchemaQuirk:
     ) -> FlextResult[dict[str, object]]:
         return FlextResult[dict[str, object]].ok(rfc_data)
 
-    def write_objectclass_to_rfc(
-        self, oc_data: dict[str, object]
-    ) -> FlextResult[str]:
+    def write_objectclass_to_rfc(self, oc_data: dict[str, object]) -> FlextResult[str]:
         return FlextResult[str].ok("")
 
 
@@ -262,9 +258,7 @@ class TestAclQuirkProtocol:
             ) -> FlextResult[dict[str, object]]:
                 return FlextResult[dict[str, object]].ok(acl_data)
 
-            def write_acl_to_rfc(
-                self, acl_data: dict[str, object]
-            ) -> FlextResult[str]:
+            def write_acl_to_rfc(self, acl_data: dict[str, object]) -> FlextResult[str]:
                 return FlextResult[str].ok("")
 
         quirk = ValidAclQuirk()
@@ -326,9 +320,10 @@ class TestEntryQuirkProtocol:
             def process_entry(
                 self, entry_dn: str, attributes: dict[str, object]
             ) -> FlextResult[dict[str, object]]:
-                return FlextResult[dict[str, object]].ok(
-                    {"dn": entry_dn, "attributes": attributes}
-                )
+                return FlextResult[dict[str, object]].ok({
+                    "dn": entry_dn,
+                    "attributes": attributes,
+                })
 
             def convert_entry_to_rfc(
                 self, entry_data: dict[str, object]
@@ -373,9 +368,7 @@ class TestConversionMatrixProtocol:
                 return FlextResult[str | dict[str, object]].ok(element_data)
 
         matrix = ValidConversionMatrix()
-        assert isinstance(
-            matrix, FlextLdifProtocols.Quirks.ConversionMatrixProtocol
-        )
+        assert isinstance(matrix, FlextLdifProtocols.Quirks.ConversionMatrixProtocol)
 
 
 # ============================================================================
@@ -437,9 +430,7 @@ class TestQuirkRegistryProtocol:
             ) -> FlextResult[None]:
                 return FlextResult[None].ok(None)
 
-            def get_schema_quirks(
-                self, server_type: str
-            ) -> FlextResult[list[object]]:
+            def get_schema_quirks(self, server_type: str) -> FlextResult[list[object]]:
                 return FlextResult[list[object]].ok([])
 
             def get_best_schema_quirk(
@@ -457,9 +448,7 @@ class TestQuirkRegistryProtocol:
                 return ValidQuirkRegistry()
 
         registry = ValidQuirkRegistry()
-        assert isinstance(
-            registry, FlextLdifProtocols.Quirks.QuirkRegistryProtocol
-        )
+        assert isinstance(registry, FlextLdifProtocols.Quirks.QuirkRegistryProtocol)
 
 
 # ============================================================================
@@ -472,6 +461,7 @@ class TestProtocolComposition:
 
     def test_schema_quirk_protocol_is_runtime_checkable(self) -> None:
         """Verify schema quirk protocol is runtime checkable via isinstance."""
+
         # Runtime checkable protocols support isinstance() checks
         # Test by verifying a conforming class passes isinstance check
         class TestSchemaQuirk:
@@ -481,31 +471,47 @@ class TestProtocolComposition:
             def can_handle_attribute(self, attr_definition: str) -> bool:
                 return True
 
-            def parse_attribute(self, attr_definition: str) -> FlextResult[dict[str, object]]:
+            def parse_attribute(
+                self, attr_definition: str
+            ) -> FlextResult[dict[str, object]]:
                 return FlextResult[dict[str, object]].ok({})
 
-            def convert_attribute_to_rfc(self, attr_data: dict[str, object]) -> FlextResult[dict[str, object]]:
+            def convert_attribute_to_rfc(
+                self, attr_data: dict[str, object]
+            ) -> FlextResult[dict[str, object]]:
                 return FlextResult[dict[str, object]].ok(attr_data)
 
-            def convert_attribute_from_rfc(self, rfc_data: dict[str, object]) -> FlextResult[dict[str, object]]:
+            def convert_attribute_from_rfc(
+                self, rfc_data: dict[str, object]
+            ) -> FlextResult[dict[str, object]]:
                 return FlextResult[dict[str, object]].ok(rfc_data)
 
-            def write_attribute_to_rfc(self, attr_data: dict[str, object]) -> FlextResult[str]:
+            def write_attribute_to_rfc(
+                self, attr_data: dict[str, object]
+            ) -> FlextResult[str]:
                 return FlextResult[str].ok("")
 
             def can_handle_objectclass(self, oc_definition: str) -> bool:
                 return True
 
-            def parse_objectclass(self, oc_definition: str) -> FlextResult[dict[str, object]]:
+            def parse_objectclass(
+                self, oc_definition: str
+            ) -> FlextResult[dict[str, object]]:
                 return FlextResult[dict[str, object]].ok({})
 
-            def convert_objectclass_to_rfc(self, oc_data: dict[str, object]) -> FlextResult[dict[str, object]]:
+            def convert_objectclass_to_rfc(
+                self, oc_data: dict[str, object]
+            ) -> FlextResult[dict[str, object]]:
                 return FlextResult[dict[str, object]].ok(oc_data)
 
-            def convert_objectclass_from_rfc(self, rfc_data: dict[str, object]) -> FlextResult[dict[str, object]]:
+            def convert_objectclass_from_rfc(
+                self, rfc_data: dict[str, object]
+            ) -> FlextResult[dict[str, object]]:
                 return FlextResult[dict[str, object]].ok(rfc_data)
 
-            def write_objectclass_to_rfc(self, oc_data: dict[str, object]) -> FlextResult[str]:
+            def write_objectclass_to_rfc(
+                self, oc_data: dict[str, object]
+            ) -> FlextResult[str]:
                 return FlextResult[str].ok("")
 
         quirk = TestSchemaQuirk()
@@ -513,6 +519,7 @@ class TestProtocolComposition:
 
     def test_acl_quirk_protocol_is_runtime_checkable(self) -> None:
         """Verify ACL quirk protocol is runtime checkable via isinstance."""
+
         class TestAclQuirk:
             server_type: str = "test"
             priority: int = 50
@@ -523,10 +530,14 @@ class TestProtocolComposition:
             def parse_acl(self, acl_line: str) -> FlextResult[dict[str, object]]:
                 return FlextResult[dict[str, object]].ok({})
 
-            def convert_acl_to_rfc(self, acl_data: dict[str, object]) -> FlextResult[dict[str, object]]:
+            def convert_acl_to_rfc(
+                self, acl_data: dict[str, object]
+            ) -> FlextResult[dict[str, object]]:
                 return FlextResult[dict[str, object]].ok(acl_data)
 
-            def convert_acl_from_rfc(self, acl_data: dict[str, object]) -> FlextResult[dict[str, object]]:
+            def convert_acl_from_rfc(
+                self, acl_data: dict[str, object]
+            ) -> FlextResult[dict[str, object]]:
                 return FlextResult[dict[str, object]].ok(acl_data)
 
             def write_acl_to_rfc(self, acl_data: dict[str, object]) -> FlextResult[str]:
@@ -537,20 +548,29 @@ class TestProtocolComposition:
 
     def test_entry_quirk_protocol_is_runtime_checkable(self) -> None:
         """Verify entry quirk protocol is runtime checkable via isinstance."""
+
         class TestEntryQuirk:
             server_type: str = "test"
             priority: int = 50
 
-            def can_handle_entry(self, entry_dn: str, attributes: dict[str, object]) -> bool:
+            def can_handle_entry(
+                self, entry_dn: str, attributes: dict[str, object]
+            ) -> bool:
                 return True
 
-            def process_entry(self, entry_dn: str, attributes: dict[str, object]) -> FlextResult[dict[str, object]]:
+            def process_entry(
+                self, entry_dn: str, attributes: dict[str, object]
+            ) -> FlextResult[dict[str, object]]:
                 return FlextResult[dict[str, object]].ok({})
 
-            def convert_entry_to_rfc(self, entry_data: dict[str, object]) -> FlextResult[dict[str, object]]:
+            def convert_entry_to_rfc(
+                self, entry_data: dict[str, object]
+            ) -> FlextResult[dict[str, object]]:
                 return FlextResult[dict[str, object]].ok(entry_data)
 
-            def convert_entry_from_rfc(self, rfc_data: dict[str, object]) -> FlextResult[dict[str, object]]:
+            def convert_entry_from_rfc(
+                self, rfc_data: dict[str, object]
+            ) -> FlextResult[dict[str, object]]:
                 return FlextResult[dict[str, object]].ok(rfc_data)
 
         quirk = TestEntryQuirk()
@@ -558,6 +578,7 @@ class TestProtocolComposition:
 
     def test_conversion_matrix_protocol_is_runtime_checkable(self) -> None:
         """Verify conversion matrix protocol is runtime checkable via isinstance."""
+
         class TestMatrix:
             def convert(
                 self,
@@ -573,25 +594,38 @@ class TestProtocolComposition:
 
     def test_quirk_registry_protocol_is_runtime_checkable(self) -> None:
         """Verify quirk registry protocol is runtime checkable via isinstance."""
+
         class TestRegistry:
-            def register_schema_quirk(self, quirk: FlextLdifProtocols.Quirks.SchemaQuirkProtocol) -> FlextResult[None]:
+            def register_schema_quirk(
+                self, quirk: FlextLdifProtocols.Quirks.SchemaQuirkProtocol
+            ) -> FlextResult[None]:
                 return FlextResult[None].ok(None)
 
-            def register_acl_quirk(self, quirk: FlextLdifProtocols.Quirks.AclQuirkProtocol) -> FlextResult[None]:
+            def register_acl_quirk(
+                self, quirk: FlextLdifProtocols.Quirks.AclQuirkProtocol
+            ) -> FlextResult[None]:
                 return FlextResult[None].ok(None)
 
-            def register_entry_quirk(self, quirk: FlextLdifProtocols.Quirks.EntryQuirkProtocol) -> FlextResult[None]:
+            def register_entry_quirk(
+                self, quirk: FlextLdifProtocols.Quirks.EntryQuirkProtocol
+            ) -> FlextResult[None]:
                 return FlextResult[None].ok(None)
 
             def get_schema_quirks(self, server_type: str) -> FlextResult[list[object]]:
                 return FlextResult[list[object]].ok([])
 
-            def get_best_schema_quirk(self, server_type: str) -> FlextResult[FlextLdifProtocols.Quirks.SchemaQuirkProtocol]:
+            def get_best_schema_quirk(
+                self, server_type: str
+            ) -> FlextResult[FlextLdifProtocols.Quirks.SchemaQuirkProtocol]:
                 schema_quirk = _MinimalSchemaQuirk()
-                return FlextResult[FlextLdifProtocols.Quirks.SchemaQuirkProtocol].ok(schema_quirk)
+                return FlextResult[FlextLdifProtocols.Quirks.SchemaQuirkProtocol].ok(
+                    schema_quirk
+                )
 
             @staticmethod
-            def get_global_instance() -> FlextLdifProtocols.Quirks.QuirkRegistryProtocol:
+            def get_global_instance() -> (
+                FlextLdifProtocols.Quirks.QuirkRegistryProtocol
+            ):
                 return TestRegistry()
 
         registry = TestRegistry()
@@ -684,23 +718,13 @@ class TestProtocolMethodSignatures:
 
         # Test with string data
         quirk = _MinimalSchemaQuirk()
-        result_str = matrix.convert(
-            quirk,
-            quirk,
-            "attribute",
-            "test attribute data"
-        )
+        result_str = matrix.convert(quirk, quirk, "attribute", "test attribute data")
         assert result_str.is_success
         assert result_str.unwrap() == "test attribute data"
 
         # Test with dict data
         test_dict: dict[str, object] = {"key": "value"}
-        result_dict = matrix.convert(
-            quirk,
-            quirk,
-            "attribute",
-            test_dict
-        )
+        result_dict = matrix.convert(quirk, quirk, "attribute", test_dict)
         assert result_dict.is_success
         assert result_dict.unwrap() == test_dict
 
@@ -708,9 +732,7 @@ class TestProtocolMethodSignatures:
         """Verify get_schema_quirks returns list."""
 
         class TestRegistry:
-            def get_schema_quirks(
-                self, server_type: str
-            ) -> FlextResult[list[object]]:
+            def get_schema_quirks(self, server_type: str) -> FlextResult[list[object]]:
                 return FlextResult[list[object]].ok([])
 
         registry = TestRegistry()
@@ -746,9 +768,7 @@ class TestProtocolMethodSignatures:
             ) -> FlextResult[None]:
                 return FlextResult[None].ok(None)
 
-            def get_schema_quirks(
-                self, server_type: str
-            ) -> FlextResult[list[object]]:
+            def get_schema_quirks(self, server_type: str) -> FlextResult[list[object]]:
                 return FlextResult[list[object]].ok([])
 
             def get_best_schema_quirk(
@@ -759,9 +779,7 @@ class TestProtocolMethodSignatures:
                 )
 
         instance = TestRegistry.get_global_instance()
-        assert isinstance(
-            instance, FlextLdifProtocols.Quirks.QuirkRegistryProtocol
-        )
+        assert isinstance(instance, FlextLdifProtocols.Quirks.QuirkRegistryProtocol)
 
 
 # ============================================================================
@@ -812,9 +830,7 @@ class TestProtocolErrorHandling:
             ) -> FlextResult[dict[str, object]]:
                 return FlextResult[dict[str, object]].ok(acl_data)
 
-            def write_acl_to_rfc(
-                self, acl_data: dict[str, object]
-            ) -> FlextResult[str]:
+            def write_acl_to_rfc(self, acl_data: dict[str, object]) -> FlextResult[str]:
                 return FlextResult[str].ok("")
 
         quirk = TestQuirk()

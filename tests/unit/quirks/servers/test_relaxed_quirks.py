@@ -167,7 +167,7 @@ class TestRelaxedAclQuirks:
         assert relaxed_acl_quirk.server_type == "relaxed"
         assert relaxed_acl_quirk.priority == 200
 
-    def test_can_handle_any_acl_line(
+    def test_can_handle_anyacl_line(
         self, relaxed_acl_quirk: FlextLdifQuirksServersRelaxedAcl
     ) -> None:
         """Test that relaxed mode accepts any ACL line."""

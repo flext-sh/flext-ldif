@@ -297,7 +297,9 @@ class FlextLdifFilters:
 
         # If invalid patterns were found, raise error (fail fast, not silent)
         if invalid_patterns:
-            error_msg = f"Invalid regex patterns in DN filter: {', '.join(invalid_patterns)}"
+            error_msg = (
+                f"Invalid regex patterns in DN filter: {', '.join(invalid_patterns)}"
+            )
             raise ValueError(error_msg)
 
         return False
