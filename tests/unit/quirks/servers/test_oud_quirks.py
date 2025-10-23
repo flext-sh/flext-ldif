@@ -1425,6 +1425,170 @@ class TestOudConversionEdgeCases:
         assert oud_data[FlextLdifConstants.DictKeys.OID] == "2.16.840.1.113894.2.1.1"
 
 
+class TestSchemaDependencyValidation:
+    """Test suite for schema dependency validation to prevent OUD startup failures.
+
+    This test class validates the fix for OUD schema corruption where objectclasses
+    with missing MUST attributes would cause startup failures with:
+    "ObjectClass X declared that it should include required attribute Y.
+     No attribute type matching this name exists in the server schema"
+    """
+
+    @pytest.fixture
+    def oud_quirk(self) -> FlextLdifQuirksServersOud:
+        """Create OUD schema quirk instance."""
+        return FlextLdifQuirksServersOud(server_type=FlextLdifConstants.ServerTypes.OUD)
+
+    def test_validate_objectclass_dependencies_all_present(
+        self, oud_quirk: FlextLdifQuirksServersOud
+    ) -> None:
+        """Test validation passes when all MUST attributes are available."""
+        oc_data: dict[str, object] = {
+            "name": "person",
+            "oid": "2.5.6.6",
+            "must": ["cn", "sn"],  # Both common attributes
+        }
+
+        available_attrs = {"cn", "sn", "objectclass", "uid"}
+
+        result = oud_quirk.validate_objectclass_dependencies(oc_data, available_attrs)
+        assert result.is_success
+        assert result.unwrap() is True  # All dependencies satisfied
+
+    def test_validate_objectclass_dependencies_missing_attrs(
+        self, oud_quirk: FlextLdifQuirksServersOud
+    ) -> None:
+        """Test validation fails when MUST attributes are missing.
+
+        This specifically addresses the OUD issue with changeLogEntry objectclass:
+        changeLogEntry requires 'servername' but it's not in available schema.
+        """
+        oc_data: dict[str, object] = {
+            "name": "changeLogEntry",
+            "oid": "2.16.840.1.113894.1.2.6",
+            "must": ["changeNumber", "servername"],
+        }
+
+        # Missing 'servername' - only has changeNumber
+        available_attrs = {"changenumber", "targetdn", "changetype"}
+
+        result = oud_quirk.validate_objectclass_dependencies(oc_data, available_attrs)
+        assert result.is_success
+        assert result.unwrap() is False  # Dependencies NOT satisfied
+
+    def test_validate_objectclass_dependencies_case_insensitive(
+        self, oud_quirk: FlextLdifQuirksServersOud
+    ) -> None:
+        """Test that dependency validation is case-insensitive.
+
+        LDAP attribute names are case-insensitive, so the validation
+        should handle both lowercase and mixed-case comparisons.
+        """
+        oc_data: dict[str, object] = {
+            "name": "inetOrgPerson",
+            "must": ["CN", "SN"],  # Mixed case MUST attributes
+        }
+
+        available_attrs = {"cn", "sn", "objectclass"}  # All lowercase
+
+        result = oud_quirk.validate_objectclass_dependencies(oc_data, available_attrs)
+        assert result.is_success
+        assert result.unwrap() is True  # Should find matches despite case
+
+    def test_validate_objectclass_dependencies_no_must(
+        self, oud_quirk: FlextLdifQuirksServersOud
+    ) -> None:
+        """Test validation passes when objectclass has no MUST attributes."""
+        oc_data: dict[str, object] = {
+            "name": "extensibleObject",
+            "oid": "1.3.6.1.4.1.1466.101196.4",
+            # No 'must' field - allows any attributes
+        }
+
+        available_attrs: set[str] = set()  # Even empty set is ok
+
+        result = oud_quirk.validate_objectclass_dependencies(oc_data, available_attrs)
+        assert result.is_success
+        assert result.unwrap() is True  # No requirements = passes
+
+    def test_validate_objectclass_dependencies_single_attr(
+        self, oud_quirk: FlextLdifQuirksServersOud
+    ) -> None:
+        """Test validation with single MUST attribute (not in list)."""
+        oc_data: dict[str, object] = {
+            "name": "organization",
+            "oid": "2.5.6.4",
+            "must": "o",  # Single attribute, not a list
+        }
+
+        available_attrs = {"o", "c"}
+
+        result = oud_quirk.validate_objectclass_dependencies(oc_data, available_attrs)
+        assert result.is_success
+        assert result.unwrap() is True
+
+    def test_should_filter_out_objectclass_with_dependency_check(
+        self, oud_quirk: FlextLdifQuirksServersOud
+    ) -> None:
+        """Test that custom Oracle objectclasses are NOT filtered.
+
+        Even with unresolved dependencies, custom objectclasses are passed through.
+        Filtering only applies to Oracle internal objectclasses.
+        """
+        # Custom Oracle objectclass (not in internal list) with unresolved dependencies
+        oc_definition = (
+            "( 2.16.840.1.113894.7.1.1 NAME 'customAppEntry' "
+            "DESC 'Custom application entry' "
+            "STRUCTURAL "
+            "SUP top "
+            "MUST ( appName $ requiredAttr ) "
+            "MAY ( description ) )"
+        )
+
+        # Custom Oracle objectclass should NOT be filtered (even with unresolved deps)
+        result = oud_quirk.should_filter_out_objectclass(oc_definition)
+        assert result is False  # Custom objectclasses always included
+
+    def test_should_filter_out_internal_objectclass(
+        self, oud_quirk: FlextLdifQuirksServersOud
+    ) -> None:
+        """Test that internal OUD objectclasses are still filtered.
+
+        Ensures the dependency validation doesn't override the existing
+        filtering of Oracle internal objectclasses like changelogentry.
+        """
+        # Lowercase name for internal objectclass check
+        oc_definition = (
+            "( 2.16.840.1.113894.1.2.6 NAME 'changelogentry' "
+            "DESC 'Oracle change log' "
+            "STRUCTURAL "
+            "SUP top "
+            "MUST cn )"
+        )
+
+        # Should filter as internal OUD objectclass
+        result = oud_quirk.should_filter_out_objectclass(oc_definition)
+        assert result is True  # Filtered as internal OUD objectclass
+
+    def test_validate_objectclass_dependencies_returns_result(
+        self, oud_quirk: FlextLdifQuirksServersOud
+    ) -> None:
+        """Test that validate method returns proper FlextResult."""
+        oc_data: dict[str, object] = {
+            "name": "test",
+            "must": ["missing_attr"],
+        }
+
+        available_attrs: set[str] = set()
+
+        result = oud_quirk.validate_objectclass_dependencies(oc_data, available_attrs)
+
+        # Result should always be success (not error)
+        assert result.is_success
+        # But the contained value indicates dependency satisfaction
+        assert result.unwrap() is False
+
+
 __all__ = [
     "TestOudAclQuirks",
     "TestOudAclRoundTrip",
@@ -1433,4 +1597,5 @@ __all__ = [
     "TestOudQuirksIntegration",
     "TestOudSchemaQuirks",
     "TestOudSchemaRoundTrip",
+    "TestSchemaDependencyValidation",
 ]

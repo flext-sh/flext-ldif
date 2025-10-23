@@ -177,18 +177,16 @@ class TestFlextLdifApiWithRealFixtures:
         assert isinstance(server_type, str)
         assert len(server_type) > 0
 
-    def test_api_parse_with_manual_server_type(
-        self, oid_fixture_path: Path
-    ) -> None:
+    def test_api_parse_with_manual_server_type(self, oid_fixture_path: Path) -> None:
         """Test parsing with manually specified server type."""
         if not oid_fixture_path.exists():
             pytest.skip(f"Fixture not found: {oid_fixture_path}")
 
         # Create new FlextLdif with manual quirks configuration
         from flext_ldif import FlextLdifConfig
+
         config = FlextLdifConfig(
-            quirks_detection_mode="manual",
-            quirks_server_type="oid"
+            quirks_detection_mode="manual", quirks_server_type="oid"
         )
         api = FlextLdif(config=config)
 
@@ -197,15 +195,14 @@ class TestFlextLdifApiWithRealFixtures:
         entries = result.unwrap()
         assert len(entries) > 0
 
-    def test_api_parse_with_relaxed_mode(
-        self, oid_fixture_path: Path
-    ) -> None:
+    def test_api_parse_with_relaxed_mode(self, oid_fixture_path: Path) -> None:
         """Test parsing with relaxed mode enabled."""
         if not oid_fixture_path.exists():
             pytest.skip(f"Fixture not found: {oid_fixture_path}")
 
         # Create new FlextLdif with relaxed parsing enabled
         from flext_ldif import FlextLdifConfig
+
         config = FlextLdifConfig(enable_relaxed_parsing=True)
         api = FlextLdif(config=config)
 

@@ -155,7 +155,7 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Models.CustomDataDict]):
                 "services": ["parser", "writer", "validator", "migration"],
                 "config": {"default_encoding": config.ldif_encoding},
             })
-        except Exception as e:  # pragma: no cover
+        except Exception as e:
             return FlextResult[FlextLdifTypes.Models.CustomDataDict].fail(
                 f"Client status check failed: {e}"
             )
@@ -386,7 +386,7 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Models.CustomDataDict]):
                 return FlextResult[str].ok(
                     f"Successfully wrote {len(entries)} entries to {output_path}"
                 )
-            except Exception as e:  # pragma: no cover
+            except Exception as e:
                 return FlextResult[str].fail(
                     f"Failed to write to file {output_path}: {e}"
                 )
@@ -544,7 +544,7 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Models.CustomDataDict]):
                 migration_result.unwrap()
             )
 
-        except Exception as e:  # pragma: no cover
+        except Exception as e:
             logger = self.logger
             logger.exception("Migration failed")
             return FlextResult[FlextLdifTypes.Models.CustomDataDict].fail(
@@ -769,7 +769,7 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Models.CustomDataDict]):
                 ]
             ].ok(filtered)
 
-        except Exception as e:  # pragma: no cover
+        except Exception as e:
             return FlextResult[
                 list[
                     FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass
@@ -857,7 +857,7 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Models.CustomDataDict]):
 
             return FlextResult[FlextLdifModels.CategorizedEntries].ok(categorized)
 
-        except Exception as e:  # pragma: no cover
+        except Exception as e:
             return FlextResult[FlextLdifModels.CategorizedEntries].fail(
                 f"Failed to categorize entries: {e}"
             )
@@ -922,10 +922,10 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Models.CustomDataDict]):
             # Encode to target encoding and decode back (ensures valid representation)
             normalized = content.encode(target_encoding).decode(target_encoding)
             return FlextResult[str].ok(normalized)
-        except UnicodeEncodeError as e:  # pragma: no cover
+        except UnicodeEncodeError as e:
             msg = f"Content has characters not representable in {target_encoding}: {e}"
             return FlextResult[str].fail(msg)
-        except Exception as e:  # pragma: no cover
+        except Exception as e:
             return FlextResult[str].fail(
                 f"Failed to normalize encoding to {target_encoding}: {e}"
             )
@@ -964,7 +964,7 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Models.CustomDataDict]):
 
             return FlextResult[bool].ok(True)
 
-        except Exception as e:  # pragma: no cover
+        except Exception as e:
             return FlextResult[bool].fail(f"Failed to validate LDIF syntax: {e}")
 
     def count_ldif_entries(self, content: str) -> FlextResult[int]:
@@ -1002,7 +1002,7 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Models.CustomDataDict]):
 
             return FlextResult[int].ok(count)
 
-        except Exception as e:  # pragma: no cover
+        except Exception as e:
             return FlextResult[int].fail(f"Failed to count LDIF entries: {e}")
 
     # =========================================================================
@@ -1086,7 +1086,7 @@ class FlextLdifClient(FlextService[FlextLdifTypes.Models.CustomDataDict]):
                 getattr(self, "_init_config_value", None) or FlextLdifConfig()
             )
         # Type narrowing: _config cannot be None after initialization above
-        if self._config is None:  # pragma: no cover
+        if self._config is None:
             msg = "Configuration initialization failed"
             raise RuntimeError(msg)
         return self._config

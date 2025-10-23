@@ -42,7 +42,9 @@ class TestUtilitiesComprehensive:
     ) -> None:
         """Test all DN utility operations with real data."""
         for server_type in ["oid", "oud", "openldap"]:
-            fixture_path = fixtures_dir / server_type / f"{server_type}_integration_fixtures.ldif"
+            fixture_path = (
+                fixtures_dir / server_type / f"{server_type}_integration_fixtures.ldif"
+            )
             if not fixture_path.exists():
                 continue
 
@@ -56,7 +58,10 @@ class TestUtilitiesComprehensive:
                 assert len(dn_str) > 0
                 # DN operations implicit in parsing/filtering - check for DN components
                 dn_lower = dn_str.lower()
-                assert any(component in dn_lower for component in ["cn=", "uid=", "dc=", "ou=", "o="])
+                assert any(
+                    component in dn_lower
+                    for component in ["cn=", "uid=", "dc=", "ou=", "o="]
+                )
 
 
 class TestFileWriterServiceComprehensive:
@@ -75,7 +80,9 @@ class TestFileWriterServiceComprehensive:
     ) -> None:
         """Test file writer with all server types."""
         for server_type in ["oid", "oud", "openldap"]:
-            fixture_path = fixtures_dir / server_type / f"{server_type}_integration_fixtures.ldif"
+            fixture_path = (
+                fixtures_dir / server_type / f"{server_type}_integration_fixtures.ldif"
+            )
             if not fixture_path.exists():
                 continue
 
@@ -178,7 +185,9 @@ class TestRfcLdifWriterComprehensive:
     ) -> None:
         """Test RFC writer with various entry types."""
         for server_type in ["oid", "oud", "openldap"]:
-            fixture_path = fixtures_dir / server_type / f"{server_type}_integration_fixtures.ldif"
+            fixture_path = (
+                fixtures_dir / server_type / f"{server_type}_integration_fixtures.ldif"
+            )
             if not fixture_path.exists():
                 continue
 
@@ -218,7 +227,9 @@ class TestConversionMatrixComprehensive:
         ]
 
         for from_server, to_server in conversions:
-            fixture_path = fixtures_dir / from_server / f"{from_server}_integration_fixtures.ldif"
+            fixture_path = (
+                fixtures_dir / from_server / f"{from_server}_integration_fixtures.ldif"
+            )
             if not fixture_path.exists():
                 continue
 
@@ -228,6 +239,7 @@ class TestConversionMatrixComprehensive:
             output_dir.mkdir(exist_ok=True)
 
             import shutil
+
             shutil.copy(fixture_path, input_dir / "data.ldif")
 
             result = api.migrate(
@@ -267,7 +279,9 @@ class TestSchemaParserComprehensive:
     def test_schema_parser_all_servers(self, fixtures_dir: Path) -> None:
         """Test schema parser on all server schema fixtures."""
         for server_type in ["oid", "oud", "openldap"]:
-            schema_path = fixtures_dir / server_type / f"{server_type}_schema_fixtures.ldif"
+            schema_path = (
+                fixtures_dir / server_type / f"{server_type}_schema_fixtures.ldif"
+            )
             if not schema_path.exists():
                 continue
 
@@ -291,7 +305,9 @@ class TestPipelineComprehensive:
     ) -> None:
         """Test pipelines with all scenarios."""
         for server_type in ["oid", "oud", "openldap"]:
-            fixture_path = fixtures_dir / server_type / f"{server_type}_integration_fixtures.ldif"
+            fixture_path = (
+                fixtures_dir / server_type / f"{server_type}_integration_fixtures.ldif"
+            )
             if not fixture_path.exists():
                 continue
 
@@ -314,6 +330,7 @@ class TestPipelineComprehensive:
             output_dir.mkdir(exist_ok=True)
 
             import shutil
+
             shutil.copy(fixture_path, input_dir / "data.ldif")
 
             result = api.migrate(
@@ -337,7 +354,9 @@ class TestServerDetectorComprehensive:
         detector = FlextLdifServerDetector()
 
         for server_type in ["oid", "oud", "openldap", "openldap2"]:
-            fixture_path = fixtures_dir / server_type / f"{server_type}_integration_fixtures.ldif"
+            fixture_path = (
+                fixtures_dir / server_type / f"{server_type}_integration_fixtures.ldif"
+            )
             if not fixture_path.exists():
                 continue
 
@@ -371,7 +390,9 @@ class TestServicesComprehensive:
     ) -> None:
         """Test all services comprehensively."""
         for server_type in ["oid", "oud", "openldap"]:
-            fixture_path = fixtures_dir / server_type / f"{server_type}_integration_fixtures.ldif"
+            fixture_path = (
+                fixtures_dir / server_type / f"{server_type}_integration_fixtures.ldif"
+            )
             if not fixture_path.exists():
                 continue
 

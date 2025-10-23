@@ -205,7 +205,7 @@ class FlextLdifRfcSchemaParser(FlextService[FlextLdifTypes.Models.CustomDataDict
 
             return FlextResult[FlextLdifTypes.Models.CustomDataDict].ok(data)
 
-        except Exception as e:  # pragma: no cover
+        except Exception as e:
             error_msg = f"Failed to execute RFC schema parser: {e}"
             if self.logger is not None:
                 self.logger.exception(error_msg)
@@ -283,7 +283,7 @@ class FlextLdifRfcSchemaParser(FlextService[FlextLdifTypes.Models.CustomDataDict
                 },
             })
 
-        except Exception as e:  # pragma: no cover
+        except Exception as e:
             return FlextResult[FlextLdifTypes.Models.CustomDataDict].fail(
                 f"Failed to parse schema file: {e}"
             )
@@ -322,7 +322,7 @@ class FlextLdifRfcSchemaParser(FlextService[FlextLdifTypes.Models.CustomDataDict
                 if oc_data and "name" in oc_data:
                     objectclasses[str(oc_data["name"])] = oc_data
 
-        except Exception as e:  # pragma: no cover
+        except Exception as e:
             if self.logger is not None:
                 self.logger.warning(
                     f"Error processing schema line: {e}",

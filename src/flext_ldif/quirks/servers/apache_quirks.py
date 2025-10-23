@@ -129,7 +129,7 @@ class FlextLdifQuirksServersApache(FlextLdifQuirksBaseSchemaQuirk):
 
             return FlextResult[dict[str, object]].ok(attr_data)
 
-        except Exception as exc:  # pragma: no cover
+        except Exception as exc:
             return FlextResult[dict[str, object]].fail(
                 f"Apache Directory Server attribute parsing failed: {exc}"
             )
@@ -205,7 +205,7 @@ class FlextLdifQuirksServersApache(FlextLdifQuirksBaseSchemaQuirk):
 
             return FlextResult[dict[str, object]].ok(oc_data)
 
-        except Exception as exc:  # pragma: no cover
+        except Exception as exc:
             return FlextResult[dict[str, object]].fail(
                 f"Apache Directory Server objectClass parsing failed: {exc}"
             )
@@ -249,7 +249,7 @@ class FlextLdifQuirksServersApache(FlextLdifQuirksBaseSchemaQuirk):
 
             return FlextResult[dict[str, object]].ok(rfc_data)
 
-        except Exception as exc:  # pragma: no cover
+        except Exception as exc:
             return FlextResult[dict[str, object]].fail(
                 f"Apache Directory Server→RFC attribute conversion failed: {exc}"
             )
@@ -287,7 +287,7 @@ class FlextLdifQuirksServersApache(FlextLdifQuirksBaseSchemaQuirk):
 
             return FlextResult[dict[str, object]].ok(rfc_data)
 
-        except Exception as exc:  # pragma: no cover
+        except Exception as exc:
             return FlextResult[dict[str, object]].fail(
                 f"Apache Directory Server→RFC objectClass conversion failed: {exc}"
             )
@@ -302,7 +302,7 @@ class FlextLdifQuirksServersApache(FlextLdifQuirksBaseSchemaQuirk):
                 FlextLdifConstants.DictKeys.SERVER_TYPE: self.server_type,
             }
             return FlextResult[dict[str, object]].ok(apache_data)
-        except Exception as exc:  # pragma: no cover
+        except Exception as exc:
             return FlextResult[dict[str, object]].fail(
                 f"RFC→Apache Directory Server attribute conversion failed: {exc}"
             )
@@ -317,7 +317,7 @@ class FlextLdifQuirksServersApache(FlextLdifQuirksBaseSchemaQuirk):
                 FlextLdifConstants.DictKeys.SERVER_TYPE: self.server_type,
             }
             return FlextResult[dict[str, object]].ok(apache_data)
-        except Exception as exc:  # pragma: no cover
+        except Exception as exc:
             return FlextResult[dict[str, object]].fail(
                 f"RFC→Apache Directory Server objectClass conversion failed: {exc}"
             )
@@ -348,7 +348,7 @@ class FlextLdifQuirksServersApache(FlextLdifQuirksBaseSchemaQuirk):
             attr_str += " )"
 
             return FlextResult[str].ok(attr_str)
-        except Exception as exc:  # pragma: no cover
+        except Exception as exc:
             return FlextResult[str].fail(
                 f"Apache Directory Server attribute write failed: {exc}"
             )
@@ -381,7 +381,7 @@ class FlextLdifQuirksServersApache(FlextLdifQuirksBaseSchemaQuirk):
             oc_str += " )"
 
             return FlextResult[str].ok(oc_str)
-        except Exception as exc:  # pragma: no cover
+        except Exception as exc:
             return FlextResult[str].fail(
                 f"Apache Directory Server objectClass write failed: {exc}"
             )
@@ -438,7 +438,7 @@ class FlextLdifQuirksServersApache(FlextLdifQuirksBaseSchemaQuirk):
                 }
                 return FlextResult[dict[str, object]].ok(acl_payload)
 
-            except Exception as exc:  # pragma: no cover
+            except Exception as exc:
                 return FlextResult[dict[str, object]].fail(
                     f"Apache Directory Server ACL parsing failed: {exc}"
                 )
@@ -458,7 +458,7 @@ class FlextLdifQuirksServersApache(FlextLdifQuirksBaseSchemaQuirk):
                 }
                 return FlextResult[dict[str, object]].ok(rfc_acl)
 
-            except Exception as exc:  # pragma: no cover
+            except Exception as exc:
                 return FlextResult[dict[str, object]].fail(
                     f"Apache Directory Server ACL→RFC conversion failed: {exc}"
                 )
@@ -477,7 +477,7 @@ class FlextLdifQuirksServersApache(FlextLdifQuirksBaseSchemaQuirk):
                 }
                 return FlextResult[dict[str, object]].ok(apache_acl)
 
-            except Exception as exc:  # pragma: no cover
+            except Exception as exc:
                 return FlextResult[dict[str, object]].fail(
                     f"RFC→Apache Directory Server ACL conversion failed: {exc}"
                 )
@@ -616,7 +616,7 @@ class FlextLdifQuirksServersApache(FlextLdifQuirksBaseSchemaQuirk):
 
                 return FlextResult[dict[str, object]].ok(processed_entry)
 
-            except Exception as exc:  # pragma: no cover
+            except Exception as exc:
                 return FlextResult[dict[str, object]].fail(
                     f"Apache Directory Server entry processing failed: {exc}"
                 )
@@ -632,7 +632,7 @@ class FlextLdifQuirksServersApache(FlextLdifQuirksBaseSchemaQuirk):
                 normalized_entry.pop(FlextLdifConstants.DictKeys.IS_CONFIG_ENTRY, None)
                 return FlextResult[dict[str, object]].ok(normalized_entry)
 
-            except Exception as exc:  # pragma: no cover
+            except Exception as exc:
                 return FlextResult[dict[str, object]].fail(
                     f"Apache Directory Server entry→RFC conversion failed: {exc}"
                 )

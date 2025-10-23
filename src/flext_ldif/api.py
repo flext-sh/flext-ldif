@@ -250,7 +250,7 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.CustomDataDict]):
                 },
             )
 
-        except Exception as e:  # pragma: no cover
+        except Exception as e:
             # Use FlextExceptions for error handling
             msg = f"Failed to register LDIF components: {e}"
             raise RuntimeError(msg) from e

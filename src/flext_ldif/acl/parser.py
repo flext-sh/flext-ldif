@@ -56,7 +56,7 @@ class FlextLdifAclParser(FlextService[dict[str, object]]):
                 raw_acl=acl_string,
             )
             return FlextResult[FlextLdifModels.AclBase].ok(acl)
-        except Exception as e:  # pragma: no cover
+        except Exception as e:
             return FlextResult[FlextLdifModels.AclBase].fail(
                 f"Failed to parse OpenLDAP ACL: {e}"
             )
@@ -82,7 +82,7 @@ class FlextLdifAclParser(FlextService[dict[str, object]]):
                 raw_acl=acl_string,
             )
             return FlextResult[FlextLdifModels.AclBase].ok(acl)
-        except Exception as e:  # pragma: no cover
+        except Exception as e:
             return FlextResult[FlextLdifModels.AclBase].fail(
                 f"Failed to parse 389DS ACL: {e}"
             )
@@ -124,7 +124,7 @@ class FlextLdifAclParser(FlextService[dict[str, object]]):
                 raw_acl=acl_string,
             )
             return FlextResult[FlextLdifModels.AclBase].ok(acl)
-        except Exception as e:  # pragma: no cover
+        except Exception as e:
             return FlextResult[FlextLdifModels.AclBase].fail(
                 f"Failed to parse Oracle ACL: {e}"
             )

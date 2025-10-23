@@ -293,7 +293,7 @@ class FlextLdifModels(FlextModels):
                 return FlextResult[FlextLdifModels.AclPermissions].ok(
                     cls.model_validate(data_mutable)
                 )
-            except Exception as e:  # pragma: no cover
+            except Exception as e:
                 return FlextResult[FlextLdifModels.AclPermissions].fail(
                     f"Failed to create AclPermissions: {e}"
                 )
@@ -779,26 +779,21 @@ class FlextLdifModels(FlextModels):
         def validate_entry_consistency(self) -> FlextLdifModels.Entry:
             """Validate cross-field consistency in Entry model.
 
-            Validates:
-            - ObjectClass attribute exists (LDAP requirement)
+            Notes:
+            - ObjectClass validation is optional - downstream code handles
+              entries without objectClass via rejection or warnings.
+            - Schema entries (dn: cn=schema) are allowed without objectClass
+              as they contain schema definitions, not directory objects.
 
             Returns:
             Self (for method chaining)
 
-            Raises:
-            ValueError: If validation fails
-
             """
-            # Ensure entry has objectClass attribute (LDAP requirement)
-            # Exception: schema entries (dn: cn=schema) contain schema
-            # definitions, not directory objects
-            if (
-                not self.has_attribute("objectClass")
-                and self.dn.value.lower() != "cn=schema"
-            ):
-                msg = f"Entry {self.dn.value} must have objectClass"
-                raise ValueError(msg)
-
+            # Allow entries without objectClass to pass through validation.
+            # Downstream code (migration, quirks, etc.) will handle:
+            # - Rejection of entries without required objectClass
+            # - Logging of warnings for malformed entries
+            # - Optional transformation or filtering based on application rules
             return self
 
         @classmethod

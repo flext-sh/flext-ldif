@@ -776,6 +776,28 @@ class FlextLdifConstants(FlextConstants):
             "orclIsEnabled",
         ])
 
+        # Oracle OID boolean attributes (non-RFC compliant: use "0"/"1" instead of "TRUE"/"FALSE")
+        # RFC 4517 Boolean syntax (OID 1.3.6.1.4.1.1466.115.121.1.7) requires "TRUE" or "FALSE"
+        # OID quirks must convert "0"→"FALSE", "1"→"TRUE" during OID→RFC normalization
+        OID_BOOLEAN_ATTRIBUTES: Final[frozenset[str]] = frozenset([
+            # Oracle DAS (Directory Application Server) boolean attributes
+            "orcldasenableproductlogo",
+            "orcldasenablesubscriberlogo",
+            "orcldasshowproductlogo",
+            "orcldasenablebranding",
+            "orcldasisenabled",
+            "orcldasismandatory",
+            "orcldasispersonal",
+            "orcldassearchable",
+            "orcldasselfmodifiable",
+            "orcldasviewable",
+            "orcldasadminmodifiable",
+            # Oracle password policy boolean attributes
+            "pwdlockout",
+            "pwdmustchange",
+            "pwdallowuserchange",
+        ])
+
         # Oracle OUD specific operational attributes
         OUD_SPECIFIC: Final[frozenset[str]] = frozenset([
             "ds-sync-hist",

@@ -127,7 +127,7 @@ class FlextLdifQuirksServersTivoli(FlextLdifQuirksBaseSchemaQuirk):
 
             return FlextResult[dict[str, object]].ok(attr_data)
 
-        except Exception as exc:  # pragma: no cover
+        except Exception as exc:
             return FlextResult[dict[str, object]].fail(
                 f"IBM Tivoli DS attribute parsing failed: {exc}"
             )
@@ -203,7 +203,7 @@ class FlextLdifQuirksServersTivoli(FlextLdifQuirksBaseSchemaQuirk):
 
             return FlextResult[dict[str, object]].ok(oc_data)
 
-        except Exception as exc:  # pragma: no cover
+        except Exception as exc:
             return FlextResult[dict[str, object]].fail(
                 f"IBM Tivoli DS objectClass parsing failed: {exc}"
             )
@@ -247,7 +247,7 @@ class FlextLdifQuirksServersTivoli(FlextLdifQuirksBaseSchemaQuirk):
 
             return FlextResult[dict[str, object]].ok(rfc_data)
 
-        except Exception as exc:  # pragma: no cover
+        except Exception as exc:
             return FlextResult[dict[str, object]].fail(
                 f"IBM Tivoli DS→RFC attribute conversion failed: {exc}"
             )
@@ -285,7 +285,7 @@ class FlextLdifQuirksServersTivoli(FlextLdifQuirksBaseSchemaQuirk):
 
             return FlextResult[dict[str, object]].ok(rfc_data)
 
-        except Exception as exc:  # pragma: no cover
+        except Exception as exc:
             return FlextResult[dict[str, object]].fail(
                 f"IBM Tivoli DS→RFC objectClass conversion failed: {exc}"
             )
@@ -300,7 +300,7 @@ class FlextLdifQuirksServersTivoli(FlextLdifQuirksBaseSchemaQuirk):
                 FlextLdifConstants.DictKeys.SERVER_TYPE: self.server_type,
             }
             return FlextResult[dict[str, object]].ok(tivoli_data)
-        except Exception as exc:  # pragma: no cover
+        except Exception as exc:
             return FlextResult[dict[str, object]].fail(
                 f"RFC→IBM Tivoli DS attribute conversion failed: {exc}"
             )
@@ -315,7 +315,7 @@ class FlextLdifQuirksServersTivoli(FlextLdifQuirksBaseSchemaQuirk):
                 FlextLdifConstants.DictKeys.SERVER_TYPE: self.server_type,
             }
             return FlextResult[dict[str, object]].ok(tivoli_data)
-        except Exception as exc:  # pragma: no cover
+        except Exception as exc:
             return FlextResult[dict[str, object]].fail(
                 f"RFC→IBM Tivoli DS objectClass conversion failed: {exc}"
             )
@@ -346,7 +346,7 @@ class FlextLdifQuirksServersTivoli(FlextLdifQuirksBaseSchemaQuirk):
             attr_str += " )"
 
             return FlextResult[str].ok(attr_str)
-        except Exception as exc:  # pragma: no cover
+        except Exception as exc:
             return FlextResult[str].fail(f"IBM Tivoli DS attribute write failed: {exc}")
 
     def write_objectclass_to_rfc(self, oc_data: dict[str, object]) -> FlextResult[str]:
@@ -376,7 +376,7 @@ class FlextLdifQuirksServersTivoli(FlextLdifQuirksBaseSchemaQuirk):
             oc_str += " )"
 
             return FlextResult[str].ok(oc_str)
-        except Exception as exc:  # pragma: no cover
+        except Exception as exc:
             return FlextResult[str].fail(
                 f"IBM Tivoli DS objectClass write failed: {exc}"
             )
@@ -447,7 +447,7 @@ class FlextLdifQuirksServersTivoli(FlextLdifQuirksBaseSchemaQuirk):
                 }
                 return FlextResult[dict[str, object]].ok(acl_payload)
 
-            except Exception as exc:  # pragma: no cover
+            except Exception as exc:
                 return FlextResult[dict[str, object]].fail(
                     f"IBM Tivoli DS ACL parsing failed: {exc}"
                 )
@@ -467,7 +467,7 @@ class FlextLdifQuirksServersTivoli(FlextLdifQuirksBaseSchemaQuirk):
                 }
                 return FlextResult[dict[str, object]].ok(rfc_acl)
 
-            except Exception as exc:  # pragma: no cover
+            except Exception as exc:
                 return FlextResult[dict[str, object]].fail(
                     f"IBM Tivoli DS ACL→RFC conversion failed: {exc}"
                 )
@@ -485,7 +485,7 @@ class FlextLdifQuirksServersTivoli(FlextLdifQuirksBaseSchemaQuirk):
                 }
                 return FlextResult[FlextLdifTypes.Models.CustomDataDict].ok(tivoli_acl)
 
-            except Exception as exc:  # pragma: no cover
+            except Exception as exc:
                 return FlextResult[dict[str, object]].fail(
                     f"RFC→IBM Tivoli DS ACL conversion failed: {exc}"
                 )
@@ -635,7 +635,7 @@ class FlextLdifQuirksServersTivoli(FlextLdifQuirksBaseSchemaQuirk):
 
                 return FlextResult[dict[str, object]].ok(processed_entry)
 
-            except Exception as exc:  # pragma: no cover
+            except Exception as exc:
                 return FlextResult[dict[str, object]].fail(
                     f"IBM Tivoli DS entry processing failed: {exc}"
                 )
@@ -650,7 +650,7 @@ class FlextLdifQuirksServersTivoli(FlextLdifQuirksBaseSchemaQuirk):
                 normalized_entry.pop(FlextLdifConstants.DictKeys.SERVER_TYPE, None)
                 return FlextResult[dict[str, object]].ok(normalized_entry)
 
-            except Exception as exc:  # pragma: no cover
+            except Exception as exc:
                 return FlextResult[dict[str, object]].fail(
                     f"IBM Tivoli DS entry→RFC conversion failed: {exc}"
                 )

@@ -238,6 +238,12 @@ class FlextLdifDnService(FlextService[FlextLdifTypes.Models.CustomDataDict]):
         # Common in OID exports where spaces are unnecessarily escaped
         cleaned = re.sub(r"\\\s+", " ", cleaned)
 
+        # Remove unnecessary character escapes (RFC 4514 compliance)
+        # Only these need escaping: , + " \ < > ; (and leading/trailing spaces, leading #)
+        # Remove backslash before characters that don't need escaping (e.g., \- \. \_ etc.)
+        # Pattern: \X where X is NOT a special character -> X
+        cleaned = re.sub(r'\\([^,+"\<>;\\# ])', r"\1", cleaned)
+
         # Normalize multiple spaces to single space
         cleaned = re.sub(r"\s+", " ", cleaned)
 

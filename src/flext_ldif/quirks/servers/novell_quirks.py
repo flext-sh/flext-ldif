@@ -136,7 +136,7 @@ class FlextLdifQuirksServersNovell(FlextLdifQuirksBaseSchemaQuirk):
 
             return FlextResult[dict[str, object]].ok(attr_data)
 
-        except Exception as exc:  # pragma: no cover
+        except Exception as exc:
             return FlextResult[dict[str, object]].fail(
                 f"Novell eDirectory attribute parsing failed: {exc}"
             )
@@ -208,7 +208,7 @@ class FlextLdifQuirksServersNovell(FlextLdifQuirksBaseSchemaQuirk):
 
             return FlextResult[dict[str, object]].ok(oc_data)
 
-        except Exception as exc:  # pragma: no cover
+        except Exception as exc:
             return FlextResult[dict[str, object]].fail(
                 f"Novell eDirectory objectClass parsing failed: {exc}"
             )
@@ -252,7 +252,7 @@ class FlextLdifQuirksServersNovell(FlextLdifQuirksBaseSchemaQuirk):
 
             return FlextResult[dict[str, object]].ok(rfc_data)
 
-        except Exception as exc:  # pragma: no cover
+        except Exception as exc:
             return FlextResult[dict[str, object]].fail(
                 f"Novell eDirectory→RFC attribute conversion failed: {exc}"
             )
@@ -290,7 +290,7 @@ class FlextLdifQuirksServersNovell(FlextLdifQuirksBaseSchemaQuirk):
 
             return FlextResult[dict[str, object]].ok(rfc_data)
 
-        except Exception as exc:  # pragma: no cover
+        except Exception as exc:
             return FlextResult[dict[str, object]].fail(
                 f"Novell eDirectory→RFC objectClass conversion failed: {exc}"
             )
@@ -305,7 +305,7 @@ class FlextLdifQuirksServersNovell(FlextLdifQuirksBaseSchemaQuirk):
                 FlextLdifConstants.DictKeys.SERVER_TYPE: self.server_type,
             }
             return FlextResult[dict[str, object]].ok(novell_data)
-        except Exception as exc:  # pragma: no cover
+        except Exception as exc:
             return FlextResult[dict[str, object]].fail(
                 f"RFC→Novell eDirectory attribute conversion failed: {exc}"
             )
@@ -320,7 +320,7 @@ class FlextLdifQuirksServersNovell(FlextLdifQuirksBaseSchemaQuirk):
                 FlextLdifConstants.DictKeys.SERVER_TYPE: self.server_type,
             }
             return FlextResult[dict[str, object]].ok(novell_data)
-        except Exception as exc:  # pragma: no cover
+        except Exception as exc:
             return FlextResult[dict[str, object]].fail(
                 f"RFC→Novell eDirectory objectClass conversion failed: {exc}"
             )
@@ -351,7 +351,7 @@ class FlextLdifQuirksServersNovell(FlextLdifQuirksBaseSchemaQuirk):
             attr_str += " )"
 
             return FlextResult[str].ok(attr_str)
-        except Exception as exc:  # pragma: no cover
+        except Exception as exc:
             return FlextResult[str].fail(
                 f"Novell eDirectory attribute write failed: {exc}"
             )
@@ -384,7 +384,7 @@ class FlextLdifQuirksServersNovell(FlextLdifQuirksBaseSchemaQuirk):
             oc_str += " )"
 
             return FlextResult[str].ok(oc_str)
-        except Exception as exc:  # pragma: no cover
+        except Exception as exc:
             return FlextResult[str].fail(
                 f"Novell eDirectory objectClass write failed: {exc}"
             )
@@ -448,7 +448,7 @@ class FlextLdifQuirksServersNovell(FlextLdifQuirksBaseSchemaQuirk):
                 }
                 return FlextResult[dict[str, object]].ok(acl_payload)
 
-            except Exception as exc:  # pragma: no cover
+            except Exception as exc:
                 return FlextResult[dict[str, object]].fail(
                     f"Novell eDirectory ACL parsing failed: {exc}"
                 )
@@ -468,7 +468,7 @@ class FlextLdifQuirksServersNovell(FlextLdifQuirksBaseSchemaQuirk):
                 }
                 return FlextResult[dict[str, object]].ok(rfc_acl)
 
-            except Exception as exc:  # pragma: no cover
+            except Exception as exc:
                 return FlextResult[dict[str, object]].fail(
                     f"Novell eDirectory ACL→RFC conversion failed: {exc}"
                 )
@@ -487,7 +487,7 @@ class FlextLdifQuirksServersNovell(FlextLdifQuirksBaseSchemaQuirk):
                 }
                 return FlextResult[dict[str, object]].ok(ed_acl)
 
-            except Exception as exc:  # pragma: no cover
+            except Exception as exc:
                 return FlextResult[dict[str, object]].fail(
                     f"RFC→Novell eDirectory ACL conversion failed: {exc}"
                 )
@@ -649,7 +649,7 @@ class FlextLdifQuirksServersNovell(FlextLdifQuirksBaseSchemaQuirk):
 
                 return FlextResult[dict[str, object]].ok(processed_entry)
 
-            except Exception as exc:  # pragma: no cover
+            except Exception as exc:
                 return FlextResult[dict[str, object]].fail(
                     f"Novell eDirectory entry processing failed: {exc}"
                 )
@@ -664,7 +664,7 @@ class FlextLdifQuirksServersNovell(FlextLdifQuirksBaseSchemaQuirk):
                 normalized_entry.pop(FlextLdifConstants.DictKeys.SERVER_TYPE, None)
                 return FlextResult[dict[str, object]].ok(normalized_entry)
 
-            except Exception as exc:  # pragma: no cover
+            except Exception as exc:
                 return FlextResult[dict[str, object]].fail(
                     f"Novell eDirectory entry→RFC conversion failed: {exc}"
                 )

@@ -65,7 +65,9 @@ class TestFlextLdifClientOperations:
     # PARSE OPERATIONS TESTS
     # =========================================================================
 
-    def test_parse_ldif_from_file(self, client: FlextLdifClient, oid_entries_fixture: Path) -> None:
+    def test_parse_ldif_from_file(
+        self, client: FlextLdifClient, oid_entries_fixture: Path
+    ) -> None:
         """Test parsing LDIF from file path."""
         if not oid_entries_fixture.exists():
             pytest.skip(f"Fixture not found: {oid_entries_fixture}")
@@ -79,10 +81,7 @@ class TestFlextLdifClientOperations:
     def test_parse_ldif_from_string(self, client: FlextLdifClient) -> None:
         """Test parsing LDIF from string content."""
         ldif_content = (
-            "dn: cn=test,dc=example,dc=com\n"
-            "cn: test\n"
-            "objectClass: person\n"
-            "\n"
+            "dn: cn=test,dc=example,dc=com\ncn: test\nobjectClass: person\n\n"
         )
         result = client.parse_ldif(ldif_content)
         assert result.is_success
@@ -101,7 +100,9 @@ class TestFlextLdifClientOperations:
         entries = result.unwrap()
         assert len(entries) > 0
 
-    def test_parse_ldif_schema(self, client: FlextLdifClient, oid_schema_fixture: Path) -> None:
+    def test_parse_ldif_schema(
+        self, client: FlextLdifClient, oid_schema_fixture: Path
+    ) -> None:
         """Test parsing schema LDIF."""
         if not oid_schema_fixture.exists():
             pytest.skip(f"Fixture not found: {oid_schema_fixture}")
@@ -111,7 +112,9 @@ class TestFlextLdifClientOperations:
         entries = result.unwrap()
         assert len(entries) > 0
 
-    def test_parse_ldif_acl(self, client: FlextLdifClient, oid_acl_fixture: Path) -> None:
+    def test_parse_ldif_acl(
+        self, client: FlextLdifClient, oid_acl_fixture: Path
+    ) -> None:
         """Test parsing ACL LDIF."""
         if not oid_acl_fixture.exists():
             pytest.skip(f"Fixture not found: {oid_acl_fixture}")
@@ -228,11 +231,7 @@ class TestFlextLdifClientOperations:
 
     def test_validate_ldif_syntax_string(self, client: FlextLdifClient) -> None:
         """Test LDIF syntax validation on string."""
-        ldif_content = (
-            "dn: cn=test,dc=example,dc=com\n"
-            "cn: test\n"
-            "objectClass: person\n"
-        )
+        ldif_content = "dn: cn=test,dc=example,dc=com\ncn: test\nobjectClass: person\n"
         result = client.validate_ldif_syntax(ldif_content)
         assert result.is_success
         is_valid = result.unwrap()
@@ -371,9 +370,7 @@ class TestFlextLdifClientOperations:
         entries = parse_result.unwrap()
 
         if len(entries) > 0:
-            result = client.filter(
-                entries, filter_type="attributes", attributes=["cn"]
-            )
+            result = client.filter(entries, filter_type="attributes", attributes=["cn"])
             assert result.is_success
             filtered = result.unwrap()
             assert isinstance(filtered, list)
@@ -488,15 +485,10 @@ class TestFlextLdifClientOperations:
         # Verify counts match
         assert count1 == count2
 
-    def test_roundtrip_string_parse_write_string(
-        self, client: FlextLdifClient
-    ) -> None:
+    def test_roundtrip_string_parse_write_string(self, client: FlextLdifClient) -> None:
         """Test roundtrip with string content."""
         original_content = (
-            "dn: cn=test,dc=example,dc=com\n"
-            "cn: test\n"
-            "objectClass: person\n"
-            "\n"
+            "dn: cn=test,dc=example,dc=com\ncn: test\nobjectClass: person\n\n"
         )
 
         # Parse
@@ -516,7 +508,10 @@ class TestFlextLdifClientOperations:
     # =========================================================================
 
     def test_parse_multiple_fixtures_sequential(
-        self, client: FlextLdifClient, oid_entries_fixture: Path, oud_entries_fixture: Path
+        self,
+        client: FlextLdifClient,
+        oid_entries_fixture: Path,
+        oud_entries_fixture: Path,
     ) -> None:
         """Test parsing multiple fixtures sequentially."""
         if not oid_entries_fixture.exists() or not oud_entries_fixture.exists():
@@ -537,7 +532,10 @@ class TestFlextLdifClientOperations:
         assert len(entries2) > 0
 
     def test_parse_schema_and_entries_sequential(
-        self, client: FlextLdifClient, oid_entries_fixture: Path, oid_schema_fixture: Path
+        self,
+        client: FlextLdifClient,
+        oid_entries_fixture: Path,
+        oid_schema_fixture: Path,
     ) -> None:
         """Test parsing schema and entries sequentially."""
         if not oid_entries_fixture.exists() or not oid_schema_fixture.exists():

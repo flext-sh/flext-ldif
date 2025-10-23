@@ -257,7 +257,7 @@ class FlextLdifRfcLdifParser(FlextService[FlextLdifTypes.Models.CustomDataDict])
 
             return FlextResult[FlextLdifTypes.Models.CustomDataDict].ok(data)
 
-        except Exception as e:  # pragma: no cover
+        except Exception as e:
             error_msg = f"Failed to execute RFC LDIF parser: {e}"
             if self.logger is not None:
                 self.logger.exception(error_msg)
@@ -405,7 +405,7 @@ class FlextLdifRfcLdifParser(FlextService[FlextLdifTypes.Models.CustomDataDict])
 
             return FlextResult[list[FlextLdifModels.Entry]].ok(entries)
 
-        except Exception as e:  # pragma: no cover
+        except Exception as e:
             return FlextResult[list[FlextLdifModels.Entry]].fail(
                 f"Failed to parse LDIF with ldif3: {e}"
             )

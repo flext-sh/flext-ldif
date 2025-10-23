@@ -216,7 +216,7 @@ class _EntryFileProcessing:
 
             return FlextResult[list[object]].ok(entries)
 
-        except Exception as e:  # pragma: no cover
+        except Exception as e:
             return FlextResult[list[object]].fail(f"Entry file processing failed: {e}")
 
 
@@ -441,7 +441,7 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifTypes.Models.CustomDataDi
 
             return FlextResult[list[object]].ok(migrated_list)
 
-        except Exception as e:  # pragma: no cover
+        except Exception as e:
             error_msg = f"Entry migration failed: {e}"
             if self.logger:
                 self.logger.exception(error_msg)
@@ -584,7 +584,7 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifTypes.Models.CustomDataDi
 
             return FlextResult[FlextLdifTypes.Models.CustomDataDict].ok(result_data)
 
-        except Exception as e:  # pragma: no cover
+        except Exception as e:
             error_msg = f"LDIF migration pipeline failed: {e}"
             if self.logger:
                 self.logger.exception(error_msg)
@@ -694,7 +694,7 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifTypes.Models.CustomDataDi
 
             return FlextResult[FlextLdifTypes.Models.CustomDataDict].ok(schema_data)
 
-        except Exception as e:  # pragma: no cover
+        except Exception as e:
             return FlextResult[FlextLdifTypes.Models.CustomDataDict].fail(
                 f"Schema migration failed: {e}"
             )
@@ -789,7 +789,7 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifTypes.Models.CustomDataDi
 
             return FlextResult[list[object]].ok(all_entries)
 
-        except Exception as e:  # pragma: no cover
+        except Exception as e:
             return FlextResult[list[object]].fail(f"Entries migration failed: {e}")
 
 

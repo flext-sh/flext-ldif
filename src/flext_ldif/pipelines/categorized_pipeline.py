@@ -100,28 +100,24 @@ class FlextLdifCategorizedMigrationPipeline(
         """Initialize categorized migration pipeline.
 
         Args:
-        input_dir: Input directory containing LDIF files
-        output_dir: Output directory for categorized LDIF files
-        categorization_rules: Dictionary containing categorization rules
-        parser_quirk: Quirk for parsing source server format
-        writer_quirk: Quirk for writing target server format
-        source_server: Source LDAP server type (optional)
-        target_server: Target LDAP server type (optional)
-        source_schema_quirk: Schema quirk for SOURCE server format (REQUIRED for schema transformation)
-        target_schema_quirk: Schema quirk for TARGET server format (REQUIRED for schema transformation)
-        schema_whitelist_rules: Optional schema whitelist rules
-        input_files: Optional list of specific input files to process
-        output_files: Optional mapping of category names to output filenames
-        entry_quirks: Service for handling entry-level quirks
-        forbidden_attributes: List of attribute names (with optional subtypes)
-        to filter out during transformation. Examples: ['authPassword',
-        'authpassword;orclcommonpwd', 'authpassword;oid']
-        forbidden_objectclasses: List of objectClass names to filter out
-        during transformation. Examples: ['orclContainerOC', 'orclService']
-        base_dn: Optional base DN to filter entries. Only entries under this
-        base DN will be included in output files 01-04. Schema (00) is not
-        filtered. Example: 'dc=ctbc'
-        Uses STRATEGY PATTERN - business rules from client application.
+            input_dir: Input directory containing LDIF files
+            output_dir: Output directory for categorized LDIF files
+            categorization_rules: Dictionary containing categorization rules
+            parser_quirk: Quirk for parsing source server format
+            writer_quirk: Quirk for writing target server format
+            source_server: Source LDAP server type (optional)
+            target_server: Target LDAP server type (optional)
+            source_schema_quirk: Schema quirk for SOURCE server format (REQUIRED for schema transformation)
+            target_schema_quirk: Schema quirk for TARGET server format (REQUIRED for schema transformation)
+            schema_whitelist_rules: Optional schema whitelist rules
+            input_files: Optional list of specific input files to process
+            output_files: Optional mapping of category names to output filenames
+            forbidden_attributes: List of attribute names (with optional subtypes) to filter out during transformation. Examples: ['authPassword', 'authpassword;orclcommonpwd', 'authpassword;oid']
+            forbidden_objectclasses: List of objectClass names to filter out during transformation. Examples: ['orclContainerOC', 'orclService']
+            base_dn: Optional base DN to filter entries. Only entries under this base DN will be included in output files 01-04. Schema (00) is not filtered. Example: 'dc=ctbc'
+
+        Note:
+            Uses STRATEGY PATTERN - business rules from client application.
 
         """
         super().__init__()
@@ -1177,6 +1173,33 @@ class FlextLdifCategorizedMigrationPipeline(
 
                 # Replace ACL entries with successfully transformed versions
                 categorized["acl"] = transformed_acl
+
+            # Step 1.5: Apply EntryQuirk conversion (OID→RFC normalization for ALL entries)
+            # Convert boolean attributes "0"/"1" → "TRUE"/"FALSE" per RFC 4517
+            parser_entry_quirk = None
+            if self._parser_quirk is not None and hasattr(
+                self._parser_quirk, "EntryQuirk"
+            ):
+                entry_quirk_cls = getattr(self._parser_quirk, "EntryQuirk", None)
+                if entry_quirk_cls is not None:
+                    parser_entry_quirk = entry_quirk_cls()
+
+            if parser_entry_quirk is not None:
+                for category, entries in categorized.items():
+                    transformed_entries = []
+                    for entry in entries:
+                        # Apply OID→RFC conversion to normalize non-RFC values
+                        entry_result = parser_entry_quirk.convert_entry_to_rfc(entry)
+                        if entry_result.is_success:
+                            transformed_entries.append(entry_result.unwrap())
+                        else:
+                            # Log warning but keep original entry
+                            self.logger.warning(
+                                f"Entry conversion failed for {entry.get('dn', 'unknown')}: "
+                                f"{entry_result.error}"
+                            )
+                            transformed_entries.append(entry)
+                    categorized[category] = transformed_entries
 
             # Step 2: Filter forbidden attributes and objectClasses from all categories
             # STRATEGY PATTERN: Business rules from client application

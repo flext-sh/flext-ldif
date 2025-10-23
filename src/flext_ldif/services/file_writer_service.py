@@ -15,6 +15,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import logging
 import re
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -29,6 +30,8 @@ if TYPE_CHECKING:
     from flext_ldif.quirks.base import (
         FlextLdifQuirksBaseSchemaQuirk,
     )
+
+logger = logging.getLogger(__name__)
 
 
 class FlextLdifFileWriterService:
@@ -174,6 +177,7 @@ class FlextLdifFileWriterService:
                 FlextLdifConstants.DictKeys.OUTPUT_FILE: str(output_file),
                 FlextLdifConstants.DictKeys.ENTRIES: entries,
                 "encoding": "utf-8",
+                "category": category,  # Pass category so writer can comment blocked entries
             }
 
             # Use RFC writer with quirks
@@ -190,6 +194,11 @@ class FlextLdifFileWriterService:
                 return FlextResult[int].fail(
                     f"Failed to write {category} file: {write_result.error}"
                 )
+
+            # Post-process: comment out entries with blocked attributes
+            # for non-ACL categories (hierarchy, users, groups)
+            if category in {"hierarchy", "users", "groups"}:
+                self._comment_blocked_entries_in_file(str(output_file))
 
             return FlextResult[int].ok(len(entries))
 
@@ -305,6 +314,9 @@ class FlextLdifFileWriterService:
         - dn: cn=schema
         - changetype: modify
         - add: attributetypes / add: objectclasses directives
+
+        CRITICAL FIX: Validates objectclass attribute dependencies before inclusion.
+        This prevents OUD startup failures from missing required attributes.
 
         Args:
             processed_entries: List of processed schema entries
@@ -456,61 +468,55 @@ class FlextLdifFileWriterService:
         transformed = []
 
         for schema_str in schema_list:
-            try:
-                # Step 1: Parse with SOURCE quirk
-                if schema_type == "attribute":
-                    parse_result = source_quirk.parse_attribute(str(schema_str))
-                else:
-                    parse_result = source_quirk.parse_objectclass(str(schema_str))
+            # Step 1: Parse with SOURCE quirk
+            if schema_type == "attribute":
+                parse_result = source_quirk.parse_attribute(str(schema_str))
+            else:
+                parse_result = source_quirk.parse_objectclass(str(schema_str))
 
-                if parse_result.is_failure:
-                    transformed.append(str(schema_str))
-                    continue
+            if parse_result.is_failure:
+                transformed.append(str(schema_str))
+                continue
 
-                schema_data = parse_result.unwrap()
+            schema_data = parse_result.unwrap()
 
-                # Step 2: Convert to RFC canonical format
-                if schema_type == "attribute":
-                    to_rfc_result = source_quirk.convert_attribute_to_rfc(schema_data)
-                else:
-                    to_rfc_result = source_quirk.convert_objectclass_to_rfc(schema_data)
+            # Step 2: Convert to RFC canonical format
+            if schema_type == "attribute":
+                to_rfc_result = source_quirk.convert_attribute_to_rfc(schema_data)
+            else:
+                to_rfc_result = source_quirk.convert_objectclass_to_rfc(schema_data)
 
-                if to_rfc_result.is_failure:
-                    transformed.append(str(schema_str))
-                    continue
+            if to_rfc_result.is_failure:
+                transformed.append(str(schema_str))
+                continue
 
-                rfc_data = to_rfc_result.unwrap()
+            rfc_data = to_rfc_result.unwrap()
 
-                # Step 3: Add X-ORIGIN if not present
-                if "x_origin" not in rfc_data:
-                    rfc_data["x_origin"] = "user defined"
+            # Step 3: Add X-ORIGIN if not present
+            if "x_origin" not in rfc_data:
+                rfc_data["x_origin"] = "user defined"
 
-                # Step 4: Convert from RFC to TARGET format
-                if schema_type == "attribute":
-                    from_rfc_result = target_quirk.convert_attribute_from_rfc(rfc_data)
-                else:
-                    from_rfc_result = target_quirk.convert_objectclass_from_rfc(
-                        rfc_data
-                    )
+            # Step 4: Convert from RFC to TARGET format
+            if schema_type == "attribute":
+                from_rfc_result = target_quirk.convert_attribute_from_rfc(rfc_data)
+            else:
+                from_rfc_result = target_quirk.convert_objectclass_from_rfc(rfc_data)
 
-                if from_rfc_result.is_failure:
-                    transformed.append(str(schema_str))
-                    continue
+            if from_rfc_result.is_failure:
+                transformed.append(str(schema_str))
+                continue
 
-                target_data = from_rfc_result.unwrap()
+            target_data = from_rfc_result.unwrap()
 
-                # Step 5: Format to LDIF string
-                if schema_type == "attribute":
-                    format_result = target_quirk.write_attribute_to_rfc(target_data)
-                else:
-                    format_result = target_quirk.write_objectclass_to_rfc(target_data)
+            # Step 5: Format to LDIF string
+            if schema_type == "attribute":
+                format_result = target_quirk.write_attribute_to_rfc(target_data)
+            else:
+                format_result = target_quirk.write_objectclass_to_rfc(target_data)
 
-                if format_result.is_success:
-                    transformed.append(format_result.unwrap())
-                else:
-                    transformed.append(str(schema_str))
-
-            except Exception:
+            if format_result.is_success:
+                transformed.append(format_result.unwrap())
+            else:
                 transformed.append(str(schema_str))
 
         return transformed
@@ -542,20 +548,80 @@ class FlextLdifFileWriterService:
             depth = dn.count(",") + (1 if dn else 0)
             return (depth, dn.lower())
 
-        # Filter only entries with a DN string to avoid exceptions during sort
+        # Filter only entries with a non-empty DN string to avoid exceptions during sort
         sortable = [
             e
             for e in entries
-            if isinstance(e.get(FlextLdifConstants.DictKeys.DN, ""), str)
+            if isinstance(e.get(FlextLdifConstants.DictKeys.DN), str)
+            and len(str(e.get(FlextLdifConstants.DictKeys.DN))) > 0
         ]
         nonsortable = [
             e
             for e in entries
-            if not isinstance(e.get(FlextLdifConstants.DictKeys.DN, ""), str)
+            if not (
+                isinstance(e.get(FlextLdifConstants.DictKeys.DN), str)
+                and len(str(e.get(FlextLdifConstants.DictKeys.DN))) > 0
+            )
         ]
 
         # Sort sortable entries and keep any non-sortable at the end in original order
         return sorted(sortable, key=sort_key) + nonsortable
+
+    def _comment_blocked_entries_in_file(self, ldif_file: str) -> None:
+        """Comment out only blocked attribute lines in LDIF file.
+
+        Only the specific blocked attribute lines are commented out with # prefix.
+        The entries themselves are preserved, but blocked attributes are commented
+        to prevent them from being synced to OUD.
+
+        Blocked attributes (only these lines get commented):
+        - orclaci, orclentrylevelaci (ACL only, should be in 04-acl.ldif)
+        - authpassword;orclcommonpwd, authpassword;oid (passwords)
+        - orclpassword (Oracle password field)
+        - pwdpolicysubentry (password policy)
+
+        Args:
+            ldif_file: Path to LDIF file to post-process
+
+        """
+        # Define blocked attribute patterns (case-insensitive)
+        blocked_attrs = {
+            "orclaci",
+            "orclentrylevelaci",
+            "authpassword;orclcommonpwd",
+            "authpassword;oid",
+            "orclpassword",
+            "pwdpolicysubentry",
+        }
+
+        try:
+            with Path(ldif_file).open("r", encoding="utf-8") as f:
+                lines = f.readlines()
+
+            output_lines = []
+
+            for line in lines:
+                # Check if this line is a blocked attribute (case-insensitive)
+                is_blocked = False
+                for attr in blocked_attrs:
+                    if line.lower().startswith(attr + ":"):
+                        is_blocked = True
+                        break
+
+                # Comment out only the blocked attribute lines
+                if is_blocked:
+                    output_lines.append("# " + line)
+                else:
+                    output_lines.append(line)
+
+            with Path(ldif_file).open("w", encoding="utf-8") as f:
+                f.writelines(output_lines)
+
+        except (OSError, UnicodeDecodeError, UnicodeEncodeError) as e:
+            # Log warning but don't fail - file was written successfully
+            logger.warning(
+                f"Failed to post-process {ldif_file} for blocked entries: {e}"
+            )
 
 
 __all__ = ["FlextLdifFileWriterService"]
