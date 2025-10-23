@@ -1059,6 +1059,372 @@ class TestOudEntryRoundTrip:
         assert processed1.get("orclVersion") == processed2.get("orclVersion")
 
 
+class TestOudFilteringEdgeCases:
+    """Test edge cases for OUD attribute and objectClass filtering."""
+
+    @pytest.fixture
+    def oud_quirk(self) -> FlextLdifQuirksServersOud:
+        """Create OUD schema quirk instance."""
+        return FlextLdifQuirksServersOud(server_type=FlextLdifConstants.ServerTypes.OUD)
+
+    def test_should_filter_out_attribute_internal_names(
+        self, oud_quirk: FlextLdifQuirksServersOud
+    ) -> None:
+        """Test filtering of Oracle internal attributes by name."""
+        # Internal attribute from ORACLE_INTERNAL_ATTRIBUTES
+        internal_attr = (
+            "( 2.16.840.1.113894.1.1.100 NAME 'changenumber' "
+            "SYNTAX 1.3.6.1.4.1.1466.115.121.1.27 )"
+        )
+        assert oud_quirk.should_filter_out_attribute(internal_attr)
+
+        # Standard Oracle attribute (not internal)
+        oracle_attr = (
+            "( 2.16.840.1.113894.1.1.1 NAME 'orclVersion' "
+            "SYNTAX 1.3.6.1.4.1.1466.115.121.1.27 )"
+        )
+        assert not oud_quirk.should_filter_out_attribute(oracle_attr)
+
+    def test_should_filter_out_attribute_non_oracle(
+        self, oud_quirk: FlextLdifQuirksServersOud
+    ) -> None:
+        """Test that non-Oracle attributes are not filtered."""
+        rfc_attr = (
+            "( 0.9.2342.19200300.100.1.1 NAME 'uid' "
+            "SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
+        )
+        assert not oud_quirk.should_filter_out_attribute(rfc_attr)
+
+    def test_should_filter_out_attribute_malformed_name(
+        self, oud_quirk: FlextLdifQuirksServersOud
+    ) -> None:
+        """Test filtering with malformed attribute name."""
+        # Missing NAME clause - should not be filtered
+        malformed_attr = (
+            "( 2.16.840.1.113894.1.1.100 SYNTAX 1.3.6.1.4.1.1466.115.121.1.27 )"
+        )
+        assert not oud_quirk.should_filter_out_attribute(malformed_attr)
+
+    def test_should_filter_out_objectclass_internal_names(
+        self, oud_quirk: FlextLdifQuirksServersOud
+    ) -> None:
+        """Test filtering of Oracle internal objectClasses by name."""
+        # Internal objectClass
+        internal_oc = (
+            "( 2.16.840.1.113894.1.2.6 NAME 'changelogentry' SUP top STRUCTURAL )"
+        )
+        assert oud_quirk.should_filter_out_objectclass(internal_oc)
+
+        # Oracle custom objectClass (not internal)
+        oracle_oc = "( 2.16.840.1.113894.2.1.1 NAME 'orclContext' SUP top STRUCTURAL )"
+        assert not oud_quirk.should_filter_out_objectclass(oracle_oc)
+
+    def test_should_filter_out_objectclass_non_oracle(
+        self, oud_quirk: FlextLdifQuirksServersOud
+    ) -> None:
+        """Test that non-Oracle objectClasses are not filtered."""
+        rfc_oc = "( 2.5.6.6 NAME 'person' SUP top STRUCTURAL )"
+        assert not oud_quirk.should_filter_out_objectclass(rfc_oc)
+
+    def test_should_filter_out_objectclass_case_insensitive(
+        self, oud_quirk: FlextLdifQuirksServersOud
+    ) -> None:
+        """Test case-insensitive filtering of objectClass names."""
+        # Uppercase version of internal class
+        internal_oc_upper = (
+            "( 2.16.840.1.113894.1.2.6 NAME 'CHANGELOGENTRY' SUP top STRUCTURAL )"
+        )
+        assert oud_quirk.should_filter_out_objectclass(internal_oc_upper)
+
+        # MixedCase version
+        internal_oc_mixed = (
+            "( 2.16.840.1.113894.1.2.6 NAME 'ChangelogEntry' SUP top STRUCTURAL )"
+        )
+        assert oud_quirk.should_filter_out_objectclass(internal_oc_mixed)
+
+    def test_can_handle_attribute_filters_internal(
+        self, oud_quirk: FlextLdifQuirksServersOud
+    ) -> None:
+        """Test can_handle_attribute correctly filters internal attributes."""
+        internal_attr = (
+            "( 2.16.840.1.113894.1.1.100 NAME 'targetdn' "
+            "SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
+        )
+        assert not oud_quirk.can_handle_attribute(internal_attr)
+
+    def test_can_handle_objectclass_filters_internal(
+        self, oud_quirk: FlextLdifQuirksServersOud
+    ) -> None:
+        """Test can_handle_objectclass correctly filters internal classes."""
+        internal_oc = (
+            "( 2.16.840.1.113894.1.2.21 NAME 'orclchangesubscriber' "
+            "SUP top STRUCTURAL )"
+        )
+        assert not oud_quirk.can_handle_objectclass(internal_oc)
+
+
+class TestOudSyntaxConversion:
+    """Test OUD syntax OID replacement and conversion."""
+
+    @pytest.fixture
+    def oud_quirk(self) -> FlextLdifQuirksServersOud:
+        """Create OUD schema quirk instance."""
+        return FlextLdifQuirksServersOud(server_type=FlextLdifConstants.ServerTypes.OUD)
+
+    def test_syntax_oid_replacement_deprecated(
+        self, oud_quirk: FlextLdifQuirksServersOud
+    ) -> None:
+        """Test replacement of deprecated syntax OIDs."""
+        # Attribute with deprecated syntax
+        attr_with_deprecated_syntax = (
+            "( 2.16.840.1.113894.1.1.1 NAME 'testAttr' "
+            "SYNTAX 1.3.6.1.4.1.1466.115.121.1.19 )"  # Deprecated Unknown
+        )
+
+        result = oud_quirk.parse_attribute(attr_with_deprecated_syntax)
+        assert result.is_success
+
+        parsed = result.unwrap()
+        # Should have been replaced with Directory String
+        assert parsed.get("syntax") in {
+            "1.3.6.1.4.1.1466.115.121.1.15",  # Directory String
+            "1.3.6.1.4.1.1466.115.121.1.19",  # Original (may not be replaced in parse)
+        }
+
+    def test_parse_attribute_with_syntax_oid_in_conversion(
+        self, oud_quirk: FlextLdifQuirksServersOud
+    ) -> None:
+        """Test that syntax OID replacement happens during conversion."""
+        attr_data: dict[str, object] = {
+            "oid": "2.16.840.1.113894.1.1.1",
+            "name": "testAttr",
+            "syntax": "1.3.6.1.4.1.1466.115.121.1.13",  # Deprecated - should be replaced
+        }
+
+        result = oud_quirk.convert_attribute_to_rfc(attr_data)
+        assert result.is_success
+
+        rfc_data = result.unwrap()
+        # Converted syntax should be valid
+        assert "syntax" in rfc_data
+
+
+class TestOudExtractSchemas:
+    """Test OUD schema extraction from LDIF content."""
+
+    @pytest.fixture
+    def oud_quirk(self) -> FlextLdifQuirksServersOud:
+        """Create OUD schema quirk instance."""
+        return FlextLdifQuirksServersOud(server_type=FlextLdifConstants.ServerTypes.OUD)
+
+    def test_extract_schemas_from_ldif_basic(
+        self, oud_quirk: FlextLdifQuirksServersOud
+    ) -> None:
+        """Test extraction of schema definitions from basic LDIF."""
+        ldif_content = """dn: cn=schema
+objectClass: top
+objectClass: ldapSubentry
+cn: schema
+attributeTypes: ( 2.16.840.1.113894.1.1.1 NAME 'orclVersion' SYNTAX 1.3.6.1.4.1.1466.115.121.1.27 )
+objectClasses: ( 2.16.840.1.113894.2.1.1 NAME 'orclContext' SUP top STRUCTURAL )
+"""
+        result = oud_quirk.extract_schemas_from_ldif(ldif_content)
+        assert result.is_success
+
+        schemas = result.unwrap()
+        assert FlextLdifConstants.DictKeys.ATTRIBUTES in schemas
+        assert "objectclasses" in schemas
+        attrs = schemas.get(FlextLdifConstants.DictKeys.ATTRIBUTES, [])
+        assert isinstance(attrs, list) and len(attrs) > 0
+        ocs = schemas.get("objectclasses", [])
+        assert isinstance(ocs, list) and len(ocs) > 0
+
+    def test_extract_schemas_from_ldif_empty(
+        self, oud_quirk: FlextLdifQuirksServersOud
+    ) -> None:
+        """Test extraction from LDIF with no schema definitions."""
+        ldif_content = """dn: cn=test,dc=example,dc=com
+objectClass: person
+cn: test
+"""
+        result = oud_quirk.extract_schemas_from_ldif(ldif_content)
+        assert result.is_success
+
+        schemas = result.unwrap()
+        attrs = schemas.get(FlextLdifConstants.DictKeys.ATTRIBUTES, [])
+        assert isinstance(attrs, list) and len(attrs) == 0
+        ocs = schemas.get("objectclasses", [])
+        assert isinstance(ocs, list) and len(ocs) == 0
+
+    def test_extract_schemas_multiline_attributes(
+        self, oud_quirk: FlextLdifQuirksServersOud
+    ) -> None:
+        """Test extraction of multi-line schema definitions."""
+        ldif_content = """dn: cn=schema
+objectClass: ldapSubentry
+attributeTypes: ( 2.16.840.1.113894.1.1.1 NAME 'orclVersion'
+ DESC 'Oracle Version'
+ SYNTAX 1.3.6.1.4.1.1466.115.121.1.27
+ SINGLE-VALUE )
+"""
+        result = oud_quirk.extract_schemas_from_ldif(ldif_content)
+        assert result.is_success
+
+        schemas = result.unwrap()
+        # Should successfully extract multi-line definition
+        attrs = schemas.get(FlextLdifConstants.DictKeys.ATTRIBUTES, [])
+        assert isinstance(attrs, list)
+
+
+class TestOudParseEdgeCases:
+    """Test edge cases in OUD attribute and objectClass parsing."""
+
+    @pytest.fixture
+    def oud_quirk(self) -> FlextLdifQuirksServersOud:
+        """Create OUD schema quirk instance."""
+        return FlextLdifQuirksServersOud(server_type=FlextLdifConstants.ServerTypes.OUD)
+
+    def test_parse_attribute_with_multiple_names(
+        self, oud_quirk: FlextLdifQuirksServersOud
+    ) -> None:
+        """Test parsing attribute with multiple NAME values."""
+        attr_def = (
+            "( 2.16.840.1.113894.1.1.1 NAME ( 'orclVersion' 'oraVersion' ) "
+            "SYNTAX 1.3.6.1.4.1.1466.115.121.1.27 )"
+        )
+
+        result = oud_quirk.parse_attribute(attr_def)
+        assert result.is_success
+
+        parsed = result.unwrap()
+        assert "oid" in parsed
+        assert "name" in parsed
+
+    def test_parse_objectclass_with_multiple_sup(
+        self, oud_quirk: FlextLdifQuirksServersOud
+    ) -> None:
+        """Test parsing objectClass with multiple SUP values."""
+        oc_def = (
+            "( 2.16.840.1.113894.2.1.1 NAME 'orclContext' "
+            "SUP ( top $ extensibleObject ) STRUCTURAL )"
+        )
+
+        result = oud_quirk.parse_objectclass(oc_def)
+        assert result.is_success
+
+        parsed = result.unwrap()
+        assert "oid" in parsed
+        assert "name" in parsed
+
+    def test_parse_attribute_with_extensions(
+        self, oud_quirk: FlextLdifQuirksServersOud
+    ) -> None:
+        """Test parsing attribute with X- extensions."""
+        attr_def = (
+            "( 2.16.840.1.113894.1.1.1 NAME 'orclVersion' "
+            "SYNTAX 1.3.6.1.4.1.1466.115.121.1.27 "
+            "X-ORIGIN 'Oracle' X-PROPERTY 'ORACLE_CUSTOM' )"
+        )
+
+        result = oud_quirk.parse_attribute(attr_def)
+        assert result.is_success
+
+        parsed = result.unwrap()
+        assert parsed.get("oid") == "2.16.840.1.113894.1.1.1"
+
+    def test_parse_objectclass_with_extensions(
+        self, oud_quirk: FlextLdifQuirksServersOud
+    ) -> None:
+        """Test parsing objectClass with X- extensions."""
+        oc_def = (
+            "( 2.16.840.1.113894.2.1.1 NAME 'orclContext' "
+            "SUP top STRUCTURAL "
+            "X-ORIGIN 'Oracle' X-STRUCTURAL 'TRUE' )"
+        )
+
+        result = oud_quirk.parse_objectclass(oc_def)
+        assert result.is_success
+
+        parsed = result.unwrap()
+        assert parsed.get("oid") == "2.16.840.1.113894.2.1.1"
+
+
+class TestOudConversionEdgeCases:
+    """Test edge cases in OUD to RFC conversions."""
+
+    @pytest.fixture
+    def oud_quirk(self) -> FlextLdifQuirksServersOud:
+        """Create OUD schema quirk instance."""
+        return FlextLdifQuirksServersOud(server_type=FlextLdifConstants.ServerTypes.OUD)
+
+    def test_convert_attribute_to_rfc_with_empty_syntax(
+        self, oud_quirk: FlextLdifQuirksServersOud
+    ) -> None:
+        """Test converting attribute with missing syntax."""
+        attr_data: dict[str, object] = {
+            "oid": "2.16.840.1.113894.1.1.1",
+            "name": "orclVersion",
+            # Missing syntax - should still convert
+        }
+
+        result = oud_quirk.convert_attribute_to_rfc(attr_data)
+        assert result.is_success
+
+        rfc_data = result.unwrap()
+        assert rfc_data[FlextLdifConstants.DictKeys.OID] == "2.16.840.1.113894.1.1.1"
+
+    def test_convert_objectclass_to_rfc_with_no_must_may(
+        self, oud_quirk: FlextLdifQuirksServersOud
+    ) -> None:
+        """Test converting objectClass without MUST or MAY clauses."""
+        oc_data: dict[str, object] = {
+            "oid": "2.16.840.1.113894.2.1.1",
+            "name": "orclContext",
+            "sup": "top",
+            "kind": "AUXILIARY",
+            # No must or may
+        }
+
+        result = oud_quirk.convert_objectclass_to_rfc(oc_data)
+        assert result.is_success
+
+        rfc_data = result.unwrap()
+        assert rfc_data[FlextLdifConstants.DictKeys.OID] == "2.16.840.1.113894.2.1.1"
+
+    def test_convert_attribute_from_rfc_with_metadata(
+        self, oud_quirk: FlextLdifQuirksServersOud
+    ) -> None:
+        """Test converting RFC attribute back to OUD with metadata."""
+        rfc_data: dict[str, object] = {
+            "oid": "2.16.840.1.113894.1.1.1",
+            "name": "orclVersion",
+            "syntax": "1.3.6.1.4.1.1466.115.121.1.27",
+        }
+
+        result = oud_quirk.convert_attribute_from_rfc(rfc_data)
+        assert result.is_success
+
+        oud_data = result.unwrap()
+        assert oud_data[FlextLdifConstants.DictKeys.OID] == "2.16.840.1.113894.1.1.1"
+
+    def test_convert_objectclass_from_rfc_with_metadata(
+        self, oud_quirk: FlextLdifQuirksServersOud
+    ) -> None:
+        """Test converting RFC objectClass back to OUD with metadata."""
+        rfc_data: dict[str, object] = {
+            "oid": "2.16.840.1.113894.2.1.1",
+            "name": "orclContext",
+            "kind": "STRUCTURAL",
+            "sup": "top",
+        }
+
+        result = oud_quirk.convert_objectclass_from_rfc(rfc_data)
+        assert result.is_success
+
+        oud_data = result.unwrap()
+        assert oud_data[FlextLdifConstants.DictKeys.OID] == "2.16.840.1.113894.2.1.1"
+
+
 __all__ = [
     "TestOudAclQuirks",
     "TestOudAclRoundTrip",

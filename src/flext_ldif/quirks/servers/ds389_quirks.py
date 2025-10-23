@@ -417,7 +417,7 @@ class FlextLdifQuirksServersDs389(FlextLdifQuirksBaseSchemaQuirk):
         def parse_acl(self, acl_line: str) -> FlextResult[dict[str, object]]:
             """Parse 389 DS ACI definition."""
             try:
-                attr_name, content = self._split_acl_line(acl_line)
+                attr_name, content = self._splitacl_line(acl_line)
                 clauses = [
                     clause.strip() for clause in self.CLAUSE_PATTERN.findall(content)
                 ]
@@ -565,7 +565,7 @@ class FlextLdifQuirksServersDs389(FlextLdifQuirksBaseSchemaQuirk):
                 )
 
         @staticmethod
-        def _split_acl_line(acl_line: str) -> tuple[str, str]:
+        def _splitacl_line(acl_line: str) -> tuple[str, str]:
             """Split an ACL line into attribute name and payload."""
             attr_name, _, remainder = acl_line.partition(":")
             return attr_name.strip(), remainder.strip()

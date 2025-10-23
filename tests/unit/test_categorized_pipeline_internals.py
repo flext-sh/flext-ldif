@@ -126,7 +126,9 @@ serialNumber: 123
         assert exec_result.statistics.rejected_entries > 0
 
     @pytest.mark.unit
-    def test_categorize_entry_case_insensitive_schema_name(self, tmp_path: Path) -> None:
+    def test_categorize_entry_case_insensitive_schema_name(
+        self, tmp_path: Path
+    ) -> None:
         """Test schema entry detection with varying case."""
         input_dir = tmp_path / "input"
         output_dir = tmp_path / "output"
@@ -788,7 +790,9 @@ uniqueMember: cn=user3,dc=example,dc=com
         pipeline = FlextLdifCategorizedMigrationPipeline(
             input_dir=input_dir,
             output_dir=output_dir,
-            categorization_rules={"group_objectclasses": ["groupOfNames", "groupOfUniqueNames"]},
+            categorization_rules={
+                "group_objectclasses": ["groupOfNames", "groupOfUniqueNames"]
+            },
             parser_quirk=None,
             writer_quirk=None,
         )

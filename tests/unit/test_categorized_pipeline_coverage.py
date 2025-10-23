@@ -31,7 +31,9 @@ class TestPipelineErrorHandling:
 
         # Create a simple LDIF file
         ldif_file = input_dir / "test.ldif"
-        ldif_file.write_text("dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test\n")
+        ldif_file.write_text(
+            "dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test\n"
+        )
 
         # Make output directory read-only
         output_dir.chmod(0o444)

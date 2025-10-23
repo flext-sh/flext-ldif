@@ -28,6 +28,12 @@ from flext_core import (
 if TYPE_CHECKING:
     # Forward reference: flext_ldap is not a direct dependency
     # Only used for type annotations to support interoperability
+    from typing import Protocol
+
+    class EntryWithDn(Protocol):
+        dn: Any  # Can be str or object with .value
+        attributes: Any  # Entry attributes dictionary
+
     FlextLdapModels: Any
 
 from flext_ldif.acl.service import FlextLdifAclService
@@ -489,7 +495,7 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.CustomDataDict]):
         return self._client.write_ldif(entries, output_path)
 
     def get_entry_dn(
-        self, entry: FlextLdifModels.Entry | FlextLdapModels.Entry  # noqa: F821
+        self, entry: FlextLdifModels.Entry | EntryWithDn
     ) -> FlextResult[str]:
         """Extract DN (Distinguished Name) from any entry type.
 
@@ -528,7 +534,7 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.CustomDataDict]):
             return FlextResult[str].fail(f"Failed to extract DN: {e}")
 
     def get_entry_attributes(
-        self, entry: FlextLdifModels.Entry | FlextLdapModels.Entry  # noqa: F821
+        self, entry: FlextLdifModels.Entry | EntryWithDn
     ) -> FlextResult[FlextLdifTypes.CommonDict.AttributeDict]:
         """Extract attributes from any entry type.
 
@@ -651,7 +657,8 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.CustomDataDict]):
             )
 
     def get_entry_objectclasses(
-        self, entry: FlextLdifModels.Entry | FlextLdapModels.Entry  # noqa: F821
+        self,
+        entry: FlextLdifModels.Entry | EntryWithDn,
     ) -> FlextResult[list[str]]:
         """Extract objectClass values from any entry type.
 

@@ -111,18 +111,32 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
             True if attribute is Oracle OID-specific (namespace 2.16.840.1.113894.*)
 
         """
-        # Extract OID from definition
-        try:
-            # Find OID in parentheses at start: ( 2.16.840.1.113894.* ...
-            match = re.search(r"\(\s*([\d.]+)", attr_definition)
-            if not match:
-                return False
-
-            oid = match.group(1)
-            # Check if it's Oracle OID namespace
-            return oid.startswith("2.16.840.1.113894.")
-        except Exception:
+        # Validate input type first (defensive programming)
+        if not isinstance(attr_definition, str):
+            logger.error(
+                f"can_handle_attribute received non-string input: "
+                f"{type(attr_definition).__name__}"
+            )
             return False
+
+        # Extract OID from definition
+        # Find OID in parentheses at start: ( 2.16.840.1.113894.* ...
+        try:
+            match = re.search(r"\(\s*([\d.]+)", attr_definition)
+        except re.error:
+            # Regex compilation/execution error (should not happen with static pattern)
+            logger.exception(
+                f"Regex error in can_handle_attribute, input: {attr_definition[:100]}"
+            )
+            return False
+
+        # No match found - this is expected for non-OID attributes
+        if not match:
+            return False
+
+        oid = match.group(1)
+        # Check if it's Oracle OID namespace
+        return oid.startswith("2.16.840.1.113894.")
 
     def parse_attribute(self, attr_definition: str) -> FlextResult[dict[str, object]]:
         """Parse Oracle OID attribute definition.
@@ -225,18 +239,25 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
             True if objectClass is Oracle OID-specific (namespace 2.16.840.1.113894.*)
 
         """
-        # Extract OID from definition
-        try:
-            # Find OID in parentheses at start: ( 2.16.840.1.113894.* ...
-            match = re.search(r"\(\s*([\d.]+)", oc_definition)
-            if not match:
-                return False
-
-            oid = match.group(1)
-            # Check if it's Oracle OID namespace
-            return oid.startswith("2.16.840.1.113894.")
-        except Exception:
+        # Validate input type first (defensive programming)
+        if not isinstance(oc_definition, str):
+            logging.getLogger(__name__).error(
+                f"can_handle_objectclass received non-string input: "
+                f"{type(oc_definition).__name__}"
+            )
             return False
+
+        # Extract OID from definition
+        # Find OID in parentheses at start: ( 2.16.840.1.113894.* ...
+        match = re.search(r"\(\s*([\d.]+)", oc_definition)
+
+        # No match found - this is expected for non-OID objectClasses
+        if not match:
+            return False
+
+        oid = match.group(1)
+        # Check if it's Oracle OID namespace
+        return oid.startswith("2.16.840.1.113894.")
 
     def parse_objectclass(self, oc_definition: str) -> FlextResult[dict[str, object]]:
         """Parse Oracle OID objectClass definition.
@@ -1019,28 +1040,48 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                         # Build permission dict
                         permissions.append({
                             "action": "allow",
-                            "operations": perms_list if isinstance(perms_list, list) else [perms_list]
+                            "operations": perms_list
+                            if isinstance(perms_list, list)
+                            else [perms_list],
                         })
 
                         # Convert OID subject to RFC bind rule
                         if subject == "*":
                             bind_rules.append({"type": "userdn", "value": "ldap:///*"})
                         elif subject == "self":
-                            bind_rules.append({"type": "userdn", "value": "ldap:///self"})
+                            bind_rules.append({
+                                "type": "userdn",
+                                "value": "ldap:///self",
+                            })
                         elif subject.startswith('group="'):
                             dn = subject.split('"')[1]
-                            bind_rules.append({"type": "groupdn", "value": f"ldap:///{dn}"})
-                        elif subject.startswith('dnattr='):
-                            attr = subject.replace('dnattr=(', '').replace(')', '')
-                            bind_rules.append({"type": "userattr", "value": f"{attr}#LDAPURL"})
-                        elif subject.startswith('guidattr='):
-                            attr = subject.replace('guidattr=(', '').replace(')', '')
-                            bind_rules.append({"type": "userattr", "value": f"{attr}#USERDN"})
-                        elif subject.startswith('groupattr='):
-                            attr = subject.replace('groupattr=(', '').replace(')', '')
-                            bind_rules.append({"type": "userattr", "value": f"{attr}#GROUPDN"})
+                            bind_rules.append({
+                                "type": "groupdn",
+                                "value": f"ldap:///{dn}",
+                            })
+                        elif subject.startswith("dnattr="):
+                            attr = subject.replace("dnattr=(", "").replace(")", "")
+                            bind_rules.append({
+                                "type": "userattr",
+                                "value": f"{attr}#LDAPURL",
+                            })
+                        elif subject.startswith("guidattr="):
+                            attr = subject.replace("guidattr=(", "").replace(")", "")
+                            bind_rules.append({
+                                "type": "userattr",
+                                "value": f"{attr}#USERDN",
+                            })
+                        elif subject.startswith("groupattr="):
+                            attr = subject.replace("groupattr=(", "").replace(")", "")
+                            bind_rules.append({
+                                "type": "userattr",
+                                "value": f"{attr}#GROUPDN",
+                            })
                         else:
-                            bind_rules.append({"type": "userdn", "value": f"ldap:///{subject}"})
+                            bind_rules.append({
+                                "type": "userdn",
+                                "value": f"ldap:///{subject}",
+                            })
 
                 # Build RFC data structure
                 rfc_data: dict[str, object] = {
@@ -1050,7 +1091,9 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                     "permissions": permissions,
                     "bind_rules": bind_rules,
                     # Preserve target info
-                    "targetattr": acl_data.get("target_attrs", "*") if acl_data.get("target") == "attr" else "*",
+                    "targetattr": acl_data.get("target_attrs", "*")
+                    if acl_data.get("target") == "attr"
+                    else "*",
                     "acl_name": "Migrated from OID",
                 }
 
@@ -1167,30 +1210,30 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                             # Extract DN from group="dn"
                             dn = subject.split('"')[1]
                             bind_rule = f'groupdn="ldap:///{dn}"'
-                        elif subject.startswith('dnattr='):
+                        elif subject.startswith("dnattr="):
                             # dnattr=(attrname) → userattr="attrname#LDAPURL"
-                            attr = subject.replace('dnattr=(', '').replace(')', '')
+                            attr = subject.replace("dnattr=(", "").replace(")", "")
                             bind_rule = f'userattr="{attr}#LDAPURL"'
-                        elif subject.startswith('guidattr='):
+                        elif subject.startswith("guidattr="):
                             # guidattr=(attrname) → userattr="attrname#USERDN"
-                            attr = subject.replace('guidattr=(', '').replace(')', '')
+                            attr = subject.replace("guidattr=(", "").replace(")", "")
                             bind_rule = f'userattr="{attr}#USERDN"'
-                        elif subject.startswith('groupattr='):
+                        elif subject.startswith("groupattr="):
                             # groupattr=(attrname) → userattr="attrname#GROUPDN"
-                            attr = subject.replace('groupattr=(', '').replace(')', '')
+                            attr = subject.replace("groupattr=(", "").replace(")", "")
                             bind_rule = f'userattr="{attr}#GROUPDN"'
                         else:
                             # Default: treat as DN
                             bind_rule = f'userdn="ldap:///{subject}"'
 
                         # Build permission rule
-                        aci_parts.append(f' allow ({perms_str}) {bind_rule};')
+                        aci_parts.append(f" allow ({perms_str}) {bind_rule};")
                 else:
                     # No by clauses → allow all for everyone
                     aci_parts.append(' allow (all) userdn="ldap:///*";')
 
                 # Close the ACI
-                aci_parts.append(')')
+                aci_parts.append(")")
 
                 # Combine all parts
                 aci_string = "".join(aci_parts)

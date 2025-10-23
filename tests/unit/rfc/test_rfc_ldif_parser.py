@@ -1562,7 +1562,7 @@ class TestRfcLdifWriterExecuteMethod:
         result = writer.execute()
 
         assert result.is_success
-        content = output_file.read_text()
+        content = output_file.read_text(encoding="utf-8")
         assert "cn=existing" in content
         assert "cn=User1" in content
 
@@ -1585,7 +1585,7 @@ class TestRfcLdifWriterFileOperations:
 
         assert result.is_success
         assert output_file.exists()
-        content = output_file.read_text()
+        content = output_file.read_text(encoding="utf-8")
         assert "dn: cn=Test,dc=example,dc=com" in content
 
     def test_write_entries_to_file_creates_directory(self, tmp_path: Path) -> None:

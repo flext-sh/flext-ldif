@@ -34,10 +34,10 @@ class FlextLdifEntryBuilder(FlextService[FlextLdifModels.Entry]):
         self, attributes: dict[str, str | list[str]]
     ) -> dict[str, list[str]]:
         """Normalize attributes dict to ensure all values are lists.
-        
+
         Args:
             attributes: Attributes dict with potentially str or list[str] values
-            
+
         Returns:
             Normalized dict[str, list[str]] where all values are lists
 

@@ -20,9 +20,7 @@ from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.typings import FlextLdifTypes
 
 
-class FlextLdifStatisticsService(
-    FlextService[FlextLdifTypes.Models.CustomDataDict]
-):
+class FlextLdifStatisticsService(FlextService[FlextLdifTypes.Models.CustomDataDict]):
     """Statistics service for LDIF processing pipeline.
 
     Provides methods for generating comprehensive statistics about
@@ -50,7 +48,11 @@ class FlextLdifStatisticsService(
         return FlextResult[FlextLdifTypes.Models.CustomDataDict].ok({
             "service": "StatisticsService",
             "status": "operational",
-            "capabilities": ["generate_statistics", "count_entries", "analyze_rejections"],
+            "capabilities": [
+                "generate_statistics",
+                "count_entries",
+                "analyze_rejections",
+            ],
         })
 
     def generate_statistics(

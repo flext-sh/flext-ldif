@@ -230,10 +230,8 @@ sn: User2
 """
 
         # Chain parse -> validate -> analyze
-        result = (
-            ldif.parse(ldif_content).flat_map(
-                lambda entries: ldif.validate_entries(entries)  # noqa: PLW0108
-            )
+        result = ldif.parse(ldif_content).flat_map(
+            lambda entries: ldif.validate_entries(entries)  # noqa: PLW0108
         )
 
         # Should complete without error
@@ -277,4 +275,4 @@ member: cn=user1,dc=example,dc=com
         analysis = ldif.analyze(entries)
 
         if analysis is not None:
-            assert isinstance(analysis, dict) or hasattr(analysis, '__iter__')
+            assert isinstance(analysis, dict) or hasattr(analysis, "__iter__")

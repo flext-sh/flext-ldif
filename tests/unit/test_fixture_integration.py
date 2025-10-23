@@ -29,7 +29,9 @@ class TestFixturesParsing:
         assert result.is_success
         entries_raw = result.unwrap()
         assert isinstance(entries_raw, list)
-        assert len(entries_raw) >= 45, f"Expected 45+ RFC entries, got {len(entries_raw)}"
+        assert len(entries_raw) >= 45, (
+            f"Expected 45+ RFC entries, got {len(entries_raw)}"
+        )
 
     def test_rfc_fixture_validation(self, ldif: FlextLdif) -> None:
         """Test RFC fixture entries are valid."""
@@ -68,7 +70,9 @@ class TestFixturesParsing:
         assert result.is_success
         entries_raw = result.unwrap()
         assert isinstance(entries_raw, list)
-        assert len(entries_raw) >= 45, f"Expected 45+ OpenLDAP2 entries, got {len(entries_raw)}"
+        assert len(entries_raw) >= 45, (
+            f"Expected 45+ OpenLDAP2 entries, got {len(entries_raw)}"
+        )
 
     def test_cross_server_fixture_parsing(self, ldif: FlextLdif) -> None:
         """Test parsing fixtures from all servers."""
@@ -84,7 +88,9 @@ class TestFixturesParsing:
             assert result.is_success, f"Failed to parse {fixture_path}: {result.error}"
             entries_raw = result.unwrap()
             assert isinstance(entries_raw, list)
-            assert len(entries_raw) >= 1, f"Expected at least 1 entry from {fixture_path}"
+            assert len(entries_raw) >= 1, (
+                f"Expected at least 1 entry from {fixture_path}"
+            )
 
 
 class TestFixturesStructure:

@@ -85,7 +85,11 @@ class TestFlextLdifConfig:
         config = FlextLdifConfig(max_workers=16)
         # max_workers is adjusted when in debug mode
         # In debug mode with high workers, it's capped at MAX_WORKERS_DEBUG_RULE (2)
-        if (config.debug or config.trace or config.log_level == FlextConstants.Settings.LogLevel.DEBUG):
+        if (
+            config.debug
+            or config.trace
+            or config.log_level == FlextConstants.Settings.LogLevel.DEBUG
+        ):
             expected_workers = FlextLdifConstants.ValidationRules.MAX_WORKERS_DEBUG_RULE
         else:
             expected_workers = 16
@@ -407,8 +411,7 @@ class TestFlextLdifConfig:
         )
         # Performance optimizations may be disabled in debug mode
         expected_perf = (
-            perf_config.enable_performance_optimizations
-            and not perf_config.debug
+            perf_config.enable_performance_optimizations and not perf_config.debug
         )
         assert perf_config.is_performance_optimized() == expected_perf
 
@@ -619,6 +622,6 @@ class TestQuirksDetectionConfiguration:
         for detection_mode in ["auto", "disabled"]:
             config = FlextLdifConfig(
                 quirks_detection_mode=detection_mode,  # type: ignore[arg-type]
-                enable_relaxed_parsing=True
+                enable_relaxed_parsing=True,
             )
             assert config.enable_relaxed_parsing is True

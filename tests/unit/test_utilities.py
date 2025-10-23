@@ -221,9 +221,7 @@ class TestNormalizer:
         entry: dict[str, object] = {
             FlextLdifConstants.DictKeys.DN: "cn=schema",
             FlextLdifConstants.DictKeys.ATTRIBUTES: {
-                "aci": [
-                    'aci: (target="ldap:///cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com")'
-                ]
+                "aci": ['aci: (target="ldap:///cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com")']
             },
         }
         dn_map = {"cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com": "CN=Admin,DC=Example,DC=Com"}
@@ -279,22 +277,31 @@ class TestNormalizer:
         )
         assert result == entry  # Returns unchanged entry
 
-    def test_normalize_aci_dn_references_exception_in_try_block(self) -> None:
+    def test_normalize_aci_dn_references_exception_in_try_block(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Test exception handling in normalize_aci_dn_references try block (lines 189-190)."""
-        # Create entry where dn_map.get causes AttributeError by using wrong dict type
+        from flext_ldif.services import FlextLdifDnService
+
         entry: dict[str, object] = {
             FlextLdifConstants.DictKeys.DN: "cn=schema",
             FlextLdifConstants.DictKeys.ATTRIBUTES: {
                 "aci": 'aci: (target="ldap:///cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com")'
             },
         }
-        # Use a non-dict as dn_map to trigger exception when calling dn_map.get()
-        bad_dn_map: dict[str, str] = {}  # Empty dict won't have the key
+        dn_map = {"cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com": "CN=Admin,DC=Example,DC=Com"}
 
+        # Patch clean_dn to raise an exception to test exception handler
+        def raise_on_clean(dn: str) -> str:
+            msg = "Test exception in clean_dn"
+            raise RuntimeError(msg)
+
+        monkeypatch.setattr(FlextLdifDnService, "clean_dn", raise_on_clean)
+
+        # Should return entry unchanged when exception occurs (lines 189-190)
         result = FlextLdifUtilities.Normalizer.normalize_aci_dn_references(
-            entry, bad_dn_map
+            entry, dn_map
         )
-        # Should return entry unchanged due to exception handling
         assert result == entry
 
 
@@ -437,7 +444,10 @@ class TestStatistics:
             ],
         }
         written_counts: dict[str, int] = {"users": 1, "groups": 1}
-        output_files: dict[str, object] = {"users": "users.ldif", "groups": "groups.ldif"}
+        output_files: dict[str, object] = {
+            "users": "users.ldif",
+            "groups": "groups.ldif",
+        }
 
         result = FlextLdifUtilities.Statistics.generate_statistics(
             categorized=categorized,

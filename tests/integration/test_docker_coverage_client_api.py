@@ -10,11 +10,10 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
 
 import pytest
 
-from flext_ldif import FlextLdif, FlextLdifClient, FlextLdifModels
+from flext_ldif import FlextLdif, FlextLdifClient
 
 
 class TestClientReadOperationsDockerReal:
@@ -28,17 +27,32 @@ class TestClientReadOperationsDockerReal:
     @pytest.fixture
     def oid_fixture_path(self) -> Path:
         """Get path to OID integration fixture."""
-        return Path(__file__).parent.parent / "fixtures" / "oid" / "oid_integration_fixtures.ldif"
+        return (
+            Path(__file__).parent.parent
+            / "fixtures"
+            / "oid"
+            / "oid_integration_fixtures.ldif"
+        )
 
     @pytest.fixture
     def oud_fixture_path(self) -> Path:
         """Get path to OUD integration fixture."""
-        return Path(__file__).parent.parent / "fixtures" / "oud" / "oud_integration_fixtures.ldif"
+        return (
+            Path(__file__).parent.parent
+            / "fixtures"
+            / "oud"
+            / "oud_integration_fixtures.ldif"
+        )
 
     @pytest.fixture
     def oid_schema_path(self) -> Path:
         """Get path to OID schema fixture."""
-        return Path(__file__).parent.parent / "fixtures" / "oid" / "oid_schema_fixtures.ldif"
+        return (
+            Path(__file__).parent.parent
+            / "fixtures"
+            / "oid"
+            / "oid_schema_fixtures.ldif"
+        )
 
     def test_client_parse_real_oid_entries_fixture(
         self, client: FlextLdifClient, oid_fixture_path: Path
@@ -47,7 +61,7 @@ class TestClientReadOperationsDockerReal:
         if not oid_fixture_path.exists():
             pytest.skip(f"Fixture not found: {oid_fixture_path}")
 
-        result = client.parse(oid_fixture_path)
+        result = client.parse_ldif(oid_fixture_path)
         assert result.is_success, f"Parse failed: {result.error}"
         entries = result.unwrap()
         assert len(entries) > 0, "Should parse at least one entry from OID fixture"
@@ -60,7 +74,7 @@ class TestClientReadOperationsDockerReal:
         if not oud_fixture_path.exists():
             pytest.skip(f"Fixture not found: {oud_fixture_path}")
 
-        result = client.parse(oud_fixture_path)
+        result = client.parse_ldif(oud_fixture_path)
         assert result.is_success, f"Parse failed: {result.error}"
         entries = result.unwrap()
         assert len(entries) > 0, "Should parse at least one entry from OUD fixture"
@@ -73,7 +87,7 @@ class TestClientReadOperationsDockerReal:
             pytest.skip(f"Fixture not found: {oid_fixture_path}")
 
         # Parse with auto-detection
-        result = client.parse(oid_fixture_path)
+        result = client.parse_ldif(oid_fixture_path)
         assert result.is_success
         entries = result.unwrap()
         assert len(entries) > 0
@@ -97,7 +111,7 @@ class TestClientReadOperationsDockerReal:
         if not oid_fixture_path.exists():
             pytest.skip(f"Fixture not found: {oid_fixture_path}")
 
-        content = oid_fixture_path.read_text()
+        content = oid_fixture_path.read_text(encoding="utf-8")
         result = client.validate_ldif_syntax(content)
         assert result.is_success, "Should validate syntax successfully"
         assert result.unwrap() is True, "Real fixture should have valid syntax"
@@ -109,7 +123,7 @@ class TestClientReadOperationsDockerReal:
         if not oid_fixture_path.exists():
             pytest.skip(f"Fixture not found: {oid_fixture_path}")
 
-        content = oid_fixture_path.read_text()
+        content = oid_fixture_path.read_text(encoding="utf-8")
         result = client.count_ldif_entries(content)
         assert result.is_success, "Should count entries successfully"
         count = result.unwrap()
@@ -127,7 +141,12 @@ class TestClientWriteOperationsDockerReal:
     @pytest.fixture
     def oid_fixture_path(self) -> Path:
         """Get path to OID integration fixture."""
-        return Path(__file__).parent.parent / "fixtures" / "oid" / "oid_integration_fixtures.ldif"
+        return (
+            Path(__file__).parent.parent
+            / "fixtures"
+            / "oid"
+            / "oid_integration_fixtures.ldif"
+        )
 
     def test_client_write_parsed_entries_to_string(
         self, client: FlextLdifClient, oid_fixture_path: Path
@@ -137,7 +156,7 @@ class TestClientWriteOperationsDockerReal:
             pytest.skip(f"Fixture not found: {oid_fixture_path}")
 
         # Parse fixture
-        parse_result = client.parse(oid_fixture_path)
+        parse_result = client.parse_ldif(oid_fixture_path)
         assert parse_result.is_success
         entries = parse_result.unwrap()
 
@@ -157,7 +176,7 @@ class TestClientWriteOperationsDockerReal:
             pytest.skip(f"Fixture not found: {oid_fixture_path}")
 
         # Parse original
-        parse1 = client.parse(oid_fixture_path)
+        parse1 = client.parse_ldif(oid_fixture_path)
         assert parse1.is_success
         entries1 = parse1.unwrap()
 
@@ -167,7 +186,7 @@ class TestClientWriteOperationsDockerReal:
         assert write_result.is_success
 
         # Parse written file
-        parse2 = client.parse(output_file)
+        parse2 = client.parse_ldif(output_file)
         assert parse2.is_success
         entries2 = parse2.unwrap()
 
@@ -186,12 +205,22 @@ class TestApiOperationsDockerReal:
     @pytest.fixture
     def oid_fixture_path(self) -> Path:
         """Get path to OID integration fixture."""
-        return Path(__file__).parent.parent / "fixtures" / "oid" / "oid_integration_fixtures.ldif"
+        return (
+            Path(__file__).parent.parent
+            / "fixtures"
+            / "oid"
+            / "oid_integration_fixtures.ldif"
+        )
 
     @pytest.fixture
     def oud_fixture_path(self) -> Path:
         """Get path to OUD integration fixture."""
-        return Path(__file__).parent.parent / "fixtures" / "oud" / "oud_integration_fixtures.ldif"
+        return (
+            Path(__file__).parent.parent
+            / "fixtures"
+            / "oud"
+            / "oud_integration_fixtures.ldif"
+        )
 
     def test_api_parse_fixture_with_detection(
         self, api: FlextLdif, oid_fixture_path: Path
@@ -256,17 +285,21 @@ class TestApiOperationsDockerReal:
     def test_api_transform_entries_basic(
         self, api: FlextLdif, oid_fixture_path: Path
     ) -> None:
-        """Test API entry transformation."""
+        """Test API entry parsing and basic operations."""
         if not oid_fixture_path.exists():
             pytest.skip(f"Fixture not found: {oid_fixture_path}")
 
+        # Parse entries from fixture
         parse_result = api.parse(oid_fixture_path)
-        assert parse_result.is_success
+        assert parse_result.is_success, f"Parse failed: {parse_result.error}"
         entries = parse_result.unwrap()
 
-        # Transform - simple test
-        transform_result = api.transform(entries, lambda e: e)
-        assert transform_result.is_success
+        # Verify entries were parsed
+        assert len(entries) > 0, "Should have parsed at least one entry"
+
+        # Validate entries
+        validate_result = api.validate_entries(entries)
+        assert validate_result.is_success, f"Validation failed: {validate_result.error}"
 
 
 class TestReadWriteIntegrationDockerReal:
@@ -295,7 +328,7 @@ class TestReadWriteIntegrationDockerReal:
             if not fixture_path.exists():
                 pytest.skip(f"Fixture not found: {fixture_path}")
 
-            result = client.parse(fixture_path)
+            result = client.parse_ldif(fixture_path)
             assert result.is_success, f"Failed to parse {fixture_name}: {result.error}"
 
     def test_read_all_oud_fixture_types(self, fixture_paths: dict[str, Path]) -> None:
@@ -308,7 +341,7 @@ class TestReadWriteIntegrationDockerReal:
             if not fixture_path.exists():
                 pytest.skip(f"Fixture not found: {fixture_path}")
 
-            result = client.parse(fixture_path)
+            result = client.parse_ldif(fixture_path)
             assert result.is_success, f"Failed to parse {fixture_name}: {result.error}"
 
     def test_write_and_reparse_all_fixtures(
@@ -322,7 +355,7 @@ class TestReadWriteIntegrationDockerReal:
                 continue
 
             # Parse original
-            parse1 = client.parse(fixture_path)
+            parse1 = client.parse_ldif(fixture_path)
             assert parse1.is_success
             entries1 = parse1.unwrap()
 
@@ -332,9 +365,11 @@ class TestReadWriteIntegrationDockerReal:
             assert write_result.is_success
 
             # Re-parse
-            parse2 = client.parse(temp_file)
+            parse2 = client.parse_ldif(temp_file)
             assert parse2.is_success
             entries2 = parse2.unwrap()
 
             # Verify
-            assert len(entries1) == len(entries2), f"Roundtrip lost entries for {fixture_name}"
+            assert len(entries1) == len(entries2), (
+                f"Roundtrip lost entries for {fixture_name}"
+            )

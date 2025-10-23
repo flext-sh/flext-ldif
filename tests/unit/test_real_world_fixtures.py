@@ -50,6 +50,7 @@ class TestRFCFixtures:
         entries = unwrapped
 
         from flext_ldif.models import FlextLdifModels
+
         categories: dict[str, list[FlextLdifModels.Entry]] = {
             "domain": [],
             "organization": [],
