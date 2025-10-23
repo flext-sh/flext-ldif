@@ -129,7 +129,7 @@ class FlextLdifQuirksServersDs389(FlextLdifQuirksBaseSchemaQuirk):
 
             return FlextResult[dict[str, object]].ok(attr_data)
 
-        except Exception as exc:  # pragma: no cover
+        except Exception as exc:
             return FlextResult[dict[str, object]].fail(
                 f"389 Directory Server attribute parsing failed: {exc}"
             )
@@ -205,7 +205,7 @@ class FlextLdifQuirksServersDs389(FlextLdifQuirksBaseSchemaQuirk):
 
             return FlextResult[dict[str, object]].ok(oc_data)
 
-        except Exception as exc:  # pragma: no cover
+        except Exception as exc:
             return FlextResult[dict[str, object]].fail(
                 f"389 Directory Server objectClass parsing failed: {exc}"
             )
@@ -249,7 +249,7 @@ class FlextLdifQuirksServersDs389(FlextLdifQuirksBaseSchemaQuirk):
 
             return FlextResult[dict[str, object]].ok(rfc_data)
 
-        except Exception as exc:  # pragma: no cover
+        except Exception as exc:
             return FlextResult[dict[str, object]].fail(
                 f"389 Directory Server→RFC attribute conversion failed: {exc}"
             )
@@ -287,7 +287,7 @@ class FlextLdifQuirksServersDs389(FlextLdifQuirksBaseSchemaQuirk):
 
             return FlextResult[dict[str, object]].ok(rfc_data)
 
-        except Exception as exc:  # pragma: no cover
+        except Exception as exc:
             return FlextResult[dict[str, object]].fail(
                 f"389 Directory Server→RFC objectClass conversion failed: {exc}"
             )
@@ -302,7 +302,7 @@ class FlextLdifQuirksServersDs389(FlextLdifQuirksBaseSchemaQuirk):
                 FlextLdifConstants.DictKeys.SERVER_TYPE: self.server_type,
             }
             return FlextResult[dict[str, object]].ok(ds389_data)
-        except Exception as exc:  # pragma: no cover
+        except Exception as exc:
             return FlextResult[dict[str, object]].fail(
                 f"RFC→389 Directory Server attribute conversion failed: {exc}"
             )
@@ -317,7 +317,7 @@ class FlextLdifQuirksServersDs389(FlextLdifQuirksBaseSchemaQuirk):
                 FlextLdifConstants.DictKeys.SERVER_TYPE: self.server_type,
             }
             return FlextResult[dict[str, object]].ok(ds389_data)
-        except Exception as exc:  # pragma: no cover
+        except Exception as exc:
             return FlextResult[dict[str, object]].fail(
                 f"RFC→389 Directory Server objectClass conversion failed: {exc}"
             )
@@ -348,7 +348,7 @@ class FlextLdifQuirksServersDs389(FlextLdifQuirksBaseSchemaQuirk):
             attr_str += " )"
 
             return FlextResult[str].ok(attr_str)
-        except Exception as exc:  # pragma: no cover
+        except Exception as exc:
             return FlextResult[str].fail(
                 f"389 Directory Server attribute write failed: {exc}"
             )
@@ -381,7 +381,7 @@ class FlextLdifQuirksServersDs389(FlextLdifQuirksBaseSchemaQuirk):
             oc_str += " )"
 
             return FlextResult[str].ok(oc_str)
-        except Exception as exc:  # pragma: no cover
+        except Exception as exc:
             return FlextResult[str].fail(
                 f"389 Directory Server objectClass write failed: {exc}"
             )
@@ -462,7 +462,7 @@ class FlextLdifQuirksServersDs389(FlextLdifQuirksBaseSchemaQuirk):
                 }
                 return FlextResult[dict[str, object]].ok(acl_payload)
 
-            except Exception as exc:  # pragma: no cover
+            except Exception as exc:
                 return FlextResult[dict[str, object]].fail(
                     f"389 Directory Server ACL parsing failed: {exc}"
                 )
@@ -482,7 +482,7 @@ class FlextLdifQuirksServersDs389(FlextLdifQuirksBaseSchemaQuirk):
                 }
                 return FlextResult[dict[str, object]].ok(rfc_acl)
 
-            except Exception as exc:  # pragma: no cover
+            except Exception as exc:
                 return FlextResult[dict[str, object]].fail(
                     f"389 Directory Server ACL→RFC conversion failed: {exc}"
                 )
@@ -501,7 +501,7 @@ class FlextLdifQuirksServersDs389(FlextLdifQuirksBaseSchemaQuirk):
                 }
                 return FlextResult[dict[str, object]].ok(ds_acl)
 
-            except Exception as exc:  # pragma: no cover
+            except Exception as exc:
                 return FlextResult[dict[str, object]].fail(
                     f"RFC→389 Directory Server ACL conversion failed: {exc}"
                 )
@@ -667,7 +667,7 @@ class FlextLdifQuirksServersDs389(FlextLdifQuirksBaseSchemaQuirk):
 
                 return FlextResult[dict[str, object]].ok(processed_entry)
 
-            except Exception as exc:  # pragma: no cover
+            except Exception as exc:
                 return FlextResult[dict[str, object]].fail(
                     f"389 Directory Server entry processing failed: {exc}"
                 )
@@ -683,7 +683,7 @@ class FlextLdifQuirksServersDs389(FlextLdifQuirksBaseSchemaQuirk):
                 normalized_entry.pop(FlextLdifConstants.DictKeys.IS_CONFIG_ENTRY, None)
                 return FlextResult[dict[str, object]].ok(normalized_entry)
 
-            except Exception as exc:  # pragma: no cover
+            except Exception as exc:
                 return FlextResult[dict[str, object]].fail(
                     f"389 Directory Server entry→RFC conversion failed: {exc}"
                 )

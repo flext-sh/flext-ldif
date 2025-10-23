@@ -31,15 +31,15 @@ class TestApiParsingVariants:
     def fixtures_dir(self) -> Path:
         return Path(__file__).parent.parent / "fixtures"
 
-    def test_api_parse_with_relaxed_mode(
-        self, fixtures_dir: Path
-    ) -> None:
+    def test_api_parse_with_relaxed_mode(self, fixtures_dir: Path) -> None:
         """Test API parsing with relaxed mode enabled."""
         config = FlextLdifConfig(enable_relaxed_parsing=True)
         api = FlextLdif(config=config)
 
         for server_type in ["oid", "oud", "openldap"]:
-            fixture_path = fixtures_dir / server_type / f"{server_type}_integration_fixtures.ldif"
+            fixture_path = (
+                fixtures_dir / server_type / f"{server_type}_integration_fixtures.ldif"
+            )
             if not fixture_path.exists():
                 continue
 
@@ -49,13 +49,10 @@ class TestApiParsingVariants:
                 entries = result.unwrap()
                 assert len(entries) >= 0
 
-    def test_api_parse_with_manual_server_override(
-        self, fixtures_dir: Path
-    ) -> None:
+    def test_api_parse_with_manual_server_override(self, fixtures_dir: Path) -> None:
         """Test API parsing with manual server type override."""
         config = FlextLdifConfig(
-            quirks_detection_mode="manual",
-            quirks_server_type="oid"
+            quirks_detection_mode="manual", quirks_server_type="oid"
         )
         api = FlextLdif(config=config)
 
@@ -64,9 +61,7 @@ class TestApiParsingVariants:
             result = api.parse(fixture_path)
             assert result.is_success or result.is_failure
 
-    def test_api_parse_with_disabled_quirks(
-        self, fixtures_dir: Path
-    ) -> None:
+    def test_api_parse_with_disabled_quirks(self, fixtures_dir: Path) -> None:
         """Test API parsing with quirks disabled (RFC-only mode)."""
         config = FlextLdifConfig(quirks_detection_mode="disabled")
         api = FlextLdif(config=config)
@@ -76,9 +71,7 @@ class TestApiParsingVariants:
             result = api.parse(fixture_path)
             assert result.is_success or result.is_failure
 
-    def test_api_parse_with_path_string(
-        self, fixtures_dir: Path
-    ) -> None:
+    def test_api_parse_with_path_string(self, fixtures_dir: Path) -> None:
         """Test API parsing with string path instead of Path object."""
         api = FlextLdif()
 
@@ -167,8 +160,7 @@ class TestClientFilterOperations:
 
         entries = parse_result.unwrap()
         filter_result = api.filter(
-            entries,
-            custom_filter=lambda e: "dc=" in str(e.dn).lower()
+            entries, custom_filter=lambda e: "dc=" in str(e.dn).lower()
         )
         assert filter_result.is_success or filter_result.is_failure
 
@@ -198,13 +190,14 @@ class TestApiMigrationVariants:
         output_dir.mkdir()
 
         import shutil
+
         shutil.copy(fixture_path, input_dir / "data.ldif")
 
         result = api.migrate(
             input_dir=input_dir,
             output_dir=output_dir,
             from_server="oid",
-            to_server="oud"
+            to_server="oud",
         )
         assert result.is_success or result.is_failure
 
@@ -222,13 +215,14 @@ class TestApiMigrationVariants:
         output_dir.mkdir()
 
         import shutil
+
         shutil.copy(fixture_path, input_dir / "data.ldif")
 
         result = api.migrate(
             input_dir=input_dir,
             output_dir=output_dir,
             from_server="oid",
-            to_server="rfc"
+            to_server="rfc",
         )
         assert result.is_success or result.is_failure
 
@@ -253,7 +247,9 @@ class TestApiAnalysisOperations:
     ) -> None:
         """Test API analysis with statistics calculation."""
         for server_type in ["oid", "oud", "openldap"]:
-            fixture_path = fixtures_dir / server_type / f"{server_type}_integration_fixtures.ldif"
+            fixture_path = (
+                fixtures_dir / server_type / f"{server_type}_integration_fixtures.ldif"
+            )
             if not fixture_path.exists():
                 continue
 
@@ -293,12 +289,12 @@ class TestApiServerDetection:
     def fixtures_dir(self) -> Path:
         return Path(__file__).parent.parent / "fixtures"
 
-    def test_api_detect_server_type(
-        self, api: FlextLdif, fixtures_dir: Path
-    ) -> None:
+    def test_api_detect_server_type(self, api: FlextLdif, fixtures_dir: Path) -> None:
         """Test server type detection from LDIF content."""
         for server_type in ["oid", "oud", "openldap"]:
-            fixture_path = fixtures_dir / server_type / f"{server_type}_integration_fixtures.ldif"
+            fixture_path = (
+                fixtures_dir / server_type / f"{server_type}_integration_fixtures.ldif"
+            )
             if not fixture_path.exists():
                 continue
 
@@ -363,9 +359,7 @@ class TestApiConfigurationModes:
     def fixtures_dir(self) -> Path:
         return Path(__file__).parent.parent / "fixtures"
 
-    def test_api_with_all_config_combinations(
-        self, fixtures_dir: Path
-    ) -> None:
+    def test_api_with_all_config_combinations(self, fixtures_dir: Path) -> None:
         """Test API with different config combinations."""
         fixture_path = fixtures_dir / "oid" / "oid_integration_fixtures.ldif"
         if not fixture_path.exists():
@@ -375,10 +369,7 @@ class TestApiConfigurationModes:
             FlextLdifConfig(quirks_detection_mode="auto"),
             FlextLdifConfig(quirks_detection_mode="disabled"),
             FlextLdifConfig(enable_relaxed_parsing=True),
-            FlextLdifConfig(
-                quirks_detection_mode="manual",
-                quirks_server_type="oid"
-            ),
+            FlextLdifConfig(quirks_detection_mode="manual", quirks_server_type="oid"),
         ]
 
         for config in configs:

@@ -74,13 +74,14 @@ class TestOidQuirksTransformations:
         output_dir.mkdir()
 
         import shutil
+
         shutil.copy(fixture_path, input_dir / "data.ldif")
 
         result = api.migrate(
             input_dir=input_dir,
             output_dir=output_dir,
             from_server="oid",
-            to_server="openldap"
+            to_server="openldap",
         )
         assert result.is_success or result.is_failure
 
@@ -142,13 +143,14 @@ class TestOudQuirksTransformations:
         output_dir.mkdir()
 
         import shutil
+
         shutil.copy(fixture_path, input_dir / "data.ldif")
 
         result = api.migrate(
             input_dir=input_dir,
             output_dir=output_dir,
             from_server="oid",
-            to_server="oud"
+            to_server="oud",
         )
         assert result.is_success or result.is_failure
 
@@ -166,13 +168,14 @@ class TestOudQuirksTransformations:
         output_dir.mkdir()
 
         import shutil
+
         shutil.copy(fixture_path, input_dir / "data.ldif")
 
         result = api.migrate(
             input_dir=input_dir,
             output_dir=output_dir,
             from_server="oud",
-            to_server="openldap"
+            to_server="openldap",
         )
         assert result.is_success or result.is_failure
 

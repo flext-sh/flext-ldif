@@ -53,9 +53,10 @@ class TestOudSchemaFixes:
         )
 
     def test_fix_objectclass_type_mismatches(self) -> None:
-        """Test automatic fixing of objectclass type mismatches.
+        """Test that objectclass type mismatches are NOT automatically fixed.
 
-        OUD rejects AUXILIARY inheriting from STRUCTURAL (and vice versa).
+        OUD validates schema at startup and will reject type mismatches.
+        Migration tool does not modify SUP clauses (pass through as-is).
         """
         quirk = FlextLdifQuirksServersOud()
 
@@ -73,8 +74,8 @@ class TestOudSchemaFixes:
         assert result_aux.is_success
         rfc_string_aux = result_aux.unwrap()
 
-        # Should remove SUP clause to fix type mismatch
-        assert "SUP orclpwdverifierprofile" not in rfc_string_aux
+        # SUP clause should be KEPT (not removed) - pass through as-is
+        assert "SUP orclpwdverifierprofile" in rfc_string_aux
         assert "AUXILIARY" in rfc_string_aux
 
         # Test Case 2: STRUCTURAL inheriting from AUXILIARY
@@ -91,8 +92,8 @@ class TestOudSchemaFixes:
         assert result_struct.is_success
         rfc_string_struct = result_struct.unwrap()
 
-        # Should remove SUP clause to fix type mismatch
-        assert "SUP javaNamingReference" not in rfc_string_struct
+        # SUP clause should be KEPT (not removed) - pass through as-is
+        assert "SUP javaNamingReference" in rfc_string_struct
         assert "STRUCTURAL" in rfc_string_struct
 
         # Test Case 3: Multiple SUP classes with mismatch
@@ -111,8 +112,8 @@ class TestOudSchemaFixes:
         assert result_multi.is_success
         rfc_string_multi = result_multi.unwrap()
 
-        # Should remove SUP clause because groupofuniquenames is STRUCTURAL
-        assert "SUP" not in rfc_string_multi
+        # SUP clause should be KEPT (not removed) - pass through as-is
+        assert "SUP" in rfc_string_multi
         assert "AUXILIARY" in rfc_string_multi
 
     def test_fix_illegal_characters_in_attribute_names(self) -> None:
@@ -202,8 +203,8 @@ class TestOudSchemaFixes:
         assert result_oc.is_success
         rfc_string_oc = result_oc.unwrap()
 
-        # Type mismatch fix: SUP should be removed
-        assert "SUP device" not in rfc_string_oc
+        # Type mismatch fix: SUP should be KEPT (not removed) - pass through as-is
+        assert "SUP device" in rfc_string_oc
         # Illegal character fix: underscore replaced with hyphen
         assert (
             "orclUM-GenericProperty" in rfc_string_oc

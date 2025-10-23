@@ -325,7 +325,7 @@ class FlextLdifRfcLdifWriter(FlextService[FlextLdifTypes.Models.CustomDataDict])
                 FlextLdifConstants.DictKeys.LINES_WRITTEN: total_lines,
             })
 
-        except Exception as e:  # pragma: no cover
+        except Exception as e:
             if self.logger is not None:
                 self.logger.exception("LDIF write failed")
             return FlextResult[FlextLdifTypes.Models.CustomDataDict].fail(
@@ -367,13 +367,27 @@ class FlextLdifRfcLdifWriter(FlextService[FlextLdifTypes.Models.CustomDataDict])
                     attributes = entry[FlextLdifConstants.DictKeys.ATTRIBUTES]
                     if isinstance(attributes, dict):
                         for attr_name, attr_values in attributes.items():
+                            # Check if this is an ACL attribute that needs conversion
+                            acl_attribute_names = ["aci", "orclaci", "orclentrylevelaci"]
+                            is_acl_attribute = attr_name.lower() in acl_attribute_names
+
                             if isinstance(attr_values, list):
-                                for value in attr_values:
-                                    # Format value according to RFC 2849 (base64 if needed)
-                                    attr_line = self._format_attribute_value(
-                                        attr_name, str(value)
-                                    )
-                                    output.write(attr_line + "\n")
+                                # If ACL attribute, convert via _extract_acl_definitions
+                                if is_acl_attribute:
+                                    converted_acls = self._extract_acl_definitions(attr_values)
+                                    for acl_str in converted_acls:
+                                        attr_line = self._format_attribute_value(
+                                            attr_name, acl_str
+                                        )
+                                        output.write(attr_line + "\n")
+                                else:
+                                    # Regular attribute - write as-is
+                                    for value in attr_values:
+                                        # Format value according to RFC 2849 (base64 if needed)
+                                        attr_line = self._format_attribute_value(
+                                            attr_name, str(value)
+                                        )
+                                        output.write(attr_line + "\n")
                 # Handle Entry objects
                 elif hasattr(entry, "dn") and hasattr(entry, "attributes"):
                     # This is an Entry object
@@ -387,11 +401,23 @@ class FlextLdifRfcLdifWriter(FlextService[FlextLdifTypes.Models.CustomDataDict])
                         attr_name,
                         attr_values,
                     ) in entry_obj.attributes.attributes.items():
+                        # Check if this is an ACL attribute that needs conversion
+                        acl_attribute_names = ["aci", "orclaci", "orclentrylevelaci"]
+                        is_acl_attribute = attr_name.lower() in acl_attribute_names
+
                         # attr_values is AttributeValues, need to access .values property
-                        for value in attr_values.values:
-                            # Format value according to RFC 2849 (base64 if needed)
-                            attr_line = self._format_attribute_value(attr_name, value)
-                            output.write(attr_line + "\n")
+                        if is_acl_attribute:
+                            # Convert ACL values via _extract_acl_definitions
+                            converted_acls = self._extract_acl_definitions(attr_values.values)
+                            for acl_str in converted_acls:
+                                attr_line = self._format_attribute_value(attr_name, acl_str)
+                                output.write(attr_line + "\n")
+                        else:
+                            # Regular attribute - write as-is
+                            for value in attr_values.values:
+                                # Format value according to RFC 2849 (base64 if needed)
+                                attr_line = self._format_attribute_value(attr_name, value)
+                                output.write(attr_line + "\n")
                 else:
                     # Fallback - shouldn't happen with proper usage
                     msg = f"Unsupported entry type: {type(entry)}"
@@ -403,7 +429,7 @@ class FlextLdifRfcLdifWriter(FlextService[FlextLdifTypes.Models.CustomDataDict])
             ldif_string = output.getvalue()
             return FlextResult[str].ok(ldif_string)
 
-        except Exception as e:  # pragma: no cover
+        except Exception as e:
             return FlextResult[str].fail(f"Failed to write entries to string: {e}")
 
     def write_entries_to_file(
@@ -441,10 +467,22 @@ class FlextLdifRfcLdifWriter(FlextService[FlextLdifTypes.Models.CustomDataDict])
                         attributes = entry[FlextLdifConstants.DictKeys.ATTRIBUTES]
                         if isinstance(attributes, dict):
                             for attr_name, attr_values in attributes.items():
+                                # Check if this is an ACL attribute that needs conversion
+                                acl_attribute_names = ["aci", "orclaci", "orclentrylevelaci"]
+                                is_acl_attribute = attr_name.lower() in acl_attribute_names
+
                                 if isinstance(attr_values, list):
-                                    for value in attr_values:
-                                        attr_line = f"{attr_name}: {value}"
-                                        f.write(attr_line + "\n")
+                                    # If ACL attribute, convert via _extract_acl_definitions
+                                    if is_acl_attribute:
+                                        converted_acls = self._extract_acl_definitions(attr_values)
+                                        for acl_str in converted_acls:
+                                            attr_line = f"{attr_name}: {acl_str}"
+                                            f.write(attr_line + "\n")
+                                    else:
+                                        # Regular attribute - write as-is
+                                        for value in attr_values:
+                                            attr_line = f"{attr_name}: {value}"
+                                            f.write(attr_line + "\n")
                     # Handle Entry objects
                     elif hasattr(entry, "dn") and hasattr(entry, "attributes"):
                         # This is an Entry object
@@ -458,10 +496,22 @@ class FlextLdifRfcLdifWriter(FlextService[FlextLdifTypes.Models.CustomDataDict])
                             attr_name,
                             attr_values,
                         ) in entry_obj.attributes.attributes.items():
+                            # Check if this is an ACL attribute that needs conversion
+                            acl_attribute_names = ["aci", "orclaci", "orclentrylevelaci"]
+                            is_acl_attribute = attr_name.lower() in acl_attribute_names
+
                             # attr_values is AttributeValues, need to access .values property
-                            for value in attr_values.values:
-                                attr_line = f"{attr_name}: {value}"
-                                f.write(attr_line + "\n")
+                            if is_acl_attribute:
+                                # Convert ACL values via _extract_acl_definitions
+                                converted_acls = self._extract_acl_definitions(attr_values.values)
+                                for acl_str in converted_acls:
+                                    attr_line = f"{attr_name}: {acl_str}"
+                                    f.write(attr_line + "\n")
+                            else:
+                                # Regular attribute - write as-is
+                                for value in attr_values.values:
+                                    attr_line = f"{attr_name}: {value}"
+                                    f.write(attr_line + "\n")
                     else:
                         # Fallback - shouldn't happen with proper usage
                         msg = f"Unsupported entry type: {type(entry)}"
@@ -473,7 +523,7 @@ class FlextLdifRfcLdifWriter(FlextService[FlextLdifTypes.Models.CustomDataDict])
 
             return FlextResult[None].ok(None)
 
-        except Exception as e:  # pragma: no cover
+        except Exception as e:
             return FlextResult[None].fail(f"Failed to write entries to file: {e}")
 
     def _write_schema_entries(
@@ -557,7 +607,7 @@ class FlextLdifRfcLdifWriter(FlextService[FlextLdifTypes.Models.CustomDataDict])
                 FlextLdifConstants.DictKeys.LINES_WRITTEN: lines_written,
             })
 
-        except Exception as e:  # pragma: no cover
+        except Exception as e:
             return FlextResult[FlextLdifTypes.Models.CustomDataDict].fail(
                 f"Schema writing failed: {e}"
             )
@@ -711,6 +761,10 @@ class FlextLdifRfcLdifWriter(FlextService[FlextLdifTypes.Models.CustomDataDict])
 
                     # Write attributes
                     for attr_name, attr_values in attributes_normalized.items():
+                        # Check if this is an ACL attribute that needs conversion
+                        acl_attribute_names = ["aci", "orclaci", "orclentrylevelaci"]
+                        is_acl_attribute = attr_name.lower() in acl_attribute_names
+
                         # Handle both single values and lists
                         values = (
                             attr_values
@@ -718,11 +772,21 @@ class FlextLdifRfcLdifWriter(FlextService[FlextLdifTypes.Models.CustomDataDict])
                             else [attr_values]
                         )
 
-                        for value in values:
-                            attr_line = f"{attr_name}: {value}\n"
-                            wrapped_lines = self._wrap_line(attr_line)
-                            file_handle.writelines(wrapped_lines)
-                            lines_written += len(wrapped_lines)
+                        # If ACL attribute, convert via _extract_acl_definitions
+                        if is_acl_attribute:
+                            converted_acls = self._extract_acl_definitions(values)
+                            for acl_str in converted_acls:
+                                attr_line = f"{attr_name}: {acl_str}\n"
+                                wrapped_lines = self._wrap_line(attr_line)
+                                file_handle.writelines(wrapped_lines)
+                                lines_written += len(wrapped_lines)
+                        else:
+                            # Regular attribute - write as-is
+                            for value in values:
+                                attr_line = f"{attr_name}: {value}\n"
+                                wrapped_lines = self._wrap_line(attr_line)
+                                file_handle.writelines(wrapped_lines)
+                                lines_written += len(wrapped_lines)
 
                     # Entry separator
                     file_handle.write("\n")
@@ -734,7 +798,7 @@ class FlextLdifRfcLdifWriter(FlextService[FlextLdifTypes.Models.CustomDataDict])
                 FlextLdifConstants.DictKeys.LINES_WRITTEN: lines_written,
             })
 
-        except Exception as e:  # pragma: no cover
+        except Exception as e:
             return FlextResult[FlextLdifTypes.Models.CustomDataDict].fail(
                 f"Entry writing failed: {e}"
             )
@@ -821,7 +885,7 @@ class FlextLdifRfcLdifWriter(FlextService[FlextLdifTypes.Models.CustomDataDict])
                 FlextLdifConstants.DictKeys.LINES_WRITTEN: lines_written,
             })
 
-        except Exception as e:  # pragma: no cover
+        except Exception as e:
             return FlextResult[FlextLdifTypes.Models.CustomDataDict].fail(
                 f"ACL writing failed: {e}"
             )
@@ -869,7 +933,45 @@ class FlextLdifRfcLdifWriter(FlextService[FlextLdifTypes.Models.CustomDataDict])
 
         """
         if isinstance(raw_acl, list):
-            return [str(item) for item in raw_acl]
+            definitions = []
+            for item in raw_acl:
+                # If item is a dict (from conversion pipeline), check for DEFINITION field
+                if isinstance(item, dict):
+                    if FlextLdifConstants.DictKeys.DEFINITION in item:
+                        # Already has DEFINITION - extract it
+                        definitions.append(str(item[FlextLdifConstants.DictKeys.DEFINITION]))
+                    elif FlextLdifConstants.DictKeys.FORMAT in item:
+                        # Has FORMAT field - this is RFC data that needs OUD conversion
+                        # Convert it now using target quirks
+                        if self._quirk_registry and self._target_server_type:
+                            acl_quirks = self._quirk_registry.get_acl_quirks(
+                                self._target_server_type
+                            )
+                            for quirk in acl_quirks:
+                                convert_result = quirk.convert_acl_from_rfc(item)
+                                if convert_result.is_success:
+                                    converted = convert_result.unwrap()
+                                    if (
+                                        isinstance(converted, dict)
+                                        and FlextLdifConstants.DictKeys.DEFINITION in converted
+                                    ):
+                                        definitions.append(
+                                            str(converted[FlextLdifConstants.DictKeys.DEFINITION])
+                                        )
+                                        break
+                            else:
+                                # No quirk could convert - use FORMAT as fallback (will fail)
+                                definitions.append(str(item.get(FlextLdifConstants.DictKeys.FORMAT, "")))
+                        else:
+                            # No quirks available - use FORMAT as fallback
+                            definitions.append(str(item.get(FlextLdifConstants.DictKeys.FORMAT, "")))
+                    else:
+                        # Unknown dict structure - convert to string
+                        definitions.append(str(item))
+                else:
+                    # Not a dict - convert to string
+                    definitions.append(str(item))
+            return definitions
         return []
 
     def _normalize_dn(self, dn: str) -> str:
@@ -939,7 +1041,7 @@ class FlextLdifRfcLdifWriter(FlextService[FlextLdifTypes.Models.CustomDataDict])
         # Check for non-ASCII characters
         try:
             value.encode("ascii")
-        except UnicodeEncodeError:  # pragma: no cover
+        except UnicodeEncodeError:
             return True
 
         return False

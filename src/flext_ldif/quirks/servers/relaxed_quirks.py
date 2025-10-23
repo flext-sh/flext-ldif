@@ -38,8 +38,8 @@ from flext_ldif.typings import FlextLdifTypes
 logger = logging.getLogger(__name__)
 
 
-class FlextLdifQuirksServersRelaxedSchema(FlextLdifQuirksBaseSchemaQuirk):
-    """Relaxed schema quirk for lenient LDIF processing.
+class FlextLdifQuirksServersRelaxed(FlextLdifQuirksBaseSchemaQuirk):
+    """Relaxed schema quirk - main class for lenient LDIF processing.
 
     Implements minimal validation and best-effort parsing of schema definitions.
     Suitable for broken or non-compliant LDIF files.
@@ -260,258 +260,266 @@ class FlextLdifQuirksServersRelaxedSchema(FlextLdifQuirksBaseSchemaQuirk):
             logger.warning(f"Write objectClass failed: {e}")
             return FlextResult[str].ok(str(oc_data))
 
+    class AclQuirk(FlextLdifQuirksBaseAclQuirk):
+        """Relaxed ACL quirk for lenient LDIF processing.
 
-class FlextLdifQuirksServersRelaxedAcl(FlextLdifQuirksBaseAclQuirk):
-    """Relaxed ACL quirk for lenient LDIF processing.
+        Implements minimal validation for ACL entries.
+        Accepts any ACL format in relaxed mode.
 
-    Implements minimal validation for ACL entries.
-    Accepts any ACL format in relaxed mode.
-
-    **Priority**: 200 (very low - last resort)
-    """
-
-    server_type: str = Field(
-        default="relaxed",
-        description="Relaxed lenient parsing mode",
-    )
-    priority: int = Field(default=200, description="Very low priority - last resort")
-
-    def model_post_init(self, _context: object, /) -> None:
-        """Initialize relaxed ACL quirk."""
-
-    def can_handle_acl(self, acl_line: str) -> bool:
-        """Accept any ACL line in relaxed mode.
-
-        Args:
-            acl_line: ACL definition line
-
-        Returns:
-            Always True - relaxed mode accepts everything
-
+        **Priority**: 200 (very low - last resort)
         """
-        return bool(acl_line.strip())
 
-    def parse_acl(
-        self, acl_line: str
-    ) -> FlextResult[FlextLdifTypes.Models.CustomDataDict]:
-        """Parse ACL with best-effort approach.
+        server_type: str = Field(
+            default="relaxed",
+            description="Relaxed lenient parsing mode",
+        )
+        priority: int = Field(
+            default=200, description="Very low priority - last resort"
+        )
 
-        Args:
-            acl_line: ACL definition line
+        def model_post_init(self, _context: object, /) -> None:
+            """Initialize relaxed ACL quirk."""
 
-        Returns:
-            FlextResult with parsed ACL or error details
+        def can_handle_acl(self, acl_line: str) -> bool:
+            """Accept any ACL line in relaxed mode.
 
+            Args:
+                acl_line: ACL definition line
+
+            Returns:
+                Always True - relaxed mode accepts everything
+
+            """
+            return bool(acl_line.strip())
+
+        def parse_acl(
+            self, acl_line: str
+        ) -> FlextResult[FlextLdifTypes.Models.CustomDataDict]:
+            """Parse ACL with best-effort approach.
+
+            Args:
+                acl_line: ACL definition line
+
+            Returns:
+                FlextResult with parsed ACL or error details
+
+            """
+            try:
+                return FlextResult[FlextLdifTypes.Models.CustomDataDict].ok({
+                    "raw_acl": acl_line,
+                    "relaxed_parsed": True,
+                })
+            except Exception as e:
+                logger.warning(f"Relaxed ACL parse failed: {e}")
+                return FlextResult[FlextLdifTypes.Models.CustomDataDict].ok({
+                    "raw_acl": acl_line,
+                    "relaxed_parsed": False,
+                    "parse_error": str(e),
+                })
+
+        def convert_acl_to_rfc(
+            self, acl_data: FlextLdifTypes.Models.CustomDataDict
+        ) -> FlextResult[FlextLdifTypes.Models.CustomDataDict]:
+            """Convert ACL to RFC format - pass-through in relaxed mode.
+
+            Args:
+                acl_data: ACL data dictionary
+
+            Returns:
+                FlextResult with data (unchanged)
+
+            """
+            return FlextResult[FlextLdifTypes.Models.CustomDataDict].ok(acl_data)
+
+        def convert_acl_from_rfc(
+            self, acl_data: FlextLdifTypes.Models.CustomDataDict
+        ) -> FlextResult[FlextLdifTypes.Models.CustomDataDict]:
+            """Convert ACL from RFC format - pass-through in relaxed mode.
+
+            Args:
+                acl_data: RFC-compliant ACL data
+
+            Returns:
+                FlextResult with data (unchanged)
+
+            """
+            return FlextResult[FlextLdifTypes.Models.CustomDataDict].ok(acl_data)
+
+        def write_acl_to_rfc(
+            self, acl_data: FlextLdifTypes.Models.CustomDataDict
+        ) -> FlextResult[str]:
+            """Write ACL to RFC format - stringify in relaxed mode.
+
+            Args:
+                acl_data: ACL data dictionary
+
+            Returns:
+                FlextResult with stringified data
+
+            """
+            try:
+                raw_acl = acl_data.get("raw_acl", "")
+                if isinstance(raw_acl, str):
+                    return FlextResult[str].ok(raw_acl)
+                return FlextResult[str].ok(str(acl_data))
+            except Exception as e:
+                logger.warning(f"Write ACL failed: {e}")
+                return FlextResult[str].ok(str(acl_data))
+
+    class EntryQuirk(FlextLdifQuirksBaseEntryQuirk):
+        """Relaxed entry quirk for lenient LDIF processing.
+
+        Implements minimal validation for LDIF entries.
+        Accepts any entry format in relaxed mode.
+
+        **Priority**: 200 (very low - last resort)
         """
-        try:
-            return FlextResult[FlextLdifTypes.Models.CustomDataDict].ok({
-                "raw_acl": acl_line,
-                "relaxed_parsed": True,
-            })
-        except Exception as e:
-            logger.warning(f"Relaxed ACL parse failed: {e}")
-            return FlextResult[FlextLdifTypes.Models.CustomDataDict].ok({
-                "raw_acl": acl_line,
-                "relaxed_parsed": False,
-                "parse_error": str(e),
-            })
 
-    def convert_acl_to_rfc(
-        self, acl_data: FlextLdifTypes.Models.CustomDataDict
-    ) -> FlextResult[FlextLdifTypes.Models.CustomDataDict]:
-        """Convert ACL to RFC format - pass-through in relaxed mode.
+        server_type: str = Field(
+            default="relaxed",
+            description="Relaxed lenient parsing mode",
+        )
+        priority: int = Field(
+            default=200, description="Very low priority - last resort"
+        )
 
-        Args:
-            acl_data: ACL data dictionary
+        def model_post_init(self, _context: object, /) -> None:
+            """Initialize relaxed entry quirk."""
 
-        Returns:
-            FlextResult with data (unchanged)
+        def process_entry(
+            self, entry_dn: str, attributes: FlextLdifTypes.Models.CustomDataDict
+        ) -> FlextResult[dict[str, object]]:
+            """Process entry for relaxed mode.
 
-        """
-        return FlextResult[FlextLdifTypes.Models.CustomDataDict].ok(acl_data)
+            Args:
+                entry_dn: Entry distinguished name
+                attributes: Entry attributes
 
-    def convert_acl_from_rfc(
-        self, acl_data: FlextLdifTypes.Models.CustomDataDict
-    ) -> FlextResult[FlextLdifTypes.Models.CustomDataDict]:
-        """Convert ACL from RFC format - pass-through in relaxed mode.
+            Returns:
+                FlextResult with processed entry data
 
-        Args:
-            acl_data: RFC-compliant ACL data
+            """
+            try:
+                return FlextResult[dict[str, object]].ok({
+                    "dn": entry_dn,
+                    "attributes": attributes,
+                    "relaxed_processed": True,
+                })
+            except Exception as e:
+                logger.warning(f"Relaxed entry processing failed: {e}")
+                return FlextResult[dict[str, object]].ok({
+                    "dn": entry_dn,
+                    "attributes": attributes,
+                    "relaxed_processed": False,
+                    "process_error": str(e),
+                })
 
-        Returns:
-            FlextResult with data (unchanged)
+        def can_handle_entry(
+            self,
+            entry_dn: str,
+            attributes: FlextLdifTypes.Models.CustomDataDict,  # noqa: ARG002
+        ) -> bool:
+            """Accept any entry in relaxed mode.
 
-        """
-        return FlextResult[FlextLdifTypes.Models.CustomDataDict].ok(acl_data)
+            Args:
+                entry_dn: Entry distinguished name
+                attributes: Entry attributes (unused - relaxed mode accepts everything)
 
-    def write_acl_to_rfc(
-        self, acl_data: FlextLdifTypes.Models.CustomDataDict
-    ) -> FlextResult[str]:
-        """Write ACL to RFC format - stringify in relaxed mode.
+            Returns:
+                Always True - relaxed mode accepts everything
 
-        Args:
-            acl_data: ACL data dictionary
+            """
+            return bool(entry_dn.strip())
 
-        Returns:
-            FlextResult with stringified data
+        def parse_entry(
+            self, entry_dn: str, attributes: FlextLdifTypes.Models.CustomDataDict
+        ) -> FlextResult[FlextLdifTypes.Models.CustomDataDict]:
+            """Parse entry with best-effort approach.
 
-        """
-        try:
-            raw_acl = acl_data.get("raw_acl", "")
-            if isinstance(raw_acl, str):
-                return FlextResult[str].ok(raw_acl)
-            return FlextResult[str].ok(str(acl_data))
-        except Exception as e:
-            logger.warning(f"Write ACL failed: {e}")
-            return FlextResult[str].ok(str(acl_data))
+            Args:
+                entry_dn: Entry distinguished name
+                attributes: Entry attributes
+
+            Returns:
+                FlextResult with parsed entry or error details
+
+            """
+            try:
+                return FlextResult[FlextLdifTypes.Models.CustomDataDict].ok({
+                    "dn": entry_dn,
+                    "attributes": attributes,
+                    "relaxed_parsed": True,
+                })
+            except Exception as e:
+                logger.warning(f"Relaxed entry parse failed: {e}")
+                return FlextResult[FlextLdifTypes.Models.CustomDataDict].ok({
+                    "dn": entry_dn,
+                    "attributes": attributes,
+                    "relaxed_parsed": False,
+                    "parse_error": str(e),
+                })
+
+        def normalize_dn(self, dn: str) -> FlextResult[str]:
+            """Normalize DN - best-effort in relaxed mode.
+
+            Args:
+                dn: Distinguished name
+
+            Returns:
+                FlextResult with normalized DN
+
+            """
+            try:
+                # Minimal normalization: just lowercase component names
+                components = dn.split(",")
+                normalized = ",".join(
+                    comp.split("=")[0].lower() + "=" + comp.split("=", 1)[1]
+                    if "=" in comp
+                    else comp
+                    for comp in components
+                )
+                return FlextResult[str].ok(normalized)
+            except Exception as e:
+                logger.warning(f"DN normalization failed, using original: {e}")
+                return FlextResult[str].ok(dn)
+
+        def convert_entry_to_rfc(
+            self, entry_data: FlextLdifTypes.Models.CustomDataDict
+        ) -> FlextResult[FlextLdifTypes.Models.CustomDataDict]:
+            """Convert entry to RFC format - pass-through in relaxed mode.
+
+            Args:
+                entry_data: Entry data dictionary
+
+            Returns:
+                FlextResult with data (unchanged)
+
+            """
+            return FlextResult[FlextLdifTypes.Models.CustomDataDict].ok(entry_data)
+
+        def convert_entry_from_rfc(
+            self, entry_data: FlextLdifTypes.Models.CustomDataDict
+        ) -> FlextResult[FlextLdifTypes.Models.CustomDataDict]:
+            """Convert entry from RFC format - pass-through in relaxed mode.
+
+            Args:
+                entry_data: RFC-compliant entry data
+
+            Returns:
+                FlextResult with data (unchanged)
+
+            """
+            return FlextResult[FlextLdifTypes.Models.CustomDataDict].ok(entry_data)
 
 
-class FlextLdifQuirksServersRelaxedEntry(FlextLdifQuirksBaseEntryQuirk):
-    """Relaxed entry quirk for lenient LDIF processing.
-
-    Implements minimal validation for LDIF entries.
-    Accepts any entry format in relaxed mode.
-
-    **Priority**: 200 (very low - last resort)
-    """
-
-    server_type: str = Field(
-        default="relaxed",
-        description="Relaxed lenient parsing mode",
-    )
-    priority: int = Field(default=200, description="Very low priority - last resort")
-
-    def model_post_init(self, _context: object, /) -> None:
-        """Initialize relaxed entry quirk."""
-
-    def process_entry(
-        self, entry_dn: str, attributes: FlextLdifTypes.Models.CustomDataDict
-    ) -> FlextResult[dict[str, object]]:
-        """Process entry for relaxed mode.
-
-        Args:
-            entry_dn: Entry distinguished name
-            attributes: Entry attributes
-
-        Returns:
-            FlextResult with processed entry data
-
-        """
-        try:
-            return FlextResult[dict[str, object]].ok({
-                "dn": entry_dn,
-                "attributes": attributes,
-                "relaxed_processed": True,
-            })
-        except Exception as e:
-            logger.warning(f"Relaxed entry processing failed: {e}")
-            return FlextResult[dict[str, object]].ok({
-                "dn": entry_dn,
-                "attributes": attributes,
-                "relaxed_processed": False,
-                "process_error": str(e),
-            })
-
-    def can_handle_entry(
-        self,
-        entry_dn: str,
-        attributes: FlextLdifTypes.Models.CustomDataDict,  # noqa: ARG002
-    ) -> bool:
-        """Accept any entry in relaxed mode.
-
-        Args:
-            entry_dn: Entry distinguished name
-            attributes: Entry attributes (unused - relaxed mode accepts everything)
-
-        Returns:
-            Always True - relaxed mode accepts everything
-
-        """
-        return bool(entry_dn.strip())
-
-    def parse_entry(
-        self, entry_dn: str, attributes: FlextLdifTypes.Models.CustomDataDict
-    ) -> FlextResult[FlextLdifTypes.Models.CustomDataDict]:
-        """Parse entry with best-effort approach.
-
-        Args:
-            entry_dn: Entry distinguished name
-            attributes: Entry attributes
-
-        Returns:
-            FlextResult with parsed entry or error details
-
-        """
-        try:
-            return FlextResult[FlextLdifTypes.Models.CustomDataDict].ok({
-                "dn": entry_dn,
-                "attributes": attributes,
-                "relaxed_parsed": True,
-            })
-        except Exception as e:
-            logger.warning(f"Relaxed entry parse failed: {e}")
-            return FlextResult[FlextLdifTypes.Models.CustomDataDict].ok({
-                "dn": entry_dn,
-                "attributes": attributes,
-                "relaxed_parsed": False,
-                "parse_error": str(e),
-            })
-
-    def normalize_dn(self, dn: str) -> FlextResult[str]:
-        """Normalize DN - best-effort in relaxed mode.
-
-        Args:
-            dn: Distinguished name
-
-        Returns:
-            FlextResult with normalized DN
-
-        """
-        try:
-            # Minimal normalization: just lowercase component names
-            components = dn.split(",")
-            normalized = ",".join(
-                comp.split("=")[0].lower() + "=" + comp.split("=", 1)[1]
-                if "=" in comp
-                else comp
-                for comp in components
-            )
-            return FlextResult[str].ok(normalized)
-        except Exception as e:
-            logger.warning(f"DN normalization failed, using original: {e}")
-            return FlextResult[str].ok(dn)
-
-    def convert_entry_to_rfc(
-        self, entry_data: FlextLdifTypes.Models.CustomDataDict
-    ) -> FlextResult[FlextLdifTypes.Models.CustomDataDict]:
-        """Convert entry to RFC format - pass-through in relaxed mode.
-
-        Args:
-            entry_data: Entry data dictionary
-
-        Returns:
-            FlextResult with data (unchanged)
-
-        """
-        return FlextResult[FlextLdifTypes.Models.CustomDataDict].ok(entry_data)
-
-    def convert_entry_from_rfc(
-        self, entry_data: FlextLdifTypes.Models.CustomDataDict
-    ) -> FlextResult[FlextLdifTypes.Models.CustomDataDict]:
-        """Convert entry from RFC format - pass-through in relaxed mode.
-
-        Args:
-            entry_data: RFC-compliant entry data
-
-        Returns:
-            FlextResult with data (unchanged)
-
-        """
-        return FlextResult[FlextLdifTypes.Models.CustomDataDict].ok(entry_data)
-
+# Backward compatibility exports
+FlextLdifQuirksServersRelaxedSchema = FlextLdifQuirksServersRelaxed
+FlextLdifQuirksServersRelaxedAcl = FlextLdifQuirksServersRelaxed.AclQuirk
+FlextLdifQuirksServersRelaxedEntry = FlextLdifQuirksServersRelaxed.EntryQuirk
 
 __all__ = [
-    "FlextLdifQuirksServersRelaxedAcl",
-    "FlextLdifQuirksServersRelaxedEntry",
-    "FlextLdifQuirksServersRelaxedSchema",
+    "FlextLdifQuirksServersRelaxed",
+    "FlextLdifQuirksServersRelaxedAcl",  # Backward compatibility
+    "FlextLdifQuirksServersRelaxedEntry",  # Backward compatibility
+    "FlextLdifQuirksServersRelaxedSchema",  # Backward compatibility
 ]

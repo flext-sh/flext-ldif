@@ -312,6 +312,15 @@ class FlextLdifEntryBuilder(FlextService[FlextLdifModels.Entry]):
                     f"DN must be a string, got {type(dn).__name__}"
                 )
 
+            # Validate that entry has objectClass (required in LDAP RFC 4512)
+            has_objectclass = any(
+                key.lower() == "objectclass" for key in normalized_attrs
+            )
+            if not has_objectclass:
+                return FlextResult[list[FlextLdifModels.Entry]].fail(
+                    f"Entry '{dn}' must have objectClass attribute"
+                )
+
             # Create entry with AttributeDict type
             entry_result: FlextResult[FlextLdifModels.Entry] = (
                 FlextLdifModels.Entry.create(

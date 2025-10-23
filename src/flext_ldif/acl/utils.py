@@ -137,7 +137,7 @@ class FlextLdifAclUtils(FlextUtilities):
                     )
 
                 return FlextResult[FlextLdifModels.AclBase].ok(unified_acl)
-            except Exception as e:  # pragma: no cover
+            except Exception as e:
                 return FlextResult[FlextLdifModels.AclBase].fail(
                     f"Failed to create ACL: {e}"
                 )

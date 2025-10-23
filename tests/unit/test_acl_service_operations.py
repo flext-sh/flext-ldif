@@ -14,7 +14,7 @@ from pathlib import Path
 import pytest
 
 from flext_ldif.acl.service import FlextLdifAclService
-from flext_ldif.quirks.registry import FlextLdifQuirksRegistry
+from flext_ldif.quirks.manager import FlextLdifQuirksManager
 
 
 class TestAclServiceRuleCreation:
@@ -130,9 +130,7 @@ class TestAclServiceRuleEvaluation:
         result = rule.evaluate(context)
         assert result.is_success
 
-    def test_evaluate_target_rule_match(
-        self, acl_service: FlextLdifAclService
-    ) -> None:
+    def test_evaluate_target_rule_match(self, acl_service: FlextLdifAclService) -> None:
         """Test target rule evaluation on matching DN."""
         dn = "CN=Group,DC=Example,DC=Com"
         rule = acl_service.create_target_rule(dn)
@@ -168,9 +166,7 @@ class TestAclServiceRuleEvaluation:
         result = composite.evaluate(context)
         assert result.is_success
 
-    def test_evaluate_composite_empty(
-        self, acl_service: FlextLdifAclService
-    ) -> None:
+    def test_evaluate_composite_empty(self, acl_service: FlextLdifAclService) -> None:
         """Test composite rule with no sub-rules."""
         composite = acl_service.create_composite_rule(operator="AND")
         context = {"permissions": ["READ"]}
@@ -226,6 +222,7 @@ class TestAclServiceExtraction:
     ) -> None:
         """Test extracting ACLs from entry with ACI attribute."""
         from flext_ldif import FlextLdifModels
+
         result = FlextLdifModels.Entry.create(
             dn="CN=Test,DC=Example,DC=Com",
             attributes={
@@ -242,6 +239,7 @@ class TestAclServiceExtraction:
     ) -> None:
         """Test extracting ACLs from OID entry with orclaci attribute."""
         from flext_ldif import FlextLdifModels
+
         result = FlextLdifModels.Entry.create(
             dn="CN=Test,DC=Example,DC=Com",
             attributes={"orclaci": ["(targetattr=*)(allow all)"]},
@@ -256,6 +254,7 @@ class TestAclServiceExtraction:
     ) -> None:
         """Test extracting ACLs from entry without ACL attributes."""
         from flext_ldif import FlextLdifModels
+
         result = FlextLdifModels.Entry.create(
             dn="CN=Test,DC=Example,DC=Com",
             attributes={"cn": ["Test"], "objectClass": ["person"]},
@@ -270,6 +269,7 @@ class TestAclServiceExtraction:
     ) -> None:
         """Test extracting ACLs from entry with empty attributes."""
         from flext_ldif import FlextLdifModels
+
         result = FlextLdifModels.Entry.create(
             dn="CN=Test,DC=Example,DC=Com",
             attributes={},
@@ -284,6 +284,7 @@ class TestAclServiceExtraction:
     ) -> None:
         """Test extracting ACLs from minimal entry with empty attributes."""
         from flext_ldif import FlextLdifModels
+
         result = FlextLdifModels.Entry.create(
             "CN=Test,DC=Example,DC=Com",
             {},
@@ -300,7 +301,7 @@ class TestAclServiceWithRealFixtures:
     @pytest.fixture
     def acl_service(self) -> FlextLdifAclService:
         """Create ACL service instance."""
-        quirks_manager = FlextLdifQuirksRegistry()
+        quirks_manager = FlextLdifQuirksManager()
         return FlextLdifAclService(quirks_manager=quirks_manager)
 
     @pytest.fixture
@@ -429,9 +430,7 @@ class TestAclServiceIntegration:
         with pytest.raises(NotImplementedError):
             base_rule.add_rule(acl_service.AclRule())
 
-    def test_acl_rule_base_evaluation(
-        self, acl_service: FlextLdifAclService
-    ) -> None:
+    def test_acl_rule_base_evaluation(self, acl_service: FlextLdifAclService) -> None:
         """Test base rule evaluation (always allows)."""
         base_rule = acl_service.AclRule()
         context = {}

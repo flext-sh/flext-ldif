@@ -87,14 +87,6 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
         "1.3.6.1.4.1.1466.115.121.1.1": "1.3.6.1.4.1.1466.115.121.1.15",  # ACI List → Directory String
     }
 
-    # Attributes to skip in objectClass definitions (missing/incompatible with OUD)
-    SKIP_OBJECTCLASS_ATTRIBUTES: ClassVar[set[str]] = {
-        "orclaci",  # OID Access Control - incompatible with OUD
-        "orclentrylevelaci",  # OID Entry-Level ACI - incompatible with OUD
-        "orcldaslov",  # Missing from schema
-        "orcljaznjavaclass",  # Missing from schema
-    }
-
     def model_post_init(self, _context: object, /) -> None:
         """Initialize OID schema quirk."""
 
@@ -161,8 +153,8 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
             if oid_match:
                 parsed_data["oid"] = oid_match.group(1)
 
-            # Extract NAME (single or multiple)
-            name_match = re.search(r"NAME\s+(?:\(\s*)?'([^']+)'", attr_definition)
+            # Extract NAME (single or multiple) - case-insensitive for non-standard inputs
+            name_match = re.search(r"(?i)NAME\s+(?:\(\s*)?'([^']+)'", attr_definition)
             if name_match:
                 parsed_data["name"] = name_match.group(1)
 
@@ -282,8 +274,8 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
             if oid_match:
                 parsed_data["oid"] = oid_match.group(1)
 
-            # Extract NAME (single or multiple)
-            name_match = re.search(r"NAME\s+(?:\(\s*)?'([^']+)'", oc_definition)
+            # Extract NAME (single or multiple) - case-insensitive for non-standard inputs
+            name_match = re.search(r"(?i)NAME\s+(?:\(\s*)?'([^']+)'", oc_definition)
             if name_match:
                 parsed_data["name"] = name_match.group(1)
 
@@ -308,12 +300,16 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                     parsed_data["sup"] = sup_value
 
             # Determine kind (STRUCTURAL, AUXILIARY, ABSTRACT)
+            # RFC 4512: Default to STRUCTURAL if KIND is not specified
             if "STRUCTURAL" in oc_definition:
                 parsed_data["kind"] = "STRUCTURAL"
             elif "AUXILIARY" in oc_definition:
                 parsed_data["kind"] = "AUXILIARY"
             elif "ABSTRACT" in oc_definition:
                 parsed_data["kind"] = "ABSTRACT"
+            else:
+                # RFC 4512: Default to STRUCTURAL when KIND is not specified
+                parsed_data["kind"] = "STRUCTURAL"
 
             # Extract MUST attributes
             must_match = re.search(
@@ -451,39 +447,33 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
         """
         try:
             # Convert Oracle OID objectClass to RFC format
-            # Filter out missing/incompatible attributes from MUST and MAY
-
-            # Filter MUST attributes
+            # NOTE: Filtering is NOT the responsibility of quirks.
+            # All attribute/objectClass filtering is handled by client-aOudMigConstants
+            # in the migration service. Quirks only perform format conversions.
             must_value = oc_data.get(FlextLdifConstants.DictKeys.MUST)
-            if must_value and isinstance(must_value, list):
-                filtered_must = [
-                    attr
-                    for attr in must_value
-                    if isinstance(attr, str)
-                    and attr.lower() not in self.SKIP_OBJECTCLASS_ATTRIBUTES
-                ]
-                must_value = filtered_must or None
-                if must_value is None:
-                    logger.debug("All MUST attributes filtered out")
-
-            # Filter MAY attributes
             may_value = oc_data.get(FlextLdifConstants.DictKeys.MAY)
-            if may_value and isinstance(may_value, list):
-                filtered_may = [
-                    attr
-                    for attr in may_value
-                    if isinstance(attr, str)
-                    and attr.lower() not in self.SKIP_OBJECTCLASS_ATTRIBUTES
-                ]
-                if len(filtered_may) < len(may_value):
-                    removed = set(may_value) - set(filtered_may)
-                    logger.debug(f"Filtered MAY attributes: {removed}")
-                may_value = filtered_may or None
 
             # Fix inheritance conflicts - OUD requires KIND to match superior class KIND
             # Map of known problematic superior classes and their expected KINDs
             kind_value = oc_data.get(FlextLdifConstants.DictKeys.KIND)
             sup_value = oc_data.get(FlextLdifConstants.DictKeys.SUP)
+            name_value = oc_data.get(FlextLdifConstants.DictKeys.NAME)
+
+            # Fix missing SUP for AUXILIARY objectClasses that require it
+            # OUD requires AUXILIARY classes to have an explicit SUP clause
+            if not sup_value and kind_value == "AUXILIARY":
+                # Known AUXILIARY classes from OID that are missing SUP top
+                auxiliary_without_sup = {
+                    "orcldAsAttrCategory",  # orclDASAttrCategory
+                    "orcldasattrcategory",
+                }
+                name_lower = str(name_value).lower() if name_value else ""
+
+                if name_lower in auxiliary_without_sup:
+                    sup_value = "top"
+                    logger.debug(
+                        f"Adding missing SUP top to AUXILIARY class {name_value}"
+                    )
 
             if sup_value and kind_value:
                 # Known STRUCTURAL superior classes that cause conflicts
@@ -500,7 +490,7 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                 # If SUP is STRUCTURAL but objectClass is AUXILIARY, change to STRUCTURAL
                 if sup_lower in structural_superiors and kind_value == "AUXILIARY":
                     logger.debug(
-                        f"Changing {oc_data.get('name')} from AUXILIARY to STRUCTURAL "
+                        f"Changing {name_value} from AUXILIARY to STRUCTURAL "
                         f"to match superior class {sup_value}"
                     )
                     kind_value = "STRUCTURAL"
@@ -508,7 +498,7 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                 # If SUP is AUXILIARY but objectClass is STRUCTURAL, change to AUXILIARY
                 elif sup_lower in auxiliary_superiors and kind_value == "STRUCTURAL":
                     logger.debug(
-                        f"Changing {oc_data.get('name')} from STRUCTURAL to AUXILIARY "
+                        f"Changing {name_value} from STRUCTURAL to AUXILIARY "
                         f"to match superior class {sup_value}"
                     )
                     kind_value = "AUXILIARY"
@@ -517,18 +507,12 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                 FlextLdifConstants.DictKeys.OID: oc_data.get(
                     FlextLdifConstants.DictKeys.OID
                 ),
-                FlextLdifConstants.DictKeys.NAME: oc_data.get(
-                    FlextLdifConstants.DictKeys.NAME
-                ),
+                FlextLdifConstants.DictKeys.NAME: name_value,
                 FlextLdifConstants.DictKeys.DESC: oc_data.get(
                     FlextLdifConstants.DictKeys.DESC
                 ),
-                FlextLdifConstants.DictKeys.SUP: oc_data.get(
-                    FlextLdifConstants.DictKeys.SUP
-                ),
-                FlextLdifConstants.DictKeys.KIND: oc_data.get(
-                    FlextLdifConstants.DictKeys.KIND
-                ),
+                FlextLdifConstants.DictKeys.SUP: sup_value,
+                FlextLdifConstants.DictKeys.KIND: kind_value,
                 FlextLdifConstants.DictKeys.MUST: must_value,
                 FlextLdifConstants.DictKeys.MAY: may_value,
             }
@@ -687,13 +671,25 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
             # Check if we have metadata with original format for perfect round-trip
             if "_metadata" in oc_data:
                 metadata = oc_data["_metadata"]
+                original_format = None
                 if (
                     isinstance(metadata, FlextLdifModels.QuirkMetadata)
                     and metadata.original_format
                 ):
-                    return FlextResult[str].ok(metadata.original_format)
-                if isinstance(metadata, dict) and "original_format" in metadata:
-                    return FlextResult[str].ok(str(metadata["original_format"]))
+                    original_format = metadata.original_format
+                elif isinstance(metadata, dict) and "original_format" in metadata:
+                    original_format = str(metadata["original_format"])
+
+                if original_format:
+                    # Fix known typos in original format
+                    # Fix AUXILLARY (double L) → AUXILIARY (single L)
+                    fixed_format = original_format.replace("AUXILLARY", "AUXILIARY")
+                    if fixed_format != original_format:
+                        logger.debug(
+                            f"Fixed AUXILLARY typo in objectClass {oc_data.get('name')}"
+                        )
+                        return FlextResult[str].ok(fixed_format)
+                    return FlextResult[str].ok(original_format)
 
             # Build RFC 4512 objectClass definition from scratch
             parts = []
@@ -725,47 +721,30 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
             if "kind" in oc_data:
                 parts.append(str(oc_data["kind"]))
 
-            # Add MUST attributes (optional) - Filter out missing/incompatible attributes
+            # Add MUST attributes (optional)
             if oc_data.get("must"):
                 must_attrs = oc_data["must"]
                 if isinstance(must_attrs, list):
-                    # Filter out attributes that don't exist in OUD
-                    filtered_must = [
-                        attr
-                        for attr in must_attrs
-                        if attr.lower() not in self.SKIP_OBJECTCLASS_ATTRIBUTES
-                    ]
-                    if len(filtered_must) > 1:
+                    if len(must_attrs) > 1:
                         # Multiple required attributes: "MUST ( cn $ sn )"
-                        must_str = " $ ".join(filtered_must)
+                        must_str = " $ ".join(must_attrs)
                         parts.append(f"MUST ( {must_str} )")
-                    elif len(filtered_must) == 1:
-                        parts.append(f"MUST {filtered_must[0]}")
-                    # If all filtered out, don't add MUST clause
-                elif str(must_attrs).lower() not in self.SKIP_OBJECTCLASS_ATTRIBUTES:
+                    elif len(must_attrs) == 1:
+                        parts.append(f"MUST {must_attrs[0]}")
+                else:
                     parts.append(f"MUST {must_attrs}")
 
-            # Add MAY attributes (optional) - Filter out missing/incompatible attributes
+            # Add MAY attributes (optional)
             if oc_data.get("may"):
                 may_attrs = oc_data["may"]
                 if isinstance(may_attrs, list):
-                    # Filter out attributes that don't exist in OUD
-                    filtered_may = [
-                        attr
-                        for attr in may_attrs
-                        if attr.lower() not in self.SKIP_OBJECTCLASS_ATTRIBUTES
-                    ]
-                    if len(filtered_may) > 1:
+                    if len(may_attrs) > 1:
                         # Multiple optional attributes: "MAY ( description $ seeAlso )"
-                        may_str = " $ ".join(filtered_may)
+                        may_str = " $ ".join(may_attrs)
                         parts.append(f"MAY ( {may_str} )")
-                    elif len(filtered_may) == 1:
-                        parts.append(f"MAY {filtered_may[0]}")
-                    # If all filtered out, don't add MAY clause
-                    if len(may_attrs) > len(filtered_may):
-                        removed = set(may_attrs) - set(filtered_may)
-                        logger.debug(f"Skipped missing attributes in MAY: {removed}")
-                elif str(may_attrs).lower() not in self.SKIP_OBJECTCLASS_ATTRIBUTES:
+                    elif len(may_attrs) == 1:
+                        parts.append(f"MAY {may_attrs[0]}")
+                else:
                     parts.append(f"MAY {may_attrs}")
 
             # Add X-ORIGIN (optional)
@@ -1006,6 +985,78 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                     f"OID ACL parsing failed: {e}"
                 )
 
+        def _convert_oid_to_rfc_permissions(
+            self, oid_permissions: list[str]
+        ) -> tuple[list[str], list[str], dict[str, object]]:
+            """Convert OID permissions to RFC-compliant allow/deny permissions with metadata.
+
+            OID → RFC conversion rules:
+            - browse → read,search (RFC equivalent)
+            - selfwrite → write (RFC equivalent)
+            - proxy → metadata annotation (OUD must handle)
+            - none → deny (all RFC permissions)
+            - no<perm> → deny (<perm>)
+
+            Args:
+                oid_permissions: List of OID permission keywords
+
+            Returns:
+                Tuple of (allowed_permissions, denied_permissions, metadata_dict)
+                metadata contains: {"proxy_permissions": [...], "original_oid_perms": [...]}
+
+            """
+            oid_to_rfc_map = {
+                "browse": ["read", "search"],
+                "selfwrite": ["write"],
+            }
+            rfc_valid_perms = {"read", "write", "add", "delete", "search", "compare", "all"}
+
+            allowed: list[str] = []
+            denied: list[str] = []
+            proxy_perms: list[str] = []
+
+            for perm in oid_permissions:
+                perm_str = str(perm).strip().lower()
+
+                # Special case: "none" means deny all
+                if perm_str == "none":
+                    denied.extend(["read", "write", "add", "delete", "search", "compare"])
+                    continue
+
+                # Special case: "proxy" → metadata annotation
+                if perm_str == "proxy":
+                    proxy_perms.append("proxy")
+                    continue
+
+                # Negated permission (no*) → deny
+                if perm_str.startswith("no"):
+                    base_perm = perm_str[2:]
+                    if base_perm in oid_to_rfc_map:
+                        denied.extend(oid_to_rfc_map[base_perm])
+                    elif base_perm in rfc_valid_perms:
+                        denied.append(base_perm)
+                    continue
+
+                # Positive permission → allow
+                if perm_str in oid_to_rfc_map:
+                    allowed.extend(oid_to_rfc_map[perm_str])
+                elif perm_str in rfc_valid_perms:
+                    allowed.append(perm_str)
+
+            # Deduplicate preserving order
+            def dedupe(perms: list[str]) -> list[str]:
+                seen: set[str] = set()
+                return [p for p in perms if not (p in seen or seen.add(p))]  # type: ignore[func-returns-value]
+
+            # Build metadata
+            metadata: dict[str, object] = {
+                "original_oid_perms": oid_permissions,
+            }
+            if proxy_perms:
+                metadata["proxy_permissions"] = proxy_perms
+
+            return (dedupe(allowed), dedupe(denied), metadata)
+
         def convert_acl_to_rfc(
             self, acl_data: dict[str, object]
         ) -> FlextResult[dict[str, object]]:
@@ -1028,6 +1079,7 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                 by_clauses = acl_data.get("by_clauses", [])
                 permissions = []
                 bind_rules = []
+                all_proxy_perms: list[str] = []
 
                 if isinstance(by_clauses, list):
                     for by_clause in by_clauses:
@@ -1037,51 +1089,54 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                         subject = by_clause.get("subject", "*")
                         perms_list = by_clause.get("permissions", [])
 
-                        # Build permission dict
-                        permissions.append({
-                            "action": "allow",
-                            "operations": perms_list
-                            if isinstance(perms_list, list)
-                            else [perms_list],
-                        })
+                        # Convert OID permissions to RFC standard permissions (now returns metadata too)
+                        allowed_perms, denied_perms, perm_metadata = self._convert_oid_to_rfc_permissions(
+                            perms_list if isinstance(perms_list, list) else [perms_list]
+                        )
 
-                        # Convert OID subject to RFC bind rule
+                        # Collect proxy permissions from metadata
+                        if perm_metadata.get("proxy_permissions"):
+                            all_proxy_perms.extend(perm_metadata["proxy_permissions"])  # type: ignore[arg-type]
+
+                        # Convert OID subject to RFC bind rule (create bind rule dict)
+                        bind_rule: dict[str, str]
                         if subject == "*":
-                            bind_rules.append({"type": "userdn", "value": "ldap:///*"})
+                            bind_rule = {"type": "userdn", "value": "ldap:///*"}
                         elif subject == "self":
-                            bind_rules.append({
-                                "type": "userdn",
-                                "value": "ldap:///self",
-                            })
+                            bind_rule = {"type": "userdn", "value": "ldap:///self"}
                         elif subject.startswith('group="'):
                             dn = subject.split('"')[1]
-                            bind_rules.append({
-                                "type": "groupdn",
-                                "value": f"ldap:///{dn}",
-                            })
+                            bind_rule = {"type": "groupdn", "value": f"ldap:///{dn}"}
                         elif subject.startswith("dnattr="):
                             attr = subject.replace("dnattr=(", "").replace(")", "")
-                            bind_rules.append({
-                                "type": "userattr",
-                                "value": f"{attr}#LDAPURL",
-                            })
+                            bind_rule = {"type": "userattr", "value": f"{attr}#LDAPURL"}
                         elif subject.startswith("guidattr="):
                             attr = subject.replace("guidattr=(", "").replace(")", "")
-                            bind_rules.append({
-                                "type": "userattr",
-                                "value": f"{attr}#USERDN",
-                            })
+                            bind_rule = {"type": "userattr", "value": f"{attr}#USERDN"}
                         elif subject.startswith("groupattr="):
                             attr = subject.replace("groupattr=(", "").replace(")", "")
-                            bind_rules.append({
-                                "type": "userattr",
-                                "value": f"{attr}#GROUPDN",
-                            })
+                            bind_rule = {"type": "userattr", "value": f"{attr}#GROUPDN"}
                         else:
-                            bind_rules.append({
-                                "type": "userdn",
-                                "value": f"ldap:///{subject}",
+                            bind_rule = {"type": "userdn", "value": f"ldap:///{subject}"}
+
+                        # Build RFC permission dicts (allow and/or deny) with corresponding bind rules
+                        # Each permission entry needs its own bind_rule
+                        if allowed_perms:
+                            permissions.append({
+                                "action": "allow",
+                                "operations": allowed_perms,
                             })
+                            bind_rules.append(bind_rule)
+                        if denied_perms:
+                            permissions.append({
+                                "action": "deny",
+                                "operations": denied_perms,
+                            })
+                            bind_rules.append(bind_rule)
+
+                # Build full acl_name with original OID ACL line
+                raw_oid_acl = str(acl_data.get("raw", "unknown"))
+                acl_name_full = f"Migrated from OID: {raw_oid_acl}"
 
                 # Build RFC data structure
                 rfc_data: dict[str, object] = {
@@ -1094,12 +1149,30 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                     "targetattr": acl_data.get("target_attrs", "*")
                     if acl_data.get("target") == "attr"
                     else "*",
-                    "acl_name": "Migrated from OID",
+                    "acl_name": acl_name_full,
                 }
 
                 # Preserve filter if present
                 if "filter" in acl_data:
                     rfc_data["targetfilter"] = acl_data["filter"]
+
+                # Convert added_object_constraint to RFC metadata (OUD will convert to targattrfilters)
+                if "added_object_constraint" in acl_data:
+                    rfc_data["_oid_constraint"] = acl_data["added_object_constraint"]
+
+                # Preserve ACL type distinction (orclaci vs orclentrylevelaci)
+                rfc_data["_acl_type"] = acl_data.get("type", "standard")
+
+                # Store proxy permissions metadata if any
+                if all_proxy_perms:
+                    rfc_data["_oid_proxy_permissions"] = all_proxy_perms
+
+                # Set multi-line formatting flag for better readability
+                rfc_data["_metadata"] = FlextLdifModels.QuirkMetadata.create_for_quirk(
+                    quirk_type="rfc",
+                    original_format=af.RFC_GENERIC,
+                    extensions={"is_multiline": True}  # Force multi-line output
+                )
 
                 return FlextResult[dict[str, object]].ok(rfc_data)
 
@@ -1484,6 +1557,10 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
         ) -> FlextResult[dict[str, object]]:
             """Convert Oracle OID entry to RFC-compliant format.
 
+            OID uses non-RFC compliant "0"/"1" for boolean attributes.
+            RFC 4517 specifies Boolean syntax must be "TRUE" or "FALSE".
+            This method normalizes OID booleans to RFC compliance.
+
             Args:
             entry_data: Oracle OID entry data
 
@@ -1496,19 +1573,55 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                 # Remove Oracle-specific operational attributes if needed
                 rfc_data = dict(entry_data)
 
-                # Optional: Remove OID-specific operational attributes
-                # that don't exist in standard LDAP
-                oid_operational_attrs = [
-                    "orclguid",
-                    "orclobjectguid",
-                    "orclentrycreatetime",
-                    "orclentrymodifytime",
-                    "has_oid_acls",
-                    "server_type",
-                ]
+                # Oracle boolean attributes (non-RFC compliant: use "0"/"1" instead of "TRUE"/"FALSE")
+                # RFC 4517 Boolean syntax (OID 1.3.6.1.4.1.1466.115.121.1.7) requires "TRUE" or "FALSE"
+                # OID quirks must convert "0"→"FALSE", "1"→"TRUE" during OID→RFC normalization
+                oid_boolean_attrs = (
+                    FlextLdifConstants.OperationalAttributes.OID_BOOLEAN_ATTRIBUTES
+                )
 
-                for attr in oid_operational_attrs:
-                    rfc_data.pop(attr, None)
+                # Check if attributes are in nested 'attributes' dict (categorized pipeline format)
+                if FlextLdifConstants.DictKeys.ATTRIBUTES in rfc_data:
+                    attrs = rfc_data[FlextLdifConstants.DictKeys.ATTRIBUTES]
+                    if isinstance(attrs, dict):
+                        # Convert boolean values in nested attributes dict
+                        for attr_name in list(attrs.keys()):
+                            if attr_name.lower() in oid_boolean_attrs:
+                                attr_value = attrs[attr_name]
+                                if isinstance(attr_value, list):
+                                    attrs[attr_name] = [
+                                        "TRUE"
+                                        if v == "1"
+                                        else "FALSE"
+                                        if v == "0"
+                                        else v
+                                        for v in attr_value
+                                    ]
+                                elif isinstance(attr_value, str):
+                                    if attr_value == "1":
+                                        attrs[attr_name] = "TRUE"
+                                    elif attr_value == "0":
+                                        attrs[attr_name] = "FALSE"
+                else:
+                    # Convert boolean values at top level (flat entry format)
+                    for attr_name in list(rfc_data.keys()):
+                        if attr_name.lower() in oid_boolean_attrs:
+                            attr_value = rfc_data[attr_name]
+                            if isinstance(attr_value, list):
+                                rfc_data[attr_name] = [
+                                    "TRUE" if v == "1" else "FALSE" if v == "0" else v
+                                    for v in attr_value
+                                ]
+                            elif isinstance(attr_value, str):
+                                if attr_value == "1":
+                                    rfc_data[attr_name] = "TRUE"
+                                elif attr_value == "0":
+                                    rfc_data[attr_name] = "FALSE"
+
+                # NOTE: Filtering is NOT the responsibility of quirks.
+                # All attribute filtering is handled by client-aOudMigConstants
+                # (BLOCKED_ATTRIBUTES) in the migration service.
+                # Quirks ONLY perform FORMAT transformations (e.g., boolean 0/1 → TRUE/FALSE).
 
                 return FlextResult[dict[str, object]].ok(rfc_data)
 

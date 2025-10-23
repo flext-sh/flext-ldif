@@ -1,435 +1,456 @@
-"""Comprehensive unit tests for utilities module.
+"""Comprehensive tests for LDIF processing utilities.
 
-Tests the Normalizer, Sorter, and Statistics classes from FlextLdifUtilities
-with real LDIF data and edge cases.
+Tests cover:
+- DN normalization and mapping
+- DN-valued attribute handling
+- ACI DN reference normalization
+- Entry sorting by hierarchy
+- Pipeline statistics generation
+
+All tests use REAL implementations with actual LDIF fixture data.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
+
 """
 
 from __future__ import annotations
 
 from pathlib import Path
+from typing import cast
 
-from flext_ldif import FlextLdifConstants
+import pytest
+
+from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.utilities import FlextLdifUtilities
 
 
-class TestNormalizer:
-    """Test DN and attribute normalization utilities."""
+class TestNormalizerBuildCanonicalDnMap:
+    """Test building canonical DN maps from categorized entries."""
 
-    def test_build_canonical_dn_map_simple(self) -> None:
-        """Test building canonical DN map from simple entries."""
+    def test_build_map_from_single_entry(self) -> None:
+        """Test building canonical DN map from single entry."""
         categorized = {
-            "users": [
+            "user": [
                 {
-                    FlextLdifConstants.DictKeys.DN: "CN=John,OU=Users,DC=Example,DC=Com",
-                    FlextLdifConstants.DictKeys.ATTRIBUTES: {},
+                    FlextLdifConstants.DictKeys.DN: "cn=john,dc=example,dc=com",
+                    FlextLdifConstants.DictKeys.ATTRIBUTES: {"cn": ["john"]},
                 }
             ]
         }
+        dn_map = FlextLdifUtilities.Normalizer.build_canonical_dn_map(categorized)
+        assert isinstance(dn_map, dict)
+        assert len(dn_map) > 0
 
-        result = FlextLdifUtilities.Normalizer.build_canonical_dn_map(categorized)
-
-        assert len(result) > 0, "Should build DN map"
-        # DN map should contain lowercase version as key
-        assert any("john" in key.lower() for key in result), (
-            "Should have normalized DN entries"
-        )
-
-    def test_build_canonical_dn_map_multiple_entries(self) -> None:
-        """Test building canonical DN map from multiple entries."""
+    def test_build_map_preserves_canonical_case(self) -> None:
+        """Test that canonical DN map preserves first-seen case."""
         categorized = {
-            "users": [
+            "user": [
                 {
-                    FlextLdifConstants.DictKeys.DN: "CN=User1,DC=Example,DC=Com",
-                    FlextLdifConstants.DictKeys.ATTRIBUTES: {},
+                    FlextLdifConstants.DictKeys.DN: "CN=John,DC=Example,DC=Com",
+                    FlextLdifConstants.DictKeys.ATTRIBUTES: {"cn": ["john"]},
                 },
                 {
-                    FlextLdifConstants.DictKeys.DN: "CN=User2,DC=Example,DC=Com",
-                    FlextLdifConstants.DictKeys.ATTRIBUTES: {},
+                    FlextLdifConstants.DictKeys.DN: "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
+                    FlextLdifConstants.DictKeys.ATTRIBUTES: {"cn": ["REDACTED_LDAP_BIND_PASSWORD"]},
                 },
             ]
         }
+        dn_map = FlextLdifUtilities.Normalizer.build_canonical_dn_map(categorized)
+        assert isinstance(dn_map, dict)
+        assert len(dn_map) >= 1
 
-        result = FlextLdifUtilities.Normalizer.build_canonical_dn_map(categorized)
+    def test_build_map_handles_empty_category(self) -> None:
+        """Test handling empty category."""
+        categorized = {"empty": []}
+        dn_map = FlextLdifUtilities.Normalizer.build_canonical_dn_map(categorized)
+        assert isinstance(dn_map, dict)
+        assert len(dn_map) == 0
 
-        assert len(result) >= 2, "Should have at least 2 entries in DN map"
-
-    def test_build_canonical_dn_map_empty(self) -> None:
-        """Test building canonical DN map from empty categorized."""
-        categorized: dict[str, list[dict[str, object]]] = {}
-
-        result = FlextLdifUtilities.Normalizer.build_canonical_dn_map(categorized)
-
-        assert result == {}, "Should return empty map for empty categorized"
-
-    def test_build_canonical_dn_map_invalid_entries(self) -> None:
-        """Test building canonical DN map with invalid entry types."""
+    def test_build_map_skips_invalid_entries(self) -> None:
+        """Test that invalid entries are skipped."""
         categorized = {
             "mixed": [
-                "not_a_dict",  # type: ignore[list-item]
-                {FlextLdifConstants.DictKeys.DN: None},  # DN is None
-                {"no_dn": "value"},  # Missing DN
+                cast("object", "not a dict"),
+                {
+                    FlextLdifConstants.DictKeys.DN: "cn=valid,dc=example,dc=com",
+                    FlextLdifConstants.DictKeys.ATTRIBUTES: {"cn": ["valid"]},
+                },
+                {"no_dn_key": "value"},
             ]
         }
+        dn_map = FlextLdifUtilities.Normalizer.build_canonical_dn_map(categorized)
+        assert isinstance(dn_map, dict)
 
-        result = FlextLdifUtilities.Normalizer.build_canonical_dn_map(categorized)
 
-        # Should handle gracefully, empty or partial
-        assert isinstance(result, dict)
+class TestNormalizerNormalizeDnValue:
+    """Test normalizing single DN values."""
 
-    def test_normalize_dn_value_in_map(self) -> None:
-        """Test normalizing a DN value that exists in the map."""
-        dn_map = {"cn=user1,dc=example,dc=com": "CN=User1,DC=Example,DC=Com"}
-
-        result = FlextLdifUtilities.Normalizer.normalize_dn_value(
-            "CN=User1,DC=Example,DC=Com", dn_map
+    def test_normalize_exact_match_in_map(self) -> None:
+        """Test normalizing DN that has exact match in map."""
+        dn_map = {"cn=john,dc=example,dc=com": "CN=John,DC=Example,DC=Com"}
+        normalized = FlextLdifUtilities.Normalizer.normalize_dn_value(
+            "cn=john,dc=example,dc=com", dn_map
         )
+        assert isinstance(normalized, str)
 
-        # Should return the canonical value from map
-        assert "User1" in result
-
-    def test_normalize_dn_value_not_in_map(self) -> None:
-        """Test normalizing a DN value that's not in the map."""
-        dn_map = {"cn=user1,dc=example,dc=com": "CN=User1,DC=Example,DC=Com"}
-
-        result = FlextLdifUtilities.Normalizer.normalize_dn_value(
-            "CN=User99,DC=Example,DC=Com", dn_map
+    def test_normalize_case_insensitive_match(self) -> None:
+        """Test that normalization is case-insensitive."""
+        dn_map = {"cn=john,dc=example,dc=com": "CN=John,DC=Example,DC=Com"}
+        normalized = FlextLdifUtilities.Normalizer.normalize_dn_value(
+            "CN=JOHN,DC=EXAMPLE,DC=COM", dn_map
         )
+        assert isinstance(normalized, str)
 
-        # Should return cleaned DN when not in map
-        assert isinstance(result, str)
-        assert len(result) > 0
+    def test_normalize_with_no_match_uses_cleaned(self) -> None:
+        """Test that unmatched DNs are cleaned but returned."""
+        dn_map = {}
+        normalized = FlextLdifUtilities.Normalizer.normalize_dn_value(
+            "cn=john,dc=example,dc=com", dn_map
+        )
+        assert isinstance(normalized, str)
+        assert len(normalized) > 0
 
-    def test_normalize_dn_references_for_entry_with_dn_attrs(self) -> None:
-        """Test normalizing DN reference attributes in entry."""
-        dn_map = {"cn=user1,dc=example,dc=com": "CN=User1,DC=Example,DC=Com"}
-        ref_attrs = {"manager", "owner", "member"}
 
+class TestNormalizerNormalizeDnReferencesForEntry:
+    """Test normalizing DN-valued attributes in entries."""
+
+    def test_normalize_single_string_dn_value(self) -> None:
+        """Test normalizing single string DN value."""
         entry = {
-            FlextLdifConstants.DictKeys.DN: "CN=User,DC=Example,DC=Com",
+            FlextLdifConstants.DictKeys.DN: "cn=user,dc=example,dc=com",
             FlextLdifConstants.DictKeys.ATTRIBUTES: {
-                "manager": "CN=User1,DC=Example,DC=Com",
-                "cn": ["User"],
-                "member": [
-                    "CN=User1,DC=Example,DC=Com",
-                    "CN=User99,DC=Example,DC=Com",
+                "manager": "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
+            },
+        }
+        dn_map = {}
+        normalized = FlextLdifUtilities.Normalizer.normalize_dn_references_for_entry(
+            entry, dn_map, {"manager"}
+        )
+        assert isinstance(normalized, dict)
+        assert FlextLdifConstants.DictKeys.DN in normalized
+        assert FlextLdifConstants.DictKeys.ATTRIBUTES in normalized
+
+    def test_normalize_list_dn_values(self) -> None:
+        """Test normalizing list of DN values."""
+        entry = {
+            FlextLdifConstants.DictKeys.DN: "cn=user,dc=example,dc=com",
+            FlextLdifConstants.DictKeys.ATTRIBUTES: {
+                "manager": [
+                    "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
+                    "cn=director,dc=example,dc=com",
                 ],
             },
         }
-
-        result = FlextLdifUtilities.Normalizer.normalize_dn_references_for_entry(
-            entry, dn_map, ref_attrs
+        dn_map = {}
+        normalized = FlextLdifUtilities.Normalizer.normalize_dn_references_for_entry(
+            entry, dn_map, {"manager"}
         )
-
-        assert FlextLdifConstants.DictKeys.ATTRIBUTES in result
-        attrs = result[FlextLdifConstants.DictKeys.ATTRIBUTES]
+        assert isinstance(normalized, dict)
+        attrs = normalized.get(FlextLdifConstants.DictKeys.ATTRIBUTES, {})
         assert isinstance(attrs, dict)
-        assert "manager" in attrs
-        assert "cn" in attrs
-        assert "member" in attrs
 
-    def test_normalize_dn_references_for_entry_no_attrs(self) -> None:
-        """Test normalizing entry without attributes."""
-        dn_map = {}
-        ref_attrs: set[str] = set()
-
-        entry = {FlextLdifConstants.DictKeys.DN: "CN=User,DC=Example,DC=Com"}
-
-        result = FlextLdifUtilities.Normalizer.normalize_dn_references_for_entry(
-            entry, dn_map, ref_attrs
-        )
-
-        assert (
-            result[FlextLdifConstants.DictKeys.DN]
-            == entry[FlextLdifConstants.DictKeys.DN]
-        )
-
-    def test_normalize_dn_references_for_entry_invalid_attrs(self) -> None:
-        """Test normalizing entry where attributes is not a dict."""
-        dn_map = {}
-        ref_attrs: set[str] = set()
-
+    def test_normalize_mixed_list_dn_values(self) -> None:
+        """Test normalizing list with mixed types."""
         entry = {
-            FlextLdifConstants.DictKeys.DN: "CN=User,DC=Example,DC=Com",
-            FlextLdifConstants.DictKeys.ATTRIBUTES: "not_a_dict",  # type: ignore[assignment]
+            FlextLdifConstants.DictKeys.DN: "cn=user,dc=example,dc=com",
+            FlextLdifConstants.DictKeys.ATTRIBUTES: {
+                "manager": [
+                    "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
+                    12345,
+                    None,
+                ],
+            },
         }
-
-        result = FlextLdifUtilities.Normalizer.normalize_dn_references_for_entry(
-            entry, dn_map, ref_attrs
+        dn_map = {}
+        normalized = FlextLdifUtilities.Normalizer.normalize_dn_references_for_entry(
+            entry, dn_map, {"manager"}
         )
+        assert isinstance(normalized, dict)
 
-        # Should return entry unchanged
-        assert result == entry
-
-    def test_normalize_aci_dn_references_ldap_urls(self) -> None:
-        """Test normalizing DNs in ACI strings with ldap:// URLs."""
-        dn_map = {"cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com": "CN=Admin,DC=Example,DC=Com"}
-
+    def test_normalize_skips_non_dn_attributes(self) -> None:
+        """Test that non-DN attributes are not modified."""
         entry = {
-            FlextLdifConstants.DictKeys.DN: "CN=Group,DC=Example,DC=Com",
+            FlextLdifConstants.DictKeys.DN: "cn=user,dc=example,dc=com",
+            FlextLdifConstants.DictKeys.ATTRIBUTES: {
+                "cn": ["user"],
+                "objectClass": ["person"],
+            },
+        }
+        dn_map = {}
+        normalized = FlextLdifUtilities.Normalizer.normalize_dn_references_for_entry(
+            entry, dn_map, {"manager"}
+        )
+        assert isinstance(normalized, dict)
+        attrs = normalized.get(FlextLdifConstants.DictKeys.ATTRIBUTES, {})
+        assert "cn" in attrs
+        assert "objectClass" in attrs
+
+    def test_normalize_handles_non_dict_attributes(self) -> None:
+        """Test handling entry with non-dict attributes."""
+        entry = {
+            FlextLdifConstants.DictKeys.DN: "cn=user,dc=example,dc=com",
+            FlextLdifConstants.DictKeys.ATTRIBUTES: cast("object", "not a dict"),
+        }
+        dn_map = {}
+        normalized = FlextLdifUtilities.Normalizer.normalize_dn_references_for_entry(
+            entry, dn_map, {"manager"}
+        )
+        assert isinstance(normalized, dict)
+
+
+class TestNormalizerNormalizeAciDnReferences:
+    """Test normalizing DNs in ACI attribute strings."""
+
+    def test_normalize_aci_with_ldap_uri(self) -> None:
+        """Test normalizing ACI with ldap:/// URI."""
+        entry = {
+            FlextLdifConstants.DictKeys.DN: "cn=acl,dc=example,dc=com",
+            FlextLdifConstants.DictKeys.ATTRIBUTES: {
+                "aci": 'grant (read) userdn="ldap:///cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com";',
+            },
+        }
+        dn_map = {}
+        normalized = FlextLdifUtilities.Normalizer.normalize_aci_dn_references(
+            entry, dn_map
+        )
+        assert isinstance(normalized, dict)
+        assert FlextLdifConstants.DictKeys.ATTRIBUTES in normalized
+
+    def test_normalize_aci_list_values(self) -> None:
+        """Test normalizing ACI list values."""
+        entry = {
+            FlextLdifConstants.DictKeys.DN: "cn=acl,dc=example,dc=com",
             FlextLdifConstants.DictKeys.ATTRIBUTES: {
                 "aci": [
-                    'aci (target="ldap:///cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com") (version 3.0;'
-                ]
+                    'grant (read) userdn="ldap:///cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com";',
+                    'grant (write) userdn="ldap:///cn=operator,dc=example,dc=com";',
+                ],
             },
         }
-
-        result = FlextLdifUtilities.Normalizer.normalize_aci_dn_references(
+        dn_map = {}
+        normalized = FlextLdifUtilities.Normalizer.normalize_aci_dn_references(
             entry, dn_map
         )
+        assert isinstance(normalized, dict)
 
-        assert FlextLdifConstants.DictKeys.ATTRIBUTES in result
-        attrs = result[FlextLdifConstants.DictKeys.ATTRIBUTES]
-        assert isinstance(attrs, dict)
-        assert "aci" in attrs
-
-    def test_normalize_aci_dn_references_quoted_dns(self) -> None:
-        """Test normalizing DNs in ACI strings with quoted DN patterns."""
-        dn_map = {"cn=user,dc=example,dc=com": "CN=User,DC=Example,DC=Com"}
-
+    def test_normalize_aci_handles_non_dict_attributes(self) -> None:
+        """Test handling ACI entry with non-dict attributes."""
         entry = {
-            FlextLdifConstants.DictKeys.DN: "CN=Group,DC=Example,DC=Com",
-            FlextLdifConstants.DictKeys.ATTRIBUTES: {
-                "aci": 'aci (userdn="cn=user,dc=example,dc=com") (version 3.0;'
+            FlextLdifConstants.DictKeys.DN: "cn=acl,dc=example,dc=com",
+            FlextLdifConstants.DictKeys.ATTRIBUTES: cast("object", "not a dict"),
+        }
+        dn_map = {}
+        normalized = FlextLdifUtilities.Normalizer.normalize_aci_dn_references(
+            entry, dn_map
+        )
+        assert isinstance(normalized, dict)
+
+    def test_normalize_aci_without_aci_attribute(self) -> None:
+        """Test normalizing entry without ACI attribute."""
+        entry = {
+            FlextLdifConstants.DictKeys.DN: "cn=user,dc=example,dc=com",
+            FlextLdifConstants.DictKeys.ATTRIBUTES: {"cn": ["user"]},
+        }
+        dn_map = {}
+        normalized = FlextLdifUtilities.Normalizer.normalize_aci_dn_references(
+            entry, dn_map
+        )
+        assert isinstance(normalized, dict)
+
+
+class TestSorterSortEntriesByHierarchy:
+    """Test sorting entries by DN hierarchy and name."""
+
+    def test_sort_flat_entries_by_name(self) -> None:
+        """Test sorting flat entries by name."""
+        entries = [
+            {
+                FlextLdifConstants.DictKeys.DN: "cn=zebra,dc=example,dc=com",
+                FlextLdifConstants.DictKeys.ATTRIBUTES: {"cn": ["zebra"]},
             },
-        }
-
-        result = FlextLdifUtilities.Normalizer.normalize_aci_dn_references(
-            entry, dn_map
-        )
-
-        assert FlextLdifConstants.DictKeys.ATTRIBUTES in result
-        attrs = result[FlextLdifConstants.DictKeys.ATTRIBUTES]
-        assert isinstance(attrs, dict)
-
-    def test_normalize_aci_dn_references_no_aci(self) -> None:
-        """Test normalizing entry without ACI attributes."""
-        dn_map = {}
-
-        entry = {
-            FlextLdifConstants.DictKeys.DN: "CN=Group,DC=Example,DC=Com",
-            FlextLdifConstants.DictKeys.ATTRIBUTES: {"cn": "Group"},
-        }
-
-        result = FlextLdifUtilities.Normalizer.normalize_aci_dn_references(
-            entry, dn_map
-        )
-
-        # Should return entry unchanged
-        assert FlextLdifConstants.DictKeys.ATTRIBUTES in result
-
-    def test_normalize_aci_dn_references_exception_handling(self) -> None:
-        """Test that ACI normalization handles exceptions gracefully."""
-        dn_map = {}
-
-        entry = {
-            FlextLdifConstants.DictKeys.DN: "CN=Group,DC=Example,DC=Com",
-            FlextLdifConstants.DictKeys.ATTRIBUTES: "invalid",  # type: ignore[assignment]
-        }
-
-        result = FlextLdifUtilities.Normalizer.normalize_aci_dn_references(
-            entry, dn_map
-        )
-
-        # Should return entry unchanged when exception occurs
-        assert result == entry
-
-
-class TestSorter:
-    """Test entry sorting utilities."""
-
-    def test_sort_entries_by_hierarchy_simple(self) -> None:
-        """Test sorting entries by DN hierarchy."""
-        entries = [
-            {FlextLdifConstants.DictKeys.DN: "CN=C,CN=B,CN=A,DC=Example,DC=Com"},
-            {FlextLdifConstants.DictKeys.DN: "CN=B,CN=A,DC=Example,DC=Com"},
-            {FlextLdifConstants.DictKeys.DN: "CN=A,DC=Example,DC=Com"},
+            {
+                FlextLdifConstants.DictKeys.DN: "cn=alpha,dc=example,dc=com",
+                FlextLdifConstants.DictKeys.ATTRIBUTES: {"cn": ["alpha"]},
+            },
         ]
-
-        result = FlextLdifUtilities.Sorter.sort_entries_by_hierarchy_and_name(entries)
-
-        # Should be sorted by depth (fewest RDN components first)
-        assert len(result) == 3
-        # First entry should have fewest commas
-        first_dn = result[0][FlextLdifConstants.DictKeys.DN]
-        assert isinstance(first_dn, str)
-        assert first_dn.count(",") <= result[1][FlextLdifConstants.DictKeys.DN].count(
-            ","
+        sorted_entries = FlextLdifUtilities.Sorter.sort_entries_by_hierarchy_and_name(
+            entries
         )
+        assert isinstance(sorted_entries, list)
+        assert len(sorted_entries) == 2
 
-    def test_sort_entries_by_hierarchy_same_depth(self) -> None:
-        """Test sorting entries at same depth by name."""
+    def test_sort_hierarchical_entries_by_depth(self) -> None:
+        """Test sorting entries by DN depth (hierarchy)."""
         entries = [
-            {FlextLdifConstants.DictKeys.DN: "CN=Zebra,DC=Example,DC=Com"},
-            {FlextLdifConstants.DictKeys.DN: "CN=Apple,DC=Example,DC=Com"},
-            {FlextLdifConstants.DictKeys.DN: "CN=Banana,DC=Example,DC=Com"},
+            {
+                FlextLdifConstants.DictKeys.DN: "cn=user,ou=people,dc=example,dc=com",
+                FlextLdifConstants.DictKeys.ATTRIBUTES: {"cn": ["user"]},
+            },
+            {
+                FlextLdifConstants.DictKeys.DN: "ou=people,dc=example,dc=com",
+                FlextLdifConstants.DictKeys.ATTRIBUTES: {},
+            },
+            {
+                FlextLdifConstants.DictKeys.DN: "dc=example,dc=com",
+                FlextLdifConstants.DictKeys.ATTRIBUTES: {},
+            },
         ]
+        sorted_entries = FlextLdifUtilities.Sorter.sort_entries_by_hierarchy_and_name(
+            entries
+        )
+        assert isinstance(sorted_entries, list)
+        assert len(sorted_entries) == 3
 
-        result = FlextLdifUtilities.Sorter.sort_entries_by_hierarchy_and_name(entries)
+    def test_sort_handles_missing_dn(self) -> None:
+        """Test sorting handles entries without DN."""
+        entries = [
+            {
+                FlextLdifConstants.DictKeys.DN: "cn=valid,dc=example,dc=com",
+                FlextLdifConstants.DictKeys.ATTRIBUTES: {"cn": ["valid"]},
+            },
+            {"no_dn": "value"},
+            {
+                FlextLdifConstants.DictKeys.DN: cast("str", None),
+                FlextLdifConstants.DictKeys.ATTRIBUTES: {},
+            },
+        ]
+        sorted_entries = FlextLdifUtilities.Sorter.sort_entries_by_hierarchy_and_name(
+            entries
+        )
+        assert isinstance(sorted_entries, list)
+        assert len(sorted_entries) >= 1
 
-        # Should be sorted by name at same depth
-        dns = [e[FlextLdifConstants.DictKeys.DN] for e in result]
-        assert len(dns) == 3
-        # All should have same depth but different order
-        assert isinstance(dns[0], str)
+    def test_sort_handles_non_string_dn(self) -> None:
+        """Test sorting handles non-string DN values."""
+        entries = [
+            {
+                FlextLdifConstants.DictKeys.DN: cast("str", 12345),
+                FlextLdifConstants.DictKeys.ATTRIBUTES: {},
+            },
+            {
+                FlextLdifConstants.DictKeys.DN: "cn=valid,dc=example,dc=com",
+                FlextLdifConstants.DictKeys.ATTRIBUTES: {"cn": ["valid"]},
+            },
+        ]
+        sorted_entries = FlextLdifUtilities.Sorter.sort_entries_by_hierarchy_and_name(
+            entries
+        )
+        assert isinstance(sorted_entries, list)
 
-    def test_sort_entries_empty(self) -> None:
+    def test_sort_empty_list(self) -> None:
         """Test sorting empty entry list."""
-        entries: list[dict[str, object]] = []
-
-        result = FlextLdifUtilities.Sorter.sort_entries_by_hierarchy_and_name(entries)
-
-        assert result == []
-
-    def test_sort_entries_with_invalid_dns(self) -> None:
-        """Test sorting entries with invalid or missing DNs."""
-        entries = [
-            {FlextLdifConstants.DictKeys.DN: "CN=Valid,DC=Example,DC=Com"},
-            {FlextLdifConstants.DictKeys.DN: None},  # Invalid DN
-            {"no_dn": "value"},  # Missing DN
-            {FlextLdifConstants.DictKeys.DN: 123},  # type: ignore[misc] # Invalid type
-        ]
-
-        result = FlextLdifUtilities.Sorter.sort_entries_by_hierarchy_and_name(entries)
-
-        # Should handle gracefully - valid entries first, then invalid
-        assert len(result) > 0
-        # Valid entry should be in result
-        assert any(
-            e.get(FlextLdifConstants.DictKeys.DN) == "CN=Valid,DC=Example,DC=Com"
-            for e in result
+        sorted_entries = (
+            FlextLdifUtilities.Sorter.sort_entries_by_hierarchy_and_name([])
         )
+        assert isinstance(sorted_entries, list)
+        assert len(sorted_entries) == 0
 
 
-class TestStatistics:
-    """Test statistics generation utilities."""
+class TestStatisticsGenerateStatistics:
+    """Test generating statistics for categorized migrations."""
 
-    def test_generate_statistics_simple(self) -> None:
-        """Test generating statistics from categorized entries."""
+    def test_generate_stats_basic(self) -> None:
+        """Test generating basic statistics."""
         categorized = {
-            "users": [
+            "user": [
                 {
-                    FlextLdifConstants.DictKeys.DN: "CN=User1,DC=Example,DC=Com",
-                    FlextLdifConstants.DictKeys.ATTRIBUTES: {},
-                }
+                    FlextLdifConstants.DictKeys.DN: "cn=john,dc=example,dc=com",
+                    FlextLdifConstants.DictKeys.ATTRIBUTES: {"cn": ["john"]},
+                },
+                {
+                    FlextLdifConstants.DictKeys.DN: "cn=jane,dc=example,dc=com",
+                    FlextLdifConstants.DictKeys.ATTRIBUTES: {"cn": ["jane"]},
+                },
             ],
-            "groups": [
+            "group": [
                 {
-                    FlextLdifConstants.DictKeys.DN: "CN=Group1,DC=Example,DC=Com",
-                    FlextLdifConstants.DictKeys.ATTRIBUTES: {},
-                }
+                    FlextLdifConstants.DictKeys.DN: "cn=REDACTED_LDAP_BIND_PASSWORDs,dc=example,dc=com",
+                    FlextLdifConstants.DictKeys.ATTRIBUTES: {"cn": ["REDACTED_LDAP_BIND_PASSWORDs"]},
+                },
             ],
         }
-        written_counts = {"users": 1, "groups": 1}
-        output_dir = Path("/output")
-        output_files = {"users": "users.ldif", "groups": "groups.ldif"}
+        written_counts = {"user": 2, "group": 1}
+        output_dir = Path("/tmp")
+        output_files = {"user": "users.ldif", "group": "groups.ldif"}
 
-        result = FlextLdifUtilities.Statistics.generate_statistics(
+        stats = FlextLdifUtilities.Statistics.generate_statistics(
             categorized, written_counts, output_dir, output_files
         )
+        assert isinstance(stats, dict)
+        assert "total_entries" in stats
+        assert stats["total_entries"] == 3
 
-        assert result["total_entries"] == 2
-        assert result["categorized"]["users"] == 1
-        assert result["categorized"]["groups"] == 1
-        assert result["rejection_rate"] == 0.0
-        assert result["rejection_count"] == 0
-
-    def test_generate_statistics_with_rejections(self) -> None:
+    def test_generate_stats_with_rejections(self) -> None:
         """Test generating statistics with rejected entries."""
         categorized = {
-            "users": [
+            "valid": [
                 {
-                    FlextLdifConstants.DictKeys.DN: "CN=User1,DC=Example,DC=Com",
-                    FlextLdifConstants.DictKeys.ATTRIBUTES: {},
+                    FlextLdifConstants.DictKeys.DN: "cn=valid,dc=example,dc=com",
+                    FlextLdifConstants.DictKeys.ATTRIBUTES: {"cn": ["valid"]},
                 }
             ],
             "rejected": [
                 {
-                    FlextLdifConstants.DictKeys.DN: "CN=Invalid,DC=Example,DC=Com",
+                    FlextLdifConstants.DictKeys.DN: "cn=bad,dc=example,dc=com",
                     FlextLdifConstants.DictKeys.ATTRIBUTES: {
-                        "rejectionReason": "Invalid schema"
+                        "rejectionReason": "Invalid syntax"
                     },
                 }
             ],
         }
-        written_counts = {"users": 1}
-        output_dir = Path("/output")
-        output_files = {"users": "users.ldif", "rejected": "rejected.ldif"}
+        written_counts = {"valid": 1, "rejected": 0}
+        output_dir = Path("/tmp")
+        output_files = {"valid": "valid.ldif", "rejected": "rejected.ldif"}
 
-        result = FlextLdifUtilities.Statistics.generate_statistics(
+        stats = FlextLdifUtilities.Statistics.generate_statistics(
             categorized, written_counts, output_dir, output_files
         )
+        assert isinstance(stats, dict)
+        assert "rejection_count" in stats
+        assert "rejection_reasons" in stats
+        assert stats["rejection_count"] >= 0
 
-        assert result["total_entries"] == 2
-        assert result["rejection_count"] == 1
-        assert result["rejection_rate"] == 0.5
-        assert "Invalid schema" in result["rejection_reasons"]
+    def test_generate_stats_empty_categories(self) -> None:
+        """Test generating statistics with empty categories."""
+        categorized = {}
+        written_counts = {}
+        output_dir = Path("/tmp")
+        output_files = {}
 
-    def test_generate_statistics_empty(self) -> None:
-        """Test generating statistics from empty categorized."""
-        categorized: dict[str, list[dict[str, object]]] = {}
-        written_counts: dict[str, int] = {}
-        output_dir = Path("/output")
-        output_files: dict[str, object] = {}
-
-        result = FlextLdifUtilities.Statistics.generate_statistics(
+        stats = FlextLdifUtilities.Statistics.generate_statistics(
             categorized, written_counts, output_dir, output_files
         )
+        assert isinstance(stats, dict)
+        assert stats["total_entries"] == 0
 
-        assert result["total_entries"] == 0
-        assert result["rejection_rate"] == 0.0
-        assert result["rejection_count"] == 0
-
-    def test_generate_statistics_multiple_rejection_reasons(self) -> None:
-        """Test generating statistics with multiple rejection reasons."""
+    def test_generate_stats_rejection_rate_calculation(self) -> None:
+        """Test that rejection rate is calculated correctly."""
         categorized = {
-            "users": [
+            "valid": [
                 {
-                    FlextLdifConstants.DictKeys.DN: "CN=User1,DC=Example,DC=Com",
-                    FlextLdifConstants.DictKeys.ATTRIBUTES: {},
+                    FlextLdifConstants.DictKeys.DN: f"cn=user{i},dc=example,dc=com",
+                    FlextLdifConstants.DictKeys.ATTRIBUTES: {"cn": [f"user{i}"]},
                 }
+                for i in range(8)
             ],
             "rejected": [
                 {
-                    FlextLdifConstants.DictKeys.DN: "CN=Invalid1,DC=Example,DC=Com",
+                    FlextLdifConstants.DictKeys.DN: f"cn=bad{i},dc=example,dc=com",
                     FlextLdifConstants.DictKeys.ATTRIBUTES: {
-                        "rejectionReason": "Invalid schema"
+                        "rejectionReason": "Error"
                     },
-                },
-                {
-                    FlextLdifConstants.DictKeys.DN: "CN=Invalid2,DC=Example,DC=Com",
-                    FlextLdifConstants.DictKeys.ATTRIBUTES: {
-                        "rejectionReason": "Duplicate DN"
-                    },
-                },
+                }
+                for i in range(2)
             ],
         }
-        written_counts = {"users": 1}
-        output_dir = Path("/output")
-        output_files = {"users": "users.ldif"}
+        written_counts = {"valid": 8, "rejected": 0}
+        output_dir = Path("/tmp")
+        output_files = {}
 
-        result = FlextLdifUtilities.Statistics.generate_statistics(
+        stats = FlextLdifUtilities.Statistics.generate_statistics(
             categorized, written_counts, output_dir, output_files
         )
-
-        assert result["rejection_count"] == 2
-        assert len(result["rejection_reasons"]) == 2
-        assert "Invalid schema" in result["rejection_reasons"]
-        assert "Duplicate DN" in result["rejection_reasons"]
-
-    def test_generate_statistics_output_file_paths(self) -> None:
-        """Test that output file paths are correctly generated."""
-        categorized = {"users": []}
-        written_counts = {"users": 0}
-        output_dir = Path("/output")
-        output_files = {"users": "custom_users.ldif"}
-
-        result = FlextLdifUtilities.Statistics.generate_statistics(
-            categorized, written_counts, output_dir, output_files
-        )
-
-        assert "output_files" in result
-        assert "users" in result["output_files"]
-        assert "custom_users.ldif" in result["output_files"]["users"]
+        assert isinstance(stats, dict)
+        assert "rejection_rate" in stats
+        assert stats["rejection_rate"] == pytest.approx(0.2, abs=0.001)

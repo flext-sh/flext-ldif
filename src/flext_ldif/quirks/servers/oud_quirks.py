@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import logging
 import re
-from typing import Any, ClassVar, cast
+from typing import ClassVar, cast
 
 from flext_core import FlextResult
 from pydantic import Field
@@ -67,179 +67,24 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
         r"2\.16\.840\.1\.113894\."
     )
 
-    # Map deprecated/invalid syntax OIDs to valid RFC 4517 syntax OIDs
-    # These are from legacy RFC 2252 or vendor-specific syntaxes not supported by OUD
-    SYNTAX_OID_REPLACEMENTS: ClassVar[dict[str, str]] = {
-        # Deprecated from RFC 2252 - map to Directory String
-        "1.3.6.1.4.1.1466.115.121.1.19": "1.3.6.1.4.1.1466.115.121.1.15",  # Unknown -> Directory String
-        "1.3.6.1.4.1.1466.115.121.1.13": "1.3.6.1.4.1.1466.115.121.1.15",  # Deprecated -> Directory String
-        "1.3.6.1.4.1.1466.115.121.1.4": "1.3.6.1.4.1.1466.115.121.1.40",  # Audio -> Octet String
-    }
-
-    # Oracle internal schema elements that OUD already has built-in
-    # These should be FILTERED OUT during migration to prevent schema corruption
-    # All names in lowercase for case-insensitive matching
-    ORACLE_INTERNAL_OBJECTCLASSES: ClassVar[set[str]] = {
-        # Replication and changelog objectClasses (OUD built-in)
-        # These are Oracle internal classes used for replication that OUD provides
-        "changelogentry",  # OID 2.16.840.1.113894.1.2.6 - Replication changelog
-        "orclchangesubscriber",  # OID 2.16.840.1.113894.1.2.21 - Replication subscriber
-        # ODIP (Oracle Directory Integration Platform) objectClasses
-        "orclodiprovisio ningintegrationprofile",  # OID 2.16.840.1.113894.8.2.400
-        "orclodiprovisio ningintegrationoutboundprofilev2",  # OID 2.16.840.1.113894.8.2.403
-        "orclodiprovisio ningintegrationoutboundprofile",  # OID 2.16.840.1.113894.8.2.404
-    }
-
-    ORACLE_INTERNAL_ATTRIBUTES: ClassVar[set[str]] = {
-        # Replication and changelog attributes (OUD built-in)
-        "changenumber",  # Changelog sequence number
-        "targetdn",  # Changelog target DN
-        "changetype",  # Changelog operation type
-        "changes",  # Changelog change details
-        "changeloginfo",  # Additional changelog metadata
-        "orcllastappliedchangenumber",  # Last applied changelog number
-        "orclsubscriberdisable",  # Subscriber disable flag
-        # Note: servername is NOT in this list because it's a legitimate custom attribute
-        # that can be used outside of changelog context
-    }
-
-    # Known STRUCTURAL objectclasses (standard + Oracle-specific)
-    # Used to detect type mismatches during schema transformation
-    # All names in lowercase for case-insensitive matching
-    KNOWN_STRUCTURAL_CLASSES: ClassVar[set[str]] = {
-        # Standard RFC objectclasses
-        "top",
-        "person",
-        "organizationalperson",
-        "inetorgperson",
-        "organization",
-        "organizationalunit",
-        "groupofnames",
-        "groupofuniquenames",
-        "country",
-        "locality",
-        "device",
-        "application",
-        "applicationprocess",
-        "tombstone",
-        "certificationauthority",
-        # Oracle-specific STRUCTURAL classes
-        "orclapplicationentity",
-        "orclpwdverifierprofile",
-    }
-
-    # Known AUXILIARY objectclasses (standard + Oracle-specific)
-    # All names in lowercase for case-insensitive matching
-    KNOWN_AUXILIARY_CLASSES: ClassVar[set[str]] = {
-        # Standard RFC AUXILIARY classes
-        "extensibleobject",
-        "dcobject",
-        "uidobject",
-        # Java AUXILIARY classes
-        "javanamingreference",
-        "javaobject",
-        "javacontainer",
-        # Oracle-specific AUXILIARY classes
-        "orclprivilegegroup",
-        "orclgroup",
-        # Custom client-a AUXILIARY classes (need conversion from STRUCTURAL)
-        "customsistemas",  # client-a custom systems attributes
-    }
-
     def model_post_init(self, _context: object, /) -> None:
         """Initialize OUD schema quirk."""
 
-    def should_filter_out_attribute(self, _attr_definition: str) -> bool:
-        """Check if this attribute should be filtered out during migration.
+    def can_handle_attribute(self, attr_definition: str) -> bool:  # noqa: ARG002
+        """Check if this attribute can be handled (always returns True).
 
-        Returns True ONLY for Oracle internal attributes that OUD already has built-in.
-        Returns False for all other attributes (standard LDAP + Oracle custom).
-
-        Args:
-            _attr_definition: AttributeType definition string
-
-        Returns:
-            True if attribute should be filtered out (excluded from migration),
-            False if attribute should be included
-
-        """
-        # Only filter Oracle namespace attributes
-        if not self.ORACLE_OUD_PATTERN.search(_attr_definition):
-            return False  # Include non-Oracle (standard LDAP) attributes
-
-        # Extract attribute name from definition
-        name_match = re.search(r"NAME\s+(?:\(\s*)?'([^']+)'", _attr_definition)
-        if name_match:
-            attr_name = name_match.group(1).lower()
-            # Filter out Oracle internal attributes only
-            if attr_name in self.ORACLE_INTERNAL_ATTRIBUTES:
-                logger.info(
-                    f"Filtering Oracle internal attribute: {attr_name} (OUD built-in)"
-                )
-                return True  # EXCLUDE internal attributes
-
-        return False  # Include Oracle custom attributes
-
-    def should_filter_out_objectclass(self, _oc_definition: str) -> bool:
-        """Check if this objectClass should be filtered out during migration.
-
-        Returns True ONLY for Oracle internal objectClasses that OUD already has built-in.
-        Returns False for all other objectClasses (standard LDAP + Oracle custom).
+        NOTE: All filtering is handled by client-aOudMigConstants (BLOCKED_ATTRIBUTES).
+        This method returns True for all attributes - filtering is NOT a quirk responsibility.
 
         Args:
-            _oc_definition: ObjectClass definition string
+            attr_definition: AttributeType definition string (unused, required by interface)
 
         Returns:
-            True if objectClass should be filtered out (excluded from migration),
-            False if objectClass should be included
+            True - all attributes are passed through to migration service for filtering
 
         """
-        # Only filter Oracle namespace objectClasses
-        if not self.ORACLE_OUD_PATTERN.search(_oc_definition):
-            return False  # Include non-Oracle (standard LDAP) objectClasses
-
-        # Extract objectClass name from definition
-        name_match = re.search(r"NAME\s+(?:\(\s*)?'([^']+)'", _oc_definition)
-        if name_match:
-            oc_name = name_match.group(1).lower()
-            # Filter out Oracle internal objectClasses only
-            if oc_name in self.ORACLE_INTERNAL_OBJECTCLASSES:
-                logger.info(
-                    f"Filtering Oracle internal objectClass: {oc_name} (OUD built-in)"
-                )
-                return True  # EXCLUDE internal objectClasses
-
-        return False  # Include Oracle custom objectClasses
-
-    def can_handle_attribute(self, attr_definition: str) -> bool:
-        """Check if this is an Oracle OUD attribute that should be migrated.
-
-        Filters out Oracle internal attributes that OUD already has built-in
-        to prevent schema corruption.
-
-        Args:
-        attr_definition: AttributeType definition string
-
-        Returns:
-        True if this is an Oracle attribute that should be migrated,
-        False if it's internal or non-Oracle
-
-        """
-        # First check if it's Oracle namespace
-        if not self.ORACLE_OUD_PATTERN.search(attr_definition):
-            return False
-
-        # Extract attribute name from definition
-        name_match = re.search(r"NAME\s+(?:\(\s*)?'([^']+)'", attr_definition)
-        if name_match:
-            attr_name = name_match.group(1).lower()
-            # Filter out Oracle internal attributes
-            if attr_name in self.ORACLE_INTERNAL_ATTRIBUTES:
-                logger.info(
-                    f"Filtering Oracle internal attribute: {attr_name} (OUD built-in)"
-                )
-                return False
-
+        # Quirks do NOT filter - return True for all attributes
+        # Migration service uses client-aOudMigConstants.Schema.BLOCKED_ATTRIBUTES
         return True
 
     def parse_attribute(self, attr_definition: str) -> FlextResult[dict[str, object]]:
@@ -321,40 +166,26 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
 
             return FlextResult[dict[str, object]].ok(parsed_data)
 
-        except Exception as e:  # pragma: no cover
+        except Exception as e:
             return FlextResult[dict[str, object]].fail(
                 f"OUD attribute parsing failed: {e}"
             )
 
-    def can_handle_objectclass(self, oc_definition: str) -> bool:
-        """Check if this is an Oracle OUD objectClass that should be migrated.
+    def can_handle_objectclass(self, oc_definition: str) -> bool:  # noqa: ARG002
+        """Check if this objectClass can be handled (always returns True).
 
-        Filters out Oracle internal objectClasses that OUD already has built-in
-        to prevent schema corruption (like changeLogEntry, orclchangesubscriber).
+        NOTE: All filtering is handled by client-aOudMigConstants (BLOCKED_OBJECTCLASSES).
+        This method returns True for all objectClasses - filtering is NOT a quirk responsibility.
 
         Args:
-        oc_definition: ObjectClass definition string
+            oc_definition: ObjectClass definition string (unused, required by interface)
 
         Returns:
-        True if this is an Oracle objectClass that should be migrated,
-        False if it's internal or non-Oracle
+            True - all objectClasses are passed through to migration service for filtering
 
         """
-        # First check if it's Oracle namespace
-        if not self.ORACLE_OUD_PATTERN.search(oc_definition):
-            return False
-
-        # Extract objectClass name from definition
-        name_match = re.search(r"NAME\s+(?:\(\s*)?'([^']+)'", oc_definition)
-        if name_match:
-            oc_name = name_match.group(1).lower()
-            # Filter out Oracle internal objectClasses
-            if oc_name in self.ORACLE_INTERNAL_OBJECTCLASSES:
-                logger.info(
-                    f"Filtering Oracle internal objectClass: {oc_name} (OUD built-in)"
-                )
-                return False
-
+        # Quirks do NOT filter - return True for all objectClasses
+        # Migration service uses client-aOudMigConstants.Schema.BLOCKED_OBJECTCLASSES
         return True
 
     def parse_objectclass(self, oc_definition: str) -> FlextResult[dict[str, object]]:
@@ -404,10 +235,15 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
                     parsed_data["sup"] = sup_value
 
             # Determine kind (STRUCTURAL, AUXILIARY, ABSTRACT)
+            # Handle AUXILLARY typo (double L) from broken OID schemas
             if "STRUCTURAL" in oc_definition:
                 parsed_data["kind"] = "STRUCTURAL"
-            elif "AUXILIARY" in oc_definition:
+            elif "AUXILIARY" in oc_definition or "AUXILLARY" in oc_definition:
                 parsed_data["kind"] = "AUXILIARY"
+                if "AUXILLARY" in oc_definition:
+                    logger.debug(
+                        f"Fixed AUXILLARY typo in objectClass {oc_definition[:50]}"
+                    )
             elif "ABSTRACT" in oc_definition:
                 parsed_data["kind"] = "ABSTRACT"
 
@@ -446,10 +282,90 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
 
             return FlextResult[dict[str, object]].ok(parsed_data)
 
-        except Exception as e:  # pragma: no cover
+        except Exception as e:
             return FlextResult[dict[str, object]].fail(
                 f"OUD objectClass parsing failed: {e}"
             )
+
+    def validate_objectclass_dependencies(
+        self,
+        oc_data: dict[str, object],
+        available_attributes: set[str],
+    ) -> FlextResult[bool]:
+        """Validate that all MUST and MAY attributes for objectclass exist in schema.
+
+        Checks if all required (MUST) and optional (MAY) attributes referenced by an
+        objectclass definition are available in the provided set of available attributes.
+        This prevents schema corruption when objectclasses with missing attributes are
+        loaded into OUD.
+
+        CRITICAL: Also validates attributes from parent objectclasses (SUP) to ensure
+        inheritance chains are valid.
+
+        Args:
+            oc_data: Parsed objectclass data dictionary with 'must', 'may' fields
+            available_attributes: Set of attribute names (lowercase) in current schema
+
+        Returns:
+            FlextResult[bool]:
+                - True if all attributes are available or no attributes required
+                - False if any MUST/MAY attribute is missing
+
+        Example:
+            >>> oc_data = {
+            ...     "name": "orclDbServer",
+            ...     "must": [],
+            ...     "may": ["orclREDACTED_LDAP_BIND_PASSWORDprivilege"],
+            ... }
+            >>> available = {"cn", "description"}  # orclREDACTED_LDAP_BIND_PASSWORDprivilege missing!
+            >>> result = quirk.validate_objectclass_dependencies(oc_data, available)
+            >>> # result.is_success and not result.unwrap() → False (missing attribute)
+
+        """
+        oc_name = str(oc_data.get("name", "unknown"))
+        oc_oid = str(oc_data.get("oid", "unknown"))
+        missing_attrs: list[str] = []
+
+        # PHASE 1: Check MUST attributes (required - failure if missing)
+        must_attrs = oc_data.get("must")
+        if must_attrs:
+            must_list: list[str] = (
+                must_attrs  # type: ignore[assignment]
+                if isinstance(must_attrs, list)
+                else [str(must_attrs)]
+            )
+            for attr in must_list:
+                attr_lower = str(attr).lower()
+                if attr_lower not in available_attributes:
+                    missing_attrs.append(str(attr))
+
+        # PHASE 2: Check MAY attributes (optional - failure if missing)
+        # CRITICAL FIX: MAY attributes MUST also be present in schema
+        # Missing MAY attributes cause: "No attribute type matching this name or OID exists"
+        may_attrs = oc_data.get("may")
+        if may_attrs:
+            may_list: list[str] = (
+                may_attrs  # type: ignore[assignment]
+                if isinstance(may_attrs, list)
+                else [str(may_attrs)]
+            )
+            for attr in may_list:
+                attr_lower = str(attr).lower()
+                if attr_lower not in available_attributes:
+                    missing_attrs.append(str(attr))
+
+        # Report validation failure if any attributes missing
+        if missing_attrs:
+            logger.warning(
+                f"ObjectClass '{oc_name}' (OID {oc_oid}) "
+                f"has unresolved attributes (MUST/MAY): {', '.join(missing_attrs)}. "
+                f"This objectclass will be filtered out to prevent OUD startup failure: "
+                f'"No attribute type matching this name or OID exists in the server schema"'
+            )
+            return FlextResult[bool].ok(False)
+
+        # All MUST and MAY attributes are available
+        return FlextResult[bool].ok(True)
 
     def convert_attribute_to_rfc(
         self, attr_data: dict[str, object]
@@ -477,7 +393,7 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
 
             return FlextResult[dict[str, object]].ok(rfc_data)
 
-        except Exception as e:  # pragma: no cover
+        except Exception as e:
             return FlextResult[dict[str, object]].fail(
                 f"OUD→RFC conversion failed: {e}"
             )
@@ -510,7 +426,7 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
 
             return FlextResult[dict[str, object]].ok(rfc_data)
 
-        except Exception as e:  # pragma: no cover
+        except Exception as e:
             return FlextResult[dict[str, object]].fail(
                 f"OUD→RFC conversion failed: {e}"
             )
@@ -629,22 +545,14 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
                 parts.append(f"SUBSTR {attr_data['substr']}")
 
             # Add SYNTAX (optional but common) - skip if None or empty
-            # Replace deprecated/invalid syntax OIDs with valid RFC 4517 equivalents
+            # NOTE: Syntax OID replacement (deprecated syntax → valid RFC 4517) happens in OID quirks
+            # during OID→RFC conversion, NOT in OUD quirks
             if (
                 "syntax" in attr_data
                 and attr_data["syntax"]
                 and attr_data["syntax"] != "None"
             ):
                 syntax_str = str(attr_data["syntax"])
-
-                # Replace deprecated syntax OIDs with valid ones
-                if syntax_str in self.SYNTAX_OID_REPLACEMENTS:
-                    original_syntax = syntax_str
-                    syntax_str = self.SYNTAX_OID_REPLACEMENTS[syntax_str]
-                    # Log replacement for debugging
-                    logger.debug(
-                        f"Replaced deprecated syntax OID {original_syntax} with {syntax_str}"
-                    )
 
                 if (
                     "syntax_length" in attr_data
@@ -667,27 +575,30 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
 
             return FlextResult[str].ok(rfc_string)
 
-        except Exception as e:  # pragma: no cover
+        except Exception as e:
             return FlextResult[str].fail(f"Failed to write attribute to RFC: {e}")
 
-    def write_objectclass_to_rfc(self, oc_data: dict[str, object]) -> FlextResult[str]:
+    def write_objectclass_to_rfc(
+        self,
+        oc_data: dict[str, object],
+        available_attributes: set[str] | None = None,  # noqa: ARG002
+    ) -> FlextResult[str]:
         """Write OUD objectClass data to RFC 4512 compliant string format.
 
         Converts parsed objectClass dictionary back to RFC 4512 schema
         definition format. If metadata contains original_format, uses it
         for perfect round-trip.
 
+        NOTE: This method does NOT filter MUST/MAY attributes. That responsibility
+        belongs to the extraction phase via validate_objectclass_dependencies.
+        Invalid objectclasses are filtered out during extraction, not modified here.
+
         Args:
             oc_data: Parsed OUD objectClass data dictionary
+            available_attributes: Ignored (accepted for interface compatibility)
 
         Returns:
             FlextResult with RFC 4512 formatted objectClass definition
-
-        Example:
-            Input: {"oid": "2.16.840.1.113894.2.1.1", "name":
-                    "orclContext", "kind": "STRUCTURAL"}
-            Output: "( 2.16.840.1.113894.2.1.1 NAME 'orclContext'
-                     STRUCTURAL MUST cn MAY description )"
 
         """
         try:
@@ -723,72 +634,19 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
             if "desc" in oc_data and oc_data["desc"] and oc_data["desc"] != "None":
                 parts.append(f"DESC '{oc_data['desc']}'")
 
-            # Add SUP (optional) - skip if None or empty
-            # Check for objectclass type mismatches (AUXILIARY vs STRUCTURAL)
-            if "sup" in oc_data and oc_data["sup"] and oc_data["sup"] != "None":
-                sup_value = oc_data["sup"]
-                current_kind = oc_data.get("kind", "STRUCTURAL")
-
-                # Check for type mismatch with superior class
-                has_mismatch = False
-                if isinstance(sup_value, list):
-                    # Multiple superior classes - check each
-                    for sup_class in sup_value:
-                        sup_class_str = str(sup_class).lower()
-                        if (
-                            current_kind == "AUXILIARY"
-                            and sup_class_str in self.KNOWN_STRUCTURAL_CLASSES
-                        ):
-                            logger.warning(
-                                f"Type mismatch: AUXILIARY objectclass '{oc_data.get('name')}' "
-                                f"cannot inherit from STRUCTURAL '{sup_class}'. Removing SUP clause."
-                            )
-                            has_mismatch = True
-                            break
-                        if (
-                            current_kind == "STRUCTURAL"
-                            and sup_class_str in self.KNOWN_AUXILIARY_CLASSES
-                        ):
-                            logger.warning(
-                                f"Type mismatch: STRUCTURAL objectclass '{oc_data.get('name')}' "
-                                f"cannot inherit from AUXILIARY '{sup_class}'. Removing SUP clause."
-                            )
-                            has_mismatch = True
-                            break
-                else:
-                    # Single superior class
-                    sup_class_str = str(sup_value).lower()
-                    if (
-                        current_kind == "AUXILIARY"
-                        and sup_class_str in self.KNOWN_STRUCTURAL_CLASSES
-                    ):
-                        logger.warning(
-                            f"Type mismatch: AUXILIARY objectclass '{oc_data.get('name')}' "
-                            f"cannot inherit from STRUCTURAL '{sup_value}'. Removing SUP clause."
-                        )
-                        has_mismatch = True
-                    elif (
-                        current_kind == "STRUCTURAL"
-                        and sup_class_str in self.KNOWN_AUXILIARY_CLASSES
-                    ):
-                        logger.warning(
-                            f"Type mismatch: STRUCTURAL objectclass '{oc_data.get('name')}' "
-                            f"cannot inherit from AUXILIARY '{sup_value}'. Removing SUP clause."
-                        )
-                        has_mismatch = True
-
-                # Only add SUP clause if no type mismatch
-                if not has_mismatch:
-                    if isinstance(sup_value, list):
-                        # Multiple superior classes: "SUP ( org $ orgUnit )"
-                        sup_str = " $ ".join(str(s) for s in sup_value)
-                        parts.append(f"SUP ( {sup_str} )")
-                    else:
-                        parts.append(f"SUP {sup_value}")
-
-            # Add KIND (STRUCTURAL, AUXILIARY, ABSTRACT) - skip if None or empty
+            # Add KIND (STRUCTURAL, AUXILIARY, ABSTRACT) BEFORE SUP - OUD expects this order
             if "kind" in oc_data and oc_data["kind"] and oc_data["kind"] != "None":
                 parts.append(str(oc_data["kind"]))
+
+            # Add SUP (optional) - skip if None or empty
+            if "sup" in oc_data and oc_data["sup"] and oc_data["sup"] != "None":
+                sup_value = oc_data["sup"]
+                if isinstance(sup_value, list):
+                    # Multiple superior classes: "SUP ( org $ orgUnit )"
+                    sup_str = " $ ".join(str(s) for s in sup_value)
+                    parts.append(f"SUP ( {sup_str} )")
+                else:
+                    parts.append(f"SUP {sup_value}")
 
             # Add MUST attributes (optional)
             # Fix illegal characters in attribute names (underscores → hyphens)
@@ -867,7 +725,7 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
 
             return FlextResult[str].ok(rfc_string)
 
-        except Exception as e:  # pragma: no cover
+        except Exception as e:
             return FlextResult[str].fail(f"Failed to write objectClass to RFC: {e}")
 
     def convert_attribute_from_rfc(
@@ -892,7 +750,7 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
 
             return FlextResult[dict[str, object]].ok(oud_data)
 
-        except Exception as e:  # pragma: no cover
+        except Exception as e:
             return FlextResult[dict[str, object]].fail(
                 f"RFC→OUD attribute conversion failed: {e}"
             )
@@ -905,6 +763,7 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
         Applies OUD-specific transformations:
         - Converts known AUXILIARY objectClasses from STRUCTURAL to AUXILIARY
           (e.g., customSistemas which is STRUCTURAL in source but should be AUXILIARY in OUD)
+        - Fixes broken OID schema definitions (missing SUP, typos in KIND)
 
         Args:
         rfc_data: RFC-compliant objectClass data
@@ -921,28 +780,33 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
                 FlextLdifConstants.ServerTypes.OUD
             )
 
-            # CRITICAL FIX: Convert STRUCTURAL to AUXILIARY for known AUXILIARY classes
-            # This fixes "multiple STRUCTURAL objectClasses" errors in OUD
-            oc_name_raw = oud_data.get("name")
-            oc_kind = oud_data.get("kind")
+            # Fix OID schema issues for OUD compatibility
+            name_value = oud_data.get(FlextLdifConstants.DictKeys.NAME)
+            sup_value = oud_data.get(FlextLdifConstants.DictKeys.SUP)
+            kind_value = oud_data.get(FlextLdifConstants.DictKeys.KIND)
 
-            if isinstance(oc_name_raw, str) and isinstance(oc_kind, str):
-                oc_name_lower = oc_name_raw.lower()
+            # Fix missing SUP for AUXILIARY objectClasses
+            # OUD requires AUXILIARY classes to have explicit SUP clause
+            if (
+                not sup_value
+                and kind_value == "AUXILIARY"
+                and isinstance(name_value, str)
+            ):
+                name_lower = name_value.lower()
+                auxiliary_without_sup = {
+                    "orcldAsAttrCategory".lower(),  # orclDASAttrCategory
+                    "orcldasconfigpublicgroup",  # orclDASConfigPublicGroup
+                }
 
-                # Check if this objectClass should be AUXILIARY in OUD
-                if (
-                    oc_name_lower in self.KNOWN_AUXILIARY_CLASSES
-                    and oc_kind == "STRUCTURAL"
-                ):
-                    logger.info(
-                        f"Converting objectClass '{oc_name_raw}' from STRUCTURAL to AUXILIARY "
-                        "(OUD compatibility fix)"
+                if name_lower in auxiliary_without_sup:
+                    oud_data[FlextLdifConstants.DictKeys.SUP] = "top"
+                    logger.debug(
+                        f"Fixed missing SUP for AUXILIARY class {name_value}"
                     )
-                    oud_data["kind"] = "AUXILIARY"
 
             return FlextResult[dict[str, object]].ok(oud_data)
 
-        except Exception as e:  # pragma: no cover
+        except Exception as e:
             return FlextResult[dict[str, object]].fail(
                 f"RFC→OUD objectClass conversion failed: {e}"
             )
@@ -956,18 +820,23 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
         and objectClasses from cn=schema LDIF entries, handling OUD's
         case variations.
 
+        Filters only Oracle internal objectClasses that OUD already provides built-in.
+        All custom objectClasses pass through, including those with unresolved
+        dependencies (OUD will validate at startup).
+
         Args:
-        ldif_content: Raw LDIF content containing schema definitions
+            ldif_content: Raw LDIF content containing schema definitions
 
         Returns:
-        FlextResult with CustomDataDict containing ATTRIBUTES and
-        objectclasses lists
+            FlextResult with CustomDataDict containing ATTRIBUTES and
+            objectclasses lists (filtered only for Oracle internal classes)
 
         """
         try:
-            attributes = []
-            objectclasses = []
+            attributes_parsed: list[dict[str, object]] = []
+            objectclasses_parsed: list[dict[str, object]] = []
 
+            # PHASE 1: Extract all attributeTypes first
             for raw_line in ldif_content.split("\n"):
                 line = raw_line.strip()
 
@@ -977,21 +846,43 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
                     attr_def = line.split(":", 1)[1].strip()
                     result = self.parse_attribute(attr_def)
                     if result.is_success:
-                        attributes.append(result.unwrap())
+                        attributes_parsed.append(result.unwrap())
+
+            # Build set of available attribute names (lowercase) for dependency validation
+            available_attributes: set[str] = set()
+            for attr_data in attributes_parsed:
+                if isinstance(attr_data, dict) and "name" in attr_data:
+                    attr_name = str(attr_data["name"]).lower()
+                    available_attributes.add(attr_name)
+
+            # PHASE 2: Extract objectClasses with dependency validation
+            # Must happen AFTER all attributes are collected
+            objectclasses_raw: list[tuple[str, dict[str, object]]] = []
+            for raw_line in ldif_content.split("\n"):
+                line = raw_line.strip()
 
                 # Match: objectClasses:, objectclasses:, or any case variation
-                elif line.lower().startswith("objectclasses:"):
+                if line.lower().startswith("objectclasses:"):
                     oc_def = line.split(":", 1)[1].strip()
                     result = self.parse_objectclass(oc_def)
                     if result.is_success:
-                        objectclasses.append(result.unwrap())
+                        oc_data = result.unwrap()
+                        # Store tuple of (definition, parsed_data) for validation
+                        objectclasses_raw.append((oc_def, oc_data))
+
+            # PHASE 3: Pass all objectClasses through to migration service
+            # NOTE: Filtering is NOT the responsibility of quirks.
+            # All objectClass filtering is handled by client-aOudMigConstants
+            # (BLOCKED_OBJECTCLASSES) in the migration service.
+            for _oc_def_str, oc_data in objectclasses_raw:
+                objectclasses_parsed.append(oc_data)
 
             return FlextResult[dict[str, object]].ok({
-                FlextLdifConstants.DictKeys.ATTRIBUTES: attributes,
-                "objectclasses": objectclasses,
+                FlextLdifConstants.DictKeys.ATTRIBUTES: attributes_parsed,
+                "objectclasses": objectclasses_parsed,
             })
 
-        except Exception as e:  # pragma: no cover
+        except Exception as e:
             return FlextResult[dict[str, object]].fail(
                 f"OUD schema extraction failed: {e}"
             )
@@ -1169,7 +1060,7 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
 
                 return FlextResult[dict[str, object]].ok(oudacl_data)
 
-            except Exception as e:  # pragma: no cover
+            except Exception as e:
                 return FlextResult[dict[str, object]].fail(
                     f"OUD ACL parsing failed: {e}"
                 )
@@ -1199,36 +1090,118 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
 
                 return FlextResult[dict[str, object]].ok(rfc_data)
 
-            except Exception as e:  # pragma: no cover
+            except Exception as e:
                 return FlextResult[dict[str, object]].fail(
                     f"OUD ACL→RFC conversion failed: {e}"
                 )
 
+        def _convert_constraint_to_targattrfilters(
+            self, oid_constraint: str
+        ) -> str:
+            """Convert OID added_object_constraint to OUD targattrfilters format.
+
+            OID format: added_object_constraint=(objectClass=person)
+            OUD format: targattrfilters="add=objectClass:(objectClass=person)"
+
+            Args:
+                oid_constraint: OID constraint string
+
+            Returns:
+                OUD targattrfilters string
+
+            """
+            # Remove outer parentheses if present
+            constraint = oid_constraint.strip()
+            if constraint.startswith("(") and constraint.endswith(")"):
+                constraint = constraint[1:-1]
+
+            # OUD targattrfilters format requires operation prefix
+            # add= for added entries, del= for deleted entries
+            return f"add=objectClass:({constraint})"
+
         def convert_acl_from_rfc(
             self, acl_data: dict[str, object]
         ) -> FlextResult[dict[str, object]]:
-            """Convert RFC ACL to OUD-specific format.
+            """Convert RFC ACL to OUD format with targattrfilters and proxy handling.
 
             Args:
-            acl_data: RFC-compliant ACL data
+                acl_data: RFC-compliant ACL data
 
             Returns:
-            FlextResult with OUD ACL data
+                FlextResult with OUD ACL data
 
             """
             try:
-                # Convert RFC ACL to Oracle OUD format
+                # PHASE 1: Validate non-empty permissions
+                permissions = acl_data.get("permissions", [])
+                if not permissions or (isinstance(permissions, list) and len(permissions) == 0):
+                    return FlextResult[dict[str, object]].fail(
+                        "RFC ACL has no permissions - cannot convert to OUD"
+                    )
+
+                # PHASE 2: Build OUD-specific attributes
+                oud_data = dict(acl_data)  # Copy RFC data
+
+                # Convert added_object_constraint to targattrfilters
+                if "_oid_constraint" in acl_data:
+                    constraint = str(acl_data["_oid_constraint"])
+                    # Convert OID constraint to OUD targattrfilters format
+                    oud_data["targattrfilters"] = self._convert_constraint_to_targattrfilters(
+                        constraint
+                    )
+                    del oud_data["_oid_constraint"]
+
+                # Handle proxy permissions metadata
+                if "_oid_proxy_permissions" in acl_data:
+                    proxy_meta = acl_data["_oid_proxy_permissions"]
+                    # Convert proxy to OUD equivalent
+                    logger.warning(
+                        f"OID proxy permissions found: {proxy_meta} - needs OUD conversion"
+                    )
+                    oud_data["_oud_proxy_meta"] = proxy_meta
+
+                # Preserve ACL type distinction
+                if "_acl_type" in acl_data:
+                    acl_type = acl_data["_acl_type"]
+                    if acl_type == "entry_level":
+                        # OUD might need different handling for entry-level ACLs
+                        oud_data["_oud_entry_level"] = True
+
+                # Preserve multi-line formatting flag
+                if "_metadata" in acl_data:
+                    metadata = acl_data["_metadata"]
+                    if isinstance(metadata, dict):
+                        extensions = metadata.get("extensions", {})
+                        if isinstance(extensions, dict) and extensions.get("is_multiline"):
+                            # Ensure OUD writer uses multi-line format
+                            if "_metadata" not in oud_data:
+                                oud_data["_metadata"] = {}
+                            if isinstance(oud_data["_metadata"], dict):
+                                if "extensions" not in oud_data["_metadata"]:
+                                    oud_data["_metadata"]["extensions"] = {}
+                                if isinstance(oud_data["_metadata"]["extensions"], dict):
+                                    oud_data["_metadata"]["extensions"]["is_multiline"] = True
+
+                # Set OUD format metadata
                 dk = FlextLdifConstants.DictKeys
                 af = FlextLdifConstants.AclFormats
-                oud_data: dict[str, object] = {
-                    dk.FORMAT: af.OUD_ACL,
-                    dk.TARGET_FORMAT: "ds-cfg",
-                    dk.DATA: acl_data,
-                }
+                oud_data[dk.FORMAT] = af.OUD_ACL
+                oud_data[dk.TARGET_FORMAT] = "ds-cfg"
+
+                # CRITICAL: Call write_acl_to_rfc() to generate the actual ACI string
+                # and store it in the DEFINITION field that the LDIF writer expects
+                write_result = self.write_acl_to_rfc(oud_data)
+                if write_result.is_failure:
+                    return FlextResult[dict[str, object]].fail(
+                        f"Failed to write OUD ACI string: {write_result.error}"
+                    )
+
+                aci_string = write_result.unwrap()
+                oud_data[dk.DEFINITION] = aci_string
 
                 return FlextResult[dict[str, object]].ok(oud_data)
 
-            except Exception as e:  # pragma: no cover
+            except Exception as e:
                 return FlextResult[dict[str, object]].fail(
                     f"RFC→OUD ACL conversion failed: {e}"
                 )
@@ -1310,6 +1283,14 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
                     target_scope = actual_acl_data.get("targetscope", "subtree")
                     aci_parts.append(f'(targetscope="{target_scope}")')
 
+                # Target attribute filters (OUD-specific, optional)
+                if (
+                    isinstance(actual_acl_data, dict)
+                    and "targattrfilters" in actual_acl_data
+                ):
+                    targattr_filters = actual_acl_data.get("targattrfilters", "")
+                    aci_parts.append(f'(targattrfilters="{targattr_filters}")')
+
                 # Version and ACL name
                 version = (
                     actual_acl_data.get("version", "3.0")
@@ -1334,22 +1315,6 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
                     if isinstance(actual_acl_data, dict)
                     else []
                 )
-
-                # Check if this is a multi-line ACI
-                is_multiline = False
-                if isinstance(actual_acl_data, dict) and "_metadata" in actual_acl_data:
-                    metadata = actual_acl_data["_metadata"]
-                    if isinstance(metadata, FlextLdifModels.QuirkMetadata):
-                        multiline_value = metadata.extensions.get("is_multiline", False)
-                        is_multiline = (
-                            bool(multiline_value)
-                            if isinstance(multiline_value, bool)
-                            else False
-                        )
-                    elif isinstance(metadata, dict):
-                        is_multiline = metadata.get("extensions", {}).get(
-                            "is_multiline", False
-                        )
 
                 # Build permission rules
                 permission_lines: list[str] = []
@@ -1387,25 +1352,61 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
                                 ops_str = str(ops)
                             permission_lines.append(f"{action} ({ops_str});")
 
-                # Format output (multi-line vs single-line)
-                if is_multiline and len(permission_lines) > 1:
-                    # Multi-line format with indentation
-                    result_lines = [aci_parts[0]]  # First line (targetattr)
-                    if len(aci_parts) > 1:
-                        # Version and ACL name on first line
-                        result_lines[0] += f" {aci_parts[1]}"
-
-                    # Add permission lines with indentation (6 spaces typical)
-                    result_lines.extend(
-                        f"      {perm_line}" for perm_line in permission_lines
+                # VALIDATION: Ensure at least one permission rule exists
+                if not permission_lines:
+                    logger.warning(
+                        f"ACL '{acl_name}' has no permission rules after conversion - skipping"
+                    )
+                    return FlextResult[str].fail(
+                        f"ACL '{acl_name}' has no valid permissions to write"
                     )
 
-                    # Close the ACI
+                # Determine if multi-line format should be used
+                # Force multi-line if 2+ permission rules OR if metadata flag set
+                min_rules_for_multiline = 2
+                should_use_multiline = (
+                    len(permission_lines) >= min_rules_for_multiline
+                    or (
+                        isinstance(actual_acl_data, dict)
+                        and isinstance(actual_acl_data.get("_metadata"), dict)
+                        and isinstance(
+                            actual_acl_data.get("_metadata", {}).get("extensions", {}), dict  # type: ignore[arg-type]
+                        )
+                        and actual_acl_data.get("_metadata", {}).get("extensions", {}).get(  # type: ignore[arg-type, union-attr]
+                            "is_multiline", False
+                        )
+                    )
+                )
+
+                # Format output (multi-line vs single-line)
+                if should_use_multiline:
+                    # Multi-line format with proper indentation and line breaks
+                    result_lines = []
+
+                    # Line 1: targetattr and optional targattrfilters/targetscope
+                    first_line = aci_parts[0]  # (targetattr="...")
+                    # Check if we have targattrfilters or targetscope in subsequent parts
+                    version_idx = 1
+                    while version_idx < len(aci_parts) and not aci_parts[version_idx].startswith(
+                        "(version"
+                    ):
+                        first_line += " " + aci_parts[version_idx]
+                        version_idx += 1
+                    result_lines.append(first_line)
+
+                    # Line 2: version and acl name (indented)
+                    if version_idx < len(aci_parts):
+                        result_lines.append("  " + aci_parts[version_idx])
+
+                    # Lines 3+: permission rules (each on own line with indentation)
+                    result_lines.extend("    " + perm_line for perm_line in permission_lines)
+
+                    # Close the ACI on last line
                     result_lines[-1] = result_lines[-1].rstrip(";") + ")"
 
                     aci_string = "\n".join(result_lines)
                 else:
-                    # Single-line format
+                    # Single-line format (fallback)
                     aci_string = " ".join(aci_parts)
                     for perm_line in permission_lines:
                         aci_string += f" {perm_line}"
@@ -1413,7 +1414,7 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
 
                 return FlextResult[str].ok(aci_string)
 
-            except Exception as e:  # pragma: no cover
+            except Exception as e:
                 return FlextResult[str].fail(f"Failed to write ACL to RFC: {e}")
 
         def extract_acls_from_ldif(
@@ -1474,7 +1475,7 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
 
                 return FlextResult[list[dict[str, object]]].ok(acls)
 
-            except Exception as e:  # pragma: no cover
+            except Exception as e:
                 return FlextResult[list[dict[str, object]]].fail(
                     f"OUD ACL extraction failed: {e}"
                 )
@@ -1584,107 +1585,14 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
                         "_modify_add_objectclasses"
                     ]
 
-                # OUD-incompatible attributes to filter out
-                # These are OID-specific attributes that cause objectClass violations in OUD
-                oud_filtered_attrs = {
-                    # Operational attributes (OUD manages these automatically)
-                    "creatorsname",
-                    "modifiersname",
-                    "createtimestamp",
-                    "modifytimestamp",
-                    "entryuuid",
-                    "entrydn",
-                    "entrycsn",
-                    # OID-specific ACL attributes (will be in 04-acl.ldif)
-                    "orclaci",
-                    "orclentrylevelaci",
-                    # OID-specific password policy attributes
-                    "pwdpolicysubentry",
-                    # OID-specific attributes causing objectClass violations
-                    "tipousuario",
-                    "uniquemember",
-                }
-
-                # CRITICAL FIX: Handle multiple STRUCTURAL objectClasses
-                # LDAP rule: Only ONE STRUCTURAL objectClass allowed per entry
-                # Access KNOWN_STRUCTURAL_CLASSES from parent OUD quirk class
-                # Note: self is EntryQuirk (nested class), parent is FlextLdifQuirksServersOud
-                known_structural = FlextLdifQuirksServersOud.KNOWN_STRUCTURAL_CLASSES
-
-                objectclass_attr = attributes.get("objectclass") or attributes.get(
-                    "objectClass"
-                )
-                if objectclass_attr:
-                    # Explicitly narrow type for pyrefly: convert to list if string
-                    oc_list: list[str | Any] = (
-                        cast("list[str | Any]", objectclass_attr)
-                        if isinstance(objectclass_attr, list)
-                        else [objectclass_attr]
-                    )
-                    oc_lower = [str(oc).lower() for oc in oc_list]
-
-                    # Find STRUCTURAL objectClasses in this entry
-                    structural_classes = [
-                        oc for oc in oc_lower if oc in known_structural
-                    ]
-
-                    if len(structural_classes) > 1:
-                        # Multiple STRUCTURAL - keep only the primary one based on entry type
-                        primary_structural = None
-
-                        # DN-based heuristics to choose primary STRUCTURAL
-                        dn_lower = entry_dn.lower()
-                        if "dc=" in dn_lower:
-                            # Domain entry - prefer domain/dcObject
-                            if "domain" in structural_classes:
-                                primary_structural = "domain"
-                            elif "dcobject" in structural_classes:
-                                primary_structural = "dcobject"
-                        elif "ou=" in dn_lower:
-                            # Organizational unit - prefer organizationalUnit
-                            if "organizationalunit" in structural_classes:
-                                primary_structural = "organizationalunit"
-                        elif "cn=" in dn_lower:
-                            # Could be group, person, container - prefer first in list
-                            if "groupofuniquenames" in structural_classes:
-                                primary_structural = "groupofuniquenames"
-                            elif "groupofnames" in structural_classes:
-                                primary_structural = "groupofnames"
-                            elif "inetorgperson" in structural_classes:
-                                primary_structural = "inetorgperson"
-                            elif "person" in structural_classes:
-                                primary_structural = "person"
-                            elif "organizationalperson" in structural_classes:
-                                primary_structural = "organizationalperson"
-
-                        # Fallback: keep first STRUCTURAL found
-                        if not primary_structural:
-                            primary_structural = structural_classes[0]
-
-                        # Remove non-primary STRUCTURAL objectClasses
-                        new_oc_list: list[str | Any] = []
-                        for oc in oc_list:
-                            oc_lower_str = str(oc).lower()
-                            if oc_lower_str in structural_classes:
-                                # Only keep the primary STRUCTURAL
-                                if oc_lower_str == primary_structural:
-                                    new_oc_list.append(oc)
-                                else:
-                                    logger.info(
-                                        f"Removed conflicting STRUCTURAL objectClass '{oc}' "
-                                        f"from entry {entry_dn} (keeping '{primary_structural}')"
-                                    )
-                            else:
-                                # Keep all AUXILIARY and ABSTRACT classes
-                                new_oc_list.append(oc)
-
-                        # Update attributes with fixed objectClass list
-                        # Create mutable copy using dict.copy() method
-                        attributes = attributes.copy()
-                        if "objectclass" in attributes:
-                            attributes["objectclass"] = new_oc_list
-                        elif "objectClass" in attributes:
-                            attributes["objectClass"] = new_oc_list
+                # NOTE: Filtering is NOT the responsibility of quirks.
+                # All attribute/objectClass filtering is handled by client-aOudMigConstants
+                # (BLOCKED_ATTRIBUTES, BLOCKED_OBJECTCLASSES) in the migration service.
+                # Quirks ONLY perform FORMAT transformations (e.g., boolean 0/1 → TRUE/FALSE).
+                #
+                # LDAP SCHEMA RULE: Only ONE STRUCTURAL objectClass per entry is allowed.
+                # If multiple STRUCTURAL classes exist, OUD will reject the entry during sync.
+                # This is NOT a quirk responsibility - let OUD server enforce its schema rules.
 
                 # Process attributes with boolean conversion (FORMAT transformation)
                 for attr_name, attr_values in attributes.items():
@@ -1692,9 +1600,6 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
                     if attr_name.startswith("_"):
                         continue
 
-                    # Filter out OUD-incompatible attributes
-                    if attr_name.lower() in oud_filtered_attrs:
-                        continue
                     # Check if this is a boolean attribute that needs FORMAT conversion
                     if attr_name.lower() in self.BOOLEAN_ATTRIBUTES:
                         # Convert 0/1 to TRUE/FALSE for OUD
@@ -1719,6 +1624,26 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
                                 processed_entry[attr_name] = "TRUE"
                             else:
                                 processed_entry[attr_name] = attr_values
+                    elif attr_name.lower() == "telephonenumber":
+                        # Validate telephone numbers - must contain at least one digit
+                        # Filter out invalid values like "N/A", "n/a", empty strings, etc.
+                        if isinstance(attr_values, list):
+                            valid_numbers = []
+                            for val in attr_values:
+                                str_val = str(val).strip()
+                                # Check if value contains at least one numeric digit
+                                if any(c.isdigit() for c in str_val):
+                                    valid_numbers.append(val)
+                            # Only add attribute if we have valid numbers
+                            if valid_numbers:
+                                processed_entry[attr_name] = valid_numbers
+                        else:
+                            # Single value
+                            str_val = str(attr_values).strip()
+                            # Only add if contains at least one digit
+                            if any(c.isdigit() for c in str_val):
+                                processed_entry[attr_name] = attr_values
+                            # Skip invalid telephone numbers (no else - don't add attribute)
                     else:
                         # Non-boolean attribute, copy as-is
                         processed_entry[attr_name] = attr_values
@@ -1758,7 +1683,7 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
 
                 return FlextResult[dict[str, object]].ok(processed_entry)
 
-            except Exception as e:  # pragma: no cover
+            except Exception as e:
                 return FlextResult[dict[str, object]].fail(
                     f"OUD entry processing failed: {e}"
                 )
@@ -1778,7 +1703,7 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
             try:
                 # OUD entries are already RFC-compliant
                 return FlextResult[dict[str, object]].ok(entry_data)
-            except Exception as e:  # pragma: no cover
+            except Exception as e:
                 return FlextResult[dict[str, object]].fail(
                     f"OUD entry→RFC conversion failed: {e}"
                 )
@@ -1805,7 +1730,7 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
 
                 return FlextResult[dict[str, object]].ok(oud_entry)
 
-            except Exception as e:  # pragma: no cover
+            except Exception as e:
                 return FlextResult[dict[str, object]].fail(
                     f"RFC→OUD entry conversion failed: {e}"
                 )
@@ -1953,7 +1878,7 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
 
                 return FlextResult[str].ok(ldif_string)
 
-            except Exception as e:  # pragma: no cover
+            except Exception as e:
                 return FlextResult[str].fail(f"Failed to write entry to LDIF: {e}")
 
         def extract_entries_from_ldif(
@@ -2066,7 +1991,7 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
 
                 return FlextResult[list[dict[str, object]]].ok(entries)
 
-            except Exception as e:  # pragma: no cover
+            except Exception as e:
                 return FlextResult[list[dict[str, object]]].fail(
                     f"OUD entry extraction failed: {e}"
                 )

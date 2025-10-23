@@ -135,7 +135,7 @@ class FlextLdifQuirksServersOpenldap1(FlextLdifQuirksBaseSchemaQuirk):
 
             return FlextResult[dict[str, object]].ok(attr_data)
 
-        except Exception as e:  # pragma: no cover
+        except Exception as e:
             return FlextResult[dict[str, object]].fail(
                 f"OpenLDAP 1.x attribute parsing failed: {e}"
             )
@@ -234,7 +234,7 @@ class FlextLdifQuirksServersOpenldap1(FlextLdifQuirksBaseSchemaQuirk):
 
             return FlextResult[dict[str, object]].ok(oc_data)
 
-        except Exception as e:  # pragma: no cover
+        except Exception as e:
             return FlextResult[dict[str, object]].fail(
                 f"OpenLDAP 1.x objectClass parsing failed: {e}"
             )
@@ -266,7 +266,7 @@ class FlextLdifQuirksServersOpenldap1(FlextLdifQuirksBaseSchemaQuirk):
 
             return FlextResult[dict[str, object]].ok(rfc_data)
 
-        except Exception as e:  # pragma: no cover
+        except Exception as e:
             return FlextResult[dict[str, object]].fail(
                 f"OpenLDAP 1.x→RFC conversion failed: {e}"
             )
@@ -299,7 +299,7 @@ class FlextLdifQuirksServersOpenldap1(FlextLdifQuirksBaseSchemaQuirk):
 
             return FlextResult[dict[str, object]].ok(rfc_data)
 
-        except Exception as e:  # pragma: no cover
+        except Exception as e:
             return FlextResult[dict[str, object]].fail(
                 f"OpenLDAP 1.x→RFC conversion failed: {e}"
             )
@@ -327,7 +327,7 @@ class FlextLdifQuirksServersOpenldap1(FlextLdifQuirksBaseSchemaQuirk):
 
             return FlextResult[dict[str, object]].ok(openldap_data)
 
-        except Exception as e:  # pragma: no cover
+        except Exception as e:
             return FlextResult[dict[str, object]].fail(
                 f"RFC→OpenLDAP 1.x attribute conversion failed: {e}"
             )
@@ -355,7 +355,7 @@ class FlextLdifQuirksServersOpenldap1(FlextLdifQuirksBaseSchemaQuirk):
 
             return FlextResult[dict[str, object]].ok(openldap_data)
 
-        except Exception as e:  # pragma: no cover
+        except Exception as e:
             return FlextResult[dict[str, object]].fail(
                 f"RFC→OpenLDAP 1.x objectClass conversion failed: {e}"
             )
@@ -395,7 +395,7 @@ class FlextLdifQuirksServersOpenldap1(FlextLdifQuirksBaseSchemaQuirk):
 
             return FlextResult[str].ok(attr_str)
 
-        except Exception as e:  # pragma: no cover
+        except Exception as e:
             return FlextResult[str].fail(f"OpenLDAP 1.x attribute write failed: {e}")
 
     def write_objectclass_to_rfc(self, oc_data: dict[str, object]) -> FlextResult[str]:
@@ -437,7 +437,7 @@ class FlextLdifQuirksServersOpenldap1(FlextLdifQuirksBaseSchemaQuirk):
 
             return FlextResult[str].ok(oc_str)
 
-        except Exception as e:  # pragma: no cover
+        except Exception as e:
             return FlextResult[str].fail(f"OpenLDAP 1.x objectClass write failed: {e}")
 
     class AclQuirk(FlextLdifQuirksBaseAclQuirk):
@@ -527,7 +527,7 @@ class FlextLdifQuirksServersOpenldap1(FlextLdifQuirksBaseSchemaQuirk):
 
                 return FlextResult[dict[str, object]].ok(openldap1acl_data)
 
-            except Exception as e:  # pragma: no cover  # pragma: no cover
+            except Exception as e:
                 return FlextResult[dict[str, object]].fail(
                     f"OpenLDAP 1.x ACL parsing failed: {e}"
                 )
@@ -555,7 +555,7 @@ class FlextLdifQuirksServersOpenldap1(FlextLdifQuirksBaseSchemaQuirk):
 
                 return FlextResult[dict[str, object]].ok(rfc_data)
 
-            except Exception as e:  # pragma: no cover  # pragma: no cover
+            except Exception as e:
                 return FlextResult[dict[str, object]].fail(
                     f"OpenLDAP 1.x ACL→RFC conversion failed: {e}"
                 )
@@ -582,7 +582,7 @@ class FlextLdifQuirksServersOpenldap1(FlextLdifQuirksBaseSchemaQuirk):
 
                 return FlextResult[dict[str, object]].ok(openldap1_data)
 
-            except Exception as e:  # pragma: no cover  # pragma: no cover
+            except Exception as e:
                 return FlextResult[dict[str, object]].fail(
                     f"RFC→OpenLDAP 1.x ACL conversion failed: {e}"
                 )
@@ -619,7 +619,7 @@ class FlextLdifQuirksServersOpenldap1(FlextLdifQuirksBaseSchemaQuirk):
                 acl_str = " ".join(acl_parts)
                 return FlextResult[str].ok(acl_str)
 
-            except Exception as e:  # pragma: no cover  # pragma: no cover
+            except Exception as e:
                 return FlextResult[str].fail(f"OpenLDAP 1.x ACL write failed: {e}")
 
     class EntryQuirk(FlextLdifQuirksBaseEntryQuirk):
@@ -691,7 +691,7 @@ class FlextLdifQuirksServersOpenldap1(FlextLdifQuirksBaseSchemaQuirk):
 
                 return FlextResult[dict[str, object]].ok(processed_entry)
 
-            except Exception as e:  # pragma: no cover  # pragma: no cover
+            except Exception as e:
                 return FlextResult[dict[str, object]].fail(
                     f"OpenLDAP 1.x entry processing failed: {e}"
                 )
@@ -711,7 +711,7 @@ class FlextLdifQuirksServersOpenldap1(FlextLdifQuirksBaseSchemaQuirk):
             try:
                 # OpenLDAP 1.x entries are already RFC-compliant
                 return FlextResult[dict[str, object]].ok(entry_data)
-            except Exception as e:  # pragma: no cover  # pragma: no cover
+            except Exception as e:
                 return FlextResult[dict[str, object]].fail(
                     f"OpenLDAP 1.x entry→RFC conversion failed: {e}"
                 )

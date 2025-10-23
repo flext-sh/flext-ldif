@@ -69,10 +69,7 @@ class TestFlextLdifApiOperations:
     def test_parse_from_string_content(self, api: FlextLdif) -> None:
         """Test parsing LDIF from string content."""
         ldif_content = (
-            "dn: cn=test,dc=example,dc=com\n"
-            "cn: test\n"
-            "objectClass: person\n"
-            "\n"
+            "dn: cn=test,dc=example,dc=com\ncn: test\nobjectClass: person\n\n"
         )
         result = api.parse(ldif_content)
         assert result.is_success
@@ -80,7 +77,9 @@ class TestFlextLdifApiOperations:
         assert isinstance(entries, list)
         assert len(entries) > 0
 
-    def test_parse_from_file_path(self, api: FlextLdif, oid_entries_fixture: Path) -> None:
+    def test_parse_from_file_path(
+        self, api: FlextLdif, oid_entries_fixture: Path
+    ) -> None:
         """Test parsing from file path."""
         if not oid_entries_fixture.exists():
             pytest.skip(f"Fixture not found: {oid_entries_fixture}")
@@ -98,15 +97,15 @@ class TestFlextLdifApiOperations:
         if not oid_entries_fixture.exists() or not oud_entries_fixture.exists():
             pytest.skip("One or both fixtures not found")
 
-        result = api.parse(
-            [oid_entries_fixture, oud_entries_fixture], batch=True
-        )
+        result = api.parse([oid_entries_fixture, oud_entries_fixture], batch=True)
         assert result.is_success
         entries = result.unwrap()
         assert isinstance(entries, list)
         assert len(entries) > 0
 
-    def test_parse_with_pagination(self, api: FlextLdif, oid_entries_fixture: Path) -> None:
+    def test_parse_with_pagination(
+        self, api: FlextLdif, oid_entries_fixture: Path
+    ) -> None:
         """Test parsing with pagination."""
         if not oid_entries_fixture.exists():
             pytest.skip(f"Fixture not found: {oid_entries_fixture}")
@@ -218,7 +217,9 @@ class TestFlextLdifApiOperations:
             assert isinstance(dn, str)
             assert len(dn) > 0
 
-    def test_get_entry_attributes(self, api: FlextLdif, oid_entries_fixture: Path) -> None:
+    def test_get_entry_attributes(
+        self, api: FlextLdif, oid_entries_fixture: Path
+    ) -> None:
         """Test extracting attributes from entry."""
         if not oid_entries_fixture.exists():
             pytest.skip(f"Fixture not found: {oid_entries_fixture}")
@@ -233,7 +234,9 @@ class TestFlextLdifApiOperations:
             attrs = attrs_result.unwrap()
             assert isinstance(attrs, dict)
 
-    def test_get_entry_objectclasses(self, api: FlextLdif, oid_entries_fixture: Path) -> None:
+    def test_get_entry_objectclasses(
+        self, api: FlextLdif, oid_entries_fixture: Path
+    ) -> None:
         """Test extracting objectClasses from entry."""
         if not oid_entries_fixture.exists():
             pytest.skip(f"Fixture not found: {oid_entries_fixture}")
@@ -276,7 +279,9 @@ class TestFlextLdifApiOperations:
     # FILTER OPERATIONS TESTS
     # =========================================================================
 
-    def test_filter_by_objectclass(self, api: FlextLdif, oid_entries_fixture: Path) -> None:
+    def test_filter_by_objectclass(
+        self, api: FlextLdif, oid_entries_fixture: Path
+    ) -> None:
         """Test filtering entries by objectclass."""
         if not oid_entries_fixture.exists():
             pytest.skip(f"Fixture not found: {oid_entries_fixture}")
@@ -291,7 +296,9 @@ class TestFlextLdifApiOperations:
             filtered = filter_result.unwrap()
             assert isinstance(filtered, list)
 
-    def test_filter_by_dn_pattern(self, api: FlextLdif, oid_entries_fixture: Path) -> None:
+    def test_filter_by_dn_pattern(
+        self, api: FlextLdif, oid_entries_fixture: Path
+    ) -> None:
         """Test filtering entries by DN pattern."""
         if not oid_entries_fixture.exists():
             pytest.skip(f"Fixture not found: {oid_entries_fixture}")
@@ -440,7 +447,9 @@ class TestFlextLdifApiOperations:
     # CONVERSION OPERATIONS TESTS
     # =========================================================================
 
-    def test_convert_entry_to_dict(self, api: FlextLdif, oid_entries_fixture: Path) -> None:
+    def test_convert_entry_to_dict(
+        self, api: FlextLdif, oid_entries_fixture: Path
+    ) -> None:
         """Test converting entry to dict."""
         if not oid_entries_fixture.exists():
             pytest.skip(f"Fixture not found: {oid_entries_fixture}")
@@ -453,7 +462,9 @@ class TestFlextLdifApiOperations:
             convert_result = api.convert("entry_to_dict", entry=entries[0])
             assert convert_result.is_success
 
-    def test_convert_entries_to_dicts(self, api: FlextLdif, oid_entries_fixture: Path) -> None:
+    def test_convert_entries_to_dicts(
+        self, api: FlextLdif, oid_entries_fixture: Path
+    ) -> None:
         """Test converting entries to dicts."""
         if not oid_entries_fixture.exists():
             pytest.skip(f"Fixture not found: {oid_entries_fixture}")
@@ -478,7 +489,9 @@ class TestFlextLdifApiOperations:
         convert_result = api.convert("dicts_to_entries", dicts=dicts)
         assert convert_result.is_success
 
-    def test_convert_entries_to_json(self, api: FlextLdif, oid_entries_fixture: Path) -> None:
+    def test_convert_entries_to_json(
+        self, api: FlextLdif, oid_entries_fixture: Path
+    ) -> None:
         """Test converting entries to JSON."""
         if not oid_entries_fixture.exists():
             pytest.skip(f"Fixture not found: {oid_entries_fixture}")
@@ -496,10 +509,10 @@ class TestFlextLdifApiOperations:
     def test_convert_json_to_entries(self, api: FlextLdif) -> None:
         """Test converting JSON to entries."""
         json_str = (
-            '['
+            "["
             '{"dn":"cn=test,dc=example,dc=com",'
             '"attributes":{"cn":["test"],"objectClass":["person"]}}'
-            ']'
+            "]"
         )
         convert_result = api.convert("json_to_entries", json_str=json_str)
         assert convert_result.is_success
@@ -658,9 +671,7 @@ class TestFlextLdifApiOperations:
         # Verify counts preserved
         assert count1 == count2
 
-    def test_roundtrip_create_write_parse(
-        self, api: FlextLdif, tmp_path: Path
-    ) -> None:
+    def test_roundtrip_create_write_parse(self, api: FlextLdif, tmp_path: Path) -> None:
         """Test roundtrip: create → write → parse."""
         # Create entries
         create1 = api.create_entry(
@@ -737,7 +748,9 @@ class TestFlextLdifApiOperations:
     # ACL OPERATIONS TESTS
     # =========================================================================
 
-    def test_extract_acls_from_entry(self, api: FlextLdif, oid_acl_fixture: Path) -> None:
+    def test_extract_acls_from_entry(
+        self, api: FlextLdif, oid_acl_fixture: Path
+    ) -> None:
         """Test extracting ACLs from entry."""
         if not oid_acl_fixture.exists():
             pytest.skip(f"Fixture not found: {oid_acl_fixture}")
@@ -789,9 +802,7 @@ class TestFlextLdifApiOperations:
         assert parse_result.is_success
         entries = parse_result.unwrap()
 
-        process_result = api.process(
-            "transform", entries, parallel=True, max_workers=2
-        )
+        process_result = api.process("transform", entries, parallel=True, max_workers=2)
         assert process_result.is_success
         results = process_result.unwrap()
         assert isinstance(results, list)
