@@ -1009,7 +1009,15 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                 "browse": ["read", "search"],
                 "selfwrite": ["write"],
             }
-            rfc_valid_perms = {"read", "write", "add", "delete", "search", "compare", "all"}
+            rfc_valid_perms = {
+                "read",
+                "write",
+                "add",
+                "delete",
+                "search",
+                "compare",
+                "all",
+            }
 
             allowed: list[str] = []
             denied: list[str] = []
@@ -1020,7 +1028,14 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
 
                 # Special case: "none" means deny all
                 if perm_str == "none":
-                    denied.extend(["read", "write", "add", "delete", "search", "compare"])
+                    denied.extend([
+                        "read",
+                        "write",
+                        "add",
+                        "delete",
+                        "search",
+                        "compare",
+                    ])
                     continue
 
                 # Special case: "proxy" → metadata annotation
@@ -1090,8 +1105,12 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                         perms_list = by_clause.get("permissions", [])
 
                         # Convert OID permissions to RFC standard permissions (now returns metadata too)
-                        allowed_perms, denied_perms, perm_metadata = self._convert_oid_to_rfc_permissions(
-                            perms_list if isinstance(perms_list, list) else [perms_list]
+                        allowed_perms, denied_perms, perm_metadata = (
+                            self._convert_oid_to_rfc_permissions(
+                                perms_list
+                                if isinstance(perms_list, list)
+                                else [perms_list]
+                            )
                         )
 
                         # Collect proxy permissions from metadata
@@ -1117,7 +1136,10 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                             attr = subject.replace("groupattr=(", "").replace(")", "")
                             bind_rule = {"type": "userattr", "value": f"{attr}#GROUPDN"}
                         else:
-                            bind_rule = {"type": "userdn", "value": f"ldap:///{subject}"}
+                            bind_rule = {
+                                "type": "userdn",
+                                "value": f"ldap:///{subject}",
+                            }
 
                         # Build RFC permission dicts (allow and/or deny) with corresponding bind rules
                         # Each permission entry needs its own bind_rule
@@ -1168,10 +1190,11 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                     rfc_data["_oid_proxy_permissions"] = all_proxy_perms
 
                 # Set multi-line formatting flag for better readability
+                # FIX: Do NOT set original_format to format identifier (causes write_acl_to_rfc to return "rfc_generic")
+                # Only set original_format if we have an actual original string to preserve for round-trip
                 rfc_data["_metadata"] = FlextLdifModels.QuirkMetadata.create_for_quirk(
                     quirk_type="rfc",
-                    original_format=af.RFC_GENERIC,
-                    extensions={"is_multiline": True}  # Force multi-line output
+                    extensions={"is_multiline": True},  # Force multi-line output
                 )
 
                 return FlextResult[dict[str, object]].ok(rfc_data)
@@ -1561,16 +1584,19 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
             RFC 4517 specifies Boolean syntax must be "TRUE" or "FALSE".
             This method normalizes OID booleans to RFC compliance.
 
+            Additionally extracts ACL attributes (orclaci, orclentrylevelaci)
+            to _acl_attributes metadata for pipeline processing.
+
             Args:
             entry_data: Oracle OID entry data
 
             Returns:
-            FlextResult with RFC-compliant entry data
+            FlextResult with RFC-compliant entry data and _acl_attributes metadata
 
             """
             try:
                 # Oracle OID entries are already RFC-compliant
-                # Remove Oracle-specific operational attributes if needed
+                # Only need to convert boolean attributes: "0"/"1" → "TRUE"/"FALSE"
                 rfc_data = dict(entry_data)
 
                 # Oracle boolean attributes (non-RFC compliant: use "0"/"1" instead of "TRUE"/"FALSE")
@@ -1622,6 +1648,7 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                 # All attribute filtering is handled by client-aOudMigConstants
                 # (BLOCKED_ATTRIBUTES) in the migration service.
                 # Quirks ONLY perform FORMAT transformations (e.g., boolean 0/1 → TRUE/FALSE).
+                # ACL extraction is handled separately in final pipeline phase.
 
                 return FlextResult[dict[str, object]].ok(rfc_data)
 

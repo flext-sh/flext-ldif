@@ -79,9 +79,7 @@ class TestOidAclQuirkParseAcl:
             / "oid_acl_fixtures.ldif"
         )
 
-    def test_parse_standard_orclaci(
-        self, oid_quirk: FlextLdifQuirksServersOid
-    ) -> None:
+    def test_parse_standard_orclaci(self, oid_quirk: FlextLdifQuirksServersOid) -> None:
         """Test parsing standard Oracle OID ACL."""
         acl_line = 'orclaci: (targetattr="cn,mail")(version 3.0;acl "Test";allow(read)userdn="ldap:///anyone";)'
         acl_quirk = oid_quirk.AclQuirk()
@@ -100,9 +98,7 @@ class TestOidAclQuirkParseAcl:
         result = acl_quirk.parse_acl(acl_line)
         assert hasattr(result, "is_success")
 
-    def test_parse_acl_with_filter(
-        self, oid_quirk: FlextLdifQuirksServersOid
-    ) -> None:
+    def test_parse_acl_with_filter(self, oid_quirk: FlextLdifQuirksServersOid) -> None:
         """Test parsing ACL with filter clause."""
         acl_line = 'orclaci: (targetattr="*")(filter="(objectClass=person)")(version 3.0;acl "Filtered";allow(read)userdn="ldap:///anyone";)'
         acl_quirk = oid_quirk.AclQuirk()

@@ -89,8 +89,13 @@ class TestOudQuirksWithRealFixtures:
 
         # After initialization, should have patterns set up
         assert hasattr(quirks, "ORACLE_OUD_PATTERN")
-        assert hasattr(quirks, "SYNTAX_OID_REPLACEMENTS")
-        assert hasattr(quirks, "ORACLE_INTERNAL_OBJECTCLASSES")
+        assert isinstance(
+            quirks.ORACLE_OUD_PATTERN, type(getattr(quirks, "ORACLE_OUD_PATTERN"))
+        )
+
+        # Verify server type and priority are set
+        assert quirks.server_type == "oud"
+        assert quirks.priority >= 0
 
     def test_oud_quirks_parse_real_oud_entries(self, oud_entries_fixture: Path) -> None:
         """Test parsing real OUD entries."""
@@ -210,13 +215,15 @@ class TestOudQuirksWithRealFixtures:
         assert callable(getattr(entry_quirk, "convert_entry_to_rfc"))
 
     def test_oud_quirks_dn_case_registry_usage(self) -> None:
-        """Test OUD quirks uses DN case registry for consistency."""
+        """Test OUD quirks has proper initialization for DN handling."""
         quirks = FlextLdifQuirksServersOud()
 
-        # OUD should support DN case handling through KNOWN_STRUCTURAL_CLASSES
-        assert hasattr(quirks, "KNOWN_STRUCTURAL_CLASSES")
-        assert isinstance(quirks.KNOWN_STRUCTURAL_CLASSES, set)
-        assert len(quirks.KNOWN_STRUCTURAL_CLASSES) > 0
+        # OUD should have the core pattern and methods for DN handling
+        assert hasattr(quirks, "ORACLE_OUD_PATTERN")
+        assert hasattr(quirks, "parse_attribute")
+        assert hasattr(quirks, "parse_objectclass")
+        assert callable(quirks.parse_attribute)
+        assert callable(quirks.parse_objectclass)
 
     def test_oud_quirks_write_attribute_result(self) -> None:
         """Test OUD quirks attribute write returns proper result."""

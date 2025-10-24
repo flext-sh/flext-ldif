@@ -46,9 +46,7 @@ class TestCategorizedPipelineInitialization:
         output_dir.mkdir()
         return input_dir, output_dir
 
-    def test_initialize_with_minimal_config(
-        self, temp_dirs: tuple[Path, Path]
-    ) -> None:
+    def test_initialize_with_minimal_config(self, temp_dirs: tuple[Path, Path]) -> None:
         """Test pipeline initialization with minimal configuration."""
         input_dir, output_dir = temp_dirs
         categorization_rules = {
@@ -66,9 +64,7 @@ class TestCategorizedPipelineInitialization:
 
         assert pipeline is not None
 
-    def test_initialize_with_schema_quirks(
-        self, temp_dirs: tuple[Path, Path]
-    ) -> None:
+    def test_initialize_with_schema_quirks(self, temp_dirs: tuple[Path, Path]) -> None:
         """Test initialization with source and target schema quirks."""
         input_dir, output_dir = temp_dirs
         oid = FlextLdifQuirksServersOid()
@@ -183,7 +179,9 @@ class TestCategorizedPipelineFilterConfiguration:
         return input_dir, output_dir
 
     @pytest.fixture
-    def pipeline(self, temp_dirs: tuple[Path, Path]) -> FlextLdifCategorizedMigrationPipeline:
+    def pipeline(
+        self, temp_dirs: tuple[Path, Path]
+    ) -> FlextLdifCategorizedMigrationPipeline:
         """Create test pipeline."""
         input_dir, output_dir = temp_dirs
         return FlextLdifCategorizedMigrationPipeline(
@@ -292,9 +290,7 @@ class TestCategorizedPipelineBaseDnFiltering:
         # Base DN should be normalized to lowercase
         assert pipeline._base_dn == "dc=example,dc=com"
 
-    def test_initialize_without_base_dn(
-        self, temp_dirs: tuple[Path, Path]
-    ) -> None:
+    def test_initialize_without_base_dn(self, temp_dirs: tuple[Path, Path]) -> None:
         """Test that base_dn is None when not provided."""
         input_dir, output_dir = temp_dirs
 
@@ -322,7 +318,9 @@ class TestCategorizedPipelineProperties:
         return input_dir, output_dir
 
     @pytest.fixture
-    def pipeline(self, temp_dirs: tuple[Path, Path]) -> FlextLdifCategorizedMigrationPipeline:
+    def pipeline(
+        self, temp_dirs: tuple[Path, Path]
+    ) -> FlextLdifCategorizedMigrationPipeline:
         """Create test pipeline."""
         input_dir, output_dir = temp_dirs
         return FlextLdifCategorizedMigrationPipeline(
@@ -389,9 +387,7 @@ class TestCategorizedPipelineDnNormalization:
         output_dir.mkdir()
         return input_dir, output_dir
 
-    def test_dn_normalization_in_pipeline(
-        self, temp_dirs: tuple[Path, Path]
-    ) -> None:
+    def test_dn_normalization_in_pipeline(self, temp_dirs: tuple[Path, Path]) -> None:
         """Test DN normalization for case matching."""
         input_dir, output_dir = temp_dirs
 
@@ -408,9 +404,7 @@ class TestCategorizedPipelineDnNormalization:
         # Base DN should be normalized to lowercase
         assert pipeline._base_dn == "dc=example,dc=com"
 
-    def test_dn_valued_attributes_available(
-        self, temp_dirs: tuple[Path, Path]
-    ) -> None:
+    def test_dn_valued_attributes_available(self, temp_dirs: tuple[Path, Path]) -> None:
         """Test that DN-valued attribute list is initialized."""
         input_dir, output_dir = temp_dirs
 
@@ -440,7 +434,9 @@ class TestCategorizedPipelineServiceIntegration:
         return input_dir, output_dir
 
     @pytest.fixture
-    def pipeline(self, temp_dirs: tuple[Path, Path]) -> FlextLdifCategorizedMigrationPipeline:
+    def pipeline(
+        self, temp_dirs: tuple[Path, Path]
+    ) -> FlextLdifCategorizedMigrationPipeline:
         """Create test pipeline."""
         input_dir, output_dir = temp_dirs
         return FlextLdifCategorizedMigrationPipeline(
