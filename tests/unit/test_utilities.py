@@ -82,7 +82,7 @@ class TestNormalizer:
         """Test that non-dict entries are skipped gracefully."""
         categorized: dict[str, list[dict[str, object]]] = {
             "users": [
-                "invalid",  # type: ignore[list-item]
+                "invalid",
                 {
                     FlextLdifConstants.DictKeys.DN: "CN=User,DC=Example,DC=Com",
                     FlextLdifConstants.DictKeys.ATTRIBUTES: {},

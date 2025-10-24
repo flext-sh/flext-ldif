@@ -68,7 +68,9 @@ class TestApiAdvancedMethods:
         validation_result = api.validate_entries(entries)
         if validation_result.is_success:
             report = validation_result.unwrap()
-            assert isinstance(report, dict)
+            # ValidationResult is now a Pydantic model, not a dict
+            assert hasattr(report, "is_valid")
+            assert hasattr(report, "total_entries")
 
     def test_api_filter_by_dn_contains(self, api: FlextLdif, oid_fixture: Path) -> None:
         """Test filtering by DN pattern contains (lines ~378)."""
@@ -149,7 +151,9 @@ class TestApiAdvancedMethods:
         result = api.analyze(entries)
         if result.is_success:
             stats = result.unwrap()
-            assert isinstance(stats, dict)
+            # AnalysisResult is now a Pydantic model, not a dict
+            assert hasattr(stats, "total_entries")
+            assert stats.total_entries > 0
 
     def test_api_validate_entries_detailed(
         self, api: FlextLdif, oid_fixture: Path
@@ -166,7 +170,9 @@ class TestApiAdvancedMethods:
         result = api.validate_entries(entries)
         if result.is_success:
             report = result.unwrap()
-            assert isinstance(report, dict)
+            # ValidationResult is now a Pydantic model, not a dict
+            assert hasattr(report, "is_valid")
+            assert hasattr(report, "total_entries")
 
     def test_api_analyze_entry_statistics(
         self, api: FlextLdif, oid_fixture: Path
@@ -183,8 +189,9 @@ class TestApiAdvancedMethods:
         result = api.analyze(entries)
         if result.is_success:
             stats = result.unwrap()
-            # Verify structure
-            assert isinstance(stats, dict)
+            # AnalysisResult is now a Pydantic model, not a dict
+            assert hasattr(stats, "total_entries")
+            assert stats.total_entries > 0
 
     def test_api_write_with_all_parameters(
         self, api: FlextLdif, oid_fixture: Path, tmp_path: Path
@@ -527,6 +534,6 @@ class TestClientAdvancedOperations:
         result = client.analyze_entries(entries)
         if result.is_success:
             stats = result.unwrap()
-            assert isinstance(stats, dict)
-            # Verify stat structure
-            assert "total_entries" in stats or "entry_count" in stats or len(stats) >= 0
+            # AnalysisResult is now a Pydantic model, not a dict
+            assert hasattr(stats, "total_entries")
+            assert stats.total_entries > 0

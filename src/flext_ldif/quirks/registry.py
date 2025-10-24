@@ -20,7 +20,6 @@ from flext_ldif.quirks.base import (
     FlextLdifQuirksBaseEntryQuirk,
     FlextLdifQuirksBaseSchemaQuirk,
 )
-from flext_ldif.typings import FlextLdifTypes
 
 if TYPE_CHECKING:
     # Type aliases for quirk types
@@ -299,7 +298,7 @@ class FlextLdifQuirksRegistry(FlextModels.Value):
         self,
         server_type: str,
         entry_dn: str,
-        attributes: FlextLdifTypes.Models.CustomDataDict,
+        attributes: dict[str, object],
     ) -> FlextLdifQuirksBase.BaseEntryQuirk | None:
         """Find the first entry quirk that can handle an entry.
 

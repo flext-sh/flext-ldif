@@ -10,7 +10,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pathlib import Path
-from typing import cast
 
 import pytest
 
@@ -531,7 +530,9 @@ class TestFlextLdifApiOperations:
         result = api.build_person_schema()
         assert result.is_success
         schema = result.unwrap()
-        assert isinstance(schema, dict)
+        # SchemaBuilderResult is now a Pydantic model, not a dict
+        assert hasattr(schema, "schema")
+        assert schema.schema is not None
 
     # =========================================================================
     # AUTO-DETECTION OPERATIONS TESTS
@@ -741,7 +742,7 @@ class TestFlextLdifApiOperations:
 
     def test_get_entry_dn_from_invalid_entry(self, api: FlextLdif) -> None:
         """Test get DN from invalid entry."""
-        result = api.get_entry_dn(cast("FlextLdifModels.Entry", None))
+        result = api.get_entry_dn("FlextLdifModels.Entry")
         assert result.is_failure
 
     # =========================================================================
@@ -767,7 +768,7 @@ class TestFlextLdifApiOperations:
     def test_evaluate_acl_rules(self, api: FlextLdif) -> None:
         """Test evaluating ACL rules."""
         # Create simple ACL models
-        acls: list[FlextLdifModels.AclBase] = []
+        acls: list[FlextLdifModels.Acl] = []
         context = {"subject_dn": "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com"}
 
         result = api.evaluate_acl_rules(acls, context)

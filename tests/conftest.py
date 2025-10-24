@@ -11,16 +11,21 @@ import os
 import tempfile
 from collections.abc import Callable, Generator
 from pathlib import Path
-from typing import cast
 
 import pytest
 from flext_core import FlextConstants, FlextResult
 
 from flext_ldif.quirks.registry import FlextLdifQuirksRegistry
-from flext_ldif.rfc.rfc_ldif_parser import FlextLdifRfcLdifParser
-from flext_ldif.rfc.rfc_ldif_writer import FlextLdifRfcLdifWriter
-from tests.fixtures import FlextLdifFixtures
-from tests.support import FileManager, LdifTestData, RealServiceFactory, TestValidators
+from flext_ldif.rfc_ldif_parser import FlextLdifRfcLdifParser
+from flext_ldif.rfc_ldif_writer import FlextLdifRfcLdifWriter
+
+from .fixtures import FlextLdifFixtures
+from .support import (
+    FileManager,
+    LdifTestData,
+    RealServiceFactory,
+    TestValidators,
+)
 
 
 class TestFileManager:
@@ -509,14 +514,10 @@ def ldif_test_content(ldif_test_entries: list[dict[str, object]]) -> str:
         attributes = entry["attributes"]
         assert isinstance(attributes, dict), "attributes must be a dictionary"
 
-        # Cast to proper type for type checker
-        typed_attributes = cast("dict[str, list[str]]", attributes)
-
         # Process attributes - all values are lists of strings based on actual structure
-        for attr_key, attr_values in typed_attributes.items():
+        for attr_key, attr_values in attributes.items():
             attr_name: str = str(attr_key)
             # Based on actual code structure, all attribute values are lists
-            # attr_values is already typed as list[str] from the cast above
             content_lines.extend(
                 f"{attr_name}: {value_item!s}" for value_item in attr_values
             )

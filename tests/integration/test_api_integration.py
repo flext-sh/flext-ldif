@@ -118,7 +118,8 @@ objectClass: person
         result = ldif.analyze(entries)
         assert result.is_success
         stats = result.unwrap()
-        assert stats["total_entries"] == 2
+        # AnalysisResult is now a Pydantic model, not a dict
+        assert stats.total_entries == 2
 
     def test_validate_entries(self) -> None:
         """Test validating entries."""
@@ -215,7 +216,8 @@ objectClass: person
         analyze_result = ldif.analyze(parsed_entries)
         assert analyze_result.is_success
         stats = analyze_result.unwrap()
-        assert stats["total_entries"] == 1
+        # AnalysisResult is now a Pydantic model, not a dict
+        assert stats.total_entries == 1
 
         # Step 3: Validate
         validate_result = ldif.validate_entries(parsed_entries)

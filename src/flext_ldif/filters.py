@@ -23,7 +23,6 @@ from flext_core import FlextResult
 
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
-from flext_ldif.typings import FlextLdifTypes
 
 
 class FlextLdifFilters:
@@ -129,10 +128,8 @@ class FlextLdifFilters:
             )
         else:
             # Preserve existing extensions and add exclusion_info
-            new_extensions: FlextLdifTypes.Models.CustomDataDict = {
-                **entry.metadata.extensions
-            }
-            # model_dump() returns FlextLdifTypes.Models.CustomDataDict which is compatible with FlextLdifTypes.Models.CustomDataDict
+            new_extensions: dict[str, object] = {**entry.metadata.extensions}
+            # model_dump() returns dict[str, object] which is compatible with dict[str, object]
             new_extensions["exclusion_info"] = exclusion_info.model_dump()
             updated_metadata: FlextLdifModels.QuirkMetadata = (
                 FlextLdifModels.QuirkMetadata(
@@ -166,18 +163,18 @@ class FlextLdifFilters:
         if entry.metadata is None:
             return False
 
-        # Get exclusion_info FlextLdifTypes.Models.CustomDataDict from extensions (stored via model_dump())
+        # Get exclusion_info dict[str, object] from extensions (stored via model_dump())
         exclusion_info_raw: object = entry.metadata.extensions.get("exclusion_info")
         if exclusion_info_raw is None:
             return False
 
-        # Type narrowing: exclusion_info is a FlextLdifTypes.Models.CustomDataDict from model_dump()
+        # Type narrowing: exclusion_info is a dict[str, object] from model_dump()
         if not isinstance(exclusion_info_raw, dict):
             return False
 
-        exclusion_info: FlextLdifTypes.Models.CustomDataDict = exclusion_info_raw
+        exclusion_info: dict[str, object] = exclusion_info_raw
 
-        # Get excluded field from FlextLdifTypes.Models.CustomDataDict (type-safe access)
+        # Get excluded field from dict[str, object] (type-safe access)
         excluded_value: object = exclusion_info.get("excluded")
         if excluded_value is None:
             return False
@@ -206,18 +203,18 @@ class FlextLdifFilters:
         if entry.metadata is None:
             return None
 
-        # Get exclusion_info FlextLdifTypes.Models.CustomDataDict from extensions (stored via model_dump())
+        # Get exclusion_info dict[str, object] from extensions (stored via model_dump())
         exclusion_info_raw: object = entry.metadata.extensions.get("exclusion_info")
         if exclusion_info_raw is None:
             return None
 
-        # Type narrowing: exclusion_info is a FlextLdifTypes.Models.CustomDataDict from model_dump()
+        # Type narrowing: exclusion_info is a dict[str, object] from model_dump()
         if not isinstance(exclusion_info_raw, dict):
             return None
 
-        exclusion_info: FlextLdifTypes.Models.CustomDataDict = exclusion_info_raw
+        exclusion_info: dict[str, object] = exclusion_info_raw
 
-        # Get exclusion_reason field from FlextLdifTypes.Models.CustomDataDict (type-safe access)
+        # Get exclusion_reason field from dict[str, object] (type-safe access)
         reason_value: object = exclusion_info.get("exclusion_reason")
         if reason_value is None:
             return None
@@ -338,8 +335,9 @@ class FlextLdifFilters:
         categorization_rules: dict[
             str, object
         ],  # Contains: hierarchy_objectclasses, user_objectclasses, group_objectclasses, acl_attributes, user_dn_patterns
-        schema_whitelist_rules: dict[str, object]
-        | None = None,  # Contains: blocked_objectclasses, allowed_attribute_oids, allowed_objectclass_oids
+        schema_whitelist_rules: (
+            dict[str, object] | None
+        ) = None,  # Contains: blocked_objectclasses, allowed_attribute_oids, allowed_objectclass_oids
     ) -> tuple[str, str | None]:
         """Categorize entry with 6-category support (schema, hierarchy, users, groups, acl, rejected).
 
@@ -472,7 +470,7 @@ class FlextLdifFilters:
     def filter_entries_by_dn(
         entries: list[FlextLdifModels.Entry],
         pattern: str,
-        mode: str = "include",
+        mode: str = FlextLdifConstants.Modes.INCLUDE,
         *,
         mark_excluded: bool = True,
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
@@ -496,8 +494,8 @@ class FlextLdifFilters:
                 matches = FlextLdifFilters.matches_dn_pattern(dn, pattern)
 
                 # Determine if entry should be included
-                include = (mode == "include" and matches) or (
-                    mode == "exclude" and not matches
+                include = (mode == FlextLdifConstants.Modes.INCLUDE and matches) or (
+                    mode == FlextLdifConstants.Modes.EXCLUDE and not matches
                 )
 
                 if include:
@@ -505,7 +503,7 @@ class FlextLdifFilters:
                 elif mark_excluded:
                     # Mark as excluded and include in results
                     criteria = FlextLdifModels.FilterCriteria(
-                        filter_type="dn_pattern",
+                        filter_type=FlextLdifConstants.FilterTypes.DN_PATTERN,
                         pattern=pattern,
                         mode=mode,
                     )
@@ -528,7 +526,7 @@ class FlextLdifFilters:
         entries: list[FlextLdifModels.Entry],
         objectclass: str | tuple[str, ...],
         required_attributes: list[str] | None = None,
-        mode: str = "include",
+        mode: str = FlextLdifConstants.Modes.INCLUDE,
         *,
         mark_excluded: bool = True,
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
@@ -565,8 +563,8 @@ class FlextLdifFilters:
                 matches = has_class and has_attrs
 
                 # Determine if entry should be included
-                include = (mode == "include" and matches) or (
-                    mode == "exclude" and not matches
+                include = (mode == FlextLdifConstants.Modes.INCLUDE and matches) or (
+                    mode == FlextLdifConstants.Modes.EXCLUDE and not matches
                 )
 
                 if include:
@@ -602,7 +600,7 @@ class FlextLdifFilters:
     def filter_entries_by_attributes(
         entries: list[FlextLdifModels.Entry],
         attributes: list[str],
-        mode: str = "include",
+        mode: str = FlextLdifConstants.Modes.INCLUDE,
         *,
         match_all: bool = False,
         mark_excluded: bool = True,
@@ -630,8 +628,8 @@ class FlextLdifFilters:
                     matches = any(entry.has_attribute(attr) for attr in attributes)
 
                 # Determine if entry should be included
-                include = (mode == "include" and matches) or (
-                    mode == "exclude" and not matches
+                include = (mode == FlextLdifConstants.Modes.INCLUDE and matches) or (
+                    mode == FlextLdifConstants.Modes.EXCLUDE and not matches
                 )
 
                 if include:
@@ -639,11 +637,15 @@ class FlextLdifFilters:
                 elif mark_excluded:
                     # Mark as excluded and include in results
                     criteria = FlextLdifModels.FilterCriteria(
-                        filter_type="attribute",
+                        filter_type=FlextLdifConstants.FilterTypes.ATTRIBUTE,
                         pattern=",".join(attributes),
                         mode=mode,
                     )
-                    match_type = "all" if match_all else "any"
+                    match_type = (
+                        FlextLdifConstants.MatchTypes.ALL
+                        if match_all
+                        else FlextLdifConstants.MatchTypes.ANY
+                    )
                     marked_entry = FlextLdifFilters.mark_entry_excluded(
                         entry,
                         f"Attribute {mode} filter ({match_type}): {','.join(attributes)}",

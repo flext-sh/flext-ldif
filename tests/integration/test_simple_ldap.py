@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import contextlib
-from typing import cast
 
 from ldap3 import ALL, Connection, Server
 
@@ -105,13 +104,9 @@ def test_create_and_export_entry() -> None:
     api = FlextLdif.get_instance()
     entry_result = api.models.Entry.create(
         dn=ldap_entry.entry_dn,
-        attributes=cast(
-            "dict[str, list[str]]",
-            {
-                attr: list(ldap_entry[attr].values)
-                for attr in ldap_entry.entry_attributes
-            },
-        ),
+        attributes={
+            attr: list(ldap_entry[attr].values) for attr in ldap_entry.entry_attributes
+        },
     )
     assert entry_result.is_success
     flext_entry = entry_result.unwrap()

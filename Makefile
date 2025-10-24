@@ -94,7 +94,9 @@ security: ## Run security scanning
 	# Risk assessment: Acceptable for LDIF processing use case (no JWT signing operations)
 	# Ignore GHSA-mw26-5g2v-hqw3: deepdiff vulnerability (transitive dependency via dbt-common)
 	# Risk assessment: Acceptable for LDIF processing use case (not directly used in LDIF operations)
-	$(POETRY) run pip-audit --ignore-vuln GHSA-wj6h-64fc-37mp --ignore-vuln GHSA-mw26-5g2v-hqw3 --ignore-vuln GHSA-4xh5-x5gv-qwph
+	# Ignore GHSA-w476-p2h3-79g9: uv binary vulnerability (build tool dependency)
+	# Risk assessment: Acceptable for LDIF processing use case (uv is a build/dev tool, not runtime dependency)
+	$(POETRY) run pip-audit --ignore-vuln GHSA-wj6h-64fc-37mp --ignore-vuln GHSA-mw26-5g2v-hqw3 --ignore-vuln GHSA-4xh5-x5gv-qwph --ignore-vuln GHSA-w476-p2h3-79g9
 
 .PHONY: fix
 fix: ## Auto-fix issues

@@ -73,12 +73,14 @@ class FlextLdifQuirksServersNovell(FlextLdifQuirksBaseSchemaQuirk):
 
         return any(prefix in attr_lower for prefix in self.NOVELL_ATTRIBUTE_PREFIXES)
 
-    def parse_attribute(self, attr_definition: str) -> FlextResult[dict[str, object]]:
+    def parse_attribute(
+        self, attr_definition: str
+    ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
         """Parse eDirectory attribute definition."""
         try:
             oid_match = re.search(r"\(\s*([\d.]+)", attr_definition)
             if not oid_match:
-                return FlextResult[dict[str, object]].fail(
+                return FlextResult[FlextLdifModels.SchemaAttribute].fail(
                     "Novell eDirectory attribute definition is missing an OID"
                 )
 
@@ -134,10 +136,10 @@ class FlextLdifQuirksServersNovell(FlextLdifQuirksBaseSchemaQuirk):
             if name_tokens:
                 attr_data["aliases"] = name_tokens
 
-            return FlextResult[dict[str, object]].ok(attr_data)
+            return FlextResult[FlextLdifModels.SchemaAttribute].ok(attr_data)
 
         except Exception as exc:
-            return FlextResult[dict[str, object]].fail(
+            return FlextResult[FlextLdifModels.SchemaAttribute].fail(
                 f"Novell eDirectory attribute parsing failed: {exc}"
             )
 
@@ -151,12 +153,14 @@ class FlextLdifQuirksServersNovell(FlextLdifQuirksBaseSchemaQuirk):
             name.lower() in self.NOVELL_OBJECTCLASS_NAMES for name in name_matches
         )
 
-    def parse_objectclass(self, oc_definition: str) -> FlextResult[dict[str, object]]:
+    def parse_objectclass(
+        self, oc_definition: str
+    ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
         """Parse eDirectory objectClass definition."""
         try:
             oid_match = re.search(r"\(\s*([\d.]+)", oc_definition)
             if not oid_match:
-                return FlextResult[dict[str, object]].fail(
+                return FlextResult[FlextLdifModels.SchemaAttribute].fail(
                     "Novell eDirectory objectClass definition is missing an OID"
                 )
 
@@ -206,17 +210,14 @@ class FlextLdifQuirksServersNovell(FlextLdifQuirksBaseSchemaQuirk):
             if name_tokens:
                 oc_data["aliases"] = name_tokens
 
-            return FlextResult[dict[str, object]].ok(oc_data)
+            return FlextResult[FlextLdifModels.SchemaAttribute].ok(oc_data)
 
         except Exception as exc:
-            return FlextResult[dict[str, object]].fail(
+            return FlextResult[FlextLdifModels.SchemaAttribute].fail(
                 f"Novell eDirectory objectClass parsing failed: {exc}"
             )
 
-    def convert_attribute_to_rfc(
-        self,
-        attr_data: dict[str, object],
-    ) -> FlextResult[dict[str, object]]:
+    def convert_attribute_to_rfc(self, attr_data: FlextLdifModels.SchemaAttribute) -> FlextResult[FlextLdifModels.SchemaAttribute]:
         """Convert eDirectory attribute metadata to RFC representation."""
         try:
             rfc_data = {
@@ -250,17 +251,14 @@ class FlextLdifQuirksServersNovell(FlextLdifQuirksBaseSchemaQuirk):
                 ),
             }
 
-            return FlextResult[dict[str, object]].ok(rfc_data)
+            return FlextResult[FlextLdifModels.SchemaAttribute].ok(rfc_data)
 
         except Exception as exc:
-            return FlextResult[dict[str, object]].fail(
+            return FlextResult[FlextLdifModels.SchemaAttribute].fail(
                 f"Novell eDirectory→RFC attribute conversion failed: {exc}"
             )
 
-    def convert_objectclass_to_rfc(
-        self,
-        oc_data: dict[str, object],
-    ) -> FlextResult[dict[str, object]]:
+    def convert_objectclass_to_rfc(self, oc_data: FlextLdifModels.SchemaObjectClass) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
         """Convert eDirectory objectClass metadata to RFC representation."""
         try:
             rfc_data = {
@@ -288,44 +286,46 @@ class FlextLdifQuirksServersNovell(FlextLdifQuirksBaseSchemaQuirk):
                 ),
             }
 
-            return FlextResult[dict[str, object]].ok(rfc_data)
+            return FlextResult[FlextLdifModels.SchemaObjectClass].ok(rfc_data)
 
         except Exception as exc:
-            return FlextResult[dict[str, object]].fail(
+            return FlextResult[FlextLdifModels.SchemaAttribute].fail(
                 f"Novell eDirectory→RFC objectClass conversion failed: {exc}"
             )
 
     def convert_attribute_from_rfc(
-        self, rfc_data: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
+        self, rfc_data: FlextLdifModels.SchemaAttribute
+    ) -> FlextResult[FlextLdifTypes.Common.EntryAttributesDict]:
         """Convert RFC-compliant attribute to Novell eDirectory-specific format."""
         try:
             novell_data = {
                 **rfc_data,
                 FlextLdifConstants.DictKeys.SERVER_TYPE: self.server_type,
             }
-            return FlextResult[dict[str, object]].ok(novell_data)
+            return FlextResult[FlextLdifModels.SchemaAttribute].ok(novell_data)
         except Exception as exc:
-            return FlextResult[dict[str, object]].fail(
+            return FlextResult[FlextLdifModels.SchemaAttribute].fail(
                 f"RFC→Novell eDirectory attribute conversion failed: {exc}"
             )
 
     def convert_objectclass_from_rfc(
-        self, rfc_data: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
+        self, rfc_data: FlextLdifModels.SchemaObjectClass
+    ) -> FlextResult[FlextLdifTypes.Common.EntryAttributesDict]:
         """Convert RFC-compliant objectClass to Novell eDirectory-specific format."""
         try:
             novell_data = {
                 **rfc_data,
                 FlextLdifConstants.DictKeys.SERVER_TYPE: self.server_type,
             }
-            return FlextResult[dict[str, object]].ok(novell_data)
+            return FlextResult[FlextLdifModels.SchemaObjectClass].ok(novell_data)
         except Exception as exc:
-            return FlextResult[dict[str, object]].fail(
+            return FlextResult[FlextLdifModels.SchemaAttribute].fail(
                 f"RFC→Novell eDirectory objectClass conversion failed: {exc}"
             )
 
-    def write_attribute_to_rfc(self, attr_data: dict[str, object]) -> FlextResult[str]:
+    def write_attribute_to_rfc(
+        self, attr_data: FlextLdifModels.SchemaAttribute
+    ) -> FlextResult[str]:
         """Write attribute data to RFC-compliant string format."""
         try:
             oid = attr_data.get(FlextLdifConstants.DictKeys.OID, "")
@@ -356,7 +356,9 @@ class FlextLdifQuirksServersNovell(FlextLdifQuirksBaseSchemaQuirk):
                 f"Novell eDirectory attribute write failed: {exc}"
             )
 
-    def write_objectclass_to_rfc(self, oc_data: dict[str, object]) -> FlextResult[str]:
+    def write_objectclass_to_rfc(
+        self, oc_data: FlextLdifModels.SchemaObjectClass
+    ) -> FlextResult[str]:
         """Write objectClass data to RFC-compliant string format."""
         try:
             oid = oc_data.get(FlextLdifConstants.DictKeys.OID, "")
@@ -417,7 +419,9 @@ class FlextLdifQuirksServersNovell(FlextLdifQuirksBaseSchemaQuirk):
             attr_name, _, _ = normalized.partition(":")
             return attr_name.strip().lower() in self.ACL_ATTRIBUTE_NAMES
 
-        def parse_acl(self, acl_line: str) -> FlextResult[dict[str, object]]:
+        def parse_acl(
+            self, acl_line: str
+        ) -> FlextResult[FlextLdifTypes.Common.EntryAttributesDict]:
             """Parse eDirectory ACL definition."""
             try:
                 attr_name, content = self._splitacl_line(acl_line)
@@ -446,53 +450,53 @@ class FlextLdifQuirksServersNovell(FlextLdifQuirksBaseSchemaQuirk):
                         "content": content.strip(),
                     },
                 }
-                return FlextResult[dict[str, object]].ok(acl_payload)
+                return FlextResult[FlextLdifModels.SchemaAttribute].ok(acl_payload)
 
             except Exception as exc:
-                return FlextResult[dict[str, object]].fail(
+                return FlextResult[FlextLdifModels.SchemaAttribute].fail(
                     f"Novell eDirectory ACL parsing failed: {exc}"
                 )
 
         def convert_acl_to_rfc(
             self,
             acl_data: dict[str, object],
-        ) -> FlextResult[dict[str, object]]:
+        ) -> FlextResult[FlextLdifTypes.Common.EntryAttributesDict]:
             """Wrap eDirectory ACL into generic RFC representation."""
             try:
-                # Type narrowing: rfc_acl is already dict[str, object] (FlextLdifTypes.Models.CustomDataDict)
+                # Type narrowing: rfc_acl is already dict[str, object] (Acl model)
                 rfc_acl: dict[str, object] = {
                     FlextLdifConstants.DictKeys.TYPE: FlextLdifConstants.DictKeys.ACL,
                     FlextLdifConstants.DictKeys.FORMAT: FlextLdifConstants.AclFormats.RFC_GENERIC,
                     FlextLdifConstants.DictKeys.SOURCE_FORMAT: FlextLdifConstants.AclFormats.ACI,
                     FlextLdifConstants.DictKeys.DATA: acl_data,
                 }
-                return FlextResult[dict[str, object]].ok(rfc_acl)
+                return FlextResult[FlextLdifModels.SchemaAttribute].ok(rfc_acl)
 
             except Exception as exc:
-                return FlextResult[dict[str, object]].fail(
+                return FlextResult[FlextLdifModels.SchemaAttribute].fail(
                     f"Novell eDirectory ACL→RFC conversion failed: {exc}"
                 )
 
         def convert_acl_from_rfc(
             self,
             acl_data: dict[str, object],
-        ) -> FlextResult[dict[str, object]]:
+        ) -> FlextResult[FlextLdifTypes.Common.EntryAttributesDict]:
             """Repackage RFC ACL payload for eDirectory."""
             try:
-                # Type narrowing: ed_acl is already dict[str, object] (FlextLdifTypes.Models.CustomDataDict)
+                # Type narrowing: ed_acl is already dict[str, object] (Acl model)
                 ed_acl: dict[str, object] = {
                     FlextLdifConstants.DictKeys.FORMAT: FlextLdifConstants.AclFormats.ACI,
                     FlextLdifConstants.DictKeys.TARGET_FORMAT: "acl",
                     FlextLdifConstants.DictKeys.DATA: acl_data,
                 }
-                return FlextResult[dict[str, object]].ok(ed_acl)
+                return FlextResult[FlextLdifModels.SchemaAttribute].ok(ed_acl)
 
             except Exception as exc:
-                return FlextResult[dict[str, object]].fail(
+                return FlextResult[FlextLdifModels.SchemaAttribute].fail(
                     f"RFC→Novell eDirectory ACL conversion failed: {exc}"
                 )
 
-        def write_acl_to_rfc(self, acl_data: dict[str, object]) -> FlextResult[str]:
+        def write_acl_to_rfc(self, acl_data: FlextLdifModels.Acl) -> FlextResult[str]:
             """Write ACL data to RFC-compliant string format.
 
             Novell eDirectory ACLs use "#" delimited segments:
@@ -584,7 +588,7 @@ class FlextLdifQuirksServersNovell(FlextLdifQuirksBaseSchemaQuirk):
         def can_handle_entry(
             self,
             entry_dn: str,
-            attributes: FlextLdifTypes.Models.CustomDataDict,
+            attributes: FlextLdifTypes.Common.EntryAttributesDict,
         ) -> bool:
             """Detect eDirectory-specific entries."""
             dn_lower = entry_dn.lower()
@@ -618,8 +622,8 @@ class FlextLdifQuirksServersNovell(FlextLdifQuirksBaseSchemaQuirk):
         def process_entry(
             self,
             entry_dn: str,
-            attributes: FlextLdifTypes.Models.CustomDataDict,
-        ) -> FlextResult[dict[str, object]]:
+            attributes: FlextLdifTypes.Common.EntryAttributesDict,
+        ) -> FlextResult[FlextLdifTypes.Common.EntryAttributesDict]:
             """Normalise eDirectory entries and expose metadata."""
             try:
                 object_classes_raw = attributes.get(
@@ -647,25 +651,25 @@ class FlextLdifQuirksServersNovell(FlextLdifQuirksBaseSchemaQuirk):
                 }
                 processed_entry.update(processed_attributes)
 
-                return FlextResult[dict[str, object]].ok(processed_entry)
+                return FlextResult[FlextLdifModels.SchemaAttribute].ok(processed_entry)
 
             except Exception as exc:
-                return FlextResult[dict[str, object]].fail(
+                return FlextResult[FlextLdifModels.SchemaAttribute].fail(
                     f"Novell eDirectory entry processing failed: {exc}"
                 )
 
         def convert_entry_to_rfc(
             self,
             entry_data: dict[str, object],
-        ) -> FlextResult[dict[str, object]]:
+        ) -> FlextResult[FlextLdifTypes.Common.EntryAttributesDict]:
             """Remove eDirectory metadata before RFC processing."""
             try:
                 normalized_entry = dict(entry_data)
                 normalized_entry.pop(FlextLdifConstants.DictKeys.SERVER_TYPE, None)
-                return FlextResult[dict[str, object]].ok(normalized_entry)
+                return FlextResult[FlextLdifModels.SchemaAttribute].ok(normalized_entry)
 
             except Exception as exc:
-                return FlextResult[dict[str, object]].fail(
+                return FlextResult[FlextLdifModels.SchemaAttribute].fail(
                     f"Novell eDirectory entry→RFC conversion failed: {exc}"
                 )
 

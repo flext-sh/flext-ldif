@@ -39,12 +39,22 @@ class TestClientParseLdif:
     @pytest.fixture
     def oid_entries_fixture(self) -> Path:
         """Get path to OID entries fixture."""
-        return Path(__file__).parent.parent / "fixtures" / "oid" / "oid_entries_fixtures.ldif"
+        return (
+            Path(__file__).parent.parent
+            / "fixtures"
+            / "oid"
+            / "oid_entries_fixtures.ldif"
+        )
 
     @pytest.fixture
     def oud_entries_fixture(self) -> Path:
         """Get path to OUD entries fixture."""
-        return Path(__file__).parent.parent / "fixtures" / "oud" / "oud_entries_fixtures.ldif"
+        return (
+            Path(__file__).parent.parent
+            / "fixtures"
+            / "oud"
+            / "oud_entries_fixtures.ldif"
+        )
 
     def test_parse_ldif_from_file_path(
         self, client: FlextLdifClient, oid_entries_fixture: Path
@@ -120,7 +130,12 @@ class TestClientWriteLdif:
     @pytest.fixture
     def oid_entries_fixture(self) -> Path:
         """Get path to OID entries fixture."""
-        return Path(__file__).parent.parent / "fixtures" / "oid" / "oid_entries_fixtures.ldif"
+        return (
+            Path(__file__).parent.parent
+            / "fixtures"
+            / "oid"
+            / "oid_entries_fixtures.ldif"
+        )
 
     def test_write_ldif_to_string(
         self, client: FlextLdifClient, oid_entries_fixture: Path
@@ -243,7 +258,12 @@ class TestClientValidateEntries:
     @pytest.fixture
     def oid_entries_fixture(self) -> Path:
         """Get path to OID entries fixture."""
-        return Path(__file__).parent.parent / "fixtures" / "oid" / "oid_entries_fixtures.ldif"
+        return (
+            Path(__file__).parent.parent
+            / "fixtures"
+            / "oid"
+            / "oid_entries_fixtures.ldif"
+        )
 
     def test_validate_entries_valid(
         self, client: FlextLdifClient, oid_entries_fixture: Path
@@ -287,7 +307,12 @@ class TestClientFilterEntries:
     @pytest.fixture
     def oid_entries_fixture(self) -> Path:
         """Get path to OID entries fixture."""
-        return Path(__file__).parent.parent / "fixtures" / "oid" / "oid_entries_fixtures.ldif"
+        return (
+            Path(__file__).parent.parent
+            / "fixtures"
+            / "oid"
+            / "oid_entries_fixtures.ldif"
+        )
 
     def test_filter_by_objectclass(
         self, client: FlextLdifClient, oid_entries_fixture: Path
@@ -299,10 +324,7 @@ class TestClientFilterEntries:
         entries = parse_result.unwrap()
 
         # Filter by objectClass
-        result = client.filter(
-            entries=entries,
-            objectclass="domain"
-        )
+        result = client.filter(entries=entries, objectclass="domain")
         assert hasattr(result, "is_success")
 
     def test_filter_by_dn_pattern(
@@ -315,10 +337,7 @@ class TestClientFilterEntries:
         entries = parse_result.unwrap()
 
         # Filter by DN pattern
-        result = client.filter(
-            entries=entries,
-            dn_pattern="ou=People*"
-        )
+        result = client.filter(entries=entries, dn_pattern="ou=People*")
         assert hasattr(result, "is_success")
 
     def test_filter_returns_result(
@@ -348,7 +367,12 @@ class TestClientCategorizeEntries:
     @pytest.fixture
     def oid_entries_fixture(self) -> Path:
         """Get path to OID entries fixture."""
-        return Path(__file__).parent.parent / "fixtures" / "oid" / "oid_entries_fixtures.ldif"
+        return (
+            Path(__file__).parent.parent
+            / "fixtures"
+            / "oid"
+            / "oid_entries_fixtures.ldif"
+        )
 
     def test_categorize_entries_by_objectclass(
         self, client: FlextLdifClient, oid_entries_fixture: Path
@@ -399,7 +423,12 @@ class TestClientCountEntries:
     @pytest.fixture
     def oid_entries_fixture(self) -> Path:
         """Get path to OID entries fixture."""
-        return Path(__file__).parent.parent / "fixtures" / "oid" / "oid_entries_fixtures.ldif"
+        return (
+            Path(__file__).parent.parent
+            / "fixtures"
+            / "oid"
+            / "oid_entries_fixtures.ldif"
+        )
 
     def test_count_ldif_entries_from_file(
         self, client: FlextLdifClient, oid_entries_fixture: Path
@@ -507,7 +536,12 @@ class TestClientMigrateEntries:
     @pytest.fixture
     def oid_entries_fixture(self) -> Path:
         """Get path to OID entries fixture."""
-        return Path(__file__).parent.parent / "fixtures" / "oid" / "oid_entries_fixtures.ldif"
+        return (
+            Path(__file__).parent.parent
+            / "fixtures"
+            / "oid"
+            / "oid_entries_fixtures.ldif"
+        )
 
     def test_migrate_entries_oid_to_rfc(
         self, client: FlextLdifClient, oid_entries_fixture: Path
@@ -520,9 +554,7 @@ class TestClientMigrateEntries:
 
         # Migrate to RFC using correct parameter names
         result = client.migrate_entries(
-            entries=entries,
-            from_server="oid",
-            to_server="rfc"
+            entries=entries, from_server="oid", to_server="rfc"
         )
         assert hasattr(result, "is_success")
 
@@ -537,9 +569,7 @@ class TestClientMigrateEntries:
 
         # Migrate using correct parameter names
         result = client.migrate_entries(
-            entries=entries,
-            from_server="oid",
-            to_server="oud"
+            entries=entries, from_server="oid", to_server="oud"
         )
         assert hasattr(result, "is_success")
 
@@ -556,18 +586,27 @@ class TestClientMigrateFiles:
     @pytest.fixture
     def oid_entries_fixture(self) -> Path:
         """Get path to OID entries fixture."""
-        return Path(__file__).parent.parent / "fixtures" / "oid" / "oid_entries_fixtures.ldif"
+        return (
+            Path(__file__).parent.parent
+            / "fixtures"
+            / "oid"
+            / "oid_entries_fixtures.ldif"
+        )
 
     def test_migrate_files_oid_to_rfc(
         self, client: FlextLdifClient, oid_entries_fixture: Path
     ) -> None:
         """Test migrating LDIF files."""
-        with tempfile.TemporaryDirectory() as input_dir, tempfile.TemporaryDirectory() as output_dir:
+        with (
+            tempfile.TemporaryDirectory() as input_dir,
+            tempfile.TemporaryDirectory() as output_dir,
+        ):
             input_path = Path(input_dir)
             output_path = Path(output_dir)
 
             # Copy fixture to input directory
             import shutil
+
             shutil.copy(oid_entries_fixture, input_path / "entries.ldif")
 
             # Migrate files using correct parameter names
@@ -575,7 +614,7 @@ class TestClientMigrateFiles:
                 input_dir=input_path,
                 output_dir=output_path,
                 from_server="oid",
-                to_server="rfc"
+                to_server="rfc",
             )
             assert hasattr(result, "is_success")
 
@@ -583,12 +622,16 @@ class TestClientMigrateFiles:
         self, client: FlextLdifClient, oid_entries_fixture: Path
     ) -> None:
         """Test that file migration creates output files."""
-        with tempfile.TemporaryDirectory() as input_dir, tempfile.TemporaryDirectory() as output_dir:
+        with (
+            tempfile.TemporaryDirectory() as input_dir,
+            tempfile.TemporaryDirectory() as output_dir,
+        ):
             input_path = Path(input_dir)
             output_path = Path(output_dir)
 
             # Copy fixture
             import shutil
+
             shutil.copy(oid_entries_fixture, input_path / "entries.ldif")
 
             # Migrate using correct parameter names
@@ -596,7 +639,7 @@ class TestClientMigrateFiles:
                 input_dir=input_path,
                 output_dir=output_path,
                 from_server="oid",
-                to_server="rfc"
+                to_server="rfc",
             )
             assert hasattr(result, "is_success")
 
@@ -644,7 +687,12 @@ class TestClientAnalyzeEntries:
     @pytest.fixture
     def oid_entries_fixture(self) -> Path:
         """Get path to OID entries fixture."""
-        return Path(__file__).parent.parent / "fixtures" / "oid" / "oid_entries_fixtures.ldif"
+        return (
+            Path(__file__).parent.parent
+            / "fixtures"
+            / "oid"
+            / "oid_entries_fixtures.ldif"
+        )
 
     def test_analyze_entries_basic(
         self, client: FlextLdifClient, oid_entries_fixture: Path
@@ -673,7 +721,9 @@ class TestClientAnalyzeEntries:
         assert hasattr(result, "is_success")
         if result.is_success:
             stats = result.unwrap()
-            assert isinstance(stats, dict)
+            # AnalysisResult is now a Pydantic model, not a dict
+            assert hasattr(stats, "total_entries")
+            assert stats.total_entries > 0
 
 
 class TestClientServerDetection:
@@ -688,7 +738,12 @@ class TestClientServerDetection:
     @pytest.fixture
     def oid_entries_fixture(self) -> Path:
         """Get path to OID entries fixture."""
-        return Path(__file__).parent.parent / "fixtures" / "oid" / "oid_entries_fixtures.ldif"
+        return (
+            Path(__file__).parent.parent
+            / "fixtures"
+            / "oid"
+            / "oid_entries_fixtures.ldif"
+        )
 
     def test_detect_server_type_from_file(
         self, client: FlextLdifClient, oid_entries_fixture: Path

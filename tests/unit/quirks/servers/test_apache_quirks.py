@@ -1,7 +1,5 @@
 """Tests for Apache Directory Server quirks implementation."""
 
-# pyright: reportArgumentType=false, reportOperatorIssue=false, reportOptionalMemberAccess=false, reportIndexIssue=false
-
 from __future__ import annotations
 
 import base64
@@ -331,7 +329,7 @@ class TestApacheDirectoryAclQuirks:
         assert acl_data[FlextLdifConstants.DictKeys.ACL_ATTRIBUTE] == "ads-aci"
 
         data = acl_data[FlextLdifConstants.DictKeys.DATA]
-        assert isinstance(data, dict)
+        assert hasattr(data, "name")
         assert "clauses" in data
         clauses = data.get("clauses", [])
         assert isinstance(clauses, list)

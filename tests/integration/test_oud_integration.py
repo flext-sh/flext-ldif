@@ -17,7 +17,8 @@ from __future__ import annotations
 import pytest
 
 from flext_ldif import FlextLdif
-from tests.fixtures.loader import FlextLdifFixtures
+
+from ..fixtures.loader import FlextLdifFixtures
 
 
 class TestOudSchemaIntegration:

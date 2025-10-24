@@ -230,9 +230,7 @@ sn: User2
 """
 
         # Chain parse -> validate -> analyze
-        result = ldif.parse(ldif_content).flat_map(
-            lambda entries: ldif.validate_entries(entries)  # noqa: PLW0108
-        )
+        result = ldif.parse(ldif_content).flat_map(ldif.validate_entries)
 
         # Should complete without error
         assert result is not None

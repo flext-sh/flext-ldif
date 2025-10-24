@@ -1,7 +1,5 @@
 """Tests for 389 Directory Server quirks implementation."""
 
-# pyright: reportArgumentType=false, reportOperatorIssue=false, reportOptionalMemberAccess=false, reportIndexIssue=false
-
 from __future__ import annotations
 
 import base64
@@ -324,7 +322,7 @@ class TestDs389AclQuirks:
         )
 
         data = acl_data[FlextLdifConstants.DictKeys.DATA]
-        assert isinstance(data, dict)
+        assert hasattr(data, "name")
         assert data.get("version") == "3.0"
         assert data.get("acl_name") == "Admin Access"
         assert "read" in data.get("permissions", [])
@@ -341,7 +339,7 @@ class TestDs389AclQuirks:
         assert result.is_success
         acl_data = result.unwrap()
         data = acl_data[FlextLdifConstants.DictKeys.DATA]
-        assert isinstance(data, dict)
+        assert hasattr(data, "name")
         userdns = data.get("userdns", [])
         assert len(userdns) == 2
 

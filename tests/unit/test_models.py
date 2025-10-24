@@ -68,11 +68,11 @@ class TestFlextLdifModels:
         """Test AttributeValues single value property."""
         values = FlextLdifModels.AttributeValues(values=["single_value"])
         # Computed field from Pydantic v2
-        result: str | None = values.single_value  # type: ignore[assignment]
+        result: str | None = values.single_value
         assert result == "single_value"
 
         empty_values = FlextLdifModels.AttributeValues(values=[])
-        empty_result: str | None = empty_values.single_value  # type: ignore[assignment]
+        empty_result: str | None = empty_values.single_value
         assert empty_result is None
 
     def test_attributes_creation(self) -> None:
@@ -167,52 +167,6 @@ class TestFlextLdifModels:
         )
         assert entry.dn.value == "cn=test,dc=example,dc=com"
 
-    def test_search_config_creation(self) -> None:
-        """Test SearchConfig model creation."""
-        config = FlextLdifModels.SearchConfig(
-            base_dn="dc=example,dc=com",
-            search_filter="(objectClass=person)",
-            attributes=["cn", "sn"],
-        )
-        assert config.base_dn == "dc=example,dc=com"
-        assert config.search_filter == "(objectClass=person)"
-        assert config.attributes == ["cn", "sn"]
-
-    def test_search_config_validation(self) -> None:
-        """Test SearchConfig validation."""
-        # Valid config
-        config = FlextLdifModels.SearchConfig(
-            base_dn="dc=example,dc=com",
-            search_filter="(objectClass=person)",
-            attributes=["cn", "sn"],
-        )
-        assert config.base_dn == "dc=example,dc=com"
-
-        # Empty base_dn should fail
-        with pytest.raises(ValidationError):
-            FlextLdifModels.SearchConfig(
-                base_dn="",
-                search_filter="(objectClass=person)",
-                attributes=["cn"],
-            )
-
-    def test_search_config_default_filter(self) -> None:
-        """Test SearchConfig with default filter."""
-        config = FlextLdifModels.SearchConfig(
-            base_dn="dc=example,dc=com",
-            attributes=["cn", "sn"],
-        )
-        assert config.search_filter == "(objectClass=*)"
-
-    def test_search_config_empty_attributes(self) -> None:
-        """Test SearchConfig with empty attributes."""
-        config = FlextLdifModels.SearchConfig(
-            base_dn="dc=example,dc=com",
-            search_filter="(objectClass=person)",
-            attributes=[],
-        )
-        assert config.attributes == []
-
     def test_model_serialization(self) -> None:
         """Test model serialization."""
         entry = FlextLdifModels.Entry(
@@ -288,116 +242,36 @@ class TestFlextLdifModels:
         assert cn_attr is not None
         assert cn_attr.values == [""]
 
-    def test_entry_parsed_event_creation(self) -> None:
-        """Test EntryParsedEvent creation."""
-        event = FlextLdifModels.EntryParsedEvent(
-            event_type="entry.parsed",
-            aggregate_id="ldif-parser",
-            entry_count=5,
-            source_type="file",
-            format_detected="rfc",
-            timestamp="2025-01-01T00:00:00Z",
-        )
-        assert event.entry_count == 5
-        assert event.source_type == "file"
-        assert event.format_detected == "rfc"
-        assert event.event_type == "entry.parsed"
-        assert event.aggregate_id == "ldif-parser"
+    # NOTE: EntryParsedEvent model was removed as part of simplification.
+    # If event-driven patterns are needed, use flext-core event system.
 
-    def test_entries_validated_event_creation(self) -> None:
-        """Test EntriesValidatedEvent creation."""
-        event = FlextLdifModels.EntriesValidatedEvent(
-            event_type="entries.validated",
-            aggregate_id="ldif-validator",
-            entry_count=10,
-            is_valid=True,
-            error_count=0,
-            strict_mode=True,
-            timestamp="2025-01-01T00:00:00Z",
-        )
-        assert event.entry_count == 10
-        assert event.is_valid is True
-        assert event.error_count == 0
-        assert event.strict_mode is True
-        assert event.event_type == "entries.validated"
-        assert event.aggregate_id == "ldif-validator"
+    # NOTE: EntriesValidatedEvent model was removed as part of simplification.
 
-    def test_analytics_generated_event_creation(self) -> None:
-        """Test AnalyticsGeneratedEvent creation."""
-        event = FlextLdifModels.AnalyticsGeneratedEvent(
-            event_type="analytics.generated",
-            aggregate_id="ldif-analytics",
-            entry_count=20,
-            statistics={"total_attrs": 100, "unique_dns": 15},
-            timestamp="2025-01-01T00:00:00Z",
-        )
-        assert event.entry_count == 20
-        assert event.statistics == {"total_attrs": 100, "unique_dns": 15}
-        assert event.event_type == "analytics.generated"
-        assert event.aggregate_id == "ldif-analytics"
+    # NOTE: AnalyticsGeneratedEvent model was removed as part of simplification.
 
-    def test_entries_written_event_creation(self) -> None:
-        """Test EntriesWrittenEvent creation."""
-        event = FlextLdifModels.EntriesWrittenEvent(
-            event_type="entries.written",
-            aggregate_id="ldif-writer",
-            entry_count=8,
-            output_path="/tmp/output.ldif",
-            format_used="rfc",
-            timestamp="2025-01-01T00:00:00Z",
-        )
-        assert event.entry_count == 8
-        assert event.output_path == "/tmp/output.ldif"
-        assert event.format_used == "rfc"
-        assert event.event_type == "entries.written"
-        assert event.aggregate_id == "ldif-writer"
+    # NOTE: EntriesWrittenEvent model was removed as part of simplification.
 
-    def test_migration_completed_event_creation(self) -> None:
-        """Test MigrationCompletedEvent creation."""
-        event = FlextLdifModels.MigrationCompletedEvent(
-            event_type="migration.completed",
-            aggregate_id="ldif-migration",
-            source_entries=15,
-            target_entries=15,
-            migration_type="format_conversion",
-            timestamp="2025-01-01T00:00:00Z",
-        )
-        assert event.source_entries == 15
-        assert event.target_entries == 15
-        assert event.migration_type == "format_conversion"
-        assert event.event_type == "migration.completed"
-        assert event.aggregate_id == "ldif-migration"
+    # NOTE: MigrationCompletedEvent model was removed as part of simplification.
 
-    def test_quirk_registered_event_creation(self) -> None:
-        """Test QuirkRegisteredEvent creation."""
-        event = FlextLdifModels.QuirkRegisteredEvent(
-            event_type="quirk.registered",
-            aggregate_id="ldif-quirks",
-            server_type="openldap",
-            quirk_name="special_handling",
-            timestamp="2025-01-01T00:00:00Z",
-        )
-        assert event.server_type == "openldap"
-        assert event.quirk_name == "special_handling"
-        assert event.event_type == "quirk.registered"
-        assert event.aggregate_id == "ldif-quirks"
+    # NOTE: QuirkRegisteredEvent model was removed as part of simplification.
 
     def test_schema_object_class_creation(self) -> None:
         """Test SchemaObjectClass model creation."""
         obj_class = FlextLdifModels.SchemaObjectClass(
             name="person",
             oid="2.5.6.6",
-            description="Person object class",
-            required_attributes=["cn", "sn"],
-            optional_attributes=["telephoneNumber", "seeAlso"],
-            structural=True,
+            desc="Person object class",
+            sup=None,
+            must=["cn", "sn"],
+            may=["telephoneNumber", "seeAlso"],
+            kind="STRUCTURAL",
         )
         assert obj_class.name == "person"
         assert obj_class.oid == "2.5.6.6"
-        assert obj_class.description == "Person object class"
-        assert obj_class.required_attributes == ["cn", "sn"]
-        assert obj_class.optional_attributes == ["telephoneNumber", "seeAlso"]
-        assert obj_class.structural is True
+        assert obj_class.desc == "Person object class"
+        assert obj_class.must == ["cn", "sn"]
+        assert obj_class.may == ["telephoneNumber", "seeAlso"]
+        assert obj_class.is_structural is True
 
     def test_schema_object_class_direct_instantiation(self) -> None:
         """Test SchemaObjectClass direct instantiation."""
@@ -405,15 +279,16 @@ class TestFlextLdifModels:
         obj_class = FlextLdifModels.SchemaObjectClass(
             name="organizationalUnit",
             oid="2.5.6.5",
-            description="Organizational unit",
-            required_attributes=["ou"],
+            desc="Organizational unit",
+            sup=None,
+            must=["ou"],
         )
         assert isinstance(obj_class, FlextLdifModels.SchemaObjectClass)
         assert obj_class.name == "organizationalUnit"
         assert obj_class.oid == "2.5.6.5"
-        assert obj_class.required_attributes == ["ou"]
-        assert obj_class.optional_attributes == []
-        assert obj_class.description == "Organizational unit"
+        assert obj_class.must == ["ou"]
+        assert obj_class.may == []
+        assert obj_class.desc == "Organizational unit"
 
     def test_schema_discovery_result_creation(self) -> None:
         """Test SchemaDiscoveryResult model creation."""
@@ -444,12 +319,18 @@ class TestFlextLdifModels:
         attr = FlextLdifModels.SchemaAttribute(
             name="cn",
             oid="2.5.4.3",
-            description="Common name attribute",
+            desc="Common name attribute",
+            sup=None,
+            equality=None,
+            ordering=None,
+            substr=None,
             syntax="1.3.6.1.4.1.1466.115.121.1.15",
+            length=None,
+            usage=None,
         )
         assert attr.name == "cn"
         assert attr.oid == "2.5.4.3"
-        assert attr.description == "Common name attribute"
+        assert attr.desc == "Common name attribute"
         assert attr.syntax == "1.3.6.1.4.1.1466.115.121.1.15"
 
 
@@ -625,17 +506,18 @@ class TestFlextLdifModelsSchemaObjectClass:
         oc = FlextLdifModels.SchemaObjectClass(
             name="inetOrgPerson",
             oid="2.16.840.1.113730.3.2.2",
-            description="Internet Organizational Person",
-            structural=True,
-            required_attributes=["cn", "sn", "objectclass"],
-            optional_attributes=["description", "telephoneNumber", "mail"],
+            desc="Internet Organizational Person",
+            sup=None,
+            kind="STRUCTURAL",
+            must=["cn", "sn", "objectclass"],
+            may=["description", "telephoneNumber", "mail"],
         )
 
         assert isinstance(oc, FlextLdifModels.SchemaObjectClass)
         assert oc.name == "inetOrgPerson"
         assert oc.oid == "2.16.840.1.113730.3.2.2"
-        assert oc.required_attributes == ["cn", "sn", "objectclass"]
-        assert oc.optional_attributes == ["description", "telephoneNumber", "mail"]
+        assert oc.must == ["cn", "sn", "objectclass"]
+        assert oc.may == ["description", "telephoneNumber", "mail"]
 
     def test_objectclass_validation(self) -> None:
         """Test object class validation."""
@@ -643,8 +525,9 @@ class TestFlextLdifModelsSchemaObjectClass:
         oc = FlextLdifModels.SchemaObjectClass(
             name="person",
             oid="2.5.6.6",
-            description="Person object class",
-            structural=True,
+            desc="Person object class",
+            sup=None,
+            kind="STRUCTURAL",
         )
         assert isinstance(oc, FlextLdifModels.SchemaObjectClass)
 
@@ -654,15 +537,16 @@ class TestFlextLdifModelsSchemaObjectClass:
         oc = FlextLdifModels.SchemaObjectClass(
             name="inetOrgPerson",
             oid="2.16.840.1.113730.3.2.2",
-            description="Internet Organizational Person",
-            required_attributes=["cn", "sn"],
-            optional_attributes=["mail", "telephoneNumber"],
+            desc="Internet Organizational Person",
+            sup=None,
+            must=["cn", "sn"],
+            may=["mail", "telephoneNumber"],
         )
         assert isinstance(oc, FlextLdifModels.SchemaObjectClass)
 
         # Test field access
-        assert oc.required_attributes == ["cn", "sn"]
-        assert oc.optional_attributes == ["mail", "telephoneNumber"]
+        assert oc.must == ["cn", "sn"]
+        assert oc.may == ["mail", "telephoneNumber"]
 
 
 class TestFlextLdifModelsAclTarget:
@@ -746,22 +630,22 @@ class TestFlextLdifModelsAcl:
         # Create unified ACL using direct instantiation of OracleOudAcl
         # (aggressive Pydantic 2 direct usage pattern - no factory class)
         try:
-            oud_acl = FlextLdifModels.OracleOudAcl(
+            oud_acl = FlextLdifModels.Acl(
                 name="test_acl",
                 target=target,
                 subject=subject,
                 permissions=perms,
                 server_type="oracle_oud",
             )
-            result = FlextResult[FlextLdifModels.AclBase].ok(oud_acl)
+            result = FlextResult[FlextLdifModels.Acl].ok(oud_acl)
         except Exception as e:  # pragma: no cover
-            result = FlextResult[FlextLdifModels.AclBase].fail(str(e))
+            result = FlextResult[FlextLdifModels.Acl].fail(str(e))
 
         assert result.is_success
-        acl: FlextLdifModels.AclBase = result.unwrap()
+        acl: FlextLdifModels.Acl = result.unwrap()
         # Discriminated union returns the specific subtype (OracleOudAcl in this case)
-        assert isinstance(acl, FlextLdifModels.AclBase)
-        assert isinstance(acl, FlextLdifModels.OracleOudAcl)
+        assert isinstance(acl, FlextLdifModels.Acl)
+        assert isinstance(acl, FlextLdifModels.Acl)
         assert acl.name == "test_acl"
         assert acl.server_type == "oracle_oud"
 
@@ -803,5 +687,5 @@ class TestFlextLdifModelsNamespace:
         assert hasattr(FlextLdifModels, "AclSubject")
         assert hasattr(FlextLdifModels, "AclPermissions")
         # Aggressive Pydantic 2 pattern: discriminated union subtypes for ACL
-        assert hasattr(FlextLdifModels, "AclBase")
+        assert hasattr(FlextLdifModels, "FlextLdifModels.Acl")
         assert hasattr(FlextLdifModels, "OpenLdapAcl")

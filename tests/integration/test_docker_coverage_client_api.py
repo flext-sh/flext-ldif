@@ -262,8 +262,9 @@ class TestApiOperationsDockerReal:
         analyze_result = api.analyze(entries)
         assert analyze_result.is_success, f"Analysis failed: {analyze_result.error}"
         stats = analyze_result.unwrap()
-        assert isinstance(stats, dict)
-        assert "total_entries" in stats or "entry_count" in stats
+        # AnalysisResult is now a Pydantic model, not a dict
+        assert hasattr(stats, "total_entries")
+        assert stats.total_entries > 0
 
     def test_api_write_entries_from_fixture(
         self, api: FlextLdif, oid_fixture_path: Path, tmp_path: Path

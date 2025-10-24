@@ -7,8 +7,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Any, cast
-
 import pytest
 from pydantic import ValidationError
 
@@ -312,15 +310,15 @@ class TestFlextLdifConfig:
         # Test that invalid values are rejected (intentional type mismatches for validation testing)
         with pytest.raises(ValidationError):
             # Test validation with intentionally invalid types
-            FlextLdifConfig(ldif_max_line_length=cast("int", "invalid"))
+            FlextLdifConfig(ldif_max_line_length="invalid")
 
         with pytest.raises(ValidationError):
             # Test validation with intentionally invalid types
-            FlextLdifConfig(max_workers=cast("int", "invalid"))
+            FlextLdifConfig(max_workers="invalid")
 
         with pytest.raises(ValidationError):
             # Test validation with intentionally invalid types
-            FlextLdifConfig(ldif_encoding=cast("str", 123))  # type: ignore[arg-type]
+            FlextLdifConfig(ldif_encoding=123)
 
     # =========================================================================
     # VALIDATOR EDGE CASES - Complete coverage for all validators
@@ -329,7 +327,7 @@ class TestFlextLdifConfig:
     def test_validate_ldif_encoding_invalid(self) -> None:
         """Test encoding validator with invalid encoding."""
         with pytest.raises(ValidationError) as exc_info:
-            FlextLdifConfig(ldif_encoding="invalid-encoding")  # type: ignore[arg-type]
+            FlextLdifConfig(ldif_encoding="invalid-encoding")
         # Pydantic v2 error message format
         assert "Input should be" in str(exc_info.value) or "ldif_encoding" in str(
             exc_info.value
@@ -353,7 +351,7 @@ class TestFlextLdifConfig:
         """Test validation_level validator with invalid value."""
         with pytest.raises(ValidationError) as exc_info:
             # Test validation with intentionally invalid enum value
-            FlextLdifConfig(validation_level=cast("Any", "invalid"))
+            FlextLdifConfig(validation_level="invalid")
         # Pydantic v2 error message format
         assert "Input should be" in str(exc_info.value) or "validation_level" in str(
             exc_info.value
@@ -363,7 +361,7 @@ class TestFlextLdifConfig:
         """Test server_type validator with invalid value."""
         with pytest.raises(ValidationError) as exc_info:
             # Test validation with intentionally invalid enum value
-            FlextLdifConfig(server_type=cast("Any", "unknown_server"))
+            FlextLdifConfig(server_type="unknown_server")
         assert "Input should be" in str(exc_info.value) or "server_type" in str(
             exc_info.value
         )
@@ -371,7 +369,7 @@ class TestFlextLdifConfig:
     def test_validate_analytics_detail_level_invalid(self) -> None:
         """Test analytics_detail_level validator with invalid value."""
         with pytest.raises(ValidationError) as exc_info:
-            FlextLdifConfig(analytics_detail_level="ultra")  # type: ignore[arg-type]
+            FlextLdifConfig(analytics_detail_level="ultra")
         # Pydantic v2 error message format
         assert "Input should be" in str(
             exc_info.value
@@ -380,7 +378,7 @@ class TestFlextLdifConfig:
     def test_validate_error_recovery_mode_invalid(self) -> None:
         """Test error_recovery_mode validator with invalid value."""
         with pytest.raises(ValidationError) as exc_info:
-            FlextLdifConfig(error_recovery_mode="abort")  # type: ignore[arg-type]
+            FlextLdifConfig(error_recovery_mode="abort")
         # Pydantic v2 error message format
         assert "Input should be" in str(exc_info.value) or "error_recovery_mode" in str(
             exc_info.value
@@ -621,7 +619,7 @@ class TestQuirksDetectionConfiguration:
         # All with relaxed parsing
         for detection_mode in ["auto", "disabled"]:
             config = FlextLdifConfig(
-                quirks_detection_mode=detection_mode,  # type: ignore[arg-type]
+                quirks_detection_mode=detection_mode,
                 enable_relaxed_parsing=True,
             )
             assert config.enable_relaxed_parsing is True

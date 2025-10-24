@@ -28,6 +28,7 @@ from typing import ClassVar
 from flext_core import FlextResult
 from pydantic import Field
 
+from flext_ldif.models import FlextLdifModels
 from flext_ldif.quirks.base import (
     FlextLdifQuirksBaseAclQuirk,
     FlextLdifQuirksBaseEntryQuirk,
@@ -80,14 +81,14 @@ class FlextLdifQuirksServersRelaxed(FlextLdifQuirksBaseSchemaQuirk):
 
     def parse_attribute(
         self, attr_definition: str
-    ) -> FlextResult[FlextLdifTypes.Models.CustomDataDict]:
+    ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
         """Parse attribute with best-effort approach.
 
         Args:
             attr_definition: AttributeType definition string
 
         Returns:
-            FlextResult with parsed attribute or error details
+            FlextResult with parsed SchemaAttribute or error details
 
         """
         try:
@@ -99,20 +100,35 @@ class FlextLdifQuirksServersRelaxed(FlextLdifQuirksBaseSchemaQuirk):
             name_match = re.search(r"NAME\s+['\"]?([^'\" ]+)['\"]?", attr_definition)
             name = name_match.group(1) if name_match else oid
 
-            return FlextResult[FlextLdifTypes.Models.CustomDataDict].ok({
-                "oid": oid,
-                "name": name,
-                "definition": attr_definition,
-                "relaxed_parsed": True,
-            })
+            # Store relaxed-specific metadata
+            metadata = FlextLdifModels.QuirkMetadata(
+                server_type="relaxed",
+                quirk_data={
+                    "relaxed_parsed": True,
+                    "original_definition": attr_definition,
+                },
+            )
+
+            return FlextResult[FlextLdifModels.SchemaAttribute].ok(
+                FlextLdifModels.SchemaAttribute(
+                    name=name,
+                    oid=oid,
+                    metadata=metadata,
+                )
+            )
         except Exception as e:
             logger.warning(f"Relaxed attribute parse failed: {e}")
-            return FlextResult[FlextLdifTypes.Models.CustomDataDict].ok({
-                "name": "unknown",
-                "definition": attr_definition,
-                "relaxed_parsed": False,
-                "parse_error": str(e),
-            })
+            metadata = FlextLdifModels.QuirkMetadata(
+                server_type="relaxed",
+                quirk_data={"relaxed_parsed": False, "parse_error": str(e)},
+            )
+            return FlextResult[FlextLdifModels.SchemaAttribute].ok(
+                FlextLdifModels.SchemaAttribute(
+                    name="unknown",
+                    oid="unknown",
+                    metadata=metadata,
+                )
+            )
 
     def can_handle_objectclass(self, oc_definition: str) -> bool:
         """Accept any objectClass definition in relaxed mode.
@@ -128,14 +144,14 @@ class FlextLdifQuirksServersRelaxed(FlextLdifQuirksBaseSchemaQuirk):
 
     def parse_objectclass(
         self, oc_definition: str
-    ) -> FlextResult[FlextLdifTypes.Models.CustomDataDict]:
+    ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
         """Parse objectClass with best-effort approach.
 
         Args:
             oc_definition: ObjectClass definition string
 
         Returns:
-            FlextResult with parsed objectClass or error details
+            FlextResult with parsed SchemaObjectClass or error details
 
         """
         try:
@@ -147,118 +163,139 @@ class FlextLdifQuirksServersRelaxed(FlextLdifQuirksBaseSchemaQuirk):
             name_match = re.search(r"NAME\s+['\"]?([^'\" ]+)['\"]?", oc_definition)
             name = name_match.group(1) if name_match else oid
 
-            return FlextResult[FlextLdifTypes.Models.CustomDataDict].ok({
-                "oid": oid,
-                "name": name,
-                "definition": oc_definition,
-                "relaxed_parsed": True,
-            })
+            # Store relaxed-specific metadata
+            metadata = FlextLdifModels.QuirkMetadata(
+                server_type="relaxed",
+                quirk_data={
+                    "relaxed_parsed": True,
+                    "original_definition": oc_definition,
+                },
+            )
+
+            return FlextResult[FlextLdifModels.SchemaObjectClass].ok(
+                FlextLdifModels.SchemaObjectClass(
+                    name=name,
+                    oid=oid,
+                    metadata=metadata,
+                )
+            )
         except Exception as e:
             logger.warning(f"Relaxed objectClass parse failed: {e}")
-            return FlextResult[FlextLdifTypes.Models.CustomDataDict].ok({
-                "name": "unknown",
-                "definition": oc_definition,
-                "relaxed_parsed": False,
-                "parse_error": str(e),
-            })
+            metadata = FlextLdifModels.QuirkMetadata(
+                server_type="relaxed",
+                quirk_data={"relaxed_parsed": False, "parse_error": str(e)},
+            )
+            return FlextResult[FlextLdifModels.SchemaObjectClass].ok(
+                FlextLdifModels.SchemaObjectClass(
+                    name="unknown",
+                    oid="unknown",
+                    metadata=metadata,
+                )
+            )
 
     def convert_attribute_to_rfc(
-        self, attr_data: FlextLdifTypes.Models.CustomDataDict
-    ) -> FlextResult[FlextLdifTypes.Models.CustomDataDict]:
+        self, attr_data: FlextLdifModels.SchemaAttribute
+    ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
         """Convert attribute to RFC format - pass-through in relaxed mode.
 
         Args:
-            attr_data: Attribute data dictionary
+            attr_data: SchemaAttribute model
 
         Returns:
             FlextResult with data (unchanged)
 
         """
-        return FlextResult[FlextLdifTypes.Models.CustomDataDict].ok(attr_data)
+        return FlextResult[FlextLdifModels.SchemaAttribute].ok(attr_data)
 
     def convert_objectclass_to_rfc(
-        self, oc_data: FlextLdifTypes.Models.CustomDataDict
-    ) -> FlextResult[FlextLdifTypes.Models.CustomDataDict]:
+        self, oc_data: FlextLdifModels.SchemaObjectClass
+    ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
         """Convert objectClass to RFC format - pass-through in relaxed mode.
 
         Args:
-            oc_data: ObjectClass data dictionary
+            oc_data: SchemaObjectClass model
 
         Returns:
             FlextResult with data (unchanged)
 
         """
-        return FlextResult[FlextLdifTypes.Models.CustomDataDict].ok(oc_data)
+        return FlextResult[FlextLdifModels.SchemaObjectClass].ok(oc_data)
 
     def convert_attribute_from_rfc(
-        self, rfc_data: FlextLdifTypes.Models.CustomDataDict
-    ) -> FlextResult[FlextLdifTypes.Models.CustomDataDict]:
+        self, rfc_data: FlextLdifModels.SchemaAttribute
+    ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
         """Convert attribute from RFC format - pass-through in relaxed mode.
 
         Args:
-            rfc_data: RFC-compliant attribute data
+            rfc_data: RFC-compliant SchemaAttribute
 
         Returns:
             FlextResult with data (unchanged)
 
         """
-        return FlextResult[FlextLdifTypes.Models.CustomDataDict].ok(rfc_data)
+        return FlextResult[FlextLdifModels.SchemaAttribute].ok(rfc_data)
 
     def convert_objectclass_from_rfc(
-        self, rfc_data: FlextLdifTypes.Models.CustomDataDict
-    ) -> FlextResult[FlextLdifTypes.Models.CustomDataDict]:
+        self, rfc_data: FlextLdifModels.SchemaObjectClass
+    ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
         """Convert objectClass from RFC format - pass-through in relaxed mode.
 
         Args:
-            rfc_data: RFC-compliant objectClass data
+            rfc_data: RFC-compliant SchemaObjectClass
 
         Returns:
             FlextResult with data (unchanged)
 
         """
-        return FlextResult[FlextLdifTypes.Models.CustomDataDict].ok(rfc_data)
+        return FlextResult[FlextLdifModels.SchemaObjectClass].ok(rfc_data)
 
     def write_attribute_to_rfc(
-        self, attr_data: FlextLdifTypes.Models.CustomDataDict
+        self, attr_data: FlextLdifModels.SchemaAttribute
     ) -> FlextResult[str]:
         """Write attribute to RFC format - stringify in relaxed mode.
 
         Args:
-            attr_data: Attribute data dictionary
+            attr_data: SchemaAttribute model
 
         Returns:
             FlextResult with stringified data
 
         """
         try:
-            definition = attr_data.get("definition", "")
-            if isinstance(definition, str):
-                return FlextResult[str].ok(definition)
-            return FlextResult[str].ok(str(attr_data))
+            # Try to get original definition from metadata
+            if attr_data.metadata and attr_data.metadata.quirk_data:
+                definition = attr_data.metadata.quirk_data.get("original_definition")
+                if isinstance(definition, str):
+                    return FlextResult[str].ok(definition)
+            # Fallback to model string representation
+            return FlextResult[str].ok(str(attr_data.model_dump()))
         except Exception as e:
             logger.warning(f"Write attribute failed: {e}")
-            return FlextResult[str].ok(str(attr_data))
+            return FlextResult[str].ok(str(attr_data.model_dump()))
 
     def write_objectclass_to_rfc(
-        self, oc_data: FlextLdifTypes.Models.CustomDataDict
+        self, oc_data: FlextLdifModels.SchemaObjectClass
     ) -> FlextResult[str]:
         """Write objectClass to RFC format - stringify in relaxed mode.
 
         Args:
-            oc_data: ObjectClass data dictionary
+            oc_data: SchemaObjectClass model
 
         Returns:
             FlextResult with stringified data
 
         """
         try:
-            definition = oc_data.get("definition", "")
-            if isinstance(definition, str):
-                return FlextResult[str].ok(definition)
-            return FlextResult[str].ok(str(oc_data))
+            # Try to get original definition from metadata
+            if oc_data.metadata and oc_data.metadata.quirk_data:
+                definition = oc_data.metadata.quirk_data.get("original_definition")
+                if isinstance(definition, str):
+                    return FlextResult[str].ok(definition)
+            # Fallback to model string representation
+            return FlextResult[str].ok(str(oc_data.model_dump()))
         except Exception as e:
             logger.warning(f"Write objectClass failed: {e}")
-            return FlextResult[str].ok(str(oc_data))
+            return FlextResult[str].ok(str(oc_data.model_dump()))
 
     class AclQuirk(FlextLdifQuirksBaseAclQuirk):
         """Relaxed ACL quirk for lenient LDIF processing.
@@ -292,79 +329,97 @@ class FlextLdifQuirksServersRelaxed(FlextLdifQuirksBaseSchemaQuirk):
             """
             return bool(acl_line.strip())
 
-        def parse_acl(
-            self, acl_line: str
-        ) -> FlextResult[FlextLdifTypes.Models.CustomDataDict]:
+        def parse_acl(self, acl_line: str) -> FlextResult[FlextLdifModels.Acl]:
             """Parse ACL with best-effort approach.
 
             Args:
                 acl_line: ACL definition line
 
             Returns:
-                FlextResult with parsed ACL or error details
+                FlextResult with parsed Acl or error details
 
             """
             try:
-                return FlextResult[FlextLdifTypes.Models.CustomDataDict].ok({
-                    "raw_acl": acl_line,
-                    "relaxed_parsed": True,
-                })
+                # Create minimal Acl model with relaxed parsing metadata
+                acl = FlextLdifModels.Acl(
+                    name="relaxed_acl",
+                    target=FlextLdifModels.AclTarget(target_dn="*", attributes=[]),
+                    subject=FlextLdifModels.AclSubject(
+                        subject_type="*", subject_value="*"
+                    ),
+                    permissions=FlextLdifModels.AclPermissions(),
+                    server_type="relaxed",
+                    raw_acl=acl_line,
+                    metadata=FlextLdifModels.QuirkMetadata(
+                        server_type="relaxed",
+                        quirk_data={"relaxed_parsed": True},
+                    ),
+                )
+                return FlextResult[FlextLdifModels.Acl].ok(acl)
             except Exception as e:
                 logger.warning(f"Relaxed ACL parse failed: {e}")
-                return FlextResult[FlextLdifTypes.Models.CustomDataDict].ok({
-                    "raw_acl": acl_line,
-                    "relaxed_parsed": False,
-                    "parse_error": str(e),
-                })
+                acl = FlextLdifModels.Acl(
+                    name="relaxed_acl_error",
+                    target=FlextLdifModels.AclTarget(target_dn="*", attributes=[]),
+                    subject=FlextLdifModels.AclSubject(
+                        subject_type="*", subject_value="*"
+                    ),
+                    permissions=FlextLdifModels.AclPermissions(),
+                    server_type="relaxed",
+                    raw_acl=acl_line,
+                    metadata=FlextLdifModels.QuirkMetadata(
+                        quirk_type="relaxed",
+                        custom_data={"relaxed_parsed": False, "parse_error": str(e)},
+                    ),
+                )
+                return FlextResult[FlextLdifModels.Acl].ok(acl)
 
         def convert_acl_to_rfc(
-            self, acl_data: FlextLdifTypes.Models.CustomDataDict
-        ) -> FlextResult[FlextLdifTypes.Models.CustomDataDict]:
+            self, acl_data: FlextLdifModels.Acl
+        ) -> FlextResult[FlextLdifModels.Acl]:
             """Convert ACL to RFC format - pass-through in relaxed mode.
 
             Args:
-                acl_data: ACL data dictionary
+                acl_data: Acl model
 
             Returns:
                 FlextResult with data (unchanged)
 
             """
-            return FlextResult[FlextLdifTypes.Models.CustomDataDict].ok(acl_data)
+            return FlextResult[FlextLdifModels.Acl].ok(acl_data)
 
         def convert_acl_from_rfc(
-            self, acl_data: FlextLdifTypes.Models.CustomDataDict
-        ) -> FlextResult[FlextLdifTypes.Models.CustomDataDict]:
+            self, acl_data: FlextLdifModels.Acl
+        ) -> FlextResult[FlextLdifModels.Acl]:
             """Convert ACL from RFC format - pass-through in relaxed mode.
 
             Args:
-                acl_data: RFC-compliant ACL data
+                acl_data: RFC-compliant Acl model
 
             Returns:
                 FlextResult with data (unchanged)
 
             """
-            return FlextResult[FlextLdifTypes.Models.CustomDataDict].ok(acl_data)
+            return FlextResult[FlextLdifModels.Acl].ok(acl_data)
 
-        def write_acl_to_rfc(
-            self, acl_data: FlextLdifTypes.Models.CustomDataDict
-        ) -> FlextResult[str]:
+        def write_acl_to_rfc(self, acl_data: FlextLdifModels.Acl) -> FlextResult[str]:
             """Write ACL to RFC format - stringify in relaxed mode.
 
             Args:
-                acl_data: ACL data dictionary
+                acl_data: Acl model
 
             Returns:
                 FlextResult with stringified data
 
             """
             try:
-                raw_acl = acl_data.get("raw_acl", "")
-                if isinstance(raw_acl, str):
-                    return FlextResult[str].ok(raw_acl)
-                return FlextResult[str].ok(str(acl_data))
+                # Use raw_acl field from Acl model
+                if acl_data.raw_acl and isinstance(acl_data.raw_acl, str):
+                    return FlextResult[str].ok(acl_data.raw_acl)
+                return FlextResult[str].ok(str(acl_data.model_dump()))
             except Exception as e:
                 logger.warning(f"Write ACL failed: {e}")
-                return FlextResult[str].ok(str(acl_data))
+                return FlextResult[str].ok(str(acl_data.model_dump()))
 
     class EntryQuirk(FlextLdifQuirksBaseEntryQuirk):
         """Relaxed entry quirk for lenient LDIF processing.
@@ -387,43 +442,39 @@ class FlextLdifQuirksServersRelaxed(FlextLdifQuirksBaseSchemaQuirk):
             """Initialize relaxed entry quirk."""
 
         def process_entry(
-            self, entry_dn: str, attributes: FlextLdifTypes.Models.CustomDataDict
-        ) -> FlextResult[dict[str, object]]:
+            self, _entry_dn: str, attributes: FlextLdifTypes.Common.EntryAttributesDict
+        ) -> FlextResult[FlextLdifTypes.Common.EntryAttributesDict]:
             """Process entry for relaxed mode.
 
             Args:
-                entry_dn: Entry distinguished name
+                _entry_dn: Entry distinguished name
                 attributes: Entry attributes
 
             Returns:
-                FlextResult with processed entry data
+                FlextResult with processed entry attributes
 
             """
             try:
-                return FlextResult[dict[str, object]].ok({
-                    "dn": entry_dn,
-                    "attributes": attributes,
-                    "relaxed_processed": True,
-                })
+                # In relaxed mode, pass through attributes unchanged
+                return FlextResult[FlextLdifTypes.Common.EntryAttributesDict].ok(
+                    attributes
+                )
             except Exception as e:
                 logger.warning(f"Relaxed entry processing failed: {e}")
-                return FlextResult[dict[str, object]].ok({
-                    "dn": entry_dn,
-                    "attributes": attributes,
-                    "relaxed_processed": False,
-                    "process_error": str(e),
-                })
+                return FlextResult[FlextLdifTypes.Common.EntryAttributesDict].ok(
+                    attributes
+                )
 
         def can_handle_entry(
             self,
             entry_dn: str,
-            attributes: FlextLdifTypes.Models.CustomDataDict,  # noqa: ARG002
+            _attributes: FlextLdifTypes.Common.EntryAttributesDict,
         ) -> bool:
             """Accept any entry in relaxed mode.
 
             Args:
                 entry_dn: Entry distinguished name
-                attributes: Entry attributes (unused - relaxed mode accepts everything)
+                _attributes: Entry attributes (unused - relaxed mode accepts everything)
 
             Returns:
                 Always True - relaxed mode accepts everything
@@ -432,8 +483,8 @@ class FlextLdifQuirksServersRelaxed(FlextLdifQuirksBaseSchemaQuirk):
             return bool(entry_dn.strip())
 
         def parse_entry(
-            self, entry_dn: str, attributes: FlextLdifTypes.Models.CustomDataDict
-        ) -> FlextResult[FlextLdifTypes.Models.CustomDataDict]:
+            self, entry_dn: str, attributes: FlextLdifTypes.Common.EntryAttributesDict
+        ) -> FlextResult[FlextLdifTypes.Common.EntryAttributesDict]:
             """Parse entry with best-effort approach.
 
             Args:
@@ -441,23 +492,19 @@ class FlextLdifQuirksServersRelaxed(FlextLdifQuirksBaseSchemaQuirk):
                 attributes: Entry attributes
 
             Returns:
-                FlextResult with parsed entry or error details
+                FlextResult with parsed entry attributes
 
             """
             try:
-                return FlextResult[FlextLdifTypes.Models.CustomDataDict].ok({
-                    "dn": entry_dn,
-                    "attributes": attributes,
-                    "relaxed_parsed": True,
-                })
+                # In relaxed mode, pass through attributes unchanged
+                return FlextResult[FlextLdifTypes.Common.EntryAttributesDict].ok(
+                    attributes
+                )
             except Exception as e:
                 logger.warning(f"Relaxed entry parse failed: {e}")
-                return FlextResult[FlextLdifTypes.Models.CustomDataDict].ok({
-                    "dn": entry_dn,
-                    "attributes": attributes,
-                    "relaxed_parsed": False,
-                    "parse_error": str(e),
-                })
+                return FlextResult[FlextLdifTypes.Common.EntryAttributesDict].ok(
+                    attributes
+                )
 
         def normalize_dn(self, dn: str) -> FlextResult[str]:
             """Normalize DN - best-effort in relaxed mode.
@@ -484,32 +531,32 @@ class FlextLdifQuirksServersRelaxed(FlextLdifQuirksBaseSchemaQuirk):
                 return FlextResult[str].ok(dn)
 
         def convert_entry_to_rfc(
-            self, entry_data: FlextLdifTypes.Models.CustomDataDict
-        ) -> FlextResult[FlextLdifTypes.Models.CustomDataDict]:
+            self, entry_data: FlextLdifTypes.Common.EntryAttributesDict
+        ) -> FlextResult[FlextLdifTypes.Common.EntryAttributesDict]:
             """Convert entry to RFC format - pass-through in relaxed mode.
 
             Args:
-                entry_data: Entry data dictionary
+                entry_data: Entry attributes dictionary
 
             Returns:
                 FlextResult with data (unchanged)
 
             """
-            return FlextResult[FlextLdifTypes.Models.CustomDataDict].ok(entry_data)
+            return FlextResult[FlextLdifTypes.Common.EntryAttributesDict].ok(entry_data)
 
         def convert_entry_from_rfc(
-            self, entry_data: FlextLdifTypes.Models.CustomDataDict
-        ) -> FlextResult[FlextLdifTypes.Models.CustomDataDict]:
+            self, entry_data: FlextLdifTypes.Common.EntryAttributesDict
+        ) -> FlextResult[FlextLdifTypes.Common.EntryAttributesDict]:
             """Convert entry from RFC format - pass-through in relaxed mode.
 
             Args:
-                entry_data: RFC-compliant entry data
+                entry_data: RFC-compliant entry attributes
 
             Returns:
                 FlextResult with data (unchanged)
 
             """
-            return FlextResult[FlextLdifTypes.Models.CustomDataDict].ok(entry_data)
+            return FlextResult[FlextLdifTypes.Common.EntryAttributesDict].ok(entry_data)
 
 
 # Backward compatibility exports

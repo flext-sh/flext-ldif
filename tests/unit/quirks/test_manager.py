@@ -1,4 +1,3 @@
-# pyright: reportArgumentType=false, reportOperatorIssue=false, reportOptionalMemberAccess=false
 """Comprehensive tests for LDAP server quirks manager.
 
 This module provides complete test coverage for the quirks manager,

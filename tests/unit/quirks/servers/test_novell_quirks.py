@@ -1,7 +1,5 @@
 """Tests for Novell eDirectory quirks implementation."""
 
-# pyright: reportArgumentType=false, reportOperatorIssue=false, reportOptionalMemberAccess=false, reportIndexIssue=false
-
 from __future__ import annotations
 
 import base64
@@ -324,7 +322,7 @@ class TestNovellAclQuirks:
         assert acl_data[FlextLdifConstants.DictKeys.ACL_ATTRIBUTE] == "acl"
 
         data = acl_data[FlextLdifConstants.DictKeys.DATA]
-        assert isinstance(data, dict)
+        assert hasattr(data, "name")
         segments = data.get("segments", [])
         assert isinstance(segments, list)
         assert len(segments) == 3
@@ -345,7 +343,7 @@ class TestNovellAclQuirks:
         assert result.is_success
         acl_data = result.unwrap()
         data = acl_data[FlextLdifConstants.DictKeys.DATA]
-        assert isinstance(data, dict)
+        assert hasattr(data, "name")
         rights = data.get("rights", [])
         assert isinstance(rights, list)
         assert len(rights) >= 1

@@ -12,15 +12,14 @@ from __future__ import annotations
 
 import base64
 from pathlib import Path
-from typing import cast
 
 import pytest
 
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.quirks.registry import FlextLdifQuirksRegistry
-from flext_ldif.rfc.rfc_ldif_parser import FlextLdifRfcLdifParser
-from flext_ldif.rfc.rfc_ldif_writer import FlextLdifRfcLdifWriter
-from flext_ldif.rfc.rfc_schema_parser import FlextLdifRfcSchemaParser
+from flext_ldif.rfc_ldif_parser import FlextLdifRfcLdifParser
+from flext_ldif.rfc_ldif_writer import FlextLdifRfcLdifWriter
+from flext_ldif.rfc_schema_parser import FlextLdifRfcSchemaParser
 
 
 class TestRfcLdifParserService:
@@ -1455,9 +1454,7 @@ class TestRfcLdifWriterComprehensive:
         )
 
         # This should not crash - intentionally testing invalid input
-        result = writer.write_entries_to_string(
-            cast("list[FlextLdifModels.Entry]", None)
-        )
+        result = writer.write_entries_to_string("list[FlextLdifModels.Entry]")
 
         assert result.is_failure
 
@@ -1650,7 +1647,7 @@ class TestRfcLdifWriterAclSupport:
 
     def test_execute_with_acl_entries(self, tmp_path: Path) -> None:
         """Test execute() writing ACL entries."""
-        acl = FlextLdifModels.OpenLdapAcl(
+        acl = FlextLdifModels.Acl(
             name="test_acl",
             target=FlextLdifModels.AclTarget(target_dn="dc=example,dc=com"),
             subject=FlextLdifModels.AclSubject(

@@ -16,11 +16,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import cast
-
 import pytest
 
-from flext_ldif.services.validation_service import FlextLdifValidationService
+from flext_ldif.validation_service import FlextLdifValidationService
 
 
 class TestValidationServiceAttributeName:
@@ -125,7 +123,7 @@ class TestValidationServiceAttributeName:
         self, validation_service: FlextLdifValidationService
     ) -> None:
         """Test validating non-string attribute name fails."""
-        result = validation_service.validate_attribute_name(cast("str", 123))
+        result = validation_service.validate_attribute_name(123)
         assert result.is_success
         assert result.unwrap() is False
 
@@ -134,7 +132,7 @@ class TestValidationServiceAttributeName:
     ) -> None:
         """Test exception handling during attribute name validation."""
         # Pass object that will cause exception in string operations
-        result = validation_service.validate_attribute_name(cast("str", None))
+        result = validation_service.validate_attribute_name("str")
         # Should handle gracefully - return False or fail result
         assert hasattr(result, "is_success")
 
@@ -269,7 +267,7 @@ class TestValidationServiceAttributeValue:
         self, validation_service: FlextLdifValidationService
     ) -> None:
         """Test validating non-string attribute value fails."""
-        result = validation_service.validate_attribute_value(cast("str", 123))
+        result = validation_service.validate_attribute_value(123)
         assert result.is_success
         assert result.unwrap() is False
 
@@ -278,7 +276,7 @@ class TestValidationServiceAttributeValue:
     ) -> None:
         """Test exception handling during attribute value validation."""
         # Pass None which will cause exception in isinstance check
-        result = validation_service.validate_attribute_value(cast("str", None))
+        result = validation_service.validate_attribute_value(None)
         assert result.is_success
         assert result.unwrap() is False
 
@@ -327,7 +325,7 @@ class TestValidationServiceDnComponent:
         self, validation_service: FlextLdifValidationService
     ) -> None:
         """Test validating DN component with non-string value fails."""
-        result = validation_service.validate_dn_component("cn", cast("str", 123))
+        result = validation_service.validate_dn_component("cn", 123)
         assert result.is_success
         assert result.unwrap() is False
 
@@ -344,9 +342,7 @@ class TestValidationServiceDnComponent:
     ) -> None:
         """Test exception handling during DN component validation."""
         # Create a mock object that will cause exception
-        result = validation_service.validate_dn_component(
-            cast("str", None), cast("str", None)
-        )
+        result = validation_service.validate_dn_component("str", "str")
         assert hasattr(result, "is_success")
 
 

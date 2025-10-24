@@ -13,7 +13,7 @@ from pathlib import Path
 
 import pytest
 
-from flext_ldif.acl.service import FlextLdifAclService
+from flext_ldif.acl_service import FlextLdifAclService
 from flext_ldif.quirks.manager import FlextLdifQuirksManager
 
 

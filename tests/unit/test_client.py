@@ -9,6 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Generator
 from pathlib import Path
 
 import pytest
@@ -47,6 +48,7 @@ class TestDetectEncoding:
 
         # Should fail - not RFC 2849 compliant
         assert result.is_failure
+        assert result.error is not None
         assert "RFC 2849 violation" in result.error
         assert "not valid UTF-8" in result.error
 
@@ -437,7 +439,7 @@ class TestLdifFileOperations:
         )
 
     @pytest.fixture
-    def temp_ldif_file(self) -> Path:
+    def temp_ldif_file(self) -> Generator[Path]:
         """Create temporary LDIF file."""
         import tempfile
 

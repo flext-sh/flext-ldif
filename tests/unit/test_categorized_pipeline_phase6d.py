@@ -27,7 +27,7 @@ from pathlib import Path
 
 import pytest
 
-from flext_ldif.pipelines.categorized_pipeline import (
+from flext_ldif.categorized_pipeline import (
     FlextLdifCategorizedMigrationPipeline,
 )
 from flext_ldif.quirks.servers.oid_quirks import FlextLdifQuirksServersOid

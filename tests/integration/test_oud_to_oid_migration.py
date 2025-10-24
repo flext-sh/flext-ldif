@@ -20,7 +20,8 @@ import pytest
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.quirks.servers.oid_quirks import FlextLdifQuirksServersOid
 from flext_ldif.quirks.servers.oud_quirks import FlextLdifQuirksServersOud
-from tests.fixtures.loader import FlextLdifFixtures
+
+from ..fixtures.loader import FlextLdifFixtures
 
 
 class TestOudToOidSchemaMigration:

@@ -17,7 +17,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pathlib import Path
-from typing import cast
 
 import pytest
 
@@ -71,7 +70,7 @@ class TestNormalizerBuildCanonicalDnMap:
         """Test that invalid entries are skipped."""
         categorized = {
             "mixed": [
-                cast("object", "not a dict"),
+                "object",
                 {
                     FlextLdifConstants.DictKeys.DN: "cn=valid,dc=example,dc=com",
                     FlextLdifConstants.DictKeys.ATTRIBUTES: {"cn": ["valid"]},
@@ -190,7 +189,7 @@ class TestNormalizerNormalizeDnReferencesForEntry:
         """Test handling entry with non-dict attributes."""
         entry = {
             FlextLdifConstants.DictKeys.DN: "cn=user,dc=example,dc=com",
-            FlextLdifConstants.DictKeys.ATTRIBUTES: cast("object", "not a dict"),
+            FlextLdifConstants.DictKeys.ATTRIBUTES: "object",
         }
         dn_map = {}
         normalized = FlextLdifUtilities.Normalizer.normalize_dn_references_for_entry(
@@ -238,7 +237,7 @@ class TestNormalizerNormalizeAciDnReferences:
         """Test handling ACI entry with non-dict attributes."""
         entry = {
             FlextLdifConstants.DictKeys.DN: "cn=acl,dc=example,dc=com",
-            FlextLdifConstants.DictKeys.ATTRIBUTES: cast("object", "not a dict"),
+            FlextLdifConstants.DictKeys.ATTRIBUTES: "object",
         }
         dn_map = {}
         normalized = FlextLdifUtilities.Normalizer.normalize_aci_dn_references(
@@ -311,7 +310,7 @@ class TestSorterSortEntriesByHierarchy:
             },
             {"no_dn": "value"},
             {
-                FlextLdifConstants.DictKeys.DN: cast("str", None),
+                FlextLdifConstants.DictKeys.DN: "str",
                 FlextLdifConstants.DictKeys.ATTRIBUTES: {},
             },
         ]
@@ -325,7 +324,7 @@ class TestSorterSortEntriesByHierarchy:
         """Test sorting handles non-string DN values."""
         entries = [
             {
-                FlextLdifConstants.DictKeys.DN: cast("str", 12345),
+                FlextLdifConstants.DictKeys.DN: "str",
                 FlextLdifConstants.DictKeys.ATTRIBUTES: {},
             },
             {

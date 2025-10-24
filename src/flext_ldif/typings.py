@@ -11,7 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Iterator, Mapping, Sequence
-from typing import Annotated, Literal
+from typing import Annotated, TypeVar
 
 from flext_core import FlextResult, FlextTypes
 from pydantic import Field
@@ -23,6 +23,9 @@ from flext_ldif.constants import FlextLdifConstants
 # =============================================================================
 
 # Generic TypeVars T and U imported from flext-core FlextTypes
+
+# TypeVar for generic service retrieval with type narrowing
+ServiceT = TypeVar("ServiceT", bound=object)
 
 
 # LDIF domain TypeVars
@@ -219,7 +222,6 @@ class FlextLdifTypes(FlextTypes):
 
         # QuirkMetadata types
         type QuirkExtensions = dict[str, bool | str | int | list[int] | None]
-        type CustomDataDict = dict[str, object]
 
         # ACL types
         type PermissionsData = dict[str, bool | str]
@@ -494,6 +496,89 @@ class FlextLdifTypes(FlextTypes):
         """Success percentage (0-100%)."""
 
     # =========================================================================
+    # PYDANTIC MODEL ALIASES - Type aliases referencing FlextLdifModels
+    # =========================================================================
+    # These provide backward-compatible type aliases while enabling
+    # gradual migration to strongly-typed Pydantic v2 models.
+    #
+    # Migration path:
+    # 1. Old code: Uses dict-based types (Parser.ParserConfiguration)
+    # 2. New code: Uses model aliases (Models.ParserConfigModel)
+    # 3. Future: Direct model usage (FlextLdifModels.ParserConfiguration)
+
+    class ModelAliases:
+        """Type aliases for Pydantic models - preferred for new code.
+
+        These aliases reference FlextLdifModels defined in models.py,
+        providing strong typing with Pydantic v2 validation and computed fields.
+        Use these instead of dict-based types for new implementations.
+        """
+
+        # Parser and Writer Configuration Models
+        # Replaces: Parser.ParserConfiguration (dict-based)
+        # Benefits: Immutable configs, cross-field validation, computed fields
+        type ParserConfigModel = (
+            object  # Forward reference: FlextLdifModels.ParserConfiguration
+        )
+        type WriterConfigModel = (
+            object  # Forward reference: FlextLdifModels.WriterConfiguration
+        )
+
+        # Runtime Context Models
+        # Replaces: Parser.ParsingContext, Writer.WritingContext (dict-based)
+        # Benefits: Mutable state tracking, progress summaries, error tracking
+        type ParsingContextModel = (
+            object  # Forward reference: FlextLdifModels.ParsingContext
+        )
+        type WritingContextModel = (
+            object  # Forward reference: FlextLdifModels.WritingContext
+        )
+
+        # Validation Models
+        # Replaces: Entry.EntryValidation, LdifValidation.LdifValidationResult (dict-based)
+        # Benefits: Computed counts, validation summaries, structured errors
+        type EntryValidationModel = (
+            object  # Forward reference: FlextLdifModels.EntryValidationDetail
+        )
+
+        # Transformation Models
+        # Replaces: Entry.EntryTransformation (dict-based)
+        # Benefits: Transformation tracking, modification detection
+        type EntryTransformationModel = (
+            object  # Forward reference: FlextLdifModels.EntryTransformationResult
+        )
+
+        # Analytics Models
+        # Replaces: Analytics.StatisticalAnalysis, Analytics.PerformanceMetrics (dict-based)
+        # Benefits: Computed metrics, complexity scores, performance summaries
+        type StatisticalAnalysisModel = (
+            object  # Forward reference: FlextLdifModels.StatisticalAnalysis
+        )
+        type PerformanceMetricsModel = (
+            object  # Forward reference: FlextLdifModels.PerformanceMetrics
+        )
+
+    # =========================================================================
+    # MIGRATION GUIDELINES - Dict-based types → Pydantic models
+    # =========================================================================
+    #
+    # OLD (dict-based, to be deprecated):
+    #   config: FlextLdifTypes.Parser.ParserConfiguration = {...}
+    #   if isinstance(config, dict): ...
+    #
+    # NEW (Pydantic model, preferred):
+    #   from flext_ldif import FlextLdifModels
+    #   config = FlextLdifModels.ParserConfiguration(file_path="test.ldif")
+    #   if config.is_file_based: ...  # Use computed fields
+    #
+    # BENEFITS OF MODELS:
+    # - Type safety: MyPy/Pyrefly strict mode compliance
+    # - Validation: Automatic Pydantic field validation
+    # - Computed fields: Automatic calculations (error_count, is_rfc_compliant, etc.)
+    # - Immutability: ConfigDict(frozen=True) for thread-safety
+    # - Serialization: model_dump() for dict, model_dump_json() for JSON
+
+    # =========================================================================
     # LDIF PROJECT TYPES - Domain-specific project types extending FlextTypes
     # =========================================================================
 
@@ -524,10 +609,8 @@ class FlextLdifTypes(FlextTypes):
     type EncodingType = FlextLdifConstants.LiteralTypes.EncodingType
     type ValidationLevel = FlextLdifConstants.LiteralTypes.ValidationLevel
     type ProjectType = FlextLdifConstants.LiteralTypes.ProjectType
-    # ACL server types subset (only servers with ACL support)
-    AclServerType = Literal[
-        "openldap", "openldap2", "openldap1", "oracle_oid", "oracle_oud", "389ds"
-    ]
+    # ACL server types - use the same types as ServerType for consistency
+    type AclServerType = FlextLdifConstants.LiteralTypes.ServerType
 
 
 # =============================================================================
@@ -536,4 +619,5 @@ class FlextLdifTypes(FlextTypes):
 
 __all__: list[str] = [
     "FlextLdifTypes",
+    "ServiceT",
 ]

@@ -197,7 +197,7 @@ class TestConversionMatrixPhase34:
         oud = FlextLdifQuirksServersOud()
 
         # Invalid data type
-        result = matrix.convert(oid, oud, "invalid_type", "test_data")  # type: ignore[arg-type]
+        result = matrix.convert(oid, oud, "invalid_type", "test_data")
 
         assert hasattr(result, "is_success")
         # Should fail due to invalid type

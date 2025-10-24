@@ -17,11 +17,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Protocol, runtime_checkable
+from typing import Any, Protocol, runtime_checkable
 
 from flext_core import FlextProtocols, FlextResult
-
-from flext_ldif.typings import FlextLdifTypes
 
 
 class FlextLdifProtocols(FlextProtocols):
@@ -397,7 +395,7 @@ class FlextLdifProtocols(FlextProtocols):
             """Quirk priority (lower number = higher priority)."""
 
             def can_handle_entry(
-                self, entry_dn: str, attributes: FlextLdifTypes.Models.CustomDataDict
+                self, entry_dn: str, attributes: dict[str, object]
             ) -> bool:
                 """Check if this quirk can handle the entry.
 
@@ -600,7 +598,43 @@ class FlextLdifProtocols(FlextProtocols):
                 """
                 ...
 
+    # =========================================================================
+    # ENTRY PROTOCOLS - General entry processing protocols
+    # =========================================================================
+
+    class Entry:
+        """General entry processing protocols for LDIF operations."""
+
+        @runtime_checkable
+        class EntryWithDnProtocol(Protocol):
+            """Protocol for objects that have a DN and attributes.
+
+            This protocol defines the minimal interface for LDAP entries
+            that can be processed by the LDIF API. Objects satisfying this
+            protocol have a DN (distinguished name) and attributes dictionary.
+
+            Used by:
+            - FlextLdif API methods for entry processing
+            - Migration operations between servers
+            - Entry validation and transformation
+
+            Implementation:
+            Any object with 'dn' and 'attributes' attributes satisfies this
+            protocol through structural typing (duck typing).
+            """
+
+            dn: Any  # Can be str or object with .value property
+            """Entry distinguished name (DN). Can be string or object with .value."""
+
+            attributes: Any  # Entry attributes dictionary
+            """Entry attributes as dictionary mapping attribute names to values."""
+
+
+# Alias for backward compatibility and cleaner imports
+EntryWithDn = FlextLdifProtocols.Entry.EntryWithDnProtocol
+
 
 __all__ = [
+    "EntryWithDn",  # Export alias for convenience
     "FlextLdifProtocols",
 ]
