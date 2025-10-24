@@ -15,8 +15,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import cast
-
 import pytest
 
 from flext_ldif.constants import FlextLdifConstants
@@ -46,9 +44,7 @@ def create_test_entry(
         for name, values in attributes.items()
     }
 
-    attrs_result = FlextLdifModels.LdifAttributes.create(
-        cast("dict[str, object]", wrapped_attrs)
-    )
+    attrs_result = FlextLdifModels.LdifAttributes.create(wrapped_attrs)
     assert attrs_result.is_success
     attrs = attrs_result.unwrap()
 

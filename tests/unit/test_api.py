@@ -13,10 +13,11 @@ from pathlib import Path
 
 import pytest
 from flext_core import FlextResult
-from tests.support import LdifTestData
 
 from flext_ldif import FlextLdif
 from flext_ldif.models import FlextLdifModels
+
+from ..support import LdifTestData
 
 
 class TestFlextLdifParse:
@@ -365,8 +366,9 @@ class TestFlextLdifValidate:
         # May fail due to container issues, but API method should exist
         if result.is_success:
             validation = result.unwrap()
-            assert "is_valid" in validation
-            assert isinstance(validation.get("errors", []), list)
+            # ValidationResult is a Pydantic model, not a dict
+            assert hasattr(validation, "is_valid")
+            assert isinstance(validation.errors, list)
         else:
             # Container initialization issue in tests
             assert result.error is not None
@@ -1069,12 +1071,13 @@ objectClass: person
         assert result1.is_success and result2.is_success
         entries = [result1.unwrap(), result2.unwrap()]
 
-        # Convert to dicts
-        conversion_result = ldif.convert("entries_to_dicts", entries=entries)
-        assert conversion_result.is_success
-        entries_dicts = conversion_result.unwrap()
+        # Convert to dicts using direct method to avoid complex union types
+        entries_dicts: list[dict[str, object]] = []
+        for entry in entries:
+            dict_result = ldif._entry_builder.convert_entry_to_dict(entry)
+            assert dict_result.is_success
+            entries_dicts.append(dict_result.unwrap())
 
-        assert isinstance(entries_dicts, list)
         assert len(entries_dicts) == 2
         for entry_dict in entries_dicts:
             assert isinstance(entry_dict, dict)

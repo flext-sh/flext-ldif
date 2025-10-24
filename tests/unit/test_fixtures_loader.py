@@ -7,7 +7,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from tests.fixtures import FlextLdifFixtures
+from ..fixtures import FlextLdifFixtures
 
 
 class TestFlextLdifFixturesLoader:

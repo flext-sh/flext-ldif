@@ -13,18 +13,24 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import re
+from pathlib import Path
+
+from flext_core import FlextResult, FlextUtilities
 
 from flext_ldif.constants import FlextLdifConstants
-from flext_ldif.services import FlextLdifDnService
+from flext_ldif.dn_service import FlextLdifDnService
+from flext_ldif.models import FlextLdifModels
+from flext_ldif.typings import FlextLdifTypes
 
 
 class FlextLdifUtilities:
     """Unified utilities for LDIF processing pipeline.
 
-    Provides three main utility components:
+    Provides four main utility components:
     - Normalizer: DN and attribute normalization
     - Sorter: Entry sorting and ordering
     - Statistics: Pipeline statistics generation
+    - AclUtils: ACL component creation and validation
 
     """
 
@@ -298,13 +304,16 @@ class FlextLdifUtilities:
             # Build output files info (LDIF files, not directories)
             output_files_info: dict[str, object] = {}
             for category in written_counts:
-                filename_obj = output_files.get(category, f"{category}.ldif")
+                filename_obj = output_files.get(
+                    category,
+                    f"{category}{FlextLdifConstants.ServerDetection.LDIF_FILE_EXTENSION}",
+                )
                 category_filename = (
                     filename_obj
                     if isinstance(filename_obj, str)
-                    else f"{category}.ldif"
+                    else f"{category}{FlextLdifConstants.ServerDetection.LDIF_FILE_EXTENSION}"
                 )
-                output_path = output_dir / category_filename  # type: ignore[operator]
+                output_path = Path(str(output_dir)) / category_filename
                 output_files_info[category] = str(output_path)
 
             return {
@@ -316,6 +325,149 @@ class FlextLdifUtilities:
                 "written_counts": written_counts,
                 "output_files": output_files_info,
             }
+
+    class AclUtils(FlextUtilities):
+        """ACL utilities with shared helper methods for ACL processing.
+
+        This class provides common ACL component creation and validation
+        logic used across ACL parser and service modules, following FLEXT
+        utility class patterns for centralized functionality.
+        """
+
+        class ComponentFactory:
+            """Factory for creating and validating ACL components with railway pattern."""
+
+            @staticmethod
+            def create_acl_components() -> FlextResult[
+                tuple[
+                    FlextLdifModels.AclTarget,
+                    FlextLdifModels.AclSubject,
+                    FlextLdifModels.AclPermissions,
+                ]
+            ]:
+                """Create ACL components with proper validation using railway pattern.
+
+                Returns:
+                    FlextResult containing tuple of (target, subject, permissions) on success,
+                    or failure with descriptive error message.
+
+                """
+                # Create ACL components using direct instantiation
+                target_result = FlextResult.ok(
+                    FlextLdifModels.AclTarget(
+                        target_dn=FlextLdifConstants.ServerDetection.ACL_WILDCARD_DN
+                    )
+                )
+                subject_result = FlextResult.ok(
+                    FlextLdifModels.AclSubject(
+                        subject_type=FlextLdifConstants.ServerDetection.ACL_WILDCARD_TYPE,
+                        subject_value=FlextLdifConstants.ServerDetection.ACL_WILDCARD_VALUE,
+                    )
+                )
+                perms_result = FlextResult.ok(FlextLdifModels.AclPermissions(read=True))
+
+                # Early return on first failure
+                if target_result.is_failure:
+                    return FlextResult.fail(
+                        f"Failed to create AclTarget: {target_result.error}"
+                    )
+
+                if subject_result.is_failure:
+                    return FlextResult.fail(
+                        f"Failed to create AclSubject: {subject_result.error}"
+                    )
+
+                if perms_result.is_failure:
+                    return FlextResult.fail(
+                        f"Failed to create AclPermissions: {perms_result.error}"
+                    )
+
+                # Type safety validation
+                target = target_result.unwrap()
+                subject = subject_result.unwrap()
+                permissions = perms_result.unwrap()
+
+                if not isinstance(target, FlextLdifModels.AclTarget):
+                    return FlextResult.fail(
+                        "Created object is not an AclTarget instance"
+                    )
+
+                if not isinstance(subject, FlextLdifModels.AclSubject):
+                    return FlextResult.fail(
+                        "Created object is not an AclSubject instance"
+                    )
+
+                if not isinstance(permissions, FlextLdifModels.AclPermissions):
+                    return FlextResult.fail(
+                        "Created object is not an AclPermissions instance"
+                    )
+
+                return FlextResult.ok((target, subject, permissions))
+
+            @staticmethod
+            def create_unified_acl(
+                name: str,
+                target: FlextLdifModels.AclTarget,
+                subject: FlextLdifModels.AclSubject,
+                permissions: FlextLdifModels.AclPermissions,
+                server_type: FlextLdifTypes.AclServerType,
+                raw_acl: str,
+            ) -> FlextResult[FlextLdifModels.Acl]:
+                """Create unified ACL with proper validation using railway pattern.
+
+                Uses consolidated Acl model with server_type discriminator.
+
+                Args:
+                    name: ACL name
+                    target: ACL target component
+                    subject: ACL subject component
+                    permissions: ACL permissions component
+                    server_type: Server type (openldap, oid, etc.)
+                    raw_acl: Original ACL string
+
+                Returns:
+                    FlextResult containing Acl instance on success, failure otherwise.
+
+                """
+                try:
+                    # Validate server_type is supported
+                    supported_servers = {
+                        FlextLdifConstants.LdapServers.OPENLDAP,
+                        FlextLdifConstants.LdapServers.OPENLDAP_2,
+                        FlextLdifConstants.LdapServers.OPENLDAP_1,
+                        FlextLdifConstants.LdapServers.ORACLE_OID,
+                        FlextLdifConstants.LdapServers.ORACLE_OUD,
+                        FlextLdifConstants.LdapServers.DS_389,
+                    }
+
+                    # Default to OpenLDAP for generic/unknown server types
+                    effective_server_type = (
+                        server_type
+                        if server_type in supported_servers
+                        else FlextLdifConstants.LdapServers.OPENLDAP
+                    )
+
+                    # Create ACL using consolidated Acl model
+                    unified_acl = FlextLdifModels.Acl(
+                        name=name,
+                        target=target,
+                        subject=subject,
+                        permissions=permissions,
+                        server_type=effective_server_type,
+                        raw_acl=raw_acl,
+                    )
+
+                    # Verify created instance is correct type
+                    if not isinstance(unified_acl, FlextLdifModels.Acl):
+                        return FlextResult[FlextLdifModels.Acl].fail(
+                            "Created object is not an Acl instance"
+                        )
+
+                    return FlextResult[FlextLdifModels.Acl].ok(unified_acl)
+                except Exception as e:
+                    return FlextResult[FlextLdifModels.Acl].fail(
+                        f"Failed to create ACL: {e}"
+                    )
 
 
 __all__ = ["FlextLdifUtilities"]

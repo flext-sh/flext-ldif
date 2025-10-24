@@ -33,6 +33,9 @@ class FlextLdifConstants(FlextConstants):
     OUD_FORMAT: Final[str] = "oud"
     RELAXED_FORMAT: Final[str] = "relaxed"
 
+    # Oracle OID namespace identifier
+    ORACLE_OID_NAMESPACE: Final[str] = "2.16.840.1.113894."
+
     class Format:
         """LDIF format specifications."""
 
@@ -117,6 +120,12 @@ class FlextLdifConstants(FlextConstants):
     MEDIUM_ENTRY_COUNT_THRESHOLD: Final[int] = 1000  # Threshold for medium entry counts
     MIN_ATTRIBUTE_PARTS: Final[int] = 2  # Minimum parts for attribute parsing
 
+    # Search configuration defaults
+    DEFAULT_SEARCH_TIME_LIMIT: Final[int] = 30  # Default search time limit in seconds
+    DEFAULT_SEARCH_SIZE_LIMIT: Final[int] = (
+        0  # Default search size limit (0 = unlimited)
+    )
+
     # Version constants (moved from version.py for FLEXT compliance)
     # Note: Cannot override parent VERSION (Final), use LDIF_VERSION instead
     LDIF_VERSION: Final[str] = "0.9.9"  # Current LDIF library version
@@ -153,6 +162,8 @@ class FlextLdifConstants(FlextConstants):
         LDIF_ANALYTICS_SAMPLE_RATE: Final[float] = 1.0
         LDIF_ANALYTICS_MAX_ENTRIES: Final[int] = 10000
         ANALYTICS_DETAIL_LEVEL_LOW: Final[str] = "low"
+        ANALYTICS_DETAIL_LEVEL_MEDIUM: Final[str] = "medium"
+        ANALYTICS_DETAIL_LEVEL_HIGH: Final[str] = "high"
 
         # Server Configuration Defaults
         LDIF_SERVER_SPECIFIC_QUIRKS: Final[bool] = True
@@ -235,14 +246,19 @@ class FlextLdifConstants(FlextConstants):
         # Individual objectClass attribute names (used by flext-ldap and domain code)
         TOP: Final[str] = "top"
         PERSON: Final[str] = "person"
+        ORGANIZATIONAL_PERSON: Final[str] = "organizationalPerson"
         INET_ORG_PERSON: Final[str] = "inetOrgPerson"
         GROUP_OF_NAMES: Final[str] = "groupOfNames"
         GROUP_OF_UNIQUE_NAMES: Final[str] = "groupOfUniqueNames"
+        POSIX_GROUP: Final[str] = "posixGroup"
+        ORGANIZATIONAL_UNIT: Final[str] = "organizationalUnit"
+        ORGANIZATION: Final[str] = "organization"
+        DOMAIN: Final[str] = "domain"
 
         LDAP_PERSON_CLASSES: Final[frozenset[str]] = frozenset([
-            "person",
-            "organizationalperson",
-            "inetorgperson",
+            PERSON,
+            ORGANIZATIONAL_PERSON,
+            INET_ORG_PERSON,
         ])
 
         LDAP_GROUP_CLASSES: Final[frozenset[str]] = frozenset([
@@ -384,6 +400,15 @@ class FlextLdifConstants(FlextConstants):
             "utf-32",
             "cp1252",
             "iso-8859-1",
+        )
+
+        # Search scopes
+        SCOPE: Final[tuple[str, ...]] = (
+            "base",
+            "one",
+            "onelevel",
+            "sub",
+            "subtree",
         )
 
         # Validation levels
@@ -582,6 +607,11 @@ class FlextLdifConstants(FlextConstants):
             ORACLE_OID,
             ORACLE_OUD,
             DS_389,
+            # Short forms for compatibility
+            "novell_edirectory",
+            "ibm_tivoli",
+            "apache_directory",
+            "389ds",
         ])
 
         # Server-specific DN patterns
@@ -735,6 +765,11 @@ class FlextLdifConstants(FlextConstants):
         ACTIVE: Final[str] = "active"
         DEPRECATED: Final[str] = "deprecated"
         OBSOLETE: Final[str] = "obsolete"
+
+        # Object class kinds (RFC 4512)
+        STRUCTURAL: Final[str] = "STRUCTURAL"
+        AUXILIARY: Final[str] = "AUXILIARY"
+        ABSTRACT: Final[str] = "ABSTRACT"
 
     # =============================================================================
     # OPERATIONAL ATTRIBUTES - Server-generated read-only attributes
@@ -956,7 +991,16 @@ class FlextLdifConstants(FlextConstants):
         PARSER: Final[str] = "parser"
         WRITER: Final[str] = "writer"
         VALIDATOR: Final[str] = "validator"
+        MIGRATION: Final[str] = "migration"
         INITIALIZED: Final[str] = "initialized"
+
+        # Service names list
+        SERVICE_NAMES: Final[list[str]] = [
+            PARSER,
+            WRITER,
+            VALIDATOR,
+            MIGRATION,
+        ]
 
         # Process/Operations keys
         PROCESS_SCHEMA: Final[str] = "process_schema"
@@ -988,6 +1032,13 @@ class FlextLdifConstants(FlextConstants):
         STANDARD: Final[str] = "standard"
         HAS_OID_ACLS: Final[str] = "has_oid_acls"
         MODEL_DUMP: Final[str] = "model_dump"
+
+        # ACL attribute names (all servers)
+        ACL_ATTRIBUTES: Final[frozenset[str]] = frozenset([
+            ACI,
+            ORCLACI,
+            ORCLENTRYLEVELACI,
+        ])
 
         # LDAP Attribute keys
         MEMBER: Final[str] = "member"
@@ -1028,6 +1079,16 @@ class FlextLdifConstants(FlextConstants):
         SCHEMA_VALIDATION: Final[str] = "schema_validation"
         ACL_PROCESSING: Final[str] = "acl_processing"
         ENTRY_BUILDING: Final[str] = "entry_building"
+
+        # Quirk types
+        SCHEMA_QUIRK: Final[str] = "schema"
+        ACL_QUIRK: Final[str] = "acl"
+        ENTRY_QUIRK: Final[str] = "entry"
+        QUIRK_TYPES: Final[frozenset[str]] = frozenset([
+            SCHEMA_QUIRK,
+            ACL_QUIRK,
+            ENTRY_QUIRK,
+        ])
 
         # Status/State keys
         UNKNOWN: Final[str] = "unknown"
@@ -1094,10 +1155,30 @@ class FlextLdifConstants(FlextConstants):
         OU_ORACLE: Final[str] = "ou=oracle"
         DC_ORACLE: Final[str] = "dc=oracle"
 
+        # Oracle OID namespace
+        ORACLE_OID_NAMESPACE: Final[str] = "2.16.840.1.113894."
+
         # DN component patterns
         DN_EQUALS: Final[str] = "="
         DN_COMMA: Final[str] = ","
         DN_PLUS: Final[str] = "+"
+
+        # DN cleaning patterns (RFC 4514 normalization)
+        DN_SPACES_AROUND_EQUALS: Final[str] = r"\s*=\s*"
+        DN_TRAILING_BACKSLASH_SPACE: Final[str] = r"\\\s+,"
+        DN_SPACES_AROUND_COMMA: Final[str] = r",\s+"
+        DN_BACKSLASH_SPACE: Final[str] = r"\\\s+"
+        DN_UNNECESSARY_ESCAPES: Final[str] = r'\\([^,+"\<>;\\# ])'
+        DN_MULTIPLE_SPACES: Final[str] = r"\s+"
+
+        # ACI DN reference patterns
+        ACI_LDAP_URL_PATTERN: Final[str] = r"ldap:///([^\"]+?)"
+        ACI_QUOTED_DN_PATTERN: Final[str] = (
+            r'"((?:[a-zA-Z]+=[^,\";\)]+)(?:,[a-zA-Z]+=[^,\";\)]+)*)"'
+        )
+
+        # Schema parsing patterns
+        SCHEMA_OID_EXTRACTION: Final[str] = r"\(\s*([\d.]+)"
 
         # Common DN prefix patterns
         CN_PREFIX: Final[str] = "cn="
@@ -1189,6 +1270,8 @@ class FlextLdifConstants(FlextConstants):
         DS_389: Final[str] = "389ds"
         ORACLE: Final[str] = "oracle"
         RELAXED: Final[str] = "relaxed"
+        NOVELL: Final[str] = "novell_edirectory"
+        IBM_TIVOLI: Final[str] = "ibm_tivoli"
 
         # Mapping between short and long server types
         ORACLE_OID_VARIANTS: Final[frozenset[str]] = frozenset(["oid", "oracle_oid"])
@@ -1198,6 +1281,200 @@ class FlextLdifConstants(FlextConstants):
             "openldap1",
             "openldap2",
         ])
+
+    # =============================================================================
+    # OPERATION CONSTANTS - Filter types, modes, categories, data types
+    # =============================================================================
+
+    class FilterTypes:
+        """Filter type identifier constants.
+
+        Zero Tolerance: All filter type strings MUST be defined here.
+        Used throughout filtering operations to avoid hardcoded strings.
+        """
+
+        OBJECTCLASS: Final[str] = "objectclass"
+        DN_PATTERN: Final[str] = "dn_pattern"
+        ATTRIBUTES: Final[str] = "attributes"
+        SCHEMA_OID: Final[str] = "schema_oid"
+        OID_PATTERN: Final[str] = "oid_pattern"
+        ATTRIBUTE: Final[str] = "attribute"
+
+        # Python 3.13 type alias from constants
+        type Type = Literal[
+            "objectclass",
+            "dn_pattern",
+            "attributes",
+            "schema_oid",
+            "oid_pattern",
+            "attribute",
+        ]
+
+    class Modes:
+        """Operation mode constants.
+
+        Zero Tolerance: All mode strings MUST be defined here.
+        Used for filter modes, detection modes, and operation modes.
+        """
+
+        INCLUDE: Final[str] = "include"
+        EXCLUDE: Final[str] = "exclude"
+        AUTO: Final[str] = "auto"
+        MANUAL: Final[str] = "manual"
+        DISABLED: Final[str] = "disabled"
+
+        # Python 3.13 type alias from constants
+        type Mode = Literal["include", "exclude", "auto", "manual", "disabled"]
+
+    class Categories:
+        """Entry category constants.
+
+        Zero Tolerance: All category strings MUST be defined here.
+        Used for LDIF entry categorization in pipelines.
+        """
+
+        USERS: Final[str] = "users"
+        GROUPS: Final[str] = "groups"
+        HIERARCHY: Final[str] = "hierarchy"
+        SCHEMA: Final[str] = "schema"
+
+        # Python 3.13 type alias from constants
+        type Category = Literal["users", "groups", "hierarchy", "schema"]
+
+    class DataTypes:
+        """Data type identifier constants.
+
+        Zero Tolerance: All data type strings MUST be defined here.
+        Used in quirks conversion matrix and data processing.
+        """
+
+        ATTRIBUTE: Final[str] = "attribute"
+        OBJECTCLASS: Final[str] = "objectclass"
+        ACL: Final[str] = "acl"
+        ENTRY: Final[str] = "entry"
+        SCHEMA: Final[str] = "schema"
+
+        # Python 3.13 type alias from constants
+        type DataType = Literal["attribute", "objectclass", "acl", "entry", "schema"]
+
+    class RuleTypes:
+        """ACL rule type constants.
+
+        Zero Tolerance: All rule type strings MUST be defined here.
+        Used in ACL service for rule type identification.
+        """
+
+        BASE: Final[str] = "base"
+        COMPOSITE: Final[str] = "composite"
+        PERMISSION: Final[str] = "permission"
+        SUBJECT: Final[str] = "subject"
+        TARGET: Final[str] = "target"
+
+        # Python 3.13 type alias from constants
+        type RuleType = Literal["base", "composite", "permission", "subject", "target"]
+
+    class EntryTypes:
+        """Entry type identifier constants.
+
+        Zero Tolerance: All entry type strings MUST be defined here.
+        Used in entry builder and API for entry type identification.
+        """
+
+        PERSON: Final[str] = "person"
+        GROUP: Final[str] = "group"
+        OU: Final[str] = "ou"
+        ORGANIZATIONAL_UNIT: Final[str] = "organizationalunit"
+        CUSTOM: Final[str] = "custom"
+
+        # Python 3.13 type alias from constants
+        type EntryType = Literal[
+            "person", "group", "ou", "organizationalunit", "custom"
+        ]
+
+    class ConversionTypes:
+        """Conversion type identifier constants.
+
+        Zero Tolerance: All conversion type strings MUST be defined here.
+        Used in API for data conversion operations.
+        """
+
+        ENTRY_TO_DICT: Final[str] = "entry_to_dict"
+        ENTRIES_TO_DICTS: Final[str] = "entries_to_dicts"
+        DICTS_TO_ENTRIES: Final[str] = "dicts_to_entries"
+        ENTRIES_TO_JSON: Final[str] = "entries_to_json"
+        JSON_TO_ENTRIES: Final[str] = "json_to_entries"
+
+        # Python 3.13 type alias from constants
+        type ConversionType = Literal[
+            "entry_to_dict",
+            "entries_to_dicts",
+            "dicts_to_entries",
+            "entries_to_json",
+            "json_to_entries",
+        ]
+
+    class ProcessorTypes:
+        """Processor type identifier constants.
+
+        Zero Tolerance: All processor type strings MUST be defined here.
+        Used in API for processor selection.
+        """
+
+        TRANSFORM: Final[str] = "transform"
+        VALIDATE: Final[str] = "validate"
+
+        # Python 3.13 type alias from constants
+        type ProcessorType = Literal["transform", "validate"]
+
+    class MatchTypes:
+        """Match type constants for filtering.
+
+        Zero Tolerance: All match type strings MUST be defined here.
+        """
+
+        ALL: Final[str] = "all"
+        ANY: Final[str] = "any"
+
+        # Python 3.13 type alias from constants
+        type MatchType = Literal["all", "any"]
+
+    class Scopes:
+        """LDAP search scope constants.
+
+        Zero Tolerance: All scope strings MUST be defined here.
+        """
+
+        BASE: Final[str] = "base"
+        ONE: Final[str] = "one"
+        ONELEVEL: Final[str] = "onelevel"
+        SUB: Final[str] = "sub"
+        SUBTREE: Final[str] = "subtree"
+        SUBORDINATE: Final[str] = "subordinate"
+
+        # Python 3.13 type alias from constants
+        type Scope = Literal["base", "one", "onelevel", "sub", "subtree", "subordinate"]
+
+    class Parameters:
+        """Parameter name constants.
+
+        Zero Tolerance: All parameter name strings MUST be defined here.
+        Used for function/method parameter naming consistency.
+        """
+
+        FILE_PATH: Final[str] = "file_path"
+        CONTENT: Final[str] = "content"
+        PARSE_CHANGES: Final[str] = "parse_changes"
+        PARSE_ATTRIBUTES: Final[str] = "parse_attributes"
+        PARSE_OBJECTCLASSES: Final[str] = "parse_objectclasses"
+
+        # Python 3.13 type alias from constants
+        type Parameter = Literal[
+            "file_path",
+            "content",
+            "parse_changes",
+            "parse_attributes",
+            "parse_objectclasses",
+        ]
 
     # =============================================================================
     # REGEX PATTERNS - All regex patterns centralized
@@ -1220,6 +1497,12 @@ class FlextLdifConstants(FlextConstants):
         DN_COMPONENT: Final[str] = r"^[a-zA-Z][a-zA-Z0-9-]*="
         DN_SEPARATOR: Final[str] = r"(?<!\\),"
 
+        # LDAP filter pattern (RFC 4515)
+        LDAP_FILTER: Final[str] = r"^\(.*\)$"
+
+        # Object class name pattern (similar to attribute names but allowing uppercase)
+        OBJECTCLASS_NAME: Final[str] = r"^[a-zA-Z][a-zA-Z0-9-]*$"
+
         # Attribute name patterns (RFC 4512)
         ATTRIBUTE_NAME: Final[str] = r"^[a-zA-Z][a-zA-Z0-9-]*$"
         ATTRIBUTE_OPTION: Final[str] = r";[a-zA-Z][a-zA-Z0-9-]*"
@@ -1230,6 +1513,9 @@ class FlextLdifConstants(FlextConstants):
 
         # Schema parsing patterns
         SCHEMA_OID: Final[str] = r"^\s*\(\s*([\d.]+)"
+        SCHEMA_OID_EXTRACTION: Final[str] = (
+            r"\(\s*([\d.]+)"  # For re.search() without ^ anchor
+        )
         SCHEMA_NAME: Final[str] = r"NAME\s+\(?\s*'([^']+)'"
         SCHEMA_DESC: Final[str] = r"DESC\s+'([^']+)'"
         SCHEMA_SYNTAX: Final[str] = r"SYNTAX\s+([\d.]+)"
@@ -1239,24 +1525,137 @@ class FlextLdifConstants(FlextConstants):
         SCHEMA_MUST: Final[str] = r"MUST\s+\(([^)]+)\)"
         SCHEMA_MAY: Final[str] = r"MAY\s+\(([^)]+)\)"
 
-        # Oracle OID/OUD patterns
-        ORACLE_OID_PATTERN: Final[str] = r"\b1\.2\.840\.113556\."
-        ORACLE_OUD_PATTERN: Final[str] = r"\boracle[_-]?oud\b"
+        # Server detection patterns moved to ServerDetection class below
 
-        # OpenLDAP patterns
-        OPENLDAP_OLC: Final[str] = r"\bolc[A-Z][a-zA-Z]+\b"
-        OPENLDAP_CONFIG_DN: Final[str] = r"\bcn=config\b"
+    # =============================================================================
+    # SERVER DETECTION - Comprehensive server type detection patterns and weights
+    # =============================================================================
 
-        # Active Directory patterns
-        AD_OID: Final[str] = r"\b1\.2\.840\.113556\."
-        AD_ATTRIBUTE: Final[str] = r"\b(samAccountName|objectGUID|objectSid)\b"
+    class ServerDetection:
+        """Server type detection patterns and weights for LDIF content analysis.
 
-        # URL patterns
-        URL_SCHEME: Final[str] = r"^(https?|ldaps?)://"
-        URL_FULL: Final[str] = r"^(https?|ldap)://[^\s/$.?#].[^\s]*$"
+        Comprehensive patterns for identifying LDAP server types from LDIF content.
+        Higher weight values indicate more specific patterns.
+        """
 
-        # Base64 detection
-        BASE64_CHARS: Final[str] = r"^[A-Za-z0-9+/=\s]+$"
+        # Detection score weights (higher = more specific)
+        ORACLE_OID_PATTERN: Final[str] = r"2\.16\.840\.1\.113894\."
+        ORACLE_OID_ATTRIBUTES: Final[frozenset[str]] = frozenset([
+            "orclOID",
+            "orclGUID",
+            "orclPassword",
+            "orclaci",
+            "orclentrylevelaci",
+            "orcldaslov",
+        ])
+        ORACLE_OID_WEIGHT: Final[int] = 10
+
+        ORACLE_OUD_PATTERN: Final[str] = r"(ds-sync-|ds-pwp-|ds-cfg-)"
+        ORACLE_OUD_ATTRIBUTES: Final[frozenset[str]] = frozenset([
+            "ds-sync-hist",
+            "ds-sync-state",
+            "ds-pwp-account-disabled",
+            "ds-cfg-backend-id",
+            "entryUUID",
+        ])
+        ORACLE_OUD_WEIGHT: Final[int] = 10
+
+        OPENLDAP_PATTERN: Final[str] = r"\b(olc[A-Z][a-zA-Z]+|cn=config)\b"
+        OPENLDAP_ATTRIBUTES: Final[frozenset[str]] = frozenset([
+            "olcDatabase",
+            "olcAccess",
+            "olcOverlay",
+            "olcModule",
+        ])
+        OPENLDAP_WEIGHT: Final[int] = 8
+
+        ACTIVE_DIRECTORY_PATTERN: Final[str] = r"1\.2\.840\.113556\."
+        ACTIVE_DIRECTORY_ATTRIBUTES: Final[frozenset[str]] = frozenset([
+            "objectGUID",
+            "samAccountName",
+            "sIDHistory",
+            "nTSecurityDescriptor",
+        ])
+        ACTIVE_DIRECTORY_WEIGHT: Final[int] = 8
+
+        NOVELL_EDIR_PATTERN: Final[str] = (
+            r"\b(GUID|Modifiers|nrpDistributionPassword)\b"
+        )
+        NOVELL_EDIR_WEIGHT: Final[int] = 6
+
+        IBM_TIVOLI_PATTERN: Final[str] = r"\b(ibm|tivoli|ldapdb)\b"
+        IBM_TIVOLI_WEIGHT: Final[int] = 6
+
+        APACHE_DS_PATTERN: Final[str] = r"\b(apacheDS|apache-.*)\b"
+        APACHE_DS_WEIGHT: Final[int] = 6
+
+        DS_389_PATTERN: Final[str] = r"\b(389ds|redhat-ds|dirsrv)\b"
+        DS_389_WEIGHT: Final[int] = 6
+
+        # Detection thresholds
+        DETECTION_THRESHOLD: Final[int] = 5
+        CONFIDENCE_THRESHOLD: Final[float] = 0.6
+
+        # Detection scoring
+        ATTRIBUTE_MATCH_SCORE: Final[int] = (
+            2  # Points awarded for matching server-specific attributes
+        )
+
+        # Detection performance limits
+        DEFAULT_MAX_LINES: Final[int] = 1000
+
+        # ObjectClass schema field names (RFC 4512)
+        SCHEMA_FIELD_SUPERIOR: Final[str] = "superior"
+        SCHEMA_FIELD_REQUIRED_ATTRIBUTES: Final[str] = "required_attributes"
+        SCHEMA_FIELD_OPTIONAL_ATTRIBUTES: Final[str] = "optional_attributes"
+        SCHEMA_FIELD_STRUCTURAL: Final[str] = "structural"
+
+        # Schema parsing constants
+        SCHEMA_SUBENTRY_DN: Final[str] = "cn=subschemasubentry"
+        ATTRIBUTE_TYPES_PREFIX: Final[str] = "attributetypes:"
+        OBJECT_CLASSES_PREFIX: Final[str] = "objectclasses:"
+        ATTRIBUTE_TYPES_PREFIX_LENGTH: Final[int] = len(ATTRIBUTE_TYPES_PREFIX)
+        OBJECT_CLASSES_PREFIX_LENGTH: Final[int] = len(OBJECT_CLASSES_PREFIX)
+
+        # LDIF parsing constants
+        CONTENT_PARAMETER: Final[str] = "content"
+        PARSE_CHANGES_PARAMETER: Final[str] = "parse_changes"
+        DEFAULT_PARSE_CHANGES: Final[bool] = False
+
+        # Error message templates
+        ERROR_UNSUPPORTED_ENTRY_TYPE: Final[str] = "Unsupported entry type"
+        ERROR_LDIF_WRITE_FAILED: Final[str] = "LDIF write failed"
+        ERROR_FAILED_TO_WRITE: Final[str] = "Failed to write"
+
+        # Parser message templates
+        MSG_PARSING_LDIF_CONTENT: Final[str] = (
+            "Parsing LDIF content string (RFC 2849 via ldif3)"
+        )
+        MSG_PARSING_LDIF_FILE: Final[str] = "Parsing LDIF file (RFC 2849 via ldif3)"
+        MSG_LDIF_CONTENT_PARSED: Final[str] = "LDIF content parsed successfully"
+        MSG_LDIF_PARSED_SUCCESS: Final[str] = "LDIF parsed successfully"
+        MSG_FAILED_EXECUTE_PARSER: Final[str] = "Failed to execute RFC LDIF parser"
+        MSG_FAILED_PARSE_LDIF3: Final[str] = "Failed to parse LDIF with ldif3"
+        MSG_EITHER_CONTENT_OR_PATH_REQUIRED: Final[str] = (
+            "Either content or file_path must be provided"
+        )
+
+        # Writer message templates
+        MSG_LDIF_FILE_WRITTEN: Final[str] = "LDIF file written"
+        MSG_LDIF_CONTENT_GENERATED: Final[str] = "LDIF content generated"
+        MSG_AT_LEAST_ONE_REQUIRED: Final[str] = (
+            "At least one of entries, schema, or acls must be provided"
+        )
+
+        # ACL utility constants
+        ACL_WILDCARD_DN: Final[str] = "*"
+        ACL_WILDCARD_TYPE: Final[str] = "*"
+        ACL_WILDCARD_VALUE: Final[str] = "*"
+        LDIF_FILE_EXTENSION: Final[str] = ".ldif"
+
+        # Schema builder constants
+        DEFAULT_ENTRY_COUNT: Final[int] = 0
+        DEFAULT_SINGLE_VALUE: Final[bool] = False
 
         # Change type patterns
         CHANGETYPE: Final[str] = r"^changetype:\s*(add|delete|modify|modrdn)$"
@@ -1323,6 +1722,10 @@ class FlextLdifConstants(FlextConstants):
         MAX_WORKERS_DEBUG_RULE: Final[int] = 2
         MIN_ANALYTICS_CACHE_RULE: Final[int] = 1
         MIN_PARALLEL_THRESHOLD_RULE: Final[int] = 1
+
+        # Validation limits
+        DEFAULT_MAX_ATTR_VALUE_LENGTH: Final[int] = 1048576  # 1MB default
+        TYPICAL_ATTR_NAME_LENGTH_LIMIT: Final[int] = 127  # RFC 4512 typical limit
 
 
 __all__ = [

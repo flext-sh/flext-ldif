@@ -11,7 +11,7 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Final, cast
+from typing import Any, Final
 
 from flext_core import FlextResult
 
@@ -108,7 +108,7 @@ class FixtureValidator:
                 for entry in entries
                 if isinstance(entry.get("dn"), str)
             ]
-            invalid_dns = [dn for dn in dns if not dn or "=" not in cast("str", dn)]
+            invalid_dns = [dn for dn in dns if not dn or "=" not in dn]
 
             stats: dict[str, object] = {
                 "entry_count": len(entries),
@@ -415,8 +415,7 @@ class FlextLdifFixtureDiscovery:
             return None
 
         try:
-            loaded_json = json.loads(metadata.expected_path.read_text(encoding="utf-8"))
-            return cast("dict[str, Any]", loaded_json)
+            return json.loads(metadata.expected_path.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError):
             return None
 
@@ -449,7 +448,7 @@ class FlextLdifFixtureDiscovery:
         if actual_count == expected_count:
             result["entry_count_matches"] = True
         else:
-            cast("list[str]", result["differences"]).append(
+            result["differences"].append(
                 f"Entry count mismatch: actual={actual_count}, expected={expected_count}"
             )
             result["matches"] = False
@@ -478,7 +477,7 @@ class FlextLdifFixtureDiscovery:
                     expected_dn = expected_dn.get("value")
 
                 if actual_dn != expected_dn:
-                    cast("list[str]", result["differences"]).append(
+                    result["differences"].append(
                         f"Entry {i}: DN mismatch: {actual_dn} != {expected_dn}"
                     )
                     entries_match = False
@@ -495,7 +494,7 @@ class FlextLdifFixtureDiscovery:
                     expected_attrs = expected_attrs.get("attributes", {})
 
                 if actual_attrs != expected_attrs:
-                    cast("list[str]", result["differences"]).append(
+                    result["differences"].append(
                         f"Entry {i}: Attributes mismatch for {actual_dn}"
                     )
                     entries_match = False

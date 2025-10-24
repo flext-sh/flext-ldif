@@ -39,7 +39,7 @@ class FlextLdifConfig(FlextConfig):
     ldif_encoding: Literal[
         "utf-8", "latin-1", "ascii", "utf-16", "utf-32", "cp1252", "iso-8859-1"
     ] = Field(
-        default="utf-8",
+        default="utf-8",  # FlextLdifConstants.Encoding.DEFAULT_ENCODING,
         description="Character encoding for LDIF files",
     )
 
@@ -121,7 +121,7 @@ class FlextLdifConfig(FlextConfig):
     )
 
     analytics_detail_level: Literal["low", "medium", "high"] = Field(
-        default="medium",
+        default="medium",  # FlextLdifConstants.ConfigDefaults.ANALYTICS_DETAIL_LEVEL_MEDIUM,
         description="Analytics detail level (low, medium, high)",
     )
 
@@ -213,13 +213,13 @@ class FlextLdifConfig(FlextConfig):
         "oud",
         "rfc",
     ] = Field(
-        default="generic",
+        default="generic",  # FlextLdifConstants.ServerTypes.GENERIC,
         description="Target LDAP server type",
     )
 
     # Error Handling Configuration
     error_recovery_mode: Literal["continue", "stop", "skip"] = Field(
-        default="continue",
+        default="continue",  # FlextLdifConstants.ConfigDefaults.ERROR_RECOVERY_MODE_CONTINUE,
         description="Error recovery mode (continue, stop, skip)",
     )
 

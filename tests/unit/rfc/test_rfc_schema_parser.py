@@ -15,7 +15,7 @@ from tempfile import NamedTemporaryFile
 
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.quirks.registry import FlextLdifQuirksRegistry
-from flext_ldif.rfc.rfc_schema_parser import FlextLdifRfcSchemaParser
+from flext_ldif.rfc_schema_parser import FlextLdifRfcSchemaParser
 
 
 class TestRfcSchemaParserInitialization:

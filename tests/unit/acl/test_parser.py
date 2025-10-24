@@ -15,13 +15,13 @@ from typing import cast
 import pytest
 from flext_core import FlextResult
 
-from flext_ldif.acl.parser import FlextLdifAclParser
-from flext_ldif.acl.service import FlextLdifAclService
-from flext_ldif.acl.utils import FlextLdifAclUtils
+from flext_ldif.acl_parser import FlextLdifAclParser
+from flext_ldif.acl_service import FlextLdifAclService
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.quirks.manager import FlextLdifQuirksManager
 from flext_ldif.typings import FlextLdifTypes
+from flext_ldif.utilities import FlextLdifUtilities
 
 
 class TestFlextLdifAclParser:
@@ -703,7 +703,7 @@ class TestFlextLdifAclService:
         service = FlextLdifAclService()
         # Test the None case that the method explicitly handles
         # Use cast to tell type checker we're intentionally passing None for testing
-        result = service.extract_acls_from_entry(cast("FlextLdifModels.Entry", None))
+        result = service.extract_acls_from_entry(None)
 
         assert result.is_failure
         assert result.error is not None
@@ -912,11 +912,11 @@ class TestFlextLdifAclService:
 
 
 class TestFlextLdifAclUtils:
-    """Test suite for FlextLdifAclUtils."""
+    """Test suite for FlextLdifUtilities."""
 
     def test_create_acl_components_success(self) -> None:
         """Test successful creation of ACL components."""
-        result = FlextLdifAclUtils.ComponentFactory.create_acl_components()
+        result = FlextLdifUtilities.AclUtils.ComponentFactory.create_acl_components()
 
         assert result.is_success
         components = result.unwrap()
@@ -929,7 +929,7 @@ class TestFlextLdifAclUtils:
 
     def test_create_acl_components_type_validation(self) -> None:
         """Test type validation of created ACL components."""
-        result = FlextLdifAclUtils.ComponentFactory.create_acl_components()
+        result = FlextLdifUtilities.AclUtils.ComponentFactory.create_acl_components()
 
         assert result.is_success
         target, subject, permissions = result.unwrap()
@@ -942,12 +942,14 @@ class TestFlextLdifAclUtils:
     def test_create_unified_acl_success(self) -> None:
         """Test successful creation of unified ACL."""
         # Create components first
-        components_result = FlextLdifAclUtils.ComponentFactory.create_acl_components()
+        components_result = (
+            FlextLdifUtilities.AclUtils.ComponentFactory.create_acl_components()
+        )
         assert components_result.is_success
         target, subject, permissions = components_result.unwrap()
 
         # Create unified ACL
-        result = FlextLdifAclUtils.ComponentFactory.create_unified_acl(
+        result = FlextLdifUtilities.AclUtils.ComponentFactory.create_unified_acl(
             name="test_acl",
             target=target,
             subject=subject,
@@ -959,33 +961,35 @@ class TestFlextLdifAclUtils:
         assert result.is_success
         unified_acl = result.unwrap()
         # Aggressive Pydantic 2 pattern: discriminated union returns specific subtype
-        assert isinstance(unified_acl, FlextLdifModels.AclBase)
+        assert isinstance(unified_acl, FlextLdifModels.Acl)
         assert unified_acl.name == "test_acl"
         assert unified_acl.server_type == "openldap"
         assert unified_acl.raw_acl == "to attrs=cn,sn by * read"
 
     def test_create_unified_acl_with_different_server_types(self) -> None:
         """Test creating unified ACL with different server types."""
-        components_result = FlextLdifAclUtils.ComponentFactory.create_acl_components()
+        components_result = (
+            FlextLdifUtilities.AclUtils.ComponentFactory.create_acl_components()
+        )
         assert components_result.is_success
         target, subject, permissions = components_result.unwrap()
 
         # Use valid server types that match actual constant values and discriminator Literals
         server_types = [
-            (FlextLdifConstants.LdapServers.OPENLDAP, FlextLdifModels.OpenLdapAcl),
-            (FlextLdifConstants.LdapServers.OPENLDAP_2, FlextLdifModels.OpenLdap2Acl),
-            (FlextLdifConstants.LdapServers.ORACLE_OID, FlextLdifModels.OracleOidAcl),
-            (FlextLdifConstants.LdapServers.ORACLE_OUD, FlextLdifModels.OracleOudAcl),
-            (FlextLdifConstants.LdapServers.DS_389, FlextLdifModels.Ds389Acl),
+            (FlextLdifConstants.LdapServers.OPENLDAP, FlextLdifModels.Acl),
+            (FlextLdifConstants.LdapServers.OPENLDAP_2, FlextLdifModels.Acl),
+            (FlextLdifConstants.LdapServers.ORACLE_OID, FlextLdifModels.Acl),
+            (FlextLdifConstants.LdapServers.ORACLE_OUD, FlextLdifModels.Acl),
+            (FlextLdifConstants.LdapServers.DS_389, FlextLdifModels.Acl),
         ]
 
         for server_type, expected_class in server_types:
-            result = FlextLdifAclUtils.ComponentFactory.create_unified_acl(
+            result = FlextLdifUtilities.AclUtils.ComponentFactory.create_unified_acl(
                 name=f"{server_type}_acl",
                 target=target,
                 subject=subject,
                 permissions=permissions,
-                server_type=cast("FlextLdifTypes.AclServerType", server_type),
+                server_type=server_type,  # Use loop variable, not string literal
                 raw_acl=f"test ACL for {server_type}",
             )
 
@@ -997,12 +1001,14 @@ class TestFlextLdifAclUtils:
 
     def test_create_unified_acl_type_validation(self) -> None:
         """Test type validation of created unified ACL."""
-        components_result = FlextLdifAclUtils.ComponentFactory.create_acl_components()
+        components_result = (
+            FlextLdifUtilities.AclUtils.ComponentFactory.create_acl_components()
+        )
         assert components_result.is_success
         target, subject, permissions = components_result.unwrap()
 
         # Use a valid server type (defaults to OpenLdapAcl for unknown types)
-        result = FlextLdifAclUtils.ComponentFactory.create_unified_acl(
+        result = FlextLdifUtilities.AclUtils.ComponentFactory.create_unified_acl(
             name="validation_test",
             target=target,
             subject=subject,
@@ -1014,25 +1020,29 @@ class TestFlextLdifAclUtils:
         assert result.is_success
         unified_acl = result.unwrap()
         # Aggressive Pydantic 2 pattern: direct subclass instantiation (e.g., OpenLdapAcl, OracleOudAcl)
-        assert isinstance(unified_acl, FlextLdifModels.AclBase)
-        assert isinstance(unified_acl, FlextLdifModels.OpenLdapAcl)
+        assert isinstance(unified_acl, FlextLdifModels.Acl)
+        assert isinstance(unified_acl, FlextLdifModels.Acl)
 
     def test_component_factory_integration(self) -> None:
         """Test ComponentFactory integration with full ACL creation flow."""
         # Step 1: Create components
-        components_result = FlextLdifAclUtils.ComponentFactory.create_acl_components()
+        components_result = (
+            FlextLdifUtilities.AclUtils.ComponentFactory.create_acl_components()
+        )
         assert components_result.is_success
 
         # Step 2: Use components to create unified ACL
         target, subject, permissions = components_result.unwrap()
 
-        unified_acl_result = FlextLdifAclUtils.ComponentFactory.create_unified_acl(
-            name="integration_test",
-            target=target,
-            subject=subject,
-            permissions=permissions,
-            server_type="openldap",
-            raw_acl="to * by * read",
+        unified_acl_result = (
+            FlextLdifUtilities.AclUtils.ComponentFactory.create_unified_acl(
+                name="integration_test",
+                target=target,
+                subject=subject,
+                permissions=permissions,
+                server_type="openldap",
+                raw_acl="to * by * read",
+            )
         )
 
         assert unified_acl_result.is_success

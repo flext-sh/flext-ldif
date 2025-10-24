@@ -11,11 +11,10 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pathlib import Path
-from typing import cast
 
 import pytest
 
-from flext_ldif.pipelines.migration_pipeline import FlextLdifMigrationPipeline
+from flext_ldif.migration_pipeline import FlextLdifMigrationPipeline
 from flext_ldif.quirks.registry import FlextLdifQuirksRegistry
 
 
@@ -111,7 +110,7 @@ class TestMigrationPipelineValidation:
         params: dict[str, str] = {"output_dir": str(tmp_path / "output")}
 
         pipeline = FlextLdifMigrationPipeline(
-            params=cast("dict[str, object]", params),
+            params=params,
             source_server_type="oid",
             target_server_type="oud",
         )
@@ -131,7 +130,7 @@ class TestMigrationPipelineValidation:
         params: dict[str, str] = {"input_dir": str(input_dir)}
 
         pipeline = FlextLdifMigrationPipeline(
-            params=cast("dict[str, object]", params),
+            params=params,
             source_server_type="oid",
             target_server_type="oud",
         )

@@ -10,18 +10,19 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
-from tests.fixtures import FlextLdifFixtures
-from tests.fixtures.helpers import (
-    extract_attributes,
-    extract_name,
-    extract_objectclasses,
-    extract_oid,
-)
 
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.quirks.conversion_matrix import FlextLdifQuirksConversionMatrix
 from flext_ldif.quirks.servers.oid_quirks import FlextLdifQuirksServersOid
 from flext_ldif.quirks.servers.oud_quirks import FlextLdifQuirksServersOud
+
+from ...fixtures import FlextLdifFixtures
+from ...fixtures.helpers import (
+    extract_attributes,
+    extract_name,
+    extract_objectclasses,
+    extract_oid,
+)
 
 
 class TestOidQuirksWithRealFixtures:

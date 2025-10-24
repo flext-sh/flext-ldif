@@ -71,7 +71,7 @@ class TestSchemaQuirkProtocol:
     def test_schema_quirk_protocol_has_attribute_methods(self) -> None:
         """Test that SchemaQuirkProtocol has attribute methods."""
         oid_quirk = FlextLdifQuirksServersOid()
-        
+
         # Verify attribute methods exist and are callable
         assert callable(oid_quirk.can_handle_attribute)
         assert callable(oid_quirk.parse_attribute)
@@ -82,7 +82,7 @@ class TestSchemaQuirkProtocol:
     def test_schema_quirk_protocol_has_objectclass_methods(self) -> None:
         """Test that SchemaQuirkProtocol has objectClass methods."""
         oid_quirk = FlextLdifQuirksServersOid()
-        
+
         # Verify objectClass methods exist and are callable
         assert callable(oid_quirk.can_handle_objectclass)
         assert callable(oid_quirk.parse_objectclass)
@@ -107,7 +107,7 @@ class TestSchemaQuirkProtocol:
     def test_schema_quirk_can_handle_methods_return_bool(self) -> None:
         """Test that can_handle methods return bool."""
         oid_quirk = FlextLdifQuirksServersOid()
-        
+
         attr_def = "( 2.5.4.3 NAME 'cn' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
         result = oid_quirk.can_handle_attribute(attr_def)
         assert isinstance(result, bool)
@@ -120,7 +120,7 @@ class TestSchemaQuirkProtocol:
         """Test write_*_to_rfc methods return FlextResult."""
         oid_quirk = FlextLdifQuirksServersOid()
         test_data: dict[str, object] = {"oid": "2.5.4.3", "name": "cn"}
-        
+
         result = oid_quirk.write_attribute_to_rfc(test_data)
         assert isinstance(result, FlextResult)
 
@@ -131,7 +131,7 @@ class TestSchemaQuirkProtocol:
         """Test convert_* methods return FlextResult."""
         oid_quirk = FlextLdifQuirksServersOid()
         test_data: dict[str, object] = {"oid": "2.5.4.3", "name": "cn"}
-        
+
         result = oid_quirk.convert_attribute_to_rfc(test_data)
         assert isinstance(result, FlextResult)
 
@@ -169,7 +169,7 @@ class TestQuirkRegistry:
     def test_quirk_registry_has_register_methods(self) -> None:
         """Test that registry has registration methods."""
         registry = FlextLdifQuirksRegistry()
-        
+
         assert callable(registry.register_schema_quirk)
         assert callable(registry.register_acl_quirk)
         assert callable(registry.register_entry_quirk)

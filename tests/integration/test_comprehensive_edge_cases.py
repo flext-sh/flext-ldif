@@ -433,7 +433,9 @@ class TestAnalysisAndStatistics:
             result = api.analyze(entries)
             if result.is_success:
                 stats = result.unwrap()
-                assert isinstance(stats, dict)
+                # AnalysisResult is now a Pydantic model, not a dict
+                assert hasattr(stats, "total_entries")
+                assert stats.total_entries > 0
 
     def test_client_analyze_comprehensive(
         self, client: FlextLdifClient, fixtures_dir: Path
@@ -451,7 +453,9 @@ class TestAnalysisAndStatistics:
         result = client.analyze_entries(entries)
         if result.is_success:
             stats = result.unwrap()
-            assert isinstance(stats, dict)
+            # AnalysisResult is now a Pydantic model, not a dict
+            assert hasattr(stats, "total_entries")
+            assert stats.total_entries > 0
 
 
 class TestMigrationScenarios:

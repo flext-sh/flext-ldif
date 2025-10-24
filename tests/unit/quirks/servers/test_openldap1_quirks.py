@@ -3,7 +3,6 @@
 Comprehensive tests for OpenLDAP 1.x-specific LDIF processing quirks including
 schema, ACL, and entry handling for legacy slapd.conf-based configurations.
 """
-# pyright: reportArgumentType=false, reportOperatorIssue=false, reportOptionalMemberAccess=false, reportIndexIssue=false
 
 from __future__ import annotations
 
@@ -44,12 +43,12 @@ class TestOpenLDAP1xSchemaQuirks:
 
         assert result.is_success
         attr_data = result.unwrap()
-        assert attr_data["oid"] == "1.2.3.4"
-        assert attr_data["name"] == "testAttr"
-        assert attr_data["desc"] == "Test attribute"
-        assert attr_data["syntax"] == "1.3.6.1.4.1.1466.115.121.1.15"
-        assert attr_data["equality"] == "caseIgnoreMatch"
-        assert attr_data["single_value"] is True
+        assert attr_data.oid == "1.2.3.4"
+        assert attr_data.name == "testAttr"
+        assert attr_data.desc == "Test attribute"
+        assert attr_data.syntax == "1.3.6.1.4.1.1466.115.121.1.15"
+        assert attr_data.equality == "caseIgnoreMatch"
+        assert attr_data.single_value is True
         assert attr_data["server_type"] == "openldap1"
 
     def test_parse_attribute_no_oid(self) -> None:
@@ -87,17 +86,17 @@ class TestOpenLDAP1xSchemaQuirks:
 
         assert result.is_success
         oc_data = result.unwrap()
-        assert isinstance(oc_data, dict)
-        assert oc_data["oid"] == "1.2.3.4"
-        assert oc_data["name"] == "testClass"
-        assert oc_data["desc"] == "Test class"
-        assert oc_data["sup"] == "top"
-        assert oc_data["kind"] == "STRUCTURAL"
-        must_attr = oc_data["must"]
+        assert hasattr(oc_data, "name")
+        assert oc_data.oid == "1.2.3.4"
+        assert oc_data.name == "testClass"
+        assert oc_data.desc == "Test class"
+        assert oc_data.sup == "top"
+        assert oc_data.kind == "STRUCTURAL"
+        must_attr = oc_data.must
         assert isinstance(must_attr, list)
         assert "cn" in must_attr
         assert "sn" in must_attr
-        may_attr = oc_data["may"]
+        may_attr = oc_data.may
         assert isinstance(may_attr, list)
         assert "description" in may_attr
         assert oc_data["server_type"] == "openldap1"
@@ -111,7 +110,7 @@ class TestOpenLDAP1xSchemaQuirks:
 
         assert result.is_success
         oc_data = result.unwrap()
-        assert oc_data["kind"] == "AUXILIARY"
+        assert oc_data.kind == "AUXILIARY"
 
     def test_parse_objectclass_abstract(self) -> None:
         """Test parsing ABSTRACT objectClass."""
@@ -122,7 +121,7 @@ class TestOpenLDAP1xSchemaQuirks:
 
         assert result.is_success
         oc_data = result.unwrap()
-        assert oc_data["kind"] == "ABSTRACT"
+        assert oc_data.kind == "ABSTRACT"
 
     def test_parse_objectclass_no_oid(self) -> None:
         """Test objectClass parsing fails without OID."""
@@ -152,8 +151,8 @@ class TestOpenLDAP1xSchemaQuirks:
         result = quirk.convert_attribute_to_rfc(attr_data)
         assert result.is_success
         rfc_data = result.unwrap()
-        assert rfc_data["oid"] == "1.2.3.4"
-        assert rfc_data["name"] == "testAttr"
+        assert rfc_data.oid == "1.2.3.4"
+        assert rfc_data.name == "testAttr"
 
     def test_convert_objectclass_to_rfc(self) -> None:
         """Test objectClass conversion to RFC format."""
@@ -172,8 +171,8 @@ class TestOpenLDAP1xSchemaQuirks:
         result = quirk.convert_objectclass_to_rfc(oc_data)
         assert result.is_success
         rfc_data = result.unwrap()
-        assert rfc_data["oid"] == "1.2.3.4"
-        assert rfc_data["kind"] == "STRUCTURAL"
+        assert rfc_data.oid == "1.2.3.4"
+        assert rfc_data.kind == "STRUCTURAL"
 
     def test_convert_attribute_from_rfc(self) -> None:
         """Test attribute conversion from RFC format."""
@@ -189,7 +188,7 @@ class TestOpenLDAP1xSchemaQuirks:
         assert result.is_success
         openldap_data = result.unwrap()
         assert openldap_data["server_type"] == "openldap1"
-        assert openldap_data["oid"] == "1.2.3.4"
+        assert openldap_data.oid == "1.2.3.4"
 
     def test_convert_objectclass_from_rfc(self) -> None:
         """Test objectClass conversion from RFC format."""
@@ -290,14 +289,14 @@ class TestOpenLDAP1xAclQuirks:
 
         assert result.is_success
         acl_data = result.unwrap()
-        assert isinstance(acl_data, dict)
+        assert hasattr(acl_data, "name")
         assert acl_data["type"] == "openldap1_acl"
         assert acl_data["what"] == "attrs=userPassword"
         by_clauses = acl_data["by_clauses"]
         assert isinstance(by_clauses, list)
         assert len(by_clauses) == 2
         first_clause = by_clauses[0]
-        assert isinstance(first_clause, dict)
+        assert hasattr(first_clause, "name")
         assert first_clause["who"] == "self"
         assert first_clause["access"] == "write"
 

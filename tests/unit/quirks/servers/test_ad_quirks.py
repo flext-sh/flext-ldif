@@ -1,5 +1,3 @@
-# pyright: reportArgumentType=false, reportOperatorIssue=false, reportOptionalMemberAccess=false, reportIndexIssue=false
-
 """Tests for Active Directory quirks implementation.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -64,12 +62,12 @@ class TestActiveDirectorySchemaQuirks:
 
         assert result.is_success
         attr_data = result.unwrap()
-        assert attr_data["oid"] == "1.2.840.113556.1.4.221"
-        assert attr_data["name"] == "sAMAccountName"
-        assert attr_data["desc"] == "SAM Account Name"
-        assert attr_data["syntax"] == "1.3.6.1.4.1.1466.115.121.1.15"
-        assert attr_data["equality"] == "caseIgnoreMatch"
-        assert attr_data["single_value"] is True
+        assert attr_data.oid == "1.2.840.113556.1.4.221"
+        assert attr_data.name == "sAMAccountName"
+        assert attr_data.desc == "SAM Account Name"
+        assert attr_data.syntax == "1.3.6.1.4.1.1466.115.121.1.15"
+        assert attr_data.equality == "caseIgnoreMatch"
+        assert attr_data.single_value is True
         assert attr_data["server_type"] == "active_directory"
 
     def test_parse_attribute_no_oid(self) -> None:
@@ -119,16 +117,16 @@ class TestActiveDirectorySchemaQuirks:
 
         assert result.is_success
         oc_data = result.unwrap()
-        assert oc_data["oid"] == "1.2.840.113556.1.5.9"
-        assert oc_data["name"] == "user"
-        assert oc_data["desc"] == "User object"
-        assert oc_data["sup"] == "top"
-        assert oc_data["kind"] == "STRUCTURAL"
-        must_attrs = oc_data["must"]
+        assert oc_data.oid == "1.2.840.113556.1.5.9"
+        assert oc_data.name == "user"
+        assert oc_data.desc == "User object"
+        assert oc_data.sup == "top"
+        assert oc_data.kind == "STRUCTURAL"
+        must_attrs = oc_data.must
         assert isinstance(must_attrs, list)
         assert "cn" in must_attrs
         assert "objectGUID" in must_attrs
-        may_attrs = oc_data["may"]
+        may_attrs = oc_data.may
         assert isinstance(may_attrs, list)
         assert "sAMAccountName" in may_attrs
         assert oc_data["server_type"] == "active_directory"
@@ -142,7 +140,7 @@ class TestActiveDirectorySchemaQuirks:
 
         assert result.is_success
         oc_data = result.unwrap()
-        assert oc_data["kind"] == "AUXILIARY"
+        assert oc_data.kind == "AUXILIARY"
 
     def test_parse_objectclass_no_oid(self) -> None:
         """Test objectClass parsing fails without OID."""
@@ -173,8 +171,8 @@ class TestActiveDirectorySchemaQuirks:
         result = quirk.convert_attribute_to_rfc(attr_data)
         assert result.is_success
         rfc_data = result.unwrap()
-        assert rfc_data["oid"] == "1.2.840.113556.1.4.221"
-        assert rfc_data["name"] == "sAMAccountName"
+        assert rfc_data.oid == "1.2.840.113556.1.4.221"
+        assert rfc_data.name == "sAMAccountName"
         assert "server_type" not in rfc_data or rfc_data.get("server_type") is None
 
     def test_convert_attribute_from_rfc(self) -> None:
@@ -209,8 +207,8 @@ class TestActiveDirectorySchemaQuirks:
         result = quirk.convert_objectclass_to_rfc(oc_data)
         assert result.is_success
         rfc_data = result.unwrap()
-        assert rfc_data["oid"] == "1.2.840.113556.1.5.9"
-        assert rfc_data["name"] == "user"
+        assert rfc_data.oid == "1.2.840.113556.1.5.9"
+        assert rfc_data.name == "user"
 
     def test_convert_objectclass_from_rfc(self) -> None:
         """Test converting RFC objectClass to AD format."""

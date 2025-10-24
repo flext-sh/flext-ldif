@@ -211,8 +211,9 @@ python -m flext_ldif parse --help
 Parse LDAP schema files with automatic server-specific handling:
 
 ```python
-from flext_ldif.rfc.rfc_schema_parser import RfcSchemaParserService
-from flext_ldif.quirks.registry import QuirkRegistryService
+# ✅ v1.0+ Flat imports
+from flext_ldif.rfc_schema_parser import RfcSchemaParserService
+from flext_ldif.quirks.registry import QuirkRegistryService  # Unchanged - quirks subdirectory
 from pathlib import Path
 
 # Initialize quirks registry

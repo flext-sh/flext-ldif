@@ -38,6 +38,7 @@ from typing import TYPE_CHECKING
 from flext_core import FlextModels, FlextResult
 from pydantic import Field
 
+from flext_ldif.models import FlextLdifModels
 from flext_ldif.typings import FlextLdifTypes
 
 # Import protocols for validation and type hints
@@ -142,14 +143,14 @@ class FlextLdifQuirksBaseSchemaQuirk(ABC, FlextModels.Value):
     @abstractmethod
     def parse_attribute(
         self, attr_definition: str
-    ) -> FlextResult[FlextLdifTypes.Models.CustomDataDict]:
+    ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
         """Parse server-specific attribute definition.
 
         Args:
         attr_definition: AttributeType definition string
 
         Returns:
-        FlextResult with parsed attribute data
+        FlextResult with SchemaAttribute model
 
         """
 
@@ -168,81 +169,81 @@ class FlextLdifQuirksBaseSchemaQuirk(ABC, FlextModels.Value):
     @abstractmethod
     def parse_objectclass(
         self, oc_definition: str
-    ) -> FlextResult[FlextLdifTypes.Models.CustomDataDict]:
+    ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
         """Parse server-specific objectClass definition.
 
         Args:
         oc_definition: ObjectClass definition string
 
         Returns:
-        FlextResult with parsed objectClass data
+        FlextResult with SchemaObjectClass model
 
         """
 
     @abstractmethod
     def convert_attribute_to_rfc(
-        self, attr_data: FlextLdifTypes.Models.CustomDataDict
-    ) -> FlextResult[FlextLdifTypes.Models.CustomDataDict]:
+        self, attr_data: FlextLdifModels.SchemaAttribute
+    ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
         """Convert server-specific attribute to RFC-compliant format.
 
         Args:
-        attr_data: Server-specific attribute data
+        attr_data: Server-specific SchemaAttribute
 
         Returns:
-        FlextResult with RFC-compliant attribute data
+        FlextResult with RFC-compliant SchemaAttribute
 
         """
 
     @abstractmethod
     def convert_objectclass_to_rfc(
-        self, oc_data: FlextLdifTypes.Models.CustomDataDict
-    ) -> FlextResult[FlextLdifTypes.Models.CustomDataDict]:
+        self, oc_data: FlextLdifModels.SchemaObjectClass
+    ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
         """Convert server-specific objectClass to RFC-compliant format.
 
         Args:
-        oc_data: Server-specific objectClass data
+        oc_data: Server-specific SchemaObjectClass
 
         Returns:
-        FlextResult with RFC-compliant objectClass data
+        FlextResult with RFC-compliant SchemaObjectClass
 
         """
 
     @abstractmethod
     def convert_attribute_from_rfc(
-        self, rfc_data: FlextLdifTypes.Models.CustomDataDict
-    ) -> FlextResult[FlextLdifTypes.Models.CustomDataDict]:
+        self, rfc_data: FlextLdifModels.SchemaAttribute
+    ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
         """Convert RFC-compliant attribute to server-specific format.
 
         Args:
-        rfc_data: RFC-compliant attribute data
+        rfc_data: RFC-compliant SchemaAttribute
 
         Returns:
-        FlextResult with server-specific attribute data
+        FlextResult with server-specific SchemaAttribute
 
         """
 
     @abstractmethod
     def convert_objectclass_from_rfc(
-        self, rfc_data: FlextLdifTypes.Models.CustomDataDict
-    ) -> FlextResult[FlextLdifTypes.Models.CustomDataDict]:
+        self, rfc_data: FlextLdifModels.SchemaObjectClass
+    ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
         """Convert RFC-compliant objectClass to server-specific format.
 
         Args:
-        rfc_data: RFC-compliant objectClass data
+        rfc_data: RFC-compliant SchemaObjectClass
 
         Returns:
-        FlextResult with server-specific objectClass data
+        FlextResult with server-specific SchemaObjectClass
 
         """
 
     @abstractmethod
     def write_attribute_to_rfc(
-        self, attr_data: FlextLdifTypes.Models.CustomDataDict
+        self, attr_data: FlextLdifModels.SchemaAttribute
     ) -> FlextResult[str]:
         """Write attribute data to RFC-compliant string format.
 
         Args:
-        attr_data: Attribute data dictionary
+        attr_data: SchemaAttribute model
 
         Returns:
         FlextResult with RFC-compliant attribute string
@@ -251,12 +252,12 @@ class FlextLdifQuirksBaseSchemaQuirk(ABC, FlextModels.Value):
 
     @abstractmethod
     def write_objectclass_to_rfc(
-        self, oc_data: FlextLdifTypes.Models.CustomDataDict
+        self, oc_data: FlextLdifModels.SchemaObjectClass
     ) -> FlextResult[str]:
         """Write objectClass data to RFC-compliant string format.
 
         Args:
-            oc_data: ObjectClass data dictionary
+            oc_data: SchemaObjectClass model
 
         Returns:
             FlextResult with RFC-compliant objectClass string
@@ -387,55 +388,51 @@ class FlextLdifQuirksBaseAclQuirk(ABC, FlextModels.Value):
         """
 
     @abstractmethod
-    def parse_acl(
-        self, acl_line: str
-    ) -> FlextResult[FlextLdifTypes.Models.CustomDataDict]:
+    def parse_acl(self, acl_line: str) -> FlextResult[FlextLdifModels.Acl]:
         """Parse server-specific ACL definition.
 
         Args:
         acl_line: ACL definition line
 
         Returns:
-        FlextResult with parsed ACL data
+        FlextResult with Acl model
 
         """
 
     @abstractmethod
     def convert_acl_to_rfc(
-        self, acl_data: FlextLdifTypes.Models.CustomDataDict
-    ) -> FlextResult[FlextLdifTypes.Models.CustomDataDict]:
+        self, acl_data: FlextLdifModels.Acl
+    ) -> FlextResult[FlextLdifModels.Acl]:
         """Convert server-specific ACL to RFC-compliant format.
 
         Args:
-        acl_data: Server-specific ACL data
+        acl_data: Server-specific Acl model
 
         Returns:
-        FlextResult with RFC-compliant ACL data
+        FlextResult with RFC-compliant Acl model
 
         """
 
     @abstractmethod
     def convert_acl_from_rfc(
-        self, acl_data: FlextLdifTypes.Models.CustomDataDict
-    ) -> FlextResult[FlextLdifTypes.Models.CustomDataDict]:
+        self, acl_data: FlextLdifModels.Acl
+    ) -> FlextResult[FlextLdifModels.Acl]:
         """Convert RFC-compliant ACL to server-specific format.
 
         Args:
-        acl_data: RFC-compliant ACL data
+        acl_data: RFC-compliant Acl model
 
         Returns:
-        FlextResult with server-specific ACL data
+        FlextResult with server-specific Acl model
 
         """
 
     @abstractmethod
-    def write_acl_to_rfc(
-        self, acl_data: FlextLdifTypes.Models.CustomDataDict
-    ) -> FlextResult[str]:
+    def write_acl_to_rfc(self, acl_data: FlextLdifModels.Acl) -> FlextResult[str]:
         """Write ACL data to RFC-compliant string format.
 
         Args:
-            acl_data: ACL data dictionary
+            acl_data: Acl model
 
         Returns:
             FlextResult with RFC-compliant ACL string
@@ -540,13 +537,13 @@ class FlextLdifQuirksBaseEntryQuirk(ABC, FlextModels.Value):
 
     @abstractmethod
     def can_handle_entry(
-        self, entry_dn: str, attributes: FlextLdifTypes.Models.CustomDataDict
+        self, entry_dn: str, attributes: FlextLdifTypes.Common.EntryAttributesDict
     ) -> bool:
         """Check if this quirk can handle the entry.
 
         Args:
         entry_dn: Entry distinguished name
-        attributes: Entry attributes
+        attributes: Entry attributes dict
 
         Returns:
         True if this quirk should process this entry
@@ -555,30 +552,30 @@ class FlextLdifQuirksBaseEntryQuirk(ABC, FlextModels.Value):
 
     @abstractmethod
     def process_entry(
-        self, entry_dn: str, attributes: FlextLdifTypes.Models.CustomDataDict
-    ) -> FlextResult[FlextLdifTypes.Models.CustomDataDict]:
+        self, entry_dn: str, attributes: FlextLdifTypes.Common.EntryAttributesDict
+    ) -> FlextResult[FlextLdifTypes.Common.EntryAttributesDict]:
         """Process entry with server-specific logic.
 
         Args:
         entry_dn: Entry distinguished name
-        attributes: Entry attributes
+        attributes: Entry attributes dict
 
         Returns:
-        FlextResult with processed entry data
+        FlextResult with processed entry attributes
 
         """
 
     @abstractmethod
     def convert_entry_to_rfc(
-        self, entry_data: FlextLdifTypes.Models.CustomDataDict
-    ) -> FlextResult[FlextLdifTypes.Models.CustomDataDict]:
+        self, entry_data: FlextLdifTypes.Common.EntryAttributesDict
+    ) -> FlextResult[FlextLdifTypes.Common.EntryAttributesDict]:
         """Convert server-specific entry to RFC-compliant format.
 
         Args:
-            entry_data: Server-specific entry data
+            entry_data: Server-specific entry attributes dict
 
         Returns:
-            FlextResult with RFC-compliant entry data
+            FlextResult with RFC-compliant entry attributes
 
         """
 

@@ -14,17 +14,20 @@ from __future__ import annotations
 
 import pytest
 
-from flext_ldif.acl.utils import FlextLdifAclUtils
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
+from flext_ldif.utilities import FlextLdifUtilities
+
+# Alias for backward compatibility with test code
+FlextLdifUtilities = FlextLdifUtilities
 
 
 class TestComponentFactory:
-    """Test FlextLdifAclUtils.ComponentFactory functionality."""
+    """Test FlextLdifUtilities.AclUtils.ComponentFactory functionality."""
 
     def test_create_acl_components_success(self) -> None:
         """Test successful creation of ACL components."""
-        result = FlextLdifAclUtils.ComponentFactory.create_acl_components()
+        result = FlextLdifUtilities.AclUtils.ComponentFactory.create_acl_components()
 
         assert result.is_success
         components = result.unwrap()
@@ -38,14 +41,14 @@ class TestComponentFactory:
 
     def test_create_acl_components_target_properties(self) -> None:
         """Test ACL target component properties."""
-        result = FlextLdifAclUtils.ComponentFactory.create_acl_components()
+        result = FlextLdifUtilities.AclUtils.ComponentFactory.create_acl_components()
         target, _, _ = result.unwrap()
 
         assert target.target_dn == "*"
 
     def test_create_acl_components_subject_properties(self) -> None:
         """Test ACL subject component properties."""
-        result = FlextLdifAclUtils.ComponentFactory.create_acl_components()
+        result = FlextLdifUtilities.AclUtils.ComponentFactory.create_acl_components()
         _, subject, _ = result.unwrap()
 
         assert subject.subject_type == "*"
@@ -53,7 +56,7 @@ class TestComponentFactory:
 
     def test_create_acl_components_permissions_properties(self) -> None:
         """Test ACL permissions component properties."""
-        result = FlextLdifAclUtils.ComponentFactory.create_acl_components()
+        result = FlextLdifUtilities.AclUtils.ComponentFactory.create_acl_components()
         _, _, permissions = result.unwrap()
 
         assert permissions.read is True
@@ -64,7 +67,7 @@ class TestComponentFactory:
         subject = FlextLdifModels.AclSubject(subject_type="user", subject_value="admin")
         permissions = FlextLdifModels.AclPermissions(read=True, write=False)
 
-        result = FlextLdifAclUtils.ComponentFactory.create_unified_acl(
+        result = FlextLdifUtilities.AclUtils.ComponentFactory.create_unified_acl(
             name="openldap_acl",
             target=target,
             subject=subject,
@@ -75,7 +78,7 @@ class TestComponentFactory:
 
         assert result.is_success
         acl = result.unwrap()
-        assert isinstance(acl, FlextLdifModels.OpenLdapAcl)
+        assert isinstance(acl, FlextLdifModels.Acl)
         assert acl.name == "openldap_acl"
         assert acl.server_type == FlextLdifConstants.LdapServers.OPENLDAP
 
@@ -85,7 +88,7 @@ class TestComponentFactory:
         subject = FlextLdifModels.AclSubject(subject_type="user", subject_value="admin")
         permissions = FlextLdifModels.AclPermissions(read=True)
 
-        result = FlextLdifAclUtils.ComponentFactory.create_unified_acl(
+        result = FlextLdifUtilities.AclUtils.ComponentFactory.create_unified_acl(
             name="openldap2_acl",
             target=target,
             subject=subject,
@@ -96,7 +99,7 @@ class TestComponentFactory:
 
         assert result.is_success
         acl = result.unwrap()
-        assert isinstance(acl, FlextLdifModels.OpenLdap2Acl)
+        assert isinstance(acl, FlextLdifModels.Acl)
 
     def test_create_unified_acl_openldap_1(self) -> None:
         """Test creating unified ACL for OpenLDAP 1.x server."""
@@ -104,7 +107,7 @@ class TestComponentFactory:
         subject = FlextLdifModels.AclSubject(subject_type="user", subject_value="admin")
         permissions = FlextLdifModels.AclPermissions(read=True)
 
-        result = FlextLdifAclUtils.ComponentFactory.create_unified_acl(
+        result = FlextLdifUtilities.AclUtils.ComponentFactory.create_unified_acl(
             name="openldap1_acl",
             target=target,
             subject=subject,
@@ -115,7 +118,7 @@ class TestComponentFactory:
 
         assert result.is_success
         acl = result.unwrap()
-        assert isinstance(acl, FlextLdifModels.OpenLdap1Acl)
+        assert isinstance(acl, FlextLdifModels.Acl)
 
     def test_create_unified_acl_oracle_oid(self) -> None:
         """Test creating unified ACL for Oracle OID server."""
@@ -123,7 +126,7 @@ class TestComponentFactory:
         subject = FlextLdifModels.AclSubject(subject_type="user", subject_value="admin")
         permissions = FlextLdifModels.AclPermissions(read=True)
 
-        result = FlextLdifAclUtils.ComponentFactory.create_unified_acl(
+        result = FlextLdifUtilities.AclUtils.ComponentFactory.create_unified_acl(
             name="oid_acl",
             target=target,
             subject=subject,
@@ -134,7 +137,7 @@ class TestComponentFactory:
 
         assert result.is_success
         acl = result.unwrap()
-        assert isinstance(acl, FlextLdifModels.OracleOidAcl)
+        assert isinstance(acl, FlextLdifModels.Acl)
 
     def test_create_unified_acl_oracle_oud(self) -> None:
         """Test creating unified ACL for Oracle OUD server."""
@@ -142,7 +145,7 @@ class TestComponentFactory:
         subject = FlextLdifModels.AclSubject(subject_type="user", subject_value="admin")
         permissions = FlextLdifModels.AclPermissions(read=True)
 
-        result = FlextLdifAclUtils.ComponentFactory.create_unified_acl(
+        result = FlextLdifUtilities.AclUtils.ComponentFactory.create_unified_acl(
             name="oud_acl",
             target=target,
             subject=subject,
@@ -153,7 +156,7 @@ class TestComponentFactory:
 
         assert result.is_success
         acl = result.unwrap()
-        assert isinstance(acl, FlextLdifModels.OracleOudAcl)
+        assert isinstance(acl, FlextLdifModels.Acl)
 
     def test_create_unified_acl_ds389(self) -> None:
         """Test creating unified ACL for 389 DS server."""
@@ -161,7 +164,7 @@ class TestComponentFactory:
         subject = FlextLdifModels.AclSubject(subject_type="user", subject_value="admin")
         permissions = FlextLdifModels.AclPermissions(read=True)
 
-        result = FlextLdifAclUtils.ComponentFactory.create_unified_acl(
+        result = FlextLdifUtilities.AclUtils.ComponentFactory.create_unified_acl(
             name="ds389_acl",
             target=target,
             subject=subject,
@@ -172,7 +175,7 @@ class TestComponentFactory:
 
         assert result.is_success
         acl = result.unwrap()
-        assert isinstance(acl, FlextLdifModels.Ds389Acl)
+        assert isinstance(acl, FlextLdifModels.Acl)
 
     def test_create_unified_acl_unsupported_server_type_returns_failure(self) -> None:
         """Test that unsupported server types result in validation error."""
@@ -180,12 +183,12 @@ class TestComponentFactory:
         subject = FlextLdifModels.AclSubject(subject_type="user", subject_value="admin")
         permissions = FlextLdifModels.AclPermissions(read=True)
 
-        result = FlextLdifAclUtils.ComponentFactory.create_unified_acl(
+        result = FlextLdifUtilities.AclUtils.ComponentFactory.create_unified_acl(
             name="unknown_acl",
             target=target,
             subject=subject,
             permissions=permissions,
-            server_type="unknown_server",  # type: ignore[arg-type]
+            server_type="unknown_server",
             raw_acl="some acl",
         )
 
@@ -202,7 +205,7 @@ class TestComponentFactory:
             read=True, write=True, delete=False
         )
 
-        result = FlextLdifAclUtils.ComponentFactory.create_unified_acl(
+        result = FlextLdifUtilities.AclUtils.ComponentFactory.create_unified_acl(
             name="test_acl",
             target=target,
             subject=subject,
@@ -219,12 +222,12 @@ class TestComponentFactory:
         assert acl.raw_acl == "original acl string"
 
     def test_create_unified_acl_returns_aclbase_instance(self) -> None:
-        """Test that created ACL is an AclBase instance."""
+        """Test that created ACL is an FlextLdifModels.Acl instance."""
         target = FlextLdifModels.AclTarget(target_dn="cn=admin")
         subject = FlextLdifModels.AclSubject(subject_type="user", subject_value="admin")
         permissions = FlextLdifModels.AclPermissions(read=True)
 
-        result = FlextLdifAclUtils.ComponentFactory.create_unified_acl(
+        result = FlextLdifUtilities.AclUtils.ComponentFactory.create_unified_acl(
             name="test_acl",
             target=target,
             subject=subject,
@@ -234,7 +237,7 @@ class TestComponentFactory:
         )
 
         acl = result.unwrap()
-        assert isinstance(acl, FlextLdifModels.AclBase)
+        assert isinstance(acl, FlextLdifModels.Acl)
 
     def test_create_unified_acl_exception_handling_caught(self) -> None:
         """Test exception handling in create_unified_acl (line 140-143) via model validation error."""
@@ -244,7 +247,7 @@ class TestComponentFactory:
         permissions = FlextLdifModels.AclPermissions(read=True)
 
         # This should trigger exception handling when creating with invalid component
-        result = FlextLdifAclUtils.ComponentFactory.create_unified_acl(
+        result = FlextLdifUtilities.AclUtils.ComponentFactory.create_unified_acl(
             name="test_acl",
             target=target,
             subject=subject,
@@ -282,7 +285,7 @@ class TestComponentFactory:
 
         monkeypatch.setattr(FlextResult, "ok", selective_ok)
 
-        result = FlextLdifAclUtils.ComponentFactory.create_acl_components()
+        result = FlextLdifUtilities.AclUtils.ComponentFactory.create_acl_components()
         assert result.is_failure
         assert "AclTarget" in str(result.error)
 
@@ -306,7 +309,7 @@ class TestComponentFactory:
 
         monkeypatch.setattr(FlextResult, "ok", selective_ok)
 
-        result = FlextLdifAclUtils.ComponentFactory.create_acl_components()
+        result = FlextLdifUtilities.AclUtils.ComponentFactory.create_acl_components()
         assert result.is_failure
         assert "AclSubject" in str(result.error)
 
@@ -330,7 +333,7 @@ class TestComponentFactory:
 
         monkeypatch.setattr(FlextResult, "ok", selective_ok)
 
-        result = FlextLdifAclUtils.ComponentFactory.create_acl_components()
+        result = FlextLdifUtilities.AclUtils.ComponentFactory.create_acl_components()
         assert result.is_failure
         assert "AclPermissions" in str(result.error)
 
@@ -358,13 +361,13 @@ class TestComponentFactory:
         def failing_init(self: object, *args: object, **kwargs: object) -> None:
             raise TypeError(test_error_msg)
 
-        monkeypatch.setattr(FlextLdifModels.OpenLdapAcl, "__init__", failing_init)
+        monkeypatch.setattr(FlextLdifModels.Acl, "__init__", failing_init)
 
         target = FlextLdifModels.AclTarget(target_dn="*")
         subject = FlextLdifModels.AclSubject(subject_type="*", subject_value="*")
         permissions = FlextLdifModels.AclPermissions(read=True)
 
-        result = FlextLdifAclUtils.ComponentFactory.create_unified_acl(
+        result = FlextLdifUtilities.AclUtils.ComponentFactory.create_unified_acl(
             name="test_acl",
             target=target,
             subject=subject,

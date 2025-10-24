@@ -828,8 +828,9 @@ def filter_by_custom_criteria(
 Parse LDAP schema definitions with RFC 4512 compliance and **MANDATORY quirks support**.
 
 ```python
-from flext_ldif.rfc.rfc_schema_parser import RfcSchemaParserService
-from flext_ldif.quirks.registry import QuirkRegistryService
+# ✅ v1.0+ Flat imports
+from flext_ldif.rfc_schema_parser import RfcSchemaParserService
+from flext_ldif.quirks.registry import QuirkRegistryService  # Unchanged - quirks subdirectory
 
 class RfcSchemaParserService:
     """RFC 4512 compliant schema parser with MANDATORY quirks integration."""
@@ -868,7 +869,8 @@ The `quirk_registry` parameter is **MANDATORY** (not Optional) to enforce RFC-fi
 **Example Usage**:
 
 ```python
-# ✅ CORRECT: Always provide quirk_registry (MANDATORY)
+# ✅ CORRECT: v1.0+ flat imports with MANDATORY quirk_registry
+from flext_ldif.rfc_schema_parser import RfcSchemaParserService
 from flext_ldif.quirks.registry import QuirkRegistryService
 
 # Initialize registry FIRST (auto-discovers all standard quirks)
@@ -1156,8 +1158,9 @@ if write_result.is_success:
 ### Server-Specific Parsing with Quirks
 
 ```python
-from flext_ldif.rfc.rfc_schema_parser import RfcSchemaParserService
-from flext_ldif.quirks.registry import QuirkRegistryService
+# ✅ v1.0+ Flat imports
+from flext_ldif.rfc_schema_parser import RfcSchemaParserService
+from flext_ldif.quirks.registry import QuirkRegistryService  # Unchanged - quirks subdirectory
 
 # ⚠️ MANDATORY: Initialize quirk registry first
 quirk_registry = QuirkRegistryService()

@@ -1,4 +1,3 @@
-# pyright: reportArgumentType=false, reportOperatorIssue=false, reportOptionalMemberAccess=false, reportIndexIssue=false
 """Comprehensive tests for IBM Tivoli Directory Server quirks.
 
 This module provides complete test coverage for IBM Tivoli Directory Server
@@ -365,7 +364,7 @@ class TestTivoliAclQuirks:
             data[FlextLdifConstants.DictKeys.ACL_ATTRIBUTE] == "ibm-slapdaccesscontrol"
         )
         parsed_data = data.get(FlextLdifConstants.DictKeys.DATA, {})
-        assert isinstance(parsed_data, dict)
+        assert hasattr(parsed_data, "name")
         assert parsed_data.get("access") == "read"
         assert parsed_data.get("permission") == "allow"
         assert parsed_data.get("groupdn") == "cn=Admins,o=Example"
@@ -380,7 +379,7 @@ class TestTivoliAclQuirks:
         assert result.is_success
         data = result.unwrap()
         parsed_data = data.get(FlextLdifConstants.DictKeys.DATA, {})
-        assert isinstance(parsed_data, dict)
+        assert hasattr(parsed_data, "name")
         assert parsed_data.get("access") == "read"
 
     def test_convert_acl_to_rfc(self) -> None:

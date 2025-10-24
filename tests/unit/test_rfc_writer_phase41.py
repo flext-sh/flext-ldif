@@ -20,7 +20,7 @@ import pytest
 
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.quirks.registry import FlextLdifQuirksRegistry
-from flext_ldif.rfc.rfc_ldif_writer import FlextLdifRfcLdifWriter
+from flext_ldif.rfc_ldif_writer import FlextLdifRfcLdifWriter
 
 
 class TestRfcLdifWriterPhase41:

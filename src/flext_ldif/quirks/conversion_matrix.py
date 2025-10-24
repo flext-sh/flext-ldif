@@ -23,6 +23,7 @@ from typing import Literal, cast
 from flext_core import FlextResult
 
 from flext_ldif.constants import FlextLdifConstants
+from flext_ldif.models import FlextLdifModels
 from flext_ldif.quirks.base import (
     FlextLdifQuirksBaseAclQuirk,
     FlextLdifQuirksBaseEntryQuirk,
@@ -136,61 +137,56 @@ class FlextLdifQuirksConversionMatrix:
         )
 
     def _extract_and_register_dns(
-        self, data: dict[str, object], data_type: DataType
+        self, model: FlextLdifModels.Acl, data_type: DataType
     ) -> None:
-        """Extract DNs from data and register with canonical case.
+        """Extract DNs from ACL model and register with canonical case.
 
-        This method extracts DNs from various data types and registers them
-        with the DN registry to ensure case consistency.
+        Extracts DNs from ACL models and registers them with the DN registry
+        to ensure case consistency across conversions.
 
         Args:
-        data: Dictionary containing potential DN references
-        data_type: Type of data being processed
+            model: ACL Pydantic model containing potential DN references
+            data_type: Type of data being processed (must be "acl")
 
         """
-        # Entry DN
-        if FlextLdifConstants.DictKeys.DN in data:
-            dn_value = data[FlextLdifConstants.DictKeys.DN]
-            if isinstance(dn_value, str):
-                self.dn_registry.register_dn(dn_value)
+        if data_type != "acl":
+            return
 
-        # Group memberships
-        for field in [FlextLdifConstants.DictKeys.MEMBER, "uniqueMember", "owner"]:
-            if field in data:
-                value = data[field]
-                if isinstance(value, str):
-                    self.dn_registry.register_dn(value)
-                elif isinstance(value, list):
-                    for item in value:
-                        if isinstance(item, str):
-                            self.dn_registry.register_dn(item)
+        # Extract DN from ACL subject (if present)
+        if model.subject and model.subject.subject_value:
+            subject_value = model.subject.subject_value
 
-        # ACL by clauses (if present in parsed ACL data)
-        if data_type == "acl" and "by_clauses" in data:
-            by_clauses = data["by_clauses"]
-            if isinstance(by_clauses, list):
-                for clause in by_clauses:
-                    if isinstance(clause, dict) and "subject" in clause:
-                        subject = clause["subject"]
-                        # Extract DN from LDAP URL format: ldap:///cn=...,dc=...
-                        if isinstance(subject, str) and "ldap:///" in subject:
-                            dn_part = subject.split("ldap:///", 1)[1].split("?", 1)[0]
-                            if dn_part:
-                                self.dn_registry.register_dn(dn_part)
+            # Extract DN from LDAP URL format: ldap:///cn=...,dc=...
+            if isinstance(subject_value, str) and "ldap:///" in subject_value:
+                dn_part = subject_value.split("ldap:///", 1)[1].split("?", 1)[0]
+                if dn_part:
+                    self.dn_registry.register_dn(dn_part)
 
-    def _normalize_dns_in_data(
-        self, data: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
-        """Normalize DN references in data to use canonical case.
+            # Plain DN (not in LDAP URL format)
+            elif isinstance(subject_value, str) and (
+                "=" in subject_value or "," in subject_value
+            ):
+                self.dn_registry.register_dn(subject_value)
+
+    def _normalize_dns_in_model(
+        self, acl: FlextLdifModels.Acl
+    ) -> FlextResult[FlextLdifModels.Acl]:
+        """Normalize DN references in ACL model to use canonical case.
+
+        For ACL models, DN normalization is typically a pass-through
+        since ACLs contain LDAP URLs, not plain DNs.
 
         Args:
-        data: Dictionary with potential DN references
+            acl: ACL Pydantic model with potential DN references
 
         Returns:
-        FlextResult with normalized data
+            FlextResult with normalized ACL model
 
         """
-        return self.dn_registry.normalize_dn_references(data)
+        # ACLs typically don't have direct DN fields to normalize
+        # DN references are in LDAP URLs like "ldap:///cn=admin,dc=com"
+        # which are handled during parsing/writing
+        return FlextResult[FlextLdifModels.Acl].ok(acl)
 
     def _convert_attribute(
         self,
@@ -358,90 +354,99 @@ class FlextLdifQuirksConversionMatrix:
         self,
         source_quirk: QuirkInstance,
         target_quirk: QuirkInstance,
-        data: str | dict[str, object],
-    ) -> FlextResult[str | dict[str, object]]:
+        data: str,
+    ) -> FlextResult[str]:
         """Convert ACL from source to target quirk via RFC.
 
-        Pipeline: parse → extract DNs → to_rfc → from_rfc → normalize DNs → write
+        Pipeline: parse → extract DNs → to_rfc → from_rfc → normalize → write
+
+        ALL steps use Pydantic models (FlextLdifModels.Acl) - NO dicts.
+
+        Args:
+            source_quirk: Source server quirk
+            target_quirk: Target server quirk
+            data: ACL string to convert
+
+        Returns:
+            FlextResult with converted ACL string
+
         """
         try:
-            # Access ACL quirk components - use type casting since concrete implementations have acl attribute
-            source_acl_quirk = cast("FlextLdifQuirksBaseAclQuirk", source_quirk)
-            target_acl_quirk = cast("FlextLdifQuirksBaseAclQuirk", target_quirk)
-
-            if not hasattr(target_acl_quirk, "write_acl_to_rfc"):
-                return FlextResult[str | dict[str, object]].fail(
-                    "Target quirk does not support ACL writing"
+            # Access nested ACL quirk components via acl attribute
+            if not hasattr(source_quirk, "acl"):
+                return FlextResult[str].fail(
+                    "Source quirk does not have ACL quirk (missing acl attribute)"
+                )
+            if not hasattr(target_quirk, "acl"):
+                return FlextResult[str].fail(
+                    "Target quirk does not have ACL quirk (missing acl attribute)"
                 )
 
-            # Step 1: Parse source format (if string)
-            if isinstance(data, str):
-                if not hasattr(source_acl_quirk, "parse_acl"):
-                    return FlextResult[str | dict[str, object]].fail(
-                        "Source quirk does not support ACL parsing"
-                    )
-                parse_result = source_acl_quirk.parse_acl(data)
-                if parse_result.is_failure:
-                    return FlextResult[str | dict[str, object]].fail(
-                        f"Failed to parse source ACL: {parse_result.error}"
-                    )
-                source_data = parse_result.unwrap()
-            else:
-                source_data = data
+            source_acl_quirk = source_quirk.acl  # type: ignore[attr-defined]
+            target_acl_quirk = target_quirk.acl  # type: ignore[attr-defined]
 
-            # Step 2: Extract and register DNs
-            self._extract_and_register_dns(source_data, "acl")
+            # Step 1: Parse source ACL string → Pydantic model
+            if not hasattr(source_acl_quirk, "parse_acl"):
+                return FlextResult[str].fail(
+                    "Source quirk does not support ACL parsing"
+                )
+            parse_result = source_acl_quirk.parse_acl(data)
+            if parse_result.is_failure:
+                return FlextResult[str].fail(
+                    f"Failed to parse source ACL: {parse_result.error}"
+                )
+            source_model: FlextLdifModels.Acl = parse_result.unwrap()
 
-            # Step 3: Convert source → RFC
+            # Step 2: Extract and register DNs from model
+            self._extract_and_register_dns(source_model, "acl")
+
+            # Step 3: Convert source model → RFC model
             if not hasattr(source_acl_quirk, "convert_acl_to_rfc"):
-                return FlextResult[str | dict[str, object]].fail(
+                return FlextResult[str].fail(
                     "Source quirk does not support ACL to RFC conversion"
                 )
-            to_rfc_result = source_acl_quirk.convert_acl_to_rfc(source_data)
+            to_rfc_result = source_acl_quirk.convert_acl_to_rfc(source_model)
             if to_rfc_result.is_failure:
-                return FlextResult[str | dict[str, object]].fail(
+                return FlextResult[str].fail(
                     f"Failed to convert source→RFC: {to_rfc_result.error}"
                 )
-            rfc_data = to_rfc_result.unwrap()
+            rfc_model: FlextLdifModels.Acl = to_rfc_result.unwrap()
 
-            # Step 4: Convert RFC → target
+            # Step 4: Convert RFC model → target model
             if not hasattr(target_acl_quirk, "convert_acl_from_rfc"):
-                return FlextResult[str | dict[str, object]].fail(
+                return FlextResult[str].fail(
                     "Target quirk does not support ACL from RFC conversion"
                 )
-            from_rfc_result = target_acl_quirk.convert_acl_from_rfc(rfc_data)
+            from_rfc_result = target_acl_quirk.convert_acl_from_rfc(rfc_model)
             if from_rfc_result.is_failure:
-                return FlextResult[str | dict[str, object]].fail(
+                return FlextResult[str].fail(
                     f"Failed to convert RFC→target: {from_rfc_result.error}"
                 )
-            target_data = from_rfc_result.unwrap()
+            target_model: FlextLdifModels.Acl = from_rfc_result.unwrap()
 
-            # Step 5: Normalize DN references to canonical case
-            normalize_result = self._normalize_dns_in_data(target_data)
+            # Step 5: Normalize DN references in model
+            normalize_result = self._normalize_dns_in_model(target_model)
             if normalize_result.is_failure:
-                return FlextResult[str | dict[str, object]].fail(
+                return FlextResult[str].fail(
                     f"Failed to normalize DN references: {normalize_result.error}"
                 )
-            normalized_data = normalize_result.unwrap()
+            normalized_model: FlextLdifModels.Acl = normalize_result.unwrap()
 
-            # Step 6: Write target format
+            # Step 6: Write target model → string
             if not hasattr(target_acl_quirk, "write_acl_to_rfc"):
-                return FlextResult[str | dict[str, object]].fail(
+                return FlextResult[str].fail(
                     "Target quirk does not support ACL writing"
                 )
-            write_result = target_acl_quirk.write_acl_to_rfc(normalized_data)
+            write_result = target_acl_quirk.write_acl_to_rfc(normalized_model)
             if write_result.is_failure:
-                return FlextResult[str | dict[str, object]].fail(
+                return FlextResult[str].fail(
                     f"Failed to write target format: {write_result.error}"
                 )
 
-            # Cast Result[str] to Result[str | Dict] for return type compatibility
-            return cast("FlextResult[str | dict[str, object]]", write_result)
+            return write_result
 
         except Exception as e:
-            return FlextResult[str | dict[str, object]].fail(
-                f"ACL conversion failed: {e}"
-            )
+            return FlextResult[str].fail(f"ACL conversion failed: {e}")
 
     def _convert_entry(
         self,

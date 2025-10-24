@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import logging
 
-from tests.fixtures.validator import FlextLdifFixtureDiscovery
+from .fixtures.validator import FlextLdifFixtureDiscovery
 
 logger = logging.getLogger(__name__)
 

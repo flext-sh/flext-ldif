@@ -24,7 +24,7 @@ from pathlib import Path
 import pytest
 
 from flext_ldif.client import FlextLdifClient
-from flext_ldif.services.file_writer_service import FlextLdifFileWriterService
+from flext_ldif.file_writer_service import FlextLdifFileWriterService
 
 
 class TestFileWriterRealLdifOperations:

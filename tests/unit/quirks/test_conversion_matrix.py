@@ -10,8 +10,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Literal, cast
-
 import pytest
 from flext_core import FlextResult
 from pydantic import Field
@@ -1234,9 +1232,7 @@ class TestErrorHandling:
         result = matrix.convert(
             oud,
             oid,
-            cast(
-                "Literal['acl', 'attribute', 'entry', 'objectclass']", invalid_data_type
-            ),
+            invalid_data_type,
             "test",
         )
 

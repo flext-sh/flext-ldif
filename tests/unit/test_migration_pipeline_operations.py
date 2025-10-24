@@ -670,7 +670,10 @@ class TestFlextLdifMigrationPipelineOperations:
         result = pipeline.execute()
         assert result.is_success
         status = result.unwrap()
-        assert isinstance(status, dict)
+        # MigrationPipelineResult is now a Pydantic model, not a dict
+        assert hasattr(status, "migrated_schema")
+        assert hasattr(status, "entries")
+        assert hasattr(status, "stats")
 
     # =========================================================================
     # MULTIPLE FIXTURE FILES SEQUENTIAL PROCESSING
@@ -875,8 +878,12 @@ o: Example Corp
         )
         result = pipeline.execute()
         if result.is_success:
-            stats = result.value.get("stats", {})
-            assert isinstance(stats, dict)
+            migration_result = result.unwrap()
+            # MigrationPipelineResult is now a Pydantic model with stats attribute
+            assert hasattr(migration_result, "stats")
+            stats = migration_result.stats
+            # Stats is MigrationStatistics model
+            assert hasattr(stats, "total_entries")
 
     def test_migration_oid_to_oud_transformation(
         self, tmp_path: Path, oid_entries_fixture: Path

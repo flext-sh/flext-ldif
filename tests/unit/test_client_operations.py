@@ -411,7 +411,9 @@ class TestFlextLdifClientOperations:
         result = client.detect_server_type(ldif_path=oid_entries_fixture)
         assert result.is_success
         detection = result.unwrap()
-        assert "detected_server_type" in detection
+        # ServerDetectionResult is a Pydantic model, not a dict
+        assert hasattr(detection, "detected_server_type")
+        assert detection.detected_server_type is not None
 
     def test_detect_server_type_from_content(self, client: FlextLdifClient) -> None:
         """Test detecting server type from content."""
@@ -419,7 +421,9 @@ class TestFlextLdifClientOperations:
         result = client.detect_server_type(ldif_content=ldif_content)
         assert result.is_success
         detection = result.unwrap()
-        assert "detected_server_type" in detection
+        # ServerDetectionResult is a Pydantic model, not a dict
+        assert hasattr(detection, "detected_server_type")
+        assert detection.detected_server_type is not None
 
     # =========================================================================
     # EFFECTIVE SERVER TYPE TESTS

@@ -17,7 +17,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from flext_ldif.constants import FlextLdifConstants
-from flext_ldif.services.file_writer_service import FlextLdifFileWriterService
+from flext_ldif.file_writer_service import FlextLdifFileWriterService
 
 
 class TestFlextLdifFileWriterServiceInitialization:

@@ -9,11 +9,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import cast
-
 import pytest
 
-from flext_ldif.services.validation_service import FlextLdifValidationService
+from flext_ldif.validation_service import FlextLdifValidationService
 
 
 class TestValidationServiceInitialization:
@@ -132,7 +130,7 @@ class TestValidateAttributeName:
     def test_reject_non_string_attribute_name(self) -> None:
         """Test rejection of non-string attribute name."""
         service = FlextLdifValidationService()
-        result = service.validate_attribute_name(cast("str", 123))
+        result = service.validate_attribute_name(123)
 
         assert result.is_success
         assert result.unwrap() is False
@@ -292,7 +290,7 @@ class TestValidateAttributeValue:
     def test_reject_non_string_attribute_value(self) -> None:
         """Test rejection of non-string attribute value."""
         service = FlextLdifValidationService()
-        result = service.validate_attribute_value(cast("str", 123))
+        result = service.validate_attribute_value(123)
 
         assert result.is_success
         assert result.unwrap() is False
@@ -336,7 +334,7 @@ class TestValidateDnComponent:
     def test_reject_dn_component_with_non_string_value(self) -> None:
         """Test rejection of DN component with non-string value."""
         service = FlextLdifValidationService()
-        result = service.validate_dn_component("cn", cast("str", 123))
+        result = service.validate_dn_component("cn", "str")
 
         assert result.is_success
         assert result.unwrap() is False

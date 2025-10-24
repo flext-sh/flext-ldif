@@ -386,6 +386,6 @@ class TestDataValidation:
 
         if result.is_success:
             stats = result.unwrap()
-            assert isinstance(stats, dict)
-            # Should have total_entries or similar key
-            assert "total_entries" in stats or "entry_count" in stats or len(stats) > 0
+            # AnalysisResult is now a Pydantic model, not a dict
+            assert hasattr(stats, "total_entries")
+            assert stats.total_entries > 0

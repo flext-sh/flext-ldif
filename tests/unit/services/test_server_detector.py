@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from flext_ldif.services.server_detector import FlextLdifServerDetector
+from flext_ldif.server_detector import FlextLdifServerDetector
 
 
 class TestServerDetectorInitialization:

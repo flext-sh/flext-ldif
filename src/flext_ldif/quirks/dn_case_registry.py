@@ -21,7 +21,6 @@ from flext_core import FlextModels, FlextResult
 from pydantic import ConfigDict
 
 from flext_ldif.constants import FlextLdifConstants
-from flext_ldif.typings import FlextLdifTypes
 
 type DN = str
 
@@ -214,7 +213,7 @@ class FlextLdifDnCaseRegistry(FlextModels.Value):
             >>> result.unwrap()  # False - multiple case variants
 
         """
-        inconsistencies: list[FlextLdifTypes.Models.CustomDataDict] = []
+        inconsistencies: list[dict[str, object]] = []
 
         for normalized_dn, variants in self._case_variants.items():
             if len(variants) > 1:

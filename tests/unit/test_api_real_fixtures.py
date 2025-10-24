@@ -409,7 +409,9 @@ objectClasses: ( 2.5.6.6 NAME 'person' STRUCTURAL SUP top MUST cn )
 
         assert result.is_success
         schema_data = result.unwrap()
-        assert isinstance(schema_data, dict)
+        # SchemaBuilderResult is now a Pydantic model
+        assert hasattr(schema_data, "schema")
+        assert schema_data.schema is not None
 
 
 class TestFlextLdifValidation:

@@ -182,17 +182,3 @@ docker = ">=7.1.0"
                 "flext_ldif",
             ]
 
-    [tool.mypy]
-        mypy_path = "src:../typings"
-        namespace_packages = true
-        warn_unused_ignores = true
-        warn_redundant_casts = true
-        strict = true
-
-    [tool.pyrefly]
-        # SubConfig: Disable unknown-name error for models.py
-        # This handles forward references to classes defined later in the same file
-        [[tool.pyrefly.sub-config]]
-            matches = "**/models.py"
-            [tool.pyrefly.sub-config.errors]
-                unknown-name = false

@@ -18,12 +18,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import cast
-
 import pytest
 
 from flext_ldif.constants import FlextLdifConstants
-from flext_ldif.services.dn_service import FlextLdifDnService
+from flext_ldif.dn_service import FlextLdifDnService
 
 
 class TestDnServiceParseComponents:
@@ -267,9 +265,7 @@ class TestDnServiceBuildCanonicalMap:
                 },
             ]
         }
-        result = dn_service.build_canonical_dn_map(
-            cast("dict[str, list[dict[str, object]]]", categorized)
-        )
+        result = dn_service.build_canonical_dn_map(categorized)
         assert result.is_success
         dn_map = result.unwrap()
         assert len(dn_map) == 1
@@ -401,9 +397,7 @@ class TestDnServiceNormalizeDnReferencesInEntry:
             },
         }
         ref_attrs = {"manager"}
-        result = dn_service.normalize_dn_references_for_entry(
-            cast("dict[str, str | dict]", entry), dn_map, ref_attrs
-        )
+        result = dn_service.normalize_dn_references_for_entry(entry, dn_map, ref_attrs)
         assert result.is_success
         normalized = result.unwrap()
         assert isinstance(
@@ -419,9 +413,7 @@ class TestDnServiceNormalizeDnReferencesInEntry:
             FlextLdifConstants.DictKeys.ATTRIBUTES: "not a dict",
         }
         ref_attrs = {"manager"}
-        result = dn_service.normalize_dn_references_for_entry(
-            cast("dict[str, str | dict]", entry), dn_map, ref_attrs
-        )
+        result = dn_service.normalize_dn_references_for_entry(entry, dn_map, ref_attrs)
         assert result.is_success
         normalized = result.unwrap()
         assert normalized[FlextLdifConstants.DictKeys.ATTRIBUTES] == "not a dict"
@@ -441,7 +433,7 @@ class TestDnServiceNormalizeDnReferencesInEntry:
         bad_dn_map: dict[str, object] = {}
         ref_attrs = {"manager"}
         result = dn_service.normalize_dn_references_for_entry(
-            entry, cast("dict[str, str]", bad_dn_map), ref_attrs
+            entry, bad_dn_map, ref_attrs
         )
         # Should handle gracefully
         assert hasattr(result, "is_success")
@@ -519,9 +511,7 @@ class TestDnServiceNormalizeAciDnReferences:
             FlextLdifConstants.DictKeys.DN: "cn=acl,dc=example,dc=com",
             FlextLdifConstants.DictKeys.ATTRIBUTES: "not a dict",
         }
-        result = dn_service.normalize_aci_dn_references(
-            cast("dict[str, str | dict]", entry), dn_map
-        )
+        result = dn_service.normalize_aci_dn_references(entry, dn_map)
         assert result.is_success
         normalized = result.unwrap()
         assert normalized[FlextLdifConstants.DictKeys.ATTRIBUTES] == "not a dict"
@@ -537,9 +527,7 @@ class TestDnServiceNormalizeAciDnReferences:
             },
         }
         bad_dn_map: dict[str, object] = {}
-        result = dn_service.normalize_aci_dn_references(
-            entry, cast("dict[str, str]", bad_dn_map)
-        )
+        result = dn_service.normalize_aci_dn_references(entry, bad_dn_map)
         assert hasattr(result, "is_success")
 
 
