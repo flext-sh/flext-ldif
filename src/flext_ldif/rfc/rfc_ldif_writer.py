@@ -368,13 +368,19 @@ class FlextLdifRfcLdifWriter(FlextService[FlextLdifTypes.Models.CustomDataDict])
                     if isinstance(attributes, dict):
                         for attr_name, attr_values in attributes.items():
                             # Check if this is an ACL attribute that needs conversion
-                            acl_attribute_names = ["aci", "orclaci", "orclentrylevelaci"]
+                            acl_attribute_names = [
+                                "aci",
+                                "orclaci",
+                                "orclentrylevelaci",
+                            ]
                             is_acl_attribute = attr_name.lower() in acl_attribute_names
 
                             if isinstance(attr_values, list):
                                 # If ACL attribute, convert via _extract_acl_definitions
                                 if is_acl_attribute:
-                                    converted_acls = self._extract_acl_definitions(attr_values)
+                                    converted_acls = self._extract_acl_definitions(
+                                        attr_values
+                                    )
                                     for acl_str in converted_acls:
                                         attr_line = self._format_attribute_value(
                                             attr_name, acl_str
@@ -408,15 +414,21 @@ class FlextLdifRfcLdifWriter(FlextService[FlextLdifTypes.Models.CustomDataDict])
                         # attr_values is AttributeValues, need to access .values property
                         if is_acl_attribute:
                             # Convert ACL values via _extract_acl_definitions
-                            converted_acls = self._extract_acl_definitions(attr_values.values)
+                            converted_acls = self._extract_acl_definitions(
+                                attr_values.values
+                            )
                             for acl_str in converted_acls:
-                                attr_line = self._format_attribute_value(attr_name, acl_str)
+                                attr_line = self._format_attribute_value(
+                                    attr_name, acl_str
+                                )
                                 output.write(attr_line + "\n")
                         else:
                             # Regular attribute - write as-is
                             for value in attr_values.values:
                                 # Format value according to RFC 2849 (base64 if needed)
-                                attr_line = self._format_attribute_value(attr_name, value)
+                                attr_line = self._format_attribute_value(
+                                    attr_name, value
+                                )
                                 output.write(attr_line + "\n")
                 else:
                     # Fallback - shouldn't happen with proper usage
@@ -468,13 +480,21 @@ class FlextLdifRfcLdifWriter(FlextService[FlextLdifTypes.Models.CustomDataDict])
                         if isinstance(attributes, dict):
                             for attr_name, attr_values in attributes.items():
                                 # Check if this is an ACL attribute that needs conversion
-                                acl_attribute_names = ["aci", "orclaci", "orclentrylevelaci"]
-                                is_acl_attribute = attr_name.lower() in acl_attribute_names
+                                acl_attribute_names = [
+                                    "aci",
+                                    "orclaci",
+                                    "orclentrylevelaci",
+                                ]
+                                is_acl_attribute = (
+                                    attr_name.lower() in acl_attribute_names
+                                )
 
                                 if isinstance(attr_values, list):
                                     # If ACL attribute, convert via _extract_acl_definitions
                                     if is_acl_attribute:
-                                        converted_acls = self._extract_acl_definitions(attr_values)
+                                        converted_acls = self._extract_acl_definitions(
+                                            attr_values
+                                        )
                                         for acl_str in converted_acls:
                                             attr_line = f"{attr_name}: {acl_str}"
                                             f.write(attr_line + "\n")
@@ -497,13 +517,19 @@ class FlextLdifRfcLdifWriter(FlextService[FlextLdifTypes.Models.CustomDataDict])
                             attr_values,
                         ) in entry_obj.attributes.attributes.items():
                             # Check if this is an ACL attribute that needs conversion
-                            acl_attribute_names = ["aci", "orclaci", "orclentrylevelaci"]
+                            acl_attribute_names = [
+                                "aci",
+                                "orclaci",
+                                "orclentrylevelaci",
+                            ]
                             is_acl_attribute = attr_name.lower() in acl_attribute_names
 
                             # attr_values is AttributeValues, need to access .values property
                             if is_acl_attribute:
                                 # Convert ACL values via _extract_acl_definitions
-                                converted_acls = self._extract_acl_definitions(attr_values.values)
+                                converted_acls = self._extract_acl_definitions(
+                                    attr_values.values
+                                )
                                 for acl_str in converted_acls:
                                     attr_line = f"{attr_name}: {acl_str}"
                                     f.write(attr_line + "\n")
@@ -939,7 +965,9 @@ class FlextLdifRfcLdifWriter(FlextService[FlextLdifTypes.Models.CustomDataDict])
                 if isinstance(item, dict):
                     if FlextLdifConstants.DictKeys.DEFINITION in item:
                         # Already has DEFINITION - extract it
-                        definitions.append(str(item[FlextLdifConstants.DictKeys.DEFINITION]))
+                        definitions.append(
+                            str(item[FlextLdifConstants.DictKeys.DEFINITION])
+                        )
                     elif FlextLdifConstants.DictKeys.FORMAT in item:
                         # Has FORMAT field - this is RFC data that needs OUD conversion
                         # Convert it now using target quirks
@@ -953,18 +981,29 @@ class FlextLdifRfcLdifWriter(FlextService[FlextLdifTypes.Models.CustomDataDict])
                                     converted = convert_result.unwrap()
                                     if (
                                         isinstance(converted, dict)
-                                        and FlextLdifConstants.DictKeys.DEFINITION in converted
+                                        and FlextLdifConstants.DictKeys.DEFINITION
+                                        in converted
                                     ):
                                         definitions.append(
-                                            str(converted[FlextLdifConstants.DictKeys.DEFINITION])
+                                            str(
+                                                converted[
+                                                    FlextLdifConstants.DictKeys.DEFINITION
+                                                ]
+                                            )
                                         )
                                         break
                             else:
                                 # No quirk could convert - use FORMAT as fallback (will fail)
-                                definitions.append(str(item.get(FlextLdifConstants.DictKeys.FORMAT, "")))
+                                definitions.append(
+                                    str(
+                                        item.get(FlextLdifConstants.DictKeys.FORMAT, "")
+                                    )
+                                )
                         else:
                             # No quirks available - use FORMAT as fallback
-                            definitions.append(str(item.get(FlextLdifConstants.DictKeys.FORMAT, "")))
+                            definitions.append(
+                                str(item.get(FlextLdifConstants.DictKeys.FORMAT, ""))
+                            )
                     else:
                         # Unknown dict structure - convert to string
                         definitions.append(str(item))

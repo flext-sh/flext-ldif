@@ -379,6 +379,10 @@ class FlextLdifRfcLdifParser(FlextService[FlextLdifTypes.Models.CustomDataDict])
                         if not isinstance(dn, str):
                             continue
 
+                        # 🔍 STDOUT DEBUG: Check if ldif3 parsed ACL attributes
+                        if any(k.lower() in {"orclaci", "orclentrylevelaci"} for k in entry_attrs):
+                            print(f"🔍 STDOUT DEBUG [ldif3]: Parsed ACL attrs for DN={dn[:60]}, attrs={list(entry_attrs.keys())}", flush=True)  # noqa: T201
+
                         # Clean DN to remove spaces around '=' (RFC 4514 compliance)
                         cleaned_dn = self._entry_quirks.clean_dn(dn)
 
@@ -387,6 +391,10 @@ class FlextLdifRfcLdifParser(FlextService[FlextLdifTypes.Models.CustomDataDict])
                             FlextLdifConstants.DictKeys.DN: cleaned_dn,
                             FlextLdifConstants.DictKeys.ATTRIBUTES: entry_attrs,
                         }
+
+                        # 🔍 STDOUT DEBUG: Check if entry_data still has ACL attributes
+                        if any(k.lower() in {"orclaci", "orclentrylevelaci"} for k in entry_attrs):
+                            print(f"🔍 STDOUT DEBUG [entry_data]: ACL attrs in entry_data for DN={dn[:60]}", flush=True)  # noqa: T201
 
                         # Create Entry model
                         entry_result = self._create_entry(file_entry_data)

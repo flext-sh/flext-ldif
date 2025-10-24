@@ -88,20 +88,14 @@ class FlextLdifContainer(containers.DeclarativeContainer):
     quirks_registry = providers.Singleton(FlextLdifQuirksRegistry)
 
     # Quirks manager - factory for configurable instances
-    quirks_manager = providers.Factory(
-        FlextLdifQuirksManager,
-        config=config,
-    )
+    quirks_manager = providers.Factory(FlextLdifQuirksManager)
 
     # =========================================================================
     # MIGRATION PROVIDERS
     # =========================================================================
 
     # Migration pipeline - factory for configurable instances
-    migration_pipeline = providers.Factory(
-        FlextLdifMigrationPipeline,
-        config=config,
-    )
+    migration_pipeline = providers.Factory(FlextLdifMigrationPipeline)
 
     # =========================================================================
     # CONTAINER LIFECYCLE METHODS

@@ -16,6 +16,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 from typing import cast, override
 
@@ -34,6 +35,8 @@ from flext_ldif.rfc.rfc_ldif_parser import FlextLdifRfcLdifParser
 from flext_ldif.services.dn_service import FlextLdifDnService
 from flext_ldif.services.file_writer_service import FlextLdifFileWriterService
 from flext_ldif.services.statistics_service import FlextLdifStatisticsService
+
+logger = logging.getLogger(__name__)
 
 
 class FlextLdifCategorizedMigrationPipeline(
@@ -213,6 +216,24 @@ class FlextLdifCategorizedMigrationPipeline(
             )
 
         categorized = categorize_result.unwrap()
+
+        # Step 3.5: Extract ACL entries as separate dedicated phase
+        # This runs AFTER categorization but uses ALL parsed entries as input
+        acl_extract_result = self._extract_acl_entries_final_phase(entries)
+        if acl_extract_result.is_failure:
+            return FlextResult[FlextLdifModels.PipelineExecutionResult].fail(
+                f"Failed to extract ACL entries: {acl_extract_result.error}"
+            )
+
+        # Replace ACL category with extracted ACL entries
+        extracted_acl_entries = acl_extract_result.unwrap()
+        categorized["acl"] = extracted_acl_entries
+
+        # Log ACL extraction results
+        self.logger.info(
+            f"ACL extraction phase: Populated 'acl' category with "
+            f"{len(extracted_acl_entries)} entries"
+        )
 
         # Step 4: Transform entries per category (quirks)
         transform_result = self._transform_categories(categorized)
@@ -499,6 +520,26 @@ class FlextLdifCategorizedMigrationPipeline(
                 if not isinstance(entries_raw, list):
                     return FlextResult[list[dict[str, object]]].ok([])
 
+                # 🔍 DEBUG POINT 0: Check Entry MODELS for ACL attributes (BEFORE dict conversion)
+                acl_count_models = sum(
+                    1
+                    for e in entries_raw
+                    if hasattr(e, "attributes")
+                    and hasattr(e.attributes, "attributes")
+                    and any(
+                        k.lower() in {"orclaci", "orclentrylevelaci"}
+                        for k in e.attributes.attributes
+                    )
+                )
+                if acl_count_models > 0:
+                    logger.info(
+                        f"🔍 DEBUG POINT 0: Entry MODELS with ACL attributes in {ldif_file.name}: {acl_count_models}/{len(entries_raw)}"
+                    )
+                else:
+                    logger.warning(
+                        f"🔍 DEBUG POINT 0: NO Entry MODELS with ACL attributes in {ldif_file.name} (checked {len(entries_raw)} models)!"
+                    )
+
                 file_entries: list[dict[str, object]] = []
                 for entry_model in entries_raw:
                     # Extract data from Entry model
@@ -532,6 +573,22 @@ class FlextLdifCategorizedMigrationPipeline(
                     entry_dict[FlextLdifConstants.DictKeys.ATTRIBUTES] = attrs_dict
 
                     file_entries.append(entry_dict)
+
+                # DEBUG: Count entries with ACL attributes after parsing
+                acl_count = sum(
+                    1
+                    for e in file_entries
+                    if any(
+                        k.lower() in {"orclaci", "orclentrylevelaci"}
+                        for k in cast(
+                            "dict", e.get(FlextLdifConstants.DictKeys.ATTRIBUTES, {})
+                        )
+                    )
+                )
+                if acl_count > 0:
+                    logger.info(
+                        f"🔍 DEBUG POINT 1: Entries with ACL attributes after parsing {ldif_file.name}: {acl_count}/{len(file_entries)}"
+                    )
 
                 return FlextResult[list[dict[str, object]]].ok(file_entries)
 
@@ -716,7 +773,6 @@ class FlextLdifCategorizedMigrationPipeline(
                 category = result_item.get("category")
                 processed_entry = result_item.get("entry")
                 rejection_reason = result_item.get("rejection_reason")
-                has_acl_metadata = result_item.get("has_acl_metadata", False)
 
                 # Type narrow category
                 if not isinstance(category, str) or category not in categorized:
@@ -751,24 +807,6 @@ class FlextLdifCategorizedMigrationPipeline(
                         if isinstance(dn_value, str):
                             rejection_reasons_map[dn_value] = rejection_reason
 
-                # If entry has ACL metadata, create separate ACL entry
-                # Only if entry is under base_dn (already checked above)
-                if has_acl_metadata and isinstance(processed_entry, dict):
-                    # Double-check base_dn for ACL entries (skip if not under base_dn)
-                    if not self._is_entry_under_base_dn(processed_entry):
-                        continue
-
-                    acl_metadata = result_item.get("acl_metadata")
-                    if isinstance(acl_metadata, dict):
-                        acl_entry = {
-                            FlextLdifConstants.DictKeys.DN: processed_entry.get(
-                                FlextLdifConstants.DictKeys.DN
-                            ),
-                            FlextLdifConstants.DictKeys.ATTRIBUTES: acl_metadata,
-                            "_from_metadata": True,
-                        }
-                        categorized["acl"].append(acl_entry)
-
             # Step 2: Inject rejection reasons into rejected entries using batch_process
             rejected_entries = categorized.get("rejected", [])
             if rejected_entries and rejection_reasons_map:
@@ -795,6 +833,24 @@ class FlextLdifCategorizedMigrationPipeline(
 
                 # Replace rejected entries with injected versions
                 categorized["rejected"] = injected_entries
+
+            # DEBUG: Log ACL category details after categorization
+            acl_count = len(categorized.get("acl", []))
+            if acl_count > 0:
+                self.logger.info(
+                    f"🔍 DEBUG POINT 3: ACL category has {acl_count} entries after categorization"
+                )
+                first_acl = categorized["acl"][0]
+                dn = first_acl.get(FlextLdifConstants.DictKeys.DN, "unknown")
+                attrs = first_acl.get(FlextLdifConstants.DictKeys.ATTRIBUTES, {})
+                if isinstance(attrs, dict):
+                    self.logger.info(
+                        f"🔍 DEBUG: First ACL entry DN={dn}, attributes={list(attrs.keys())[:5]}"
+                    )
+            else:
+                self.logger.warning(
+                    "🔍 DEBUG POINT 3: ACL category is EMPTY after categorization! (Expected 2,302+ entries)"
+                )
 
             return FlextResult[dict[str, list[dict[str, object]]]].ok(categorized)
 
@@ -1003,25 +1059,9 @@ class FlextLdifCategorizedMigrationPipeline(
                         "Entry is not a dictionary"
                     )
 
-                # STRATEGY PATTERN: Check if entry has ACL attributes in metadata
-                # (set by OID quirk during RFC conversion)
-                acl_attrs = entry.get("_acl_attributes")
-                processed_entry = entry
-                has_acl_metadata = False
-                acl_metadata: dict[str, object] = {}
-
-                if acl_attrs and isinstance(acl_attrs, dict):
-                    # Mark that entry has ACL metadata
-                    has_acl_metadata = True
-                    acl_metadata = acl_attrs.copy()
-
-                    # Remove ACL metadata from original entry (already extracted)
-                    processed_entry = entry.copy()
-                    processed_entry.pop("_acl_attributes", None)
-
                 # Categorize the entry
                 categorize_func = getattr(pipeline, "_categorize_entry")
-                category, rejection_reason = categorize_func(processed_entry)
+                category, rejection_reason = categorize_func(entry)
 
                 # Type narrow category and rejection_reason
                 if not isinstance(category, str):
@@ -1029,16 +1069,12 @@ class FlextLdifCategorizedMigrationPipeline(
                         f"Invalid category type: {type(category)}"
                     )
 
-                # Build result dictionary with all tracking information
+                # Build result dictionary with tracking information
                 result_dict: dict[str, object] = {
                     "category": category,
-                    "entry": processed_entry,
+                    "entry": entry,
                     "rejection_reason": rejection_reason,
-                    "has_acl_metadata": has_acl_metadata,
                 }
-
-                if has_acl_metadata:
-                    result_dict["acl_metadata"] = acl_metadata
 
                 return FlextResult[dict[str, object]].ok(result_dict)
 
@@ -1099,6 +1135,113 @@ class FlextLdifCategorizedMigrationPipeline(
                 return FlextResult[dict[str, object]].fail(
                     f"Rejection reason injection failed: {e}"
                 )
+
+    def _extract_acl_entries_final_phase(
+        self, all_entries: list[dict[str, object]]
+    ) -> FlextResult[list[dict[str, object]]]:
+        """Extract ACL entries as final separate phase.
+
+        Scans all parsed entries and creates minimal ACL entries containing:
+        - DN from original entry
+        - ONLY ACL attributes (orclaci, orclentrylevelaci, aci)
+        - Applies quirks: OID → RFC → OUD conversion
+
+        This is a DEDICATED ACL processing phase that runs AFTER categorization
+        but BEFORE transformation. It ensures ACL attributes are properly
+        extracted and converted using the quirks system.
+
+        Args:
+            all_entries: All parsed entry dictionaries from input
+
+        Returns:
+            FlextResult containing list of converted ACL entries
+
+        """
+        try:
+            acl_entries: list[dict[str, object]] = []
+            acl_attribute_names = {"orclaci", "orclentrylevelaci", "aci"}
+
+            # Step 1: Scan all entries for ACL attributes
+            for entry in all_entries:
+                if not isinstance(entry, dict):
+                    continue
+
+                # Get entry DN
+                dn = entry.get(FlextLdifConstants.DictKeys.DN)
+                if not isinstance(dn, str):
+                    continue
+
+                # Get entry attributes
+                attributes = entry.get(FlextLdifConstants.DictKeys.ATTRIBUTES)
+                if not isinstance(attributes, dict):
+                    continue
+
+                # Check if entry has any ACL attributes
+                has_acl = any(
+                    attr_name.lower() in acl_attribute_names
+                    for attr_name in attributes
+                )
+
+                if not has_acl:
+                    continue
+
+                # Step 2: Create minimal ACL entry (DN + ACL attrs only)
+                acl_attributes: dict[str, object] = {
+                    attr_name: attr_value
+                    for attr_name, attr_value in attributes.items()
+                    if attr_name.lower() in acl_attribute_names
+                }
+
+                # Build minimal ACL entry
+                acl_entry = {
+                    FlextLdifConstants.DictKeys.DN: dn,
+                    FlextLdifConstants.DictKeys.ATTRIBUTES: acl_attributes,
+                }
+
+                # Step 3: Apply parser quirk (OID → RFC)
+                # Get parser's ACL quirk if available
+                parser_acl_quirk = None
+                if self._parser_quirk is not None and hasattr(self._parser_quirk, "acl_quirk"):
+                    parser_acl_quirk = getattr(self._parser_quirk, "acl_quirk")
+
+                # Step 4: Apply writer quirk (RFC → OUD: aci)
+                # Get writer's ACL quirk if available
+                writer_acl_quirk = None
+                if self._writer_quirk is not None and hasattr(self._writer_quirk, "acl_quirk"):
+                    writer_acl_quirk = getattr(self._writer_quirk, "acl_quirk")
+
+                # Step 5: Transform ACL entry using quirks system
+                if parser_acl_quirk is not None and writer_acl_quirk is not None:
+                    transform_result = self._AclTransformationChain.transform_acl_entry(
+                        acl_entry, parser_acl_quirk, writer_acl_quirk
+                    )
+
+                    if transform_result.is_success:
+                        transformed_entry = transform_result.unwrap()
+                        acl_entries.append(transformed_entry)
+                    else:
+                        # Log transformation failure but continue
+                        self.logger.warning(
+                            f"ACL transformation failed for DN={dn}: {transform_result.error}"
+                        )
+                        # Add untransformed entry as fallback
+                        acl_entries.append(acl_entry)
+                else:
+                    # No quirks available, add untransformed entry
+                    acl_entries.append(acl_entry)
+
+            # Log extraction statistics
+            self.logger.info(
+                f"ACL extraction: Found {len(acl_entries)} ACL entries from "
+                f"{len(all_entries)} total entries"
+            )
+
+            return FlextResult[list[dict[str, object]]].ok(acl_entries)
+
+        except Exception as e:
+            return FlextResult[list[dict[str, object]]].fail(
+                f"ACL extraction failed: {e}"
+            )
 
     def _transform_categories(
         self, categorized: dict[str, list[dict[str, object]]]

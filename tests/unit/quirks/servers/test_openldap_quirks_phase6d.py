@@ -96,12 +96,16 @@ class TestOpenldapSchemaQuirkParseAttribute:
         self, openldap_quirk: FlextLdifQuirksServersOpenldap
     ) -> None:
         """Test parsing attribute with SINGLE-VALUE constraint."""
-        attr_def = "( 2.5.4.6 NAME 'c' DESC 'RFC2256: country name' SUP name SINGLE-VALUE )"
+        attr_def = (
+            "( 2.5.4.6 NAME 'c' DESC 'RFC2256: country name' SUP name SINGLE-VALUE )"
+        )
         result = openldap_quirk.parse_attribute(attr_def)
         assert hasattr(result, "is_success")
 
     def test_parse_attribute_from_fixture(
-        self, openldap_quirk: FlextLdifQuirksServersOpenldap, openldap_schema_fixture: Path
+        self,
+        openldap_quirk: FlextLdifQuirksServersOpenldap,
+        openldap_schema_fixture: Path,
     ) -> None:
         """Test parsing attributes from real OpenLDAP fixture."""
         if not openldap_schema_fixture.exists():
@@ -110,7 +114,7 @@ class TestOpenldapSchemaQuirkParseAttribute:
         content = openldap_schema_fixture.read_text(encoding="utf-8")
         for line in content.split("\n"):
             if line.startswith("attributetypes:"):
-                attr_def = line[len("attributetypes: "):].strip()
+                attr_def = line[len("attributetypes: ") :].strip()
                 result = openldap_quirk.parse_attribute(attr_def)
                 assert hasattr(result, "is_success")
                 break
@@ -136,7 +140,9 @@ class TestOpenldapSchemaQuirkCanHandleObjectClass:
         self, openldap_quirk: FlextLdifQuirksServersOpenldap
     ) -> None:
         """Test detection of olc* objectClasses."""
-        oc_def = "( 1.3.6.1.4.1.4203.2.1.1 NAME 'olcBackendConfig' DESC 'OpenLDAP Backend' )"
+        oc_def = (
+            "( 1.3.6.1.4.1.4203.2.1.1 NAME 'olcBackendConfig' DESC 'OpenLDAP Backend' )"
+        )
         assert isinstance(openldap_quirk.can_handle_objectclass(oc_def), bool)
 
     def test_can_handle_standard_objectclass(
@@ -199,7 +205,9 @@ class TestOpenldapSchemaQuirkConvertAttribute:
         """Create OpenLDAP quirk instance."""
         return FlextLdifQuirksServersOpenldap()
 
-    def test_convert_attribute_to_rfc(self, openldap_quirk: FlextLdifQuirksServersOpenldap) -> None:
+    def test_convert_attribute_to_rfc(
+        self, openldap_quirk: FlextLdifQuirksServersOpenldap
+    ) -> None:
         """Test converting OpenLDAP attribute to RFC format."""
         attr_data = {
             "oid": "2.5.4.3",
@@ -211,7 +219,9 @@ class TestOpenldapSchemaQuirkConvertAttribute:
         result = openldap_quirk.convert_attribute_to_rfc(attr_data)
         assert hasattr(result, "is_success")
 
-    def test_convert_attribute_from_rfc(self, openldap_quirk: FlextLdifQuirksServersOpenldap) -> None:
+    def test_convert_attribute_from_rfc(
+        self, openldap_quirk: FlextLdifQuirksServersOpenldap
+    ) -> None:
         """Test converting RFC attribute to OpenLDAP format."""
         rfc_data = {
             "oid": "2.5.4.3",
@@ -231,7 +241,9 @@ class TestOpenldapSchemaQuirkConvertObjectClass:
         """Create OpenLDAP quirk instance."""
         return FlextLdifQuirksServersOpenldap()
 
-    def test_convert_objectclass_to_rfc(self, openldap_quirk: FlextLdifQuirksServersOpenldap) -> None:
+    def test_convert_objectclass_to_rfc(
+        self, openldap_quirk: FlextLdifQuirksServersOpenldap
+    ) -> None:
         """Test converting OpenLDAP objectClass to RFC format."""
         oc_data = {
             "oid": "2.5.6.6",
@@ -244,7 +256,9 @@ class TestOpenldapSchemaQuirkConvertObjectClass:
         result = openldap_quirk.convert_objectclass_to_rfc(oc_data)
         assert hasattr(result, "is_success")
 
-    def test_convert_objectclass_from_rfc(self, openldap_quirk: FlextLdifQuirksServersOpenldap) -> None:
+    def test_convert_objectclass_from_rfc(
+        self, openldap_quirk: FlextLdifQuirksServersOpenldap
+    ) -> None:
         """Test converting RFC objectClass to OpenLDAP format."""
         rfc_data = {
             "oid": "2.5.6.6",
@@ -266,7 +280,9 @@ class TestOpenldapSchemaQuirkWriteAttribute:
         """Create OpenLDAP quirk instance."""
         return FlextLdifQuirksServersOpenldap()
 
-    def test_write_attribute_to_rfc(self, openldap_quirk: FlextLdifQuirksServersOpenldap) -> None:
+    def test_write_attribute_to_rfc(
+        self, openldap_quirk: FlextLdifQuirksServersOpenldap
+    ) -> None:
         """Test writing attribute to RFC format string."""
         attr_data = {
             "oid": "2.5.4.3",
@@ -291,7 +307,9 @@ class TestOpenldapSchemaQuirkWriteObjectClass:
         """Create OpenLDAP quirk instance."""
         return FlextLdifQuirksServersOpenldap()
 
-    def test_write_objectclass_to_rfc(self, openldap_quirk: FlextLdifQuirksServersOpenldap) -> None:
+    def test_write_objectclass_to_rfc(
+        self, openldap_quirk: FlextLdifQuirksServersOpenldap
+    ) -> None:
         """Test writing objectClass to RFC format string."""
         oc_data = {
             "oid": "2.5.6.6",
@@ -317,25 +335,33 @@ class TestOpenldapAclQuirkCanHandleAcl:
         """Create OpenLDAP quirk instance."""
         return FlextLdifQuirksServersOpenldap()
 
-    def test_can_handle_to_by_acl(self, openldap_quirk: FlextLdifQuirksServersOpenldap) -> None:
+    def test_can_handle_to_by_acl(
+        self, openldap_quirk: FlextLdifQuirksServersOpenldap
+    ) -> None:
         """Test detection of OpenLDAP 'to <what> by' ACL format."""
         acl_line = "to attrs=userPassword by self write by anonymous auth by * none"
         acl_quirk = openldap_quirk.AclQuirk()
         assert isinstance(acl_quirk.can_handle_acl(acl_line), bool)
 
-    def test_can_handle_indexed_acl(self, openldap_quirk: FlextLdifQuirksServersOpenldap) -> None:
+    def test_can_handle_indexed_acl(
+        self, openldap_quirk: FlextLdifQuirksServersOpenldap
+    ) -> None:
         """Test detection of indexed OpenLDAP ACL."""
         acl_line = "{0}to * by * read"
         acl_quirk = openldap_quirk.AclQuirk()
         assert isinstance(acl_quirk.can_handle_acl(acl_line), bool)
 
-    def test_can_handle_olcaccess_acl(self, openldap_quirk: FlextLdifQuirksServersOpenldap) -> None:
+    def test_can_handle_olcaccess_acl(
+        self, openldap_quirk: FlextLdifQuirksServersOpenldap
+    ) -> None:
         """Test detection of olcAccess attribute format."""
         acl_line = "olcAccess: to * by * read"
         acl_quirk = openldap_quirk.AclQuirk()
         assert isinstance(acl_quirk.can_handle_acl(acl_line), bool)
 
-    def test_can_handle_non_acl(self, openldap_quirk: FlextLdifQuirksServersOpenldap) -> None:
+    def test_can_handle_non_acl(
+        self, openldap_quirk: FlextLdifQuirksServersOpenldap
+    ) -> None:
         """Test rejection of non-OpenLDAP ACL format."""
         acl_line = "some random text"
         acl_quirk = openldap_quirk.AclQuirk()
@@ -350,7 +376,9 @@ class TestOpenldapAclQuirkParseAcl:
         """Create OpenLDAP quirk instance."""
         return FlextLdifQuirksServersOpenldap()
 
-    def test_parse_basic_acl(self, openldap_quirk: FlextLdifQuirksServersOpenldap) -> None:
+    def test_parse_basic_acl(
+        self, openldap_quirk: FlextLdifQuirksServersOpenldap
+    ) -> None:
         """Test parsing basic OpenLDAP ACL."""
         acl_line = "to * by * read"
         acl_quirk = openldap_quirk.AclQuirk()
@@ -360,21 +388,27 @@ class TestOpenldapAclQuirkParseAcl:
             acl_data = result.unwrap()
             assert isinstance(acl_data, dict)
 
-    def test_parse_attribute_acl(self, openldap_quirk: FlextLdifQuirksServersOpenldap) -> None:
+    def test_parse_attribute_acl(
+        self, openldap_quirk: FlextLdifQuirksServersOpenldap
+    ) -> None:
         """Test parsing attribute-specific ACL."""
         acl_line = "to attrs=userPassword by self write by anonymous auth by * none"
         acl_quirk = openldap_quirk.AclQuirk()
         result = acl_quirk.parse_acl(acl_line)
         assert hasattr(result, "is_success")
 
-    def test_parse_indexed_acl(self, openldap_quirk: FlextLdifQuirksServersOpenldap) -> None:
+    def test_parse_indexed_acl(
+        self, openldap_quirk: FlextLdifQuirksServersOpenldap
+    ) -> None:
         """Test parsing indexed ACL with {n} prefix."""
         acl_line = "{0}to * by * read"
         acl_quirk = openldap_quirk.AclQuirk()
         result = acl_quirk.parse_acl(acl_line)
         assert hasattr(result, "is_success")
 
-    def test_parse_olcaccess_acl(self, openldap_quirk: FlextLdifQuirksServersOpenldap) -> None:
+    def test_parse_olcaccess_acl(
+        self, openldap_quirk: FlextLdifQuirksServersOpenldap
+    ) -> None:
         """Test parsing olcAccess format ACL."""
         acl_line = "olcAccess: to * by * read"
         acl_quirk = openldap_quirk.AclQuirk()
@@ -390,7 +424,9 @@ class TestOpenldapAclQuirkConvertAcl:
         """Create OpenLDAP quirk instance."""
         return FlextLdifQuirksServersOpenldap()
 
-    def test_convert_acl_to_rfc(self, openldap_quirk: FlextLdifQuirksServersOpenldap) -> None:
+    def test_convert_acl_to_rfc(
+        self, openldap_quirk: FlextLdifQuirksServersOpenldap
+    ) -> None:
         """Test converting OpenLDAP ACL to RFC format."""
         acl_quirk = openldap_quirk.AclQuirk()
         acl_data = {
@@ -402,7 +438,9 @@ class TestOpenldapAclQuirkConvertAcl:
         result = acl_quirk.convert_acl_to_rfc(acl_data)
         assert hasattr(result, "is_success")
 
-    def test_convert_acl_from_rfc(self, openldap_quirk: FlextLdifQuirksServersOpenldap) -> None:
+    def test_convert_acl_from_rfc(
+        self, openldap_quirk: FlextLdifQuirksServersOpenldap
+    ) -> None:
         """Test converting RFC ACL to OpenLDAP format."""
         acl_quirk = openldap_quirk.AclQuirk()
         rfc_data = {
@@ -413,7 +451,9 @@ class TestOpenldapAclQuirkConvertAcl:
         result = acl_quirk.convert_acl_from_rfc(rfc_data)
         assert hasattr(result, "is_success")
 
-    def test_write_acl_to_rfc(self, openldap_quirk: FlextLdifQuirksServersOpenldap) -> None:
+    def test_write_acl_to_rfc(
+        self, openldap_quirk: FlextLdifQuirksServersOpenldap
+    ) -> None:
         """Test writing ACL in RFC format."""
         acl_quirk = openldap_quirk.AclQuirk()
         acl_data = {
@@ -438,7 +478,9 @@ class TestOpenldapEntryQuirkCanHandleEntry:
         """Create OpenLDAP quirk instance."""
         return FlextLdifQuirksServersOpenldap()
 
-    def test_can_handle_config_entry(self, openldap_quirk: FlextLdifQuirksServersOpenldap) -> None:
+    def test_can_handle_config_entry(
+        self, openldap_quirk: FlextLdifQuirksServersOpenldap
+    ) -> None:
         """Test detection of cn=config entries."""
         dn = "cn=config"
         attributes = {"objectClass": ["olcBackendConfig"]}
@@ -454,7 +496,9 @@ class TestOpenldapEntryQuirkCanHandleEntry:
         entry_quirk = openldap_quirk.EntryQuirk()
         assert isinstance(entry_quirk.can_handle_entry(dn, attributes), bool)
 
-    def test_can_handle_standard_entry(self, openldap_quirk: FlextLdifQuirksServersOpenldap) -> None:
+    def test_can_handle_standard_entry(
+        self, openldap_quirk: FlextLdifQuirksServersOpenldap
+    ) -> None:
         """Test handling of standard LDAP entries."""
         dn = "uid=user,ou=people,dc=example,dc=com"
         attributes = {"objectClass": ["inetOrgPerson"], "uid": ["user"]}
@@ -480,7 +524,9 @@ class TestOpenldapEntryQuirkProcessEntry:
             / "openldap2_entries_fixtures.ldif"
         )
 
-    def test_process_config_entry(self, openldap_quirk: FlextLdifQuirksServersOpenldap) -> None:
+    def test_process_config_entry(
+        self, openldap_quirk: FlextLdifQuirksServersOpenldap
+    ) -> None:
         """Test processing cn=config entry."""
         entry_quirk = openldap_quirk.EntryQuirk()
         dn = "cn=config"
@@ -491,7 +537,9 @@ class TestOpenldapEntryQuirkProcessEntry:
         result = entry_quirk.process_entry(dn, attributes)
         assert hasattr(result, "is_success")
 
-    def test_process_standard_entry(self, openldap_quirk: FlextLdifQuirksServersOpenldap) -> None:
+    def test_process_standard_entry(
+        self, openldap_quirk: FlextLdifQuirksServersOpenldap
+    ) -> None:
         """Test processing standard directory entry."""
         entry_quirk = openldap_quirk.EntryQuirk()
         dn = "uid=ldapuser,ou=people,dc=example,dc=com"
@@ -506,7 +554,9 @@ class TestOpenldapEntryQuirkProcessEntry:
         assert hasattr(result, "is_success")
 
     def test_process_entry_from_fixture(
-        self, openldap_quirk: FlextLdifQuirksServersOpenldap, openldap_entries_fixture: Path
+        self,
+        openldap_quirk: FlextLdifQuirksServersOpenldap,
+        openldap_entries_fixture: Path,
     ) -> None:
         """Test processing entries from real OpenLDAP fixture."""
         if not openldap_entries_fixture.exists():
@@ -528,7 +578,9 @@ class TestOpenldapEntryQuirkConvertEntry:
         """Create OpenLDAP quirk instance."""
         return FlextLdifQuirksServersOpenldap()
 
-    def test_convert_entry_to_rfc(self, openldap_quirk: FlextLdifQuirksServersOpenldap) -> None:
+    def test_convert_entry_to_rfc(
+        self, openldap_quirk: FlextLdifQuirksServersOpenldap
+    ) -> None:
         """Test converting OpenLDAP entry to RFC format."""
         entry_quirk = openldap_quirk.EntryQuirk()
         entry_dict = {

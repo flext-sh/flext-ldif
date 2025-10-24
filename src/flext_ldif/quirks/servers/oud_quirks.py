@@ -174,9 +174,6 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
     def can_handle_objectclass(self, oc_definition: str) -> bool:  # noqa: ARG002
         """Check if this objectClass can be handled (always returns True).
 
-        NOTE: All filtering is handled by AlgarOudMigConstants (BLOCKED_OBJECTCLASSES).
-        This method returns True for all objectClasses - filtering is NOT a quirk responsibility.
-
         Args:
             oc_definition: ObjectClass definition string (unused, required by interface)
 
@@ -184,8 +181,6 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
             True - all objectClasses are passed through to migration service for filtering
 
         """
-        # Quirks do NOT filter - return True for all objectClasses
-        # Migration service uses AlgarOudMigConstants.Schema.BLOCKED_OBJECTCLASSES
         return True
 
     def parse_objectclass(self, oc_definition: str) -> FlextResult[dict[str, object]]:
@@ -800,9 +795,7 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
 
                 if name_lower in auxiliary_without_sup:
                     oud_data[FlextLdifConstants.DictKeys.SUP] = "top"
-                    logger.debug(
-                        f"Fixed missing SUP for AUXILIARY class {name_value}"
-                    )
+                    logger.debug(f"Fixed missing SUP for AUXILIARY class {name_value}")
 
             return FlextResult[dict[str, object]].ok(oud_data)
 
@@ -871,9 +864,6 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
                         objectclasses_raw.append((oc_def, oc_data))
 
             # PHASE 3: Pass all objectClasses through to migration service
-            # NOTE: Filtering is NOT the responsibility of quirks.
-            # All objectClass filtering is handled by AlgarOudMigConstants
-            # (BLOCKED_OBJECTCLASSES) in the migration service.
             for _oc_def_str, oc_data in objectclasses_raw:
                 objectclasses_parsed.append(oc_data)
 
@@ -1095,9 +1085,7 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
                     f"OUD ACL→RFC conversion failed: {e}"
                 )
 
-        def _convert_constraint_to_targattrfilters(
-            self, oid_constraint: str
-        ) -> str:
+        def _convert_constraint_to_targattrfilters(self, oid_constraint: str) -> str:
             """Convert OID added_object_constraint to OUD targattrfilters format.
 
             OID format: added_object_constraint=(objectClass=person)
@@ -1134,7 +1122,9 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
             try:
                 # PHASE 1: Validate non-empty permissions
                 permissions = acl_data.get("permissions", [])
-                if not permissions or (isinstance(permissions, list) and len(permissions) == 0):
+                if not permissions or (
+                    isinstance(permissions, list) and len(permissions) == 0
+                ):
                     return FlextResult[dict[str, object]].fail(
                         "RFC ACL has no permissions - cannot convert to OUD"
                     )
@@ -1146,8 +1136,8 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
                 if "_oid_constraint" in acl_data:
                     constraint = str(acl_data["_oid_constraint"])
                     # Convert OID constraint to OUD targattrfilters format
-                    oud_data["targattrfilters"] = self._convert_constraint_to_targattrfilters(
-                        constraint
+                    oud_data["targattrfilters"] = (
+                        self._convert_constraint_to_targattrfilters(constraint)
                     )
                     del oud_data["_oid_constraint"]
 
@@ -1172,15 +1162,21 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
                     metadata = acl_data["_metadata"]
                     if isinstance(metadata, dict):
                         extensions = metadata.get("extensions", {})
-                        if isinstance(extensions, dict) and extensions.get("is_multiline"):
+                        if isinstance(extensions, dict) and extensions.get(
+                            "is_multiline"
+                        ):
                             # Ensure OUD writer uses multi-line format
                             if "_metadata" not in oud_data:
                                 oud_data["_metadata"] = {}
                             if isinstance(oud_data["_metadata"], dict):
                                 if "extensions" not in oud_data["_metadata"]:
                                     oud_data["_metadata"]["extensions"] = {}
-                                if isinstance(oud_data["_metadata"]["extensions"], dict):
-                                    oud_data["_metadata"]["extensions"]["is_multiline"] = True
+                                if isinstance(
+                                    oud_data["_metadata"]["extensions"], dict
+                                ):
+                                    oud_data["_metadata"]["extensions"][
+                                        "is_multiline"
+                                    ] = True
 
                 # Set OUD format metadata
                 dk = FlextLdifConstants.DictKeys
@@ -1271,6 +1267,18 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
                 ):
                     targetattr_op = actual_acl_data.get("targetattr_op", "=")
                     target_attr_value = actual_acl_data.get("targetattr", "*")
+
+                    # FIX 1: Convert comma-separated attrs to || format for OUD
+                    # OID uses: "attr1,attr2,attr3" but OUD requires: "attr1 || attr2 || attr3"
+                    if (
+                        isinstance(target_attr_value, str)
+                        and "," in target_attr_value
+                        and target_attr_value != "*"
+                    ):
+                        # Split by comma (with optional spaces), join with ||
+                        attrs = [attr.strip() for attr in target_attr_value.split(",")]
+                        target_attr_value = " || ".join(attrs)
+
                     aci_parts.append(
                         f'(targetattr{targetattr_op}"{target_attr_value}")'
                     )
@@ -1302,6 +1310,36 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
                     if isinstance(actual_acl_data, dict)
                     else "Generated ACL"
                 )
+
+                # FIX 3: Clean acl_name to avoid ACI syntax conflicts
+                # The acl_name contains the original OID ACL text, which may have
+                # embedded quotes that conflict with the outer ACI string quotes.
+                # We need to remove these embedded quotes while preserving the
+                # original DN and permission syntax as much as possible.
+                if isinstance(acl_name, str):
+                    # Remove embedded quotes around DN values and attributes
+                    # e.g., group="cn=Admin,dc=com" (browse) → group=cn=Admin,dc=com (browse)
+                    # Add space after DN to preserve formatting: ...dc=com (browse)
+                    acl_name = re.sub(
+                        r'(by|group|dnattr)="([^"]+)"\s*', r"\1=\2 ", acl_name
+                    )
+                    acl_name = re.sub(r'attr=\("([^"]+)"\)\s*', r"attr=(\1) ", acl_name)
+
+                    # Remove negative permissions from permission lists
+                    # OID uses "nowrite", "noadd", etc. but OUD doesn't recognize these
+                    acl_name = re.sub(r",\s*no\w+", "", acl_name)  # ",nowrite" → ""
+                    acl_name = re.sub(
+                        r"\(no\w+,\s*", "(", acl_name
+                    )  # "(nowrite," → "("
+                    acl_name = re.sub(
+                        r"\(no\w+\)", "()", acl_name
+                    )  # "(nowrite)" → "()"
+
+                    # Remove empty permission lists from acl_name
+                    # e.g., "by * ()" → "by *"
+                    # Empty lists confuse OUD parser even inside quoted strings
+                    acl_name = re.sub(r"\(\s*\)", "", acl_name)
+
                 aci_parts.append(f'(version {version}; acl "{acl_name}";')
 
                 # Permissions and bind rules
@@ -1335,6 +1373,14 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
                                     rule_type = rule.get("type", "userdn")
                                     rule_value = rule.get("value", "")
 
+                                    # FIX 2: Normalize DN - remove spaces after commas
+                                    # OID ACLs have: "cn=Admin, cn=groups,..." but OUD requires: "cn=Admin,cn=groups,..."
+                                    if (
+                                        isinstance(rule_value, str)
+                                        and "," in rule_value
+                                    ):
+                                        rule_value = re.sub(r",\s+", ",", rule_value)
+
                                     permission_line = (
                                         f"{action} ({ops_str}) "
                                         f'{rule_type}="{rule_value}";'
@@ -1364,18 +1410,20 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
                 # Determine if multi-line format should be used
                 # Force multi-line if 2+ permission rules OR if metadata flag set
                 min_rules_for_multiline = 2
+                # Check if should use multiline format
+                use_multiline_by_metadata = False
+                if isinstance(actual_acl_data, dict):
+                    metadata = actual_acl_data.get("_metadata")
+                    if isinstance(metadata, dict):
+                        extensions = metadata.get("extensions")
+                        if isinstance(extensions, dict):
+                            use_multiline_by_metadata = extensions.get(
+                                "is_multiline", False
+                            )
+
                 should_use_multiline = (
                     len(permission_lines) >= min_rules_for_multiline
-                    or (
-                        isinstance(actual_acl_data, dict)
-                        and isinstance(actual_acl_data.get("_metadata"), dict)
-                        and isinstance(
-                            actual_acl_data.get("_metadata", {}).get("extensions", {}), dict  # type: ignore[arg-type]
-                        )
-                        and actual_acl_data.get("_metadata", {}).get("extensions", {}).get(  # type: ignore[arg-type, union-attr]
-                            "is_multiline", False
-                        )
-                    )
+                    or use_multiline_by_metadata
                 )
 
                 # Format output (multi-line vs single-line)
@@ -1387,9 +1435,9 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
                     first_line = aci_parts[0]  # (targetattr="...")
                     # Check if we have targattrfilters or targetscope in subsequent parts
                     version_idx = 1
-                    while version_idx < len(aci_parts) and not aci_parts[version_idx].startswith(
-                        "(version"
-                    ):
+                    while version_idx < len(aci_parts) and not aci_parts[
+                        version_idx
+                    ].startswith("(version"):
                         first_line += " " + aci_parts[version_idx]
                         version_idx += 1
                     result_lines.append(first_line)
@@ -1399,10 +1447,14 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
                         result_lines.append("  " + aci_parts[version_idx])
 
                     # Lines 3+: permission rules (each on own line with indentation)
-                    result_lines.extend("    " + perm_line for perm_line in permission_lines)
+                    result_lines.extend(
+                        "    " + perm_line for perm_line in permission_lines
+                    )
 
-                    # Close the ACI on last line
-                    result_lines[-1] = result_lines[-1].rstrip(";") + ")"
+                    # Close the ACI on the last permission line (keep semicolon)
+                    # OUD requires semicolons on ALL permission rules, then closing paren
+                    # Format: "    deny (ops) userdn="...";)"
+                    result_lines[-1] += ")"
 
                     aci_string = "\n".join(result_lines)
                 else:
@@ -1585,10 +1637,8 @@ class FlextLdifQuirksServersOud(FlextLdifQuirksBaseSchemaQuirk):
                         "_modify_add_objectclasses"
                     ]
 
-                # NOTE: Filtering is NOT the responsibility of quirks.
-                # All attribute/objectClass filtering is handled by AlgarOudMigConstants
-                # (BLOCKED_ATTRIBUTES, BLOCKED_OBJECTCLASSES) in the migration service.
-                # Quirks ONLY perform FORMAT transformations (e.g., boolean 0/1 → TRUE/FALSE).
+                # NOTE: ACL transformation is handled by the pipeline using quirks system
+                # (OID → RFC → OUD conversion). Quirks only perform FORMAT transformations.
                 #
                 # LDAP SCHEMA RULE: Only ONE STRUCTURAL objectClass per entry is allowed.
                 # If multiple STRUCTURAL classes exist, OUD will reject the entry during sync.
