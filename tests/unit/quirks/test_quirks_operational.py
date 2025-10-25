@@ -77,7 +77,7 @@ class TestOidQuirksWithRealFixtures:
         # Verify essential elements preserved
         oid = extract_oid(attr_def)
         if oid:
-            assert "oid" in parsed, f"OID not in parsed attribute: {parsed}"
+            assert hasattr(parsed, "oid"), f"OID not in parsed attribute: {parsed}"
 
     @pytest.mark.parametrize("oc_index", range(5))
     def test_parse_real_oid_objectclasses_from_fixtures(

@@ -18,17 +18,18 @@ from __future__ import annotations
 import logging
 import re
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from flext_core import FlextResult
 
 from flext_ldif.constants import FlextLdifConstants
+from flext_ldif.models import FlextLdifModels
 from flext_ldif.quirks.registry import FlextLdifQuirksRegistry
 from flext_ldif.rfc_ldif_writer import FlextLdifRfcLdifWriter
 
 if TYPE_CHECKING:
     from flext_ldif.quirks.base import (
-        FlextLdifQuirksBaseSchemaQuirk,
+        BaseSchemaQuirk,
     )
 
 logger = logging.getLogger(__name__)
@@ -49,8 +50,8 @@ class FlextLdifFileWriterService:
             str, object
         ],  # category -> filename mapping (flexible type for compatibility)
         target_server: str,
-        target_schema_quirk: FlextLdifQuirksBaseSchemaQuirk | None,
-        source_schema_quirk: FlextLdifQuirksBaseSchemaQuirk | None,
+        target_schema_quirk: BaseSchemaQuirk | None,
+        source_schema_quirk: BaseSchemaQuirk | None,
         schema_whitelist_rules: dict[str, object] | None = None,
     ) -> None:
         """Initialize file writer service.
@@ -491,9 +492,11 @@ class FlextLdifFileWriterService:
 
             # Step 2: Convert to RFC canonical format
             if schema_type == "attribute":
-                to_rfc_result = source_quirk.convert_attribute_to_rfc(schema_data)
+                attr_data = cast("FlextLdifModels.SchemaAttribute", schema_data)
+                to_rfc_result = source_quirk.convert_attribute_to_rfc(attr_data)
             else:
-                to_rfc_result = source_quirk.convert_objectclass_to_rfc(schema_data)
+                oc_data = cast("FlextLdifModels.SchemaObjectClass", schema_data)
+                to_rfc_result = source_quirk.convert_objectclass_to_rfc(oc_data)
 
             if to_rfc_result.is_failure:
                 transformed.append(str(schema_str))
@@ -501,15 +504,13 @@ class FlextLdifFileWriterService:
 
             rfc_data = to_rfc_result.unwrap()
 
-            # Step 3: Add X-ORIGIN if not present
-            if "x_origin" not in rfc_data:
-                rfc_data["x_origin"] = "user defined"
-
-            # Step 4: Convert from RFC to TARGET format
+            # Step 3: Convert from RFC to TARGET format
             if schema_type == "attribute":
-                from_rfc_result = target_quirk.convert_attribute_from_rfc(rfc_data)
+                rfc_attr = cast("FlextLdifModels.SchemaAttribute", rfc_data)
+                from_rfc_result = target_quirk.convert_attribute_from_rfc(rfc_attr)
             else:
-                from_rfc_result = target_quirk.convert_objectclass_from_rfc(rfc_data)
+                rfc_oc = cast("FlextLdifModels.SchemaObjectClass", rfc_data)
+                from_rfc_result = target_quirk.convert_objectclass_from_rfc(rfc_oc)
 
             if from_rfc_result.is_failure:
                 transformed.append(str(schema_str))
@@ -519,9 +520,11 @@ class FlextLdifFileWriterService:
 
             # Step 5: Format to LDIF string
             if schema_type == "attribute":
-                format_result = target_quirk.write_attribute_to_rfc(target_data)
+                target_attr = cast("FlextLdifModels.SchemaAttribute", target_data)
+                format_result = target_quirk.write_attribute_to_rfc(target_attr)
             else:
-                format_result = target_quirk.write_objectclass_to_rfc(target_data)
+                target_oc = cast("FlextLdifModels.SchemaObjectClass", target_data)
+                format_result = target_quirk.write_objectclass_to_rfc(target_oc)
 
             if format_result.is_success:
                 transformed.append(format_result.unwrap())

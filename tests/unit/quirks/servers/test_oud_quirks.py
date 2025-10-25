@@ -16,6 +16,7 @@ from typing import cast
 import pytest
 
 from flext_ldif.constants import FlextLdifConstants
+from flext_ldif.models import FlextLdifModels
 from flext_ldif.quirks.servers.oud_quirks import FlextLdifQuirksServersOud
 
 from ....fixtures.loader import FlextLdifFixtures
@@ -79,9 +80,10 @@ class TestOudSchemaQuirks:
         assert result.is_success, f"Failed to parse attribute: {result.error}"
 
         parsed = result.unwrap()
-        assert parsed[FlextLdifConstants.DictKeys.SERVER_TYPE] == "oud"
-        assert "oid" in parsed
-        assert "name" in parsed
+        assert parsed.metadata is not None
+        assert parsed.metadata.quirk_type == "oud"
+        assert parsed.oid is not None
+        assert parsed.name is not None
 
     def test_parse_oracle_attribute_from_fixtures(
         self, oud_quirk: FlextLdifQuirksServersOud, oud_fixtures: FlextLdifFixtures.OUD
@@ -109,7 +111,8 @@ class TestOudSchemaQuirks:
         assert result.is_success, f"Failed to parse fixture attribute: {result.error}"
 
         parsed = result.unwrap()
-        assert parsed[FlextLdifConstants.DictKeys.SERVER_TYPE] == "oud"
+        assert parsed.metadata is not None
+        assert parsed.metadata.quirk_type == "oud"
 
     def test_can_handle_oracle_objectclass(
         self, oud_quirk: FlextLdifQuirksServersOud
@@ -145,8 +148,8 @@ class TestOudSchemaQuirks:
 
         parsed = result.unwrap()
         assert parsed[FlextLdifConstants.DictKeys.SERVER_TYPE] == "oud"
-        assert "oid" in parsed
-        assert "name" in parsed
+        assert hasattr(parsed, "oid")
+        assert hasattr(parsed, "name")
 
     def test_parse_oracle_objectclass_from_fixtures(
         self, oud_quirk: FlextLdifQuirksServersOud, oud_fixtures: FlextLdifFixtures.OUD
@@ -177,41 +180,46 @@ class TestOudSchemaQuirks:
         self, oud_quirk: FlextLdifQuirksServersOud
     ) -> None:
         """Test converting OUD attribute to RFC-compliant format."""
-        oud_attr_data: dict[str, object] = {
-            "oid": "2.16.840.1.113894.1.1.1",
-            "name": "orclVersion",
-            "desc": "Oracle version",
-            "syntax": "1.3.6.1.4.1.1466.115.121.1.27",
-            "equality": "integerMatch",
-        }
+        oud_attr_data = FlextLdifModels.SchemaAttribute(
+            oid="2.16.840.1.113894.1.1.1",
+            name="orclVersion",
+            desc="Oracle version",
+            syntax="1.3.6.1.4.1.1466.115.121.1.27",
+            equality="integerMatch",
+            sup=None,
+            ordering=None,
+            substr=None,
+            length=None,
+            usage=None,
+        )
 
         result = oud_quirk.convert_attribute_to_rfc(oud_attr_data)
         assert result.is_success
 
         rfc_data = result.unwrap()
-        assert rfc_data[FlextLdifConstants.DictKeys.OID] == "2.16.840.1.113894.1.1.1"
-        assert rfc_data[FlextLdifConstants.DictKeys.NAME] == "orclVersion"
+        assert rfc_data.oid == "2.16.840.1.113894.1.1.1"
+        assert rfc_data.name == "orclVersion"
 
     def test_convert_objectclass_to_rfc(
         self, oud_quirk: FlextLdifQuirksServersOud
     ) -> None:
         """Test converting OUD objectClass to RFC-compliant format."""
-        oud_oc_data: dict[str, object] = {
-            "oid": "2.16.840.1.113894.2.1.1",
-            "name": "orclContext",
-            "desc": "Oracle Context",
-            "sup": "top",
-            "kind": "STRUCTURAL",
-            "must": ["cn"],
-            "may": ["orclVersion"],
-        }
+        oud_oc_data = FlextLdifModels.SchemaObjectClass(
+            oid="2.16.840.1.113894.2.1.1",
+            name="orclContext",
+            desc="Oracle Context",
+            kind="STRUCTURAL",
+            sup="top",
+            must=["cn"],
+            may=["orclVersion"],
+        )
 
         result = oud_quirk.convert_objectclass_to_rfc(oud_oc_data)
         assert result.is_success
 
         rfc_data = result.unwrap()
-        assert rfc_data[FlextLdifConstants.DictKeys.OID] == "2.16.840.1.113894.2.1.1"
-        assert rfc_data[FlextLdifConstants.DictKeys.NAME] == "orclContext"
+        assert rfc_data.oid == "2.16.840.1.113894.2.1.1"
+        assert rfc_data.name == "orclContext"
 
     def test_schema_roundtrip(self, oud_quirk: FlextLdifQuirksServersOud) -> None:
         """Test schema attribute roundtrip: parse → convert to RFC → back."""
@@ -234,8 +242,8 @@ class TestOudSchemaQuirks:
         rfc_data = rfc_result.unwrap()
 
         # Validate essential fields preserved
-        assert rfc_data[FlextLdifConstants.DictKeys.OID] == "2.16.840.1.113894.1.1.1"
-        assert rfc_data[FlextLdifConstants.DictKeys.NAME] == "orclVersion"
+        assert rfc_data.oid == "2.16.840.1.113894.1.1.1"
+        assert rfc_data.name == "orclVersion"
 
 
 class TestOudAclQuirks:
@@ -718,13 +726,18 @@ class TestOudSchemaRoundTrip:
 
     def test_write_attribute_to_rfc(self, oud_quirk: FlextLdifQuirksServersOud) -> None:
         """Test writing attribute data to RFC 4512 format."""
-        attr_data: dict[str, object] = {
-            "oid": "2.16.840.1.113894.1.1.1",
-            "name": "orclGUID",
-            "desc": "Oracle GUID",
-            "syntax": "1.3.6.1.4.1.1466.115.121.1.15",
-            "equality": "caseIgnoreMatch",
-        }
+        attr_data = FlextLdifModels.SchemaAttribute(
+            oid="2.16.840.1.113894.1.1.1",
+            name="orclGUID",
+            desc="Oracle GUID",
+            syntax="1.3.6.1.4.1.1466.115.121.1.15",
+            equality="caseIgnoreMatch",
+            sup=None,
+            ordering=None,
+            substr=None,
+            length=None,
+            usage=None,
+        )
 
         result = oud_quirk.write_attribute_to_rfc(attr_data)
         assert result.is_success, f"Failed to write attribute: {result.error}"
@@ -738,16 +751,22 @@ class TestOudSchemaRoundTrip:
         self, oud_quirk: FlextLdifQuirksServersOud
     ) -> None:
         """Test writing attribute with metadata for perfect round-trip."""
-        from flext_ldif.models import FlextLdifModels
-
         original_format = "( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
-        attr_data: dict[str, object] = {
-            "oid": "2.16.840.1.113894.1.1.1",
-            "name": "orclGUID",
-            "_metadata": FlextLdifModels.QuirkMetadata(
+        attr_data = FlextLdifModels.SchemaAttribute(
+            oid="2.16.840.1.113894.1.1.1",
+            name="orclGUID",
+            desc="Oracle GUID",
+            syntax="1.3.6.1.4.1.1466.115.121.1.15",
+            sup=None,
+            equality=None,
+            ordering=None,
+            substr=None,
+            length=None,
+            usage=None,
+            metadata=FlextLdifModels.QuirkMetadata(
                 original_format=original_format, quirk_type="oud"
             ),
-        }
+        )
 
         result = oud_quirk.write_attribute_to_rfc(attr_data)
         assert result.is_success
@@ -792,15 +811,15 @@ class TestOudSchemaRoundTrip:
         self, oud_quirk: FlextLdifQuirksServersOud
     ) -> None:
         """Test writing objectClass data to RFC 4512 format."""
-        oc_data: dict[str, object] = {
-            "oid": "2.16.840.1.113894.2.1.1",
-            "name": "orclContext",
-            "desc": "Oracle Context",
-            "sup": "top",
-            "kind": "STRUCTURAL",
-            "must": ["cn"],
-            "may": ["description", "orclVersion"],
-        }
+        oc_data = FlextLdifModels.SchemaObjectClass(
+            oid="2.16.840.1.113894.2.1.1",
+            name="orclContext",
+            desc="Oracle Context",
+            kind="STRUCTURAL",
+            sup="top",
+            must=["cn"],
+            may=["description", "orclVersion"],
+        )
 
         result = oud_quirk.write_objectclass_to_rfc(oc_data)
         assert result.is_success, f"Failed to write objectClass: {result.error}"
@@ -1238,18 +1257,25 @@ class TestOudSyntaxConversion:
         self, oud_quirk: FlextLdifQuirksServersOud
     ) -> None:
         """Test that syntax OID replacement happens during conversion."""
-        attr_data: dict[str, object] = {
-            "oid": "2.16.840.1.113894.1.1.1",
-            "name": "testAttr",
-            "syntax": "1.3.6.1.4.1.1466.115.121.1.13",  # Deprecated - should be replaced
-        }
+        attr_data = FlextLdifModels.SchemaAttribute(
+            oid="2.16.840.1.113894.1.1.1",
+            name="testAttr",
+            desc="Test attribute",
+            syntax="1.3.6.1.4.1.1466.115.121.1.13",  # Deprecated - should be replaced
+            sup=None,
+            equality=None,
+            ordering=None,
+            substr=None,
+            length=None,
+            usage=None,
+        )
 
         result = oud_quirk.convert_attribute_to_rfc(attr_data)
         assert result.is_success
 
         rfc_data = result.unwrap()
         # Converted syntax should be valid
-        assert "syntax" in rfc_data
+        assert rfc_data.syntax is not None
 
 
 class TestOudExtractSchemas:
@@ -1340,8 +1366,8 @@ class TestOudParseEdgeCases:
         assert result.is_success
 
         parsed = result.unwrap()
-        assert "oid" in parsed
-        assert "name" in parsed
+        assert hasattr(parsed, "oid")
+        assert hasattr(parsed, "name")
 
     def test_parse_objectclass_with_multiple_sup(
         self, oud_quirk: FlextLdifQuirksServersOud
@@ -1356,8 +1382,8 @@ class TestOudParseEdgeCases:
         assert result.is_success
 
         parsed = result.unwrap()
-        assert "oid" in parsed
-        assert "name" in parsed
+        assert hasattr(parsed, "oid")
+        assert hasattr(parsed, "name")
 
     def test_parse_attribute_with_extensions(
         self, oud_quirk: FlextLdifQuirksServersOud
@@ -1373,7 +1399,7 @@ class TestOudParseEdgeCases:
         assert result.is_success
 
         parsed = result.unwrap()
-        assert parsed.get("oid") == "2.16.840.1.113894.1.1.1"
+        assert parsed.oid == "2.16.840.1.113894.1.1.1"
 
     def test_parse_objectclass_with_extensions(
         self, oud_quirk: FlextLdifQuirksServersOud
@@ -1389,7 +1415,7 @@ class TestOudParseEdgeCases:
         assert result.is_success
 
         parsed = result.unwrap()
-        assert parsed.get("oid") == "2.16.840.1.113894.2.1.1"
+        assert parsed.oid == "2.16.840.1.113894.2.1.1"
 
 
 class TestOudConversionEdgeCases:
@@ -1404,35 +1430,43 @@ class TestOudConversionEdgeCases:
         self, oud_quirk: FlextLdifQuirksServersOud
     ) -> None:
         """Test converting attribute with missing syntax."""
-        attr_data: dict[str, object] = {
-            "oid": "2.16.840.1.113894.1.1.1",
-            "name": "orclVersion",
+        attr_data = FlextLdifModels.SchemaAttribute(
+            oid="2.16.840.1.113894.1.1.1",
+            name="orclVersion",
+            desc="Oracle version",
             # Missing syntax - should still convert
-        }
+            sup=None,
+            equality=None,
+            ordering=None,
+            substr=None,
+            syntax=None,
+            length=None,
+            usage=None,
+        )
 
         result = oud_quirk.convert_attribute_to_rfc(attr_data)
         assert result.is_success
 
         rfc_data = result.unwrap()
-        assert rfc_data[FlextLdifConstants.DictKeys.OID] == "2.16.840.1.113894.1.1.1"
+        assert rfc_data.oid == "2.16.840.1.113894.1.1.1"
 
     def test_convert_objectclass_to_rfc_with_no_must_may(
         self, oud_quirk: FlextLdifQuirksServersOud
     ) -> None:
         """Test converting objectClass without MUST or MAY clauses."""
-        oc_data: dict[str, object] = {
-            "oid": "2.16.840.1.113894.2.1.1",
-            "name": "orclContext",
-            "sup": "top",
-            "kind": "AUXILIARY",
-            # No must or may
-        }
+        oc_data = FlextLdifModels.SchemaObjectClass(
+            oid="2.16.840.1.113894.2.1.1",
+            name="orclContext",
+            desc="Oracle Context object class",
+            kind="AUXILIARY",
+            sup="top",
+        )
 
         result = oud_quirk.convert_objectclass_to_rfc(oc_data)
         assert result.is_success
 
         rfc_data = result.unwrap()
-        assert rfc_data[FlextLdifConstants.DictKeys.OID] == "2.16.840.1.113894.2.1.1"
+        assert rfc_data.oid == "2.16.840.1.113894.2.1.1"
 
     def test_convert_attribute_from_rfc_with_metadata(
         self, oud_quirk: FlextLdifQuirksServersOud
@@ -1486,11 +1520,13 @@ class TestSchemaDependencyValidation:
         self, oud_quirk: FlextLdifQuirksServersOud
     ) -> None:
         """Test validation passes when all MUST attributes are available."""
-        oc_data: dict[str, object] = {
-            "name": "person",
-            "oid": "2.5.6.6",
-            "must": ["cn", "sn"],  # Both common attributes
-        }
+        oc_data = FlextLdifModels.SchemaObjectClass(
+            oid="2.5.6.6",
+            name="person",
+            desc="A person object class",
+            sup="top",
+            must=["cn", "sn"],  # Both common attributes,
+        )
 
         available_attrs = {"cn", "sn", "objectclass", "uid"}
 
@@ -1506,11 +1542,13 @@ class TestSchemaDependencyValidation:
         This specifically addresses the OUD issue with changeLogEntry objectclass:
         changeLogEntry requires 'servername' but it's not in available schema.
         """
-        oc_data: dict[str, object] = {
-            "name": "changeLogEntry",
-            "oid": "2.16.840.1.113894.1.2.6",
-            "must": ["changeNumber", "servername"],
-        }
+        oc_data = FlextLdifModels.SchemaObjectClass(
+            oid="2.16.840.1.113894.1.2.6",
+            name="changeLogEntry",
+            desc="Change log entry object class",
+            sup="top",
+            must=["changeNumber", "servername"],
+        )
 
         # Missing 'servername' - only has changeNumber
         available_attrs = {"changenumber", "targetdn", "changetype"}
@@ -1527,10 +1565,13 @@ class TestSchemaDependencyValidation:
         LDAP attribute names are case-insensitive, so the validation
         should handle both lowercase and mixed-case comparisons.
         """
-        oc_data: dict[str, object] = {
-            "name": "inetOrgPerson",
-            "must": ["CN", "SN"],  # Mixed case MUST attributes
-        }
+        oc_data = FlextLdifModels.SchemaObjectClass(
+            oid="unknown",
+            name="inetOrgPerson",
+            desc="Internet organizational person object class",
+            sup="person",
+            must=["CN", "SN"],  # Mixed case MUST attributes,
+        )
 
         available_attrs = {"cn", "sn", "objectclass"}  # All lowercase
 
@@ -1542,11 +1583,12 @@ class TestSchemaDependencyValidation:
         self, oud_quirk: FlextLdifQuirksServersOud
     ) -> None:
         """Test validation passes when objectclass has no MUST attributes."""
-        oc_data: dict[str, object] = {
-            "name": "extensibleObject",
-            "oid": "1.3.6.1.4.1.1466.101196.4",
-            # No 'must' field - allows any attributes
-        }
+        oc_data = FlextLdifModels.SchemaObjectClass(
+            oid="1.3.6.1.4.1.1466.101196.4",
+            name="extensibleObject",
+            desc="Extensible object class",
+            sup="top",
+        )
 
         available_attrs: set[str] = set()  # Even empty set is ok
 
@@ -1558,11 +1600,13 @@ class TestSchemaDependencyValidation:
         self, oud_quirk: FlextLdifQuirksServersOud
     ) -> None:
         """Test validation with single MUST attribute (not in list)."""
-        oc_data: dict[str, object] = {
-            "name": "organization",
-            "oid": "2.5.6.4",
-            "must": "o",  # Single attribute, not a list
-        }
+        oc_data = FlextLdifModels.SchemaObjectClass(
+            oid="2.5.6.4",
+            name="organization",
+            desc="Organization object class",
+            sup="top",
+            must=["o"],  # Single attribute, not a list,
+        )
 
         available_attrs = {"o", "c"}
 
@@ -1617,10 +1661,13 @@ class TestSchemaDependencyValidation:
         self, oud_quirk: FlextLdifQuirksServersOud
     ) -> None:
         """Test that validate method returns proper FlextResult."""
-        oc_data: dict[str, object] = {
-            "name": "test",
-            "must": ["missing_attr"],
-        }
+        oc_data = FlextLdifModels.SchemaObjectClass(
+            oid="unknown",
+            name="test",
+            desc="Test object class",
+            sup="top",
+            must=["missing_attr"],
+        )
 
         available_attrs: set[str] = set()
 
@@ -1975,7 +2022,7 @@ class TestOudQuirksParseAttribute:
         assert result.is_success
         parsed = result.unwrap()
         assert hasattr(parsed, "name")
-        assert "name" in parsed or "oid" in parsed
+        assert hasattr(parsed, "name") or "oid" in parsed
 
     def test_parse_attribute_invalid_returns_failure(
         self, oud_quirk: FlextLdifQuirksServersOud
@@ -2080,11 +2127,18 @@ class TestOudQuirksConversion:
     ) -> None:
         """Test converting attribute from RFC format (parsed data)."""
         # Create parsed attribute data
-        rfc_attr_data: dict[str, object] = {
-            "oid": "2.16.840.1.113894.1.1.1",
-            "name": "orclGUID",
-            "syntax": "1.3.6.1.4.1.1466.115.121.1.15",
-        }
+        rfc_attr_data = FlextLdifModels.SchemaAttribute(
+            oid="2.16.840.1.113894.1.1.1",
+            name="orclGUID",
+            desc="Oracle GUID",
+            syntax="1.3.6.1.4.1.1466.115.121.1.15",
+            sup=None,
+            equality=None,
+            ordering=None,
+            substr=None,
+            length=None,
+            usage=None,
+        )
         result = oud_quirk.convert_attribute_from_rfc(rfc_attr_data)
         assert result.is_success
         converted = result.unwrap()
@@ -2095,12 +2149,13 @@ class TestOudQuirksConversion:
     ) -> None:
         """Test converting objectClass from RFC format (parsed data)."""
         # Create parsed objectClass data
-        rfc_oc_data: dict[str, object] = {
-            "oid": "2.16.840.1.113894.2.1.1",
-            "name": "orclContext",
-            "kind": "STRUCTURAL",
-            "sup": "top",
-        }
+        rfc_oc_data = FlextLdifModels.SchemaObjectClass(
+            oid="2.16.840.1.113894.2.1.1",
+            name="orclContext",
+            desc="Oracle Context object class",
+            kind="STRUCTURAL",
+            sup="top",
+        )
         result = oud_quirk.convert_objectclass_from_rfc(rfc_oc_data)
         assert result.is_success
         converted = result.unwrap()
@@ -2119,10 +2174,13 @@ class TestOudQuirksValidation:
         self, oud_quirk: FlextLdifQuirksServersOud
     ) -> None:
         """Test dependency validation with available attributes."""
-        oc_data: dict[str, object] = {
-            "name": "testClass",
-            "must": ["cn"],
-        }
+        oc_data = FlextLdifModels.SchemaObjectClass(
+            oid="unknown",
+            name="testClass",
+            desc="Test object class",
+            sup="top",
+            must=["cn"],
+        )
         available_attrs: set[str] = {"cn", "description"}
 
         result = oud_quirk.validate_objectclass_dependencies(oc_data, available_attrs)
@@ -2135,10 +2193,13 @@ class TestOudQuirksValidation:
         self, oud_quirk: FlextLdifQuirksServersOud
     ) -> None:
         """Test dependency validation with missing attributes."""
-        oc_data: dict[str, object] = {
-            "name": "testClass",
-            "must": ["missing_attr"],
-        }
+        oc_data = FlextLdifModels.SchemaObjectClass(
+            oid="unknown",
+            name="testClass",
+            desc="Test object class",
+            sup="top",
+            must=["missing_attr"],
+        )
         available_attrs: set[str] = set()
 
         result = oud_quirk.validate_objectclass_dependencies(oc_data, available_attrs)
@@ -2155,10 +2216,13 @@ class TestOudQuirksValidation:
         Custom objectclasses are allowed even with missing MUST attributes.
         OUD will validate them at startup.
         """
-        oc_data: dict[str, object] = {
-            "name": "customClass",
-            "must": ["missing_attribute"],
-        }
+        oc_data = FlextLdifModels.SchemaObjectClass(
+            oid="unknown",
+            name="customClass",
+            desc="Custom object class",
+            sup="top",
+            must=["missing_attribute"],
+        )
         available_attrs: set[str] = set()
 
         result = oud_quirk.validate_objectclass_dependencies(oc_data, available_attrs)
@@ -2185,8 +2249,8 @@ class TestOudParseAttributeComprehensive:
         result = oud_quirk.parse_attribute(attr_def)
         assert result.is_success
         parsed = result.unwrap()
-        assert parsed.get("oid") == "1.2.3.4"
-        assert parsed.get("name") == "testAttr"
+        assert parsed.oid == "1.2.3.4"
+        assert parsed.name == "testAttr"
 
     def test_parse_attribute_with_description(
         self, oud_quirk: FlextLdifQuirksServersOud
@@ -2196,7 +2260,7 @@ class TestOudParseAttributeComprehensive:
         result = oud_quirk.parse_attribute(attr_def)
         assert result.is_success
         parsed = result.unwrap()
-        assert parsed.get("desc") == "Test Attribute"
+        assert parsed.desc == "Test Attribute"
 
     def test_parse_attribute_with_syntax(
         self, oud_quirk: FlextLdifQuirksServersOud
@@ -2450,13 +2514,19 @@ class TestOudWriteMethods:
         self, oud_quirk: FlextLdifQuirksServersOud
     ) -> None:
         """Test writing parsed attribute data to RFC format."""
-        attr_data: dict[str, object] = {
-            "oid": "1.2.3.4",
-            "name": "testAttr",
-            "desc": "Test Attribute",
-            "syntax": "1.3.6.1.4.1.1466.115.121.1.15",
-            "single_value": True,
-        }
+        attr_data = FlextLdifModels.SchemaAttribute(
+            oid="1.2.3.4",
+            name="testAttr",
+            desc="Test Attribute",
+            syntax="1.3.6.1.4.1.1466.115.121.1.15",
+            single_value=True,
+            sup=None,
+            equality=None,
+            ordering=None,
+            substr=None,
+            length=None,
+            usage=None,
+        )
         result = oud_quirk.write_attribute_to_rfc(attr_data)
         assert result.is_success
         written = result.unwrap()
@@ -2468,15 +2538,15 @@ class TestOudWriteMethods:
         self, oud_quirk: FlextLdifQuirksServersOud
     ) -> None:
         """Test writing parsed objectClass data to RFC format."""
-        oc_data: dict[str, object] = {
-            "oid": "2.5.6.6",
-            "name": "person",
-            "desc": "A person",
-            "kind": "STRUCTURAL",
-            "sup": "top",
-            "must": ["cn", "sn"],
-            "may": ["description", "mail"],
-        }
+        oc_data = FlextLdifModels.SchemaObjectClass(
+            oid="2.5.6.6",
+            name="person",
+            desc="A person",
+            kind="STRUCTURAL",
+            sup="top",
+            must=["cn", "sn"],
+            may=["description", "mail"],
+        )
         result = oud_quirk.write_objectclass_to_rfc(oc_data)
         assert result.is_success
         written = result.unwrap()
@@ -2520,10 +2590,13 @@ class TestOudValidateDependencies:
         self, oud_quirk: FlextLdifQuirksServersOud
     ) -> None:
         """Test validation passes when all MUST attributes are available."""
-        oc_data: dict[str, object] = {
-            "name": "testClass",
-            "must": ["cn", "sn"],
-        }
+        oc_data = FlextLdifModels.SchemaObjectClass(
+            oid="unknown",
+            name="testClass",
+            desc="Test object class",
+            sup="top",
+            must=["cn", "sn"],
+        )
         available_attrs = {"cn", "sn", "description"}
         result = oud_quirk.validate_objectclass_dependencies(oc_data, available_attrs)
         assert result.is_success
@@ -2533,10 +2606,13 @@ class TestOudValidateDependencies:
         self, oud_quirk: FlextLdifQuirksServersOud
     ) -> None:
         """Test validation fails when some MUST attributes are missing."""
-        oc_data: dict[str, object] = {
-            "name": "testClass",
-            "must": ["cn", "sn"],
-        }
+        oc_data = FlextLdifModels.SchemaObjectClass(
+            oid="unknown",
+            name="testClass",
+            desc="Test object class",
+            sup="top",
+            must=["cn", "sn"],
+        )
         available_attrs = {"cn"}  # Missing 'sn'
         result = oud_quirk.validate_objectclass_dependencies(oc_data, available_attrs)
         assert result.is_success
@@ -2546,10 +2622,12 @@ class TestOudValidateDependencies:
         self, oud_quirk: FlextLdifQuirksServersOud
     ) -> None:
         """Test validation passes when there are no MUST attributes."""
-        oc_data: dict[str, object] = {
-            "name": "testClass",
-            # No 'must' field
-        }
+        oc_data = FlextLdifModels.SchemaObjectClass(
+            oid="unknown",
+            name="testClass",
+            desc="Test object class",
+            sup="top",
+        )
         available_attrs: set[str] = set()
         result = oud_quirk.validate_objectclass_dependencies(oc_data, available_attrs)
         assert result.is_success

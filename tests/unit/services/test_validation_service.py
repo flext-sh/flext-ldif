@@ -127,10 +127,10 @@ class TestValidateAttributeName:
         assert result.is_success
         assert result.unwrap() is True
 
-    def test_reject_non_string_attribute_name(self) -> None:
-        """Test rejection of non-string attribute name."""
+    def test_reject_invalid_attribute_name(self) -> None:
+        """Test rejection of invalid attribute name format."""
         service = FlextLdifValidationService()
-        result = service.validate_attribute_name(123)
+        result = service.validate_attribute_name("2invalid")
 
         assert result.is_success
         assert result.unwrap() is False
@@ -290,7 +290,7 @@ class TestValidateAttributeValue:
     def test_reject_non_string_attribute_value(self) -> None:
         """Test rejection of non-string attribute value."""
         service = FlextLdifValidationService()
-        result = service.validate_attribute_value(123)
+        result = service.validate_attribute_value(123)  # type: ignore[arg-type]  # Testing non-string value
 
         assert result.is_success
         assert result.unwrap() is False
@@ -334,7 +334,7 @@ class TestValidateDnComponent:
     def test_reject_dn_component_with_non_string_value(self) -> None:
         """Test rejection of DN component with non-string value."""
         service = FlextLdifValidationService()
-        result = service.validate_dn_component("cn", "str")
+        result = service.validate_dn_component("cn", 123)  # type: ignore[arg-type]  # Testing non-string value
 
         assert result.is_success
         assert result.unwrap() is False

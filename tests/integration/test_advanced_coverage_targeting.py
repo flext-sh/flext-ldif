@@ -19,7 +19,7 @@ from pathlib import Path
 import pytest
 
 from flext_ldif import FlextLdif, FlextLdifClient, FlextLdifModels
-from flext_ldif.acl.service import FlextLdifAclService
+from flext_ldif.acl_service import FlextLdifAclService
 from flext_ldif.quirks.registry import FlextLdifQuirksRegistry
 from flext_ldif.quirks.servers.oid_quirks import FlextLdifQuirksServersOid
 from flext_ldif.quirks.servers.oud_quirks import FlextLdifQuirksServersOud

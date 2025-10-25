@@ -268,7 +268,7 @@ class FlextLdif(FlextService[dict[str, object]]):
         )
 
     @override
-    def execute(self) -> FlextResult[dict[str, object]]:
+    def execute(self) -> FlextResult[FlextLdifModels.ClientStatus]:
         """Execute facade self-check and return status.
 
         Returns:
@@ -277,8 +277,8 @@ class FlextLdif(FlextService[dict[str, object]]):
         """
         result = self._client.execute()
         if result.is_success:
-            return FlextResult[dict[str, object]].ok(result.value.model_dump())
-        return FlextResult[dict[str, object]].fail(result.error)
+            return FlextResult[FlextLdifModels.ClientStatus].ok(result.value)
+        return FlextResult[FlextLdifModels.ClientStatus].fail(result.error)
 
     def parse(
         self,
@@ -823,7 +823,7 @@ class FlextLdif(FlextService[dict[str, object]]):
 
     def validate_entries(
         self, entries: list[FlextLdifModels.Entry]
-    ) -> FlextResult[dict[str, object]]:
+    ) -> FlextResult[FlextLdifModels.ValidationResult]:
         """Validate LDIF entries against RFC and business rules.
 
         Args:
@@ -840,8 +840,8 @@ class FlextLdif(FlextService[dict[str, object]]):
         """
         result = self._client.validate_entries(entries)
         if result.is_success:
-            return FlextResult[dict[str, object]].ok(result.value.model_dump())
-        return FlextResult[dict[str, object]].fail(result.error)
+            return FlextResult[FlextLdifModels.ValidationResult].ok(result.value)
+        return FlextResult[FlextLdifModels.ValidationResult].fail(result.error)
 
     def migrate(
         self,
@@ -852,7 +852,7 @@ class FlextLdif(FlextService[dict[str, object]]):
         *,
         process_schema: bool = True,
         process_entries: bool = True,
-    ) -> FlextResult[dict[str, object]]:
+    ) -> FlextResult[FlextLdifModels.MigrationPipelineResult]:
         """Migrate LDIF data between different LDAP server types.
 
         Args:
@@ -877,7 +877,7 @@ class FlextLdif(FlextService[dict[str, object]]):
             )
             if result.is_success:
                 stats = result.unwrap()
-                print(f"Migrated {stats['total_entries']} entries")
+                print(f"Migrated {stats.total_entries} entries")
 
         """
         result = self._client.migrate_files(
@@ -889,12 +889,12 @@ class FlextLdif(FlextService[dict[str, object]]):
             process_entries=process_entries,
         )
         if result.is_success:
-            return FlextResult[dict[str, object]].ok(result.value.model_dump())
-        return FlextResult[dict[str, object]].fail(result.error)
+            return FlextResult[FlextLdifModels.MigrationPipelineResult].ok(result.value)
+        return FlextResult[FlextLdifModels.MigrationPipelineResult].fail(result.error)
 
     def analyze(
         self, entries: list[FlextLdifModels.Entry]
-    ) -> FlextResult[dict[str, object]]:
+    ) -> FlextResult[FlextLdifModels.EntryAnalysisResult]:
         """Analyze LDIF entries and generate statistics.
 
         Args:
@@ -907,14 +907,14 @@ class FlextLdif(FlextService[dict[str, object]]):
             result = ldif.analyze(entries)
             if result.is_success:
                 stats = result.unwrap()
-                print(f"Total entries: {stats['total_entries']}")
-                print(f"Entry types: {stats['entry_types']}")
+                print(f"Total entries: {stats.total_entries}")
+                print(f"Entry types: {stats.objectclass_distribution}")
 
         """
         result = self._client.analyze_entries(entries)
         if result.is_success:
-            return FlextResult[dict[str, object]].ok(result.value.model_dump())
-        return FlextResult[dict[str, object]].fail(result.error)
+            return FlextResult[FlextLdifModels.EntryAnalysisResult].ok(result.value)
+        return FlextResult[FlextLdifModels.EntryAnalysisResult].fail(result.error)
 
     def filter(
         self,
@@ -1352,7 +1352,7 @@ class FlextLdif(FlextService[dict[str, object]]):
     # SCHEMA BUILDER OPERATIONS
     # =========================================================================
 
-    def build_person_schema(self) -> FlextResult[dict[str, object]]:
+    def build_person_schema(self) -> FlextResult[FlextLdifModels.SchemaBuilderResult]:
         """Build standard person schema definition.
 
         Returns:
@@ -1366,8 +1366,8 @@ class FlextLdif(FlextService[dict[str, object]]):
         """
         result = self._schema_builder.build_standard_person_schema()
         if result.is_success:
-            return FlextResult[dict[str, object]].ok(result.value.model_dump())
-        return FlextResult[dict[str, object]].fail(result.error)
+            return FlextResult[FlextLdifModels.SchemaBuilderResult].ok(result.value)
+        return FlextResult[FlextLdifModels.SchemaBuilderResult].fail(result.error)
 
     # =========================================================================
     # SCHEMA VALIDATOR OPERATIONS
@@ -1376,13 +1376,13 @@ class FlextLdif(FlextService[dict[str, object]]):
     def validate_with_schema(
         self,
         entries: list[FlextLdifModels.Entry],
-        schema: dict[str, object],
+        schema: dict[str, object] | FlextLdifModels.SchemaBuilderResult,
     ) -> FlextResult[FlextLdifModels.LdifValidationResult]:
         """Validate entries against schema definition.
 
         Args:
             entries: List of entries to validate
-            schema: Schema definition to validate against
+            schema: Schema definition to validate against (dict or SchemaBuilderResult)
 
         Returns:
             FlextResult containing validation report
@@ -1394,32 +1394,42 @@ class FlextLdif(FlextService[dict[str, object]]):
                 result = api.validate_with_schema(entries, schema)
 
         """
-        # Convert dict[str, object] schema to SchemaDiscoveryResult with type validation
-        attributes_value = schema.get(FlextLdifConstants.DictKeys.ATTRIBUTES, {})
-        if not isinstance(attributes_value, dict):
-            return FlextResult[FlextLdifModels.LdifValidationResult].fail(
-                "Schema attributes must be a dictionary"
-            )
+        # Handle both dict and SchemaBuilderResult schemas
+        if isinstance(schema, FlextLdifModels.SchemaBuilderResult):
+            attributes_value = schema.attributes
+            objectclasses_value = schema.object_classes
+        else:
+            # Convert dict[str, object] schema to SchemaDiscoveryResult with type validation
+            attributes_value = schema.get(FlextLdifConstants.DictKeys.ATTRIBUTES, {})
+            if not isinstance(attributes_value, dict):
+                return FlextResult[FlextLdifModels.LdifValidationResult].fail(
+                    "Schema attributes must be a dictionary"
+                )
 
-        objectclasses_value = schema.get("object_classes", {})
-        if not isinstance(objectclasses_value, dict):
-            return FlextResult[FlextLdifModels.LdifValidationResult].fail(
-                "Schema object classes must be a dictionary"
-            )
+        if isinstance(schema, FlextLdifModels.SchemaBuilderResult):
+            objectclasses_value = schema.object_classes
+            server_type_value = schema.server_type
+            entry_count_value = schema.entry_count
+        else:
+            objectclasses_value = schema.get("object_classes", {})
+            if not isinstance(objectclasses_value, dict):
+                return FlextResult[FlextLdifModels.LdifValidationResult].fail(
+                    "Schema object classes must be a dictionary"
+                )
 
-        server_type_value = schema.get(
-            FlextLdifConstants.DictKeys.SERVER_TYPE, "generic"
-        )
-        if not isinstance(server_type_value, str):
-            return FlextResult[FlextLdifModels.LdifValidationResult].fail(
-                "Schema server type must be a string"
+            server_type_value = schema.get(
+                FlextLdifConstants.DictKeys.SERVER_TYPE, "generic"
             )
+            if not isinstance(server_type_value, str):
+                return FlextResult[FlextLdifModels.LdifValidationResult].fail(
+                    "Schema server type must be a string"
+                )
 
-        entry_count_value = schema.get("entry_count", 0)
-        if not isinstance(entry_count_value, int):
-            return FlextResult[FlextLdifModels.LdifValidationResult].fail(
-                "Schema entry count must be an integer"
-            )
+            entry_count_value = schema.get("entry_count", 0)
+            if not isinstance(entry_count_value, int):
+                return FlextResult[FlextLdifModels.LdifValidationResult].fail(
+                    "Schema entry count must be an integer"
+                )
 
         schema_discovery = FlextLdifModels.SchemaDiscoveryResult(
             attributes=attributes_value,
@@ -1689,7 +1699,7 @@ class FlextLdif(FlextService[dict[str, object]]):
         self,
         ldif_path: Path | None = None,
         ldif_content: str | None = None,
-    ) -> FlextResult[dict[str, object]]:
+    ) -> FlextResult[FlextLdifModels.ServerDetectionResult]:
         """Detect LDAP server type from LDIF file or content.
 
         Analyzes LDIF content to identify the source LDAP server type
@@ -1700,21 +1710,19 @@ class FlextLdif(FlextService[dict[str, object]]):
             ldif_content: Raw LDIF content as string
 
         Returns:
-            FlextResult with detection results:
-            {
-                "detected_server_type": "oid" | "oud" | "openldap" | ...,
-                "confidence": 0.0-1.0,
-                "scores": {server_type: score, ...},
-                "patterns_found": [pattern1, pattern2, ...],
-                "is_confident": bool,
-            }
+            FlextResult with detection results containing:
+            - detected_server_type: "oid" | "oud" | "openldap" | ...
+            - confidence: 0.0-1.0
+            - scores: {server_type: score, ...}
+            - patterns_found: [pattern1, pattern2, ...]
+            - is_confident: bool
 
         Example:
             result = api.detect_server_type(ldif_path=Path("data.ldif"))
             if result.is_success:
                 detected = result.unwrap()
-                print(f"Server type: {detected['detected_server_type']}")
-                print(f"Confidence: {detected['confidence']:.2%}")
+                print(f"Server type: {detected.detected_server_type}")
+                print(f"Confidence: {detected.confidence:.2%}")
 
         """
         result = self._client.detect_server_type(
@@ -1722,8 +1730,8 @@ class FlextLdif(FlextService[dict[str, object]]):
             ldif_content=ldif_content,
         )
         if result.is_success:
-            return FlextResult[dict[str, object]].ok(result.value.model_dump())
-        return FlextResult[dict[str, object]].fail(result.error)
+            return FlextResult[FlextLdifModels.ServerDetectionResult].ok(result.value)
+        return FlextResult[FlextLdifModels.ServerDetectionResult].fail(result.error)
 
     def parse_with_auto_detection(
         self, source: Path | str

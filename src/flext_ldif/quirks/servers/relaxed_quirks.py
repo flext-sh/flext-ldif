@@ -26,20 +26,20 @@ import re
 from typing import ClassVar
 
 from flext_core import FlextResult
-from pydantic import Field
 
+# Pydantic removed
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.quirks.base import (
-    FlextLdifQuirksBaseAclQuirk,
-    FlextLdifQuirksBaseEntryQuirk,
-    FlextLdifQuirksBaseSchemaQuirk,
+    BaseAclQuirk,
+    BaseEntryQuirk,
+    BaseSchemaQuirk,
 )
 from flext_ldif.typings import FlextLdifTypes
 
 logger = logging.getLogger(__name__)
 
 
-class FlextLdifQuirksServersRelaxed(FlextLdifQuirksBaseSchemaQuirk):
+class FlextLdifQuirksServersRelaxed(BaseSchemaQuirk):
     """Relaxed schema quirk - main class for lenient LDIF processing.
 
     Implements minimal validation and best-effort parsing of schema definitions.
@@ -55,17 +55,22 @@ class FlextLdifQuirksServersRelaxed(FlextLdifQuirksBaseSchemaQuirk):
     **Priority**: 200 (very low - last resort)
     """
 
-    server_type: str = Field(
-        default="relaxed",
-        description="Relaxed lenient parsing mode",
-    )
-    priority: int = Field(default=200, description="Very low priority - last resort")
-
     # Permissive OID pattern - matches anything that looks like an OID
     OID_PATTERN: ClassVar[re.Pattern[str]] = re.compile(r"\(?\s*([0-9a-zA-Z._\-]+)")
 
-    def model_post_init(self, _context: object, /) -> None:
-        """Initialize relaxed schema quirk."""
+    def __init__(
+        self,
+        server_type: str = "relaxed",
+        priority: int = 200,
+    ) -> None:
+        """Initialize relaxed schema quirk.
+
+        Args:
+            server_type: Relaxed lenient parsing mode
+            priority: Very low priority - last resort
+
+        """
+        super().__init__(server_type=server_type, priority=priority)
 
     def can_handle_attribute(self, attr_definition: str) -> bool:
         """Accept any attribute definition in relaxed mode.
@@ -102,10 +107,10 @@ class FlextLdifQuirksServersRelaxed(FlextLdifQuirksBaseSchemaQuirk):
 
             # Store relaxed-specific metadata
             metadata = FlextLdifModels.QuirkMetadata(
-                server_type="relaxed",
-                quirk_data={
+                quirk_type="relaxed",
+                original_format=attr_definition,
+                extensions={
                     "relaxed_parsed": True,
-                    "original_definition": attr_definition,
                 },
             )
 
@@ -113,19 +118,38 @@ class FlextLdifQuirksServersRelaxed(FlextLdifQuirksBaseSchemaQuirk):
                 FlextLdifModels.SchemaAttribute(
                     name=name,
                     oid=oid,
+                    desc=None,  # Relaxed - not extracted
+                    sup=None,  # Relaxed - not extracted
+                    equality=None,  # Relaxed - not extracted
+                    ordering=None,  # Relaxed - not extracted
+                    substr=None,  # Relaxed - not extracted
+                    syntax=None,  # Relaxed - not extracted
+                    length=None,  # Relaxed - not extracted
+                    usage=None,  # Relaxed - not extracted
                     metadata=metadata,
                 )
             )
         except Exception as e:
             logger.warning(f"Relaxed attribute parse failed: {e}")
             metadata = FlextLdifModels.QuirkMetadata(
-                server_type="relaxed",
-                quirk_data={"relaxed_parsed": False, "parse_error": str(e)},
+                quirk_type="relaxed",
+                original_format=attr_definition
+                if isinstance(attr_definition, str)
+                else "",
+                extensions={"relaxed_parsed": False, "parse_error": str(e)},
             )
             return FlextResult[FlextLdifModels.SchemaAttribute].ok(
                 FlextLdifModels.SchemaAttribute(
                     name="unknown",
                     oid="unknown",
+                    desc=None,  # Relaxed - parse failed
+                    sup=None,  # Relaxed - parse failed
+                    equality=None,  # Relaxed - parse failed
+                    ordering=None,  # Relaxed - parse failed
+                    substr=None,  # Relaxed - parse failed
+                    syntax=None,  # Relaxed - parse failed
+                    length=None,  # Relaxed - parse failed
+                    usage=None,  # Relaxed - parse failed
                     metadata=metadata,
                 )
             )
@@ -165,10 +189,10 @@ class FlextLdifQuirksServersRelaxed(FlextLdifQuirksBaseSchemaQuirk):
 
             # Store relaxed-specific metadata
             metadata = FlextLdifModels.QuirkMetadata(
-                server_type="relaxed",
-                quirk_data={
+                quirk_type="relaxed",
+                original_format=oc_definition,
+                extensions={
                     "relaxed_parsed": True,
-                    "original_definition": oc_definition,
                 },
             )
 
@@ -176,19 +200,24 @@ class FlextLdifQuirksServersRelaxed(FlextLdifQuirksBaseSchemaQuirk):
                 FlextLdifModels.SchemaObjectClass(
                     name=name,
                     oid=oid,
+                    desc=None,  # Relaxed - not extracted
+                    sup=None,  # Relaxed - not extracted
                     metadata=metadata,
                 )
             )
         except Exception as e:
             logger.warning(f"Relaxed objectClass parse failed: {e}")
             metadata = FlextLdifModels.QuirkMetadata(
-                server_type="relaxed",
-                quirk_data={"relaxed_parsed": False, "parse_error": str(e)},
+                quirk_type="relaxed",
+                original_format=oc_definition if isinstance(oc_definition, str) else "",
+                extensions={"relaxed_parsed": False, "parse_error": str(e)},
             )
             return FlextResult[FlextLdifModels.SchemaObjectClass].ok(
                 FlextLdifModels.SchemaObjectClass(
                     name="unknown",
                     oid="unknown",
+                    desc=None,  # Relaxed - parse failed
+                    sup=None,  # Relaxed - parse failed
                     metadata=metadata,
                 )
             )
@@ -263,8 +292,8 @@ class FlextLdifQuirksServersRelaxed(FlextLdifQuirksBaseSchemaQuirk):
         """
         try:
             # Try to get original definition from metadata
-            if attr_data.metadata and attr_data.metadata.quirk_data:
-                definition = attr_data.metadata.quirk_data.get("original_definition")
+            if attr_data.metadata and attr_data.metadata.custom_data:
+                definition = attr_data.metadata.custom_data.get("original_definition")
                 if isinstance(definition, str):
                     return FlextResult[str].ok(definition)
             # Fallback to model string representation
@@ -287,8 +316,8 @@ class FlextLdifQuirksServersRelaxed(FlextLdifQuirksBaseSchemaQuirk):
         """
         try:
             # Try to get original definition from metadata
-            if oc_data.metadata and oc_data.metadata.quirk_data:
-                definition = oc_data.metadata.quirk_data.get("original_definition")
+            if oc_data.metadata and oc_data.metadata.custom_data:
+                definition = oc_data.metadata.custom_data.get("original_definition")
                 if isinstance(definition, str):
                     return FlextResult[str].ok(definition)
             # Fallback to model string representation
@@ -297,7 +326,7 @@ class FlextLdifQuirksServersRelaxed(FlextLdifQuirksBaseSchemaQuirk):
             logger.warning(f"Write objectClass failed: {e}")
             return FlextResult[str].ok(str(oc_data.model_dump()))
 
-    class AclQuirk(FlextLdifQuirksBaseAclQuirk):
+    class AclQuirk(BaseAclQuirk):
         """Relaxed ACL quirk for lenient LDIF processing.
 
         Implements minimal validation for ACL entries.
@@ -306,16 +335,9 @@ class FlextLdifQuirksServersRelaxed(FlextLdifQuirksBaseSchemaQuirk):
         **Priority**: 200 (very low - last resort)
         """
 
-        server_type: str = Field(
-            default="relaxed",
-            description="Relaxed lenient parsing mode",
-        )
-        priority: int = Field(
-            default=200, description="Very low priority - last resort"
-        )
-
-        def model_post_init(self, _context: object, /) -> None:
-            """Initialize relaxed ACL quirk."""
+        def __init__(self) -> None:
+            """Initialize relaxed ACL quirk with priority 200."""
+            super().__init__(server_type="relaxed", priority=200)
 
         def can_handle_acl(self, acl_line: str) -> bool:
             """Accept any ACL line in relaxed mode.
@@ -340,7 +362,7 @@ class FlextLdifQuirksServersRelaxed(FlextLdifQuirksBaseSchemaQuirk):
 
             """
             try:
-                # Create minimal Acl model with relaxed parsing metadata
+                # Create minimal Acl model with relaxed parsing
                 acl = FlextLdifModels.Acl(
                     name="relaxed_acl",
                     target=FlextLdifModels.AclTarget(target_dn="*", attributes=[]),
@@ -348,16 +370,13 @@ class FlextLdifQuirksServersRelaxed(FlextLdifQuirksBaseSchemaQuirk):
                         subject_type="*", subject_value="*"
                     ),
                     permissions=FlextLdifModels.AclPermissions(),
-                    server_type="relaxed",
+                    server_type="generic",  # Use generic server type for relaxed parsing
                     raw_acl=acl_line,
-                    metadata=FlextLdifModels.QuirkMetadata(
-                        server_type="relaxed",
-                        quirk_data={"relaxed_parsed": True},
-                    ),
                 )
                 return FlextResult[FlextLdifModels.Acl].ok(acl)
             except Exception as e:
                 logger.warning(f"Relaxed ACL parse failed: {e}")
+                # Return generic ACL as fallback when parsing fails
                 acl = FlextLdifModels.Acl(
                     name="relaxed_acl_error",
                     target=FlextLdifModels.AclTarget(target_dn="*", attributes=[]),
@@ -365,12 +384,8 @@ class FlextLdifQuirksServersRelaxed(FlextLdifQuirksBaseSchemaQuirk):
                         subject_type="*", subject_value="*"
                     ),
                     permissions=FlextLdifModels.AclPermissions(),
-                    server_type="relaxed",
+                    server_type="generic",  # Use generic server type for relaxed parsing
                     raw_acl=acl_line,
-                    metadata=FlextLdifModels.QuirkMetadata(
-                        quirk_type="relaxed",
-                        custom_data={"relaxed_parsed": False, "parse_error": str(e)},
-                    ),
                 )
                 return FlextResult[FlextLdifModels.Acl].ok(acl)
 
@@ -421,7 +436,7 @@ class FlextLdifQuirksServersRelaxed(FlextLdifQuirksBaseSchemaQuirk):
                 logger.warning(f"Write ACL failed: {e}")
                 return FlextResult[str].ok(str(acl_data.model_dump()))
 
-    class EntryQuirk(FlextLdifQuirksBaseEntryQuirk):
+    class EntryQuirk(BaseEntryQuirk):
         """Relaxed entry quirk for lenient LDIF processing.
 
         Implements minimal validation for LDIF entries.
@@ -430,24 +445,17 @@ class FlextLdifQuirksServersRelaxed(FlextLdifQuirksBaseSchemaQuirk):
         **Priority**: 200 (very low - last resort)
         """
 
-        server_type: str = Field(
-            default="relaxed",
-            description="Relaxed lenient parsing mode",
-        )
-        priority: int = Field(
-            default=200, description="Very low priority - last resort"
-        )
-
-        def model_post_init(self, _context: object, /) -> None:
-            """Initialize relaxed entry quirk."""
+        def __init__(self) -> None:
+            """Initialize relaxed entry quirk with priority 200."""
+            super().__init__(server_type="relaxed", priority=200)
 
         def process_entry(
-            self, _entry_dn: str, attributes: FlextLdifTypes.Common.EntryAttributesDict
-        ) -> FlextResult[FlextLdifTypes.Common.EntryAttributesDict]:
+            self, entry_dn: str, attributes: FlextLdifTypes.Models.EntryAttributesDict
+        ) -> FlextResult[FlextLdifTypes.Models.EntryAttributesDict]:
             """Process entry for relaxed mode.
 
             Args:
-                _entry_dn: Entry distinguished name
+                entry_dn: Entry distinguished name
                 attributes: Entry attributes
 
             Returns:
@@ -455,40 +463,44 @@ class FlextLdifQuirksServersRelaxed(FlextLdifQuirksBaseSchemaQuirk):
 
             """
             try:
+                # Suppress unused parameter warning - required by interface
+                _ = entry_dn
                 # In relaxed mode, pass through attributes unchanged
-                return FlextResult[FlextLdifTypes.Common.EntryAttributesDict].ok(
+                return FlextResult[FlextLdifTypes.Models.EntryAttributesDict].ok(
                     attributes
                 )
             except Exception as e:
                 logger.warning(f"Relaxed entry processing failed: {e}")
-                return FlextResult[FlextLdifTypes.Common.EntryAttributesDict].ok(
+                return FlextResult[FlextLdifTypes.Models.EntryAttributesDict].ok(
                     attributes
                 )
 
         def can_handle_entry(
             self,
             entry_dn: str,
-            _attributes: FlextLdifTypes.Common.EntryAttributesDict,
+            attributes: FlextLdifTypes.Models.EntryAttributesDict,
         ) -> bool:
             """Accept any entry in relaxed mode.
 
             Args:
                 entry_dn: Entry distinguished name
-                _attributes: Entry attributes (unused - relaxed mode accepts everything)
+                attributes: Entry attributes (unused - relaxed mode accepts everything)
 
             Returns:
                 Always True - relaxed mode accepts everything
 
             """
+            # Suppress unused parameter warning - required by interface
+            _ = attributes
             return bool(entry_dn.strip())
 
         def parse_entry(
-            self, entry_dn: str, attributes: FlextLdifTypes.Common.EntryAttributesDict
-        ) -> FlextResult[FlextLdifTypes.Common.EntryAttributesDict]:
+            self, _entry_dn: str, attributes: FlextLdifTypes.Models.EntryAttributesDict
+        ) -> FlextResult[FlextLdifTypes.Models.EntryAttributesDict]:
             """Parse entry with best-effort approach.
 
             Args:
-                entry_dn: Entry distinguished name
+                _entry_dn: Entry distinguished name
                 attributes: Entry attributes
 
             Returns:
@@ -497,12 +509,12 @@ class FlextLdifQuirksServersRelaxed(FlextLdifQuirksBaseSchemaQuirk):
             """
             try:
                 # In relaxed mode, pass through attributes unchanged
-                return FlextResult[FlextLdifTypes.Common.EntryAttributesDict].ok(
+                return FlextResult[FlextLdifTypes.Models.EntryAttributesDict].ok(
                     attributes
                 )
             except Exception as e:
                 logger.warning(f"Relaxed entry parse failed: {e}")
-                return FlextResult[FlextLdifTypes.Common.EntryAttributesDict].ok(
+                return FlextResult[FlextLdifTypes.Models.EntryAttributesDict].ok(
                     attributes
                 )
 
@@ -531,8 +543,8 @@ class FlextLdifQuirksServersRelaxed(FlextLdifQuirksBaseSchemaQuirk):
                 return FlextResult[str].ok(dn)
 
         def convert_entry_to_rfc(
-            self, entry_data: FlextLdifTypes.Common.EntryAttributesDict
-        ) -> FlextResult[FlextLdifTypes.Common.EntryAttributesDict]:
+            self, entry_data: FlextLdifTypes.Models.EntryAttributesDict
+        ) -> FlextResult[FlextLdifTypes.Models.EntryAttributesDict]:
             """Convert entry to RFC format - pass-through in relaxed mode.
 
             Args:
@@ -542,11 +554,11 @@ class FlextLdifQuirksServersRelaxed(FlextLdifQuirksBaseSchemaQuirk):
                 FlextResult with data (unchanged)
 
             """
-            return FlextResult[FlextLdifTypes.Common.EntryAttributesDict].ok(entry_data)
+            return FlextResult[FlextLdifTypes.Models.EntryAttributesDict].ok(entry_data)
 
         def convert_entry_from_rfc(
-            self, entry_data: FlextLdifTypes.Common.EntryAttributesDict
-        ) -> FlextResult[FlextLdifTypes.Common.EntryAttributesDict]:
+            self, entry_data: FlextLdifTypes.Models.EntryAttributesDict
+        ) -> FlextResult[FlextLdifTypes.Models.EntryAttributesDict]:
             """Convert entry from RFC format - pass-through in relaxed mode.
 
             Args:
@@ -556,7 +568,7 @@ class FlextLdifQuirksServersRelaxed(FlextLdifQuirksBaseSchemaQuirk):
                 FlextResult with data (unchanged)
 
             """
-            return FlextResult[FlextLdifTypes.Common.EntryAttributesDict].ok(entry_data)
+            return FlextResult[FlextLdifTypes.Models.EntryAttributesDict].ok(entry_data)
 
 
 # Backward compatibility exports

@@ -21,9 +21,9 @@ ARCHITECTURE:
 
 PROTOCOL COMPLIANCE:
     All base classes and implementations MUST satisfy corresponding protocols:
-    - FlextLdifQuirksBaseSchemaQuirk → FlextLdifProtocols.Quirks.SchemaQuirkProtocol
-    - FlextLdifQuirksBaseAclQuirk → FlextLdifProtocols.Quirks.AclQuirkProtocol
-    - FlextLdifQuirksBaseEntryQuirk → FlextLdifProtocols.Quirks.EntryQuirkProtocol
+    - BaseSchemaQuirk → FlextLdifProtocols.Quirks.SchemaQuirkProtocol
+    - BaseAclQuirk → FlextLdifProtocols.Quirks.AclQuirkProtocol
+    - BaseEntryQuirk → FlextLdifProtocols.Quirks.EntryQuirkProtocol
 
     All method signatures must match protocol definitions exactly for type safety.
 """
@@ -33,10 +33,9 @@ from __future__ import annotations
 import logging
 from abc import ABC, abstractmethod
 from types import ModuleType
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
-from flext_core import FlextModels, FlextResult
-from pydantic import Field
+from flext_core import FlextResult
 
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.typings import FlextLdifTypes
@@ -60,8 +59,66 @@ else:
 logger = logging.getLogger(__name__)
 
 
-class FlextLdifQuirksBaseSchemaQuirk(ABC, FlextModels.Value):
+class QuirkRegistrationMixin:
+    """Shared automatic registration logic for all quirk types.
+
+    Pure Python 3.13+ pattern - no wrappers, no helpers, no boilerplate.
+    Quirks transparently register in global registry when class is defined.
+
+    Subclasses must define `_REGISTRY_METHOD` class variable with the
+    registry method name (e.g., "register_schema_quirk").
+
+    Example:
+        >>> class MyServerQuirk(QuirkRegistrationMixin, BaseSchemaQuirk):
+        ...     server_type: str = "myserver"
+        ...     # Automatically registered in global FlextLdifQuirksRegistry
+
+    """
+
+    _REGISTRY_METHOD: ClassVar[str] = ""  # Must be overridden by subclasses
+
+    def __init_subclass__(cls) -> None:
+        """Automatic quirk registration when concrete class is defined."""
+        super().__init_subclass__()
+
+        # Only register concrete classes (not base classes or abstract classes)
+        if not hasattr(cls, "__abstractmethods__") or not cls.__abstractmethods__:
+            try:
+                # Check if cls has all required fields with defaults
+                # Pydantic models can only be instantiated if all required fields have defaults
+                try:
+                    quirk_instance = cls()
+                except TypeError:
+                    # Missing required fields (like server_type) - skip registration
+                    # This happens for abstract base classes
+                    return
+
+                # Get registry and register quirk instance
+                if quirks_registry_module is not None:
+                    registry = quirks_registry_module.FlextLdifQuirksRegistry.get_global_instance()
+                    # Get registry method from class variable
+                    if hasattr(cls, "_REGISTRY_METHOD") and cls._REGISTRY_METHOD:
+                        registry_method = getattr(registry, cls._REGISTRY_METHOD)
+                        registry_method(quirk_instance)
+                else:
+                    return
+            except Exception as e:
+                # Registration failures are non-critical during class creation
+                # Log at debug level to avoid noise during module import
+                quirk_type = cls._REGISTRY_METHOD.replace("register_", "").replace(
+                    "_quirk", ""
+                )
+                logger.debug(
+                    f"Failed to register {quirk_type} quirk {cls.__name__}: {e}",
+                    exc_info=False,
+                )
+
+
+class BaseSchemaQuirk(ABC, QuirkRegistrationMixin):
     """Base class for schema quirks - satisfies FlextLdifProtocols.Quirks.SchemaQuirkProtocol.
+
+    NOTE: This is an implementation detail - DO NOT import directly.
+    Use BaseSchemaQuirk instead.
 
     Schema quirks extend RFC 4512 schema parsing with server-specific features
     for attribute and objectClass processing.
@@ -81,52 +138,23 @@ class FlextLdifQuirksBaseSchemaQuirk(ABC, FlextModels.Value):
     - RFC: RFC 4512 compliant baseline (no extensions)
     """
 
-    server_type: str = Field(
-        default="generic",
-        description="Server type this quirk applies to (e.g., 'oid', 'oud', 'openldap')",
-    )
-    priority: int = Field(
-        default=100, description="Quirk priority (lower = higher priority)"
-    )
+    # Registry method for automatic registration via QuirkRegistrationMixin
+    _REGISTRY_METHOD: ClassVar[str] = "register_schema_quirk"
 
-    def __init_subclass__(cls) -> None:
-        """Automatic quirk registration - pure Python 3.13+ pattern.
+    def __init__(
+        self,
+        server_type: str = "generic",
+        priority: int = 100,
+    ) -> None:
+        """Initialize schema quirk.
 
-        Pure Python 3.13+ pattern - no wrappers, no helpers, no boilerplate.
-        Schema quirks transparently register in global registry when class is defined.
-
-        Example:
-            >>> class MyServerQuirk(FlextLdifQuirksBaseSchemaQuirk):
-            ...     server_type: str = "myserver"
-            ...     # Automatically registered in global FlextLdifQuirksRegistry
+        Args:
+            server_type: Server type this quirk applies to
+            priority: Quirk priority (lower = higher priority)
 
         """
-        super().__init_subclass__()
-
-        # Only register concrete classes (not base classes or nested abstract classes)
-        if not hasattr(cls, "__abstractmethods__") or not cls.__abstractmethods__:
-            try:
-                # Check if cls has all required fields with defaults
-                # Pydantic models can only be instantiated if all required fields have defaults
-                try:
-                    quirk_instance = cls()
-                except TypeError:
-                    # Missing required fields (like server_type) - skip registration
-                    # This happens for abstract base classes
-                    return
-
-                if quirks_registry_module is not None:
-                    registry = quirks_registry_module.FlextLdifQuirksRegistry.get_global_instance()
-                else:
-                    return
-                registry.register_schema_quirk(quirk_instance)
-            except Exception as e:
-                # Registration failures are non-critical during class creation
-                # Log at debug level to avoid noise during module import
-                logger.debug(
-                    f"Failed to register schema quirk {cls.__name__}: {e}",
-                    exc_info=False,
-                )
+        self.server_type = server_type
+        self.priority = priority
 
     @abstractmethod
     def can_handle_attribute(self, attr_definition: str) -> bool:
@@ -294,24 +322,12 @@ class FlextLdifQuirksBaseSchemaQuirk(ABC, FlextModels.Value):
         """
         return False
 
-    def can_handle_acl(self, _acl_line: str) -> bool:
-        """Check if this quirk can handle the ACL definition.
 
-        Schema quirks typically don't handle ACLs, so default False.
-        Subclasses can override if they handle both schema and ACLs.
-
-        Args:
-            _acl_line: ACL definition line
-
-        Returns:
-            True if this quirk can parse this ACL
-
-        """
-        return False
-
-
-class FlextLdifQuirksBaseAclQuirk(ABC, FlextModels.Value):
+class BaseAclQuirk(ABC, QuirkRegistrationMixin):
     """Base class for ACL quirks - satisfies FlextLdifProtocols.Quirks.AclQuirkProtocol.
+
+    NOTE: This is an implementation detail - DO NOT import directly.
+    Use BaseAclQuirk instead.
 
     ACL quirks extend RFC 4516 ACL parsing with server-specific formats
     for access control list processing.
@@ -331,49 +347,23 @@ class FlextLdifQuirksBaseAclQuirk(ABC, FlextModels.Value):
     - RFC: RFC 4516 compliant baseline
     """
 
-    server_type: str = Field(
-        default="generic", description="Server type this quirk applies to"
-    )
-    priority: int = Field(default=100, description="Quirk priority")
+    # Registry method for automatic registration via QuirkRegistrationMixin
+    _REGISTRY_METHOD: ClassVar[str] = "register_acl_quirk"
 
-    def __init_subclass__(cls) -> None:
-        """Automatic quirk registration - pure Python 3.13+ pattern.
+    def __init__(
+        self,
+        server_type: str = "generic",
+        priority: int = 100,
+    ) -> None:
+        """Initialize ACL quirk.
 
-        Pure Python 3.13+ pattern - no wrappers, no helpers, no boilerplate.
-        ACL quirks transparently register in global registry when class is defined.
-
-        Example:
-            >>> class MyServerAclQuirk(FlextLdifQuirksBaseAclQuirk):
-            ...     server_type: str = "myserver"
-            ...     # Automatically registered in global FlextLdifQuirksRegistry
+        Args:
+            server_type: Server type this quirk applies to
+            priority: Quirk priority (lower = higher priority)
 
         """
-        super().__init_subclass__()
-
-        # Only register concrete classes (not base classes or nested abstract classes)
-        if not hasattr(cls, "__abstractmethods__") or not cls.__abstractmethods__:
-            try:
-                # Check if cls has all required fields with defaults
-                # Pydantic models can only be instantiated if all required fields have defaults
-                try:
-                    quirk_instance = cls()
-                except TypeError:
-                    # Missing required fields (like server_type) - skip registration
-                    # This happens for abstract base classes
-                    return
-
-                if quirks_registry_module is not None:
-                    registry = quirks_registry_module.FlextLdifQuirksRegistry.get_global_instance()
-                else:
-                    return
-                registry.register_acl_quirk(quirk_instance)
-            except Exception as e:
-                # Registration failures are non-critical during class creation
-                # Log at debug level to avoid noise during module import
-                logger.debug(
-                    f"Failed to register ACL quirk {cls.__name__}: {e}",
-                    exc_info=False,
-                )
+        self.server_type = server_type
+        self.priority = priority
 
     @abstractmethod
     def can_handle_acl(self, acl_line: str) -> bool:
@@ -439,39 +429,12 @@ class FlextLdifQuirksBaseAclQuirk(ABC, FlextModels.Value):
 
         """
 
-    def can_handle_attribute(self, _attr_definition: str) -> bool:
-        """Check if this quirk can handle the attribute definition.
 
-        ACL quirks typically don't handle attributes, so default False.
-        Subclasses can override if they handle both ACL and attributes.
-
-        Args:
-            _attr_definition: AttributeType definition string
-
-        Returns:
-            True if this quirk can parse this attribute
-
-        """
-        return False
-
-    def can_handle_objectclass(self, _oc_definition: str) -> bool:
-        """Check if this quirk can handle the objectClass definition.
-
-        ACL quirks typically don't handle objectClasses, so default False.
-        Subclasses can override if they handle both ACL and objectClasses.
-
-        Args:
-            _oc_definition: ObjectClass definition string
-
-        Returns:
-            True if this quirk can parse this objectClass
-
-        """
-        return False
-
-
-class FlextLdifQuirksBaseEntryQuirk(ABC, FlextModels.Value):
+class BaseEntryQuirk(ABC, QuirkRegistrationMixin):
     """Base class for entry processing quirks - satisfies FlextLdifProtocols.Quirks.EntryQuirkProtocol.
+
+    NOTE: This is an implementation detail - DO NOT import directly.
+    Use BaseEntryQuirk instead.
 
     Entry quirks handle server-specific entry attributes and transformations
     for LDAP entry processing.
@@ -491,53 +454,27 @@ class FlextLdifQuirksBaseEntryQuirk(ABC, FlextModels.Value):
     - RFC baseline entry handling
     """
 
-    server_type: str = Field(
-        default="generic", description="Server type this quirk applies to"
-    )
-    priority: int = Field(default=100, description="Quirk priority")
+    # Registry method for automatic registration via QuirkRegistrationMixin
+    _REGISTRY_METHOD: ClassVar[str] = "register_entry_quirk"
 
-    def __init_subclass__(cls) -> None:
-        """Automatic quirk registration - pure Python 3.13+ pattern.
+    def __init__(
+        self,
+        server_type: str = "generic",
+        priority: int = 100,
+    ) -> None:
+        """Initialize entry quirk.
 
-        Pure Python 3.13+ pattern - no wrappers, no helpers, no boilerplate.
-        Entry quirks transparently register in global registry when class is defined.
-
-        Example:
-            >>> class MyServerEntryQuirk(FlextLdifQuirksBaseEntryQuirk):
-            ...     server_type: str = "myserver"
-            ...     # Automatically registered in global FlextLdifQuirksRegistry
+        Args:
+            server_type: Server type this quirk applies to
+            priority: Quirk priority (lower = higher priority)
 
         """
-        super().__init_subclass__()
-
-        # Only register concrete classes (not base classes or nested abstract classes)
-        if not hasattr(cls, "__abstractmethods__") or not cls.__abstractmethods__:
-            try:
-                # Check if cls has all required fields with defaults
-                # Pydantic models can only be instantiated if all required fields have defaults
-                try:
-                    quirk_instance = cls()
-                except TypeError:
-                    # Missing required fields (like server_type) - skip registration
-                    # This happens for abstract base classes
-                    return
-
-                if quirks_registry_module is not None:
-                    registry = quirks_registry_module.FlextLdifQuirksRegistry.get_global_instance()
-                else:
-                    return
-                registry.register_entry_quirk(quirk_instance)
-            except Exception as e:
-                # Registration failures are non-critical during class creation
-                # Log at debug level to avoid noise during module import
-                logger.debug(
-                    f"Failed to register entry quirk {cls.__name__}: {e}",
-                    exc_info=False,
-                )
+        self.server_type = server_type
+        self.priority = priority
 
     @abstractmethod
     def can_handle_entry(
-        self, entry_dn: str, attributes: FlextLdifTypes.Common.EntryAttributesDict
+        self, entry_dn: str, attributes: FlextLdifTypes.Models.EntryAttributesDict
     ) -> bool:
         """Check if this quirk can handle the entry.
 
@@ -552,8 +489,8 @@ class FlextLdifQuirksBaseEntryQuirk(ABC, FlextModels.Value):
 
     @abstractmethod
     def process_entry(
-        self, entry_dn: str, attributes: FlextLdifTypes.Common.EntryAttributesDict
-    ) -> FlextResult[FlextLdifTypes.Common.EntryAttributesDict]:
+        self, entry_dn: str, attributes: FlextLdifTypes.Models.EntryAttributesDict
+    ) -> FlextResult[FlextLdifTypes.Models.EntryAttributesDict]:
         """Process entry with server-specific logic.
 
         Args:
@@ -567,8 +504,8 @@ class FlextLdifQuirksBaseEntryQuirk(ABC, FlextModels.Value):
 
     @abstractmethod
     def convert_entry_to_rfc(
-        self, entry_data: FlextLdifTypes.Common.EntryAttributesDict
-    ) -> FlextResult[FlextLdifTypes.Common.EntryAttributesDict]:
+        self, entry_data: FlextLdifTypes.Models.EntryAttributesDict
+    ) -> FlextResult[FlextLdifTypes.Models.EntryAttributesDict]:
         """Convert server-specific entry to RFC-compliant format.
 
         Args:
@@ -579,68 +516,40 @@ class FlextLdifQuirksBaseEntryQuirk(ABC, FlextModels.Value):
 
         """
 
-    def can_handle_attribute(self, _attr_definition: str) -> bool:
-        """Check if this quirk can handle the attribute definition.
-
-        Entry quirks typically don't handle attributes, so default False.
-        Subclasses can override if they handle both entry and attributes.
-
-        Args:
-            _attr_definition: AttributeType definition string
-
-        Returns:
-            True if this quirk can parse this attribute
-
-        """
-        return False
-
-    def can_handle_objectclass(self, _oc_definition: str) -> bool:
-        """Check if this quirk can handle the objectClass definition.
-
-        Entry quirks typically don't handle objectClasses, so default False.
-        Subclasses can override if they handle both entry and objectClasses.
-
-        Args:
-            _oc_definition: ObjectClass definition string
-
-        Returns:
-            True if this quirk can parse this objectClass
-
-        """
-        return False
-
-    def can_handle_acl(self, _acl_line: str) -> bool:
-        """Check if this quirk can handle the ACL definition.
-
-        Entry quirks typically don't handle ACLs, so default False.
-        Subclasses can override if they handle both entry and ACLs.
-
-        Args:
-            _acl_line: ACL definition line
-
-        Returns:
-            True if this quirk can parse this ACL
-
-        """
-        return False
-
 
 class FlextLdifQuirksBase:
-    """Main container class for all LDIF quirk functionality.
+    """Main LDIF quirk functionality - ONLY class with FlextLdif prefix in this module.
 
-    Provides unified access to base quirk classes and server-specific implementations.
-    Follows FLEXT pattern: one main class per module named FlextLdif[ModuleName].
+    Provides unified access to quirk base classes via nested classes.
+    Follows FLEXT pattern: ONE main class per module named FlextLdif[ModuleName].
+
+    Nested Classes:
+        SchemaQuirk: Base class for schema quirks (attributes, objectClasses)
+        AclQuirk: Base class for ACL quirks (access control)
+        EntryQuirk: Base class for entry processing quirks
+
+    Example:
+        >>> # Access nested classes
+        >>> from flext_ldif.quirks.base import (
+    BaseAclQuirk,
+    BaseEntryQuirk,
+    BaseSchemaQuirk,
+    FlextLdifQuirksBase,
+    )
+        >>>
+        >>> # Create custom schema quirk
+        >>> class MyServerSchema(BaseSchemaQuirk):
+        ...     server_type: str = "myserver"
+        ...
+        ...     def can_handle_attribute(self, attr: str) -> bool:
+        ...         return True
+
     """
 
-    # Direct access to base classes using TypeAlias for MyPy compliance
-    type SchemaQuirk = FlextLdifQuirksBaseSchemaQuirk
-    # Aliases for backward compatibility
-    type BaseAclQuirk = FlextLdifQuirksBaseAclQuirk
-    type BaseEntryQuirk = FlextLdifQuirksBaseEntryQuirk
-    type BaseSchemaQuirk = FlextLdifQuirksBaseSchemaQuirk
-
-    type AclQuirk = FlextLdifQuirksBaseAclQuirk
-    type EntryQuirk = FlextLdifQuirksBaseEntryQuirk
+    # Nested base classes - these are the ONLY public API
+    SchemaQuirk = BaseSchemaQuirk
+    AclQuirk = BaseAclQuirk
+    EntryQuirk = BaseEntryQuirk
 
 
 __all__ = [

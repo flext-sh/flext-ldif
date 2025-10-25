@@ -469,5 +469,41 @@ class FlextLdifUtilities:
                         f"Failed to create ACL: {e}"
                     )
 
+    @staticmethod
+    def normalize_server_type_for_literal(
+        server_type: str,
+    ) -> FlextLdifConstants.LiteralTypes.ServerType:
+        """Normalize server type from short form to Literal-compatible long form.
+
+        Converts short-form server type identifiers (e.g., "oid", "oud")
+        to long-form identifiers required by LiteralTypes.ServerType
+        (e.g., "oracle_oid", "oracle_oud").
+
+        Args:
+            server_type: Short-form server type identifier
+
+        Returns:
+            Long-form server type compatible with LiteralTypes.ServerType
+
+        """
+        # Map short forms to long forms for Literal validation
+        server_type_map: dict[str, FlextLdifConstants.LiteralTypes.ServerType] = {
+            "oid": "oracle_oid",
+            "oud": "oracle_oud",
+            # All other types are already in long form or match directly
+            "active_directory": "active_directory",
+            "openldap": "openldap",
+            "openldap2": "openldap2",
+            "openldap1": "openldap1",
+            "apache_directory": "apache_directory",
+            "novell_edirectory": "novell_edirectory",
+            "ibm_tivoli": "ibm_tivoli",
+            "generic": "generic",
+            "389ds": "389ds",
+        }
+
+        # Return mapped value or default to generic if unknown
+        return server_type_map.get(server_type, "generic")
+
 
 __all__ = ["FlextLdifUtilities"]

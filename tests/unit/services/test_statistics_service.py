@@ -499,7 +499,7 @@ class TestGenerateStatisticsErrorHandling:
         """Test that exceptions in statistics generation are handled gracefully."""
         service = FlextLdifStatisticsService()
         # Pass invalid types to trigger an exception
-        categorized: dict[str, list[dict[str, object]]] | None = None
+        categorized: dict[str, list[dict[str, object]]] = {}
         written_counts: dict[str, int] = {}
         output_dir = Path("/tmp")
         output_files: dict[str, object] = {}

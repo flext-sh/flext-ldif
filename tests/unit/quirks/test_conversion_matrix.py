@@ -15,15 +15,15 @@ from flext_core import FlextResult
 from pydantic import Field
 
 from flext_ldif.constants import FlextLdifConstants
-from flext_ldif.quirks.base import FlextLdifQuirksBaseSchemaQuirk
+from flext_ldif.quirks.base import BaseSchemaQuirk
 from flext_ldif.quirks.conversion_matrix import FlextLdifQuirksConversionMatrix
 from flext_ldif.quirks.servers.oid_quirks import FlextLdifQuirksServersOid
 from flext_ldif.quirks.servers.oud_quirks import FlextLdifQuirksServersOud
 
 
 # Real test quirks for error path testing
-class FailingParseQuirk(FlextLdifQuirksBaseSchemaQuirk):
-    """Real FlextLdifQuirksBaseSchemaQuirk subclass that fails on parse."""
+class FailingParseQuirk(BaseSchemaQuirk):
+    """Real BaseSchemaQuirk subclass that fails on parse."""
 
     server_type: str = Field(default="test_failing_parse")
     priority: int = Field(default=100)
@@ -80,8 +80,8 @@ class FailingParseQuirk(FlextLdifQuirksBaseSchemaQuirk):
         return FlextResult.fail(self.error_msg)
 
 
-class SuccessfulParseQuirk(FlextLdifQuirksBaseSchemaQuirk):
-    """Real FlextLdifQuirksBaseSchemaQuirk subclass for successful operations."""
+class SuccessfulParseQuirk(BaseSchemaQuirk):
+    """Real BaseSchemaQuirk subclass for successful operations."""
 
     server_type: str = Field(default="test_successful_parse")
     priority: int = Field(default=100)
@@ -137,8 +137,8 @@ class SuccessfulParseQuirk(FlextLdifQuirksBaseSchemaQuirk):
         return FlextResult.ok({"name": "test"})
 
 
-class ConversionFailingQuirk(FlextLdifQuirksBaseSchemaQuirk):
-    """Real FlextLdifQuirksBaseSchemaQuirk subclass that fails on conversion."""
+class ConversionFailingQuirk(BaseSchemaQuirk):
+    """Real BaseSchemaQuirk subclass that fails on conversion."""
 
     server_type: str = Field(default="test_conversion_failing")
     priority: int = Field(default=100)
@@ -204,8 +204,8 @@ class ConversionFailingQuirk(FlextLdifQuirksBaseSchemaQuirk):
         return FlextResult.ok("(test)")
 
 
-class ExceptionThrowingQuirk(FlextLdifQuirksBaseSchemaQuirk):
-    """Real FlextLdifQuirksBaseSchemaQuirk subclass that throws exceptions."""
+class ExceptionThrowingQuirk(BaseSchemaQuirk):
+    """Real BaseSchemaQuirk subclass that throws exceptions."""
 
     server_type: str = Field(default="test_exception_throwing")
     priority: int = Field(default=100)
@@ -270,7 +270,7 @@ class ExceptionThrowingQuirk(FlextLdifQuirksBaseSchemaQuirk):
         raise RuntimeError(msg)
 
 
-class MissingParseObjectClassQuirk(FlextLdifQuirksBaseSchemaQuirk):
+class MissingParseObjectClassQuirk(BaseSchemaQuirk):
     """Real quirk missing parse_objectclass method."""
 
     server_type: str = Field(default="test_missing_parse_oc")
@@ -330,7 +330,7 @@ class MissingParseObjectClassQuirk(FlextLdifQuirksBaseSchemaQuirk):
         return FlextResult.ok("(test)")
 
 
-class ObjectClassParseOnlyQuirk(FlextLdifQuirksBaseSchemaQuirk):
+class ObjectClassParseOnlyQuirk(BaseSchemaQuirk):
     """Real quirk with parse and to_rfc only."""
 
     server_type: str = Field(default="test_parse_only")
@@ -384,7 +384,7 @@ class ObjectClassParseOnlyQuirk(FlextLdifQuirksBaseSchemaQuirk):
         return FlextResult.ok("(test)")
 
 
-class MissingParseAclQuirk(FlextLdifQuirksBaseSchemaQuirk):
+class MissingParseAclQuirk(BaseSchemaQuirk):
     """Real quirk missing parse_acl method."""
 
     server_type: str = Field(default="test_missing_parse_acl")
@@ -452,7 +452,7 @@ class MissingParseAclQuirk(FlextLdifQuirksBaseSchemaQuirk):
         return FlextResult.ok(data)
 
 
-class MissingWriteAclQuirk(FlextLdifQuirksBaseSchemaQuirk):
+class MissingWriteAclQuirk(BaseSchemaQuirk):
     """Real quirk missing write_acl_to_rfc method."""
 
     server_type: str = Field(default="test_missing_write_acl")
@@ -520,7 +520,7 @@ class MissingWriteAclQuirk(FlextLdifQuirksBaseSchemaQuirk):
         return FlextResult.ok(data)
 
 
-class EntryConversionQuirk(FlextLdifQuirksBaseSchemaQuirk):
+class EntryConversionQuirk(BaseSchemaQuirk):
     """Real quirk with entry conversion support.
 
     Note: Sets entry=True as a marker for entry support (not self-reference).
@@ -585,7 +585,7 @@ class EntryConversionQuirk(FlextLdifQuirksBaseSchemaQuirk):
         return FlextResult.ok("dn: cn=test,dc=example,dc=com\ncn: test")
 
 
-class MinimalQuirk(FlextLdifQuirksBaseSchemaQuirk):
+class MinimalQuirk(BaseSchemaQuirk):
     """Real quirk with minimal functionality."""
 
     server_type: str = Field(default="test_minimal")
@@ -633,7 +633,7 @@ class MinimalQuirk(FlextLdifQuirksBaseSchemaQuirk):
         return FlextResult.ok("(test)")
 
 
-class PartialAttributeQuirk(FlextLdifQuirksBaseSchemaQuirk):
+class PartialAttributeQuirk(BaseSchemaQuirk):
     """Real quirk with only attribute parsing support."""
 
     server_type: str = Field(default="test_partial_attr")
@@ -681,7 +681,7 @@ class PartialAttributeQuirk(FlextLdifQuirksBaseSchemaQuirk):
         return FlextResult.fail("Not supported")
 
 
-class AclOnlyQuirk(FlextLdifQuirksBaseSchemaQuirk):
+class AclOnlyQuirk(BaseSchemaQuirk):
     """Real quirk with only ACL support.
 
     Note: Sets acl=True as a marker for ACL support (not self-reference).
@@ -744,7 +744,7 @@ class AclOnlyQuirk(FlextLdifQuirksBaseSchemaQuirk):
         return FlextResult.ok(data)
 
 
-class EntryOnlyQuirk(FlextLdifQuirksBaseSchemaQuirk):
+class EntryOnlyQuirk(BaseSchemaQuirk):
     """Real quirk with only entry support.
 
     Note: Sets entry=True as a marker for entry support (not self-reference).

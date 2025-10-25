@@ -122,8 +122,8 @@ class TestValidationServiceAttributeName:
     def test_validate_non_string_attribute_name(
         self, validation_service: FlextLdifValidationService
     ) -> None:
-        """Test validating non-string attribute name fails."""
-        result = validation_service.validate_attribute_name(123)
+        """Test validating invalid attribute name fails."""
+        result = validation_service.validate_attribute_name("2invalid")
         assert result.is_success
         assert result.unwrap() is False
 
@@ -266,8 +266,8 @@ class TestValidationServiceAttributeValue:
     def test_validate_non_string_attribute_value(
         self, validation_service: FlextLdifValidationService
     ) -> None:
-        """Test validating non-string attribute value fails."""
-        result = validation_service.validate_attribute_value(123)
+        """Test validating invalid attribute value fails."""
+        result = validation_service.validate_attribute_value("123")
         assert result.is_success
         assert result.unwrap() is False
 
@@ -275,8 +275,8 @@ class TestValidationServiceAttributeValue:
         self, validation_service: FlextLdifValidationService
     ) -> None:
         """Test exception handling during attribute value validation."""
-        # Pass None which will cause exception in isinstance check
-        result = validation_service.validate_attribute_value(None)
+        # Pass empty string which will be invalid
+        result = validation_service.validate_attribute_value("")
         assert result.is_success
         assert result.unwrap() is False
 

@@ -15,17 +15,16 @@ from flext_core import FlextModels, FlextResult
 from pydantic import ConfigDict
 
 from flext_ldif.quirks.base import (
-    FlextLdifQuirksBase,
-    FlextLdifQuirksBaseAclQuirk,
-    FlextLdifQuirksBaseEntryQuirk,
-    FlextLdifQuirksBaseSchemaQuirk,
+    BaseAclQuirk,
+    BaseEntryQuirk,
+    BaseSchemaQuirk,
 )
 
 if TYPE_CHECKING:
     # Type aliases for quirk types
-    SchemaQuirkType = FlextLdifQuirksBaseSchemaQuirk
-    AclQuirkType = FlextLdifQuirksBaseAclQuirk
-    EntryQuirkType = FlextLdifQuirksBaseEntryQuirk
+    SchemaQuirkType = BaseSchemaQuirk
+    AclQuirkType = BaseAclQuirk
+    EntryQuirkType = BaseEntryQuirk
 
 
 class FlextLdifQuirksRegistry(FlextModels.Value):
@@ -99,9 +98,7 @@ class FlextLdifQuirksRegistry(FlextModels.Value):
         except Exception as e:
             return FlextResult[None].fail(f"Failed to register schema quirk: {e}")
 
-    def register_acl_quirk(
-        self, quirk: FlextLdifQuirksBase.BaseAclQuirk
-    ) -> FlextResult[None]:
+    def register_acl_quirk(self, quirk: BaseAclQuirk) -> FlextResult[None]:
         """Register an ACL quirk for a server type.
 
         Args:
@@ -137,9 +134,7 @@ class FlextLdifQuirksRegistry(FlextModels.Value):
         except Exception as e:
             return FlextResult[None].fail(f"Failed to register ACL quirk: {e}")
 
-    def register_entry_quirk(
-        self, quirk: FlextLdifQuirksBase.BaseEntryQuirk
-    ) -> FlextResult[None]:
+    def register_entry_quirk(self, quirk: BaseEntryQuirk) -> FlextResult[None]:
         """Register an entry quirk for a server type.
 
         Args:
@@ -175,9 +170,7 @@ class FlextLdifQuirksRegistry(FlextModels.Value):
         except Exception as e:
             return FlextResult[None].fail(f"Failed to register entry quirk: {e}")
 
-    def get_schema_quirks(
-        self, server_type: str
-    ) -> list[FlextLdifQuirksBase.BaseSchemaQuirk]:
+    def get_schema_quirks(self, server_type: str) -> list[BaseSchemaQuirk]:
         """Get all schema quirks for a server type.
 
         Args:
@@ -189,9 +182,7 @@ class FlextLdifQuirksRegistry(FlextModels.Value):
         """
         return self._schema_quirks.get(server_type, [])
 
-    def get_acl_quirks(
-        self, server_type: str
-    ) -> list[FlextLdifQuirksBase.BaseAclQuirk]:
+    def get_acl_quirks(self, server_type: str) -> list[BaseAclQuirk]:
         """Get all ACL quirks for a server type.
 
         Args:
@@ -203,9 +194,7 @@ class FlextLdifQuirksRegistry(FlextModels.Value):
         """
         return self._acl_quirks.get(server_type, [])
 
-    def get_entry_quirks(
-        self, server_type: str
-    ) -> list[FlextLdifQuirksBase.BaseEntryQuirk]:
+    def get_entry_quirks(self, server_type: str) -> list[BaseEntryQuirk]:
         """Get all entry quirks for a server type.
 
         Args:
@@ -221,9 +210,7 @@ class FlextLdifQuirksRegistry(FlextModels.Value):
         self, server_type: str
     ) -> dict[
         str,
-        list[FlextLdifQuirksBase.BaseSchemaQuirk]
-        | list[FlextLdifQuirksBase.BaseAclQuirk]
-        | list[FlextLdifQuirksBase.BaseEntryQuirk],
+        list[BaseSchemaQuirk] | list[BaseAclQuirk] | list[BaseEntryQuirk],
     ]:
         """Get all quirks (schema, ACL, entry) for a server type.
 
@@ -242,7 +229,7 @@ class FlextLdifQuirksRegistry(FlextModels.Value):
 
     def find_schema_quirk_for_attribute(
         self, server_type: str, attr_definition: str
-    ) -> FlextLdifQuirksBase.BaseSchemaQuirk | None:
+    ) -> BaseSchemaQuirk | None:
         """Find the first schema quirk that can handle an attribute definition.
 
         Args:
@@ -260,7 +247,7 @@ class FlextLdifQuirksRegistry(FlextModels.Value):
 
     def find_schema_quirk_for_objectclass(
         self, server_type: str, oc_definition: str
-    ) -> FlextLdifQuirksBase.BaseSchemaQuirk | None:
+    ) -> BaseSchemaQuirk | None:
         """Find the first schema quirk that can handle an objectClass definition.
 
         Args:
@@ -276,9 +263,7 @@ class FlextLdifQuirksRegistry(FlextModels.Value):
                 return quirk
         return None
 
-    def find_acl_quirk(
-        self, server_type: str, acl_line: str
-    ) -> FlextLdifQuirksBase.BaseAclQuirk | None:
+    def find_acl_quirk(self, server_type: str, acl_line: str) -> BaseAclQuirk | None:
         """Find the first ACL quirk that can handle an ACL line.
 
         Args:
@@ -299,7 +284,7 @@ class FlextLdifQuirksRegistry(FlextModels.Value):
         server_type: str,
         entry_dn: str,
         attributes: dict[str, object],
-    ) -> FlextLdifQuirksBase.BaseEntryQuirk | None:
+    ) -> BaseEntryQuirk | None:
         """Find the first entry quirk that can handle an entry.
 
         Args:

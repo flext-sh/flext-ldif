@@ -31,10 +31,9 @@ from flext_ldif.filters import FlextLdifFilters
 from flext_ldif.migration_pipeline import FlextLdifMigrationPipeline
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.quirks.base import (
-    FlextLdifQuirksBase,
-    FlextLdifQuirksBaseAclQuirk,
-    FlextLdifQuirksBaseEntryQuirk,
-    FlextLdifQuirksBaseSchemaQuirk,
+    BaseAclQuirk,
+    BaseEntryQuirk,
+    BaseSchemaQuirk,
 )
 from flext_ldif.quirks.registry import FlextLdifQuirksRegistry
 from flext_ldif.quirks.servers import (
@@ -59,7 +58,7 @@ from flext_ldif.server_detector import FlextLdifServerDetector
 from flext_ldif.typings import ServiceT
 
 
-class FlextLdifClient(FlextService[dict[str, object]]):
+class FlextLdifClient(FlextService[FlextLdifModels.ClientStatus]):
     """Main client implementation for LDIF processing operations.
 
     This class contains all the actual business logic for LDIF operations,
@@ -146,7 +145,7 @@ class FlextLdifClient(FlextService[dict[str, object]]):
         try:
             config = self.config
             client_status = FlextLdifModels.ClientStatus(
-                status="initialized",
+                status=FlextLdifConstants.DictKeys.INITIALIZED,
                 services=FlextLdifConstants.DictKeys.SERVICE_NAMES,
                 config={"default_encoding": config.ldif_encoding},
             )
@@ -217,7 +216,7 @@ class FlextLdifClient(FlextService[dict[str, object]]):
             return
 
         # Register complete implementations
-        complete_quirks: list[FlextLdifQuirksBase.BaseSchemaQuirk] = [
+        complete_quirks: list[BaseSchemaQuirk] = [
             FlextLdifQuirksServersOid(
                 server_type=FlextLdifConstants.ServerTypes.OID, priority=10
             ),
@@ -261,7 +260,7 @@ class FlextLdifClient(FlextService[dict[str, object]]):
         complete_quirks.extend(relaxed_quirks)
 
         # Register stub implementations (for future completion)
-        stub_quirks: list[FlextLdifQuirksBase.BaseSchemaQuirk] = []
+        stub_quirks: list[BaseSchemaQuirk] = []
 
         all_quirks = complete_quirks + stub_quirks
 
@@ -564,7 +563,7 @@ class FlextLdifClient(FlextService[dict[str, object]]):
 
     def analyze_entries(
         self, entries: list[FlextLdifModels.Entry]
-    ) -> FlextResult[FlextLdifModels.EntryAnalysisResultAnalysisResult]:
+    ) -> FlextResult[FlextLdifModels.EntryAnalysisResult]:
         """Analyze LDIF entries and generate statistics.
 
         Args:
@@ -590,14 +589,12 @@ class FlextLdifClient(FlextService[dict[str, object]]):
                     )
 
         # Return analytics result as model for type safety
-        analysis_model = FlextLdifModels.EntryAnalysisResultAnalysisResult(
+        analysis_model = FlextLdifModels.EntryAnalysisResult(
             total_entries=total_entries,
             objectclass_distribution=object_class_distribution,
             patterns_detected=[],
         )
-        return FlextResult[FlextLdifModels.EntryAnalysisResultAnalysisResult].ok(
-            analysis_model
-        )
+        return FlextResult[FlextLdifModels.EntryAnalysisResult].ok(analysis_model)
 
     def filter(
         self,
@@ -1027,11 +1024,7 @@ class FlextLdifClient(FlextService[dict[str, object]]):
 
     def register_quirk(
         self,
-        quirk: (
-            FlextLdifQuirksBaseSchemaQuirk
-            | FlextLdifQuirksBaseAclQuirk
-            | FlextLdifQuirksBaseEntryQuirk
-        ),
+        quirk: (BaseSchemaQuirk | BaseAclQuirk | BaseEntryQuirk),
         quirk_type: str = "schema",
     ) -> FlextResult[None]:
         """Register a custom quirk for server-specific processing.
@@ -1063,22 +1056,16 @@ class FlextLdifClient(FlextService[dict[str, object]]):
             tuple[type, Callable[[FlextLdifQuirksRegistry, object], FlextResult[None]]],
         ] = {
             FlextLdifConstants.DictKeys.SCHEMA_QUIRK: (
-                FlextLdifQuirksBaseSchemaQuirk,
-                lambda reg, q: reg.register_schema_quirk(
-                    cast("FlextLdifQuirksBaseSchemaQuirk", q)
-                ),
+                BaseSchemaQuirk,
+                lambda reg, q: reg.register_schema_quirk(cast("BaseSchemaQuirk", q)),
             ),
             FlextLdifConstants.DictKeys.ACL_QUIRK: (
-                FlextLdifQuirksBaseAclQuirk,
-                lambda reg, q: reg.register_acl_quirk(
-                    cast("FlextLdifQuirksBaseAclQuirk", q)
-                ),
+                BaseAclQuirk,
+                lambda reg, q: reg.register_acl_quirk(cast("BaseAclQuirk", q)),
             ),
             FlextLdifConstants.DictKeys.ENTRY_QUIRK: (
-                FlextLdifQuirksBaseEntryQuirk,
-                lambda reg, q: reg.register_entry_quirk(
-                    cast("FlextLdifQuirksBaseEntryQuirk", q)
-                ),
+                BaseEntryQuirk,
+                lambda reg, q: reg.register_entry_quirk(cast("BaseEntryQuirk", q)),
             ),
         }
 

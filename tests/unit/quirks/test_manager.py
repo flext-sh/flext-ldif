@@ -10,6 +10,8 @@ including:
 
 from __future__ import annotations
 
+import pytest
+
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.quirks.manager import FlextLdifQuirksManager
@@ -77,8 +79,12 @@ class TestQuirksManagerExecute:
         assert isinstance(quirks_loaded, int) and quirks_loaded > 0
 
 
+@pytest.mark.skip(
+    reason="Server detection moved to FlextLdifServerDetector service. "
+    "See tests/unit/services/test_server_detector.py for updated tests."
+)
 class TestQuirksManagerDetectServerType:
-    """Tests for server type detection."""
+    """Tests for server type detection (DEPRECATED - moved to FlextLdifServerDetector)."""
 
     def test_detect_empty_entries_returns_generic(self) -> None:
         """Test detection with empty entries list returns generic."""

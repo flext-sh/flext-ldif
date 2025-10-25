@@ -368,7 +368,9 @@ class FlextLdifRfcSchemaParser(FlextService[dict[str, object]]):
                         )
                     quirk_result = quirk.parse_attribute(definition)
                     if quirk_result.is_success:
-                        return quirk_result.unwrap()
+                        # Quirks now return models - convert to dict for catalog storage
+                        attr_model = quirk_result.unwrap()
+                        return attr_model.model_dump(exclude_none=True)
 
         # Fall back to RFC 4512 standard parsing
         match = self.ATTRIBUTE_TYPE_PATTERN.match(definition)
@@ -427,7 +429,9 @@ class FlextLdifRfcSchemaParser(FlextService[dict[str, object]]):
                         )
                     quirk_result = quirk.parse_objectclass(definition)
                     if quirk_result.is_success:
-                        return quirk_result.unwrap()
+                        # Quirks now return models - convert to dict for catalog storage
+                        oc_model = quirk_result.unwrap()
+                        return oc_model.model_dump(exclude_none=True)
 
         # Fall back to RFC 4512 standard parsing
         match = self.OBJECT_CLASS_PATTERN.match(definition)

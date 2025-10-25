@@ -95,7 +95,7 @@ class TestAclServiceRuleEvaluation:
     ) -> None:
         """Test permission rule evaluation when permission granted."""
         rule = acl_service.create_permission_rule("READ", required=True)
-        context = {"permissions": ["READ", "WRITE"]}
+        context = {"permissions": {"READ": True, "WRITE": True}}
         result = rule.evaluate(context)
         assert result.is_success
         assert result.unwrap() is True
@@ -105,7 +105,7 @@ class TestAclServiceRuleEvaluation:
     ) -> None:
         """Test permission rule evaluation when permission denied."""
         rule = acl_service.create_permission_rule("EXECUTE", required=True)
-        context = {"permissions": ["READ", "WRITE"]}
+        context = {"permissions": {"READ": True, "WRITE": True}}
         result = rule.evaluate(context)
         assert result.is_success
         assert result.unwrap() is False
@@ -148,7 +148,7 @@ class TestAclServiceRuleEvaluation:
         composite.add_rule(rule1)
         composite.add_rule(rule2)
 
-        context = {"permissions": ["READ", "WRITE", "EXECUTE"]}
+        context = {"permissions": {"READ": True, "WRITE": True, "EXECUTE": True}}
         result = composite.evaluate(context)
         assert result.is_success
 
@@ -162,14 +162,14 @@ class TestAclServiceRuleEvaluation:
         composite.add_rule(rule1)
         composite.add_rule(rule2)
 
-        context = {"permissions": ["READ", "WRITE"]}
+        context = {"permissions": {"READ": True, "WRITE": True}}
         result = composite.evaluate(context)
         assert result.is_success
 
     def test_evaluate_composite_empty(self, acl_service: FlextLdifAclService) -> None:
         """Test composite rule with no sub-rules."""
         composite = acl_service.create_composite_rule(operator="AND")
-        context = {"permissions": ["READ"]}
+        context = {"permissions": {"READ": True}}
         result = composite.evaluate(context)
         assert result.is_success
         assert result.unwrap() is True
@@ -403,15 +403,15 @@ class TestAclServiceIntegration:
         entries_data = [
             {
                 "dn": "CN=User1,DC=Example,DC=Com",
-                "attributes": {"aci": ["(allow all)"]},
+                "attributes": {"aci": "(allow all)"},
             },
             {
                 "dn": "CN=User2,DC=Example,DC=Com",
-                "attributes": {"orclaci": ["(allow all)"]},
+                "attributes": {"orclaci": "(allow all)"},
             },
             {
                 "dn": "CN=User3,DC=Example,DC=Com",
-                "attributes": {"cn": ["User3"]},
+                "attributes": {"cn": "User3"},
             },
         ]
 

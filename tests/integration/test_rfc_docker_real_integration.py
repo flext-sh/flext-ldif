@@ -17,9 +17,9 @@ import pytest
 
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.quirks.registry import FlextLdifQuirksRegistry
-from flext_ldif.rfc.rfc_ldif_parser import FlextLdifRfcLdifParser
-from flext_ldif.rfc.rfc_ldif_writer import FlextLdifRfcLdifWriter
-from flext_ldif.rfc.rfc_schema_parser import FlextLdifRfcSchemaParser
+from flext_ldif.rfc_ldif_parser import FlextLdifRfcLdifParser
+from flext_ldif.rfc_ldif_writer import FlextLdifRfcLdifWriter
+from flext_ldif.rfc_schema_parser import FlextLdifRfcSchemaParser
 
 
 class TestRfcParserRealFixtures:

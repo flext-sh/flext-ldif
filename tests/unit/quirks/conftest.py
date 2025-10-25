@@ -3,10 +3,10 @@
 from flext_core import FlextResult
 from pydantic import Field
 
-from flext_ldif.quirks.base import FlextLdifQuirksBaseSchemaQuirk
+from flext_ldif.quirks.base import BaseSchemaQuirk
 
 
-class ObjectClassParseOnlyQuirk(FlextLdifQuirksBaseSchemaQuirk):
+class ObjectClassParseOnlyQuirk(BaseSchemaQuirk):
     """Simple test quirk with parse and to_rfc only - NO AUTO-REGISTRATION."""
 
     server_type: str = Field(default="test_parse_only_no_register")

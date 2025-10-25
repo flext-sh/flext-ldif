@@ -20,15 +20,12 @@ import re
 from typing import ClassVar
 
 from flext_core import FlextResult
-from pydantic import Field
 
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.dn_service import FlextLdifDnService
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.quirks.base import (
-    FlextLdifQuirksBaseAclQuirk,
-    FlextLdifQuirksBaseEntryQuirk,
-    FlextLdifQuirksBaseSchemaQuirk,
+    FlextLdifQuirksBase,
 )
 from flext_ldif.quirks.rfc_parsers import RfcSchemaConverter, RfcSchemaExtractor
 from flext_ldif.typings import FlextLdifTypes
@@ -36,7 +33,7 @@ from flext_ldif.typings import FlextLdifTypes
 logger = logging.getLogger(__name__)
 
 
-class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
+class FlextLdifQuirksServersOid(FlextLdifQuirksBase.SchemaQuirk):
     """Oracle OID schema quirk - implements FlextLdifProtocols.Quirks.SchemaQuirkProtocol.
 
     Extends RFC 4512 schema parsing with Oracle OID-specific features:
@@ -55,28 +52,13 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
         assert isinstance(quirk, FlextLdifProtocols.Quirks.SchemaQuirkProtocol)
 
     Example:
-        quirk = FlextLdifQuirksServersOid(server_type="oid")
+        quirk = FlextLdifQuirksServersOid(server_type="oracle_oid")
         if quirk.can_handle_attribute(attr_def):
             result = quirk.parse_attribute(attr_def)
             if result.is_success:
                 parsed_attr = result.unwrap()
 
     """
-
-    server_type: str = Field(
-        default=FlextLdifConstants.ServerTypes.OID,
-        description="Oracle OID server type",
-    )
-    priority: int = Field(
-        default=10, description="High priority for OID-specific parsing"
-    )
-
-    # Nested ACL quirk for ACL conversion (initialized in model_post_init)
-    acl: object | None = Field(
-        default=None,
-        description="Nested ACL quirk instance for ACL operations",
-        exclude=True,
-    )
 
     # Oracle OID namespace pattern
     ORACLE_OID_PATTERN: ClassVar[re.Pattern[str]] = re.compile(
@@ -95,11 +77,21 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
         "1.3.6.1.4.1.1466.115.121.1.1": "1.3.6.1.4.1.1466.115.121.1.15",  # ACI List → Directory String
     }
 
-    def model_post_init(self, _context: object, /) -> None:
-        """Initialize OID schema quirk and nested ACL quirk."""
-        super().model_post_init(_context)
-        # Instantiate nested ACL quirk for conversion matrix access (use object_setattr for frozen model)
-        object.__setattr__(self, "acl", self.AclQuirk(server_type=self.server_type))  # noqa: PLC2801
+    def __init__(
+        self,
+        server_type: str = FlextLdifConstants.ServerTypes.OID,
+        priority: int = 10,
+    ) -> None:
+        """Initialize OID schema quirk and nested ACL quirk.
+
+        Args:
+            server_type: Oracle OID server type
+            priority: High priority for OID-specific parsing
+
+        """
+        super().__init__(server_type=server_type, priority=priority)
+        # Instantiate nested ACL quirk for conversion matrix access
+        self.acl = self.AclQuirk(server_type=self.server_type)
 
     def can_handle_attribute(self, attr_definition: str) -> bool:
         """Check if this attribute should be processed by OID quirks.
@@ -313,15 +305,15 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
 
             # Determine kind (STRUCTURAL, AUXILIARY, ABSTRACT)
             # RFC 4512: Default to STRUCTURAL if KIND is not specified
-            if "STRUCTURAL" in oc_definition:
-                kind = "STRUCTURAL"
-            elif "AUXILIARY" in oc_definition:
-                kind = "AUXILIARY"
-            elif "ABSTRACT" in oc_definition:
-                kind = "ABSTRACT"
+            if FlextLdifConstants.Schema.STRUCTURAL in oc_definition:
+                kind = FlextLdifConstants.Schema.STRUCTURAL
+            elif FlextLdifConstants.Schema.AUXILIARY in oc_definition:
+                kind = FlextLdifConstants.Schema.AUXILIARY
+            elif FlextLdifConstants.Schema.ABSTRACT in oc_definition:
+                kind = FlextLdifConstants.Schema.ABSTRACT
             else:
                 # RFC 4512: Default to STRUCTURAL when KIND is not specified
-                kind = "STRUCTURAL"
+                kind = FlextLdifConstants.Schema.STRUCTURAL
 
             # Extract MUST attributes
             must_match = re.search(
@@ -369,7 +361,9 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                 f"OID objectClass parsing failed: {e}"
             )
 
-    def convert_attribute_to_rfc(self, attr_data: FlextLdifModels.SchemaAttribute) -> FlextResult[FlextLdifModels.SchemaAttribute]:
+    def convert_attribute_to_rfc(
+        self, attr_data: FlextLdifModels.SchemaAttribute
+    ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
         """Convert OID attribute to RFC-compliant format.
 
         Args:
@@ -383,26 +377,22 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
             # Oracle OID attributes can be represented in RFC format
             # by removing Oracle-specific extensions and fixing OUD-incompatible values
 
-            # Copy all fields from attr_data first
-            rfc_data = dict(attr_data)
+            # Extract values from model
+            name_value = attr_data.name
+            equality_value = attr_data.equality
+            substr_value = attr_data.substr
+            syntax_value = attr_data.syntax
 
             # Fix NAME - remove ;binary suffix and replace underscores
-            name_value = rfc_data.get(FlextLdifConstants.DictKeys.NAME)
             if name_value and isinstance(name_value, str):
-                modified = False
                 if ";binary" in name_value:
                     name_value = name_value.replace(";binary", "")
-                    modified = True
                     logger.debug(f"Removed ;binary from NAME: {name_value}")
                 if "_" in name_value:
                     name_value = name_value.replace("_", "-")
-                    modified = True
                     logger.debug(f"Replaced _ with - in NAME: {name_value}")
-                if modified:
-                    rfc_data[FlextLdifConstants.DictKeys.NAME] = name_value
 
             # Fix EQUALITY - replace invalid matching rules or fix misused SUBSTR rules
-            equality_value = rfc_data.get(FlextLdifConstants.DictKeys.EQUALITY)
             if equality_value and isinstance(equality_value, str):
                 # Check if EQUALITY is using a SUBSTR matching rule (common OID mistake)
                 # Handle both caseIgnoreSubStringsMatch (capital S) and caseIgnoreSubstringsMatch (lowercase)
@@ -411,50 +401,59 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                     "caseIgnoreSubStringsMatch",
                 }:
                     # Move to SUBSTR and use proper EQUALITY
-                    rfc_data[FlextLdifConstants.DictKeys.EQUALITY] = "caseIgnoreMatch"
-                    rfc_data[FlextLdifConstants.DictKeys.SUBSTR] = (
-                        "caseIgnoreSubstringsMatch"
-                    )
+                    equality_value = "caseIgnoreMatch"
+                    substr_value = "caseIgnoreSubstringsMatch"
                     logger.debug(
-                        f"Fixed EQUALITY: moved {equality_value} to SUBSTR, using caseIgnoreMatch for EQUALITY"
+                        "Fixed EQUALITY: moved substr match to SUBSTR, using caseIgnoreMatch for EQUALITY"
                     )
                 elif equality_value in self.MATCHING_RULE_REPLACEMENTS:
                     # Standard replacement
                     original = equality_value
-                    rfc_data[FlextLdifConstants.DictKeys.EQUALITY] = (
-                        self.MATCHING_RULE_REPLACEMENTS[equality_value]
-                    )
+                    equality_value = self.MATCHING_RULE_REPLACEMENTS[equality_value]
                     logger.debug(
-                        f"Replaced matching rule {original} -> {rfc_data[FlextLdifConstants.DictKeys.EQUALITY]}"
+                        f"Replaced matching rule {original} -> {equality_value}"
                     )
 
             # Fix SYNTAX - remove quotes (OID uses 'OID' format, RFC 4512 uses OID without quotes)
-            syntax_value = rfc_data.get(FlextLdifConstants.DictKeys.SYNTAX)
             if syntax_value and isinstance(syntax_value, str):
                 # Remove quotes if present
                 if syntax_value.startswith("'") and syntax_value.endswith("'"):
                     syntax_value = syntax_value[1:-1]
-                    rfc_data[FlextLdifConstants.DictKeys.SYNTAX] = syntax_value
                     logger.debug(f"Removed quotes from SYNTAX: {syntax_value}")
 
                 # Replace unsupported syntax OIDs
                 if syntax_value in self.SYNTAX_OID_REPLACEMENTS:
                     original = syntax_value
-                    rfc_data[FlextLdifConstants.DictKeys.SYNTAX] = (
-                        self.SYNTAX_OID_REPLACEMENTS[syntax_value]
-                    )
-                    logger.debug(
-                        f"Replaced syntax OID {original} -> {rfc_data[FlextLdifConstants.DictKeys.SYNTAX]}"
-                    )
+                    syntax_value = self.SYNTAX_OID_REPLACEMENTS[syntax_value]
+                    logger.debug(f"Replaced syntax OID {original} -> {syntax_value}")
 
-            return FlextResult[FlextLdifModels.SchemaAttribute].ok(rfc_data)
+            # Create new RFC attribute model with modified values
+            rfc_attr = FlextLdifModels.SchemaAttribute(
+                name=name_value,
+                oid=attr_data.oid,
+                desc=attr_data.desc,
+                sup=attr_data.sup,
+                equality=equality_value,
+                ordering=attr_data.ordering,
+                substr=substr_value,
+                syntax=syntax_value,
+                length=attr_data.length,
+                usage=attr_data.usage,
+                single_value=attr_data.single_value,
+                no_user_modification=attr_data.no_user_modification,
+                metadata=attr_data.metadata,
+            )
+
+            return FlextResult[FlextLdifModels.SchemaAttribute].ok(rfc_attr)
 
         except Exception as e:
             return FlextResult[FlextLdifModels.SchemaAttribute].fail(
                 f"OID→RFC conversion failed: {e}"
             )
 
-    def convert_objectclass_to_rfc(self, oc_data: FlextLdifModels.SchemaObjectClass) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
+    def convert_objectclass_to_rfc(
+        self, oc_data: FlextLdifModels.SchemaObjectClass
+    ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
         """Convert OID objectClass to RFC-compliant format.
 
         Args:
@@ -469,18 +468,17 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
             # NOTE: Filtering is NOT the responsibility of quirks.
             # All attribute/objectClass filtering is handled by client-aOudMigConstants
             # in the migration service. Quirks only perform format conversions.
-            must_value = oc_data.get(FlextLdifConstants.DictKeys.MUST)
-            may_value = oc_data.get(FlextLdifConstants.DictKeys.MAY)
 
-            # Fix inheritance conflicts - OUD requires KIND to match superior class KIND
-            # Map of known problematic superior classes and their expected KINDs
-            kind_value = oc_data.get(FlextLdifConstants.DictKeys.KIND)
-            sup_value = oc_data.get(FlextLdifConstants.DictKeys.SUP)
-            name_value = oc_data.get(FlextLdifConstants.DictKeys.NAME)
+            # Extract values from model
+            must_value = oc_data.must
+            may_value = oc_data.may
+            kind_value = oc_data.kind
+            sup_value = oc_data.sup
+            name_value = oc_data.name
 
             # Fix missing SUP for AUXILIARY objectClasses that require it
             # OUD requires AUXILIARY classes to have an explicit SUP clause
-            if not sup_value and kind_value == "AUXILIARY":
+            if not sup_value and kind_value == FlextLdifConstants.Schema.AUXILIARY:
                 # Known AUXILIARY classes from OID that are missing SUP top
                 auxiliary_without_sup = {
                     "orcldAsAttrCategory",  # orclDASAttrCategory
@@ -507,39 +505,43 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                 sup_lower = str(sup_value).lower() if isinstance(sup_value, str) else ""
 
                 # If SUP is STRUCTURAL but objectClass is AUXILIARY, change to STRUCTURAL
-                if sup_lower in structural_superiors and kind_value == "AUXILIARY":
+                if (
+                    sup_lower in structural_superiors
+                    and kind_value == FlextLdifConstants.Schema.AUXILIARY
+                ):
                     logger.debug(
                         f"Changing {name_value} from AUXILIARY to STRUCTURAL "
                         f"to match superior class {sup_value}"
                     )
-                    kind_value = "STRUCTURAL"
+                    kind_value = FlextLdifConstants.Schema.STRUCTURAL
 
                 # If SUP is AUXILIARY but objectClass is STRUCTURAL, change to AUXILIARY
-                elif sup_lower in auxiliary_superiors and kind_value == "STRUCTURAL":
+                elif (
+                    sup_lower in auxiliary_superiors
+                    and kind_value == FlextLdifConstants.Schema.STRUCTURAL
+                ):
                     logger.debug(
                         f"Changing {name_value} from STRUCTURAL to AUXILIARY "
                         f"to match superior class {sup_value}"
                     )
-                    kind_value = "AUXILIARY"
+                    kind_value = FlextLdifConstants.Schema.AUXILIARY
 
-            rfc_data = {
-                FlextLdifConstants.DictKeys.OID: oc_data.get(
-                    FlextLdifConstants.DictKeys.OID
-                ),
-                FlextLdifConstants.DictKeys.NAME: name_value,
-                FlextLdifConstants.DictKeys.DESC: oc_data.get(
-                    FlextLdifConstants.DictKeys.DESC
-                ),
-                FlextLdifConstants.DictKeys.SUP: sup_value,
-                FlextLdifConstants.DictKeys.KIND: kind_value,
-                FlextLdifConstants.DictKeys.MUST: must_value,
-                FlextLdifConstants.DictKeys.MAY: may_value,
-            }
+            # Create new RFC objectClass model with modified values
+            rfc_oc = FlextLdifModels.SchemaObjectClass(
+                oid=oc_data.oid,
+                name=name_value,
+                desc=oc_data.desc,
+                sup=sup_value,
+                kind=kind_value,
+                must=must_value,
+                may=may_value,
+                metadata=oc_data.metadata,
+            )
 
-            return FlextResult[FlextLdifModels.SchemaObjectClass].ok(rfc_data)
+            return FlextResult[FlextLdifModels.SchemaObjectClass].ok(rfc_oc)
 
         except Exception as e:
-            return FlextResult[FlextLdifModels.SchemaAttribute].fail(
+            return FlextResult[FlextLdifModels.SchemaObjectClass].fail(
                 f"OID→RFC conversion failed: {e}"
             )
 
@@ -571,10 +573,8 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
         """
         try:
             # Check if we have metadata with original format for perfect round-trip
-            if attr_data.metadata and attr_data.metadata.quirk_data:
-                original = attr_data.metadata.quirk_data.get("original_format")
-                if isinstance(original, str):
-                    return FlextResult[str].ok(original)
+            if attr_data.metadata and attr_data.metadata.original_format:
+                return FlextResult[str].ok(attr_data.metadata.original_format)
 
             # Build RFC 4512 attribute definition from scratch
             parts = []
@@ -612,7 +612,9 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                 if equality in self.MATCHING_RULE_REPLACEMENTS:
                     original_eq = equality
                     equality = self.MATCHING_RULE_REPLACEMENTS[equality]
-                    logger.debug(f"Replaced matching rule {original_eq} with {equality}")
+                    logger.debug(
+                        f"Replaced matching rule {original_eq} with {equality}"
+                    )
                 parts.append(f"EQUALITY {equality}")
 
             # Add ORDERING (optional)
@@ -681,24 +683,25 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
         """
         try:
             # Check if we have metadata with original format for perfect round-trip
-            if oc_data.metadata and oc_data.metadata.quirk_data:
-                original = oc_data.metadata.quirk_data.get("original_format")
-                if isinstance(original, str):
-                    # Fix known typos in original format
-                    # Fix AUXILLARY (double L) → AUXILIARY (single L)
-                    fixed_format = original.replace("AUXILLARY", "AUXILIARY")
-                    if fixed_format != original:
-                        logger.debug(
-                            f"Fixed AUXILLARY typo in objectClass {oc_data.name}"
-                        )
-                        return FlextResult[str].ok(fixed_format)
-                    return FlextResult[str].ok(original)
+            if oc_data.metadata and oc_data.metadata.original_format:
+                # Fix known typos in original format
+                # Fix AUXILLARY (double L) → AUXILIARY (single L)
+                original = oc_data.metadata.original_format
+                fixed_format = original.replace("AUXILLARY", "AUXILIARY")
+                if fixed_format != original:
+                    logger.debug(f"Fixed AUXILLARY typo in objectClass {oc_data.name}")
+                    return FlextResult[str].ok(fixed_format)
+                return FlextResult[str].ok(original)
 
             # Build RFC 4512 objectClass definition from scratch
             parts = []
 
             # Start with OID (required)
             oid = oc_data.oid
+            if not oid or not oid.strip():
+                return FlextResult[str].fail(
+                    "OID is required for objectClass RFC 4512 format"
+                )
             parts.append(f"( {oid}")
 
             # Add NAME (required)
@@ -745,6 +748,10 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                     elif len(may_attrs) == 1:
                         parts.append(f"MAY {may_attrs[0]}")
 
+            # Add X-ORIGIN from metadata if present
+            if oc_data.metadata and oc_data.metadata.x_origin:
+                parts.append(f"X-ORIGIN '{oc_data.metadata.x_origin}'")
+
             # Close the definition
             rfc_string = " ".join(parts) + " )"
 
@@ -755,7 +762,7 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
 
     def extract_schemas_from_ldif(
         self, ldif_content: str
-    ) -> FlextResult[FlextLdifTypes.Common.EntryAttributesDict]:
+    ) -> FlextResult[FlextLdifTypes.Models.EntryAttributesDict]:
         """Extract and parse all schema definitions from LDIF content.
 
         Strategy pattern: OID-specific approach to extract attributeTypes
@@ -780,19 +787,19 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                 ldif_content, self.parse_objectclass
             )
 
-            return FlextResult[FlextLdifModels.SchemaAttribute].ok({
+            return FlextResult[FlextLdifTypes.Models.EntryAttributesDict].ok({
                 dk.ATTRIBUTES: attributes,
                 "objectclasses": objectclasses,
             })
 
         except Exception as e:
-            return FlextResult[FlextLdifModels.SchemaAttribute].fail(
+            return FlextResult[FlextLdifTypes.Models.EntryAttributesDict].fail(
                 f"OID schema extraction failed: {e}"
             )
 
     def convert_attribute_from_rfc(
         self, rfc_data: FlextLdifModels.SchemaAttribute
-    ) -> FlextResult[FlextLdifTypes.Common.EntryAttributesDict]:
+    ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
         """Convert RFC-compliant attribute to OID-specific format.
 
         Args:
@@ -804,13 +811,10 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
         """
         try:
             # Oracle OID uses RFC-compliant schema format
-            # Just ensure OID server type is set
-            oid_data = dict(rfc_data)
-            oid_data[FlextLdifConstants.DictKeys.SERVER_TYPE] = (
-                FlextLdifConstants.ServerTypes.OID
-            )
-
-            return FlextResult[FlextLdifModels.SchemaAttribute].ok(oid_data)
+            # Just create new model with updated metadata if needed
+            # Since models are frozen, we return the input model as-is
+            # (OID format is identical to RFC format for attributes)
+            return FlextResult[FlextLdifModels.SchemaAttribute].ok(rfc_data)
 
         except Exception as e:
             return FlextResult[FlextLdifModels.SchemaAttribute].fail(
@@ -819,7 +823,7 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
 
     def convert_objectclass_from_rfc(
         self, rfc_data: FlextLdifModels.SchemaObjectClass
-    ) -> FlextResult[FlextLdifTypes.Common.EntryAttributesDict]:
+    ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
         """Convert RFC-compliant objectClass to OID-specific format.
 
         Args:
@@ -831,20 +835,16 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
         """
         try:
             # Oracle OID uses RFC-compliant schema format
-            # Just ensure OID server type is set
-            oid_data = dict(rfc_data)
-            oid_data[FlextLdifConstants.DictKeys.SERVER_TYPE] = (
-                FlextLdifConstants.ServerTypes.OID
-            )
-
-            return FlextResult[FlextLdifModels.SchemaObjectClass].ok(oid_data)
+            # Just return the input model as-is
+            # (OID format is identical to RFC format for objectClasses)
+            return FlextResult[FlextLdifModels.SchemaObjectClass].ok(rfc_data)
 
         except Exception as e:
-            return FlextResult[FlextLdifModels.SchemaAttribute].fail(
+            return FlextResult[FlextLdifModels.SchemaObjectClass].fail(
                 f"RFC→OID objectClass conversion failed: {e}"
             )
 
-    class AclQuirk(FlextLdifQuirksBaseAclQuirk):
+    class AclQuirk(FlextLdifQuirksBase.AclQuirk):
         """Oracle OID ACL quirk (nested).
 
         Extends RFC ACL parsing with Oracle OID-specific ACL formats:
@@ -852,22 +852,25 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
         - orclentrylevelaci: Oracle entry-level ACIs
 
         Example:
-            quirk = FlextLdifQuirksServersOid.AclQuirk(server_type="oid")
+            quirk = FlextLdifQuirksServersOid.AclQuirk(server_type="oracle_oid")
             if quirk.can_handle_acl(acl_line):
                 result = quirk.parse_acl(acl_line)
 
         """
 
-        server_type: str = Field(
-            default=FlextLdifConstants.ServerTypes.OID,
-            description="Oracle OID server type",
-        )
-        priority: int = Field(
-            default=10, description="High priority for OID ACL parsing"
-        )
+        def __init__(
+            self,
+            server_type: str = FlextLdifConstants.ServerTypes.OID,
+            priority: int = 10,
+        ) -> None:
+            """Initialize OID ACL quirk.
 
-        def model_post_init(self, _context: object, /) -> None:
-            """Initialize OID ACL quirk."""
+            Args:
+                server_type: Oracle OID server type
+                priority: High priority for OID ACL parsing
+
+            """
+            super().__init__(server_type=server_type, priority=priority)
 
         def can_handle_acl(self, acl_line: str) -> bool:
             """Check if this is an Oracle OID ACL.
@@ -918,9 +921,26 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                         target_dn = "*"
 
                 # Extract "by" clauses with subjects and permissions
-                # Pattern: by <subject> (<permissions>)
+                # Pattern: by <subject> (<permissions>) OR by <subject> ... (<permissions>) for entry-level with constraints
                 by_pattern = r'by\s+(group="[^"]+"|dnattr=\([^)]+\)|guidattr=\([^)]+\)|groupattr=\([^)]+\)|"[^"]+"|self|\*)\s+\(([^)]+)\)'
                 matches = list(re.finditer(by_pattern, acl_content))
+
+                # For entry-level ACLs with added_object_constraint, permissions are at the end
+                if (
+                    not matches
+                    and is_entry_level
+                    and "added_object_constraint=" in acl_content
+                ):
+                    # Extract subject from 'by <subject> added_object_constraint=...'
+                    subject_pattern = r'by\s+(group="[^"]+"|dnattr=\([^)]+\)|guidattr=\([^)]+\)|groupattr=\([^)]+\)|"[^"]+"|self|\*)'
+                    subject_match = re.search(subject_pattern, acl_content)
+                    # Extract permissions from the final (...) at the end
+                    perms_pattern = r"\(([^)]+)\)\s*$"
+                    perms_match = re.search(perms_pattern, acl_content)
+
+                    if subject_match and perms_match:
+                        # Create a synthetic match that looks like the standard format
+                        matches = [(subject_match.group(1), perms_match.group(1))]
 
                 if not matches:
                     return FlextResult[FlextLdifModels.Acl].fail(
@@ -929,8 +949,13 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
 
                 # Take first by_clause (OID can have multiple, but model expects single subject/permissions)
                 first_match = matches[0]
-                subject_str = first_match.group(1).strip()
-                permissions_str = first_match.group(2).strip()
+                # Handle both regex match objects and tuples (from entry-level constraint parsing)
+                if isinstance(first_match, tuple):
+                    subject_str = first_match[0].strip()
+                    permissions_str = first_match[1].strip()
+                else:
+                    subject_str = first_match.group(1).strip()
+                    permissions_str = first_match.group(2).strip()
                 permissions_list = [p.strip() for p in permissions_str.split(",")]
 
                 # Build AclSubject from subject string
@@ -1004,7 +1029,7 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                         subject_type=subject_type, subject_value=subject_value
                     ),
                     permissions=FlextLdifModels.AclPermissions(**permissions_data),
-                    server_type="oid",
+                    server_type="oracle_oid",
                     raw_acl=acl_line,
                 )
 
@@ -1108,7 +1133,7 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
             return (dedupe(allowed), dedupe(denied), metadata)
 
         def convert_acl_to_rfc(
-            self, acl_model: FlextLdifModels.Acl
+            self, acl_data: FlextLdifModels.Acl
         ) -> FlextResult[FlextLdifModels.Acl]:
             """Convert OID ACL model to RFC-compliant ACL model (OID→RFC transformation).
 
@@ -1119,90 +1144,25 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
             - Server type change to "rfc"
 
             Args:
-                acl_model: OID ACL Pydantic model
+                acl_data: OID ACL Pydantic model
 
             Returns:
                 FlextResult with RFC-compliant ACL model
 
             """
             try:
-                # Extract permissions as list from model
-                perms_list = acl_model.permissions.permissions  # Computed field returns list[str]
-
-                # Apply OID→RFC permission conversion using helper
-                allowed_perms, denied_perms, perm_metadata = (
-                    self._convert_oid_to_rfc_permissions(perms_list)
-                )
-
-                # Build new permissions model from converted permissions
-                new_permissions_data: dict[str, bool] = {
-                    "read": False,
-                    "write": False,
-                    "add": False,
-                    "delete": False,
-                    "search": False,
-                    "compare": False,
-                    "self_write": False,
-                    "proxy": False,
-                }
-
-                # Map allowed permissions to model fields
-                for perm in allowed_perms:
-                    perm_lower = perm.lower()
-                    if perm_lower == "read":
-                        new_permissions_data["read"] = True
-                    elif perm_lower == "write":
-                        new_permissions_data["write"] = True
-                    elif perm_lower == "add":
-                        new_permissions_data["add"] = True
-                    elif perm_lower == "delete":
-                        new_permissions_data["delete"] = True
-                    elif perm_lower == "search":
-                        new_permissions_data["search"] = True
-                    elif perm_lower == "compare":
-                        new_permissions_data["compare"] = True
-                    elif perm_lower == "selfwrite" or perm_lower == "self_write":
-                        new_permissions_data["self_write"] = True
-                    elif perm_lower == "proxy":
-                        new_permissions_data["proxy"] = True
-
-                # Extract subject information from model
-                subject_type = acl_model.subject.subject_type
-                subject_value = acl_model.subject.subject_value
-
-                # Convert OID subject format to RFC bind rule format
-                rfc_subject_type = subject_type
-                rfc_subject_value = subject_value
-
-                if subject_type == "anonymous" or subject_value == "*":
-                    rfc_subject_type = "bind_rules"
-                    rfc_subject_value = 'userdn="ldap:///*"'
-                elif subject_type == "self":
-                    rfc_subject_type = "bind_rules"
-                    rfc_subject_value = 'userdn="ldap:///self"'
-                elif subject_type == "group":
-                    rfc_subject_type = "bind_rules"
-                    # Ensure LDAP URL format
-                    if not subject_value.startswith("ldap:///"):
-                        rfc_subject_value = f'groupdn="ldap:///{subject_value}"'
-                    else:
-                        rfc_subject_value = f'groupdn="{subject_value}"'
-                elif subject_type == "bind_rules":
-                    # Already in bind_rules format, keep as-is
-                    rfc_subject_type = "bind_rules"
-                    rfc_subject_value = subject_value
+                # The model from parse_acl already has permissions in the correct format
+                # (as boolean fields). We just need to change the server_type to "generic"
+                # and update the name. No permission conversion needed.
 
                 # Build RFC-compliant ACL model
                 rfc_acl = FlextLdifModels.Acl(
-                    name=f"Migrated from OID: {acl_model.name}",
-                    target=acl_model.target,  # Copy target as-is
-                    subject=FlextLdifModels.AclSubject(
-                        subject_type=rfc_subject_type,
-                        subject_value=rfc_subject_value,
-                    ),
-                    permissions=FlextLdifModels.AclPermissions(**new_permissions_data),
-                    server_type="rfc",
-                    raw_acl=acl_model.raw_acl,
+                    name=f"Migrated from OID: {acl_data.name}",
+                    target=acl_data.target,  # Copy target as-is
+                    subject=acl_data.subject,  # Copy subject as-is (already in correct format)
+                    permissions=acl_data.permissions,  # Copy permissions as-is (already correct)
+                    server_type="generic",  # Change to RFC/generic type
+                    raw_acl=acl_data.raw_acl,
                 )
 
                 return FlextResult[FlextLdifModels.Acl].ok(rfc_acl)
@@ -1213,7 +1173,7 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                 )
 
         def convert_acl_from_rfc(
-            self, acl_model: FlextLdifModels.Acl
+            self, acl_data: FlextLdifModels.Acl
         ) -> FlextResult[FlextLdifModels.Acl]:
             """Convert RFC ACL model to OID-specific format.
 
@@ -1221,7 +1181,7 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
             this is a pass-through that just sets the server_type to OID.
 
             Args:
-                acl_model: RFC-compliant ACL Pydantic model
+                acl_data: RFC-compliant ACL Pydantic model
 
             Returns:
                 FlextResult with OID ACL model
@@ -1229,9 +1189,9 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
             """
             try:
                 # Change server_type to OID (use object.__setattr__ for frozen model)
-                object.__setattr__(acl_model, "server_type", "oid")
+                object.__setattr__(acl_data, "server_type", "oid")  # noqa: PLC2801
 
-                return FlextResult[FlextLdifModels.Acl].ok(acl_model)
+                return FlextResult[FlextLdifModels.Acl].ok(acl_data)
 
             except Exception as e:
                 return FlextResult[FlextLdifModels.Acl].fail(
@@ -1245,7 +1205,7 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
             Uses model fields to build proper OID syntax.
 
             Args:
-                acl_model: ACL Pydantic model
+                acl_data: ACL Pydantic model
 
             Returns:
                 FlextResult with formatted OID orclaci string
@@ -1253,16 +1213,16 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
             """
             try:
                 # If raw_acl is available and is OID format, use it for perfect round-trip
-                if acl_model.raw_acl and acl_model.raw_acl.startswith("orclaci:"):
-                    return FlextResult[str].ok(acl_model.raw_acl)
+                if acl_data.raw_acl and acl_data.raw_acl.startswith("orclaci:"):
+                    return FlextResult[str].ok(acl_data.raw_acl)
 
                 # Build orclaci string from model fields
                 parts = ["orclaci: access to entry"]
 
                 # Extract subject and permissions from model
-                if acl_model.subject and acl_model.permissions:
-                    subject_type = acl_model.subject.subject_type
-                    subject_value = acl_model.subject.subject_value
+                if acl_data.subject and acl_data.permissions:
+                    subject_type = acl_data.subject.subject_type
+                    subject_value = acl_data.subject.subject_value
 
                     # Convert subject to OID format
                     if subject_type == "anonymous" or subject_value == "*":
@@ -1296,11 +1256,15 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                         subject_str = subject_value
 
                     # Get permissions (from computed field)
-                    if acl_model.permissions:
+                    if acl_data.permissions:
                         ops = (
-                            acl_model.permissions.permissions
+                            acl_data.permissions.permissions
                         )  # Computed field returns list[str]
-                        perms_str = ",".join(ops) if ops else "all"
+                        # Type narrowing for Pyrefly - ensure ops is list[str]
+                        if isinstance(ops, list) and ops:
+                            perms_str = ",".join(str(op) for op in ops)
+                        else:
+                            perms_str = "all"
                     else:
                         perms_str = "all"
 
@@ -1315,8 +1279,6 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
 
             except Exception as e:
                 return FlextResult[str].fail(f"Failed to write ACL: {e}")
-
-
 
         def extract_acls_from_ldif(
             self, ldif_content: str
@@ -1390,7 +1352,7 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                     f"Failed to extract OID ACLs from LDIF: {e}"
                 )
 
-    class EntryQuirk(FlextLdifQuirksBaseEntryQuirk):
+    class EntryQuirk(FlextLdifQuirksBase.EntryQuirk):
         """Oracle OID entry quirk (nested).
 
         Handles Oracle OID-specific entry transformations:
@@ -1399,22 +1361,25 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
         - Oracle namespace attributes
 
         Example:
-            quirk = FlextLdifQuirksServersOid.EntryQuirk(server_type="oid")
+            quirk = FlextLdifQuirksServersOid.EntryQuirk(server_type="oracle_oid")
             if quirk.can_handle_entry(dn, attributes):
                 result = quirk.process_entry(dn, attributes)
 
         """
 
-        server_type: str = Field(
-            default=FlextLdifConstants.ServerTypes.OID,
-            description="Oracle OID server type",
-        )
-        priority: int = Field(
-            default=10, description="High priority for OID entry processing"
-        )
+        def __init__(
+            self,
+            server_type: str = FlextLdifConstants.ServerTypes.OID,
+            priority: int = 10,
+        ) -> None:
+            """Initialize OID entry quirk.
 
-        def model_post_init(self, _context: object, /) -> None:
-            """Initialize OID entry quirk."""
+            Args:
+                server_type: Oracle OID server type
+                priority: High priority for OID entry processing
+
+            """
+            super().__init__(server_type=server_type, priority=priority)
 
         def clean_dn(self, dn: str) -> str:
             r"""Clean OID-specific DN formatting issues.
@@ -1447,7 +1412,7 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
         def can_handle_entry(
             self,
             entry_dn: str,
-            attributes: FlextLdifTypes.Common.EntryAttributesDict,
+            attributes: FlextLdifTypes.Models.EntryAttributesDict,
         ) -> bool:
             """Check if this quirk should handle the entry.
 
@@ -1495,8 +1460,8 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
             return has_oid_attrs or has_oid_classes or has_oid_dn_pattern
 
         def process_entry(
-            self, entry_dn: str, attributes: FlextLdifTypes.Common.EntryAttributesDict
-        ) -> FlextResult[FlextLdifTypes.Common.EntryAttributesDict]:
+            self, entry_dn: str, attributes: FlextLdifTypes.Models.EntryAttributesDict
+        ) -> FlextResult[FlextLdifTypes.Models.EntryAttributesDict]:
             """Process entry for Oracle OID format.
 
             Args:
@@ -1547,16 +1512,18 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                 if acl_only_attrs:
                     processed_entry["_acl_attributes"] = acl_only_attrs
 
-                return FlextResult[FlextLdifModels.SchemaAttribute].ok(processed_entry)
+                return FlextResult[FlextLdifTypes.Models.EntryAttributesDict].ok(
+                    processed_entry
+                )
 
             except Exception as e:
-                return FlextResult[FlextLdifModels.SchemaAttribute].fail(
+                return FlextResult[FlextLdifTypes.Models.EntryAttributesDict].fail(
                     f"OID entry processing failed: {e}"
                 )
 
         def convert_entry_to_rfc(
-            self, entry_data: dict[str, object]
-        ) -> FlextResult[FlextLdifTypes.Common.EntryAttributesDict]:
+            self, entry_data: FlextLdifTypes.Models.EntryAttributesDict
+        ) -> FlextResult[FlextLdifTypes.Models.EntryAttributesDict]:
             """Convert Oracle OID entry to RFC-compliant format.
 
             OID uses non-RFC compliant "0"/"1" for boolean attributes.
@@ -1629,16 +1596,18 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                 # Quirks ONLY perform FORMAT transformations (e.g., boolean 0/1 → TRUE/FALSE).
                 # ACL extraction is handled separately in final pipeline phase.
 
-                return FlextResult[FlextLdifModels.SchemaAttribute].ok(rfc_data)
+                return FlextResult[FlextLdifTypes.Models.EntryAttributesDict].ok(
+                    rfc_data
+                )
 
             except Exception as e:
-                return FlextResult[FlextLdifModels.SchemaAttribute].fail(
+                return FlextResult[FlextLdifTypes.Models.EntryAttributesDict].fail(
                     f"OID entry→RFC conversion failed: {e}"
                 )
 
         def convert_entry_from_rfc(
-            self, entry_data: dict[str, object]
-        ) -> FlextResult[FlextLdifTypes.Common.EntryAttributesDict]:
+            self, entry_data: FlextLdifTypes.Models.EntryAttributesDict
+        ) -> FlextResult[FlextLdifTypes.Models.EntryAttributesDict]:
             """Convert RFC-compliant entry to Oracle OID format.
 
             Args:
@@ -1655,7 +1624,7 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
             )
 
         def write_entry_to_ldif(
-            self, entry_data: dict[str, object]
+            self, entry_data: FlextLdifTypes.Models.EntryAttributesDict
         ) -> FlextResult[str]:
             r"""Write OID entry data to standard LDIF string format.
 
@@ -1744,7 +1713,7 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
 
         def extract_entries_from_ldif(
             self, ldif_content: str
-        ) -> FlextResult[list[dict[str, object]]]:
+        ) -> FlextResult[list[FlextLdifTypes.Models.EntryAttributesDict]]:
             """Strategy pattern: OID-specific approach to extract entries from LDIF.
 
             Handles:
@@ -1893,12 +1862,14 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBaseSchemaQuirk):
                     if result.is_success:
                         entries.append(result.unwrap())
 
-                return FlextResult[list[dict[str, object]]].ok(entries)
+                return FlextResult[list[FlextLdifTypes.Models.EntryAttributesDict]].ok(
+                    entries
+                )
 
             except Exception as e:
-                return FlextResult[list[dict[str, object]]].fail(
-                    f"Failed to extract OID entries from LDIF: {e}"
-                )
+                return FlextResult[
+                    list[FlextLdifTypes.Models.EntryAttributesDict]
+                ].fail(f"Failed to extract OID entries from LDIF: {e}")
 
 
 __all__ = [

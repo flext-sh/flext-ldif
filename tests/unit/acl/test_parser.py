@@ -805,7 +805,7 @@ class TestFlextLdifAclService:
         """Test parsing ACL with empty string."""
         FlextLdifAclService()
 
-        from flext_ldif.acl.parser import FlextLdifAclParser
+        from flext_ldif.acl_parser import FlextLdifAclParser
 
         parser = FlextLdifAclParser()
         result = parser.parse_acl("", "openldap")

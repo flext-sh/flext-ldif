@@ -722,24 +722,30 @@ class FlextLdifRfcLdifWriter(FlextService[dict[str, object]]):
                 if not dn:
                     continue
 
+                # Type narrow: after the above check, dn is guaranteed to be non-empty str
+                dn_str: str = dn
+
                 # Apply target entry quirks if available (convert FROM RFC to target format)
                 if self._quirk_registry and self._target_server_type:
                     entry_quirks = self._quirk_registry.get_entry_quirks(
                         self._target_server_type
                     )
                     for quirk in entry_quirks:
-                        if quirk.can_handle_entry(dn, attributes_normalized):
+                        if quirk.can_handle_entry(dn_str, attributes_normalized):
                             process_result = quirk.process_entry(
-                                dn, attributes_normalized
+                                dn_str, attributes_normalized
                             )
                             if process_result.is_success:
                                 processed = process_result.unwrap()
                                 if isinstance(processed, dict):
-                                    dn = str(
-                                        processed.get(
-                                            FlextLdifConstants.DictKeys.DN, dn
-                                        )
+                                    # Extract DN from processed result with type safety
+                                    dn_from_processed = processed.get(
+                                        FlextLdifConstants.DictKeys.DN
                                     )
+                                    if dn_from_processed is not None and isinstance(
+                                        dn_from_processed, str
+                                    ):
+                                        dn_str = dn_from_processed
                                     # Extract attributes (everything except dn)
                                     attributes_normalized = {
                                         k: v
@@ -755,7 +761,7 @@ class FlextLdifRfcLdifWriter(FlextService[dict[str, object]]):
                     )
                     # Build full entry dict for quirk writer
                     full_entry_dict: dict[str, object] = {
-                        FlextLdifConstants.DictKeys.DN: dn
+                        FlextLdifConstants.DictKeys.DN: dn_str
                     }
                     full_entry_dict.update(attributes_normalized)
 
@@ -764,7 +770,7 @@ class FlextLdifRfcLdifWriter(FlextService[dict[str, object]]):
                         if (
                             hasattr(quirk, "write_entry_to_ldif")
                             and callable(getattr(quirk, "write_entry_to_ldif"))
-                            and quirk.can_handle_entry(dn, attributes_normalized)
+                            and quirk.can_handle_entry(dn_str, attributes_normalized)
                         ):
                             # Use quirk's custom LDIF writer
                             write_method = getattr(quirk, "write_entry_to_ldif")
@@ -790,7 +796,7 @@ class FlextLdifRfcLdifWriter(FlextService[dict[str, object]]):
                 # Standard RFC writing (if custom writer not used)
                 if not used_custom_writer:
                     # Write DN (with RFC 4514 normalization)
-                    normalized_dn = self._normalize_dn(dn)
+                    normalized_dn = self._normalize_dn(dn_str)
                     dn_line = f"{FlextLdifConstants.Format.DN_PREFIX} {normalized_dn}\n"
                     file_handle.write(dn_line)
                     lines_written += 1
@@ -981,38 +987,68 @@ class FlextLdifRfcLdifWriter(FlextService[dict[str, object]]):
                             str(item[FlextLdifConstants.DictKeys.DEFINITION])
                         )
                     elif FlextLdifConstants.DictKeys.FORMAT in item:
-                        # Has FORMAT field - this is RFC data that needs OUD conversion
-                        # Convert it now using target quirks
-                        if self._quirk_registry and self._target_server_type:
-                            acl_quirks = self._quirk_registry.get_acl_quirks(
-                                self._target_server_type
+                        # Has FORMAT field - this is RFC data that needs conversion
+                        # Legacy dict-based code path - create minimal Acl model for conversion
+                        try:
+                            # Create minimal Acl model from dict for type-safe conversion
+                            acl_model = FlextLdifModels.Acl(
+                                name=str(
+                                    item.get(FlextLdifConstants.DictKeys.NAME, "acl")
+                                ),
+                                target=FlextLdifModels.AclTarget(
+                                    target_dn=str(
+                                        item.get(
+                                            FlextLdifConstants.DictKeys.TARGET, "*"
+                                        )
+                                    ),
+                                    attributes=[],
+                                ),
+                                subject=FlextLdifModels.AclSubject(
+                                    subject_type="generic",
+                                    subject_value=str(
+                                        item.get(
+                                            FlextLdifConstants.DictKeys.SUBJECT, "*"
+                                        )
+                                    ),
+                                ),
+                                permissions=FlextLdifModels.AclPermissions(),
+                                server_type="generic",
+                                raw_acl=str(
+                                    item.get(FlextLdifConstants.DictKeys.RAW, "")
+                                ),
                             )
-                            for quirk in acl_quirks:
-                                convert_result = quirk.convert_acl_from_rfc(item)
-                                if convert_result.is_success:
-                                    converted = convert_result.unwrap()
-                                    if (
-                                        isinstance(converted, dict)
-                                        and FlextLdifConstants.DictKeys.DEFINITION
-                                        in converted
-                                    ):
-                                        definitions.append(
-                                            str(
-                                                converted[
-                                                    FlextLdifConstants.DictKeys.DEFINITION
-                                                ]
+
+                            if self._quirk_registry and self._target_server_type:
+                                acl_quirks = self._quirk_registry.get_acl_quirks(
+                                    self._target_server_type
+                                )
+                                for quirk in acl_quirks:
+                                    convert_result = quirk.convert_acl_from_rfc(
+                                        acl_model
+                                    )
+                                    if convert_result.is_success:
+                                        converted_acl = convert_result.unwrap()
+                                        # Use raw_acl from converted model
+                                        definitions.append(converted_acl.raw_acl)
+                                        break
+                                else:
+                                    # No quirk could convert - use FORMAT as fallback
+                                    definitions.append(
+                                        str(
+                                            item.get(
+                                                FlextLdifConstants.DictKeys.FORMAT, ""
                                             )
                                         )
-                                        break
+                                    )
                             else:
-                                # No quirk could convert - use FORMAT as fallback (will fail)
+                                # No quirks available - use FORMAT as fallback
                                 definitions.append(
                                     str(
                                         item.get(FlextLdifConstants.DictKeys.FORMAT, "")
                                     )
                                 )
-                        else:
-                            # No quirks available - use FORMAT as fallback
+                        except Exception:
+                            # If model creation fails, use FORMAT as fallback
                             definitions.append(
                                 str(item.get(FlextLdifConstants.DictKeys.FORMAT, ""))
                             )
