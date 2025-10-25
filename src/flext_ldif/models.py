@@ -143,6 +143,11 @@ class FlextLdifModels(FlextModels):
 
         """
 
+        model_config = ConfigDict(
+            extra="allow",
+            validate_assignment=True,
+        )
+
         original_format: str | None = Field(
             default=None,
             description="Original format before parsing (round-trip)",
@@ -153,6 +158,9 @@ class FlextLdifModels(FlextModels):
         )
         parsed_timestamp: str | None = Field(
             default=None, description="Timestamp when data was parsed (ISO 8601)"
+        )
+        x_origin: str | None = Field(
+            default=None, description="X-ORIGIN metadata for schema definitions"
         )
         extensions: dict[str, object] = Field(
             default_factory=dict,
@@ -299,6 +307,50 @@ class FlextLdifModels(FlextModels):
             description="LDAP server type (openldap, openldap2, openldap1, oid, oud, 389ds)",
         )
         raw_acl: str = Field(default="", description="Original ACL string from LDIF")
+
+        def __getitem__(self, key: str) -> object:
+            """Support dict-like access for backward compatibility with tests.
+
+            Maps old dict keys to Pydantic model attributes.
+            """
+            # Convert long form server_type to short form for backward compatibility
+            short_form_map = {
+                "oracle_oid": "oid",
+                "oracle_oud": "oud",
+            }
+            short_server_type = short_form_map.get(self.server_type, self.server_type)
+
+            # Map dict keys to model attributes
+            if key == FlextLdifConstants.DictKeys.TYPE:
+                # TYPE maps to server_type with legacy suffix
+                return f"{short_server_type}_acl"
+            if key == FlextLdifConstants.DictKeys.FORMAT:
+                # FORMAT derived from server_type (using short form)
+                format_map = {
+                    "oud": FlextLdifConstants.AclFormats.ACI,
+                    "oid": FlextLdifConstants.AclFormats.ORCLACI,
+                    "openldap": FlextLdifConstants.AclFormats.OLCACCESS,
+                    "openldap2": FlextLdifConstants.AclFormats.OPENLDAP2_ACL,
+                    "openldap1": FlextLdifConstants.AclFormats.ACCESS,
+                    "389ds": FlextLdifConstants.AclFormats.ACI,
+                }
+                return format_map.get(
+                    short_server_type, FlextLdifConstants.AclFormats.ACI
+                )
+            if key == FlextLdifConstants.DictKeys.RAW:
+                return self.raw_acl
+            if key == FlextLdifConstants.DictKeys.NAME:
+                return self.name
+            if key == FlextLdifConstants.DictKeys.TARGET:
+                return self.target
+            if key == FlextLdifConstants.DictKeys.SUBJECT:
+                return self.subject
+            if key == FlextLdifConstants.DictKeys.PERMISSIONS:
+                return self.permissions
+            if key == FlextLdifConstants.DictKeys.SERVER_TYPE:
+                return self.server_type
+            msg = f"Unknown key: {key}"
+            raise KeyError(msg)
 
     # =========================================================================
     # DTO MODELS - Data transfer objects
@@ -640,6 +692,41 @@ class FlextLdifModels(FlextModels):
             """Check if attribute has any matching rules defined."""
             return bool(self.equality or self.ordering or self.substr)
 
+        def __getitem__(self, key: str) -> object:
+            """Support dict-like access for backward compatibility with tests."""
+            if key == "server_type":
+                return self.metadata.quirk_type if self.metadata else None
+            if key == "name":
+                return self.name
+            if key == "oid":
+                return self.oid
+            if key == "desc":
+                return self.desc
+            if key == "sup":
+                return self.sup
+            if key == "equality":
+                return self.equality
+            if key == "ordering":
+                return self.ordering
+            if key == "substr":
+                return self.substr
+            if key == "syntax":
+                return self.syntax
+            if key == "length":
+                return self.length
+            if key == "usage":
+                return self.usage
+            if key == "single_value":
+                return self.single_value
+            if key == "no_user_modification":
+                return self.no_user_modification
+            if key == "metadata":
+                return self.metadata
+            if key == "has_matching_rules":
+                return self.has_matching_rules
+            msg = f"Unknown key: {key}"
+            raise KeyError(msg)
+
     class SchemaObjectClass(FlextModels.ArbitraryTypesModel):
         """LDAP schema object class definition model (RFC 4512 compliant).
 
@@ -651,18 +738,18 @@ class FlextLdifModels(FlextModels):
         desc: str | None = Field(
             None, description="Object class description (RFC 4512 DESC)"
         )
-        sup: str | None = Field(
-            None, description="Superior object class (RFC 4512 SUP)"
+        sup: str | list[str] | None = Field(
+            None, description="Superior object class(es) (RFC 4512 SUP)"
         )
         kind: str = Field(
             default=FlextLdifConstants.Schema.STRUCTURAL,
             description="Object class kind (RFC 4512: STRUCTURAL, AUXILIARY, ABSTRACT)",
         )
-        must: list[str] = Field(
-            default_factory=list, description="Required attributes (RFC 4512 MUST)"
+        must: list[str] | None = Field(
+            default=None, description="Required attributes (RFC 4512 MUST)"
         )
-        may: list[str] = Field(
-            default_factory=list, description="Optional attributes (RFC 4512 MAY)"
+        may: list[str] | None = Field(
+            default=None, description="Optional attributes (RFC 4512 MAY)"
         )
         metadata: FlextLdifModels.QuirkMetadata | None = Field(
             default=None, description="Quirk-specific metadata"
@@ -686,15 +773,19 @@ class FlextLdifModels(FlextModels):
         @computed_field
         def total_attributes(self) -> int:
             """Total number of attributes (required + optional)."""
-            return len(self.must) + len(self.may)
+            must_count = len(self.must) if self.must else 0
+            may_count = len(self.may) if self.may else 0
+            return must_count + may_count
 
         @computed_field
         def attribute_summary(self) -> FlextLdifTypes.CommonDict.DistributionDict:
             """Get summary of required and optional attributes."""
+            must_count = len(self.must) if self.must else 0
+            may_count = len(self.may) if self.may else 0
             return {
-                "required": len(self.must),
-                "optional": len(self.may),
-                "total": len(self.must) + len(self.may),
+                "required": must_count,
+                "optional": may_count,
+                "total": must_count + may_count,
             }
 
     class Entry(FlextModels.Entity):
@@ -1132,6 +1223,19 @@ class FlextLdifModels(FlextModels):
             return self.total_attributes == 0 and self.total_object_classes == 0
 
         @computed_field
+        def schema_dict(self) -> dict[str, object]:
+            """Complete schema containing both attributes and object classes.
+
+            Returns:
+                Dict with 'attributes' and 'object_classes' keys
+
+            """
+            return {
+                "attributes": self.attributes,
+                "object_classes": self.object_classes,
+            }
+
+        @computed_field
         def schema_summary(self) -> dict[str, int | str]:
             """Summary of schema contents.
 
@@ -1139,13 +1243,15 @@ class FlextLdifModels(FlextModels):
                 Dict with counts of attributes, object classes, server type, and entries
 
             """
-            # Access computed fields through model_dump() to avoid mypy callable issues
-            summary = self.model_dump()
+            # Access fields directly to avoid recursion with model_dump()
+            # Type cast to satisfy Pyrefly (computed_field seen as BoundMethod)
+            attrs: int = self.total_attributes  # type: ignore[assignment]
+            ocs: int = self.total_object_classes  # type: ignore[assignment]
             return {
-                "attributes": summary["total_attributes"],
-                "object_classes": summary["total_object_classes"],
+                "attributes": attrs,
+                "object_classes": ocs,
                 "server_type": self.server_type,
-                "entry_count": summary["entry_count"],
+                "entry_count": self.entry_count,
             }
 
     class MigrationStatistics(FlextModels.Value):
@@ -1206,7 +1312,9 @@ class FlextLdifModels(FlextModels):
                 Sum of schema elements and entries
 
             """
-            return self.total_schema_elements + self.total_entries
+            # Type cast to satisfy Pyrefly (computed_field seen as BoundMethod)
+            schema_elems: int = self.total_schema_elements  # type: ignore[assignment]
+            return schema_elems + self.total_entries
 
         @computed_field
         def has_schema(self) -> bool:
@@ -1216,7 +1324,9 @@ class FlextLdifModels(FlextModels):
                 True if attributes or object classes exist
 
             """
-            return self.total_schema_elements > 0
+            # Type cast to satisfy Pyrefly (computed_field seen as BoundMethod)
+            schema_elems: int = self.total_schema_elements  # type: ignore[assignment]
+            return schema_elems > 0
 
         @computed_field
         def has_entries(self) -> bool:
@@ -1250,16 +1360,19 @@ class FlextLdifModels(FlextModels):
                 Dict with all counts and computed metrics
 
             """
-            # Access computed fields through model_dump() to avoid mypy callable issues
-            stats_summary = self.model_dump()
+            # Access fields directly to avoid recursion with model_dump()
+            # Type cast to satisfy Pyrefly (computed_field seen as BoundMethod)
+            schema_elems: int = self.total_schema_elements  # type: ignore[assignment]
+            total_items: int = self.total_items  # type: ignore[assignment]
+            success: float = self.success_rate  # type: ignore[assignment]
             return {
-                "schema_attributes": stats_summary["total_schema_attributes"],
-                "schema_objectclasses": stats_summary["total_schema_objectclasses"],
-                "total_schema": stats_summary["total_schema_elements"],
-                "entries": stats_summary["total_entries"],
-                "failed": stats_summary["failed_entries"],
-                "total_items": stats_summary["total_items"],
-                "success_rate": round(stats_summary["success_rate"], 2),
+                "schema_attributes": self.total_schema_attributes,
+                "schema_objectclasses": self.total_schema_objectclasses,
+                "total_schema": schema_elems,
+                "entries": self.total_entries,
+                "failed": self.failed_entries,
+                "total_items": total_items,
+                "success_rate": round(success, 2),
             }
 
     class MigrationPipelineResult(FlextModels.Value):
@@ -1344,6 +1457,29 @@ class FlextLdifModels(FlextModels):
                 "is_empty": self.is_empty,
             }
 
+        def __getitem__(self, key: str) -> object:
+            """Support dict-like access for backward compatibility with tests."""
+            if key == "migrated_schema":
+                return self.migrated_schema
+            if key == "entries":
+                return self.entries
+            if key == "stats":
+                return self.stats
+            if key == "output_files":
+                return self.output_files
+            if key == "is_empty":
+                return self.is_empty
+            if key == "entry_count":
+                return self.entry_count
+            if key == "output_file_count":
+                return self.output_file_count
+            if key == "migration_summary":
+                return self.migration_summary
+            if key == "total_entries":  # Backward compatibility
+                return self.stats.total_entries
+            msg = f"Unknown key: {key}"
+            raise KeyError(msg)
+
     # =========================================================================
     # CLIENT AND SERVICE RESULT MODELS
     # =========================================================================
@@ -1363,6 +1499,17 @@ class FlextLdifModels(FlextModels):
         config: dict[str, object] = Field(
             default_factory=dict, description="Active configuration settings"
         )
+
+        def __getitem__(self, key: str) -> object:
+            """Support dict-like access for backward compatibility with tests."""
+            if key == "status":
+                return self.status
+            if key == "services":
+                return self.services
+            if key == "config":
+                return self.config
+            msg = f"Unknown key: {key}"
+            raise KeyError(msg)
 
     class ValidationResult(FlextModels.Value):
         """Entry validation result."""
@@ -1436,6 +1583,19 @@ class FlextLdifModels(FlextModels):
             """Count of unique object classes."""
             return len(self.objectclass_distribution)
 
+        def __getitem__(self, key: str) -> object:
+            """Support dict-like access for backward compatibility with tests."""
+            if key == "total_entries":
+                return self.total_entries
+            if key == "objectclass_distribution":
+                return self.objectclass_distribution
+            if key == "patterns_detected":
+                return self.patterns_detected
+            if key == "unique_objectclasses":
+                return self.unique_objectclasses
+            msg = f"Unknown key: {key}"
+            raise KeyError(msg)
+
     class ServerDetectionResult(FlextModels.Value):
         """Result from LDAP server type detection."""
 
@@ -1462,6 +1622,25 @@ class FlextLdifModels(FlextModels):
         fallback_reason: str | None = Field(
             default=None, description="Reason for fallback to RFC mode"
         )
+
+        def __getitem__(self, key: str) -> object:
+            """Support dict-like access for backward compatibility with tests."""
+            if key == "detected_server_type":
+                return self.detected_server_type
+            if key == "confidence":
+                return self.confidence
+            if key == "scores":
+                return self.scores
+            if key == "patterns_found":
+                return self.patterns_found
+            if key == "is_confident":
+                return self.is_confident
+            if key == "detection_error":
+                return self.detection_error
+            if key == "fallback_reason":
+                return self.fallback_reason
+            msg = f"Unknown key: {key}"
+            raise KeyError(msg)
 
 
 __all__ = ["FlextLdifModels"]

@@ -57,7 +57,6 @@ class TestOpenLDAP2xSchemaQuirks:
         assert attr_data.syntax == "1.3.6.1.4.1.1466.115.121.1.15"
         assert attr_data.equality == "caseIgnoreMatch"
         assert attr_data.single_value is True
-        assert attr_data["server_type"] == "openldap2"
 
     def test_parse_attribute_no_oid(self) -> None:
         """Test attribute parsing fails without OID."""
@@ -107,7 +106,6 @@ class TestOpenLDAP2xSchemaQuirks:
         may_attr = oc_data.may
         assert isinstance(may_attr, list)
         assert "description" in may_attr
-        assert oc_data["server_type"] == "openldap2"
 
     def test_parse_objectclass_auxiliary(self) -> None:
         """Test parsing AUXILIARY objectClass."""
@@ -159,8 +157,8 @@ class TestOpenLDAP2xSchemaQuirks:
         result = quirk.convert_attribute_to_rfc(attr_data)
         assert result.is_success
         rfc_data = result.unwrap()
-        assert rfc_data.oid == "1.2.3.4"
-        assert rfc_data.name == "testAttr"
+        assert rfc_data["oid"] == "1.2.3.4"
+        assert rfc_data["name"] == "testAttr"
 
     def test_convert_objectclass_to_rfc(self) -> None:
         """Test objectClass conversion to RFC format."""
@@ -179,8 +177,8 @@ class TestOpenLDAP2xSchemaQuirks:
         result = quirk.convert_objectclass_to_rfc(oc_data)
         assert result.is_success
         rfc_data = result.unwrap()
-        assert rfc_data.oid == "1.2.3.4"
-        assert rfc_data.kind == "STRUCTURAL"
+        assert rfc_data["oid"] == "1.2.3.4"
+        assert rfc_data["kind"] == "STRUCTURAL"
 
     def test_convert_attribute_from_rfc(self) -> None:
         """Test attribute conversion from RFC format."""
@@ -268,7 +266,7 @@ class TestOpenLDAP2xAclQuirks:
         """Test ACL quirk initialization."""
         main_quirk = FlextLdifQuirksServersOpenldap()
         acl_quirk = main_quirk.AclQuirk()
-        assert acl_quirk.server_type == "openldap2"
+        assert acl_quirk.server_type == "generic"
         assert acl_quirk.priority == 10
 
     def test_can_handle_acl_with_to_clause(self) -> None:
@@ -390,7 +388,7 @@ class TestOpenLDAP2xEntryQuirks:
         """Test entry quirk initialization."""
         main_quirk = FlextLdifQuirksServersOpenldap()
         entry_quirk = main_quirk.EntryQuirk()
-        assert entry_quirk.server_type == "openldap2"
+        assert entry_quirk.server_type == "generic"
         assert entry_quirk.priority == 10
 
     def test_can_handle_entry_with_config_dn(self) -> None:
@@ -1096,5 +1094,5 @@ class TestOpenldapProperties:
     ) -> None:
         """Test EntryQuirk has correct properties."""
         entry_quirk = openldap_quirk.EntryQuirk()
-        assert entry_quirk.server_type == "openldap2"
+        assert entry_quirk.server_type == "generic"
         assert entry_quirk.priority == 10

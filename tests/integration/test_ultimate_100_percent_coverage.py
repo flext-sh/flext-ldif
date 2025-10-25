@@ -19,7 +19,7 @@ import pytest
 from flext_ldif import FlextLdif, FlextLdifClient
 from flext_ldif.quirks.servers.oid_quirks import FlextLdifQuirksServersOid
 from flext_ldif.quirks.servers.oud_quirks import FlextLdifQuirksServersOud
-from flext_ldif.services.server_detector import FlextLdifServerDetector
+from flext_ldif.server_detector import FlextLdifServerDetector
 
 
 class TestUtilitiesComprehensive:

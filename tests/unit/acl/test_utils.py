@@ -18,8 +18,7 @@ from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.utilities import FlextLdifUtilities
 
-# Alias for backward compatibility with test code
-FlextLdifUtilities = FlextLdifUtilities
+# Alias for backward compatibility with test code - removed self-assignment
 
 
 class TestComponentFactory:
@@ -192,8 +191,10 @@ class TestComponentFactory:
             raw_acl="some acl",
         )
 
-        # Should fail validation for unknown server type
-        assert result.is_failure
+        # Should succeed with default to OpenLDAP for unknown server type
+        assert result.is_success
+        acl = result.unwrap()
+        assert acl.server_type == "openldap"
 
     def test_create_unified_acl_preserves_properties(self) -> None:
         """Test that created ACL preserves all input properties."""

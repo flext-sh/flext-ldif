@@ -216,7 +216,7 @@ class TestFlextLdifModels:
         assert hasattr(FlextLdifModels, "AttributeValues")
         assert hasattr(FlextLdifModels, "LdifAttributes")
         assert hasattr(FlextLdifModels, "Entry")
-        assert hasattr(FlextLdifModels, "SearchConfig")
+        # Note: SearchConfig deleted (0 usages) - use dict[str, object] for LDAP search config
 
     def test_edge_cases(self) -> None:
         """Test edge cases in models."""
@@ -287,7 +287,7 @@ class TestFlextLdifModels:
         assert obj_class.name == "organizationalUnit"
         assert obj_class.oid == "2.5.6.5"
         assert obj_class.must == ["ou"]
-        assert obj_class.may == []
+        assert obj_class.may is None  # may defaults to None when not provided
         assert obj_class.desc == "Organizational unit"
 
     def test_schema_discovery_result_creation(self) -> None:
@@ -664,10 +664,9 @@ class TestFlextLdifModelsNamespace:
         assert hasattr(FlextLdifModels, "AclTarget")
         assert hasattr(FlextLdifModels, "AclSubject")
         assert hasattr(FlextLdifModels, "AclPermissions")
-        # Aggressive Pydantic 2 pattern: removed Acl factory class, using direct subclass instantiation
-        # Verify discriminated union subtypes are available instead
-        assert hasattr(FlextLdifModels, "OpenLdapAcl")
-        assert hasattr(FlextLdifModels, "OracleOudAcl")
+        # Universal ACL model consolidation: replaced 7 separate ACL classes with single Acl model
+        # Note: OpenLdapAcl, OracleOudAcl, etc. consolidated into FlextLdifModels.Acl with server_type field
+        assert hasattr(FlextLdifModels, "Acl")
 
     def test_computed_fields(self) -> None:
         """Test namespace structure."""
@@ -686,6 +685,6 @@ class TestFlextLdifModelsNamespace:
         assert hasattr(FlextLdifModels, "AclTarget")
         assert hasattr(FlextLdifModels, "AclSubject")
         assert hasattr(FlextLdifModels, "AclPermissions")
-        # Aggressive Pydantic 2 pattern: discriminated union subtypes for ACL
-        assert hasattr(FlextLdifModels, "FlextLdifModels.Acl")
-        assert hasattr(FlextLdifModels, "OpenLdapAcl")
+        # Universal ACL model consolidation: replaced 7 separate ACL classes with single Acl model
+        # Note: OpenLdapAcl, OracleOudAcl, etc. consolidated into FlextLdifModels.Acl with server_type field
+        assert hasattr(FlextLdifModels, "Acl")

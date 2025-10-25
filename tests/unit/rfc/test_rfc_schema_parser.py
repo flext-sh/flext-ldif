@@ -654,9 +654,9 @@ objectclasses: ( 2.5.6.6 NAME 'person' DESC 'Person' SUP top STRUCTURAL MUST ( s
 
             stats = data["stats"]
             assert isinstance(stats, dict)
-            stats_total_attrs = stats["total_attributes"]
+            stats_total_attrs = stats["attributes_count"]
             assert isinstance(stats_total_attrs, int)
-            stats_total_ocs = stats["total_objectclasses"]
+            stats_total_ocs = stats["objectclasses_count"]
             assert isinstance(stats_total_ocs, int)
             assert stats_total_attrs >= 2
             assert stats_total_ocs >= 1

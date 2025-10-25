@@ -47,7 +47,7 @@ attributeTypes: ( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' )
         result = detector.detect_server_type(ldif_content=content)
         assert result.is_success
         detection = result.unwrap()
-        assert detection["detected_server_type"] == "oid" or detection["confidence"] > 0
+        assert detection.detected_server_type == "oid" or detection.confidence > 0
 
     def test_detect_oid_by_orclaci_attribute(
         self, detector: FlextLdifServerDetector
@@ -61,7 +61,7 @@ orclACI: (target="ldap:///cn=admin,dc=example,dc=com")(version 3.0; acl "admin";
         assert result.is_success
         detection = result.unwrap()
         # Should detect OID due to orclaci attribute
-        assert detection["is_confident"] or detection["confidence"] >= 0
+        assert detection.is_confident or detection.confidence >= 0
 
     def test_detect_oid_by_orclentrylevelaci(
         self, detector: FlextLdifServerDetector
@@ -74,8 +74,8 @@ orclentrylevelaci: (version 3.0; acl "test"; allow(all) userdn="ldap:///anyone";
         result = detector.detect_server_type(ldif_content=content)
         assert result.is_success
         detection = result.unwrap()
-        assert "confidence" in detection
-        assert detection["is_confident"] is not None
+        assert hasattr(detection, "confidence")
+        assert detection.is_confident is not None
 
 
 class TestServerDetectorOracleOud:
@@ -99,7 +99,7 @@ ds-sync-state: synced
         assert result.is_success
         detection = result.unwrap()
         assert "detected_server_type" in detection
-        assert detection["confidence"] >= 0
+        assert detection.confidence >= 0
 
     def test_detect_oud_by_ds_pwp_attribute(
         self, detector: FlextLdifServerDetector
@@ -112,7 +112,7 @@ ds-pwp-account-disabled: true
         result = detector.detect_server_type(ldif_content=content)
         assert result.is_success
         detection = result.unwrap()
-        assert detection["confidence"] >= 0
+        assert detection.confidence >= 0
 
     def test_detect_oud_by_entryuuid(self, detector: FlextLdifServerDetector) -> None:
         """Test detecting OUD by entryUUID attribute."""
@@ -123,7 +123,7 @@ entryUUID: 550e8400-e29b-41d4-a716-446655440000
         result = detector.detect_server_type(ldif_content=content)
         assert result.is_success
         detection = result.unwrap()
-        assert detection["confidence"] >= 0
+        assert detection.confidence >= 0
 
 
 class TestServerDetectorOpenLdap:
@@ -148,7 +148,7 @@ olcDbDirectory: /var/lib/ldap
         detection = result.unwrap()
         # Should have scores for OpenLDAP
         assert "scores" in detection
-        assert detection["confidence"] >= 0
+        assert detection.confidence >= 0
 
     def test_detect_openldap_by_cn_config(
         self, detector: FlextLdifServerDetector
@@ -161,7 +161,7 @@ objectClass: olcGlobal
         result = detector.detect_server_type(ldif_content=content)
         assert result.is_success
         detection = result.unwrap()
-        assert detection["confidence"] >= 0
+        assert detection.confidence >= 0
 
     def test_detect_openldap_by_olcaccess(
         self, detector: FlextLdifServerDetector
@@ -174,7 +174,7 @@ olcAccess: to * by users read
         result = detector.detect_server_type(ldif_content=content)
         assert result.is_success
         detection = result.unwrap()
-        assert detection["confidence"] >= 0
+        assert detection.confidence >= 0
 
 
 class TestServerDetectorActiveDirectory:
@@ -194,7 +194,7 @@ attributeTypes: ( 1.2.840.113556.1.4.1 NAME 'objectGUID' )
         result = detector.detect_server_type(ldif_content=content)
         assert result.is_success
         detection = result.unwrap()
-        assert detection["confidence"] >= 0
+        assert detection.confidence >= 0
 
     def test_detect_ad_by_samaccountname(
         self, detector: FlextLdifServerDetector
@@ -207,7 +207,7 @@ samAccountName: testuser
         result = detector.detect_server_type(ldif_content=content)
         assert result.is_success
         detection = result.unwrap()
-        assert detection["confidence"] >= 0
+        assert detection.confidence >= 0
 
 
 class TestServerDetectorOther:
@@ -228,7 +228,7 @@ objectClass: top
         assert result.is_success
         detection = result.unwrap()
         assert "detected_server_type" in detection
-        assert detection["confidence"] >= 0
+        assert detection.confidence >= 0
 
     def test_detect_apache_ds(self, detector: FlextLdifServerDetector) -> None:
         """Test detecting Apache Directory Server."""
@@ -239,7 +239,7 @@ objectClass: top
         result = detector.detect_server_type(ldif_content=content)
         assert result.is_success
         detection = result.unwrap()
-        assert detection["confidence"] >= 0
+        assert detection.confidence >= 0
 
 
 class TestServerDetectorConfidence:
@@ -263,7 +263,7 @@ orclACI: (target="ldap:///")(version 3.0; acl "test"; allow(all) userdn="ldap://
         assert result.is_success
         detection = result.unwrap()
         # Multiple OID patterns should give high confidence
-        assert detection["confidence"] >= 0
+        assert detection.confidence >= 0
         assert "detected_server_type" in detection
 
     def test_low_confidence_fallback_to_rfc(
@@ -279,7 +279,7 @@ cn: test
         assert result.is_success
         detection = result.unwrap()
         # Generic content with no specific patterns
-        assert detection["confidence"] >= 0
+        assert detection.confidence >= 0
         assert "detected_server_type" in detection
 
     def test_mixed_patterns_detection(self, detector: FlextLdifServerDetector) -> None:
@@ -295,8 +295,8 @@ olcDatabase: mdb
         assert result.is_success
         detection = result.unwrap()
         # Multiple patterns present - should detect most prevalent
-        assert detection["confidence"] >= 0
-        assert len(detection["scores"]) > 0
+        assert detection.confidence >= 0
+        assert len(detection.scores) > 0
 
 
 class TestServerDetectorPatternExtraction:
@@ -317,7 +317,7 @@ orclACI: (target="ldap:///")(version 3.0; acl "test"; allow(all) userdn="ldap://
         result = detector.detect_server_type(ldif_content=content)
         assert result.is_success
         detection = result.unwrap()
-        patterns = detection["patterns_found"]
+        patterns = detection.patterns_found
         assert isinstance(patterns, list)
 
     def test_extract_openldap_patterns(self, detector: FlextLdifServerDetector) -> None:
@@ -330,7 +330,7 @@ olcAccess: to * by users read
         result = detector.detect_server_type(ldif_content=content)
         assert result.is_success
         detection = result.unwrap()
-        patterns = detection["patterns_found"]
+        patterns = detection.patterns_found
         assert isinstance(patterns, list)
 
     def test_extract_ad_patterns(self, detector: FlextLdifServerDetector) -> None:
@@ -343,7 +343,7 @@ samAccountName: testuser
         result = detector.detect_server_type(ldif_content=content)
         assert result.is_success
         detection = result.unwrap()
-        patterns = detection["patterns_found"]
+        patterns = detection.patterns_found
         assert isinstance(patterns, list)
 
 
@@ -370,7 +370,7 @@ attributeTypes: ( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' )
             result = detector.detect_server_type(ldif_path=ldif_file)
             assert result.is_success
             detection = result.unwrap()
-            assert detection["confidence"] >= 0
+            assert detection.confidence >= 0
 
     def test_detect_from_file_with_encoding_error(
         self, detector: FlextLdifServerDetector
@@ -406,7 +406,7 @@ class TestServerDetectorErrorHandling:
         assert result.is_success
         detection = result.unwrap()
         # Empty content should fall back to RFC
-        assert detection["confidence"] >= 0
+        assert detection.confidence >= 0
 
     def test_detect_with_nonexistent_file(
         self, detector: FlextLdifServerDetector
@@ -427,7 +427,7 @@ class TestServerDetectorErrorHandling:
         result = detector.detect_server_type(ldif_content=content, max_lines=5)
         assert result.is_success
         detection = result.unwrap()
-        assert detection["confidence"] >= 0
+        assert detection.confidence >= 0
 
 
 class TestServerDetectorExecute:
@@ -443,9 +443,9 @@ class TestServerDetectorExecute:
         result = detector.execute()
         assert result.is_success
         status = result.unwrap()
-        assert status["status"] == "initialized"
-        assert status["service"] == "FlextLdifServerDetector"
-        assert "detect_server_type" in status["capabilities"]
+        assert status.status == "initialized"
+        assert status.config["service"] == "FlextLdifServerDetector"
+        assert "detect_server_type" in status.services
 
 
 __all__ = [

@@ -10,10 +10,9 @@ from __future__ import annotations
 from typing import cast, override
 
 from flext_core import FlextResult, FlextService
-from pydantic import Field
+from pydantic import PrivateAttr
 
 from flext_ldif.constants import FlextLdifConstants
-from flext_ldif.models import FlextLdifModels
 
 
 class FlextLdifQuirksManager(FlextService[dict[str, object]]):
@@ -23,10 +22,7 @@ class FlextLdifQuirksManager(FlextService[dict[str, object]]):
     across different LDAP implementations.
     """
 
-    # Declare Pydantic fields at class level
-    quirks_registry: dict[str, object] = Field(
-        default_factory=dict, description="Registry of server-specific quirks"
-    )
+    _quirks_registry: dict[str, object] = PrivateAttr(default_factory=dict)
 
     @override
     def __init__(self, server_type: str | None = None) -> None:
@@ -46,6 +42,11 @@ class FlextLdifQuirksManager(FlextService[dict[str, object]]):
         """Get the current server type."""
         return self._server_type
 
+    @property
+    def quirks_registry(self) -> dict[str, object]:
+        """Get the quirks registry (read-only access)."""
+        return self._quirks_registry
+
     def _setup_quirks(self) -> None:
         """Setup server-specific quirks registry."""
         # Use short names to reduce line lengths (not type aliases)
@@ -54,7 +55,7 @@ class FlextLdifQuirksManager(FlextService[dict[str, object]]):
         af = FlextLdifConstants.AclFormats
         dn = FlextLdifConstants.DnPatterns
 
-        self.quirks_registry = {
+        self._quirks_registry = {
             ls.OPENLDAP_2: {
                 dk.ACL_ATTRIBUTE: dk.OLCACCESS,
                 dk.ACL_FORMAT: af.OPENLDAP2_ACL,
@@ -169,132 +170,8 @@ class FlextLdifQuirksManager(FlextService[dict[str, object]]):
         return FlextResult[dict[str, object]].ok({
             "service": FlextLdifQuirksManager,
             "server_type": self._server_type,
-            "quirks_loaded": len(self.quirks_registry),
+            "quirks_loaded": len(self._quirks_registry),
         })
-
-    def detect_server_type(
-        self, entries: list[FlextLdifModels.Entry]
-    ) -> FlextResult[str]:
-        """Detect LDAP server type from entries.
-
-        Args:
-        entries: List of LDIF entries to analyze
-
-        Returns:
-        FlextResult containing detected server type
-
-        """
-        if not entries:
-            return FlextResult[str].ok(FlextLdifConstants.LdapServers.GENERIC)
-
-        for entry in entries:
-            object_classes_raw: object = entry.get_attribute_values(
-                FlextLdifConstants.DictKeys.OBJECTCLASS
-            )
-            object_classes: list[str] = (
-                object_classes_raw if isinstance(object_classes_raw, list) else []
-            )
-            dn_lower = entry.dn.value.lower()
-
-            if "orclContainer" in object_classes or "orclUserV2" in object_classes:
-                return FlextResult[str].ok(FlextLdifConstants.LdapServers.ORACLE_OID)
-
-            # OpenLDAP 2.x detection (cn=config with olc* attributes)
-            if "olcConfig" in object_classes or "olcDatabase" in object_classes:
-                return FlextResult[str].ok(FlextLdifConstants.LdapServers.OPENLDAP_2)
-
-            # Check for olc* attributes indicating OpenLDAP 2.x
-            has_olc_attrs = any(
-                attr.startswith("olc") for attr in entry.attributes.attributes
-            )
-            if has_olc_attrs:
-                return FlextResult[str].ok(FlextLdifConstants.LdapServers.OPENLDAP_2)
-
-            if "nsContainer" in object_classes or "nsPerson" in object_classes:
-                return FlextResult[str].ok(FlextLdifConstants.LdapServers.DS_389)
-
-            if any(
-                attr.startswith(("nsslapd-", "nsds"))
-                for attr in entry.attributes.attributes
-            ):
-                return FlextResult[str].ok(FlextLdifConstants.LdapServers.DS_389)
-
-            if (
-                any(
-                    attr.startswith(("ads-", "apacheds"))
-                    for attr in entry.attributes.attributes
-                )
-                or any(oc.lower() == "ads-directoryservice" for oc in object_classes)
-                or any(marker in dn_lower for marker in ("ou=config", "ou=services"))
-            ):
-                return FlextResult[str].ok(
-                    FlextLdifConstants.LdapServers.APACHE_DIRECTORY
-                )
-
-            if "top" in object_classes and dn_lower.startswith(
-                FlextLdifConstants.DnPatterns.CN_SCHEMA
-            ):
-                if "olc" in dn_lower:
-                    return FlextResult[str].ok(
-                        FlextLdifConstants.LdapServers.OPENLDAP_2
-                    )
-                if "ds-cfg" in dn_lower:
-                    return FlextResult[str].ok(
-                        FlextLdifConstants.LdapServers.ORACLE_OUD
-                    )
-
-            if (
-                entry.has_attribute("nspmPasswordPolicyDN")
-                or entry.has_attribute("loginDisabled")
-                or any(
-                    oc.lower() in {"ndsperson", "nspmpasswordpolicy"}
-                    for oc in object_classes
-                )
-            ):
-                return FlextResult[str].ok(
-                    FlextLdifConstants.LdapServers.NOVELL_EDIRECTORY
-                )
-
-            if any(
-                attr.startswith(("ibm-", "ids-"))
-                for attr in entry.attributes.attributes
-            ) or any(oc.lower().startswith("ibm-") for oc in object_classes):
-                return FlextResult[str].ok(FlextLdifConstants.LdapServers.IBM_TIVOLI)
-
-            # Active Directory detection heuristics
-            ad_attr_present = any(
-                entry.has_attribute(attr_name)
-                for attr_name in (
-                    "objectGUID",
-                    "objectSid",
-                    "sAMAccountName",
-                    "userPrincipalName",
-                    FlextLdifConstants.DictKeys.NTSECURITYDESCRIPTOR,
-                )
-            )
-            ad_object_classes = {
-                cls.lower()
-                for cls in FlextLdifConstants.LdapServers.AD_REQUIRED_CLASSES
-            }
-            has_ad_classes = any(
-                oc.lower() in ad_object_classes for oc in object_classes
-            )
-            ad_dn_markers = {
-                marker.lower()
-                for marker in FlextLdifConstants.LdapServers.AD_DN_PATTERNS
-            }
-            dn_matches_ad = any(marker in dn_lower for marker in ad_dn_markers)
-
-            if ad_attr_present or has_ad_classes or dn_matches_ad:
-                return FlextResult[str].ok(
-                    FlextLdifConstants.LdapServers.ACTIVE_DIRECTORY
-                )
-
-            # OpenLDAP 1.x detection (traditional attributes, no olc* prefix)
-            if "attributetype" in str(entry.attributes).lower() and not has_olc_attrs:
-                return FlextResult[str].ok(FlextLdifConstants.LdapServers.OPENLDAP_1)
-
-        return FlextResult[str].ok(FlextLdifConstants.LdapServers.GENERIC)
 
     def get_server_quirks(
         self, server_type: str | None = None
@@ -310,13 +187,13 @@ class FlextLdifQuirksManager(FlextService[dict[str, object]]):
         """
         target_server = server_type or self._server_type
 
-        if target_server not in self.quirks_registry:
+        if target_server not in self._quirks_registry:
             return FlextResult[dict[str, object]].fail(
                 f"Unknown server type: {target_server}"
             )
 
         # Cast registry value from object to dict[str, object] for type safety
-        quirks = cast("dict[str, object]", self.quirks_registry[target_server])
+        quirks = cast("dict[str, object]", self._quirks_registry[target_server])
         return FlextResult[dict[str, object]].ok(quirks)
 
     def get_acl_attribute_name(

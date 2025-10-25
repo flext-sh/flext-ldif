@@ -41,6 +41,7 @@ from typing import ClassVar
 from flext_core import FlextResult
 
 from flext_ldif.constants import FlextLdifConstants
+from flext_ldif.models import FlextLdifModels
 
 logger = logging.getLogger(__name__)
 
@@ -96,25 +97,11 @@ class RfcAttributeParser:
         *,
         case_insensitive: bool = False,
         allow_syntax_quotes: bool = False,
-    ) -> FlextResult[dict[str, object]]:
+    ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
         """Parse RFC 4512 attribute definition with optional lenient mode.
 
-        Extracts all RFC 4512 standard fields from attribute definition:
-        - oid: Numeric OID (required)
-        - name: Attribute name (optional, can be multiple)
-        - desc: Human-readable description (optional)
-        - syntax: Syntax OID (optional)
-        - syntax_length: Maximum length constraint (optional)
-        - equality: Equality matching rule (optional)
-        - substr: Substring matching rule (optional)
-        - ordering: Ordering matching rule (optional)
-        - single_value: Boolean flag (default: False)
-        - no_user_mod: Boolean flag (default: False)
-        - obsolete: Boolean flag (default: False)
-        - collective: Boolean flag (default: False)
-        - sup: Superior attribute type (optional)
-        - usage: Attribute usage (optional)
-        - x_origin: Origin extension (optional)
+        Extracts all RFC 4512 standard fields from attribute definition
+        and builds a SchemaAttribute Pydantic model.
 
         Args:
             attr_definition: RFC 4512 attribute definition string
@@ -122,7 +109,7 @@ class RfcAttributeParser:
             allow_syntax_quotes: If True, allow optional quotes in SYNTAX (for OID quirk)
 
         Returns:
-            FlextResult with parsed attribute data or error message
+            FlextResult with SchemaAttribute model or error message
 
         Example:
             >>> # Strict RFC mode (OUD)
@@ -131,7 +118,7 @@ class RfcAttributeParser:
             ...     "SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
             ... )
             >>> parsed = result.unwrap()
-            >>> parsed["oid"]
+            >>> parsed.oid
             '2.5.4.3'
 
             >>> # Lenient mode (OID)
@@ -141,111 +128,126 @@ class RfcAttributeParser:
             ...     allow_syntax_quotes=True,
             ... )
             >>> parsed = result.unwrap()
-            >>> parsed["name"]
+            >>> parsed.name
             'cn'
 
         """
         try:
-            parsed_data: dict[str, object] = {}
-
             # Extract OID (required) - first element after opening parenthesis
             oid_match = re.match(RfcAttributeParser.OID_PATTERN, attr_definition)
-            if oid_match:
-                parsed_data[FlextLdifConstants.DictKeys.OID] = oid_match.group(1)
-            else:
-                return FlextResult[dict[str, object]].fail(
+            if not oid_match:
+                return FlextResult[FlextLdifModels.SchemaAttribute].fail(
                     "RFC attribute parsing failed: missing OID"
                 )
+            oid = oid_match.group(1)
 
-            # Extract NAME (optional, single or multiple)
-            # Use case-insensitive flag if requested (OID quirk needs this)
+            # Extract NAME (optional, single or multiple) - use OID as fallback
             name_pattern = (
                 r"(?i)NAME\s+(?:\(\s*)?'([^']+)'"  # OID lenient mode
                 if case_insensitive
                 else RfcAttributeParser.NAME_PATTERN  # RFC strict mode
             )
             name_match = re.search(name_pattern, attr_definition)
-            if name_match:
-                parsed_data["name"] = name_match.group(1)
+            name = name_match.group(1) if name_match else oid
 
             # Extract DESC (optional)
             desc_match = re.search(RfcAttributeParser.DESC_PATTERN, attr_definition)
-            if desc_match:
-                parsed_data["desc"] = desc_match.group(1)
+            desc = desc_match.group(1) if desc_match else None
 
             # Extract SYNTAX (optional) with optional length constraint
-            # Allow optional quotes if requested (OID quirk needs this)
             syntax_pattern = (
                 r"SYNTAX\s+'?([0-9.]+)(?:\{(\d+)\})?'?"  # OID lenient mode
                 if allow_syntax_quotes
                 else RfcAttributeParser.SYNTAX_PATTERN  # RFC strict mode
             )
             syntax_match = re.search(syntax_pattern, attr_definition)
-            if syntax_match:
-                parsed_data["syntax"] = syntax_match.group(1)
-                if syntax_match.group(2):  # Length constraint present
-                    parsed_data["syntax_length"] = syntax_match.group(2)
+            syntax = syntax_match.group(1) if syntax_match else None
+            # NOTE: Model uses "length" not "syntax_length"
+            length = (
+                int(syntax_match.group(2))
+                if syntax_match and syntax_match.group(2)
+                else None
+            )
 
             # Extract matching rules (optional)
             equality_match = re.search(
                 RfcAttributeParser.EQUALITY_PATTERN, attr_definition
             )
-            if equality_match:
-                parsed_data["equality"] = equality_match.group(1)
+            equality = equality_match.group(1) if equality_match else None
 
             substr_match = re.search(RfcAttributeParser.SUBSTR_PATTERN, attr_definition)
-            if substr_match:
-                parsed_data["substr"] = substr_match.group(1)
+            substr = substr_match.group(1) if substr_match else None
 
             ordering_match = re.search(
                 RfcAttributeParser.ORDERING_PATTERN, attr_definition
             )
-            if ordering_match:
-                parsed_data["ordering"] = ordering_match.group(1)
+            ordering = ordering_match.group(1) if ordering_match else None
 
-            # Extract flags (optional, boolean)
-            # SINGLE-VALUE: Always add (both OID and OUD extract this)
-            if "SINGLE-VALUE" in attr_definition:
-                parsed_data["single_value"] = True
-            else:
-                parsed_data["single_value"] = False
+            # Extract flags (boolean)
+            single_value = "SINGLE-VALUE" in attr_definition
 
             # NO-USER-MODIFICATION: Only in lenient mode (OID extracts, OUD doesn't)
+            no_user_modification = None
             if case_insensitive:  # Lenient mode (OID)
-                if "NO-USER-MODIFICATION" in attr_definition:
-                    parsed_data["no_user_mod"] = True
-                else:
-                    parsed_data["no_user_mod"] = False
-
-            # OBSOLETE and COLLECTIVE: Only if present (extra RFC fields)
-            if "OBSOLETE" in attr_definition:
-                parsed_data["obsolete"] = True
-
-            if "COLLECTIVE" in attr_definition:
-                parsed_data["collective"] = True
+                no_user_modification = "NO-USER-MODIFICATION" in attr_definition
 
             # Extract SUP (optional) - superior attribute type
             sup_match = re.search(RfcAttributeParser.SUP_PATTERN, attr_definition)
-            if sup_match:
-                parsed_data["sup"] = sup_match.group(1)
+            sup = sup_match.group(1) if sup_match else None
 
             # Extract USAGE (optional)
             usage_match = re.search(RfcAttributeParser.USAGE_PATTERN, attr_definition)
-            if usage_match:
-                parsed_data["usage"] = usage_match.group(1)
+            usage = usage_match.group(1) if usage_match else None
 
-            # Extract X-ORIGIN (optional) - vendor extension
+            # Build metadata for non-standard fields (obsolete, collective, x_origin)
+            metadata_extensions: dict[str, object] = {}
+
+            if "OBSOLETE" in attr_definition:
+                metadata_extensions["obsolete"] = True
+
+            if "COLLECTIVE" in attr_definition:
+                metadata_extensions["collective"] = True
+
             xorigin_match = re.search(
                 RfcAttributeParser.X_ORIGIN_PATTERN, attr_definition
             )
             if xorigin_match:
-                parsed_data["x_origin"] = xorigin_match.group(1)
+                metadata_extensions["x_origin"] = xorigin_match.group(1)
 
-            return FlextResult[dict[str, object]].ok(parsed_data)
+            # Store original format for round-trip fidelity
+            metadata_extensions["original_format"] = attr_definition.strip()
+
+            # Build QuirkMetadata if we have extensions
+            metadata = (
+                FlextLdifModels.QuirkMetadata(
+                    server_type="rfc", quirk_type="rfc", extensions=metadata_extensions
+                )
+                if metadata_extensions
+                else None
+            )
+
+            # Build SchemaAttribute model
+            attribute = FlextLdifModels.SchemaAttribute(
+                oid=oid,
+                name=name,
+                desc=desc,
+                syntax=syntax,
+                length=length,
+                equality=equality,
+                ordering=ordering,
+                substr=substr,
+                single_value=single_value,
+                no_user_modification=no_user_modification,
+                sup=sup,
+                usage=usage,
+                metadata=metadata,
+            )
+
+            return FlextResult[FlextLdifModels.SchemaAttribute].ok(attribute)
 
         except Exception as e:
             logger.exception("RFC attribute parsing exception")
-            return FlextResult[dict[str, object]].fail(
+            return FlextResult[FlextLdifModels.SchemaAttribute].fail(
                 f"RFC attribute parsing failed: {e}"
             )
 
@@ -292,26 +294,18 @@ class RfcObjectClassParser:
         oc_definition: str,
         *,
         case_insensitive: bool = False,
-    ) -> FlextResult[dict[str, object]]:
+    ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
         """Parse RFC 4512 objectClass definition with optional lenient mode.
 
-        Extracts all RFC 4512 standard fields from objectClass definition:
-        - oid: Numeric OID (required)
-        - name: ObjectClass name (optional)
-        - desc: Human-readable description (optional)
-        - sup: Superior objectClass(es) (optional, can be multiple with $ separator)
-        - kind: STRUCTURAL | AUXILIARY | ABSTRACT (default: STRUCTURAL per RFC)
-        - must: Required attributes (optional, list)
-        - may: Optional attributes (optional, list)
-        - obsolete: Boolean flag (default: False)
-        - x_origin: Origin extension (optional)
+        Extracts all RFC 4512 standard fields from objectClass definition
+        and builds a SchemaObjectClass Pydantic model.
 
         Args:
             oc_definition: RFC 4512 objectClass definition string
             case_insensitive: If True, use case-insensitive NAME matching (for OID quirk)
 
         Returns:
-            FlextResult with parsed objectClass data or error message
+            FlextResult with SchemaObjectClass model or error message
 
         Example:
             >>> # Strict RFC mode (OUD)
@@ -320,7 +314,7 @@ class RfcObjectClassParser:
             ...     "MUST cn MAY ( sn $ telephoneNumber ) )"
             ... )
             >>> parsed = result.unwrap()
-            >>> parsed["kind"]
+            >>> parsed.kind
             'STRUCTURAL'
 
             >>> # Lenient mode (OID)
@@ -329,40 +323,35 @@ class RfcObjectClassParser:
             ...     case_insensitive=True,
             ... )
             >>> parsed = result.unwrap()
-            >>> parsed["name"]
+            >>> parsed.name
             'person'
 
         """
         try:
-            parsed_data: dict[str, object] = {}
-
             # Extract OID (required) - first element after opening parenthesis
             oid_match = re.match(RfcObjectClassParser.OID_PATTERN, oc_definition)
-            if oid_match:
-                parsed_data[FlextLdifConstants.DictKeys.OID] = oid_match.group(1)
-            else:
-                return FlextResult[dict[str, object]].fail(
+            if not oid_match:
+                return FlextResult[FlextLdifModels.SchemaObjectClass].fail(
                     "RFC objectClass parsing failed: missing OID"
                 )
+            oid = oid_match.group(1)
 
-            # Extract NAME (optional)
-            # Use case-insensitive flag if requested (OID quirk needs this)
+            # Extract NAME (optional) - use OID as fallback
             name_pattern = (
                 r"(?i)NAME\s+(?:\(\s*)?'([^']+)'"  # OID lenient mode
                 if case_insensitive
                 else RfcObjectClassParser.NAME_PATTERN  # RFC strict mode
             )
             name_match = re.search(name_pattern, oc_definition)
-            if name_match:
-                parsed_data["name"] = name_match.group(1)
+            name = name_match.group(1) if name_match else oid
 
             # Extract DESC (optional)
             desc_match = re.search(RfcObjectClassParser.DESC_PATTERN, oc_definition)
-            if desc_match:
-                parsed_data["desc"] = desc_match.group(1)
+            desc = desc_match.group(1) if desc_match else None
 
             # Extract SUP (optional) - superior objectClass(es)
             # Can be single or multiple separated by $
+            sup = None
             sup_match = re.search(RfcObjectClassParser.SUP_PATTERN, oc_definition)
             if sup_match:
                 sup_value = sup_match.group(1) or sup_match.group(2)
@@ -370,62 +359,90 @@ class RfcObjectClassParser:
 
                 # Handle multiple superior classes like "organization $ organizationalUnit"
                 if "$" in sup_value:
-                    parsed_data["sup"] = [s.strip() for s in sup_value.split("$")]
+                    # Model expects single string for sup - use first one
+                    sup = next(s.strip() for s in sup_value.split("$"))
                 else:
-                    parsed_data["sup"] = sup_value
+                    sup = sup_value
 
             # Determine kind (STRUCTURAL, AUXILIARY, ABSTRACT)
             # RFC 4512: Default to STRUCTURAL if KIND is not specified
             if "STRUCTURAL" in oc_definition:
-                parsed_data["kind"] = "STRUCTURAL"
+                kind = "STRUCTURAL"
             elif "AUXILIARY" in oc_definition:
-                parsed_data["kind"] = "AUXILIARY"
+                kind = "AUXILIARY"
             elif "ABSTRACT" in oc_definition:
-                parsed_data["kind"] = "ABSTRACT"
+                kind = "ABSTRACT"
             else:
                 # RFC 4512 default: STRUCTURAL
-                parsed_data["kind"] = "STRUCTURAL"
+                kind = "STRUCTURAL"
 
             # Extract MUST attributes (optional) - required attributes
             # Can be single or multiple separated by $
+            must = None
             must_match = re.search(RfcObjectClassParser.MUST_PATTERN, oc_definition)
             if must_match:
                 must_value = must_match.group(1) or must_match.group(2)
                 must_value = must_value.strip()
 
                 if "$" in must_value:
-                    parsed_data["must"] = [m.strip() for m in must_value.split("$")]
+                    must = [m.strip() for m in must_value.split("$")]
                 else:
-                    parsed_data["must"] = [must_value]
+                    must = [must_value]
 
             # Extract MAY attributes (optional) - optional attributes
             # Can be single or multiple separated by $
+            may = None
             may_match = re.search(RfcObjectClassParser.MAY_PATTERN, oc_definition)
             if may_match:
                 may_value = may_match.group(1) or may_match.group(2)
                 may_value = may_value.strip()
 
                 if "$" in may_value:
-                    parsed_data["may"] = [m.strip() for m in may_value.split("$")]
+                    may = [m.strip() for m in may_value.split("$")]
                 else:
-                    parsed_data["may"] = [may_value]
+                    may = [may_value]
 
-            # Extract flags (optional, boolean) - only add if present
+            # Build metadata for non-standard fields (obsolete, x_origin)
+            metadata_extensions: dict[str, object] = {}
+
             if "OBSOLETE" in oc_definition:
-                parsed_data["obsolete"] = True
+                metadata_extensions["obsolete"] = True
 
-            # Extract X-ORIGIN (optional) - vendor extension
             xorigin_match = re.search(
                 RfcObjectClassParser.X_ORIGIN_PATTERN, oc_definition
             )
             if xorigin_match:
-                parsed_data["x_origin"] = xorigin_match.group(1)
+                metadata_extensions["x_origin"] = xorigin_match.group(1)
 
-            return FlextResult[dict[str, object]].ok(parsed_data)
+            # Store original format for round-trip fidelity
+            metadata_extensions["original_format"] = oc_definition.strip()
+
+            # Build QuirkMetadata if we have extensions
+            metadata = (
+                FlextLdifModels.QuirkMetadata(
+                    server_type="rfc", quirk_type="rfc", extensions=metadata_extensions
+                )
+                if metadata_extensions
+                else None
+            )
+
+            # Build SchemaObjectClass model
+            objectclass = FlextLdifModels.SchemaObjectClass(
+                oid=oid,
+                name=name,
+                desc=desc,
+                sup=sup,
+                kind=kind,
+                must=must,
+                may=may,
+                metadata=metadata,
+            )
+
+            return FlextResult[FlextLdifModels.SchemaObjectClass].ok(objectclass)
 
         except Exception as e:
             logger.exception("RFC objectClass parsing exception")
-            return FlextResult[dict[str, object]].fail(
+            return FlextResult[FlextLdifModels.SchemaObjectClass].fail(
                 f"RFC objectClass parsing failed: {e}"
             )
 
@@ -743,8 +760,8 @@ class RfcSchemaExtractor:
     @staticmethod
     def extract_attributes_from_lines(
         ldif_content: str,
-        parse_callback: Callable[[str], FlextResult[dict[str, object]]],
-    ) -> list[dict[str, object]]:
+        parse_callback: Callable[[str], FlextResult],
+    ) -> list:
         """Extract and parse all attributeTypes from LDIF content lines.
 
         Iterates through LDIF lines, identifies attributeTypes definitions
@@ -756,7 +773,7 @@ class RfcSchemaExtractor:
                           (e.g., self.parse_attribute from server quirk)
 
         Returns:
-            List of successfully parsed attribute dictionaries
+            List of successfully parsed attribute models
 
         Example:
             >>> ldif = '''
@@ -770,7 +787,7 @@ class RfcSchemaExtractor:
             2
 
         """
-        attributes: list[dict[str, object]] = []
+        attributes: list = []
 
         for raw_line in ldif_content.split("\n"):
             line = raw_line.strip()
@@ -787,8 +804,8 @@ class RfcSchemaExtractor:
     @staticmethod
     def extract_objectclasses_from_lines(
         ldif_content: str,
-        parse_callback: Callable[[str], FlextResult[dict[str, object]]],
-    ) -> list[dict[str, object]]:
+        parse_callback: Callable[[str], FlextResult],
+    ) -> list:
         """Extract and parse all objectClasses from LDIF content lines.
 
         Iterates through LDIF lines, identifies objectClasses definitions
@@ -800,7 +817,7 @@ class RfcSchemaExtractor:
                           (e.g., self.parse_objectclass from server quirk)
 
         Returns:
-            List of successfully parsed objectClass dictionaries
+            List of successfully parsed objectClass models
 
         Example:
             >>> ldif = '''
@@ -814,7 +831,7 @@ class RfcSchemaExtractor:
             2
 
         """
-        objectclasses: list[dict[str, object]] = []
+        objectclasses: list = []
 
         for raw_line in ldif_content.split("\n"):
             line = raw_line.strip()

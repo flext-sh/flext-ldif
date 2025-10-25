@@ -366,8 +366,9 @@ class TestFlextLdifValidate:
         # May fail due to container issues, but API method should exist
         if result.is_success:
             validation = result.unwrap()
-            # ValidationResult is a Pydantic model, not a dict
-            assert hasattr(validation, "is_valid")
+            # validation is a ValidationResult model
+            assert isinstance(validation, FlextLdifModels.ValidationResult)
+            assert validation.is_valid is True
             assert isinstance(validation.errors, list)
         else:
             # Container initialization issue in tests
@@ -399,7 +400,8 @@ class TestFlextLdifValidate:
         # API method should exist and be callable
         if result.is_success:
             validation = result.unwrap()
-            assert isinstance(validation, dict)
+            assert isinstance(validation, FlextLdifModels.ValidationResult)
+            assert hasattr(validation, "is_valid")
         else:
             assert result.error is not None
             assert result.error is not None
@@ -437,7 +439,7 @@ objectClass: person
         validate_result = api.validate_entries(entries)
         if validate_result.is_success:
             validation = validate_result.unwrap()
-            assert isinstance(validation, dict)
+            assert isinstance(validation, FlextLdifModels.ValidationResult)
 
         # Write
         output_file = tmp_path / "cycle_output.ldif"
@@ -693,21 +695,21 @@ objectClass: person
         assert isinstance(unwrapped, list), "Expected list, not callable"
         entries = unwrapped
 
-        validate_result = ldif.validate_entries(entries)
+        analyze_result = ldif.analyze(entries)
 
-        assert validate_result.is_success
-        report = validate_result.unwrap()
-        assert isinstance(report, dict)
+        assert analyze_result.is_success
+        report = analyze_result.unwrap()
+        assert isinstance(report, FlextLdifModels.EntryAnalysisResult)
 
-    def test_validate_empty_entries(self) -> None:
-        """Test validating empty entries list."""
+    def test_analyze_empty_entries(self) -> None:
+        """Test analyzing empty entries list."""
         ldif = FlextLdif()
 
-        result = ldif.validate_entries([])
+        result = ldif.analyze([])
 
         assert result.is_success
         report = result.unwrap()
-        assert isinstance(report, dict)
+        assert isinstance(report, FlextLdifModels.EntryAnalysisResult)
 
 
 class TestFlextLdifMigrateComprehensive:
@@ -775,7 +777,7 @@ objectClass: person
 
         assert analyze_result.is_success
         report = analyze_result.unwrap()
-        assert isinstance(report, dict)
+        assert isinstance(report, FlextLdifModels.EntryAnalysisResult)
 
     def test_analyze_empty_entries(self) -> None:
         """Test analyzing empty entries list."""
@@ -785,7 +787,7 @@ objectClass: person
 
         assert result.is_success
         report = result.unwrap()
-        assert isinstance(report, dict)
+        assert isinstance(report, FlextLdifModels.EntryAnalysisResult)
 
 
 class TestFlextLdifFilterComprehensive:
@@ -936,9 +938,9 @@ objectClass: person
         analyze_result = ldif.analyze(entries)
         assert analyze_result.is_success
 
-        # All results should be proper dictionaries or lists
-        assert isinstance(validate_result.unwrap(), dict)
-        assert isinstance(analyze_result.unwrap(), dict)
+        # All results should be proper models or dictionaries
+        assert isinstance(validate_result.unwrap(), FlextLdifModels.ValidationResult)
+        assert isinstance(analyze_result.unwrap(), FlextLdifModels.EntryAnalysisResult)
 
     def test_build_person_entry(self) -> None:
         """Test building a person entry."""
@@ -1165,9 +1167,10 @@ objectClass: person
 
         schema_result = ldif.build_person_schema()
         assert schema_result.is_success
-        schema = schema_result.unwrap()
+        schema_builder = schema_result.unwrap()
 
-        assert isinstance(schema, dict)
+        # Convert SchemaBuilderResult to dict format expected by validate_with_schema
+        schema = schema_builder.model_dump()
         # Should contain object classes and attributes
         assert "objectclasses" in schema or "attributes" in schema
 
@@ -1178,7 +1181,8 @@ objectClass: person
         # Build schema first
         schema_result = ldif.build_person_schema()
         assert schema_result.is_success
-        schema = schema_result.unwrap()
+        schema_builder = schema_result.unwrap()
+        schema = schema_builder.model_dump()
 
         # Create an entry
         result = ldif.build(

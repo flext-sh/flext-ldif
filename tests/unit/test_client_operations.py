@@ -14,6 +14,7 @@ from pathlib import Path
 import pytest
 
 from flext_ldif import FlextLdifClient
+from flext_ldif.models import FlextLdifModels
 
 
 class TestFlextLdifClientOperations:
@@ -307,14 +308,14 @@ class TestFlextLdifClientOperations:
         result = client.analyze_entries(entries)
         assert result.is_success
         stats = result.unwrap()
-        assert isinstance(stats, dict)
+        assert isinstance(stats, FlextLdifModels.EntryAnalysisResult)
 
     def test_analyze_empty_entries(self, client: FlextLdifClient) -> None:
         """Test analyzing empty entries."""
         result = client.analyze_entries([])
         assert result.is_success
         stats = result.unwrap()
-        assert isinstance(stats, dict)
+        assert isinstance(stats, FlextLdifModels.EntryAnalysisResult)
 
     # =========================================================================
     # FILTER OPERATIONS TESTS
@@ -594,4 +595,4 @@ class TestFlextLdifClientOperations:
         result = client.execute()
         assert result.is_success
         status = result.unwrap()
-        assert isinstance(status, dict)
+        assert isinstance(status, FlextLdifModels.ClientStatus)

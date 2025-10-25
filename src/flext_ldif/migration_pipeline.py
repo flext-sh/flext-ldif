@@ -21,7 +21,7 @@ from flext_core import FlextResult, FlextService
 
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
-from flext_ldif.quirks.base import FlextLdifQuirksBaseEntryQuirk
+from flext_ldif.quirks.base import BaseEntryQuirk
 from flext_ldif.quirks.registry import FlextLdifQuirksRegistry
 from flext_ldif.quirks.servers import (
     FlextLdifQuirksServersOid,
@@ -85,7 +85,7 @@ class _QuirkIterationChain:
 
     @staticmethod
     def apply_source_quirks(
-        entry: dict[str, object], quirks: Sequence[FlextLdifQuirksBaseEntryQuirk] | None
+        entry: dict[str, object], quirks: Sequence[BaseEntryQuirk] | None
     ) -> FlextResult[dict[str, object]]:
         """Apply source quirks to normalize entry to RFC format.
 
@@ -121,7 +121,7 @@ class _QuirkIterationChain:
 
     @staticmethod
     def apply_target_quirks(
-        entry: dict[str, object], quirks: Sequence[FlextLdifQuirksBaseEntryQuirk] | None
+        entry: dict[str, object], quirks: Sequence[BaseEntryQuirk] | None
     ) -> FlextResult[dict[str, object]]:
         """Apply target quirks to transform entry from RFC format.
 

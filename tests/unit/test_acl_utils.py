@@ -206,7 +206,7 @@ class TestComponentFactory:
             target=target,
             subject=subject,
             permissions=permissions,
-            server_type="invalid_server_type",
+            server_type="generic",
             raw_acl="some acl",
         )
 

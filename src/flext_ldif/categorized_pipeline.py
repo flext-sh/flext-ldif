@@ -29,8 +29,8 @@ from flext_ldif.file_writer_service import FlextLdifFileWriterService
 from flext_ldif.filters import FlextLdifFilters
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.quirks.base import (
-    FlextLdifQuirksBaseAclQuirk,
-    FlextLdifQuirksBaseSchemaQuirk,
+    BaseAclQuirk,
+    BaseSchemaQuirk,
 )
 from flext_ldif.quirks.registry import FlextLdifQuirksRegistry
 from flext_ldif.rfc_ldif_parser import FlextLdifRfcLdifParser
@@ -91,8 +91,8 @@ class FlextLdifCategorizedMigrationPipeline(
         *,
         source_server: str = "oracle_oid",
         target_server: str = "oracle_oud",
-        source_schema_quirk: FlextLdifQuirksBaseSchemaQuirk | None = None,
-        target_schema_quirk: FlextLdifQuirksBaseSchemaQuirk | None = None,
+        source_schema_quirk: BaseSchemaQuirk | None = None,
+        target_schema_quirk: BaseSchemaQuirk | None = None,
         schema_whitelist_rules: dict[str, list[str]] | None = None,
         input_files: list[str] | None = None,
         output_files: dict[str, str] | None = None,
@@ -962,8 +962,8 @@ class FlextLdifCategorizedMigrationPipeline(
         @staticmethod
         def transform_acl_entry(
             entry: dict[str, object],
-            parser_acl_quirk: FlextLdifQuirksBaseAclQuirk | None,
-            writer_acl_quirk: FlextLdifQuirksBaseAclQuirk | None,
+            parser_acl_quirk: BaseAclQuirk | None,
+            writer_acl_quirk: BaseAclQuirk | None,
         ) -> FlextResult[dict[str, object]]:
             """Transform single ACL entry using server-specific quirks.
 
@@ -1300,8 +1300,8 @@ class FlextLdifCategorizedMigrationPipeline(
             # Generic approach - works with ANY server combination
             # Parser quirk handles source server ACL format
             # Writer quirk handles target server ACL format
-            parser_acl_quirk: FlextLdifQuirksBaseAclQuirk | None = None
-            writer_acl_quirk: FlextLdifQuirksBaseAclQuirk | None = None
+            parser_acl_quirk: BaseAclQuirk | None = None
+            writer_acl_quirk: BaseAclQuirk | None = None
 
             # Try to get ACL quirk from parser (source server)
             if self._parser_quirk is not None and hasattr(

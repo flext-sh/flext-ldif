@@ -936,6 +936,7 @@ class FlextLdifConstants(FlextConstants):
         FORMAT: Final[str] = "format"
         DATA: Final[str] = "data"
         DEFINITION: Final[str] = "definition"
+        SUBJECT: Final[str] = "subject"
 
         # Statistics/Analytics keys
         STATS: Final[str] = "stats"
@@ -1228,6 +1229,8 @@ class FlextLdifConstants(FlextConstants):
         # OpenLDAP ACL formats
         OPENLDAP1_ACL: Final[str] = "openldap1_acl"
         OPENLDAP2_ACL: Final[str] = "openldap2_acl"
+        OLCACCESS: Final[str] = "olcAccess"
+        ACCESS: Final[str] = "access"
 
         # 389 Directory Server ACL format
         DS389_ACL: Final[str] = "ds389_acl"
@@ -1236,6 +1239,7 @@ class FlextLdifConstants(FlextConstants):
         OID_ACL: Final[str] = "oracle_oid"
         OUD_ACL: Final[str] = "oracle_oud"
         OUD_DS_CFG: Final[str] = "ds-cfg"
+        ORCLACI: Final[str] = "orclaci"
 
         # Generic/RFC ACL formats
         RFC_GENERIC: Final[str] = "rfc_generic"

@@ -18,8 +18,17 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
+from flext_core import FlextResult
 
 from flext_ldif import FlextLdif, FlextLdifClient
+
+
+def unwrap_parse_result(result: FlextResult[object]) -> object:
+    """Unwrap parse result handling both direct lists and callables."""
+    unwrapped = result.unwrap()
+    if callable(unwrapped):
+        return unwrapped()
+    return unwrapped
 
 
 class TestClientFullCoverage:
@@ -106,7 +115,7 @@ class TestClientFullCoverage:
 
         parse_result = client.parse_ldif(oid_fixture)
         assert parse_result.is_success
-        entries = parse_result.unwrap()
+        entries = unwrap_parse_result(parse_result)
 
         output = tmp_path / "output.ldif"
         result = client.write_ldif(entries, output_path=output)
@@ -123,7 +132,7 @@ class TestClientFullCoverage:
 
         parse_result = client.parse_ldif(oid_fixture)
         assert parse_result.is_success
-        entries = parse_result.unwrap()[:3]
+        entries = unwrap_parse_result(parse_result)[:3]
 
         result = client.write_ldif(entries, output_path=None)
         assert result.is_success
@@ -142,7 +151,7 @@ class TestClientFullCoverage:
 
         parse_result = client.parse_ldif(oid_fixture)
         assert parse_result.is_success
-        entries = parse_result.unwrap()
+        entries = unwrap_parse_result(parse_result)
 
         result = client.filter(
             entries,
@@ -162,7 +171,7 @@ class TestClientFullCoverage:
 
         parse_result = client.parse_ldif(oid_fixture)
         assert parse_result.is_success
-        entries = parse_result.unwrap()
+        entries = unwrap_parse_result(parse_result)
 
         result = client.filter(
             entries, filter_type="dn_pattern", dn_pattern="*", mark_excluded=False
@@ -179,7 +188,7 @@ class TestClientFullCoverage:
 
         parse_result = client.parse_ldif(oid_fixture)
         assert parse_result.is_success
-        entries = parse_result.unwrap()
+        entries = unwrap_parse_result(parse_result)
 
         result = client.filter(
             entries, filter_type="objectclass", objectclass="*", mark_excluded=True
@@ -197,7 +206,7 @@ class TestClientFullCoverage:
 
         parse_result = client.parse_ldif(oid_fixture)
         assert parse_result.is_success
-        entries = parse_result.unwrap()
+        entries = unwrap_parse_result(parse_result)
 
         result = client.analyze_entries(entries)
         assert result.is_success
@@ -254,7 +263,7 @@ class TestApiFullCoverage:
 
         parse_result = api.parse(fixture)
         assert parse_result.is_success
-        entries = parse_result.unwrap()
+        entries = unwrap_parse_result(parse_result)
 
         result = api.validate_entries(entries)
         assert result.is_success
@@ -268,7 +277,7 @@ class TestApiFullCoverage:
 
         parse_result = api.parse(fixture)
         assert parse_result.is_success
-        entries = parse_result.unwrap()
+        entries = unwrap_parse_result(parse_result)
 
         result = api.analyze(entries)
         assert result.is_success
@@ -286,7 +295,7 @@ class TestApiFullCoverage:
 
         parse_result = api.parse(fixture)
         assert parse_result.is_success
-        entries = parse_result.unwrap()[:3]
+        entries = unwrap_parse_result(parse_result)[:3]
 
         output = tmp_path / "api_output.ldif"
         result = api.write(entries, output)
@@ -304,7 +313,7 @@ class TestApiFullCoverage:
 
         parse_result = api.parse(fixture)
         assert parse_result.is_success
-        entries = parse_result.unwrap()
+        entries = unwrap_parse_result(parse_result)
 
         result = api.filter(entries, objectclass="person")
         assert result.value is not None
@@ -319,7 +328,7 @@ class TestApiFullCoverage:
 
         parse_result = api.parse(fixture)
         assert parse_result.is_success
-        entries = parse_result.unwrap()
+        entries = unwrap_parse_result(parse_result)
 
         result = api.filter(entries, dn_pattern="cn=")
         assert result.value is not None
@@ -334,7 +343,7 @@ class TestApiFullCoverage:
 
         parse_result = api.parse(fixture)
         assert parse_result.is_success
-        entries = parse_result.unwrap()
+        entries = unwrap_parse_result(parse_result)
 
         result = api.filter(entries, custom_filter=lambda e: True)
         assert result.value is not None

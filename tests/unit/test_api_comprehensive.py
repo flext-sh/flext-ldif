@@ -10,10 +10,18 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pathlib import Path
+from typing import cast
 
 import pytest
+from flext_core import FlextResult
 
 from flext_ldif import FlextLdif
+from flext_ldif.models import FlextLdifModels
+
+
+def _unwrap_result(result: FlextResult[object]) -> object:
+    """Helper to unwrap FlextResult."""
+    return result.unwrap()
 
 
 class TestFlextLdifApiWithRealFixtures:
@@ -53,7 +61,7 @@ class TestFlextLdifApiWithRealFixtures:
 
         result = api.parse(oid_fixture_path)
         assert result.is_success, f"Parse failed: {result.error}"
-        entries = result.unwrap()
+        entries = cast("list[FlextLdifModels.Entry]", _unwrap_result(result))
         assert len(entries) > 0, "Should parse at least one entry"
         assert all(hasattr(e, "dn") for e in entries), "All entries should have DN"
 
@@ -66,7 +74,7 @@ class TestFlextLdifApiWithRealFixtures:
 
         result = api.parse(oud_fixture_path)
         assert result.is_success, f"Parse failed: {result.error}"
-        entries = result.unwrap()
+        entries = cast("list[FlextLdifModels.Entry]", _unwrap_result(result))
         assert len(entries) > 0, "Should parse at least one entry from OUD"
 
     def test_api_validate_entries_from_fixture(
@@ -79,7 +87,7 @@ class TestFlextLdifApiWithRealFixtures:
         parse_result = api.parse(oid_fixture_path)
         assert parse_result.is_success
 
-        entries = parse_result.unwrap()
+        entries = cast("list", _unwrap_result(parse_result))
         validate_result = api.validate_entries(entries)
         assert validate_result.is_success, f"Validation failed: {validate_result.error}"
 
@@ -93,11 +101,11 @@ class TestFlextLdifApiWithRealFixtures:
         parse_result = api.parse(oid_fixture_path)
         assert parse_result.is_success
 
-        entries = parse_result.unwrap()
+        entries = cast("list", _unwrap_result(parse_result))
         analyze_result = api.analyze(entries)
         assert analyze_result.is_success, f"Analysis failed: {analyze_result.error}"
 
-        stats = analyze_result.unwrap()
+        stats = _unwrap_result(analyze_result)
         assert isinstance(stats, dict), "Analysis should return a dictionary"
         # Check for expected stat keys
         assert any(
@@ -114,7 +122,7 @@ class TestFlextLdifApiWithRealFixtures:
         parse_result = api.parse(oid_fixture_path)
         assert parse_result.is_success
 
-        entries = parse_result.unwrap()
+        entries = cast("list", _unwrap_result(parse_result))
         output_file = tmp_path / "output.ldif"
 
         write_result = api.write(entries, output_file)
@@ -159,7 +167,7 @@ class TestFlextLdifApiWithRealFixtures:
         result = api.detect_server_type(oid_fixture_path)
         assert result.is_success, f"Detection failed: {result.error}"
 
-        detection = result.unwrap()
+        detection = _unwrap_result(result)
         assert isinstance(detection, dict)
         assert "detected_server_type" in detection
 
@@ -173,7 +181,7 @@ class TestFlextLdifApiWithRealFixtures:
         result = api.get_effective_server_type(oid_fixture_path)
         assert result.is_success, f"Get server type failed: {result.error}"
 
-        server_type = result.unwrap()
+        server_type = _unwrap_result(result)
         assert isinstance(server_type, str)
         assert len(server_type) > 0
 
@@ -192,7 +200,7 @@ class TestFlextLdifApiWithRealFixtures:
 
         result = api.parse(oid_fixture_path)
         assert result.is_success, f"Parse failed: {result.error}"
-        entries = result.unwrap()
+        entries = cast("list[FlextLdifModels.Entry]", _unwrap_result(result))
         assert len(entries) > 0
 
     def test_api_parse_with_relaxed_mode(self, oid_fixture_path: Path) -> None:
@@ -208,7 +216,7 @@ class TestFlextLdifApiWithRealFixtures:
 
         result = api.parse(oid_fixture_path)
         assert result.is_success, f"Parse with relaxed failed: {result.error}"
-        entries = result.unwrap()
+        entries = cast("list[FlextLdifModels.Entry]", _unwrap_result(result))
         assert len(entries) > 0
 
     def test_api_parse_multiple_fixtures_sequence(
