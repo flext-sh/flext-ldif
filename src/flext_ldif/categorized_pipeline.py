@@ -1083,8 +1083,8 @@ class FlextLdifCategorizedMigrationPipeline(
                         "Entry is not a dictionary"
                     )
 
-                # Categorize the entry
-                categorize_func = pipeline._categorize_entry
+                # Categorize the entry (accessing private method intentionally)
+                categorize_func = pipeline._categorize_entry  # noqa: SLF001
                 category, rejection_reason = categorize_func(entry)
 
                 # Type narrow category and rejection_reason

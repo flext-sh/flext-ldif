@@ -231,7 +231,7 @@ class TestNormalizer:
         )
         attrs = result[FlextLdifConstants.DictKeys.ATTRIBUTES]
         assert isinstance(attrs, dict)
-        aci_value = attrs.aci
+        aci_value = attrs["aci"]
         assert isinstance(aci_value, list)
 
     def test_normalize_aci_dn_references_quoted_dn_format(self) -> None:
@@ -281,7 +281,7 @@ class TestNormalizer:
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Test exception handling in normalize_aci_dn_references try block (lines 189-190)."""
-        from flext_ldif.services import FlextLdifDnService
+        from flext_ldif.dn_service import FlextLdifDnService
 
         entry: dict[str, object] = {
             FlextLdifConstants.DictKeys.DN: "cn=schema",

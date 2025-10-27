@@ -370,8 +370,8 @@ class FlextLdifQuirksServersTivoli(BaseSchemaQuirk):
             scope#trustee#rights#...
             """
             try:
-                # Use direct field access on Acl model
-                acl_attribute = "acl"  # Novell standard attribute name
+                # Use Tivoli-specific attribute name
+                acl_attribute = "ibm-slapdaccesscontrol"
 
                 # Check for raw_acl first (original ACL string)
                 if acl_data.raw_acl:
@@ -425,24 +425,32 @@ class FlextLdifQuirksServersTivoli(BaseSchemaQuirk):
     class EntryQuirk(BaseEntryQuirk):
         """IBM Tivoli DS entry quirk."""
 
-        EDIR_DIRECTORY_MARKERS: ClassVar[frozenset[str]] = frozenset([
-            "ou=services",
-            "ou=apps",
-            "ou=system",
+        TIVOLI_DIRECTORY_MARKERS: ClassVar[frozenset[str]] = frozenset([
+            "cn=ibm",
+            "cn=configuration",
+            "cn=schema",
         ])
-        EDIR_ATTRIBUTE_MARKERS: ClassVar[frozenset[str]] = frozenset([
-            "nspmpasswordpolicy",
-            "nspmpasswordpolicydn",
-            "logindisabled",
-            "loginexpirationtime",
+        TIVOLI_ATTRIBUTE_MARKERS: ClassVar[frozenset[str]] = frozenset([
+            "ibm-entryuuid",
+            "ibm-slapdaccesscontrol",
+            "ibm-replicationchangecount",
         ])
 
-        def __init__(self) -> None:
-            """Initialize Tivoli DS entry quirk."""
-            super().__init__(
-                server_type=FlextLdifConstants.LdapServers.IBM_TIVOLI,
-                priority=15,
-            )
+        def __init__(
+            self,
+            server_type: str = FlextLdifConstants.LdapServers.IBM_TIVOLI,
+            priority: int = 15,
+        ) -> None:
+            """Initialize IBM Tivoli DS entry quirk."""
+            super().__init__(server_type=server_type, priority=priority)
+
+        def normalize_dn(self, entry_dn: str) -> str:
+            """Normalize DN for Tivoli DS."""
+            return entry_dn.lower()
+
+        def normalize_attribute_name(self, attr_name: str) -> str:
+            """Normalize attribute name for Tivoli DS."""
+            return attr_name.lower()
 
         def can_handle_entry(
             self,
@@ -451,14 +459,14 @@ class FlextLdifQuirksServersTivoli(BaseSchemaQuirk):
         ) -> bool:
             """Detect Tivoli DS-specific entries."""
             dn_lower = entry_dn.lower()
-            if any(marker in dn_lower for marker in self.EDIR_DIRECTORY_MARKERS):
+            if any(marker in dn_lower for marker in self.TIVOLI_DIRECTORY_MARKERS):
                 return True
 
             normalized_attrs = {
                 name.lower(): value for name, value in attributes.items()
             }
             if any(
-                marker in normalized_attrs for marker in self.EDIR_ATTRIBUTE_MARKERS
+                marker in normalized_attrs for marker in self.TIVOLI_ATTRIBUTE_MARKERS
             ):
                 return True
 
@@ -478,13 +486,64 @@ class FlextLdifQuirksServersTivoli(BaseSchemaQuirk):
                 )
             )
 
+        def convert_entry_to_rfc(
+            self,
+            entry_data: dict[str, object],
+        ) -> FlextResult[FlextLdifTypes.Models.EntryAttributesDict]:
+            """Strip IBM Tivoli DS metadata before RFC processing."""
+            try:
+                # Remove Tivoli-specific metadata, preserve everything else including DN
+                rfc_entry = dict(entry_data)
+                rfc_entry.pop(FlextLdifConstants.DictKeys.SERVER_TYPE, None)
+                rfc_entry.pop(FlextLdifConstants.DictKeys.IS_CONFIG_ENTRY, None)
+
+                return FlextResult[FlextLdifTypes.Models.EntryAttributesDict].ok(
+                    rfc_entry
+                )
+
+            except (ValueError, TypeError, AttributeError) as exc:
+                return FlextResult[FlextLdifTypes.Models.EntryAttributesDict].fail(
+                    f"IBM Tivoli DS entry→RFC conversion failed: {exc}"
+                )
+
+        def convert_entry_from_rfc(
+            self,
+            entry_data: dict[str, object],
+        ) -> FlextResult[FlextLdifTypes.Models.EntryAttributesDict]:
+            """Convert RFC entry to Tivoli DS-specific format."""
+            try:
+                # Extract DN
+                entry_dn = str(entry_data.get(FlextLdifConstants.DictKeys.DN, ""))
+
+                # Normalize DN for Tivoli DS
+                normalized_dn = self.normalize_dn(entry_dn)
+
+                # Normalize attribute names
+                tivoli_entry: dict[str, object] = {
+                    FlextLdifConstants.DictKeys.DN: normalized_dn
+                }
+                for key, value in entry_data.items():
+                    if key != FlextLdifConstants.DictKeys.DN:
+                        normalized_name = self.normalize_attribute_name(str(key))
+                        tivoli_entry[normalized_name] = value
+
+                return FlextResult[FlextLdifTypes.Models.EntryAttributesDict].ok(
+                    tivoli_entry
+                )
+
+            except (ValueError, TypeError, AttributeError) as exc:
+                return FlextResult[FlextLdifTypes.Models.EntryAttributesDict].fail(
+                    f"RFC→IBM Tivoli DS entry conversion failed: {exc}"
+                )
+
         def process_entry(
             self,
             entry_dn: str,
             attributes: FlextLdifTypes.Models.EntryAttributesDict,
         ) -> FlextResult[FlextLdifTypes.Models.EntryAttributesDict]:
-            """Normalise Tivoli DS entries and expose metadata."""
+            """Normalise IBM Tivoli DS entries and attach metadata."""
             try:
+                dn_lower = entry_dn.lower()
                 object_classes_raw = attributes.get(
                     FlextLdifConstants.DictKeys.OBJECTCLASS, []
                 )
@@ -499,13 +558,15 @@ class FlextLdifQuirksServersTivoli(BaseSchemaQuirk):
                     if isinstance(attr_value, bytes):
                         processed_attributes[attr_name] = base64.b64encode(
                             attr_value
-                        ).decode("ascii")
+                        ).decode("utf-8")
                     else:
                         processed_attributes[attr_name] = attr_value
 
                 processed_entry: dict[str, object] = {
                     FlextLdifConstants.DictKeys.DN: entry_dn,
                     FlextLdifConstants.DictKeys.SERVER_TYPE: FlextLdifConstants.LdapServers.IBM_TIVOLI,
+                    FlextLdifConstants.DictKeys.IS_CONFIG_ENTRY: "cn=ibm" in dn_lower
+                    or "cn=configuration" in dn_lower,
                     FlextLdifConstants.DictKeys.OBJECTCLASS: object_classes,
                 }
                 processed_entry.update(processed_attributes)
@@ -517,23 +578,6 @@ class FlextLdifQuirksServersTivoli(BaseSchemaQuirk):
             except (ValueError, TypeError, AttributeError) as exc:
                 return FlextResult[FlextLdifTypes.Models.EntryAttributesDict].fail(
                     f"IBM Tivoli DS entry processing failed: {exc}"
-                )
-
-        def convert_entry_to_rfc(
-            self,
-            entry_data: dict[str, object],
-        ) -> FlextResult[FlextLdifTypes.Models.EntryAttributesDict]:
-            """Remove Tivoli DS metadata before RFC processing."""
-            try:
-                normalized_entry = dict(entry_data)
-                normalized_entry.pop(FlextLdifConstants.DictKeys.SERVER_TYPE, None)
-                return FlextResult[FlextLdifTypes.Models.EntryAttributesDict].ok(
-                    normalized_entry
-                )
-
-            except (ValueError, TypeError, AttributeError) as exc:
-                return FlextResult[FlextLdifTypes.Models.EntryAttributesDict].fail(
-                    f"IBM Tivoli DS entry→RFC conversion failed: {exc}"
                 )
 
 

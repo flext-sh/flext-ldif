@@ -1137,32 +1137,49 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBase.SchemaQuirk):
         ) -> FlextResult[FlextLdifModels.Acl]:
             """Convert OID ACL model to RFC-compliant ACL model (OID→RFC transformation).
 
-            Applies OID-specific transformations to produce RFC-compliant ACL model:
-            - Permission normalization via _convert_oid_to_rfc_permissions
-            - Subject format conversion to RFC bind rules
-            - Name prefixing with "Migrated from OID:"
-            - Server type change to "rfc"
+            Stores transformation info in metadata so OUD quirks can apply server-specific
+            conversions without knowing about OID format.
+
+            Metadata stored:
+            - source_server: "oid" (for tracking where the ACL came from)
+            - oid_specific_rights: list of OID-specific rights found (e.g., self_write, proxy)
+            - self_write_to_write: boolean indicating if self_write was present and needs write promotion
+
+            This maintains loose coupling: OID quirks parse and store info, OUD quirks
+            read metadata and decide how to handle OID-specific rights.
 
             Args:
                 acl_data: OID ACL Pydantic model
 
             Returns:
-                FlextResult with RFC-compliant ACL model
+                FlextResult with RFC-compliant ACL model with transformation metadata
 
             """
             try:
-                # The model from parse_acl already has permissions in the correct format
-                # (as boolean fields). We just need to change the server_type to "generic"
-                # and update the name. No permission conversion needed.
+                # Build metadata for downstream quirks
+                perms = acl_data.permissions
+                oid_specific_rights = []
+                if perms.self_write:
+                    oid_specific_rights.append("self_write")
+                if perms.proxy:
+                    oid_specific_rights.append("proxy")
 
-                # Build RFC-compliant ACL model
+                metadata = {
+                    "source_server": "oid",
+                    "oid_specific_rights": oid_specific_rights,
+                    "self_write_to_write": perms.self_write,  # Mark for conversion
+                }
+
+                # Change server_type to "generic" (RFC/canonical format)
+                # Keep ALL permissions (including OID-specific) for downstream quirks to decide
                 rfc_acl = FlextLdifModels.Acl(
                     name=f"Migrated from OID: {acl_data.name}",
-                    target=acl_data.target,  # Copy target as-is
-                    subject=acl_data.subject,  # Copy subject as-is (already in correct format)
-                    permissions=acl_data.permissions,  # Copy permissions as-is (already correct)
-                    server_type="generic",  # Change to RFC/generic type
+                    target=acl_data.target,
+                    subject=acl_data.subject,
+                    permissions=acl_data.permissions,  # Keep as-is, metadata guides conversion
+                    server_type="generic",
                     raw_acl=acl_data.raw_acl,
+                    metadata=metadata,  # Store transformation guidance
                 )
 
                 return FlextResult[FlextLdifModels.Acl].ok(rfc_acl)
@@ -1188,10 +1205,10 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBase.SchemaQuirk):
 
             """
             try:
-                # Change server_type to OID (use object.__setattr__ for frozen model)
-                object.__setattr__(acl_data, "server_type", "oid")
+                # Change server_type to OID using model_copy for frozen model
+                oid_acl = acl_data.model_copy(update={"server_type": "oid"})
 
-                return FlextResult[FlextLdifModels.Acl].ok(acl_data)
+                return FlextResult[FlextLdifModels.Acl].ok(oid_acl)
 
             except Exception as e:
                 return FlextResult[FlextLdifModels.Acl].fail(

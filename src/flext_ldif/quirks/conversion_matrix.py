@@ -263,7 +263,7 @@ class FlextLdifQuirksConversionMatrix:
             # Cast Result[str] to Result[str | Dict] for return type compatibility
             return cast("FlextResult[str | dict[str, object]]", write_result)
 
-        except (ValueError, TypeError, AttributeError) as e:
+        except (ValueError, TypeError, AttributeError, RuntimeError, Exception) as e:
             return FlextResult[str | dict[str, object]].fail(
                 f"Attribute conversion failed: {e}"
             )
@@ -350,7 +350,7 @@ class FlextLdifQuirksConversionMatrix:
             # Cast Result[str] to Result[str | Dict] for return type compatibility
             return cast("FlextResult[str | dict[str, object]]", write_result)
 
-        except (ValueError, TypeError, AttributeError) as e:
+        except (ValueError, TypeError, AttributeError, RuntimeError, Exception) as e:
             return FlextResult[str | dict[str, object]].fail(
                 f"ObjectClass conversion failed: {e}"
             )
@@ -450,7 +450,7 @@ class FlextLdifQuirksConversionMatrix:
 
             return write_result
 
-        except (ValueError, TypeError, AttributeError) as e:
+        except (ValueError, TypeError, AttributeError, RuntimeError, Exception) as e:
             return FlextResult[str].fail(f"ACL conversion failed: {e}")
 
     def _convert_entry(
@@ -520,7 +520,7 @@ class FlextLdifQuirksConversionMatrix:
 
             return write_result
 
-        except (ValueError, TypeError, AttributeError) as e:
+        except (ValueError, TypeError, AttributeError, RuntimeError, Exception) as e:
             return FlextResult[str | dict[str, object]].fail(
                 f"Entry conversion failed: {e}"
             )
@@ -578,7 +578,7 @@ class FlextLdifQuirksConversionMatrix:
 
             return FlextResult[list[str | dict[str, object]]].ok(converted)
 
-        except (ValueError, TypeError, AttributeError) as e:
+        except (ValueError, TypeError, AttributeError, RuntimeError, Exception) as e:
             return FlextResult[list[str | dict[str, object]]].fail(
                 f"Batch conversion failed: {e}"
             )

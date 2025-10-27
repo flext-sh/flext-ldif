@@ -17,7 +17,7 @@ Notes:
 from __future__ import annotations
 
 import re
-from typing import ClassVar
+from typing import ClassVar, cast
 
 from flext_core import FlextModels, FlextResult
 from pydantic import (
@@ -307,6 +307,10 @@ class FlextLdifModels(FlextModels):
             description="LDAP server type (openldap, openldap2, openldap1, oid, oud, 389ds)",
         )
         raw_acl: str = Field(default="", description="Original ACL string from LDIF")
+        metadata: dict[str, object] | None = Field(
+            default=None,
+            description="Server-specific metadata for quirks transformation (e.g., OID→RFC conversion info)",
+        )
 
         def get_acl_format(self) -> str:
             """Get ACL format for this server type.
@@ -322,7 +326,7 @@ class FlextLdifModels(FlextModels):
                 "openldap2": FlextLdifConstants.AclFormats.OPENLDAP2_ACL,
                 "openldap1": FlextLdifConstants.AclFormats.ACCESS,
                 "389ds": FlextLdifConstants.AclFormats.ACI,
-                "active_directory": FlextLdifConstants.AclFormats.NTSECURITYDESCRIPTOR,
+                "active_directory": FlextLdifConstants.AclFormats.AD_NTSECURITY,
                 "rfc": FlextLdifConstants.AclFormats.RFC_GENERIC,
             }
             return format_map.get(self.server_type, FlextLdifConstants.AclFormats.ACI)
@@ -1224,9 +1228,9 @@ class FlextLdifModels(FlextModels):
 
             """
             # Access fields directly to avoid recursion with model_dump()
-            # Type cast to satisfy Pyrefly (computed_field seen as BoundMethod)
-            attrs: int = self.total_attributes
-            ocs: int = self.total_object_classes
+            # Cast computed fields to proper types for Pyrefly compatibility
+            attrs: int = cast("int", self.total_attributes)
+            ocs: int = cast("int", self.total_object_classes)
             return {
                 "attributes": attrs,
                 "object_classes": ocs,
@@ -1292,8 +1296,8 @@ class FlextLdifModels(FlextModels):
                 Sum of schema elements and entries
 
             """
-            # Type cast to satisfy Pyrefly (computed_field seen as BoundMethod)
-            schema_elems: int = self.total_schema_elements
+            # Cast computed field to proper type for Pyrefly compatibility
+            schema_elems: int = cast("int", self.total_schema_elements)
             return schema_elems + self.total_entries
 
         @computed_field
@@ -1304,8 +1308,8 @@ class FlextLdifModels(FlextModels):
                 True if attributes or object classes exist
 
             """
-            # Type cast to satisfy Pyrefly (computed_field seen as BoundMethod)
-            schema_elems: int = self.total_schema_elements
+            # Cast computed field to proper type for Pyrefly compatibility
+            schema_elems: int = cast("int", self.total_schema_elements)
             return schema_elems > 0
 
         @computed_field
@@ -1341,10 +1345,10 @@ class FlextLdifModels(FlextModels):
 
             """
             # Access fields directly to avoid recursion with model_dump()
-            # Type cast to satisfy Pyrefly (computed_field seen as BoundMethod)
-            schema_elems: int = self.total_schema_elements
-            total_items: int = self.total_items
-            success: float = self.success_rate
+            # Cast computed fields to proper types for Pyrefly compatibility
+            schema_elems: int = cast("int", self.total_schema_elements)
+            total_items: int = cast("int", self.total_items)
+            success: float = cast("float", self.success_rate)
             return {
                 "schema_attributes": self.total_schema_attributes,
                 "schema_objectclasses": self.total_schema_objectclasses,

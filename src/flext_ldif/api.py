@@ -268,7 +268,7 @@ class FlextLdif(FlextService[dict[str, object]]):
         )
 
     @override
-    def execute(self) -> FlextResult[FlextLdifModels.ClientStatus]:
+    def execute(self) -> FlextResult[dict[str, object]]:
         """Execute facade self-check and return status.
 
         Returns:
@@ -277,8 +277,10 @@ class FlextLdif(FlextService[dict[str, object]]):
         """
         result = self._client.execute()
         if result.is_success:
-            return FlextResult[FlextLdifModels.ClientStatus].ok(result.value)
-        return FlextResult[FlextLdifModels.ClientStatus].fail(result.error)
+            # Convert ClientStatus to dict for parent contract compliance
+            status_dict: dict[str, object] = cast("dict[str, object]", result.value)
+            return FlextResult[dict[str, object]].ok(status_dict)
+        return FlextResult[dict[str, object]].fail(result.error)
 
     def parse(
         self,

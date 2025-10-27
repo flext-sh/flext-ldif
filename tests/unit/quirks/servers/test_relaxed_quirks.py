@@ -69,7 +69,9 @@ class TestRelaxedSchemaQuirks:
         assert result.is_success
 
         parsed = result.unwrap()
-        assert parsed.metadata and parsed.metadata.extensions.relaxed_parsed is True
+        assert (
+            parsed.metadata and parsed.metadata.extensions.get("relaxed_parsed") is True
+        )
         assert hasattr(parsed, "oid")
         assert parsed.oid == "2.5.4.3"
 
@@ -86,7 +88,9 @@ class TestRelaxedSchemaQuirks:
         assert result.is_success
 
         parsed = result.unwrap()
-        assert parsed.metadata and parsed.metadata.extensions.relaxed_parsed is True
+        assert (
+            parsed.metadata and parsed.metadata.extensions.get("relaxed_parsed") is True
+        )
 
     def test_parse_attribute_returns_definition(
         self, relaxed_schema_quirk: FlextLdifQuirksServersRelaxedSchema
@@ -111,7 +115,9 @@ class TestRelaxedSchemaQuirks:
         assert result.is_success
 
         parsed = result.unwrap()
-        assert parsed.metadata and parsed.metadata.extensions.relaxed_parsed is True
+        assert (
+            parsed.metadata and parsed.metadata.extensions.get("relaxed_parsed") is True
+        )
 
     def test_can_handle_any_objectclass_definition(
         self, relaxed_schema_quirk: FlextLdifQuirksServersRelaxedSchema
@@ -531,7 +537,9 @@ class TestRelaxedQuirksParseAttribute:
         parsed = result.unwrap()
         assert hasattr(parsed, "name")
         assert parsed.oid == "1.2.3.4"
-        assert parsed.metadata and parsed.metadata.extensions.relaxed_parsed is True
+        assert (
+            parsed.metadata and parsed.metadata.extensions.get("relaxed_parsed") is True
+        )
 
     def test_parse_attribute_malformed_oid(
         self, relaxed_quirk: FlextLdifQuirksServersRelaxed
@@ -622,7 +630,9 @@ class TestRelaxedQuirksParseObjectclass:
         parsed = result.unwrap()
         assert hasattr(parsed, "name")
         assert parsed.oid == "1.2.3.4"
-        assert parsed.metadata and parsed.metadata.extensions.relaxed_parsed is True
+        assert (
+            parsed.metadata and parsed.metadata.extensions.get("relaxed_parsed") is True
+        )
 
     def test_parse_objectclass_malformed_oid(
         self, relaxed_quirk: FlextLdifQuirksServersRelaxed
