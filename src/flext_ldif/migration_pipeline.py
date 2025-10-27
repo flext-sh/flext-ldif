@@ -191,7 +191,7 @@ class _EntryFileProcessing:
             if self._logger and hasattr(self._logger, "info"):
                 dk = FlextLdifConstants.DictKeys
                 # Type narrowing: _logger has info method after hasattr check
-                getattr(self._logger, "info")(
+                self._logger.info(
                     f"Processing entry file: {entry_file.name}",
                     extra={dk.SOURCE_SERVER: FlextLdifConstants.ServerTypes.RFC},
                 )
@@ -217,7 +217,7 @@ class _EntryFileProcessing:
 
             return FlextResult[list[object]].ok(entries)
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError) as e:
             return FlextResult[list[object]].fail(f"Entry file processing failed: {e}")
 
 
@@ -442,7 +442,7 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifModels.MigrationPipelineR
 
             return FlextResult[list[object]].ok(migrated_list)
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError) as e:
             error_msg = f"Entry migration failed: {e}"
             if self.logger:
                 self.logger.exception(error_msg)
@@ -607,7 +607,7 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifModels.MigrationPipelineR
                 migration_result
             )
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError) as e:
             error_msg = f"LDIF migration pipeline failed: {e}"
             if self.logger:
                 self.logger.exception(error_msg)
@@ -717,7 +717,7 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifModels.MigrationPipelineR
 
             return FlextResult[dict[str, object]].ok(schema_data)
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError) as e:
             return FlextResult[dict[str, object]].fail(f"Schema migration failed: {e}")
 
     def _process_entries_migration(
@@ -810,7 +810,7 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifModels.MigrationPipelineR
 
             return FlextResult[list[object]].ok(all_entries)
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError) as e:
             return FlextResult[list[object]].fail(f"Entries migration failed: {e}")
 
 

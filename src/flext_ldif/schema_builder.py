@@ -173,7 +173,7 @@ class FlextLdifSchemaBuilder(FlextService[FlextLdifConfig]):
             # Return model directly wrapped in FlextResult
             return FlextResult[FlextLdifModels.SchemaBuilderResult].ok(schema_result)
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError) as e:
             if self.logger:
                 self.logger.exception("Schema building failed")
             return FlextResult[FlextLdifModels.SchemaBuilderResult].fail(

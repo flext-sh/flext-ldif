@@ -263,7 +263,7 @@ class FlextLdifQuirksConversionMatrix:
             # Cast Result[str] to Result[str | Dict] for return type compatibility
             return cast("FlextResult[str | dict[str, object]]", write_result)
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError) as e:
             return FlextResult[str | dict[str, object]].fail(
                 f"Attribute conversion failed: {e}"
             )
@@ -350,7 +350,7 @@ class FlextLdifQuirksConversionMatrix:
             # Cast Result[str] to Result[str | Dict] for return type compatibility
             return cast("FlextResult[str | dict[str, object]]", write_result)
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError) as e:
             return FlextResult[str | dict[str, object]].fail(
                 f"ObjectClass conversion failed: {e}"
             )
@@ -387,8 +387,8 @@ class FlextLdifQuirksConversionMatrix:
                     "Target quirk does not have ACL quirk (missing acl attribute)"
                 )
 
-            source_acl_quirk = source_quirk.acl  # type: ignore[attr-defined]
-            target_acl_quirk = target_quirk.acl  # type: ignore[attr-defined]
+            source_acl_quirk = source_quirk.acl
+            target_acl_quirk = target_quirk.acl
 
             # Step 1: Parse source ACL string → Pydantic model
             if not hasattr(source_acl_quirk, "parse_acl"):
@@ -450,7 +450,7 @@ class FlextLdifQuirksConversionMatrix:
 
             return write_result
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError) as e:
             return FlextResult[str].fail(f"ACL conversion failed: {e}")
 
     def _convert_entry(
@@ -520,7 +520,7 @@ class FlextLdifQuirksConversionMatrix:
 
             return write_result
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError) as e:
             return FlextResult[str | dict[str, object]].fail(
                 f"Entry conversion failed: {e}"
             )
@@ -578,7 +578,7 @@ class FlextLdifQuirksConversionMatrix:
 
             return FlextResult[list[str | dict[str, object]]].ok(converted)
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError) as e:
             return FlextResult[list[str | dict[str, object]]].fail(
                 f"Batch conversion failed: {e}"
             )

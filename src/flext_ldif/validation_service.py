@@ -142,7 +142,7 @@ class FlextLdifValidationService(FlextService[dict[str, object]]):
 
             return FlextResult[bool].ok(True)
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError) as e:
             return FlextResult[bool].fail(f"Failed to validate attribute name: {e}")
 
     def validate_objectclass_name(self, name: str) -> FlextResult[bool]:
@@ -216,7 +216,7 @@ class FlextLdifValidationService(FlextService[dict[str, object]]):
 
             return FlextResult[bool].ok(True)
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError) as e:
             return FlextResult[bool].fail(f"Failed to validate attribute value: {e}")
 
     def validate_dn_component(
@@ -255,7 +255,7 @@ class FlextLdifValidationService(FlextService[dict[str, object]]):
             # DN values can be empty strings
             return FlextResult[bool].ok(True)
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError) as e:
             return FlextResult[bool].fail(f"Failed to validate DN component: {e}")
 
 

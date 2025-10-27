@@ -80,7 +80,7 @@ class TestOidToOudSchemaConversion:
         # Verify conversion preserved key fields
         assert oud_data["oid"] == parsed_data["oid"]
         assert oud_data["name"] == parsed_data["name"]
-        assert oud_data.get("syntax") == parsed_data.get("syntax")
+        assert oud_data.syntax == parsed_data.syntax
 
     def test_convert_oid_objectclass_to_oud(
         self,
@@ -118,7 +118,7 @@ class TestOidToOudSchemaConversion:
         assert oud_data["oid"] == parsed_data["oid"]
         assert oud_data["name"] == parsed_data["name"]
         assert oud_data["kind"] == parsed_data["kind"]
-        assert oud_data.get("superior") == parsed_data.get("superior")
+        assert oud_data.superior == parsed_data.superior
 
 
 class TestOidToOudAclConversion:

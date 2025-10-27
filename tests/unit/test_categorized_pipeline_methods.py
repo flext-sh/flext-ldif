@@ -398,7 +398,7 @@ class TestCategorizeEntries:
         assert result.is_success
         categorized = result.unwrap()
         # Schema entry should be categorized
-        assert isinstance(categorized.get("schema"), list)
+        assert isinstance(categorized.schema, list)
 
     def test_categorize_with_user_entries(self, temp_dirs: tuple[Path, Path]) -> None:
         """Test categorization of user entries."""
@@ -460,7 +460,7 @@ class TestCategorizeEntries:
         result = pipeline._categorize_entries(entries)
         assert result.is_success
         categorized = result.unwrap()
-        assert isinstance(categorized.get("hierarchy"), list)
+        assert isinstance(categorized.hierarchy, list)
 
     def test_categorize_with_base_dn_filtering(
         self, temp_dirs: tuple[Path, Path]
@@ -688,7 +688,7 @@ class TestTransformCategories:
         assert result.is_success
         transformed = result.unwrap()
         # Should have hierarchy entry
-        assert isinstance(transformed.get("hierarchy"), list)
+        assert isinstance(transformed.hierarchy, list)
 
     def test_transform_with_both_forbidden_attributes_and_objectclasses(
         self, temp_dirs: tuple[Path, Path]
@@ -2164,7 +2164,7 @@ class TestAclTransformation:
         assert result.is_success
         transformed = result.unwrap()
         # Verify forbidden attribute was filtered
-        if transformed.get("acl"):
+        if transformed.acl:
             for entry in transformed.get("acl", []):
                 attrs = entry.get("attributes", {})
                 assert isinstance(attrs, dict)
@@ -2260,12 +2260,12 @@ class TestEntryQuirkConversion:
         assert result.is_success
         transformed = result.unwrap()
         # Verify all categories preserved
-        assert isinstance(transformed.get("schema"), list)
-        assert isinstance(transformed.get("hierarchy"), list)
-        assert isinstance(transformed.get("users"), list)
-        assert isinstance(transformed.get("groups"), list)
-        assert isinstance(transformed.get("acl"), list)
-        assert isinstance(transformed.get("rejected"), list)
+        assert isinstance(transformed.schema, list)
+        assert isinstance(transformed.hierarchy, list)
+        assert isinstance(transformed.users, list)
+        assert isinstance(transformed.groups, list)
+        assert isinstance(transformed.acl, list)
+        assert isinstance(transformed.rejected, list)
 
 
 class TestDnNormalization:

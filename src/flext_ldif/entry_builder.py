@@ -271,7 +271,7 @@ class FlextLdifEntryBuilder(FlextService[FlextLdifModels.Entry]):
 
         except json.JSONDecodeError as e:
             return FlextResult[list[FlextLdifModels.Entry]].fail(f"Invalid JSON: {e}")
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError) as e:
             return FlextResult[list[FlextLdifModels.Entry]].fail(
                 f"Failed to build entries from JSON: {e}"
             )
@@ -377,7 +377,7 @@ class FlextLdifEntryBuilder(FlextService[FlextLdifModels.Entry]):
                 self.logger.info(f"Converted {len(entries)} entries to JSON")
             return FlextResult[str].ok(json_str)
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError) as e:
             return FlextResult[str].fail(f"Failed to convert entries to JSON: {e}")
 
 

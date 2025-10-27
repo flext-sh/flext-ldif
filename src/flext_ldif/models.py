@@ -221,7 +221,7 @@ class FlextLdifModels(FlextModels):
                 return FlextResult[FlextLdifModels.AclPermissions].ok(
                     cls.model_validate(data_mutable)
                 )
-            except Exception as e:
+            except (ValueError, TypeError, AttributeError) as e:
                 return FlextResult[FlextLdifModels.AclPermissions].fail(
                     f"Failed to create AclPermissions: {e}"
                 )
@@ -308,49 +308,36 @@ class FlextLdifModels(FlextModels):
         )
         raw_acl: str = Field(default="", description="Original ACL string from LDIF")
 
-        def __getitem__(self, key: str) -> object:
-            """Support dict-like access for backward compatibility with tests.
+        def get_acl_format(self) -> str:
+            """Get ACL format for this server type.
 
-            Maps old dict keys to Pydantic model attributes.
+            Returns the RFC or server-specific ACL format constant.
             """
-            # Convert long form server_type to short form for backward compatibility
+            format_map = {
+                "oud": FlextLdifConstants.AclFormats.ACI,
+                "oracle_oud": FlextLdifConstants.AclFormats.ACI,
+                "oid": FlextLdifConstants.AclFormats.ORCLACI,
+                "oracle_oid": FlextLdifConstants.AclFormats.ORCLACI,
+                "openldap": FlextLdifConstants.AclFormats.OLCACCESS,
+                "openldap2": FlextLdifConstants.AclFormats.OPENLDAP2_ACL,
+                "openldap1": FlextLdifConstants.AclFormats.ACCESS,
+                "389ds": FlextLdifConstants.AclFormats.ACI,
+                "active_directory": FlextLdifConstants.AclFormats.NTSECURITYDESCRIPTOR,
+                "rfc": FlextLdifConstants.AclFormats.RFC_GENERIC,
+            }
+            return format_map.get(self.server_type, FlextLdifConstants.AclFormats.ACI)
+
+        def get_acl_type(self) -> str:
+            """Get ACL type identifier for this server.
+
+            Returns ACL type string derived from server_type with '_acl' suffix.
+            """
             short_form_map = {
                 "oracle_oid": "oid",
                 "oracle_oud": "oud",
             }
             short_server_type = short_form_map.get(self.server_type, self.server_type)
-
-            # Map dict keys to model attributes
-            if key == FlextLdifConstants.DictKeys.TYPE:
-                # TYPE maps to server_type with legacy suffix
-                return f"{short_server_type}_acl"
-            if key == FlextLdifConstants.DictKeys.FORMAT:
-                # FORMAT derived from server_type (using short form)
-                format_map = {
-                    "oud": FlextLdifConstants.AclFormats.ACI,
-                    "oid": FlextLdifConstants.AclFormats.ORCLACI,
-                    "openldap": FlextLdifConstants.AclFormats.OLCACCESS,
-                    "openldap2": FlextLdifConstants.AclFormats.OPENLDAP2_ACL,
-                    "openldap1": FlextLdifConstants.AclFormats.ACCESS,
-                    "389ds": FlextLdifConstants.AclFormats.ACI,
-                }
-                return format_map.get(
-                    short_server_type, FlextLdifConstants.AclFormats.ACI
-                )
-            if key == FlextLdifConstants.DictKeys.RAW:
-                return self.raw_acl
-            if key == FlextLdifConstants.DictKeys.NAME:
-                return self.name
-            if key == FlextLdifConstants.DictKeys.TARGET:
-                return self.target
-            if key == FlextLdifConstants.DictKeys.SUBJECT:
-                return self.subject
-            if key == FlextLdifConstants.DictKeys.PERMISSIONS:
-                return self.permissions
-            if key == FlextLdifConstants.DictKeys.SERVER_TYPE:
-                return self.server_type
-            msg = f"Unknown key: {key}"
-            raise KeyError(msg)
+            return f"{short_server_type}_acl"
 
     # =========================================================================
     # DTO MODELS - Data transfer objects
@@ -692,41 +679,6 @@ class FlextLdifModels(FlextModels):
             """Check if attribute has any matching rules defined."""
             return bool(self.equality or self.ordering or self.substr)
 
-        def __getitem__(self, key: str) -> object:
-            """Support dict-like access for backward compatibility with tests."""
-            if key == "server_type":
-                return self.metadata.quirk_type if self.metadata else None
-            if key == "name":
-                return self.name
-            if key == "oid":
-                return self.oid
-            if key == "desc":
-                return self.desc
-            if key == "sup":
-                return self.sup
-            if key == "equality":
-                return self.equality
-            if key == "ordering":
-                return self.ordering
-            if key == "substr":
-                return self.substr
-            if key == "syntax":
-                return self.syntax
-            if key == "length":
-                return self.length
-            if key == "usage":
-                return self.usage
-            if key == "single_value":
-                return self.single_value
-            if key == "no_user_modification":
-                return self.no_user_modification
-            if key == "metadata":
-                return self.metadata
-            if key == "has_matching_rules":
-                return self.has_matching_rules
-            msg = f"Unknown key: {key}"
-            raise KeyError(msg)
-
     class SchemaObjectClass(FlextModels.ArbitraryTypesModel):
         """LDAP schema object class definition model (RFC 4512 compliant).
 
@@ -887,7 +839,7 @@ class FlextLdifModels(FlextModels):
                 return FlextResult[FlextLdifModels.Entry].ok(
                     cls.model_validate(entry_data)
                 )
-            except Exception as e:
+            except (ValueError, TypeError, AttributeError) as e:
                 return FlextResult[FlextLdifModels.Entry].fail(
                     f"Failed to create Entry: {e}"
                 )
@@ -962,29 +914,9 @@ class FlextLdifModels(FlextModels):
             description="Metadata for preserving ordering and formats",
         )
 
-        def get(self, key: str, default: list[str] | None = None) -> list[str] | None:
-            """Dict-like get method for backward compatibility."""
-            if key in self.attributes:
-                return self.attributes[key].values
-            return default
-
         def __len__(self) -> int:
             """Return the number of attributes."""
             return len(self.attributes)
-
-        def __getitem__(self, key: str) -> FlextLdifModels.AttributeValues:
-            """Get attribute by name."""
-            return self.attributes[key]
-
-        def __setitem__(self, key: str, value: str | list[str]) -> None:
-            """Set attribute value."""
-            if isinstance(value, str):
-                value = [value]
-            self.attributes[key] = FlextLdifModels.AttributeValues(values=value)
-
-        def __contains__(self, key: object) -> bool:
-            """Check if attribute exists."""
-            return key in self.attributes
 
         def get_attribute(self, key: str) -> FlextLdifModels.AttributeValues | None:
             """Get AttributeValues for a specific attribute name.
@@ -997,6 +929,54 @@ class FlextLdifModels(FlextModels):
 
             """
             return self.attributes.get(key)
+
+        def get_values(self, key: str, default: list[str] | None = None) -> list[str]:
+            """Get attribute values as a list with optional default.
+
+            Ergonomic method for retrieving attribute values directly as a list.
+
+            Args:
+            key: Attribute name
+            default: Default list to return if attribute not found
+
+            Returns:
+            List of attribute values, or default if not found
+
+            """
+            if default is None:
+                default = []
+            attr = self.attributes.get(key)
+            return attr.values if attr else default
+
+        def has_attribute(self, key: str) -> bool:
+            """Check if attribute exists.
+
+            Args:
+            key: Attribute name
+
+            Returns:
+            True if attribute exists, False otherwise
+
+            """
+            return key in self.attributes
+
+        def iter_attributes(self) -> list[str]:
+            """Get list of all attribute names.
+
+            Returns:
+            List of attribute names
+
+            """
+            return list(self.attributes.keys())
+
+        def items(self) -> list[tuple[str, list[str]]]:
+            """Get attribute name-values pairs.
+
+            Returns:
+            List of (name, values) tuples for all attributes
+
+            """
+            return [(name, attr.values) for name, attr in self.attributes.items()]
 
         def add_attribute(self, key: str, values: str | list[str]) -> None:
             """Add or update an attribute with values.
@@ -1061,7 +1041,7 @@ class FlextLdifModels(FlextModels):
                         FlextLdifConstants.DictKeys.ATTRIBUTES: attrs_data
                     })
                 )
-            except Exception as e:
+            except (ValueError, TypeError, AttributeError) as e:
                 return FlextResult[FlextLdifModels.LdifAttributes].fail(
                     f"Failed to create LdifAttributes: {e}"
                 )
@@ -1245,8 +1225,8 @@ class FlextLdifModels(FlextModels):
             """
             # Access fields directly to avoid recursion with model_dump()
             # Type cast to satisfy Pyrefly (computed_field seen as BoundMethod)
-            attrs: int = self.total_attributes  # type: ignore[assignment]
-            ocs: int = self.total_object_classes  # type: ignore[assignment]
+            attrs: int = self.total_attributes
+            ocs: int = self.total_object_classes
             return {
                 "attributes": attrs,
                 "object_classes": ocs,
@@ -1313,7 +1293,7 @@ class FlextLdifModels(FlextModels):
 
             """
             # Type cast to satisfy Pyrefly (computed_field seen as BoundMethod)
-            schema_elems: int = self.total_schema_elements  # type: ignore[assignment]
+            schema_elems: int = self.total_schema_elements
             return schema_elems + self.total_entries
 
         @computed_field
@@ -1325,7 +1305,7 @@ class FlextLdifModels(FlextModels):
 
             """
             # Type cast to satisfy Pyrefly (computed_field seen as BoundMethod)
-            schema_elems: int = self.total_schema_elements  # type: ignore[assignment]
+            schema_elems: int = self.total_schema_elements
             return schema_elems > 0
 
         @computed_field
@@ -1362,9 +1342,9 @@ class FlextLdifModels(FlextModels):
             """
             # Access fields directly to avoid recursion with model_dump()
             # Type cast to satisfy Pyrefly (computed_field seen as BoundMethod)
-            schema_elems: int = self.total_schema_elements  # type: ignore[assignment]
-            total_items: int = self.total_items  # type: ignore[assignment]
-            success: float = self.success_rate  # type: ignore[assignment]
+            schema_elems: int = self.total_schema_elements
+            total_items: int = self.total_items
+            success: float = self.success_rate
             return {
                 "schema_attributes": self.total_schema_attributes,
                 "schema_objectclasses": self.total_schema_objectclasses,
@@ -1457,29 +1437,6 @@ class FlextLdifModels(FlextModels):
                 "is_empty": self.is_empty,
             }
 
-        def __getitem__(self, key: str) -> object:
-            """Support dict-like access for backward compatibility with tests."""
-            if key == "migrated_schema":
-                return self.migrated_schema
-            if key == "entries":
-                return self.entries
-            if key == "stats":
-                return self.stats
-            if key == "output_files":
-                return self.output_files
-            if key == "is_empty":
-                return self.is_empty
-            if key == "entry_count":
-                return self.entry_count
-            if key == "output_file_count":
-                return self.output_file_count
-            if key == "migration_summary":
-                return self.migration_summary
-            if key == "total_entries":  # Backward compatibility
-                return self.stats.total_entries
-            msg = f"Unknown key: {key}"
-            raise KeyError(msg)
-
     # =========================================================================
     # CLIENT AND SERVICE RESULT MODELS
     # =========================================================================
@@ -1499,17 +1456,6 @@ class FlextLdifModels(FlextModels):
         config: dict[str, object] = Field(
             default_factory=dict, description="Active configuration settings"
         )
-
-        def __getitem__(self, key: str) -> object:
-            """Support dict-like access for backward compatibility with tests."""
-            if key == "status":
-                return self.status
-            if key == "services":
-                return self.services
-            if key == "config":
-                return self.config
-            msg = f"Unknown key: {key}"
-            raise KeyError(msg)
 
     class ValidationResult(FlextModels.Value):
         """Entry validation result."""
@@ -1583,19 +1529,6 @@ class FlextLdifModels(FlextModels):
             """Count of unique object classes."""
             return len(self.objectclass_distribution)
 
-        def __getitem__(self, key: str) -> object:
-            """Support dict-like access for backward compatibility with tests."""
-            if key == "total_entries":
-                return self.total_entries
-            if key == "objectclass_distribution":
-                return self.objectclass_distribution
-            if key == "patterns_detected":
-                return self.patterns_detected
-            if key == "unique_objectclasses":
-                return self.unique_objectclasses
-            msg = f"Unknown key: {key}"
-            raise KeyError(msg)
-
     class ServerDetectionResult(FlextModels.Value):
         """Result from LDAP server type detection."""
 
@@ -1622,25 +1555,6 @@ class FlextLdifModels(FlextModels):
         fallback_reason: str | None = Field(
             default=None, description="Reason for fallback to RFC mode"
         )
-
-        def __getitem__(self, key: str) -> object:
-            """Support dict-like access for backward compatibility with tests."""
-            if key == "detected_server_type":
-                return self.detected_server_type
-            if key == "confidence":
-                return self.confidence
-            if key == "scores":
-                return self.scores
-            if key == "patterns_found":
-                return self.patterns_found
-            if key == "is_confident":
-                return self.is_confident
-            if key == "detection_error":
-                return self.detection_error
-            if key == "fallback_reason":
-                return self.fallback_reason
-            msg = f"Unknown key: {key}"
-            raise KeyError(msg)
 
 
 __all__ = ["FlextLdifModels"]

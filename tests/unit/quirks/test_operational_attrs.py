@@ -34,7 +34,7 @@ class TestOperationalAttributesStripping:
         # If DN is invalid, ValidationError will be raised
         try:
             dn = FlextLdifModels.DistinguishedName(value=dn_string)
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError) as e:
             raise AssertionError(f"Failed to create DN: {e}") from e
 
         # Convert attributes to LdifAttributes format manually

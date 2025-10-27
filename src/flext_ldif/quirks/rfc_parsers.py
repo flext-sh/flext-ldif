@@ -137,7 +137,7 @@ class RfcAttributeParser:
             oid_match = re.match(RfcAttributeParser.OID_PATTERN, attr_definition)
             if not oid_match:
                 return FlextResult[FlextLdifModels.SchemaAttribute].fail(
-                    "RFC attribute parsing failed: missing OID"
+                    "RFC attribute parsing failed: missing an OID"
                 )
             oid = oid_match.group(1)
 
@@ -245,7 +245,7 @@ class RfcAttributeParser:
 
             return FlextResult[FlextLdifModels.SchemaAttribute].ok(attribute)
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError) as e:
             logger.exception("RFC attribute parsing exception")
             return FlextResult[FlextLdifModels.SchemaAttribute].fail(
                 f"RFC attribute parsing failed: {e}"
@@ -332,7 +332,7 @@ class RfcObjectClassParser:
             oid_match = re.match(RfcObjectClassParser.OID_PATTERN, oc_definition)
             if not oid_match:
                 return FlextResult[FlextLdifModels.SchemaObjectClass].fail(
-                    "RFC objectClass parsing failed: missing OID"
+                    "RFC objectClass parsing failed: missing an OID"
                 )
             oid = oid_match.group(1)
 
@@ -440,7 +440,7 @@ class RfcObjectClassParser:
 
             return FlextResult[FlextLdifModels.SchemaObjectClass].ok(objectclass)
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError) as e:
             logger.exception("RFC objectClass parsing exception")
             return FlextResult[FlextLdifModels.SchemaObjectClass].fail(
                 f"RFC objectClass parsing failed: {e}"
@@ -551,7 +551,7 @@ class RfcAttributeWriter:
 
             return FlextResult[str].ok(" ".join(parts))
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError) as e:
             logger.exception("RFC attribute writing exception")
             return FlextResult[str].fail(f"RFC attribute writing failed: {e}")
 
@@ -668,7 +668,7 @@ class RfcObjectClassWriter:
 
             return FlextResult[str].ok(" ".join(parts))
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError) as e:
             logger.exception("RFC objectClass writing exception")
             return FlextResult[str].fail(f"RFC objectClass writing failed: {e}")
 
@@ -725,7 +725,7 @@ class RfcSchemaConverter:
             result_data[FlextLdifConstants.DictKeys.SERVER_TYPE] = server_type
             return FlextResult[dict[str, object]].ok(result_data)
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError) as e:
             return FlextResult[dict[str, object]].fail(
                 f"Failed to set server type '{server_type}': {e}"
             )

@@ -323,7 +323,7 @@ class FlextLdifRfcLdifWriter(FlextService[dict[str, object]]):
                 FlextLdifConstants.DictKeys.LINES_WRITTEN: total_lines,
             })
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError) as e:
             if self.logger is not None:
                 self.logger.exception(
                     FlextLdifConstants.ServerDetection.ERROR_LDIF_WRITE_FAILED
@@ -442,7 +442,7 @@ class FlextLdifRfcLdifWriter(FlextService[dict[str, object]]):
             ldif_string = output.getvalue()
             return FlextResult[str].ok(ldif_string)
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError) as e:
             return FlextResult[str].fail(
                 f"{FlextLdifConstants.ServerDetection.ERROR_FAILED_TO_WRITE} entries to string: {e}"
             )
@@ -551,7 +551,7 @@ class FlextLdifRfcLdifWriter(FlextService[dict[str, object]]):
 
             return FlextResult[None].ok(None)
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError) as e:
             return FlextResult[None].fail(
                 f"{FlextLdifConstants.ServerDetection.ERROR_FAILED_TO_WRITE} entries to file: {e}"
             )
@@ -637,7 +637,7 @@ class FlextLdifRfcLdifWriter(FlextService[dict[str, object]]):
                 FlextLdifConstants.DictKeys.LINES_WRITTEN: lines_written,
             })
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError) as e:
             return FlextResult[dict[str, object]].fail(
                 f"{FlextLdifConstants.ServerDetection.ERROR_FAILED_TO_WRITE} schema: {e}"
             )
@@ -769,11 +769,11 @@ class FlextLdifRfcLdifWriter(FlextService[dict[str, object]]):
                         # Check if quirk has custom writer and can handle this entry
                         if (
                             hasattr(quirk, "write_entry_to_ldif")
-                            and callable(getattr(quirk, "write_entry_to_ldif"))
+                            and callable(quirk.write_entry_to_ldif)
                             and quirk.can_handle_entry(dn_str, attributes_normalized)
                         ):
                             # Use quirk's custom LDIF writer
-                            write_method = getattr(quirk, "write_entry_to_ldif")
+                            write_method = quirk.write_entry_to_ldif
                             write_result = write_method(full_entry_dict)
                             if (
                                 hasattr(write_result, "is_success")
@@ -842,7 +842,7 @@ class FlextLdifRfcLdifWriter(FlextService[dict[str, object]]):
                 FlextLdifConstants.DictKeys.LINES_WRITTEN: lines_written,
             })
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError) as e:
             return FlextResult[dict[str, object]].fail(
                 f"{FlextLdifConstants.ServerDetection.ERROR_FAILED_TO_WRITE} entries: {e}"
             )
@@ -929,7 +929,7 @@ class FlextLdifRfcLdifWriter(FlextService[dict[str, object]]):
                 FlextLdifConstants.DictKeys.LINES_WRITTEN: lines_written,
             })
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError) as e:
             return FlextResult[dict[str, object]].fail(
                 f"{FlextLdifConstants.ServerDetection.ERROR_FAILED_TO_WRITE} ACLs: {e}"
             )
@@ -1047,7 +1047,7 @@ class FlextLdifRfcLdifWriter(FlextService[dict[str, object]]):
                                         item.get(FlextLdifConstants.DictKeys.FORMAT, "")
                                     )
                                 )
-                        except Exception:
+                        except (ValueError, TypeError, AttributeError):
                             # If model creation fails, use FORMAT as fallback
                             definitions.append(
                                 str(item.get(FlextLdifConstants.DictKeys.FORMAT, ""))

@@ -106,11 +106,12 @@ class TestFlextLdifApiWithRealFixtures:
         assert analyze_result.is_success, f"Analysis failed: {analyze_result.error}"
 
         stats = _unwrap_result(analyze_result)
-        assert isinstance(stats, dict), "Analysis should return a dictionary"
-        # Check for expected stat keys
-        assert any(
-            key in stats for key in ["total_entries", "entry_count", "entries"]
-        ), "Should have entry count statistics"
+        assert isinstance(stats, FlextLdifModels.EntryAnalysisResult), (
+            "Analysis should return EntryAnalysisResult model"
+        )
+        # Check for expected stat fields
+        assert hasattr(stats, "total_entries"), "Should have total_entries field"
+        assert stats.total_entries >= 0, "Entry count should be non-negative"
 
     def test_api_write_parsed_entries(
         self, api: FlextLdif, oid_fixture_path: Path, tmp_path: Path
@@ -168,8 +169,9 @@ class TestFlextLdifApiWithRealFixtures:
         assert result.is_success, f"Detection failed: {result.error}"
 
         detection = _unwrap_result(result)
-        assert isinstance(detection, dict)
-        assert "detected_server_type" in detection
+        assert isinstance(detection, FlextLdifModels.ServerDetectionResult)
+        assert detection.detected_server_type is not None
+        assert len(detection.detected_server_type) > 0
 
     def test_api_get_effective_server_type(
         self, api: FlextLdif, oid_fixture_path: Path

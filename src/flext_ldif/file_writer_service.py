@@ -167,7 +167,7 @@ class FlextLdifFileWriterService:
                 if hasattr(target_quirk_obj, "AclQuirk") and callable(
                     getattr(target_quirk_obj, "AclQuirk", None)
                 ):
-                    acl_quirk_class = getattr(target_quirk_obj, "AclQuirk")
+                    acl_quirk_class = target_quirk_obj.AclQuirk
                     acl_instance = acl_quirk_class(server_type=self._target_server)
                     quirk_registry.register_acl_quirk(acl_instance)
 
@@ -175,7 +175,7 @@ class FlextLdifFileWriterService:
                 if hasattr(target_quirk_obj, "EntryQuirk") and callable(
                     getattr(target_quirk_obj, "EntryQuirk", None)
                 ):
-                    entry_quirk_class = getattr(target_quirk_obj, "EntryQuirk")
+                    entry_quirk_class = target_quirk_obj.EntryQuirk
                     entry_instance = entry_quirk_class(server_type=self._target_server)
                     quirk_registry.register_entry_quirk(entry_instance)
 

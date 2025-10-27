@@ -206,7 +206,7 @@ class TestEnvVariableLoading:
         assert (
             config.model_config["env_prefix"] == "FLEXT_"
         )  # Combined with ldif_ field names = FLEXT_LDIF_*
-        assert config.model_config.get("env_nested_delimiter") == "__"
+        assert config.model_config.env_nested_delimiter == "__"
 
     def test_extra_fields_ignored(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test extra environment variables are ignored (extra='ignore')."""

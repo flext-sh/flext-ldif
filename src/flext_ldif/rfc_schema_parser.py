@@ -211,7 +211,7 @@ class FlextLdifRfcSchemaParser(FlextService[dict[str, object]]):
 
             return FlextResult[dict[str, object]].ok(data)
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError) as e:
             error_msg = f"Failed to execute RFC schema parser: {e}"
             if self.logger is not None:
                 self.logger.exception(error_msg)
@@ -289,7 +289,7 @@ class FlextLdifRfcSchemaParser(FlextService[dict[str, object]]):
                 },
             })
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError) as e:
             return FlextResult[dict[str, object]].fail(
                 f"Failed to parse schema file: {e}"
             )
@@ -336,7 +336,7 @@ class FlextLdifRfcSchemaParser(FlextService[dict[str, object]]):
                 if oc_data and "name" in oc_data:
                     objectclasses[str(oc_data["name"])] = oc_data
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError) as e:
             if self.logger is not None:
                 self.logger.warning(
                     f"Error processing schema line: {e}",
@@ -396,7 +396,7 @@ class FlextLdifRfcSchemaParser(FlextService[dict[str, object]]):
             # exclude_none=True removes None values to match original behavior
             return attribute_model.model_dump(exclude_none=True)
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError) as e:
             if self.logger:
                 self.logger.warning(
                     f"Failed to create SchemaAttribute model: {e}",
@@ -475,7 +475,7 @@ class FlextLdifRfcSchemaParser(FlextService[dict[str, object]]):
             # exclude_none=True removes None values to match original behavior
             return objectclass_model.model_dump(exclude_none=True)
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError) as e:
             if self.logger:
                 self.logger.warning(
                     f"Failed to create SchemaObjectClass model: {e}",

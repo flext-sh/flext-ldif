@@ -102,7 +102,7 @@ class QuirkRegistrationMixin:
                         registry_method(quirk_instance)
                 else:
                     return
-            except Exception as e:
+            except (ValueError, TypeError, AttributeError) as e:
                 # Registration failures are non-critical during class creation
                 # Log at debug level to avoid noise during module import
                 quirk_type = cls._REGISTRY_METHOD.replace("register_", "").replace(

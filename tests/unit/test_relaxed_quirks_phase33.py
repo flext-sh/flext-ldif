@@ -35,16 +35,16 @@ class TestRelaxedQuirksPhase33:
         quirks = FlextLdifQuirksServersRelaxed()
 
         assert hasattr(quirks, "parse_attribute")
-        assert callable(getattr(quirks, "parse_attribute"))
+        assert callable(quirks.parse_attribute)
         assert hasattr(quirks, "parse_objectclass")
-        assert callable(getattr(quirks, "parse_objectclass"))
+        assert callable(quirks.parse_objectclass)
 
     def test_relaxed_quirks_has_entry_methods(self) -> None:
         """Test Relaxed quirks has entry processing methods."""
         quirks = FlextLdifQuirksServersRelaxed()
 
         if hasattr(quirks, "EntryQuirk"):
-            entry_quirk_class = getattr(quirks, "EntryQuirk")
+            entry_quirk_class = quirks.EntryQuirk
             assert callable(entry_quirk_class)
 
     def test_relaxed_quirks_parse_malformed_attribute(self) -> None:
@@ -82,7 +82,7 @@ class TestRelaxedQuirksPhase33:
         quirks = FlextLdifQuirksServersRelaxed()
 
         assert hasattr(quirks, "AclQuirk")
-        acl_quirk_class = getattr(quirks, "AclQuirk")
+        acl_quirk_class = quirks.AclQuirk
         assert callable(acl_quirk_class)
 
     def test_relaxed_entry_quirk_initialization(self) -> None:
@@ -90,7 +90,7 @@ class TestRelaxedQuirksPhase33:
         quirks = FlextLdifQuirksServersRelaxed()
 
         assert hasattr(quirks, "EntryQuirk")
-        entry_quirk_class = getattr(quirks, "EntryQuirk")
+        entry_quirk_class = quirks.EntryQuirk
         assert callable(entry_quirk_class)
 
     def test_relaxed_acl_quirk_parse_malformed_acl(self) -> None:
@@ -131,9 +131,9 @@ class TestRelaxedQuirksPhase33:
         quirks = FlextLdifQuirksServersRelaxed()
 
         assert hasattr(quirks, "parse_attribute")
-        assert callable(getattr(quirks, "parse_attribute"))
+        assert callable(quirks.parse_attribute)
         assert hasattr(quirks, "parse_objectclass")
-        assert callable(getattr(quirks, "parse_objectclass"))
+        assert callable(quirks.parse_objectclass)
 
     def test_relaxed_acl_quirk_has_methods(self) -> None:
         """Test Relaxed ACL quirk has processing methods."""
@@ -141,7 +141,7 @@ class TestRelaxedQuirksPhase33:
         acl_quirk = quirks.AclQuirk()
 
         assert hasattr(acl_quirk, "parse_acl")
-        assert callable(getattr(acl_quirk, "parse_acl"))
+        assert callable(acl_quirk.parse_acl)
 
     def test_relaxed_entry_quirk_has_methods(self) -> None:
         """Test Relaxed entry quirk has processing methods."""
@@ -149,7 +149,7 @@ class TestRelaxedQuirksPhase33:
         entry_quirk = quirks.EntryQuirk()
 
         assert hasattr(entry_quirk, "process_entry")
-        assert callable(getattr(entry_quirk, "process_entry"))
+        assert callable(entry_quirk.process_entry)
 
     def test_relaxed_quirks_can_handle_any_attribute(self) -> None:
         """Test Relaxed quirks handles any attribute (lenient)."""
@@ -173,9 +173,9 @@ class TestRelaxedQuirksPhase33:
         quirks = FlextLdifQuirksServersRelaxed()
 
         assert hasattr(quirks, "convert_attribute_to_rfc")
-        assert callable(getattr(quirks, "convert_attribute_to_rfc"))
+        assert callable(quirks.convert_attribute_to_rfc)
         assert hasattr(quirks, "convert_objectclass_to_rfc")
-        assert callable(getattr(quirks, "convert_objectclass_to_rfc"))
+        assert callable(quirks.convert_objectclass_to_rfc)
 
     def test_relaxed_acl_quirk_convert_to_rfc(self) -> None:
         """Test Relaxed ACL quirk can convert to RFC."""
@@ -183,7 +183,7 @@ class TestRelaxedQuirksPhase33:
         acl_quirk = quirks.AclQuirk()
 
         assert hasattr(acl_quirk, "convert_acl_to_rfc")
-        assert callable(getattr(acl_quirk, "convert_acl_to_rfc"))
+        assert callable(acl_quirk.convert_acl_to_rfc)
 
     def test_relaxed_entry_quirk_convert_to_rfc(self) -> None:
         """Test Relaxed entry quirk can convert to RFC."""
@@ -191,7 +191,7 @@ class TestRelaxedQuirksPhase33:
         entry_quirk = quirks.EntryQuirk()
 
         assert hasattr(entry_quirk, "convert_entry_to_rfc")
-        assert callable(getattr(entry_quirk, "convert_entry_to_rfc"))
+        assert callable(entry_quirk.convert_entry_to_rfc)
 
 
 if __name__ == "__main__":

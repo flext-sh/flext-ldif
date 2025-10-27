@@ -73,7 +73,7 @@ class FixtureValidator:
 
             return FlextResult.ok(stats)
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError) as e:
             return FlextResult.fail(f"Schema validation error: {e!s}")
 
     @staticmethod
@@ -126,7 +126,7 @@ class FixtureValidator:
 
             return FlextResult.ok(stats)
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError) as e:
             return FlextResult.fail(f"Entry validation error: {e!s}")
 
     @staticmethod
@@ -156,7 +156,7 @@ class FixtureValidator:
 
             return FlextResult.ok(True)
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError) as e:
             return FlextResult.fail(f"Semantic comparison error: {e!s}")
 
     @staticmethod
@@ -200,7 +200,7 @@ class FixtureValidator:
 
             return FlextResult.ok(stats)
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError) as e:
             return FlextResult.fail(f"Roundtrip validation error: {e!s}")
 
 

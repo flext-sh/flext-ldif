@@ -251,7 +251,7 @@ if __name__ == "__main__":
             passed += 1
         except AssertionError:
             failed += 1
-        except Exception:
+        except (ValueError, TypeError, AttributeError):
             failed += 1
 
     sys.exit(0 if failed == 0 else 1)

@@ -231,7 +231,7 @@ class TestNormalizer:
         )
         attrs = result[FlextLdifConstants.DictKeys.ATTRIBUTES]
         assert isinstance(attrs, dict)
-        aci_value = attrs.get("aci")
+        aci_value = attrs.aci
         assert isinstance(aci_value, list)
 
     def test_normalize_aci_dn_references_quoted_dn_format(self) -> None:

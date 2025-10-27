@@ -6,7 +6,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif import FlextLdifModels
 from flext_ldif.schema_builder import FlextLdifSchemaBuilder
 
 
@@ -34,14 +33,13 @@ class TestFlextLdifSchemaBuilder:
         result = builder.build()
 
         assert result.is_success
-        schema_dict = result.unwrap()
-        assert schema_dict["attributes"] == {}
-        assert schema_dict["object_classes"] == {}
-        assert schema_dict["server_type"] == "generic"
-        assert schema_dict["entry_count"] == 0
+        schema_model = result.unwrap()
+        assert schema_model.attributes == {}
+        assert schema_model.object_classes == {}
+        assert schema_model.server_type == "generic"
+        assert schema_model.entry_count == 0
 
-        # Verify it can be converted to model
-        schema_model = FlextLdifModels.create_schema_builder_result(schema_dict)
+        # Verify computed fields
         assert schema_model.is_empty is True
 
     def test_build_with_attributes(self) -> None:
@@ -53,13 +51,12 @@ class TestFlextLdifSchemaBuilder:
         result = builder.build()
 
         assert result.is_success
-        schema_dict = result.unwrap()
-        assert len(schema_dict["attributes"]) == 2
-        assert "cn" in schema_dict["attributes"]
-        assert "sn" in schema_dict["attributes"]
+        schema_model = result.unwrap()
+        assert len(schema_model.attributes) == 2
+        assert "cn" in schema_model.attributes
+        assert "sn" in schema_model.attributes
 
         # Verify model conversion
-        schema_model = FlextLdifModels.create_schema_builder_result(schema_dict)
         assert schema_model.total_attributes == 2
         assert schema_model.is_empty is False
 
@@ -73,12 +70,11 @@ class TestFlextLdifSchemaBuilder:
         result = builder.build()
 
         assert result.is_success
-        schema_dict = result.unwrap()
-        assert len(schema_dict["object_classes"]) == 1
-        assert "person" in schema_dict["object_classes"]
+        schema_model = result.unwrap()
+        assert len(schema_model.object_classes) == 1
+        assert "person" in schema_model.object_classes
 
         # Verify model conversion
-        schema_model = FlextLdifModels.create_schema_builder_result(schema_dict)
         assert schema_model.total_object_classes == 1
 
     def test_build_standard_person_schema(self) -> None:
@@ -87,22 +83,21 @@ class TestFlextLdifSchemaBuilder:
         result = builder.build_standard_person_schema()
 
         assert result.is_success
-        schema_dict = result.unwrap()
+        schema_model = result.unwrap()
 
         # Verify attributes
-        assert "cn" in schema_dict["attributes"]
-        assert "sn" in schema_dict["attributes"]
-        assert "mail" in schema_dict["attributes"]
+        assert "cn" in schema_model.attributes
+        assert "sn" in schema_model.attributes
+        assert "mail" in schema_model.attributes
 
         # Verify object classes
-        assert "person" in schema_dict["object_classes"]
-        assert "inetOrgPerson" in schema_dict["object_classes"]
+        assert "person" in schema_model.object_classes
+        assert "inetOrgPerson" in schema_model.object_classes
 
         # Verify server type
-        assert schema_dict["server_type"] == "generic"
+        assert schema_model.server_type == "generic"
 
         # Verify model conversion with computed fields
-        schema_model = FlextLdifModels.create_schema_builder_result(schema_dict)
         assert schema_model.total_attributes > 0
         assert schema_model.total_object_classes > 0
         assert schema_model.is_empty is False
@@ -113,17 +108,16 @@ class TestFlextLdifSchemaBuilder:
         result = builder.build_standard_group_schema()
 
         assert result.is_success
-        schema_dict = result.unwrap()
+        schema_model = result.unwrap()
 
         # Verify attributes
-        assert "cn" in schema_dict["attributes"]
-        assert "member" in schema_dict["attributes"]
+        assert "cn" in schema_model.attributes
+        assert "member" in schema_model.attributes
 
         # Verify object classes
-        assert "groupOfNames" in schema_dict["object_classes"]
+        assert "groupOfNames" in schema_model.object_classes
 
         # Verify model conversion
-        schema_model = FlextLdifModels.create_schema_builder_result(schema_dict)
         assert schema_model.total_attributes > 0
         assert schema_model.total_object_classes > 0
 
@@ -141,10 +135,10 @@ class TestFlextLdifSchemaBuilder:
         )
 
         assert result.is_success
-        schema_dict = result.unwrap()
-        assert schema_dict["server_type"] == "oud"
-        assert len(schema_dict["attributes"]) == 2
-        assert len(schema_dict["object_classes"]) == 1
+        schema_model = result.unwrap()
+        assert schema_model.server_type == "oud"
+        assert len(schema_model.attributes) == 2
+        assert len(schema_model.object_classes) == 1
 
     def test_reset_builder(self) -> None:
         """Test resetting builder to initial state."""
@@ -173,10 +167,9 @@ class TestFlextLdifSchemaBuilder:
         result = builder.build()
 
         assert result.is_success
-        schema_dict = result.unwrap()
+        schema_model = result.unwrap()
 
         # Convert to model - should work seamlessly
-        schema_model = FlextLdifModels.create_schema_builder_result(schema_dict)
 
         # Verify computed fields work
         assert schema_model.total_attributes == 1
@@ -203,9 +196,9 @@ class TestFlextLdifSchemaBuilder:
 
         result = builder.build()
         assert result.is_success
-        schema_dict = result.unwrap()
+        schema_model = result.unwrap()
 
-        cn_attr = schema_dict["attributes"]["cn"]
+        cn_attr = schema_model.attributes["cn"]
         assert cn_attr["name"] == "cn"
         assert cn_attr["description"] == "Common Name"
         assert cn_attr["single_value"] is True
@@ -225,9 +218,9 @@ class TestFlextLdifSchemaBuilder:
 
         result = builder.build()
         assert result.is_success
-        schema_dict = result.unwrap()
+        schema_model = result.unwrap()
 
-        oc = schema_dict["object_classes"]["inetOrgPerson"]
+        oc = schema_model.object_classes["inetOrgPerson"]
         assert oc["name"] == "inetOrgPerson"
         assert oc["superior"] == "person"
         assert oc["structural"] is True

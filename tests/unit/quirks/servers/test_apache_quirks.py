@@ -5,6 +5,7 @@ from __future__ import annotations
 import base64
 
 from flext_ldif.constants import FlextLdifConstants
+from flext_ldif.models import FlextLdifModels
 from flext_ldif.quirks.servers.apache_quirks import FlextLdifQuirksServersApache
 
 
@@ -51,11 +52,8 @@ class TestApacheDirectorySchemaQuirks:
 
         assert result.is_success
         attr_data = result.unwrap()
-        assert (
-            attr_data[FlextLdifConstants.DictKeys.OID]
-            == "1.3.6.1.4.1.18060.0.4.1.2.100"
-        )
-        assert attr_data[FlextLdifConstants.DictKeys.NAME] == "ads-enabled"
+        assert attr_data.oid == "1.3.6.1.4.1.18060.0.4.1.2.100"
+        assert attr_data.name == "ads-enabled"
         assert attr_data[FlextLdifConstants.DictKeys.DESC] == "Enable flag"
         assert (
             attr_data[FlextLdifConstants.DictKeys.SYNTAX]
@@ -114,10 +112,8 @@ class TestApacheDirectorySchemaQuirks:
 
         assert result.is_success
         oc_data = result.unwrap()
-        assert (
-            oc_data[FlextLdifConstants.DictKeys.OID] == "1.3.6.1.4.1.18060.0.4.1.3.100"
-        )
-        assert oc_data[FlextLdifConstants.DictKeys.NAME] == "ads-directoryService"
+        assert oc_data.oid == "1.3.6.1.4.1.18060.0.4.1.3.100"
+        assert oc_data.name == "ads-directoryService"
         assert oc_data[FlextLdifConstants.DictKeys.KIND] == "STRUCTURAL"
         assert oc_data[FlextLdifConstants.DictKeys.SUP] == "top"
         must_attrs = oc_data[FlextLdifConstants.DictKeys.MUST]
@@ -172,10 +168,8 @@ class TestApacheDirectorySchemaQuirks:
 
         assert result.is_success
         rfc_data = result.unwrap()
-        assert (
-            rfc_data[FlextLdifConstants.DictKeys.OID] == "1.3.6.1.4.1.18060.0.4.1.2.100"
-        )
-        assert rfc_data[FlextLdifConstants.DictKeys.NAME] == "ads-enabled"
+        assert rfc_data.oid == "1.3.6.1.4.1.18060.0.4.1.2.100"
+        assert rfc_data.name == "ads-enabled"
 
     def test_convert_objectclass_to_rfc(self) -> None:
         """Test converting Apache DS objectClass to RFC format."""
@@ -190,9 +184,7 @@ class TestApacheDirectorySchemaQuirks:
 
         assert result.is_success
         rfc_data = result.unwrap()
-        assert (
-            rfc_data[FlextLdifConstants.DictKeys.OID] == "1.3.6.1.4.1.18060.0.4.1.3.100"
-        )
+        assert rfc_data.oid == "1.3.6.1.4.1.18060.0.4.1.3.100"
 
     def test_convert_attribute_from_rfc(self) -> None:
         """Test converting RFC attribute to Apache DS format."""
@@ -206,8 +198,7 @@ class TestApacheDirectorySchemaQuirks:
         assert result.is_success
         apache_data = result.unwrap()
         assert (
-            apache_data[FlextLdifConstants.DictKeys.SERVER_TYPE]
-            == FlextLdifConstants.LdapServers.APACHE_DIRECTORY
+            apache_data.server_type == FlextLdifConstants.LdapServers.APACHE_DIRECTORY
         )
 
     def test_convert_objectclass_from_rfc(self) -> None:
@@ -222,8 +213,7 @@ class TestApacheDirectorySchemaQuirks:
         assert result.is_success
         apache_data = result.unwrap()
         assert (
-            apache_data[FlextLdifConstants.DictKeys.SERVER_TYPE]
-            == FlextLdifConstants.LdapServers.APACHE_DIRECTORY
+            apache_data.server_type == FlextLdifConstants.LdapServers.APACHE_DIRECTORY
         )
 
     def test_write_attribute_to_rfc(self) -> None:
@@ -353,47 +343,45 @@ class TestApacheDirectoryAclQuirks:
         """Test converting Apache DS ACL to RFC format."""
         main_quirk = FlextLdifQuirksServersApache()
         acl_quirk = main_quirk.AclQuirk()
-        acl_data: dict[str, object] = {
-            FlextLdifConstants.DictKeys.TYPE: FlextLdifConstants.DictKeys.ACL,
-            FlextLdifConstants.DictKeys.FORMAT: FlextLdifConstants.AclFormats.ACI,
-            FlextLdifConstants.DictKeys.DATA: {
-                "clauses": ["( version 3.0 )", "( deny grantAdd )"],
-                "content": "( version 3.0 ) ( deny grantAdd )",
-            },
-        }
+
+        # Create proper Acl model instead of dict
+        acl_data = FlextLdifModels.Acl(
+            name="test-acl",
+            target=FlextLdifModels.AclTarget(target_dn="dc=example,dc=com", attributes=[]),
+            subject=FlextLdifModels.AclSubject(subject_type="userdn", subject_value="cn=admin"),
+            permissions=FlextLdifModels.AclPermissions(read=True),
+            server_type=FlextLdifConstants.LdapServers.APACHE_DIRECTORY,
+            raw_acl="( version 3.0 ) ( deny grantAdd )",
+        )
         result = acl_quirk.convert_acl_to_rfc(acl_data)
 
         assert result.is_success
         rfc_acl = result.unwrap()
-        assert (
-            rfc_acl[FlextLdifConstants.DictKeys.FORMAT]
-            == FlextLdifConstants.AclFormats.RFC_GENERIC
-        )
-        assert (
-            rfc_acl[FlextLdifConstants.DictKeys.SOURCE_FORMAT]
-            == FlextLdifConstants.AclFormats.ACI
-        )
+        # Verify the returned model is an Acl with expected properties
+        assert rfc_acl.name == "test-acl"
+        assert rfc_acl.server_type == FlextLdifConstants.LdapServers.APACHE_DIRECTORY
 
     def test_convert_acl_from_rfc(self) -> None:
         """Test converting RFC ACL to Apache DS format."""
         main_quirk = FlextLdifQuirksServersApache()
         acl_quirk = main_quirk.AclQuirk()
-        rfc_acl: dict[str, object] = {
-            FlextLdifConstants.DictKeys.TYPE: FlextLdifConstants.DictKeys.ACL,
-            FlextLdifConstants.DictKeys.DATA: {"content": "( version 3.0 )"},
-        }
+
+        # Create proper Acl model instead of dict
+        rfc_acl = FlextLdifModels.Acl(
+            name="rfc-acl",
+            target=FlextLdifModels.AclTarget(target_dn="dc=example,dc=com", attributes=[]),
+            subject=FlextLdifModels.AclSubject(subject_type="userdn", subject_value="cn=admin"),
+            permissions=FlextLdifModels.AclPermissions(read=True),
+            server_type="rfc",
+            raw_acl="( version 3.0 )",
+        )
         result = acl_quirk.convert_acl_from_rfc(rfc_acl)
 
         assert result.is_success
         apache_acl = result.unwrap()
-        assert (
-            apache_acl[FlextLdifConstants.DictKeys.FORMAT]
-            == FlextLdifConstants.AclFormats.ACI
-        )
-        assert (
-            apache_acl[FlextLdifConstants.DictKeys.TARGET_FORMAT]
-            == FlextLdifConstants.DictKeys.ACI
-        )
+        # Verify the returned model is properly converted
+        assert apache_acl.name == "rfc-acl"
+        assert apache_acl.server_type == "apache_directory"
 
     def test_write_acl_to_rfc_with_content(self) -> None:
         """Test writing ACL with content to RFC string format."""
@@ -555,9 +543,9 @@ class TestApacheDirectoryEntryQuirks:
 
         assert result.is_success
         processed_entry = result.unwrap()
-        assert processed_entry[FlextLdifConstants.DictKeys.DN] == entry_dn
+        assert processed_entry.dn == entry_dn
         assert (
-            processed_entry[FlextLdifConstants.DictKeys.SERVER_TYPE]
+            processed_entry.server_type
             == FlextLdifConstants.LdapServers.APACHE_DIRECTORY
         )
         assert processed_entry[FlextLdifConstants.DictKeys.IS_CONFIG_ENTRY] is True
@@ -614,7 +602,5 @@ class TestApacheDirectoryEntryQuirks:
         rfc_entry = result.unwrap()
         assert FlextLdifConstants.DictKeys.SERVER_TYPE not in rfc_entry
         assert FlextLdifConstants.DictKeys.IS_CONFIG_ENTRY not in rfc_entry
-        assert (
-            rfc_entry[FlextLdifConstants.DictKeys.DN] == "ou=config,dc=example,dc=com"
-        )
+        assert rfc_entry.dn == "ou=config,dc=example,dc=com"
         assert FlextLdifConstants.DictKeys.OBJECTCLASS in rfc_entry

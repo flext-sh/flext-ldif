@@ -92,15 +92,15 @@ class TestGenerateStatisticsBasic:
         stats = result.unwrap()
         assert isinstance(stats, dict)
         assert stats["total_entries"] == 3
-        categorized_field = stats.get("categorized")
+        categorized_field = stats.categorized
         assert isinstance(categorized_field, dict)
-        assert categorized_field.get("users") == 3
-        written_counts_val = stats.get("written_counts")
+        assert categorized_field.users == 3
+        written_counts_val = stats.written_counts
         assert isinstance(written_counts_val, dict)
         assert written_counts_val["users"] == 3
         assert stats["rejection_count"] == 0
         assert stats["rejection_rate"] == 0.0
-        output_files_val = stats.get("output_files")
+        output_files_val = stats.output_files
         assert isinstance(output_files_val, dict)
         assert output_files_val["users"] == str(output_dir / "users.ldif")
 
@@ -140,12 +140,12 @@ class TestGenerateStatisticsBasic:
         stats = result.unwrap()
         assert isinstance(stats, dict)
         assert stats["total_entries"] == 6
-        categorized_field = stats.get("categorized")
+        categorized_field = stats.categorized
         assert isinstance(categorized_field, dict)
-        assert categorized_field.get("users") == 2
-        assert categorized_field.get("groups") == 3
-        assert categorized_field.get("roles") == 1
-        written_counts_val = stats.get("written_counts")
+        assert categorized_field.users == 2
+        assert categorized_field.groups == 3
+        assert categorized_field.roles == 1
+        written_counts_val = stats.written_counts
         assert isinstance(written_counts_val, dict)
         assert written_counts_val["users"] == 2
         assert written_counts_val["groups"] == 3
@@ -195,7 +195,7 @@ class TestGenerateStatisticsWithRejections:
         assert stats["total_entries"] == 4
         assert stats["rejection_count"] == 2
         assert stats["rejection_rate"] == 0.5  # 2 out of 4
-        rejection_reasons = stats.get("rejection_reasons")
+        rejection_reasons = stats.rejection_reasons
         assert isinstance(rejection_reasons, list)
         assert len(rejection_reasons) == 2
         assert "Missing required attribute" in rejection_reasons
@@ -241,7 +241,7 @@ class TestGenerateStatisticsWithRejections:
         assert isinstance(stats, dict)
         assert stats["total_entries"] == 6
         assert stats["rejection_count"] == 2
-        rejection_rate = stats.get("rejection_rate")
+        rejection_rate = stats.rejection_rate
         assert isinstance(rejection_rate, (int, float))
         assert abs(rejection_rate - 0.333333) < 0.001  # 2 out of 6
 
@@ -284,7 +284,7 @@ class TestGenerateStatisticsWithRejections:
         assert isinstance(stats, dict)
         assert stats["rejection_count"] == 4
         # Only unique reasons should be in the list
-        rejection_reasons = stats.get("rejection_reasons")
+        rejection_reasons = stats.rejection_reasons
         assert isinstance(rejection_reasons, list)
         assert len(rejection_reasons) == 2
         assert "Duplicate DN" in rejection_reasons
@@ -324,7 +324,7 @@ class TestGenerateStatisticsRejectionReasons:
         stats = result.unwrap()
         assert isinstance(stats, dict)
         assert stats["rejection_count"] == 2
-        rejection_reasons = stats.get("rejection_reasons")
+        rejection_reasons = stats.rejection_reasons
         assert isinstance(rejection_reasons, list)
         assert "Test reason 1" in rejection_reasons
         assert "Test reason 2" in rejection_reasons
@@ -366,7 +366,7 @@ class TestGenerateStatisticsRejectionReasons:
         assert isinstance(stats, dict)
         # Only the valid string reason should be included
         assert stats["rejection_count"] == 3
-        rejection_reasons = stats.get("rejection_reasons")
+        rejection_reasons = stats.rejection_reasons
         assert isinstance(rejection_reasons, list)
         assert len(rejection_reasons) == 1
         assert "Valid reason" in rejection_reasons
@@ -402,7 +402,7 @@ class TestGenerateStatisticsRejectionReasons:
         assert isinstance(stats, dict)
         assert stats["rejection_count"] == 2
         # Both reasons are included (even the empty string)
-        rejection_reasons = stats.get("rejection_reasons")
+        rejection_reasons = stats.rejection_reasons
         assert isinstance(rejection_reasons, list)
         assert len(rejection_reasons) == 2
         assert "Valid reason" in rejection_reasons
@@ -436,7 +436,7 @@ class TestGenerateStatisticsOutputFiles:
         assert result.is_success
         stats = result.unwrap()
         assert isinstance(stats, dict)
-        output_files_val = stats.get("output_files")
+        output_files_val = stats.output_files
         assert isinstance(output_files_val, dict)
         assert output_files_val["users"] == str(output_dir / "users_export.ldif")
         assert output_files_val["groups"] == str(output_dir / "groups_export.ldif")
@@ -462,7 +462,7 @@ class TestGenerateStatisticsOutputFiles:
         stats = result.unwrap()
         assert isinstance(stats, dict)
         # Should use default filename: category.ldif
-        output_files_val = stats.get("output_files")
+        output_files_val = stats.output_files
         assert isinstance(output_files_val, dict)
         assert output_files_val["users"] == str(output_dir / "users.ldif")
 
@@ -487,7 +487,7 @@ class TestGenerateStatisticsOutputFiles:
         stats = result.unwrap()
         assert isinstance(stats, dict)
         # Should fall back to default: users.ldif
-        output_files_val = stats.get("output_files")
+        output_files_val = stats.output_files
         assert isinstance(output_files_val, dict)
         assert output_files_val["users"] == str(output_dir / "users.ldif")
 
@@ -578,11 +578,11 @@ class TestGenerateStatisticsEdgeCases:
         assert isinstance(stats, dict)
         assert stats["total_entries"] == 1000
         assert stats["rejection_count"] == 900
-        rejection_rate = stats.get("rejection_rate")
+        rejection_rate = stats.rejection_rate
         assert isinstance(rejection_rate, (int, float))
         assert abs(rejection_rate - 0.9) < 0.001
         # Should have 5 unique reasons (0-4)
-        rejection_reasons = stats.get("rejection_reasons")
+        rejection_reasons = stats.rejection_reasons
         assert isinstance(rejection_reasons, list)
         assert len(rejection_reasons) == 5
 
@@ -607,7 +607,7 @@ class TestGenerateStatisticsEdgeCases:
         stats = result.unwrap()
         assert isinstance(stats, dict)
         expected_path = str(output_dir / "exported_users.ldif")
-        output_files_val = stats.get("output_files")
+        output_files_val = stats.output_files
         assert isinstance(output_files_val, dict)
         assert output_files_val["users"] == expected_path
 

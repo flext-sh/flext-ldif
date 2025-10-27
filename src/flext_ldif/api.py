@@ -233,7 +233,7 @@ class FlextLdif(FlextService[dict[str, object]]):
                 },
             )
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError) as e:
             # Use FlextExceptions for error handling
             msg = f"Failed to register LDIF components: {e}"
             raise RuntimeError(msg) from e
@@ -383,7 +383,7 @@ class FlextLdif(FlextService[dict[str, object]]):
                     FlextResult[list[FlextLdifModels.Entry]].ok(all_entries),
                 )
 
-            except Exception as e:
+            except (ValueError, TypeError, AttributeError) as e:
                 return FlextResult[
                     list[FlextLdifModels.Entry]
                     | Callable[[], list[FlextLdifModels.Entry] | None]
@@ -422,7 +422,7 @@ class FlextLdif(FlextService[dict[str, object]]):
                     | Callable[[], list[FlextLdifModels.Entry] | None]
                 ].ok(get_next_page)
 
-            except Exception as e:
+            except (ValueError, TypeError, AttributeError) as e:
                 return FlextResult[
                     list[FlextLdifModels.Entry]
                     | Callable[[], list[FlextLdifModels.Entry] | None]
@@ -516,7 +516,7 @@ class FlextLdif(FlextService[dict[str, object]]):
                 return FlextResult[str].ok(str(value_attr))
             return FlextResult[str].ok(str(dn_value))
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError) as e:
             return FlextResult[str].fail(f"Failed to extract DN: {e}")
 
     def get_entry_attributes(
@@ -582,7 +582,7 @@ class FlextLdif(FlextService[dict[str, object]]):
 
             return FlextResult[FlextLdifTypes.CommonDict.AttributeDict].ok(result_dict)
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError) as e:
             return FlextResult[FlextLdifTypes.CommonDict.AttributeDict].fail(
                 f"Failed to extract attributes: {e}"
             )
@@ -637,7 +637,7 @@ class FlextLdif(FlextService[dict[str, object]]):
                 f"Failed to create entry: {create_result.error}"
             )
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError) as e:
             return FlextResult[FlextLdifModels.Entry].fail(
                 f"Failed to create entry: {e}"
             )
@@ -688,7 +688,7 @@ class FlextLdif(FlextService[dict[str, object]]):
 
             return FlextResult[list[str]].fail("Entry missing objectClass attribute")
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError) as e:
             return FlextResult[list[str]].fail(f"Failed to extract objectClasses: {e}")
 
     def get_attribute_values(self, attribute: object) -> FlextResult[list[str]]:
@@ -731,7 +731,7 @@ class FlextLdif(FlextService[dict[str, object]]):
             # Handle single values
             return FlextResult[list[str]].ok([str(attribute)])
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError) as e:
             return FlextResult[list[str]].fail(
                 f"Failed to extract attribute values: {e}"
             )
@@ -816,7 +816,7 @@ class FlextLdif(FlextService[dict[str, object]]):
 
             return FlextResult[dict[str, list[tuple[str, list[str]]]]].ok(modifications)
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError) as e:
             return FlextResult[dict[str, list[tuple[str, list[str]]]]].fail(
                 f"Failed to parse schema LDIF: {e}"
             )
@@ -1026,7 +1026,7 @@ class FlextLdif(FlextService[dict[str, object]]):
                 filtered_entries = [e for e in entries if custom_filter(e)]
                 return FlextResult[list[FlextLdifModels.Entry]].ok(filtered_entries)
 
-            except Exception as e:
+            except (ValueError, TypeError, AttributeError) as e:
                 return FlextResult[list[FlextLdifModels.Entry]].fail(
                     f"Entry filtering with custom filter failed: {e}",
                 )
@@ -1092,7 +1092,7 @@ class FlextLdif(FlextService[dict[str, object]]):
             # Return filtered entries (all criteria have been applied)
             return FlextResult[list[FlextLdifModels.Entry]].ok(entries)
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError) as e:
             return FlextResult[list[FlextLdifModels.Entry]].fail(
                 f"Entry filtering failed: {e}",
             )
@@ -1571,7 +1571,7 @@ class FlextLdif(FlextService[dict[str, object]]):
             # Evaluate composite rule
             return composite.evaluate(cast("dict[str, object]", eval_context))
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError) as e:
             return FlextResult[bool].fail(f"ACL evaluation failed: {e}")
 
     # =========================================================================
@@ -1668,7 +1668,7 @@ class FlextLdif(FlextService[dict[str, object]]):
                             future.result() for future in as_completed(future_to_entry)
                         ]
                     return FlextResult[list[dict[str, object]]].ok(results)
-                except Exception as e:
+                except (ValueError, TypeError, AttributeError) as e:
                     return FlextResult[list[dict[str, object]]].fail(
                         f"Parallel processing failed: {e}"
                     )
@@ -1681,7 +1681,7 @@ class FlextLdif(FlextService[dict[str, object]]):
                     results.extend(batch_results)
                 return FlextResult[list[dict[str, object]]].ok(results)
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError) as e:
             mode = "Parallel" if parallel else "Batch"
             return FlextResult[list[dict[str, object]]].fail(
                 f"{mode} processing failed: {e}"
@@ -1773,7 +1773,7 @@ class FlextLdif(FlextService[dict[str, object]]):
             server_type = server_result.unwrap()
             return self._client.parse_ldif(source, server_type)
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError) as e:
             return FlextResult[list[FlextLdifModels.Entry]].fail(
                 f"Auto-detection parsing failed: {e}"
             )
@@ -1817,7 +1817,7 @@ class FlextLdif(FlextService[dict[str, object]]):
             # File path
             return temp_client.parse_ldif(source)
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError) as e:
             return FlextResult[list[FlextLdifModels.Entry]].fail(
                 f"Relaxed parsing failed: {e}"
             )

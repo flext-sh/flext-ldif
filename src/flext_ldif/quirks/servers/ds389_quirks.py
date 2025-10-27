@@ -15,8 +15,11 @@ from flext_ldif.quirks.base import (
     BaseEntryQuirk,
     BaseSchemaQuirk,
 )
+from flext_ldif.quirks.rfc_parsers import (
+    RfcAttributeParser,
+    RfcObjectClassParser,
+)
 from flext_ldif.typings import FlextLdifTypes
-from flext_ldif.utilities import FlextLdifUtilities
 
 
 class FlextLdifQuirksServersDs389(BaseSchemaQuirk):
@@ -72,75 +75,23 @@ class FlextLdifQuirksServersDs389(BaseSchemaQuirk):
         self, attr_definition: str
     ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
         """Parse 389 DS attribute definition."""
-        try:
-            oid_match = re.search(r"\(\s*([\d.]+)", attr_definition)
-            if not oid_match:
-                return FlextResult[FlextLdifModels.SchemaAttribute].fail(
-                    "389 Directory Server attribute definition is missing an OID"
-                )
-
-            name_tokens = re.findall(
-                r"NAME\s+\(?\s*'([^']+)'", attr_definition, re.IGNORECASE
-            )
-            primary_name = name_tokens[0] if name_tokens else oid_match.group(1)
-
-            desc_match = re.search(r"DESC\s+'([^']+)'", attr_definition, re.IGNORECASE)
-            sup_match = re.search(r"SUP\s+([\w-]+)", attr_definition, re.IGNORECASE)
-            equality_match = re.search(
-                r"EQUALITY\s+([\w-]+)", attr_definition, re.IGNORECASE
-            )
-            ordering_match = re.search(
-                r"ORDERING\s+([\w-]+)", attr_definition, re.IGNORECASE
-            )
-            substr_match = re.search(
-                r"SUBSTR\s+([\w-]+)", attr_definition, re.IGNORECASE
-            )
-            syntax_match = re.search(
-                r"SYNTAX\s+([\d.]+)(?:\{(\d+)\})?", attr_definition, re.IGNORECASE
-            )
-            single_value = bool(
-                re.search(r"\bSINGLE-VALUE\b", attr_definition, re.IGNORECASE)
-            )
-
-            # Extract syntax length if present
-            length_val: int | None = None
-            if syntax_match and syntax_match.group(2):
-                length_val = int(syntax_match.group(2))
-
-            # Build metadata for server-specific data
-            metadata = FlextLdifModels.QuirkMetadata(
-                server_type=FlextLdifUtilities.normalize_server_type_for_literal(
-                    self.server_type
-                ),
-                quirk_type="ds389",
-                custom_data={},
-                extensions={
-                    "aliases": name_tokens or None,
-                },
-            )
-
-            # Build SchemaAttribute model
-            schema_attr = FlextLdifModels.SchemaAttribute(
-                oid=oid_match.group(1),
-                name=primary_name,
-                desc=desc_match.group(1) if desc_match else None,
-                syntax=syntax_match.group(1) if syntax_match else None,
-                length=length_val,
-                equality=equality_match.group(1) if equality_match else None,
-                ordering=ordering_match.group(1) if ordering_match else None,
-                substr=substr_match.group(1) if substr_match else None,
-                single_value=single_value,
-                usage=None,  # 389 DS stub - usage not extracted
-                sup=sup_match.group(1) if sup_match else None,
-                metadata=metadata,
-            )
-
-            return FlextResult[FlextLdifModels.SchemaAttribute].ok(schema_attr)
-
-        except Exception as exc:
+        # Use RFC parser as foundation
+        rfc_result = RfcAttributeParser.parse_common(
+            attr_definition, case_insensitive=True
+        )
+        if not rfc_result.is_success:
             return FlextResult[FlextLdifModels.SchemaAttribute].fail(
-                f"389 Directory Server attribute parsing failed: {exc}"
+                f"389 Directory Server attribute parsing failed: {rfc_result.error}"
             )
+
+        # Enhance with 389DS-specific metadata
+        attribute = rfc_result.unwrap()
+        attribute.metadata = FlextLdifModels.QuirkMetadata.create_for_quirk(
+            quirk_type="389ds",
+            original_format=attr_definition.strip(),
+        )
+
+        return FlextResult[FlextLdifModels.SchemaAttribute].ok(attribute)
 
     def can_handle_objectclass(self, oc_definition: str) -> bool:
         """Detect 389 DS objectClass definitions."""
@@ -158,80 +109,29 @@ class FlextLdifQuirksServersDs389(BaseSchemaQuirk):
         self, oc_definition: str
     ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
         """Parse 389 DS objectClass definition."""
-        try:
-            oid_match = re.search(r"\(\s*([\d.]+)", oc_definition)
-            if not oid_match:
-                return FlextResult[FlextLdifModels.SchemaObjectClass].fail(
-                    "389 Directory Server objectClass definition is missing an OID"
-                )
-
-            name_tokens = re.findall(
-                r"NAME\s+\(?\s*'([^']+)'", oc_definition, re.IGNORECASE
-            )
-            primary_name = name_tokens[0] if name_tokens else oid_match.group(1)
-
-            desc_match = re.search(r"DESC\s+'([^']+)'", oc_definition, re.IGNORECASE)
-            sup_match = re.search(r"SUP\s+([\w-]+)", oc_definition, re.IGNORECASE)
-
-            must_match = re.search(r"MUST\s+\(([^)]+)\)", oc_definition, re.IGNORECASE)
-            may_match = re.search(r"MAY\s+\(([^)]+)\)", oc_definition, re.IGNORECASE)
-            must_attrs = (
-                [attr.strip() for attr in must_match.group(1).split("$")]
-                if must_match
-                else []
-            )
-            may_attrs = (
-                [attr.strip() for attr in may_match.group(1).split("$")]
-                if may_match
-                else []
-            )
-
-            if re.search(r"\bSTRUCTURAL\b", oc_definition, re.IGNORECASE):
-                kind = FlextLdifConstants.Schema.STRUCTURAL
-            elif re.search(r"\bAUXILIARY\b", oc_definition, re.IGNORECASE):
-                kind = FlextLdifConstants.Schema.AUXILIARY
-            elif re.search(r"\bABSTRACT\b", oc_definition, re.IGNORECASE):
-                kind = FlextLdifConstants.Schema.ABSTRACT
-            else:
-                kind = FlextLdifConstants.Schema.STRUCTURAL
-
-            # Build metadata for server-specific data
-            metadata = FlextLdifModels.QuirkMetadata(
-                server_type=FlextLdifUtilities.normalize_server_type_for_literal(
-                    self.server_type
-                ),
-                quirk_type="ds389",
-                custom_data={},
-                extensions={
-                    "aliases": name_tokens or None,
-                },
-            )
-
-            # Build SchemaObjectClass model
-            schema_oc = FlextLdifModels.SchemaObjectClass(
-                oid=oid_match.group(1),
-                name=primary_name,
-                desc=desc_match.group(1) if desc_match else None,
-                sup=sup_match.group(1) if sup_match else None,
-                kind=kind,
-                must=[attr for attr in must_attrs if attr],
-                may=[attr for attr in may_attrs if attr],
-                metadata=metadata,
-            )
-
-            return FlextResult[FlextLdifModels.SchemaObjectClass].ok(schema_oc)
-
-        except Exception as exc:
+        # Use RFC parser as foundation
+        rfc_result = RfcObjectClassParser.parse_common(
+            oc_definition, case_insensitive=True
+        )
+        if not rfc_result.is_success:
             return FlextResult[FlextLdifModels.SchemaObjectClass].fail(
-                f"389 Directory Server objectClass parsing failed: {exc}"
+                f"389 Directory Server objectClass parsing failed: {rfc_result.error}"
             )
+
+        # Enhance with 389DS-specific metadata
+        oc_data = rfc_result.unwrap()
+        oc_data.metadata = FlextLdifModels.QuirkMetadata.create_for_quirk(
+            quirk_type="389ds",
+            original_format=oc_definition.strip(),
+        )
+
+        return FlextResult[FlextLdifModels.SchemaObjectClass].ok(oc_data)
 
     def convert_attribute_to_rfc(
         self, attr_data: FlextLdifModels.SchemaAttribute
     ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
         """Convert 389 DS attribute metadata to an RFC-friendly payload."""
         try:
-            # Create a new SchemaAttribute model with RFC-compliant data (remove server-specific metadata)
             rfc_data = FlextLdifModels.SchemaAttribute(
                 oid=attr_data.oid,
                 name=attr_data.name or attr_data.oid,
@@ -248,7 +148,7 @@ class FlextLdifQuirksServersDs389(BaseSchemaQuirk):
 
             return FlextResult[FlextLdifModels.SchemaAttribute].ok(rfc_data)
 
-        except Exception as exc:
+        except (ValueError, TypeError, AttributeError) as exc:
             return FlextResult[FlextLdifModels.SchemaAttribute].fail(
                 f"389 Directory Server→RFC attribute conversion failed: {exc}"
             )
@@ -271,7 +171,7 @@ class FlextLdifQuirksServersDs389(BaseSchemaQuirk):
 
             return FlextResult[FlextLdifModels.SchemaObjectClass].ok(rfc_data)
 
-        except Exception as exc:
+        except (ValueError, TypeError, AttributeError) as exc:
             return FlextResult[FlextLdifModels.SchemaObjectClass].fail(
                 f"389 Directory Server→RFC objectClass conversion failed: {exc}"
             )
@@ -281,21 +181,16 @@ class FlextLdifQuirksServersDs389(BaseSchemaQuirk):
     ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
         """Convert RFC-compliant attribute to 389 DS-specific format."""
         try:
-            # Update metadata to reflect DS389 server type
-            metadata = FlextLdifModels.QuirkMetadata(
-                server_type=FlextLdifUtilities.normalize_server_type_for_literal(
-                    self.server_type
-                ),
-                quirk_type="ds389",
-                custom_data={},
-                extensions={},
+            # Update metadata to reflect 389DS server type
+            metadata = FlextLdifModels.QuirkMetadata.create_for_quirk(
+                quirk_type="389ds"
             )
 
-            # Create new model with DS389 metadata
-            ds389_data = rfc_data.model_copy(update={"metadata": metadata})
+            # Create new model with 389DS metadata
+            ds389_data = rfc_data.model_copy(update={"metadata": metadata}, deep=True)
 
             return FlextResult[FlextLdifModels.SchemaAttribute].ok(ds389_data)
-        except Exception as exc:
+        except (ValueError, TypeError, AttributeError) as exc:
             return FlextResult[FlextLdifModels.SchemaAttribute].fail(
                 f"RFC→389 Directory Server attribute conversion failed: {exc}"
             )
@@ -305,21 +200,16 @@ class FlextLdifQuirksServersDs389(BaseSchemaQuirk):
     ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
         """Convert RFC-compliant objectClass to 389 DS-specific format."""
         try:
-            # Update metadata to reflect DS389 server type
-            metadata = FlextLdifModels.QuirkMetadata(
-                server_type=FlextLdifUtilities.normalize_server_type_for_literal(
-                    self.server_type
-                ),
-                quirk_type="ds389",
-                custom_data={},
-                extensions={},
+            # Update metadata to reflect 389DS server type
+            metadata = FlextLdifModels.QuirkMetadata.create_for_quirk(
+                quirk_type="389ds"
             )
 
-            # Create new model with DS389 metadata
-            ds389_data = rfc_data.model_copy(update={"metadata": metadata})
+            # Create new model with 389DS metadata
+            ds389_data = rfc_data.model_copy(update={"metadata": metadata}, deep=True)
 
             return FlextResult[FlextLdifModels.SchemaObjectClass].ok(ds389_data)
-        except Exception as exc:
+        except (ValueError, TypeError, AttributeError) as exc:
             return FlextResult[FlextLdifModels.SchemaObjectClass].fail(
                 f"RFC→389 Directory Server objectClass conversion failed: {exc}"
             )
@@ -351,7 +241,7 @@ class FlextLdifQuirksServersDs389(BaseSchemaQuirk):
             attr_str += " )"
 
             return FlextResult[str].ok(attr_str)
-        except Exception as exc:
+        except (ValueError, TypeError, AttributeError) as exc:
             return FlextResult[str].fail(
                 f"389 Directory Server attribute write failed: {exc}"
             )
@@ -387,7 +277,7 @@ class FlextLdifQuirksServersDs389(BaseSchemaQuirk):
             oc_str += " )"
 
             return FlextResult[str].ok(oc_str)
-        except Exception as exc:
+        except (ValueError, TypeError, AttributeError) as exc:
             return FlextResult[str].fail(
                 f"389 Directory Server objectClass write failed: {exc}"
             )
@@ -482,7 +372,7 @@ class FlextLdifQuirksServersDs389(BaseSchemaQuirk):
 
                 return FlextResult[FlextLdifModels.Acl].ok(acl)
 
-            except Exception as exc:
+            except (ValueError, TypeError, AttributeError) as exc:
                 return FlextResult[FlextLdifModels.Acl].fail(
                     f"389 Directory Server ACL parsing failed: {exc}"
                 )
@@ -497,7 +387,7 @@ class FlextLdifQuirksServersDs389(BaseSchemaQuirk):
                 rfc_acl = acl_data.model_copy(update={"server_type": "rfc"})
                 return FlextResult[FlextLdifModels.Acl].ok(rfc_acl)
 
-            except Exception as exc:
+            except (ValueError, TypeError, AttributeError) as exc:
                 return FlextResult[FlextLdifModels.Acl].fail(
                     f"389 Directory Server ACL→RFC conversion failed: {exc}"
                 )
@@ -512,7 +402,7 @@ class FlextLdifQuirksServersDs389(BaseSchemaQuirk):
                 ds_acl = acl_data.model_copy(update={"server_type": "389ds"})
                 return FlextResult[FlextLdifModels.Acl].ok(ds_acl)
 
-            except Exception as exc:
+            except (ValueError, TypeError, AttributeError) as exc:
                 return FlextResult[FlextLdifModels.Acl].fail(
                     f"RFC→389 Directory Server ACL conversion failed: {exc}"
                 )
@@ -572,7 +462,7 @@ class FlextLdifQuirksServersDs389(BaseSchemaQuirk):
                 acl_str = f"aci: {acl_content}" if acl_content else "aci:"
 
                 return FlextResult[str].ok(acl_str)
-            except Exception as exc:
+            except (ValueError, TypeError, AttributeError) as exc:
                 return FlextResult[str].fail(
                     f"389 Directory Server ACL write failed: {exc}"
                 )
@@ -685,7 +575,7 @@ class FlextLdifQuirksServersDs389(BaseSchemaQuirk):
                     processed_entry
                 )
 
-            except Exception as exc:
+            except (ValueError, TypeError, AttributeError) as exc:
                 return FlextResult[FlextLdifTypes.Models.EntryAttributesDict].fail(
                     f"389 Directory Server entry processing failed: {exc}"
                 )
@@ -703,7 +593,7 @@ class FlextLdifQuirksServersDs389(BaseSchemaQuirk):
                     normalized_entry
                 )
 
-            except Exception as exc:
+            except (ValueError, TypeError, AttributeError) as exc:
                 return FlextResult[FlextLdifTypes.Models.EntryAttributesDict].fail(
                     f"389 Directory Server entry→RFC conversion failed: {exc}"
                 )

@@ -364,8 +364,8 @@ class TestValidationServiceExecute:
         status: FlextLdifTypes.Models.CustomDataDict = result.unwrap()
         assert status["service"] == "ValidationService"
         assert status["status"] == "operational"
-        rfc_compliance = status.get("rfc_compliance")
-        validation_types = status.get("validation_types")
+        rfc_compliance = status.rfc_compliance
+        validation_types = status.validation_types
         assert isinstance(rfc_compliance, str) and "RFC 2849" in rfc_compliance
         assert isinstance(validation_types, (list, dict)) and len(validation_types) > 0
 

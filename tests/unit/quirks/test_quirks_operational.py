@@ -38,7 +38,7 @@ class TestOidQuirksWithRealFixtures:
         """Extract OID attributes from schema fixture."""
         try:
             schema = oid_fixtures.schema()
-        except (AttributeError, Exception):
+        except AttributeError:
             pytest.skip("OID schema fixture not available")
         return extract_attributes(schema)
 
@@ -49,7 +49,7 @@ class TestOidQuirksWithRealFixtures:
         """Extract OID objectClasses from schema fixture."""
         try:
             schema = oid_fixtures.schema()
-        except (AttributeError, Exception):
+        except AttributeError:
             pytest.skip("OID schema fixture not available")
         return extract_objectclasses(schema)
 
@@ -150,7 +150,7 @@ class TestConversionMatrixWithRealFixtures:
         """Extract OID attributes for conversion testing."""
         try:
             schema = oid_fixtures.schema()
-        except (AttributeError, Exception):
+        except AttributeError:
             pytest.skip("OID schema fixture not available")
         return extract_attributes(schema)
 

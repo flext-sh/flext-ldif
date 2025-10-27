@@ -638,7 +638,7 @@ class TestFlextLdifModelsAcl:
                 server_type="oracle_oud",
             )
             result = FlextResult[FlextLdifModels.Acl].ok(oud_acl)
-        except Exception as e:  # pragma: no cover
+        except (ValueError, TypeError, AttributeError) as e:  # pragma: no cover
             result = FlextResult[FlextLdifModels.Acl].fail(str(e))
 
         assert result.is_success

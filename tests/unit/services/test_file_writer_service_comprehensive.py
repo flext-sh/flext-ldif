@@ -352,7 +352,7 @@ class TestFileWriterServiceSortEntries:
         )
 
         # Should be sorted by depth (fewer components first)
-        dns = [e[FlextLdifConstants.DictKeys.DN] for e in sorted_entries]
+        dns = [e.dn for e in sorted_entries]
         assert dns[0] == "dc=example,dc=com"  # 1 component
         assert dns[1] == "ou=people,dc=example,dc=com"  # 2 components
         # Rest are 3+ components

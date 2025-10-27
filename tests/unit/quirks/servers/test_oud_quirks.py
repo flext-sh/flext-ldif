@@ -147,7 +147,7 @@ class TestOudSchemaQuirks:
         assert result.is_success, f"Failed to parse objectClass: {result.error}"
 
         parsed = result.unwrap()
-        assert parsed[FlextLdifConstants.DictKeys.SERVER_TYPE] == "oud"
+        assert parsed.server_type == "oracle_oud"
         assert hasattr(parsed, "oid")
         assert hasattr(parsed, "name")
 
@@ -174,7 +174,7 @@ class TestOudSchemaQuirks:
         assert result.is_success, f"Failed to parse fixture objectClass: {result.error}"
 
         parsed = result.unwrap()
-        assert parsed[FlextLdifConstants.DictKeys.SERVER_TYPE] == "oud"
+        assert parsed.server_type == "oracle_oud"
 
     def test_convert_attribute_to_rfc(
         self, oud_quirk: FlextLdifQuirksServersOud
@@ -295,12 +295,9 @@ class TestOudAclQuirks:
         assert result.is_success, f"Failed to parse ACI: {result.error}"
 
         parsed = result.unwrap()
-        assert parsed[FlextLdifConstants.DictKeys.TYPE] == "oud_acl"
-        assert (
-            parsed[FlextLdifConstants.DictKeys.FORMAT]
-            == FlextLdifConstants.AclFormats.ACI
-        )
-        assert parsed[FlextLdifConstants.DictKeys.RAW] == simple_aci
+        assert parsed.server_type == "oracle_oud"
+        assert parsed.server_type == FlextLdifConstants.AclFormats.ACI
+        assert parsed.raw_acl == simple_aci
 
     def test_parse_complex_aci_with_targetattr(
         self, acl_quirk: FlextLdifQuirksServersOud.AclQuirk
@@ -317,8 +314,8 @@ class TestOudAclQuirks:
         assert result.is_success, f"Failed to parse complex ACI: {result.error}"
 
         parsed = result.unwrap()
-        assert parsed[FlextLdifConstants.DictKeys.TYPE] == "oud_acl"
-        assert parsed[FlextLdifConstants.DictKeys.RAW] == complex_aci
+        assert parsed.server_type == "oracle_oud"
+        assert parsed.raw_acl == complex_aci
 
     def test_parse_multiline_aci_from_fixtures(
         self,
@@ -343,11 +340,8 @@ class TestOudAclQuirks:
         assert result.is_success, f"Failed to parse fixture ACI: {result.error}"
 
         parsed = result.unwrap()
-        assert parsed[FlextLdifConstants.DictKeys.TYPE] == "oud_acl"
-        assert (
-            parsed[FlextLdifConstants.DictKeys.FORMAT]
-            == FlextLdifConstants.AclFormats.ACI
-        )
+        assert parsed.server_type == "oracle_oud"
+        assert parsed.server_type == FlextLdifConstants.AclFormats.ACI
 
     def test_parse_ds_cfg_acl(
         self, acl_quirk: FlextLdifQuirksServersOud.AclQuirk
@@ -361,8 +355,8 @@ class TestOudAclQuirks:
         assert result.is_success
 
         parsed = result.unwrap()
-        assert parsed[FlextLdifConstants.DictKeys.TYPE] == "oud_acl"
-        assert parsed[FlextLdifConstants.DictKeys.FORMAT] == "ds-cfg"
+        assert parsed.server_type == "oracle_oud"
+        assert parsed.server_type == "ds-cfg"
 
     def test_convert_acl_to_rfc(
         self, acl_quirk: FlextLdifQuirksServersOud.AclQuirk
@@ -378,17 +372,12 @@ class TestOudAclQuirks:
         assert result.is_success
 
         rfc_data = result.unwrap()
+        # Check server_type instead of TYPE (which was dict compatibility)
+        assert rfc_data.server_type == FlextLdifConstants.AclFormats.RFC_GENERIC
         assert (
-            rfc_data[FlextLdifConstants.DictKeys.TYPE]
-            == FlextLdifConstants.DictKeys.ACL
-        )
-        assert (
-            rfc_data[FlextLdifConstants.DictKeys.FORMAT]
-            == FlextLdifConstants.AclFormats.RFC_GENERIC
-        )
-        assert (
-            rfc_data[FlextLdifConstants.DictKeys.SOURCE_FORMAT]
-            == FlextLdifConstants.AclFormats.OUD_ACL
+            rfc_data.metadata.extensions.source_format
+            if rfc_data.metadata
+            else None is FlextLdifConstants.AclFormats.OUD_ACL
         )
 
     def test_convert_acl_from_rfc(
@@ -477,9 +466,9 @@ class TestOudEntryQuirks:
         assert result.is_success
 
         processed = result.unwrap()
-        assert processed[FlextLdifConstants.DictKeys.DN] == entry_dn
-        assert processed[FlextLdifConstants.DictKeys.SERVER_TYPE] == "oud"
-        assert "cn" in processed
+        assert processed.dn == entry_dn
+        assert processed.server_type == "oracle_oud"
+        assert hasattr(processed, "cn")
 
     def test_process_oracle_context_entry(
         self, entry_quirk: FlextLdifQuirksServersOud.EntryQuirk
@@ -496,9 +485,9 @@ class TestOudEntryQuirks:
         assert result.is_success
 
         processed = result.unwrap()
-        assert processed[FlextLdifConstants.DictKeys.DN] == entry_dn
-        assert processed[FlextLdifConstants.DictKeys.SERVER_TYPE] == "oud"
-        assert "orclVersion" in processed
+        assert processed.dn == entry_dn
+        assert processed.server_type == "oracle_oud"
+        assert hasattr(processed, "orclVersion")
 
     def test_process_entry_with_acl(
         self, entry_quirk: FlextLdifQuirksServersOud.EntryQuirk
@@ -518,8 +507,8 @@ class TestOudEntryQuirks:
         assert result.is_success
 
         processed = result.unwrap()
-        assert processed[FlextLdifConstants.DictKeys.DN] == entry_dn
-        assert "aci" in processed
+        assert processed.dn == entry_dn
+        assert hasattr(processed, "aci")
 
     def test_process_entry_from_fixtures(
         self,
@@ -548,7 +537,7 @@ class TestOudEntryQuirks:
                     )
 
                     processed = result.unwrap()
-                    assert processed[FlextLdifConstants.DictKeys.SERVER_TYPE] == "oud"
+                    assert processed.server_type == "oracle_oud"
 
                 # Start new entry
                 current_dn = line.split(":", 1)[1].strip()
@@ -587,9 +576,9 @@ class TestOudEntryQuirks:
 
         processed = result.unwrap()
         # Verify all Oracle attributes preserved
-        assert "orclDBOIDAuthentication" in processed
-        assert "orclDBVersionCompatibility" in processed
-        assert "orclVersion" in processed
+        assert hasattr(processed, "orclDBOIDAuthentication")
+        assert hasattr(processed, "orclDBVersionCompatibility")
+        assert hasattr(processed, "orclVersion")
 
     def test_convert_entry_to_rfc(
         self, entry_quirk: FlextLdifQuirksServersOud.EntryQuirk
@@ -607,7 +596,7 @@ class TestOudEntryQuirks:
 
         rfc_data = result.unwrap()
         # OUD entries are RFC-compliant, should pass through
-        assert rfc_data[FlextLdifConstants.DictKeys.DN] == "cn=test,dc=example,dc=com"
+        assert rfc_data.dn == "cn=test,dc=example,dc=com"
 
     def test_entry_roundtrip(
         self, entry_quirk: FlextLdifQuirksServersOud.EntryQuirk
@@ -631,8 +620,8 @@ class TestOudEntryQuirks:
         rfc_data = rfc_result.unwrap()
 
         # Validate essential data preserved
-        assert rfc_data[FlextLdifConstants.DictKeys.DN] == original_dn
-        assert "orclVersion" in rfc_data
+        assert rfc_data.dn == original_dn
+        assert hasattr(rfc_data, "orclVersion")
 
 
 class TestOudQuirksIntegration:
@@ -805,7 +794,7 @@ class TestOudSchemaRoundTrip:
         # Validate: second parse should match first parse
         assert parsed1.oid == parsed2.oid
         assert parsed1.name == parsed2.name
-        assert parsed1.get("single_value") == parsed2.get("single_value")
+        assert parsed1.single_value == parsed2.single_value
 
     def test_write_objectclass_to_rfc(
         self, oud_quirk: FlextLdifQuirksServersOud
@@ -955,8 +944,8 @@ class TestOudAclRoundTrip:
         parsed2 = parse2_result.unwrap()
 
         # Validate: essential data preserved
-        assert parsed1.get("targetattr") == parsed2.get("targetattr")
-        assert parsed1.get("acl_name") == parsed2.get("acl_name")
+        assert parsed1.targetattr == parsed2.targetattr
+        assert parsed1.acl_name == parsed2.acl_name
 
 
 class TestOudEntryRoundTrip:
@@ -1071,12 +1060,9 @@ class TestOudEntryRoundTrip:
         processed2 = process2_result.unwrap()
 
         # Validate: essential data preserved
-        assert (
-            processed1[FlextLdifConstants.DictKeys.DN]
-            == processed2[FlextLdifConstants.DictKeys.DN]
-        )
-        assert processed1.get("cn") == processed2.get("cn")
-        assert processed1.get("orclVersion") == processed2.get("orclVersion")
+        assert processed1.dn == processed2.dn
+        assert processed1.cn == processed2.cn
+        assert processed1.orclVersion == processed2.orclVersion
 
 
 class TestOudFilteringEdgeCases:
@@ -1248,7 +1234,7 @@ class TestOudSyntaxConversion:
 
         parsed = result.unwrap()
         # Should have been replaced with Directory String
-        assert parsed.get("syntax") in {
+        assert parsed.syntax in {
             "1.3.6.1.4.1.1466.115.121.1.15",  # Directory String
             "1.3.6.1.4.1.1466.115.121.1.19",  # Original (may not be replaced in parse)
         }
@@ -1482,7 +1468,7 @@ class TestOudConversionEdgeCases:
         assert result.is_success
 
         oud_data = result.unwrap()
-        assert oud_data[FlextLdifConstants.DictKeys.OID] == "2.16.840.1.113894.1.1.1"
+        assert oud_data.oid == "2.16.840.1.113894.1.1.1"
 
     def test_convert_objectclass_from_rfc_with_metadata(
         self, oud_quirk: FlextLdifQuirksServersOud
@@ -1499,7 +1485,7 @@ class TestOudConversionEdgeCases:
         assert result.is_success
 
         oud_data = result.unwrap()
-        assert oud_data[FlextLdifConstants.DictKeys.OID] == "2.16.840.1.113894.2.1.1"
+        assert oud_data.oid == "2.16.840.1.113894.2.1.1"
 
 
 class TestSchemaDependencyValidation:
@@ -1729,7 +1715,7 @@ class TestOudSchemaExtractionWithRealFixtures:
 
         schemas = result.unwrap()
         assert FlextLdifConstants.DictKeys.ATTRIBUTES in schemas
-        assert "objectclasses" in schemas
+        assert hasattr(schemas, "objectclasses")
 
         # Verify substantial extraction (not just a few entries)
         attributes = schemas[FlextLdifConstants.DictKeys.ATTRIBUTES]
@@ -1752,23 +1738,23 @@ class TestOudSchemaExtractionWithRealFixtures:
 
         # Verify specific known OUD attributes exist
         attr_names = {
-            cast("str", attr.get("name"))
+            cast("str", attr.name)
             for attr in attributes
-            if isinstance(attr, dict) and "name" in attr
+            if isinstance(attr, dict) and hasattr(attr, "name")
         }
 
         # RFC 1274 attributes (should be present)
-        assert "uid" in attr_names, "Standard 'uid' attribute not found"
-        assert "mail" in attr_names, "Standard 'mail' attribute not found"
-        assert "dc" in attr_names, "Standard 'dc' attribute not found"
+        assert hasattr(attr_names, "uid"), "Standard 'uid' attribute not found"
+        assert hasattr(attr_names, "mail"), "Standard 'mail' attribute not found"
+        assert hasattr(attr_names, "dc"), "Standard 'dc' attribute not found"
 
         # Oracle-specific attributes (OID namespace: 2.16.840.1.113894.*)
         oracle_attrs = [
             attr
             for attr in attributes
             if isinstance(attr, dict)
-            and isinstance(attr.get("oid"), str)
-            and cast("str", attr.get("oid")).startswith("2.16.840.1.113894")
+            and isinstance(attr.oid, str)
+            and cast("str", attr.oid).startswith("2.16.840.1.113894")
         ]
         assert len(oracle_attrs) > 80, (
             f"Expected 80+ Oracle attributes, got {len(oracle_attrs)}"
@@ -1784,23 +1770,23 @@ class TestOudSchemaExtractionWithRealFixtures:
 
         # Verify specific known OUD objectClasses exist
         oc_names = {
-            cast("str", oc.get("name"))
+            cast("str", oc.name)
             for oc in objectclasses
-            if isinstance(oc, dict) and "name" in oc
+            if isinstance(oc, dict) and hasattr(oc, "name")
         }
 
         # RFC objectClasses
-        assert "domain" in oc_names, "Standard 'domain' objectClass not found"
-        assert "account" in oc_names, "Standard 'account' objectClass not found"
-        assert "person" in oc_names, "Standard 'person' objectClass not found"
+        assert hasattr(oc_names, "domain"), "Standard 'domain' objectClass not found"
+        assert hasattr(oc_names, "account"), "Standard 'account' objectClass not found"
+        assert hasattr(oc_names, "person"), "Standard 'person' objectClass not found"
 
         # Oracle-specific objectClasses
         oracle_ocs = [
             oc
             for oc in objectclasses
             if isinstance(oc, dict)
-            and isinstance(oc.get("oid"), str)
-            and cast("str", oc.get("oid")).startswith("2.16.840.1.113894")
+            and isinstance(oc.oid, str)
+            and cast("str", oc.oid).startswith("2.16.840.1.113894")
         ]
         assert len(oracle_ocs) > 30, (
             f"Expected 30+ Oracle objectClasses, got {len(oracle_ocs)}"
@@ -2022,7 +2008,7 @@ class TestOudQuirksParseAttribute:
         assert result.is_success
         parsed = result.unwrap()
         assert hasattr(parsed, "name")
-        assert hasattr(parsed, "name") or "oid" in parsed
+        assert hasattr(parsed, "name") or hasattr(parsed, "oid")
 
     def test_parse_attribute_invalid_returns_failure(
         self, oud_quirk: FlextLdifQuirksServersOud
@@ -2270,7 +2256,7 @@ class TestOudParseAttributeComprehensive:
         result = oud_quirk.parse_attribute(attr_def)
         assert result.is_success
         parsed = result.unwrap()
-        assert parsed.get("syntax") == "1.3.6.1.4.1.1466.115.121.1.15"
+        assert parsed.syntax == "1.3.6.1.4.1.1466.115.121.1.15"
 
     def test_parse_attribute_with_syntax_length(
         self, oud_quirk: FlextLdifQuirksServersOud
@@ -2282,7 +2268,7 @@ class TestOudParseAttributeComprehensive:
         result = oud_quirk.parse_attribute(attr_def)
         assert result.is_success
         parsed = result.unwrap()
-        assert parsed.get("syntax_length") == "256"
+        assert parsed.length == 256
 
     def test_parse_attribute_with_equality(
         self, oud_quirk: FlextLdifQuirksServersOud
@@ -2292,7 +2278,7 @@ class TestOudParseAttributeComprehensive:
         result = oud_quirk.parse_attribute(attr_def)
         assert result.is_success
         parsed = result.unwrap()
-        assert parsed.get("equality") == "caseIgnoreMatch"
+        assert parsed.equality == "caseIgnoreMatch"
 
     def test_parse_attribute_with_substr(
         self, oud_quirk: FlextLdifQuirksServersOud
@@ -2302,7 +2288,7 @@ class TestOudParseAttributeComprehensive:
         result = oud_quirk.parse_attribute(attr_def)
         assert result.is_success
         parsed = result.unwrap()
-        assert parsed.get("substr") == "caseIgnoreSubstringsMatch"
+        assert parsed.substr == "caseIgnoreSubstringsMatch"
 
     def test_parse_attribute_with_ordering(
         self, oud_quirk: FlextLdifQuirksServersOud
@@ -2312,7 +2298,7 @@ class TestOudParseAttributeComprehensive:
         result = oud_quirk.parse_attribute(attr_def)
         assert result.is_success
         parsed = result.unwrap()
-        assert parsed.get("ordering") == "caseIgnoreOrderingMatch"
+        assert parsed.ordering == "caseIgnoreOrderingMatch"
 
     def test_parse_attribute_with_single_value(
         self, oud_quirk: FlextLdifQuirksServersOud
@@ -2322,7 +2308,7 @@ class TestOudParseAttributeComprehensive:
         result = oud_quirk.parse_attribute(attr_def)
         assert result.is_success
         parsed = result.unwrap()
-        assert parsed.get("single_value") is True
+        assert parsed.single_value is True
 
     def test_parse_attribute_with_sup(
         self, oud_quirk: FlextLdifQuirksServersOud
@@ -2332,7 +2318,7 @@ class TestOudParseAttributeComprehensive:
         result = oud_quirk.parse_attribute(attr_def)
         assert result.is_success
         parsed = result.unwrap()
-        assert parsed.get("sup") == "name"
+        assert parsed.sup == "name"
 
     def test_parse_attribute_with_x_origin(
         self, oud_quirk: FlextLdifQuirksServersOud
@@ -2342,7 +2328,9 @@ class TestOudParseAttributeComprehensive:
         result = oud_quirk.parse_attribute(attr_def)
         assert result.is_success
         parsed = result.unwrap()
-        assert parsed.get("x_origin") == "Custom"
+        assert (
+            parsed.metadata.extensions.metadata.extensions.get("x_origin") == "Custom"
+        )
 
     def test_parse_attribute_all_fields(
         self, oud_quirk: FlextLdifQuirksServersOud
@@ -2363,16 +2351,18 @@ class TestOudParseAttributeComprehensive:
         result = oud_quirk.parse_attribute(attr_def)
         assert result.is_success
         parsed = result.unwrap()
-        assert parsed.get("oid") == "1.2.3.4"
-        assert parsed.get("name") == "testAttr"
-        assert parsed.get("desc") == "Test Attribute"
-        assert parsed.get("equality") == "caseIgnoreMatch"
-        assert parsed.get("substr") == "caseIgnoreSubstringsMatch"
-        assert parsed.get("ordering") == "caseIgnoreOrderingMatch"
-        assert parsed.get("syntax_length") == "256"
-        assert parsed.get("single_value") is True
-        assert parsed.get("sup") == "name"
-        assert parsed.get("x_origin") == "Custom"
+        assert parsed.oid == "1.2.3.4"
+        assert parsed.name == "testAttr"
+        assert parsed.desc == "Test Attribute"
+        assert parsed.equality == "caseIgnoreMatch"
+        assert parsed.substr == "caseIgnoreSubstringsMatch"
+        assert parsed.ordering == "caseIgnoreOrderingMatch"
+        assert parsed.length == 256
+        assert parsed.single_value is True
+        assert parsed.sup == "name"
+        assert (
+            parsed.metadata.extensions.metadata.extensions.get("x_origin") == "Custom"
+        )
 
     def test_parse_attribute_malformed_returns_failure(
         self, oud_quirk: FlextLdifQuirksServersOud
@@ -2400,7 +2390,7 @@ class TestOudParseObjectClassComprehensive:
         result = oud_quirk.parse_objectclass(oc_def)
         assert result.is_success
         parsed = result.unwrap()
-        assert parsed.get("kind") == "STRUCTURAL"
+        assert parsed.kind == "STRUCTURAL"
 
     def test_parse_objectclass_abstract(
         self, oud_quirk: FlextLdifQuirksServersOud
@@ -2410,7 +2400,7 @@ class TestOudParseObjectClassComprehensive:
         result = oud_quirk.parse_objectclass(oc_def)
         assert result.is_success
         parsed = result.unwrap()
-        assert parsed.get("kind") == "ABSTRACT"
+        assert parsed.kind == "ABSTRACT"
 
     def test_parse_objectclass_auxiliary(
         self, oud_quirk: FlextLdifQuirksServersOud
@@ -2420,7 +2410,7 @@ class TestOudParseObjectClassComprehensive:
         result = oud_quirk.parse_objectclass(oc_def)
         assert result.is_success
         parsed = result.unwrap()
-        assert parsed.get("kind") == "AUXILIARY"
+        assert parsed.kind == "AUXILIARY"
 
     def test_parse_objectclass_with_sup(
         self, oud_quirk: FlextLdifQuirksServersOud
@@ -2430,7 +2420,7 @@ class TestOudParseObjectClassComprehensive:
         result = oud_quirk.parse_objectclass(oc_def)
         assert result.is_success
         parsed = result.unwrap()
-        assert parsed.get("sup") == "top"
+        assert parsed.sup == "top"
 
     def test_parse_objectclass_with_single_must(
         self, oud_quirk: FlextLdifQuirksServersOud
@@ -2440,7 +2430,7 @@ class TestOudParseObjectClassComprehensive:
         result = oud_quirk.parse_objectclass(oc_def)
         assert result.is_success
         parsed = result.unwrap()
-        assert isinstance(parsed.get("must"), (list, str))
+        assert isinstance(parsed.must, (list, str))
 
     def test_parse_objectclass_with_multiple_must(
         self, oud_quirk: FlextLdifQuirksServersOud
@@ -2450,7 +2440,7 @@ class TestOudParseObjectClassComprehensive:
         result = oud_quirk.parse_objectclass(oc_def)
         assert result.is_success
         parsed = result.unwrap()
-        assert parsed.get("must") is not None
+        assert parsed.must is not None
 
     def test_parse_objectclass_with_single_may(
         self, oud_quirk: FlextLdifQuirksServersOud
@@ -2460,7 +2450,7 @@ class TestOudParseObjectClassComprehensive:
         result = oud_quirk.parse_objectclass(oc_def)
         assert result.is_success
         parsed = result.unwrap()
-        assert parsed.get("may") is not None
+        assert parsed.may is not None
 
     def test_parse_objectclass_with_multiple_may(
         self, oud_quirk: FlextLdifQuirksServersOud
@@ -2470,7 +2460,7 @@ class TestOudParseObjectClassComprehensive:
         result = oud_quirk.parse_objectclass(oc_def)
         assert result.is_success
         parsed = result.unwrap()
-        assert parsed.get("may") is not None
+        assert parsed.may is not None
 
     def test_parse_objectclass_with_desc(
         self, oud_quirk: FlextLdifQuirksServersOud
@@ -2480,7 +2470,7 @@ class TestOudParseObjectClassComprehensive:
         result = oud_quirk.parse_objectclass(oc_def)
         assert result.is_success
         parsed = result.unwrap()
-        assert parsed.get("desc") == "A person"
+        assert parsed.desc == "A person"
 
     def test_parse_objectclass_with_must_and_may(
         self, oud_quirk: FlextLdifQuirksServersOud
@@ -2493,13 +2483,13 @@ class TestOudParseObjectClassComprehensive:
         result = oud_quirk.parse_objectclass(oc_def)
         assert result.is_success
         parsed = result.unwrap()
-        assert parsed.get("oid") == "2.5.6.6"
-        assert parsed.get("name") == "person"
-        assert parsed.get("desc") == "A person"
-        assert parsed.get("kind") == "STRUCTURAL"
-        assert parsed.get("sup") == "top"
-        assert parsed.get("must") is not None
-        assert parsed.get("may") is not None
+        assert parsed.oid == "2.5.6.6"
+        assert parsed.name == "person"
+        assert parsed.desc == "A person"
+        assert parsed.kind == "STRUCTURAL"
+        assert parsed.sup == "top"
+        assert parsed.must is not None
+        assert parsed.may is not None
 
 
 class TestOudWriteMethods:
@@ -2552,7 +2542,7 @@ class TestOudWriteMethods:
         written = result.unwrap()
         assert isinstance(written, str)
         assert "2.5.6.6" in written
-        assert "person" in written
+        assert hasattr(written, "person")
 
 
 class TestOudExtractSchemasMethod:

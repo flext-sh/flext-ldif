@@ -66,13 +66,13 @@ class TestOudQuirksWithRealFixtures:
 
         # Check for required methods
         assert hasattr(quirks, "parse_attribute")
-        assert callable(getattr(quirks, "parse_attribute"))
+        assert callable(quirks.parse_attribute)
         assert hasattr(quirks, "parse_objectclass")
-        assert callable(getattr(quirks, "parse_objectclass"))
+        assert callable(quirks.parse_objectclass)
         assert hasattr(quirks, "convert_attribute_to_rfc")
-        assert callable(getattr(quirks, "convert_attribute_to_rfc"))
+        assert callable(quirks.convert_attribute_to_rfc)
         assert hasattr(quirks, "convert_objectclass_to_rfc")
-        assert callable(getattr(quirks, "convert_objectclass_to_rfc"))
+        assert callable(quirks.convert_objectclass_to_rfc)
 
     def test_oud_quirks_has_entry_methods(self) -> None:
         """Test OUD quirks has entry processing methods."""
@@ -80,7 +80,7 @@ class TestOudQuirksWithRealFixtures:
 
         # Check for EntryQuirk class
         if hasattr(quirks, "EntryQuirk"):
-            entry_quirk_class = getattr(quirks, "EntryQuirk")
+            entry_quirk_class = quirks.EntryQuirk
             assert callable(entry_quirk_class)
 
     def test_oud_quirks_model_post_init(self) -> None:
@@ -89,9 +89,7 @@ class TestOudQuirksWithRealFixtures:
 
         # After initialization, should have patterns set up
         assert hasattr(quirks, "ORACLE_OUD_PATTERN")
-        assert isinstance(
-            quirks.ORACLE_OUD_PATTERN, type(getattr(quirks, "ORACLE_OUD_PATTERN"))
-        )
+        assert isinstance(quirks.ORACLE_OUD_PATTERN, type(quirks.ORACLE_OUD_PATTERN))
 
         # Verify server type and priority are set
         assert quirks.server_type == "oud"
@@ -140,49 +138,49 @@ class TestOudQuirksWithRealFixtures:
         quirks = FlextLdifQuirksServersOud()
 
         assert hasattr(quirks, "convert_attribute_to_rfc")
-        assert callable(getattr(quirks, "convert_attribute_to_rfc"))
+        assert callable(quirks.convert_attribute_to_rfc)
 
     def test_oud_quirks_convert_objectclass_to_rfc(self) -> None:
         """Test OUD quirks can convert objectClasses to RFC format."""
         quirks = FlextLdifQuirksServersOud()
 
         assert hasattr(quirks, "convert_objectclass_to_rfc")
-        assert callable(getattr(quirks, "convert_objectclass_to_rfc"))
+        assert callable(quirks.convert_objectclass_to_rfc)
 
     def test_oud_quirks_convert_attribute_from_rfc(self) -> None:
         """Test OUD quirks has attribute conversion from RFC."""
         quirks = FlextLdifQuirksServersOud()
 
         assert hasattr(quirks, "convert_attribute_from_rfc")
-        assert callable(getattr(quirks, "convert_attribute_from_rfc"))
+        assert callable(quirks.convert_attribute_from_rfc)
 
     def test_oud_quirks_convert_objectclass_from_rfc(self) -> None:
         """Test OUD quirks has objectClass conversion from RFC."""
         quirks = FlextLdifQuirksServersOud()
 
         assert hasattr(quirks, "convert_objectclass_from_rfc")
-        assert callable(getattr(quirks, "convert_objectclass_from_rfc"))
+        assert callable(quirks.convert_objectclass_from_rfc)
 
     def test_oud_quirks_write_attribute_to_rfc(self) -> None:
         """Test OUD quirks can write attributes in RFC format."""
         quirks = FlextLdifQuirksServersOud()
 
         assert hasattr(quirks, "write_attribute_to_rfc")
-        assert callable(getattr(quirks, "write_attribute_to_rfc"))
+        assert callable(quirks.write_attribute_to_rfc)
 
     def test_oud_quirks_write_objectclass_to_rfc(self) -> None:
         """Test OUD quirks can write objectClasses in RFC format."""
         quirks = FlextLdifQuirksServersOud()
 
         assert hasattr(quirks, "write_objectclass_to_rfc")
-        assert callable(getattr(quirks, "write_objectclass_to_rfc"))
+        assert callable(quirks.write_objectclass_to_rfc)
 
     def test_oud_quirks_nested_acl_quirk_available(self) -> None:
         """Test OUD quirks has nested ACL Quirk class."""
         quirks = FlextLdifQuirksServersOud()
 
         assert hasattr(quirks, "AclQuirk")
-        acl_quirk_class = getattr(quirks, "AclQuirk")
+        acl_quirk_class = quirks.AclQuirk
         assert callable(acl_quirk_class)
 
     def test_oud_quirks_nested_entry_quirk_available(self) -> None:
@@ -190,7 +188,7 @@ class TestOudQuirksWithRealFixtures:
         quirks = FlextLdifQuirksServersOud()
 
         assert hasattr(quirks, "EntryQuirk")
-        entry_quirk_class = getattr(quirks, "EntryQuirk")
+        entry_quirk_class = quirks.EntryQuirk
         assert callable(entry_quirk_class)
 
     def test_oud_acl_quirk_acl_processing_methods(self) -> None:
@@ -200,9 +198,9 @@ class TestOudQuirksWithRealFixtures:
 
         # Check for ACL processing methods (OUD uses ds-aci format)
         assert hasattr(acl_quirk, "parse_acl")
-        assert callable(getattr(acl_quirk, "parse_acl"))
+        assert callable(acl_quirk.parse_acl)
         assert hasattr(acl_quirk, "convert_acl_to_rfc")
-        assert callable(getattr(acl_quirk, "convert_acl_to_rfc"))
+        assert callable(acl_quirk.convert_acl_to_rfc)
 
     def test_oud_entry_quirk_entry_processing_methods(self) -> None:
         """Test OUD entry quirk processing methods exist."""
@@ -210,9 +208,9 @@ class TestOudQuirksWithRealFixtures:
         entry_quirk = quirks.EntryQuirk()
 
         assert hasattr(entry_quirk, "process_entry")
-        assert callable(getattr(entry_quirk, "process_entry"))
+        assert callable(entry_quirk.process_entry)
         assert hasattr(entry_quirk, "convert_entry_to_rfc")
-        assert callable(getattr(entry_quirk, "convert_entry_to_rfc"))
+        assert callable(entry_quirk.convert_entry_to_rfc)
 
     def test_oud_quirks_dn_case_registry_usage(self) -> None:
         """Test OUD quirks has proper initialization for DN handling."""
@@ -278,7 +276,7 @@ class TestOudQuirksWithRealFixtures:
         quirks = FlextLdifQuirksServersOud()
 
         assert hasattr(quirks, "extract_schemas_from_ldif")
-        assert callable(getattr(quirks, "extract_schemas_from_ldif"))
+        assert callable(quirks.extract_schemas_from_ldif)
 
     def test_oud_quirks_priority_assignment(self) -> None:
         """Test OUD quirks priority is properly assigned."""

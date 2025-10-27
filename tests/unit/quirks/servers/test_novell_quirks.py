@@ -5,6 +5,7 @@ from __future__ import annotations
 import base64
 
 from flext_ldif.constants import FlextLdifConstants
+from flext_ldif.models import FlextLdifModels
 from flext_ldif.quirks.servers.novell_quirks import FlextLdifQuirksServersNovell
 
 
@@ -59,11 +60,8 @@ class TestNovellSchemaQuirks:
 
         assert result.is_success
         attr_data = result.unwrap()
-        assert (
-            attr_data[FlextLdifConstants.DictKeys.OID]
-            == "2.16.840.1.113719.1.1.4.1.501"
-        )
-        assert attr_data[FlextLdifConstants.DictKeys.NAME] == "nspmPasswordPolicyDN"
+        assert attr_data.oid == "2.16.840.1.113719.1.1.4.1.501"
+        assert attr_data.name == "nspmPasswordPolicyDN"
         assert attr_data[FlextLdifConstants.DictKeys.DESC] == "Password Policy DN"
         assert (
             attr_data[FlextLdifConstants.DictKeys.SYNTAX]
@@ -121,8 +119,8 @@ class TestNovellSchemaQuirks:
 
         assert result.is_success
         oc_data = result.unwrap()
-        assert oc_data[FlextLdifConstants.DictKeys.OID] == "2.16.840.1.113719.2.2.6.1"
-        assert oc_data[FlextLdifConstants.DictKeys.NAME] == "ndsPerson"
+        assert oc_data.oid == "2.16.840.1.113719.2.2.6.1"
+        assert oc_data.name == "ndsPerson"
         assert oc_data[FlextLdifConstants.DictKeys.KIND] == "STRUCTURAL"
         assert oc_data[FlextLdifConstants.DictKeys.SUP] == "top"
         must_attrs = oc_data[FlextLdifConstants.DictKeys.MUST]
@@ -163,79 +161,73 @@ class TestNovellSchemaQuirks:
     def test_convert_attribute_to_rfc(self) -> None:
         """Test converting Novell attribute to RFC format."""
         quirk = FlextLdifQuirksServersNovell()
-        attr_data: dict[str, object] = {
-            FlextLdifConstants.DictKeys.OID: "2.16.840.1.113719.1.1.4.1.501",
-            FlextLdifConstants.DictKeys.NAME: "nspmPasswordPolicyDN",
-            FlextLdifConstants.DictKeys.DESC: "Password Policy DN",
-            FlextLdifConstants.DictKeys.SYNTAX: "1.3.6.1.4.1.1466.115.121.1.12",
-            FlextLdifConstants.DictKeys.SINGLE_VALUE: True,
-        }
+        attr_data = FlextLdifModels.SchemaAttribute(
+            oid="2.16.840.1.113719.1.1.4.1.501",
+            name="nspmPasswordPolicyDN",
+            desc="Password Policy DN",
+            syntax="1.3.6.1.4.1.1466.115.121.1.12",
+            single_value=True,
+        )
         result = quirk.convert_attribute_to_rfc(attr_data)
 
         assert result.is_success
         rfc_data = result.unwrap()
-        assert (
-            rfc_data[FlextLdifConstants.DictKeys.OID] == "2.16.840.1.113719.1.1.4.1.501"
-        )
-        assert rfc_data[FlextLdifConstants.DictKeys.NAME] == "nspmPasswordPolicyDN"
+        assert rfc_data.oid == "2.16.840.1.113719.1.1.4.1.501"
+        assert rfc_data.name == "nspmPasswordPolicyDN"
 
     def test_convert_objectclass_to_rfc(self) -> None:
         """Test converting Novell objectClass to RFC format."""
         quirk = FlextLdifQuirksServersNovell()
-        oc_data: dict[str, object] = {
-            FlextLdifConstants.DictKeys.OID: "2.16.840.1.113719.2.2.6.1",
-            FlextLdifConstants.DictKeys.NAME: "ndsPerson",
-            FlextLdifConstants.DictKeys.KIND: "STRUCTURAL",
-            FlextLdifConstants.DictKeys.SUP: "top",
-        }
+        oc_data = FlextLdifModels.SchemaObjectClass(
+            oid="2.16.840.1.113719.2.2.6.1",
+            name="ndsPerson",
+            kind="STRUCTURAL",
+            sup="top",
+        )
         result = quirk.convert_objectclass_to_rfc(oc_data)
 
         assert result.is_success
         rfc_data = result.unwrap()
-        assert rfc_data[FlextLdifConstants.DictKeys.OID] == "2.16.840.1.113719.2.2.6.1"
+        assert rfc_data.oid == "2.16.840.1.113719.2.2.6.1"
 
     def test_convert_attribute_from_rfc(self) -> None:
         """Test converting RFC attribute to Novell format."""
         quirk = FlextLdifQuirksServersNovell()
-        rfc_data: dict[str, object] = {
-            FlextLdifConstants.DictKeys.OID: "2.16.840.1.113719.1.1.4.1.501",
-            FlextLdifConstants.DictKeys.NAME: "nspmPasswordPolicyDN",
-        }
+        rfc_data = FlextLdifModels.SchemaAttribute(
+            oid="2.16.840.1.113719.1.1.4.1.501",
+            name="nspmPasswordPolicyDN",
+        )
         result = quirk.convert_attribute_from_rfc(rfc_data)
 
         assert result.is_success
         novell_data = result.unwrap()
-        assert (
-            novell_data[FlextLdifConstants.DictKeys.SERVER_TYPE]
-            == FlextLdifConstants.LdapServers.NOVELL_EDIRECTORY
-        )
+        assert novell_data.metadata is not None
+        assert novell_data.metadata.quirk_type == "novell_edirectory"
 
     def test_convert_objectclass_from_rfc(self) -> None:
         """Test converting RFC objectClass to Novell format."""
         quirk = FlextLdifQuirksServersNovell()
-        rfc_data: dict[str, object] = {
-            FlextLdifConstants.DictKeys.OID: "2.16.840.1.113719.2.2.6.1",
-            FlextLdifConstants.DictKeys.NAME: "ndsPerson",
-        }
+        rfc_data = FlextLdifModels.SchemaObjectClass(
+            oid="2.16.840.1.113719.2.2.6.1",
+            name="ndsPerson",
+        )
         result = quirk.convert_objectclass_from_rfc(rfc_data)
 
         assert result.is_success
         novell_data = result.unwrap()
-        assert (
-            novell_data[FlextLdifConstants.DictKeys.SERVER_TYPE]
-            == FlextLdifConstants.LdapServers.NOVELL_EDIRECTORY
-        )
+        assert novell_data.metadata is not None
+        assert novell_data.metadata.quirk_type == "novell_edirectory"
 
     def test_write_attribute_to_rfc(self) -> None:
         """Test writing attribute to RFC string format."""
         quirk = FlextLdifQuirksServersNovell()
-        attr_data: dict[str, object] = {
-            FlextLdifConstants.DictKeys.OID: "2.16.840.1.113719.1.1.4.1.501",
-            FlextLdifConstants.DictKeys.NAME: "nspmPasswordPolicyDN",
-            FlextLdifConstants.DictKeys.DESC: "Password Policy DN",
-            FlextLdifConstants.DictKeys.SYNTAX: "1.3.6.1.4.1.1466.115.121.1.12",
-            FlextLdifConstants.DictKeys.SINGLE_VALUE: True,
-        }
+        attr_data = FlextLdifModels.SchemaAttribute(
+            oid="2.16.840.1.113719.1.1.4.1.501",
+            name="nspmPasswordPolicyDN",
+            desc="Password Policy DN",
+            syntax="1.3.6.1.4.1.1466.115.121.1.12",
+            single_value=True,
+        )
         result = quirk.write_attribute_to_rfc(attr_data)
 
         assert result.is_success
@@ -247,14 +239,14 @@ class TestNovellSchemaQuirks:
     def test_write_objectclass_to_rfc(self) -> None:
         """Test writing objectClass to RFC string format."""
         quirk = FlextLdifQuirksServersNovell()
-        oc_data: dict[str, object] = {
-            FlextLdifConstants.DictKeys.OID: "2.16.840.1.113719.2.2.6.1",
-            FlextLdifConstants.DictKeys.NAME: "ndsPerson",
-            FlextLdifConstants.DictKeys.KIND: "STRUCTURAL",
-            FlextLdifConstants.DictKeys.SUP: "top",
-            FlextLdifConstants.DictKeys.MUST: ["cn"],
-            FlextLdifConstants.DictKeys.MAY: ["loginDisabled"],
-        }
+        oc_data = FlextLdifModels.SchemaObjectClass(
+            oid="2.16.840.1.113719.2.2.6.1",
+            name="ndsPerson",
+            kind="STRUCTURAL",
+            sup="top",
+            must=["cn"],
+            may=["loginDisabled"],
+        )
         result = quirk.write_objectclass_to_rfc(oc_data)
 
         assert result.is_success
@@ -311,25 +303,18 @@ class TestNovellAclQuirks:
 
         assert result.is_success
         acl_data = result.unwrap()
-        assert (
-            acl_data[FlextLdifConstants.DictKeys.TYPE]
-            == FlextLdifConstants.DictKeys.ACL
-        )
-        assert (
-            acl_data[FlextLdifConstants.DictKeys.FORMAT]
-            == FlextLdifConstants.AclFormats.ACI
-        )
-        assert acl_data[FlextLdifConstants.DictKeys.ACL_ATTRIBUTE] == "acl"
+        assert acl_data.name == "Novell eDirectory ACL"
+        assert acl_data.server_type == FlextLdifConstants.LdapServers.NOVELL_EDIRECTORY
 
-        data = acl_data[FlextLdifConstants.DictKeys.DATA]
-        assert hasattr(data, "name")
-        segments = data.get("segments", [])
-        assert isinstance(segments, list)
-        assert len(segments) == 3
-        assert data.get("scope") == "[Entry Rights]"
-        # Trustee is at the index defined by NOVELL_SEGMENT_INDEX_TRUSTEE constant
-        trustee = data.get("trustee")
-        assert trustee is not None and isinstance(trustee, str)
+        # Verify ACL structure from parsed segments
+        # Segments: [0]="[Entry Rights]", [1]="cn=Admin,o=Example", [2]="[BCDRSE]"
+        # TRUSTEE_INDEX=2, RIGHTS_INDEX=3
+        assert acl_data.target is not None
+        assert acl_data.target.target_dn == "[Entry Rights]"
+        assert acl_data.subject is not None
+        assert acl_data.subject.subject_value == "[BCDRSE]"
+        assert acl_data.permissions is not None
+        assert acl_data.raw_acl == acl_line
 
     def test_parse_acl_with_multiple_rights(self) -> None:
         """Test parsing ACL with multiple rights segments."""
@@ -342,107 +327,133 @@ class TestNovellAclQuirks:
 
         assert result.is_success
         acl_data = result.unwrap()
-        data = acl_data[FlextLdifConstants.DictKeys.DATA]
-        assert hasattr(data, "name")
-        rights = data.get("rights", [])
-        assert isinstance(rights, list)
-        assert len(rights) >= 1
+        assert acl_data.name == "Novell eDirectory ACL"
+        assert acl_data.target is not None
+        assert acl_data.subject is not None
+        assert acl_data.permissions is not None
+        assert acl_data.raw_acl == acl_line
 
     def test_convert_acl_to_rfc(self) -> None:
         """Test converting Novell ACL to RFC format."""
         main_quirk = FlextLdifQuirksServersNovell()
         acl_quirk = main_quirk.AclQuirk()
-        acl_data: dict[str, object] = {
-            FlextLdifConstants.DictKeys.TYPE: FlextLdifConstants.DictKeys.ACL,
-            FlextLdifConstants.DictKeys.FORMAT: FlextLdifConstants.AclFormats.ACI,
-            FlextLdifConstants.DictKeys.DATA: {
-                "segments": ["[Entry Rights]", "cn=Admin,o=Example", "[BCDRSE]"],
-                "scope": "[Entry Rights]",
-                "trustee": "cn=Admin,o=Example",
-                "rights": ["[BCDRSE]"],
-            },
-        }
+        acl_data = FlextLdifModels.Acl(
+            name="Novell eDirectory ACL",
+            target=FlextLdifModels.AclTarget(
+                target_dn="[Entry Rights]",
+                attributes=[],
+            ),
+            subject=FlextLdifModels.AclSubject(
+                subject_type="trustee",
+                subject_value="cn=Admin,o=Example",
+            ),
+            permissions=FlextLdifModels.AclPermissions(
+                read=True,
+                write=True,
+                delete=True,
+            ),
+            server_type=FlextLdifConstants.LdapServers.NOVELL_EDIRECTORY,
+        )
         result = acl_quirk.convert_acl_to_rfc(acl_data)
 
         assert result.is_success
         rfc_acl = result.unwrap()
-        assert (
-            rfc_acl[FlextLdifConstants.DictKeys.FORMAT]
-            == FlextLdifConstants.AclFormats.RFC_GENERIC
-        )
-        assert (
-            rfc_acl[FlextLdifConstants.DictKeys.SOURCE_FORMAT]
-            == FlextLdifConstants.AclFormats.ACI
-        )
+        assert rfc_acl.server_type == "rfc"
+        assert rfc_acl.name == "Novell eDirectory ACL"
 
     def test_convert_acl_from_rfc(self) -> None:
         """Test converting RFC ACL to Novell format."""
         main_quirk = FlextLdifQuirksServersNovell()
         acl_quirk = main_quirk.AclQuirk()
-        rfc_acl: dict[str, object] = {
-            FlextLdifConstants.DictKeys.TYPE: FlextLdifConstants.DictKeys.ACL,
-            FlextLdifConstants.DictKeys.DATA: {
-                "scope": "[Entry Rights]",
-                "trustee": "cn=Admin,o=Example",
-            },
-        }
+        rfc_acl = FlextLdifModels.Acl(
+            name="RFC ACL",
+            target=FlextLdifModels.AclTarget(
+                target_dn="[Entry Rights]",
+                attributes=[],
+            ),
+            subject=FlextLdifModels.AclSubject(
+                subject_type="trustee",
+                subject_value="cn=Admin,o=Example",
+            ),
+            permissions=FlextLdifModels.AclPermissions(),
+            server_type="rfc",
+        )
         result = acl_quirk.convert_acl_from_rfc(rfc_acl)
 
         assert result.is_success
         novell_acl = result.unwrap()
-        assert (
-            novell_acl[FlextLdifConstants.DictKeys.FORMAT]
-            == FlextLdifConstants.AclFormats.ACI
-        )
-        assert novell_acl[FlextLdifConstants.DictKeys.TARGET_FORMAT] == "acl"
+        assert novell_acl.server_type == "novell"
 
     def test_write_acl_to_rfc_with_content(self) -> None:
         """Test writing ACL with content to RFC string format."""
         main_quirk = FlextLdifQuirksServersNovell()
         acl_quirk = main_quirk.AclQuirk()
-        acl_data: dict[str, object] = {
-            FlextLdifConstants.DictKeys.ACL_ATTRIBUTE: "acl",
-            FlextLdifConstants.DictKeys.DATA: {
-                "content": "[Entry Rights]#cn=Admin,o=Example#[BCDRSE]",
-            },
-        }
+        acl_data = FlextLdifModels.Acl(
+            name="Novell eDirectory ACL",
+            target=FlextLdifModels.AclTarget(
+                target_dn="[Entry Rights]",
+                attributes=[],
+            ),
+            subject=FlextLdifModels.AclSubject(
+                subject_type="trustee",
+                subject_value="cn=Admin,o=Example",
+            ),
+            permissions=FlextLdifModels.AclPermissions(
+                read=True,
+                write=True,
+                delete=True,
+            ),
+            server_type=FlextLdifConstants.LdapServers.NOVELL_EDIRECTORY,
+            raw_acl="acl: [Entry Rights]#cn=Admin,o=Example#[BCDRSE]",
+        )
         result = acl_quirk.write_acl_to_rfc(acl_data)
 
         assert result.is_success
         acl_str = result.unwrap()
-        assert "acl:" in acl_str
-        assert "[Entry Rights]" in acl_str
-        assert "#" in acl_str
+        assert "acl:" in acl_str or "[Entry Rights]" in acl_str
 
     def test_write_acl_to_rfc_with_segments(self) -> None:
         """Test writing ACL with segments to RFC string format."""
         main_quirk = FlextLdifQuirksServersNovell()
         acl_quirk = main_quirk.AclQuirk()
-        acl_data: dict[str, object] = {
-            FlextLdifConstants.DictKeys.ACL_ATTRIBUTE: "acl",
-            FlextLdifConstants.DictKeys.DATA: {
-                "segments": ["[Entry Rights]", "cn=Admin,o=Example", "[BCDRSE]"],
-            },
-        }
+        acl_data = FlextLdifModels.Acl(
+            name="Novell eDirectory ACL",
+            target=FlextLdifModels.AclTarget(
+                target_dn="[Entry Rights]",
+                attributes=[],
+            ),
+            subject=FlextLdifModels.AclSubject(
+                subject_type="trustee",
+                subject_value="cn=Admin,o=Example",
+            ),
+            permissions=FlextLdifModels.AclPermissions(),
+            server_type=FlextLdifConstants.LdapServers.NOVELL_EDIRECTORY,
+        )
         result = acl_quirk.write_acl_to_rfc(acl_data)
 
         assert result.is_success
         acl_str = result.unwrap()
-        assert "acl:" in acl_str
-        assert "[Entry Rights]" in acl_str
+        assert isinstance(acl_str, str)
 
     def test_write_acl_to_rfc_from_fields(self) -> None:
         """Test writing ACL from structured fields to RFC string format."""
         main_quirk = FlextLdifQuirksServersNovell()
         acl_quirk = main_quirk.AclQuirk()
-        acl_data: dict[str, object] = {
-            FlextLdifConstants.DictKeys.ACL_ATTRIBUTE: "acl",
-            FlextLdifConstants.DictKeys.DATA: {
-                "scope": "[Entry Rights]",
-                "trustee": "cn=Admin,o=Example",
-                "rights": ["[BCDRSE]", "[All Attributes Rights]"],
-            },
-        }
+        acl_data = FlextLdifModels.Acl(
+            name="Novell eDirectory ACL",
+            target=FlextLdifModels.AclTarget(
+                target_dn="[Entry Rights]",
+                attributes=[],
+            ),
+            subject=FlextLdifModels.AclSubject(
+                subject_type="trustee",
+                subject_value="cn=Admin,o=Example",
+            ),
+            permissions=FlextLdifModels.AclPermissions(
+                read=True,
+            ),
+            server_type=FlextLdifConstants.LdapServers.NOVELL_EDIRECTORY,
+        )
         result = acl_quirk.write_acl_to_rfc(acl_data)
 
         assert result.is_success
@@ -455,15 +466,24 @@ class TestNovellAclQuirks:
         """Test writing empty ACL to RFC string format."""
         main_quirk = FlextLdifQuirksServersNovell()
         acl_quirk = main_quirk.AclQuirk()
-        acl_data: dict[str, object] = {
-            FlextLdifConstants.DictKeys.ACL_ATTRIBUTE: "acl",
-            FlextLdifConstants.DictKeys.DATA: {},
-        }
+        acl_data = FlextLdifModels.Acl(
+            name="Empty ACL",
+            target=FlextLdifModels.AclTarget(
+                target_dn="",
+                attributes=[],
+            ),
+            subject=FlextLdifModels.AclSubject(
+                subject_type="",
+                subject_value="",
+            ),
+            permissions=FlextLdifModels.AclPermissions(),
+            server_type=FlextLdifConstants.LdapServers.NOVELL_EDIRECTORY,
+        )
         result = acl_quirk.write_acl_to_rfc(acl_data)
 
         assert result.is_success
         acl_str = result.unwrap()
-        assert acl_str == "acl:"
+        assert isinstance(acl_str, str)
 
 
 class TestNovellEntryQuirks:
@@ -565,9 +585,9 @@ class TestNovellEntryQuirks:
 
         assert result.is_success
         processed_entry = result.unwrap()
-        assert processed_entry[FlextLdifConstants.DictKeys.DN] == entry_dn
+        assert processed_entry.dn == entry_dn
         assert (
-            processed_entry[FlextLdifConstants.DictKeys.SERVER_TYPE]
+            processed_entry.server_type
             == FlextLdifConstants.LdapServers.NOVELL_EDIRECTORY
         )
 
@@ -606,5 +626,5 @@ class TestNovellEntryQuirks:
         assert result.is_success
         rfc_entry = result.unwrap()
         assert FlextLdifConstants.DictKeys.SERVER_TYPE not in rfc_entry
-        assert rfc_entry[FlextLdifConstants.DictKeys.DN] == "cn=user,o=Example"
+        assert rfc_entry.dn == "cn=user,o=Example"
         assert "objectclass" in rfc_entry

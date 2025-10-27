@@ -317,6 +317,7 @@ class TestRfcLdifWriterAppendMode:
                     },
                 }
             ],
+            FlextLdifConstants.DictKeys.APPEND: True,  # Enable append mode
         }
 
         # Write first entry
