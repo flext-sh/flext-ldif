@@ -60,7 +60,7 @@ class TestOudSchemaIntegration:
         schema_entry = entries[0]
 
         # Check for attributeTypes attribute (note: capital T)
-        attrs = schema_entry.attributes.get("attributeTypes") or []
+        attrs = schema_entry.attributes.attributeTypes or []
         oracle_attr_count = sum(
             1 for attr in attrs if isinstance(attr, str) and "2.16.840.1.113894" in attr
         )
@@ -78,7 +78,7 @@ class TestOudSchemaIntegration:
         schema_entry = entries[0]
 
         # Check for objectClasses attribute (note: capital C)
-        object_classes = schema_entry.attributes.get("objectClasses") or []
+        object_classes = schema_entry.attributes.objectClasses or []
         oracle_oc_count = sum(
             1
             for oc in object_classes
@@ -130,7 +130,7 @@ class TestOudAclIntegration:
         # OUD ACL fixtures contain complex multi-line ACIs with 4+ rules
         has_multiline = False
         for entry in entries:
-            aci_values = entry.attributes.get("aci") or []
+            aci_values = entry.attributes.aci or []
             for aci in aci_values:
                 if isinstance(aci, str) and "\n" in aci:
                     has_multiline = True
@@ -184,9 +184,7 @@ class TestOudEntryIntegration:
         entries_with_oracle_oc = 0
         for entry in entries:
             objectclasses = (
-                entry.attributes.get("objectclass")
-                or entry.attributes.get("objectclass")
-                or []
+                entry.attributes.objectclass or entry.attributes.objectclass or []
             )
             for oc in objectclasses:
                 if any(

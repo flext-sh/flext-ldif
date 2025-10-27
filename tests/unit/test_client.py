@@ -359,7 +359,7 @@ class TestParseLdif:
         entries = result.unwrap()
         assert len(entries) == 1
         assert entries[0].dn.value == "cn=test,dc=example,dc=com"
-        assert entries[0].attributes.get("cn") == ["test"]
+        assert entries[0].attributes.cn == ["test"]
 
     def test_parse_ldif_from_path_object(
         self, client: FlextLdifClient, tmp_path: Path
@@ -378,7 +378,7 @@ class TestParseLdif:
         entries = result.unwrap()
         assert len(entries) == 1
         assert entries[0].dn.value == "cn=test,dc=example,dc=com"
-        assert entries[0].attributes.get("cn") == ["test"]
+        assert entries[0].attributes.cn == ["test"]
 
     def test_parse_ldif_with_minimal_container(self) -> None:
         """Test parse_ldif behavior with minimal container (real test, no mocks)."""
@@ -397,7 +397,7 @@ class TestParseLdif:
         entries = result.unwrap()
         assert len(entries) == 1
         assert entries[0].dn.value == "cn=test,dc=example,dc=com"
-        assert entries[0].attributes.get("cn") == ["test"]
+        assert entries[0].attributes.cn == ["test"]
 
 
 class TestWriteLdif:

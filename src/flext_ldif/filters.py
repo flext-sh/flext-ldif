@@ -516,7 +516,7 @@ class FlextLdifFilters:
 
             return FlextResult[list[FlextLdifModels.Entry]].ok(filtered)
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError) as e:
             return FlextResult[list[FlextLdifModels.Entry]].fail(
                 f"Failed to filter entries by DN: {e}"
             )
@@ -591,7 +591,7 @@ class FlextLdifFilters:
 
             return FlextResult[list[FlextLdifModels.Entry]].ok(filtered)
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError) as e:
             return FlextResult[list[FlextLdifModels.Entry]].fail(
                 f"Failed to filter entries by objectClass: {e}"
             )
@@ -655,7 +655,7 @@ class FlextLdifFilters:
 
             return FlextResult[list[FlextLdifModels.Entry]].ok(filtered)
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError) as e:
             return FlextResult[list[FlextLdifModels.Entry]].fail(
                 f"Failed to filter entries by attributes: {e}"
             )
@@ -717,7 +717,7 @@ class FlextLdifFilters:
 
             return FlextResult[FlextLdifModels.Entry].ok(filtered_entry)
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError) as e:
             return FlextResult[FlextLdifModels.Entry].fail(
                 f"Failed to filter entry attributes: {e}"
             )
@@ -797,7 +797,7 @@ class FlextLdifFilters:
 
             return FlextResult[FlextLdifModels.Entry].ok(filtered_entry)
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError) as e:
             return FlextResult[FlextLdifModels.Entry].fail(
                 f"Failed to filter entry objectClasses: {e}"
             )

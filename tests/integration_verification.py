@@ -37,7 +37,7 @@ def verify_imports() -> bool:
         logger.info("✅ FlextLdif API imported successfully")
 
         return True
-    except Exception as e:
+    except (ValueError, TypeError, AttributeError) as e:
         logger.info(f"❌ Import failed: {e}")
         import traceback
 
@@ -49,7 +49,7 @@ def verify_server_detector() -> bool:
     """Verify FlextLdifServerDetector functionality."""
     logger.info("\n=== VERIFYING SERVER DETECTOR ===")
     try:
-        from flext_ldif.services.server_detector import FlextLdifServerDetector
+        from flext_ldif.server_detector import FlextLdifServerDetector
 
         detector = FlextLdifServerDetector()
         logger.info("✅ FlextLdifServerDetector instantiated")
@@ -73,7 +73,7 @@ attributeTypes: ( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' SYNTAX 1.3.6.1.4.1.146
             return True  # Still OK if detection logic is working
         logger.info(f"❌ Detection failed: {result.error}")
         return False
-    except Exception as e:
+    except (ValueError, TypeError, AttributeError) as e:
         logger.info(f"❌ Server detector verification failed: {e}")
         import traceback
 
@@ -126,7 +126,7 @@ def verify_relaxed_quirks() -> bool:
             return False
 
         return True
-    except Exception as e:
+    except (ValueError, TypeError, AttributeError) as e:
         logger.info(f"❌ Relaxed quirks verification failed: {e}")
         import traceback
 
@@ -178,7 +178,7 @@ def verify_config_modes() -> bool:
             return False
 
         return True
-    except Exception as e:
+    except (ValueError, TypeError, AttributeError) as e:
         logger.info(f"❌ Config modes verification failed: {e}")
         import traceback
 
@@ -221,7 +221,7 @@ def verify_api_integration() -> bool:
             return False
 
         return True
-    except Exception as e:
+    except (ValueError, TypeError, AttributeError) as e:
         logger.info(f"❌ API integration verification failed: {e}")
         import traceback
 

@@ -5,6 +5,7 @@ from __future__ import annotations
 import base64
 
 from flext_ldif.constants import FlextLdifConstants
+from flext_ldif.models import FlextLdifModels
 from flext_ldif.quirks.servers.ds389_quirks import FlextLdifQuirksServersDs389
 
 
@@ -155,8 +156,6 @@ class TestDs389SchemaQuirks:
 
     def test_convert_attribute_to_rfc(self) -> None:
         """Test converting 389 DS attribute to RFC format."""
-        from flext_ldif.models import FlextLdifModels
-
         quirk = FlextLdifQuirksServersDs389()
         attr_data = FlextLdifModels.SchemaAttribute(
             oid="2.16.840.1.113730.3.1.1",
@@ -174,8 +173,6 @@ class TestDs389SchemaQuirks:
 
     def test_convert_objectclass_to_rfc(self) -> None:
         """Test converting 389 DS objectClass to RFC format."""
-        from flext_ldif.models import FlextLdifModels
-
         quirk = FlextLdifQuirksServersDs389()
         oc_data = FlextLdifModels.SchemaObjectClass(
             oid="2.16.840.1.113730.3.2.1",
@@ -191,8 +188,6 @@ class TestDs389SchemaQuirks:
 
     def test_convert_attribute_from_rfc(self) -> None:
         """Test converting RFC attribute to 389 DS format."""
-        from flext_ldif.models import FlextLdifModels
-
         quirk = FlextLdifQuirksServersDs389()
         rfc_data = FlextLdifModels.SchemaAttribute(
             oid="2.16.840.1.113730.3.1.1",
@@ -209,8 +204,6 @@ class TestDs389SchemaQuirks:
 
     def test_convert_objectclass_from_rfc(self) -> None:
         """Test converting RFC objectClass to 389 DS format."""
-        from flext_ldif.models import FlextLdifModels
-
         quirk = FlextLdifQuirksServersDs389()
         rfc_data = FlextLdifModels.SchemaObjectClass(
             oid="2.16.840.1.113730.3.2.1",
@@ -227,8 +220,6 @@ class TestDs389SchemaQuirks:
 
     def test_write_objectclass_to_rfc(self) -> None:
         """Test writing objectClass to RFC string format."""
-        from flext_ldif.models import FlextLdifModels
-
         quirk = FlextLdifQuirksServersDs389()
         oc_data = FlextLdifModels.SchemaObjectClass(
             oid="2.16.840.1.113730.3.2.1",
@@ -330,8 +321,6 @@ class TestDs389AclQuirks:
 
     def test_convert_acl_to_rfc(self) -> None:
         """Test converting 389 DS ACL to RFC format."""
-        from flext_ldif.models import FlextLdifModels
-
         main_quirk = FlextLdifQuirksServersDs389()
         acl_quirk = main_quirk.AclQuirk()
         acl_data = FlextLdifModels.Acl(
@@ -353,8 +342,6 @@ class TestDs389AclQuirks:
 
     def test_convert_acl_from_rfc(self) -> None:
         """Test converting RFC ACL to 389 DS format."""
-        from flext_ldif.models import FlextLdifModels
-
         main_quirk = FlextLdifQuirksServersDs389()
         acl_quirk = main_quirk.AclQuirk()
         rfc_acl = FlextLdifModels.Acl(
@@ -377,8 +364,6 @@ class TestDs389AclQuirks:
 
     def test_write_acl_to_rfc_with_content(self) -> None:
         """Test writing ACL with content to RFC string format."""
-        from flext_ldif.models import FlextLdifModels
-
         main_quirk = FlextLdifQuirksServersDs389()
         acl_quirk = main_quirk.AclQuirk()
         # Create proper Acl model instance with raw_acl
@@ -400,20 +385,15 @@ class TestDs389AclQuirks:
 
     def test_write_acl_to_rfc_from_structured(self) -> None:
         """Test writing ACL from structured fields to RFC string format."""
-        from flext_ldif.models import FlextLdifModels
-
         main_quirk = FlextLdifQuirksServersDs389()
         acl_quirk = main_quirk.AclQuirk()
         # Create proper Acl model instance
         acl_data = FlextLdifModels.Acl(
             name="Admin Access",
-            target=FlextLdifModels.AclTarget(
-                target_dn="*",
-                attributes=["cn"]
-            ),
+            target=FlextLdifModels.AclTarget(target_dn="*", attributes=["cn"]),
             subject=FlextLdifModels.AclSubject(
                 subject_type="userdn",
-                subject_value="ldap:///cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com"
+                subject_value="ldap:///cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
             ),
             permissions=FlextLdifModels.AclPermissions(
                 read=True,
@@ -431,18 +411,13 @@ class TestDs389AclQuirks:
 
     def test_write_acl_to_rfc_empty(self) -> None:
         """Test writing empty ACL to RFC string format."""
-        from flext_ldif.models import FlextLdifModels
-
         main_quirk = FlextLdifQuirksServersDs389()
         acl_quirk = main_quirk.AclQuirk()
         # Create minimal Acl model instance
         acl_data = FlextLdifModels.Acl(
             name="",
             target=FlextLdifModels.AclTarget(target_dn="*"),
-            subject=FlextLdifModels.AclSubject(
-                subject_type="user",
-                subject_value="*"
-            ),
+            subject=FlextLdifModels.AclSubject(subject_type="user", subject_value="*"),
             permissions=FlextLdifModels.AclPermissions(),
             server_type="389ds",
         )
@@ -550,8 +525,8 @@ class TestDs389EntryQuirks:
 
         assert result.is_success
         processed_entry = result.unwrap()
-        assert processed_entry[FlextLdifConstants.DictKeys.DN] == entry_dn
-        assert processed_entry[FlextLdifConstants.DictKeys.SERVER_TYPE] == FlextLdifConstants.LdapServers.DS_389
+        assert processed_entry.dn == entry_dn
+        assert processed_entry.server_type == FlextLdifConstants.LdapServers.DS_389
         assert processed_entry[FlextLdifConstants.DictKeys.IS_CONFIG_ENTRY] is True
 
     def test_process_entry_non_config(self) -> None:
@@ -606,5 +581,5 @@ class TestDs389EntryQuirks:
         rfc_entry = result.unwrap()
         assert FlextLdifConstants.DictKeys.SERVER_TYPE not in rfc_entry
         assert FlextLdifConstants.DictKeys.IS_CONFIG_ENTRY not in rfc_entry
-        assert rfc_entry[FlextLdifConstants.DictKeys.DN] == "cn=config"
+        assert rfc_entry.dn == "cn=config"
         assert "objectclass" in rfc_entry

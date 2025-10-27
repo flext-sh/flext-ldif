@@ -60,7 +60,7 @@ class TestOidSchemaIntegration:
         schema_entry = entries[0]
 
         # Check for attributetypes attribute
-        attrs = schema_entry.attributes.get("attributetypes") or []
+        attrs = schema_entry.attributes.attributetypes or []
         oracle_attr_count = sum(
             1 for attr in attrs if isinstance(attr, str) and "2.16.840.1.113894" in attr
         )
@@ -78,7 +78,7 @@ class TestOidSchemaIntegration:
         schema_entry = entries[0]
 
         # Check for objectclasses attribute
-        object_classes = schema_entry.attributes.get("objectclasses") or []
+        object_classes = schema_entry.attributes.objectclasses or []
         oracle_oc_count = sum(
             1
             for oc in object_classes
@@ -238,10 +238,10 @@ class TestOidRoundTripIntegration:
 
         # Count ACLs in original
         original_orclaci_count = sum(
-            len(entry.attributes.get("orclaci") or []) for entry in entries_1
+            len(entry.attributes.orclaci or []) for entry in entries_1
         )
         original_entrylevel_count = sum(
-            len(entry.attributes.get("orclentrylevelaci") or []) for entry in entries_1
+            len(entry.attributes.orclentrylevelaci or []) for entry in entries_1
         )
 
         # Write and parse again
@@ -254,10 +254,10 @@ class TestOidRoundTripIntegration:
 
         # Count ACLs after round-trip
         roundtrip_orclaci_count = sum(
-            len(entry.attributes.get("orclaci") or []) for entry in entries_2
+            len(entry.attributes.orclaci or []) for entry in entries_2
         )
         roundtrip_entrylevel_count = sum(
-            len(entry.attributes.get("orclentrylevelaci") or []) for entry in entries_2
+            len(entry.attributes.orclentrylevelaci or []) for entry in entries_2
         )
 
         # Should have same ACL counts

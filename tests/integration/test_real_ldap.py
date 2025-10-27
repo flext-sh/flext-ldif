@@ -164,10 +164,7 @@ class TestRealLdapExport:
         # Convert to FlextLdif entry
         entry_result = flext_api.models.Entry.create(
             dn=ldap_entry.entry_dn,
-            attributes={
-                attr: ldap_entry.entry_attributes[attr]
-                for attr in ldap_entry.entry_attributes
-            },
+            attributes=dict(ldap_entry.entry_attributes),
             metadata=None,
         )
         assert entry_result.is_success
@@ -218,10 +215,7 @@ class TestRealLdapExport:
         for entry in ldap_connection.entries:
             result = flext_api.models.Entry.create(
                 dn=entry.entry_dn,
-                attributes={
-                    attr: entry.entry_attributes[attr]
-                    for attr in entry.entry_attributes
-                },
+                attributes=entry.attributes.to_ldap3(),
                 metadata=None,
             )
             assert result.is_success
@@ -279,10 +273,7 @@ class TestRealLdapExport:
         for entry in ldap_connection.entries:
             result = flext_api.models.Entry.create(
                 dn=entry.entry_dn,
-                attributes={
-                    attr: entry.entry_attributes[attr]
-                    for attr in entry.entry_attributes
-                },
+                attributes=entry.attributes.to_ldap3(),
                 metadata=None,
             )
             assert result.is_success
@@ -329,9 +320,7 @@ mail: import@example.com
         ldap_connection.add(
             str(entry.dn),
             entry.get_attribute_values("objectclass"),
-            attributes={
-                attr: entry.entry_attributes[attr] for attr in entry.entry_attributes
-            },
+            attributes=entry.attributes.to_ldap3(),
         )
 
         # Verify import
@@ -381,9 +370,7 @@ jpegPhoto:: {encoded_photo}
         ldap_connection.add(
             str(entry.dn),
             entry.get_attribute_values("objectclass"),
-            attributes={
-                attr: entry.entry_attributes[attr] for attr in entry.entry_attributes
-            },
+            attributes={attr: entry.attributes[attr] for attr in entry.attributes},
         )
 
         # Verify
@@ -452,7 +439,7 @@ class TestRealLdapRoundtrip:
         # Type note: reimport_attrs is dict[str, list[str]], need to wrap string in list
         reimport_attrs["cn"] = ["Roundtrip Test Copy"]
 
-        obj_class_values = reimport_entry.attributes.get("objectclass", [])
+        obj_class_values = reimport_entry.get_attribute_values("objectclass")
         assert isinstance(obj_class_values, list)
         ldap_connection.add(
             reimport_dn,
@@ -500,7 +487,7 @@ mail: valid@example.com
         assert validation_result.is_success
 
         validation_report = validation_result.unwrap()
-        assert validation_report.get("is_valid", False)
+        assert validation_report.is_valid
 
     def test_detect_invalid_ldif(
         self,
@@ -646,10 +633,7 @@ class TestRealLdapAnalytics:
         for entry in ldap_connection.entries:
             result = flext_api.models.Entry.create(
                 dn=entry.entry_dn,
-                attributes={
-                    attr: entry.entry_attributes[attr]
-                    for attr in entry.entry_attributes
-                },
+                attributes=entry.attributes.to_ldap3(),
                 metadata=None,
             )
             assert result.is_success
@@ -661,11 +645,11 @@ class TestRealLdapAnalytics:
 
         stats = analysis_result.unwrap()
         # Should find at least the 10 entries we created
-        total_entries = stats.get("total_entries", 0)
+        total_entries = stats.total_entries or 0
         assert total_entries >= 10, (
             f"Expected at least 10 entries, found {total_entries}"
         )
-        obj_class_dist = stats.get("objectclass_distribution", {})
+        obj_class_dist = stats.objectclass_distribution or {}
         assert isinstance(obj_class_dist, dict)
         assert "person" in obj_class_dist
         # Verify we have the expected object classes from our test data
@@ -747,9 +731,7 @@ mail: import@example.com
         ldap_connection.add(
             str(entry.dn),
             entry.get_attribute_values("objectclass"),
-            attributes={
-                attr: entry.entry_attributes[attr] for attr in entry.entry_attributes
-            },
+            attributes=entry.attributes.to_ldap3(),
         )
 
         # Verify
@@ -783,7 +765,7 @@ class TestRealLdapCRUD:
         person_entry = person_result.unwrap()
 
         # Write to LDAP
-        obj_class_values = person_entry.attributes.get("objectclass", [])
+        obj_class_values = person_entry.get_attribute_values("objectclass")
         assert isinstance(obj_class_values, list)
         ldap_connection.add(
             str(person_entry.dn),
@@ -857,7 +839,7 @@ class TestRealLdapBatchOperations:
         analysis_result = flext_api.analyze(entries)
         assert analysis_result.is_success
         stats = analysis_result.unwrap()
-        assert stats.get("total_entries", 0) == 20
+        assert (stats.total_entries or 0) == 20
 
     def test_batch_ldif_export_import(
         self,
@@ -897,10 +879,7 @@ class TestRealLdapBatchOperations:
         for entry in ldap_connection.entries:
             result = flext_api.models.Entry.create(
                 dn=entry.entry_dn,
-                attributes={
-                    attr: entry.entry_attributes[attr]
-                    for attr in entry.entry_attributes
-                },
+                attributes=entry.attributes.to_ldap3(),
                 metadata=None,
             )
             assert result.is_success

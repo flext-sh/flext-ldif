@@ -62,7 +62,7 @@ class TestRFCFixtures:
         }
 
         for entry in entries:
-            object_classes = entry.attributes.get("objectClass", [])
+            object_classes = entry.attributes.get_values("objectClass", [])
             assert isinstance(object_classes, list)
             if "domain" in object_classes:
                 categories["domain"].append(entry)
@@ -126,7 +126,7 @@ class TestRFCFixtures:
         # Find entry with multiple objectClass values (always multi-valued)
         multi_attr_entry = None
         for entry in entries:
-            oc_attr = entry.attributes.attributes.get("objectClass")
+            oc_attr = entry.attributes.attributes.objectClass
             if oc_attr and len(oc_attr.values) > 1:
                 multi_attr_entry = entry
                 break
@@ -212,7 +212,7 @@ class TestOIDFixtures:
         user_entries = [
             e
             for e in entries
-            if (oc := e.attributes.get("objectClass", [])) is not None
+            if (oc := e.attributes.get_values("objectClass", [])) is not None
             and "inetOrgPerson" in oc
         ]
 
@@ -261,7 +261,7 @@ class TestOUDFixtures:
         oracle_entries = [
             e
             for e in entries
-            if (oc := e.attributes.get("objectClass", [])) is not None
+            if (oc := e.attributes.get_values("objectClass", [])) is not None
             and "orclContainer" in oc
         ]
 
@@ -320,7 +320,7 @@ class TestOpenLDAP2Fixtures:
         posix_accounts = [
             e
             for e in entries
-            if (oc := e.attributes.get("objectClass", [])) is not None
+            if (oc := e.attributes.get_values("objectClass", [])) is not None
             and "posixAccount" in oc
         ]
         assert len(posix_accounts) >= 10, "Should have at least 10 posixAccount entries"
@@ -352,7 +352,7 @@ class TestOpenLDAP2Fixtures:
         posix_groups = [
             e
             for e in entries
-            if (oc := e.attributes.get("objectClass", [])) is not None
+            if (oc := e.attributes.get_values("objectClass", [])) is not None
             and "posixGroup" in oc
         ]
         assert len(posix_groups) >= 2, "Should have at least 2 posixGroup entries"
@@ -383,9 +383,9 @@ class TestOpenLDAP2Fixtures:
         service_accounts = [
             e
             for e in entries
-            if (oc := e.attributes.get("objectClass", [])) is not None
+            if (oc := e.attributes.get_values("objectClass", [])) is not None
             and "posixAccount" in oc
-            and "nologin" in str(e.attributes.get("loginShell", []))
+            and "nologin" in str(e.attributes.get_values("loginShell", []))
         ]
 
         assert len(service_accounts) >= 2, "Should have at least 2 service accounts"

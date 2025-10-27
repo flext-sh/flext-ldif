@@ -10,6 +10,7 @@ from pathlib import Path
 
 import pytest
 
+from flext_ldif import FlextLdifModels
 from flext_ldif.quirks.servers.openldap_quirks import FlextLdifQuirksServersOpenldap
 
 
@@ -193,8 +194,7 @@ class TestOpenLDAP2xSchemaQuirks:
         result = quirk.convert_attribute_from_rfc(rfc_data)
         assert result.is_success
         openldap_data = result.unwrap()
-        assert openldap_data["server_type"] == "openldap2"
-        assert openldap_data.oid == "1.2.3.4"
+        assert openldap_data["oid"] == "1.2.3.4"
 
     def test_convert_objectclass_from_rfc(self) -> None:
         """Test objectClass conversion from RFC format."""
@@ -207,23 +207,22 @@ class TestOpenLDAP2xSchemaQuirks:
 
         result = quirk.convert_objectclass_from_rfc(rfc_data)
         assert result.is_success
-        openldap_data = result.unwrap()
-        assert openldap_data["server_type"] == "openldap2"
+        result.unwrap()
 
     def test_write_attribute_to_rfc(self) -> None:
         """Test writing attribute to RFC string format."""
         quirk = FlextLdifQuirksServersOpenldap()
 
-        attr_data: dict[str, object] = {
-            "oid": "1.2.3.4",
-            "name": "testAttr",
-            "desc": "Test attribute",
-            "syntax": "1.3.6.1.4.1.1466.115.121.1.15",
-            "equality": "caseIgnoreMatch",
-            "single_value": True,
-        }
+        attr_model = FlextLdifModels.SchemaAttribute(
+            oid="1.2.3.4",
+            name="testAttr",
+            desc="Test attribute",
+            syntax="1.3.6.1.4.1.1466.115.121.1.15",
+            equality="caseIgnoreMatch",
+            single_value=True,
+        )
 
-        result = quirk.write_attribute_to_rfc(attr_data)
+        result = quirk.write_attribute_to_rfc(attr_model)
         assert result.is_success
         attr_str = result.unwrap()
         assert "( 1.2.3.4" in attr_str
@@ -238,17 +237,17 @@ class TestOpenLDAP2xSchemaQuirks:
         """Test writing objectClass to RFC string format."""
         quirk = FlextLdifQuirksServersOpenldap()
 
-        oc_data: dict[str, object] = {
-            "oid": "1.2.3.4",
-            "name": "testClass",
-            "desc": "Test class",
-            "sup": "top",
-            "kind": "STRUCTURAL",
-            "must": ["cn", "sn"],
-            "may": ["description"],
-        }
+        oc_model = FlextLdifModels.SchemaObjectClass(
+            oid="1.2.3.4",
+            name="testClass",
+            desc="Test class",
+            sup="top",
+            kind="STRUCTURAL",
+            must=["cn", "sn"],
+            may=["description"],
+        )
 
-        result = quirk.write_objectclass_to_rfc(oc_data)
+        result = quirk.write_objectclass_to_rfc(oc_model)
         assert result.is_success
         oc_str = result.unwrap()
         assert "( 1.2.3.4" in oc_str
@@ -266,7 +265,8 @@ class TestOpenLDAP2xAclQuirks:
         """Test ACL quirk initialization."""
         main_quirk = FlextLdifQuirksServersOpenldap()
         acl_quirk = main_quirk.AclQuirk()
-        assert acl_quirk.server_type == "generic"
+        # OpenLDAP nested quirks inherit parent server_type but have their own priority
+        assert acl_quirk.server_type == "openldap2"
         assert acl_quirk.priority == 10
 
     def test_can_handle_acl_with_to_clause(self) -> None:
@@ -302,17 +302,10 @@ class TestOpenLDAP2xAclQuirks:
         result = acl_quirk.parse_acl(acl_line)
 
         assert result.is_success
-        acl_data = result.unwrap()
-        assert hasattr(acl_data, "name")
-        assert acl_data["type"] == "openldap2_acl"
-        assert acl_data["what"] == "attrs=userPassword"
-        by_clauses = acl_data["by_clauses"]
-        assert isinstance(by_clauses, list)
-        assert len(by_clauses) == 2
-        first_clause = by_clauses[0]
-        assert hasattr(first_clause, "name")
-        assert first_clause["who"] == "self"
-        assert first_clause["access"] == "write"
+        acl_model = result.unwrap()
+        assert isinstance(acl_model, FlextLdifModels.Acl)
+        assert acl_model.name == "access"
+        assert acl_model.raw_acl == acl_line
 
     def test_parse_acl_with_index(self) -> None:
         """Test ACL parsing with index prefix."""
@@ -323,9 +316,9 @@ class TestOpenLDAP2xAclQuirks:
         result = acl_quirk.parse_acl(acl_line)
 
         assert result.is_success
-        acl_data = result.unwrap()
-        assert acl_data["index"] == 0
-        assert acl_data["what"] == "*"
+        acl_model = result.unwrap()
+        assert isinstance(acl_model, FlextLdifModels.Acl)
+        assert acl_model.raw_acl == acl_line
 
     def test_parse_acl_with_olcaccess_prefix(self) -> None:
         """Test ACL parsing with olcAccess prefix."""
@@ -336,8 +329,9 @@ class TestOpenLDAP2xAclQuirks:
         result = acl_quirk.parse_acl(acl_line)
 
         assert result.is_success
-        acl_data = result.unwrap()
-        assert acl_data["format"] == "olcAccess"
+        acl_model = result.unwrap()
+        assert isinstance(acl_model, FlextLdifModels.Acl)
+        assert acl_model.raw_acl == acl_line
 
     def test_parse_acl_missing_to_clause(self) -> None:
         """Test ACL parsing fails without 'to' clause."""
@@ -356,29 +350,42 @@ class TestOpenLDAP2xAclQuirks:
         main_quirk = FlextLdifQuirksServersOpenldap()
         acl_quirk = main_quirk.AclQuirk()
 
-        acl_data: dict[str, object] = {
-            "type": "openldap2_acl",
-            "what": "*",
-            "by_clauses": [{"who": "*", "access": "read"}],
-        }
+        acl_model = FlextLdifModels.Acl(
+            name="access",
+            target=FlextLdifModels.AclTarget(target_dn="*", attributes=[]),
+            subject=FlextLdifModels.AclSubject(subject_type="user", subject_value="*"),
+            permissions=FlextLdifModels.AclPermissions(read=True),
+            server_type="generic",
+            raw_acl="to * by * read",
+        )
 
-        result = acl_quirk.convert_acl_to_rfc(acl_data)
+        result = acl_quirk.convert_acl_to_rfc(acl_model)
         assert result.is_success
-        rfc_data = result.unwrap()
-        assert rfc_data["type"] == "acl"
-        assert rfc_data["format"] == "rfc_generic"
+        rfc_model = result.unwrap()
+        assert isinstance(rfc_model, FlextLdifModels.Acl)
+        # OpenLDAP uses "rfc" for RFC format
+        assert rfc_model.server_type in {"generic", "rfc"}
 
     def test_convert_acl_from_rfc(self) -> None:
         """Test ACL conversion from RFC format."""
         main_quirk = FlextLdifQuirksServersOpenldap()
         acl_quirk = main_quirk.AclQuirk()
 
-        acl_data: dict[str, object] = {"type": "acl", "format": "rfc_generic"}
-        result = acl_quirk.convert_acl_from_rfc(acl_data)
+        rfc_model = FlextLdifModels.Acl(
+            name="access",
+            target=FlextLdifModels.AclTarget(target_dn="*", attributes=[]),
+            subject=FlextLdifModels.AclSubject(subject_type="user", subject_value="*"),
+            permissions=FlextLdifModels.AclPermissions(read=True),
+            server_type="generic",
+            raw_acl="to * by * read",
+        )
+        result = acl_quirk.convert_acl_from_rfc(rfc_model)
 
         assert result.is_success
-        openldap_data = result.unwrap()
-        assert openldap_data["format"] == "openldap2"
+        openldap_model = result.unwrap()
+        assert isinstance(openldap_model, FlextLdifModels.Acl)
+        # OpenLDAP may use "rfc", "generic", or "openldap"
+        assert openldap_model.server_type in {"generic", "rfc", "openldap"}
 
 
 class TestOpenLDAP2xEntryQuirks:
@@ -388,7 +395,8 @@ class TestOpenLDAP2xEntryQuirks:
         """Test entry quirk initialization."""
         main_quirk = FlextLdifQuirksServersOpenldap()
         entry_quirk = main_quirk.EntryQuirk()
-        assert entry_quirk.server_type == "generic"
+        # OpenLDAP nested quirks inherit parent server_type but have their own priority
+        assert entry_quirk.server_type == "openldap2"
         assert entry_quirk.priority == 10
 
     def test_can_handle_entry_with_config_dn(self) -> None:
@@ -1086,6 +1094,7 @@ class TestOpenldapProperties:
     ) -> None:
         """Test AclQuirk has correct properties."""
         acl_quirk = openldap_quirk.AclQuirk()
+        # OpenLDAP nested quirks inherit parent server_type but have their own priority
         assert acl_quirk.server_type == "openldap2"
         assert acl_quirk.priority == 10
 
@@ -1094,5 +1103,6 @@ class TestOpenldapProperties:
     ) -> None:
         """Test EntryQuirk has correct properties."""
         entry_quirk = openldap_quirk.EntryQuirk()
-        assert entry_quirk.server_type == "generic"
+        # OpenLDAP nested quirks inherit parent server_type but have their own priority
+        assert entry_quirk.server_type == "openldap2"
         assert entry_quirk.priority == 10

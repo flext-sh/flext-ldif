@@ -131,7 +131,7 @@ class FlextLdifServerDetector(FlextService[FlextLdifModels.ClientStatus]):
             return FlextResult[FlextLdifModels.ServerDetectionResult].ok(
                 detection_result
             )
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError) as e:
             logger.warning(f"Server detection failed: {e}")
             fallback_result = FlextLdifModels.ServerDetectionResult(
                 detected_server_type=FlextLdifConstants.ServerTypes.RFC,

@@ -30,13 +30,12 @@ class TestServerDetectorInitialization:
 
         assert result.is_success
         status = result.unwrap()
-        assert isinstance(status, dict)
-        assert status["service"] == "FlextLdifServerDetector"
-        assert status["status"] == "initialized"
-        assert "capabilities" in status
-        capabilities = status.get("capabilities")
-        assert isinstance(capabilities, list)
-        assert "detect_server_type" in capabilities
+        assert status.config["service"] == "FlextLdifServerDetector"
+        assert status.status == "initialized"
+        assert hasattr(status, "services")
+        services = status.services
+        assert isinstance(services, list)
+        assert "detect_server_type" in services
 
 
 class TestOracleOidDetection:
@@ -55,12 +54,11 @@ attributeTypes: ( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' SYNTAX 1.3.6.1.4.1.146
         assert result.is_success
 
         detection = result.unwrap()
-        assert isinstance(detection, dict)
-        assert detection["detected_server_type"] == "oid"
-        confidence = detection.get("confidence")
+        assert detection.detected_server_type == "oid"
+        confidence = detection.confidence
         assert isinstance(confidence, (int, float))
         assert confidence > 0.6
-        patterns_found = detection.get("patterns_found")
+        patterns_found = detection.patterns_found
         assert isinstance(patterns_found, list)
         assert len(patterns_found) > 0
 
@@ -77,7 +75,7 @@ orclaci: (targetentry="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com")(versio
         assert result.is_success
 
         detection = result.unwrap()
-        assert detection["detected_server_type"] == "oid"
+        assert detection.detected_server_type == "oid"
 
     def test_oid_detection_includes_patterns_found(self) -> None:
         """Test that OID detection includes identified patterns."""
@@ -91,8 +89,7 @@ orclaci: test
         assert result.is_success
 
         detection = result.unwrap()
-        assert isinstance(detection, dict)
-        patterns = detection.get("patterns_found")
+        patterns = detection.patterns_found
         assert isinstance(patterns, list)
         assert any("Oracle OID" in p for p in patterns)
 
@@ -114,9 +111,8 @@ ds-pwp-account-disabled: TRUE
         assert result.is_success
 
         detection = result.unwrap()
-        assert isinstance(detection, dict)
-        assert detection["detected_server_type"] == "oud"
-        confidence = detection.get("confidence")
+        assert detection.detected_server_type == "oud"
+        confidence = detection.confidence
         assert isinstance(confidence, (int, float))
         assert confidence > 0.6
 
@@ -134,7 +130,7 @@ entryUUID: 12345678-1234-5678-1234-567812345678
 
         detection = result.unwrap()
         # Should detect OUD if entryUUID is present
-        assert detection["detected_server_type"] in {"oud", "generic", "rfc"}
+        assert detection.detected_server_type in {"oud", "generic", "rfc"}
 
 
 class TestOpenLdapDetection:
@@ -154,9 +150,8 @@ olcAccess: to * by self write
         assert result.is_success
 
         detection = result.unwrap()
-        assert isinstance(detection, dict)
-        assert detection["detected_server_type"] == "openldap"
-        confidence = detection.get("confidence")
+        assert detection.detected_server_type == "openldap"
+        confidence = detection.confidence
         assert isinstance(confidence, (int, float))
         assert confidence > 0.6
 
@@ -172,8 +167,7 @@ olcOverlay: syncprov
         assert result.is_success
 
         detection = result.unwrap()
-        assert isinstance(detection, dict)
-        patterns = detection.get("patterns_found")
+        patterns = detection.patterns_found
         assert isinstance(patterns, list)
         assert any("OpenLDAP" in p for p in patterns)
 
@@ -193,7 +187,7 @@ attributeTypes: ( 1.2.840.113556.1.4.1 NAME 'samAccountName' SYNTAX 1.3.6.1.4.1.
         assert result.is_success
 
         detection = result.unwrap()
-        assert detection["detected_server_type"] == "active_directory"
+        assert detection.detected_server_type == "active_directory"
 
     def test_detect_active_directory_by_attributes(self) -> None:
         """Test detection of Active Directory by AD-specific attributes."""
@@ -209,7 +203,7 @@ objectGUID: {12345678-1234-5678-1234-567812345678}
         assert result.is_success
 
         detection = result.unwrap()
-        assert detection["detected_server_type"] == "active_directory"
+        assert detection.detected_server_type == "active_directory"
 
 
 class TestConfidenceScoring:
@@ -230,9 +224,9 @@ cn: test
 
         detection = result.unwrap()
         # Generic content detects as "generic" with perfect confidence (only generic baseline score)
-        assert detection["detected_server_type"] == "generic"
+        assert detection.detected_server_type == "generic"
         # Confidence is 1.0 since only generic score (1) exists, total is 1
-        assert detection["confidence"] == 1.0
+        assert detection.confidence == 1.0
 
     def test_high_confidence_scoring(self) -> None:
         """Test that specific server patterns produce high confidence."""
@@ -249,9 +243,8 @@ orclaci: test
         assert result.is_success
 
         detection = result.unwrap()
-        assert isinstance(detection, dict)
-        assert detection["detected_server_type"] == "oid"
-        confidence = detection.get("confidence")
+        assert detection.detected_server_type == "oid"
+        confidence = detection.confidence
         assert isinstance(confidence, (int, float))
         assert confidence > 0.8
 
@@ -267,9 +260,9 @@ objectClass: person
         assert result.is_success
 
         detection = result.unwrap()
-        assert "confidence" in detection
-        assert isinstance(detection["confidence"], float)
-        assert 0.0 <= detection["confidence"] <= 1.0
+        assert hasattr(detection, "confidence")
+        assert isinstance(detection.confidence, float)
+        assert 0.0 <= detection.confidence <= 1.0
 
 
 class TestDetectionFromFile:
@@ -292,7 +285,7 @@ olcAccess: to * by self write
         assert result.is_success
 
         detection = result.unwrap()
-        assert detection["detected_server_type"] == "openldap"
+        assert detection.detected_server_type == "openldap"
 
     def test_detect_handles_encoding_issues(self, tmp_path: Path) -> None:
         """Test that detector handles encoding issues gracefully."""
@@ -327,7 +320,7 @@ ds-pwp-account-disabled: TRUE
 """
         result = detector.detect_server_type(ldif_content=ldif_content)
         assert result.is_success
-        assert result.unwrap()["detected_server_type"] == "oud"
+        assert result.unwrap().detected_server_type == "oud"
 
     def test_error_when_no_input(self) -> None:
         """Test that error is returned when no input provided."""
@@ -366,11 +359,11 @@ objectClass: person
         assert result.is_success
 
         detection = result.unwrap()
-        assert "detected_server_type" in detection
-        assert "confidence" in detection
-        assert "scores" in detection
-        assert "patterns_found" in detection
-        assert "is_confident" in detection
+        assert hasattr(detection, "detected_server_type")
+        assert hasattr(detection, "confidence")
+        assert hasattr(detection, "scores")
+        assert hasattr(detection, "patterns_found")
+        assert hasattr(detection, "is_confident")
 
     def test_scores_dict_structure(self) -> None:
         """Test that scores dictionary contains expected server types."""
@@ -383,8 +376,7 @@ attributeTypes: ( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' )
         assert result.is_success
 
         detection = result.unwrap()
-        assert isinstance(detection, dict)
-        scores = detection.get("scores")
+        scores = detection.scores
         assert isinstance(scores, dict)
         # Should have scores for all server types
         assert "oid" in scores
@@ -404,7 +396,7 @@ olcDatabase: mdb
         assert result.is_success
 
         detection = result.unwrap()
-        patterns = detection["patterns_found"]
+        patterns = detection.patterns_found
         assert isinstance(patterns, list)
         assert all(isinstance(p, str) for p in patterns)
 
@@ -422,13 +414,12 @@ objectClasses: ( 2.16.840.1.113894.1.0.1 NAME 'orclPerson' )
         assert result.is_success
 
         detection = result.unwrap()
-        assert isinstance(detection, dict)
-        confidence = detection.get("confidence")
+        confidence = detection.confidence
         assert isinstance(confidence, (int, float))
         if confidence >= 0.6:
-            assert detection["is_confident"] is True
+            assert detection.is_confident is True
         else:
-            assert detection["is_confident"] is False
+            assert detection.is_confident is False
 
 
 class TestMultipleServerPatterns:
@@ -450,7 +441,7 @@ attributeTypes: ( 1.2.840.113556.1.4.1 NAME 'samAccountName' )
         detection = result.unwrap()
         # OID and AD patterns present, but scores might not be high enough for detection
         # The RFC content baseline makes confidence calculation unclear, so accept any valid detection
-        assert detection["detected_server_type"] in {
+        assert detection.detected_server_type in {
             "oid",
             "active_directory",
             "generic",
@@ -472,7 +463,7 @@ cn: test
 
         detection = result.unwrap()
         # Should detect as generic or rfc on weak patterns
-        assert detection["detected_server_type"] in {"generic", "rfc"}
+        assert detection.detected_server_type in {"generic", "rfc"}
 
 
 class TestDetectionEdgeCases:
@@ -487,7 +478,7 @@ class TestDetectionEdgeCases:
 
         detection = result.unwrap()
         # Empty content should fall back to RFC or generic
-        assert detection["detected_server_type"] in {"generic", "rfc"}
+        assert detection.detected_server_type in {"generic", "rfc"}
 
     def test_whitespace_only_content(self) -> None:
         """Test detection with whitespace-only content."""
@@ -497,7 +488,7 @@ class TestDetectionEdgeCases:
         assert result.is_success
 
         detection = result.unwrap()
-        assert detection["detected_server_type"] in {"generic", "rfc"}
+        assert detection.detected_server_type in {"generic", "rfc"}
 
     def test_case_insensitive_attribute_matching(self) -> None:
         """Test that attribute matching is case-insensitive."""
@@ -513,4 +504,4 @@ OlcAccess: to * by self write
 
         detection = result.unwrap()
         # Should detect OpenLDAP regardless of case
-        assert detection["detected_server_type"] == "openldap"
+        assert detection.detected_server_type == "openldap"

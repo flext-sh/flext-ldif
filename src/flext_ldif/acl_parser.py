@@ -54,7 +54,7 @@ class FlextLdifAclParser(FlextService[dict[str, object]]):
                 raw_acl=acl_string,
             )
             return FlextResult[FlextLdifModels.Acl].ok(acl)
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError) as e:
             return FlextResult[FlextLdifModels.Acl].fail(
                 f"Failed to parse OpenLDAP ACL: {e}"
             )
@@ -80,7 +80,7 @@ class FlextLdifAclParser(FlextService[dict[str, object]]):
                 raw_acl=acl_string,
             )
             return FlextResult[FlextLdifModels.Acl].ok(acl)
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError) as e:
             return FlextResult[FlextLdifModels.Acl].fail(
                 f"Failed to parse 389DS ACL: {e}"
             )
@@ -120,7 +120,7 @@ class FlextLdifAclParser(FlextService[dict[str, object]]):
                 raw_acl=acl_string,
             )
             return FlextResult[FlextLdifModels.Acl].ok(acl)
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError) as e:
             return FlextResult[FlextLdifModels.Acl].fail(
                 f"Failed to parse Oracle ACL: {e}"
             )

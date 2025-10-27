@@ -192,7 +192,7 @@ class FlextLdifUtilities:
                 entry_out = entry.copy()
                 entry_out[FlextLdifConstants.DictKeys.ATTRIBUTES] = attrs
                 return entry_out
-            except Exception:
+            except (ValueError, TypeError, AttributeError):
                 return entry
 
     class Sorter:
@@ -464,7 +464,7 @@ class FlextLdifUtilities:
                         )
 
                     return FlextResult[FlextLdifModels.Acl].ok(unified_acl)
-                except Exception as e:
+                except (ValueError, TypeError, AttributeError) as e:
                     return FlextResult[FlextLdifModels.Acl].fail(
                         f"Failed to create ACL: {e}"
                     )

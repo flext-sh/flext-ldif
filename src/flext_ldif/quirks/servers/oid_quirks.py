@@ -1189,7 +1189,7 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBase.SchemaQuirk):
             """
             try:
                 # Change server_type to OID (use object.__setattr__ for frozen model)
-                object.__setattr__(acl_data, "server_type", "oid")  # noqa: PLC2801
+                object.__setattr__(acl_data, "server_type", "oid")
 
                 return FlextResult[FlextLdifModels.Acl].ok(acl_data)
 

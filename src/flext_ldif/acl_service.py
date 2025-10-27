@@ -70,7 +70,7 @@ class FlextLdifAclService(FlextService[dict[str, object]]):
                 _ = context  # Mark as intentionally unused
                 return FlextResult[bool].ok(True)
 
-            except Exception as e:
+            except (ValueError, TypeError, AttributeError) as e:
                 return FlextResult[bool].fail(f"ACL evaluation failed: {e}")
 
         def add_rule(self, rule: FlextLdifAclService.AclRule) -> None:
@@ -154,7 +154,7 @@ class FlextLdifAclService(FlextService[dict[str, object]]):
                 result = has_perm == self._required
                 return FlextResult[bool].ok(result)
 
-            except Exception as e:
+            except (ValueError, TypeError, AttributeError) as e:
                 return FlextResult[bool].fail(f"Permission rule evaluation failed: {e}")
 
     class SubjectRule(AclRule):
@@ -202,7 +202,7 @@ class FlextLdifAclService(FlextService[dict[str, object]]):
 
                 return FlextResult[bool].ok(result)
 
-            except Exception as e:
+            except (ValueError, TypeError, AttributeError) as e:
                 return FlextResult[bool].fail(f"Subject rule evaluation failed: {e}")
 
     class TargetRule(AclRule):
@@ -250,7 +250,7 @@ class FlextLdifAclService(FlextService[dict[str, object]]):
 
                 return FlextResult[bool].ok(result)
 
-            except Exception as e:
+            except (ValueError, TypeError, AttributeError) as e:
                 return FlextResult[bool].fail(f"Target rule evaluation failed: {e}")
 
     class TimeRule(AclRule):
@@ -323,7 +323,7 @@ class FlextLdifAclService(FlextService[dict[str, object]]):
 
                 return FlextResult[bool].ok(result)
 
-            except Exception as e:
+            except (ValueError, TypeError, AttributeError) as e:
                 return FlextResult[bool].fail(f"Time rule evaluation failed: {e}")
 
         def _parse_time_to_minutes(self, time_str: str) -> int:
@@ -379,7 +379,7 @@ class FlextLdifAclService(FlextService[dict[str, object]]):
 
                 return FlextResult[bool].ok(result)
 
-            except Exception as e:
+            except (ValueError, TypeError, AttributeError) as e:
                 return FlextResult[bool].fail(f"Group rule evaluation failed: {e}")
 
     @override
@@ -508,7 +508,7 @@ class FlextLdifAclService(FlextService[dict[str, object]]):
                 raw_acl=acl_string,
             )
             return FlextResult[FlextLdifModels.Acl].ok(acl)
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError) as e:
             return FlextResult[FlextLdifModels.Acl].fail(f"Failed to parse ACL: {e}")
 
     def evaluate_acl_rules(

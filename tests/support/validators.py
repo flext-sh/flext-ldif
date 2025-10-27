@@ -192,7 +192,7 @@ class TestValidators:
                 validations["encoding_valid"] = True
             except UnicodeDecodeError:
                 validations["encoding_valid"] = False
-            except Exception:
+            except (ValueError, TypeError, AttributeError):
                 validations["file_readable"] = False
 
         return validations

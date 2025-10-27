@@ -97,13 +97,13 @@ class TestOidQuirksWithRealFixtures:
 
         # Check for required methods
         assert hasattr(quirks, "parse_attribute")
-        assert callable(getattr(quirks, "parse_attribute"))
+        assert callable(quirks.parse_attribute)
         assert hasattr(quirks, "parse_objectclass")
-        assert callable(getattr(quirks, "parse_objectclass"))
+        assert callable(quirks.parse_objectclass)
         assert hasattr(quirks, "convert_attribute_to_rfc")
-        assert callable(getattr(quirks, "convert_attribute_to_rfc"))
+        assert callable(quirks.convert_attribute_to_rfc)
         assert hasattr(quirks, "convert_objectclass_to_rfc")
-        assert callable(getattr(quirks, "convert_objectclass_to_rfc"))
+        assert callable(quirks.convert_objectclass_to_rfc)
 
     def test_oid_quirks_has_entry_methods(self) -> None:
         """Test OID quirks has entry processing methods."""
@@ -111,7 +111,7 @@ class TestOidQuirksWithRealFixtures:
 
         # Check for EntryQuirk class if available
         if hasattr(quirks, "EntryQuirk"):
-            entry_quirk_class = getattr(quirks, "EntryQuirk")
+            entry_quirk_class = quirks.EntryQuirk
             assert callable(entry_quirk_class)
 
     def test_oid_quirks_can_handle_oracle_attributes(self) -> None:
@@ -195,7 +195,7 @@ class TestOidQuirksWithRealFixtures:
 
         # Should have extract_schemas_from_ldif method
         assert hasattr(quirks, "extract_schemas_from_ldif")
-        assert callable(getattr(quirks, "extract_schemas_from_ldif"))
+        assert callable(quirks.extract_schemas_from_ldif)
 
     def test_oid_quirks_convert_attribute_to_rfc(self) -> None:
         """Test OID quirks can convert attributes to RFC format."""
@@ -203,7 +203,7 @@ class TestOidQuirksWithRealFixtures:
 
         # Test conversion capability
         assert hasattr(quirks, "convert_attribute_to_rfc")
-        assert callable(getattr(quirks, "convert_attribute_to_rfc"))
+        assert callable(quirks.convert_attribute_to_rfc)
 
     def test_oid_quirks_convert_objectclass_to_rfc(self) -> None:
         """Test OID quirks can convert objectClasses to RFC format."""
@@ -211,7 +211,7 @@ class TestOidQuirksWithRealFixtures:
 
         # Test conversion capability
         assert hasattr(quirks, "convert_objectclass_to_rfc")
-        assert callable(getattr(quirks, "convert_objectclass_to_rfc"))
+        assert callable(quirks.convert_objectclass_to_rfc)
 
     def test_oid_quirks_write_attribute_to_rfc(self) -> None:
         """Test OID quirks can write attributes in RFC format."""
@@ -219,7 +219,7 @@ class TestOidQuirksWithRealFixtures:
 
         # Test write capability
         assert hasattr(quirks, "write_attribute_to_rfc")
-        assert callable(getattr(quirks, "write_attribute_to_rfc"))
+        assert callable(quirks.write_attribute_to_rfc)
 
     def test_oid_quirks_write_objectclass_to_rfc(self) -> None:
         """Test OID quirks can write objectClasses in RFC format."""
@@ -227,7 +227,7 @@ class TestOidQuirksWithRealFixtures:
 
         # Test write capability
         assert hasattr(quirks, "write_objectclass_to_rfc")
-        assert callable(getattr(quirks, "write_objectclass_to_rfc"))
+        assert callable(quirks.write_objectclass_to_rfc)
 
     def test_oid_quirks_nested_acl_quirk_available(self) -> None:
         """Test OID quirks has nested ACL Quirk class."""
@@ -235,7 +235,7 @@ class TestOidQuirksWithRealFixtures:
 
         # Should have AclQuirk nested class
         assert hasattr(quirks, "AclQuirk")
-        acl_quirk_class = getattr(quirks, "AclQuirk")
+        acl_quirk_class = quirks.AclQuirk
         assert callable(acl_quirk_class)
 
     def test_oid_quirks_nested_entry_quirk_available(self) -> None:
@@ -244,7 +244,7 @@ class TestOidQuirksWithRealFixtures:
 
         # Should have EntryQuirk nested class
         assert hasattr(quirks, "EntryQuirk")
-        entry_quirk_class = getattr(quirks, "EntryQuirk")
+        entry_quirk_class = quirks.EntryQuirk
         assert callable(entry_quirk_class)
 
     def test_oid_quirks_acl_processing_methods(self) -> None:
@@ -254,11 +254,11 @@ class TestOidQuirksWithRealFixtures:
 
         # Check for ACL processing methods
         assert hasattr(acl_quirk, "parse_acl")
-        assert callable(getattr(acl_quirk, "parse_acl"))
+        assert callable(acl_quirk.parse_acl)
         assert hasattr(acl_quirk, "convert_acl_to_rfc")
-        assert callable(getattr(acl_quirk, "convert_acl_to_rfc"))
+        assert callable(acl_quirk.convert_acl_to_rfc)
         assert hasattr(acl_quirk, "write_acl_to_rfc")
-        assert callable(getattr(acl_quirk, "write_acl_to_rfc"))
+        assert callable(acl_quirk.write_acl_to_rfc)
 
     def test_oid_quirks_entry_processing_methods(self) -> None:
         """Test OID quirks entry processing methods exist."""
@@ -267,11 +267,11 @@ class TestOidQuirksWithRealFixtures:
 
         # Check for entry processing methods
         assert hasattr(entry_quirk, "process_entry")
-        assert callable(getattr(entry_quirk, "process_entry"))
+        assert callable(entry_quirk.process_entry)
         assert hasattr(entry_quirk, "convert_entry_to_rfc")
-        assert callable(getattr(entry_quirk, "convert_entry_to_rfc"))
+        assert callable(entry_quirk.convert_entry_to_rfc)
         assert hasattr(entry_quirk, "clean_dn")
-        assert callable(getattr(entry_quirk, "clean_dn"))
+        assert callable(entry_quirk.clean_dn)
 
     def test_oid_quirks_parse_real_rfc1274_attribute(self) -> None:
         """Test parsing real RFC 1274 attribute from OID schema fixture."""
@@ -300,7 +300,7 @@ class TestOidQuirksWithRealFixtures:
 
         # Check for convert_attribute_from_rfc method
         assert hasattr(quirks, "convert_attribute_from_rfc")
-        assert callable(getattr(quirks, "convert_attribute_from_rfc"))
+        assert callable(quirks.convert_attribute_from_rfc)
 
     def test_oid_quirks_convert_objectclass_from_rfc(self) -> None:
         """Test OID quirks has objectClass conversion from RFC."""
@@ -308,7 +308,7 @@ class TestOidQuirksWithRealFixtures:
 
         # Check for convert_objectclass_from_rfc method
         assert hasattr(quirks, "convert_objectclass_from_rfc")
-        assert callable(getattr(quirks, "convert_objectclass_from_rfc"))
+        assert callable(quirks.convert_objectclass_from_rfc)
 
     def test_oid_acl_quirk_can_handle_oracle_aci(self) -> None:
         """Test OID ACL quirk can detect Oracle ACL entries."""
@@ -342,7 +342,7 @@ class TestOidQuirksWithRealFixtures:
 
         # Check for entry detection method
         assert hasattr(entry_quirk, "can_handle_entry")
-        assert callable(getattr(entry_quirk, "can_handle_entry"))
+        assert callable(entry_quirk.can_handle_entry)
 
     def test_oid_acl_quirk_can_handle_entry_level_aci(self) -> None:
         """Test OID ACL quirk handles entry-level ACIs."""

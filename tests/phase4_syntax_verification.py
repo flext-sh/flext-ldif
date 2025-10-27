@@ -29,7 +29,7 @@ def check_file_syntax(filepath: Path) -> tuple[bool, str]:
         return True, "Valid syntax"
     except SyntaxError as e:
         return False, f"Syntax error at line {e.lineno}: {e.msg}"
-    except Exception as e:
+    except (ValueError, TypeError, AttributeError) as e:
         return False, str(e)
 
 
@@ -45,7 +45,7 @@ def check_file_has_class(filepath: Path, class_name: str) -> tuple[bool, str]:
                 return True, f"Class '{class_name}' found"
 
         return False, f"Class '{class_name}' not found"
-    except Exception as e:
+    except (ValueError, TypeError, AttributeError) as e:
         return False, str(e)
 
 
@@ -73,7 +73,7 @@ def check_file_has_method(
                 )
 
         return False, f"Class '{class_name}' not found"
-    except Exception as e:
+    except (ValueError, TypeError, AttributeError) as e:
         return False, str(e)
 
 

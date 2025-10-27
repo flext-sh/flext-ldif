@@ -95,7 +95,7 @@ class FlextLdifQuirksRegistry(FlextModels.Value):
 
             return FlextResult[None].ok(None)
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError) as e:
             return FlextResult[None].fail(f"Failed to register schema quirk: {e}")
 
     def register_acl_quirk(self, quirk: BaseAclQuirk) -> FlextResult[None]:
@@ -131,7 +131,7 @@ class FlextLdifQuirksRegistry(FlextModels.Value):
 
             return FlextResult[None].ok(None)
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError) as e:
             return FlextResult[None].fail(f"Failed to register ACL quirk: {e}")
 
     def register_entry_quirk(self, quirk: BaseEntryQuirk) -> FlextResult[None]:
@@ -167,7 +167,7 @@ class FlextLdifQuirksRegistry(FlextModels.Value):
 
             return FlextResult[None].ok(None)
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError) as e:
             return FlextResult[None].fail(f"Failed to register entry quirk: {e}")
 
     def get_schema_quirks(self, server_type: str) -> list[BaseSchemaQuirk]:

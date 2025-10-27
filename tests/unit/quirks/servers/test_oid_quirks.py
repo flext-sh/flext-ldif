@@ -807,7 +807,7 @@ class TestOidEntryQuirks:
         assert result.is_success
 
         processed = result.unwrap()
-        assert processed[FlextLdifConstants.DictKeys.DN] == entry_dn
+        assert processed.dn == entry_dn
         assert "cn" in processed
 
     def test_process_oracle_context_entry(
@@ -826,7 +826,7 @@ class TestOidEntryQuirks:
         assert result.is_success
 
         processed = result.unwrap()
-        assert processed[FlextLdifConstants.DictKeys.DN] == entry_dn
+        assert processed.dn == entry_dn
         assert "orclguid" in processed
 
     def test_process_entry_with_acls(
@@ -852,7 +852,7 @@ class TestOidEntryQuirks:
 
         processed = result.unwrap()
 
-        assert processed[FlextLdifConstants.DictKeys.DN] == entry_dn
+        assert processed.dn == entry_dn
 
         assert "_acl_attributes" in processed
         acl_attrs = processed["_acl_attributes"]
@@ -953,9 +953,7 @@ class TestOidEntryQuirks:
         rfc_data = result.unwrap()
         # RFC conversion preserves all attributes - filtering is done at migration layer
 
-        assert (
-            rfc_data[FlextLdifConstants.DictKeys.DN] == "cn=test,dc=network,dc=example"
-        )
+        assert rfc_data.dn == "cn=test,dc=network,dc=example"
         # OID-specific attributes are preserved during format conversion
 
         assert "orclguid" in rfc_data  # Format converted, not filtered
@@ -985,7 +983,7 @@ class TestOidEntryQuirks:
 
         # Validate essential data preserved
 
-        assert rfc_data[FlextLdifConstants.DictKeys.DN] == original_dn
+        assert rfc_data.dn == original_dn
 
     def test_parse_attribute_error_handling(
         self, oid_quirk: FlextLdifQuirksServersOid

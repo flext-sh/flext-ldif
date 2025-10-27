@@ -23,7 +23,7 @@ def test_ldap_connection() -> None:
     try:
         if not conn.bind():
             pytest.skip("LDAP server not available at localhost:3390")
-    except Exception:
+    except (ValueError, TypeError, AttributeError):
         pytest.skip("LDAP server not available at localhost:3390")
 
     assert conn.bound
@@ -47,7 +47,7 @@ def test_simple_ldap_search() -> None:
     try:
         if not conn.bind():
             pytest.skip("LDAP server not available at localhost:3390")
-    except Exception:
+    except (ValueError, TypeError, AttributeError):
         pytest.skip("LDAP server not available at localhost:3390")
 
     # Search for base DN
@@ -77,7 +77,7 @@ def test_create_and_export_entry() -> None:
     try:
         if not conn.bind():
             pytest.skip("LDAP server not available at localhost:3390")
-    except Exception:
+    except (ValueError, TypeError, AttributeError):
         pytest.skip("LDAP server not available at localhost:3390")
 
     # Create test entry

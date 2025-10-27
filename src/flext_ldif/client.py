@@ -150,7 +150,7 @@ class FlextLdifClient(FlextService[FlextLdifModels.ClientStatus]):
                 config={"default_encoding": config.ldif_encoding},
             )
             return FlextResult[FlextLdifModels.ClientStatus].ok(client_status)
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError) as e:
             return FlextResult[FlextLdifModels.ClientStatus].fail(
                 f"Client status check failed: {e}"
             )
@@ -395,7 +395,7 @@ class FlextLdifClient(FlextService[FlextLdifModels.ClientStatus]):
                 return FlextResult[str].ok(
                     f"Successfully wrote {len(entries)} entries to {output_path}"
                 )
-            except Exception as e:
+            except (ValueError, TypeError, AttributeError) as e:
                 return FlextResult[str].fail(
                     f"Failed to write to file {output_path}: {e}"
                 )
@@ -554,7 +554,7 @@ class FlextLdifClient(FlextService[FlextLdifModels.ClientStatus]):
                 migration_result.unwrap()
             )
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError) as e:
             logger = self.logger
             logger.exception("Migration failed")
             return FlextResult[FlextLdifModels.MigrationPipelineResult].fail(
@@ -780,7 +780,7 @@ class FlextLdifClient(FlextService[FlextLdifModels.ClientStatus]):
                 ]
             ].ok(filtered)
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError) as e:
             return FlextResult[
                 list[
                     FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass
@@ -868,7 +868,7 @@ class FlextLdifClient(FlextService[FlextLdifModels.ClientStatus]):
 
             return FlextResult[FlextLdifModels.CategorizedEntries].ok(categorized)
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError) as e:
             return FlextResult[FlextLdifModels.CategorizedEntries].fail(
                 f"Failed to categorize entries: {e}"
             )
@@ -906,7 +906,7 @@ class FlextLdifClient(FlextService[FlextLdifModels.ClientStatus]):
                 f"LDIF content is not valid UTF-8 (RFC 2849 violation): "
                 f"Invalid byte at position {e.start}: {e.reason}"
             )
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError) as e:
             return FlextResult[str].fail(f"Failed to detect encoding: {e}")
 
     def normalize_encoding(
@@ -936,7 +936,7 @@ class FlextLdifClient(FlextService[FlextLdifModels.ClientStatus]):
         except UnicodeEncodeError as e:
             msg = f"Content has characters not representable in {target_encoding}: {e}"
             return FlextResult[str].fail(msg)
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError) as e:
             return FlextResult[str].fail(
                 f"Failed to normalize encoding to {target_encoding}: {e}"
             )
@@ -975,7 +975,7 @@ class FlextLdifClient(FlextService[FlextLdifModels.ClientStatus]):
 
             return FlextResult[bool].ok(True)
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError) as e:
             return FlextResult[bool].fail(f"Failed to validate LDIF syntax: {e}")
 
     def count_ldif_entries(self, content: str) -> FlextResult[int]:
@@ -1015,7 +1015,7 @@ class FlextLdifClient(FlextService[FlextLdifModels.ClientStatus]):
 
             return FlextResult[int].ok(count)
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError) as e:
             return FlextResult[int].fail(f"Failed to count LDIF entries: {e}")
 
     # =========================================================================
@@ -1173,7 +1173,7 @@ class FlextLdifClient(FlextService[FlextLdifModels.ClientStatus]):
             # Default to configured server type
             return FlextResult[str].ok(config.server_type)
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError) as e:
             return FlextResult[str].fail(f"Error determining server type: {e}")
 
     def detect_server_type(
@@ -1200,7 +1200,7 @@ class FlextLdifClient(FlextService[FlextLdifModels.ClientStatus]):
                 ldif_path=ldif_path,
                 ldif_content=ldif_content,
             )
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError) as e:
             return FlextResult[FlextLdifModels.ServerDetectionResult].fail(
                 f"Server detection failed: {e}"
             )

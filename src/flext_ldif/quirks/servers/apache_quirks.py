@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import base64
 import re
-from typing import ClassVar, cast
+from typing import ClassVar
 
 from flext_core import FlextResult
 
@@ -14,6 +14,10 @@ from flext_ldif.quirks.base import (
     BaseAclQuirk,
     BaseEntryQuirk,
     BaseSchemaQuirk,
+)
+from flext_ldif.quirks.rfc_parsers import (
+    RfcAttributeParser,
+    RfcObjectClassParser,
 )
 from flext_ldif.typings import FlextLdifTypes
 
@@ -71,125 +75,23 @@ class FlextLdifQuirksServersApache(BaseSchemaQuirk):
         self, attr_definition: str
     ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
         """Parse ApacheDS attribute definition."""
-        try:
-            oid_match = re.search(r"\(\s*([\d.]+)", attr_definition)
-            if not oid_match:
-                return FlextResult[FlextLdifModels.SchemaAttribute].fail(
-                    "ApacheDS attribute definition is missing an OID"
-                )
-
-            name_tokens = re.findall(
-                r"NAME\s+\(?\s*'([^']+)'", attr_definition, re.IGNORECASE
-            )
-            primary_name = name_tokens[0] if name_tokens else oid_match.group(1)
-
-            desc_match = re.search(r"DESC\s+'([^']+)'", attr_definition, re.IGNORECASE)
-            sup_match = re.search(r"SUP\s+([\w-]+)", attr_definition, re.IGNORECASE)
-            equality_match = re.search(
-                r"EQUALITY\s+([\w-]+)", attr_definition, re.IGNORECASE
-            )
-            ordering_match = re.search(
-                r"ORDERING\s+([\w-]+)", attr_definition, re.IGNORECASE
-            )
-            substr_match = re.search(
-                r"SUBSTR\s+([\w-]+)", attr_definition, re.IGNORECASE
-            )
-            syntax_match = re.search(
-                r"SYNTAX\s+([\d.]+)(?:\{(\d+)\})?", attr_definition, re.IGNORECASE
-            )
-            single_value = bool(
-                re.search(r"\bSINGLE-VALUE\b", attr_definition, re.IGNORECASE)
-            )
-
-            attr_data: dict[str, object] = {
-                FlextLdifConstants.DictKeys.OID: oid_match.group(1),
-                FlextLdifConstants.DictKeys.NAME: primary_name,
-                FlextLdifConstants.DictKeys.DESC: desc_match.group(1)
-                if desc_match
-                else None,
-                FlextLdifConstants.DictKeys.SUP: sup_match.group(1)
-                if sup_match
-                else None,
-                FlextLdifConstants.DictKeys.EQUALITY: equality_match.group(1)
-                if equality_match
-                else None,
-                FlextLdifConstants.DictKeys.ORDERING: ordering_match.group(1)
-                if ordering_match
-                else None,
-                FlextLdifConstants.DictKeys.SUBSTR: substr_match.group(1)
-                if substr_match
-                else None,
-                FlextLdifConstants.DictKeys.SYNTAX: syntax_match.group(1)
-                if syntax_match
-                else None,
-                FlextLdifConstants.DictKeys.SINGLE_VALUE: single_value,
-                FlextLdifConstants.DictKeys.SERVER_TYPE: self.server_type,
-            }
-
-            if syntax_match and syntax_match.group(2):
-                attr_data["syntax_length"] = int(syntax_match.group(2))
-
-            if name_tokens:
-                attr_data["aliases"] = list(name_tokens)
-
-            # Create proper SchemaAttribute model with metadata for server-specific info
-            metadata = FlextLdifModels.QuirkMetadata(
-                original_format="apache",
-                quirk_type="schema_attribute",
-                extensions={
-                    "server_type": attr_data.get(
-                        FlextLdifConstants.DictKeys.SERVER_TYPE, self.server_type
-                    ),
-                    "aliases": attr_data.get("aliases"),
-                    "syntax_length": attr_data.get("syntax_length"),
-                },
-            )
-
-            # Extract syntax length if present (convert to int for model)
-            syntax_length_val = attr_data.get("syntax_length")
-            length_val: int | None = None
-            if syntax_length_val is not None and isinstance(
-                syntax_length_val, (int, str)
-            ):
-                try:
-                    length_val = int(syntax_length_val)
-                except (ValueError, TypeError):
-                    length_val = None
-
-            schema_attr = FlextLdifModels.SchemaAttribute(
-                oid=str(attr_data[FlextLdifConstants.DictKeys.OID]),
-                name=str(attr_data[FlextLdifConstants.DictKeys.NAME]),
-                desc=str(attr_data.get(FlextLdifConstants.DictKeys.DESC))
-                if attr_data.get(FlextLdifConstants.DictKeys.DESC)
-                else None,
-                syntax=str(attr_data.get(FlextLdifConstants.DictKeys.SYNTAX))
-                if attr_data.get(FlextLdifConstants.DictKeys.SYNTAX)
-                else None,
-                length=length_val,
-                equality=str(attr_data.get(FlextLdifConstants.DictKeys.EQUALITY))
-                if attr_data.get(FlextLdifConstants.DictKeys.EQUALITY)
-                else None,
-                ordering=str(attr_data.get(FlextLdifConstants.DictKeys.ORDERING))
-                if attr_data.get(FlextLdifConstants.DictKeys.ORDERING)
-                else None,
-                substr=str(attr_data.get(FlextLdifConstants.DictKeys.SUBSTR))
-                if attr_data.get(FlextLdifConstants.DictKeys.SUBSTR)
-                else None,
-                single_value=bool(
-                    attr_data.get(FlextLdifConstants.DictKeys.SINGLE_VALUE)
-                ),
-                usage=None,  # Apache DS stub - usage not extracted from attr_data
-                sup=str(attr_data.get(FlextLdifConstants.DictKeys.SUP))
-                if attr_data.get(FlextLdifConstants.DictKeys.SUP)
-                else None,
-                metadata=metadata,
-            )
-            return FlextResult[FlextLdifModels.SchemaAttribute].ok(schema_attr)
-
-        except Exception as exc:
+        # Use RFC parser as foundation
+        rfc_result = RfcAttributeParser.parse_common(
+            attr_definition, case_insensitive=True
+        )
+        if not rfc_result.is_success:
             return FlextResult[FlextLdifModels.SchemaAttribute].fail(
-                f"Apache Directory Server attribute parsing failed: {exc}"
+                f"Apache Directory Server attribute parsing failed: {rfc_result.error}"
             )
+
+        # Enhance with Apache-specific metadata
+        attribute = rfc_result.unwrap()
+        attribute.metadata = FlextLdifModels.QuirkMetadata.create_for_quirk(
+            quirk_type="apache_directory",
+            original_format=attr_definition.strip(),
+        )
+
+        return FlextResult[FlextLdifModels.SchemaAttribute].ok(attribute)
 
     def can_handle_objectclass(self, oc_definition: str) -> bool:
         """Detect ApacheDS objectClass definitions."""
@@ -207,100 +109,23 @@ class FlextLdifQuirksServersApache(BaseSchemaQuirk):
         self, oc_definition: str
     ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
         """Parse ApacheDS objectClass definition."""
-        try:
-            oid_match = re.search(r"\(\s*([\d.]+)", oc_definition)
-            if not oid_match:
-                return FlextResult[FlextLdifModels.SchemaObjectClass].fail(
-                    "ApacheDS objectClass definition is missing an OID"
-                )
-
-            name_tokens = re.findall(
-                r"NAME\s+\(?\s*'([^']+)'", oc_definition, re.IGNORECASE
-            )
-            primary_name = name_tokens[0] if name_tokens else oid_match.group(1)
-
-            desc_match = re.search(r"DESC\s+'([^']+)'", oc_definition, re.IGNORECASE)
-            sup_match = re.search(r"SUP\s+([\w-]+)", oc_definition, re.IGNORECASE)
-
-            must_match = re.search(r"MUST\s+\(([^)]+)\)", oc_definition, re.IGNORECASE)
-            may_match = re.search(r"MAY\s+\(([^)]+)\)", oc_definition, re.IGNORECASE)
-            must_attrs = (
-                [attr.strip() for attr in must_match.group(1).split("$")]
-                if must_match
-                else []
-            )
-            may_attrs = (
-                [attr.strip() for attr in may_match.group(1).split("$")]
-                if may_match
-                else []
-            )
-
-            if re.search(r"\bSTRUCTURAL\b", oc_definition, re.IGNORECASE):
-                kind = FlextLdifConstants.Schema.STRUCTURAL
-            elif re.search(r"\bAUXILIARY\b", oc_definition, re.IGNORECASE):
-                kind = FlextLdifConstants.Schema.AUXILIARY
-            elif re.search(r"\bABSTRACT\b", oc_definition, re.IGNORECASE):
-                kind = FlextLdifConstants.Schema.ABSTRACT
-            else:
-                kind = FlextLdifConstants.Schema.STRUCTURAL
-
-            oc_data: dict[str, object] = {
-                FlextLdifConstants.DictKeys.OID: oid_match.group(1),
-                FlextLdifConstants.DictKeys.NAME: primary_name,
-                FlextLdifConstants.DictKeys.DESC: desc_match.group(1)
-                if desc_match
-                else None,
-                FlextLdifConstants.DictKeys.SUP: sup_match.group(1)
-                if sup_match
-                else None,
-                FlextLdifConstants.DictKeys.MUST: [attr for attr in must_attrs if attr],
-                FlextLdifConstants.DictKeys.MAY: [attr for attr in may_attrs if attr],
-                FlextLdifConstants.DictKeys.KIND: kind,
-                FlextLdifConstants.DictKeys.SERVER_TYPE: self.server_type,
-            }
-
-            if name_tokens:
-                oc_data["aliases"] = list(name_tokens)
-
-            # Create proper SchemaObjectClass model with metadata for server-specific info
-            metadata = FlextLdifModels.QuirkMetadata(
-                original_format="apache",
-                quirk_type="schema_objectclass",
-                extensions={
-                    "server_type": oc_data.get(
-                        FlextLdifConstants.DictKeys.SERVER_TYPE, self.server_type
-                    ),
-                    "aliases": oc_data.get("aliases"),
-                },
-            )
-
-            schema_oc = FlextLdifModels.SchemaObjectClass(
-                oid=str(oc_data[FlextLdifConstants.DictKeys.OID]),
-                name=str(oc_data[FlextLdifConstants.DictKeys.NAME]),
-                desc=str(oc_data.get(FlextLdifConstants.DictKeys.DESC))
-                if oc_data.get(FlextLdifConstants.DictKeys.DESC)
-                else None,
-                sup=str(oc_data.get(FlextLdifConstants.DictKeys.SUP))
-                if oc_data.get(FlextLdifConstants.DictKeys.SUP)
-                else None,
-                kind=str(
-                    oc_data.get(
-                        FlextLdifConstants.DictKeys.KIND,
-                        FlextLdifConstants.Schema.STRUCTURAL,
-                    )
-                ),
-                must=cast(
-                    "list[str]", oc_data.get(FlextLdifConstants.DictKeys.MUST, [])
-                ),
-                may=cast("list[str]", oc_data.get(FlextLdifConstants.DictKeys.MAY, [])),
-                metadata=metadata,
-            )
-            return FlextResult[FlextLdifModels.SchemaObjectClass].ok(schema_oc)
-
-        except Exception as exc:
+        # Use RFC parser as foundation
+        rfc_result = RfcObjectClassParser.parse_common(
+            oc_definition, case_insensitive=True
+        )
+        if not rfc_result.is_success:
             return FlextResult[FlextLdifModels.SchemaObjectClass].fail(
-                f"Apache Directory Server objectClass parsing failed: {exc}"
+                f"Apache Directory Server objectClass parsing failed: {rfc_result.error}"
             )
+
+        # Enhance with Apache-specific metadata
+        oc_data = rfc_result.unwrap()
+        oc_data.metadata = FlextLdifModels.QuirkMetadata.create_for_quirk(
+            quirk_type="apache_directory",
+            original_format=oc_definition.strip(),
+        )
+
+        return FlextResult[FlextLdifModels.SchemaObjectClass].ok(oc_data)
 
     def convert_attribute_to_rfc(
         self, attr_data: FlextLdifModels.SchemaAttribute
@@ -324,7 +149,7 @@ class FlextLdifQuirksServersApache(BaseSchemaQuirk):
 
             return FlextResult[FlextLdifModels.SchemaAttribute].ok(rfc_data)
 
-        except Exception as exc:
+        except (ValueError, TypeError, AttributeError) as exc:
             return FlextResult[FlextLdifModels.SchemaAttribute].fail(
                 f"Apache Directory Server→RFC attribute conversion failed: {exc}"
             )
@@ -336,23 +161,18 @@ class FlextLdifQuirksServersApache(BaseSchemaQuirk):
         try:
             # Create a new SchemaObjectClass model with RFC-compliant data (remove server-specific metadata)
             rfc_data = FlextLdifModels.SchemaObjectClass(
-                oid=getattr(oc_data, FlextLdifConstants.DictKeys.OID, ""),
-                name=getattr(oc_data, FlextLdifConstants.DictKeys.NAME, "")
-                or getattr(oc_data, FlextLdifConstants.DictKeys.OID, ""),
-                desc=getattr(oc_data, FlextLdifConstants.DictKeys.DESC, None),
-                sup=getattr(oc_data, FlextLdifConstants.DictKeys.SUP, None),
-                kind=getattr(
-                    oc_data,
-                    FlextLdifConstants.DictKeys.KIND,
-                    FlextLdifConstants.Schema.STRUCTURAL,
-                ),
-                must=getattr(oc_data, FlextLdifConstants.DictKeys.MUST, []),
-                may=getattr(oc_data, FlextLdifConstants.DictKeys.MAY, []),
+                oid=oc_data.oid,
+                name=oc_data.name or oc_data.oid,
+                desc=oc_data.desc,
+                sup=oc_data.sup,
+                kind=oc_data.kind or FlextLdifConstants.Schema.STRUCTURAL,
+                must=oc_data.must or [],
+                may=oc_data.may or [],
             )
 
             return FlextResult[FlextLdifModels.SchemaObjectClass].ok(rfc_data)
 
-        except Exception as exc:
+        except (ValueError, TypeError, AttributeError) as exc:
             return FlextResult[FlextLdifModels.SchemaObjectClass].fail(
                 f"Apache Directory Server→RFC objectClass conversion failed: {exc}"
             )
@@ -362,13 +182,17 @@ class FlextLdifQuirksServersApache(BaseSchemaQuirk):
     ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
         """Convert RFC-compliant attribute to ApacheDS-specific format."""
         try:
-            # ApacheDS uses RFC-compliant schema format
-            # Just create new model with updated metadata if needed
-            # Since models are frozen, we return the input model as-is
-            # (ApacheDS format is identical to RFC format for attributes)
-            return FlextResult[FlextLdifModels.SchemaAttribute].ok(rfc_data)
+            # Update metadata to indicate Apache Directory Server format
+            updated_metadata = FlextLdifModels.QuirkMetadata.create_for_quirk(
+                quirk_type="apache_directory",
+                original_format=None,
+            )
+            converted = rfc_data.model_copy(
+                update={"metadata": updated_metadata}, deep=True
+            )
+            return FlextResult[FlextLdifModels.SchemaAttribute].ok(converted)
 
-        except Exception as exc:
+        except (ValueError, TypeError, AttributeError) as exc:
             return FlextResult[FlextLdifModels.SchemaAttribute].fail(
                 f"RFC→Apache Directory Server attribute conversion failed: {exc}"
             )
@@ -378,13 +202,17 @@ class FlextLdifQuirksServersApache(BaseSchemaQuirk):
     ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
         """Convert RFC-compliant objectClass to ApacheDS-specific format."""
         try:
-            # ApacheDS uses RFC-compliant schema format
-            # Just create new model with updated metadata if needed
-            # Since models are frozen, we return the input model as-is
-            # (ApacheDS format is identical to RFC format for objectClasses)
-            return FlextResult[FlextLdifModels.SchemaObjectClass].ok(rfc_data)
+            # Update metadata to indicate Apache Directory Server format
+            updated_metadata = FlextLdifModels.QuirkMetadata.create_for_quirk(
+                quirk_type="apache_directory",
+                original_format=None,
+            )
+            converted = rfc_data.model_copy(
+                update={"metadata": updated_metadata}, deep=True
+            )
+            return FlextResult[FlextLdifModels.SchemaObjectClass].ok(converted)
 
-        except Exception as exc:
+        except (ValueError, TypeError, AttributeError) as exc:
             return FlextResult[FlextLdifModels.SchemaObjectClass].fail(
                 f"RFC→Apache Directory Server objectClass conversion failed: {exc}"
             )
@@ -417,7 +245,7 @@ class FlextLdifQuirksServersApache(BaseSchemaQuirk):
             attr_str += " )"
 
             return FlextResult[str].ok(attr_str)
-        except Exception as exc:
+        except (ValueError, TypeError, AttributeError) as exc:
             return FlextResult[str].fail(
                 f"Apache Directory Server attribute write failed: {exc}"
             )
@@ -456,7 +284,7 @@ class FlextLdifQuirksServersApache(BaseSchemaQuirk):
             oc_str += " )"
 
             return FlextResult[str].ok(oc_str)
-        except Exception as exc:
+        except (ValueError, TypeError, AttributeError) as exc:
             return FlextResult[str].fail(
                 f"Apache Directory Server objectClass write failed: {exc}"
             )
@@ -514,7 +342,7 @@ class FlextLdifQuirksServersApache(BaseSchemaQuirk):
 
                 return FlextResult[FlextLdifModels.Acl].ok(acl_model)
 
-            except Exception as exc:
+            except (ValueError, TypeError, AttributeError) as exc:
                 return FlextResult[FlextLdifModels.Acl].fail(
                     f"Apache Directory Server ACL parsing failed: {exc}"
                 )
@@ -536,7 +364,7 @@ class FlextLdifQuirksServersApache(BaseSchemaQuirk):
                 )
                 return FlextResult[FlextLdifModels.Acl].ok(rfc_acl)
 
-            except Exception as exc:
+            except (ValueError, TypeError, AttributeError) as exc:
                 return FlextResult[FlextLdifModels.Acl].fail(
                     f"Apache Directory Server ACL→RFC conversion failed: {exc}"
                 )
@@ -558,7 +386,7 @@ class FlextLdifQuirksServersApache(BaseSchemaQuirk):
                 )
                 return FlextResult[FlextLdifModels.Acl].ok(apache_acl)
 
-            except Exception as exc:
+            except (ValueError, TypeError, AttributeError) as exc:
                 return FlextResult[FlextLdifModels.Acl].fail(
                     f"RFC→Apache Directory Server ACL conversion failed: {exc}"
                 )
@@ -590,7 +418,7 @@ class FlextLdifQuirksServersApache(BaseSchemaQuirk):
                     acl_str = f"{acl_attribute}:"
 
                 return FlextResult[str].ok(acl_str)
-            except Exception as exc:
+            except (ValueError, TypeError, AttributeError) as exc:
                 return FlextResult[str].fail(
                     f"Apache Directory Server ACL write failed: {exc}"
                 )
@@ -697,7 +525,7 @@ class FlextLdifQuirksServersApache(BaseSchemaQuirk):
                     processed_entry
                 )
 
-            except Exception as exc:
+            except (ValueError, TypeError, AttributeError) as exc:
                 return FlextResult[FlextLdifTypes.Models.EntryAttributesDict].fail(
                     f"Apache Directory Server entry processing failed: {exc}"
                 )
@@ -715,7 +543,7 @@ class FlextLdifQuirksServersApache(BaseSchemaQuirk):
                     normalized_entry
                 )
 
-            except Exception as exc:
+            except (ValueError, TypeError, AttributeError) as exc:
                 return FlextResult[FlextLdifTypes.Models.EntryAttributesDict].fail(
                     f"Apache Directory Server entry→RFC conversion failed: {exc}"
                 )

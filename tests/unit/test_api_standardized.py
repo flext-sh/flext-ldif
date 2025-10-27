@@ -191,7 +191,7 @@ class TestFilterEntriesMethods:
         filtered = result.unwrap()
         assert len(filtered) == 2
         for e in filtered:
-            oc_attr = e.attributes.attributes.get("objectClass")
+            oc_attr = e.attributes.attributes.objectClass
             assert oc_attr is not None
             oc_values = oc_attr.values if hasattr(oc_attr, "values") else oc_attr
             assert oc_values is not None
@@ -225,7 +225,7 @@ class TestFilterEntriesMethods:
         assert result.is_success
         filtered = result.unwrap()
         assert len(filtered) == 1
-        mail_attr = filtered[0].attributes.attributes.get("mail")
+        mail_attr = filtered[0].attributes.attributes.mail
         assert mail_attr is not None
         # Handle both raw lists and AttributeValues objects
         mail_values = mail_attr.values if hasattr(mail_attr, "values") else mail_attr
@@ -238,7 +238,7 @@ class TestFilterEntriesMethods:
         ldif = FlextLdif()
 
         def has_uid(entry: FlextLdifModels.Entry) -> bool:
-            uid_attr = entry.attributes.attributes.get("uid")
+            uid_attr = entry.attributes.attributes.uid
             return uid_attr is not None
 
         result = ldif.filter(sample_entries, custom_filter=has_uid)
@@ -411,15 +411,16 @@ class TestBuildMethods:
         entry = result.unwrap()
         assert entry.dn.value == "cn=John Doe,ou=People,dc=example,dc=com"
         # Try both camelCase and lowercase keys (builder may create either)
-        oc_attr = entry.attributes.attributes.get(
-            "objectClass"
-        ) or entry.attributes.attributes.get("objectclass")
+        oc_attr = (
+            entry.attributes.attributes.get("objectClass")
+            or entry.attributes.attributes.objectclass
+        )
         assert oc_attr is not None
         oc_values = oc_attr.values if hasattr(oc_attr, "values") else oc_attr
         assert oc_values is not None
         assert "person" in oc_values
         # Handle both raw lists and AttributeValues objects for mail
-        mail_attr = entry.attributes.attributes.get("mail")
+        mail_attr = entry.attributes.attributes.mail
         assert mail_attr is not None
         mail_values = mail_attr.values if hasattr(mail_attr, "values") else mail_attr
         assert mail_values == ["jdoe@example.com"]
@@ -441,15 +442,16 @@ class TestBuildMethods:
         entry = result.unwrap()
         assert entry.dn.value == "cn=Admins,ou=Groups,dc=example,dc=com"
         # Try both camelCase and lowercase keys (builder may create either)
-        oc_attr = entry.attributes.attributes.get(
-            "objectClass"
-        ) or entry.attributes.attributes.get("objectclass")
+        oc_attr = (
+            entry.attributes.attributes.get("objectClass")
+            or entry.attributes.attributes.objectclass
+        )
         assert oc_attr is not None
         oc_values = oc_attr.values if hasattr(oc_attr, "values") else oc_attr
         assert oc_values is not None
         assert "groupOfNames" in oc_values
         # Handle AttributeValues objects for member
-        member_attr = entry.attributes.attributes.get("member")
+        member_attr = entry.attributes.attributes.member
         assert member_attr is not None
         member_values = (
             member_attr.values if hasattr(member_attr, "values") else member_attr
@@ -471,9 +473,10 @@ class TestBuildMethods:
         entry = result.unwrap()
         assert entry.dn.value == "ou=People,dc=example,dc=com"
         # Try both camelCase and lowercase keys (builder may create either)
-        oc_attr = entry.attributes.attributes.get(
-            "objectClass"
-        ) or entry.attributes.attributes.get("objectclass")
+        oc_attr = (
+            entry.attributes.attributes.get("objectClass")
+            or entry.attributes.attributes.objectclass
+        )
         assert oc_attr is not None
         oc_values = oc_attr.values if hasattr(oc_attr, "values") else oc_attr
         assert oc_values is not None
@@ -498,7 +501,7 @@ class TestBuildMethods:
         assert result.is_success
         entry = result.unwrap()
         assert entry.dn.value == "cn=Test User,dc=example,dc=com"
-        custom_attr = entry.attributes.attributes.get("custom_attr")
+        custom_attr = entry.attributes.attributes.custom_attr
         assert custom_attr is not None
         custom_values = (
             custom_attr.values if hasattr(custom_attr, "values") else custom_attr
@@ -657,7 +660,7 @@ mail: testuser@example.com
         # Should maintain data integrity
         assert len(entries) == 1
         assert "Test User" in str(entries[0].dn.value)
-        oc_attr = entries[0].attributes.attributes.get("objectClass")
+        oc_attr = entries[0].attributes.attributes.objectClass
         assert oc_attr is not None
         oc_values = oc_attr.values if hasattr(oc_attr, "values") else oc_attr
         assert oc_values is not None

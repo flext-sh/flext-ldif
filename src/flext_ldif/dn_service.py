@@ -126,7 +126,7 @@ class FlextLdifDnService(FlextService[dict[str, object]]):
             # Use ldap3 for RFC 4514 compliant parsing
             components = parse_dn(dn, escape=False, strip=True)
             return FlextResult[list[tuple[str, str, str]]].ok(components)
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError) as e:
             return FlextResult[list[tuple[str, str, str]]].fail(
                 f"Invalid DN format (RFC 4514): {e}"
             )
@@ -160,7 +160,7 @@ class FlextLdifDnService(FlextService[dict[str, object]]):
             # Try parsing - if it succeeds, DN is valid per RFC 4514
             parse_dn(dn, escape=False, strip=True)
             return FlextResult[bool].ok(True)
-        except Exception:
+        except (ValueError, TypeError, AttributeError):
             return FlextResult[bool].ok(False)
 
     def normalize(self, dn: str) -> FlextResult[str]:
@@ -192,7 +192,7 @@ class FlextLdifDnService(FlextService[dict[str, object]]):
             # Use ldap3 for RFC 4514 compliant normalization
             normalized = safe_dn(dn)
             return FlextResult[str].ok(str(normalized))
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError) as e:
             return FlextResult[str].fail(f"Failed to normalize DN (RFC 4514): {e}")
 
     @staticmethod
@@ -348,7 +348,7 @@ class FlextLdifDnService(FlextService[dict[str, object]]):
 
             normalized[FlextLdifConstants.DictKeys.ATTRIBUTES] = new_attrs
             return FlextResult[dict[str, object]].ok(normalized)
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError) as e:
             return FlextResult[dict[str, object]].fail(
                 f"Failed to normalize DN references: {e}"
             )
@@ -409,7 +409,7 @@ class FlextLdifDnService(FlextService[dict[str, object]]):
             entry_out = entry.copy()
             entry_out[FlextLdifConstants.DictKeys.ATTRIBUTES] = attrs
             return FlextResult[dict[str, object]].ok(entry_out)
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError) as e:
             return FlextResult[dict[str, object]].fail(
                 f"Failed to normalize ACI DN references: {e}"
             )

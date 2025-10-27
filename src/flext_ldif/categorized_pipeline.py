@@ -466,7 +466,7 @@ class FlextLdifCategorizedMigrationPipeline(
                         dn=dn, attributes=attributes, metadata=metadata
                     )
                     entry_objects.append(entry_obj)
-                except Exception as e:
+                except (ValueError, TypeError, AttributeError) as e:
                     # ABORT on conversion failure - do not continue with invalid data
                     dn_for_error: str = dn.value if dn else str(dn_value)
                     error_msg = f"Failed to convert entry to Entry object (DN: {dn_for_error}): {e}"
@@ -878,7 +878,7 @@ class FlextLdifCategorizedMigrationPipeline(
 
             return FlextResult[dict[str, list[dict[str, object]]]].ok(categorized)
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError) as e:
             return FlextResult[dict[str, list[dict[str, object]]]].fail(
                 f"Entry categorization failed: {e}"
             )
@@ -1047,7 +1047,7 @@ class FlextLdifCategorizedMigrationPipeline(
                 )
                 return FlextResult[dict[str, object]].ok(transformed_entry)
 
-            except Exception as e:
+            except (ValueError, TypeError, AttributeError) as e:
                 return FlextResult[dict[str, object]].fail(
                     f"ACL transformation failed: {e}"
                 )
@@ -1084,7 +1084,7 @@ class FlextLdifCategorizedMigrationPipeline(
                     )
 
                 # Categorize the entry
-                categorize_func = getattr(pipeline, "_categorize_entry")
+                categorize_func = pipeline._categorize_entry
                 category, rejection_reason = categorize_func(entry)
 
                 # Type narrow category and rejection_reason
@@ -1102,7 +1102,7 @@ class FlextLdifCategorizedMigrationPipeline(
 
                 return FlextResult[dict[str, object]].ok(result_dict)
 
-            except Exception as e:
+            except (ValueError, TypeError, AttributeError) as e:
                 return FlextResult[dict[str, object]].fail(
                     f"Entry categorization and tracking failed: {e}"
                 )
@@ -1155,7 +1155,7 @@ class FlextLdifCategorizedMigrationPipeline(
 
                 return FlextResult[dict[str, object]].ok(updated_entry)
 
-            except Exception as e:
+            except (ValueError, TypeError, AttributeError) as e:
                 return FlextResult[dict[str, object]].fail(
                     f"Rejection reason injection failed: {e}"
                 )
@@ -1233,7 +1233,7 @@ class FlextLdifCategorizedMigrationPipeline(
                 if self._parser_quirk is not None and hasattr(
                     self._parser_quirk, "acl_quirk"
                 ):
-                    parser_acl_quirk = getattr(self._parser_quirk, "acl_quirk")
+                    parser_acl_quirk = self._parser_quirk.acl_quirk
 
                 # Step 4: Apply writer quirk (RFC → OUD: aci)
                 # Get writer's ACL quirk if available
@@ -1241,7 +1241,7 @@ class FlextLdifCategorizedMigrationPipeline(
                 if self._writer_quirk is not None and hasattr(
                     self._writer_quirk, "acl_quirk"
                 ):
-                    writer_acl_quirk = getattr(self._writer_quirk, "acl_quirk")
+                    writer_acl_quirk = self._writer_quirk.acl_quirk
 
                 # Step 5: Transform ACL entry using quirks system
                 if parser_acl_quirk is not None and writer_acl_quirk is not None:
@@ -1271,7 +1271,7 @@ class FlextLdifCategorizedMigrationPipeline(
 
             return FlextResult[list[dict[str, object]]].ok(acl_entries)
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError) as e:
             return FlextResult[list[dict[str, object]]].fail(
                 f"ACL extraction failed: {e}"
             )
@@ -1436,7 +1436,7 @@ class FlextLdifCategorizedMigrationPipeline(
 
                         return FlextResult[dict[str, object]].ok(filtered_entry)
 
-                    except Exception as e:
+                    except (ValueError, TypeError, AttributeError) as e:
                         return FlextResult[dict[str, object]].fail(
                             f"Forbidden filtering failed: {e}"
                         )
@@ -1525,7 +1525,7 @@ class FlextLdifCategorizedMigrationPipeline(
 
             return FlextResult[dict[str, list[dict[str, object]]]].ok(categorized)
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError) as e:
             return FlextResult[dict[str, list[dict[str, object]]]].fail(
                 f"ACL transformation failed: {e}"
             )

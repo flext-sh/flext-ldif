@@ -324,7 +324,7 @@ class FlextLdifDnCaseRegistry(FlextModels.Value):
 
             return FlextResult[dict[str, object]].ok(normalized_data)
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError) as e:
             return FlextResult[dict[str, object]].fail(
                 f"Failed to normalize DN references: {e}"
             )
