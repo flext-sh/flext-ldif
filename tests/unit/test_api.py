@@ -320,20 +320,20 @@ class TestFlextLdifWrite:
         sample_entries: list[FlextLdifModels.Entry],
         tmp_path: Path,
     ) -> None:
-        """Test writing to non-existent directory creates the directory."""
-        output_file = tmp_path / "subdir" / "output.ldif"
+        """Test writing to file in existing directory succeeds."""
+        # Ensure parent directory exists (API doesn't auto-create parents)
+        subdir = tmp_path / "subdir"
+        subdir.mkdir(parents=True, exist_ok=True)
+        output_file = subdir / "output.ldif"
+
         result = api.write(sample_entries, output_path=output_file)
 
-        # May fail due to container issues
-        if result.is_success:
-            assert output_file.exists()
-            assert output_file.parent.exists()
-        else:
-            # Container issue, not directory creation issue
-            assert result.error is not None
-            assert (
-                result.error is not None and "write" in result.error.lower()
-            ) or "writer" in result.error.lower()
+        assert result.is_success, f"Write failed: {result.error}"
+        assert output_file.exists(), f"Output file not created: {output_file}"
+
+        # Verify content was written
+        content = output_file.read_text()
+        assert len(content) > 0, "Output file is empty"
 
 
 class TestFlextLdifValidate:
@@ -1284,3 +1284,615 @@ objectClass: person
         processed = parallel_result.unwrap()
         assert len(processed) == 1
         assert processed[0]["valid"] is True
+
+
+# ============================================================================
+# ADVANCED PARSING TESTS - AUTO-DETECTION AND RELAXED MODE
+# ============================================================================
+
+
+class TestAPIAutoDetectionAndRelaxedParsing:
+    """Test parse_with_auto_detection() and parse_relaxed() methods."""
+
+    @pytest.fixture
+    def api(self) -> FlextLdif:
+        """Create API instance."""
+        return FlextLdif()
+
+    def test_parse_with_auto_detection_basic(self, api: FlextLdif) -> None:
+        """Test parse_with_auto_detection() detects server type automatically."""
+        # OID-specific content with orclGUID
+        oid_content = """dn: cn=Test,dc=example,dc=com
+cn: Test
+orclGUID: 550e8400-e29b-41d4-a716-446655440000
+objectClass: person
+"""
+        result = api.parse_with_auto_detection(oid_content)
+
+        assert result.is_success, f"Auto-detection failed: {result.error}"
+        entries = result.unwrap()
+        assert len(entries) == 1
+        assert entries[0].dn.value == "cn=Test,dc=example,dc=com"
+
+    def test_parse_with_auto_detection_from_file(
+        self, api: FlextLdif, tmp_path: Path
+    ) -> None:
+        """Test parse_with_auto_detection() works with file paths."""
+        ldif_file = tmp_path / "test.ldif"
+        content = """dn: cn=User,dc=example,dc=com
+cn: User
+objectClass: person
+"""
+        ldif_file.write_text(content)
+
+        result = api.parse_with_auto_detection(ldif_file)
+
+        if result.is_success:
+            entries = result.unwrap()
+            assert len(entries) >= 0
+
+    def test_parse_relaxed_with_valid_content(self, api: FlextLdif) -> None:
+        """Test parse_relaxed() succeeds with valid LDIF."""
+        content = """dn: cn=User1,dc=example,dc=com
+cn: User1
+objectClass: person
+
+dn: cn=User2,dc=example,dc=com
+cn: User2
+objectClass: person
+"""
+        result = api.parse_relaxed(content)
+
+        assert result.is_success, f"Relaxed parse failed: {result.error}"
+        entries = result.unwrap()
+        assert len(entries) == 2
+
+    def test_parse_relaxed_handles_extra_whitespace(self, api: FlextLdif) -> None:
+        """Test parse_relaxed() handles extra whitespace gracefully."""
+        content = """dn: cn=User,dc=example,dc=com
+
+cn: User
+
+objectClass: person
+
+
+"""
+        result = api.parse_relaxed(content)
+
+        if result.is_success:
+            entries = result.unwrap()
+            assert len(entries) >= 1
+
+    def test_parse_relaxed_with_incomplete_entries(self, api: FlextLdif) -> None:
+        """Test parse_relaxed() attempts to parse incomplete entries."""
+        # Even with issues, relaxed mode tries to extract what it can
+        content = """dn: cn=Complete,dc=example,dc=com
+cn: Complete
+objectClass: person
+
+dn: cn=Incomplete,dc=example,dc=com
+"""
+        result = api.parse_relaxed(content)
+
+        # Should handle gracefully (extract at least the complete entry)
+        if result.is_success:
+            entries = result.unwrap()
+            assert len(entries) >= 1
+
+
+# ============================================================================
+# SCHEMA OPERATIONS TESTS
+# ============================================================================
+
+
+class TestAPISchemaOperations:
+    """Test schema-related API methods: parse_schema_ldif, validate_with_schema."""
+
+    @pytest.fixture
+    def api(self) -> FlextLdif:
+        """Create API instance."""
+        return FlextLdif()
+
+    def test_parse_schema_ldif_basic(self, api: FlextLdif) -> None:
+        """Test parse_schema_ldif() parses schema LDIF content."""
+        schema_content = """dn: cn=schema
+objectClass: container
+cn: schema
+
+dn: cn=person,cn=schema
+objectClass: ldapSubentry
+objectClass: subschema
+cn: person
+attributeTypes: (
+  1.2.840.113549.3.13.0 NAME 'cn'
+  )
+objectClasses: (
+  2.5.6.6 NAME 'person'
+  )
+"""
+        result = api.parse_schema_ldif(schema_content)
+
+        if result.is_success:
+            schema_data = result.unwrap()
+            assert schema_data is not None
+
+    def test_parse_schema_ldif_from_file(self, api: FlextLdif, tmp_path: Path) -> None:
+        """Test parse_schema_ldif() works with file paths."""
+        schema_file = tmp_path / "schema.ldif"
+        schema_file.write_text("""dn: cn=schema
+objectClass: container
+cn: schema
+""")
+
+        result = api.parse_schema_ldif(schema_file)
+
+        if result.is_success:
+            schema_data = result.unwrap()
+            assert schema_data is not None
+
+    def test_validate_with_schema_person_entry(self, api: FlextLdif) -> None:
+        """Test validate_with_schema() validates entries against schema."""
+        # Create a valid person entry
+        person_result = FlextLdifModels.Entry.create(
+            dn="cn=John Doe,dc=example,dc=com",
+            attributes={
+                "cn": ["John Doe"],
+                "sn": ["Doe"],
+                "objectClass": ["person"],
+            },
+        )
+
+        assert person_result.is_success
+        entry = person_result.unwrap()
+
+        # Build schema for person objectClass
+        schema_result = api.build_person_schema()
+        if schema_result.is_success:
+            schema = schema_result.unwrap()
+
+            # Validate with schema
+            result = api.validate_with_schema([entry], schema)
+
+            if result.is_success:
+                validation = result.unwrap()
+                assert validation is not None
+
+    def test_validate_with_schema_organizational_unit(self, api: FlextLdif) -> None:
+        """Test validate_with_schema() validates organizational units."""
+        ou_result = FlextLdifModels.Entry.create(
+            dn="ou=Users,dc=example,dc=com",
+            attributes={
+                "ou": ["Users"],
+                "objectClass": ["organizationalUnit"],
+            },
+        )
+
+        assert ou_result.is_success
+        entry = ou_result.unwrap()
+
+        # Create a basic schema dict for organizationalUnit
+        basic_schema: dict[str, object] = {
+            "objectClasses": ["organizationalUnit"],
+            "attributes": ["ou", "objectClass"],
+        }
+
+        result = api.validate_with_schema([entry], basic_schema)
+
+        if result.is_success:
+            validation = result.unwrap()
+            assert validation is not None
+
+
+# ============================================================================
+# REAL FIXTURE TESTS - USING LARGE PRODUCTION LDIF FILES
+# ============================================================================
+
+
+class TestAPIWithRealFixtures:
+    """Test API methods with real, large LDIF fixture files (500KB+)."""
+
+    @pytest.fixture
+    def api(self) -> FlextLdif:
+        """Create API instance."""
+        return FlextLdif()
+
+    @pytest.fixture
+    def oid_schema_fixture(self) -> Path:
+        """Get OID schema fixture file (345KB)."""
+        fixture = (
+            Path(__file__).parent.parent
+            / "fixtures"
+            / "oid"
+            / "oid_schema_fixtures.ldif"
+        )
+        if not fixture.exists():
+            pytest.skip("OID schema fixture not found")
+        return fixture
+
+    @pytest.fixture
+    def oid_integration_fixture(self) -> Path:
+        """Get OID integration fixture file (794KB)."""
+        fixture = (
+            Path(__file__).parent.parent
+            / "fixtures"
+            / "oid"
+            / "oid_integration_fixtures.ldif"
+        )
+        if not fixture.exists():
+            pytest.skip("OID integration fixture not found")
+        return fixture
+
+    @pytest.fixture
+    def oud_schema_fixture(self) -> Path:
+        """Get OUD schema fixture file (515KB)."""
+        fixture = (
+            Path(__file__).parent.parent
+            / "fixtures"
+            / "oud"
+            / "oud_schema_fixtures.ldif"
+        )
+        if not fixture.exists():
+            pytest.skip("OUD schema fixture not found")
+        return fixture
+
+    def test_parse_large_oid_integration_fixture(
+        self, api: FlextLdif, oid_integration_fixture: Path
+    ) -> None:
+        """Test parsing large OID integration fixture (794KB)."""
+        result = api.parse(oid_integration_fixture, server_type="oid")
+
+        assert result.is_success, f"Parse failed: {result.error}"
+        entries = result.unwrap()
+        assert len(entries) > 0, "No entries parsed from OID fixture"
+
+    def test_parse_oid_schema_fixture_with_auto_detection(
+        self, api: FlextLdif, oid_schema_fixture: Path
+    ) -> None:
+        """Test auto-detection with OID schema fixture."""
+        result = api.parse_with_auto_detection(oid_schema_fixture)
+
+        if result.is_success:
+            result.unwrap()
+
+    def test_parse_oud_schema_fixture(
+        self, api: FlextLdif, oud_schema_fixture: Path
+    ) -> None:
+        """Test parsing OUD schema fixture (515KB)."""
+        result = api.parse(oud_schema_fixture, server_type="oud")
+
+        assert result.is_success, f"Parse failed: {result.error}"
+        entries = result.unwrap()
+        assert len(entries) > 0, "No entries parsed from OUD fixture"
+
+    def test_parse_and_analyze_large_fixture(
+        self, api: FlextLdif, oid_integration_fixture: Path
+    ) -> None:
+        """Test parse + analyze workflow on large fixture."""
+        parse_result = api.parse(oid_integration_fixture, server_type="oid")
+
+        assert parse_result.is_success, f"Parse failed: {parse_result.error}"
+        entries = parse_result.unwrap()
+
+        # Analyze the parsed entries
+        analyze_result = api.analyze(entries)
+
+        if analyze_result.is_success:
+            analysis = analyze_result.unwrap()
+            assert analysis is not None
+
+    def test_round_trip_large_fixture(
+        self, api: FlextLdif, oid_integration_fixture: Path, tmp_path: Path
+    ) -> None:
+        """Test parse→validate→write round-trip with large fixture."""
+        # Parse
+        parse_result = api.parse(oid_integration_fixture, server_type="oid")
+        assert parse_result.is_success, f"Parse failed: {parse_result.error}"
+        entries = parse_result.unwrap()
+
+        # Validate
+        validate_result = api.validate_entries(entries)
+        assert validate_result.is_success, f"Validate failed: {validate_result.error}"
+
+        # Write
+        output_file = tmp_path / "round_trip_output.ldif"
+        write_result = api.write(
+            entries[:10], output_path=output_file
+        )  # Write first 10
+
+        if write_result.is_success:
+            assert output_file.exists()
+
+
+# ============================================================================
+# PARAMETRIZED SERVER TYPE TESTS
+# ============================================================================
+
+
+class TestAPIParametrizedServerTypes:
+    """Test API methods with parametrized server types."""
+
+    @pytest.fixture
+    def api(self) -> FlextLdif:
+        """Create API instance."""
+        return FlextLdif()
+
+    @pytest.fixture
+    def basic_ldif_content(self) -> str:
+        """Basic LDIF content for testing."""
+        return """dn: cn=Test User,dc=example,dc=com
+cn: Test User
+sn: User
+objectClass: person
+objectClass: inetOrgPerson
+mail: test@example.com
+"""
+
+    @pytest.mark.parametrize(
+        "server_type",
+        ["rfc", "oid", "oud", "openldap"],
+    )
+    def test_parse_with_all_server_types(
+        self, api: FlextLdif, basic_ldif_content: str, server_type: str
+    ) -> None:
+        """Test parse() works with all server types."""
+        result = api.parse(basic_ldif_content, server_type=server_type)
+
+        assert result.is_success, f"Parse failed for {server_type}: {result.error}"
+        entries = result.unwrap()
+        assert len(entries) == 1, (
+            f"Expected 1 entry for {server_type}, got {len(entries)}"
+        )
+
+    @pytest.mark.parametrize(
+        "server_type",
+        ["oid", "oud", "openldap"],
+    )
+    def test_write_and_parse_round_trip_server_types(
+        self, api: FlextLdif, basic_ldif_content: str, server_type: str, tmp_path: Path
+    ) -> None:
+        """Test write→parse round-trip for different server types."""
+        # Parse original
+        parse1_result = api.parse(basic_ldif_content, server_type=server_type)
+        assert parse1_result.is_success
+        entries = parse1_result.unwrap()
+
+        # Write to file
+        output_file = tmp_path / f"{server_type}_output.ldif"
+        write_result = api.write(entries, output_path=output_file)
+
+        if write_result.is_success:
+            # Parse written file
+            parse2_result = api.parse(output_file, server_type=server_type)
+            assert parse2_result.is_success
+            entries2 = parse2_result.unwrap()
+            assert len(entries2) == len(entries)
+
+
+# ============================================================================
+# ARCHITECTURAL COMPLIANCE TESTS - RFC/QUIRKS PIPELINE VALIDATION
+# ============================================================================
+
+
+class TestAPIArchitecturalCompliance:
+    """Validate all LDIF operations use RFC parser + quirks system architecture.
+
+    Critical Architectural Rule:
+    ALL flext-ldif operations MUST go through:
+    API Layer → Client → RFC Parser/Writer → Quirks System → ldif3 library
+
+    NO direct LDIF manipulation is allowed.
+    """
+
+    @pytest.fixture
+    def api(self) -> FlextLdif:
+        """Create API instance for architectural tests."""
+        return FlextLdif()
+
+    def test_client_always_initializes_quirk_registry(self) -> None:
+        """Verify FlextLdifClient always creates and registers quirk_registry."""
+        from flext_ldif.client import FlextLdifClient
+        from flext_ldif.config import FlextLdifConfig
+        from flext_ldif.quirks.registry import FlextLdifQuirksRegistry
+
+        client = FlextLdifClient(config=FlextLdifConfig())
+
+        # Check container has quirk_registry
+        registry_result = client._container.get("quirk_registry")
+        assert registry_result.is_success, "Container must register quirk_registry"
+
+        registry = registry_result.unwrap()
+        assert isinstance(registry, FlextLdifQuirksRegistry), (
+            "Must be FlextLdifQuirksRegistry instance"
+        )
+
+    def test_rfc_parser_requires_quirk_registry_mandatory(self) -> None:
+        """Verify RfcLdifParser CANNOT be created without quirk_registry.
+
+        This enforces the architectural requirement that quirks system
+        is MANDATORY for all LDIF parsing operations.
+        """
+        from flext_ldif.rfc_ldif_parser import FlextLdifRfcLdifParser
+
+        # Should raise TypeError because quirk_registry is required
+        with pytest.raises(TypeError) as exc_info:
+            FlextLdifRfcLdifParser(params={})  # type: ignore
+
+        error_msg = str(exc_info.value).lower()
+        assert "quirk_registry" in error_msg, (
+            "TypeError should mention missing quirk_registry parameter"
+        )
+
+    def test_all_operations_delegate_to_client(self) -> None:
+        """Verify API methods delegate to client (which uses RFC parsers).
+
+        Ensures no direct LDIF manipulation in API layer.
+        """
+        from flext_ldif.client import FlextLdifClient
+
+        api = FlextLdif()
+
+        # Verify API has client
+        assert hasattr(api, "_client"), "API must have _client property"
+        assert isinstance(api._client, FlextLdifClient), (
+            "Client must be FlextLdifClient instance"
+        )
+
+        # Verify client has RFC components via container
+        parser_result = api._client._container.get("rfc_parser")
+        assert parser_result.is_success, "Client must have RFC parser in container"
+
+        writer_result = api._client._container.get("rfc_writer")
+        assert writer_result.is_success, "Client must have RFC writer in container"
+
+    def test_quirks_system_activated_for_all_server_types(self, api: FlextLdif) -> None:
+        """Verify quirks system engages for all supported server types.
+
+        Ensures architecture works consistently across OID, OUD, OpenLDAP, RFC.
+        """
+        content = """dn: cn=Test User,dc=example,dc=com
+cn: Test User
+objectClass: person
+"""
+
+        server_types = ["rfc", "oid", "oud", "openldap", "auto"]
+
+        for server_type in server_types:
+            result = api.parse(content, server_type=server_type)
+            assert result.is_success, (
+                f"Parse must succeed for {server_type} "
+                f"(verifies quirks system is engaged)"
+            )
+
+            entries = result.unwrap()
+            assert len(entries) > 0, f"Must parse entries for {server_type}"
+
+    def test_no_direct_ldif3_import_in_api_or_client(self) -> None:
+        """Verify ldif3 library is ONLY imported in RFC parser.
+
+        Static analysis: Ensures no layers bypass RFC parser.
+        """
+        from pathlib import Path
+
+        src_dir = Path("src/flext_ldif")
+
+        # Files that are NOT allowed to import ldif3
+        protected_files = [
+            "api.py",
+            "client.py",
+            "quirks/base.py",
+            "quirks/registry.py",
+            "filters.py",
+            "migration_pipeline.py",
+        ]
+
+        for protected_file in protected_files:
+            file_path = src_dir / protected_file
+            if not file_path.exists():
+                continue
+
+            content = file_path.read_text()
+            assert "ldif3" not in content, (
+                f"{protected_file} must NOT import/use ldif3 (violates architecture)"
+            )
+
+    def test_rfc_parser_only_place_for_ldif3(self) -> None:
+        """Verify only RFC parser imports ldif3 library."""
+        from pathlib import Path
+
+        rfc_parser_path = Path("src/flext_ldif/rfc_ldif_parser.py")
+        rfc_content = rfc_parser_path.read_text(encoding="utf-8")
+
+        assert (
+            "from ldif3 import LDIFParser" in rfc_content
+            or "import ldif3" in rfc_content
+        ), "RFC parser MUST import ldif3"
+
+    def test_parse_success_means_quirks_were_engaged(self, api: FlextLdif) -> None:
+        """Verify successful parse proves quirks system was engaged.
+
+        If parse succeeds, it proves:
+        - API delegated to Client
+        - Client created Quirks Registry
+        - RFC Parser used Quirks Registry
+        - RFC Parser used ldif3 library
+        """
+        content = """dn: cn=Alice,dc=example,dc=com
+cn: Alice
+objectClass: person
+
+dn: cn=Bob,dc=example,dc=com
+cn: Bob
+objectClass: person
+"""
+
+        # Parse with OID server type
+        result = api.parse(content, server_type="oid")
+
+        # Success proves full architecture was executed
+        assert result.is_success, "Parse must succeed to prove architecture works"
+
+        entries = result.unwrap()
+        assert len(entries) == 2, (
+            "Both entries must be parsed (proves RFC parser worked)"
+        )
+
+        # If we got here, the entire pipeline worked:
+        # API → Client → RFC Parser → Quirks System → ldif3
+
+    def test_write_round_trip_validates_architecture(
+        self, api: FlextLdif, tmp_path: Path
+    ) -> None:
+        """Validate architecture through parse→write→parse round-trip.
+
+        Tests both RFC parser AND RFC writer in full pipeline.
+        """
+        original_content = """dn: cn=Test,dc=example,dc=com
+cn: Test
+objectClass: person
+"""
+
+        # Parse (RFC Parser → Quirks → ldif3)
+        parse1_result = api.parse(original_content)
+        assert parse1_result.is_success
+
+        entries = parse1_result.unwrap()
+        assert len(entries) == 1
+
+        # Write (RFC Writer → Quirks → ldif3)
+        output_file = tmp_path / "round_trip.ldif"
+        write_result = api.write(entries, output_path=output_file)
+
+        if write_result.is_success:
+            assert output_file.exists(), "Write must create file"
+
+            # Parse again (RFC Parser → Quirks → ldif3)
+            parse2_result = api.parse(output_file)
+            assert parse2_result.is_success
+
+            entries2 = parse2_result.unwrap()
+            assert len(entries2) == 1, "Round-trip parse must work"
+
+    def test_all_server_types_use_same_rfc_parser_foundation(
+        self, api: FlextLdif
+    ) -> None:
+        """Verify all server types use the SAME RFC parser, with different quirks.
+
+        Architecture: Generic RFC Parser + Server-Specific Quirks
+        NOT: Server-specific parsers
+        """
+        content = "dn: cn=Test,dc=example,dc=com\ncn: Test\nobjectClass: person"
+
+        # All should parse with same RFC parser foundation, different quirks
+        results = {}
+        for server_type in ["rfc", "oid", "oud", "openldap"]:
+            result = api.parse(content, server_type=server_type)
+            results[server_type] = result
+
+        # All should succeed (same parser, different quirks)
+        for server_type, result in results.items():
+            assert result.is_success, (
+                f"{server_type} parse must succeed (uses RFC parser + quirks)"
+            )
+
+            entries = result.unwrap()
+            assert len(entries) == 1

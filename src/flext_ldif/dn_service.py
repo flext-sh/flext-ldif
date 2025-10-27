@@ -31,6 +31,7 @@ import re
 from typing import override
 
 from flext_core import FlextDecorators, FlextResult, FlextService
+from ldap3.core.exceptions import LDAPInvalidDnError
 from ldap3.utils.dn import parse_dn, safe_dn
 
 from flext_ldif.constants import FlextLdifConstants
@@ -126,7 +127,7 @@ class FlextLdifDnService(FlextService[dict[str, object]]):
             # Use ldap3 for RFC 4514 compliant parsing
             components = parse_dn(dn, escape=False, strip=True)
             return FlextResult[list[tuple[str, str, str]]].ok(components)
-        except (ValueError, TypeError, AttributeError) as e:
+        except (ValueError, TypeError, AttributeError, LDAPInvalidDnError) as e:
             return FlextResult[list[tuple[str, str, str]]].fail(
                 f"Invalid DN format (RFC 4514): {e}"
             )
@@ -160,7 +161,7 @@ class FlextLdifDnService(FlextService[dict[str, object]]):
             # Try parsing - if it succeeds, DN is valid per RFC 4514
             parse_dn(dn, escape=False, strip=True)
             return FlextResult[bool].ok(True)
-        except (ValueError, TypeError, AttributeError):
+        except (ValueError, TypeError, AttributeError, LDAPInvalidDnError):
             return FlextResult[bool].ok(False)
 
     def normalize(self, dn: str) -> FlextResult[str]:
@@ -192,7 +193,7 @@ class FlextLdifDnService(FlextService[dict[str, object]]):
             # Use ldap3 for RFC 4514 compliant normalization
             normalized = safe_dn(dn)
             return FlextResult[str].ok(str(normalized))
-        except (ValueError, TypeError, AttributeError) as e:
+        except (ValueError, TypeError, AttributeError, LDAPInvalidDnError) as e:
             return FlextResult[str].fail(f"Failed to normalize DN (RFC 4514): {e}")
 
     @staticmethod

@@ -405,13 +405,13 @@ class TestTivoliAclQuirks:
                 write=False,
                 delete=False,
             ),
-            server_type="rfc",
+            server_type="generic",  # Use "generic" instead of "rfc"
         )
         result = acl_quirk.convert_acl_from_rfc(rfc_data)
         assert result.is_success
         tivoli_data = result.unwrap()
-        assert tivoli_data.metadata is not None
-        assert tivoli_data.metadata.quirk_type == "ibm_tivoli"
+        # Verify server_type was updated to tivoli
+        assert tivoli_data.server_type == "tivoli"
 
     def test_write_acl_to_rfc_with_content(self) -> None:
         """Test writing ACL with existing content."""
@@ -554,8 +554,11 @@ class TestTivoliEntryQuirks:
         result = entry_quirk.process_entry(entry_dn, attributes)
         assert result.is_success
         processed = result.unwrap()
-        assert processed.dn == entry_dn
-        assert processed.server_type == FlextLdifConstants.LdapServers.IBM_TIVOLI
+        assert processed[FlextLdifConstants.DictKeys.DN] == entry_dn
+        assert (
+            processed[FlextLdifConstants.DictKeys.SERVER_TYPE]
+            == FlextLdifConstants.LdapServers.IBM_TIVOLI
+        )
         assert "objectclass" in processed
 
     def test_process_entry_with_binary_data(self) -> None:
@@ -590,4 +593,4 @@ class TestTivoliEntryQuirks:
         assert result.is_success
         rfc_data = result.unwrap()
         assert FlextLdifConstants.DictKeys.SERVER_TYPE not in rfc_data
-        assert rfc_data.dn == "cn=server,o=Example"
+        assert rfc_data[FlextLdifConstants.DictKeys.DN] == "cn=server,o=Example"

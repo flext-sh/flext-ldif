@@ -19,7 +19,6 @@ import re
 from typing import ClassVar
 
 from flext_core import FlextResult
-from pydantic import Field
 
 # Pydantic removed
 from flext_ldif.constants import FlextLdifConstants
@@ -445,21 +444,25 @@ class FlextLdifQuirksServersOpenldap(BaseSchemaQuirk):
         - Format: to <what> by <who> <access>
 
         Example:
-            quirk = FlextLdifQuirksServersOpenldap.AclQuirk(server_type="openldap2")
+            quirk = FlextLdifQuirksServersOpenldap.AclQuirk()
             if quirk.can_handle_acl(acl_line):
                 result = quirk.parse_acl(acl_line)
 
         """
 
-        server_type: str = Field(
-            default="openldap2", description="OpenLDAP 2.x server type"
-        )
-        priority: int = Field(
-            default=10, description="High priority for OpenLDAP 2.x ACL parsing"
-        )
+        def __init__(
+            self,
+            server_type: str = "openldap2",
+            priority: int = 10,
+        ) -> None:
+            """Initialize OpenLDAP 2.x ACL quirk.
 
-        def model_post_init(self, _context: object, /) -> None:
-            """Initialize OpenLDAP 2.x ACL quirk."""
+            Args:
+                server_type: OpenLDAP 2.x server type
+                priority: High priority for OpenLDAP 2.x ACL parsing
+
+            """
+            super().__init__(server_type=server_type, priority=priority)
 
         def can_handle_acl(self, acl_line: str) -> bool:
             """Check if this is an OpenLDAP 2.x ACL.
@@ -521,10 +524,10 @@ class FlextLdifQuirksServersOpenldap(BaseSchemaQuirk):
 
                 # Build Acl model
                 acl = FlextLdifModels.Acl(
-                    name="OpenLDAP 2.x ACL",
+                    name="access",
                     target=FlextLdifModels.AclTarget(
                         target_dn=what,  # OpenLDAP: "what" is target
-                        attributes=None,  # OpenLDAP stub - not extracted from what clause
+                        attributes=[],  # OpenLDAP stub - not extracted from what clause
                     ),
                     subject=FlextLdifModels.AclSubject(
                         subject_type="who",
@@ -641,21 +644,25 @@ class FlextLdifQuirksServersOpenldap(BaseSchemaQuirk):
         - Database and overlay configuration entries
 
         Example:
-            quirk = FlextLdifQuirksServersOpenldap.EntryQuirk(server_type="openldap2")
+            quirk = FlextLdifQuirksServersOpenldap.EntryQuirk()
             if quirk.can_handle_entry(dn, attributes):
                 result = quirk.process_entry(dn, attributes)
 
         """
 
-        server_type: str = Field(
-            default="openldap2", description="OpenLDAP 2.x server type"
-        )
-        priority: int = Field(
-            default=10, description="High priority for OpenLDAP 2.x entry processing"
-        )
+        def __init__(
+            self,
+            server_type: str = "openldap2",
+            priority: int = 10,
+        ) -> None:
+            """Initialize OpenLDAP 2.x entry quirk.
 
-        def model_post_init(self, _context: object, /) -> None:
-            """Initialize OpenLDAP 2.x entry quirk."""
+            Args:
+                server_type: OpenLDAP 2.x server type
+                priority: High priority for OpenLDAP 2.x entry processing
+
+            """
+            super().__init__(server_type=server_type, priority=priority)
 
         def can_handle_entry(
             self, entry_dn: str, attributes: FlextLdifTypes.Models.EntryAttributesDict

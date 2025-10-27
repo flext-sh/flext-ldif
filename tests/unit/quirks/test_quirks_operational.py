@@ -72,7 +72,10 @@ class TestOidQuirksWithRealFixtures:
 
         assert result.is_success, f"Failed to parse attribute: {result.error}"
         parsed = result.unwrap()
-        assert isinstance(parsed, dict)
+        # Parse attribute returns a Pydantic SchemaAttribute model, not dict
+        from flext_ldif import FlextLdifModels
+
+        assert isinstance(parsed, FlextLdifModels.SchemaAttribute)
 
         # Verify essential elements preserved
         oid = extract_oid(attr_def)
@@ -95,7 +98,10 @@ class TestOidQuirksWithRealFixtures:
 
         assert result.is_success, f"Failed to parse objectClass: {result.error}"
         parsed = result.unwrap()
-        assert isinstance(parsed, dict)
+        # Parse objectclass returns a Pydantic SchemaObjectClass model, not dict
+        from flext_ldif import FlextLdifModels
+
+        assert isinstance(parsed, FlextLdifModels.SchemaObjectClass)
 
     def test_parse_all_oid_attributes_success_rate(
         self,

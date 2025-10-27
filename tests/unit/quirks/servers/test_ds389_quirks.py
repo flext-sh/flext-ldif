@@ -199,7 +199,7 @@ class TestDs389SchemaQuirks:
         ds389_data = result.unwrap()
         # convert_attribute_from_rfc now returns SchemaAttribute model
         assert ds389_data.metadata is not None
-        assert ds389_data.metadata.server_type == "389ds"
+        assert ds389_data.metadata.quirk_type == "389ds"
         assert ds389_data.oid == rfc_data.oid
 
     def test_convert_objectclass_from_rfc(self) -> None:
@@ -215,7 +215,7 @@ class TestDs389SchemaQuirks:
         ds389_data = result.unwrap()
         # convert_objectclass_from_rfc now returns SchemaObjectClass model
         assert ds389_data.metadata is not None
-        assert ds389_data.metadata.server_type == "389ds"
+        assert ds389_data.metadata.quirk_type == "389ds"
         assert ds389_data.oid == rfc_data.oid
 
     def test_write_objectclass_to_rfc(self) -> None:
@@ -525,8 +525,11 @@ class TestDs389EntryQuirks:
 
         assert result.is_success
         processed_entry = result.unwrap()
-        assert processed_entry.dn == entry_dn
-        assert processed_entry.server_type == FlextLdifConstants.LdapServers.DS_389
+        assert processed_entry[FlextLdifConstants.DictKeys.DN] == entry_dn
+        assert (
+            processed_entry[FlextLdifConstants.DictKeys.SERVER_TYPE]
+            == FlextLdifConstants.LdapServers.DS_389
+        )
         assert processed_entry[FlextLdifConstants.DictKeys.IS_CONFIG_ENTRY] is True
 
     def test_process_entry_non_config(self) -> None:
@@ -581,5 +584,5 @@ class TestDs389EntryQuirks:
         rfc_entry = result.unwrap()
         assert FlextLdifConstants.DictKeys.SERVER_TYPE not in rfc_entry
         assert FlextLdifConstants.DictKeys.IS_CONFIG_ENTRY not in rfc_entry
-        assert rfc_entry.dn == "cn=config"
+        assert rfc_entry[FlextLdifConstants.DictKeys.DN] == "cn=config"
         assert "objectclass" in rfc_entry

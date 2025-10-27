@@ -32,7 +32,7 @@ from flext_ldif.typings import FlextLdifTypes
 
 # Python 3.13 compatibility: ldif3 uses deprecated base64.decodestring
 if not hasattr(base64, "decodestring"):
-    base64.decodestring = base64.decodebytes
+    base64.decodestring = base64.decodebytes  # type: ignore[attr-defined]
 
 
 class FlextLdifRfcLdifParser(FlextService[dict[str, object]]):
@@ -406,7 +406,7 @@ class FlextLdifRfcLdifParser(FlextService[dict[str, object]]):
 
             return FlextResult[list[FlextLdifModels.Entry]].ok(entries)
 
-        except (ValueError, TypeError, AttributeError) as e:
+        except (ValueError, TypeError, AttributeError, FileNotFoundError, OSError, Exception) as e:
             return FlextResult[list[FlextLdifModels.Entry]].fail(
                 f"{FlextLdifConstants.ServerDetection.MSG_FAILED_PARSE_LDIF3}: {e}"
             )

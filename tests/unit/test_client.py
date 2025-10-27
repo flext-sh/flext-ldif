@@ -359,7 +359,7 @@ class TestParseLdif:
         entries = result.unwrap()
         assert len(entries) == 1
         assert entries[0].dn.value == "cn=test,dc=example,dc=com"
-        assert entries[0].attributes.cn == ["test"]
+        assert entries[0].attributes.attributes["cn"].values == ["test"]
 
     def test_parse_ldif_from_path_object(
         self, client: FlextLdifClient, tmp_path: Path
@@ -378,7 +378,7 @@ class TestParseLdif:
         entries = result.unwrap()
         assert len(entries) == 1
         assert entries[0].dn.value == "cn=test,dc=example,dc=com"
-        assert entries[0].attributes.cn == ["test"]
+        assert entries[0].attributes.attributes["cn"].values == ["test"]
 
     def test_parse_ldif_with_minimal_container(self) -> None:
         """Test parse_ldif behavior with minimal container (real test, no mocks)."""
@@ -397,7 +397,7 @@ class TestParseLdif:
         entries = result.unwrap()
         assert len(entries) == 1
         assert entries[0].dn.value == "cn=test,dc=example,dc=com"
-        assert entries[0].attributes.cn == ["test"]
+        assert entries[0].attributes.attributes["cn"].values == ["test"]
 
 
 class TestWriteLdif:
@@ -840,7 +840,9 @@ cn: bob
         assert result.is_success or result.is_failure
         if result.is_success:
             validation_result = result.unwrap()
-            assert isinstance(validation_result, dict)
+            # ValidationResult should have is_valid attribute
+            assert hasattr(validation_result, "is_valid")
+            assert validation_result.is_valid
 
     def test_analyze_entries_calculates_statistics(
         self, client: FlextLdifClient

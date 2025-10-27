@@ -1158,18 +1158,42 @@ class FlextLdifQuirksServersOud(BaseSchemaQuirk):
                 aci_parts.append(f'(version 3.0; acl "{acl_name}";')
 
                 # Permissions (from model's permissions computed field)
+                # OUD supports: read, write, add, delete, search, compare
+                # OUD does NOT support: self_write, proxy (OID-specific)
                 if acl_data.permissions:
                     ops_property = acl_data.permissions.permissions
                     # ops_property is a property, call it to get list[str]
                     ops: list[str] = (
                         ops_property() if callable(ops_property) else ops_property
                     )
-                    if ops:
-                        ops_str = ",".join(ops)
+                    # Filter to only OUD-supported rights
+                    oud_supported_rights = {
+                        "read",
+                        "write",
+                        "add",
+                        "delete",
+                        "search",
+                        "compare",
+                    }
+                    filtered_ops = [op for op in ops if op in oud_supported_rights]
+
+                    # Use metadata bridge: check if self_write needs to be promoted to write
+                    # This allows OUD to properly convert OID→OUD without knowing OID format details
+                    if (
+                        acl_data.metadata
+                        and acl_data.metadata.get("self_write_to_write")
+                        and "self_write" in ops
+                        and "write" not in filtered_ops
+                    ):
+                        # self_write was present in OID ACL - promote to write for OUD
+                        filtered_ops.append("write")
+
+                    if filtered_ops:
+                        ops_str = ",".join(filtered_ops)
                         aci_parts.append(f"allow ({ops_str})")
                     else:
                         return FlextResult[str].fail(
-                            "ACL model has no active permissions"
+                            "ACL model has no OUD-supported permissions (all were OID-specific like self_write)"
                         )
                 else:
                     return FlextResult[str].fail("ACL model has no permissions object")

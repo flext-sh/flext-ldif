@@ -102,9 +102,13 @@ class FlextLdifServerDetector(FlextService[FlextLdifModels.ClientStatus]):
                     return FlextResult[FlextLdifModels.ServerDetectionResult].fail(
                         "Either ldif_path or ldif_content must be provided"
                     )
-                # RFC 2849 mandates UTF-8 encoding - fail on invalid encoding
+                # RFC 2849 mandates UTF-8 encoding - fail on invalid encoding or missing file
                 try:
                     ldif_content = ldif_path.read_text(encoding="utf-8")
+                except FileNotFoundError:
+                    return FlextResult[FlextLdifModels.ServerDetectionResult].fail(
+                        f"LDIF file not found: {ldif_path}"
+                    )
                 except UnicodeDecodeError as e:
                     return FlextResult[FlextLdifModels.ServerDetectionResult].fail(
                         f"LDIF file is not valid UTF-8 (RFC 2849 violation): {e}"

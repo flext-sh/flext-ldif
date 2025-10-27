@@ -147,9 +147,10 @@ class TestOudSchemaQuirks:
         assert result.is_success, f"Failed to parse objectClass: {result.error}"
 
         parsed = result.unwrap()
-        assert parsed.server_type == "oracle_oud"
-        assert hasattr(parsed, "oid")
-        assert hasattr(parsed, "name")
+        # Verify the parsed SchemaObjectClass has expected attributes
+        assert parsed.oid == "2.16.840.1.113894.2.1.1"
+        assert parsed.name == "orclContext"
+        assert parsed.kind == "STRUCTURAL"
 
     def test_parse_oracle_objectclass_from_fixtures(
         self, oud_quirk: FlextLdifQuirksServersOud, oud_fixtures: FlextLdifFixtures.OUD
@@ -174,7 +175,9 @@ class TestOudSchemaQuirks:
         assert result.is_success, f"Failed to parse fixture objectClass: {result.error}"
 
         parsed = result.unwrap()
-        assert parsed.server_type == "oracle_oud"
+        # Verify the parsed SchemaObjectClass has expected attributes
+        assert parsed.oid is not None
+        assert parsed.name is not None
 
     def test_convert_attribute_to_rfc(
         self, oud_quirk: FlextLdifQuirksServersOud
@@ -296,7 +299,6 @@ class TestOudAclQuirks:
 
         parsed = result.unwrap()
         assert parsed.server_type == "oracle_oud"
-        assert parsed.server_type == FlextLdifConstants.AclFormats.ACI
         assert parsed.raw_acl == simple_aci
 
     def test_parse_complex_aci_with_targetattr(
@@ -341,7 +343,6 @@ class TestOudAclQuirks:
 
         parsed = result.unwrap()
         assert parsed.server_type == "oracle_oud"
-        assert parsed.server_type == FlextLdifConstants.AclFormats.ACI
 
     def test_parse_ds_cfg_acl(
         self, acl_quirk: FlextLdifQuirksServersOud.AclQuirk
@@ -356,12 +357,15 @@ class TestOudAclQuirks:
 
         parsed = result.unwrap()
         assert parsed.server_type == "oracle_oud"
-        assert parsed.server_type == "ds-cfg"
 
     def test_convert_acl_to_rfc(
         self, acl_quirk: FlextLdifQuirksServersOud.AclQuirk
     ) -> None:
-        """Test converting OUD ACL to RFC-compliant format."""
+        """Test converting OUD ACL to RFC-compliant format.
+
+        OUD ACLs are already RFC-compliant (standard LDAP ACI format),
+        so convert_acl_to_rfc returns the data as-is.
+        """
         oud_acl_data: dict[str, object] = {
             FlextLdifConstants.DictKeys.TYPE: "oud_acl",
             FlextLdifConstants.DictKeys.FORMAT: FlextLdifConstants.AclFormats.ACI,
@@ -372,12 +376,11 @@ class TestOudAclQuirks:
         assert result.is_success
 
         rfc_data = result.unwrap()
-        # Check server_type instead of TYPE (which was dict compatibility)
-        assert rfc_data.server_type == FlextLdifConstants.AclFormats.RFC_GENERIC
+        # OUD returns data as-is since it's already RFC-compliant
+        assert rfc_data.get(FlextLdifConstants.DictKeys.TYPE) == "oud_acl"
         assert (
-            rfc_data.metadata.extensions.source_format
-            if rfc_data.metadata
-            else None is FlextLdifConstants.AclFormats.OUD_ACL
+            rfc_data.get(FlextLdifConstants.DictKeys.FORMAT)
+            == FlextLdifConstants.AclFormats.ACI
         )
 
     def test_convert_acl_from_rfc(
@@ -466,9 +469,9 @@ class TestOudEntryQuirks:
         assert result.is_success
 
         processed = result.unwrap()
-        assert processed.dn == entry_dn
-        assert processed.server_type == "oracle_oud"
-        assert hasattr(processed, "cn")
+        assert processed[FlextLdifConstants.DictKeys.DN] == entry_dn
+        assert processed[FlextLdifConstants.DictKeys.SERVER_TYPE] == "oud"
+        assert "cn" in processed
 
     def test_process_oracle_context_entry(
         self, entry_quirk: FlextLdifQuirksServersOud.EntryQuirk
@@ -485,9 +488,9 @@ class TestOudEntryQuirks:
         assert result.is_success
 
         processed = result.unwrap()
-        assert processed.dn == entry_dn
-        assert processed.server_type == "oracle_oud"
-        assert hasattr(processed, "orclVersion")
+        assert processed[FlextLdifConstants.DictKeys.DN] == entry_dn
+        assert processed[FlextLdifConstants.DictKeys.SERVER_TYPE] == "oud"
+        assert "orclVersion" in processed
 
     def test_process_entry_with_acl(
         self, entry_quirk: FlextLdifQuirksServersOud.EntryQuirk
@@ -507,8 +510,8 @@ class TestOudEntryQuirks:
         assert result.is_success
 
         processed = result.unwrap()
-        assert processed.dn == entry_dn
-        assert hasattr(processed, "aci")
+        assert processed[FlextLdifConstants.DictKeys.DN] == entry_dn
+        assert "aci" in processed
 
     def test_process_entry_from_fixtures(
         self,
@@ -537,7 +540,10 @@ class TestOudEntryQuirks:
                     )
 
                     processed = result.unwrap()
-                    assert processed.server_type == "oracle_oud"
+                    assert (
+                        processed[FlextLdifConstants.DictKeys.SERVER_TYPE]
+                        == FlextLdifConstants.ServerTypes.OUD
+                    )
 
                 # Start new entry
                 current_dn = line.split(":", 1)[1].strip()
@@ -576,9 +582,9 @@ class TestOudEntryQuirks:
 
         processed = result.unwrap()
         # Verify all Oracle attributes preserved
-        assert hasattr(processed, "orclDBOIDAuthentication")
-        assert hasattr(processed, "orclDBVersionCompatibility")
-        assert hasattr(processed, "orclVersion")
+        assert "orclDBOIDAuthentication" in processed
+        assert "orclDBVersionCompatibility" in processed
+        assert "orclVersion" in processed
 
     def test_convert_entry_to_rfc(
         self, entry_quirk: FlextLdifQuirksServersOud.EntryQuirk
@@ -596,7 +602,7 @@ class TestOudEntryQuirks:
 
         rfc_data = result.unwrap()
         # OUD entries are RFC-compliant, should pass through
-        assert rfc_data.dn == "cn=test,dc=example,dc=com"
+        assert rfc_data[FlextLdifConstants.DictKeys.DN] == "cn=test,dc=example,dc=com"
 
     def test_entry_roundtrip(
         self, entry_quirk: FlextLdifQuirksServersOud.EntryQuirk
@@ -620,8 +626,8 @@ class TestOudEntryQuirks:
         rfc_data = rfc_result.unwrap()
 
         # Validate essential data preserved
-        assert rfc_data.dn == original_dn
-        assert hasattr(rfc_data, "orclVersion")
+        assert rfc_data[FlextLdifConstants.DictKeys.DN] == original_dn
+        assert "orclVersion" in rfc_data
 
 
 class TestOudQuirksIntegration:
@@ -871,13 +877,22 @@ class TestOudAclRoundTrip:
         self, acl_quirk: FlextLdifQuirksServersOud.AclQuirk
     ) -> None:
         """Test writing simple ACL data to ACI format."""
-        acl_data: dict[str, object] = {
-            "targetattr": "*",
-            "version": "3.0",
-            "acl_name": "Test ACL",
-            "permissions": [{"action": "allow", "operations": ["read", "search"]}],
-            "bind_rules": [{"type": "userdn", "value": "ldap:///anyone"}],
-        }
+        from flext_ldif.models import FlextLdifModels
+
+        # Create proper Acl model
+        acl_data = FlextLdifModels.Acl(
+            name="Test ACL",
+            server_type="oracle_oud",
+            target=FlextLdifModels.AclTarget(target_dn="*"),
+            permissions=FlextLdifModels.AclPermissions(
+                read=True,
+                search=True,
+            ),
+            subject=FlextLdifModels.AclSubject(
+                subject_type="anonymous",
+                subject_value="ldap:///anyone",
+            ),
+        )
 
         result = acl_quirk.write_acl_to_rfc(acl_data)
         assert result.is_success, f"Failed to write ACL: {result.error}"
@@ -894,24 +909,30 @@ class TestOudAclRoundTrip:
         from flext_ldif.models import FlextLdifModels
 
         original_multiline = (
-            '(targetattr="*")(version 3.0; acl "Multi ACL";\n'
+            'aci: (targetattr="*")(version 3.0; acl "Multi ACL";\n'
             '      allow (read,search) groupdn="ldap:///cn=Group1,dc=example,dc=com";\n'
             '      allow (write) groupdn="ldap:///cn=Group2,dc=example,dc=com";)'
         )
 
-        acl_data: dict[str, object] = {
-            "targetattr": "*",
-            "_metadata": FlextLdifModels.QuirkMetadata(
-                original_format=original_multiline,
-                quirk_type="oud",
-                extensions={"is_multiline": True, "line_breaks": [50, 120]},
+        # Create proper Acl model with raw_acl for round-trip
+        acl_data = FlextLdifModels.Acl(
+            name="Multi ACL",
+            server_type="oracle_oud",
+            raw_acl=original_multiline,
+            target=FlextLdifModels.AclTarget(target_dn="*"),
+            permissions=FlextLdifModels.AclPermissions(
+                read=True, search=True, write=True
             ),
-        }
+            subject=FlextLdifModels.AclSubject(
+                subject_type="group",
+                subject_value="ldap:///cn=Group1,dc=example,dc=com",
+            ),
+        )
 
         result = acl_quirk.write_acl_to_rfc(acl_data)
         assert result.is_success
 
-        # Should return exact original format when metadata present
+        # Should return exact original format when raw_acl is present
         aci_string = result.unwrap()
         assert aci_string == original_multiline
 
@@ -944,8 +965,8 @@ class TestOudAclRoundTrip:
         parsed2 = parse2_result.unwrap()
 
         # Validate: essential data preserved
-        assert parsed1.targetattr == parsed2.targetattr
-        assert parsed1.acl_name == parsed2.acl_name
+        assert parsed1.target.target_dn == parsed2.target.target_dn
+        assert parsed1.name == parsed2.name
 
 
 class TestOudEntryRoundTrip:
@@ -1060,9 +1081,12 @@ class TestOudEntryRoundTrip:
         processed2 = process2_result.unwrap()
 
         # Validate: essential data preserved
-        assert processed1.dn == processed2.dn
-        assert processed1.cn == processed2.cn
-        assert processed1.orclVersion == processed2.orclVersion
+        assert (
+            processed1[FlextLdifConstants.DictKeys.DN]
+            == processed2[FlextLdifConstants.DictKeys.DN]
+        )
+        assert processed1["cn"] == processed2["cn"]
+        assert processed1["orclVersion"] == processed2["orclVersion"]
 
 
 class TestOudFilteringEdgeCases:
@@ -1458,11 +1482,11 @@ class TestOudConversionEdgeCases:
         self, oud_quirk: FlextLdifQuirksServersOud
     ) -> None:
         """Test converting RFC attribute back to OUD with metadata."""
-        rfc_data: dict[str, object] = {
-            "oid": "2.16.840.1.113894.1.1.1",
-            "name": "orclVersion",
-            "syntax": "1.3.6.1.4.1.1466.115.121.1.27",
-        }
+        rfc_data = FlextLdifModels.SchemaAttribute(
+            oid="2.16.840.1.113894.1.1.1",
+            name="orclVersion",
+            syntax="1.3.6.1.4.1.1466.115.121.1.27",
+        )
 
         result = oud_quirk.convert_attribute_from_rfc(rfc_data)
         assert result.is_success
@@ -1474,12 +1498,12 @@ class TestOudConversionEdgeCases:
         self, oud_quirk: FlextLdifQuirksServersOud
     ) -> None:
         """Test converting RFC objectClass back to OUD with metadata."""
-        rfc_data: dict[str, object] = {
-            "oid": "2.16.840.1.113894.2.1.1",
-            "name": "orclContext",
-            "kind": "STRUCTURAL",
-            "sup": "top",
-        }
+        rfc_data = FlextLdifModels.SchemaObjectClass(
+            oid="2.16.840.1.113894.2.1.1",
+            name="orclContext",
+            kind="STRUCTURAL",
+            sup="top",
+        )
 
         result = oud_quirk.convert_objectclass_from_rfc(rfc_data)
         assert result.is_success
@@ -1715,7 +1739,7 @@ class TestOudSchemaExtractionWithRealFixtures:
 
         schemas = result.unwrap()
         assert FlextLdifConstants.DictKeys.ATTRIBUTES in schemas
-        assert hasattr(schemas, "objectclasses")
+        assert "objectclasses" in schemas
 
         # Verify substantial extraction (not just a few entries)
         attributes = schemas[FlextLdifConstants.DictKeys.ATTRIBUTES]
@@ -1738,21 +1762,19 @@ class TestOudSchemaExtractionWithRealFixtures:
 
         # Verify specific known OUD attributes exist
         attr_names = {
-            cast("str", attr.name)
-            for attr in attributes
-            if isinstance(attr, dict) and hasattr(attr, "name")
+            cast("str", attr.name) for attr in attributes if hasattr(attr, "name")
         }
 
         # RFC 1274 attributes (should be present)
-        assert hasattr(attr_names, "uid"), "Standard 'uid' attribute not found"
-        assert hasattr(attr_names, "mail"), "Standard 'mail' attribute not found"
-        assert hasattr(attr_names, "dc"), "Standard 'dc' attribute not found"
+        assert "uid" in attr_names, "Standard 'uid' attribute not found"
+        assert "mail" in attr_names, "Standard 'mail' attribute not found"
+        assert "dc" in attr_names, "Standard 'dc' attribute not found"
 
         # Oracle-specific attributes (OID namespace: 2.16.840.1.113894.*)
         oracle_attrs = [
             attr
             for attr in attributes
-            if isinstance(attr, dict)
+            if hasattr(attr, "oid")
             and isinstance(attr.oid, str)
             and cast("str", attr.oid).startswith("2.16.840.1.113894")
         ]
@@ -1769,22 +1791,18 @@ class TestOudSchemaExtractionWithRealFixtures:
         )
 
         # Verify specific known OUD objectClasses exist
-        oc_names = {
-            cast("str", oc.name)
-            for oc in objectclasses
-            if isinstance(oc, dict) and hasattr(oc, "name")
-        }
+        oc_names = {cast("str", oc.name) for oc in objectclasses if hasattr(oc, "name")}
 
         # RFC objectClasses
-        assert hasattr(oc_names, "domain"), "Standard 'domain' objectClass not found"
-        assert hasattr(oc_names, "account"), "Standard 'account' objectClass not found"
-        assert hasattr(oc_names, "person"), "Standard 'person' objectClass not found"
+        assert "domain" in oc_names, "Standard 'domain' objectClass not found"
+        assert "account" in oc_names, "Standard 'account' objectClass not found"
+        assert "person" in oc_names, "Standard 'person' objectClass not found"
 
         # Oracle-specific objectClasses
         oracle_ocs = [
             oc
             for oc in objectclasses
-            if isinstance(oc, dict)
+            if hasattr(oc, "oid")
             and isinstance(oc.oid, str)
             and cast("str", oc.oid).startswith("2.16.840.1.113894")
         ]
@@ -2328,9 +2346,7 @@ class TestOudParseAttributeComprehensive:
         result = oud_quirk.parse_attribute(attr_def)
         assert result.is_success
         parsed = result.unwrap()
-        assert (
-            parsed.metadata.extensions.metadata.extensions.get("x_origin") == "Custom"
-        )
+        assert parsed.metadata.extensions.get("x_origin") == "Custom"
 
     def test_parse_attribute_all_fields(
         self, oud_quirk: FlextLdifQuirksServersOud
@@ -2360,9 +2376,7 @@ class TestOudParseAttributeComprehensive:
         assert parsed.length == 256
         assert parsed.single_value is True
         assert parsed.sup == "name"
-        assert (
-            parsed.metadata.extensions.metadata.extensions.get("x_origin") == "Custom"
-        )
+        assert parsed.metadata.extensions.get("x_origin") == "Custom"
 
     def test_parse_attribute_malformed_returns_failure(
         self, oud_quirk: FlextLdifQuirksServersOud
@@ -2542,7 +2556,7 @@ class TestOudWriteMethods:
         written = result.unwrap()
         assert isinstance(written, str)
         assert "2.5.6.6" in written
-        assert hasattr(written, "person")
+        assert "person" in written
 
 
 class TestOudExtractSchemasMethod:

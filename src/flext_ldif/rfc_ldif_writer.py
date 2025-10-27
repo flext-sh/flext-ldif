@@ -323,7 +323,7 @@ class FlextLdifRfcLdifWriter(FlextService[dict[str, object]]):
                 FlextLdifConstants.DictKeys.LINES_WRITTEN: total_lines,
             })
 
-        except (ValueError, TypeError, AttributeError) as e:
+        except (ValueError, TypeError, AttributeError, PermissionError, OSError, Exception) as e:
             if self.logger is not None:
                 self.logger.exception(
                     FlextLdifConstants.ServerDetection.ERROR_LDIF_WRITE_FAILED
@@ -779,7 +779,11 @@ class FlextLdifRfcLdifWriter(FlextService[dict[str, object]]):
                                 hasattr(write_result, "is_success")
                                 and write_result.is_success
                             ):
-                                ldif_string = write_result.unwrap()
+                                # Cast to FlextResult for type safety before unwrapping
+                                typed_result: FlextResult[str] = cast(
+                                    "FlextResult[str]", write_result
+                                )
+                                ldif_string: str = typed_result.unwrap()
                                 file_handle.write(ldif_string)
                                 # Add entry separator (blank line) if not already present
                                 if not ldif_string.endswith("\n\n"):

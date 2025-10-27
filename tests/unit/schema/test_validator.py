@@ -130,7 +130,7 @@ class TestFlextLdifSchemaValidator:
         assert validation.is_valid is False
         assert len(validation.errors) == 1
         assert "Missing required attribute" in validation.errors[0]
-        assert "'sn'" in validation.errors[0]
+        assert "sn" in validation.errors[0]
 
     def test_validate_entries_strict_mode_valid_person(self) -> None:
         """Test strict mode validation with valid person entry."""

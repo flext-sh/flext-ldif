@@ -192,7 +192,7 @@ class FlextLdifUtilities:
                 entry_out = entry.copy()
                 entry_out[FlextLdifConstants.DictKeys.ATTRIBUTES] = attrs
                 return entry_out
-            except (ValueError, TypeError, AttributeError):
+            except (ValueError, TypeError, AttributeError, RuntimeError, Exception):
                 return entry
 
     class Sorter:
