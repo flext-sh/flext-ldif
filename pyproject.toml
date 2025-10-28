@@ -170,6 +170,16 @@ docker = ">=7.1.0"
             "unit: Unit tests",
         ]
         minversion = "8.0"
+        python_classes = [
+            "Test*",
+        ]
+        python_files = [
+            "*_test.py",
+            "test_*.py",
+        ]
+        python_functions = [
+            "test_*",
+        ]
         testpaths = [
             "tests",
         ]

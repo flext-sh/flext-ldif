@@ -16,25 +16,15 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import cast
 
-from flext_core import (
-    FlextBus,
-    FlextContainer,
-    FlextContext,
-    FlextResult,
-    FlextService,
-)
+from flext_core import FlextBus, FlextContainer, FlextContext, FlextResult, FlextService
 from pydantic import PrivateAttr
 
+from flext_ldif import FlextLdifModels
 from flext_ldif.config import FlextLdifConfig
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.filters import FlextLdifFilters
 from flext_ldif.migration_pipeline import FlextLdifMigrationPipeline
-from flext_ldif.models import FlextLdifModels
-from flext_ldif.quirks.base import (
-    BaseAclQuirk,
-    BaseEntryQuirk,
-    BaseSchemaQuirk,
-)
+from flext_ldif.quirks.base import BaseAclQuirk, BaseEntryQuirk, BaseSchemaQuirk
 from flext_ldif.quirks.registry import FlextLdifQuirksRegistry
 from flext_ldif.quirks.servers import (
     FlextLdifQuirksServersAd,
@@ -47,9 +37,7 @@ from flext_ldif.quirks.servers import (
     FlextLdifQuirksServersOud,
     FlextLdifQuirksServersTivoli,
 )
-from flext_ldif.quirks.servers.relaxed_quirks import (
-    FlextLdifQuirksServersRelaxedSchema,
-)
+from flext_ldif.quirks.servers.relaxed_quirks import FlextLdifQuirksServersRelaxedSchema
 from flext_ldif.rfc_ldif_parser import FlextLdifRfcLdifParser
 from flext_ldif.rfc_ldif_writer import FlextLdifRfcLdifWriter
 from flext_ldif.rfc_schema_parser import FlextLdifRfcSchemaParser
@@ -100,13 +88,13 @@ class FlextLdifClient(FlextService[FlextLdifModels.ClientStatus]):
         # Call Pydantic/FlextService initialization
         super().__init__()
 
-    def model_post_init(self, __context: dict[str, object] | None, /) -> None:
+    def model_post_init(self, _context: dict[str, object] | None, /) -> None:
         """Initialize private attributes after Pydantic initialization.
 
         This hook is called by Pydantic after __init__ completes.
 
         Args:
-        __context: Pydantic's validation context dictionary or None.
+        _context: Pydantic's validation context dictionary or None (unused).
 
         """
         # Initialize private attributes that parent's __init__ may access
@@ -1024,7 +1012,7 @@ class FlextLdifClient(FlextService[FlextLdifModels.ClientStatus]):
 
     def register_quirk(
         self,
-        quirk: (BaseSchemaQuirk | BaseAclQuirk | BaseEntryQuirk),
+        quirk: BaseSchemaQuirk | BaseAclQuirk | BaseEntryQuirk,
         quirk_type: str = "schema",
     ) -> FlextResult[None]:
         """Register a custom quirk for server-specific processing.

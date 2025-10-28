@@ -21,19 +21,11 @@ import re
 from typing import ClassVar
 
 from flext_core import FlextResult
-from pydantic import Field
 
+from flext_ldif import FlextLdifModels
 from flext_ldif.constants import FlextLdifConstants
-from flext_ldif.models import FlextLdifModels
-from flext_ldif.quirks.base import (
-    BaseAclQuirk,
-    BaseEntryQuirk,
-    BaseSchemaQuirk,
-)
-from flext_ldif.quirks.rfc_parsers import (
-    RfcAttributeParser,
-    RfcObjectClassParser,
-)
+from flext_ldif.quirks.base import BaseAclQuirk, BaseEntryQuirk, BaseSchemaQuirk
+from flext_ldif.quirks.rfc_parsers import RfcAttributeParser, RfcObjectClassParser
 from flext_ldif.typings import FlextLdifTypes
 from flext_ldif.utilities import FlextLdifUtilities
 
@@ -41,19 +33,9 @@ from flext_ldif.utilities import FlextLdifUtilities
 class FlextLdifQuirksServersAd(BaseSchemaQuirk):
     """Active Directory schema quirk."""
 
-    def __init__(
-        self,
-        server_type: str = FlextLdifConstants.LdapServers.ACTIVE_DIRECTORY,
-        priority: int = 15,
-    ) -> None:
-        """Initialize with Active Directory defaults.
-
-        Args:
-            server_type: Active Directory server type
-            priority: Standard priority for AD parsing
-
-        """
-        super().__init__(server_type=server_type, priority=priority)
+    # Active Directory configuration defaults
+    server_type: ClassVar[str] = FlextLdifConstants.LdapServers.ACTIVE_DIRECTORY
+    priority: ClassVar[int] = 15
 
     # Microsoft-owned schema namespace. All AD schema elements live under it.
     AD_OID_PATTERN: ClassVar[re.Pattern[str]] = re.compile(
@@ -90,9 +72,6 @@ class FlextLdifQuirksServersAd(BaseSchemaQuirk):
         "msds-groupmanagedserviceaccount",
         "msds-managedserviceaccount",
     ])
-
-    def model_post_init(self, _context: object, /) -> None:
-        """Initialize Active Directory schema quirk."""
 
     # --------------------------------------------------------------------- #
     # Schema attribute handling
@@ -378,19 +357,17 @@ class FlextLdifQuirksServersAd(BaseSchemaQuirk):
     class AclQuirk(BaseAclQuirk):
         """Active Directory ACL quirk handling nTSecurityDescriptor entries."""
 
-        server_type: str = Field(
-            default=FlextLdifConstants.LdapServers.ACTIVE_DIRECTORY,
-            description="Active Directory server type",
-        )
-        priority: int = Field(default=15, description="Standard priority for AD ACL")
-
         # SDDL strings start with O:, G:, D:, or S:
         SDDL_PREFIX_PATTERN: ClassVar[re.Pattern[str]] = re.compile(
             r"^(O:|G:|D:|S:)", re.IGNORECASE
         )
 
-        def model_post_init(self, _context: object, /) -> None:
-            """Initialize Active Directory ACL quirk."""
+        server_type: ClassVar[str] = "generic"
+        priority: ClassVar[int] = 200
+
+        def __init__(self) -> None:
+            """Initialize Active Directory ACL quirk with RFC format."""
+            super().__init__(server_type="generic", priority=200)
 
         def can_handle_acl(self, acl_line: str) -> bool:
             """Check whether the ACL line belongs to an AD security descriptor."""
@@ -561,12 +538,6 @@ class FlextLdifQuirksServersAd(BaseSchemaQuirk):
     class EntryQuirk(BaseEntryQuirk):
         """Active Directory entry processing quirk."""
 
-        server_type: str = Field(
-            default=FlextLdifConstants.LdapServers.ACTIVE_DIRECTORY,
-            description="Active Directory server type",
-        )
-        priority: int = Field(default=15, description="Standard priority for AD entry")
-
         AD_DN_MARKERS: ClassVar[frozenset[str]] = frozenset([
             "cn=users",
             "cn=computers",
@@ -586,8 +557,12 @@ class FlextLdifQuirksServersAd(BaseSchemaQuirk):
             "pwdlastset",
         ])
 
-        def model_post_init(self, _context: object, /) -> None:
-            """Initialize Active Directory entry quirk."""
+        server_type: ClassVar[str] = "generic"
+        priority: ClassVar[int] = 200
+
+        def __init__(self) -> None:
+            """Initialize Active Directory entry quirk with RFC format."""
+            super().__init__(server_type="generic", priority=200)
 
         def can_handle_entry(
             self,

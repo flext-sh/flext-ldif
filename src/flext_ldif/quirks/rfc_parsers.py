@@ -39,8 +39,8 @@ from typing import ClassVar
 
 from flext_core import FlextLogger, FlextResult
 
+from flext_ldif import FlextLdifModels
 from flext_ldif.constants import FlextLdifConstants
-from flext_ldif.models import FlextLdifModels
 
 logger = FlextLogger(__name__)
 

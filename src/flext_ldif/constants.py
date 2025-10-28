@@ -26,13 +26,6 @@ class FlextLdifConstants(FlextConstants):
     # FORMAT CONSTANTS
     # =============================================================================
 
-    # LDIF format constants (moved from models.py for proper organization)
-    RFC_FORMAT: Final[str] = "rfc"
-    OID_FORMAT: Final[str] = "oid"
-    AUTO_FORMAT: Final[str] = "auto"
-    OUD_FORMAT: Final[str] = "oud"
-    RELAXED_FORMAT: Final[str] = "relaxed"
-
     # Oracle OID namespace identifier
     ORACLE_OID_NAMESPACE: Final[str] = "2.16.840.1.113894."
 
@@ -1341,9 +1334,13 @@ class FlextLdifConstants(FlextConstants):
         GROUPS: Final[str] = "groups"
         HIERARCHY: Final[str] = "hierarchy"
         SCHEMA: Final[str] = "schema"
+        ACL: Final[str] = "acl"
+        REJECTED: Final[str] = "rejected"
 
         # Python 3.13 type alias from constants
-        type Category = Literal["users", "groups", "hierarchy", "schema"]
+        type Category = Literal[
+            "users", "groups", "hierarchy", "schema", "acl", "rejected"
+        ]
 
     class DataTypes:
         """Data type identifier constants.

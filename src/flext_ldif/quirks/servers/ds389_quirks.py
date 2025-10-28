@@ -8,17 +8,10 @@ from typing import ClassVar
 
 from flext_core import FlextResult
 
+from flext_ldif import FlextLdifModels
 from flext_ldif.constants import FlextLdifConstants
-from flext_ldif.models import FlextLdifModels
-from flext_ldif.quirks.base import (
-    BaseAclQuirk,
-    BaseEntryQuirk,
-    BaseSchemaQuirk,
-)
-from flext_ldif.quirks.rfc_parsers import (
-    RfcAttributeParser,
-    RfcObjectClassParser,
-)
+from flext_ldif.quirks.base import BaseAclQuirk, BaseEntryQuirk, BaseSchemaQuirk
+from flext_ldif.quirks.rfc_parsers import RfcAttributeParser, RfcObjectClassParser
 from flext_ldif.typings import FlextLdifTypes
 
 
@@ -40,19 +33,9 @@ class FlextLdifQuirksServersDs389(BaseSchemaQuirk):
         "nsds5replicationagreement",
     ])
 
-    def __init__(
-        self,
-        server_type: str = FlextLdifConstants.LdapServers.DS_389,
-        priority: int = 15,
-    ) -> None:
-        """Initialize 389 DS schema quirk.
-
-        Args:
-            server_type: 389 Directory Server type
-            priority: Standard priority for 389 DS parsing
-
-        """
-        super().__init__(server_type=server_type, priority=priority)
+    # 389 Directory Server configuration defaults
+    server_type: ClassVar[str] = FlextLdifConstants.LdapServers.DS_389
+    priority: ClassVar[int] = 15
 
     def can_handle_attribute(self, attr_definition: str) -> bool:
         """Detect 389 DS attribute definitions."""
@@ -287,6 +270,9 @@ class FlextLdifQuirksServersDs389(BaseSchemaQuirk):
 
         CLAUSE_PATTERN: ClassVar[re.Pattern[str]] = re.compile(r"\([^()]+\)")
 
+        server_type: ClassVar[str] = "generic"
+        priority: ClassVar[int] = 200
+
         def __init__(
             self,
             server_type: str = FlextLdifConstants.LdapServers.DS_389,
@@ -353,9 +339,9 @@ class FlextLdifQuirksServersDs389(BaseSchemaQuirk):
                     ),
                     subject=FlextLdifModels.AclSubject(
                         subject_type="userdn",
-                        subject_value=userdn_matches[0]
-                        if userdn_matches
-                        else "ldap:///anyone",
+                        subject_value=(
+                            userdn_matches[0] if userdn_matches else "ldap:///anyone"
+                        ),
                     ),
                     permissions=FlextLdifModels.AclPermissions(
                         # DS389 stub - set permissions based on parsed list
@@ -486,6 +472,9 @@ class FlextLdifQuirksServersDs389(BaseSchemaQuirk):
             "nsds",
             "nsuniqueid",
         ])
+
+        server_type: ClassVar[str] = "generic"
+        priority: ClassVar[int] = 200
 
         def __init__(
             self,

@@ -18,8 +18,8 @@ from typing import Any, TextIO, cast
 
 from flext_core import FlextResult, FlextService
 
+from flext_ldif import FlextLdifModels
 from flext_ldif.constants import FlextLdifConstants
-from flext_ldif.models import FlextLdifModels
 from flext_ldif.quirks.registry import FlextLdifQuirksRegistry
 from flext_ldif.services.dn import FlextLdifDnService
 
@@ -114,9 +114,8 @@ class FlextLdifRfcLdifWriter(FlextService[dict[str, object]]):
             schema: dict[str, object] = (
                 schema_raw if isinstance(schema_raw, dict) else {}
             )
-            acls: list[dict[str, object]] = cast(
-                "list[dict[str, object]]",
-                acls_raw if isinstance(acls_raw, list) else [],
+            acls: list[dict[str, object] | FlextLdifModels.Entry] = (
+                acls_raw if isinstance(acls_raw, list) else []
             )
 
             if not entries and not schema and not acls:
@@ -423,11 +422,16 @@ class FlextLdifRfcLdifWriter(FlextService[dict[str, object]]):
                             in FlextLdifConstants.DictKeys.ACL_ATTRIBUTES
                         )
 
-                        # attr_values is AttributeValues, need to access .values property
+                        # attr_values might be AttributeValues with .values property or direct list
+                        values_list = (
+                            attr_values.values
+                            if hasattr(attr_values, "values")
+                            else attr_values
+                        )
                         if is_acl_attribute:
                             # Convert ACL values via _extract_acl_definitions
                             converted_acls = self._extract_acl_definitions(
-                                attr_values.values
+                                values_list
                             )
                             for acl_str in converted_acls:
                                 attr_line = self._format_attribute_value(
@@ -436,7 +440,7 @@ class FlextLdifRfcLdifWriter(FlextService[dict[str, object]]):
                                 output.write(attr_line + "\n")
                         else:
                             # Regular attribute - write as-is
-                            for value in attr_values.values:
+                            for value in values_list:
                                 # Format value according to RFC 2849 (base64 if needed)
                                 attr_line = self._format_attribute_value(
                                     attr_name, value
@@ -537,18 +541,23 @@ class FlextLdifRfcLdifWriter(FlextService[dict[str, object]]):
                                 in FlextLdifConstants.DictKeys.ACL_ATTRIBUTES
                             )
 
-                            # attr_values is AttributeValues, need to access .values property
+                            # attr_values might be AttributeValues with .values property or direct list
+                            values_list = (
+                                attr_values.values
+                                if hasattr(attr_values, "values")
+                                else attr_values
+                            )
                             if is_acl_attribute:
                                 # Convert ACL values via _extract_acl_definitions
                                 converted_acls = self._extract_acl_definitions(
-                                    attr_values.values
+                                    values_list
                                 )
                                 for acl_str in converted_acls:
                                     attr_line = f"{attr_name}: {acl_str}"
                                     f.write(attr_line + "\n")
                             else:
                                 # Regular attribute - write as-is
-                                for value in attr_values.values:
+                                for value in values_list:
                                     attr_line = f"{attr_name}: {value}"
                                     f.write(attr_line + "\n")
                     else:
@@ -895,16 +904,18 @@ class FlextLdifRfcLdifWriter(FlextService[dict[str, object]]):
             )
 
     def _write_acl_entries(
-        self, file_handle: TextIO, acls: list[dict[str, object]]
+        self, file_handle: TextIO, acls: list[dict[str, object] | FlextLdifModels.Entry]
     ) -> FlextResult[dict[str, object]]:
         """Write ACL entries to LDIF file.
 
+        Handles both Entry objects with embedded ACLs and dict-based ACL entries.
+
         Args:
-        file_handle: Open text file handle for writing
-        acls: List of ACL entry dicts
+            file_handle: Open text file handle for writing
+            acls: List of ACL entry dicts or Entry objects with acls field
 
         Returns:
-        FlextResult with stats dict
+            FlextResult with stats dict
 
         """
         try:
@@ -912,18 +923,37 @@ class FlextLdifRfcLdifWriter(FlextService[dict[str, object]]):
             lines_written = 0
 
             for acl_entry in acls:
-                dn = acl_entry.get(FlextLdifConstants.DictKeys.DN, "")
+                # Handle both Entry objects and dict format
+                dn: str = ""
+                acl_definitions: list[str] = []
+
+                if isinstance(acl_entry, FlextLdifModels.Entry):
+                    # Entry object format - extract DN and ACLs from Entry model
+                    dn = acl_entry.dn.value
+                    # Extract ACL definitions from Entry.acls list
+                    if acl_entry.acls:
+                        acl_definitions = [acl.raw_acl for acl in acl_entry.acls if acl.raw_acl]
+                else:
+                    # Dict format - extract from dict keys
+                    dn_raw: Any = acl_entry.get(FlextLdifConstants.DictKeys.DN, "")
+                    dn = dn_raw if isinstance(dn_raw, str) else ""
+
+                    raw_acl: Any = acl_entry.get(FlextLdifConstants.DictKeys.ACL, [])
+                    acl_definitions = self._extract_acl_definitions(raw_acl)
+
                 if not dn:
                     continue
 
-                raw_acl: Any = acl_entry.get(FlextLdifConstants.DictKeys.ACL, [])
-                acl_definitions: list[str] = self._extract_acl_definitions(raw_acl)
-
                 # Apply target ACL quirks if available (convert FROM RFC to target format)
+                acl_attribute_name: str = FlextLdifConstants.DictKeys.ACL  # Default fallback
                 if self._quirk_registry and self._target_server_type:
                     acl_quirks = self._quirk_registry.get_acl_quirks(
                         self._target_server_type
                     )
+                    # Get ACL attribute name from first available quirk
+                    if acl_quirks:
+                        acl_attribute_name = acl_quirks[0].get_acl_attribute_name()
+
                     # Apply ACL transformations
                     transformed_acls: list[str] = []
                     for acl_def in acl_definitions:
@@ -959,9 +989,9 @@ class FlextLdifRfcLdifWriter(FlextService[dict[str, object]]):
                 file_handle.write(dn_line)
                 lines_written += 1
 
-                # Write ACL definitions
+                # Write ACL definitions using server-specific ACL attribute name
                 for acl_def in acl_definitions:
-                    acl_line = f"{FlextLdifConstants.DictKeys.ACL}: {acl_def}\n"
+                    acl_line = f"{acl_attribute_name}: {acl_def}\n"
                     wrapped_lines = self._wrap_line(acl_line)
                     file_handle.writelines(wrapped_lines)
                     lines_written += len(wrapped_lines)

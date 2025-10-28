@@ -815,6 +815,65 @@ if result.is_success:
     )
 ```
 
+### Fluent Entry Filtering with EntryFilterBuilder (NEW in v0.9.9)
+
+**Purpose**: Advanced composable entry filtering using a fluent builder pattern with support for complex filter combinations.
+
+```python
+from flext_ldif import EntryFilterBuilder, FlextLdif
+from pathlib import Path
+
+ldif = FlextLdif()
+
+# Parse entries
+result = ldif.parse(Path("directory.ldif"))
+if result.is_success:
+    entries = result.unwrap()
+
+    # Filter users with email in specific OU
+    builder = EntryFilterBuilder()
+    filtered_result = (
+        builder
+        .with_dn_pattern("*,ou=users,dc=example,dc=com")
+        .with_objectclass("inetOrgPerson")
+        .with_required_attributes(["mail"])
+        .apply(entries)
+    )
+
+    if filtered_result.is_success:
+        active_users = filtered_result.unwrap()
+        print(f"Found {len(active_users)} active users with email")
+
+    # Find entries to exclude (e.g., service accounts)
+    builder2 = EntryFilterBuilder()
+    excluded_result = (
+        builder2
+        .with_dn_pattern("cn=service*,*")
+        .exclude_matching()
+        .apply(entries)
+    )
+```
+
+**EntryFilterBuilder Methods**:
+
+| Method | Purpose | Example |
+|--------|---------|---------|
+| `with_dn_pattern(pattern)` | Add DN wildcard pattern | `.with_dn_pattern("*,ou=users,*")` |
+| `with_dn_patterns(patterns)` | Add multiple DN patterns (OR) | `.with_dn_patterns([pattern1, pattern2])` |
+| `with_objectclass(*classes)` | Add objectClass requirement (OR) | `.with_objectclass("person", "group")` |
+| `with_required_attributes(attrs)` | Add required attributes (AND) | `.with_required_attributes(["mail", "cn"])` |
+| `exclude_matching()` | Invert filter to exclude matches | `.exclude_matching()` |
+| `apply(entries)` | Apply filter to entry list | `.apply([entry1, entry2])` |
+| `build_predicate()` | Build callable predicate function | `.build_predicate()` |
+
+**Filter Logic**:
+- **DN/ObjectClass**: Any pattern can match (OR logic)
+- **Combined Conditions**: All conditions must match (AND logic)
+- **Attributes**: All must be present (AND logic)
+- **Exclusion**: Inverts the entire filter logic
+
+**Test Coverage**: 37 comprehensive tests covering all filter combinations, edge cases, and error handling scenarios.
+
 ---
 
 ## Pydantic v2 Compliance Standards

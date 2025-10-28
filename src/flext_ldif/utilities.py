@@ -1,9 +1,11 @@
 """Utility classes for LDIF processing pipeline.
 
-Provides normalized, reusable utility components:
- - Normalizer: DN and attribute normalization
- - Sorter: Entry sorting and ordering
- - Statistics: Pipeline statistics generation
+DEPRECATED: Use services instead (FlextLdifDnService, FlextLdifStatisticsService).
+
+This module provides thin wrapper classes that delegate to service implementations.
+Scheduled for removal in v0.11.0. Use services directly:
+ - FlextLdifDnService: DN and attribute normalization
+ - FlextLdifStatisticsService: Pipeline statistics generation
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -17,8 +19,8 @@ from pathlib import Path
 
 from flext_core import FlextResult, FlextUtilities
 
+from flext_ldif import FlextLdifModels
 from flext_ldif.constants import FlextLdifConstants
-from flext_ldif.models import FlextLdifModels
 from flext_ldif.services.dn import FlextLdifDnService
 from flext_ldif.typings import FlextLdifTypes
 
@@ -37,8 +39,11 @@ class FlextLdifUtilities:
     class Normalizer:
         """DN and attribute normalization utilities.
 
+        DEPRECATED: Use FlextLdifDnService instead.
+
         Provides methods for normalizing DN values and DN-valued attributes
-        in LDIF entries according to canonical DN mappings.
+        in LDIF entries according to canonical DN mappings. These methods
+        delegate to FlextLdifDnService for actual implementation.
 
         """
 
@@ -47,6 +52,8 @@ class FlextLdifUtilities:
             categorized: dict[str, list[dict[str, object]]],
         ) -> dict[str, str]:
             """Build mapping of lowercase(cleaned DN) -> canonical cleaned DN.
+
+            DEPRECATED: Use FlextLdifDnService.build_canonical_dn_map instead.
 
             Uses FlextLdifDnService.clean_dn to normalize formatting and ensures
             case-consistent canonical values based on parsed entries.
@@ -58,20 +65,15 @@ class FlextLdifUtilities:
                 Dictionary mapping lowercase cleaned DN to canonical cleaned DN
 
             """
-            dn_map: dict[str, str] = {}
-            for entries in categorized.values():
-                for entry in entries:
-                    if isinstance(entry, dict):
-                        dn_value = entry.get(FlextLdifConstants.DictKeys.DN)
-                        if isinstance(dn_value, str) and dn_value:
-                            cleaned = FlextLdifDnService.clean_dn(dn_value)
-                            if cleaned:
-                                dn_map[cleaned.lower()] = cleaned
-            return dn_map
+            dn_service = FlextLdifDnService()
+            result = dn_service.build_canonical_dn_map(categorized)
+            return result.value if result.is_success else {}
 
         @staticmethod
         def normalize_dn_value(value: str, dn_map: dict[str, str]) -> str:
             """Normalize a single DN value using canonical map, fallback to cleaned DN.
+
+            DEPRECATED: Use FlextLdifDnService.normalize_dn_value instead.
 
             Args:
                 value: DN value to normalize
@@ -81,8 +83,8 @@ class FlextLdifUtilities:
                 Normalized DN value
 
             """
-            cleaned = FlextLdifDnService.clean_dn(value)
-            return dn_map.get(cleaned.lower(), cleaned)
+            dn_service = FlextLdifDnService()
+            return dn_service.normalize_dn_value(value, dn_map)
 
         @staticmethod
         def normalize_dn_references_for_entry(
@@ -113,9 +115,13 @@ class FlextLdifUtilities:
                 if attr_name.lower() in ref_attrs_lower:
                     if isinstance(attr_value, list):
                         new_attrs[attr_name] = [
-                            FlextLdifUtilities.Normalizer.normalize_dn_value(v, dn_map)
-                            if isinstance(v, str)
-                            else v
+                            (
+                                FlextLdifUtilities.Normalizer.normalize_dn_value(
+                                    v, dn_map
+                                )
+                                if isinstance(v, str)
+                                else v
+                            )
                             for v in attr_value
                         ]
                     elif isinstance(attr_value, str):

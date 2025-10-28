@@ -10,15 +10,15 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from flext_ldif.models import FlextLdifModels
 from flext_ldif.api import FlextLdif
 from flext_ldif.categorized_pipeline import FlextLdifCategorizedMigrationPipeline
 from flext_ldif.client import FlextLdifClient
 from flext_ldif.config import FlextLdifConfig
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.entry_builder import FlextLdifEntryBuilder
-from flext_ldif.filters import FlextLdifFilters
+from flext_ldif.filters import EntryFilterBuilder, FlextLdifFilters
 from flext_ldif.migration_pipeline import FlextLdifMigrationPipeline
-from flext_ldif.models import FlextLdifModels
 from flext_ldif.objectclass_manager import FlextLdifObjectClassManager
 from flext_ldif.quirks.conversion_matrix import FlextLdifQuirksConversionMatrix
 from flext_ldif.quirks.registry import FlextLdifQuirksRegistry
@@ -38,6 +38,7 @@ from flext_ldif.typings import FlextLdifTypes
 __email__ = "dev@flext.com"
 
 __all__ = [
+    "EntryFilterBuilder",
     "FlextLdif",
     "FlextLdifAclParser",
     "FlextLdifAclService",

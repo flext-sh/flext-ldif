@@ -22,13 +22,9 @@ from typing import Literal, cast
 
 from flext_core import FlextResult
 
+from flext_ldif import FlextLdifModels
 from flext_ldif.constants import FlextLdifConstants
-from flext_ldif.models import FlextLdifModels
-from flext_ldif.quirks.base import (
-    BaseAclQuirk,
-    BaseEntryQuirk,
-    BaseSchemaQuirk,
-)
+from flext_ldif.quirks.base import BaseAclQuirk, BaseEntryQuirk, BaseSchemaQuirk
 from flext_ldif.quirks.dn_case_registry import FlextLdifDnCaseRegistry
 
 DataType = Literal["attribute", "objectclass", "acl", "entry"]

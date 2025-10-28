@@ -17,12 +17,14 @@ from __future__ import annotations
 
 import fnmatch
 import re
+from collections.abc import Callable
 from datetime import UTC, datetime
+from typing import cast
 
 from flext_core import FlextResult
 
+from flext_ldif import FlextLdifModels
 from flext_ldif.constants import FlextLdifConstants
-from flext_ldif.models import FlextLdifModels
 
 
 class FlextLdifFilters:
@@ -778,9 +780,14 @@ class FlextLdifFilters:
             new_attrs_dict = dict(entry.attributes.attributes)
             # Update objectClass attribute with filtered values
             if FlextLdifConstants.DictKeys.OBJECTCLASS in new_attrs_dict:
-                new_attrs_dict[
-                    FlextLdifConstants.DictKeys.OBJECTCLASS
-                ].values = filtered_ocs
+                oc_attr = new_attrs_dict[FlextLdifConstants.DictKeys.OBJECTCLASS]
+                if hasattr(oc_attr, "values"):
+                    # Cast to known type with values attribute
+                    attr_with_values = cast("object", oc_attr)
+                    attr_with_values.values = filtered_ocs  # type: ignore [attr-defined]
+                else:
+                    # Replace the list directly
+                    new_attrs_dict[FlextLdifConstants.DictKeys.OBJECTCLASS] = filtered_ocs
 
             # Create new LdifAttributes container
             new_attributes = FlextLdifModels.LdifAttributes(
@@ -803,4 +810,183 @@ class FlextLdifFilters:
             )
 
 
-__all__ = ["FlextLdifFilters"]
+class EntryFilterBuilder:
+    """Fluent builder for composable entry filtering.
+
+    Provides a chainable API for building complex LDIF entry filters with
+    multiple conditions. Follows builder pattern with FlextResult error handling.
+
+    Example:
+        >>> builder = EntryFilterBuilder()
+        >>> filtered = (builder
+        ...     .with_dn_pattern("*,ou=users,dc=example,dc=com")
+        ...     .with_objectclass("person", "organizationalPerson")
+        ...     .with_required_attributes(["cn", "mail"])
+        ...     .apply([entry1, entry2, entry3]))
+        >>> if filtered.is_success:
+        ...     results = filtered.unwrap()
+
+    """
+
+    def __init__(self) -> None:
+        """Initialize empty filter builder."""
+        self._dn_patterns: list[str] = []
+        self._objectclasses: list[str] = []
+        self._required_attrs: list[str] = []
+        self._excluded: bool = False
+
+    def with_dn_pattern(self, pattern: str) -> EntryFilterBuilder:
+        """Add DN pattern to filter (wildcard format).
+
+        Args:
+            pattern: Wildcard pattern for DN matching
+
+        Returns:
+            self for method chaining
+
+        """
+        self._dn_patterns.append(pattern)
+        return self
+
+    def with_dn_patterns(self, patterns: list[str]) -> EntryFilterBuilder:
+        """Add multiple DN patterns to filter.
+
+        Args:
+            patterns: List of wildcard patterns
+
+        Returns:
+            self for method chaining
+
+        """
+        self._dn_patterns.extend(patterns)
+        return self
+
+    def with_objectclass(self, *classes: str) -> EntryFilterBuilder:
+        """Add objectClass filter (entry must have any of these).
+
+        Args:
+            *classes: ObjectClass names to match
+
+        Returns:
+            self for method chaining
+
+        """
+        self._objectclasses.extend(classes)
+        return self
+
+    def with_required_attributes(self, attributes: list[str]) -> EntryFilterBuilder:
+        """Add required attributes filter (entry must have all).
+
+        Args:
+            attributes: List of required attribute names
+
+        Returns:
+            self for method chaining
+
+        """
+        self._required_attrs.extend(attributes)
+        return self
+
+    def exclude_matching(self) -> EntryFilterBuilder:
+        """Invert filter to exclude matching entries instead of including.
+
+        Returns:
+            self for method chaining
+
+        """
+        self._excluded = True
+        return self
+
+    def _matches_entry(self, entry: FlextLdifModels.Entry) -> bool:
+        """Check if entry matches all filter conditions (AND logic).
+
+        Args:
+            entry: Entry to check
+
+        Returns:
+            True if entry matches all conditions, False otherwise
+
+        """
+        # Check DN pattern (if specified)
+        if self._dn_patterns:
+            entry_dn = entry.dn.value
+            dn_matches = any(
+                FlextLdifFilters.matches_dn_pattern(entry_dn, pattern)
+                for pattern in self._dn_patterns
+            )
+            if not dn_matches:
+                return False
+
+        # Check objectClass (if specified)
+        if self._objectclasses and not FlextLdifFilters.has_objectclass(
+            entry, tuple(self._objectclasses)
+        ):
+            return False
+
+        # Check required attributes (if specified) - return inverted condition
+        return not (
+            self._required_attrs
+            and not FlextLdifFilters.has_required_attributes(
+                entry, self._required_attrs
+            )
+        )
+
+    def apply(
+        self, entries: list[FlextLdifModels.Entry]
+    ) -> FlextResult[list[FlextLdifModels.Entry]]:
+        """Apply filter to entries.
+
+        Args:
+            entries: List of entries to filter
+
+        Returns:
+            FlextResult containing filtered entries
+
+        """
+        try:
+            filtered: list[FlextLdifModels.Entry] = []
+
+            for entry in entries:
+                matches = self._matches_entry(entry)
+
+                # Apply exclusion logic (invert if exclude_matching was called)
+                if self._excluded:
+                    matches = not matches
+
+                if matches:
+                    filtered.append(entry)
+
+            return FlextResult[list[FlextLdifModels.Entry]].ok(filtered)
+
+        except (ValueError, TypeError, AttributeError) as e:
+            return FlextResult[list[FlextLdifModels.Entry]].fail(
+                f"Failed to apply filter: {e}"
+            )
+
+    def build_predicate(
+        self,
+    ) -> FlextResult[Callable[[FlextLdifModels.Entry], bool]]:
+        """Build a predicate function for this filter.
+
+        Returns:
+            FlextResult containing callable that takes Entry and returns bool
+
+        """
+        try:
+
+            def predicate(entry: FlextLdifModels.Entry) -> bool:
+                """Predicate function for entry filtering."""
+                matches = self._matches_entry(entry)
+                return (not matches) if self._excluded else matches
+
+            return FlextResult[Callable[[FlextLdifModels.Entry], bool]].ok(
+                predicate
+            )
+
+        except Exception as e:
+            return FlextResult[Callable[[FlextLdifModels.Entry], bool]].fail(
+                f"Failed to build predicate: {e}"
+            )
+
+
+__all__ = ["EntryFilterBuilder", "FlextLdifFilters"]

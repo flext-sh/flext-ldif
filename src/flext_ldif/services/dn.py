@@ -333,9 +333,11 @@ class FlextLdifDnService(FlextService[dict[str, object]]):
                 if attr_name.lower() in ref_attrs_lower:
                     if isinstance(attr_value, list):
                         new_attrs[attr_name] = [
-                            self.normalize_dn_value(v, dn_map)
-                            if isinstance(v, str)
-                            else v
+                            (
+                                self.normalize_dn_value(v, dn_map)
+                                if isinstance(v, str)
+                                else v
+                            )
                             for v in attr_value
                         ]
                     elif isinstance(attr_value, str):

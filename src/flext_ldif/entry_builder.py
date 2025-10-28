@@ -15,9 +15,8 @@ from typing import override
 
 from flext_core import FlextResult, FlextService
 
+from flext_ldif import FlextLdifModels
 from flext_ldif.constants import FlextLdifConstants
-from flext_ldif.models import FlextLdifModels
-from flext_ldif.objectclass_manager import FlextLdifObjectClassManager
 from flext_ldif.typings import FlextLdifTypes
 
 
@@ -28,7 +27,6 @@ class FlextLdifEntryBuilder(FlextService[FlextLdifModels.Entry]):
     def __init__(self) -> None:
         """Initialize entry builder."""
         super().__init__()
-        self._objectclass_manager = FlextLdifObjectClassManager()
 
     def _normalize_attributes(
         self, attributes: dict[str, str | list[str]]
@@ -134,7 +132,7 @@ class FlextLdifEntryBuilder(FlextService[FlextLdifModels.Entry]):
         )
 
         if result.is_success and self.logger:
-            self.logger.info(f"Created group entry: {dn}")
+            self.logger.debug(f"Created group entry: {dn}")
 
         return result
 
@@ -170,7 +168,7 @@ class FlextLdifEntryBuilder(FlextService[FlextLdifModels.Entry]):
         )
 
         if result.is_success and self.logger:
-            self.logger.info(f"Created organizational unit entry: {dn}")
+            self.logger.debug(f"Created organizational unit entry: {dn}")
 
         return result
 
@@ -198,7 +196,7 @@ class FlextLdifEntryBuilder(FlextService[FlextLdifModels.Entry]):
         )
 
         if result.is_success and self.logger:
-            self.logger.info(f"Created custom entry: {dn}")
+            self.logger.debug(f"Created custom entry: {dn}")
 
         return result
 
@@ -266,7 +264,7 @@ class FlextLdifEntryBuilder(FlextService[FlextLdifModels.Entry]):
                 entries.append(entry_result.value)
 
             if self.logger:
-                self.logger.info(f"Created {len(entries)} entries from JSON")
+                self.logger.debug(f"Created {len(entries)} entries from JSON")
             return FlextResult[list[FlextLdifModels.Entry]].ok(entries)
 
         except json.JSONDecodeError as e:
@@ -337,7 +335,7 @@ class FlextLdifEntryBuilder(FlextService[FlextLdifModels.Entry]):
             entries.append(entry_result.value)
 
         if self.logger:
-            self.logger.info(f"Created {len(entries)} entries from dictionary")
+            self.logger.debug(f"Created {len(entries)} entries from dictionary")
         return FlextResult[list[FlextLdifModels.Entry]].ok(entries)
 
     def convert_entry_to_dict(
@@ -345,7 +343,8 @@ class FlextLdifEntryBuilder(FlextService[FlextLdifModels.Entry]):
     ) -> FlextResult[dict[str, object]]:
         """Convert an entry to dictionary format."""
         attributes_dict: dict[str, list[str]] = {
-            name: attr.values for name, attr in entry.attributes.attributes.items()
+            name: (attr.values if hasattr(attr, "values") else attr)
+            for name, attr in entry.attributes.attributes.items()
         }
 
         entry_dict: dict[str, object] = {
@@ -374,7 +373,7 @@ class FlextLdifEntryBuilder(FlextService[FlextLdifModels.Entry]):
 
             json_str = json.dumps(entries_data, indent=indent)
             if self.logger:
-                self.logger.info(f"Converted {len(entries)} entries to JSON")
+                self.logger.debug(f"Converted {len(entries)} entries to JSON")
             return FlextResult[str].ok(json_str)
 
         except (ValueError, TypeError, AttributeError) as e:

@@ -36,7 +36,7 @@ from typing import TYPE_CHECKING, ClassVar
 
 from flext_core import FlextLogger, FlextResult
 
-from flext_ldif.models import FlextLdifModels
+from flext_ldif import FlextLdifModels
 from flext_ldif.typings import FlextLdifTypes
 
 # Import protocols for validation and type hints
@@ -140,20 +140,15 @@ class BaseSchemaQuirk(ABC, QuirkRegistrationMixin):
     # Registry method for automatic registration via QuirkRegistrationMixin
     _REGISTRY_METHOD: ClassVar[str] = "register_schema_quirk"
 
-    def __init__(
-        self,
-        server_type: str = "generic",
-        priority: int = 100,
-    ) -> None:
-        """Initialize schema quirk.
+    # Base configuration defaults - subclasses CAN override
+    # These are class-level attributes, not instance attributes
+    server_type: ClassVar[str] = "generic"
+    priority: ClassVar[int] = 100
 
-        Args:
-            server_type: Server type this quirk applies to
-            priority: Quirk priority (lower = higher priority)
-
-        """
-        self.server_type = server_type
-        self.priority = priority
+    def __init__(self, server_type: str | None = None, priority: int | None = None) -> None:
+        """Initialize schema quirk with optional server_type and priority."""
+        # Note: server_type and priority are ClassVar attributes
+        # They cannot be assigned per-instance
 
     @abstractmethod
     def can_handle_attribute(self, attr_definition: str) -> bool:
@@ -207,61 +202,93 @@ class BaseSchemaQuirk(ABC, QuirkRegistrationMixin):
 
         """
 
-    @abstractmethod
     def convert_attribute_to_rfc(
         self, attr_data: FlextLdifModels.SchemaAttribute
     ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
         """Convert server-specific attribute to RFC-compliant format.
 
+        Default: Return as-is (RFC-compliant servers). Override for custom logic.
+
         Args:
-        attr_data: Server-specific SchemaAttribute
+            attr_data: Server-specific SchemaAttribute
 
         Returns:
-        FlextResult with RFC-compliant SchemaAttribute
+            FlextResult with RFC-compliant SchemaAttribute
 
         """
+        return FlextResult[FlextLdifModels.SchemaAttribute].ok(attr_data)
 
-    @abstractmethod
     def convert_objectclass_to_rfc(
         self, oc_data: FlextLdifModels.SchemaObjectClass
     ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
         """Convert server-specific objectClass to RFC-compliant format.
 
+        Default: Return as-is (RFC-compliant servers). Override for custom logic.
+
         Args:
-        oc_data: Server-specific SchemaObjectClass
+            oc_data: Server-specific SchemaObjectClass
 
         Returns:
-        FlextResult with RFC-compliant SchemaObjectClass
+            FlextResult with RFC-compliant SchemaObjectClass
 
         """
+        return FlextResult[FlextLdifModels.SchemaObjectClass].ok(oc_data)
 
-    @abstractmethod
     def convert_attribute_from_rfc(
         self, rfc_data: FlextLdifModels.SchemaAttribute
     ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
         """Convert RFC-compliant attribute to server-specific format.
 
+        Default: Return as-is (RFC-compliant servers). Override for custom logic.
+
         Args:
-        rfc_data: RFC-compliant SchemaAttribute
+            rfc_data: RFC-compliant SchemaAttribute
 
         Returns:
-        FlextResult with server-specific SchemaAttribute
+            FlextResult with server-specific SchemaAttribute
 
         """
+        return FlextResult[FlextLdifModels.SchemaAttribute].ok(rfc_data)
 
-    @abstractmethod
     def convert_objectclass_from_rfc(
         self, rfc_data: FlextLdifModels.SchemaObjectClass
     ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
         """Convert RFC-compliant objectClass to server-specific format.
 
+        Default: Return as-is (RFC-compliant servers). Override for custom logic.
+
         Args:
-        rfc_data: RFC-compliant SchemaObjectClass
+            rfc_data: RFC-compliant SchemaObjectClass
 
         Returns:
-        FlextResult with server-specific SchemaObjectClass
+            FlextResult with server-specific SchemaObjectClass
 
         """
+        return FlextResult[FlextLdifModels.SchemaObjectClass].ok(rfc_data)
+
+    def create_quirk_metadata(
+        self,
+        original_format: str,
+        extensions: dict[str, object] | None = None,
+    ) -> FlextLdifModels.QuirkMetadata:
+        """Create quirk metadata with consistent server-specific extensions.
+
+        Helper method to consolidate metadata creation across server quirks.
+        Reduces code duplication in server-specific parse_attribute/parse_objectclass methods.
+
+        Args:
+            original_format: Original text format of the parsed element
+            extensions: Optional dict of server-specific extensions/metadata
+
+        Returns:
+            FlextLdifModels.QuirkMetadata with quirk_type from server_type ClassVar
+
+        """
+        return FlextLdifModels.QuirkMetadata(
+            quirk_type=self.server_type,
+            original_format=original_format,
+            extensions=extensions or {},
+        )
 
     @abstractmethod
     def write_attribute_to_rfc(
@@ -349,20 +376,17 @@ class BaseAclQuirk(ABC, QuirkRegistrationMixin):
     # Registry method for automatic registration via QuirkRegistrationMixin
     _REGISTRY_METHOD: ClassVar[str] = "register_acl_quirk"
 
-    def __init__(
-        self,
-        server_type: str = "generic",
-        priority: int = 100,
-    ) -> None:
-        """Initialize ACL quirk.
+    # Default ACL attribute name (RFC baseline). Override in subclass for server-specific name.
+    acl_attribute_name: ClassVar[str] = "acl"
 
-        Args:
-            server_type: Server type this quirk applies to
-            priority: Quirk priority (lower = higher priority)
+    # Server type and priority defaults - Subclasses override via ClassVar declarations
+    server_type: ClassVar[str] = "generic"
+    priority: ClassVar[int] = 100
 
-        """
-        self.server_type = server_type
-        self.priority = priority
+    def __init__(self, server_type: str | None = None, priority: int | None = None) -> None:
+        """Initialize ACL quirk with optional server_type and priority."""
+        # Note: server_type and priority are ClassVar attributes, not instance attributes
+        # They are overridden in subclasses via ClassVar declarations
 
     @abstractmethod
     def can_handle_acl(self, acl_line: str) -> bool:
@@ -416,6 +440,23 @@ class BaseAclQuirk(ABC, QuirkRegistrationMixin):
 
         """
 
+    def get_acl_attribute_name(self) -> str:
+        """Get the server-specific ACL attribute name.
+
+        Returns the LDAP attribute name for ACL definitions in this server.
+        Different servers use different attribute names:
+        - OUD: "aci" (RFC 4876 compliant)
+        - OID: "orclaci" or "orclentrylevelaci"
+        - RFC baseline: "acl"
+
+        Returns the class attribute `acl_attribute_name` which can be overridden in subclasses.
+
+        Returns:
+            Server-specific ACL attribute name
+
+        """
+        return self.acl_attribute_name
+
     @abstractmethod
     def write_acl_to_rfc(self, acl_data: FlextLdifModels.Acl) -> FlextResult[str]:
         """Write ACL data to RFC-compliant string format.
@@ -456,20 +497,14 @@ class BaseEntryQuirk(ABC, QuirkRegistrationMixin):
     # Registry method for automatic registration via QuirkRegistrationMixin
     _REGISTRY_METHOD: ClassVar[str] = "register_entry_quirk"
 
-    def __init__(
-        self,
-        server_type: str = "generic",
-        priority: int = 100,
-    ) -> None:
-        """Initialize entry quirk.
+    # Server type and priority defaults - Subclasses override via ClassVar declarations
+    server_type: ClassVar[str] = "generic"
+    priority: ClassVar[int] = 100
 
-        Args:
-            server_type: Server type this quirk applies to
-            priority: Quirk priority (lower = higher priority)
-
-        """
-        self.server_type = server_type
-        self.priority = priority
+    def __init__(self, server_type: str | None = None, priority: int | None = None) -> None:
+        """Initialize entry quirk with optional server_type and priority."""
+        # Note: server_type and priority are ClassVar attributes, not instance attributes
+        # They are overridden in subclasses via ClassVar declarations
 
     @abstractmethod
     def can_handle_entry(

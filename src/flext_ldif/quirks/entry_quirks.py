@@ -11,8 +11,8 @@ from typing import override
 
 from flext_core import FlextResult, FlextService
 
+from flext_ldif import FlextLdifModels
 from flext_ldif.constants import FlextLdifConstants
-from flext_ldif.models import FlextLdifModels
 from flext_ldif.quirks.manager import FlextLdifQuirksManager
 from flext_ldif.services.dn import FlextLdifDnService
 
@@ -107,7 +107,7 @@ class FlextLdifEntryQuirks(FlextService[dict[str, object]]):
                 f"attribute_mappings must be dict, got {type(attribute_mappings_raw).__name__}"
             )
         attribute_mappings: dict[str, str] = attribute_mappings_raw
-        adapted_attrs: dict[str, FlextLdifModels.AttributeValues] = {}
+        adapted_attrs: dict[str, list[str]] = {}
 
         # Strip operational attributes FIRST, then apply transformations
         operational_attrs_lower = {attr.lower() for attr in operational_attrs}
@@ -127,13 +127,11 @@ class FlextLdifEntryQuirks(FlextService[dict[str, object]]):
             # Transform attribute values
             adapted_values = self._adapt_attribute_values(
                 attr_name,
-                attr_values.values,
+                attr_values,
                 target_server or FlextLdifConstants.LdapServers.GENERIC,
             )
 
-            adapted_attrs[mapped_name] = FlextLdifModels.AttributeValues(
-                values=adapted_values
-            )
+            adapted_attrs[mapped_name] = adapted_values
 
         # Convert adapted_attrs to LdifAttributes (Entry.create needs proper format)
         ldif_attributes = FlextLdifModels.LdifAttributes(attributes=adapted_attrs)

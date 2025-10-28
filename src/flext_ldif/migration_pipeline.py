@@ -19,8 +19,8 @@ from pathlib import Path
 
 from flext_core import FlextResult, FlextService
 
+from flext_ldif import FlextLdifModels
 from flext_ldif.constants import FlextLdifConstants
-from flext_ldif.models import FlextLdifModels
 from flext_ldif.quirks.base import BaseEntryQuirk
 from flext_ldif.quirks.registry import FlextLdifQuirksRegistry
 from flext_ldif.quirks.servers import (
@@ -426,7 +426,7 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifModels.MigrationPipelineR
             )
 
             if self.logger and failures:
-                self.logger.warning(f"Entry migration: {len(failures)} entries failed")
+                self.logger.debug(f"Entry migration: {len(failures)} entries failed")
 
             if self.logger:
                 migrated_count = len(migrated_list)
@@ -631,7 +631,7 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifModels.MigrationPipelineR
             schema_files = list(input_dir.glob("*schema*.ldif"))
             if not schema_files:
                 if self.logger:
-                    self.logger.warning("No schema files found in input directory")
+                    self.logger.debug("No schema files found in input directory")
                 return FlextResult[dict[str, object]].ok({
                     FlextLdifConstants.DictKeys.ATTRIBUTES: {},
                     FlextLdifConstants.DictKeys.OBJECTCLASSES: {},
@@ -746,7 +746,7 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifModels.MigrationPipelineR
 
             if not entry_files:
                 if self.logger:
-                    self.logger.warning("No entry files found in input directory")
+                    self.logger.debug("No entry files found in input directory")
                 return FlextResult[list[object]].ok([])
 
             # Create file processor with consolidated logic
@@ -767,7 +767,7 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifModels.MigrationPipelineR
 
             # Log file processing failures
             if self.logger and file_failures:
-                self.logger.warning(
+                self.logger.debug(
                     f"Entry file processing: {len(file_failures)} files failed"
                 )
 

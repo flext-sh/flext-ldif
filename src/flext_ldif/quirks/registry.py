@@ -14,11 +14,7 @@ from typing import TYPE_CHECKING
 from flext_core import FlextModels, FlextResult
 from pydantic import ConfigDict
 
-from flext_ldif.quirks.base import (
-    BaseAclQuirk,
-    BaseEntryQuirk,
-    BaseSchemaQuirk,
-)
+from flext_ldif.quirks.base import BaseAclQuirk, BaseEntryQuirk, BaseSchemaQuirk
 
 if TYPE_CHECKING:
     # Type aliases for quirk types

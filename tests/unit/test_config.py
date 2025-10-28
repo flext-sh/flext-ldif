@@ -623,3 +623,227 @@ class TestQuirksDetectionConfiguration:
                 enable_relaxed_parsing=True,
             )
             assert config.enable_relaxed_parsing is True
+
+
+# =========================================================================
+# ENV LOADING AND ENVIRONMENT VARIABLE TESTS (consolidated from test_config_env_loading.py)
+# =========================================================================
+
+
+class TestEnvVariableLoading:
+    """Test environment variable loading with Pydantic 2 Settings."""
+
+    def test_default_values_from_constants(self) -> None:
+        """Test that defaults come from FlextLdifConstants."""
+        config = FlextLdifConfig()
+
+        # Verify defaults match constants
+        assert config.ldif_encoding == FlextLdifConstants.Encoding.DEFAULT_ENCODING
+        assert config.ldif_max_line_length == FlextLdifConstants.Format.MAX_LINE_LENGTH
+        assert (
+            config.ldif_skip_comments
+            == FlextLdifConstants.ConfigDefaults.LDIF_SKIP_COMMENTS
+        )
+        assert (
+            config.ldif_strict_validation
+            == FlextLdifConstants.ConfigDefaults.LDIF_STRICT_VALIDATION
+        )
+        assert config.ldif_chunk_size == FlextLdifConstants.DEFAULT_BATCH_SIZE
+        # max_workers uses default from FlextConfig
+        assert config.max_workers == 4
+
+    def test_env_variable_override(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Test environment variables override defaults."""
+        # LDIF-specific fields use FLEXT_LDIF_ prefix
+        monkeypatch.setenv("FLEXT_LDIF_ENCODING", "utf-16")
+        monkeypatch.setenv("FLEXT_LDIF_MAX_LINE_LENGTH", "100")
+        monkeypatch.setenv("FLEXT_LDIF_SKIP_COMMENTS", "true")
+        monkeypatch.setenv("FLEXT_LDIF_STRICT_VALIDATION", "false")
+        monkeypatch.setenv("FLEXT_LDIF_CHUNK_SIZE", "2000")
+
+        # Inherited field from FlextConfig uses FLEXT_ prefix
+        monkeypatch.setenv("FLEXT_MAX_WORKERS", "8")
+
+        config = FlextLdifConfig()
+
+        # Verify environment variables override defaults
+        assert config.ldif_encoding == "utf-16"
+        assert config.ldif_max_line_length == 100
+        assert config.ldif_skip_comments is True
+        assert config.ldif_strict_validation is False
+        assert config.ldif_chunk_size == 2000
+        assert config.max_workers == 8
+
+    def test_direct_instantiation_override(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Test direct parameters override environment variables (highest priority)."""
+        # Set environment variables
+        monkeypatch.setenv("FLEXT_LDIF_ENCODING", "utf-16")
+        monkeypatch.setenv("FLEXT_MAX_WORKERS", "8")
+
+        # Direct instantiation overrides env var
+        config = FlextLdifConfig(
+            ldif_encoding="latin-1",
+            max_workers=2,
+            enable_performance_optimizations=False,
+        )
+
+        # Direct params win over env vars
+        assert config.ldif_encoding == "latin-1"
+        assert config.max_workers == 2
+
+    def test_env_prefix_flext_ldif(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Test FLEXT_LDIF_ prefix is required for FlextLdifConfig."""
+        # Wrong prefix (FLEXT_ instead of FLEXT_LDIF_)
+        monkeypatch.setenv("FLEXT_ENCODING", "utf-16")
+
+        config = FlextLdifConfig()
+
+        # Should use default, not FLEXT_ENCODING
+        assert config.ldif_encoding == FlextLdifConstants.Encoding.DEFAULT_ENCODING
+
+        # Correct prefix
+        monkeypatch.setenv("FLEXT_LDIF_ENCODING", "utf-16")
+        config = FlextLdifConfig()
+        assert config.ldif_encoding == "utf-16"
+
+    def test_type_coercion_from_env(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Test Pydantic type coercion from string env vars."""
+        # Set as strings (as environment variables always are)
+        monkeypatch.setenv("FLEXT_LDIF_MAX_LINE_LENGTH", "100")  # string → int
+        monkeypatch.setenv("FLEXT_LDIF_SKIP_COMMENTS", "true")  # string → bool
+        monkeypatch.setenv("FLEXT_LDIF_ANALYTICS_SAMPLE_RATE", "0.75")  # string → float
+
+        config = FlextLdifConfig()
+
+        # Verify proper type coercion
+        assert isinstance(config.ldif_max_line_length, int)
+        assert config.ldif_max_line_length == 100
+
+        assert isinstance(config.ldif_skip_comments, bool)
+        assert config.ldif_skip_comments is True
+
+        assert isinstance(config.ldif_analytics_sample_rate, float)
+        assert config.ldif_analytics_sample_rate == 0.75
+
+    def test_validation_from_env(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Test field validators work with environment variables."""
+        # Invalid encoding
+        monkeypatch.setenv("FLEXT_LDIF_ENCODING", "invalid-encoding")
+
+        with pytest.raises(ValidationError, match="Input should be"):
+            FlextLdifConfig()
+
+        # Invalid max_workers (too high)
+        monkeypatch.delenv("FLEXT_LDIF_ENCODING", raising=False)
+        monkeypatch.setenv("FLEXT_MAX_WORKERS", "999")
+
+        with pytest.raises(ValidationError, match="less than or equal"):
+            FlextLdifConfig()
+
+
+class TestDotEnvFileLoading:
+    """Test .env file loading with Pydantic 2 Settings."""
+
+    def test_env_file_loading(
+        self, tmp_path: pytest.TempPathFactory, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Test .env file is automatically loaded."""
+        # Create .env file
+        env_file = tmp_path / ".env"
+        env_file.write_text(
+            """
+FLEXT_LDIF_ENCODING=utf-16
+FLEXT_MAX_WORKERS=6
+FLEXT_LDIF_SKIP_COMMENTS=true
+"""
+        )
+
+        # Change to temp directory
+        monkeypatch.chdir(tmp_path)
+
+        config = FlextLdifConfig()
+
+        # Verify .env file was loaded
+        assert config.ldif_encoding == "utf-16"
+        assert config.max_workers == 6
+        assert config.ldif_skip_comments is True
+
+    def test_env_var_overrides_env_file(
+        self, tmp_path: pytest.TempPathFactory, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Test environment variables override .env file values."""
+        # Create .env file
+        env_file = tmp_path / ".env"
+        env_file.write_text("FLEXT_LDIF_ENCODING=utf-16\n")
+
+        monkeypatch.chdir(tmp_path)
+
+        # Set environment variable (higher priority)
+        monkeypatch.setenv("FLEXT_LDIF_ENCODING", "latin-1")
+
+        config = FlextLdifConfig()
+
+        # Environment variable wins over .env file
+        assert config.ldif_encoding == "latin-1"
+
+
+class TestConfigInheritance:
+    """Test FlextConfig inheritance."""
+
+    def test_inherits_from_flext_config(self) -> None:
+        """Test FlextLdifConfig inherits from FlextConfig."""
+        from flext_core import FlextConfig
+
+        config = FlextLdifConfig()
+
+        # Verify inheritance
+        assert isinstance(config, FlextConfig)
+
+        # Verify FlextConfig fields are accessible
+        assert hasattr(config, "debug")
+        assert hasattr(config, "log_level")
+
+
+class TestOrderOfPrecedence:
+    """Test complete order of precedence for configuration loading."""
+
+    def test_complete_precedence_chain(
+        self, tmp_path: pytest.TempPathFactory, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Test complete order: direct > env var > .env file > defaults."""
+        from pathlib import Path
+
+        # 1. Default from FlextLdifConstants
+        default_encoding = FlextLdifConstants.Encoding.DEFAULT_ENCODING
+
+        # 2. .env file (lower priority)
+        env_file = tmp_path / ".env"
+        env_file.write_text("FLEXT_LDIF_ENCODING=utf-16\n")
+        monkeypatch.chdir(tmp_path)
+
+        # 3. Environment variable (higher priority)
+        monkeypatch.setenv("FLEXT_LDIF_ENCODING", "latin-1")
+
+        # Test precedence levels
+
+        # Level 1: Only defaults (no .env, no env var, no direct param)
+        monkeypatch.delenv("FLEXT_LDIF_ENCODING", raising=False)
+        Path(env_file).unlink()
+        config1 = FlextLdifConfig()
+        assert config1.ldif_encoding == default_encoding
+
+        # Level 2: .env file overrides defaults
+        env_file.write_text("FLEXT_LDIF_ENCODING=utf-16\n")
+        config2 = FlextLdifConfig()
+        assert config2.ldif_encoding == "utf-16"
+
+        # Level 3: Environment variable overrides .env file
+        monkeypatch.setenv("FLEXT_LDIF_ENCODING", "latin-1")
+        config3 = FlextLdifConfig()
+        assert config3.ldif_encoding == "latin-1"
+
+        # Level 4: Direct parameter overrides everything (highest priority)
+        config4 = FlextLdifConfig(ldif_encoding="iso-8859-1")
+        assert config4.ldif_encoding == "iso-8859-1"

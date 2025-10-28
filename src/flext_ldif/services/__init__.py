@@ -19,10 +19,7 @@ from __future__ import annotations
 from flext_ldif.services.acl import FlextLdifAclParser, FlextLdifAclService
 from flext_ldif.services.dn import FlextLdifDnService
 from flext_ldif.services.file_writer import FlextLdifFileWriterService
-from flext_ldif.services.schema import (
-    FlextLdifSchemaBuilder,
-    FlextLdifSchemaValidator,
-)
+from flext_ldif.services.schema import FlextLdifSchemaBuilder, FlextLdifSchemaValidator
 from flext_ldif.services.statistics import FlextLdifStatisticsService
 from flext_ldif.services.validation import FlextLdifValidationService
 

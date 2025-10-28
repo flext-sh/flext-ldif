@@ -20,8 +20,8 @@ from pathlib import Path
 
 from flext_core import FlextLogger, FlextResult, FlextService
 
+from flext_ldif import FlextLdifModels
 from flext_ldif.constants import FlextLdifConstants
-from flext_ldif.models import FlextLdifModels
 
 logger = FlextLogger(__name__)
 
@@ -135,15 +135,15 @@ class FlextLdifServerDetector(FlextService[FlextLdifModels.ClientStatus]):
             return FlextResult[FlextLdifModels.ServerDetectionResult].ok(
                 detection_result
             )
-        except (ValueError, TypeError, AttributeError) as e:
-            logger.warning(f"Server detection failed: {e}")
+        except (ValueError, TypeError, AttributeError):
+            logger.exception("Server detection failed")
             fallback_result = FlextLdifModels.ServerDetectionResult(
                 detected_server_type=FlextLdifConstants.ServerTypes.RFC,
                 confidence=0.0,
                 scores={},
                 patterns_found=[],
                 is_confident=False,
-                detection_error=str(e),
+                detection_error="Detection failed with exception",
                 fallback_reason="Detection failed with exception",
             )
             return FlextResult[FlextLdifModels.ServerDetectionResult].ok(

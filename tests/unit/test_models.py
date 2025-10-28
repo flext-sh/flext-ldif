@@ -49,38 +49,12 @@ class TestFlextLdifModels:
         # Domain model preserves DN as-is (no normalization at domain level)
         assert dn.value == "CN=Test,DC=Example,DC=Com"
 
-    def test_attribute_values_creation(self) -> None:
-        """Test AttributeValues model creation."""
-        values = FlextLdifModels.AttributeValues(values=["value1", "value2"])
-        assert values.values == ["value1", "value2"]
-
-    def test_attribute_values_validation(self) -> None:
-        """Test AttributeValues validation."""
-        # Valid values
-        values = FlextLdifModels.AttributeValues(values=["value1", "value2"])
-        assert len(values.values) == 2
-
-        # Empty values should be allowed
-        empty_values = FlextLdifModels.AttributeValues(values=[])
-        assert empty_values.values == []
-
-    def test_attribute_values_single_value(self) -> None:
-        """Test AttributeValues single value property."""
-        values = FlextLdifModels.AttributeValues(values=["single_value"])
-        # Computed field from Pydantic v2
-        result: str | None = values.single_value
-        assert result == "single_value"
-
-        empty_values = FlextLdifModels.AttributeValues(values=[])
-        empty_result: str | None = empty_values.single_value
-        assert empty_result is None
-
     def test_attributes_creation(self) -> None:
         """Test Attributes model creation."""
         attrs = FlextLdifModels.LdifAttributes(
             attributes={
-                "cn": FlextLdifModels.AttributeValues(values=["test"]),
-                "sn": FlextLdifModels.AttributeValues(values=["user"]),
+                "cn": ["test"],
+                "sn": ["user"],
             }
         )
         assert len(attrs.attributes) == 2
@@ -91,47 +65,45 @@ class TestFlextLdifModels:
         """Test getting attributes by name."""
         attrs = FlextLdifModels.LdifAttributes(
             attributes={
-                "cn": FlextLdifModels.AttributeValues(values=["test"]),
+                "cn": ["test"],
             }
         )
 
-        cn_attr = attrs.get_attribute("cn")
-        assert cn_attr is not None
-        assert cn_attr.values == ["test"]
+        # Test getting existing attribute
+        cn_attr = attrs.get("cn")
+        assert cn_attr == ["test"]
 
-        # Non-existent attribute
-        missing_attr = attrs.get_attribute("missing")
-        assert missing_attr is None
+        # Test non-existent attribute with default
+        missing_attr = attrs.get("missing")
+        assert missing_attr == []
 
     def test_attributes_add_attribute(self) -> None:
         """Test adding attributes."""
         attrs = FlextLdifModels.LdifAttributes(attributes={})
 
         attrs.add_attribute("cn", "test")
-        cn_attr = attrs.get_attribute("cn")
-        assert cn_attr is not None
-        assert cn_attr.values == ["test"]
+        cn_attr = attrs.get("cn")
+        assert cn_attr == ["test"]
 
     def test_attributes_add_attribute_multiple_values(self) -> None:
         """Test adding attributes with multiple values."""
         attrs = FlextLdifModels.LdifAttributes(attributes={})
 
         attrs.add_attribute("cn", ["test1", "test2"])
-        cn_attr = attrs.get_attribute("cn")
-        assert cn_attr is not None
-        assert cn_attr.values == ["test1", "test2"]
+        cn_attr = attrs.get("cn")
+        assert cn_attr == ["test1", "test2"]
 
     def test_attributes_remove_attribute(self) -> None:
         """Test removing attributes."""
         attrs = FlextLdifModels.LdifAttributes(
             attributes={
-                "cn": FlextLdifModels.AttributeValues(values=["test"]),
+                "cn": ["test"],
             }
         )
 
         attrs.remove_attribute("cn")
-        cn_attr = attrs.get_attribute("cn")
-        assert cn_attr is None
+        # After removal, attribute should not exist
+        assert "cn" not in attrs.attributes
 
     def test_attributes_remove_nonexistent_attribute(self) -> None:
         """Test removing non-existent attribute."""
@@ -146,8 +118,8 @@ class TestFlextLdifModels:
             dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
             attributes=FlextLdifModels.LdifAttributes(
                 attributes={
-                    "cn": FlextLdifModels.AttributeValues(values=["test"]),
-                    "objectclass": FlextLdifModels.AttributeValues(values=["person"]),
+                    "cn": ["test"],
+                    "objectclass": ["person"],
                 }
             ),
         )
@@ -161,7 +133,7 @@ class TestFlextLdifModels:
             dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
             attributes=FlextLdifModels.LdifAttributes(
                 attributes={
-                    "objectclass": FlextLdifModels.AttributeValues(values=["person"]),
+                    "objectclass": ["person"],
                 }
             ),
         )
@@ -173,8 +145,8 @@ class TestFlextLdifModels:
             dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
             attributes=FlextLdifModels.LdifAttributes(
                 attributes={
-                    "cn": FlextLdifModels.AttributeValues(values=["test"]),
-                    "objectclass": FlextLdifModels.AttributeValues(values=["person"]),
+                    "cn": ["test"],
+                    "objectclass": ["person"],
                 }
             ),
         )
@@ -198,7 +170,7 @@ class TestFlextLdifModels:
         assert result.is_success
         entry = result.unwrap()
         assert entry.dn.value == "cn=test,dc=example,dc=com"
-        assert entry.attributes.get_attribute("cn") is not None
+        assert "cn" in entry.attributes.attributes
 
     def test_model_validation_errors(self) -> None:
         """Test model validation errors."""
@@ -213,9 +185,9 @@ class TestFlextLdifModels:
         """Test that models properly inherit from FlextModels."""
         # Test that all models are properly structured
         assert hasattr(FlextLdifModels, "DistinguishedName")
-        assert hasattr(FlextLdifModels, "AttributeValues")
         assert hasattr(FlextLdifModels, "LdifAttributes")
         assert hasattr(FlextLdifModels, "Entry")
+        # Note: AttributeValues deleted - use dict[str, list[str]] directly in LdifAttributes
         # Note: SearchConfig deleted (0 usages) - use dict[str, object] for LDAP search config
 
     def test_edge_cases(self) -> None:
@@ -227,7 +199,7 @@ class TestFlextLdifModels:
         # Test attributes with special characters
         attrs = FlextLdifModels.LdifAttributes(
             attributes={
-                "cn;lang-en": FlextLdifModels.AttributeValues(values=["test"]),
+                "cn;lang-en": ["test"],
             }
         )
         assert "cn;lang-en" in attrs.attributes
@@ -235,12 +207,11 @@ class TestFlextLdifModels:
         # Test empty attribute values
         attrs = FlextLdifModels.LdifAttributes(
             attributes={
-                "cn": FlextLdifModels.AttributeValues(values=[""]),
+                "cn": [""],
             }
         )
-        cn_attr = attrs.get_attribute("cn")
-        assert cn_attr is not None
-        assert cn_attr.values == [""]
+        cn_attr = attrs.get("cn")
+        assert cn_attr == [""]
 
     # NOTE: EntryParsedEvent model was removed as part of simplification.
     # If event-driven patterns are needed, use flext-core event system.
@@ -452,11 +423,9 @@ class TestFlextLdifModelsLdifAttributes:
     def test_attributes_creation(self) -> None:
         """Test creating an LdifAttributes instance."""
         attrs_data = {
-            "cn": FlextLdifModels.AttributeValues(values=["Test User"]),
-            "sn": FlextLdifModels.AttributeValues(values=["User"]),
-            "objectclass": FlextLdifModels.AttributeValues(
-                values=["inetOrgPerson", "person"]
-            ),
+            "cn": ["Test User"],
+            "sn": ["User"],
+            "objectclass": ["inetOrgPerson", "person"],
         }
 
         result = FlextLdifModels.LdifAttributes.create(
@@ -467,7 +436,7 @@ class TestFlextLdifModelsLdifAttributes:
         attrs = result.unwrap()
         assert isinstance(attrs, FlextLdifModels.LdifAttributes)
         assert "cn" in attrs.attributes
-        assert attrs.attributes["cn"].values == ["Test User"]
+        assert attrs.attributes["cn"] == ["Test User"]
 
     def test_empty_attributes(self) -> None:
         """Test creating empty attributes."""
@@ -481,10 +450,8 @@ class TestFlextLdifModelsLdifAttributes:
     def test_attributes_with_options(self) -> None:
         """Test attributes with LDAP options."""
         attrs_data = {
-            "cn": FlextLdifModels.AttributeValues(values=["Test User"]),
-            "userCertificate;binary": FlextLdifModels.AttributeValues(
-                values=["cert-data"]
-            ),
+            "cn": ["Test User"],
+            "userCertificate;binary": ["cert-data"],
         }
 
         result = FlextLdifModels.LdifAttributes.create(
@@ -658,7 +625,6 @@ class TestFlextLdifModelsNamespace:
         # Test that all expected model classes are available
         assert hasattr(FlextLdifModels, "Entry")
         assert hasattr(FlextLdifModels, "DistinguishedName")
-        assert hasattr(FlextLdifModels, "AttributeValues")
         assert hasattr(FlextLdifModels, "LdifAttributes")
         assert hasattr(FlextLdifModels, "SchemaObjectClass")
         assert hasattr(FlextLdifModels, "AclTarget")
@@ -666,6 +632,7 @@ class TestFlextLdifModelsNamespace:
         assert hasattr(FlextLdifModels, "AclPermissions")
         # Universal ACL model consolidation: replaced 7 separate ACL classes with single Acl model
         # Note: OpenLdapAcl, OracleOudAcl, etc. consolidated into FlextLdifModels.Acl with server_type field
+        # Note: AttributeValues deleted - LdifAttributes now uses dict[str, list[str]] directly
         assert hasattr(FlextLdifModels, "Acl")
 
     def test_computed_fields(self) -> None:
@@ -680,11 +647,11 @@ class TestFlextLdifModelsNamespace:
         assert hasattr(FlextLdifModels, "Entry")
         assert hasattr(FlextLdifModels, "DistinguishedName")
         assert hasattr(FlextLdifModels, "LdifAttributes")
-        assert hasattr(FlextLdifModels, "AttributeValues")
         assert hasattr(FlextLdifModels, "SchemaObjectClass")
         assert hasattr(FlextLdifModels, "AclTarget")
         assert hasattr(FlextLdifModels, "AclSubject")
         assert hasattr(FlextLdifModels, "AclPermissions")
         # Universal ACL model consolidation: replaced 7 separate ACL classes with single Acl model
         # Note: OpenLdapAcl, OracleOudAcl, etc. consolidated into FlextLdifModels.Acl with server_type field
+        # Note: AttributeValues deleted - LdifAttributes now uses dict[str, list[str]] directly
         assert hasattr(FlextLdifModels, "Acl")

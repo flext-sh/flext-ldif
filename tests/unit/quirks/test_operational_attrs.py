@@ -38,12 +38,9 @@ class TestOperationalAttributesStripping:
             raise AssertionError(f"Failed to create DN: {e}") from e
 
         # Convert attributes to LdifAttributes format manually
-        # Entry.create() doesn't automatically convert dict[str, list[str]] to AttributeValues
+        # LdifAttributes now uses dict[str, list[str]] directly
         ldif_attributes = FlextLdifModels.LdifAttributes(
-            attributes={
-                name: FlextLdifModels.AttributeValues(values=values)
-                for name, values in attributes.items()
-            }
+            attributes=attributes
         )
 
         entry_result = FlextLdifModels.Entry.create(dn=dn, attributes=ldif_attributes)

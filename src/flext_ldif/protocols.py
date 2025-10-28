@@ -481,8 +481,8 @@ class FlextLdifProtocols(FlextProtocols):
                 self,
                 source_quirk: FlextLdifProtocols.Quirks.SchemaQuirkProtocol,
                 target_quirk: FlextLdifProtocols.Quirks.SchemaQuirkProtocol,
-                element_type: str,
-                element_data: str | dict[str, object],
+                _element_type: str,
+                _element_data: str | dict[str, object],
             ) -> FlextResult[str | dict[str, object]]:
                 """Convert schema element between two servers via RFC format.
 
@@ -492,8 +492,8 @@ class FlextLdifProtocols(FlextProtocols):
                 Args:
                     source_quirk: Source server quirk implementation
                     target_quirk: Target server quirk implementation
-                    element_type: Type of element ('attribute', 'objectclass', 'entry', 'acl')
-                    element_data: Element data to convert (string or dict)
+                    _element_type: Type of element ('attribute', 'objectclass', 'entry', 'acl')
+                    _element_data: Element data to convert (string or dict)
 
                 Returns:
                     FlextResult with converted element data
@@ -630,11 +630,6 @@ class FlextLdifProtocols(FlextProtocols):
             """Entry attributes as dictionary mapping attribute names to values."""
 
 
-# Alias for backward compatibility and cleaner imports
-EntryWithDn = FlextLdifProtocols.Entry.EntryWithDnProtocol
-
-
 __all__ = [
-    "EntryWithDn",  # Export alias for convenience
     "FlextLdifProtocols",
 ]

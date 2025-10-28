@@ -20,14 +20,9 @@ from typing import ClassVar
 
 from flext_core import FlextResult
 
-# Pydantic removed
+from flext_ldif import FlextLdifModels
 from flext_ldif.constants import FlextLdifConstants
-from flext_ldif.models import FlextLdifModels
-from flext_ldif.quirks.base import (
-    BaseAclQuirk,
-    BaseEntryQuirk,
-    BaseSchemaQuirk,
-)
+from flext_ldif.quirks.base import BaseAclQuirk, BaseEntryQuirk, BaseSchemaQuirk
 from flext_ldif.typings import FlextLdifTypes
 
 
@@ -57,19 +52,9 @@ class FlextLdifQuirksServersOpenldap1(BaseSchemaQuirk):
         r"^\s*objectclass\s+", re.IGNORECASE
     )
 
-    def __init__(
-        self,
-        server_type: str = "openldap1",
-        priority: int = 20,
-    ) -> None:
-        """Initialize OpenLDAP 1.x schema quirk.
-
-        Args:
-            server_type: OpenLDAP 1.x server type
-            priority: Lower priority than OpenLDAP 2.x (fallback)
-
-        """
-        super().__init__(server_type=server_type, priority=priority)
+    # OpenLDAP 1.x configuration defaults
+    server_type: ClassVar[str] = "openldap1"
+    priority: ClassVar[int] = 20
 
     def can_handle_attribute(self, attr_definition: str) -> bool:
         """Check if this is an OpenLDAP 1.x attribute.
@@ -239,88 +224,6 @@ class FlextLdifQuirksServersOpenldap1(BaseSchemaQuirk):
                 f"OpenLDAP 1.x objectClass parsing failed: {e}"
             )
 
-    def convert_attribute_to_rfc(
-        self, attr_data: FlextLdifModels.SchemaAttribute
-    ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
-        """Convert OpenLDAP 1.x attribute to RFC-compliant format.
-
-        OpenLDAP 1.x attributes are already RFC-compliant.
-
-        Args:
-        attr_data: OpenLDAP 1.x attribute data
-
-        Returns:
-        FlextResult with RFC-compliant attribute data
-
-        """
-        try:
-            # OpenLDAP 1.x attributes are RFC-compliant - just return the model as-is
-            return FlextResult[FlextLdifModels.SchemaAttribute].ok(attr_data)
-
-        except Exception as e:
-            return FlextResult[FlextLdifModels.SchemaAttribute].fail(
-                f"OpenLDAP 1.x→RFC conversion failed: {e}"
-            )
-
-    def convert_objectclass_to_rfc(
-        self, oc_data: FlextLdifModels.SchemaObjectClass
-    ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
-        """Convert OpenLDAP 1.x objectClass to RFC-compliant format.
-
-        OpenLDAP 1.x objectClasses are already RFC-compliant.
-
-        Args:
-        oc_data: OpenLDAP 1.x objectClass data
-
-        Returns:
-        FlextResult with RFC-compliant objectClass data
-
-        """
-        try:
-            # OpenLDAP 1.x objectClasses are RFC-compliant - just return the model as-is
-            return FlextResult[FlextLdifModels.SchemaObjectClass].ok(oc_data)
-
-        except Exception as e:
-            return FlextResult[FlextLdifModels.SchemaObjectClass].fail(
-                f"OpenLDAP 1.x→RFC conversion failed: {e}"
-            )
-
-    def convert_attribute_from_rfc(
-        self, rfc_data: FlextLdifModels.SchemaAttribute
-    ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
-        """Convert RFC-compliant attribute to OpenLDAP 1.x-specific format.
-
-        OpenLDAP 1.x attributes are already RFC-compliant, so minimal conversion needed.
-
-        Args:
-        rfc_data: RFC-compliant attribute data
-
-        Returns:
-        FlextResult with OpenLDAP 1.x attribute model
-
-        """
-        # OpenLDAP 1.x uses RFC format - just return the model as-is
-        # (models don't have server_type field, so no conversion needed)
-        return FlextResult[FlextLdifModels.SchemaAttribute].ok(rfc_data)
-
-    def convert_objectclass_from_rfc(
-        self, rfc_data: FlextLdifModels.SchemaObjectClass
-    ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
-        """Convert RFC-compliant objectClass to OpenLDAP 1.x-specific format.
-
-        OpenLDAP 1.x objectClasses are already RFC-compliant, so minimal conversion needed.
-
-        Args:
-        rfc_data: RFC-compliant objectClass data
-
-        Returns:
-        FlextResult with OpenLDAP 1.x objectClass model
-
-        """
-        # OpenLDAP 1.x uses RFC format - just return the model as-is
-        # (models don't have server_type field, so no conversion needed)
-        return FlextResult[FlextLdifModels.SchemaObjectClass].ok(rfc_data)
-
     def write_attribute_to_rfc(
         self, attr_data: FlextLdifModels.SchemaAttribute
     ) -> FlextResult[str]:
@@ -419,19 +322,12 @@ class FlextLdifQuirksServersOpenldap1(BaseSchemaQuirk):
 
         """
 
-        def __init__(
-            self,
-            server_type: str = "openldap1",
-            priority: int = 20,
-        ) -> None:
-            """Initialize OpenLDAP 1.x ACL quirk.
+        server_type: ClassVar[str] = "generic"
+        priority: ClassVar[int] = 200
 
-            Args:
-                server_type: OpenLDAP 1.x server type
-                priority: Lower priority for OpenLDAP 1.x ACL parsing
-
-            """
-            super().__init__(server_type=server_type, priority=priority)
+        def __init__(self) -> None:
+            """Initialize OpenLDAP 1.x ACL quirk with RFC format."""
+            super().__init__(server_type="generic", priority=200)
 
         def can_handle_acl(self, acl_line: str) -> bool:
             """Check if this is an OpenLDAP 1.x ACL.
@@ -624,19 +520,12 @@ class FlextLdifQuirksServersOpenldap1(BaseSchemaQuirk):
 
         """
 
-        def __init__(
-            self,
-            server_type: str = "openldap1",
-            priority: int = 20,
-        ) -> None:
-            """Initialize OpenLDAP 1.x entry quirk.
+        server_type: ClassVar[str] = "generic"
+        priority: ClassVar[int] = 200
 
-            Args:
-                server_type: OpenLDAP 1.x server type
-                priority: Lower priority for OpenLDAP 1.x entry processing
-
-            """
-            super().__init__(server_type=server_type, priority=priority)
+        def __init__(self) -> None:
+            """Initialize OpenLDAP 1.x entry quirk with RFC format."""
+            super().__init__(server_type="generic", priority=200)
 
         def can_handle_entry(
             self, entry_dn: str, attributes: FlextLdifTypes.Models.EntryAttributesDict
