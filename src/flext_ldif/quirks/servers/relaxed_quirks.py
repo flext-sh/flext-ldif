@@ -21,11 +21,10 @@ Relaxed Mode Features:
 
 from __future__ import annotations
 
-import logging
 import re
 from typing import ClassVar
 
-from flext_core import FlextResult
+from flext_core import FlextLogger, FlextResult
 
 # Pydantic removed
 from flext_ldif.models import FlextLdifModels
@@ -36,7 +35,7 @@ from flext_ldif.quirks.base import (
 )
 from flext_ldif.typings import FlextLdifTypes
 
-logger = logging.getLogger(__name__)
+logger = FlextLogger(__name__)
 
 
 class FlextLdifQuirksServersRelaxed(BaseSchemaQuirk):

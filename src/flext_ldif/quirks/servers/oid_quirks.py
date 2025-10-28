@@ -15,22 +15,21 @@ OID-specific features:
 
 from __future__ import annotations
 
-import logging
 import re
 from typing import ClassVar
 
-from flext_core import FlextResult
+from flext_core import FlextLogger, FlextResult
 
 from flext_ldif.constants import FlextLdifConstants
-from flext_ldif.dn_service import FlextLdifDnService
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.quirks.base import (
     FlextLdifQuirksBase,
 )
 from flext_ldif.quirks.rfc_parsers import RfcSchemaConverter, RfcSchemaExtractor
+from flext_ldif.services.dn import FlextLdifDnService
 from flext_ldif.typings import FlextLdifTypes
 
-logger = logging.getLogger(__name__)
+logger = FlextLogger(__name__)
 
 
 class FlextLdifQuirksServersOid(FlextLdifQuirksBase.SchemaQuirk):
@@ -241,7 +240,7 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBase.SchemaQuirk):
         """
         # Validate input type first (defensive programming)
         if not isinstance(oc_definition, str):
-            logging.getLogger(__name__).error(
+            logger.error(
                 f"can_handle_objectclass received non-string input: "
                 f"{type(oc_definition).__name__}"
             )

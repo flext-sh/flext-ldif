@@ -13,11 +13,12 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import ast
-import logging
 import sys
 from pathlib import Path
 
-logger = logging.getLogger(__name__)
+from flext_core import FlextLogger
+
+logger = FlextLogger(__name__)
 
 
 def check_file_syntax(filepath: Path) -> tuple[bool, str]:

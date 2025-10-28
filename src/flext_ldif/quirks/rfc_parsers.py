@@ -33,17 +33,16 @@ References:
 
 """
 
-import logging
 import re
 from collections.abc import Callable
 from typing import ClassVar
 
-from flext_core import FlextResult
+from flext_core import FlextLogger, FlextResult
 
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 
-logger = logging.getLogger(__name__)
+logger = FlextLogger(__name__)
 
 
 class RfcAttributeParser:

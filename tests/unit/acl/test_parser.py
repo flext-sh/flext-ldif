@@ -15,11 +15,10 @@ from typing import cast
 import pytest
 from flext_core import FlextResult
 
-from flext_ldif.acl_parser import FlextLdifAclParser
-from flext_ldif.acl_service import FlextLdifAclService
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.quirks.manager import FlextLdifQuirksManager
+from flext_ldif.services.acl import FlextLdifAclParser, FlextLdifAclService
 from flext_ldif.typings import FlextLdifTypes
 from flext_ldif.utilities import FlextLdifUtilities
 
@@ -805,7 +804,7 @@ class TestFlextLdifAclService:
         """Test parsing ACL with empty string."""
         FlextLdifAclService()
 
-        from flext_ldif.acl_parser import FlextLdifAclParser
+        from flext_ldif.services.acl import FlextLdifAclParser
 
         parser = FlextLdifAclParser()
         result = parser.parse_acl("", "openldap")

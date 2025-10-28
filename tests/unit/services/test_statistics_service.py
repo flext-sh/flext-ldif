@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from flext_ldif.statistics_service import FlextLdifStatisticsService
+from flext_ldif.services.statistics import FlextLdifStatisticsService
 
 
 class TestStatisticsServiceInitialization:

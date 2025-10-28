@@ -763,6 +763,22 @@ class FlextLdifModels(FlextModels):
             default=None,
             description="Quirk-specific metadata for preserving original entry format",
         )
+        acls: list[FlextLdifModels.Acl] | None = Field(
+            default=None,
+            description="Access Control Lists extracted from entry attributes",
+        )
+        objectclasses: list[FlextLdifModels.SchemaObjectClass] | None = Field(
+            default=None,
+            description="ObjectClass definitions for schema validation",
+        )
+        entry_metadata: dict[str, object] | None = Field(
+            default=None,
+            description="Entry-level metadata (changetype, modifyTimestamp, etc.)",
+        )
+        validation_metadata: dict[str, object] | None = Field(
+            default=None,
+            description="Validation results and metadata from entry processing",
+        )
 
         @model_validator(mode="after")
         def validate_entry_consistency(self) -> FlextLdifModels.Entry:
@@ -793,13 +809,21 @@ class FlextLdifModels(FlextModels):
                 FlextLdifTypes.CommonDict.AttributeDict | FlextLdifModels.LdifAttributes
             ),
             metadata: FlextLdifModels.QuirkMetadata | None = None,
+            acls: list[FlextLdifModels.Acl] | None = None,
+            objectclasses: list[FlextLdifModels.SchemaObjectClass] | None = None,
+            entry_metadata: dict[str, object] | None = None,
+            validation_metadata: dict[str, object] | None = None,
         ) -> FlextResult[FlextLdifModels.Entry]:
-            """Create a new Entry instance with validation.
+            """Create a new Entry instance with composition fields.
 
             Args:
             dn: Distinguished Name for the entry
             attributes: Entry attributes as dict[str, list[str]] or LdifAttributes
-            metadata: Optional quirk metadata
+            metadata: Optional quirk metadata for preserving original format
+            acls: Optional list of Access Control Lists for the entry
+            objectclasses: Optional list of ObjectClass definitions for schema validation
+            entry_metadata: Optional entry-level metadata (changetype, modifyTimestamp, etc.)
+            validation_metadata: Optional validation results and metadata
 
             Returns:
             FlextResult with Entry instance or validation error
@@ -839,6 +863,10 @@ class FlextLdifModels(FlextModels):
                     FlextLdifConstants.DictKeys.DN: dn_obj,
                     FlextLdifConstants.DictKeys.ATTRIBUTES: attrs_obj,
                     "metadata": metadata,
+                    "acls": acls,
+                    "objectclasses": objectclasses,
+                    "entry_metadata": entry_metadata,
+                    "validation_metadata": validation_metadata,
                 }
                 return FlextResult[FlextLdifModels.Entry].ok(
                     cls.model_validate(entry_data)

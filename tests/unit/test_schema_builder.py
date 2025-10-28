@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif.schema_builder import FlextLdifSchemaBuilder
+from flext_ldif.services.schema import FlextLdifSchemaBuilder
 
 
 class TestFlextLdifSchemaBuilder:

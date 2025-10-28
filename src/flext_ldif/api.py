@@ -26,15 +26,14 @@ from flext_core import (
     FlextService,
 )
 
-from flext_ldif.acl_service import FlextLdifAclService
 from flext_ldif.client import FlextLdifClient
 from flext_ldif.config import FlextLdifConfig
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.entry_builder import FlextLdifEntryBuilder
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.protocols import EntryWithDn
-from flext_ldif.schema_builder import FlextLdifSchemaBuilder
-from flext_ldif.schema_validator import FlextLdifSchemaValidator
+from flext_ldif.services.acl import FlextLdifAclService
+from flext_ldif.services.schema import FlextLdifSchemaBuilder, FlextLdifSchemaValidator
 from flext_ldif.typings import FlextLdifTypes
 
 

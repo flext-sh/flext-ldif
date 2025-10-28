@@ -10,11 +10,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import logging
+from flext_core import FlextLogger
 
 from .fixtures.validator import FlextLdifFixtureDiscovery
 
-logger = logging.getLogger(__name__)
+logger = FlextLogger(__name__)
 
 
 class TestFixtureDiscovery:

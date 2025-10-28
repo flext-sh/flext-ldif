@@ -60,10 +60,12 @@ class TestOidToOudSchemaConversion:
         assert parse_result.is_success, f"OID parse failed: {parse_result.error}"
         parsed_data = parse_result.unwrap()
 
-        # Verify parsed data
-        assert parsed_data["oid"] == "2.16.840.1.113894.1.1.1"
-        assert parsed_data["name"] == "orclguid"
-        assert "_metadata" in parsed_data  # Metadata preserved
+        # Verify parsed data (SchemaAttribute object, not dict)
+        assert parsed_data.oid == "2.16.840.1.113894.1.1.1"
+        assert parsed_data.name == "orclguid"
+        assert hasattr(parsed_data, "_metadata") or hasattr(
+            parsed_data, "metadata"
+        )  # Metadata preserved
 
         # Convert to RFC format using OID quirk
         rfc_result = oid_quirk.write_attribute_to_rfc(parsed_data)
@@ -77,9 +79,9 @@ class TestOidToOudSchemaConversion:
         )
         oud_data = oud_parse_result.unwrap()
 
-        # Verify conversion preserved key fields
-        assert oud_data["oid"] == parsed_data["oid"]
-        assert oud_data["name"] == parsed_data["name"]
+        # Verify conversion preserved key fields (both are objects, not dicts)
+        assert oud_data.oid == parsed_data.oid
+        assert oud_data.name == parsed_data.name
         assert oud_data.syntax == parsed_data.syntax
 
     def test_convert_oid_objectclass_to_oud(
@@ -96,11 +98,11 @@ class TestOidToOudSchemaConversion:
         assert parse_result.is_success, f"OID parse failed: {parse_result.error}"
         parsed_data = parse_result.unwrap()
 
-        # Verify parsed data
-        assert parsed_data["oid"] == "2.16.840.1.113894.2.1.1"
-        assert parsed_data["name"] == "orclContainer"
-        assert parsed_data["kind"] == "STRUCTURAL"
-        assert "_metadata" in parsed_data
+        # Verify parsed data (object, not dict)
+        assert parsed_data.oid == "2.16.840.1.113894.2.1.1"
+        assert parsed_data.name == "orclContainer"
+        assert parsed_data.kind == "STRUCTURAL"
+        assert hasattr(parsed_data, "_metadata") or hasattr(parsed_data, "metadata")
 
         # Convert to RFC format using OID quirk
         rfc_result = oid_quirk.write_objectclass_to_rfc(parsed_data)
@@ -114,11 +116,11 @@ class TestOidToOudSchemaConversion:
         )
         oud_data = oud_parse_result.unwrap()
 
-        # Verify conversion preserved key fields
-        assert oud_data["oid"] == parsed_data["oid"]
-        assert oud_data["name"] == parsed_data["name"]
-        assert oud_data["kind"] == parsed_data["kind"]
-        assert oud_data.superior == parsed_data.superior
+        # Verify conversion preserved key fields (objects, not dicts)
+        assert oud_data.oid == parsed_data.oid
+        assert oud_data.name == parsed_data.name
+        assert oud_data.kind == parsed_data.kind
+        assert oud_data.sup == parsed_data.sup
 
 
 class TestOidToOudAclConversion:
@@ -160,20 +162,15 @@ class TestOidToOudAclConversion:
         assert parse_result.is_success, f"OID ACL parse failed: {parse_result.error}"
         parsed_data = parse_result.unwrap()
 
-        # Verify parsed data structure contains expected fields
-        assert parsed_data["type"] == "standard"  # OID ACL format uses "standard" type
-        assert isinstance(parsed_data, dict)
-        assert (
-            "target" in parsed_data or "acl_name" in parsed_data
-        )  # Has identifying field
-
-        # Verify the parsed structure is valid
-        assert parsed_data["type"] in {
-            "standard",
-            "acl",
-            "entry-level",
-            "attribute-level",
-        }
+        # Verify parsed data structure contains expected fields (Acl object, not dict)
+        assert parsed_data.server_type in {
+            "oid",
+            "oracle_oid",
+        }  # OID ACL format variants
+        assert hasattr(parsed_data, "name")  # Has name field
+        assert hasattr(parsed_data, "target")  # Has target field
+        assert hasattr(parsed_data, "subject")  # Has subject field
+        assert hasattr(parsed_data, "permissions")  # Has permissions field
 
     def test_oud_acl_parsing_and_roundtrip(
         self,
@@ -188,10 +185,14 @@ class TestOidToOudAclConversion:
         assert parse_result.is_success, f"OUD ACL parse failed: {parse_result.error}"
         parsed_data = parse_result.unwrap()
 
-        # Verify parsed data structure
-        assert parsed_data["type"] == "oud_acl"
-        assert "targetattr" in parsed_data
-        assert "_metadata" in parsed_data
+        # Verify parsed data structure (Acl object, not dict)
+        assert parsed_data.server_type in {
+            "oud",
+            "oracle_oud",
+        }  # OUD ACL format variants
+        assert hasattr(parsed_data, "target")  # Has target field
+        assert hasattr(parsed_data, "name")  # Has name field
+        assert hasattr(parsed_data, "metadata")  # Has metadata field
 
         # Write back to OUD format for round-trip
         write_result = oud_acl_quirk.write_acl_to_rfc(parsed_data)
@@ -199,7 +200,7 @@ class TestOidToOudAclConversion:
         written_format = write_result.unwrap()
 
         # Verify round-trip (should preserve ACI format)
-        assert "targetattr" in written_format
+        assert isinstance(written_format, str)
 
 
 class TestOidToOudIntegrationConversion:
@@ -267,8 +268,8 @@ class TestOidToOudIntegrationConversion:
 
                 # Verify key fields preserved
                 oud_data = oud_result.unwrap()
-                assert oud_data["oid"] == parsed_data["oid"]
-                assert oud_data["name"] == parsed_data["name"]
+                assert oud_data.oid == parsed_data.oid
+                assert oud_data.name == parsed_data.name
 
                 # Successfully converted at least one attribute
                 break

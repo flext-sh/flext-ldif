@@ -19,9 +19,9 @@ from typing import Any, TextIO, cast
 from flext_core import FlextResult, FlextService
 
 from flext_ldif.constants import FlextLdifConstants
-from flext_ldif.dn_service import FlextLdifDnService
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.quirks.registry import FlextLdifQuirksRegistry
+from flext_ldif.services.dn import FlextLdifDnService
 
 
 class FlextLdifRfcLdifWriter(FlextService[dict[str, object]]):
@@ -74,6 +74,10 @@ class FlextLdifRfcLdifWriter(FlextService[dict[str, object]]):
         self._quirk_registry = quirk_registry
         self._target_server_type = target_server_type
         self._dn_service = FlextLdifDnService()  # RFC 4514 DN normalization
+
+        self._skipped_entries_count = 0  # Track skipped entries for logging
+
+        self._dn_normalization_errors = 0  # Track DN normalization failures for logging
 
     def execute(self) -> FlextResult[dict[str, object]]:
         """Execute RFC LDIF writing.
@@ -323,7 +327,14 @@ class FlextLdifRfcLdifWriter(FlextService[dict[str, object]]):
                 FlextLdifConstants.DictKeys.LINES_WRITTEN: total_lines,
             })
 
-        except (ValueError, TypeError, AttributeError, PermissionError, OSError, Exception) as e:
+        except (
+            ValueError,
+            TypeError,
+            AttributeError,
+            PermissionError,
+            OSError,
+            Exception,
+        ) as e:
             if self.logger is not None:
                 self.logger.exception(
                     FlextLdifConstants.ServerDetection.ERROR_LDIF_WRITE_FAILED
@@ -720,7 +731,39 @@ class FlextLdifRfcLdifWriter(FlextService[dict[str, object]]):
                             ] = oc_values
 
                 if not dn:
+                    # ROOT CAUSE FIX: Log error instead of silently skipping entry
+                    # Issue 2.2: Silent entry dropping was causing data loss
+                    self.logger.error(
+                        f"Entry skipped: Missing DN. "
+                        f"Attributes: {list(attributes_normalized.keys())}. "
+                        f"This entry will NOT appear in output LDIF file."
+                    )
+                    self._skipped_entries_count += 1
                     continue
+
+                # ROOT CAUSE FIX: Validate objectClass (RFC 4512 requirement)
+                # Issue 2.1: Missing objectClass validation causes RFC violations
+                objectclass_attr = FlextLdifConstants.DictKeys.OBJECTCLASS
+                objectclass_values = attributes_normalized.get(objectclass_attr, [])
+
+                # Normalize to list for consistency
+                if isinstance(objectclass_values, str):
+                    objectclass_values = [objectclass_values]
+                elif not isinstance(objectclass_values, list):
+                    objectclass_values = []
+
+                # RFC 4512 requires every LDAP entry to have at least one objectClass
+                # Log warning if missing (don't skip, as this might break backward compatibility)
+                if not objectclass_values:
+                    error_msg = (
+                        f"VALIDATION WARNING: Entry may violate RFC 4512 (missing objectClass). "
+                        f"DN: {dn!r}. Available attributes: {list(attributes_normalized.keys())}."
+                    )
+                    if self.logger is not None:
+                        self.logger.warning(error_msg)
+                    self._dn_normalization_errors += (
+                        1  # Reuse counter for validation errors
+                    )
 
                 # Type narrow: after the above check, dn is guaranteed to be non-empty str
                 dn_str: str = dn
@@ -1086,11 +1129,20 @@ class FlextLdifRfcLdifWriter(FlextService[dict[str, object]]):
         if normalize_result.is_success:
             return normalize_result.unwrap()
 
-        # Log warning but continue with original DN
+        # ROOT CAUSE FIX: Log error instead of warning
+        # Issue 3.1: DN normalization failures indicate RFC 4514 violations
+        # These should be reported as errors, not silently swallowed
+        error_msg = normalize_result.error
         if self.logger is not None:
-            self.logger.warning(
-                f"DN normalization failed, using original: {normalize_result.error}"
+            self.logger.error(
+                f"DN normalization FAILED (RFC 4514 violation): DN={dn!r}. "
+                f"Error: {error_msg}. "
+                f"This entry will use original DN but may cause schema validation failures."
             )
+
+        # Track error count for reporting
+        self._dn_normalization_errors += 1
+
         return dn
 
     def _needs_base64_encoding(self, value: str) -> bool:

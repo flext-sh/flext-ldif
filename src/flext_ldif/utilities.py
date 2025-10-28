@@ -18,8 +18,8 @@ from pathlib import Path
 from flext_core import FlextResult, FlextUtilities
 
 from flext_ldif.constants import FlextLdifConstants
-from flext_ldif.dn_service import FlextLdifDnService
 from flext_ldif.models import FlextLdifModels
+from flext_ldif.services.dn import FlextLdifDnService
 from flext_ldif.typings import FlextLdifTypes
 
 

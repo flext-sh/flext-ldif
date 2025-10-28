@@ -218,13 +218,12 @@ class TestOudToOidAclMigration:
         assert write_result.is_success, f"OID ACL write failed: {write_result.error}"
         write_result.unwrap()
 
-        # Validate: ACL data structure preserved
+        # Validate: ACL data structure preserved (Acl object, not dict)
         assert oid_data is not None
-        # Check that essential ACL data is present (format or data)
-        assert (
-            FlextLdifConstants.DictKeys.FORMAT in oid_data
-            or FlextLdifConstants.DictKeys.DATA in oid_data
-        )
+        # Check that essential ACL data is present (Acl object with required fields)
+        assert hasattr(oid_data, "name")  # Has name field
+        assert hasattr(oid_data, "target")  # Has target field
+        assert hasattr(oid_data, "server_type")  # Has server_type field
 
 
 class TestOudToOidEntryMigration:
@@ -462,7 +461,7 @@ class TestOudToOidFullMigration:
 
         # Verify metadata exists (check if object has custom_data or is a valid model)
         assert oud_parsed is not None, "OUD parse should return a valid result"
-        if hasattr(oud_parsed, 'custom_data'):
+        if hasattr(oud_parsed, "custom_data"):
             # Pydantic model with custom_data
             assert isinstance(oud_parsed, object), "OUD parse should create metadata"
         elif isinstance(oud_parsed, dict) and "_metadata" in oud_parsed:

@@ -16,16 +16,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import logging
 from pathlib import Path
 from typing import cast, override
 
-from flext_core import FlextResult, FlextService
+from flext_core import FlextLogger, FlextResult, FlextService
 
-from flext_ldif.acl_service import FlextLdifAclService
 from flext_ldif.constants import FlextLdifConstants
-from flext_ldif.dn_service import FlextLdifDnService
-from flext_ldif.file_writer_service import FlextLdifFileWriterService
 from flext_ldif.filters import FlextLdifFilters
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.quirks.base import (
@@ -34,9 +30,12 @@ from flext_ldif.quirks.base import (
 )
 from flext_ldif.quirks.registry import FlextLdifQuirksRegistry
 from flext_ldif.rfc_ldif_parser import FlextLdifRfcLdifParser
-from flext_ldif.statistics_service import FlextLdifStatisticsService
+from flext_ldif.services.acl import FlextLdifAclService
+from flext_ldif.services.dn import FlextLdifDnService
+from flext_ldif.services.file_writer import FlextLdifFileWriterService
+from flext_ldif.services.statistics import FlextLdifStatisticsService
 
-logger = logging.getLogger(__name__)
+logger = FlextLogger(__name__)
 
 
 class FlextLdifCategorizedMigrationPipeline(
@@ -1169,6 +1168,7 @@ class FlextLdifCategorizedMigrationPipeline(
         - DN from original entry
         - ONLY ACL attributes (orclaci, orclentrylevelaci, aci)
         - Applies quirks: OID → RFC → OUD conversion
+        - FILTERS by base_dn (Phase 04 must respect baseDN filtering)
 
         This is a DEDICATED ACL processing phase that runs AFTER categorization
         but BEFORE transformation. It ensures ACL attributes are properly
@@ -1212,6 +1212,16 @@ class FlextLdifCategorizedMigrationPipeline(
                 )
 
                 if not has_acl:
+                    continue
+
+                # CRITICAL: Filter ACL entries by base_dn (Phase 04 filtering)
+                # ACL entries MUST match target baseDN, just like phases 01-03
+                is_under_base_dn = self._is_entry_under_base_dn(entry)
+                if not is_under_base_dn:
+                    # Skip ACL entries not under base_dn
+                    self.logger.debug(
+                        f"Phase 04 - Filtering out-of-scope ACL entry: {dn}"
+                    )
                     continue
 
                 # Step 2: Create minimal ACL entry (DN + ACL attrs only)

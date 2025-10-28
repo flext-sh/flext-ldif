@@ -12,7 +12,7 @@ from pathlib import Path
 
 import pytest
 
-from flext_ldif.acl_service import FlextLdifAclService
+from flext_ldif.services.acl import FlextLdifAclService
 
 
 class TestFlextLdifAclServiceWithRealFixtures:

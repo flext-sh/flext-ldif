@@ -13,14 +13,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import logging
-
 import pytest
+from flext_core import FlextLogger
 
 from flext_ldif import FlextLdif
 from flext_ldif.config import FlextLdifConfig
 
-logger = logging.getLogger(__name__)
+logger = FlextLogger(__name__)
 
 
 class TestFlextLdifConfigIntegration:

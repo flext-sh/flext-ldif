@@ -53,8 +53,8 @@ from flext_ldif.quirks.servers.relaxed_quirks import (
 from flext_ldif.rfc_ldif_parser import FlextLdifRfcLdifParser
 from flext_ldif.rfc_ldif_writer import FlextLdifRfcLdifWriter
 from flext_ldif.rfc_schema_parser import FlextLdifRfcSchemaParser
-from flext_ldif.schema_validator import FlextLdifSchemaValidator
 from flext_ldif.server_detector import FlextLdifServerDetector
+from flext_ldif.services.schema import FlextLdifSchemaValidator
 from flext_ldif.typings import ServiceT
 
 

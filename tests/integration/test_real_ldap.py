@@ -161,10 +161,37 @@ class TestRealLdapExport:
         assert len(ldap_connection.entries) == 1
         ldap_entry = ldap_connection.entries[0]
 
-        # Convert to FlextLdif entry
+        # Convert to FlextLdif entry - convert ldap3 entry attributes to dict
+        attrs_dict = {}
+        for attr_name in ldap_entry.entry_attributes:
+            # ldap3 returns Attribute objects, extract the raw_values
+            attr_obj = ldap_entry[attr_name]
+            if hasattr(attr_obj, "raw_values"):
+                # raw_values is a list of bytes
+                values = [
+                    v.decode("utf-8") if isinstance(v, bytes) else str(v)
+                    for v in attr_obj.raw_values
+                ]
+            elif hasattr(attr_obj, "value"):
+                # single value
+                val = attr_obj.value
+                if isinstance(val, bytes):
+                    values = [val.decode("utf-8")]
+                elif isinstance(val, list):
+                    values = [
+                        v.decode("utf-8") if isinstance(v, bytes) else str(v)
+                        for v in val
+                    ]
+                else:
+                    values = [str(val)]
+            else:
+                # fallback
+                values = [str(attr_obj)]
+            attrs_dict[attr_name] = values
+
         entry_result = flext_api.models.Entry.create(
             dn=ldap_entry.entry_dn,
-            attributes=dict(ldap_entry.entry_attributes),
+            attributes=attrs_dict,
             metadata=None,
         )
         assert entry_result.is_success
@@ -213,9 +240,38 @@ class TestRealLdapExport:
         # Convert to FlextLdif entries
         entries = []
         for entry in ldap_connection.entries:
+            # Convert ldap3 entry attributes to dict format
+            # entry.attributes is an Attributes object from ldap3, convert it to dict
+            attrs_dict = {}
+            for attr_name in entry.entry_attributes:
+                # ldap3 returns Attribute objects, extract the raw_values
+                attr_obj = entry[attr_name]
+                if hasattr(attr_obj, "raw_values"):
+                    # raw_values is a list of bytes
+                    values = [
+                        v.decode("utf-8") if isinstance(v, bytes) else str(v)
+                        for v in attr_obj.raw_values
+                    ]
+                elif hasattr(attr_obj, "value"):
+                    # single value
+                    val = attr_obj.value
+                    if isinstance(val, bytes):
+                        values = [val.decode("utf-8")]
+                    elif isinstance(val, list):
+                        values = [
+                            v.decode("utf-8") if isinstance(v, bytes) else str(v)
+                            for v in val
+                        ]
+                    else:
+                        values = [str(val)]
+                else:
+                    # fallback
+                    values = [str(attr_obj)]
+                attrs_dict[attr_name] = values
+
             result = flext_api.models.Entry.create(
                 dn=entry.entry_dn,
-                attributes=entry.attributes.to_ldap3(),
+                attributes=attrs_dict,
                 metadata=None,
             )
             assert result.is_success
@@ -271,9 +327,38 @@ class TestRealLdapExport:
 
         entries = []
         for entry in ldap_connection.entries:
+            # Convert ldap3 entry attributes to dict format
+            # entry.attributes is an Attributes object from ldap3, convert it to dict
+            attrs_dict = {}
+            for attr_name in entry.entry_attributes:
+                # ldap3 returns Attribute objects, extract the raw_values
+                attr_obj = entry[attr_name]
+                if hasattr(attr_obj, "raw_values"):
+                    # raw_values is a list of bytes
+                    values = [
+                        v.decode("utf-8") if isinstance(v, bytes) else str(v)
+                        for v in attr_obj.raw_values
+                    ]
+                elif hasattr(attr_obj, "value"):
+                    # single value
+                    val = attr_obj.value
+                    if isinstance(val, bytes):
+                        values = [val.decode("utf-8")]
+                    elif isinstance(val, list):
+                        values = [
+                            v.decode("utf-8") if isinstance(v, bytes) else str(v)
+                            for v in val
+                        ]
+                    else:
+                        values = [str(val)]
+                else:
+                    # fallback
+                    values = [str(attr_obj)]
+                attrs_dict[attr_name] = values
+
             result = flext_api.models.Entry.create(
                 dn=entry.entry_dn,
-                attributes=entry.attributes.to_ldap3(),
+                attributes=attrs_dict,
                 metadata=None,
             )
             assert result.is_success
@@ -316,11 +401,28 @@ mail: import@example.com
 
         entry = entries[0]
 
+        # Convert FlextLdif entry attributes to dict format for ldap3
+        attrs_dict = {}
+        for attr_name, attr_values in entry.attributes.attributes.items():
+            # attr_values is AttributeValues object, get the actual values list
+            attrs_dict[attr_name] = (
+                attr_values.values
+                if hasattr(attr_values, "values")
+                else [str(attr_values)]
+            )
+
         # Import to LDAP
+        # get_attribute_values returns AttributeValues object, need to extract actual values
+        oc_attr_values = entry.get_attribute_values("objectclass")
+        if hasattr(oc_attr_values, "values"):
+            object_classes = oc_attr_values.values
+        else:
+            object_classes = list(oc_attr_values) if oc_attr_values else []
+
         ldap_connection.add(
             str(entry.dn),
-            entry.get_attribute_values("objectclass"),
-            attributes=entry.attributes.to_ldap3(),
+            object_classes,
+            attributes=attrs_dict,
         )
 
         # Verify import
@@ -358,19 +460,23 @@ jpegPhoto:: {encoded_photo}
         entry = entries[0]
 
         # Import to LDAP
-        attrs_dict = entry.attributes.to_ldap3(exclude=["objectclass"])
+        # Build attrs_dict from FlextLdif entry attributes
+        attrs_dict: dict[str, list[str] | bytes] = {}
+        for attr_name, attr_values in entry.attributes.attributes.items():
+            if attr_name.lower() != "objectclass":
+                attrs_dict[attr_name] = attr_values.values
 
         # Handle binary attribute - ldap3 accepts bytes for binary attributes
-        # Type note: attrs_dict is dict[str, list[str]], but ldap3 also accepts bytes
-        # for binary attributes. We need to create a new dict with proper typing.
-        ldap_attrs: dict[str, list[str] | bytes] = dict(attrs_dict)
-        if "jpegPhoto" in ldap_attrs:
-            ldap_attrs["jpegPhoto"] = binary_data
+        if "jpegPhoto" in attrs_dict:
+            attrs_dict["jpegPhoto"] = binary_data
 
         ldap_connection.add(
             str(entry.dn),
             entry.get_attribute_values("objectclass"),
-            attributes={attr: entry.attributes[attr] for attr in entry.attributes},
+            attributes={
+                attr: entry.attributes.attributes[attr].values
+                for attr in entry.attributes.attributes
+            },
         )
 
         # Verify
@@ -411,12 +517,27 @@ class TestRealLdapRoundtrip:
         ldap_connection.search(original_dn, "(objectClass=*)", attributes=["*"])
         ldap_entry = ldap_connection.entries[0]
 
+        # Convert ldap3 entry attributes to dict format
+        attrs_dict = {}
+        for attr_name in ldap_entry.entry_attributes:
+            attr_obj = ldap_entry[attr_name]
+            # Extract values from ldap3 Attribute object
+            if hasattr(attr_obj, "values"):
+                # ldap3 Attribute object with .values property
+                values = [
+                    str(v) if not isinstance(v, str) else v for v in attr_obj.values
+                ]
+            elif isinstance(attr_obj, list):
+                # Already a list
+                values = [str(v) for v in attr_obj]
+            else:
+                # Single value
+                values = [str(attr_obj)]
+            attrs_dict[attr_name] = values
+
         entry_result = flext_api.models.Entry.create(
             dn=ldap_entry.entry_dn,
-            attributes={
-                attr: ldap_entry.entry_attributes[attr]
-                for attr in ldap_entry.entry_attributes
-            },
+            attributes=attrs_dict,
             metadata=None,
         )
         assert entry_result.is_success
@@ -435,8 +556,11 @@ class TestRealLdapRoundtrip:
 
         reimport_entry = parsed_entries[0]
         # Change DN for reimport
-        reimport_attrs = reimport_entry.attributes.to_ldap3(exclude=["objectclass"])
-        # Type note: reimport_attrs is dict[str, list[str]], need to wrap string in list
+        # Build reimport_attrs from FlextLdif entry attributes
+        reimport_attrs: dict[str, list[str]] = {}
+        for attr_name, attr_values in reimport_entry.attributes.attributes.items():
+            if attr_name.lower() != "objectclass":
+                reimport_attrs[attr_name] = attr_values.values
         reimport_attrs["cn"] = ["Roundtrip Test Copy"]
 
         obj_class_values = reimport_entry.get_attribute_values("objectclass")
@@ -445,8 +569,8 @@ class TestRealLdapRoundtrip:
             reimport_dn,
             obj_class_values,
             attributes={
-                attr: reimport_entry.entry_attributes[attr]
-                for attr in reimport_entry.entry_attributes
+                attr: reimport_entry.attributes.attributes[attr].values
+                for attr in reimport_entry.attributes.attributes
             },
         )
 
@@ -457,7 +581,9 @@ class TestRealLdapRoundtrip:
         # Verify attributes preserved
         assert reimported["sn"].value == original_attrs["sn"]
         assert reimported["mail"].value == original_attrs["mail"]
-        assert set(reimported["telephoneNumber"].values) == set("list[str]")
+        assert set(reimported["telephoneNumber"].values) == set(
+            original_attrs["telephoneNumber"]
+        )
 
 
 class TestRealLdapValidation:
@@ -541,12 +667,27 @@ class TestRealLdapModify:
         ldap_connection.search(entry_dn, "(objectClass=*)", attributes=["*"])
         ldap_entry = ldap_connection.entries[0]
 
+        # Convert ldap3 entry attributes to dict format
+        attrs_dict = {}
+        for attr_name in ldap_entry.entry_attributes:
+            attr_obj = ldap_entry[attr_name]
+            # Extract values from ldap3 Attribute object
+            if hasattr(attr_obj, "values"):
+                # ldap3 Attribute object with .values property
+                values = [
+                    str(v) if not isinstance(v, str) else v for v in attr_obj.values
+                ]
+            elif isinstance(attr_obj, list):
+                # Already a list
+                values = [str(v) for v in attr_obj]
+            else:
+                # Single value
+                values = [str(attr_obj)]
+            attrs_dict[attr_name] = values
+
         entry_result = flext_api.models.Entry.create(
             dn=ldap_entry.entry_dn,
-            attributes={
-                attr: ldap_entry.entry_attributes[attr]
-                for attr in ldap_entry.entry_attributes
-            },
+            attributes=attrs_dict,
             metadata=None,
         )
         assert entry_result.is_success
@@ -631,9 +772,24 @@ class TestRealLdapAnalytics:
 
         entries = []
         for entry in ldap_connection.entries:
+            # Convert ldap3 entry attributes to dict format
+            attrs_dict = {}
+            for attr_name in entry.entry_attributes:
+                attr_obj = entry[attr_name]
+                # Extract values from ldap3 Attribute object
+                if hasattr(attr_obj, "values"):
+                    values = [
+                        str(v) if not isinstance(v, str) else v for v in attr_obj.values
+                    ]
+                elif isinstance(attr_obj, list):
+                    values = [str(v) for v in attr_obj]
+                else:
+                    values = [str(attr_obj)]
+                attrs_dict[attr_name] = values
+
             result = flext_api.models.Entry.create(
                 dn=entry.entry_dn,
-                attributes=entry.attributes.to_ldap3(),
+                attributes=attrs_dict,
                 metadata=None,
             )
             assert result.is_success
@@ -679,12 +835,27 @@ class TestRealLdapFileOperations:
         ldap_connection.search(person_dn, "(objectClass=*)", attributes=["*"])
         ldap_entry = ldap_connection.entries[0]
 
+        # Convert ldap3 entry attributes to dict format
+        attrs_dict = {}
+        for attr_name in ldap_entry.entry_attributes:
+            attr_obj = ldap_entry[attr_name]
+            # Extract values from ldap3 Attribute object
+            if hasattr(attr_obj, "values"):
+                # ldap3 Attribute object with .values property
+                values = [
+                    str(v) if not isinstance(v, str) else v for v in attr_obj.values
+                ]
+            elif isinstance(attr_obj, list):
+                # Already a list
+                values = [str(v) for v in attr_obj]
+            else:
+                # Single value
+                values = [str(attr_obj)]
+            attrs_dict[attr_name] = values
+
         entry_result = flext_api.models.Entry.create(
             dn=ldap_entry.entry_dn,
-            attributes={
-                attr: ldap_entry.entry_attributes[attr]
-                for attr in ldap_entry.entry_attributes
-            },
+            attributes=attrs_dict,
             metadata=None,
         )
         assert entry_result.is_success
@@ -727,11 +898,28 @@ mail: import@example.com
 
         entry = entries[0]
 
+        # Convert FlextLdif entry attributes to dict format for ldap3
+        attrs_dict = {}
+        for attr_name, attr_values in entry.attributes.attributes.items():
+            # attr_values is AttributeValues object, get the actual values list
+            attrs_dict[attr_name] = (
+                attr_values.values
+                if hasattr(attr_values, "values")
+                else [str(attr_values)]
+            )
+
         # Import to LDAP
+        # get_attribute_values returns AttributeValues object, need to extract actual values
+        oc_attr_values = entry.get_attribute_values("objectclass")
+        if hasattr(oc_attr_values, "values"):
+            object_classes = oc_attr_values.values
+        else:
+            object_classes = list(oc_attr_values) if oc_attr_values else []
+
         ldap_connection.add(
             str(entry.dn),
-            entry.get_attribute_values("objectclass"),
-            attributes=entry.attributes.to_ldap3(),
+            object_classes,
+            attributes=attrs_dict,
         )
 
         # Verify
@@ -771,10 +959,16 @@ class TestRealLdapCRUD:
             str(person_entry.dn),
             obj_class_values,
             {
-                attr: person_entry.attributes[attr]
-                for attr in person_entry.attributes
-                if attr != "objectclass"
+                attr: person_entry.attributes.attributes[attr].values
+                for attr in person_entry.attributes.attributes
+                if attr.lower() != "objectclass"
             },
+        )
+
+        # UPDATE: Modify the mail attribute
+        ldap_connection.modify(
+            str(person_entry.dn),
+            {"mail": [("MODIFY_REPLACE", ["updated_crud@example.com"])]},
         )
 
         # Verify update
@@ -822,14 +1016,21 @@ class TestRealLdapBatchOperations:
         # Write to LDAP in batch
         ldap_entries = []
         for entry in entries:
+            # Build attributes dict from FlextLdif entry
+            attrs_dict = {}
+            for attr_name, attr_values in entry.attributes.attributes.items():
+                attrs_dict[attr_name] = (
+                    attr_values.values
+                    if hasattr(attr_values, "values")
+                    else [str(attr_values)]
+                )
+
             ldap_connection.add(
                 str(entry.dn),
                 entry.get_attribute_values("objectclass"),
-                {attr: entry.entry_attributes[attr] for attr in entry.entry_attributes},
-                metadata=None,
+                attrs_dict,
             )
-            assert result.is_success
-            ldap_entries.append(result.unwrap())
+            ldap_entries.append(entry.dn)
 
         # Validate batch
         validation_result = flext_api.validate_entries(entries)
@@ -877,9 +1078,24 @@ class TestRealLdapBatchOperations:
 
         entries = []
         for entry in ldap_connection.entries:
+            # Convert ldap3 entry attributes to dict format
+            attrs_dict = {}
+            for attr_name in entry.entry_attributes:
+                attr_obj = entry[attr_name]
+                # Extract values from ldap3 Attribute object
+                if hasattr(attr_obj, "values"):
+                    values = [
+                        str(v) if not isinstance(v, str) else v for v in attr_obj.values
+                    ]
+                elif isinstance(attr_obj, list):
+                    values = [str(v) for v in attr_obj]
+                else:
+                    values = [str(attr_obj)]
+                attrs_dict[attr_name] = values
+
             result = flext_api.models.Entry.create(
                 dn=entry.entry_dn,
-                attributes=entry.attributes.to_ldap3(),
+                attributes=attrs_dict,
                 metadata=None,
             )
             assert result.is_success
@@ -963,12 +1179,27 @@ class TestRealLdapRailwayComposition:
         ldap_connection.search(person_dn, "(objectClass=*)", attributes=["*"])
         ldap_entry = ldap_connection.entries[0]
 
+        # Convert ldap3 entry attributes to dict format
+        attrs_dict = {}
+        for attr_name in ldap_entry.entry_attributes:
+            attr_obj = ldap_entry[attr_name]
+            # Extract values from ldap3 Attribute object
+            if hasattr(attr_obj, "values"):
+                # ldap3 Attribute object with .values property
+                values = [
+                    str(v) if not isinstance(v, str) else v for v in attr_obj.values
+                ]
+            elif isinstance(attr_obj, list):
+                # Already a list
+                values = [str(v) for v in attr_obj]
+            else:
+                # Single value
+                values = [str(attr_obj)]
+            attrs_dict[attr_name] = values
+
         entry_result = flext_api.models.Entry.create(
             dn=ldap_entry.entry_dn,
-            attributes={
-                attr: ldap_entry.entry_attributes[attr]
-                for attr in ldap_entry.entry_attributes
-            },
+            attributes=attrs_dict,
             metadata=None,
         )
         assert entry_result.is_success
@@ -995,4 +1226,4 @@ class TestRealLdapRailwayComposition:
         assert result.is_success
         entries, stats = result.unwrap()
         assert len(entries) == 1
-        assert stats.get("total_entries", 0) == 1
+        assert stats.total_entries == 1

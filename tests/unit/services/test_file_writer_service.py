@@ -20,7 +20,7 @@ from pathlib import Path
 import pytest
 
 from flext_ldif.constants import FlextLdifConstants
-from flext_ldif.file_writer_service import FlextLdifFileWriterService
+from flext_ldif.services.file_writer import FlextLdifFileWriterService
 
 
 class TestFileWriterService:
