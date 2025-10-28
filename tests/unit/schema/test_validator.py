@@ -75,8 +75,8 @@ class TestFlextLdifSchemaValidator:
             dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
             attributes=FlextLdifModels.LdifAttributes(
                 attributes={
-                    "objectClass": FlextLdifModels.AttributeValues(values=["person"]),
-                    "cn": FlextLdifModels.AttributeValues(values=["test"]),
+                    "objectClass": ["person"],
+                    "cn": ["test"],
                 }
             ),
         )
@@ -96,8 +96,8 @@ class TestFlextLdifSchemaValidator:
             dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
             attributes=FlextLdifModels.LdifAttributes(
                 attributes={
-                    "objectClass": FlextLdifModels.AttributeValues(values=["person"]),
-                    "sn": FlextLdifModels.AttributeValues(values=["Test"]),
+                    "objectClass": ["person"],
+                    "sn": ["Test"],
                 }
             ),
         )
@@ -118,8 +118,8 @@ class TestFlextLdifSchemaValidator:
             dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
             attributes=FlextLdifModels.LdifAttributes(
                 attributes={
-                    "objectClass": FlextLdifModels.AttributeValues(values=["person"]),
-                    "cn": FlextLdifModels.AttributeValues(values=["Test"]),
+                    "objectClass": ["person"],
+                    "cn": ["Test"],
                 }
             ),
         )
@@ -140,9 +140,9 @@ class TestFlextLdifSchemaValidator:
             dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
             attributes=FlextLdifModels.LdifAttributes(
                 attributes={
-                    "objectClass": FlextLdifModels.AttributeValues(values=["person"]),
-                    "cn": FlextLdifModels.AttributeValues(values=["Test"]),
-                    "sn": FlextLdifModels.AttributeValues(values=["User"]),
+                    "objectClass": ["person"],
+                    "cn": ["Test"],
+                    "sn": ["User"],
                 }
             ),
         )
@@ -161,9 +161,9 @@ class TestFlextLdifSchemaValidator:
             dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
             attributes=FlextLdifModels.LdifAttributes(
                 attributes={
-                    "objectClass": FlextLdifModels.AttributeValues(values=["person"]),
-                    "cn": FlextLdifModels.AttributeValues(values=["Test"]),
-                    "unknownAttr": FlextLdifModels.AttributeValues(values=["value"]),
+                    "objectClass": ["person"],
+                    "cn": ["Test"],
+                    "unknownAttr": ["value"],
                 }
             ),
         )
@@ -189,10 +189,8 @@ class TestFlextLdifSchemaValidator:
             dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
             attributes=FlextLdifModels.LdifAttributes(
                 attributes={
-                    "objectClass": FlextLdifModels.AttributeValues(
-                        values=["unknownOC"]
-                    ),
-                    "cn": FlextLdifModels.AttributeValues(values=["Test"]),
+                    "objectClass": ["unknownOC"],
+                    "cn": ["Test"],
                 }
             ),
         )
@@ -217,9 +215,9 @@ class TestFlextLdifSchemaValidator:
             dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
             attributes=FlextLdifModels.LdifAttributes(
                 attributes={
-                    "objectClass": FlextLdifModels.AttributeValues(values=["person"]),
-                    "cn": FlextLdifModels.AttributeValues(values=["Test"]),
-                    "sn": FlextLdifModels.AttributeValues(values=["User"]),
+                    "objectClass": ["person"],
+                    "cn": ["Test"],
+                    "sn": ["User"],
                 }
             ),
         )
@@ -247,8 +245,8 @@ class TestFlextLdifSchemaValidator:
             dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
             attributes=FlextLdifModels.LdifAttributes(
                 attributes={
-                    "objectClass": FlextLdifModels.AttributeValues(values=["person"]),
-                    "sn": FlextLdifModels.AttributeValues(values=["User"]),
+                    "objectClass": ["person"],
+                    "sn": ["User"],
                     # Missing required 'cn' attribute
                 }
             ),
@@ -275,9 +273,9 @@ class TestFlextLdifSchemaValidator:
             dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
             attributes=FlextLdifModels.LdifAttributes(
                 attributes={
-                    "objectClass": FlextLdifModels.AttributeValues(values=["person"]),
-                    "cn": FlextLdifModels.AttributeValues(values=["Test"]),
-                    "sn": FlextLdifModels.AttributeValues(values=["User"]),
+                    "objectClass": ["person"],
+                    "cn": ["Test"],
+                    "sn": ["User"],
                 }
             ),
         )
@@ -302,10 +300,8 @@ class TestFlextLdifSchemaValidator:
             dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
             attributes=FlextLdifModels.LdifAttributes(
                 attributes={
-                    "objectClass": FlextLdifModels.AttributeValues(
-                        values=["unknownOC"]
-                    ),
-                    "cn": FlextLdifModels.AttributeValues(values=["Test"]),
+                    "objectClass": ["unknownOC"],
+                    "cn": ["Test"],
                 }
             ),
         )
@@ -329,8 +325,8 @@ class TestFlextLdifSchemaValidator:
             dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
             attributes=FlextLdifModels.LdifAttributes(
                 attributes={
-                    "objectClass": FlextLdifModels.AttributeValues(values=["person"]),
-                    "cn": FlextLdifModels.AttributeValues(values=["Test"]),
+                    "objectClass": ["person"],
+                    "cn": ["Test"],
                 }
             ),
         )
@@ -355,8 +351,8 @@ class TestFlextLdifSchemaValidator:
             dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
             attributes=FlextLdifModels.LdifAttributes(
                 attributes={
-                    "objectClass": FlextLdifModels.AttributeValues(values=["person"]),
-                    "cn": FlextLdifModels.AttributeValues(values=["Test"]),
+                    "objectClass": ["person"],
+                    "cn": ["Test"],
                 }
             ),
         )

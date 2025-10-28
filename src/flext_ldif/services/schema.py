@@ -24,9 +24,9 @@ from typing import Self, override
 
 from flext_core import FlextDecorators, FlextResult, FlextService
 
+from flext_ldif import FlextLdifModels
 from flext_ldif.config import FlextLdifConfig
 from flext_ldif.constants import FlextLdifConstants
-from flext_ldif.models import FlextLdifModels
 from flext_ldif.typings import FlextLdifTypes
 
 

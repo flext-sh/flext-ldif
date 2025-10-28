@@ -8,18 +8,10 @@ from typing import ClassVar
 
 from flext_core import FlextResult
 
-# Pydantic removed
+from flext_ldif import FlextLdifModels
 from flext_ldif.constants import FlextLdifConstants
-from flext_ldif.models import FlextLdifModels
-from flext_ldif.quirks.base import (
-    BaseAclQuirk,
-    BaseEntryQuirk,
-    BaseSchemaQuirk,
-)
-from flext_ldif.quirks.rfc_parsers import (
-    RfcAttributeParser,
-    RfcObjectClassParser,
-)
+from flext_ldif.quirks.base import BaseAclQuirk, BaseEntryQuirk, BaseSchemaQuirk
+from flext_ldif.quirks.rfc_parsers import RfcAttributeParser, RfcObjectClassParser
 from flext_ldif.typings import FlextLdifTypes
 
 
@@ -39,19 +31,9 @@ class FlextLdifQuirksServersTivoli(BaseSchemaQuirk):
         "ibm-filterentry",
     ])
 
-    def __init__(
-        self,
-        server_type: str = FlextLdifConstants.LdapServers.IBM_TIVOLI,
-        priority: int = 15,
-    ) -> None:
-        """Initialize Tivoli schema quirk.
-
-        Args:
-            server_type: IBM Tivoli Directory Server type
-            priority: Standard priority for Tivoli parsing
-
-        """
-        super().__init__(server_type=server_type, priority=priority)
+    # IBM Tivoli Directory Server configuration defaults
+    server_type: ClassVar[str] = FlextLdifConstants.LdapServers.IBM_TIVOLI
+    priority: ClassVar[int] = 15
 
     def can_handle_attribute(self, attr_definition: str) -> bool:
         """Detect Tivoli-specific attributes."""
@@ -283,6 +265,9 @@ class FlextLdifQuirksServersTivoli(BaseSchemaQuirk):
             "ibm-slapdgroupacl",
         ])
 
+        server_type: ClassVar[str] = "generic"
+        priority: ClassVar[int] = 200
+
         def __init__(self) -> None:
             """Initialize Tivoli DS ACL quirk."""
             super().__init__(
@@ -435,6 +420,9 @@ class FlextLdifQuirksServersTivoli(BaseSchemaQuirk):
             "ibm-slapdaccesscontrol",
             "ibm-replicationchangecount",
         ])
+
+        server_type: ClassVar[str] = "generic"
+        priority: ClassVar[int] = 200
 
         def __init__(
             self,

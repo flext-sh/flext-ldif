@@ -21,13 +21,10 @@ from typing import cast, override
 
 from flext_core import FlextLogger, FlextResult, FlextService
 
+from flext_ldif import FlextLdifModels
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.filters import FlextLdifFilters
-from flext_ldif.models import FlextLdifModels
-from flext_ldif.quirks.base import (
-    BaseAclQuirk,
-    BaseSchemaQuirk,
-)
+from flext_ldif.quirks.base import BaseAclQuirk, BaseSchemaQuirk
 from flext_ldif.quirks.registry import FlextLdifQuirksRegistry
 from flext_ldif.rfc_ldif_parser import FlextLdifRfcLdifParser
 from flext_ldif.services.acl import FlextLdifAclService
@@ -314,12 +311,12 @@ class FlextLdifCategorizedMigrationPipeline(
 
         # Convert dictionaries to proper Entry objects for the model
         entries_by_category: dict[str, list[FlextLdifModels.Entry]] = {}
-        self.logger.info(
+        self.logger.debug(
             f"Converting entries for categories: {list(transformed_categorized.keys())}"
         )
 
         for category, entries in transformed_categorized.items():
-            self.logger.info(
+            self.logger.debug(
                 f"Processing category: {category}, entries: {len(entries)}"
             )
             entry_objects = []
@@ -344,7 +341,7 @@ class FlextLdifCategorizedMigrationPipeline(
                         dn = FlextLdifModels.DistinguishedName(value=str(dn_value))
 
                     # Handle schema entries specially (cn=schema or cn=subschemasubentry)
-                    schema_attrs: dict[str, FlextLdifModels.AttributeValues] = {}
+                    schema_attrs: dict[str, list[str]] = {}
                     dn_str = str(dn_value).lower()
                     is_schema_entry = dn_str in {"cn=schema", "cn=subschemasubentry"}
 
@@ -387,10 +384,8 @@ class FlextLdifCategorizedMigrationPipeline(
                                 else:
                                     string_values = [str(value)]
 
-                                # Create single AttributeValues object with all values
-                                schema_attrs[key] = FlextLdifModels.AttributeValues(
-                                    values=string_values
-                                )
+                                # Store values directly (no AttributeValues wrapper)
+                                schema_attrs[key] = string_values
                     else:
                         # For regular entries, extract attributes normally
                         attrs_value = entry_dict.get("attributes", entry_dict)
@@ -409,11 +404,9 @@ class FlextLdifCategorizedMigrationPipeline(
                             if isinstance(attributes_dict, dict):
                                 attributes_dict.pop(key, None)
 
-                        # Convert all attribute values to proper AttributeValues objects
-                        # Each attribute should be a SINGLE AttributeValues object, not a list
-                        converted_attributes: dict[
-                            str, FlextLdifModels.AttributeValues
-                        ] = {}
+                        # Convert all attribute values to proper list format
+                        # Each attribute is stored as a list of strings directly
+                        converted_attributes: dict[str, list[str]] = {}
                         if isinstance(attributes_dict, dict):
                             for key, value in attributes_dict.items():
                                 # Ensure value is a list of strings
@@ -423,12 +416,8 @@ class FlextLdifCategorizedMigrationPipeline(
                                 else:
                                     string_values = [str(value)]
 
-                                # Create single AttributeValues object with all values
-                                converted_attributes[key] = (
-                                    FlextLdifModels.AttributeValues(
-                                        values=string_values
-                                    )
-                                )
+                                # Store values directly (no AttributeValues wrapper)
+                                converted_attributes[key] = string_values
 
                         schema_attrs = converted_attributes
 
@@ -446,9 +435,7 @@ class FlextLdifCategorizedMigrationPipeline(
 
                     # Add objectClass to schema_attrs if present
                     if objectclass_list:
-                        schema_attrs["objectClass"] = FlextLdifModels.AttributeValues(
-                            values=objectclass_list
-                        )
+                        schema_attrs["objectClass"] = objectclass_list
 
                     # Create attributes with objectClass included
                     attributes = FlextLdifModels.LdifAttributes(attributes=schema_attrs)
@@ -576,17 +563,23 @@ class FlextLdifCategorizedMigrationPipeline(
                         attr_name,
                         attr_values,
                     ) in entry_model.attributes.attributes.items():
+                        # Handle both object with .values attribute and direct list
+                        values_list = (
+                            attr_values.values
+                            if hasattr(attr_values, "values")
+                            else attr_values
+                        )
                         if attr_name.lower() == FlextLdifConstants.DictKeys.OBJECTCLASS:
                             # Add to objectClass list
                             entry_dict[FlextLdifConstants.DictKeys.OBJECTCLASS] = (
-                                attr_values.values
+                                values_list
                             )
                         # Add to attributes dict
                         # (multi-valued attributes stored as list or single value)
-                        elif len(attr_values.values) == 1:
-                            attrs_dict[attr_name] = attr_values.values[0]
+                        elif len(values_list) == 1:
+                            attrs_dict[attr_name] = values_list[0]
                         else:
-                            attrs_dict[attr_name] = attr_values.values
+                            attrs_dict[attr_name] = values_list
 
                     # Set attributes after building the dict
                     entry_dict[FlextLdifConstants.DictKeys.ATTRIBUTES] = attrs_dict
@@ -676,7 +669,7 @@ class FlextLdifCategorizedMigrationPipeline(
 
             # Log failures if any (non-fatal, continue with successful files)
             if file_failures:
-                self.logger.warning(
+                self.logger.debug(
                     f"LDIF file parsing: {len(file_failures)} files failed to parse"
                 )
 
@@ -718,6 +711,7 @@ class FlextLdifCategorizedMigrationPipeline(
 
         Args:
             entry: Entry dictionary with 'dn' attribute
+                   Can be either simple string or Pydantic Entry dict with {'value': ...}
 
         Returns:
             True if entry is under base_dn or no base_dn is configured,
@@ -729,8 +723,20 @@ class FlextLdifCategorizedMigrationPipeline(
             return True
 
         # Extract DN from entry
-        dn = entry.get("dn")
-        if not dn or not isinstance(dn, str):
+        # Handle both simple string format and Pydantic Entry format
+        dn_value: object = entry.get("dn")
+        dn: str = ""
+
+        if isinstance(dn_value, str):
+            # Simple string format
+            dn = dn_value
+        elif isinstance(dn_value, dict):
+            # Pydantic Entry format with {'value': ..., 'metadata': ..., 'components': ...}
+            dn_extracted: object = dn_value.get('value')
+            if isinstance(dn_extracted, str):
+                dn = dn_extracted
+
+        if not dn:
             return False
 
         # Normalize DN to lowercase for comparison
@@ -768,7 +774,7 @@ class FlextLdifCategorizedMigrationPipeline(
 
             # Log failures if any (non-fatal, continue processing)
             if categorization_failures:
-                self.logger.warning(
+                self.logger.debug(
                     f"Entry categorization: {len(categorization_failures)} entries "
                     f"failed categorization"
                 )
@@ -849,7 +855,7 @@ class FlextLdifCategorizedMigrationPipeline(
 
                 # Log failures if any (non-fatal)
                 if injection_failures:
-                    self.logger.warning(
+                    self.logger.debug(
                         f"Rejection reason injection: {len(injection_failures)} "
                         f"entries failed injection"
                     )
@@ -1191,20 +1197,45 @@ class FlextLdifCategorizedMigrationPipeline(
                     continue
 
                 # Get entry DN with type narrowing
+                # DN can be either a simple string or a dict with 'value' key (from Pydantic model)
                 dn_value: object = entry.get(FlextLdifConstants.DictKeys.DN)
-                if not isinstance(dn_value, str):
+                dn: str = ""
+
+                if isinstance(dn_value, str):
+                    # Simple string format (legacy dict format)
+                    dn = dn_value
+                elif isinstance(dn_value, dict):
+                    # Pydantic Entry model format with {'value': ..., 'metadata': ..., 'components': ...}
+                    dn_extracted: object = dn_value.get('value')
+                    if isinstance(dn_extracted, str):
+                        dn = dn_extracted
+
+                if not dn:
+                    # No valid DN found, skip entry
                     continue
-                dn: str = dn_value  # Type narrowed to str
 
                 # Get entry attributes with type narrowing
+                # Attributes can be either flat dict or nested dict with 'attributes' key (from Pydantic model)
                 attributes_value: object = entry.get(
                     FlextLdifConstants.DictKeys.ATTRIBUTES
                 )
                 if not isinstance(attributes_value, dict):
                     continue
-                attributes: dict[str, object] = (
-                    attributes_value  # Type narrowed to dict
-                )
+
+                # Extract actual attributes dict
+                # If Pydantic Entry format, attributes are under 'attributes' key
+                # Otherwise use attributes_value directly
+                attributes_container: dict[str, object] = attributes_value
+                if 'attributes' in attributes_container:
+                    # Pydantic Entry model format
+                    inner_attrs: object = attributes_container.get('attributes')
+                    if isinstance(inner_attrs, dict):
+                        attributes: dict[str, object] = inner_attrs
+                    else:
+                        continue
+                else:
+                    # Legacy dict format - use attributes directly
+                    attributes = attributes_container
 
                 # Check if entry has any ACL attributes
                 has_acl = any(
@@ -1224,17 +1255,56 @@ class FlextLdifCategorizedMigrationPipeline(
                     )
                     continue
 
-                # Step 2: Create minimal ACL entry (DN + ACL attrs only)
-                acl_attributes: dict[str, object] = {
-                    attr_name: attr_value
-                    for attr_name, attr_value in attributes.items()
-                    if attr_name.lower() in acl_attribute_names
-                }
+                # Step 2: Extract ACL definition strings from raw attributes
+                # Raw attributes have structure: {'orclaci': {'values': [...], 'single_value': ...}, ...}
+                # RFC writer's _extract_acl_definitions expects ACL items as dicts with 'DEFINITION' key
+                acl_items: list[object] = []
 
-                # Build minimal ACL entry with explicit type annotation
+                for attr_name, attr_value in attributes.items():
+                    if attr_name.lower() not in acl_attribute_names:
+                        continue
+
+                    # Extract ACL values from attribute
+                    # Attribute value can be:
+                    # 1. Dict with 'values' key (from parsed LDIF): {'values': [...], 'single_value': ...}
+                    # 2. List of strings (legacy format)
+                    # 3. String (single value)
+                    acl_definitions: list[str] = []
+
+                    if isinstance(attr_value, dict):
+                        # Pydantic Entry model format
+                        if 'values' in attr_value:
+                            values_list: object = attr_value.get('values')
+                            if isinstance(values_list, list):
+                                acl_definitions.extend([
+                                    val for val in values_list if isinstance(val, str)
+                                ])
+                        elif 'single_value' in attr_value:
+                            single_val: object = attr_value.get('single_value')
+                            if isinstance(single_val, str):
+                                acl_definitions.append(single_val)
+                    elif isinstance(attr_value, list):
+                        # Legacy list format
+                        acl_definitions.extend([
+                            val for val in attr_value if isinstance(val, str)
+                        ])
+                    elif isinstance(attr_value, str):
+                        # Single value (string)
+                        acl_definitions.append(attr_value)
+
+                    # Convert ACL definitions to format expected by RFC writer
+                    # Wrap each definition in a dict with 'DEFINITION' key for compatibility
+                    acl_items.extend([
+                        {FlextLdifConstants.DictKeys.DEFINITION: acl_def}
+                        for acl_def in acl_definitions
+                    ])
+
+                # Build minimal ACL entry with wrapped ACL definitions
+                # DN can be either simple string or dict with 'value' key
+                # ACL is a list of dicts with 'DEFINITION' key for RFC writer to process
                 acl_entry: dict[str, object] = {
-                    FlextLdifConstants.DictKeys.DN: dn,
-                    FlextLdifConstants.DictKeys.ATTRIBUTES: acl_attributes,
+                    FlextLdifConstants.DictKeys.DN: entry.get(FlextLdifConstants.DictKeys.DN, dn),
+                    FlextLdifConstants.DictKeys.ACL: acl_items,
                 }
 
                 # Step 3: Apply parser quirk (OID → RFC)
@@ -1264,7 +1334,7 @@ class FlextLdifCategorizedMigrationPipeline(
                         acl_entries.append(transformed_entry)
                     else:
                         # Log transformation failure but continue
-                        self.logger.warning(
+                        self.logger.debug(
                             f"ACL transformation failed for DN={dn}: {transform_result.error}"
                         )
                         # Add untransformed entry as fallback
@@ -1352,7 +1422,7 @@ class FlextLdifCategorizedMigrationPipeline(
 
                 # Log failures if any (non-fatal, continue processing)
                 if acl_failures:
-                    self.logger.warning(
+                    self.logger.debug(
                         f"ACL transformation: {len(acl_failures)} entries "
                         f"failed transformation"
                     )
@@ -1380,7 +1450,7 @@ class FlextLdifCategorizedMigrationPipeline(
                             transformed_entries.append(entry_result.unwrap())
                         else:
                             # Log warning but keep original entry
-                            self.logger.warning(
+                            self.logger.debug(
                                 f"Entry conversion failed for {entry.get('dn', 'unknown')}: "
                                 f"{entry_result.error}"
                             )
@@ -1460,7 +1530,7 @@ class FlextLdifCategorizedMigrationPipeline(
 
                     # Log failures if any (non-fatal, continue processing)
                     if filter_failures:
-                        self.logger.warning(
+                        self.logger.debug(
                             f"Forbidden filtering for '{category}': "
                             f"{len(filter_failures)} entries failed filtering"
                         )
@@ -1520,7 +1590,7 @@ class FlextLdifCategorizedMigrationPipeline(
 
                     # Log failures if any (non-fatal, continue processing)
                     if normalization_failures:
-                        self.logger.warning(
+                        self.logger.debug(
                             f"DN reference normalization for '{category}': "
                             f"{len(normalization_failures)} entries failed normalization"
                         )
@@ -1531,7 +1601,7 @@ class FlextLdifCategorizedMigrationPipeline(
             except (
                 Exception
             ) as e:  # Safety net: do not fail migration if normalization fails
-                self.logger.warning(f"DN reference normalization skipped: {e}")
+                self.logger.debug(f"DN reference normalization skipped: {e}")
 
             return FlextResult[dict[str, list[dict[str, object]]]].ok(categorized)
 

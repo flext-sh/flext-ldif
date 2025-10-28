@@ -32,8 +32,8 @@ from typing import cast, override
 
 from flext_core import FlextDecorators, FlextResult, FlextService
 
+from flext_ldif import FlextLdifModels
 from flext_ldif.constants import FlextLdifConstants
-from flext_ldif.models import FlextLdifModels
 from flext_ldif.quirks.manager import FlextLdifQuirksManager
 from flext_ldif.typings import FlextLdifTypes
 

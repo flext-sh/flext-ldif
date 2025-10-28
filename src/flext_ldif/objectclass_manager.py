@@ -3,6 +3,10 @@
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 
+DEPRECATED: Use FlextLdifSchemaBuilder instead for all schema-related operations.
+This class is scheduled for removal in v0.10.0. See FlextLdifSchemaBuilder for
+replacement functionality.
+
 """
 
 from __future__ import annotations
@@ -11,12 +15,20 @@ from typing import Any, override
 
 from flext_core import FlextResult, FlextService
 
+from flext_ldif import FlextLdifModels
 from flext_ldif.constants import FlextLdifConstants
-from flext_ldif.models import FlextLdifModels
 
 
 class FlextLdifObjectClassManager(FlextService[dict[str, object]]):
-    """ObjectClass hierarchy and validation management."""
+    """ObjectClass hierarchy and validation management.
+
+    DEPRECATED: Use FlextLdifSchemaBuilder instead.
+
+    This class is deprecated as of v0.9.0 and will be removed in v0.10.0.
+    All functionality has been migrated to FlextLdifSchemaBuilder for better
+    integration with the overall schema processing pipeline.
+
+    """
 
     @override
     def __init__(self) -> None:

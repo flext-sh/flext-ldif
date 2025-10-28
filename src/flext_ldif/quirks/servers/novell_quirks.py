@@ -14,20 +14,11 @@ import re
 from typing import ClassVar
 
 from flext_core import FlextResult
-from pydantic import Field
 
-# Pydantic removed
+from flext_ldif import FlextLdifModels
 from flext_ldif.constants import FlextLdifConstants
-from flext_ldif.models import FlextLdifModels
-from flext_ldif.quirks.base import (
-    BaseAclQuirk,
-    BaseEntryQuirk,
-    BaseSchemaQuirk,
-)
-from flext_ldif.quirks.rfc_parsers import (
-    RfcAttributeParser,
-    RfcObjectClassParser,
-)
+from flext_ldif.quirks.base import BaseAclQuirk, BaseEntryQuirk, BaseSchemaQuirk
+from flext_ldif.quirks.rfc_parsers import RfcAttributeParser, RfcObjectClassParser
 from flext_ldif.typings import FlextLdifTypes
 
 
@@ -53,19 +44,9 @@ class FlextLdifQuirksServersNovell(BaseSchemaQuirk):
         r"NAME\s+\(?\s*'([^']+)'", re.IGNORECASE
     )
 
-    def __init__(
-        self,
-        server_type: str = FlextLdifConstants.LdapServers.NOVELL_EDIRECTORY,
-        priority: int = 15,
-    ) -> None:
-        """Initialize eDirectory schema quirk.
-
-        Args:
-            server_type: Novell eDirectory server type
-            priority: Standard priority for eDirectory parsing
-
-        """
-        super().__init__(server_type=server_type, priority=priority)
+    # Novell eDirectory server configuration defaults
+    server_type: ClassVar[str] = FlextLdifConstants.LdapServers.NOVELL_EDIRECTORY
+    priority: ClassVar[int] = 15
 
     def can_handle_attribute(self, attr_definition: str) -> bool:
         """Detect eDirectory attribute definitions."""
@@ -289,21 +270,13 @@ class FlextLdifQuirksServersNovell(BaseSchemaQuirk):
     class AclQuirk(BaseAclQuirk):
         """Novell eDirectory ACL quirk."""
 
-        server_type: str = Field(
-            default=FlextLdifConstants.LdapServers.NOVELL_EDIRECTORY,
-            description="Novell eDirectory server type",
-        )
-        priority: int = Field(
-            default=15, description="Standard priority for eDirectory ACL"
-        )
-
         ACL_ATTRIBUTE_NAMES: ClassVar[frozenset[str]] = frozenset([
             "acl",
             "inheritedacl",
         ])
 
-        def model_post_init(self, _context: object, /) -> None:
-            """Initialize eDirectory ACL quirk."""
+        server_type: ClassVar[str] = "generic"
+        priority: ClassVar[int] = 200
 
         def can_handle_acl(self, acl_line: str) -> bool:
             """Detect eDirectory ACL values."""
@@ -354,15 +327,15 @@ class FlextLdifQuirksServersNovell(BaseSchemaQuirk):
                         read="read" in rights if isinstance(rights, list) else False,
                         write="write" in rights if isinstance(rights, list) else False,
                         add="add" in rights if isinstance(rights, list) else False,
-                        delete="delete" in rights
-                        if isinstance(rights, list)
-                        else False,
-                        search="search" in rights
-                        if isinstance(rights, list)
-                        else False,
-                        compare="compare" in rights
-                        if isinstance(rights, list)
-                        else False,
+                        delete=(
+                            "delete" in rights if isinstance(rights, list) else False
+                        ),
+                        search=(
+                            "search" in rights if isinstance(rights, list) else False
+                        ),
+                        compare=(
+                            "compare" in rights if isinstance(rights, list) else False
+                        ),
                     ),
                     server_type=FlextLdifConstants.LdapServers.NOVELL_EDIRECTORY,
                     raw_acl=acl_line,
@@ -468,14 +441,6 @@ class FlextLdifQuirksServersNovell(BaseSchemaQuirk):
     class EntryQuirk(BaseEntryQuirk):
         """Novell eDirectory entry quirk."""
 
-        server_type: str = Field(
-            default=FlextLdifConstants.LdapServers.NOVELL_EDIRECTORY,
-            description="Novell eDirectory server type",
-        )
-        priority: int = Field(
-            default=15, description="Standard priority for eDirectory entry"
-        )
-
         EDIR_DIRECTORY_MARKERS: ClassVar[frozenset[str]] = frozenset([
             "ou=services",
             "ou=apps",
@@ -487,6 +452,9 @@ class FlextLdifQuirksServersNovell(BaseSchemaQuirk):
             "logindisabled",
             "loginexpirationtime",
         ])
+
+        server_type: ClassVar[str] = "generic"
+        priority: ClassVar[int] = 200
 
         def model_post_init(self, _context: object, /) -> None:
             """Initialize eDirectory entry quirk."""

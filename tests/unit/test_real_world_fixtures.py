@@ -129,14 +129,14 @@ class TestRFCFixtures:
             attrs_dict = entry.attributes.attributes
             if isinstance(attrs_dict, dict) and "objectClass" in attrs_dict:
                 oc_attr = attrs_dict["objectClass"]
-                if oc_attr and len(oc_attr.values) > 1:
+                if oc_attr and len(oc_attr) > 1:
                     multi_attr_entry = entry
                     break
 
         assert multi_attr_entry is not None, (
             "Should have entry with multiple attribute values"
         )
-        assert len(multi_attr_entry.attributes.attributes["objectClass"].values) >= 2
+        assert len(multi_attr_entry.attributes.attributes["objectClass"]) >= 2
 
     def test_rfc_dn_components(self) -> None:
         """Test proper DN component structure in RFC entries."""
@@ -533,9 +533,8 @@ class TestFixtureEdgeCases:
         # Find entries with multi-valued attributes
         multi_valued = []
         for entry in entries:
-            for attr, attr_obj in entry.attributes.attributes.items():
-                # Get values from AttributeValues object
-                values = attr_obj.values if hasattr(attr_obj, "values") else attr_obj
+            for attr, values in entry.attributes.attributes.items():
+                # values is always a list in the new API
                 if isinstance(values, list) and len(values) > 1:
                     multi_valued.append((entry.dn.value, attr, len(values)))
 

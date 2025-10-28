@@ -24,10 +24,11 @@ from pathlib import Path
 from flext_core import FlextResult, FlextService
 from ldif3 import LDIFParser
 
+from flext_ldif import FlextLdifModels
 from flext_ldif.constants import FlextLdifConstants
-from flext_ldif.models import FlextLdifModels
 from flext_ldif.quirks.entry_quirks import FlextLdifEntryQuirks
 from flext_ldif.quirks.registry import FlextLdifQuirksRegistry
+from flext_ldif.services.acl import FlextLdifAclService
 from flext_ldif.typings import FlextLdifTypes
 
 # Python 3.13 compatibility: ldif3 uses deprecated base64.decodestring
@@ -86,11 +87,19 @@ class FlextLdifRfcLdifParser(FlextService[dict[str, object]]):
         super().__init__()
         self._params = params
         self._quirk_registry = quirk_registry
-        self._source_server = params.get(
+
+        # Type narrow source_server to str | None
+        source_server_raw = params.get(
             FlextLdifConstants.DictKeys.SOURCE_SERVER,
             FlextLdifConstants.ServerTypes.RFC,
         )
+        if isinstance(source_server_raw, str):
+            self._source_server: str | None = source_server_raw
+        else:
+            self._source_server = FlextLdifConstants.ServerTypes.RFC
+
         self._entry_quirks = FlextLdifEntryQuirks()
+        self._acl_service = FlextLdifAclService()
 
     def execute(self) -> FlextResult[dict[str, object]]:
         """Execute RFC-compliant LDIF parsing using ldif3 library.
@@ -353,19 +362,28 @@ class FlextLdifRfcLdifParser(FlextService[dict[str, object]]):
                         # Clean DN to remove spaces around '=' (RFC 4514 compliance)
                         cleaned_dn = self._entry_quirks.clean_dn(dn)
 
-                        # Convert ldif3 format to our Entry format
-                        entry_data: dict[str, object] = {
-                            FlextLdifConstants.DictKeys.DN: cleaned_dn,
-                            FlextLdifConstants.DictKeys.ATTRIBUTES: entry_attrs,
-                        }
-
-                        # Create Entry model
-                        entry_result = self._create_entry(entry_data)
+                        # Create Entry model directly from cleaned DN and attributes
+                        entry_result = FlextLdifModels.Entry.create(
+                            dn=cleaned_dn,
+                            attributes=entry_attrs,
+                        )
                         if entry_result.is_success:
-                            entries.append(entry_result.value)
+                            entry = entry_result.value
+
+                            # Extract ACLs from the entry
+                            acl_result = self._acl_service.extract_acls_from_entry(
+                                entry, server_type=self._source_server
+                            )
+                            if acl_result.is_success:
+                                acls = acl_result.value
+                                # Update entry with extracted ACLs
+                                if acls:
+                                    entry = entry.model_copy(update={"acls": acls})
+
+                            entries.append(entry)
                         # Log error but continue parsing
                         elif self.logger is not None:
-                            self.logger.warning(
+                            self.logger.debug(
                                 f"Failed to create entry for DN {cleaned_dn}: {entry_result.error}"
                             )
 
@@ -383,19 +401,28 @@ class FlextLdifRfcLdifParser(FlextService[dict[str, object]]):
                         # Clean DN to remove spaces around '=' (RFC 4514 compliance)
                         cleaned_dn = self._entry_quirks.clean_dn(dn)
 
-                        # Convert ldif3 format to our Entry format
-                        file_entry_data: dict[str, object] = {
-                            FlextLdifConstants.DictKeys.DN: cleaned_dn,
-                            FlextLdifConstants.DictKeys.ATTRIBUTES: entry_attrs,
-                        }
-
-                        # Create Entry model
-                        entry_result = self._create_entry(file_entry_data)
+                        # Create Entry model directly from cleaned DN and attributes
+                        entry_result = FlextLdifModels.Entry.create(
+                            dn=cleaned_dn,
+                            attributes=entry_attrs,
+                        )
                         if entry_result.is_success:
-                            entries.append(entry_result.value)
+                            entry = entry_result.value
+
+                            # Extract ACLs from the entry
+                            acl_result = self._acl_service.extract_acls_from_entry(
+                                entry, server_type=self._source_server
+                            )
+                            if acl_result.is_success:
+                                acls = acl_result.value
+                                # Update entry with extracted ACLs
+                                if acls:
+                                    entry = entry.model_copy(update={"acls": acls})
+
+                            entries.append(entry)
                         # Log error but continue parsing
                         elif self.logger is not None:
-                            self.logger.warning(
+                            self.logger.debug(
                                 f"Failed to create entry for DN {cleaned_dn}: {entry_result.error}"
                             )
 
@@ -417,37 +444,6 @@ class FlextLdifRfcLdifParser(FlextService[dict[str, object]]):
             return FlextResult[list[FlextLdifModels.Entry]].fail(
                 f"{FlextLdifConstants.ServerDetection.MSG_FAILED_PARSE_LDIF3}: {e}"
             )
-
-    def _create_entry(
-        self, entry_data: dict[str, object]
-    ) -> FlextResult[FlextLdifModels.Entry]:
-        """Create LDIF entry from parsed data.
-
-        Args:
-        entry_data: Parsed entry data with FlextLdifConstants.DictKeys.DN and FlextLdifConstants.DictKeys.ATTRIBUTES keys
-
-        Returns:
-        FlextResult with Entry model
-
-        """
-        # Extract and type narrow dn
-        dn_raw = entry_data.get(FlextLdifConstants.DictKeys.DN, "")
-        if not isinstance(dn_raw, str):
-            return FlextResult[FlextLdifModels.Entry].fail(
-                f"DN must be string, got {type(dn_raw).__name__}"
-            )
-        dn: str = dn_raw
-
-        # Extract and type narrow attributes
-        attributes_raw = entry_data.get(FlextLdifConstants.DictKeys.ATTRIBUTES, {})
-        if not isinstance(attributes_raw, dict):
-            return FlextResult[FlextLdifModels.Entry].fail(
-                f"attributes must be dict, got {type(attributes_raw).__name__}"
-            )
-        attributes: FlextLdifTypes.CommonDict.AttributeDict = attributes_raw
-
-        # Use Entry.create() with separate parameters
-        return FlextLdifModels.Entry.create(dn=dn, attributes=attributes)
 
 
 __all__ = ["FlextLdifRfcLdifParser"]

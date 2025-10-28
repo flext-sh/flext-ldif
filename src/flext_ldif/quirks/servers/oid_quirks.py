@@ -20,11 +20,9 @@ from typing import ClassVar
 
 from flext_core import FlextLogger, FlextResult
 
+from flext_ldif import FlextLdifModels
 from flext_ldif.constants import FlextLdifConstants
-from flext_ldif.models import FlextLdifModels
-from flext_ldif.quirks.base import (
-    FlextLdifQuirksBase,
-)
+from flext_ldif.quirks.base import FlextLdifQuirksBase
 from flext_ldif.quirks.rfc_parsers import RfcSchemaConverter, RfcSchemaExtractor
 from flext_ldif.services.dn import FlextLdifDnService
 from flext_ldif.typings import FlextLdifTypes
@@ -59,6 +57,10 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBase.SchemaQuirk):
 
     """
 
+    # Server identity - MUST be declared explicitly in subclasses
+    server_type: ClassVar[str] = FlextLdifConstants.ServerTypes.OID
+    priority: ClassVar[int] = 10
+
     # Oracle OID namespace pattern
     ORACLE_OID_PATTERN: ClassVar[re.Pattern[str]] = re.compile(
         r"2\.16\.840\.1\.113894\."
@@ -90,7 +92,7 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBase.SchemaQuirk):
         """
         super().__init__(server_type=server_type, priority=priority)
         # Instantiate nested ACL quirk for conversion matrix access
-        self.acl = self.AclQuirk(server_type=self.server_type)
+        self.acl = self.AclQuirk(server_type=server_type)
 
     def can_handle_attribute(self, attr_definition: str) -> bool:
         """Check if this attribute should be processed by OID quirks.
@@ -796,53 +798,6 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBase.SchemaQuirk):
                 f"OID schema extraction failed: {e}"
             )
 
-    def convert_attribute_from_rfc(
-        self, rfc_data: FlextLdifModels.SchemaAttribute
-    ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
-        """Convert RFC-compliant attribute to OID-specific format.
-
-        Args:
-        rfc_data: RFC-compliant attribute data
-
-        Returns:
-        FlextResult with OID attribute data
-
-        """
-        try:
-            # Oracle OID uses RFC-compliant schema format
-            # Just create new model with updated metadata if needed
-            # Since models are frozen, we return the input model as-is
-            # (OID format is identical to RFC format for attributes)
-            return FlextResult[FlextLdifModels.SchemaAttribute].ok(rfc_data)
-
-        except Exception as e:
-            return FlextResult[FlextLdifModels.SchemaAttribute].fail(
-                f"RFC→OID attribute conversion failed: {e}"
-            )
-
-    def convert_objectclass_from_rfc(
-        self, rfc_data: FlextLdifModels.SchemaObjectClass
-    ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
-        """Convert RFC-compliant objectClass to OID-specific format.
-
-        Args:
-        rfc_data: RFC-compliant objectClass data
-
-        Returns:
-        FlextResult with OID objectClass data
-
-        """
-        try:
-            # Oracle OID uses RFC-compliant schema format
-            # Just return the input model as-is
-            # (OID format is identical to RFC format for objectClasses)
-            return FlextResult[FlextLdifModels.SchemaObjectClass].ok(rfc_data)
-
-        except Exception as e:
-            return FlextResult[FlextLdifModels.SchemaObjectClass].fail(
-                f"RFC→OID objectClass conversion failed: {e}"
-            )
-
     class AclQuirk(FlextLdifQuirksBase.AclQuirk):
         """Oracle OID ACL quirk (nested).
 
@@ -857,19 +812,12 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBase.SchemaQuirk):
 
         """
 
-        def __init__(
-            self,
-            server_type: str = FlextLdifConstants.ServerTypes.OID,
-            priority: int = 10,
-        ) -> None:
-            """Initialize OID ACL quirk.
+        # Oracle OID uses "orclaci" for ACL attribute names
+        acl_attribute_name = "orclaci"
 
-            Args:
-                server_type: Oracle OID server type
-                priority: High priority for OID ACL parsing
-
-            """
-            super().__init__(server_type=server_type, priority=priority)
+        # Oracle OID server configuration defaults
+        server_type: ClassVar[str] = FlextLdifConstants.ServerTypes.OID
+        priority: ClassVar[int] = 10
 
         def can_handle_acl(self, acl_line: str) -> bool:
             """Check if this is an Oracle OID ACL.
@@ -1383,6 +1331,9 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBase.SchemaQuirk):
 
         """
 
+        server_type: ClassVar[str] = FlextLdifConstants.ServerTypes.OID
+        priority: ClassVar[int] = 10
+
         def __init__(
             self,
             server_type: str = FlextLdifConstants.ServerTypes.OID,
@@ -1578,11 +1529,13 @@ class FlextLdifQuirksServersOid(FlextLdifQuirksBase.SchemaQuirk):
                                 attr_value = attrs[attr_name]
                                 if isinstance(attr_value, list):
                                     attrs[attr_name] = [
-                                        "TRUE"
-                                        if v == "1"
-                                        else "FALSE"
-                                        if v == "0"
-                                        else v
+                                        (
+                                            "TRUE"
+                                            if v == "1"
+                                            else "FALSE"
+                                            if v == "0"
+                                            else v
+                                        )
                                         for v in attr_value
                                     ]
                                 elif isinstance(attr_value, str):

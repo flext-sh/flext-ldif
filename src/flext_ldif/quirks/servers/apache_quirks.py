@@ -8,17 +8,10 @@ from typing import ClassVar
 
 from flext_core import FlextResult
 
+from flext_ldif import FlextLdifModels
 from flext_ldif.constants import FlextLdifConstants
-from flext_ldif.models import FlextLdifModels
-from flext_ldif.quirks.base import (
-    BaseAclQuirk,
-    BaseEntryQuirk,
-    BaseSchemaQuirk,
-)
-from flext_ldif.quirks.rfc_parsers import (
-    RfcAttributeParser,
-    RfcObjectClassParser,
-)
+from flext_ldif.quirks.base import BaseAclQuirk, BaseEntryQuirk, BaseSchemaQuirk
+from flext_ldif.quirks.rfc_parsers import RfcAttributeParser, RfcObjectClassParser
 from flext_ldif.typings import FlextLdifTypes
 
 
@@ -40,19 +33,9 @@ class FlextLdifQuirksServersApache(BaseSchemaQuirk):
         "ads-interceptor",
     ])
 
-    def __init__(
-        self,
-        server_type: str = FlextLdifConstants.LdapServers.APACHE_DIRECTORY,
-        priority: int = 15,
-    ) -> None:
-        """Initialize ApacheDS schema quirk.
-
-        Args:
-            server_type: Apache Directory Server type
-            priority: Standard priority for ApacheDS parsing
-
-        """
-        super().__init__(server_type=server_type, priority=priority)
+    # Apache Directory Server configuration defaults
+    server_type: ClassVar[str] = FlextLdifConstants.LdapServers.APACHE_DIRECTORY
+    priority: ClassVar[int] = 15
 
     def can_handle_attribute(self, attr_definition: str) -> bool:
         """Detect ApacheDS attribute definitions."""
@@ -298,6 +281,9 @@ class FlextLdifQuirksServersApache(BaseSchemaQuirk):
         ])
         CLAUSE_PATTERN: ClassVar[re.Pattern[str]] = re.compile(r"\([^()]+\)")
 
+        server_type: ClassVar[str] = "generic"
+        priority: ClassVar[int] = 200
+
         def __init__(
             self,
             server_type: str = FlextLdifConstants.LdapServers.APACHE_DIRECTORY,
@@ -442,6 +428,9 @@ class FlextLdifQuirksServersApache(BaseSchemaQuirk):
             "ads-",
             "apacheds",
         ])
+
+        server_type: ClassVar[str] = "generic"
+        priority: ClassVar[int] = 200
 
         def __init__(
             self,

@@ -13,13 +13,9 @@ from typing import ClassVar
 
 from flext_core import FlextLogger, FlextResult
 
+from flext_ldif import FlextLdifModels
 from flext_ldif.constants import FlextLdifConstants
-from flext_ldif.models import FlextLdifModels
-from flext_ldif.quirks.base import (
-    BaseAclQuirk,
-    BaseEntryQuirk,
-    BaseSchemaQuirk,
-)
+from flext_ldif.quirks.base import BaseAclQuirk, BaseEntryQuirk, BaseSchemaQuirk
 from flext_ldif.quirks.rfc_parsers import RfcSchemaConverter, RfcSchemaExtractor
 from flext_ldif.typings import FlextLdifTypes
 from flext_ldif.utilities import FlextLdifUtilities
@@ -60,6 +56,10 @@ class FlextLdifQuirksServersOud(BaseSchemaQuirk):
         r"2\.16\.840\.1\.113894\."
     )
 
+    # OUD configuration defaults
+    server_type: ClassVar[str] = FlextLdifConstants.ServerTypes.OUD
+    priority: ClassVar[int] = 10
+
     def __init__(
         self,
         server_type: str = FlextLdifConstants.ServerTypes.OUD,
@@ -74,7 +74,7 @@ class FlextLdifQuirksServersOud(BaseSchemaQuirk):
         """
         super().__init__(server_type=server_type, priority=priority)
         # Instantiate nested ACL quirk for conversion matrix access
-        self.acl = self.AclQuirk(server_type=self.server_type)
+        self.acl = self.AclQuirk(server_type=server_type)
 
     def can_handle_attribute(self, attr_definition: str) -> bool:
         """Check if this attribute can be handled (always returns True).
@@ -158,15 +158,12 @@ class FlextLdifQuirksServersOud(BaseSchemaQuirk):
             x_origin = xorigin_match.group(1) if xorigin_match else None
 
             # Build quirk metadata for OUD-specific data
-            quirk_data: dict[str, object] = {"original_format": attr_definition.strip()}
+            quirk_data: dict[str, object] = {}
             if x_origin:
                 quirk_data["x_origin"] = x_origin
 
-            metadata = FlextLdifModels.QuirkMetadata(
-                quirk_type="oud",
-                original_format=attr_definition.strip(),
-                extensions=quirk_data,
-            )
+            # Use helper method for consistent metadata creation
+            metadata = self.create_quirk_metadata(attr_definition.strip(), quirk_data)
 
             # Build SchemaAttribute model directly
             attribute = FlextLdifModels.SchemaAttribute(
@@ -835,19 +832,12 @@ class FlextLdifQuirksServersOud(BaseSchemaQuirk):
 
         """
 
-        def __init__(
-            self,
-            server_type: str = FlextLdifConstants.ServerTypes.OUD,
-            priority: int = 10,
-        ) -> None:
-            """Initialize OUD ACL quirk.
+        # Oracle OUD uses RFC 4876 compliant "aci" for ACL attribute names
+        acl_attribute_name = "aci"
 
-            Args:
-                server_type: Oracle OUD server type
-                priority: High priority for OUD ACL parsing
-
-            """
-            super().__init__(server_type=server_type, priority=priority)
+        # Oracle OUD server configuration defaults
+        server_type: ClassVar[str] = FlextLdifConstants.ServerTypes.OUD
+        priority: ClassVar[int] = 10
 
         def can_handle_acl(self, acl_line: str) -> bool:
             """Check if this is an Oracle OUD ACL.
@@ -1308,6 +1298,9 @@ class FlextLdifQuirksServersOud(BaseSchemaQuirk):
 
         """
 
+        server_type: ClassVar[str] = FlextLdifConstants.ServerTypes.OUD
+        priority: ClassVar[int] = 10
+
         def __init__(
             self,
             server_type: str = FlextLdifConstants.ServerTypes.OUD,
@@ -1355,6 +1348,20 @@ class FlextLdifQuirksServersOud(BaseSchemaQuirk):
             "pwdmaxage",
             "pwdmaxlength",
             "pwdminlength",
+        }
+
+        # Attribute name casing map: lowercase source → proper OUD camelCase
+        # Maps common LDAP attributes with incorrect casing to OUD-expected camelCase
+        ATTRIBUTE_CASE_MAP: ClassVar[dict[str, str]] = {
+            "uniquemember": "uniqueMember",
+            "displayname": "displayName",
+            "distinguishedname": "distinguishedName",
+            "objectclass": "objectClass",
+            "memberof": "memberOf",
+            "seealsodescription": "seeAlsoDescription",
+            "orclaci": "aci",
+            "orclentrylevelaci": "aci",
+            "acl": "aci",
         }
 
         def process_entry(
@@ -1405,8 +1412,17 @@ class FlextLdifQuirksServersOud(BaseSchemaQuirk):
                 # If multiple STRUCTURAL classes exist, OUD will reject the entry during sync.
                 # This is NOT a quirk responsibility - let OUD server enforce its schema rules.
 
-                # Process attributes with boolean conversion (FORMAT transformation)
+                # PHASE 0: Normalize attribute names to proper camelCase
+                # Maps lowercase LDAP attribute names to OUD-expected camelCase
+                normalized_attributes: dict[str, object] = {}
                 for attr_name, attr_values in attributes.items():
+                    # Check if this attribute needs case normalization
+                    attr_lower = attr_name.lower()
+                    normalized_name = self.ATTRIBUTE_CASE_MAP.get(attr_lower, attr_name)
+                    normalized_attributes[normalized_name] = attr_values
+
+                # Process attributes with boolean conversion (FORMAT transformation)
+                for attr_name, attr_values in normalized_attributes.items():
                     # Skip internal metadata attributes (except LDIF modify markers, already handled above)
                     if attr_name.startswith("_"):
                         continue
@@ -1466,14 +1482,14 @@ class FlextLdifQuirksServersOud(BaseSchemaQuirk):
                 if ", " in entry_dn:
                     metadata_extensions["dn_spaces"] = True
 
-                # Preserve attribute ordering
-                if attributes:
-                    attr_order: list[str] = list(attributes.keys())
+                # Preserve attribute ordering (using normalized names)
+                if normalized_attributes:
+                    attr_order: list[str] = list(normalized_attributes.keys())
                     metadata_extensions["attribute_order"] = attr_order
 
-                # Detect Oracle-specific objectClasses
-                if FlextLdifConstants.DictKeys.OBJECTCLASS in attributes:
-                    oc_values = attributes[FlextLdifConstants.DictKeys.OBJECTCLASS]
+                # Detect Oracle-specific objectClasses (use normalized attributes)
+                if FlextLdifConstants.DictKeys.OBJECTCLASS in normalized_attributes:
+                    oc_values = normalized_attributes[FlextLdifConstants.DictKeys.OBJECTCLASS]
                     if isinstance(oc_values, list):
                         oracle_ocs: list[str] = [
                             str(oc)
@@ -1667,9 +1683,11 @@ class FlextLdifQuirksServersOud(BaseSchemaQuirk):
                         # Skip internal metadata attributes
                         if attr_name.startswith("_"):
                             continue
+                        # Apply attribute name mapping (e.g., orclaci → aci, uniquemember → uniqueMember)
+                        mapped_attr_name = self.ATTRIBUTE_CASE_MAP.get(attr_name.lower(), attr_name)
                         # Check if this attribute should be base64-encoded
                         is_base64 = attr_name in base64_attrs
-                        attr_prefix = f"{attr_name}::" if is_base64 else f"{attr_name}:"
+                        attr_prefix = f"{mapped_attr_name}::" if is_base64 else f"{mapped_attr_name}:"
 
                         # Handle both list and single values
                         if isinstance(attr_value, list):

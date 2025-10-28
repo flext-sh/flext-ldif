@@ -1428,8 +1428,8 @@ class TestRfcLdifWriterComprehensive:
             dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
             attributes=FlextLdifModels.LdifAttributes(
                 attributes={
-                    "objectClass": FlextLdifModels.AttributeValues(values=["person"]),
-                    "cn": FlextLdifModels.AttributeValues(values=["test"]),
+                    "objectClass": ["person"],
+                    "cn": ["test"],
                 }
             ),
         )

@@ -26,13 +26,8 @@ from typing import ClassVar
 
 from flext_core import FlextLogger, FlextResult
 
-# Pydantic removed
-from flext_ldif.models import FlextLdifModels
-from flext_ldif.quirks.base import (
-    BaseAclQuirk,
-    BaseEntryQuirk,
-    BaseSchemaQuirk,
-)
+from flext_ldif import FlextLdifModels
+from flext_ldif.quirks.base import BaseAclQuirk, BaseEntryQuirk, BaseSchemaQuirk
 from flext_ldif.typings import FlextLdifTypes
 
 logger = FlextLogger(__name__)
@@ -57,19 +52,9 @@ class FlextLdifQuirksServersRelaxed(BaseSchemaQuirk):
     # Permissive OID pattern - matches anything that looks like an OID
     OID_PATTERN: ClassVar[re.Pattern[str]] = re.compile(r"\(?\s*([0-9a-zA-Z._\-]+)")
 
-    def __init__(
-        self,
-        server_type: str = "relaxed",
-        priority: int = 200,
-    ) -> None:
-        """Initialize relaxed schema quirk.
-
-        Args:
-            server_type: Relaxed lenient parsing mode
-            priority: Very low priority - last resort
-
-        """
-        super().__init__(server_type=server_type, priority=priority)
+    # Relaxed mode configuration defaults
+    server_type: ClassVar[str] = "relaxed"
+    priority: ClassVar[int] = 200
 
     def can_handle_attribute(self, attr_definition: str) -> bool:
         """Accept any attribute definition in relaxed mode.
@@ -129,12 +114,12 @@ class FlextLdifQuirksServersRelaxed(BaseSchemaQuirk):
                 )
             )
         except Exception as e:
-            logger.warning(f"Relaxed attribute parse failed: {e}")
+            logger.debug(f"Relaxed attribute parse failed: {e}")
             metadata = FlextLdifModels.QuirkMetadata(
                 quirk_type="relaxed",
-                original_format=attr_definition
-                if isinstance(attr_definition, str)
-                else "",
+                original_format=(
+                    attr_definition if isinstance(attr_definition, str) else ""
+                ),
                 extensions={"relaxed_parsed": False, "parse_error": str(e)},
             )
             return FlextResult[FlextLdifModels.SchemaAttribute].ok(
@@ -205,7 +190,7 @@ class FlextLdifQuirksServersRelaxed(BaseSchemaQuirk):
                 )
             )
         except Exception as e:
-            logger.warning(f"Relaxed objectClass parse failed: {e}")
+            logger.debug(f"Relaxed objectClass parse failed: {e}")
             metadata = FlextLdifModels.QuirkMetadata(
                 quirk_type="relaxed",
                 original_format=oc_definition if isinstance(oc_definition, str) else "",
@@ -298,7 +283,7 @@ class FlextLdifQuirksServersRelaxed(BaseSchemaQuirk):
             # Fallback to model string representation
             return FlextResult[str].ok(str(attr_data.model_dump()))
         except Exception as e:
-            logger.warning(f"Write attribute failed: {e}")
+            logger.debug(f"Write attribute failed: {e}")
             return FlextResult[str].ok(str(attr_data.model_dump()))
 
     def write_objectclass_to_rfc(
@@ -322,7 +307,7 @@ class FlextLdifQuirksServersRelaxed(BaseSchemaQuirk):
             # Fallback to model string representation
             return FlextResult[str].ok(str(oc_data.model_dump()))
         except Exception as e:
-            logger.warning(f"Write objectClass failed: {e}")
+            logger.debug(f"Write objectClass failed: {e}")
             return FlextResult[str].ok(str(oc_data.model_dump()))
 
     class AclQuirk(BaseAclQuirk):
@@ -334,9 +319,12 @@ class FlextLdifQuirksServersRelaxed(BaseSchemaQuirk):
         **Priority**: 200 (very low - last resort)
         """
 
+        server_type: ClassVar[str] = "generic"
+        priority: ClassVar[int] = 200
+
         def __init__(self) -> None:
             """Initialize relaxed ACL quirk with priority 200."""
-            super().__init__(server_type="relaxed", priority=200)
+            super().__init__(server_type="generic", priority=200)
 
         def can_handle_acl(self, acl_line: str) -> bool:
             """Accept any ACL line in relaxed mode.
@@ -374,7 +362,7 @@ class FlextLdifQuirksServersRelaxed(BaseSchemaQuirk):
                 )
                 return FlextResult[FlextLdifModels.Acl].ok(acl)
             except Exception as e:
-                logger.warning(f"Relaxed ACL parse failed: {e}")
+                logger.debug(f"Relaxed ACL parse failed: {e}")
                 # Return generic ACL as fallback when parsing fails
                 acl = FlextLdifModels.Acl(
                     name="relaxed_acl_error",
@@ -432,7 +420,7 @@ class FlextLdifQuirksServersRelaxed(BaseSchemaQuirk):
                     return FlextResult[str].ok(acl_data.raw_acl)
                 return FlextResult[str].ok(str(acl_data.model_dump()))
             except Exception as e:
-                logger.warning(f"Write ACL failed: {e}")
+                logger.debug(f"Write ACL failed: {e}")
                 return FlextResult[str].ok(str(acl_data.model_dump()))
 
     class EntryQuirk(BaseEntryQuirk):
@@ -469,7 +457,7 @@ class FlextLdifQuirksServersRelaxed(BaseSchemaQuirk):
                     attributes
                 )
             except Exception as e:
-                logger.warning(f"Relaxed entry processing failed: {e}")
+                logger.debug(f"Relaxed entry processing failed: {e}")
                 return FlextResult[FlextLdifTypes.Models.EntryAttributesDict].ok(
                     attributes
                 )
@@ -512,7 +500,7 @@ class FlextLdifQuirksServersRelaxed(BaseSchemaQuirk):
                     attributes
                 )
             except Exception as e:
-                logger.warning(f"Relaxed entry parse failed: {e}")
+                logger.debug(f"Relaxed entry parse failed: {e}")
                 return FlextResult[FlextLdifTypes.Models.EntryAttributesDict].ok(
                     attributes
                 )
@@ -531,14 +519,16 @@ class FlextLdifQuirksServersRelaxed(BaseSchemaQuirk):
                 # Minimal normalization: just lowercase component names
                 components = dn.split(",")
                 normalized = ",".join(
-                    comp.split("=")[0].lower() + "=" + comp.split("=", 1)[1]
-                    if "=" in comp
-                    else comp
+                    (
+                        comp.split("=")[0].lower() + "=" + comp.split("=", 1)[1]
+                        if "=" in comp
+                        else comp
+                    )
                     for comp in components
                 )
                 return FlextResult[str].ok(normalized)
             except Exception as e:
-                logger.warning(f"DN normalization failed, using original: {e}")
+                logger.debug(f"DN normalization failed, using original: {e}")
                 return FlextResult[str].ok(dn)
 
         def convert_entry_to_rfc(

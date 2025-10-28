@@ -17,16 +17,11 @@ Notes:
 from __future__ import annotations
 
 import re
+from collections.abc import Callable
 from typing import ClassVar, cast
 
 from flext_core import FlextModels, FlextResult
-from pydantic import (
-    ConfigDict,
-    Field,
-    computed_field,
-    field_validator,
-    model_validator,
-)
+from pydantic import ConfigDict, Field, computed_field, field_validator, model_validator
 
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.typings import FlextLdifTypes
@@ -598,6 +593,26 @@ class FlextLdifModels(FlextModels):
             default=0,
             description="Number of entries used for schema discovery",
         )
+        server_info: object = Field(
+            default=None,
+            description="LDAP server information from Root DSE",
+        )
+        server_quirks: object = Field(
+            default=None,
+            description="Server-specific quirks and behaviors",
+        )
+        naming_contexts: list[str] = Field(
+            default_factory=list,
+            description="Naming contexts (suffixes) available on server",
+        )
+        supported_controls: list[str] = Field(
+            default_factory=list,
+            description="LDAP controls supported by server",
+        )
+        supported_extensions: list[str] = Field(
+            default_factory=list,
+            description="LDAP extensions supported by server",
+        )
 
         @computed_field
         def discovery_ratio(self) -> float:
@@ -841,18 +856,16 @@ class FlextLdifModels(FlextModels):
                 # Convert dict[str, object] to LdifAttributes if needed
                 attrs_obj: FlextLdifModels.LdifAttributes
                 if isinstance(attributes, dict):
-                    # Build AttributeValues for each attribute
-                    attrs_dict: dict[str, FlextLdifModels.AttributeValues] = {}
+                    # Normalize attribute values to list[str]
+                    attrs_dict: dict[str, list[str]] = {}
                     for attr_name, attr_values in attributes.items():
                         # Normalize to list if string
                         values_list: list[str] = (
-                            [attr_values]
+                            [str(attr_values)]
                             if isinstance(attr_values, str)
-                            else attr_values
+                            else [str(v) for v in attr_values]
                         )
-                        attrs_dict[attr_name] = FlextLdifModels.AttributeValues(
-                            values=values_list
-                        )
+                        attrs_dict[attr_name] = values_list
                     attrs_obj = FlextLdifModels.LdifAttributes(attributes=attrs_dict)
                 else:
                     attrs_obj = attributes
@@ -892,7 +905,7 @@ class FlextLdifModels(FlextModels):
             attr_name_lower = attribute_name.lower()
             for stored_name, attr_values in self.attributes.attributes.items():
                 if stored_name.lower() == attr_name_lower:
-                    return attr_values.values
+                    return attr_values
             return []
 
         def has_attribute(self, attribute_name: str) -> bool:
@@ -923,23 +936,169 @@ class FlextLdifModels(FlextModels):
                 FlextLdifConstants.DictKeys.OBJECTCLASS
             )
 
-    class AttributeValues(FlextModels.ArbitraryTypesModel):
-        """LDIF attribute values container."""
+        def get_all_attribute_names(self) -> list[str]:
+            """Get list of all attribute names in the entry.
 
-        values: list[str] = Field(default_factory=list, description="Attribute values")
+            Returns:
+            List of attribute names (case as stored in entry)
+
+            """
+            return list(self.attributes.attributes.keys())
+
+        def get_all_attributes(self) -> dict[str, list[str]]:
+            """Get all attributes as dictionary.
+
+            Returns:
+            Dictionary of attribute_name -> list[str] (deep copy)
+
+            """
+            return dict(self.attributes.attributes)
+
+        def count_attributes(self) -> int:
+            """Count the number of attributes in the entry.
+
+            Returns:
+            Number of attributes (including multivalued attributes count as 1)
+
+            """
+            return len(self.attributes.attributes)
+
+        def get_dn_components(self) -> list[str]:
+            """Get DN components (RDN parts) from the entry's DN.
+
+            Returns:
+            List of DN components (e.g., ["cn=admin", "dc=example", "dc=com"])
+
+            """
+            components = self.dn.components
+            return cast("list[str]", components)
+
+        def matches_filter(
+            self, filter_func: Callable[..., bool] | None = None
+        ) -> bool:
+            """Check if entry matches a filter function.
+
+            Convenience method for delegation to filters module.
+            If no filter provided, returns True (entry matches).
+
+            Args:
+            filter_func: Optional callable that takes Entry and returns bool
+
+            Returns:
+            True if entry matches filter (or no filter provided), False otherwise
+
+            """
+            if filter_func is None:
+                return True
+            try:
+                return filter_func(self)
+            except Exception:
+                return False
+
+        def to_dict(self) -> dict[str, object]:
+            """Convert Entry to dictionary representation.
+
+            Used for serialization and data interchange.
+
+            Returns:
+            Dictionary with all entry fields
+
+            """
+            return {
+                "dn": self.dn.value,
+                "attributes": self.get_all_attributes(),
+                "metadata": self.metadata,
+                "acls": self.acls,
+                "objectclasses": self.objectclasses,
+                "entry_metadata": self.entry_metadata,
+                "validation_metadata": self.validation_metadata,
+            }
+
+        def clone(self) -> FlextLdifModels.Entry:
+            """Create an immutable copy of the entry.
+
+            Returns:
+            New Entry instance with same values (shallow copy of attributes)
+
+            """
+            return FlextLdifModels.Entry(
+                dn=self.dn,
+                attributes=FlextLdifModels.LdifAttributes(
+                    attributes=dict(self.attributes.attributes)
+                ),
+                metadata=self.metadata,
+                acls=list(self.acls) if self.acls else None,
+                objectclasses=list(self.objectclasses)
+                if self.objectclasses
+                else None,
+                entry_metadata=dict(self.entry_metadata)
+                if self.entry_metadata
+                else None,
+                validation_metadata=dict(self.validation_metadata)
+                if self.validation_metadata
+                else None,
+            )
 
         @computed_field
-        def single_value(self) -> str | None:
-            """Get single value if there's exactly one value, None otherwise."""
-            if len(self.values) == 1:
-                return self.values[0]
-            return None
+        @property
+        def is_schema_entry(self) -> bool:
+            """Check if entry is a schema definition entry.
+
+            Schema entries contain objectClass definitions and are typically
+            found in the schema naming context.
+
+            Returns:
+            True if entry has objectClasses, False otherwise
+
+            """
+            return bool(self.objectclasses)
+
+        @computed_field
+        @property
+        def is_acl_entry(self) -> bool:
+            """Check if entry has Access Control Lists.
+
+            Returns:
+            True if entry has ACLs, False otherwise
+
+            """
+            return bool(self.acls)
+
+        @computed_field
+        @property
+        def has_validation_errors(self) -> bool:
+            """Check if entry has validation errors.
+
+            Returns:
+            True if entry has validation errors in validation_metadata, False otherwise
+
+            """
+            if not self.validation_metadata:
+                return False
+            return bool(self.validation_metadata.get("errors"))
+
+        def get_objectclass_names(self) -> list[str]:
+            """Get list of objectClass attribute values from entry.
+
+            Returns:
+            List of objectClass values, empty list if objectClass attribute not found
+
+            """
+            return self.get_attribute_values(
+                FlextLdifConstants.DictKeys.OBJECTCLASS
+            )
 
     class LdifAttributes(FlextModels.ArbitraryTypesModel):
-        """LDIF attributes container with dict-like interface."""
+        """LDIF attributes container - simplified dict-like interface.
 
-        attributes: dict[str, FlextLdifModels.AttributeValues] = Field(
-            default_factory=dict, description="Attribute name to values"
+        Directly stores attribute name to list of values (no intermediate wrapper).
+        Replaces the 3-level indirection pattern:
+            OLD: entry.attributes.attributes["cn"].values → list[str]
+            NEW: entry.attributes["cn"] → list[str]
+        """
+
+        attributes: dict[str, list[str]] = Field(
+            default_factory=dict, description="Attribute name to values list"
         )
         metadata: dict[str, object] | None = Field(
             default=None,
@@ -950,44 +1109,69 @@ class FlextLdifModels(FlextModels):
             """Return the number of attributes."""
             return len(self.attributes)
 
-        def get_attribute(self, key: str) -> FlextLdifModels.AttributeValues | None:
-            """Get AttributeValues for a specific attribute name.
+        def __getitem__(self, key: str) -> list[str]:
+            """Get attribute values by name (case-sensitive LDAP).
 
             Args:
-            key: Attribute name
+                key: Attribute name
 
             Returns:
-            AttributeValues object or None if not found
+                List of attribute values
+
+            Raises:
+                KeyError if attribute not found
 
             """
-            return self.attributes.get(key)
+            return self.attributes[key]
+
+        def __setitem__(self, key: str, value: list[str]) -> None:
+            """Set attribute values by name.
+
+            Args:
+                key: Attribute name
+                value: List of values
+
+            """
+            self.attributes[key] = value
+
+        def __contains__(self, key: str) -> bool:
+            """Check if attribute exists."""
+            return key in self.attributes
+
+        def get(self, key: str, default: list[str] | None = None) -> list[str]:
+            """Get attribute values with optional default.
+
+            Args:
+                key: Attribute name
+                default: Default list if not found
+
+            Returns:
+                List of values or default
+
+            """
+            return self.attributes.get(key, default or [])
 
         def get_values(self, key: str, default: list[str] | None = None) -> list[str]:
-            """Get attribute values as a list with optional default.
-
-            Ergonomic method for retrieving attribute values directly as a list.
+            """Get attribute values as a list (same as get()).
 
             Args:
-            key: Attribute name
-            default: Default list to return if attribute not found
+                key: Attribute name
+                default: Default list if not found
 
             Returns:
-            List of attribute values, or default if not found
+                List of attribute values, or default if not found
 
             """
-            if default is None:
-                default = []
-            attr = self.attributes.get(key)
-            return attr.values if attr else default
+            return self.get(key, default)
 
         def has_attribute(self, key: str) -> bool:
             """Check if attribute exists.
 
             Args:
-            key: Attribute name
+                key: Attribute name
 
             Returns:
-            True if attribute exists, False otherwise
+                True if attribute exists
 
             """
             return key in self.attributes
@@ -996,7 +1180,7 @@ class FlextLdifModels(FlextModels):
             """Get list of all attribute names.
 
             Returns:
-            List of attribute names
+                List of attribute names
 
             """
             return list(self.attributes.keys())
@@ -1005,28 +1189,36 @@ class FlextLdifModels(FlextModels):
             """Get attribute name-values pairs.
 
             Returns:
-            List of (name, values) tuples for all attributes
+                List of (name, values) tuples
 
             """
-            return [(name, attr.values) for name, attr in self.attributes.items()]
+            return list(self.attributes.items())
+
+        def keys(self) -> list[str]:
+            """Get attribute names."""
+            return list(self.attributes.keys())
+
+        def values(self) -> list[list[str]]:
+            """Get attribute values lists."""
+            return list(self.attributes.values())
 
         def add_attribute(self, key: str, values: str | list[str]) -> None:
             """Add or update an attribute with values.
 
             Args:
-            key: Attribute name
-            values: Single value or list of values
+                key: Attribute name
+                values: Single value or list of values
 
             """
             if isinstance(values, str):
                 values = [values]
-            self.attributes[key] = FlextLdifModels.AttributeValues(values=values)
+            self.attributes[key] = values
 
         def remove_attribute(self, key: str) -> None:
             """Remove an attribute if it exists.
 
             Args:
-            key: Attribute name
+                key: Attribute name
 
             """
             self.attributes.pop(key, None)
@@ -1037,18 +1229,18 @@ class FlextLdifModels(FlextModels):
             """Convert to ldap3-compatible attributes dict.
 
             Args:
-            exclude: List of attribute names to exclude from output
+                exclude: List of attribute names to exclude from output
 
             Returns:
-            Dict compatible with ldap3 library format
+                Dict compatible with ldap3 library format
 
             """
             exclude_set = set(exclude or [])
             result: FlextLdifTypes.CommonDict.AttributeDict = {}
 
-            for attr_name, attr_values in self.attributes.items():
+            for attr_name, values in self.attributes.items():
                 if attr_name not in exclude_set:
-                    result[attr_name] = attr_values.values
+                    result[attr_name] = values
 
             return result
 
@@ -1059,19 +1251,25 @@ class FlextLdifModels(FlextModels):
             """Create an LdifAttributes instance from data.
 
             Args:
-            attrs_data: Dictionary mapping attribute names to values
+                attrs_data: Dictionary mapping attribute names to values
 
             Returns:
-            FlextResult with LdifAttributes instance or error
+                FlextResult with LdifAttributes instance or error
 
             """
             try:
-                # Wrap attrs_data in ATTRIBUTES key for Pydantic validation
-                # The model has an ATTRIBUTES field that expects this
+                # Normalize values to list[str]
+                normalized_attrs: dict[str, list[str]] = {}
+                for key, val in attrs_data.items():
+                    if isinstance(val, list):
+                        normalized_attrs[key] = [str(v) for v in val]
+                    elif isinstance(val, str):
+                        normalized_attrs[key] = [val]
+                    else:
+                        normalized_attrs[key] = [str(val)]
+
                 return FlextResult[FlextLdifModels.LdifAttributes].ok(
-                    cls.model_validate({
-                        FlextLdifConstants.DictKeys.ATTRIBUTES: attrs_data
-                    })
+                    cls(attributes=normalized_attrs)
                 )
             except (ValueError, TypeError, AttributeError) as e:
                 return FlextResult[FlextLdifModels.LdifAttributes].fail(

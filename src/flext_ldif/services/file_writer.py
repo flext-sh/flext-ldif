@@ -21,15 +21,13 @@ from typing import TYPE_CHECKING, cast
 
 from flext_core import FlextLogger, FlextResult
 
+from flext_ldif import FlextLdifModels
 from flext_ldif.constants import FlextLdifConstants
-from flext_ldif.models import FlextLdifModels
 from flext_ldif.quirks.registry import FlextLdifQuirksRegistry
 from flext_ldif.rfc_ldif_writer import FlextLdifRfcLdifWriter
 
 if TYPE_CHECKING:
-    from flext_ldif.quirks.base import (
-        BaseSchemaQuirk,
-    )
+    from flext_ldif.quirks.base import BaseSchemaQuirk
 
 logger = FlextLogger(__name__)
 
@@ -180,10 +178,18 @@ class FlextLdifFileWriterService:
             # Prepare writer parameters
             writer_params: dict[str, object] = {
                 FlextLdifConstants.DictKeys.OUTPUT_FILE: str(output_file),
-                FlextLdifConstants.DictKeys.ENTRIES: entries,
+                FlextLdifConstants.DictKeys.ENTRIES: (
+                    [] if category == FlextLdifConstants.Categories.ACL else entries
+                ),
                 "encoding": FlextLdifConstants.Encoding.DEFAULT_ENCODING,
                 "category": category,  # Pass category so writer can comment blocked entries
             }
+
+            # CRITICAL FIX: For ACL category, pass entries under ACL key
+            # RFC writer expects ACL entries under FlextLdifConstants.DictKeys.ACL parameter
+            # to use _write_acl_entries method instead of _write_entries
+            if category == FlextLdifConstants.Categories.ACL:
+                writer_params[FlextLdifConstants.DictKeys.ACL] = entries
 
             # Use RFC writer with quirks
             writer = FlextLdifRfcLdifWriter(
@@ -490,10 +496,16 @@ class FlextLdifFileWriterService:
 
             # Step 2: Convert to RFC canonical format
             if schema_type == "attribute":
-                attr_data = cast("FlextLdifModels.SchemaAttribute", schema_data)
+                # Type narrowing: parse_attribute returns SchemaAttribute
+                attr_data: FlextLdifModels.SchemaAttribute = cast(
+                    "FlextLdifModels.SchemaAttribute", schema_data
+                )
                 to_rfc_result = source_quirk.convert_attribute_to_rfc(attr_data)
             else:
-                oc_data = cast("FlextLdifModels.SchemaObjectClass", schema_data)
+                # Type narrowing: parse_objectclass returns SchemaObjectClass
+                oc_data: FlextLdifModels.SchemaObjectClass = cast(
+                    "FlextLdifModels.SchemaObjectClass", schema_data
+                )
                 to_rfc_result = source_quirk.convert_objectclass_to_rfc(oc_data)
 
             if to_rfc_result.is_failure:
@@ -504,10 +516,16 @@ class FlextLdifFileWriterService:
 
             # Step 3: Convert from RFC to TARGET format
             if schema_type == "attribute":
-                rfc_attr = cast("FlextLdifModels.SchemaAttribute", rfc_data)
+                # Type narrowing: convert_attribute_to_rfc returns SchemaAttribute
+                rfc_attr: FlextLdifModels.SchemaAttribute = cast(
+                    "FlextLdifModels.SchemaAttribute", rfc_data
+                )
                 from_rfc_result = target_quirk.convert_attribute_from_rfc(rfc_attr)
             else:
-                rfc_oc = cast("FlextLdifModels.SchemaObjectClass", rfc_data)
+                # Type narrowing: convert_objectclass_to_rfc returns SchemaObjectClass
+                rfc_oc: FlextLdifModels.SchemaObjectClass = cast(
+                    "FlextLdifModels.SchemaObjectClass", rfc_data
+                )
                 from_rfc_result = target_quirk.convert_objectclass_from_rfc(rfc_oc)
 
             if from_rfc_result.is_failure:

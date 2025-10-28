@@ -406,7 +406,7 @@ mail: import@example.com
         for attr_name, attr_values in entry.attributes.attributes.items():
             # attr_values is AttributeValues object, get the actual values list
             attrs_dict[attr_name] = (
-                attr_values.values
+                attr_values
                 if hasattr(attr_values, "values")
                 else [str(attr_values)]
             )
@@ -415,7 +415,7 @@ mail: import@example.com
         # get_attribute_values returns AttributeValues object, need to extract actual values
         oc_attr_values = entry.get_attribute_values("objectclass")
         if hasattr(oc_attr_values, "values"):
-            object_classes = oc_attr_values.values
+            object_classes = oc_attr_values
         else:
             object_classes = list(oc_attr_values) if oc_attr_values else []
 
@@ -461,10 +461,11 @@ jpegPhoto:: {encoded_photo}
 
         # Import to LDAP
         # Build attrs_dict from FlextLdif entry attributes
-        attrs_dict: dict[str, list[str] | bytes] = {}
-        for attr_name, attr_values in entry.attributes.attributes.items():
-            if attr_name.lower() != "objectclass":
-                attrs_dict[attr_name] = attr_values.values
+        attrs_dict: dict[str, list[str] | bytes] = {
+            attr_name: attr_values
+            for attr_name, attr_values in entry.attributes.attributes.items()
+            if attr_name.lower() != "objectclass"
+        }
 
         # Handle binary attribute - ldap3 accepts bytes for binary attributes
         if "jpegPhoto" in attrs_dict:
@@ -474,7 +475,7 @@ jpegPhoto:: {encoded_photo}
             str(entry.dn),
             entry.get_attribute_values("objectclass"),
             attributes={
-                attr: entry.attributes.attributes[attr].values
+                attr: entry.attributes.attributes[attr]
                 for attr in entry.attributes.attributes
             },
         )
@@ -525,7 +526,7 @@ class TestRealLdapRoundtrip:
             if hasattr(attr_obj, "values"):
                 # ldap3 Attribute object with .values property
                 values = [
-                    str(v) if not isinstance(v, str) else v for v in attr_obj.values
+                    str(v) if not isinstance(v, str) else v for v in attr_obj
                 ]
             elif isinstance(attr_obj, list):
                 # Already a list
@@ -557,10 +558,11 @@ class TestRealLdapRoundtrip:
         reimport_entry = parsed_entries[0]
         # Change DN for reimport
         # Build reimport_attrs from FlextLdif entry attributes
-        reimport_attrs: dict[str, list[str]] = {}
-        for attr_name, attr_values in reimport_entry.attributes.attributes.items():
-            if attr_name.lower() != "objectclass":
-                reimport_attrs[attr_name] = attr_values.values
+        reimport_attrs: dict[str, list[str]] = {
+            attr_name: attr_values
+            for attr_name, attr_values in reimport_entry.attributes.attributes.items()
+            if attr_name.lower() != "objectclass"
+        }
         reimport_attrs["cn"] = ["Roundtrip Test Copy"]
 
         obj_class_values = reimport_entry.get_attribute_values("objectclass")
@@ -569,7 +571,7 @@ class TestRealLdapRoundtrip:
             reimport_dn,
             obj_class_values,
             attributes={
-                attr: reimport_entry.attributes.attributes[attr].values
+                attr: reimport_entry.attributes.attributes[attr]
                 for attr in reimport_entry.attributes.attributes
             },
         )
@@ -675,7 +677,7 @@ class TestRealLdapModify:
             if hasattr(attr_obj, "values"):
                 # ldap3 Attribute object with .values property
                 values = [
-                    str(v) if not isinstance(v, str) else v for v in attr_obj.values
+                    str(v) if not isinstance(v, str) else v for v in attr_obj
                 ]
             elif isinstance(attr_obj, list):
                 # Already a list
@@ -779,7 +781,7 @@ class TestRealLdapAnalytics:
                 # Extract values from ldap3 Attribute object
                 if hasattr(attr_obj, "values"):
                     values = [
-                        str(v) if not isinstance(v, str) else v for v in attr_obj.values
+                        str(v) if not isinstance(v, str) else v for v in attr_obj
                     ]
                 elif isinstance(attr_obj, list):
                     values = [str(v) for v in attr_obj]
@@ -843,7 +845,7 @@ class TestRealLdapFileOperations:
             if hasattr(attr_obj, "values"):
                 # ldap3 Attribute object with .values property
                 values = [
-                    str(v) if not isinstance(v, str) else v for v in attr_obj.values
+                    str(v) if not isinstance(v, str) else v for v in attr_obj
                 ]
             elif isinstance(attr_obj, list):
                 # Already a list
@@ -903,7 +905,7 @@ mail: import@example.com
         for attr_name, attr_values in entry.attributes.attributes.items():
             # attr_values is AttributeValues object, get the actual values list
             attrs_dict[attr_name] = (
-                attr_values.values
+                attr_values
                 if hasattr(attr_values, "values")
                 else [str(attr_values)]
             )
@@ -912,7 +914,7 @@ mail: import@example.com
         # get_attribute_values returns AttributeValues object, need to extract actual values
         oc_attr_values = entry.get_attribute_values("objectclass")
         if hasattr(oc_attr_values, "values"):
-            object_classes = oc_attr_values.values
+            object_classes = oc_attr_values
         else:
             object_classes = list(oc_attr_values) if oc_attr_values else []
 
@@ -959,7 +961,7 @@ class TestRealLdapCRUD:
             str(person_entry.dn),
             obj_class_values,
             {
-                attr: person_entry.attributes.attributes[attr].values
+                attr: person_entry.attributes.attributes[attr]
                 for attr in person_entry.attributes.attributes
                 if attr.lower() != "objectclass"
             },
@@ -1020,7 +1022,7 @@ class TestRealLdapBatchOperations:
             attrs_dict = {}
             for attr_name, attr_values in entry.attributes.attributes.items():
                 attrs_dict[attr_name] = (
-                    attr_values.values
+                    attr_values
                     if hasattr(attr_values, "values")
                     else [str(attr_values)]
                 )
@@ -1085,7 +1087,7 @@ class TestRealLdapBatchOperations:
                 # Extract values from ldap3 Attribute object
                 if hasattr(attr_obj, "values"):
                     values = [
-                        str(v) if not isinstance(v, str) else v for v in attr_obj.values
+                        str(v) if not isinstance(v, str) else v for v in attr_obj
                     ]
                 elif isinstance(attr_obj, list):
                     values = [str(v) for v in attr_obj]
@@ -1187,7 +1189,7 @@ class TestRealLdapRailwayComposition:
             if hasattr(attr_obj, "values"):
                 # ldap3 Attribute object with .values property
                 values = [
-                    str(v) if not isinstance(v, str) else v for v in attr_obj.values
+                    str(v) if not isinstance(v, str) else v for v in attr_obj
                 ]
             elif isinstance(attr_obj, list):
                 # Already a list

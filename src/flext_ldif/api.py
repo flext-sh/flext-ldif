@@ -26,12 +26,12 @@ from flext_core import (
     FlextService,
 )
 
+from flext_ldif import FlextLdifModels
 from flext_ldif.client import FlextLdifClient
 from flext_ldif.config import FlextLdifConfig
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.entry_builder import FlextLdifEntryBuilder
-from flext_ldif.models import FlextLdifModels
-from flext_ldif.protocols import EntryWithDn
+from flext_ldif.protocols import FlextLdifProtocols
 from flext_ldif.services.acl import FlextLdifAclService
 from flext_ldif.services.schema import FlextLdifSchemaBuilder, FlextLdifSchemaValidator
 from flext_ldif.typings import FlextLdifTypes
@@ -482,7 +482,8 @@ class FlextLdif(FlextService[dict[str, object]]):
         return self._client.write_ldif(entries, output_path)
 
     def get_entry_dn(
-        self, entry: FlextLdifModels.Entry | EntryWithDn
+        self,
+        entry: FlextLdifModels.Entry | FlextLdifProtocols.Entry.EntryWithDnProtocol,
     ) -> FlextResult[str]:
         """Extract DN (Distinguished Name) from any entry type.
 
@@ -521,7 +522,8 @@ class FlextLdif(FlextService[dict[str, object]]):
             return FlextResult[str].fail(f"Failed to extract DN: {e}")
 
     def get_entry_attributes(
-        self, entry: FlextLdifModels.Entry | EntryWithDn
+        self,
+        entry: FlextLdifModels.Entry | FlextLdifProtocols.Entry.EntryWithDnProtocol,
     ) -> FlextResult[FlextLdifTypes.CommonDict.AttributeDict]:
         """Extract attributes from any entry type.
 
@@ -561,8 +563,12 @@ class FlextLdif(FlextService[dict[str, object]]):
             if isinstance(attrs_container, FlextLdifModels.LdifAttributes):
                 # Extract attributes from LdifAttributes container
                 for attr_name, attr_values in attrs_container.attributes.items():
-                    # attr_values is AttributeValues with .values property
-                    values_list: list[str] = attr_values.values
+                    # attr_values might be AttributeValues with .values property or a direct list
+                    values_list: list[str] = (
+                        attr_values.values
+                        if hasattr(attr_values, "values")
+                        else attr_values
+                    )
                     if len(values_list) == 1:
                         result_dict[attr_name] = values_list[0]
                     else:
@@ -645,7 +651,7 @@ class FlextLdif(FlextService[dict[str, object]]):
 
     def get_entry_objectclasses(
         self,
-        entry: FlextLdifModels.Entry | EntryWithDn,
+        entry: FlextLdifModels.Entry | FlextLdifProtocols.Entry.EntryWithDnProtocol,
     ) -> FlextResult[list[str]]:
         """Extract objectClass values from any entry type.
 
@@ -1406,6 +1412,8 @@ class FlextLdif(FlextService[dict[str, object]]):
                 return FlextResult[FlextLdifModels.LdifValidationResult].fail(
                     "Schema attributes must be a dictionary"
                 )
+            # Type narrowing after isinstance check
+            attributes_value = cast("dict[str, dict[str, object]]", attributes_value)
 
         if isinstance(schema, FlextLdifModels.SchemaBuilderResult):
             objectclasses_value = schema.object_classes
@@ -1417,6 +1425,10 @@ class FlextLdif(FlextService[dict[str, object]]):
                 return FlextResult[FlextLdifModels.LdifValidationResult].fail(
                     "Schema object classes must be a dictionary"
                 )
+            # Type narrowing after isinstance check
+            objectclasses_value = cast(
+                "dict[str, dict[str, object]]", objectclasses_value
+            )
 
             server_type_value = schema.get(
                 FlextLdifConstants.DictKeys.SERVER_TYPE, "generic"
@@ -1425,12 +1437,14 @@ class FlextLdif(FlextService[dict[str, object]]):
                 return FlextResult[FlextLdifModels.LdifValidationResult].fail(
                     "Schema server type must be a string"
                 )
+            # Type narrowing after isinstance check - already str type
 
             entry_count_value = schema.get("entry_count", 0)
             if not isinstance(entry_count_value, int):
                 return FlextResult[FlextLdifModels.LdifValidationResult].fail(
                     "Schema entry count must be an integer"
                 )
+            # Type narrowing after isinstance check - already int type
 
         schema_discovery = FlextLdifModels.SchemaDiscoveryResult(
             attributes=attributes_value,

@@ -457,7 +457,7 @@ class TestDnFormatValidation:
         # Create attributes with required objectClass
         attributes = FlextLdifModels.LdifAttributes(
             attributes={
-                "objectClass": FlextLdifModels.AttributeValues(values=["person"])
+                "objectClass": ["person"]
             }
         )
 
