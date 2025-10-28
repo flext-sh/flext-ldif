@@ -15,12 +15,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import logging
 import re
 from pathlib import Path
 from typing import TYPE_CHECKING, cast
 
-from flext_core import FlextResult
+from flext_core import FlextLogger, FlextResult
 
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
@@ -32,7 +31,7 @@ if TYPE_CHECKING:
         BaseSchemaQuirk,
     )
 
-logger = logging.getLogger(__name__)
+logger = FlextLogger(__name__)
 
 
 class FlextLdifFileWriterService:
@@ -65,7 +64,6 @@ class FlextLdifFileWriterService:
             schema_whitelist_rules: Optional whitelist rules for schema
 
         """
-        super().__init__()
         self._output_dir = output_dir
         self._output_files = output_files
         self._target_server = target_server

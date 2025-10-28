@@ -1,8 +1,7 @@
-"""Statistics service for LDIF processing pipeline.
+"""Statistics Service - Pipeline Statistics Generation and Analysis.
 
-This service provides comprehensive statistics generation for categorized
-and migrated LDIF entries. It replaces the over-engineered Statistics
-class from utilities.py with a proper service implementation.
+Provides comprehensive statistics and metrics for LDIF processing pipelines,
+including categorization counts, rejection analysis, and output file tracking.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT

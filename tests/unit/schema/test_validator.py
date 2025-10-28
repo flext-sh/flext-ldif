@@ -11,7 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_ldif.models import FlextLdifModels
-from flext_ldif.schema_validator import FlextLdifSchemaValidator
+from flext_ldif.services.schema import FlextLdifSchemaValidator
 
 
 def _get_list_field(data: object, key: str) -> list[str]:

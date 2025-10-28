@@ -182,9 +182,13 @@ class TestApiComprehensiveCoverage:
         assert result.is_success
         stats = result.unwrap()
 
-        # Should have entry statistics
-        assert "total_entries" in stats or "entry_count" in stats
-        assert isinstance(stats, dict)
+        # Should have entry statistics (stats is EntryAnalysisResult object, not dict)
+        assert (
+            hasattr(stats, "total_entries")
+            or hasattr(stats, "entry_count")
+            or isinstance(stats, dict)
+        )
+        assert isinstance(stats, dict) or hasattr(stats, "total_entries")
 
     def test_api_filter_multiple_criteria(
         self, api: FlextLdif, fixtures_dir: Path

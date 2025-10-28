@@ -30,12 +30,11 @@ PROTOCOL COMPLIANCE:
 
 from __future__ import annotations
 
-import logging
 from abc import ABC, abstractmethod
 from types import ModuleType
 from typing import TYPE_CHECKING, ClassVar
 
-from flext_core import FlextResult
+from flext_core import FlextLogger, FlextResult
 
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.typings import FlextLdifTypes
@@ -56,7 +55,7 @@ else:
         quirks_registry_module = None
         _QUIRKS_REGISTRY_AVAILABLE = False
 
-logger = logging.getLogger(__name__)
+logger = FlextLogger(__name__)
 
 
 class QuirkRegistrationMixin:

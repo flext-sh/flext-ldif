@@ -14,10 +14,10 @@ from pathlib import Path
 import pytest
 
 from flext_ldif import FlextLdif, FlextLdifClient
-from flext_ldif.acl_service import FlextLdifAclService
 from flext_ldif.quirks.registry import FlextLdifQuirksRegistry
 from flext_ldif.quirks.servers.oid_quirks import FlextLdifQuirksServersOid
 from flext_ldif.quirks.servers.oud_quirks import FlextLdifQuirksServersOud
+from flext_ldif.services.acl import FlextLdifAclService
 
 
 class TestAclServiceWithRealData:
@@ -365,9 +365,9 @@ class TestDataValidation:
         validation_result = api.validate_entries(entries)
         assert validation_result.is_success
 
-        # Check validation report structure
+        # Check validation report structure (ValidationResult is a Pydantic model, not dict)
         report = validation_result.unwrap()
-        assert isinstance(report, dict)
+        assert hasattr(report, "is_valid") or isinstance(report, dict)
 
     def test_api_analyze_entry_statistics(
         self, api: FlextLdif, oid_fixture_path: Path

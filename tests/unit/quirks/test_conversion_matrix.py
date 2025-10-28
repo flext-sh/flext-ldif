@@ -1338,8 +1338,8 @@ class TestDnExtractionAndRegistration:
         # Test that DN registry exists and can be used
         assert matrix.dn_registry is not None
         # Register a DN to test the registry is functional
-        matrix.dn_registry.register_dn("cn=acl,dc=example,dc=com")
-        assert "cn=acl,dc=example,dc=com" != None
+        registered_dn = matrix.dn_registry.register_dn("cn=acl,dc=example,dc=com")
+        assert registered_dn is not None
 
     def test_extract_and_register_dns_mixed_case(
         self, matrix: FlextLdifQuirksConversionMatrix

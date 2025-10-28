@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import pytest
 
-from flext_ldif.validation_service import FlextLdifValidationService
+from flext_ldif.services.validation import FlextLdifValidationService
 
 
 class TestValidationServiceInitialization:

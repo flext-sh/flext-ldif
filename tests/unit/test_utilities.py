@@ -281,7 +281,7 @@ class TestNormalizer:
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Test exception handling in normalize_aci_dn_references try block (lines 189-190)."""
-        from flext_ldif.dn_service import FlextLdifDnService
+        from flext_ldif.services.dn import FlextLdifDnService
 
         entry: dict[str, object] = {
             FlextLdifConstants.DictKeys.DN: "cn=schema",

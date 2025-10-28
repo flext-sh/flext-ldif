@@ -406,7 +406,14 @@ class FlextLdifRfcLdifParser(FlextService[dict[str, object]]):
 
             return FlextResult[list[FlextLdifModels.Entry]].ok(entries)
 
-        except (ValueError, TypeError, AttributeError, FileNotFoundError, OSError, Exception) as e:
+        except (
+            ValueError,
+            TypeError,
+            AttributeError,
+            FileNotFoundError,
+            OSError,
+            Exception,
+        ) as e:
             return FlextResult[list[FlextLdifModels.Entry]].fail(
                 f"{FlextLdifConstants.ServerDetection.MSG_FAILED_PARSE_LDIF3}: {e}"
             )

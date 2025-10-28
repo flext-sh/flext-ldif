@@ -126,10 +126,12 @@ class TestRFCFixtures:
         # Find entry with multiple objectClass values (always multi-valued)
         multi_attr_entry = None
         for entry in entries:
-            oc_attr = entry.attributes.attributes.objectClass
-            if oc_attr and len(oc_attr.values) > 1:
-                multi_attr_entry = entry
-                break
+            attrs_dict = entry.attributes.attributes
+            if isinstance(attrs_dict, dict) and "objectClass" in attrs_dict:
+                oc_attr = attrs_dict["objectClass"]
+                if oc_attr and len(oc_attr.values) > 1:
+                    multi_attr_entry = entry
+                    break
 
         assert multi_attr_entry is not None, (
             "Should have entry with multiple attribute values"

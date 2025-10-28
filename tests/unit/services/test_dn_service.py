@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import pytest
 
-from flext_ldif.dn_service import FlextLdifDnService
+from flext_ldif.services.dn import FlextLdifDnService
 
 
 class TestDnServiceInitialization:

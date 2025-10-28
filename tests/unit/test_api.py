@@ -1715,7 +1715,7 @@ class TestAPIArchitecturalCompliance:
 
         # Should raise TypeError because quirk_registry is required
         with pytest.raises(TypeError) as exc_info:
-            FlextLdifRfcLdifParser(params={})  # type: ignore
+            FlextLdifRfcLdifParser(params={})  # type: ignore[arg-type]
 
         error_msg = str(exc_info.value).lower()
         assert "quirk_registry" in error_msg, (
