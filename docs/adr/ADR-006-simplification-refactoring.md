@@ -47,17 +47,20 @@ We will simplify flext-ldif through structural and architectural changes while *
 **Action**: Move all modules to `src/flext_ldif/` root except `quirks/`
 
 **Rationale**:
+
 - **Simpler Navigation**: Direct file access without directory drilling
 - **Faster Imports**: Fewer nesting levels
 - **Industry Standard**: Libraries like `requests`, `httpx`, `pydantic` use flat structure
 - **Clear Dependencies**: Module relationships more visible
 
 **Exception**: Keep `quirks/` with `servers/` subdirectory due to:
+
 - Domain complexity (10+ server implementations)
 - Pluggable architecture (dynamic registration)
 - Clear isolation (server-specific code)
 
 **Before**:
+
 ```
 src/flext_ldif/
 ├── rfc/
@@ -74,6 +77,7 @@ src/flext_ldif/
 ```
 
 **After**:
+
 ```
 src/flext_ldif/
 ├── rfc_ldif_parser.py
@@ -87,7 +91,7 @@ src/flext_ldif/
     ├── base.py
     ├── registry.py
     └── servers/
-        ├── oid_quirks.py
+        ├── oid.py
         └── oud_quirks.py
 ```
 
@@ -96,11 +100,13 @@ src/flext_ldif/
 **Action**: Remove `processors/` directory entirely (~200 lines)
 
 **Rationale**:
+
 - `FlextLdifBatchProcessor` and `FlextLdifParallelProcessor` only wrap `FlextProcessors()`
 - No domain-specific logic - pure delegation
 - Users should import `FlextProcessors` from flext-core directly
 
 **Before**:
+
 ```python
 from flext_ldif import FlextLdif
 ldif = FlextLdif()
@@ -109,6 +115,7 @@ result = processor.batch_process(entries, func)
 ```
 
 **After**:
+
 ```python
 from flext_core import FlextProcessors
 processor = FlextProcessors()  # Direct usage
@@ -120,17 +127,20 @@ result = processor.batch_process(entries, func)
 **Action**: Delete 600+ lines of delegation methods from `api.py`
 
 **Methods to Remove**:
+
 - `get_entry_dn()` → Use `entry.dn.value` directly
 - `get_entry_attributes()` → Use `entry.attributes.to_ldap3()` directly
 - `get_entry_objectclasses()` → Use `entry.get_attribute_values("objectClass")` directly
 - `create_entry()` → Use `FlextLdifModels.Entry.create()` directly
 
 **Rationale**:
+
 - No added value - pure delegation
 - Forces indirection (must have `FlextLdif` instance)
 - Domain models already provide these operations
 
 **Before**:
+
 ```python
 ldif = FlextLdif()
 dn = ldif.get_entry_dn(entry)  # Wrapper
@@ -138,6 +148,7 @@ attrs = ldif.get_entry_attributes(entry)  # Wrapper
 ```
 
 **After**:
+
 ```python
 from flext_ldif import FlextLdifModels
 dn = entry.dn.value  # Direct
@@ -149,12 +160,14 @@ attrs = entry.attributes.to_ldap3()  # Direct
 **Action**: Delete 100+ lines of property wrappers
 
 **Properties to Remove**:
+
 - `@property def models()` → Import `FlextLdifModels` directly
 - `@property def config()` → Import `FlextLdifConfig` directly
 - `@property def constants()` → Import `FlextLdifConstants` directly
 - `@property def processors()` → Import `FlextProcessors` from flext-core
 
 **Rationale**:
+
 - Unnecessary indirection
 - Python convention: direct imports over property access
 
@@ -163,12 +176,14 @@ attrs = entry.attributes.to_ldap3()  # Direct
 **Action**: Apply flext-core decorators to key operations
 
 **Decorators to Apply**:
+
 - `@FlextDecorators.log_operation()` - Automatic operation logging
 - `@FlextDecorators.track_performance()` - Performance metrics
 - `@FlextDecorators.retry()` - Automatic retry logic
 - `@FlextDecorators.railway()` - Railway error handling
 
 **Example**:
+
 ```python
 from flext_core import FlextDecorators
 
@@ -181,6 +196,7 @@ class RfcLdifParser:
 ```
 
 **Benefits**:
+
 - Automatic operation logging
 - Performance tracking built-in
 - Retry logic for file operations
@@ -191,6 +207,7 @@ class RfcLdifParser:
 **Action**: Services extend `FlextService` base class
 
 **Services to Update**:
+
 - `FlextLdifServerDetector`
 - `FlextLdifValidationService`
 - `FlextLdifStatisticsService`
@@ -198,6 +215,7 @@ class RfcLdifParser:
 - `FlextLdifFileWriterService`
 
 **Before**:
+
 ```python
 class FlextLdifServerDetector:
     def __init__(self):
@@ -205,6 +223,7 @@ class FlextLdifServerDetector:
 ```
 
 **After**:
+
 ```python
 from flext_core import FlextService, FlextResult
 
@@ -217,6 +236,7 @@ class FlextLdifServerDetector(FlextService):
 ```
 
 **Benefits**:
+
 - Automatic logger injection
 - Context management
 - Operation tracking
@@ -227,6 +247,7 @@ class FlextLdifServerDetector(FlextService):
 **Action**: Replace if/else chains with pattern matching
 
 **Before** (170 lines with nested if/else):
+
 ```python
 def parse(self, source, server_type="rfc", *, batch=False, paginate=False, page_size=1000):
     if batch:
@@ -239,6 +260,7 @@ def parse(self, source, server_type="rfc", *, batch=False, paginate=False, page_
 ```
 
 **After** (80 lines with pattern matching):
+
 ```python
 from typing import Literal
 
@@ -259,6 +281,7 @@ def parse(
 ```
 
 **Benefits**:
+
 - Clearer intent
 - Type safety with `Literal`
 - Reduced line count
@@ -269,6 +292,7 @@ def parse(
 **Action**: Flatten test structure to mirror module structure
 
 **Before**:
+
 ```
 tests/unit/
 ├── rfc/
@@ -280,6 +304,7 @@ tests/unit/
 ```
 
 **After**:
+
 ```
 tests/unit/
 ├── quirks/              # Only subdirectory (mirrors src)
@@ -290,6 +315,7 @@ tests/unit/
 ```
 
 **Rationale**:
+
 - Test structure matches module structure
 - Easier to find tests for modules
 - Consistent with flat module organization
@@ -407,7 +433,7 @@ tests/unit/
 
 - **ADR-001**: RFC-First Design - Foundation pattern maintained
 - **ADR-005**: Pluggable Quirks System - Structure preserved
-- **flext-core Documentation**: https://github.com/flext/flext-core
+- **flext-core Documentation**: <https://github.com/flext/flext-core>
 - **Python 3.13+ Pattern Matching**: PEP 636
 - **Flat Module Structure Examples**: requests, httpx, pydantic
 
@@ -418,6 +444,7 @@ tests/unit/
 This ADR represents a maturity milestone for flext-ldif. After achieving production-ready quality (0 type errors, 1766 tests), we can now focus on simplification and maintainability. The refactoring removes accidental complexity while preserving essential complexity (quirks system, RFC compliance).
 
 The decision aligns with FLEXT principles:
+
 - **SOLID**: Single Responsibility (focused modules)
 - **DRY**: Don't Repeat Yourself (use flext-core directly)
 - **KISS**: Keep It Simple (flat structure, pattern matching)

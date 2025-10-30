@@ -47,12 +47,14 @@ class FlextLdifTypes(FlextTypes):
 
         type EntryConfiguration = dict[str, str | list[str] | dict[str, object]]
         type EntryAttributes = dict[
-            str, list[str] | dict[str, FlextLdifTypes.JsonValue]
+            str,
+            list[str] | dict[str, FlextLdifTypes.JsonValue],
         ]
         type EntryValidation = dict[str, bool | list[str] | dict[str, object]]
         type EntryTransformation = list[dict[str, str | object]]
         type EntryMetadata = dict[
-            str, str | int | bool | dict[str, FlextLdifTypes.JsonValue]
+            str,
+            str | int | bool | dict[str, FlextLdifTypes.JsonValue],
         ]
         type EntryProcessing = dict[str, str | bool | list[dict[str, object]]]
         type EntryCreateData = Mapping[str, object]
@@ -66,12 +68,14 @@ class FlextLdifTypes(FlextTypes):
 
         type ParserConfiguration = dict[str, bool | str | int | dict[str, object]]
         type ParsingContext = dict[
-            str, str | int | bool | list[str] | dict[str, object]
+            str,
+            str | int | bool | list[str] | dict[str, object],
         ]
         type ParsingResult = dict[str, list[dict[str, object]] | bool | str]
         type ParsingValidation = dict[str, bool | str | list[str] | dict[str, object]]
         type ParsingMetrics = dict[
-            str, int | float | bool | dict[str, FlextLdifTypes.JsonValue]
+            str,
+            int | float | bool | dict[str, FlextLdifTypes.JsonValue],
         ]
         type ParsingState = dict[str, str | int | bool | list[object]]
 
@@ -109,13 +113,16 @@ class FlextLdifTypes(FlextTypes):
             dict[str, str | Callable[[object], FlextResult[object]]]
         ]
         type ProcessingState = dict[
-            str, str | int | bool | list[object] | dict[str, object]
+            str,
+            str | int | bool | list[object] | dict[str, object],
         ]
         type ProcessingMetrics = dict[
-            str, int | float | dict[str, FlextLdifTypes.JsonValue]
+            str,
+            int | float | dict[str, FlextLdifTypes.JsonValue],
         ]
         type LdifProcessingResult = dict[
-            str, bool | list[object] | dict[str, FlextLdifTypes.JsonValue]
+            str,
+            bool | list[object] | dict[str, FlextLdifTypes.JsonValue],
         ]
         type TransformationRules = list[dict[str, str | FlextTypes.MiddlewareType]]
 
@@ -128,7 +135,8 @@ class FlextLdifTypes(FlextTypes):
 
         type AnalyticsConfiguration = dict[str, bool | str | int | dict[str, object]]
         type AnalyticsMetrics = dict[
-            str, int | float | bool | dict[str, FlextLdifTypes.JsonValue]
+            str,
+            int | float | bool | dict[str, FlextLdifTypes.JsonValue],
         ]
         type StatisticalAnalysis = dict[str, float | int | dict[str, int | float]]
         type AnalyticsReport = dict[str, str | int | float | list[dict[str, object]]]
@@ -152,7 +160,8 @@ class FlextLdifTypes(FlextTypes):
         type WriterConfiguration = dict[str, str | bool | int | dict[str, object]]
         type OutputFormat = dict[str, str | bool | list[str] | dict[str, object]]
         type WritingContext = dict[
-            str, str | bool | dict[str, FlextLdifTypes.JsonValue]
+            str,
+            str | bool | dict[str, FlextLdifTypes.JsonValue],
         ]
         type OutputValidation = dict[str, bool | str | list[str]]
         type SerializationRules = list[dict[str, str | Callable[[object], str]]]
@@ -168,7 +177,8 @@ class FlextLdifTypes(FlextTypes):
         type ServerConfiguration = dict[str, str | int | bool | dict[str, object]]
         type ServerCompatibility = dict[str, bool | list[str] | dict[str, object]]
         type SchemaMapping = dict[
-            str, str | list[str] | dict[str, FlextLdifTypes.JsonValue]
+            str,
+            str | list[str] | dict[str, FlextLdifTypes.JsonValue],
         ]
         type AttributeMapping = dict[str, str | list[str] | dict[str, object]]
         type ServerOptimization = dict[str, bool | int | dict[str, object]]
@@ -190,7 +200,8 @@ class FlextLdifTypes(FlextTypes):
         type ValidatorFunction = Callable[[object], FlextResult[bool]]
         type TransformerFunction = FlextTypes.MiddlewareType
         type AnalyzerFunction = Callable[
-            [Sequence[object]], FlextResult[dict[str, FlextLdifTypes.JsonValue]]
+            [Sequence[object]],
+            FlextResult[dict[str, FlextLdifTypes.JsonValue]],
         ]
         type WriterFunction = Callable[[Sequence[object]], FlextResult[str]]
         type FilterFunction = FlextTypes.PredicateType
@@ -244,7 +255,8 @@ class FlextLdifTypes(FlextTypes):
 
         # Validation and Quirks types with semantic meaning
         type ValidationReportData = dict[
-            str, str | bool | list[str] | int | dict[str, object]
+            str,
+            str | bool | list[str] | int | dict[str, object],
         ]
         type DNValidationResult = dict[str, bool | list[str]]
         type QuirksRulesData = dict[
@@ -330,7 +342,8 @@ class FlextLdifTypes(FlextTypes):
 
         # Server-specific conversion result
         type QuirkConversionResult = dict[
-            str, str | int | bool | dict[str, object] | object
+            str,
+            str | int | bool | dict[str, object] | object,
         ]
 
     # =========================================================================
@@ -421,7 +434,8 @@ class FlextLdifTypes(FlextTypes):
         """Path to output directory with minimum length constraint."""
 
         EncodingFormat = Annotated[
-            str, Field(pattern=r"^(utf-8|latin-1|ascii|iso-8859-1)$")
+            str,
+            Field(pattern=r"^(utf-8|latin-1|ascii|iso-8859-1)$"),
         ]
         """Supported encoding formats for LDIF files."""
 
@@ -430,7 +444,8 @@ class FlextLdifTypes(FlextTypes):
         # =====================================================================
 
         ServerTypeName = Annotated[
-            str, Field(pattern=r"^(oid|oud|openldap|openldap1|rfc|generic)$")
+            str,
+            Field(pattern=r"^(oid|oud|openldap|openldap1|rfc|generic)$"),
         ]
         """LDIF server type selector."""
 
@@ -567,7 +582,7 @@ class FlextLdifTypes(FlextTypes):
     #   if isinstance(config, dict): ...
     #
     # NEW (Pydantic model, preferred):
-    #   from flext_ldif import FlextLdifModels
+    #   from flext_ldif.models import FlextLdifModels
     #   config = FlextLdifModels.ParserConfiguration(file_path="test.ldif")
     #   if config.is_file_based: ...  # Use computed fields
     #

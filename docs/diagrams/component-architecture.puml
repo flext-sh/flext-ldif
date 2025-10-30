@@ -27,14 +27,14 @@ Container_Boundary(flext_ldif_lib, "FLEXT-LDIF Library") {
     }
 
     Component_Boundary(quirks_layer, "Quirks System") {
-        Component(quirk_registry, "FlextLdifQuirksRegistry", "Python Class", "Quirk discovery", "Auto-loads server implementations")
+        Component(quirk_registry, "FlextLdifRegistry", "Python Class", "Quirk discovery", "Auto-loads server implementations")
         Component(quirk_base, "QuirkBase", "Abstract Class", "Standard interface", "to_rfc(), from_rfc() methods")
 
         Component_Boundary(server_implementations, "Server Implementations") {
-            Component(oid_quirks, "OidQuirks", "Python Class", "Oracle Internet Directory", "Complete implementation")
+            Component(oid, "OidQuirks", "Python Class", "Oracle Internet Directory", "Complete implementation")
             Component(oud_quirks, "OudQuirks", "Python Class", "Oracle Unified Directory", "Complete implementation")
-            Component(openldap_quirks, "OpenLdapQuirks", "Python Class", "OpenLDAP 2.x", "Complete implementation")
-            Component(openldap1_quirks, "OpenLdap1Quirks", "Python Class", "OpenLDAP 1.x", "Complete implementation")
+            Component(openldap, "OpenLdapQuirks", "Python Class", "OpenLDAP 2.x", "Complete implementation")
+            Component(openldap1, "OpenLdap1Quirks", "Python Class", "OpenLDAP 1.x", "Complete implementation")
             Component(ad_stub, "ActiveDirectoryStub", "Python Class", "Active Directory", "Stub implementation")
             Component(apache_stub, "ApacheDsStub", "Python Class", "Apache Directory Server", "Stub implementation")
             Component(ds389_stub, "Ds389Stub", "Python Class", "389 Directory Server", "Stub implementation")

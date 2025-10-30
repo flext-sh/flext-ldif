@@ -13,16 +13,16 @@ from pathlib import Path
 import pytest
 
 from flext_ldif import FlextLdif
-from flext_ldif.quirks.servers.oid_quirks import FlextLdifQuirksServersOid
-from flext_ldif.quirks.servers.oud_quirks import FlextLdifQuirksServersOud
+from flext_ldif.servers.oid import FlextLdifServersOid
+from flext_ldif.servers.oud import FlextLdifServersOud
 
 
 class TestOidQuirksTransformations:
     """Test OID quirks with actual data transformations."""
 
     @pytest.fixture
-    def oid_quirks(self) -> FlextLdifQuirksServersOid:
-        return FlextLdifQuirksServersOid()
+    def oid(self) -> FlextLdifServersOid:
+        return FlextLdifServersOid()
 
     @pytest.fixture
     def api(self) -> FlextLdif:
@@ -90,8 +90,8 @@ class TestOudQuirksTransformations:
     """Test OUD quirks with actual data transformations."""
 
     @pytest.fixture
-    def oud_quirks(self) -> FlextLdifQuirksServersOud:
-        return FlextLdifQuirksServersOud()
+    def oud_quirks(self) -> FlextLdifServersOud:
+        return FlextLdifServersOud()
 
     @pytest.fixture
     def api(self) -> FlextLdif:
@@ -184,20 +184,20 @@ class TestQuirksPropertyValidation:
     """Test quirks properties and identification."""
 
     @pytest.fixture
-    def oid_quirks(self) -> FlextLdifQuirksServersOid:
-        return FlextLdifQuirksServersOid()
+    def oid(self) -> FlextLdifServersOid:
+        return FlextLdifServersOid()
 
     @pytest.fixture
-    def oud_quirks(self) -> FlextLdifQuirksServersOud:
-        return FlextLdifQuirksServersOud()
+    def oud_quirks(self) -> FlextLdifServersOud:
+        return FlextLdifServersOud()
 
-    def test_oid_quirks_properties(self, oid_quirks: FlextLdifQuirksServersOid) -> None:
+    def test_oid_properties(self, oid: FlextLdifServersOid) -> None:
         """Test OID quirks properties."""
-        assert oid_quirks.server_type == "oid"
-        assert hasattr(oid_quirks, "priority")
-        assert oid_quirks.priority >= 0
+        assert oid.server_type == "oid"
+        assert hasattr(oid, "priority")
+        assert oid.priority >= 0
 
-    def test_oud_quirks_properties(self, oud_quirks: FlextLdifQuirksServersOud) -> None:
+    def test_oud_quirks_properties(self, oud_quirks: FlextLdifServersOud) -> None:
         """Test OUD quirks properties."""
         assert oud_quirks.server_type == "oud"
         assert hasattr(oud_quirks, "priority")

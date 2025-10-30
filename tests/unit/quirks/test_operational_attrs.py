@@ -10,8 +10,8 @@ from __future__ import annotations
 import pytest
 
 from flext_ldif.models import FlextLdifModels
-from flext_ldif.quirks.entry_quirks import FlextLdifEntryQuirks
-from flext_ldif.quirks.manager import FlextLdifQuirksManager
+from flext_ldif.services.entry_quirks import FlextLdifEntrys
+from flext_ldif.services.manager import FlextLdifQuirksManager
 
 
 class TestOperationalAttributesStripping:
@@ -39,9 +39,7 @@ class TestOperationalAttributesStripping:
 
         # Convert attributes to LdifAttributes format manually
         # LdifAttributes now uses dict[str, list[str]] directly
-        ldif_attributes = FlextLdifModels.LdifAttributes(
-            attributes=attributes
-        )
+        ldif_attributes = FlextLdifModels.LdifAttributes(attributes=attributes)
 
         entry_result = FlextLdifModels.Entry.create(dn=dn, attributes=ldif_attributes)
         assert entry_result.is_success, f"Failed to create entry: {entry_result.error}"
@@ -50,7 +48,7 @@ class TestOperationalAttributesStripping:
     def test_strip_common_operational_attrs(self) -> None:
         """Common operational attributes should be stripped."""
         quirks_manager = FlextLdifQuirksManager(server_type="oracle_oid")
-        entry_quirks = FlextLdifEntryQuirks(quirks_manager=quirks_manager)
+        entry_quirks = FlextLdifEntrys(quirks_manager=quirks_manager)
 
         # Create entry with operational attributes
         entry = self._create_entry(
@@ -82,7 +80,7 @@ class TestOperationalAttributesStripping:
     def test_strip_oid_specific_operational_attrs(self) -> None:
         """OID-specific operational attributes should be stripped."""
         quirks_manager = FlextLdifQuirksManager(server_type="oracle_oid")
-        entry_quirks = FlextLdifEntryQuirks(quirks_manager=quirks_manager)
+        entry_quirks = FlextLdifEntrys(quirks_manager=quirks_manager)
 
         entry = self._create_entry(
             "cn=test,dc=algar",
@@ -109,7 +107,7 @@ class TestOperationalAttributesStripping:
     def test_preserve_user_attributes(self) -> None:
         """User attributes should never be stripped."""
         quirks_manager = FlextLdifQuirksManager(server_type="oracle_oid")
-        entry_quirks = FlextLdifEntryQuirks(quirks_manager=quirks_manager)
+        entry_quirks = FlextLdifEntrys(quirks_manager=quirks_manager)
 
         # Entry with only user attributes (no operational)
         entry = self._create_entry(
@@ -140,7 +138,7 @@ class TestOperationalAttributesStripping:
     def test_case_insensitive_stripping(self) -> None:
         """Operational attributes should be stripped case-insensitively."""
         quirks_manager = FlextLdifQuirksManager(server_type="oracle_oid")
-        entry_quirks = FlextLdifEntryQuirks(quirks_manager=quirks_manager)
+        entry_quirks = FlextLdifEntrys(quirks_manager=quirks_manager)
 
         entry = self._create_entry(
             "cn=test,dc=algar",
@@ -167,7 +165,7 @@ class TestOperationalAttributesStripping:
     def test_integration_with_real_ldif(self) -> None:
         """Test with realistic LDIF entry from OID export."""
         quirks_manager = FlextLdifQuirksManager(server_type="oracle_oid")
-        entry_quirks = FlextLdifEntryQuirks(quirks_manager=quirks_manager)
+        entry_quirks = FlextLdifEntrys(quirks_manager=quirks_manager)
 
         # Realistic OID entry
         entry = self._create_entry(
@@ -216,7 +214,7 @@ class TestOperationalAttributesStripping:
     def test_strip_oud_specific_operational_attrs(self) -> None:
         """OUD-specific operational attributes should be stripped."""
         quirks_manager = FlextLdifQuirksManager(server_type="oracle_oud")
-        entry_quirks = FlextLdifEntryQuirks(quirks_manager=quirks_manager)
+        entry_quirks = FlextLdifEntrys(quirks_manager=quirks_manager)
 
         entry = self._create_entry(
             "cn=test,dc=algar",
@@ -245,7 +243,7 @@ class TestOperationalAttributesStripping:
     def test_strip_openldap_specific_operational_attrs(self) -> None:
         """OpenLDAP-specific operational attributes should be stripped."""
         quirks_manager = FlextLdifQuirksManager(server_type="openldap")
-        entry_quirks = FlextLdifEntryQuirks(quirks_manager=quirks_manager)
+        entry_quirks = FlextLdifEntrys(quirks_manager=quirks_manager)
 
         entry = self._create_entry(
             "cn=test,dc=algar",
@@ -274,7 +272,7 @@ class TestOperationalAttributesStripping:
     def test_strip_ad_specific_operational_attrs(self) -> None:
         """Active Directory-specific operational attributes should be stripped."""
         quirks_manager = FlextLdifQuirksManager(server_type="active_directory")
-        entry_quirks = FlextLdifEntryQuirks(quirks_manager=quirks_manager)
+        entry_quirks = FlextLdifEntrys(quirks_manager=quirks_manager)
 
         entry = self._create_entry(
             "cn=test,dc=algar",
@@ -309,7 +307,7 @@ class TestOperationalAttributesStripping:
     def test_no_source_server_defaults_to_generic(self) -> None:
         """Entry with generic source_server should strip COMMON only."""
         quirks_manager = FlextLdifQuirksManager(server_type="generic")
-        entry_quirks = FlextLdifEntryQuirks(quirks_manager=quirks_manager)
+        entry_quirks = FlextLdifEntrys(quirks_manager=quirks_manager)
 
         entry = self._create_entry(
             "cn=test,dc=algar",
@@ -339,7 +337,7 @@ class TestOperationalAttributesStripping:
     def test_mixed_operational_and_user_attributes(self) -> None:
         """Mix of operational and user attributes should filter correctly."""
         quirks_manager = FlextLdifQuirksManager(server_type="oracle_oid")
-        entry_quirks = FlextLdifEntryQuirks(quirks_manager=quirks_manager)
+        entry_quirks = FlextLdifEntrys(quirks_manager=quirks_manager)
 
         entry = self._create_entry(
             "cn=mixed,dc=algar",

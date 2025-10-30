@@ -63,7 +63,7 @@ class QuirkBase(ABC):
 
 ```python
 # Auto-discovery and registration
-registry = FlextLdifQuirksRegistry()
+registry = FlextLdifRegistry()
 registry.load_all_quirks()
 
 # Priority-based resolution

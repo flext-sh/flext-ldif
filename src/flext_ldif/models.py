@@ -152,17 +152,20 @@ class FlextLdifModels(FlextModels):
             description="Quirk type that generated metadata (oud, oid, etc.)",
         )
         parsed_timestamp: str | None = Field(
-            default=None, description="Timestamp when data was parsed (ISO 8601)"
+            default=None,
+            description="Timestamp when data was parsed (ISO 8601)",
         )
         x_origin: str | None = Field(
-            default=None, description="X-ORIGIN metadata for schema definitions"
+            default=None,
+            description="X-ORIGIN metadata for schema definitions",
         )
         extensions: dict[str, object] = Field(
             default_factory=dict,
             description="Extensions (line_breaks, dn_spaces, attribute_order)",
         )
         custom_data: dict[str, object] = Field(
-            default_factory=dict, description="Additional custom data for future quirks"
+            default_factory=dict,
+            description="Additional custom data for future quirks",
         )
 
         @classmethod
@@ -196,7 +199,8 @@ class FlextLdifModels(FlextModels):
 
         @classmethod
         def create(
-            cls, data: FlextLdifTypes.Entry.EntryCreateData
+            cls,
+            data: FlextLdifTypes.Entry.EntryCreateData,
         ) -> FlextResult[FlextLdifModels.AclPermissions]:
             """Create an AclPermissions instance from data."""
             try:
@@ -214,33 +218,37 @@ class FlextLdifModels(FlextModels):
                         data_mutable.pop("permissions", None)
 
                 return FlextResult[FlextLdifModels.AclPermissions].ok(
-                    cls.model_validate(data_mutable)
+                    cls.model_validate(data_mutable),
                 )
             except (ValueError, TypeError, AttributeError) as e:
                 return FlextResult[FlextLdifModels.AclPermissions].fail(
-                    f"Failed to create AclPermissions: {e}"
+                    f"Failed to create AclPermissions: {e}",
                 )
 
         @computed_field
         def permissions(self) -> list[str]:
-            """Get permissions as a list of strings."""
+            """Get permissions as a list of strings.
+
+            Uses centralized constants from FlextLdifConstants.Acl
+            to ensure consistency across all ACL operations.
+            """
             perms = []
             if self.read:
-                perms.append("read")
+                perms.append(FlextLdifConstants.Acl.READ)
             if self.write:
-                perms.append("write")
+                perms.append(FlextLdifConstants.Acl.WRITE)
             if self.add:
-                perms.append("add")
+                perms.append(FlextLdifConstants.Acl.ADD)
             if self.delete:
-                perms.append("delete")
+                perms.append(FlextLdifConstants.Acl.DELETE)
             if self.search:
-                perms.append("search")
+                perms.append(FlextLdifConstants.Acl.SEARCH)
             if self.compare:
-                perms.append("compare")
+                perms.append(FlextLdifConstants.Acl.COMPARE)
             if self.self_write:
-                perms.append("self_write")
+                perms.append(FlextLdifConstants.Acl.SELF_WRITE)
             if self.proxy:
-                perms.append("proxy")
+                perms.append(FlextLdifConstants.Acl.PROXY)
             return perms
 
     class AclTarget(FlextModels.ArbitraryTypesModel):
@@ -248,7 +256,8 @@ class FlextLdifModels(FlextModels):
 
         target_dn: str = Field(..., description="Target DN pattern")
         attributes: list[str] = Field(
-            default_factory=list, description="Target attributes"
+            default_factory=list,
+            description="Target attributes",
         )
 
     class AclSubject(FlextModels.ArbitraryTypesModel):
@@ -295,7 +304,8 @@ class FlextLdifModels(FlextModels):
         target: FlextLdifModels.AclTarget = Field(..., description="ACL target")
         subject: FlextLdifModels.AclSubject = Field(..., description="ACL subject")
         permissions: FlextLdifModels.AclPermissions = Field(
-            ..., description="ACL permissions"
+            ...,
+            description="ACL permissions",
         )
         server_type: FlextLdifConstants.LiteralTypes.ServerType = Field(
             ...,
@@ -311,20 +321,13 @@ class FlextLdifModels(FlextModels):
             """Get ACL format for this server type.
 
             Returns the RFC or server-specific ACL format constant.
+            Uses centralized mapping from FlextLdifConstants.AclFormats.SERVER_TYPE_TO_FORMAT
+            to ensure consistency across all ACL operations.
             """
-            format_map = {
-                "oud": FlextLdifConstants.AclFormats.ACI,
-                "oracle_oud": FlextLdifConstants.AclFormats.ACI,
-                "oid": FlextLdifConstants.AclFormats.ORCLACI,
-                "oracle_oid": FlextLdifConstants.AclFormats.ORCLACI,
-                "openldap": FlextLdifConstants.AclFormats.OLCACCESS,
-                "openldap2": FlextLdifConstants.AclFormats.OPENLDAP2_ACL,
-                "openldap1": FlextLdifConstants.AclFormats.ACCESS,
-                "389ds": FlextLdifConstants.AclFormats.ACI,
-                "active_directory": FlextLdifConstants.AclFormats.AD_NTSECURITY,
-                "rfc": FlextLdifConstants.AclFormats.RFC_GENERIC,
-            }
-            return format_map.get(self.server_type, FlextLdifConstants.AclFormats.ACI)
+            return FlextLdifConstants.AclFormats.SERVER_TYPE_TO_FORMAT.get(
+                self.server_type,
+                FlextLdifConstants.AclFormats.ACI,
+            )
 
         def get_acl_type(self) -> str:
             """Get ACL type identifier for this server.
@@ -355,10 +358,12 @@ class FlextLdifModels(FlextModels):
 
         is_valid: bool = Field(default=False, description="Whether validation passed")
         errors: list[str] = Field(
-            default_factory=list, description="List of validation errors"
+            default_factory=list,
+            description="List of validation errors",
         )
         warnings: list[str] = Field(
-            default_factory=list, description="List of validation warnings"
+            default_factory=list,
+            description="List of validation warnings",
         )
 
         @computed_field
@@ -390,13 +395,16 @@ class FlextLdifModels(FlextModels):
         """Result of LDIF analytics operations."""
 
         total_entries: int = Field(
-            default=0, description="Total number of entries analyzed"
+            default=0,
+            description="Total number of entries analyzed",
         )
         object_class_distribution: FlextLdifTypes.CommonDict.DistributionDict = Field(
-            default_factory=dict, description="Distribution of object classes"
+            default_factory=dict,
+            description="Distribution of object classes",
         )
         patterns_detected: list[str] = Field(
-            default_factory=list, description="Detected patterns in the data"
+            default_factory=list,
+            description="Detected patterns in the data",
         )
 
         @computed_field
@@ -462,10 +470,12 @@ class FlextLdifModels(FlextModels):
             description="Whitelist of patterns to include",
         )
         blacklist: list[str] | None = Field(
-            default=None, description="Blacklist of patterns to exclude"
+            default=None,
+            description="Blacklist of patterns to exclude",
         )
         required_attributes: list[str] | None = Field(
-            default=None, description="Required attributes for objectClass"
+            default=None,
+            description="Required attributes for objectClass",
         )
         mode: str = Field(
             default="include",
@@ -491,16 +501,20 @@ class FlextLdifModels(FlextModels):
         """
 
         excluded: bool = Field(
-            default=False, description="Whether the item is excluded"
+            default=False,
+            description="Whether the item is excluded",
         )
         exclusion_reason: str | None = Field(
-            default=None, description="Human-readable reason for exclusion"
+            default=None,
+            description="Human-readable reason for exclusion",
         )
         filter_criteria: FlextLdifModels.FilterCriteria | None = Field(
-            default=None, description="Filter criteria that caused the exclusion"
+            default=None,
+            description="Filter criteria that caused the exclusion",
         )
         timestamp: str = Field(
-            ..., description="ISO 8601 timestamp when exclusion was marked"
+            ...,
+            description="ISO 8601 timestamp when exclusion was marked",
         )
 
     class CategorizedEntries(FlextModels.ArbitraryTypesModel):
@@ -533,7 +547,8 @@ class FlextLdifModels(FlextModels):
             description="Entries categorized as containers (organizationalUnit, etc.)",
         )
         uncategorized: list[FlextLdifModels.Entry] = Field(
-            default_factory=list, description="Entries that don't match any category"
+            default_factory=list,
+            description="Entries that don't match any category",
         )
 
         @computed_field
@@ -662,22 +677,28 @@ class FlextLdifModels(FlextModels):
         name: str = Field(..., description="Attribute name")
         oid: str = Field(..., description="Attribute OID")
         desc: str | None = Field(
-            None, description="Attribute description (RFC 4512 DESC)"
+            None,
+            description="Attribute description (RFC 4512 DESC)",
         )
         sup: str | None = Field(
-            None, description="Superior attribute type (RFC 4512 SUP)"
+            None,
+            description="Superior attribute type (RFC 4512 SUP)",
         )
         equality: str | None = Field(
-            None, description="Equality matching rule (RFC 4512 EQUALITY)"
+            None,
+            description="Equality matching rule (RFC 4512 EQUALITY)",
         )
         ordering: str | None = Field(
-            None, description="Ordering matching rule (RFC 4512 ORDERING)"
+            None,
+            description="Ordering matching rule (RFC 4512 ORDERING)",
         )
         substr: str | None = Field(
-            None, description="Substring matching rule (RFC 4512 SUBSTR)"
+            None,
+            description="Substring matching rule (RFC 4512 SUBSTR)",
         )
         syntax: str | None = Field(
-            None, description="Attribute syntax OID (RFC 4512 SYNTAX)"
+            None,
+            description="Attribute syntax OID (RFC 4512 SYNTAX)",
         )
         length: int | None = Field(None, description="Maximum length constraint")
         usage: str | None = Field(None, description="Attribute usage (RFC 4512 USAGE)")
@@ -690,7 +711,8 @@ class FlextLdifModels(FlextModels):
             description="Whether users can modify this attribute (RFC 4512 NO-USER-MODIFICATION)",
         )
         metadata: FlextLdifModels.QuirkMetadata | None = Field(
-            default=None, description="Quirk-specific metadata"
+            default=None,
+            description="Quirk-specific metadata",
         )
 
         @computed_field
@@ -707,23 +729,28 @@ class FlextLdifModels(FlextModels):
         name: str = Field(..., description="Object class name")
         oid: str = Field(..., description="Object class OID")
         desc: str | None = Field(
-            None, description="Object class description (RFC 4512 DESC)"
+            None,
+            description="Object class description (RFC 4512 DESC)",
         )
         sup: str | list[str] | None = Field(
-            None, description="Superior object class(es) (RFC 4512 SUP)"
+            None,
+            description="Superior object class(es) (RFC 4512 SUP)",
         )
         kind: str = Field(
             default=FlextLdifConstants.Schema.STRUCTURAL,
             description="Object class kind (RFC 4512: STRUCTURAL, AUXILIARY, ABSTRACT)",
         )
         must: list[str] | None = Field(
-            default=None, description="Required attributes (RFC 4512 MUST)"
+            default=None,
+            description="Required attributes (RFC 4512 MUST)",
         )
         may: list[str] | None = Field(
-            default=None, description="Optional attributes (RFC 4512 MAY)"
+            default=None,
+            description="Optional attributes (RFC 4512 MAY)",
         )
         metadata: FlextLdifModels.QuirkMetadata | None = Field(
-            default=None, description="Quirk-specific metadata"
+            default=None,
+            description="Quirk-specific metadata",
         )
 
         @computed_field
@@ -769,10 +796,12 @@ class FlextLdifModels(FlextModels):
         )
 
         dn: FlextLdifModels.DistinguishedName = Field(
-            ..., description="Distinguished Name of the entry"
+            ...,
+            description="Distinguished Name of the entry",
         )
         attributes: FlextLdifModels.LdifAttributes = Field(
-            ..., description="Entry attributes container"
+            ...,
+            description="Entry attributes container",
         )
         metadata: FlextLdifModels.QuirkMetadata | None = Field(
             default=None,
@@ -882,11 +911,56 @@ class FlextLdifModels(FlextModels):
                     "validation_metadata": validation_metadata,
                 }
                 return FlextResult[FlextLdifModels.Entry].ok(
-                    cls.model_validate(entry_data)
+                    cls.model_validate(entry_data),
                 )
             except (ValueError, TypeError, AttributeError) as e:
                 return FlextResult[FlextLdifModels.Entry].fail(
-                    f"Failed to create Entry: {e}"
+                    f"Failed to create Entry: {e}",
+                )
+
+        @classmethod
+        def from_ldap3(cls, ldap3_entry: object) -> FlextResult[FlextLdifModels.Entry]:
+            """Create Entry from ldap3 Entry object.
+
+            Args:
+                ldap3_entry: ldap3 Entry object with entry_dn and entry_attributes_as_dict
+
+            Returns:
+                FlextResult with Entry instance or error
+
+            """
+            try:
+                # Extract DN
+                dn_str = str(getattr(ldap3_entry, "entry_dn", ""))
+
+                # Extract attributes - ldap3 provides dict[str, list[str]]
+                entry_attrs: dict[str, list[str]] = (
+                    getattr(ldap3_entry, "entry_attributes_as_dict", {})
+                    if hasattr(ldap3_entry, "entry_attributes_as_dict")
+                    else {}
+                )
+
+                # Normalize to dict[str, list[str]] (ensure all values are lists of strings)
+                attrs_dict: dict[str, list[str]] = {}
+                for attr_name, attr_value_list in entry_attrs.items():
+                    if isinstance(attr_value_list, list):
+                        attrs_dict[attr_name] = [str(v) for v in attr_value_list]
+                    elif isinstance(attr_value_list, str):
+                        attrs_dict[attr_name] = [attr_value_list]
+                    else:
+                        attrs_dict[attr_name] = [str(attr_value_list)]
+
+                # Use Entry.create to handle DN and attribute conversion
+                from typing import cast as typing_cast
+
+                return cls.create(
+                    dn=dn_str,
+                    attributes=typing_cast("dict[str, list[str] | str]", attrs_dict),
+                )
+
+            except Exception as e:
+                return FlextResult[FlextLdifModels.Entry].fail(
+                    f"Failed to create Entry from ldap3: {e}",
                 )
 
         def get_attribute_values(self, attribute_name: str) -> list[str]:
@@ -933,7 +1007,7 @@ class FlextLdifModels(FlextModels):
 
             """
             return object_class in self.get_attribute_values(
-                FlextLdifConstants.DictKeys.OBJECTCLASS
+                FlextLdifConstants.DictKeys.OBJECTCLASS,
             )
 
         def get_all_attribute_names(self) -> list[str]:
@@ -974,7 +1048,8 @@ class FlextLdifModels(FlextModels):
             return cast("list[str]", components)
 
         def matches_filter(
-            self, filter_func: Callable[..., bool] | None = None
+            self,
+            filter_func: Callable[..., bool] | None = None,
         ) -> bool:
             """Check if entry matches a filter function.
 
@@ -1024,13 +1099,11 @@ class FlextLdifModels(FlextModels):
             return FlextLdifModels.Entry(
                 dn=self.dn,
                 attributes=FlextLdifModels.LdifAttributes(
-                    attributes=dict(self.attributes.attributes)
+                    attributes=dict(self.attributes.attributes),
                 ),
                 metadata=self.metadata,
                 acls=list(self.acls) if self.acls else None,
-                objectclasses=list(self.objectclasses)
-                if self.objectclasses
-                else None,
+                objectclasses=list(self.objectclasses) if self.objectclasses else None,
                 entry_metadata=dict(self.entry_metadata)
                 if self.entry_metadata
                 else None,
@@ -1084,9 +1157,7 @@ class FlextLdifModels(FlextModels):
             List of objectClass values, empty list if objectClass attribute not found
 
             """
-            return self.get_attribute_values(
-                FlextLdifConstants.DictKeys.OBJECTCLASS
-            )
+            return self.get_attribute_values(FlextLdifConstants.DictKeys.OBJECTCLASS)
 
     class LdifAttributes(FlextModels.ArbitraryTypesModel):
         """LDIF attributes container - simplified dict-like interface.
@@ -1098,7 +1169,8 @@ class FlextLdifModels(FlextModels):
         """
 
         attributes: dict[str, list[str]] = Field(
-            default_factory=dict, description="Attribute name to values list"
+            default_factory=dict,
+            description="Attribute name to values list",
         )
         metadata: dict[str, object] | None = Field(
             default=None,
@@ -1224,7 +1296,8 @@ class FlextLdifModels(FlextModels):
             self.attributes.pop(key, None)
 
         def to_ldap3(
-            self, exclude: list[str] | None = None
+            self,
+            exclude: list[str] | None = None,
         ) -> FlextLdifTypes.CommonDict.AttributeDict:
             """Convert to ldap3-compatible attributes dict.
 
@@ -1246,7 +1319,8 @@ class FlextLdifModels(FlextModels):
 
         @classmethod
         def create(
-            cls, attrs_data: dict[str, object]
+            cls,
+            attrs_data: dict[str, object],
         ) -> FlextResult[FlextLdifModels.LdifAttributes]:
             """Create an LdifAttributes instance from data.
 
@@ -1269,11 +1343,11 @@ class FlextLdifModels(FlextModels):
                         normalized_attrs[key] = [str(val)]
 
                 return FlextResult[FlextLdifModels.LdifAttributes].ok(
-                    cls(attributes=normalized_attrs)
+                    cls(attributes=normalized_attrs),
                 )
             except (ValueError, TypeError, AttributeError) as e:
                 return FlextResult[FlextLdifModels.LdifAttributes].fail(
-                    f"Failed to create LdifAttributes: {e}"
+                    f"Failed to create LdifAttributes: {e}",
                 )
 
     class PipelineStatistics(FlextModels.ArbitraryTypesModel):
@@ -1302,30 +1376,45 @@ class FlextLdifModels(FlextModels):
         )
 
         total_entries: int = Field(
-            default=0, ge=0, description="Total entries encountered"
+            default=0,
+            ge=0,
+            description="Total entries encountered",
         )
         processed_entries: int = Field(
-            default=0, ge=0, description="Successfully processed entries"
+            default=0,
+            ge=0,
+            description="Successfully processed entries",
         )
         schema_entries: int = Field(
-            default=0, ge=0, description="Schema entries categorized"
+            default=0,
+            ge=0,
+            description="Schema entries categorized",
         )
         hierarchy_entries: int = Field(
-            default=0, ge=0, description="Hierarchy entries categorized"
+            default=0,
+            ge=0,
+            description="Hierarchy entries categorized",
         )
         user_entries: int = Field(
-            default=0, ge=0, description="User entries categorized"
+            default=0,
+            ge=0,
+            description="User entries categorized",
         )
         group_entries: int = Field(
-            default=0, ge=0, description="Group entries categorized"
+            default=0,
+            ge=0,
+            description="Group entries categorized",
         )
         acl_entries: int = Field(default=0, ge=0, description="ACL entries categorized")
         rejected_entries: int = Field(default=0, ge=0, description="Entries rejected")
         rejected_reasons: dict[str, int] = Field(
-            default_factory=dict, description="Rejection reason distribution"
+            default_factory=dict,
+            description="Rejection reason distribution",
         )
         processing_duration: float = Field(
-            default=0.0, ge=0.0, description="Processing duration in seconds"
+            default=0.0,
+            ge=0.0,
+            description="Processing duration in seconds",
         )
 
     class PipelineExecutionResult(FlextModels.Value):
@@ -1681,10 +1770,12 @@ class FlextLdifModels(FlextModels):
 
         status: str = Field(description="Client initialization status")
         services: list[str] = Field(
-            default_factory=list, description="List of registered service names"
+            default_factory=list,
+            description="List of registered service names",
         )
         config: dict[str, object] = Field(
-            default_factory=dict, description="Active configuration settings"
+            default_factory=dict,
+            description="Active configuration settings",
         )
 
     class ValidationResult(FlextModels.Value):
@@ -1697,12 +1788,14 @@ class FlextLdifModels(FlextModels):
 
         is_valid: bool = Field(description="Overall validation status")
         total_entries: int = Field(
-            ge=0, description="Total number of entries validated"
+            ge=0,
+            description="Total number of entries validated",
         )
         valid_entries: int = Field(ge=0, description="Number of valid entries")
         invalid_entries: int = Field(ge=0, description="Number of invalid entries")
         errors: list[str] = Field(
-            default_factory=list, description="List of validation error messages"
+            default_factory=list,
+            description="List of validation error messages",
         )
 
         @computed_field
@@ -1723,7 +1816,8 @@ class FlextLdifModels(FlextModels):
 
         total_entries: int = Field(ge=0, description="Total number of input entries")
         migrated_entries: int = Field(
-            ge=0, description="Number of successfully migrated entries"
+            ge=0,
+            description="Number of successfully migrated entries",
         )
         from_server: str = Field(description="Source server type")
         to_server: str = Field(description="Target server type")
@@ -1747,10 +1841,12 @@ class FlextLdifModels(FlextModels):
 
         total_entries: int = Field(ge=0, description="Total number of entries analyzed")
         objectclass_distribution: dict[str, int] = Field(
-            default_factory=dict, description="Distribution of object classes"
+            default_factory=dict,
+            description="Distribution of object classes",
         )
         patterns_detected: list[str] = Field(
-            default_factory=list, description="Detected patterns in entries"
+            default_factory=list,
+            description="Detected patterns in entries",
         )
 
         @computed_field
@@ -1769,10 +1865,13 @@ class FlextLdifModels(FlextModels):
 
         detected_server_type: str = Field(description="Detected LDAP server type")
         confidence: float = Field(
-            ge=0.0, le=1.0, description="Detection confidence score"
+            ge=0.0,
+            le=1.0,
+            description="Detection confidence score",
         )
         scores: dict[str, int] = Field(
-            default_factory=dict, description="Score for each server type"
+            default_factory=dict,
+            description="Score for each server type",
         )
         patterns_found: list[str] = Field(
             default_factory=list,
@@ -1780,10 +1879,40 @@ class FlextLdifModels(FlextModels):
         )
         is_confident: bool = Field(description="Whether confidence meets threshold")
         detection_error: str | None = Field(
-            default=None, description="Error message if detection failed"
+            default=None,
+            description="Error message if detection failed",
         )
         fallback_reason: str | None = Field(
-            default=None, description="Reason for fallback to RFC mode"
+            default=None,
+            description="Reason for fallback to RFC mode",
+        )
+
+    class QuirkCollection(FlextModels.Value):
+        """Collection of all quirks (Schema, ACL, Entry) for a single server type.
+
+        Stores all three quirk types together for unified access and management.
+        """
+
+        model_config = ConfigDict(
+            arbitrary_types_allowed=True,
+            frozen=True,
+            validate_default=True,
+        )
+
+        server_type: str = Field(
+            description="Server type identifier (e.g., 'oid', 'oud')",
+        )
+        schema_quirks: list[object] = Field(
+            default_factory=list,
+            description="List of Schema quirk model instances",
+        )
+        acl_quirks: list[object] = Field(
+            default_factory=list,
+            description="List of ACL quirk model instances",
+        )
+        entry_quirks: list[object] = Field(
+            default_factory=list,
+            description="List of Entry quirk model instances",
         )
 
 

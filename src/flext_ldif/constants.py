@@ -16,6 +16,20 @@ from typing import Final, Literal
 from flext_core import FlextConstants
 
 
+class LdapServerType(StrEnum):
+    """LDAP server types supported by FLEXT ecosystem."""
+
+    ACTIVE_DIRECTORY = "active_directory"
+    OPENLDAP = "openldap"
+    APACHE_DIRECTORY = "apache_directory"
+    NOVELL_EDIRECTORY = "novell_edirectory"
+    IBM_TIVOLI = "ibm_tivoli"
+    GENERIC = "generic"
+    ORACLE_OID = "oracle_oid"
+    ORACLE_OUD = "oracle_oud"
+    DS_389 = "389ds"
+
+
 class FlextLdifConstants(FlextConstants):
     """LDIF domain constants extending flext-core FlextConstants.
 
@@ -47,6 +61,9 @@ class FlextLdifConstants(FlextConstants):
         MIN_BUFFER_SIZE: Final[int] = 1024
         CONTENT_PREVIEW_LENGTH: Final[int] = 100
         MAX_ATTRIBUTES_DISPLAY: Final[int] = 10
+
+        # Filesystem constraints
+        MAX_FILENAME_LENGTH: Final[int] = 255  # Common filesystem limit
 
         # RFC 2849 specific constants
         BASE64_PREFIX: Final[str] = "::"
@@ -126,6 +143,7 @@ class FlextLdifConstants(FlextConstants):
 
     # Client operation constants
     MAX_PATH_LENGTH_CHECK: Final[int] = 500  # Maximum path length for file operations
+    MAX_LOGGED_ERRORS: Final[int] = 5  # Maximum number of errors to log in output
 
     # =============================================================================
     # CONFIGURATION DEFAULTS
@@ -203,8 +221,8 @@ class FlextLdifConstants(FlextConstants):
 
         MIN_DN_COMPONENTS: Final[int] = 1
 
-        # RFC 4514 DN length limit
-        MAX_DN_LENGTH: Final[int] = 255
+        # RFC 4514 DN length limit (increased from 255 to support real-world long DNs)
+        MAX_DN_LENGTH: Final[int] = 2048
 
         # Reasonable limits for LDAP attributes
         MAX_ATTRIBUTES_PER_ENTRY: Final[int] = 1000
@@ -234,9 +252,14 @@ class FlextLdifConstants(FlextConstants):
     # =============================================================================
 
     class ObjectClasses:
-        """LDAP object class definitions."""
+        """LDAP object class name constants (RFC 4512 standard classes).
 
-        # Individual objectClass attribute names (used by flext-ldap and domain code)
+        Core LDIF-level object class definitions used across the FLEXT ecosystem.
+        These are the fundamental LDAP schema object classes defined in RFC 4512
+        and commonly used across all LDAP server implementations.
+        """
+
+        # Structural object classes (RFC 4512)
         TOP: Final[str] = "top"
         PERSON: Final[str] = "person"
         ORGANIZATIONAL_PERSON: Final[str] = "organizationalPerson"
@@ -248,6 +271,13 @@ class FlextLdifConstants(FlextConstants):
         ORGANIZATION: Final[str] = "organization"
         DOMAIN: Final[str] = "domain"
 
+        # Common auxiliary object classes
+        USER: Final[str] = "user"
+        GROUP: Final[str] = "group"
+        COUNTRY: Final[str] = "country"
+        LOCALITY: Final[str] = "locality"
+
+        # Convenience sets for validation and filtering
         LDAP_PERSON_CLASSES: Final[frozenset[str]] = frozenset([
             PERSON,
             ORGANIZATIONAL_PERSON,
@@ -255,8 +285,21 @@ class FlextLdifConstants(FlextConstants):
         ])
 
         LDAP_GROUP_CLASSES: Final[frozenset[str]] = frozenset([
-            "groupofnames",
-            "groupofuniquenames",
+            GROUP_OF_NAMES,
+            GROUP_OF_UNIQUE_NAMES,
+            POSIX_GROUP,
+        ])
+
+        # Standard structural hierarchy
+        LDAP_STRUCTURAL_BASE: Final[frozenset[str]] = frozenset([
+            TOP,
+            PERSON,
+            ORGANIZATIONAL_PERSON,
+            INET_ORG_PERSON,
+            GROUP_OF_NAMES,
+            ORGANIZATIONAL_UNIT,
+            ORGANIZATION,
+            DOMAIN,
         ])
 
     # =============================================================================
@@ -334,6 +377,28 @@ class FlextLdifConstants(FlextConstants):
         DELETE = "delete"
         MODRDN = "modrdn"
 
+    class ServerTypeEnum(StrEnum):
+        """LDAP server types supported by FLEXT.
+
+        Single source of truth for server type enumerations.
+        Uses SHORT identifiers (oid, oud, etc.) which map to full names via
+        ServerTypes.LONG_NAMES mapping.
+        """
+
+        OID = "oid"  # Oracle Internet Directory
+        OUD = "oud"  # Oracle Unified Directory
+        OPENLDAP = "openldap"  # Generic OpenLDAP
+        OPENLDAP1 = "openldap1"  # OpenLDAP 1.x (slapd.conf)
+        OPENLDAP2 = "openldap2"  # OpenLDAP 2.x (cn=config)
+        ACTIVE_DIRECTORY = "active_directory"  # Microsoft Active Directory
+        APACHE_DIRECTORY = "apache_directory"  # Apache Directory Server
+        NOVELL_EDIRECTORY = "novell_edirectory"  # Novell eDirectory
+        IBM_TIVOLI = "ibm_tivoli"  # IBM Tivoli Directory Server
+        DS_389 = "389ds"  # Red Hat Directory Server (389ds)
+        GENERIC = "generic"  # Generic/RFC-only LDAP
+        RFC = "rfc"  # Pure RFC 2849 (no server-specific quirks)
+        RELAXED = "relaxed"  # Relaxed mode for broken/non-compliant LDIF
+
     # =============================================================================
     # LITERAL TYPE CONSTANTS - All Literal types MUST be declared here
     # =============================================================================
@@ -369,19 +434,25 @@ class FlextLdifConstants(FlextConstants):
             "modrdn",
         )
 
-        # Server types
+        # Server types (includes short and long forms for compatibility)
         SERVER_TYPES: Final[tuple[str, ...]] = (
-            "active_directory",
+            # Short forms (primary - used in code)
+            "oid",
+            "oud",
             "openldap",
-            "openldap2",
             "openldap1",
+            "openldap2",
+            "active_directory",
             "apache_directory",
+            "generic",
+            "rfc",
+            "389ds",
+            "relaxed",
             "novell_edirectory",
             "ibm_tivoli",
-            "generic",
+            # Long forms (for backward compatibility)
             "oracle_oid",
             "oracle_oud",
-            "389ds",
         )
 
         # Encoding types
@@ -406,6 +477,15 @@ class FlextLdifConstants(FlextConstants):
 
         # Validation levels
         VALIDATION_LEVELS: Final[tuple[str, ...]] = ("strict", "moderate", "lenient")
+
+        # Analytics detail levels
+        ANALYTICS_DETAIL_LEVELS: Final[tuple[str, ...]] = ("low", "medium", "high")
+
+        # Quirks detection modes
+        DETECTION_MODES: Final[tuple[str, ...]] = ("auto", "manual", "disabled")
+
+        # Error recovery modes
+        ERROR_RECOVERY_MODES: Final[tuple[str, ...]] = ("continue", "stop", "skip")
 
         # Project types
         PROJECT_TYPES: Final[tuple[str, ...]] = (
@@ -463,26 +543,45 @@ class FlextLdifConstants(FlextConstants):
         type ProcessingStage = Literal["parsing", "validation", "analytics", "writing"]
         type HealthStatus = Literal["healthy", "degraded", "unhealthy"]
         type EntryType = Literal[
-            "person", "group", "organizationalunit", "domain", "other"
+            "person",
+            "group",
+            "organizationalunit",
+            "domain",
+            "other",
         ]
         type ModificationType = Literal["add", "modify", "delete", "modrdn"]
         type ServerType = Literal[
-            "active_directory",
+            # Short forms (primary - used in code)
+            "oid",
+            "oud",
             "openldap",
-            "openldap2",
             "openldap1",
+            "openldap2",
+            "active_directory",
             "apache_directory",
+            "generic",
+            "rfc",
+            "389ds",
+            "relaxed",
             "novell_edirectory",
             "ibm_tivoli",
-            "generic",
+            # Long forms (for backward compatibility)
             "oracle_oid",
             "oracle_oud",
-            "389ds",
         ]
         type EncodingType = Literal[
-            "utf-8", "latin-1", "ascii", "utf-16", "utf-32", "cp1252", "iso-8859-1"
+            "utf-8",
+            "latin-1",
+            "ascii",
+            "utf-16",
+            "utf-32",
+            "cp1252",
+            "iso-8859-1",
         ]
         type ValidationLevel = Literal["strict", "moderate", "lenient"]
+        type AnalyticsDetailLevel = Literal["low", "medium", "high"]
+        type DetectionMode = Literal["auto", "manual", "disabled"]
+        type ErrorRecoveryMode = Literal["continue", "stop", "skip"]
         type ProjectType = Literal[
             "library",
             "application",
@@ -736,10 +835,30 @@ class FlextLdifConstants(FlextConstants):
         ADD: Final[str] = "add"
         DELETE: Final[str] = "delete"
         MODIFY: Final[str] = "modify"
+        SELF_WRITE: Final[str] = "self_write"  # Self-modification permission (OUD)
+        PROXY: Final[str] = "proxy"  # Proxy rights (OUD/OID)
 
         # Novell ACL parsing indices
         NOVELL_SEGMENT_INDEX_TRUSTEE: Final[int] = 2
         NOVELL_SEGMENT_INDEX_RIGHTS: Final[int] = 3
+
+    class AclSubjectTypes:
+        """ACL subject type identifiers for permission subjects.
+
+        Used in ACL rules to identify what entity the permission applies to
+        (user, group, role, self, everyone, etc.)
+        """
+
+        # Subject types for ACL permissions
+        USER: Final[str] = "user"
+        GROUP: Final[str] = "group"
+        ROLE: Final[str] = "role"
+        SELF: Final[str] = "self"  # Self (person modifying own entry)
+        ALL: Final[str] = "all"  # Everyone
+        PUBLIC: Final[str] = "public"  # Public access
+        ANONYMOUS: Final[str] = "anonymous"  # Anonymous access
+        AUTHENTICATED: Final[str] = "authenticated"  # Any authenticated user
+        DN_PREFIX: Final[str] = "dn"  # DN prefix for specific DN subjects
 
     class Schema:
         """Schema-related constants."""
@@ -1046,7 +1165,8 @@ class FlextLdifConstants(FlextConstants):
         TELEPHONE_NUMBER: Final[str] = "telephoneNumber"
         SURNAME: Final[str] = "Surname"
 
-        # ObjectClass values
+        # ObjectClass values (deprecated - use FlextLdifConstants.ObjectClasses instead)
+        # These are kept for backward compatibility but should be migrated to ObjectClasses.*
         TOP: Final[str] = "top"
         PERSON: Final[str] = "person"
         GROUP_OF_NAMES: Final[str] = "groupOfNames"
@@ -1115,7 +1235,7 @@ class FlextLdifConstants(FlextConstants):
         SUMMARY: Final[str] = "summary"
 
         # Class/Component name keys
-        FLEXT_LDIF_QUIRKS_REGISTRY: Final[str] = "FlextLdifQuirksRegistry"
+        FLEXT_LDIF_QUIRKS_REGISTRY: Final[str] = "FlextLdifRegistry"
         FLEXT_LDIF_QUIRKS_MANAGER: Final[str] = "FlextLdifQuirksManager"
         FLEXT_LDIF_ACL_SERVICE: Final[str] = "FlextLdifAclService"
         FLEXT_LDIF_SCHEMA_BUILDER: Final[str] = "FlextLdifSchemaBuilder"
@@ -1242,19 +1362,39 @@ class FlextLdifConstants(FlextConstants):
         AD_ACL: Final[str] = "active_directory_acl"
         AD_NTSECURITY: Final[str] = "nTSecurityDescriptor"
 
+        # Server type to ACL format mapping (CENTRALIZED - eliminate hardcoded maps)
+        # Maps server types (short and long forms) to their ACL format constants
+        SERVER_TYPE_TO_FORMAT: Final[dict[str, str]] = {
+            # Short forms (primary)
+            "oid": ORCLACI,
+            "oud": ACI,
+            "openldap": OLCACCESS,
+            "openldap1": ACCESS,
+            "openldap2": OPENLDAP2_ACL,
+            "active_directory": AD_NTSECURITY,
+            "389ds": ACI,
+            "rfc": RFC_GENERIC,
+            "relaxed": RFC_GENERIC,  # Relaxed mode uses RFC format
+            # Long forms (backward compatibility)
+            "oracle_oid": ORCLACI,
+            "oracle_oud": ACI,
+        }
+
     # =============================================================================
     # SERVER TYPE SHORTCUTS - Short server type identifiers
     # =============================================================================
 
     class ServerTypes:
-        """Server type identifiers (short forms).
+        """Server type identifiers - Single source of truth for all server types.
 
         Zero Tolerance: All server type identifier strings MUST be defined here.
-        These are the SHORT identifiers used in quirks, config, and processing.
-        Long names are in LdapServers class.
+        Uses SHORT identifiers for code usage. Use LONG_NAMES mapping to get full names.
+        Internal note: LdapServers class provides server-specific detection patterns,
+        but all server type strings MUST be defined here first.
         """
 
-        # Short identifiers (used in code)
+        # Short identifiers (used in code, configuration, and processing)
+        # PRIMARY SOURCE: Use these in all code
         OID: Final[str] = "oid"
         OUD: Final[str] = "oud"
         OPENLDAP: Final[str] = "openldap"
@@ -1265,12 +1405,31 @@ class FlextLdifConstants(FlextConstants):
         GENERIC: Final[str] = "generic"
         RFC: Final[str] = "rfc"
         DS_389: Final[str] = "389ds"
-        ORACLE: Final[str] = "oracle"
         RELAXED: Final[str] = "relaxed"
         NOVELL: Final[str] = "novell_edirectory"
         IBM_TIVOLI: Final[str] = "ibm_tivoli"
 
-        # Mapping between short and long server types
+        # Mapping from short forms to long forms (for backward compatibility)
+        LONG_NAMES: Final[dict[str, str]] = {
+            OID: "oracle_oid",
+            OUD: "oracle_oud",
+            OPENLDAP: "openldap",
+            OPENLDAP1: "openldap1",
+            OPENLDAP2: "openldap2",
+            AD: "active_directory",
+            APACHE: "apache_directory",
+            GENERIC: "generic",
+            RFC: "rfc",
+            DS_389: "389ds",
+            RELAXED: "relaxed",
+            NOVELL: "novell_edirectory",
+            IBM_TIVOLI: "ibm_tivoli",
+        }
+
+        # Reverse mapping from long forms to short forms
+        FROM_LONG: Final[dict[str, str]] = {v: k for k, v in LONG_NAMES.items()}
+
+        # Server type variants (for compatibility checks)
         ORACLE_OID_VARIANTS: Final[frozenset[str]] = frozenset(["oid", "oracle_oid"])
         ORACLE_OUD_VARIANTS: Final[frozenset[str]] = frozenset(["oud", "oracle_oud"])
         OPENLDAP_VARIANTS: Final[frozenset[str]] = frozenset([
@@ -1339,8 +1498,29 @@ class FlextLdifConstants(FlextConstants):
 
         # Python 3.13 type alias from constants
         type Category = Literal[
-            "users", "groups", "hierarchy", "schema", "acl", "rejected"
+            "users",
+            "groups",
+            "hierarchy",
+            "schema",
+            "acl",
+            "rejected",
         ]
+
+    class Categorization:
+        """Attribute categorization constants for server-specific filtering.
+
+        Zero Tolerance: All attribute categorizations MUST be defined here.
+        Used for filtering attributes during server migration and quirks handling.
+        """
+
+        OID_SPECIFIC_ATTRIBUTES: Final[frozenset[str]] = frozenset([
+            "orcloid",  # Oracle OID identifier
+            "orclguid",  # Oracle GUID
+            "orclpassword",  # Oracle password attribute
+            "orclaci",  # Oracle ACL attribute
+            "orclentrylevelaci",  # Oracle entry-level ACL
+            "orcldaslov",  # Oracle DASLOV configuration
+        ])
 
     class DataTypes:
         """Data type identifier constants.
@@ -1389,7 +1569,11 @@ class FlextLdifConstants(FlextConstants):
 
         # Python 3.13 type alias from constants
         type EntryType = Literal[
-            "person", "group", "ou", "organizationalunit", "custom"
+            "person",
+            "group",
+            "ou",
+            "organizationalunit",
+            "custom",
         ]
 
     class ConversionTypes:

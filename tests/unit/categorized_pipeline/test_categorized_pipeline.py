@@ -13,7 +13,9 @@ from pathlib import Path
 
 import pytest
 
-from flext_ldif import FlextLdifCategorizedMigrationPipeline
+from flext_ldif.services.categorized_pipeline import (
+    FlextLdifCategorizedMigrationPipeline,
+)
 
 
 class TestCategorizedPipelineInitialization:
@@ -129,7 +131,7 @@ class TestEntryCategorization:
             "objectclass": ["top", "subschema"],
         }
 
-        category, reason = pipeline._categorize_entry(entry)
+        category, reason = pipeline.categorize_entry(entry)
         assert category == "schema"
         assert reason is None
 
@@ -152,7 +154,7 @@ class TestEntryCategorization:
             "objectclass": ["top", "domain"],
         }
 
-        category, reason = pipeline._categorize_entry(entry)
+        category, reason = pipeline.categorize_entry(entry)
         assert category == "acl"
         assert reason is None
 
@@ -172,10 +174,10 @@ class TestEntryCategorization:
         entry: dict[str, object] = {
             "dn": "ou=users,dc=example,dc=com",
             "attributes": {"ou": "users"},
-            "objectclass": ["top", "organizationalUnit"],
+            "objectClass": ["top", "organizationalUnit"],
         }
 
-        category, reason = pipeline._categorize_entry(entry)
+        category, reason = pipeline.categorize_entry(entry)
         assert category == "hierarchy"
         assert reason is None
 
@@ -196,10 +198,10 @@ class TestEntryCategorization:
         entry: dict[str, object] = {
             "dn": "uid=jdoe,dc=example,dc=com",
             "attributes": {"cn": "John Doe", "sn": "Doe"},
-            "objectclass": ["top", "person", "inetOrgPerson"],
+            "objectClass": ["top", "person", "inetOrgPerson"],
         }
 
-        category, reason = pipeline._categorize_entry(entry)
+        category, reason = pipeline.categorize_entry(entry)
         assert category == "users"
         assert reason is None
 
@@ -220,10 +222,10 @@ class TestEntryCategorization:
         entry: dict[str, object] = {
             "dn": "cn=jdoe,dc=example,dc=com",  # No uid=
             "attributes": {"cn": "John Doe"},
-            "objectclass": ["top", "person"],
+            "objectClass": ["top", "person"],
         }
 
-        category, reason = pipeline._categorize_entry(entry)
+        category, reason = pipeline.categorize_entry(entry)
         assert category == "rejected"
         assert reason is not None
         assert "DN pattern mismatch" in reason
@@ -244,10 +246,10 @@ class TestEntryCategorization:
         entry: dict[str, object] = {
             "dn": "cn=admins,dc=example,dc=com",
             "attributes": {"cn": "admins"},
-            "objectclass": ["top", "groupOfNames"],
+            "objectClass": ["top", "groupOfNames"],
         }
 
-        category, reason = pipeline._categorize_entry(entry)
+        category, reason = pipeline.categorize_entry(entry)
         assert category == "groups"
         assert reason is None
 
@@ -272,7 +274,7 @@ class TestEntryCategorization:
             "objectclass": ["top", "unknownClass"],
         }
 
-        category, reason = pipeline._categorize_entry(entry)
+        category, reason = pipeline.categorize_entry(entry)
         assert category == "rejected"
         assert reason is not None
         assert "No category match" in reason
@@ -301,27 +303,27 @@ class TestCategoryBatchProcessing:
             {
                 "dn": "cn=schema",
                 "attributes": {},
-                "objectclass": ["subschema"],
+                "objectClass": ["subschema"],
             },
             {
                 "dn": "ou=users,dc=example,dc=com",
                 "attributes": {"ou": "users"},
-                "objectclass": ["organizationalUnit"],
+                "objectClass": ["organizationalUnit"],
             },
             {
                 "dn": "uid=jdoe,dc=example,dc=com",
                 "attributes": {"cn": "John Doe"},
-                "objectclass": ["person"],
+                "objectClass": ["person"],
             },
             {
                 "dn": "cn=admins,dc=example,dc=com",
                 "attributes": {"cn": "admins"},
-                "objectclass": ["groupOfNames"],
+                "objectClass": ["groupOfNames"],
             },
             {
                 "dn": "dc=example,dc=com",
                 "attributes": {"aci": "(targetattr=*)"},
-                "objectclass": ["domain"],
+                "objectClass": ["domain"],
             },
         ]
 
@@ -2357,7 +2359,7 @@ class TestAclTransformation:
                 assert "userPassword" not in attrs
 
 
-class TestEntryQuirkConversion:
+class TestEntryConversion:
     """Test entry quirk conversion (OID→RFC normalization) in _transform_categories."""
 
     @pytest.fixture

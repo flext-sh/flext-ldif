@@ -3,6 +3,21 @@
 LDIF processing library with RFC 2849/4512 compliance and server-specific quirks
 for the FLEXT ecosystem.
 
+Single Entry Point Architecture:
+    This module enforces a single entry point pattern. ALL LDIF operations must
+    go through the FlextLdif class. Internal modules (quirks, services, parsers,
+    writers) are NOT part of the public API and should not be imported directly
+    by consumers.
+
+    Correct usage:
+        from flext_ldif import FlextLdif
+        ldif = FlextLdif()
+        result = ldif.parse(data)
+
+    Incorrect usage (bypasses single entry point):
+        from flext_ldif.services.registry import FlextLdifRegistry  # ❌ WRONG
+        from flext_ldif.services import FlextLdifAclService  # ❌ WRONG
+
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 
@@ -10,55 +25,19 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif.models import FlextLdifModels
 from flext_ldif.api import FlextLdif
-from flext_ldif.categorized_pipeline import FlextLdifCategorizedMigrationPipeline
-from flext_ldif.client import FlextLdifClient
 from flext_ldif.config import FlextLdifConfig
-from flext_ldif.constants import FlextLdifConstants
-from flext_ldif.entry_builder import FlextLdifEntryBuilder
-from flext_ldif.filters import EntryFilterBuilder, FlextLdifFilters
-from flext_ldif.migration_pipeline import FlextLdifMigrationPipeline
-from flext_ldif.objectclass_manager import FlextLdifObjectClassManager
-from flext_ldif.quirks.conversion_matrix import FlextLdifQuirksConversionMatrix
-from flext_ldif.quirks.registry import FlextLdifQuirksRegistry
-from flext_ldif.rfc_ldif_writer import FlextLdifRfcLdifWriter
-from flext_ldif.services import (
-    FlextLdifAclParser,
-    FlextLdifAclService,
-    FlextLdifDnService,
-    FlextLdifFileWriterService,
-    FlextLdifSchemaBuilder,
-    FlextLdifSchemaValidator,
-    FlextLdifStatisticsService,
-    FlextLdifValidationService,
-)
-from flext_ldif.typings import FlextLdifTypes
+from flext_ldif.constants import FlextLdifConstants, LdapServerType
+from flext_ldif.models import FlextLdifModels
+from flext_ldif.services.filters import EntryFilterBuilder
 
 __email__ = "dev@flext.com"
 
 __all__ = [
     "EntryFilterBuilder",
     "FlextLdif",
-    "FlextLdifAclParser",
-    "FlextLdifAclService",
-    "FlextLdifCategorizedMigrationPipeline",
-    "FlextLdifClient",
     "FlextLdifConfig",
     "FlextLdifConstants",
-    "FlextLdifDnService",
-    "FlextLdifEntryBuilder",
-    "FlextLdifFileWriterService",
-    "FlextLdifFilters",
-    "FlextLdifMigrationPipeline",
     "FlextLdifModels",
-    "FlextLdifObjectClassManager",
-    "FlextLdifQuirksConversionMatrix",
-    "FlextLdifQuirksRegistry",
-    "FlextLdifRfcLdifWriter",
-    "FlextLdifSchemaBuilder",
-    "FlextLdifSchemaValidator",
-    "FlextLdifStatisticsService",
-    "FlextLdifTypes",
-    "FlextLdifValidationService",
+    "LdapServerType",
 ]

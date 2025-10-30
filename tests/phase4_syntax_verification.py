@@ -121,10 +121,10 @@ def verify_server_detector() -> bool:
     return True
 
 
-def verify_relaxed_quirks() -> bool:
+def verify_relaxed() -> bool:
     """Verify Relaxed Quirks implementation."""
     logger.info("\n=== VERIFYING RELAXED QUIRKS IMPLEMENTATION ===")
-    base_path = Path("src/flext_ldif/quirks/servers/relaxed_quirks.py")
+    base_path = Path("src/flext_ldif/servers/relaxed.py")
 
     # Check file exists
     if not base_path.exists():
@@ -138,19 +138,12 @@ def verify_relaxed_quirks() -> bool:
         return False
     logger.info("✅ Valid Python syntax")
 
-    # Check classes exist
-    classes_to_check = [
-        "FlextLdifQuirksServersRelaxedSchema",
-        "FlextLdifQuirksServersRelaxedAcl",
-        "FlextLdifQuirksServersRelaxedEntry",
-    ]
-
-    for class_name in classes_to_check:
-        ok, msg = check_file_has_class(base_path, class_name)
-        if not ok:
-            logger.info(f"❌ {msg}")
-            return False
-        logger.info(f"✅ {msg}")
+    # Check main relaxed class exists
+    ok, msg = check_file_has_class(base_path, "FlextLdifServersRelaxed")
+    if not ok:
+        logger.info(f"❌ {msg}")
+        return False
+    logger.info(f"✅ {msg}")
 
     # Check key methods for schema quirk
     schema_methods = [
@@ -164,7 +157,7 @@ def verify_relaxed_quirks() -> bool:
 
     for method in schema_methods:
         ok, msg = check_file_has_method(
-            base_path, "FlextLdifQuirksServersRelaxedSchema", method
+            base_path, "FlextLdifServersRelaxedSchema", method
         )
         if not ok:
             logger.info(f"❌ {msg}")
@@ -277,7 +270,7 @@ def verify_test_files() -> bool:
 
     test_files = [
         Path("tests/unit/services/test_server_detector.py"),
-        Path("tests/unit/quirks/servers/test_relaxed_quirks.py"),
+        Path("tests/unit/quirks/servers/test_relaxed.py"),
     ]
 
     for test_file in test_files:
@@ -323,7 +316,7 @@ def main() -> int:
 
     results = {
         "Server Detector": verify_server_detector(),
-        "Relaxed Quirks": verify_relaxed_quirks(),
+        "Relaxed Quirks": verify_relaxed(),
         "Config Modes": verify_config_modes(),
         "Client & API": verify_client_api(),
         "Test Files": verify_test_files(),

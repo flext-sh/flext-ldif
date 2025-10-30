@@ -14,35 +14,33 @@ import base64
 
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
-from flext_ldif.quirks.servers.tivoli_quirks import (
-    FlextLdifQuirksServersTivoli,
-)
+from flext_ldif.servers.tivoli import FlextLdifServersTivoli
 
 
-class TestTivoliSchemaQuirks:
+class TestTivoliSchemas:
     """Tests for IBM Tivoli Directory Server schema quirk handling."""
 
     def test_initialization(self) -> None:
         """Test Tivoli schema quirk initialization."""
-        quirk = FlextLdifQuirksServersTivoli()
+        quirk = FlextLdifServersTivoli.Schema()
         assert quirk.server_type == FlextLdifConstants.LdapServers.IBM_TIVOLI
         assert quirk.priority == 15
 
     def test_can_handle_attribute_tivoli_oid(self) -> None:
         """Test Tivoli attribute detection by OID pattern."""
-        quirk = FlextLdifQuirksServersTivoli()
+        quirk = FlextLdifServersTivoli.Schema()
         attr_def = "( 1.3.18.0.2.4.1 NAME 'ibm-entryUUID' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
         assert quirk.can_handle_attribute(attr_def)
 
     def test_can_handle_attribute_ibm_prefix(self) -> None:
         """Test Tivoli attribute detection by ibm- prefix."""
-        quirk = FlextLdifQuirksServersTivoli()
+        quirk = FlextLdifServersTivoli.Schema()
         attr_def = "( 1.2.3.4 NAME 'ibm-slapdaccesscontrol' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
         assert quirk.can_handle_attribute(attr_def)
 
     def test_can_handle_attribute_ids_prefix(self) -> None:
         """Test Tivoli attribute detection by ids- prefix."""
-        quirk = FlextLdifQuirksServersTivoli()
+        quirk = FlextLdifServersTivoli.Schema()
         attr_def = (
             "( 1.2.3.4 NAME 'ids-pwdPolicy' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
         )
@@ -50,13 +48,13 @@ class TestTivoliSchemaQuirks:
 
     def test_can_handle_attribute_non_tivoli(self) -> None:
         """Test non-Tivoli attribute rejection."""
-        quirk = FlextLdifQuirksServersTivoli()
+        quirk = FlextLdifServersTivoli.Schema()
         attr_def = "( 2.5.4.3 NAME 'cn' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
         assert not quirk.can_handle_attribute(attr_def)
 
     def test_parse_attribute_success(self) -> None:
         """Test successful Tivoli attribute parsing."""
-        quirk = FlextLdifQuirksServersTivoli()
+        quirk = FlextLdifServersTivoli.Schema()
         attr_def = (
             "( 1.3.18.0.2.4.1 NAME 'ibm-entryUUID' "
             "DESC 'Entry UUID' "
@@ -78,7 +76,7 @@ class TestTivoliSchemaQuirks:
 
     def test_parse_attribute_missing_oid(self) -> None:
         """Test attribute parsing failure when OID is missing."""
-        quirk = FlextLdifQuirksServersTivoli()
+        quirk = FlextLdifServersTivoli.Schema()
         attr_def = "NAME 'ibm-entryUUID' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15"
         result = quirk.parse_attribute(attr_def)
         assert not result.is_success
@@ -87,7 +85,7 @@ class TestTivoliSchemaQuirks:
 
     def test_parse_attribute_with_ordering(self) -> None:
         """Test attribute parsing with ORDERING matching rule."""
-        quirk = FlextLdifQuirksServersTivoli()
+        quirk = FlextLdifServersTivoli.Schema()
         attr_def = (
             "( 1.3.18.0.2.4.2 NAME 'ids-timestamp' "
             "SYNTAX 1.3.6.1.4.1.1466.115.121.1.24 "
@@ -100,7 +98,7 @@ class TestTivoliSchemaQuirks:
 
     def test_parse_attribute_with_substr(self) -> None:
         """Test attribute parsing with SUBSTR matching rule."""
-        quirk = FlextLdifQuirksServersTivoli()
+        quirk = FlextLdifServersTivoli.Schema()
         attr_def = (
             "( 1.3.18.0.2.4.3 NAME 'ibm-description' "
             "SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 "
@@ -113,7 +111,7 @@ class TestTivoliSchemaQuirks:
 
     def test_parse_attribute_with_syntax_length(self) -> None:
         """Test attribute parsing with syntax length constraint."""
-        quirk = FlextLdifQuirksServersTivoli()
+        quirk = FlextLdifServersTivoli.Schema()
         attr_def = "( 1.3.18.0.2.4.4 NAME 'ibm-code' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{128} )"
         result = quirk.parse_attribute(attr_def)
         assert result.is_success
@@ -122,7 +120,7 @@ class TestTivoliSchemaQuirks:
 
     def test_parse_attribute_with_sup(self) -> None:
         """Test attribute parsing with SUP (superior) attribute."""
-        quirk = FlextLdifQuirksServersTivoli()
+        quirk = FlextLdifServersTivoli.Schema()
         attr_def = "( 1.3.18.0.2.4.5 NAME 'ibm-specialAttr' SUP name )"
         result = quirk.parse_attribute(attr_def)
         assert result.is_success
@@ -131,25 +129,25 @@ class TestTivoliSchemaQuirks:
 
     def test_can_handle_objectclass_tivoli_oid(self) -> None:
         """Test Tivoli objectClass detection by OID pattern."""
-        quirk = FlextLdifQuirksServersTivoli()
+        quirk = FlextLdifServersTivoli.Schema()
         oc_def = "( 1.3.18.0.2.6.1 NAME 'ibm-ldapserver' SUP top STRUCTURAL )"
         assert quirk.can_handle_objectclass(oc_def)
 
     def test_can_handle_objectclass_tivoli_name(self) -> None:
         """Test Tivoli objectClass detection by known names."""
-        quirk = FlextLdifQuirksServersTivoli()
+        quirk = FlextLdifServersTivoli.Schema()
         oc_def = "( 1.2.3.4 NAME 'ibm-slapdaccesscontrolsubentry' SUP top AUXILIARY )"
         assert quirk.can_handle_objectclass(oc_def)
 
     def test_can_handle_objectclass_non_tivoli(self) -> None:
         """Test non-Tivoli objectClass rejection."""
-        quirk = FlextLdifQuirksServersTivoli()
+        quirk = FlextLdifServersTivoli.Schema()
         oc_def = "( 2.5.6.6 NAME 'person' SUP top STRUCTURAL )"
         assert not quirk.can_handle_objectclass(oc_def)
 
     def test_parse_objectclass_success(self) -> None:
         """Test successful Tivoli objectClass parsing."""
-        quirk = FlextLdifQuirksServersTivoli()
+        quirk = FlextLdifServersTivoli.Schema()
         oc_def = (
             "( 1.3.18.0.2.6.1 NAME 'ibm-ldapserver' "
             "DESC 'LDAP server configuration' "
@@ -173,7 +171,7 @@ class TestTivoliSchemaQuirks:
 
     def test_parse_objectclass_missing_oid(self) -> None:
         """Test objectClass parsing failure when OID is missing."""
-        quirk = FlextLdifQuirksServersTivoli()
+        quirk = FlextLdifServersTivoli.Schema()
         oc_def = "NAME 'ibm-ldapserver' SUP top STRUCTURAL"
         result = quirk.parse_objectclass(oc_def)
         assert not result.is_success
@@ -182,7 +180,7 @@ class TestTivoliSchemaQuirks:
 
     def test_parse_objectclass_auxiliary(self) -> None:
         """Test parsing AUXILIARY objectClass."""
-        quirk = FlextLdifQuirksServersTivoli()
+        quirk = FlextLdifServersTivoli.Schema()
         oc_def = "( 1.3.18.0.2.6.2 NAME 'ibm-filterentry' AUXILIARY )"
         result = quirk.parse_objectclass(oc_def)
         assert result.is_success
@@ -191,7 +189,7 @@ class TestTivoliSchemaQuirks:
 
     def test_parse_objectclass_abstract(self) -> None:
         """Test parsing ABSTRACT objectClass."""
-        quirk = FlextLdifQuirksServersTivoli()
+        quirk = FlextLdifServersTivoli.Schema()
         oc_def = "( 1.3.18.0.2.6.3 NAME 'ibm-baseClass' ABSTRACT )"
         result = quirk.parse_objectclass(oc_def)
         assert result.is_success
@@ -200,7 +198,7 @@ class TestTivoliSchemaQuirks:
 
     def test_convert_attribute_to_rfc(self) -> None:
         """Test attribute conversion to RFC format."""
-        quirk = FlextLdifQuirksServersTivoli()
+        quirk = FlextLdifServersTivoli.Schema()
         attr_data = FlextLdifModels.SchemaAttribute(
             oid="1.3.18.0.2.4.1",
             name="ibm-entryUUID",
@@ -217,7 +215,7 @@ class TestTivoliSchemaQuirks:
 
     def test_convert_objectclass_to_rfc(self) -> None:
         """Test objectClass conversion to RFC format."""
-        quirk = FlextLdifQuirksServersTivoli()
+        quirk = FlextLdifServersTivoli.Schema()
         oc_data = FlextLdifModels.SchemaObjectClass(
             oid="1.3.18.0.2.6.1",
             name="ibm-ldapserver",
@@ -235,7 +233,7 @@ class TestTivoliSchemaQuirks:
 
     def test_convert_attribute_from_rfc(self) -> None:
         """Test attribute conversion from RFC format."""
-        quirk = FlextLdifQuirksServersTivoli()
+        quirk = FlextLdifServersTivoli.Schema()
         rfc_data = FlextLdifModels.SchemaAttribute(
             oid="1.3.18.0.2.4.1",
             name="ibm-entryUUID",
@@ -249,7 +247,7 @@ class TestTivoliSchemaQuirks:
 
     def test_convert_objectclass_from_rfc(self) -> None:
         """Test objectClass conversion from RFC format."""
-        quirk = FlextLdifQuirksServersTivoli()
+        quirk = FlextLdifServersTivoli.Schema()
         rfc_data = FlextLdifModels.SchemaObjectClass(
             oid="1.3.18.0.2.6.1",
             name="ibm-ldapserver",
@@ -263,7 +261,7 @@ class TestTivoliSchemaQuirks:
 
     def test_write_attribute_to_rfc(self) -> None:
         """Test writing attribute to RFC string format."""
-        quirk = FlextLdifQuirksServersTivoli()
+        quirk = FlextLdifServersTivoli.Schema()
         attr_data = FlextLdifModels.SchemaAttribute(
             oid="1.3.18.0.2.4.1",
             name="ibm-entryUUID",
@@ -281,7 +279,7 @@ class TestTivoliSchemaQuirks:
 
     def test_write_objectclass_to_rfc(self) -> None:
         """Test writing objectClass to RFC string format."""
-        quirk = FlextLdifQuirksServersTivoli()
+        quirk = FlextLdifServersTivoli.Schema()
         oc_data = FlextLdifModels.SchemaObjectClass(
             oid="1.3.18.0.2.6.1",
             name="ibm-ldapserver",
@@ -301,47 +299,47 @@ class TestTivoliSchemaQuirks:
         assert "MAY" in oc_str
 
 
-class TestTivoliAclQuirks:
+class TestTivoliAcls:
     """Tests for IBM Tivoli Directory Server ACL quirk handling."""
 
     def test_initialization(self) -> None:
         """Test Tivoli ACL quirk initialization."""
-        quirk = FlextLdifQuirksServersTivoli()
-        acl_quirk = quirk.AclQuirk()
+        quirk = FlextLdifServersTivoli.Schema()
+        acl_quirk = quirk.Acl()
         assert acl_quirk.server_type == FlextLdifConstants.LdapServers.IBM_TIVOLI
         assert acl_quirk.priority == 15
 
     def test_can_handle_acl_ibm_slapdaccesscontrol(self) -> None:
         """Test ACL detection with ibm-slapdaccesscontrol attribute."""
-        quirk = FlextLdifQuirksServersTivoli()
-        acl_quirk = quirk.AclQuirk()
+        quirk = FlextLdifServersTivoli.Schema()
+        acl_quirk = quirk.Acl()
         acl_line = 'ibm-slapdaccesscontrol: {access "read" permission "allow" userdn="cn=Admin,o=Example"}'
         assert acl_quirk.can_handle_acl(acl_line)
 
     def test_can_handle_acl_ibm_slapdgroupacl(self) -> None:
         """Test ACL detection with ibm-slapdgroupacl attribute."""
-        quirk = FlextLdifQuirksServersTivoli()
-        acl_quirk = quirk.AclQuirk()
+        quirk = FlextLdifServersTivoli.Schema()
+        acl_quirk = quirk.Acl()
         acl_line = 'ibm-slapdgroupacl: {access "write" groupdn="cn=Admins,o=Example"}'
         assert acl_quirk.can_handle_acl(acl_line)
 
     def test_can_handle_acl_empty_line(self) -> None:
         """Test ACL rejection with empty line."""
-        quirk = FlextLdifQuirksServersTivoli()
-        acl_quirk = quirk.AclQuirk()
+        quirk = FlextLdifServersTivoli.Schema()
+        acl_quirk = quirk.Acl()
         assert not acl_quirk.can_handle_acl("")
 
     def test_can_handle_acl_non_tivoli(self) -> None:
         """Test non-Tivoli ACL rejection."""
-        quirk = FlextLdifQuirksServersTivoli()
-        acl_quirk = quirk.AclQuirk()
+        quirk = FlextLdifServersTivoli.Schema()
+        acl_quirk = quirk.Acl()
         acl_line = "aci: (version 3.0; acl read-access; allow(read))"
         assert not acl_quirk.can_handle_acl(acl_line)
 
     def test_parse_acl_success(self) -> None:
         """Test successful Tivoli ACL parsing."""
-        quirk = FlextLdifQuirksServersTivoli()
-        acl_quirk = quirk.AclQuirk()
+        quirk = FlextLdifServersTivoli.Schema()
+        acl_quirk = quirk.Acl()
         acl_line = 'ibm-slapdaccesscontrol: {access "read" permission "allow" groupdn="cn=Admins,o=Example" userdn="cn=User,o=Example"}'
         result = acl_quirk.parse_acl(acl_line)
         assert result.is_success
@@ -351,8 +349,8 @@ class TestTivoliAclQuirks:
 
     def test_parse_acl_without_braces(self) -> None:
         """Test ACL parsing without braces (raw format)."""
-        quirk = FlextLdifQuirksServersTivoli()
-        acl_quirk = quirk.AclQuirk()
+        quirk = FlextLdifServersTivoli.Schema()
+        acl_quirk = quirk.Acl()
         acl_line = 'ibm-slapdaccesscontrol: access "read" permission "allow"'
         result = acl_quirk.parse_acl(acl_line)
         assert result.is_success
@@ -362,8 +360,8 @@ class TestTivoliAclQuirks:
 
     def test_convert_acl_to_rfc(self) -> None:
         """Test ACL conversion to RFC format."""
-        quirk = FlextLdifQuirksServersTivoli()
-        acl_quirk = quirk.AclQuirk()
+        quirk = FlextLdifServersTivoli.Schema()
+        acl_quirk = quirk.Acl()
         acl_data = FlextLdifModels.Acl(
             name="Tivoli ACL",
             target=FlextLdifModels.AclTarget(
@@ -388,8 +386,8 @@ class TestTivoliAclQuirks:
 
     def test_convert_acl_from_rfc(self) -> None:
         """Test ACL conversion from RFC format."""
-        quirk = FlextLdifQuirksServersTivoli()
-        acl_quirk = quirk.AclQuirk()
+        quirk = FlextLdifServersTivoli.Schema()
+        acl_quirk = quirk.Acl()
         rfc_data = FlextLdifModels.Acl(
             name="RFC ACL",
             target=FlextLdifModels.AclTarget(
@@ -411,12 +409,12 @@ class TestTivoliAclQuirks:
         assert result.is_success
         tivoli_data = result.unwrap()
         # Verify server_type was updated to tivoli
-        assert tivoli_data.server_type == "tivoli"
+        assert tivoli_data.server_type == FlextLdifConstants.ServerTypes.IBM_TIVOLI
 
     def test_write_acl_to_rfc_with_content(self) -> None:
         """Test writing ACL with existing content."""
-        quirk = FlextLdifQuirksServersTivoli()
-        acl_quirk = quirk.AclQuirk()
+        quirk = FlextLdifServersTivoli.Schema()
+        acl_quirk = quirk.Acl()
         acl_data = FlextLdifModels.Acl(
             name="Tivoli ACL",
             target=FlextLdifModels.AclTarget(
@@ -441,8 +439,8 @@ class TestTivoliAclQuirks:
 
     def test_write_acl_to_rfc_with_structured_fields(self) -> None:
         """Test writing ACL with structured fields."""
-        quirk = FlextLdifQuirksServersTivoli()
-        acl_quirk = quirk.AclQuirk()
+        quirk = FlextLdifServersTivoli.Schema()
+        acl_quirk = quirk.Acl()
         acl_data = FlextLdifModels.Acl(
             name="Tivoli ACL",
             target=FlextLdifModels.AclTarget(
@@ -467,8 +465,8 @@ class TestTivoliAclQuirks:
 
     def test_write_acl_to_rfc_empty_data(self) -> None:
         """Test writing ACL with empty data."""
-        quirk = FlextLdifQuirksServersTivoli()
-        acl_quirk = quirk.AclQuirk()
+        quirk = FlextLdifServersTivoli.Schema()
+        acl_quirk = quirk.Acl()
         acl_data = FlextLdifModels.Acl(
             name="Tivoli ACL",
             target=FlextLdifModels.AclTarget(
@@ -492,20 +490,20 @@ class TestTivoliAclQuirks:
         assert "ibm-slapdaccesscontrol:" in acl_str
 
 
-class TestTivoliEntryQuirks:
+class TestTivoliEntrys:
     """Tests for IBM Tivoli Directory Server entry quirk handling."""
 
     def test_initialization(self) -> None:
         """Test Tivoli entry quirk initialization."""
-        quirk = FlextLdifQuirksServersTivoli()
-        entry_quirk = quirk.EntryQuirk()
+        quirk = FlextLdifServersTivoli.Schema()
+        entry_quirk = quirk.Entry()
         assert entry_quirk.server_type == FlextLdifConstants.LdapServers.IBM_TIVOLI
         assert entry_quirk.priority == 15
 
     def test_can_handle_entry_tivoli_dn_marker(self) -> None:
         """Test entry detection by Tivoli DN markers."""
-        quirk = FlextLdifQuirksServersTivoli()
-        entry_quirk = quirk.EntryQuirk()
+        quirk = FlextLdifServersTivoli.Schema()
+        entry_quirk = quirk.Entry()
         assert entry_quirk.can_handle_entry(
             "cn=ibm,cn=configuration,o=Example",
             {FlextLdifConstants.DictKeys.OBJECTCLASS: ["top"]},
@@ -513,8 +511,8 @@ class TestTivoliEntryQuirks:
 
     def test_can_handle_entry_tivoli_attribute(self) -> None:
         """Test entry detection by ibm- prefixed attributes."""
-        quirk = FlextLdifQuirksServersTivoli()
-        entry_quirk = quirk.EntryQuirk()
+        quirk = FlextLdifServersTivoli.Schema()
+        entry_quirk = quirk.Entry()
         assert entry_quirk.can_handle_entry(
             "cn=test,o=Example",
             {
@@ -525,8 +523,8 @@ class TestTivoliEntryQuirks:
 
     def test_can_handle_entry_tivoli_objectclass(self) -> None:
         """Test entry detection by Tivoli objectClass."""
-        quirk = FlextLdifQuirksServersTivoli()
-        entry_quirk = quirk.EntryQuirk()
+        quirk = FlextLdifServersTivoli.Schema()
+        entry_quirk = quirk.Entry()
         assert entry_quirk.can_handle_entry(
             "cn=server,o=Example",
             {FlextLdifConstants.DictKeys.OBJECTCLASS: ["top", "ibm-ldapserver"]},
@@ -534,8 +532,8 @@ class TestTivoliEntryQuirks:
 
     def test_can_handle_entry_non_tivoli(self) -> None:
         """Test non-Tivoli entry rejection."""
-        quirk = FlextLdifQuirksServersTivoli()
-        entry_quirk = quirk.EntryQuirk()
+        quirk = FlextLdifServersTivoli.Schema()
+        entry_quirk = quirk.Entry()
         assert not entry_quirk.can_handle_entry(
             "cn=test,dc=example,dc=com",
             {FlextLdifConstants.DictKeys.OBJECTCLASS: ["person"], "cn": ["test"]},
@@ -543,8 +541,8 @@ class TestTivoliEntryQuirks:
 
     def test_process_entry_success(self) -> None:
         """Test successful Tivoli entry processing."""
-        quirk = FlextLdifQuirksServersTivoli()
-        entry_quirk = quirk.EntryQuirk()
+        quirk = FlextLdifServersTivoli.Schema()
+        entry_quirk = quirk.Entry()
         entry_dn = "cn=server,o=Example"
         attributes: dict[str, object] = {
             "objectclass": ["top", "ibm-ldapserver"],
@@ -563,8 +561,8 @@ class TestTivoliEntryQuirks:
 
     def test_process_entry_with_binary_data(self) -> None:
         """Test entry processing with binary data (base64 encoding)."""
-        quirk = FlextLdifQuirksServersTivoli()
-        entry_quirk = quirk.EntryQuirk()
+        quirk = FlextLdifServersTivoli.Schema()
+        entry_quirk = quirk.Entry()
         entry_dn = "cn=test,o=Example"
         binary_data = b"binary_content"
         attributes: dict[str, object] = {
@@ -581,8 +579,8 @@ class TestTivoliEntryQuirks:
 
     def test_convert_entry_to_rfc(self) -> None:
         """Test entry conversion to RFC format."""
-        quirk = FlextLdifQuirksServersTivoli()
-        entry_quirk = quirk.EntryQuirk()
+        quirk = FlextLdifServersTivoli.Schema()
+        entry_quirk = quirk.Entry()
         entry_data: dict[str, object] = {
             FlextLdifConstants.DictKeys.DN: "cn=server,o=Example",
             FlextLdifConstants.DictKeys.SERVER_TYPE: FlextLdifConstants.LdapServers.IBM_TIVOLI,

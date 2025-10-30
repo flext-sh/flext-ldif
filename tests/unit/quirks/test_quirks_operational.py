@@ -11,10 +11,9 @@ from __future__ import annotations
 
 import pytest
 
-from flext_ldif.constants import FlextLdifConstants
-from flext_ldif.quirks.conversion_matrix import FlextLdifQuirksConversionMatrix
-from flext_ldif.quirks.servers.oid_quirks import FlextLdifQuirksServersOid
-from flext_ldif.quirks.servers.oud_quirks import FlextLdifQuirksServersOud
+from flext_ldif.servers.oid import FlextLdifServersOid
+from flext_ldif.servers.oud import FlextLdifServersOud
+from flext_ldif.services.conversion_matrix import FlextLdifQuirksConversionMatrix
 
 from ...fixtures import FlextLdifFixtures
 from ...fixtures.helpers import (
@@ -29,9 +28,9 @@ class TestOidQuirksWithRealFixtures:
     """Test OID quirks with real fixture data."""
 
     @pytest.fixture
-    def oid_quirk(self) -> FlextLdifQuirksServersOid:
+    def oid_quirk(self) -> FlextLdifServersOid:
         """Create OID quirk instance."""
-        return FlextLdifQuirksServersOid(server_type=FlextLdifConstants.ServerTypes.OID)
+        return FlextLdifServersOid()
 
     @pytest.fixture
     def oid_schema_attributes(self, oid_fixtures: FlextLdifFixtures.OID) -> list[str]:
@@ -56,7 +55,7 @@ class TestOidQuirksWithRealFixtures:
     @pytest.mark.parametrize("attr_index", range(5))
     def test_parse_real_oid_attributes_from_fixtures(
         self,
-        oid_quirk: FlextLdifQuirksServersOid,
+        oid_quirk: FlextLdifServersOid,
         oid_schema_attributes: list[str],
         attr_index: int,
     ) -> None:
@@ -85,7 +84,7 @@ class TestOidQuirksWithRealFixtures:
     @pytest.mark.parametrize("oc_index", range(5))
     def test_parse_real_oid_objectclasses_from_fixtures(
         self,
-        oid_quirk: FlextLdifQuirksServersOid,
+        oid_quirk: FlextLdifServersOid,
         oid_schema_objectclasses: list[str],
         oc_index: int,
     ) -> None:
@@ -105,7 +104,7 @@ class TestOidQuirksWithRealFixtures:
 
     def test_parse_all_oid_attributes_success_rate(
         self,
-        oid_quirk: FlextLdifQuirksServersOid,
+        oid_quirk: FlextLdifServersOid,
         oid_schema_attributes: list[str],
     ) -> None:
         """Test that high percentage of real OID attributes parse successfully."""
@@ -140,14 +139,14 @@ class TestConversionMatrixWithRealFixtures:
         return FlextLdifQuirksConversionMatrix()
 
     @pytest.fixture
-    def oid_quirk(self) -> FlextLdifQuirksServersOid:
-        """Create OID quirk."""
-        return FlextLdifQuirksServersOid(server_type=FlextLdifConstants.ServerTypes.OID)
+    def oid_quirk(self) -> FlextLdifServersOid.Schema:
+        """Create OID schema quirk."""
+        return FlextLdifServersOid.Schema()
 
     @pytest.fixture
-    def oud_quirk(self) -> FlextLdifQuirksServersOud:
-        """Create OUD quirk."""
-        return FlextLdifQuirksServersOud(server_type=FlextLdifConstants.ServerTypes.OUD)
+    def oud_quirk(self) -> FlextLdifServersOud.Schema:
+        """Create OUD schema quirk."""
+        return FlextLdifServersOud.Schema()
 
     @pytest.fixture
     def oid_conversion_attributes(
@@ -163,8 +162,8 @@ class TestConversionMatrixWithRealFixtures:
     def test_oid_to_oud_conversion_with_real_attributes(
         self,
         matrix: FlextLdifQuirksConversionMatrix,
-        oid_quirk: FlextLdifQuirksServersOid,
-        oud_quirk: FlextLdifQuirksServersOud,
+        oid_quirk: FlextLdifServersOid,
+        oud_quirk: FlextLdifServersOud,
         oid_conversion_attributes: list[str],
     ) -> None:
         """Test OID→OUD conversion with real fixture attributes."""
@@ -199,8 +198,8 @@ class TestConversionMatrixWithRealFixtures:
     def test_roundtrip_oid_oud_oid_with_real_data(
         self,
         matrix: FlextLdifQuirksConversionMatrix,
-        oid_quirk: FlextLdifQuirksServersOid,
-        oud_quirk: FlextLdifQuirksServersOud,
+        oid_quirk: FlextLdifServersOid,
+        oud_quirk: FlextLdifServersOud,
         oid_conversion_attributes: list[str],
     ) -> None:
         """Test OID→OUD→OID roundtrip preserves essential data."""

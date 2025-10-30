@@ -24,9 +24,9 @@ from typing import Self, override
 
 from flext_core import FlextDecorators, FlextResult, FlextService
 
-from flext_ldif import FlextLdifModels
 from flext_ldif.config import FlextLdifConfig
 from flext_ldif.constants import FlextLdifConstants
+from flext_ldif.models import FlextLdifModels
 from flext_ldif.typings import FlextLdifTypes
 
 
@@ -46,7 +46,9 @@ class FlextLdifSchemaBuilder(FlextService[FlextLdifConfig]):
 
     @override
     def __init__(
-        self, *, server_type: str = FlextLdifConstants.ServerTypes.GENERIC
+        self,
+        *,
+        server_type: str = FlextLdifConstants.ServerTypes.GENERIC,
     ) -> None:
         """Initialize schema builder with Phase 1 context enrichment."""
         super().__init__()
@@ -188,7 +190,7 @@ class FlextLdifSchemaBuilder(FlextService[FlextLdifConfig]):
             # Check computed field: is_empty
             if schema_result.is_empty and self.logger:
                 self.logger.warning(
-                    "Building empty schema (no attributes or object classes)"
+                    "Building empty schema (no attributes or object classes)",
                 )
 
             # Return model directly wrapped in FlextResult
@@ -198,7 +200,7 @@ class FlextLdifSchemaBuilder(FlextService[FlextLdifConfig]):
             if self.logger:
                 self.logger.exception("Schema building failed")
             return FlextResult[FlextLdifModels.SchemaBuilderResult].fail(
-                f"Failed to create schema: {e}"
+                f"Failed to create schema: {e}",
             )
 
     def reset(self) -> Self:
@@ -227,15 +229,20 @@ class FlextLdifSchemaBuilder(FlextService[FlextLdifConfig]):
         return (
             self.reset()
             .add_attribute(
-                FlextLdifConstants.DictKeys.CN, "Common Name", single_value=True
+                FlextLdifConstants.DictKeys.CN,
+                "Common Name",
+                single_value=True,
             )
             .add_attribute(FlextLdifConstants.DictKeys.SN, "Surname", single_value=True)
             .add_attribute(
-                FlextLdifConstants.DictKeys.UID, "User ID", single_value=True
+                FlextLdifConstants.DictKeys.UID,
+                "User ID",
+                single_value=True,
             )
             .add_attribute(FlextLdifConstants.DictKeys.MAIL, "Email Address")
             .add_attribute(
-                FlextLdifConstants.DictKeys.TELEPHONE_NUMBER, "Telephone Number"
+                FlextLdifConstants.DictKeys.TELEPHONE_NUMBER,
+                "Telephone Number",
             )
             .add_attribute(FlextLdifConstants.DictKeys.OBJECTCLASS, "Object Class")
             .add_object_class(
@@ -275,11 +282,14 @@ class FlextLdifSchemaBuilder(FlextService[FlextLdifConfig]):
         return (
             self.reset()
             .add_attribute(
-                FlextLdifConstants.DictKeys.CN, "Common Name", single_value=True
+                FlextLdifConstants.DictKeys.CN,
+                "Common Name",
+                single_value=True,
             )
             .add_attribute(FlextLdifConstants.DictKeys.MEMBER, "Group Member")
             .add_attribute(
-                FlextLdifConstants.DictKeys.UNIQUE_MEMBER, "Unique Group Member"
+                FlextLdifConstants.DictKeys.UNIQUE_MEMBER,
+                "Unique Group Member",
             )
             .add_attribute(FlextLdifConstants.DictKeys.OBJECTCLASS, "Object Class")
             .add_object_class(
@@ -348,12 +358,12 @@ class FlextLdifSchemaValidator(FlextService[dict[str, object]]):
 
             # Validate objectClass presence
             object_classes = entry.get_attribute_values(
-                FlextLdifConstants.DictKeys.OBJECTCLASS
+                FlextLdifConstants.DictKeys.OBJECTCLASS,
             )
             if not object_classes:
                 errors.append(
                     f"Entry {idx} ({entry.dn.value}): Missing "
-                    f"{FlextLdifConstants.DictKeys.OBJECTCLASS} attribute"
+                    f"{FlextLdifConstants.DictKeys.OBJECTCLASS} attribute",
                 )
 
             # In strict mode, perform additional validation
@@ -371,12 +381,12 @@ class FlextLdifSchemaValidator(FlextService[dict[str, object]]):
                 if not entry.get_attribute_values(FlextLdifConstants.DictKeys.CN):
                     errors.append(
                         f"Entry {idx} ({entry.dn.value}): Missing required attribute "
-                        f"{FlextLdifConstants.DictKeys.CN} for person objectClass"
+                        f"{FlextLdifConstants.DictKeys.CN} for person objectClass",
                     )
                 if not entry.get_attribute_values(FlextLdifConstants.DictKeys.SN):
                     errors.append(
                         f"Entry {idx} ({entry.dn.value}): Missing required attribute "
-                        f"{FlextLdifConstants.DictKeys.SN} for person objectClass"
+                        f"{FlextLdifConstants.DictKeys.SN} for person objectClass",
                     )
 
         # Build validation result
@@ -410,7 +420,7 @@ class FlextLdifSchemaValidator(FlextService[dict[str, object]]):
         ]
 
         entry_object_classes: list[str] = entry.get_attribute_values(
-            FlextLdifConstants.DictKeys.OBJECTCLASS
+            FlextLdifConstants.DictKeys.OBJECTCLASS,
         )
         issues: list[str] = [
             f"{FlextLdifConstants.DictKeys.OBJECTCLASS} '{oc}' not in discovered schema"
@@ -426,7 +436,7 @@ class FlextLdifSchemaValidator(FlextService[dict[str, object]]):
         }
 
         return FlextResult[FlextLdifTypes.Models.ValidationReportData].ok(
-            validation_result
+            validation_result,
         )
 
     def validate_objectclass_requirements(
@@ -447,7 +457,7 @@ class FlextLdifSchemaValidator(FlextService[dict[str, object]]):
         issues: list[str] = []
         entry_attrs = set(entry.attributes.attributes.keys())
         entry_object_classes: list[str] = entry.get_attribute_values(
-            FlextLdifConstants.DictKeys.OBJECTCLASS
+            FlextLdifConstants.DictKeys.OBJECTCLASS,
         )
 
         for oc_name in entry_object_classes:
@@ -472,7 +482,7 @@ class FlextLdifSchemaValidator(FlextService[dict[str, object]]):
         }
 
         return FlextResult[FlextLdifTypes.Models.ValidationReportData].ok(
-            validation_result
+            validation_result,
         )
 
 

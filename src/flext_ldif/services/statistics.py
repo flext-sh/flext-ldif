@@ -124,7 +124,7 @@ class FlextLdifStatisticsService(FlextService[dict[str, object]]):
             })
         except (ValueError, TypeError, AttributeError) as e:
             return FlextResult[dict[str, object]].fail(
-                f"Failed to generate statistics: {e}"
+                f"Failed to generate statistics: {e}",
             )
 
 

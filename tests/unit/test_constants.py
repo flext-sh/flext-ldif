@@ -61,7 +61,7 @@ class TestFlextLdifConstants:
     def test_ldif_validation_constants(self) -> None:
         """Test LdifValidation constants."""
         assert FlextLdifConstants.LdifValidation.MIN_DN_COMPONENTS == 1
-        assert FlextLdifConstants.LdifValidation.MAX_DN_LENGTH == 255
+        assert FlextLdifConstants.LdifValidation.MAX_DN_LENGTH == 2048
         assert FlextLdifConstants.LdifValidation.MAX_ATTRIBUTES_PER_ENTRY == 1000
         assert FlextLdifConstants.LdifValidation.MAX_VALUES_PER_ATTRIBUTE == 100
         assert FlextLdifConstants.LdifValidation.MAX_ATTRIBUTE_VALUE_LENGTH == 10000
@@ -75,7 +75,7 @@ class TestFlextLdifConstants:
     def test_object_classes_constants(self) -> None:
         """Test ObjectClasses constants."""
         assert "person" in FlextLdifConstants.ObjectClasses.LDAP_PERSON_CLASSES
-        assert "groupofnames" in FlextLdifConstants.ObjectClasses.LDAP_GROUP_CLASSES
+        assert "groupOfNames" in FlextLdifConstants.ObjectClasses.LDAP_GROUP_CLASSES
 
     def test_encoding_constants(self) -> None:
         """Test Encoding constants."""

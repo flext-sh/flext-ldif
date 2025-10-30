@@ -12,8 +12,8 @@ from __future__ import annotations
 
 import pytest
 
-from flext_ldif.quirks.conversion_matrix import FlextLdifQuirksConversionMatrix
-from flext_ldif.quirks.dn_case_registry import FlextLdifDnCaseRegistry
+from flext_ldif.services.conversion_matrix import FlextLdifQuirksConversionMatrix
+from flext_ldif.services.dn_case_registry import FlextLdifDnCaseRegistry
 
 
 class TestDnCaseRegistry:

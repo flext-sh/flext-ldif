@@ -14,8 +14,8 @@ from pathlib import Path
 
 import pytest
 
-from flext_ldif.migration_pipeline import FlextLdifMigrationPipeline
-from flext_ldif.quirks.registry import FlextLdifQuirksRegistry
+from flext_ldif.services.migration_pipeline import FlextLdifMigrationPipeline
+from flext_ldif.services.registry import FlextLdifRegistry
 
 
 class TestMigrationPipelineInitialization:
@@ -54,7 +54,6 @@ class TestMigrationPipelineInitialization:
             "output_dir": str(output_dir),
         }
 
-        registry = FlextLdifQuirksRegistry()
         # Type cast for params - explicit dict[str, object] comprehension
         params_obj: dict[str, object] = dict(params.items())
 
@@ -62,7 +61,6 @@ class TestMigrationPipelineInitialization:
             params=params_obj,
             source_server_type="oid",
             target_server_type="oud",
-            quirk_registry=registry,
         )
 
         assert pipeline is not None
@@ -248,7 +246,7 @@ class TestMigrationPipelineExecution:
 class TestDefaultQuirkRegistration:
     """Test suite for default quirk registration."""
 
-    def test_oid_quirks_auto_registered(self, tmp_path: Path) -> None:
+    def test_oid_auto_registered(self, tmp_path: Path) -> None:
         """Test OID quirks are automatically registered when needed."""
         input_dir = tmp_path / "input"
         output_dir = tmp_path / "output"
@@ -260,7 +258,7 @@ class TestDefaultQuirkRegistration:
         }
 
         # Create pipeline with OID as source - should trigger registration
-        registry = FlextLdifQuirksRegistry()
+        registry = FlextLdifRegistry()
         # Type cast for params - explicit dict[str, object] comprehension
         params_obj: dict[str, object] = dict(params.items())
 
@@ -268,7 +266,6 @@ class TestDefaultQuirkRegistration:
             params=params_obj,
             source_server_type="oid",
             target_server_type="openldap",
-            quirk_registry=registry,
         )
 
         # Check quirks were registered
@@ -293,7 +290,7 @@ class TestDefaultQuirkRegistration:
         }
 
         # Create pipeline with OUD as target - should trigger registration
-        registry = FlextLdifQuirksRegistry()
+        registry = FlextLdifRegistry()
         # Type cast for params - explicit dict[str, object] comprehension
         params_obj: dict[str, object] = dict(params.items())
 
@@ -301,7 +298,6 @@ class TestDefaultQuirkRegistration:
             params=params_obj,
             source_server_type="openldap",
             target_server_type="oud",
-            quirk_registry=registry,
         )
 
         # Check quirks were registered
@@ -325,14 +321,13 @@ class TestDefaultQuirkRegistration:
             "output_dir": str(output_dir),
         }
 
-        registry = FlextLdifQuirksRegistry()
+        registry = FlextLdifRegistry()
 
         # Create first pipeline - registers quirks
         FlextLdifMigrationPipeline(
             params=params,
             source_server_type="oid",
             target_server_type="oud",
-            quirk_registry=registry,
         )
 
         # Get initial quirk counts
@@ -349,7 +344,6 @@ class TestDefaultQuirkRegistration:
             params=params,
             source_server_type="oid",
             target_server_type="oud",
-            quirk_registry=registry,
         )
 
         # Counts should be the same (no duplicates)
@@ -528,7 +522,7 @@ class TestMigrateEntriesMethod:
 class TestQuirkRegistration:
     """Test suite for automatic quirk registration."""
 
-    def test_oid_quirks_registered_when_source(self, tmp_path: Path) -> None:
+    def test_oid_registered_when_source(self, tmp_path: Path) -> None:
         """Test OID quirks are registered when OID is source."""
         input_dir = tmp_path / "input"
         output_dir = tmp_path / "output"
@@ -539,13 +533,12 @@ class TestQuirkRegistration:
             "output_dir": str(output_dir),
         }
 
-        registry = FlextLdifQuirksRegistry()
+        registry = FlextLdifRegistry()
 
         FlextLdifMigrationPipeline(
             params=params,
             source_server_type="oid",
             target_server_type="oud",
-            quirk_registry=registry,
         )
 
         # OID quirks should be registered
@@ -563,13 +556,12 @@ class TestQuirkRegistration:
             "output_dir": str(output_dir),
         }
 
-        registry = FlextLdifQuirksRegistry()
+        registry = FlextLdifRegistry()
 
         FlextLdifMigrationPipeline(
             params=params,
             source_server_type="openldap",
             target_server_type="oud",
-            quirk_registry=registry,
         )
 
         # OUD quirks should be registered
@@ -587,14 +579,13 @@ class TestQuirkRegistration:
             "output_dir": str(output_dir),
         }
 
-        registry = FlextLdifQuirksRegistry()
+        registry = FlextLdifRegistry()
 
         # Create two pipelines with same registry
         FlextLdifMigrationPipeline(
             params=params,
             source_server_type="oid",
             target_server_type="oud",
-            quirk_registry=registry,
         )
 
         initial_quirks_count = len(registry.get_schema_quirks("oid"))
@@ -603,7 +594,6 @@ class TestQuirkRegistration:
             params=params,
             source_server_type="oid",
             target_server_type="oud",
-            quirk_registry=registry,
         )
 
         # Should not add duplicate quirks

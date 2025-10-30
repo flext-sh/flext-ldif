@@ -8,11 +8,8 @@ Test suite verifying LDIF operations against an actual LDAP server:
     - Perform CRUD operations
     - Process batches of entries
 
-Requirements:
-    - OpenLDAP test container on localhost:3390
-    - Environment variables:
-        LDAP_HOST, LDAP_PORT, LDAP_ADMIN_DN,
-        LDAP_ADMIN_PASSWORD, LDAP_BASE_DN
+Uses Docker fixture infrastructure from conftest.py for automatic
+container management via FlextTestsDocker.ldap_container fixture.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -32,17 +29,28 @@ from ldap3 import ALL, MODIFY_ADD, MODIFY_REPLACE, Connection, Server
 from flext_ldif import FlextLdif
 
 # LDAP connection details for flext-openldap-test container
-LDAP_HOST = os.getenv("LDAP_HOST", "localhost")
-LDAP_PORT = int(os.getenv("LDAP_PORT", "3390"))
-LDAP_ADMIN_DN = os.getenv("LDAP_ADMIN_DN", "cn=admin,dc=flext,dc=local")
-LDAP_ADMIN_PASSWORD = os.getenv("LDAP_ADMIN_PASSWORD", "admin123")
-LDAP_BASE_DN = os.getenv("LDAP_BASE_DN", "dc=flext,dc=local")
+LDAP_ADMIN_DN = "cn=admin,dc=flext,dc=local"
+LDAP_ADMIN_PASSWORD = "admin123"
+LDAP_BASE_DN = "dc=flext,dc=local"
 
 
 @pytest.fixture(scope="module")
-def ldap_connection() -> Generator[Connection]:
-    """Create connection to real LDAP server."""
-    server = Server(f"{LDAP_HOST}:{LDAP_PORT}", get_info=ALL)
+def ldap_connection(ldap_container: str) -> Generator[Connection]:
+    """Create connection to real LDAP server via Docker fixture.
+
+    Args:
+        ldap_container: Docker LDAP connection string from conftest fixture
+
+    Yields:
+        Connection: ldap3 connection to LDAP server
+
+    """
+    # ldap_container is a connection URL provided by the Docker fixture
+    # Extract host:port from the connection string
+    # Expected format: "ldap://localhost:3390"
+    host_port = ldap_container.replace("ldap://", "").replace("ldaps://", "")
+
+    server = Server(f"ldap://{host_port}", get_info=ALL)
     conn = Connection(
         server,
         user=LDAP_ADMIN_DN,
@@ -52,9 +60,9 @@ def ldap_connection() -> Generator[Connection]:
     # Check if server is available
     try:
         if not conn.bind():
-            pytest.skip(f"LDAP server not available at {LDAP_HOST}:{LDAP_PORT}")
-    except Exception:
-        pytest.skip(f"LDAP server not available at {LDAP_HOST}:{LDAP_PORT}")
+            pytest.skip(f"LDAP server not available at {host_port}")
+    except Exception as e:
+        pytest.skip(f"LDAP server not available at {host_port}: {e}")
 
     yield conn
     conn.unbind()
@@ -128,6 +136,9 @@ def flext_api() -> FlextLdif:
     return FlextLdif.get_instance()
 
 
+@pytest.mark.docker
+@pytest.mark.integration
+@pytest.mark.real_ldap
 class TestRealLdapExport:
     """Test LDIF export from real LDAP server."""
 
@@ -375,6 +386,9 @@ class TestRealLdapExport:
         assert "cn=Admins" in ldif_output
 
 
+@pytest.mark.docker
+@pytest.mark.integration
+@pytest.mark.real_ldap
 class TestRealLdapImport:
     """Test LDIF import to real LDAP server."""
 
@@ -401,24 +415,31 @@ mail: import@example.com
 
         entry = entries[0]
 
+        # Extract object classes (not included in attributes dict)
+        object_classes = entry.get_attribute_values("objectclass")
+        if not isinstance(object_classes, list):
+            # Convert to list if needed
+            object_classes = list(object_classes) if object_classes else []
+
         # Convert FlextLdif entry attributes to dict format for ldap3
+        # EXCLUDE objectclass as it's passed separately to ldap3.add()
         attrs_dict = {}
         for attr_name, attr_values in entry.attributes.attributes.items():
-            # attr_values is AttributeValues object, get the actual values list
-            attrs_dict[attr_name] = (
-                attr_values
-                if hasattr(attr_values, "values")
-                else [str(attr_values)]
-            )
+            # Skip objectclass - it's handled separately
+            if attr_name.lower() == "objectclass":
+                continue
+            # Extract actual list of strings from AttributeValues
+            if isinstance(attr_values, list):
+                # Already a list
+                attrs_dict[attr_name] = attr_values
+            elif hasattr(attr_values, "values"):
+                # AttributeValues object with values property
+                attrs_dict[attr_name] = list(attr_values.values)
+            else:
+                # Single value or other type - convert to list
+                attrs_dict[attr_name] = [str(attr_values)]
 
         # Import to LDAP
-        # get_attribute_values returns AttributeValues object, need to extract actual values
-        oc_attr_values = entry.get_attribute_values("objectclass")
-        if hasattr(oc_attr_values, "values"):
-            object_classes = oc_attr_values
-        else:
-            object_classes = list(oc_attr_values) if oc_attr_values else []
-
         ldap_connection.add(
             str(entry.dn),
             object_classes,
@@ -488,6 +509,9 @@ jpegPhoto:: {encoded_photo}
         assert imported_entry["jpegPhoto"].value == binary_data
 
 
+@pytest.mark.docker
+@pytest.mark.integration
+@pytest.mark.real_ldap
 class TestRealLdapRoundtrip:
     """Test LDAP → LDIF → LDAP data roundtrip."""
 
@@ -525,9 +549,7 @@ class TestRealLdapRoundtrip:
             # Extract values from ldap3 Attribute object
             if hasattr(attr_obj, "values"):
                 # ldap3 Attribute object with .values property
-                values = [
-                    str(v) if not isinstance(v, str) else v for v in attr_obj
-                ]
+                values = [str(v) if not isinstance(v, str) else v for v in attr_obj]
             elif isinstance(attr_obj, list):
                 # Already a list
                 values = [str(v) for v in attr_obj]
@@ -588,6 +610,9 @@ class TestRealLdapRoundtrip:
         )
 
 
+@pytest.mark.docker
+@pytest.mark.integration
+@pytest.mark.real_ldap
 class TestRealLdapValidation:
     """Test LDIF validation against real LDAP schema."""
 
@@ -641,6 +666,9 @@ cn: Invalid Entry
         assert validation_result.is_success or validation_result.is_failure
 
 
+@pytest.mark.docker
+@pytest.mark.integration
+@pytest.mark.real_ldap
 class TestRealLdapModify:
     """Test LDAP modification operations with LDIF."""
 
@@ -676,9 +704,7 @@ class TestRealLdapModify:
             # Extract values from ldap3 Attribute object
             if hasattr(attr_obj, "values"):
                 # ldap3 Attribute object with .values property
-                values = [
-                    str(v) if not isinstance(v, str) else v for v in attr_obj
-                ]
+                values = [str(v) if not isinstance(v, str) else v for v in attr_obj]
             elif isinstance(attr_obj, list):
                 # Already a list
                 values = [str(v) for v in attr_obj]
@@ -742,6 +768,9 @@ telephoneNumber: +1-555-9999
         assert "+1-555-9999" in modified_entry["telephoneNumber"].values
 
 
+@pytest.mark.docker
+@pytest.mark.integration
+@pytest.mark.real_ldap
 class TestRealLdapAnalytics:
     """Test LDIF analytics on real LDAP data."""
 
@@ -780,9 +809,7 @@ class TestRealLdapAnalytics:
                 attr_obj = entry[attr_name]
                 # Extract values from ldap3 Attribute object
                 if hasattr(attr_obj, "values"):
-                    values = [
-                        str(v) if not isinstance(v, str) else v for v in attr_obj
-                    ]
+                    values = [str(v) if not isinstance(v, str) else v for v in attr_obj]
                 elif isinstance(attr_obj, list):
                     values = [str(v) for v in attr_obj]
                 else:
@@ -814,6 +841,9 @@ class TestRealLdapAnalytics:
         assert "inetOrgPerson" in obj_class_dist
 
 
+@pytest.mark.docker
+@pytest.mark.integration
+@pytest.mark.real_ldap
 class TestRealLdapFileOperations:
     """Test LDIF file operations with real LDAP data."""
 
@@ -844,9 +874,7 @@ class TestRealLdapFileOperations:
             # Extract values from ldap3 Attribute object
             if hasattr(attr_obj, "values"):
                 # ldap3 Attribute object with .values property
-                values = [
-                    str(v) if not isinstance(v, str) else v for v in attr_obj
-                ]
+                values = [str(v) if not isinstance(v, str) else v for v in attr_obj]
             elif isinstance(attr_obj, list):
                 # Already a list
                 values = [str(v) for v in attr_obj]
@@ -900,24 +928,31 @@ mail: import@example.com
 
         entry = entries[0]
 
+        # Extract object classes (not included in attributes dict)
+        object_classes = entry.get_attribute_values("objectclass")
+        if not isinstance(object_classes, list):
+            # Convert to list if needed
+            object_classes = list(object_classes) if object_classes else []
+
         # Convert FlextLdif entry attributes to dict format for ldap3
+        # EXCLUDE objectclass as it's passed separately to ldap3.add()
         attrs_dict = {}
         for attr_name, attr_values in entry.attributes.attributes.items():
-            # attr_values is AttributeValues object, get the actual values list
-            attrs_dict[attr_name] = (
-                attr_values
-                if hasattr(attr_values, "values")
-                else [str(attr_values)]
-            )
+            # Skip objectclass - it's handled separately
+            if attr_name.lower() == "objectclass":
+                continue
+            # Extract actual list of strings from AttributeValues
+            if isinstance(attr_values, list):
+                # Already a list
+                attrs_dict[attr_name] = attr_values
+            elif hasattr(attr_values, "values"):
+                # AttributeValues object with values property
+                attrs_dict[attr_name] = list(attr_values.values)
+            else:
+                # Single value or other type - convert to list
+                attrs_dict[attr_name] = [str(attr_values)]
 
         # Import to LDAP
-        # get_attribute_values returns AttributeValues object, need to extract actual values
-        oc_attr_values = entry.get_attribute_values("objectclass")
-        if hasattr(oc_attr_values, "values"):
-            object_classes = oc_attr_values
-        else:
-            object_classes = list(oc_attr_values) if oc_attr_values else []
-
         ldap_connection.add(
             str(entry.dn),
             object_classes,
@@ -932,6 +967,9 @@ mail: import@example.com
         assert imported["cn"].value == "File Import"
 
 
+@pytest.mark.docker
+@pytest.mark.integration
+@pytest.mark.real_ldap
 class TestRealLdapCRUD:
     """Test CRUD operations with LDAP server."""
 
@@ -990,6 +1028,9 @@ class TestRealLdapCRUD:
         assert not result or len(ldap_connection.entries) == 0
 
 
+@pytest.mark.docker
+@pytest.mark.integration
+@pytest.mark.real_ldap
 class TestRealLdapBatchOperations:
     """Test batch processing operations with real LDAP server."""
 
@@ -1018,18 +1059,33 @@ class TestRealLdapBatchOperations:
         # Write to LDAP in batch
         ldap_entries = []
         for entry in entries:
+            # Extract object classes (not included in attributes dict)
+            object_classes = entry.get_attribute_values("objectclass")
+            if not isinstance(object_classes, list):
+                # Convert to list if needed
+                object_classes = list(object_classes) if object_classes else []
+
             # Build attributes dict from FlextLdif entry
+            # EXCLUDE objectclass as it's passed separately to ldap3.add()
             attrs_dict = {}
             for attr_name, attr_values in entry.attributes.attributes.items():
-                attrs_dict[attr_name] = (
-                    attr_values
-                    if hasattr(attr_values, "values")
-                    else [str(attr_values)]
-                )
+                # Skip objectclass - it's handled separately
+                if attr_name.lower() == "objectclass":
+                    continue
+                # Extract actual list of strings from AttributeValues
+                if isinstance(attr_values, list):
+                    # Already a list
+                    attrs_dict[attr_name] = attr_values
+                elif hasattr(attr_values, "values"):
+                    # AttributeValues object with values property
+                    attrs_dict[attr_name] = list(attr_values.values)
+                else:
+                    # Single value or other type - convert to list
+                    attrs_dict[attr_name] = [str(attr_values)]
 
             ldap_connection.add(
                 str(entry.dn),
-                entry.get_attribute_values("objectclass"),
+                object_classes,
                 attrs_dict,
             )
             ldap_entries.append(entry.dn)
@@ -1086,9 +1142,7 @@ class TestRealLdapBatchOperations:
                 attr_obj = entry[attr_name]
                 # Extract values from ldap3 Attribute object
                 if hasattr(attr_obj, "values"):
-                    values = [
-                        str(v) if not isinstance(v, str) else v for v in attr_obj
-                    ]
+                    values = [str(v) if not isinstance(v, str) else v for v in attr_obj]
                 elif isinstance(attr_obj, list):
                     values = [str(v) for v in attr_obj]
                 else:
@@ -1116,6 +1170,9 @@ class TestRealLdapBatchOperations:
         assert len(parsed_entries) == actual_count
 
 
+@pytest.mark.docker
+@pytest.mark.integration
+@pytest.mark.real_ldap
 class TestRealLdapConfigurationFromEnv:
     """Test configuration loading from .env file."""
 
@@ -1158,6 +1215,9 @@ class TestRealLdapConfigurationFromEnv:
         assert large_workers <= config.max_workers
 
 
+@pytest.mark.docker
+@pytest.mark.integration
+@pytest.mark.real_ldap
 class TestRealLdapRailwayComposition:
     """Test railway-oriented FlextResult composition with real LDAP."""
 
@@ -1188,9 +1248,7 @@ class TestRealLdapRailwayComposition:
             # Extract values from ldap3 Attribute object
             if hasattr(attr_obj, "values"):
                 # ldap3 Attribute object with .values property
-                values = [
-                    str(v) if not isinstance(v, str) else v for v in attr_obj
-                ]
+                values = [str(v) if not isinstance(v, str) else v for v in attr_obj]
             elif isinstance(attr_obj, list):
                 # Already a list
                 values = [str(v) for v in attr_obj]

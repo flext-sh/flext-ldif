@@ -17,8 +17,9 @@ Original: 252 lines | Optimized: ~140 lines (44% reduction)
 from __future__ import annotations
 
 from pathlib import Path
+from typing import cast
 
-from flext_ldif import FlextLdif
+from flext_ldif import FlextLdif, FlextLdifModels
 
 
 def parse_with_server_quirks_example() -> None:
@@ -35,10 +36,12 @@ mail: server@example.com
 
     # Library automates server-specific parsing - no manual quirk handling!
     servers = ["rfc", "oid", "oud", "openldap"]
-    results = {
-        server: api.parse(ldif_content, server_type=server).unwrap_or([])
-        for server in servers
-    }
+    results: dict[str, list[FlextLdifModels.Entry]] = {}
+    for server in servers:
+        parse_result = api.parse(ldif_content, server_type=server)
+        if parse_result.is_success:
+            entries = parse_result.unwrap()
+            results[server] = entries if isinstance(entries, list) else []
 
     print(
         "Parsed with quirks: "
@@ -63,10 +66,13 @@ cn: schema
 """
 
     # Railway pattern with dict[str, object] comprehension - auto error handling
-    results = {
-        server: len(api.parse(ldif_content, server_type=server).unwrap_or([]))
-        for server in ["rfc", "oid", "oud", "openldap"]
-    }
+    results: dict[str, int] = {}
+    for server in ["rfc", "oid", "oud", "openldap"]:
+        parse_result = api.parse(ldif_content, server_type=server)
+        if parse_result.is_success:
+            entries = parse_result.unwrap()
+            if isinstance(entries, list):
+                results[server] = len(entries)
 
     print(f"Comparison: {results}")
 
@@ -106,8 +112,7 @@ cn: schema
         process_entries=True,
     ).map(
         lambda stats: (
-            f"Migrated {stats.get('total_entries', 0)} entries "
-            f"in {stats.get('total_files', 0)} files"
+            f"Migrated {stats.entry_count} entries in {len(stats.output_files)} files"
         )
     )
 
@@ -142,11 +147,11 @@ mail: openldap@example.com
         process_entries=True,
     )
 
-    print(
-        f"OpenLDAP→OUD: {result.unwrap().get('total_entries', 0)} entries"
-        if result.is_success
-        else f"Error: {result.error}"
-    )
+    if result.is_success:
+        stats = result.unwrap()
+        print(f"OpenLDAP→OUD: {stats.entry_count} entries")
+    else:
+        print(f"Error: {result.error}")
 
 
 def migrate_to_rfc_compliant() -> None:
@@ -193,7 +198,7 @@ sn: Test
     if parse_result.is_failure:
         return
 
-    entries = parse_result.unwrap()
+    entries = cast("list[FlextLdifModels.Entry]", parse_result.unwrap())
     validation_result = api.validate_entries(entries)
 
     if validation_result.is_failure:
@@ -201,7 +206,7 @@ sn: Test
 
     report = validation_result.unwrap()
 
-    if not report.get("is_valid", False):
+    if not report.is_valid:
         return
 
     # Analyze
@@ -210,13 +215,13 @@ sn: Test
         return
 
     # Write result
-    result = api.write(entries)
+    write_result = api.write(entries)
 
-    print(
-        f"Pipeline: {len(result.unwrap())} bytes"
-        if result.is_success
-        else f"Error: {result.error}"
-    )
+    if write_result.is_success:
+        output = write_result.unwrap()
+        print(f"Pipeline: {len(output)} bytes")
+    else:
+        print(f"Error: {write_result.error}")
 
 
 if __name__ == "__main__":

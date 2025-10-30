@@ -3,15 +3,26 @@
     {
       "dn": "cn=John Michael Smith,ou=Engineering,ou=People,dc=company,dc=example,dc=com",
       "attributes": {
-        "objectClass": ["inetOrgPerson", "organizationalPerson", "person", "top"],
+        "objectClass": [
+          "inetOrgPerson",
+          "organizationalPerson",
+          "person",
+          "top"
+        ],
         "cn": ["John Michael Smith", "J.M. Smith", "John Smith"],
         "sn": ["Smith"],
         "givenName": ["John"],
-        "mail": ["jsmith@company.example.com", "john.smith@company.example.com", "j.m.smith@company.example.com"],
+        "mail": [
+          "jsmith@company.example.com",
+          "john.smith@company.example.com",
+          "j.m.smith@company.example.com"
+        ],
         "telephoneNumber": ["+1 (555) 123-4567", "+1 (555) 123-4568"],
         "mobile": ["+1 (555) 987-6543", "+1 (555) 987-6544"],
         "title": ["Senior Software Engineer", "Team Lead"],
-        "description": ["Experienced software engineer with expertise in enterprise systems and directory services implementation and LDAP architecture design"],
+        "description": [
+          "Experienced software engineer with expertise in enterprise systems and directory services implementation and LDAP architecture design"
+        ],
         "street": ["123 Oak Street", "Suite 456"],
         "l": ["San Francisco"],
         "st": ["California"],
@@ -26,6 +37,11 @@
   "valid": true,
   "metadata": {
     "type": "boundary_case",
-    "test_aspects": ["multi_valued_attributes", "line_folding", "complex_dn", "special_attributes"]
+    "test_aspects": [
+      "multi_valued_attributes",
+      "line_folding",
+      "complex_dn",
+      "special_attributes"
+    ]
   }
 }

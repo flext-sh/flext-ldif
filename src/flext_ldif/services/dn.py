@@ -129,7 +129,7 @@ class FlextLdifDnService(FlextService[dict[str, object]]):
             return FlextResult[list[tuple[str, str, str]]].ok(components)
         except (ValueError, TypeError, AttributeError, LDAPInvalidDnError) as e:
             return FlextResult[list[tuple[str, str, str]]].fail(
-                f"Invalid DN format (RFC 4514): {e}"
+                f"Invalid DN format (RFC 4514): {e}",
             )
 
     def validate_format(self, dn: str) -> FlextResult[bool]:
@@ -255,7 +255,9 @@ class FlextLdifDnService(FlextService[dict[str, object]]):
         # Remove backslash before characters that don't need escaping (e.g., \- \. \_ etc.)
         # Pattern: \X where X is NOT a special character -> X
         cleaned = re.sub(
-            FlextLdifConstants.DnPatterns.DN_UNNECESSARY_ESCAPES, r"\1", cleaned
+            FlextLdifConstants.DnPatterns.DN_UNNECESSARY_ESCAPES,
+            r"\1",
+            cleaned,
         )
 
         # Normalize multiple spaces to single space
@@ -264,7 +266,8 @@ class FlextLdifDnService(FlextService[dict[str, object]]):
         return cleaned.strip()
 
     def build_canonical_dn_map(
-        self, categorized: dict[str, list[dict[str, object]]]
+        self,
+        categorized: dict[str, list[dict[str, object]]],
     ) -> FlextResult[dict[str, str]]:
         """Build mapping of lowercase(cleaned DN) -> canonical cleaned DN.
 
@@ -342,7 +345,8 @@ class FlextLdifDnService(FlextService[dict[str, object]]):
                         ]
                     elif isinstance(attr_value, str):
                         new_attrs[attr_name] = self.normalize_dn_value(
-                            attr_value, dn_map
+                            attr_value,
+                            dn_map,
                         )
                     else:
                         new_attrs[attr_name] = attr_value
@@ -353,11 +357,13 @@ class FlextLdifDnService(FlextService[dict[str, object]]):
             return FlextResult[dict[str, object]].ok(normalized)
         except (ValueError, TypeError, AttributeError) as e:
             return FlextResult[dict[str, object]].fail(
-                f"Failed to normalize DN references: {e}"
+                f"Failed to normalize DN references: {e}",
             )
 
     def normalize_aci_dn_references(
-        self, entry: dict[str, object], dn_map: dict[str, str]
+        self,
+        entry: dict[str, object],
+        dn_map: dict[str, str],
     ) -> FlextResult[dict[str, object]]:
         """Normalize DNs embedded in ACI attribute strings using dn_map.
 
@@ -386,7 +392,9 @@ class FlextLdifDnService(FlextService[dict[str, object]]):
                     return f"ldap:///{norm}"
 
                 text2 = re.sub(
-                    FlextLdifConstants.DnPatterns.ACI_LDAP_URL_PATTERN, repl_ldap, text
+                    FlextLdifConstants.DnPatterns.ACI_LDAP_URL_PATTERN,
+                    repl_ldap,
+                    text,
                 )
 
                 # Also handle bare quoted DN-like sequences (best-effort)
@@ -414,7 +422,7 @@ class FlextLdifDnService(FlextService[dict[str, object]]):
             return FlextResult[dict[str, object]].ok(entry_out)
         except (ValueError, TypeError, AttributeError) as e:
             return FlextResult[dict[str, object]].fail(
-                f"Failed to normalize ACI DN references: {e}"
+                f"Failed to normalize ACI DN references: {e}",
             )
 
 

@@ -32,6 +32,11 @@
   "metadata": {
     "type": "rfc_operation",
     "operation_type": "modify",
-    "test_aspects": ["changetype_directive", "modify_operation", "add_operation", "delete_operation"]
+    "test_aspects": [
+      "changetype_directive",
+      "modify_operation",
+      "add_operation",
+      "delete_operation"
+    ]
   }
 }

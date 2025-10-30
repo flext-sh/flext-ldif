@@ -18,7 +18,10 @@
         "olcDbDirectory": ["/var/lib/ldap"],
         "olcDbMaxsize": ["1073741824"],
         "olcDbIndex": ["objectClass eq", "cn pres,eq,sub", "mail pres,eq,sub"],
-        "olcAccess": ["to attrs=userPassword by self write by anonymous auth by * none", "to * by self write by users read by * none"]
+        "olcAccess": [
+          "to attrs=userPassword by self write by anonymous auth by * none",
+          "to * by self write by users read by * none"
+        ]
       }
     },
     {
@@ -37,6 +40,12 @@
   "metadata": {
     "type": "server_specific",
     "server": "OpenLDAP 2.x",
-    "test_aspects": ["configuration_entries", "database_config", "access_control", "overlay_config", "replication_setup"]
+    "test_aspects": [
+      "configuration_entries",
+      "database_config",
+      "access_control",
+      "overlay_config",
+      "replication_setup"
+    ]
   }
 }

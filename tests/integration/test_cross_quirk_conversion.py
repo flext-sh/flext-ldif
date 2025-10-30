@@ -18,11 +18,11 @@ from __future__ import annotations
 import pytest
 
 from flext_ldif.constants import FlextLdifConstants
-from flext_ldif.quirks.conversion_matrix import (
+from flext_ldif.servers.oid import FlextLdifServersOid
+from flext_ldif.servers.oud import FlextLdifServersOud
+from flext_ldif.services.conversion_matrix import (
     FlextLdifQuirksConversionMatrix,
 )
-from flext_ldif.quirks.servers.oid_quirks import FlextLdifQuirksServersOid
-from flext_ldif.quirks.servers.oud_quirks import FlextLdifQuirksServersOud
 
 from ..fixtures.loader import FlextLdifFixtures
 
@@ -31,14 +31,14 @@ class TestOidToOudSchemaConversion:
     """Test OID schema → OUD schema conversion."""
 
     @pytest.fixture
-    def oid_quirk(self) -> FlextLdifQuirksServersOid:
+    def oid_quirk(self) -> FlextLdifServersOid.Schema:
         """Create OID quirk instance."""
-        return FlextLdifQuirksServersOid(server_type=FlextLdifConstants.ServerTypes.OID)
+        return FlextLdifServersOid.Schema()
 
     @pytest.fixture
-    def oud_quirk(self) -> FlextLdifQuirksServersOud:
+    def oud_quirk(self) -> FlextLdifServersOud.Schema:
         """Create OUD quirk instance."""
-        return FlextLdifQuirksServersOud(server_type=FlextLdifConstants.ServerTypes.OUD)
+        return FlextLdifServersOud.Schema()
 
     @pytest.fixture
     def oid_schema_fixture(self) -> str:
@@ -48,8 +48,8 @@ class TestOidToOudSchemaConversion:
 
     def test_convert_oid_attribute_to_oud(
         self,
-        oid_quirk: FlextLdifQuirksServersOid,
-        oud_quirk: FlextLdifQuirksServersOud,
+        oid_quirk: FlextLdifServersOid.Schema,
+        oud_quirk: FlextLdifServersOud.Schema,
     ) -> None:
         """Test converting OID attribute definition to OUD format."""
         # OID attribute definition
@@ -86,8 +86,8 @@ class TestOidToOudSchemaConversion:
 
     def test_convert_oid_objectclass_to_oud(
         self,
-        oid_quirk: FlextLdifQuirksServersOid,
-        oud_quirk: FlextLdifQuirksServersOud,
+        oid_quirk: FlextLdifServersOid.Schema,
+        oud_quirk: FlextLdifServersOud.Schema,
     ) -> None:
         """Test converting OID objectClass definition to OUD format."""
         # OID objectClass definition
@@ -135,22 +135,18 @@ class TestOidToOudAclConversion:
     """
 
     @pytest.fixture
-    def oid_acl_quirk(self) -> FlextLdifQuirksServersOid.AclQuirk:
+    def oid_acl_quirk(self) -> FlextLdifServersOid.Acl:
         """Create OID ACL quirk instance."""
-        return FlextLdifQuirksServersOid.AclQuirk(
-            server_type=FlextLdifConstants.ServerTypes.OID
-        )
+        return FlextLdifServersOid.Acl()
 
     @pytest.fixture
-    def oud_acl_quirk(self) -> FlextLdifQuirksServersOud.AclQuirk:
+    def oud_acl_quirk(self) -> FlextLdifServersOud.Acl:
         """Create OUD ACL quirk instance."""
-        return FlextLdifQuirksServersOud.AclQuirk(
-            server_type=FlextLdifConstants.ServerTypes.OUD
-        )
+        return FlextLdifServersOud.Acl()
 
     def test_oid_acl_parsing_and_roundtrip(
         self,
-        oid_acl_quirk: FlextLdifQuirksServersOid.AclQuirk,
+        oid_acl_quirk: FlextLdifServersOid.Acl,
     ) -> None:
         """Test OID ACL parsing and round-trip within OID format."""
         # OID ACL definition
@@ -174,7 +170,7 @@ class TestOidToOudAclConversion:
 
     def test_oud_acl_parsing_and_roundtrip(
         self,
-        oud_acl_quirk: FlextLdifQuirksServersOud.AclQuirk,
+        oud_acl_quirk: FlextLdifServersOud.Acl,
     ) -> None:
         """Test OUD ACL parsing and round-trip within OUD format."""
         # OUD ACI format
@@ -186,10 +182,8 @@ class TestOidToOudAclConversion:
         parsed_data = parse_result.unwrap()
 
         # Verify parsed data structure (Acl object, not dict)
-        assert parsed_data.server_type in {
-            "oud",
-            "oracle_oud",
-        }  # OUD ACL format variants
+        # Note: Parsed ACL is converted to generic (RFC) format after parsing OUD-specific format
+        assert parsed_data.server_type == "generic"
         assert hasattr(parsed_data, "target")  # Has target field
         assert hasattr(parsed_data, "name")  # Has name field
         assert hasattr(parsed_data, "metadata")  # Has metadata field
@@ -207,14 +201,14 @@ class TestOidToOudIntegrationConversion:
     """Test complete OID fixture → OUD conversion workflow."""
 
     @pytest.fixture
-    def oid_quirk(self) -> FlextLdifQuirksServersOid:
+    def oid_quirk(self) -> FlextLdifServersOid.Schema:
         """Create OID quirk instance."""
-        return FlextLdifQuirksServersOid(server_type=FlextLdifConstants.ServerTypes.OID)
+        return FlextLdifServersOid.Schema()
 
     @pytest.fixture
-    def oud_quirk(self) -> FlextLdifQuirksServersOud:
+    def oud_quirk(self) -> FlextLdifServersOud.Schema:
         """Create OUD quirk instance."""
-        return FlextLdifQuirksServersOud(server_type=FlextLdifConstants.ServerTypes.OUD)
+        return FlextLdifServersOud.Schema()
 
     @pytest.fixture
     def oid_schema_fixture(self) -> str:
@@ -224,8 +218,8 @@ class TestOidToOudIntegrationConversion:
 
     def test_convert_oid_schema_fixture_to_oud(
         self,
-        oid_quirk: FlextLdifQuirksServersOid,
-        oud_quirk: FlextLdifQuirksServersOud,
+        oid_quirk: FlextLdifServersOid.Schema,
+        oud_quirk: FlextLdifServersOud.Schema,
         oid_schema_fixture: str,
     ) -> None:
         """Test converting OID schema fixture to OUD format."""
@@ -284,14 +278,14 @@ class TestQuirksConversionMatrixFacade:
         return FlextLdifQuirksConversionMatrix()
 
     @pytest.fixture
-    def oud(self) -> FlextLdifQuirksServersOud:
+    def oud(self) -> FlextLdifServersOud:
         """Create OUD quirk instance."""
-        return FlextLdifQuirksServersOud(server_type=FlextLdifConstants.ServerTypes.OUD)
+        return FlextLdifServersOud(server_type=FlextLdifConstants.ServerTypes.OUD)
 
     @pytest.fixture
-    def oid(self) -> FlextLdifQuirksServersOid:
+    def oid(self) -> FlextLdifServersOid:
         """Create OID quirk instance."""
-        return FlextLdifQuirksServersOid(server_type=FlextLdifConstants.ServerTypes.OID)
+        return FlextLdifServersOid(server_type=FlextLdifConstants.ServerTypes.OID)
 
     def test_matrix_instantiation(
         self, matrix: FlextLdifQuirksConversionMatrix
@@ -300,7 +294,7 @@ class TestQuirksConversionMatrixFacade:
         assert matrix is not None
 
     def test_get_supported_conversions(
-        self, matrix: FlextLdifQuirksConversionMatrix, oud: FlextLdifQuirksServersOud
+        self, matrix: FlextLdifQuirksConversionMatrix, oud: FlextLdifServersOud
     ) -> None:
         """Test checking supported conversions."""
         supported = matrix.get_supported_conversions(oud)
@@ -317,8 +311,8 @@ class TestQuirksConversionMatrixFacade:
     def test_convert_attribute_oud_to_oid(
         self,
         matrix: FlextLdifQuirksConversionMatrix,
-        oud: FlextLdifQuirksServersOud,
-        oid: FlextLdifQuirksServersOid,
+        oud: FlextLdifServersOud,
+        oid: FlextLdifServersOid,
     ) -> None:
         """Test converting attribute via matrix facade."""
         oud_attr = (
@@ -336,8 +330,8 @@ class TestQuirksConversionMatrixFacade:
     def test_convert_objectclass_oid_to_oud(
         self,
         matrix: FlextLdifQuirksConversionMatrix,
-        oud: FlextLdifQuirksServersOud,
-        oid: FlextLdifQuirksServersOid,
+        oud: FlextLdifServersOud,
+        oid: FlextLdifServersOid,
     ) -> None:
         """Test converting objectClass via matrix facade."""
         oid_oc = (
@@ -354,8 +348,8 @@ class TestQuirksConversionMatrixFacade:
     def test_batch_convert_attributes(
         self,
         matrix: FlextLdifQuirksConversionMatrix,
-        oud: FlextLdifQuirksServersOud,
-        oid: FlextLdifQuirksServersOid,
+        oud: FlextLdifServersOud,
+        oid: FlextLdifServersOid,
     ) -> None:
         """Test batch conversion via matrix facade."""
         oud_attrs = [
@@ -374,8 +368,8 @@ class TestQuirksConversionMatrixFacade:
     def test_bidirectional_conversion(
         self,
         matrix: FlextLdifQuirksConversionMatrix,
-        oud: FlextLdifQuirksServersOud,
-        oid: FlextLdifQuirksServersOid,
+        oud: FlextLdifServersOud,
+        oid: FlextLdifServersOid,
     ) -> None:
         """Test bidirectional conversion OUD ↔ OID."""
         original = (
@@ -400,8 +394,8 @@ class TestQuirksConversionMatrixFacade:
     def test_invalid_data_type(
         self,
         matrix: FlextLdifQuirksConversionMatrix,
-        oud: FlextLdifQuirksServersOud,
-        oid: FlextLdifQuirksServersOid,
+        oud: FlextLdifServersOud,
+        oid: FlextLdifServersOid,
     ) -> None:
         """Test error handling for invalid data type."""
         result = matrix.convert(oud, oid, "DataType", "test")

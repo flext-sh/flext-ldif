@@ -44,10 +44,9 @@ from __future__ import annotations
 
 import pytest
 
-from flext_ldif.constants import FlextLdifConstants
-from flext_ldif.quirks.conversion_matrix import FlextLdifQuirksConversionMatrix
-from flext_ldif.quirks.servers.oid_quirks import FlextLdifQuirksServersOid
-from flext_ldif.quirks.servers.oud_quirks import FlextLdifQuirksServersOud
+from flext_ldif.servers.oid import FlextLdifServersOid
+from flext_ldif.servers.oud import FlextLdifServersOud
+from flext_ldif.services.conversion_matrix import FlextLdifQuirksConversionMatrix
 
 
 class TestOIDSubjectTypesConversion:
@@ -59,20 +58,20 @@ class TestOIDSubjectTypesConversion:
         return FlextLdifQuirksConversionMatrix()
 
     @pytest.fixture
-    def oid_quirk(self) -> FlextLdifQuirksServersOid:
+    def oid_quirk(self) -> FlextLdifServersOid:
         """Create OID quirk."""
-        return FlextLdifQuirksServersOid(server_type=FlextLdifConstants.ServerTypes.OID)
+        return FlextLdifServersOid()
 
     @pytest.fixture
-    def oud_quirk(self) -> FlextLdifQuirksServersOud:
+    def oud_quirk(self) -> FlextLdifServersOud:
         """Create OUD quirk."""
-        return FlextLdifQuirksServersOud(server_type=FlextLdifConstants.ServerTypes.OUD)
+        return FlextLdifServersOud()
 
     def test_oid_self_subject_to_oud(
         self,
         conversion_matrix: FlextLdifQuirksConversionMatrix,
-        oid_quirk: FlextLdifQuirksServersOid,
-        oud_quirk: FlextLdifQuirksServersOud,
+        oid_quirk: FlextLdifServersOid,
+        oud_quirk: FlextLdifServersOud,
     ) -> None:
         """Test OID 'by self' subject conversion to OUD 'userdn=ldap:///self'.
 
@@ -97,8 +96,8 @@ class TestOIDSubjectTypesConversion:
     def test_oid_dnattr_subject_to_oud(
         self,
         conversion_matrix: FlextLdifQuirksConversionMatrix,
-        oid_quirk: FlextLdifQuirksServersOid,
-        oud_quirk: FlextLdifQuirksServersOud,
+        oid_quirk: FlextLdifServersOid,
+        oud_quirk: FlextLdifServersOud,
     ) -> None:
         """Test OID 'by dnattr=(attr)' subject conversion to OUD 'userattr=attr#LDAPURL'.
 
@@ -124,8 +123,8 @@ class TestOIDSubjectTypesConversion:
     def test_oid_guidattr_subject_to_oud(
         self,
         conversion_matrix: FlextLdifQuirksConversionMatrix,
-        oid_quirk: FlextLdifQuirksServersOid,
-        oud_quirk: FlextLdifQuirksServersOud,
+        oid_quirk: FlextLdifServersOid,
+        oud_quirk: FlextLdifServersOud,
     ) -> None:
         """Test OID 'by guidattr=(attr)' subject conversion to OUD 'userattr=attr#USERDN'.
 
@@ -151,8 +150,8 @@ class TestOIDSubjectTypesConversion:
     def test_oid_groupattr_subject_to_oud(
         self,
         conversion_matrix: FlextLdifQuirksConversionMatrix,
-        oid_quirk: FlextLdifQuirksServersOid,
-        oud_quirk: FlextLdifQuirksServersOud,
+        oid_quirk: FlextLdifServersOid,
+        oud_quirk: FlextLdifServersOud,
     ) -> None:
         """Test OID 'by groupattr=(attr)' subject conversion to OUD 'userattr=attr#GROUPDN'.
 
@@ -178,8 +177,8 @@ class TestOIDSubjectTypesConversion:
     def test_oid_user_dn_subject_to_oud(
         self,
         conversion_matrix: FlextLdifQuirksConversionMatrix,
-        oid_quirk: FlextLdifQuirksServersOid,
-        oud_quirk: FlextLdifQuirksServersOud,
+        oid_quirk: FlextLdifServersOid,
+        oud_quirk: FlextLdifServersOud,
     ) -> None:
         """Test OID user DN subject conversion to OUD 'userdn=ldap:///dn'.
 
@@ -209,20 +208,20 @@ class TestOIDPermissionsConversion:
         return FlextLdifQuirksConversionMatrix()
 
     @pytest.fixture
-    def oid_quirk(self) -> FlextLdifQuirksServersOid:
+    def oid_quirk(self) -> FlextLdifServersOid:
         """Create OID quirk."""
-        return FlextLdifQuirksServersOid(server_type=FlextLdifConstants.ServerTypes.OID)
+        return FlextLdifServersOid()
 
     @pytest.fixture
-    def oud_quirk(self) -> FlextLdifQuirksServersOud:
+    def oud_quirk(self) -> FlextLdifServersOud:
         """Create OUD quirk."""
-        return FlextLdifQuirksServersOud(server_type=FlextLdifConstants.ServerTypes.OUD)
+        return FlextLdifServersOud()
 
     def test_oid_selfwrite_permission_to_oud(
         self,
         conversion_matrix: FlextLdifQuirksConversionMatrix,
-        oid_quirk: FlextLdifQuirksServersOid,
-        oud_quirk: FlextLdifQuirksServersOud,
+        oid_quirk: FlextLdifServersOid,
+        oud_quirk: FlextLdifServersOud,
     ) -> None:
         """Test OID 'selfwrite' permission conversion to OUD 'write'.
 
@@ -248,8 +247,8 @@ class TestOIDPermissionsConversion:
     def test_oid_browse_permission_mapping_to_oud(
         self,
         conversion_matrix: FlextLdifQuirksConversionMatrix,
-        oid_quirk: FlextLdifQuirksServersOid,
-        oud_quirk: FlextLdifQuirksServersOud,
+        oid_quirk: FlextLdifServersOid,
+        oud_quirk: FlextLdifServersOud,
     ) -> None:
         """Test OID 'browse' permission mapping to OUD 'read,search'.
 
@@ -277,8 +276,8 @@ class TestOIDPermissionsConversion:
     def test_oid_negative_permissions_to_oud(
         self,
         conversion_matrix: FlextLdifQuirksConversionMatrix,
-        oid_quirk: FlextLdifQuirksServersOid,
-        oud_quirk: FlextLdifQuirksServersOud,
+        oid_quirk: FlextLdifServersOid,
+        oud_quirk: FlextLdifServersOud,
     ) -> None:
         """Test OID negative permissions (nowrite, noadd) conversion to OUD deny rules.
 
@@ -313,20 +312,20 @@ class TestOIDAdvancedFeaturesConversion:
         return FlextLdifQuirksConversionMatrix()
 
     @pytest.fixture
-    def oid_quirk(self) -> FlextLdifQuirksServersOid:
+    def oid_quirk(self) -> FlextLdifServersOid:
         """Create OID quirk."""
-        return FlextLdifQuirksServersOid(server_type=FlextLdifConstants.ServerTypes.OID)
+        return FlextLdifServersOid()
 
     @pytest.fixture
-    def oud_quirk(self) -> FlextLdifQuirksServersOud:
+    def oud_quirk(self) -> FlextLdifServersOud:
         """Create OUD quirk."""
-        return FlextLdifQuirksServersOud(server_type=FlextLdifConstants.ServerTypes.OUD)
+        return FlextLdifServersOud()
 
     def test_oid_filter_conversion_to_oud(
         self,
         conversion_matrix: FlextLdifQuirksConversionMatrix,
-        oid_quirk: FlextLdifQuirksServersOid,
-        oud_quirk: FlextLdifQuirksServersOud,
+        oid_quirk: FlextLdifServersOid,
+        oud_quirk: FlextLdifServersOud,
     ) -> None:
         """Test OID filter conversion to OUD targetfilter.
 
@@ -353,8 +352,8 @@ class TestOIDAdvancedFeaturesConversion:
     def test_oid_orclentrylevelaci_with_constraint_to_oud(
         self,
         conversion_matrix: FlextLdifQuirksConversionMatrix,
-        oid_quirk: FlextLdifQuirksServersOid,
-        oud_quirk: FlextLdifQuirksServersOud,
+        oid_quirk: FlextLdifServersOid,
+        oud_quirk: FlextLdifServersOud,
     ) -> None:
         """Test OID orclentrylevelaci with added_object_constraint to OUD targattrfilters.
 
@@ -381,8 +380,8 @@ class TestOIDAdvancedFeaturesConversion:
     def test_oid_multiple_by_clauses_to_oud(
         self,
         conversion_matrix: FlextLdifQuirksConversionMatrix,
-        oid_quirk: FlextLdifQuirksServersOid,
-        oud_quirk: FlextLdifQuirksServersOud,
+        oid_quirk: FlextLdifServersOid,
+        oud_quirk: FlextLdifServersOud,
     ) -> None:
         """Test OID ACL with multiple 'by' clauses conversion to OUD multiple permission rules.
 
@@ -409,8 +408,8 @@ class TestOIDAdvancedFeaturesConversion:
     def test_oid_attribute_target_to_oud(
         self,
         conversion_matrix: FlextLdifQuirksConversionMatrix,
-        oid_quirk: FlextLdifQuirksServersOid,
-        oud_quirk: FlextLdifQuirksServersOud,
+        oid_quirk: FlextLdifServersOid,
+        oud_quirk: FlextLdifServersOud,
     ) -> None:
         """Test OID attribute-level ACL conversion to OUD targetattr.
 
@@ -441,20 +440,20 @@ class TestOUDSubjectTypesConversion:
         return FlextLdifQuirksConversionMatrix()
 
     @pytest.fixture
-    def oid_quirk(self) -> FlextLdifQuirksServersOid:
+    def oid_quirk(self) -> FlextLdifServersOid:
         """Create OID quirk."""
-        return FlextLdifQuirksServersOid(server_type=FlextLdifConstants.ServerTypes.OID)
+        return FlextLdifServersOid()
 
     @pytest.fixture
-    def oud_quirk(self) -> FlextLdifQuirksServersOud:
+    def oud_quirk(self) -> FlextLdifServersOud:
         """Create OUD quirk."""
-        return FlextLdifQuirksServersOud(server_type=FlextLdifConstants.ServerTypes.OUD)
+        return FlextLdifServersOud()
 
     def test_oud_self_userdn_to_oid(
         self,
         conversion_matrix: FlextLdifQuirksConversionMatrix,
-        oid_quirk: FlextLdifQuirksServersOid,
-        oud_quirk: FlextLdifQuirksServersOud,
+        oid_quirk: FlextLdifServersOid,
+        oud_quirk: FlextLdifServersOud,
     ) -> None:
         """Test OUD 'userdn=ldap:///self' conversion to OID 'by self'.
 
@@ -479,8 +478,8 @@ class TestOUDSubjectTypesConversion:
     def test_oud_userattr_ldapurl_to_oid(
         self,
         conversion_matrix: FlextLdifQuirksConversionMatrix,
-        oid_quirk: FlextLdifQuirksServersOid,
-        oud_quirk: FlextLdifQuirksServersOud,
+        oid_quirk: FlextLdifServersOid,
+        oud_quirk: FlextLdifServersOud,
     ) -> None:
         """Test OUD 'userattr=attr#LDAPURL' conversion to OID 'by dnattr=(attr)'.
 
@@ -513,20 +512,20 @@ class TestOUDAdvancedFeaturesConversion:
         return FlextLdifQuirksConversionMatrix()
 
     @pytest.fixture
-    def oid_quirk(self) -> FlextLdifQuirksServersOid:
+    def oid_quirk(self) -> FlextLdifServersOid:
         """Create OID quirk."""
-        return FlextLdifQuirksServersOid(server_type=FlextLdifConstants.ServerTypes.OID)
+        return FlextLdifServersOid()
 
     @pytest.fixture
-    def oud_quirk(self) -> FlextLdifQuirksServersOud:
+    def oud_quirk(self) -> FlextLdifServersOud:
         """Create OUD quirk."""
-        return FlextLdifQuirksServersOud(server_type=FlextLdifConstants.ServerTypes.OUD)
+        return FlextLdifServersOud()
 
     def test_oud_targetscope_to_oid(
         self,
         conversion_matrix: FlextLdifQuirksConversionMatrix,
-        oid_quirk: FlextLdifQuirksServersOid,
-        oud_quirk: FlextLdifQuirksServersOud,
+        oid_quirk: FlextLdifServersOid,
+        oud_quirk: FlextLdifServersOud,
     ) -> None:
         """Test OUD targetscope conversion to OID (metadata preservation).
 
@@ -554,8 +553,8 @@ class TestOUDAdvancedFeaturesConversion:
     def test_oud_deny_rules_to_oid(
         self,
         conversion_matrix: FlextLdifQuirksConversionMatrix,
-        oid_quirk: FlextLdifQuirksServersOid,
-        oud_quirk: FlextLdifQuirksServersOud,
+        oid_quirk: FlextLdifServersOid,
+        oud_quirk: FlextLdifServersOud,
     ) -> None:
         """Test OUD deny rules conversion to OID negative permissions.
 
@@ -582,8 +581,8 @@ class TestOUDAdvancedFeaturesConversion:
     def test_oud_targetattr_negation_to_oid(
         self,
         conversion_matrix: FlextLdifQuirksConversionMatrix,
-        oid_quirk: FlextLdifQuirksServersOid,
-        oud_quirk: FlextLdifQuirksServersOud,
+        oid_quirk: FlextLdifServersOid,
+        oud_quirk: FlextLdifServersOud,
     ) -> None:
         """Test OUD targetattr negation (!= operator) conversion to OID.
 

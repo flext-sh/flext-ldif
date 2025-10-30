@@ -32,9 +32,9 @@ from typing import cast, override
 
 from flext_core import FlextDecorators, FlextResult, FlextService
 
-from flext_ldif import FlextLdifModels
 from flext_ldif.constants import FlextLdifConstants
-from flext_ldif.quirks.manager import FlextLdifQuirksManager
+from flext_ldif.models import FlextLdifModels
+from flext_ldif.services.manager import FlextLdifQuirksManager
 from flext_ldif.typings import FlextLdifTypes
 
 
@@ -258,7 +258,9 @@ class FlextLdifAclService(FlextService[dict[str, object]]):
 
         @override
         def __init__(
-            self, start_time: str | None = None, end_time: str | None = None
+            self,
+            start_time: str | None = None,
+            end_time: str | None = None,
         ) -> None:
             """Initialize time rule.
 
@@ -390,13 +392,17 @@ class FlextLdifAclService(FlextService[dict[str, object]]):
         self._quirks = quirks_manager or FlextLdifQuirksManager()
 
     def create_composite_rule(
-        self, operator: str = "AND"
+        self,
+        operator: str = "AND",
     ) -> FlextLdifAclService.CompositeAclRule:
         """Create composite ACL rule for combining multiple rules."""
         return self.CompositeAclRule(operator=operator)
 
     def create_permission_rule(
-        self, permission: str, *, required: bool = True
+        self,
+        permission: str,
+        *,
+        required: bool = True,
     ) -> FlextLdifAclService.PermissionRule:
         """Create permission-based ACL rule."""
         return self.PermissionRule(permission=permission, required=required)
@@ -410,19 +416,26 @@ class FlextLdifAclService(FlextService[dict[str, object]]):
         return self.TargetRule(target_dn=target_dn)
 
     def create_time_rule(
-        self, start_time: str | None = None, end_time: str | None = None
+        self,
+        start_time: str | None = None,
+        end_time: str | None = None,
     ) -> FlextLdifAclService.TimeRule:
         """Create time-based ACL rule."""
         return self.TimeRule(start_time=start_time, end_time=end_time)
 
     def create_group_rule(
-        self, group_dn: str, *, member_required: bool = True
+        self,
+        group_dn: str,
+        *,
+        member_required: bool = True,
     ) -> FlextLdifAclService.GroupRule:
         """Create group membership ACL rule."""
         return self.GroupRule(group_dn=group_dn, member_required=member_required)
 
     def extract_acls_from_entry(
-        self, entry: FlextLdifModels.Entry, server_type: str | None = None
+        self,
+        entry: FlextLdifModels.Entry,
+        server_type: str | None = None,
     ) -> FlextResult[list[FlextLdifModels.Acl]]:
         """Extract ACLs from LDIF entry using composite pattern.
 
@@ -437,11 +450,11 @@ class FlextLdifAclService(FlextService[dict[str, object]]):
         # Handle None entry case
         if entry is None:
             return FlextResult[list[FlextLdifModels.Acl]].fail(
-                "Invalid entry: Entry is None"
+                "Invalid entry: Entry is None",
             )
 
         acl_attr_result: FlextResult[str] = self._quirks.get_acl_attribute_name(
-            server_type
+            server_type,
         )
         if acl_attr_result.is_failure:
             error_msg = acl_attr_result.error or "Unknown ACL attribute error"
@@ -512,7 +525,9 @@ class FlextLdifAclService(FlextService[dict[str, object]]):
             return FlextResult[FlextLdifModels.Acl].fail(f"Failed to parse ACL: {e}")
 
     def evaluate_acl_rules(
-        self, rules: list[AclRule], context: dict[str, object]
+        self,
+        rules: list[AclRule],
+        context: dict[str, object],
     ) -> FlextResult[bool]:
         """Evaluate ACL rules against context using composite pattern."""
         # Handle None context case
@@ -571,7 +586,7 @@ class FlextLdifAclService(FlextService[dict[str, object]]):
             return FlextResult[FlextLdifModels.Acl].ok(acl)
         except (ValueError, TypeError, AttributeError) as e:
             return FlextResult[FlextLdifModels.Acl].fail(
-                f"Failed to parse OpenLDAP ACL: {e}"
+                f"Failed to parse OpenLDAP ACL: {e}",
             )
 
     def parse_389ds_acl(self, acl_string: str) -> FlextResult[FlextLdifModels.Acl]:
@@ -597,7 +612,7 @@ class FlextLdifAclService(FlextService[dict[str, object]]):
             return FlextResult[FlextLdifModels.Acl].ok(acl)
         except (ValueError, TypeError, AttributeError) as e:
             return FlextResult[FlextLdifModels.Acl].fail(
-                f"Failed to parse 389DS ACL: {e}"
+                f"Failed to parse 389DS ACL: {e}",
             )
 
     def parse_oracle_acl(
@@ -623,7 +638,7 @@ class FlextLdifAclService(FlextService[dict[str, object]]):
                 FlextLdifConstants.LdapServers.ORACLE_OUD,
             }:
                 return FlextResult[FlextLdifModels.Acl].fail(
-                    f"Unknown Oracle server type: {server_type}"
+                    f"Unknown Oracle server type: {server_type}",
                 )
 
             acl = FlextLdifModels.Acl(
@@ -637,11 +652,13 @@ class FlextLdifAclService(FlextService[dict[str, object]]):
             return FlextResult[FlextLdifModels.Acl].ok(acl)
         except (ValueError, TypeError, AttributeError) as e:
             return FlextResult[FlextLdifModels.Acl].fail(
-                f"Failed to parse Oracle ACL: {e}"
+                f"Failed to parse Oracle ACL: {e}",
             )
 
     def parse_acl(
-        self, acl_string: str, server_type: str
+        self,
+        acl_string: str,
+        server_type: str,
     ) -> FlextResult[FlextLdifModels.Acl]:
         """Parse ACL string based on server type.
 
@@ -664,11 +681,12 @@ class FlextLdifAclService(FlextService[dict[str, object]]):
             FlextLdifConstants.LdapServers.ORACLE_OUD,
         }:
             return self.parse_oracle_acl(
-                acl_string, cast("FlextLdifTypes.AclServerType", server_type)
+                acl_string,
+                cast("FlextLdifTypes.AclServerType", server_type),
             )
 
         return FlextResult[FlextLdifModels.Acl].fail(
-            f"Unsupported server type: {server_type}"
+            f"Unsupported server type: {server_type}",
         )
 
 

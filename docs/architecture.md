@@ -24,6 +24,7 @@ This document describes the architectural patterns and design decisions of FLEXT
 **Decision**: Move all modules to `src/flext_ldif/` root except `quirks/` subdirectory.
 
 **Rationale**:
+
 - **Simpler Navigation**: Direct file access without directory drilling
 - **Faster Imports**: Fewer nesting levels reduce import overhead
 - **Industry Standard**: Libraries like `requests`, `httpx`, `pydantic` use flat structure
@@ -75,25 +76,25 @@ src/flext_ldif/
     ├── entry_quirks.py
     ├── manager.py
     └── servers/               # Per-server implementations
-        ├── oid_quirks.py
+        ├── oid.py
         ├── oud_quirks.py
-        ├── openldap_quirks.py
-        ├── openldap1_quirks.py
-        ├── ad_quirks.py
-        ├── ds389_quirks.py
-        ├── apache_quirks.py
-        ├── novell_quirks.py
-        ├── tivoli_quirks.py
-        └── relaxed_quirks.py
+        ├── openldap.py
+        ├── openldap1.py
+        ├── ad.py
+        ├── ds389.py
+        ├── apache.py
+        ├── novell.py
+        ├── tivoli.py
+        └── relaxed.py
 ```
 
 **Import Pattern Changes (v1.0+)**:
 
 ```python
-# ✅ NEW (v1.0+): Flat imports
-from flext_ldif.rfc_ldif_parser import RfcLdifParser
-from flext_ldif.server_detector import FlextLdifServerDetector
-from flext_ldif.migration_pipeline import FlextLdifMigrationPipeline
+# ✅ NEW (v1.0+): Service imports
+from flext_ldif.services.rfc_ldif_parser import FlextLdifRfcLdifParser
+from flext_ldif.services.server_detector import FlextLdifServerDetector
+from flext_ldif.services.migration_pipeline import FlextLdifMigrationPipeline
 
 # ❌ OLD (v0.9): Nested imports (no longer valid)
 from flext_ldif.rfc.rfc_ldif_parser import RfcLdifParser
@@ -101,19 +102,21 @@ from flext_ldif.services.server_detector import FlextLdifServerDetector
 from flext_ldif.pipelines.migration_pipeline import FlextLdifMigrationPipeline
 
 # ✅ UNCHANGED: Quirks still use subdirectory
-from flext_ldif.quirks.registry import FlextLdifQuirksRegistry
-from flext_ldif.quirks.servers.oid_quirks import FlextLdifQuirksServersOid
+from flext_ldif.services.registry import FlextLdifRegistry
+from flext_ldif.servers.oid import FlextLdifServersOid
 ```
 
 **Quirks Subdirectory Exception**:
 
 The `quirks/` directory is kept as a subdirectory because:
+
 - **Domain Complexity**: 10+ server implementations require organization
 - **Pluggable Architecture**: Dynamic quirk registration system
 - **Clear Isolation**: Server-specific code separated from core
 - **Extensibility**: Easy to add new servers without cluttering root
 
 **Benefits of Flat Structure**:
+
 - 🚀 **50% faster navigation** - No directory drilling
 - 📦 **Smaller import paths** - 2-3 levels instead of 4-5
 - 🔍 **Better discoverability** - All modules visible at root
@@ -829,49 +832,49 @@ graph TB
 
 #### 1. Oracle Internet Directory (OID) - 477 Lines
 
-**File**: `src/flext_ldif/quirks/servers/oid_quirks.py`
+**File**: `src/flext_ldif/quirks/servers/oid.py`
 
-- ✅ SchemaQuirk with can*handle*\_, parse\_\_, convert\_\*\_to_rfc methods
-- ✅ Nested AclQuirk (134 lines, lines 208-341)
-- ✅ Nested EntryQuirk (135 lines, lines 343-477)
+- ✅ Schema with can*handle*\_, parse\_\_, convert\_\*\_to_rfc methods
+- ✅ Nested Acl (134 lines, lines 208-341)
+- ✅ Nested Entry (135 lines, lines 343-477)
 - ✅ Priority: 10 (high priority)
 
 #### 2. Oracle Unified Directory (OUD) - 422 Lines
 
 **File**: `src/flext_ldif/quirks/servers/oud_quirks.py`
 
-- ✅ SchemaQuirk with OUD-specific parsing
-- ✅ Nested AclQuirk (117 lines, lines 215-331)
-- ✅ Nested EntryQuirk (90 lines, lines 333-422)
+- ✅ Schema with OUD-specific parsing
+- ✅ Nested Acl (117 lines, lines 215-331)
+- ✅ Nested Entry (90 lines, lines 333-422)
 - ✅ Priority: 10 (high priority)
 
 #### 3. OpenLDAP 2.x - 529 Lines
 
-**File**: `src/flext_ldif/quirks/servers/openldap_quirks.py`
+**File**: `src/flext_ldif/quirks/servers/openldap.py`
 
-- ✅ SchemaQuirk with full method implementation
-- ✅ Nested AclQuirk (154 lines, lines 270-423)
-- ✅ Nested EntryQuirk (105 lines, lines 425-529)
+- ✅ Schema with full method implementation
+- ✅ Nested Acl (154 lines, lines 270-423)
+- ✅ Nested Entry (105 lines, lines 425-529)
 - ✅ Priority: 10 (high priority)
 
 #### 4. OpenLDAP 1.x - 520 Lines
 
-**File**: `src/flext_ldif/quirks/servers/openldap1_quirks.py`
+**File**: `src/flext_ldif/quirks/servers/openldap1.py`
 
-- ✅ SchemaQuirk with can*handle*\_, parse\_\_, convert\_\*\_to_rfc methods
-- ✅ Nested AclQuirk (143 lines, lines 284-426)
-- ✅ Nested EntryQuirk (93 lines, lines 428-520)
+- ✅ Schema with can*handle*\_, parse\_\_, convert\_\*\_to_rfc methods
+- ✅ Nested Acl (143 lines, lines 284-426)
+- ✅ Nested Entry (93 lines, lines 428-520)
 - ✅ Priority: 20 (lower priority than OpenLDAP 2.x)
 
 ### Stub Implementations (Ready for Enhancement)
 
 #### 5. Active Directory (AD) - 364 Lines STUB
 
-**File**: `src/flext_ldif/quirks/servers/ad_quirks.py`
+**File**: `src/flext_ldif/quirks/servers/ad.py`
 
-- ✅ Complete stub structure with SchemaQuirk
-- ✅ Nested AclQuirk (103 lines, lines 170-272)
-- ✅ Nested EntryQuirk (91 lines, lines 274-364)
+- ✅ Complete stub structure with Schema
+- ✅ Nested Acl (103 lines, lines 170-272)
+- ✅ Nested Entry (91 lines, lines 274-364)
 - ✅ Priority: 15 (medium priority)
 - ⚠️ All methods return `FlextResult.fail("not yet implemented")`
 
@@ -899,23 +902,23 @@ def parse_attribute(self, definition: str) -> FlextResult[FlextTypes.Dict]:
 
 Each server has a three-level quirk hierarchy:
 
-1. **SchemaQuirk**: Handles attributeType and objectClass parsing extensions
-2. **EntryQuirk** (nested): Handles entry transformation and validation
-3. **AclQuirk** (nested): Handles ACL parsing and transformation
+1. **Schema**: Handles attributeType and objectClass parsing extensions
+2. **Entry** (nested): Handles entry transformation and validation
+3. **Acl** (nested): Handles ACL parsing and transformation
 
 ```python
-class OidSchemaQuirk:
+class OidSchema:
     """Oracle Internet Directory schema quirk."""
 
     server_type: str = "oid"
     priority: int = 15  # Lower = higher priority
 
-    class OidEntryQuirk:
+    class OidEntry:
         """Nested entry quirk for OID."""
         def can_handle_entry(self, dn: str, attributes: dict) -> bool: ...
         def convert_entry_to_rfc(self, entry: dict) -> FlextResult[FlextTypes.Dict]: ...
 
-    class OidAclQuirk:
+    class OidAcl:
         """Nested ACL quirk for OID."""
         def can_handle_acl(self, acl_string: str) -> bool: ...
         def parse_acl(self, acl_string: str) -> FlextResult[FlextTypes.Dict]: ...
@@ -1071,15 +1074,15 @@ To add support for a new LDAP server:
 1. Create schema quirk in `src/flext_ldif/quirks/servers/{server}_quirks.py`
 2. Implement `can_handle_attribute()` and `parse_attribute()` methods
 3. Implement `can_handle_objectclass()` and `parse_objectclass()` methods
-4. Create nested `EntryQuirk` class if needed
-5. Create nested `AclQuirk` class if needed
+4. Create nested `Entry` class if needed
+5. Create nested `Acl` class if needed
 6. Set appropriate priority (10=high, 15=medium, 20=low)
 7. Register in quirks registry
 
 Example stub (ready for enhancement):
 
 ```python
-class AdSchemaQuirk:
+class AdSchema:
     """Active Directory schema quirk - STUB."""
     server_type: str = "ad"
     priority: int = 15
@@ -1096,7 +1099,7 @@ class AdSchemaQuirk:
 All quirks implement the same Protocol interface:
 
 ```python
-class SchemaQuirkProtocol(Protocol):
+class SchemaProtocol(Protocol):
     server_type: str
     priority: int
 

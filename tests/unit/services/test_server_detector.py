@@ -26,7 +26,7 @@ from pathlib import Path
 
 import pytest
 
-from flext_ldif.server_detector import FlextLdifServerDetector
+from flext_ldif.services.server_detector import FlextLdifServerDetector
 
 
 class TestServerDetectorOracleOid:

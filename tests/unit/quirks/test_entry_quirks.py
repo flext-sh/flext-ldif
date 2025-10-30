@@ -1,6 +1,6 @@
 """Test suite for entry quirks module.
 
-Comprehensive testing for FlextLdifEntryQuirks which handles entry adaptation
+Comprehensive testing for FlextLdifEntrys which handles entry adaptation
 and validation for server-specific quirks.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -11,16 +11,16 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_ldif.models import FlextLdifModels
-from flext_ldif.quirks.entry_quirks import FlextLdifEntryQuirks
-from flext_ldif.quirks.manager import FlextLdifQuirksManager
+from flext_ldif.services.entry_quirks import FlextLdifEntrys
+from flext_ldif.services.manager import FlextLdifQuirksManager
 
 
-class TestFlextLdifEntryQuirksInitialization:
+class TestFlextLdifEntrysInitialization:
     """Test suite for entry quirks initialization."""
 
     def test_initialization_default(self) -> None:
         """Test entry quirks initialization with default quirks manager."""
-        quirks = FlextLdifEntryQuirks()
+        quirks = FlextLdifEntrys()
 
         assert quirks is not None
         assert quirks._quirks is not None
@@ -29,7 +29,7 @@ class TestFlextLdifEntryQuirksInitialization:
     def test_initialization_custom_manager(self) -> None:
         """Test entry quirks initialization with custom quirks manager."""
         manager = FlextLdifQuirksManager(server_type="openldap")
-        quirks = FlextLdifEntryQuirks(quirks_manager=manager)
+        quirks = FlextLdifEntrys(quirks_manager=manager)
 
         assert quirks is not None
         assert quirks._quirks is manager
@@ -37,11 +37,11 @@ class TestFlextLdifEntryQuirksInitialization:
 
     def test_execute_service(self) -> None:
         """Test entry quirks service execution."""
-        quirks = FlextLdifEntryQuirks()
+        quirks = FlextLdifEntrys()
         result = quirks.execute()
 
         assert result.is_success
-        assert result.value["service"] == FlextLdifEntryQuirks
+        assert result.value["service"] == FlextLdifEntrys
         assert result.value["status"] == "ready"
 
 
@@ -50,7 +50,7 @@ class TestEntryAdaptation:
 
     def test_adapt_entry_generic_server(self) -> None:
         """Test adapting entry for generic LDAP server."""
-        quirks = FlextLdifEntryQuirks()
+        quirks = FlextLdifEntrys()
 
         # Create test entry
         entry_result = FlextLdifModels.Entry.create(
@@ -75,7 +75,7 @@ class TestEntryAdaptation:
 
     def test_adapt_entry_openldap(self) -> None:
         """Test adapting entry for OpenLDAP server."""
-        quirks = FlextLdifEntryQuirks()
+        quirks = FlextLdifEntrys()
 
         entry_result = FlextLdifModels.Entry.create(
             dn="cn=test,dc=example,dc=com",
@@ -95,7 +95,7 @@ class TestEntryAdaptation:
 
     def test_adapt_entry_active_directory(self) -> None:
         """Test adapting entry for Active Directory server."""
-        quirks = FlextLdifEntryQuirks()
+        quirks = FlextLdifEntrys()
 
         entry_result = FlextLdifModels.Entry.create(
             dn="cn=test,dc=example,dc=com",
@@ -129,7 +129,7 @@ class TestEntryAdaptation:
         """Test entry adaptation with attribute name mappings."""
         # Create custom manager with attribute mappings
         manager = FlextLdifQuirksManager(server_type="generic")
-        quirks = FlextLdifEntryQuirks(quirks_manager=manager)
+        quirks = FlextLdifEntrys(quirks_manager=manager)
 
         entry_result = FlextLdifModels.Entry.create(
             dn="cn=test,dc=example,dc=com",
@@ -147,7 +147,7 @@ class TestEntryAdaptation:
 
     def test_adapt_entry_invalid_server_type(self) -> None:
         """Test adapting entry with invalid server type."""
-        quirks = FlextLdifEntryQuirks()
+        quirks = FlextLdifEntrys()
 
         entry_result = FlextLdifModels.Entry.create(
             dn="cn=test,dc=example,dc=com",
@@ -163,7 +163,7 @@ class TestEntryAdaptation:
 
     def test_adapt_entry_no_target_server(self) -> None:
         """Test adapting entry without specifying target server."""
-        quirks = FlextLdifEntryQuirks()
+        quirks = FlextLdifEntrys()
 
         entry_result = FlextLdifModels.Entry.create(
             dn="cn=test,dc=example,dc=com",
@@ -183,7 +183,7 @@ class TestAttributeValueAdaptation:
 
     def test_adapt_objectclass_values(self) -> None:
         """Test adaptation of objectClass attribute values."""
-        quirks = FlextLdifEntryQuirks()
+        quirks = FlextLdifEntrys()
 
         entry_result = FlextLdifModels.Entry.create(
             dn="cn=test,dc=example,dc=com",
@@ -210,7 +210,7 @@ class TestAttributeValueAdaptation:
 
     def test_adapt_ad_special_attributes_lowercase(self) -> None:
         """Test Active Directory special attributes are lowercased."""
-        quirks = FlextLdifEntryQuirks()
+        quirks = FlextLdifEntrys()
 
         entry_result = FlextLdifModels.Entry.create(
             dn="cn=test,dc=example,dc=com",
@@ -239,7 +239,7 @@ class TestAttributeValueAdaptation:
 
     def test_adapt_regular_attributes_unchanged(self) -> None:
         """Test that regular attributes are not modified during adaptation."""
-        quirks = FlextLdifEntryQuirks()
+        quirks = FlextLdifEntrys()
 
         entry_result = FlextLdifModels.Entry.create(
             dn="cn=test,dc=example,dc=com",
@@ -264,7 +264,7 @@ class TestAttributeValueAdaptation:
 
     def test_adapt_attribute_values_invalid_server(self) -> None:
         """Test attribute value adaptation with invalid server type."""
-        quirks = FlextLdifEntryQuirks()
+        quirks = FlextLdifEntrys()
 
         # Test internal method directly
         adapted_values = quirks._adapt_attribute_values(
@@ -280,7 +280,7 @@ class TestEntryValidation:
 
     def test_validate_entry_generic_compliant(self) -> None:
         """Test validating compliant entry for generic server."""
-        quirks = FlextLdifEntryQuirks()
+        quirks = FlextLdifEntrys()
 
         entry_result = FlextLdifModels.Entry.create(
             dn="cn=test,dc=example,dc=com",
@@ -305,7 +305,7 @@ class TestEntryValidation:
 
     def test_validate_entry_missing_required_objectclass(self) -> None:
         """Test validation detects missing required object classes."""
-        quirks = FlextLdifEntryQuirks()
+        quirks = FlextLdifEntrys()
 
         entry_result = FlextLdifModels.Entry.create(
             dn="cn=test,dc=example,dc=com",
@@ -330,7 +330,7 @@ class TestEntryValidation:
 
     def test_validate_entry_missing_special_attributes(self) -> None:
         """Test validation detects missing special attributes as warnings."""
-        quirks = FlextLdifEntryQuirks()
+        quirks = FlextLdifEntrys()
 
         entry_result = FlextLdifModels.Entry.create(
             dn="cn=test,dc=example,dc=com",
@@ -353,7 +353,7 @@ class TestEntryValidation:
 
     def test_validate_entry_active_directory(self) -> None:
         """Test validating entry for Active Directory server."""
-        quirks = FlextLdifEntryQuirks()
+        quirks = FlextLdifEntrys()
 
         entry_result = FlextLdifModels.Entry.create(
             dn="cn=test,cn=users,dc=example,dc=com",
@@ -377,7 +377,7 @@ class TestEntryValidation:
 
     def test_validate_entry_invalid_server_type(self) -> None:
         """Test validation with invalid server type."""
-        quirks = FlextLdifEntryQuirks()
+        quirks = FlextLdifEntrys()
 
         entry_result = FlextLdifModels.Entry.create(
             dn="cn=test,dc=example,dc=com",
@@ -393,7 +393,7 @@ class TestEntryValidation:
 
     def test_validate_entry_no_server_type(self) -> None:
         """Test validation without specifying server type (defaults to generic)."""
-        quirks = FlextLdifEntryQuirks()
+        quirks = FlextLdifEntrys()
 
         entry_result = FlextLdifModels.Entry.create(
             dn="cn=test,dc=example,dc=com",
@@ -418,7 +418,7 @@ class TestDnFormatValidation:
         test_entry = FlextLdifModels.Entry.create(
             "cn=test,dc=example,dc=com", {"objectClass": ["person"]}
         ).unwrap()
-        quirks = FlextLdifEntryQuirks()
+        quirks = FlextLdifEntrys()
 
         # Use the entry validation which includes DN format validation
         validation_result = quirks.validate_entry(test_entry, "generic")
@@ -432,7 +432,7 @@ class TestDnFormatValidation:
 
     def test_validate_dn_format_active_directory_valid(self) -> None:
         """Test DN format validation for Active Directory."""
-        quirks = FlextLdifEntryQuirks()
+        quirks = FlextLdifEntrys()
 
         dn_result = quirks._validate_dn_format(
             "cn=test,cn=users,dc=example,dc=com", "ad"
@@ -456,14 +456,12 @@ class TestDnFormatValidation:
 
         # Create attributes with required objectClass
         attributes = FlextLdifModels.LdifAttributes(
-            attributes={
-                "objectClass": ["person"]
-            }
+            attributes={"objectClass": ["person"]}
         )
 
         # Create entry directly
         test_entry = FlextLdifModels.Entry(dn=dn_obj, attributes=attributes)
-        quirks = FlextLdifEntryQuirks()
+        quirks = FlextLdifEntrys()
 
         # Use the entry validation which includes DN format validation for AD server type
         validation_result = quirks.validate_entry(test_entry, "active_directory")
@@ -485,7 +483,7 @@ class TestDnFormatValidation:
         test_entry = FlextLdifModels.Entry.create(
             "OU=People,DC=Example,DC=COM", {"objectClass": ["organizationalUnit"]}
         ).unwrap()
-        quirks = FlextLdifEntryQuirks()
+        quirks = FlextLdifEntrys()
 
         # Use the entry validation which includes DN format validation
         validation_result = quirks.validate_entry(test_entry, "generic")
@@ -501,7 +499,7 @@ class TestDnFormatValidation:
         test_entry = FlextLdifModels.Entry.create(
             "cn=config,dc=example,dc=com", {"objectClass": ["top"]}
         ).unwrap()
-        quirks = FlextLdifEntryQuirks()
+        quirks = FlextLdifEntrys()
 
         # Use the entry validation which includes DN format validation
         validation_result = quirks.validate_entry(test_entry, "generic")
@@ -513,7 +511,7 @@ class TestDnFormatValidation:
 
     def test_validate_dn_format_unknown_attribute(self) -> None:
         """Test DN format validation detects unknown DN attributes."""
-        quirks = FlextLdifEntryQuirks()
+        quirks = FlextLdifEntrys()
 
         # Use server with specific DN patterns
         dn_result = quirks._validate_dn_format(
@@ -538,7 +536,7 @@ class TestDnFormatValidation:
 
     def test_validate_dn_format_quirks_failure(self) -> None:
         """Test DN format validation when quirks lookup fails."""
-        quirks = FlextLdifEntryQuirks()
+        quirks = FlextLdifEntrys()
 
         # Invalid server type should cause quirks failure
         dn_result = quirks._validate_dn_format(
@@ -557,7 +555,7 @@ class TestCompleteEntryWorkflow:
 
     def test_adapt_then_validate_workflow(self) -> None:
         """Test complete workflow: create, adapt, then validate entry."""
-        quirks = FlextLdifEntryQuirks()
+        quirks = FlextLdifEntrys()
 
         # Create entry with DN matching server expectations
         entry_result = FlextLdifModels.Entry.create(
@@ -588,7 +586,7 @@ class TestCompleteEntryWorkflow:
 
     def test_cross_server_adaptation(self) -> None:
         """Test adapting entry from one server type to another."""
-        quirks = FlextLdifEntryQuirks()
+        quirks = FlextLdifEntrys()
 
         # Create OpenLDAP-style entry
         entry_result = FlextLdifModels.Entry.create(
@@ -613,7 +611,7 @@ class TestCompleteEntryWorkflow:
 
     def test_multiple_entries_batch_adaptation(self) -> None:
         """Test adapting multiple entries in batch."""
-        quirks = FlextLdifEntryQuirks()
+        quirks = FlextLdifEntrys()
 
         entries = []
         for i in range(5):
@@ -648,7 +646,7 @@ class TestEdgeCases:
 
     def test_adapt_entry_minimal_attributes(self) -> None:
         """Test adapting entry with minimal required attributes."""
-        quirks = FlextLdifEntryQuirks()
+        quirks = FlextLdifEntrys()
 
         entry_result = FlextLdifModels.Entry.create(
             dn="cn=test,dc=example,dc=com",
@@ -663,7 +661,7 @@ class TestEdgeCases:
 
     def test_adapt_entry_with_multivalued_attributes(self) -> None:
         """Test adapting entry with multi-valued attributes."""
-        quirks = FlextLdifEntryQuirks()
+        quirks = FlextLdifEntrys()
 
         entry_result = FlextLdifModels.Entry.create(
             dn="cn=test,dc=example,dc=com",
@@ -692,7 +690,7 @@ class TestEdgeCases:
 
     def test_validate_dn_with_special_characters(self) -> None:
         """Test DN validation with special characters."""
-        quirks = FlextLdifEntryQuirks()
+        quirks = FlextLdifEntrys()
 
         # DN with spaces and special chars
         dn_result = quirks._validate_dn_format(
@@ -703,7 +701,7 @@ class TestEdgeCases:
 
     def test_validation_report_structure(self) -> None:
         """Test that validation report has correct structure."""
-        quirks = FlextLdifEntryQuirks()
+        quirks = FlextLdifEntrys()
 
         entry_result = FlextLdifModels.Entry.create(
             dn="cn=test,dc=example,dc=com",

@@ -104,6 +104,7 @@ else:
 ```
 
 **Design Principles**:
+
 - **RFC-First** - RFC compliance as foundation
 - **Pluggable Quirks** - Server-specific extensions
 - **Railway Pattern** - Composable error handling
@@ -244,7 +245,7 @@ result = processor.batch_process(entries, transform_func, batch_size=100)
 ### Custom Quirks
 
 ```python
-from flext_ldif.quirks.base import QuirkBase
+from flext_ldif.services.base import QuirkBase
 
 class CustomServerQuirks(QuirkBase):
     """Custom server-specific quirks."""
@@ -369,9 +370,9 @@ Part of the **FLEXT Ecosystem** - Enterprise data integration platform.
 ## 📞 Support
 
 - **Documentation**: [docs/](docs/)
-- **Issues**: https://github.com/flext/flext-ldif/issues
-- **Discussions**: https://github.com/flext/flext-ldif/discussions
-- **Email**: support@flext-platform.org
+- **Issues**: <https://github.com/flext/flext-ldif/issues>
+- **Discussions**: <https://github.com/flext/flext-ldif/discussions>
+- **Email**: <support@flext-platform.org>
 
 ---
 
@@ -413,13 +414,13 @@ Source Format → Source.to_rfc() → RFC Format → Target.from_rfc() → Targe
 **Example**:
 
 ```python
-from flext_ldif.quirks.conversion_matrix import QuirksConversionMatrix
-from flext_ldif.quirks.servers.oud_quirks import FlextLdifQuirksServersOud
-from flext_ldif.quirks.servers.oid_quirks import FlextLdifQuirksServersOid
+from flext_ldif.services.conversion_matrix import QuirksConversionMatrix
+from flext_ldif.servers.oud_quirks import FlextLdifServersOud
+from flext_ldif.servers.oid import FlextLdifServersOid
 
 matrix = QuirksConversionMatrix()
-oud = FlextLdifQuirksServersOud()
-oid = FlextLdifQuirksServersOid()
+oud = FlextLdifServersOud()
+oid = FlextLdifServersOid()
 
 # Convert OID attribute to OUD format
 oid_attr = "( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' ... )"
@@ -431,7 +432,7 @@ result = matrix.convert(oud, oid, "attribute", oid_attr)
 Ensures DN case consistency during conversions, critical for OUD compatibility:
 
 ```python
-from flext_ldif.quirks.dn_case_registry import DnCaseRegistry
+from flext_ldif.services.dn_case_registry import DnCaseRegistry
 
 registry = DnCaseRegistry()
 
@@ -503,8 +504,8 @@ Automatic detection and quirk-based adaptation for LDAP servers:
 
 **Quirks Architecture**:
 
-- Each server has a **SchemaQuirk** for attributeType/objectClass extensions
-- Schema quirks contain nested **AclQuirk** and **EntryQuirk** classes
+- Each server has a **Schema** for attributeType/objectClass extensions
+- Schema quirks contain nested **Acl** and **Entry** classes
 - Quirks use **priority-based resolution** (lower number = higher priority)
 - Strict RFC 4514 compliance enforced (NO fallback behavior)
 
@@ -558,7 +559,7 @@ graph TB
 
     Quirks --> ConversionMatrix[QuirksConversionMatrix]
     Quirks --> DnCaseRegistry[DnCaseRegistry]
-    Quirks --> Registry[FlextLdifQuirksRegistry]
+    Quirks --> Registry[FlextLdifRegistry]
 
     Models --> Entry[Entry Domain Model]
     Models --> DN[Distinguished Name]
@@ -620,8 +621,8 @@ else:
 ### **Generic Schema Parsing with Quirks (MANDATORY)**
 
 ```python
-from flext_ldif.rfc.rfc_schema_parser import RfcSchemaParserService
-from flext_ldif.quirks.registry import QuirkRegistryService
+from flext_ldif.services.rfc_schema_parser import FlextLdifRfcSchemaParser
+from flext_ldif.services.registry import QuirkRegistryService
 from pathlib import Path
 
 # ⚠️ MANDATORY: quirk_registry is REQUIRED for all RFC parsers/writers
@@ -660,11 +661,11 @@ rfc_parser = RfcSchemaParserService(
 
 ```python
 from flext_ldif.categorized_pipeline import FlextLdifCategorizedMigrationPipeline
-from flext_ldif.quirks.registry import FlextLdifQuirksRegistry
+from flext_ldif.services.registry import FlextLdifRegistry
 from pathlib import Path
 
 # Initialize categorized migration pipeline
-registry = FlextLdifQuirksRegistry()
+registry = FlextLdifRegistry()
 
 # Define categorization rules
 categorization_rules = {
