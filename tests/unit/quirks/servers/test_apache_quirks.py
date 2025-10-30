@@ -6,33 +6,33 @@ import base64
 
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
-from flext_ldif.quirks.servers.apache_quirks import FlextLdifQuirksServersApache
+from flext_ldif.servers.apache import FlextLdifServersApache
 
 
-class TestApacheDirectorySchemaQuirks:
+class TestApacheDirectorySchemas:
     """Tests for Apache Directory Server schema quirk handling."""
 
     def test_initialization(self) -> None:
         """Test Apache Directory Server quirk initialization."""
-        quirk = FlextLdifQuirksServersApache()
+        quirk = FlextLdifServersApache.Schema()
         assert quirk.server_type == FlextLdifConstants.LdapServers.APACHE_DIRECTORY
         assert quirk.priority == 15
 
     def test_can_handle_attribute_with_apache_oid(self) -> None:
         """Test attribute detection with Apache DS OID pattern."""
-        quirk = FlextLdifQuirksServersApache()
+        quirk = FlextLdifServersApache.Schema()
         attr_def = "( 1.3.6.1.4.1.18060.0.4.1.2.100 NAME 'ads-enabled' SYNTAX 1.3.6.1.4.1.1466.115.121.1.7 )"
         assert quirk.can_handle_attribute(attr_def) is True
 
     def test_can_handle_attribute_with_ads_prefix(self) -> None:
         """Test attribute detection with ads- prefix."""
-        quirk = FlextLdifQuirksServersApache()
+        quirk = FlextLdifServersApache.Schema()
         attr_def = "( 2.16.840.1.113730.3.1.1 NAME 'ads-searchBaseDN' SYNTAX 1.3.6.1.4.1.1466.115.121.1.12 )"
         assert quirk.can_handle_attribute(attr_def) is True
 
     def test_can_handle_attribute_with_apacheds_name(self) -> None:
         """Test attribute detection with apacheds in name."""
-        quirk = FlextLdifQuirksServersApache()
+        quirk = FlextLdifServersApache.Schema()
         attr_def = (
             "( 1.2.3.4 NAME 'apachedsSystemId' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
         )
@@ -40,13 +40,13 @@ class TestApacheDirectorySchemaQuirks:
 
     def test_can_handle_attribute_negative(self) -> None:
         """Test attribute detection rejects non-ApacheDS attributes."""
-        quirk = FlextLdifQuirksServersApache()
+        quirk = FlextLdifServersApache.Schema()
         attr_def = "( 2.5.4.3 NAME 'cn' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
         assert quirk.can_handle_attribute(attr_def) is False
 
     def test_parse_attribute_success(self) -> None:
         """Test parsing Apache DS attribute definition."""
-        quirk = FlextLdifQuirksServersApache()
+        quirk = FlextLdifServersApache.Schema()
         attr_def = "( 1.3.6.1.4.1.18060.0.4.1.2.100 NAME 'ads-enabled' DESC 'Enable flag' SYNTAX 1.3.6.1.4.1.1466.115.121.1.7 SINGLE-VALUE )"
         result = quirk.parse_attribute(attr_def)
 
@@ -60,7 +60,7 @@ class TestApacheDirectorySchemaQuirks:
 
     def test_parse_attribute_with_syntax_length(self) -> None:
         """Test parsing attribute with syntax length specification."""
-        quirk = FlextLdifQuirksServersApache()
+        quirk = FlextLdifServersApache.Schema()
         attr_def = "( 1.3.6.1.4.1.18060.0.4.1.2.1 NAME 'ads-directoryServiceId' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} )"
         result = quirk.parse_attribute(attr_def)
 
@@ -71,7 +71,7 @@ class TestApacheDirectorySchemaQuirks:
 
     def test_parse_attribute_missing_oid(self) -> None:
         """Test parsing attribute without OID fails."""
-        quirk = FlextLdifQuirksServersApache()
+        quirk = FlextLdifServersApache.Schema()
         attr_def = "NAME 'ads-enabled' SYNTAX 1.3.6.1.4.1.1466.115.121.1.7"
         result = quirk.parse_attribute(attr_def)
 
@@ -82,25 +82,25 @@ class TestApacheDirectorySchemaQuirks:
 
     def test_can_handle_objectclass_with_apache_oid(self) -> None:
         """Test objectClass detection with Apache DS OID."""
-        quirk = FlextLdifQuirksServersApache()
+        quirk = FlextLdifServersApache.Schema()
         oc_def = "( 1.3.6.1.4.1.18060.0.4.1.3.100 NAME 'ads-directoryService' SUP top STRUCTURAL )"
         assert quirk.can_handle_objectclass(oc_def) is True
 
     def test_can_handle_objectclass_with_ads_name(self) -> None:
         """Test objectClass detection with ads- name."""
-        quirk = FlextLdifQuirksServersApache()
+        quirk = FlextLdifServersApache.Schema()
         oc_def = "( 2.5.6.0 NAME 'ads-base' SUP top ABSTRACT )"
         assert quirk.can_handle_objectclass(oc_def) is True
 
     def test_can_handle_objectclass_negative(self) -> None:
         """Test objectClass detection rejects non-ApacheDS classes."""
-        quirk = FlextLdifQuirksServersApache()
+        quirk = FlextLdifServersApache.Schema()
         oc_def = "( 2.5.6.6 NAME 'posixAccount' SUP top STRUCTURAL )"
         assert quirk.can_handle_objectclass(oc_def) is False
 
     def test_parse_objectclass_structural(self) -> None:
         """Test parsing STRUCTURAL objectClass."""
-        quirk = FlextLdifQuirksServersApache()
+        quirk = FlextLdifServersApache.Schema()
         oc_def = "( 1.3.6.1.4.1.18060.0.4.1.3.100 NAME 'ads-directoryService' DESC 'Directory service' SUP top STRUCTURAL MUST ( cn $ ads-directoryServiceId ) MAY ( ads-enabled ) )"
         result = quirk.parse_objectclass(oc_def)
 
@@ -120,7 +120,7 @@ class TestApacheDirectorySchemaQuirks:
 
     def test_parse_objectclass_auxiliary(self) -> None:
         """Test parsing AUXILIARY objectClass."""
-        quirk = FlextLdifQuirksServersApache()
+        quirk = FlextLdifServersApache.Schema()
         oc_def = "( 1.3.6.1.4.1.18060.0.4.1.3.200 NAME 'ads-partition' AUXILIARY MAY ( ads-partitionSuffix $ ads-contextEntry ) )"
         result = quirk.parse_objectclass(oc_def)
 
@@ -130,7 +130,7 @@ class TestApacheDirectorySchemaQuirks:
 
     def test_parse_objectclass_abstract(self) -> None:
         """Test parsing ABSTRACT objectClass."""
-        quirk = FlextLdifQuirksServersApache()
+        quirk = FlextLdifServersApache.Schema()
         oc_def = "( 1.3.6.1.4.1.18060.0.4.1.3.1 NAME 'ads-base' ABSTRACT )"
         result = quirk.parse_objectclass(oc_def)
 
@@ -140,7 +140,7 @@ class TestApacheDirectorySchemaQuirks:
 
     def test_parse_objectclass_missing_oid(self) -> None:
         """Test parsing objectClass without OID fails."""
-        quirk = FlextLdifQuirksServersApache()
+        quirk = FlextLdifServersApache.Schema()
         oc_def = "NAME 'ads-directoryService' SUP top STRUCTURAL"
         result = quirk.parse_objectclass(oc_def)
 
@@ -150,7 +150,7 @@ class TestApacheDirectorySchemaQuirks:
 
     def test_convert_attribute_to_rfc(self) -> None:
         """Test converting Apache DS attribute to RFC format."""
-        quirk = FlextLdifQuirksServersApache()
+        quirk = FlextLdifServersApache.Schema()
         # Create proper SchemaAttribute model instead of dict
         attr_data = FlextLdifModels.SchemaAttribute(
             oid="1.3.6.1.4.1.18060.0.4.1.2.100",
@@ -168,7 +168,7 @@ class TestApacheDirectorySchemaQuirks:
 
     def test_convert_objectclass_to_rfc(self) -> None:
         """Test converting Apache DS objectClass to RFC format."""
-        quirk = FlextLdifQuirksServersApache()
+        quirk = FlextLdifServersApache.Schema()
         # Create proper SchemaObjectClass model instead of dict
         oc_data = FlextLdifModels.SchemaObjectClass(
             oid="1.3.6.1.4.1.18060.0.4.1.3.100",
@@ -184,7 +184,7 @@ class TestApacheDirectorySchemaQuirks:
 
     def test_convert_attribute_from_rfc(self) -> None:
         """Test converting RFC attribute to Apache DS format."""
-        quirk = FlextLdifQuirksServersApache()
+        quirk = FlextLdifServersApache.Schema()
         # Create proper SchemaAttribute model instead of dict
         rfc_data = FlextLdifModels.SchemaAttribute(
             oid="1.3.6.1.4.1.18060.0.4.1.2.100",
@@ -200,7 +200,7 @@ class TestApacheDirectorySchemaQuirks:
 
     def test_convert_objectclass_from_rfc(self) -> None:
         """Test converting RFC objectClass to Apache DS format."""
-        quirk = FlextLdifQuirksServersApache()
+        quirk = FlextLdifServersApache.Schema()
         # Create proper SchemaObjectClass model instead of dict
         rfc_data = FlextLdifModels.SchemaObjectClass(
             oid="1.3.6.1.4.1.18060.0.4.1.3.100",
@@ -216,7 +216,7 @@ class TestApacheDirectorySchemaQuirks:
 
     def test_write_attribute_to_rfc(self) -> None:
         """Test writing attribute to RFC string format."""
-        quirk = FlextLdifQuirksServersApache()
+        quirk = FlextLdifServersApache.Schema()
         # Create proper SchemaAttribute model instead of dict
         attr_data = FlextLdifModels.SchemaAttribute(
             oid="1.3.6.1.4.1.18060.0.4.1.2.100",
@@ -235,7 +235,7 @@ class TestApacheDirectorySchemaQuirks:
 
     def test_write_objectclass_to_rfc(self) -> None:
         """Test writing objectClass to RFC string format."""
-        quirk = FlextLdifQuirksServersApache()
+        quirk = FlextLdifServersApache.Schema()
         # Create proper SchemaObjectClass model instead of dict
         oc_data = FlextLdifModels.SchemaObjectClass(
             oid="1.3.6.1.4.1.18060.0.4.1.3.100",
@@ -254,55 +254,55 @@ class TestApacheDirectorySchemaQuirks:
         assert "STRUCTURAL" in oc_str
 
 
-class TestApacheDirectoryAclQuirks:
+class TestApacheDirectoryAcls:
     """Tests for Apache Directory Server ACL quirk handling."""
 
     def test_acl_quirk_initialization(self) -> None:
         """Test ACL quirk initialization."""
-        main_quirk = FlextLdifQuirksServersApache()
-        acl_quirk = main_quirk.AclQuirk()
+        main_quirk = FlextLdifServersApache.Schema()
+        acl_quirk = main_quirk.Acl()
         assert acl_quirk.server_type == FlextLdifConstants.LdapServers.APACHE_DIRECTORY
         assert acl_quirk.priority == 15
 
     def test_can_handle_acl_with_ads_aci(self) -> None:
         """Test ACL detection with ads-aci attribute."""
-        main_quirk = FlextLdifQuirksServersApache()
-        acl_quirk = main_quirk.AclQuirk()
+        main_quirk = FlextLdifServersApache.Schema()
+        acl_quirk = main_quirk.Acl()
         acl_line = "ads-aci: ( version 3.0 ) ( deny grantAdd ) ( grantRemove )"
         assert acl_quirk.can_handle_acl(acl_line) is True
 
     def test_can_handle_acl_with_aci(self) -> None:
         """Test ACL detection with aci attribute."""
-        main_quirk = FlextLdifQuirksServersApache()
-        acl_quirk = main_quirk.AclQuirk()
+        main_quirk = FlextLdifServersApache.Schema()
+        acl_quirk = main_quirk.Acl()
         acl_line = "aci: ( version 3.0 ) ( deny grantAdd ) ( grantRemove )"
         assert acl_quirk.can_handle_acl(acl_line) is True
 
     def test_can_handle_acl_with_version_prefix(self) -> None:
         """Test ACL detection with version prefix."""
-        main_quirk = FlextLdifQuirksServersApache()
-        acl_quirk = main_quirk.AclQuirk()
+        main_quirk = FlextLdifServersApache.Schema()
+        acl_quirk = main_quirk.Acl()
         acl_line = "(version 3.0) (deny grantAdd) (grantRemove)"
         assert acl_quirk.can_handle_acl(acl_line) is True
 
     def test_can_handle_acl_negative(self) -> None:
         """Test ACL detection rejects non-ApacheDS ACLs."""
-        main_quirk = FlextLdifQuirksServersApache()
-        acl_quirk = main_quirk.AclQuirk()
+        main_quirk = FlextLdifServersApache.Schema()
+        acl_quirk = main_quirk.Acl()
         acl_line = "access to * by * read"
         assert acl_quirk.can_handle_acl(acl_line) is False
 
     def test_can_handle_acl_empty_line(self) -> None:
         """Test ACL detection rejects empty lines."""
-        main_quirk = FlextLdifQuirksServersApache()
-        acl_quirk = main_quirk.AclQuirk()
+        main_quirk = FlextLdifServersApache.Schema()
+        acl_quirk = main_quirk.Acl()
         acl_line = ""
         assert acl_quirk.can_handle_acl(acl_line) is False
 
     def test_parse_acl_success(self) -> None:
         """Test parsing Apache DS ACI definition."""
-        main_quirk = FlextLdifQuirksServersApache()
-        acl_quirk = main_quirk.AclQuirk()
+        main_quirk = FlextLdifServersApache.Schema()
+        acl_quirk = main_quirk.Acl()
         acl_line = "ads-aci: ( version 3.0 ) ( deny grantAdd ) ( grantRemove )"
         result = acl_quirk.parse_acl(acl_line)
 
@@ -315,8 +315,8 @@ class TestApacheDirectoryAclQuirks:
 
     def test_parse_acl_with_aci_attribute(self) -> None:
         """Test parsing ACI with aci attribute."""
-        main_quirk = FlextLdifQuirksServersApache()
-        acl_quirk = main_quirk.AclQuirk()
+        main_quirk = FlextLdifServersApache.Schema()
+        acl_quirk = main_quirk.Acl()
         acl_line = "aci: ( deny grantAdd )"
         result = acl_quirk.parse_acl(acl_line)
 
@@ -327,8 +327,8 @@ class TestApacheDirectoryAclQuirks:
 
     def test_convert_acl_to_rfc(self) -> None:
         """Test converting Apache DS ACL to RFC format."""
-        main_quirk = FlextLdifQuirksServersApache()
-        acl_quirk = main_quirk.AclQuirk()
+        main_quirk = FlextLdifServersApache.Schema()
+        acl_quirk = main_quirk.Acl()
 
         # Create proper Acl model instead of dict
         acl_data = FlextLdifModels.Acl(
@@ -353,8 +353,8 @@ class TestApacheDirectoryAclQuirks:
 
     def test_convert_acl_from_rfc(self) -> None:
         """Test converting RFC ACL to Apache DS format."""
-        main_quirk = FlextLdifQuirksServersApache()
-        acl_quirk = main_quirk.AclQuirk()
+        main_quirk = FlextLdifServersApache.Schema()
+        acl_quirk = main_quirk.Acl()
 
         # Create proper Acl model instead of dict
         rfc_acl = FlextLdifModels.Acl(
@@ -379,8 +379,8 @@ class TestApacheDirectoryAclQuirks:
 
     def test_write_acl_to_rfc_with_content(self) -> None:
         """Test writing ACL with content to RFC string format."""
-        main_quirk = FlextLdifQuirksServersApache()
-        acl_quirk = main_quirk.AclQuirk()
+        main_quirk = FlextLdifServersApache.Schema()
+        acl_quirk = main_quirk.Acl()
 
         # Create proper Acl model with raw_acl containing the content
         acl_model = FlextLdifModels.Acl(
@@ -400,8 +400,8 @@ class TestApacheDirectoryAclQuirks:
 
     def test_write_acl_to_rfc_with_clauses_only(self) -> None:
         """Test writing ACL with clauses only to RFC string format."""
-        main_quirk = FlextLdifQuirksServersApache()
-        acl_quirk = main_quirk.AclQuirk()
+        main_quirk = FlextLdifServersApache.Schema()
+        acl_quirk = main_quirk.Acl()
 
         # Create proper Acl model with raw_acl containing the clauses joined
         acl_model = FlextLdifModels.Acl(
@@ -421,8 +421,8 @@ class TestApacheDirectoryAclQuirks:
 
     def test_write_acl_to_rfc_empty(self) -> None:
         """Test writing empty ACL to RFC string format."""
-        main_quirk = FlextLdifQuirksServersApache()
-        acl_quirk = main_quirk.AclQuirk()
+        main_quirk = FlextLdifServersApache.Schema()
+        acl_quirk = main_quirk.Acl()
 
         # Create proper Acl model with minimal fields
         acl_model = FlextLdifModels.Acl(
@@ -441,13 +441,13 @@ class TestApacheDirectoryAclQuirks:
         assert "ads-aci" in acl_str or "aci:" in acl_str
 
 
-class TestApacheDirectoryEntryQuirks:
+class TestApacheDirectoryEntrys:
     """Tests for Apache Directory Server entry quirk handling."""
 
     def test_entry_quirk_initialization(self) -> None:
         """Test entry quirk initialization."""
-        main_quirk = FlextLdifQuirksServersApache()
-        entry_quirk = main_quirk.EntryQuirk()
+        main_quirk = FlextLdifServersApache.Schema()
+        entry_quirk = main_quirk.Entry()
         assert (
             entry_quirk.server_type == FlextLdifConstants.LdapServers.APACHE_DIRECTORY
         )
@@ -455,8 +455,8 @@ class TestApacheDirectoryEntryQuirks:
 
     def test_can_handle_entry_with_ou_config(self) -> None:
         """Test entry detection with ou=config DN marker."""
-        main_quirk = FlextLdifQuirksServersApache()
-        entry_quirk = main_quirk.EntryQuirk()
+        main_quirk = FlextLdifServersApache.Schema()
+        entry_quirk = main_quirk.Entry()
         entry_dn = "ou=config,dc=example,dc=com"
         attributes: dict[str, object] = {
             FlextLdifConstants.DictKeys.OBJECTCLASS: ["organizationalUnit"]
@@ -465,8 +465,8 @@ class TestApacheDirectoryEntryQuirks:
 
     def test_can_handle_entry_with_ou_services(self) -> None:
         """Test entry detection with ou=services DN marker."""
-        main_quirk = FlextLdifQuirksServersApache()
-        entry_quirk = main_quirk.EntryQuirk()
+        main_quirk = FlextLdifServersApache.Schema()
+        entry_quirk = main_quirk.Entry()
         entry_dn = "ou=services,dc=example,dc=com"
         attributes: dict[str, object] = {
             FlextLdifConstants.DictKeys.OBJECTCLASS: ["organizationalUnit"]
@@ -475,8 +475,8 @@ class TestApacheDirectoryEntryQuirks:
 
     def test_can_handle_entry_with_ou_system(self) -> None:
         """Test entry detection with ou=system DN marker."""
-        main_quirk = FlextLdifQuirksServersApache()
-        entry_quirk = main_quirk.EntryQuirk()
+        main_quirk = FlextLdifServersApache.Schema()
+        entry_quirk = main_quirk.Entry()
         entry_dn = "ou=system,dc=example,dc=com"
         attributes: dict[str, object] = {
             FlextLdifConstants.DictKeys.OBJECTCLASS: ["organizationalUnit"]
@@ -485,8 +485,8 @@ class TestApacheDirectoryEntryQuirks:
 
     def test_can_handle_entry_with_ou_partitions(self) -> None:
         """Test entry detection with ou=partitions DN marker."""
-        main_quirk = FlextLdifQuirksServersApache()
-        entry_quirk = main_quirk.EntryQuirk()
+        main_quirk = FlextLdifServersApache.Schema()
+        entry_quirk = main_quirk.Entry()
         entry_dn = "ou=partitions,dc=example,dc=com"
         attributes: dict[str, object] = {
             FlextLdifConstants.DictKeys.OBJECTCLASS: ["organizationalUnit"]
@@ -495,8 +495,8 @@ class TestApacheDirectoryEntryQuirks:
 
     def test_can_handle_entry_with_ads_attribute(self) -> None:
         """Test entry detection with ads- attribute prefix."""
-        main_quirk = FlextLdifQuirksServersApache()
-        entry_quirk = main_quirk.EntryQuirk()
+        main_quirk = FlextLdifServersApache.Schema()
+        entry_quirk = main_quirk.Entry()
         entry_dn = "cn=test,dc=example,dc=com"
         attributes: dict[str, object] = {
             "ads-enabled": ["TRUE"],
@@ -506,8 +506,8 @@ class TestApacheDirectoryEntryQuirks:
 
     def test_can_handle_entry_with_apacheds_attribute(self) -> None:
         """Test entry detection with apacheds attribute prefix."""
-        main_quirk = FlextLdifQuirksServersApache()
-        entry_quirk = main_quirk.EntryQuirk()
+        main_quirk = FlextLdifServersApache.Schema()
+        entry_quirk = main_quirk.Entry()
         entry_dn = "cn=test,dc=example,dc=com"
         attributes: dict[str, object] = {
             "apachedsSystemId": ["test"],
@@ -517,8 +517,8 @@ class TestApacheDirectoryEntryQuirks:
 
     def test_can_handle_entry_with_ads_objectclass(self) -> None:
         """Test entry detection with ads- objectClass."""
-        main_quirk = FlextLdifQuirksServersApache()
-        entry_quirk = main_quirk.EntryQuirk()
+        main_quirk = FlextLdifServersApache.Schema()
+        entry_quirk = main_quirk.Entry()
         entry_dn = "cn=test,dc=example,dc=com"
         attributes: dict[str, object] = {
             FlextLdifConstants.DictKeys.OBJECTCLASS: ["top", "ads-directoryService"]
@@ -527,8 +527,8 @@ class TestApacheDirectoryEntryQuirks:
 
     def test_can_handle_entry_negative(self) -> None:
         """Test entry detection rejects non-ApacheDS entries."""
-        main_quirk = FlextLdifQuirksServersApache()
-        entry_quirk = main_quirk.EntryQuirk()
+        main_quirk = FlextLdifServersApache.Schema()
+        entry_quirk = main_quirk.Entry()
         entry_dn = "cn=user,dc=example,dc=com"
         attributes: dict[str, object] = {
             FlextLdifConstants.DictKeys.OBJECTCLASS: ["person"],
@@ -538,8 +538,8 @@ class TestApacheDirectoryEntryQuirks:
 
     def test_process_entry_config_entry(self) -> None:
         """Test processing ApacheDS config entry."""
-        main_quirk = FlextLdifQuirksServersApache()
-        entry_quirk = main_quirk.EntryQuirk()
+        main_quirk = FlextLdifServersApache.Schema()
+        entry_quirk = main_quirk.Entry()
         entry_dn = "ou=config,dc=example,dc=com"
         attributes: dict[str, object] = {
             FlextLdifConstants.DictKeys.OBJECTCLASS: ["organizationalUnit"],
@@ -559,8 +559,8 @@ class TestApacheDirectoryEntryQuirks:
 
     def test_process_entry_non_config(self) -> None:
         """Test processing non-config ApacheDS entry."""
-        main_quirk = FlextLdifQuirksServersApache()
-        entry_quirk = main_quirk.EntryQuirk()
+        main_quirk = FlextLdifServersApache.Schema()
+        entry_quirk = main_quirk.Entry()
         entry_dn = "cn=test,ou=system,dc=example,dc=com"
         attributes: dict[str, object] = {
             FlextLdifConstants.DictKeys.OBJECTCLASS: ["top", "ads-base"],
@@ -574,8 +574,8 @@ class TestApacheDirectoryEntryQuirks:
 
     def test_process_entry_with_binary_data(self) -> None:
         """Test processing entry with binary attribute data."""
-        main_quirk = FlextLdifQuirksServersApache()
-        entry_quirk = main_quirk.EntryQuirk()
+        main_quirk = FlextLdifServersApache.Schema()
+        entry_quirk = main_quirk.Entry()
         entry_dn = "cn=test,ou=system,dc=example,dc=com"
         binary_data = b"binary_value"
         attributes: dict[str, object] = {
@@ -594,8 +594,8 @@ class TestApacheDirectoryEntryQuirks:
 
     def test_convert_entry_to_rfc(self) -> None:
         """Test converting Apache DS entry to RFC format."""
-        main_quirk = FlextLdifQuirksServersApache()
-        entry_quirk = main_quirk.EntryQuirk()
+        main_quirk = FlextLdifServersApache.Schema()
+        entry_quirk = main_quirk.Entry()
         entry_data: dict[str, object] = {
             FlextLdifConstants.DictKeys.DN: "ou=config,dc=example,dc=com",
             FlextLdifConstants.DictKeys.SERVER_TYPE: FlextLdifConstants.LdapServers.APACHE_DIRECTORY,

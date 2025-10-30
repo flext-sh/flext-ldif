@@ -11,7 +11,7 @@ including:
 from __future__ import annotations
 
 from flext_ldif.constants import FlextLdifConstants
-from flext_ldif.quirks.manager import FlextLdifQuirksManager
+from flext_ldif.services.manager import FlextLdifQuirksManager
 
 
 class TestQuirksManagerInitialization:

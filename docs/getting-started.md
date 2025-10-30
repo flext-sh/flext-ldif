@@ -49,7 +49,7 @@ make validate       # Complete validation pipeline (lint + type + security + tes
 PYTHONPATH=src pytest                           # Full test suite
 PYTHONPATH=src pytest -m unit                   # Unit tests only
 PYTHONPATH=src pytest --cov=src/flext_ldif      # Coverage report
-PYTHONPATH=src pytest tests/unit/test_oid_quirks.py -v  # Specific test file
+PYTHONPATH=src pytest tests/unit/test_oid.py -v  # Specific test file
 ```
 
 ### ⚠️ CRITICAL: PYTHONPATH Requirements
@@ -58,11 +58,11 @@ PYTHONPATH=src pytest tests/unit/test_oid_quirks.py -v  # Specific test file
 
 ```bash
 # ✅ CORRECT
-PYTHONPATH=src poetry run pytest tests/unit/test_oid_quirks.py -v
+PYTHONPATH=src poetry run pytest tests/unit/test_oid.py -v
 PYTHONPATH=src poetry run python -c "from flext_ldif import FlextLdif"
 
 # ❌ WRONG - Will fail with import errors
-poetry run pytest tests/unit/test_oid_quirks.py -v
+poetry run pytest tests/unit/test_oid.py -v
 python -c "from flext_ldif import FlextLdif"
 ```
 
@@ -211,9 +211,9 @@ python -m flext_ldif parse --help
 Parse LDAP schema files with automatic server-specific handling:
 
 ```python
-# ✅ v1.0+ Flat imports
-from flext_ldif.rfc_schema_parser import RfcSchemaParserService
-from flext_ldif.quirks.registry import QuirkRegistryService  # Unchanged - quirks subdirectory
+# ✅ v1.0+ Service imports
+from flext_ldif.services.parser import FlextLdifParserService
+from flext_ldif.services.registry import QuirkRegistryService  # Unchanged - quirks subdirectory
 from pathlib import Path
 
 # Initialize quirks registry
@@ -280,14 +280,14 @@ if result.is_success:
 Handle entries from different LDAP servers in the same workflow:
 
 ```python
-from flext_ldif.quirks.registry import QuirkRegistryService
+from flext_ldif.services.registry import QuirkRegistryService
 
 # Initialize registry once
 quirk_registry = QuirkRegistryService()
 
 # Get quirks for different servers
-openldap_quirks = quirk_registry.get_entry_quirks("openldap")
-oid_quirks = quirk_registry.get_entry_quirks("oid")
+openldap = quirk_registry.get_entry_quirks("openldap")
+oid = quirk_registry.get_entry_quirks("oid")
 oud_quirks = quirk_registry.get_entry_quirks("oud")
 
 # Each quirk knows how to handle server-specific extensions

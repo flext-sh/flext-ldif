@@ -13,6 +13,10 @@
   "metadata": {
     "type": "rfc_operation",
     "operation_type": "modrdn",
-    "test_aspects": ["changetype_directive", "rdn_modification", "dn_transformation"]
+    "test_aspects": [
+      "changetype_directive",
+      "rdn_modification",
+      "dn_transformation"
+    ]
   }
 }

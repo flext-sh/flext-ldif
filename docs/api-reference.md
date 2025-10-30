@@ -829,8 +829,8 @@ Parse LDAP schema definitions with RFC 4512 compliance and **MANDATORY quirks su
 
 ```python
 # ✅ v1.0+ Flat imports
-from flext_ldif.rfc_schema_parser import RfcSchemaParserService
-from flext_ldif.quirks.registry import QuirkRegistryService  # Unchanged - quirks subdirectory
+from flext_ldif.services.parser import FlextLdifParserService
+from flext_ldif.services.registry import QuirkRegistryService  # Unchanged - quirks subdirectory
 
 class RfcSchemaParserService:
     """RFC 4512 compliant schema parser with MANDATORY quirks integration."""
@@ -870,8 +870,8 @@ The `quirk_registry` parameter is **MANDATORY** (not Optional) to enforce RFC-fi
 
 ```python
 # ✅ CORRECT: v1.0+ flat imports with MANDATORY quirk_registry
-from flext_ldif.rfc_schema_parser import RfcSchemaParserService
-from flext_ldif.quirks.registry import QuirkRegistryService
+from flext_ldif.services.parser import FlextLdifParserService
+from flext_ldif.services.registry import QuirkRegistryService
 
 # Initialize registry FIRST (auto-discovers all standard quirks)
 quirk_registry = QuirkRegistryService()
@@ -985,12 +985,12 @@ if result.is_success:
 Central registry for managing server-specific quirks.
 
 ```python
-from flext_ldif.quirks.registry import QuirkRegistryService
+from flext_ldif.services.registry import QuirkRegistryService
 
 class QuirkRegistryService:
     """Registry for managing LDAP server quirks."""
 
-    def get_schema_quirks(self, server_type: str) -> list[SchemaQuirkProtocol]:
+    def get_schema_quirks(self, server_type: str) -> list[SchemaProtocol]:
         """Get schema quirks for server type.
 
         Args:
@@ -1000,7 +1000,7 @@ class QuirkRegistryService:
             List of schema quirks sorted by priority
         """
 
-    def get_entry_quirks(self, server_type: str) -> list[EntryQuirkProtocol]:
+    def get_entry_quirks(self, server_type: str) -> list[EntryProtocol]:
         """Get entry quirks for server type.
 
         Args:
@@ -1010,7 +1010,7 @@ class QuirkRegistryService:
             List of entry quirks sorted by priority
         """
 
-    def get_acl_quirks(self, server_type: str) -> list[AclQuirkProtocol]:
+    def get_acl_quirks(self, server_type: str) -> list[AclProtocol]:
         """Get ACL quirks for server type.
 
         Args:
@@ -1159,8 +1159,8 @@ if write_result.is_success:
 
 ```python
 # ✅ v1.0+ Flat imports
-from flext_ldif.rfc_schema_parser import RfcSchemaParserService
-from flext_ldif.quirks.registry import QuirkRegistryService  # Unchanged - quirks subdirectory
+from flext_ldif.services.parser import FlextLdifParserService
+from flext_ldif.services.registry import QuirkRegistryService  # Unchanged - quirks subdirectory
 
 # ⚠️ MANDATORY: Initialize quirk registry first
 quirk_registry = QuirkRegistryService()

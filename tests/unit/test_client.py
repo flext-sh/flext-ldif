@@ -14,7 +14,7 @@ from pathlib import Path
 
 import pytest
 
-from flext_ldif.client import FlextLdifClient
+from flext_ldif.services.client import FlextLdifClient
 
 
 @pytest.fixture
@@ -712,9 +712,9 @@ description: Español y más
 
     def test_register_quirk_adds_to_registry(self, client: FlextLdifClient) -> None:
         """Test registering a custom quirk."""
-        from flext_ldif.quirks.servers.oid_quirks import FlextLdifQuirksServersOid
+        from flext_ldif.servers.oid import FlextLdifServersOid
 
-        quirk = FlextLdifQuirksServersOid()
+        quirk = FlextLdifServersOid()
 
         # Register quirk - OID quirks are schema quirks by default
         result = client.register_quirk(quirk, quirk_type="schema")

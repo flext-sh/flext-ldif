@@ -3,7 +3,12 @@
     {
       "dn": "cn=user1,ou=People,dc=example,dc=com",
       "attributes": {
-        "objectClass": ["person", "organizationalPerson", "inetOrgPerson", "top"],
+        "objectClass": [
+          "person",
+          "organizationalPerson",
+          "inetOrgPerson",
+          "top"
+        ],
         "cn": ["user1"],
         "sn": ["User"],
         "givenName": ["First"],
@@ -13,7 +18,10 @@
         "createTimestamp": ["20250101120000Z"],
         "ds-sync-hist": ["dc=example,dc=com:20250101120000Z:1234567890abc"],
         "ds-pwp-account-disabled": ["FALSE"],
-        "isMemberOf": ["cn=engineering,ou=Groups,dc=example,dc=com", "cn=employees,ou=Groups,dc=example,dc=com"]
+        "isMemberOf": [
+          "cn=engineering,ou=Groups,dc=example,dc=com",
+          "cn=employees,ou=Groups,dc=example,dc=com"
+        ]
       }
     }
   ],
@@ -23,6 +31,12 @@
   "metadata": {
     "type": "server_specific",
     "server": "Oracle Unified Directory",
-    "test_aspects": ["replication_attributes", "sync_history", "entry_uuid", "group_membership", "password_policy"]
+    "test_aspects": [
+      "replication_attributes",
+      "sync_history",
+      "entry_uuid",
+      "group_membership",
+      "password_policy"
+    ]
   }
 }

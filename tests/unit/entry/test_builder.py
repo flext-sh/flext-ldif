@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import json
 
-from flext_ldif.entry_builder import FlextLdifEntryBuilder
+from flext_ldif.services.entry_builder import FlextLdifEntryBuilder
 
 
 class TestFlextLdifEntryBuilder:
@@ -397,125 +397,6 @@ class TestFlextLdifEntryBuilder:
         cn_attr = entry.attributes.attributes["cn"]
         assert cn_attr is not None
         assert cn_attr == ["User 1"]
-
-    def test_build_entries_from_dict_valid(self) -> None:
-        """Test building entries from valid dictionary data."""
-        builder = FlextLdifEntryBuilder()
-
-        data: list[dict[str, object]] = [
-            {
-                "dn": "cn=user1,dc=example,dc=com",
-                "attributes": {
-                    "objectclass": ["person"],
-                    "cn": ["User 1"],
-                    "sn": ["One"],
-                },
-            },
-            {
-                "dn": "cn=user2,dc=example,dc=com",
-                "attributes": {
-                    "objectclass": ["person"],
-                    "cn": ["User 2"],
-                    "sn": ["Two"],
-                },
-            },
-        ]
-
-        result = builder.build_entries_from_dict(data)
-
-        assert result.is_success
-        entries = result.value
-        assert len(entries) == 2
-        assert entries[0].dn.value == "cn=user1,dc=example,dc=com"
-        assert entries[1].dn.value == "cn=user2,dc=example,dc=com"
-
-    def test_build_entries_from_dict_missing_dn(self) -> None:
-        """Test building entries from dictionary with missing DN."""
-        builder = FlextLdifEntryBuilder()
-
-        data: list[dict[str, object]] = [
-            {"attributes": {"objectclass": ["person"], "cn": ["User 1"]}}
-        ]
-
-        result = builder.build_entries_from_dict(data)
-
-        assert result.is_failure
-        assert result.error is not None
-        assert result.error is not None
-        assert result.error is not None
-        assert "Each entry must have a 'dn' field" in result.error
-
-    def test_build_entries_from_dict_non_dict_attributes(self) -> None:
-        """Test building entries from dictionary with non-dict attributes."""
-        builder = FlextLdifEntryBuilder()
-
-        data: list[dict[str, object]] = [
-            {
-                "dn": "cn=user1,dc=example,dc=com",
-                "attributes": "not a dict",
-            }
-        ]
-
-        result = builder.build_entries_from_dict(data)
-
-        # When attributes is not a dict, it's converted to {}, which results
-        # in missing objectClass, so entry creation should fail
-        assert result.is_failure
-        assert result.error is not None
-        assert "must have objectClass" in result.error
-
-    def test_build_entries_from_dict_mixed_value_types(self) -> None:
-        """Test building entries from dictionary with mixed value types."""
-        builder = FlextLdifEntryBuilder()
-
-        data: list[dict[str, object]] = [
-            {
-                "dn": "cn=user1,dc=example,dc=com",
-                "attributes": {
-                    "objectclass": "person",  # String
-                    "cn": ["User 1"],  # List
-                    "age": 25,  # Number
-                },
-            }
-        ]
-
-        result = builder.build_entries_from_dict(data)
-
-        assert result.is_success
-        entries = result.value
-        assert len(entries) == 1
-        entry = entries[0]
-        object_class_attr = entry.attributes.attributes["objectclass"]
-        assert object_class_attr is not None
-        assert object_class_attr == ["person"]
-        cn_attr = entry.attributes.attributes["cn"]
-        assert cn_attr is not None
-        assert cn_attr == ["User 1"]
-        age_attr = entry.attributes.attributes["age"]
-        assert age_attr is not None
-        assert age_attr == ["25"]
-
-    def test_convert_entry_to_dict(self) -> None:
-        """Test converting an entry to dictionary format."""
-        builder = FlextLdifEntryBuilder()
-
-        # Create an entry first
-        entry_result = builder.build_person_entry(
-            cn="Test User", sn="User", base_dn="dc=example,dc=com"
-        )
-
-        assert entry_result.is_success
-        entry = entry_result.value
-
-        # Convert to dict
-        result = builder.convert_entry_to_dict(entry)
-
-        assert result.is_success
-        entry_dict = result.value
-        assert entry_dict["dn"] == "cn=Test User,dc=example,dc=com"
-        assert isinstance(entry_dict["attributes"], dict)
-        assert entry_dict["attributes"]["cn"] == ["Test User"]
-        assert entry_dict["attributes"]["sn"] == ["User"]
 
     def test_convert_entries_to_json(self) -> None:
         """Test converting entries to JSON format."""

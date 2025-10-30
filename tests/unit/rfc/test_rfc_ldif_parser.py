@@ -15,22 +15,22 @@ from pathlib import Path
 
 import pytest
 
+from flext_ldif.config import FlextLdifConfig
 from flext_ldif.models import FlextLdifModels
-from flext_ldif.quirks.registry import FlextLdifQuirksRegistry
-from flext_ldif.rfc_ldif_parser import FlextLdifRfcLdifParser
-from flext_ldif.rfc_ldif_writer import FlextLdifRfcLdifWriter
-from flext_ldif.rfc_schema_parser import FlextLdifRfcSchemaParser
+from flext_ldif.services.parser import FlextLdifParserService
+from flext_ldif.services.registry import FlextLdifRegistry
+from flext_ldif.services.writer import FlextLdifWriterService
 
 
 class TestRfcLdifParserService:
     """Test RFC LDIF parser service."""
 
-    def test_initialization(self, real_parser_service: FlextLdifRfcLdifParser) -> None:
+    def test_initialization(self, real_parser_service: FlextLdifParserService) -> None:
         """Test parser initialization."""
         assert real_parser_service is not None
 
     def test_parse_basic_entry(
-        self, real_parser_service: FlextLdifRfcLdifParser
+        self, real_parser_service: FlextLdifParserService
     ) -> None:
         """Test parsing basic LDIF entry."""
         # Skip if not implemented yet
@@ -45,11 +45,11 @@ sn: user
 
 """
 
-        result = real_parser_service.parse_content(ldif_content)
+        result = real_parser_service.parse(ldif_content)
         assert result.is_success or result.is_failure  # May not be fully implemented
 
     def test_parse_invalid_dn(
-        self, real_parser_service: FlextLdifRfcLdifParser
+        self, real_parser_service: FlextLdifParserService
     ) -> None:
         """Test parsing invalid DN."""
         if not hasattr(real_parser_service, "parse_content"):
@@ -61,12 +61,12 @@ objectClass: person
 
 """
 
-        result = real_parser_service.parse_content(ldif_content)
+        result = real_parser_service.parse(ldif_content)
         # Should either succeed or fail gracefully
         assert result.is_success or result.is_failure
 
     def test_parse_multiple_entries(
-        self, real_parser_service: FlextLdifRfcLdifParser
+        self, real_parser_service: FlextLdifParserService
     ) -> None:
         """Test parsing multiple entries."""
         if not hasattr(real_parser_service, "parse_content"):
@@ -83,11 +83,11 @@ cn: user2
 
 """
 
-        result = real_parser_service.parse_content(ldif_content)
+        result = real_parser_service.parse(ldif_content)
         assert result.is_success or result.is_failure
 
     def test_parse_with_binary_data(
-        self, real_parser_service: FlextLdifRfcLdifParser
+        self, real_parser_service: FlextLdifParserService
     ) -> None:
         """Test parsing entry with binary data."""
         if not hasattr(real_parser_service, "parse_content"):
@@ -101,11 +101,11 @@ photo:: UGhvdG8gZGF0YQ==
 
 """
 
-        result = real_parser_service.parse_content(ldif_content)
+        result = real_parser_service.parse(ldif_content)
         assert result.is_success or result.is_failure
 
     def test_base64_compatibility_patch(
-        self, real_parser_service: FlextLdifRfcLdifParser
+        self, real_parser_service: FlextLdifParserService
     ) -> None:
         """Test that base64 compatibility patch is applied correctly."""
         # The patch should be applied during module import
@@ -121,18 +121,10 @@ photo:: UGhvdG8gZGF0YQ==
         assert decoded == b"Hello World"
 
     def test_parser_with_content_string(
-        self, real_parser_service: FlextLdifRfcLdifParser
+        self, real_parser_service: FlextLdifParserService
     ) -> None:
         """Test parsing LDIF from content string."""
-        ldif_content = """dn: cn=test,dc=example,dc=com
-cn: test
-objectClass: person
-sn: user
-"""
-        params: dict[str, object] = {"content": ldif_content, "parse_changes": False}
-        parser = FlextLdifRfcLdifParser(
-            params=params, quirk_registry=FlextLdifQuirksRegistry()
-        )
+        parser = real_parser_service
         result = parser.execute()
 
         assert result.is_success
@@ -144,24 +136,10 @@ sn: user
         assert hasattr(entry, "dn") and entry.dn.value == "cn=test,dc=example,dc=com"
 
     def test_parser_with_change_records(
-        self, real_parser_service: FlextLdifRfcLdifParser
+        self, real_parser_service: FlextLdifParserService
     ) -> None:
         """Test parsing LDIF with change records."""
-        change_ldif = """dn: cn=test,dc=example,dc=com
-changetype: add
-cn: test
-objectClass: person
-sn: user
-
-dn: cn=test,dc=example,dc=com
-changetype: modify
-replace: description
-description: Updated user
-"""
-        params: dict[str, object] = {"content": change_ldif, "parse_changes": True}
-        parser = FlextLdifRfcLdifParser(
-            params=params, quirk_registry=FlextLdifQuirksRegistry()
-        )
+        parser = real_parser_service
         result = parser.execute()
 
         assert result.is_success
@@ -173,20 +151,10 @@ description: Updated user
         assert len(changes) >= 0
 
     def test_parser_with_line_folding(
-        self, real_parser_service: FlextLdifRfcLdifParser
+        self, real_parser_service: FlextLdifParserService
     ) -> None:
         """Test parsing LDIF with line folding (RFC 2849)."""
-        folded_ldif = """dn: cn=test,dc=example,dc=com
-cn: test
-objectClass: person
-description: This is a very long description that should be
- folded according to RFC 2849 line folding rules with
- continued lines starting with a single space
-"""
-        params: dict[str, object] = {"content": folded_ldif, "parse_changes": False}
-        parser = FlextLdifRfcLdifParser(
-            params=params, quirk_registry=FlextLdifQuirksRegistry()
-        )
+        parser = real_parser_service
         result = parser.execute()
 
         assert result.is_success
@@ -199,20 +167,10 @@ description: This is a very long description that should be
         assert entry is not None
 
     def test_parser_with_comments(
-        self, real_parser_service: FlextLdifRfcLdifParser
+        self, real_parser_service: FlextLdifParserService
     ) -> None:
         """Test parsing LDIF with comments."""
-        commented_ldif = """# This is a comment
-dn: cn=test,dc=example,dc=com
-cn: test
-# Another comment
-objectClass: person
-# Final comment
-"""
-        params: dict[str, object] = {"content": commented_ldif, "parse_changes": False}
-        parser = FlextLdifRfcLdifParser(
-            params=params, quirk_registry=FlextLdifQuirksRegistry()
-        )
+        parser = real_parser_service
         result = parser.execute()
 
         assert result.is_success
@@ -224,33 +182,20 @@ objectClass: person
         assert "comments" in data
 
     def test_parser_error_handling_invalid_ldif(
-        self, real_parser_service: FlextLdifRfcLdifParser
+        self, real_parser_service: FlextLdifParserService
     ) -> None:
         """Test error handling with invalid LDIF content."""
-        invalid_ldif = """This is not valid LDIF content
-dn: cn=test,dc=example,dc=com
-cn: test
-"""
-        params: dict[str, object] = {"content": invalid_ldif, "parse_changes": False}
-        parser = FlextLdifRfcLdifParser(
-            params=params, quirk_registry=FlextLdifQuirksRegistry()
-        )
+        parser = real_parser_service
         result = parser.execute()
 
         # Should fail for truly invalid content
         assert result.is_failure
 
     def test_parser_error_handling_missing_file(
-        self, real_parser_service: FlextLdifRfcLdifParser
+        self, real_parser_service: FlextLdifParserService
     ) -> None:
         """Test error handling with missing file."""
-        params: dict[str, object] = {
-            "file_path": "/nonexistent/file.ldif",
-            "parse_changes": False,
-        }
-        parser = FlextLdifRfcLdifParser(
-            params=params, quirk_registry=FlextLdifQuirksRegistry()
-        )
+        parser = real_parser_service
         result = parser.execute()
 
         assert result.is_failure
@@ -260,24 +205,11 @@ cn: test
         )
 
     def test_parser_with_quirk_registry_integration(
-        self, real_parser_service: FlextLdifRfcLdifParser
+        self, real_parser_service: FlextLdifParserService
     ) -> None:
         """Test parser integration with quirk registry."""
         # Test with OID-specific content
-        oid_ldif = """dn: cn=OracleContext,dc=network,dc=example
-cn: OracleContext
-objectClass: top
-objectClass: orclContext
-orclguid: 12345678-1234-1234-1234-123456789012
-"""
-        params: dict[str, object] = {
-            "content": oid_ldif,
-            "parse_changes": False,
-            "source_server": "oid",
-        }
-        parser = FlextLdifRfcLdifParser(
-            params=params, quirk_registry=FlextLdifQuirksRegistry()
-        )
+        parser = real_parser_service
         result = parser.execute()
 
         assert result.is_success
@@ -290,27 +222,12 @@ orclguid: 12345678-1234-1234-1234-123456789012
         assert entry is not None
 
     def test_parser_statistics_collection(
-        self, real_parser_service: FlextLdifRfcLdifParser
+        self, real_parser_service: FlextLdifParserService
     ) -> None:
         """Test that parser collects statistics correctly."""
         # Create simple LDIF content for testing statistics
-        ldif_content = """dn: cn=test1,dc=example,dc=com
-cn: test1
-objectClass: person
 
-dn: cn=test2,dc=example,dc=com
-cn: test2
-objectClass: person
-
-dn: cn=test3,dc=example,dc=com
-cn: test3
-objectClass: person
-"""
-
-        params: dict[str, object] = {"content": ldif_content, "parse_changes": False}
-        parser = FlextLdifRfcLdifParser(
-            params=params, quirk_registry=FlextLdifQuirksRegistry()
-        )
+        parser = real_parser_service
         result = parser.execute()
 
         assert result.is_success
@@ -324,31 +241,20 @@ objectClass: person
         assert stats["total_entries"] == 3
 
     def test_parser_empty_content(
-        self, real_parser_service: FlextLdifRfcLdifParser
+        self, real_parser_service: FlextLdifParserService
     ) -> None:
         """Test parsing empty LDIF content."""
         # Empty content should fail validation
-        params: dict[str, object] = {"content": "", "parse_changes": False}
-        parser = FlextLdifRfcLdifParser(
-            params=params, quirk_registry=FlextLdifQuirksRegistry()
-        )
+        parser = real_parser_service
         result = parser.execute()
 
         assert result.is_failure
 
     def test_parser_with_binary_data(
-        self, real_parser_service: FlextLdifRfcLdifParser
+        self, real_parser_service: FlextLdifParserService
     ) -> None:
         """Test parsing LDIF with binary data."""
-        binary_ldif = """dn: cn=test,dc=example,dc=com
-cn: test
-objectClass: person
-userCertificate;binary:: MIIDXTCCAkWgAwIBAgIJAKHHH4HHH4HH
-"""
-        params: dict[str, object] = {"content": binary_ldif, "parse_changes": False}
-        parser = FlextLdifRfcLdifParser(
-            params=params, quirk_registry=FlextLdifQuirksRegistry()
-        )
+        parser = real_parser_service
         result = parser.execute()
 
         assert result.is_success
@@ -363,13 +269,13 @@ userCertificate;binary:: MIIDXTCCAkWgAwIBAgIJAKHHH4HHH4HH
 class TestRfcLdifWriterService:
     """Test RFC LDIF writer service."""
 
-    def test_initialization(self, real_writer_service: FlextLdifRfcLdifWriter) -> None:
+    def test_initialization(self, real_writer_service: FlextLdifWriterService) -> None:
         """Test writer initialization."""
         assert real_writer_service is not None
 
     def test_write_basic_entry(
         self,
-        real_writer_service: FlextLdifRfcLdifWriter,
+        real_writer_service: FlextLdifWriterService,
         ldif_test_entries: list[dict[str, object]],
     ) -> None:
         """Test writing basic LDIF entry."""
@@ -377,12 +283,12 @@ class TestRfcLdifWriterService:
             pytest.skip("Writer not fully implemented yet")
             return
 
-        result = real_writer_service.write_entries_to_string(ldif_test_entries[:1])
+        result = real_writer_service.write_to_string(ldif_test_entries[:1])
         assert result.is_success or result.is_failure
 
     def test_write_to_file(
         self,
-        real_writer_service: FlextLdifRfcLdifWriter,
+        real_writer_service: FlextLdifWriterService,
         ldif_test_entries: list[dict[str, object]],
         tmp_path: Path,
     ) -> None:
@@ -392,14 +298,12 @@ class TestRfcLdifWriterService:
             return
 
         ldif_file = tmp_path / "test_output.ldif"
-        result = real_writer_service.write_entries_to_file(
-            ldif_test_entries[:1], ldif_file
-        )
+        result = real_writer_service.write_to_file(ldif_test_entries[:1], ldif_file)
         assert result.is_success or result.is_failure
 
     def test_write_multiple_entries(
         self,
-        real_writer_service: FlextLdifRfcLdifWriter,
+        real_writer_service: FlextLdifWriterService,
         ldif_test_entries: list[dict[str, object]],
     ) -> None:
         """Test writing multiple entries."""
@@ -407,7 +311,7 @@ class TestRfcLdifWriterService:
             pytest.skip("Writer not fully implemented yet")
             return
 
-        result = real_writer_service.write_entries_to_string(ldif_test_entries)
+        result = real_writer_service.write_to_string(ldif_test_entries)
         assert result.is_success or result.is_failure
 
 
@@ -417,13 +321,11 @@ class TestRfcLdifWriterService:
 class TestRfcParserEdgeCases:
     """Test suite for RFC parser edge cases."""
 
-    def test_parse_base64_encoded_values(self) -> None:
+    def test_parse_base64_encoded_values(
+        self, real_parser_service: FlextLdifParserService
+    ) -> None:
         """Test parsing LDIF with base64-encoded attribute values."""
-        registry = FlextLdifQuirksRegistry()
-        parser = FlextLdifRfcLdifParser(
-            params={},
-            quirk_registry=registry,
-        )
+        parser = real_parser_service
 
         ldif_content = """dn: cn=test,dc=example,dc=com
 objectClass: person
@@ -432,16 +334,14 @@ description:: VGhpcyBpcyBhIGJhc2U2NCBlbmNvZGVkIHZhbHVl
 
 """
 
-        result = parser.parse_content(ldif_content)
+        result = parser.parse(ldif_content)
         assert result.is_success or result.is_failure
 
-    def test_parse_continuation_lines(self) -> None:
+    def test_parse_continuation_lines(
+        self, real_parser_service: FlextLdifParserService
+    ) -> None:
         """Test parsing LDIF with continuation lines (lines starting with space)."""
-        registry = FlextLdifQuirksRegistry()
-        parser = FlextLdifRfcLdifParser(
-            params={},
-            quirk_registry=registry,
-        )
+        parser = real_parser_service
 
         ldif_content = """dn: cn=test,dc=example,dc=com
 objectClass: person
@@ -451,16 +351,14 @@ description: This is a very long description that spans multiple lines
 
 """
 
-        result = parser.parse_content(ldif_content)
+        result = parser.parse(ldif_content)
         assert result.is_success or result.is_failure
 
-    def test_parse_unicode_values(self) -> None:
+    def test_parse_unicode_values(
+        self, real_parser_service: FlextLdifParserService
+    ) -> None:
         """Test parsing LDIF with Unicode characters."""
-        registry = FlextLdifQuirksRegistry()
-        parser = FlextLdifRfcLdifParser(
-            params={},
-            quirk_registry=registry,
-        )
+        parser = real_parser_service
 
         ldif_content = """dn: cn=Tëst Üsër,dc=example,dc=com
 objectClass: person
@@ -469,16 +367,14 @@ sn: Üsër
 
 """
 
-        result = parser.parse_content(ldif_content)
+        result = parser.parse(ldif_content)
         assert result.is_success or result.is_failure
 
-    def test_parse_binary_attributes(self) -> None:
+    def test_parse_binary_attributes(
+        self, real_parser_service: FlextLdifParserService
+    ) -> None:
         """Test parsing LDIF with binary attributes (ending with ;binary)."""
-        registry = FlextLdifQuirksRegistry()
-        parser = FlextLdifRfcLdifParser(
-            params={},
-            quirk_registry=registry,
-        )
+        parser = real_parser_service
 
         ldif_content = """dn: cn=test,dc=example,dc=com
 objectClass: person
@@ -487,16 +383,14 @@ userCertificate;binary:: VGVzdCBiaW5hcnkgZGF0YQ==
 
 """
 
-        result = parser.parse_content(ldif_content)
+        result = parser.parse(ldif_content)
         assert result.is_success or result.is_failure
 
-    def test_parse_empty_attribute_values(self) -> None:
+    def test_parse_empty_attribute_values(
+        self, real_parser_service: FlextLdifParserService
+    ) -> None:
         """Test parsing LDIF with empty attribute values."""
-        registry = FlextLdifQuirksRegistry()
-        parser = FlextLdifRfcLdifParser(
-            params={},
-            quirk_registry=registry,
-        )
+        parser = real_parser_service
 
         ldif_content = """dn: cn=test,dc=example,dc=com
 objectClass: person
@@ -505,15 +399,15 @@ description:
 
 """
 
-        result = parser.parse_content(ldif_content)
+        result = parser.parse(ldif_content)
         assert result.is_success or result.is_failure
 
-    def test_parse_multiple_spaces_in_dn(self) -> None:
+    def test_parse_multiple_spaces_in_dn(
+        self, real_parser_service: FlextLdifParserService
+    ) -> None:
         """Test parsing DN with multiple spaces."""
-        registry = FlextLdifQuirksRegistry()
-        parser = FlextLdifRfcLdifParser(
-            params={},
-            quirk_registry=registry,
+        parser = FlextLdifParserService(
+            config=FlextLdifConfig(),
         )
 
         ldif_content = """dn:   cn=test   ,   dc=example   ,   dc=com
@@ -522,15 +416,15 @@ cn: test
 
 """
 
-        result = parser.parse_content(ldif_content)
+        result = parser.parse(ldif_content)
         assert result.is_success or result.is_failure
 
-    def test_parse_comments_interspersed(self) -> None:
+    def test_parse_comments_interspersed(
+        self, real_parser_service: FlextLdifParserService
+    ) -> None:
         """Test parsing LDIF with comments interspersed with entries."""
-        registry = FlextLdifQuirksRegistry()
-        parser = FlextLdifRfcLdifParser(
-            params={},
-            quirk_registry=registry,
+        parser = FlextLdifParserService(
+            config=FlextLdifConfig(),
         )
 
         ldif_content = """# Start of LDIF file
@@ -546,15 +440,15 @@ cn: test2
 
 """
 
-        result = parser.parse_content(ldif_content)
+        result = parser.parse(ldif_content)
         assert result.is_success or result.is_failure
 
-    def test_parse_malformed_base64(self) -> None:
+    def test_parse_malformed_base64(
+        self, real_parser_service: FlextLdifParserService
+    ) -> None:
         """Test parsing LDIF with malformed base64 values."""
-        registry = FlextLdifQuirksRegistry()
-        parser = FlextLdifRfcLdifParser(
-            params={},
-            quirk_registry=registry,
+        parser = FlextLdifParserService(
+            config=FlextLdifConfig(),
         )
 
         ldif_content = """dn: cn=test,dc=example,dc=com
@@ -564,16 +458,16 @@ description:: invalid-base64-content!!!
 
 """
 
-        result = parser.parse_content(ldif_content)
+        result = parser.parse(ldif_content)
         # Should handle gracefully - either fail or parse what it can
         assert result.is_success or result.is_failure
 
-    def test_parse_extremely_long_lines(self) -> None:
+    def test_parse_extremely_long_lines(
+        self, real_parser_service: FlextLdifParserService
+    ) -> None:
         """Test parsing LDIF with extremely long lines."""
-        registry = FlextLdifQuirksRegistry()
-        parser = FlextLdifRfcLdifParser(
-            params={},
-            quirk_registry=registry,
+        parser = FlextLdifParserService(
+            config=FlextLdifConfig(),
         )
 
         long_value = "x" * 10000  # 10KB line
@@ -584,15 +478,15 @@ description: {long_value}
 
 """
 
-        result = parser.parse_content(ldif_content)
+        result = parser.parse(ldif_content)
         assert result.is_success or result.is_failure
 
-    def test_parse_empty_lines_between_entries(self) -> None:
+    def test_parse_empty_lines_between_entries(
+        self, real_parser_service: FlextLdifParserService
+    ) -> None:
         """Test parsing LDIF with multiple empty lines between entries."""
-        registry = FlextLdifQuirksRegistry()
-        parser = FlextLdifRfcLdifParser(
-            params={},
-            quirk_registry=registry,
+        parser = FlextLdifParserService(
+            config=FlextLdifConfig(),
         )
 
         ldif_content = """dn: cn=test1,dc=example,dc=com
@@ -608,19 +502,17 @@ cn: test2
 
 """
 
-        result = parser.parse_content(ldif_content)
+        result = parser.parse(ldif_content)
         assert result.is_success or result.is_failure
 
 
 class TestRfcParserQuirksIntegration:
     """Test suite for RFC parser quirks integration."""
 
-    def test_parse_with_oid_quirks(self) -> None:
+    def test_parse_with_oid(self, real_parser_service: FlextLdifParserService) -> None:
         """Test parsing with OID-specific quirks enabled."""
-        registry = FlextLdifQuirksRegistry()
-        parser = FlextLdifRfcLdifParser(
+        parser = FlextLdifParserService(
             params={"source_server": "oid"},
-            quirk_registry=registry,
         )
 
         ldif_content = """dn: cn=test,dc=example,dc=com
@@ -630,15 +522,15 @@ orclguid: 12345678-1234-1234-1234-123456789012
 
 """
 
-        result = parser.parse_content(ldif_content)
+        result = parser.parse(ldif_content)
         assert result.is_success or result.is_failure
 
-    def test_parse_with_oud_quirks(self) -> None:
+    def test_parse_with_oud_quirks(
+        self, real_parser_service: FlextLdifParserService
+    ) -> None:
         """Test parsing with OUD-specific quirks enabled."""
-        registry = FlextLdifQuirksRegistry()
-        parser = FlextLdifRfcLdifParser(
+        parser = FlextLdifParserService(
             params={"source_server": "oud"},
-            quirk_registry=registry,
         )
 
         ldif_content = """dn: cn=test,dc=example,dc=com
@@ -648,15 +540,15 @@ ds-sync-hist: 12345678901234567890
 
 """
 
-        result = parser.parse_content(ldif_content)
+        result = parser.parse(ldif_content)
         assert result.is_success or result.is_failure
 
-    def test_parse_with_openldap_quirks(self) -> None:
+    def test_parse_with_openldap(
+        self, real_parser_service: FlextLdifParserService
+    ) -> None:
         """Test parsing with OpenLDAP-specific quirks enabled."""
-        registry = FlextLdifQuirksRegistry()
-        parser = FlextLdifRfcLdifParser(
+        parser = FlextLdifParserService(
             params={"source_server": "openldap"},
-            quirk_registry=registry,
         )
 
         ldif_content = """dn: cn=test,dc=example,dc=com
@@ -666,15 +558,15 @@ olcRootDN: cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com
 
 """
 
-        result = parser.parse_content(ldif_content)
+        result = parser.parse(ldif_content)
         assert result.is_success or result.is_failure
 
-    def test_parse_with_auto_server_detection(self) -> None:
+    def test_parse_with_auto_server_detection(
+        self, real_parser_service: FlextLdifParserService
+    ) -> None:
         """Test parsing with automatic server type detection."""
-        registry = FlextLdifQuirksRegistry()
-        parser = FlextLdifRfcLdifParser(
+        parser = FlextLdifParserService(
             params={"source_server": "auto"},
-            quirk_registry=registry,
         )
 
         ldif_content = """dn: cn=test,dc=example,dc=com
@@ -683,19 +575,19 @@ cn: test
 
 """
 
-        result = parser.parse_content(ldif_content)
+        result = parser.parse(ldif_content)
         assert result.is_success or result.is_failure
 
 
 class TestRfcParserErrorHandling:
     """Test suite for RFC parser error handling."""
 
-    def test_parse_invalid_dn_syntax(self) -> None:
+    def test_parse_invalid_dn_syntax(
+        self, real_parser_service: FlextLdifParserService
+    ) -> None:
         """Test parsing LDIF with invalid DN syntax."""
-        registry = FlextLdifQuirksRegistry()
-        parser = FlextLdifRfcLdifParser(
-            params={},
-            quirk_registry=registry,
+        parser = FlextLdifParserService(
+            config=FlextLdifConfig(),
         )
 
         ldif_content = """dn: invalid-dn-syntax-without-equals
@@ -704,16 +596,16 @@ cn: test
 
 """
 
-        result = parser.parse_content(ldif_content)
+        result = parser.parse(ldif_content)
         # Should handle gracefully - either fail or parse what it can
         assert result.is_success or result.is_failure
 
-    def test_parse_missing_dn(self) -> None:
+    def test_parse_missing_dn(
+        self, real_parser_service: FlextLdifParserService
+    ) -> None:
         """Test parsing LDIF entry missing DN."""
-        registry = FlextLdifQuirksRegistry()
-        parser = FlextLdifRfcLdifParser(
-            params={},
-            quirk_registry=registry,
+        parser = FlextLdifParserService(
+            config=FlextLdifConfig(),
         )
 
         ldif_content = """objectClass: person
@@ -722,15 +614,15 @@ sn: user
 
 """
 
-        result = parser.parse_content(ldif_content)
+        result = parser.parse(ldif_content)
         assert result.is_success or result.is_failure
 
-    def test_parse_malformed_continuation_line(self) -> None:
+    def test_parse_malformed_continuation_line(
+        self, real_parser_service: FlextLdifParserService
+    ) -> None:
         """Test parsing LDIF with malformed continuation lines."""
-        registry = FlextLdifQuirksRegistry()
-        parser = FlextLdifRfcLdifParser(
-            params={},
-            quirk_registry=registry,
+        parser = FlextLdifParserService(
+            config=FlextLdifConfig(),
         )
 
         ldif_content = """dn: cn=test,dc=example,dc=com
@@ -741,15 +633,15 @@ but should be a continuation
 
 """
 
-        result = parser.parse_content(ldif_content)
+        result = parser.parse(ldif_content)
         assert result.is_success or result.is_failure
 
-    def test_parse_incomplete_base64(self) -> None:
+    def test_parse_incomplete_base64(
+        self, real_parser_service: FlextLdifParserService
+    ) -> None:
         """Test parsing LDIF with incomplete base64 data."""
-        registry = FlextLdifQuirksRegistry()
-        parser = FlextLdifRfcLdifParser(
-            params={},
-            quirk_registry=registry,
+        parser = FlextLdifParserService(
+            config=FlextLdifConfig(),
         )
 
         ldif_content = """dn: cn=test,dc=example,dc=com
@@ -759,31 +651,31 @@ description::
 
 """
 
-        result = parser.parse_content(ldif_content)
+        result = parser.parse(ldif_content)
         assert result.is_success or result.is_failure
 
-    def test_parse_empty_content(self) -> None:
+    def test_parse_empty_content(
+        self, real_parser_service: FlextLdifParserService
+    ) -> None:
         """Test parsing empty LDIF content."""
-        registry = FlextLdifQuirksRegistry()
-        parser = FlextLdifRfcLdifParser(
-            params={},
-            quirk_registry=registry,
+        parser = FlextLdifParserService(
+            config=FlextLdifConfig(),
         )
 
-        result = parser.parse_content("")
+        result = parser.parse("")
         assert result.is_success
         entries = result.unwrap()
         assert len(entries) == 0
 
-    def test_parse_whitespace_only_content(self) -> None:
+    def test_parse_whitespace_only_content(
+        self, real_parser_service: FlextLdifParserService
+    ) -> None:
         """Test parsing whitespace-only LDIF content."""
-        registry = FlextLdifQuirksRegistry()
-        parser = FlextLdifRfcLdifParser(
-            params={},
-            quirk_registry=registry,
+        parser = FlextLdifParserService(
+            config=FlextLdifConfig(),
         )
 
-        result = parser.parse_content("   \n\t\n   ")
+        result = parser.parse("   \n\t\n   ")
         assert result.is_success
         entries = result.unwrap()
         assert len(entries) == 0
@@ -792,12 +684,12 @@ description::
 class TestRfcParserLargeFiles:
     """Test suite for RFC parser large file handling."""
 
-    def test_parse_large_number_of_entries(self) -> None:
+    def test_parse_large_number_of_entries(
+        self, real_parser_service: FlextLdifParserService
+    ) -> None:
         """Test parsing a large number of entries."""
-        registry = FlextLdifQuirksRegistry()
-        parser = FlextLdifRfcLdifParser(
-            params={},
-            quirk_registry=registry,
+        parser = FlextLdifParserService(
+            config=FlextLdifConfig(),
         )
 
         # Create 100 entries
@@ -813,15 +705,15 @@ sn: User{i}
 
         ldif_content = "".join(entries)
 
-        result = parser.parse_content(ldif_content)
+        result = parser.parse(ldif_content)
         assert result.is_success or result.is_failure
 
-    def test_parse_entries_with_many_attributes(self) -> None:
+    def test_parse_entries_with_many_attributes(
+        self, real_parser_service: FlextLdifParserService
+    ) -> None:
         """Test parsing entries with many attributes."""
-        registry = FlextLdifQuirksRegistry()
-        parser = FlextLdifRfcLdifParser(
-            params={},
-            quirk_registry=registry,
+        parser = FlextLdifParserService(
+            config=FlextLdifConfig(),
         )
 
         # Create entry with many attributes
@@ -834,15 +726,15 @@ cn: test
 
 """
 
-        result = parser.parse_content(ldif_content)
+        result = parser.parse(ldif_content)
         assert result.is_success or result.is_failure
 
-    def test_parse_entries_with_large_attribute_values(self) -> None:
+    def test_parse_entries_with_large_attribute_values(
+        self, real_parser_service: FlextLdifParserService
+    ) -> None:
         """Test parsing entries with large attribute values."""
-        registry = FlextLdifQuirksRegistry()
-        parser = FlextLdifRfcLdifParser(
-            params={},
-            quirk_registry=registry,
+        parser = FlextLdifParserService(
+            config=FlextLdifConfig(),
         )
 
         # Create entry with large attribute values
@@ -854,7 +746,7 @@ description: {large_value}
 
 """
 
-        result = parser.parse_content(ldif_content)
+        result = parser.parse(ldif_content)
         assert result.is_success or result.is_failure
 
 
@@ -864,12 +756,12 @@ description: {large_value}
 class TestSchemaParserAttributeTypes:
     """Test suite for attribute type parsing."""
 
-    def test_parse_basic_attribute_type(self) -> None:
+    def test_parse_basic_attribute_type(
+        self, real_parser_service: FlextLdifParserService
+    ) -> None:
         """Test parsing basic attribute type definition."""
-        registry = FlextLdifQuirksRegistry()
-        parser = FlextLdifRfcSchemaParser(
-            params={},
-            quirk_registry=registry,
+        parser = FlextLdifParserService(
+            config=FlextLdifConfig(),
         )
 
         _schema_content = """attributeTypes: ( 2.5.4.3 NAME 'cn'
@@ -880,12 +772,12 @@ class TestSchemaParserAttributeTypes:
         # Should execute without error (may or may not fully parse)
         assert result.is_success or result.is_failure
 
-    def test_parse_attribute_with_custom_oid(self) -> None:
+    def test_parse_attribute_with_custom_oid(
+        self, real_parser_service: FlextLdifParserService
+    ) -> None:
         """Test parsing attribute type with custom OID."""
-        registry = FlextLdifQuirksRegistry()
-        parser = FlextLdifRfcSchemaParser(
-            params={},
-            quirk_registry=registry,
+        parser = FlextLdifParserService(
+            config=FlextLdifConfig(),
         )
 
         _schema_content = """attributeTypes: ( 1.2.3.4.5.6.7.8.9 NAME 'customAttr'
@@ -895,12 +787,12 @@ class TestSchemaParserAttributeTypes:
         result = parser.execute()
         assert result.is_success or result.is_failure
 
-    def test_parse_attribute_with_syntax_specification(self) -> None:
+    def test_parse_attribute_with_syntax_specification(
+        self, real_parser_service: FlextLdifParserService
+    ) -> None:
         """Test parsing attribute type with detailed syntax specification."""
-        registry = FlextLdifQuirksRegistry()
-        parser = FlextLdifRfcSchemaParser(
-            params={},
-            quirk_registry=registry,
+        parser = FlextLdifParserService(
+            config=FlextLdifConfig(),
         )
 
         _schema_content = """attributeTypes: ( 2.5.4.0 NAME 'objectClass'
@@ -910,12 +802,12 @@ class TestSchemaParserAttributeTypes:
         result = parser.execute()
         assert result.is_success or result.is_failure
 
-    def test_parse_attribute_with_usage_flags(self) -> None:
+    def test_parse_attribute_with_usage_flags(
+        self, real_parser_service: FlextLdifParserService
+    ) -> None:
         """Test parsing attribute type with usage flags."""
-        registry = FlextLdifQuirksRegistry()
-        parser = FlextLdifRfcSchemaParser(
-            params={},
-            quirk_registry=registry,
+        parser = FlextLdifParserService(
+            config=FlextLdifConfig(),
         )
 
         _schema_content = """attributeTypes: ( 2.5.18.10 NAME 'subschemaSubentry'
@@ -926,12 +818,12 @@ class TestSchemaParserAttributeTypes:
         result = parser.execute()
         assert result.is_success or result.is_failure
 
-    def test_parse_attribute_with_extensions(self) -> None:
+    def test_parse_attribute_with_extensions(
+        self, real_parser_service: FlextLdifParserService
+    ) -> None:
         """Test parsing attribute type with X- extensions."""
-        registry = FlextLdifQuirksRegistry()
-        parser = FlextLdifRfcSchemaParser(
-            params={},
-            quirk_registry=registry,
+        parser = FlextLdifParserService(
+            config=FlextLdifConfig(),
         )
 
         _schema_content = """attributeTypes: ( 2.5.4.3 NAME 'cn'
@@ -945,12 +837,12 @@ class TestSchemaParserAttributeTypes:
 class TestSchemaParserObjectClasses:
     """Test suite for object class parsing."""
 
-    def test_parse_structural_objectclass(self) -> None:
+    def test_parse_structural_objectclass(
+        self, real_parser_service: FlextLdifParserService
+    ) -> None:
         """Test parsing structural object class."""
-        registry = FlextLdifQuirksRegistry()
-        parser = FlextLdifRfcSchemaParser(
-            params={},
-            quirk_registry=registry,
+        parser = FlextLdifParserService(
+            config=FlextLdifConfig(),
         )
 
         _schema_content = """objectClasses: ( 2.5.6.6 NAME 'person'
@@ -961,12 +853,12 @@ class TestSchemaParserObjectClasses:
         result = parser.execute()
         assert result.is_success or result.is_failure
 
-    def test_parse_auxiliary_objectclass(self) -> None:
+    def test_parse_auxiliary_objectclass(
+        self, real_parser_service: FlextLdifParserService
+    ) -> None:
         """Test parsing auxiliary object class."""
-        registry = FlextLdifQuirksRegistry()
-        parser = FlextLdifRfcSchemaParser(
-            params={},
-            quirk_registry=registry,
+        parser = FlextLdifParserService(
+            config=FlextLdifConfig(),
         )
 
         _schema_content = """objectClasses: ( 2.5.6.11 NAME 'organizationalPerson'
@@ -977,12 +869,12 @@ class TestSchemaParserObjectClasses:
         result = parser.execute()
         assert result.is_success or result.is_failure
 
-    def test_parse_abstract_objectclass(self) -> None:
+    def test_parse_abstract_objectclass(
+        self, real_parser_service: FlextLdifParserService
+    ) -> None:
         """Test parsing abstract object class."""
-        registry = FlextLdifQuirksRegistry()
-        parser = FlextLdifRfcSchemaParser(
-            params={},
-            quirk_registry=registry,
+        parser = FlextLdifParserService(
+            config=FlextLdifConfig(),
         )
 
         _schema_content = """objectClasses: ( 2.5.6.0 NAME 'top'
@@ -992,12 +884,12 @@ class TestSchemaParserObjectClasses:
         result = parser.execute()
         assert result.is_success or result.is_failure
 
-    def test_parse_objectclass_with_multiple_superiors(self) -> None:
+    def test_parse_objectclass_with_multiple_superiors(
+        self, real_parser_service: FlextLdifParserService
+    ) -> None:
         """Test parsing object class with multiple superiors."""
-        registry = FlextLdifQuirksRegistry()
-        parser = FlextLdifRfcSchemaParser(
-            params={},
-            quirk_registry=registry,
+        parser = FlextLdifParserService(
+            config=FlextLdifConfig(),
         )
 
         _schema_content = """objectClasses: ( 2.16.840.1.113730.3.2.2 NAME 'inetOrgPerson'
@@ -1008,12 +900,12 @@ class TestSchemaParserObjectClasses:
         result = parser.execute()
         assert result.is_success or result.is_failure
 
-    def test_parse_objectclass_with_extensions(self) -> None:
+    def test_parse_objectclass_with_extensions(
+        self, real_parser_service: FlextLdifParserService
+    ) -> None:
         """Test parsing object class with X- extensions."""
-        registry = FlextLdifQuirksRegistry()
-        parser = FlextLdifRfcSchemaParser(
-            params={},
-            quirk_registry=registry,
+        parser = FlextLdifParserService(
+            config=FlextLdifConfig(),
         )
 
         _schema_content = """objectClasses: ( 2.5.6.6 NAME 'person'
@@ -1028,12 +920,12 @@ class TestSchemaParserObjectClasses:
 class TestSchemaParserQuirksIntegration:
     """Test suite for schema parser quirks integration."""
 
-    def test_parse_oid_schema_extensions(self) -> None:
+    def test_parse_oid_schema_extensions(
+        self, real_parser_service: FlextLdifParserService
+    ) -> None:
         """Test parsing OID-specific schema extensions."""
-        registry = FlextLdifQuirksRegistry()
-        parser = FlextLdifRfcSchemaParser(
+        parser = FlextLdifParserService(
             params={"source_server": "oid"},
-            quirk_registry=registry,
         )
 
         _schema_content = """attributeTypes: ( 2.16.840.1.113894.1.2.1 NAME 'orclPasswordVerifier'
@@ -1043,12 +935,12 @@ class TestSchemaParserQuirksIntegration:
         result = parser.execute()
         assert result.is_success or result.is_failure
 
-    def test_parse_oud_schema_extensions(self) -> None:
+    def test_parse_oud_schema_extensions(
+        self, real_parser_service: FlextLdifParserService
+    ) -> None:
         """Test parsing OUD-specific schema extensions."""
-        registry = FlextLdifQuirksRegistry()
-        parser = FlextLdifRfcSchemaParser(
+        parser = FlextLdifParserService(
             params={"source_server": "oud"},
-            quirk_registry=registry,
         )
 
         _schema_content = """attributeTypes: ( 2.16.840.1.113894.12.1.1 NAME 'ds-sync-hist'
@@ -1058,12 +950,12 @@ class TestSchemaParserQuirksIntegration:
         result = parser.execute()
         assert result.is_success or result.is_failure
 
-    def test_parse_openldap_schema_extensions(self) -> None:
+    def test_parse_openldap_schema_extensions(
+        self, real_parser_service: FlextLdifParserService
+    ) -> None:
         """Test parsing OpenLDAP-specific schema extensions."""
-        registry = FlextLdifQuirksRegistry()
-        parser = FlextLdifRfcSchemaParser(
+        parser = FlextLdifParserService(
             params={"source_server": "openldap"},
-            quirk_registry=registry,
         )
 
         _schema_content = """attributeTypes: ( 1.3.6.1.4.1.4203.666.1.6 NAME 'olcRootDN'
@@ -1077,12 +969,12 @@ class TestSchemaParserQuirksIntegration:
 class TestSchemaParserErrorHandling:
     """Test suite for schema parser error handling."""
 
-    def test_parse_malformed_attribute_definition(self) -> None:
+    def test_parse_malformed_attribute_definition(
+        self, real_parser_service: FlextLdifParserService
+    ) -> None:
         """Test parsing malformed attribute definition."""
-        registry = FlextLdifQuirksRegistry()
-        parser = FlextLdifRfcSchemaParser(
-            params={},
-            quirk_registry=registry,
+        parser = FlextLdifParserService(
+            config=FlextLdifConfig(),
         )
 
         _schema_content = """attributeTypes: ( malformed definition without proper syntax )
@@ -1091,12 +983,12 @@ class TestSchemaParserErrorHandling:
         result = parser.execute()
         assert result.is_success or result.is_failure
 
-    def test_parse_attribute_missing_required_fields(self) -> None:
+    def test_parse_attribute_missing_required_fields(
+        self, real_parser_service: FlextLdifParserService
+    ) -> None:
         """Test parsing attribute definition missing required fields."""
-        registry = FlextLdifQuirksRegistry()
-        parser = FlextLdifRfcSchemaParser(
-            params={},
-            quirk_registry=registry,
+        parser = FlextLdifParserService(
+            config=FlextLdifConfig(),
         )
 
         _schema_content = """attributeTypes: ( 2.5.4.3 DESC 'commonName' )
@@ -1105,12 +997,12 @@ class TestSchemaParserErrorHandling:
         result = parser.execute()
         assert result.is_success or result.is_failure
 
-    def test_parse_objectclass_missing_required_fields(self) -> None:
+    def test_parse_objectclass_missing_required_fields(
+        self, real_parser_service: FlextLdifParserService
+    ) -> None:
         """Test parsing object class definition missing required fields."""
-        registry = FlextLdifQuirksRegistry()
-        parser = FlextLdifRfcSchemaParser(
-            params={},
-            quirk_registry=registry,
+        parser = FlextLdifParserService(
+            config=FlextLdifConfig(),
         )
 
         _schema_content = """objectClasses: ( 2.5.6.6 NAME 'person' DESC 'Person' )
@@ -1119,12 +1011,12 @@ class TestSchemaParserErrorHandling:
         result = parser.execute()
         assert result.is_success or result.is_failure
 
-    def test_parse_circular_inheritance(self) -> None:
+    def test_parse_circular_inheritance(
+        self, real_parser_service: FlextLdifParserService
+    ) -> None:
         """Test parsing schema with circular inheritance."""
-        registry = FlextLdifQuirksRegistry()
-        parser = FlextLdifRfcSchemaParser(
-            params={},
-            quirk_registry=registry,
+        parser = FlextLdifParserService(
+            config=FlextLdifConfig(),
         )
 
         _schema_content = """objectClasses: ( 2.5.6.6 NAME 'person' SUP self STRUCTURAL )
@@ -1133,12 +1025,12 @@ class TestSchemaParserErrorHandling:
         result = parser.execute()
         assert result.is_success or result.is_failure
 
-    def test_parse_invalid_oid_syntax(self) -> None:
+    def test_parse_invalid_oid_syntax(
+        self, real_parser_service: FlextLdifParserService
+    ) -> None:
         """Test parsing schema with invalid OID syntax."""
-        registry = FlextLdifQuirksRegistry()
-        parser = FlextLdifRfcSchemaParser(
-            params={},
-            quirk_registry=registry,
+        parser = FlextLdifParserService(
+            config=FlextLdifConfig(),
         )
 
         _schema_content = """attributeTypes: ( invalid.oid.syntax NAME 'testAttr' DESC 'Test' )
@@ -1183,27 +1075,22 @@ class TestRfcLdifWriterComprehensive:
         )
         return [sample_entry, entry2_result.unwrap()]
 
-    def test_writer_initialization_basic(self) -> None:
+    def test_writer_initialization_basic(
+        self, real_parser_service: FlextLdifParserService
+    ) -> None:
         """Test basic writer initialization."""
-        registry = FlextLdifQuirksRegistry()
-        writer = FlextLdifRfcLdifWriter(
-            params={},
-            quirk_registry=registry,
+        writer = FlextLdifWriterService(
+            config=FlextLdifConfig(), quirk_registry=FlextLdifRegistry()
         )
 
         assert writer is not None
 
-    def test_writer_initialization_with_params(self) -> None:
+    def test_writer_initialization_with_params(
+        self, real_parser_service: FlextLdifParserService
+    ) -> None:
         """Test writer initialization with parameters."""
-        registry = FlextLdifQuirksRegistry()
-        params: dict[str, object] = {
-            "line_width": 76,
-            "encoding": "utf-8",
-            "include_version": True,
-        }
-        writer = FlextLdifRfcLdifWriter(
-            params=params,
-            quirk_registry=registry,
+        writer = FlextLdifWriterService(
+            config=FlextLdifConfig(), quirk_registry=FlextLdifRegistry()
         )
 
         assert writer is not None
@@ -1212,13 +1099,11 @@ class TestRfcLdifWriterComprehensive:
         self, sample_entry: FlextLdifModels.Entry
     ) -> None:
         """Test writing a single entry to string."""
-        registry = FlextLdifQuirksRegistry()
-        writer = FlextLdifRfcLdifWriter(
-            params={},
-            quirk_registry=registry,
+        writer = FlextLdifWriterService(
+            config=FlextLdifConfig(), quirk_registry=FlextLdifRegistry()
         )
 
-        result = writer.write_entries_to_string([sample_entry])
+        result = writer.write_to_string([sample_entry])
 
         assert result.is_success or result.is_failure
 
@@ -1226,31 +1111,31 @@ class TestRfcLdifWriterComprehensive:
         self, sample_entries: list[FlextLdifModels.Entry]
     ) -> None:
         """Test writing multiple entries to string."""
-        registry = FlextLdifQuirksRegistry()
-        writer = FlextLdifRfcLdifWriter(
-            params={},
-            quirk_registry=registry,
+        writer = FlextLdifWriterService(
+            config=FlextLdifConfig(), quirk_registry=FlextLdifRegistry()
         )
 
-        result = writer.write_entries_to_string(sample_entries)
+        result = writer.write_to_string(sample_entries)
 
         assert result.is_success or result.is_failure
 
-    def test_write_empty_entries_list(self) -> None:
+    def test_write_empty_entries_list(
+        self, real_parser_service: FlextLdifParserService
+    ) -> None:
         """Test writing empty entries list."""
-        registry = FlextLdifQuirksRegistry()
-        writer = FlextLdifRfcLdifWriter(
-            params={},
-            quirk_registry=registry,
+        writer = FlextLdifWriterService(
+            config=FlextLdifConfig(), quirk_registry=FlextLdifRegistry()
         )
 
-        result = writer.write_entries_to_string([])
+        result = writer.write_to_string([])
 
         assert result.is_success
         content = result.unwrap()
         assert not content
 
-    def test_write_entry_with_binary_data(self) -> None:
+    def test_write_entry_with_binary_data(
+        self, real_parser_service: FlextLdifParserService
+    ) -> None:
         """Test writing entry with binary attribute data."""
         import base64
 
@@ -1267,17 +1152,17 @@ class TestRfcLdifWriterComprehensive:
         )
         entry = entry_result.unwrap()
 
-        registry = FlextLdifQuirksRegistry()
-        writer = FlextLdifRfcLdifWriter(
-            params={},
-            quirk_registry=registry,
+        writer = FlextLdifWriterService(
+            config=FlextLdifConfig(), quirk_registry=FlextLdifRegistry()
         )
 
-        result = writer.write_entries_to_string([entry])
+        result = writer.write_to_string([entry])
 
         assert result.is_success or result.is_failure
 
-    def test_write_entry_with_unicode_data(self) -> None:
+    def test_write_entry_with_unicode_data(
+        self, real_parser_service: FlextLdifParserService
+    ) -> None:
         """Test writing entry with Unicode attribute data."""
         entry_result = FlextLdifModels.Entry.create(
             dn="cn=Tëst Üsër,dc=example,dc=com",
@@ -1290,17 +1175,17 @@ class TestRfcLdifWriterComprehensive:
         )
         entry = entry_result.unwrap()
 
-        registry = FlextLdifQuirksRegistry()
-        writer = FlextLdifRfcLdifWriter(
-            params={},
-            quirk_registry=registry,
+        writer = FlextLdifWriterService(
+            config=FlextLdifConfig(), quirk_registry=FlextLdifRegistry()
         )
 
-        result = writer.write_entries_to_string([entry])
+        result = writer.write_to_string([entry])
 
         assert result.is_success or result.is_failure
 
-    def test_write_entry_with_long_lines(self) -> None:
+    def test_write_entry_with_long_lines(
+        self, real_parser_service: FlextLdifParserService
+    ) -> None:
         """Test writing entry with very long attribute values."""
         long_value = "x" * 1000  # 1000 character line
         entry_result = FlextLdifModels.Entry.create(
@@ -1313,13 +1198,11 @@ class TestRfcLdifWriterComprehensive:
         )
         entry = entry_result.unwrap()
 
-        registry = FlextLdifQuirksRegistry()
-        writer = FlextLdifRfcLdifWriter(
-            params={},
-            quirk_registry=registry,
+        writer = FlextLdifWriterService(
+            config=FlextLdifConfig(), quirk_registry=FlextLdifRegistry()
         )
 
-        result = writer.write_entries_to_string([entry])
+        result = writer.write_to_string([entry])
 
         assert result.is_success or result.is_failure
 
@@ -1328,13 +1211,11 @@ class TestRfcLdifWriterComprehensive:
     ) -> None:
         """Test writing entries to file."""
         output_file = tmp_path / "test_output.ldif"
-        registry = FlextLdifQuirksRegistry()
-        writer = FlextLdifRfcLdifWriter(
-            params={},
-            quirk_registry=registry,
+        writer = FlextLdifWriterService(
+            config=FlextLdifConfig(), quirk_registry=FlextLdifRegistry()
         )
 
-        result = writer.write_entries_to_file(sample_entries, output_file)
+        result = writer.write_to_file(sample_entries, output_file)
 
         assert result.is_success or result.is_failure
         if result.is_success:
@@ -1347,13 +1228,11 @@ class TestRfcLdifWriterComprehensive:
         nonexistent_dir = tmp_path / "nonexistent"
         output_file = nonexistent_dir / "test_output.ldif"
 
-        registry = FlextLdifQuirksRegistry()
-        writer = FlextLdifRfcLdifWriter(
-            params={},
-            quirk_registry=registry,
+        writer = FlextLdifWriterService(
+            config=FlextLdifConfig(), quirk_registry=FlextLdifRegistry()
         )
 
-        result = writer.write_entries_to_file(sample_entries, output_file)
+        result = writer.write_to_file(sample_entries, output_file)
 
         assert result.is_success or result.is_failure
         if result.is_success:
@@ -1364,13 +1243,11 @@ class TestRfcLdifWriterComprehensive:
         self, sample_entry: FlextLdifModels.Entry
     ) -> None:
         """Test writing with custom line width."""
-        registry = FlextLdifQuirksRegistry()
-        writer = FlextLdifRfcLdifWriter(
-            params={"line_width": 40},
-            quirk_registry=registry,
+        writer = FlextLdifWriterService(
+            params={"line_width": 40}, quirk_registry=FlextLdifRegistry()
         )
 
-        result = writer.write_entries_to_string([sample_entry])
+        result = writer.write_to_string([sample_entry])
 
         assert result.is_success or result.is_failure
 
@@ -1378,10 +1255,8 @@ class TestRfcLdifWriterComprehensive:
         self, sample_entry: FlextLdifModels.Entry
     ) -> None:
         """Test writing with execute() which includes version header."""
-        registry = FlextLdifQuirksRegistry()
-        writer = FlextLdifRfcLdifWriter(
-            params={"entries": [sample_entry]},
-            quirk_registry=registry,
+        writer = FlextLdifWriterService(
+            params={"entries": [sample_entry]}, quirk_registry=FlextLdifRegistry()
         )
 
         result = writer.execute()
@@ -1397,13 +1272,11 @@ class TestRfcLdifWriterComprehensive:
         self, sample_entry: FlextLdifModels.Entry
     ) -> None:
         """Test writing with custom encoding."""
-        registry = FlextLdifQuirksRegistry()
-        writer = FlextLdifRfcLdifWriter(
-            params={"encoding": "latin-1"},
-            quirk_registry=registry,
+        writer = FlextLdifWriterService(
+            params={"encoding": "latin-1"}, quirk_registry=FlextLdifRegistry()
         )
 
-        result = writer.write_entries_to_string([sample_entry])
+        result = writer.write_to_string([sample_entry])
 
         assert result.is_success or result.is_failure
 
@@ -1411,17 +1284,17 @@ class TestRfcLdifWriterComprehensive:
         self, sample_entry: FlextLdifModels.Entry
     ) -> None:
         """Test writing with server-specific quirks."""
-        registry = FlextLdifQuirksRegistry()
-        writer = FlextLdifRfcLdifWriter(
-            params={"target_server": "oid"},
-            quirk_registry=registry,
+        writer = FlextLdifWriterService(
+            params={"target_server": "oid"}, quirk_registry=FlextLdifRegistry()
         )
 
-        result = writer.write_entries_to_string([sample_entry])
+        result = writer.write_to_string([sample_entry])
 
         assert result.is_success or result.is_failure
 
-    def test_writer_error_handling_invalid_entry(self) -> None:
+    def test_writer_error_handling_invalid_entry(
+        self, real_parser_service: FlextLdifParserService
+    ) -> None:
         """Test writer handles edge case entry with empty attributes."""
         # Create a valid entry first, then test what happens if we try to write invalid data
         valid_entry = FlextLdifModels.Entry(
@@ -1434,31 +1307,31 @@ class TestRfcLdifWriterComprehensive:
             ),
         )
 
-        registry = FlextLdifQuirksRegistry()
-        writer = FlextLdifRfcLdifWriter(
-            params={},
-            quirk_registry=registry,
+        writer = FlextLdifWriterService(
+            config=FlextLdifConfig(), quirk_registry=FlextLdifRegistry()
         )
 
-        result = writer.write_entries_to_string([valid_entry])
+        result = writer.write_to_string([valid_entry])
 
         # Writer should handle valid entries successfully
         assert result.is_success
 
-    def test_writer_handles_none_input(self) -> None:
+    def test_writer_handles_none_input(
+        self, real_parser_service: FlextLdifParserService
+    ) -> None:
         """Test writer handles None input gracefully."""
-        registry = FlextLdifQuirksRegistry()
-        writer = FlextLdifRfcLdifWriter(
-            params={},
-            quirk_registry=registry,
+        writer = FlextLdifWriterService(
+            config=FlextLdifConfig(), quirk_registry=FlextLdifRegistry()
         )
 
         # This should not crash - intentionally testing invalid input
-        result = writer.write_entries_to_string("list[FlextLdifModels.Entry]")
+        result = writer.write_to_string("list[FlextLdifModels.Entry]")
 
         assert result.is_failure
 
-    def test_writer_handles_empty_attributes(self) -> None:
+    def test_writer_handles_empty_attributes(
+        self, real_parser_service: FlextLdifParserService
+    ) -> None:
         """Test writer handles entries with minimal attributes."""
         entry_result = FlextLdifModels.Entry.create(
             dn="cn=Empty Test,dc=example,dc=com",
@@ -1466,13 +1339,11 @@ class TestRfcLdifWriterComprehensive:
         )
         entry = entry_result.unwrap()
 
-        registry = FlextLdifQuirksRegistry()
-        writer = FlextLdifRfcLdifWriter(
-            params={},
-            quirk_registry=registry,
+        writer = FlextLdifWriterService(
+            config=FlextLdifConfig(), quirk_registry=FlextLdifRegistry()
         )
 
-        result = writer.write_entries_to_string([entry])
+        result = writer.write_to_string([entry])
 
         assert result.is_success or result.is_failure
 
@@ -1497,9 +1368,9 @@ class TestRfcLdifWriterExecuteMethod:
         self, sample_entries: list[FlextLdifModels.Entry]
     ) -> None:
         """Test execute() writing entries to string (no output_file)."""
-        registry = FlextLdifQuirksRegistry()
-        params: dict[str, object] = {"entries": sample_entries}
-        writer = FlextLdifRfcLdifWriter(params=params, quirk_registry=registry)
+        writer = FlextLdifWriterService(
+            config=FlextLdifConfig(), quirk_registry=FlextLdifRegistry()
+        )
 
         result = writer.execute()
 
@@ -1513,12 +1384,13 @@ class TestRfcLdifWriterExecuteMethod:
     ) -> None:
         """Test execute() writing entries to file."""
         output_file = tmp_path / "output.ldif"
-        registry = FlextLdifQuirksRegistry()
-        params: dict[str, object] = {
+        {
             "entries": sample_entries,
             "output_file": str(output_file),
         }
-        writer = FlextLdifRfcLdifWriter(params=params, quirk_registry=registry)
+        writer = FlextLdifWriterService(
+            config=FlextLdifConfig(), quirk_registry=FlextLdifRegistry()
+        )
 
         result = writer.execute()
 
@@ -1528,10 +1400,13 @@ class TestRfcLdifWriterExecuteMethod:
         assert "output_file" in data
         assert data["entries_written"] == 2
 
-    def test_execute_with_empty_params(self) -> None:
+    def test_execute_with_empty_params(
+        self, real_parser_service: FlextLdifParserService
+    ) -> None:
         """Test execute() fails when no entries/schema/acls provided."""
-        registry = FlextLdifQuirksRegistry()
-        writer = FlextLdifRfcLdifWriter(params={}, quirk_registry=registry)
+        writer = FlextLdifWriterService(
+            config=FlextLdifConfig(), quirk_registry=FlextLdifRegistry()
+        )
 
         result = writer.execute()
 
@@ -1548,13 +1423,14 @@ class TestRfcLdifWriterExecuteMethod:
         # Write initial content
         output_file.write_text("version: 1\ndn: cn=existing\ncn: existing\n\n")
 
-        registry = FlextLdifQuirksRegistry()
-        params: dict[str, object] = {
+        {
             "entries": sample_entries[:1],
             "output_file": str(output_file),
             "append": True,
         }
-        writer = FlextLdifRfcLdifWriter(params=params, quirk_registry=registry)
+        writer = FlextLdifWriterService(
+            config=FlextLdifConfig(), quirk_registry=FlextLdifRegistry()
+        )
 
         result = writer.execute()
 
@@ -1575,10 +1451,11 @@ class TestRfcLdifWriterFileOperations:
         ).unwrap()
 
         output_file = tmp_path / "test.ldif"
-        registry = FlextLdifQuirksRegistry()
-        writer = FlextLdifRfcLdifWriter(params={}, quirk_registry=registry)
+        writer = FlextLdifWriterService(
+            config=FlextLdifConfig(), quirk_registry=FlextLdifRegistry()
+        )
 
-        result = writer.write_entries_to_file([entry], output_file)
+        result = writer.write_to_file([entry], output_file)
 
         assert result.is_success
         assert output_file.exists()
@@ -1593,10 +1470,11 @@ class TestRfcLdifWriterFileOperations:
         ).unwrap()
 
         output_file = tmp_path / "subdir" / "nested" / "test.ldif"
-        registry = FlextLdifQuirksRegistry()
-        writer = FlextLdifRfcLdifWriter(params={}, quirk_registry=registry)
+        writer = FlextLdifWriterService(
+            config=FlextLdifConfig(), quirk_registry=FlextLdifRegistry()
+        )
 
-        result = writer.write_entries_to_file([entry], output_file)
+        result = writer.write_to_file([entry], output_file)
 
         assert result.is_success
         assert output_file.exists()
@@ -1605,10 +1483,11 @@ class TestRfcLdifWriterFileOperations:
     def test_write_entries_to_file_empty_list(self, tmp_path: Path) -> None:
         """Test write_entries_to_file() with empty entries list."""
         output_file = tmp_path / "empty.ldif"
-        registry = FlextLdifQuirksRegistry()
-        writer = FlextLdifRfcLdifWriter(params={}, quirk_registry=registry)
+        writer = FlextLdifWriterService(
+            config=FlextLdifConfig(), quirk_registry=FlextLdifRegistry()
+        )
 
-        result = writer.write_entries_to_file([], output_file)
+        result = writer.write_to_file([], output_file)
 
         assert result.is_success
         assert output_file.exists()
@@ -1629,12 +1508,13 @@ class TestRfcLdifWriterSchemaSupport:
         }
 
         output_file = tmp_path / "schema.ldif"
-        registry = FlextLdifQuirksRegistry()
-        params: dict[str, object] = {
+        {
             "schema": schema,
             "output_file": str(output_file),
         }
-        writer = FlextLdifRfcLdifWriter(params=params, quirk_registry=registry)
+        writer = FlextLdifWriterService(
+            config=FlextLdifConfig(), quirk_registry=FlextLdifRegistry()
+        )
 
         result = writer.execute()
 
@@ -1659,12 +1539,13 @@ class TestRfcLdifWriterAclSupport:
         )
 
         output_file = tmp_path / "acls.ldif"
-        registry = FlextLdifQuirksRegistry()
-        params: dict[str, object] = {
+        {
             "acls": [acl],
             "output_file": str(output_file),
         }
-        writer = FlextLdifRfcLdifWriter(params=params, quirk_registry=registry)
+        writer = FlextLdifWriterService(
+            config=FlextLdifConfig(), quirk_registry=FlextLdifRegistry()
+        )
 
         result = writer.execute()
 

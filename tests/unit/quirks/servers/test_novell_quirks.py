@@ -6,27 +6,27 @@ import base64
 
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
-from flext_ldif.quirks.servers.novell_quirks import FlextLdifQuirksServersNovell
+from flext_ldif.servers.novell import FlextLdifServersNovell
 
 
-class TestNovellSchemaQuirks:
+class TestNovellSchemas:
     """Tests for Novell eDirectory schema quirk handling."""
 
     def test_initialization(self) -> None:
         """Test Novell eDirectory quirk initialization."""
-        quirk = FlextLdifQuirksServersNovell()
+        quirk = FlextLdifServersNovell.Schema()
         assert quirk.server_type == FlextLdifConstants.LdapServers.NOVELL_EDIRECTORY
         assert quirk.priority == 15
 
     def test_can_handle_attribute_with_novell_oid(self) -> None:
         """Test attribute detection with Novell OID pattern."""
-        quirk = FlextLdifQuirksServersNovell()
+        quirk = FlextLdifServersNovell.Schema()
         attr_def = "( 2.16.840.1.113719.1.1.4.1.501 NAME 'nspmPasswordPolicyDN' SYNTAX 1.3.6.1.4.1.1466.115.121.1.12 )"
         assert quirk.can_handle_attribute(attr_def) is True
 
     def test_can_handle_attribute_with_nspm_prefix(self) -> None:
         """Test attribute detection with nspm prefix."""
-        quirk = FlextLdifQuirksServersNovell()
+        quirk = FlextLdifServersNovell.Schema()
         attr_def = (
             "( 1.2.3.4 NAME 'nspmPasswordPolicy' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
         )
@@ -34,7 +34,7 @@ class TestNovellSchemaQuirks:
 
     def test_can_handle_attribute_with_login_prefix(self) -> None:
         """Test attribute detection with login prefix."""
-        quirk = FlextLdifQuirksServersNovell()
+        quirk = FlextLdifServersNovell.Schema()
         attr_def = (
             "( 1.2.3.4 NAME 'loginDisabled' SYNTAX 1.3.6.1.4.1.1466.115.121.1.7 )"
         )
@@ -42,19 +42,19 @@ class TestNovellSchemaQuirks:
 
     def test_can_handle_attribute_with_dirxml_prefix(self) -> None:
         """Test attribute detection with dirxml- prefix."""
-        quirk = FlextLdifQuirksServersNovell()
+        quirk = FlextLdifServersNovell.Schema()
         attr_def = "( 1.2.3.4 NAME 'dirxml-associations' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
         assert quirk.can_handle_attribute(attr_def) is True
 
     def test_can_handle_attribute_negative(self) -> None:
         """Test attribute detection rejects non-Novell attributes."""
-        quirk = FlextLdifQuirksServersNovell()
+        quirk = FlextLdifServersNovell.Schema()
         attr_def = "( 2.5.4.3 NAME 'cn' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
         assert quirk.can_handle_attribute(attr_def) is False
 
     def test_parse_attribute_success(self) -> None:
         """Test parsing Novell eDirectory attribute definition."""
-        quirk = FlextLdifQuirksServersNovell()
+        quirk = FlextLdifServersNovell.Schema()
         attr_def = "( 2.16.840.1.113719.1.1.4.1.501 NAME 'nspmPasswordPolicyDN' DESC 'Password Policy DN' SYNTAX 1.3.6.1.4.1.1466.115.121.1.12 SINGLE-VALUE )"
         result = quirk.parse_attribute(attr_def)
 
@@ -68,7 +68,7 @@ class TestNovellSchemaQuirks:
 
     def test_parse_attribute_with_syntax_length(self) -> None:
         """Test parsing attribute with syntax length specification."""
-        quirk = FlextLdifQuirksServersNovell()
+        quirk = FlextLdifServersNovell.Schema()
         attr_def = "( 2.16.840.1.113719.1.1.4.1.1 NAME 'nspmAdminGroup' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} )"
         result = quirk.parse_attribute(attr_def)
 
@@ -80,7 +80,7 @@ class TestNovellSchemaQuirks:
 
     def test_parse_attribute_missing_oid(self) -> None:
         """Test parsing attribute without OID fails."""
-        quirk = FlextLdifQuirksServersNovell()
+        quirk = FlextLdifServersNovell.Schema()
         attr_def = "NAME 'nspmPasswordPolicy' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15"
         result = quirk.parse_attribute(attr_def)
 
@@ -90,25 +90,25 @@ class TestNovellSchemaQuirks:
 
     def test_can_handle_objectclass_with_novell_oid(self) -> None:
         """Test objectClass detection with Novell OID."""
-        quirk = FlextLdifQuirksServersNovell()
+        quirk = FlextLdifServersNovell.Schema()
         oc_def = "( 2.16.840.1.113719.2.2.6.1 NAME 'ndsPerson' SUP top STRUCTURAL )"
         assert quirk.can_handle_objectclass(oc_def) is True
 
     def test_can_handle_objectclass_with_nds_name(self) -> None:
         """Test objectClass detection with nds- name."""
-        quirk = FlextLdifQuirksServersNovell()
+        quirk = FlextLdifServersNovell.Schema()
         oc_def = "( 2.5.6.0 NAME 'ndsserver' SUP top STRUCTURAL )"
         assert quirk.can_handle_objectclass(oc_def) is True
 
     def test_can_handle_objectclass_negative(self) -> None:
         """Test objectClass detection rejects non-Novell classes."""
-        quirk = FlextLdifQuirksServersNovell()
+        quirk = FlextLdifServersNovell.Schema()
         oc_def = "( 2.5.6.6 NAME 'posixAccount' SUP top STRUCTURAL )"
         assert quirk.can_handle_objectclass(oc_def) is False
 
     def test_parse_objectclass_structural(self) -> None:
         """Test parsing STRUCTURAL objectClass."""
-        quirk = FlextLdifQuirksServersNovell()
+        quirk = FlextLdifServersNovell.Schema()
         oc_def = "( 2.16.840.1.113719.2.2.6.1 NAME 'ndsPerson' DESC 'NDS Person' SUP top STRUCTURAL MUST ( cn ) MAY ( loginDisabled ) )"
         result = quirk.parse_objectclass(oc_def)
 
@@ -125,7 +125,7 @@ class TestNovellSchemaQuirks:
 
     def test_parse_objectclass_auxiliary(self) -> None:
         """Test parsing AUXILIARY objectClass."""
-        quirk = FlextLdifQuirksServersNovell()
+        quirk = FlextLdifServersNovell.Schema()
         oc_def = "( 2.16.840.1.113719.2.2.6.2 NAME 'nspmPasswordPolicy' AUXILIARY MAY ( nspmPasswordPolicyDN ) )"
         result = quirk.parse_objectclass(oc_def)
 
@@ -135,7 +135,7 @@ class TestNovellSchemaQuirks:
 
     def test_parse_objectclass_abstract(self) -> None:
         """Test parsing ABSTRACT objectClass."""
-        quirk = FlextLdifQuirksServersNovell()
+        quirk = FlextLdifServersNovell.Schema()
         oc_def = "( 2.16.840.1.113719.2.2.6.3 NAME 'ndsbase' ABSTRACT )"
         result = quirk.parse_objectclass(oc_def)
 
@@ -145,7 +145,7 @@ class TestNovellSchemaQuirks:
 
     def test_parse_objectclass_missing_oid(self) -> None:
         """Test parsing objectClass without OID fails."""
-        quirk = FlextLdifQuirksServersNovell()
+        quirk = FlextLdifServersNovell.Schema()
         oc_def = "NAME 'ndsPerson' SUP top STRUCTURAL"
         result = quirk.parse_objectclass(oc_def)
 
@@ -155,7 +155,7 @@ class TestNovellSchemaQuirks:
 
     def test_convert_attribute_to_rfc(self) -> None:
         """Test converting Novell attribute to RFC format."""
-        quirk = FlextLdifQuirksServersNovell()
+        quirk = FlextLdifServersNovell.Schema()
         attr_data = FlextLdifModels.SchemaAttribute(
             oid="2.16.840.1.113719.1.1.4.1.501",
             name="nspmPasswordPolicyDN",
@@ -172,7 +172,7 @@ class TestNovellSchemaQuirks:
 
     def test_convert_objectclass_to_rfc(self) -> None:
         """Test converting Novell objectClass to RFC format."""
-        quirk = FlextLdifQuirksServersNovell()
+        quirk = FlextLdifServersNovell.Schema()
         oc_data = FlextLdifModels.SchemaObjectClass(
             oid="2.16.840.1.113719.2.2.6.1",
             name="ndsPerson",
@@ -187,7 +187,7 @@ class TestNovellSchemaQuirks:
 
     def test_convert_attribute_from_rfc(self) -> None:
         """Test converting RFC attribute to Novell format."""
-        quirk = FlextLdifQuirksServersNovell()
+        quirk = FlextLdifServersNovell.Schema()
         rfc_data = FlextLdifModels.SchemaAttribute(
             oid="2.16.840.1.113719.1.1.4.1.501",
             name="nspmPasswordPolicyDN",
@@ -201,7 +201,7 @@ class TestNovellSchemaQuirks:
 
     def test_convert_objectclass_from_rfc(self) -> None:
         """Test converting RFC objectClass to Novell format."""
-        quirk = FlextLdifQuirksServersNovell()
+        quirk = FlextLdifServersNovell.Schema()
         rfc_data = FlextLdifModels.SchemaObjectClass(
             oid="2.16.840.1.113719.2.2.6.1",
             name="ndsPerson",
@@ -215,7 +215,7 @@ class TestNovellSchemaQuirks:
 
     def test_write_attribute_to_rfc(self) -> None:
         """Test writing attribute to RFC string format."""
-        quirk = FlextLdifQuirksServersNovell()
+        quirk = FlextLdifServersNovell.Schema()
         attr_data = FlextLdifModels.SchemaAttribute(
             oid="2.16.840.1.113719.1.1.4.1.501",
             name="nspmPasswordPolicyDN",
@@ -233,7 +233,7 @@ class TestNovellSchemaQuirks:
 
     def test_write_objectclass_to_rfc(self) -> None:
         """Test writing objectClass to RFC string format."""
-        quirk = FlextLdifQuirksServersNovell()
+        quirk = FlextLdifServersNovell.Schema()
         oc_data = FlextLdifModels.SchemaObjectClass(
             oid="2.16.840.1.113719.2.2.6.1",
             name="ndsPerson",
@@ -251,49 +251,49 @@ class TestNovellSchemaQuirks:
         assert "STRUCTURAL" in oc_str
 
 
-class TestNovellAclQuirks:
+class TestNovellAcls:
     """Tests for Novell eDirectory ACL quirk handling."""
 
     def test_acl_quirk_initialization(self) -> None:
         """Test ACL quirk initialization."""
-        main_quirk = FlextLdifQuirksServersNovell()
-        acl_quirk = main_quirk.AclQuirk()
-        # The ACL quirk inherits from BaseAclQuirk which has __init__ with default "generic"
+        main_quirk = FlextLdifServersNovell.Schema()
+        acl_quirk = main_quirk.Acl()
+        # The ACL quirk inherits from FlextLdifServersBase.Acl which has __init__ with default "generic"
         assert acl_quirk.server_type == "generic"
-        assert acl_quirk.priority == 100  # Also uses BaseAclQuirk default
+        assert acl_quirk.priority == 15  # Also uses FlextLdifServersBase.Acl default
 
     def test_can_handle_acl_with_acl_attribute(self) -> None:
         """Test ACL detection with acl attribute."""
-        main_quirk = FlextLdifQuirksServersNovell()
-        acl_quirk = main_quirk.AclQuirk()
+        main_quirk = FlextLdifServersNovell.Schema()
+        acl_quirk = main_quirk.Acl()
         acl_line = "acl: [Entry Rights]#cn=Admin,o=Example#[BCDRSE]"
         assert acl_quirk.can_handle_acl(acl_line) is True
 
     def test_can_handle_acl_with_inheritedacl_attribute(self) -> None:
         """Test ACL detection with inheritedacl attribute."""
-        main_quirk = FlextLdifQuirksServersNovell()
-        acl_quirk = main_quirk.AclQuirk()
+        main_quirk = FlextLdifServersNovell.Schema()
+        acl_quirk = main_quirk.Acl()
         acl_line = "inheritedacl: [Entry Rights]#cn=Admin,o=Example#[BCDRSE]"
         assert acl_quirk.can_handle_acl(acl_line) is True
 
     def test_can_handle_acl_negative(self) -> None:
         """Test ACL detection rejects non-Novell ACLs."""
-        main_quirk = FlextLdifQuirksServersNovell()
-        acl_quirk = main_quirk.AclQuirk()
+        main_quirk = FlextLdifServersNovell.Schema()
+        acl_quirk = main_quirk.Acl()
         acl_line = "access to * by * read"
         assert acl_quirk.can_handle_acl(acl_line) is False
 
     def test_can_handle_acl_empty_line(self) -> None:
         """Test ACL detection rejects empty lines."""
-        main_quirk = FlextLdifQuirksServersNovell()
-        acl_quirk = main_quirk.AclQuirk()
+        main_quirk = FlextLdifServersNovell.Schema()
+        acl_quirk = main_quirk.Acl()
         acl_line = ""
         assert acl_quirk.can_handle_acl(acl_line) is False
 
     def test_parse_acl_success(self) -> None:
         """Test parsing Novell eDirectory ACL definition."""
-        main_quirk = FlextLdifQuirksServersNovell()
-        acl_quirk = main_quirk.AclQuirk()
+        main_quirk = FlextLdifServersNovell.Schema()
+        acl_quirk = main_quirk.Acl()
         acl_line = "acl: [Entry Rights]#cn=Admin,o=Example#[BCDRSE]"
         result = acl_quirk.parse_acl(acl_line)
 
@@ -314,8 +314,8 @@ class TestNovellAclQuirks:
 
     def test_parse_acl_with_multiple_rights(self) -> None:
         """Test parsing ACL with multiple rights segments."""
-        main_quirk = FlextLdifQuirksServersNovell()
-        acl_quirk = main_quirk.AclQuirk()
+        main_quirk = FlextLdifServersNovell.Schema()
+        acl_quirk = main_quirk.Acl()
         acl_line = (
             "acl: [Entry Rights]#cn=Admin,o=Example#[BCDRSE]#[All Attributes Rights]"
         )
@@ -331,8 +331,8 @@ class TestNovellAclQuirks:
 
     def test_convert_acl_to_rfc(self) -> None:
         """Test converting Novell ACL to RFC format."""
-        main_quirk = FlextLdifQuirksServersNovell()
-        acl_quirk = main_quirk.AclQuirk()
+        main_quirk = FlextLdifServersNovell.Schema()
+        acl_quirk = main_quirk.Acl()
         acl_data = FlextLdifModels.Acl(
             name="Novell eDirectory ACL",
             target=FlextLdifModels.AclTarget(
@@ -359,8 +359,8 @@ class TestNovellAclQuirks:
 
     def test_convert_acl_from_rfc(self) -> None:
         """Test converting RFC ACL to Novell format."""
-        main_quirk = FlextLdifQuirksServersNovell()
-        acl_quirk = main_quirk.AclQuirk()
+        main_quirk = FlextLdifServersNovell.Schema()
+        acl_quirk = main_quirk.Acl()
         rfc_acl = FlextLdifModels.Acl(
             name="RFC ACL",
             target=FlextLdifModels.AclTarget(
@@ -378,12 +378,14 @@ class TestNovellAclQuirks:
 
         assert result.is_success
         novell_acl = result.unwrap()
-        assert novell_acl.server_type == "novell"  # Actual returned value
+        assert (
+            novell_acl.server_type == FlextLdifConstants.ServerTypes.NOVELL
+        )  # Actual returned value
 
     def test_write_acl_to_rfc_with_content(self) -> None:
         """Test writing ACL with content to RFC string format."""
-        main_quirk = FlextLdifQuirksServersNovell()
-        acl_quirk = main_quirk.AclQuirk()
+        main_quirk = FlextLdifServersNovell.Schema()
+        acl_quirk = main_quirk.Acl()
         acl_data = FlextLdifModels.Acl(
             name="Novell eDirectory ACL",
             target=FlextLdifModels.AclTarget(
@@ -410,8 +412,8 @@ class TestNovellAclQuirks:
 
     def test_write_acl_to_rfc_with_segments(self) -> None:
         """Test writing ACL with segments to RFC string format."""
-        main_quirk = FlextLdifQuirksServersNovell()
-        acl_quirk = main_quirk.AclQuirk()
+        main_quirk = FlextLdifServersNovell.Schema()
+        acl_quirk = main_quirk.Acl()
         acl_data = FlextLdifModels.Acl(
             name="Novell eDirectory ACL",
             target=FlextLdifModels.AclTarget(
@@ -433,8 +435,8 @@ class TestNovellAclQuirks:
 
     def test_write_acl_to_rfc_from_fields(self) -> None:
         """Test writing ACL from structured fields to RFC string format."""
-        main_quirk = FlextLdifQuirksServersNovell()
-        acl_quirk = main_quirk.AclQuirk()
+        main_quirk = FlextLdifServersNovell.Schema()
+        acl_quirk = main_quirk.Acl()
         acl_data = FlextLdifModels.Acl(
             name="Novell eDirectory ACL",
             target=FlextLdifModels.AclTarget(
@@ -460,8 +462,8 @@ class TestNovellAclQuirks:
 
     def test_write_acl_to_rfc_empty(self) -> None:
         """Test writing empty ACL to RFC string format."""
-        main_quirk = FlextLdifQuirksServersNovell()
-        acl_quirk = main_quirk.AclQuirk()
+        main_quirk = FlextLdifServersNovell.Schema()
+        acl_quirk = main_quirk.Acl()
         acl_data = FlextLdifModels.Acl(
             name="Empty ACL",
             target=FlextLdifModels.AclTarget(
@@ -482,21 +484,21 @@ class TestNovellAclQuirks:
         assert isinstance(acl_str, str)
 
 
-class TestNovellEntryQuirks:
+class TestNovellEntrys:
     """Tests for Novell eDirectory entry quirk handling."""
 
     def test_entry_quirk_initialization(self) -> None:
         """Test entry quirk initialization."""
-        main_quirk = FlextLdifQuirksServersNovell()
-        entry_quirk = main_quirk.EntryQuirk()
-        # The Entry quirk inherits from BaseEntryQuirk which has __init__ with default "generic"
-        assert entry_quirk.server_type == "generic"
-        assert entry_quirk.priority == 100  # Also uses BaseEntryQuirk default
+        main_quirk = FlextLdifServersNovell.Schema()
+        entry_quirk = main_quirk.Entry()
+        # The nested Entry class overrides server_type with FlextLdifConstants.ServerTypes.NOVELL
+        assert entry_quirk.server_type == FlextLdifConstants.ServerTypes.NOVELL
+        assert entry_quirk.priority == 15
 
     def test_can_handle_entry_with_ou_services(self) -> None:
         """Test entry detection with ou=services DN marker."""
-        main_quirk = FlextLdifQuirksServersNovell()
-        entry_quirk = main_quirk.EntryQuirk()
+        main_quirk = FlextLdifServersNovell.Schema()
+        entry_quirk = main_quirk.Entry()
         entry_dn = "ou=services,o=Example"
         attributes: dict[str, object] = {
             FlextLdifConstants.DictKeys.OBJECTCLASS: ["organizationalUnit"]
@@ -505,8 +507,8 @@ class TestNovellEntryQuirks:
 
     def test_can_handle_entry_with_ou_apps(self) -> None:
         """Test entry detection with ou=apps DN marker."""
-        main_quirk = FlextLdifQuirksServersNovell()
-        entry_quirk = main_quirk.EntryQuirk()
+        main_quirk = FlextLdifServersNovell.Schema()
+        entry_quirk = main_quirk.Entry()
         entry_dn = "ou=apps,o=Example"
         attributes: dict[str, object] = {
             FlextLdifConstants.DictKeys.OBJECTCLASS: ["organizationalUnit"]
@@ -515,8 +517,8 @@ class TestNovellEntryQuirks:
 
     def test_can_handle_entry_with_ou_system(self) -> None:
         """Test entry detection with ou=system DN marker."""
-        main_quirk = FlextLdifQuirksServersNovell()
-        entry_quirk = main_quirk.EntryQuirk()
+        main_quirk = FlextLdifServersNovell.Schema()
+        entry_quirk = main_quirk.Entry()
         entry_dn = "ou=system,o=Example"
         attributes: dict[str, object] = {
             FlextLdifConstants.DictKeys.OBJECTCLASS: ["organizationalUnit"]
@@ -525,8 +527,8 @@ class TestNovellEntryQuirks:
 
     def test_can_handle_entry_with_password_policy_attribute(self) -> None:
         """Test entry detection with nspmpasswordpolicy attribute."""
-        main_quirk = FlextLdifQuirksServersNovell()
-        entry_quirk = main_quirk.EntryQuirk()
+        main_quirk = FlextLdifServersNovell.Schema()
+        entry_quirk = main_quirk.Entry()
         entry_dn = "cn=user,o=Example"
         attributes: dict[str, object] = {
             "nspmpasswordpolicy": ["policy1"],
@@ -536,8 +538,8 @@ class TestNovellEntryQuirks:
 
     def test_can_handle_entry_with_login_attribute(self) -> None:
         """Test entry detection with loginDisabled attribute."""
-        main_quirk = FlextLdifQuirksServersNovell()
-        entry_quirk = main_quirk.EntryQuirk()
+        main_quirk = FlextLdifServersNovell.Schema()
+        entry_quirk = main_quirk.Entry()
         entry_dn = "cn=user,o=Example"
         attributes: dict[str, object] = {
             "logindisabled": ["TRUE"],
@@ -547,8 +549,8 @@ class TestNovellEntryQuirks:
 
     def test_can_handle_entry_with_nds_objectclass(self) -> None:
         """Test entry detection with nds- objectClass."""
-        main_quirk = FlextLdifQuirksServersNovell()
-        entry_quirk = main_quirk.EntryQuirk()
+        main_quirk = FlextLdifServersNovell.Schema()
+        entry_quirk = main_quirk.Entry()
         entry_dn = "cn=user,o=Example"
         attributes: dict[str, object] = {
             FlextLdifConstants.DictKeys.OBJECTCLASS: ["top", "ndsperson"]
@@ -557,8 +559,8 @@ class TestNovellEntryQuirks:
 
     def test_can_handle_entry_negative(self) -> None:
         """Test entry detection rejects non-Novell entries."""
-        main_quirk = FlextLdifQuirksServersNovell()
-        entry_quirk = main_quirk.EntryQuirk()
+        main_quirk = FlextLdifServersNovell.Schema()
+        entry_quirk = main_quirk.Entry()
         entry_dn = "cn=user,dc=example,dc=com"
         attributes: dict[str, object] = {
             FlextLdifConstants.DictKeys.OBJECTCLASS: ["person"],
@@ -568,8 +570,8 @@ class TestNovellEntryQuirks:
 
     def test_process_entry_success(self) -> None:
         """Test processing Novell eDirectory entry."""
-        main_quirk = FlextLdifQuirksServersNovell()
-        entry_quirk = main_quirk.EntryQuirk()
+        main_quirk = FlextLdifServersNovell.Schema()
+        entry_quirk = main_quirk.Entry()
         entry_dn = "cn=user,o=Example"
         attributes: dict[str, object] = {
             "objectclass": ["top", "ndsperson"],
@@ -588,8 +590,8 @@ class TestNovellEntryQuirks:
 
     def test_process_entry_with_binary_data(self) -> None:
         """Test processing entry with binary attribute data."""
-        main_quirk = FlextLdifQuirksServersNovell()
-        entry_quirk = main_quirk.EntryQuirk()
+        main_quirk = FlextLdifServersNovell.Schema()
+        entry_quirk = main_quirk.Entry()
         entry_dn = "cn=user,o=Example"
         binary_data = b"binary_value"
         attributes: dict[str, object] = {
@@ -608,8 +610,8 @@ class TestNovellEntryQuirks:
 
     def test_convert_entry_to_rfc(self) -> None:
         """Test converting Novell entry to RFC format."""
-        main_quirk = FlextLdifQuirksServersNovell()
-        entry_quirk = main_quirk.EntryQuirk()
+        main_quirk = FlextLdifServersNovell.Schema()
+        entry_quirk = main_quirk.Entry()
         entry_data: dict[str, object] = {
             FlextLdifConstants.DictKeys.DN: "cn=user,o=Example",
             FlextLdifConstants.DictKeys.SERVER_TYPE: FlextLdifConstants.LdapServers.NOVELL_EDIRECTORY,

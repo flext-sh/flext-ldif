@@ -38,7 +38,11 @@
   "metadata": {
     "type": "edge_case",
     "edge_case_type": "unicode_characters",
-    "character_sets": ["spanish_accents", "chinese_characters", "german_umlauts"],
+    "character_sets": [
+      "spanish_accents",
+      "chinese_characters",
+      "german_umlauts"
+    ],
     "test_aspects": ["utf8_encoding", "international_characters", "dn_parsing"]
   }
 }

@@ -50,7 +50,7 @@ def verify_server_detector() -> bool:
     """Verify FlextLdifServerDetector functionality."""
     logger.info("\n=== VERIFYING SERVER DETECTOR ===")
     try:
-        from flext_ldif.server_detector import FlextLdifServerDetector
+        from flext_ldif.services.server_detector import FlextLdifServerDetector
 
         detector = FlextLdifServerDetector()
         logger.info("✅ FlextLdifServerDetector instantiated")
@@ -82,18 +82,14 @@ attributeTypes: ( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' SYNTAX 1.3.6.1.4.1.146
         return False
 
 
-def verify_relaxed_quirks() -> bool:
+def verify_relaxed() -> bool:
     """Verify Relaxed quirks functionality."""
     logger.info("\n=== VERIFYING RELAXED QUIRKS ===")
     try:
-        from flext_ldif.quirks.servers.relaxed_quirks import (
-            FlextLdifQuirksServersRelaxedAcl,
-            FlextLdifQuirksServersRelaxedEntry,
-            FlextLdifQuirksServersRelaxedSchema,
-        )
+        from flext_ldif.servers.relaxed import FlextLdifServersRelaxed
 
         # Test Schema quirk
-        schema = FlextLdifQuirksServersRelaxedSchema()
+        schema = FlextLdifServersRelaxed.Schema()
         result = schema.parse_attribute("( broken-oid NAME 'test'")
         if result.is_success and result.unwrap()["relaxed_parsed"]:
             logger.info("✅ Relaxed schema quirk works")
@@ -102,7 +98,7 @@ def verify_relaxed_quirks() -> bool:
             return False
 
         # Test ACL quirk
-        acl = FlextLdifQuirksServersRelaxedAcl()
+        acl = FlextLdifServersRelaxed.Acl()
         result = acl.parse_acl("(incomplete-acl")
         if result.is_success and result.unwrap()["relaxed_parsed"]:
             logger.info("✅ Relaxed ACL quirk works")
@@ -111,7 +107,7 @@ def verify_relaxed_quirks() -> bool:
             return False
 
         # Test Entry quirk
-        entry = FlextLdifQuirksServersRelaxedEntry()
+        entry = FlextLdifServersRelaxed.Entry()
         result = entry.parse_entry("cn=broken-dn", {})
         if result.is_success and result.unwrap()["relaxed_parsed"]:
             logger.info("✅ Relaxed entry quirk works")
@@ -240,7 +236,7 @@ def main() -> int:
     results = {
         "Imports": verify_imports(),
         "Server Detector": verify_server_detector(),
-        "Relaxed Quirks": verify_relaxed_quirks(),
+        "Relaxed Quirks": verify_relaxed(),
         "Config Modes": verify_config_modes(),
         "API Integration": verify_api_integration(),
     }

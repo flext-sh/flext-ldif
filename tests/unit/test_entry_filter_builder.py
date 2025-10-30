@@ -20,8 +20,8 @@ from typing import cast
 
 import pytest
 
-from flext_ldif.filters import EntryFilterBuilder
 from flext_ldif.models import FlextLdifModels
+from flext_ldif.services.filters import EntryFilterBuilder
 
 
 def create_test_entry(
@@ -90,14 +90,14 @@ class TestDnPatternFiltering:
     def sample_entries(self) -> list[FlextLdifModels.Entry]:
         """Create sample entries for DN filtering."""
         return [
+            create_test_entry("cn=user1,ou=users,dc=example,dc=com", {"cn": ["user1"]}),
             create_test_entry(
-                "cn=user1,ou=users,dc=example,dc=com", {"cn": ["user1"]}
+                "cn=REDACTED_LDAP_BIND_PASSWORD1,ou=REDACTED_LDAP_BIND_PASSWORDs,dc=example,dc=com", {"cn": ["REDACTED_LDAP_BIND_PASSWORD1"]}
             ),
-            create_test_entry("cn=REDACTED_LDAP_BIND_PASSWORD1,ou=REDACTED_LDAP_BIND_PASSWORDs,dc=example,dc=com", {"cn": ["REDACTED_LDAP_BIND_PASSWORD1"]}),
-            create_test_entry("cn=service1,ou=services,dc=example,dc=com", {"cn": ["service1"]}),
             create_test_entry(
-                "cn=user2,ou=users,dc=example,dc=com", {"cn": ["user2"]}
+                "cn=service1,ou=services,dc=example,dc=com", {"cn": ["service1"]}
             ),
+            create_test_entry("cn=user2,ou=users,dc=example,dc=com", {"cn": ["user2"]}),
         ]
 
     def test_single_dn_pattern(
@@ -374,11 +374,13 @@ class TestExclusionLogic:
     def sample_entries(self) -> list[FlextLdifModels.Entry]:
         """Create sample entries for exclusion testing."""
         return [
+            create_test_entry("cn=user1,ou=users,dc=example,dc=com", {"cn": ["user1"]}),
             create_test_entry(
-                "cn=user1,ou=users,dc=example,dc=com", {"cn": ["user1"]}
+                "cn=REDACTED_LDAP_BIND_PASSWORD1,ou=REDACTED_LDAP_BIND_PASSWORDs,dc=example,dc=com", {"cn": ["REDACTED_LDAP_BIND_PASSWORD1"]}
             ),
-            create_test_entry("cn=REDACTED_LDAP_BIND_PASSWORD1,ou=REDACTED_LDAP_BIND_PASSWORDs,dc=example,dc=com", {"cn": ["REDACTED_LDAP_BIND_PASSWORD1"]}),
-            create_test_entry("cn=service1,ou=services,dc=example,dc=com", {"cn": ["service1"]}),
+            create_test_entry(
+                "cn=service1,ou=services,dc=example,dc=com", {"cn": ["service1"]}
+            ),
         ]
 
     def test_exclude_matching_single_pattern(
@@ -400,7 +402,9 @@ class TestExclusionLogic:
     ) -> None:
         """Test exclude_matching method chaining returns builder."""
         builder = EntryFilterBuilder()
-        result = builder.with_dn_pattern("*,ou=users,dc=example,dc=com").exclude_matching()
+        result = builder.with_dn_pattern(
+            "*,ou=users,dc=example,dc=com"
+        ).exclude_matching()
         assert result is builder
 
     def test_exclude_matching_multiple_calls(
@@ -611,7 +615,9 @@ class TestFluentApiChaining:
         """Test method chain with exclusion."""
         entries = [
             create_test_entry("cn=user1,ou=users,dc=example,dc=com", {"cn": ["user1"]}),
-            create_test_entry("cn=REDACTED_LDAP_BIND_PASSWORD1,ou=REDACTED_LDAP_BIND_PASSWORDs,dc=example,dc=com", {"cn": ["REDACTED_LDAP_BIND_PASSWORD1"]}),
+            create_test_entry(
+                "cn=REDACTED_LDAP_BIND_PASSWORD1,ou=REDACTED_LDAP_BIND_PASSWORDs,dc=example,dc=com", {"cn": ["REDACTED_LDAP_BIND_PASSWORD1"]}
+            ),
         ]
 
         result = (
@@ -629,8 +635,12 @@ class TestFluentApiChaining:
         """Test method chain with multiple DN patterns."""
         entries = [
             create_test_entry("cn=user1,ou=users,dc=example,dc=com", {"cn": ["user1"]}),
-            create_test_entry("cn=REDACTED_LDAP_BIND_PASSWORD1,ou=REDACTED_LDAP_BIND_PASSWORDs,dc=example,dc=com", {"cn": ["REDACTED_LDAP_BIND_PASSWORD1"]}),
-            create_test_entry("cn=service1,ou=services,dc=example,dc=com", {"cn": ["service1"]}),
+            create_test_entry(
+                "cn=REDACTED_LDAP_BIND_PASSWORD1,ou=REDACTED_LDAP_BIND_PASSWORDs,dc=example,dc=com", {"cn": ["REDACTED_LDAP_BIND_PASSWORD1"]}
+            ),
+            create_test_entry(
+                "cn=service1,ou=services,dc=example,dc=com", {"cn": ["service1"]}
+            ),
         ]
 
         result = (

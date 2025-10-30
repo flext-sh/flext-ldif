@@ -3,7 +3,12 @@
     {
       "dn": "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
       "attributes": {
-        "objectClass": ["person", "orclPerson", "organizationalPerson", "inetOrgPerson"],
+        "objectClass": [
+          "person",
+          "orclPerson",
+          "organizationalPerson",
+          "inetOrgPerson"
+        ],
         "cn": ["REDACTED_LDAP_BIND_PASSWORD"],
         "sn": ["Administrator"],
         "givenName": ["System"],
@@ -12,9 +17,16 @@
         "orclPassword": ["{SSHA}TrustNo1"],
         "orclPasswordExpireTime": ["20250101000000Z"],
         "orclPasswordLockout": ["FALSE"],
-        "orclaci": ["(targetentry=\"cn=*,dc=example,dc=com\")(version 3.0;acl \"Admin Access\";allow(all) userdn=\"ldap:///cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com\";)"],
-        "attributeTypes": ["( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )", "( 2.16.840.1.113894.1.1.2 NAME 'orclPassword' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"],
-        "objectClasses": ["( 2.16.840.1.113894.1.0.1 NAME 'orclPerson' SUP person STRUCTURAL MAY ( orclPassword $ orclPasswordExpireTime $ orclPasswordLockout $ orclaci ) )"]
+        "orclaci": [
+          "(targetentry=\"cn=*,dc=example,dc=com\")(version 3.0;acl \"Admin Access\";allow(all) userdn=\"ldap:///cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com\";)"
+        ],
+        "attributeTypes": [
+          "( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )",
+          "( 2.16.840.1.113894.1.1.2 NAME 'orclPassword' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
+        ],
+        "objectClasses": [
+          "( 2.16.840.1.113894.1.0.1 NAME 'orclPerson' SUP person STRUCTURAL MAY ( orclPassword $ orclPasswordExpireTime $ orclPasswordLockout $ orclaci ) )"
+        ]
       }
     }
   ],
@@ -24,6 +36,11 @@
   "metadata": {
     "type": "server_specific",
     "server": "Oracle Internet Directory",
-    "test_aspects": ["oracle_specific_attributes", "acl_parsing", "password_handling", "schema_definition"]
+    "test_aspects": [
+      "oracle_specific_attributes",
+      "acl_parsing",
+      "password_handling",
+      "schema_definition"
+    ]
   }
 }

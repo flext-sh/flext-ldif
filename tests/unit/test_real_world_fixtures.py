@@ -16,7 +16,7 @@ from pathlib import Path
 import pytest
 
 from flext_ldif import FlextLdif
-from flext_ldif.quirks.registry import FlextLdifQuirksRegistry
+from flext_ldif.services.registry import FlextLdifRegistry
 
 
 class TestRFCFixtures:
@@ -26,7 +26,7 @@ class TestRFCFixtures:
     def setup(self) -> None:
         """Initialize fixtures and registry."""
         self.ldif = FlextLdif()
-        self.quirk_registry = FlextLdifQuirksRegistry()
+        self.quirk_registry = FlextLdifRegistry()
 
     def test_rfc_parse_all_entries(self) -> None:
         """Test parsing all RFC entries from fixture file."""

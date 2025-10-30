@@ -25,13 +25,13 @@ from pathlib import Path
 
 import pytest
 
-from flext_ldif.categorized_pipeline import (
+from flext_ldif.servers.oid import FlextLdifServersOid
+from flext_ldif.servers.openldap import FlextLdifServersOpenldap
+from flext_ldif.servers.oud import FlextLdifServersOud
+from flext_ldif.services.categorized_pipeline import (
     FlextLdifCategorizedMigrationPipeline,
 )
-from flext_ldif.quirks.registry import FlextLdifQuirksRegistry
-from flext_ldif.quirks.servers.oid_quirks import FlextLdifQuirksServersOid
-from flext_ldif.quirks.servers.openldap_quirks import FlextLdifQuirksServersOpenldap
-from flext_ldif.quirks.servers.oud_quirks import FlextLdifQuirksServersOud
+from flext_ldif.services.registry import FlextLdifRegistry
 
 
 class TestCategorizedPipelineBasicExecution:
@@ -52,9 +52,9 @@ class TestCategorizedPipelineBasicExecution:
             yield Path(tmpdir)
 
     @pytest.fixture
-    def quirk_registry(self) -> FlextLdifQuirksRegistry:
+    def quirk_registry(self) -> FlextLdifRegistry:
         """Create quirk registry."""
-        return FlextLdifQuirksRegistry()
+        return FlextLdifRegistry()
 
     @pytest.fixture
     def categorization_rules(self) -> dict[str, list[str]]:
@@ -71,7 +71,7 @@ class TestCategorizedPipelineBasicExecution:
         self,
         temp_input_dir: Path,
         temp_output_dir: Path,
-        quirk_registry: FlextLdifQuirksRegistry,
+        quirk_registry: FlextLdifRegistry,
         categorization_rules: dict[str, list[str]],
     ) -> None:
         """Test pipeline execution with empty LDIF content."""
@@ -79,7 +79,7 @@ class TestCategorizedPipelineBasicExecution:
         ldif_file = temp_input_dir / "empty.ldif"
         ldif_file.write_text("")
 
-        oid_quirk = FlextLdifQuirksServersOid()
+        oid_quirk = FlextLdifServersOid()
         rfc_quirk = None
 
         pipeline = FlextLdifCategorizedMigrationPipeline(
@@ -99,7 +99,7 @@ class TestCategorizedPipelineBasicExecution:
         self,
         temp_input_dir: Path,
         temp_output_dir: Path,
-        quirk_registry: FlextLdifQuirksRegistry,
+        quirk_registry: FlextLdifRegistry,
         categorization_rules: dict[str, list[str]],
     ) -> None:
         """Test pipeline execution with only schema entries."""
@@ -115,7 +115,7 @@ objectClasses: ( 2.5.6.6 NAME 'person' STRUCTURAL SUP top MUST cn )
         ldif_file = temp_input_dir / "schema.ldif"
         ldif_file.write_text(ldif_content)
 
-        oid_quirk = FlextLdifQuirksServersOid()
+        oid_quirk = FlextLdifServersOid()
         rfc_quirk = None
 
         pipeline = FlextLdifCategorizedMigrationPipeline(
@@ -135,7 +135,7 @@ objectClasses: ( 2.5.6.6 NAME 'person' STRUCTURAL SUP top MUST cn )
         self,
         temp_input_dir: Path,
         temp_output_dir: Path,
-        quirk_registry: FlextLdifQuirksRegistry,
+        quirk_registry: FlextLdifRegistry,
         categorization_rules: dict[str, list[str]],
     ) -> None:
         """Test pipeline execution with user entries."""
@@ -152,7 +152,7 @@ objectClass: inetOrgPerson
         ldif_file = temp_input_dir / "users.ldif"
         ldif_file.write_text(ldif_content)
 
-        oid_quirk = FlextLdifQuirksServersOid()
+        oid_quirk = FlextLdifServersOid()
         rfc_quirk = None
 
         pipeline = FlextLdifCategorizedMigrationPipeline(
@@ -173,7 +173,7 @@ objectClass: inetOrgPerson
         self,
         temp_input_dir: Path,
         temp_output_dir: Path,
-        quirk_registry: FlextLdifQuirksRegistry,
+        quirk_registry: FlextLdifRegistry,
         categorization_rules: dict[str, list[str]],
     ) -> None:
         """Test pipeline execution with group entries."""
@@ -189,7 +189,7 @@ member: cn=Jane Smith,ou=users,dc=example,dc=com
         ldif_file = temp_input_dir / "groups.ldif"
         ldif_file.write_text(ldif_content)
 
-        oid_quirk = FlextLdifQuirksServersOid()
+        oid_quirk = FlextLdifServersOid()
         rfc_quirk = None
 
         pipeline = FlextLdifCategorizedMigrationPipeline(
@@ -210,7 +210,7 @@ member: cn=Jane Smith,ou=users,dc=example,dc=com
         self,
         temp_input_dir: Path,
         temp_output_dir: Path,
-        quirk_registry: FlextLdifQuirksRegistry,
+        quirk_registry: FlextLdifRegistry,
         categorization_rules: dict[str, list[str]],
     ) -> None:
         """Test pipeline execution with organizational units."""
@@ -232,7 +232,7 @@ objectClass: organizationalUnit
         ldif_file = temp_input_dir / "hierarchy.ldif"
         ldif_file.write_text(ldif_content)
 
-        oid_quirk = FlextLdifQuirksServersOid()
+        oid_quirk = FlextLdifServersOid()
         rfc_quirk = None
 
         pipeline = FlextLdifCategorizedMigrationPipeline(
@@ -311,7 +311,7 @@ member: cn=John,ou=users,dc=example,dc=com
         ldif_file = temp_input_dir / "mixed.ldif"
         ldif_file.write_text(ldif_content)
 
-        oid_quirk = FlextLdifQuirksServersOid()
+        oid_quirk = FlextLdifServersOid()
         rfc_quirk = None
 
         pipeline = FlextLdifCategorizedMigrationPipeline(
@@ -373,7 +373,7 @@ objectClass: person
         ldif_file = temp_input_dir / "oid.ldif"
         ldif_file.write_text(ldif_content)
 
-        oid_quirk = FlextLdifQuirksServersOid()
+        oid_quirk = FlextLdifServersOid()
         rfc_quirk = None
 
         pipeline = FlextLdifCategorizedMigrationPipeline(
@@ -407,7 +407,7 @@ ds-sync-timestamp: 20250101000000Z
         ldif_file = temp_input_dir / "oud.ldif"
         ldif_file.write_text(ldif_content)
 
-        oud_quirk = FlextLdifQuirksServersOud()
+        oud_quirk = FlextLdifServersOud()
         rfc_quirk = None
 
         pipeline = FlextLdifCategorizedMigrationPipeline(
@@ -440,7 +440,7 @@ objectClass: person
         ldif_file = temp_input_dir / "openldap.ldif"
         ldif_file.write_text(ldif_content)
 
-        openldap_quirk = FlextLdifQuirksServersOpenldap()
+        openldap_quirk = FlextLdifServersOpenldap()
         rfc_quirk = None
 
         pipeline = FlextLdifCategorizedMigrationPipeline(
@@ -501,7 +501,7 @@ objectClass: person
         ldif_file = temp_input_dir / "test.ldif"
         ldif_file.write_text(ldif_content)
 
-        oid_quirk = FlextLdifQuirksServersOid()
+        oid_quirk = FlextLdifServersOid()
         rfc_quirk = None
 
         pipeline = FlextLdifCategorizedMigrationPipeline(
@@ -537,7 +537,7 @@ objectClass: person
         ldif_file = temp_input_dir / "test.ldif"
         ldif_file.write_text(ldif_content)
 
-        oid_quirk = FlextLdifQuirksServersOid()
+        oid_quirk = FlextLdifServersOid()
         rfc_quirk = None
 
         pipeline = FlextLdifCategorizedMigrationPipeline(
@@ -594,7 +594,7 @@ dn: incomplete entry without attributes
         ldif_file = temp_input_dir / "malformed.ldif"
         ldif_file.write_text(ldif_content)
 
-        oid_quirk = FlextLdifQuirksServersOid()
+        oid_quirk = FlextLdifServersOid()
         rfc_quirk = None
 
         pipeline = FlextLdifCategorizedMigrationPipeline(
@@ -625,7 +625,7 @@ objectClass: person
         ldif_file = temp_input_dir / "test.ldif"
         ldif_file.write_text(ldif_content)
 
-        oid_quirk = FlextLdifQuirksServersOid()
+        oid_quirk = FlextLdifServersOid()
         rfc_quirk = None
 
         # Use base DN that doesn't match entries
@@ -660,7 +660,7 @@ objectClass: person
         # Minimal categorization rules
         categorization_rules = {"users": ["person"]}
 
-        oid_quirk = FlextLdifQuirksServersOid()
+        oid_quirk = FlextLdifServersOid()
         rfc_quirk = None
 
         pipeline = FlextLdifCategorizedMigrationPipeline(
@@ -718,7 +718,7 @@ objectClass: person
         ldif_file = temp_input_dir / "test.ldif"
         ldif_file.write_text(ldif_content)
 
-        oid_quirk = FlextLdifQuirksServersOid()
+        oid_quirk = FlextLdifServersOid()
         rfc_quirk = None
 
         pipeline = FlextLdifCategorizedMigrationPipeline(
@@ -750,7 +750,7 @@ objectClass: person
         ldif_file = temp_input_dir / "broken.ldif"
         ldif_file.write_text(ldif_content)
 
-        oid_quirk = FlextLdifQuirksServersOid()
+        oid_quirk = FlextLdifServersOid()
         rfc_quirk = None
 
         pipeline = FlextLdifCategorizedMigrationPipeline(

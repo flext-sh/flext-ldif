@@ -1,3 +1,0 @@
- WARN PYTHONPATH environment variable is set to `src`. Checks in other environments may not include these paths.
- WARN ..flext-ldif/pyproject.toml: Invalid search-path: `..flext-ldif/scripts` does not exist
- INFO 1 error

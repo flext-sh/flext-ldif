@@ -12,6 +12,7 @@ This directory contains LDIF fixtures for 4 primary LDAP server types:
 - **OpenLDAP 2**: OpenLDAP 2.x
 
 Each server has 4 types of fixtures:
+
 1. **Schema** - LDAP schema definitions (attributeTypes, objectClasses)
 2. **Entries** - Example LDAP directory entries
 3. **ACL** - Access control configurations
@@ -20,15 +21,18 @@ Each server has 4 types of fixtures:
 ## Fixture Sources and Licensing
 
 ### RFC Fixtures
+
 - **Source**: RFC 2252, 2256, 4519 (public domain)
 - **License**: Public domain
 
 ### OID/OUD Fixtures
+
 - **Source**: Oracle documentation and standards
 - **License**: Used for reference and testing
 
 ### OpenLDAP 2 Fixtures
-- **Source**: OpenLDAP project (http://www.openldap.org/)
+
+- **Source**: OpenLDAP project (<http://www.openldap.org/>)
 - **License**: OpenLDAP Public License (BSD-like)
 
 ## Using Fixtures in Tests
@@ -61,6 +65,7 @@ pytest -m "operational and real_data" tests/unit/quirks/
 ### Pytest Markers
 
 Available markers:
+
 - `fixtures` - Tests using LDIF fixtures
 - `operational` - Operational tests with real data
 - `real_data` - Tests using real fixture data

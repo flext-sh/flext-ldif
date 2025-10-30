@@ -2,9 +2,9 @@
 
 Tests for relaxed/lenient quirks that allow processing of broken, non-compliant,
 or malformed LDIF files. Tests all three relaxed quirk classes:
-- FlextLdifQuirksServersRelaxedSchema
-- FlextLdifQuirksServersRelaxedAcl
-- FlextLdifQuirksServersRelaxedEntry
+- FlextLdifServersRelaxedSchema
+- FlextLdifServersRelaxedAcl
+- FlextLdifServersRelaxedEntry
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -18,33 +18,28 @@ from typing import cast
 import pytest
 
 from flext_ldif.models import FlextLdifModels
-from flext_ldif.quirks.servers.relaxed_quirks import (
-    FlextLdifQuirksServersRelaxed,
-    FlextLdifQuirksServersRelaxedAcl,
-    FlextLdifQuirksServersRelaxedEntry,
-    FlextLdifQuirksServersRelaxedSchema,
-)
+from flext_ldif.servers.relaxed import FlextLdifServersRelaxed
 
 
-class TestRelaxedSchemaQuirks:
+class TestRelaxedSchemas:
     """Test suite for Relaxed Schema quirks."""
 
     @pytest.fixture
     def relaxed_schema_quirk(
         self,
-    ) -> FlextLdifQuirksServersRelaxedSchema:
+    ) -> FlextLdifServersRelaxed.Schema:
         """Create relaxed schema quirk instance."""
-        return FlextLdifQuirksServersRelaxedSchema()
+        return FlextLdifServersRelaxed.Schema()
 
     def test_initialization(
-        self, relaxed_schema_quirk: FlextLdifQuirksServersRelaxedSchema
+        self, relaxed_schema_quirk: FlextLdifServersRelaxed.Schema
     ) -> None:
         """Test relaxed schema quirk initialization."""
         assert relaxed_schema_quirk.server_type == "relaxed"
         assert relaxed_schema_quirk.priority == 200
 
     def test_can_handle_any_attribute_definition(
-        self, relaxed_schema_quirk: FlextLdifQuirksServersRelaxedSchema
+        self, relaxed_schema_quirk: FlextLdifServersRelaxed.Schema
     ) -> None:
         """Test that relaxed mode accepts any attribute definition."""
         # Malformed attribute
@@ -59,7 +54,7 @@ class TestRelaxedSchemaQuirks:
         assert relaxed_schema_quirk.can_handle_attribute(valid)
 
     def test_parse_malformed_attribute(
-        self, relaxed_schema_quirk: FlextLdifQuirksServersRelaxedSchema
+        self, relaxed_schema_quirk: FlextLdifServersRelaxed.Schema
     ) -> None:
         """Test parsing malformed attribute with best-effort approach."""
         # Malformed attribute missing closing paren
@@ -76,7 +71,7 @@ class TestRelaxedSchemaQuirks:
         assert parsed.oid == "2.5.4.3"
 
     def test_parse_attribute_with_unknown_oid_format(
-        self, relaxed_schema_quirk: FlextLdifQuirksServersRelaxedSchema
+        self, relaxed_schema_quirk: FlextLdifServersRelaxed.Schema
     ) -> None:
         """Test parsing attribute with non-standard OID format."""
         # Non-standard OID format
@@ -93,7 +88,7 @@ class TestRelaxedSchemaQuirks:
         )
 
     def test_parse_attribute_returns_definition(
-        self, relaxed_schema_quirk: FlextLdifQuirksServersRelaxedSchema
+        self, relaxed_schema_quirk: FlextLdifServersRelaxed.Schema
     ) -> None:
         """Test that parsed attribute includes original definition."""
         attr_def = "( 2.5.4.3 NAME 'cn' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
@@ -102,10 +97,13 @@ class TestRelaxedSchemaQuirks:
         assert result.is_success
 
         parsed = result.unwrap()
-        assert parsed.metadata and parsed.metadata.original_format == attr_def
+        assert (
+            parsed.metadata
+            and parsed.metadata.extensions.get("original_format") == attr_def
+        )
 
     def test_parse_objectclass_malformed(
-        self, relaxed_schema_quirk: FlextLdifQuirksServersRelaxedSchema
+        self, relaxed_schema_quirk: FlextLdifServersRelaxed.Schema
     ) -> None:
         """Test parsing malformed objectClass definition."""
         # Malformed objectClass
@@ -120,7 +118,7 @@ class TestRelaxedSchemaQuirks:
         )
 
     def test_can_handle_any_objectclass_definition(
-        self, relaxed_schema_quirk: FlextLdifQuirksServersRelaxedSchema
+        self, relaxed_schema_quirk: FlextLdifServersRelaxed.Schema
     ) -> None:
         """Test that relaxed mode accepts any objectClass definition."""
         # Malformed objectClass
@@ -132,7 +130,7 @@ class TestRelaxedSchemaQuirks:
         assert relaxed_schema_quirk.can_handle_objectclass(valid)
 
     def test_convert_attribute_to_rfc_passthrough(
-        self, relaxed_schema_quirk: FlextLdifQuirksServersRelaxedSchema
+        self, relaxed_schema_quirk: FlextLdifServersRelaxed.Schema
     ) -> None:
         """Test that attribute conversion is pass-through."""
         attr_data = {
@@ -149,7 +147,7 @@ class TestRelaxedSchemaQuirks:
         assert converted == attr_data
 
     def test_write_attribute_preserves_definition(
-        self, relaxed_schema_quirk: FlextLdifQuirksServersRelaxedSchema
+        self, relaxed_schema_quirk: FlextLdifServersRelaxed.Schema
     ) -> None:
         """Test that writing attribute preserves original definition."""
         definition = "( 2.5.4.3 NAME 'cn' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
@@ -170,23 +168,23 @@ class TestRelaxedSchemaQuirks:
         assert isinstance(written, str) and len(written) > 0
 
 
-class TestRelaxedAclQuirks:
+class TestRelaxedAcls:
     """Test suite for Relaxed ACL quirks."""
 
     @pytest.fixture
-    def relaxed_acl_quirk(self) -> FlextLdifQuirksServersRelaxedAcl:
+    def relaxed_acl_quirk(self) -> FlextLdifServersRelaxed.Acl:
         """Create relaxed ACL quirk instance."""
-        return FlextLdifQuirksServersRelaxedAcl()
+        return FlextLdifServersRelaxed.Acl()
 
     def test_initialization(
-        self, relaxed_acl_quirk: FlextLdifQuirksServersRelaxedAcl
+        self, relaxed_acl_quirk: FlextLdifServersRelaxed.Acl
     ) -> None:
         """Test relaxed ACL quirk initialization."""
         assert relaxed_acl_quirk.server_type == "relaxed"
         assert relaxed_acl_quirk.priority == 200
 
     def test_can_handle_anyacl_line(
-        self, relaxed_acl_quirk: FlextLdifQuirksServersRelaxedAcl
+        self, relaxed_acl_quirk: FlextLdifServersRelaxed.Acl
     ) -> None:
         """Test that relaxed mode accepts any ACL line."""
         # Malformed ACL
@@ -198,7 +196,7 @@ class TestRelaxedAclQuirks:
         assert relaxed_acl_quirk.can_handle_acl(valid)
 
     def test_parse_malformed_acl(
-        self, relaxed_acl_quirk: FlextLdifQuirksServersRelaxedAcl
+        self, relaxed_acl_quirk: FlextLdifServersRelaxed.Acl
     ) -> None:
         """Test parsing malformed ACL line."""
         # Malformed ACL
@@ -212,7 +210,7 @@ class TestRelaxedAclQuirks:
         assert parsed.raw_acl == malformed
 
     def test_parse_acl_preserves_raw_content(
-        self, relaxed_acl_quirk: FlextLdifQuirksServersRelaxedAcl
+        self, relaxed_acl_quirk: FlextLdifServersRelaxed.Acl
     ) -> None:
         """Test that parsed ACL preserves raw content."""
         acl_line = "(targetentry invalid) broken"
@@ -224,7 +222,7 @@ class TestRelaxedAclQuirks:
         assert parsed.raw_acl == acl_line
 
     def test_convert_acl_to_rfc_passthrough(
-        self, relaxed_acl_quirk: FlextLdifQuirksServersRelaxedAcl
+        self, relaxed_acl_quirk: FlextLdifServersRelaxed.Acl
     ) -> None:
         """Test that ACL conversion is pass-through."""
         acl_data = {
@@ -239,7 +237,7 @@ class TestRelaxedAclQuirks:
         assert converted == acl_data
 
     def test_write_acl_preserves_raw_content(
-        self, relaxed_acl_quirk: FlextLdifQuirksServersRelaxedAcl
+        self, relaxed_acl_quirk: FlextLdifServersRelaxed.Acl
     ) -> None:
         """Test that writing ACL preserves raw content."""
         raw_acl = '(targetentry="cn=REDACTED_LDAP_BIND_PASSWORD")(version 3.0;acl "REDACTED_LDAP_BIND_PASSWORD";allow(all)'
@@ -259,23 +257,23 @@ class TestRelaxedAclQuirks:
         assert written == raw_acl
 
 
-class TestRelaxedEntryQuirks:
+class TestRelaxedEntrys:
     """Test suite for Relaxed Entry quirks."""
 
     @pytest.fixture
-    def relaxed_entry_quirk(self) -> FlextLdifQuirksServersRelaxedEntry:
+    def relaxed_entry_quirk(self) -> FlextLdifServersRelaxed.Entry:
         """Create relaxed entry quirk instance."""
-        return FlextLdifQuirksServersRelaxedEntry()
+        return FlextLdifServersRelaxed.Entry()
 
     def test_initialization(
-        self, relaxed_entry_quirk: FlextLdifQuirksServersRelaxedEntry
+        self, relaxed_entry_quirk: FlextLdifServersRelaxed.Entry
     ) -> None:
         """Test relaxed entry quirk initialization."""
         assert relaxed_entry_quirk.server_type == "relaxed"
         assert relaxed_entry_quirk.priority == 200
 
     def test_can_handle_any_entry(
-        self, relaxed_entry_quirk: FlextLdifQuirksServersRelaxedEntry
+        self, relaxed_entry_quirk: FlextLdifServersRelaxed.Entry
     ) -> None:
         """Test that relaxed mode accepts any entry DN."""
         # Malformed DN
@@ -287,7 +285,7 @@ class TestRelaxedEntryQuirks:
         assert relaxed_entry_quirk.can_handle_entry(valid_dn, {})
 
     def test_parse_malformed_entry(
-        self, relaxed_entry_quirk: FlextLdifQuirksServersRelaxedEntry
+        self, relaxed_entry_quirk: FlextLdifServersRelaxed.Entry
     ) -> None:
         """Test parsing entry with malformed DN."""
         malformed_dn = "cn=test invalid format"
@@ -301,7 +299,7 @@ class TestRelaxedEntryQuirks:
         assert parsed == attributes
 
     def test_parse_entry_preserves_data(
-        self, relaxed_entry_quirk: FlextLdifQuirksServersRelaxedEntry
+        self, relaxed_entry_quirk: FlextLdifServersRelaxed.Entry
     ) -> None:
         """Test that parsed entry preserves attributes."""
         dn = "cn=test,dc=example,dc=com"
@@ -315,7 +313,7 @@ class TestRelaxedEntryQuirks:
         assert parsed == attributes
 
     def test_normalize_dn_basic(
-        self, relaxed_entry_quirk: FlextLdifQuirksServersRelaxedEntry
+        self, relaxed_entry_quirk: FlextLdifServersRelaxed.Entry
     ) -> None:
         """Test basic DN normalization."""
         dn = "CN=Test,DC=Example,DC=Com"
@@ -328,7 +326,7 @@ class TestRelaxedEntryQuirks:
         assert "cn=" in normalized.lower()
 
     def test_normalize_dn_mixed_case(
-        self, relaxed_entry_quirk: FlextLdifQuirksServersRelaxedEntry
+        self, relaxed_entry_quirk: FlextLdifServersRelaxed.Entry
     ) -> None:
         """Test DN normalization with mixed case."""
         dn = "CN=REDACTED_LDAP_BIND_PASSWORD,DC=EXAMPLE,DC=COM"
@@ -341,7 +339,7 @@ class TestRelaxedEntryQuirks:
         assert normalized.startswith("cn=")
 
     def test_normalize_dn_with_values(
-        self, relaxed_entry_quirk: FlextLdifQuirksServersRelaxedEntry
+        self, relaxed_entry_quirk: FlextLdifServersRelaxed.Entry
     ) -> None:
         """Test DN normalization preserves values."""
         dn = "CN=Admin User,DC=Example,DC=Com"
@@ -354,7 +352,7 @@ class TestRelaxedEntryQuirks:
         assert "Admin User" in normalized
 
     def test_normalize_malformed_dn(
-        self, relaxed_entry_quirk: FlextLdifQuirksServersRelaxedEntry
+        self, relaxed_entry_quirk: FlextLdifServersRelaxed.Entry
     ) -> None:
         """Test normalization handles malformed DN gracefully."""
         # Missing equals sign
@@ -365,7 +363,7 @@ class TestRelaxedEntryQuirks:
         assert result.is_success or result.error is not None
 
     def test_convert_entry_to_rfc_passthrough(
-        self, relaxed_entry_quirk: FlextLdifQuirksServersRelaxedEntry
+        self, relaxed_entry_quirk: FlextLdifServersRelaxed.Entry
     ) -> None:
         """Test that entry conversion is pass-through."""
         entry_data = {
@@ -388,21 +386,21 @@ class TestRelaxedModePriority:
         self,
     ) -> None:
         """Test that relaxed schema quirk has priority 200 (last resort)."""
-        quirk = FlextLdifQuirksServersRelaxedSchema()
+        quirk = FlextLdifServersRelaxed.Schema()
         assert quirk.priority == 200
 
     def test_relaxed_acl_priority_is_200(
         self,
     ) -> None:
         """Test that relaxed ACL quirk has priority 200 (last resort)."""
-        quirk = FlextLdifQuirksServersRelaxedAcl()
+        quirk = FlextLdifServersRelaxed.Acl()
         assert quirk.priority == 200
 
     def test_relaxed_entry_priority_is_200(
         self,
     ) -> None:
         """Test that relaxed entry quirk has priority 200 (last resort)."""
-        quirk = FlextLdifQuirksServersRelaxedEntry()
+        quirk = FlextLdifServersRelaxed.Entry()
         assert quirk.priority == 200
 
 
@@ -411,7 +409,7 @@ class TestRelaxedModeErrorHandling:
 
     def test_schema_handles_exception_gracefully(self) -> None:
         """Test that schema quirk handles exceptions gracefully."""
-        quirk = FlextLdifQuirksServersRelaxedSchema()
+        quirk = FlextLdifServersRelaxed.Schema()
         # Even with invalid input, should return result with error flag
         result = quirk.parse_attribute("")
         assert result.is_success  # Relaxed mode always succeeds
@@ -420,7 +418,7 @@ class TestRelaxedModeErrorHandling:
         self,
     ) -> None:
         """Test that ACL quirk handles exceptions gracefully."""
-        quirk = FlextLdifQuirksServersRelaxedAcl()
+        quirk = FlextLdifServersRelaxed.Acl()
         # Even with invalid input, should return result with error flag
         result = quirk.parse_acl("")
         assert result.is_success  # Relaxed mode always succeeds
@@ -429,7 +427,7 @@ class TestRelaxedModeErrorHandling:
         self,
     ) -> None:
         """Test that entry quirk handles exceptions gracefully."""
-        quirk = FlextLdifQuirksServersRelaxedEntry()
+        quirk = FlextLdifServersRelaxed.Entry()
         # Even with invalid input, should return result with error flag
         result = quirk.parse_entry("", {})
         assert result.is_success  # Relaxed mode always succeeds
@@ -440,9 +438,9 @@ class TestRelaxedModeIntegration:
 
     def test_all_three_quirks_work_together(self) -> None:
         """Test that all three relaxed quirks can work together."""
-        schema = FlextLdifQuirksServersRelaxedSchema()
-        acl = FlextLdifQuirksServersRelaxedAcl()
-        entry = FlextLdifQuirksServersRelaxedEntry()
+        schema = FlextLdifServersRelaxed.Schema()
+        acl = FlextLdifServersRelaxed.Acl()
+        entry = FlextLdifServersRelaxed.Entry()
 
         # All should accept problematic input
         schema_result = schema.parse_attribute("( broken-oid")
@@ -455,7 +453,7 @@ class TestRelaxedModeIntegration:
 
     def test_relaxed_mode_returns_valid_result_structure(self) -> None:
         """Test that relaxed mode returns properly structured results."""
-        quirk = FlextLdifQuirksServersRelaxedSchema()
+        quirk = FlextLdifServersRelaxed.Schema()
 
         result = quirk.parse_attribute("( broken")
         assert result.is_success
@@ -466,26 +464,26 @@ class TestRelaxedModeIntegration:
 
     def test_relaxed_mode_logs_warnings_on_parse_failure(self) -> None:
         """Test that relaxed mode logs warnings on parse failures."""
-        quirk = FlextLdifQuirksServersRelaxedSchema()
+        quirk = FlextLdifServersRelaxed.Schema()
 
         # This should work but might log a warning
         result = quirk.parse_attribute("( broken-oid NAME 'test'")
         assert result.is_success  # Still succeeds despite issues
 
 
-# ===== Merged from test_relaxed_quirks_comprehensive.py =====
+# ===== Merged from test_relaxed_comprehensive.py =====
 
 
 class TestRelaxedQuirksCanHandle:
     """Test can_handle_* methods in relaxed mode."""
 
     @pytest.fixture
-    def relaxed_quirk(self) -> FlextLdifQuirksServersRelaxed:
+    def relaxed_quirk(self) -> FlextLdifServersRelaxed.Schema:
         """Create relaxed quirk instance."""
-        return FlextLdifQuirksServersRelaxed(server_type="relaxed")
+        return FlextLdifServersRelaxed.Schema()
 
     def test_can_handle_attribute_always_true(
-        self, relaxed_quirk: FlextLdifQuirksServersRelaxed
+        self, relaxed_quirk: FlextLdifServersRelaxed
     ) -> None:
         """Test can_handle_attribute always returns True in relaxed mode."""
         # Relaxed mode accepts ANY attribute definition
@@ -494,7 +492,7 @@ class TestRelaxedQuirksCanHandle:
         assert relaxed_quirk.can_handle_attribute("ANY STRING") is True
 
     def test_can_handle_attribute_empty_string_fails(
-        self, relaxed_quirk: FlextLdifQuirksServersRelaxed
+        self, relaxed_quirk: FlextLdifServersRelaxed
     ) -> None:
         """Test can_handle_attribute rejects empty strings."""
         # Only empty/whitespace strings are rejected
@@ -502,7 +500,7 @@ class TestRelaxedQuirksCanHandle:
         assert relaxed_quirk.can_handle_attribute("   ") is False
 
     def test_can_handle_objectclass_always_true(
-        self, relaxed_quirk: FlextLdifQuirksServersRelaxed
+        self, relaxed_quirk: FlextLdifServersRelaxed
     ) -> None:
         """Test can_handle_objectclass always returns True in relaxed mode."""
         # Relaxed mode accepts ANY objectClass definition
@@ -511,7 +509,7 @@ class TestRelaxedQuirksCanHandle:
         assert relaxed_quirk.can_handle_objectclass("ANYTHING") is True
 
     def test_can_handle_objectclass_empty_string_fails(
-        self, relaxed_quirk: FlextLdifQuirksServersRelaxed
+        self, relaxed_quirk: FlextLdifServersRelaxed
     ) -> None:
         """Test can_handle_objectclass rejects empty strings."""
         # Only empty/whitespace strings are rejected
@@ -523,12 +521,12 @@ class TestRelaxedQuirksParseAttribute:
     """Test parse_attribute() with lenient parsing."""
 
     @pytest.fixture
-    def relaxed_quirk(self) -> FlextLdifQuirksServersRelaxed:
+    def relaxed_quirk(self) -> FlextLdifServersRelaxed.Schema:
         """Create relaxed quirk instance."""
-        return FlextLdifQuirksServersRelaxed(server_type="relaxed")
+        return FlextLdifServersRelaxed.Schema()
 
     def test_parse_attribute_valid_oid(
-        self, relaxed_quirk: FlextLdifQuirksServersRelaxed
+        self, relaxed_quirk: FlextLdifServersRelaxed
     ) -> None:
         """Test parsing attribute with valid OID."""
         attr_def = "( 1.2.3.4 NAME 'testAttr' )"
@@ -542,7 +540,7 @@ class TestRelaxedQuirksParseAttribute:
         )
 
     def test_parse_attribute_malformed_oid(
-        self, relaxed_quirk: FlextLdifQuirksServersRelaxed
+        self, relaxed_quirk: FlextLdifServersRelaxed
     ) -> None:
         """Test parsing attribute with malformed OID."""
         # Relaxed mode accepts incomplete/malformed OIDs
@@ -551,7 +549,7 @@ class TestRelaxedQuirksParseAttribute:
         assert result.is_success
 
     def test_parse_attribute_missing_name(
-        self, relaxed_quirk: FlextLdifQuirksServersRelaxed
+        self, relaxed_quirk: FlextLdifServersRelaxed
     ) -> None:
         """Test parsing attribute without NAME field."""
         # Relaxed mode accepts attributes without NAME
@@ -562,7 +560,7 @@ class TestRelaxedQuirksParseAttribute:
         assert hasattr(parsed, "name")
 
     def test_parse_attribute_no_oid(
-        self, relaxed_quirk: FlextLdifQuirksServersRelaxed
+        self, relaxed_quirk: FlextLdifServersRelaxed
     ) -> None:
         """Test parsing attribute without OID."""
         # Relaxed mode assigns 'unknown' OID
@@ -573,7 +571,7 @@ class TestRelaxedQuirksParseAttribute:
         assert parsed.oid == "unknown" or parsed.oid is not None
 
     def test_parse_attribute_various_name_formats(
-        self, relaxed_quirk: FlextLdifQuirksServersRelaxed
+        self, relaxed_quirk: FlextLdifServersRelaxed
     ) -> None:
         """Test parsing attribute with various NAME formats."""
         # Test quoted NAME
@@ -589,7 +587,7 @@ class TestRelaxedQuirksParseAttribute:
         assert result3.is_success
 
     def test_parse_attribute_exception_handling(
-        self, relaxed_quirk: FlextLdifQuirksServersRelaxed
+        self, relaxed_quirk: FlextLdifServersRelaxed
     ) -> None:
         """Test parse_attribute handles exceptions gracefully."""
         # Even with completely invalid content, relaxed mode recovers
@@ -602,26 +600,29 @@ class TestRelaxedQuirksParseAttribute:
         )
 
     def test_parse_attribute_stores_original_definition(
-        self, relaxed_quirk: FlextLdifQuirksServersRelaxed
+        self, relaxed_quirk: FlextLdifServersRelaxed.Schema
     ) -> None:
         """Test parse_attribute stores original definition for recovery."""
         original = "( 1.2.3.4 NAME 'test' SYNTAX 1.2.3 )"
         result = relaxed_quirk.parse_attribute(original)
         assert result.is_success
         parsed = result.unwrap()
-        assert parsed.metadata and parsed.metadata.original_format == original
+        assert (
+            parsed.metadata
+            and parsed.metadata.extensions.get("original_format") == original
+        )
 
 
 class TestRelaxedQuirksParseObjectclass:
     """Test parse_objectclass() with lenient parsing."""
 
     @pytest.fixture
-    def relaxed_quirk(self) -> FlextLdifQuirksServersRelaxed:
+    def relaxed_quirk(self) -> FlextLdifServersRelaxed.Schema:
         """Create relaxed quirk instance."""
-        return FlextLdifQuirksServersRelaxed(server_type="relaxed")
+        return FlextLdifServersRelaxed.Schema()
 
     def test_parse_objectclass_valid_oid(
-        self, relaxed_quirk: FlextLdifQuirksServersRelaxed
+        self, relaxed_quirk: FlextLdifServersRelaxed
     ) -> None:
         """Test parsing objectClass with valid OID."""
         oc_def = "( 1.2.3.4 NAME 'testClass' STRUCTURAL )"
@@ -635,7 +636,7 @@ class TestRelaxedQuirksParseObjectclass:
         )
 
     def test_parse_objectclass_malformed_oid(
-        self, relaxed_quirk: FlextLdifQuirksServersRelaxed
+        self, relaxed_quirk: FlextLdifServersRelaxed
     ) -> None:
         """Test parsing objectClass with malformed OID."""
         oc_def = "( broken_oid NAME 'test' )"
@@ -643,7 +644,7 @@ class TestRelaxedQuirksParseObjectclass:
         assert result.is_success
 
     def test_parse_objectclass_missing_kind(
-        self, relaxed_quirk: FlextLdifQuirksServersRelaxed
+        self, relaxed_quirk: FlextLdifServersRelaxed
     ) -> None:
         """Test parsing objectClass without KIND (STRUCTURAL/AUXILIARY/ABSTRACT)."""
         # Relaxed mode accepts objectClasses without explicit kind
@@ -652,7 +653,7 @@ class TestRelaxedQuirksParseObjectclass:
         assert result.is_success
 
     def test_parse_objectclass_no_oid(
-        self, relaxed_quirk: FlextLdifQuirksServersRelaxed
+        self, relaxed_quirk: FlextLdifServersRelaxed
     ) -> None:
         """Test parsing objectClass without OID."""
         oc_def = "NAME 'onlyName' STRUCTURAL"
@@ -660,7 +661,7 @@ class TestRelaxedQuirksParseObjectclass:
         assert result.is_success
 
     def test_parse_objectclass_exception_handling(
-        self, relaxed_quirk: FlextLdifQuirksServersRelaxed
+        self, relaxed_quirk: FlextLdifServersRelaxed
     ) -> None:
         """Test parse_objectclass handles exceptions gracefully."""
         result = relaxed_quirk.parse_objectclass("\x00\x01 INVALID")
@@ -672,7 +673,7 @@ class TestRelaxedQuirksParseObjectclass:
         )
 
     def test_parse_objectclass_with_sup_must_may(
-        self, relaxed_quirk: FlextLdifQuirksServersRelaxed
+        self, relaxed_quirk: FlextLdifServersRelaxed
     ) -> None:
         """Test parsing objectClass with SUP, MUST, MAY clauses."""
         oc_def = "( 1.2.3.4 NAME 'test' SUP top MUST cn MAY description STRUCTURAL )"
@@ -684,12 +685,12 @@ class TestRelaxedQuirksConversions:
     """Test conversion methods in relaxed mode."""
 
     @pytest.fixture
-    def relaxed_quirk(self) -> FlextLdifQuirksServersRelaxed:
+    def relaxed_quirk(self) -> FlextLdifServersRelaxed.Schema:
         """Create relaxed quirk instance."""
-        return FlextLdifQuirksServersRelaxed(server_type="relaxed")
+        return FlextLdifServersRelaxed.Schema()
 
     def test_convert_attribute_to_rfc(
-        self, relaxed_quirk: FlextLdifQuirksServersRelaxed
+        self, relaxed_quirk: FlextLdifServersRelaxed
     ) -> None:
         """Test converting attribute to RFC format."""
         attr_data = {
@@ -702,7 +703,7 @@ class TestRelaxedQuirksConversions:
         assert hasattr(result, "is_success")
 
     def test_convert_attribute_from_rfc(
-        self, relaxed_quirk: FlextLdifQuirksServersRelaxed
+        self, relaxed_quirk: FlextLdifServersRelaxed
     ) -> None:
         """Test converting attribute from RFC format."""
         attr_rfc = {
@@ -715,7 +716,7 @@ class TestRelaxedQuirksConversions:
         assert result.is_success
 
     def test_convert_objectclass_to_rfc(
-        self, relaxed_quirk: FlextLdifQuirksServersRelaxed
+        self, relaxed_quirk: FlextLdifServersRelaxed
     ) -> None:
         """Test converting objectClass to RFC format."""
         oc_data = {
@@ -729,7 +730,7 @@ class TestRelaxedQuirksConversions:
         assert hasattr(result, "is_success")
 
     def test_convert_objectclass_from_rfc(
-        self, relaxed_quirk: FlextLdifQuirksServersRelaxed
+        self, relaxed_quirk: FlextLdifServersRelaxed
     ) -> None:
         """Test converting objectClass from RFC format."""
         oc_rfc = {
@@ -746,12 +747,12 @@ class TestRelaxedQuirksWriteToRfc:
     """Test write_*_to_rfc() methods."""
 
     @pytest.fixture
-    def relaxed_quirk(self) -> FlextLdifQuirksServersRelaxed:
+    def relaxed_quirk(self) -> FlextLdifServersRelaxed.Schema:
         """Create relaxed quirk instance."""
-        return FlextLdifQuirksServersRelaxed(server_type="relaxed")
+        return FlextLdifServersRelaxed.Schema()
 
     def test_write_attribute_to_rfc_basic(
-        self, relaxed_quirk: FlextLdifQuirksServersRelaxed
+        self, relaxed_quirk: FlextLdifServersRelaxed
     ) -> None:
         """Test writing attribute to RFC format."""
         attr_data = FlextLdifModels.SchemaAttribute(
@@ -765,7 +766,7 @@ class TestRelaxedQuirksWriteToRfc:
         )  # Either works in relaxed mode
 
     def test_write_attribute_to_rfc_minimal(
-        self, relaxed_quirk: FlextLdifQuirksServersRelaxed
+        self, relaxed_quirk: FlextLdifServersRelaxed
     ) -> None:
         """Test writing attribute with minimal data."""
         attr_data = FlextLdifModels.SchemaAttribute(
@@ -776,7 +777,7 @@ class TestRelaxedQuirksWriteToRfc:
         assert hasattr(result, "is_success")
 
     def test_write_objectclass_to_rfc_basic(
-        self, relaxed_quirk: FlextLdifQuirksServersRelaxed
+        self, relaxed_quirk: FlextLdifServersRelaxed
     ) -> None:
         """Test writing objectClass to RFC format."""
         oc_data = FlextLdifModels.SchemaObjectClass(
@@ -788,7 +789,7 @@ class TestRelaxedQuirksWriteToRfc:
         assert hasattr(result, "is_success")
 
     def test_write_objectclass_to_rfc_minimal(
-        self, relaxed_quirk: FlextLdifQuirksServersRelaxed
+        self, relaxed_quirk: FlextLdifServersRelaxed
     ) -> None:
         """Test writing objectClass with minimal data."""
         oc_data = FlextLdifModels.SchemaObjectClass(
@@ -799,17 +800,15 @@ class TestRelaxedQuirksWriteToRfc:
         assert hasattr(result, "is_success")
 
 
-class TestRelaxedQuirksAclQuirk:
-    """Test nested FlextLdifQuirksServersRelaxedAcl class."""
+class TestRelaxedQuirksAcl:
+    """Test nested FlextLdifServersRelaxedAcl class."""
 
     @pytest.fixture
-    def relaxed_quirk(self) -> FlextLdifQuirksServersRelaxed:
+    def relaxed_quirk(self) -> FlextLdifServersRelaxed.Schema:
         """Create relaxed quirk instance to access nested ACL quirk."""
-        return FlextLdifQuirksServersRelaxed(server_type="relaxed")
+        return FlextLdifServersRelaxed.Schema()
 
-    def test_acl_quirk_available(
-        self, relaxed_quirk: FlextLdifQuirksServersRelaxed
-    ) -> None:
+    def test_acl_quirk_available(self, relaxed_quirk: FlextLdifServersRelaxed) -> None:
         """Test nested ACL quirk is available."""
         # Access through the quirk's structure
         assert (
@@ -817,23 +816,23 @@ class TestRelaxedQuirksAclQuirk:
         )  # May or may not be directly accessible
 
     def test_can_handle_acl_accepts_any_line(
-        self, relaxed_quirk: FlextLdifQuirksServersRelaxed
+        self, relaxed_quirk: FlextLdifServersRelaxed
     ) -> None:
         """Test ACL quirk can_handle_acl accepts any ACL line."""
         # Relaxed ACL quirk should accept any line
         assert hasattr(relaxed_quirk, "acl_quirk") or True  # Structure may vary
 
 
-class TestRelaxedQuirksEntryQuirk:
-    """Test nested FlextLdifQuirksServersRelaxedEntry class."""
+class TestRelaxedQuirksEntry:
+    """Test nested FlextLdifServersRelaxedEntry class."""
 
     @pytest.fixture
-    def relaxed_quirk(self) -> FlextLdifQuirksServersRelaxed:
+    def relaxed_quirk(self) -> FlextLdifServersRelaxed.Schema:
         """Create relaxed quirk instance."""
-        return FlextLdifQuirksServersRelaxed(server_type="relaxed")
+        return FlextLdifServersRelaxed.Schema()
 
     def test_entry_quirk_lenient_dn_parsing(
-        self, relaxed_quirk: FlextLdifQuirksServersRelaxed
+        self, relaxed_quirk: FlextLdifServersRelaxed
     ) -> None:
         """Test entry quirk accepts malformed DNs."""
         # Relaxed mode should accept DNs that standard mode rejects
@@ -844,12 +843,12 @@ class TestRelaxedQuirksErrorRecovery:
     """Test relaxed mode error recovery and best-effort parsing."""
 
     @pytest.fixture
-    def relaxed_quirk(self) -> FlextLdifQuirksServersRelaxed:
+    def relaxed_quirk(self) -> FlextLdifServersRelaxed.Schema:
         """Create relaxed quirk instance."""
-        return FlextLdifQuirksServersRelaxed(server_type="relaxed")
+        return FlextLdifServersRelaxed.Schema()
 
     def test_parse_attribute_logs_failures_but_recovers(
-        self, relaxed_quirk: FlextLdifQuirksServersRelaxed
+        self, relaxed_quirk: FlextLdifServersRelaxed
     ) -> None:
         """Test parse_attribute logs failures but returns valid result."""
         # Even severe failures don't crash
@@ -862,7 +861,7 @@ class TestRelaxedQuirksErrorRecovery:
         )
 
     def test_parse_objectclass_logs_failures_but_recovers(
-        self, relaxed_quirk: FlextLdifQuirksServersRelaxed
+        self, relaxed_quirk: FlextLdifServersRelaxed
     ) -> None:
         """Test parse_objectclass logs failures but returns valid result."""
         result = relaxed_quirk.parse_objectclass("💣 \x00\x01\x02 INVALID")
@@ -874,7 +873,7 @@ class TestRelaxedQuirksErrorRecovery:
         )
 
     def test_relaxed_mode_priority_very_low(
-        self, relaxed_quirk: FlextLdifQuirksServersRelaxed
+        self, relaxed_quirk: FlextLdifServersRelaxed
     ) -> None:
         """Test relaxed mode has very low priority (200)."""
         assert relaxed_quirk.priority == 200
@@ -884,26 +883,26 @@ class TestRelaxedQuirksEdgeCases:
     """Test edge cases in relaxed mode."""
 
     @pytest.fixture
-    def relaxed_quirk(self) -> FlextLdifQuirksServersRelaxed:
+    def relaxed_quirk(self) -> FlextLdifServersRelaxed.Schema:
         """Create relaxed quirk instance."""
-        return FlextLdifQuirksServersRelaxed(server_type="relaxed")
+        return FlextLdifServersRelaxed.Schema()
 
     def test_parse_attribute_with_binary_data(
-        self, relaxed_quirk: FlextLdifQuirksServersRelaxed
+        self, relaxed_quirk: FlextLdifServersRelaxed
     ) -> None:
         """Test parsing attribute with binary/non-text data."""
         result = relaxed_quirk.parse_attribute(b"binary\x00\x01".decode("latin1"))
         assert result.is_success
 
     def test_parse_objectclass_with_unicode(
-        self, relaxed_quirk: FlextLdifQuirksServersRelaxed
+        self, relaxed_quirk: FlextLdifServersRelaxed
     ) -> None:
         """Test parsing objectClass with Unicode characters."""
         result = relaxed_quirk.parse_objectclass("( 1.2.3.4 NAME 'тест' 😀 )")
         assert result.is_success
 
     def test_can_handle_with_very_long_definition(
-        self, relaxed_quirk: FlextLdifQuirksServersRelaxed
+        self, relaxed_quirk: FlextLdifServersRelaxed
     ) -> None:
         """Test can_handle methods with very long definitions."""
         long_def = "( 1.2.3.4 " + "NAME 'test' " * 1000 + ")"
@@ -917,12 +916,12 @@ class TestRelaxedQuirksFallbackBehavior:
     """Test fallback behavior when core parsing fails."""
 
     @pytest.fixture
-    def relaxed_quirk(self) -> FlextLdifQuirksServersRelaxed:
+    def relaxed_quirk(self) -> FlextLdifServersRelaxed.Schema:
         """Create relaxed quirk instance."""
-        return FlextLdifQuirksServersRelaxed(server_type="relaxed")
+        return FlextLdifServersRelaxed.Schema()
 
     def test_parse_attribute_fallback_on_exception(
-        self, relaxed_quirk: FlextLdifQuirksServersRelaxed
+        self, relaxed_quirk: FlextLdifServersRelaxed
     ) -> None:
         """Test parse_attribute falls back to generic result on exception."""
         # Crafted to cause potential exception
@@ -933,7 +932,7 @@ class TestRelaxedQuirksFallbackBehavior:
         assert hasattr(parsed, "name")
 
     def test_parse_objectclass_fallback_on_exception(
-        self, relaxed_quirk: FlextLdifQuirksServersRelaxed
+        self, relaxed_quirk: FlextLdifServersRelaxed
     ) -> None:
         """Test parse_objectclass falls back on exception."""
         result = relaxed_quirk.parse_objectclass("( \x00 )")

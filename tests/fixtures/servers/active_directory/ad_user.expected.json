@@ -30,6 +30,13 @@
   "metadata": {
     "type": "server_specific",
     "server": "Active Directory",
-    "test_aspects": ["sam_account_name", "object_guid", "user_account_control", "timestamps", "sip_address", "binary_attributes"]
+    "test_aspects": [
+      "sam_account_name",
+      "object_guid",
+      "user_account_control",
+      "timestamps",
+      "sip_address",
+      "binary_attributes"
+    ]
   }
 }

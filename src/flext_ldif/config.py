@@ -9,8 +9,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Literal
-
 from flext_core import FlextConfig, FlextConstants
 from pydantic import Field, model_validator
 
@@ -36,10 +34,8 @@ class FlextLdifConfig(FlextConfig):
     # NO model_config override - Pydantic v2 pattern for proper field inheritance
 
     # LDIF Format Configuration using FlextLdifConstants for defaults
-    ldif_encoding: Literal[
-        "utf-8", "latin-1", "ascii", "utf-16", "utf-32", "cp1252", "iso-8859-1"
-    ] = Field(
-        default="utf-8",  # FlextLdifConstants.Encoding.DEFAULT_ENCODING,
+    ldif_encoding: FlextLdifConstants.LiteralTypes.EncodingType = Field(
+        default="utf-8",
         description="Character encoding for LDIF files",
     )
 
@@ -120,9 +116,11 @@ class FlextLdifConfig(FlextConfig):
         description="Cache size for LDIF analytics",
     )
 
-    analytics_detail_level: Literal["low", "medium", "high"] = Field(
-        default="medium",  # FlextLdifConstants.ConfigDefaults.ANALYTICS_DETAIL_LEVEL_MEDIUM,
-        description="Analytics detail level (low, medium, high)",
+    analytics_detail_level: FlextLdifConstants.LiteralTypes.AnalyticsDetailLevel = (
+        Field(
+            default="medium",
+            description="Analytics detail level (low, medium, high)",
+        )
     )
 
     # Additional LDIF processing configuration
@@ -173,7 +171,7 @@ class FlextLdifConfig(FlextConfig):
     )
 
     # Quirks Detection and Mode Configuration
-    quirks_detection_mode: Literal["auto", "manual", "disabled"] = Field(
+    quirks_detection_mode: FlextLdifConstants.LiteralTypes.DetectionMode = Field(
         default="auto",
         description="Quirks detection mode: auto (detect server type), manual (use quirks_server_type), disabled (RFC only)",
     )
@@ -189,7 +187,7 @@ class FlextLdifConfig(FlextConfig):
     )
 
     # Validation Configuration using FlextLdifConstants for defaults
-    validation_level: Literal["strict", "moderate", "lenient"] = Field(
+    validation_level: FlextLdifConstants.LiteralTypes.ValidationLevel = Field(
         default="strict",
         description="Validation strictness level",
     )
@@ -200,26 +198,14 @@ class FlextLdifConfig(FlextConfig):
     )
 
     # Server Configuration using FlextLdifConstants for defaults
-    server_type: Literal[
-        "active_directory",
-        "openldap",
-        "openldap1",
-        "openldap2",
-        "apache_directory",
-        "novell_edirectory",
-        "ibm_tivoli",
-        "generic",
-        "oid",
-        "oud",
-        "rfc",
-    ] = Field(
-        default="generic",  # FlextLdifConstants.ServerTypes.GENERIC,
+    server_type: FlextLdifConstants.LiteralTypes.ServerType = Field(
+        default="generic",
         description="Target LDAP server type",
     )
 
     # Error Handling Configuration
-    error_recovery_mode: Literal["continue", "stop", "skip"] = Field(
-        default="continue",  # FlextLdifConstants.ConfigDefaults.ERROR_RECOVERY_MODE_CONTINUE,
+    error_recovery_mode: FlextLdifConstants.LiteralTypes.ErrorRecoveryMode = Field(
+        default="continue",
         description="Error recovery mode (continue, stop, skip)",
     )
 

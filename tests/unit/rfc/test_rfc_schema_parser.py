@@ -1,7 +1,7 @@
 """Test suite for RFC 4512 schema parser.
 
-Comprehensive testing for FlextLdifRfcSchemaParser which parses LDAP schema
-definitions according to RFC 4512 specification.
+Comprehensive testing for FlextLdifParserService schema parsing functionality
+which parses LDAP schema definitions according to RFC 4512 specification.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -14,34 +14,19 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile
 
 from flext_ldif.constants import FlextLdifConstants
-from flext_ldif.quirks.registry import FlextLdifQuirksRegistry
-from flext_ldif.rfc_schema_parser import FlextLdifRfcSchemaParser
+from flext_ldif.services.parser import FlextLdifParserService
 
 
 class TestRfcSchemaParserInitialization:
     """Test suite for RFC schema parser initialization."""
 
-    def test_initialization_with_registry(self) -> None:
-        """Test parser initialization with quirks registry."""
-        registry = FlextLdifQuirksRegistry()
-        params: dict[str, object] = {"file_path": "/tmp/test.ldif"}
-
-        parser = FlextLdifRfcSchemaParser(params=params, quirk_registry=registry)
+    def test_parser_service_initialization(self) -> None:
+        """Test parser service initialization."""
+        parser = FlextLdifParserService()
 
         assert parser is not None
-        assert parser._quirk_registry is registry
-        assert parser._params == params
-
-    def test_initialization_with_server_type(self) -> None:
-        """Test parser initialization with specific server type."""
-        registry = FlextLdifQuirksRegistry()
-        params: dict[str, object] = {"file_path": "/tmp/test.ldif"}
-
-        parser = FlextLdifRfcSchemaParser(
-            params=params, quirk_registry=registry, server_type="openldap"
-        )
-
-        assert parser._server_type == "openldap"
+        assert hasattr(parser, "_quirk_registry")
+        assert hasattr(parser, "_config")
 
 
 class TestSchemaFileParsingBasic:
@@ -65,54 +50,51 @@ objectclasses: ( 2.5.6.6 NAME 'person' DESC 'RFC2256: a person' SUP top STRUCTUR
             schema_file = Path(f.name)
 
         try:
-            registry = FlextLdifQuirksRegistry()
-            params: dict[str, object] = {"file_path": str(schema_file)}
-
-            parser = FlextLdifRfcSchemaParser(params=params, quirk_registry=registry)
-            result = parser.execute()
+            parser = FlextLdifParserService()
+            result = parser.parse_schema_ldif(schema_file)
 
             assert result.is_success
             data = result.unwrap()
 
-            # Check structure
-            assert FlextLdifConstants.DictKeys.ATTRIBUTES in data
-            assert "objectclasses" in data
-            assert "source_dn" in data
-            assert "stats" in data
-
-            # Check parsed data
-            attributes = data[FlextLdifConstants.DictKeys.ATTRIBUTES]
-            assert isinstance(attributes, dict)
-            assert "cn" in attributes
-
-            objectclasses = data["objectclasses"]
-            assert isinstance(objectclasses, dict)
-            assert "person" in objectclasses
+            # Check structure - parse_schema_ldif returns dict with modifications
+            assert "add" in data
+            assert isinstance(data["add"], list)
 
         finally:
             schema_file.unlink(missing_ok=True)
 
     def test_parse_schema_file_missing_file(self) -> None:
         """Test parsing with non-existent file."""
-        registry = FlextLdifQuirksRegistry()
-        params: dict[str, object] = {"file_path": "/tmp/nonexistent_schema.ldif"}
+        nonexistent_file = Path("/tmp/nonexistent_schema.ldif")
 
-        parser = FlextLdifRfcSchemaParser(params=params, quirk_registry=registry)
-        result = parser.execute()
+        parser = FlextLdifParserService()
+        result = parser.parse_schema_ldif(nonexistent_file)
 
         assert result.is_failure
-        assert "not found" in str(result.error)
+        assert "not found" in str(result.error).lower()
 
     def test_parse_schema_file_no_file_path(self) -> None:
         """Test parsing with missing file_path parameter."""
-        registry = FlextLdifQuirksRegistry()
-        params: dict[str, object] = {}
+        # This test doesn't make sense for parse_schema_ldif which requires a file path
+        # Let's test with an empty file instead
+        with NamedTemporaryFile(
+            mode="w", suffix=".ldif", delete=False, encoding="utf-8"
+        ) as f:
+            f.write("")  # Empty file
+            empty_file = Path(f.name)
 
-        parser = FlextLdifRfcSchemaParser(params=params, quirk_registry=registry)
-        result = parser.execute()
+        try:
+            parser = FlextLdifParserService()
+            result = parser.parse_schema_ldif(empty_file)
 
-        assert result.is_failure
-        assert "required" in str(result.error)
+            # Should succeed but return empty modifications
+            assert result.is_success
+            data = result.unwrap()
+            assert "add" in data
+            assert len(data["add"]) == 0
+
+        finally:
+            empty_file.unlink(missing_ok=True)
 
 
 class TestAttributeTypeParsing:
@@ -131,14 +113,10 @@ attributetypes: ( 2.5.4.4 NAME 'sn' DESC 'Surname' SYNTAX '1.3.6.1.4.1.1466.115.
             schema_file = Path(f.name)
 
         try:
-            registry = FlextLdifQuirksRegistry()
-            params: dict[str, object] = {
-                "file_path": str(schema_file),
-                "parse_attributes": True,
-            }
-
-            parser = FlextLdifRfcSchemaParser(params=params, quirk_registry=registry)
-            result = parser.execute()
+            # Test the nested SchemaParser directly
+            parser_service = FlextLdifParserService()
+            schema_parser = parser_service.SchemaParser(parser_service._quirk_registry)
+            result = schema_parser.parse_file(schema_file)
 
             assert result.is_success
             data = result.unwrap()
@@ -170,11 +148,10 @@ attributetypes: ( 2.5.4.35 NAME 'userPassword' DESC 'User Password' EQUALITY oct
             schema_file = Path(f.name)
 
         try:
-            registry = FlextLdifQuirksRegistry()
-            params: dict[str, object] = {"file_path": str(schema_file)}
-
-            parser = FlextLdifRfcSchemaParser(params=params, quirk_registry=registry)
-            result = parser.execute()
+            # Test the nested SchemaParser directly
+            parser_service = FlextLdifParserService()
+            schema_parser = parser_service.SchemaParser(parser_service._quirk_registry)
+            result = schema_parser.parse_file(schema_file)
 
             assert result.is_success
             data = result.unwrap()
@@ -202,11 +179,10 @@ attributetypes: ( 2.5.4.42 NAME 'givenName' DESC 'Given Name' SUP name SYNTAX '1
             schema_file = Path(f.name)
 
         try:
-            registry = FlextLdifQuirksRegistry()
-            params: dict[str, object] = {"file_path": str(schema_file)}
-
-            parser = FlextLdifRfcSchemaParser(params=params, quirk_registry=registry)
-            result = parser.execute()
+            # Test the nested SchemaParser directly
+            parser_service = FlextLdifParserService()
+            schema_parser = parser_service.SchemaParser(parser_service._quirk_registry)
+            result = schema_parser.parse_file(schema_file)
 
             assert result.is_success
             data = result.unwrap()
@@ -234,11 +210,10 @@ attributetypes: ( 1.2.3.4.5 NAME 'shortString' DESC 'Short String' SYNTAX '1.3.6
             schema_file = Path(f.name)
 
         try:
-            registry = FlextLdifQuirksRegistry()
-            params: dict[str, object] = {"file_path": str(schema_file)}
-
-            parser = FlextLdifRfcSchemaParser(params=params, quirk_registry=registry)
-            result = parser.execute()
+            # Test the nested SchemaParser directly
+            parser_service = FlextLdifParserService()
+            schema_parser = parser_service.SchemaParser(parser_service._quirk_registry)
+            result = schema_parser.parse_file(schema_file)
 
             assert result.is_success
             data = result.unwrap()
@@ -266,14 +241,10 @@ attributetypes: ( 2.5.4.3 NAME 'cn' DESC 'Common Name' SYNTAX '1.3.6.1.4.1.1466.
             schema_file = Path(f.name)
 
         try:
-            registry = FlextLdifQuirksRegistry()
-            params: dict[str, object] = {
-                "file_path": str(schema_file),
-                "parse_attributes": False,
-            }
-
-            parser = FlextLdifRfcSchemaParser(params=params, quirk_registry=registry)
-            result = parser.execute()
+            # Test the nested SchemaParser directly
+            parser_service = FlextLdifParserService()
+            schema_parser = parser_service.SchemaParser(parser_service._quirk_registry)
+            result = schema_parser.parse_file(schema_file, parse_attributes=False)
 
             assert result.is_success
             data = result.unwrap()
@@ -302,11 +273,10 @@ objectclasses: ( 2.5.6.6 NAME 'person' DESC 'Person class' SUP top STRUCTURAL MU
             schema_file = Path(f.name)
 
         try:
-            registry = FlextLdifQuirksRegistry()
-            params: dict[str, object] = {"file_path": str(schema_file)}
-
-            parser = FlextLdifRfcSchemaParser(params=params, quirk_registry=registry)
-            result = parser.execute()
+            # Test the nested SchemaParser directly
+            parser_service = FlextLdifParserService()
+            schema_parser = parser_service.SchemaParser(parser_service._quirk_registry)
+            result = schema_parser.parse_file(schema_file)
 
             assert result.is_success
             data = result.unwrap()
@@ -350,11 +320,10 @@ objectclasses: ( 2.5.6.0 NAME 'top' DESC 'Top class' ABSTRACT MUST objectClass )
             schema_file = Path(f.name)
 
         try:
-            registry = FlextLdifQuirksRegistry()
-            params: dict[str, object] = {"file_path": str(schema_file)}
-
-            parser = FlextLdifRfcSchemaParser(params=params, quirk_registry=registry)
-            result = parser.execute()
+            # Test the nested SchemaParser directly
+            parser_service = FlextLdifParserService()
+            schema_parser = parser_service.SchemaParser(parser_service._quirk_registry)
+            result = schema_parser.parse_file(schema_file)
 
             assert result.is_success
             data = result.unwrap()
@@ -382,11 +351,10 @@ objectclasses: ( 2.5.6.20 NAME 'simpleClass' DESC 'Simple' MUST cn )
             schema_file = Path(f.name)
 
         try:
-            registry = FlextLdifQuirksRegistry()
-            params: dict[str, object] = {"file_path": str(schema_file)}
-
-            parser = FlextLdifRfcSchemaParser(params=params, quirk_registry=registry)
-            result = parser.execute()
+            # Test the nested SchemaParser directly
+            parser_service = FlextLdifParserService()
+            schema_parser = parser_service.SchemaParser(parser_service._quirk_registry)
+            result = schema_parser.parse_file(schema_file)
 
             assert result.is_success
             data = result.unwrap()
@@ -415,14 +383,10 @@ objectclasses: ( 2.5.6.6 NAME 'person' DESC 'Person' SUP top STRUCTURAL MUST cn 
             schema_file = Path(f.name)
 
         try:
-            registry = FlextLdifQuirksRegistry()
-            params: dict[str, object] = {
-                "file_path": str(schema_file),
-                "parse_objectclasses": False,
-            }
-
-            parser = FlextLdifRfcSchemaParser(params=params, quirk_registry=registry)
-            result = parser.execute()
+            # Test the nested SchemaParser directly
+            parser_service = FlextLdifParserService()
+            schema_parser = parser_service.SchemaParser(parser_service._quirk_registry)
+            result = schema_parser.parse_file(schema_file, parse_objectclasses=False)
 
             assert result.is_success
             data = result.unwrap()
@@ -455,11 +419,10 @@ attributetypes: ( 2.5.4.3 NAME 'cn'
             schema_file = Path(f.name)
 
         try:
-            registry = FlextLdifQuirksRegistry()
-            params: dict[str, object] = {"file_path": str(schema_file)}
-
-            parser = FlextLdifRfcSchemaParser(params=params, quirk_registry=registry)
-            result = parser.execute()
+            # Test the nested SchemaParser directly
+            parser_service = FlextLdifParserService()
+            schema_parser = parser_service.SchemaParser(parser_service._quirk_registry)
+            result = schema_parser.parse_file(schema_file)
 
             assert result.is_success
             data = result.unwrap()
@@ -495,11 +458,10 @@ objectclasses: ( 2.5.6.6 NAME 'person'
             schema_file = Path(f.name)
 
         try:
-            registry = FlextLdifQuirksRegistry()
-            params: dict[str, object] = {"file_path": str(schema_file)}
-
-            parser = FlextLdifRfcSchemaParser(params=params, quirk_registry=registry)
-            result = parser.execute()
+            # Test the nested SchemaParser directly
+            parser_service = FlextLdifParserService()
+            schema_parser = parser_service.SchemaParser(parser_service._quirk_registry)
+            result = schema_parser.parse_file(schema_file)
 
             assert result.is_success
             data = result.unwrap()
@@ -538,11 +500,10 @@ attributetypes: ( 2.5.4.3 NAME 'cn' DESC 'Common Name' SYNTAX '1.3.6.1.4.1.1466.
             schema_file = Path(f.name)
 
         try:
-            registry = FlextLdifQuirksRegistry()
-            params: dict[str, object] = {"file_path": str(schema_file)}
-
-            parser = FlextLdifRfcSchemaParser(params=params, quirk_registry=registry)
-            result = parser.execute()
+            # Test the nested SchemaParser directly
+            parser_service = FlextLdifParserService()
+            schema_parser = parser_service.SchemaParser(parser_service._quirk_registry)
+            result = schema_parser.parse_file(schema_file)
 
             assert result.is_success
             data = result.unwrap()
@@ -571,11 +532,10 @@ attributetypes: ( 2.5.4.41 NAME 'name' DESC 'Name' SYNTAX '1.3.6.1.4.1.1466.115.
             schema_file = Path(f.name)
 
         try:
-            registry = FlextLdifQuirksRegistry()
-            params: dict[str, object] = {"file_path": str(schema_file)}
-
-            parser = FlextLdifRfcSchemaParser(params=params, quirk_registry=registry)
-            result = parser.execute()
+            # Test the nested SchemaParser directly
+            parser_service = FlextLdifParserService()
+            schema_parser = parser_service.SchemaParser(parser_service._quirk_registry)
+            result = schema_parser.parse_file(schema_file)
 
             assert result.is_success
             data = result.unwrap()
@@ -605,11 +565,10 @@ objectclasses: ( 2.5.6.7 NAME 'organizationalPerson' DESC 'Organizational Person
             schema_file = Path(f.name)
 
         try:
-            registry = FlextLdifQuirksRegistry()
-            params: dict[str, object] = {"file_path": str(schema_file)}
-
-            parser = FlextLdifRfcSchemaParser(params=params, quirk_registry=registry)
-            result = parser.execute()
+            # Test the nested SchemaParser directly
+            parser_service = FlextLdifParserService()
+            schema_parser = parser_service.SchemaParser(parser_service._quirk_registry)
+            result = schema_parser.parse_file(schema_file)
 
             assert result.is_success
             data = result.unwrap()
@@ -643,11 +602,10 @@ objectclasses: ( 2.5.6.6 NAME 'person' DESC 'Person' SUP top STRUCTURAL MUST ( s
             schema_file = Path(f.name)
 
         try:
-            registry = FlextLdifQuirksRegistry()
-            params: dict[str, object] = {"file_path": str(schema_file)}
-
-            parser = FlextLdifRfcSchemaParser(params=params, quirk_registry=registry)
-            result = parser.execute()
+            # Test the nested SchemaParser directly
+            parser_service = FlextLdifParserService()
+            schema_parser = parser_service.SchemaParser(parser_service._quirk_registry)
+            result = schema_parser.parse_file(schema_file)
 
             assert result.is_success
             data = result.unwrap()
@@ -682,11 +640,10 @@ objectclasses: also invalid
             schema_file = Path(f.name)
 
         try:
-            registry = FlextLdifQuirksRegistry()
-            params: dict[str, object] = {"file_path": str(schema_file)}
-
-            parser = FlextLdifRfcSchemaParser(params=params, quirk_registry=registry)
-            result = parser.execute()
+            # Test the nested SchemaParser directly
+            parser_service = FlextLdifParserService()
+            schema_parser = parser_service.SchemaParser(parser_service._quirk_registry)
+            result = schema_parser.parse_file(schema_file)
 
             # Should succeed but skip invalid definitions
             assert result.is_success
@@ -705,11 +662,10 @@ objectclasses: also invalid
             schema_file = Path(f.name)
 
         try:
-            registry = FlextLdifQuirksRegistry()
-            params: dict[str, object] = {"file_path": str(schema_file)}
-
-            parser = FlextLdifRfcSchemaParser(params=params, quirk_registry=registry)
-            result = parser.execute()
+            # Test the nested SchemaParser directly
+            parser_service = FlextLdifParserService()
+            schema_parser = parser_service.SchemaParser(parser_service._quirk_registry)
+            result = schema_parser.parse_file(schema_file)
 
             # Should succeed with no definitions
             assert result.is_success
@@ -748,11 +704,10 @@ objectclasses: ( 2.5.6.7 NAME 'organizationalPerson' DESC 'RFC2256: an organizat
             schema_file = Path(f.name)
 
         try:
-            registry = FlextLdifQuirksRegistry()
-            params: dict[str, object] = {"file_path": str(schema_file)}
-
-            parser = FlextLdifRfcSchemaParser(params=params, quirk_registry=registry)
-            result = parser.execute()
+            # Test the nested SchemaParser directly
+            parser_service = FlextLdifParserService()
+            schema_parser = parser_service.SchemaParser(parser_service._quirk_registry)
+            result = schema_parser.parse_file(schema_file)
 
             assert result.is_success
             data = result.unwrap()

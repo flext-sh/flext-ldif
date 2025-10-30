@@ -15,9 +15,9 @@ from pathlib import Path
 import pytest
 from flext_core import FlextConstants, FlextResult
 
-from flext_ldif.quirks.registry import FlextLdifQuirksRegistry
-from flext_ldif.rfc_ldif_parser import FlextLdifRfcLdifParser
-from flext_ldif.rfc_ldif_writer import FlextLdifRfcLdifWriter
+from flext_ldif.services.parser import FlextLdifParserService
+from flext_ldif.services.registry import FlextLdifRegistry
+from flext_ldif.services.writer import FlextLdifWriterService
 
 from .fixtures import FlextLdifFixtures
 from .support import (
@@ -58,23 +58,28 @@ def set_test_environment() -> Generator[None]:
 # DOCKER CONTAINER MANAGEMENT (CENTRALIZED FIXTURES)
 # ============================================================================
 #
-# Docker fixtures are provided by flext_tests.fixtures.docker_fixtures:
-#   - ldap_container: OpenLDAP container (port 3390) - PRIMARY FOR LDIF TESTING
-#   - oracle_container: Oracle DB container (port 1522)
-#   - client-a_oud_container: client-a OUD container (port 3389)
-#   - postgres_container: PostgreSQL container (port 5432)
-#   - redis_container: Redis container (port 6379)
-#
-# The ldap_container fixture is automatically available for all tests that need it.
-# FlextTestDocker is also available via flext_test_docker fixture if direct
-# container management is needed.
+# Docker fixtures provide container connection strings for testing.
+# The ldap_container fixture provides connection to OpenLDAP server (port 3390).
 #
 # Example usage:
 #   def test_ldif_with_ldap(ldap_container: str):
 #       # ldap_container provides connection string like "ldap://localhost:3390"
-#       # Container is automatically started and cleaned up
 #       pass
 #
+
+
+@pytest.fixture(scope="module")
+def ldap_container() -> str:
+    """Provide LDAP container connection string.
+
+    Returns:
+        str: LDAP connection URL (e.g., "ldap://localhost:3390")
+
+    """
+    # Docker container is expected to be running at localhost:3390
+    # Container name: flext-openldap-test
+    # Base DN: dc=flext,dc=local
+    return "ldap://localhost:3390"
 
 
 # LDIF processing fixtures - optimized with real services
@@ -192,25 +197,25 @@ def ldif_binary_file(test_ldif_dir: Path, sample_ldif_with_binary: str) -> Path:
 
 # Quirk registry fixture for RFC-first architecture enforcement
 @pytest.fixture
-def quirk_registry() -> FlextLdifQuirksRegistry:
+def quirk_registry() -> FlextLdifRegistry:
     """Provide quirk registry for RFC-first testing (MANDATORY)."""
     # Registry auto-discovers and registers all standard quirks
-    return FlextLdifQuirksRegistry()
+    return FlextLdifRegistry()
 
 
 # Real service fixtures for functional testing
 @pytest.fixture
 def real_parser_service(
-    quirk_registry: FlextLdifQuirksRegistry,
-) -> FlextLdifRfcLdifParser:
+    quirk_registry: FlextLdifRegistry,
+) -> FlextLdifParserService:
     """Real parser service for functional testing (RFC-first with quirks)."""
-    return RealServiceFactory.create_parser(quirk_registry=quirk_registry)
+    return RealServiceFactory.create_parser()
 
 
 @pytest.fixture
 def real_writer_service(
-    quirk_registry: FlextLdifQuirksRegistry,
-) -> FlextLdifRfcLdifWriter:
+    quirk_registry: FlextLdifRegistry,
+) -> FlextLdifWriterService:
     """Real writer service for functional testing (RFC-first with quirks)."""
     return RealServiceFactory.create_writer(quirk_registry=quirk_registry)
 

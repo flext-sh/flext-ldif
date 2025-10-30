@@ -55,22 +55,12 @@ def validate_entries_example() -> None:
         return
 
     report = validation_result.unwrap()
-    errors_count = 0
-    if report.get("errors"):
-        errors_list = report.get("errors", [])
-        if isinstance(errors_list, list):
-            errors_count = len(errors_list)
-
-    warnings_count = 0
-    if report.get("warnings"):
-        warnings_list = report.get("warnings", [])
-        if isinstance(warnings_list, list):
-            warnings_count = len(warnings_list)
+    errors_count = len(report.errors) if report.errors else 0
 
     result_msg = (
-        f"Valid: {report.get('is_valid', False)}, "
+        f"Valid: {report.is_valid}, "
         f"Errors: {errors_count}, "
-        f"Warnings: {warnings_count}"
+        f"Total entries: {report.total_entries}"
     )
     print(result_msg)
 
@@ -108,9 +98,9 @@ ou: People
         analyze_result = api.analyze(entries)
         if analyze_result.is_success:
             stats = analyze_result.unwrap()
-            print(f"Total entries: {stats.get('total_entries', 0)}")
-            print(f"Entry types: {stats.get('entry_types', {})}")
-            print(f"ObjectClass dist: {stats.get('objectclass_distribution', {})}")
+            print(f"Total entries: {stats.total_entries}")
+            print(f"ObjectClass dist: {stats.objectclass_distribution}")
+            print(f"Patterns detected: {stats.patterns_detected}")
         else:
             print("Analysis failed")
     else:
@@ -136,7 +126,7 @@ mail: pipeline@example.com
         validate_result = api.validate_entries(entries)
         if validate_result.is_success:
             validation_report = validate_result.unwrap()
-            if validation_report.get("is_valid", False):
+            if validation_report.is_valid:
                 analyze_result = api.analyze(entries)
                 result = analyze_result
             else:
@@ -150,7 +140,10 @@ mail: pipeline@example.com
 
     if result.is_success:
         stats = result.unwrap()
-        print(f"Pipeline succeeded: {stats.get('total_entries', 0)} entries analyzed")
+        if isinstance(stats, FlextLdifModels.EntryAnalysisResult):
+            print(f"Pipeline succeeded: {stats.total_entries} entries analyzed")
+        else:
+            print("Pipeline succeeded")
     else:
         print(f"Pipeline failed: {result.error}")
 
@@ -183,11 +176,10 @@ def validate_and_filter_pipeline() -> None:
 
     if result.is_success:
         report = result.unwrap()
-        if report.get("is_valid", False):
+        if report.is_valid:
             print(f"All {len(entries)} entries are valid")
         else:
-            errors = report.get("errors", [])
-            errors_list: list[object] = errors if isinstance(errors, list) else []
+            errors_list = report.errors or []
             print(f"Found {len(errors_list)} validation errors")
 
 
@@ -214,22 +206,21 @@ member: cn=Person1,ou=People,dc=example,dc=com
 """
 
     # Railway pattern - parse → analyze → filter by each objectClass
-    result = api.parse(ldif_content).flat_map(api.analyze)
-
-    if result.is_success:
-        stats = result.unwrap()
-        objectclass_dist_raw = stats.get("objectclass_distribution", {})
-        if isinstance(objectclass_dist_raw, dict):
-            objectclass_dist = objectclass_dist_raw
+    parse_result = api.parse(ldif_content)
+    if parse_result.is_success:
+        entries = cast("list[FlextLdifModels.Entry]", parse_result.unwrap())
+        analyze_result = api.analyze(entries)
+        if analyze_result.is_success:
+            stats = analyze_result.unwrap()
+            objectclass_dist = stats.objectclass_distribution
 
             # Parse once, filter multiple times - library handles iteration
-            entries = api.parse(ldif_content).unwrap_or([])
             for objectclass in objectclass_dist:
                 objectclass_str = str(objectclass)
-                filtered = api.filter(
-                    entries, objectclass=objectclass_str
-                ).unwrap_or([])
-                print(f"{objectclass_str}: {len(filtered)} entries")
+                filter_result = api.filter(entries, objectclass=objectclass_str)
+                if filter_result.is_success:
+                    filtered = filter_result.unwrap()
+                    print(f"{objectclass_str}: {len(filtered)} entries")
 
 
 if __name__ == "__main__":

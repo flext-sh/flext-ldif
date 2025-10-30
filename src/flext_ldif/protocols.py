@@ -43,15 +43,15 @@ class FlextLdifProtocols(FlextProtocols):
     - Inheritance hierarchy allows shared method signatures
 
     Usage Pattern:
-        >>> class MySchemaQuirk:
+        >>> class MySchema:
         ...     def can_handle_attribute(self, attr: str) -> bool:
         ...         return "MY_" in attr
         ...
         ...     def parse_attribute(self, attr: str) -> FlextResult:
         ...         # Parse logic
         ...         return FlextResult.ok({})
-        >>> quirk = MySchemaQuirk()
-        >>> isinstance(quirk, FlextLdifProtocols.Quirks.SchemaQuirkProtocol)
+        >>> quirk = MySchema()
+        >>> isinstance(quirk, FlextLdifProtocols.Quirks.SchemaProtocol)
         True  # Satisfies protocol through structural typing
     """
 
@@ -74,17 +74,17 @@ class FlextLdifProtocols(FlextProtocols):
         # =====================================================================
 
         @runtime_checkable
-        class SchemaQuirkProtocol(Protocol):
+        class SchemaProtocol(Protocol):
             """Protocol for schema-level quirks.
 
             Schema quirks handle RFC 4512 schema parsing with server-specific
             extensions for attributeTypes and objectClasses.
 
             Implemented by:
-            - FlextLdifQuirksServersOid (Oracle OID)
-            - FlextLdifQuirksServersOud (Oracle OUD)
-            - FlextLdifQuirksServersOpenldap (OpenLDAP)
-            - FlextLdifQuirksServersRfc (RFC baseline)
+            - FlextLdifServersOid (Oracle OID)
+            - FlextLdifServersOud (Oracle OUD)
+            - FlextLdifServersOpenldap (OpenLDAP)
+            - FlextLdifServersRfc (RFC baseline)
 
             Responsibilities:
             1. Determine if can handle an attribute/objectClass (can_handle_*)
@@ -116,7 +116,8 @@ class FlextLdifProtocols(FlextProtocols):
                 ...
 
             def parse_attribute(
-                self, attr_definition: str
+                self,
+                attr_definition: str,
             ) -> FlextResult[dict[str, object]]:
                 """Parse server-specific attribute definition.
 
@@ -133,7 +134,8 @@ class FlextLdifProtocols(FlextProtocols):
                 ...
 
             def convert_attribute_to_rfc(
-                self, attr_data: dict[str, object]
+                self,
+                attr_data: dict[str, object],
             ) -> FlextResult[dict[str, object]]:
                 """Convert server-specific attribute to RFC-compliant format.
 
@@ -150,7 +152,8 @@ class FlextLdifProtocols(FlextProtocols):
                 ...
 
             def convert_attribute_from_rfc(
-                self, rfc_data: dict[str, object]
+                self,
+                rfc_data: dict[str, object],
             ) -> FlextResult[dict[str, object]]:
                 """Convert RFC-compliant attribute to server-specific format.
 
@@ -166,7 +169,8 @@ class FlextLdifProtocols(FlextProtocols):
                 ...
 
             def write_attribute_to_rfc(
-                self, attr_data: dict[str, object]
+                self,
+                attr_data: dict[str, object],
             ) -> FlextResult[str]:
                 """Write attribute data to RFC-compliant string format.
 
@@ -198,7 +202,8 @@ class FlextLdifProtocols(FlextProtocols):
                 ...
 
             def parse_objectclass(
-                self, oc_definition: str
+                self,
+                oc_definition: str,
             ) -> FlextResult[dict[str, object]]:
                 """Parse server-specific objectClass definition.
 
@@ -215,7 +220,8 @@ class FlextLdifProtocols(FlextProtocols):
                 ...
 
             def convert_objectclass_to_rfc(
-                self, oc_data: dict[str, object]
+                self,
+                oc_data: dict[str, object],
             ) -> FlextResult[dict[str, object]]:
                 """Convert server-specific objectClass to RFC-compliant format.
 
@@ -232,7 +238,8 @@ class FlextLdifProtocols(FlextProtocols):
                 ...
 
             def convert_objectclass_from_rfc(
-                self, rfc_data: dict[str, object]
+                self,
+                rfc_data: dict[str, object],
             ) -> FlextResult[dict[str, object]]:
                 """Convert RFC-compliant objectClass to server-specific format.
 
@@ -248,7 +255,8 @@ class FlextLdifProtocols(FlextProtocols):
                 ...
 
             def write_objectclass_to_rfc(
-                self, oc_data: dict[str, object]
+                self,
+                oc_data: dict[str, object],
             ) -> FlextResult[str]:
                 """Write objectClass data to RFC-compliant string format.
 
@@ -268,17 +276,17 @@ class FlextLdifProtocols(FlextProtocols):
         # =====================================================================
 
         @runtime_checkable
-        class AclQuirkProtocol(Protocol):
+        class AclProtocol(Protocol):
             """Protocol for ACL-level quirks.
 
             ACL quirks handle server-specific access control list processing
             for orclaci, orclentrylevelaci, olcAccess, and other ACL formats.
 
             Implemented by:
-            - FlextLdifQuirksServersOid (Oracle OID ACL format)
-            - FlextLdifQuirksServersOud (Oracle OUD ACL format)
-            - FlextLdifQuirksServersOpenldap (OpenLDAP olcAccess format)
-            - FlextLdifQuirksServersRfc (RFC-based ACL handling)
+            - FlextLdifServersOid (Oracle OID ACL format)
+            - FlextLdifServersOud (Oracle OUD ACL format)
+            - FlextLdifServersOpenldap (OpenLDAP olcAccess format)
+            - FlextLdifServersRfc (RFC-based ACL handling)
 
             Responsibilities:
             1. Determine if can handle an ACL definition (can_handle_acl)
@@ -320,7 +328,8 @@ class FlextLdifProtocols(FlextProtocols):
                 ...
 
             def convert_acl_to_rfc(
-                self, acl_data: dict[str, object]
+                self,
+                acl_data: dict[str, object],
             ) -> FlextResult[dict[str, object]]:
                 """Convert server-specific ACL to RFC-compliant format.
 
@@ -336,7 +345,8 @@ class FlextLdifProtocols(FlextProtocols):
                 ...
 
             def convert_acl_from_rfc(
-                self, acl_data: dict[str, object]
+                self,
+                acl_data: dict[str, object],
             ) -> FlextResult[dict[str, object]]:
                 """Convert RFC-compliant ACL to server-specific format.
 
@@ -370,17 +380,17 @@ class FlextLdifProtocols(FlextProtocols):
         # =====================================================================
 
         @runtime_checkable
-        class EntryQuirkProtocol(Protocol):
+        class EntryProtocol(Protocol):
             """Protocol for entry-level quirks.
 
             Entry quirks handle LDAP entry processing with server-specific
             attribute handling, DN normalization, and operational attributes.
 
             Implemented by:
-            - FlextLdifQuirksServersOid (Oracle OID entry handling)
-            - FlextLdifQuirksServersOud (Oracle OUD entry handling)
-            - FlextLdifQuirksServersOpenldap (OpenLDAP entry handling)
-            - FlextLdifQuirksServersRfc (RFC baseline)
+            - FlextLdifServersOid (Oracle OID entry handling)
+            - FlextLdifServersOud (Oracle OUD entry handling)
+            - FlextLdifServersOpenldap (OpenLDAP entry handling)
+            - FlextLdifServersRfc (RFC baseline)
 
             Responsibilities:
             1. Determine if can handle an entry (can_handle_entry)
@@ -395,7 +405,9 @@ class FlextLdifProtocols(FlextProtocols):
             """Quirk priority (lower number = higher priority)."""
 
             def can_handle_entry(
-                self, entry_dn: str, attributes: dict[str, object]
+                self,
+                entry_dn: str,
+                attributes: dict[str, object],
             ) -> bool:
                 """Check if this quirk can handle the entry.
 
@@ -410,7 +422,9 @@ class FlextLdifProtocols(FlextProtocols):
                 ...
 
             def process_entry(
-                self, entry_dn: str, attributes: dict[str, object]
+                self,
+                entry_dn: str,
+                attributes: dict[str, object],
             ) -> FlextResult[dict[str, object]]:
                 """Process entry with server-specific logic.
 
@@ -428,7 +442,8 @@ class FlextLdifProtocols(FlextProtocols):
                 ...
 
             def convert_entry_to_rfc(
-                self, entry_data: dict[str, object]
+                self,
+                entry_data: dict[str, object],
             ) -> FlextResult[dict[str, object]]:
                 """Convert server-specific entry to RFC-compliant format.
 
@@ -444,7 +459,8 @@ class FlextLdifProtocols(FlextProtocols):
                 ...
 
             def convert_entry_from_rfc(
-                self, rfc_data: dict[str, object]
+                self,
+                rfc_data: dict[str, object],
             ) -> FlextResult[dict[str, object]]:
                 """Convert RFC-compliant entry to server-specific format.
 
@@ -479,8 +495,8 @@ class FlextLdifProtocols(FlextProtocols):
 
             def convert(
                 self,
-                source_quirk: FlextLdifProtocols.Quirks.SchemaQuirkProtocol,
-                target_quirk: FlextLdifProtocols.Quirks.SchemaQuirkProtocol,
+                source_quirk: FlextLdifProtocols.Quirks.SchemaProtocol,
+                target_quirk: FlextLdifProtocols.Quirks.SchemaProtocol,
                 _element_type: str,
                 _element_data: str | dict[str, object],
             ) -> FlextResult[str | dict[str, object]]:
@@ -519,7 +535,8 @@ class FlextLdifProtocols(FlextProtocols):
             """
 
             def register_schema_quirk(
-                self, quirk: FlextLdifProtocols.Quirks.SchemaQuirkProtocol
+                self,
+                quirk: FlextLdifProtocols.Quirks.SchemaProtocol,
             ) -> FlextResult[None]:
                 """Register a schema quirk.
 
@@ -533,7 +550,8 @@ class FlextLdifProtocols(FlextProtocols):
                 ...
 
             def register_acl_quirk(
-                self, quirk: FlextLdifProtocols.Quirks.AclQuirkProtocol
+                self,
+                quirk: FlextLdifProtocols.Quirks.AclProtocol,
             ) -> FlextResult[None]:
                 """Register an ACL quirk.
 
@@ -547,7 +565,8 @@ class FlextLdifProtocols(FlextProtocols):
                 ...
 
             def register_entry_quirk(
-                self, quirk: FlextLdifProtocols.Quirks.EntryQuirkProtocol
+                self,
+                quirk: FlextLdifProtocols.Quirks.EntryProtocol,
             ) -> FlextResult[None]:
                 """Register an entry quirk.
 
@@ -573,8 +592,9 @@ class FlextLdifProtocols(FlextProtocols):
                 ...
 
             def get_best_schema_quirk(
-                self, server_type: str
-            ) -> FlextResult[FlextLdifProtocols.Quirks.SchemaQuirkProtocol]:
+                self,
+                server_type: str,
+            ) -> FlextResult[FlextLdifProtocols.Quirks.SchemaProtocol]:
                 """Get best-fit schema quirk for server type.
 
                 Args:

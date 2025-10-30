@@ -266,15 +266,15 @@ src/flext_ldif/
 │   ├── dn_case_registry.py    # DN case consistency
 │   ├── entry_quirks.py        # Entry-level quirks
 │   └── servers/               # Server implementations
-│       ├── oid_quirks.py      # Oracle Internet Directory
+│       ├── oid.py      # Oracle Internet Directory
 │       ├── oud_quirks.py      # Oracle Unified Directory
-│       ├── openldap_quirks.py # OpenLDAP 2.x
-│       ├── openldap1_quirks.py# OpenLDAP 1.x
-│       ├── ad_quirks.py       # Active Directory (stub)
-│       ├── apache_quirks.py   # Apache DS (stub)
-│       ├── ds389_quirks.py    # 389 DS (stub)
-│       ├── novell_quirks.py   # Novell eDirectory (stub)
-│       └── tivoli_quirks.py   # IBM Tivoli DS (stub)
+│       ├── openldap.py # OpenLDAP 2.x
+│       ├── openldap1.py# OpenLDAP 1.x
+│       ├── ad.py       # Active Directory (stub)
+│       ├── apache.py   # Apache DS (stub)
+│       ├── ds389.py    # 389 DS (stub)
+│       ├── novell.py   # Novell eDirectory (stub)
+│       └── tivoli.py   # IBM Tivoli DS (stub)
 │
 ├── schema/                     # Schema processing
 │   ├── builder.py             # Schema construction
@@ -324,7 +324,7 @@ class QuirkBase(ABC):
 #### 3. Registry Pattern
 
 ```python
-class FlextLdifQuirksRegistry:
+class FlextLdifRegistry:
     """Auto-discovery registry for quirk implementations."""
 
     def __init__(self) -> None:
