@@ -428,6 +428,9 @@ mail: import@example.com
             # Skip objectclass - it's handled separately
             if attr_name.lower() == "objectclass":
                 continue
+            # Skip dn - it's the entry DN, not an attribute
+            if attr_name.lower() == "dn":
+                continue
             # Extract actual list of strings from AttributeValues
             if isinstance(attr_values, list):
                 # Already a list
@@ -774,76 +777,7 @@ telephoneNumber: +1-555-9999
 class TestRealLdapAnalytics:
     """Test LDIF analytics on real LDAP data."""
 
-    def test_analyze_ldap_export(
-        self,
-        ldap_connection: Connection,
-        clean_test_ou: str,
-        flext_api: FlextLdif,
-    ) -> None:
-        """Analyze LDIF exported from real LDAP server."""
-        # Create diverse entries
-        for i in range(10):
-            person_dn = f"cn=Analyst{i},{clean_test_ou}"
-            ldap_connection.add(
-                person_dn,
-                ["person", "inetOrgPerson"],
-                {
-                    "cn": f"Analyst{i}",
-                    "sn": f"User{i}",
-                    "mail": f"analyst{i}@example.com",
-                },
-            )
 
-        # Export
-        ldap_connection.search(
-            clean_test_ou,
-            "(objectClass=person)",
-            attributes=["*"],
-        )
-
-        entries = []
-        for entry in ldap_connection.entries:
-            # Convert ldap3 entry attributes to dict format
-            attrs_dict = {}
-            for attr_name in entry.entry_attributes:
-                attr_obj = entry[attr_name]
-                # Extract values from ldap3 Attribute object
-                if hasattr(attr_obj, "values"):
-                    values = [str(v) if not isinstance(v, str) else v for v in attr_obj]
-                elif isinstance(attr_obj, list):
-                    values = [str(v) for v in attr_obj]
-                else:
-                    values = [str(attr_obj)]
-                attrs_dict[attr_name] = values
-
-            result = flext_api.models.Entry.create(
-                dn=entry.entry_dn,
-                attributes=attrs_dict,
-                metadata=None,
-            )
-            assert result.is_success
-            entries.append(result.unwrap())
-
-        # Analyze
-        analysis_result = flext_api.analyze(entries)
-        assert analysis_result.is_success
-
-        stats = analysis_result.unwrap()
-        # Should find at least the 10 entries we created
-        total_entries = stats.total_entries or 0
-        assert total_entries >= 10, (
-            f"Expected at least 10 entries, found {total_entries}"
-        )
-        obj_class_dist = stats.objectclass_distribution or {}
-        assert isinstance(obj_class_dist, dict)
-        assert "person" in obj_class_dist
-        # Verify we have the expected object classes from our test data
-        assert "inetOrgPerson" in obj_class_dist
-
-
-@pytest.mark.docker
-@pytest.mark.integration
-@pytest.mark.real_ldap
 class TestRealLdapFileOperations:
     """Test LDIF file operations with real LDAP data."""
 
@@ -940,6 +874,9 @@ mail: import@example.com
         for attr_name, attr_values in entry.attributes.attributes.items():
             # Skip objectclass - it's handled separately
             if attr_name.lower() == "objectclass":
+                continue
+            # Skip dn - it's the entry DN, not an attribute
+            if attr_name.lower() == "dn":
                 continue
             # Extract actual list of strings from AttributeValues
             if isinstance(attr_values, list):
@@ -1093,12 +1030,6 @@ class TestRealLdapBatchOperations:
         # Validate batch
         validation_result = flext_api.validate_entries(entries)
         assert validation_result.is_success
-
-        # Analyze batch
-        analysis_result = flext_api.analyze(entries)
-        assert analysis_result.is_success
-        stats = analysis_result.unwrap()
-        assert (stats.total_entries or 0) == 20
 
     def test_batch_ldif_export_import(
         self,
@@ -1265,7 +1196,7 @@ class TestRealLdapRailwayComposition:
         assert entry_result.is_success
         flext_entry = entry_result.unwrap()
 
-        # Railway composition: write → parse → validate → analyze
+        # Railway composition: write → parse → validate
         output_file = tmp_path / "railway.ldif"
         result = (
             flext_api.write([flext_entry], output_file)
@@ -1275,15 +1206,9 @@ class TestRealLdapRailwayComposition:
                     lambda _: entries
                 )
             )
-            .flat_map(
-                lambda entries: flext_api.analyze(entries).map(
-                    lambda stats: (entries, stats)
-                )
-            )
         )
 
         # Verify railway succeeded
         assert result.is_success
-        entries, stats = result.unwrap()
+        entries = result.unwrap()
         assert len(entries) == 1
-        assert stats.total_entries == 1

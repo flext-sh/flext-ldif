@@ -19,7 +19,9 @@ from typing import TYPE_CHECKING
 
 from flext_core import FlextLogger, FlextResult
 
-from flext_ldif import servers as servers_package
+import flext_ldif.servers as servers_package
+from flext_ldif.constants import FlextLdifConstants
+from flext_ldif.protocols import FlextLdifProtocols
 from flext_ldif.servers.base import FlextLdifServersBase
 
 logger = FlextLogger(__name__)
@@ -65,9 +67,11 @@ class FlextLdifRegistry:
     def __init__(self) -> None:
         """Initialize quirk registry with direct quirk model instances (no dicts)."""
         # Store all quirk instances directly as lists (no dicts)
+        super().__init__()
+        self._quirks: list[FlextLdifProtocols.Quirks.QuirksPort] = []
         self._schema_quirks: list[SchemaType] = []
         self._acl_quirks: list[AclType] = []
-        self._entry_quirks: list[EntryType] = []
+        self._entrys: list[EntryType] = []
 
         # Auto-discover and register all quirks via dependency injection
         self._auto_discover_and_register_quirks()
@@ -89,36 +93,34 @@ class FlextLdifRegistry:
         try:
             # Get all members from the servers package
             for name, obj in inspect.getmembers(servers_package):
-                # Skip private/internal classes and non-classes
-                if name.startswith("_") or not inspect.isclass(obj):
+                # Skip private/internal classes, non-classes, and the base class itself
+                if (
+                    name.startswith("_")
+                    or not inspect.isclass(obj)
+                    or obj is FlextLdifServersBase
+                ):
                     continue
 
-                # Process top-level quirk classes that have _REGISTRY_METHOD
-                registry_method = getattr(obj, "_REGISTRY_METHOD", None)
-                if registry_method:
-                    # Try to instantiate - will skip abstract classes (TypeError)
-                    try:
-                        quirk_instance = obj()
-
-                        # Call appropriate register method
-                        register_fn = getattr(self, registry_method, None)
-                        if register_fn:
-                            register_fn(quirk_instance)
-                            logger.debug(
-                                f"Auto-discovered and registered {obj.__name__} ({registry_method})",
-                            )
-
-                    except TypeError:
-                        # Abstract class or missing required fields - skip gracefully
-                        pass
-                    except Exception as e:
-                        # Non-critical failures
+                # Register top-level QuirkPort implementations
+                try:
+                    # Instantiate first, then check for protocol conformance.
+                    # issubclass() is not reliable with protocols having data attributes.
+                    instance = obj()
+                    if isinstance(instance, FlextLdifProtocols.Quirks.QuirksPort):
+                        self._quirks.append(instance)
+                        self._quirks.sort(key=lambda q: q.priority)
                         logger.debug(
-                            f"Failed to auto-register {obj.__name__}: {e}",
-                            exc_info=False,
+                            f"Auto-discovered and registered top-level quirk: {obj.__name__}"
                         )
+                except TypeError:
+                    # Abstract class or instantiation error - skip gracefully
+                    pass
+                except Exception as e:
+                    logger.debug(
+                        f"Failed to auto-register {obj.__name__}: {e}", exc_info=False
+                    )
 
-                # Also check for nested Schema/Acl/Entry classes
+                # Process nested Schema/Acl/Entry classes
                 for nested_name in ["Schema", "Acl", "Entry"]:
                     if hasattr(obj, nested_name):
                         nested_class = getattr(obj, nested_name)
@@ -234,9 +236,9 @@ class FlextLdifRegistry:
 
         """
         try:
-            self._entry_quirks.append(quirk)
+            self._entrys.append(quirk)
             # Sort by priority (lower number = higher priority)
-            self._entry_quirks.sort(key=lambda q: q.priority)
+            self._entrys.sort(key=lambda q: q.priority)
 
             logger = getattr(self, "logger", None)
             if logger:
@@ -254,41 +256,63 @@ class FlextLdifRegistry:
         except (ValueError, TypeError, AttributeError) as e:
             return FlextResult[None].fail(f"Failed to register entry quirk: {e}")
 
+    def _normalize_server_type(self, server_type: str) -> str:
+        """Normalize server type to canonical short form.
+
+        Args:
+            server_type: Server type (may be long or short form)
+
+        Returns:
+            Normalized server type in short form
+
+        """
+        return FlextLdifConstants.ServerTypes.FROM_LONG.get(server_type, server_type)
+
     def get_schema_quirks(self, server_type: str) -> list[FlextLdifServersBase.Schema]:
         """Get all schema quirks for a server type.
 
         Args:
-            server_type: Server type (e.g., 'oid', 'oud', 'openldap')
+            server_type: Server type (e.g., 'oid', 'oud', 'openldap', 'oracle_oud')
 
         Returns:
             List of schema quirks in priority order
 
         """
-        return [q for q in self._schema_quirks if q.server_type == server_type]
+        normalized_type = self._normalize_server_type(server_type)
+        return [q for q in self._schema_quirks if q.server_type == normalized_type]
 
     def get_acl_quirks(self, server_type: str) -> list[FlextLdifServersBase.Acl]:
         """Get all ACL quirks for a server type.
 
         Args:
-            server_type: Server type
+            server_type: Server type (may be long or short form)
 
         Returns:
             List of ACL quirks in priority order
 
         """
-        return [q for q in self._acl_quirks if q.server_type == server_type]
+        normalized_type = self._normalize_server_type(server_type)
+        return [q for q in self._acl_quirks if q.server_type == normalized_type]
 
-    def get_entry_quirks(self, server_type: str) -> list[FlextLdifServersBase.Entry]:
+    def get_entrys(self, server_type: str) -> list[FlextLdifServersBase.Entry]:
         """Get all entry quirks for a server type.
 
         Args:
-            server_type: Server type
+            server_type: Server type (may be long or short form)
 
         Returns:
             List of entry quirks in priority order
 
         """
-        return [q for q in self._entry_quirks if q.server_type == server_type]
+        normalized_type = self._normalize_server_type(server_type)
+        return [q for q in self._entrys if q.server_type == normalized_type]
+
+    def get_quirks(
+        self, server_type: str
+    ) -> list[FlextLdifProtocols.Quirks.QuirksPort]:
+        """Get all top-level quirk implementations for a server type."""
+        normalized_type = self._normalize_server_type(server_type)
+        return [q for q in self._quirks if q.server_type == normalized_type]
 
     def get_all_quirks_for_server(
         self,
@@ -311,7 +335,7 @@ class FlextLdifRegistry:
         return {
             "schema": self.get_schema_quirks(server_type),
             "acl": self.get_acl_quirks(server_type),
-            "entry": self.get_entry_quirks(server_type),
+            "entry": self.get_entrys(server_type),
         }
 
     def find_schema_quirk_for_attribute(
@@ -382,8 +406,11 @@ class FlextLdifRegistry:
     ) -> FlextLdifServersBase.Entry | None:
         """Find the first entry quirk that can handle an entry.
 
+        Checks all server types in priority order to find the best quirk
+        for handling the entry, not just the specified server type.
+
         Args:
-        server_type: Server type
+        server_type: Preferred server type (higher priority)
         entry_dn: Entry distinguished name
         attributes: Entry attributes
 
@@ -391,9 +418,32 @@ class FlextLdifRegistry:
         First matching quirk or None
 
         """
-        for quirk in self.get_entry_quirks(server_type):
+        # First check the preferred server type
+        for quirk in self.get_entrys(server_type):
             if quirk.can_handle_entry(entry_dn, attributes):
                 return quirk
+
+        # Then check all other server types in priority order
+        all_server_types = [
+            "oid",
+            "oud",
+            "ad",
+            "openldap",
+            "apache",
+            "ds389",
+            "novell",
+            "tivoli",
+            "rfc",
+        ]
+
+        for other_server_type in all_server_types:
+            if other_server_type == server_type:
+                continue  # Already checked above
+
+            for quirk in self.get_entrys(other_server_type):
+                if quirk.can_handle_entry(entry_dn, attributes):
+                    return quirk
+
         return None
 
     def list_registered_servers(self) -> list[str]:
@@ -405,8 +455,7 @@ class FlextLdifRegistry:
         """
         server_types: set[str] = set()
         server_types.update(
-            q.server_type
-            for q in self._schema_quirks + self._acl_quirks + self._entry_quirks
+            q.server_type for q in self._schema_quirks + self._acl_quirks + self._entrys
         )
         return sorted(server_types)
 
@@ -422,20 +471,26 @@ class FlextLdifRegistry:
         acl_by_server: dict[str, int] = {}
         entry_by_server: dict[str, int] = {}
 
-        for q in self._schema_quirks:
-            schema_by_server[q.server_type] = schema_by_server.get(q.server_type, 0) + 1
+        for schema_quirk in self._schema_quirks:
+            server_type = schema_quirk.server_type
+            schema_count = schema_by_server.get(server_type, 0)
+            schema_by_server[server_type] = schema_count + 1
 
-        for q in self._acl_quirks:
-            acl_by_server[q.server_type] = acl_by_server.get(q.server_type, 0) + 1
+        for acl_quirk in self._acl_quirks:
+            server_type = acl_quirk.server_type
+            acl_count = acl_by_server.get(server_type, 0)
+            acl_by_server[server_type] = acl_count + 1
 
-        for q in self._entry_quirks:
-            entry_by_server[q.server_type] = entry_by_server.get(q.server_type, 0) + 1
+        for entry_quirk in self._entrys:
+            server_type = entry_quirk.server_type
+            entry_count = entry_by_server.get(server_type, 0)
+            entry_by_server[server_type] = entry_count + 1
 
         return {
             "total_servers": len(self.list_registered_servers()),
             "schema_quirks_by_server": schema_by_server,
             "acl_quirks_by_server": acl_by_server,
-            "entry_quirks_by_server": entry_by_server,
+            "entrys_by_server": entry_by_server,
         }
 
     class _GlobalAccess:

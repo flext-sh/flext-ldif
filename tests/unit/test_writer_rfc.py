@@ -130,8 +130,8 @@ def test_write_entries_counted(
     result = writer.write([simple_entry])
 
     assert result.is_success
-    data = result.unwrap()
-    assert data.get("entries_written") == 1
+    write_response = result.unwrap()
+    assert write_response.statistics.entries_written == 1
 
 
 def test_effective_server_type(writer: FlextLdifWriterService) -> None:
@@ -175,15 +175,15 @@ def test_write_empty_entries_list(writer: FlextLdifWriterService) -> None:
     assert result.is_success
     content = result.unwrap()
     # Should have LDIF version but no entries
-    assert content.startswith("version: 1\n")
+    assert content == "version: 1"
     assert content.count("dn:") == 0
 
 
-def test_error_when_no_quirk_for_entry(
+def test_fallback_to_rfc_when_no_server_quirk(
     rfc_config: FlextLdifConfig, registry: FlextLdifRegistry
 ) -> None:
-    """Test that error is raised when no quirk found for entry."""
-    # Use non-existent server type
+    """Test that RFC serves as fallback when no server-specific quirk handles entry."""
+    # Use non-existent server type - should fall back to RFC
     writer = FlextLdifWriterService(
         config=rfc_config,
         quirk_registry=registry,
@@ -198,5 +198,10 @@ def test_error_when_no_quirk_for_entry(
     )
 
     result = writer.write_to_string([entry])
-    assert result.is_failure
-    assert "No quirk found" in result.error
+    assert result.is_success
+    # Should contain RFC-formatted LDIF
+    ldif_content = result.unwrap()
+    assert "version: 1" in ldif_content
+    assert "dn: cn=test,dc=example,dc=com" in ldif_content
+    assert "cn: test" in ldif_content
+    assert "objectClass: person" in ldif_content

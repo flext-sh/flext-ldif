@@ -11,7 +11,51 @@ from pathlib import Path
 import pytest
 
 from flext_ldif import FlextLdifModels
+from flext_ldif.api import FlextLdif
 from flext_ldif.servers.openldap import FlextLdifServersOpenldap
+from tests.unit.quirks.servers.test_utils import FlextLdifTestUtils
+
+
+@pytest.fixture(scope="module")
+def ldif_api() -> FlextLdif:
+    """Provides a FlextLdif API instance for the test module."""
+    return FlextLdif()
+
+
+class TestOpenLdapFixtures:
+    """Test OpenLDAP quirks with real fixture files."""
+
+    def test_parse_openldap_schema_fixture(self, ldif_api: FlextLdif) -> None:
+        """Test parsing of OpenLDAP schema fixture."""
+        entries = FlextLdifTestUtils.load_fixture(
+            ldif_api, "openldap", "openldap_schema_fixtures.ldif"
+        )
+        assert entries is not None
+        assert len(entries) > 0
+
+    def test_parse_openldap_integration_fixture(self, ldif_api: FlextLdif) -> None:
+        """Test parsing of OpenLDAP integration fixture."""
+        entries = FlextLdifTestUtils.load_fixture(
+            ldif_api, "openldap", "openldap_integration_fixtures.ldif"
+        )
+        assert entries is not None
+        assert len(entries) > 0
+
+    def test_roundtrip_openldap_schema(
+        self, ldif_api: FlextLdif, tmp_path: Path
+    ) -> None:
+        """Test roundtrip of OpenLDAP schema."""
+        FlextLdifTestUtils.run_roundtrip_test(
+            ldif_api, "openldap", "openldap_schema_fixtures.ldif", tmp_path
+        )
+
+    def test_roundtrip_openldap_integration(
+        self, ldif_api: FlextLdif, tmp_path: Path
+    ) -> None:
+        """Test roundtrip of OpenLDAP integration fixture."""
+        FlextLdifTestUtils.run_roundtrip_test(
+            ldif_api, "openldap", "openldap_integration_fixtures.ldif", tmp_path
+        )
 
 
 class TestOpenLDAP2xSchemas:

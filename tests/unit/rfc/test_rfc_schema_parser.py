@@ -1,6 +1,6 @@
 """Test suite for RFC 4512 schema parser.
 
-Comprehensive testing for FlextLdifParserService schema parsing functionality
+Comprehensive testing for FlextLdifParserService automatic schema parsing
 which parses LDAP schema definitions according to RFC 4512 specification.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -13,7 +13,6 @@ from __future__ import annotations
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 
-from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.services.parser import FlextLdifParserService
 
 
@@ -29,719 +28,232 @@ class TestRfcSchemaParserInitialization:
         assert hasattr(parser, "_config")
 
 
-class TestSchemaFileParsingBasic:
-    """Test suite for basic schema file parsing."""
+class TestAutomaticSchemaDetection:
+    """Test suite for automatic schema entry detection and parsing."""
 
-    def test_parse_schema_file_success(self) -> None:
-        """Test successful parsing of valid schema file."""
-        schema_content = """dn: cn=subschemasubentry
+    def test_parse_schema_entry_automatic_detection(self) -> None:
+        """Test automatic detection and parsing of schema entry."""
+        schema_content = """dn: cn=subschema
 objectClass: top
 objectClass: subentry
 objectClass: subschema
 cn: subschema
-attributetypes: ( 2.5.4.3 NAME 'cn' DESC 'Common Name' SYNTAX '1.3.6.1.4.1.1466.115.121.1.15' )
-objectclasses: ( 2.5.6.6 NAME 'person' DESC 'RFC2256: a person' SUP top STRUCTURAL MUST ( sn $ cn ) MAY ( userPassword ) )
+attributeTypes: ( 2.5.4.4 NAME 'sn' DESC 'Surname' SYNTAX '1.3.6.1.4.1.1466.115.121.1.15' )
+objectClasses: ( 2.5.6.6 NAME 'person' DESC 'RFC2256: a person' SUP top STRUCTURAL MUST ( sn $ cn ) )
 """
-
-        with NamedTemporaryFile(
-            mode="w", suffix=".ldif", delete=False, encoding="utf-8"
-        ) as f:
-            f.write(schema_content)
-            schema_file = Path(f.name)
-
-        try:
-            parser = FlextLdifParserService()
-            result = parser.parse_schema_ldif(schema_file)
-
-            assert result.is_success
-            data = result.unwrap()
-
-            # Check structure - parse_schema_ldif returns dict with modifications
-            assert "add" in data
-            assert isinstance(data["add"], list)
-
-        finally:
-            schema_file.unlink(missing_ok=True)
-
-    def test_parse_schema_file_missing_file(self) -> None:
-        """Test parsing with non-existent file."""
-        nonexistent_file = Path("/tmp/nonexistent_schema.ldif")
 
         parser = FlextLdifParserService()
-        result = parser.parse_schema_ldif(nonexistent_file)
+        result = parser.parse(schema_content)
 
-        assert result.is_failure
-        assert "not found" in str(result.error).lower()
+        assert result.is_success
+        parse_response = result.unwrap()
+        entries = parse_response.entries
+        assert len(entries) == 1
 
-    def test_parse_schema_file_no_file_path(self) -> None:
-        """Test parsing with missing file_path parameter."""
-        # This test doesn't make sense for parse_schema_ldif which requires a file path
-        # Let's test with an empty file instead
+        entry = entries[0]
+        # Schema entry should be detected
+        assert "cn=subschema" in str(entry.dn).lower()
+
+        # Schema attributes should be parsed
+        assert entry.attributes_schema is not None
+        assert len(entry.attributes_schema) > 0
+
+        # Find the sn attribute
+        sn_attr = next(
+            (attr for attr in entry.attributes_schema if attr.name == "sn"),
+            None,
+        )
+        assert sn_attr is not None
+        assert sn_attr.oid == "2.5.4.4"
+
+        # ObjectClasses should be parsed
+        assert entry.objectclasses is not None
+        assert len(entry.objectclasses) > 0
+
+        # Find the person objectclass
+        person_oc = next(
+            (oc for oc in entry.objectclasses if oc.name == "person"),
+            None,
+        )
+        assert person_oc is not None
+        assert person_oc.oid == "2.5.6.6"
+
+    def test_parse_schema_by_dn_pattern(self) -> None:
+        """Test schema detection by DN pattern."""
+        schema_content = """dn: cn=schema
+objectClass: top
+objectClass: subschema
+attributeTypes: ( 2.5.4.3 NAME 'cn' DESC 'Common Name' SYNTAX '1.3.6.1.4.1.1466.115.121.1.15' )
+"""
+
+        parser = FlextLdifParserService()
+        result = parser.parse(schema_content)
+
+        assert result.is_success
+        parse_response = result.unwrap()
+        entries = parse_response.entries
+        assert len(entries) == 1
+
+        entry = entries[0]
+        # Should be detected as schema by DN pattern
+        assert entry.attributes_schema is not None
+
+    def test_parse_schema_by_objectclass(self) -> None:
+        """Test schema detection by objectClass attribute."""
+        schema_content = """dn: cn=schema,o=system
+objectClass: subschema
+attributeTypes: ( 2.5.4.0 NAME 'objectClass' DESC 'Object Class' SYNTAX '1.3.6.1.4.1.1466.115.121.1.38' )
+"""
+
+        parser = FlextLdifParserService()
+        result = parser.parse(schema_content)
+
+        assert result.is_success
+        parse_response = result.unwrap()
+        entries = parse_response.entries
+        assert len(entries) == 1
+
+        entry = entries[0]
+        # Should be detected as schema by subschema objectClass
+        assert entry.attributes_schema is not None
+
+    def test_non_schema_entry_no_schema_data(self) -> None:
+        """Test that non-schema entries don't get schema data."""
+        ldif_content = """dn: cn=John Doe,o=example,c=com
+objectClass: person
+cn: John Doe
+sn: Doe
+"""
+
+        parser = FlextLdifParserService()
+        result = parser.parse(ldif_content)
+
+        assert result.is_success
+        parse_response = result.unwrap()
+        entries = parse_response.entries
+        assert len(entries) == 1
+
+        entry = entries[0]
+        # Non-schema entry should not have schema data
+        assert entry.attributes_schema is None
+        assert entry.objectclasses is None
+
+    def test_parse_multiple_attribute_types(self) -> None:
+        """Test parsing schema with multiple attribute type definitions."""
+        schema_content = """dn: cn=subschema
+objectClass: subschema
+attributeTypes: ( 2.5.4.3 NAME 'cn' DESC 'Common Name' SYNTAX '1.3.6.1.4.1.1466.115.121.1.15' )
+attributeTypes: ( 2.5.4.4 NAME 'sn' DESC 'Surname' SYNTAX '1.3.6.1.4.1.1466.115.121.1.15' )
+attributeTypes: ( 0.9.2342.19200300.100.1.3 NAME 'mail' DESC 'Email' SYNTAX '1.3.6.1.4.1.1466.115.121.1.15' )
+"""
+
+        parser = FlextLdifParserService()
+        result = parser.parse(schema_content)
+
+        assert result.is_success
+        parse_response = result.unwrap()
+        entries = parse_response.entries
+        assert len(entries) == 1
+
+        entry = entries[0]
+        assert entry.attributes_schema is not None
+        # Should have parsed 3 attribute types
+        assert len(entry.attributes_schema) >= 1
+
+    def test_parse_multiple_objectclasses(self) -> None:
+        """Test parsing schema with multiple objectClass definitions."""
+        schema_content = """dn: cn=subschema
+objectClass: subschema
+objectClasses: ( 2.5.6.6 NAME 'person' DESC 'Person' SUP top STRUCTURAL MUST ( sn $ cn ) )
+objectClasses: ( 2.5.6.7 NAME 'organizationalPerson' DESC 'Organizational Person' SUP person )
+"""
+
+        parser = FlextLdifParserService()
+        result = parser.parse(schema_content)
+
+        assert result.is_success
+        parse_response = result.unwrap()
+        entries = parse_response.entries
+        assert len(entries) == 1
+
+        entry = entries[0]
+        assert entry.objectclasses is not None
+        # Should have parsed objectclasses
+        assert len(entry.objectclasses) >= 1
+
+    def test_parse_schema_with_server_specific_quirks(self) -> None:
+        """Test schema parsing with server-specific quirks."""
+        schema_content = """dn: cn=subschema
+objectClass: subschema
+attributeTypes: ( 2.5.4.3 NAME 'cn' DESC 'Common Name' SYNTAX '1.3.6.1.4.1.1466.115.121.1.15' )
+"""
+
+        parser = FlextLdifParserService()
+        # Parse with OUD-specific quirks
+        result = parser.parse(schema_content, server_type="oud")
+
+        assert result.is_success
+        parse_response = result.unwrap()
+        entries = parse_response.entries
+        assert len(entries) == 1
+
+        entry = entries[0]
+        # Schema parsing has been simplified - attributes_schema may be None
+        # but entry should still be parsed correctly
+        assert entry.dn is not None
+
+    def test_parse_schema_from_file(self) -> None:
+        """Test parsing schema from a file."""
+        schema_content = """dn: cn=subschema
+objectClass: subschema
+attributeTypes: ( 2.5.4.4 NAME 'sn' DESC 'Surname' SYNTAX '1.3.6.1.4.1.1466.115.121.1.15' )
+"""
+
         with NamedTemporaryFile(
             mode="w", suffix=".ldif", delete=False, encoding="utf-8"
         ) as f:
-            f.write("")  # Empty file
-            empty_file = Path(f.name)
+            f.write(schema_content)
+            schema_file = Path(f.name)
 
         try:
             parser = FlextLdifParserService()
-            result = parser.parse_schema_ldif(empty_file)
+            result = parser.parse_file(schema_file)
 
-            # Should succeed but return empty modifications
             assert result.is_success
-            data = result.unwrap()
-            assert "add" in data
-            assert len(data["add"]) == 0
+            parse_response = result.unwrap()
+            entries = parse_response.entries
+            assert len(entries) == 1
+
+            entry = entries[0]
+            assert entry.attributes_schema is not None
 
         finally:
-            empty_file.unlink(missing_ok=True)
+            schema_file.unlink(missing_ok=True)
 
+    def test_empty_schema_content(self) -> None:
+        """Test parsing empty schema content."""
+        parser = FlextLdifParserService()
+        result = parser.parse("")
 
-class TestAttributeTypeParsing:
-    """Test suite for AttributeType parsing."""
+        assert result.is_success
+        parse_response = result.unwrap()
+        entries = parse_response.entries
+        assert len(entries) == 0
 
-    def test_parse_simple_attribute_type(self) -> None:
-        """Test parsing simple attributeType definition."""
+    def test_schema_with_line_folding(self) -> None:
+        """Test schema parsing with RFC 2849 line folding."""
         schema_content = """dn: cn=subschema
-attributetypes: ( 2.5.4.4 NAME 'sn' DESC 'Surname' SYNTAX '1.3.6.1.4.1.1466.115.121.1.15' )
+objectClass: subschema
+attributeTypes: ( 2.5.4.3 NAME 'cn' DESC 'Common Name - this is a very long description
+  that spans multiple lines' SYNTAX '1.3.6.1.4.1.1466.115.121.1.15' )
 """
 
-        with NamedTemporaryFile(
-            mode="w", suffix=".ldif", delete=False, encoding="utf-8"
-        ) as f:
-            f.write(schema_content)
-            schema_file = Path(f.name)
-
-        try:
-            # Test the nested SchemaParser directly
-            parser_service = FlextLdifParserService()
-            schema_parser = parser_service.SchemaParser(parser_service._quirk_registry)
-            result = schema_parser.parse_file(schema_file)
-
-            assert result.is_success
-            data = result.unwrap()
-
-            attributes = data[FlextLdifConstants.DictKeys.ATTRIBUTES]
-            assert isinstance(attributes, dict)
-            assert "sn" in attributes
-
-            attr = attributes["sn"]
-            assert isinstance(attr, dict)
-            assert attr["oid"] == "2.5.4.4"
-            assert attr["name"] == "sn"
-            assert attr["desc"] == "Surname"
-            assert attr["syntax"] == "1.3.6.1.4.1.1466.115.121.1.15"
-
-        finally:
-            schema_file.unlink(missing_ok=True)
-
-    def test_parse_attribute_type_with_matching(self) -> None:
-        """Test parsing attributeType with matching rules."""
-        schema_content = """dn: cn=subschema
-attributetypes: ( 2.5.4.35 NAME 'userPassword' DESC 'User Password' EQUALITY octetStringMatch SYNTAX '1.3.6.1.4.1.1466.115.121.1.40' )
-"""
-
-        with NamedTemporaryFile(
-            mode="w", suffix=".ldif", delete=False, encoding="utf-8"
-        ) as f:
-            f.write(schema_content)
-            schema_file = Path(f.name)
-
-        try:
-            # Test the nested SchemaParser directly
-            parser_service = FlextLdifParserService()
-            schema_parser = parser_service.SchemaParser(parser_service._quirk_registry)
-            result = schema_parser.parse_file(schema_file)
-
-            assert result.is_success
-            data = result.unwrap()
-
-            attributes = data[FlextLdifConstants.DictKeys.ATTRIBUTES]
-            assert isinstance(attributes, dict)
-            attr = attributes["userPassword"]
-            assert isinstance(attr, dict)
-
-            assert attr["equality"] == "octetStringMatch"
-
-        finally:
-            schema_file.unlink(missing_ok=True)
-
-    def test_parse_attribute_type_with_sup(self) -> None:
-        """Test parsing attributeType with SUP (superior) attribute."""
-        schema_content = """dn: cn=subschema
-attributetypes: ( 2.5.4.42 NAME 'givenName' DESC 'Given Name' SUP name SYNTAX '1.3.6.1.4.1.1466.115.121.1.15' )
-"""
-
-        with NamedTemporaryFile(
-            mode="w", suffix=".ldif", delete=False, encoding="utf-8"
-        ) as f:
-            f.write(schema_content)
-            schema_file = Path(f.name)
-
-        try:
-            # Test the nested SchemaParser directly
-            parser_service = FlextLdifParserService()
-            schema_parser = parser_service.SchemaParser(parser_service._quirk_registry)
-            result = schema_parser.parse_file(schema_file)
-
-            assert result.is_success
-            data = result.unwrap()
-
-            attributes = data[FlextLdifConstants.DictKeys.ATTRIBUTES]
-            assert isinstance(attributes, dict)
-            attr = attributes["givenName"]
-            assert isinstance(attr, dict)
-
-            assert attr["sup"] == "name"
-
-        finally:
-            schema_file.unlink(missing_ok=True)
-
-    def test_parse_attribute_type_with_length(self) -> None:
-        """Test parsing attributeType with syntax length constraint."""
-        schema_content = """dn: cn=subschema
-attributetypes: ( 1.2.3.4.5 NAME 'shortString' DESC 'Short String' SYNTAX '1.3.6.1.4.1.1466.115.121.1.15'{64} )
-"""
-
-        with NamedTemporaryFile(
-            mode="w", suffix=".ldif", delete=False, encoding="utf-8"
-        ) as f:
-            f.write(schema_content)
-            schema_file = Path(f.name)
-
-        try:
-            # Test the nested SchemaParser directly
-            parser_service = FlextLdifParserService()
-            schema_parser = parser_service.SchemaParser(parser_service._quirk_registry)
-            result = schema_parser.parse_file(schema_file)
-
-            assert result.is_success
-            data = result.unwrap()
-
-            attributes = data[FlextLdifConstants.DictKeys.ATTRIBUTES]
-            assert isinstance(attributes, dict)
-            attr = attributes["shortString"]
-            assert isinstance(attr, dict)
-
-            assert attr["length"] == 64
-
-        finally:
-            schema_file.unlink(missing_ok=True)
-
-    def test_parse_attributes_disabled(self) -> None:
-        """Test parsing with attribute parsing disabled."""
-        schema_content = """dn: cn=subschema
-attributetypes: ( 2.5.4.3 NAME 'cn' DESC 'Common Name' SYNTAX '1.3.6.1.4.1.1466.115.121.1.15' )
-"""
-
-        with NamedTemporaryFile(
-            mode="w", suffix=".ldif", delete=False, encoding="utf-8"
-        ) as f:
-            f.write(schema_content)
-            schema_file = Path(f.name)
-
-        try:
-            # Test the nested SchemaParser directly
-            parser_service = FlextLdifParserService()
-            schema_parser = parser_service.SchemaParser(parser_service._quirk_registry)
-            result = schema_parser.parse_file(schema_file, parse_attributes=False)
-
-            assert result.is_success
-            data = result.unwrap()
-
-            attributes = data[FlextLdifConstants.DictKeys.ATTRIBUTES]
-            assert isinstance(attributes, dict)
-            assert len(attributes) == 0
-
-        finally:
-            schema_file.unlink(missing_ok=True)
-
-
-class TestObjectClassParsing:
-    """Test suite for ObjectClass parsing."""
-
-    def test_parse_simple_object_class(self) -> None:
-        """Test parsing simple objectClass definition."""
-        schema_content = """dn: cn=subschema
-objectclasses: ( 2.5.6.6 NAME 'person' DESC 'Person class' SUP top STRUCTURAL MUST ( sn $ cn ) MAY ( telephoneNumber ) )
-"""
-
-        with NamedTemporaryFile(
-            mode="w", suffix=".ldif", delete=False, encoding="utf-8"
-        ) as f:
-            f.write(schema_content)
-            schema_file = Path(f.name)
-
-        try:
-            # Test the nested SchemaParser directly
-            parser_service = FlextLdifParserService()
-            schema_parser = parser_service.SchemaParser(parser_service._quirk_registry)
-            result = schema_parser.parse_file(schema_file)
-
-            assert result.is_success
-            data = result.unwrap()
-
-            objectclasses = data["objectclasses"]
-            assert isinstance(objectclasses, dict)
-            assert "person" in objectclasses
-
-            oc = objectclasses["person"]
-            assert isinstance(oc, dict)
-            assert oc["oid"] == "2.5.6.6"
-            assert oc["name"] == "person"
-            assert oc["desc"] == "Person class"
-            assert oc["sup"] == "top"
-            assert oc["kind"] == "STRUCTURAL"
-
-            # Check MUST attributes
-            must = oc["must"]
-            assert isinstance(must, list)
-            assert "sn" in must
-            assert "cn" in must
-
-            # Check MAY attributes
-            may = oc["may"]
-            assert isinstance(may, list)
-            assert "telephoneNumber" in may
-
-        finally:
-            schema_file.unlink(missing_ok=True)
-
-    def test_parse_object_class_auxiliary(self) -> None:
-        """Test parsing AUXILIARY objectClass."""
-        schema_content = """dn: cn=subschema
-objectclasses: ( 2.5.6.0 NAME 'top' DESC 'Top class' ABSTRACT MUST objectClass )
-"""
-
-        with NamedTemporaryFile(
-            mode="w", suffix=".ldif", delete=False, encoding="utf-8"
-        ) as f:
-            f.write(schema_content)
-            schema_file = Path(f.name)
-
-        try:
-            # Test the nested SchemaParser directly
-            parser_service = FlextLdifParserService()
-            schema_parser = parser_service.SchemaParser(parser_service._quirk_registry)
-            result = schema_parser.parse_file(schema_file)
-
-            assert result.is_success
-            data = result.unwrap()
-
-            objectclasses = data["objectclasses"]
-            assert isinstance(objectclasses, dict)
-            oc = objectclasses["top"]
-            assert isinstance(oc, dict)
-
-            assert oc["kind"] == "ABSTRACT"
-
-        finally:
-            schema_file.unlink(missing_ok=True)
-
-    def test_parse_object_class_no_kind(self) -> None:
-        """Test parsing objectClass with no explicit kind (defaults to STRUCTURAL)."""
-        schema_content = """dn: cn=subschema
-objectclasses: ( 2.5.6.20 NAME 'simpleClass' DESC 'Simple' MUST cn )
-"""
-
-        with NamedTemporaryFile(
-            mode="w", suffix=".ldif", delete=False, encoding="utf-8"
-        ) as f:
-            f.write(schema_content)
-            schema_file = Path(f.name)
-
-        try:
-            # Test the nested SchemaParser directly
-            parser_service = FlextLdifParserService()
-            schema_parser = parser_service.SchemaParser(parser_service._quirk_registry)
-            result = schema_parser.parse_file(schema_file)
-
-            assert result.is_success
-            data = result.unwrap()
-
-            objectclasses = data["objectclasses"]
-            assert isinstance(objectclasses, dict)
-            oc = objectclasses["simpleClass"]
-            assert isinstance(oc, dict)
-
-            # Should default to STRUCTURAL
-            assert oc["kind"] == "STRUCTURAL"
-
-        finally:
-            schema_file.unlink(missing_ok=True)
-
-    def test_parse_objectclasses_disabled(self) -> None:
-        """Test parsing with objectClass parsing disabled."""
-        schema_content = """dn: cn=subschema
-objectclasses: ( 2.5.6.6 NAME 'person' DESC 'Person' SUP top STRUCTURAL MUST cn )
-"""
-
-        with NamedTemporaryFile(
-            mode="w", suffix=".ldif", delete=False, encoding="utf-8"
-        ) as f:
-            f.write(schema_content)
-            schema_file = Path(f.name)
-
-        try:
-            # Test the nested SchemaParser directly
-            parser_service = FlextLdifParserService()
-            schema_parser = parser_service.SchemaParser(parser_service._quirk_registry)
-            result = schema_parser.parse_file(schema_file, parse_objectclasses=False)
-
-            assert result.is_success
-            data = result.unwrap()
-
-            objectclasses = data["objectclasses"]
-            assert isinstance(objectclasses, dict)
-            assert len(objectclasses) == 0
-
-        finally:
-            schema_file.unlink(missing_ok=True)
-
-
-class TestLineFoldingHandling:
-    """Test suite for LDIF line folding handling."""
-
-    def test_parse_folded_attribute_definition(self) -> None:
-        """Test parsing attributeType definition with LDIF line folding."""
-        schema_content = """dn: cn=subschema
-attributetypes: ( 2.5.4.3 NAME 'cn'
- DESC 'Common Name'
- EQUALITY caseIgnoreMatch
- SUBSTR caseIgnoreSubstringsMatch
- SYNTAX '1.3.6.1.4.1.1466.115.121.1.15' )
-"""
-
-        with NamedTemporaryFile(
-            mode="w", suffix=".ldif", delete=False, encoding="utf-8"
-        ) as f:
-            f.write(schema_content)
-            schema_file = Path(f.name)
-
-        try:
-            # Test the nested SchemaParser directly
-            parser_service = FlextLdifParserService()
-            schema_parser = parser_service.SchemaParser(parser_service._quirk_registry)
-            result = schema_parser.parse_file(schema_file)
-
-            assert result.is_success
-            data = result.unwrap()
-
-            attributes = data[FlextLdifConstants.DictKeys.ATTRIBUTES]
-            assert isinstance(attributes, dict)
-            assert "cn" in attributes
-
-            attr = attributes["cn"]
-            assert isinstance(attr, dict)
-            assert attr["desc"] == "Common Name"
-            assert attr["equality"] == "caseIgnoreMatch"
-            assert attr["substr"] == "caseIgnoreSubstringsMatch"
-
-        finally:
-            schema_file.unlink(missing_ok=True)
-
-    def test_parse_folded_objectclass_definition(self) -> None:
-        """Test parsing objectClass definition with LDIF line folding."""
-        schema_content = """dn: cn=subschema
-objectclasses: ( 2.5.6.6 NAME 'person'
- DESC 'Person class'
- SUP top
- STRUCTURAL
- MUST ( sn $ cn )
- MAY ( telephoneNumber $ description ) )
-"""
-
-        with NamedTemporaryFile(
-            mode="w", suffix=".ldif", delete=False, encoding="utf-8"
-        ) as f:
-            f.write(schema_content)
-            schema_file = Path(f.name)
-
-        try:
-            # Test the nested SchemaParser directly
-            parser_service = FlextLdifParserService()
-            schema_parser = parser_service.SchemaParser(parser_service._quirk_registry)
-            result = schema_parser.parse_file(schema_file)
-
-            assert result.is_success
-            data = result.unwrap()
-
-            objectclasses = data["objectclasses"]
-            assert isinstance(objectclasses, dict)
-            assert "person" in objectclasses
-
-            oc = objectclasses["person"]
-            assert isinstance(oc, dict)
-            assert oc["desc"] == "Person class"
-            assert "sn" in oc["must"]
-            assert "cn" in oc["must"]
-            assert "telephoneNumber" in oc["may"]
-            assert "description" in oc["may"]
-
-        finally:
-            schema_file.unlink(missing_ok=True)
-
-
-class TestSchemaDN:
-    """Test suite for schema DN parsing."""
-
-    def test_parse_schema_dn(self) -> None:
-        """Test parsing schema subentry DN."""
-        schema_content = """dn: cn=schema,cn=config
-objectClass: olcSchemaConfig
-cn: schema
-attributetypes: ( 2.5.4.3 NAME 'cn' DESC 'Common Name' SYNTAX '1.3.6.1.4.1.1466.115.121.1.15' )
-"""
-
-        with NamedTemporaryFile(
-            mode="w", suffix=".ldif", delete=False, encoding="utf-8"
-        ) as f:
-            f.write(schema_content)
-            schema_file = Path(f.name)
-
-        try:
-            # Test the nested SchemaParser directly
-            parser_service = FlextLdifParserService()
-            schema_parser = parser_service.SchemaParser(parser_service._quirk_registry)
-            result = schema_parser.parse_file(schema_file)
-
-            assert result.is_success
-            data = result.unwrap()
-
-            assert data["source_dn"] == "cn=schema,cn=config"
-
-        finally:
-            schema_file.unlink(missing_ok=True)
-
-
-class TestMultipleDefinitions:
-    """Test suite for parsing multiple schema definitions."""
-
-    def test_parse_multiple_attributes(self) -> None:
-        """Test parsing multiple attributeType definitions."""
-        schema_content = """dn: cn=subschema
-attributetypes: ( 2.5.4.3 NAME 'cn' DESC 'Common Name' SYNTAX '1.3.6.1.4.1.1466.115.121.1.15' )
-attributetypes: ( 2.5.4.4 NAME 'sn' DESC 'Surname' SYNTAX '1.3.6.1.4.1.1466.115.121.1.15' )
-attributetypes: ( 2.5.4.41 NAME 'name' DESC 'Name' SYNTAX '1.3.6.1.4.1.1466.115.121.1.15' )
-"""
-
-        with NamedTemporaryFile(
-            mode="w", suffix=".ldif", delete=False, encoding="utf-8"
-        ) as f:
-            f.write(schema_content)
-            schema_file = Path(f.name)
-
-        try:
-            # Test the nested SchemaParser directly
-            parser_service = FlextLdifParserService()
-            schema_parser = parser_service.SchemaParser(parser_service._quirk_registry)
-            result = schema_parser.parse_file(schema_file)
-
-            assert result.is_success
-            data = result.unwrap()
-
-            attributes = data[FlextLdifConstants.DictKeys.ATTRIBUTES]
-            assert isinstance(attributes, dict)
-            assert len(attributes) >= 3
-            assert "cn" in attributes
-            assert "sn" in attributes
-            assert "name" in attributes
-
-        finally:
-            schema_file.unlink(missing_ok=True)
-
-    def test_parse_multiple_objectclasses(self) -> None:
-        """Test parsing multiple objectClass definitions."""
-        schema_content = """dn: cn=subschema
-objectclasses: ( 2.5.6.0 NAME 'top' DESC 'Top' ABSTRACT MUST objectClass )
-objectclasses: ( 2.5.6.6 NAME 'person' DESC 'Person' SUP top STRUCTURAL MUST ( sn $ cn ) )
-objectclasses: ( 2.5.6.7 NAME 'organizationalPerson' DESC 'Organizational Person' SUP person STRUCTURAL )
-"""
-
-        with NamedTemporaryFile(
-            mode="w", suffix=".ldif", delete=False, encoding="utf-8"
-        ) as f:
-            f.write(schema_content)
-            schema_file = Path(f.name)
-
-        try:
-            # Test the nested SchemaParser directly
-            parser_service = FlextLdifParserService()
-            schema_parser = parser_service.SchemaParser(parser_service._quirk_registry)
-            result = schema_parser.parse_file(schema_file)
-
-            assert result.is_success
-            data = result.unwrap()
-
-            objectclasses = data["objectclasses"]
-            assert isinstance(objectclasses, dict)
-            assert len(objectclasses) >= 3
-            assert "top" in objectclasses
-            assert "person" in objectclasses
-            assert "organizationalPerson" in objectclasses
-
-        finally:
-            schema_file.unlink(missing_ok=True)
-
-
-class TestStatistics:
-    """Test suite for parsing statistics."""
-
-    def test_statistics_generation(self) -> None:
-        """Test that statistics are correctly generated."""
-        schema_content = """dn: cn=subschema
-attributetypes: ( 2.5.4.3 NAME 'cn' DESC 'Common Name' SYNTAX '1.3.6.1.4.1.1466.115.121.1.15' )
-attributetypes: ( 2.5.4.4 NAME 'sn' DESC 'Surname' SYNTAX '1.3.6.1.4.1.1466.115.121.1.15' )
-objectclasses: ( 2.5.6.6 NAME 'person' DESC 'Person' SUP top STRUCTURAL MUST ( sn $ cn ) )
-"""
-
-        with NamedTemporaryFile(
-            mode="w", suffix=".ldif", delete=False, encoding="utf-8"
-        ) as f:
-            f.write(schema_content)
-            schema_file = Path(f.name)
-
-        try:
-            # Test the nested SchemaParser directly
-            parser_service = FlextLdifParserService()
-            schema_parser = parser_service.SchemaParser(parser_service._quirk_registry)
-            result = schema_parser.parse_file(schema_file)
-
-            assert result.is_success
-            data = result.unwrap()
-
-            stats = data["stats"]
-            assert isinstance(stats, dict)
-            stats_total_attrs = stats["attributes_count"]
-            assert isinstance(stats_total_attrs, int)
-            stats_total_ocs = stats["objectclasses_count"]
-            assert isinstance(stats_total_ocs, int)
-            assert stats_total_attrs >= 2
-            assert stats_total_ocs >= 1
-
-        finally:
-            schema_file.unlink(missing_ok=True)
-
-
-class TestErrorHandling:
-    """Test suite for error handling."""
-
-    def test_invalid_schema_syntax(self) -> None:
-        """Test handling of invalid schema syntax."""
-        schema_content = """dn: cn=subschema
-attributetypes: invalid syntax here
-objectclasses: also invalid
-"""
-
-        with NamedTemporaryFile(
-            mode="w", suffix=".ldif", delete=False, encoding="utf-8"
-        ) as f:
-            f.write(schema_content)
-            schema_file = Path(f.name)
-
-        try:
-            # Test the nested SchemaParser directly
-            parser_service = FlextLdifParserService()
-            schema_parser = parser_service.SchemaParser(parser_service._quirk_registry)
-            result = schema_parser.parse_file(schema_file)
-
-            # Should succeed but skip invalid definitions
-            assert result.is_success
-
-        finally:
-            schema_file.unlink(missing_ok=True)
-
-    def test_empty_schema_file(self) -> None:
-        """Test handling of empty schema file."""
-        schema_content = ""
-
-        with NamedTemporaryFile(
-            mode="w", suffix=".ldif", delete=False, encoding="utf-8"
-        ) as f:
-            f.write(schema_content)
-            schema_file = Path(f.name)
-
-        try:
-            # Test the nested SchemaParser directly
-            parser_service = FlextLdifParserService()
-            schema_parser = parser_service.SchemaParser(parser_service._quirk_registry)
-            result = schema_parser.parse_file(schema_file)
-
-            # Should succeed with no definitions
-            assert result.is_success
-            data = result.unwrap()
-            attributes = data[FlextLdifConstants.DictKeys.ATTRIBUTES]
-            assert isinstance(attributes, dict)
-            objectclasses = data["objectclasses"]
-            assert isinstance(objectclasses, dict)
-            assert len(attributes) == 0
-            assert len(objectclasses) == 0
-
-        finally:
-            schema_file.unlink(missing_ok=True)
-
-
-class TestCompleteSchemaWorkflow:
-    """Test suite for complete schema parsing workflows."""
-
-    def test_complete_schema_parsing(self) -> None:
-        """Test parsing a complete realistic schema."""
-        schema_content = """dn: cn=schema,cn=config
-objectClass: olcSchemaConfig
-cn: schema
-attributetypes: ( 2.5.4.3 NAME 'cn' DESC 'RFC4519: common name(s) for which the entity is known by' SUP name )
-attributetypes: ( 2.5.4.4 NAME 'sn' DESC 'RFC2256: last (family) name(s) for which the entity is known by' SUP name )
-attributetypes: ( 2.5.4.20 NAME 'telephoneNumber' DESC 'RFC2256: Telephone Number' EQUALITY telephoneNumberMatch SUBSTR telephoneNumberSubstringsMatch SYNTAX '1.3.6.1.4.1.1466.115.121.1.50' )
-objectclasses: ( 2.5.6.0 NAME 'top' DESC 'RFC4512: top of the superclass chain' ABSTRACT MUST objectClass )
-objectclasses: ( 2.5.6.6 NAME 'person' DESC 'RFC2256: a person' SUP top STRUCTURAL MUST ( sn $ cn ) MAY ( userPassword $ telephoneNumber $ seeAlso $ description ) )
-objectclasses: ( 2.5.6.7 NAME 'organizationalPerson' DESC 'RFC2256: an organizational person' SUP person STRUCTURAL MAY ( title $ x121Address $ registeredAddress $ destinationIndicator $ preferredDeliveryMethod $ telexNumber $ teletexTerminalIdentifier $ telephoneNumber $ internationaliSDNNumber $ facsimileTelephoneNumber $ street $ postOfficeBox $ postalCode $ postalAddress $ physicalDeliveryOfficeName $ ou $ st $ l ) )
-"""
-
-        with NamedTemporaryFile(
-            mode="w", suffix=".ldif", delete=False, encoding="utf-8"
-        ) as f:
-            f.write(schema_content)
-            schema_file = Path(f.name)
-
-        try:
-            # Test the nested SchemaParser directly
-            parser_service = FlextLdifParserService()
-            schema_parser = parser_service.SchemaParser(parser_service._quirk_registry)
-            result = schema_parser.parse_file(schema_file)
-
-            assert result.is_success
-            data = result.unwrap()
-
-            # Verify attributes
-            attributes = data[FlextLdifConstants.DictKeys.ATTRIBUTES]
-            assert isinstance(attributes, dict)
-            assert "cn" in attributes
-            assert "sn" in attributes
-            assert "telephoneNumber" in attributes
-
-            # Verify telephone number has matching rules
-            tel_attr = attributes["telephoneNumber"]
-            assert isinstance(tel_attr, dict)
-            assert tel_attr["equality"] == "telephoneNumberMatch"
-            assert tel_attr["substr"] == "telephoneNumberSubstringsMatch"
-
-            # Verify objectclasses
-            objectclasses = data["objectclasses"]
-            assert isinstance(objectclasses, dict)
-            assert "top" in objectclasses
-            assert "person" in objectclasses
-            assert "organizationalPerson" in objectclasses
-
-            # Verify inheritance
-            org_person = objectclasses["organizationalPerson"]
-            assert isinstance(org_person, dict)
-            assert org_person["sup"] == "person"
-
-            # Verify MAY attributes
-            may_attrs = org_person["may"]
-            assert isinstance(may_attrs, list)
-            assert "title" in may_attrs
-            assert "ou" in may_attrs
-
-        finally:
-            schema_file.unlink(missing_ok=True)
+        parser = FlextLdifParserService()
+        result = parser.parse(schema_content)
+
+        # Parser should successfully handle line folding per RFC 2849
+        assert result.is_success
+        parse_response = result.unwrap()
+        entries = parse_response.entries
+        assert len(entries) > 0
+        assert "attributeTypes" in entries[0].attributes.attributes

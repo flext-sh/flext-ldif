@@ -16,7 +16,6 @@ from pathlib import Path
 import pytest
 
 from flext_ldif.config import FlextLdifConfig
-from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.services.parser import FlextLdifParserService
 from flext_ldif.services.registry import FlextLdifRegistry
 from flext_ldif.services.writer import FlextLdifWriterService
@@ -44,7 +43,7 @@ class TestRfcParserRealFixtures:
             config=FlextLdifConfig(),
         )
 
-        result = parser.parse_ldif_file(entries_file)
+        result = parser.parse_file(entries_file)
 
         assert result.is_success, f"Failed to parse: {result.error}"
         entries = result.unwrap()
@@ -65,7 +64,7 @@ class TestRfcParserRealFixtures:
             config=FlextLdifConfig(),
         )
 
-        result = parser.parse_ldif_file(entries_file)
+        result = parser.parse_file(entries_file)
 
         assert result.is_success, f"Failed to parse: {result.error}"
         entries = result.unwrap()
@@ -85,7 +84,7 @@ class TestRfcParserRealFixtures:
             config=FlextLdifConfig(),
         )
 
-        result = parser.parse_ldif_file(entries_file)
+        result = parser.parse_file(entries_file)
 
         assert result.is_success, f"Failed to parse: {result.error}"
         entries = result.unwrap()
@@ -111,14 +110,15 @@ class TestRfcSchemaParserRealFixtures:
             pytest.skip(f"Fixture not found: {schema_file}")
 
         parser = FlextLdifParserService(
-            params={FlextLdifConstants.DictKeys.FILE_PATH: str(schema_file)},
+            config=FlextLdifConfig(),
         )
 
-        result = parser.execute()
+        result = parser.parse_file(schema_file)
 
         assert result.is_success, f"Failed to parse: {result.error}"
-        schema_data = result.unwrap()
-        assert "attributes" in schema_data or "objectclasses" in schema_data
+        entries = result.unwrap()
+        # Schema entries should be parsed with automatic schema extraction
+        assert len(entries) > 0
 
     def test_parse_oud_schema_fixture(
         self,
@@ -131,10 +131,10 @@ class TestRfcSchemaParserRealFixtures:
             pytest.skip(f"Fixture not found: {schema_file}")
 
         parser = FlextLdifParserService(
-            params={FlextLdifConstants.DictKeys.FILE_PATH: str(schema_file)},
+            config=FlextLdifConfig(),
         )
 
-        result = parser.execute()
+        result = parser.parse_file(schema_file)
 
         assert result.is_success, f"Failed to parse: {result.error}"
 
@@ -162,7 +162,7 @@ class TestRfcWriterRealFixtures:
         parser = FlextLdifParserService(
             config=FlextLdifConfig(),
         )
-        parse_result = parser.parse_ldif_file(source_file)
+        parse_result = parser.parse_file(source_file)
 
         assert parse_result.is_success, f"Failed to parse source: {parse_result.error}"
         entries = parse_result.unwrap()
@@ -170,16 +170,13 @@ class TestRfcWriterRealFixtures:
 
         # Write to file
         output_file = tmp_path / "roundtrip.ldif"
-        {
-            FlextLdifConstants.DictKeys.OUTPUT_FILE: str(output_file),
-            FlextLdifConstants.DictKeys.ENTRIES: entries,  # Pass Entry objects directly
-        }
 
         writer = FlextLdifWriterService(
             config=FlextLdifConfig(),
+            quirk_registry=quirk_registry,
             target_server_type="rfc",
         )
-        write_result = writer.execute()
+        write_result = writer.write(entries, output_file)
 
         assert write_result.is_success, f"Failed to write: {write_result.error}"
         assert output_file.exists()
@@ -188,7 +185,7 @@ class TestRfcWriterRealFixtures:
         reparser = FlextLdifParserService(
             config=FlextLdifConfig(),
         )
-        reparse_result = reparser.parse_ldif_file(output_file)
+        reparse_result = reparser.parse_file(output_file)
 
         assert reparse_result.is_success, f"Failed to re-parse: {reparse_result.error}"
         reparsed_entries = reparse_result.unwrap()
@@ -211,7 +208,7 @@ class TestRfcWriterRealFixtures:
             config=FlextLdifConfig(),
         )
 
-        parse_result = parser.parse_ldif_file(acl_file)
+        parse_result = parser.parse_file(acl_file)
 
         if not parse_result.is_success:
             pytest.skip(f"Failed to parse ACL fixture: {parse_result.error}")
@@ -220,17 +217,14 @@ class TestRfcWriterRealFixtures:
 
         # Write to file
         output_file = tmp_path / "acl_output.ldif"
-        {
-            FlextLdifConstants.DictKeys.OUTPUT_FILE: str(output_file),
-            FlextLdifConstants.DictKeys.ENTRIES: entries,  # Pass Entry objects directly
-        }
 
         writer = FlextLdifWriterService(
             config=FlextLdifConfig(),
+            quirk_registry=quirk_registry,
             target_server_type="rfc",
         )
 
-        result = writer.execute()
+        result = writer.write(entries, output_file)
 
         assert result.is_success, f"Failed to write ACL entries: {result.error}"
         assert output_file.exists()
@@ -253,7 +247,7 @@ class TestRfcExceptionHandlingRealScenarios:
             config=FlextLdifConfig(),
         )
 
-        result = parser.parse_ldif_file(Path("/nonexistent/file.ldif"))
+        result = parser.parse_file(Path("/nonexistent/file.ldif"))
 
         assert not result.is_success
         assert result.error is not None
@@ -269,26 +263,23 @@ class TestRfcExceptionHandlingRealScenarios:
         readonly_dir.chmod(0o555)
 
         try:
-            {
-                FlextLdifConstants.DictKeys.OUTPUT_FILE: str(
-                    readonly_dir / "test.ldif"
-                ),
-                FlextLdifConstants.DictKeys.ENTRIES: [
-                    {
-                        FlextLdifConstants.DictKeys.DN: "cn=test,dc=example,dc=com",
-                        FlextLdifConstants.DictKeys.ATTRIBUTES: {"cn": ["test"]},
-                    }
-                ],
-            }
+            # Create test entry
+            from flext_ldif.models import FlextLdifModels
+
+            test_entry = FlextLdifModels.Entry(
+                dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
+                attributes=FlextLdifModels.LdifAttributes(attributes={"cn": ["test"]}),
+            )
 
             writer = FlextLdifWriterService(
                 config=FlextLdifConfig(),
+                quirk_registry=quirk_registry,
                 target_server_type="rfc",
             )
 
-            result = writer.execute()
+            result = writer.write([test_entry], readonly_dir / "test.ldif")
 
-            # Should fail
+            # Should fail with permission error
             if not result.is_success:
                 assert (
                     "Permission denied" in result.error
@@ -310,7 +301,7 @@ class TestRfcExceptionHandlingRealScenarios:
             config=FlextLdifConfig(),
         )
 
-        result = parser.parse_ldif_file(empty_file)
+        result = parser.parse_file(empty_file)
 
         # Empty file should parse successfully with 0 entries
         assert result.is_success

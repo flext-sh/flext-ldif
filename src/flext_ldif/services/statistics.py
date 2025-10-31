@@ -10,12 +10,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from pathlib import Path
-from typing import override
+from typing import Any, override
 
 from flext_core import FlextDecorators, FlextResult, FlextService
 
 from flext_ldif.constants import FlextLdifConstants
+from flext_ldif.models import FlextLdifModels
 
 
 class FlextLdifStatisticsService(FlextService[dict[str, object]]):
@@ -126,6 +128,37 @@ class FlextLdifStatisticsService(FlextService[dict[str, object]]):
             return FlextResult[dict[str, object]].fail(
                 f"Failed to generate statistics: {e}",
             )
+
+    def calculate_for_entries(
+        self, entries: Sequence[FlextLdifModels.Entry]
+    ) -> FlextResult[dict[str, Any]]:
+        """Calculate general-purpose statistics for a list of Entry models."""
+        try:
+            total_entries = len(entries)
+            object_class_distribution: dict[str, int] = {}
+            server_type_distribution: dict[str, int] = {}
+
+            for entry in entries:
+                # Tally object classes
+                for oc in entry.get_objectclass_names():
+                    object_class_distribution[oc] = (
+                        object_class_distribution.get(oc, 0) + 1
+                    )
+
+                # Tally server types from metadata
+                if entry.metadata and entry.metadata.server_type:
+                    st = entry.metadata.server_type
+                    server_type_distribution[st] = (
+                        server_type_distribution.get(st, 0) + 1
+                    )
+
+            return FlextResult.ok({
+                "total_entries": total_entries,
+                "object_class_distribution": object_class_distribution,
+                "server_type_distribution": server_type_distribution,
+            })
+        except Exception as e:
+            return FlextResult.fail(f"Failed to calculate statistics for entries: {e}")
 
 
 __all__ = ["FlextLdifStatisticsService"]

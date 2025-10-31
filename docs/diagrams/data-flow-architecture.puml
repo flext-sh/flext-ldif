@@ -6,7 +6,6 @@ skinparam backgroundColor #FEFEFE
 skinparam sequenceParticipant underline
 
 participant "LDIF File" as File
-participant "FlextLdifClient" as Client
 participant "FlextLdif Facade" as Facade
 participant "RfcLdifParserService" as Parser
 participant "QuirkRegistry" as Registry

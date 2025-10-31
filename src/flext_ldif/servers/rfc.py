@@ -34,20 +34,25 @@ References:
 """
 
 import re
-from collections.abc import Callable
-from io import BytesIO
-from typing import ClassVar
+from collections.abc import Callable, Mapping
+from typing import ClassVar, TypeVar
 
 from flext_core import FlextLogger, FlextResult
-from ldif3 import LDIFParser
 
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.servers.base import FlextLdifServersBase
 from flext_ldif.services.dn import FlextLdifDnService
-from flext_ldif.typings import FlextLdifTypes
+from flext_ldif.services.syntax import FlextLdifSyntaxService
+from flext_ldif.utilities import FlextLdifUtilities
 
 logger = FlextLogger(__name__)
+
+SchemaModel = TypeVar(
+    "SchemaModel",
+    FlextLdifModels.SchemaAttribute,
+    FlextLdifModels.SchemaObjectClass,
+)
 
 
 class FlextLdifServersRfc(FlextLdifServersBase):
@@ -96,7 +101,176 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 parsed_attr = result.unwrap()
                 # Use parsed attribute...
 
+        # Parse objectClass
+        result = RfcObjectClassParser.parse_common(oc_definition)
+
     """
+
+    def __init__(self) -> None:
+        """Initialize RFC quirks."""
+        super().__init__()
+        self.schema = self.Schema()
+        self.acl = self.Acl()
+        self.entry = self.Entry()
+
+    # =========================================================================
+    # QuirksPort Protocol Implementation (Concrete Methods for RFC)
+    # =========================================================================
+
+    def normalize_entry_to_rfc(
+        self, entry: FlextLdifModels.Entry
+    ) -> FlextResult[FlextLdifModels.Entry]:
+        """Return the entry as is, since it's already in RFC format."""
+        return FlextResult.ok(entry)
+
+    def denormalize_entry_from_rfc(
+        self, entry: FlextLdifModels.Entry
+    ) -> FlextResult[FlextLdifModels.Entry]:
+        """Return the entry as is, since RFC is the target format."""
+        return FlextResult.ok(entry)
+
+    def normalize_attribute_to_rfc(
+        self, attribute: FlextLdifModels.SchemaAttribute
+    ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
+        """Return the attribute as is, since it's already in RFC format."""
+        return FlextResult.ok(attribute)
+
+    def denormalize_attribute_from_rfc(
+        self, attribute: FlextLdifModels.SchemaAttribute
+    ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
+        """Return the attribute as is, since RFC is the target format."""
+        return FlextResult.ok(attribute)
+
+    def normalize_objectclass_to_rfc(
+        self, objectclass: FlextLdifModels.SchemaObjectClass
+    ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
+        """Return the object class as is, since it's already in RFC format."""
+        return FlextResult.ok(objectclass)
+
+    def denormalize_objectclass_from_rfc(
+        self, objectclass: FlextLdifModels.SchemaObjectClass
+    ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
+        """Return the object class as is, since RFC is the target format."""
+        return FlextResult.ok(objectclass)
+
+    def normalize_acl_to_rfc(
+        self, acl: FlextLdifModels.Acl
+    ) -> FlextResult[FlextLdifModels.Acl]:
+        """Return the ACL as is, since it's already in RFC format."""
+        return FlextResult.ok(acl)
+
+    def denormalize_acl_from_rfc(
+        self, acl: FlextLdifModels.Acl
+    ) -> FlextResult[FlextLdifModels.Acl]:
+        """Return the ACL as is, since RFC is the target format."""
+        return FlextResult.ok(acl)
+
+    server_type = FlextLdifConstants.ServerTypes.RFC
+    priority = 100
+
+    def parse_ldif_content(
+        self, content: str
+    ) -> FlextResult[list[FlextLdifModels.Entry]]:
+        """Delegate LDIF content parsing to the nested Entry quirk."""
+        return self.entry.parse_content(content)
+
+    # =========================================================================
+    # DELEGATION METHODS (for backward compatibility or internal use)
+    # =========================================================================
+
+    def can_handle_attribute(self, attribute: FlextLdifModels.SchemaAttribute) -> bool:
+        """Delegate to schema instance."""
+        return self.schema.can_handle_attribute(attribute)
+
+    def can_handle_objectclass(
+        self, objectclass: FlextLdifModels.SchemaObjectClass
+    ) -> bool:
+        """Delegate to schema instance."""
+        return self.schema.can_handle_objectclass(objectclass)
+
+    def parse_attribute(
+        self,
+        attr_definition: str,
+    ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
+        """Parse RFC 4512 attribute definition by delegating to AttributeParser."""
+        return FlextLdifServersRfc.AttributeParser.parse_common(
+            attr_definition=attr_definition,
+            case_insensitive=False,
+            allow_syntax_quotes=False,
+        )
+
+    def parse_objectclass(
+        self,
+        oc_definition: str,
+    ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
+        """Delegate to schema instance."""
+        return self.schema.parse_objectclass(oc_definition)
+
+    def can_handle_acl(self, acl: FlextLdifModels.Acl) -> bool:
+        """Check if this ACL is RFC-compliant.
+
+        The RFC quirk assumes any ACL that has been successfully parsed into
+        the Acl model is handleable.
+
+        Args:
+            acl: The Acl model to check.
+
+        Returns:
+            True, as any parsed ACL is considered handleable.
+
+        """
+        return True
+
+    def parse_acl(self, acl_line: str) -> FlextResult[FlextLdifModels.Acl]:
+        """Delegate ACL parsing to the nested Acl quirk."""
+        return self.acl.parse_acl(acl_line)
+
+    def create_quirk_metadata(
+        self,
+        original_format: str,
+        extensions: dict[str, object] | None = None,
+    ) -> FlextLdifModels.QuirkMetadata:
+        """Create ACL quirk metadata."""
+        return FlextLdifModels.QuirkMetadata(
+            quirk_type=self.acl.server_type,
+            original_format=original_format,
+            extensions=extensions or {},
+        )
+
+    def convert_acl_to_rfc(
+        self,
+        acl_data: FlextLdifModels.Acl,
+    ) -> FlextResult[FlextLdifModels.Acl]:
+        """Convert ACL to RFC-compliant format (pass-through for RFC).
+
+        Args:
+            acl_data: Acl model
+
+        Returns:
+            FlextResult with RFC-compliant Acl (unchanged)
+
+        """
+        # RFC is already RFC-compliant, return unchanged
+        return FlextResult[FlextLdifModels.Acl].ok(acl_data)
+
+    def convert_acl_from_rfc(
+        self,
+        acl_data: FlextLdifModels.Acl,
+    ) -> FlextResult[FlextLdifModels.Acl]:
+        """Convert ACL from RFC format (pass-through for RFC).
+
+        Args:
+            acl_data: RFC-compliant Acl model
+
+        Returns:
+            FlextResult with Acl (unchanged)
+
+        """
+        return FlextResult[FlextLdifModels.Acl].ok(acl_data)
+
+    def write_acl_to_rfc(self, acl_data: FlextLdifModels.Acl) -> FlextResult[str]:
+        """Write ACL to RFC-compliant string format."""
+        return FlextResult[str].ok(acl_data.raw_acl)
 
     class AttributeParser:
         """RFC 4512 attribute definition parsing utilities.
@@ -132,16 +306,16 @@ class FlextLdifServersRfc(FlextLdifServersBase):
         """
 
         # RFC 4512 attribute regex patterns
-        OID_PATTERN: ClassVar[str] = r"\(\s*([0-9.]+)"
-        NAME_PATTERN: ClassVar[str] = r"NAME\s+(?:\(\s*)?'([^']+)'"
-        DESC_PATTERN: ClassVar[str] = r"DESC\s+'([^']+)'"
-        SYNTAX_PATTERN: ClassVar[str] = r"SYNTAX\s+([0-9.]+)(?:\{(\d+)\})?"
-        EQUALITY_PATTERN: ClassVar[str] = r"EQUALITY\s+(\w+)"
-        SUBSTR_PATTERN: ClassVar[str] = r"SUBSTR\s+(\w+)"
-        ORDERING_PATTERN: ClassVar[str] = r"ORDERING\s+(\w+)"
-        SUP_PATTERN: ClassVar[str] = r"SUP\s+(\w+)"
-        USAGE_PATTERN: ClassVar[str] = r"USAGE\s+(\w+)"
-        X_ORIGIN_PATTERN: ClassVar[str] = r"X-ORIGIN\s+'([^']+)'"
+        # OID_PATTERN: ClassVar[str] = r"\(\s*([0-9.]+)"
+        # NAME_PATTERN: ClassVar[str] = r"NAME\s+(?:\(\s*)?'([^']+)'"
+        # DESC_PATTERN: ClassVar[str] = r"DESC\s+'([^']+)'"
+        # SYNTAX_PATTERN: ClassVar[str] = r"SYNTAX\s+([0-9.]+)(?:\{(\d+)\})?"
+        # EQUALITY_PATTERN: ClassVar[str] = r"EQUALITY\s+(\w+)"
+        # SUBSTR_PATTERN: ClassVar[str] = r"SUBSTR\s+(\w+)"
+        # ORDERING_PATTERN: ClassVar[str] = r"ORDERING\s+(\w+)"
+        # SUP_PATTERN: ClassVar[str] = r"SUP\s+(\w+)"
+        # USAGE_PATTERN: ClassVar[str] = r"USAGE\s+(\w+)"
+        # X_ORIGIN_PATTERN: ClassVar[str] = r"X-ORIGIN\s+'([^']+)'"
 
         @staticmethod
         def parse_common(
@@ -187,7 +361,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             try:
                 # Extract OID (required) - first element after opening parenthesis
                 oid_match = re.match(
-                    FlextLdifServersRfc.AttributeParser.OID_PATTERN,
+                    FlextLdifConstants.LdifPatterns.SCHEMA_OID_EXTRACTION,
                     attr_definition,
                 )
                 if not oid_match:
@@ -197,28 +371,23 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 oid = oid_match.group(1)
 
                 # Extract NAME (optional, single or multiple) - use OID as fallback
-                name_pattern = (
-                    r"(?i)NAME\s+(?:\(\s*)?'([^']+)'"  # OID lenient mode
-                    if case_insensitive
-                    else FlextLdifServersRfc.AttributeParser.NAME_PATTERN  # RFC strict mode
+                name_match = re.search(
+                    FlextLdifConstants.LdifPatterns.SCHEMA_NAME, attr_definition
                 )
-                name_match = re.search(name_pattern, attr_definition)
                 name = name_match.group(1) if name_match else oid
 
                 # Extract DESC (optional)
                 desc_match = re.search(
-                    FlextLdifServersRfc.AttributeParser.DESC_PATTERN,
+                    FlextLdifConstants.LdifPatterns.SCHEMA_DESC,
                     attr_definition,
                 )
                 desc = desc_match.group(1) if desc_match else None
 
                 # Extract SYNTAX (optional) with optional length constraint
-                syntax_pattern = (
-                    r"SYNTAX\s+'?([0-9.]+)(?:\{(\d+)\})?'?"  # OID lenient mode
-                    if allow_syntax_quotes
-                    else FlextLdifServersRfc.AttributeParser.SYNTAX_PATTERN  # RFC strict mode
+                syntax_match = re.search(
+                    FlextLdifConstants.LdifPatterns.SCHEMA_SYNTAX_LENGTH,
+                    attr_definition,
                 )
-                syntax_match = re.search(syntax_pattern, attr_definition)
                 syntax = syntax_match.group(1) if syntax_match else None
                 # NOTE: Model uses "length" not "syntax_length"
                 length = (
@@ -227,71 +396,98 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                     else None
                 )
 
+                # Validate syntax OID format using RFC 4517 service
+                syntax_validation_error: str | None = None
+                if syntax is not None and syntax.strip():
+                    syntax_service = FlextLdifSyntaxService()
+                    validate_result = syntax_service.validate_oid(syntax)
+                    if validate_result.is_failure:
+                        syntax_validation_error = (
+                            f"Syntax OID validation failed: {validate_result.error}"
+                        )
+                    elif not validate_result.unwrap():
+                        syntax_validation_error = (
+                            f"Invalid syntax OID format: {syntax} "
+                            f"(must be numeric dot-separated format)"
+                        )
+
                 # Extract matching rules (optional)
                 equality_match = re.search(
-                    FlextLdifServersRfc.AttributeParser.EQUALITY_PATTERN,
+                    FlextLdifConstants.LdifPatterns.SCHEMA_EQUALITY,
                     attr_definition,
                 )
                 equality = equality_match.group(1) if equality_match else None
 
                 substr_match = re.search(
-                    FlextLdifServersRfc.AttributeParser.SUBSTR_PATTERN,
+                    FlextLdifConstants.LdifPatterns.SCHEMA_SUBSTR,
                     attr_definition,
                 )
                 substr = substr_match.group(1) if substr_match else None
 
                 ordering_match = re.search(
-                    FlextLdifServersRfc.AttributeParser.ORDERING_PATTERN,
+                    FlextLdifConstants.LdifPatterns.SCHEMA_ORDERING,
                     attr_definition,
                 )
                 ordering = ordering_match.group(1) if ordering_match else None
 
                 # Extract flags (boolean)
-                single_value = "SINGLE-VALUE" in attr_definition
+                single_value = (
+                    re.search(
+                        FlextLdifConstants.LdifPatterns.SCHEMA_SINGLE_VALUE,
+                        attr_definition,
+                    )
+                    is not None
+                )
 
                 # NO-USER-MODIFICATION: Only in lenient mode (OID extracts, OUD doesn't)
                 no_user_modification = False
                 if case_insensitive:  # Lenient mode (OID)
-                    no_user_modification = "NO-USER-MODIFICATION" in attr_definition
+                    no_user_modification = (
+                        re.search(
+                            FlextLdifConstants.LdifPatterns.SCHEMA_NO_USER_MODIFICATION,
+                            attr_definition,
+                        )
+                        is not None
+                    )
 
                 # Extract SUP (optional) - superior attribute type
                 sup_match = re.search(
-                    FlextLdifServersRfc.AttributeParser.SUP_PATTERN,
+                    FlextLdifConstants.LdifPatterns.SCHEMA_SUP,
                     attr_definition,
                 )
                 sup = sup_match.group(1) if sup_match else None
 
                 # Extract USAGE (optional)
                 usage_match = re.search(
-                    FlextLdifServersRfc.AttributeParser.USAGE_PATTERN,
+                    FlextLdifConstants.LdifPatterns.SCHEMA_USAGE,
                     attr_definition,
                 )
                 usage = usage_match.group(1) if usage_match else None
 
-                # Build metadata for non-standard fields (obsolete, collective, x_origin)
-                metadata_extensions: dict[str, object] = {}
-
-                if "OBSOLETE" in attr_definition:
-                    metadata_extensions["obsolete"] = True
-
-                if "COLLECTIVE" in attr_definition:
-                    metadata_extensions["collective"] = True
-
-                xorigin_match = re.search(
-                    FlextLdifServersRfc.AttributeParser.X_ORIGIN_PATTERN,
-                    attr_definition,
+                # Build metadata for non-standard fields using shared utility
+                metadata_extensions = FlextLdifUtilities.LdifParser.extract_extensions(
+                    attr_definition
                 )
-                if xorigin_match:
-                    metadata_extensions["x_origin"] = xorigin_match.group(1)
+
+                # Store syntax validation status from RFC 4517 service
+                if syntax:
+                    metadata_extensions[
+                        FlextLdifConstants.MetadataKeys.SYNTAX_OID_VALID
+                    ] = syntax_validation_error is None
+                    if syntax_validation_error:
+                        metadata_extensions[
+                            FlextLdifConstants.MetadataKeys.SYNTAX_VALIDATION_ERROR
+                        ] = syntax_validation_error
 
                 # Store original format for round-trip fidelity
-                metadata_extensions["original_format"] = attr_definition.strip()
+                metadata_extensions[FlextLdifConstants.MetadataKeys.ORIGINAL_FORMAT] = (
+                    attr_definition.strip()
+                )
 
                 # Build QuirkMetadata if we have extensions
                 metadata = (
                     FlextLdifModels.QuirkMetadata(
-                        server_type="rfc",
-                        quirk_type="rfc",
+                        quirk_type=FlextLdifConstants.ServerTypes.RFC,
                         extensions=metadata_extensions,
                     )
                     if metadata_extensions
@@ -352,13 +548,13 @@ class FlextLdifServersRfc(FlextLdifServersBase):
         """
 
         # RFC 4512 objectClass regex patterns
-        OID_PATTERN: ClassVar[str] = r"\(\s*([0-9.]+)"
-        NAME_PATTERN: ClassVar[str] = r"NAME\s+(?:\(\s*)?'([^']+)'"
-        DESC_PATTERN: ClassVar[str] = r"DESC\s+'([^']+)'"
-        SUP_PATTERN: ClassVar[str] = r"SUP\s+(?:\(\s*([\w\s$]+)\s*\)|(\w+))"
-        MUST_PATTERN: ClassVar[str] = r"MUST\s+\(\s*([^)]+)\s*\)|MUST\s+(\w+)"
-        MAY_PATTERN: ClassVar[str] = r"MAY\s+\(\s*([^)]+)\s*\)|MAY\s+(\w+)"
-        X_ORIGIN_PATTERN: ClassVar[str] = r"X-ORIGIN\s+'([^']+)'"
+        # OID_PATTERN: ClassVar[str] = r"\(\s*([0-9.]+)"
+        # NAME_PATTERN: ClassVar[str] = r"NAME\s+(?:\(\s*)?'([^']+)'"
+        # DESC_PATTERN: ClassVar[str] = r"DESC\s+'([^']+)'"
+        # SUP_PATTERN: ClassVar[str] = r"SUP\s+(?:\(\s*([\w\s$]+)\s*\)|(\w+))"
+        # MUST_PATTERN: ClassVar[str] = r"MUST\s+\(\s*([^)]+)\s*\)|MUST\s+(\w+)"
+        # MAY_PATTERN: ClassVar[str] = r"MAY\s+\(\s*([^)]+)\s*\)|MAY\s+(\w+)"
+        # X_ORIGIN_PATTERN: ClassVar[str] = r"X-ORIGIN\s+'([^']+)'"
 
         @classmethod
         def parse_common(
@@ -401,7 +597,9 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             """
             try:
                 # Extract OID (required) - first element after opening parenthesis
-                oid_match = re.match(cls.OID_PATTERN, oc_definition)
+                oid_match = re.match(
+                    FlextLdifConstants.LdifPatterns.SCHEMA_OID_EXTRACTION, oc_definition
+                )
                 if not oid_match:
                     return FlextResult[FlextLdifModels.SchemaObjectClass].fail(
                         "RFC objectClass parsing failed: missing an OID",
@@ -409,22 +607,24 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 oid = oid_match.group(1)
 
                 # Extract NAME (optional) - use OID as fallback
-                name_pattern = (
-                    r"(?i)NAME\s+(?:\(\s*)?'([^']+)'"  # OID lenient mode
-                    if case_insensitive
-                    else cls.NAME_PATTERN  # RFC strict mode
+                name_match = re.search(
+                    FlextLdifConstants.LdifPatterns.SCHEMA_NAME, oc_definition
                 )
-                name_match = re.search(name_pattern, oc_definition)
                 name = name_match.group(1) if name_match else oid
 
                 # Extract DESC (optional)
-                desc_match = re.search(cls.DESC_PATTERN, oc_definition)
+                desc_match = re.search(
+                    FlextLdifConstants.LdifPatterns.SCHEMA_DESC, oc_definition
+                )
                 desc = desc_match.group(1) if desc_match else None
 
                 # Extract SUP (optional) - superior objectClass(es)
                 # Can be single or multiple separated by $
                 sup = None
-                sup_match = re.search(cls.SUP_PATTERN, oc_definition)
+                sup_match = re.search(
+                    FlextLdifConstants.LdifPatterns.SCHEMA_OBJECTCLASS_SUP,
+                    oc_definition,
+                )
                 if sup_match:
                     sup_value = sup_match.group(1) or sup_match.group(2)
                     sup_value = sup_value.strip()
@@ -438,20 +638,24 @@ class FlextLdifServersRfc(FlextLdifServersBase):
 
                 # Determine kind (STRUCTURAL, AUXILIARY, ABSTRACT)
                 # RFC 4512: Default to STRUCTURAL if KIND is not specified
-                if "STRUCTURAL" in oc_definition:
-                    kind = "STRUCTURAL"
-                elif "AUXILIARY" in oc_definition:
-                    kind = "AUXILIARY"
-                elif "ABSTRACT" in oc_definition:
-                    kind = "ABSTRACT"
+                kind_match = re.search(
+                    FlextLdifConstants.LdifPatterns.SCHEMA_OBJECTCLASS_KIND,
+                    oc_definition,
+                    re.IGNORECASE,
+                )
+                if kind_match:
+                    kind = kind_match.group(1).upper()
                 else:
                     # RFC 4512 default: STRUCTURAL
-                    kind = "STRUCTURAL"
+                    kind = FlextLdifConstants.Schema.STRUCTURAL
 
                 # Extract MUST attributes (optional) - required attributes
                 # Can be single or multiple separated by $
                 must = None
-                must_match = re.search(cls.MUST_PATTERN, oc_definition)
+                must_match = re.search(
+                    FlextLdifConstants.LdifPatterns.SCHEMA_OBJECTCLASS_MUST,
+                    oc_definition,
+                )
                 if must_match:
                     must_value = must_match.group(1) or must_match.group(2)
                     must_value = must_value.strip()
@@ -464,7 +668,10 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 # Extract MAY attributes (optional) - optional attributes
                 # Can be single or multiple separated by $
                 may = None
-                may_match = re.search(cls.MAY_PATTERN, oc_definition)
+                may_match = re.search(
+                    FlextLdifConstants.LdifPatterns.SCHEMA_OBJECTCLASS_MAY,
+                    oc_definition,
+                )
                 if may_match:
                     may_value = may_match.group(1) or may_match.group(2)
                     may_value = may_value.strip()
@@ -474,24 +681,20 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                     else:
                         may = [may_value]
 
-                # Build metadata for non-standard fields (obsolete, x_origin)
-                metadata_extensions: dict[str, object] = {}
-
-                if "OBSOLETE" in oc_definition:
-                    metadata_extensions["obsolete"] = True
-
-                xorigin_match = re.search(cls.X_ORIGIN_PATTERN, oc_definition)
-                if xorigin_match:
-                    metadata_extensions["x_origin"] = xorigin_match.group(1)
+                # Build metadata for non-standard fields using shared utility
+                metadata_extensions = FlextLdifUtilities.LdifParser.extract_extensions(
+                    oc_definition
+                )
 
                 # Store original format for round-trip fidelity
-                metadata_extensions["original_format"] = oc_definition.strip()
+                metadata_extensions[FlextLdifConstants.MetadataKeys.ORIGINAL_FORMAT] = (
+                    oc_definition.strip()
+                )
 
                 # Build QuirkMetadata if we have extensions
                 metadata = (
                     FlextLdifModels.QuirkMetadata(
-                        server_type="rfc",
-                        quirk_type="rfc",
+                        quirk_type=FlextLdifConstants.ServerTypes.RFC,
                         extensions=metadata_extensions,
                     )
                     if metadata_extensions
@@ -538,84 +741,93 @@ class FlextLdifServersRfc(FlextLdifServersBase):
         """
 
         @staticmethod
-        def write_common(attr_data: dict[str, object]) -> FlextResult[str]:
+        def write_common(
+            attr_data: FlextLdifModels.SchemaAttribute,
+        ) -> FlextResult[str]:
             """Write attribute data to RFC 4512 format.
 
-            Builds RFC-compliant attribute definition string from parsed data.
+            Builds RFC-compliant attribute definition string from SchemaAttribute model.
             All fields are optional except OID.
 
             Args:
-                attr_data: Dictionary with attribute fields (oid required)
+                attr_data: SchemaAttribute model (oid required)
 
             Returns:
                 FlextResult with RFC 4512 formatted string or error message
 
             Example:
-                >>> attr_data = {"oid": "2.5.4.3", "name": "cn", "desc": "Common Name"}
-                >>> result = RfcAttributeWriter.write_common(attr_data)
+                >>> attr = FlextLdifModels.SchemaAttribute(
+                ...     oid="2.5.4.3", name="cn", desc="Common Name"
+                ... )
+                >>> result = AttributeWriter.write_common(attr)
                 >>> result.unwrap()
                 "( 2.5.4.3 NAME 'cn' DESC 'Common Name' )"
 
             """
             try:
                 # OID is required
-                if FlextLdifConstants.DictKeys.OID not in attr_data:
+                if not attr_data.oid:
                     return FlextResult[str].fail(
                         "RFC attribute writing failed: missing OID",
                     )
 
-                parts: list[str] = [f"( {attr_data[FlextLdifConstants.DictKeys.OID]}"]
+                parts: list[str] = [f"( {attr_data.oid}"]
 
                 # Add NAME (optional)
-                if "name" in attr_data:
-                    parts.append(f"NAME '{attr_data['name']}'")
+                if attr_data.name:
+                    parts.append(f"NAME '{attr_data.name}'")
 
                 # Add DESC (optional)
-                if "desc" in attr_data:
-                    parts.append(f"DESC '{attr_data['desc']}'")
+                if attr_data.desc:
+                    parts.append(f"DESC '{attr_data.desc}'")
 
-                # Add OBSOLETE flag (optional)
-                if attr_data.get("obsolete"):
+                # Add OBSOLETE flag (optional) - check metadata extensions
+                if attr_data.metadata and attr_data.metadata.extensions.get(
+                    FlextLdifConstants.MetadataKeys.OBSOLETE
+                ):
                     parts.append("OBSOLETE")
 
                 # Add SUP (optional)
-                if "sup" in attr_data:
-                    parts.append(f"SUP {attr_data['sup']}")
+                if attr_data.sup:
+                    parts.append(f"SUP {attr_data.sup}")
 
                 # Add matching rules (optional)
-                if "equality" in attr_data:
-                    parts.append(f"EQUALITY {attr_data['equality']}")
+                if attr_data.equality:
+                    parts.append(f"EQUALITY {attr_data.equality}")
 
-                if "ordering" in attr_data:
-                    parts.append(f"ORDERING {attr_data['ordering']}")
+                if attr_data.ordering:
+                    parts.append(f"ORDERING {attr_data.ordering}")
 
-                if "substr" in attr_data:
-                    parts.append(f"SUBSTR {attr_data['substr']}")
+                if attr_data.substr:
+                    parts.append(f"SUBSTR {attr_data.substr}")
 
                 # Add SYNTAX with optional length (optional)
-                if "syntax" in attr_data:
-                    syntax_str = str(attr_data["syntax"])
-                    if "syntax_length" in attr_data:
-                        syntax_str += f"{{{attr_data['syntax_length']}}}"
+                if attr_data.syntax:
+                    syntax_str = str(attr_data.syntax)
+                    if attr_data.length is not None:
+                        syntax_str += f"{{{attr_data.length}}}"
                     parts.append(f"SYNTAX {syntax_str}")
 
                 # Add flags (optional)
-                if attr_data.get("single_value"):
+                if attr_data.single_value:
                     parts.append("SINGLE-VALUE")
 
-                if attr_data.get("collective"):
+                # COLLECTIVE flag from metadata extensions
+                if attr_data.metadata and attr_data.metadata.extensions.get(
+                    FlextLdifConstants.MetadataKeys.COLLECTIVE
+                ):
                     parts.append("COLLECTIVE")
 
-                if attr_data.get("no_user_mod"):
+                if attr_data.no_user_modification:
                     parts.append("NO-USER-MODIFICATION")
 
                 # Add USAGE (optional)
-                if "usage" in attr_data:
-                    parts.append(f"USAGE {attr_data['usage']}")
+                if attr_data.usage:
+                    parts.append(f"USAGE {attr_data.usage}")
 
-                # Add X-ORIGIN (optional)
-                if "x_origin" in attr_data:
-                    parts.append(f"X-ORIGIN '{attr_data['x_origin']}'")
+                # Add X-ORIGIN (optional) from metadata
+                if attr_data.metadata and attr_data.metadata.x_origin:
+                    parts.append(f"X-ORIGIN '{attr_data.metadata.x_origin}'")
 
                 # Close definition
                 parts.append(")")
@@ -625,6 +837,17 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             except (ValueError, TypeError, AttributeError) as e:
                 logger.exception("RFC attribute writing exception")
                 return FlextResult[str].fail(f"RFC attribute writing failed: {e}")
+
+        def _transform_attribute_for_write(
+            self,
+            attr_data: FlextLdifModels.SchemaAttribute,
+        ) -> FlextLdifModels.SchemaAttribute:
+            """Hook for subclasses to transform attribute before writing."""
+            return attr_data
+
+        def _post_write_attribute(self, written_str: str) -> str:
+            """Hook for subclasses to transform written attribute string."""
+            return written_str
 
     class ObjectClassWriter:
         """RFC 4512 objectClass definition writing utilities.
@@ -637,7 +860,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             ...     "oid": "2.5.6.6",
             ...     "name": "person",
             ...     "sup": "top",
-            ...     "kind": "STRUCTURAL",
+            ...     "kind": FlextLdifConstants.Schema.STRUCTURAL,
             ...     "must": ["cn"],
             ...     "may": ["sn", "telephoneNumber"],
             ... }
@@ -647,91 +870,88 @@ class FlextLdifServersRfc(FlextLdifServersBase):
         """
 
         @staticmethod
-        def write_common(oc_data: dict[str, object]) -> FlextResult[str]:
+        def write_common(
+            oc_data: FlextLdifModels.SchemaObjectClass,
+        ) -> FlextResult[str]:
             """Write objectClass data to RFC 4512 format.
 
-            Builds RFC-compliant objectClass definition string from parsed data.
+            Builds RFC-compliant objectClass definition string from SchemaObjectClass model.
             All fields are optional except OID.
 
             Args:
-                oc_data: Dictionary with objectClass fields (oid required)
+                oc_data: SchemaObjectClass model (oid required)
 
             Returns:
                 FlextResult with RFC 4512 formatted string or error message
 
             Example:
-                >>> oc_data = {
-                ...     "oid": "2.5.6.6",
-                ...     "name": "person",
-                ...     "kind": "STRUCTURAL",
-                ...     "must": ["cn"],
-                ... }
-                >>> result = RfcObjectClassWriter.write_common(oc_data)
+                >>> oc = FlextLdifModels.SchemaObjectClass(
+                ...     oid="2.5.6.6",
+                ...     name="person",
+                ...     kind=FlextLdifConstants.Schema.STRUCTURAL,
+                ...     must=["cn"],
+                ... )
+                >>> result = ObjectClassWriter.write_common(oc)
                 >>> result.unwrap()
                 "( 2.5.6.6 NAME 'person' STRUCTURAL MUST cn )"
 
             """
             try:
-                # OID is required
-                if FlextLdifConstants.DictKeys.OID not in oc_data:
+                # OID is required and must not be empty
+                if not oc_data.oid:
                     return FlextResult[str].fail(
                         "RFC objectClass writing failed: missing OID",
                     )
 
-                parts: list[str] = [f"( {oc_data[FlextLdifConstants.DictKeys.OID]}"]
+                parts: list[str] = [f"( {oc_data.oid}"]
 
                 # Add NAME (optional)
-                if "name" in oc_data:
-                    parts.append(f"NAME '{oc_data['name']}'")
+                if oc_data.name:
+                    parts.append(f"NAME '{oc_data.name}'")
 
                 # Add DESC (optional)
-                if "desc" in oc_data:
-                    parts.append(f"DESC '{oc_data['desc']}'")
+                if oc_data.desc:
+                    parts.append(f"DESC '{oc_data.desc}'")
 
-                # Add OBSOLETE flag (optional)
-                if oc_data.get("obsolete"):
+                # Add OBSOLETE flag (optional) - check metadata extensions
+                if oc_data.metadata and oc_data.metadata.extensions.get(
+                    FlextLdifConstants.MetadataKeys.OBSOLETE
+                ):
                     parts.append("OBSOLETE")
 
-                # Add SUP (optional) - can be single or list
-                if "sup" in oc_data:
-                    sup_value = oc_data["sup"]
-                    if isinstance(sup_value, list):
-                        sup_str = " $ ".join(sup_value)
-                        parts.append(f"SUP ( {sup_str} )")
-                    else:
-                        parts.append(f"SUP {sup_value}")
+                # Add SUP (optional) - can be single string or list
+                if oc_data.sup:
+                    parts.append(f"SUP {oc_data.sup}")
 
                 # Add kind (optional, defaults to STRUCTURAL per RFC)
-                kind = oc_data.get("kind", "STRUCTURAL")
+                kind = oc_data.kind or FlextLdifConstants.Schema.STRUCTURAL
                 parts.append(str(kind))
 
                 # Add MUST (optional) - can be single or list
-                if "must" in oc_data:
-                    must_value = oc_data["must"]
-                    if isinstance(must_value, list):
-                        if len(must_value) == 1:
-                            parts.append(f"MUST {must_value[0]}")
+                if oc_data.must:
+                    if isinstance(oc_data.must, list):
+                        if len(oc_data.must) == 1:
+                            parts.append(f"MUST {oc_data.must[0]}")
                         else:
-                            must_str = " $ ".join(must_value)
+                            must_str = " $ ".join(oc_data.must)
                             parts.append(f"MUST ( {must_str} )")
                     else:
-                        parts.append(f"MUST {must_value}")
+                        parts.append(f"MUST {oc_data.must}")
 
                 # Add MAY (optional) - can be single or list
-                if "may" in oc_data:
-                    may_value = oc_data["may"]
-                    if isinstance(may_value, list):
-                        if len(may_value) == 1:
-                            parts.append(f"MAY {may_value[0]}")
+                if oc_data.may:
+                    if isinstance(oc_data.may, list):
+                        if len(oc_data.may) == 1:
+                            parts.append(f"MAY {oc_data.may[0]}")
                         else:
-                            may_str = " $ ".join(may_value)
+                            may_str = " $ ".join(oc_data.may)
                             parts.append(f"MAY ( {may_str} )")
                     else:
-                        parts.append(f"MAY {may_value}")
+                        parts.append(f"MAY {oc_data.may}")
 
-                # Add X-ORIGIN (optional)
-                if "x_origin" in oc_data:
-                    parts.append(f"X-ORIGIN '{oc_data['x_origin']}'")
+                # Add X-ORIGIN (optional) from metadata
+                if oc_data.metadata and oc_data.metadata.x_origin:
+                    parts.append(f"X-ORIGIN '{oc_data.metadata.x_origin}'")
 
                 # Close definition
                 parts.append(")")
@@ -742,6 +962,17 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 logger.exception("RFC objectClass writing exception")
                 return FlextResult[str].fail(f"RFC objectClass writing failed: {e}")
 
+        def _transform_objectclass_for_write(
+            self,
+            oc_data: FlextLdifModels.SchemaObjectClass,
+        ) -> FlextLdifModels.SchemaObjectClass:
+            """Hook for subclasses to transform objectClass before writing."""
+            return oc_data
+
+        def _post_write_objectclass(self, written_str: str) -> str:
+            """Hook for subclasses to transform written objectClass string."""
+            return written_str
+
     class SchemaConverter:
         """RFC schema conversion utilities for server-specific quirks.
 
@@ -750,7 +981,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
 
         Usage:
             # In server quirk convert_attribute_from_rfc method:
-            return RfcSchemaConverter.set_server_type(
+            return RfcSchemaConverter.set_quirk_type(
                 rfc_data,
                 FlextLdifConstants.ServerTypes.OID
             )
@@ -762,42 +993,49 @@ class FlextLdifServersRfc(FlextLdifServersBase):
         """
 
         @staticmethod
-        def set_server_type(
-            data: dict[str, object],
-            server_type: str,
-        ) -> FlextResult[dict[str, object]]:
-            """Copy schema data and set server_type field.
+        def set_quirk_type(
+            model_instance: SchemaModel,
+            quirk_type: str,
+        ) -> FlextResult[SchemaModel]:
+            """Copy schema model and set quirk_type field in metadata.
 
             This is the common pattern used by quirks when converting from RFC format
-            to server-specific format. Most servers use RFC-compliant formats and only
+            to a server-specific format. Most servers use RFC-compliant formats and only
             need to tag the data with their server type.
 
             Args:
-                data: RFC-compliant schema data (attribute or objectClass)
-                server_type: Server type identifier (e.g., "oid", "oud", "openldap")
+                model_instance: RFC-compliant schema model (Attribute or ObjectClass)
+                quirk_type: Server type identifier (e.g., "oid", "oud", "openldap")
 
             Returns:
-                FlextResult with data copy containing SERVER_TYPE field
+                FlextResult with a data copy containing the new quirk_type in metadata.
 
             Example:
-                >>> rfc_data = {"oid": "2.5.4.3", "name": "cn"}
-                >>> result = RfcSchemaConverter.set_server_type(
-                ...     rfc_data, FlextLdifConstants.ServerTypes.OID
+                >>> rfc_attr = FlextLdifModels.SchemaAttribute(oid="2.5.4.3", name="cn")
+                >>> result = RfcSchemaConverter.set_quirk_type(
+                ...     rfc_attr, FlextLdifConstants.ServerTypes.OID
                 ... )
-                >>> server_data = result.unwrap()
-                >>> server_data[FlextLdifConstants.DictKeys.SERVER_TYPE]
+                >>> server_attr = result.unwrap()
+                >>> server_attr.metadata.quirk_type
                 'oid'
 
             """
             try:
-                # Create copy to avoid mutating input
-                result_data = dict(data)
-                result_data[FlextLdifConstants.DictKeys.SERVER_TYPE] = server_type
-                return FlextResult[dict[str, object]].ok(result_data)
+                # Create a deep copy to avoid mutating the original model instance.
+                new_model = model_instance.model_copy(deep=True)
+
+                if new_model.metadata is None:
+                    new_model.metadata = FlextLdifModels.QuirkMetadata(
+                        quirk_type=quirk_type
+                    )
+                else:
+                    new_model.metadata.quirk_type = quirk_type
+
+                return FlextResult.ok(new_model)
 
             except (ValueError, TypeError, AttributeError) as e:
-                return FlextResult[dict[str, object]].fail(
-                    f"Failed to set server type '{server_type}': {e}",
+                return FlextResult.fail(
+                    f"Failed to set quirk type '{quirk_type}': {e}",
                 )
 
     class SchemaExtractor:
@@ -921,74 +1159,84 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             return objectclasses
 
     class Schema(FlextLdifServersBase.Schema):
-        """RFC 4512 Compliant Schema Quirk - Base Implementation.
-
-        Provides RFC-compliant schema parsing using AttributeParser and
-        RfcObjectClassParser as the foundation for all LDAP schema processing.
-
-        """
-
-        # Server identity
-        server_type: ClassVar[str] = "rfc"
-        priority: ClassVar[int] = 100  # Lowest priority - RFC is foundation
+        """RFC 4512 Compliant Schema Quirk - Base Implementation."""
 
         def __init__(
             self,
-            server_type: str | None = None,
-            priority: int | None = None,
         ) -> None:
             """Initialize RFC schema quirk."""
-            super().__init__(server_type=server_type, priority=priority)
+            # RFC implementation doesn't call super() as it's the base implementation
 
-        def can_handle_attribute(self, attr_definition: str) -> bool:
-            """Check if this attribute is RFC-compliant.
+        def can_handle_attribute(
+            self, attribute: FlextLdifModels.SchemaAttribute
+        ) -> bool:
+            """Check if attribute is RFC-compliant.
 
-            RFC quirk handles all RFC-compliant attributes that start with '('.
-            This is the baseline - all servers inherit from this.
-
-            Args:
-                attr_definition: AttributeType definition string
-
-            Returns:
-                True if attribute appears RFC-compliant (starts with '(')
-
-            """
-            return bool(attr_definition.strip().startswith("("))
-
-        def can_handle_objectclass(self, oc_definition: str) -> bool:
-            """Check if this objectClass is RFC-compliant.
-
-            RFC quirk handles all RFC-compliant objectClasses that start with '('.
-            This is the baseline - all servers inherit from this.
+            This method is part of the quirk protocol but is more relevant for
+            server-specific quirks that need to identify non-standard definitions.
+            For the RFC quirk, we assume any validly parsed attribute can be handled.
 
             Args:
-                oc_definition: ObjectClass definition string
+                attribute: SchemaAttribute model (unused)
 
             Returns:
-                True if objectClass appears RFC-compliant (starts with '(')
+                True, as any parsed attribute is considered handleable by the RFC base.
 
             """
-            return bool(oc_definition.strip().startswith("("))
+            return True
+
+        def can_handle_objectclass(
+            self, objectclass: FlextLdifModels.SchemaObjectClass
+        ) -> bool:
+            """Check if objectClass is RFC-compliant.
+
+            Similar to can_handle_attribute, the RFC quirk considers any successfully
+            parsed objectClass as handleable.
+
+            Args:
+                objectclass: SchemaObjectClass model (unused)
+
+            Returns:
+                True, as any parsed objectClass is considered handleable.
+
+            """
+            return True
+
+        def should_filter_out_attribute(
+            self, attribute: FlextLdifModels.SchemaAttribute
+        ) -> bool:
+            """RFC quirk does not filter attributes.
+
+            Args:
+                attribute: SchemaAttribute model (unused)
+
+            Returns:
+                False
+
+            """
+            return False
+
+        def should_filter_out_objectclass(
+            self, objectclass: FlextLdifModels.SchemaObjectClass
+        ) -> bool:
+            """RFC quirk does not filter objectClasses.
+
+            Args:
+                objectclass: SchemaObjectClass model (unused)
+
+            Returns:
+                False
+
+            """
+            return False
 
         def parse_attribute(
             self,
             attr_definition: str,
         ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
-            """Parse RFC 4512 attribute definition.
-
-            Uses strict RFC parsing (case-sensitive) for standards compliance.
-            Server-specific quirks can override for lenient parsing.
-
-            Args:
-                attr_definition: AttributeType definition string per RFC 4512
-
-            Returns:
-                FlextResult with SchemaAttribute model
-
-            """
-            # RFC strict mode: case_insensitive=False, allow_syntax_quotes=False
+            """Parse RFC 4512 attribute definition by delegating to AttributeParser."""
             return FlextLdifServersRfc.AttributeParser.parse_common(
-                attr_definition,
+                attr_definition=attr_definition,
                 case_insensitive=False,
                 allow_syntax_quotes=False,
             )
@@ -997,22 +1245,9 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             self,
             oc_definition: str,
         ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
-            """Parse RFC 4512 objectClass definition.
-
-            Uses strict RFC parsing (case-sensitive) for standards compliance.
-            Server-specific quirks can override for lenient parsing.
-
-            Args:
-                oc_definition: ObjectClass definition string per RFC 4512
-
-            Returns:
-                FlextResult with SchemaObjectClass model
-
-            """
-            # RFC strict mode: case_insensitive=False
+            """Parse RFC-compliant objectClass definition by delegating to ObjectClassParser."""
             return FlextLdifServersRfc.ObjectClassParser.parse_common(
-                oc_definition,
-                case_insensitive=False,
+                oc_definition=oc_definition, case_insensitive=False
             )
 
         def convert_attribute_to_rfc(
@@ -1109,6 +1344,28 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             """
             return FlextResult[FlextLdifModels.SchemaObjectClass].ok(rfc_data)
 
+        def _transform_objectclass_for_write(
+            self,
+            oc_data: FlextLdifModels.SchemaObjectClass,
+        ) -> FlextLdifModels.SchemaObjectClass:
+            """Hook for subclasses to transform objectClass before writing."""
+            return oc_data
+
+        def _post_write_objectclass(self, written_str: str) -> str:
+            """Hook for subclasses to transform written objectClass string."""
+            return written_str
+
+        def _transform_attribute_for_write(
+            self,
+            attr_data: FlextLdifModels.SchemaAttribute,
+        ) -> FlextLdifModels.SchemaAttribute:
+            """Hook for subclasses to transform attribute before writing."""
+            return attr_data
+
+        def _post_write_attribute(self, written_str: str) -> str:
+            """Hook for subclasses to transform written attribute string."""
+            return written_str
+
         def write_attribute_to_rfc(
             self,
             attr_data: FlextLdifModels.SchemaAttribute,
@@ -1122,9 +1379,49 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 FlextResult with RFC-compliant attribute string
 
             """
-            return FlextLdifServersRfc.AttributeWriter.write_common(
-                attr_data.model_dump(),
-            )
+            # Type check - ensure we got a proper model object
+            if not isinstance(attr_data, FlextLdifModels.SchemaAttribute):
+                return FlextResult[str].fail(
+                    "write_attribute_to_rfc requires SchemaAttribute model, got "
+                    f"{type(attr_data).__name__}"
+                )
+
+            # Check for original format in metadata (for perfect round-trip)
+            if attr_data.metadata and attr_data.metadata.original_format:
+                return FlextResult[str].ok(attr_data.metadata.original_format)
+
+            # Transform attribute data using subclass hooks
+            transformed_attr = self._transform_attribute_for_write(attr_data)
+
+            # Write to RFC format (writer now accepts model directly)
+            result = FlextLdifServersRfc.AttributeWriter.write_common(transformed_attr)
+
+            # Apply post-write transformations
+            if result.is_success:
+                written_str = result.unwrap()
+                transformed_str = self._post_write_attribute(written_str)
+
+                # Include attribute flags and extended attributes
+                extras = []
+
+                # Add attribute flags
+                if transformed_attr.no_user_modification:
+                    extras.append("NO-USER-MODIFICATION")
+                if transformed_attr.single_value:
+                    extras.append("SINGLE-VALUE")
+
+                # Add X-ORIGIN from metadata if available
+                if transformed_attr.metadata and transformed_attr.metadata.x_origin:
+                    extras.append(f"X-ORIGIN '{transformed_attr.metadata.x_origin}'")
+
+                # Insert all extras before closing paren
+                if extras and ")" in transformed_str:
+                    extras_str = " " + " ".join(extras)
+                    transformed_str = transformed_str.rstrip(")") + extras_str + ")"
+
+                return FlextResult[str].ok(transformed_str)
+
+            return result
 
         def write_objectclass_to_rfc(
             self,
@@ -1139,62 +1436,124 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 FlextResult with RFC-compliant objectClass string
 
             """
-            return FlextLdifServersRfc.ObjectClassWriter.write_common(
-                oc_data.model_dump(),
-            )
+            # Type check - ensure we got a proper model object
+            if not isinstance(oc_data, FlextLdifModels.SchemaObjectClass):
+                return FlextResult[str].fail(
+                    "write_objectclass_to_rfc requires SchemaObjectClass model, got "
+                    f"{type(oc_data).__name__}"
+                )
+
+            # Check for original format in metadata (for perfect round-trip)
+            if oc_data.metadata and oc_data.metadata.original_format:
+                return FlextResult[str].ok(oc_data.metadata.original_format)
+
+            # Transform objectClass data using subclass hooks
+            transformed_oc = self._transform_objectclass_for_write(oc_data)
+
+            # Write to RFC format (writer now accepts model directly)
+            result = FlextLdifServersRfc.ObjectClassWriter.write_common(transformed_oc)
+
+            # Apply post-write transformations
+            if result.is_success:
+                written_str = result.unwrap()
+                transformed_str = self._post_write_objectclass(written_str)
+
+                # Include extended attributes from metadata
+                if (
+                    transformed_oc.metadata
+                    and transformed_oc.metadata.x_origin
+                    and ")" in transformed_str
+                ):
+                    # Insert X-ORIGIN before closing paren
+                    x_origin_str = f" X-ORIGIN '{transformed_oc.metadata.x_origin}'"
+                    transformed_str = transformed_str.rstrip(")") + x_origin_str + ")"
+
+                return FlextResult[str].ok(transformed_str)
+
+            return result
 
     class Acl(FlextLdifServersBase.Acl):
-        """RFC 4516 Compliant ACL Quirk - Base Implementation.
-
-        Provides RFC 4516 compliant ACL parsing baseline.
-
-        """
-
-        server_type: ClassVar[str] = "rfc"
-        priority: ClassVar[int] = 100
+        """RFC 4516 Compliant ACL Quirk - Base Implementation."""
 
         def __init__(
             self,
-            server_type: str | None = None,
-            priority: int | None = None,
         ) -> None:
             """Initialize RFC ACL quirk."""
-            super().__init__(server_type=server_type, priority=priority)
+            # RFC implementation doesn't call super() as it's the base implementation
 
-        def can_handle_acl(self, acl_line: str) -> bool:
-            """Check if ACL line is RFC-compliant.
+        def can_handle_acl(self, acl: FlextLdifModels.Acl) -> bool:
+            """Check if this ACL is RFC-compliant.
+
+            The RFC quirk assumes any ACL that has been successfully parsed into
+            the Acl model is handleable.
 
             Args:
-                acl_line: ACL definition line
+                acl: The Acl model to check.
 
             Returns:
-                True if line is not empty
+                True, as any parsed ACL is considered handleable.
 
             """
-            return bool(acl_line.strip())
+            return True
+
+        def get_acl_attribute_name(self) -> str:
+            """Get RFC-compliant ACL attribute name.
+
+            Returns:
+                The name of the attribute used for ACLs in RFC 4516.
+
+            """
+            return self.acl_attribute_name
+
+        def can_handle_attribute(
+            self, attribute: FlextLdifModels.SchemaAttribute
+        ) -> bool:
+            """RFC ACL quirk does not handle attributes.
+
+            Args:
+                attribute: SchemaAttribute model (unused)
+
+            Returns:
+                False
+
+            """
+            return False
+
+        def can_handle_objectclass(
+            self, objectclass: FlextLdifModels.SchemaObjectClass
+        ) -> bool:
+            """RFC ACL quirk does not handle objectClasses.
+
+            Args:
+                objectclass: SchemaObjectClass model (unused)
+
+            Returns:
+                False
+
+            """
+            return False
 
         def parse_acl(self, acl_line: str) -> FlextResult[FlextLdifModels.Acl]:
             """Parse RFC-compliant ACL line.
 
             Args:
-                acl_line: ACL definition line
+                acl_line: The raw ACL string from the LDIF.
 
             Returns:
-                FlextResult with Acl model
+                A FlextResult containing the Acl model.
 
             """
-            try:
-                acl = FlextLdifModels.Acl(
-                    raw_line=acl_line.strip(),
-                    metadata=self.create_quirk_metadata(
-                        original_format=acl_line.strip(),
-                    ),
-                )
-                return FlextResult[FlextLdifModels.Acl].ok(acl)
-            except (ValueError, TypeError, AttributeError) as exc:
-                return FlextResult[FlextLdifModels.Acl].fail(
-                    f"ACL parsing failed: {exc}",
-                )
+            if not acl_line or not isinstance(acl_line, str):
+                return FlextResult.fail("ACL line must be a non-empty string.")
+
+            # RFC passthrough: store the raw line in the model.
+            acl_model = FlextLdifModels.Acl(
+                raw_acl=acl_line,
+                metadata=FlextLdifModels.QuirkMetadata(
+                    quirk_type=self.server_type, original_format=acl_line
+                ),
+            )
+            return FlextResult.ok(acl_model)
 
         def create_quirk_metadata(
             self,
@@ -1240,23 +1599,11 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             return FlextResult[FlextLdifModels.Acl].ok(acl_data)
 
         def write_acl_to_rfc(self, acl_data: FlextLdifModels.Acl) -> FlextResult[str]:
-            """Write ACL to RFC-compliant string format.
-
-            Args:
-                acl_data: Acl model
-
-            Returns:
-                FlextResult with RFC-compliant ACL string
-
-            """
+            """Write ACL to RFC-compliant string format."""
             return FlextResult[str].ok(acl_data.raw_acl)
 
     class Entry(FlextLdifServersBase.Entry):
-        """RFC 2849 Compliant Entry Quirk - Base Implementation.
-
-        Provides RFC 2849 compliant LDIF entry handling baseline.
-
-        """
+        """RFC 2849 Compliant Entry Quirk - Base Implementation."""
 
         server_type: ClassVar[str] = "rfc"
         priority: ClassVar[int] = 100
@@ -1267,24 +1614,68 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             priority: int | None = None,
         ) -> None:
             """Initialize RFC entry quirk."""
-            super().__init__(server_type=server_type, priority=priority)
+            # RFC implementation doesn't call super() as it's the base implementation
 
         def can_handle_entry(
             self,
-            _entry_dn: str,
-            _attributes: FlextLdifTypes.Models.EntryAttributesDict,
+            entry: FlextLdifModels.Entry,
         ) -> bool:
             """Check if entry is RFC-compliant.
 
+            Validates RFC 2849 and RFC 4514 compliance:
+            - DN must be properly formatted (RFC 4514)
+            - Entry must have objectClass attribute (LDAP requirement)
+            - Attributes must be non-empty
+
+            RFC quirk acts as the baseline handler since all LDAP entries
+            must be RFC-compliant before server-specific quirks can extend them.
+
             Args:
-                entry_dn: Entry distinguished name
-                attributes: Entry attributes dict
+                entry: Entry model to validate
 
             Returns:
-                True - RFC quirk handles all entries as baseline
+                True if entry meets RFC baseline requirements
 
             """
-            return True
+            # RFC 4514: DN must not be empty
+            if not entry.dn or not entry.dn.value:
+                return False
+
+            # RFC 2849: Attributes must be present
+            if not entry.attributes or not entry.attributes.attributes:
+                return False
+
+            # LDAP requirement: Every entry must have objectClass attribute
+            # Use Entry model method to check for objectClass
+            return entry.has_attribute(FlextLdifConstants.DictKeys.OBJECTCLASS)
+
+        def can_handle_attribute(
+            self, attribute: FlextLdifModels.SchemaAttribute
+        ) -> bool:
+            """Entry quirks don't handle attribute definitions.
+
+            Args:
+                attribute: SchemaAttribute model (unused)
+
+            Returns:
+                False - Entry quirks don't handle attributes
+
+            """
+            return False
+
+        def can_handle_objectclass(
+            self, objectclass: FlextLdifModels.SchemaObjectClass
+        ) -> bool:
+            """Entry quirks don't handle objectClass definitions.
+
+            Args:
+                objectclass: SchemaObjectClass model (unused)
+
+            Returns:
+                False - Entry quirks don't handle objectClasses
+
+            """
+            return False
 
         def parse_content(
             self,
@@ -1315,25 +1706,16 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 if not ldif_content.strip():
                     return FlextResult[list[FlextLdifModels.Entry]].ok(entries)
 
-                # Parse LDIF content using ldif3
-                content_bytes = ldif_content.encode("utf-8")
-                with BytesIO(content_bytes) as input_stream:
-                    parser = LDIFParser(input_stream)
+                # Use shared RFC 2849-compliant LDIF parser from FlextLdifUtilities
+                parsed_entries = FlextLdifUtilities.LdifParser.parse_ldif_lines(
+                    ldif_content
+                )
 
-                    # Iterate through all entries from ldif3
-                    for dn, entry_attrs in parser.parse():
-                        # Type narrow DN to string
-                        if not isinstance(dn, str):
-                            continue
-
-                        # Delegate to parse_entry() to transform individual entry
-                        entry_result = self.parse_entry(
-                            entry_dn=dn,
-                            entry_attrs=entry_attrs,
-                        )
-
-                        if entry_result.is_success:
-                            entries.append(entry_result.unwrap())
+                # Convert parsed (dn, attrs) tuples to Entry models
+                for dn, attrs in parsed_entries:
+                    entry_result = self.parse_entry(dn, attrs)
+                    if entry_result.is_success:
+                        entries.append(entry_result.unwrap())
 
                 return FlextResult[list[FlextLdifModels.Entry]].ok(entries)
 
@@ -1345,30 +1727,29 @@ class FlextLdifServersRfc(FlextLdifServersBase):
         def parse_entry(
             self,
             entry_dn: str,
-            entry_attrs: dict[str, object],
+            entry_attrs: Mapping[str, object],
         ) -> FlextResult[FlextLdifModels.Entry]:
             """Parse raw LDIF entry data into Entry model.
 
-            This is the core parsing method that handles RFC 2849 compliant
-            LDIF entry parsing. It:
-            1. Cleans DN to RFC 4514 format
-            2. Converts ldif3 bytes attributes to strings
-            3. Creates and validates Entry model
-            4. Returns fully parsed Entry object
+            Converts raw LDIF parser output (dict with bytes values) into
+            an Entry model with string attributes. This is the boundary method
+            that converts raw parser data to Entry models - all subsequent
+            processing uses Entry models.
 
             Args:
                 entry_dn: Raw DN string from LDIF parser
-                entry_attrs: Raw attributes dict from LDIF parser (may contain bytes values)
+                entry_attrs: Raw attributes mapping from LDIF parser (may contain bytes values)
 
             Returns:
-                FlextResult with parsed Entry object (fully validated)
+                FlextResult with parsed Entry model (ready for process_entry)
 
             """
             try:
-                # Step 1: Clean DN to remove spaces around '=' (RFC 4514 compliance)
+                # Clean/normalize DN using DN service
                 cleaned_dn = FlextLdifDnService.clean_dn(entry_dn)
 
-                # Step 2: Convert ldif3 bytes attributes to strings
+                # Convert raw attributes to dict[str, list[str]] format
+                # Handle bytes values from ldif3 parser
                 converted_attrs: dict[str, list[str]] = {}
                 for attr_name, attr_values in entry_attrs.items():
                     if isinstance(attr_values, list):
@@ -1378,148 +1759,77 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                             else str(value)
                             for value in attr_values
                         ]
-                    else:
-                        # Handle single value (shouldn't happen but be defensive)
+                    elif isinstance(attr_values, bytes):
                         converted_attrs[attr_name] = [
                             attr_values.decode("utf-8", errors="replace")
-                            if isinstance(attr_values, bytes)
-                            else str(attr_values)
                         ]
+                    else:
+                        converted_attrs[attr_name] = [str(attr_values)]
 
-                # Step 3: Create Entry model directly with validated attributes
+                # Create LdifAttributes directly from converted_attrs
+                # converted_attrs is already dict[str, list[str]]
+                ldif_attrs = FlextLdifModels.LdifAttributes(attributes=converted_attrs)
+
+                # Create Entry model using Entry.create factory method
+                # This ensures proper validation and model construction
                 entry_result = FlextLdifModels.Entry.create(
                     dn=cleaned_dn,
-                    attributes=converted_attrs,
+                    attributes=ldif_attrs,
                 )
 
-                if entry_result.is_success:
-                    entry = entry_result.value
-
-                    # Step 4: Apply RFC post-processing via process_entry()
-                    # This adds DN to attributes dict for output processing
-                    process_result = self.process_entry(
-                        entry_dn=entry.dn.value,
-                        attributes=entry.attributes.attributes,
-                    )
-
-                    if process_result.is_success:
-                        # Update entry with processed attributes
-                        processed_attrs = process_result.unwrap()
-                        typed_attrs: dict[str, list[str]] = {}
-                        for key, value in processed_attrs.items():
-                            if isinstance(value, list):
-                                typed_attrs[key] = [str(v) for v in value]
-                            else:
-                                typed_attrs[key] = [str(value)]
-                        entry = FlextLdifModels.Entry(
-                            dn=entry.dn,
-                            attributes=FlextLdifModels.LdifAttributes(
-                                attributes=typed_attrs,
-                            ),
-                        )
-                        return FlextResult[FlextLdifModels.Entry].ok(entry)
+                if entry_result.is_failure:
                     return FlextResult[FlextLdifModels.Entry].fail(
-                        f"Failed to process entry: {process_result.error}",
+                        f"Failed to create Entry model: {entry_result.error}",
                     )
-                return FlextResult[FlextLdifModels.Entry].fail(
-                    f"Failed to create entry: {entry_result.error}",
-                )
 
-            except (ValueError, TypeError, AttributeError, Exception) as e:
+                # Get the Entry model and apply server-specific processing
+                entry_model = entry_result.unwrap()
+                return self.process_entry(entry_model)
+
+            except Exception as e:
+                logger.exception("RFC entry parsing exception")
                 return FlextResult[FlextLdifModels.Entry].fail(
                     f"Failed to parse entry: {e}",
                 )
 
         def process_entry(
             self,
-            entry_dn: str,
-            attributes: FlextLdifTypes.Models.EntryAttributesDict,
-        ) -> FlextResult[FlextLdifTypes.Models.EntryAttributesDict]:
-            """Process entry with RFC baseline logic (pass-through).
-
-            Args:
-                entry_dn: Entry distinguished name
-                attributes: Entry attributes dict
-
-            Returns:
-                FlextResult with processed entry attributes including DN
-
-            """
-            # Add DN to attributes for write_entry_to_ldif()
-            processed = dict(attributes)
-            processed[FlextLdifConstants.DictKeys.DN] = entry_dn
-            return FlextResult[FlextLdifTypes.Models.EntryAttributesDict].ok(processed)
+            entry: FlextLdifModels.Entry,
+        ) -> FlextResult[FlextLdifModels.Entry]:
+            """Process entry with RFC baseline logic (pass-through)."""
+            # For RFC, no extra processing is needed.
+            return FlextResult.ok(entry)
 
         def convert_entry_to_rfc(
             self,
-            entry_data: FlextLdifTypes.Models.EntryAttributesDict,
-        ) -> FlextResult[FlextLdifTypes.Models.EntryAttributesDict]:
-            """Convert entry to RFC-compliant format (pass-through for RFC).
-
-            Args:
-                entry_data: Server-specific entry attributes dict
-
-            Returns:
-                FlextResult with RFC-compliant entry attributes (unchanged)
-
-            """
-            return FlextResult[FlextLdifTypes.Models.EntryAttributesDict].ok(entry_data)
+            entry_data: FlextLdifModels.Entry,
+        ) -> FlextResult[FlextLdifModels.Entry]:
+            """Return the entry as is, as it's already RFC-compliant."""
+            return FlextResult.ok(entry_data)
 
         def convert_entry_from_rfc(
             self,
-            entry_data: FlextLdifTypes.Models.EntryAttributesDict,
-        ) -> FlextResult[FlextLdifTypes.Models.EntryAttributesDict]:
-            """Convert entry from RFC format (pass-through for RFC).
+            entry_data: FlextLdifModels.Entry,
+        ) -> FlextResult[FlextLdifModels.Entry]:
+            """Return the entry as is, as it's already in the target format."""
+            return FlextResult.ok(entry_data)
 
-            Args:
-                entry_data: RFC-compliant entry attributes dict
-
-            Returns:
-                FlextResult with entry attributes (unchanged)
-
-            """
-            return FlextResult[FlextLdifTypes.Models.EntryAttributesDict].ok(entry_data)
-
-        def write_entry_to_ldif(
+        def denormalize_entry_from_rfc(
             self,
-            entry_data: FlextLdifTypes.Models.EntryAttributesDict,
-        ) -> FlextResult[str]:
-            """Write RFC entry data to standard LDIF format string.
+            entry: FlextLdifModels.Entry,
+        ) -> FlextResult[FlextLdifModels.Entry]:
+            """Convert RFC Entry model to RFC format (pass-through for RFC).
+
+            Since RFC is already the canonical format, this returns the entry unchanged.
 
             Args:
-                entry_data: Entry attributes dict (must include 'dn' key)
+                entry: RFC-compliant Entry model
 
             Returns:
-                FlextResult with LDIF formatted entry string
+                FlextResult with Entry model (unchanged)
 
             """
-            try:
-                if FlextLdifConstants.DictKeys.DN not in entry_data:
-                    return FlextResult[str].fail("Missing required DN field")
-
-                dn = entry_data[FlextLdifConstants.DictKeys.DN]
-                ldif_lines = [f"dn: {dn}"]
-
-                # Write all attributes except DN and internal fields
-                for attr_name, attr_values in entry_data.items():
-                    if (
-                        attr_name.startswith("_")
-                        or attr_name == FlextLdifConstants.DictKeys.DN
-                    ):
-                        continue
-
-                    if isinstance(attr_values, list):
-                        ldif_lines.extend(
-                            f"{attr_name}: {value}" for value in attr_values
-                        )
-                    else:
-                        ldif_lines.append(f"{attr_name}: {attr_values}")
-
-                ldif_text = "\n".join(ldif_lines) + "\n"
-                return FlextResult[str].ok(ldif_text)
-
-            except (ValueError, TypeError, KeyError, AttributeError) as exc:
-                return FlextResult[str].fail(f"Failed to write entry to LDIF: {exc}")
+            return FlextResult[FlextLdifModels.Entry].ok(entry)
 
 
 __all__ = [

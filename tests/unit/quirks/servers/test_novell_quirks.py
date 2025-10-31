@@ -258,9 +258,9 @@ class TestNovellAcls:
         """Test ACL quirk initialization."""
         main_quirk = FlextLdifServersNovell.Schema()
         acl_quirk = main_quirk.Acl()
-        # The ACL quirk inherits from FlextLdifServersBase.Acl which has __init__ with default "generic"
-        assert acl_quirk.server_type == "generic"
-        assert acl_quirk.priority == 15  # Also uses FlextLdifServersBase.Acl default
+        # The nested ACL quirk has its own server_type and priority
+        assert acl_quirk.server_type == FlextLdifConstants.ServerTypes.NOVELL
+        assert acl_quirk.priority == 15
 
     def test_can_handle_acl_with_acl_attribute(self) -> None:
         """Test ACL detection with acl attribute."""

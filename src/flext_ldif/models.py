@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import re
 from collections.abc import Callable
-from typing import ClassVar, cast
+from typing import Any, ClassVar, cast
 
 from flext_core import FlextModels, FlextResult
 from pydantic import ConfigDict, Field, computed_field, field_validator, model_validator
@@ -58,6 +58,16 @@ class FlextLdifModels(FlextModels):
     """
 
     # =========================================================================
+    # PYTHON 3.13 TYPE ALIASES - Semantic type clarity for LDIF domain
+    # =========================================================================
+    # Semantic type aliases for better code readability and intent
+    type DnString = str  # Distinguished Name as string
+    type AttributeName = str  # LDAP attribute name
+    type CategoryName = str  # Categorization key
+    type ServerType = str  # LDAP server type identifier
+    type ConversionData = str | dict[str, str] | list[str]  # Conversion data types
+
+    # =========================================================================
     # DOMAIN MODELS - Core business entities
     # =========================================================================
     class DistinguishedName(FlextModels.Value):
@@ -67,6 +77,7 @@ class FlextLdifModels(FlextModels):
             strict=True,
             validate_default=True,
             validate_assignment=True,
+            extra="allow",  # Allow dynamic fields from conversions
         )
 
         value: str = Field(
@@ -139,7 +150,7 @@ class FlextLdifModels(FlextModels):
         """
 
         model_config = ConfigDict(
-            extra="allow",
+            extra="forbid",
             validate_assignment=True,
         )
 
@@ -161,11 +172,31 @@ class FlextLdifModels(FlextModels):
         )
         extensions: dict[str, object] = Field(
             default_factory=dict,
-            description="Extensions (line_breaks, dn_spaces, attribute_order)",
+            description="Extensions (line_breaks, dn_spaces, attribute_order, unconverted_attributes)",
         )
         custom_data: dict[str, object] = Field(
             default_factory=dict,
             description="Additional custom data for future quirks",
+        )
+        server_type: FlextLdifModels.ServerType | None = Field(
+            default=None,
+            description="Detected LDAP server type for the entry/schema",
+        )
+        source_entry: str | None = Field(
+            default=None,
+            description="Original raw entry representation before parsing",
+        )
+        self_write_to_write: bool = Field(
+            default=False,
+            description="Flag indicating if self_write permission should be promoted to write",
+        )
+        oid_specific_rights: list[str] = Field(
+            default_factory=list,
+            description="List of OID-specific rights found during parsing",
+        )
+        removed_attributes: list[str] = Field(
+            default_factory=list,
+            description="Attributes removed during migration/filtering",
         )
 
         @classmethod
@@ -175,6 +206,8 @@ class FlextLdifModels(FlextModels):
             original_format: str | None = None,
             extensions: dict[str, object] | None = None,
             custom_data: dict[str, object] | None = None,
+            server_type: FlextLdifModels.ServerType | None = None,
+            source_entry: str | None = None,
         ) -> FlextLdifModels.QuirkMetadata:
             """Create QuirkMetadata for a specific quirk type."""
             return cls(
@@ -183,6 +216,8 @@ class FlextLdifModels(FlextModels):
                 extensions=extensions or {},
                 custom_data=custom_data or {},
                 parsed_timestamp=None,  # Will be set by caller if needed
+                server_type=server_type,
+                source_entry=source_entry,
             )
 
     class AclPermissions(FlextModels.ArbitraryTypesModel):
@@ -300,19 +335,26 @@ class FlextLdifModels(FlextModels):
             validate_assignment=True,
         )
 
-        name: str = Field(..., description="ACL name")
-        target: FlextLdifModels.AclTarget = Field(..., description="ACL target")
-        subject: FlextLdifModels.AclSubject = Field(..., description="ACL subject")
-        permissions: FlextLdifModels.AclPermissions = Field(
-            ...,
+        name: str = Field(default="", description="ACL name")
+        target: FlextLdifModels.AclTarget | None = Field(
+            default=None,
+            description="ACL target",
+        )
+        subject: FlextLdifModels.AclSubject | None = Field(
+            default=None,
+            description="ACL subject",
+        )
+        permissions: FlextLdifModels.AclPermissions | None = Field(
+            default=None,
             description="ACL permissions",
         )
         server_type: FlextLdifConstants.LiteralTypes.ServerType = Field(
-            ...,
+            default="rfc",
             description="LDAP server type (openldap, openldap2, openldap1, oid, oud, 389ds)",
         )
+        raw_line: str = Field(default="", description="Original raw ACL line from LDIF")
         raw_acl: str = Field(default="", description="Original ACL string from LDIF")
-        metadata: dict[str, object] | None = Field(
+        metadata: FlextLdifModels.QuirkMetadata | None = Field(
             default=None,
             description="Server-specific metadata for quirks transformation (e.g., OID→RFC conversion info)",
         )
@@ -706,6 +748,10 @@ class FlextLdifModels(FlextModels):
             default=False,
             description="Whether attribute is single-valued (RFC 4512 SINGLE-VALUE)",
         )
+        collective: bool = Field(
+            default=False,
+            description="Whether attribute is collective (RFC 4512 COLLECTIVE)",
+        )
         no_user_modification: bool = Field(
             default=False,
             description="Whether users can modify this attribute (RFC 4512 NO-USER-MODIFICATION)",
@@ -719,6 +765,164 @@ class FlextLdifModels(FlextModels):
         def has_matching_rules(self) -> bool:
             """Check if attribute has any matching rules defined."""
             return bool(self.equality or self.ordering or self.substr)
+
+        @computed_field
+        def syntax_definition(self) -> FlextLdifModels.Syntax | None:
+            """Resolve syntax OID to complete Syntax model using RFC 4517 validation.
+
+            Returns:
+                Resolved Syntax model with RFC 4517 compliance details, or None if:
+                - syntax field is None or empty
+                - syntax OID validation fails
+                - syntax resolution fails
+
+            """
+            if not self.syntax:
+                return None
+            return FlextLdifModels.Syntax.resolve_syntax_oid(
+                self.syntax,
+                server_type="rfc",
+            )
+
+    class Syntax(FlextModels.ArbitraryTypesModel):
+        """LDAP attribute syntax definition model (RFC 4517 compliant).
+
+        Represents an LDAP attribute syntax OID and its validation rules per RFC 4517.
+        """
+
+        oid: str = Field(
+            ...,
+            description="Syntax OID (RFC 4517, format: 1.3.6.1.4.1.1466.115.121.1.X)",
+        )
+        name: str | None = Field(
+            None,
+            description="Human-readable syntax name (e.g., 'Boolean', 'Integer')",
+        )
+        desc: str | None = Field(
+            None,
+            description="Syntax description and purpose",
+        )
+        type_category: str = Field(
+            default="string",
+            description="Syntax type category: string, integer, binary, dn, time, boolean",
+        )
+        is_binary: bool = Field(
+            default=False,
+            description="Whether this syntax uses binary encoding",
+        )
+        max_length: int | None = Field(
+            None,
+            description="Maximum length in bytes (if applicable)",
+        )
+        case_insensitive: bool = Field(
+            default=False,
+            description="Whether comparisons are case-insensitive",
+        )
+        allows_multivalued: bool = Field(
+            default=True,
+            description="Whether attributes using this syntax can be multivalued",
+        )
+        encoding: str = Field(
+            default="utf-8",
+            description="Expected character encoding (utf-8, ascii, iso-8859-1, etc.)",
+        )
+        validation_pattern: str | None = Field(
+            None,
+            description="Optional regex pattern for value validation",
+        )
+        metadata: FlextLdifModels.QuirkMetadata | None = Field(
+            default=None,
+            description="Server-specific quirk metadata",
+        )
+
+        @field_validator("oid")
+        @classmethod
+        def validate_oid(cls, v: str) -> str:
+            """Validate that OID is not empty."""
+            if not v or not v.strip():
+                msg = "OID cannot be empty"
+                raise ValueError(msg)
+            return v
+
+        @computed_field
+        def is_rfc4517_standard(self) -> bool:
+            """Check if this is a standard RFC 4517 syntax OID."""
+            oid_base = "1.3.6.1.4.1.1466.115.121.1"
+            return self.oid.startswith(oid_base)
+
+        @computed_field
+        def syntax_oid_suffix(self) -> str | None:
+            """Extract the numeric suffix from RFC 4517 OID."""
+            # Compute directly instead of accessing is_rfc4517_standard property
+            oid_base = "1.3.6.1.4.1.1466.115.121.1"
+            is_standard = self.oid.startswith(oid_base)
+            if not is_standard:
+                return None
+            parts = self.oid.split(".")
+            return parts[-1] if parts else None
+
+        @staticmethod
+        def resolve_syntax_oid(
+            oid: str, server_type: str = "rfc"
+        ) -> FlextLdifModels.Syntax | None:
+            """Resolve a syntax OID to a Syntax model using RFC 4517 validation.
+
+            This method is used by both models and the syntax service to avoid circular dependencies.
+
+            Args:
+                oid: Syntax OID to resolve
+                server_type: LDAP server type for quirk metadata
+
+            Returns:
+                Resolved Syntax model with RFC 4517 compliance details, or None if:
+                - oid is None or empty
+                - syntax OID validation fails
+                - syntax resolution fails
+
+            """
+            # Handle missing syntax
+            if not oid or not oid.strip():
+                return None
+
+            try:
+                # Build lookup tables
+                oid_to_name = FlextLdifConstants.RfcSyntaxOids.OID_TO_NAME.copy()
+
+                # Look up name from OID
+                name = oid_to_name.get(oid)
+                type_category = (
+                    FlextLdifConstants.RfcSyntaxOids.NAME_TO_TYPE_CATEGORY.get(
+                        name, "string"
+                    )
+                    if name
+                    else "string"
+                )
+
+                # Create metadata for server-specific handling
+                metadata = (
+                    FlextLdifModels.QuirkMetadata(
+                        quirk_type=server_type,
+                        extensions={"description": f"RFC 4517 syntax OID: {oid}"},
+                    )
+                    if server_type != FlextLdifConstants.ServerTypes.RFC
+                    else None
+                )
+
+                # Create and validate Syntax model
+                return FlextLdifModels.Syntax(
+                    oid=oid,
+                    name=name,
+                    desc=None,
+                    type_category=type_category,
+                    max_length=None,
+                    validation_pattern=None,
+                    metadata=metadata,
+                )
+
+            except (ImportError, Exception):
+                # Log and return None for any resolution errors
+                # This prevents the model from being invalid due to service failures
+                return None
 
     class SchemaObjectClass(FlextModels.ArbitraryTypesModel):
         """LDAP schema object class definition model (RFC 4512 compliant).
@@ -793,6 +997,7 @@ class FlextLdifModels(FlextModels):
             strict=True,
             validate_default=True,
             validate_assignment=True,
+            extra="allow",  # Allow dynamic fields from conversions and transformations
         )
 
         dn: FlextLdifModels.DistinguishedName = Field(
@@ -805,7 +1010,7 @@ class FlextLdifModels(FlextModels):
         )
         metadata: FlextLdifModels.QuirkMetadata | None = Field(
             default=None,
-            description="Quirk-specific metadata for preserving original entry format",
+            description="Quirk-specific metadata for preserving original entry format and server-specific data",
         )
         acls: list[FlextLdifModels.Acl] | None = Field(
             default=None,
@@ -814,6 +1019,10 @@ class FlextLdifModels(FlextModels):
         objectclasses: list[FlextLdifModels.SchemaObjectClass] | None = Field(
             default=None,
             description="ObjectClass definitions for schema validation",
+        )
+        attributes_schema: list[FlextLdifModels.SchemaAttribute] | None = Field(
+            default=None,
+            description="AttributeType definitions for schema validation",
         )
         entry_metadata: dict[str, object] | None = Field(
             default=None,
@@ -845,6 +1054,16 @@ class FlextLdifModels(FlextModels):
             # - Optional transformation or filtering based on application rules
             return self
 
+        @computed_field
+        def unconverted_attributes(self) -> dict[str, object]:
+            """Get unconverted attributes from metadata extensions (read-only view)."""
+            if self.metadata and "unconverted_attributes" in self.metadata.extensions:
+                return cast(
+                    "dict[str, object]",
+                    self.metadata.extensions["unconverted_attributes"],
+                )
+            return {}
+
         @classmethod
         def create(
             cls,
@@ -855,8 +1074,12 @@ class FlextLdifModels(FlextModels):
             metadata: FlextLdifModels.QuirkMetadata | None = None,
             acls: list[FlextLdifModels.Acl] | None = None,
             objectclasses: list[FlextLdifModels.SchemaObjectClass] | None = None,
+            attributes_schema: list[FlextLdifModels.SchemaAttribute] | None = None,
             entry_metadata: dict[str, object] | None = None,
             validation_metadata: dict[str, object] | None = None,
+            server_type: FlextLdifModels.ServerType | None = None,  # New parameter
+            source_entry: str | None = None,  # New parameter
+            unconverted_attributes: dict[str, object] | None = None,  # New parameter
         ) -> FlextResult[FlextLdifModels.Entry]:
             """Create a new Entry instance with composition fields.
 
@@ -866,8 +1089,12 @@ class FlextLdifModels(FlextModels):
             metadata: Optional quirk metadata for preserving original format
             acls: Optional list of Access Control Lists for the entry
             objectclasses: Optional list of ObjectClass definitions for schema validation
+            attributes_schema: Optional list of SchemaAttribute definitions for schema validation
             entry_metadata: Optional entry-level metadata (changetype, modifyTimestamp, etc.)
             validation_metadata: Optional validation results and metadata
+            server_type: Optional server type for the entry (for quirk metadata)
+            source_entry: Optional original source entry string (for quirk metadata)
+            unconverted_attributes: Optional dictionary of unconverted attributes (for quirk metadata)
 
             Returns:
             FlextResult with Entry instance or validation error
@@ -899,6 +1126,27 @@ class FlextLdifModels(FlextModels):
                 else:
                     attrs_obj = attributes
 
+                # Handle metadata creation and update
+                if metadata is None:
+                    if server_type or source_entry or unconverted_attributes:
+                        metadata = FlextLdifModels.QuirkMetadata(
+                            server_type=server_type,
+                            source_entry=source_entry,
+                            extensions={
+                                "unconverted_attributes": unconverted_attributes or {}
+                            },
+                        )
+                elif server_type or source_entry or unconverted_attributes:
+                    # Update existing metadata if new values are provided
+                    metadata.server_type = server_type or metadata.server_type
+                    metadata.source_entry = source_entry or metadata.source_entry
+                    if unconverted_attributes:
+                        if not metadata.extensions:
+                            metadata.extensions = {}
+                        metadata.extensions["unconverted_attributes"] = (
+                            unconverted_attributes
+                        )
+
                 # Use model_validate to ensure Pydantic handles
                 # default_factory fields. Entity fields have defaults.
                 entry_data = {
@@ -907,6 +1155,7 @@ class FlextLdifModels(FlextModels):
                     "metadata": metadata,
                     "acls": acls,
                     "objectclasses": objectclasses,
+                    "attributes_schema": attributes_schema,
                     "entry_metadata": entry_metadata,
                     "validation_metadata": validation_metadata,
                 }
@@ -1113,7 +1362,6 @@ class FlextLdifModels(FlextModels):
             )
 
         @computed_field
-        @property
         def is_schema_entry(self) -> bool:
             """Check if entry is a schema definition entry.
 
@@ -1127,7 +1375,6 @@ class FlextLdifModels(FlextModels):
             return bool(self.objectclasses)
 
         @computed_field
-        @property
         def is_acl_entry(self) -> bool:
             """Check if entry has Access Control Lists.
 
@@ -1138,7 +1385,6 @@ class FlextLdifModels(FlextModels):
             return bool(self.acls)
 
         @computed_field
-        @property
         def has_validation_errors(self) -> bool:
             """Check if entry has validation errors.
 
@@ -1151,26 +1397,21 @@ class FlextLdifModels(FlextModels):
             return bool(self.validation_metadata.get("errors"))
 
         def get_objectclass_names(self) -> list[str]:
-            """Get list of objectClass attribute values from entry.
-
-            Returns:
-            List of objectClass values, empty list if objectClass attribute not found
-
-            """
+            """Get list of objectClass attribute values from entry."""
             return self.get_attribute_values(FlextLdifConstants.DictKeys.OBJECTCLASS)
 
     class LdifAttributes(FlextModels.ArbitraryTypesModel):
-        """LDIF attributes container - simplified dict-like interface.
+        """LDIF attributes container - simplified dict-like interface."""
 
-        Directly stores attribute name to list of values (no intermediate wrapper).
-        Replaces the 3-level indirection pattern:
-            OLD: entry.attributes.attributes["cn"].values → list[str]
-            NEW: entry.attributes["cn"] → list[str]
-        """
+        model_config = ConfigDict(extra="allow")  # Allow dynamic attribute fields
 
         attributes: dict[str, list[str]] = Field(
             default_factory=dict,
             description="Attribute name to values list",
+        )
+        attribute_metadata: dict[str, dict[str, Any]] = Field(
+            default_factory=dict,
+            description="Metadata for each attribute, like category or hidden status.",
         )
         metadata: dict[str, object] | None = Field(
             default=None,
@@ -1452,7 +1693,6 @@ class FlextLdifModels(FlextModels):
     class SchemaBuilderResult(FlextModels.Value):
         """Result of schema builder build() operation.
 
-        Represents a complete LDAP schema built using the FlextLdifSchemaBuilder.
         Contains attributes, object classes, server type, and metadata about the schema.
 
         Note: Uses builder-friendly field names (description, required_attributes)
@@ -1519,7 +1759,9 @@ class FlextLdifModels(FlextModels):
                 True if schema is empty (no attributes and no object classes)
 
             """
-            return self.total_attributes == 0 and self.total_object_classes == 0
+            attrs_count: int = len(self.attributes)
+            obj_classes_count: int = len(self.object_classes)
+            return attrs_count == 0 and obj_classes_count == 0
 
         @computed_field
         def schema_dict(self) -> dict[str, object]:
@@ -1674,6 +1916,178 @@ class FlextLdifModels(FlextModels):
                 "success_rate": round(success, 2),
             }
 
+    # =========================================================================
+    # RESPONSE MODELS - Composed from domain models and statistics
+    # =========================================================================
+
+    class ParseStatistics(FlextModels.Value):
+        """Statistics from LDIF parsing operation (composed from PipelineStatistics pattern)."""
+
+        model_config = ConfigDict(
+            frozen=True,
+            validate_default=True,
+        )
+
+        total_entries: int = Field(ge=0, description="Total entries parsed")
+        schema_entries: int = Field(ge=0, description="Schema type entries")
+        data_entries: int = Field(ge=0, description="Data entries")
+        parse_errors: int = Field(ge=0, description="Parse errors encountered")
+        detected_server_type: str | None = Field(
+            None,
+            description="Auto-detected server type from content",
+        )
+
+        @computed_field
+        def success_rate(self) -> float:
+            """Success rate as percentage."""
+            if self.total_entries == 0:
+                return 100.0
+            return (
+                (self.total_entries - self.parse_errors) / self.total_entries
+            ) * 100.0
+
+    class ParseResponse(FlextModels.Value):
+        """Composed response from parsing operation.
+
+        Combines Entry models with statistics from parse operation.
+        Uses model composition instead of dict intermediaries.
+        """
+
+        model_config = ConfigDict(frozen=True, validate_default=True)
+
+        entries: list[FlextLdifModels.Entry] = Field(description="Parsed LDIF entries")
+        statistics: FlextLdifModels.ParseStatistics = Field(
+            description="Parse operation statistics"
+        )
+        detected_server_type: str | None = Field(None)
+
+    class WriteStatistics(FlextModels.Value):
+        """Statistics from LDIF write operation."""
+
+        model_config = ConfigDict(
+            frozen=True,
+            validate_default=True,
+        )
+
+        entries_written: int = Field(ge=0, description="Number of entries written")
+        output_file: str | None = Field(None, description="Output file path")
+        file_size_bytes: int = Field(
+            ge=0, default=0, description="Written file size in bytes"
+        )
+        encoding: str = Field(default="utf-8", description="File encoding used")
+
+    class WriteResponse(FlextModels.Value):
+        """Composed response from write operation.
+
+        Contains written LDIF content and statistics using model composition.
+        """
+
+        model_config = ConfigDict(frozen=True, validate_default=True)
+
+        content: str | None = Field(None, description="Written LDIF content")
+        statistics: FlextLdifModels.WriteStatistics = Field(
+            description="Write operation statistics"
+        )
+
+    class WriteFormatOptions(FlextModels.Value):
+        """Formatting options for LDIF serialization.
+
+        Provides detailed control over the output format, including line width
+        for folding, and whether to respect attribute ordering from metadata.
+        """
+
+        model_config = ConfigDict(frozen=True)
+
+        line_width: int = Field(
+            default=FlextLdifConstants.LdifFormat.DEFAULT_LINE_WIDTH,
+            ge=10,
+            le=100000,
+            description="Maximum line width before folding (RFC 2849 recommends 76). Set high for no folding.",
+        )
+        disable_line_folding: bool = Field(
+            default=False,
+            description="If True, disables line folding completely (ignores line_width).",
+        )
+        respect_attribute_order: bool = Field(
+            default=True,
+            description="If True, writes attributes in the order specified in Entry.metadata.",
+        )
+        sort_attributes: bool = Field(
+            default=False,
+            description="If True, sorts attributes alphabetically. Overridden by respect_attribute_order.",
+        )
+        write_hidden_attributes_as_comments: bool = Field(
+            default=False,
+            description="If True, attributes marked as 'hidden' in metadata will be written as comments.",
+        )
+        write_metadata_as_comments: bool = Field(
+            default=False,
+            description="If True, the entry's main metadata will be written as a commented block.",
+        )
+        include_version_header: bool = Field(
+            default=True,
+            description="If True, includes the LDIF version header in output.",
+        )
+        include_timestamps: bool = Field(
+            default=False,
+            description="If True, includes timestamp comments for when entries were written.",
+        )
+        base64_encode_binary: bool = Field(
+            default=True,
+            description="If True, automatically base64 encodes binary attribute values.",
+        )
+        fold_long_lines: bool = Field(
+            default=True,
+            description="If True, folds lines longer than line_width according to RFC 2849.",
+        )
+        write_empty_values: bool = Field(
+            default=True,
+            description="If True, writes attributes with empty values. If False, omits them.",
+        )
+        normalize_attribute_names: bool = Field(
+            default=False,
+            description="If True, normalizes attribute names to lowercase.",
+        )
+        include_dn_comments: bool = Field(
+            default=False,
+            description="If True, includes DN explanation comments for complex entries.",
+        )
+        write_removed_attributes_as_comments: bool = Field(
+            default=False,
+            description="If True, writes removed attributes as comments in LDIF output.",
+        )
+
+    class AclStatistics(FlextModels.Value):
+        """Statistics from ACL extraction operation."""
+
+        model_config = ConfigDict(
+            frozen=True,
+            validate_default=True,
+        )
+
+        total_entries_processed: int = Field(ge=0, description="Total entries analyzed")
+        entries_with_acls: int = Field(ge=0, description="Entries containing ACLs")
+        total_acls_extracted: int = Field(
+            ge=0, description="Total ACL objects extracted"
+        )
+        acl_attribute_name: str | None = Field(
+            None,
+            description="Primary ACL attribute name found",
+        )
+
+    class AclResponse(FlextModels.Value):
+        """Composed response from ACL extraction.
+
+        Combines extracted Acl models with extraction statistics.
+        """
+
+        model_config = ConfigDict(frozen=True, validate_default=True)
+
+        acls: list[FlextLdifModels.Acl] = Field(description="Extracted ACL models")
+        statistics: FlextLdifModels.AclStatistics = Field(
+            description="ACL extraction statistics"
+        )
+
     class MigrationPipelineResult(FlextModels.Value):
         """Result of migration pipeline execution.
 
@@ -1719,7 +2133,13 @@ class FlextLdifModels(FlextModels):
                 True if no schema and no entries were migrated
 
             """
-            return not self.stats.has_schema and not self.stats.has_entries
+            # Compute directly instead of accessing computed field properties
+            has_schema: bool = (
+                self.stats.total_schema_attributes > 0
+                or self.stats.total_schema_objectclasses > 0
+            )
+            has_entries: bool = self.stats.total_entries > 0
+            return not has_schema and not has_entries
 
         @computed_field
         def entry_count(self) -> int:
@@ -1799,7 +2219,6 @@ class FlextLdifModels(FlextModels):
         )
 
         @computed_field
-        @property
         def success_rate(self) -> float:
             """Calculate validation success rate as percentage."""
             if self.total_entries == 0:
@@ -1824,7 +2243,6 @@ class FlextLdifModels(FlextModels):
         success: bool = Field(description="Migration completion status")
 
         @computed_field
-        @property
         def migration_rate(self) -> float:
             """Calculate migration success rate as percentage."""
             if self.total_entries == 0:
@@ -1850,7 +2268,6 @@ class FlextLdifModels(FlextModels):
         )
 
         @computed_field
-        @property
         def unique_objectclasses(self) -> int:
             """Count of unique object classes."""
             return len(self.objectclass_distribution)
@@ -1910,9 +2327,124 @@ class FlextLdifModels(FlextModels):
             default_factory=list,
             description="List of ACL quirk model instances",
         )
-        entry_quirks: list[object] = Field(
+        entrys: list[object] = Field(
             default_factory=list,
             description="List of Entry quirk model instances",
+        )
+
+    class MigrationConfig(FlextModels.Value):
+        """Configuration for migration pipeline from YAML or dict.
+
+        Supports structured 6-file output (00-06) with flexible categorization,
+        filtering, and removed attribute tracking.
+        """
+
+        model_config = ConfigDict(frozen=True)
+
+        # File organization (00-06)
+        output_file_mapping: dict[str, str] = Field(
+            default_factory=lambda: {
+                "schema": "00-schema.ldif",
+                "hierarchy": "01-hierarchy.ldif",
+                "users": "02-users.ldif",
+                "groups": "03-groups.ldif",
+                "acl": "04-acl.ldif",
+                "data": "05-data.ldif",
+                "rejected": "06-rejected.ldif",
+            },
+            description="Mapping of category names to output filenames",
+        )
+
+        # Categorization rules (for 01, 02, 03, 05)
+        hierarchy_objectclasses: list[str] = Field(
+            default_factory=list,
+            description="ObjectClasses for hierarchy entries (01-hierarchy.ldif)",
+        )
+        user_objectclasses: list[str] = Field(
+            default_factory=list,
+            description="ObjectClasses for user entries (02-users.ldif)",
+        )
+        group_objectclasses: list[str] = Field(
+            default_factory=list,
+            description="ObjectClasses for group entries (03-groups.ldif)",
+        )
+
+        # Filtering rules
+        attribute_whitelist: list[str] | None = Field(
+            default=None,
+            description="If provided, only these attributes are kept",
+        )
+        attribute_blacklist: list[str] | None = Field(
+            default=None,
+            description="If provided, these attributes are removed",
+        )
+        objectclass_whitelist: list[str] | None = Field(
+            default=None,
+            description="If provided, only entries with these objectClasses are kept",
+        )
+        objectclass_blacklist: list[str] | None = Field(
+            default=None,
+            description="If provided, entries with these objectClasses are removed",
+        )
+
+        # Removed attributes tracking
+        track_removed_attributes: bool = Field(
+            default=True,
+            description="If True, tracks removed attributes in entry metadata",
+        )
+        write_removed_as_comments: bool = Field(
+            default=True,
+            description="If True, writes removed attributes as comments in LDIF",
+        )
+
+        # Header template (Jinja2)
+        header_template: str | None = Field(
+            default=None,
+            description="Jinja2 template for file headers",
+        )
+        header_data: dict[str, object] = Field(
+            default_factory=dict,
+            description="Data to pass to header template",
+        )
+
+    class ParseFormatOptions(FlextModels.Value):
+        """Formatting options for LDIF parsing."""
+
+        model_config = ConfigDict(frozen=True)
+
+        auto_parse_schema: bool = Field(
+            default=True,
+            description="If True, automatically parses schema definitions from entries.",
+        )
+        auto_extract_acls: bool = Field(
+            default=True,
+            description="If True, automatically extracts ACLs from entry attributes.",
+        )
+        preserve_attribute_order: bool = Field(
+            default=False,
+            description="If True, preserves the original attribute order from the LDIF file in Entry.metadata.",
+        )
+        validate_entries: bool = Field(
+            default=True,
+            description="If True, validates entries against LDAP schema rules.",
+        )
+        normalize_dns: bool = Field(
+            default=True,
+            description="If True, normalizes DN formatting to RFC 2253 standard.",
+        )
+        max_parse_errors: int = Field(
+            default=100,
+            ge=0,
+            le=10000,
+            description="Maximum number of parsing errors to collect before stopping. 0 means no limit.",
+        )
+        include_operational_attrs: bool = Field(
+            default=False,
+            description="If True, includes operational attributes in parsed entries.",
+        )
+        strict_schema_validation: bool = Field(
+            default=False,
+            description="If True, applies strict schema validation and fails on violations.",
         )
 
 

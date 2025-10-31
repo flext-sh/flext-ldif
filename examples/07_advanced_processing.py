@@ -58,7 +58,7 @@ sn: Three
 
     # Process in batch mode - ONE LINE! (was 15+ lines)
     # No processor creation, no manual conversion loops!
-    batch_result = api.process_batch("transform", entries)
+    batch_result = api.process("transform", entries, parallel=False)
 
     if batch_result.is_success:
         processed = batch_result.unwrap()
@@ -89,7 +89,7 @@ def parallel_processing() -> None:
             entries.append(result.unwrap())
 
     # Process in parallel using ThreadPoolExecutor
-    parallel_result = api.process_parallel("validate", entries)
+    parallel_result = api.process("validate", entries, parallel=True)
 
     if parallel_result.is_success:
         processed = parallel_result.unwrap()
@@ -262,7 +262,7 @@ sn: User
             continue
 
     # Batch process - ONE LINE! (was 15+ lines)
-    batch_result = api.process_batch("transform", entries)
+    batch_result = api.process("transform", entries, parallel=False)
 
     if batch_result.is_success:
         processed = batch_result.unwrap()

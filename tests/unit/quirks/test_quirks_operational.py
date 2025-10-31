@@ -14,9 +14,8 @@ import pytest
 from flext_ldif.servers.oid import FlextLdifServersOid
 from flext_ldif.servers.oud import FlextLdifServersOud
 from flext_ldif.services.conversion_matrix import FlextLdifQuirksConversionMatrix
-
-from ...fixtures import FlextLdifFixtures
-from ...fixtures.helpers import (
+from tests.fixtures import FlextLdifFixtures
+from tests.fixtures.helpers import (
     extract_attributes,
     extract_name,
     extract_objectclasses,

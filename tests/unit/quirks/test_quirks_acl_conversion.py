@@ -59,8 +59,7 @@ import pytest
 from flext_ldif.servers.oid import FlextLdifServersOid
 from flext_ldif.servers.oud import FlextLdifServersOud
 from flext_ldif.services.conversion_matrix import FlextLdifQuirksConversionMatrix
-
-from ...fixtures.loader import FlextLdifFixtures
+from tests.fixtures.loader import FlextLdifFixtures
 
 
 class TestOIDToOUDACLConversion:

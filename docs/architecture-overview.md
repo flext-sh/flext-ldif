@@ -172,7 +172,6 @@ Rel(flext_ldif_lib, python_runtime, "Executes in", "Python 3.13+ environment")
 Container_Boundary(flext_ldif_lib, "FLEXT-LDIF Library") {
 
     Component(facade, "FlextLdif Facade", "Python Class", "Unified API entry point")
-    Component(client, "FlextLdifClient", "Python Class", "File I/O operations")
     Component(quirk_matrix, "QuirksConversionMatrix", "Python Class", "Universal server conversion")
     Component(dn_registry, "DnCaseRegistry", "Python Class", "DN case consistency tracking")
 
@@ -264,7 +263,7 @@ src/flext_ldif/
 │   ├── manager.py             # Quirk orchestration
 │   ├── conversion_matrix.py   # Universal conversions
 │   ├── dn_case_registry.py    # DN case consistency
-│   ├── entry_quirks.py        # Entry-level quirks
+│   ├── entrys.py        # Entry-level quirks
 │   └── servers/               # Server implementations
 │       ├── oid.py      # Oracle Internet Directory
 │       ├── oud_quirks.py      # Oracle Unified Directory
@@ -330,22 +329,6 @@ class FlextLdifRegistry:
     def __init__(self) -> None:
         self._quirks: dict[str, type[QuirkBase]] = {}
         self._discover_quirks()
-```
-
-#### 4. Builder Pattern
-
-```python
-class FlextLdifEntryBuilder:
-    """Builder for constructing LDIF entries."""
-
-    def with_dn(self, dn: str) -> Self:
-        """Set distinguished name."""
-
-    def with_attributes(self, attrs: dict[str, FlextTypes.StringList]) -> Self:
-        """Set entry attributes."""
-
-    def build(self) -> FlextResult[FlextLdifModels.Entry]:
-        """Build validated entry."""
 ```
 
 ---

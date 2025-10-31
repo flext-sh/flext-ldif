@@ -23,6 +23,7 @@ from __future__ import annotations
 
 from flext_ldif.servers.ad import FlextLdifServersAd
 from flext_ldif.servers.apache import FlextLdifServersApache
+from flext_ldif.servers.base import FlextLdifServersBase
 from flext_ldif.servers.ds389 import FlextLdifServersDs389
 from flext_ldif.servers.novell import FlextLdifServersNovell
 from flext_ldif.servers.oid import FlextLdifServersOid
@@ -37,6 +38,7 @@ from flext_ldif.typings import FlextLdifTypes
 __all__ = [
     "FlextLdifServersAd",
     "FlextLdifServersApache",
+    "FlextLdifServersBase",
     "FlextLdifServersDs389",
     "FlextLdifServersNovell",
     "FlextLdifServersOid",
@@ -44,9 +46,6 @@ __all__ = [
     "FlextLdifServersOpenldap1",
     "FlextLdifServersOud",
     "FlextLdifServersRelaxed",
-    "FlextLdifServersRelaxedAcl",
-    "FlextLdifServersRelaxedEntry",
-    "FlextLdifServersRelaxedSchema",
     "FlextLdifServersRfc",
     "FlextLdifServersTivoli",
     "FlextLdifTypes",

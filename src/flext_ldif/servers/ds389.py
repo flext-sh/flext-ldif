@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import base64
 import re
 from typing import ClassVar
 
@@ -11,208 +10,221 @@ from flext_core import FlextResult
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.servers.rfc import FlextLdifServersRfc
-from flext_ldif.typings import FlextLdifTypes
+from flext_ldif.utilities import FlextLdifUtilities
 
 
 class FlextLdifServersDs389(FlextLdifServersRfc):
     """389 Directory Server quirks implementation."""
 
     # Top-level configuration for 389 DS quirks
-    server_type: ClassVar[str] = FlextLdifConstants.ServerTypes.DS_389
-    priority: ClassVar[int] = 15
+    server_type = FlextLdifConstants.LdapServers.DS_389
+    priority = 15
 
-    def __init__(self) -> None:
-        """Initialize 389 DS quirks."""
-        super().__init__()
-        self._schema = self.Schema()
+    def __getattr__(self, name: str) -> object:
+        """Delegate method calls to nested Schema, Acl, or Entry instances.
 
-    def can_handle_attribute(self, attr_definition: str) -> bool:
-        """Delegate to schema instance."""
-        return self._schema.can_handle_attribute(attr_definition)
+        This enables calling schema/acl/entry methods directly on the main server instance.
 
-    def parse_attribute(
-        self,
-        attr_definition: str,
-    ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
-        """Delegate to schema instance."""
-        return self._schema.parse_attribute(attr_definition)
+        Args:
+            name: Method or attribute name to look up
 
-    def can_handle_objectclass(self, oc_definition: str) -> bool:
-        """Delegate to schema instance."""
-        return self._schema.can_handle_objectclass(oc_definition)
+        Returns:
+            Method or attribute from nested instance
 
-    def parse_objectclass(
-        self,
-        oc_definition: str,
-    ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
-        """Delegate to schema instance."""
-        return self._schema.parse_objectclass(oc_definition)
+        Raises:
+            AttributeError: If attribute not found in any nested instance
 
-    def convert_attribute_to_rfc(
-        self,
-        attribute: FlextLdifModels.SchemaAttribute,
-    ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
-        """Delegate to schema instance."""
-        return self._schema.convert_attribute_to_rfc(attribute)
-
-    def convert_attribute_from_rfc(
-        self,
-        attribute: FlextLdifModels.SchemaAttribute,
-    ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
-        """Delegate to schema instance."""
-        return self._schema.convert_attribute_from_rfc(attribute)
-
-    def convert_objectclass_to_rfc(
-        self,
-        objectclass: FlextLdifModels.SchemaObjectClass,
-    ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
-        """Delegate to schema instance."""
-        return self._schema.convert_objectclass_to_rfc(objectclass)
-
-    def convert_objectclass_from_rfc(
-        self,
-        objectclass: FlextLdifModels.SchemaObjectClass,
-    ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
-        """Delegate to schema instance."""
-        return self._schema.convert_objectclass_from_rfc(objectclass)
-
-    def write_attribute_to_rfc(
-        self,
-        attribute: FlextLdifModels.SchemaAttribute,
-    ) -> FlextResult[str]:
-        """Delegate to schema instance."""
-        return self._schema.write_attribute_to_rfc(attribute)
-
-    def write_objectclass_to_rfc(
-        self,
-        objectclass: FlextLdifModels.SchemaObjectClass,
-    ) -> FlextResult[str]:
-        """Delegate to schema instance."""
-        return self._schema.write_objectclass_to_rfc(objectclass)
-
-    # Quirk detection patterns and prefixes for 389 DS (shared with Schema and Entry)
-    DS389_OID_PATTERN: ClassVar[re.Pattern[str]] = re.compile(
-        r"\b2\.16\.840\.1\.113730\.",
-        re.IGNORECASE,
-    )
-    DS389_ATTRIBUTE_PREFIXES: ClassVar[frozenset[str]] = frozenset([
-        "nsslapd-",
-        "nsds",
-        "nsuniqueid",
-    ])
-    DS389_OBJECTCLASS_NAMES: ClassVar[frozenset[str]] = frozenset([
-        "nscontainer",
-        "nsperson",
-        "nsds5replica",
-        "nsds5replicationagreement",
-    ])
+        """
+        # Try schema methods first (most common)
+        if hasattr(self.schema, name):
+            return getattr(self.schema, name)
+        # Try acl methods
+        if hasattr(self.acl, name):
+            return getattr(self.acl, name)
+        # Try entry methods
+        if hasattr(self.entry, name):
+            return getattr(self.entry, name)
+        # Not found in any nested instance
+        msg = f"'{type(self).__name__}' object has no attribute '{name}'"
+        raise AttributeError(msg)
 
     class Schema(FlextLdifServersRfc.Schema):
         """Schema quirks for Red Hat / 389 Directory Server."""
 
-        server_type: ClassVar[str] = FlextLdifConstants.ServerTypes.DS_389
+        server_type: ClassVar[str] = FlextLdifConstants.LdapServers.DS_389
         priority: ClassVar[int] = 15
 
-        DS389_OID_PATTERN: ClassVar[re.Pattern[str]] = re.compile(
-            r"\b2\.16\.840\.1\.113730\.",
-            re.IGNORECASE,
-        )
-        DS389_ATTRIBUTE_PREFIXES: ClassVar[frozenset[str]] = frozenset([
-            "nsslapd-",
-            "nsds",
-            "nsuniqueid",
-        ])
-        DS389_OBJECTCLASS_NAMES: ClassVar[frozenset[str]] = frozenset([
-            "nscontainer",
-            "nsperson",
-            "nsds5replica",
-            "nsds5replicationagreement",
-        ])
-
-        def can_handle_attribute(self, attr_definition: str) -> bool:
-            """Detect 389 DS attribute definitions."""
-            attr_lower = attr_definition.lower()
-            if self.DS389_OID_PATTERN.search(attr_definition):
-                return True
-
-            name_matches = re.findall(
-                r"NAME\s+\(?\s*'([^']+)'",
-                attr_definition,
-                re.IGNORECASE,
-            )
-            if any(
-                name.lower().startswith(tuple(self.DS389_ATTRIBUTE_PREFIXES))
-                for name in name_matches
+        def can_handle_attribute(
+            self, attribute: FlextLdifModels.SchemaAttribute
+        ) -> bool:
+            """Detect 389 DS attribute definitions using centralized constants."""
+            if re.search(
+                FlextLdifConstants.LdapServerDetection.DS389_OID_PATTERN,
+                attribute.oid,
             ):
                 return True
-
-            return any(prefix in attr_lower for prefix in self.DS389_ATTRIBUTE_PREFIXES)
-
-        # --------------------------------------------------------------------- #
-        # INHERITED METHODS (from FlextLdifServersRfc.Schema)
-        # --------------------------------------------------------------------- #
-        # These methods are inherited from RFC base class:
-        # - parse_attribute(): Uses RFC parser
-        # - parse_objectclass(): Uses RFC parser
-        # - convert_attribute_to_rfc(): RFC conversion
-        # - convert_objectclass_to_rfc(): RFC conversion
-        # - convert_attribute_from_rfc(): RFC conversion
-        # - convert_objectclass_from_rfc(): RFC conversion
-        # - write_attribute_to_rfc(): RFC writer
-        # - write_objectclass_to_rfc(): RFC writer
-        # - should_filter_out_attribute(): Returns False (no filtering)
-        # - should_filter_out_objectclass(): Returns False (no filtering)
-        #
-        # Only can_handle_* methods are overridden with 389DS-specific logic.
-        #
-
-        def can_handle_objectclass(self, oc_definition: str) -> bool:
-            """Detect 389 DS objectClass definitions."""
-            if self.DS389_OID_PATTERN.search(oc_definition):
-                return True
-
-            name_matches = re.findall(
-                r"NAME\s+\(?\s*'([^']+)'",
-                oc_definition,
-                re.IGNORECASE,
-            )
+            attr_name_lower = attribute.name.lower()
             return any(
-                name.lower() in self.DS389_OBJECTCLASS_NAMES for name in name_matches
+                attr_name_lower.startswith(prefix)
+                for prefix in FlextLdifConstants.LdapServerDetection.DS389_ATTRIBUTE_PREFIXES
             )
+
+        def can_handle_objectclass(
+            self, objectclass: FlextLdifModels.SchemaObjectClass
+        ) -> bool:
+            """Detect 389 DS objectClass definitions using centralized constants."""
+            if re.search(
+                FlextLdifConstants.LdapServerDetection.DS389_OID_PATTERN,
+                objectclass.oid,
+            ):
+                return True
+            oc_name_lower = objectclass.name.lower()
+            return (
+                oc_name_lower
+                in FlextLdifConstants.LdapServerDetection.DS389_OBJECTCLASS_NAMES
+            )
+
+        def parse_attribute(
+            self,
+            attr_definition: str,
+        ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
+            """Parse attribute definition and add 389 DS metadata.
+
+            Args:
+                attr_definition: Attribute definition string
+
+            Returns:
+                FlextResult with SchemaAttribute marked with 389 DS metadata
+
+            """
+            result = super().parse_attribute(attr_definition)
+            if result.is_success:
+                attr_data = result.unwrap()
+                metadata = FlextLdifModels.QuirkMetadata.create_for_quirk(
+                    FlextLdifConstants.LdapServers.DS_389
+                )
+                return FlextResult[FlextLdifModels.SchemaAttribute].ok(
+                    attr_data.model_copy(update={"metadata": metadata})
+                )
+            return result
+
+        def parse_objectclass(
+            self,
+            oc_definition: str,
+        ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
+            """Parse objectClass definition and add 389 DS metadata.
+
+            Args:
+                oc_definition: ObjectClass definition string
+
+            Returns:
+                FlextResult with SchemaObjectClass marked with 389 DS metadata
+
+            """
+            result = super().parse_objectclass(oc_definition)
+            if result.is_success:
+                oc_data = result.unwrap()
+                # Use FlextLdifUtilities for common objectClass validation
+                FlextLdifUtilities.ObjectClassValidator.fix_missing_sup(
+                    oc_data, server_type=FlextLdifConstants.LdapServers.DS_389
+                )
+                FlextLdifUtilities.ObjectClassValidator.fix_kind_mismatch(
+                    oc_data, server_type=FlextLdifConstants.LdapServers.DS_389
+                )
+                metadata = FlextLdifModels.QuirkMetadata.create_for_quirk(
+                    FlextLdifConstants.LdapServers.DS_389
+                )
+                return FlextResult[FlextLdifModels.SchemaObjectClass].ok(
+                    oc_data.model_copy(update={"metadata": metadata})
+                )
+            return result
+
+        def convert_attribute_from_rfc(
+            self,
+            rfc_data: FlextLdifModels.SchemaAttribute,
+        ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
+            """Convert RFC attribute to 389 DS format with metadata.
+
+            Args:
+                rfc_data: RFC-compliant SchemaAttribute
+
+            Returns:
+                FlextResult with SchemaAttribute marked with 389 DS metadata
+
+            """
+            metadata = FlextLdifModels.QuirkMetadata.create_for_quirk(
+                FlextLdifConstants.LdapServers.DS_389
+            )
+            result_data = rfc_data.model_copy(update={"metadata": metadata})
+            return FlextResult[FlextLdifModels.SchemaAttribute].ok(result_data)
+
+        def convert_objectclass_from_rfc(
+            self,
+            rfc_data: FlextLdifModels.SchemaObjectClass,
+        ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
+            """Convert RFC objectClass to 389 DS format with metadata.
+
+            Args:
+                rfc_data: RFC-compliant SchemaObjectClass
+
+            Returns:
+                FlextResult with SchemaObjectClass marked with 389 DS metadata
+
+            """
+            metadata = FlextLdifModels.QuirkMetadata.create_for_quirk(
+                FlextLdifConstants.LdapServers.DS_389
+            )
+            result_data = rfc_data.model_copy(update={"metadata": metadata})
+            return FlextResult[FlextLdifModels.SchemaObjectClass].ok(result_data)
 
         # Nested class references for Schema - allows Schema().Entry() pattern
         # These are references to the outer class definitions for proper architecture
         class Acl(FlextLdifServersRfc.Acl):
             """Nested Acl reference within Schema."""
 
-            server_type: ClassVar[str] = FlextLdifConstants.ServerTypes.DS_389
+            server_type: ClassVar[str] = FlextLdifConstants.LdapServers.DS_389
             priority: ClassVar[int] = 15
 
-            def __init__(self) -> None:
-                """Initialize by delegating to outer Acl class."""
-                super().__init__()
+            def parse_acl(self, acl_line: str) -> FlextResult[FlextLdifModels.Acl]:
+                """Delegate to outer 389 DS Acl's parse_acl implementation."""
+                # Create an instance of the outer FlextLdifServersDs389.Acl and use its parse_acl
+                outer_acl = FlextLdifServersDs389.Acl()
+                return outer_acl.parse_acl(acl_line)
+
+            def write_acl_to_rfc(
+                self,
+                acl_data: FlextLdifModels.Acl,
+            ) -> FlextResult[str]:
+                """Delegate to outer ds389 Acl's write_acl_to_rfc implementation."""
+                outer_acl = FlextLdifServersDs389.Acl()
+                return outer_acl.write_acl_to_rfc(acl_data)
 
         class Entry(FlextLdifServersRfc.Entry):
             """Nested Entry reference within Schema."""
 
-            server_type: ClassVar[str] = FlextLdifConstants.ServerTypes.DS_389
+            server_type: ClassVar[str] = FlextLdifConstants.LdapServers.DS_389
             priority: ClassVar[int] = 15
 
-            def __init__(self) -> None:
-                """Initialize by delegating to outer Entry class."""
-                super().__init__()
+            def process_entry(
+                self, entry: FlextLdifModels.Entry
+            ) -> FlextResult[FlextLdifModels.Entry]:
+                """Delegate to outer ds389 Entry's process_entry implementation."""
+                outer_entry = FlextLdifServersDs389.Entry()
+                return outer_entry.process_entry(entry)
 
     class Acl(FlextLdifServersRfc.Acl):
         """389 Directory Server ACI quirk."""
 
         CLAUSE_PATTERN: ClassVar[re.Pattern[str]] = re.compile(r"\([^()]+\)")
 
-        server_type: ClassVar[str] = FlextLdifConstants.ServerTypes.DS_389
+        server_type: ClassVar[str] = FlextLdifConstants.LdapServers.DS_389
         priority: ClassVar[int] = 15
 
-        def can_handle_acl(self, acl_line: str) -> bool:
+        def can_handle_acl(self, acl: FlextLdifModels.Acl) -> bool:
             """Detect 389 DS ACI lines."""
-            normalized = acl_line.strip()
+            if not isinstance(acl, FlextLdifModels.Acl) or not acl.raw_acl:
+                return False
+            normalized = acl.raw_acl.strip()
             if not normalized:
                 return False
 
@@ -261,11 +273,27 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                         attr.strip() for attr in attr_string.split() if attr.strip()
                     ]
 
-                # Build Acl model (simplified for DS389 stub)
+                # Extract target DN from the ACI target clause
+                # 389 DS ACLs use: target = "dn:<dn_pattern>"
+                target_dn = "*"  # Default wildcard
+                target_match = re.search(
+                    r"target\s*=\s*\"([^\"]+)\"",
+                    content,
+                    re.IGNORECASE,
+                )
+                if target_match:
+                    target_clause = target_match.group(1)
+                    # Parse DN from "dn:<dn_pattern>" format
+                    if target_clause.lower().startswith("dn:"):
+                        target_dn = target_clause[3:]  # Extract after "dn:"
+                    else:
+                        target_dn = target_clause
+
+                # Build Acl model
                 acl = FlextLdifModels.Acl(
                     name=acl_name_match.group(1) if acl_name_match else "389 DS ACL",
                     target=FlextLdifModels.AclTarget(
-                        target_dn="*",  # DS389 stub - not extracted, use wildcard
+                        target_dn=target_dn,  # DS389: extracted from target clause
                         attributes=target_attributes,
                     ),
                     subject=FlextLdifModels.AclSubject(
@@ -275,7 +303,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                         ),
                     ),
                     permissions=FlextLdifModels.AclPermissions(
-                        # DS389 stub - set permissions based on parsed list
+                        # DS389: set permissions based on parsed permission list
                         read="read" in permissions,
                         write="write" in permissions,
                         add="add" in permissions,
@@ -283,7 +311,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                         search="search" in permissions,
                         compare="compare" in permissions,
                     ),
-                    server_type=FlextLdifConstants.ServerTypes.DS_389,
+                    server_type=FlextLdifConstants.LdapServers.DS_389,
                     raw_acl=acl_line,
                 )
 
@@ -300,7 +328,8 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
         ) -> FlextResult[FlextLdifModels.Acl]:
             """Convert 389 DS ACL to RFC representation."""
             try:
-                # For stub, pass through Acl model with server_type cleared
+                # Convert 389 DS ACL to RFC format by changing server_type
+                # The ACL structure is compatible between 389 DS and RFC
                 rfc_acl = acl_data.model_copy(
                     update={"server_type": FlextLdifConstants.ServerTypes.RFC},
                 )
@@ -317,7 +346,8 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
         ) -> FlextResult[FlextLdifModels.Acl]:
             """Convert RFC ACL to 389 DS representation."""
             try:
-                # For stub, pass through Acl model with DS389 server_type
+                # Convert RFC to DS389 format by changing server_type
+                # The ACL structure is compatible between RFC and 389 DS
                 ds_acl = acl_data.model_copy(
                     update={"server_type": FlextLdifConstants.ServerTypes.DS_389},
                 )
@@ -334,7 +364,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             389 Directory Server ACLs use ACI format with structured clauses.
             """
             try:
-                # For DS389 stub, use raw_acl if available
+                # Use raw_acl if available (preserves original format)
                 if acl_data.raw_acl:
                     acl_str = f"aci: {acl_data.raw_acl}"
                     return FlextResult[str].ok(acl_str)
@@ -345,18 +375,19 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                 # Build permissions list from flags
                 permissions: list[str] = []
                 if acl_data.permissions:
+                    # Use constants for permission names
                     if acl_data.permissions.read:
-                        permissions.append("read")
+                        permissions.append(FlextLdifConstants.PermissionNames.READ)
                     if acl_data.permissions.write:
-                        permissions.append("write")
+                        permissions.append(FlextLdifConstants.PermissionNames.WRITE)
                     if acl_data.permissions.add:
-                        permissions.append("add")
+                        permissions.append(FlextLdifConstants.PermissionNames.ADD)
                     if acl_data.permissions.delete:
-                        permissions.append("delete")
+                        permissions.append(FlextLdifConstants.PermissionNames.DELETE)
                     if acl_data.permissions.search:
-                        permissions.append("search")
+                        permissions.append(FlextLdifConstants.PermissionNames.SEARCH)
                     if acl_data.permissions.compare:
-                        permissions.append("compare")
+                        permissions.append(FlextLdifConstants.PermissionNames.COMPARE)
 
                 targetattr = (
                     " ".join(acl_data.target.attributes)
@@ -397,49 +428,42 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
     class Entry(FlextLdifServersRfc.Entry):
         """Entry quirks for 389 Directory Server."""
 
-        DS389_DN_MARKERS: ClassVar[frozenset[str]] = frozenset([
-            "cn=config",
-            "cn=monitor",
-            "cn=changelog",
-        ])
-        DS389_ATTRIBUTE_PREFIXES: ClassVar[frozenset[str]] = frozenset([
-            "nsslapd-",
-            "nsds",
-            "nsuniqueid",
-        ])
-
-        server_type: ClassVar[str] = FlextLdifConstants.ServerTypes.DS_389
+        server_type: ClassVar[str] = FlextLdifConstants.LdapServers.DS_389
         priority: ClassVar[int] = 15
 
-        # --------------------------------------------------------------------- #
-        # OVERRIDDEN METHODS (from FlextLdifServersBase.Entry)
-        # --------------------------------------------------------------------- #
-        # These methods override the base class with 389DS-specific logic:
-        # - can_handle_entry(): Detects 389DS entries by DN/attributes
-        # - process_entry(): Normalizes 389DS entries with metadata
-        # - convert_entry_to_rfc(): Converts 389DS entries to RFC format
-
-        def can_handle_entry(
-            self,
-            entry_dn: str,
-            attributes: FlextLdifTypes.Models.EntryAttributesDict,
-        ) -> bool:
+        def can_handle_entry(self, entry: FlextLdifModels.Entry) -> bool:
             """Detect 389 DS-specific entries."""
+            if not isinstance(entry, FlextLdifModels.Entry):
+                return False
+
+            attributes = entry.attributes.attributes
+            entry_dn = entry.dn.value
+
+            if not entry_dn:
+                return False
+
             dn_lower = entry_dn.lower()
-            if any(marker in dn_lower for marker in self.DS389_DN_MARKERS):
+            if any(
+                marker in dn_lower
+                for marker in FlextLdifConstants.LdapServerDetection.DS389_DN_MARKERS
+            ):
                 return True
 
             normalized_attrs = {
                 name.lower(): value for name, value in attributes.items()
             }
             if any(
-                attr.startswith(tuple(self.DS389_ATTRIBUTE_PREFIXES))
+                attr.startswith(
+                    tuple(
+                        FlextLdifConstants.LdapServerDetection.DS389_ATTRIBUTE_PREFIXES
+                    )
+                )
                 for attr in normalized_attrs
             ):
                 return True
 
-            object_classes_raw = attributes.get(
-                FlextLdifConstants.DictKeys.OBJECTCLASS,
+            object_classes_raw = normalized_attrs.get(
+                "objectclass",
                 [],
             )
             object_classes = (
@@ -449,71 +473,65 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             )
             return bool(
                 any(
-                    str(oc).lower() in FlextLdifServersDs389.DS389_OBJECTCLASS_NAMES
+                    str(oc).lower()
+                    in FlextLdifConstants.LdapServerDetection.DS389_OBJECTCLASS_NAMES
                     for oc in object_classes
                 ),
             )
 
         def process_entry(
-            self,
-            entry_dn: str,
-            attributes: FlextLdifTypes.Models.EntryAttributesDict,
-        ) -> FlextResult[FlextLdifTypes.Models.EntryAttributesDict]:
+            self, entry: FlextLdifModels.Entry
+        ) -> FlextResult[FlextLdifModels.Entry]:
             """Normalise 389 DS entries and attach metadata."""
             try:
+                attributes = entry.attributes.attributes.copy()
+                entry_dn = entry.dn.value
                 dn_lower = entry_dn.lower()
-                object_classes_raw = attributes.get(
-                    FlextLdifConstants.DictKeys.OBJECTCLASS,
-                    [],
-                )
-                object_classes = (
-                    object_classes_raw
-                    if isinstance(object_classes_raw, list)
-                    else [object_classes_raw]
+
+                # Store metadata in extensions
+                metadata = entry.metadata or FlextLdifModels.QuirkMetadata()
+                metadata.extensions[FlextLdifConstants.DictKeys.IS_CONFIG_ENTRY] = (
+                    FlextLdifConstants.DnPatterns.CN_CONFIG.lower() in dn_lower
                 )
 
-                processed_attributes: dict[str, object] = {}
-                for attr_name, attr_value in attributes.items():
-                    if isinstance(attr_value, bytes):
-                        processed_attributes[attr_name] = base64.b64encode(
-                            attr_value,
-                        ).decode("ascii")
-                    else:
-                        processed_attributes[attr_name] = attr_value
+                processed_entry = FlextLdifModels.Entry(
+                    dn=entry.dn,
+                    attributes=FlextLdifModels.LdifAttributes(attributes=attributes),
+                    metadata=metadata,
+                )
 
-                processed_entry: dict[str, object] = {
-                    FlextLdifConstants.DictKeys.DN: entry_dn,
-                    FlextLdifConstants.DictKeys.SERVER_TYPE: FlextLdifConstants.LdapServers.DS_389,
-                    FlextLdifConstants.DictKeys.IS_CONFIG_ENTRY: "cn=config"
-                    in dn_lower,
-                    FlextLdifConstants.DictKeys.OBJECTCLASS: object_classes,
-                }
-                processed_entry.update(processed_attributes)
-
-                return FlextResult[FlextLdifTypes.Models.EntryAttributesDict].ok(
+                return FlextResult[FlextLdifModels.Entry].ok(
                     processed_entry,
                 )
 
             except (ValueError, TypeError, AttributeError) as exc:
-                return FlextResult[FlextLdifTypes.Models.EntryAttributesDict].fail(
+                return FlextResult[FlextLdifModels.Entry].fail(
                     f"389 Directory Server entry processing failed: {exc}",
                 )
 
         def convert_entry_to_rfc(
-            self,
-            entry_data: dict[str, object],
-        ) -> FlextResult[FlextLdifTypes.Models.EntryAttributesDict]:
+            self, entry_data: FlextLdifModels.Entry
+        ) -> FlextResult[FlextLdifModels.Entry]:
             """Strip 389 DS metadata before RFC processing."""
             try:
-                normalized_entry = dict(entry_data)
-                normalized_entry.pop(FlextLdifConstants.DictKeys.SERVER_TYPE, None)
-                normalized_entry.pop(FlextLdifConstants.DictKeys.IS_CONFIG_ENTRY, None)
-                return FlextResult[FlextLdifTypes.Models.EntryAttributesDict].ok(
-                    normalized_entry,
+                attributes = entry_data.attributes.attributes.copy()
+                attributes.pop(FlextLdifConstants.DictKeys.SERVER_TYPE, None)
+                attributes.pop(FlextLdifConstants.DictKeys.IS_CONFIG_ENTRY, None)
+
+                rfc_entry = entry_data.model_copy(
+                    update={
+                        "attributes": FlextLdifModels.LdifAttributes(
+                            attributes=attributes
+                        )
+                    }
+                )
+
+                return FlextResult[FlextLdifModels.Entry].ok(
+                    rfc_entry,
                 )
 
             except (ValueError, TypeError, AttributeError) as exc:
-                return FlextResult[FlextLdifTypes.Models.EntryAttributesDict].fail(
+                return FlextResult[FlextLdifModels.Entry].fail(
                     f"389 Directory Server entry→RFC conversion failed: {exc}",
                 )
 

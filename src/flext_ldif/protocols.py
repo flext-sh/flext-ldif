@@ -21,6 +21,9 @@ from typing import Any, Protocol, runtime_checkable
 
 from flext_core import FlextProtocols, FlextResult
 
+from flext_ldif.models import FlextLdifModels
+from flext_ldif.typings import FlextLdifTypes
+
 
 class FlextLdifProtocols(FlextProtocols):
     """Unified LDIF protocol definitions extending FlextProtocols.
@@ -55,6 +58,15 @@ class FlextLdifProtocols(FlextProtocols):
         True  # Satisfies protocol through structural typing
     """
 
+    # Define a type alias for any model that can be converted by the matrix.
+    # This is defined here, alongside the protocol that uses it, to avoid
+    # circular dependencies between models.py and typings.py.
+    ConvertibleModel = (
+        FlextLdifModels.Entry
+        | FlextLdifModels.SchemaAttribute
+        | FlextLdifModels.SchemaObjectClass
+        | FlextLdifModels.Acl
+    )
     # =========================================================================
     # INHERIT FOUNDATION PROTOCOLS - Available through inheritance
     # =========================================================================
@@ -407,7 +419,7 @@ class FlextLdifProtocols(FlextProtocols):
             def can_handle_entry(
                 self,
                 entry_dn: str,
-                attributes: dict[str, object],
+                attributes: FlextLdifTypes.Models.EntryAttributesDict,
             ) -> bool:
                 """Check if this quirk can handle the entry.
 
@@ -424,7 +436,7 @@ class FlextLdifProtocols(FlextProtocols):
             def process_entry(
                 self,
                 entry_dn: str,
-                attributes: dict[str, object],
+                attributes: FlextLdifTypes.Models.EntryAttributesDict,
             ) -> FlextResult[dict[str, object]]:
                 """Process entry with server-specific logic.
 
@@ -476,6 +488,137 @@ class FlextLdifProtocols(FlextProtocols):
                 ...
 
         # =====================================================================
+        # UNIVERSAL QUIRK PROTOCOL - For all server-specific conversions
+        # =====================================================================
+
+        @runtime_checkable
+        class QuirksPort(Protocol):
+            """A universal, model-driven port for handling server-specific LDIF quirks.
+
+            All communication with services (parser, writer, migration, etc.) should happen
+            through this interface using the Entry, SchemaAttribute, SchemaObjectClass,
+            and Acl models. This ensures a standardized, type-safe contract between
+            the services layer and the server-specific implementation layer.
+
+            The port is responsible for two main categories of operations:
+            1.  **Model-to-Model Transformation**: Converting models between the canonical
+                RFC representation and a server-specific representation. This is used by
+                services like the migration pipeline.
+            2.  **Raw-to-Model Parsing & Model-to-Raw Writing**: Encapsulating the logic
+                of parsing raw data (LDIF strings, dictionaries) into standardized models
+                and writing those models back to LDIF strings. This is used by the
+                Parser and Writer services.
+            """
+
+            server_type: str
+            """Server type identifier (e.g., 'oid', 'oud', 'openldap', 'rfc').
+            Must match a value from `FlextLdifConstants.ServerTypes`.
+            """
+
+            priority: int
+            """Quirk priority (lower number = higher priority). Used by the registry
+            to select the most specific quirk available.
+            """
+
+            # =====================================================================
+            # Model-to-Model Transformations
+            # =====================================================================
+
+            def normalize_entry_to_rfc(
+                self, entry: FlextLdifModels.Entry
+            ) -> FlextResult[FlextLdifModels.Entry]:
+                """Convert a server-specific Entry model to the canonical RFC model.
+
+                This process should strip server-specific attributes or translate
+                them into a standard representation, storing original data in the
+                `QuirkMetadata` if necessary for a round trip.
+
+                Args:
+                    entry: The server-specific Entry model to normalize.
+
+                Returns:
+                    A FlextResult containing the normalized, RFC-compliant Entry model.
+
+                """
+                ...
+
+            def denormalize_entry_from_rfc(
+                self, entry: FlextLdifModels.Entry
+            ) -> FlextResult[FlextLdifModels.Entry]:
+                """Convert a canonical RFC Entry model to a server-specific model.
+
+                This process may involve adding server-specific operational attributes,
+                translating standard attributes back to a proprietary format, or
+                restoring data from `QuirkMetadata`.
+
+                Args:
+                    entry: The RFC-compliant Entry model to denormalize.
+
+                Returns:
+                    A FlextResult containing the denormalized, server-specific Entry model.
+
+                """
+                ...
+
+            def normalize_attribute_to_rfc(
+                self, attribute: FlextLdifModels.SchemaAttribute
+            ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
+                """Convert a server-specific SchemaAttribute to the canonical RFC model."""
+                ...
+
+            def denormalize_attribute_from_rfc(
+                self, attribute: FlextLdifModels.SchemaAttribute
+            ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
+                """Convert a canonical RFC SchemaAttribute to a server-specific model."""
+                ...
+
+            def normalize_objectclass_to_rfc(
+                self, objectclass: FlextLdifModels.SchemaObjectClass
+            ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
+                """Convert a server-specific SchemaObjectClass to the canonical RFC model."""
+                ...
+
+            def denormalize_objectclass_from_rfc(
+                self, objectclass: FlextLdifModels.SchemaObjectClass
+            ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
+                """Convert a canonical RFC SchemaObjectClass to a server-specific model."""
+                ...
+
+            def normalize_acl_to_rfc(
+                self, acl: FlextLdifModels.Acl
+            ) -> FlextResult[FlextLdifModels.Acl]:
+                """Convert a server-specific Acl to the canonical RFC model."""
+                ...
+
+            def denormalize_acl_from_rfc(
+                self, acl: FlextLdifModels.Acl
+            ) -> FlextResult[FlextLdifModels.Acl]:
+                """Convert a canonical RFC Acl to a server-specific model."""
+                ...
+
+            # =====================================================================
+            # Raw-to-Model Parsing (for the Parser Service)
+            # =====================================================================
+
+            def parse_ldif_content(
+                self, content: str
+            ) -> FlextResult[list[FlextLdifModels.Entry]]:
+                """Parse a raw LDIF string into a list of Entry models.
+
+                This method encapsulates the entire parsing process, including
+                handling multi-entry LDIF, line folding, and decoding of values,
+                producing a clean list of `Entry` models with appropriate metadata.
+
+                Args:
+                    content: The raw LDIF content as a string.
+
+                Returns:
+                    A FlextResult containing a list of parsed Entry models.
+
+                """
+                ...
+
+        # =====================================================================
         # CONVERSION MATRIX PROTOCOLS - For server-to-server conversions
         # =====================================================================
 
@@ -495,24 +638,25 @@ class FlextLdifProtocols(FlextProtocols):
 
             def convert(
                 self,
-                source_quirk: FlextLdifProtocols.Quirks.SchemaProtocol,
-                target_quirk: FlextLdifProtocols.Quirks.SchemaProtocol,
-                _element_type: str,
-                _element_data: str | dict[str, object],
-            ) -> FlextResult[str | dict[str, object]]:
-                """Convert schema element between two servers via RFC format.
+                source_quirk: FlextLdifProtocols.Quirks.QuirksPort,
+                target_quirk: FlextLdifProtocols.Quirks.QuirksPort,
+                model_instance: FlextLdifProtocols.ConvertibleModel,
+            ) -> FlextResult[FlextLdifProtocols.ConvertibleModel]:
+                """Convert a model from a source server format to a target server format.
 
-                Performs: Source → RFC → Target conversion with automatic
-                DN case registry management for OUD compatibility.
+                This is the core method for all transformations. It orchestrates the
+                two-step conversion process (Source -> RFC -> Target) by delegating
+                to the appropriate `normalize_*_to_rfc` and `denormalize_*_from_rfc`
+                methods on the provided quirk ports.
 
                 Args:
-                    source_quirk: Source server quirk implementation
-                    target_quirk: Target server quirk implementation
-                    _element_type: Type of element ('attribute', 'objectclass', 'entry', 'acl')
-                    _element_data: Element data to convert (string or dict)
+                    source_quirk: The quirk port implementation for the source server.
+                    target_quirk: The quirk port implementation for the target server.
+                    model_instance: The Pydantic model instance to convert.
 
                 Returns:
-                    FlextResult with converted element data
+                    A FlextResult containing the converted Pydantic model in the
+                    target server's format.
 
                 """
                 ...

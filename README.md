@@ -137,22 +137,23 @@ if result.is_success:
 ### Server-to-Server Migration
 
 ```python
-from flext_ldif import FlextLdifMigrationPipeline
+from flext_ldif import FlextLdif
 from pathlib import Path
 
-# Migrate from Oracle OID to OUD
-pipeline = FlextLdifMigrationPipeline(
+# Initialize FlextLdif API
+ldif = FlextLdif()
+
+# Simple migration from Oracle OID to OUD (single output file)
+result = ldif.migrate(
     input_dir=Path("oid-export"),
     output_dir=Path("oud-import"),
-    source_server_type="oid",
-    target_server_type="oud",
+    from_server="oracle_oid",
+    to_server="oracle_oud"
 )
 
-result = pipeline.execute()
-
 if result.is_success:
-    stats = result.unwrap()
-    print(f"✅ Migrated {stats['total_migrated']} entries")
+    stats = result.unwrap().statistics
+    print(f"✅ Migrated {stats.processed_entries} entries")
 ```
 
 ### Filter and Categorize Entries
@@ -541,14 +542,12 @@ Automatic detection and quirk-based adaptation for LDAP servers:
 
 ```mermaid
 graph TB
-    API[FlextLdif] --> Client[FlextLdifClient]
     API --> Models[FlextLdifModels]
     API --> Config[FlextLdifConfig]
 
     Client --> Parser[RFC Parser]
     Client --> Writer[RFC Writer]
-    Client --> Migration[FlextLdifMigrationPipeline]
-    Client --> Categorized[FlextLdifCategorizedMigrationPipeline]
+    Client --> Migration[FlextLdif.migrate()]
     Client --> Processors[LdifBatchProcessor/LdifParallelProcessor]
     Client --> Events[LdifMigratedEvent/LdifParsedEvent/etc.]
 
@@ -660,42 +659,34 @@ rfc_parser = RfcSchemaParserService(
 ### **Categorized Entry Migration with Structured Output**
 
 ```python
-from flext_ldif.categorized_pipeline import FlextLdifCategorizedMigrationPipeline
-from flext_ldif.services.registry import FlextLdifRegistry
+from flext_ldif import FlextLdif
 from pathlib import Path
 
-# Initialize categorized migration pipeline
-registry = FlextLdifRegistry()
+# Initialize FlextLdif API
+ldif = FlextLdif()
 
-# Define categorization rules
+# Define categorization rules (enables categorized mode automatically)
 categorization_rules = {
-    "schema": [r"^(attributeTypes|objectClasses)="],
-    "hierarchy": [r"^(ou|organization|domain)="],
-    "users": [r"^(person|inetOrgPerson|organizationalPerson)="],
-    "groups": [r"^(groupOfNames|groupOfUniqueNames)="],
-    "acl": [r"aci="],
+    "hierarchy_objectclasses": ["organization", "organizationalUnit", "domain"],
+    "user_objectclasses": ["inetOrgPerson", "person", "organizationalPerson"],
+    "group_objectclasses": ["groupOfNames", "groupOfUniqueNames"],
+    "acl_attributes": ["aci"],  # Empty list disables ACL processing
 }
 
-pipeline = FlextLdifCategorizedMigrationPipeline(
+# Execute unified migration (automatically detects categorized mode)
+result = ldif.migrate(
     input_dir=Path("source_ldifs"),
     output_dir=Path("categorized_output"),
-    categorization_rules=categorization_rules,
-    parser_quirk=registry.get_quirk("oid"),
-    writer_quirk=registry.get_quirk("oud"),
-    source_server="oracle_oid",
-    target_server="oracle_oud"
+    from_server="oracle_oid",
+    to_server="oracle_oud",
+    categorization_rules=categorization_rules
 )
 
-# Execute categorized migration
-result = pipeline.execute()
 if result.is_success:
-    stats = result.value['statistics']
+    stats = result.unwrap().statistics
     print("Categorized migration completed successfully")
-    print(f"Schema entries: {stats['schema_count']}")
-    print(f"User entries: {stats['users_count']}")
-    print(f"Group entries: {stats['groups_count']}")
-    print(f"ACL entries: {stats['acl_count']}")
-    print(f"Rejected entries: {stats['rejected_count']}")
+    print(f"Total entries processed: {stats.processed_entries}")
+    print(f"Categories created: {len(result.unwrap().entries_by_category)}")
 
     # Generates 6 structured LDIF files:
     # 00-schema.ldif, 01-hierarchy.ldif, 02-users.ldif,

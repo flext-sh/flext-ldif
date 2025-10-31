@@ -106,13 +106,11 @@ cn: schema
     result = api.migrate(
         input_dir=input_dir,
         output_dir=output_dir,
-        from_server="oid",  # Oracle Internet Directory
-        to_server="oud",  # Oracle Unified Directory
-        process_schema=True,
-        process_entries=True,
+        source_server="oid",  # Oracle Internet Directory
+        target_server="oud",  # Oracle Unified Directory
     ).map(
         lambda stats: (
-            f"Migrated {stats.entry_count} entries in {len(stats.output_files)} files"
+            f"Migrated {stats.entries_by_category} entries in {len(stats.file_paths)} files"
         )
     )
 
@@ -141,15 +139,13 @@ mail: openldap@example.com
     result = api.migrate(
         input_dir=input_dir,
         output_dir=output_dir,
-        from_server="openldap",
-        to_server="oud",
-        process_schema=True,
-        process_entries=True,
+        source_server="openldap",
+        target_server="oud",
     )
 
     if result.is_success:
         stats = result.unwrap()
-        print(f"OpenLDAP→OUD: {stats.entry_count} entries")
+        print(f"OpenLDAP→OUD: {len(stats.file_paths)} files created")
     else:
         print(f"Error: {result.error}")
 
@@ -174,10 +170,8 @@ sn: Test
     result = api.migrate(
         input_dir=input_dir,
         output_dir=output_dir,
-        from_server="oid",
-        to_server="rfc",
-        process_schema=False,
-        process_entries=True,
+        source_server="oid",
+        target_server="rfc",
     )
 
     print("RFC normalization: " + ("Success" if result.is_success else "Failed"))

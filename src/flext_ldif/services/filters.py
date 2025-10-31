@@ -1,12 +1,16 @@
-"""FLEXT LDIF Filters - Filtering and Categorization Utilities.
+"""FLEXT LDIF Filters - Generic Filtering and Categorization Utilities.
 
 This module provides utilities for filtering and categorizing LDIF entries:
 - DN pattern matching with wildcards
-- OID pattern matching for schema filtering
+- Pattern matching for schema filtering (attribute OIDs, etc.)
 - ObjectClass-based filtering with attribute validation
-- Attribute-based filtering
-- Entry categorization (users, groups, containers)
+- Attribute-based filtering and removal
+- Entry categorization (users, groups, containers, schema, ACL, rejected)
 - Exclusion metadata marking
+- Registry-delegated server-specific attribute filtering
+
+All filtering is server-agnostic and completely generic. Server-specific behavior
+is delegated to registered quirks through the FlextLdifQuirksRegistry pattern.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -27,13 +31,17 @@ from flext_ldif.models import FlextLdifModels
 
 
 class FlextLdifFilters:
-    """Utility class for LDIF filtering and categorization operations.
+    """Utility class for generic LDIF filtering and categorization operations.
 
     Provides static methods for:
-    - Pattern matching (DN wildcards, OID patterns)
+    - Pattern matching (DN wildcards, schema patterns)
     - Exclusion metadata management
     - Entry categorization by objectClass
     - Attribute presence/absence filtering
+    - Generic attribute removal
+
+    All methods are server-agnostic and work with any LDAP directory model.
+    Server-specific behavior is delegated to registered quirks.
 
     All methods use fnmatch for wildcard pattern matching, supporting:
     - * (matches any sequence of characters)
@@ -344,7 +352,7 @@ class FlextLdifFilters:
         """Categorize entry with 6-category support (schema, hierarchy, users, groups, acl, rejected).
 
         Categorization logic:
-        0. Check for blocked objectClasses (ALGAR business rule)
+        0. Check for blocked objectClasses (business rule filtering)
         1. Check for schema entries (attributeTypes, objectClasses)
         2. Check for hierarchy objectClasses → hierarchy (BEFORE ACL!)
         3. Check for user objectClasses → users
@@ -353,8 +361,8 @@ class FlextLdifFilters:
         6. Otherwise → rejected
 
         CRITICAL: Hierarchy check has HIGHER priority than ACL check. This ensures
-        Oracle containers (orclcontainer, orclprivilegegroup) with ACL attributes go
-        to hierarchy file for proper parent-child sync order.
+        container entries with ACL attributes go to hierarchy category for proper
+        parent-child relationship handling during sync operations.
 
         Args:
             entry: Entry object to categorize
@@ -365,7 +373,7 @@ class FlextLdifFilters:
                 - user_dn_patterns: list of regex patterns for user DN validation
                 - acl_attributes: list of ACL attribute names to check
             schema_whitelist_rules: Optional dictionary with schema whitelist configuration:
-                - blocked_objectclasses: list of objectClasses to reject (ALGAR rule)
+                - blocked_objectclasses: list of objectClasses to reject
 
         Returns:
             Tuple of (category, rejection_reason):
@@ -379,18 +387,19 @@ class FlextLdifFilters:
         # Get entry DN and objectClasses from Entry model
         dn = entry.dn.value
 
-        # Extract objectClasses from entry attributes
-        objectclass_values = entry.attributes.attributes.get("objectClass", [])
-        object_classes = (
-            objectclass_values if isinstance(objectclass_values, list) else []
-        )
+        # Extract objectClasses from entry attributes (case-insensitive lookup)
+        object_classes = []
+        for attr_name, attr_values in entry.attributes.attributes.items():
+            if attr_name.lower() == FlextLdifConstants.DictKeys.OBJECTCLASS.lower():
+                object_classes = attr_values if isinstance(attr_values, list) else []
+                break
 
         # Convert objectClasses to lowercase for case-insensitive matching per RFC 4512
         object_classes_lower = [
             oc.lower() if isinstance(oc, str) else oc for oc in object_classes
         ]
 
-        # 0. Check for blocked objectClasses (ALGAR business rule)
+        # 0. Check for blocked objectClasses (business rule filtering)
         blocked_ocs = schema_whitelist_rules.get("blocked_objectclasses", [])
         if isinstance(blocked_ocs, list) and blocked_ocs:
             blocked_ocs_lower = {
@@ -400,16 +409,42 @@ class FlextLdifFilters:
                 if obj_class_lower in blocked_ocs_lower:
                     return (
                         "rejected",
-                        f"Blocked objectClass: {obj_class_lower} (OID-specific)",
+                        f"Blocked objectClass: {obj_class_lower}",
                     )
 
-        # 1. Schema entries (cn=schema, subschemasubentry, or has schema attributes)
-        if "cn=schema" in dn.lower() or "subschemasubentry" in dn.lower():
+        # 1. Schema entries - CRITICAL: Only entries with attributetypes/objectclasses are schema
+        # Entries with attributetypes/objectclasses should ALWAYS be categorized as schema,
+        # even if they have ACL attributes or other characteristics
+        # This ensures schema entries from OID (cn=subschemasubentry) are correctly identified
+        attrs_lower = {k.lower() for k in entry.attributes.attributes}
+        # Use constants for schema field detection
+        schema_attr_types_lower = {
+            FlextLdifConstants.SchemaFields.ATTRIBUTE_TYPES_LOWER.lower(),
+            FlextLdifConstants.SchemaFields.ATTRIBUTE_TYPES.lower(),
+        }
+        schema_obj_classes_lower = {
+            FlextLdifConstants.SchemaFields.OBJECT_CLASSES_LOWER.lower(),
+            FlextLdifConstants.SchemaFields.OBJECT_CLASSES.lower(),
+        }
+        if attrs_lower.intersection(schema_attr_types_lower) or attrs_lower.intersection(
+            schema_obj_classes_lower
+        ):
             return ("schema", None)
 
-        # Check for schema attributes in entry attributes
-        attrs_lower = {k.lower() for k in entry.attributes.attributes}
-        if "attributetypes" in attrs_lower or "objectclasses" in attrs_lower:
+        # Also check DN patterns for schema entries (legacy support for entries without attributetypes/objectclasses)
+        # But only if DN is exactly cn=schema or cn=subschema (not partial matches like "cn=Schema,...")
+        # Use constants for DN pattern matching
+        dn_lower = dn.lower()
+        schema_dn_patterns = [
+            FlextLdifConstants.DnPatterns.CN_SCHEMA.lower(),
+            FlextLdifConstants.DnPatterns.CN_SUBSCHEMA.lower(),
+        ]
+        if (
+            dn_lower in schema_dn_patterns
+            or dn_lower.startswith(
+                FlextLdifConstants.DnPatterns.CN_SUBSCHEMA_SUBENTRY.lower()
+            )
+        ):
             return ("schema", None)
 
         # Get categorization rules with type validation
@@ -439,7 +474,7 @@ class FlextLdifFilters:
             oc.lower() for oc in group_classes if isinstance(oc, str)
         }
 
-        # 2. Hierarchy entries (BEFORE ACL - critical for Oracle containers)
+        # 2. Hierarchy entries (BEFORE ACL - critical for proper relationship handling)
         for obj_class_lower in object_classes_lower:
             if obj_class_lower in hierarchy_classes_lower:
                 return ("hierarchy", None)
@@ -684,13 +719,13 @@ class FlextLdifFilters:
         Example:
             >>> entry = FlextLdifModels.Entry(
             ...     dn="cn=test,dc=example",
-            ...     attributes={"cn": ["test"], "orclaci": ["access rule"]},
+            ...     attributes={"cn": ["test"], "tempAttribute": ["value"]},
             ... )
             >>> result = FlextLdifFilters.filter_entry_attributes(
-            ...     entry, ["orclaci", "orclentrylevelaci"]
+            ...     entry, ["tempAttribute", "anotherAttribute"]
             ... )
             >>> filtered_entry = result.unwrap()
-            >>> "orclaci" in filtered_entry.attributes
+            >>> "tempAttribute" in filtered_entry.attributes.attributes
             False
 
         """
@@ -746,13 +781,15 @@ class FlextLdifFilters:
         Example:
             >>> entry = FlextLdifModels.Entry(
             ...     dn="cn=test,dc=example",
-            ...     attributes={"objectClass": ["top", "person", "orclContainerOC"]},
+            ...     attributes={"objectClass": ["top", "person", "customObjectClass"]},
             ... )
             >>> result = FlextLdifFilters.filter_entry_objectclasses(
-            ...     entry, ["orclContainerOC", "orclService"]
+            ...     entry, ["customObjectClass", "temporaryClass"]
             ... )
             >>> filtered_entry = result.unwrap()
-            >>> "orclContainerOC" in filtered_entry.get_attribute_values("objectClass")
+            >>> "customObjectClass" in filtered_entry.get_attribute_values(
+            ...     "objectClass"
+            ... )
             False
 
         """
@@ -782,14 +819,8 @@ class FlextLdifFilters:
             new_attrs_dict = dict(entry.attributes.attributes)
             # Update objectClass attribute with filtered values
             if FlextLdifConstants.DictKeys.OBJECTCLASS in new_attrs_dict:
-                oc_attr = new_attrs_dict[FlextLdifConstants.DictKeys.OBJECTCLASS]
-                if hasattr(oc_attr, "values"):
-                    oc_attr.values = filtered_ocs
-                else:
-                    # Replace the list directly
-                    new_attrs_dict[FlextLdifConstants.DictKeys.OBJECTCLASS] = (
-                        filtered_ocs
-                    )
+                # Replace the objectClass list directly with filtered values
+                new_attrs_dict[FlextLdifConstants.DictKeys.OBJECTCLASS] = filtered_ocs
 
             # Create new LdifAttributes container
             new_attributes = FlextLdifModels.LdifAttributes(

@@ -71,14 +71,12 @@ Created new `FlextLdifParserService` following FLEXT architectural patterns to c
 class FlextLdifParserService(FlextService[dict[str, object]]):
     """LDIF parsing service following FLEXT patterns."""
 
-    _client: FlextLdifClient      # Core LDIF operations
     _logger: FlextLogger          # Structured logging
     _config: FlextLdifConfig      # Configuration
 ```
 
 ### Dependencies
 
-- **FlextLdifClient**: Delegates actual LDIF I/O operations
 - **FlextLdifConfig**: Configuration for parsing behavior
 - **FlextLogger**: Structured logging for operations
 - **FlextResult**: Railway-oriented error handling
@@ -107,7 +105,6 @@ class FlextLdif(FlextService[dict[str, object]]):
     def __init__(self, config: FlextLdifConfig | None = None) -> None:
         super().__init__()
         self._config = config if config is not None else FlextLdifConfig()
-        self._client = FlextLdifClient(config=self._config)
 
         # Initialize parser service
         self._parser = FlextLdifParserService(

@@ -23,15 +23,13 @@ from flext_core import FlextResult
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.servers.rfc import FlextLdifServersRfc
-from flext_ldif.typings import FlextLdifTypes
 
 
 class FlextLdifServersOpenldap(FlextLdifServersRfc):
     """OpenLDAP 2.x Quirks - Complete Implementation."""
 
-    # Top-level configuration - mirrors Schema class for direct access
-    server_type: ClassVar[str] = FlextLdifConstants.ServerTypes.OPENLDAP
-    priority: ClassVar[int] = 10
+    server_type = FlextLdifConstants.ServerTypes.OPENLDAP
+    priority = 10
 
     class Schema(FlextLdifServersRfc.Schema):
         """OpenLDAP 2.x schema quirk.
@@ -57,24 +55,30 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             r"\bolc[A-Z][a-zA-Z]*\b",
         )
 
-        # OpenLDAP cn=config DN pattern
+        # OpenLDAP cn=config DN pattern - use constant
         OPENLDAP_CONFIG_DN_PATTERN: ClassVar[re.Pattern[str]] = re.compile(
-            r"cn=config",
+            FlextLdifConstants.DnPatterns.CN_CONFIG,
             re.IGNORECASE,
         )
 
-        def can_handle_attribute(self, attr_definition: str) -> bool:
+        def can_handle_attribute(
+            self, attribute: str | FlextLdifModels.SchemaAttribute
+        ) -> bool:
             """Check if this is an OpenLDAP 2.x attribute.
 
             Args:
-            attr_definition: AttributeType definition string
+                attribute: Attribute definition string or model
 
             Returns:
-            True if this contains OpenLDAP 2.x markers
+                True if this contains OpenLDAP 2.x markers
 
             """
             # Check for olc* prefix or olcAttributeTypes context
-            return bool(self.OPENLDAP_OLC_PATTERN.search(attr_definition))
+            if isinstance(attribute, str):
+                return bool(self.OPENLDAP_OLC_PATTERN.search(attribute))
+            if isinstance(attribute, FlextLdifModels.SchemaAttribute):
+                return bool(self.OPENLDAP_OLC_PATTERN.search(attribute.oid))
+            return False
 
         # --------------------------------------------------------------------- #
         # Schema parsing and conversion methods
@@ -145,17 +149,23 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                     f"OpenLDAP 2.x attribute parsing failed: {e}",
                 )
 
-        def can_handle_objectclass(self, oc_definition: str) -> bool:
+        def can_handle_objectclass(
+            self, objectclass: str | FlextLdifModels.SchemaObjectClass
+        ) -> bool:
             """Check if this is an OpenLDAP 2.x objectClass.
 
             Args:
-            oc_definition: ObjectClass definition string
+                objectclass: ObjectClass definition string or model
 
             Returns:
-            True if this contains OpenLDAP 2.x markers
+                True if this contains OpenLDAP 2.x markers
 
             """
-            return bool(self.OPENLDAP_OLC_PATTERN.search(oc_definition))
+            if isinstance(objectclass, str):
+                return bool(self.OPENLDAP_OLC_PATTERN.search(objectclass))
+            if isinstance(objectclass, FlextLdifModels.SchemaObjectClass):
+                return bool(self.OPENLDAP_OLC_PATTERN.search(objectclass.oid))
+            return False
 
         def parse_objectclass(
             self,
@@ -270,7 +280,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                 name = oc_data.name
                 desc = oc_data.desc
                 sup = oc_data.sup
-                kind = oc_data.kind or "STRUCTURAL"
+                kind = oc_data.kind or FlextLdifConstants.Schema.STRUCTURAL
                 must = oc_data.must or []
                 may = oc_data.may or []
 
@@ -323,27 +333,32 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
 
             """
 
+            # OVERRIDE: OpenLDAP 2.x uses "olcAccess" for ACL attribute names
+            acl_attribute_name = "olcAccess"
+
             server_type: ClassVar[str] = FlextLdifConstants.ServerTypes.OPENLDAP
             priority: ClassVar[int] = 10
 
             def __init__(self) -> None:
                 """Initialize OpenLDAP 2.x ACL quirk with RFC format."""
-                super().__init__(server_type=FlextLdifConstants.ServerTypes.OPENLDAP)
+                super().__init__()
 
-            def can_handle_acl(self, acl_line: str) -> bool:
+            def can_handle_acl(self, acl: FlextLdifModels.Acl) -> bool:
                 """Check if this is an OpenLDAP 2.x ACL.
 
                 Args:
-                acl_line: ACL definition line
+                    acl: The ACL model to check.
 
                 Returns:
-                True if this is OpenLDAP 2.x ACL format
+                    True if this is OpenLDAP 2.x ACL format
 
                 """
+                if not isinstance(acl, FlextLdifModels.Acl) or not acl.raw_acl:
+                    return False
                 # OpenLDAP 2.x ACLs start with "to" or "{n}to"
                 return bool(
-                    re.match(r"^(\{\d+\})?\s*to\s+", acl_line, re.IGNORECASE),
-                ) or acl_line.startswith(f"{FlextLdifConstants.DictKeys.OLCACCESS}:")
+                    re.match(r"^(\{\d+\})?\s*to\s+", acl.raw_acl, re.IGNORECASE),
+                ) or acl.raw_acl.startswith(f"{FlextLdifConstants.DictKeys.OLCACCESS}:")
 
             def parse_acl(self, acl_line: str) -> FlextResult[FlextLdifModels.Acl]:
                 """Parse OpenLDAP 2.x ACL definition.
@@ -382,13 +397,27 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
 
                     what = to_match.group(1).strip()
 
+                    # Extract attributes from "what" clause if present
+                    # OpenLDAP ACLs can specify: "to attrs=attr1,attr2 by ..."
+                    attributes: list[str] = []
+                    attrs_match = re.search(
+                        r"attrs?\s*=\s*([^,\s]+(?:\s*,\s*[^,\s]+)*)",
+                        what,
+                        re.IGNORECASE,
+                    )
+                    if attrs_match:
+                        attr_string = attrs_match.group(1)
+                        attributes = [attr.strip() for attr in attr_string.split(",")]
+
                     # Parse "by <who> <access>" clauses - extract first by clause for model
                     by_pattern = re.compile(r"by\s+([^\s]+)\s+([^\s]+)", re.IGNORECASE)
                     by_matches = list(by_pattern.finditer(acl_content))
 
                     # Extract subject from first by clause
                     subject_value = (
-                        by_matches[0].group(1) if by_matches else "anonymous"
+                        by_matches[0].group(1)
+                        if by_matches
+                        else FlextLdifConstants.AclSubjectTypes.ANONYMOUS
                     )
 
                     # Extract access permissions from first by clause
@@ -399,21 +428,25 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                         name="access",
                         target=FlextLdifModels.AclTarget(
                             target_dn=what,  # OpenLDAP: "what" is target
-                            attributes=[],  # OpenLDAP stub - not extracted from what clause
+                            attributes=attributes,  # OpenLDAP: extracted from what clause
                         ),
                         subject=FlextLdifModels.AclSubject(
                             subject_type="who",
                             subject_value=subject_value,
                         ),
                         permissions=FlextLdifModels.AclPermissions(
-                            read="read" in access,
-                            write="write" in access,
-                            add="write" in access,  # OpenLDAP: write includes add
-                            delete="write" in access,  # OpenLDAP: write includes delete
-                            search="read" in access,  # OpenLDAP: read includes search
-                            compare="read" in access,  # OpenLDAP: read includes compare
+                            read=FlextLdifConstants.PermissionNames.READ in access,
+                            write=FlextLdifConstants.PermissionNames.WRITE in access,
+                            add=FlextLdifConstants.PermissionNames.WRITE
+                            in access,  # OpenLDAP: write includes add
+                            delete=FlextLdifConstants.PermissionNames.WRITE
+                            in access,  # OpenLDAP: write includes delete
+                            search=FlextLdifConstants.PermissionNames.READ
+                            in access,  # OpenLDAP: read includes search
+                            compare=FlextLdifConstants.PermissionNames.READ
+                            in access,  # OpenLDAP: read includes compare
                         ),
-                        server_type=FlextLdifConstants.ServerTypes.OPENLDAP,
+                        server_type="openldap",
                         raw_acl=acl_line,
                     )
 
@@ -502,9 +535,9 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                         # Add permissions if available
                         perms = []
                         if acl_data.permissions.read:
-                            perms.append("read")
+                            perms.append(FlextLdifConstants.PermissionNames.READ)
                         if acl_data.permissions.write:
-                            perms.append("write")
+                            perms.append(FlextLdifConstants.PermissionNames.WRITE)
                         if perms:
                             acl_parts.append(",".join(perms))
 
@@ -513,6 +546,17 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
 
                 except Exception as e:
                     return FlextResult[str].fail(f"OpenLDAP 2.x ACL write failed: {e}")
+
+        def get_acl_attribute_name(self) -> str:
+            """Get OpenLDAP-specific ACL attribute name.
+
+            OpenLDAP 2.x uses 'olcAccess' for ACL configuration in cn=config.
+
+            Returns:
+                'olcAccess' - OpenLDAP-specific ACL attribute name
+
+            """
+            return "olcAccess"
 
     class Entry(FlextLdifServersRfc.Entry):
         """OpenLDAP 2.x entry quirk (nested).
@@ -534,7 +578,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
 
         def __init__(self) -> None:
             """Initialize OpenLDAP 2.x entry quirk with RFC format."""
-            super().__init__(server_type=FlextLdifConstants.ServerTypes.OPENLDAP)
+            super().__init__()
 
         # --------------------------------------------------------------------- #
         # OVERRIDDEN METHODS (from FlextLdifServersBase.Entry)
@@ -544,23 +588,29 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
         # - process_entry(): Normalizes OpenLDAP 2.x entries with metadata
         # - convert_entry_to_rfc(): Converts OpenLDAP 2.x entries to RFC format
 
-        def can_handle_entry(
-            self,
-            entry_dn: str,
-            attributes: FlextLdifTypes.Models.EntryAttributesDict,
-        ) -> bool:
+        def can_handle_entry(self, entry: FlextLdifModels.Entry) -> bool:
             """Check if this quirk should handle the entry.
 
             Args:
-            entry_dn: Entry distinguished name
-            attributes: Entry attributes
+                entry: The entry model to check.
 
             Returns:
-            True if this is an OpenLDAP 2.x-specific entry
+                True if this is an OpenLDAP 2.x-specific entry
 
             """
+            if not isinstance(entry, FlextLdifModels.Entry):
+                return False
+
+            attributes = entry.attributes.attributes
+            entry_dn = entry.dn.value
+
+            if not entry_dn:
+                return False
+
             # Check for cn=config DN or olc* attributes
-            is_config_dn = "cn=config" in entry_dn.lower()
+            is_config_dn = (
+                FlextLdifConstants.DnPatterns.CN_CONFIG.lower() in entry_dn.lower()
+            )
 
             # Check for olc* attributes
             has_olc_attrs = any(attr.startswith("olc") for attr in attributes)
@@ -578,44 +628,45 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             return is_config_dn or has_olc_attrs or has_olc_classes
 
         def process_entry(
-            self,
-            entry_dn: str,
-            attributes: FlextLdifTypes.Models.EntryAttributesDict,
-        ) -> FlextResult[FlextLdifTypes.Models.EntryAttributesDict]:
+            self, entry: FlextLdifModels.Entry
+        ) -> FlextResult[FlextLdifModels.Entry]:
             """Process entry for OpenLDAP 2.x format.
 
             Args:
-            entry_dn: Entry distinguished name
-            attributes: Entry attributes
+                entry: The entry model to process.
 
             Returns:
-            FlextResult with processed entry data
+                FlextResult with processed entry data
 
             """
             try:
                 # OpenLDAP 2.x entries are RFC-compliant
                 # Add OpenLDAP-specific processing if needed
-                processed_entry: dict[str, object] = {
-                    FlextLdifConstants.DictKeys.DN: entry_dn,
-                    FlextLdifConstants.DictKeys.SERVER_TYPE: "generic",
-                    FlextLdifConstants.DictKeys.IS_CONFIG_ENTRY: "cn=config"
-                    in entry_dn.lower(),
-                }
-                processed_entry.update(attributes)
+                metadata = entry.metadata or FlextLdifModels.QuirkMetadata()
+                entry_dn = entry.dn.value
+                metadata.extensions[FlextLdifConstants.DictKeys.IS_CONFIG_ENTRY] = (
+                    "cn=config" in entry_dn.lower()
+                )
 
-                return FlextResult[FlextLdifTypes.Models.EntryAttributesDict].ok(
+                processed_entry = FlextLdifModels.Entry(
+                    dn=entry.dn,
+                    attributes=entry.attributes,
+                    metadata=metadata,
+                )
+
+                return FlextResult[FlextLdifModels.Entry].ok(
                     processed_entry,
                 )
 
             except Exception as e:
-                return FlextResult[FlextLdifTypes.Models.EntryAttributesDict].fail(
+                return FlextResult[FlextLdifModels.Entry].fail(
                     f"OpenLDAP 2.x entry processing failed: {e}",
                 )
 
         def convert_entry_to_rfc(
             self,
-            entry_data: FlextLdifTypes.Models.EntryAttributesDict,
-        ) -> FlextResult[FlextLdifTypes.Models.EntryAttributesDict]:
+            entry_data: FlextLdifModels.Entry,
+        ) -> FlextResult[FlextLdifModels.Entry]:
             """Convert server-specific entry to RFC-compliant format.
 
             Args:
@@ -627,18 +678,18 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             """
             try:
                 # OpenLDAP 2.x entries are already RFC-compliant
-                return FlextResult[FlextLdifTypes.Models.EntryAttributesDict].ok(
+                return FlextResult[FlextLdifModels.Entry].ok(
                     entry_data,
                 )
             except Exception as e:
-                return FlextResult[FlextLdifTypes.Models.EntryAttributesDict].fail(
+                return FlextResult[FlextLdifModels.Entry].fail(
                     f"OpenLDAP 2.x entry→RFC conversion failed: {e}",
                 )
 
         def convert_entry_from_rfc(
             self,
-            entry_data: FlextLdifTypes.Models.EntryAttributesDict,
-        ) -> FlextResult[FlextLdifTypes.Models.EntryAttributesDict]:
+            entry_data: FlextLdifModels.Entry,
+        ) -> FlextResult[FlextLdifModels.Entry]:
             """Convert entry from RFC format - pass-through for OpenLDAP 2.x.
 
             Args:
@@ -648,7 +699,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             FlextResult with data (unchanged, since OpenLDAP entries are RFC-compliant)
 
             """
-            return FlextResult[FlextLdifTypes.Models.EntryAttributesDict].ok(
+            return FlextResult[FlextLdifModels.Entry].ok(
                 entry_data,
             )
 

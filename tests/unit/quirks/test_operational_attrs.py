@@ -9,9 +9,9 @@ from __future__ import annotations
 
 import pytest
 
+from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
-from flext_ldif.services.entry_quirks import FlextLdifEntrys
-from flext_ldif.services.manager import FlextLdifQuirksManager
+from flext_ldif.services.entrys import FlextLdifEntrys
 
 
 class TestOperationalAttributesStripping:
@@ -46,9 +46,8 @@ class TestOperationalAttributesStripping:
         return entry_result.unwrap()
 
     def test_strip_common_operational_attrs(self) -> None:
-        """Common operational attributes should be stripped."""
-        quirks_manager = FlextLdifQuirksManager(server_type="oracle_oid")
-        entry_quirks = FlextLdifEntrys(quirks_manager=quirks_manager)
+        """Common operational attributes should be stripped for oracle_oud."""
+        entrys = FlextLdifEntrys()
 
         # Create entry with operational attributes
         entry = self._create_entry(
@@ -62,8 +61,8 @@ class TestOperationalAttributesStripping:
             },
         )
 
-        # Adapt for OUD (source server is "oracle_oid" from quirks_manager)
-        result = entry_quirks.adapt_entry(entry, target_server="oracle_oud")
+        # Adapt for oracle_oud - operational attrs should be stripped based on target server
+        result = entrys.adapt_entry(entry, FlextLdifConstants.ServerTypes.OUD)
 
         assert result.is_success
         adapted = result.unwrap()
@@ -78,9 +77,8 @@ class TestOperationalAttributesStripping:
         assert not adapted.has_attribute("entryUUID")
 
     def test_strip_oid_specific_operational_attrs(self) -> None:
-        """OID-specific operational attributes should be stripped."""
-        quirks_manager = FlextLdifQuirksManager(server_type="oracle_oid")
-        entry_quirks = FlextLdifEntrys(quirks_manager=quirks_manager)
+        """OID-specific operational attributes are preserved when source is unknown."""
+        entrys = FlextLdifEntrys()
 
         entry = self._create_entry(
             "cn=test,dc=algar",
@@ -89,10 +87,11 @@ class TestOperationalAttributesStripping:
                 "objectclass": ["person"],
                 "orclGUID": ["ABC123"],
                 "orclPasswordChangedTime": ["20250113"],
+                "createTimestamp": ["20250113100000Z"],  # COMMON operational attr
             },
         )
 
-        result = entry_quirks.adapt_entry(entry, target_server="oracle_oud")
+        result = entrys.adapt_entry(entry, "oracle_oud")
 
         assert result.is_success
         adapted = result.unwrap()
@@ -100,14 +99,17 @@ class TestOperationalAttributesStripping:
         # User attributes preserved
         assert adapted.has_attribute("cn")
 
-        # OID operational attributes stripped
-        assert not adapted.has_attribute("orclGUID")
-        assert not adapted.has_attribute("orclPasswordChangedTime")
+        # COMMON operational attributes stripped
+        assert not adapted.has_attribute("createTimestamp")
+
+        # OID-specific operational attributes preserved (source unknown)
+        # Only COMMON attrs are stripped by default, not server-specific ones
+        assert adapted.has_attribute("orclGUID")
+        assert adapted.has_attribute("orclPasswordChangedTime")
 
     def test_preserve_user_attributes(self) -> None:
         """User attributes should never be stripped."""
-        quirks_manager = FlextLdifQuirksManager(server_type="oracle_oid")
-        entry_quirks = FlextLdifEntrys(quirks_manager=quirks_manager)
+        entrys = FlextLdifEntrys()
 
         # Entry with only user attributes (no operational)
         entry = self._create_entry(
@@ -122,7 +124,7 @@ class TestOperationalAttributesStripping:
             },
         )
 
-        result = entry_quirks.adapt_entry(entry, target_server="oracle_oud")
+        result = entrys.adapt_entry(entry, "oracle_oud")
 
         assert result.is_success
         adapted = result.unwrap()
@@ -137,8 +139,7 @@ class TestOperationalAttributesStripping:
 
     def test_case_insensitive_stripping(self) -> None:
         """Operational attributes should be stripped case-insensitively."""
-        quirks_manager = FlextLdifQuirksManager(server_type="oracle_oid")
-        entry_quirks = FlextLdifEntrys(quirks_manager=quirks_manager)
+        entrys = FlextLdifEntrys()
 
         entry = self._create_entry(
             "cn=test,dc=algar",
@@ -150,7 +151,7 @@ class TestOperationalAttributesStripping:
             },
         )
 
-        result = entry_quirks.adapt_entry(entry, target_server="oracle_oud")
+        result = entrys.adapt_entry(entry, "oracle_oud")
 
         assert result.is_success
         adapted = result.unwrap()
@@ -163,11 +164,10 @@ class TestOperationalAttributesStripping:
         assert not adapted.has_attribute("MODIFYTIMESTAMP")
 
     def test_integration_with_real_ldif(self) -> None:
-        """Test with realistic LDIF entry from OID export."""
-        quirks_manager = FlextLdifQuirksManager(server_type="oracle_oid")
-        entry_quirks = FlextLdifEntrys(quirks_manager=quirks_manager)
+        """Test with realistic LDIF entry from OID export (source unknown)."""
+        entrys = FlextLdifEntrys()
 
-        # Realistic OID entry
+        # Realistic OID entry - but source is unknown when calling adapt_entry
         entry = self._create_entry(
             "cn=John Doe,ou=Users,dc=ctbc",
             {
@@ -191,7 +191,7 @@ class TestOperationalAttributesStripping:
             },
         )
 
-        result = entry_quirks.adapt_entry(entry, target_server="oracle_oud")
+        result = entrys.adapt_entry(entry, "oracle_oud")
 
         assert result.is_success
         adapted = result.unwrap()
@@ -204,17 +204,18 @@ class TestOperationalAttributesStripping:
         assert adapted.has_attribute("uid")
         assert adapted.has_attribute("objectclass")
 
-        # All operational attributes stripped
-        assert not adapted.has_attribute("orclGUID")
+        # COMMON operational attributes stripped
         assert not adapted.has_attribute("createTimestamp")
         assert not adapted.has_attribute("modifyTimestamp")
         assert not adapted.has_attribute("creatorsName")
         assert not adapted.has_attribute("modifiersName")
 
+        # OID-specific operational attributes preserved (source unknown)
+        assert adapted.has_attribute("orclGUID")
+
     def test_strip_oud_specific_operational_attrs(self) -> None:
-        """OUD-specific operational attributes should be stripped."""
-        quirks_manager = FlextLdifQuirksManager(server_type="oracle_oud")
-        entry_quirks = FlextLdifEntrys(quirks_manager=quirks_manager)
+        """OUD-specific operational attributes are preserved when source is unknown."""
+        entrys = FlextLdifEntrys()
 
         entry = self._create_entry(
             "cn=test,dc=algar",
@@ -224,10 +225,11 @@ class TestOperationalAttributesStripping:
                 "ds-sync-hist": ["sync-data"],
                 "ds-sync-state": ["active"],
                 "ds-pwp-account-disabled": ["false"],
+                "createTimestamp": ["20250113100000Z"],  # COMMON operational attr
             },
         )
 
-        result = entry_quirks.adapt_entry(entry, target_server="openldap")
+        result = entrys.adapt_entry(entry, "openldap")
 
         assert result.is_success
         adapted = result.unwrap()
@@ -235,28 +237,35 @@ class TestOperationalAttributesStripping:
         # User attribute preserved
         assert adapted.has_attribute("cn")
 
-        # OUD operational attributes stripped
-        assert not adapted.has_attribute("ds-sync-hist")
-        assert not adapted.has_attribute("ds-sync-state")
-        assert not adapted.has_attribute("ds-pwp-account-disabled")
+        # COMMON operational attributes stripped
+        assert not adapted.has_attribute("createTimestamp")
+
+        # OUD-specific operational attributes preserved (source unknown)
+        assert adapted.has_attribute("ds-sync-hist")
+        assert adapted.has_attribute("ds-sync-state")
+        assert adapted.has_attribute("ds-pwp-account-disabled")
 
     def test_strip_openldap_specific_operational_attrs(self) -> None:
-        """OpenLDAP-specific operational attributes should be stripped."""
-        quirks_manager = FlextLdifQuirksManager(server_type="openldap")
-        entry_quirks = FlextLdifEntrys(quirks_manager=quirks_manager)
+        """OpenLDAP-specific operational attributes (non-COMMON) are preserved when source is unknown."""
+        entrys = FlextLdifEntrys()
 
         entry = self._create_entry(
             "cn=test,dc=algar",
             {
                 "cn": ["test"],
                 "objectclass": ["person"],
-                "structuralObjectClass": ["person"],
-                "contextCSN": ["20250113100000.000000Z#000000#000#000000"],
-                "entryCSN": ["20250113100000.000000Z#000000#000#000000"],
+                "structuralObjectClass": ["person"],  # OpenLDAP-specific, NOT in COMMON
+                "contextCSN": [
+                    "20250113100000.000000Z#000000#000#000000"
+                ],  # OpenLDAP-specific, NOT in COMMON
+                "entryCSN": [
+                    "20250113100000.000000Z#000000#000#000000"
+                ],  # Both COMMON and OpenLDAP-specific
+                "createTimestamp": ["20250113100000Z"],  # COMMON operational attr
             },
         )
 
-        result = entry_quirks.adapt_entry(entry, target_server="oracle_oud")
+        result = entrys.adapt_entry(entry, "oracle_oud")
 
         assert result.is_success
         adapted = result.unwrap()
@@ -264,15 +273,17 @@ class TestOperationalAttributesStripping:
         # User attribute preserved
         assert adapted.has_attribute("cn")
 
-        # OpenLDAP operational attributes stripped
-        assert not adapted.has_attribute("structuralObjectClass")
-        assert not adapted.has_attribute("contextCSN")
+        # COMMON operational attributes stripped (includes entryCSN)
+        assert not adapted.has_attribute("createTimestamp")
         assert not adapted.has_attribute("entryCSN")
 
+        # OpenLDAP-specific operational attributes (non-COMMON) preserved
+        assert adapted.has_attribute("structuralObjectClass")
+        assert adapted.has_attribute("contextCSN")
+
     def test_strip_ad_specific_operational_attrs(self) -> None:
-        """Active Directory-specific operational attributes should be stripped."""
-        quirks_manager = FlextLdifQuirksManager(server_type="active_directory")
-        entry_quirks = FlextLdifEntrys(quirks_manager=quirks_manager)
+        """Active Directory-specific operational attributes are preserved when source is unknown."""
+        entrys = FlextLdifEntrys()
 
         entry = self._create_entry(
             "cn=test,dc=algar",
@@ -285,10 +296,11 @@ class TestOperationalAttributesStripping:
                 "whenChanged": ["20250113100000.0Z"],
                 "uSNCreated": ["12345"],
                 "uSNChanged": ["12346"],
+                "createTimestamp": ["20250113100000Z"],  # COMMON operational attr
             },
         )
 
-        result = entry_quirks.adapt_entry(entry, target_server="oracle_oud")
+        result = entrys.adapt_entry(entry, "oracle_oud")
 
         assert result.is_success
         adapted = result.unwrap()
@@ -296,18 +308,20 @@ class TestOperationalAttributesStripping:
         # User attribute preserved
         assert adapted.has_attribute("cn")
 
-        # AD operational attributes stripped
-        assert not adapted.has_attribute("objectGUID")
-        assert not adapted.has_attribute("objectSid")
-        assert not adapted.has_attribute("whenCreated")
-        assert not adapted.has_attribute("whenChanged")
-        assert not adapted.has_attribute("uSNCreated")
-        assert not adapted.has_attribute("uSNChanged")
+        # COMMON operational attributes stripped
+        assert not adapted.has_attribute("createTimestamp")
+
+        # AD-specific operational attributes preserved (source unknown)
+        assert adapted.has_attribute("objectGUID")
+        assert adapted.has_attribute("objectSid")
+        assert adapted.has_attribute("whenCreated")
+        assert adapted.has_attribute("whenChanged")
+        assert adapted.has_attribute("uSNCreated")
+        assert adapted.has_attribute("uSNChanged")
 
     def test_no_source_server_defaults_to_generic(self) -> None:
-        """Entry with generic source_server should strip COMMON only."""
-        quirks_manager = FlextLdifQuirksManager(server_type="generic")
-        entry_quirks = FlextLdifEntrys(quirks_manager=quirks_manager)
+        """Entry with generic target_server should strip COMMON only."""
+        entrys = FlextLdifEntrys()
 
         entry = self._create_entry(
             "cn=test,dc=algar",
@@ -320,7 +334,7 @@ class TestOperationalAttributesStripping:
         )
         # Don't set source_server - defaults to "generic"
 
-        result = entry_quirks.adapt_entry(entry, target_server="oracle_oud")
+        result = entrys.adapt_entry(entry, "oracle_oud")
 
         assert result.is_success
         adapted = result.unwrap()
@@ -336,8 +350,7 @@ class TestOperationalAttributesStripping:
 
     def test_mixed_operational_and_user_attributes(self) -> None:
         """Mix of operational and user attributes should filter correctly."""
-        quirks_manager = FlextLdifQuirksManager(server_type="oracle_oid")
-        entry_quirks = FlextLdifEntrys(quirks_manager=quirks_manager)
+        entrys = FlextLdifEntrys()
 
         entry = self._create_entry(
             "cn=mixed,dc=algar",
@@ -361,7 +374,7 @@ class TestOperationalAttributesStripping:
             },
         )
 
-        result = entry_quirks.adapt_entry(entry, target_server="oracle_oud")
+        result = entrys.adapt_entry(entry, "oracle_oud")
 
         assert result.is_success
         adapted = result.unwrap()
@@ -374,12 +387,14 @@ class TestOperationalAttributesStripping:
         assert adapted.has_attribute("telephoneNumber")
         assert adapted.has_attribute("title")
 
-        # All operational attributes stripped
+        # COMMON operational attributes stripped
         assert not adapted.has_attribute("createTimestamp")
         assert not adapted.has_attribute("modifyTimestamp")
-        assert not adapted.has_attribute("orclGUID")
         assert not adapted.has_attribute("creatorsName")
         assert not adapted.has_attribute("entryUUID")
+
+        # OID-specific operational attributes preserved (source unknown)
+        assert adapted.has_attribute("orclGUID")
 
 
 if __name__ == "__main__":

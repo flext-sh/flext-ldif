@@ -217,10 +217,8 @@ mail: migration@example.com
     migration_result = api.migrate(
         input_dir=source_dir,
         output_dir=target_dir,
-        from_server="oid",
-        to_server="oud",
-        process_schema=True,
-        process_entries=True,
+        source_server="oid",
+        target_server="oud",
     )
 
     if migration_result.is_failure:
@@ -316,8 +314,6 @@ def schema_driven_workflow() -> None:
     if schema_result.is_failure:
         return
 
-    schema = schema_result.unwrap()
-
     # Step 2: Create entries following schema using direct API methods
     entries = []
     for i in range(5):
@@ -329,22 +325,6 @@ def schema_driven_workflow() -> None:
 
         if person_result.is_success:
             entries.append(person_result.unwrap())
-
-    # Step 3: Validate against schema using direct API method
-    validation_result = api.validate_with_schema(entries, schema)
-
-    if validation_result.is_failure:
-        return
-
-    validation_report = validation_result.unwrap()
-
-    if validation_report.is_valid:
-        # Step 4: Process validated entries
-        write_result = api.write(entries)
-
-        if write_result.is_success:
-            ldif_output = write_result.unwrap()
-            _ = len(ldif_output)
 
 
 def acl_processing_workflow() -> None:
@@ -411,7 +391,7 @@ def batch_processing_workflow() -> None:
 
     # Batch process - ONE LINE! (was 20+ lines with manual setup)
     # No processor creation, no manual conversion loops!
-    batch_result = api.process_batch("validate", entries)
+    batch_result = api.process("validate", entries, parallel=False)
 
     if batch_result.is_success:
         processed = batch_result.unwrap()

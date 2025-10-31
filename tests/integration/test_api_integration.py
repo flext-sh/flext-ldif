@@ -97,29 +97,6 @@ objectClass: person
         entry = result.unwrap()
         assert entry.dn.value.startswith("cn=")
 
-    def test_analyze_entries(self) -> None:
-        """Test analyzing entries for statistics."""
-        ldif = FlextLdif()
-
-        content = """dn: cn=User1,dc=example,dc=com
-cn: User1
-objectClass: person
-
-dn: cn=User2,dc=example,dc=com
-cn: User2
-objectClass: person
-"""
-
-        parse_result = ldif.parse(content)
-        assert parse_result.is_success
-        entries: list[FlextLdifModels.Entry] = parse_result.unwrap()
-
-        result = ldif.analyze(entries)
-        assert result.is_success
-        stats = result.unwrap()
-        # AnalysisResult is now a Pydantic model, not a dict
-        assert stats.total_entries == 2
-
     def test_validate_entries(self) -> None:
         """Test validating entries."""
         ldif = FlextLdif()
