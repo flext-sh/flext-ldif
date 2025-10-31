@@ -8,7 +8,6 @@ Container_Boundary(flext_ecosystem, "FLEXT Ecosystem") {
 
     Container_Boundary(flext_ldif, "FLEXT-LDIF Library") {
         Container(api_facade, "FlextLdif Facade", "Python Class", "Unified API entry point for all operations")
-        Container(ldif_client, "FlextLdifClient", "Python Class", "File I/O operations and encoding detection")
         Container(conversion_matrix, "QuirksConversionMatrix", "Python Class", "Universal N×N server conversion facade")
         Container(dn_registry, "DnCaseRegistry", "Python Class", "Canonical DN case tracking")
 

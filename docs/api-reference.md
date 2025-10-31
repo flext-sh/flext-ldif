@@ -1000,7 +1000,7 @@ class QuirkRegistryService:
             List of schema quirks sorted by priority
         """
 
-    def get_entry_quirks(self, server_type: str) -> list[EntryProtocol]:
+    def get_entrys(self, server_type: str) -> list[EntryProtocol]:
         """Get entry quirks for server type.
 
         Args:
@@ -1029,7 +1029,7 @@ registry = QuirkRegistryService()
 
 # Get quirks for different servers
 oid_schema_quirks = registry.get_schema_quirks("oid")
-oud_entry_quirks = registry.get_entry_quirks("oud")
+oud_entrys = registry.get_entrys("oud")
 openldap_acl_quirks = registry.get_acl_quirks("openldap")
 
 # Quirks are automatically sorted by priority

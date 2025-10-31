@@ -291,11 +291,7 @@ class FlextLdifConfig(FlextConfig):
         """
         # Server-specific encoding preferences
         if self.server_type == FlextLdifConstants.LdapServers.ACTIVE_DIRECTORY:
-            return (
-                FlextLdifConstants.Encoding.UTF16
-                if self.ldif_encoding == FlextLdifConstants.Encoding.UTF8
-                else self.ldif_encoding
-            )
+            return "utf-16" if self.ldif_encoding == "utf-8" else self.ldif_encoding
         return self.ldif_encoding
 
     def get_effective_workers(self, entry_count: int) -> int:

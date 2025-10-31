@@ -346,6 +346,19 @@ class FlextLdifTypes(FlextTypes):
             str | int | bool | dict[str, object] | object,
         ]
 
+        # =====================================================================
+        # MODEL CONVERSION TYPES - For ConversionMatrix and QuirksPort
+        # =====================================================================
+
+        # A union of all Pydantic models that can be processed by the conversion matrix.
+        # This ensures that all conversion operations are strictly model-driven.
+        # type ConvertibleModel = (
+        #     FlextLdifModels.Entry
+        #     | FlextLdifModels.SchemaAttribute
+        #     | FlextLdifModels.SchemaObjectClass
+        #     | FlextLdifModels.Acl
+        # )
+
     # =========================================================================
     # OPTIMIZED DIRECTORY TYPES - Consolidated high-frequency patterns
     # =========================================================================
@@ -582,7 +595,7 @@ class FlextLdifTypes(FlextTypes):
     #   if isinstance(config, dict): ...
     #
     # NEW (Pydantic model, preferred):
-    #   from flext_ldif.models import FlextLdifModels
+    #   # from flext_ldif.models import FlextLdifModels  # Circular import - using string literals
     #   config = FlextLdifModels.ParserConfiguration(file_path="test.ldif")
     #   if config.is_file_based: ...  # Use computed fields
     #

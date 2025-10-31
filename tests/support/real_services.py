@@ -8,7 +8,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_ldif.config import FlextLdifConfig
-from flext_ldif.services.migration_pipeline import FlextLdifMigrationPipeline
+from flext_ldif.services.migration import FlextLdifMigrationPipeline
 from flext_ldif.services.parser import FlextLdifParserService
 from flext_ldif.services.registry import FlextLdifRegistry
 from flext_ldif.services.writer import FlextLdifWriterService
@@ -218,7 +218,6 @@ class FlextLdifTestServiceFactory:
     @classmethod
     def create_writer(
         cls,
-        config: dict[str, object] | None = None,
         quirk_registry: FlextLdifRegistry | None = None,
     ) -> FlextLdifWriterService:
         """Create writer service with quirk registry."""

@@ -8,7 +8,6 @@ Container_Boundary(flext_ldif_lib, "FLEXT-LDIF Library") {
     Component(api_facade, "FlextLdif Facade", "Python Class", "Unified API entry point", "Provides clean, consistent interface")
 
     Component_Boundary(client_layer, "Client Layer") {
-        Component(ldif_client, "FlextLdifClient", "Python Class", "File I/O operations", "Handles encoding detection, file access")
         Component(config_client, "Config Client", "Python Class", "Configuration management", "Manages runtime configuration")
     }
 

@@ -7,6 +7,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import base64
 import os
 import tempfile
 from collections.abc import Callable, Generator
@@ -14,6 +15,11 @@ from pathlib import Path
 
 import pytest
 from flext_core import FlextConstants, FlextResult
+
+# Python 3.13 compatibility: base64.decodestring was removed in Python 3.9, completely gone in 3.13
+# ldif3 library uses it, so we provide a compatibility shim
+if not hasattr(base64, "decodestring"):
+    base64.decodestring = base64.decodebytes
 
 from flext_ldif.services.parser import FlextLdifParserService
 from flext_ldif.services.registry import FlextLdifRegistry

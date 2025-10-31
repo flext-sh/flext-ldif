@@ -16,32 +16,58 @@ from typing import Final, Literal
 from flext_core import FlextConstants
 
 
-class LdapServerType(StrEnum):
-    """LDAP server types supported by FLEXT ecosystem."""
-
-    ACTIVE_DIRECTORY = "active_directory"
-    OPENLDAP = "openldap"
-    APACHE_DIRECTORY = "apache_directory"
-    NOVELL_EDIRECTORY = "novell_edirectory"
-    IBM_TIVOLI = "ibm_tivoli"
-    GENERIC = "generic"
-    ORACLE_OID = "oracle_oid"
-    ORACLE_OUD = "oracle_oud"
-    DS_389 = "389ds"
-
-
 class FlextLdifConstants(FlextConstants):
     """LDIF domain constants extending flext-core FlextConstants.
 
     Contains ONLY constant values, no implementations.
     """
 
-    # =============================================================================
     # FORMAT CONSTANTS
     # =============================================================================
 
     # Oracle OID namespace identifier
     ORACLE_OID_NAMESPACE: Final[str] = "2.16.840.1.113894."
+
+    class LdapServerType(StrEnum):
+        """LDAP server types supported by FLEXT ecosystem."""
+
+        ACTIVE_DIRECTORY = "active_directory"
+        OPENLDAP = "openldap"
+        APACHE_DIRECTORY = "apache_directory"
+        NOVELL_EDIRECTORY = "novell_edirectory"
+        IBM_TIVOLI = "ibm_tivoli"
+        GENERIC = "generic"
+        ORACLE_OID = "oracle_oid"
+        ORACLE_OUD = "oracle_oud"
+        DS_389 = "389ds"
+
+    class DictKeys:
+        """Dictionary keys used throughout flext-ldif for consistent data access."""
+
+        # Core entry keys
+        DN: Final[str] = "dn"
+        ATTRIBUTES: Final[str] = "attributes"
+        OBJECTCLASS: Final[str] = "objectClass"
+        CN: Final[str] = "cn"
+        OID: Final[str] = "oid"
+
+        # Service and initialization keys
+        SERVICE_NAMES: Final[str] = "service_names"
+        INITIALIZED: Final[str] = "initialized"
+        DATA: Final[str] = "data"
+
+        # Server-specific keys
+        SERVER_TYPE: Final[str] = "server_type"
+        IS_CONFIG_ENTRY: Final[str] = "is_config_entry"
+        IS_TRADITIONAL_DIT: Final[str] = "is_traditional_dit"
+
+        # ACL-related keys
+        ACL_ATTRIBUTE: Final[str] = "acl"
+        ACI: Final[str] = "aci"
+        ACCESS: Final[str] = "access"
+        OLCACCESS: Final[str] = "olcAccess"
+        NTSECURITYDESCRIPTOR: Final[str] = "nTSecurityDescriptor"
+        HAS_OID_ACLS: Final[str] = "has_oid_acls"
 
     class Format:
         """LDIF format specifications."""
@@ -611,63 +637,6 @@ class FlextLdifConstants(FlextConstants):
     # ENCODING CONSTANTS
     # =============================================================================
 
-    class Encoding:
-        """Character encoding constants for LDIF processing."""
-
-        UTF8: Final[str] = "utf-8"
-        UTF16: Final[str] = "utf-16"
-        UTF32: Final[str] = "utf-32"
-        LATIN1: Final[str] = "latin-1"
-        ASCII: Final[str] = "ascii"
-        CP1252: Final[str] = "cp1252"
-        ISO_8859_1: Final[str] = "iso-8859-1"
-        DEFAULT_ENCODING: Final[str] = UTF8
-
-        # Encoding detection constants
-        MIN_BOM_LENGTH: Final[int] = 2
-        MIN_UTF32_LENGTH: Final[int] = 4
-        MIN_STATISTICAL_LENGTH: Final[int] = 10
-
-        # Encoding detection thresholds
-        UTF32_NULL_RATIO_THRESHOLD: Final[float] = 0.3
-        UTF16_NULL_RATIO_THRESHOLD: Final[float] = 0.1
-        CP1252_RATIO_THRESHOLD: Final[float] = 0.01  # 1% CP1252 chars
-        HIGH_BYTES_RATIO_THRESHOLD: Final[float] = 0.05  # 5% high bytes
-
-        # UTF-8 byte pattern constants (for statistical detection)
-        UTF8_HIGH_BIT_MASK: Final[int] = 0x80
-        UTF8_2BYTE_LEAD_MASK: Final[int] = 0xE0
-        UTF8_2BYTE_LEAD_VALUE: Final[int] = 0xC0
-        UTF8_3BYTE_LEAD_MASK: Final[int] = 0xF0
-        UTF8_3BYTE_LEAD_VALUE: Final[int] = 0xE0
-        UTF8_4BYTE_LEAD_MASK: Final[int] = 0xF8
-        UTF8_4BYTE_LEAD_VALUE: Final[int] = 0xF0
-        UTF8_CONTINUATION_MASK: Final[int] = 0xC0
-        UTF8_CONTINUATION_VALUE: Final[int] = 0x80
-
-        # Character range constants
-        CP1252_RANGE_START: Final[int] = 0x80
-        CP1252_RANGE_END: Final[int] = 0x9F
-        ASCII_MAX: Final[int] = 127
-
-        # Byte size for file sampling
-        ENCODING_SAMPLE_SIZE: Final[int] = 1024
-
-        # Supported encodings for LDIF processing
-        SUPPORTED_ENCODINGS: Final[frozenset[str]] = frozenset([
-            UTF8,
-            LATIN1,
-            ASCII,
-            UTF16,
-            UTF32,
-            CP1252,
-            ISO_8859_1,
-        ])
-
-    # =============================================================================
-    # LDAP SERVER CONSTANTS
-    # =============================================================================
-
     class LdapServers:
         """LDAP server implementation constants."""
 
@@ -945,6 +914,24 @@ class FlextLdifConstants(FlextConstants):
             "pwdallowuserchange",
         ])
 
+        # Oracle OUD boolean attributes (RFC 4517 compliant: use "TRUE"/"FALSE")
+        # OUD password policy attributes require TRUE/FALSE format (not 0/1)
+        OUD_BOOLEAN_ATTRIBUTES: Final[frozenset[str]] = frozenset([
+            "pwdlockout",
+            "pwdmustchange",
+            "pwdallowuserchange",
+            "pwdexpirewarning",
+            "pwdgraceauthnlimit",
+            "pwdlockoutduration",
+            "pwdmaxfailure",
+            "pwdminage",
+            "pwdmaxage",
+            "pwdmaxlength",
+            "pwdminlength",
+            # Oracle OID/OUD directory server attributes that require TRUE/FALSE format
+            "orcldasselfmodifiable",
+        ])
+
         # Oracle OUD specific operational attributes
         OUD_SPECIFIC: Final[frozenset[str]] = frozenset([
             "ds-sync-hist",
@@ -992,257 +979,437 @@ class FlextLdifConstants(FlextConstants):
             "ibm-entryChecksum",
         ])
 
-    # =============================================================================
-    # DICTIONARY KEYS - Standardize all dict[str, object] key strings
-    # =============================================================================
+        # Common operational attributes to filter from ALL entries
+        # These are always filtered regardless of entry type
+        FILTER_FROM_ALL_ENTRIES: Final[frozenset[str]] = frozenset([
+            # "createtimestamp",
+            # "creatorsname",
+            # "modifytimestamp",
+            # "modifiersname",
+            # "entrycsn",
+            # "entryuuid",
+            # "structuralobjectclass",
+            # "hassubordinates",
+            # "1.1",
+            # "+",
+            # "*",
+            # "aci",
+            # "aclrights",
+        ])
 
-    class DictKeys:
-        """Standard dictionary keys used throughout flext-ldif.
+        # Schema-related operational attributes to filter from NON-SCHEMA entries only
+        # These are preserved in schema entries (cn=schema, cn=subschemasubentry, etc.)
+        # as they contain the actual schema content
+        FILTER_FROM_NON_SCHEMA_ENTRIES: Final[frozenset[str]] = frozenset([
+            # "attributetypes",
+            # "objectclasses",
+            # "ldapsyntaxes",
+            # "matchingrules",
+            # "ditcontentrules",
+            # "ditstructurerules",
+            # "nameformsrules",
+            # "matchingruleuse",
+        ])
 
-        Zero Tolerance: All dict[str, object] key strings MUST be defined here.
-        DO NOT use hard-coded strings as dict keys anywhere in the codebase.
+    class SchemaFields:
+        """LDIF schema structure field names (case-sensitive).
+
+        Consolidates all schema dictionary key names used throughout parsing.
+        Critical for consistency when parsing RFC 2849 schema declarations.
         """
 
-        # Server type keys
-        SERVER_TYPE: Final[str] = "server_type"
-        SOURCE_SERVER: Final[str] = "source_server"
-        TARGET_SERVER: Final[str] = "target_server"
-        FROM_SERVER: Final[str] = "from_server"
-        TO_SERVER: Final[str] = "to_server"
+        # Primary schema field names (RFC 2849 section 5)
+        ATTRIBUTE_TYPES: Final[str] = "attributeTypes"  # RFC 4512 attribute definitions
+        OBJECT_CLASSES: Final[str] = (
+            "objectClasses"  # RFC 4512 object class definitions
+        )
+        MATCHING_RULES: Final[str] = "matchingRules"  # RFC 4512 matching rules
+        MATCHING_RULE_USE: Final[str] = "matchingRuleUse"  # RFC 4512 matching rule use
+        DIT_CONTENT_RULES: Final[str] = "dITContentRules"  # RFC 4512 DIT content rules
+        DIT_STRUCTURE_RULES: Final[str] = (
+            "dITStructureRules"  # RFC 4512 DIT structure rules
+        )
+        NAME_FORMS: Final[str] = "nameForms"  # RFC 4512 name forms
+        LDAP_SYNTAXES: Final[str] = "ldapSyntaxes"  # RFC 4512 LDAP syntaxes
 
-        # Entry/Data keys
-        DN: Final[str] = "dn"
-        ATTRIBUTES: Final[str] = "attributes"
-        OBJECTCLASS: Final[str] = "objectclass"
-        ENTRIES: Final[str] = "entries"
-        ENTRY: Final[str] = "entry"
-        ENTRY_TYPES: Final[str] = "entry_types"
+        # Schema field names (lowercase variants for compatibility with some servers)
+        ATTRIBUTE_TYPES_LOWER: Final[str] = "attributetypes"
+        OBJECT_CLASSES_LOWER: Final[str] = "objectclasses"
 
-        # Schema keys
-        SCHEMA: Final[str] = "schema"
-        OBJECTCLASSES: Final[str] = "objectclasses"
-        OID: Final[str] = "oid"
-        NAME: Final[str] = "name"
-        DESC: Final[str] = "desc"
-        SUP: Final[str] = "sup"
-        SYNTAX: Final[str] = "syntax"
-        EQUALITY: Final[str] = "equality"
-        ORDERING: Final[str] = "ordering"
-        SUBSTR: Final[str] = "substr"
-        MUST: Final[str] = "must"
-        MAY: Final[str] = "may"
-        KIND: Final[str] = "kind"
-        SINGLE_VALUE: Final[str] = "single_value"
-        # High-frequency schema field (8 occurrences)
-        ALIASES: Final[str] = "aliases"
+        # ObjectClass field name (camelCase - used in entry attributes)
+        OBJECT_CLASS_CAMEL: Final[str] = "objectClass"
 
-        # ACL keys
-        ACL: Final[str] = "acl"
-        ACL_FORMAT: Final[str] = "acl_format"
-        ACL_ATTRIBUTE: Final[str] = "acl_attribute"
-        ACI: Final[str] = "aci"
-        ACCESS: Final[str] = "access"
-        RAW: Final[str] = "raw"
-        PARSED: Final[str] = "parsed"
-        TYPE: Final[str] = "type"
-        FORMAT: Final[str] = "format"
-        DATA: Final[str] = "data"
-        DEFINITION: Final[str] = "definition"
-        SUBJECT: Final[str] = "subject"
+        # All schema field names as frozenset for membership testing
+        ALL_SCHEMA_FIELDS: Final[frozenset[str]] = frozenset([
+            ATTRIBUTE_TYPES,
+            OBJECT_CLASSES,
+            MATCHING_RULES,
+            MATCHING_RULE_USE,
+            DIT_CONTENT_RULES,
+            DIT_STRUCTURE_RULES,
+            NAME_FORMS,
+            LDAP_SYNTAXES,
+        ])
 
-        # Statistics/Analytics keys
-        STATS: Final[str] = "stats"
-        TOTAL_ENTRIES: Final[str] = "total_entries"
-        TOTAL_CHANGES: Final[str] = "total_changes"
-        TOTAL_COMMENTS: Final[str] = "total_comments"
-        TOTAL_MIGRATED: Final[str] = "total_migrated"
-        TOTAL_SCHEMA_ATTRIBUTES: Final[str] = "total_schema_attributes"
-        TOTAL_SCHEMA_OBJECTCLASSES: Final[str] = "total_schema_objectclasses"
-        ENTRIES_WRITTEN: Final[str] = "entries_written"
-        LINES_WRITTEN: Final[str] = "lines_written"
+    # =============================================================================
+    # ACL ATTRIBUTES - ACL attribute names consolidated by server type
+    # =============================================================================
 
-        # Processing keys
-        VALID: Final[str] = "valid"
-        IS_VALID: Final[str] = "is_valid"
-        READY: Final[str] = "ready"
-        ISSUES: Final[str] = "issues"
-        ERRORS: Final[str] = "errors"
-        CHANGES: Final[str] = "changes"
-        COMMENTS: Final[str] = "comments"
+    class AclAttributes:
+        """ACL attribute names used across different LDAP servers.
 
-        # Configuration keys
-        CONFIG: Final[str] = "config"
-        DEFAULT_ENCODING: Final[str] = "utf-8"
-        ENCODING: Final[str] = "encoding"
-        DESCRIPTION: Final[str] = "description"
-        QUIRK_REGISTRY: Final[str] = "quirk_registry"
+        Consolidates all ACL attribute references to prevent duplication
+        and ensure consistent ACL detection across the codebase.
+        """
 
-        # Internal metadata and special pattern keys
-        # High-frequency internal metadata tracking (16 occurrences)
-        METADATA: Final[str] = "_metadata"
-        # High-frequency wildcard pattern (15 occurrences)
-        WILDCARD: Final[str] = "*"
+        # Oracle Internet Directory (OID) ACL attributes
+        ORCLACI: Final[str] = "orclaci"  # Standard OID entry-level ACL
+        ORCL_ENTRY_LEVEL_ACI: Final[str] = (
+            "orclentrylevelaci"  # OID entry-level variant
+        )
 
-        # File operation keys
-        FILE_PATH: Final[str] = "file_path"
-        INPUT_DIR: Final[str] = "input_dir"
-        OUTPUT_DIR: Final[str] = "output_dir"
-        OUTPUT_FILE: Final[str] = "output_file"
-        OUTPUT_FILES: Final[str] = "output_files"
-        APPEND: Final[str] = "append"
-        CONTENT: Final[str] = "content"
+        # Oracle Unified Directory (OUD) and RFC 4876 standard
+        ACI: Final[str] = "aci"  # RFC 4876 ACI attribute
 
-        # Quirks keys
-        SUPPORTS_OPERATIONAL_ATTRS: Final[str] = "supports_operational_attrs"
-        SCHEMA_SUBENTRY: Final[str] = "schema_subentry"
-        SOURCE_FORMAT: Final[str] = "source_format"
-        TARGET_FORMAT: Final[str] = "target_format"
-        RFC_GENERIC: Final[str] = "rfc_generic"
+        # OpenLDAP ACL attributes
+        OLC_ACCESS: Final[str] = "olcAccess"  # OpenLDAP cn=config ACL
 
-        # Service/Component keys
-        SERVICES: Final[str] = "services"
-        PARSER: Final[str] = "parser"
-        WRITER: Final[str] = "writer"
-        VALIDATOR: Final[str] = "validator"
-        MIGRATION: Final[str] = "migration"
-        INITIALIZED: Final[str] = "initialized"
+        # Additional ACL-related attributes for filtering
+        ACLRIGHTS: Final[str] = "aclrights"  # Generic ACL rights attribute
+        ACLENTRY: Final[str] = "aclentry"  # Generic ACL entry attribute
+        ACCESS_CONTROL_LIST: Final[str] = "accessControlList"  # Active Directory ACL attribute
 
-        # Service names list
-        SERVICE_NAMES: Final[list[str]] = [
-            PARSER,
-            WRITER,
-            VALIDATOR,
-            MIGRATION,
-        ]
-
-        # Process/Operations keys
-        PROCESS_SCHEMA: Final[str] = "process_schema"
-        PROCESS_ENTRIES: Final[str] = "process_entries"
-        PARSE_CHANGES: Final[str] = "parse_changes"
-        PARSE_ATTRIBUTES: Final[str] = "parse_attributes"
-        PARSE_OBJECTCLASSES: Final[str] = "parse_objectclasses"
-        ATTRIBUTES_COUNT: Final[str] = "attributes_count"
-        OBJECTCLASSES_COUNT: Final[str] = "objectclasses_count"
-
-        # OpenLDAP-specific keys
-        OLCACCESS: Final[str] = "olcAccess"
-
-        # 389 Directory Server-specific keys
-        DS_PRIVILEGE_NAME: Final[str] = "ds-privilege-name"
-
-        # Active Directory-specific keys
-        NTSECURITYDESCRIPTOR: Final[str] = "nTSecurityDescriptor"
-        WHAT: Final[str] = "what"
-        BY_CLAUSES: Final[str] = "by_clauses"
-        INDEX: Final[str] = "index"
-        IS_CONFIG_ENTRY: Final[str] = "is_config_entry"
-        IS_TRADITIONAL_DIT: Final[str] = "is_traditional_dit"
-
-        # Oracle OID/OUD-specific keys
-        ORCLACI: Final[str] = "orclaci"
-        ORCLENTRYLEVELACI: Final[str] = "orclentrylevelaci"
-        ENTRY_LEVEL: Final[str] = "entry_level"
-        STANDARD: Final[str] = "standard"
-        HAS_OID_ACLS: Final[str] = "has_oid_acls"
-        MODEL_DUMP: Final[str] = "model_dump"
-
-        # ACL attribute names (all servers)
-        ACL_ATTRIBUTES: Final[frozenset[str]] = frozenset([
-            ACI,
+        # Set of all known ACL attributes for quick membership testing
+        ALL_ACL_ATTRIBUTES: Final[frozenset[str]] = frozenset([
             ORCLACI,
-            ORCLENTRYLEVELACI,
+            ORCL_ENTRY_LEVEL_ACI,
+            ACI,
+            OLC_ACCESS,
+            ACLRIGHTS,
+            ACLENTRY,
+            ACCESS_CONTROL_LIST,
         ])
 
-        # LDAP Attribute keys
-        MEMBER: Final[str] = "member"
-        UNIQUE_MEMBER: Final[str] = "uniqueMember"
-        CN: Final[str] = "cn"
-        SN: Final[str] = "sn"
-        OU: Final[str] = "ou"
-        DC: Final[str] = "dc"
-        UID: Final[str] = "uid"
-        MAIL: Final[str] = "mail"
-        TELEPHONE_NUMBER: Final[str] = "telephoneNumber"
-        SURNAME: Final[str] = "Surname"
-
-        # ObjectClass values (deprecated - use FlextLdifConstants.ObjectClasses instead)
-        # These are kept for backward compatibility but should be migrated to ObjectClasses.*
-        TOP: Final[str] = "top"
-        PERSON: Final[str] = "person"
-        GROUP_OF_NAMES: Final[str] = "groupOfNames"
-        GROUP_OF_UNIQUE_NAMES: Final[str] = "groupOfUniqueNames"
-        ORGANIZATIONAL_UNIT: Final[str] = "organizationalUnit"
-
-        # ACL service keys
-        PATTERNS: Final[str] = "patterns"
-        COMPOSITE: Final[str] = "composite"
-        RULE_EVALUATION: Final[str] = "rule_evaluation"
-
-        # Validation/Check keys
-        HAS_DN: Final[str] = "has_dn"
-        LENGTH: Final[str] = "length"
-        BOOL: Final[str] = "bool"
-        STR: Final[str] = "str"
-
-        # Feature flags
-        LDIF_FEATURES: Final[str] = "ldif_features"
-        RFC_2849_PARSING: Final[str] = "rfc_2849_parsing"
-        RFC_4512_COMPLIANCE: Final[str] = "rfc_4512_compliance"
-        SERVER_QUIRKS: Final[str] = "server_quirks"
-        GENERIC_MIGRATION: Final[str] = "generic_migration"
-        SCHEMA_VALIDATION: Final[str] = "schema_validation"
-        ACL_PROCESSING: Final[str] = "acl_processing"
-        ENTRY_BUILDING: Final[str] = "entry_building"
-
-        # Quirk types
-        SCHEMA_QUIRK: Final[str] = "schema"
-        ACL_QUIRK: Final[str] = "acl"
-        ENTRY_QUIRK: Final[str] = "entry"
-        QUIRK_TYPES: Final[frozenset[str]] = frozenset([
-            SCHEMA_QUIRK,
-            ACL_QUIRK,
-            ENTRY_QUIRK,
+        # ACL attributes to filter/detect during migration
+        # NOTE: All values are commented and list is empty - values should be added as needed
+        FILTER_ACL_ATTRIBUTES: Final[frozenset[str]] = frozenset([
+            # "aci",
+            # "orclaci",
+            # "aclrights",
+            # "aclentry",
         ])
 
-        # Status/State keys
-        UNKNOWN: Final[str] = "unknown"
-        HIGH: Final[str] = "high"
-        STOP: Final[str] = "stop"
-        SKIP: Final[str] = "skip"
-        AFTER: Final[str] = "after"
-        MEDIUM: Final[str] = "medium"
-        # High-frequency status tracking (21 occurrences)
-        FAILED: Final[str] = "failed"
-        # High-frequency status tracking (14 occurrences)
-        SYNCED: Final[str] = "synced"
-        # Medium-frequency status tracking (5 occurrences)
-        SKIPPED: Final[str] = "skipped"
-        # Medium-frequency status tracking (5 occurrences)
-        RESOLVED: Final[str] = "resolved"
-        # Status indicator for data loading
-        LOADED: Final[str] = "loaded"
-        # Medium-frequency ACL permissions (7 occurrences)
-        PERMISSIONS: Final[str] = "permissions"
-        # Medium-frequency ACL target (6 occurrences)
-        TARGET: Final[str] = "target"
-        # Medium-frequency schema constraint (6 occurrences)
-        SYNTAX_LENGTH: Final[str] = "syntax_length"
-        # Medium-frequency format tracking (6 occurrences)
-        ORIGINAL_FORMAT: Final[str] = "original_format"
-        # Medium-frequency metadata version (5 occurrences)
-        VERSION: Final[str] = "version"
-        # Medium-frequency metadata summary (5 occurrences)
-        SUMMARY: Final[str] = "summary"
+        # Grouped by server type for server-specific processing
+        OID_ACL_ATTRS: Final[frozenset[str]] = frozenset([
+            ORCLACI,
+            ORCL_ENTRY_LEVEL_ACI,
+        ])
+        OUD_ACL_ATTRS: Final[frozenset[str]] = frozenset([ACI])
+        OPENLDAP_ACL_ATTRS: Final[frozenset[str]] = frozenset([OLC_ACCESS])
 
-        # Class/Component name keys
-        FLEXT_LDIF_QUIRKS_REGISTRY: Final[str] = "FlextLdifRegistry"
-        FLEXT_LDIF_QUIRKS_MANAGER: Final[str] = "FlextLdifQuirksManager"
-        FLEXT_LDIF_ACL_SERVICE: Final[str] = "FlextLdifAclService"
-        FLEXT_LDIF_SCHEMA_BUILDER: Final[str] = "FlextLdifSchemaBuilder"
+    # =============================================================================
+    # DN-VALUED ATTRIBUTES - Attributes that contain DN values
+    # =============================================================================
+
+    class DnValuedAttributes:
+        """Attributes that contain Distinguished Names as values.
+
+        Consolidated list of all attributes that hold DN references across
+        all supported LDAP servers. Used for DN consistency validation during
+        server-to-server migrations and conversions.
+
+        These attributes require special handling during DN normalization
+        and case preservation (especially for OUD compatibility).
+        """
+
+        # Member/ownership attributes (point to user/group DNs)
+        MEMBER: Final[str] = "member"  # RFC 4512 group members
+        UNIQUE_MEMBER: Final[str] = "uniqueMember"  # RFC 4512 unique members
+        OWNER: Final[str] = "owner"  # Entry owner DN
+        MANAGED_BY: Final[str] = "managedBy"  # Active Directory manager
+        MANAGER: Final[str] = "manager"  # inetOrgPerson manager
+        SECRETARY: Final[str] = "secretary"  # inetOrgPerson secretary
+        SEES_ALSO: Final[str] = "seeAlso"  # See also reference
+
+        # Parent/hierarchy attributes
+        PARENT: Final[str] = "parent"  # Parent entry reference
+        REFERS_TO: Final[str] = "refersTo"  # Generic reference
+
+        # Group/role attributes (point to group/role DNs)
+        MEMBER_OF: Final[str] = "memberOf"  # Active Directory member of groups
+        GROUPS: Final[str] = "groups"  # Generic group membership
+
+        # Authorization/delegation attributes
+        AUTHORIZED_TO: Final[str] = "authorizedTo"  # Delegation target
+        HAS_SUBORDINATES: Final[str] = "hasSubordinates"  # RFC 3673 operational
+        SUBORDINATE_DN: Final[str] = "subordinateDn"  # Subordinate reference
+
+        # All DN-valued attributes as frozenset for membership testing
+        ALL_DN_VALUED: Final[frozenset[str]] = frozenset([
+            MEMBER,
+            UNIQUE_MEMBER,
+            OWNER,
+            MANAGED_BY,
+            MANAGER,
+            SECRETARY,
+            SEES_ALSO,
+            PARENT,
+            REFERS_TO,
+            MEMBER_OF,
+            GROUPS,
+            AUTHORIZED_TO,
+            HAS_SUBORDINATES,
+            SUBORDINATE_DN,
+        ])
 
     # =============================================================================
     # DN PATTERNS - Standard DN patterns for schema and configuration
     # =============================================================================
+
+    # =============================================================================
+    # PERMISSION NAMES - ACL Permission Type Identifiers
+    # =============================================================================
+
+    class PermissionNames:
+        """ACL permission type identifiers (magic strings representing permission types).
+
+        Used across OID, OUD, OpenLDAP, and other LDAP server ACL definitions.
+        These are different from actions (add/delete/modify in changetype).
+
+        Zero Tolerance: All permission name strings (read, write, etc.) MUST be here.
+        DO NOT hard-code permission names in servers/*.py
+        """
+
+        # Standard LDAP ACL permissions
+        READ: Final[str] = "read"
+        WRITE: Final[str] = "write"
+        ADD: Final[str] = "add"
+        DELETE: Final[str] = "delete"
+        SEARCH: Final[str] = "search"
+        COMPARE: Final[str] = "compare"
+
+        # Extended permissions
+        SELF_WRITE: Final[str] = "self_write"
+        SELFWRITE: Final[str] = "selfwrite"  # Oracle variant
+        PROXY: Final[str] = "proxy"
+        BROWSE: Final[str] = "browse"
+        ALL: Final[str] = "all"
+        NONE: Final[str] = "none"
+
+        # Permission aliases/mappings
+        PERMISSION_MAPPINGS: Final[dict[str, list[str]]] = {
+            "browse": ["read", "search"],
+            "selfwrite": ["write"],
+            "proxy": ["proxy"],
+        }
+
+        # All permission names for validation
+        ALL_PERMISSIONS: Final[frozenset[str]] = frozenset([
+            READ,
+            WRITE,
+            ADD,
+            DELETE,
+            SEARCH,
+            COMPARE,
+            SELF_WRITE,
+            SELFWRITE,
+            PROXY,
+            BROWSE,
+            ALL,
+            NONE,
+        ])
+
+    # =============================================================================
+    # BOOLEAN FORMATS - Server-Specific Boolean Representations
+    # =============================================================================
+
+    class BooleanFormats:
+        """Boolean value representations and conversions across LDAP servers.
+
+        Different servers use different boolean formats:
+        - RFC 4517 compliant: "TRUE" / "FALSE"
+        - Oracle OID: "1" / "0"
+        - Legacy formats: "true" / "false", "yes" / "no"
+
+        Zero Tolerance: Boolean conversions MUST use these constants.
+        DO NOT hard-code boolean strings like "TRUE" or "1" in servers/*.py
+        """
+
+        # RFC 4517 compliant (OUD, modern servers)
+        TRUE_RFC: Final[str] = "TRUE"
+        FALSE_RFC: Final[str] = "FALSE"
+
+        # Legacy variants (case-insensitive)
+        TRUE_LOWER: Final[str] = "true"
+        FALSE_LOWER: Final[str] = "false"
+
+        # Oracle OID format (non-RFC compliant)
+        ONE_OID: Final[str] = "1"
+        ZERO_OID: Final[str] = "0"
+
+        # Boolean conversion mappings
+        OID_TO_RFC: Final[dict[str, str]] = {
+            "1": TRUE_RFC,
+            "0": FALSE_RFC,
+            "true": TRUE_RFC,
+            "false": FALSE_RFC,
+        }
+
+        RFC_TO_OID: Final[dict[str, str]] = {
+            TRUE_RFC: ONE_OID,
+            FALSE_RFC: ZERO_OID,
+            TRUE_LOWER: ONE_OID,
+            FALSE_LOWER: ZERO_OID,
+        }
+
+        # Universal boolean check
+        RFC_TRUE_VALUES: Final[frozenset[str]] = frozenset([TRUE_RFC, TRUE_LOWER])
+        RFC_FALSE_VALUES: Final[frozenset[str]] = frozenset([FALSE_RFC, FALSE_LOWER])
+        OID_TRUE_VALUES: Final[frozenset[str]] = frozenset([
+            ONE_OID,
+            "true",
+            "True",
+            "TRUE",
+        ])
+        OID_FALSE_VALUES: Final[frozenset[str]] = frozenset([
+            ZERO_OID,
+            "false",
+            "False",
+            "FALSE",
+        ])
+
+    # =============================================================================
+    # METADATA KEYS - Quirk Processing and Entry Extension Metadata
+    # =============================================================================
+
+    class MetadataKeys:
+        """Metadata extension keys used in quirk processing and entry transformations.
+
+        Used in _metadata dictionaries and extension fields within Entry/ACL/Schema models.
+
+        Zero Tolerance: All metadata key strings MUST be defined here.
+        DO NOT use hard-coded keys like metadata["proxy_permissions"] in servers/*.py
+        """
+
+        # =========================
+        # OID-Specific Metadata
+        # =========================
+
+        PROXY_PERMISSIONS: Final[str] = "proxy_permissions"
+        ORIGINAL_OID_PERMS: Final[str] = "original_oid_perms"
+        SELF_WRITE_TO_WRITE: Final[str] = "self_write_to_write"
+        OID_SPECIFIC_RIGHTS: Final[str] = "oid_specific_rights"
+        OID_TO_OUD_TRANSFORMED: Final[str] = "oid_to_oud_transformed"
+
+        # =========================
+        # Schema Extension Metadata
+        # =========================
+
+        SYNTAX_OID_VALID: Final[str] = "syntax_oid_valid"
+        SYNTAX_VALIDATION_ERROR: Final[str] = "syntax_validation_error"
+        X_ORIGIN: Final[str] = "x_origin"  # RFC 2252 X-ORIGIN extension
+        OBSOLETE: Final[str] = "obsolete"  # RFC 4512 OBSOLETE flag
+        COLLECTIVE: Final[str] = "collective"  # RFC 2876 COLLECTIVE flag
+        ORIGINAL_FORMAT: Final[str] = (
+            "original_format"  # Source format before conversion
+        )
+        ORIGINAL_SOURCE: Final[str] = (
+            "original_source"  # Source server type that generated
+        )
+
+        # =========================
+        # ACL/Permission Metadata
+        # =========================
+
+        VERSION: Final[str] = "version"  # ACL version/format number
+        LINE_BREAKS: Final[str] = "line_breaks"  # Whether ACL uses line breaks
+        IS_MULTILINE: Final[str] = "is_multiline"  # ACL spans multiple lines
+        DN_SPACES: Final[str] = "dn_spaces"  # Whether DN has spaces around delimiters
+        TARGETSCOPE: Final[str] = (
+            "targetscope"  # ACL target scope (base, one, sub, etc)
+        )
+        ATTRIBUTE_ORDER: Final[str] = (
+            "attribute_order"  # Order of attributes in original
+        )
+        SUBJECT_BINDING: Final[str] = "subject_binding"  # Subject binding type
+
+        # =========================
+        # Entry Extension Metadata
+        # =========================
+
+        BASE64_ATTRS: Final[str] = "_base64_attrs"  # Attributes encoded in base64
+        MODIFY_ADD_ATTRIBUTETYPES: Final[str] = (
+            "_modify_add_attributetypes"  # New attribute types in changetype: modify
+        )
+        MODIFY_ADD_OBJECTCLASSES: Final[str] = (
+            "_modify_add_objectclasses"  # New object classes in changetype: modify
+        )
+        ORACLE_OBJECTCLASSES: Final[str] = (
+            "oracle_objectclasses"  # Oracle-specific objectClasses
+        )
+        SKIPPED_ATTRIBUTES: Final[str] = (
+            "_skipped_attributes"  # Attributes removed during conversion
+        )
+        CONVERTED_ATTRIBUTES: Final[str] = (
+            "_converted_attributes"  # Attribute names that changed
+        )
+
+        # =========================
+        # Processing Metadata
+        # =========================
+
+        METADATA: Final[str] = "_metadata"  # Root metadata container
+        ACL_ATTRIBUTES: Final[str] = (
+            "_acl_attributes"  # ACL-related attributes in entry
+        )
+        HAS_SYNTAX_EXTENSIONS: Final[str] = (
+            "_has_syntax_extensions"  # Custom SYNTAX extensions
+        )
+        REQUIRES_RFC_TRANSLATION: Final[str] = (
+            "_requires_rfc_translation"  # Needs RFC conversion
+        )
+        IS_RELAXED_PARSED: Final[str] = (
+            "_is_relaxed_parsed"  # Parsed using relaxed mode
+        )
+
+        # =========================
+        # All Metadata Keys Registry
+        # =========================
+
+        ALL_OID_KEYS: Final[frozenset[str]] = frozenset([
+            PROXY_PERMISSIONS,
+            ORIGINAL_OID_PERMS,
+            SELF_WRITE_TO_WRITE,
+            OID_SPECIFIC_RIGHTS,
+            OID_TO_OUD_TRANSFORMED,
+        ])
+
+        ALL_SCHEMA_KEYS: Final[frozenset[str]] = frozenset([
+            X_ORIGIN,
+            OBSOLETE,
+            COLLECTIVE,
+            ORIGINAL_FORMAT,
+            ORIGINAL_SOURCE,
+        ])
+
+        ALL_ACL_KEYS: Final[frozenset[str]] = frozenset([
+            VERSION,
+            LINE_BREAKS,
+            IS_MULTILINE,
+            DN_SPACES,
+            TARGETSCOPE,
+            ATTRIBUTE_ORDER,
+            SUBJECT_BINDING,
+        ])
+
+        ALL_ENTRY_KEYS: Final[frozenset[str]] = frozenset([
+            BASE64_ATTRS,
+            MODIFY_ADD_ATTRIBUTETYPES,
+            MODIFY_ADD_OBJECTCLASSES,
+            ORACLE_OBJECTCLASSES,
+            SKIPPED_ATTRIBUTES,
+            CONVERTED_ATTRIBUTES,
+        ])
 
     class DnPatterns:
         """Standard DN patterns used in LDAP/LDIF processing.
@@ -1701,14 +1868,30 @@ class FlextLdifConstants(FlextConstants):
         SCHEMA_OID_EXTRACTION: Final[str] = (
             r"\(\s*([\d.]+)"  # For re.search() without ^ anchor
         )
+        # Regex pattern for extracting OID from schema definitions (with start anchor)
+        SCHEMA_OID_EXTRACTION_START: Final[str] = (
+            r"^\s*\(\s*([0-9.]+)"  # For re.search() with ^ anchor (common use case)
+        )
         SCHEMA_NAME: Final[str] = r"NAME\s+\(?\s*'([^']+)'"
         SCHEMA_DESC: Final[str] = r"DESC\s+'([^']+)'"
         SCHEMA_SYNTAX: Final[str] = r"SYNTAX\s+([\d.]+)"
         SCHEMA_EQUALITY: Final[str] = r"EQUALITY\s+([^\s)]+)"
-        SCHEMA_SINGLE_VALUE: Final[str] = r"\bSINGLE-VALUE\b"
+        SCHEMA_SUBSTR: Final[str] = r"SUBSTR\s+([^\s)]+)"
+        SCHEMA_ORDERING: Final[str] = r"ORDERING\s+([^\s)]+)"
         SCHEMA_SUP: Final[str] = r"SUP\s+(\w+)"
-        SCHEMA_MUST: Final[str] = r"MUST\s+\(([^)]+)\)"
-        SCHEMA_MAY: Final[str] = r"MAY\s+\(([^)]+)\)"
+        SCHEMA_USAGE: Final[str] = r"USAGE\s+(\w+)"
+        SCHEMA_X_ORIGIN: Final[str] = r"X-ORIGIN\s+'([^']+)'"
+        SCHEMA_SYNTAX_LENGTH: Final[str] = r"SYNTAX\s+([0-9.]+)(?:\{(\d+)\})?"
+        SCHEMA_SINGLE_VALUE: Final[str] = r"\bSINGLE-VALUE\b"
+        SCHEMA_COLLECTIVE: Final[str] = r"\bCOLLECTIVE\b"
+        SCHEMA_NO_USER_MODIFICATION: Final[str] = r"\bNO-USER-MODIFICATION\b"
+        SCHEMA_OBSOLETE: Final[str] = r"\bOBSOLETE\b"
+
+        # ObjectClass specific schema parsing patterns
+        SCHEMA_OBJECTCLASS_KIND: Final[str] = r"\b(ABSTRACT|STRUCTURAL|AUXILIARY)\b"
+        SCHEMA_OBJECTCLASS_SUP: Final[str] = r"SUP\s+\(?\s*([\w$ ]+?)\s*\)?"
+        SCHEMA_OBJECTCLASS_MUST: Final[str] = r"MUST\s+\(?\s*([\w$ ]+?)\s*\)?"
+        SCHEMA_OBJECTCLASS_MAY: Final[str] = r"MAY\s+\(?\s*([\w$ ]+?)\s*\)?"
 
         # Server detection patterns moved to ServerDetection class below
 
@@ -1845,9 +2028,172 @@ class FlextLdifConstants(FlextConstants):
         # Change type patterns
         CHANGETYPE: Final[str] = r"^changetype:\s*(add|delete|modify|modrdn)$"
 
+    # Change type enum
+    class ChangeType(StrEnum):
+        """LDIF change types for entry operations."""
+
+        ADD = "add"
+        DELETE = "delete"
+        MODIFY = "modify"
+        MODRDN = "modrdn"
+
         # Comment patterns
-        COMMENT_LINE: Final[str] = r"^\s*#"
-        VERSION_LINE: Final[str] = r"^version:\s*\d+"
+        COMMENT_LINE = r"^\s*#"
+        VERSION_LINE = r"^version:\s*\d+"
+
+    # LDAP SERVERS - Server-specific detection patterns
+    # =============================================================================
+
+    class LdapServerDetection:
+        """Server-specific detection patterns and markers for LDAP servers.
+
+        Centralizes all OID patterns, attribute prefixes, objectClass names,
+        and DN markers used for server detection across all quirk implementations.
+
+        Zero Tolerance: All server detection constants MUST be defined here,
+        NO hardcoding in server implementations.
+        """
+
+        # ===== ACTIVE DIRECTORY (Microsoft) =====
+        AD_OID_PATTERN: Final[str] = r"1\.2\.840\.113556\."
+        AD_ATTRIBUTE_NAMES: Final[frozenset[str]] = frozenset([
+            "samaccountname",
+            "objectguid",
+            "objectsid",
+            "userprincipalname",
+            "unicodepwd",
+            "useraccountcontrol",
+            "primarygroupid",
+            "logonhours",
+            "lockouttime",
+            "pwdlastset",
+            "memberof",
+            "msds-supportedencryptiontypes",
+            "serviceprincipalname",
+            "distinguishedname",
+        ])
+        AD_OBJECTCLASS_NAMES: Final[frozenset[str]] = frozenset([
+            "user",
+            "computer",
+            "group",
+            "organizationalunit",
+            "organizationalperson",
+            "person",
+            "domain",
+            "domainpolicy",
+            "foreignsecurityprincipal",
+            "msds-groupmanagedserviceaccount",
+            "msds-managedserviceaccount",
+        ])
+        AD_DN_MARKERS: Final[frozenset[str]] = frozenset([
+            "cn=users",
+            "cn=computers",
+            "cn=configuration",
+            "cn=system",
+            "ou=domain controllers",
+        ])
+        AD_ATTRIBUTE_MARKERS: Final[frozenset[str]] = frozenset([
+            "objectguid",
+            "objectsid",
+            "samaccountname",
+            "userprincipalname",
+            "ntsecuritydescriptor",
+            "useraccountcontrol",
+            "serviceprincipalname",
+            "lastlogontimestamp",
+            "pwdlastset",
+        ])
+
+        # ===== APACHE DIRECTORY SERVER =====
+        APACHE_OID_PATTERN: Final[str] = r"1\.3\.6\.1\.4\.1\.18060\."
+        APACHE_ATTRIBUTE_PREFIXES: Final[frozenset[str]] = frozenset([
+            "ads-",
+            "apacheds",
+        ])
+        APACHE_OBJECTCLASS_NAMES: Final[frozenset[str]] = frozenset([
+            "ads-directoryservice",
+            "ads-base",
+            "ads-server",
+            "ads-partition",
+            "ads-interceptor",
+        ])
+        APACHE_DN_MARKERS: Final[frozenset[str]] = frozenset([
+            "ou=config",
+            "ou=services",
+            "ou=system",
+            "ou=partitions",
+        ])
+
+        # ===== 389 DIRECTORY SERVER (Red Hat) =====
+        DS389_OID_PATTERN: Final[str] = r"2\.16\.840\.1\.113730\."
+        DS389_ATTRIBUTE_PREFIXES: Final[frozenset[str]] = frozenset([
+            "nsslapd-",
+            "nsds",
+            "nsuniqueid",
+        ])
+        DS389_OBJECTCLASS_NAMES: Final[frozenset[str]] = frozenset([
+            "nscontainer",
+            "nsperson",
+            "nsds5replica",
+            "nsds5replicationagreement",
+        ])
+        DS389_DN_MARKERS: Final[frozenset[str]] = frozenset([
+            "cn=config",
+            "cn=monitor",
+            "cn=changelog",
+        ])
+
+        # ===== NOVELL eDIRECTORY =====
+        NOVELL_OID_PATTERN: Final[str] = r"2\.16\.840\.1\.113719\."
+        NOVELL_ATTRIBUTE_PREFIXES: Final[frozenset[str]] = frozenset([
+            "nspm",
+            "login",
+            "dirxml-",
+        ])
+        NOVELL_OBJECTCLASS_NAMES: Final[frozenset[str]] = frozenset([
+            "ndsperson",
+            "nspmpasswordpolicy",
+            "ndsserver",
+            "ndstree",
+            "ndsloginproperties",
+        ])
+        NOVELL_DN_MARKERS: Final[frozenset[str]] = frozenset([
+            "ou=services",
+            "ou=apps",
+            "ou=system",
+        ])
+        NOVELL_ATTRIBUTE_MARKERS: Final[frozenset[str]] = frozenset([
+            "nspmpasswordpolicy",
+            "nspmpasswordpolicydn",
+            "logindisabled",
+            "loginexpirationtime",
+        ])
+        # Novell ACL segment indices
+        NOVELL_SEGMENT_INDEX_SCOPE: Final[int] = 0
+        NOVELL_SEGMENT_INDEX_TRUSTEE: Final[int] = 1
+        NOVELL_SEGMENT_INDEX_RIGHTS: Final[int] = 2
+
+        # ===== IBM TIVOLI DIRECTORY SERVER =====
+        TIVOLI_OID_PATTERN: Final[str] = r"1\.3\.18\."
+        TIVOLI_ATTRIBUTE_PREFIXES: Final[frozenset[str]] = frozenset([
+            "ibm-",
+            "ids-",
+        ])
+        TIVOLI_OBJECTCLASS_NAMES: Final[frozenset[str]] = frozenset([
+            "ibm-slapdaccesscontrolsubentry",
+            "ibm-ldapserver",
+            "ibm-filterentry",
+        ])
+        TIVOLI_DN_MARKERS: Final[frozenset[str]] = frozenset([
+            "cn=ibm",
+            "cn=configuration",
+            "cn=schema",
+        ])
+        TIVOLI_ATTRIBUTE_MARKERS: Final[frozenset[str]] = frozenset([
+            "ibm-entryuuid",
+            "ibm-slapdaccesscontrol",
+            "ibm-replicationchangecount",
+        ])
 
     # =============================================================================
     # VALIDATION RULES - Validation logic constants
@@ -1911,6 +2257,719 @@ class FlextLdifConstants(FlextConstants):
         # Validation limits
         DEFAULT_MAX_ATTR_VALUE_LENGTH: Final[int] = 1048576  # 1MB default
         TYPICAL_ATTR_NAME_LENGTH_LIMIT: Final[int] = 127  # RFC 4512 typical limit
+
+    class RfcSyntaxOids:
+        """RFC 4517 LDAP Attribute Syntax OIDs.
+
+        Standard LDAP attribute syntax definitions per RFC 4517.
+        OID format: 1.3.6.1.4.1.1466.115.121.1.X
+        """
+
+        # RFC 4517 Syntax OIDs (base: 1.3.6.1.4.1.1466.115.121.1)
+        BASE: Final[str] = "1.3.6.1.4.1.1466.115.121.1"
+
+        # Basic syntaxes
+        ACI: Final[str] = "1.3.6.1.4.1.1466.115.121.1.1"  # ACI Item
+        ACCESS_POINT: Final[str] = "1.3.6.1.4.1.1466.115.121.1.2"  # Access Point
+        ATTRIBUTE_TYPE_DESCRIPTION: Final[str] = (
+            "1.3.6.1.4.1.1466.115.121.1.3"  # Attribute Type Description
+        )
+        AUDIO: Final[str] = "1.3.6.1.4.1.1466.115.121.1.4"  # Audio
+        BINARY: Final[str] = "1.3.6.1.4.1.1466.115.121.1.5"  # Binary
+        BIT_STRING: Final[str] = "1.3.6.1.4.1.1466.115.121.1.6"  # Bit String
+        BOOLEAN: Final[str] = "1.3.6.1.4.1.1466.115.121.1.7"  # Boolean
+        CERTIFICATE: Final[str] = (
+            "1.3.6.1.4.1.1466.115.121.1.8"  # Certificate (DER encoded)
+        )
+        CERTIFICATE_LIST: Final[str] = (
+            "1.3.6.1.4.1.1466.115.121.1.9"  # Certificate List (DER encoded)
+        )
+        CERTIFICATE_PAIR: Final[str] = (
+            "1.3.6.1.4.1.1466.115.121.1.10"  # Certificate Pair (DER encoded)
+        )
+        COUNTRY_STRING: Final[str] = "1.3.6.1.4.1.1466.115.121.1.11"  # Country String
+        DN: Final[str] = "1.3.6.1.4.1.1466.115.121.1.12"  # Distinguished Name (DN)
+        DATA_QUALITY_SYNTAX: Final[str] = (
+            "1.3.6.1.4.1.1466.115.121.1.13"  # Data Quality Syntax
+        )
+        DELIVERY_METHOD: Final[str] = "1.3.6.1.4.1.1466.115.121.1.14"  # Delivery Method
+        DIRECTORY_STRING: Final[str] = (
+            "1.3.6.1.4.1.1466.115.121.1.15"  # Directory String
+        )
+        DIT_CONTENT_RULE_DESCRIPTION: Final[str] = (
+            "1.3.6.1.4.1.1466.115.121.1.16"  # DIT Content Rule Description
+        )
+        DIT_STRUCTURE_RULE_DESCRIPTION: Final[str] = (
+            "1.3.6.1.4.1.1466.115.121.1.17"  # DIT Structure Rule Description
+        )
+        DLEXP_TIME: Final[str] = "1.3.6.1.4.1.1466.115.121.1.18"  # DLEXP Time
+        DN_WITH_BINARY: Final[str] = "1.3.6.1.4.1.1466.115.121.1.19"  # DN With Binary
+        DN_WITH_STRING: Final[str] = "1.3.6.1.4.1.1466.115.121.1.20"  # DN With String
+
+        # String-based syntaxes
+        DIRECTORY_STRING_21: Final[str] = (
+            "1.3.6.1.4.1.1466.115.121.1.21"  # Directory String
+        )
+        ENHANCED_GUIDE: Final[str] = "1.3.6.1.4.1.1466.115.121.1.22"  # Enhanced Guide
+        FACSIMILE_TELEPHONE_NUMBER: Final[str] = (
+            "1.3.6.1.4.1.1466.115.121.1.23"  # Facsimile Telephone Number
+        )
+        FAX: Final[str] = "1.3.6.1.4.1.1466.115.121.1.24"  # Fax
+        GENERALIZED_TIME: Final[str] = (
+            "1.3.6.1.4.1.1466.115.121.1.25"  # Generalized Time
+        )
+        GUIDE: Final[str] = "1.3.6.1.4.1.1466.115.121.1.26"  # Guide
+        IA5_STRING: Final[str] = "1.3.6.1.4.1.1466.115.121.1.27"  # IA5 String (ASCII)
+        INTEGER_RFC: Final[str] = "2.5.5.5"  # INTEGER (RFC 2252/4517 standard)
+        JPEG: Final[str] = "1.3.6.1.4.1.1466.115.121.1.28"  # JPEG Image
+        LDAP_SYNTAX_DESCRIPTION: Final[str] = (
+            "1.3.6.1.4.1.1466.115.121.1.29"  # LDAP Syntax Description
+        )
+
+        # Numeric and structured syntaxes
+        MATCHING_RULE_DESCRIPTION: Final[str] = (
+            "1.3.6.1.4.1.1466.115.121.1.30"  # Matching Rule Description
+        )
+        MATCHING_RULE_USE_DESCRIPTION: Final[str] = (
+            "1.3.6.1.4.1.1466.115.121.1.31"  # Matching Rule Use Description
+        )
+        MHS_OR_ADDRESS: Final[str] = "1.3.6.1.4.1.1466.115.121.1.32"  # MHS OR Address
+        MODIFY_INCREMENT: Final[str] = (
+            "1.3.6.1.4.1.1466.115.121.1.33"  # Modify Increment
+        )
+        NAME_AND_OPTIONAL_UID: Final[str] = (
+            "1.3.6.1.4.1.1466.115.121.1.34"  # Name and Optional UID
+        )
+        NAME_FORM_DESCRIPTION: Final[str] = (
+            "1.3.6.1.4.1.1466.115.121.1.35"  # Name Form Description
+        )
+        NUMERIC_STRING: Final[str] = "1.3.6.1.4.1.1466.115.121.1.36"  # Numeric String
+        OBJECT_CLASS_DESCRIPTION: Final[str] = (
+            "1.3.6.1.4.1.1466.115.121.1.37"  # Object Class Description
+        )
+        OID: Final[str] = "1.3.6.1.4.1.1466.115.121.1.38"  # OID
+        OCTET_STRING: Final[str] = "1.3.6.1.4.1.1466.115.121.1.39"  # Octet String
+
+        # Additional standard syntaxes
+        OTHER_MAILBOX: Final[str] = "1.3.6.1.4.1.1466.115.121.1.40"  # Other Mailbox
+        OCTET_STRING_40: Final[str] = (
+            "1.3.6.1.4.1.1466.115.121.1.40"  # Octet String (same as 39)
+        )
+        POSTAL_ADDRESS: Final[str] = "1.3.6.1.4.1.1466.115.121.1.41"  # Postal Address
+        PROTOCOL_INFORMATION: Final[str] = (
+            "1.3.6.1.4.1.1466.115.121.1.42"  # Protocol Information
+        )
+        PRESENTATION_ADDRESS: Final[str] = (
+            "1.3.6.1.4.1.1466.115.121.1.43"  # Presentation Address
+        )
+        PRINTABLE_STRING: Final[str] = (
+            "1.3.6.1.4.1.1466.115.121.1.44"  # Printable String
+        )
+        SUBSTRING_ASSERTION: Final[str] = (
+            "1.3.6.1.4.1.1466.115.121.1.58"  # Substring Assertion
+        )
+        TELEPHONE_NUMBER: Final[str] = (
+            "1.3.6.1.4.1.1466.115.121.1.50"  # Telephone Number
+        )
+        TELETEX_TERMINAL_IDENTIFIER: Final[str] = (
+            "1.3.6.1.4.1.1466.115.121.1.51"  # Teletex Terminal Identifier
+        )
+        TELEX_NUMBER: Final[str] = "1.3.6.1.4.1.1466.115.121.1.52"  # Telex Number
+        TIME_OF_DAY: Final[str] = "1.3.6.1.4.1.1466.115.121.1.53"  # Time of Day
+        UTCTIME: Final[str] = "1.3.6.1.4.1.1466.115.121.1.54"  # UTC Time
+        LDAP_SYNTAX: Final[str] = "1.3.6.1.4.1.1466.115.121.1.54"  # LDAP Syntax (alias)
+        UTF8_STRING: Final[str] = "1.3.6.1.4.1.1466.115.121.1.55"  # UTF-8 String
+        UNICODE_STRING: Final[str] = (
+            "1.3.6.1.4.1.1466.115.121.1.56"  # Unicode String (also UCS-2)
+        )
+        UUI: Final[str] = (
+            "1.3.6.1.4.1.1466.115.121.1.57"  # UUI (User-defined attribute)
+        )
+
+        # Mapping of OID to human-readable name
+        OID_TO_NAME: Final[dict[str, str]] = {
+            "2.5.5.5": "integer",  # INTEGER (RFC 2252/4517 standard)
+            "1.3.6.1.4.1.1466.115.121.1.1": "aci",
+            "1.3.6.1.4.1.1466.115.121.1.2": "access_point",
+            "1.3.6.1.4.1.1466.115.121.1.3": "attribute_type_description",
+            "1.3.6.1.4.1.1466.115.121.1.4": "audio",
+            "1.3.6.1.4.1.1466.115.121.1.5": "binary",
+            "1.3.6.1.4.1.1466.115.121.1.6": "bit_string",
+            "1.3.6.1.4.1.1466.115.121.1.7": "boolean",
+            "1.3.6.1.4.1.1466.115.121.1.8": "certificate",
+            "1.3.6.1.4.1.1466.115.121.1.9": "certificate_list",
+            "1.3.6.1.4.1.1466.115.121.1.10": "certificate_pair",
+            "1.3.6.1.4.1.1466.115.121.1.11": "country_string",
+            "1.3.6.1.4.1.1466.115.121.1.12": "dn",
+            "1.3.6.1.4.1.1466.115.121.1.13": "data_quality_syntax",
+            "1.3.6.1.4.1.1466.115.121.1.14": "delivery_method",
+            "1.3.6.1.4.1.1466.115.121.1.15": "directory_string",
+            "1.3.6.1.4.1.1466.115.121.1.16": "dit_content_rule_description",
+            "1.3.6.1.4.1.1466.115.121.1.17": "dit_structure_rule_description",
+            "1.3.6.1.4.1.1466.115.121.1.18": "dlexp_time",
+            "1.3.6.1.4.1.1466.115.121.1.19": "dn_with_binary",
+            "1.3.6.1.4.1.1466.115.121.1.20": "dn_with_string",
+            "1.3.6.1.4.1.1466.115.121.1.21": "directory_string",
+            "1.3.6.1.4.1.1466.115.121.1.22": "enhanced_guide",
+            "1.3.6.1.4.1.1466.115.121.1.23": "facsimile_telephone_number",
+            "1.3.6.1.4.1.1466.115.121.1.24": "fax",
+            "1.3.6.1.4.1.1466.115.121.1.25": "generalized_time",
+            "1.3.6.1.4.1.1466.115.121.1.26": "guide",
+            "1.3.6.1.4.1.1466.115.121.1.27": "ia5_string",
+            "1.3.6.1.4.1.1466.115.121.1.28": "jpeg",
+            "1.3.6.1.4.1.1466.115.121.1.29": "ldap_syntax_description",
+            "1.3.6.1.4.1.1466.115.121.1.30": "matching_rule_description",
+            "1.3.6.1.4.1.1466.115.121.1.31": "matching_rule_use_description",
+            "1.3.6.1.4.1.1466.115.121.1.32": "mhs_or_address",
+            "1.3.6.1.4.1.1466.115.121.1.33": "modify_increment",
+            "1.3.6.1.4.1.1466.115.121.1.34": "name_and_optional_uid",
+            "1.3.6.1.4.1.1466.115.121.1.35": "name_form_description",
+            "1.3.6.1.4.1.1466.115.121.1.36": "numeric_string",
+            "1.3.6.1.4.1.1466.115.121.1.37": "object_class_description",
+            "1.3.6.1.4.1.1466.115.121.1.38": "oid",
+            "1.3.6.1.4.1.1466.115.121.1.39": "octet_string",
+            "1.3.6.1.4.1.1466.115.121.1.40": "other_mailbox",
+            "1.3.6.1.4.1.1466.115.121.1.41": "postal_address",
+            "1.3.6.1.4.1.1466.115.121.1.42": "protocol_information",
+            "1.3.6.1.4.1.1466.115.121.1.43": "presentation_address",
+            "1.3.6.1.4.1.1466.115.121.1.44": "printable_string",
+            "1.3.6.1.4.1.1466.115.121.1.50": "telephone_number",
+            "1.3.6.1.4.1.1466.115.121.1.51": "teletex_terminal_identifier",
+            "1.3.6.1.4.1.1466.115.121.1.52": "telex_number",
+            "1.3.6.1.4.1.1466.115.121.1.53": "time_of_day",
+            "1.3.6.1.4.1.1466.115.121.1.54": "utctime",
+            "1.3.6.1.4.1.1466.115.121.1.55": "utf8_string",
+            "1.3.6.1.4.1.1466.115.121.1.56": "unicode_string",
+            "1.3.6.1.4.1.1466.115.121.1.57": "uui",
+            "1.3.6.1.4.1.1466.115.121.1.58": "substring_assertion",
+        }
+
+        # Mapping of human-readable name to OID
+        NAME_TO_OID: Final[dict[str, str]] = {v: k for k, v in OID_TO_NAME.items()}
+
+        # Commonly used syntaxes
+        COMMON_SYNTAXES: Final[frozenset[str]] = frozenset([
+            "1.3.6.1.4.1.1466.115.121.1.7",  # Boolean
+            "1.3.6.1.4.1.1466.115.121.1.12",  # DN
+            "1.3.6.1.4.1.1466.115.121.1.15",  # Directory String
+            "1.3.6.1.4.1.1466.115.121.1.27",  # IA5 String
+            "1.3.6.1.4.1.1466.115.121.1.39",  # Octet String
+            "1.3.6.1.4.1.1466.115.121.1.55",  # UTF-8 String
+        ])
+
+        # Mapping of syntax names to type categories
+        NAME_TO_TYPE_CATEGORY: Final[dict[str, str]] = {
+            "boolean": "boolean",
+            "integer": "integer",
+            "dn": "dn",
+            "distinguished_name": "dn",
+            "generalized_time": "time",
+            "utc_time": "time",
+            "utctime": "time",
+            "time_of_day": "time",
+            "dlexp_time": "time",
+            "audio": "binary",
+            "binary": "binary",
+            "certificate": "binary",
+            "certificate_list": "binary",
+            "certificate_pair": "binary",
+            "fax": "binary",
+            "jpeg": "binary",
+            "octet_string": "binary",
+            "directory_string": "string",
+            "ia5_string": "string",
+            "printable_string": "string",
+            "utf8_string": "string",
+            "unicode_string": "string",
+            "teletex_terminal_identifier": "string",
+            "telephone_number": "string",
+            "facsimile_telephone_number": "string",
+            "guide": "string",
+            "enhanced_guide": "string",
+            "access_point": "string",
+            "attribute_type_description": "string",
+            "country_string": "string",
+            "dn_with_binary": "string",
+            "dn_with_string": "string",
+            "ldap_syntax_description": "string",
+            "matching_rule_description": "string",
+            "matching_rule_use_description": "string",
+            "name_and_optional_uid": "string",
+            "name_form_description": "string",
+            "numeric_string": "string",
+            "object_class_description": "string",
+            "oid": "string",
+            "other_mailbox": "string",
+            "postal_address": "string",
+            "protocol_information": "string",
+            "presentation_address": "string",
+            "telex_number": "string",
+            "teletex_number": "string",
+            "uui": "string",
+            "substring_assertion": "string",
+            "mhs_or_address": "string",
+            "aci": "string",
+            "delivery_method": "string",
+            "data_quality_syntax": "string",
+            "dit_content_rule_description": "string",
+            "dit_structure_rule_description": "string",
+            "modify_increment": "integer",
+            "bit_string": "string",
+        }
+
+        # Service and initialization keys
+        SERVICE_NAMES: Final[str] = "service_names"
+        DATA: Final[str] = "data"
+
+    class Encoding:
+        """Encoding constants for LDIF processing.
+
+        Defines encoding-related constants used throughout the LDIF processing system.
+        """
+
+        # Default encoding for LDIF files
+        DEFAULT_ENCODING: Final[str] = "utf-8"
+
+        # Supported encodings for LDIF processing
+        SUPPORTED_ENCODINGS: Final[frozenset[str]] = frozenset([
+            "utf-8",
+            "utf-16",
+            "ascii",
+        ])
+
+    class LdifFormat:
+        """LDIF formatting constants.
+
+        Defines constants for LDIF formatting options including line width
+        and other formatting preferences.
+        """
+
+        # Default line width for LDIF folding (RFC 2849 recommends 76)
+        DEFAULT_LINE_WIDTH: Final[int] = 76
+
+        # Maximum allowed line width
+        MAX_LINE_WIDTH: Final[int] = 1000
+
+        # Minimum allowed line width
+        MIN_LINE_WIDTH: Final[int] = 10
+
+    # =============================================================================
+    # CONVERSION STRATEGY - RFC as Canonical Format (Adapter Pattern)
+    # =============================================================================
+
+    class ConversionStrategy:
+        """Server conversion strategy using RFC as canonical intermediate format.
+
+        **Architecture**: Adapter Pattern with RFC as Hub
+
+        **Algorithm**:
+        1. Any→RFC: source.normalize_to_rfc() → RFC canonical format + metadata
+        2. RFC→Any: target.denormalize_from_rfc() → target format (metadata guides conversion)
+        3. Any→Any: source.normalize_to_rfc() → target.denormalize_from_rfc()
+
+        **Benefits**:
+        - Eliminates N×N complexity (N servers = N² direct conversions)
+        - Reduces to 2N conversions (N to RFC + N from RFC)
+        - Metadata in RFC format preserves original for round-trip fidelity
+        - Single source of truth (RFC) for validation and compliance
+
+        **Example**:
+            OID → OUD:
+              1. oid_entry.normalize_to_rfc() → rfc_entry (with oid metadata)
+              2. oud.denormalize_from_rfc(rfc_entry) → oud_entry
+
+        **Required Methods**:
+        All server quirks MUST implement:
+        - normalize_entry_to_rfc(entry: Entry) → FlextResult[Entry]
+        - denormalize_entry_from_rfc(entry: Entry) → FlextResult[Entry]
+        - normalize_attribute_to_rfc(attr: SchemaAttribute) → FlextResult[SchemaAttribute]
+        - denormalize_attribute_from_rfc(attr: SchemaAttribute) → FlextResult[SchemaAttribute]
+        - normalize_objectclass_to_rfc(oc: SchemaObjectClass) → FlextResult[SchemaObjectClass]
+        - denormalize_objectclass_from_rfc(oc: SchemaObjectClass) → FlextResult[SchemaObjectClass]
+        - normalize_acl_to_rfc(acl: Acl) → FlextResult[Acl]
+        - denormalize_acl_from_rfc(acl: Acl) → FlextResult[Acl]
+        """
+
+        # Canonical format - all conversions pass through this
+        CANONICAL_FORMAT: Final[str] = "rfc"
+
+        # Conversion algorithm type
+        ALGORITHM: Final[str] = "adapter_pattern_with_rfc_hub"
+
+        # Complexity: O(2N) instead of O(N²)
+        CONVERSION_COMPLEXITY: Final[str] = "2N"  # vs "N²" for direct conversions
+
+        # All conversions MUST go through RFC - no direct server-to-server
+        ENFORCE_RFC_INTERMEDIATE: Final[bool] = True
+
+        # Preserve original format in metadata for round-trip
+        PRESERVE_SOURCE_METADATA: Final[bool] = True
+
+        # Conversion direction constants
+        DIRECTION_TO_RFC: Final[str] = "normalize"
+        DIRECTION_FROM_RFC: Final[str] = "denormalize"
+
+        # Metadata keys for tracking conversions
+        METADATA_ORIGINAL_SERVER: Final[str] = "original_server_type"
+        METADATA_CONVERSION_PATH: Final[str] = "conversion_path"
+        METADATA_INTERMEDIATE_FORMAT: Final[str] = "rfc_intermediate"
+
+    class AclSubjectTransformations:
+        """Subject transformation mappings for ACL conversions.
+
+        Maps (source_server, target_server, subject_type) → (new_type, value_template)
+        Wildcard "*" matches any server for generic transformations.
+        """
+
+        # Subject type transformations for OID → OUD via RFC
+        OID_TO_RFC_SUBJECTS: Final[dict[str, tuple[str, str]]] = {
+            "dynamic_group_dnattr": ("group_membership", 'memberOf="{value}"'),
+            "dynamic_group_guidattr": ("user_attribute", 'guidattr="{value}"'),
+            "dynamic_group_attr": ("group_attribute", 'groupattr="{value}"'),
+        }
+
+        RFC_TO_OUD_SUBJECTS: Final[dict[str, tuple[str, str]]] = {
+            "group_membership": ("bind_rules", 'userattr="{value}#LDAPURL"'),
+            "user_attribute": ("bind_rules", 'userattr="{value}#USERDN"'),
+            "group_attribute": ("bind_rules", 'userattr="{value}#GROUPDN"'),
+        }
+
+        # Reverse: OUD → RFC → OID
+        OUD_TO_RFC_SUBJECTS: Final[dict[str, tuple[str, str]]] = {
+            "bind_rules": ("group_membership", "{value}"),
+        }
+
+        RFC_TO_OID_SUBJECTS: Final[dict[str, tuple[str, str]]] = {
+            "group_membership": ("group_dn", 'group="{value}"'),
+        }
+
+        # 389DS transformations via RFC
+        DS389_TO_RFC_SUBJECTS: Final[dict[str, tuple[str, str]]] = {
+            "groupdn": ("group_dn", "{value}"),
+            "userdn": ("user_dn", "{value}"),
+        }
+
+        # Generic transformations (preserved across all servers)
+        UNIVERSAL_SUBJECTS: Final[dict[str, tuple[str, str]]] = {
+            "anonymous": ("anonymous", "*"),
+            "self": ("self", "self"),
+            "all": ("all", "*"),
+        }
+
+    class AclPermissionCompatibility:
+        """Permission compatibility matrix for server types.
+
+        Defines which permissions each server type supports.
+        Used for validation and alternative suggestion during conversion.
+        """
+
+        # Permission support matrix
+        SUPPORTED_PERMISSIONS: Final[dict[str, frozenset[str]]] = {
+            "rfc": frozenset(["read", "write", "add", "delete", "search", "compare"]),
+            "oid": frozenset([
+                "read",
+                "write",
+                "add",
+                "delete",
+                "search",
+                "compare",
+                "self_write",
+                "proxy",
+                "browse",
+                "auth",
+                "all",
+                "none",
+            ]),
+            "oracle_oid": frozenset([
+                "read",
+                "write",
+                "add",
+                "delete",
+                "search",
+                "compare",
+                "self_write",
+                "proxy",
+                "browse",
+                "auth",
+                "all",
+                "none",
+            ]),
+            "oud": frozenset([
+                "read",
+                "write",
+                "add",
+                "delete",
+                "search",
+                "compare",
+                "all",
+            ]),
+            "oracle_oud": frozenset([
+                "read",
+                "write",
+                "add",
+                "delete",
+                "search",
+                "compare",
+                "all",
+            ]),
+            "389ds": frozenset([
+                "read",
+                "write",
+                "add",
+                "delete",
+                "search",
+                "compare",
+                "proxy",
+                "all",
+            ]),
+            "openldap": frozenset([
+                "read",
+                "write",
+                "add",
+                "delete",
+                "search",
+                "compare",
+                "auth",
+            ]),
+            "active_directory": frozenset([
+                "read",
+                "write",
+                "add",
+                "delete",
+                "search",
+                "compare",
+                "control_access",
+            ]),
+        }
+
+        # Permission alternatives when converting to servers with limited support
+        PERMISSION_ALTERNATIVES: Final[dict[tuple[str, str], list[str]]] = {
+            # When converting to OUD, these OID permissions map to alternatives
+            ("self_write", "oud"): ["write"],
+            ("self_write", "oracle_oud"): ["write"],
+            ("proxy", "oud"): [],  # No equivalent - will be documented in comments
+            ("proxy", "oracle_oud"): [],
+            ("browse", "oud"): ["read", "search"],
+            ("browse", "oracle_oud"): ["read", "search"],
+            ("auth", "oud"): ["compare"],
+            ("auth", "oracle_oud"): ["compare"],
+            # When converting to RFC (canonical), simplify extended permissions
+            ("self_write", "rfc"): ["write"],
+            ("proxy", "rfc"): [],
+            ("browse", "rfc"): ["read", "search"],
+            ("auth", "rfc"): ["compare"],
+            # When converting to 389DS
+            ("self_write", "389ds"): ["write"],
+            ("browse", "389ds"): ["read", "search"],
+            # When converting to OpenLDAP
+            ("self_write", "openldap"): ["write"],
+            ("proxy", "openldap"): [],
+            ("browse", "openldap"): ["read", "search"],
+        }
+
+    class SchemaConversionMappings:
+        """Schema attribute and objectClass conversion mappings.
+
+        Defines server-specific schema quirks and how to normalize/denormalize them.
+        All mappings use RFC-as-hub strategy.
+        """
+
+        # Attribute fields that are server-specific and need special handling
+        SERVER_SPECIFIC_ATTRIBUTE_FIELDS: Final[dict[str, frozenset[str]]] = {
+            "oid": frozenset(["usage", "x_origin"]),
+            "oud": frozenset(["x_origin"]),
+            "openldap": frozenset(["x_origin", "ordering"]),
+            "389ds": frozenset(["x_origin", "x_ds_use"]),
+            "rfc": frozenset([]),  # RFC is canonical - no special fields
+        }
+
+        # ObjectClass kinds that require special handling per server
+        OBJECTCLASS_KIND_REQUIREMENTS: Final[dict[str, dict[str, bool]]] = {
+            "rfc": {
+                "requires_sup_for_auxiliary": True,
+                "allows_multiple_sup": False,
+                "requires_explicit_structural": False,
+            },
+            "oid": {
+                "requires_sup_for_auxiliary": True,
+                "allows_multiple_sup": True,
+                "requires_explicit_structural": False,
+            },
+            "oud": {
+                "requires_sup_for_auxiliary": True,
+                "allows_multiple_sup": False,
+                "requires_explicit_structural": True,
+            },
+            "openldap": {
+                "requires_sup_for_auxiliary": True,
+                "allows_multiple_sup": False,
+                "requires_explicit_structural": False,
+            },
+        }
+
+        # Matching rule normalizations (moved from utilities)
+        MATCHING_RULE_NORMALIZATIONS: Final[dict[str, str]] = {
+            "caseIgnoreIA5SubstringsMatch": "caseIgnoreIA5Match",
+            "caseIgnoreOrdinalMatch": "caseIgnoreMatch",
+        }
+
+        # Attribute name transformations via RFC (OID→RFC→OUD strategy)
+        ATTRIBUTE_TRANSFORMATION_OID_TO_RFC: Final[dict[str, str]] = {
+            "orclguid": "entryUUID",
+            "orclobjectguid": "entryUUID",
+            "createTimestamp": "createTimestamp",  # Preserved
+            "modifyTimestamp": "modifyTimestamp",  # Preserved
+        }
+
+        ATTRIBUTE_TRANSFORMATION_RFC_TO_OUD: Final[dict[str, str]] = {
+            "entryUUID": "entryUUID",  # Same in OUD
+        }
+
+        ATTRIBUTE_TRANSFORMATION_OUD_TO_RFC: Final[dict[str, str]] = {
+            "entryUUID": "entryUUID",  # Already RFC
+        }
+
+        ATTRIBUTE_TRANSFORMATION_RFC_TO_OID: Final[dict[str, str]] = {
+            "entryUUID": "orclguid",
+        }
+
+        # Attribute aliases (multiple names for same semantic attribute)
+        ATTRIBUTE_ALIASES: Final[dict[str, dict[str, list[str]]]] = {
+            "oud": {
+                "cn": ["commonName"],
+                "sn": ["surname"],
+                "givenName": ["gn"],
+                "mail": ["rfc822Mailbox", "emailAddress"],
+                "telephoneNumber": ["phone"],
+                "uid": ["userid", "username"],
+            },
+            "oid": {"cn": ["commonName"], "mail": ["rfc822Mailbox"], "uid": ["userid"]},
+        }
+
+    class OperationalAttributeMappings:
+        """Operational attribute definitions per server type.
+
+        Operational attributes are maintained by the server and typically
+        read-only. Important for filtering during migrations.
+        """
+
+        OPERATIONAL_ATTRIBUTES: Final[dict[str, frozenset[str]]] = {
+            "oid": frozenset({
+                "createTimestamp",
+                "modifyTimestamp",
+                "creatorsName",
+                "modifiersName",
+                "orclguid",
+                "orclobjectguid",
+                "orclentryid",
+                "orclaccount",
+                "pwdChangedTime",
+                "pwdHistory",
+                "pwdFailureTime",
+            }),
+            "oracle_oid": frozenset({
+                "createTimestamp",
+                "modifyTimestamp",
+                "creatorsName",
+                "modifiersName",
+                "orclguid",
+                "orclobjectguid",
+                "orclentryid",
+                "orclaccount",
+                "pwdChangedTime",
+                "pwdHistory",
+                "pwdFailureTime",
+            }),
+            "oud": frozenset({
+                "createTimestamp",
+                "modifyTimestamp",
+                "creatorsName",
+                "modifiersName",
+                "entryUUID",
+                "entryDN",
+                "subschemaSubentry",
+                "hasSubordinates",
+                "pwdChangedTime",
+                "pwdHistory",
+                "pwdFailureTime",
+                "ds-sync-hist",
+            }),
+            "oracle_oud": frozenset({
+                "createTimestamp",
+                "modifyTimestamp",
+                "creatorsName",
+                "modifiersName",
+                "entryUUID",
+                "entryDN",
+                "subschemaSubentry",
+                "hasSubordinates",
+                "pwdChangedTime",
+                "pwdHistory",
+                "pwdFailureTime",
+                "ds-sync-hist",
+            }),
+            "active_directory": frozenset({
+                "objectGUID",
+                "objectSid",
+                "whenCreated",
+                "whenChanged",
+                "uSNCreated",
+                "uSNChanged",
+                "distinguishedName",
+                "canonicalName",
+                "lastLogon",
+                "logonCount",
+                "badPwdCount",
+                "pwdLastSet",
+            }),
+            "389ds": frozenset({
+                "createTimestamp",
+                "modifyTimestamp",
+                "creatorsName",
+                "modifiersName",
+                "nsUniqueId",
+                "entryid",
+                "dncomp",
+                "parentid",
+                "passwordExpirationTime",
+                "passwordHistory",
+            }),
+            "openldap": frozenset({
+                "createTimestamp",
+                "modifyTimestamp",
+                "creatorsName",
+                "modifiersName",
+                "entryUUID",
+                "entryCSN",
+                "contextCSN",
+                "hasSubordinates",
+                "subschemaSubentry",
+                "structuralObjectClass",
+            }),
+            "rfc": frozenset({
+                "createTimestamp",
+                "modifyTimestamp",
+                "creatorsName",
+                "modifiersName",
+                "subschemaSubentry",
+                "structuralObjectClass",
+            }),
+        }
+
+        # Operational attributes to preserve during migration
+        PRESERVE_ON_MIGRATION: Final[dict[str, frozenset[str]]] = {
+            "oid": frozenset({"createTimestamp", "modifyTimestamp"}),
+            "oracle_oid": frozenset({"createTimestamp", "modifyTimestamp"}),
+            "oud": frozenset({"createTimestamp", "modifyTimestamp", "pwdChangedTime"}),
+            "oracle_oud": frozenset({
+                "createTimestamp",
+                "modifyTimestamp",
+                "pwdChangedTime",
+            }),
+            "active_directory": frozenset({"whenCreated", "whenChanged"}),
+            "389ds": frozenset({"createTimestamp", "modifyTimestamp"}),
+            "openldap": frozenset({"createTimestamp", "modifyTimestamp"}),
+        }
 
 
 __all__ = [

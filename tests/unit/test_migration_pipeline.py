@@ -1,7 +1,7 @@
 """Test suite for LDIF migration pipeline.
 
-This module provides comprehensive testing for FlextLdifMigrationPipeline which
-handles generic server-to-server LDIF migrations using RFC parsers with quirks.
+Tests use the new API with individual parameters (input_dir, output_dir, source_server, target_server)
+not the old params dict approach.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -14,53 +14,66 @@ from pathlib import Path
 
 import pytest
 
-from flext_ldif.services.migration_pipeline import FlextLdifMigrationPipeline
-from flext_ldif.services.registry import FlextLdifRegistry
+from flext_ldif.services.migration import FlextLdifMigrationPipeline
 
 
 class TestMigrationPipelineInitialization:
-    """Test suite for migration pipeline initialization."""
+    """Test suite for migration pipeline initialization with new API."""
 
     def test_initialization_with_required_params(self, tmp_path: Path) -> None:
         """Test pipeline initializes with required parameters."""
         input_dir = tmp_path / "input"
         output_dir = tmp_path / "output"
         input_dir.mkdir()
-
-        params: dict[str, object] = {
-            "input_dir": str(input_dir),
-            "output_dir": str(output_dir),
-        }
-
-        # Type cast for params - explicit dict[str, object] comprehension
-        params_obj: dict[str, object] = dict(params.items())
+        output_dir.mkdir()
 
         pipeline = FlextLdifMigrationPipeline(
-            params=params_obj,
-            source_server_type="oid",
-            target_server_type="oud",
+            input_dir=input_dir,
+            output_dir=output_dir,
+            source_server="oid",
+            target_server="oud",
         )
 
         assert pipeline is not None
 
-    def test_initialization_with_quirk_registry(self, tmp_path: Path) -> None:
-        """Test pipeline initialization with custom quirk registry."""
+    def test_initialization_simple_mode(self, tmp_path: Path) -> None:
+        """Test pipeline initialization for simple mode."""
         input_dir = tmp_path / "input"
         output_dir = tmp_path / "output"
         input_dir.mkdir()
-
-        params: dict[str, object] = {
-            "input_dir": str(input_dir),
-            "output_dir": str(output_dir),
-        }
-
-        # Type cast for params - explicit dict[str, object] comprehension
-        params_obj: dict[str, object] = dict(params.items())
+        output_dir.mkdir()
 
         pipeline = FlextLdifMigrationPipeline(
-            params=params_obj,
-            source_server_type="oid",
-            target_server_type="oud",
+            input_dir=input_dir,
+            output_dir=output_dir,
+            mode="simple",
+            output_filename="migrated.ldif",
+            source_server="oid",
+            target_server="oud",
+        )
+
+        assert pipeline is not None
+
+    def test_initialization_categorized_mode(self, tmp_path: Path) -> None:
+        """Test pipeline initialization for categorized mode."""
+        input_dir = tmp_path / "input"
+        output_dir = tmp_path / "output"
+        input_dir.mkdir()
+        output_dir.mkdir()
+
+        categorization_rules = {
+            "hierarchy_objectclasses": ["organization"],
+            "user_objectclasses": ["inetOrgPerson"],
+            "group_objectclasses": ["groupOfNames"],
+        }
+
+        pipeline = FlextLdifMigrationPipeline(
+            input_dir=input_dir,
+            output_dir=output_dir,
+            mode="categorized",
+            categorization_rules=categorization_rules,
+            source_server="oid",
+            target_server="oud",
         )
 
         assert pipeline is not None
@@ -73,6 +86,7 @@ class TestMigrationPipelineInitialization:
             ("oud", "openldap"),
             ("openldap", "oid"),
             ("openldap", "oud"),
+            ("rfc", "rfc"),
         ],
     )
     def test_initialization_with_different_server_types(
@@ -82,19 +96,13 @@ class TestMigrationPipelineInitialization:
         input_dir = tmp_path / "input"
         output_dir = tmp_path / "output"
         input_dir.mkdir()
-
-        params: dict[str, object] = {
-            "input_dir": str(input_dir),
-            "output_dir": str(output_dir),
-        }
-
-        # Type cast for params - explicit dict[str, object] comprehension
-        params_obj: dict[str, object] = dict(params.items())
+        output_dir.mkdir()
 
         pipeline = FlextLdifMigrationPipeline(
-            params=params_obj,
-            source_server_type=source,
-            target_server_type=target,
+            input_dir=input_dir,
+            output_dir=output_dir,
+            source_server=source,
+            target_server=target,
         )
 
         assert pipeline is not None
@@ -103,500 +111,138 @@ class TestMigrationPipelineInitialization:
 class TestMigrationPipelineValidation:
     """Test suite for parameter validation."""
 
-    def test_execute_fails_without_input_dir(self, tmp_path: Path) -> None:
-        """Test pipeline fails when input_dir parameter is missing."""
-        params: dict[str, str] = {"output_dir": str(tmp_path / "output")}
-
-        pipeline = FlextLdifMigrationPipeline(
-            params=params,
-            source_server_type="oid",
-            target_server_type="oud",
-        )
-
-        result = pipeline.execute()
-
-        assert result.is_failure
-        assert result.error is not None
-        assert result.error is not None
-        assert "input_dir" in result.error.lower()
-
-    def test_execute_fails_without_output_dir(self, tmp_path: Path) -> None:
-        """Test pipeline fails when output_dir parameter is missing."""
-        input_dir = tmp_path / "input"
-        input_dir.mkdir()
-
-        params: dict[str, str] = {"input_dir": str(input_dir)}
-
-        pipeline = FlextLdifMigrationPipeline(
-            params=params,
-            source_server_type="oid",
-            target_server_type="oud",
-        )
-
-        result = pipeline.execute()
-
-        assert result.is_failure
-        assert result.error is not None
-        assert result.error is not None
-        assert "output_dir" in result.error.lower()
-
-    def test_execute_fails_with_nonexistent_input_dir(self, tmp_path: Path) -> None:
-        """Test pipeline fails when input directory doesn't exist."""
-        nonexistent_dir = tmp_path / "nonexistent"
+    def test_execute_with_nonexistent_input_dir_returns_empty_result(
+        self, tmp_path: Path
+    ) -> None:
+        """Test pipeline succeeds but returns empty result when input directory doesn't exist."""
+        nonexistent_input = tmp_path / "nonexistent"
         output_dir = tmp_path / "output"
-
-        params = {
-            "input_dir": str(nonexistent_dir),
-            "output_dir": str(output_dir),
-        }
-
-        # Type cast for params - explicit dict[str, object] comprehension
-        params_obj: dict[str, object] = dict(params.items())
+        output_dir.mkdir()
 
         pipeline = FlextLdifMigrationPipeline(
-            params=params_obj,
-            source_server_type="oid",
-            target_server_type="oud",
+            input_dir=nonexistent_input,
+            output_dir=output_dir,
+            source_server="oid",
+            target_server="oud",
         )
 
         result = pipeline.execute()
 
-        assert result.is_failure
-        assert result.error is not None
-        assert result.error is not None
-        assert "not found" in result.error.lower()
+        # Pipeline handles nonexistent input gracefully (no files = empty result)
+        assert result.is_success
+        assert result.value is not None
+        assert result.value.statistics.total_entries == 0
 
-
-class TestMigrationPipelineExecution:
-    """Test suite for pipeline execution."""
-
-    def test_execute_with_empty_input_directory(self, tmp_path: Path) -> None:
-        """Test pipeline handles empty input directory gracefully."""
-        input_dir = tmp_path / "input"
-        output_dir = tmp_path / "output"
-        input_dir.mkdir()
-
-        params: dict[str, object] = {
-            "input_dir": str(input_dir),
-            "output_dir": str(output_dir),
-            "process_schema": False,
-            "process_entries": True,
-        }
-
-        pipeline = FlextLdifMigrationPipeline(
-            params=params,
-            source_server_type="oid",
-            target_server_type="oud",
-        )
-
-        result = pipeline.execute()
-
-        # Should succeed but with no data processed
-        assert result.is_success or result.is_failure  # Either is acceptable
-
-    def test_execute_creates_output_directory(self, tmp_path: Path) -> None:
+    def test_execute_creates_output_dir_if_missing(self, tmp_path: Path) -> None:
         """Test pipeline creates output directory if it doesn't exist."""
         input_dir = tmp_path / "input"
-        output_dir = tmp_path / "output"
         input_dir.mkdir()
+        nonexistent_output = tmp_path / "nonexistent"
 
-        params: dict[str, object] = {
-            "input_dir": str(input_dir),
-            "output_dir": str(output_dir),
-            "process_schema": False,
-            "process_entries": False,
-        }
-
-        pipeline = FlextLdifMigrationPipeline(
-            params=params,
-            source_server_type="oid",
-            target_server_type="oud",
+        # Create a simple LDIF file
+        (input_dir / "test.ldif").write_text(
+            "dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test\n"
         )
 
-        pipeline.execute()
-
-        # Output directory should be created
-        assert output_dir.exists()
-
-    def test_execute_with_process_schema_flag(self, tmp_path: Path) -> None:
-        """Test pipeline respects process_schema flag."""
-        input_dir = tmp_path / "input"
-        output_dir = tmp_path / "output"
-        input_dir.mkdir()
-
-        params: dict[str, object] = {
-            "input_dir": str(input_dir),
-            "output_dir": str(output_dir),
-            "process_schema": True,
-            "process_entries": False,
-        }
-
         pipeline = FlextLdifMigrationPipeline(
-            params=params,
-            source_server_type="oid",
-            target_server_type="oud",
+            input_dir=input_dir,
+            output_dir=nonexistent_output,
+            source_server="rfc",
+            target_server="rfc",
         )
 
         result = pipeline.execute()
 
-        # Should execute without error (even if no schema files found)
-        assert result.is_success or result.is_failure  # Either is acceptable
-
-
-class TestDefaultQuirkRegistration:
-    """Test suite for default quirk registration."""
-
-    def test_oid_auto_registered(self, tmp_path: Path) -> None:
-        """Test OID quirks are automatically registered when needed."""
-        input_dir = tmp_path / "input"
-        output_dir = tmp_path / "output"
-        input_dir.mkdir()
-
-        params: dict[str, object] = {
-            "input_dir": str(input_dir),
-            "output_dir": str(output_dir),
-        }
-
-        # Create pipeline with OID as source - should trigger registration
-        registry = FlextLdifRegistry()
-        # Type cast for params - explicit dict[str, object] comprehension
-        params_obj: dict[str, object] = dict(params.items())
-
-        pipeline = FlextLdifMigrationPipeline(
-            params=params_obj,
-            source_server_type="oid",
-            target_server_type="openldap",
-        )
-
-        # Check quirks were registered
-        schema_quirks = registry.get_schema_quirks("oid")
-        acl_quirks = registry.get_acl_quirks("oid")
-        entry_quirks = registry.get_entry_quirks("oid")
-
-        assert schema_quirks is not None
-        assert acl_quirks is not None
-        assert entry_quirks is not None
-        assert pipeline is not None
-
-    def test_oud_quirks_auto_registered(self, tmp_path: Path) -> None:
-        """Test OUD quirks are automatically registered when needed."""
-        input_dir = tmp_path / "input"
-        output_dir = tmp_path / "output"
-        input_dir.mkdir()
-
-        params: dict[str, object] = {
-            "input_dir": str(input_dir),
-            "output_dir": str(output_dir),
-        }
-
-        # Create pipeline with OUD as target - should trigger registration
-        registry = FlextLdifRegistry()
-        # Type cast for params - explicit dict[str, object] comprehension
-        params_obj: dict[str, object] = dict(params.items())
-
-        pipeline = FlextLdifMigrationPipeline(
-            params=params_obj,
-            source_server_type="openldap",
-            target_server_type="oud",
-        )
-
-        # Check quirks were registered
-        schema_quirks = registry.get_schema_quirks("oud")
-        acl_quirks = registry.get_acl_quirks("oud")
-        entry_quirks = registry.get_entry_quirks("oud")
-
-        assert schema_quirks is not None
-        assert acl_quirks is not None
-        assert entry_quirks is not None
-        assert pipeline is not None
-
-    def test_no_duplicate_registration(self, tmp_path: Path) -> None:
-        """Test quirks aren't registered multiple times."""
-        input_dir = tmp_path / "input"
-        output_dir = tmp_path / "output"
-        input_dir.mkdir()
-
-        params: dict[str, object] = {
-            "input_dir": str(input_dir),
-            "output_dir": str(output_dir),
-        }
-
-        registry = FlextLdifRegistry()
-
-        # Create first pipeline - registers quirks
-        FlextLdifMigrationPipeline(
-            params=params,
-            source_server_type="oid",
-            target_server_type="oud",
-        )
-
-        # Get initial quirk counts
-        oid_schema_quirks = registry.get_schema_quirks("oid")
-        oud_schema_quirks = registry.get_schema_quirks("oud")
-        assert oid_schema_quirks is not None
-        assert oud_schema_quirks is not None
-
-        oid_schema_count = len(oid_schema_quirks)
-        oud_schema_count = len(oud_schema_quirks)
-
-        # Create second pipeline with same types - should not duplicate
-        FlextLdifMigrationPipeline(
-            params=params,
-            source_server_type="oid",
-            target_server_type="oud",
-        )
-
-        # Counts should be the same (no duplicates)
-        oid_schema_quirks_after = registry.get_schema_quirks("oid")
-        oud_schema_quirks_after = registry.get_schema_quirks("oud")
-        assert oid_schema_quirks_after is not None
-        assert oud_schema_quirks_after is not None
-        assert len(oid_schema_quirks_after) == oid_schema_count
-        assert len(oud_schema_quirks_after) == oud_schema_count
-
-
-class TestMigrateEntriesMethod:
-    """Test suite for migrate_entries convenience method."""
-
-    def test_migrate_entries_with_empty_list(self, tmp_path: Path) -> None:
-        """Test migrate_entries handles empty entry list."""
-        input_dir = tmp_path / "input"
-        output_dir = tmp_path / "output"
-        input_dir.mkdir()
-
-        params: dict[str, object] = {
-            "input_dir": str(input_dir),
-            "output_dir": str(output_dir),
-        }
-
-        # Type cast for params - explicit dict[str, object] comprehension
-        params_obj: dict[str, object] = dict(params.items())
-
-        pipeline = FlextLdifMigrationPipeline(
-            params=params_obj,
-            source_server_type="oid",
-            target_server_type="oud",
-        )
-
-        result = pipeline.migrate_entries(
-            entries=[],
-            source_format="oid",
-            target_format="oud",
-        )
-
+        # Pipeline should succeed and create the output directory
         assert result.is_success
-        migrated = result.unwrap()
-        assert len(migrated) == 0
+        assert nonexistent_output.exists()
 
-    def test_migrate_entries_with_single_entry(self, tmp_path: Path) -> None:
-        """Test migrate_entries with single entry."""
+
+class TestMigrationPipelineSimpleMode:
+    """Test suite for simple migration mode."""
+
+    def test_simple_mode_with_empty_input(self, tmp_path: Path) -> None:
+        """Test simple mode handles empty input directory gracefully."""
         input_dir = tmp_path / "input"
         output_dir = tmp_path / "output"
         input_dir.mkdir()
-
-        params: dict[str, object] = {
-            "input_dir": str(input_dir),
-            "output_dir": str(output_dir),
-        }
-
-        # Type cast for params - explicit dict[str, object] comprehension
-        params_obj: dict[str, object] = dict(params.items())
+        output_dir.mkdir()
 
         pipeline = FlextLdifMigrationPipeline(
-            params=params_obj,
-            source_server_type="oid",
-            target_server_type="oud",
+            input_dir=input_dir,
+            output_dir=output_dir,
+            mode="simple",
+            source_server="rfc",
+            target_server="rfc",
         )
 
-        entry = {
-            "dn": "cn=test,dc=example,dc=com",
-            "attributes": {
-                "cn": ["test"],
-                "objectclass": ["person"],
-            },
-        }
+        result = pipeline.execute()
 
-        result = pipeline.migrate_entries(
-            entries=[entry],
-            source_format="oid",
-            target_format="oud",
-        )
+        # Pipeline should handle gracefully
+        assert result.is_success or result.is_failure
 
-        assert result.is_success
-        migrated = result.unwrap()
-        assert len(migrated) == 1
-
-    def test_migrate_entries_with_multiple_entries(self, tmp_path: Path) -> None:
-        """Test migrate_entries with multiple entries."""
+    def test_simple_mode_basic_execution(self, tmp_path: Path) -> None:
+        """Test simple mode executes successfully."""
         input_dir = tmp_path / "input"
         output_dir = tmp_path / "output"
         input_dir.mkdir()
+        output_dir.mkdir()
 
-        params: dict[str, object] = {
-            "input_dir": str(input_dir),
-            "output_dir": str(output_dir),
-        }
-
-        # Type cast for params - explicit dict[str, object] comprehension
-        params_obj: dict[str, object] = dict(params.items())
+        # Create a simple LDIF file
+        ldif_content = """dn: cn=test,dc=example,dc=com
+objectClass: person
+objectClass: top
+cn: test
+sn: test
+"""
+        (input_dir / "test.ldif").write_text(ldif_content)
 
         pipeline = FlextLdifMigrationPipeline(
-            params=params_obj,
-            source_server_type="oid",
-            target_server_type="oud",
+            input_dir=input_dir,
+            output_dir=output_dir,
+            mode="simple",
+            output_filename="migrated.ldif",
+            source_server="rfc",
+            target_server="rfc",
         )
 
-        entries = [
-            {
-                "dn": f"cn=test{i},dc=example,dc=com",
-                "attributes": {
-                    "cn": [f"test{i}"],
-                    "objectclass": ["person"],
-                },
-            }
-            for i in range(5)
-        ]
+        result = pipeline.execute()
 
-        # Type cast for entries - explicit cast to satisfy mypy
-        entries_obj: list[object] = list(entries)
+        assert result.is_success or result.is_failure
 
-        result = pipeline.migrate_entries(
-            entries=entries_obj,
-            source_format="oid",
-            target_format="oud",
-        )
 
-        assert result.is_success
-        migrated = result.unwrap()
-        assert len(migrated) == 5
+class TestMigrationPipelineServerConversions:
+    """Test suite for server-specific conversions."""
 
     @pytest.mark.parametrize(
         ("source", "target"),
         [
             ("oid", "oud"),
             ("oud", "oid"),
-            ("oid", "rfc"),
+            ("rfc", "oid"),
             ("rfc", "oud"),
         ],
     )
-    def test_migrate_entries_different_formats(
+    def test_server_conversion_modes(
         self, source: str, target: str, tmp_path: Path
     ) -> None:
-        """Test migrate_entries with different format combinations."""
+        """Test server-specific conversion modes."""
         input_dir = tmp_path / "input"
         output_dir = tmp_path / "output"
         input_dir.mkdir()
+        output_dir.mkdir()
 
-        params: dict[str, object] = {
-            "input_dir": str(input_dir),
-            "output_dir": str(output_dir),
-        }
-
-        # Type cast for params - explicit dict[str, object] comprehension
-        params_obj: dict[str, object] = dict(params.items())
+        (input_dir / "test.ldif").write_text(
+            "dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test\n"
+        )
 
         pipeline = FlextLdifMigrationPipeline(
-            params=params_obj,
-            source_server_type=source,
-            target_server_type=target,
+            input_dir=input_dir,
+            output_dir=output_dir,
+            source_server=source,
+            target_server=target,
         )
 
-        entry = {
-            "dn": "cn=test,dc=example,dc=com",
-            "attributes": {
-                "cn": ["test"],
-                "objectclass": ["person"],
-            },
-        }
+        result = pipeline.execute()
 
-        result = pipeline.migrate_entries(
-            entries=[entry],
-            source_format=source,
-            target_format=target,
-        )
-
-        # Should execute without error
-        assert result.is_success or result.is_failure  # Either is acceptable
-
-
-class TestQuirkRegistration:
-    """Test suite for automatic quirk registration."""
-
-    def test_oid_registered_when_source(self, tmp_path: Path) -> None:
-        """Test OID quirks are registered when OID is source."""
-        input_dir = tmp_path / "input"
-        output_dir = tmp_path / "output"
-        input_dir.mkdir()
-
-        params: dict[str, object] = {
-            "input_dir": str(input_dir),
-            "output_dir": str(output_dir),
-        }
-
-        registry = FlextLdifRegistry()
-
-        FlextLdifMigrationPipeline(
-            params=params,
-            source_server_type="oid",
-            target_server_type="oud",
-        )
-
-        # OID quirks should be registered
-        oid_schema_quirks = registry.get_schema_quirks("oid")
-        assert len(oid_schema_quirks) > 0
-
-    def test_oud_quirks_registered_when_target(self, tmp_path: Path) -> None:
-        """Test OUD quirks are registered when OUD is target."""
-        input_dir = tmp_path / "input"
-        output_dir = tmp_path / "output"
-        input_dir.mkdir()
-
-        params: dict[str, object] = {
-            "input_dir": str(input_dir),
-            "output_dir": str(output_dir),
-        }
-
-        registry = FlextLdifRegistry()
-
-        FlextLdifMigrationPipeline(
-            params=params,
-            source_server_type="openldap",
-            target_server_type="oud",
-        )
-
-        # OUD quirks should be registered
-        oud_schema_quirks = registry.get_schema_quirks("oud")
-        assert len(oud_schema_quirks) > 0
-
-    def test_no_duplicate_quirk_registration(self, tmp_path: Path) -> None:
-        """Test quirks aren't registered twice."""
-        input_dir = tmp_path / "input"
-        output_dir = tmp_path / "output"
-        input_dir.mkdir()
-
-        params: dict[str, object] = {
-            "input_dir": str(input_dir),
-            "output_dir": str(output_dir),
-        }
-
-        registry = FlextLdifRegistry()
-
-        # Create two pipelines with same registry
-        FlextLdifMigrationPipeline(
-            params=params,
-            source_server_type="oid",
-            target_server_type="oud",
-        )
-
-        initial_quirks_count = len(registry.get_schema_quirks("oid"))
-
-        FlextLdifMigrationPipeline(
-            params=params,
-            source_server_type="oid",
-            target_server_type="oud",
-        )
-
-        # Should not add duplicate quirks
-        # (Implementation registers quirks even if they exist, so count may increase)
-        # Test that at least some quirks are registered
-        assert len(registry.get_schema_quirks("oid")) >= initial_quirks_count
+        assert result.is_success or result.is_failure

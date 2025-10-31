@@ -20,6 +20,7 @@ from pathlib import Path
 
 from flext_core import FlextLogger, FlextResult, FlextService
 
+from flext_ldif.config import FlextLdifConfig
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 
@@ -163,6 +164,72 @@ class FlextLdifServerDetector(FlextService[FlextLdifModels.ClientStatus]):
             config={"service": "FlextLdifServerDetector"},
         )
         return FlextResult[FlextLdifModels.ClientStatus].ok(status_result)
+
+    @staticmethod
+    def resolve_from_config(
+        config: FlextLdifConfig, target_server_type: str | None = None
+    ) -> str:
+        """Determine effective server type based on a prioritized configuration hierarchy."""
+        # Priority 1: Direct override from a service-level parameter
+        if target_server_type:
+            return target_server_type
+
+        # Priority 2: Relaxed parsing mode takes precedence
+        if config.enable_relaxed_parsing:
+            return FlextLdifConstants.ServerTypes.RELAXED
+
+        # Priority 3: Manual configuration mode
+        if config.quirks_detection_mode == "manual":
+            return config.quirks_server_type or FlextLdifConstants.ServerTypes.RFC
+
+        # Priority 4: Disabled mode falls back to RFC
+        if config.quirks_detection_mode == "disabled":
+            return FlextLdifConstants.ServerTypes.RFC
+
+        # Default: Use the configured default server type
+        return config.ldif_default_server_type
+
+    def get_effective_server_type(
+        self,
+        ldif_path: Path | None = None,
+        ldif_content: str | None = None,
+    ) -> FlextResult[str]:
+        """Resolve the effective LDAP server type to use for processing.
+
+        Applies priority resolution based on config settings:
+        1. Relaxed mode enabled → "relaxed"
+        2. Manual mode → configured server type
+        3. Auto mode → detected server type from content
+        4. Disabled mode → "rfc"
+
+        Args:
+            ldif_path: Optional path to LDIF file for auto-detection
+            ldif_content: Optional LDIF content string for auto-detection
+
+        Returns:
+            FlextResult with the server type string to use
+
+        """
+        try:
+            # Priority 3: Auto-detection
+            if ldif_path is not None or ldif_content is not None:
+                detection_result = self.detect_server_type(
+                    ldif_path=ldif_path,
+                    ldif_content=ldif_content,
+                )
+                if detection_result.is_success:
+                    result = detection_result.unwrap()
+                    if isinstance(result, dict) and "detected_server_type" in result:
+                        server_type = result["detected_server_type"]
+                        return FlextResult[str].ok(server_type)
+
+            # Default to RFC
+            return FlextResult[str].ok(FlextLdifConstants.ServerTypes.RFC)
+
+        except (ValueError, TypeError, AttributeError) as e:
+            return FlextResult[str].fail(
+                f"Failed to resolve effective server type: {e}"
+            )
 
     def _calculate_scores(self, content: str) -> dict[str, int]:
         """Calculate detection scores for each server type.
@@ -320,7 +387,11 @@ class FlextLdifServerDetector(FlextService[FlextLdifModels.ClientStatus]):
         # Oracle OID detection
         if re.search(FlextLdifConstants.ServerDetection.ORACLE_OID_PATTERN, content):
             patterns.append("Oracle OID namespace (2.16.840.1.113894.*)")
-        if "orclaci" in content_lower or "orclentrylevelaci" in content_lower:
+        if (
+            FlextLdifConstants.AclAttributes.ORCLACI.lower() in content_lower
+            or FlextLdifConstants.AclAttributes.ORCL_ENTRY_LEVEL_ACI.lower()
+            in content_lower
+        ):
             patterns.append("Oracle OID ACLs")
 
         # Oracle OUD detection

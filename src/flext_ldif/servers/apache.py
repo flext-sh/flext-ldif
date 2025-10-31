@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import base64
 import re
 from typing import ClassVar
 
@@ -11,197 +10,329 @@ from flext_core import FlextResult
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.servers.rfc import FlextLdifServersRfc
-from flext_ldif.typings import FlextLdifTypes
+from flext_ldif.utilities import FlextLdifUtilities
 
 
 class FlextLdifServersApache(FlextLdifServersRfc):
-    """Apache Directory Server quirks implementation."""
+    """Apache Directory Server quirks implementation.
 
-    # Top-level configuration for Apache quirks
-    server_type: ClassVar[str] = FlextLdifConstants.ServerTypes.APACHE
-    priority: ClassVar[int] = 15
+    Extends RFC base with Apache-specific detection for attributes, objectClasses, and entries.
+    All parsing/conversion inherited from RFC - only detection and metadata handling overridden.
+    Uses FlextLdifUtilities for shared validation logic across servers.
+    """
 
-    def __init__(self) -> None:
-        """Initialize Apache quirks."""
-        super().__init__()
-        self._schema = self.Schema()
+    server_type = FlextLdifConstants.ServerTypes.APACHE
+    priority = 15
 
-    def can_handle_attribute(self, attr_definition: str) -> bool:
-        """Delegate to schema instance."""
-        return self._schema.can_handle_attribute(attr_definition)
+    def __getattr__(self, name: str) -> object:
+        """Delegate method calls to nested Schema, Acl, or Entry instances.
 
-    def parse_attribute(
-        self,
-        attr_definition: str,
-    ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
-        """Delegate to schema instance."""
-        return self._schema.parse_attribute(attr_definition)
+        This enables calling schema/acl/entry methods directly on the main server instance.
 
-    def can_handle_objectclass(self, oc_definition: str) -> bool:
-        """Delegate to schema instance."""
-        return self._schema.can_handle_objectclass(oc_definition)
+        Args:
+            name: Method or attribute name to look up
 
-    def parse_objectclass(
-        self,
-        oc_definition: str,
-    ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
-        """Delegate to schema instance."""
-        return self._schema.parse_objectclass(oc_definition)
+        Returns:
+            Method or attribute from nested instance
 
-    def convert_attribute_to_rfc(
-        self,
-        attribute: FlextLdifModels.SchemaAttribute,
-    ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
-        """Delegate to schema instance."""
-        return self._schema.convert_attribute_to_rfc(attribute)
+        Raises:
+            AttributeError: If attribute not found in any nested instance
 
-    def convert_attribute_from_rfc(
-        self,
-        attribute: FlextLdifModels.SchemaAttribute,
-    ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
-        """Delegate to schema instance."""
-        return self._schema.convert_attribute_from_rfc(attribute)
-
-    def convert_objectclass_to_rfc(
-        self,
-        objectclass: FlextLdifModels.SchemaObjectClass,
-    ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
-        """Delegate to schema instance."""
-        return self._schema.convert_objectclass_to_rfc(objectclass)
-
-    def convert_objectclass_from_rfc(
-        self,
-        objectclass: FlextLdifModels.SchemaObjectClass,
-    ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
-        """Delegate to schema instance."""
-        return self._schema.convert_objectclass_from_rfc(objectclass)
-
-    def write_attribute_to_rfc(
-        self,
-        attribute: FlextLdifModels.SchemaAttribute,
-    ) -> FlextResult[str]:
-        """Delegate to schema instance."""
-        return self._schema.write_attribute_to_rfc(attribute)
-
-    def write_objectclass_to_rfc(
-        self,
-        objectclass: FlextLdifModels.SchemaObjectClass,
-    ) -> FlextResult[str]:
-        """Delegate to schema instance."""
-        return self._schema.write_objectclass_to_rfc(objectclass)
+        """
+        # Try schema methods first (most common)
+        if hasattr(self.schema, name):
+            return getattr(self.schema, name)
+        # Try acl methods
+        if hasattr(self.acl, name):
+            return getattr(self.acl, name)
+        # Try entry methods
+        if hasattr(self.entry, name):
+            return getattr(self.entry, name)
+        # Not found in any nested instance
+        msg = f"'{type(self).__name__}' object has no attribute '{name}'"
+        raise AttributeError(msg)
 
     class Schema(FlextLdifServersRfc.Schema):
-        """Schema quirks for Apache Directory Server (ApacheDS)."""
+        """Schema quirks for Apache Directory Server (ApacheDS).
 
-        server_type: ClassVar[str] = FlextLdifConstants.ServerTypes.APACHE
+        Detects and tags Apache-specific schema attributes and objectClasses.
+        Inherits all parsing and conversion from RFC base.
+        """
+
+        server_type: ClassVar[str] = FlextLdifConstants.LdapServers.APACHE_DIRECTORY
         priority: ClassVar[int] = 15
 
-        APACHE_OID_PATTERN: ClassVar[re.Pattern[str]] = re.compile(
-            r"\b1\.3\.6\.1\.4\.1\.18060\.",
-            re.IGNORECASE,
-        )
-        APACHE_ATTRIBUTE_PREFIXES: ClassVar[frozenset[str]] = frozenset([
-            "ads-",
-            "apacheds",
-        ])
-        APACHE_OBJECTCLASS_NAMES: ClassVar[frozenset[str]] = frozenset([
-            "ads-directoryservice",
-            "ads-base",
-            "ads-server",
-            "ads-partition",
-            "ads-interceptor",
-        ])
+        def can_handle_attribute(
+            self, attribute: str | FlextLdifModels.SchemaAttribute
+        ) -> bool:
+            """Detect ApacheDS attribute definitions using centralized constants."""
+            # Handle both string and model inputs
+            if isinstance(attribute, str):
+                attr_definition = attribute
+                attr_lower = attribute.lower()
 
-        def can_handle_attribute(self, attr_definition: str) -> bool:
-            """Detect ApacheDS attribute definitions."""
-            attr_lower = attr_definition.lower()
-            if self.APACHE_OID_PATTERN.search(attr_definition):
-                return True
+                # Check OID pattern from constants
+                if re.search(
+                    FlextLdifConstants.LdapServerDetection.APACHE_OID_PATTERN,
+                    attr_definition,
+                ):
+                    return True
 
-            name_matches = re.findall(
-                r"NAME\s+\(?\s*'([^']+)'",
-                attr_definition,
-                re.IGNORECASE,
+                # Check attribute name prefixes
+                name_matches = re.findall(
+                    r"NAME\s+\(?\s*'([^']+)'",
+                    attr_definition,
+                    re.IGNORECASE,
+                )
+                if any(
+                    name.lower().startswith(
+                        tuple(
+                            FlextLdifConstants.LdapServerDetection.APACHE_ATTRIBUTE_PREFIXES
+                        )
+                    )
+                    for name in name_matches
+                ):
+                    return True
+
+                return any(
+                    prefix in attr_lower
+                    for prefix in FlextLdifConstants.LdapServerDetection.APACHE_ATTRIBUTE_PREFIXES
+                )
+            if isinstance(attribute, FlextLdifModels.SchemaAttribute):
+                # Check OID pattern from constants
+                if re.search(
+                    FlextLdifConstants.LdapServerDetection.APACHE_OID_PATTERN,
+                    attribute.oid,
+                ):
+                    return True
+
+                # Check attribute name prefixes
+                attr_name_lower = attribute.name.lower()
+                return any(
+                    attr_name_lower.startswith(prefix)
+                    for prefix in FlextLdifConstants.LdapServerDetection.APACHE_ATTRIBUTE_PREFIXES
+                )
+            return False
+
+        def can_handle_objectclass(
+            self, objectclass: str | FlextLdifModels.SchemaObjectClass
+        ) -> bool:
+            """Detect ApacheDS objectClass definitions using centralized constants."""
+            if isinstance(objectclass, str):
+                if re.search(
+                    FlextLdifConstants.LdapServerDetection.APACHE_OID_PATTERN,
+                    objectclass,
+                ):
+                    return True
+
+                name_matches = re.findall(
+                    r"NAME\s+\(?\s*'([^']+)'",
+                    objectclass,
+                    re.IGNORECASE,
+                )
+                return any(
+                    name.lower()
+                    in FlextLdifConstants.LdapServerDetection.APACHE_OBJECTCLASS_NAMES
+                    for name in name_matches
+                )
+            if isinstance(objectclass, FlextLdifModels.SchemaObjectClass):
+                # Check OID pattern from constants
+                if re.search(
+                    FlextLdifConstants.LdapServerDetection.APACHE_OID_PATTERN,
+                    objectclass.oid,
+                ):
+                    return True
+
+                # Check objectClass name
+                oc_name_lower = objectclass.name.lower()
+                return (
+                    oc_name_lower
+                    in FlextLdifConstants.LdapServerDetection.APACHE_OBJECTCLASS_NAMES
+                )
+            return False
+
+        def parse_attribute(
+            self,
+            attr_definition: str,
+        ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
+            """Parse attribute definition and add Apache metadata.
+
+            Args:
+                attr_definition: Attribute definition string
+
+            Returns:
+                FlextResult with SchemaAttribute marked with Apache metadata
+
+            """
+            result = super().parse_attribute(attr_definition)
+            if result.is_success:
+                attr_data = result.unwrap()
+                metadata = FlextLdifModels.QuirkMetadata.create_for_quirk(
+                    "apache_directory"
+                )
+                return FlextResult[FlextLdifModels.SchemaAttribute].ok(
+                    attr_data.model_copy(update={"metadata": metadata})
+                )
+            return result
+
+        def parse_objectclass(
+            self,
+            oc_definition: str,
+        ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
+            """Parse objectClass definition and add Apache metadata.
+
+            Args:
+                oc_definition: ObjectClass definition string
+
+            Returns:
+                FlextResult with SchemaObjectClass marked with Apache metadata
+
+            """
+            result = super().parse_objectclass(oc_definition)
+            if result.is_success:
+                oc_data = result.unwrap()
+                # Use FlextLdifUtilities for common objectClass validation
+                FlextLdifUtilities.ObjectClassValidator.fix_missing_sup(
+                    oc_data, server_type=FlextLdifConstants.LdapServers.APACHE_DIRECTORY
+                )
+                FlextLdifUtilities.ObjectClassValidator.fix_kind_mismatch(
+                    oc_data, server_type=FlextLdifConstants.LdapServers.APACHE_DIRECTORY
+                )
+                metadata = FlextLdifModels.QuirkMetadata.create_for_quirk(
+                    "apache_directory"
+                )
+                return FlextResult[FlextLdifModels.SchemaObjectClass].ok(
+                    oc_data.model_copy(update={"metadata": metadata})
+                )
+            return result
+
+        def convert_attribute_from_rfc(
+            self,
+            rfc_data: FlextLdifModels.SchemaAttribute,
+        ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
+            """Convert RFC attribute to Apache format with metadata.
+
+            Args:
+                rfc_data: RFC-compliant SchemaAttribute
+
+            Returns:
+                FlextResult with SchemaAttribute marked with Apache metadata
+
+            """
+            metadata = FlextLdifModels.QuirkMetadata.create_for_quirk(
+                "apache_directory"
             )
-            if any(
-                name.lower().startswith(tuple(self.APACHE_ATTRIBUTE_PREFIXES))
-                for name in name_matches
-            ):
-                return True
+            result_data = rfc_data.model_copy(update={"metadata": metadata})
+            return FlextResult[FlextLdifModels.SchemaAttribute].ok(result_data)
 
-            return any(
-                prefix in attr_lower for prefix in self.APACHE_ATTRIBUTE_PREFIXES
+        def convert_objectclass_from_rfc(
+            self,
+            rfc_data: FlextLdifModels.SchemaObjectClass,
+        ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
+            """Convert RFC objectClass to Apache format with metadata.
+
+            Args:
+                rfc_data: RFC-compliant SchemaObjectClass
+
+            Returns:
+                FlextResult with SchemaObjectClass marked with Apache metadata
+
+            """
+            metadata = FlextLdifModels.QuirkMetadata.create_for_quirk(
+                "apache_directory"
             )
+            result_data = rfc_data.model_copy(update={"metadata": metadata})
+            return FlextResult[FlextLdifModels.SchemaObjectClass].ok(result_data)
 
-        # --------------------------------------------------------------------- #
-        # INHERITED METHODS (from FlextLdifServersRfc.Schema)
-        # --------------------------------------------------------------------- #
-        # These methods are inherited from RFC base class:
-        # - parse_attribute(): Uses RFC parser
-        # - parse_objectclass(): Uses RFC parser
-        # - convert_attribute_to_rfc(): RFC conversion
-        # - convert_objectclass_to_rfc(): RFC conversion
-        # - convert_attribute_from_rfc(): RFC conversion
-        # - convert_objectclass_from_rfc(): RFC conversion
-        # - write_attribute_to_rfc(): RFC writer
-        # - write_objectclass_to_rfc(): RFC writer
-        # - should_filter_out_attribute(): Returns False (no filtering)
-        # - should_filter_out_objectclass(): Returns False (no filtering)
-        #
-        # Only can_handle_* methods are overridden with ApacheDS-specific logic.
-        #
-
-        def can_handle_objectclass(self, oc_definition: str) -> bool:
-            """Detect ApacheDS objectClass definitions."""
-            if self.APACHE_OID_PATTERN.search(oc_definition):
-                return True
-
-            name_matches = re.findall(
-                r"NAME\s+\(?\s*'([^']+)'",
-                oc_definition,
-                re.IGNORECASE,
-            )
-            return any(
-                name.lower() in self.APACHE_OBJECTCLASS_NAMES for name in name_matches
-            )
-
-        # Nested class references for Schema - allows Schema().Entry() pattern
-        # These are references to the outer class definitions for proper architecture
+        # Nested Acl and Entry classes for test API compatibility
         class Acl(FlextLdifServersRfc.Acl):
-            """Nested Acl reference within Schema."""
+            """Nested Acl reference within Schema - delegates to outer Apache.Acl."""
 
-            server_type: ClassVar[str] = FlextLdifConstants.ServerTypes.APACHE
+            server_type: ClassVar[str] = FlextLdifConstants.LdapServers.APACHE_DIRECTORY
             priority: ClassVar[int] = 15
 
             def __init__(self) -> None:
                 """Initialize by delegating to outer Acl class."""
                 super().__init__()
+                self._outer = FlextLdifServersApache.Acl()
+
+            def can_handle_acl(self, acl: FlextLdifModels.Acl) -> bool:
+                """Delegate to outer Apache Acl."""
+                return self._outer.can_handle_acl(acl)
+
+            def parse_acl(self, acl_line: str) -> FlextResult[FlextLdifModels.Acl]:
+                """Delegate to outer Apache Acl."""
+                return self._outer.parse_acl(acl_line)
+
+            def convert_acl_to_rfc(
+                self,
+                acl_data: FlextLdifModels.Acl,
+            ) -> FlextResult[FlextLdifModels.Acl]:
+                """Delegate to outer Apache Acl."""
+                return self._outer.convert_acl_to_rfc(acl_data)
+
+            def convert_acl_from_rfc(
+                self,
+                acl_data: FlextLdifModels.Acl,
+            ) -> FlextResult[FlextLdifModels.Acl]:
+                """Delegate to outer Apache Acl."""
+                return self._outer.convert_acl_from_rfc(acl_data)
+
+            def write_acl_to_rfc(
+                self, acl_data: FlextLdifModels.Acl
+            ) -> FlextResult[str]:
+                """Delegate to outer Apache Acl."""
+                return self._outer.write_acl_to_rfc(acl_data)
 
         class Entry(FlextLdifServersRfc.Entry):
-            """Nested Entry reference within Schema."""
+            """Nested Entry reference within Schema - delegates to outer Apache.Entry."""
 
-            server_type: ClassVar[str] = FlextLdifConstants.ServerTypes.APACHE
+            server_type: ClassVar[str] = FlextLdifConstants.LdapServers.APACHE_DIRECTORY
             priority: ClassVar[int] = 15
 
             def __init__(self) -> None:
                 """Initialize by delegating to outer Entry class."""
                 super().__init__()
+                self._outer = FlextLdifServersApache.Entry()
+
+            def can_handle_entry(self, entry: FlextLdifModels.Entry) -> bool:
+                """Delegate to outer Apache Entry."""
+                return self._outer.can_handle_entry(entry)
+
+            def process_entry(
+                self, entry: FlextLdifModels.Entry
+            ) -> FlextResult[FlextLdifModels.Entry]:
+                """Delegate to outer Apache Entry."""
+                return self._outer.process_entry(entry)
+
+            def convert_entry_to_rfc(
+                self, entry_data: FlextLdifModels.Entry
+            ) -> FlextResult[FlextLdifModels.Entry]:
+                """Delegate to outer Apache Entry."""
+                return self._outer.convert_entry_to_rfc(entry_data)
 
     class Acl(FlextLdifServersRfc.Acl):
-        """Apache Directory Server ACI quirk."""
+        """Apache Directory Server ACI quirk.
+
+        Handles ApacheDS ACI (Access Control Instruction) format.
+        """
 
         ACI_ATTRIBUTE_NAMES: ClassVar[frozenset[str]] = frozenset([
             "ads-aci",
-            FlextLdifConstants.DictKeys.ACI,
+            FlextLdifConstants.AclAttributes.ACI,
         ])
         CLAUSE_PATTERN: ClassVar[re.Pattern[str]] = re.compile(r"\([^()]+\)")
 
-        server_type: ClassVar[str] = FlextLdifConstants.ServerTypes.APACHE
+        server_type: ClassVar[str] = FlextLdifConstants.LdapServers.APACHE_DIRECTORY
         priority: ClassVar[int] = 15
 
-        def can_handle_acl(self, acl_line: str) -> bool:
+        def can_handle_acl(self, acl: FlextLdifModels.Acl) -> bool:
             """Detect ApacheDS ACI lines."""
-            normalized = acl_line.strip()
+            if not isinstance(acl, FlextLdifModels.Acl):
+                return False
+            if not acl.raw_acl:
+                return False
+            normalized = acl.raw_acl.strip()
             if not normalized:
                 return False
 
@@ -214,10 +345,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
         def parse_acl(self, acl_line: str) -> FlextResult[FlextLdifModels.Acl]:
             """Parse ApacheDS ACI definition."""
             try:
-                attr_name, content = self._splitacl_line(acl_line)
-                _clauses = [
-                    clause.strip() for clause in self.CLAUSE_PATTERN.findall(content)
-                ]
+                attr_name, _content = self._splitacl_line(acl_line)
 
                 # Create proper Acl model
                 acl_model = FlextLdifModels.Acl(
@@ -227,11 +355,11 @@ class FlextLdifServersApache(FlextLdifServersRfc):
                         attributes=[attr_name] if attr_name else [],
                     ),
                     subject=FlextLdifModels.AclSubject(
-                        subject_type="anonymous",
+                        subject_type=FlextLdifConstants.AclSubjectTypes.ANONYMOUS,
                         subject_value="*",
                     ),
                     permissions=FlextLdifModels.AclPermissions(),
-                    server_type=FlextLdifConstants.ServerTypes.APACHE,
+                    server_type=FlextLdifConstants.LdapServers.APACHE_DIRECTORY,
                     raw_acl=acl_line,
                 )
 
@@ -254,7 +382,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
                     target=acl_data.target,
                     subject=acl_data.subject,
                     permissions=acl_data.permissions,
-                    server_type=FlextLdifConstants.ServerTypes.APACHE,
+                    server_type=FlextLdifConstants.LdapServers.APACHE_DIRECTORY,
                     raw_acl=acl_data.raw_acl,
                 )
                 return FlextResult[FlextLdifModels.Acl].ok(rfc_acl)
@@ -276,7 +404,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
                     target=acl_data.target,
                     subject=acl_data.subject,
                     permissions=acl_data.permissions,
-                    server_type=FlextLdifConstants.ServerTypes.APACHE,
+                    server_type=FlextLdifConstants.LdapServers.APACHE_DIRECTORY,
                     raw_acl=acl_data.raw_acl,
                 )
                 return FlextResult[FlextLdifModels.Acl].ok(apache_acl)
@@ -325,45 +453,41 @@ class FlextLdifServersApache(FlextLdifServersRfc):
             return attr_name.strip(), remainder.strip()
 
     class Entry(FlextLdifServersRfc.Entry):
-        """Entry quirks for Apache Directory Server."""
+        """Entry quirks for Apache Directory Server.
 
-        APACHE_DN_MARKERS: ClassVar[frozenset[str]] = frozenset([
-            "ou=config",
-            "ou=services",
-            "ou=system",
-            "ou=partitions",
-        ])
-        APACHE_ATTRIBUTE_PREFIXES: ClassVar[frozenset[str]] = frozenset([
-            "ads-",
-            "apacheds",
-        ])
+        Handles ApacheDS-specific entry detection and processing.
+        """
 
-        server_type: ClassVar[str] = FlextLdifConstants.ServerTypes.APACHE
+        server_type: ClassVar[str] = FlextLdifConstants.LdapServers.APACHE_DIRECTORY
         priority: ClassVar[int] = 15
 
-        # --------------------------------------------------------------------- #
-        # OVERRIDDEN METHODS (from FlextLdifServersBase.Entry)
-        # --------------------------------------------------------------------- #
-        # These methods override the base class with ApacheDS-specific logic:
-        # - can_handle_entry(): Detects ApacheDS entries by DN/attributes
-        # - process_entry(): Normalizes ApacheDS entries with metadata
-        # - convert_entry_to_rfc(): Converts ApacheDS entries to RFC format
+        def can_handle_entry(self, entry: FlextLdifModels.Entry) -> bool:
+            """Detect ApacheDS-specific entries using centralized constants."""
+            if not isinstance(entry, FlextLdifModels.Entry):
+                return False
 
-        def can_handle_entry(
-            self,
-            entry_dn: str,
-            attributes: FlextLdifTypes.Models.EntryAttributesDict,
-        ) -> bool:
-            """Detect ApacheDS-specific entries."""
+            attributes = entry.attributes.attributes
+            entry_dn = entry.dn.value
+
+            if not entry_dn:
+                return False
+
             dn_lower = entry_dn.lower()
-            if any(marker in dn_lower for marker in self.APACHE_DN_MARKERS):
+            if any(
+                marker in dn_lower
+                for marker in FlextLdifConstants.LdapServerDetection.APACHE_DN_MARKERS
+            ):
                 return True
 
             normalized_attrs = {
                 name.lower(): value for name, value in attributes.items()
             }
             if any(
-                attr.startswith(tuple(self.APACHE_ATTRIBUTE_PREFIXES))
+                attr.startswith(
+                    tuple(
+                        FlextLdifConstants.LdapServerDetection.APACHE_ATTRIBUTE_PREFIXES
+                    )
+                )
                 for attr in normalized_attrs
             ):
                 return True
@@ -379,71 +503,65 @@ class FlextLdifServersApache(FlextLdifServersRfc):
             )
             return bool(
                 any(
-                    str(oc).lower() in FlextLdifServersApache.APACHE_OBJECTCLASS_NAMES
+                    str(oc).lower()
+                    in FlextLdifConstants.LdapServerDetection.APACHE_OBJECTCLASS_NAMES
                     for oc in object_classes
                 ),
             )
 
         def process_entry(
-            self,
-            entry_dn: str,
-            attributes: FlextLdifTypes.Models.EntryAttributesDict,
-        ) -> FlextResult[FlextLdifTypes.Models.EntryAttributesDict]:
+            self, entry: FlextLdifModels.Entry
+        ) -> FlextResult[FlextLdifModels.Entry]:
             """Normalise ApacheDS entries and attach metadata."""
             try:
+                attributes = entry.attributes.attributes.copy()
+                entry_dn = entry.dn.value
                 dn_lower = entry_dn.lower()
-                object_classes_raw = attributes.get(
-                    FlextLdifConstants.DictKeys.OBJECTCLASS,
-                    [],
-                )
-                object_classes = (
-                    object_classes_raw
-                    if isinstance(object_classes_raw, list)
-                    else [object_classes_raw]
+
+                # Store metadata in extensions
+                metadata = entry.metadata or FlextLdifModels.QuirkMetadata()
+                metadata.extensions[FlextLdifConstants.DictKeys.IS_CONFIG_ENTRY] = (
+                    "ou=config" in dn_lower
                 )
 
-                processed_attributes: dict[str, object] = {}
-                for attr_name, attr_value in attributes.items():
-                    if isinstance(attr_value, bytes):
-                        processed_attributes[attr_name] = base64.b64encode(
-                            attr_value,
-                        ).decode("ascii")
-                    else:
-                        processed_attributes[attr_name] = attr_value
+                processed_entry = FlextLdifModels.Entry(
+                    dn=entry.dn,
+                    attributes=FlextLdifModels.LdifAttributes(attributes=attributes),
+                    metadata=metadata,
+                )
 
-                processed_entry: dict[str, object] = {
-                    FlextLdifConstants.DictKeys.DN: entry_dn,
-                    FlextLdifConstants.DictKeys.SERVER_TYPE: FlextLdifConstants.ServerTypes.APACHE,
-                    FlextLdifConstants.DictKeys.IS_CONFIG_ENTRY: "ou=config"
-                    in dn_lower,
-                    FlextLdifConstants.DictKeys.OBJECTCLASS: object_classes,
-                }
-                processed_entry.update(processed_attributes)
-
-                return FlextResult[FlextLdifTypes.Models.EntryAttributesDict].ok(
+                return FlextResult[FlextLdifModels.Entry].ok(
                     processed_entry,
                 )
 
             except (ValueError, TypeError, AttributeError) as exc:
-                return FlextResult[FlextLdifTypes.Models.EntryAttributesDict].fail(
+                return FlextResult[FlextLdifModels.Entry].fail(
                     f"Apache Directory Server entry processing failed: {exc}",
                 )
 
         def convert_entry_to_rfc(
-            self,
-            entry_data: dict[str, object],
-        ) -> FlextResult[FlextLdifTypes.Models.EntryAttributesDict]:
+            self, entry_data: FlextLdifModels.Entry
+        ) -> FlextResult[FlextLdifModels.Entry]:
             """Strip ApacheDS metadata before RFC processing."""
             try:
-                normalized_entry = dict(entry_data)
-                normalized_entry.pop(FlextLdifConstants.DictKeys.SERVER_TYPE, None)
-                normalized_entry.pop(FlextLdifConstants.DictKeys.IS_CONFIG_ENTRY, None)
-                return FlextResult[FlextLdifTypes.Models.EntryAttributesDict].ok(
-                    normalized_entry,
+                attributes = entry_data.attributes.attributes.copy()
+                attributes.pop(FlextLdifConstants.DictKeys.SERVER_TYPE, None)
+                attributes.pop(FlextLdifConstants.DictKeys.IS_CONFIG_ENTRY, None)
+
+                rfc_entry = entry_data.model_copy(
+                    update={
+                        "attributes": FlextLdifModels.LdifAttributes(
+                            attributes=attributes
+                        )
+                    }
+                )
+
+                return FlextResult[FlextLdifModels.Entry].ok(
+                    rfc_entry,
                 )
 
             except (ValueError, TypeError, AttributeError) as exc:
-                return FlextResult[FlextLdifTypes.Models.EntryAttributesDict].fail(
+                return FlextResult[FlextLdifModels.Entry].fail(
                     f"Apache Directory Server entry→RFC conversion failed: {exc}",
                 )
 

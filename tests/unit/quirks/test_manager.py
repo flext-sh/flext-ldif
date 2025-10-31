@@ -1,126 +1,109 @@
-"""Comprehensive tests for LDAP server quirks manager.
+"""Tests for FlextLdifRegistry - server-specific quirks management.
 
-This module provides complete test coverage for the quirks manager,
-including:
-- Initialization and configuration
-- Server type detection for all supported LDAP servers
-- Quirks retrieval (ACL attributes, formats, schema subentries)
-- Error handling and edge cases
+This module provides comprehensive testing for the quirks registry which
+manages server-specific LDAP quirks and configurations.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+
 """
 
 from __future__ import annotations
 
+import pytest
+
 from flext_ldif.constants import FlextLdifConstants
-from flext_ldif.services.manager import FlextLdifQuirksManager
+from flext_ldif.services.registry import FlextLdifRegistry
 
 
-class TestQuirksManagerInitialization:
-    """Tests for FlextLdifQuirksManager initialization."""
+class TestFlextLdifRegistry:
+    """Tests for FlextLdifRegistry initialization and quirks management."""
 
-    def test_initialization_default_server_type(self) -> None:
-        """Test manager initialization with default (generic) server type."""
-        manager = FlextLdifQuirksManager()
-        assert manager is not None
-        assert manager.server_type == FlextLdifConstants.LdapServers.GENERIC
-        assert len(manager.quirks_registry) > 0
+    def test_initialization(self) -> None:
+        """Test registry initialization."""
+        registry = FlextLdifRegistry()
+        assert registry is not None
 
-    def test_initialization_custom_server_type(self) -> None:
-        """Test manager initialization with custom server type."""
-        manager = FlextLdifQuirksManager(
-            server_type=FlextLdifConstants.LdapServers.ORACLE_OID
-        )
-        assert manager.server_type == FlextLdifConstants.LdapServers.ORACLE_OID
+    def test_get_global_instance(self) -> None:
+        """Test getting global singleton registry instance."""
+        registry1 = FlextLdifRegistry.get_global_instance()
+        registry2 = FlextLdifRegistry.get_global_instance()
 
-    def test_initialization_sets_up_quirks_registry(self) -> None:
-        """Test that initialization sets up quirks registry for all servers."""
-        manager = FlextLdifQuirksManager()
-        # Verify all major server types are in registry
-        expected_servers = [
-            FlextLdifConstants.LdapServers.OPENLDAP_2,
-            FlextLdifConstants.LdapServers.OPENLDAP_1,
-            FlextLdifConstants.LdapServers.ORACLE_OID,
-            FlextLdifConstants.LdapServers.ORACLE_OUD,
-            FlextLdifConstants.LdapServers.ACTIVE_DIRECTORY,
-            FlextLdifConstants.LdapServers.APACHE_DIRECTORY,
-            FlextLdifConstants.LdapServers.DS_389,
-            FlextLdifConstants.LdapServers.NOVELL_EDIRECTORY,
-            FlextLdifConstants.LdapServers.IBM_TIVOLI,
-            FlextLdifConstants.LdapServers.GENERIC,
-        ]
-        for server in expected_servers:
-            assert server in manager.quirks_registry
+        assert registry1 is not None
+        assert registry2 is not None
+        assert isinstance(registry1, FlextLdifRegistry)
+        assert isinstance(registry2, FlextLdifRegistry)
+        # Both should be the same instance (singleton)
+        assert registry1 is registry2
 
-    def test_server_type_property(self) -> None:
-        """Test server_type property returns correct value."""
-        manager = FlextLdifQuirksManager(
-            server_type=FlextLdifConstants.LdapServers.OPENLDAP_2
-        )
-        assert manager.server_type == FlextLdifConstants.LdapServers.OPENLDAP_2
+    def test_get_acl_quirks_oracle_oid(self) -> None:
+        """Test getting ACL quirks for Oracle OID."""
+        registry = FlextLdifRegistry()
 
+        # Get the ACL quirks for Oracle OID
+        quirks = registry.get_acl_quirks(FlextLdifConstants.LdapServers.ORACLE_OID)
+        assert quirks is not None
 
-class TestQuirksManagerExecute:
-    """Tests for FlextLdifQuirksManager execute method."""
+    def test_get_acl_quirks_oracle_oud(self) -> None:
+        """Test getting ACL quirks for Oracle OUD."""
+        registry = FlextLdifRegistry()
 
-    def test_execute_returns_service_metadata(self) -> None:
-        """Test execute returns service metadata."""
-        manager = FlextLdifQuirksManager(
-            server_type=FlextLdifConstants.LdapServers.ORACLE_OID
-        )
-        result = manager.execute()
+        quirks = registry.get_acl_quirks(FlextLdifConstants.LdapServers.ORACLE_OUD)
+        assert quirks is not None
 
-        assert result.is_success
-        metadata = result.unwrap()
-        assert metadata["service"] == FlextLdifQuirksManager
-        assert metadata["server_type"] == FlextLdifConstants.LdapServers.ORACLE_OID
-        quirks_loaded = metadata["quirks_loaded"]
-        assert isinstance(quirks_loaded, int) and quirks_loaded > 0
+    def test_get_acl_quirks_openldap(self) -> None:
+        """Test getting ACL quirks for OpenLDAP."""
+        registry = FlextLdifRegistry()
 
+        quirks = registry.get_acl_quirks(FlextLdifConstants.LdapServers.OPENLDAP_2)
+        assert quirks is not None
 
-class TestQuirksManagerGetServerQuirks:
-    """Tests for get_server_quirks method."""
+    def test_get_schema_quirks_oracle_oid(self) -> None:
+        """Test getting schema quirks for Oracle OID."""
+        registry = FlextLdifRegistry()
 
-    def test_get_server_quirks_with_default_server_type(self) -> None:
-        """Test getting quirks using manager's default server type."""
-        manager = FlextLdifQuirksManager(
-            server_type=FlextLdifConstants.LdapServers.ORACLE_OID
-        )
-        result = manager.get_server_quirks()
+        quirks = registry.get_schema_quirks(FlextLdifConstants.LdapServers.ORACLE_OID)
+        assert quirks is not None
 
-        assert result.is_success
-        quirks = result.unwrap()
-        assert FlextLdifConstants.DictKeys.ACL_ATTRIBUTE in quirks
-        assert (
-            quirks[FlextLdifConstants.DictKeys.ACL_ATTRIBUTE]
-            == FlextLdifConstants.DictKeys.ORCLACI
-        )
+    def test_get_schema_quirks_openldap(self) -> None:
+        """Test getting schema quirks for OpenLDAP."""
+        registry = FlextLdifRegistry()
 
-    def test_get_server_quirks_with_custom_server_type(self) -> None:
-        """Test getting quirks for specified server type."""
-        manager = FlextLdifQuirksManager()
-        result = manager.get_server_quirks(
-            server_type=FlextLdifConstants.LdapServers.OPENLDAP_2
-        )
+        quirks = registry.get_schema_quirks(FlextLdifConstants.LdapServers.OPENLDAP_2)
+        assert quirks is not None
 
-        assert result.is_success
-        quirks = result.unwrap()
-        assert FlextLdifConstants.DictKeys.ACL_ATTRIBUTE in quirks
-        assert (
-            quirks[FlextLdifConstants.DictKeys.ACL_ATTRIBUTE]
-            == FlextLdifConstants.DictKeys.OLCACCESS
-        )
+    def test_find_acl_quirk_is_callable(self) -> None:
+        """Test that find_acl_quirk method is available and callable."""
+        registry = FlextLdifRegistry()
 
-    def test_get_server_quirks_unknown_server_type_fails(self) -> None:
-        """Test getting quirks for unknown server type fails."""
-        manager = FlextLdifQuirksManager()
-        result = manager.get_server_quirks(server_type="unknown-server")
+        # Test that the method exists and can be called without raising an exception
+        # The result depends on the server type and line content
+        try:
+            registry.find_acl_quirk(
+                FlextLdifConstants.LdapServers.OPENLDAP, "test line"
+            )
+            # If we got here, the method works
+        except AttributeError as e:
+            pytest.fail(f"find_acl_quirk method not found on FlextLdifRegistry: {e}")
 
-        assert not result.is_success
-        assert result.error is not None
-        assert "Unknown server type" in result.error
+    def test_get_entrys_oracle_oid(self) -> None:
+        """Test getting entry quirks for Oracle OID."""
+        registry = FlextLdifRegistry()
 
-    def test_get_server_quirks_all_supported_servers(self) -> None:
-        """Test getting quirks for all supported server types."""
-        manager = FlextLdifQuirksManager()
+        quirks = registry.get_entrys(FlextLdifConstants.LdapServers.ORACLE_OID)
+        assert quirks is not None
+
+    def test_get_entrys_oracle_oud(self) -> None:
+        """Test getting entry quirks for Oracle OUD."""
+        registry = FlextLdifRegistry()
+
+        quirks = registry.get_entrys(FlextLdifConstants.LdapServers.ORACLE_OUD)
+        assert quirks is not None
+
+    def test_registry_supports_all_server_types(self) -> None:
+        """Test that registry has quirks for all supported server types."""
+        registry = FlextLdifRegistry()
+
         supported_servers = [
             FlextLdifConstants.LdapServers.OPENLDAP_2,
             FlextLdifConstants.LdapServers.OPENLDAP_1,
@@ -135,136 +118,16 @@ class TestQuirksManagerGetServerQuirks:
         ]
 
         for server_type in supported_servers:
-            result = manager.get_server_quirks(server_type=server_type)
-            assert result.is_success
-            quirks = result.unwrap()
-            assert FlextLdifConstants.DictKeys.ACL_ATTRIBUTE in quirks
-            assert FlextLdifConstants.DictKeys.ACL_FORMAT in quirks
+            schema_quirks = registry.get_schema_quirks(server_type)
+            assert schema_quirks is not None, (
+                f"Schema quirks not found for {server_type}"
+            )
+
+            acl_quirks = registry.get_acl_quirks(server_type)
+            assert acl_quirks is not None, f"ACL quirks not found for {server_type}"
+
+            entrys = registry.get_entrys(server_type)
+            assert entrys is not None, f"Entry quirks not found for {server_type}"
 
 
-class TestQuirksManagerGetAclAttributeName:
-    """Tests for get_acl_attribute_name method."""
-
-    def test_get_acl_attribute_name_default_server(self) -> None:
-        """Test getting ACL attribute name for default server type."""
-        manager = FlextLdifQuirksManager(
-            server_type=FlextLdifConstants.LdapServers.ORACLE_OID
-        )
-        result = manager.get_acl_attribute_name()
-
-        assert result.is_success
-        assert result.unwrap() == FlextLdifConstants.DictKeys.ORCLACI
-
-    def test_get_acl_attribute_name_custom_server(self) -> None:
-        """Test getting ACL attribute name for specified server type."""
-        manager = FlextLdifQuirksManager()
-        result = manager.get_acl_attribute_name(
-            server_type=FlextLdifConstants.LdapServers.OPENLDAP_2
-        )
-
-        assert result.is_success
-        assert result.unwrap() == FlextLdifConstants.DictKeys.OLCACCESS
-
-    def test_get_acl_attribute_name_unknown_server_fails(self) -> None:
-        """Test getting ACL attribute name for unknown server type fails."""
-        manager = FlextLdifQuirksManager()
-        result = manager.get_acl_attribute_name(server_type="unknown-server")
-
-        assert not result.is_success
-        assert result.error is not None
-        assert "Unknown server type" in result.error
-
-    def test_get_acl_attribute_name_all_servers(self) -> None:
-        """Test getting ACL attribute name for all supported servers."""
-        manager = FlextLdifQuirksManager()
-        servers = [
-            (
-                FlextLdifConstants.LdapServers.OPENLDAP_2,
-                FlextLdifConstants.DictKeys.OLCACCESS,
-            ),
-            (
-                FlextLdifConstants.LdapServers.OPENLDAP_1,
-                FlextLdifConstants.DictKeys.ACCESS,
-            ),
-            (
-                FlextLdifConstants.LdapServers.ORACLE_OID,
-                FlextLdifConstants.DictKeys.ORCLACI,
-            ),
-            (
-                FlextLdifConstants.LdapServers.ORACLE_OUD,
-                FlextLdifConstants.DictKeys.DS_PRIVILEGE_NAME,
-            ),
-            (
-                FlextLdifConstants.LdapServers.ACTIVE_DIRECTORY,
-                FlextLdifConstants.DictKeys.NTSECURITYDESCRIPTOR,
-            ),
-        ]
-
-        for server_type, expected_attr in servers:
-            result = manager.get_acl_attribute_name(server_type=server_type)
-            assert result.is_success
-            assert result.unwrap() == expected_attr
-
-
-class TestQuirksManagerGetAclFormat:
-    """Tests for get_acl_format method."""
-
-    def test_get_acl_format_default_server(self) -> None:
-        """Test getting ACL format for default server type."""
-        manager = FlextLdifQuirksManager(
-            server_type=FlextLdifConstants.LdapServers.ORACLE_OID
-        )
-        result = manager.get_acl_format()
-
-        assert result.is_success
-        assert result.unwrap() == FlextLdifConstants.AclFormats.OID_ACL
-
-    def test_get_acl_format_custom_server(self) -> None:
-        """Test getting ACL format for specified server type."""
-        manager = FlextLdifQuirksManager()
-        result = manager.get_acl_format(
-            server_type=FlextLdifConstants.LdapServers.OPENLDAP_2
-        )
-
-        assert result.is_success
-        assert result.unwrap() == FlextLdifConstants.AclFormats.OPENLDAP2_ACL
-
-    def test_get_acl_format_unknown_server_fails(self) -> None:
-        """Test getting ACL format for unknown server type fails."""
-        manager = FlextLdifQuirksManager()
-        result = manager.get_acl_format(server_type="unknown-server")
-
-        assert not result.is_success
-        assert result.error is not None
-        assert "Unknown server type" in result.error
-
-    def test_get_acl_format_all_servers(self) -> None:
-        """Test getting ACL format for all supported servers."""
-        manager = FlextLdifQuirksManager()
-        servers = [
-            (
-                FlextLdifConstants.LdapServers.OPENLDAP_2,
-                FlextLdifConstants.AclFormats.OPENLDAP2_ACL,
-            ),
-            (
-                FlextLdifConstants.LdapServers.OPENLDAP_1,
-                FlextLdifConstants.AclFormats.OPENLDAP1_ACL,
-            ),
-            (
-                FlextLdifConstants.LdapServers.ORACLE_OID,
-                FlextLdifConstants.AclFormats.OID_ACL,
-            ),
-            (
-                FlextLdifConstants.LdapServers.ACTIVE_DIRECTORY,
-                FlextLdifConstants.AclFormats.AD_ACL,
-            ),
-            (
-                FlextLdifConstants.LdapServers.DS_389,
-                FlextLdifConstants.AclFormats.DS389_ACL,
-            ),
-        ]
-
-        for server_type, expected_format in servers:
-            result = manager.get_acl_format(server_type=server_type)
-            assert result.is_success
-            assert result.unwrap() == expected_format
+__all__ = ["TestFlextLdifRegistry"]

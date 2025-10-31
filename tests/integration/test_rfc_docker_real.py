@@ -57,19 +57,22 @@ class TestRfcDockerRealData:
             pytest.skip(f"OID schema fixtures not found: {schema_file}")
 
         parser = FlextLdifParserService(
-            params={FlextLdifConstants.DictKeys.FILE_PATH: str(schema_file)},
+            config=FlextLdifConfig(),
         )
 
-        result = parser.execute()
+        result = parser.parse_file(schema_file)
 
         assert result.is_success, f"Failed to parse OID schema: {result.error}"
-        schema_data = result.unwrap()
+        entries = result.unwrap()
 
-        # Verify schema data structure
-        assert "attributes" in schema_data
-        assert "objectclasses" in schema_data
-        assert len(schema_data.get("attributes", {})) > 0
-        assert len(schema_data.get("objectclasses", {})) > 0
+        # Verify schema entries are parsed
+        assert len(entries) > 0, "No schema entries parsed"
+        # Schema entries should have attributeTypes or objectClasses
+        assert any(
+            "attributeTypes" in entry.attributes.attributes
+            or "objectClasses" in entry.attributes.attributes
+            for entry in entries
+        )
 
     def test_parse_real_oud_entries(
         self,
@@ -86,7 +89,7 @@ class TestRfcDockerRealData:
             config=FlextLdifConfig(),
         )
 
-        result = parser.parse_ldif_file(entries_file)
+        result = parser.parse_file(entries_file)
 
         assert result.is_success, f"Failed to parse OUD entries: {result.error}"
         entries = result.unwrap()
@@ -110,11 +113,12 @@ class TestRfcDockerRealData:
             config=FlextLdifConfig(),
         )
 
-        result = parser.parse_ldif_file(integration_file)
+        result = parser.parse_file(integration_file)
 
         assert result.is_success or "Failed to parse" in result.error
         if result.is_success:
-            entries = result.unwrap()
+            parse_response = result.unwrap()
+            entries = parse_response.entries
             assert len(entries) > 0
 
     def test_roundtrip_oid_to_file(
@@ -133,7 +137,7 @@ class TestRfcDockerRealData:
         parser = FlextLdifParserService(
             config=FlextLdifConfig(),
         )
-        parse_result = parser.parse_ldif_file(source_file)
+        parse_result = parser.parse_file(source_file)
 
         if not parse_result.is_success:
             pytest.skip(f"Could not parse source: {parse_result.error}")
@@ -142,16 +146,13 @@ class TestRfcDockerRealData:
 
         # Write to new file
         output_file = tmp_path / "roundtrip.ldif"
-        {
-            FlextLdifConstants.DictKeys.OUTPUT_FILE: str(output_file),
-            FlextLdifConstants.DictKeys.ENTRIES: entries,  # Pass Entry objects directly
-        }
 
         writer = FlextLdifWriterService(
             config=FlextLdifConfig(),
+            quirk_registry=quirk_registry,
             target_server_type="rfc",
         )
-        write_result = writer.execute()
+        write_result = writer.write(entries, output_file)
 
         assert write_result.is_success, f"Failed to write: {write_result.error}"
         assert output_file.exists()
@@ -160,7 +161,7 @@ class TestRfcDockerRealData:
         reparser = FlextLdifParserService(
             config=FlextLdifConfig(),
         )
-        reparse_result = reparser.parse_ldif_file(output_file)
+        reparse_result = reparser.parse_file(output_file)
 
         assert reparse_result.is_success, f"Failed to re-parse: {reparse_result.error}"
         reparsed_entries = reparse_result.unwrap()
@@ -183,10 +184,11 @@ class TestRfcDockerRealData:
             config=FlextLdifConfig(),
         )
 
-        result = parser.parse_ldif_file(acl_file)
+        result = parser.parse_file(acl_file)
 
         if result.is_success:
-            entries = result.unwrap()
+            parse_response = result.unwrap()
+            entries = parse_response.entries
             # OUD ACLs should have 'aci' attributes
             # LdifAttributes is a wrapper - access inner dict via .attributes
             acl_entries = [e for e in entries if "aci" in e.attributes.attributes]
@@ -209,7 +211,7 @@ class TestRfcDockerRealData:
                 config=FlextLdifConfig(),
             )
 
-            result = parser.parse_ldif_file(ldif_file)
+            result = parser.parse_file(ldif_file)
 
             # Should handle Unicode gracefully
             assert result.is_success or result.error, (
@@ -223,6 +225,8 @@ class TestRfcDockerRealData:
     ) -> None:
         """Test RFC writer exception handling (now exposed without pragmas)."""
         # Test with readonly directory (permission error)
+        from flext_ldif.models import FlextLdifModels
+
         readonly_dir = tmp_path / "readonly"
         readonly_dir.mkdir()
         readonly_dir.chmod(0o555)
@@ -230,22 +234,19 @@ class TestRfcDockerRealData:
         try:
             output_file = readonly_dir / "test.ldif"
 
-            {
-                FlextLdifConstants.DictKeys.OUTPUT_FILE: str(output_file),
-                FlextLdifConstants.DictKeys.ENTRIES: [
-                    {
-                        FlextLdifConstants.DictKeys.DN: "cn=test,dc=example,dc=com",
-                        FlextLdifConstants.DictKeys.ATTRIBUTES: {"cn": ["test"]},
-                    }
-                ],
-            }
+            # Create test entry
+            test_entry = FlextLdifModels.Entry(
+                dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
+                attributes=FlextLdifModels.LdifAttributes(attributes={"cn": ["test"]}),
+            )
 
             writer = FlextLdifWriterService(
                 config=FlextLdifConfig(),
+                quirk_registry=quirk_registry,
                 target_server_type="rfc",
             )
 
-            result = writer.execute()
+            result = writer.write([test_entry], output_file)
 
             # Should fail with permission error (not silently)
             if not result.is_success:
@@ -274,11 +275,12 @@ class TestRfcDockerRealData:
                 # Use relaxed mode for broken LDIF
             )
 
-            result = parser.parse_ldif_file(broken_file)
+            result = parser.parse_file(broken_file)
 
             # Relaxed mode should attempt to parse even broken LDIF
             if result.is_success:
-                entries = result.unwrap()
+                parse_response = result.unwrap()
+                entries = parse_response.entries
                 assert isinstance(entries, list)
 
     def test_rfc_schema_parser_with_real_data(
@@ -292,15 +294,21 @@ class TestRfcDockerRealData:
             pytest.skip("OID schema fixtures not found")
 
         parser = FlextLdifParserService(
-            params={FlextLdifConstants.DictKeys.FILE_PATH: str(schema_file)},
+            config=FlextLdifConfig(),
         )
 
-        result = parser.execute()
+        result = parser.parse_file(schema_file)
 
         if result.is_success:
-            schema_data = result.unwrap()
-            # Should have both attributes and objectclasses
-            assert "attributes" in schema_data or "objectclasses" in schema_data
+            parse_response = result.unwrap()
+            entries = parse_response.entries
+            # Should have schema entries with attributeTypes or objectClasses
+            assert len(entries) > 0
+            assert any(
+                "attributeTypes" in e.attributes.attributes
+                or "objectClasses" in e.attributes.attributes
+                for e in entries
+            )
 
 
 class TestRfcIntegrationRealWorld:
@@ -326,10 +334,10 @@ class TestRfcIntegrationRealWorld:
         assert file_size > 300000, "Expected large schema file"
 
         parser = FlextLdifParserService(
-            params={FlextLdifConstants.DictKeys.FILE_PATH: str(schema_file)},
+            config=FlextLdifConfig(),
         )
 
-        result = parser.execute()
+        result = parser.parse_file(schema_file)
 
         assert result.is_success, f"Failed to parse large schema: {result.error}"
 
@@ -347,10 +355,11 @@ class TestRfcIntegrationRealWorld:
             config=FlextLdifConfig(),
         )
 
-        result = parser.parse_ldif_file(integration_file)
+        result = parser.parse_file(integration_file)
 
         if result.is_success:
-            entries = result.unwrap()
+            parse_response = result.unwrap()
+            entries = parse_response.entries
             assert len(entries) > 0, "Integration file should have entries"
 
     def test_write_large_dataset(
@@ -382,6 +391,7 @@ class TestRfcIntegrationRealWorld:
 
         writer = FlextLdifWriterService(
             config=FlextLdifConfig(),
+            quirk_registry=quirk_registry,
             target_server_type="rfc",
         )
 

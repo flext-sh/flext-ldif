@@ -73,7 +73,7 @@ src/flext_ldif/
     ├── registry.py
     ├── conversion_matrix.py
     ├── dn_case_registry.py
-    ├── entry_quirks.py
+    ├── entrys.py
     ├── manager.py
     └── servers/               # Per-server implementations
         ├── oid.py
@@ -1030,15 +1030,15 @@ def migrate_entries(
     """Migrate entries using Source → RFC → Target pipeline."""
 
     # Get source and target quirks from registry
-    source_entry_quirks = self._quirk_registry.get_entry_quirks(source_format)
-    target_entry_quirks = self._quirk_registry.get_entry_quirks(target_format)
+    source_entrys = self._quirk_registry.get_entrys(source_format)
+    target_entrys = self._quirk_registry.get_entrys(target_format)
 
     migrated_entries = []
     for entry in entries:
         # Step 1: Normalize source entry to RFC format using source quirks
         normalized_entry = entry.copy()
-        if source_entry_quirks:
-            for quirk in source_entry_quirks:
+        if source_entrys:
+            for quirk in source_entrys:
                 if quirk.can_handle_entry(entry_dn, entry_attrs):
                     convert_result = quirk.convert_entry_to_rfc(normalized_entry)
                     if convert_result.is_success:
@@ -1047,8 +1047,8 @@ def migrate_entries(
 
         # Step 2: Transform from RFC to target format using target quirks
         target_entry = normalized_entry.copy()
-        if target_entry_quirks:
-            for quirk in target_entry_quirks:
+        if target_entrys:
+            for quirk in target_entrys:
                 if quirk.can_handle_entry(entry_dn, entry_attrs):
                     transform_result = quirk.convert_entry_from_rfc(target_entry)
                     if transform_result.is_success:

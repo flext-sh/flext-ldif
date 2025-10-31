@@ -2,17 +2,14 @@
 
 Demonstrates FlextLdif ACL-related functionality:
 - Extracting ACLs from LDIF entries
-- Creating ACL rules (composite, permission, subject)
 - Parsing ACL attributes
-- Evaluating ACL rules
+- Evaluating ACLs against context
 - Working with ACL components
 
 All functionality accessed through FlextLdif facade.
 """
 
 from __future__ import annotations
-
-from flext_core import FlextResult
 
 from flext_ldif import FlextLdif
 
@@ -45,45 +42,17 @@ aci: (target="ldap:///ou=People,dc=example,dc=com")(targetattr="*")(version 3.0;
     acl_service = api.acl_service
 
     # Extract ACLs from entry
-    acl_result = acl_service.extract_acls_from_entry(entry)
+    acl_result = acl_service.extract_acls_from_entry(entry, server_type="openldap")
 
     if acl_result.is_success:
-        acls = acl_result.unwrap()
-        # ACLs is a list of parsed ACL rules
+        acl_response = acl_result.unwrap()
+        # Access ACLs from response
+        acls = acl_response.acls
         _ = len(acls)
 
 
-def create_acl_rules() -> None:
-    """Create different types of ACL rules."""
-    api = FlextLdif.get_instance()
-
-    acl_service = api.acl_service
-
-    # Create permission rule (single permission)
-    _permission_rule = acl_service.create_permission_rule(
-        permission="read",
-        required=True,
-    )
-
-    # Create subject rule
-    _subject_rule = acl_service.create_subject_rule(
-        subject_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
-    )
-
-    # Create target rule
-    _target_rule = acl_service.create_target_rule(
-        target_dn="ou=People,dc=example,dc=com",
-    )
-
-    # Create composite rule (combines multiple rules)
-    _composite_rule = acl_service.create_composite_rule(
-        operator="AND",
-    )
-    # Add rules to composite (would use composite.add_rule() if available)
-
-
 def parse_and_evaluate_acls() -> None:
-    """Parse ACL attributes and evaluate rules."""
+    """Parse ACL attributes and evaluate against context."""
     api = FlextLdif.get_instance()
 
     # Entry with multiple ACL rules
@@ -109,52 +78,27 @@ aci: (target="ldap:///ou=People,dc=example,dc=com")(targetattr="*")(version 3.0;
     acl_service = api.acl_service
 
     # Extract and parse ACLs
-    acl_result = acl_service.extract_acls_from_entry(entry)
+    acl_result = acl_service.extract_acls_from_entry(entry, server_type="openldap")
 
     if acl_result.is_failure:
         return
 
-    acls = acl_result.unwrap()
+    acl_response = acl_result.unwrap()
+    acls = acl_response.acls
 
-    # Evaluate ACL rules (if evaluation context provided)
-    for acl in acls:
-        # ACL is a structured rule object
-        _ = acl
+    # Evaluate ACLs directly against a context
+    eval_context: dict[str, object] = {
+        "subject_dn": "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
+        "target_dn": "ou=People,dc=example,dc=com",
+        "permissions": {"read": True, "write": True},
+    }
 
-
-def work_with_acl_components() -> None:
-    """Work with ACL components (helper classes)."""
-    api = FlextLdif.get_instance()
-
-    acl_service = api.acl_service
-
-    # Create permission rule with specific permission
-    _permission = acl_service.create_permission_rule(
-        permission="write",
-        required=True,
-    )
-
-    # Create subject rule for specific user
-    _subject = acl_service.create_subject_rule(
-        subject_dn="cn=groupREDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
-    )
-
-    # Create target rule
-    _target = acl_service.create_target_rule(
-        target_dn="ou=Groups,dc=example,dc=com",
-    )
-
-    # Combine into composite rule
-    composite = acl_service.create_composite_rule(
-        operator="AND",
-    )
-
-    # Evaluate composite rule (with empty context for demonstration)
-    evaluation_result = acl_service.evaluate_acl_rules([composite], context={})
+    evaluation_result = acl_service.evaluate_acl_context(acls, eval_context)
 
     if evaluation_result.is_success:
-        eval_data = evaluation_result.unwrap()
-        _ = eval_data
+        allowed = evaluation_result.unwrap()
+        # allowed is True if all ACL constraints are met, False otherwise
+        _ = allowed
 
 
 def process_entries_with_acls() -> None:
@@ -189,10 +133,11 @@ sn: test
 
     # Process each entry for ACLs
     for entry in entries:
-        acl_result = acl_service.extract_acls_from_entry(entry)
+        acl_result = acl_service.extract_acls_from_entry(entry, server_type="openldap")
 
         if acl_result.is_success:
-            acls = acl_result.unwrap()
+            acl_response = acl_result.unwrap()
+            acls = acl_response.acls
 
             if acls:
                 # Entry has ACLs
@@ -230,7 +175,7 @@ def execute_acl_service() -> None:
 
     if exec_result.is_success:
         acl_data = exec_result.unwrap()
-        # Result contains processed ACL information
+        # Result contains service status
         _ = acl_data
 
 
@@ -259,64 +204,39 @@ aci: (target="ldap:///ou=Pipeline,dc=example,dc=com")(targetattr="*")(version 3.
 
     # Extract ACLs
     acl_service = api.acl_service
-    acl_result = acl_service.extract_acls_from_entry(entry)
+    acl_result = acl_service.extract_acls_from_entry(entry, server_type="openldap")
 
     if acl_result.is_failure:
         return
 
-    acl_result.unwrap()
+    acl_response = acl_result.unwrap()
+    acls = acl_response.acls
 
-    # Evaluate ACLs - need to convert Acl to AclRule and provide context
-    # For this example, skip evaluation as it requires proper type conversion
-    # eval_result = acl_service.evaluate_acl_rules(acls, {"user": "anonymous"})
-    eval_result = FlextResult[bool].ok(True)  # Placeholder for example
+    # Evaluate ACLs against an anonymous user context
+    eval_context: dict[str, object] = {
+        "subject_dn": "cn=anonymous",
+        "permissions": {"read": True},
+    }
+
+    eval_result = acl_service.evaluate_acl_context(acls, eval_context)
 
     if eval_result.is_success:
-        evaluation = eval_result.unwrap()
-
         # Validate entry
         validation_result = api.validate_entries([entry])
 
         if validation_result.is_success:
-            _ = evaluation
+            # ACL validation successful
+            pass
 
 
-def filter_entries_with_acls() -> None:
-    """Filter entries that have ACL attributes."""
-    api = FlextLdif.get_instance()
+def main() -> None:
+    """Run all ACL processing examples."""
+    extract_acls_from_entry()
+    parse_and_evaluate_acls()
+    process_entries_with_acls()
+    execute_acl_service()
+    acl_pipeline()
 
-    ldif_content = """dn: ou=WithACL,dc=example,dc=com
-objectClass: organizationalUnit
-ou: WithACL
-aci: (target="ldap:///ou=WithACL,dc=example,dc=com")(targetattr="*")(version 3.0; acl "Has ACL"; allow (read) userdn="ldap:///anyone";)
 
-dn: ou=NoACL,dc=example,dc=com
-objectClass: organizationalUnit
-ou: NoACL
-
-dn: cn=user,ou=WithACL,dc=example,dc=com
-objectClass: person
-cn: user
-sn: test
-"""
-
-    parse_result = api.parse(ldif_content)
-
-    if parse_result.is_failure:
-        return
-
-    entries = parse_result.unwrap()
-
-    # Find entries with ACL attributes
-    acl_service = api.acl_service
-    entries_with_acls = []
-
-    for entry in entries:
-        acl_result = acl_service.extract_acls_from_entry(entry)
-
-        if acl_result.is_success:
-            acls = acl_result.unwrap()
-            if acls:
-                entries_with_acls.append(entry)
-
-    _ = len(entries_with_acls)
+if __name__ == "__main__":
+    main()

@@ -102,26 +102,6 @@ sn: Test
 
         assert validation_result is not None
 
-    def test_analyze_entries_returns_stats(self) -> None:
-        """Test analyzing entries returns statistics."""
-        ldif = FlextLdif()
-
-        ldif_content = """dn: cn=test,dc=example,dc=com
-objectClass: person
-cn: test
-
-dn: cn=test2,dc=example,dc=com
-objectClass: person
-cn: test2
-"""
-
-        parse_result = ldif.parse(ldif_content)
-        entries = parse_result.unwrap()
-
-        analysis_result = ldif.analyze(entries)
-
-        assert analysis_result is not None
-
     def test_write_entries_to_file(self, tmp_path: Path) -> None:
         """Test writing entries to file."""
         ldif = FlextLdif()
@@ -154,7 +134,8 @@ sn: Test
         result = ldif.parse(ldif_file)
 
         if result.is_success:
-            entries = result.unwrap()
+            parse_response = result.unwrap()
+            entries = parse_response.entries
             assert len(entries) == 1
 
     def test_parse_handles_encoding(self, tmp_path: Path) -> None:
@@ -250,27 +231,7 @@ sn: Test
 
         result = ldif.parse(ldif_content)
 
-        assert result is not None
-
-    def test_analyze_returns_detailed_stats(self) -> None:
-        """Test that analyze returns detailed statistics."""
-        ldif = FlextLdif()
-
-        ldif_content = """dn: cn=user1,dc=example,dc=com
-objectClass: person
-cn: user1
-mail: user1@example.com
-
-dn: cn=group1,dc=example,dc=com
-objectClass: groupOfNames
-cn: group1
-member: cn=user1,dc=example,dc=com
-"""
-
-        parse_result = ldif.parse(ldif_content)
-        entries = parse_result.unwrap()
-
-        analysis = ldif.analyze(entries)
-
-        if analysis is not None:
-            assert isinstance(analysis, dict) or hasattr(analysis, "__iter__")
+        assert result.is_success
+        entries = result.unwrap()
+        assert len(entries) == 1
+        assert "cn" in entries[0].attributes.attributes

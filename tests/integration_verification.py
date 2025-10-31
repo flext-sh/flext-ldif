@@ -33,8 +33,6 @@ def verify_imports() -> bool:
 
         logger.info("✅ FlextLdifConfig imported successfully")
 
-        logger.info("✅ FlextLdifClient imported successfully")
-
         logger.info("✅ FlextLdif API imported successfully")
 
         return True

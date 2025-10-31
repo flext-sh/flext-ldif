@@ -31,23 +31,100 @@ PROTOCOL COMPLIANCE:
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from collections.abc import Mapping
 from typing import ClassVar
 
 from flext_core import FlextLogger, FlextResult
 
 from flext_ldif.models import FlextLdifModels
-from flext_ldif.typings import FlextLdifTypes
+from flext_ldif.protocols import FlextLdifProtocols
 
 logger = FlextLogger(__name__)
 
 
-class FlextLdifServersBase(ABC):
+class FlextLdifServersBase(ABC, FlextLdifProtocols.Quirks.QuirksPort):
     """Abstract base class for LDIF/LDAP server quirks.
 
-    Provides nested abstract base classes for Schema, Acl, and Entry quirks.
-    Each nested class defines contracts for server-specific implementations.
+    This class defines the complete contract for a server quirk implementation
+    by inheriting from `FlextLdifProtocols.Quirks.QuirksPort`. It uses the
+    `ABC` helper class to define all methods from the port as abstract,
+    ensuring that any concrete subclass must implement the full interface.
+
+    It also preserves the nested abstract base classes for `Schema`, `Acl`, and
+    `Entry` quirks. These nested classes define the internal implementation
+    contracts that concrete server classes use to structure their specialized logic.
     """
 
+    # =========================================================================
+    # QuirksPort Protocol Implementation (Abstract Methods)
+    # =========================================================================
+
+    @abstractmethod
+    def normalize_entry_to_rfc(
+        self, entry: FlextLdifModels.Entry
+    ) -> FlextResult[FlextLdifModels.Entry]:
+        """Convert a server-specific Entry model to the canonical RFC model."""
+        ...
+
+    @abstractmethod
+    def denormalize_entry_from_rfc(
+        self, entry: FlextLdifModels.Entry
+    ) -> FlextResult[FlextLdifModels.Entry]:
+        """Convert a canonical RFC Entry model to a server-specific model."""
+        ...
+
+    @abstractmethod
+    def normalize_attribute_to_rfc(
+        self, attribute: FlextLdifModels.SchemaAttribute
+    ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
+        """Convert a server-specific SchemaAttribute to the canonical RFC model."""
+        ...
+
+    @abstractmethod
+    def denormalize_attribute_from_rfc(
+        self, attribute: FlextLdifModels.SchemaAttribute
+    ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
+        """Convert a canonical RFC SchemaAttribute to a server-specific model."""
+        ...
+
+    @abstractmethod
+    def normalize_objectclass_to_rfc(
+        self, objectclass: FlextLdifModels.SchemaObjectClass
+    ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
+        """Convert a server-specific SchemaObjectClass to the canonical RFC model."""
+        ...
+
+    @abstractmethod
+    def denormalize_objectclass_from_rfc(
+        self, objectclass: FlextLdifModels.SchemaObjectClass
+    ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
+        """Convert a canonical RFC SchemaObjectClass to a server-specific model."""
+        ...
+
+    @abstractmethod
+    def normalize_acl_to_rfc(
+        self, acl: FlextLdifModels.Acl
+    ) -> FlextResult[FlextLdifModels.Acl]:
+        """Convert a server-specific Acl to the canonical RFC model."""
+        ...
+
+    @abstractmethod
+    def denormalize_acl_from_rfc(
+        self, acl: FlextLdifModels.Acl
+    ) -> FlextResult[FlextLdifModels.Acl]:
+        """Convert a canonical RFC Acl to a server-specific model."""
+        ...
+
+    @abstractmethod
+    def parse_ldif_content(
+        self, content: str
+    ) -> FlextResult[list[FlextLdifModels.Entry]]:
+        """Parse a raw LDIF string into a list of Entry models."""
+        ...
+
+    # =========================================================================
+    # Nested Abstract Base Classes for Internal Implementation
+    # =========================================================================
     class Schema(ABC):
         """Base class for schema quirks - satisfies FlextLdifProtocols.Quirks.SchemaProtocol.
 
@@ -80,6 +157,7 @@ class FlextLdifServersBase(ABC):
         server_type: ClassVar[str] = "generic"
         priority: ClassVar[int] = 100
 
+        @abstractmethod
         def __init__(
             self,
             server_type: str | None = None,
@@ -88,20 +166,24 @@ class FlextLdifServersBase(ABC):
             """Initialize schema quirk with optional server_type and priority."""
             # Note: server_type and priority are ClassVar attributes
             # They cannot be assigned per-instance
-            pass  # Explicit pass to satisfy linter
+            # Explicit pass to satisfy linter
 
         @abstractmethod
-        def can_handle_attribute(self, attr_definition: str) -> bool:
+        @abstractmethod
+        def can_handle_attribute(
+            self, attribute: FlextLdifModels.SchemaAttribute
+        ) -> bool:
             """Check if this quirk can handle the attribute definition.
 
             Args:
-            attr_definition: AttributeType definition string
+            attribute: AttributeType definition model
 
             Returns:
             True if this quirk can parse this attribute
 
             """
 
+        @abstractmethod
         @abstractmethod
         def parse_attribute(
             self,
@@ -118,17 +200,21 @@ class FlextLdifServersBase(ABC):
             """
 
         @abstractmethod
-        def can_handle_objectclass(self, oc_definition: str) -> bool:
+        @abstractmethod
+        def can_handle_objectclass(
+            self, objectclass: FlextLdifModels.SchemaObjectClass
+        ) -> bool:
             """Check if this quirk can handle the objectClass definition.
 
             Args:
-            oc_definition: ObjectClass definition string
+            objectclass: ObjectClass definition model
 
             Returns:
             True if this quirk can parse this objectClass
 
             """
 
+        @abstractmethod
         @abstractmethod
         def parse_objectclass(
             self,
@@ -258,35 +344,38 @@ class FlextLdifServersBase(ABC):
 
             """
 
-        def should_filter_out_attribute(self, _attr_definition: str) -> bool:
+        @abstractmethod
+        def should_filter_out_attribute(
+            self, attribute: FlextLdifModels.SchemaAttribute
+        ) -> bool:
             """Check if an attribute should be filtered out during export.
 
             Schema quirks typically don't filter attributes, so default False.
             Subclasses can override if they implement attribute filtering.
 
             Args:
-                _attr_definition: Attribute definition string
+                attribute: SchemaAttribute model to check
 
             Returns:
                 True if this attribute should be filtered out (removed from output)
 
             """
-            return False
 
-        def should_filter_out_objectclass(self, _oc_definition: str) -> bool:
+        @abstractmethod
+        def should_filter_out_objectclass(
+            self, objectclass: FlextLdifModels.SchemaObjectClass
+        ) -> bool:
             """Check if an objectClass should be filtered out during export.
 
-            Default implementation returns False (no filtering).
-            Subclasses can override to filter out server-specific objectClasses.
+            Schema quirks may filter objectClasses during export operations.
 
             Args:
-                _oc_definition: ObjectClass definition string
+                objectclass: SchemaObjectClass model to check
 
             Returns:
                 True if the objectClass should be filtered out
 
             """
-            return False
 
     class Acl(ABC):
         """Base class for ACL quirks - satisfies FlextLdifProtocols.Quirks.AclProtocol.
@@ -322,6 +411,7 @@ class FlextLdifServersBase(ABC):
         server_type: ClassVar[str] = "generic"
         priority: ClassVar[int] = 100
 
+        @abstractmethod
         def __init__(
             self,
             server_type: str | None = None,
@@ -329,18 +419,18 @@ class FlextLdifServersBase(ABC):
         ) -> None:
             """Initialize ACL quirk with optional server_type and priority."""
             # Note: server_type and priority are ClassVar attributes, not instance attributes
-            pass  # Explicit pass to satisfy linter
+            # Explicit pass to satisfy linter
             # They are overridden in subclasses via ClassVar declarations
 
         @abstractmethod
-        def can_handle_acl(self, acl_line: str) -> bool:
+        def can_handle_acl(self, acl: FlextLdifModels.Acl) -> bool:
             """Check if this quirk can handle the ACL definition.
 
             Args:
-            acl_line: ACL definition line
+                acl: Acl model
 
             Returns:
-            True if this quirk can parse this ACL
+                True if this quirk can handle this ACL
 
             """
 
@@ -386,6 +476,7 @@ class FlextLdifServersBase(ABC):
 
             """
 
+        @abstractmethod
         def get_acl_attribute_name(self) -> str:
             """Get the server-specific ACL attribute name.
 
@@ -401,7 +492,40 @@ class FlextLdifServersBase(ABC):
                 Server-specific ACL attribute name
 
             """
-            return self.acl_attribute_name
+
+        @abstractmethod
+        def can_handle_attribute(
+            self, attribute: FlextLdifModels.SchemaAttribute
+        ) -> bool:
+            """Check if this ACL quirk should be aware of a specific attribute definition.
+
+            ACL quirks may need to evaluate rules based on attribute schema properties
+            (e.g., sensitivity, usage). This method allows the quirk to indicate
+            if it has special handling for a given attribute model.
+
+            Args:
+                attribute: The SchemaAttribute model to check.
+
+            Returns:
+                True if this quirk has specific logic related to this attribute.
+
+            """
+
+        @abstractmethod
+        def can_handle_objectclass(
+            self, objectclass: FlextLdifModels.SchemaObjectClass
+        ) -> bool:
+            """Check if this ACL quirk should be aware of a specific objectClass definition.
+
+            ACL quirks may need to evaluate rules based on objectClass properties.
+
+            Args:
+                objectclass: The SchemaObjectClass model to check.
+
+            Returns:
+                True if this quirk has specific logic related to this objectClass.
+
+            """
 
         @abstractmethod
         def write_acl_to_rfc(self, acl_data: FlextLdifModels.Acl) -> FlextResult[str]:
@@ -446,6 +570,7 @@ class FlextLdifServersBase(ABC):
         server_type: ClassVar[str] = "generic"
         priority: ClassVar[int] = 100
 
+        @abstractmethod
         def __init__(
             self,
             server_type: str | None = None,
@@ -453,23 +578,21 @@ class FlextLdifServersBase(ABC):
         ) -> None:
             """Initialize entry quirk with optional server_type and priority."""
             # Note: server_type and priority are ClassVar attributes, not instance attributes
-            pass  # Explicit pass to satisfy linter
+            # Explicit pass to satisfy linter
             # They are overridden in subclasses via ClassVar declarations
 
         @abstractmethod
         def can_handle_entry(
             self,
-            entry_dn: str,
-            attributes: FlextLdifTypes.Models.EntryAttributesDict,
+            entry: FlextLdifModels.Entry,
         ) -> bool:
             """Check if this quirk can handle the entry.
 
             Args:
-            entry_dn: Entry distinguished name
-            attributes: Entry attributes dict
+                entry: Entry model to check
 
             Returns:
-            True if this quirk should process this entry
+                True if this quirk should process this entry
 
             """
 
@@ -503,7 +626,7 @@ class FlextLdifServersBase(ABC):
         def parse_entry(
             self,
             entry_dn: str,
-            entry_attrs: dict[str, object],
+            entry_attrs: Mapping[str, object],
         ) -> FlextResult[FlextLdifModels.Entry]:
             """Parse individual LDIF entry data into Entry model.
 
@@ -517,7 +640,8 @@ class FlextLdifServersBase(ABC):
 
             Args:
                 entry_dn: Raw DN string from LDIF parser
-                entry_attrs: Raw attributes dict from LDIF parser (may contain bytes values)
+                entry_attrs: Raw attributes mapping from LDIF parser (may contain bytes values).
+                           This is a Mapping (read-only) to accept dict, dict[str, list[bytes]], etc.
 
             Returns:
                 FlextResult with parsed Entry object (fully validated and processed)
@@ -527,62 +651,84 @@ class FlextLdifServersBase(ABC):
         @abstractmethod
         def process_entry(
             self,
-            entry_dn: str,
-            attributes: FlextLdifTypes.Models.EntryAttributesDict,
-        ) -> FlextResult[FlextLdifTypes.Models.EntryAttributesDict]:
+            entry: FlextLdifModels.Entry,
+        ) -> FlextResult[FlextLdifModels.Entry]:
             """Process entry with server-specific logic.
 
+            Applies server-specific transformations to an Entry model, such as:
+            - Attribute name normalization
+            - Boolean value conversion (0/1 to TRUE/FALSE)
+            - Telephone number validation
+            - Metadata preservation and updates
+
             Args:
-            entry_dn: Entry distinguished name
-            attributes: Entry attributes dict
+                entry: Entry model to process
 
             Returns:
-            FlextResult with processed entry attributes
+                FlextResult with processed Entry model
 
             """
 
         @abstractmethod
         def convert_entry_to_rfc(
             self,
-            entry_data: FlextLdifTypes.Models.EntryAttributesDict,
-        ) -> FlextResult[FlextLdifTypes.Models.EntryAttributesDict]:
+            entry_data: FlextLdifModels.Entry,
+        ) -> FlextResult[FlextLdifModels.Entry]:
             """Convert server-specific entry to RFC-compliant format.
 
             Args:
-                entry_data: Server-specific entry attributes dict
+                entry_data: Server-specific Entry model
 
             Returns:
-                FlextResult with RFC-compliant entry attributes
+                FlextResult with RFC-compliant Entry model
 
             """
 
         @abstractmethod
         def convert_entry_from_rfc(
             self,
-            entry_data: FlextLdifTypes.Models.EntryAttributesDict,
-        ) -> FlextResult[FlextLdifTypes.Models.EntryAttributesDict]:
+            entry_data: FlextLdifModels.Entry,
+        ) -> FlextResult[FlextLdifModels.Entry]:
             """Convert RFC-compliant entry to server-specific format.
 
             Args:
-                entry_data: RFC-compliant entry attributes dict
+                entry_data: RFC-compliant Entry model
 
             Returns:
-                FlextResult with server-specific entry attributes
+                FlextResult with server-specific Entry model
 
             """
 
         @abstractmethod
-        def write_entry_to_ldif(
-            self,
-            entry_data: FlextLdifTypes.Models.EntryAttributesDict,
-        ) -> FlextResult[str]:
-            """Write entry to LDIF text format.
+        def can_handle_attribute(
+            self, attribute: FlextLdifModels.SchemaAttribute
+        ) -> bool:
+            """Check if this Entry quirk has special handling for an attribute definition.
+
+            Entry processing logic might change based on an attribute's schema
+            (e.g., handling operational attributes differently).
 
             Args:
-                entry_data: Entry attributes dict
+                attribute: The SchemaAttribute model to check.
 
             Returns:
-                FlextResult with LDIF text for the entry
+                True if this quirk has specific processing logic for this attribute.
+
+            """
+
+        @abstractmethod
+        def can_handle_objectclass(
+            self, objectclass: FlextLdifModels.SchemaObjectClass
+        ) -> bool:
+            """Check if this Entry quirk has special handling for an objectClass definition.
+
+            Entry processing logic might change based on an entry's objectClasses.
+
+            Args:
+                objectclass: The SchemaObjectClass model to check.
+
+            Returns:
+                True if this quirk has specific processing logic for this objectClass.
 
             """
 
