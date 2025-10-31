@@ -683,10 +683,14 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                 processed_attributes[FlextLdifConstants.DictKeys.SERVER_TYPE] = [
                     FlextLdifConstants.LdapServers.NOVELL_EDIRECTORY
                 ]
-                processed_attributes[FlextLdifConstants.DictKeys.OBJECTCLASS] = object_classes
+                processed_attributes[FlextLdifConstants.DictKeys.OBJECTCLASS] = (
+                    object_classes
+                )
 
                 # Create new LdifAttributes directly
-                new_attrs = FlextLdifModels.LdifAttributes(attributes=processed_attributes)
+                new_attrs = FlextLdifModels.LdifAttributes(
+                    attributes=processed_attributes
+                )
                 new_entry = entry.model_copy(
                     update={"attributes": new_attrs},
                 )
@@ -708,7 +712,9 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                 normalized_attributes.pop(FlextLdifConstants.DictKeys.SERVER_TYPE, None)
 
                 # Create new LdifAttributes directly
-                new_attrs = FlextLdifModels.LdifAttributes(attributes=normalized_attributes)
+                new_attrs = FlextLdifModels.LdifAttributes(
+                    attributes=normalized_attributes
+                )
                 new_entry = entry_data.model_copy(
                     update={"attributes": new_attrs},
                 )

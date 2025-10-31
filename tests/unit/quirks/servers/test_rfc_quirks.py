@@ -58,7 +58,7 @@ class TestRfcQuirksWithRealFixtures:
         has_any_objectclass = False
         for entry in entries:
             if any(
-                attr_name.lower() == "objectclass" for attr_name in entry.attributes.keys()
+                attr_name.lower() == "objectclass" for attr_name in entry.attributes
             ):
                 has_any_objectclass = True
                 break

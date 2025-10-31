@@ -90,7 +90,10 @@ class FlextLdifServersAd(FlextLdifServersRfc):
             if "microsoft active directory" in attr_name_lower:
                 return True
 
-            if attr_name_lower in FlextLdifConstants.LdapServerDetection.AD_ATTRIBUTE_NAMES:
+            if (
+                attr_name_lower
+                in FlextLdifConstants.LdapServerDetection.AD_ATTRIBUTE_NAMES
+            ):
                 return True
 
             return any(
@@ -108,7 +111,10 @@ class FlextLdifServersAd(FlextLdifServersRfc):
                 return True
 
             oc_name_lower = objectclass.name.lower()
-            if oc_name_lower in FlextLdifConstants.LdapServerDetection.AD_OBJECTCLASS_NAMES:
+            if (
+                oc_name_lower
+                in FlextLdifConstants.LdapServerDetection.AD_OBJECTCLASS_NAMES
+            ):
                 return True
 
             return any(
@@ -500,10 +506,14 @@ class FlextLdifServersAd(FlextLdifServersRfc):
                     processed_attributes[attr_name] = processed_values
 
                 # Ensure objectClass is included (already in list format)
-                processed_attributes[FlextLdifConstants.DictKeys.OBJECTCLASS] = object_classes
+                processed_attributes[FlextLdifConstants.DictKeys.OBJECTCLASS] = (
+                    object_classes
+                )
 
                 # Create new LdifAttributes directly
-                new_attrs = FlextLdifModels.LdifAttributes(attributes=processed_attributes)
+                new_attrs = FlextLdifModels.LdifAttributes(
+                    attributes=processed_attributes
+                )
 
                 processed_entry = entry.model_copy(
                     update={"attributes": new_attrs},

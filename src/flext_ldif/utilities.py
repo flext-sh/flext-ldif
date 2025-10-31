@@ -2685,11 +2685,25 @@ class FlextLdifUtilities:
             try:
                 # Validate input content
                 if not acl_content or not acl_content.strip():
-                    return FlextResult.fail("ACL content cannot be empty or whitespace-only")
+                    return FlextResult.fail(
+                        "ACL content cannot be empty or whitespace-only"
+                    )
 
                 # Basic format validation - must contain some recognizable ACL structure
-                if not any(keyword in acl_content.lower() for keyword in ['access', 'allow', 'deny', 'aci:', 'orclaci:', 'orclentrylevelaci:']):
-                    return FlextResult.fail(f"Invalid ACL format: no recognizable ACL keywords found in '{acl_content[:50]}...'")
+                if not any(
+                    keyword in acl_content.lower()
+                    for keyword in [
+                        "access",
+                        "allow",
+                        "deny",
+                        "aci:",
+                        "orclaci:",
+                        "orclentrylevelaci:",
+                    ]
+                ):
+                    return FlextResult.fail(
+                        f"Invalid ACL format: no recognizable ACL keywords found in '{acl_content[:50]}...'"
+                    )
 
                 # Apply pre-parse hook
                 if pre_parse_hook:
@@ -2779,8 +2793,13 @@ class FlextLdifUtilities:
                                             param_value = subject_str
                                         # Type narrowing: transform_func is callable that returns tuple[str, str]
                                         transform_result = transform_func(param_value)
-                                        if isinstance(transform_result, tuple) and len(transform_result) == 2:
-                                            subject_type, subject_value = transform_result
+                                        if (
+                                            isinstance(transform_result, tuple)
+                                            and len(transform_result) == 2
+                                        ):
+                                            subject_type, subject_value = (
+                                                transform_result
+                                            )
                                         else:
                                             # Fallback if transform doesn't return expected tuple
                                             subject_type = "unknown"
@@ -2883,8 +2902,8 @@ class FlextLdifUtilities:
 
                 # Phase 6: Build final ACL model
                 # Convert server_type str to ServerType literal
-                server_type_literal: FlextLdifConstants.LiteralTypes.ServerType = (
-                    cast(FlextLdifConstants.LiteralTypes.ServerType, server_type)
+                server_type_literal: FlextLdifConstants.LiteralTypes.ServerType = cast(
+                    "FlextLdifConstants.LiteralTypes.ServerType", server_type
                 )
                 acl_model = FlextLdifModels.Acl(
                     name=f"{server_type.title()} ACL - {acl_type}",

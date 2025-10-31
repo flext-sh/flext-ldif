@@ -1077,7 +1077,9 @@ class FlextLdifConstants(FlextConstants):
         # Additional ACL-related attributes for filtering
         ACLRIGHTS: Final[str] = "aclrights"  # Generic ACL rights attribute
         ACLENTRY: Final[str] = "aclentry"  # Generic ACL entry attribute
-        ACCESS_CONTROL_LIST: Final[str] = "accessControlList"  # Active Directory ACL attribute
+        ACCESS_CONTROL_LIST: Final[str] = (
+            "accessControlList"  # Active Directory ACL attribute
+        )
 
         # Set of all known ACL attributes for quick membership testing
         ALL_ACL_ATTRIBUTES: Final[frozenset[str]] = frozenset([

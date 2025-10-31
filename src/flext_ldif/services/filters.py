@@ -426,9 +426,9 @@ class FlextLdifFilters:
             FlextLdifConstants.SchemaFields.OBJECT_CLASSES_LOWER.lower(),
             FlextLdifConstants.SchemaFields.OBJECT_CLASSES.lower(),
         }
-        if attrs_lower.intersection(schema_attr_types_lower) or attrs_lower.intersection(
-            schema_obj_classes_lower
-        ):
+        if attrs_lower.intersection(
+            schema_attr_types_lower
+        ) or attrs_lower.intersection(schema_obj_classes_lower):
             return ("schema", None)
 
         # Also check DN patterns for schema entries (legacy support for entries without attributetypes/objectclasses)
@@ -439,11 +439,8 @@ class FlextLdifFilters:
             FlextLdifConstants.DnPatterns.CN_SCHEMA.lower(),
             FlextLdifConstants.DnPatterns.CN_SUBSCHEMA.lower(),
         ]
-        if (
-            dn_lower in schema_dn_patterns
-            or dn_lower.startswith(
-                FlextLdifConstants.DnPatterns.CN_SUBSCHEMA_SUBENTRY.lower()
-            )
+        if dn_lower in schema_dn_patterns or dn_lower.startswith(
+            FlextLdifConstants.DnPatterns.CN_SUBSCHEMA_SUBENTRY.lower()
         ):
             return ("schema", None)
 

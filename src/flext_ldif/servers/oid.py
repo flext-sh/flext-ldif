@@ -516,16 +516,16 @@ class FlextLdifServersOid(FlextLdifServersRfc):
             # OID-specific mappings: normalize case variants to RFC-compliant forms
             fixed_equality, fixed_substr = (
                 FlextLdifUtilities.AttributeFixer.normalize_matching_rules(
-                attr_data.equality,
-                attr_data.substr,
-                substr_rules_in_equality={
-                    "caseIgnoreSubstringsMatch": "caseIgnoreMatch",
-                    "caseIgnoreSubStringsMatch": "caseIgnoreMatch",
-                },
-                normalized_substr_values={
-                    "caseIgnoreSubstringsMatch": "caseIgnoreSubstringsMatch",
-                    "caseIgnoreSubStringsMatch": "caseIgnoreSubstringsMatch",
-                },
+                    attr_data.equality,
+                    attr_data.substr,
+                    substr_rules_in_equality={
+                        "caseIgnoreSubstringsMatch": "caseIgnoreMatch",
+                        "caseIgnoreSubStringsMatch": "caseIgnoreMatch",
+                    },
+                    normalized_substr_values={
+                        "caseIgnoreSubstringsMatch": "caseIgnoreSubstringsMatch",
+                        "caseIgnoreSubStringsMatch": "caseIgnoreSubstringsMatch",
+                    },
                 )
             )
 
@@ -716,7 +716,7 @@ class FlextLdifServersOid(FlextLdifServersRfc):
             """
             return FlextLdifUtilities.Acl.parser(
                 acl_line,
-                    server_type="oracle_oid",
+                server_type="oracle_oid",
                 patterns=self._get_oid_patterns(),
                 permissions_map=self._get_oid_permissions(),
                 subject_transforms=self._get_oid_subject_transforms(),
@@ -755,13 +755,18 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                 "compare": ["compare"],
             }
 
-        def _get_oid_subject_transforms(self) -> dict[str, Callable[[str], tuple[str, str]]]:
+        def _get_oid_subject_transforms(
+            self,
+        ) -> dict[str, Callable[[str], tuple[str, str]]]:
             """Get OID-specific subject transformation functions."""
             return {
                 "dnattr": lambda attr: ("bind_rules", f'userattr="{attr}#LDAPURL"'),
                 "guidattr": lambda attr: ("bind_rules", f'userattr="{attr}#USERDN"'),
                 "groupattr": lambda attr: ("bind_rules", f'userattr="{attr}#GROUPDN"'),
-                'group="': lambda full_str: ("group_dn", full_str.split('="')[1].rstrip('"')),
+                'group="': lambda full_str: (
+                    "group_dn",
+                    full_str.split('="')[1].rstrip('"'),
+                ),
                 "self": lambda _: ("self", "self"),
                 "*": lambda _: ("anonymous", "*"),
             }

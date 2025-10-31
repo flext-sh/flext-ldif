@@ -1480,12 +1480,10 @@ class FlextLdif(FlextService[dict[str, object]]):
                     attrs = entry.attributes.attributes
                     # Use constants for ACL attribute detection
                     acl_attrs_lower = {
-                        attr.lower() for attr in FlextLdifConstants.AclAttributes.ALL_ACL_ATTRIBUTES
+                        attr.lower()
+                        for attr in FlextLdifConstants.AclAttributes.ALL_ACL_ATTRIBUTES
                     }
-                    has_acl = any(
-                        key.lower() in acl_attrs_lower
-                        for key in attrs.keys()
-                    )
+                    has_acl = any(key.lower() in acl_attrs_lower for key in attrs)
 
                     if not has_acl:
                         # No ACL attributes, pass through unchanged

@@ -58,7 +58,7 @@ class TestOidQuirksWithRealFixtures:
         has_any_objectclass = False
         for entry in entries:
             if any(
-                attr_name.lower() == "objectclass" for attr_name in entry.attributes.keys()
+                attr_name.lower() == "objectclass" for attr_name in entry.attributes
             ):
                 has_any_objectclass = True
                 break
@@ -104,7 +104,7 @@ class TestOidQuirksWithRealFixtures:
         # Find Oracle-specific entries (orclguid, etc.)
         has_oracle_attrs = False
         for entry in entries:
-            for attr_name in entry.attributes.keys():
+            for attr_name in entry.attributes:
                 if attr_name.lower().startswith("orcl"):
                     has_oracle_attrs = True
                     break
@@ -122,7 +122,7 @@ class TestOidQuirksWithRealFixtures:
         # Find entries with userPassword
         password_entries = []
         for entry in entries:
-            for attr_name in entry.attributes.keys():
+            for attr_name in entry.attributes:
                 if attr_name.lower() == "userpassword":
                     password_entries.append(entry)
                     break

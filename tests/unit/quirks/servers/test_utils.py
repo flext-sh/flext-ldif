@@ -66,8 +66,8 @@ class FlextLdifTestUtils:
                 )
 
             # Compare attribute names (case-insensitive per LDAP spec)
-            orig_attr_names = {name.lower() for name in orig_entry.attributes.keys()}
-            rt_attr_names = {name.lower() for name in rt_entry.attributes.keys()}
+            orig_attr_names = {name.lower() for name in orig_entry.attributes}
+            rt_attr_names = {name.lower() for name in rt_entry.attributes}
 
             if orig_attr_names != rt_attr_names:
                 missing = orig_attr_names - rt_attr_names
