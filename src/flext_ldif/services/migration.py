@@ -425,7 +425,8 @@ class FlextLdifMigrationPipeline(
             for category in list(categorized.keys()):
                 if category != FlextLdifConstants.Categories.ACL:
                     categorized[category] = [
-                        entry for entry in categorized[category]
+                        entry
+                        for entry in categorized[category]
                         if entry.dn.value not in acl_dns
                     ]
 
@@ -442,17 +443,17 @@ class FlextLdifMigrationPipeline(
         final_categorized = {}
         for category, cat_entries in transformed.items():
             # Apply schema whitelist filtering for schema entries
-            if category == FlextLdifConstants.Categories.SCHEMA and self._schema_whitelist_rules:
+            if (
+                category == FlextLdifConstants.Categories.SCHEMA
+                and self._schema_whitelist_rules
+            ):
                 cat_entries = self._filter_schema_by_oids(cat_entries)
 
             # Filter
             filtered = self._filter_entries_batch(cat_entries)
 
             # DN normalization if base_dn specified
-            if self._base_dn:
-                normalized = self._normalize_dns(filtered)
-            else:
-                normalized = filtered
+            normalized = self._normalize_dns(filtered) if self._base_dn else filtered
 
             # Sort entries hierarchically if requested
             if self._sort_entries_hierarchically:
@@ -616,7 +617,10 @@ class FlextLdifMigrationPipeline(
         writer = FlextLdifWriterService()
 
         # Write files for all categories in the mapping (even if not in transformed_categories)
-        for category, output_filename in self._migration_config.output_file_mapping.items():
+        for (
+            category,
+            output_filename,
+        ) in self._migration_config.output_file_mapping.items():
             cat_entries = transformed_categories.get(category, [])
             output_path = self._output_dir / output_filename
 
@@ -637,7 +641,9 @@ class FlextLdifMigrationPipeline(
                     file_paths[category] = str(output_path)
                     category_entry_counts[category] = len(cat_entries)
                 else:
-                    self.logger.warning(f"Failed to write {category} file: {write_result.error}")
+                    self.logger.warning(
+                        f"Failed to write {category} file: {write_result.error}"
+                    )
             else:
                 # Create empty file with just version line
                 output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -862,7 +868,8 @@ class FlextLdifMigrationPipeline(
         return result_entries
 
     def _filter_schema_by_oids(
-        self, entries: list[FlextLdifModels.Entry],
+        self,
+        entries: list[FlextLdifModels.Entry],
     ) -> list[FlextLdifModels.Entry]:
         """Filter schema entries by allowed OID patterns.
 
@@ -879,8 +886,12 @@ class FlextLdifMigrationPipeline(
         if not self._schema_whitelist_rules:
             return entries
 
-        allowed_attr_oids_raw = self._schema_whitelist_rules.get("allowed_attribute_oids", [])
-        allowed_oc_oids_raw = self._schema_whitelist_rules.get("allowed_objectclass_oids", [])
+        allowed_attr_oids_raw = self._schema_whitelist_rules.get(
+            "allowed_attribute_oids", []
+        )
+        allowed_oc_oids_raw = self._schema_whitelist_rules.get(
+            "allowed_objectclass_oids", []
+        )
 
         # Validate and convert to list[str]
         allowed_attr_oids = (
@@ -889,9 +900,7 @@ class FlextLdifMigrationPipeline(
             else []
         )
         allowed_oc_oids = (
-            list(allowed_oc_oids_raw)
-            if isinstance(allowed_oc_oids_raw, list)
-            else []
+            list(allowed_oc_oids_raw) if isinstance(allowed_oc_oids_raw, list) else []
         )
 
         if not allowed_attr_oids and not allowed_oc_oids:
@@ -932,7 +941,9 @@ class FlextLdifMigrationPipeline(
                         )
                         if oid_match:
                             oid = oid_match.group(1)
-                            if FlextLdifFilters.matches_oid_pattern(oid, allowed_attr_oids):
+                            if FlextLdifFilters.matches_oid_pattern(
+                                oid, allowed_attr_oids
+                            ):
                                 filtered_attr_values.append(attr_def)
                         else:
                             logger.debug(
@@ -951,32 +962,30 @@ class FlextLdifMigrationPipeline(
                     # Single value or multiline string - need to split by lines
                     attr_str = str(attr_values)
                     # Check if it's a multiline string with multiple attributetypes
-                    if '\n' in attr_str or '\r' in attr_str:
+                    if "\n" in attr_str or "\r" in attr_str:
                         # Split by lines and process each
                         lines = attr_str.splitlines()
                         filtered_attr_values = []
                         for line in lines:
                             line = line.strip()
-                            if (
-                                line.startswith(
-                                    f"{FlextLdifConstants.SchemaFields.ATTRIBUTE_TYPES_LOWER}:"
-                                )
-                                or line.startswith(
-                                    f"{FlextLdifConstants.SchemaFields.ATTRIBUTE_TYPES}:"
-                                )
-                            ):
+                            if line.startswith((
+                                f"{FlextLdifConstants.SchemaFields.ATTRIBUTE_TYPES_LOWER}:",
+                                f"{FlextLdifConstants.SchemaFields.ATTRIBUTE_TYPES}:",
+                            )):
                                 # Extract the definition after the colon
-                                if ':' in line:
-                                    definition = line.split(':', 1)[1].strip()
+                                if ":" in line:
+                                    definition = line.split(":", 1)[1].strip()
                                     oid_match = re.search(
                                         FlextLdifConstants.LdifPatterns.SCHEMA_OID_EXTRACTION_START,
                                         definition,
                                     )
                                     if oid_match:
                                         oid = oid_match.group(1)
-                                        if FlextLdifFilters.matches_oid_pattern(oid, allowed_attr_oids):
+                                        if FlextLdifFilters.matches_oid_pattern(
+                                            oid, allowed_attr_oids
+                                        ):
                                             filtered_attr_values.append(definition)
-                            elif line.startswith('('):
+                            elif line.startswith("("):
                                 # Direct definition line
                                 oid_match = re.search(
                                     FlextLdifConstants.LdifPatterns.SCHEMA_OID_EXTRACTION_START,
@@ -984,7 +993,9 @@ class FlextLdifMigrationPipeline(
                                 )
                                 if oid_match:
                                     oid = oid_match.group(1)
-                                    if FlextLdifFilters.matches_oid_pattern(oid, allowed_attr_oids):
+                                    if FlextLdifFilters.matches_oid_pattern(
+                                        oid, allowed_attr_oids
+                                    ):
                                         filtered_attr_values.append(line)
                         if filtered_attr_values:
                             filtered_attrs[attr_key] = filtered_attr_values
@@ -996,7 +1007,9 @@ class FlextLdifMigrationPipeline(
                         )
                         if oid_match:
                             oid = oid_match.group(1)
-                            if FlextLdifFilters.matches_oid_pattern(oid, allowed_attr_oids):
+                            if FlextLdifFilters.matches_oid_pattern(
+                                oid, allowed_attr_oids
+                            ):
                                 filtered_attrs[attr_key] = attr_values
 
             # Filter objectclasses if present - use constants for field names
@@ -1021,7 +1034,9 @@ class FlextLdifMigrationPipeline(
                         )
                         if oid_match:
                             oid = oid_match.group(1)
-                            if FlextLdifFilters.matches_oid_pattern(oid, allowed_oc_oids):
+                            if FlextLdifFilters.matches_oid_pattern(
+                                oid, allowed_oc_oids
+                            ):
                                 filtered_oc_values.append(oc_def)
                     filtered_attrs[oc_key] = filtered_oc_values
                 else:
@@ -1132,14 +1147,11 @@ class FlextLdifMigrationPipeline(
         # Fallback to ALL_ACL_ATTRIBUTES if FILTER_ACL_ATTRIBUTES is empty
         filter_acl_attrs = (
             FlextLdifConstants.AclAttributes.FILTER_ACL_ATTRIBUTES
-            if FlextLdifConstants.AclAttributes.FILTER_ACL_ATTRIBUTES
-            else FlextLdifConstants.AclAttributes.ALL_ACL_ATTRIBUTES
+            or FlextLdifConstants.AclAttributes.ALL_ACL_ATTRIBUTES
         )
 
         # Case-insensitive attribute check
-        attr_names_lower = {
-            name.lower() for name in entry.attributes.attributes.keys()
-        }
+        attr_names_lower = {name.lower() for name in entry.attributes.attributes}
         acl_attrs_lower = {attr.lower() for attr in filter_acl_attrs}
         return any(acl_attr in attr_names_lower for acl_attr in acl_attrs_lower)
 

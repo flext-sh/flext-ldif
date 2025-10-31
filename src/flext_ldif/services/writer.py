@@ -189,7 +189,8 @@ class FlextLdifWriterService(FlextService[Any]):
             for attr_name, attr_values in entry.attributes.attributes.items():
                 # Check if attribute is an ACL attribute using constants
                 acl_attrs_lower = {
-                    attr.lower() for attr in FlextLdifConstants.AclAttributes.ALL_ACL_ATTRIBUTES
+                    attr.lower()
+                    for attr in FlextLdifConstants.AclAttributes.ALL_ACL_ATTRIBUTES
                 }
                 if attr_name.lower() in acl_attrs_lower:  # ACL attribute (OUD/OID/etc.)
                     # Check if this attribute has conversion metadata
@@ -200,9 +201,11 @@ class FlextLdifWriterService(FlextService[Any]):
                     ):
                         comments = entry.metadata.extensions["aci_conversion_comments"]
                         if isinstance(comments, list):
-                            for comment in comments:
-                                if isinstance(comment, str):
-                                    ldif_lines.append(comment)
+                            ldif_lines.extend(
+                                comment
+                                for comment in comments
+                                if isinstance(comment, str)
+                            )
                         elif isinstance(comments, str):
                             ldif_lines.append(comments)
                         ldif_lines.append("")  # Empty line after comments
@@ -223,12 +226,14 @@ class FlextLdifWriterService(FlextService[Any]):
             dn_value = entry.dn.value
 
             # Split DN into components
-            components = dn_value.split(',')
+            components = dn_value.split(",")
 
             # Build lines respecting width limit
             current_line = prefix
             for i, component in enumerate(components):
-                component_with_comma = component + (',' if i < len(components) - 1 else '')
+                component_with_comma = component + (
+                    "," if i < len(components) - 1 else ""
+                )
 
                 # Check if adding this component would exceed limit
                 test_line = current_line + component_with_comma
@@ -275,7 +280,11 @@ class FlextLdifWriterService(FlextService[Any]):
 
         # Apply quirk-specific attribute name mappings (e.g., orclaci → aci for OUD)
         # Get the quirk that was used for denormalization
-        quirks = self._quirk_registry.get_quirks(entry.metadata.server_type if entry.metadata and entry.metadata.server_type else "rfc")
+        quirks = self._quirk_registry.get_quirks(
+            entry.metadata.server_type
+            if entry.metadata and entry.metadata.server_type
+            else "rfc"
+        )
         if quirks:
             quirk = quirks[0]
             # Check if quirk has Entry class with ATTRIBUTE_CASE_MAP

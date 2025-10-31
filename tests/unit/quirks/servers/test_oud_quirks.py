@@ -60,7 +60,7 @@ class TestOudQuirksWithRealFixtures:
         for entry in entries:
             # Check that objectClass is present
             if any(
-                attr_name.lower() == "objectclass" for attr_name in entry.attributes.keys()
+                attr_name.lower() == "objectclass" for attr_name in entry.attributes
             ):
                 has_any_objectclass = True
                 break
@@ -137,7 +137,7 @@ class TestOudQuirksWithRealFixtures:
         # Find entries with userPassword
         password_entries = []
         for entry in entries:
-            for attr_name in entry.attributes.keys():
+            for attr_name in entry.attributes:
                 if attr_name.lower() == "userpassword":
                     password_entries.append(entry)
                     break

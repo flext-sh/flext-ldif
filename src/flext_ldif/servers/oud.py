@@ -652,20 +652,23 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 for perm in permissions:
                     perm_lower = perm.lower()
                     # Use constants for permission names
-                    if perm_lower == FlextLdifConstants.PermissionNames.SELF_WRITE.lower():
+                    if (
+                        perm_lower
+                        == FlextLdifConstants.PermissionNames.SELF_WRITE.lower()
+                    ):
                         # OUD doesn't support self_write - promote to write
                         allowed.append(FlextLdifConstants.PermissionNames.WRITE)
                     elif perm_lower == FlextLdifConstants.PermissionNames.PROXY.lower():
                         # OUD doesn't support proxy - will be noted in comments
                         denied.append(FlextLdifConstants.PermissionNames.PROXY)
-                    elif perm_lower == FlextLdifConstants.PermissionNames.BROWSE.lower():
+                    elif (
+                        perm_lower == FlextLdifConstants.PermissionNames.BROWSE.lower()
+                    ):
                         # OID browse maps to read+search in OUD
-                        allowed.extend(
-                            [
-                                FlextLdifConstants.PermissionNames.READ,
-                                FlextLdifConstants.PermissionNames.SEARCH,
-                            ]
-                        )
+                        allowed.extend([
+                            FlextLdifConstants.PermissionNames.READ,
+                            FlextLdifConstants.PermissionNames.SEARCH,
+                        ])
                     elif perm_lower == "auth":
                         # OID auth maps to compare in OUD
                         allowed.append(FlextLdifConstants.PermissionNames.COMPARE)
@@ -919,11 +922,17 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                         permissions_data["write"] = True
                     elif perm_lower == FlextLdifConstants.PermissionNames.ADD.lower():
                         permissions_data["add"] = True
-                    elif perm_lower == FlextLdifConstants.PermissionNames.DELETE.lower():
+                    elif (
+                        perm_lower == FlextLdifConstants.PermissionNames.DELETE.lower()
+                    ):
                         permissions_data["delete"] = True
-                    elif perm_lower == FlextLdifConstants.PermissionNames.SEARCH.lower():
+                    elif (
+                        perm_lower == FlextLdifConstants.PermissionNames.SEARCH.lower()
+                    ):
                         permissions_data["search"] = True
-                    elif perm_lower == FlextLdifConstants.PermissionNames.COMPARE.lower():
+                    elif (
+                        perm_lower == FlextLdifConstants.PermissionNames.COMPARE.lower()
+                    ):
                         permissions_data["compare"] = True
                     elif perm_lower in {
                         FlextLdifConstants.PermissionNames.SELFWRITE.lower(),
@@ -1034,8 +1043,8 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 # Detect if this is from OID and delegate to advanced conversion system
                 metadata = acl_data.metadata
                 is_from_oid = metadata and (
-                    metadata.quirk_type == FlextLdifConstants.LdapServerType.ORACLE_OID.value
-                    or metadata.server_type == FlextLdifConstants.LdapServerType.ORACLE_OID.value
+                    FlextLdifConstants.LdapServerType.ORACLE_OID.value
+                    in {metadata.quirk_type, metadata.server_type}
                     or (
                         hasattr(metadata, "extensions")
                         and metadata.extensions
@@ -1249,17 +1258,20 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 oud_metadata = acl_data.metadata
                 if oud_metadata:
                     # Update server type in metadata
-                    oud_metadata = oud_metadata.model_copy(update={
-                        "server_type": "oracle_oud",
-                        "quirk_type": "oracle_oud"
-                    })
+                    oud_metadata = oud_metadata.model_copy(
+                        update={"server_type": "oracle_oud", "quirk_type": "oracle_oud"}
+                    )
 
                 # Create the OUD ACL with updated server type and permissions
-                oud_acl = acl_data.model_copy(update={
-                    "server_type": "oracle_oud",
-                    "permissions": FlextLdifModels.AclPermissions(**oud_permissions),
-                    "metadata": oud_metadata
-                })
+                oud_acl = acl_data.model_copy(
+                    update={
+                        "server_type": "oracle_oud",
+                        "permissions": FlextLdifModels.AclPermissions(
+                            **oud_permissions
+                        ),
+                        "metadata": oud_metadata,
+                    }
+                )
 
                 return FlextResult[FlextLdifModels.Acl].ok(oud_acl)
 
@@ -1589,9 +1601,8 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             ):
                 return True
 
-            if (
-                FlextLdifConstants.DnPatterns.CN_CONFIG.lower() in dn_value_lower
-                and ("cn=directory" in dn_value_lower or "cn=ds" in dn_value_lower)
+            if FlextLdifConstants.DnPatterns.CN_CONFIG.lower() in dn_value_lower and (
+                "cn=directory" in dn_value_lower or "cn=ds" in dn_value_lower
             ):
                 return True
 
@@ -1808,18 +1819,21 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 if attr_name.lower() in self.BOOLEAN_ATTRIBUTES:
                     # Transform boolean values
                     transformed_values = []
-                    for value in attr_values if isinstance(attr_values, list) else [attr_values]:
+                    for value in (
+                        attr_values if isinstance(attr_values, list) else [attr_values]
+                    ):
                         str_value = str(value).lower()
-                        if str_value in ('0', 'false', 'f', 'no', 'n'):
-                            transformed_values.append('FALSE')
-                        elif str_value in ('1', 'true', 't', 'yes', 'y'):
-                            transformed_values.append('TRUE')
+                        if str_value in {"0", "false", "f", "no", "n"}:
+                            transformed_values.append("FALSE")
+                        elif str_value in {"1", "true", "t", "yes", "y"}:
+                            transformed_values.append("TRUE")
                         else:
                             # Keep original value if not clearly boolean
                             transformed_values.append(str(value))
 
                     transformed_attributes[attr_name] = (
-                        transformed_values if isinstance(attr_values, list)
+                        transformed_values
+                        if isinstance(attr_values, list)
                         else transformed_values[0]
                     )
                 else:
@@ -1828,7 +1842,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             # Create new LdifAttributes with transformed attributes
             new_attributes = FlextLdifModels.LdifAttributes(
                 attributes=transformed_attributes,
-                attribute_metadata=entry_data.attributes.attribute_metadata
+                attribute_metadata=entry_data.attributes.attribute_metadata,
             )
 
             # Create new entry with transformed attributes

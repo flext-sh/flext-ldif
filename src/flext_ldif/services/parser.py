@@ -486,7 +486,7 @@ class FlextLdifParserService(FlextService[Any]):
             # Only warn in strict mode, not in normal validation
             has_objectclass = any(
                 attr_name.lower() == FlextLdifConstants.DictKeys.OBJECTCLASS.lower()
-                for attr_name in entry.attributes.attributes.keys()
+                for attr_name in entry.attributes.attributes
             )
             if not has_objectclass and strict:
                 validation_errors.append("Entry must have objectClass attribute")

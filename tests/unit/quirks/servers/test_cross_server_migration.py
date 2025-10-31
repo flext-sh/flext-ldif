@@ -37,7 +37,9 @@ class TestCrossServerMigration:
 
         # Write as OUD (this should convert via RFC)
         output_path = tmp_path / "oid_to_oud.ldif"
-        write_result = ldif_api.write(oid_entries, output_path=output_path, server_type="oud")
+        write_result = ldif_api.write(
+            oid_entries, output_path=output_path, server_type="oud"
+        )
         assert write_result.is_success, f"OID→OUD write failed: {write_result.error}"
 
         # Parse back as OUD
@@ -59,7 +61,9 @@ class TestCrossServerMigration:
 
         # Write as OID
         output_path = tmp_path / "oud_to_oid.ldif"
-        write_result = ldif_api.write(oud_entries, output_path=output_path, server_type="oid")
+        write_result = ldif_api.write(
+            oud_entries, output_path=output_path, server_type="oid"
+        )
         assert write_result.is_success, f"OUD→OID write failed: {write_result.error}"
 
         # Parse back as OID
@@ -77,7 +81,9 @@ class TestCrossServerMigration:
         assert len(rfc_entries) > 0
 
         output_path = tmp_path / "rfc_to_oid.ldif"
-        write_result = ldif_api.write(rfc_entries, output_path=output_path, server_type="oid")
+        write_result = ldif_api.write(
+            rfc_entries, output_path=output_path, server_type="oid"
+        )
         assert write_result.is_success, f"RFC→OID write failed: {write_result.error}"
 
     def test_rfc_to_oud_migration(self, ldif_api: FlextLdif, tmp_path: Path) -> None:
@@ -88,7 +94,9 @@ class TestCrossServerMigration:
         assert len(rfc_entries) > 0
 
         output_path = tmp_path / "rfc_to_oud.ldif"
-        write_result = ldif_api.write(rfc_entries, output_path=output_path, server_type="oud")
+        write_result = ldif_api.write(
+            rfc_entries, output_path=output_path, server_type="oud"
+        )
         assert write_result.is_success, f"RFC→OUD write failed: {write_result.error}"
 
     def test_oid_schema_to_oud(self, ldif_api: FlextLdif, tmp_path: Path) -> None:
@@ -99,10 +107,16 @@ class TestCrossServerMigration:
         assert len(oid_schema) > 0
 
         output_path = tmp_path / "oid_schema_to_oud.ldif"
-        write_result = ldif_api.write(oid_schema, output_path=output_path, server_type="oud")
-        assert write_result.is_success, f"OID schema→OUD write failed: {write_result.error}"
+        write_result = ldif_api.write(
+            oid_schema, output_path=output_path, server_type="oud"
+        )
+        assert write_result.is_success, (
+            f"OID schema→OUD write failed: {write_result.error}"
+        )
 
-    def test_migration_preserves_dn_structure(self, ldif_api: FlextLdif, tmp_path: Path) -> None:
+    def test_migration_preserves_dn_structure(
+        self, ldif_api: FlextLdif, tmp_path: Path
+    ) -> None:
         """Test that DN structure is preserved across migrations."""
         # Load OID entries
         oid_entries = FlextLdifTestUtils.load_fixture(
@@ -111,7 +125,9 @@ class TestCrossServerMigration:
 
         # Migrate OID → OUD
         output_path = tmp_path / "dn_preservation_test.ldif"
-        write_result = ldif_api.write(oid_entries, output_path=output_path, server_type="oud")
+        write_result = ldif_api.write(
+            oid_entries, output_path=output_path, server_type="oud"
+        )
         assert write_result.is_success
 
         # Parse back
@@ -125,9 +141,13 @@ class TestCrossServerMigration:
         oud_dns = {e.dn.value for e in oud_entries}
 
         # DN count should match
-        assert len(oud_dns) == len(oid_dns), f"DN count mismatch: {len(oid_dns)} → {len(oud_dns)}"
+        assert len(oud_dns) == len(oid_dns), (
+            f"DN count mismatch: {len(oid_dns)} → {len(oud_dns)}"
+        )
 
-    def test_migration_preserves_attribute_names(self, ldif_api: FlextLdif, tmp_path: Path) -> None:
+    def test_migration_preserves_attribute_names(
+        self, ldif_api: FlextLdif, tmp_path: Path
+    ) -> None:
         """Test that attribute names are properly transformed during migration."""
         # Load a small OID fixture
         oid_entries = FlextLdifTestUtils.load_fixture(
@@ -141,7 +161,9 @@ class TestCrossServerMigration:
 
         # Migrate to OUD
         output_path = tmp_path / "attr_preservation_test.ldif"
-        write_result = ldif_api.write(oid_entries[:5], output_path=output_path, server_type="oud")
+        write_result = ldif_api.write(
+            oid_entries[:5], output_path=output_path, server_type="oud"
+        )
         assert write_result.is_success
 
         # Parse as OUD

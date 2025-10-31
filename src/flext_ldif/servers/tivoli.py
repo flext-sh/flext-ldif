@@ -27,9 +27,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
         self.acl = self.Acl()
         self.entry = self.Entry()
 
-    def can_handle_attribute(
-        self, attribute: FlextLdifModels.SchemaAttribute
-    ) -> bool:
+    def can_handle_attribute(self, attribute: FlextLdifModels.SchemaAttribute) -> bool:
         """Delegate to schema instance."""
         return self._schema.can_handle_attribute(attribute)
 
@@ -650,10 +648,14 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                     str("cn=ibm" in dn_lower or "cn=configuration" in dn_lower)
                 ]
                 # Update objectClass (already in list format)
-                processed_attributes[FlextLdifConstants.DictKeys.OBJECTCLASS] = object_classes
+                processed_attributes[FlextLdifConstants.DictKeys.OBJECTCLASS] = (
+                    object_classes
+                )
 
                 # Create new LdifAttributes directly
-                new_attrs = FlextLdifModels.LdifAttributes(attributes=processed_attributes)
+                new_attrs = FlextLdifModels.LdifAttributes(
+                    attributes=processed_attributes
+                )
 
                 processed_entry = entry.model_copy(
                     update={"attributes": new_attrs},
