@@ -60,7 +60,7 @@ class TestOudQuirksWithRealFixtures:
         for entry in entries:
             # Check that objectClass is present
             if any(
-                attr_name.lower() == "objectclass" for attr_name in entry.attributes
+                attr_name.lower() == "objectclass" for attr_name in entry.attributes.attributes
             ):
                 has_any_objectclass = True
                 break

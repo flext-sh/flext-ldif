@@ -9,9 +9,8 @@ from __future__ import annotations
 
 import pytest
 
-from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
-from flext_ldif.services.entrys import FlextLdifEntrys
+from flext_ldif.services.entrys import FlextLdifEntryService
 
 
 class TestOperationalAttributesStripping:
@@ -47,7 +46,7 @@ class TestOperationalAttributesStripping:
 
     def test_strip_common_operational_attrs(self) -> None:
         """Common operational attributes should be stripped for oracle_oud."""
-        entrys = FlextLdifEntrys()
+        entrys = FlextLdifEntryService()
 
         # Create entry with operational attributes
         entry = self._create_entry(
@@ -61,8 +60,8 @@ class TestOperationalAttributesStripping:
             },
         )
 
-        # Adapt for oracle_oud - operational attrs should be stripped based on target server
-        result = entrys.adapt_entry(entry, FlextLdifConstants.ServerTypes.OUD)
+        # Remove operational attributes - COMMON operational attrs are stripped
+        result = entrys.remove_operational_attributes(entry)
 
         assert result.is_success
         adapted = result.unwrap()
@@ -78,7 +77,7 @@ class TestOperationalAttributesStripping:
 
     def test_strip_oid_specific_operational_attrs(self) -> None:
         """OID-specific operational attributes are preserved when source is unknown."""
-        entrys = FlextLdifEntrys()
+        entrys = FlextLdifEntryService()
 
         entry = self._create_entry(
             "cn=test,dc=client-a",
@@ -91,7 +90,7 @@ class TestOperationalAttributesStripping:
             },
         )
 
-        result = entrys.adapt_entry(entry, "oracle_oud")
+        result = entrys.remove_operational_attributes(entry)
 
         assert result.is_success
         adapted = result.unwrap()
@@ -109,7 +108,7 @@ class TestOperationalAttributesStripping:
 
     def test_preserve_user_attributes(self) -> None:
         """User attributes should never be stripped."""
-        entrys = FlextLdifEntrys()
+        entrys = FlextLdifEntryService()
 
         # Entry with only user attributes (no operational)
         entry = self._create_entry(
@@ -124,7 +123,7 @@ class TestOperationalAttributesStripping:
             },
         )
 
-        result = entrys.adapt_entry(entry, "oracle_oud")
+        result = entrys.remove_operational_attributes(entry)
 
         assert result.is_success
         adapted = result.unwrap()
@@ -139,7 +138,7 @@ class TestOperationalAttributesStripping:
 
     def test_case_insensitive_stripping(self) -> None:
         """Operational attributes should be stripped case-insensitively."""
-        entrys = FlextLdifEntrys()
+        entrys = FlextLdifEntryService()
 
         entry = self._create_entry(
             "cn=test,dc=client-a",
@@ -151,7 +150,7 @@ class TestOperationalAttributesStripping:
             },
         )
 
-        result = entrys.adapt_entry(entry, "oracle_oud")
+        result = entrys.remove_operational_attributes(entry)
 
         assert result.is_success
         adapted = result.unwrap()
@@ -165,7 +164,7 @@ class TestOperationalAttributesStripping:
 
     def test_integration_with_real_ldif(self) -> None:
         """Test with realistic LDIF entry from OID export (source unknown)."""
-        entrys = FlextLdifEntrys()
+        entrys = FlextLdifEntryService()
 
         # Realistic OID entry - but source is unknown when calling adapt_entry
         entry = self._create_entry(
@@ -191,7 +190,7 @@ class TestOperationalAttributesStripping:
             },
         )
 
-        result = entrys.adapt_entry(entry, "oracle_oud")
+        result = entrys.remove_operational_attributes(entry)
 
         assert result.is_success
         adapted = result.unwrap()
@@ -215,7 +214,7 @@ class TestOperationalAttributesStripping:
 
     def test_strip_oud_specific_operational_attrs(self) -> None:
         """OUD-specific operational attributes are preserved when source is unknown."""
-        entrys = FlextLdifEntrys()
+        entrys = FlextLdifEntryService()
 
         entry = self._create_entry(
             "cn=test,dc=client-a",
@@ -229,7 +228,7 @@ class TestOperationalAttributesStripping:
             },
         )
 
-        result = entrys.adapt_entry(entry, "openldap")
+        result = entrys.remove_operational_attributes(entry)
 
         assert result.is_success
         adapted = result.unwrap()
@@ -247,7 +246,7 @@ class TestOperationalAttributesStripping:
 
     def test_strip_openldap_specific_operational_attrs(self) -> None:
         """OpenLDAP-specific operational attributes (non-COMMON) are preserved when source is unknown."""
-        entrys = FlextLdifEntrys()
+        entrys = FlextLdifEntryService()
 
         entry = self._create_entry(
             "cn=test,dc=client-a",
@@ -265,7 +264,7 @@ class TestOperationalAttributesStripping:
             },
         )
 
-        result = entrys.adapt_entry(entry, "oracle_oud")
+        result = entrys.remove_operational_attributes(entry)
 
         assert result.is_success
         adapted = result.unwrap()
@@ -283,7 +282,7 @@ class TestOperationalAttributesStripping:
 
     def test_strip_ad_specific_operational_attrs(self) -> None:
         """Active Directory-specific operational attributes are preserved when source is unknown."""
-        entrys = FlextLdifEntrys()
+        entrys = FlextLdifEntryService()
 
         entry = self._create_entry(
             "cn=test,dc=client-a",
@@ -300,7 +299,7 @@ class TestOperationalAttributesStripping:
             },
         )
 
-        result = entrys.adapt_entry(entry, "oracle_oud")
+        result = entrys.remove_operational_attributes(entry)
 
         assert result.is_success
         adapted = result.unwrap()
@@ -321,7 +320,7 @@ class TestOperationalAttributesStripping:
 
     def test_no_source_server_defaults_to_generic(self) -> None:
         """Entry with generic target_server should strip COMMON only."""
-        entrys = FlextLdifEntrys()
+        entrys = FlextLdifEntryService()
 
         entry = self._create_entry(
             "cn=test,dc=client-a",
@@ -334,7 +333,7 @@ class TestOperationalAttributesStripping:
         )
         # Don't set source_server - defaults to "generic"
 
-        result = entrys.adapt_entry(entry, "oracle_oud")
+        result = entrys.remove_operational_attributes(entry)
 
         assert result.is_success
         adapted = result.unwrap()
@@ -350,7 +349,7 @@ class TestOperationalAttributesStripping:
 
     def test_mixed_operational_and_user_attributes(self) -> None:
         """Mix of operational and user attributes should filter correctly."""
-        entrys = FlextLdifEntrys()
+        entrys = FlextLdifEntryService()
 
         entry = self._create_entry(
             "cn=mixed,dc=client-a",
@@ -374,7 +373,7 @@ class TestOperationalAttributesStripping:
             },
         )
 
-        result = entrys.adapt_entry(entry, "oracle_oud")
+        result = entrys.remove_operational_attributes(entry)
 
         assert result.is_success
         adapted = result.unwrap()

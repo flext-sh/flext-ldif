@@ -2959,7 +2959,28 @@ class TestOidAclCanHandleAcl:
         acl_line = 'aci: (targetattr="userPassword") (version 3.0;...)'
         acl_quirk = FlextLdifServersOid.Acl()
 
-        assert not acl_quirk.can_handle_acl(acl_line)
+        # Parse string ACL into model object before testing
+
+
+        parse_result = acl_quirk.parse_acl(acl_line)
+
+
+        if parse_result.is_success:
+
+
+            acl_model = parse_result.unwrap()
+
+
+            assert acl_quirk.can_handle_acl(acl_model) is False
+
+
+        else:
+
+
+            # If parsing fails, assertion should be False
+
+
+            assert acl_quirk.can_handle_acl(acl_line) is False
 
     def test_can_handle_empty_acl(self, oid_quirk: FlextLdifServersOid) -> None:
         """Test handling of empty ACL line."""

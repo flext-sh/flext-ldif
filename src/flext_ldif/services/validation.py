@@ -258,5 +258,46 @@ class FlextLdifValidationService(FlextService[dict[str, object]]):
         except (ValueError, TypeError, AttributeError) as e:
             return FlextResult[bool].fail(f"Failed to validate DN component: {e}")
 
+    def validate_attribute_names(
+        self,
+        names: list[str],
+    ) -> FlextResult[dict[str, bool]]:
+        """Batch validate multiple attribute names.
+
+        Validates a list of attribute names and returns results for each.
+
+        Args:
+            names: List of attribute names to validate
+
+        Returns:
+            FlextResult containing dict mapping each name to validation result
+
+        Example:
+            >>> result = service.validate_attribute_names(
+            ...     ["cn", "mail", "2invalid", "objectClass"]
+            ... )
+            >>> validated = result.unwrap()
+            >>> print(validated["cn"])  # True
+            >>> print(validated["2invalid"])  # False
+
+        """
+        try:
+            validated_names: dict[str, bool] = {}
+
+            for name in names:
+                result = self.validate_attribute_name(name)
+                if result.is_success:
+                    validated_names[name] = result.unwrap()
+                else:
+                    # If validation fails, mark as invalid
+                    validated_names[name] = False
+
+            return FlextResult[dict[str, bool]].ok(validated_names)
+
+        except (ValueError, TypeError, AttributeError) as e:
+            return FlextResult[dict[str, bool]].fail(
+                f"Failed to batch validate attribute names: {e}"
+            )
+
 
 __all__ = ["FlextLdifValidationService"]

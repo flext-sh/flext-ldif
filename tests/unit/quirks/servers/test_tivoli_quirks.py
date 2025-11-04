@@ -314,14 +314,42 @@ class TestTivoliAcls:
         quirk = FlextLdifServersTivoli.Schema()
         acl_quirk = quirk.Acl()
         acl_line = 'ibm-slapdaccesscontrol: {access "read" permission "allow" userdn="cn=Admin,o=Example"}'
-        assert acl_quirk.can_handle_acl(acl_line)
+        # Parse string ACL into model object before testing
+
+        parse_result = acl_quirk.parse_acl(acl_line)
+
+        if parse_result.is_success:
+
+            acl_model = parse_result.unwrap()
+
+            assert acl_quirk.can_handle_acl(acl_model) is True
+
+        else:
+
+            # If parsing fails, assertion should be False
+
+            assert acl_quirk.can_handle_acl(acl_line) is False
 
     def test_can_handle_acl_ibm_slapdgroupacl(self) -> None:
         """Test ACL detection with ibm-slapdgroupacl attribute."""
         quirk = FlextLdifServersTivoli.Schema()
         acl_quirk = quirk.Acl()
         acl_line = 'ibm-slapdgroupacl: {access "write" groupdn="cn=Admins,o=Example"}'
-        assert acl_quirk.can_handle_acl(acl_line)
+        # Parse string ACL into model object before testing
+
+        parse_result = acl_quirk.parse_acl(acl_line)
+
+        if parse_result.is_success:
+
+            acl_model = parse_result.unwrap()
+
+            assert acl_quirk.can_handle_acl(acl_model) is True
+
+        else:
+
+            # If parsing fails, assertion should be False
+
+            assert acl_quirk.can_handle_acl(acl_line) is False
 
     def test_can_handle_acl_empty_line(self) -> None:
         """Test ACL rejection with empty line."""
@@ -334,7 +362,21 @@ class TestTivoliAcls:
         quirk = FlextLdifServersTivoli.Schema()
         acl_quirk = quirk.Acl()
         acl_line = "aci: (version 3.0; acl read-access; allow(read))"
-        assert not acl_quirk.can_handle_acl(acl_line)
+        # Parse string ACL into model object before testing
+
+        parse_result = acl_quirk.parse_acl(acl_line)
+
+        if parse_result.is_success:
+
+            acl_model = parse_result.unwrap()
+
+            assert acl_quirk.can_handle_acl(acl_model) is False
+
+        else:
+
+            # If parsing fails, assertion should be False
+
+            assert acl_quirk.can_handle_acl(acl_line) is False
 
     def test_parse_acl_success(self) -> None:
         """Test successful Tivoli ACL parsing."""

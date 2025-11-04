@@ -30,6 +30,7 @@ PROTOCOL COMPLIANCE:
 
 from __future__ import annotations
 
+import re
 from abc import ABC, abstractmethod
 from collections.abc import Mapping
 from typing import ClassVar
@@ -125,6 +126,92 @@ class FlextLdifServersBase(ABC, FlextLdifProtocols.Quirks.QuirksPort):
     # =========================================================================
     # Nested Abstract Base Classes for Internal Implementation
     # =========================================================================
+    # =========================================================================
+    # Shared OID Extraction Utilities for Server Quirk Detection
+    # =========================================================================
+
+    @staticmethod
+    def extract_oid_from_schema_object(
+        schema_obj: FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass,
+    ) -> str | None:
+        """Extract OID from schema object metadata or model.
+
+        Checks both sources:
+        1. Original format in metadata (via regex extraction)
+        2. OID field in model (fallback)
+
+        This utility is used by server quirks to detect whether they should
+        handle a particular attribute or objectClass based on OID patterns.
+
+        Args:
+            schema_obj: Attribute or ObjectClass to extract OID from
+
+        Returns:
+            OID string (e.g., "2.5.4.3") or None if not found
+
+        """
+        # First try: Extract from original_format if available
+        if schema_obj.metadata and schema_obj.metadata.original_format:
+            try:
+                # Look for OID in parentheses at start: ( 2.16.840.1.113894. ...
+                match = re.search(r"\(\s*([\d.]+)", schema_obj.metadata.original_format)
+                if match:
+                    return match.group(1)
+            except (re.error, AttributeError):
+                # Regex error or original_format type issue - continue to fallback
+                logger.debug(
+                    "Failed to extract OID from original_format: %s",
+                    schema_obj.metadata.original_format[:100] if schema_obj.metadata.original_format else "None",
+                )
+
+        # Fallback: Use OID field from model
+        return schema_obj.oid
+
+    @staticmethod
+    def can_handle_by_oid_pattern(
+        schema_obj: FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass,
+        oid_pattern: re.Pattern[str],
+    ) -> bool:
+        r"""Check if schema object matches server's OID pattern.
+
+        Generic method for server quirks to check if they should handle
+        a particular attribute or objectClass based on OID pattern matching.
+
+        Example:
+            # In OID quirks
+            if FlextLdifServersBase.can_handle_by_oid_pattern(
+                attribute,
+                FlextLdifServersOid.Constants.OID_PATTERN  # 2.16.840.1.113894.*
+            ):
+                return self.parse_attribute(attribute)
+
+        Args:
+            schema_obj: Attribute or ObjectClass to check
+            oid_pattern: Compiled regex pattern to match OID (e.g., re.compile(r'2\\.16\\.840\\..*'))
+
+        Returns:
+            True if OID matches pattern, False otherwise
+
+        """
+        # Validate input type
+        if not isinstance(
+            schema_obj,
+            (FlextLdifModels.SchemaAttribute, FlextLdifModels.SchemaObjectClass),
+        ):
+            logger.error(
+                "can_handle_by_oid_pattern received invalid input: %s",
+                type(schema_obj).__name__,
+            )
+            return False
+
+        # Extract OID using shared utility
+        oid = FlextLdifServersBase.extract_oid_from_schema_object(schema_obj)
+        if not oid:
+            return False
+
+        # Check if OID matches server's pattern
+        return bool(oid_pattern.match(oid))
+
     class Schema(ABC):
         """Base class for schema quirks - satisfies FlextLdifProtocols.Quirks.SchemaProtocol.
 
@@ -133,6 +220,14 @@ class FlextLdifServersBase(ABC, FlextLdifProtocols.Quirks.QuirksPort):
 
         Schema quirks extend RFC 4512 schema parsing with server-specific features
         for attribute and objectClass processing.
+
+        **STANDARDIZED CONSTANTS REQUIRED**: Each Schema implementation MUST define
+        a Constants nested class with:
+        - CANONICAL_NAME: Unique server identifier (e.g., "oid", "oud")
+        - ALIASES: All valid names for this server including canonical
+        - PRIORITY: Selection priority (lower = higher priority)
+        - CAN_NORMALIZE_FROM: What source types this quirk can normalize
+        - CAN_DENORMALIZE_TO: What target types this quirk can denormalize to
 
         **Protocol Compliance**: All implementations MUST satisfy
         FlextLdifProtocols.Quirks.SchemaProtocol through structural typing.
@@ -156,6 +251,20 @@ class FlextLdifServersBase(ABC, FlextLdifProtocols.Quirks.QuirksPort):
         # These are class-level attributes, not instance attributes
         server_type: ClassVar[str] = "generic"
         priority: ClassVar[int] = 100
+
+        class Constants:
+            """Standardized constants every Schema quirk must define.
+
+            These constants enable automatic quirk discovery, server type
+            normalization, and conversion path resolution without hardcoding
+            server-specific knowledge in constants.py or registry.py.
+            """
+
+            CANONICAL_NAME: ClassVar[str]  # e.g., "oid"
+            ALIASES: ClassVar[frozenset[str]]  # Includes canonical name
+            PRIORITY: ClassVar[int]  # Selection priority
+            CAN_NORMALIZE_FROM: ClassVar[frozenset[str]]  # Source formats
+            CAN_DENORMALIZE_TO: ClassVar[frozenset[str]]  # Target formats
 
         @abstractmethod
         def __init__(
@@ -386,6 +495,14 @@ class FlextLdifServersBase(ABC, FlextLdifProtocols.Quirks.QuirksPort):
         ACL quirks extend RFC 4516 ACL parsing with server-specific formats
         for access control list processing.
 
+        **STANDARDIZED CONSTANTS REQUIRED**: Each Acl implementation MUST define
+        a Constants nested class with:
+        - CANONICAL_NAME: Unique server identifier (e.g., "oid", "oud")
+        - ALIASES: All valid names for this server including canonical
+        - PRIORITY: Selection priority (lower = higher priority)
+        - CAN_NORMALIZE_FROM: What source types this quirk can normalize
+        - CAN_DENORMALIZE_TO: What target types this quirk can denormalize to
+
         **Protocol Compliance**: All implementations MUST satisfy
         FlextLdifProtocols.Quirks.AclProtocol through structural typing.
         This means all public methods must match protocol signatures exactly.
@@ -410,6 +527,20 @@ class FlextLdifServersBase(ABC, FlextLdifProtocols.Quirks.QuirksPort):
         # Server type and priority defaults - Subclasses override via ClassVar declarations
         server_type: ClassVar[str] = "generic"
         priority: ClassVar[int] = 100
+
+        class Constants:
+            """Standardized constants every Acl quirk must define.
+
+            These constants enable automatic quirk discovery, server type
+            normalization, and conversion path resolution without hardcoding
+            server-specific knowledge in constants.py or registry.py.
+            """
+
+            CANONICAL_NAME: ClassVar[str]  # e.g., "oid"
+            ALIASES: ClassVar[frozenset[str]]  # Includes canonical name
+            PRIORITY: ClassVar[int]  # Selection priority
+            CAN_NORMALIZE_FROM: ClassVar[frozenset[str]]  # Source formats
+            CAN_DENORMALIZE_TO: ClassVar[frozenset[str]]  # Target formats
 
         @abstractmethod
         def __init__(
@@ -548,6 +679,14 @@ class FlextLdifServersBase(ABC, FlextLdifProtocols.Quirks.QuirksPort):
         Entry quirks handle server-specific entry attributes and transformations
         for LDAP entry processing.
 
+        **STANDARDIZED CONSTANTS REQUIRED**: Each Entry implementation MUST define
+        a Constants nested class with:
+        - CANONICAL_NAME: Unique server identifier (e.g., "oid", "oud")
+        - ALIASES: All valid names for this server including canonical
+        - PRIORITY: Selection priority (lower = higher priority)
+        - CAN_NORMALIZE_FROM: What source types this quirk can normalize
+        - CAN_DENORMALIZE_TO: What target types this quirk can denormalize to
+
         **Protocol Compliance**: All implementations MUST satisfy
         FlextLdifProtocols.Quirks.EntryProtocol through structural typing.
         This means all public methods must match protocol signatures exactly.
@@ -569,6 +708,20 @@ class FlextLdifServersBase(ABC, FlextLdifProtocols.Quirks.QuirksPort):
         # Server type and priority defaults - Subclasses override via ClassVar declarations
         server_type: ClassVar[str] = "generic"
         priority: ClassVar[int] = 100
+
+        class Constants:
+            """Standardized constants every Entry quirk must define.
+
+            These constants enable automatic quirk discovery, server type
+            normalization, and conversion path resolution without hardcoding
+            server-specific knowledge in constants.py or registry.py.
+            """
+
+            CANONICAL_NAME: ClassVar[str]  # e.g., "oid"
+            ALIASES: ClassVar[frozenset[str]]  # Includes canonical name
+            PRIORITY: ClassVar[int]  # Selection priority
+            CAN_NORMALIZE_FROM: ClassVar[frozenset[str]]  # Source formats
+            CAN_DENORMALIZE_TO: ClassVar[frozenset[str]]  # Target formats
 
         @abstractmethod
         def __init__(

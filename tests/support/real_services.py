@@ -48,11 +48,10 @@ class FlextLdifTestServiceFactory:
         def create_ldif_writer(
             quirk_registry: FlextLdifRegistry | None = None,
         ) -> FlextLdifWriterService:
-            """Create unified LDIF writer with mandatory quirk registry."""
-            if quirk_registry is None:
-                quirk_registry = FlextLdifRegistry()
-            config = FlextLdifConfig()
-            return FlextLdifWriterService(config=config, quirk_registry=quirk_registry)
+            """Create unified LDIF writer service."""
+            # WriterService is stateless and uses global registry
+            # Config and quirk_registry are fetched at runtime via singletons
+            return FlextLdifWriterService()
 
         @staticmethod
         def create_migration_pipeline(

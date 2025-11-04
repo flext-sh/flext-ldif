@@ -73,7 +73,17 @@ class TestOpenLDAP2xSchemas:
 
         # Should handle olcAttributeTypes
         attr_def = "olcAttributeTypes: ( 1.2.3.4 NAME 'test' )"
-        assert quirk.can_handle_attribute(attr_def) is True
+        # Parse string definition into model object
+
+        parse_result = quirk.parse_attribute(attr_def)
+
+        assert parse_result.is_success, f"Failed to parse attribute: {parse_result.error}"
+
+        attr_model = parse_result.unwrap()
+
+        # Test with the model object
+
+        assert quirk.can_handle_attribute(attr_model) is True
 
         # Should handle olcAccess
         acl_def = "olcAccess: to * by * read"
@@ -85,7 +95,17 @@ class TestOpenLDAP2xSchemas:
 
         # Should not handle non-olc attributes
         attr_def = "( 1.2.3.4 NAME 'test' )"
-        assert quirk.can_handle_attribute(attr_def) is False
+        # Parse string definition into model object
+
+        parse_result = quirk.parse_attribute(attr_def)
+
+        assert parse_result.is_success, f"Failed to parse attribute: {parse_result.error}"
+
+        attr_model = parse_result.unwrap()
+
+        # Test with the model object
+
+        assert quirk.can_handle_attribute(attr_model) is False
 
     def test_parse_attribute_success(self) -> None:
         """Test successful attribute parsing."""
@@ -120,14 +140,34 @@ class TestOpenLDAP2xSchemas:
         quirk = FlextLdifServersOpenldap.Schema()
 
         oc_def = "olcObjectClasses: ( 1.2.3.4 NAME 'testClass' )"
-        assert quirk.can_handle_objectclass(oc_def) is True
+        # Parse string definition into model object
+
+        parse_result = quirk.parse_objectclass(oc_def)
+
+        assert parse_result.is_success, f"Failed to parse objectClass: {parse_result.error}"
+
+        oc_model = parse_result.unwrap()
+
+        # Test with the model object
+
+        assert quirk.can_handle_objectclass(oc_model) is True
 
     def test_can_handle_objectclass_without_olc(self) -> None:
         """Test objectClass detection without olc prefix."""
         quirk = FlextLdifServersOpenldap.Schema()
 
         oc_def = "( 1.2.3.4 NAME 'testClass' )"
-        assert quirk.can_handle_objectclass(oc_def) is False
+        # Parse string definition into model object
+
+        parse_result = quirk.parse_objectclass(oc_def)
+
+        assert parse_result.is_success, f"Failed to parse objectClass: {parse_result.error}"
+
+        oc_model = parse_result.unwrap()
+
+        # Test with the model object
+
+        assert quirk.can_handle_objectclass(oc_model) is False
 
     def test_parse_objectclass_success(self) -> None:
         """Test successful objectClass parsing."""
@@ -319,7 +359,18 @@ class TestOpenLDAP2xAcls:
         acl_quirk = main_quirk.Acl()
 
         acl_line = "to attrs=userPassword by self write by anonymous auth by * none"
-        assert acl_quirk.can_handle_acl(acl_line) is True
+        # Parse string ACL into model object
+
+        parse_result = acl_quirk.parse_acl(acl_line)
+
+        assert parse_result.is_success, f"Failed to parse ACL: {parse_result.error}"
+
+        acl_model = parse_result.unwrap()
+
+
+        # Test with the model object
+
+        assert acl_quirk.can_handle_acl(acl_model) is True
 
     def test_can_handle_acl_with_olcaccess(self) -> None:
         """Test ACL detection with olcAccess prefix."""
@@ -327,7 +378,18 @@ class TestOpenLDAP2xAcls:
         acl_quirk = main_quirk.Acl()
 
         acl_line = "olcAccess: to * by * read"
-        assert acl_quirk.can_handle_acl(acl_line) is True
+        # Parse string ACL into model object
+
+        parse_result = acl_quirk.parse_acl(acl_line)
+
+        assert parse_result.is_success, f"Failed to parse ACL: {parse_result.error}"
+
+        acl_model = parse_result.unwrap()
+
+
+        # Test with the model object
+
+        assert acl_quirk.can_handle_acl(acl_model) is True
 
     def test_can_handle_acl_negative(self) -> None:
         """Test ACL detection returns false for non-OpenLDAP ACL."""
@@ -335,7 +397,18 @@ class TestOpenLDAP2xAcls:
         acl_quirk = main_quirk.Acl()
 
         acl_line = "random text"
-        assert acl_quirk.can_handle_acl(acl_line) is False
+        # Parse string ACL into model object
+
+        parse_result = acl_quirk.parse_acl(acl_line)
+
+        assert parse_result.is_success, f"Failed to parse ACL: {parse_result.error}"
+
+        acl_model = parse_result.unwrap()
+
+
+        # Test with the model object
+
+        assert acl_quirk.can_handle_acl(acl_model) is False
 
     def test_parse_acl_success(self) -> None:
         """Test successful ACL parsing."""
@@ -446,36 +519,44 @@ class TestOpenLDAP2xEntrys:
         """Test entry detection with cn=config DN."""
         entry_quirk = FlextLdifServersOpenldap.Entry()
 
-        dn = "cn=config"
-        attributes: dict[str, object] = {"cn": ["config"]}
-        assert entry_quirk.can_handle_entry(dn, attributes) is True
+        dn = FlextLdifModels.DistinguishedName(value="cn=config")
+        attributes = FlextLdifModels.LdifAttributes(attributes={"cn": ["config"]})
+        entry = FlextLdifModels.Entry(dn=dn, attributes=attributes)
+        assert entry_quirk.can_handle_entry(entry) is True
 
     def test_can_handle_entry_with_olc_attributes(self) -> None:
         """Test entry detection with olc attributes."""
         entry_quirk = FlextLdifServersOpenldap.Entry()
 
-        dn = "olcDatabase={1}mdb,cn=config"
-        attributes: dict[str, object] = {
-            "olcDatabase": ["{1}mdb"],
-            "olcSuffix": ["dc=example,dc=com"],
-        }
-        assert entry_quirk.can_handle_entry(dn, attributes) is True
+        dn = FlextLdifModels.DistinguishedName(value="olcDatabase={1}mdb,cn=config")
+        attributes = FlextLdifModels.LdifAttributes(
+            attributes={
+                "olcDatabase": ["{1}mdb"],
+                "olcSuffix": ["dc=example,dc=com"],
+            }
+        )
+        entry = FlextLdifModels.Entry(dn=dn, attributes=attributes)
+        assert entry_quirk.can_handle_entry(entry) is True
 
     def test_can_handle_entry_with_olc_objectclass(self) -> None:
         """Test entry detection with olc objectClass."""
         entry_quirk = FlextLdifServersOpenldap.Entry()
 
-        dn = "cn=schema,cn=config"
-        attributes: dict[str, object] = {"objectclass": ["olcSchemaConfig"]}
-        assert entry_quirk.can_handle_entry(dn, attributes) is True
+        dn = FlextLdifModels.DistinguishedName(value="cn=schema,cn=config")
+        attributes = FlextLdifModels.LdifAttributes(attributes={"objectclass": ["olcSchemaConfig"]})
+        entry = FlextLdifModels.Entry(dn=dn, attributes=attributes)
+        assert entry_quirk.can_handle_entry(entry) is True
 
     def test_can_handle_entry_negative(self) -> None:
         """Test entry detection returns false for non-OpenLDAP entry."""
         entry_quirk = FlextLdifServersOpenldap.Entry()
 
-        dn = "cn=test,dc=example,dc=com"
-        attributes: dict[str, object] = {"cn": ["test"], "objectclass": ["person"]}
-        assert entry_quirk.can_handle_entry(dn, attributes) is False
+        dn = FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com")
+        attributes = FlextLdifModels.LdifAttributes(
+            attributes={"cn": ["test"], "objectclass": ["person"]}
+        )
+        entry = FlextLdifModels.Entry(dn=dn, attributes=attributes)
+        assert entry_quirk.can_handle_entry(entry) is False
 
     def test_process_entry_success(self) -> None:
         """Test successful entry processing."""
@@ -869,7 +950,21 @@ class TestOpenldapAclCanHandleAcl:
         """Test rejection of non-OpenLDAP ACL format."""
         acl_line = "some random text"
         acl_quirk = openldap_quirk.Acl()
-        assert not acl_quirk.can_handle_acl(acl_line)
+        # Parse string ACL into model object before testing
+
+        parse_result = acl_quirk.parse_acl(acl_line)
+
+        if parse_result.is_success:
+
+            acl_model = parse_result.unwrap()
+
+            assert acl_quirk.can_handle_acl(acl_model) is False
+
+        else:
+
+            # If parsing fails, assertion should be False
+
+            assert acl_quirk.can_handle_acl(acl_line) is False
 
 
 class TestOpenldapAclParseAcl:
@@ -986,28 +1081,33 @@ class TestOpenldapEntryCanHandleEntry:
         self, openldap_quirk: FlextLdifServersOpenldap.Entry
     ) -> None:
         """Test detection of cn=config entries."""
-        dn = "cn=config"
-        attributes = {"objectClass": ["olcBackendConfig"]}
+        dn = FlextLdifModels.DistinguishedName(value="cn=config")
+        attributes = FlextLdifModels.LdifAttributes(attributes={"objectClass": ["olcBackendConfig"]})
+        entry = FlextLdifModels.Entry(dn=dn, attributes=attributes)
         entry_quirk = openldap_quirk
-        assert isinstance(entry_quirk.can_handle_entry(dn, attributes), bool)
+        assert isinstance(entry_quirk.can_handle_entry(entry), bool)
 
     def test_can_handle_olc_attribute_entry(
         self, openldap_quirk: FlextLdifServersOpenldap.Entry
     ) -> None:
         """Test detection of entries with olc* attributes."""
-        dn = "cn=module,cn=config"
-        attributes = {"olcModuleLoad": "back_ldif"}
+        dn = FlextLdifModels.DistinguishedName(value="cn=module,cn=config")
+        attributes = FlextLdifModels.LdifAttributes(attributes={"olcModuleLoad": ["back_ldif"]})
+        entry = FlextLdifModels.Entry(dn=dn, attributes=attributes)
         entry_quirk = openldap_quirk
-        assert isinstance(entry_quirk.can_handle_entry(dn, attributes), bool)
+        assert isinstance(entry_quirk.can_handle_entry(entry), bool)
 
     def test_can_handle_standard_entry(
         self, openldap_quirk: FlextLdifServersOpenldap.Entry
     ) -> None:
         """Test handling of standard LDAP entries."""
-        dn = "uid=user,ou=people,dc=example,dc=com"
-        attributes = {"objectClass": ["inetOrgPerson"], "uid": ["user"]}
+        dn = FlextLdifModels.DistinguishedName(value="uid=user,ou=people,dc=example,dc=com")
+        attributes = FlextLdifModels.LdifAttributes(
+            attributes={"objectClass": ["inetOrgPerson"], "uid": ["user"]}
+        )
+        entry = FlextLdifModels.Entry(dn=dn, attributes=attributes)
         entry_quirk = openldap_quirk
-        assert isinstance(entry_quirk.can_handle_entry(dn, attributes), bool)
+        assert isinstance(entry_quirk.can_handle_entry(entry), bool)
 
 
 class TestOpenldapEntryProcessEntry:

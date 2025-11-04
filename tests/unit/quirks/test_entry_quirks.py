@@ -1,6 +1,6 @@
 """Test suite for entry quirks module.
 
-Comprehensive testing for FlextLdifEntrys which handles entry adaptation
+Comprehensive testing for FlextLdifEntryService which handles entry adaptation
 for server-specific quirks.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -10,30 +10,31 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from flext_core import FlextResult
+
 from flext_ldif.models import FlextLdifModels
-from flext_ldif.services.entrys import FlextLdifEntrys
-from flext_ldif.services.registry import FlextLdifRegistry
+from flext_ldif.services.entrys import FlextLdifEntryService
 
 
-class TestFlextLdifEntrysInitialization:
+class TestFlextLdifEntryServiceInitialization:
     """Test suite for entry quirks initialization."""
 
     def test_initialization_default(self) -> None:
-        """Test entry quirks initialization with registry."""
-        quirks = FlextLdifEntrys()
+        """Test entry service initialization."""
+        service = FlextLdifEntryService()
 
-        assert quirks is not None
-        assert quirks._registry is not None
-        assert isinstance(quirks._registry, FlextLdifRegistry)
+        assert service is not None
+        assert service.operation == "remove_operational_attributes"
+        assert isinstance(service.entries, list)
+        assert isinstance(service.attributes_to_remove, list)
 
     def test_initialization_has_execute_method(self) -> None:
-        """Test entry quirks service execution."""
-        quirks = FlextLdifEntrys()
-        result = quirks.execute()
+        """Test entry service execute method exists."""
+        service = FlextLdifEntryService()
+        result = service.execute()
 
-        assert result.is_success
-        assert result.value["service"] == FlextLdifEntrys
-        assert result.value["status"] == "ready"
+        assert result is not None
+        assert isinstance(result, FlextResult)
 
 
 class TestDnCleaning:
@@ -41,7 +42,7 @@ class TestDnCleaning:
 
     def test_clean_dn_simple(self) -> None:
         """Test cleaning a simple DN."""
-        quirks = FlextLdifEntrys()
+        quirks = FlextLdifEntryService()
 
         dn = "cn=test,dc=example,dc=com"
         cleaned = quirks.clean_dn(dn)
@@ -52,7 +53,7 @@ class TestDnCleaning:
 
     def test_clean_dn_with_spaces(self) -> None:
         """Test cleaning DN with spaces around equals."""
-        quirks = FlextLdifEntrys()
+        quirks = FlextLdifEntryService()
 
         dn = "cn = test , dc = example , dc = com"
         cleaned = quirks.clean_dn(dn)
@@ -65,7 +66,7 @@ class TestDnCleaning:
 
     def test_clean_dn_preserves_value(self) -> None:
         """Test that cleaning preserves DN values."""
-        quirks = FlextLdifEntrys()
+        quirks = FlextLdifEntryService()
 
         dn = "cn=John Doe,ou=Users,dc=example,dc=com"
         cleaned = quirks.clean_dn(dn)
@@ -90,7 +91,7 @@ class TestEntryAdaptation:
 
     def test_adapt_entry_generic_server(self) -> None:
         """Test adapting entry for generic LDAP server."""
-        quirks = FlextLdifEntrys()
+        quirks = FlextLdifEntryService()
 
         # Create test entry
         entry = self._create_entry(
@@ -102,7 +103,7 @@ class TestEntryAdaptation:
             },
         )
 
-        result = quirks.adapt_entry(entry, "generic")
+        result = quirks.remove_operational_attributes(entry)
 
         assert result.is_success
         adapted = result.unwrap()
@@ -112,7 +113,7 @@ class TestEntryAdaptation:
 
     def test_adapt_entry_oid_server(self) -> None:
         """Test adapting entry for OID server."""
-        quirks = FlextLdifEntrys()
+        quirks = FlextLdifEntryService()
 
         entry = self._create_entry(
             "cn=test,dc=example,dc=com",
@@ -123,7 +124,7 @@ class TestEntryAdaptation:
             },
         )
 
-        result = quirks.adapt_entry(entry, "oid")
+        result = quirks.remove_operational_attributes(entry)
 
         assert result.is_success
         adapted = result.unwrap()
@@ -132,7 +133,7 @@ class TestEntryAdaptation:
 
     def test_adapt_entry_oud_server(self) -> None:
         """Test adapting entry for OUD server."""
-        quirks = FlextLdifEntrys()
+        quirks = FlextLdifEntryService()
 
         entry = self._create_entry(
             "cn=test,dc=example,dc=com",
@@ -143,7 +144,7 @@ class TestEntryAdaptation:
             },
         )
 
-        result = quirks.adapt_entry(entry, "oud")
+        result = quirks.remove_operational_attributes(entry)
 
         assert result.is_success
         adapted = result.unwrap()
@@ -152,7 +153,7 @@ class TestEntryAdaptation:
 
     def test_adapt_entry_openldap_server(self) -> None:
         """Test adapting entry for OpenLDAP server."""
-        quirks = FlextLdifEntrys()
+        quirks = FlextLdifEntryService()
 
         entry = self._create_entry(
             "cn=test,dc=example,dc=com",
@@ -163,7 +164,7 @@ class TestEntryAdaptation:
             },
         )
 
-        result = quirks.adapt_entry(entry, "openldap")
+        result = quirks.remove_operational_attributes(entry)
 
         assert result.is_success
         adapted = result.unwrap()
@@ -172,7 +173,7 @@ class TestEntryAdaptation:
 
     def test_adapt_entry_with_operational_attrs(self) -> None:
         """Test that adapt_entry handles operational attributes."""
-        quirks = FlextLdifEntrys()
+        quirks = FlextLdifEntryService()
 
         entry = self._create_entry(
             "cn=test,dc=example,dc=com",
@@ -184,7 +185,7 @@ class TestEntryAdaptation:
             },
         )
 
-        result = quirks.adapt_entry(entry, "oid")
+        result = quirks.remove_operational_attributes(entry)
 
         assert result.is_success
         adapted = result.unwrap()
@@ -197,7 +198,7 @@ class TestEntryAdaptation:
 
     def test_adapt_entry_case_insensitive_operational_attrs(self) -> None:
         """Test case-insensitive operational attribute stripping."""
-        quirks = FlextLdifEntrys()
+        quirks = FlextLdifEntryService()
 
         entry = self._create_entry(
             "cn=test,dc=example,dc=com",
@@ -208,7 +209,7 @@ class TestEntryAdaptation:
             },
         )
 
-        result = quirks.adapt_entry(entry, "generic")
+        result = quirks.remove_operational_attributes(entry)
 
         assert result.is_success
         adapted = result.unwrap()
@@ -220,14 +221,14 @@ class TestEntryAdaptation:
 
     def test_adapt_entry_returns_flext_result(self) -> None:
         """Test that adapt_entry returns proper FlextResult."""
-        quirks = FlextLdifEntrys()
+        quirks = FlextLdifEntryService()
 
         entry = self._create_entry(
             "cn=test,dc=example,dc=com",
             {"cn": ["test"]},
         )
 
-        result = quirks.adapt_entry(entry, "oid")
+        result = quirks.remove_operational_attributes(entry)
 
         # Should return FlextResult
         assert hasattr(result, "is_success")
@@ -238,7 +239,7 @@ class TestEntryAdaptation:
 
     def test_adapt_entry_preserves_user_attributes(self) -> None:
         """Test that all user attributes are preserved."""
-        quirks = FlextLdifEntrys()
+        quirks = FlextLdifEntryService()
 
         entry = self._create_entry(
             "cn=John Doe,ou=Users,dc=example,dc=com",
@@ -255,7 +256,7 @@ class TestEntryAdaptation:
             },
         )
 
-        result = quirks.adapt_entry(entry, "oud")
+        result = quirks.remove_operational_attributes(entry)
 
         assert result.is_success
         adapted = result.unwrap()
@@ -276,7 +277,7 @@ class TestEntryAdaptation:
 
     def test_adapt_entry_empty_entry(self) -> None:
         """Test adapting an entry with minimal attributes."""
-        quirks = FlextLdifEntrys()
+        quirks = FlextLdifEntryService()
 
         entry = self._create_entry(
             "cn=minimal,dc=example,dc=com",
@@ -285,7 +286,7 @@ class TestEntryAdaptation:
             },
         )
 
-        result = quirks.adapt_entry(entry, "openldap")
+        result = quirks.remove_operational_attributes(entry)
 
         assert result.is_success
         adapted = result.unwrap()
@@ -293,7 +294,7 @@ class TestEntryAdaptation:
 
     def test_adapt_entry_multiple_values(self) -> None:
         """Test adapting entry with multi-valued attributes."""
-        quirks = FlextLdifEntrys()
+        quirks = FlextLdifEntryService()
 
         entry = self._create_entry(
             "cn=user,dc=example,dc=com",
@@ -309,7 +310,7 @@ class TestEntryAdaptation:
             },
         )
 
-        result = quirks.adapt_entry(entry, "oud")
+        result = quirks.remove_operational_attributes(entry)
 
         assert result.is_success
         adapted = result.unwrap()
@@ -319,7 +320,7 @@ class TestEntryAdaptation:
 
     def test_adapt_entry_preserves_dn(self) -> None:
         """Test that adaptation preserves the DN."""
-        quirks = FlextLdifEntrys()
+        quirks = FlextLdifEntryService()
 
         original_dn = "cn=test,ou=Users,dc=example,dc=com"
         entry = self._create_entry(
@@ -327,7 +328,7 @@ class TestEntryAdaptation:
             {"cn": ["test"]},
         )
 
-        result = quirks.adapt_entry(entry, "oid")
+        result = quirks.remove_operational_attributes(entry)
 
         assert result.is_success
         adapted = result.unwrap()

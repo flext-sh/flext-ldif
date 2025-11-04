@@ -41,6 +41,16 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
     server_type = FlextLdifConstants.ServerTypes.RELAXED
     priority = 200
 
+    # === STANDARDIZED CONSTANTS FOR AUTO-DISCOVERY ===
+    class Constants:
+        """Standardized constants for Relaxed (lenient) quirk."""
+
+        CANONICAL_NAME: ClassVar[str] = "relaxed"
+        ALIASES: ClassVar[frozenset[str]] = frozenset(["relaxed", "lenient"])
+        PRIORITY: ClassVar[int] = 200
+        CAN_NORMALIZE_FROM: ClassVar[frozenset[str]] = frozenset(["relaxed"])
+        CAN_DENORMALIZE_TO: ClassVar[frozenset[str]] = frozenset(["relaxed", "rfc"])
+
     class Schema(FlextLdifServersRfc.Schema):
         """Relaxed schema quirk - main class for lenient LDIF processing.
 
@@ -56,6 +66,9 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
 
         **Priority**: 200 (very low - last resort)
         """
+
+        server_type: ClassVar[str] = FlextLdifConstants.ServerTypes.RELAXED
+        priority: ClassVar[int] = 200
 
         # Permissive OID pattern - matches anything that looks like an OID
         OID_PATTERN: ClassVar[re.Pattern[str]] = re.compile(r"\(?\s*([0-9a-zA-Z._\-]+)")
@@ -78,12 +91,8 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             """
             return True
 
-        # --------------------------------------------------------------------- #
         # Schema parsing and conversion methods
-        # --------------------------------------------------------------------- #
-        # --------------------------------------------------------------------- #
         # OVERRIDDEN METHODS (from FlextLdifServersBase.Schema)
-        # --------------------------------------------------------------------- #
         # These methods override the base class with relaxed/lenient logic:
         # - parse_attribute(): Lenient parsing that accepts malformed definitions
         # - parse_objectclass(): Lenient parsing that accepts malformed definitions
@@ -369,16 +378,18 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             self,
             rfc_data: FlextLdifModels.SchemaObjectClass,
         ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
-            """Convert objectClass from RFC format - pass-through in relaxed mode.
+            """Convert objectClass from RFC format - apply relaxed mode metadata.
 
             Args:
                 rfc_data: RFC-compliant SchemaObjectClass
 
             Returns:
-                FlextResult with data (unchanged)
+                FlextResult with relaxed mode metadata
 
             """
-            return FlextResult[FlextLdifModels.SchemaObjectClass].ok(rfc_data)
+            return FlextLdifServersRfc.SchemaConverter.set_quirk_type(
+                rfc_data, self.server_type
+            )
 
         def write_attribute_to_rfc(
             self,
@@ -432,9 +443,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 logger.debug("Write objectClass failed: %s", e)
                 return FlextResult[str].ok(str(oc_data.model_dump()))
 
-        # --------------------------------------------------------------------- #
         # OVERRIDDEN METHODS (from FlextLdifServersBase.Acl)
-        # --------------------------------------------------------------------- #
         # These methods override the base class with relaxed/lenient logic:
         # - can_handle_acl(): Accepts any ACL line in relaxed mode
         # - parse_acl(): Parses ACL with best-effort approach
@@ -457,7 +466,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
 
         def __init__(self) -> None:
             """Initialize relaxed ACL quirk with priority 200."""
-            super().__init__(server_type=FlextLdifConstants.ServerTypes.GENERIC)
+            super().__init__()
 
         def can_handle_acl(self, acl: FlextLdifModels.Acl) -> bool:
             """Accept any ACL line in relaxed mode.
@@ -574,11 +583,9 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
 
         def __init__(self) -> None:
             """Initialize relaxed entry quirk with priority 200."""
-            super().__init__(server_type=FlextLdifConstants.ServerTypes.RELAXED)
+            super().__init__()
 
-        # --------------------------------------------------------------------- #
         # OVERRIDDEN METHODS (from FlextLdifServersBase.Entry)
-        # --------------------------------------------------------------------- #
         # These methods override the base class with relaxed/lenient logic:
         # - can_handle_entry(): Accepts any entry in relaxed mode
         # - process_entry(): Pass-through processing for relaxed mode
@@ -720,25 +727,28 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
         def normalize_dn(self, dn: str) -> FlextResult[str]:
             """Normalize DN - best-effort in relaxed mode.
 
+            Uses utility DN normalization (RFC 4514 compliant).
+            Falls back to original DN if normalization fails (best-effort).
+
             Args:
                 dn: Distinguished name
 
             Returns:
-                FlextResult with normalized DN
+                FlextResult with normalized DN (or original if normalization fails)
 
             """
             try:
-                # Minimal normalization: just lowercase component names
-                components = dn.split(",")
-                normalized = ",".join(
-                    (
-                        comp.split("=")[0].lower() + "=" + comp.split("=", 1)[1]
-                        if "=" in comp
-                        else comp
-                    )
-                    for comp in components
+                # Use RFC 4514 compliant utility normalization
+                normalized = FlextLdifUtilities.DN.norm(dn)
+                if normalized:
+                    return FlextResult[str].ok(normalized)
+                # Fallback: return original (relaxed mode best-effort)
+                logger.debug(
+                    "Utility normalization returned None for DN: %s, "
+                    "using original (relaxed mode)",
+                    dn,
                 )
-                return FlextResult[str].ok(normalized)
+                return FlextResult[str].ok(dn)
             except Exception as e:
                 logger.debug("DN normalization failed, using original: %s", e)
                 return FlextResult[str].ok(dn)

@@ -25,49 +25,79 @@ class FlextLdifConstants(FlextConstants):
     # FORMAT CONSTANTS
     # =============================================================================
 
-    # Oracle OID namespace identifier
-    ORACLE_OID_NAMESPACE: Final[str] = "2.16.840.1.113894."
+    # NOTE: ORACLE_OID_NAMESPACE removed - server-specific constants belong in quirks
+    # OID-specific constants should be defined in src/flext_ldif/servers/oid.py
 
-    class LdapServerType(StrEnum):
-        """LDAP server types supported by FLEXT ecosystem."""
+    # NOTE: LdapServerType removed - use ServerTypes instead (canonical source)
+    # LdapServerType was duplicate of ServerTypeEnum - consolidated to ServerTypes
 
-        ACTIVE_DIRECTORY = "active_directory"
-        OPENLDAP = "openldap"
-        APACHE_DIRECTORY = "apache_directory"
-        NOVELL_EDIRECTORY = "novell_edirectory"
-        IBM_TIVOLI = "ibm_tivoli"
-        GENERIC = "generic"
-        ORACLE_OID = "oracle_oid"
-        ORACLE_OUD = "oracle_oud"
-        DS_389 = "389ds"
+    class SortStrategy(StrEnum):
+        """Valid sorting strategies for LDIF entries (V2 type-safe enum)."""
+
+        HIERARCHY = "hierarchy"
+        DN = "dn"
+        ALPHABETICAL = "alphabetical"
+        SCHEMA = "schema"
+        CUSTOM = "custom"
+
+    class SortTarget(StrEnum):
+        """What to sort in LDIF data (V2 type-safe enum)."""
+
+        ENTRIES = "entries"
+        ATTRIBUTES = "attributes"
+        ACL = "acl"
+        SCHEMA = "schema"
+        COMBINED = "combined"
 
     class DictKeys:
-        """Dictionary keys used throughout flext-ldif for consistent data access."""
+        """Dictionary keys for LDIF entry data access - CORE KEYS ONLY per SRP.
 
-        # Core entry keys
+        IMPORTANT: This class contains ONLY core LDIF/entry keys.
+        Server-specific keys → QuirkMetadataKeys
+        ACL keys → AclKeys
+        """
+
+        # Core entry and LDIF keys (63+ usages)
         DN: Final[str] = "dn"
         ATTRIBUTES: Final[str] = "attributes"
         OBJECTCLASS: Final[str] = "objectClass"
         CN: Final[str] = "cn"
         OID: Final[str] = "oid"
 
-        # Service and initialization keys
-        SERVICE_NAMES: Final[str] = "service_names"
-        INITIALIZED: Final[str] = "initialized"
-        DATA: Final[str] = "data"
+        # NOTE: Removed server-specific keys (use QuirkMetadataKeys instead):
+        # SERVER_TYPE, IS_CONFIG_ENTRY, IS_TRADITIONAL_DIT
 
-        # Server-specific keys
+        # NOTE: Removed ACL keys (use AclKeys instead):
+        # ACL_ATTRIBUTE, ACI, ACCESS, OLCACCESS, NTSECURITYDESCRIPTOR, HAS_OID_ACLS
+
+        # NOTE: Removed service keys (use local constants in respective modules):
+        # SERVICE_NAMES, INITIALIZED, DATA
+
+    class QuirkMetadataKeys:
+        """Dictionary keys for quirk metadata and server-specific entry properties.
+
+        Used in Entry.metadata.extensions for server-specific attributes.
+        Consolidates server-specific entry properties per SRP.
+        """
+
+        # Quirk metadata keys (20 usages across server quirks)
         SERVER_TYPE: Final[str] = "server_type"
         IS_CONFIG_ENTRY: Final[str] = "is_config_entry"
         IS_TRADITIONAL_DIT: Final[str] = "is_traditional_dit"
 
-        # ACL-related keys
+    class AclKeys:
+        """Dictionary keys for ACL-related attributes and operations.
+
+        Used in ACL parsing, writing, and entry processing across server quirks.
+        Consolidates ACL-specific keys per SRP.
+        """
+
+        # ACL attribute keys (11 usages across server ACL quirks)
         ACL_ATTRIBUTE: Final[str] = "acl"
         ACI: Final[str] = "aci"
         ACCESS: Final[str] = "access"
         OLCACCESS: Final[str] = "olcAccess"
         NTSECURITYDESCRIPTOR: Final[str] = "nTSecurityDescriptor"
-        HAS_OID_ACLS: Final[str] = "has_oid_acls"
 
     class Format:
         """LDIF format specifications."""
@@ -328,44 +358,8 @@ class FlextLdifConstants(FlextConstants):
             DOMAIN,
         ])
 
-    # =============================================================================
-    # ERROR MESSAGE CONSTANTS
-    # =============================================================================
-
-    class ErrorMessages:
-        """Error message constants for validation."""
-
-        # DN Errors
-        DN_EMPTY_ERROR: Final[str] = "DN cannot be empty"
-        DN_INVALID_FORMAT_ERROR: Final[str] = "DN has invalid format"
-        DN_INVALID_CHARS_ERROR: Final[str] = "DN contains invalid characters"
-
-        # Attribute Errors
-        ATTRIBUTES_EMPTY_ERROR: Final[str] = "Attributes cannot be empty"
-        ATTRIBUTES_TYPE_ERROR: Final[str] = "Attributes must be a dictionary"
-        ATTRIBUTE_NAME_EMPTY_ERROR: Final[str] = "Attribute name cannot be empty"
-        ATTRIBUTE_NAME_ERROR: Final[str] = "Attribute name must be a string"
-        ATTRIBUTE_VALUES_ERROR: Final[str] = "Attribute values must be a list"
-        ATTRIBUTE_VALUE_TYPE_ERROR: Final[str] = "Attribute values must be strings"
-
-        # ObjectClass Errors
-        OBJECTCLASS_EMPTY_ERROR: Final[str] = "ObjectClass list cannot be empty"
-
-        # Entry Errors
-        ENTRY_DN_EMPTY_ERROR: Final[str] = "Entry DN cannot be empty"
-        ENTRIES_EMPTY_ERROR: Final[str] = "Entries cannot be empty"
-
-        # Base DN Errors
-        BASE_DN_EMPTY_ERROR: Final[str] = "Base DN cannot be empty"
-
-        # Data Errors
-        DATA_BATCH_EMPTY_ERROR: Final[str] = "Data batch cannot be empty"
-
-        # URL Errors
-        URL_EMPTY_ERROR: Final[str] = "URL cannot be empty"
-
-        # Format Errors
-        INVALID_LDIF_FORMAT_ERROR: Final[str] = "Invalid LDIF file format"
+    # NOTE: ErrorMessages class removed (removed unused error message constants)
+    # Error messages are now defined in appropriate validation modules
 
     # =============================================================================
     # ENUMS
@@ -403,27 +397,8 @@ class FlextLdifConstants(FlextConstants):
         DELETE = "delete"
         MODRDN = "modrdn"
 
-    class ServerTypeEnum(StrEnum):
-        """LDAP server types supported by FLEXT.
-
-        Single source of truth for server type enumerations.
-        Uses SHORT identifiers (oid, oud, etc.) which map to full names via
-        ServerTypes.LONG_NAMES mapping.
-        """
-
-        OID = "oid"  # Oracle Internet Directory
-        OUD = "oud"  # Oracle Unified Directory
-        OPENLDAP = "openldap"  # Generic OpenLDAP
-        OPENLDAP1 = "openldap1"  # OpenLDAP 1.x (slapd.conf)
-        OPENLDAP2 = "openldap2"  # OpenLDAP 2.x (cn=config)
-        ACTIVE_DIRECTORY = "active_directory"  # Microsoft Active Directory
-        APACHE_DIRECTORY = "apache_directory"  # Apache Directory Server
-        NOVELL_EDIRECTORY = "novell_edirectory"  # Novell eDirectory
-        IBM_TIVOLI = "ibm_tivoli"  # IBM Tivoli Directory Server
-        DS_389 = "389ds"  # Red Hat Directory Server (389ds)
-        GENERIC = "generic"  # Generic/RFC-only LDAP
-        RFC = "rfc"  # Pure RFC 2849 (no server-specific quirks)
-        RELAXED = "relaxed"  # Relaxed mode for broken/non-compliant LDIF
+    # NOTE: ServerTypeEnum removed - use ServerTypes instead (canonical source)
+    # ServerTypeEnum was duplicate of LdapServerType - consolidated to ServerTypes
 
     # =============================================================================
     # LITERAL TYPE CONSTANTS - All Literal types MUST be declared here
@@ -460,26 +435,8 @@ class FlextLdifConstants(FlextConstants):
             "modrdn",
         )
 
-        # Server types (includes short and long forms for compatibility)
-        SERVER_TYPES: Final[tuple[str, ...]] = (
-            # Short forms (primary - used in code)
-            "oid",
-            "oud",
-            "openldap",
-            "openldap1",
-            "openldap2",
-            "active_directory",
-            "apache_directory",
-            "generic",
-            "rfc",
-            "389ds",
-            "relaxed",
-            "novell_edirectory",
-            "ibm_tivoli",
-            # Long forms (for backward compatibility)
-            "oracle_oid",
-            "oracle_oud",
-        )
+        # NOTE: SERVER_TYPES removed - use ServerTypes class for server type identifiers
+        # All server types (short forms: oid, oud, openldap, etc.) are defined in ServerTypes class
 
         # Encoding types
         ENCODING_TYPES: Final[tuple[str, ...]] = (
@@ -1438,8 +1395,7 @@ class FlextLdifConstants(FlextConstants):
         OU_ORACLE: Final[str] = "ou=oracle"
         DC_ORACLE: Final[str] = "dc=oracle"
 
-        # Oracle OID namespace
-        ORACLE_OID_NAMESPACE: Final[str] = "2.16.840.1.113894."
+        # NOTE: ORACLE_OID_NAMESPACE removed - server-specific constant, use oid.py Constants instead
 
         # DN component patterns
         DN_EQUALS: Final[str] = "="
@@ -1606,6 +1562,50 @@ class FlextLdifConstants(FlextConstants):
             "openldap1",
             "openldap2",
         ])
+
+        @staticmethod
+        def normalize(server_type: str) -> str:
+            """Normalize server type aliases to canonical form.
+
+            Converts aliases like 'oracle_oid' → 'oid', 'oracle_oud' → 'oud'.
+
+            Args:
+                server_type: Server type string (may be alias)
+
+            Returns:
+                Canonical server type
+
+            Example:
+                >>> ServerTypes.normalize("oracle_oid")
+                'oid'
+                >>> ServerTypes.normalize("oid")
+                'oid'
+
+            """
+            return FlextLdifConstants.ServerTypes.FROM_LONG.get(
+                server_type, server_type
+            )
+
+        @staticmethod
+        def matches(server_type: str, *canonical_types: str) -> bool:
+            """Check if server_type matches any of the canonical types (handles aliases).
+
+            Args:
+                server_type: Server type to check
+                *canonical_types: Canonical type(s) to match against
+
+            Returns:
+                True if server_type (or its canonical form) matches any canonical_type
+
+            Example:
+                >>> ServerTypes.matches("oracle_oid", "oid", "oud")
+                True
+                >>> ServerTypes.matches("rfc", "oid", "oud")
+                False
+
+            """
+            normalized = FlextLdifConstants.ServerTypes.normalize(server_type)
+            return normalized in canonical_types or server_type in canonical_types
 
     # =============================================================================
     # OPERATION CONSTANTS - Filter types, modes, categories, data types

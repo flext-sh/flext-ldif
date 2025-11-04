@@ -26,6 +26,16 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
     server_type = FlextLdifConstants.ServerTypes.NOVELL
     priority = 10
 
+    # === STANDARDIZED CONSTANTS FOR AUTO-DISCOVERY ===
+    class Constants:
+        """Standardized constants for Novell eDirectory quirk."""
+
+        CANONICAL_NAME: ClassVar[str] = "novell_edirectory"
+        ALIASES: ClassVar[frozenset[str]] = frozenset(["novell_edirectory", "novell"])
+        PRIORITY: ClassVar[int] = 30
+        CAN_NORMALIZE_FROM: ClassVar[frozenset[str]] = frozenset(["novell_edirectory"])
+        CAN_DENORMALIZE_TO: ClassVar[frozenset[str]] = frozenset(["novell_edirectory", "rfc"])
+
     def __init__(self) -> None:
         """Initialize Novell quirks."""
         super().__init__()
@@ -124,6 +134,9 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
         """Novell eDirectory schema quirk."""
 
         server_type: ClassVar[str] = FlextLdifConstants.ServerTypes.NOVELL
+        priority: ClassVar[int] = 18
+
+        server_type: ClassVar[str] = FlextLdifConstants.ServerTypes.NOVELL
         priority: ClassVar[int] = 15
 
         NOVELL_OID_PATTERN: ClassVar[re.Pattern[str]] = re.compile(
@@ -176,9 +189,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                 )
             return False
 
-        # --------------------------------------------------------------------- #
         # INHERITED METHODS (from FlextLdifServersRfc.Schema)
-        # --------------------------------------------------------------------- #
         # These methods are inherited from RFC base class:
         # - parse_attribute(): Uses RFC parser
         # - parse_objectclass(): Uses RFC parser
@@ -294,11 +305,9 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                 FlextResult with SchemaObjectClass marked with Novell metadata
 
             """
-            metadata = FlextLdifModels.QuirkMetadata.create_for_quirk(
-                "novell_edirectory"
+            return FlextLdifServersRfc.SchemaConverter.set_quirk_type(
+                rfc_data, self.server_type
             )
-            result_data = rfc_data.model_copy(update={"metadata": metadata})
-            return FlextResult[FlextLdifModels.SchemaObjectClass].ok(result_data)
 
         # Nested class references for Schema - allows Schema().Entry() pattern
         # These are references to the outer class definitions for proper architecture
@@ -612,9 +621,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
         def model_post_init(self, _context: object, /) -> None:
             """Initialize eDirectory entry quirk."""
 
-        # --------------------------------------------------------------------- #
         # OVERRIDDEN METHODS (from FlextLdifServersBase.Entry)
-        # --------------------------------------------------------------------- #
         # These methods override the base class with Novell eDirectory-specific logic:
         # - can_handle_entry(): Detects eDirectory entries by DN/attributes
         # - process_entry(): Normalizes eDirectory entries with metadata
@@ -680,7 +687,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                     processed_attributes[attr_name] = processed_values
 
                 # Add metadata attributes
-                processed_attributes[FlextLdifConstants.DictKeys.SERVER_TYPE] = [
+                processed_attributes[FlextLdifConstants.QuirkMetadataKeys.SERVER_TYPE] = [
                     FlextLdifConstants.LdapServers.NOVELL_EDIRECTORY
                 ]
                 processed_attributes[FlextLdifConstants.DictKeys.OBJECTCLASS] = (
@@ -709,7 +716,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             try:
                 # Work directly with LdifAttributes
                 normalized_attributes = entry_data.attributes.attributes.copy()
-                normalized_attributes.pop(FlextLdifConstants.DictKeys.SERVER_TYPE, None)
+                normalized_attributes.pop(FlextLdifConstants.QuirkMetadataKeys.SERVER_TYPE, None)
 
                 # Create new LdifAttributes directly
                 new_attrs = FlextLdifModels.LdifAttributes(

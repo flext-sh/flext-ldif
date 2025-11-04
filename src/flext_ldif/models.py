@@ -235,11 +235,11 @@ class FlextLdifModels(FlextModels):
         @classmethod
         def create(
             cls,
-            data: FlextLdifTypes.Entry.EntryCreateData,
+            data: dict[str, object],
         ) -> FlextResult[FlextLdifModels.AclPermissions]:
             """Create an AclPermissions instance from data."""
             try:
-                # Create mutable copy of data (may be Mapping from tests)
+                # Create mutable copy of data
                 data_mutable: dict[str, object] = dict(data)
 
                 # Handle permissions list format from tests
@@ -2055,6 +2055,10 @@ class FlextLdifModels(FlextModels):
         write_removed_attributes_as_comments: bool = Field(
             default=False,
             description="If True, writes removed attributes as comments in LDIF output.",
+        )
+        ldif_changetype: str | None = Field(
+            default=None,
+            description="If set to 'modify', writes entries in LDIF modify add format (changetype: modify). Otherwise uses add format.",
         )
 
     class AclStatistics(FlextModels.Value):

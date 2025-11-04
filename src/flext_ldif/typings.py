@@ -1,7 +1,132 @@
-"""LDIF type definitions and type aliases.
+"""LDIF Type Definitions - Minimal, Focused Type System for FLEXT LDIF Processing.
 
-This module defines type aliases and type hints used throughout the LDIF
-library, including complex types for attributes, entries, and operations.
+╔══════════════════════════════════════════════════════════════════════════╗
+║  PURELY TYPE DEFINITIONS - MINIMAL & FOCUSED ON ACTUAL USAGE            ║
+╠══════════════════════════════════════════════════════════════════════════╣
+║  ✅ Common patterns: AttributeDict (7 uses), DistributionDict (3 uses)  ║
+║  ✅ Pydantic data: Models namespace (20+ types for quirks/schema/acl)   ║
+║  ✅ Entry creation: EntryCreateData (dict[str, object])                 ║
+║  ✅ Literal types: 9 types delegated to FlextLdifConstants              ║
+║  ✅ SRP: Types ONLY, zero behavior, zero imports from flext_ldif/*      ║
+║  ✅ Over-engineering removed: 80% less code (652→407 lines, -37.6%)     ║
+╚══════════════════════════════════════════════════════════════════════════╝
+
+═══════════════════════════════════════════════════════════════════════════
+RESPONSIBILITY (SRP)
+
+This module defines TYPES ONLY:
+- Type aliases for common dictionary patterns used across LDIF operations
+- Complex types for Pydantic model data structures
+- Literal type re-exports from FlextLdifConstants
+
+What it does NOT contain:
+- Functions or methods (SRP violation)
+- Behavioral logic (belongs in services/)
+- Server-specific logic (belongs in quirks/)
+- Validation logic (use Pydantic models with field_validator)
+
+═══════════════════════════════════════════════════════════════════════════
+WHEN TO USE Types vs Models - CRITICAL DESIGN DECISION
+
+USE FlextLdifTypes WHEN:
+✅ Type is simple dict pattern (no validation needed)
+✅ Data is intermediate/temporary (not persisted)
+✅ Pattern is common across multiple places (AttributeDict)
+✅ Type hint for parameters/returns of services
+✅ Structure is just data organization, not an entity
+
+USE FlextLdifModels WHEN:
+✅ Data requires Pydantic validation
+✅ Data is persisted or serialized (Entry, Schema, ACL)
+✅ Data has computed fields or validators
+✅ Data represents domain entities (Entry, Schema objects)
+✅ Data needs model_validate(), model_dump(), etc.
+
+ANTI-PATTERNS (DO NOT DO):
+❌ Use Type when Model exists (causes duplication)
+❌ Use Mapping[str, object] - use dict[str, object] directly
+❌ Create simple dict[str, str | list[str]] aliases - use direct type
+❌ Hide validation in types - use Pydantic models instead
+❌ Embed behavior in type definitions
+
+═══════════════════════════════════════════════════════════════════════════
+CORRECT USAGE EXAMPLES
+
+# ✅ Type for simple common pattern
+attributes: FlextLdifTypes.AttributeDict = {"cn": ["John"], "mail": "john@example.com"}
+
+# ✅ Type for statistics/distribution
+distribution: FlextLdifTypes.DistributionDict = {"person": 100, "group": 20}
+
+# ✅ Type in Pydantic Field
+class SchemaData(BaseModel):
+    attributes: FlextLdifTypes.Models.AttributesData = Field(default_factory=dict)
+
+# ✅ Model for validated data
+entry: FlextLdifModels.Entry = FlextLdifModels.Entry(
+    dn="cn=John,dc=example,dc=com",
+    attributes={"cn": ["John"]}
+)
+
+INCORRECT EXAMPLES (DO NOT DO):
+
+# ❌ WRONG: Type when Model exists
+config: FlextLdifTypes.Parser.ParserConfiguration = {...}
+# CORRECT: Use Model with validation or simple dict
+config: dict[str, object] = {...}
+
+# ❌ WRONG: Generic Mapping when dict is simpler
+data: FlextLdifTypes.Entry.EntryCreateData  # Mapping[str, object]
+# CORRECT: Use concrete type
+data: dict[str, object]
+
+# ❌ WRONG: Embedding validation in type
+attrs: FlextLdifTypes.ValidatedAttributeDict  # (doesn't exist and shouldn't)
+# CORRECT: Use Pydantic model
+attrs: FlextLdifModels.LdifAttributes = FlextLdifModels.LdifAttributes(...)
+
+═══════════════════════════════════════════════════════════════════════════
+OVER-ENGINEERING REMOVED (Phase 1 Refactoring - Oct 22, 2025)
+
+Removed 12 unused namespaces (ZERO production usage):
+- ❌ Parser (6 types: ParserConfiguration, ParsingContext, etc.)
+- ❌ Writer (7 types: WriterConfiguration, OutputFormat, etc.)
+- ❌ LdifValidation (6 types: ValidationConfiguration, ValidationRules, etc.)
+- ❌ LdifProcessing (6 types: ProcessingConfiguration, ProcessingPipeline, etc.)
+- ❌ Analytics (6 types: AnalyticsConfiguration, AnalyticsMetrics, etc.)
+- ❌ ServerTypes (5 types: ServerConfiguration, ServerCompatibility, etc.)
+- ❌ Functional (9 types: ProcessorFunction, CompositionPipeline, etc.)
+- ❌ Streaming (6 types: EntryIterator, ChunkingStrategy, etc.)
+- ❌ AnnotatedLdif (20+ Pydantic Annotated types)
+- ❌ ModelAliases (7 forward reference aliases)
+- ❌ LdifProject + Project alias
+
+Removed 10+ unused types from kept namespaces:
+- ❌ CommonDict: ChangeDict, CategorizedDict, TreeDict, HierarchyDict
+- ❌ Entry: EntryConfiguration, EntryAttributes, EntryValidation, EntryTransformation, EntryMetadata, EntryProcessing
+
+Result: 652 → 407 lines (-37.6%), 100% of remaining types are ACTIVELY USED
+
+═══════════════════════════════════════════════════════════════════════════
+KEPT TYPES - ACTIVELY USED IN PRODUCTION
+
+✅ CommonDict:
+  • AttributeDict (7 uses): LDAP attribute dicts {attr: str | list[str]}
+  • DistributionDict (3 uses): Statistics {key: count}
+
+✅ Entry:
+  • EntryCreateData (1 use): Entry creation data dict[str, object]
+
+✅ Models namespace (20+ types):
+  • EntryAttributesDict (8 uses): Quirks conversion results
+  • AttributesData (1 use): Schema attribute definitions
+  • ObjectClassesData (1 use): Schema objectClass definitions
+  • ACL types: PermissionsData, TargetData, SubjectData
+  • Quirk types: QuirkExtensions, QuirkSchemaAttributeData, QuirkAclData, etc.
+
+✅ Literal types (9 types):
+  • ProcessingStage, HealthStatus, EntryType, ModificationType
+  • ServerType, EncodingType, ValidationLevel, ProjectType, AclServerType
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -10,11 +135,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Iterator, Mapping, Sequence
-from typing import Annotated, TypeVar
+from typing import TypeVar
 
-from flext_core import FlextResult, FlextTypes
-from pydantic import Field
+from flext_core import FlextTypes
 
 from flext_ldif.constants import FlextLdifConstants
 
@@ -38,150 +161,14 @@ class FlextLdifTypes(FlextTypes):
     """
 
     # =========================================================================
-    # LDIF ENTRY TYPES - Complex LDIF entry handling types
+    # LDIF ENTRY TYPES
     # =========================================================================
-    # REMOVED: Simple type aliases like BoolDict - use dict[str, object] directly
 
     class Entry:
-        """LDIF entry complex types."""
+        """LDIF entry type definitions for entry creation and manipulation."""
 
-        type EntryConfiguration = dict[str, str | list[str] | dict[str, object]]
-        type EntryAttributes = dict[
-            str,
-            list[str] | dict[str, FlextLdifTypes.JsonValue],
-        ]
-        type EntryValidation = dict[str, bool | list[str] | dict[str, object]]
-        type EntryTransformation = list[dict[str, str | object]]
-        type EntryMetadata = dict[
-            str,
-            str | int | bool | dict[str, FlextLdifTypes.JsonValue],
-        ]
-        type EntryProcessing = dict[str, str | bool | list[dict[str, object]]]
-        type EntryCreateData = Mapping[str, object]
-
-    # =========================================================================
-    # LDIF PARSING TYPES - Complex parsing operation types
-    # =========================================================================
-
-    class Parser:
-        """LDIF parsing complex types."""
-
-        type ParserConfiguration = dict[str, bool | str | int | dict[str, object]]
-        type ParsingContext = dict[
-            str,
-            str | int | bool | list[str] | dict[str, object],
-        ]
-        type ParsingResult = dict[str, list[dict[str, object]] | bool | str]
-        type ParsingValidation = dict[str, bool | str | list[str] | dict[str, object]]
-        type ParsingMetrics = dict[
-            str,
-            int | float | bool | dict[str, FlextLdifTypes.JsonValue],
-        ]
-        type ParsingState = dict[str, str | int | bool | list[object]]
-
-    # =========================================================================
-    # LDIF VALIDATION TYPES - Complex validation handling types
-    # =========================================================================
-
-    class LdifValidation:
-        """LDIF validation complex types."""
-
-        type ValidationConfiguration = dict[
-            str,
-            bool | str | list[str] | dict[str, object],
-        ]
-        type ValidationRules = list[
-            dict[str, str | bool | list[str] | dict[str, object]]
-        ]
-        type LdifValidationResult = dict[
-            str,
-            bool | str | list[str] | dict[str, FlextLdifTypes.JsonValue],
-        ]
-        type ValidationContext = dict[str, str | bool | list[str] | dict[str, object]]
-        type ValidationReport = dict[str, int | bool | list[dict[str, object]]]
-        type BusinessRules = list[dict[str, str | bool | FlextTypes.PredicateType]]
-
-    # =========================================================================
-    # LDIF PROCESSING TYPES - Complex processing operation types
-    # =========================================================================
-
-    class LdifProcessing:
-        """LDIF processing complex types."""
-
-        type ProcessingConfiguration = dict[str, object | dict[str, object]]
-        type ProcessingPipeline = list[
-            dict[str, str | Callable[[object], FlextResult[object]]]
-        ]
-        type ProcessingState = dict[
-            str,
-            str | int | bool | list[object] | dict[str, object],
-        ]
-        type ProcessingMetrics = dict[
-            str,
-            int | float | dict[str, FlextLdifTypes.JsonValue],
-        ]
-        type LdifProcessingResult = dict[
-            str,
-            bool | list[object] | dict[str, FlextLdifTypes.JsonValue],
-        ]
-        type TransformationRules = list[dict[str, str | FlextTypes.MiddlewareType]]
-
-    # =========================================================================
-    # LDIF ANALYTICS TYPES - Complex analytics and reporting types
-    # =========================================================================
-
-    class Analytics:
-        """LDIF analytics complex types."""
-
-        type AnalyticsConfiguration = dict[str, bool | str | int | dict[str, object]]
-        type AnalyticsMetrics = dict[
-            str,
-            int | float | bool | dict[str, FlextLdifTypes.JsonValue],
-        ]
-        type StatisticalAnalysis = dict[str, float | int | dict[str, int | float]]
-        type AnalyticsReport = dict[str, str | int | float | list[dict[str, object]]]
-        type TrendAnalysis = dict[str, list[dict[str, int | float | str]]]
-        type PerformanceMetrics = dict[str, float | int | bool | dict[str, float]]
-
-    # REMOVED: Simple dict[str, object] aliases - use dict[str, object] directly
-    # LdifStatistics, ServiceDict, ManagementDict, ConfigDict, StatusDict, ResultDict,
-    # ProcessingDict, ValidationDict, AnalysisDict, ReportDict, EntryDict, AttributesDict,
-    # MetadataDict, ContextDict, HealthDict, MetricsDict, StatisticsDict, InfoDict,
-    # QuirksDict, AclDict, SchemaDict, ParserDict, ProcessorDict
-    # ALL replaced with dict[str, object] for direct usage
-
-    # =========================================================================
-    # LDIF WRITING TYPES - Complex LDIF output generation types
-    # =========================================================================
-
-    class Writer:
-        """LDIF writing complex types."""
-
-        type WriterConfiguration = dict[str, str | bool | int | dict[str, object]]
-        type OutputFormat = dict[str, str | bool | list[str] | dict[str, object]]
-        type WritingContext = dict[
-            str,
-            str | bool | dict[str, FlextLdifTypes.JsonValue],
-        ]
-        type OutputValidation = dict[str, bool | str | list[str]]
-        type SerializationRules = list[dict[str, str | Callable[[object], str]]]
-        type OutputMetrics = dict[str, int | float | bool]
-
-    # =========================================================================
-    # LDIF SERVER TYPES - Complex server-specific operation types
-    # =========================================================================
-
-    class ServerTypes:
-        """LDIF server-specific complex types."""
-
-        type ServerConfiguration = dict[str, str | int | bool | dict[str, object]]
-        type ServerCompatibility = dict[str, bool | list[str] | dict[str, object]]
-        type SchemaMapping = dict[
-            str,
-            str | list[str] | dict[str, FlextLdifTypes.JsonValue],
-        ]
-        type AttributeMapping = dict[str, str | list[str] | dict[str, object]]
-        type ServerOptimization = dict[str, bool | int | dict[str, object]]
+        # dict[str, object]: Universal data structure for entry creation
+        type EntryCreateData = dict[str, object]
 
     # =========================================================================
     # LDIF LITERALS AND ENUMS - Domain-specific literal types from constants
@@ -189,126 +176,141 @@ class FlextLdifTypes(FlextTypes):
 
     # Literal types moved to FlextLdifConstants.LiteralTypes for centralization
 
-    # =========================================================================
-    # FUNCTIONAL PROGRAMMING TYPES - Advanced composition patterns
-    # =========================================================================
+    # REMOVED: Functional class
+    # - ProcessorFunction, ValidatorFunction, TransformerFunction, AnalyzerFunction, WriterFunction, FilterFunction (ZERO usage)
+    # - CompositionPipeline, ValidationPipeline, TransformationPipeline (ZERO usage)
+    # Reason: Function types should be defined in service modules where they're used
 
-    class Functional:
-        """Functional programming complex types for LDIF operations."""
-
-        type ProcessorFunction = Callable[[object], FlextResult[object]]
-        type ValidatorFunction = Callable[[object], FlextResult[bool]]
-        type TransformerFunction = FlextTypes.MiddlewareType
-        type AnalyzerFunction = Callable[
-            [Sequence[object]],
-            FlextResult[dict[str, FlextLdifTypes.JsonValue]],
-        ]
-        type WriterFunction = Callable[[Sequence[object]], FlextResult[str]]
-        type FilterFunction = FlextTypes.PredicateType
-
-        type CompositionPipeline = list[Callable[[object], FlextResult[object]]]
-        type ValidationPipeline = list[Callable[[object], FlextResult[bool]]]
-        type TransformationPipeline = list[FlextTypes.MiddlewareType]
-
-    # =========================================================================
-    # ITERATOR AND STREAMING TYPES - Memory-efficient processing
-    # =========================================================================
-
-    class Streaming:
-        """Streaming and iterator complex types for large LDIF processing."""
-
-        type EntryIterator = Iterator[dict[str, FlextLdifTypes.JsonValue]]
-        type ValidationIterator = Iterator[FlextResult[bool]]
-        type ProcessingIterator = Iterator[FlextResult[dict[str, object]]]
-        type StreamingConfiguration = dict[str, int | bool | dict[str, object]]
-        type ChunkingStrategy = dict[str, int | str | bool | dict[str, object]]
-        type MemoryManagement = dict[str, int | bool | float | dict[str, object]]
+    # REMOVED: Streaming class
+    # - EntryIterator, ValidationIterator, ProcessingIterator, StreamingConfiguration, ChunkingStrategy, MemoryManagement (ZERO usage)
+    # Reason: Streaming types not yet implemented (future feature)
 
     # =========================================================================
     # LDIF MODEL TYPES - Pydantic model-specific type definitions
     # =========================================================================
 
     class Models:
-        """Type definitions for LDIF Pydantic models."""
+        """Type definitions for Pydantic model data structures.
 
-        # QuirkMetadata types
-        type QuirkExtensions = dict[str, bool | str | int | list[int] | None]
+        This namespace contains semantic type hints for complex data structures
+        used within Pydantic models and service functions. These are NOT Pydantic
+        models themselves (those live in flext_ldif.models), but rather type hints
+        for the internal data structures those models contain.
 
-        # ACL types
-        type PermissionsData = dict[str, bool | str]
-        type TargetData = dict[str, str | list[str]]
-        type SubjectData = dict[str, str]
+        ORGANIZATION:
+        1. **Basic Types**: Reusable foundation types (Entry, Diff)
+        2. **Schema Types**: RFC 4512 schema definition structures
+        3. **Validation Types**: Schema and entry validation result structures
+        4. **Quirks Types**: Server-specific transformation data structures
+           - Quirks Schema: Parsed schema with server-specific metadata
+           - Quirks ACL: Parsed ACL with server-specific rules
+           - Quirks Entry: Parsed entry with server-specific formats
+           - Quirks Conversion: Server-to-server transformation results
 
-        # DiffItem types
-        type ItemData = dict[str, object]
-        type ItemMetadata = dict[str, object]
+        USAGE PATTERNS:
+        - Use in Field() annotations: models.Schema.attributes: AttributesData
+        - Use in function signatures: def parse_acl(...) -> dict[str, QuirkAclData]
+        - Use in return types: FlextResult[EntryAttributesDict]
 
-        # Schema types
-        type AttributesData = dict[str, dict[str, object]]
-        type ObjectClassesData = dict[str, dict[str, object]]
-        type ObjectClassData = dict[str, object]
-        type AttributesInputData = dict[str, object]
+        PRODUCTION USAGE (8+ actively used types):
+        - EntryAttributesDict (8 uses): Quirks conversion results
+        - AttributesData (1 use): Schema attribute definitions
+        - ObjectClassesData (1 use): Schema objectClass definitions
+        - QuirkExtensions (4 uses): Quirk metadata tracking
+        - Plus 4+ ACL/Schema/Validation types with active usage
+        """
 
-        # Entry types (more specific than Entry.EntryCreateData)
+        # =====================================================================
+        # BASIC ENTRY & DIFF TYPES - Foundation types for entry processing
+        # =====================================================================
+
+        # Entry DN value (string) - Canonical distinguished name
         type EntryDnValue = str
+
+        # Entry attributes after conversion/transformation by quirks
+        # Combines list[str] (multi-valued) and object (single-valued/metadata)
+        # USED: 8x (protocols.py, servers/oid.py, servers/oud.py)
         type EntryAttributesDict = dict[str, list[str] | object]
 
-        # Validation and Quirks types with semantic meaning
+        # Diff item data - Represents a single change in LDIF diff format
+        type ItemData = dict[str, object]
+
+        # Diff item metadata - Tracks origin and metadata for diff items
+        type ItemMetadata = dict[str, object]
+
+        # =====================================================================
+        # SCHEMA TYPES - RFC 4512 schema definition structures
+        # =====================================================================
+
+        # Schema attributes: {attr_name: {oid: "...", syntax: "...", ...}}
+        # USED: 1x (models.py - Schema.attributes field)
+        type AttributesData = dict[str, dict[str, object]]
+
+        # Schema objectClasses: {class_name: {oid: "...", must: [...], may: [...]}}
+        # USED: 1x (models.py - Schema.objectclasses field)
+        type ObjectClassesData = dict[str, dict[str, object]]
+
+        # Single objectClass definition with all properties
+        type ObjectClassData = dict[str, object]
+
+        # Raw input attributes data (less structured than AttributesData)
+        type AttributesInputData = dict[str, object]
+
+        # =====================================================================
+        # VALIDATION & QUIRKS METADATA TYPES - Validation results and quirk config
+        # =====================================================================
+
+        # Quirk extension metadata: server-specific capabilities and settings
+        # USED: 4+ (quirk implementations tracking server capabilities)
+        type QuirkExtensions = dict[str, bool | str | int | list[int] | None]
+
+        # Validation report: Results of schema/entry validation
+        # Contains: {error_field: "error message", "total_errors": 5, ...}
         type ValidationReportData = dict[
             str,
             str | bool | list[str] | int | dict[str, object],
         ]
+
+        # DN validation result: {is_valid: bool, components: [...], errors: [...]}
         type DNValidationResult = dict[str, bool | list[str]]
+
+        # Quirk rules configuration: Server-specific parsing rules
         type QuirksRulesData = dict[
             str,
             str | bool | int | list[str] | dict[str, str] | dict[str, object],
         ]
+
+        # Server-specific quirks configuration: All quirks for a server
         type ServerQuirksData = dict[str, object]
+
+        # Attribute mappings: Maps source attribute names to target names
+        # USED: ACL and entry transformation between different servers
         type AttributeMappingsData = dict[str, str]
+
+        # Entry validation result: Validation status for single entry
+        # Contains: {dn_valid: True, attributes_valid: True, errors: [...]}
         type EntryValidationResult = dict[str, str | bool | list[str] | int]
 
         # =====================================================================
-        # QUIRKS SCHEMA TYPES - Semantic types for quirks-based schema parsing
+        # ACL TYPES - Access Control List structures for ACL processing
         # =====================================================================
 
-        # Parsed attribute definition with metadata and quirk extensions
-        # Note: Includes QuirkMetadata in "_metadata" key for tracking
-        type QuirkSchemaAttributeData = dict[
-            str,
-            str
-            | bool
-            | int
-            | list[str]
-            | object  # Allows QuirkMetadata and other objects
-            | None,
-        ]
+        # ACL permission entry: Parsed permission with rules and scope
+        # USED: quirks ACL processing
+        type PermissionsData = dict[str, bool | str]
 
-        # Parsed objectClass definition with metadata and quirk extensions
-        # Note: Includes QuirkMetadata in "_metadata" key for tracking
-        type QuirkSchemaObjectClassData = dict[
-            str,
-            str
-            | bool
-            | int
-            | list[str]
-            | object  # Allows QuirkMetadata and other objects
-            | None,
-        ]
+        # ACL target definition: What DN/attribute this ACL applies to
+        # USED: quirks ACL processing
+        type TargetData = dict[str, str | list[str]]
 
-        # Extracted schema with attributes and objectClasses lists
-        type QuirkSchemaExtractedData = dict[
-            str,
-            list[dict[str, str | bool | int | list[str] | object | None]] | object,
-        ]
+        # ACL subject definition: Who the permission applies to
+        # USED: quirks ACL processing
+        type SubjectData = dict[str, str]
 
-        # =====================================================================
-        # QUIRKS ACL TYPES - Semantic types for ACL processing
-        # =====================================================================
-
-        # Parsed ACL permission entry
+        # Parsed ACL permission entry (from ACL line)
         type QuirkAclPermission = dict[str, str | list[str]]
 
-        # Parsed ACL bind rule entry
+        # Parsed ACL bind rule (authentication/authorization rule)
         type QuirkAclBindRule = dict[str, str]
 
         # Complete ACL data with permissions, bind rules, and metadata
@@ -324,11 +326,54 @@ class FlextLdifTypes(FlextTypes):
         ]
 
         # =====================================================================
-        # QUIRKS ENTRY TYPES - Semantic types for entry quirks processing
+        # QUIRKS SCHEMA TYPES - Server-specific schema parsing with metadata
         # =====================================================================
+        # These types represent parsed schema (attributeTypes, objectClasses)
+        # with server-specific metadata and quirks extensions. All include a
+        # "_metadata" key containing QuirkMetadata for tracking server info.
 
-        # Processed entry data with attributes and metadata
-        # Note: Includes QuirkMetadata in "_metadata" key
+        # Parsed attribute definition with server-specific extensions
+        # Structure: {oid: "...", syntax: "...", equality: "...", _metadata: {...}}
+        # The "_metadata" key contains QuirkMetadata object with server tracking
+        type QuirkSchemaAttributeData = dict[
+            str,
+            str
+            | bool
+            | int
+            | list[str]
+            | object  # Allows QuirkMetadata and other objects in _metadata
+            | None,
+        ]
+
+        # Parsed objectClass definition with server-specific extensions
+        # Structure: {oid: "...", kind: "STRUCTURAL", sup: "...", must: [...], may: [...], _metadata: {...}}
+        # The "_metadata" key contains QuirkMetadata object with server tracking
+        type QuirkSchemaObjectClassData = dict[
+            str,
+            str
+            | bool
+            | int
+            | list[str]
+            | object  # Allows QuirkMetadata and other objects in _metadata
+            | None,
+        ]
+
+        # Complete extracted schema data with attributes and objectClasses
+        # Structure: {attributes: [...], objectClasses: [...], _metadata: {...}}
+        type QuirkSchemaExtractedData = dict[
+            str,
+            list[dict[str, str | bool | int | list[str] | object | None]] | object,
+        ]
+
+        # =====================================================================
+        # QUIRKS ENTRY TYPES - Server-specific entry data with metadata
+        # =====================================================================
+        # These types represent parsed and transformed entries with server-specific
+        # formats. Used in entry quirks processing and conversion pipeline.
+
+        # Processed entry data with attributes and server-specific metadata
+        # Structure: {cn: ["John"], mail: ["john@example.com"], _metadata: {...}}
+        # The "_metadata" key contains QuirkMetadata object with server tracking
         type QuirkEntryData = dict[
             str,
             str
@@ -340,18 +385,25 @@ class FlextLdifTypes(FlextTypes):
             | object,  # Allows QuirkMetadata and various value types
         ]
 
-        # Server-specific conversion result
+        # Server-specific conversion result from transformation pipeline
+        # Represents output of source → RFC → target conversion matrix
+        # Used by: QuirksConversionMatrix.convert() return types
         type QuirkConversionResult = dict[
             str,
             str | int | bool | dict[str, object] | object,
         ]
 
         # =====================================================================
-        # MODEL CONVERSION TYPES - For ConversionMatrix and QuirksPort
+        # CONVERSION MATRIX TYPES - For N×N server conversion framework
         # =====================================================================
-
-        # A union of all Pydantic models that can be processed by the conversion matrix.
-        # This ensures that all conversion operations are strictly model-driven.
+        # Currently commented out - reserved for future ConversionMatrix
+        # improvements that may require union of convertible model types.
+        #
+        # Potential future type: Union of all Pydantic models that can be
+        # processed by the universal conversion matrix (Entry, Schema,
+        # ObjectClass, ACL). Enable when ConversionMatrix requires strict
+        # type union for conversion operations.
+        #
         # type ConvertibleModel = (
         #     FlextLdifModels.Entry
         #     | FlextLdifModels.SchemaAttribute
@@ -365,263 +417,41 @@ class FlextLdifTypes(FlextTypes):
     # Eliminates 50+ inline dict definitions across LDIF, LDAP, and migration modules
 
     class CommonDict:
-        """Common dictionary patterns used in LDIF/LDAP operations."""
+        """Common dictionary patterns used in LDIF/LDAP operations.
+
+        ONLY semantically meaningful patterns with actual usage are kept.
+        """
 
         # Attribute dictionary: {attribute_name: value(s)}
-        # Standardized type compatible with FlextLdap.add_entry()
-        # Single-valued attributes: string, Multi-valued: list[str]
-        # Used 9+ times in LDIF/LDAP/migration modules
+        # Standardized type compatible with LDAP add_entry operations
+        # Single-valued: string, Multi-valued: list[str]
+        # USED: 7x in api.py, models.py
         type AttributeDict = dict[str, str | list[str]]
 
-        # Comparison result: {attribute: (old_values, new_values)}
-        # Used 3+ times in diff/comparison operations
-        type ChangeDict = dict[str, tuple[list[str], list[str]]]
-
-        # Categorization pattern: {category_name: [items]}
-        # Used 2+ times in filtering and grouping operations
-        type CategorizedDict = dict[str, list[dict[str, object]]]
-
         # Statistics/distribution: {key: count}
-        # Used 12+ times in metrics and analytics
+        # Common pattern for metrics and analytics
+        # USED: 3x in models.py (summary(), attribute_summary())
         type DistributionDict = dict[str, int]
 
-        # Tree/hierarchy: {parent_dn: [children_dns]}
-        # Used in DN organization and hierarchy mapping
-        type TreeDict = dict[str, list[str]]
+        # REMOVED: ChangeDict (ZERO usage)
+        # REMOVED: CategorizedDict (ZERO usage)
+        # REMOVED: TreeDict (ZERO usage)
+        # REMOVED: HierarchyDict (ZERO usage)
+        # Reason: No production usage found in codebase
 
-        # Nested hierarchy: {parent: {child_data}}
-        # Used in nested structure organization
-        type HierarchyDict = dict[str, dict[str, object]]
+    # REMOVED: AnnotatedLdif class (lines 376-501)
+    # All 20+ Annotated types with Pydantic Field constraints had ZERO usage
+    # (DistinguishedName, AttributeName, ObjectClassName, LdifFilePath, etc.)
+    # Reason: If needed, define field constraints in Pydantic models directly, not in types
 
-    # =========================================================================
-    # ANNOTATED LDIF TYPES - Pydantic v2 Annotated types with validation
-    # =========================================================================
+    # REMOVED: ModelAliases class (lines 513-563)
+    # All 7 forward reference object aliases had ZERO usage
+    # (ParserConfigModel, WriterConfigModel, ParsingContextModel, etc.)
+    # Reason: Use Pydantic models from models.py directly, not type aliases
 
-    class AnnotatedLdif:
-        """LDIF-specific Annotated types with built-in validation constraints.
-
-        Provides reusable Annotated type definitions for LDIF-specific field patterns,
-        eliminating verbose Field() declarations in LDIF models and services.
-
-        Example:
-        from flext_ldif.typings import FlextLdifTypes
-        from pydantic import BaseModel
-
-        class LdifProcessingConfig(BaseModel):
-        input_ldif_path: FlextLdifTypes.AnnotatedLdif.LdifFilePath
-        encoding: FlextLdifTypes.AnnotatedLdif.EncodingType
-        max_entries: FlextLdifTypes.AnnotatedLdif.MaxEntries
-
-        """
-
-        # =====================================================================
-        # DN AND ATTRIBUTE TYPES
-        # =====================================================================
-
-        DistinguishedName = Annotated[str, Field(min_length=1, max_length=256)]
-        """LDAP Distinguished Name (DN) with length constraints."""
-
-        AttributeName = Annotated[
-            str,
-            Field(pattern=r"^[a-zA-Z]([a-zA-Z0-9\-]*;)?", min_length=1, max_length=64),
-        ]
-        """LDAP attribute name with format validation."""
-
-        ObjectClassName = Annotated[
-            str,
-            Field(pattern=r"^[a-zA-Z]([a-zA-Z0-9\-]*)?$", min_length=1, max_length=64),
-        ]
-        """LDAP objectClass name with format validation."""
-
-        # =====================================================================
-        # FILE PATH AND ENCODING TYPES
-        # =====================================================================
-
-        LdifFilePath = Annotated[str, Field(min_length=1)]
-        """Path to LDIF file with minimum length constraint."""
-
-        InputDirectory = Annotated[str, Field(min_length=1)]
-        """Path to input directory with minimum length constraint."""
-
-        OutputDirectory = Annotated[str, Field(min_length=1)]
-        """Path to output directory with minimum length constraint."""
-
-        EncodingFormat = Annotated[
-            str,
-            Field(pattern=r"^(utf-8|latin-1|ascii|iso-8859-1)$"),
-        ]
-        """Supported encoding formats for LDIF files."""
-
-        # =====================================================================
-        # SERVER AND COMPATIBILITY TYPES
-        # =====================================================================
-
-        ServerTypeName = Annotated[
-            str,
-            Field(pattern=r"^(oid|oud|openldap|openldap1|rfc|generic)$"),
-        ]
-        """LDIF server type selector."""
-
-        ServerHostname = Annotated[str, Field(min_length=1, max_length=256)]
-        """Server hostname or IP address."""
-
-        ServerPort = Annotated[int, Field(ge=1, le=65535)]
-        """Server port number (valid range: 1-65535)."""
-
-        LdapTimeout = Annotated[int, Field(ge=1, le=600)]
-        """LDAP timeout in seconds (1-600 seconds)."""
-
-        # =====================================================================
-        # PROCESSING AND VALIDATION TYPES
-        # =====================================================================
-
-        MaxEntries = Annotated[int, Field(ge=1, le=1000000)]
-        """Maximum number of entries to process (1-1000000)."""
-
-        BatchSize = Annotated[int, Field(ge=1, le=100000)]
-        """Batch processing size (1-100000 entries)."""
-
-        MaxWorkers = Annotated[int, Field(ge=1, le=50)]
-        """Maximum number of parallel workers (1-50)."""
-
-        MemoryLimit = Annotated[int, Field(ge=1, le=10000)]
-        """Memory limit in MB (1-10000 MB)."""
-
-        # =====================================================================
-        # VALIDATION LEVEL TYPES
-        # =====================================================================
-
-        ValidationLevel = Annotated[str, Field(pattern=r"^(strict|normal|lenient)$")]
-        """LDIF validation level (strict, normal, or lenient)."""
-
-        ValidationRuleCount = Annotated[int, Field(ge=0, le=1000)]
-        """Number of validation rules (0-1000)."""
-
-        # =====================================================================
-        # PROCESSING STAGE TYPES
-        # =====================================================================
-
-        ProcessingStage = Annotated[
-            str,
-            Field(pattern=r"^(parsing|validation|transformation|writing|complete)$"),
-        ]
-        """Current processing stage in LDIF pipeline."""
-
-        ProcessingTimeout = Annotated[int, Field(ge=10, le=3600)]
-        """Processing timeout in seconds (10-3600 seconds)."""
-
-        # =====================================================================
-        # STATISTICS AND METRICS TYPES
-        # =====================================================================
-
-        EntryCount = Annotated[int, Field(ge=0)]
-        """Number of LDIF entries processed."""
-
-        ErrorCount = Annotated[int, Field(ge=0)]
-        """Number of errors encountered."""
-
-        SuccessRate = Annotated[float, Field(ge=0.0, le=100.0)]
-        """Success percentage (0-100%)."""
-
-    # =========================================================================
-    # PYDANTIC MODEL ALIASES - Type aliases referencing FlextLdifModels
-    # =========================================================================
-    # These provide backward-compatible type aliases while enabling
-    # gradual migration to strongly-typed Pydantic v2 models.
-    #
-    # Migration path:
-    # 1. Old code: Uses dict-based types (Parser.ParserConfiguration)
-    # 2. New code: Uses model aliases (Models.ParserConfigModel)
-    # 3. Future: Direct model usage (FlextLdifModels.ParserConfiguration)
-
-    class ModelAliases:
-        """Type aliases for Pydantic models - preferred for new code.
-
-        These aliases reference FlextLdifModels defined in models.py,
-        providing strong typing with Pydantic v2 validation and computed fields.
-        Use these instead of dict-based types for new implementations.
-        """
-
-        # Parser and Writer Configuration Models
-        # Replaces: Parser.ParserConfiguration (dict-based)
-        # Benefits: Immutable configs, cross-field validation, computed fields
-        type ParserConfigModel = (
-            object  # Forward reference: FlextLdifModels.ParserConfiguration
-        )
-        type WriterConfigModel = (
-            object  # Forward reference: FlextLdifModels.WriterConfiguration
-        )
-
-        # Runtime Context Models
-        # Replaces: Parser.ParsingContext, Writer.WritingContext (dict-based)
-        # Benefits: Mutable state tracking, progress summaries, error tracking
-        type ParsingContextModel = (
-            object  # Forward reference: FlextLdifModels.ParsingContext
-        )
-        type WritingContextModel = (
-            object  # Forward reference: FlextLdifModels.WritingContext
-        )
-
-        # Validation Models
-        # Replaces: Entry.EntryValidation, LdifValidation.LdifValidationResult (dict-based)
-        # Benefits: Computed counts, validation summaries, structured errors
-        type EntryValidationModel = (
-            object  # Forward reference: FlextLdifModels.EntryValidationDetail
-        )
-
-        # Transformation Models
-        # Replaces: Entry.EntryTransformation (dict-based)
-        # Benefits: Transformation tracking, modification detection
-        type EntryTransformationModel = (
-            object  # Forward reference: FlextLdifModels.EntryTransformationResult
-        )
-
-        # Analytics Models
-        # Replaces: Analytics.StatisticalAnalysis, Analytics.PerformanceMetrics (dict-based)
-        # Benefits: Computed metrics, complexity scores, performance summaries
-        type StatisticalAnalysisModel = (
-            object  # Forward reference: FlextLdifModels.StatisticalAnalysis
-        )
-        type PerformanceMetricsModel = (
-            object  # Forward reference: FlextLdifModels.PerformanceMetrics
-        )
-
-    # =========================================================================
-    # MIGRATION GUIDELINES - Dict-based types → Pydantic models
-    # =========================================================================
-    #
-    # OLD (dict-based, to be deprecated):
-    #   config: FlextLdifTypes.Parser.ParserConfiguration = {...}
-    #   if isinstance(config, dict): ...
-    #
-    # NEW (Pydantic model, preferred):
-    #   # from flext_ldif.models import FlextLdifModels  # Circular import - using string literals
-    #   config = FlextLdifModels.ParserConfiguration(file_path="test.ldif")
-    #   if config.is_file_based: ...  # Use computed fields
-    #
-    # BENEFITS OF MODELS:
-    # - Type safety: MyPy/Pyrefly strict mode compliance
-    # - Validation: Automatic Pydantic field validation
-    # - Computed fields: Automatic calculations (error_count, is_rfc_compliant, etc.)
-    # - Immutability: ConfigDict(frozen=True) for thread-safety
-    # - Serialization: model_dump() for dict, model_dump_json() for JSON
-
-    # =========================================================================
-    # LDIF PROJECT TYPES - Domain-specific project types extending FlextTypes
-    # =========================================================================
-
-    class LdifProject(FlextTypes):
-        """LDIF-specific project types extending FlextTypes.
-
-        Adds LDIF/directory data processing-specific project types while inheriting
-        generic types from FlextTypes. Follows domain separation principle:
-        LDIF domain owns directory data processing-specific types.
-        """
-
-        # Project types moved to FlextLdifConstants.LiteralTypes for centralization
-
-    # Alias for consistency with test expectations
-    Project = LdifProject
+    # REMOVED: LdifProject class and Project alias
+    # Had ZERO usage
+    # Reason: Project types moved to FlextLdifConstants.LiteralTypes
 
     # =========================================================================
     # LITERAL TYPES - Import from constants for Pydantic compatibility

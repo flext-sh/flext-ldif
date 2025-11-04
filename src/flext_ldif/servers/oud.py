@@ -9,7 +9,7 @@ Provides OUD-specific quirks for schema, ACL, and entry processing.
 from __future__ import annotations
 
 import re
-from typing import Any, ClassVar
+from typing import ClassVar, Final
 
 from flext_core import FlextLogger, FlextResult
 
@@ -17,7 +17,6 @@ from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 from flext_ldif.typings import FlextLdifTypes
-from flext_ldif.utilities import FlextLdifUtilities
 
 logger = FlextLogger(__name__)
 
@@ -28,6 +27,34 @@ class FlextLdifServersOud(FlextLdifServersRfc):
     # Top-level configuration - mirrors Schema class for direct access
     server_type = FlextLdifConstants.ServerTypes.OUD
     priority = 10
+
+    class Constants:
+        """Oracle Unified Directory-specific constants centralized for operations in oud.py.
+
+        These constants follow a standardized naming pattern that can be replicated
+        in other server quirks implementations for consistency.
+        """
+
+        # OID pattern for server detection
+        OID_PATTERN: Final[re.Pattern[str]] = re.compile(
+            r"2\.16\.840\.1\.113894\.",
+        )
+
+        # Server-specific boolean attributes
+        BOOLEAN_ATTRIBUTES: Final[frozenset[str]] = (
+            FlextLdifConstants.OperationalAttributes.OUD_BOOLEAN_ATTRIBUTES
+        )
+
+        # DN patterns used for detection
+        DN_PREFIX_CN_CONFIG: Final[str] = "cn=config"
+        DN_PREFIX_CN_SCHEMA: Final[str] = "cn=schema"
+
+        # === STANDARDIZED CONSTANTS FOR AUTO-DISCOVERY ===
+        CANONICAL_NAME: Final[str] = "oud"
+        ALIASES: Final[frozenset[str]] = frozenset(["oud", "oracle_oud"])
+        PRIORITY: Final[int] = 10
+        CAN_NORMALIZE_FROM: Final[frozenset[str]] = frozenset(["oud", "rfc"])
+        CAN_DENORMALIZE_TO: Final[frozenset[str]] = frozenset(["oud", "rfc"])
 
     class AttributeWriter(FlextLdifServersRfc.AttributeWriter):
         """OUD-specific attribute writer."""
@@ -144,43 +171,13 @@ class FlextLdifServersOud(FlextLdifServersRfc):
 
         server_type: ClassVar[str] = FlextLdifConstants.ServerTypes.OUD
         priority: ClassVar[int] = 10
-        ORACLE_OUD_PATTERN: ClassVar[re.Pattern[str]] = re.compile(
-            r"2\.16\.840\.1\.113894\.",
-        )
-        BOOLEAN_ATTRIBUTES: ClassVar[frozenset[str]] = (
-            FlextLdifConstants.OperationalAttributes.OUD_BOOLEAN_ATTRIBUTES
-        )
-
-        @staticmethod
-        def _normalize_server_type_for_literal(
-            server_type: str,
-        ) -> FlextLdifConstants.LiteralTypes.ServerType:
-            """Normalize server type to literal-compatible form.
-
-            Converts short-form identifiers (oid, oud) to long-form (oracle_oid, oracle_oud).
-            Other types are returned as-is.
-
-            Args:
-                server_type: Server type identifier
-
-            Returns:
-                Normalized server type for LiteralTypes.ServerType
-
-            """
-            server_type_map: dict[str, FlextLdifConstants.LiteralTypes.ServerType] = {
-                "oid": "oracle_oid",
-                "oud": "oracle_oud",
-            }
-
-            # Return mapped type or default to "rfc" if not in map
-            # "rfc" is a valid ServerType literal, though type checker may need assistance
-            mapped = server_type_map.get(server_type)
-            return mapped if mapped is not None else "rfc"
 
         def __init__(
             self,
         ) -> None:
-            """Initialize OUD schema quirk and nested ACL quirk."""
+            """server_type: ClassVar[str] = FlextLdifConstants.ServerTypes.OUD
+            priority: ClassVar[int] = 14Initialize OUD schema quirk and nested ACL quirk.
+            """
             super().__init__()
             # Instantiate nested ACL quirk for conversion matrix access
             self.acl = FlextLdifServersOud.Acl()
@@ -220,12 +217,8 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 for keyword in ["pwd", "ds-", "x-origin", "2.16.840.1.113894"]
             )
 
-        # --------------------------------------------------------------------- #
         # Schema parsing and conversion methods
-        # --------------------------------------------------------------------- #
-        # --------------------------------------------------------------------- #
         # OVERRIDDEN METHODS (from FlextLdifServersBase.Schema)
-        # --------------------------------------------------------------------- #
         # These methods override the base class with Oracle OUD-specific logic:
         # - parse_attribute(): Custom parsing logic for Oracle OUD schema
         # - parse_objectclass(): Custom parsing logic for Oracle OUD schema
@@ -497,15 +490,19 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             Applies OUD-specific transformations:
             - Fixes broken OID schema definitions (missing SUP for AUXILIARY classes)
             - OUD requires AUXILIARY classes to have explicit SUP clause
+            - Sets OUD server type metadata
 
             Args:
-            rfc_data: RFC-compliant objectClass model
+                rfc_data: RFC-compliant objectClass model
 
             Returns:
-            FlextResult with OUD objectClass model
+                FlextResult with OUD objectClass model
 
             """
             try:
+                # Apply OUD-specific transformations
+                oud_data = rfc_data
+
                 # Check if we need to fix missing SUP for AUXILIARY objectClasses
                 # OUD requires AUXILIARY classes to have explicit SUP clause
                 if (
@@ -514,22 +511,22 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 ):
                     name_lower = rfc_data.name.lower()
                     auxiliary_without_sup = {
-                        "orcldAsAttrCategory".lower(),
                         "orcldasconfigpublicgroup",
+                        "orcldAsAttrCategory".lower(),
                     }
 
                     if name_lower in auxiliary_without_sup:
                         # Create new model with sup="top"
                         oud_data = rfc_data.model_copy(update={"sup": "top"})
                         logger.debug(
-                            f"Fixed missing SUP for AUXILIARY class {rfc_data.name}",
-                        )
-                        return FlextResult[FlextLdifModels.SchemaObjectClass].ok(
-                            oud_data,
+                            "Fixed missing SUP for AUXILIARY class %s",
+                            rfc_data.name,
                         )
 
-                # No modifications needed - return as-is
-                return FlextResult[FlextLdifModels.SchemaObjectClass].ok(rfc_data)
+                # Set OUD server type metadata
+                return FlextLdifServersRfc.SchemaConverter.set_quirk_type(
+                    oud_data, self.server_type
+                )
 
             except Exception as e:
                 return FlextResult[FlextLdifModels.SchemaObjectClass].fail(
@@ -616,194 +613,63 @@ class FlextLdifServersOud(FlextLdifServersRfc):
         # OVERRIDE: Oracle OUD uses RFC 4876 compliant "aci" for ACL attribute names (not inherited)
         acl_attribute_name = FlextLdifConstants.AclAttributes.ACI
 
-        # --------------------------------------------------------------------- #
         # OVERRIDDEN METHODS (from FlextLdifServersBase.Acl)
-        # --------------------------------------------------------------------- #
         # These methods override the base class with Oracle OUD-specific logic:
-        # - can_handle_acl(): Detects OUD ACL formats
-        # - parse_acl(): Parses Oracle OUD ACL definitions
-        # - convert_acl_to_rfc(): Converts to RFC format
-        # - convert_acl_from_rfc(): Converts from RFC format
-        # - write_acl_to_rfc(): Writes RFC-compliant ACL strings
-        # - get_acl_attribute_name(): Returns "aci" (OUD-specific, overridden)
+        # - can_handle(): Detects OUD ACL formats
+        # - parse(): Normalizes Oracle OUD ACL to RFC-compliant internal model
+        # - write(): Serializes RFC-compliant model to OUD ACI format
+        # - get_attribute_name(): Returns "aci" (OUD-specific, overridden)
 
         # Oracle OUD server configuration defaults
         server_type: ClassVar[str] = FlextLdifConstants.ServerTypes.OUD
         priority: ClassVar[int] = 10
 
         def __init__(self) -> None:
-            """Initialize OUD ACL quirk and register conversion hooks."""
+            """Initialize OUD ACL quirk."""
             super().__init__()
-            # Register OID→OUD specific conversion hooks
-            self._register_oid_to_oud_hooks()
+            # NOTE: Hook registration was removed - AclConverter was moved to services/acl.py
+            # Use FlextLdifAclService instead for ACL conversion operations
 
-        def _register_oid_to_oud_hooks(self) -> None:
-            """Register OID→OUD specific conversion hooks with advanced utilities."""
-            from flext_ldif.utilities import FlextLdifUtilities
+        # NOTE: Obsolete method removed - hook registration pattern changed
+        # AclConverter was moved to services/acl.py as FlextLdifAclService
+        # Use FlextLdifAclService for OID→OUD ACL conversions instead
 
-            # Register permission conversion hook for OID→OUD
-            def oid_to_oud_permission_hook(
-                permissions: list[str], source_server: str, target_server: str
-            ) -> tuple[list[str], list[str]]:
-                """Convert OID-specific permissions to OUD equivalents."""
-                allowed = []
-                denied = []
+        def can_handle(self, acl_line: str) -> bool:
+            """Check if this is an Oracle OUD ACL line.
 
-                for perm in permissions:
-                    perm_lower = perm.lower()
-                    # Use constants for permission names
-                    if (
-                        perm_lower
-                        == FlextLdifConstants.PermissionNames.SELF_WRITE.lower()
-                    ):
-                        # OUD doesn't support self_write - promote to write
-                        allowed.append(FlextLdifConstants.PermissionNames.WRITE)
-                    elif perm_lower == FlextLdifConstants.PermissionNames.PROXY.lower():
-                        # OUD doesn't support proxy - will be noted in comments
-                        denied.append(FlextLdifConstants.PermissionNames.PROXY)
-                    elif (
-                        perm_lower == FlextLdifConstants.PermissionNames.BROWSE.lower()
-                    ):
-                        # OID browse maps to read+search in OUD
-                        allowed.extend([
-                            FlextLdifConstants.PermissionNames.READ,
-                            FlextLdifConstants.PermissionNames.SEARCH,
-                        ])
-                    elif perm_lower == "auth":
-                        # OID auth maps to compare in OUD
-                        allowed.append(FlextLdifConstants.PermissionNames.COMPARE)
-                    elif perm_lower in {
-                        FlextLdifConstants.PermissionNames.READ.lower(),
-                        FlextLdifConstants.PermissionNames.WRITE.lower(),
-                        FlextLdifConstants.PermissionNames.ADD.lower(),
-                        FlextLdifConstants.PermissionNames.DELETE.lower(),
-                        FlextLdifConstants.PermissionNames.SEARCH.lower(),
-                        FlextLdifConstants.PermissionNames.COMPARE.lower(),
-                    }:
-                        # Standard permissions are preserved
-                        allowed.append(perm_lower)
-
-                return allowed, denied
-
-            FlextLdifUtilities.AclConverter.register_permission_hook(
-                "oracle_oid", "oracle_oud", oid_to_oud_permission_hook
-            )
-
-            # Register comment generation hook for OID→OUD
-            def oid_to_oud_comment_hook(
-                metadata_info: dict[str, Any], source_server: str, target_server: str
-            ) -> list[str]:
-                """Generate OID→OUD specific conversion comments."""
-                comments = []
-                extensions = metadata_info.get("extensions", {})
-
-                # Add OID-specific feature comments
-                if extensions.get("filter_clause"):
-                    comments.append(
-                        f"# OID filter clause: {extensions['filter_clause']}"
-                    )
-
-                if extensions.get("added_object_constraint"):
-                    constraint = extensions["added_object_constraint"]
-                    comments.append(f"# OID entry-level constraint: {constraint}")
-
-                    # Check if convertible to OUD targattrfilters
-                    if constraint.startswith("objectClass="):
-                        comments.append("# Converted to OUD targattrfilters")
-                    else:
-                        comments.append("# Complex constraint preserved as comment")
-
-                if "multi_subject_blocks" in extensions:
-                    blocks = extensions["multi_subject_blocks"]
-                    if isinstance(blocks, list) and len(blocks) > 1:
-                        comments.append(
-                            f"# OID multi-subject ACL with {len(blocks)} subjects"
-                        )
-
-                return comments
-
-            FlextLdifUtilities.AclConverter.register_comment_hook(
-                "oracle_oid", "oracle_oud", oid_to_oud_comment_hook
-            )
-
-            # Register conversion hook for OID→OUD specific metadata
-            def oid_to_oud_conversion_hook(
-                acl_data: FlextLdifModels.Acl, source_server: str, target_server: str
-            ) -> FlextResult[FlextLdifModels.Acl]:
-                """Custom OID→OUD conversion that sets expected metadata keys."""
-                # Use the built-in conversion
-                builtin_result = FlextLdifUtilities.AclConverter._convert_acl_builtin(
-                    acl_data, source_server, target_server
-                )
-
-                if builtin_result.is_success:
-                    converted_acl = builtin_result.unwrap()
-
-                    # Add OUD-specific metadata extensions
-                    if converted_acl.metadata and converted_acl.metadata.extensions:
-                        extensions = converted_acl.metadata.extensions.copy()
-
-                        # Add OUD-specific keys expected by tests
-                        extensions["converted_from_oid"] = True
-                        extensions["oud_conversion_comments"] = extensions.get(
-                            "conversion_comments", []
-                        )
-
-                        # Update metadata with OUD-specific extensions
-                        updated_metadata = converted_acl.metadata.model_copy(
-                            update={"extensions": extensions}
-                        )
-
-                        # Return ACL with updated metadata
-                        return FlextResult.ok(
-                            converted_acl.model_copy(
-                                update={"metadata": updated_metadata}
-                            )
-                        )
-
-                return builtin_result
-
-            FlextLdifUtilities.AclConverter.register_conversion_hook(
-                "oracle_oid", "oracle_oud", oid_to_oud_conversion_hook
-            )
-
-        def can_handle_acl(self, acl: FlextLdifModels.Acl | str) -> bool:
-            """Check if this is an Oracle OUD ACL.
+            Detects Oracle OUD ACL by checking if the line starts with:
+            - "aci:" (RFC 4876 compliant ACI)
+            - "targetattr=" (inline ACI format)
+            - "targetscope=" (inline ACI format)
+            - "version 3.0" (ACI version marker)
+            - "ds-cfg-" (OUD configuration ACL)
 
             Args:
-            acl: ACL definition model or string
+                acl_line: Raw ACL line from LDIF
 
             Returns:
-            True if this is OUD ACL format
+                True if this is Oracle OUD ACL format
 
             """
-            if isinstance(acl, str):
-                # Check if string format looks like OUD ACI format
-                return acl.strip().startswith((
-                    "targetattr=",
-                    "targetscope=",
-                    "version 3.0",
-                    "ds-cfg-",
-                    "aci:",
-                ))
+            if not acl_line:
+                return False
 
-            # For model instances, check the raw_acl format
-            if hasattr(acl, "raw_acl") and acl.raw_acl:
-                return acl.raw_acl.startswith((
-                    "ds-cfg-",
-                    "aci:",
-                    "targetattr=",
-                    "targetscope=",
-                    "version 3.0",
-                ))
+            normalized = acl_line.strip()
+            return normalized.startswith((
+                "aci:",
+                "targetattr=",
+                "targetscope=",
+                "version 3.0",
+                "ds-cfg-",
+            ))
 
-            # Fallback to checking server_type or other properties
-            return getattr(acl, "server_type", "") in {"oracle_oud", "rfc", ""}
+        def parse(self, acl_line: str) -> FlextResult[FlextLdifModels.Acl]:
+            """Parse Oracle OUD ACL string to RFC-compliant internal model.
 
-        def parse_acl(self, acl_line: str) -> FlextResult[FlextLdifModels.Acl]:
-            """Parse Oracle OUD ACL definition to Pydantic model.
+            Normalizes OUD ACI (Access Control Instruction) format to RFC-compliant
+            internal representation.
 
-            Parses ACI (Access Control Instruction) format used by OUD, extracting:
+            Parses ACI format used by OUD, extracting:
             - targetattr: Target attributes
             - targetscope: Target scope (base, onelevel, subtree)
             - version: ACI version
@@ -888,7 +754,8 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                     userdn_matches = re.findall(r'userdn\s*=\s*"([^"]+)"', aci_content)
                     for userdn in userdn_matches:
                         bind_rules_data.append({"type": "userdn", "value": userdn})
-                        if ", " in userdn:
+                        # Use utility for DN space detection
+                        if FlextLdifUtilities.DN.contains_pattern(userdn, ", "):
                             dn_spaces = True
 
                     # Extract groupdn rules
@@ -898,7 +765,8 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                     )
                     for groupdn in groupdn_matches:
                         bind_rules_data.append({"type": "groupdn", "value": groupdn})
-                        if ", " in groupdn:
+                        # Use utility for DN space detection
+                        if FlextLdifUtilities.DN.contains_pattern(groupdn, ", "):
                             dn_spaces = True
 
                 # Build AclPermissions from parsed permissions
@@ -1009,292 +877,22 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                     f"OUD ACL parsing failed: {e}",
                 )
 
-        def convert_acl_to_rfc(
-            self,
-            acl_data: FlextLdifModels.Acl,
-        ) -> FlextResult[FlextLdifModels.Acl]:
-            """Convert OUD ACL to RFC-compliant format with comprehensive OID→OUD transformation.
+        def write(self, acl_data: FlextLdifModels.Acl) -> FlextResult[str]:
+            """Write RFC-compliant ACL model to OUD ACI string format.
 
-            **Enhanced OID→OUD Conversion with Zero Data Loss:**
-            - Detects OID source via metadata and applies complete transformation
-            - Converts OID-specific permissions (self_write, proxy, browse, etc.)
-            - Transforms OID subject types (dnattr, guidattr, groupattr)
-            - Converts entry-level constraints to OUD targattrfilters
-            - Preserves filter clauses as OUD filter expressions where possible
-            - Generates comprehensive comments for unconvertible OID features
-            - Maintains multi-subject support through comment preservation
-
-            **Conversion Strategy:**
-            1. Direct conversion where OUD has equivalent features
-            2. Comment preservation for OID-only features
-            3. Permission promotion (self_write → write)
-            4. Subject transformation (OID dynamic groups → OUD bind rules)
-            5. Constraint mapping (added_object_constraint → targattrfilters)
+            Serializes the RFC-compliant internal model to Oracle OUD ACI format string,
+            including comprehensive comment generation for OID→OUD conversions to ensure
+            zero data loss.
 
             Args:
-                acl_data: ACL model (may be from OID or OUD source)
+                acl_data: RFC-compliant ACL Pydantic model
 
             Returns:
-                FlextResult with RFC-compliant ACL data optimized for OUD with metadata
-
-            """
-            try:
-                # **Use Advanced Utilities for Comprehensive ACL Conversion**
-                # Detect if this is from OID and delegate to advanced conversion system
-                metadata = acl_data.metadata
-                is_from_oid = metadata and (
-                    FlextLdifConstants.LdapServerType.ORACLE_OID.value
-                    in {metadata.quirk_type, metadata.server_type}
-                    or (
-                        hasattr(metadata, "extensions")
-                        and metadata.extensions
-                        and metadata.extensions.get("acl_type")
-                        in FlextLdifConstants.AclAttributes.OID_ACL_ATTRS
-                    )
-                )
-
-                if not is_from_oid:
-                    # Native OUD ACL - just set server type and return
-                    return FlextResult[FlextLdifModels.Acl].ok(
-                        acl_data.model_copy(update={"server_type": "oracle_oud"})
-                    )
-
-                # **Delegate to Advanced ACL Converter with Hooks**
-                conversion_result = (
-                    FlextLdifUtilities.AclConverter.convert_acl_with_hooks(
-                        acl_data, "oracle_oid", "oracle_oud"
-                    )
-                )
-
-                if conversion_result.is_success:
-                    return conversion_result
-
-                # **Fallback: Manual OID→OUD Conversion with Advanced Utilities**
-                # Extract OID features using advanced metadata processor
-                oid_features = (
-                    FlextLdifUtilities.MetadataProcessor.extract_oid_features(metadata)
-                )
-
-                # Generate comprehensive comments using advanced utilities
-                conversion_comments = []
-
-                # Use advanced permission mapping
-                converted_permissions = (
-                    FlextLdifUtilities.AclConverter.convert_permissions_advanced(
-                        acl_data.permissions, "oracle_oid", "oracle_oud"
-                    )
-                    if acl_data.permissions
-                    else None
-                )
-
-                # Use advanced subject transformation
-                transformed_subject = (
-                    FlextLdifUtilities.AclConverter.transform_subject_advanced(
-                        acl_data.subject, "oracle_oid", "oracle_oud"
-                    )
-                    if acl_data.subject
-                    else None
-                )
-
-                # Generate OID→OUD specific comments
-                conversion_comments.extend([
-                    "# OID ACL converted to OUD format",
-                    f"# Original OID type: {oid_features.get('acl_type', 'orclaci')}",
-                ])
-
-                # Add feature-specific comments
-                for feature_name, feature_value in oid_features.items():
-                    if feature_value and feature_name in {
-                        "filter_clause",
-                        "added_object_constraint",
-                    }:
-                        is_convertible = (
-                            FlextLdifUtilities.MetadataProcessor.is_feature_convertible(
-                                feature_name, feature_value, "oracle_oud"
-                            )
-                        )
-                        if is_convertible:
-                            conversion_comments.append(
-                                f"# {feature_name} converted to OUD syntax"
-                            )
-                        else:
-                            conversion_comments.append(
-                                f"# {feature_name} preserved as comment (not convertible)"
-                            )
-
-                # Build comprehensive metadata
-                oud_metadata = FlextLdifModels.QuirkMetadata(
-                    original_format=metadata.original_format if metadata else "",
-                    quirk_type="oud",
-                    server_type="oracle_oud",
-                    extensions={
-                        "converted_from_oid": True,
-                        "oud_conversion_comments": conversion_comments,
-                        "original_oid_features": oid_features,
-                        "conversion_method": "advanced_utilities",
-                    },
-                )
-
-                # Build final converted ACL
-                final_acl = FlextLdifModels.Acl(
-                    name=f"Converted from OID: {acl_data.name}",
-                    target=acl_data.target,
-                    subject=transformed_subject,
-                    permissions=converted_permissions,
-                    server_type="oracle_oud",
-                    raw_acl=acl_data.raw_acl,
-                    metadata=oud_metadata,
-                )
-
-                return FlextResult[FlextLdifModels.Acl].ok(final_acl)
-
-            except Exception as e:
-                return FlextResult[FlextLdifModels.Acl].fail(
-                    f"OUD ACL→RFC conversion failed: {e}",
-                )
-
-        def _is_filter_convertible_to_oud(self, filter_clause: str) -> bool:
-            """Check if OID filter clause can be converted to OUD syntax.
-
-            Args:
-                filter_clause: OID filter expression
-
-            Returns:
-                True if convertible to OUD, False if needs comment preservation
-
-            """
-            if not filter_clause:
-                return True
-
-            # Simple equality filters are usually convertible
-            # Complex logical operations may need preservation
-            complex_operators = ["&", "|", "!", ">=", "<=", "~=", "^="]
-            has_complex = any(op in filter_clause for op in complex_operators)
-
-            # Simple single condition filters are convertible
-            return bool(not has_complex and "=" in filter_clause)
-
-        def _is_constraint_convertible_to_targattrfilters(
-            self, constraint: str
-        ) -> bool:
-            """Check if OID constraint can be converted to OUD targattrfilters.
-
-            Args:
-                constraint: OID added_object_constraint expression
-
-            Returns:
-                True if convertible to OUD targattrfilters
-
-            """
-            if not constraint:
-                return True
-
-            # Simple objectClass constraints are convertible
-            # Complex expressions may need comments
-            if constraint.startswith("objectClass=") and "=" not in constraint[12:]:
-                return True
-
-            # Check for complex operators
-            complex_operators = ["&", "|", "!", ">=", "<=", "~="]
-            return not any(op in constraint for op in complex_operators)
-
-        def _convert_constraint_to_targattrfilters(self, oid_constraint: str) -> str:
-            """Convert OID added_object_constraint to OUD targattrfilters format.
-
-            OID format: added_object_constraint=(objectClass=person)
-            OUD format: targattrfilters="add=objectClass:(objectClass=person)"
-
-            Args:
-                oid_constraint: OID constraint string
-
-            Returns:
-                OUD targattrfilters string
-
-            """
-            # Remove outer parentheses if present
-            constraint = oid_constraint.strip()
-            if constraint.startswith("(") and constraint.endswith(")"):
-                constraint = constraint[1:-1]
-
-            # OUD targattrfilters format requires operation prefix
-            # add= for added entries, del= for deleted entries
-            return f"add=objectClass:({constraint})"
-
-        def convert_acl_from_rfc(
-            self,
-            acl_data: FlextLdifModels.Acl,
-        ) -> FlextResult[FlextLdifModels.Acl]:
-            """Convert RFC ACL to OUD format with permission mapping and server type update.
-
-            Args:
-                acl_data: RFC-compliant Acl model
-
-            Returns:
-                FlextResult with OUD Acl model with proper server type and permission mapping
-
-            """
-            try:
-                # Create OUD-specific permission mapping
-                oud_permissions = {}
-
-                if acl_data.permissions:
-                    # Copy all existing permissions
-                    oud_permissions = {
-                        "read": acl_data.permissions.read,
-                        "write": acl_data.permissions.write,
-                        "add": acl_data.permissions.add,
-                        "delete": acl_data.permissions.delete,
-                        "search": acl_data.permissions.search,
-                        "compare": acl_data.permissions.compare,
-                        "self_write": acl_data.permissions.self_write,
-                        "proxy": acl_data.permissions.proxy,
-                    }
-
-                    # OUD-specific mapping: self_write → write (if self_write is True)
-                    if acl_data.permissions.self_write:
-                        oud_permissions["write"] = True
-
-                # Create OUD-specific metadata
-                oud_metadata = acl_data.metadata
-                if oud_metadata:
-                    # Update server type in metadata
-                    oud_metadata = oud_metadata.model_copy(
-                        update={"server_type": "oracle_oud", "quirk_type": "oracle_oud"}
-                    )
-
-                # Create the OUD ACL with updated server type and permissions
-                oud_acl = acl_data.model_copy(
-                    update={
-                        "server_type": "oracle_oud",
-                        "permissions": FlextLdifModels.AclPermissions(
-                            **oud_permissions
-                        ),
-                        "metadata": oud_metadata,
-                    }
-                )
-
-                return FlextResult[FlextLdifModels.Acl].ok(oud_acl)
-
-            except Exception as e:
-                return FlextResult[FlextLdifModels.Acl].fail(
-                    f"RFC→OUD ACL conversion failed: {e}",
-                )
-
-        def write_acl_to_rfc(self, acl_data: FlextLdifModels.Acl) -> FlextResult[str]:
-            """Write OUD ACL model to ACI string format with OID conversion comment preservation.
-
-            Converts ACL Pydantic model to RFC-compliant ACI format string with comprehensive
-            comment generation for OID→OUD conversions to ensure zero data loss.
-
-            Args:
-                acl_data: ACL Pydantic model (potentially converted from OID)
-
-            Returns:
-                FlextResult with ACI formatted string including conversion comments
+                FlextResult with OUD ACI formatted string including conversion comments
 
             Example:
-                Input: FlextLdifModels.Acl(name="Test", ...)
-                Output: '(targetattr="*")(version 3.0; acl "Test"; allow (read) userdn="ldap:///self";)'
+                Input: Acl(name="Test", target=..., subject=..., permissions=...)
+                Output: 'aci: (targetattr="*")(version 3.0; acl "Test"; allow (read) userdn="ldap:///self";)'
 
             """
             try:
@@ -1444,7 +1042,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                         if current_aci:
                             # Parse accumulated multiline ACI
                             aci_text = "\n".join(current_aci)
-                            result = self.parse_acl(aci_text)
+                            result = self.parse(aci_text)
                             if result.is_success:
                                 acls.append(result.unwrap())
                             current_aci = []
@@ -1462,14 +1060,14 @@ class FlextLdifServersOud(FlextLdifServersRfc):
 
                     # Also handle ds-cfg format
                     elif stripped.lower().startswith("ds-cfg-"):
-                        result = self.parse_acl(stripped)
+                        result = self.parse(stripped)
                         if result.is_success:
                             acls.append(result.unwrap())
 
                 # Parse any remaining ACI
                 if current_aci:
                     aci_text = "\n".join(current_aci)
-                    result = self.parse_acl(aci_text)
+                    result = self.parse(aci_text)
                     if result.is_success:
                         acls.append(result.unwrap())
 
@@ -1524,7 +1122,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                     f"OUD ACL conversion failed: {e}",
                 )
 
-        def get_acl_attribute_name(self) -> str:
+        def get_attribute_name(self) -> str:
             """Get OUD-specific ACL attribute name.
 
             OUD uses RFC 4876 compliant 'aci' attribute for ACL definitions,
@@ -1560,9 +1158,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             """Initialize OUD entry quirk."""
             super().__init__()
 
-        # --------------------------------------------------------------------- #
         # OVERRIDDEN METHODS (from FlextLdifServersBase.Entry)
-        # --------------------------------------------------------------------- #
         # These methods override the base class with Oracle OUD-specific logic:
         # - can_handle_entry(): Detects OUD entries by DN/attributes
         # - process_entry(): Normalizes OUD entries with metadata
@@ -1593,16 +1189,27 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             if not entry_attrs or not isinstance(entry_attrs, dict):
                 return False
 
-            dn_value_lower = entry.dn.value.lower()
+            entry_dn = entry.dn.value
 
+            # Use utility methods for DN pattern matching
             if (
-                FlextLdifConstants.DnPatterns.CN_CONFIG.lower() in dn_value_lower
-                and FlextLdifConstants.DnPatterns.CN_SCHEMA.lower() in dn_value_lower
+                FlextLdifUtilities.DN.contains_pattern(
+                    entry_dn, FlextLdifServersOud.Constants.DN_PREFIX_CN_CONFIG
+                )
+                and FlextLdifUtilities.DN.contains_pattern(
+                    entry_dn, FlextLdifServersOud.Constants.DN_PREFIX_CN_SCHEMA
+                )
             ):
                 return True
 
-            if FlextLdifConstants.DnPatterns.CN_CONFIG.lower() in dn_value_lower and (
-                "cn=directory" in dn_value_lower or "cn=ds" in dn_value_lower
+            if (
+                FlextLdifUtilities.DN.contains_pattern(
+                    entry_dn, FlextLdifServersOud.Constants.DN_PREFIX_CN_CONFIG
+                )
+                and (
+                    FlextLdifUtilities.DN.contains_pattern(entry_dn, "cn=directory")
+                    or FlextLdifUtilities.DN.contains_pattern(entry_dn, "cn=ds")
+                )
             ):
                 return True
 
@@ -1610,7 +1217,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 return True
 
             if any(
-                attr_name.lower() in self.BOOLEAN_ATTRIBUTES
+                attr_name.lower() in FlextLdifServersOud.Constants.BOOLEAN_ATTRIBUTES
                 for attr_name in entry_attrs
             ):
                 return True
@@ -1633,11 +1240,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
         # Oracle OUD boolean attributes that expect TRUE/FALSE instead of 0/1
         # This IS format-specific - OUD requires TRUE/FALSE, not 0/1
         # Boolean attributes that expect TRUE/FALSE instead of 0/1
-        # Consolidated in FlextLdifConstants.OperationalAttributes.OUD_BOOLEAN_ATTRIBUTES
-        # Kept as ClassVar for backward compatibility and type hints
-        BOOLEAN_ATTRIBUTES: ClassVar[frozenset[str]] = (
-            FlextLdifConstants.OperationalAttributes.OUD_BOOLEAN_ATTRIBUTES
-        )
+        # BOOLEAN_ATTRIBUTES moved to Constants class
 
         # Attribute name casing map: lowercase source → proper OUD camelCase
         # Maps common LDAP attributes with incorrect casing to OUD-expected camelCase
@@ -1686,7 +1289,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                     normalized_name = self.ATTRIBUTE_CASE_MAP.get(attr_lower, attr_name)
 
                     # Process values based on attribute type
-                    if normalized_name.lower() in self.BOOLEAN_ATTRIBUTES:
+                    if normalized_name.lower() in FlextLdifServersOud.Constants.BOOLEAN_ATTRIBUTES:
                         # Convert 0/1 to TRUE/FALSE for OUD
                         if isinstance(attr_values, list):
                             converted_values = []
@@ -1750,7 +1353,8 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 # Preserve metadata for DN quirks and attribute ordering
                 metadata_extensions: dict[str, object] = {}
 
-                if ", " in entry.dn.value:
+                # Use utility for DN space detection
+                if FlextLdifUtilities.DN.contains_pattern(entry.dn.value, ", "):
                     metadata_extensions["dn_spaces"] = True
 
                 if final_attributes_for_new_entry:
@@ -1814,9 +1418,10 @@ class FlextLdifServersOud(FlextLdifServersRfc):
         ) -> FlextResult[FlextLdifModels.Entry]:
             """Convert RFC-compliant entry to OUD-specific format."""
             # Transform boolean attributes from 0/1 to TRUE/FALSE for OUD
+            # Also format ACI attributes with semicolons between multiple "by" clauses
             transformed_attributes = {}
             for attr_name, attr_values in entry_data.attributes.attributes.items():
-                if attr_name.lower() in self.BOOLEAN_ATTRIBUTES:
+                if attr_name.lower() in FlextLdifServersOud.Constants.BOOLEAN_ATTRIBUTES:
                     # Transform boolean values
                     transformed_values = []
                     for value in (
@@ -1830,6 +1435,20 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                         else:
                             # Keep original value if not clearly boolean
                             transformed_values.append(str(value))
+
+                    transformed_attributes[attr_name] = (
+                        transformed_values
+                        if isinstance(attr_values, list)
+                        else transformed_values[0]
+                    )
+                elif attr_name.lower() == FlextLdifConstants.AclAttributes.ACI.lower():
+                    # Format ACI attributes with semicolons between multiple "by" clauses
+                    transformed_values = []
+                    for value in (
+                        attr_values if isinstance(attr_values, list) else [attr_values]
+                    ):
+                        formatted_value = self._format_aci_with_semicolons(str(value))
+                        transformed_values.append(formatted_value)
 
                     transformed_attributes[attr_name] = (
                         transformed_values
@@ -1851,14 +1470,89 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             # Ensure OUD server type is set in metadata
             if new_entry.metadata:
                 new_entry.metadata.server_type = (
-                    FlextLdifConstants.LdapServers.ORACLE_OUD
+                    FlextLdifConstants.ServerTypes.OUD
                 )
             else:
                 new_entry.metadata = FlextLdifModels.QuirkMetadata(
-                    server_type=FlextLdifConstants.LdapServers.ORACLE_OUD
+                    server_type=FlextLdifConstants.ServerTypes.OUD
                 )
 
             return FlextResult.ok(new_entry)
+
+        def _format_aci_with_semicolons(self, aci_value: str) -> str:
+            """Format ACI value with semicolons between multiple 'by' clauses for OUD.
+
+            OUD requires semicolons (;) to separate multiple 'by' clauses in ACI.
+
+            Example:
+              Input:  "aci: access to entry by group=... (...) by group=... (...) by * (...)"
+              Output: "aci: access to entry by group=... (...) ; by group=... (...) ; by * (...)"
+
+            Args:
+                aci_value: ACI value string (may be multiline)
+
+            Returns:
+                Formatted ACI with semicolons inserted after each 'by' clause (except last)
+
+            """
+            import re
+
+            # CRITICAL: This method only does semantic transformation (add semicolons).
+            # Line formatting (folding/unfolding) is the writer's responsibility, NOT the quirk's.
+            # Always normalize whitespace and remove newlines - let writer handle formatting.
+
+            # Normalize whitespace: replace all whitespace (including newlines) with single spaces)
+            # This ensures the quirk only does semantic transformation, not formatting
+            normalized = re.sub(r"\s+", " ", aci_value.strip())
+
+            # OUD format requires semicolons after each "by" clause (except the last one)
+            # Format: "by group=\"...\" ;" or "by *" (no semicolon if last)
+            # Find all "by group=\"...\"" and "by *" clauses
+            by_group_pattern = r"by\s+group=\"[^\"]+\""
+            by_star_pattern = r"by\s+\*"
+
+            # Find all by clauses with their end positions
+            by_clauses = []
+            for match in re.finditer(by_group_pattern, normalized, re.IGNORECASE):
+                by_clauses.append((match.end(), "group"))
+            for match in re.finditer(by_star_pattern, normalized, re.IGNORECASE):
+                by_clauses.append((match.end(), "star"))
+
+            # Sort by position (first element of tuple)
+            by_clauses.sort(key=lambda x: x[0])
+
+            if len(by_clauses) <= 1:
+                # Only one or zero "by" clauses - no formatting needed, but still normalize whitespace
+                return normalized
+
+            # Insert semicolons after each "by" clause except the last one
+            # Check if each is followed by (permissions) by next_clause
+            result_parts = []
+            last_pos = 0
+
+            for i, (pos, _clause_type) in enumerate(by_clauses):
+                # Add text up to this position
+                result_parts.append(normalized[last_pos:pos])
+
+                # Check if this is NOT the last clause and is followed by (permissions) by
+                if i < len(by_clauses) - 1:
+                    # Check what comes after this clause
+                    next_text = normalized[pos : min(len(normalized), pos + 100)]
+                    # Pattern: space(s) followed by (permissions) followed by space(s) and "by"
+                    if re.search(r"^\s+\([^)]+\)\s+by\s+", next_text, re.IGNORECASE):
+                        # Add semicolon after the closing quote or *
+                        result_parts.append(" ;")
+
+                last_pos = pos
+
+            # Add remaining text
+            result_parts.append(normalized[last_pos:])
+
+            formatted = "".join(result_parts)
+
+            # Always return single-line normalized string - writer will handle line folding if needed
+            # NEVER preserve newlines - that's the writer's job based on format_options
+            return formatted
 
         def convert_rfc_acl_to_aci(
             self,
@@ -2006,7 +1700,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                             not in {
                                 FlextLdifConstants.DictKeys.DN,
                                 "_metadata",
-                                FlextLdifConstants.DictKeys.SERVER_TYPE,
+                                FlextLdifConstants.QuirkMetadataKeys.SERVER_TYPE,
                                 "_acl_attributes",  # Processed by ACL service, not written as attribute
                             }
                         ]
@@ -2019,7 +1713,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                             not in {
                                 FlextLdifConstants.DictKeys.DN,
                                 "_metadata",
-                                FlextLdifConstants.DictKeys.SERVER_TYPE,
+                                FlextLdifConstants.QuirkMetadataKeys.SERVER_TYPE,
                                 "changetype",
                                 "_acl_attributes",  # Processed by ACL service, not written as attribute
                             }
@@ -2285,9 +1979,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
         """Delegate to schema instance."""
         return self.schema.write_attribute_to_rfc(attr_data)
 
-    # =========================================================================
     # QuirksPort Protocol Implementation (Concrete Methods for OUD)
-    # =========================================================================
 
     def normalize_entry_to_rfc(
         self, entry: FlextLdifModels.Entry
@@ -2324,25 +2016,6 @@ class FlextLdifServersOud(FlextLdifServersRfc):
     ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
         """Delegate SchemaObjectClass denormalization to the nested Schema quirk."""
         return self.schema.convert_objectclass_from_rfc(objectclass)
-
-    def convert_acl_to_rfc(
-        self,
-        acl_data: FlextLdifModels.Acl,
-    ) -> FlextResult[FlextLdifModels.Acl]:
-        """Convert ACL to RFC-compliant format, delegating to nested Acl quirk."""
-        return self.acl.convert_acl_to_rfc(acl_data)
-
-    def normalize_acl_to_rfc(
-        self, acl: FlextLdifModels.Acl
-    ) -> FlextResult[FlextLdifModels.Acl]:
-        """Delegate Acl normalization to the nested Acl quirk."""
-        return self.acl.convert_acl_to_rfc(acl)
-
-    def denormalize_acl_from_rfc(
-        self, acl: FlextLdifModels.Acl
-    ) -> FlextResult[FlextLdifModels.Acl]:
-        """Delegate Acl denormalization to the nested Acl quirk."""
-        return self.acl.convert_acl_from_rfc(acl)
 
 
 __all__ = ["FlextLdifServersOud"]

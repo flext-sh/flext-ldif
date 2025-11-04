@@ -20,6 +20,16 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
     server_type = FlextLdifConstants.LdapServers.DS_389
     priority = 15
 
+    # === STANDARDIZED CONSTANTS FOR AUTO-DISCOVERY ===
+    class Constants:
+        """Standardized constants for 389 Directory Server quirk."""
+
+        CANONICAL_NAME: ClassVar[str] = "389ds"
+        ALIASES: ClassVar[frozenset[str]] = frozenset(["389ds"])
+        PRIORITY: ClassVar[int] = 30
+        CAN_NORMALIZE_FROM: ClassVar[frozenset[str]] = frozenset(["389ds"])
+        CAN_DENORMALIZE_TO: ClassVar[frozenset[str]] = frozenset(["389ds", "rfc"])
+
     def __getattr__(self, name: str) -> object:
         """Delegate method calls to nested Schema, Acl, or Entry instances.
 
@@ -50,6 +60,9 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
 
     class Schema(FlextLdifServersRfc.Schema):
         """Schema quirks for Red Hat / 389 Directory Server."""
+
+        server_type: ClassVar[str] = FlextLdifConstants.ServerTypes.DS_389
+        priority: ClassVar[int] = 20
 
         server_type: ClassVar[str] = FlextLdifConstants.LdapServers.DS_389
         priority: ClassVar[int] = 15
@@ -124,11 +137,11 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             result = super().parse_objectclass(oc_definition)
             if result.is_success:
                 oc_data = result.unwrap()
-                # Use FlextLdifUtilities for common objectClass validation
-                FlextLdifUtilities.ObjectClassValidator.fix_missing_sup(
+                # Fix common ObjectClass issues (RFC 4512 compliance)
+                FlextLdifUtilities.ObjectClass.fix_missing_sup(
                     oc_data, server_type=FlextLdifConstants.LdapServers.DS_389
                 )
-                FlextLdifUtilities.ObjectClassValidator.fix_kind_mismatch(
+                FlextLdifUtilities.ObjectClass.fix_kind_mismatch(
                     oc_data, server_type=FlextLdifConstants.LdapServers.DS_389
                 )
                 metadata = FlextLdifModels.QuirkMetadata.create_for_quirk(
@@ -229,7 +242,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                 return False
 
             attr_name, _, _ = normalized.partition(":")
-            if attr_name.strip().lower() == FlextLdifConstants.DictKeys.ACI:
+            if attr_name.strip().lower() == FlextLdifConstants.AclKeys.ACI:
                 return True
 
             return normalized.lower().startswith("(version")
@@ -490,7 +503,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
 
                 # Store metadata in extensions
                 metadata = entry.metadata or FlextLdifModels.QuirkMetadata()
-                metadata.extensions[FlextLdifConstants.DictKeys.IS_CONFIG_ENTRY] = (
+                metadata.extensions[FlextLdifConstants.QuirkMetadataKeys.IS_CONFIG_ENTRY] = (
                     FlextLdifConstants.DnPatterns.CN_CONFIG.lower() in dn_lower
                 )
 
@@ -515,8 +528,8 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             """Strip 389 DS metadata before RFC processing."""
             try:
                 attributes = entry_data.attributes.attributes.copy()
-                attributes.pop(FlextLdifConstants.DictKeys.SERVER_TYPE, None)
-                attributes.pop(FlextLdifConstants.DictKeys.IS_CONFIG_ENTRY, None)
+                attributes.pop(FlextLdifConstants.QuirkMetadataKeys.SERVER_TYPE, None)
+                attributes.pop(FlextLdifConstants.QuirkMetadataKeys.IS_CONFIG_ENTRY, None)
 
                 rfc_entry = entry_data.model_copy(
                     update={

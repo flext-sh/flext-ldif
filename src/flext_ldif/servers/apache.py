@@ -24,6 +24,16 @@ class FlextLdifServersApache(FlextLdifServersRfc):
     server_type = FlextLdifConstants.ServerTypes.APACHE
     priority = 15
 
+    # === STANDARDIZED CONSTANTS FOR AUTO-DISCOVERY ===
+    class Constants:
+        """Standardized constants for Apache Directory Server quirk."""
+
+        CANONICAL_NAME: ClassVar[str] = "apache_directory"
+        ALIASES: ClassVar[frozenset[str]] = frozenset(["apache_directory", "apache"])
+        PRIORITY: ClassVar[int] = 30
+        CAN_NORMALIZE_FROM: ClassVar[frozenset[str]] = frozenset(["apache_directory"])
+        CAN_DENORMALIZE_TO: ClassVar[frozenset[str]] = frozenset(["apache_directory", "rfc"])
+
     def __getattr__(self, name: str) -> object:
         """Delegate method calls to nested Schema, Acl, or Entry instances.
 
@@ -59,7 +69,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
         Inherits all parsing and conversion from RFC base.
         """
 
-        server_type: ClassVar[str] = FlextLdifConstants.LdapServers.APACHE_DIRECTORY
+        server_type: ClassVar[str] = FlextLdifConstants.ServerTypes.APACHE
         priority: ClassVar[int] = 15
 
         def can_handle_attribute(
@@ -191,11 +201,11 @@ class FlextLdifServersApache(FlextLdifServersRfc):
             result = super().parse_objectclass(oc_definition)
             if result.is_success:
                 oc_data = result.unwrap()
-                # Use FlextLdifUtilities for common objectClass validation
-                FlextLdifUtilities.ObjectClassValidator.fix_missing_sup(
+                # Fix common ObjectClass issues (RFC 4512 compliance)
+                FlextLdifUtilities.ObjectClass.fix_missing_sup(
                     oc_data, server_type=FlextLdifConstants.LdapServers.APACHE_DIRECTORY
                 )
-                FlextLdifUtilities.ObjectClassValidator.fix_kind_mismatch(
+                FlextLdifUtilities.ObjectClass.fix_kind_mismatch(
                     oc_data, server_type=FlextLdifConstants.LdapServers.APACHE_DIRECTORY
                 )
                 metadata = FlextLdifModels.QuirkMetadata.create_for_quirk(
@@ -422,10 +432,10 @@ class FlextLdifServersApache(FlextLdifServersRfc):
             try:
                 acl_attribute = getattr(
                     acl_data,
-                    FlextLdifConstants.DictKeys.ACL_ATTRIBUTE,
-                    FlextLdifConstants.DictKeys.ACI,
+                    FlextLdifConstants.AclKeys.ACL_ATTRIBUTE,
+                    FlextLdifConstants.AclKeys.ACI,
                 )
-                data_raw = getattr(acl_data, FlextLdifConstants.DictKeys.DATA, {})
+                data_raw = getattr(acl_data, "data", {})
                 data: dict[str, object] = data_raw if isinstance(data_raw, dict) else {}
                 content = data.get("content", "")
                 clauses_raw = data.get("clauses", [])
@@ -520,7 +530,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
 
                 # Store metadata in extensions
                 metadata = entry.metadata or FlextLdifModels.QuirkMetadata()
-                metadata.extensions[FlextLdifConstants.DictKeys.IS_CONFIG_ENTRY] = (
+                metadata.extensions[FlextLdifConstants.QuirkMetadataKeys.IS_CONFIG_ENTRY] = (
                     "ou=config" in dn_lower
                 )
 
@@ -545,8 +555,8 @@ class FlextLdifServersApache(FlextLdifServersRfc):
             """Strip ApacheDS metadata before RFC processing."""
             try:
                 attributes = entry_data.attributes.attributes.copy()
-                attributes.pop(FlextLdifConstants.DictKeys.SERVER_TYPE, None)
-                attributes.pop(FlextLdifConstants.DictKeys.IS_CONFIG_ENTRY, None)
+                attributes.pop(FlextLdifConstants.QuirkMetadataKeys.SERVER_TYPE, None)
+                attributes.pop(FlextLdifConstants.QuirkMetadataKeys.IS_CONFIG_ENTRY, None)
 
                 rfc_entry = entry_data.model_copy(
                     update={
