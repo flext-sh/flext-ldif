@@ -22,7 +22,17 @@ class TestNovellSchemas:
         """Test attribute detection with Novell OID pattern."""
         quirk = FlextLdifServersNovell.Schema()
         attr_def = "( 2.16.840.1.113719.1.1.4.1.501 NAME 'nspmPasswordPolicyDN' SYNTAX 1.3.6.1.4.1.1466.115.121.1.12 )"
-        assert quirk.can_handle_attribute(attr_def) is True
+        # Parse string definition into model object
+
+        parse_result = quirk.parse_attribute(attr_def)
+
+        assert parse_result.is_success, f"Failed to parse attribute: {parse_result.error}"
+
+        attr_model = parse_result.unwrap()
+
+        # Test with the model object
+
+        assert quirk.can_handle_attribute(attr_model) is True
 
     def test_can_handle_attribute_with_nspm_prefix(self) -> None:
         """Test attribute detection with nspm prefix."""
@@ -30,7 +40,17 @@ class TestNovellSchemas:
         attr_def = (
             "( 1.2.3.4 NAME 'nspmPasswordPolicy' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
         )
-        assert quirk.can_handle_attribute(attr_def) is True
+        # Parse string definition into model object
+
+        parse_result = quirk.parse_attribute(attr_def)
+
+        assert parse_result.is_success, f"Failed to parse attribute: {parse_result.error}"
+
+        attr_model = parse_result.unwrap()
+
+        # Test with the model object
+
+        assert quirk.can_handle_attribute(attr_model) is True
 
     def test_can_handle_attribute_with_login_prefix(self) -> None:
         """Test attribute detection with login prefix."""
@@ -38,19 +58,49 @@ class TestNovellSchemas:
         attr_def = (
             "( 1.2.3.4 NAME 'loginDisabled' SYNTAX 1.3.6.1.4.1.1466.115.121.1.7 )"
         )
-        assert quirk.can_handle_attribute(attr_def) is True
+        # Parse string definition into model object
+
+        parse_result = quirk.parse_attribute(attr_def)
+
+        assert parse_result.is_success, f"Failed to parse attribute: {parse_result.error}"
+
+        attr_model = parse_result.unwrap()
+
+        # Test with the model object
+
+        assert quirk.can_handle_attribute(attr_model) is True
 
     def test_can_handle_attribute_with_dirxml_prefix(self) -> None:
         """Test attribute detection with dirxml- prefix."""
         quirk = FlextLdifServersNovell.Schema()
         attr_def = "( 1.2.3.4 NAME 'dirxml-associations' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
-        assert quirk.can_handle_attribute(attr_def) is True
+        # Parse string definition into model object
+
+        parse_result = quirk.parse_attribute(attr_def)
+
+        assert parse_result.is_success, f"Failed to parse attribute: {parse_result.error}"
+
+        attr_model = parse_result.unwrap()
+
+        # Test with the model object
+
+        assert quirk.can_handle_attribute(attr_model) is True
 
     def test_can_handle_attribute_negative(self) -> None:
         """Test attribute detection rejects non-Novell attributes."""
         quirk = FlextLdifServersNovell.Schema()
         attr_def = "( 2.5.4.3 NAME 'cn' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
-        assert quirk.can_handle_attribute(attr_def) is False
+        # Parse string definition into model object
+
+        parse_result = quirk.parse_attribute(attr_def)
+
+        assert parse_result.is_success, f"Failed to parse attribute: {parse_result.error}"
+
+        attr_model = parse_result.unwrap()
+
+        # Test with the model object
+
+        assert quirk.can_handle_attribute(attr_model) is False
 
     def test_parse_attribute_success(self) -> None:
         """Test parsing Novell eDirectory attribute definition."""
@@ -92,19 +142,49 @@ class TestNovellSchemas:
         """Test objectClass detection with Novell OID."""
         quirk = FlextLdifServersNovell.Schema()
         oc_def = "( 2.16.840.1.113719.2.2.6.1 NAME 'ndsPerson' SUP top STRUCTURAL )"
-        assert quirk.can_handle_objectclass(oc_def) is True
+        # Parse string definition into model object
+
+        parse_result = quirk.parse_objectclass(oc_def)
+
+        assert parse_result.is_success, f"Failed to parse objectClass: {parse_result.error}"
+
+        oc_model = parse_result.unwrap()
+
+        # Test with the model object
+
+        assert quirk.can_handle_objectclass(oc_model) is True
 
     def test_can_handle_objectclass_with_nds_name(self) -> None:
         """Test objectClass detection with nds- name."""
         quirk = FlextLdifServersNovell.Schema()
         oc_def = "( 2.5.6.0 NAME 'ndsserver' SUP top STRUCTURAL )"
-        assert quirk.can_handle_objectclass(oc_def) is True
+        # Parse string definition into model object
+
+        parse_result = quirk.parse_objectclass(oc_def)
+
+        assert parse_result.is_success, f"Failed to parse objectClass: {parse_result.error}"
+
+        oc_model = parse_result.unwrap()
+
+        # Test with the model object
+
+        assert quirk.can_handle_objectclass(oc_model) is True
 
     def test_can_handle_objectclass_negative(self) -> None:
         """Test objectClass detection rejects non-Novell classes."""
         quirk = FlextLdifServersNovell.Schema()
         oc_def = "( 2.5.6.6 NAME 'posixAccount' SUP top STRUCTURAL )"
-        assert quirk.can_handle_objectclass(oc_def) is False
+        # Parse string definition into model object
+
+        parse_result = quirk.parse_objectclass(oc_def)
+
+        assert parse_result.is_success, f"Failed to parse objectClass: {parse_result.error}"
+
+        oc_model = parse_result.unwrap()
+
+        # Test with the model object
+
+        assert quirk.can_handle_objectclass(oc_model) is False
 
     def test_parse_objectclass_structural(self) -> None:
         """Test parsing STRUCTURAL objectClass."""
@@ -267,28 +347,72 @@ class TestNovellAcls:
         main_quirk = FlextLdifServersNovell.Schema()
         acl_quirk = main_quirk.Acl()
         acl_line = "acl: [Entry Rights]#cn=Admin,o=Example#[BCDRSE]"
-        assert acl_quirk.can_handle_acl(acl_line) is True
+        # Parse string ACL into model object
+
+        parse_result = acl_quirk.parse_acl(acl_line)
+
+        assert parse_result.is_success, f"Failed to parse ACL: {parse_result.error}"
+
+        acl_model = parse_result.unwrap()
+
+
+        # Test with the model object
+
+        assert acl_quirk.can_handle_acl(acl_model) is True
 
     def test_can_handle_acl_with_inheritedacl_attribute(self) -> None:
         """Test ACL detection with inheritedacl attribute."""
         main_quirk = FlextLdifServersNovell.Schema()
         acl_quirk = main_quirk.Acl()
         acl_line = "inheritedacl: [Entry Rights]#cn=Admin,o=Example#[BCDRSE]"
-        assert acl_quirk.can_handle_acl(acl_line) is True
+        # Parse string ACL into model object
+
+        parse_result = acl_quirk.parse_acl(acl_line)
+
+        assert parse_result.is_success, f"Failed to parse ACL: {parse_result.error}"
+
+        acl_model = parse_result.unwrap()
+
+
+        # Test with the model object
+
+        assert acl_quirk.can_handle_acl(acl_model) is True
 
     def test_can_handle_acl_negative(self) -> None:
         """Test ACL detection rejects non-Novell ACLs."""
         main_quirk = FlextLdifServersNovell.Schema()
         acl_quirk = main_quirk.Acl()
         acl_line = "access to * by * read"
-        assert acl_quirk.can_handle_acl(acl_line) is False
+        # Parse string ACL into model object
+
+        parse_result = acl_quirk.parse_acl(acl_line)
+
+        assert parse_result.is_success, f"Failed to parse ACL: {parse_result.error}"
+
+        acl_model = parse_result.unwrap()
+
+
+        # Test with the model object
+
+        assert acl_quirk.can_handle_acl(acl_model) is False
 
     def test_can_handle_acl_empty_line(self) -> None:
         """Test ACL detection rejects empty lines."""
         main_quirk = FlextLdifServersNovell.Schema()
         acl_quirk = main_quirk.Acl()
         acl_line = ""
-        assert acl_quirk.can_handle_acl(acl_line) is False
+        # Parse string ACL into model object
+
+        parse_result = acl_quirk.parse_acl(acl_line)
+
+        assert parse_result.is_success, f"Failed to parse ACL: {parse_result.error}"
+
+        acl_model = parse_result.unwrap()
+
+
+        # Test with the model object
+
+        assert acl_quirk.can_handle_acl(acl_model) is False
 
     def test_parse_acl_success(self) -> None:
         """Test parsing Novell eDirectory ACL definition."""

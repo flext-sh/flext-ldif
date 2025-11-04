@@ -26,6 +26,7 @@ from typing import override
 from flext_core import FlextDecorators, FlextLogger, FlextResult, FlextService
 
 from flext_ldif.config import FlextLdifConfig
+from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.services.registry import FlextLdifRegistry
 

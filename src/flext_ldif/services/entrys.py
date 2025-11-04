@@ -1,8 +1,123 @@
-"""Entry quirks module for LDIF processing.
+"""LDIF Entry Adaptation Service - Entry Transformation and Cleanup.
 
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
+╔══════════════════════════════════════════════════════════════════════════╗
+║  UNIVERSAL ENTRY TRANSFORMATION & CLEANUP ENGINE                         ║
+╠══════════════════════════════════════════════════════════════════════════╣
+║  ✅ DN string cleaning (RFC 4514 compliant)                             ║
+║  ✅ Operational attribute removal (server-agnostic)                      ║
+║  ✅ Attribute stripping (selective removal)                              ║
+║  ✅ Entry adaptation for server compatibility                            ║
+║  ✅ Entry portability (makes entries work across servers)               ║
+║  ✅ Multiple API patterns (classmethod, builder, direct)                ║
+║  ✅ 100% server-agnostic design                                         ║
+║  ✅ FlextResult railway-oriented programming                            ║
+╚══════════════════════════════════════════════════════════════════════════╝
 
+═══════════════════════════════════════════════════════════════════════════
+RESPONSIBILITY (SRP)
+
+This service handles ENTRY TRANSFORMATION ONLY:
+- Cleaning DN strings to RFC 4514 compliance
+- Removing operational attributes for portability
+- Removing unwanted attributes from entries
+- Adapting entries for specific server targets
+
+What it does NOT do:
+- Filter entries (use FlextLdifFilterService)
+- Sort entries (use FlextLdifSortingService)
+- Validate schema (use FlextLdifValidationService)
+
+═══════════════════════════════════════════════════════════════════════════
+REAL USAGE EXAMPLES
+
+# PATTERN 1: Direct Classmethod API (Most Common)
+────────────────────────────────────────────────
+# Clean DN strings
+cleaned_dn = FlextLdifEntryService.clean_dn("cn = John , dc = example , dc = com")
+# Result: "cn=John,dc=example,dc=com"
+
+# Remove operational attributes from entry
+result = FlextLdifEntryService.remove_operational_attributes(entry)
+adapted_entry = result.unwrap()
+
+# Remove specific attributes
+result = FlextLdifEntryService.remove_attributes(
+    entry=my_entry,
+    attributes=["tempAttribute", "debugInfo"]
+)
+cleaned_entry = result.unwrap()
+
+# Clean all DNs in multiple entries
+result = FlextLdifEntryService.clean_all_dns(entries)
+cleaned_entries = result.unwrap()
+
+# PATTERN 2: Execute Method (V1 FlextService Style)
+────────────────────────────────────────────────────
+result = FlextLdifEntryService(
+    entries=my_entries,
+    operation="remove_operational_attributes"
+).execute()
+
+if result.is_success:
+    adapted_entries = result.unwrap()
+
+# PATTERN 3: Fluent Builder Pattern
+───────────────────────────────────
+adapted_entries = (
+    FlextLdifEntryService.builder()
+    .with_entries(my_entries)
+    .with_operation("remove_operational_attributes")
+    .build()
+)
+
+# PATTERN 4: Transformation Pipeline
+─────────────────────────────────────
+result = (
+    FlextLdifEntryService.remove_operational_attributes(entries)
+    .and_then(lambda e: FlextLdifEntryService.remove_attributes(
+        e,
+        attributes=["tempAttr"]
+    ))
+)
+
+═══════════════════════════════════════════════════════════════════════════
+OPERATIONAL ATTRIBUTES
+
+COMMON (removed by default):
+- createTimestamp, modifyTimestamp
+- createTimestamp, modifyTimestamp
+- creatorsName, modifiersName
+- entryCSN, entryUUID
+- contextCSN
+
+SPECIFIC (server-specific, not removed):
+- creatorsName (might be needed for auditing)
+- modifiersName (might be needed for auditing)
+
+═══════════════════════════════════════════════════════════════════════════
+QUICK REFERENCE
+
+Most Common Use Cases:
+
+# Clean a DN string
+cleaned = FlextLdifEntryService.clean_dn(messy_dn)
+
+# Remove operational attributes (for portability)
+result = FlextLdifEntryService.remove_operational_attributes(entry)
+portable_entry = result.unwrap()
+
+# Remove specific attributes (cleanup)
+result = FlextLdifEntryService.remove_attributes(
+    entry,
+    attributes=["tempAttribute", "debugInfo"]
+)
+
+# Remove operational attributes from multiple entries
+result = FlextLdifEntryService.remove_operational_attributes_batch(entries)
+portable_entries = result.unwrap()
+
+# Copyright (c) 2025 FLEXT Team. All rights reserved.
+# SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -14,172 +129,330 @@ from flext_core import FlextResult, FlextService
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.services.dn import FlextLdifDnService
-from flext_ldif.services.registry import FlextLdifRegistry
 
 
-class FlextLdifEntrys(FlextService[dict[str, object]]):
-    """Entry adaptation and validation for server-specific quirks."""
+class FlextLdifEntryService(FlextService[list[FlextLdifModels.Entry]]):
+    """Universal entry transformation and cleanup service.
+
+    Handles entry adaptation, DN cleaning, and attribute removal for
+    making LDIF entries compatible across different LDAP servers.
+
+    Responsibility (SRP):
+    - Clean DN strings to RFC 4514 compliance
+    - Remove operational attributes for portability
+    - Remove unwanted attributes
+    - Adapt entries for server compatibility
+
+    Does NOT handle:
+    - Filtering entries (use FlextLdifFilterService)
+    - Sorting entries (use FlextLdifSortingService)
+    - Validating schema (use FlextLdifValidationService)
+    """
+
+    # ════════════════════════════════════════════════════════════════════════
+    # PYDANTIC FIELDS
+    # ════════════════════════════════════════════════════════════════════════
+
+    entries: list[FlextLdifModels.Entry] = []
+    operation: str = "remove_operational_attributes"
+    attributes_to_remove: list[str] = []
+
+    # ════════════════════════════════════════════════════════════════════════
+    # EXECUTE PATTERN (V1 FlextService)
+    # ════════════════════════════════════════════════════════════════════════
 
     @override
-    def __init__(self) -> None:
-        """Initialize entry quirks handler.
+    def execute(self) -> FlextResult[list[FlextLdifModels.Entry]]:
+        """Execute entry transformation operation.
 
-        Uses quirks registry for server-specific entry processing.
-
-        """
-        super().__init__()
-        self._registry = FlextLdifRegistry.get_global_instance()
-
-    @override
-    def execute(self) -> FlextResult[dict[str, object]]:
-        """Execute entry quirks service."""
-        return FlextResult[dict[str, object]].ok({
-            "service": FlextLdifEntrys,
-            "status": "ready",
-        })
-
-    def clean_dn(self, dn: str) -> str:
-        """Clean a DN string before it's processed.
-
-        This acts as a hook for server-specific quirks to fix common
-        formatting issues in DNs from specific LDAP server exports.
-
-        Fixes applied:
-        - Removes spaces around '=' in RDN components (e.g., "cn = value" -> "cn=value")
-        - Fixes malformed backslash escapes
-        - Normalizes whitespace
-
-        Args:
-            dn: The original DN string from the LDIF file.
+        Supported operations:
+        - "remove_operational_attributes": Strip COMMON operational attrs
+        - "remove_attributes": Strip specific attributes
 
         Returns:
-            The cleaned DN string.
+            FlextResult with transformed entries
 
         """
-        # Use DN utils for proper RFC 4514 compliant cleaning
+        try:
+            if self.operation == "remove_operational_attributes":
+                return self._remove_operational_attributes_batch()
+            if self.operation == "remove_attributes":
+                return self._remove_attributes_batch()
+            return FlextResult[list[FlextLdifModels.Entry]].fail(
+                f"Unknown operation: {self.operation}"
+            )
+        except Exception as e:
+            return FlextResult[list[FlextLdifModels.Entry]].fail(str(e))
+
+    # ════════════════════════════════════════════════════════════════════════
+    # PUBLIC CLASSMETHOD API (Direct Entry Points)
+    # ════════════════════════════════════════════════════════════════════════
+
+    @classmethod
+    def clean_dn(cls, dn: str) -> str:
+        """Clean a DN string to RFC 4514 compliance.
+
+        Fixes common issues in DN strings:
+        - Removes spaces around '=' in RDN components
+        - Fixes malformed escape sequences
+        - Normalizes whitespace
+        - Makes DN RFC 4514 compliant
+
+        Args:
+            dn: Raw DN string from LDIF
+
+        Returns:
+            RFC 4514 compliant DN string
+
+        Example:
+            >>> dn = "cn = John Doe , dc = example , dc = com"
+            >>> FlextLdifEntryService.clean_dn(dn)
+            'cn=John Doe,dc=example,dc=com'
+
+        """
         return FlextLdifDnService.clean_dn(dn)
 
-    def adapt_entry(
-        self,
-        entry: FlextLdifModels.Entry,
-        _target_server: str,
+    @classmethod
+    def remove_operational_attributes(
+        cls, entry: FlextLdifModels.Entry
     ) -> FlextResult[FlextLdifModels.Entry]:
-        """Adapt entry for specific server type.
+        """Remove operational attributes from a single entry.
 
-        Strips COMMON operational attributes to ensure portability across servers.
-        Server-specific operational attributes are only stripped if known to be present
-        in the entry's source server type.
+        Removes COMMON operational attributes (createTimestamp, modifyTimestamp, etc.)
+        making the entry portable across different LDAP servers.
 
         Args:
             entry: Entry to adapt
-            _target_server: Target server type (required, reserved for future use)
 
         Returns:
-            FlextResult containing adapted entry
+            FlextResult with adapted entry (operational attrs removed)
+
+        Example:
+            result = FlextLdifEntryService.remove_operational_attributes(entry)
+            portable_entry = result.unwrap()
 
         """
-        # Only strip COMMON operational attributes by default
-        # This is conservative: we only strip attributes that are universally operational
-        # across all LDAP servers (createTimestamp, modifyTimestamp, etc.)
-        # Server-specific attributes are only stripped if we explicitly know the source
-        operational_attrs = set(FlextLdifConstants.OperationalAttributes.COMMON)
+        return cls()._remove_operational_attributes_single(entry)
 
-        adapted_attrs: dict[str, list[str]] = {}
+    @classmethod
+    def remove_operational_attributes_batch(
+        cls, entries: list[FlextLdifModels.Entry]
+    ) -> FlextResult[list[FlextLdifModels.Entry]]:
+        """Remove operational attributes from multiple entries.
+
+        Args:
+            entries: Entries to adapt
+
+        Returns:
+            FlextResult with adapted entries
+
+        Example:
+            result = FlextLdifEntryService.remove_operational_attributes_batch(entries)
+            portable_entries = result.unwrap()
+
+        """
+        return cls(entries=entries, operation="remove_operational_attributes").execute()
+
+    @classmethod
+    def remove_attributes(
+        cls,
+        entry: FlextLdifModels.Entry,
+        attributes: list[str],
+    ) -> FlextResult[FlextLdifModels.Entry]:
+        """Remove specific attributes from a single entry.
+
+        Args:
+            entry: Entry to clean
+            attributes: List of attribute names to remove (case-insensitive)
+
+        Returns:
+            FlextResult with cleaned entry
+
+        Example:
+            result = FlextLdifEntryService.remove_attributes(
+                entry,
+                attributes=["tempAttribute", "debugInfo"]
+            )
+            cleaned_entry = result.unwrap()
+
+        """
+        return cls()._remove_attributes_single(entry, attributes)
+
+    @classmethod
+    def remove_attributes_batch(
+        cls,
+        entries: list[FlextLdifModels.Entry],
+        attributes: list[str],
+    ) -> FlextResult[list[FlextLdifModels.Entry]]:
+        """Remove specific attributes from multiple entries.
+
+        Args:
+            entries: Entries to clean
+            attributes: List of attribute names to remove
+
+        Returns:
+            FlextResult with cleaned entries
+
+        Example:
+            result = FlextLdifEntryService.remove_attributes_batch(
+                entries,
+                attributes=["tempAttribute", "debugInfo"]
+            )
+            cleaned_entries = result.unwrap()
+
+        """
+        return cls(
+            entries=entries,
+            operation="remove_attributes",
+            attributes_to_remove=attributes,
+        ).execute()
+
+    # ════════════════════════════════════════════════════════════════════════
+    # FLUENT BUILDER PATTERN
+    # ════════════════════════════════════════════════════════════════════════
+
+    @classmethod
+    def builder(cls) -> FlextLdifEntryService:
+        """Create fluent builder for complex entry transformations.
+
+        Returns:
+            Service instance for method chaining
+
+        Example:
+            result = (FlextLdifEntryService.builder()
+                .with_entries(entries)
+                .with_operation("remove_operational_attributes")
+                .build())
+
+        """
+        return cls(entries=[])
+
+    def with_entries(self, entries: list[FlextLdifModels.Entry]) -> FlextLdifEntryService:
+        """Set entries to transform (fluent builder)."""
+        self.entries = entries
+        return self
+
+    def with_operation(self, operation: str) -> FlextLdifEntryService:
+        """Set transformation operation (fluent builder)."""
+        self.operation = operation
+        return self
+
+    def with_attributes_to_remove(self, attributes: list[str]) -> FlextLdifEntryService:
+        """Set attributes to remove (fluent builder)."""
+        self.attributes_to_remove = attributes
+        return self
+
+    def build(self) -> list[FlextLdifModels.Entry]:
+        """Execute and return unwrapped result (fluent terminal)."""
+        return self.execute().unwrap()
+
+    # ════════════════════════════════════════════════════════════════════════
+    # PRIVATE IMPLEMENTATION (DRY Core)
+    # ════════════════════════════════════════════════════════════════════════
+
+    def _remove_operational_attributes_batch(
+        self,
+    ) -> FlextResult[list[FlextLdifModels.Entry]]:
+        """Remove operational attributes from all entries."""
+        adapted_entries: list[FlextLdifModels.Entry] = []
+
+        for entry in self.entries:
+            result = self._remove_operational_attributes_single(entry)
+            if result.is_failure:
+                return result
+            adapted_entries.append(result.unwrap())
+
+        return FlextResult[list[FlextLdifModels.Entry]].ok(adapted_entries)
+
+    def _remove_operational_attributes_single(
+        self,
+        entry: FlextLdifModels.Entry,
+    ) -> FlextResult[FlextLdifModels.Entry]:
+        """Remove operational attributes from single entry."""
+        operational_attrs = set(FlextLdifConstants.OperationalAttributes.COMMON)
         operational_attrs_lower = {attr.lower() for attr in operational_attrs}
 
-        # Process attributes - strip operational ones
+        adapted_attrs: dict[str, list[str]] = {}
+
         for attr_name, attr_values in entry.attributes.attributes.items():
             # Skip operational attributes (case-insensitive check)
             if attr_name.lower() in operational_attrs_lower:
                 if self.logger is not None:
                     self.logger.debug(
-                        f"Stripped operational attribute '{attr_name}' from {entry.dn.value}",
+                        f"Removed operational attribute '{attr_name}' from {entry.dn.value}",
                     )
                 continue
 
-            # Keep attribute as-is (no transformations needed for now)
+            # Keep attribute as-is
             adapted_attrs[attr_name] = attr_values.copy()
 
-        # Convert adapted_attrs to LdifAttributes
-        ldif_attributes = FlextLdifModels.LdifAttributes(attributes=adapted_attrs)
-
         # Create adapted entry
+        ldif_attributes = FlextLdifModels.LdifAttributes(attributes=adapted_attrs)
         adapted_entry_result: FlextResult[FlextLdifModels.Entry] = (
             FlextLdifModels.Entry.create(
                 dn=entry.dn,
                 attributes=ldif_attributes,
             )
         )
+
         if adapted_entry_result.is_failure:
-            error_msg = f"Failed to create adapted entry: {adapted_entry_result.error}"
+            error_msg = f"Failed to adapt entry {entry.dn.value}: {adapted_entry_result.error}"
             if self.logger is not None:
                 self.logger.error(error_msg)
             return FlextResult[FlextLdifModels.Entry].fail(error_msg)
 
         return adapted_entry_result
 
-    def _get_operational_attrs(self, server_type: str) -> list[str]:
-        """Get operational attributes for specific server type.
+    def _remove_attributes_batch(self) -> FlextResult[list[FlextLdifModels.Entry]]:
+        """Remove specific attributes from all entries."""
+        adapted_entries: list[FlextLdifModels.Entry] = []
 
-        Combines COMMON operational attributes with server-specific ones.
+        for entry in self.entries:
+            result = self._remove_attributes_single(entry, self.attributes_to_remove)
+            if result.is_failure:
+                return result
+            adapted_entries.append(result.unwrap())
 
-        Args:
-        server_type: Source LDAP server type (case-insensitive)
+        return FlextResult[list[FlextLdifModels.Entry]].ok(adapted_entries)
 
-        Returns:
-        List of operational attribute names to strip
+    def _remove_attributes_single(
+        self,
+        entry: FlextLdifModels.Entry,
+        attributes: list[str],
+    ) -> FlextResult[FlextLdifModels.Entry]:
+        """Remove specific attributes from single entry."""
+        attrs_to_remove_lower = {attr.lower() for attr in attributes}
 
-        """
-        # Start with common operational attributes
-        operational_attrs = set(FlextLdifConstants.OperationalAttributes.COMMON)
+        adapted_attrs: dict[str, list[str]] = {}
 
-        # Normalize server type for matching (case-insensitive)
-        server_lower = server_type.lower()
+        for attr_name, attr_values in entry.attributes.attributes.items():
+            # Skip attributes in removal list (case-insensitive check)
+            if attr_name.lower() in attrs_to_remove_lower:
+                if self.logger is not None:
+                    self.logger.debug(
+                        f"Removed attribute '{attr_name}' from {entry.dn.value}",
+                    )
+                continue
 
-        # Add server-specific operational attributes using ServerTypes constants
-        # Check more specific patterns first to avoid substring matches
-        # Use ServerTypes constants instead of string literals
-        if (
-            server_lower == FlextLdifConstants.ServerTypes.OPENLDAP.lower()
-            or server_lower == FlextLdifConstants.ServerTypes.OPENLDAP1.lower()
-            or server_lower == FlextLdifConstants.ServerTypes.OPENLDAP2.lower()
-            or FlextLdifConstants.LdapServers.OPENLDAP in server_lower
-        ):
-            operational_attrs |= (
-                FlextLdifConstants.OperationalAttributes.OPENLDAP_SPECIFIC
+            # Keep attribute as-is
+            adapted_attrs[attr_name] = attr_values.copy()
+
+        # Create cleaned entry
+        ldif_attributes = FlextLdifModels.LdifAttributes(attributes=adapted_attrs)
+        cleaned_entry_result: FlextResult[FlextLdifModels.Entry] = (
+            FlextLdifModels.Entry.create(
+                dn=entry.dn,
+                attributes=ldif_attributes,
             )
-        elif (
-            server_lower == FlextLdifConstants.ServerTypes.OID.lower()
-            or FlextLdifConstants.LdapServers.ORACLE_OID in server_lower
-        ):
-            operational_attrs |= FlextLdifConstants.OperationalAttributes.OID_SPECIFIC
-        elif (
-            server_lower == FlextLdifConstants.ServerTypes.OUD.lower()
-            or FlextLdifConstants.LdapServers.ORACLE_OUD in server_lower
-        ):
-            operational_attrs |= FlextLdifConstants.OperationalAttributes.OUD_SPECIFIC
-        elif (
-            server_lower == FlextLdifConstants.ServerTypes.DS_389.lower()
-            or FlextLdifConstants.LdapServers.DS_389 in server_lower
-        ):
-            operational_attrs |= (
-                FlextLdifConstants.OperationalAttributes.DS_389_SPECIFIC
-            )
-        elif (
-            server_lower == FlextLdifConstants.ServerTypes.AD.lower()
-            or FlextLdifConstants.LdapServers.ACTIVE_DIRECTORY in server_lower
-        ):
-            operational_attrs |= FlextLdifConstants.OperationalAttributes.AD_SPECIFIC
-        elif FlextLdifConstants.LdapServers.NOVELL_EDIRECTORY in server_lower:
-            operational_attrs |= (
-                FlextLdifConstants.OperationalAttributes.NOVELL_SPECIFIC
-            )
-        elif FlextLdifConstants.LdapServers.IBM_TIVOLI in server_lower:
-            operational_attrs |= (
-                FlextLdifConstants.OperationalAttributes.IBM_TIVOLI_SPECIFIC
-            )
+        )
 
-        return list(operational_attrs)
+        if cleaned_entry_result.is_failure:
+            error_msg = f"Failed to clean entry {entry.dn.value}: {cleaned_entry_result.error}"
+            if self.logger is not None:
+                self.logger.error(error_msg)
+            return FlextResult[FlextLdifModels.Entry].fail(error_msg)
+
+        return cleaned_entry_result
 
 
-__all__ = ["FlextLdifEntrys"]
+__all__ = ["FlextLdifEntryService"]

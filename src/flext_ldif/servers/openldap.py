@@ -31,6 +31,16 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
     server_type = FlextLdifConstants.ServerTypes.OPENLDAP
     priority = 10
 
+    # === STANDARDIZED CONSTANTS FOR AUTO-DISCOVERY ===
+    class Constants:
+        """Standardized constants for OpenLDAP 2.x quirk."""
+
+        CANONICAL_NAME: ClassVar[str] = "openldap"
+        ALIASES: ClassVar[frozenset[str]] = frozenset(["openldap", "openldap2"])
+        PRIORITY: ClassVar[int] = 20
+        CAN_NORMALIZE_FROM: ClassVar[frozenset[str]] = frozenset(["openldap"])
+        CAN_DENORMALIZE_TO: ClassVar[frozenset[str]] = frozenset(["openldap", "rfc"])
+
     class Schema(FlextLdifServersRfc.Schema):
         """OpenLDAP 2.x schema quirk.
 
@@ -80,12 +90,8 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                 return bool(self.OPENLDAP_OLC_PATTERN.search(attribute.oid))
             return False
 
-        # --------------------------------------------------------------------- #
         # Schema parsing and conversion methods
-        # --------------------------------------------------------------------- #
-        # --------------------------------------------------------------------- #
         # OVERRIDDEN METHODS (from FlextLdifServersBase.Schema)
-        # --------------------------------------------------------------------- #
         # These methods override the base class with OpenLDAP 2.x-specific logic:
         # - parse_attribute(): Custom parsing logic for olc* attributes
         # - parse_objectclass(): Custom parsing logic for olc* objectClasses
@@ -308,9 +314,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                     f"OpenLDAP 2.x objectClass write failed: {e}",
                 )
 
-        # --------------------------------------------------------------------- #
         # OVERRIDDEN METHODS (from FlextLdifServersBase.Acl)
-        # --------------------------------------------------------------------- #
         # These methods override the base class with OpenLDAP 2.x-specific logic:
         # - can_handle_acl(): Detects olcAccess formats
         # - parse_acl(): Parses OpenLDAP 2.x ACL definitions
@@ -358,7 +362,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                 # OpenLDAP 2.x ACLs start with "to" or "{n}to"
                 return bool(
                     re.match(r"^(\{\d+\})?\s*to\s+", acl.raw_acl, re.IGNORECASE),
-                ) or acl.raw_acl.startswith(f"{FlextLdifConstants.DictKeys.OLCACCESS}:")
+                ) or acl.raw_acl.startswith(f"{FlextLdifConstants.AclKeys.OLCACCESS}:")
 
             def parse_acl(self, acl_line: str) -> FlextResult[FlextLdifModels.Acl]:
                 """Parse OpenLDAP 2.x ACL definition.
@@ -376,7 +380,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                 try:
                     # Remove olcAccess: prefix if present
                     acl_content = acl_line
-                    if acl_line.startswith(f"{FlextLdifConstants.DictKeys.OLCACCESS}:"):
+                    if acl_line.startswith(f"{FlextLdifConstants.AclKeys.OLCACCESS}:"):
                         acl_content = acl_line[len("olcAccess:") :].strip()
 
                     # Remove {n} index if present
@@ -574,15 +578,16 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
         """
 
         server_type: ClassVar[str] = FlextLdifConstants.ServerTypes.OPENLDAP
+        priority: ClassVar[int] = 16
+
+        server_type: ClassVar[str] = FlextLdifConstants.ServerTypes.OPENLDAP
         priority: ClassVar[int] = 10
 
         def __init__(self) -> None:
             """Initialize OpenLDAP 2.x entry quirk with RFC format."""
             super().__init__()
 
-        # --------------------------------------------------------------------- #
         # OVERRIDDEN METHODS (from FlextLdifServersBase.Entry)
-        # --------------------------------------------------------------------- #
         # These methods override the base class with OpenLDAP 2.x-specific logic:
         # - can_handle_entry(): Detects OpenLDAP 2.x entries by DN/attributes
         # - process_entry(): Normalizes OpenLDAP 2.x entries with metadata
@@ -644,7 +649,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                 # Add OpenLDAP-specific processing if needed
                 metadata = entry.metadata or FlextLdifModels.QuirkMetadata()
                 entry_dn = entry.dn.value
-                metadata.extensions[FlextLdifConstants.DictKeys.IS_CONFIG_ENTRY] = (
+                metadata.extensions[FlextLdifConstants.QuirkMetadataKeys.IS_CONFIG_ENTRY] = (
                     "cn=config" in entry_dn.lower()
                 )
 

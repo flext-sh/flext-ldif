@@ -97,7 +97,7 @@ class TestOIDToOUDACLConversion:
         result = conversion_matrix.convert(
             source_quirk=oid_quirk,
             target_quirk=oud_quirk,
-            data_type="acl",
+            model_instance_or_data_type="acl",
             data=oid_acl,
         )
 
@@ -131,7 +131,7 @@ class TestOIDToOUDACLConversion:
         result = conversion_matrix.convert(
             source_quirk=oid_quirk,
             target_quirk=oud_quirk,
-            data_type="acl",
+            model_instance_or_data_type="acl",
             data=oid_acl,
         )
 
@@ -164,7 +164,7 @@ class TestOIDToOUDACLConversion:
         result = conversion_matrix.convert(
             source_quirk=oid_quirk,
             target_quirk=oud_quirk,
-            data_type="acl",
+            model_instance_or_data_type="acl",
             data=oid_acl,
         )
 
@@ -198,7 +198,7 @@ class TestOIDToOUDACLConversion:
         result = conversion_matrix.convert(
             source_quirk=oid_quirk,
             target_quirk=oud_quirk,
-            data_type="acl",
+            model_instance_or_data_type="acl",
             data=oid_acl,
         )
 
@@ -249,7 +249,7 @@ class TestOUDToOIDACLConversion:
         result = conversion_matrix.convert(
             source_quirk=oud_quirk,
             target_quirk=oid_quirk,
-            data_type="acl",
+            model_instance_or_data_type="acl",
             data=oud_aci,
         )
 
@@ -285,7 +285,7 @@ class TestOUDToOIDACLConversion:
         result = conversion_matrix.convert(
             source_quirk=oud_quirk,
             target_quirk=oid_quirk,
-            data_type="acl",
+            model_instance_or_data_type="acl",
             data=oud_aci,
         )
 
@@ -322,7 +322,7 @@ class TestOUDToOIDACLConversion:
         result = conversion_matrix.convert(
             source_quirk=oud_quirk,
             target_quirk=oid_quirk,
-            data_type="acl",
+            model_instance_or_data_type="acl",
             data=oud_aci,
         )
 

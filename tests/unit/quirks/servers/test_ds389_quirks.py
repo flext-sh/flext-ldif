@@ -22,7 +22,14 @@ class TestDs389Schemas:
         """Test attribute detection with 389 DS OID pattern."""
         quirk = FlextLdifServersDs389()
         attr_def = "( 2.16.840.1.113730.3.1.1 NAME 'nsslapd-suffix' SYNTAX 1.3.6.1.4.1.1466.115.121.1.12 )"
-        assert quirk.can_handle_attribute(attr_def) is True
+
+        # Parse string definition into model object
+        parse_result = quirk.parse_attribute(attr_def)
+        assert parse_result.is_success, f"Failed to parse attribute: {parse_result.error}"
+        attr_model = parse_result.unwrap()
+
+        # Test with the model object
+        assert quirk.can_handle_attribute(attr_model) is True
 
     def test_can_handle_attribute_with_nsslapd_prefix(self) -> None:
         """Test attribute detection with nsslapd- prefix."""
@@ -30,7 +37,14 @@ class TestDs389Schemas:
         attr_def = (
             "( 1.2.3.4 NAME 'nsslapd-port' SYNTAX 1.3.6.1.4.1.1466.115.121.1.27 )"
         )
-        assert quirk.can_handle_attribute(attr_def) is True
+
+        # Parse string definition into model object
+        parse_result = quirk.parse_attribute(attr_def)
+        assert parse_result.is_success, f"Failed to parse attribute: {parse_result.error}"
+        attr_model = parse_result.unwrap()
+
+        # Test with the model object
+        assert quirk.can_handle_attribute(attr_model) is True
 
     def test_can_handle_attribute_with_nsds_prefix(self) -> None:
         """Test attribute detection with nsds prefix."""
@@ -38,19 +52,40 @@ class TestDs389Schemas:
         attr_def = (
             "( 1.2.3.4 NAME 'nsds5ReplicaId' SYNTAX 1.3.6.1.4.1.1466.115.121.1.27 )"
         )
-        assert quirk.can_handle_attribute(attr_def) is True
+
+        # Parse string definition into model object
+        parse_result = quirk.parse_attribute(attr_def)
+        assert parse_result.is_success, f"Failed to parse attribute: {parse_result.error}"
+        attr_model = parse_result.unwrap()
+
+        # Test with the model object
+        assert quirk.can_handle_attribute(attr_model) is True
 
     def test_can_handle_attribute_with_nsuniqueid(self) -> None:
         """Test attribute detection with nsuniqueid prefix."""
         quirk = FlextLdifServersDs389()
         attr_def = "( 1.2.3.4 NAME 'nsuniqueid' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
-        assert quirk.can_handle_attribute(attr_def) is True
+
+        # Parse string definition into model object
+        parse_result = quirk.parse_attribute(attr_def)
+        assert parse_result.is_success, f"Failed to parse attribute: {parse_result.error}"
+        attr_model = parse_result.unwrap()
+
+        # Test with the model object
+        assert quirk.can_handle_attribute(attr_model) is True
 
     def test_can_handle_attribute_negative(self) -> None:
         """Test attribute detection rejects non-389 DS attributes."""
         quirk = FlextLdifServersDs389()
         attr_def = "( 2.5.4.3 NAME 'cn' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
-        assert quirk.can_handle_attribute(attr_def) is False
+
+        # Parse string definition into model object
+        parse_result = quirk.parse_attribute(attr_def)
+        assert parse_result.is_success, f"Failed to parse attribute: {parse_result.error}"
+        attr_model = parse_result.unwrap()
+
+        # Test with the model object
+        assert quirk.can_handle_attribute(attr_model) is False
 
     def test_parse_attribute_success(self) -> None:
         """Test parsing 389 DS attribute definition."""
@@ -91,19 +126,40 @@ class TestDs389Schemas:
         """Test objectClass detection with 389 DS OID."""
         quirk = FlextLdifServersDs389()
         oc_def = "( 2.16.840.1.113730.3.2.1 NAME 'nscontainer' SUP top STRUCTURAL )"
-        assert quirk.can_handle_objectclass(oc_def) is True
+
+        # Parse string definition into model object
+        parse_result = quirk.parse_objectclass(oc_def)
+        assert parse_result.is_success, f"Failed to parse objectClass: {parse_result.error}"
+        oc_model = parse_result.unwrap()
+
+        # Test with the model object
+        assert quirk.can_handle_objectclass(oc_model) is True
 
     def test_can_handle_objectclass_with_ns_name(self) -> None:
         """Test objectClass detection with ns- name."""
         quirk = FlextLdifServersDs389()
         oc_def = "( 2.5.6.0 NAME 'nsperson' SUP top STRUCTURAL )"
-        assert quirk.can_handle_objectclass(oc_def) is True
+
+        # Parse string definition into model object
+        parse_result = quirk.parse_objectclass(oc_def)
+        assert parse_result.is_success, f"Failed to parse objectClass: {parse_result.error}"
+        oc_model = parse_result.unwrap()
+
+        # Test with the model object
+        assert quirk.can_handle_objectclass(oc_model) is True
 
     def test_can_handle_objectclass_negative(self) -> None:
         """Test objectClass detection rejects non-389 DS classes."""
         quirk = FlextLdifServersDs389()
         oc_def = "( 2.5.6.6 NAME 'posixAccount' SUP top STRUCTURAL )"
-        assert quirk.can_handle_objectclass(oc_def) is False
+
+        # Parse string definition into model object
+        parse_result = quirk.parse_objectclass(oc_def)
+        assert parse_result.is_success, f"Failed to parse objectClass: {parse_result.error}"
+        oc_model = parse_result.unwrap()
+
+        # Test with the model object
+        assert quirk.can_handle_objectclass(oc_model) is False
 
     def test_parse_objectclass_structural(self) -> None:
         """Test parsing STRUCTURAL objectClass."""
@@ -253,28 +309,72 @@ class TestDs389Acls:
         main_quirk = FlextLdifServersDs389()
         acl_quirk = main_quirk.Acl()
         acl_line = 'aci: (version 3.0; acl "Admin Access"; allow (all) userdn = "ldap:///cn=admin,dc=example,dc=com";)'
-        assert acl_quirk.can_handle_acl(acl_line) is True
+        # Parse string ACL into model object
+
+        parse_result = acl_quirk.parse_acl(acl_line)
+
+        assert parse_result.is_success, f"Failed to parse ACL: {parse_result.error}"
+
+        acl_model = parse_result.unwrap()
+
+
+        # Test with the model object
+
+        assert acl_quirk.can_handle_acl(acl_model) is True
 
     def test_can_handle_acl_with_version_prefix(self) -> None:
         """Test ACL detection with version prefix."""
         main_quirk = FlextLdifServersDs389()
         acl_quirk = main_quirk.Acl()
         acl_line = '(version 3.0; acl "Admin Access"; allow (all) userdn = "ldap:///cn=admin,dc=example,dc=com";)'
-        assert acl_quirk.can_handle_acl(acl_line) is True
+        # Parse string ACL into model object
+
+        parse_result = acl_quirk.parse_acl(acl_line)
+
+        assert parse_result.is_success, f"Failed to parse ACL: {parse_result.error}"
+
+        acl_model = parse_result.unwrap()
+
+
+        # Test with the model object
+
+        assert acl_quirk.can_handle_acl(acl_model) is True
 
     def test_can_handle_acl_negative(self) -> None:
         """Test ACL detection rejects non-389 DS ACLs."""
         main_quirk = FlextLdifServersDs389()
         acl_quirk = main_quirk.Acl()
         acl_line = "access to * by * read"
-        assert acl_quirk.can_handle_acl(acl_line) is False
+        # Parse string ACL into model object
+
+        parse_result = acl_quirk.parse_acl(acl_line)
+
+        assert parse_result.is_success, f"Failed to parse ACL: {parse_result.error}"
+
+        acl_model = parse_result.unwrap()
+
+
+        # Test with the model object
+
+        assert acl_quirk.can_handle_acl(acl_model) is False
 
     def test_can_handle_acl_empty_line(self) -> None:
         """Test ACL detection rejects empty lines."""
         main_quirk = FlextLdifServersDs389()
         acl_quirk = main_quirk.Acl()
         acl_line = ""
-        assert acl_quirk.can_handle_acl(acl_line) is False
+        # Parse string ACL into model object
+
+        parse_result = acl_quirk.parse_acl(acl_line)
+
+        assert parse_result.is_success, f"Failed to parse ACL: {parse_result.error}"
+
+        acl_model = parse_result.unwrap()
+
+
+        # Test with the model object
+
+        assert acl_quirk.can_handle_acl(acl_model) is False
 
     def test_parse_acl_success(self) -> None:
         """Test parsing 389 DS ACI definition."""

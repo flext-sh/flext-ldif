@@ -465,7 +465,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 usage = usage_match.group(1) if usage_match else None
 
                 # Build metadata for non-standard fields using shared utility
-                metadata_extensions = FlextLdifUtilities.LdifParser.extract_extensions(
+                metadata_extensions = FlextLdifUtilities.Parser.extract_extensions(
                     attr_definition
                 )
 
@@ -682,7 +682,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                         may = [may_value]
 
                 # Build metadata for non-standard fields using shared utility
-                metadata_extensions = FlextLdifUtilities.LdifParser.extract_extensions(
+                metadata_extensions = FlextLdifUtilities.Parser.extract_extensions(
                     oc_definition
                 )
 
@@ -1158,13 +1158,319 @@ class FlextLdifServersRfc(FlextLdifServersBase):
 
             return objectclasses
 
+    class SchemaTransformer:
+        """Shared schema transformation utilities for server-specific quirks.
+
+        Provides generic methods for transforming attribute/objectClass fields
+        in server conversions. Eliminates ~1000 lines of duplicate transformation
+        logic across OID, OUD, OpenLDAP, and other server implementations.
+
+        Design Pattern:
+            Each server quirk defines Constants with server-specific transformations,
+            then uses SchemaTransformer methods to apply them generically:
+
+                class Constants:
+                    MATCHING_RULE_REPLACEMENTS = {...}
+                    SYNTAX_OID_REPLACEMENTS = {...}
+
+                result = SchemaTransformer.apply_attribute_transformations(
+                    attr_data,
+                    server_constants=self.Constants,
+                )
+
+        Benefits:
+            - Single source of truth for all transformation patterns
+            - Consistent error handling across all servers
+            - Eliminates 90+ lines of duplicate code per server
+            - Type-safe transformations with FlextResult pattern
+            - Centralized logging for debugging
+        """
+
+        @staticmethod
+        def normalize_attribute_name(name: str) -> str:
+            """Normalize attribute NAME field.
+
+            Transformations:
+            - Remove ;binary suffix
+            - Replace underscores with hyphens (;binary and _ are Oracle OID conventions)
+
+            Args:
+                name: Original attribute name
+
+            Returns:
+                Normalized name
+
+            """
+            if not name:
+                return name
+
+            # Remove ;binary suffix (Oracle OID convention)
+            if ";binary" in name:
+                name = name.replace(";binary", "")
+                logger.debug("Removed ;binary from NAME: %s", name)
+
+            # Replace underscores with hyphens (RFC prefers hyphens)
+            if "_" in name:
+                name = name.replace("_", "-")
+                logger.debug("Replaced _ with - in NAME: %s", name)
+
+            return name
+
+        @staticmethod
+        def normalize_matching_rule(
+            equality: str | None,
+            substr: str | None,
+            replacements: dict[str, str] | None = None,
+        ) -> tuple[str | None, str | None]:
+            """Normalize EQUALITY and SUBSTR matching rules.
+
+            Transformations:
+            - Fix SUBSTR rules incorrectly used in EQUALITY (common OID mistake)
+            - Apply server-specific matching rule replacements
+            - Ensure consistency between EQUALITY and SUBSTR rules
+
+            Args:
+                equality: Current EQUALITY rule
+                substr: Current SUBSTR rule
+                replacements: Dict of matching rule replacements {old: new}
+
+            Returns:
+                Tuple of (normalized_equality, normalized_substr)
+
+            """
+            if not equality:
+                return equality, substr
+
+            # Fix SUBSTR rules incorrectly used in EQUALITY field
+            # Handle both 'caseIgnoreSubStringsMatch' (capital S) and
+            # 'caseIgnoreSubstringsMatch' (lowercase) variations
+            if equality in {"caseIgnoreSubstringsMatch", "caseIgnoreSubStringsMatch"}:
+                # Move SUBSTR rule to correct SUBSTR field
+                new_substr = "caseIgnoreSubstringsMatch"
+                new_equality = "caseIgnoreMatch"
+                logger.debug(
+                    "Fixed EQUALITY field: moved substr match to SUBSTR field, "
+                    "using caseIgnoreMatch for EQUALITY"
+                )
+                return new_equality, new_substr
+
+            # Apply server-specific matching rule replacements
+            if replacements and equality in replacements:
+                original = equality
+                equality = replacements[equality]
+                logger.debug(
+                    "Replaced matching rule %s -> %s",
+                    original,
+                    equality,
+                )
+
+            return equality, substr
+
+        @staticmethod
+        def normalize_syntax_oid(
+            syntax: str | None,
+            replacements: dict[str, str] | None = None,
+        ) -> str | None:
+            """Normalize SYNTAX OID field.
+
+            Transformations:
+            - Remove quotes (Oracle OID uses 'OID' format, RFC 4512 uses OID)
+            - Apply server-specific syntax OID replacements
+            - Validate OID format
+
+            Args:
+                syntax: Original SYNTAX OID
+                replacements: Dict of syntax OID replacements {old: new}
+
+            Returns:
+                Normalized syntax OID
+
+            """
+            if not syntax:
+                return syntax
+
+            # Remove quotes if present (Oracle OID convention: '1.2.3', RFC: 1.2.3)
+            if syntax.startswith("'") and syntax.endswith("'"):
+                syntax = syntax[1:-1]
+                logger.debug("Removed quotes from SYNTAX OID: %s", syntax)
+
+            # Apply server-specific syntax OID replacements
+            if replacements and syntax in replacements:
+                original = syntax
+                syntax = replacements[syntax]
+                logger.debug(
+                    "Replaced syntax OID %s -> %s",
+                    original,
+                    syntax,
+                )
+
+            return syntax
+
+        @staticmethod
+        def apply_attribute_transformations(
+            attr_data: FlextLdifModels.SchemaAttribute,
+            name_transform: Callable[[str], str] | None = None,
+            equality_transform: (
+                Callable[[str, str], tuple[str, str]] | None
+            ) = None,
+            syntax_transform: Callable[[str], str] | None = None,
+        ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
+            """Apply transformation pipeline to attribute.
+
+            Generic transformation pipeline that accepts optional transformer callables
+            for NAME, EQUALITY/SUBSTR, and SYNTAX fields. Allows servers to customize
+            transformations via dependency injection.
+
+            Args:
+                attr_data: Attribute to transform
+                name_transform: Optional callable to transform NAME field
+                equality_transform: Optional callable to transform EQUALITY/SUBSTR fields
+                syntax_transform: Optional callable to transform SYNTAX field
+
+            Returns:
+                FlextResult with transformed attribute
+
+            Example:
+                # Simple server with just matching rule replacements
+                result = SchemaTransformer.apply_attribute_transformations(
+                    attr_data,
+                    equality_transform=lambda eq, sub: (
+                        SchemaTransformer._normalize_matching_rule(
+                            eq, sub, MyServer.Constants.MATCHING_RULE_REPLACEMENTS
+                        )
+                    ),
+                )
+
+                # Complex server with all transformations
+                result = SchemaTransformer.apply_attribute_transformations(
+                    attr_data,
+                    name_transform=SchemaTransformer._normalize_attribute_name,
+                    equality_transform=lambda eq, sub: (
+                        SchemaTransformer._normalize_matching_rule(
+                            eq, sub, MyServer.Constants.MATCHING_RULE_REPLACEMENTS
+                        )
+                    ),
+                    syntax_transform=lambda syn: (
+                        SchemaTransformer._normalize_syntax_oid(
+                            syn, MyServer.Constants.SYNTAX_OID_REPLACEMENTS
+                        )
+                    ),
+                )
+
+            """
+            try:
+                # Apply transformations (or keep original if no transformer provided)
+                name_value = (
+                    name_transform(attr_data.name) if name_transform and attr_data.name
+                    else attr_data.name
+                )
+
+                equality_value = attr_data.equality
+                substr_value = attr_data.substr
+                if equality_transform and equality_value:
+                    equality_value, substr_value = equality_transform(
+                        equality_value, substr_value
+                    )
+
+                syntax_value = (
+                    syntax_transform(attr_data.syntax) if syntax_transform and attr_data.syntax
+                    else attr_data.syntax
+                )
+
+                # Create new attribute model with transformed values
+                transformed_attr = FlextLdifModels.SchemaAttribute(
+                    name=name_value,
+                    oid=attr_data.oid,
+                    desc=attr_data.desc,
+                    sup=attr_data.sup,
+                    equality=equality_value,
+                    ordering=attr_data.ordering,
+                    substr=substr_value,
+                    syntax=syntax_value,
+                    length=attr_data.length,
+                    usage=attr_data.usage,
+                    single_value=attr_data.single_value,
+                    no_user_modification=attr_data.no_user_modification,
+                    metadata=attr_data.metadata,
+                )
+
+                return FlextResult[FlextLdifModels.SchemaAttribute].ok(transformed_attr)
+
+            except Exception as e:
+                return FlextResult[FlextLdifModels.SchemaAttribute].fail(
+                    f"Attribute transformation failed: {e}",
+                )
+
+        @staticmethod
+        def apply_objectclass_transformations(
+            oc_data: FlextLdifModels.SchemaObjectClass,
+            name_transform: Callable[[str], str] | None = None,
+        ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
+            """Apply transformation pipeline to objectClass.
+
+            Currently supports NAME field transformation only, as objectClasses
+            typically don't have EQUALITY/SUBSTR/SYNTAX fields like attributes.
+
+            Args:
+                oc_data: ObjectClass to transform
+                name_transform: Optional callable to transform NAME field
+
+            Returns:
+                FlextResult with transformed objectClass
+
+            """
+            try:
+                # Apply name transformation (or keep original if no transformer provided)
+                name_value = (
+                    name_transform(oc_data.name) if name_transform and oc_data.name
+                    else oc_data.name
+                )
+
+                # Create new objectClass model with transformed values
+                transformed_oc = FlextLdifModels.SchemaObjectClass(
+                    name=name_value,
+                    oid=oc_data.oid,
+                    desc=oc_data.desc,
+                    sup=oc_data.sup,
+                    kind=oc_data.kind,
+                    must=oc_data.must,
+                    may=oc_data.may,
+                    metadata=oc_data.metadata,
+                )
+
+                return FlextResult[FlextLdifModels.SchemaObjectClass].ok(transformed_oc)
+
+            except Exception as e:
+                return FlextResult[FlextLdifModels.SchemaObjectClass].fail(
+                    f"ObjectClass transformation failed: {e}",
+                )
+
     class Schema(FlextLdifServersBase.Schema):
         """RFC 4512 Compliant Schema Quirk - Base Implementation."""
 
+        class Constants:
+            """RFC 4512 baseline - universal intermediate format for all conversions."""
+
+            CANONICAL_NAME: ClassVar[str] = "rfc"
+            ALIASES: ClassVar[frozenset[str]] = frozenset(["rfc", "generic"])
+            PRIORITY: ClassVar[int] = 100  # Lowest priority - fallback only
+            CAN_NORMALIZE_FROM: ClassVar[frozenset[str]] = frozenset(["rfc"])
+            CAN_DENORMALIZE_TO: ClassVar[frozenset[str]] = frozenset(["rfc"])
+
         def __init__(
             self,
+            server_type: str | None = None,
+            priority: int | None = None,
         ) -> None:
-            """Initialize RFC schema quirk."""
+            """Initialize RFC schema quirk.
+
+            Args:
+                server_type: Optional server type (ignored for RFC - RFC is generic)
+                priority: Optional priority (ignored for RFC - uses ClassVar)
+            """
+            # RFC implementation uses ClassVar for server_type and priority
+            # Parameters are accepted for compatibility with base.py contract
+            # but are not used (RFC is generic, not server-specific)
             # RFC implementation doesn't call super() as it's the base implementation
 
         def can_handle_attribute(
@@ -1475,10 +1781,29 @@ class FlextLdifServersRfc(FlextLdifServersBase):
     class Acl(FlextLdifServersBase.Acl):
         """RFC 4516 Compliant ACL Quirk - Base Implementation."""
 
+        class Constants:
+            """RFC 4516 baseline - universal intermediate format for all ACL conversions."""
+
+            CANONICAL_NAME: ClassVar[str] = "rfc"
+            ALIASES: ClassVar[frozenset[str]] = frozenset(["rfc", "generic"])
+            PRIORITY: ClassVar[int] = 100  # Lowest priority - fallback only
+            CAN_NORMALIZE_FROM: ClassVar[frozenset[str]] = frozenset(["rfc"])
+            CAN_DENORMALIZE_TO: ClassVar[frozenset[str]] = frozenset(["rfc"])
+
         def __init__(
             self,
+            server_type: str | None = None,
+            priority: int | None = None,
         ) -> None:
-            """Initialize RFC ACL quirk."""
+            """Initialize RFC ACL quirk.
+
+            Args:
+                server_type: Optional server type (ignored for RFC - RFC is generic)
+                priority: Optional priority (ignored for RFC - uses ClassVar)
+            """
+            # RFC implementation uses ClassVar for server_type and priority
+            # Parameters are accepted for compatibility with base.py contract
+            # but are not used (RFC is generic, not server-specific)
             # RFC implementation doesn't call super() as it's the base implementation
 
         def can_handle_acl(self, acl: FlextLdifModels.Acl) -> bool:
@@ -1605,6 +1930,15 @@ class FlextLdifServersRfc(FlextLdifServersBase):
     class Entry(FlextLdifServersBase.Entry):
         """RFC 2849 Compliant Entry Quirk - Base Implementation."""
 
+        class Constants:
+            """RFC 2849 baseline - universal intermediate format for all entry conversions."""
+
+            CANONICAL_NAME: ClassVar[str] = "rfc"
+            ALIASES: ClassVar[frozenset[str]] = frozenset(["rfc", "generic"])
+            PRIORITY: ClassVar[int] = 100  # Lowest priority - fallback only
+            CAN_NORMALIZE_FROM: ClassVar[frozenset[str]] = frozenset(["rfc"])
+            CAN_DENORMALIZE_TO: ClassVar[frozenset[str]] = frozenset(["rfc"])
+
         server_type: ClassVar[str] = "rfc"
         priority: ClassVar[int] = 100
 
@@ -1707,7 +2041,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                     return FlextResult[list[FlextLdifModels.Entry]].ok(entries)
 
                 # Use shared RFC 2849-compliant LDIF parser from FlextLdifUtilities
-                parsed_entries = FlextLdifUtilities.LdifParser.parse_ldif_lines(
+                parsed_entries = FlextLdifUtilities.Parser.parse_ldif_lines(
                     ldif_content
                 )
 

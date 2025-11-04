@@ -25,7 +25,17 @@ class TestOpenLDAP1xSchemas:
 
         # Should handle attributetype (without olc)
         attr_def = "attributetype ( 1.2.3.4 NAME 'test' )"
-        assert quirk.can_handle_attribute(attr_def) is True
+        # Parse string definition into model object
+
+        parse_result = quirk.parse_attribute(attr_def)
+
+        assert parse_result.is_success, f"Failed to parse attribute: {parse_result.error}"
+
+        attr_model = parse_result.unwrap()
+
+        # Test with the model object
+
+        assert quirk.can_handle_attribute(attr_model) is True
 
     def test_can_handle_attribute_with_olc_rejected(self) -> None:
         """Test attribute detection rejects olc prefix (OpenLDAP 2.x)."""
@@ -33,7 +43,17 @@ class TestOpenLDAP1xSchemas:
 
         # Should NOT handle olc* (that's OpenLDAP 2.x)
         attr_def = "attributetype ( 1.2.3.4 NAME 'olcTest' )"
-        assert quirk.can_handle_attribute(attr_def) is False
+        # Parse string definition into model object
+
+        parse_result = quirk.parse_attribute(attr_def)
+
+        assert parse_result.is_success, f"Failed to parse attribute: {parse_result.error}"
+
+        attr_model = parse_result.unwrap()
+
+        # Test with the model object
+
+        assert quirk.can_handle_attribute(attr_model) is False
 
     def test_parse_attribute_success(self) -> None:
         """Test successful attribute parsing."""
@@ -68,14 +88,34 @@ class TestOpenLDAP1xSchemas:
         quirk = FlextLdifServersOpenldap1.Schema()
 
         oc_def = "objectclass ( 1.2.3.4 NAME 'testClass' )"
-        assert quirk.can_handle_objectclass(oc_def) is True
+        # Parse string definition into model object
+
+        parse_result = quirk.parse_objectclass(oc_def)
+
+        assert parse_result.is_success, f"Failed to parse objectClass: {parse_result.error}"
+
+        oc_model = parse_result.unwrap()
+
+        # Test with the model object
+
+        assert quirk.can_handle_objectclass(oc_model) is True
 
     def test_can_handle_objectclass_with_olc_rejected(self) -> None:
         """Test objectClass detection rejects olc (OpenLDAP 2.x)."""
         quirk = FlextLdifServersOpenldap1.Schema()
 
         oc_def = "objectclass ( 1.2.3.4 NAME 'olcTestClass' )"
-        assert quirk.can_handle_objectclass(oc_def) is False
+        # Parse string definition into model object
+
+        parse_result = quirk.parse_objectclass(oc_def)
+
+        assert parse_result.is_success, f"Failed to parse objectClass: {parse_result.error}"
+
+        oc_model = parse_result.unwrap()
+
+        # Test with the model object
+
+        assert quirk.can_handle_objectclass(oc_model) is False
 
     def test_parse_objectclass_success(self) -> None:
         """Test successful objectClass parsing."""
@@ -273,7 +313,18 @@ class TestOpenLDAP1xAcls:
         acl_quirk = main_quirk.Acl()
 
         acl_line = "access to attrs=userPassword by self write by * auth"
-        assert acl_quirk.can_handle_acl(acl_line) is True
+        # Parse string ACL into model object
+
+        parse_result = acl_quirk.parse_acl(acl_line)
+
+        assert parse_result.is_success, f"Failed to parse ACL: {parse_result.error}"
+
+        acl_model = parse_result.unwrap()
+
+
+        # Test with the model object
+
+        assert acl_quirk.can_handle_acl(acl_model) is True
 
     def test_can_handle_acl_negative(self) -> None:
         """Test ACL detection returns false for non-OpenLDAP 1.x ACL."""
@@ -281,7 +332,18 @@ class TestOpenLDAP1xAcls:
         acl_quirk = main_quirk.Acl()
 
         acl_line = "random text"
-        assert acl_quirk.can_handle_acl(acl_line) is False
+        # Parse string ACL into model object
+
+        parse_result = acl_quirk.parse_acl(acl_line)
+
+        assert parse_result.is_success, f"Failed to parse ACL: {parse_result.error}"
+
+        acl_model = parse_result.unwrap()
+
+
+        # Test with the model object
+
+        assert acl_quirk.can_handle_acl(acl_model) is False
 
     def test_parse_acl_success(self) -> None:
         """Test successful ACL parsing."""

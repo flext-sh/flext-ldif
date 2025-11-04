@@ -32,7 +32,7 @@ from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.protocols import FlextLdifProtocols
 from flext_ldif.services.acl import FlextLdifAclService
-from flext_ldif.services.filters import FlextLdifFilters
+from flext_ldif.services.filters import FlextLdifFilterService
 from flext_ldif.services.migration import FlextLdifMigrationPipeline
 from flext_ldif.services.parser import FlextLdifParserService
 from flext_ldif.services.registry import FlextLdifRegistry
@@ -157,10 +157,16 @@ class FlextLdif(FlextService[dict[str, object]]):
 
         """
         if cls._instance is None:
-            cls._instance = cls(config)
+            # Create empty instance (FlextService v2 doesn't accept positional args)
+            cls._instance = cls()
+            # Set config if provided via private attribute
+            if config is not None:
+                object.__setattr__(cls._instance, "_init_config_value", config)
+                # Re-initialize with config
+                cls._instance.model_post_init(None)
         return cls._instance
 
-    def __init__(self, config: FlextLdifConfig | None = None) -> None:
+    def __init__(self, **kwargs: object) -> None:
         """Initialize LDIF facade - the sole entry point for all LDIF operations.
 
         Integrates Flext components for infrastructure support:
@@ -173,16 +179,12 @@ class FlextLdif(FlextService[dict[str, object]]):
             - FlextRegistry: Component registration
 
         Args:
-            config: Optional LDIF configuration. If not provided,
-                   uses global singleton instance.
+            **kwargs: Configuration parameters (ignored, for FlextService V2 compatibility)
 
         """
-        # Store config for lazy initialization in model_post_init
-        object.__setattr__(self, "_init_config_value", config)
-
         # Call super().__init__() for Pydantic v2 model initialization
         # This will call model_post_init() which initializes all services
-        super().__init__()
+        super().__init__(**kwargs)
 
         # Services initialized in model_post_init for proper initialization order
 
@@ -250,7 +252,7 @@ class FlextLdif(FlextService[dict[str, object]]):
         container.register("writer", unified_writer)
 
         # Register filters service
-        container.register("filters", FlextLdifFilters())
+        container.register("filters", FlextLdifFilterService())
 
         # Register statistics service
         container.register("statistics", FlextLdifStatisticsService())
@@ -392,8 +394,8 @@ class FlextLdif(FlextService[dict[str, object]]):
         try:
             config = self.config
             status_dict: dict[str, object] = {
-                "status": FlextLdifConstants.DictKeys.INITIALIZED,
-                "services": FlextLdifConstants.DictKeys.SERVICE_NAMES,
+                "status": "initialized",
+                "services": "services",
                 "config": {"default_encoding": config.ldif_encoding},
             }
             return FlextResult[dict[str, object]].ok(status_dict)
@@ -1074,7 +1076,7 @@ class FlextLdif(FlextService[dict[str, object]]):
         filters_service = self._get_service_typed(
             self.container,
             "filters",
-            FlextLdifFilters,
+            FlextLdifFilterService,
         )
         if filters_service is None:
             return FlextResult[list[FlextLdifModels.Entry]].fail(

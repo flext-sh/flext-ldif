@@ -22,13 +22,33 @@ class TestApacheDirectorySchemas:
         """Test attribute detection with Apache DS OID pattern."""
         quirk = FlextLdifServersApache.Schema()
         attr_def = "( 1.3.6.1.4.1.18060.0.4.1.2.100 NAME 'ads-enabled' SYNTAX 1.3.6.1.4.1.1466.115.121.1.7 )"
-        assert quirk.can_handle_attribute(attr_def) is True
+        # Parse string definition into model object
+
+        parse_result = quirk.parse_attribute(attr_def)
+
+        assert parse_result.is_success, f"Failed to parse attribute: {parse_result.error}"
+
+        attr_model = parse_result.unwrap()
+
+        # Test with the model object
+
+        assert quirk.can_handle_attribute(attr_model) is True
 
     def test_can_handle_attribute_with_ads_prefix(self) -> None:
         """Test attribute detection with ads- prefix."""
         quirk = FlextLdifServersApache.Schema()
         attr_def = "( 2.16.840.1.113730.3.1.1 NAME 'ads-searchBaseDN' SYNTAX 1.3.6.1.4.1.1466.115.121.1.12 )"
-        assert quirk.can_handle_attribute(attr_def) is True
+        # Parse string definition into model object
+
+        parse_result = quirk.parse_attribute(attr_def)
+
+        assert parse_result.is_success, f"Failed to parse attribute: {parse_result.error}"
+
+        attr_model = parse_result.unwrap()
+
+        # Test with the model object
+
+        assert quirk.can_handle_attribute(attr_model) is True
 
     def test_can_handle_attribute_with_apacheds_name(self) -> None:
         """Test attribute detection with apacheds in name."""
@@ -36,13 +56,33 @@ class TestApacheDirectorySchemas:
         attr_def = (
             "( 1.2.3.4 NAME 'apachedsSystemId' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
         )
-        assert quirk.can_handle_attribute(attr_def) is True
+        # Parse string definition into model object
+
+        parse_result = quirk.parse_attribute(attr_def)
+
+        assert parse_result.is_success, f"Failed to parse attribute: {parse_result.error}"
+
+        attr_model = parse_result.unwrap()
+
+        # Test with the model object
+
+        assert quirk.can_handle_attribute(attr_model) is True
 
     def test_can_handle_attribute_negative(self) -> None:
         """Test attribute detection rejects non-ApacheDS attributes."""
         quirk = FlextLdifServersApache.Schema()
         attr_def = "( 2.5.4.3 NAME 'cn' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
-        assert quirk.can_handle_attribute(attr_def) is False
+        # Parse string definition into model object
+
+        parse_result = quirk.parse_attribute(attr_def)
+
+        assert parse_result.is_success, f"Failed to parse attribute: {parse_result.error}"
+
+        attr_model = parse_result.unwrap()
+
+        # Test with the model object
+
+        assert quirk.can_handle_attribute(attr_model) is False
 
     def test_parse_attribute_success(self) -> None:
         """Test parsing Apache DS attribute definition."""
@@ -84,19 +124,49 @@ class TestApacheDirectorySchemas:
         """Test objectClass detection with Apache DS OID."""
         quirk = FlextLdifServersApache.Schema()
         oc_def = "( 1.3.6.1.4.1.18060.0.4.1.3.100 NAME 'ads-directoryService' SUP top STRUCTURAL )"
-        assert quirk.can_handle_objectclass(oc_def) is True
+        # Parse string definition into model object
+
+        parse_result = quirk.parse_objectclass(oc_def)
+
+        assert parse_result.is_success, f"Failed to parse objectClass: {parse_result.error}"
+
+        oc_model = parse_result.unwrap()
+
+        # Test with the model object
+
+        assert quirk.can_handle_objectclass(oc_model) is True
 
     def test_can_handle_objectclass_with_ads_name(self) -> None:
         """Test objectClass detection with ads- name."""
         quirk = FlextLdifServersApache.Schema()
         oc_def = "( 2.5.6.0 NAME 'ads-base' SUP top ABSTRACT )"
-        assert quirk.can_handle_objectclass(oc_def) is True
+        # Parse string definition into model object
+
+        parse_result = quirk.parse_objectclass(oc_def)
+
+        assert parse_result.is_success, f"Failed to parse objectClass: {parse_result.error}"
+
+        oc_model = parse_result.unwrap()
+
+        # Test with the model object
+
+        assert quirk.can_handle_objectclass(oc_model) is True
 
     def test_can_handle_objectclass_negative(self) -> None:
         """Test objectClass detection rejects non-ApacheDS classes."""
         quirk = FlextLdifServersApache.Schema()
         oc_def = "( 2.5.6.6 NAME 'posixAccount' SUP top STRUCTURAL )"
-        assert quirk.can_handle_objectclass(oc_def) is False
+        # Parse string definition into model object
+
+        parse_result = quirk.parse_objectclass(oc_def)
+
+        assert parse_result.is_success, f"Failed to parse objectClass: {parse_result.error}"
+
+        oc_model = parse_result.unwrap()
+
+        # Test with the model object
+
+        assert quirk.can_handle_objectclass(oc_model) is False
 
     def test_parse_objectclass_structural(self) -> None:
         """Test parsing STRUCTURAL objectClass."""
@@ -269,35 +339,90 @@ class TestApacheDirectoryAcls:
         main_quirk = FlextLdifServersApache.Schema()
         acl_quirk = main_quirk.Acl()
         acl_line = "ads-aci: ( version 3.0 ) ( deny grantAdd ) ( grantRemove )"
-        assert acl_quirk.can_handle_acl(acl_line) is True
+        # Parse string ACL into model object
+
+        parse_result = acl_quirk.parse_acl(acl_line)
+
+        assert parse_result.is_success, f"Failed to parse ACL: {parse_result.error}"
+
+        acl_model = parse_result.unwrap()
+
+
+        # Test with the model object
+
+        assert acl_quirk.can_handle_acl(acl_model) is True
 
     def test_can_handle_acl_with_aci(self) -> None:
         """Test ACL detection with aci attribute."""
         main_quirk = FlextLdifServersApache.Schema()
         acl_quirk = main_quirk.Acl()
         acl_line = "aci: ( version 3.0 ) ( deny grantAdd ) ( grantRemove )"
-        assert acl_quirk.can_handle_acl(acl_line) is True
+        # Parse string ACL into model object
+
+        parse_result = acl_quirk.parse_acl(acl_line)
+
+        assert parse_result.is_success, f"Failed to parse ACL: {parse_result.error}"
+
+        acl_model = parse_result.unwrap()
+
+
+        # Test with the model object
+
+        assert acl_quirk.can_handle_acl(acl_model) is True
 
     def test_can_handle_acl_with_version_prefix(self) -> None:
         """Test ACL detection with version prefix."""
         main_quirk = FlextLdifServersApache.Schema()
         acl_quirk = main_quirk.Acl()
         acl_line = "(version 3.0) (deny grantAdd) (grantRemove)"
-        assert acl_quirk.can_handle_acl(acl_line) is True
+        # Parse string ACL into model object
+
+        parse_result = acl_quirk.parse_acl(acl_line)
+
+        assert parse_result.is_success, f"Failed to parse ACL: {parse_result.error}"
+
+        acl_model = parse_result.unwrap()
+
+
+        # Test with the model object
+
+        assert acl_quirk.can_handle_acl(acl_model) is True
 
     def test_can_handle_acl_negative(self) -> None:
         """Test ACL detection rejects non-ApacheDS ACLs."""
         main_quirk = FlextLdifServersApache.Schema()
         acl_quirk = main_quirk.Acl()
         acl_line = "access to * by * read"
-        assert acl_quirk.can_handle_acl(acl_line) is False
+        # Parse string ACL into model object
+
+        parse_result = acl_quirk.parse_acl(acl_line)
+
+        assert parse_result.is_success, f"Failed to parse ACL: {parse_result.error}"
+
+        acl_model = parse_result.unwrap()
+
+
+        # Test with the model object
+
+        assert acl_quirk.can_handle_acl(acl_model) is False
 
     def test_can_handle_acl_empty_line(self) -> None:
         """Test ACL detection rejects empty lines."""
         main_quirk = FlextLdifServersApache.Schema()
         acl_quirk = main_quirk.Acl()
         acl_line = ""
-        assert acl_quirk.can_handle_acl(acl_line) is False
+        # Parse string ACL into model object
+
+        parse_result = acl_quirk.parse_acl(acl_line)
+
+        assert parse_result.is_success, f"Failed to parse ACL: {parse_result.error}"
+
+        acl_model = parse_result.unwrap()
+
+
+        # Test with the model object
+
+        assert acl_quirk.can_handle_acl(acl_model) is False
 
     def test_parse_acl_success(self) -> None:
         """Test parsing Apache DS ACI definition."""

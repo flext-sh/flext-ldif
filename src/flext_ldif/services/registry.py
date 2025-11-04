@@ -19,7 +19,6 @@ from typing import TYPE_CHECKING
 
 from flext_core import FlextLogger, FlextResult
 
-import flext_ldif.servers as servers_package
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.protocols import FlextLdifProtocols
 from flext_ldif.servers.base import FlextLdifServersBase
@@ -83,7 +82,7 @@ class FlextLdifRegistry:
         and automatically registers them. This is the core DI mechanism.
 
         Process:
-        1. Import flext_ldif.servers package
+        1. Lazy import flext_ldif.servers package (avoids circular imports)
         2. Find all concrete classes extending FlextLdifServersBase.Schema/Acl/Entry
         3. Instantiate each concrete class (including nested Schema/Acl/Entry classes)
         4. Register using appropriate register_*_quirk method based on _REGISTRY_METHOD
@@ -91,6 +90,9 @@ class FlextLdifRegistry:
 
         """
         try:
+            # Lazy import to avoid circular import issues
+            import flext_ldif.servers as servers_package
+
             # Get all members from the servers package
             for name, obj in inspect.getmembers(servers_package):
                 # Skip private/internal classes, non-classes, and the base class itself
@@ -394,7 +396,7 @@ class FlextLdifRegistry:
 
         """
         for quirk in self.get_acl_quirks(server_type):
-            if quirk.can_handle_acl(acl_line):
+            if quirk.can_handle(acl_line):
                 return quirk
         return None
 

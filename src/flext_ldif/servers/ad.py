@@ -41,6 +41,16 @@ class FlextLdifServersAd(FlextLdifServersRfc):
     server_type: ClassVar[str] = FlextLdifConstants.LdapServers.ACTIVE_DIRECTORY
     priority: ClassVar[int] = 15
 
+    # === STANDARDIZED CONSTANTS FOR AUTO-DISCOVERY ===
+    class Constants:
+        """Standardized constants for Active Directory quirk."""
+
+        CANONICAL_NAME: ClassVar[str] = "active_directory"
+        ALIASES: ClassVar[frozenset[str]] = frozenset(["active_directory", "ad"])
+        PRIORITY: ClassVar[int] = 30
+        CAN_NORMALIZE_FROM: ClassVar[frozenset[str]] = frozenset(["active_directory"])
+        CAN_DENORMALIZE_TO: ClassVar[frozenset[str]] = frozenset(["active_directory", "rfc"])
+
     def __getattr__(self, name: str) -> object:
         """Delegate method calls to nested Schema, Acl, or Entry instances.
 
@@ -72,7 +82,6 @@ class FlextLdifServersAd(FlextLdifServersRfc):
     class Schema(FlextLdifServersRfc.Schema):
         """Active Directory schema quirk."""
 
-        # Active Directory configuration defaults
         server_type: ClassVar[str] = FlextLdifConstants.LdapServers.ACTIVE_DIRECTORY
         priority: ClassVar[int] = 15
 
@@ -162,11 +171,11 @@ class FlextLdifServersAd(FlextLdifServersRfc):
             result = super().parse_objectclass(oc_definition)
             if result.is_success:
                 oc_data = result.unwrap()
-                # Use FlextLdifUtilities for common objectClass validation
-                FlextLdifUtilities.ObjectClassValidator.fix_missing_sup(
+                # Fix common ObjectClass issues (RFC 4512 compliance)
+                FlextLdifUtilities.ObjectClass.fix_missing_sup(
                     oc_data, server_type=FlextLdifConstants.LdapServers.ACTIVE_DIRECTORY
                 )
-                FlextLdifUtilities.ObjectClassValidator.fix_kind_mismatch(
+                FlextLdifUtilities.ObjectClass.fix_kind_mismatch(
                     oc_data, server_type=FlextLdifConstants.LdapServers.ACTIVE_DIRECTORY
                 )
                 metadata = FlextLdifModels.QuirkMetadata.create_for_quirk(
@@ -196,9 +205,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
             server_type: ClassVar[str] = FlextLdifConstants.LdapServers.ACTIVE_DIRECTORY
             priority: ClassVar[int] = 15
 
-        # --------------------------------------------------------------------- #
         # INHERITED METHODS (from FlextLdifServersRfc.Schema)
-        # --------------------------------------------------------------------- #
         # These methods are inherited from RFC base class:
         # - parse_attribute(): Uses RFC parser
         # - parse_objectclass(): Uses RFC parser
@@ -213,9 +220,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
         #
         # Only can_handle_* methods are overridden with AD-specific logic.
         #
-        # ===================================================================== #
         # Nested ACL quirk
-        # ===================================================================== #
 
     class Acl(FlextLdifServersRfc.Acl):
         """Active Directory ACL quirk handling nTSecurityDescriptor entries."""
@@ -243,7 +248,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
             attr_name, _, _ = normalized.partition(":")
             if (
                 attr_name.strip().lower()
-                == FlextLdifConstants.DictKeys.NTSECURITYDESCRIPTOR.lower()
+                == FlextLdifConstants.AclKeys.NTSECURITYDESCRIPTOR.lower()
             ):
                 return True
 
@@ -261,7 +266,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
                 attr_name, _, remainder = line.partition(":")
                 attr_name = (
                     attr_name.strip()
-                    or FlextLdifConstants.DictKeys.NTSECURITYDESCRIPTOR
+                    or FlextLdifConstants.AclKeys.NTSECURITYDESCRIPTOR
                 )
                 remainder = remainder.lstrip()
                 is_base64 = False
@@ -383,7 +388,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
             try:
                 # Get the raw ACL value
                 raw_value = acl_data.raw_acl or ""
-                acl_attribute = FlextLdifConstants.DictKeys.NTSECURITYDESCRIPTOR
+                acl_attribute = FlextLdifConstants.AclKeys.NTSECURITYDESCRIPTOR
 
                 # Use the raw ACL value
                 sddl_value = raw_value
@@ -414,18 +419,14 @@ class FlextLdifServersAd(FlextLdifServersRfc):
             """
             return self.acl_attribute_name
 
-    # ===================================================================== #
     # Nested entry quirk
-    # ===================================================================== #
     class Entry(FlextLdifServersRfc.Entry):
         """Active Directory entry processing quirk."""
 
         server_type: ClassVar[str] = FlextLdifConstants.LdapServers.ACTIVE_DIRECTORY
         priority: ClassVar[int] = 15
 
-        # --------------------------------------------------------------------- #
         # OVERRIDDEN METHODS (from FlextLdifServersBase.Entry)
-        # --------------------------------------------------------------------- #
         # These methods override the base class with AD-specific logic:
         # - can_handle_entry(): Detects AD entries by DN/attributes
         # - process_entry(): Normalizes AD entries with metadata
@@ -534,10 +535,10 @@ class FlextLdifServersAd(FlextLdifServersRfc):
             try:
                 # Work directly with LdifAttributes
                 attributes = entry_data.attributes.attributes.copy()
-                attributes.pop(FlextLdifConstants.DictKeys.SERVER_TYPE, None)
-                attributes.pop(FlextLdifConstants.DictKeys.IS_CONFIG_ENTRY, None)
+                attributes.pop(FlextLdifConstants.QuirkMetadataKeys.SERVER_TYPE, None)
+                attributes.pop(FlextLdifConstants.QuirkMetadataKeys.IS_CONFIG_ENTRY, None)
                 attributes.pop(
-                    FlextLdifConstants.DictKeys.IS_TRADITIONAL_DIT,
+                    FlextLdifConstants.QuirkMetadataKeys.IS_TRADITIONAL_DIT,
                     None,
                 )
 

@@ -19,6 +19,16 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
     server_type = FlextLdifConstants.ServerTypes.IBM_TIVOLI
     priority = 15
 
+    # === STANDARDIZED CONSTANTS FOR AUTO-DISCOVERY ===
+    class Constants:
+        """Standardized constants for IBM Tivoli Directory Server quirk."""
+
+        CANONICAL_NAME: ClassVar[str] = "ibm_tivoli"
+        ALIASES: ClassVar[frozenset[str]] = frozenset(["ibm_tivoli", "tivoli"])
+        PRIORITY: ClassVar[int] = 30
+        CAN_NORMALIZE_FROM: ClassVar[frozenset[str]] = frozenset(["ibm_tivoli"])
+        CAN_DENORMALIZE_TO: ClassVar[frozenset[str]] = frozenset(["ibm_tivoli", "rfc"])
+
     def __init__(self) -> None:
         """Initialize Tivoli quirks."""
         super().__init__()
@@ -111,9 +121,10 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
     class Schema(FlextLdifServersRfc.Schema):
         """IBM Tivoli Directory Server schema quirks implementation."""
 
-        # --------------------------------------------------------------------- #
+        server_type: ClassVar[str] = FlextLdifConstants.ServerTypes.IBM_TIVOLI
+        priority: ClassVar[int] = 15
+
         # INHERITED METHODS (from FlextLdifServersRfc.Schema)
-        # --------------------------------------------------------------------- #
         # These methods are inherited from RFC base class:
         # - parse_attribute(): Uses RFC parser
         # - parse_objectclass(): Uses RFC parser
@@ -238,9 +249,9 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                 FlextResult with SchemaObjectClass marked with Tivoli metadata
 
             """
-            metadata = FlextLdifModels.QuirkMetadata.create_for_quirk("ibm_tivoli")
-            result_data = rfc_data.model_copy(update={"metadata": metadata})
-            return FlextResult[FlextLdifModels.SchemaObjectClass].ok(result_data)
+            return FlextLdifServersRfc.SchemaConverter.set_quirk_type(
+                rfc_data, self.server_type
+            )
 
         # Nested class references for Schema - allows Schema().Entry() pattern
         # These are references to the outer class definitions for proper architecture
@@ -497,17 +508,20 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
         server_type: ClassVar[str] = FlextLdifConstants.ServerTypes.IBM_TIVOLI
         priority: ClassVar[int] = 15
 
-        # --------------------------------------------------------------------- #
         # OVERRIDDEN METHODS (from FlextLdifServersBase.Entry)
-        # --------------------------------------------------------------------- #
         # These methods override the base class with Tivoli DS-specific logic:
         # - can_handle_entry(): Detects Tivoli DS entries by DN/attributes
         # - process_entry(): Normalizes Tivoli DS entries with metadata
         # - convert_entry_to_rfc(): Converts Tivoli DS entries to RFC format
 
         def normalize_dn(self, entry_dn: str) -> str:
-            """Normalize DN for Tivoli DS."""
-            return entry_dn.lower()
+            """Normalize DN for Tivoli DS.
+
+            Uses utility DN normalization (RFC 4514 compliant).
+            Falls back to lowercase if normalization fails (Tivoli specific).
+            """
+            normalized = FlextLdifUtilities.DN.norm(entry_dn)
+            return normalized or entry_dn.lower()
 
         def normalize_attribute_name(self, attr_name: str) -> str:
             """Normalize attribute name for Tivoli DS."""
@@ -557,8 +571,8 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                 # Work directly with LdifAttributes
                 attributes = entry_data.attributes.attributes.copy()
                 # Remove Tivoli-specific metadata, preserve everything else
-                attributes.pop(FlextLdifConstants.DictKeys.SERVER_TYPE, None)
-                attributes.pop(FlextLdifConstants.DictKeys.IS_CONFIG_ENTRY, None)
+                attributes.pop(FlextLdifConstants.QuirkMetadataKeys.SERVER_TYPE, None)
+                attributes.pop(FlextLdifConstants.QuirkMetadataKeys.IS_CONFIG_ENTRY, None)
 
                 # Create new LdifAttributes directly from the dict
                 new_attrs = FlextLdifModels.LdifAttributes(attributes=attributes)
@@ -641,10 +655,10 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                     processed_attributes[attr_name] = processed_values
 
                 # Add/update metadata attributes
-                processed_attributes[FlextLdifConstants.DictKeys.SERVER_TYPE] = [
+                processed_attributes[FlextLdifConstants.QuirkMetadataKeys.SERVER_TYPE] = [
                     FlextLdifConstants.ServerTypes.IBM_TIVOLI
                 ]
-                processed_attributes[FlextLdifConstants.DictKeys.IS_CONFIG_ENTRY] = [
+                processed_attributes[FlextLdifConstants.QuirkMetadataKeys.IS_CONFIG_ENTRY] = [
                     str("cn=ibm" in dn_lower or "cn=configuration" in dn_lower)
                 ]
                 # Update objectClass (already in list format)

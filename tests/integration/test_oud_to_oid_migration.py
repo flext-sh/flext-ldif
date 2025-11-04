@@ -17,7 +17,6 @@ from __future__ import annotations
 
 import pytest
 
-from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.servers.oid import FlextLdifServersOid
 from flext_ldif.servers.oud import FlextLdifServersOud
 
@@ -30,12 +29,12 @@ class TestOudToOidSchemaMigration:
     @pytest.fixture
     def oud_quirk(self) -> FlextLdifServersOud:
         """Create OUD schema quirk instance."""
-        return FlextLdifServersOud(server_type=FlextLdifConstants.ServerTypes.OUD)
+        return FlextLdifServersOud()
 
     @pytest.fixture
     def oid_quirk(self) -> FlextLdifServersOid:
         """Create OID schema quirk instance."""
-        return FlextLdifServersOid(server_type=FlextLdifConstants.ServerTypes.OID)
+        return FlextLdifServersOid()
 
     @pytest.fixture
     def oud_schema_fixture(self) -> str:
@@ -170,12 +169,12 @@ class TestOudToOidAclMigration:
     @pytest.fixture
     def oud_acl_quirk(self) -> FlextLdifServersOud.Acl:
         """Create OUD ACL quirk instance."""
-        return FlextLdifServersOud.Acl(server_type=FlextLdifConstants.ServerTypes.OUD)
+        return FlextLdifServersOud.Acl()
 
     @pytest.fixture
     def oid_acl_quirk(self) -> FlextLdifServersOid.Acl:
         """Create OID ACL quirk instance."""
-        return FlextLdifServersOid.Acl(server_type=FlextLdifConstants.ServerTypes.OID)
+        return FlextLdifServersOid.Acl()
 
     def test_migrate_oud_aci_to_oid_orclaci(
         self,
@@ -228,12 +227,12 @@ class TestOudToOidEntryMigration:
     @pytest.fixture
     def oud_entry_quirk(self) -> FlextLdifServersOud.Entry:
         """Create OUD entry quirk instance."""
-        return FlextLdifServersOud.Entry(server_type=FlextLdifConstants.ServerTypes.OUD)
+        return FlextLdifServersOud.Entry()
 
     @pytest.fixture
     def oid_entry_quirk(self) -> FlextLdifServersOid.Entry:
         """Create OID entry quirk instance."""
-        return FlextLdifServersOid.Entry(server_type=FlextLdifConstants.ServerTypes.OID)
+        return FlextLdifServersOid.Entry()
 
     def test_migrate_oracle_context_entry_oud_to_oid(
         self,
@@ -328,22 +327,22 @@ class TestOudToOidFullMigration:
     @pytest.fixture
     def oud_quirk(self) -> FlextLdifServersOud:
         """Create OUD schema quirk."""
-        return FlextLdifServersOud(server_type="oud")
+        return FlextLdifServersOud()
 
     @pytest.fixture
     def oid_quirk(self) -> FlextLdifServersOid:
         """Create OID schema quirk."""
-        return FlextLdifServersOid(server_type="oid")
+        return FlextLdifServersOid()
 
     @pytest.fixture
     def oud_entry_quirk(self) -> FlextLdifServersOud.Entry:
         """Create OUD entry quirk."""
-        return FlextLdifServersOud.Entry(server_type="oud")
+        return FlextLdifServersOud.Entry()
 
     @pytest.fixture
     def oid_entry_quirk(self) -> FlextLdifServersOid.Entry:
         """Create OID entry quirk."""
-        return FlextLdifServersOid.Entry(server_type="oid")
+        return FlextLdifServersOid.Entry()
 
     def test_migrate_oud_entries_to_oid_preserves_data(
         self,

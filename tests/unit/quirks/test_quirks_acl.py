@@ -83,7 +83,7 @@ class TestOIDSubjectTypesConversion:
         result = conversion_matrix.convert(
             source_quirk=oid_quirk,
             target_quirk=oud_quirk,
-            data_type="acl",
+            model_instance_or_data_type="acl",
             data=oid_acl,
         )
 
@@ -109,7 +109,7 @@ class TestOIDSubjectTypesConversion:
         result = conversion_matrix.convert(
             source_quirk=oid_quirk,
             target_quirk=oud_quirk,
-            data_type="acl",
+            model_instance_or_data_type="acl",
             data=oid_acl,
         )
 
@@ -136,7 +136,7 @@ class TestOIDSubjectTypesConversion:
         result = conversion_matrix.convert(
             source_quirk=oid_quirk,
             target_quirk=oud_quirk,
-            data_type="acl",
+            model_instance_or_data_type="acl",
             data=oid_acl,
         )
 
@@ -163,7 +163,7 @@ class TestOIDSubjectTypesConversion:
         result = conversion_matrix.convert(
             source_quirk=oid_quirk,
             target_quirk=oud_quirk,
-            data_type="acl",
+            model_instance_or_data_type="acl",
             data=oid_acl,
         )
 
@@ -190,7 +190,7 @@ class TestOIDSubjectTypesConversion:
         result = conversion_matrix.convert(
             source_quirk=oid_quirk,
             target_quirk=oud_quirk,
-            data_type="acl",
+            model_instance_or_data_type="acl",
             data=oid_acl,
         )
 
@@ -235,7 +235,7 @@ class TestOIDPermissionsConversion:
         result = conversion_matrix.convert(
             source_quirk=oid_quirk,
             target_quirk=oud_quirk,
-            data_type="acl",
+            model_instance_or_data_type="acl",
             data=oid_acl,
         )
 
@@ -262,7 +262,7 @@ class TestOIDPermissionsConversion:
         result = conversion_matrix.convert(
             source_quirk=oid_quirk,
             target_quirk=oud_quirk,
-            data_type="acl",
+            model_instance_or_data_type="acl",
             data=oid_acl,
         )
 
@@ -291,7 +291,7 @@ class TestOIDPermissionsConversion:
         result = conversion_matrix.convert(
             source_quirk=oid_quirk,
             target_quirk=oud_quirk,
-            data_type="acl",
+            model_instance_or_data_type="acl",
             data=oid_acl,
         )
 
@@ -339,7 +339,7 @@ class TestOIDAdvancedFeaturesConversion:
         result = conversion_matrix.convert(
             source_quirk=oid_quirk,
             target_quirk=oud_quirk,
-            data_type="acl",
+            model_instance_or_data_type="acl",
             data=oid_acl,
         )
 
@@ -367,7 +367,7 @@ class TestOIDAdvancedFeaturesConversion:
         result = conversion_matrix.convert(
             source_quirk=oid_quirk,
             target_quirk=oud_quirk,
-            data_type="acl",
+            model_instance_or_data_type="acl",
             data=oid_acl,
         )
 
@@ -395,7 +395,7 @@ class TestOIDAdvancedFeaturesConversion:
         result = conversion_matrix.convert(
             source_quirk=oid_quirk,
             target_quirk=oud_quirk,
-            data_type="acl",
+            model_instance_or_data_type="acl",
             data=oid_acl,
         )
 
@@ -421,7 +421,7 @@ class TestOIDAdvancedFeaturesConversion:
         result = conversion_matrix.convert(
             source_quirk=oid_quirk,
             target_quirk=oud_quirk,
-            data_type="acl",
+            model_instance_or_data_type="acl",
             data=oid_acl,
         )
 
@@ -465,7 +465,7 @@ class TestOUDSubjectTypesConversion:
         result = conversion_matrix.convert(
             source_quirk=oud_quirk,
             target_quirk=oid_quirk,
-            data_type="acl",
+            model_instance_or_data_type="acl",
             data=oud_aci,
         )
 
@@ -491,7 +491,7 @@ class TestOUDSubjectTypesConversion:
         result = conversion_matrix.convert(
             source_quirk=oud_quirk,
             target_quirk=oid_quirk,
-            data_type="acl",
+            model_instance_or_data_type="acl",
             data=oud_aci,
         )
 
@@ -539,7 +539,7 @@ class TestOUDAdvancedFeaturesConversion:
         result = conversion_matrix.convert(
             source_quirk=oud_quirk,
             target_quirk=oid_quirk,
-            data_type="acl",
+            model_instance_or_data_type="acl",
             data=oud_aci,
         )
 
@@ -568,7 +568,7 @@ class TestOUDAdvancedFeaturesConversion:
         result = conversion_matrix.convert(
             source_quirk=oud_quirk,
             target_quirk=oid_quirk,
-            data_type="acl",
+            model_instance_or_data_type="acl",
             data=oud_aci,
         )
 
@@ -596,7 +596,7 @@ class TestOUDAdvancedFeaturesConversion:
         result = conversion_matrix.convert(
             source_quirk=oud_quirk,
             target_quirk=oid_quirk,
-            data_type="acl",
+            model_instance_or_data_type="acl",
             data=oud_aci,
         )
 
