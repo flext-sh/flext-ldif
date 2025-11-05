@@ -1,6 +1,6 @@
 """Unit tests for Syntax Service - RFC 4517 Validation and Resolution.
 
-Comprehensive testing of FlextLdifSyntaxService for OID validation,
+Comprehensive testing of FlextLdifSyntax for OID validation,
 syntax resolution, and type-specific value validation.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import pytest
 
-from flext_ldif.services.syntax import FlextLdifSyntaxService
+from flext_ldif.services.syntax import FlextLdifSyntax
 
 
 class TestSyntaxServiceInitialization:
@@ -20,12 +20,12 @@ class TestSyntaxServiceInitialization:
 
     def test_service_initialization(self) -> None:
         """Test Syntax service can be instantiated."""
-        service = FlextLdifSyntaxService()
+        service = FlextLdifSyntax()
         assert service is not None
 
     def test_execute_returns_status(self) -> None:
         """Test execute returns service status."""
-        service = FlextLdifSyntaxService()
+        service = FlextLdifSyntax()
         result = service.execute()
 
         assert result.is_success
@@ -42,7 +42,7 @@ class TestOidValidation:
 
     def test_validate_valid_boolean_oid(self) -> None:
         """Test validation of valid Boolean syntax OID."""
-        service = FlextLdifSyntaxService()
+        service = FlextLdifSyntax()
         result = service.validate_oid("1.3.6.1.4.1.1466.115.121.1.7")
 
         assert result.is_success
@@ -50,7 +50,7 @@ class TestOidValidation:
 
     def test_validate_valid_directory_string_oid(self) -> None:
         """Test validation of valid Directory String OID."""
-        service = FlextLdifSyntaxService()
+        service = FlextLdifSyntax()
         result = service.validate_oid("1.3.6.1.4.1.1466.115.121.1.15")
 
         assert result.is_success
@@ -58,7 +58,7 @@ class TestOidValidation:
 
     def test_validate_empty_oid(self) -> None:
         """Test validation of empty OID."""
-        service = FlextLdifSyntaxService()
+        service = FlextLdifSyntax()
         result = service.validate_oid("")
 
         assert result.is_success
@@ -66,7 +66,7 @@ class TestOidValidation:
 
     def test_validate_invalid_oid_format(self) -> None:
         """Test validation of invalid OID format."""
-        service = FlextLdifSyntaxService()
+        service = FlextLdifSyntax()
         result = service.validate_oid("not.an.oid")
 
         assert result.is_success
@@ -74,7 +74,7 @@ class TestOidValidation:
 
     def test_validate_oid_with_letters(self) -> None:
         """Test validation rejects OIDs with letters."""
-        service = FlextLdifSyntaxService()
+        service = FlextLdifSyntax()
         result = service.validate_oid("1.3.6.a.1.b.1")
 
         assert result.is_success
@@ -82,7 +82,7 @@ class TestOidValidation:
 
     def test_validate_oid_single_number(self) -> None:
         """Test validation of single numeric OID."""
-        service = FlextLdifSyntaxService()
+        service = FlextLdifSyntax()
         result = service.validate_oid("2")
 
         assert result.is_success
@@ -90,7 +90,7 @@ class TestOidValidation:
 
     def test_validate_very_long_valid_oid(self) -> None:
         """Test validation of very long but valid OID."""
-        service = FlextLdifSyntaxService()
+        service = FlextLdifSyntax()
         result = service.validate_oid("1.2.3.4.5.6.7.8.9.10.11.12.13.14.15")
 
         assert result.is_success
@@ -102,7 +102,7 @@ class TestRfc4517Standard:
 
     def test_is_rfc4517_boolean(self) -> None:
         """Test detection of RFC 4517 Boolean OID."""
-        service = FlextLdifSyntaxService()
+        service = FlextLdifSyntax()
         result = service.is_rfc4517_standard("1.3.6.1.4.1.1466.115.121.1.7")
 
         assert result.is_success
@@ -110,7 +110,7 @@ class TestRfc4517Standard:
 
     def test_is_rfc4517_directory_string(self) -> None:
         """Test detection of RFC 4517 Directory String OID."""
-        service = FlextLdifSyntaxService()
+        service = FlextLdifSyntax()
         result = service.is_rfc4517_standard("1.3.6.1.4.1.1466.115.121.1.15")
 
         assert result.is_success
@@ -118,7 +118,7 @@ class TestRfc4517Standard:
 
     def test_is_not_rfc4517_oracle_oid(self) -> None:
         """Test detection of non-RFC 4517 OID (Oracle)."""
-        service = FlextLdifSyntaxService()
+        service = FlextLdifSyntax()
         result = service.is_rfc4517_standard("2.16.840.1.113894.1.1.1")
 
         assert result.is_success
@@ -126,7 +126,7 @@ class TestRfc4517Standard:
 
     def test_is_rfc4517_empty_oid(self) -> None:
         """Test detection with empty OID."""
-        service = FlextLdifSyntaxService()
+        service = FlextLdifSyntax()
         result = service.is_rfc4517_standard("")
 
         assert result.is_success
@@ -138,7 +138,7 @@ class TestOidLookup:
 
     def test_lookup_boolean_oid(self) -> None:
         """Test looking up Boolean syntax name."""
-        service = FlextLdifSyntaxService()
+        service = FlextLdifSyntax()
         result = service.lookup_oid("1.3.6.1.4.1.1466.115.121.1.7")
 
         assert result.is_success
@@ -147,7 +147,7 @@ class TestOidLookup:
 
     def test_lookup_directory_string_oid(self) -> None:
         """Test looking up Directory String syntax name."""
-        service = FlextLdifSyntaxService()
+        service = FlextLdifSyntax()
         result = service.lookup_oid("1.3.6.1.4.1.1466.115.121.1.15")
 
         assert result.is_success
@@ -156,7 +156,7 @@ class TestOidLookup:
 
     def test_lookup_integer_oid(self) -> None:
         """Test looking up Integer syntax name (IA5 String)."""
-        service = FlextLdifSyntaxService()
+        service = FlextLdifSyntax()
         result = service.lookup_oid("1.3.6.1.4.1.1466.115.121.1.27")
 
         assert result.is_success
@@ -165,7 +165,7 @@ class TestOidLookup:
 
     def test_lookup_unknown_oid(self) -> None:
         """Test lookup of unknown OID returns None."""
-        service = FlextLdifSyntaxService()
+        service = FlextLdifSyntax()
         result = service.lookup_oid("9.9.9.9.9.9")
 
         assert result.is_success
@@ -173,7 +173,7 @@ class TestOidLookup:
 
     def test_lookup_empty_oid(self) -> None:
         """Test lookup of empty OID returns None."""
-        service = FlextLdifSyntaxService()
+        service = FlextLdifSyntax()
         result = service.lookup_oid("")
 
         assert result.is_success
@@ -185,7 +185,7 @@ class TestNameLookup:
 
     def test_lookup_boolean_name(self) -> None:
         """Test looking up Boolean syntax OID."""
-        service = FlextLdifSyntaxService()
+        service = FlextLdifSyntax()
         result = service.lookup_name("boolean")
 
         assert result.is_success
@@ -194,7 +194,7 @@ class TestNameLookup:
 
     def test_lookup_directory_string_name(self) -> None:
         """Test looking up Directory String syntax OID."""
-        service = FlextLdifSyntaxService()
+        service = FlextLdifSyntax()
         result = service.lookup_name("directory_string")
 
         assert result.is_success
@@ -203,7 +203,7 @@ class TestNameLookup:
 
     def test_lookup_integer_name(self) -> None:
         """Test looking up IA5 String syntax OID."""
-        service = FlextLdifSyntaxService()
+        service = FlextLdifSyntax()
         result = service.lookup_name("ia5_string")
 
         assert result.is_success
@@ -212,7 +212,7 @@ class TestNameLookup:
 
     def test_lookup_unknown_name(self) -> None:
         """Test lookup of unknown name returns None."""
-        service = FlextLdifSyntaxService()
+        service = FlextLdifSyntax()
         result = service.lookup_name("Unknown Syntax Type")
 
         assert result.is_success
@@ -220,7 +220,7 @@ class TestNameLookup:
 
     def test_lookup_empty_name(self) -> None:
         """Test lookup of empty name returns None."""
-        service = FlextLdifSyntaxService()
+        service = FlextLdifSyntax()
         result = service.lookup_name("")
 
         assert result.is_success
@@ -232,7 +232,7 @@ class TestResolveSyntax:
 
     def test_resolve_boolean_syntax(self) -> None:
         """Test resolving Boolean syntax."""
-        service = FlextLdifSyntaxService()
+        service = FlextLdifSyntax()
         result = service.resolve_syntax("1.3.6.1.4.1.1466.115.121.1.7")
 
         assert result.is_success
@@ -243,7 +243,7 @@ class TestResolveSyntax:
 
     def test_resolve_syntax_with_manual_name(self) -> None:
         """Test resolving syntax with manually provided name."""
-        service = FlextLdifSyntaxService()
+        service = FlextLdifSyntax()
         result = service.resolve_syntax(
             "1.3.6.1.4.1.1466.115.121.1.7",
             name="Custom Boolean",
@@ -255,7 +255,7 @@ class TestResolveSyntax:
 
     def test_resolve_syntax_with_description(self) -> None:
         """Test resolving syntax with description."""
-        service = FlextLdifSyntaxService()
+        service = FlextLdifSyntax()
         result = service.resolve_syntax(
             "1.3.6.1.4.1.1466.115.121.1.7",
             desc="Boolean value syntax",
@@ -267,7 +267,7 @@ class TestResolveSyntax:
 
     def test_resolve_syntax_with_server_type(self) -> None:
         """Test resolving syntax with server-specific type."""
-        service = FlextLdifSyntaxService()
+        service = FlextLdifSyntax()
         result = service.resolve_syntax(
             "1.3.6.1.4.1.1466.115.121.1.7",
             server_type="oid",
@@ -280,7 +280,7 @@ class TestResolveSyntax:
 
     def test_resolve_unknown_oid_succeeds(self) -> None:
         """Test resolving syntax with unknown but valid OID format succeeds."""
-        service = FlextLdifSyntaxService()
+        service = FlextLdifSyntax()
         result = service.resolve_syntax("9.9.9.9.9.9")
 
         assert result.is_success
@@ -293,7 +293,7 @@ class TestValueValidation:
 
     def test_validate_boolean_true(self) -> None:
         """Test validating Boolean value TRUE."""
-        service = FlextLdifSyntaxService()
+        service = FlextLdifSyntax()
         result = service.validate_value(
             "TRUE",
             "1.3.6.1.4.1.1466.115.121.1.7",
@@ -304,7 +304,7 @@ class TestValueValidation:
 
     def test_validate_boolean_false(self) -> None:
         """Test validating Boolean value FALSE."""
-        service = FlextLdifSyntaxService()
+        service = FlextLdifSyntax()
         result = service.validate_value(
             "FALSE",
             "1.3.6.1.4.1.1466.115.121.1.7",
@@ -315,7 +315,7 @@ class TestValueValidation:
 
     def test_validate_boolean_lowercase_true(self) -> None:
         """Test validating Boolean value with lowercase."""
-        service = FlextLdifSyntaxService()
+        service = FlextLdifSyntax()
         result = service.validate_value(
             "true",
             "1.3.6.1.4.1.1466.115.121.1.7",
@@ -326,7 +326,7 @@ class TestValueValidation:
 
     def test_validate_boolean_invalid(self) -> None:
         """Test validating invalid Boolean value."""
-        service = FlextLdifSyntaxService()
+        service = FlextLdifSyntax()
         result = service.validate_value(
             "MAYBE",
             "1.3.6.1.4.1.1466.115.121.1.7",
@@ -338,7 +338,7 @@ class TestValueValidation:
 
     def test_validate_integer_via_numeric_string(self) -> None:
         """Test validating numeric string (IA5 String defaults to string validation)."""
-        service = FlextLdifSyntaxService()
+        service = FlextLdifSyntax()
         result = service.validate_value(
             "12345",
             "1.3.6.1.4.1.1466.115.121.1.27",
@@ -349,7 +349,7 @@ class TestValueValidation:
 
     def test_validate_numeric_negative(self) -> None:
         """Test validating negative numeric value."""
-        service = FlextLdifSyntaxService()
+        service = FlextLdifSyntax()
         result = service.validate_value(
             "-999",
             "1.3.6.1.4.1.1466.115.121.1.27",
@@ -360,7 +360,7 @@ class TestValueValidation:
 
     def test_validate_string_value(self) -> None:
         """Test validating string value (default is string validation)."""
-        service = FlextLdifSyntaxService()
+        service = FlextLdifSyntax()
         result = service.validate_value(
             "not_a_number",
             "1.3.6.1.4.1.1466.115.121.1.27",
@@ -372,7 +372,7 @@ class TestValueValidation:
 
     def test_validate_empty_value(self) -> None:
         """Test validating empty value (should pass)."""
-        service = FlextLdifSyntaxService()
+        service = FlextLdifSyntax()
         result = service.validate_value(
             "",
             "1.3.6.1.4.1.1466.115.121.1.7",
@@ -383,7 +383,7 @@ class TestValueValidation:
 
     def test_validate_unknown_syntax_oid_uses_default(self) -> None:
         """Test validating value against unknown syntax OID uses default validation."""
-        service = FlextLdifSyntaxService()
+        service = FlextLdifSyntax()
         result = service.validate_value(
             "value",
             "9.9.9.9.9.9",
@@ -399,7 +399,7 @@ class TestSyntaxCategory:
 
     def test_get_category_boolean(self) -> None:
         """Test getting category for Boolean syntax."""
-        service = FlextLdifSyntaxService()
+        service = FlextLdifSyntax()
         result = service.get_syntax_category("1.3.6.1.4.1.1466.115.121.1.7")
 
         assert result.is_success
@@ -408,7 +408,7 @@ class TestSyntaxCategory:
 
     def test_get_category_ia5_string(self) -> None:
         """Test getting category for IA5 String syntax."""
-        service = FlextLdifSyntaxService()
+        service = FlextLdifSyntax()
         result = service.get_syntax_category("1.3.6.1.4.1.1466.115.121.1.27")
 
         assert result.is_success
@@ -417,7 +417,7 @@ class TestSyntaxCategory:
 
     def test_get_category_directory_string(self) -> None:
         """Test getting category for Directory String syntax."""
-        service = FlextLdifSyntaxService()
+        service = FlextLdifSyntax()
         result = service.get_syntax_category("1.3.6.1.4.1.1466.115.121.1.15")
 
         assert result.is_success
@@ -426,7 +426,7 @@ class TestSyntaxCategory:
 
     def test_get_category_unknown_oid_succeeds(self) -> None:
         """Test getting category for unknown OID (succeeds with default)."""
-        service = FlextLdifSyntaxService()
+        service = FlextLdifSyntax()
         result = service.get_syntax_category("9.9.9.9.9.9")
 
         assert result.is_success
@@ -439,7 +439,7 @@ class TestListSyntaxes:
 
     def test_list_common_syntaxes(self) -> None:
         """Test listing all common RFC 4517 syntaxes."""
-        service = FlextLdifSyntaxService()
+        service = FlextLdifSyntax()
         result = service.list_common_syntaxes()
 
         assert result.is_success
@@ -450,7 +450,7 @@ class TestListSyntaxes:
 
     def test_list_syntaxes_sorted(self) -> None:
         """Test that listed syntaxes are sorted."""
-        service = FlextLdifSyntaxService()
+        service = FlextLdifSyntax()
         result = service.list_common_syntaxes()
 
         assert result.is_success
@@ -463,8 +463,8 @@ class TestMultipleServices:
 
     def test_multiple_service_instances(self) -> None:
         """Test that multiple service instances don't interfere."""
-        service1 = FlextLdifSyntaxService()
-        service2 = FlextLdifSyntaxService()
+        service1 = FlextLdifSyntax()
+        service2 = FlextLdifSyntax()
 
         result1 = service1.validate_oid("1.3.6.1.4.1.1466.115.121.1.7")
         result2 = service2.validate_oid("1.3.6.1.4.1.1466.115.121.1.7")

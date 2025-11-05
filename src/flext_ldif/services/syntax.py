@@ -28,9 +28,9 @@ This service handles SYNTAX VALIDATION & RESOLUTION ONLY:
 
 What it does NOT do:
 - Parse LDIF entries (use FlextLdifParser)
-- Validate attribute names (use FlextLdifValidationService)
-- Transform entries (use FlextLdifEntryService)
-- Sort entries (use FlextLdifSortingService)
+- Validate attribute names (use FlextLdifValidation)
+- Transform entries (use FlextLdifEntry)
+- Sort entries (use FlextLdifSorting)
 
 ═══════════════════════════════════════════════════════════════════════════
 RFC COMPLIANCE
@@ -55,7 +55,7 @@ REAL USAGE EXAMPLES
 
 # PATTERN 1: Direct Method API (Most Common)
 ─────────────────────────────────────────────
-syntax_service = FlextLdifSyntaxService()
+syntax_service = FlextLdifSyntax()
 
 # Validate OID format
 result = syntax_service.validate_oid("1.3.6.1.4.1.1466.115.121.1.7")
@@ -95,7 +95,7 @@ oids = result.unwrap()  # ["1.3.6.1.4.1.1466.115.121.1.1", ...]
 
 # PATTERN 2: Execute Method (V1 FlextService Style)
 ────────────────────────────────────────────────────
-result = FlextLdifSyntaxService().execute()
+result = FlextLdifSyntax().execute()
 if result.is_success:
     status = result.unwrap()
     # {"service": "SyntaxService", "status": "operational", ...}
@@ -129,7 +129,7 @@ from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 
 
-class FlextLdifSyntaxService(FlextService[dict[str, object]]):
+class FlextLdifSyntax(FlextService[dict[str, object]]):
     """RFC 4517 Compliant Attribute Syntax Validation and Resolution Service.
 
     Provides comprehensive syntax OID validation, lookup, resolution, and
@@ -496,3 +496,22 @@ class FlextLdifSyntaxService(FlextService[dict[str, object]]):
             return FlextResult[list[str]].fail(
                 f"Failed to list common syntaxes: {e}",
             )
+
+    @classmethod
+    def list_all_syntaxes(cls) -> FlextResult[list[str]]:
+        """List all supported RFC 4517 syntax OIDs (classmethod).
+
+        This is a convenience classmethod wrapper around list_common_syntaxes().
+
+        Returns:
+            FlextResult containing sorted list of OIDs
+
+        Example:
+            >>> result = FlextLdifSyntax.list_all_syntaxes()
+            >>> if result.is_success:
+            >>>     oids = result.unwrap()
+            >>>     assert "1.3.6.1.4.1.1466.115.121.1.7" in oids
+
+        """
+        service = cls()
+        return service.list_common_syntaxes()

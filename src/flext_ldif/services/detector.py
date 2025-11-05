@@ -27,7 +27,7 @@ from flext_ldif.models import FlextLdifModels
 logger = FlextLogger(__name__)
 
 
-class FlextLdifServerDetector(FlextService[FlextLdifModels.ClientStatus]):
+class FlextLdifDetector(FlextService[FlextLdifModels.ClientStatus]):
     """Service for detecting LDAP server type from LDIF content.
 
     Uses pattern matching to identify server-specific features across all supported
@@ -51,6 +51,12 @@ class FlextLdifServerDetector(FlextService[FlextLdifModels.ClientStatus]):
     3. Generic patterns (Novell, IBM, Apache, 389DS - weight 6)
     4. Fallback to RFC if no patterns found
     5. Return RFC if detection confidence is below threshold
+
+    DN Handling Integration:
+    - Returns detected server type compatible with FlextLdifUtilities.DN operations
+    - Detected server type can be used for server-specific DN normalization/validation
+    - Use result with FlextLdifUtilities for RFC 4514 compliant DN processing
+    - Supports migration workflows via conversion matrix with detected server type
     """
 
     # Detection score weights and patterns imported from constants
@@ -161,7 +167,7 @@ class FlextLdifServerDetector(FlextService[FlextLdifModels.ClientStatus]):
         status_result = FlextLdifModels.ClientStatus(
             status="initialized",
             services=["detect_server_type"],
-            config={"service": "FlextLdifServerDetector"},
+            config={"service": "FlextLdifDetector"},
         )
         return FlextResult[FlextLdifModels.ClientStatus].ok(status_result)
 
@@ -231,6 +237,29 @@ class FlextLdifServerDetector(FlextService[FlextLdifModels.ClientStatus]):
                 f"Failed to resolve effective server type: {e}"
             )
 
+    def _update_server_scores(
+        self,
+        server_type: str,
+        pattern: str,
+        weight: int,
+        attributes: list[str] | frozenset[str],
+        content: str,
+        content_lower: str,
+        scores: dict[str, int],
+        *,
+        case_sensitive: bool = False,
+    ) -> None:
+        """Update scores for a server type based on pattern and attribute matches."""
+        search_content = content if case_sensitive else content_lower
+        if re.search(pattern, search_content):
+            scores[server_type] += weight
+
+        for attr in attributes:
+            if attr.lower() in content_lower:
+                scores[server_type] += (
+                    FlextLdifConstants.ServerDetection.ATTRIBUTE_MATCH_SCORE
+                )
+
     def _calculate_scores(self, content: str) -> dict[str, int]:
         """Calculate detection scores for each server type.
 
@@ -251,57 +280,50 @@ class FlextLdifServerDetector(FlextService[FlextLdifModels.ClientStatus]):
         content_lower = content.lower()
 
         # Oracle OID detection
-        if re.search(FlextLdifConstants.ServerDetection.ORACLE_OID_PATTERN, content):
-            scores[FlextLdifConstants.ServerTypes.OID] += (
-                FlextLdifConstants.ServerDetection.ORACLE_OID_WEIGHT
-            )
-        for attr in FlextLdifConstants.ServerDetection.ORACLE_OID_ATTRIBUTES:
-            if attr.lower() in content_lower:
-                scores[FlextLdifConstants.ServerTypes.OID] += (
-                    FlextLdifConstants.ServerDetection.ATTRIBUTE_MATCH_SCORE
-                )
+        self._update_server_scores(
+            FlextLdifConstants.ServerTypes.OID,
+            FlextLdifConstants.ServerDetection.ORACLE_OID_PATTERN,
+            FlextLdifConstants.ServerDetection.ORACLE_OID_WEIGHT,
+            FlextLdifConstants.ServerDetection.ORACLE_OID_ATTRIBUTES,
+            content,
+            content_lower,
+            scores,
+            case_sensitive=True,
+        )
 
         # Oracle OUD detection
-        if re.search(
+        self._update_server_scores(
+            FlextLdifConstants.ServerTypes.OUD,
             FlextLdifConstants.ServerDetection.ORACLE_OUD_PATTERN,
+            FlextLdifConstants.ServerDetection.ORACLE_OUD_WEIGHT,
+            FlextLdifConstants.ServerDetection.ORACLE_OUD_ATTRIBUTES,
+            content,
             content_lower,
-        ):
-            scores[FlextLdifConstants.ServerTypes.OUD] += (
-                FlextLdifConstants.ServerDetection.ORACLE_OUD_WEIGHT
-            )
-        for attr in FlextLdifConstants.ServerDetection.ORACLE_OUD_ATTRIBUTES:
-            if attr.lower() in content_lower:
-                scores[FlextLdifConstants.ServerTypes.OUD] += (
-                    FlextLdifConstants.ServerDetection.ATTRIBUTE_MATCH_SCORE
-                )
+            scores,
+        )
 
         # OpenLDAP detection
-        if re.search(
+        self._update_server_scores(
+            FlextLdifConstants.ServerTypes.OPENLDAP,
             FlextLdifConstants.ServerDetection.OPENLDAP_PATTERN,
+            FlextLdifConstants.ServerDetection.OPENLDAP_WEIGHT,
+            FlextLdifConstants.ServerDetection.OPENLDAP_ATTRIBUTES,
+            content,
             content_lower,
-        ):
-            scores[FlextLdifConstants.ServerTypes.OPENLDAP] += (
-                FlextLdifConstants.ServerDetection.OPENLDAP_WEIGHT
-            )
-        for attr in FlextLdifConstants.ServerDetection.OPENLDAP_ATTRIBUTES:
-            if attr.lower() in content_lower:
-                scores[FlextLdifConstants.ServerTypes.OPENLDAP] += (
-                    FlextLdifConstants.ServerDetection.ATTRIBUTE_MATCH_SCORE
-                )
+            scores,
+        )
 
         # Active Directory detection
-        if re.search(
+        self._update_server_scores(
+            FlextLdifConstants.ServerTypes.AD,
             FlextLdifConstants.ServerDetection.ACTIVE_DIRECTORY_PATTERN,
+            FlextLdifConstants.ServerDetection.ACTIVE_DIRECTORY_WEIGHT,
+            FlextLdifConstants.ServerDetection.ACTIVE_DIRECTORY_ATTRIBUTES,
             content,
-        ):
-            scores[FlextLdifConstants.ServerTypes.AD] += (
-                FlextLdifConstants.ServerDetection.ACTIVE_DIRECTORY_WEIGHT
-            )
-        for attr in FlextLdifConstants.ServerDetection.ACTIVE_DIRECTORY_ATTRIBUTES:
-            if attr.lower() in content_lower:
-                scores[FlextLdifConstants.ServerTypes.AD] += (
-                    FlextLdifConstants.ServerDetection.ATTRIBUTE_MATCH_SCORE
-                )
+            content_lower,
+            scores,
+            case_sensitive=True,
+        )
 
         # Novell eDirectory detection
         if re.search(
@@ -377,6 +399,22 @@ class FlextLdifServerDetector(FlextService[FlextLdifModels.ClientStatus]):
 
         return detected, confidence
 
+    @staticmethod
+    def _check_regex_pattern(
+        pattern: str, content: str, description: str, patterns: list[str]
+    ) -> None:
+        """Check if pattern exists in content, append description if found."""
+        if re.search(pattern, content):
+            patterns.append(description)
+
+    @staticmethod
+    def _check_substring_pattern(
+        value: str, content_lower: str, description: str, patterns: list[str]
+    ) -> None:
+        """Check if substring exists in content (case-insensitive), append if found."""
+        if value.lower() in content_lower:
+            patterns.append(description)
+
     def _extract_patterns(self, content: str) -> list[str]:
         """Extract detected patterns from content.
 
@@ -391,71 +429,88 @@ class FlextLdifServerDetector(FlextService[FlextLdifModels.ClientStatus]):
         content_lower = content.lower()
 
         # Oracle OID detection
-        if re.search(FlextLdifConstants.ServerDetection.ORACLE_OID_PATTERN, content):
-            patterns.append("Oracle OID namespace (2.16.840.1.113894.*)")
+        self._check_regex_pattern(
+            FlextLdifConstants.ServerDetection.ORACLE_OID_PATTERN,
+            content,
+            "Oracle OID namespace (2.16.840.1.113894.*)",
+            patterns,
+        )
         # Import OID constants for detection (server-specific constants)
         from flext_ldif.servers.oid import FlextLdifServersOid
 
+        self._check_substring_pattern(
+            FlextLdifServersOid.Constants.ORCLACI,
+            content_lower,
+            "Oracle OID ACLs",
+            patterns,
+        )
         if (
-            FlextLdifServersOid.Constants.ORCLACI.lower() in content_lower
-            or FlextLdifServersOid.Constants.ORCL_ENTRY_LEVEL_ACI.lower()
-            in content_lower
-        ):
+            FlextLdifServersOid.Constants.ORCL_ENTRY_LEVEL_ACI.lower() in content_lower
+        ) and "Oracle OID ACLs" not in patterns:
             patterns.append("Oracle OID ACLs")
 
         # Oracle OUD detection
-        if re.search(
+        self._check_regex_pattern(
             FlextLdifConstants.ServerDetection.ORACLE_OUD_PATTERN,
             content_lower,
-        ):
-            patterns.append("Oracle OUD attributes (ds-sync-*)")
+            "Oracle OUD attributes (ds-sync-*)",
+            patterns,
+        )
 
         # OpenLDAP detection
-        if re.search(
+        self._check_regex_pattern(
             FlextLdifConstants.ServerDetection.OPENLDAP_PATTERN,
             content_lower,
-        ):
-            patterns.append("OpenLDAP configuration (olc*)")
+            "OpenLDAP configuration (olc*)",
+            patterns,
+        )
 
         # Active Directory detection
-        if re.search(
+        self._check_regex_pattern(
             FlextLdifConstants.ServerDetection.ACTIVE_DIRECTORY_PATTERN,
             content,
-        ):
-            patterns.append("Active Directory namespace (1.2.840.113556.*)")
-        if "samaccountname" in content_lower:
-            patterns.append("Active Directory attributes")
+            "Active Directory namespace (1.2.840.113556.*)",
+            patterns,
+        )
+        self._check_substring_pattern(
+            "samaccountname", content_lower, "Active Directory attributes", patterns
+        )
 
         # Novell eDirectory detection
-        if re.search(
+        self._check_regex_pattern(
             FlextLdifConstants.ServerDetection.NOVELL_EDIR_PATTERN,
             content_lower,
-        ):
-            patterns.append("Novell eDirectory attributes (GUID, Modifiers, etc.)")
+            "Novell eDirectory attributes (GUID, Modifiers, etc.)",
+            patterns,
+        )
 
         # IBM Tivoli detection
-        if re.search(
+        self._check_regex_pattern(
             FlextLdifConstants.ServerDetection.IBM_TIVOLI_PATTERN,
             content_lower,
-        ):
-            patterns.append("IBM Tivoli attributes (ibm-*, tivoli, ldapdb)")
+            "IBM Tivoli attributes (ibm-*, tivoli, ldapdb)",
+            patterns,
+        )
 
         # 389 DS detection
-        if re.search(FlextLdifConstants.ServerDetection.DS_389_PATTERN, content_lower):
-            patterns.append(
-                "389 Directory Server attributes (389ds, redhat-ds, dirsrv)",
-            )
+        self._check_regex_pattern(
+            FlextLdifConstants.ServerDetection.DS_389_PATTERN,
+            content_lower,
+            "389 Directory Server attributes (389ds, redhat-ds, dirsrv)",
+            patterns,
+        )
 
         # Apache DS detection
         from flext_ldif.servers.apache import FlextLdifServersApache
 
-        if re.search(
+        self._check_regex_pattern(
             FlextLdifServersApache.Constants.APACHE_DS_PATTERN,
             content_lower,
-        ):
-            patterns.append("Apache DS attributes (apacheDS, apache-*)")
+            "Apache DS attributes (apacheDS, apache-*)",
+            patterns,
+        )
 
         return patterns
 
 
-__all__ = ["FlextLdifServerDetector"]
+__all__ = ["FlextLdifDetector"]

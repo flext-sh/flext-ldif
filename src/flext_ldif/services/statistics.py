@@ -20,7 +20,7 @@ from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 
 
-class FlextLdifStatisticsService(FlextService[dict[str, object]]):
+class FlextLdifStatistics(FlextService[dict[str, object]]):
     """Statistics service for LDIF processing pipeline.
 
     Provides methods for generating comprehensive statistics about
@@ -161,4 +161,4 @@ class FlextLdifStatisticsService(FlextService[dict[str, object]]):
             return FlextResult.fail(f"Failed to calculate statistics for entries: {e}")
 
 
-__all__ = ["FlextLdifStatisticsService"]
+__all__ = ["FlextLdifStatistics"]

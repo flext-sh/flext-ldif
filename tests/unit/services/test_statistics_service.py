@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from flext_ldif.services.statistics import FlextLdifStatisticsService
+from flext_ldif.services.statistics import FlextLdifStatistics
 
 
 class TestStatisticsServiceInitialization:
@@ -20,12 +20,12 @@ class TestStatisticsServiceInitialization:
 
     def test_init_creates_service(self) -> None:
         """Test statistics service can be instantiated."""
-        service = FlextLdifStatisticsService()
+        service = FlextLdifStatistics()
         assert service is not None
 
     def test_execute_returns_status(self) -> None:
         """Test execute returns service operational status."""
-        service = FlextLdifStatisticsService()
+        service = FlextLdifStatistics()
         result = service.execute()
 
         assert result.is_success
@@ -45,7 +45,7 @@ class TestGenerateStatisticsBasic:
 
     def test_generate_statistics_empty_categorized(self) -> None:
         """Test statistics for empty categorized entries."""
-        service = FlextLdifStatisticsService()
+        service = FlextLdifStatistics()
         categorized: dict[str, list[dict[str, object]]] = {}
         written_counts: dict[str, int] = {}
         output_dir = Path("/tmp/ldif")
@@ -69,7 +69,7 @@ class TestGenerateStatisticsBasic:
 
     def test_generate_statistics_single_category(self) -> None:
         """Test statistics for single category with entries."""
-        service = FlextLdifStatisticsService()
+        service = FlextLdifStatistics()
         categorized: dict[str, list[dict[str, object]]] = {
             "users": [
                 {"dn": "cn=user1,dc=example,dc=com", "attributes": {}},
@@ -106,7 +106,7 @@ class TestGenerateStatisticsBasic:
 
     def test_generate_statistics_multiple_categories(self) -> None:
         """Test statistics for multiple categories with different sizes."""
-        service = FlextLdifStatisticsService()
+        service = FlextLdifStatistics()
         categorized: dict[str, list[dict[str, object]]] = {
             "users": [
                 {"dn": "cn=user1,dc=example,dc=com", "attributes": {}},
@@ -158,7 +158,7 @@ class TestGenerateStatisticsWithRejections:
 
     def test_generate_statistics_with_rejected_entries(self) -> None:
         """Test statistics with rejected entries."""
-        service = FlextLdifStatisticsService()
+        service = FlextLdifStatistics()
         categorized: dict[str, list[dict[str, object]]] = {
             "valid": [
                 {"dn": "cn=valid1,dc=example,dc=com", "attributes": {}},
@@ -203,7 +203,7 @@ class TestGenerateStatisticsWithRejections:
 
     def test_generate_statistics_rejection_rate_calculation(self) -> None:
         """Test rejection rate calculation with various entry counts."""
-        service = FlextLdifStatisticsService()
+        service = FlextLdifStatistics()
         categorized: dict[str, list[dict[str, object]]] = {
             "valid": [
                 {"dn": "cn=user1,dc=example,dc=com", "attributes": {}},
@@ -247,7 +247,7 @@ class TestGenerateStatisticsWithRejections:
 
     def test_generate_statistics_unique_rejection_reasons(self) -> None:
         """Test that rejection reasons are deduplicated."""
-        service = FlextLdifStatisticsService()
+        service = FlextLdifStatistics()
         categorized: dict[str, list[dict[str, object]]] = {
             "rejected": [
                 {
@@ -296,7 +296,7 @@ class TestGenerateStatisticsRejectionReasons:
 
     def test_rejection_reasons_with_dict_attributes(self) -> None:
         """Test extraction of rejection reasons from dict attributes."""
-        service = FlextLdifStatisticsService()
+        service = FlextLdifStatistics()
         categorized: dict[str, list[dict[str, object]]] = {
             "rejected": [
                 {
@@ -331,7 +331,7 @@ class TestGenerateStatisticsRejectionReasons:
 
     def test_rejection_reasons_skips_non_string_values(self) -> None:
         """Test that non-string rejection reason values are skipped."""
-        service = FlextLdifStatisticsService()
+        service = FlextLdifStatistics()
         categorized: dict[str, list[dict[str, object]]] = {
             "rejected": [
                 {
@@ -373,7 +373,7 @@ class TestGenerateStatisticsRejectionReasons:
 
     def test_rejection_reasons_includes_empty_string(self) -> None:
         """Test that empty string rejection reasons are included (not filtered)."""
-        service = FlextLdifStatisticsService()
+        service = FlextLdifStatistics()
         categorized: dict[str, list[dict[str, object]]] = {
             "rejected": [
                 {
@@ -414,7 +414,7 @@ class TestGenerateStatisticsOutputFiles:
 
     def test_output_files_with_explicit_filenames(self) -> None:
         """Test output files with explicit filenames."""
-        service = FlextLdifStatisticsService()
+        service = FlextLdifStatistics()
         categorized: dict[str, list[dict[str, object]]] = {
             "users": [{"dn": "cn=user1,dc=example,dc=com", "attributes": {}}],
             "groups": [{"dn": "cn=admin,dc=example,dc=com", "attributes": {}}],
@@ -443,7 +443,7 @@ class TestGenerateStatisticsOutputFiles:
 
     def test_output_files_default_names_when_not_provided(self) -> None:
         """Test default output filenames when not provided."""
-        service = FlextLdifStatisticsService()
+        service = FlextLdifStatistics()
         categorized: dict[str, list[dict[str, object]]] = {
             "users": [{"dn": "cn=user1,dc=example,dc=com", "attributes": {}}],
         }
@@ -468,7 +468,7 @@ class TestGenerateStatisticsOutputFiles:
 
     def test_output_files_non_string_values_converted_to_default(self) -> None:
         """Test that non-string output file values are converted to defaults."""
-        service = FlextLdifStatisticsService()
+        service = FlextLdifStatistics()
         categorized: dict[str, list[dict[str, object]]] = {
             "users": [{"dn": "cn=user1,dc=example,dc=com", "attributes": {}}],
         }
@@ -497,7 +497,7 @@ class TestGenerateStatisticsErrorHandling:
 
     def test_generate_statistics_handles_exception(self) -> None:
         """Test that statistics generation handles empty data gracefully."""
-        service = FlextLdifStatisticsService()
+        service = FlextLdifStatistics()
         # Pass valid but empty data
         categorized: dict[str, list[dict[str, object]]] = {}
         written_counts: dict[str, int] = {}
@@ -519,7 +519,7 @@ class TestGenerateStatisticsErrorHandling:
 
     def test_generate_statistics_handles_missing_attributes_key(self) -> None:
         """Test handling of entries without attributes key."""
-        service = FlextLdifStatisticsService()
+        service = FlextLdifStatistics()
         categorized: dict[str, list[dict[str, object]]] = {
             "entries": [
                 {"dn": "cn=test1,dc=example,dc=com"},  # No attributes key
@@ -549,7 +549,7 @@ class TestGenerateStatisticsEdgeCases:
 
     def test_statistics_with_very_large_rejection_counts(self) -> None:
         """Test statistics with large number of rejected entries."""
-        service = FlextLdifStatisticsService()
+        service = FlextLdifStatistics()
         categorized: dict[str, list[dict[str, object]]] = {
             "valid": [
                 {"dn": f"cn=user{i},dc=example,dc=com", "attributes": {}}
@@ -589,7 +589,7 @@ class TestGenerateStatisticsEdgeCases:
 
     def test_statistics_with_complex_path_objects(self) -> None:
         """Test statistics generation with complex Path objects."""
-        service = FlextLdifStatisticsService()
+        service = FlextLdifStatistics()
         categorized: dict[str, list[dict[str, object]]] = {
             "users": [{"dn": "cn=user1,dc=example,dc=com", "attributes": {}}],
         }
@@ -614,7 +614,7 @@ class TestGenerateStatisticsEdgeCases:
 
     def test_statistics_all_rejected_entries(self) -> None:
         """Test statistics when all entries are rejected."""
-        service = FlextLdifStatisticsService()
+        service = FlextLdifStatistics()
         categorized: dict[str, list[dict[str, object]]] = {
             "rejected": [
                 {

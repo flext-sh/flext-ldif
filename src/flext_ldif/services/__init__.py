@@ -18,24 +18,24 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif.services.acl import FlextLdifAclService
-from flext_ldif.services.dn import FlextLdifDnService
-from flext_ldif.services.entrys import FlextLdifEntryService
-from flext_ldif.services.parser import FlextLdifParserService
-from flext_ldif.services.registry import FlextLdifRegistry
-from flext_ldif.services.statistics import FlextLdifStatisticsService
-from flext_ldif.services.syntax import FlextLdifSyntaxService
-from flext_ldif.services.validation import FlextLdifValidationService
-from flext_ldif.services.writer import FlextLdifWriterService
+from flext_ldif.services.acl import FlextLdifAcl
+from flext_ldif.services.dn import FlextLdifDn
+from flext_ldif.services.entrys import FlextLdifEntry
+from flext_ldif.services.parser import FlextLdifParser
+from flext_ldif.services.server import FlextLdifServer
+from flext_ldif.services.statistics import FlextLdifStatistics
+from flext_ldif.services.syntax import FlextLdifSyntax
+from flext_ldif.services.validation import FlextLdifValidation
+from flext_ldif.services.writer import FlextLdifWriter
 
 __all__ = [
-    "FlextLdifAclService",
-    "FlextLdifDnService",
-    "FlextLdifEntryService",
-    "FlextLdifParserService",
-    "FlextLdifRegistry",
-    "FlextLdifStatisticsService",
-    "FlextLdifSyntaxService",
-    "FlextLdifValidationService",
-    "FlextLdifWriterService",
+    "FlextLdifAcl",
+    "FlextLdifDn",
+    "FlextLdifEntry",
+    "FlextLdifParser",
+    "FlextLdifServer",
+    "FlextLdifStatistics",
+    "FlextLdifSyntax",
+    "FlextLdifValidation",
+    "FlextLdifWriter",
 ]

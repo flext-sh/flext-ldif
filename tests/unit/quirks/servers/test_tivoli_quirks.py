@@ -294,15 +294,15 @@ class TestTivoliAcls:
         """Test ACL rejection with empty line."""
         server = FlextLdifServersTivoli()
         acl_quirk = server.acl
-        assert not acl_quirk._can_handle("")
+        assert not acl_quirk._can_handle_acl("")
 
     def test__can_handle_non_tivoli(self) -> None:
         """Test non-Tivoli ACL rejection."""
         server = FlextLdifServersTivoli()
         acl_quirk = server.acl
         acl_line = "aci: (version 3.0; acl read-access; allow(read))"
-        # _can_handle should reject non-Tivoli ACLs directly
-        assert acl_quirk._can_handle(acl_line) is False
+        # _can_handle_acl should reject non-Tivoli ACLs directly
+        assert acl_quirk._can_handle_acl(acl_line) is False
 
     def test_parse_success(self) -> None:
         """Test successful Tivoli ACL parsing."""
@@ -425,7 +425,7 @@ class TestTivoliEntrys:
             attributes={FlextLdifConstants.DictKeys.OBJECTCLASS: ["top"]}
         )
         FlextLdifModels.Entry(dn=dn, attributes=attributes)
-        assert entry_quirk._can_handle_entry(dn.value, attributes.attributes)
+        assert entry_quirk._can_handle_entry(dn.value, attributes.attributes) is True
 
     def test_can_handle_entry_tivoli_attribute(self) -> None:
         """Test entry detection by ibm- prefixed attributes."""
@@ -439,7 +439,7 @@ class TestTivoliEntrys:
             }
         )
         FlextLdifModels.Entry(dn=dn, attributes=attributes)
-        assert entry_quirk._can_handle_entry(dn.value, attributes.attributes)
+        assert entry_quirk._can_handle_entry(dn.value, attributes.attributes) is True
 
     def test_can_handle_entry_tivoli_objectclass(self) -> None:
         """Test entry detection by Tivoli objectClass."""

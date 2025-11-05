@@ -264,7 +264,9 @@ class TestDs389Acls:
         # Check basic ACL properties
         # server_type comes from metadata.quirk_type, which should match Constants.SERVER_TYPE
         assert acl_data.metadata is not None
-        assert acl_data.metadata.quirk_type == FlextLdifServersDs389.Constants.SERVER_TYPE
+        assert (
+            acl_data.metadata.quirk_type == FlextLdifServersDs389.Constants.SERVER_TYPE
+        )
         assert acl_data.name == "Admin Access"
         assert acl_data.raw_acl == acl_line
         # Check target attributes
@@ -274,7 +276,7 @@ class TestDs389Acls:
         # Check subject
         assert acl_data.subject is not None
         # Subject type is normalized to "user" when parsing userdn
-        assert acl_data.subject.subject_type in ("user", "userdn")
+        assert acl_data.subject.subject_type in {"user", "userdn"}
         # Check permissions
         assert acl_data.permissions is not None
         assert acl_data.permissions.read is True
@@ -352,7 +354,7 @@ class TestDs389Acls:
     def test_write_acl_to_rfc_empty(self) -> None:
         """Test writing empty ACL to RFC string format."""
         main_quirk = FlextLdifServersDs389()
-        acl_quirk = main_quirk.acl  # type: ignore[attr-defined]
+        acl_quirk = main_quirk.acl
         # Create minimal Acl model instance
         acl_data = FlextLdifModels.Acl(
             name="",
@@ -376,13 +378,13 @@ class TestDs389Entrys:
     def test_entry_quirk_initialization(self) -> None:
         """Test entry quirk initialization."""
         main_quirk = FlextLdifServersDs389()
-        entry_quirk = main_quirk.entry  # type: ignore[attr-defined]
+        entry_quirk = main_quirk.entry
         assert entry_quirk is not None
 
     def test_can_handle_entry_with_cn_config(self) -> None:
         """Test entry detection with cn=config DN marker."""
         main_quirk = FlextLdifServersDs389()
-        entry_quirk = main_quirk.entry  # type: ignore[attr-defined]
+        entry_quirk = main_quirk.entry
         entry_dn = "cn=config"
         attributes: dict[str, object] = {
             FlextLdifConstants.DictKeys.OBJECTCLASS: ["nscontainer"]
@@ -392,7 +394,7 @@ class TestDs389Entrys:
     def test_can_handle_entry_with_cn_monitor(self) -> None:
         """Test entry detection with cn=monitor DN marker."""
         main_quirk = FlextLdifServersDs389()
-        entry_quirk = main_quirk.entry  # type: ignore[attr-defined]
+        entry_quirk = main_quirk.entry
         entry_dn = "cn=monitor"
         attributes: dict[str, object] = {
             FlextLdifConstants.DictKeys.OBJECTCLASS: ["top"]
@@ -402,7 +404,7 @@ class TestDs389Entrys:
     def test_can_handle_entry_with_cn_changelog(self) -> None:
         """Test entry detection with cn=changelog DN marker."""
         main_quirk = FlextLdifServersDs389()
-        entry_quirk = main_quirk.entry  # type: ignore[attr-defined]
+        entry_quirk = main_quirk.entry
         entry_dn = "cn=changelog"
         attributes: dict[str, object] = {
             FlextLdifConstants.DictKeys.OBJECTCLASS: ["top"]
@@ -412,7 +414,7 @@ class TestDs389Entrys:
     def test_can_handle_entry_with_nsslapd_attribute(self) -> None:
         """Test entry detection with nsslapd- attribute prefix."""
         main_quirk = FlextLdifServersDs389()
-        entry_quirk = main_quirk.entry  # type: ignore[attr-defined]
+        entry_quirk = main_quirk.entry
         entry_dn = "cn=test,dc=example,dc=com"
         attributes: dict[str, object] = {
             "nsslapd-port": ["389"],
@@ -423,7 +425,7 @@ class TestDs389Entrys:
     def test_can_handle_entry_with_nsds_attribute(self) -> None:
         """Test entry detection with nsds attribute prefix."""
         main_quirk = FlextLdifServersDs389()
-        entry_quirk = main_quirk.entry  # type: ignore[attr-defined]
+        entry_quirk = main_quirk.entry
         entry_dn = "cn=test,dc=example,dc=com"
         attributes: dict[str, object] = {
             "nsds5ReplicaId": ["1"],
@@ -434,7 +436,7 @@ class TestDs389Entrys:
     def test_can_handle_entry_with_nsuniqueid_attribute(self) -> None:
         """Test entry detection with nsuniqueid attribute."""
         main_quirk = FlextLdifServersDs389()
-        entry_quirk = main_quirk.entry  # type: ignore[attr-defined]
+        entry_quirk = main_quirk.entry
         entry_dn = "cn=test,dc=example,dc=com"
         attributes: dict[str, object] = {
             "nsuniqueid": ["12345"],
@@ -445,7 +447,7 @@ class TestDs389Entrys:
     def test_can_handle_entry_with_ns_objectclass(self) -> None:
         """Test entry detection with ns- objectClass."""
         main_quirk = FlextLdifServersDs389()
-        entry_quirk = main_quirk.entry  # type: ignore[attr-defined]
+        entry_quirk = main_quirk.entry
         entry_dn = "cn=test,dc=example,dc=com"
         attributes: dict[str, object] = {
             FlextLdifConstants.DictKeys.OBJECTCLASS: ["top", "nscontainer"]
@@ -455,7 +457,7 @@ class TestDs389Entrys:
     def test_can_handle_entry_negative(self) -> None:
         """Test entry detection rejects non-389 DS entries."""
         main_quirk = FlextLdifServersDs389()
-        entry_quirk = main_quirk.entry  # type: ignore[attr-defined]
+        entry_quirk = main_quirk.entry
         entry_dn = "cn=user,dc=example,dc=com"
         attributes: dict[str, object] = {
             FlextLdifConstants.DictKeys.OBJECTCLASS: ["person"],

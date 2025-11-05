@@ -415,7 +415,7 @@ Source Format → Source.to_rfc() → RFC Format → Target.from_rfc() → Targe
 **Example**:
 
 ```python
-from flext_ldif.services.conversion_matrix import QuirksConversionMatrix
+from flext_ldif.services.conversion import QuirksConversionMatrix
 from flext_ldif.servers.oud_quirks import FlextLdifServersOud
 from flext_ldif.servers.oid import FlextLdifServersOid
 
@@ -558,7 +558,7 @@ graph TB
 
     Quirks --> ConversionMatrix[QuirksConversionMatrix]
     Quirks --> DnCaseRegistry[DnCaseRegistry]
-    Quirks --> Registry[FlextLdifRegistry]
+    Quirks --> Registry[FlextLdifServer]
 
     Models --> Entry[Entry Domain Model]
     Models --> DN[Distinguished Name]
@@ -621,7 +621,7 @@ else:
 
 ```python
 from flext_ldif.services.rfc_schema_parser import FlextLdifRfcSchemaParser
-from flext_ldif.services.registry import QuirkRegistryService
+from flext_ldif.services.server import QuirkRegistryService
 from pathlib import Path
 
 # ⚠️ MANDATORY: quirk_registry is REQUIRED for all RFC parsers/writers

@@ -121,7 +121,7 @@ def _transform_categories(
 ) -> FlextResult[dict[str, list[FlextTypes.Dict]]]:
     """Transform ACL entries using OID→OUD pipeline.
 
-    Uses parse(), convert_acl_to_rfc(), convert_acl_from_rfc()
+    Uses parse()
     """
     # Lines 668-771: Complete ACL transformation logic
     for entry in categorized.get("acl", []):

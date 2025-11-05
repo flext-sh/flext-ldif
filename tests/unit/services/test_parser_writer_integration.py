@@ -1,4 +1,4 @@
-"""Integration tests for FlextLdifParserService and FlextLdifWriterService.
+"""Integration tests for FlextLdifParser and FlextLdifWriter.
 
 Tests the interaction between parsing and writing with various options combinations.
 
@@ -14,22 +14,22 @@ import pytest
 
 from flext_ldif.config import FlextLdifConfig
 from flext_ldif.models import FlextLdifModels
-from flext_ldif.services.parser import FlextLdifParserService
-from flext_ldif.services.writer import FlextLdifWriterService
+from flext_ldif.services.parser import FlextLdifParser
+from flext_ldif.services.writer import FlextLdifWriter
 
 
 class TestParserWriterIntegration:
     """Test integration between parser and writer services."""
 
     @pytest.fixture
-    def parser_service(self) -> FlextLdifParserService:
+    def parser_service(self) -> FlextLdifParser:
         """Create parser service instance."""
-        return FlextLdifParserService(config=FlextLdifConfig())
+        return FlextLdifParser(config=FlextLdifConfig())
 
     @pytest.fixture
-    def writer_service(self) -> FlextLdifWriterService:
+    def writer_service(self) -> FlextLdifWriter:
         """Create writer service instance."""
-        return FlextLdifWriterService()
+        return FlextLdifWriter()
 
     @pytest.fixture
     def complex_ldif_content(self) -> str:
@@ -73,8 +73,8 @@ mail: jane.smith@example.com
 
     def test_roundtrip_basic(
         self,
-        parser_service: FlextLdifParserService,
-        writer_service: FlextLdifWriterService,
+        parser_service: FlextLdifParser,
+        writer_service: FlextLdifWriter,
         complex_ldif_content: str,
     ) -> None:
         """Test basic parse -> write roundtrip."""
@@ -110,8 +110,8 @@ mail: jane.smith@example.com
 
     def test_roundtrip_with_attribute_order_preservation(
         self,
-        parser_service: FlextLdifParserService,
-        writer_service: FlextLdifWriterService,
+        parser_service: FlextLdifParser,
+        writer_service: FlextLdifWriter,
     ) -> None:
         """Test roundtrip with attribute order preservation."""
         ldif_content = """version: 1
@@ -166,8 +166,8 @@ telephoneNumber: 123-456-7890
 
     def test_roundtrip_with_operational_attributes_filtering(
         self,
-        parser_service: FlextLdifParserService,
-        writer_service: FlextLdifWriterService,
+        parser_service: FlextLdifParser,
+        writer_service: FlextLdifWriter,
         complex_ldif_content: str,
     ) -> None:
         """Test roundtrip with operational attributes filtering."""
@@ -208,8 +208,8 @@ telephoneNumber: 123-456-7890
 
     def test_roundtrip_with_schema_processing(
         self,
-        parser_service: FlextLdifParserService,
-        writer_service: FlextLdifWriterService,
+        parser_service: FlextLdifParser,
+        writer_service: FlextLdifWriter,
         complex_ldif_content: str,
     ) -> None:
         """Test roundtrip with schema processing."""
@@ -244,8 +244,8 @@ telephoneNumber: 123-456-7890
 
     def test_roundtrip_with_acl_processing(
         self,
-        parser_service: FlextLdifParserService,
-        writer_service: FlextLdifWriterService,
+        parser_service: FlextLdifParser,
+        writer_service: FlextLdifWriter,
         complex_ldif_content: str,
     ) -> None:
         """Test roundtrip with ACL processing."""
@@ -280,8 +280,8 @@ telephoneNumber: 123-456-7890
 
     def test_roundtrip_with_validation_and_error_handling(
         self,
-        parser_service: FlextLdifParserService,
-        writer_service: FlextLdifWriterService,
+        parser_service: FlextLdifParser,
+        writer_service: FlextLdifWriter,
     ) -> None:
         """Test roundtrip with validation and error handling."""
         # LDIF with some validation issues
@@ -336,8 +336,8 @@ sn: Empty Values
 
     def test_roundtrip_file_operations(
         self,
-        parser_service: FlextLdifParserService,
-        writer_service: FlextLdifWriterService,
+        parser_service: FlextLdifParser,
+        writer_service: FlextLdifWriter,
         complex_ldif_content: str,
         tmp_path: Path,
     ) -> None:
@@ -378,8 +378,8 @@ sn: Empty Values
 
     def test_roundtrip_ldap3_format(
         self,
-        parser_service: FlextLdifParserService,
-        writer_service: FlextLdifWriterService,
+        parser_service: FlextLdifParser,
+        writer_service: FlextLdifWriter,
     ) -> None:
         """Test roundtrip using ldap3 format."""
         # Mock ldap3 data
@@ -433,8 +433,8 @@ sn: Empty Values
 
     def test_format_options_compatibility(
         self,
-        parser_service: FlextLdifParserService,
-        writer_service: FlextLdifWriterService,
+        parser_service: FlextLdifParser,
+        writer_service: FlextLdifWriter,
     ) -> None:
         """Test that parse and write options work well together."""
         ldif_content = """version: 1
@@ -504,8 +504,8 @@ entryUUID: 12345678-1234-1234-1234-123456789abc
 
     def test_error_propagation(
         self,
-        parser_service: FlextLdifParserService,
-        writer_service: FlextLdifWriterService,
+        parser_service: FlextLdifParser,
+        writer_service: FlextLdifWriter,
     ) -> None:
         """Test that errors are properly propagated through the pipeline."""
         # Test invalid server type in parser
@@ -539,8 +539,8 @@ entryUUID: 12345678-1234-1234-1234-123456789abc
 
     def test_performance_with_large_dataset(
         self,
-        parser_service: FlextLdifParserService,
-        writer_service: FlextLdifWriterService,
+        parser_service: FlextLdifParser,
+        writer_service: FlextLdifWriter,
     ) -> None:
         """Test performance with larger dataset."""
         # Generate a larger LDIF dataset
@@ -585,8 +585,8 @@ description: Test user number {i} for performance testing
 
     def test_edge_case_empty_and_special_values(
         self,
-        parser_service: FlextLdifParserService,
-        writer_service: FlextLdifWriterService,
+        parser_service: FlextLdifParser,
+        writer_service: FlextLdifWriter,
     ) -> None:
         """Test handling of empty and special values."""
         edge_case_ldif = """version: 1

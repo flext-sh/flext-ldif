@@ -25,7 +25,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from pathlib import Path
 
-from flext_ldif import DnService, FlextLdif, ValidationService
+from flext_ldif import DnService, FlextLdif
 
 
 def basic_batch_processing() -> None:

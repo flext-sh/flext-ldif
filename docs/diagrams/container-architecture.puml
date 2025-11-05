@@ -8,7 +8,7 @@ Container_Boundary(flext_ecosystem, "FLEXT Ecosystem") {
 
     Container_Boundary(flext_ldif, "FLEXT-LDIF Library") {
         Container(api_facade, "FlextLdif Facade", "Python Class", "Unified API entry point for all operations")
-        Container(conversion_matrix, "QuirksConversionMatrix", "Python Class", "Universal N×N server conversion facade")
+        Container(conversion, "QuirksConversionMatrix", "Python Class", "Universal N×N server conversion facade")
         Container(dn_registry, "DnCaseRegistry", "Python Class", "Canonical DN case tracking")
 
         Container_Boundary(rfc_parsing, "RFC Parsing Layer") {
@@ -38,11 +38,11 @@ Container_Ext(ldif_files, "LDIF Data Files", "File System", "RFC 2849 compliant 
 Container_Ext(python_runtime, "Python Runtime", "CPython 3.13+", "Execution environment with dependencies")
 
 Rel(api_facade, ldif_client, "Delegates I/O", "Path objects, encoding detection")
-Rel(api_facade, conversion_matrix, "Uses for conversions", "Server migration operations")
+Rel(api_facade, conversion, "Uses for conversions", "Server migration operations")
 Rel(api_facade, rfc_parsing, "Uses for parsing", "RFC compliance with quirks")
 
-Rel(conversion_matrix, dn_registry, "Tracks case consistency", "OUD compatibility during conversions")
-Rel(conversion_matrix, server_quirks, "Uses server implementations", "Source/target format conversions")
+Rel(conversion, dn_registry, "Tracks case consistency", "OUD compatibility during conversions")
+Rel(conversion, server_quirks, "Uses server implementations", "Source/target format conversions")
 
 Rel(rfc_parsing, quirk_registry, "Applies server quirks", "Server-specific enhancements")
 Rel(rfc_parsing, domain_models, "Produces validated", "Type-safe domain objects")
@@ -58,7 +58,7 @@ Rel(flext_ldif, python_runtime, "Executes in", "Python 3.13+ environment")
 Rel(flext_ldif, ldif_files, "Reads/Writes", "RFC 2849 compliant files")
 Rel(flext_ldif, ldap_servers, "Processes data for/from", "Various LDAP server formats")
 
-note right of conversion_matrix
+note right of conversion
     **Universal Conversion Matrix**
     N×N server conversions via RFC intermediate format
     Only 2×N implementations needed

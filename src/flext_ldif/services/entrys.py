@@ -23,9 +23,9 @@ This service handles ENTRY TRANSFORMATION ONLY:
 - Adapting entries for specific server targets
 
 What it does NOT do:
-- Filter entries (use FlextLdifFilterService)
-- Sort entries (use FlextLdifSortingService)
-- Validate schema (use FlextLdifValidationService)
+- Filter entries (use FlextLdifFilter)
+- Sort entries (use FlextLdifSorting)
+- Validate schema (use FlextLdifValidation)
 
 ═══════════════════════════════════════════════════════════════════════════
 REAL USAGE EXAMPLES
@@ -33,27 +33,27 @@ REAL USAGE EXAMPLES
 # PATTERN 1: Direct Classmethod API (Most Common)
 ────────────────────────────────────────────────
 # Clean DN strings
-cleaned_dn = FlextLdifEntryService.clean_dn("cn = John , dc = example , dc = com")
+cleaned_dn = FlextLdifEntry.clean_dn("cn = John , dc = example , dc = com")
 # Result: "cn=John,dc=example,dc=com"
 
 # Remove operational attributes from entry
-result = FlextLdifEntryService.remove_operational_attributes(entry)
+result = FlextLdifEntry.remove_operational_attributes(entry)
 adapted_entry = result.unwrap()
 
 # Remove specific attributes
-result = FlextLdifEntryService.remove_attributes(
+result = FlextLdifEntry.remove_attributes(
     entry=my_entry,
     attributes=["tempAttribute", "debugInfo"]
 )
 cleaned_entry = result.unwrap()
 
 # Clean all DNs in multiple entries
-result = FlextLdifEntryService.clean_all_dns(entries)
+result = FlextLdifEntry.clean_all_dns(entries)
 cleaned_entries = result.unwrap()
 
 # PATTERN 2: Execute Method (V1 FlextService Style)
 ────────────────────────────────────────────────────
-result = FlextLdifEntryService(
+result = FlextLdifEntry(
     entries=my_entries,
     operation="remove_operational_attributes"
 ).execute()
@@ -64,7 +64,7 @@ if result.is_success:
 # PATTERN 3: Fluent Builder Pattern
 ───────────────────────────────────
 adapted_entries = (
-    FlextLdifEntryService.builder()
+    FlextLdifEntry.builder()
     .with_entries(my_entries)
     .with_operation("remove_operational_attributes")
     .build()
@@ -73,8 +73,8 @@ adapted_entries = (
 # PATTERN 4: Transformation Pipeline
 ─────────────────────────────────────
 result = (
-    FlextLdifEntryService.remove_operational_attributes(entries)
-    .and_then(lambda e: FlextLdifEntryService.remove_attributes(
+    FlextLdifEntry.remove_operational_attributes(entries)
+    .and_then(lambda e: FlextLdifEntry.remove_attributes(
         e,
         attributes=["tempAttr"]
     ))
@@ -100,20 +100,20 @@ QUICK REFERENCE
 Most Common Use Cases:
 
 # Clean a DN string
-cleaned = FlextLdifEntryService.clean_dn(messy_dn)
+cleaned = FlextLdifEntry.clean_dn(messy_dn)
 
 # Remove operational attributes (for portability)
-result = FlextLdifEntryService.remove_operational_attributes(entry)
+result = FlextLdifEntry.remove_operational_attributes(entry)
 portable_entry = result.unwrap()
 
 # Remove specific attributes (cleanup)
-result = FlextLdifEntryService.remove_attributes(
+result = FlextLdifEntry.remove_attributes(
     entry,
     attributes=["tempAttribute", "debugInfo"]
 )
 
 # Remove operational attributes from multiple entries
-result = FlextLdifEntryService.remove_operational_attributes_batch(entries)
+result = FlextLdifEntry.remove_operational_attributes_batch(entries)
 portable_entries = result.unwrap()
 
 # Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -128,10 +128,11 @@ from flext_core import FlextResult, FlextService
 
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
-from flext_ldif.services.dn import FlextLdifDnService
+from flext_ldif.services.dn import FlextLdifDn
+from flext_ldif.utilities import FlextLdifUtilities
 
 
-class FlextLdifEntryService(FlextService[list[FlextLdifModels.Entry]]):
+class FlextLdifEntry(FlextService[list[FlextLdifModels.Entry]]):
     """Universal entry transformation and cleanup service.
 
     Handles entry adaptation, DN cleaning, and attribute removal for
@@ -144,9 +145,9 @@ class FlextLdifEntryService(FlextService[list[FlextLdifModels.Entry]]):
     - Adapt entries for server compatibility
 
     Does NOT handle:
-    - Filtering entries (use FlextLdifFilterService)
-    - Sorting entries (use FlextLdifSortingService)
-    - Validating schema (use FlextLdifValidationService)
+    - Filtering entries (use FlextLdifFilter)
+    - Sorting entries (use FlextLdifSorting)
+    - Validating schema (use FlextLdifValidation)
     """
 
     # ════════════════════════════════════════════════════════════════════════
@@ -206,11 +207,11 @@ class FlextLdifEntryService(FlextService[list[FlextLdifModels.Entry]]):
 
         Example:
             >>> dn = "cn = John Doe , dc = example , dc = com"
-            >>> FlextLdifEntryService.clean_dn(dn)
+            >>> FlextLdifEntry.clean_dn(dn)
             'cn=John Doe,dc=example,dc=com'
 
         """
-        return FlextLdifDnService.clean_dn(dn)
+        return FlextLdifDn.clean_dn(dn)
 
     @classmethod
     def remove_operational_attributes(
@@ -228,7 +229,7 @@ class FlextLdifEntryService(FlextService[list[FlextLdifModels.Entry]]):
             FlextResult with adapted entry (operational attrs removed)
 
         Example:
-            result = FlextLdifEntryService.remove_operational_attributes(entry)
+            result = FlextLdifEntry.remove_operational_attributes(entry)
             portable_entry = result.unwrap()
 
         """
@@ -247,7 +248,7 @@ class FlextLdifEntryService(FlextService[list[FlextLdifModels.Entry]]):
             FlextResult with adapted entries
 
         Example:
-            result = FlextLdifEntryService.remove_operational_attributes_batch(entries)
+            result = FlextLdifEntry.remove_operational_attributes_batch(entries)
             portable_entries = result.unwrap()
 
         """
@@ -269,7 +270,7 @@ class FlextLdifEntryService(FlextService[list[FlextLdifModels.Entry]]):
             FlextResult with cleaned entry
 
         Example:
-            result = FlextLdifEntryService.remove_attributes(
+            result = FlextLdifEntry.remove_attributes(
                 entry,
                 attributes=["tempAttribute", "debugInfo"]
             )
@@ -294,7 +295,7 @@ class FlextLdifEntryService(FlextService[list[FlextLdifModels.Entry]]):
             FlextResult with cleaned entries
 
         Example:
-            result = FlextLdifEntryService.remove_attributes_batch(
+            result = FlextLdifEntry.remove_attributes_batch(
                 entries,
                 attributes=["tempAttribute", "debugInfo"]
             )
@@ -312,14 +313,14 @@ class FlextLdifEntryService(FlextService[list[FlextLdifModels.Entry]]):
     # ════════════════════════════════════════════════════════════════════════
 
     @classmethod
-    def builder(cls) -> FlextLdifEntryService:
+    def builder(cls) -> FlextLdifEntry:
         """Create fluent builder for complex entry transformations.
 
         Returns:
             Service instance for method chaining
 
         Example:
-            result = (FlextLdifEntryService.builder()
+            result = (FlextLdifEntry.builder()
                 .with_entries(entries)
                 .with_operation("remove_operational_attributes")
                 .build())
@@ -327,19 +328,17 @@ class FlextLdifEntryService(FlextService[list[FlextLdifModels.Entry]]):
         """
         return cls(entries=[])
 
-    def with_entries(
-        self, entries: list[FlextLdifModels.Entry]
-    ) -> FlextLdifEntryService:
+    def with_entries(self, entries: list[FlextLdifModels.Entry]) -> FlextLdifEntry:
         """Set entries to transform (fluent builder)."""
         self.entries = entries
         return self
 
-    def with_operation(self, operation: str) -> FlextLdifEntryService:
+    def with_operation(self, operation: str) -> FlextLdifEntry:
         """Set transformation operation (fluent builder)."""
         self.operation = operation
         return self
 
-    def with_attributes_to_remove(self, attributes: list[str]) -> FlextLdifEntryService:
+    def with_attributes_to_remove(self, attributes: list[str]) -> FlextLdifEntry:
         """Set attributes to remove (fluent builder)."""
         self.attributes_to_remove = attributes
         return self
@@ -424,41 +423,28 @@ class FlextLdifEntryService(FlextService[list[FlextLdifModels.Entry]]):
         entry: FlextLdifModels.Entry,
         attributes: list[str],
     ) -> FlextResult[FlextLdifModels.Entry]:
-        """Remove specific attributes from single entry."""
-        attrs_to_remove_lower = {attr.lower() for attr in attributes}
+        """Remove specific attributes from single entry.
 
-        adapted_attrs: dict[str, list[str]] = {}
-
-        for attr_name, attr_values in entry.attributes.attributes.items():
-            # Skip attributes in removal list (case-insensitive check)
-            if attr_name.lower() in attrs_to_remove_lower:
-                if self.logger is not None:
+        Uses FlextLdifUtilities.Entry.remove_attributes() for core logic.
+        """
+        # Log attributes being removed
+        if self.logger is not None:
+            attrs_to_remove_lower = {attr.lower() for attr in attributes}
+            for attr_name in entry.attributes.attributes:
+                if attr_name.lower() in attrs_to_remove_lower:
                     self.logger.debug(
                         f"Removed attribute '{attr_name}' from {entry.dn.value}",
                     )
-                continue
 
-            # Keep attribute as-is
-            adapted_attrs[attr_name] = attr_values.copy()
-
-        # Create cleaned entry
-        ldif_attributes = FlextLdifModels.LdifAttributes(attributes=adapted_attrs)
-        cleaned_entry_result: FlextResult[FlextLdifModels.Entry] = (
-            FlextLdifModels.Entry.create(
-                dn=entry.dn,
-                attributes=ldif_attributes,
-            )
-        )
-
-        if cleaned_entry_result.is_failure:
-            error_msg = (
-                f"Failed to clean entry {entry.dn.value}: {cleaned_entry_result.error}"
-            )
+        # Use utility for core removal logic
+        try:
+            cleaned_entry = FlextLdifUtilities.Entry.remove_attributes(entry, attributes)
+            return FlextResult[FlextLdifModels.Entry].ok(cleaned_entry)
+        except Exception as e:
+            error_msg = f"Failed to clean entry {entry.dn.value}: {e}"
             if self.logger is not None:
                 self.logger.error(error_msg)
             return FlextResult[FlextLdifModels.Entry].fail(error_msg)
 
-        return cleaned_entry_result
 
-
-__all__ = ["FlextLdifEntryService"]
+__all__ = ["FlextLdifEntry"]

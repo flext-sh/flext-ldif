@@ -68,7 +68,7 @@ src/flext_ldif/
 │   ├── rfc_ldif_writer.py
 │   └── rfc_schema_parser.py
 ├── services/
-│   ├── server_detector.py
+│   ├── detector.py
 │   └── validation_service.py
 ├── acl/
 │   ├── parser.py
@@ -83,7 +83,7 @@ src/flext_ldif/
 ├── rfc_ldif_parser.py
 ├── rfc_ldif_writer.py
 ├── rfc_schema_parser.py
-├── server_detector.py
+├── detector.py
 ├── validation_service.py
 ├── acl_parser.py
 ├── acl_service.py
@@ -208,16 +208,16 @@ class RfcLdifParser:
 
 **Services to Update**:
 
-- `FlextLdifServerDetector`
-- `FlextLdifValidationService`
-- `FlextLdifStatisticsService`
-- `FlextLdifDnService`
-- `FlextLdifFileWriterService`
+- `FlextLdifDetector`
+- `FlextLdifValidation`
+- `FlextLdifStatistics`
+- `FlextLdifDn`
+- `FlextLdifFileWriter`
 
 **Before**:
 
 ```python
-class FlextLdifServerDetector:
+class FlextLdifDetector:
     def __init__(self):
         self._patterns = {...}
 ```
@@ -227,7 +227,7 @@ class FlextLdifServerDetector:
 ```python
 from flext_core import FlextService, FlextResult
 
-class FlextLdifServerDetector(FlextService):
+class FlextLdifDetector(Flext):
     """Server detection service with automatic logging."""
 
     def execute(self, content: str) -> FlextResult[dict]:
@@ -309,7 +309,7 @@ tests/unit/
 tests/unit/
 ├── quirks/              # Only subdirectory (mirrors src)
 ├── test_rfc_ldif_parser.py
-├── test_server_detector.py
+├── test_detector.py
 ├── test_acl_parser.py
 └── ...
 ```

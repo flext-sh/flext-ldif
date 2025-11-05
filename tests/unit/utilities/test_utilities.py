@@ -2,8 +2,8 @@
 
 This file replaces the old test_utilities.py that tested removed utilities module.
 Tests use newer service APIs directly:
-- FlextLdifDnService: DN and attribute normalization
-- FlextLdifStatisticsService: Pipeline statistics
+- FlextLdifDn: DN and attribute normalization
+- FlextLdifStatistics: Pipeline statistics
 - FlextLdifModels: Direct model instantiation
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -16,8 +16,8 @@ from __future__ import annotations
 import pytest
 
 from flext_ldif.constants import FlextLdifConstants
-from flext_ldif.services.dn import FlextLdifDnService
-from flext_ldif.services.statistics import FlextLdifStatisticsService
+from flext_ldif.services.dn import FlextLdifDn
+from flext_ldif.services.statistics import FlextLdifStatistics
 
 
 @pytest.mark.unit
@@ -25,13 +25,13 @@ class TestNewServiceAPIs:
     """Test that newer service APIs are available and work."""
 
     def test_dn_service_instantiation(self) -> None:
-        """Test FlextLdifDnService can be instantiated."""
-        service = FlextLdifDnService()
+        """Test FlextLdifDn can be instantiated."""
+        service = FlextLdifDn()
         assert service is not None
 
     def test_statistics_service_instantiation(self) -> None:
-        """Test FlextLdifStatisticsService can be instantiated."""
-        service = FlextLdifStatisticsService()
+        """Test FlextLdifStatistics can be instantiated."""
+        service = FlextLdifStatistics()
         assert service is not None
 
     def test_models_imported_correctly(self) -> None:
@@ -56,8 +56,8 @@ class TestNewServiceAPIs:
         """Test that services module structure is correct."""
         from flext_ldif import services
 
-        assert hasattr(services, "FlextLdifDnService")
-        assert hasattr(services, "FlextLdifStatisticsService")
+        assert hasattr(services, "FlextLdifDn")
+        assert hasattr(services, "FlextLdifStatistics")
 
     def test_configuration_imports(self) -> None:
         """Test that configuration can be imported."""

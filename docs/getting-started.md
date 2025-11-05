@@ -212,8 +212,8 @@ Parse LDAP schema files with automatic server-specific handling:
 
 ```python
 # ✅ v1.0+ Service imports
-from flext_ldif.services.parser import FlextLdifParserService
-from flext_ldif.services.registry import QuirkRegistryService  # Unchanged - quirks subdirectory
+from flext_ldif.services.parser import FlextLdifParser
+from flext_ldif.services.server import QuirkRegistryService  # Unchanged - quirks subdirectory
 from pathlib import Path
 
 # Initialize quirks registry
@@ -250,11 +250,11 @@ if result.is_success:
 Migrate entries between different LDAP servers using generic transformation:
 
 ```python
-from flext_ldif.migration_pipeline import FlextLdifMigrationService
+from flext_ldif.migration_pipeline import FlextLdifMigration
 from pathlib import Path
 
 # Initialize migration pipeline with source and target servers
-pipeline = FlextLdifMigrationService(
+pipeline = FlextLdifMigration(
     input_dir=Path("source_ldifs"),
     output_dir=Path("target_ldifs"),
     source_server_type="oid",    # Source: Oracle Internet Directory
@@ -280,7 +280,7 @@ if result.is_success:
 Handle entries from different LDAP servers in the same workflow:
 
 ```python
-from flext_ldif.services.registry import QuirkRegistryService
+from flext_ldif.services.server import QuirkRegistryService
 
 # Initialize registry once
 quirk_registry = QuirkRegistryService()

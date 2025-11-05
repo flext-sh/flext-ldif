@@ -1,4 +1,4 @@
-"""Test FlextLdifWriterService with RFC quirks."""
+"""Test FlextLdifWriter with RFC quirks."""
 
 from __future__ import annotations
 
@@ -10,8 +10,8 @@ from flext_ldif.config import FlextLdifConfig
 from flext_ldif.models import FlextLdifModels
 
 # Import RFC quirks to ensure they are auto-registered
-from flext_ldif.services.registry import FlextLdifRegistry
-from flext_ldif.services.writer import FlextLdifWriterService
+from flext_ldif.services.server import FlextLdifServer
+from flext_ldif.services.writer import FlextLdifWriter
 
 
 @pytest.fixture
@@ -25,17 +25,15 @@ def rfc_config() -> FlextLdifConfig:
 
 
 @pytest.fixture
-def registry() -> FlextLdifRegistry:
-    """Get global FlextLdifRegistry with all registered quirks."""
-    return FlextLdifRegistry.get_global_instance()
+def registry() -> FlextLdifServer:
+    """Get global FlextLdifServer with all registered quirks."""
+    return FlextLdifServer.get_global_instance()
 
 
 @pytest.fixture
-def writer(
-    rfc_config: FlextLdifConfig, registry: FlextLdifRegistry
-) -> FlextLdifWriterService:
-    """Create FlextLdifWriterService with RFC server type."""
-    return FlextLdifWriterService(
+def writer(rfc_config: FlextLdifConfig, registry: FlextLdifServer) -> FlextLdifWriter:
+    """Create FlextLdifWriter with RFC server type."""
+    return FlextLdifWriter(
         config=rfc_config,
         quirk_registry=registry,
     )
@@ -58,7 +56,7 @@ def simple_entry() -> FlextLdifModels.Entry:
 
 
 def test_write_single_entry_to_string(
-    writer: FlextLdifWriterService, simple_entry: FlextLdifModels.Entry
+    writer: FlextLdifWriter, simple_entry: FlextLdifModels.Entry
 ) -> None:
     """Test writing a single entry to string."""
     # Disable base64 encoding for readable output
@@ -88,7 +86,7 @@ def test_write_single_entry_to_string(
 
 
 def test_write_multiple_entries_to_string(
-    writer: FlextLdifWriterService, simple_entry: FlextLdifModels.Entry
+    writer: FlextLdifWriter, simple_entry: FlextLdifModels.Entry
 ) -> None:
     """Test writing multiple entries to string."""
     entry2 = FlextLdifModels.Entry(
@@ -119,7 +117,7 @@ def test_write_multiple_entries_to_string(
 
 
 def test_write_to_file(
-    tmp_path: Path, writer: FlextLdifWriterService, simple_entry: FlextLdifModels.Entry
+    tmp_path: Path, writer: FlextLdifWriter, simple_entry: FlextLdifModels.Entry
 ) -> None:
     """Test writing entries to file."""
     output_file = tmp_path / "output.ldif"
@@ -144,7 +142,7 @@ def test_write_to_file(
 
 
 def test_write_entries_counted(
-    writer: FlextLdifWriterService, simple_entry: FlextLdifModels.Entry, tmp_path: Path
+    writer: FlextLdifWriter, simple_entry: FlextLdifModels.Entry, tmp_path: Path
 ) -> None:
     """Test that entry count is correct."""
     output_file = tmp_path / "count_test.ldif"
@@ -160,14 +158,14 @@ def test_write_entries_counted(
     assert write_response.statistics.entries_written == 1
 
 
-def test_effective_server_type(writer: FlextLdifWriterService) -> None:
+def test_effective_server_type(writer: FlextLdifWriter) -> None:
     """Test that writer service can be initialized successfully."""
     # Writer service is initialized correctly - just verify it exists
     assert writer is not None
-    assert isinstance(writer, FlextLdifWriterService)
+    assert isinstance(writer, FlextLdifWriter)
 
 
-def test_write_with_multiple_attribute_values(writer: FlextLdifWriterService) -> None:
+def test_write_with_multiple_attribute_values(writer: FlextLdifWriter) -> None:
     """Test writing entry with multiple values for same attribute."""
     entry = FlextLdifModels.Entry(
         dn=FlextLdifModels.DistinguishedName(value="cn=group,dc=example,dc=com"),
@@ -202,7 +200,7 @@ def test_write_with_multiple_attribute_values(writer: FlextLdifWriterService) ->
     assert "member: cn=user3,dc=example,dc=com" in content
 
 
-def test_write_empty_entries_list(writer: FlextLdifWriterService) -> None:
+def test_write_empty_entries_list(writer: FlextLdifWriter) -> None:
     """Test writing empty entries list."""
     result = writer.write([], target_server_type="rfc", output_target="string")
 
@@ -214,11 +212,11 @@ def test_write_empty_entries_list(writer: FlextLdifWriterService) -> None:
 
 
 def test_fallback_to_rfc_when_no_server_quirk(
-    rfc_config: FlextLdifConfig, registry: FlextLdifRegistry
+    rfc_config: FlextLdifConfig, registry: FlextLdifServer
 ) -> None:
     """Test that non-existent server type fails gracefully."""
     # Use non-existent server type - should fail
-    writer = FlextLdifWriterService(
+    writer = FlextLdifWriter(
         config=rfc_config,
         quirk_registry=registry,
     )

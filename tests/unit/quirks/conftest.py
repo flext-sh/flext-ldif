@@ -1,7 +1,6 @@
 """Simple test quirk classes - no auto-registration."""
 
 from flext_core import FlextResult
-from pydantic import Field
 
 from flext_ldif.servers.base import FlextLdifServersBase
 
@@ -9,8 +8,9 @@ from flext_ldif.servers.base import FlextLdifServersBase
 class ObjectClassParseOnlyQuirk(FlextLdifServersBase.Schema):
     """Simple test quirk with parse and to_rfc only - NO AUTO-REGISTRATION."""
 
-    server_type: str = Field(default="test_parse_only_no_register")
-    priority: int = Field(default=100)
+    # NOTE: server_type and priority are now @property in base class
+    # They are accessed from parent Constants, so no need to define as fields here
+    # Remove Field definitions to avoid shadowing parent properties
 
     def __init_subclass__(cls) -> None:
         """Override to prevent auto-registration."""
@@ -36,26 +36,6 @@ class ObjectClassParseOnlyQuirk(FlextLdifServersBase.Schema):
 
     def parse(self, data: str) -> FlextResult[dict[str, object]]:
         return FlextResult.ok({})
-
-    def convert_attribute_to_rfc(
-        self, data: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
-        return FlextResult.ok(data)
-
-    def convert_objectclass_to_rfc(
-        self, data: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
-        return FlextResult.ok(data)
-
-    def convert_attribute_from_rfc(
-        self, data: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
-        return FlextResult.ok(data)
-
-    def convert_objectclass_from_rfc(
-        self, data: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
-        return FlextResult.ok(data)
 
     def write_attribute_to_rfc(self, data: dict[str, object]) -> FlextResult[str]:
         return FlextResult.ok("(test)")

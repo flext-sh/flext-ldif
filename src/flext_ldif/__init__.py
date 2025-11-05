@@ -15,8 +15,8 @@ Single Entry Point Architecture:
         result = ldif.parse(data)
 
     Incorrect usage (bypasses single entry point):
-        from flext_ldif.services.registry import FlextLdifRegistry  # ❌ WRONG
-        from flext_ldif.services import FlextLdifAclService  # ❌ WRONG
+        from flext_ldif.services.server import FlextLdifServer  # ❌ WRONG
+        from flext_ldif.services import FlextLdifAcl  # ❌ WRONG
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -37,18 +37,20 @@ from flext_ldif.api import FlextLdif
 from flext_ldif.config import FlextLdifConfig
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
-from flext_ldif.services.dn import FlextLdifDnService as DnService
+from flext_ldif.services.dn import FlextLdifDn as Dn
 from flext_ldif.services.validation import (
-    FlextLdifValidationService as ValidationService,
+    FlextLdifValidation as Validation,
 )
 
 __email__ = "dev@flext.com"
 
 __all__ = [
+    "Dn",
     "DnService",
     "FlextLdif",
     "FlextLdifConfig",
     "FlextLdifConstants",
     "FlextLdifModels",
+    "Validation",
     "ValidationService",
 ]

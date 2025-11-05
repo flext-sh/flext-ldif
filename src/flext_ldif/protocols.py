@@ -46,7 +46,7 @@ class FlextLdifProtocols(FlextProtocols):
     **Private Methods (NOT in protocols):**
     - _can_handle_* methods for internal detection logic
     - _hook_* methods for customization points
-    - process_entry, convert_entry (handled via hooks or conversion_matrix)
+    - process_entry, convert_entry (handled via hooks or conversion)
 
     **Usage Pattern - Maximum Automation:**
         >>> from flext_ldif.servers.base import FlextLdifServersBase
@@ -68,29 +68,13 @@ class FlextLdifProtocols(FlextProtocols):
         >>> line = acl.execute(model)  # Write
 
     **Registration and Validation:**
-        The FlextLdifRegistry validates protocol compliance automatically when quirks are:
+        The FlextLdifServer validates protocol compliance automatically when quirks are:
         1. Auto-discovered during initialization
         2. Registered manually via registry.register(quirk)
 
         This happens at REGISTRATION TIME, not at type-checking time, ensuring all
         quirks satisfy their protocols before being used by the framework.
     """
-
-    # Define a type alias for any model that can be converted by the matrix.
-    # This is defined here, alongside the protocol that uses it, to avoid
-    # circular dependencies between models.py and typings.py.
-    ConvertibleModel = (
-        FlextLdifModels.Entry
-        | FlextLdifModels.SchemaAttribute
-        | FlextLdifModels.SchemaObjectClass
-        | FlextLdifModels.Acl
-    )
-    # =========================================================================
-    # INHERIT FOUNDATION PROTOCOLS - Available through inheritance
-    # =========================================================================
-
-    # Foundation, Domain, Application, Infrastructure, Extensions, Commands
-    # are all inherited from FlextProtocols - no need to re-export
 
     # =========================================================================
     # LDIF-SPECIFIC PROTOCOLS - Domain extension for LDIF operations
@@ -220,7 +204,7 @@ class FlextLdifProtocols(FlextProtocols):
             **Private Methods** (NOT in protocol, internal only):
             - __can_handle() - Detection logic
             - _hook_post_parse() - Customization hook
-            - Conversion handled via conversion_matrix service
+            - Conversion handled via conversion service
             """
 
             server_type: str
@@ -301,7 +285,7 @@ class FlextLdifProtocols(FlextProtocols):
             - _can_handle_attribute() - Detection logic
             - _can_handle_objectclass() - Detection logic
             - Hooks: _hook_validate_entry_raw(), _hook_post_parse_entry(), _hook_pre_write_entry()
-            - process_entry, convert_entry handled via hooks or conversion_matrix
+            - process_entry, convert_entry handled via hooks or conversion
             """
 
             server_type: str
@@ -448,8 +432,8 @@ class FlextLdifProtocols(FlextProtocols):
                 self,
                 source_quirk: FlextLdifProtocols.Quirks.QuirksPort,
                 target_quirk: FlextLdifProtocols.Quirks.QuirksPort,
-                model_instance: FlextLdifProtocols.ConvertibleModel,
-            ) -> FlextResult[FlextLdifProtocols.ConvertibleModel]:
+                model_instance: FlextLdifModels.ConvertibleModel,
+            ) -> FlextResult[FlextLdifModels.ConvertibleModel]:
                 """Convert a model from a source server format to a target server format.
 
                 This is the core method for all transformations. It orchestrates the

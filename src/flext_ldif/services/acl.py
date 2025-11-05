@@ -10,7 +10,7 @@ Features:
 - Integration with LDIF entry processing pipeline
 
 Architecture:
-- ACL Parsing: Delegated entirely to quirks via FlextLdifRegistry (RFC/server-specific/relaxed)
+- ACL Parsing: Delegated entirely to quirks via FlextLdifServer (RFC/server-specific/relaxed)
 - ACL Evaluation: Direct context matching against ACL attributes
 - No unnecessary abstraction layers or unused pattern implementations
 
@@ -28,10 +28,11 @@ from flext_core import FlextDecorators, FlextLogger, FlextResult, FlextService
 from flext_ldif.config import FlextLdifConfig
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
-from flext_ldif.services.registry import FlextLdifRegistry
+from flext_ldif.services.server import FlextLdifServer
+from flext_ldif.utilities import FlextLdifUtilities
 
 
-class FlextLdifAclService(FlextService[FlextLdifModels.AclResponse]):
+class FlextLdifAcl(FlextService[FlextLdifModels.AclResponse]):
     """Unified ACL management service.
 
     Provides ACL parsing via quirks and direct context evaluation.
@@ -43,7 +44,7 @@ class FlextLdifAclService(FlextService[FlextLdifModels.AclResponse]):
 
     _logger: FlextLogger
     _config: FlextLdifConfig
-    _registry: FlextLdifRegistry
+    _registry: FlextLdifServer
 
     @override
     def __init__(self, config: FlextLdifConfig | None = None) -> None:
@@ -58,7 +59,7 @@ class FlextLdifAclService(FlextService[FlextLdifModels.AclResponse]):
         super().__init__()
         self._config = config if config is not None else FlextLdifConfig()
         self._logger = FlextLogger(__name__)
-        self._registry = FlextLdifRegistry()
+        self._registry = FlextLdifServer()
 
     def extract_acls_from_entry(
         self,
@@ -201,7 +202,7 @@ class FlextLdifAclService(FlextService[FlextLdifModels.AclResponse]):
     ) -> FlextResult[FlextLdifModels.Acl]:
         """Parse ACL string using server-specific quirks.
 
-        Delegates entirely to quirks via FlextLdifRegistry. No fallback logic.
+        Delegates entirely to quirks via FlextLdifServer. No fallback logic.
 
         Args:
             acl_string: Raw ACL string
@@ -262,20 +263,9 @@ class FlextLdifAclService(FlextService[FlextLdifModels.AclResponse]):
                 # No ACL attributes to convert, return as-is
                 return FlextResult[dict[str, object]].ok(converted_data)
 
-            # Step 1: Convert source ACLs to RFC format using source server quirks
-            rfc_acl_attrs = (
-                acl_attrs  # Assume _acl_attributes is already in internal format
-            )
-            if source_server.lower() != FlextLdifConstants.ServerTypes.RFC.value:
-                source_quirk = self._registry.get_entry_quirk(source_server)
-                if source_quirk and hasattr(source_quirk, "acl"):
-                    if hasattr(source_quirk.acl, "convert_acl_to_rfc"):
-                        rfc_result = source_quirk.acl.convert_acl_to_rfc(acl_attrs)
-                        if rfc_result.is_failure:
-                            return FlextResult[dict[str, object]].fail(
-                                f"Source ACL to RFC conversion failed: {rfc_result.error}",
-                            )
-                        rfc_acl_attrs = rfc_result.unwrap()
+            # Step 1: ACLs are expected to be in RFC-compliant format already
+            # Use only private _parse_acl() method for format conversions
+            rfc_acl_attrs = acl_attrs
 
             # Step 2: Convert RFC ACLs to target server ACI format using target server ACL quirks
             if target_server.lower() == FlextLdifConstants.ServerTypes.RFC.value:
@@ -317,6 +307,146 @@ class FlextLdifAclService(FlextService[FlextLdifModels.AclResponse]):
                 f"ACL attribute conversion failed from {source_server} to {target_server}: {e}",
             )
 
+    @staticmethod
+    def _extract_permissions(acl: FlextLdifModels.Acl) -> dict[str, object]:
+        """Extract permissions dictionary from ACL.
+
+        Args:
+            acl: ACL model instance
+
+        Returns:
+            Dictionary of permissions
+
+        """
+        if not hasattr(acl, "permissions") or not acl.permissions:
+            return {}
+
+        perms_data = acl.permissions
+        if isinstance(perms_data, dict):
+            return perms_data
+        if hasattr(perms_data, "model_dump"):
+            return perms_data.model_dump()
+
+        return {}
+
+    @staticmethod
+    def _validate_permissions(
+        perms: dict[str, object],
+        context: dict[str, object],
+    ) -> FlextResult[bool]:
+        """Validate permissions against context.
+
+        Args:
+            perms: ACL permissions dictionary
+            context: Evaluation context
+
+        Returns:
+            FlextResult with validation result
+
+        """
+        for perm_name, perm_value in perms.items():
+            # Skip the computed 'permissions' field
+            if perm_name == "permissions":
+                continue
+
+            if not perm_value:
+                continue
+
+            # Check if permission is in context
+            context_perms = context.get("permissions", {})
+
+            if isinstance(context_perms, dict):
+                if not context_perms.get(perm_name, False):
+                    return FlextResult[bool].fail(f"Permission {perm_name} not granted")
+            elif isinstance(context_perms, list) and perm_name not in context_perms:
+                return FlextResult[bool].fail(f"Permission {perm_name} not granted")
+
+        return FlextResult[bool].ok(True)
+
+    @staticmethod
+    def _validate_subject_dn(
+        acl: FlextLdifModels.Acl,
+        context: dict[str, object],
+    ) -> FlextResult[bool]:
+        """Validate subject DN against context using FlextLdifUtilities.
+
+        Args:
+            acl: ACL model instance
+            context: Evaluation context
+
+        Returns:
+            FlextResult with validation result
+
+        """
+        if not hasattr(acl, "subject") or not acl.subject:
+            return FlextResult[bool].ok(True)
+
+        subject_value = getattr(acl.subject, "subject_value", None)
+        if not subject_value or subject_value == "*":
+            return FlextResult[bool].ok(True)
+
+        # Validate subject DN using FlextLdifUtilities.DN
+        if subject_value and subject_value != "*":
+            if not FlextLdifUtilities.DN.validate(subject_value):
+                return FlextResult[bool].fail(
+                    f"Invalid subject DN format per RFC 4514: {subject_value}"
+                )
+
+        context_subject = context.get("subject_dn", "")
+        if context_subject:
+            # Use FlextLdifUtilities for case-insensitive DN comparison
+            comparison_result = FlextLdifUtilities.DN.compare_dns(
+                str(context_subject), subject_value
+            )
+            if comparison_result != 0:  # 0 means equal
+                return FlextResult[bool].fail(
+                    f"Subject DN mismatch: {context_subject} != {subject_value}"
+                )
+
+        return FlextResult[bool].ok(True)
+
+    @staticmethod
+    def _validate_target_dn(
+        acl: FlextLdifModels.Acl,
+        context: dict[str, object],
+    ) -> FlextResult[bool]:
+        """Validate target DN against context using FlextLdifUtilities.
+
+        Args:
+            acl: ACL model instance
+            context: Evaluation context
+
+        Returns:
+            FlextResult with validation result
+
+        """
+        if not hasattr(acl, "target") or not acl.target:
+            return FlextResult[bool].ok(True)
+
+        target_dn = getattr(acl.target, "target_dn", None)
+        if not target_dn or target_dn == "*":
+            return FlextResult[bool].ok(True)
+
+        # Validate target DN using FlextLdifUtilities.DN
+        if target_dn and target_dn != "*":
+            if not FlextLdifUtilities.DN.validate(target_dn):
+                return FlextResult[bool].fail(
+                    f"Invalid target DN format per RFC 4514: {target_dn}"
+                )
+
+        context_target = context.get("target_dn", "")
+        if context_target:
+            # Use FlextLdifUtilities for case-insensitive DN comparison
+            comparison_result = FlextLdifUtilities.DN.compare_dns(
+                str(context_target), target_dn
+            )
+            if comparison_result != 0:  # 0 means equal
+                return FlextResult[bool].fail(
+                    f"Target DN mismatch: {context_target} != {target_dn}"
+                )
+
+        return FlextResult[bool].ok(True)
+
     def evaluate_acl_context(
         self,
         acls: list[FlextLdifModels.Acl],
@@ -343,63 +473,22 @@ class FlextLdifAclService(FlextService[FlextLdifModels.AclResponse]):
 
             # Evaluate each ACL against the context
             for acl in acls:
-                # Check permissions
-                if hasattr(acl, "permissions") and acl.permissions:
-                    perms_data = acl.permissions
-                    if isinstance(perms_data, dict):
-                        perms = perms_data
-                    elif hasattr(perms_data, "model_dump"):
-                        perms = perms_data.model_dump()
-                    else:
-                        perms = {}
+                # Extract and validate permissions using helper
+                perms = self._extract_permissions(acl)
+                if perms:
+                    result = self._validate_permissions(perms, eval_context)
+                    if result.is_failure:
+                        return result
 
-                    # All required permissions must be present
-                    # Skip the 'permissions' computed field (contains list of permission names)
-                    for perm_name, perm_value in perms.items():
-                        # Skip the computed 'permissions' field
-                        if perm_name == "permissions":
-                            continue
-                        if perm_value:
-                            # Check if permission is in context
-                            context_perms = eval_context.get("permissions", {})
-                            if isinstance(context_perms, dict):
-                                if not context_perms.get(perm_name, False):
-                                    return FlextResult[bool].fail(
-                                        f"Permission {perm_name} not granted",
-                                    )
-                            elif (
-                                isinstance(context_perms, list)
-                                and perm_name not in context_perms
-                            ):
-                                return FlextResult[bool].fail(
-                                    f"Permission {perm_name} not granted",
-                                )
+                # Validate subject DN using helper
+                result = self._validate_subject_dn(acl, eval_context)
+                if result.is_failure:
+                    return result
 
-                # Check subject DN
-                if hasattr(acl, "subject") and acl.subject:
-                    subject_value = getattr(acl.subject, "subject_value", None)
-                    if subject_value and subject_value != "*":
-                        context_subject = eval_context.get("subject_dn", "")
-                        if (
-                            context_subject
-                            and str(context_subject).lower() != subject_value.lower()
-                        ):
-                            return FlextResult[bool].fail(
-                                f"Subject DN mismatch: {context_subject} != {subject_value}",
-                            )
-
-                # Check target DN
-                if hasattr(acl, "target") and acl.target:
-                    target_dn = getattr(acl.target, "target_dn", None)
-                    if target_dn and target_dn != "*":
-                        context_target = eval_context.get("target_dn", "")
-                        if (
-                            context_target
-                            and str(context_target).lower() != target_dn.lower()
-                        ):
-                            return FlextResult[bool].fail(
-                                f"Target DN mismatch: {context_target} != {target_dn}",
-                            )
+                # Validate target DN using helper
+                result = self._validate_target_dn(acl, eval_context)
+                if result.is_failure:
+                    return result
 
             return FlextResult[bool].ok(True)
 
@@ -407,4 +496,4 @@ class FlextLdifAclService(FlextService[FlextLdifModels.AclResponse]):
             return FlextResult[bool].fail(f"ACL evaluation failed: {e}")
 
 
-__all__ = ["FlextLdifAclService"]
+__all__ = ["FlextLdifAcl"]

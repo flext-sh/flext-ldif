@@ -27,25 +27,6 @@ from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.typings import FlextLdifTypes
 
 
-# Factory functions for default_factory (defined at module level to avoid forward reference issues)
-def _create_default_pipeline_statistics() -> FlextLdifModels.PipelineStatistics:
-    """Create default PipelineStatistics instance.
-
-    Uses globals() to get FlextLdifModels at runtime after class is fully defined.
-    """
-    flext_models = globals()["FlextLdifModels"]
-    return flext_models.PipelineStatistics()
-
-
-def _create_default_migration_statistics() -> FlextLdifModels.MigrationStatistics:
-    """Create default MigrationStatistics instance.
-
-    Uses globals() to get FlextLdifModels at runtime after class is fully defined.
-    """
-    flext_models = globals()["FlextLdifModels"]
-    return flext_models.MigrationStatistics()
-
-
 class FlextLdifModels(FlextModels):
     """LDIF domain models extending flext-core FlextModels.
 
@@ -58,14 +39,11 @@ class FlextLdifModels(FlextModels):
     """
 
     # =========================================================================
-    # PYTHON 3.13 TYPE ALIASES - Semantic type clarity for LDIF domain
+    # TYPE ALIASES - Semantic types for LDIF domain
     # =========================================================================
-    # Semantic type aliases for better code readability and intent
-    type DnString = str  # Distinguished Name as string
-    type AttributeName = str  # LDAP attribute name
-    type CategoryName = str  # Categorization key
-    type ServerType = str  # LDAP server type identifier
-    type ConversionData = str | dict[str, str] | list[str]  # Conversion data types
+    # Type alias for any model that can be converted by the matrix
+    # Represents the union of all convertible model types
+    ConvertibleModel = None  # Will be set after class definition
 
     # =========================================================================
     # DOMAIN MODELS - Core business entities
@@ -178,7 +156,7 @@ class FlextLdifModels(FlextModels):
             default_factory=dict,
             description="Additional custom data for future quirks",
         )
-        server_type: FlextLdifModels.ServerType | None = Field(
+        server_type: str | None = Field(
             default=None,
             description="Detected LDAP server type for the entry/schema",
         )
@@ -198,6 +176,14 @@ class FlextLdifModels(FlextModels):
             default_factory=list,
             description="Attributes removed during migration/filtering",
         )
+        priority: int | None = Field(
+            default=None,
+            description="Priority level for quirk processing",
+        )
+        description: str | None = Field(
+            default=None,
+            description="Description of the quirk metadata or processing",
+        )
 
         @classmethod
         def create_for_quirk(
@@ -206,7 +192,7 @@ class FlextLdifModels(FlextModels):
             original_format: str | None = None,
             extensions: dict[str, object] | None = None,
             custom_data: dict[str, object] | None = None,
-            server_type: FlextLdifModels.ServerType | None = None,
+            server_type: str | None = None,
             source_entry: str | None = None,
         ) -> FlextLdifModels.QuirkMetadata:
             """Create QuirkMetadata for a specific quirk type."""
@@ -367,13 +353,14 @@ class FlextLdifModels(FlextModels):
             """
             # Try to get ACL_FORMAT from server Constants via registry
             try:
-                from flext_ldif.services.registry import FlextLdifRegistry
+                from flext_ldif.services.server import FlextLdifServer
 
-                registry = FlextLdifRegistry.get_global_instance()
-                base_quirk = registry._get_base_quirk(self.server_type)  # type: ignore[attr-defined]
+                registry = FlextLdifServer.get_global_instance()
+                base_quirk = registry.get_base_quirk(self.server_type)
                 if base_quirk and hasattr(base_quirk, "Constants"):
-                    if hasattr(base_quirk.Constants, "ACL_FORMAT"):
-                        return base_quirk.Constants.ACL_FORMAT
+                    constants = getattr(base_quirk, "Constants", None)
+                    if constants and hasattr(constants, "ACL_FORMAT"):
+                        return constants.ACL_FORMAT
             except Exception:
                 pass
 
@@ -767,6 +754,39 @@ class FlextLdifModels(FlextModels):
             default=False,
             description="Whether users can modify this attribute (RFC 4512 NO-USER-MODIFICATION)",
         )
+        # OUD and server-specific fields
+        immutable: bool = Field(
+            default=False,
+            description="Whether attribute is immutable (OUD extension)",
+        )
+        user_modification: bool = Field(
+            default=True,
+            description="Whether users can modify this attribute (OUD extension)",
+        )
+        obsolete: bool = Field(
+            default=False,
+            description="Whether attribute is obsolete (OUD extension)",
+        )
+        x_origin: str | None = Field(
+            None,
+            description="Origin of attribute definition (server-specific X-ORIGIN extension)",
+        )
+        x_file_ref: str | None = Field(
+            None,
+            description="File reference for attribute definition (server-specific X-FILE-REF extension)",
+        )
+        x_name: str | None = Field(
+            None,
+            description="Extended name for attribute (server-specific X-NAME extension)",
+        )
+        x_alias: str | None = Field(
+            None,
+            description="Extended alias for attribute (server-specific X-ALIAS extension)",
+        )
+        x_oid: str | None = Field(
+            None,
+            description="Extended OID for attribute (server-specific X-OID extension)",
+        )
         metadata: FlextLdifModels.QuirkMetadata | None = Field(
             default=None,
             description="Quirk-specific metadata",
@@ -1088,7 +1108,7 @@ class FlextLdifModels(FlextModels):
             attributes_schema: list[FlextLdifModels.SchemaAttribute] | None = None,
             entry_metadata: dict[str, object] | None = None,
             validation_metadata: dict[str, object] | None = None,
-            server_type: FlextLdifModels.ServerType | None = None,  # New parameter
+            server_type: str | None = None,  # New parameter
             source_entry: str | None = None,  # New parameter
             unconverted_attributes: dict[str, object] | None = None,  # New parameter
         ) -> FlextResult[FlextLdifModels.Entry]:
@@ -1781,7 +1801,7 @@ class FlextLdifModels(FlextModels):
             description="Entries organized by category",
         )
         statistics: FlextLdifModels.PipelineStatistics = Field(
-            default_factory=_create_default_pipeline_statistics,
+            default_factory=lambda: FlextLdifModels.PipelineStatistics(),
             description="Pipeline execution statistics",
         )
         file_paths: dict[str, str] = Field(
@@ -2132,7 +2152,7 @@ class FlextLdifModels(FlextModels):
             description="If True, includes timestamp comments for when entries were written.",
         )
         base64_encode_binary: bool = Field(
-            default=True,
+            default=False,
             description="If True, automatically base64 encodes binary attribute values.",
         )
         fold_long_lines: bool = Field(
@@ -2220,7 +2240,7 @@ class FlextLdifModels(FlextModels):
             description="List of migrated directory entries (Entry objects or dicts)",
         )
         stats: FlextLdifModels.MigrationStatistics = Field(
-            default_factory=_create_default_migration_statistics,
+            default_factory=lambda: FlextLdifModels.MigrationStatistics(),
             description="Migration statistics and metrics",
         )
         output_files: list[str] = Field(
@@ -2550,5 +2570,13 @@ class FlextLdifModels(FlextModels):
             description="If True, applies strict schema validation and fails on violations.",
         )
 
+
+# Set the ConvertibleModel type alias after all classes are defined
+FlextLdifModels.ConvertibleModel = (
+    FlextLdifModels.Entry
+    | FlextLdifModels.SchemaAttribute
+    | FlextLdifModels.SchemaObjectClass
+    | FlextLdifModels.Acl
+)
 
 __all__ = ["FlextLdifModels"]

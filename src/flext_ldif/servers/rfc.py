@@ -33,7 +33,6 @@ References:
 
 """
 
-import re
 from collections.abc import Mapping
 from typing import ClassVar, TypeVar
 
@@ -42,8 +41,7 @@ from flext_core import FlextLogger, FlextResult
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.servers.base import FlextLdifServersBase
-from flext_ldif.services.dn import FlextLdifDnService
-from flext_ldif.services.syntax import FlextLdifSyntaxService
+from flext_ldif.services.dn import FlextLdifDn
 from flext_ldif.utilities import FlextLdifUtilities
 
 logger = FlextLogger(__name__)
@@ -176,48 +174,13 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             """
             return True
 
-        def can_handle_attribute(
-            self, attribute: FlextLdifModels.SchemaAttribute
-        ) -> bool:
-            """Check if attribute is RFC-compliant.
-
-            This method is part of the quirk protocol but is more relevant for
-            server-specific quirks that need to identify non-standard definitions.
-            For the RFC quirk, we assume any validly parsed attribute can be handled.
-
-            Args:
-                attribute: SchemaAttribute model (unused)
-
-            Returns:
-                True, as any parsed attribute is considered handleable by the RFC base.
-
-            """
-            return True
-
-        def can_handle_objectclass(
-            self, objectclass: FlextLdifModels.SchemaObjectClass
-        ) -> bool:
-            """Check if objectClass is RFC-compliant.
-
-            Similar to can_handle_attribute, the RFC quirk considers any successfully
-            parsed objectClass as handleable.
-
-            Args:
-                objectclass: SchemaObjectClass model (unused)
-
-            Returns:
-                True, as any parsed objectClass is considered handleable.
-
-            """
-            return True
-
         def should_filter_out_attribute(
-            self, attribute: FlextLdifModels.SchemaAttribute
+            self, _attribute: FlextLdifModels.SchemaAttribute
         ) -> bool:
             """RFC quirk does not filter attributes.
 
             Args:
-                attribute: SchemaAttribute model (unused)
+                _attribute: SchemaAttribute model (unused)
 
             Returns:
                 False
@@ -226,12 +189,12 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             return False
 
         def should_filter_out_objectclass(
-            self, objectclass: FlextLdifModels.SchemaObjectClass
+            self, _objectclass: FlextLdifModels.SchemaObjectClass
         ) -> bool:
             """RFC quirk does not filter objectClasses.
 
             Args:
-                objectclass: SchemaObjectClass model (unused)
+                _objectclass: SchemaObjectClass model (unused)
 
             Returns:
                 False
@@ -247,7 +210,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             return FlextLdifUtilities.Parser.parse_rfc_attribute(
                 attr_definition=attr_definition,
                 case_insensitive=False,
-                allow_syntax_quotes=False,
+                _allow_syntax_quotes=False,
             )
 
         def _parse_objectclass(
@@ -256,7 +219,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
         ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
             """Parse RFC-compliant objectClass definition (implements abstract method)."""
             return FlextLdifUtilities.Parser.parse_rfc_objectclass(
-                oc_definition=oc_definition, case_insensitive=False
+                oc_definition=oc_definition, _case_insensitive=False
             )
 
         # Schema conversion methods eliminated - use universal parse/write pipeline
@@ -367,8 +330,8 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             # Transform objectClass data using subclass hooks
             transformed_oc = self._transform_objectclass_for_write(oc_data)
 
-            # Write to RFC format (writer now accepts model directly)
-            result = FlextLdifUtilities.Writer.write_rfc_objectclass(transformed_oc)
+            # Write to RFC format (call static method)
+            result = FlextLdifUtilities.Writer.write_rfc_objectclass(transformed_oc)  # type: ignore[arg-type]
 
             # Apply post-write transformations
             if result.is_success:
@@ -415,29 +378,20 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             """
             return True
 
-        def _can_handle(self, acl: FlextLdifModels.Acl) -> bool:
+        def _can_handle(self, acl: str | FlextLdifModels.Acl) -> bool:
             """Check if this ACL is RFC-compliant.
 
             The RFC quirk assumes any ACL that has been successfully parsed into
             the Acl model is handleable.
 
             Args:
-                acl: The Acl model to check.
+                acl: The ACL string or Acl model to check.
 
             Returns:
                 True, as any parsed ACL is considered handleable.
 
             """
             return True
-
-        def get_acl_attribute_name(self) -> str:
-            """Get RFC-compliant ACL attribute name.
-
-            Returns:
-                The name of the attribute used for ACLs in RFC 4516 from Constants.ACL_ATTRIBUTE_NAME.
-
-            """
-            return FlextLdifServersRfc.Constants.ACL_ATTRIBUTE_NAME
 
         def _can_handle_attribute(
             self, attribute: FlextLdifModels.SchemaAttribute
@@ -466,18 +420,6 @@ class FlextLdifServersRfc(FlextLdifServersBase):
 
             """
             return False
-
-        def can_handle_attribute(
-            self, attribute: FlextLdifModels.SchemaAttribute
-        ) -> bool:
-            """RFC ACL quirk does not handle attributes (delegates to _can_handle_attribute)."""
-            return self._can_handle_attribute(attribute)
-
-        def can_handle_objectclass(
-            self, objectclass: FlextLdifModels.SchemaObjectClass
-        ) -> bool:
-            """RFC ACL quirk does not handle objectClasses (delegates to _can_handle_objectclass)."""
-            return self._can_handle_objectclass(objectclass)
 
         def _parse_acl(self, acl_line: str) -> FlextResult[FlextLdifModels.Acl]:
             """Parse RFC-compliant ACL line (implements abstract method).
@@ -586,7 +528,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             Entry processing doesn't change based on objectClass.
 
             Args:
-                objectclass: The SchemaObjectClass model to check.
+                _objectclass: The SchemaObjectClass model to check.
 
             Returns:
                 False - RFC entry quirk doesn't have objectClass-specific logic
@@ -626,34 +568,6 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             # LDAP requirement: Every entry must have objectClass attribute
             # Use Entry model method to check for objectClass
             return entry.has_attribute(FlextLdifConstants.DictKeys.OBJECTCLASS)
-
-        def can_handle_attribute(
-            self, attribute: FlextLdifModels.SchemaAttribute
-        ) -> bool:
-            """Entry quirks don't handle attribute definitions.
-
-            Args:
-                attribute: SchemaAttribute model (unused)
-
-            Returns:
-                False - Entry quirks don't handle attributes
-
-            """
-            return False
-
-        def can_handle_objectclass(
-            self, objectclass: FlextLdifModels.SchemaObjectClass
-        ) -> bool:
-            """Entry quirks don't handle objectClass definitions.
-
-            Args:
-                objectclass: SchemaObjectClass model (unused)
-
-            Returns:
-                False - Entry quirks don't handle objectClasses
-
-            """
-            return False
 
         def _parse_content(
             self,
@@ -725,7 +639,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             """
             try:
                 # Clean/normalize DN using DN service
-                cleaned_dn = FlextLdifDnService.clean_dn(entry_dn)
+                cleaned_dn = FlextLdifDn.clean_dn(entry_dn)
 
                 # Convert raw attributes to dict[str, list[str]] format
                 # Handle bytes values from ldif3 parser

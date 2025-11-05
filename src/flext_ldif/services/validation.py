@@ -25,9 +25,9 @@ This service handles LDIF VALIDATION ONLY:
 
 What it does NOT do:
 - Parse LDIF entries (use FlextLdifParser)
-- Transform entries (use FlextLdifEntryService)
-- Sort entries (use FlextLdifSortingService)
-- Filter entries (use FlextLdifFilterService)
+- Transform entries (use FlextLdifEntry)
+- Sort entries (use FlextLdifSorting)
+- Filter entries (use FlextLdifFilter)
 
 ═══════════════════════════════════════════════════════════════════════════
 RFC COMPLIANCE
@@ -55,7 +55,7 @@ REAL USAGE EXAMPLES
 
 # PATTERN 1: Direct Method API (Most Common)
 ─────────────────────────────────────────────
-validation_service = FlextLdifValidationService()
+validation_service = FlextLdifValidation()
 
 # Validate attribute name
 result = validation_service.validate_attribute_name("cn")
@@ -88,7 +88,7 @@ validated = result.unwrap()
 
 # PATTERN 2: Execute Method (V1 FlextService Style)
 ────────────────────────────────────────────────────
-result = FlextLdifValidationService().execute()
+result = FlextLdifValidation().execute()
 if result.is_success:
     status = result.unwrap()
     # {"service": "ValidationService", "status": "operational", ...}
@@ -118,7 +118,7 @@ from flext_core import FlextDecorators, FlextResult, FlextService
 from flext_ldif.constants import FlextLdifConstants
 
 
-class FlextLdifValidationService(FlextService[dict[str, object]]):
+class FlextLdifValidation(FlextService[dict[str, object]]):
     """RFC 2849/4512 Compliant LDIF Validation Service.
 
     Provides comprehensive validation for LDAP attribute names, object class names,
@@ -379,4 +379,4 @@ class FlextLdifValidationService(FlextService[dict[str, object]]):
             )
 
 
-__all__ = ["FlextLdifValidationService"]
+__all__ = ["FlextLdifValidation"]

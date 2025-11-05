@@ -35,7 +35,7 @@ from flext_ldif.servers.oud import FlextLdifServersOud
 from flext_ldif.services.migration import (
     FlextLdifMigrationPipeline,
 )
-from flext_ldif.services.registry import FlextLdifRegistry
+from flext_ldif.services.server import FlextLdifServer
 
 
 class TestCategorizedPipelineBasicExecution:
@@ -56,9 +56,9 @@ class TestCategorizedPipelineBasicExecution:
             yield Path(tmpdir)
 
     @pytest.fixture
-    def quirk_registry(self) -> FlextLdifRegistry:
+    def quirk_registry(self) -> FlextLdifServer:
         """Create quirk registry."""
-        return FlextLdifRegistry()
+        return FlextLdifServer()
 
     @pytest.fixture
     def categorization_rules(self) -> dict[str, list[str]]:
@@ -75,7 +75,7 @@ class TestCategorizedPipelineBasicExecution:
         self,
         temp_input_dir: Path,
         temp_output_dir: Path,
-        quirk_registry: FlextLdifRegistry,
+        quirk_registry: FlextLdifServer,
         categorization_rules: dict[str, list[str]],
     ) -> None:
         """Test pipeline execution with empty LDIF content."""
@@ -100,7 +100,7 @@ class TestCategorizedPipelineBasicExecution:
         self,
         temp_input_dir: Path,
         temp_output_dir: Path,
-        quirk_registry: FlextLdifRegistry,
+        quirk_registry: FlextLdifServer,
         categorization_rules: dict[str, list[str]],
     ) -> None:
         """Test pipeline execution with only schema entries."""
@@ -133,7 +133,7 @@ objectClasses: ( 2.5.6.6 NAME 'person' STRUCTURAL SUP top MUST cn )
         self,
         temp_input_dir: Path,
         temp_output_dir: Path,
-        quirk_registry: FlextLdifRegistry,
+        quirk_registry: FlextLdifServer,
         categorization_rules: dict[str, list[str]],
     ) -> None:
         """Test pipeline execution with user entries."""
@@ -168,7 +168,7 @@ objectClass: inetOrgPerson
         self,
         temp_input_dir: Path,
         temp_output_dir: Path,
-        quirk_registry: FlextLdifRegistry,
+        quirk_registry: FlextLdifServer,
         categorization_rules: dict[str, list[str]],
     ) -> None:
         """Test pipeline execution with group entries."""
@@ -202,7 +202,7 @@ member: cn=Jane Smith,ou=users,dc=example,dc=com
         self,
         temp_input_dir: Path,
         temp_output_dir: Path,
-        quirk_registry: FlextLdifRegistry,
+        quirk_registry: FlextLdifServer,
         categorization_rules: dict[str, list[str]],
     ) -> None:
         """Test pipeline execution with organizational units."""

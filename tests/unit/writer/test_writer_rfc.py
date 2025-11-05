@@ -1,4 +1,4 @@
-"""Test FlextLdifWriterService with RFC quirks."""
+"""Test FlextLdifWriter with RFC quirks."""
 
 from __future__ import annotations
 
@@ -8,8 +8,8 @@ from flext_ldif.config import FlextLdifConfig
 from flext_ldif.models import FlextLdifModels
 
 # Import RFC quirks to ensure they are auto-registered
-from flext_ldif.services.registry import FlextLdifRegistry
-from flext_ldif.services.writer import FlextLdifWriterService
+from flext_ldif.services.server import FlextLdifServer
+from flext_ldif.services.writer import FlextLdifWriter
 
 
 @pytest.fixture
@@ -23,19 +23,17 @@ def rfc_config() -> FlextLdifConfig:
 
 
 @pytest.fixture
-def registry() -> FlextLdifRegistry:
-    """Get global FlextLdifRegistry with all registered quirks."""
-    return FlextLdifRegistry.get_global_instance()
+def registry() -> FlextLdifServer:
+    """Get global FlextLdifServer with all registered quirks."""
+    return FlextLdifServer.get_global_instance()
 
 
 @pytest.fixture
-def writer(
-    rfc_config: FlextLdifConfig, registry: FlextLdifRegistry
-) -> FlextLdifWriterService:
-    """Create FlextLdifWriterService with RFC server type."""
+def writer(rfc_config: FlextLdifConfig, registry: FlextLdifServer) -> FlextLdifWriter:
+    """Create FlextLdifWriter with RFC server type."""
     # WriterService is stateless and uses global singleton registry
     # Config is not passed to constructor but used via write() method parameters
-    return FlextLdifWriterService()
+    return FlextLdifWriter()
 
 
 @pytest.fixture
@@ -55,7 +53,7 @@ def simple_entry() -> FlextLdifModels.Entry:
 
 
 def test_write_basic_string_output(
-    writer: FlextLdifWriterService, simple_entry: FlextLdifModels.Entry
+    writer: FlextLdifWriter, simple_entry: FlextLdifModels.Entry
 ) -> None:
     """Test writing entries to string returns LDIF content."""
     result = writer.write(

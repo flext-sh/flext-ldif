@@ -31,15 +31,15 @@ from flext_ldif.config import FlextLdifConfig
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.protocols import FlextLdifProtocols
-from flext_ldif.services.acl import FlextLdifAclService
-from flext_ldif.services.filters import FlextLdifFilterService
+from flext_ldif.services.acl import FlextLdifAcl
+from flext_ldif.services.detector import FlextLdifDetector
+from flext_ldif.services.filters import FlextLdifFilter
 from flext_ldif.services.migration import FlextLdifMigrationPipeline
-from flext_ldif.services.parser import FlextLdifParserService
-from flext_ldif.services.registry import FlextLdifRegistry
-from flext_ldif.services.server_detector import FlextLdifServerDetector
-from flext_ldif.services.statistics import FlextLdifStatisticsService
-from flext_ldif.services.validation import FlextLdifValidationService
-from flext_ldif.services.writer import FlextLdifWriterService
+from flext_ldif.services.parser import FlextLdifParser
+from flext_ldif.services.server import FlextLdifServer
+from flext_ldif.services.statistics import FlextLdifStatistics
+from flext_ldif.services.validation import FlextLdifValidation
+from flext_ldif.services.writer import FlextLdifWriter
 from flext_ldif.typings import FlextLdifTypes, ServiceT
 
 
@@ -120,9 +120,9 @@ class FlextLdif(FlextService[dict[str, object]]):
     _dispatcher: FlextDispatcher | None = PrivateAttr(default=None)
     _registry: FlextRegistry | None = PrivateAttr(default=None)
     _logger: FlextLogger | None = PrivateAttr(default=None)
-    _parser_service: FlextLdifParserService = PrivateAttr()
-    _acl_service: FlextLdifAclService = PrivateAttr()
-    _writer_service: FlextLdifWriterService | None = PrivateAttr(default=None)
+    _parser_service: FlextLdifParser = PrivateAttr()
+    _acl_service: FlextLdifAcl = PrivateAttr()
+    _writer_service: FlextLdifWriter | None = PrivateAttr(default=None)
 
     _container: FlextContainer = PrivateAttr(
         default_factory=FlextContainer.get_global,
@@ -132,7 +132,7 @@ class FlextLdif(FlextService[dict[str, object]]):
     _init_config_value: FlextLdifConfig | None = PrivateAttr(default=None)
 
     # Direct class access for builders and services (no wrappers)
-    AclService: ClassVar[type[FlextLdifAclService]] = FlextLdifAclService
+    AclService: ClassVar[type[FlextLdifAcl]] = FlextLdifAcl
 
     # Singleton instance storage
     _instance: ClassVar[FlextLdif | None] = None
@@ -223,8 +223,8 @@ class FlextLdif(FlextService[dict[str, object]]):
         self._handlers = {}
 
         # Initialize service instances (using config for parser)
-        self._parser_service = FlextLdifParserService(config=config)
-        self._acl_service = FlextLdifAclService()
+        self._parser_service = FlextLdifParser(config=config)
+        self._acl_service = FlextLdifAcl()
 
         # Register services in container
         self._setup_services()
@@ -252,22 +252,22 @@ class FlextLdif(FlextService[dict[str, object]]):
         container = self.container
 
         # Register quirk registry FIRST (required by writer/parsers)
-        quirk_registry = FlextLdifRegistry()
+        quirk_registry = FlextLdifServer()
         container.register("quirk_registry", quirk_registry)
 
         # Register unified writer service (primary)
         # Writer service is stateless and gets registry from global instance
-        unified_writer = FlextLdifWriterService()
+        unified_writer = FlextLdifWriter()
         container.register("writer", unified_writer)
 
         # Register filters service
-        container.register("filters", FlextLdifFilterService())
+        container.register("filters", FlextLdifFilter())
 
         # Register statistics service
-        container.register("statistics", FlextLdifStatisticsService())
+        container.register("statistics", FlextLdifStatistics())
 
         # Register validation service
-        container.register("validation", FlextLdifValidationService())
+        container.register("validation", FlextLdifValidation())
 
         # Register migration pipeline (params provided at call time by handlers)
         def migration_pipeline_factory(
@@ -457,41 +457,13 @@ class FlextLdif(FlextService[dict[str, object]]):
 
             # Ensure the parser service is initialized.
             if not hasattr(self, "_parser_service") or self._parser_service is None:
-                self._parser_service = FlextLdifParserService(config=self.config)
+                self._parser_service = FlextLdifParser(config=self.config)
 
-            # Read content from Path object if necessary.
-            if isinstance(source, Path):
-                content = source.read_text(encoding=self.config.ldif_encoding)
-            elif isinstance(source, str) and "\n" not in source:
-                try:
-                    file_path = Path(source)
-                    if file_path.is_file():
-                        content = file_path.read_text(
-                            encoding=self.config.ldif_encoding
-                        )
-                    elif file_path.exists():
-                        # Path exists but is not a file (e.g., directory)
-                        return FlextResult[list[FlextLdifModels.Entry]].fail(
-                            f"Path exists but is not a file: {source}"
-                        )
-                    elif "/" in source or "\\" in source or source.endswith(".ldif"):
-                        # Looks like a file path but doesn't exist - return error
-                        return FlextResult[list[FlextLdifModels.Entry]].fail(
-                            f"File not found: {source}"
-                        )
-                    else:
-                        # Doesn't look like a file path - treat as string content
-                        content = source
-                except (OSError, PermissionError) as e:
-                    # File system error - return error, don't treat as string
-                    return FlextResult[list[FlextLdifModels.Entry]].fail(
-                        f"Failed to read file: {e}"
-                    )
-                except (ValueError, UnicodeDecodeError):
-                    # Not a valid path or encoding issue - treat as string content
-                    content = source
-            else:
-                content = source
+            # Resolve source to LDIF content
+            content_result = self._resolve_source_content(source)
+            if isinstance(content_result, FlextResult):
+                return content_result
+            content = content_result
 
             # Delegate parsing to the parser service.
             parse_result = self._parser_service.parse(
@@ -510,6 +482,54 @@ class FlextLdif(FlextService[dict[str, object]]):
                 f"Failed to parse LDIF: {e}"
             )
 
+    def _resolve_source_content(
+        self, source: str | Path
+    ) -> str | FlextResult[list[FlextLdifModels.Entry]]:
+        """Resolve source (Path or string) to LDIF content string.
+
+        Handles three cases:
+        1. Path object → read file content
+        2. String with file path hints → attempt file read, fallback to string
+        3. Pure string content → return as-is
+
+        Returns:
+            Content string or FlextResult error if file operations fail.
+
+        """
+        # Case 1: Path object
+        if isinstance(source, Path):
+            return source.read_text(encoding=self.config.ldif_encoding)
+
+        # Case 2: String with possible file path
+        if isinstance(source, str) and "\n" not in source:
+            try:
+                file_path = Path(source)
+                if file_path.is_file():
+                    return file_path.read_text(encoding=self.config.ldif_encoding)
+                if file_path.exists():
+                    # Path exists but is not a file (e.g., directory)
+                    return FlextResult[list[FlextLdifModels.Entry]].fail(
+                        f"Path exists but is not a file: {source}"
+                    )
+                if "/" in source or "\\" in source or source.endswith(".ldif"):
+                    # Looks like a file path but doesn't exist - return error
+                    return FlextResult[list[FlextLdifModels.Entry]].fail(
+                        f"File not found: {source}"
+                    )
+                # Doesn't look like a file path - treat as string content
+                return source
+            except (OSError, PermissionError) as e:
+                # File system error - return error, don't treat as string
+                return FlextResult[list[FlextLdifModels.Entry]].fail(
+                    f"Failed to read file: {e}"
+                )
+            except (ValueError, UnicodeDecodeError):
+                # Not a valid path or encoding issue - treat as string content
+                return source
+
+        # Case 3: Pure string content
+        return source
+
     def write(
         self,
         entries: list[FlextLdifModels.Entry],
@@ -519,7 +539,7 @@ class FlextLdif(FlextService[dict[str, object]]):
     ) -> FlextResult[str]:
         """Write entries to LDIF format string or file.
 
-        Uses FlextLdifWriterService for RFC 2849 compliant LDIF writing.
+        Uses FlextLdifWriter for RFC 2849 compliant LDIF writing.
 
         Args:
             entries: List of LDIF entries to write
@@ -551,7 +571,7 @@ class FlextLdif(FlextService[dict[str, object]]):
         try:
             # Get writer service from container or create new instance
             if self._writer_service is None:
-                self._writer_service = FlextLdifWriterService()
+                self._writer_service = FlextLdifWriter()
 
             target_server = server_type or "rfc"
 
@@ -990,14 +1010,21 @@ class FlextLdif(FlextService[dict[str, object]]):
             else:
                 mode = "simple"
 
-            # Set default write options for structured mode
-            if mode == "structured" and write_options is None:
-                write_options = FlextLdifModels.WriteFormatOptions(
-                    disable_line_folding=True,
-                    write_removed_attributes_as_comments=config_model.write_removed_as_comments
-                    if config_model
-                    else False,
-                )
+            # Set default write options for structured and categorized modes
+            if write_options is None:
+                if mode == "structured":
+                    write_options = FlextLdifModels.WriteFormatOptions(
+                        disable_line_folding=True,
+                        write_removed_attributes_as_comments=config_model.write_removed_as_comments
+                        if config_model
+                        else False,
+                    )
+                elif mode == "categorized":
+                    # Default write options for categorized mode (disable folding by default)
+                    write_options = FlextLdifModels.WriteFormatOptions(
+                        disable_line_folding=True,
+                    )
+                # Simple mode: write_options remains None, writer will use defaults
 
             # Validate requirements for simple mode
             if input_filename is not None and output_filename is None:
@@ -1037,7 +1064,6 @@ class FlextLdif(FlextService[dict[str, object]]):
     def _apply_standard_filters(
         self,
         entries: list[FlextLdifModels.Entry],
-        filters_service: FlextLdifFilterService,
         objectclass: str | None,
         dn_pattern: str | None,
         attributes: dict[str, str | None] | None,
@@ -1048,7 +1074,6 @@ class FlextLdif(FlextService[dict[str, object]]):
 
         Args:
             entries: List of entries to filter
-            filters_service: Filters service instance
             objectclass: Optional objectclass filter
             dn_pattern: Optional DN pattern filter
             attributes: Optional attributes filter
@@ -1059,7 +1084,7 @@ class FlextLdif(FlextService[dict[str, object]]):
         """
         # Apply objectclass filter if provided
         if objectclass is not None:
-            filter_result = FlextLdifFilterService.by_objectclass(
+            filter_result = FlextLdifFilter.by_objectclass(
                 entries, objectclass, mark_excluded=False
             )
             if not filter_result.is_success:
@@ -1072,7 +1097,7 @@ class FlextLdif(FlextService[dict[str, object]]):
         if dn_pattern is not None:
             # Convert simple substring pattern to fnmatch pattern
             fnmatch_pattern = f"*{dn_pattern}*" if "*" not in dn_pattern else dn_pattern
-            filter_result = FlextLdifFilterService.by_dn(
+            filter_result = FlextLdifFilter.by_dn(
                 entries, fnmatch_pattern, mark_excluded=False
             )
             if not filter_result.is_success:
@@ -1084,7 +1109,7 @@ class FlextLdif(FlextService[dict[str, object]]):
         # Apply attributes filter if provided
         if attributes is not None:
             attr_list = list(attributes.keys())
-            filter_result = FlextLdifFilterService.by_attributes(
+            filter_result = FlextLdifFilter.by_attributes(
                 entries, attr_list, mark_excluded=False
             )
             if not filter_result.is_success:
@@ -1147,7 +1172,7 @@ class FlextLdif(FlextService[dict[str, object]]):
         filters_service = self._get_service_typed(
             self.container,
             "filters",
-            FlextLdifFilterService,
+            FlextLdifFilter,
         )
         if filters_service is None:
             return FlextResult[list[FlextLdifModels.Entry]].fail(
@@ -1157,7 +1182,7 @@ class FlextLdif(FlextService[dict[str, object]]):
         # Apply standard filters first
         try:
             filter_result = self._apply_standard_filters(
-                entries, filters_service, objectclass, dn_pattern, attributes
+                entries, objectclass, dn_pattern, attributes
             )
             if not filter_result.is_success:
                 return filter_result
@@ -1179,7 +1204,7 @@ class FlextLdif(FlextService[dict[str, object]]):
     def _validate_single_entry(
         self,
         entry: FlextLdifModels.Entry,
-        validation_service: FlextLdifValidationService,
+        validation_service: FlextLdifValidation,
     ) -> tuple[bool, list[str]]:
         """Validate a single LDIF entry.
 
@@ -1242,7 +1267,7 @@ class FlextLdif(FlextService[dict[str, object]]):
         quirk_registry = self._get_service_typed(
             self.container,
             "quirk_registry",
-            FlextLdifRegistry,
+            FlextLdifServer,
         )
         if quirk_registry is None:
             return None, None
@@ -1428,7 +1453,7 @@ class FlextLdif(FlextService[dict[str, object]]):
             validation_service = self._get_service_typed(
                 self.container,
                 "validation",
-                FlextLdifValidationService,
+                FlextLdifValidation,
             )
             if validation_service is None:
                 return FlextResult[FlextLdifModels.ValidationResult].fail(
@@ -1799,7 +1824,7 @@ class FlextLdif(FlextService[dict[str, object]]):
 
         """
         try:
-            detector = FlextLdifServerDetector()
+            detector = FlextLdifDetector()
             return detector.detect_server_type(
                 ldif_path=ldif_path,
                 ldif_content=ldif_content,
@@ -1852,7 +1877,7 @@ class FlextLdif(FlextService[dict[str, object]]):
 
             # Auto-detection mode
             if config.quirks_detection_mode == "auto" and ldif_path:
-                detector = FlextLdifServerDetector()
+                detector = FlextLdifDetector()
                 detection_result = detector.detect_server_type(ldif_path=ldif_path)
                 if detection_result.is_success:
                     detected_data = detection_result.unwrap()
@@ -1928,11 +1953,11 @@ class FlextLdif(FlextService[dict[str, object]]):
     # Use register_quirk() method for quirk management instead
 
     @property
-    def acl_service(self) -> FlextLdifAclService:
-        """Access to FlextLdifAclService for ACL operations.
+    def acl_service(self) -> FlextLdifAcl:
+        """Access to FlextLdifAcl for ACL operations.
 
         Returns:
-            FlextLdifAclService instance for ACL processing
+            FlextLdifAcl instance for ACL processing
 
         Example:
             acls = ldif.acl_service.extract_acls_from_entry(entry)

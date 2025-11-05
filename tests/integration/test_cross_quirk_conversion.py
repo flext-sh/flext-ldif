@@ -19,8 +19,8 @@ import pytest
 
 from flext_ldif.servers.oid import FlextLdifServersOid
 from flext_ldif.servers.oud import FlextLdifServersOud
-from flext_ldif.services.conversion_matrix import (
-    FlextLdifQuirksConversionMatrix,
+from flext_ldif.services.conversion import (
+    FlextLdifConversion,
 )
 
 from ..fixtures.loader import FlextLdifFixtures
@@ -278,9 +278,9 @@ class TestQuirksConversionMatrixFacade:
     """Test QuirksConversionMatrix facade for universal translation."""
 
     @pytest.fixture
-    def matrix(self) -> FlextLdifQuirksConversionMatrix:
+    def matrix(self) -> FlextLdifConversion:
         """Create conversion matrix instance."""
-        return FlextLdifQuirksConversionMatrix()
+        return FlextLdifConversion()
 
     @pytest.fixture
     def oud(self) -> FlextLdifServersOud:
@@ -292,14 +292,12 @@ class TestQuirksConversionMatrixFacade:
         """Create OID quirk instance."""
         return FlextLdifServersOid()
 
-    def test_matrix_instantiation(
-        self, matrix: FlextLdifQuirksConversionMatrix
-    ) -> None:
+    def test_matrix_instantiation(self, matrix: FlextLdifConversion) -> None:
         """Test that conversion matrix can be instantiated."""
         assert matrix is not None
 
     def test_get_supported_conversions(
-        self, matrix: FlextLdifQuirksConversionMatrix, oud: FlextLdifServersOud
+        self, matrix: FlextLdifConversion, oud: FlextLdifServersOud
     ) -> None:
         """Test checking supported conversions."""
         supported = matrix.get_supported_conversions(oud)
@@ -315,7 +313,7 @@ class TestQuirksConversionMatrixFacade:
 
     def test_convert_attribute_oud_to_oid(
         self,
-        matrix: FlextLdifQuirksConversionMatrix,
+        matrix: FlextLdifConversion,
         oud: FlextLdifServersOud,
         oid: FlextLdifServersOid,
     ) -> None:
@@ -334,7 +332,7 @@ class TestQuirksConversionMatrixFacade:
 
     def test_convert_objectclass_oid_to_oud(
         self,
-        matrix: FlextLdifQuirksConversionMatrix,
+        matrix: FlextLdifConversion,
         oud: FlextLdifServersOud,
         oid: FlextLdifServersOid,
     ) -> None:
@@ -352,7 +350,7 @@ class TestQuirksConversionMatrixFacade:
 
     def test_batch_convert_attributes(
         self,
-        matrix: FlextLdifQuirksConversionMatrix,
+        matrix: FlextLdifConversion,
         oud: FlextLdifServersOud,
         oid: FlextLdifServersOid,
     ) -> None:
@@ -372,7 +370,7 @@ class TestQuirksConversionMatrixFacade:
 
     def test_bidirectional_conversion(
         self,
-        matrix: FlextLdifQuirksConversionMatrix,
+        matrix: FlextLdifConversion,
         oud: FlextLdifServersOud,
         oid: FlextLdifServersOid,
     ) -> None:
@@ -398,7 +396,7 @@ class TestQuirksConversionMatrixFacade:
 
     def test_invalid_data_type(
         self,
-        matrix: FlextLdifQuirksConversionMatrix,
+        matrix: FlextLdifConversion,
         oud: FlextLdifServersOud,
         oid: FlextLdifServersOid,
     ) -> None:

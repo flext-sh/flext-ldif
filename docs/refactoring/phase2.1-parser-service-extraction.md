@@ -2,13 +2,13 @@
 
 **Date**: 2025-01-29
 **Status**: Complete - Ready for Integration
-**Goal**: Extract all parsing operations from FlextLdif facade into dedicated FlextLdifParserService
+**Goal**: Extract all parsing operations from FlextLdif facade into dedicated FlextLdifParser
 
 ---
 
 ## Overview
 
-Created new `FlextLdifParserService` following FLEXT architectural patterns to consolidate all LDIF parsing operations from the 2184-line api.py facade.
+Created new `FlextLdifParser` following FLEXT architectural patterns to consolidate all LDIF parsing operations from the 2184-line api.py facade.
 
 **New File**: `src/flext_ldif/services/parser.py` (576 lines)
 
@@ -74,7 +74,7 @@ Created new `FlextLdifParserService` following FLEXT architectural patterns to c
 ### Service Design
 
 ```python
-class FlextLdifParserService(FlextService[dict[str, object]]):
+class FlextLdifParser(Flext[dict[str, object]]):
     """LDIF parsing service following FLEXT patterns."""
 
     _logger: FlextLogger          # Structured logging
@@ -105,15 +105,15 @@ class FlextLdifParserService(FlextService[dict[str, object]]):
 Replace existing parse methods in `FlextLdif` class:
 
 ```python
-class FlextLdif(FlextService[dict[str, object]]):
-    _parser: FlextLdifParserService  # Add new service
+class FlextLdif(Flext[dict[str, object]]):
+    _parser: FlextLdifParser  # Add new service
 
     def __init__(self, config: FlextLdifConfig | None = None) -> None:
         super().__init__()
         self._config = config if config is not None else FlextLdifConfig()
 
         # Initialize parser service
-        self._parser = FlextLdifParserService(
+        self._parser = FlextLdifParser(
             client=self._client,
             config=self._config
         )
@@ -168,11 +168,11 @@ class FlextLdif(FlextService[dict[str, object]]):
 Add parser service to exports:
 
 ```python
-from flext_ldif.services.parser import FlextLdifParserService
+from flext_ldif.services.parser import FlextLdifParser
 
 __all__ = [
     # ... existing exports
-    "FlextLdifParserService",
+    "FlextLdifParser",
 ]
 ```
 
@@ -181,7 +181,7 @@ __all__ = [
 Add import for parser service:
 
 ```python
-from flext_ldif.services.parser import FlextLdifParserService
+from flext_ldif.services.parser import FlextLdifParser
 ```
 
 ---
@@ -309,7 +309,7 @@ Add to existing integration tests:
 
 ## Next Steps
 
-1. **Integrate into api.py**: Update FlextLdif to use FlextLdifParserService
+1. **Integrate into api.py**: Update FlextLdif to use FlextLdifParser
 2. **Remove duplicate code**: Delete original parse methods from api.py
 3. **Update tests**: Create comprehensive test suite for parser service
 4. **Verify integration**: Run existing tests to ensure no regressions
@@ -329,7 +329,7 @@ Add to existing integration tests:
 
 ## Success Criteria
 
-- ✅ FlextLdifParserService created with all parsing operations
+- ✅ FlextLdifParser created with all parsing operations
 - ✅ All methods follow FLEXT patterns (FlextService, FlextResult)
 - ✅ Complete type annotations (Python 3.13+)
 - ✅ Comprehensive documentation with examples

@@ -78,10 +78,10 @@ def check_file_has_method(
         return False, str(e)
 
 
-def verify_server_detector() -> bool:
-    """Verify FlextLdifServerDetector implementation."""
+def verify_detector() -> bool:
+    """Verify FlextLdifDetector implementation."""
     logger.info("\n=== VERIFYING SERVER DETECTOR IMPLEMENTATION ===")
-    base_path = Path("src/flext_ldif/services/server_detector.py")
+    base_path = Path("src/flext_ldif/services/detector.py")
 
     # Check file exists
     if not base_path.exists():
@@ -96,7 +96,7 @@ def verify_server_detector() -> bool:
     logger.info("✅ Valid Python syntax")
 
     # Check class exists
-    ok, msg = check_file_has_class(base_path, "FlextLdifServerDetector")
+    ok, msg = check_file_has_class(base_path, "FlextLdifDetector")
     if not ok:
         logger.info(f"❌ {msg}")
         return False
@@ -112,7 +112,7 @@ def verify_server_detector() -> bool:
     ]
 
     for method in methods_to_check:
-        ok, msg = check_file_has_method(base_path, "FlextLdifServerDetector", method)
+        ok, msg = check_file_has_method(base_path, "FlextLdifDetector", method)
         if not ok:
             logger.info(f"❌ {msg}")
             return False
@@ -269,7 +269,7 @@ def verify_test_files() -> bool:
     logger.info("\n=== VERIFYING TEST FILES ===")
 
     test_files = [
-        Path("tests/unit/services/test_server_detector.py"),
+        Path("tests/unit/services/test_detector.py"),
         Path("tests/unit/quirks/servers/test_relaxed.py"),
     ]
 
@@ -315,7 +315,7 @@ def main() -> int:
     logger.info("╚════════════════════════════════════════════════════════════╝")
 
     results = {
-        "Server Detector": verify_server_detector(),
+        "Server Detector": verify_detector(),
         "Relaxed Quirks": verify_relaxed(),
         "Config Modes": verify_config_modes(),
         "Client & API": verify_client_api(),

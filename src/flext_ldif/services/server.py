@@ -7,7 +7,7 @@ Provides centralized registry for discovering, registering, and composing
 server-specific quirks with RFC-compliant base parsers.
 
 Registration is handled automatically via dependency injection during
-FlextLdifRegistry initialization. All quirk classes are auto-discovered
+FlextLdifServer initialization. All quirk classes are auto-discovered
 from the flext_ldif.servers package and registered automatically.
 """
 
@@ -24,7 +24,7 @@ from flext_ldif.servers.base import FlextLdifServersBase
 logger = FlextLogger(__name__)
 
 
-class FlextLdifRegistry:
+class FlextLdifServer:
     """Centralized registry for LDIF/LDAP quirks.
 
     Manages discovery, registration, and composition of server-specific quirks.
@@ -37,16 +37,23 @@ class FlextLdifRegistry:
     - Dynamic access to nested Schema/Acl/Entry quirks from base instances
     - Singleton pattern for global registry access via get_global_instance()
     - Dynamic quirk lookup methods for runtime composition
+    - Integration with FlextLdifUtilities for RFC 4514 DN operations
+
+    DN Handling via Quirks:
+    - All registered server quirks support FlextLdifUtilities.DN operations
+    - DN normalization/validation is performed at quirk level using FlextLdifUtilities
+    - Server-specific DN handling hooks available in registered quirks
+    - Supports migration workflows with proper DN transformation via conversion matrix
 
     Example:
         # Automatic discovery and registration on initialization
-        registry = FlextLdifRegistry()
+        registry = FlextLdifServer()
 
         # Query available quirks
         quirks = registry.get_schema_quirks("oid")
 
         # Get global singleton instance
-        global_registry = FlextLdifRegistry.get_global_instance()
+        global_registry = FlextLdifServer.get_global_instance()
 
     Note:
         All quirks are automatically discovered and registered during __init__.
@@ -67,9 +74,9 @@ class FlextLdifRegistry:
         self._base_quirks: dict[str, FlextLdifServersBase] = {}
 
         # Auto-discover and register all base quirks
-        self._auto_discover_and_register_quirks()
+        self._auto_discover_and_register()
 
-    def _auto_discover_and_register_quirks(self) -> None:
+    def _auto_discover_and_register(self) -> None:
         """Discover and register all base quirk classes.
 
         Scans the flext_ldif.servers package for concrete quirk implementations
@@ -109,7 +116,7 @@ class FlextLdifRegistry:
                         continue
 
                     # Validate that all nested quirks satisfy their protocols
-                    validation_result = self._validate_quirk_protocols(instance)
+                    validation_result = self._validate_protocols(instance)
                     if validation_result.is_failure:
                         logger.warning(
                             f"Skipping {obj.__name__}: protocol validation failed - "
@@ -156,7 +163,7 @@ class FlextLdifRegistry:
                 )
 
             # Validate that all nested quirks satisfy their protocols
-            validation_result = self._validate_quirk_protocols(quirk)
+            validation_result = self._validate_protocols(quirk)
             if validation_result.is_failure:
                 return FlextResult[None].fail(
                     f"Protocol validation failed: {validation_result.error}"
@@ -173,7 +180,64 @@ class FlextLdifRegistry:
         except (ValueError, TypeError, AttributeError) as e:
             return FlextResult[None].fail(f"Failed to register quirk: {e}")
 
-    def _validate_quirk_protocols(
+    def register_schema_quirk(
+        self,
+        quirk: FlextLdifServersBase.Schema,
+    ) -> FlextResult[None]:
+        """Register a schema quirk (wrapper for protocol compliance).
+
+        Args:
+            quirk: Schema quirk to register
+
+        Returns:
+            FlextResult[None]: Registration success
+
+        """
+        # Schema quirks are accessed from their parent base quirk
+        # This is a protocol method that doesn't do anything in our implementation
+        # because schema quirks are always part of a base quirk
+        # But we provide it for protocol compliance
+        return FlextResult[None].ok(None)
+
+    def register_acl_quirk(
+        self,
+        quirk: FlextLdifServersBase.Acl,
+    ) -> FlextResult[None]:
+        """Register an ACL quirk (wrapper for protocol compliance).
+
+        Args:
+            quirk: ACL quirk to register
+
+        Returns:
+            FlextResult[None]: Registration success
+
+        """
+        # ACL quirks are accessed from their parent base quirk
+        # This is a protocol method that doesn't do anything in our implementation
+        # because ACL quirks are always part of a base quirk
+        # But we provide it for protocol compliance
+        return FlextResult[None].ok(None)
+
+    def register_entry_quirk(
+        self,
+        quirk: FlextLdifServersBase.Entry,
+    ) -> FlextResult[None]:
+        """Register an entry quirk (wrapper for protocol compliance).
+
+        Args:
+            quirk: Entry quirk to register
+
+        Returns:
+            FlextResult[None]: Registration success
+
+        """
+        # Entry quirks are accessed from their parent base quirk
+        # This is a protocol method that doesn't do anything in our implementation
+        # because entry quirks are always part of a base quirk
+        # But we provide it for protocol compliance
+        return FlextResult[None].ok(None)
+
+    def _validate_protocols(
         self, quirk: FlextLdifServersBase
     ) -> FlextResult[None]:
         """Validate that all nested quirks satisfy their protocols.
@@ -241,7 +305,7 @@ class FlextLdifRegistry:
         """
         return FlextLdifConstants.ServerTypes.FROM_LONG.get(server_type, server_type)
 
-    def _get_base_quirk(self, server_type: str) -> FlextLdifServersBase | None:
+    def get_base_quirk(self, server_type: str) -> FlextLdifServersBase | None:
         """Get base quirk instance for server type.
 
         Args:
@@ -264,7 +328,7 @@ class FlextLdifRegistry:
             Schema quirk instance or None
 
         """
-        base = self._get_base_quirk(server_type)
+        base = self.get_base_quirk(server_type)
         if base and hasattr(base, "schema"):
             # Use getattr to avoid Pydantic schema attribute confusion
             schema_attr = getattr(base, "schema", None)
@@ -295,7 +359,7 @@ class FlextLdifRegistry:
             ACL quirk instance or None
 
         """
-        base = self._get_base_quirk(server_type)
+        base = self.get_base_quirk(server_type)
         if base and hasattr(base, "acl"):
             acl_attr = getattr(base, "acl", None)
             if isinstance(acl_attr, FlextLdifServersBase.Acl):
@@ -325,7 +389,7 @@ class FlextLdifRegistry:
             Entry quirk instance or None
 
         """
-        base = self._get_base_quirk(server_type)
+        base = self.get_base_quirk(server_type)
         if base and hasattr(base, "entry"):
             entry_attr = getattr(base, "entry", None)
             if isinstance(entry_attr, FlextLdifServersBase.Entry):
@@ -432,7 +496,7 @@ class FlextLdifRegistry:
 
         """
         quirk = self.get_acl_quirk(server_type)
-        if quirk and quirk.__can_handle(acl_line):
+        if quirk and quirk._can_handle(acl_line):
             return quirk
         return None
 
@@ -509,26 +573,26 @@ class FlextLdifRegistry:
     class _GlobalAccess:
         """Nested singleton management for global quirk registry."""
 
-        _instance: FlextLdifRegistry | None = None
+        _instance: FlextLdifServer | None = None
 
         @classmethod
-        def get_instance(cls) -> FlextLdifRegistry:
+        def get_instance(cls) -> FlextLdifServer:
             """Get or create the global registry instance."""
             if cls._instance is None:
-                cls._instance = FlextLdifRegistry()
+                cls._instance = FlextLdifServer()
             return cls._instance
 
     @classmethod
-    def get_global_instance(cls) -> FlextLdifRegistry:
+    def get_global_instance(cls) -> FlextLdifServer:
         """Get or create the global quirk registry instance.
 
         Returns:
-            Global FlextLdifRegistry instance
+            Global FlextLdifServer instance
 
         """
         return cls._GlobalAccess.get_instance()
 
 
 __all__ = [
-    "FlextLdifRegistry",
+    "FlextLdifServer",
 ]

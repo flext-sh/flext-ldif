@@ -1,4 +1,4 @@
-"""Comprehensive unit tests for FlextLdifSortingService using REAL LDIF fixtures.
+"""Comprehensive unit tests for FlextLdifSorting using REAL LDIF fixtures.
 
 This test file validates ALL sorting functionality with authentic LDIF data from:
   - tests/fixtures/oid/oid_entries_fixtures.ldif
@@ -19,7 +19,7 @@ import pytest
 
 from flext_ldif import FlextLdif
 from flext_ldif.models import FlextLdifModels
-from flext_ldif.services.sorting import FlextLdifSortingService
+from flext_ldif.services.sorting import FlextLdifSorting
 
 # ════════════════════════════════════════════════════════════════════════════
 # FIXTURES - Load REAL LDIF Data
@@ -110,7 +110,7 @@ class TestSortingWithRealOIDEntries:
         if not oid_entries:
             pytest.skip("No OID entries loaded")
 
-        result = FlextLdifSortingService.by_hierarchy(oid_entries)
+        result = FlextLdifSorting.by_hierarchy(oid_entries)
 
         assert result.is_success
         sorted_entries = result.unwrap()
@@ -131,7 +131,7 @@ class TestSortingWithRealOIDEntries:
         if not oid_entries:
             pytest.skip("No OID entries loaded")
 
-        result = FlextLdifSortingService.by_dn(oid_entries)
+        result = FlextLdifSorting.by_dn(oid_entries)
 
         assert result.is_success
         sorted_entries = result.unwrap()
@@ -147,7 +147,7 @@ class TestSortingWithRealOIDEntries:
         if not oid_entries:
             pytest.skip("No OID entries loaded")
 
-        result = FlextLdifSortingService(
+        result = FlextLdifSorting(
             entries=oid_entries, sort_target="entries", sort_by="hierarchy"
         ).execute()
 
@@ -165,9 +165,7 @@ class TestSortingWithRealOIDEntries:
         # Take first entry for testing
         entry = oid_entries[0]
 
-        result = FlextLdifSortingService(
-            entries=[entry], sort_target="attributes"
-        ).execute()
+        result = FlextLdifSorting(entries=[entry], sort_target="attributes").execute()
 
         assert result.is_success
         sorted_entries = result.unwrap()
@@ -188,7 +186,7 @@ class TestSortingWithRealOIDEntries:
         if not oid_entries:
             pytest.skip("No OID entries loaded")
 
-        result = FlextLdifSortingService(
+        result = FlextLdifSorting(
             entries=oid_entries,
             sort_target="combined",
             sort_by="hierarchy",
@@ -217,7 +215,7 @@ class TestSortingWithRealOIDSchema:
         if not oid_schema:
             pytest.skip("No OID schema loaded")
 
-        result = FlextLdifSortingService.by_schema(oid_schema)
+        result = FlextLdifSorting.by_schema(oid_schema)
 
         assert result.is_success
         sorted_entries = result.unwrap()
@@ -230,7 +228,7 @@ class TestSortingWithRealOIDSchema:
         if not oid_schema:
             pytest.skip("No OID schema loaded")
 
-        result = FlextLdifSortingService(
+        result = FlextLdifSorting(
             entries=oid_schema, sort_target="schema", sort_by="schema"
         ).execute()
 
@@ -254,7 +252,7 @@ class TestSortingWithRealOIDACL:
         if not oid_acl:
             pytest.skip("No OID ACL loaded")
 
-        result = FlextLdifSortingService(entries=oid_acl, sort_target="acl").execute()
+        result = FlextLdifSorting(entries=oid_acl, sort_target="acl").execute()
 
         assert result.is_success
         sorted_entries = result.unwrap()
@@ -282,12 +280,12 @@ class TestRealWorldSortingPipelines:
             pytest.skip("No OID entries loaded")
 
         # Stage 1: Sort entries by hierarchy
-        result1 = FlextLdifSortingService.by_hierarchy(oid_entries)
+        result1 = FlextLdifSorting.by_hierarchy(oid_entries)
         assert result1.is_success
         entries_by_hierarchy = result1.unwrap()
 
         # Stage 2: Sort attributes within those entries
-        result2 = FlextLdifSortingService(
+        result2 = FlextLdifSorting(
             entries=entries_by_hierarchy, sort_target="attributes"
         ).execute()
         assert result2.is_success
@@ -309,7 +307,7 @@ class TestRealWorldSortingPipelines:
         def dn_length(entry: FlextLdifModels.Entry) -> int:
             return len(entry.dn.value)
 
-        result = FlextLdifSortingService.by_custom(oid_entries, dn_length)
+        result = FlextLdifSorting.by_custom(oid_entries, dn_length)
 
         assert result.is_success
         sorted_entries = result.unwrap()
@@ -328,7 +326,7 @@ class TestRealWorldSortingPipelines:
         def dn_depth(entry: FlextLdifModels.Entry) -> int:
             return entry.dn.value.count(",")
 
-        result = FlextLdifSortingService.by_custom(oid_entries, dn_depth)
+        result = FlextLdifSorting.by_custom(oid_entries, dn_depth)
 
         assert result.is_success
         sorted_entries = result.unwrap()
@@ -352,11 +350,11 @@ class TestRealWorldSortingPipelines:
 
         for name, key_func in strategies:
             if name == "hierarchy":
-                result = FlextLdifSortingService.by_hierarchy(oid_entries)
+                result = FlextLdifSorting.by_hierarchy(oid_entries)
             elif name == "dn":
-                result = FlextLdifSortingService.by_dn(oid_entries)
+                result = FlextLdifSorting.by_dn(oid_entries)
             else:
-                result = FlextLdifSortingService.by_custom(oid_entries, key_func)
+                result = FlextLdifSorting.by_custom(oid_entries, key_func)
 
             assert result.is_success, f"Failed for strategy: {name}"
 
@@ -376,7 +374,7 @@ class TestEdgeCasesWithRealLDIF:
         if not oid_entries:
             pytest.skip("No OID entries loaded")
 
-        result = FlextLdifSortingService.by_hierarchy(oid_entries)
+        result = FlextLdifSorting.by_hierarchy(oid_entries)
         sorted_entries = result.unwrap()
 
         # All DNs should still be present
@@ -403,8 +401,8 @@ class TestEdgeCasesWithRealLDIF:
 
         # Test all sorting strategies
         strategies = [
-            FlextLdifSortingService.by_hierarchy,
-            FlextLdifSortingService.by_dn,
+            FlextLdifSorting.by_hierarchy,
+            FlextLdifSorting.by_dn,
         ]
 
         for strategy in strategies:
@@ -420,7 +418,7 @@ class TestEdgeCasesWithRealLDIF:
         if not oid_entries:
             pytest.skip("No OID entries loaded")
 
-        result = FlextLdifSortingService.by_hierarchy(oid_entries)
+        result = FlextLdifSorting.by_hierarchy(oid_entries)
 
         assert result.is_success
         sorted_entries = result.unwrap()
@@ -445,9 +443,9 @@ class TestComprehensiveAPIUsage:
             pytest.skip("No OID entries loaded")
 
         methods = [
-            FlextLdifSortingService.by_hierarchy,
-            FlextLdifSortingService.by_dn,
-            FlextLdifSortingService.by_schema,
+            FlextLdifSorting.by_hierarchy,
+            FlextLdifSorting.by_dn,
+            FlextLdifSorting.by_schema,
         ]
 
         for method in methods:
@@ -465,7 +463,7 @@ class TestComprehensiveAPIUsage:
         targets = ["entries", "attributes", "acl", "combined"]
 
         for target in targets:
-            result = FlextLdifSortingService(
+            result = FlextLdifSorting(
                 entries=oid_entries,
                 sort_target=target,
                 sort_by="hierarchy" if target == "entries" else "hierarchy",
@@ -481,7 +479,7 @@ class TestComprehensiveAPIUsage:
             pytest.skip("No OID entries loaded")
 
         sorted_entries = (
-            FlextLdifSortingService.builder()
+            FlextLdifSorting.builder()
             .with_entries(oid_entries)
             .with_strategy("hierarchy")
             .with_attribute_sorting(alphabetical=True)
@@ -498,7 +496,7 @@ class TestComprehensiveAPIUsage:
         if not oid_entries:
             pytest.skip("No OID entries loaded")
 
-        result = FlextLdifSortingService.sort(
+        result = FlextLdifSorting.sort(
             oid_entries, by="hierarchy", sort_attributes=True
         )
 
