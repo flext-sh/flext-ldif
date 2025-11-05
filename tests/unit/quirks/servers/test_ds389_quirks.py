@@ -8,15 +8,18 @@ from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.servers.ds389 import FlextLdifServersDs389
 
-
 class TestDs389Schemas:
     """Tests for 389 Directory Server schema quirk handling."""
 
     def test_initialization(self) -> None:
         """Test 389 DS quirk initialization."""
         quirk = FlextLdifServersDs389()
-        assert quirk.server_type == FlextLdifConstants.LdapServers.DS_389
-        assert quirk.priority == 15
+        # server_type and priority are ClassVar - access via Constants
+        assert FlextLdifServersDs389.Constants.SERVER_TYPE == "389ds"
+        assert FlextLdifServersDs389.Constants.PRIORITY == 15
+        # Verify class-level attributes are set from Constants
+        assert FlextLdifServersDs389.server_type == "389ds"  # ClassVar from Constants
+        assert FlextLdifServersDs389.priority == 15  # ClassVar from Constants
 
     def test_can_handle_attribute_with_ds389_oid(self) -> None:
         """Test attribute detection with 389 DS OID pattern."""
@@ -24,12 +27,14 @@ class TestDs389Schemas:
         attr_def = "( 2.16.840.1.113730.3.1.1 NAME 'nsslapd-suffix' SYNTAX 1.3.6.1.4.1.1466.115.121.1.12 )"
 
         # Parse string definition into model object
-        parse_result = quirk.parse_attribute(attr_def)
-        assert parse_result.is_success, f"Failed to parse attribute: {parse_result.error}"
-        attr_model = parse_result.unwrap()
+        parse_result = quirk.parse(attr_def)
+        assert parse_result.is_success, (
+            f"Failed to parse attribute: {parse_result.error}"
+        )
+        parse_result.unwrap()
 
         # Test with the model object
-        assert quirk.can_handle_attribute(attr_model) is True
+        assert quirk._can_handle_attribute(attr_def) is True
 
     def test_can_handle_attribute_with_nsslapd_prefix(self) -> None:
         """Test attribute detection with nsslapd- prefix."""
@@ -39,12 +44,14 @@ class TestDs389Schemas:
         )
 
         # Parse string definition into model object
-        parse_result = quirk.parse_attribute(attr_def)
-        assert parse_result.is_success, f"Failed to parse attribute: {parse_result.error}"
-        attr_model = parse_result.unwrap()
+        parse_result = quirk.parse(attr_def)
+        assert parse_result.is_success, (
+            f"Failed to parse attribute: {parse_result.error}"
+        )
+        parse_result.unwrap()
 
         # Test with the model object
-        assert quirk.can_handle_attribute(attr_model) is True
+        assert quirk._can_handle_attribute(attr_def) is True
 
     def test_can_handle_attribute_with_nsds_prefix(self) -> None:
         """Test attribute detection with nsds prefix."""
@@ -54,12 +61,14 @@ class TestDs389Schemas:
         )
 
         # Parse string definition into model object
-        parse_result = quirk.parse_attribute(attr_def)
-        assert parse_result.is_success, f"Failed to parse attribute: {parse_result.error}"
-        attr_model = parse_result.unwrap()
+        parse_result = quirk.parse(attr_def)
+        assert parse_result.is_success, (
+            f"Failed to parse attribute: {parse_result.error}"
+        )
+        parse_result.unwrap()
 
         # Test with the model object
-        assert quirk.can_handle_attribute(attr_model) is True
+        assert quirk._can_handle_attribute(attr_def) is True
 
     def test_can_handle_attribute_with_nsuniqueid(self) -> None:
         """Test attribute detection with nsuniqueid prefix."""
@@ -67,12 +76,14 @@ class TestDs389Schemas:
         attr_def = "( 1.2.3.4 NAME 'nsuniqueid' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
 
         # Parse string definition into model object
-        parse_result = quirk.parse_attribute(attr_def)
-        assert parse_result.is_success, f"Failed to parse attribute: {parse_result.error}"
-        attr_model = parse_result.unwrap()
+        parse_result = quirk.parse(attr_def)
+        assert parse_result.is_success, (
+            f"Failed to parse attribute: {parse_result.error}"
+        )
+        parse_result.unwrap()
 
         # Test with the model object
-        assert quirk.can_handle_attribute(attr_model) is True
+        assert quirk._can_handle_attribute(attr_def) is True
 
     def test_can_handle_attribute_negative(self) -> None:
         """Test attribute detection rejects non-389 DS attributes."""
@@ -80,18 +91,20 @@ class TestDs389Schemas:
         attr_def = "( 2.5.4.3 NAME 'cn' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
 
         # Parse string definition into model object
-        parse_result = quirk.parse_attribute(attr_def)
-        assert parse_result.is_success, f"Failed to parse attribute: {parse_result.error}"
-        attr_model = parse_result.unwrap()
+        parse_result = quirk.parse(attr_def)
+        assert parse_result.is_success, (
+            f"Failed to parse attribute: {parse_result.error}"
+        )
+        parse_result.unwrap()
 
         # Test with the model object
-        assert quirk.can_handle_attribute(attr_model) is False
+        assert quirk._can_handle_attribute(attr_def) is False
 
     def test_parse_attribute_success(self) -> None:
         """Test parsing 389 DS attribute definition."""
         quirk = FlextLdifServersDs389()
         attr_def = "( 2.16.840.1.113730.3.1.1 NAME 'nsslapd-suffix' DESC 'Directory suffix' SYNTAX 1.3.6.1.4.1.1466.115.121.1.12 SINGLE-VALUE )"
-        result = quirk.parse_attribute(attr_def)
+        result = quirk.parse(attr_def)
 
         assert result.is_success
         attr_data = result.unwrap()
@@ -105,7 +118,7 @@ class TestDs389Schemas:
         """Test parsing attribute with syntax length specification."""
         quirk = FlextLdifServersDs389()
         attr_def = "( 2.16.840.1.113730.3.1.2 NAME 'nsslapd-database' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} )"
-        result = quirk.parse_attribute(attr_def)
+        result = quirk.parse(attr_def)
 
         assert result.is_success
         attr_data = result.unwrap()
@@ -116,7 +129,7 @@ class TestDs389Schemas:
         """Test parsing attribute without OID fails."""
         quirk = FlextLdifServersDs389()
         attr_def = "NAME 'nsslapd-port' SYNTAX 1.3.6.1.4.1.1466.115.121.1.27"
-        result = quirk.parse_attribute(attr_def)
+        result = quirk.parse(attr_def)
 
         assert result.is_failure
         assert result.error is not None
@@ -128,12 +141,14 @@ class TestDs389Schemas:
         oc_def = "( 2.16.840.1.113730.3.2.1 NAME 'nscontainer' SUP top STRUCTURAL )"
 
         # Parse string definition into model object
-        parse_result = quirk.parse_objectclass(oc_def)
-        assert parse_result.is_success, f"Failed to parse objectClass: {parse_result.error}"
-        oc_model = parse_result.unwrap()
+        parse_result = quirk.parse(oc_def)
+        assert parse_result.is_success, (
+            f"Failed to parse objectClass: {parse_result.error}"
+        )
+        parse_result.unwrap()
 
         # Test with the model object
-        assert quirk.can_handle_objectclass(oc_model) is True
+        assert quirk._can_handle_objectclass(oc_def) is True
 
     def test_can_handle_objectclass_with_ns_name(self) -> None:
         """Test objectClass detection with ns- name."""
@@ -141,12 +156,14 @@ class TestDs389Schemas:
         oc_def = "( 2.5.6.0 NAME 'nsperson' SUP top STRUCTURAL )"
 
         # Parse string definition into model object
-        parse_result = quirk.parse_objectclass(oc_def)
-        assert parse_result.is_success, f"Failed to parse objectClass: {parse_result.error}"
-        oc_model = parse_result.unwrap()
+        parse_result = quirk.parse(oc_def)
+        assert parse_result.is_success, (
+            f"Failed to parse objectClass: {parse_result.error}"
+        )
+        parse_result.unwrap()
 
         # Test with the model object
-        assert quirk.can_handle_objectclass(oc_model) is True
+        assert quirk._can_handle_objectclass(oc_def) is True
 
     def test_can_handle_objectclass_negative(self) -> None:
         """Test objectClass detection rejects non-389 DS classes."""
@@ -154,18 +171,20 @@ class TestDs389Schemas:
         oc_def = "( 2.5.6.6 NAME 'posixAccount' SUP top STRUCTURAL )"
 
         # Parse string definition into model object
-        parse_result = quirk.parse_objectclass(oc_def)
-        assert parse_result.is_success, f"Failed to parse objectClass: {parse_result.error}"
-        oc_model = parse_result.unwrap()
+        parse_result = quirk.parse(oc_def)
+        assert parse_result.is_success, (
+            f"Failed to parse objectClass: {parse_result.error}"
+        )
+        parse_result.unwrap()
 
         # Test with the model object
-        assert quirk.can_handle_objectclass(oc_model) is False
+        assert quirk._can_handle_objectclass(oc_def) is False
 
     def test_parse_objectclass_structural(self) -> None:
         """Test parsing STRUCTURAL objectClass."""
         quirk = FlextLdifServersDs389()
         oc_def = "( 2.16.840.1.113730.3.2.1 NAME 'nscontainer' DESC 'Container class' SUP top STRUCTURAL MUST ( cn ) MAY ( nsslapd-port ) )"
-        result = quirk.parse_objectclass(oc_def)
+        result = quirk.parse(oc_def)
 
         assert result.is_success
         oc_data = result.unwrap()
@@ -184,7 +203,7 @@ class TestDs389Schemas:
         """Test parsing AUXILIARY objectClass."""
         quirk = FlextLdifServersDs389()
         oc_def = "( 2.16.840.1.113730.3.2.2 NAME 'nsds5replica' AUXILIARY MAY ( nsds5ReplicaId $ nsds5ReplicaRoot ) )"
-        result = quirk.parse_objectclass(oc_def)
+        result = quirk.parse(oc_def)
 
         assert result.is_success
         oc_data = result.unwrap()
@@ -194,7 +213,7 @@ class TestDs389Schemas:
         """Test parsing ABSTRACT objectClass."""
         quirk = FlextLdifServersDs389()
         oc_def = "( 2.16.840.1.113730.3.2.3 NAME 'nsds5base' ABSTRACT )"
-        result = quirk.parse_objectclass(oc_def)
+        result = quirk.parse(oc_def)
 
         assert result.is_success
         oc_data = result.unwrap()
@@ -204,75 +223,11 @@ class TestDs389Schemas:
         """Test parsing objectClass without OID fails."""
         quirk = FlextLdifServersDs389()
         oc_def = "NAME 'nscontainer' SUP top STRUCTURAL"
-        result = quirk.parse_objectclass(oc_def)
+        result = quirk.parse(oc_def)
 
         assert result.is_failure
         assert result.error is not None
         assert "missing an OID" in result.error
-
-    def test_convert_attribute_to_rfc(self) -> None:
-        """Test converting 389 DS attribute to RFC format."""
-        quirk = FlextLdifServersDs389()
-        attr_data = FlextLdifModels.SchemaAttribute(
-            oid="2.16.840.1.113730.3.1.1",
-            name="nsslapd-suffix",
-            desc="Directory suffix",
-            syntax="1.3.6.1.4.1.1466.115.121.1.12",
-            single_value=True,
-        )
-        result = quirk.convert_attribute_to_rfc(attr_data)
-
-        assert result.is_success
-        rfc_data = result.unwrap()
-        assert rfc_data.oid == "2.16.840.1.113730.3.1.1"
-        assert rfc_data.name == "nsslapd-suffix"
-
-    def test_convert_objectclass_to_rfc(self) -> None:
-        """Test converting 389 DS objectClass to RFC format."""
-        quirk = FlextLdifServersDs389()
-        oc_data = FlextLdifModels.SchemaObjectClass(
-            oid="2.16.840.1.113730.3.2.1",
-            name="nscontainer",
-            kind="STRUCTURAL",
-            sup="top",
-        )
-        result = quirk.convert_objectclass_to_rfc(oc_data)
-
-        assert result.is_success
-        rfc_data = result.unwrap()
-        assert rfc_data.oid == "2.16.840.1.113730.3.2.1"
-
-    def test_convert_attribute_from_rfc(self) -> None:
-        """Test converting RFC attribute to 389 DS format."""
-        quirk = FlextLdifServersDs389()
-        rfc_data = FlextLdifModels.SchemaAttribute(
-            oid="2.16.840.1.113730.3.1.1",
-            name="nsslapd-suffix",
-        )
-        result = quirk.convert_attribute_from_rfc(rfc_data)
-
-        assert result.is_success
-        ds389_data = result.unwrap()
-        # convert_attribute_from_rfc now returns SchemaAttribute model
-        assert ds389_data.metadata is not None
-        assert ds389_data.metadata.quirk_type == "389ds"
-        assert ds389_data.oid == rfc_data.oid
-
-    def test_convert_objectclass_from_rfc(self) -> None:
-        """Test converting RFC objectClass to 389 DS format."""
-        quirk = FlextLdifServersDs389()
-        rfc_data = FlextLdifModels.SchemaObjectClass(
-            oid="2.16.840.1.113730.3.2.1",
-            name="nscontainer",
-        )
-        result = quirk.convert_objectclass_from_rfc(rfc_data)
-
-        assert result.is_success
-        ds389_data = result.unwrap()
-        # convert_objectclass_from_rfc now returns SchemaObjectClass model
-        assert ds389_data.metadata is not None
-        assert ds389_data.metadata.quirk_type == "389ds"
-        assert ds389_data.oid == rfc_data.oid
 
     def test_write_objectclass_to_rfc(self) -> None:
         """Test writing objectClass to RFC string format."""
@@ -285,7 +240,7 @@ class TestDs389Schemas:
             must=["cn"],
             may=["nsslapd-port"],
         )
-        result = quirk.write_objectclass_to_rfc(oc_data)
+        result = quirk.write(oc_data)
 
         assert result.is_success
         oc_str = result.unwrap()
@@ -293,95 +248,80 @@ class TestDs389Schemas:
         assert "nscontainer" in oc_str
         assert "STRUCTURAL" in oc_str
 
-
 class TestDs389Acls:
     """Tests for 389 Directory Server ACL quirk handling."""
 
     def test_acl_quirk_initialization(self) -> None:
         """Test ACL quirk initialization."""
         main_quirk = FlextLdifServersDs389()
-        acl_quirk = main_quirk.Acl()
-        assert acl_quirk.server_type == FlextLdifConstants.LdapServers.DS_389
-        assert acl_quirk.priority == 15
+        acl_quirk = main_quirk.acl
+        assert acl_quirk is not None
 
-    def test_can_handle_acl_with_aci_attribute(self) -> None:
+    def test__can_handle_with_aci_attribute(self) -> None:
         """Test ACL detection with aci attribute."""
         main_quirk = FlextLdifServersDs389()
-        acl_quirk = main_quirk.Acl()
+        acl_quirk = main_quirk.acl
         acl_line = 'aci: (version 3.0; acl "Admin Access"; allow (all) userdn = "ldap:///cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com";)'
         # Parse string ACL into model object
 
-        parse_result = acl_quirk.parse_acl(acl_line)
+        parse_result = acl_quirk.parse(acl_line)
 
         assert parse_result.is_success, f"Failed to parse ACL: {parse_result.error}"
 
-        acl_model = parse_result.unwrap()
-
+        parse_result.unwrap()
 
         # Test with the model object
 
-        assert acl_quirk.can_handle_acl(acl_model) is True
+        assert acl_quirk._can_handle(acl_line) is True
 
-    def test_can_handle_acl_with_version_prefix(self) -> None:
+    def test__can_handle_with_version_prefix(self) -> None:
         """Test ACL detection with version prefix."""
         main_quirk = FlextLdifServersDs389()
-        acl_quirk = main_quirk.Acl()
+        acl_quirk = main_quirk.acl
         acl_line = '(version 3.0; acl "Admin Access"; allow (all) userdn = "ldap:///cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com";)'
         # Parse string ACL into model object
 
-        parse_result = acl_quirk.parse_acl(acl_line)
+        parse_result = acl_quirk.parse(acl_line)
 
         assert parse_result.is_success, f"Failed to parse ACL: {parse_result.error}"
 
-        acl_model = parse_result.unwrap()
-
+        parse_result.unwrap()
 
         # Test with the model object
 
-        assert acl_quirk.can_handle_acl(acl_model) is True
+        assert acl_quirk._can_handle(acl_line) is True
 
-    def test_can_handle_acl_negative(self) -> None:
+    def test__can_handle_negative(self) -> None:
         """Test ACL detection rejects non-389 DS ACLs."""
         main_quirk = FlextLdifServersDs389()
-        acl_quirk = main_quirk.Acl()
+        acl_quirk = main_quirk.acl
         acl_line = "access to * by * read"
         # Parse string ACL into model object
 
-        parse_result = acl_quirk.parse_acl(acl_line)
+        parse_result = acl_quirk.parse(acl_line)
 
         assert parse_result.is_success, f"Failed to parse ACL: {parse_result.error}"
 
-        acl_model = parse_result.unwrap()
-
+        parse_result.unwrap()
 
         # Test with the model object
 
-        assert acl_quirk.can_handle_acl(acl_model) is False
+        assert acl_quirk._can_handle(acl_line) is False
 
-    def test_can_handle_acl_empty_line(self) -> None:
+    def test__can_handle_empty_line(self) -> None:
         """Test ACL detection rejects empty lines."""
         main_quirk = FlextLdifServersDs389()
-        acl_quirk = main_quirk.Acl()
+        acl_quirk = main_quirk.acl
         acl_line = ""
-        # Parse string ACL into model object
+        # Empty string should return False for can_handle
+        assert acl_quirk._can_handle(acl_line) is False
 
-        parse_result = acl_quirk.parse_acl(acl_line)
-
-        assert parse_result.is_success, f"Failed to parse ACL: {parse_result.error}"
-
-        acl_model = parse_result.unwrap()
-
-
-        # Test with the model object
-
-        assert acl_quirk.can_handle_acl(acl_model) is False
-
-    def test_parse_acl_success(self) -> None:
+    def test_parse_success(self) -> None:
         """Test parsing 389 DS ACI definition."""
         main_quirk = FlextLdifServersDs389()
-        acl_quirk = main_quirk.Acl()
+        acl_quirk = main_quirk.acl
         acl_line = 'aci: (version 3.0; acl "Admin Access"; allow (read, write, search) targetattr = "cn, ou" userdn = "ldap:///cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com";)'
-        result = acl_quirk.parse_acl(acl_line)
+        result = acl_quirk.parse(acl_line)
 
         assert result.is_success
         acl_data = result.unwrap()
@@ -402,12 +342,12 @@ class TestDs389Acls:
         assert acl_data.permissions.write is True
         assert acl_data.permissions.search is True
 
-    def test_parse_acl_with_multiple_userdns(self) -> None:
+    def test_parse_with_multiple_userdns(self) -> None:
         """Test parsing ACI with multiple userdn clauses."""
         main_quirk = FlextLdifServersDs389()
-        acl_quirk = main_quirk.Acl()
+        acl_quirk = main_quirk.acl
         acl_line = 'aci: (version 3.0; acl "Multi User"; allow (read) userdn = "ldap:///cn=user1,dc=example,dc=com" userdn = "ldap:///cn=user2,dc=example,dc=com";)'
-        result = acl_quirk.parse_acl(acl_line)
+        result = acl_quirk.parse(acl_line)
 
         assert result.is_success
         acl_data = result.unwrap()
@@ -419,53 +359,10 @@ class TestDs389Acls:
         assert acl_data.permissions is not None
         assert acl_data.permissions.read is True
 
-    def test_convert_acl_to_rfc(self) -> None:
-        """Test converting 389 DS ACL to RFC format."""
-        main_quirk = FlextLdifServersDs389()
-        acl_quirk = main_quirk.Acl()
-        acl_data = FlextLdifModels.Acl(
-            name="Admin Access",
-            target=FlextLdifModels.AclTarget(target_dn="dc=example,dc=com"),
-            subject=FlextLdifModels.AclSubject(
-                subject_type="user", subject_value="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com"
-            ),
-            permissions=FlextLdifModels.AclPermissions(read=True, write=True),
-            server_type="389ds",
-            raw_acl='aci: (version 3.0; acl "Admin Access"; allow (read, write) userdn = "ldap:///cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com";)',
-        )
-        result = acl_quirk.convert_acl_to_rfc(acl_data)
-
-        assert result.is_success
-        rfc_acl = result.unwrap()
-        # Verify it's still an Acl model after conversion
-        assert isinstance(rfc_acl, FlextLdifModels.Acl)
-
-    def test_convert_acl_from_rfc(self) -> None:
-        """Test converting RFC ACL to 389 DS format."""
-        main_quirk = FlextLdifServersDs389()
-        acl_quirk = main_quirk.Acl()
-        rfc_acl = FlextLdifModels.Acl(
-            name="Admin Access",
-            target=FlextLdifModels.AclTarget(target_dn="dc=example,dc=com"),
-            subject=FlextLdifModels.AclSubject(
-                subject_type="user", subject_value="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com"
-            ),
-            permissions=FlextLdifModels.AclPermissions(read=True),
-            server_type="generic",
-            raw_acl="",
-        )
-        result = acl_quirk.convert_acl_from_rfc(rfc_acl)
-
-        assert result.is_success
-        ds389_acl = result.unwrap()
-        # Verify it's still an Acl model and server_type changed to 389ds
-        assert isinstance(ds389_acl, FlextLdifModels.Acl)
-        assert ds389_acl.server_type == "389ds"
-
     def test_write_acl_to_rfc_with_content(self) -> None:
         """Test writing ACL with content to RFC string format."""
         main_quirk = FlextLdifServersDs389()
-        acl_quirk = main_quirk.Acl()
+        acl_quirk = main_quirk.acl
         # Create proper Acl model instance with raw_acl
         acl_data = FlextLdifModels.Acl(
             name="Admin",
@@ -477,7 +374,7 @@ class TestDs389Acls:
             server_type="389ds",
             raw_acl='(version 3.0; acl "Admin"; allow (read) userdn = "ldap:///cn=REDACTED_LDAP_BIND_PASSWORD";)',
         )
-        result = acl_quirk.write_acl_to_rfc(acl_data)
+        result = acl_quirk.write(acl_data)
 
         assert result.is_success
         acl_str = result.unwrap()
@@ -486,7 +383,7 @@ class TestDs389Acls:
     def test_write_acl_to_rfc_from_structured(self) -> None:
         """Test writing ACL from structured fields to RFC string format."""
         main_quirk = FlextLdifServersDs389()
-        acl_quirk = main_quirk.Acl()
+        acl_quirk = main_quirk.acl
         # Create proper Acl model instance
         acl_data = FlextLdifModels.Acl(
             name="Admin Access",
@@ -501,7 +398,7 @@ class TestDs389Acls:
             ),
             server_type="389ds",
         )
-        result = acl_quirk.write_acl_to_rfc(acl_data)
+        result = acl_quirk.write(acl_data)
 
         assert result.is_success
         acl_str = result.unwrap()
@@ -512,7 +409,7 @@ class TestDs389Acls:
     def test_write_acl_to_rfc_empty(self) -> None:
         """Test writing empty ACL to RFC string format."""
         main_quirk = FlextLdifServersDs389()
-        acl_quirk = main_quirk.Acl()
+        acl_quirk = main_quirk.acl
         # Create minimal Acl model instance
         acl_data = FlextLdifModels.Acl(
             name="",
@@ -521,12 +418,11 @@ class TestDs389Acls:
             permissions=FlextLdifModels.AclPermissions(),
             server_type="389ds",
         )
-        result = acl_quirk.write_acl_to_rfc(acl_data)
+        result = acl_quirk.write(acl_data)
 
         assert result.is_success
         acl_str = result.unwrap()
         assert "aci:" in acl_str
-
 
 class TestDs389Entrys:
     """Tests for 389 Directory Server entry quirk handling."""
@@ -534,155 +430,81 @@ class TestDs389Entrys:
     def test_entry_quirk_initialization(self) -> None:
         """Test entry quirk initialization."""
         main_quirk = FlextLdifServersDs389()
-        entry_quirk = main_quirk.Entry()
-        assert entry_quirk.server_type == FlextLdifConstants.LdapServers.DS_389
-        assert entry_quirk.priority == 15
+        entry_quirk = main_quirk.entry
+        assert entry_quirk is not None
 
     def test_can_handle_entry_with_cn_config(self) -> None:
         """Test entry detection with cn=config DN marker."""
         main_quirk = FlextLdifServersDs389()
-        entry_quirk = main_quirk.Entry()
+        entry_quirk = main_quirk.entry
         entry_dn = "cn=config"
-        attributes: dict[str, object] = {"objectclass": ["nscontainer"]}
-        assert entry_quirk.can_handle_entry(entry_dn, attributes) is True
+        attributes: dict[str, object] = {FlextLdifConstants.DictKeys.OBJECTCLASS: ["nscontainer"]}
+        assert entry_quirk._can_handle_entry(entry_dn, attributes) is True
 
     def test_can_handle_entry_with_cn_monitor(self) -> None:
         """Test entry detection with cn=monitor DN marker."""
         main_quirk = FlextLdifServersDs389()
-        entry_quirk = main_quirk.Entry()
+        entry_quirk = main_quirk.entry
         entry_dn = "cn=monitor"
-        attributes: dict[str, object] = {"objectclass": ["top"]}
-        assert entry_quirk.can_handle_entry(entry_dn, attributes) is True
+        attributes: dict[str, object] = {FlextLdifConstants.DictKeys.OBJECTCLASS: ["top"]}
+        assert entry_quirk._can_handle_entry(entry_dn, attributes) is True
 
     def test_can_handle_entry_with_cn_changelog(self) -> None:
         """Test entry detection with cn=changelog DN marker."""
         main_quirk = FlextLdifServersDs389()
-        entry_quirk = main_quirk.Entry()
+        entry_quirk = main_quirk.entry
         entry_dn = "cn=changelog"
-        attributes: dict[str, object] = {"objectclass": ["top"]}
-        assert entry_quirk.can_handle_entry(entry_dn, attributes) is True
+        attributes: dict[str, object] = {FlextLdifConstants.DictKeys.OBJECTCLASS: ["top"]}
+        assert entry_quirk._can_handle_entry(entry_dn, attributes) is True
 
     def test_can_handle_entry_with_nsslapd_attribute(self) -> None:
         """Test entry detection with nsslapd- attribute prefix."""
         main_quirk = FlextLdifServersDs389()
-        entry_quirk = main_quirk.Entry()
+        entry_quirk = main_quirk.entry
         entry_dn = "cn=test,dc=example,dc=com"
         attributes: dict[str, object] = {
             "nsslapd-port": ["389"],
             "objectclass": ["top"],
         }
-        assert entry_quirk.can_handle_entry(entry_dn, attributes) is True
+        assert entry_quirk._can_handle_entry(entry_dn, attributes) is True
 
     def test_can_handle_entry_with_nsds_attribute(self) -> None:
         """Test entry detection with nsds attribute prefix."""
         main_quirk = FlextLdifServersDs389()
-        entry_quirk = main_quirk.Entry()
+        entry_quirk = main_quirk.entry
         entry_dn = "cn=test,dc=example,dc=com"
         attributes: dict[str, object] = {
             "nsds5ReplicaId": ["1"],
             "objectclass": ["top"],
         }
-        assert entry_quirk.can_handle_entry(entry_dn, attributes) is True
+        assert entry_quirk._can_handle_entry(entry_dn, attributes) is True
 
     def test_can_handle_entry_with_nsuniqueid_attribute(self) -> None:
         """Test entry detection with nsuniqueid attribute."""
         main_quirk = FlextLdifServersDs389()
-        entry_quirk = main_quirk.Entry()
+        entry_quirk = main_quirk.entry
         entry_dn = "cn=test,dc=example,dc=com"
         attributes: dict[str, object] = {
             "nsuniqueid": ["12345"],
             "objectclass": ["top"],
         }
-        assert entry_quirk.can_handle_entry(entry_dn, attributes) is True
+        assert entry_quirk._can_handle_entry(entry_dn, attributes) is True
 
     def test_can_handle_entry_with_ns_objectclass(self) -> None:
         """Test entry detection with ns- objectClass."""
         main_quirk = FlextLdifServersDs389()
-        entry_quirk = main_quirk.Entry()
+        entry_quirk = main_quirk.entry
         entry_dn = "cn=test,dc=example,dc=com"
-        attributes: dict[str, object] = {"objectclass": ["top", "nscontainer"]}
-        assert entry_quirk.can_handle_entry(entry_dn, attributes) is True
+        attributes: dict[str, object] = {
+            FlextLdifConstants.DictKeys.OBJECTCLASS: ["top", "nscontainer"]
+        }
+        assert entry_quirk._can_handle_entry(entry_dn, attributes) is True
 
     def test_can_handle_entry_negative(self) -> None:
         """Test entry detection rejects non-389 DS entries."""
         main_quirk = FlextLdifServersDs389()
-        entry_quirk = main_quirk.Entry()
+        entry_quirk = main_quirk.entry
         entry_dn = "cn=user,dc=example,dc=com"
-        attributes: dict[str, object] = {"objectclass": ["person"], "cn": ["user"]}
-        assert entry_quirk.can_handle_entry(entry_dn, attributes) is False
+        attributes: dict[str, object] = {FlextLdifConstants.DictKeys.OBJECTCLASS: ["person"], "cn": ["user"]}
+        assert entry_quirk._can_handle_entry(entry_dn, attributes) is False
 
-    def test_process_entry_config_entry(self) -> None:
-        """Test processing 389 DS config entry."""
-        main_quirk = FlextLdifServersDs389()
-        entry_quirk = main_quirk.Entry()
-        entry_dn = "cn=config"
-        attributes: dict[str, object] = {
-            "objectclass": ["nscontainer"],
-            "cn": ["config"],
-            "nsslapd-port": ["389"],
-        }
-        result = entry_quirk.process_entry(entry_dn, attributes)
-
-        assert result.is_success
-        processed_entry = result.unwrap()
-        assert processed_entry[FlextLdifConstants.DictKeys.DN] == entry_dn
-        assert (
-            processed_entry[FlextLdifConstants.DictKeys.SERVER_TYPE]
-            == FlextLdifConstants.LdapServers.DS_389
-        )
-        assert processed_entry[FlextLdifConstants.DictKeys.IS_CONFIG_ENTRY] is True
-
-    def test_process_entry_non_config(self) -> None:
-        """Test processing non-config 389 DS entry."""
-        main_quirk = FlextLdifServersDs389()
-        entry_quirk = main_quirk.Entry()
-        entry_dn = "cn=test,dc=example,dc=com"
-        attributes: dict[str, object] = {
-            "objectclass": ["top", "nscontainer"],
-            "cn": ["test"],
-        }
-        result = entry_quirk.process_entry(entry_dn, attributes)
-
-        assert result.is_success
-        processed_entry = result.unwrap()
-        assert processed_entry[FlextLdifConstants.DictKeys.IS_CONFIG_ENTRY] is False
-
-    def test_process_entry_with_binary_data(self) -> None:
-        """Test processing entry with binary attribute data."""
-        main_quirk = FlextLdifServersDs389()
-        entry_quirk = main_quirk.Entry()
-        entry_dn = "cn=test,dc=example,dc=com"
-        binary_data = b"binary_value"
-        attributes: dict[str, object] = {
-            "objectclass": ["top"],
-            "cn": ["test"],
-            "userCertificate": binary_data,
-        }
-        result = entry_quirk.process_entry(entry_dn, attributes)
-
-        assert result.is_success
-        processed_entry = result.unwrap()
-        assert "userCertificate" in processed_entry
-        cert_value = processed_entry["userCertificate"]
-        assert isinstance(cert_value, str)
-        assert cert_value == base64.b64encode(binary_data).decode("ascii")
-
-    def test_convert_entry_to_rfc(self) -> None:
-        """Test converting 389 DS entry to RFC format."""
-        main_quirk = FlextLdifServersDs389()
-        entry_quirk = main_quirk.Entry()
-        entry_data: dict[str, object] = {
-            FlextLdifConstants.DictKeys.DN: "cn=config",
-            FlextLdifConstants.DictKeys.SERVER_TYPE: FlextLdifConstants.LdapServers.DS_389,
-            FlextLdifConstants.DictKeys.IS_CONFIG_ENTRY: True,
-            "objectclass": ["nscontainer"],
-            "cn": ["config"],
-        }
-        result = entry_quirk.convert_entry_to_rfc(entry_data)
-
-        assert result.is_success
-        rfc_entry = result.unwrap()
-        assert FlextLdifConstants.DictKeys.SERVER_TYPE not in rfc_entry
-        assert FlextLdifConstants.DictKeys.IS_CONFIG_ENTRY not in rfc_entry
-        assert rfc_entry[FlextLdifConstants.DictKeys.DN] == "cn=config"
-        assert "objectclass" in rfc_entry

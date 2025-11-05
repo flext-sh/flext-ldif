@@ -10,6 +10,8 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import base64
+import copy
+import logging
 import re
 import string
 from pathlib import Path
@@ -19,6 +21,10 @@ from flext_core import FlextResult
 from jinja2 import Environment
 
 from flext_ldif.constants import FlextLdifConstants
+from flext_ldif.models import FlextLdifModels
+from flext_ldif.services.syntax import FlextLdifSyntaxService
+
+logger = logging.getLogger(__name__)
 
 # NOTE: Removed ldap3.utils.dn.parse_dn import (not available in current ldap3 version)
 # Implemented pure RFC 4514 DN parsing below
@@ -259,7 +265,7 @@ class FlextLdifUtilities:
                 return None
 
         @staticmethod
-        def parse_rdn(rdn: str) -> list[tuple[str, str]] | None:  # noqa: C901
+        def parse_rdn(rdn: str) -> list[tuple[str, str]] | None:
             """Parse a single RDN component per RFC 4514.
 
             Returns None on error.
@@ -474,9 +480,7 @@ class FlextLdifUtilities:
         """
 
         @staticmethod
-        def fmt_dn(
-            dn_value: str, *, width: int = 78, fold: bool = True
-        ) -> list[str]:
+        def fmt_dn(dn_value: str, *, width: int = 78, fold: bool = True) -> list[str]:
             """Format DN line with optional line folding (RFC 2849).
 
             Args:
@@ -528,7 +532,7 @@ class FlextLdifUtilities:
             while remaining:
                 # Continuation lines start with a single space (RFC 2849)
                 if len(remaining) > width - 1:
-                    folded.append(f" {remaining[:width - 1]}")
+                    folded.append(f" {remaining[: width - 1]}")
                     remaining = remaining[width - 1 :]
                 else:
                     folded.append(f" {remaining}")
@@ -637,6 +641,8 @@ class FlextLdifUtilities:
 
             """
             try:
+                # Create parent directories if they don't exist
+                file_path.parent.mkdir(parents=True, exist_ok=True)
                 file_path.write_text(content, encoding=encoding)
                 stats = {
                     "bytes_written": len(content.encode(encoding)),
@@ -678,10 +684,786 @@ class FlextLdifUtilities:
 
         @staticmethod
         def normalize_matching_rules(
-            matching_rules: list[str] | None,
-        ) -> list[str]:
-            """Normalize matching rule OIDs."""
-            return matching_rules or []
+            equality: str | None,
+            substr: str | None = None,
+            *,
+            replacements: dict[str, str] | None = None,
+            substr_rules_in_equality: dict[str, str] | None = None,
+            normalized_substr_values: dict[str, str] | None = None,
+        ) -> tuple[str | None, str | None]:
+            """Normalize EQUALITY and SUBSTR matching rules.
+
+            Handles:
+            1. SUBSTR rule incorrectly in EQUALITY field → move to SUBSTR
+            2. Apply server-specific matching rule replacements
+            3. Normalize case variants (caseIgnoreSubStringsMatch → caseIgnoreSubstringsMatch)
+
+            Args:
+                equality: Current EQUALITY rule
+                substr: Current SUBSTR rule
+                replacements: Dict of custom replacements {old: new}
+                substr_rules_in_equality: Map of SUBSTR rules found in EQUALITY → correct EQUALITY
+                normalized_substr_values: Map of SUBSTR variants → normalized SUBSTR
+
+            Returns:
+                Tuple of (normalized_equality, normalized_substr)
+
+            """
+            if not equality:
+                return equality, substr
+
+            result_equality = equality
+            result_substr = substr
+
+            # Fix SUBSTR rules incorrectly used in EQUALITY field
+            # When a SUBSTR rule is found in EQUALITY, move it to SUBSTR and set EQUALITY to default
+            if substr_rules_in_equality and equality in substr_rules_in_equality:
+                # Move the SUBSTR rule from EQUALITY to SUBSTR
+                # The original equality value (e.g., "caseIgnoreSubstringsMatch") goes to substr
+                result_substr = equality  # The original equality value is a SUBSTR rule
+                # Set EQUALITY to the mapped correct EQUALITY rule
+                result_equality = substr_rules_in_equality[equality]  # e.g., "caseIgnoreMatch"
+
+            # Normalize SUBSTR case variants
+            if (
+                result_substr
+                and normalized_substr_values
+                and result_substr in normalized_substr_values
+            ):
+                result_substr = normalized_substr_values[result_substr]
+
+            # Apply server-specific matching rule replacements
+            if replacements and result_equality in replacements:
+                result_equality = replacements[result_equality]
+
+            return result_equality, result_substr
+
+        @staticmethod
+        def normalize_syntax_oid(
+            syntax: str | None,
+            *,
+            replacements: dict[str, str] | None = None,
+        ) -> str | None:
+            """Normalize SYNTAX OID field.
+
+            Transformations:
+            - Remove quotes (Oracle OID uses 'OID', RFC uses OID)
+            - Apply server-specific syntax OID replacements
+
+            Args:
+                syntax: Original SYNTAX OID
+                replacements: Dict of syntax OID replacements {old: new}
+
+            Returns:
+                Normalized syntax OID
+
+            """
+            if not syntax:
+                return syntax
+
+            result = syntax
+
+            # Remove quotes if present (Oracle OID: '1.2.3', RFC: 1.2.3)
+            if result.startswith("'") and result.endswith("'"):
+                result = result[1:-1]
+
+            # Apply server-specific syntax OID replacements
+            if replacements and result in replacements:
+                result = replacements[result]
+
+            return result
+
+        @staticmethod
+        def apply_transformations(
+            schema_obj: Any,
+            *,
+            field_transforms: dict[str, Any] | None = None,
+        ) -> FlextResult[Any]:
+            """Apply transformation pipeline to schema object.
+
+            Generic transformation pipeline accepting optional transformer callables.
+
+            Args:
+                schema_obj: SchemaAttribute or SchemaObjectClass
+                field_transforms: Dict of {field_name: transform_callable}
+
+            Returns:
+                FlextResult with transformed schema object
+
+            """
+            if not schema_obj:
+                return FlextResult[Any].ok(schema_obj)
+
+            try:
+                # Create copy using model_copy if available
+                if hasattr(schema_obj, "model_copy"):
+                    transformed = schema_obj.model_copy()
+                else:
+                    transformed = copy.copy(schema_obj)
+
+                # Apply transformations
+                if field_transforms:
+                    for field_name, transform_fn in field_transforms.items():
+                        if hasattr(transformed, field_name):
+                            old_value = getattr(transformed, field_name, None)
+                            if callable(transform_fn):
+                                # Apply transformation even if old_value is None
+                                # Some transformations need to set values that were None
+                                new_value = transform_fn(old_value)
+                                setattr(transformed, field_name, new_value)
+
+                return FlextResult[Any].ok(transformed)
+            except Exception as e:
+                return FlextResult[Any].fail(f"Failed to apply transformations: {e}")
+
+        @staticmethod
+        def set_server_type(
+            model_instance: Any,
+            server_type: str,
+        ) -> FlextResult[Any]:
+            """Copy schema model and set server_type in metadata.
+
+            Common pattern used by quirks when converting from RFC format.
+
+            Args:
+                model_instance: RFC-compliant schema model
+                server_type: Server type identifier (e.g., "oid", "oud")
+
+            Returns:
+                FlextResult with model copy containing server_type in metadata
+
+            """
+            if not model_instance:
+                return FlextResult[Any].ok(model_instance)
+
+            try:
+                # Create copy
+                if hasattr(model_instance, "model_copy"):
+                    result = model_instance.model_copy(deep=True)
+                else:
+                    result = copy.deepcopy(model_instance)
+
+                # Set server_type in metadata
+                if (
+                    hasattr(result, "metadata")
+                    and result.metadata is not None
+                    and hasattr(result.metadata, "server_type")
+                ):
+                    result.metadata.server_type = server_type
+
+                return FlextResult[Any].ok(result)
+            except Exception as e:
+                return FlextResult[Any].fail(f"Failed to set server type: {e}")
+
+        @staticmethod
+        def build_metadata(
+            definition: str,
+            quirk_type: str,
+            additional_extensions: dict[str, object] | None = None,
+        ) -> dict[str, Any]:
+            """Build metadata extensions dictionary for schema definitions.
+
+            Generic method to build metadata from schema definition string.
+            Extracts extensions and adds original format and additional extensions.
+
+            Args:
+                definition: Original schema definition string
+                quirk_type: Server type identifier
+                additional_extensions: Additional extension key-value pairs
+
+            Returns:
+                Dictionary of metadata extensions (empty if none)
+
+            """
+            # Use Parser to extract extensions
+            extensions = FlextLdifUtilities.Parser.extract_extensions(definition)
+
+            # Store original format for round-trip fidelity
+            extensions[FlextLdifConstants.MetadataKeys.ORIGINAL_FORMAT] = (
+                definition.strip()
+            )
+
+            # Add any additional extensions
+            if additional_extensions:
+                extensions.update(additional_extensions)
+
+            return extensions
+
+        @staticmethod
+        def parse_attribute(
+            attr_definition: str,
+            *,
+            case_insensitive: bool = False,
+            allow_syntax_quotes: bool = False,
+            quirk_type: str = "rfc",
+            validate_syntax: bool = True,
+        ) -> dict[str, Any]:
+            """Parse RFC 4512 attribute definition into structured data.
+
+            Generic parsing method that extracts all fields from attribute definition.
+            Used by server quirks to get base parsing logic without duplication.
+
+            Args:
+                attr_definition: RFC 4512 attribute definition string
+                case_insensitive: If True, use case-insensitive NAME matching
+                allow_syntax_quotes: If True, allow optional quotes in SYNTAX
+                quirk_type: Server type identifier for metadata
+                validate_syntax: If True, validate syntax OID format
+
+            Returns:
+                Dictionary with parsed fields:
+                - oid: str (required)
+                - name: str | None
+                - desc: str | None
+                - syntax: str | None
+                - length: int | None
+                - equality: str | None
+                - ordering: str | None
+                - substr: str | None
+                - single_value: bool
+                - no_user_modification: bool
+                - sup: str | None
+                - usage: str | None
+                - metadata_extensions: dict[str, object]
+                - syntax_validation: dict[str, object] | None
+
+            Raises:
+                ValueError: If OID is missing or invalid
+
+            """
+            # Extract OID (required)
+            oid = FlextLdifUtilities.Parser.extract_oid(attr_definition)
+            if not oid:
+                msg = "RFC attribute parsing failed: missing an OID"
+                raise ValueError(msg)
+
+            # Extract NAME (optional) - use utilities with OID as fallback
+            name = FlextLdifUtilities.Parser.extract_optional_field(
+                attr_definition,
+                FlextLdifConstants.LdifPatterns.SCHEMA_NAME,
+                default=oid,
+            )
+
+            # Extract DESC (optional)
+            desc = FlextLdifUtilities.Parser.extract_optional_field(
+                attr_definition,
+                FlextLdifConstants.LdifPatterns.SCHEMA_DESC,
+            )
+
+            # Extract SYNTAX (optional) with optional length constraint
+            syntax_match = re.search(
+                FlextLdifConstants.LdifPatterns.SCHEMA_SYNTAX_LENGTH,
+                attr_definition,
+            )
+            syntax = syntax_match.group(1) if syntax_match else None
+            length = (
+                int(syntax_match.group(2))
+                if syntax_match and syntax_match.group(2)
+                else None
+            )
+
+            # Validate syntax OID (if requested)
+            syntax_extensions: dict[str, object] = {}
+            syntax_validation: dict[str, object] | None = None
+            if validate_syntax and syntax and syntax.strip():
+                syntax_service = FlextLdifSyntaxService()
+                validate_result = syntax_service.validate_oid(syntax)
+                if validate_result.is_failure:
+                    syntax_extensions[
+                        FlextLdifConstants.MetadataKeys.SYNTAX_VALIDATION_ERROR
+                    ] = f"Syntax OID validation failed: {validate_result.error}"
+                elif not validate_result.unwrap():
+                    syntax_extensions[
+                        FlextLdifConstants.MetadataKeys.SYNTAX_VALIDATION_ERROR
+                    ] = (
+                        f"Invalid syntax OID format: {syntax} "
+                        f"(must be numeric dot-separated format)"
+                    )
+                syntax_extensions[FlextLdifConstants.MetadataKeys.SYNTAX_OID_VALID] = (
+                    FlextLdifConstants.MetadataKeys.SYNTAX_VALIDATION_ERROR
+                    not in syntax_extensions
+                )
+                syntax_validation = syntax_extensions.copy()
+
+            # Extract matching rules (optional)
+            equality = FlextLdifUtilities.Parser.extract_optional_field(
+                attr_definition,
+                FlextLdifConstants.LdifPatterns.SCHEMA_EQUALITY,
+            )
+            substr = FlextLdifUtilities.Parser.extract_optional_field(
+                attr_definition,
+                FlextLdifConstants.LdifPatterns.SCHEMA_SUBSTR,
+            )
+            ordering = FlextLdifUtilities.Parser.extract_optional_field(
+                attr_definition,
+                FlextLdifConstants.LdifPatterns.SCHEMA_ORDERING,
+            )
+
+            # Extract flags (boolean)
+            single_value = FlextLdifUtilities.Parser.extract_boolean_flag(
+                attr_definition,
+                FlextLdifConstants.LdifPatterns.SCHEMA_SINGLE_VALUE,
+            )
+
+            no_user_modification = False
+            if case_insensitive:  # Lenient mode (OID)
+                no_user_modification = FlextLdifUtilities.Parser.extract_boolean_flag(
+                    attr_definition,
+                    FlextLdifConstants.LdifPatterns.SCHEMA_NO_USER_MODIFICATION,
+                )
+
+            # Extract SUP and USAGE (optional)
+            sup = FlextLdifUtilities.Parser.extract_optional_field(
+                attr_definition,
+                FlextLdifConstants.LdifPatterns.SCHEMA_SUP,
+            )
+            usage = FlextLdifUtilities.Parser.extract_optional_field(
+                attr_definition,
+                FlextLdifConstants.LdifPatterns.SCHEMA_USAGE,
+            )
+
+            # Build metadata using utilities
+            extensions = FlextLdifUtilities.Schema.build_metadata(
+                attr_definition,
+                quirk_type=quirk_type,
+                additional_extensions=syntax_extensions if syntax_validation else None,
+            )
+
+            return {
+                "oid": oid,
+                "name": name,
+                "desc": desc,
+                "syntax": syntax,
+                "length": length,
+                "equality": equality,
+                "ordering": ordering,
+                "substr": substr,
+                "single_value": single_value,
+                "no_user_modification": no_user_modification,
+                "sup": sup,
+                "usage": usage,
+                "metadata_extensions": extensions,
+                "syntax_validation": syntax_validation,
+            }
+
+        @staticmethod
+        def parse_objectclass(
+            oc_definition: str,
+            *,
+            case_insensitive: bool = False,
+            quirk_type: str = "rfc",
+        ) -> dict[str, Any]:
+            """Parse RFC 4512 objectClass definition into structured data.
+
+            Generic parsing method that extracts all fields from objectClass definition.
+            Used by server quirks to get base parsing logic without duplication.
+
+            Args:
+                oc_definition: RFC 4512 objectClass definition string
+                case_insensitive: If True, use case-insensitive NAME matching
+                quirk_type: Server type identifier for metadata
+
+            Returns:
+                Dictionary with parsed fields:
+                - oid: str (required)
+                - name: str | None
+                - desc: str | None
+                - sup: str | None
+                - kind: str (STRUCTURAL, AUXILIARY, or ABSTRACT)
+                - must: list[str] | None
+                - may: list[str] | None
+                - metadata_extensions: dict[str, object]
+
+            Raises:
+                ValueError: If OID is missing or invalid
+
+            """
+            # Extract OID (required)
+            oid = FlextLdifUtilities.Parser.extract_oid(oc_definition)
+            if not oid:
+                msg = "RFC objectClass parsing failed: missing an OID"
+                raise ValueError(msg)
+
+            # Extract NAME (optional) - use utilities with OID as fallback
+            name = FlextLdifUtilities.Parser.extract_optional_field(
+                oc_definition,
+                FlextLdifConstants.LdifPatterns.SCHEMA_NAME,
+                default=oid,
+            )
+
+            # Extract DESC (optional)
+            desc = FlextLdifUtilities.Parser.extract_optional_field(
+                oc_definition,
+                FlextLdifConstants.LdifPatterns.SCHEMA_DESC,
+            )
+
+            # Extract SUP (optional) - superior objectClass(es)
+            sup = None
+            sup_match = re.search(
+                FlextLdifConstants.LdifPatterns.SCHEMA_OBJECTCLASS_SUP,
+                oc_definition,
+            )
+            if sup_match:
+                sup_value = sup_match.group(1) or sup_match.group(2)
+                sup_value = sup_value.strip()
+                # Handle multiple superior classes - use first one
+                sup = next(
+                    (s.strip() for s in sup_value.split("$")),
+                    sup_value,
+                )
+
+            # Determine kind (STRUCTURAL, AUXILIARY, ABSTRACT)
+            # RFC 4512: Default to STRUCTURAL if KIND is not specified
+            kind_match = re.search(
+                FlextLdifConstants.LdifPatterns.SCHEMA_OBJECTCLASS_KIND,
+                oc_definition,
+                re.IGNORECASE,
+            )
+            kind = (
+                kind_match.group(1).upper()
+                if kind_match
+                else FlextLdifConstants.Schema.STRUCTURAL
+            )
+
+            # Extract MUST attributes (optional) - can be single or multiple
+            must = None
+            must_match = re.search(
+                FlextLdifConstants.LdifPatterns.SCHEMA_OBJECTCLASS_MUST,
+                oc_definition,
+            )
+            if must_match:
+                must_value = (must_match.group(1) or must_match.group(2)).strip()
+                must = [m.strip() for m in must_value.split("$")]
+
+            # Extract MAY attributes (optional) - can be single or multiple
+            may = None
+            may_match = re.search(
+                FlextLdifConstants.LdifPatterns.SCHEMA_OBJECTCLASS_MAY,
+                oc_definition,
+            )
+            if may_match:
+                may_value = (may_match.group(1) or may_match.group(2)).strip()
+                may = [m.strip() for m in may_value.split("$")]
+
+            # Build metadata using utilities
+            extensions = FlextLdifUtilities.Schema.build_metadata(
+                oc_definition,
+                quirk_type=quirk_type,
+            )
+
+            return {
+                "oid": oid,
+                "name": name,
+                "desc": desc,
+                "sup": sup,
+                "kind": kind,
+                "must": must,
+                "may": may,
+                "metadata_extensions": extensions,
+            }
+
+        @staticmethod
+        def write_attribute(
+            attr_data: Any,
+        ) -> str:
+            """Write RFC 4512 attribute definition string from SchemaAttribute model.
+
+            Generic writing method that builds RFC-compliant attribute definition string.
+            Used by server quirks to get base writing logic without duplication.
+
+            Args:
+                attr_data: SchemaAttribute model (oid required)
+
+            Returns:
+                RFC 4512 formatted string
+
+            Raises:
+                ValueError: If OID is missing
+
+            """
+            if not isinstance(attr_data, FlextLdifModels.SchemaAttribute):
+                msg = "attr_data must be SchemaAttribute model"
+                raise TypeError(msg)
+
+            # OID is required
+            if not attr_data.oid:
+                msg = "RFC attribute writing failed: missing OID"
+                raise ValueError(msg)
+
+            parts: list[str] = [f"( {attr_data.oid}"]
+
+            # Add NAME (optional)
+            if attr_data.name:
+                parts.append(f"NAME '{attr_data.name}'")
+
+            # Add DESC (optional)
+            if attr_data.desc:
+                parts.append(f"DESC '{attr_data.desc}'")
+
+            # Add OBSOLETE flag (optional) - check metadata extensions
+            if attr_data.metadata and attr_data.metadata.extensions.get(
+                FlextLdifConstants.MetadataKeys.OBSOLETE
+            ):
+                parts.append("OBSOLETE")
+
+            # Add SUP (optional)
+            if attr_data.sup:
+                parts.append(f"SUP {attr_data.sup}")
+
+            # Add matching rules (optional)
+            if attr_data.equality:
+                parts.append(f"EQUALITY {attr_data.equality}")
+
+            if attr_data.ordering:
+                parts.append(f"ORDERING {attr_data.ordering}")
+
+            if attr_data.substr:
+                parts.append(f"SUBSTR {attr_data.substr}")
+
+            # Add SYNTAX with optional length (optional)
+            if attr_data.syntax:
+                syntax_str = str(attr_data.syntax)
+                if attr_data.length is not None:
+                    syntax_str += f"{{{attr_data.length}}}"
+                parts.append(f"SYNTAX {syntax_str}")
+
+            # Add flags (optional)
+            if attr_data.single_value:
+                parts.append("SINGLE-VALUE")
+
+            # COLLECTIVE flag from metadata extensions
+            if attr_data.metadata and attr_data.metadata.extensions.get(
+                FlextLdifConstants.MetadataKeys.COLLECTIVE
+            ):
+                parts.append("COLLECTIVE")
+
+            if attr_data.no_user_modification:
+                parts.append("NO-USER-MODIFICATION")
+
+            # Add USAGE (optional)
+            if attr_data.usage:
+                parts.append(f"USAGE {attr_data.usage}")
+
+            # Add X-ORIGIN (optional) from metadata
+            if attr_data.metadata and attr_data.metadata.x_origin:
+                parts.append(f"X-ORIGIN '{attr_data.metadata.x_origin}'")
+
+            # Close definition
+            parts.append(")")
+
+            return " ".join(parts)
+
+        @staticmethod
+        def write_objectclass(
+            oc_data: Any,
+        ) -> str:
+            """Write RFC 4512 objectClass definition string from SchemaObjectClass model.
+
+            Generic writing method that builds RFC-compliant objectClass definition string.
+            Used by server quirks to get base writing logic without duplication.
+
+            Args:
+                oc_data: SchemaObjectClass model (oid required)
+
+            Returns:
+                RFC 4512 formatted string
+
+            Raises:
+                ValueError: If OID is missing
+
+            """
+            if not isinstance(oc_data, FlextLdifModels.SchemaObjectClass):
+                msg = "oc_data must be SchemaObjectClass model"
+                raise TypeError(msg)
+
+            # OID is required and must not be empty
+            if not oc_data.oid:
+                msg = "RFC objectClass writing failed: missing OID"
+                raise ValueError(msg)
+
+            parts: list[str] = [f"( {oc_data.oid}"]
+
+            # Add NAME (optional)
+            if oc_data.name:
+                parts.append(f"NAME '{oc_data.name}'")
+
+            # Add DESC (optional)
+            if oc_data.desc:
+                parts.append(f"DESC '{oc_data.desc}'")
+
+            # Add OBSOLETE flag (optional) - check metadata extensions
+            if oc_data.metadata and oc_data.metadata.extensions.get(
+                FlextLdifConstants.MetadataKeys.OBSOLETE
+            ):
+                parts.append("OBSOLETE")
+
+            # Add SUP (optional) - can be single string or list
+            if oc_data.sup:
+                if isinstance(oc_data.sup, list):
+                    if len(oc_data.sup) == 1:
+                        parts.append(f"SUP {oc_data.sup[0]}")
+                    else:
+                        sup_str = " $ ".join(oc_data.sup)
+                        parts.append(f"SUP ( {sup_str} )")
+                else:
+                    parts.append(f"SUP {oc_data.sup}")
+
+            # Add kind (optional, defaults to STRUCTURAL per RFC)
+            kind = oc_data.kind or FlextLdifConstants.Schema.STRUCTURAL
+            parts.append(str(kind))
+
+            # Add MUST (optional) - can be single or list
+            if oc_data.must:
+                if isinstance(oc_data.must, list):
+                    if len(oc_data.must) == 1:
+                        parts.append(f"MUST {oc_data.must[0]}")
+                    else:
+                        must_str = " $ ".join(oc_data.must)
+                        parts.append(f"MUST ( {must_str} )")
+                else:
+                    parts.append(f"MUST {oc_data.must}")
+
+            # Add MAY (optional) - can be single or list
+            if oc_data.may:
+                if isinstance(oc_data.may, list):
+                    if len(oc_data.may) == 1:
+                        parts.append(f"MAY {oc_data.may[0]}")
+                    else:
+                        may_str = " $ ".join(oc_data.may)
+                        parts.append(f"MAY ( {may_str} )")
+                else:
+                    parts.append(f"MAY {oc_data.may}")
+
+            # Add X-ORIGIN (optional) from metadata
+            if oc_data.metadata and oc_data.metadata.x_origin:
+                parts.append(f"X-ORIGIN '{oc_data.metadata.x_origin}'")
+
+            # Close definition
+            parts.append(")")
+
+            return " ".join(parts)
+
+    class OID:
+        """OID extraction and validation utilities.
+
+        Pure functions for extracting and validating OIDs from schema definitions.
+        Independent of quirks and services - only string/regex operations.
+
+        Methods:
+        - extract_from_definition: Extract OID from raw schema definition string
+        - extract_from_schema_object: Extract OID from schema model (metadata or field)
+        - matches_pattern: Check if OID matches a regex pattern
+
+        """
+
+        @staticmethod
+        def extract_from_definition(definition: str) -> str | None:
+            """Extract OID from schema definition string.
+
+            Extracts OID from raw attribute or objectClass definition string.
+            Looks for OID in parentheses at start: ( 2.5.4.3 ...
+
+            This is a pure utility function with no dependencies on quirks or services.
+
+            Args:
+                definition: Raw attribute or objectClass definition string
+                           (e.g., "( 2.5.4.3 NAME 'cn' DESC 'Common Name' ...)")
+
+            Returns:
+                OID string (e.g., "2.5.4.3") or None if not found
+
+            Example:
+                oid = FlextLdifUtilities.OID.extract_from_definition(
+                    "( 2.16.840.1.113894.1.1.1 NAME 'orclGuid' ...)"
+                )
+                # Returns: "2.16.840.1.113894.1.1.1"
+
+            """
+            try:
+                # Look for OID in parentheses at start: ( 2.16.840.1.113894. ...
+                match = re.search(r"\(\s*([\d.]+)", definition)
+                if match:
+                    return match.group(1)
+            except (re.error, AttributeError) as e:
+                logger.debug(
+                    "Failed to extract OID from definition: %s",
+                    e,
+                )
+            return None
+
+        @staticmethod
+        def extract_from_schema_object(
+            schema_obj: FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass,
+        ) -> str | None:
+            """Extract OID from schema object metadata or model.
+
+            Checks both sources:
+            1. Original format in metadata (via regex extraction)
+            2. OID field in model (fallback)
+
+            This is a pure utility function with no dependencies on quirks or services.
+
+            Args:
+                schema_obj: Attribute or ObjectClass model (already parsed)
+
+            Returns:
+                OID string (e.g., "2.5.4.3") or None if not found
+
+            """
+            # First try: Extract from original_format if available
+            if schema_obj.metadata and schema_obj.metadata.original_format:
+                try:
+                    # Look for OID in parentheses at start: ( 2.16.840.1.113894. ...
+                    match = re.search(r"\(\s*([\d.]+)", schema_obj.metadata.original_format)
+                    if match:
+                        return match.group(1)
+                except (re.error, AttributeError):
+                    # Regex error or original_format type issue - continue to fallback
+                    logger.debug(
+                        "Failed to extract OID from original_format: %s",
+                        schema_obj.metadata.original_format[:100]
+                        if schema_obj.metadata.original_format
+                        else "None",
+                    )
+
+            # Fallback: Use OID field from model
+            return schema_obj.oid
+
+        @staticmethod
+        def matches_pattern(
+            definition: str,
+            oid_pattern: re.Pattern[str],
+        ) -> bool:
+            r"""Check if schema definition string matches server's OID pattern.
+
+            Generic method for checking if a schema definition matches an OID pattern.
+            Works with raw definition strings BEFORE parsing.
+
+            This is a pure utility function with no dependencies on quirks or services.
+
+            Example:
+                # Check if attribute matches Oracle OID pattern
+                if FlextLdifUtilities.OID.matches_pattern(
+                    attr_definition,  # Raw string: "( 2.16.840.1.113894.1.1.1 ...)"
+                    re.compile(r'2\.16\.840\.1\.113894\..*')  # Oracle OID pattern
+                ):
+                    # Handle Oracle-specific attribute
+
+            Args:
+                definition: Raw attribute or objectClass definition string
+                oid_pattern: Compiled regex pattern to match OID (e.g., re.compile(r'2\\.16\\.840\\..*'))
+
+            Returns:
+                True if OID matches pattern, False otherwise
+
+            """
+            # Extract OID from definition string
+            oid = FlextLdifUtilities.OID.extract_from_definition(definition)
+            if not oid:
+                return False
+
+            # Check if OID matches server's pattern
+            return bool(oid_pattern.match(oid))
 
     class Parser:
         """Generic LDIF parsing utilities - simple helper functions.
@@ -696,6 +1478,81 @@ class FlextLdifUtilities:
             """Extract extension information from parsed metadata."""
             result = metadata.get("extensions", {})
             return result if isinstance(result, dict) else {}
+
+        @staticmethod
+        def extract_oid(definition: str) -> str | None:
+            """Extract OID from schema definition string.
+
+            Generic method to extract OID (numeric dot-separated) from schema
+            definitions. Works for both attribute and objectClass definitions.
+
+            Args:
+                definition: Schema definition string (e.g., "( 2.5.4.3 NAME 'cn' ... )")
+
+            Returns:
+                Extracted OID string or None if not found
+
+            """
+            if not definition or not isinstance(definition, str):
+                return None
+
+            # Match OID pattern: opening parenthesis followed by numeric OID
+            oid_pattern = re.compile(r"\(\s*([0-9.]+)")
+            match = re.match(oid_pattern, definition.strip())
+            return match.group(1) if match else None
+
+        @staticmethod
+        def extract_optional_field(
+            definition: str,
+            pattern: re.Pattern[str] | str,
+            default: str | None = None,
+        ) -> str | None:
+            """Extract optional field via regex pattern.
+
+            Generic method to extract optional fields from schema definitions.
+
+            Args:
+                definition: Schema definition string
+                pattern: Compiled regex pattern or pattern string
+                default: Default value if not found
+
+            Returns:
+                Extracted value or default
+
+            """
+            if not definition:
+                return default
+
+            if isinstance(pattern, str):
+                pattern = re.compile(pattern)
+
+            match = re.search(pattern, definition)
+            return match.group(1) if match else default
+
+        @staticmethod
+        def extract_boolean_flag(
+            definition: str,
+            pattern: re.Pattern[str] | str,
+        ) -> bool:
+            """Check if boolean flag exists in definition.
+
+            Generic method to check for boolean flags in schema definitions.
+
+            Args:
+                definition: Schema definition string
+                pattern: Compiled regex pattern or pattern string
+
+            Returns:
+                True if flag found, False otherwise
+
+            """
+            if not definition:
+                return False
+
+            if isinstance(pattern, str):
+                pattern = re.compile(pattern)
+
+            return re.search(pattern, definition) is not None
 
         @staticmethod
         def extract_extensions(definition: str) -> dict[str, Any]:
@@ -745,8 +1602,6 @@ class FlextLdifUtilities:
             """Unfold LDIF lines folded across multiple lines per RFC 2849.
 
             Continuation lines start with a single space.
-
-            # LEGACY: Was part of LdifParser._unfold_lines
             """
             lines: list[str] = []
             current_line = ""
@@ -767,7 +1622,9 @@ class FlextLdifUtilities:
             return lines
 
         @staticmethod
-        def parse_ldif_lines(ldif_content: str) -> list[tuple[str, dict[str, list[str]]]]:  # noqa: C901
+        def parse_ldif_lines(
+            ldif_content: str,
+        ) -> list[tuple[str, dict[str, list[str]]]]:
             """Parse LDIF content into (dn, attributes_dict) tuples - RFC 2849 compliant.
 
             Returns list of (dn, {attr: [values...]}) tuples where:
@@ -852,6 +1709,52 @@ class FlextLdifUtilities:
                 entries.append(current_entry)
 
             return entries
+
+        @staticmethod
+        def extract_schema_definitions(
+            ldif_content: str,
+            definition_type: str = "attributeTypes",
+            parse_callback: Any | None = None,
+        ) -> list[Any]:
+            """Extract and parse schema definitions from LDIF content.
+
+            Generic line-by-line parser that:
+            1. Iterates LDIF lines
+            2. Identifies definition type (case-insensitive)
+            3. Calls parse_callback for each definition
+            4. Returns list of parsed models
+
+            Args:
+                ldif_content: Raw LDIF content containing schema definitions
+                definition_type: Type to extract (attributeTypes, objectClasses, etc.)
+                parse_callback: Callable to parse each definition
+
+            Returns:
+                List of successfully parsed schema objects
+
+            """
+            definitions: list[Any] = []
+
+            for raw_line in ldif_content.split("\n"):
+                line = raw_line.strip()
+
+                # Case-insensitive match for definition type
+                if line.lower().startswith(f"{definition_type.lower()}:"):
+                    definition = line.split(":", 1)[1].strip()
+                    if parse_callback and callable(parse_callback):
+                        result = parse_callback(definition)
+                        # Handle FlextResult returns
+                        if hasattr(result, "is_success") and hasattr(result, "unwrap"):
+                            if result.is_success:
+                                definitions.append(result.unwrap())
+                        # Direct return value (not FlextResult)
+                        elif result is not None:
+                            definitions.append(result)
+                    else:
+                        # No callback, just collect definitions
+                        definitions.append(definition)
+
+            return definitions
 
     class ACL:
         """Generic ACL parsing and writing utilities."""
@@ -1076,6 +1979,154 @@ class FlextLdifUtilities:
                 and schema_oc.kind == FlextLdifConstants.Schema.STRUCTURAL
             ):
                 schema_oc.kind = FlextLdifConstants.Schema.AUXILIARY
+
+    class Entry:
+        """Entry transformation utilities - pure helper functions.
+
+        Common entry transformations extracted from server quirks.
+        Servers can use these for consistent attribute handling.
+        """
+
+        # Minimum length for base64 pattern matching
+        _MIN_BASE64_LENGTH: int = 8
+
+        @staticmethod
+        def convert_boolean_attributes(
+            attributes: dict[str, list[str]],
+            boolean_attr_names: set[str],
+            *,
+            source_format: str = "0/1",
+            target_format: str = "TRUE/FALSE",
+        ) -> dict[str, list[str]]:
+            """Convert boolean attribute values between formats.
+
+            Args:
+                attributes: Entry attributes {attr_name: [values]}
+                boolean_attr_names: Set of attribute names (lowercase) to convert
+                source_format: Input format ("0/1" or "TRUE/FALSE")
+                target_format: Output format ("0/1" or "TRUE/FALSE")
+
+            Returns:
+                New attributes dict with converted boolean values
+
+            """
+            if not attributes or not boolean_attr_names:
+                return attributes
+
+            result = dict(attributes)
+
+            for attr_name, values in result.items():
+                if attr_name.lower() in boolean_attr_names:
+                    converted = []
+
+                    for value in values:
+                        if source_format == "0/1" and target_format == "TRUE/FALSE":
+                            converted.append("TRUE" if value == "1" else "FALSE")
+                        elif source_format == "TRUE/FALSE" and target_format == "0/1":
+                            converted.append("1" if value.upper() == "TRUE" else "0")
+                        else:
+                            converted.append(value)
+
+                    result[attr_name] = converted
+
+            return result
+
+        @staticmethod
+        def validate_telephone_numbers(
+            telephone_values: list[str],
+        ) -> list[str]:
+            """Validate telephone numbers - must contain at least one digit.
+
+            Args:
+                telephone_values: List of telephone number values
+
+            Returns:
+                Filtered list containing only valid telephone numbers
+
+            """
+            if not telephone_values:
+                return []
+
+            # Telephone numbers must contain at least one digit
+            return [
+                value
+                for value in telephone_values
+                if any(char.isdigit() for char in value)
+            ]
+
+        @staticmethod
+        def normalize_attribute_names(
+            attributes: dict[str, list[str]],
+            case_map: dict[str, str],
+        ) -> dict[str, list[str]]:
+            """Normalize attribute names using case mapping.
+
+            Args:
+                attributes: Entry attributes dict
+                case_map: Dict mapping lowercase names → proper case
+
+            Returns:
+                New attributes dict with normalized attribute names
+
+            """
+            if not attributes or not case_map:
+                return attributes
+
+            result: dict[str, list[str]] = {}
+
+            for attr_name, values in attributes.items():
+                # Check if this attribute needs case normalization
+                normalized_name = case_map.get(attr_name.lower(), attr_name)
+                result[normalized_name] = values
+
+            return result
+
+        @staticmethod
+        def detect_base64_attributes(
+            attributes: dict[str, list[str]],
+        ) -> set[str]:
+            """Detect which attributes contain base64-encoded values.
+
+            Args:
+                attributes: Entry attributes dict
+
+            Returns:
+                Set of attribute names that contain base64 data
+
+            """
+            if not attributes:
+                return set()
+
+            base64_attrs: set[str] = set()
+
+            for attr_name, values in attributes.items():
+                for value in values:
+                    if not isinstance(value, str):
+                        continue
+
+                    # Check for base64 markers or non-UTF8 patterns
+                    try:
+                        value.encode("utf-8").decode("utf-8")
+                    except (UnicodeDecodeError, AttributeError):
+                        base64_attrs.add(attr_name)
+                        break
+
+                    # Check for common base64 patterns
+                    if (
+                        re.match(r"^[A-Za-z0-9+/]*={0,2}$", value)
+                        and len(value) > FlextLdifUtilities.Entry._MIN_BASE64_LENGTH
+                    ):
+                        # Looks like base64
+                        try:
+                            base64.b64decode(value, validate=True)
+                            base64_attrs.add(attr_name)
+                            break
+                        except Exception as e:
+                            logger.debug(
+                                f"Base64 validation failed for {attr_name}: {e}"
+                            )
+
+            return base64_attrs
 
 
 __all__ = [

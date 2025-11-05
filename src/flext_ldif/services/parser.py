@@ -219,29 +219,22 @@ class FlextLdifParserService(FlextService[Any]):
         server_type: str,
         options: FlextLdifModels.ParseFormatOptions,
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
-        # Use FlextLdifRegistry to get the appropriate quirk
-        # Server type is now properly resolved upstream, so this should always succeed
-        quirks = self._quirk_registry.get_quirks(server_type)
+        # Get the appropriate entry quirk for this server type from registry
+        # Entry quirks handle LDIF content parsing via entry.parse_content method
+        quirks = self._quirk_registry.get_entrys(server_type)
         if not quirks:
             return FlextResult.fail(
-                f"Internal error: No quirk found for resolved server type '{server_type}'"
+                f"Internal error: No entry quirk found for resolved server type '{server_type}'"
             )
 
-        # Use the first available quirk for this server type
+        # Use the first (highest priority) quirk for this server type
         quirk = quirks[0]
 
-        # Apply preserve_attribute_order option if supported by quirk
-        if options.preserve_attribute_order:
-            try:
-                return quirk.parse_ldif_content(content, preserve_attribute_order=True)
-            except TypeError:
-                # Fallback for quirks that don't support preserve_attribute_order
-                self._logger.warning(
-                    f"Quirk {type(quirk).__name__} doesn't support preserve_attribute_order option"
-                )
-                return quirk.parse_ldif_content(content)
-        else:
-            return quirk.parse_ldif_content(content)
+        # Access entry quirk directly
+        entry_quirk = quirk.entry if hasattr(quirk, "entry") else quirk
+
+        # Use public parse() interface (preserve_attribute_order is handled internally if supported)
+        return entry_quirk.parse(content)
 
     def _parse_from_file(
         self,
@@ -264,6 +257,11 @@ class FlextLdifParserService(FlextService[Any]):
         server_type: str,
         options: FlextLdifModels.ParseFormatOptions,
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
+        """Parse LDAP3 search results into Entry models.
+
+        Uses the quirk's entry parsing to properly create Entry models
+        from LDAP3 format (dn, attributes) tuples.
+        """
         quirks = self._quirk_registry.get_quirks(server_type)
         if not quirks:
             return FlextResult.fail(
@@ -273,15 +271,18 @@ class FlextLdifParserService(FlextService[Any]):
 
         entries = []
         for dn, attrs in results:
-            # Manually create a barebones Entry to normalize
-            raw_entry = FlextLdifModels.Entry.model_validate({
-                "dn": dn,
-                "attributes": attrs,
-            })
-            normalized_result = quirk.normalize_entry_to_rfc(raw_entry)
+            # Use quirk's parse_entry method to properly create Entry model
+            # This ensures proper DN and attributes handling per server type
+            entry_result = quirk.entry.parse_entry(dn, attrs)
 
-            if normalized_result.is_success:
-                entries.append(normalized_result.unwrap())
+            if entry_result.is_success:
+                entries.append(entry_result.unwrap())
+            else:
+                # Log warning but continue processing other entries
+                self._logger.warning(
+                    f"Failed to parse LDAP3 entry {dn}: {entry_result.error}"
+                )
+
         return FlextResult.ok(entries)
 
     def _resolve_server_type(
@@ -638,14 +639,9 @@ class FlextLdifParserService(FlextService[Any]):
             if attr_types:
                 for attr_def in attr_types:
                     for quirk in schema_quirks:
-                        # Create a dummy SchemaAttribute to satisfy the protocol
-                        dummy_attribute = (
-                            FlextLdifModels.SchemaAttribute.model_validate({
-                                "raw": attr_def
-                            })
-                        )
-                        if quirk.can_handle_attribute(dummy_attribute):
-                            result = quirk.parse_attribute(attr_def)
+                        # Check if quirk can handle this attribute definition (receives str)
+                        if quirk.schema.can_handle_attribute(attr_def):
+                            result = quirk.schema.parse_attribute(attr_def)
                             if result.is_success:
                                 schema_attributes.append(result.unwrap())
                                 break
@@ -657,13 +653,9 @@ class FlextLdifParserService(FlextService[Any]):
             if obj_classes:
                 for oc_def in obj_classes:
                     for quirk in schema_quirks:
-                        dummy_objectclass = (
-                            FlextLdifModels.SchemaObjectClass.model_validate({
-                                "raw": oc_def
-                            })
-                        )
-                        if quirk.can_handle_objectclass(dummy_objectclass):
-                            oc_result = quirk.parse_objectclass(oc_def)
+                        # Check if quirk can handle this objectClass definition (receives str)
+                        if quirk.schema.can_handle_objectclass(oc_def):
+                            oc_result = quirk.schema.parse_objectclass(oc_def)
                             if oc_result.is_success:
                                 schema_objectclasses.append(oc_result.unwrap())
                                 break
@@ -757,6 +749,52 @@ class FlextLdifParserService(FlextService[Any]):
             server_type=server_type,
             format_options=format_options,
         )
+
+    def parse_file(
+        self,
+        path: Path,
+        server_type: str | None = None,
+        encoding: str = "utf-8",
+        format_options: FlextLdifModels.ParseFormatOptions | None = None,
+    ) -> FlextResult[list[FlextLdifModels.Entry]]:
+        """Parse LDIF file and return entries directly.
+
+        This method is a convenience wrapper around parse_ldif_file that
+        returns entries directly instead of ParseResponse, for backward
+        compatibility with existing tests.
+
+        Note: This method name intentionally conflicts with Pydantic BaseModel.parse_file,
+        but serves a different purpose (parsing LDIF files, not Pydantic model files).
+        The type: ignore comment is used to suppress the override warning.
+
+        Args:
+            path: Path to LDIF file to parse
+            server_type: Optional server type (auto-detected if not provided)
+            encoding: File encoding (default: utf-8)
+            format_options: Optional parsing format options
+
+        Returns:
+            FlextResult containing list of parsed entries
+
+        Example:
+            >>> parser = FlextLdifParserService()
+            >>> result = parser.parse_file(Path("directory.ldif"))
+            >>> if result.is_success:
+            ...     entries = result.unwrap()
+
+        """
+        parse_result = self.parse_ldif_file(
+            path=path,
+            server_type=server_type,
+            encoding=encoding,
+            format_options=format_options,
+        )
+
+        if parse_result.is_failure:
+            return FlextResult.fail(parse_result.error)
+
+        parse_response = parse_result.unwrap()
+        return FlextResult.ok(parse_response.entries)
 
 
 __all__ = ["FlextLdifParserService"]

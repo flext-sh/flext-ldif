@@ -406,13 +406,13 @@ class TestACLConversionInfrastructure:
         oid_quirk = FlextLdifServersOid()
 
         # Verify ACL-related methods exist
-        hasattr(oid_quirk, "parse_acl")
+        hasattr(oid_quirk, "parse")
         hasattr(oid_quirk, "extract_acls_from_ldif")
         hasattr(oid_quirk, "convert_acl_to_rfc")
         hasattr(oid_quirk, "convert_acl_from_rfc")
 
         # Document infrastructure availability
-        assert True, "Documented: parse_acl method presence"
+        assert True, "Documented: parse method presence"
         assert True, "Documented: extract_acls_from_ldif method presence"
         assert True, "Documented: convert_acl_to_rfc method presence"
         assert True, "Documented: convert_acl_from_rfc method presence"
@@ -422,13 +422,13 @@ class TestACLConversionInfrastructure:
         oud_quirk = FlextLdifServersOud()
 
         # Verify ACL-related methods exist
-        hasattr(oud_quirk, "parse_acl")
+        hasattr(oud_quirk, "parse")
         hasattr(oud_quirk, "extract_acls_from_ldif")
         hasattr(oud_quirk, "convert_acl_to_rfc")
         hasattr(oud_quirk, "convert_acl_from_rfc")
 
         # Document infrastructure availability
-        assert True, "Documented: parse_acl method presence"
+        assert True, "Documented: parse method presence"
         assert True, "Documented: extract_acls_from_ldif method presence"
         assert True, "Documented: convert_acl_to_rfc method presence"
         assert True, "Documented: convert_acl_from_rfc method presence"

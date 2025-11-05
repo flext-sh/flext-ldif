@@ -21,7 +21,9 @@ from flext_ldif.models import FlextLdifModels
 from flext_ldif.services.sorting import FlextLdifSortingService
 
 
-def create_entry(dn_str: str, attributes: dict[str, list[str]]) -> FlextLdifModels.Entry:
+def create_entry(
+    dn_str: str, attributes: dict[str, list[str]]
+) -> FlextLdifModels.Entry:
     """Create test entry with DN and attributes."""
     dn = FlextLdifModels.DistinguishedName(value=dn_str)
     attrs = FlextLdifModels.LdifAttributes.create(attributes).unwrap()
@@ -33,7 +35,7 @@ def create_entry(dn_str: str, attributes: dict[str, list[str]]) -> FlextLdifMode
 # ════════════════════════════════════════════════════════════════════════════
 
 
-def test_by_hierarchy_exists_and_works():
+def test_by_hierarchy_exists_and_works() -> None:
     """Test by_hierarchy classmethod exists and works."""
     entries = [
         create_entry("cn=deep,ou=level2,dc=example,dc=com", {"cn": ["deep"]}),
@@ -51,7 +53,7 @@ def test_by_hierarchy_exists_and_works():
     assert sorted_entries[2].dn.value == "cn=deep,ou=level2,dc=example,dc=com"
 
 
-def test_by_dn_exists_and_works():
+def test_by_dn_exists_and_works() -> None:
     """Test by_dn classmethod exists and works."""
     entries = [
         create_entry("cn=zzz,dc=example,dc=com", {"cn": ["zzz"]}),
@@ -67,7 +69,7 @@ def test_by_dn_exists_and_works():
     assert dns == sorted(dns)
 
 
-def test_by_schema_exists_and_works():
+def test_by_schema_exists_and_works() -> None:
     """Test by_schema classmethod exists and works."""
     entries = [
         create_entry(
@@ -86,7 +88,7 @@ def test_by_schema_exists_and_works():
     assert len(sorted_entries) == 2
 
 
-def test_by_custom_exists_and_works():
+def test_by_custom_exists_and_works() -> None:
     """Test by_custom classmethod exists and works."""
     entries = [
         create_entry("cn=aaa,ou=b,dc=example,dc=com", {"cn": ["aaa"]}),  # depth 2
@@ -112,14 +114,16 @@ def test_by_custom_exists_and_works():
 # ════════════════════════════════════════════════════════════════════════════
 
 
-def test_execute_hierarchy():
+def test_execute_hierarchy() -> None:
     """Test execute() with hierarchy sorting."""
     entries = [
         create_entry(
             "uid=jdoe,ou=people,ou=users,dc=example,dc=com",
             {"uid": ["jdoe"], "objectClass": ["person"]},
         ),
-        create_entry("dc=example,dc=com", {"dc": ["example"], "objectClass": ["domain"]}),
+        create_entry(
+            "dc=example,dc=com", {"dc": ["example"], "objectClass": ["domain"]}
+        ),
         create_entry(
             "ou=users,dc=example,dc=com",
             {"ou": ["users"], "objectClass": ["organizationalUnit"]},
@@ -135,7 +139,7 @@ def test_execute_hierarchy():
     assert sorted_entries[0].dn.value == "dc=example,dc=com"
 
 
-def test_execute_alphabetical():
+def test_execute_alphabetical() -> None:
     """Test execute() with alphabetical sorting."""
     entries = [
         create_entry("cn=zzz,dc=example,dc=com", {"cn": ["zzz"]}),
@@ -153,7 +157,7 @@ def test_execute_alphabetical():
     assert dns == sorted(dns)
 
 
-def test_execute_custom():
+def test_execute_custom() -> None:
     """Test execute() with custom sorting."""
 
     def custom_pred(e: FlextLdifModels.Entry) -> str:
@@ -165,13 +169,16 @@ def test_execute_custom():
     ]
 
     result = FlextLdifSortingService(
-        entries=entries, sort_target="entries", sort_by="custom", custom_predicate=custom_pred
+        entries=entries,
+        sort_target="entries",
+        sort_by="custom",
+        custom_predicate=custom_pred,
     ).execute()
 
     assert result.is_success
 
 
-def test_execute_attributes_target():
+def test_execute_attributes_target() -> None:
     """Test execute() with attributes as target."""
     entry = create_entry(
         "cn=test,dc=example,dc=com",
@@ -189,23 +196,21 @@ def test_execute_attributes_target():
     assert len(attrs) == 3
 
 
-def test_execute_acl_target():
+def test_execute_acl_target() -> None:
     """Test execute() with acl as target."""
     entry = create_entry(
         "cn=test,dc=example,dc=com",
         {"cn": ["test"], "acl": ["zzz-rule", "aaa-rule"]},
     )
 
-    result = FlextLdifSortingService(
-        entries=[entry], sort_target="acl"
-    ).execute()
+    result = FlextLdifSortingService(entries=[entry], sort_target="acl").execute()
 
     assert result.is_success
     sorted_entries = result.unwrap()
     assert len(sorted_entries) == 1
 
 
-def test_execute_combined_target():
+def test_execute_combined_target() -> None:
     """Test execute() with combined target."""
     entries = [
         create_entry(
@@ -235,7 +240,7 @@ def test_execute_combined_target():
 # ════════════════════════════════════════════════════════════════════════════
 
 
-def test_sort_classmethod():
+def test_sort_classmethod() -> None:
     """Test sort() classmethod."""
     entries = [
         create_entry("cn=zzz,dc=example,dc=com", {"cn": ["zzz"]}),
@@ -248,7 +253,7 @@ def test_sort_classmethod():
     assert sorted_entries[0].dn.value == "cn=aaa,dc=example,dc=com"
 
 
-def test_sort_classmethod_with_custom():
+def test_sort_classmethod_with_custom() -> None:
     """Test sort() classmethod with custom predicate."""
     entries = [
         create_entry("cn=a,ou=b,dc=example,dc=com", {"cn": ["a"]}),  # length: 22
@@ -272,7 +277,7 @@ def test_sort_classmethod_with_custom():
 # ════════════════════════════════════════════════════════════════════════════
 
 
-def test_builder_pattern():
+def test_builder_pattern() -> None:
     """Test fluent builder pattern."""
     entries = [
         create_entry("cn=zzz,dc=example,dc=com", {"zzz": ["z"], "cn": ["zzz"]}),
@@ -290,7 +295,7 @@ def test_builder_pattern():
     assert len(sorted_entries) == 2
 
 
-def test_builder_with_attribute_sorting():
+def test_builder_with_attribute_sorting() -> None:
     """Test builder with attribute sorting."""
     entries = [
         create_entry("cn=test,dc=example,dc=com", {"zzz": ["z"], "aaa": ["a"]}),
@@ -310,10 +315,12 @@ def test_builder_with_attribute_sorting():
     assert len(attrs) == 2
 
 
-def test_builder_with_attribute_order():
+def test_builder_with_attribute_order() -> None:
     """Test builder with custom attribute order."""
     entries = [
-        create_entry("cn=test,dc=example,dc=com", {"zzz": ["z"], "cn": ["test"], "aaa": ["a"]}),
+        create_entry(
+            "cn=test,dc=example,dc=com", {"zzz": ["z"], "cn": ["test"], "aaa": ["a"]}
+        ),
     ]
 
     sorted_entries = (
@@ -336,14 +343,14 @@ def test_builder_with_attribute_order():
 # ════════════════════════════════════════════════════════════════════════════
 
 
-def test_empty_entries():
+def test_empty_entries() -> None:
     """Test sorting empty list."""
     result = FlextLdifSortingService.by_hierarchy([])
     assert result.is_success
     assert result.unwrap() == []
 
 
-def test_single_entry():
+def test_single_entry() -> None:
     """Test sorting single entry."""
     entry = create_entry("dc=example,dc=com", {"dc": ["example"]})
     result = FlextLdifSortingService.by_hierarchy([entry])
@@ -351,7 +358,7 @@ def test_single_entry():
     assert len(result.unwrap()) == 1
 
 
-def test_duplicate_dns():
+def test_duplicate_dns() -> None:
     """Test sorting with duplicate DNs."""
     entries = [
         create_entry("cn=test,dc=example,dc=com", {"cn": ["test1"]}),
@@ -362,7 +369,7 @@ def test_duplicate_dns():
     assert len(result.unwrap()) == 2
 
 
-def test_unicode_dns():
+def test_unicode_dns() -> None:
     """Test sorting with Unicode."""
     entries = [
         create_entry("cn=日本語,dc=example,dc=com", {"cn": ["日本語"]}),
@@ -378,7 +385,7 @@ def test_unicode_dns():
 # ════════════════════════════════════════════════════════════════════════════
 
 
-def test_invalid_sort_target():
+def test_invalid_sort_target() -> None:
     """Test invalid sort_target raises validation error."""
     from pydantic import ValidationError
 
@@ -391,7 +398,7 @@ def test_invalid_sort_target():
         )
 
 
-def test_invalid_sort_strategy():
+def test_invalid_sort_strategy() -> None:
     """Test invalid sort_by raises validation error."""
     from pydantic import ValidationError
 
@@ -404,7 +411,7 @@ def test_invalid_sort_strategy():
         )
 
 
-def test_custom_without_predicate():
+def test_custom_without_predicate() -> None:
     """Test custom sort_by without predicate raises validation error."""
     from pydantic import ValidationError
 

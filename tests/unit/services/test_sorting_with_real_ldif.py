@@ -103,7 +103,9 @@ def oid_acl(oid_acl_ldif_path: Path) -> list[FlextLdifModels.Entry]:
 class TestSortingWithRealOIDEntries:
     """Test sorting with real OID LDIF entries."""
 
-    def test_by_hierarchy_real_ldif(self, oid_entries: list[FlextLdifModels.Entry]) -> None:
+    def test_by_hierarchy_real_ldif(
+        self, oid_entries: list[FlextLdifModels.Entry]
+    ) -> None:
         """Test by_hierarchy with real OID LDIF data."""
         if not oid_entries:
             pytest.skip("No OID entries loaded")
@@ -138,7 +140,9 @@ class TestSortingWithRealOIDEntries:
         dns = [e.dn.value.lower() for e in sorted_entries]
         assert dns == sorted(dns)
 
-    def test_execute_hierarchy_real_ldif(self, oid_entries: list[FlextLdifModels.Entry]) -> None:
+    def test_execute_hierarchy_real_ldif(
+        self, oid_entries: list[FlextLdifModels.Entry]
+    ) -> None:
         """Test execute() with hierarchy sorting on real data."""
         if not oid_entries:
             pytest.skip("No OID entries loaded")
@@ -243,14 +247,14 @@ class TestSortingWithRealOIDSchema:
 class TestSortingWithRealOIDACL:
     """Test sorting with real OID ACL LDIF."""
 
-    def test_execute_acl_target_real_ldif(self, oid_acl: list[FlextLdifModels.Entry]) -> None:
+    def test_execute_acl_target_real_ldif(
+        self, oid_acl: list[FlextLdifModels.Entry]
+    ) -> None:
         """Test ACL sorting on real data."""
         if not oid_acl:
             pytest.skip("No OID ACL loaded")
 
-        result = FlextLdifSortingService(
-            entries=oid_acl, sort_target="acl"
-        ).execute()
+        result = FlextLdifSortingService(entries=oid_acl, sort_target="acl").execute()
 
         assert result.is_success
         sorted_entries = result.unwrap()

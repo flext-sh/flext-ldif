@@ -102,7 +102,9 @@ class TestDnNormalization:
         assert "cn=" in normalized.lower()
         assert "dc=" in normalized.lower()
 
-    def test_normalize_preserves_value_case(self, dn_service: FlextLdifDnService) -> None:
+    def test_normalize_preserves_value_case(
+        self, dn_service: FlextLdifDnService
+    ) -> None:
         """Normalize preserves case in attribute values."""
         result = dn_service.normalize("cn=JohnDoe,dc=EXAMPLE,dc=com")
         assert result.is_success
@@ -132,7 +134,9 @@ class TestDnCleaning:
         assert "cn=" in cleaned  # Spaces before = removed
         assert " John" in cleaned  # Spaces in values preserved
 
-    def test_clean_trailing_backslash_space(self, dn_service: FlextLdifDnService) -> None:
+    def test_clean_trailing_backslash_space(
+        self, dn_service: FlextLdifDnService
+    ) -> None:
         """Clean DN with trailing backslash+space."""
         cleaned = dn_service.clean_dn(r"cn=OIM-TEST\ ,ou=Users,dc=com")
         assert cleaned == "cn=OIM-TEST,ou=Users,dc=com"
@@ -167,7 +171,9 @@ class TestDnEscaping:
         escaped = dn_service.escape_dn_value("#1 User")
         assert escaped == "\\231 User"
 
-    def test_escape_multiple_special_chars(self, dn_service: FlextLdifDnService) -> None:
+    def test_escape_multiple_special_chars(
+        self, dn_service: FlextLdifDnService
+    ) -> None:
         """Escape multiple special characters."""
         escaped = dn_service.escape_dn_value('Test+User,"Admin"')
         # Should escape +, comma, and quotes
@@ -223,8 +229,7 @@ class TestDnComparison:
     def test_compare_equal_dns(self, dn_service: FlextLdifDnService) -> None:
         """Compare equal DNs (different case)."""
         result = dn_service.compare_dns(
-            "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
-            "CN=ADMIN,DC=EXAMPLE,DC=COM"
+            "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com", "CN=ADMIN,DC=EXAMPLE,DC=COM"
         )
         assert result.is_success
         assert result.unwrap() == 0
@@ -232,8 +237,7 @@ class TestDnComparison:
     def test_compare_different_dns(self, dn_service: FlextLdifDnService) -> None:
         """Compare different DNs."""
         result = dn_service.compare_dns(
-            "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
-            "cn=user,dc=example,dc=com"
+            "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com", "cn=user,dc=example,dc=com"
         )
         assert result.is_success
         comparison = result.unwrap()
@@ -241,10 +245,7 @@ class TestDnComparison:
 
     def test_compare_invalid_dn(self, dn_service: FlextLdifDnService) -> None:
         """Compare with invalid DN should fail."""
-        result = dn_service.compare_dns(
-            "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
-            "invalid dn"
-        )
+        result = dn_service.compare_dns("cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com", "invalid dn")
         assert result.is_failure
 
 
@@ -313,10 +314,7 @@ class TestDnServiceBuilderPattern:
     def test_builder_escape(self, dn_service: FlextLdifDnService) -> None:
         """Builder pattern for escape operation."""
         escaped = (
-            dn_service.builder()
-            .with_dn("Smith, John")
-            .with_operation("escape")
-            .build()
+            dn_service.builder().with_dn("Smith, John").with_operation("escape").build()
         )
         assert escaped == "Smith\\2c John"
 
@@ -327,8 +325,7 @@ class TestDnServiceExecutePattern:
     def test_execute_normalize(self, dn_service: FlextLdifDnService) -> None:
         """Execute normalize operation."""
         result = FlextLdifDnService(
-            dn="CN=Admin,DC=Example,DC=Com",
-            operation="normalize"
+            dn="CN=Admin,DC=Example,DC=Com", operation="normalize"
         ).execute()
         assert result.is_success
         assert result.unwrap()
@@ -336,18 +333,14 @@ class TestDnServiceExecutePattern:
     def test_execute_validate_valid(self, dn_service: FlextLdifDnService) -> None:
         """Execute validate operation on valid DN."""
         result = FlextLdifDnService(
-            dn="cn=test,dc=example,dc=com",
-            operation="validate"
+            dn="cn=test,dc=example,dc=com", operation="validate"
         ).execute()
         assert result.is_success
         assert result.unwrap() == "True"
 
     def test_execute_validate_invalid(self, dn_service: FlextLdifDnService) -> None:
         """Execute validate operation on invalid DN."""
-        result = FlextLdifDnService(
-            dn="invalid dn",
-            operation="validate"
-        ).execute()
+        result = FlextLdifDnService(dn="invalid dn", operation="validate").execute()
         assert result.is_success
         assert result.unwrap() == "False"
 
@@ -356,7 +349,7 @@ class TestDnServiceExecutePattern:
         result = FlextLdifDnService(
             dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
             other_dn="CN=ADMIN,DC=EXAMPLE,DC=COM",
-            operation="compare"
+            operation="compare",
         ).execute()
         assert result.is_success
         assert result.unwrap() == "0"  # Equal
@@ -394,7 +387,9 @@ class TestCaseRegistry:
         variants = registry.get_case_variants("cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com")
         assert len(variants) == 3
 
-    def test_validate_oud_consistency_consistent(self, dn_service: FlextLdifDnService) -> None:
+    def test_validate_oud_consistency_consistent(
+        self, dn_service: FlextLdifDnService
+    ) -> None:
         """Validate OUD consistency when all variants are same case."""
         registry = FlextLdifDnService.CaseRegistry()
         registry.register_dn("cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com")
@@ -402,7 +397,9 @@ class TestCaseRegistry:
         assert result.is_success
         assert result.unwrap() is True
 
-    def test_validate_oud_consistency_inconsistent(self, dn_service: FlextLdifDnService) -> None:
+    def test_validate_oud_consistency_inconsistent(
+        self, dn_service: FlextLdifDnService
+    ) -> None:
         """Validate OUD consistency with multiple case variants."""
         registry = FlextLdifDnService.CaseRegistry()
         registry.register_dn("CN=Admin,DC=Example,DC=Com")
@@ -433,7 +430,9 @@ class TestCaseRegistry:
 class TestDnServiceIntegration:
     """Integration tests with real-world DN patterns."""
 
-    def test_workflow_parse_validate_normalize(self, dn_service: FlextLdifDnService) -> None:
+    def test_workflow_parse_validate_normalize(
+        self, dn_service: FlextLdifDnService
+    ) -> None:
         """Complete workflow: parse, validate, normalize."""
         dn = "CN=John Doe,OU=Users,DC=Example,DC=Com"
 
@@ -467,7 +466,9 @@ class TestDnServiceIntegration:
         escaped = dn_service.escape_dn_value("Smith, John")
         assert "\\" in escaped
 
-    def test_workflow_registry_for_migration(self, dn_service: FlextLdifDnService) -> None:
+    def test_workflow_registry_for_migration(
+        self, dn_service: FlextLdifDnService
+    ) -> None:
         """Workflow: use registry to track DN case during migration."""
         source_dns = [
             "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",

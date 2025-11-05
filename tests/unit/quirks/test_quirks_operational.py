@@ -66,7 +66,7 @@ class TestOidQuirksWithRealFixtures:
             pytest.skip(f"Not enough attributes in fixture (need {attr_index + 1})")
 
         attr_def = oid_schema_attributes[attr_index]
-        result = oid_quirk.parse_attribute(attr_def)
+        result = oid_quirk.parse(attr_def)
 
         assert result.is_success, f"Failed to parse attribute: {result.error}"
         parsed = result.unwrap()
@@ -92,7 +92,7 @@ class TestOidQuirksWithRealFixtures:
             pytest.skip(f"Not enough objectClasses in fixture (need {oc_index + 1})")
 
         oc_def = oid_schema_objectclasses[oc_index]
-        result = oid_quirk.parse_objectclass(oc_def)
+        result = oid_quirk.parse(oc_def)
 
         assert result.is_success, f"Failed to parse objectClass: {result.error}"
         parsed = result.unwrap()
@@ -114,7 +114,7 @@ class TestOidQuirksWithRealFixtures:
         failures = []
 
         for attr in oid_schema_attributes:
-            result = oid_quirk.parse_attribute(attr)
+            result = oid_quirk.parse(attr)
             if result.is_success:
                 successes += 1
             else:

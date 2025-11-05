@@ -59,9 +59,7 @@ def test_write_basic_string_output(
 ) -> None:
     """Test writing entries to string returns LDIF content."""
     result = writer.write(
-        entries=[simple_entry],
-        target_server_type="rfc",
-        output_target="string"
+        entries=[simple_entry], target_server_type="rfc", output_target="string"
     )
 
     assert result.is_success, f"Write failed: {result.error}"

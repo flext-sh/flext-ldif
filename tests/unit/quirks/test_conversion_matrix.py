@@ -30,51 +30,42 @@ class FailingParseQuirk(FlextLdifServersBase.Schema):
         self.priority = 100
         self.error_msg = error_msg
 
-    def can_handle_attribute(self, attr_definition: str) -> bool:
+    def _can_handle_attribute(
+        self, attr_definition: str | FlextLdifModels.SchemaAttribute
+    ) -> bool:
         """Always handle attributes for testing."""
         return True
 
-    def can_handle_objectclass(self, oc_definition: str) -> bool:
+    def _can_handle_objectclass(
+        self, oc_definition: str | FlextLdifModels.SchemaObjectClass
+    ) -> bool:
         """Always handle objectClass for testing."""
         return True
 
-    def can_handle_acl(self, acl_definition: str) -> bool:
+    def _can_handle_acl(
+        self, acl_line: str | FlextLdifModels.Acl
+    ) -> bool:
         """Always handle ACL for testing."""
         return True
 
-    def parse_attribute(self, data: str) -> FlextResult[dict[str, object]]:
+    def _parse_attribute(
+        self, attr_definition: str
+    ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
         return FlextResult.fail(self.error_msg)
 
-    def parse_objectclass(self, data: str) -> FlextResult[dict[str, object]]:
+    def _parse_objectclass(
+        self, oc_definition: str
+    ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
         return FlextResult.fail(self.error_msg)
 
-    def parse_acl(self, data: str) -> FlextResult[dict[str, object]]:
+    def _write_attribute(
+        self, attr_data: FlextLdifModels.SchemaAttribute
+    ) -> FlextResult[str]:
         return FlextResult.fail(self.error_msg)
 
-    def convert_attribute_to_rfc(
-        self, data: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
-        return FlextResult.fail(self.error_msg)
-
-    def convert_objectclass_to_rfc(
-        self, data: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
-        return FlextResult.fail(self.error_msg)
-
-    def convert_attribute_from_rfc(
-        self, data: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
-        return FlextResult.fail(self.error_msg)
-
-    def convert_objectclass_from_rfc(
-        self, data: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
-        return FlextResult.fail(self.error_msg)
-
-    def write_attribute_to_rfc(self, data: dict[str, object]) -> FlextResult[str]:
-        return FlextResult.fail(self.error_msg)
-
-    def write_objectclass_to_rfc(self, data: dict[str, object]) -> FlextResult[str]:
+    def _write_objectclass(
+        self, oc_data: FlextLdifModels.SchemaObjectClass
+    ) -> FlextResult[str]:
         return FlextResult.fail(self.error_msg)
 
 
@@ -83,51 +74,42 @@ class SuccessfulParseQuirk(FlextLdifServersBase.Schema):
 
     def __init__(self) -> None:
         """Initialize quirk."""
-        self.server_type = "test_successful_parse"
-        self.priority = 100
+        super().__init__()
 
-    def can_handle_attribute(self, attr_definition: str) -> bool:
+    def _can_handle_attribute(
+        self, attr_definition: str | FlextLdifModels.SchemaAttribute
+    ) -> bool:
         """Always handle attributes for testing."""
         return True
 
-    def can_handle_objectclass(self, oc_definition: str) -> bool:
+    def _can_handle_objectclass(
+        self, oc_definition: str | FlextLdifModels.SchemaObjectClass
+    ) -> bool:
         """Always handle objectClass for testing."""
         return True
 
-    def can_handle_acl(self, acl_definition: str) -> bool:
-        """Always handle ACL for testing."""
-        return True
+    def _parse_attribute(
+        self, attr_definition: str
+    ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
+        return FlextResult.ok(
+            FlextLdifModels.SchemaAttribute(oid="1.2.3.4.5", name="test")
+        )
 
-    def parse_attribute(self, data: str) -> FlextResult[dict[str, object]]:
-        return FlextResult.ok({"name": "test", "oid": "1.2.3.4.5"})
+    def _parse_objectclass(
+        self, oc_definition: str
+    ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
+        return FlextResult.ok(
+            FlextLdifModels.SchemaObjectClass(oid="1.2.3.4.6", name="test")
+        )
 
-    def convert_attribute_to_rfc(
-        self, data: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
-        return FlextResult.ok(data)
-
-    def convert_attribute_from_rfc(
-        self, data: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
-        return FlextResult.ok(data)
-
-    def write_attribute_to_rfc(self, data: dict[str, object]) -> FlextResult[str]:
+    def _write_attribute(
+        self, attr_data: FlextLdifModels.SchemaAttribute
+    ) -> FlextResult[str]:
         return FlextResult.ok("(test)")
 
-    def parse_objectclass(self, data: str) -> FlextResult[dict[str, object]]:
-        return FlextResult.ok({"name": "test", "oid": "1.2.3.4.6"})
-
-    def convert_objectclass_to_rfc(
-        self, data: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
-        return FlextResult.ok(data)
-
-    def convert_objectclass_from_rfc(
-        self, data: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
-        return FlextResult.ok(data)
-
-    def write_objectclass_to_rfc(self, data: dict[str, object]) -> FlextResult[str]:
+    def _write_objectclass(
+        self, oc_data: FlextLdifModels.SchemaObjectClass
+    ) -> FlextResult[str]:
         return FlextResult.ok("(test)")
 
 
@@ -140,61 +122,33 @@ class ConversionFailingQuirk(FlextLdifServersBase.Schema):
         self.priority = 100
         self.fail_on = fail_on
 
-    def can_handle_attribute(self, attr_definition: str) -> bool:
+    def _can_handle_attribute(self, attr_definition: str | FlextLdifModels.SchemaAttribute) -> bool:
         """Always handle attributes for testing."""
         return True
 
-    def can_handle_objectclass(self, oc_definition: str) -> bool:
+    def _can_handle_objectclass(self, oc_definition: str | FlextLdifModels.SchemaObjectClass) -> bool:
         """Always handle objectClass for testing."""
         return True
 
-    def can_handle_acl(self, acl_definition: str) -> bool:
+    def _can_handle_acl(self, acl_line: str | FlextLdifModels.Acl) -> bool:
         """Always handle ACL for testing."""
         return True
 
-    def parse_attribute(self, data: str) -> FlextResult[dict[str, object]]:
-        return FlextResult.ok({"name": "test"})
+    def _parse_attribute(self, attr_definition: str) -> FlextResult[FlextLdifModels.SchemaAttribute]:
+        return FlextResult.ok(FlextLdifModels.SchemaAttribute(oid="1.2.3.4", name="test"))
 
-    def convert_attribute_to_rfc(
-        self, data: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
-        if self.fail_on == "to_rfc":
-            return FlextResult.fail("to_rfc failed")
-        return FlextResult.ok(data)
-
-    def convert_attribute_from_rfc(
-        self, data: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
-        if self.fail_on == "from_rfc":
-            return FlextResult.fail("from_rfc failed")
-        return FlextResult.ok(data)
-
-    def write_attribute_to_rfc(self, data: dict[str, object]) -> FlextResult[str]:
+    def _write_attribute(self, attr_data: FlextLdifModels.SchemaAttribute) -> FlextResult[str]:
         if self.fail_on == "write":
             return FlextResult.fail("write failed")
-        return FlextResult.ok("(test)")
+        return FlextResult.ok(f"({attr_data.oid} NAME '{attr_data.name}')")
 
-    def parse_objectclass(self, data: str) -> FlextResult[dict[str, object]]:
-        return FlextResult.ok({"name": "test"})
+    def _parse_objectclass(self, oc_definition: str) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
+        return FlextResult.ok(FlextLdifModels.SchemaObjectClass(oid="1.2.3.5", name="test"))
 
-    def convert_objectclass_to_rfc(
-        self, data: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
-        if self.fail_on == "to_rfc":
-            return FlextResult.fail("to_rfc failed")
-        return FlextResult.ok(data)
-
-    def convert_objectclass_from_rfc(
-        self, data: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
-        if self.fail_on == "from_rfc":
-            return FlextResult.fail("from_rfc failed")
-        return FlextResult.ok(data)
-
-    def write_objectclass_to_rfc(self, data: dict[str, object]) -> FlextResult[str]:
+    def _write_objectclass(self, oc_data: FlextLdifModels.SchemaObjectClass) -> FlextResult[str]:
         if self.fail_on == "write":
             return FlextResult.fail("write failed")
-        return FlextResult.ok("(test)")
+        return FlextResult.ok(f"({oc_data.oid} NAME '{oc_data.name}')")
 
 
 class ExceptionThrowingQuirk(FlextLdifServersBase.Schema):
@@ -205,59 +159,31 @@ class ExceptionThrowingQuirk(FlextLdifServersBase.Schema):
         self.server_type = "test_exception_throwing"
         self.priority = 100
 
-    def can_handle_attribute(self, attr_definition: str) -> bool:
+    def _can_handle_attribute(self, attr_definition: str | FlextLdifModels.SchemaAttribute) -> bool:
         """Always handle attributes for testing."""
         return True
 
-    def can_handle_objectclass(self, oc_definition: str) -> bool:
+    def _can_handle_objectclass(self, oc_definition: str | FlextLdifModels.SchemaObjectClass) -> bool:
         """Always handle objectClass for testing."""
         return True
 
-    def can_handle_acl(self, acl_definition: str) -> bool:
+    def _can_handle_acl(self, acl_line: str | FlextLdifModels.Acl) -> bool:
         """Always handle ACL for testing."""
         return True
 
-    def parse_attribute(self, data: str) -> FlextResult[dict[str, object]]:
+    def _parse_attribute(self, attr_definition: str) -> FlextResult[FlextLdifModels.SchemaAttribute]:
         msg = "unexpected error"
         raise RuntimeError(msg)
 
-    def parse_objectclass(self, data: str) -> FlextResult[dict[str, object]]:
+    def _parse_objectclass(self, oc_definition: str) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
         msg = "unexpected error"
         raise RuntimeError(msg)
 
-    def parse_acl(self, data: str) -> FlextResult[dict[str, object]]:
+    def _write_attribute(self, attr_data: FlextLdifModels.SchemaAttribute) -> FlextResult[str]:
         msg = "unexpected error"
         raise RuntimeError(msg)
 
-    def convert_attribute_to_rfc(
-        self, data: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
-        msg = "unexpected error"
-        raise RuntimeError(msg)
-
-    def convert_objectclass_to_rfc(
-        self, data: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
-        msg = "unexpected error"
-        raise RuntimeError(msg)
-
-    def convert_attribute_from_rfc(
-        self, data: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
-        msg = "unexpected error"
-        raise RuntimeError(msg)
-
-    def convert_objectclass_from_rfc(
-        self, data: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
-        msg = "unexpected error"
-        raise RuntimeError(msg)
-
-    def write_attribute_to_rfc(self, data: dict[str, object]) -> FlextResult[str]:
-        msg = "unexpected error"
-        raise RuntimeError(msg)
-
-    def write_objectclass_to_rfc(self, data: dict[str, object]) -> FlextResult[str]:
+    def _write_objectclass(self, oc_data: FlextLdifModels.SchemaObjectClass) -> FlextResult[str]:
         msg = "unexpected error"
         raise RuntimeError(msg)
 
@@ -270,54 +196,30 @@ class MissingParseObjectClassQuirk(FlextLdifServersBase.Schema):
         self.server_type = "test_missing_parse_oc"
         self.priority = 100
 
-    def can_handle_attribute(self, attr_definition: str) -> bool:
+    def _can_handle_attribute(self, attr_definition: str | FlextLdifModels.SchemaAttribute) -> bool:
         """Always handle attributes for testing."""
         return True
 
-    def can_handle_objectclass(self, oc_definition: str) -> bool:
+    def _can_handle_objectclass(self, oc_definition: str | FlextLdifModels.SchemaObjectClass) -> bool:
         """Does NOT handle objectClass - that's the point of this test."""
         return False
 
-    def can_handle_acl(self, acl_definition: str) -> bool:
+    def _can_handle_acl(self, acl_line: str | FlextLdifModels.Acl) -> bool:
         """Always handle ACL for testing."""
         return True
 
-    def parse_attribute(self, data: str) -> FlextResult[dict[str, object]]:
+    def _parse_attribute(self, attr_definition: str) -> FlextResult[FlextLdifModels.SchemaAttribute]:
         """Dummy implementation."""
-        return FlextResult.ok({})
+        return FlextResult.ok(FlextLdifModels.SchemaAttribute(oid="1.2.3.4", name="test"))
 
-    def parse_objectclass(self, data: str) -> FlextResult[dict[str, object]]:
+    def _parse_objectclass(self, oc_definition: str) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
         """Should never be called since can_handle_objectclass returns False."""
         return FlextResult.fail("Not implemented")
 
-    def parse_acl(self, data: str) -> FlextResult[dict[str, object]]:
-        """Dummy implementation."""
-        return FlextResult.ok({})
-
-    def convert_attribute_to_rfc(
-        self, data: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
-        return FlextResult.ok(data)
-
-    def convert_objectclass_to_rfc(
-        self, data: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
-        return FlextResult.ok(data)
-
-    def convert_attribute_from_rfc(
-        self, data: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
-        return FlextResult.ok(data)
-
-    def convert_objectclass_from_rfc(
-        self, data: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
-        return FlextResult.ok(data)
-
-    def write_attribute_to_rfc(self, data: dict[str, object]) -> FlextResult[str]:
+    def _write_attribute(self, attr_data: FlextLdifModels.SchemaAttribute) -> FlextResult[str]:
         return FlextResult.ok("(test)")
 
-    def write_objectclass_to_rfc(self, data: dict[str, object]) -> FlextResult[str]:
+    def _write_objectclass(self, oc_data: FlextLdifModels.SchemaObjectClass) -> FlextResult[str]:
         return FlextResult.ok("(test)")
 
 
@@ -329,116 +231,62 @@ class ObjectClassParseOnlyQuirk(FlextLdifServersBase.Schema):
         self.server_type = "test_parse_only"
         self.priority = 100
 
-    def can_handle_attribute(self, attr_definition: str) -> bool:
+    def _can_handle_attribute(self, attr_definition: str | FlextLdifModels.SchemaAttribute) -> bool:
         return True
 
-    def can_handle_objectclass(self, oc_definition: str) -> bool:
+    def _can_handle_objectclass(self, oc_definition: str | FlextLdifModels.SchemaObjectClass) -> bool:
         return True
 
-    def can_handle_acl(self, acl_definition: str) -> bool:
+    def _can_handle_acl(self, acl_line: str | FlextLdifModels.Acl) -> bool:
         return True
 
-    def parse_attribute(self, data: str) -> FlextResult[dict[str, object]]:
-        return FlextResult.ok({})
+    def _parse_attribute(self, attr_definition: str) -> FlextResult[FlextLdifModels.SchemaAttribute]:
+        return FlextResult.ok(FlextLdifModels.SchemaAttribute(oid="1.2.3.4", name="test"))
 
-    def parse_objectclass(self, data: str) -> FlextResult[dict[str, object]]:
-        return FlextResult.ok({"name": "test"})
+    def _parse_objectclass(self, oc_definition: str) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
+        return FlextResult.ok(FlextLdifModels.SchemaObjectClass(oid="1.2.3.5", name="test"))
 
-    def parse_acl(self, data: str) -> FlextResult[dict[str, object]]:
-        return FlextResult.ok({})
-
-    def convert_attribute_to_rfc(
-        self, data: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
-        return FlextResult.ok(data)
-
-    def convert_objectclass_to_rfc(
-        self, data: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
-        return FlextResult.ok(data)
-
-    def convert_attribute_from_rfc(
-        self, data: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
-        return FlextResult.ok(data)
-
-    def convert_objectclass_from_rfc(
-        self, data: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
-        return FlextResult.ok(data)
-
-    def write_attribute_to_rfc(self, data: dict[str, object]) -> FlextResult[str]:
+    def _write_attribute(self, attr_data: FlextLdifModels.SchemaAttribute) -> FlextResult[str]:
         return FlextResult.ok("(test)")
 
-    def write_objectclass_to_rfc(self, data: dict[str, object]) -> FlextResult[str]:
+    def _write_objectclass(self, oc_data: FlextLdifModels.SchemaObjectClass) -> FlextResult[str]:
         return FlextResult.ok("(test)")
 
 
 class MissingParseAcl(FlextLdifServersBase.Schema):
-    """Real quirk missing parse_acl method."""
+    """Real quirk missing parse method."""
 
     def __init__(self) -> None:
         """Initialize quirk."""
-        self.server_type = "test_missing_parse_acl"
+        self.server_type = "test_missing_parse"
         self.priority = 100
 
-    def can_handle_attribute(self, attribute_name: str) -> bool:
+    def _can_handle_attribute(self, attr_definition: str | FlextLdifModels.SchemaAttribute) -> bool:
         return False
 
-    def can_handle_objectclass(self, objectclass_name: str) -> bool:
+    def _can_handle_objectclass(self, oc_definition: str | FlextLdifModels.SchemaObjectClass) -> bool:
         return False
 
-    def can_handle_acl(self, acl_definition: str) -> bool:
+    def _can_handle_acl(self, acl_line: str | FlextLdifModels.Acl) -> bool:
         return True
 
-    def parse_attribute(
-        self, attribute_definition: str
-    ) -> FlextResult[dict[str, object]]:
+    def _parse_attribute(
+        self, attr_definition: str
+    ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
         return FlextResult.fail("Not implemented")
 
-    def write_attribute_to_rfc(self, data: dict[str, object]) -> FlextResult[str]:
+    def _write_attribute(self, attr_data: FlextLdifModels.SchemaAttribute) -> FlextResult[str]:
+        return FlextResult.fail("Not implemented")
+    def _parse_objectclass(
+        self, oc_definition: str
+    ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
         return FlextResult.fail("Not implemented")
 
-    def convert_attribute_to_rfc(
-        self, data: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
+    def _write_objectclass(self, oc_data: FlextLdifModels.SchemaObjectClass) -> FlextResult[str]:
         return FlextResult.fail("Not implemented")
 
-    def convert_attribute_from_rfc(
-        self, data: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
-        return FlextResult.fail("Not implemented")
-
-    def parse_objectclass(
-        self, objectclass_definition: str
-    ) -> FlextResult[dict[str, object]]:
-        return FlextResult.fail("Not implemented")
-
-    def write_objectclass_to_rfc(self, data: dict[str, object]) -> FlextResult[str]:
-        return FlextResult.fail("Not implemented")
-
-    def convert_objectclass_to_rfc(
-        self, data: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
-        return FlextResult.fail("Not implemented")
-
-    def convert_objectclass_from_rfc(
-        self, data: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
-        return FlextResult.fail("Not implemented")
-
-    def write_acl_to_rfc(self, data: dict[str, object]) -> FlextResult[str]:
+    def _write_acl(self, acl_data: FlextLdifModels.Acl) -> FlextResult[str]:
         return FlextResult.ok("test")
-
-    def convert_acl_to_rfc(
-        self, data: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
-        return FlextResult.ok(data)
-
-    def convert_acl_from_rfc(
-        self, data: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
-        return FlextResult.ok(data)
 
 
 class MissingWriteAcl(FlextLdifServersBase.Schema):
@@ -449,63 +297,29 @@ class MissingWriteAcl(FlextLdifServersBase.Schema):
         self.server_type = "test_missing_write_acl"
         self.priority = 100
 
-    def can_handle_attribute(self, attribute_name: str) -> bool:
+    def _can_handle_attribute(self, attr_definition: str | FlextLdifModels.SchemaAttribute) -> bool:
         return False
 
-    def can_handle_objectclass(self, objectclass_name: str) -> bool:
+    def _can_handle_objectclass(self, oc_definition: str | FlextLdifModels.SchemaObjectClass) -> bool:
         return False
 
-    def can_handle_acl(self, acl_definition: str) -> bool:
+    def _can_handle_acl(self, acl_line: str | FlextLdifModels.Acl) -> bool:
         return True
 
-    def parse_attribute(
-        self, attribute_definition: str
-    ) -> FlextResult[dict[str, object]]:
+    def _parse_attribute(
+        self, attr_definition: str
+    ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
         return FlextResult.fail("Not implemented")
 
-    def write_attribute_to_rfc(self, data: dict[str, object]) -> FlextResult[str]:
+    def _write_attribute(self, attr_data: FlextLdifModels.SchemaAttribute) -> FlextResult[str]:
+        return FlextResult.fail("Not implemented")
+    def _parse_objectclass(
+        self, oc_definition: str
+    ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
         return FlextResult.fail("Not implemented")
 
-    def convert_attribute_to_rfc(
-        self, data: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
+    def _write_objectclass(self, oc_data: FlextLdifModels.SchemaObjectClass) -> FlextResult[str]:
         return FlextResult.fail("Not implemented")
-
-    def convert_attribute_from_rfc(
-        self, data: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
-        return FlextResult.fail("Not implemented")
-
-    def parse_objectclass(
-        self, objectclass_definition: str
-    ) -> FlextResult[dict[str, object]]:
-        return FlextResult.fail("Not implemented")
-
-    def write_objectclass_to_rfc(self, data: dict[str, object]) -> FlextResult[str]:
-        return FlextResult.fail("Not implemented")
-
-    def convert_objectclass_to_rfc(
-        self, data: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
-        return FlextResult.fail("Not implemented")
-
-    def convert_objectclass_from_rfc(
-        self, data: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
-        return FlextResult.fail("Not implemented")
-
-    def parse_acl(self, data: str) -> FlextResult[dict[str, object]]:
-        return FlextResult.ok({"name": "test"})
-
-    def convert_acl_to_rfc(
-        self, data: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
-        return FlextResult.ok(data)
-
-    def convert_acl_from_rfc(
-        self, data: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
-        return FlextResult.ok(data)
 
 
 class EntryConversionQuirk(FlextLdifServersBase.Schema):
@@ -520,56 +334,23 @@ class EntryConversionQuirk(FlextLdifServersBase.Schema):
         self.priority = 100
         self.entry = True
 
-    def can_handle_attribute(self, attr_definition: str) -> bool:
+    def _can_handle_attribute(self, attr_definition: str | FlextLdifModels.SchemaAttribute) -> bool:
         return True  # Supports attribute parsing
 
-    def parse_attribute(self, data: str) -> FlextResult[dict[str, object]]:
-        return FlextResult.ok({})
+    def _parse_attribute(self, attr_definition: str) -> FlextResult[FlextLdifModels.SchemaAttribute]:
+        return FlextResult.ok(FlextLdifModels.SchemaAttribute(oid="1.2.3.4", name="test"))
 
-    def can_handle_objectclass(self, oc_definition: str) -> bool:
+    def _can_handle_objectclass(self, oc_definition: str | FlextLdifModels.SchemaObjectClass) -> bool:
         return False
 
-    def parse_objectclass(self, data: str) -> FlextResult[dict[str, object]]:
-        return FlextResult.ok({})
+    def _parse_objectclass(self, oc_definition: str) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
+        return FlextResult.ok(FlextLdifModels.SchemaObjectClass(oid="1.2.3.5", name="test"))
 
-    def convert_attribute_to_rfc(
-        self, data: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
-        return FlextResult.ok(data)
-
-    def convert_objectclass_to_rfc(
-        self, data: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
-        return FlextResult.ok(data)
-
-    def convert_attribute_from_rfc(
-        self, data: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
-        return FlextResult.ok(data)
-
-    def convert_objectclass_from_rfc(
-        self, data: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
-        return FlextResult.ok(data)
-
-    def write_attribute_to_rfc(self, data: dict[str, object]) -> FlextResult[str]:
+    def _write_attribute(self, attr_data: FlextLdifModels.SchemaAttribute) -> FlextResult[str]:
         return FlextResult.ok("(test)")
 
-    def write_objectclass_to_rfc(self, data: dict[str, object]) -> FlextResult[str]:
+    def _write_objectclass(self, oc_data: FlextLdifModels.SchemaObjectClass) -> FlextResult[str]:
         return FlextResult.ok("(test)")
-
-    def convert_entry_to_rfc(
-        self, data: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
-        return FlextResult.ok(data)
-
-    def convert_entry_from_rfc(
-        self, data: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
-        return FlextResult.ok(data)
-
-    def write_entry_to_ldif(self, data: dict[str, object]) -> FlextResult[str]:
-        return FlextResult.ok("dn: cn=test,dc=example,dc=com\ncn: test")
 
 
 class MinimalQuirk(FlextLdifServersBase.Schema):
@@ -580,42 +361,22 @@ class MinimalQuirk(FlextLdifServersBase.Schema):
         self.server_type = "test_minimal"
         self.priority = 100
 
-    def can_handle_attribute(self, attr_definition: str) -> bool:
+    def _can_handle_attribute(self, attr_definition: str | FlextLdifModels.SchemaAttribute) -> bool:
         return False
 
-    def parse_attribute(self, data: str) -> FlextResult[dict[str, object]]:
-        return FlextResult.ok({})
+    def _parse_attribute(self, attr_definition: str) -> FlextResult[FlextLdifModels.SchemaAttribute]:
+        return FlextResult.ok(FlextLdifModels.SchemaAttribute(oid="1.2.3.4", name="test"))
 
-    def can_handle_objectclass(self, oc_definition: str) -> bool:
+    def _can_handle_objectclass(self, oc_definition: str | FlextLdifModels.SchemaObjectClass) -> bool:
         return False
 
-    def parse_objectclass(self, data: str) -> FlextResult[dict[str, object]]:
-        return FlextResult.ok({})
+    def _parse_objectclass(self, oc_definition: str) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
+        return FlextResult.ok(FlextLdifModels.SchemaObjectClass(oid="1.2.3.5", name="test"))
 
-    def convert_attribute_to_rfc(
-        self, data: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
-        return FlextResult.ok(data)
-
-    def convert_objectclass_to_rfc(
-        self, data: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
-        return FlextResult.ok(data)
-
-    def convert_attribute_from_rfc(
-        self, data: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
-        return FlextResult.ok(data)
-
-    def convert_objectclass_from_rfc(
-        self, data: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
-        return FlextResult.ok(data)
-
-    def write_attribute_to_rfc(self, data: dict[str, object]) -> FlextResult[str]:
+    def _write_attribute(self, attr_data: FlextLdifModels.SchemaAttribute) -> FlextResult[str]:
         return FlextResult.ok("(test)")
 
-    def write_objectclass_to_rfc(self, data: dict[str, object]) -> FlextResult[str]:
+    def _write_objectclass(self, oc_data: FlextLdifModels.SchemaObjectClass) -> FlextResult[str]:
         return FlextResult.ok("(test)")
 
 
@@ -627,42 +388,22 @@ class PartialAttributeQuirk(FlextLdifServersBase.Schema):
         self.server_type = "test_partial_attr"
         self.priority = 100
 
-    def can_handle_attribute(self, attr_definition: str) -> bool:
+    def _can_handle_attribute(self, attr_definition: str | FlextLdifModels.SchemaAttribute) -> bool:
         return True
 
-    def parse_attribute(self, data: str) -> FlextResult[dict[str, object]]:
-        return FlextResult.ok({})
+    def _parse_attribute(self, attr_definition: str) -> FlextResult[FlextLdifModels.SchemaAttribute]:
+        return FlextResult.ok(FlextLdifModels.SchemaAttribute(oid="1.2.3.4", name="test"))
 
-    def can_handle_objectclass(self, oc_definition: str) -> bool:
+    def _can_handle_objectclass(self, oc_definition: str | FlextLdifModels.SchemaObjectClass) -> bool:
         return False
 
-    def parse_objectclass(self, data: str) -> FlextResult[dict[str, object]]:
+    def _parse_objectclass(self, oc_definition: str) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
         return FlextResult.fail("Not supported")
 
-    def convert_attribute_to_rfc(
-        self, data: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
-        return FlextResult.ok(data)
-
-    def convert_objectclass_to_rfc(
-        self, data: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
-        return FlextResult.fail("Not supported")
-
-    def convert_attribute_from_rfc(
-        self, data: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
-        return FlextResult.ok(data)
-
-    def convert_objectclass_from_rfc(
-        self, data: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
-        return FlextResult.fail("Not supported")
-
-    def write_attribute_to_rfc(self, data: dict[str, object]) -> FlextResult[str]:
+    def _write_attribute(self, attr_data: FlextLdifModels.SchemaAttribute) -> FlextResult[str]:
         return FlextResult.ok("(test)")
 
-    def write_objectclass_to_rfc(self, data: dict[str, object]) -> FlextResult[str]:
+    def _write_objectclass(self, oc_data: FlextLdifModels.SchemaObjectClass) -> FlextResult[str]:
         return FlextResult.fail("Not supported")
 
 
@@ -672,23 +413,13 @@ class TestAclQuirk(FlextLdifServersBase.Acl):
     def __init__(self, server_type: str = "test_acl", priority: int = 100) -> None:
         """Initialize test ACL quirk."""
 
-    def can_handle_acl(self, acl_definition: str) -> bool:
+    def _can_handle_acl(self, acl_line: str | FlextLdifModels.Acl) -> bool:
         return True
 
-    def parse_acl(self, acl_definition: str) -> FlextResult[FlextLdifModels.Acl]:
-        return FlextResult.ok(FlextLdifModels.Acl(raw_acl=acl_definition))
+    def _parse_acl(self, acl_line: str) -> FlextResult[FlextLdifModels.Acl]:
+        return FlextResult.ok(FlextLdifModels.Acl(raw_acl=acl_line))
 
-    def convert_acl_to_rfc(
-        self, acl_data: FlextLdifModels.Acl
-    ) -> FlextResult[FlextLdifModels.Acl]:
-        return FlextResult.ok(acl_data)
-
-    def convert_acl_from_rfc(
-        self, rfc_data: FlextLdifModels.Acl
-    ) -> FlextResult[FlextLdifModels.Acl]:
-        return FlextResult.ok(rfc_data)
-
-    def write_acl_to_rfc(self, acl_data: FlextLdifModels.Acl) -> FlextResult[str]:
+    def _write_acl(self, acl_data: FlextLdifModels.Acl) -> FlextResult[str]:
         return FlextResult.ok(acl_data.raw_acl)
 
 
@@ -701,54 +432,26 @@ class AclOnlyQuirk(FlextLdifServersBase.Schema):
         self.priority = 100
         self.acl = TestAclQuirk()
 
-    def can_handle_attribute(self, attr_definition: str) -> bool:
+    def _can_handle_attribute(self, attr_definition: str | FlextLdifModels.SchemaAttribute) -> bool:
         return False
 
-    def parse_attribute(self, data: str) -> FlextResult[dict[str, object]]:
-        return FlextResult.ok({})
+    def _parse_attribute(self, attr_definition: str) -> FlextResult[FlextLdifModels.SchemaAttribute]:
+        return FlextResult.ok(FlextLdifModels.SchemaAttribute(oid="1.2.3.4", name="test"))
 
-    def can_handle_objectclass(self, oc_definition: str) -> bool:
+    def _can_handle_objectclass(self, oc_definition: str | FlextLdifModels.SchemaObjectClass) -> bool:
         return False
 
-    def can_handle_acl(self, acl_definition: str) -> bool:
+    def _can_handle_acl(self, acl_line: str | FlextLdifModels.Acl) -> bool:
         return True  # Only ACL support
 
-    def parse_objectclass(self, data: str) -> FlextResult[dict[str, object]]:
-        return FlextResult.ok({})
+    def _parse_objectclass(self, oc_definition: str) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
+        return FlextResult.ok(FlextLdifModels.SchemaObjectClass(oid="1.2.3.5", name="test"))
 
-    def convert_attribute_to_rfc(
-        self, data: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
-        return FlextResult.ok(data)
-
-    def convert_objectclass_to_rfc(
-        self, data: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
-        return FlextResult.ok(data)
-
-    def convert_attribute_from_rfc(
-        self, data: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
-        return FlextResult.ok(data)
-
-    def convert_objectclass_from_rfc(
-        self, data: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
-        return FlextResult.ok(data)
-
-    def write_attribute_to_rfc(self, data: dict[str, object]) -> FlextResult[str]:
+    def _write_attribute(self, attr_data: FlextLdifModels.SchemaAttribute) -> FlextResult[str]:
         return FlextResult.ok("(test)")
 
-    def write_objectclass_to_rfc(self, data: dict[str, object]) -> FlextResult[str]:
+    def _write_objectclass(self, oc_data: FlextLdifModels.SchemaObjectClass) -> FlextResult[str]:
         return FlextResult.ok("(test)")
-
-    def parse_acl(self, data: str) -> FlextResult[dict[str, object]]:
-        return FlextResult.ok({})
-
-    def convert_acl_to_rfc(
-        self, data: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
-        return FlextResult.ok(data)
 
 
 class EntryOnlyQuirk(FlextLdifServersBase.Schema):
@@ -763,48 +466,23 @@ class EntryOnlyQuirk(FlextLdifServersBase.Schema):
         self.priority = 100
         self.entry = True
 
-    def can_handle_attribute(self, attr_definition: str) -> bool:
+    def _can_handle_attribute(self, attr_definition: str | FlextLdifModels.SchemaAttribute) -> bool:
         return False
 
-    def parse_attribute(self, data: str) -> FlextResult[dict[str, object]]:
-        return FlextResult.ok({})
+    def _parse_attribute(self, attr_definition: str) -> FlextResult[FlextLdifModels.SchemaAttribute]:
+        return FlextResult.ok(FlextLdifModels.SchemaAttribute(oid="1.2.3.4", name="test"))
 
-    def can_handle_objectclass(self, oc_definition: str) -> bool:
+    def _can_handle_objectclass(self, oc_definition: str | FlextLdifModels.SchemaObjectClass) -> bool:
         return False
 
-    def parse_objectclass(self, data: str) -> FlextResult[dict[str, object]]:
-        return FlextResult.ok({})
+    def _parse_objectclass(self, oc_definition: str) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
+        return FlextResult.ok(FlextLdifModels.SchemaObjectClass(oid="1.2.3.5", name="test"))
 
-    def convert_attribute_to_rfc(
-        self, data: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
-        return FlextResult.ok(data)
-
-    def convert_objectclass_to_rfc(
-        self, data: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
-        return FlextResult.ok(data)
-
-    def convert_attribute_from_rfc(
-        self, data: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
-        return FlextResult.ok(data)
-
-    def convert_objectclass_from_rfc(
-        self, data: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
-        return FlextResult.ok(data)
-
-    def write_attribute_to_rfc(self, data: dict[str, object]) -> FlextResult[str]:
+    def _write_attribute(self, attr_data: FlextLdifModels.SchemaAttribute) -> FlextResult[str]:
         return FlextResult.ok("(test)")
 
-    def write_objectclass_to_rfc(self, data: dict[str, object]) -> FlextResult[str]:
+    def _write_objectclass(self, oc_data: FlextLdifModels.SchemaObjectClass) -> FlextResult[str]:
         return FlextResult.ok("(test)")
-
-    def convert_entry_to_rfc(
-        self, data: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
-        return FlextResult.ok(data)
 
 
 class TestConversionMatrixInitialization:

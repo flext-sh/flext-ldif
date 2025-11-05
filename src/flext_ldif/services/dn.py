@@ -606,6 +606,60 @@ class FlextLdifDnService(FlextService[str]):
 
             return FlextResult[bool].ok(True)
 
+        def normalize_dn_references(
+            self,
+            data: dict[str, object],
+            dn_fields: list[str],
+        ) -> FlextResult[dict[str, object]]:
+            """Normalize DN references in data object to canonical case.
+
+            Args:
+                data: Dictionary containing DN references
+                dn_fields: List of field names containing DNs or DN lists
+
+            Returns:
+                FlextResult with normalized data dict
+
+            """
+            try:
+                normalized_data = dict(data)
+
+                for field_name in dn_fields:
+                    if field_name not in normalized_data:
+                        continue
+
+                    field_value = normalized_data[field_name]
+
+                    # Handle single DN (string)
+                    if isinstance(field_value, str):
+                        canonical = self.get_canonical_dn(field_value)
+                        if canonical:
+                            normalized_data[field_name] = canonical
+                        else:
+                            # Not registered, just normalize to lowercase
+                            normalized_data[field_name] = field_value.lower()
+
+                    # Handle list of DNs
+                    elif isinstance(field_value, list):
+                        normalized_list: list[object] = []
+                        for item in field_value:
+                            if isinstance(item, str):
+                                canonical = self.get_canonical_dn(item)
+                                if canonical:
+                                    normalized_list.append(canonical)
+                                else:
+                                    normalized_list.append(item.lower())
+                            else:
+                                normalized_list.append(item)
+                        normalized_data[field_name] = normalized_list
+
+                return FlextResult[dict[str, object]].ok(normalized_data)
+
+            except Exception as e:
+                return FlextResult[dict[str, object]].fail(
+                    f"Failed to normalize DN references: {e}",
+                )
+
         def clear(self) -> None:
             """Clear all DN registrations."""
             self._registry.clear()

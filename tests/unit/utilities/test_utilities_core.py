@@ -110,6 +110,7 @@ class TestDnObjectClassMethods:
 
     def test_fix_missing_sup(self) -> None:
         """Test fixing missing SUP in AUXILIARY classes."""
+
         # Create simple mock object
         class MockObjectClass:
             def __init__(self) -> None:
@@ -118,29 +119,31 @@ class TestDnObjectClassMethods:
                 self.name = "orcldasattrcategory"
 
         obj = MockObjectClass()
-        FlextLdifUtilities.ObjectClass.fix_missing_sup(obj)  # type: ignore[arg-type]
+        FlextLdifUtilities.ObjectClass.fix_missing_sup(obj)
         assert obj.sup == "top"
 
     def test_fix_kind_mismatch(self) -> None:
         """Test fixing kind mismatches."""
+
         class MockObjectClass:
             def __init__(self) -> None:
                 self.sup = "orclpwdverifierprofile"
                 self.kind = "AUXILIARY"
 
         obj = MockObjectClass()
-        FlextLdifUtilities.ObjectClass.fix_kind_mismatch(obj)  # type: ignore[arg-type]
+        FlextLdifUtilities.ObjectClass.fix_kind_mismatch(obj)
         assert obj.kind == "STRUCTURAL"
 
     def test_ensure_sup_for_auxiliary(self) -> None:
         """Test ensuring AUXILIARY classes have SUP."""
+
         class MockObjectClass:
             def __init__(self) -> None:
                 self.sup: str | None = None
                 self.kind = "AUXILIARY"
 
         obj = MockObjectClass()
-        FlextLdifUtilities.ObjectClass.ensure_sup_for_auxiliary(obj)  # type: ignore[arg-type]
+        FlextLdifUtilities.ObjectClass.ensure_sup_for_auxiliary(obj)
         assert obj.sup == "top"
 
 
@@ -169,13 +172,19 @@ class TestAttributeFixer:
     def test_normalize_matching_rules_empty(self) -> None:
         """Test normalizing empty matching rules."""
         result = FlextLdifUtilities.Schema.normalize_matching_rules(None)
-        assert result == []
+        assert result == (None, None)
 
-    def test_normalize_matching_rules_list(self) -> None:
-        """Test normalizing matching rules list."""
-        rules = ["2.5.13.2", "2.5.13.3"]
-        result = FlextLdifUtilities.Schema.normalize_matching_rules(rules)
-        assert result == rules
+    def test_normalize_matching_rules_equality_only(self) -> None:
+        """Test normalizing matching rules with equality rule only."""
+        result = FlextLdifUtilities.Schema.normalize_matching_rules("caseIgnoreMatch")
+        assert result == ("caseIgnoreMatch", None)
+
+    def test_normalize_matching_rules_both(self) -> None:
+        """Test normalizing matching rules with both equality and substr."""
+        result = FlextLdifUtilities.Schema.normalize_matching_rules(
+            "caseIgnoreMatch", "caseIgnoreSubstringsMatch"
+        )
+        assert result == ("caseIgnoreMatch", "caseIgnoreSubstringsMatch")
 
 
 @pytest.mark.unit
@@ -365,7 +374,9 @@ class TestObjectClassUtilities:
             kind=FlextLdifConstants.Schema.AUXILIARY,
             sup=None,
         )
-        FlextLdifUtilities.ObjectClass.ensure_sup_for_auxiliary(oc, default_sup="custom")
+        FlextLdifUtilities.ObjectClass.ensure_sup_for_auxiliary(
+            oc, default_sup="custom"
+        )
         assert oc.sup == "custom"
 
     def test_fix_kind_mismatch_structural_superior(self) -> None:

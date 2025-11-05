@@ -25,7 +25,7 @@ class ObjectClassParseOnlyQuirk(FlextLdifServersBase.Schema):
     def can_handle_objectclass(self, oc_definition: str) -> bool:
         return True
 
-    def can_handle_acl(self, acl_definition: str) -> bool:
+    def _can_handle(self, acl_definition: str) -> bool:
         return True
 
     def parse_attribute(self, data: str) -> FlextResult[dict[str, object]]:
@@ -34,7 +34,7 @@ class ObjectClassParseOnlyQuirk(FlextLdifServersBase.Schema):
     def parse_objectclass(self, data: str) -> FlextResult[dict[str, object]]:
         return FlextResult.ok({"name": "test"})
 
-    def parse_acl(self, data: str) -> FlextResult[dict[str, object]]:
+    def parse(self, data: str) -> FlextResult[dict[str, object]]:
         return FlextResult.ok({})
 
     def convert_attribute_to_rfc(

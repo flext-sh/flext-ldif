@@ -1,19 +1,117 @@
-"""RFC 4517 Attribute Syntax Service - LDAP Syntax Validation and Resolution.
+"""LDIF Syntax Service - RFC 4517 Attribute Syntax Validation and Resolution.
 
-This module provides comprehensive RFC 4517 syntax validation, OID resolution,
-and type-specific value validation for LDAP attribute syntaxes.
+╔══════════════════════════════════════════════════════════════════════════╗
+║  RFC 4517 ATTRIBUTE SYNTAX VALIDATION & RESOLUTION SERVICE              ║
+╠══════════════════════════════════════════════════════════════════════════╣
+║  ✅ OID format validation (numeric.numeric.numeric...)                  ║
+║  ✅ RFC 4517 standard syntax detection                                   ║
+║  ✅ OID to syntax name resolution                                        ║
+║  ✅ Syntax name to OID lookup                                            ║
+║  ✅ Complete Syntax model resolution with metadata                       ║
+║  ✅ Type-specific value validation (boolean, integer, DN, time, etc.)    ║
+║  ✅ Syntax type category resolution                                      ║
+║  ✅ Common syntax listing and lookup                                    ║
+║  ✅ 100% type-safe with FlextResult error handling                      ║
+║  ✅ Multiple API patterns: execute(), direct methods                   ║
+╚══════════════════════════════════════════════════════════════════════════╝
 
-RFC 4517: LDAP Schema Syntax Definitions
+═══════════════════════════════════════════════════════════════════════════
+RESPONSIBILITY (SRP)
+
+This service handles SYNTAX VALIDATION & RESOLUTION ONLY:
+- Validating OID format compliance with LDAP standards
+- Detecting RFC 4517 standard syntax OIDs
+- Resolving OIDs to complete Syntax models
+- Looking up syntax names and OIDs
+- Validating values against syntax types
+- Determining syntax type categories
+
+What it does NOT do:
+- Parse LDIF entries (use FlextLdifParser)
+- Validate attribute names (use FlextLdifValidationService)
+- Transform entries (use FlextLdifEntryService)
+- Sort entries (use FlextLdifSortingService)
+
+═══════════════════════════════════════════════════════════════════════════
+RFC COMPLIANCE
+
+RFC 4517: Lightweight Directory Access Protocol (LDAP): Syntaxes and Matching Rules
 - Defines standard syntax OIDs (1.3.6.1.4.1.1466.115.121.1.X)
-- Specifies value validation rules per syntax
+- Specifies value validation rules per syntax type
 - Provides type categories (string, integer, binary, dn, time, boolean)
-- Supports server-specific syntax extensions
+- Standard OID format: numeric.numeric.numeric... (no leading zeros)
+- RFC 4517 standard syntaxes follow pattern: 1.3.6.1.4.1.1466.115.121.1.X
 
-The FlextLdifSyntaxService replaces naive syntax handling with:
-1. Standard OID validation (format: numeric.numeric.numeric...)
-2. RFC 4517 syntax resolution and lookup
-3. Type-specific value validators
-4. Syntax compatibility checking across LDAP servers
+Common Syntax Types:
+- Boolean: TRUE/FALSE values
+- Integer: Numeric values
+- DN: Distinguished Name values
+- GeneralizedTime: Time values (YYYYMMDDhhmmss[.frac]Z)
+- Binary: Base64-encoded binary data
+- String: Text values
+
+═══════════════════════════════════════════════════════════════════════════
+REAL USAGE EXAMPLES
+
+# PATTERN 1: Direct Method API (Most Common)
+─────────────────────────────────────────────
+syntax_service = FlextLdifSyntaxService()
+
+# Validate OID format
+result = syntax_service.validate_oid("1.3.6.1.4.1.1466.115.121.1.7")
+is_valid = result.unwrap()  # True
+
+# Check if OID is RFC 4517 standard
+result = syntax_service.is_rfc4517_standard("1.3.6.1.4.1.1466.115.121.1.7")
+is_standard = result.unwrap()  # True
+
+# Look up syntax name from OID
+result = syntax_service.lookup_oid("1.3.6.1.4.1.1466.115.121.1.7")
+name = result.unwrap()  # "Boolean"
+
+# Look up OID from syntax name
+result = syntax_service.lookup_name("Boolean")
+oid = result.unwrap()  # "1.3.6.1.4.1.1466.115.121.1.7"
+
+# Resolve complete Syntax model
+result = syntax_service.resolve_syntax("1.3.6.1.4.1.1466.115.121.1.7")
+syntax = result.unwrap()
+# Syntax(oid="1.3.6.1.4.1.1466.115.121.1.7", name="Boolean", ...)
+
+# Validate value against syntax type
+result = syntax_service.validate_value(
+    value="TRUE",
+    syntax_oid="1.3.6.1.4.1.1466.115.121.1.7"
+)
+is_valid = result.unwrap()  # True
+
+# Get syntax type category
+result = syntax_service.get_syntax_category("1.3.6.1.4.1.1466.115.121.1.7")
+category = result.unwrap()  # "boolean"
+
+# List all common syntaxes
+result = syntax_service.list_common_syntaxes()
+oids = result.unwrap()  # ["1.3.6.1.4.1.1466.115.121.1.1", ...]
+
+# PATTERN 2: Execute Method (V1 FlextService Style)
+────────────────────────────────────────────────────
+result = FlextLdifSyntaxService().execute()
+if result.is_success:
+    status = result.unwrap()
+    # {"service": "SyntaxService", "status": "operational", ...}
+
+═══════════════════════════════════════════════════════════════════════════
+QUICK REFERENCE
+
+Most Common Use Cases:
+- validate_oid(oid) -> bool
+- is_rfc4517_standard(oid) -> bool
+- lookup_oid(oid) -> str | None
+- lookup_name(name) -> str | None
+- resolve_syntax(oid, name=None, desc=None, server_type="rfc") -> Syntax
+- validate_value(value, syntax_oid, server_type="rfc") -> bool
+- get_syntax_category(oid) -> str
+- list_common_syntaxes() -> list[str]
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -32,32 +130,23 @@ from flext_ldif.models import FlextLdifModels
 
 
 class FlextLdifSyntaxService(FlextService[dict[str, object]]):
-    """RFC 4517 compliant syntax validation and OID resolution service.
+    """RFC 4517 Compliant Attribute Syntax Validation and Resolution Service.
 
-    Provides methods for syntax OID validation, lookup, resolution, and
+    Provides comprehensive syntax OID validation, lookup, resolution, and
     type-specific value validation following RFC 4517 (LDAP Attribute Syntax).
 
-    Example:
-        >>> syntax_service = FlextLdifSyntaxService()
-        >>>
-        >>> # Validate OID format
-        >>> result = syntax_service.validate_oid("1.3.6.1.4.1.1466.115.121.1.7")
-        >>> if result.is_success:
-        >>>     is_valid = result.unwrap()  # True
-        >>>
-        >>> # Resolve OID to Syntax model
-        >>> result = syntax_service.resolve_syntax("1.3.6.1.4.1.1466.115.121.1.7")
-        >>> if result.is_success:
-        >>>     syntax = result.unwrap()  # Syntax(oid=..., name="Boolean")
-        >>>
-        >>> # Validate value against syntax type
-        >>> result = syntax_service.validate_value(
-        ...     value="TRUE",
-        ...     syntax_oid="1.3.6.1.4.1.1466.115.121.1.7",
-        ...     server_type="rfc",
-        ... )
-        >>> if result.is_success:
-        >>>     is_valid = result.unwrap()  # True
+    Key Features:
+    - OID format validation (numeric.numeric.numeric...)
+    - RFC 4517 standard syntax detection
+    - Bidirectional OID <-> name lookup
+    - Complete Syntax model resolution with metadata
+    - Type-specific value validation (boolean, integer, DN, time, binary, string)
+    - Syntax type category resolution
+    - Common syntax listing and management
+
+    All methods return FlextResult for consistent error handling and composable
+    operations. The service maintains internal lookup tables for fast OID/name
+    resolution based on RFC 4517 standard syntax definitions.
 
     """
 

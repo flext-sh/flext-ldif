@@ -14,6 +14,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import operator
 import re
 from collections.abc import Callable
 
@@ -300,9 +301,8 @@ class FlextLdifSortingService(FlextService[list[FlextLdifModels.Entry]]):
         """Validate sort_target is valid."""
         valid = {t.value for t in FlextLdifConstants.SortTarget}
         if v not in valid:
-            raise ValueError(
-                f"Invalid sort_target: {v!r}. Valid: {', '.join(sorted(valid))}"
-            )
+            msg = f"Invalid sort_target: {v!r}. Valid: {', '.join(sorted(valid))}"
+            raise ValueError(msg)
         return v
 
     @field_validator("sort_by")
@@ -311,9 +311,8 @@ class FlextLdifSortingService(FlextService[list[FlextLdifModels.Entry]]):
         """Validate sort_by is valid."""
         valid = {s.value for s in FlextLdifConstants.SortStrategy}
         if v not in valid:
-            raise ValueError(
-                f"Invalid sort_by: {v!r}. Valid: {', '.join(sorted(valid))}"
-            )
+            msg = f"Invalid sort_by: {v!r}. Valid: {', '.join(sorted(valid))}"
+            raise ValueError(msg)
         return v
 
     @model_validator(mode="after")
@@ -323,7 +322,8 @@ class FlextLdifSortingService(FlextService[list[FlextLdifModels.Entry]]):
             self.sort_by == FlextLdifConstants.SortStrategy.CUSTOM.value
             and not self.custom_predicate
         ):
-            raise ValueError("custom_predicate required when sort_by='custom'.")
+            msg = "custom_predicate required when sort_by='custom'."
+            raise ValueError(msg)
         return self
 
     # ════════════════════════════════════════════════════════════════════════
@@ -362,7 +362,8 @@ class FlextLdifSortingService(FlextService[list[FlextLdifModels.Entry]]):
         entries: list[FlextLdifModels.Entry],
         *,
         target: str = FlextLdifConstants.SortTarget.ENTRIES.value,
-        by: str | FlextLdifConstants.SortStrategy = FlextLdifConstants.SortStrategy.HIERARCHY,
+        by: str
+        | FlextLdifConstants.SortStrategy = FlextLdifConstants.SortStrategy.HIERARCHY,
         predicate: Callable[[FlextLdifModels.Entry], str | int | float] | None = None,
         sort_attributes: bool = False,
         attribute_order: list[str] | None = None,
@@ -444,7 +445,9 @@ class FlextLdifSortingService(FlextService[list[FlextLdifModels.Entry]]):
 
         """
         self.sort_target = (
-            target.value if isinstance(target, FlextLdifConstants.SortTarget) else target
+            target.value
+            if isinstance(target, FlextLdifConstants.SortTarget)
+            else target
         )
         return self
 
@@ -529,10 +532,14 @@ class FlextLdifSortingService(FlextService[list[FlextLdifModels.Entry]]):
             sorted_entries = result.unwrap()
 
         """
-        return cls(entries=entries, sort_target="entries", sort_by="hierarchy").execute()
+        return cls(
+            entries=entries, sort_target="entries", sort_by="hierarchy"
+        ).execute()
 
     @classmethod
-    def by_dn(cls, entries: list[FlextLdifModels.Entry]) -> FlextResult[list[FlextLdifModels.Entry]]:
+    def by_dn(
+        cls, entries: list[FlextLdifModels.Entry]
+    ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Sort entries alphabetically by full DN.
 
         Args:
@@ -695,7 +702,9 @@ class FlextLdifSortingService(FlextService[list[FlextLdifModels.Entry]]):
                 if acl_attr in attrs_dict:
                     acl_values = attrs_dict[acl_attr]
                     if isinstance(acl_values, list) and len(acl_values) > 1:
-                        attrs_dict[acl_attr] = sorted(acl_values, key=lambda x: str(x).lower())
+                        attrs_dict[acl_attr] = sorted(
+                            acl_values, key=lambda x: str(x).lower()
+                        )
                         modified = True
 
             if modified:
@@ -711,7 +720,10 @@ class FlextLdifSortingService(FlextService[list[FlextLdifModels.Entry]]):
         """Sort by DN hierarchy (depth-first)."""
         sorted_entries = sorted(
             self.entries,
-            key=lambda e: (e.dn.value.count(",") + 1 if e.dn.value else 0, e.dn.value.lower()),
+            key=lambda e: (
+                e.dn.value.count(",") + 1 if e.dn.value else 0,
+                e.dn.value.lower(),
+            ),
         )
         return FlextResult[list[FlextLdifModels.Entry]].ok(sorted_entries)
 
@@ -737,7 +749,9 @@ class FlextLdifSortingService(FlextService[list[FlextLdifModels.Entry]]):
                 return (3, entry.dn.value.lower())
 
             # Extract OID
-            first_val = str(oid_values[0] if isinstance(oid_values, list) else oid_values)
+            first_val = str(
+                oid_values[0] if isinstance(oid_values, list) else oid_values
+            )
             oid_match = re.search(r"\b\d+(?:\.\d+)+\b", first_val)
             oid = oid_match.group(0) if oid_match else first_val
 
@@ -748,7 +762,11 @@ class FlextLdifSortingService(FlextService[list[FlextLdifModels.Entry]]):
 
     def _by_custom(self) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Sort using custom predicate."""
-        sorted_entries = sorted(self.entries, key=self.custom_predicate)  # type: ignore
+        if self.custom_predicate is None:
+            return FlextResult[list[FlextLdifModels.Entry]].fail(
+                "Custom predicate not provided"
+            )
+        sorted_entries = sorted(self.entries, key=self.custom_predicate)
         return FlextResult[list[FlextLdifModels.Entry]].ok(sorted_entries)
 
     def _sort_entry_attributes_alphabetically(
@@ -756,7 +774,10 @@ class FlextLdifSortingService(FlextService[list[FlextLdifModels.Entry]]):
     ) -> FlextResult[FlextLdifModels.Entry]:
         """Sort entry attributes alphabetically."""
         attrs_dict = entry.attributes.model_dump()
-        key_func = (lambda x: x[0]) if case_sensitive else (lambda x: x[0].lower())
+        if case_sensitive:
+            key_func: Callable[[tuple[str, list[str]]], str] = operator.itemgetter(0)
+        else:
+            key_func = lambda x: x[0].lower()
         sorted_items = sorted(attrs_dict.items(), key=key_func)
         sorted_attrs = FlextLdifModels.LdifAttributes(**dict(sorted_items))
         return FlextResult[FlextLdifModels.Entry].ok(
@@ -767,16 +788,63 @@ class FlextLdifSortingService(FlextService[list[FlextLdifModels.Entry]]):
         self, entry: FlextLdifModels.Entry
     ) -> FlextResult[FlextLdifModels.Entry]:
         """Sort entry attributes by custom order."""
+        if not self.attribute_order:
+            return self._sort_entry_attributes_alphabetically(entry)
         attrs_dict = entry.attributes.model_dump()
-        ordered = [(k, attrs_dict[k]) for k in self.attribute_order if k in attrs_dict]  # type: ignore
+        order = self.attribute_order
+        ordered = [(k, attrs_dict[k]) for k in order if k in attrs_dict]
         remaining = sorted(
-            [(k, v) for k, v in attrs_dict.items() if k not in self.attribute_order],  # type: ignore
+            [(k, v) for k, v in attrs_dict.items() if k not in order],
             key=lambda x: x[0].lower(),
         )
         sorted_attrs = FlextLdifModels.LdifAttributes(**dict(ordered + remaining))
         return FlextResult[FlextLdifModels.Entry].ok(
             entry.model_copy(update={"attributes": sorted_attrs})
         )
+
+    @staticmethod
+    def attributes_by_order(
+        attribute_items: list[tuple[str, list[str]]],
+        order: list[str],
+    ) -> list[tuple[str, list[str]]]:
+        """Sort attribute items by custom order list.
+
+        Args:
+            attribute_items: List of (attr_name, attr_values) tuples
+            order: Custom attribute order list
+
+        Returns:
+            Sorted list of attribute items
+
+        """
+        attrs_dict = dict(attribute_items)
+        ordered = [(k, attrs_dict[k]) for k in order if k in attrs_dict]
+        remaining = sorted(
+            [(k, v) for k, v in attrs_dict.items() if k not in order],
+            key=lambda x: x[0].lower(),
+        )
+        return ordered + remaining
+
+    @staticmethod
+    def attributes_alphabetically(
+        attribute_items: list[tuple[str, list[str]]],
+        case_sensitive: bool = False,
+    ) -> list[tuple[str, list[str]]]:
+        """Sort attribute items alphabetically.
+
+        Args:
+            attribute_items: List of (attr_name, attr_values) tuples
+            case_sensitive: Whether to use case-sensitive sorting
+
+        Returns:
+            Sorted list of attribute items
+
+        """
+        if case_sensitive:
+            key_func: Callable[[tuple[str, list[str]]], str] = operator.itemgetter(0)
+        else:
+            key_func = lambda x: x[0].lower()
+        return sorted(attribute_items, key=key_func)
 
 
 __all__ = ["FlextLdifSortingService"]

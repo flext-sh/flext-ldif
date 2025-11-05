@@ -25,15 +25,28 @@ class FlextLdifServersOud(FlextLdifServersRfc):
     """Oracle Unified Directory (OUD) Quirks."""
 
     # Top-level configuration - mirrors Schema class for direct access
-    server_type = FlextLdifConstants.ServerTypes.OUD
-    priority = 10
+    # =========================================================================
+    # Class-level attributes for server identification
+    # =========================================================================
+    # Class-level attributes for server identification (from Constants)
+    # =========================================================================
+    server_type: ClassVar[str] = Constants.SERVER_TYPE
+    priority: ClassVar[int] = Constants.PRIORITY
 
-    class Constants:
+    class Constants(FlextLdifServersRfc.Constants):
         """Oracle Unified Directory-specific constants centralized for operations in oud.py.
 
         These constants follow a standardized naming pattern that can be replicated
         in other server quirks implementations for consistency.
         """
+
+        # === STANDARDIZED CONSTANTS FOR AUTO-DISCOVERY ===
+        SERVER_TYPE: ClassVar[str] = FlextLdifConstants.ServerTypes.OUD
+        CANONICAL_NAME: ClassVar[str] = "oud"
+        ALIASES: ClassVar[frozenset[str]] = frozenset(["oud", "oracle_oud"])
+        PRIORITY: ClassVar[int] = 10
+        CAN_NORMALIZE_FROM: ClassVar[frozenset[str]] = frozenset(["oud", "rfc"])
+        CAN_DENORMALIZE_TO: ClassVar[frozenset[str]] = frozenset(["oud", "rfc"])
 
         # OID pattern for server detection
         OID_PATTERN: Final[re.Pattern[str]] = re.compile(
@@ -42,19 +55,25 @@ class FlextLdifServersOud(FlextLdifServersRfc):
 
         # Server-specific boolean attributes
         BOOLEAN_ATTRIBUTES: Final[frozenset[str]] = (
-            FlextLdifConstants.OperationalAttributes.OUD_BOOLEAN_ATTRIBUTES
+            frozenset(["pwdlockout", "pwdmustchange", "pwdallowuserchange", "pwdexpirewarning", "pwdgraceauthnlimit", "pwdlockoutduration", "pwdmaxfailure", "pwdminage", "pwdmaxage", "pwdmaxlength", "pwdminlength", "orcldasselfmodifiable"])
         )
+
+        # Oracle OUD operational attributes (server-specific)
+        OPERATIONAL_ATTRIBUTES: Final[frozenset[str]] = frozenset([
+            "ds-sync-hist",
+            "ds-sync-state",
+            "ds-pwp-account-disabled",
+            "ds-cfg-backend-id",
+            "entryUUID",  # OUD specific version
+        ])
 
         # DN patterns used for detection
         DN_PREFIX_CN_CONFIG: Final[str] = "cn=config"
         DN_PREFIX_CN_SCHEMA: Final[str] = "cn=schema"
 
-        # === STANDARDIZED CONSTANTS FOR AUTO-DISCOVERY ===
-        CANONICAL_NAME: Final[str] = "oud"
-        ALIASES: Final[frozenset[str]] = frozenset(["oud", "oracle_oud"])
-        PRIORITY: Final[int] = 10
-        CAN_NORMALIZE_FROM: Final[frozenset[str]] = frozenset(["oud", "rfc"])
-        CAN_DENORMALIZE_TO: Final[frozenset[str]] = frozenset(["oud", "rfc"])
+        # Oracle Unified Directory ACL format constants
+        ACL_FORMAT: ClassVar[str] = "aci"  # RFC 4876 ACI attribute
+        ACL_ATTRIBUTE_NAME: ClassVar[str] = "aci"  # ACL attribute name
 
     class AttributeWriter(FlextLdifServersRfc.AttributeWriter):
         """OUD-specific attribute writer."""
@@ -169,68 +188,21 @@ class FlextLdifServersOud(FlextLdifServersRfc):
 
         """
 
-        server_type: ClassVar[str] = FlextLdifConstants.ServerTypes.OUD
-        priority: ClassVar[int] = 10
-
         def __init__(
             self,
+            server_type: str | None = None,
+            priority: int | None = None,
         ) -> None:
-            """server_type: ClassVar[str] = FlextLdifConstants.ServerTypes.OUD
-            priority: ClassVar[int] = 14Initialize OUD schema quirk and nested ACL quirk.
-            """
-            super().__init__()
-            # Instantiate nested ACL quirk for conversion matrix access
-            self.acl = FlextLdifServersOud.Acl()
+            """Initialize OUD schema quirk.
 
-        def can_handle_attribute(
-            self, attribute: str | FlextLdifModels.SchemaAttribute
-        ) -> bool:
-            """Check if attribute should be handled with OUD-specific quirks.
-
-            Detects OUD-specific attributes and patterns:
-            - X-ORIGIN extension (OUD metadata)
-            - pwdPolicy* attributes (OUD password policy)
-            - ds-* attributes (OUD directory service attributes)
-            - OUD operational attributes
-
-            Acts as a fallback handler for Oracle Unified Directory entries.
-            Returns False for namespace-specific attributes (OID, OpenLDAP, etc.)
-            to allow other quirks to handle them first.
+            OUD extends RFC baseline with Oracle-specific enhancements.
 
             Args:
-                attribute: SchemaAttribute model or definition string
-
-            Returns:
-                True if attribute should be handled with OUD-specific logic
+                server_type: Optional server type (inherited from parent)
+                priority: Optional priority (inherited from parent)
 
             """
-            if isinstance(attribute, FlextLdifModels.SchemaAttribute):
-                attr_def = self.write_attribute_to_rfc(attribute).unwrap_or("")
-            elif isinstance(attribute, str):
-                attr_def = attribute
-            else:
-                return False
-
-            attr_lower = attr_def.lower()
-            return any(
-                keyword in attr_lower
-                for keyword in ["pwd", "ds-", "x-origin", "2.16.840.1.113894"]
-            )
-
-        # Schema parsing and conversion methods
-        # OVERRIDDEN METHODS (from FlextLdifServersBase.Schema)
-        # These methods override the base class with Oracle OUD-specific logic:
-        # - parse_attribute(): Custom parsing logic for Oracle OUD schema
-        # - parse_objectclass(): Custom parsing logic for Oracle OUD schema
-        # - convert_attribute_to_rfc(): Strips OUD-specific metadata
-        # - convert_objectclass_to_rfc(): Strips OUD-specific metadata
-        # - convert_attribute_from_rfc(): Adds OUD-specific metadata
-        # - convert_objectclass_from_rfc(): Adds OUD-specific metadata
-        # - write_attribute_to_rfc(): Uses RFC writer with OUD error handling
-        # - write_objectclass_to_rfc(): Uses RFC writer with OUD error handling
-        # - should_filter_out_attribute(): Returns False (accept all in OUD mode)
-        # - should_filter_out_objectclass(): Returns False (accept all in OUD mode)
-        # - create_quirk_metadata(): Creates OUD-specific metadata
+            super().__init__(server_type=server_type, priority=priority)
 
         def parse_attribute(
             self,
@@ -248,41 +220,6 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 return FlextResult[FlextLdifModels.SchemaAttribute].fail(
                     f"OUD attribute parsing failed: {e}",
                 )
-
-        def can_handle_objectclass(
-            self, objectclass: str | FlextLdifModels.SchemaObjectClass
-        ) -> bool:
-            """Check if objectClass should be handled with OUD-specific quirks.
-
-            Detects OUD-specific objectClasses and patterns:
-            - X-ORIGIN extension (OUD metadata)
-            - ds-cfg-* objectClasses (OUD configuration classes)
-            - pwdPolicy-related classes (OUD password policy)
-            - OUD operational objectClasses
-
-            Acts as a fallback handler for Oracle Unified Directory entries.
-            Returns False for namespace-specific objectClasses (OID, OpenLDAP, etc.)
-            to allow other quirks to handle them first.
-
-            Args:
-                objectclass: ObjectClass definition string
-
-            Returns:
-                True if objectClass should be handled with OUD-specific logic
-
-            """
-            if isinstance(objectclass, FlextLdifModels.SchemaObjectClass):
-                oc_def = self.write_objectclass_to_rfc(objectclass).unwrap_or("")
-            elif isinstance(objectclass, str):
-                oc_def = objectclass
-            else:
-                return False
-
-            oc_lower = oc_def.lower()
-            return any(
-                keyword in oc_lower
-                for keyword in ["ds-cfg-", "pwd", "x-origin", "2.16.840.1.113894"]
-            )
 
         def parse_objectclass(
             self,
@@ -377,162 +314,6 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             # All MUST and MAY attributes are available
             return FlextResult[bool].ok(True)
 
-        def convert_attribute_to_rfc(
-            self,
-            attr_data: FlextLdifModels.SchemaAttribute,
-        ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
-            """Convert OUD attribute to RFC-compliant format.
-
-            OUD attributes are already RFC-compliant, so pass through.
-
-            Args:
-            attr_data: OUD attribute data
-
-            Returns:
-            FlextResult with RFC-compliant attribute data (same model)
-
-            """
-            # OUD attributes are RFC-compliant - return as-is
-            return FlextResult[FlextLdifModels.SchemaAttribute].ok(attr_data)
-
-        def convert_objectclass_to_rfc(
-            self,
-            oc_data: FlextLdifModels.SchemaObjectClass,
-        ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
-            """Convert OUD objectClass to RFC-compliant format.
-
-            OUD objectClasses are already RFC-compliant, so pass through.
-
-            Args:
-            oc_data: OUD objectClass data
-
-            Returns:
-            FlextResult with RFC-compliant objectClass data (same model)
-
-            """
-            # OUD objectClasses are RFC-compliant - return as-is
-            return FlextResult[FlextLdifModels.SchemaObjectClass].ok(oc_data)
-
-        def write_attribute_to_rfc(
-            self,
-            attr_data: FlextLdifModels.SchemaAttribute,
-        ) -> FlextResult[str]:
-            """Write OUD attribute data to RFC 4512 compliant string format."""
-            try:
-                # Use OUD-specific writer
-                writer = FlextLdifServersOud.AttributeWriter()
-                return writer.write_common(attr_data)
-            except Exception as e:
-                return FlextResult[str].fail(f"Failed to write attribute to RFC: {e}")
-
-        def write_objectclass_to_rfc(
-            self,
-            oc_data: FlextLdifModels.SchemaObjectClass,
-        ) -> FlextResult[str]:
-            """Write OUD objectClass data to RFC 4512 compliant string format."""
-            try:
-                # Use OUD-specific writer
-                writer = FlextLdifServersOud.ObjectClassWriter()
-                return writer.write_common(oc_data)
-            except Exception as e:
-                return FlextResult[str].fail(f"Failed to write objectClass to RFC: {e}")
-
-        def convert_attribute_from_rfc(
-            self,
-            rfc_data: FlextLdifModels.SchemaAttribute,
-        ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
-            """Convert RFC-compliant attribute to OUD-specific format.
-
-            Args:
-            rfc_data: RFC-compliant attribute data
-
-            Returns:
-            FlextResult with OUD attribute data
-
-            """
-            try:
-                # Oracle OUD uses RFC-compliant schema format
-                # Set OUD server type in metadata
-                if rfc_data.metadata:
-                    # Update existing metadata
-                    oud_data = rfc_data.model_copy(
-                        update={
-                            "metadata": rfc_data.metadata.model_copy(
-                                update={
-                                    "server_type": FlextLdifConstants.LdapServers.ORACLE_OUD,
-                                },
-                            ),
-                        },
-                    )
-                else:
-                    # Create new metadata with OUD server type
-                    oud_data = rfc_data.model_copy(
-                        update={
-                            "metadata": FlextLdifModels.QuirkMetadata(
-                                quirk_type=FlextLdifConstants.LdapServers.ORACLE_OUD,
-                            ),
-                        },
-                    )
-
-                return FlextResult[FlextLdifModels.SchemaAttribute].ok(oud_data)
-
-            except Exception as e:
-                return FlextResult[FlextLdifModels.SchemaAttribute].fail(
-                    f"RFC→OUD attribute conversion failed: {e}",
-                )
-
-        def convert_objectclass_from_rfc(
-            self,
-            rfc_data: FlextLdifModels.SchemaObjectClass,
-        ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
-            """Convert RFC-compliant objectClass to OUD-specific format.
-
-            Applies OUD-specific transformations:
-            - Fixes broken OID schema definitions (missing SUP for AUXILIARY classes)
-            - OUD requires AUXILIARY classes to have explicit SUP clause
-            - Sets OUD server type metadata
-
-            Args:
-                rfc_data: RFC-compliant objectClass model
-
-            Returns:
-                FlextResult with OUD objectClass model
-
-            """
-            try:
-                # Apply OUD-specific transformations
-                oud_data = rfc_data
-
-                # Check if we need to fix missing SUP for AUXILIARY objectClasses
-                # OUD requires AUXILIARY classes to have explicit SUP clause
-                if (
-                    not rfc_data.sup
-                    and rfc_data.kind == FlextLdifConstants.Schema.AUXILIARY
-                ):
-                    name_lower = rfc_data.name.lower()
-                    auxiliary_without_sup = {
-                        "orcldasconfigpublicgroup",
-                        "orcldAsAttrCategory".lower(),
-                    }
-
-                    if name_lower in auxiliary_without_sup:
-                        # Create new model with sup="top"
-                        oud_data = rfc_data.model_copy(update={"sup": "top"})
-                        logger.debug(
-                            "Fixed missing SUP for AUXILIARY class %s",
-                            rfc_data.name,
-                        )
-
-                # Set OUD server type metadata
-                return FlextLdifServersRfc.SchemaConverter.set_quirk_type(
-                    oud_data, self.server_type
-                )
-
-            except Exception as e:
-                return FlextResult[FlextLdifModels.SchemaObjectClass].fail(
-                    f"RFC→OUD objectClass conversion failed: {e}",
-                )
-
         def extract_schemas_from_ldif(
             self,
             ldif_content: str,
@@ -605,8 +386,8 @@ class FlextLdifServersOud(FlextLdifServersRfc):
 
         Example:
             quirk = FlextLdifServersOud.Acl(server_type="oracle_oud")
-            if quirk.can_handle_acl(acl_line):
-                result = quirk.parse_acl(acl_line)
+            if quirk._can_handle(acl_line):
+                result = quirk.parse(acl_line)
 
         """
 
@@ -621,12 +402,20 @@ class FlextLdifServersOud(FlextLdifServersRfc):
         # - get_attribute_name(): Returns "aci" (OUD-specific, overridden)
 
         # Oracle OUD server configuration defaults
-        server_type: ClassVar[str] = FlextLdifConstants.ServerTypes.OUD
-        priority: ClassVar[int] = 10
 
-        def __init__(self) -> None:
-            """Initialize OUD ACL quirk."""
-            super().__init__()
+        def __init__(
+            self,
+            server_type: str | None = None,
+            priority: int | None = None,
+        ) -> None:
+            """Initialize OUD ACL quirk.
+
+            Args:
+                server_type: Optional server type (inherited from parent)
+                priority: Optional priority (inherited from parent)
+
+            """
+            super().__init__(server_type=server_type, priority=priority)
             # NOTE: Hook registration was removed - AclConverter was moved to services/acl.py
             # Use FlextLdifAclService instead for ACL conversion operations
 
@@ -1078,50 +867,6 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                     f"OUD ACL extraction failed: {e}",
                 )
 
-        def convert_rfc_acl_to_aci(
-            self,
-            rfc_acl_attrs: dict[str, object],
-            target_server: str,
-        ) -> FlextResult[dict[str, object]]:
-            """Convert RFC ACL attributes to OUD ACI format.
-
-            Takes ACL attributes in internal RFC/metadata format and converts
-            them to proper ACI attributes for OUD server.
-
-            Args:
-                rfc_acl_attrs: ACL attributes in RFC metadata format
-                target_server: Target server (should be 'oud' or 'oracle_oud')
-
-            Returns:
-                FlextResult with ACI attributes in OUD format
-
-            """
-            try:
-                if target_server.lower() not in {"oud", "oracle_oud"}:
-                    return FlextResult[dict[str, object]].fail(
-                        f"Invalid target server for OUD ACL conversion: {target_server}",
-                    )
-
-                aci_values = []
-
-                # Convert all ACL attributes to OUD ACI format
-                for attr_values in rfc_acl_attrs.values():
-                    if isinstance(attr_values, list):
-                        aci_values.extend(str(val) for val in attr_values)
-                    else:
-                        aci_values.append(str(attr_values))
-
-                if aci_values:
-                    return FlextResult[dict[str, object]].ok({
-                        self.acl_attribute_name: aci_values
-                    })
-                return FlextResult[dict[str, object]].ok({})
-
-            except (ValueError, TypeError, AttributeError) as e:
-                return FlextResult[dict[str, object]].fail(
-                    f"OUD ACL conversion failed: {e}",
-                )
-
         def get_attribute_name(self) -> str:
             """Get OUD-specific ACL attribute name.
 
@@ -1144,25 +889,30 @@ class FlextLdifServersOud(FlextLdifServersRfc):
 
         Example:
             quirk = FlextLdifServersOud.Entry(server_type="oracle_oud")
-            if quirk.can_handle_entry(dn, attributes):
-                result = quirk.process_entry(dn, attributes)
+            if quirk.can_handle_entry(entry):
+                result = quirk.parse_entry(entry.dn.value, entry.attributes.attributes)
 
         """
 
-        server_type: ClassVar[str] = FlextLdifConstants.ServerTypes.OUD
-        priority: ClassVar[int] = 10
-
         def __init__(
             self,
+            server_type: str | None = None,
+            priority: int | None = None,
         ) -> None:
-            """Initialize OUD entry quirk."""
-            super().__init__()
+            """Initialize OUD entry quirk.
+
+            Args:
+                server_type: Optional server type (inherited from parent)
+                priority: Optional priority (inherited from parent)
+
+            """
+            super().__init__(server_type=server_type, priority=priority)
 
         # OVERRIDDEN METHODS (from FlextLdifServersBase.Entry)
         # These methods override the base class with Oracle OUD-specific logic:
         # - can_handle_entry(): Detects OUD entries by DN/attributes
-        # - process_entry(): Normalizes OUD entries with metadata
-        # - convert_entry_to_rfc(): Converts OUD entries to RFC format
+        # - parse_entry(): Normalizes OUD entries with metadata during parsing
+        # - write_entry(): Writes OUD entries with proper formatting
 
         def can_handle_entry(
             self,
@@ -1251,23 +1001,45 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             "objectclass": "objectClass",
             "memberof": "memberOf",
             "seealsodescription": "seeAlsoDescription",
-            FlextLdifConstants.AclAttributes.ORCLACI: FlextLdifConstants.AclAttributes.ACI,
-            FlextLdifConstants.AclAttributes.ORCL_ENTRY_LEVEL_ACI: FlextLdifConstants.AclAttributes.ACI,
+            "orclaci": FlextLdifConstants.AclAttributes.ACI,  # Oracle OID ACI → OUD RFC ACI
+            "orclentrylevelaci": FlextLdifConstants.AclAttributes.ACI,  # Oracle OID entry-level ACI → OUD RFC ACI
             "acl": FlextLdifConstants.AclAttributes.ACI,
         }
 
-        def process_entry(
+        def parse_entry(
             self,
-            entry: FlextLdifModels.Entry,
+            entry_dn: str,
+            entry_attrs: Mapping[str, object],
         ) -> FlextResult[FlextLdifModels.Entry]:
-            """Process entry for Oracle OUD format."""
+            """Parse raw LDIF entry data into Entry model with OUD-specific transformations.
+
+            Applies OUD-specific normalizations during parsing:
+            - Normalize attribute names to proper camelCase
+            - Convert boolean attributes from 0/1 to TRUE/FALSE
+            - Validate telephone numbers
+            - Preserve metadata for DN quirks and attribute ordering
+
+            Args:
+                entry_dn: Raw DN string from LDIF parser
+                entry_attrs: Raw attributes mapping from LDIF parser
+
+            Returns:
+                FlextResult with parsed Entry model with OUD-specific transformations
+
+            """
+            # First call parent parse_entry to get base Entry model
+            base_result = super().parse_entry(entry_dn, entry_attrs)
+            if base_result.is_failure:
+                return base_result
+
+            entry = base_result.unwrap()
+
             try:
                 # Initialize a dictionary to hold processed attributes
                 processed_attrs_dict: dict[str, list[str]] = {}
 
                 # Preserve base64 encoding metadata from entry extraction
                 if "_base64_attrs" in entry.attributes.attributes:
-                    # Re-add as an internal metadata key, not a regular attribute
                     processed_attrs_dict["_base64_attrs"] = entry.attributes.attributes[
                         "_base64_attrs"
                     ]
@@ -1282,54 +1054,31 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                         entry.attributes.attributes["_modify_add_objectclasses"]
                     )
 
-                # PHASE 0: Normalize attribute names to proper camelCase and apply OUD-specific transformations
+                # Normalize attribute names to proper camelCase and apply OUD-specific transformations
                 final_attributes_for_new_entry: dict[str, list[str]] = {}
                 for attr_name, attr_values in entry.attributes.attributes.items():
+                    # Skip internal metadata attributes
+                    if attr_name.startswith("_"):
+                        continue
+
                     attr_lower = attr_name.lower()
                     normalized_name = self.ATTRIBUTE_CASE_MAP.get(attr_lower, attr_name)
 
                     # Process values based on attribute type
                     if normalized_name.lower() in FlextLdifServersOud.Constants.BOOLEAN_ATTRIBUTES:
-                        # Convert 0/1 to TRUE/FALSE for OUD
-                        if isinstance(attr_values, list):
-                            converted_values = []
-                            for val in attr_values:
-                                str_val = str(val).strip()
-                                converted_val = (
-                                    FlextLdifConstants.BooleanFormats.OID_TO_RFC.get(
-                                        str_val, val
-                                    )
-                                )
-                                converted_values.append(str(converted_val))
-                            final_attributes_for_new_entry[normalized_name] = (
-                                converted_values
-                            )
-                        else:
-                            str_val = str(attr_values).strip()
-                            converted_val = (
-                                FlextLdifConstants.BooleanFormats.OID_TO_RFC.get(
-                                    str_val, str(attr_values)
-                                )
-                            )
-                            final_attributes_for_new_entry[normalized_name] = [
-                                str(converted_val)
-                            ]
-                    elif normalized_name.lower() == "telephonenumber":
-                        # Validate telephone numbers - must contain at least one digit
-                        valid_numbers = []
-                        values_to_process = (
-                            [attr_values]
-                            if not isinstance(attr_values, list)
-                            else attr_values
+                        # Convert 0/1 to TRUE/FALSE for OUD using utilities
+                        converted_values = FlextLdifUtilities.Entry.convert_boolean_attributes(
+                            attr_values if isinstance(attr_values, list) else [attr_values],
+                            set(FlextLdifServersOud.Constants.BOOLEAN_ATTRIBUTES),
                         )
-                        for val in values_to_process:
-                            str_val = str(val).strip()
-                            if any(c.isdigit() for c in str_val):
-                                valid_numbers.append(str_val)
+                        final_attributes_for_new_entry[normalized_name] = converted_values
+                    elif normalized_name.lower() == "telephonenumber":
+                        # Validate telephone numbers using utilities
+                        valid_numbers = FlextLdifUtilities.Entry.validate_telephone_numbers(
+                            attr_values if isinstance(attr_values, list) else [attr_values]
+                        )
                         if valid_numbers:
-                            final_attributes_for_new_entry[normalized_name] = (
-                                valid_numbers
-                            )
+                            final_attributes_for_new_entry[normalized_name] = valid_numbers
                     else:
                         # Copy other attributes as is, ensuring list[str] format
                         final_attributes_for_new_entry[normalized_name] = [
@@ -1341,7 +1090,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                             )
                         ]
 
-                # Create LdifAttributes model for the new entry, combining processed and internal attributes
+                # Create LdifAttributes model, combining processed and internal attributes
                 combined_attributes = final_attributes_for_new_entry.copy()
                 combined_attributes.update({
                     k: v for k, v in processed_attrs_dict.items() if k.startswith("_")
@@ -1350,17 +1099,14 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                     attributes=combined_attributes
                 )
 
-                # Preserve metadata for DN quirks and attribute ordering
+                # Build metadata extensions
                 metadata_extensions: dict[str, object] = {}
-
-                # Use utility for DN space detection
                 if FlextLdifUtilities.DN.contains_pattern(entry.dn.value, ", "):
                     metadata_extensions["dn_spaces"] = True
-
                 if final_attributes_for_new_entry:
-                    attr_order: list[str] = list(final_attributes_for_new_entry.keys())
-                    metadata_extensions["attribute_order"] = attr_order
-
+                    metadata_extensions["attribute_order"] = list(
+                        final_attributes_for_new_entry.keys()
+                    )
                 if (
                     FlextLdifConstants.DictKeys.OBJECTCLASS
                     in final_attributes_for_new_entry
@@ -1369,7 +1115,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                         FlextLdifConstants.DictKeys.OBJECTCLASS
                     ]
                     if isinstance(oc_values, list):
-                        oracle_ocs: list[str] = [
+                        oracle_ocs = [
                             str(oc)
                             for oc in oc_values
                             if any(
@@ -1397,87 +1143,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 )
 
             except Exception as e:
-                return FlextResult.fail(f"OUD entry processing failed: {e}")
-
-        def convert_entry_to_rfc(
-            self,
-            entry_data: FlextLdifModels.Entry,
-        ) -> FlextResult[FlextLdifModels.Entry]:
-            """Convert server-specific entry to RFC-compliant format."""
-            try:
-                # OUD entries are already RFC-compliant
-                return FlextResult.ok(entry_data)
-            except Exception as e:
-                return FlextResult.fail(
-                    f"OUD entry→RFC conversion failed: {e}",
-                )
-
-        def convert_entry_from_rfc(
-            self,
-            entry_data: FlextLdifModels.Entry,
-        ) -> FlextResult[FlextLdifModels.Entry]:
-            """Convert RFC-compliant entry to OUD-specific format."""
-            # Transform boolean attributes from 0/1 to TRUE/FALSE for OUD
-            # Also format ACI attributes with semicolons between multiple "by" clauses
-            transformed_attributes = {}
-            for attr_name, attr_values in entry_data.attributes.attributes.items():
-                if attr_name.lower() in FlextLdifServersOud.Constants.BOOLEAN_ATTRIBUTES:
-                    # Transform boolean values
-                    transformed_values = []
-                    for value in (
-                        attr_values if isinstance(attr_values, list) else [attr_values]
-                    ):
-                        str_value = str(value).lower()
-                        if str_value in {"0", "false", "f", "no", "n"}:
-                            transformed_values.append("FALSE")
-                        elif str_value in {"1", "true", "t", "yes", "y"}:
-                            transformed_values.append("TRUE")
-                        else:
-                            # Keep original value if not clearly boolean
-                            transformed_values.append(str(value))
-
-                    transformed_attributes[attr_name] = (
-                        transformed_values
-                        if isinstance(attr_values, list)
-                        else transformed_values[0]
-                    )
-                elif attr_name.lower() == FlextLdifConstants.AclAttributes.ACI.lower():
-                    # Format ACI attributes with semicolons between multiple "by" clauses
-                    transformed_values = []
-                    for value in (
-                        attr_values if isinstance(attr_values, list) else [attr_values]
-                    ):
-                        formatted_value = self._format_aci_with_semicolons(str(value))
-                        transformed_values.append(formatted_value)
-
-                    transformed_attributes[attr_name] = (
-                        transformed_values
-                        if isinstance(attr_values, list)
-                        else transformed_values[0]
-                    )
-                else:
-                    transformed_attributes[attr_name] = attr_values
-
-            # Create new LdifAttributes with transformed attributes
-            new_attributes = FlextLdifModels.LdifAttributes(
-                attributes=transformed_attributes,
-                attribute_metadata=entry_data.attributes.attribute_metadata,
-            )
-
-            # Create new entry with transformed attributes
-            new_entry = entry_data.model_copy(update={"attributes": new_attributes})
-
-            # Ensure OUD server type is set in metadata
-            if new_entry.metadata:
-                new_entry.metadata.server_type = (
-                    FlextLdifConstants.ServerTypes.OUD
-                )
-            else:
-                new_entry.metadata = FlextLdifModels.QuirkMetadata(
-                    server_type=FlextLdifConstants.ServerTypes.OUD
-                )
-
-            return FlextResult.ok(new_entry)
+                return FlextResult.fail(f"OUD entry parsing failed: {e}")
 
         def _format_aci_with_semicolons(self, aci_value: str) -> str:
             """Format ACI value with semicolons between multiple 'by' clauses for OUD.
@@ -1553,50 +1219,6 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             # Always return single-line normalized string - writer will handle line folding if needed
             # NEVER preserve newlines - that's the writer's job based on format_options
             return formatted
-
-        def convert_rfc_acl_to_aci(
-            self,
-            rfc_acl_attrs: dict[str, object],
-            target_server: str,
-        ) -> FlextResult[dict[str, object]]:
-            """Convert RFC ACL attributes to OUD ACI format.
-
-            Takes ACL attributes in internal RFC/metadata format and converts
-            them to proper ACI attributes for OUD server.
-
-            Args:
-                rfc_acl_attrs: ACL attributes in RFC metadata format
-                target_server: Target server (should be 'oud' or 'oracle_oud')
-
-            Returns:
-                FlextResult with ACI attributes in OUD format
-
-            """
-            try:
-                if target_server.lower() not in {"oud", "oracle_oud"}:
-                    return FlextResult[dict[str, object]].fail(
-                        f"Invalid target server for OUD ACL conversion: {target_server}",
-                    )
-
-                aci_values = []
-
-                # Convert all ACL attributes to OUD ACI format
-                for attr_values in rfc_acl_attrs.values():
-                    if isinstance(attr_values, list):
-                        aci_values.extend(str(val) for val in attr_values)
-                    else:
-                        aci_values.append(str(attr_values))
-
-                if aci_values:
-                    return FlextResult[dict[str, object]].ok({
-                        FlextLdifConstants.AclAttributes.ACI: aci_values
-                    })
-                return FlextResult[dict[str, object]].ok({})
-
-            except (ValueError, TypeError, AttributeError) as e:
-                return FlextResult[dict[str, object]].fail(
-                    f"OUD ACL conversion failed: {e}",
-                )
 
         def write_entry_to_ldif(
             self,
@@ -1841,7 +1463,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                                 dn = str(
                                     current_entry.pop(FlextLdifConstants.DictKeys.DN),
                                 )
-                                result = self.process_entry(dn, current_entry)
+                                result = self.parse_entry(dn, current_entry)
                                 if result.is_success:
                                     entries.append(result.unwrap())
 
@@ -1907,7 +1529,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
 
                     if FlextLdifConstants.DictKeys.DN in current_entry:
                         dn = str(current_entry.pop(FlextLdifConstants.DictKeys.DN))
-                        result = self.process_entry(dn, current_entry)
+                        result = self.parse_entry(dn, current_entry)
                         if result.is_success:
                             entries.append(result.unwrap())
 
@@ -1926,96 +1548,10 @@ class FlextLdifServersOud(FlextLdifServersRfc):
 
         """
         super().__init__()
-        self.schema = self.Schema()
-        self.acl = self.Acl()
-        self.entry = self.Entry()
-
-    def extract_schemas_from_ldif(
-        self,
-        ldif_content: str,
-    ) -> FlextResult[FlextLdifTypes.Models.EntryAttributesDict]:
-        """Delegate to schema instance."""
-        return self.schema.extract_schemas_from_ldif(ldif_content)
-
-    def convert_attribute_to_rfc(
-        self,
-        attr_data: FlextLdifModels.SchemaAttribute,
-    ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
-        """Delegate to schema instance."""
-        return self.schema.convert_attribute_to_rfc(attr_data)
-
-    def convert_objectclass_to_rfc(
-        self,
-        oc_data: FlextLdifModels.SchemaObjectClass,
-    ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
-        """Delegate to schema instance."""
-        return self.schema.convert_objectclass_to_rfc(oc_data)
-
-    def convert_objectclass_from_rfc(
-        self,
-        rfc_data: FlextLdifModels.SchemaObjectClass,
-    ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
-        """Delegate to schema instance."""
-        return self.schema.convert_objectclass_from_rfc(rfc_data)
-
-    def convert_attribute_from_rfc(
-        self,
-        rfc_data: FlextLdifModels.SchemaAttribute,
-    ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
-        """Delegate to schema instance."""
-        return self.schema.convert_attribute_from_rfc(rfc_data)
-
-    def write_objectclass_to_rfc(
-        self,
-        oc_data: FlextLdifModels.SchemaObjectClass,
-    ) -> FlextResult[str]:
-        """Delegate to schema instance."""
-        return self.schema.write_objectclass_to_rfc(oc_data)
-
-    def write_attribute_to_rfc(
-        self,
-        attr_data: FlextLdifModels.SchemaAttribute,
-    ) -> FlextResult[str]:
-        """Delegate to schema instance."""
-        return self.schema.write_attribute_to_rfc(attr_data)
-
-    # QuirksPort Protocol Implementation (Concrete Methods for OUD)
-
-    def normalize_entry_to_rfc(
-        self, entry: FlextLdifModels.Entry
-    ) -> FlextResult[FlextLdifModels.Entry]:
-        """Delegate Entry normalization to the nested Entry quirk."""
-        return self.entry.convert_entry_to_rfc(entry)
-
-    def denormalize_entry_from_rfc(
-        self, entry: FlextLdifModels.Entry
-    ) -> FlextResult[FlextLdifModels.Entry]:
-        """Delegate Entry denormalization to the nested Entry quirk."""
-        return self.entry.convert_entry_from_rfc(entry)
-
-    def normalize_attribute_to_rfc(
-        self, attribute: FlextLdifModels.SchemaAttribute
-    ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
-        """Delegate SchemaAttribute normalization to the nested Schema quirk."""
-        return self.schema.convert_attribute_to_rfc(attribute)
-
-    def denormalize_attribute_from_rfc(
-        self, attribute: FlextLdifModels.SchemaAttribute
-    ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
-        """Delegate SchemaAttribute denormalization to the nested Schema quirk."""
-        return self.schema.convert_attribute_from_rfc(attribute)
-
-    def normalize_objectclass_to_rfc(
-        self, objectclass: FlextLdifModels.SchemaObjectClass
-    ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
-        """Delegate SchemaObjectClass normalization to the nested Schema quirk."""
-        return self.schema.convert_objectclass_to_rfc(objectclass)
-
-    def denormalize_objectclass_from_rfc(
-        self, objectclass: FlextLdifModels.SchemaObjectClass
-    ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
-        """Delegate SchemaObjectClass denormalization to the nested Schema quirk."""
-        return self.schema.convert_objectclass_from_rfc(objectclass)
+        # Use object.__setattr__ to bypass Pydantic validation for dynamic attributes
+        object.__setattr__(self, "schema", self.Schema())
+        object.__setattr__(self, "acl", self.Acl())
+        object.__setattr__(self, "entry", self.Entry())
 
 
 __all__ = ["FlextLdifServersOud"]

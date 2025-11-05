@@ -179,10 +179,19 @@ class FlextLdif(FlextService[dict[str, object]]):
             - FlextRegistry: Component registration
 
         Args:
-            **kwargs: Configuration parameters (ignored, for FlextService V2 compatibility)
+            **kwargs: Configuration parameters. Supports 'config' for FlextLdifConfig.
 
         """
+        # Extract 'config' from kwargs to avoid Pydantic extra='forbid' error
+        # Store it in _init_config_value for use in model_post_init
+        config_value = kwargs.pop("config", None)
+        if config_value is not None and isinstance(config_value, FlextLdifConfig):
+            # Store temporarily before super().__init__()
+            # model_post_init will read it and initialize services with it
+            object.__setattr__(self, "_init_config_value", config_value)
+
         # Call super().__init__() for Pydantic v2 model initialization
+        # Remaining kwargs (empty after config removal) are passed
         # This will call model_post_init() which initializes all services
         super().__init__(**kwargs)
 
@@ -460,9 +469,26 @@ class FlextLdif(FlextService[dict[str, object]]):
                         content = file_path.read_text(
                             encoding=self.config.ldif_encoding
                         )
+                    elif file_path.exists():
+                        # Path exists but is not a file (e.g., directory)
+                        return FlextResult[list[FlextLdifModels.Entry]].fail(
+                            f"Path exists but is not a file: {source}"
+                        )
+                    elif "/" in source or "\\" in source or source.endswith(".ldif"):
+                        # Looks like a file path but doesn't exist - return error
+                        return FlextResult[list[FlextLdifModels.Entry]].fail(
+                            f"File not found: {source}"
+                        )
                     else:
+                        # Doesn't look like a file path - treat as string content
                         content = source
-                except (ValueError, OSError):
+                except (OSError, PermissionError) as e:
+                    # File system error - return error, don't treat as string
+                    return FlextResult[list[FlextLdifModels.Entry]].fail(
+                        f"Failed to read file: {e}"
+                    )
+                except (ValueError, UnicodeDecodeError):
+                    # Not a valid path or encoding issue - treat as string content
                     content = source
             else:
                 content = source
@@ -973,49 +999,33 @@ class FlextLdif(FlextService[dict[str, object]]):
                     else False,
                 )
 
-            # Build pipeline arguments
-            pipeline_kwargs = {
-                "input_dir": input_dir,
-                "output_dir": output_dir,
-                "mode": mode,
-                "source_server": source_server,
-                "target_server": target_server,
-                # Common parameters
-                "forbidden_attributes": forbidden_attributes,
-                "forbidden_objectclasses": forbidden_objectclasses,
-                "base_dn": base_dn,
-                "sort_entries_hierarchically": sort_entries_hierarchically,
-            }
+            # Validate requirements for simple mode
+            if input_filename is not None and output_filename is None:
+                return FlextResult[FlextLdifModels.PipelineExecutionResult].fail(
+                    "output_filename is required when input_filename is specified"
+                )
 
-            # Add structured mode parameters
-            if config_model is not None:
-                pipeline_kwargs.update({
-                    "migration_config": config_model,
-                    "write_options": write_options,
-                })
-
-            # Add categorized mode parameters if provided
-            if categorization_rules is not None:
-                pipeline_kwargs.update({
-                    "categorization_rules": categorization_rules,
-                    "input_files": input_files,
-                    "output_files": output_files,
-                    "schema_whitelist_rules": schema_whitelist_rules,
-                })
-
-            # Add simple mode parameters if provided
-            if input_filename is not None:
-                pipeline_kwargs["input_filename"] = input_filename
-                # When input_filename is specified, output_filename becomes required
-                if output_filename is None:
-                    return FlextResult[FlextLdifModels.PipelineExecutionResult].fail(
-                        "output_filename is required when input_filename is specified"
-                    )
-                pipeline_kwargs["output_filename"] = output_filename
-            elif output_filename is not None:
-                pipeline_kwargs["output_filename"] = output_filename
-
-            migration_pipeline = FlextLdifMigrationPipeline(**pipeline_kwargs)
+            # Initialize migration pipeline with proper type safety
+            # All parameters passed directly with correct types
+            migration_pipeline = FlextLdifMigrationPipeline(
+                input_dir=input_dir,
+                output_dir=output_dir,
+                mode=mode,
+                source_server=source_server,
+                target_server=target_server,
+                forbidden_attributes=forbidden_attributes,
+                forbidden_objectclasses=forbidden_objectclasses,
+                base_dn=base_dn,
+                sort_entries_hierarchically=sort_entries_hierarchically,
+                migration_config=config_model,
+                write_options=write_options,
+                categorization_rules=categorization_rules,
+                input_files=input_files,
+                output_files=output_files,
+                schema_whitelist_rules=schema_whitelist_rules,
+                input_filename=input_filename,
+                output_filename=output_filename or "migrated.ldif",
+            )
 
             return migration_pipeline.execute()
 
@@ -1023,6 +1033,67 @@ class FlextLdif(FlextService[dict[str, object]]):
             return FlextResult[FlextLdifModels.PipelineExecutionResult].fail(
                 f"Migration failed: {e}"
             )
+
+    def _apply_standard_filters(
+        self,
+        entries: list[FlextLdifModels.Entry],
+        filters_service: FlextLdifFilterService,
+        objectclass: str | None,
+        dn_pattern: str | None,
+        attributes: dict[str, str | None] | None,
+    ) -> FlextResult[list[FlextLdifModels.Entry]]:
+        """Apply standard filters (objectclass, DN pattern, attributes) to entries.
+
+        Internal helper method to reduce complexity in filter() method.
+
+        Args:
+            entries: List of entries to filter
+            filters_service: Filters service instance
+            objectclass: Optional objectclass filter
+            dn_pattern: Optional DN pattern filter
+            attributes: Optional attributes filter
+
+        Returns:
+            FlextResult containing filtered entries
+
+        """
+        # Apply objectclass filter if provided
+        if objectclass is not None:
+            filter_result = FlextLdifFilterService.by_objectclass(
+                entries, objectclass, mark_excluded=False
+            )
+            if not filter_result.is_success:
+                return FlextResult[list[FlextLdifModels.Entry]].fail(
+                    f"Objectclass filter failed: {filter_result.error}",
+                )
+            entries = filter_result.unwrap()
+
+        # Apply dn_pattern filter if provided
+        if dn_pattern is not None:
+            # Convert simple substring pattern to fnmatch pattern
+            fnmatch_pattern = f"*{dn_pattern}*" if "*" not in dn_pattern else dn_pattern
+            filter_result = FlextLdifFilterService.by_dn(
+                entries, fnmatch_pattern, mark_excluded=False
+            )
+            if not filter_result.is_success:
+                return FlextResult[list[FlextLdifModels.Entry]].fail(
+                    f"DN pattern filter failed: {filter_result.error}",
+                )
+            entries = filter_result.unwrap()
+
+        # Apply attributes filter if provided
+        if attributes is not None:
+            attr_list = list(attributes.keys())
+            filter_result = FlextLdifFilterService.by_attributes(
+                entries, attr_list, mark_excluded=False
+            )
+            if not filter_result.is_success:
+                return FlextResult[list[FlextLdifModels.Entry]].fail(
+                    f"Attributes filter failed: {filter_result.error}",
+                )
+            entries = filter_result.unwrap()
+
+        return FlextResult[list[FlextLdifModels.Entry]].ok(entries)
 
     def filter(
         self,
@@ -1083,102 +1154,175 @@ class FlextLdif(FlextService[dict[str, object]]):
                 "Filters service not available in container",
             )
 
-        # If custom_filter is provided, apply it along with other criteria
-        if custom_filter is not None:
-            try:
-                # First apply standard filters
-                # Note: mark_excluded=False for clean filtering (public API behavior)
-                if objectclass is not None:
-                    filter_result = filters_service.filter_entries_by_objectclass(
-                        entries, objectclass, mark_excluded=False
-                    )
-                    if not filter_result.is_success:
-                        return FlextResult[list[FlextLdifModels.Entry]].fail(
-                            f"Objectclass filter failed: {filter_result.error}",
-                        )
-                    entries = filter_result.unwrap()
+        # Apply standard filters first
+        try:
+            filter_result = self._apply_standard_filters(
+                entries, filters_service, objectclass, dn_pattern, attributes
+            )
+            if not filter_result.is_success:
+                return filter_result
+            entries = filter_result.unwrap()
 
-                if dn_pattern is not None:
-                    # Convert simple substring pattern to fnmatch pattern
-                    fnmatch_pattern = (
-                        f"*{dn_pattern}*" if "*" not in dn_pattern else dn_pattern
-                    )
-                    filter_result = filters_service.filter_entries_by_dn(
-                        entries, fnmatch_pattern, mark_excluded=False
-                    )
-                    if not filter_result.is_success:
-                        return FlextResult[list[FlextLdifModels.Entry]].fail(
-                            f"DN pattern filter failed: {filter_result.error}",
-                        )
-                    entries = filter_result.unwrap()
-
-                if attributes is not None:
-                    attr_list = list(attributes.keys())
-                    filter_result = filters_service.filter_entries_by_attributes(
-                        entries, attr_list, mark_excluded=False
-                    )
-                    if not filter_result.is_success:
-                        return FlextResult[list[FlextLdifModels.Entry]].fail(
-                            f"Attributes filter failed: {filter_result.error}",
-                        )
-                    entries = filter_result.unwrap()
-
-                # Now apply custom_filter to the remaining entries
+            # Apply custom_filter if provided
+            if custom_filter is not None:
                 filtered_entries = [e for e in entries if custom_filter(e)]
                 return FlextResult[list[FlextLdifModels.Entry]].ok(filtered_entries)
-
-            except (ValueError, TypeError, AttributeError) as e:
-                return FlextResult[list[FlextLdifModels.Entry]].fail(
-                    f"Entry filtering with custom filter failed: {e}",
-                )
-
-        # No custom_filter - chain multiple filters
-        try:
-            # Apply objectclass filter if provided
-            if objectclass is not None:
-                filter_result = filters_service.filter_entries_by_objectclass(
-                    entries, objectclass, mark_excluded=False
-                )
-                if not filter_result.is_success:
-                    return FlextResult[list[FlextLdifModels.Entry]].fail(
-                        f"Objectclass filter failed: {filter_result.error}",
-                    )
-                entries = filter_result.unwrap()
-
-            # Apply dn_pattern filter if provided
-            if dn_pattern is not None:
-                # Convert simple substring pattern to fnmatch pattern
-                fnmatch_pattern = (
-                    f"*{dn_pattern}*" if "*" not in dn_pattern else dn_pattern
-                )
-                filter_result = filters_service.filter_entries_by_dn(
-                    entries, fnmatch_pattern, mark_excluded=False
-                )
-                if not filter_result.is_success:
-                    return FlextResult[list[FlextLdifModels.Entry]].fail(
-                        f"DN pattern filter failed: {filter_result.error}",
-                    )
-                entries = filter_result.unwrap()
-
-            # Apply attributes filter if provided
-            if attributes is not None:
-                attr_list = list(attributes.keys())
-                filter_result = filters_service.filter_entries_by_attributes(
-                    entries, attr_list, mark_excluded=False
-                )
-                if not filter_result.is_success:
-                    return FlextResult[list[FlextLdifModels.Entry]].fail(
-                        f"Attributes filter failed: {filter_result.error}",
-                    )
-                entries = filter_result.unwrap()
 
             # Return filtered entries (all criteria have been applied)
             return FlextResult[list[FlextLdifModels.Entry]].ok(entries)
 
-        except (ValueError, TypeError, AttributeError) as e:
+        except Exception as e:
             return FlextResult[list[FlextLdifModels.Entry]].fail(
                 f"Entry filtering failed: {e}",
             )
+
+    def _validate_single_entry(
+        self,
+        entry: FlextLdifModels.Entry,
+        validation_service: FlextLdifValidationService,
+    ) -> tuple[bool, list[str]]:
+        """Validate a single LDIF entry.
+
+        Internal helper method to reduce complexity in validate_entries() method.
+
+        Args:
+            entry: Entry to validate
+            validation_service: Validation service instance
+
+        Returns:
+            Tuple of (is_valid, errors) where is_valid is True if entry is valid,
+            and errors is list of validation error messages
+
+        """
+        errors: list[str] = []
+        is_entry_valid = True
+
+        # Validate DN
+        dn_str = entry.dn.value
+        if not dn_str or not isinstance(dn_str, str):
+            errors.append(f"Entry has invalid DN: {entry.dn}")
+            is_entry_valid = False
+
+        # Validate each attribute name
+        for attr_name in entry.attributes.attributes:
+            attr_result = validation_service.validate_attribute_name(attr_name)
+            if attr_result.is_failure or not attr_result.unwrap():
+                errors.append(f"Entry {dn_str}: Invalid attribute name '{attr_name}'")
+                is_entry_valid = False
+
+        # Validate objectClass values
+        oc_values = entry.attributes.attributes.get("objectClass", [])
+        if isinstance(oc_values, list):
+            for oc in oc_values:
+                oc_result = validation_service.validate_objectclass_name(oc)
+                if oc_result.is_failure or not oc_result.unwrap():
+                    errors.append(f"Entry {dn_str}: Invalid objectClass '{oc}'")
+                    is_entry_valid = False
+
+        return is_entry_valid, errors
+
+    def _get_acl_quirks_for_transformation(
+        self,
+        source_type: str,
+        target_type: str,
+    ) -> tuple[object | None, object | None]:
+        """Get ACL quirks for source and target servers.
+
+        Internal helper method to reduce complexity in transform_acl_entries() method.
+
+        Args:
+            source_type: Source server type string
+            target_type: Target server type string
+
+        Returns:
+            Tuple of (source_acl_quirk, target_acl_quirk) or (None, None) if not available
+
+        """
+        # Get quirk registry from container
+        quirk_registry = self._get_service_typed(
+            self.container,
+            "quirk_registry",
+            FlextLdifRegistry,
+        )
+        if quirk_registry is None:
+            return None, None
+
+        # Get schema quirks for source and target
+        source_schemas = quirk_registry.get_schema_quirks(source_type)
+        target_schemas = quirk_registry.get_schema_quirks(target_type)
+        source_quirk = source_schemas[0] if source_schemas else None
+        target_quirk = target_schemas[0] if target_schemas else None
+
+        if source_quirk is None or target_quirk is None:
+            return None, None
+
+        # Extract ACL quirks from schema quirks
+        source_acl_quirk = (
+            getattr(source_quirk, "acl_quirk", None)
+            if hasattr(source_quirk, "acl_quirk")
+            else None
+        )
+        target_acl_quirk = (
+            getattr(target_quirk, "acl_quirk", None)
+            if hasattr(target_quirk, "acl_quirk")
+            else None
+        )
+
+        return source_acl_quirk, target_acl_quirk
+
+    def _transform_acl_in_entry(
+        self,
+        entry: FlextLdifModels.Entry,
+        source_type: str,
+        target_type: str,
+    ) -> FlextResult[FlextLdifModels.Entry]:
+        """Transform ACL attributes in a single entry.
+
+        Internal helper method to reduce complexity in transform_acl_entries() method.
+
+        Args:
+            entry: Entry to transform
+            source_type: Source server type string
+            target_type: Target server type string
+
+        Returns:
+            FlextResult containing transformed entry (or original if no ACLs)
+
+        """
+        # Check if entry has any ACL attributes
+        if not entry.attributes or not entry.attributes.attributes:
+            return FlextResult[FlextLdifModels.Entry].ok(entry)
+
+        attrs = entry.attributes.attributes
+        # Use constants for ACL attribute detection
+        acl_attrs_lower = {
+            attr.lower() for attr in FlextLdifConstants.AclAttributes.ALL_ACL_ATTRIBUTES
+        }
+        has_acl = any(key.lower() in acl_attrs_lower for key in attrs)
+
+        if not has_acl:
+            # No ACL attributes, pass through unchanged
+            return FlextResult[FlextLdifModels.Entry].ok(entry)
+
+        # Get ACL quirks for transformation
+        source_acl_quirk, target_acl_quirk = self._get_acl_quirks_for_transformation(
+            source_type, target_type
+        )
+
+        if source_acl_quirk is None or target_acl_quirk is None:
+            # No ACL transformation available for this server pair
+            self.logger.debug(
+                f"ACL quirks not available for {source_type}→{target_type}, "
+                f"passing entry unchanged: {entry.dn.value}",
+            )
+            return FlextResult[FlextLdifModels.Entry].ok(entry)
+
+        # For now, pass entry unchanged as full ACL transformation is not fully implemented
+        self.logger.debug(
+            f"ACL transformation placeholder for {source_type}→{target_type}, "
+            f"passing entry unchanged: {entry.dn.value}",
+        )
+        return FlextResult[FlextLdifModels.Entry].ok(entry)
 
     # =========================================================================
     # ANALYSIS OPERATIONS
@@ -1296,31 +1440,10 @@ class FlextLdif(FlextService[dict[str, object]]):
             invalid_count = 0
 
             for entry in entries:
-                is_entry_valid = True
-
-                # Validate DN
-                dn_str = entry.dn.value
-                if not dn_str or not isinstance(dn_str, str):
-                    errors.append(f"Entry has invalid DN: {entry.dn}")
-                    is_entry_valid = False
-
-                # Validate each attribute name
-                for attr_name in entry.attributes.attributes:
-                    attr_result = validation_service.validate_attribute_name(attr_name)
-                    if attr_result.is_failure or not attr_result.unwrap():
-                        errors.append(
-                            f"Entry {dn_str}: Invalid attribute name '{attr_name}'"
-                        )
-                        is_entry_valid = False
-
-                # Validate objectClass values
-                oc_values = entry.attributes.attributes.get("objectClass", [])
-                if isinstance(oc_values, list):
-                    for oc in oc_values:
-                        oc_result = validation_service.validate_objectclass_name(oc)
-                        if oc_result.is_failure or not oc_result.unwrap():
-                            errors.append(f"Entry {dn_str}: Invalid objectClass '{oc}'")
-                            is_entry_valid = False
+                is_entry_valid, entry_errors = self._validate_single_entry(
+                    entry, validation_service
+                )
+                errors.extend(entry_errors)
 
                 if is_entry_valid:
                     valid_count += 1
@@ -1474,90 +1597,16 @@ class FlextLdif(FlextService[dict[str, object]]):
             # Process each entry
             for entry in entries:
                 try:
-                    # Check if entry has any ACL attributes
-                    if not entry.attributes or not entry.attributes.attributes:
-                        transformed_entries.append(entry)
-                        continue
-
-                    attrs = entry.attributes.attributes
-                    # Use constants for ACL attribute detection
-                    acl_attrs_lower = {
-                        attr.lower()
-                        for attr in FlextLdifConstants.AclAttributes.ALL_ACL_ATTRIBUTES
-                    }
-                    has_acl = any(key.lower() in acl_attrs_lower for key in attrs)
-
-                    if not has_acl:
-                        # No ACL attributes, pass through unchanged
-                        transformed_entries.append(entry)
-                        continue
-
-                    # Build transformation entry dict for quirks system
-                    # Quirks work with dict format: {dn: str, attributes: dict}
-                    # Note: transformation_entry prepared but ACL transformation not fully implemented
-                    _ = {
-                        FlextLdifConstants.DictKeys.DN: entry.dn.value,
-                        FlextLdifConstants.DictKeys.ATTRIBUTES: dict(attrs),
-                    }
-
-                    # Get quirks for source and target servers
-                    # These are internal implementation details not exposed to consumers
-                    source_quirk = None
-                    target_quirk = None
-
-                    # Try to get quirks from registry
-                    # Get quirk registry from container
-                    quirk_registry = self._get_service_typed(
-                        self.container,
-                        "quirk_registry",
-                        FlextLdifRegistry,
+                    transform_result = self._transform_acl_in_entry(
+                        entry, source_type, target_type
                     )
-                    if quirk_registry is not None:
-                        source_schemas = quirk_registry.get_schema_quirks(source_type)
-                        target_schemas = quirk_registry.get_schema_quirks(target_type)
-                        source_quirk = source_schemas[0] if source_schemas else None
-                        target_quirk = target_schemas[0] if target_schemas else None
+                    if transform_result.is_success:
+                        transformed_entries.append(transform_result.unwrap())
                     else:
-                        source_quirk = None
-                        target_quirk = None
-
-                    if source_quirk is None or target_quirk is None:
-                        # Fallback: no transformation available
-                        self.logger.debug(
-                            f"Quirks not available for {source_type}→{target_type}, "
-                            f"passing entry unchanged: {entry.dn.value}",
-                        )
-                        transformed_entries.append(entry)
-                        continue
-
-                    # Check if quirks have ACL transformation capability
-                    source_acl_quirk = (
-                        getattr(source_quirk, "acl_quirk", None)
-                        if hasattr(source_quirk, "acl_quirk")
-                        else None
-                    )
-                    target_acl_quirk = (
-                        getattr(target_quirk, "acl_quirk", None)
-                        if hasattr(target_quirk, "acl_quirk")
-                        else None
-                    )
-
-                    if source_acl_quirk is None or target_acl_quirk is None:
-                        # No ACL transformation available for this server pair
-                        self.logger.debug(
-                            f"ACL quirks not available for {source_type}→{target_type}, "
-                            f"passing entry unchanged: {entry.dn.value}",
-                        )
-                        transformed_entries.append(entry)
-                        continue
-
-                    # For now, pass entry unchanged as full ACL transformation is not fully implemented
-                    self.logger.debug(
-                        f"ACL transformation placeholder for {source_type}→{target_type}, "
-                        f"passing entry unchanged: {entry.dn.value}",
-                    )
-                    transformed_entries.append(entry)
-                    continue
+                        transformation_errors.append((
+                            entry.dn.value,
+                            f"Transformation failed: {transform_result.error}",
+                        ))
 
                 except (ValueError, TypeError, AttributeError, KeyError) as e:
                     transformation_errors.append((

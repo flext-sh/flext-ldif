@@ -274,9 +274,8 @@ class FlextLdifFilterService(FlextService[list[FlextLdifModels.Entry]]):
         """Validate filter_criteria is valid."""
         valid = {"dn", "objectclass", "attributes", "base_dn"}
         if v not in valid:
-            raise ValueError(
-                f"Invalid filter_criteria: {v!r}. Valid: {', '.join(sorted(valid))}"
-            )
+            msg = f"Invalid filter_criteria: {v!r}. Valid: {', '.join(sorted(valid))}"
+            raise ValueError(msg)
         return v
 
     @field_validator("mode")
@@ -285,9 +284,8 @@ class FlextLdifFilterService(FlextService[list[FlextLdifModels.Entry]]):
         """Validate mode is valid."""
         valid = {FlextLdifConstants.Modes.INCLUDE, FlextLdifConstants.Modes.EXCLUDE}
         if v not in valid:
-            raise ValueError(
-                f"Invalid mode: {v!r}. Valid: {', '.join(sorted(valid))}"
-            )
+            msg = f"Invalid mode: {v!r}. Valid: {', '.join(sorted(valid))}"
+            raise ValueError(msg)
         return v
 
     # ════════════════════════════════════════════════════════════════════════
@@ -316,9 +314,7 @@ class FlextLdifFilterService(FlextService[list[FlextLdifModels.Entry]]):
                         f"Unknown filter_criteria: {self.filter_criteria}"
                     )
         except Exception as e:
-            return FlextResult[list[FlextLdifModels.Entry]].fail(
-                f"Filter failed: {e}"
-            )
+            return FlextResult[list[FlextLdifModels.Entry]].fail(f"Filter failed: {e}")
 
     # ════════════════════════════════════════════════════════════════════════
     # PUBLIC API - MINIMAL ESSENTIALS
@@ -365,7 +361,7 @@ class FlextLdifFilterService(FlextService[list[FlextLdifModels.Entry]]):
             required_attributes=required_attributes,
             attributes=attributes,
             base_dn=base_dn,
-                        mode=mode,
+            mode=mode,
             match_all=match_all,
             mark_excluded=mark_excluded,
         ).execute()
@@ -388,17 +384,13 @@ class FlextLdifFilterService(FlextService[list[FlextLdifModels.Entry]]):
         self.dn_pattern = pattern
         return self
 
-    def with_objectclass(
-        self, *classes: str
-    ) -> FlextLdifFilterService:
+    def with_objectclass(self, *classes: str) -> FlextLdifFilterService:
         """Set objectClass filter (fluent builder)."""
         self.filter_criteria = "objectclass"
         self.objectclass = classes or None
         return self
 
-    def with_required_attributes(
-        self, attributes: list[str]
-    ) -> FlextLdifFilterService:
+    def with_required_attributes(self, attributes: list[str]) -> FlextLdifFilterService:
         """Set required attributes (fluent builder)."""
         self.required_attributes = attributes
         return self
@@ -469,8 +461,8 @@ class FlextLdifFilterService(FlextService[list[FlextLdifModels.Entry]]):
             entries=entries,
             filter_criteria="objectclass",
             objectclass=objectclass,
-                        required_attributes=required_attributes,
-                        mode=mode,
+            required_attributes=required_attributes,
+            mode=mode,
             mark_excluded=mark_excluded,
         ).execute()
 
@@ -681,9 +673,9 @@ class FlextLdifFilterService(FlextService[list[FlextLdifModels.Entry]]):
     @classmethod
     def filter_schema_by_oids(
         cls,
-            entries: list[FlextLdifModels.Entry],
+        entries: list[FlextLdifModels.Entry],
         allowed_oids: dict[str, list[str]],
-        ) -> FlextResult[list[FlextLdifModels.Entry]]:
+    ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Filter schema entries by allowed OID patterns.
 
         Args:
@@ -713,12 +705,12 @@ class FlextLdifFilterService(FlextService[list[FlextLdifModels.Entry]]):
                     values = attrs[key]
                     if isinstance(values, list):
                         for val in values:
-                            oid_match = re.search(
-                                r"\(\s*(\d+(?:\.\d+)*)", str(val)
-                            )
+                            oid_match = re.search(r"\(\s*(\d+(?:\.\d+)*)", str(val))
                             if oid_match and fnmatch.fnmatch(
                                 oid_match.group(1),
-                                "|".join(allowed_attr_oids) if allowed_attr_oids else "*",
+                                "|".join(allowed_attr_oids)
+                                if allowed_attr_oids
+                                else "*",
                             ):
                                 keep_entry = True
                                 break
@@ -729,9 +721,7 @@ class FlextLdifFilterService(FlextService[list[FlextLdifModels.Entry]]):
                     values = attrs[key]
                     if isinstance(values, list):
                         for val in values:
-                            oid_match = re.search(
-                                r"\(\s*(\d+(?:\.\d+)*)", str(val)
-                            )
+                            oid_match = re.search(r"\(\s*(\d+(?:\.\d+)*)", str(val))
                             if oid_match and fnmatch.fnmatch(
                                 oid_match.group(1),
                                 "|".join(allowed_oc_oids) if allowed_oc_oids else "*",
@@ -759,9 +749,7 @@ class FlextLdifFilterService(FlextService[list[FlextLdifModels.Entry]]):
             pattern = self.dn_pattern  # Type narrowing: str
             filtered = []
             for entry in self.entries:
-                matches = fnmatch.fnmatch(
-                    entry.dn.value.lower(), pattern.lower()
-                )
+                matches = fnmatch.fnmatch(entry.dn.value.lower(), pattern.lower())
                 include = (
                     self.mode == FlextLdifConstants.Modes.INCLUDE and matches
                 ) or (self.mode == FlextLdifConstants.Modes.EXCLUDE and not matches)
@@ -769,11 +757,15 @@ class FlextLdifFilterService(FlextService[list[FlextLdifModels.Entry]]):
                 if include:
                     filtered.append(entry)
                 elif self.mark_excluded:
-                    filtered.append(self._mark_excluded(entry, f"DN pattern: {self.dn_pattern}"))
+                    filtered.append(
+                        self._mark_excluded(entry, f"DN pattern: {self.dn_pattern}")
+                    )
 
             return FlextResult[list[FlextLdifModels.Entry]].ok(filtered)
         except Exception as e:
-            return FlextResult[list[FlextLdifModels.Entry]].fail(f"DN filter failed: {e}")
+            return FlextResult[list[FlextLdifModels.Entry]].fail(
+                f"DN filter failed: {e}"
+            )
 
     def _filter_by_objectclass(self) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Filter by objectClass."""
@@ -839,7 +831,9 @@ class FlextLdifFilterService(FlextService[list[FlextLdifModels.Entry]]):
                     filtered.append(entry)
                 elif self.mark_excluded:
                     filtered.append(
-                        self._mark_excluded(entry, f"Attribute filter: {self.attributes}")
+                        self._mark_excluded(
+                            entry, f"Attribute filter: {self.attributes}"
+                        )
                     )
 
             return FlextResult[list[FlextLdifModels.Entry]].ok(filtered)
@@ -929,7 +923,9 @@ class FlextLdifFilterService(FlextService[list[FlextLdifModels.Entry]]):
         return all(entry.has_attribute(attr) for attr in attributes)
 
     @staticmethod
-    def _mark_excluded(entry: FlextLdifModels.Entry, reason: str) -> FlextLdifModels.Entry:
+    def _mark_excluded(
+        entry: FlextLdifModels.Entry, reason: str
+    ) -> FlextLdifModels.Entry:
         """Mark entry as excluded."""
         exclusion_info = FlextLdifModels.ExclusionInfo(
             excluded=True,
@@ -1072,12 +1068,8 @@ class FlextLdifFilters:
         if not attributes:
             return False
 
-        entry_attrs_lower = {attr.lower() for attr in entry.attributes.keys()}
-        for attr in attributes:
-            if attr.lower() in entry_attrs_lower:
-                return True
-
-        return False
+        entry_attrs_lower = {attr.lower() for attr in entry.attributes}
+        return any(attr.lower() in entry_attrs_lower for attr in attributes)
 
     @staticmethod
     def categorize_entry(
@@ -1117,7 +1109,9 @@ class FlextLdifFilters:
             user_dn_patterns = rules.get("user_dn_patterns", [])
             if user_dn_patterns:
                 try:
-                    if not FlextLdifFilters._matches_dn_pattern(entry.dn.value, user_dn_patterns):
+                    if not FlextLdifFilters._matches_dn_pattern(
+                        entry.dn.value, user_dn_patterns
+                    ):
                         return ("rejected", "DN pattern does not match user rules")
                 except ValueError:
                     # Invalid patterns - just let it through
@@ -1127,7 +1121,9 @@ class FlextLdifFilters:
             group_dn_patterns = rules.get("group_dn_patterns", [])
             if group_dn_patterns:
                 try:
-                    if not FlextLdifFilters._matches_dn_pattern(entry.dn.value, group_dn_patterns):
+                    if not FlextLdifFilters._matches_dn_pattern(
+                        entry.dn.value, group_dn_patterns
+                    ):
                         return ("rejected", "DN pattern does not match group rules")
                 except ValueError:
                     # Invalid patterns - just let it through
@@ -1246,11 +1242,12 @@ class FlextLdifFilters:
 
             # Create filtered attributes dict
             attrs_lower = {attr.lower() for attr in attributes_to_remove}
-            filtered_attrs = {}
 
-            for key, values in entry.attributes.items():
-                if key.lower() not in attrs_lower:
-                    filtered_attrs[key] = values
+            filtered_attrs = {
+                key: values
+                for key, values in entry.attributes.items()
+                if key.lower() not in attrs_lower
+            }
 
             # Create new LdifAttributes
             attrs_result = FlextLdifModels.LdifAttributes.create(filtered_attrs)
@@ -1261,7 +1258,9 @@ class FlextLdifFilters:
             return FlextResult[FlextLdifModels.Entry].ok(new_entry)
 
         except Exception as e:
-            return FlextResult[FlextLdifModels.Entry].fail(f"Filter attributes failed: {e}")
+            return FlextResult[FlextLdifModels.Entry].fail(
+                f"Filter attributes failed: {e}"
+            )
 
     @staticmethod
     def filter_entry_objectclasses(
@@ -1287,8 +1286,7 @@ class FlextLdifFilters:
 
             # Filter objectClasses
             filtered_ocs = [
-                oc for oc in current_ocs
-                if oc.lower() not in oc_to_remove_lower
+                oc for oc in current_ocs if oc.lower() not in oc_to_remove_lower
             ]
 
             # Check if all objectClasses would be removed
@@ -1310,7 +1308,9 @@ class FlextLdifFilters:
             return FlextResult[FlextLdifModels.Entry].ok(new_entry)
 
         except Exception as e:
-            return FlextResult[FlextLdifModels.Entry].fail(f"Filter objectClasses failed: {e}")
+            return FlextResult[FlextLdifModels.Entry].fail(
+                f"Filter objectClasses failed: {e}"
+            )
 
 
 __all__ = ["FlextLdifFilterService", "FlextLdifFilters"]

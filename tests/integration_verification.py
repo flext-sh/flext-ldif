@@ -88,7 +88,7 @@ def verify_relaxed() -> bool:
 
         # Test Schema quirk
         schema = FlextLdifServersRelaxed.Schema()
-        result = schema.parse_attribute("( broken-oid NAME 'test'")
+        result = schema.parse("( broken-oid NAME 'test'")
         if result.is_success and result.unwrap()["relaxed_parsed"]:
             logger.info("✅ Relaxed schema quirk works")
         else:
@@ -97,7 +97,7 @@ def verify_relaxed() -> bool:
 
         # Test ACL quirk
         acl = FlextLdifServersRelaxed.Acl()
-        result = acl.parse_acl("(incomplete-acl")
+        result = acl.parse("(incomplete-acl")
         if result.is_success and result.unwrap()["relaxed_parsed"]:
             logger.info("✅ Relaxed ACL quirk works")
         else:
@@ -106,7 +106,7 @@ def verify_relaxed() -> bool:
 
         # Test Entry quirk
         entry = FlextLdifServersRelaxed.Entry()
-        result = entry.parse_entry("cn=broken-dn", {})
+        result = entry.parse("cn=broken-dn", {})
         if result.is_success and result.unwrap()["relaxed_parsed"]:
             logger.info("✅ Relaxed entry quirk works")
         else:

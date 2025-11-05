@@ -115,10 +115,11 @@ class TestRfcDockerRealData:
 
         result = parser.parse_file(integration_file)
 
-        assert result.is_success or "Failed to parse" in result.error
+        assert result.is_success or (
+            result.error is not None and "Failed to parse" in result.error
+        )
         if result.is_success:
-            parse_response = result.unwrap()
-            entries = parse_response.entries
+            entries = result.unwrap()
             assert len(entries) > 0
 
     def test_roundtrip_oid_to_file(
@@ -150,9 +151,13 @@ class TestRfcDockerRealData:
         writer = FlextLdifWriterService(
             config=FlextLdifConfig(),
             quirk_registry=quirk_registry,
-            target_server_type="rfc",
         )
-        write_result = writer.write(entries, output_file)
+        write_result = writer.write(
+            entries,
+            target_server_type="rfc",
+            output_target="file",
+            output_path=output_file,
+        )
 
         assert write_result.is_success, f"Failed to write: {write_result.error}"
         assert output_file.exists()
@@ -187,8 +192,7 @@ class TestRfcDockerRealData:
         result = parser.parse_file(acl_file)
 
         if result.is_success:
-            parse_response = result.unwrap()
-            entries = parse_response.entries
+            entries = result.unwrap()
             # OUD ACLs should have 'aci' attributes
             # LdifAttributes is a wrapper - access inner dict via .attributes
             acl_entries = [e for e in entries if "aci" in e.attributes.attributes]
@@ -243,14 +247,18 @@ class TestRfcDockerRealData:
             writer = FlextLdifWriterService(
                 config=FlextLdifConfig(),
                 quirk_registry=quirk_registry,
-                target_server_type="rfc",
             )
 
-            result = writer.write([test_entry], output_file)
+            result = writer.write(
+                [test_entry],
+                target_server_type="rfc",
+                output_target="file",
+                output_path=output_file,
+            )
 
             # Should fail with permission error (not silently)
             if not result.is_success:
-                assert (
+                assert result.error is not None and (
                     "Permission denied" in result.error
                     or "LDIF write failed" in result.error
                 )
@@ -279,8 +287,7 @@ class TestRfcDockerRealData:
 
             # Relaxed mode should attempt to parse even broken LDIF
             if result.is_success:
-                parse_response = result.unwrap()
-                entries = parse_response.entries
+                entries = result.unwrap()
                 assert isinstance(entries, list)
 
     def test_rfc_schema_parser_with_real_data(
@@ -300,8 +307,7 @@ class TestRfcDockerRealData:
         result = parser.parse_file(schema_file)
 
         if result.is_success:
-            parse_response = result.unwrap()
-            entries = parse_response.entries
+            entries = result.unwrap()
             # Should have schema entries with attributeTypes or objectClasses
             assert len(entries) > 0
             assert any(
@@ -358,8 +364,7 @@ class TestRfcIntegrationRealWorld:
         result = parser.parse_file(integration_file)
 
         if result.is_success:
-            parse_response = result.unwrap()
-            entries = parse_response.entries
+            entries = result.unwrap()
             assert len(entries) > 0, "Integration file should have entries"
 
     def test_write_large_dataset(
@@ -384,18 +389,24 @@ class TestRfcIntegrationRealWorld:
 
         output_file = tmp_path / "large_output.ldif"
 
-        {
-            FlextLdifConstants.DictKeys.OUTPUT_FILE: str(output_file),
-            FlextLdifConstants.DictKeys.ENTRIES: entries,
-        }
-
         writer = FlextLdifWriterService(
             config=FlextLdifConfig(),
             quirk_registry=quirk_registry,
-            target_server_type="rfc",
         )
 
-        result = writer.execute()
+        # Convert entries to Entry models
+        from flext_ldif.models import FlextLdifModels
+
+        entry_models = [
+            FlextLdifModels.Entry.model_validate(entry) for entry in entries
+        ]
+
+        result = writer.write(
+            entry_models,
+            target_server_type="rfc",
+            output_target="file",
+            output_path=output_file,
+        )
 
         assert result.is_success, f"Failed to write large dataset: {result.error}"
         assert output_file.exists()

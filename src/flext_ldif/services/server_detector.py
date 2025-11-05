@@ -328,12 +328,13 @@ class FlextLdifServerDetector(FlextService[FlextLdifModels.ClientStatus]):
             )
 
         # Apache DS detection
+        from flext_ldif.servers.apache import FlextLdifServersApache
         if re.search(
-            FlextLdifConstants.ServerDetection.APACHE_DS_PATTERN,
+            FlextLdifServersApache.Constants.APACHE_DS_PATTERN,
             content_lower,
         ):
             scores[FlextLdifConstants.ServerTypes.APACHE] += (
-                FlextLdifConstants.ServerDetection.APACHE_DS_WEIGHT
+                FlextLdifServersApache.Constants.APACHE_DS_WEIGHT
             )
 
         return scores
@@ -369,6 +370,10 @@ class FlextLdifServerDetector(FlextService[FlextLdifModels.ClientStatus]):
         if confidence < FlextLdifConstants.ServerDetection.CONFIDENCE_THRESHOLD:
             return FlextLdifConstants.ServerTypes.RFC, confidence
 
+        # Map "generic" fallback to "rfc" (generic is not a registered quirk)
+        if detected == FlextLdifConstants.ServerTypes.GENERIC:
+            return FlextLdifConstants.ServerTypes.RFC, confidence
+
         return detected, confidence
 
     def _extract_patterns(self, content: str) -> list[str]:
@@ -387,9 +392,11 @@ class FlextLdifServerDetector(FlextService[FlextLdifModels.ClientStatus]):
         # Oracle OID detection
         if re.search(FlextLdifConstants.ServerDetection.ORACLE_OID_PATTERN, content):
             patterns.append("Oracle OID namespace (2.16.840.1.113894.*)")
+        # Import OID constants for detection (server-specific constants)
+        from flext_ldif.servers.oid import FlextLdifServersOid
         if (
-            FlextLdifConstants.AclAttributes.ORCLACI.lower() in content_lower
-            or FlextLdifConstants.AclAttributes.ORCL_ENTRY_LEVEL_ACI.lower()
+            FlextLdifServersOid.Constants.ORCLACI.lower() in content_lower
+            or FlextLdifServersOid.Constants.ORCL_ENTRY_LEVEL_ACI.lower()
             in content_lower
         ):
             patterns.append("Oracle OID ACLs")
@@ -438,8 +445,9 @@ class FlextLdifServerDetector(FlextService[FlextLdifModels.ClientStatus]):
             )
 
         # Apache DS detection
+        from flext_ldif.servers.apache import FlextLdifServersApache
         if re.search(
-            FlextLdifConstants.ServerDetection.APACHE_DS_PATTERN,
+            FlextLdifServersApache.Constants.APACHE_DS_PATTERN,
             content_lower,
         ):
             patterns.append("Apache DS attributes (apacheDS, apache-*)")

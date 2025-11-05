@@ -11,7 +11,8 @@ from __future__ import annotations
 
 import base64
 import re
-from typing import ClassVar
+from collections.abc import Mapping
+from typing import ClassVar, Final
 
 from flext_core import FlextResult
 
@@ -23,11 +24,14 @@ from flext_ldif.servers.rfc import FlextLdifServersRfc
 class FlextLdifServersNovell(FlextLdifServersRfc):
     """Novell eDirectory quirks implementation."""
 
-    server_type = FlextLdifConstants.ServerTypes.NOVELL
-    priority = 10
+    # =========================================================================
+    # Class-level attributes for server identification
+    # =========================================================================
+    server_type: ClassVar[str] = FlextLdifConstants.ServerTypes.NOVELL
+    priority: ClassVar[int] = 10
 
     # === STANDARDIZED CONSTANTS FOR AUTO-DISCOVERY ===
-    class Constants:
+    class Constants(FlextLdifServersRfc.Constants):
         """Standardized constants for Novell eDirectory quirk."""
 
         CANONICAL_NAME: ClassVar[str] = "novell_edirectory"
@@ -36,81 +40,21 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
         CAN_NORMALIZE_FROM: ClassVar[frozenset[str]] = frozenset(["novell_edirectory"])
         CAN_DENORMALIZE_TO: ClassVar[frozenset[str]] = frozenset(["novell_edirectory", "rfc"])
 
+        # Novell eDirectory operational attributes (server-specific)
+        OPERATIONAL_ATTRIBUTES: Final[frozenset[str]] = frozenset([
+            "GUID",
+            "createTimestamp",
+            "modifyTimestamp",
+        ])
+
     def __init__(self) -> None:
         """Initialize Novell quirks."""
         super().__init__()
-        self._schema = self.Schema()
-        self.schema = self._schema  # Public alias for delegation
-        self.acl = self.Acl()
-        self.entry = self.Entry()
-
-    def can_handle_attribute(
-        self, attribute: str | FlextLdifModels.SchemaAttribute
-    ) -> bool:
-        """Delegate to schema instance."""
-        return self._schema.can_handle_attribute(attribute)
-
-    def parse_attribute(
-        self,
-        attr_definition: str,
-    ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
-        """Delegate to schema instance."""
-        return self._schema.parse_attribute(attr_definition)
-
-    def can_handle_objectclass(
-        self, objectclass: str | FlextLdifModels.SchemaObjectClass
-    ) -> bool:
-        """Delegate to schema instance."""
-        return self._schema.can_handle_objectclass(objectclass)
-
-    def parse_objectclass(
-        self,
-        oc_definition: str,
-    ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
-        """Delegate to schema instance."""
-        return self._schema.parse_objectclass(oc_definition)
-
-    def convert_attribute_to_rfc(
-        self,
-        attribute: FlextLdifModels.SchemaAttribute,
-    ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
-        """Delegate to schema instance."""
-        return self._schema.convert_attribute_to_rfc(attribute)
-
-    def convert_attribute_from_rfc(
-        self,
-        attribute: FlextLdifModels.SchemaAttribute,
-    ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
-        """Delegate to schema instance."""
-        return self._schema.convert_attribute_from_rfc(attribute)
-
-    def convert_objectclass_to_rfc(
-        self,
-        objectclass: FlextLdifModels.SchemaObjectClass,
-    ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
-        """Delegate to schema instance."""
-        return self._schema.convert_objectclass_to_rfc(objectclass)
-
-    def convert_objectclass_from_rfc(
-        self,
-        objectclass: FlextLdifModels.SchemaObjectClass,
-    ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
-        """Delegate to schema instance."""
-        return self._schema.convert_objectclass_from_rfc(objectclass)
-
-    def write_attribute_to_rfc(
-        self,
-        attribute: FlextLdifModels.SchemaAttribute,
-    ) -> FlextResult[str]:
-        """Delegate to schema instance."""
-        return self._schema.write_attribute_to_rfc(attribute)
-
-    def write_objectclass_to_rfc(
-        self,
-        objectclass: FlextLdifModels.SchemaObjectClass,
-    ) -> FlextResult[str]:
-        """Delegate to schema instance."""
-        return self._schema.write_objectclass_to_rfc(objectclass)
+        # Use object.__setattr__ to bypass Pydantic validation for dynamic attributes
+        # Pass server_type and priority to nested class instances
+        object.__setattr__(self, "schema", self.Schema(server_type=self.server_type, priority=self.priority))
+        object.__setattr__(self, "acl", self.Acl(server_type=self.server_type, priority=self.priority))
+        object.__setattr__(self, "entry", self.Entry(server_type=self.server_type, priority=self.priority))
 
     # Quirk detection patterns and prefixes for Novell (shared with Schema and Entry)
     NOVELL_OID_PATTERN: ClassVar[re.Pattern[str]] = re.compile(
@@ -133,12 +77,6 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
     class Schema(FlextLdifServersRfc.Schema):
         """Novell eDirectory schema quirk."""
 
-        server_type: ClassVar[str] = FlextLdifConstants.ServerTypes.NOVELL
-        priority: ClassVar[int] = 18
-
-        server_type: ClassVar[str] = FlextLdifConstants.ServerTypes.NOVELL
-        priority: ClassVar[int] = 15
-
         NOVELL_OID_PATTERN: ClassVar[re.Pattern[str]] = re.compile(
             r"\b2\.16\.840\.1\.113719\.",
             re.IGNORECASE,
@@ -160,16 +98,16 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             re.IGNORECASE,
         )
 
-        def can_handle_attribute(
-            self, attribute: str | FlextLdifModels.SchemaAttribute
+        def _can_handle_attribute(
+            self, attr_definition: str | FlextLdifModels.SchemaAttribute
         ) -> bool:
             """Detect eDirectory attribute definitions."""
-            if isinstance(attribute, str):
-                attr_lower = attribute.lower()
-                if self.NOVELL_OID_PATTERN.search(attribute):
+            if isinstance(attr_definition, str):
+                attr_lower = attr_definition.lower()
+                if self.NOVELL_OID_PATTERN.search(attr_definition):
                     return True
 
-                name_matches = self.ATTRIBUTE_NAME_REGEX.findall(attribute)
+                name_matches = self.ATTRIBUTE_NAME_REGEX.findall(attr_definition)
                 if any(
                     name.lower().startswith(tuple(self.NOVELL_ATTRIBUTE_PREFIXES))
                     for name in name_matches
@@ -179,10 +117,10 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                 return any(
                     prefix in attr_lower for prefix in self.NOVELL_ATTRIBUTE_PREFIXES
                 )
-            if isinstance(attribute, FlextLdifModels.SchemaAttribute):
-                if self.NOVELL_OID_PATTERN.search(attribute.oid):
+            if isinstance(attr_definition, FlextLdifModels.SchemaAttribute):
+                if self.NOVELL_OID_PATTERN.search(attr_definition.oid):
                     return True
-                attr_name_lower = attribute.name.lower()
+                attr_name_lower = attr_definition.name.lower()
                 return any(
                     attr_name_lower.startswith(prefix)
                     for prefix in self.NOVELL_ATTRIBUTE_PREFIXES
@@ -191,41 +129,39 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
 
         # INHERITED METHODS (from FlextLdifServersRfc.Schema)
         # These methods are inherited from RFC base class:
-        # - parse_attribute(): Uses RFC parser
-        # - parse_objectclass(): Uses RFC parser
-        # - convert_attribute_to_rfc(): RFC conversion
-        # - convert_objectclass_to_rfc(): RFC conversion
+        # - _parse_attribute(): Uses RFC parser
+        # - _parse_objectclass(): Uses RFC parser
         # - convert_attribute_from_rfc(): RFC conversion
         # - convert_objectclass_from_rfc(): RFC conversion
-        # - write_attribute_to_rfc(): RFC writer
-        # - write_objectclass_to_rfc(): RFC writer
+        # - _write_attribute(): RFC writer
+        # - _write_objectclass(): RFC writer
         # - should_filter_out_attribute(): Returns False (no filtering)
         # - should_filter_out_objectclass(): Returns False (no filtering)
         #
-        # Only can_handle_* methods are overridden with Novell-specific logic.
+        # Only _can_handle_* methods are overridden with Novell-specific logic.
         #
 
-        def can_handle_objectclass(
-            self, objectclass: str | FlextLdifModels.SchemaObjectClass
+        def _can_handle_objectclass(
+            self, oc_definition: str | FlextLdifModels.SchemaObjectClass
         ) -> bool:
             """Detect eDirectory objectClass definitions."""
-            if isinstance(objectclass, str):
-                if self.NOVELL_OID_PATTERN.search(objectclass):
+            if isinstance(oc_definition, str):
+                if self.NOVELL_OID_PATTERN.search(oc_definition):
                     return True
 
-                name_matches = self.ATTRIBUTE_NAME_REGEX.findall(objectclass)
+                name_matches = self.ATTRIBUTE_NAME_REGEX.findall(oc_definition)
                 return any(
                     name.lower() in self.NOVELL_OBJECTCLASS_NAMES
                     for name in name_matches
                 )
-            if isinstance(objectclass, FlextLdifModels.SchemaObjectClass):
-                if self.NOVELL_OID_PATTERN.search(objectclass.oid):
+            if isinstance(oc_definition, FlextLdifModels.SchemaObjectClass):
+                if self.NOVELL_OID_PATTERN.search(oc_definition.oid):
                     return True
-                oc_name_lower = objectclass.name.lower()
+                oc_name_lower = oc_definition.name.lower()
                 return oc_name_lower in self.NOVELL_OBJECTCLASS_NAMES
             return False
 
-        def parse_attribute(
+        def _parse_attribute(
             self,
             attr_definition: str,
         ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
@@ -238,7 +174,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                 FlextResult with SchemaAttribute marked with Novell metadata
 
             """
-            result = super().parse_attribute(attr_definition)
+            result = super()._parse_attribute(attr_definition)
             if result.is_success:
                 attr_data = result.unwrap()
                 metadata = FlextLdifModels.QuirkMetadata.create_for_quirk(
@@ -249,7 +185,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                 )
             return result
 
-        def parse_objectclass(
+        def _parse_objectclass(
             self,
             oc_definition: str,
         ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
@@ -262,7 +198,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                 FlextResult with SchemaObjectClass marked with Novell metadata
 
             """
-            result = super().parse_objectclass(oc_definition)
+            result = super()._parse_objectclass(oc_definition)
             if result.is_success:
                 oc_data = result.unwrap()
                 metadata = FlextLdifModels.QuirkMetadata.create_for_quirk(
@@ -311,88 +247,6 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
 
         # Nested class references for Schema - allows Schema().Entry() pattern
         # These are references to the outer class definitions for proper architecture
-        class Acl(FlextLdifServersRfc.Acl):
-            """Nested Acl reference within Schema."""
-
-            server_type: ClassVar[str] = FlextLdifConstants.ServerTypes.NOVELL
-            priority: ClassVar[int] = 15
-
-            def __init__(self) -> None:
-                """Initialize by delegating to outer Acl class."""
-                super().__init__()
-
-            def can_handle_acl(self, acl: FlextLdifModels.Acl) -> bool:
-                """Delegate to outer Novell Acl's can_handle_acl implementation."""
-                outer_acl = FlextLdifServersNovell.Acl()
-                return outer_acl.can_handle_acl(acl)
-
-            def parse_acl(self, acl_line: str) -> FlextResult[FlextLdifModels.Acl]:
-                """Delegate to outer Novell Acl's parse_acl implementation."""
-                outer_acl = FlextLdifServersNovell.Acl()
-                return outer_acl.parse_acl(acl_line)
-
-            def write_acl_to_rfc(
-                self,
-                acl_data: FlextLdifModels.Acl,
-            ) -> FlextResult[str]:
-                """Delegate to outer Novell Acl's write_acl_to_rfc implementation."""
-                outer_acl = FlextLdifServersNovell.Acl()
-                return outer_acl.write_acl_to_rfc(acl_data)
-
-            def convert_acl_to_rfc(
-                self,
-                acl_data: FlextLdifModels.Acl,
-            ) -> FlextResult[FlextLdifModels.Acl]:
-                """Delegate to outer Novell Acl's convert_acl_to_rfc implementation."""
-                outer_acl = FlextLdifServersNovell.Acl()
-                return outer_acl.convert_acl_to_rfc(acl_data)
-
-            def convert_acl_from_rfc(
-                self,
-                acl_data: FlextLdifModels.Acl,
-            ) -> FlextResult[FlextLdifModels.Acl]:
-                """Delegate to outer Novell Acl's convert_acl_from_rfc implementation."""
-                outer_acl = FlextLdifServersNovell.Acl()
-                return outer_acl.convert_acl_from_rfc(acl_data)
-
-        class Entry(FlextLdifServersRfc.Entry):
-            """Nested Entry reference within Schema."""
-
-            server_type: ClassVar[str] = FlextLdifConstants.ServerTypes.NOVELL
-            priority: ClassVar[int] = 15
-
-            def __init__(self) -> None:
-                """Initialize by delegating to outer Entry class."""
-                super().__init__()
-
-            def can_handle_entry(
-                self,
-                entry: FlextLdifModels.Entry,
-            ) -> bool:
-                """Delegate to outer Novell Entry's can_handle_entry implementation."""
-                outer_entry = FlextLdifServersNovell.Entry()
-                return outer_entry.can_handle_entry(entry)
-
-            def process_entry(
-                self,
-                entry: FlextLdifModels.Entry,
-            ) -> FlextResult[FlextLdifModels.Entry]:
-                """Delegate to outer Novell Entry's process_entry implementation."""
-                outer_entry = FlextLdifServersNovell.Entry()
-                return outer_entry.process_entry(entry)
-
-            def convert_entry_to_rfc(
-                self,
-                entry_data: FlextLdifModels.Entry,
-            ) -> FlextResult[FlextLdifModels.Entry]:
-                """Delegate to outer Novell Entry's convert_entry_to_rfc implementation."""
-                outer_entry = FlextLdifServersNovell.Entry()
-                result = outer_entry.convert_entry_to_rfc(entry_data)
-                if result.is_failure:
-                    return FlextResult[FlextLdifModels.Entry].fail(result.error)
-                # Result is already Entry
-                return result
-
     class Acl(FlextLdifServersRfc.Acl):
         """Novell eDirectory ACL quirk."""
 
@@ -401,19 +255,25 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             "inheritedacl",
         ])
 
-        server_type: ClassVar[str] = FlextLdifConstants.ServerTypes.NOVELL
-        priority: ClassVar[int] = 15
-
-        def can_handle_acl(self, acl: FlextLdifModels.Acl) -> bool:
+        def _can_handle_acl(
+            self, acl_line: str | FlextLdifModels.Acl
+        ) -> bool:
             """Detect eDirectory ACL values."""
-            normalized = acl.raw_acl.strip() if acl.raw_acl else ""
-            if not normalized:
-                return False
+            if isinstance(acl_line, str):
+                normalized = acl_line.strip() if acl_line else ""
+                if not normalized:
+                    return False
+                attr_name, _, _ = normalized.partition(":")
+                return attr_name.strip().lower() in self.ACL_ATTRIBUTE_NAMES
+            if isinstance(acl_line, FlextLdifModels.Acl):
+                normalized = acl_line.raw_acl.strip() if acl_line.raw_acl else ""
+                if not normalized:
+                    return False
+                attr_name, _, _ = normalized.partition(":")
+                return attr_name.strip().lower() in self.ACL_ATTRIBUTE_NAMES
+            return False
 
-            attr_name, _, _ = normalized.partition(":")
-            return attr_name.strip().lower() in self.ACL_ATTRIBUTE_NAMES
-
-        def parse_acl(self, acl_line: str) -> FlextResult[FlextLdifModels.Acl]:
+        def _parse_acl(self, acl_line: str) -> FlextResult[FlextLdifModels.Acl]:
             """Parse eDirectory ACL definition."""
             try:
                 _, content = self._splitacl_line(acl_line)
@@ -505,41 +365,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                     f"Novell eDirectory ACL parsing failed: {exc}",
                 )
 
-        def convert_acl_to_rfc(
-            self,
-            acl_data: FlextLdifModels.Acl,
-        ) -> FlextResult[FlextLdifModels.Acl]:
-            """Wrap eDirectory ACL into generic RFC representation."""
-            try:
-                # Convert Novell ACL to RFC format using model_copy
-                rfc_acl = acl_data.model_copy(
-                    update={"server_type": FlextLdifConstants.ServerTypes.RFC},
-                )
-                return FlextResult[FlextLdifModels.Acl].ok(rfc_acl)
-
-            except (ValueError, TypeError, AttributeError) as exc:
-                return FlextResult[FlextLdifModels.Acl].fail(
-                    f"Novell eDirectory ACL→RFC conversion failed: {exc}",
-                )
-
-        def convert_acl_from_rfc(
-            self,
-            acl_data: FlextLdifModels.Acl,
-        ) -> FlextResult[FlextLdifModels.Acl]:
-            """Repackage RFC ACL payload for eDirectory."""
-            try:
-                # Convert RFC ACL to Novell format using model_copy
-                ed_acl = acl_data.model_copy(
-                    update={"server_type": FlextLdifConstants.ServerTypes.NOVELL},
-                )
-                return FlextResult[FlextLdifModels.Acl].ok(ed_acl)
-
-            except (ValueError, TypeError, AttributeError) as exc:
-                return FlextResult[FlextLdifModels.Acl].fail(
-                    f"RFC→Novell eDirectory ACL conversion failed: {exc}",
-                )
-
-        def write_acl_to_rfc(self, acl_data: FlextLdifModels.Acl) -> FlextResult[str]:
+        def _write_acl(self, acl_data: FlextLdifModels.Acl) -> FlextResult[str]:
             """Write ACL data to RFC-compliant string format.
 
             Novell eDirectory ACLs use "#" delimited segments:
@@ -615,25 +441,23 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             "loginexpirationtime",
         ])
 
-        server_type: ClassVar[str] = FlextLdifConstants.ServerTypes.NOVELL
-        priority: ClassVar[int] = 15
-
         def model_post_init(self, _context: object, /) -> None:
             """Initialize eDirectory entry quirk."""
 
         # OVERRIDDEN METHODS (from FlextLdifServersBase.Entry)
         # These methods override the base class with Novell eDirectory-specific logic:
-        # - can_handle_entry(): Detects eDirectory entries by DN/attributes
+        # - _can_handle_entry(): Detects eDirectory entries by DN/attributes
         # - process_entry(): Normalizes eDirectory entries with metadata
         # - convert_entry_to_rfc(): Converts eDirectory entries to RFC format
 
-        def can_handle_entry(
+        def _can_handle_entry(
             self,
-            entry: FlextLdifModels.Entry,
+            entry_dn: str,
+            attributes: Mapping[str, object],
         ) -> bool:
             """Detect eDirectory-specific entries."""
-            entry_dn = entry.dn.value
-            attributes = entry.attributes.attributes
+            if not entry_dn:
+                return False
             dn_lower = entry_dn.lower()
             if any(marker in dn_lower for marker in self.EDIR_DIRECTORY_MARKERS):
                 return True

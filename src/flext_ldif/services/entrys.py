@@ -327,7 +327,9 @@ class FlextLdifEntryService(FlextService[list[FlextLdifModels.Entry]]):
         """
         return cls(entries=[])
 
-    def with_entries(self, entries: list[FlextLdifModels.Entry]) -> FlextLdifEntryService:
+    def with_entries(
+        self, entries: list[FlextLdifModels.Entry]
+    ) -> FlextLdifEntryService:
         """Set entries to transform (fluent builder)."""
         self.entries = entries
         return self
@@ -396,7 +398,9 @@ class FlextLdifEntryService(FlextService[list[FlextLdifModels.Entry]]):
         )
 
         if adapted_entry_result.is_failure:
-            error_msg = f"Failed to adapt entry {entry.dn.value}: {adapted_entry_result.error}"
+            error_msg = (
+                f"Failed to adapt entry {entry.dn.value}: {adapted_entry_result.error}"
+            )
             if self.logger is not None:
                 self.logger.error(error_msg)
             return FlextResult[FlextLdifModels.Entry].fail(error_msg)
@@ -447,7 +451,9 @@ class FlextLdifEntryService(FlextService[list[FlextLdifModels.Entry]]):
         )
 
         if cleaned_entry_result.is_failure:
-            error_msg = f"Failed to clean entry {entry.dn.value}: {cleaned_entry_result.error}"
+            error_msg = (
+                f"Failed to clean entry {entry.dn.value}: {cleaned_entry_result.error}"
+            )
             if self.logger is not None:
                 self.logger.error(error_msg)
             return FlextResult[FlextLdifModels.Entry].fail(error_msg)

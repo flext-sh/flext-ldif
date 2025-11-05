@@ -17,7 +17,7 @@ Notes:
 from __future__ import annotations
 
 import re
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
 from typing import Any, ClassVar, cast
 
 from flext_core import FlextModels, FlextResult
@@ -1515,6 +1515,17 @@ class FlextLdifModels(FlextModels):
             """Get attribute values lists."""
             return list(self.attributes.values())
 
+        def __iter__(self) -> Iterator[str]:
+            """Iterate over attribute names.
+
+            Allows: for name in attributes_obj: ...
+
+            Returns:
+                Iterator over attribute names
+
+            """
+            return iter(self.attributes.keys())
+
         def add_attribute(self, key: str, values: str | list[str]) -> None:
             """Add or update an attribute with values.
 
@@ -1590,6 +1601,83 @@ class FlextLdifModels(FlextModels):
                 return FlextResult[FlextLdifModels.LdifAttributes].fail(
                     f"Failed to create LdifAttributes: {e}",
                 )
+
+        def mark_as_deleted(
+            self,
+            attribute_name: str,
+            reason: str,
+            deleted_by: str,
+        ) -> None:
+            """Mark attribute as soft-deleted with audit trail.
+
+            HIGH COMPLEXITY: Uses UTC timestamp, tracks deletion metadata,
+            preserves original values for compliance/rollback.
+
+            Uses existing attribute_metadata dict to track deletion.
+            Attribute stays in self.attributes but is marked.
+
+            Args:
+                attribute_name: Name of attribute to mark deleted
+                reason: Reason for deletion (e.g., "migration", "obsolete")
+                deleted_by: Server/quirk that deleted it (e.g., "oid", "oud")
+
+            Raises:
+                ValueError: If attribute not found in attributes
+
+            """
+            from datetime import UTC, datetime
+
+            if attribute_name not in self.attributes:
+                msg = f"Attribute '{attribute_name}' not found in attributes"
+                raise ValueError(msg)
+
+            # Use existing attribute_metadata dict
+            self.attribute_metadata[attribute_name] = {
+                "status": "deleted",
+                "deleted_at": datetime.now(UTC).isoformat(),
+                "deleted_reason": reason,
+                "deleted_by": deleted_by,
+                "original_values": self.attributes[attribute_name].copy(),
+            }
+
+        def get_active_attributes(self) -> dict[str, list[str]]:
+            """Get only active attributes (exclude deleted/hidden).
+
+            MEDIUM COMPLEXITY: Filters attributes based on metadata status,
+            handles missing metadata gracefully.
+
+            Returns:
+                Dict of attribute_name -> values for active attributes only
+
+            """
+            if not self.attribute_metadata:
+                return dict(self.attributes)
+
+            return {
+                name: values
+                for name, values in self.attributes.items()
+                if self.attribute_metadata.get(name, {}).get("status", "active")
+                not in {"deleted", "hidden"}
+            }
+
+        def get_deleted_attributes(self) -> dict[str, dict[str, Any]]:
+            """Get soft-deleted attributes with their metadata.
+
+            MEDIUM COMPLEXITY: Returns deleted attributes with full audit trail
+            (timestamp, reason, original values) for reconciliation.
+
+            Returns:
+                Dict of attribute_name -> metadata_dict for deleted attributes
+
+            """
+            if not self.attribute_metadata:
+                return {}
+
+            return {
+                name: meta
+                for name, meta in self.attribute_metadata.items()
+                if meta.get("status") == "deleted"
+            }
 
     class PipelineStatistics(FlextModels.ArbitraryTypesModel):
         """Statistics for LDIF pipeline operations.

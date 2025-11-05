@@ -18,7 +18,8 @@ from __future__ import annotations
 import base64
 import binascii
 import re
-from typing import ClassVar, cast
+from collections.abc import Mapping
+from typing import ClassVar, Final, cast
 
 from flext_core import FlextResult
 
@@ -42,14 +43,99 @@ class FlextLdifServersAd(FlextLdifServersRfc):
     priority: ClassVar[int] = 15
 
     # === STANDARDIZED CONSTANTS FOR AUTO-DISCOVERY ===
-    class Constants:
+    class Constants(FlextLdifServersRfc.Constants):
         """Standardized constants for Active Directory quirk."""
 
+        # === STANDARDIZED CONSTANTS (from FlextLdifServersRfc.Constants) ===
         CANONICAL_NAME: ClassVar[str] = "active_directory"
         ALIASES: ClassVar[frozenset[str]] = frozenset(["active_directory", "ad"])
         PRIORITY: ClassVar[int] = 30
         CAN_NORMALIZE_FROM: ClassVar[frozenset[str]] = frozenset(["active_directory"])
         CAN_DENORMALIZE_TO: ClassVar[frozenset[str]] = frozenset(["active_directory", "rfc"])
+
+        # Active Directory ACL format constants
+        ACL_FORMAT: ClassVar[str] = "nTSecurityDescriptor"  # AD ACL format
+        ACL_ATTRIBUTE_NAME: ClassVar[str] = "nTSecurityDescriptor"  # ACL attribute name
+
+        # Active Directory DN patterns
+        AD_DN_PATTERNS: Final[frozenset[str]] = frozenset([
+            "CN=",
+            "OU=",
+            "DC=",
+            "O=",
+            "L=",
+            "ST=",
+            "C=",
+        ])
+
+        # Active Directory required object classes
+        AD_REQUIRED_CLASSES: Final[frozenset[str]] = frozenset([
+            "top",
+            "person",
+            "organizationalPerson",
+            "user",
+        ])
+
+        # Active Directory operational attributes (server-specific)
+        OPERATIONAL_ATTRIBUTES: Final[frozenset[str]] = frozenset([
+            "objectGUID",
+            "objectSid",
+            "whenCreated",
+            "whenChanged",
+            "uSNCreated",
+            "uSNChanged",
+            "dSCorePropagationData",
+        ])
+
+        # === AD-SPECIFIC DETECTION PATTERNS (migrated from FlextLdifConstants.LdapServerDetection) ===
+        OID_PATTERN: Final[str] = r"1\.2\.840\.113556\."
+        ATTRIBUTE_NAMES: Final[frozenset[str]] = frozenset([
+            "samaccountname",
+            "objectguid",
+            "objectsid",
+            "userprincipalname",
+            "unicodepwd",
+            "useraccountcontrol",
+            "primarygroupid",
+            "logonhours",
+            "lockouttime",
+            "pwdlastset",
+            "memberof",
+            "msds-supportedencryptiontypes",
+            "serviceprincipalname",
+            "distinguishedname",
+        ])
+        OBJECTCLASS_NAMES: Final[frozenset[str]] = frozenset([
+            "user",
+            "computer",
+            "group",
+            "organizationalunit",
+            "organizationalperson",
+            "person",
+            "domain",
+            "domainpolicy",
+            "foreignsecurityprincipal",
+            "msds-groupmanagedserviceaccount",
+            "msds-managedserviceaccount",
+        ])
+        DN_MARKERS: Final[frozenset[str]] = frozenset([
+            "cn=users",
+            "cn=computers",
+            "cn=configuration",
+            "cn=system",
+            "ou=domain controllers",
+        ])
+        ATTRIBUTE_MARKERS: Final[frozenset[str]] = frozenset([
+            "objectguid",
+            "objectsid",
+            "samaccountname",
+            "userprincipalname",
+            "ntsecuritydescriptor",
+            "useraccountcontrol",
+            "serviceprincipalname",
+            "lastlogontimestamp",
+            "pwdlastset",
+        ])
 
     def __getattr__(self, name: str) -> object:
         """Delegate method calls to nested Schema, Acl, or Entry instances.
@@ -82,56 +168,85 @@ class FlextLdifServersAd(FlextLdifServersRfc):
     class Schema(FlextLdifServersRfc.Schema):
         """Active Directory schema quirk."""
 
-        server_type: ClassVar[str] = FlextLdifConstants.LdapServers.ACTIVE_DIRECTORY
-        priority: ClassVar[int] = 15
-
-        def can_handle_attribute(
-            self, attribute: FlextLdifModels.SchemaAttribute
+        def _can_handle_attribute(
+            self, attr_definition: str | FlextLdifModels.SchemaAttribute
         ) -> bool:
             """Detect AD attribute definitions using centralized constants."""
-            # Check OID pattern from constants
-            if re.search(
-                FlextLdifConstants.LdapServerDetection.AD_OID_PATTERN, attribute.oid
-            ):
-                return True
+            if isinstance(attr_definition, str):
+                # Check OID pattern from constants
+                if re.search(
+                    self.Constants.OID_PATTERN, attr_definition
+                ):
+                    return True
+                attr_lower = attr_definition.lower()
+                if "microsoft active directory" in attr_lower:
+                    return True
+                if attr_lower in self.Constants.ATTRIBUTE_NAMES:
+                    return True
 
-            attr_name_lower = attribute.name.lower()
-            if "microsoft active directory" in attr_name_lower:
-                return True
+                return any(
+                    marker in attr_lower
+                    for marker in self.Constants.ATTRIBUTE_NAMES
+                )
+            if isinstance(attr_definition, FlextLdifModels.SchemaAttribute):
+                # Check OID pattern from constants
+                if re.search(
+                    self.Constants.OID_PATTERN, attr_definition.oid
+                ):
+                    return True
 
-            if (
-                attr_name_lower
-                in FlextLdifConstants.LdapServerDetection.AD_ATTRIBUTE_NAMES
-            ):
-                return True
+                attr_name_lower = attr_definition.name.lower()
+                if "microsoft active directory" in attr_name_lower:
+                    return True
 
-            return any(
-                marker in attr_name_lower
-                for marker in FlextLdifConstants.LdapServerDetection.AD_ATTRIBUTE_NAMES
-            )
+                if (
+                    attr_name_lower
+                    in self.Constants.ATTRIBUTE_NAMES
+                ):
+                    return True
 
-        def can_handle_objectclass(
-            self, objectclass: FlextLdifModels.SchemaObjectClass
+                return any(
+                    marker in attr_name_lower
+                    for marker in self.Constants.ATTRIBUTE_NAMES
+                )
+            return False
+
+        def _can_handle_objectclass(
+            self, oc_definition: str | FlextLdifModels.SchemaObjectClass
         ) -> bool:
             """Detect AD objectClass definitions using centralized constants."""
-            if re.search(
-                FlextLdifConstants.LdapServerDetection.AD_OID_PATTERN, objectclass.oid
-            ):
-                return True
+            if isinstance(oc_definition, str):
+                if re.search(
+                    self.Constants.OID_PATTERN, oc_definition
+                ):
+                    return True
+                oc_lower = oc_definition.lower()
+                if oc_lower in self.Constants.OBJECTCLASS_NAMES:
+                    return True
+                return any(
+                    marker in oc_lower
+                    for marker in self.Constants.OBJECTCLASS_NAMES
+                )
+            if isinstance(oc_definition, FlextLdifModels.SchemaObjectClass):
+                if re.search(
+                    self.Constants.OID_PATTERN, oc_definition.oid
+                ):
+                    return True
 
-            oc_name_lower = objectclass.name.lower()
-            if (
-                oc_name_lower
-                in FlextLdifConstants.LdapServerDetection.AD_OBJECTCLASS_NAMES
-            ):
-                return True
+                oc_name_lower = oc_definition.name.lower()
+                if (
+                    oc_name_lower
+                    in self.Constants.OBJECTCLASS_NAMES
+                ):
+                    return True
 
-            return any(
-                marker in oc_name_lower
-                for marker in FlextLdifConstants.LdapServerDetection.AD_OBJECTCLASS_NAMES
-            )
+                return any(
+                    marker in oc_name_lower
+                    for marker in self.Constants.OBJECTCLASS_NAMES
+                )
+            return False
 
-        def parse_attribute(
+        def _parse_attribute(
             self,
             attr_definition: str,
         ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
@@ -144,7 +259,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
                 FlextResult with SchemaAttribute marked with AD metadata
 
             """
-            result = super().parse_attribute(attr_definition)
+            result = super()._parse_attribute(attr_definition)
             if result.is_success:
                 attr_data = result.unwrap()
                 metadata = FlextLdifModels.QuirkMetadata.create_for_quirk(
@@ -155,7 +270,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
                 )
             return result
 
-        def parse_objectclass(
+        def _parse_objectclass(
             self,
             oc_definition: str,
         ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
@@ -168,7 +283,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
                 FlextResult with SchemaObjectClass marked with AD metadata
 
             """
-            result = super().parse_objectclass(oc_definition)
+            result = super()._parse_objectclass(oc_definition)
             if result.is_success:
                 oc_data = result.unwrap()
                 # Fix common ObjectClass issues (RFC 4512 compliance)
@@ -187,41 +302,6 @@ class FlextLdifServersAd(FlextLdifServersRfc):
             return result
 
         # Nested class references for Schema - allows Schema().Entry() pattern
-        class Acl(FlextLdifServersRfc.Acl):
-            """Nested Acl reference within Schema."""
-
-            server_type: ClassVar[str] = FlextLdifConstants.LdapServers.ACTIVE_DIRECTORY
-            priority: ClassVar[int] = 15
-
-            def parse_acl(self, acl_line: str) -> FlextResult[FlextLdifModels.Acl]:
-                """Delegate to outer Active Directory Acl's parse_acl implementation."""
-                # Create an instance of the outer FlextLdifServersAd.Acl and use its parse_acl
-                outer_acl = FlextLdifServersAd.Acl()
-                return outer_acl.parse_acl(acl_line)
-
-        class Entry(FlextLdifServersRfc.Entry):
-            """Nested Entry reference within Schema."""
-
-            server_type: ClassVar[str] = FlextLdifConstants.LdapServers.ACTIVE_DIRECTORY
-            priority: ClassVar[int] = 15
-
-        # INHERITED METHODS (from FlextLdifServersRfc.Schema)
-        # These methods are inherited from RFC base class:
-        # - parse_attribute(): Uses RFC parser
-        # - parse_objectclass(): Uses RFC parser
-        # - convert_attribute_to_rfc(): RFC conversion
-        # - convert_objectclass_to_rfc(): RFC conversion
-        # - convert_attribute_from_rfc(): RFC conversion
-        # - convert_objectclass_from_rfc(): RFC conversion
-        # - write_attribute_to_rfc(): RFC writer
-        # - write_objectclass_to_rfc(): RFC writer
-        # - should_filter_out_attribute(): Returns False (no filtering)
-        # - should_filter_out_objectclass(): Returns False (no filtering)
-        #
-        # Only can_handle_* methods are overridden with AD-specific logic.
-        #
-        # Nested ACL quirk
-
     class Acl(FlextLdifServersRfc.Acl):
         """Active Directory ACL quirk handling nTSecurityDescriptor entries."""
 
@@ -234,27 +314,39 @@ class FlextLdifServersAd(FlextLdifServersRfc):
         # OVERRIDE: Active Directory uses "nTSecurityDescriptor" for ACL attributes
         acl_attribute_name = "nTSecurityDescriptor"
 
-        server_type: ClassVar[str] = FlextLdifConstants.LdapServers.ACTIVE_DIRECTORY
-        priority: ClassVar[int] = 15
-
-        def can_handle_acl(self, acl: FlextLdifModels.Acl) -> bool:
+        def _can_handle_acl(
+            self, acl_line: str | FlextLdifModels.Acl
+        ) -> bool:
             """Check whether the ACL line belongs to an AD security descriptor."""
-            if not acl.raw_acl:
-                return False
-            normalized = acl.raw_acl.strip()
-            if not normalized:
-                return False
+            if isinstance(acl_line, str):
+                normalized = acl_line.strip() if acl_line else ""
+                if not normalized:
+                    return False
+                attr_name, _, _ = normalized.partition(":")
+                if (
+                    attr_name.strip().lower()
+                    == FlextLdifServersAd.Constants.ACL_ATTRIBUTE_NAME.lower()
+                ):
+                    return True
+                return bool(self.SDDL_PREFIX_PATTERN.match(normalized))
+            if isinstance(acl_line, FlextLdifModels.Acl):
+                if not acl_line.raw_acl:
+                    return False
+                normalized = acl_line.raw_acl.strip()
+                if not normalized:
+                    return False
 
-            attr_name, _, _ = normalized.partition(":")
-            if (
-                attr_name.strip().lower()
-                == FlextLdifConstants.AclKeys.NTSECURITYDESCRIPTOR.lower()
-            ):
-                return True
+                attr_name, _, _ = normalized.partition(":")
+                if (
+                    attr_name.strip().lower()
+                    == FlextLdifServersAd.Constants.ACL_ATTRIBUTE_NAME.lower()
+                ):
+                    return True
 
-            return bool(self.SDDL_PREFIX_PATTERN.match(normalized))
+                return bool(self.SDDL_PREFIX_PATTERN.match(normalized))
+            return False
 
-        def parse_acl(self, acl_line: str) -> FlextResult[FlextLdifModels.Acl]:
+        def _parse_acl(self, acl_line: str) -> FlextResult[FlextLdifModels.Acl]:
             """Parse nTSecurityDescriptor values and expose best-effort SDDL."""
             try:
                 line = acl_line.strip()
@@ -321,59 +413,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
                     f"Active Directory ACL parsing failed: {exc}",
                 )
 
-        def convert_acl_to_rfc(
-            self,
-            acl_data: FlextLdifModels.Acl,
-        ) -> FlextResult[FlextLdifModels.Acl]:
-            """Convert an AD ACL payload into the generic RFC representation."""
-            try:
-                # Convert to RFC format by creating new Acl with generic server_type
-                rfc_acl = FlextLdifModels.Acl(
-                    name=acl_data.name,
-                    target=acl_data.target,
-                    subject=acl_data.subject,
-                    permissions=acl_data.permissions,
-                    server_type=cast(
-                        "FlextLdifConstants.LiteralTypes.ServerType",
-                        FlextLdifConstants.ServerTypes.GENERIC,
-                    ),
-                    raw_acl=acl_data.raw_acl,
-                )
-
-                return FlextResult[FlextLdifModels.Acl].ok(rfc_acl)
-
-            except (ValueError, TypeError, AttributeError) as exc:
-                return FlextResult[FlextLdifModels.Acl].fail(
-                    f"Active Directory ACL→RFC conversion failed: {exc}",
-                )
-
-        def convert_acl_from_rfc(
-            self,
-            acl_data: FlextLdifModels.Acl,
-        ) -> FlextResult[FlextLdifModels.Acl]:
-            """Translate a generic ACL payload back into AD notation metadata."""
-            try:
-                # Convert from RFC format by creating new Acl with AD server_type
-                ad_acl = FlextLdifModels.Acl(
-                    name=acl_data.name,
-                    target=acl_data.target,
-                    subject=acl_data.subject,
-                    permissions=acl_data.permissions,
-                    server_type=cast(
-                        "FlextLdifConstants.LiteralTypes.ServerType",
-                        self.server_type,
-                    ),
-                    raw_acl=acl_data.raw_acl,
-                )
-
-                return FlextResult[FlextLdifModels.Acl].ok(ad_acl)
-
-            except (ValueError, TypeError, AttributeError) as exc:
-                return FlextResult[FlextLdifModels.Acl].fail(
-                    f"RFC→Active Directory ACL conversion failed: {exc}",
-                )
-
-        def write_acl_to_rfc(self, acl_data: FlextLdifModels.Acl) -> FlextResult[str]:
+        def _write_acl(self, acl_data: FlextLdifModels.Acl) -> FlextResult[str]:
             """Write ACL data to RFC-compliant string format.
 
             Active Directory ACLs use nTSecurityDescriptor format.
@@ -423,26 +463,24 @@ class FlextLdifServersAd(FlextLdifServersRfc):
     class Entry(FlextLdifServersRfc.Entry):
         """Active Directory entry processing quirk."""
 
-        server_type: ClassVar[str] = FlextLdifConstants.LdapServers.ACTIVE_DIRECTORY
-        priority: ClassVar[int] = 15
-
         # OVERRIDDEN METHODS (from FlextLdifServersBase.Entry)
         # These methods override the base class with AD-specific logic:
-        # - can_handle_entry(): Detects AD entries by DN/attributes
+        # - _can_handle_entry(): Detects AD entries by DN/attributes
         # - process_entry(): Normalizes AD entries with metadata
         # - convert_entry_to_rfc(): Converts AD entries to RFC format
 
-        def can_handle_entry(
+        def _can_handle_entry(
             self,
-            entry: FlextLdifModels.Entry,
+            entry_dn: str,
+            attributes: Mapping[str, object],
         ) -> bool:
             """Detect Active Directory entries based on DN, attributes, or classes."""
-            entry_dn = entry.dn.value
-            attributes = entry.attributes.attributes
+            if not entry_dn:
+                return False
             dn_lower = entry_dn.lower()
             if any(
                 marker in dn_lower
-                for marker in FlextLdifConstants.LdapServerDetection.AD_DN_MARKERS
+                for marker in self.Constants.DN_MARKERS
             ):
                 return True
 
@@ -457,7 +495,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
             }
             if any(
                 marker in normalized_attrs
-                for marker in FlextLdifConstants.LdapServerDetection.AD_ATTRIBUTE_MARKERS
+                for marker in self.Constants.ATTRIBUTE_MARKERS
             ):
                 return True
 
@@ -473,103 +511,10 @@ class FlextLdifServersAd(FlextLdifServersRfc):
             return bool(
                 any(
                     str(oc).lower()
-                    in FlextLdifConstants.LdapServerDetection.AD_OBJECTCLASS_NAMES
+                    in self.Constants.OBJECTCLASS_NAMES
                     for oc in object_classes
                 ),
             )
-
-        def process_entry(
-            self,
-            entry: FlextLdifModels.Entry,
-        ) -> FlextResult[FlextLdifModels.Entry]:
-            """Normalise Active Directory entries and surface metadata."""
-            try:
-                attributes = entry.attributes.attributes.copy()
-
-                # Get objectClasses (already list[str] in LdifAttributes)
-                object_classes = attributes.get(
-                    FlextLdifConstants.DictKeys.OBJECTCLASS,
-                    [],
-                )
-
-                # Process attributes - work directly with dict[str, list[str]]
-                # Process binary values if any (convert bytes to base64 strings)
-                processed_attributes: dict[str, list[str]] = {}
-                for attr_name, attr_values in attributes.items():
-                    processed_values: list[str] = []
-                    for value in attr_values:
-                        if isinstance(value, bytes):
-                            processed_values.append(
-                                base64.b64encode(value).decode("ascii")
-                            )
-                        else:
-                            processed_values.append(str(value))
-                    processed_attributes[attr_name] = processed_values
-
-                # Ensure objectClass is included (already in list format)
-                processed_attributes[FlextLdifConstants.DictKeys.OBJECTCLASS] = (
-                    object_classes
-                )
-
-                # Create new LdifAttributes directly
-                new_attrs = FlextLdifModels.LdifAttributes(
-                    attributes=processed_attributes
-                )
-
-                processed_entry = entry.model_copy(
-                    update={"attributes": new_attrs},
-                )
-
-                return FlextResult[FlextLdifModels.Entry].ok(processed_entry)
-
-            except (ValueError, TypeError, AttributeError) as exc:
-                return FlextResult[FlextLdifModels.Entry].fail(
-                    f"Active Directory entry processing failed: {exc}",
-                )
-
-        def convert_entry_to_rfc(
-            self,
-            entry_data: FlextLdifModels.Entry,
-        ) -> FlextResult[FlextLdifModels.Entry]:
-            """Strip AD-only metadata before handing control to RFC logic."""
-            try:
-                # Work directly with LdifAttributes
-                attributes = entry_data.attributes.attributes.copy()
-                attributes.pop(FlextLdifConstants.QuirkMetadataKeys.SERVER_TYPE, None)
-                attributes.pop(FlextLdifConstants.QuirkMetadataKeys.IS_CONFIG_ENTRY, None)
-                attributes.pop(
-                    FlextLdifConstants.QuirkMetadataKeys.IS_TRADITIONAL_DIT,
-                    None,
-                )
-
-                # Create new LdifAttributes directly
-                new_attrs = FlextLdifModels.LdifAttributes(attributes=attributes)
-
-                rfc_entry = entry_data.model_copy(
-                    update={"attributes": new_attrs},
-                )
-
-                return FlextResult[FlextLdifModels.Entry].ok(rfc_entry)
-
-            except (ValueError, TypeError, AttributeError) as exc:
-                return FlextResult[FlextLdifModels.Entry].fail(
-                    f"Active Directory entry→RFC conversion failed: {exc}",
-                )
-
-        def convert_entry_from_rfc(
-            self,
-            entry_data: FlextLdifModels.Entry,
-        ) -> FlextResult[FlextLdifModels.Entry]:
-            """Convert entry from RFC format - pass-through for Active Directory.
-
-            Args:
-            entry_data: RFC-compliant entry model
-
-            Returns:
-            FlextResult with data (unchanged, since AD entries are RFC-compliant)
-
-            """
-            return FlextResult[FlextLdifModels.Entry].ok(entry_data)
 
 
 __all__ = ["FlextLdifServersAd"]

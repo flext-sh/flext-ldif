@@ -209,7 +209,7 @@ class FlextLdifTypes(FlextTypes):
 
         USAGE PATTERNS:
         - Use in Field() annotations: models.Schema.attributes: AttributesData
-        - Use in function signatures: def parse_acl(...) -> dict[str, QuirkAclData]
+        - Use in function signatures: def parse(...) -> dict[str, QuirkAclData]
         - Use in return types: FlextResult[EntryAttributesDict]
 
         PRODUCTION USAGE (8+ actively used types):
