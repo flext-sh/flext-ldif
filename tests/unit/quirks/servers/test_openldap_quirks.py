@@ -33,7 +33,9 @@ class TestOpenLdapFixtures:
         fixture_path = FlextLdifTestUtils.get_fixture_path(
             "openldap", "openldap_schema_fixtures.ldif"
         )
-        result = ldif_api.parse(fixture_path, server_type="openldap")
+        result = ldif_api.parse(
+            fixture_path, server_type=FlextLdifServersOpenldap.Constants.SERVER_TYPE
+        )
         assert result.is_success, f"Failed to parse schema fixture: {result.error}"
         # cn=config schema files don't parse as regular entries
         entries = result.unwrap()
@@ -73,8 +75,8 @@ class TestOpenLDAP2xSchemas:
 
     def test_initialization(self, server: FlextLdifServersOpenldap) -> None:
         """Test OpenLDAP 2.x schema quirk initialization."""
-        assert server.server_type == "openldap"  # Main server class
-        assert server.priority == 20  # OpenLDAP priority from Constants
+        assert server.server_type == FlextLdifServersOpenldap.Constants.SERVER_TYPE
+        assert server.priority == FlextLdifServersOpenldap.Constants.PRIORITY
 
     def test_can_handle_attribute_with_olc_prefix(
         self, quirk: FlextLdifServersOpenldap.Schema
@@ -90,7 +92,7 @@ class TestOpenLDAP2xSchemas:
         assert quirk._can_handle_attribute(attr_def) is True
 
         # Parse just the attribute definition part (without LDIF prefix)
-        parse_result = quirk.parse(attr_def)
+        parse_result = quirk.parse_attribute(attr_def)
 
         assert parse_result.is_success, (
             f"Failed to parse attribute: {parse_result.error}"
@@ -111,7 +113,7 @@ class TestOpenLDAP2xSchemas:
         assert quirk._can_handle_attribute(attr_def) is True
 
         # Parse the attribute
-        parse_result = quirk.parse(attr_def)
+        parse_result = quirk.parse_attribute(attr_def)
 
         assert parse_result.is_success, (
             f"Failed to parse attribute: {parse_result.error}"
@@ -126,7 +128,7 @@ class TestOpenLDAP2xSchemas:
     ) -> None:
         """Test successful attribute parsing."""
         attr_def = "( 1.2.3.4 NAME 'testAttr' DESC 'Test attribute' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 EQUALITY caseIgnoreMatch SINGLE-VALUE )"
-        result = quirk.parse(attr_def)
+        result = quirk.parse_attribute(attr_def)
 
         assert result.is_success
         attr_data = result.unwrap()
@@ -142,7 +144,7 @@ class TestOpenLDAP2xSchemas:
     ) -> None:
         """Test attribute parsing fails without OID."""
         attr_def = "NAME 'testAttr'"
-        result = quirk.parse(attr_def)
+        result = quirk.parse_attribute(attr_def)
 
         assert result.is_failure
         assert result.error is not None
@@ -162,7 +164,7 @@ class TestOpenLDAP2xSchemas:
         assert quirk._can_handle_objectclass(oc_def) is True
 
         # Parse just the objectClass definition part (without LDIF prefix)
-        parse_result = quirk.parse(oc_def)
+        parse_result = quirk.parse_objectclass(oc_def)
 
         assert parse_result.is_success, (
             f"Failed to parse objectClass: {parse_result.error}"
@@ -183,7 +185,7 @@ class TestOpenLDAP2xSchemas:
         assert quirk._can_handle_objectclass(oc_def) is True
 
         # Parse the objectClass
-        parse_result = quirk.parse(oc_def)
+        parse_result = quirk.parse_objectclass(oc_def)
 
         assert parse_result.is_success, (
             f"Failed to parse objectClass: {parse_result.error}"
@@ -198,7 +200,7 @@ class TestOpenLDAP2xSchemas:
     ) -> None:
         """Test successful objectClass parsing."""
         oc_def = "( 1.2.3.4 NAME 'testClass' DESC 'Test class' SUP top STRUCTURAL MUST ( cn $ sn ) MAY ( description ) )"
-        result = quirk.parse(oc_def)
+        result = quirk.parse_objectclass(oc_def)
 
         assert result.is_success
         oc_data = result.unwrap()
@@ -221,7 +223,7 @@ class TestOpenLDAP2xSchemas:
     ) -> None:
         """Test parsing AUXILIARY objectClass."""
         oc_def = "( 1.2.3.5 NAME 'auxClass' AUXILIARY )"
-        result = quirk.parse(oc_def)
+        result = quirk.parse_objectclass(oc_def)
 
         assert result.is_success
         oc_data = result.unwrap()
@@ -232,7 +234,7 @@ class TestOpenLDAP2xSchemas:
     ) -> None:
         """Test parsing ABSTRACT objectClass."""
         oc_def = "( 1.2.3.6 NAME 'absClass' ABSTRACT )"
-        result = quirk.parse(oc_def)
+        result = quirk.parse_objectclass(oc_def)
 
         assert result.is_success
         oc_data = result.unwrap()
@@ -242,11 +244,12 @@ class TestOpenLDAP2xSchemas:
         self, quirk: FlextLdifServersOpenldap.Schema
     ) -> None:
         """Test objectClass parsing fails without OID."""
-        oc_def = "NAME 'testClass'"
-        result = quirk.parse(oc_def)
+        # Use a valid objectClass definition format but without OID
+        # The parser will try to parse as attribute first, but test verifies failure
+        oc_def = "( NAME 'testClass' )"
+        result = quirk._parse_objectclass(oc_def)
 
         assert result.is_failure
-        assert result.error is not None
         assert result.error is not None
         assert "RFC objectClass parsing failed: missing an OID" in result.error
 
@@ -263,7 +266,7 @@ class TestOpenLDAP2xSchemas:
             single_value=True,
         )
 
-        result = quirk.write(attr_model)
+        result = quirk.write_attribute(attr_model)
         assert result.is_success
         attr_str = result.unwrap()
         assert "( 1.2.3.4" in attr_str
@@ -288,7 +291,7 @@ class TestOpenLDAP2xSchemas:
             may=["description"],
         )
 
-        result = quirk.write(oc_model)
+        result = quirk.write_objectclass(oc_model)
         assert result.is_success
         oc_str = result.unwrap()
         assert "( 1.2.3.4" in oc_str
@@ -375,7 +378,11 @@ class TestOpenLDAP2xAcls:
         assert isinstance(acl_model, FlextLdifModels.Acl)
         assert acl_model.raw_acl == acl_line
         # name is optional, defaults to empty string
-        assert acl_model.server_type == "openldap"
+        assert acl_model.metadata is not None
+        assert (
+            acl_model.metadata.quirk_type
+            == FlextLdifServersOpenldap.Constants.SERVER_TYPE
+        )
 
     def test_parse_with_index(self) -> None:
         """Test ACL parsing with index prefix."""
@@ -487,20 +494,20 @@ class TestOpenldapSchemaCanHandleAttribute:
     ) -> None:
         """Test detection of olc* attributes."""
         attr_def = "( 2.5.4.3 NAME 'olcAttributeTypes' DESC 'OpenLDAP attribute' )"
-        assert isinstance(openldap_quirk._can_handle_attribute(attr_def), bool)
+        assert isinstance(openldap_quirk.schema._can_handle_attribute(attr_def), bool)
 
     def test_can_handle_standard_attribute(
         self, openldap_quirk: FlextLdifServersOpenldap
     ) -> None:
         """Test handling of standard RFC attributes."""
         attr_def = "( 2.5.4.3 NAME 'cn' DESC 'RFC2256: common name' )"
-        assert isinstance(openldap_quirk._can_handle_attribute(attr_def), bool)
+        assert isinstance(openldap_quirk.schema._can_handle_attribute(attr_def), bool)
 
     def test_can_handle_empty_attribute(
         self, openldap_quirk: FlextLdifServersOpenldap
     ) -> None:
         """Test handling of empty attribute definition."""
-        assert not openldap_quirk._can_handle_attribute("")
+        assert not openldap_quirk.schema._can_handle_attribute("")
 
 
 class TestOpenldapSchemaParseAttribute:
@@ -526,7 +533,7 @@ class TestOpenldapSchemaParseAttribute:
     ) -> None:
         """Test parsing standard OpenLDAP RFC attribute."""
         attr_def = "( 2.5.4.3 NAME ( 'cn' 'commonName' ) DESC 'RFC2256: common name(s)' SUP name )"
-        result = openldap_quirk.parse(attr_def)
+        result = openldap_quirk.schema.parse(attr_def)
         assert hasattr(result, "is_success")
         if result.is_success:
             attr_data = result.unwrap()
@@ -537,7 +544,7 @@ class TestOpenldapSchemaParseAttribute:
     ) -> None:
         """Test parsing attribute with SYNTAX clause."""
         attr_def = "( 2.5.4.2 NAME 'knowledgeInformation' DESC 'RFC2256' EQUALITY caseIgnoreMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{32768} )"
-        result = openldap_quirk.parse(attr_def)
+        result = openldap_quirk.schema.parse(attr_def)
         assert hasattr(result, "is_success")
 
     def test_parse_attribute_with_single_value(
@@ -547,7 +554,7 @@ class TestOpenldapSchemaParseAttribute:
         attr_def = (
             "( 2.5.4.6 NAME 'c' DESC 'RFC2256: country name' SUP name SINGLE-VALUE )"
         )
-        result = openldap_quirk.parse(attr_def)
+        result = openldap_quirk.schema.parse(attr_def)
         assert hasattr(result, "is_success")
 
     def test_parse_attribute_from_fixture(
@@ -563,7 +570,7 @@ class TestOpenldapSchemaParseAttribute:
         for line in content.split("\n"):
             if line.startswith("attributetypes:"):
                 attr_def = line[len("attributetypes: ") :].strip()
-                result = openldap_quirk.parse(attr_def)
+                result = openldap_quirk.schema.parse(attr_def)
                 assert hasattr(result, "is_success")
                 break
 
@@ -572,7 +579,7 @@ class TestOpenldapSchemaParseAttribute:
     ) -> None:
         """Test error handling for attribute without OID."""
         attr_def = "( NAME 'invalid' DESC 'No OID' )"
-        result = openldap_quirk.parse(attr_def)
+        result = openldap_quirk.schema.parse(attr_def)
         assert hasattr(result, "is_success")
 
 
@@ -591,14 +598,14 @@ class TestOpenldapSchemaCanHandleObjectClass:
         oc_def = (
             "( 1.3.6.1.4.1.4203.2.1.1 NAME 'olcBackendConfig' DESC 'OpenLDAP Backend' )"
         )
-        assert isinstance(openldap_quirk._can_handle_objectclass(oc_def), bool)
+        assert isinstance(openldap_quirk.schema._can_handle_objectclass(oc_def), bool)
 
     def test_can_handle_standard_objectclass(
         self, openldap_quirk: FlextLdifServersOpenldap
     ) -> None:
         """Test handling of standard RFC objectClasses."""
         oc_def = "( 2.5.6.6 NAME 'person' DESC 'RFC2256: person' )"
-        assert isinstance(openldap_quirk._can_handle_objectclass(oc_def), bool)
+        assert isinstance(openldap_quirk.schema._can_handle_objectclass(oc_def), bool)
 
 
 class TestOpenldapSchemaParseObjectClass:
@@ -614,7 +621,7 @@ class TestOpenldapSchemaParseObjectClass:
     ) -> None:
         """Test parsing standard RFC objectClass."""
         oc_def = "( 2.5.6.6 NAME 'person' DESC 'RFC2256: person' MUST ( sn $ cn ) MAY ( userPassword ) )"
-        result = openldap_quirk.parse(oc_def)
+        result = openldap_quirk.schema.parse(oc_def)
         assert hasattr(result, "is_success")
         if result.is_success:
             oc_data = result.unwrap()
@@ -625,7 +632,7 @@ class TestOpenldapSchemaParseObjectClass:
     ) -> None:
         """Test parsing STRUCTURAL objectClass."""
         oc_def = "( 1.3.6.1.4.1.4203.1.4.1 NAME 'olcDatabaseConfig' STRUCTURAL SUP olcConfig )"
-        result = openldap_quirk.parse(oc_def)
+        result = openldap_quirk.schema.parse(oc_def)
         assert hasattr(result, "is_success")
 
     def test_parse_auxiliary_objectclass(
@@ -633,7 +640,7 @@ class TestOpenldapSchemaParseObjectClass:
     ) -> None:
         """Test parsing AUXILIARY objectClass."""
         oc_def = "( 1.3.6.1.4.1.4203.1.4.2 NAME 'olcModuleList' AUXILIARY SUP top )"
-        result = openldap_quirk.parse(oc_def)
+        result = openldap_quirk.schema.parse(oc_def)
         assert hasattr(result, "is_success")
 
     def test_parse_abstract_objectclass(
@@ -641,7 +648,7 @@ class TestOpenldapSchemaParseObjectClass:
     ) -> None:
         """Test parsing ABSTRACT objectClass."""
         oc_def = "( 2.5.6.0 NAME 'top' ABSTRACT )"
-        result = openldap_quirk.parse(oc_def)
+        result = openldap_quirk.schema.parse(oc_def)
         assert hasattr(result, "is_success")
 
 
@@ -836,7 +843,9 @@ class TestOpenldapAclConvertAcl:
                 subject_value="self",
             ),
             permissions=FlextLdifModels.AclPermissions(write=True),
-            server_type="openldap",
+            metadata=FlextLdifModels.QuirkMetadata.create_for_quirk(
+                FlextLdifServersOpenldap.Constants.SERVER_TYPE
+            ),
             raw_acl="to attrs=userPassword by self write by * none",
         )
         result = acl_quirk.write(acl_data)

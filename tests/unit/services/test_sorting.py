@@ -1,4 +1,4 @@
-"""Comprehensive unit tests for FlextLdifSortingService.
+"""Comprehensive unit tests for FlextLdifSorting.
 
 Tests all ACTUAL sorting methods, patterns, and edge cases with 100% coverage.
 Uses REAL implementations without mocks for authentic behavior validation.
@@ -23,7 +23,7 @@ import operator
 import pytest
 
 from flext_ldif.models import FlextLdifModels
-from flext_ldif.services.sorting import FlextLdifSortingService
+from flext_ldif.services.sorting import FlextLdifSorting
 
 # ════════════════════════════════════════════════════════════════════════════
 # TEST FIXTURES
@@ -109,7 +109,7 @@ class TestPublicClassmethods:
         self, hierarchy_entries: list[FlextLdifModels.Entry]
     ) -> None:
         """Test by_hierarchy() public classmethod."""
-        result = FlextLdifSortingService.by_hierarchy(hierarchy_entries)
+        result = FlextLdifSorting.by_hierarchy(hierarchy_entries)
 
         assert result.is_success
         sorted_entries = result.unwrap()
@@ -122,7 +122,7 @@ class TestPublicClassmethods:
 
     def test_by_dn_basic(self, hierarchy_entries: list[FlextLdifModels.Entry]) -> None:
         """Test by_dn() public classmethod."""
-        result = FlextLdifSortingService.by_dn(hierarchy_entries)
+        result = FlextLdifSorting.by_dn(hierarchy_entries)
 
         assert result.is_success
         sorted_entries = result.unwrap()
@@ -132,7 +132,7 @@ class TestPublicClassmethods:
 
     def test_by_schema_basic(self, schema_entries: list[FlextLdifModels.Entry]) -> None:
         """Test by_schema() public classmethod."""
-        result = FlextLdifSortingService.by_schema(schema_entries)
+        result = FlextLdifSorting.by_schema(schema_entries)
 
         assert result.is_success
         sorted_entries = result.unwrap()
@@ -146,7 +146,7 @@ class TestPublicClassmethods:
         def depth_predicate(entry: FlextLdifModels.Entry) -> int:
             return entry.dn.value.count(",")
 
-        result = FlextLdifSortingService.by_custom(hierarchy_entries, depth_predicate)
+        result = FlextLdifSorting.by_custom(hierarchy_entries, depth_predicate)
 
         assert result.is_success
         sorted_entries = result.unwrap()
@@ -164,7 +164,7 @@ class TestExecutePattern:
 
     def test_execute_empty_entries(self) -> None:
         """Test execute() with empty entries list."""
-        result = FlextLdifSortingService(entries=[], sort_by="hierarchy").execute()
+        result = FlextLdifSorting(entries=[], sort_by="hierarchy").execute()
 
         assert result.is_success
         assert result.unwrap() == []
@@ -173,7 +173,7 @@ class TestExecutePattern:
         self, hierarchy_entries: list[FlextLdifModels.Entry]
     ) -> None:
         """Test execute() routes to hierarchy sorting correctly."""
-        result = FlextLdifSortingService(
+        result = FlextLdifSorting(
             entries=hierarchy_entries, sort_target="entries", sort_by="hierarchy"
         ).execute()
 
@@ -186,7 +186,7 @@ class TestExecutePattern:
         self, hierarchy_entries: list[FlextLdifModels.Entry]
     ) -> None:
         """Test execute() with DN sorting."""
-        result = FlextLdifSortingService(
+        result = FlextLdifSorting(
             entries=hierarchy_entries, sort_target="entries", sort_by="dn"
         ).execute()
 
@@ -199,7 +199,7 @@ class TestExecutePattern:
         self, hierarchy_entries: list[FlextLdifModels.Entry]
     ) -> None:
         """Test execute() with alphabetical as alias for dn."""
-        result = FlextLdifSortingService(
+        result = FlextLdifSorting(
             entries=hierarchy_entries, sort_target="entries", sort_by="alphabetical"
         ).execute()
 
@@ -216,7 +216,7 @@ class TestExecutePattern:
         def custom_pred(entry: FlextLdifModels.Entry) -> str:
             return entry.dn.value.lower()
 
-        result = FlextLdifSortingService(
+        result = FlextLdifSorting(
             entries=hierarchy_entries,
             sort_target="entries",
             sort_by="custom",
@@ -230,7 +230,7 @@ class TestExecutePattern:
         self, hierarchy_entries: list[FlextLdifModels.Entry]
     ) -> None:
         """Test execute() with attributes as sort target."""
-        result = FlextLdifSortingService(
+        result = FlextLdifSorting(
             entries=hierarchy_entries, sort_target="attributes"
         ).execute()
 
@@ -243,7 +243,7 @@ class TestExecutePattern:
         self, hierarchy_entries: list[FlextLdifModels.Entry]
     ) -> None:
         """Test execute() with acl as sort target."""
-        result = FlextLdifSortingService(
+        result = FlextLdifSorting(
             entries=hierarchy_entries, sort_target="acl"
         ).execute()
 
@@ -255,7 +255,7 @@ class TestExecutePattern:
         self, schema_entries: list[FlextLdifModels.Entry]
     ) -> None:
         """Test execute() with schema as sort target."""
-        result = FlextLdifSortingService(
+        result = FlextLdifSorting(
             entries=schema_entries, sort_target="schema", sort_by="schema"
         ).execute()
 
@@ -267,7 +267,7 @@ class TestExecutePattern:
         self, hierarchy_entries: list[FlextLdifModels.Entry]
     ) -> None:
         """Test execute() with combined as sort target."""
-        result = FlextLdifSortingService(
+        result = FlextLdifSorting(
             entries=hierarchy_entries,
             sort_target="combined",
             sort_by="hierarchy",
@@ -292,7 +292,7 @@ class TestClassmethodSort:
         self, hierarchy_entries: list[FlextLdifModels.Entry]
     ) -> None:
         """Test sort() classmethod with hierarchy strategy."""
-        result = FlextLdifSortingService.sort(hierarchy_entries, by="hierarchy")
+        result = FlextLdifSorting.sort(hierarchy_entries, by="hierarchy")
 
         assert result.is_success
         sorted_entries = result.unwrap()
@@ -303,7 +303,7 @@ class TestClassmethodSort:
     ) -> None:
         """Test sort() with chainable map/and_then operations."""
         result = (
-            FlextLdifSortingService.sort(hierarchy_entries, by="hierarchy").map(
+            FlextLdifSorting.sort(hierarchy_entries, by="hierarchy").map(
                 operator.itemgetter(slice(3))
             )  # Take first 3
         )
@@ -316,7 +316,7 @@ class TestClassmethodSort:
         self, hierarchy_entries: list[FlextLdifModels.Entry]
     ) -> None:
         """Test sort() with error handling."""
-        result = FlextLdifSortingService.sort(
+        result = FlextLdifSorting.sort(
             hierarchy_entries,
             by="custom",
             predicate=lambda e: e.dn.value,
@@ -338,7 +338,7 @@ class TestFluentBuilder:
     ) -> None:
         """Test builder().with_entries().with_strategy().build()."""
         sorted_entries = (
-            FlextLdifSortingService.builder()
+            FlextLdifSorting.builder()
             .with_entries(hierarchy_entries)
             .with_strategy("hierarchy")
             .build()
@@ -353,7 +353,7 @@ class TestFluentBuilder:
     ) -> None:
         """Test builder with attribute sorting."""
         sorted_entries = (
-            FlextLdifSortingService.builder()
+            FlextLdifSorting.builder()
             .with_entries(hierarchy_entries)
             .with_strategy("hierarchy")
             .with_attribute_sorting(alphabetical=True)
@@ -368,7 +368,7 @@ class TestFluentBuilder:
     ) -> None:
         """Test builder with custom attribute order."""
         sorted_entries = (
-            FlextLdifSortingService.builder()
+            FlextLdifSorting.builder()
             .with_entries(hierarchy_entries)
             .with_strategy("hierarchy")
             .with_attribute_sorting(order=["objectClass", "cn", "sn"])
@@ -383,7 +383,7 @@ class TestFluentBuilder:
     ) -> None:
         """Test builder with ACL sorting."""
         sorted_entries = (
-            FlextLdifSortingService.builder()
+            FlextLdifSorting.builder()
             .with_entries(hierarchy_entries)
             .with_strategy("hierarchy")
             .with_acl_sorting(enabled=True)
@@ -397,7 +397,7 @@ class TestFluentBuilder:
         self, hierarchy_entries: list[FlextLdifModels.Entry]
     ) -> None:
         """Test builder method chaining."""
-        builder = FlextLdifSortingService.builder()
+        builder = FlextLdifSorting.builder()
         assert builder is not None
 
         builder2 = builder.with_entries(hierarchy_entries)
@@ -423,7 +423,7 @@ class TestSortingStrategies:
             create_entry("ou=level1,dc=example,dc=com", {"ou": ["level1"]}),
         ]
 
-        result = FlextLdifSortingService.by_hierarchy(entries)
+        result = FlextLdifSorting.by_hierarchy(entries)
         sorted_entries = result.unwrap()
 
         # Should be shallowest first
@@ -439,7 +439,7 @@ class TestSortingStrategies:
             create_entry("ou=mmm,dc=example,dc=com", {"ou": ["mmm"]}),
         ]
 
-        result = FlextLdifSortingService.by_hierarchy(entries)
+        result = FlextLdifSorting.by_hierarchy(entries)
         sorted_entries = result.unwrap()
 
         assert sorted_entries[0].dn.value == "ou=aaa,dc=example,dc=com"
@@ -454,7 +454,7 @@ class TestSortingStrategies:
             create_entry("Cn=BBB,Dc=Example,Dc=Com", {"cn": ["BBB"]}),
         ]
 
-        result = FlextLdifSortingService.by_dn(entries)
+        result = FlextLdifSorting.by_dn(entries)
         sorted_entries = result.unwrap()
 
         dns_lower = [e.dn.value.lower() for e in sorted_entries]
@@ -468,7 +468,7 @@ class TestSortingStrategies:
         def length_pred(entry: FlextLdifModels.Entry) -> int:
             return len(entry.dn.value)
 
-        result = FlextLdifSortingService.by_custom(hierarchy_entries, length_pred)
+        result = FlextLdifSorting.by_custom(hierarchy_entries, length_pred)
         sorted_entries = result.unwrap()
 
         # Check that lengths are in ascending order
@@ -490,9 +490,7 @@ class TestAttributeSorting:
         """Test attributes are sorted alphabetically via execute()."""
         entry = hierarchy_entries[0]
 
-        result = FlextLdifSortingService(
-            entries=[entry], sort_target="attributes"
-        ).execute()
+        result = FlextLdifSorting(entries=[entry], sort_target="attributes").execute()
         sorted_entries = result.unwrap()
 
         assert len(sorted_entries) == 1
@@ -508,7 +506,7 @@ class TestAttributeSorting:
         """Test attributes respect custom order via execute()."""
         order = ["objectClass", "uid", "cn"]
 
-        result = FlextLdifSortingService(
+        result = FlextLdifSorting(
             entries=hierarchy_entries,
             sort_target="attributes",
             attribute_order=order,
@@ -537,7 +535,7 @@ class TestAclSorting:
             },
         )
 
-        result = FlextLdifSortingService(entries=[entry], sort_target="acl").execute()
+        result = FlextLdifSorting(entries=[entry], sort_target="acl").execute()
         sorted_entries = result.unwrap()
 
         assert len(sorted_entries) == 1
@@ -557,7 +555,7 @@ class TestSchemaSorting:
         self, schema_entries: list[FlextLdifModels.Entry]
     ) -> None:
         """Test schema sorting prioritizes attributeTypes over objectClasses."""
-        result = FlextLdifSortingService.by_schema(schema_entries)
+        result = FlextLdifSorting.by_schema(schema_entries)
         sorted_entries = result.unwrap()
 
         assert len(sorted_entries) == 2
@@ -583,7 +581,7 @@ class TestCombinedSorting:
         self, hierarchy_entries: list[FlextLdifModels.Entry]
     ) -> None:
         """Test combined sorting with all options enabled."""
-        result = FlextLdifSortingService(
+        result = FlextLdifSorting(
             entries=hierarchy_entries,
             sort_target="combined",
             sort_by="hierarchy",
@@ -609,7 +607,7 @@ class TestEdgeCases:
 
     def test_empty_entries(self) -> None:
         """Test sorting empty entry list."""
-        result = FlextLdifSortingService.by_hierarchy([])
+        result = FlextLdifSorting.by_hierarchy([])
 
         assert result.is_success
         assert result.unwrap() == []
@@ -618,7 +616,7 @@ class TestEdgeCases:
         """Test sorting single entry."""
         entry = create_entry("dc=example,dc=com", {"dc": ["example"]})
 
-        result = FlextLdifSortingService.by_hierarchy([entry])
+        result = FlextLdifSorting.by_hierarchy([entry])
 
         assert result.is_success
         assert len(result.unwrap()) == 1
@@ -630,7 +628,7 @@ class TestEdgeCases:
             create_entry("cn=English,dc=example,dc=com", {"cn": ["English"]}),
         ]
 
-        result = FlextLdifSortingService.by_hierarchy(entries)
+        result = FlextLdifSorting.by_hierarchy(entries)
 
         assert result.is_success
         assert len(result.unwrap()) == 2
@@ -642,7 +640,7 @@ class TestEdgeCases:
             for i in range(100)
         ]
 
-        result = FlextLdifSortingService.by_hierarchy(entries)
+        result = FlextLdifSorting.by_hierarchy(entries)
 
         assert result.is_success
         assert len(result.unwrap()) == 100
@@ -654,7 +652,7 @@ class TestEdgeCases:
             create_entry("cn=test,dc=example,dc=com", {"cn": ["test2"]}),
         ]
 
-        result = FlextLdifSortingService.by_hierarchy(entries)
+        result = FlextLdifSorting.by_hierarchy(entries)
 
         assert result.is_success
         assert len(result.unwrap()) == 2
@@ -675,7 +673,7 @@ class TestErrorCases:
         from pydantic import ValidationError
 
         with pytest.raises(ValidationError, match="Invalid sort_target"):
-            FlextLdifSortingService(
+            FlextLdifSorting(
                 entries=hierarchy_entries,
                 sort_target="invalid_target",
             )
@@ -687,7 +685,7 @@ class TestErrorCases:
         from pydantic import ValidationError
 
         with pytest.raises(ValidationError, match="Invalid sort_by"):
-            FlextLdifSortingService(
+            FlextLdifSorting(
                 entries=hierarchy_entries,
                 sort_by="invalid_strategy",
             )
@@ -699,7 +697,7 @@ class TestErrorCases:
         from pydantic import ValidationError
 
         with pytest.raises(ValidationError, match="custom_predicate required"):
-            FlextLdifSortingService(
+            FlextLdifSorting(
                 entries=hierarchy_entries,
                 sort_by="custom",
                 custom_predicate=None,
@@ -719,12 +717,12 @@ class TestIntegration:
     ) -> None:
         """Test real-world LDIF organization sorting."""
         # Sort by hierarchy
-        result = FlextLdifSortingService.by_hierarchy(hierarchy_entries)
+        result = FlextLdifSorting.by_hierarchy(hierarchy_entries)
         assert result.is_success
 
         sorted_entries = result.unwrap()
         # Then sort attributes on the result
-        result2 = FlextLdifSortingService.sort_attributes(sorted_entries)
+        result2 = FlextLdifSorting.sort_attributes(sorted_entries)
         assert result2.is_success
         final_entries = result2.unwrap()
         assert len(final_entries) == 5
@@ -734,13 +732,13 @@ class TestIntegration:
     ) -> None:
         """Test multi-stage sorting pipeline."""
         # Stage 1: Sort by hierarchy
-        result = FlextLdifSortingService.sort(hierarchy_entries, by="hierarchy")
+        result = FlextLdifSorting.sort(hierarchy_entries, by="hierarchy")
         assert result.is_success
 
         sorted_by_hierarchy = result.unwrap()
 
         # Stage 2: Sort attributes
-        result2 = FlextLdifSortingService(
+        result2 = FlextLdifSorting(
             entries=sorted_by_hierarchy, sort_target="attributes"
         ).execute()
         assert result2.is_success

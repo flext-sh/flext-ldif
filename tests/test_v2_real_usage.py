@@ -15,7 +15,7 @@ import pytest
 from flext_core import FlextResult
 
 from flext_ldif.models import FlextLdifModels
-from flext_ldif.services.sorting import FlextLdifSortingService
+from flext_ldif.services.sorting import FlextLdifSorting
 
 
 def create_test_entry(
@@ -53,9 +53,7 @@ class TestFlextServiceV2Patterns:
         entries = create_test_entries()
 
         # V2 MANUAL: Use .result property (auto_execute = False by default)
-        sorted_entries = FlextLdifSortingService(
-            entries=entries, sort_by="hierarchy"
-        ).result
+        sorted_entries = FlextLdifSorting(entries=entries, sort_by="hierarchy").result
 
         # Should return list[Entry] directly, not FlextResult
         assert isinstance(sorted_entries, list)
@@ -72,7 +70,7 @@ class TestFlextServiceV2Patterns:
         entries = create_test_entries()
 
         # V1: Use .execute() explicitly for FlextResult
-        result = FlextLdifSortingService(entries=entries, sort_by="hierarchy").execute()
+        result = FlextLdifSorting(entries=entries, sort_by="hierarchy").execute()
 
         # Should return FlextResult
         assert isinstance(result, FlextResult)
@@ -93,7 +91,7 @@ class TestFlextServiceV2Patterns:
         entries = create_test_entries()
 
         # Static method returns FlextResult directly
-        result = FlextLdifSortingService.by_hierarchy(entries)
+        result = FlextLdifSorting.by_hierarchy(entries)
 
         # Verify it's a FlextResult
         assert isinstance(result, FlextResult)
@@ -109,12 +107,10 @@ class TestFlextServiceV2Patterns:
         entries = create_test_entries()
 
         # V2 MANUAL: Returns value directly
-        v2_result = FlextLdifSortingService(entries=entries, sort_by="hierarchy").result
+        v2_result = FlextLdifSorting(entries=entries, sort_by="hierarchy").result
 
         # V1 EXPLICIT: Returns FlextResult
-        v1_result = FlextLdifSortingService(
-            entries=entries, sort_by="hierarchy"
-        ).execute()
+        v1_result = FlextLdifSorting(entries=entries, sort_by="hierarchy").execute()
 
         # V2 returns value, V1 returns FlextResult
         assert isinstance(v2_result, list)
@@ -127,9 +123,7 @@ class TestFlextServiceV2Patterns:
         """Test V2 error handling when using .result property."""
         # Invalid sort_by should raise exception with .result
         with pytest.raises(Exception, match="Invalid sort_by value"):
-            FlextLdifSortingService(
-                entries=create_test_entries(), sort_by="invalid"
-            ).result
+            FlextLdifSorting(entries=create_test_entries(), sort_by="invalid").result
 
     def test_v1_error_handling_with_execute(self) -> None:
         """Test V2 error handling raises ValidationError on invalid parameters."""
@@ -137,7 +131,7 @@ class TestFlextServiceV2Patterns:
         from pydantic_core import ValidationError
 
         with pytest.raises(ValidationError, match="Invalid sort_by"):
-            FlextLdifSortingService(entries=create_test_entries(), sort_by="invalid")
+            FlextLdifSorting(entries=create_test_entries(), sort_by="invalid")
 
 
 class TestFlextServiceV2BuilderPattern:
@@ -149,10 +143,7 @@ class TestFlextServiceV2BuilderPattern:
 
         # Builder pattern returns FlextResult for railway-oriented composition
         result = (
-            FlextLdifSortingService.builder()
-            .with_entries(entries)
-            .by_hierarchy()
-            .execute()
+            FlextLdifSorting.builder().with_entries(entries).by_hierarchy().execute()
         )
 
         assert isinstance(result, FlextResult)
@@ -167,10 +158,7 @@ class TestFlextServiceV2BuilderPattern:
         entries = create_test_entries()
 
         result = (
-            FlextLdifSortingService.builder()
-            .with_entries(entries)
-            .by_alphabetical()
-            .execute()
+            FlextLdifSorting.builder().with_entries(entries).by_alphabetical().execute()
         )
 
         assert result.is_success
@@ -190,12 +178,12 @@ class TestFlextServiceV2Comparison:
         entries = create_test_entries()
 
         # V1 Pattern (verbose): 3 lines
-        service_v1 = FlextLdifSortingService(entries=entries, sort_by="hierarchy")
+        service_v1 = FlextLdifSorting(entries=entries, sort_by="hierarchy")
         result_v1 = service_v1.execute()
         sorted_v1 = result_v1.unwrap()
 
         # V2 Pattern (concise): 1 line (68% reduction!)
-        sorted_v2 = FlextLdifSortingService(entries=entries, sort_by="hierarchy").result
+        sorted_v2 = FlextLdifSorting(entries=entries, sort_by="hierarchy").result
 
         # Both produce same result
         assert sorted_v1 == sorted_v2
@@ -206,12 +194,12 @@ class TestFlextServiceV2Comparison:
         entries = create_test_entries()
 
         # V2: IDE knows type is list[Entry]
-        sorted_v2: list[FlextLdifModels.Entry] = FlextLdifSortingService(
+        sorted_v2: list[FlextLdifModels.Entry] = FlextLdifSorting(
             entries=entries, sort_by="hierarchy"
         ).result
 
         # V1: IDE knows type is FlextResult[list[Entry]]
-        result_v1: FlextResult[list[FlextLdifModels.Entry]] = FlextLdifSortingService(
+        result_v1: FlextResult[list[FlextLdifModels.Entry]] = FlextLdifSorting(
             entries=entries, sort_by="hierarchy"
         ).execute()
 

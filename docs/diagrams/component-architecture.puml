@@ -12,7 +12,7 @@ Container_Boundary(flext_ldif_lib, "FLEXT-LDIF Library") {
     }
 
     Component_Boundary(conversion_layer, "Conversion Layer") {
-        Component(conversion_matrix, "QuirksConversionMatrix", "Python Class", "Universal conversion facade", "N×N server conversions")
+        Component(conversion, "QuirksConversionMatrix", "Python Class", "Universal conversion facade", "N×N server conversions")
         Component(dn_registry, "DnCaseRegistry", "Python Class", "DN case tracking", "OUD compatibility assurance")
         Component(batch_processor, "BatchProcessor", "Python Class", "Batch operations", "Efficient bulk conversions")
     }
@@ -26,7 +26,7 @@ Container_Boundary(flext_ldif_lib, "FLEXT-LDIF Library") {
     }
 
     Component_Boundary(quirks_layer, "Quirks System") {
-        Component(quirk_registry, "FlextLdifRegistry", "Python Class", "Quirk discovery", "Auto-loads server implementations")
+        Component(quirk_registry, "FlextLdifServer", "Python Class", "Quirk discovery", "Auto-loads server implementations")
         Component(quirk_base, "QuirkBase", "Abstract Class", "Standard interface", "to_rfc(), from_rfc() methods")
 
         Component_Boundary(server_implementations, "Server Implementations") {
@@ -80,7 +80,7 @@ Rel(service_layer, model_layer, "Operates on", "domain objects")
 
 Rel(infrastructure, flext_ldif_lib, "Provides foundation", "for all components")
 
-note right of conversion_matrix
+note right of conversion
     **Universal Conversion Matrix**
     - N×N server conversions
     - RFC intermediate format

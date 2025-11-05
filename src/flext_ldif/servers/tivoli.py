@@ -57,9 +57,11 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
             "ibm-filterentry",
         ])
         DETECTION_DN_MARKERS: Final[frozenset[str]] = frozenset([
-            "o=ibm,c=us",
-            "o=example,c=us",
+            "o=ibm",
+            "o=example",
             "cn=REDACTED_LDAP_BIND_PASSWORD",
+            "cn=configuration",
+            "cn=ibm",
         ])
 
         # IBM Tivoli specific attributes (migrated from FlextLdifConstants)
@@ -78,7 +80,27 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
             "ibm-slapdaccesscontrol",
             "ibm-slapdgroupacl",
         ])
+        # Non-Tivoli ACL format markers (for rejection)
+        ACL_NON_TIVOLI_MARKERS: Final[frozenset[str]] = frozenset([
+            "aci:",
+            "version 3.0",
+            "allow(",
+        ])
         ACL_DEFAULT_NAME: Final[str] = "Tivoli ACL"  # Default ACL name for Tivoli DS
+
+        # ACL parsing patterns (migrated from _parse_acl method)
+        ACL_ACCESS_PATTERN: Final[str] = r'access\s+"(\w+)"'
+
+        # ACL default values (migrated from _parse_acl method)
+        ACL_DEFAULT_TARGET_DN: Final[str] = ""
+        ACL_DEFAULT_SUBJECT_TYPE: Final[str] = ""
+        ACL_DEFAULT_SUBJECT_VALUE: Final[str] = ""
+
+        # ACL attribute name constants (migrated from _write_acl method)
+        ACL_PRIMARY_ATTRIBUTE_NAME: Final[str] = "ibm-slapdaccesscontrol"
+
+        # ACL separator for Tivoli format (migrated from _write_acl method)
+        ACL_SEPARATOR: Final[str] = "#"
 
     # =========================================================================
     # Class-level attributes for server identification (from Constants)
@@ -88,12 +110,14 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
 
     def __init__(self) -> None:
         """Initialize IBM Tivoli Directory Server quirks."""
+        # Initialize RFC base first
         super().__init__()
+        # Override with Tivoli-specific nested class instances
         # Use object.__setattr__ to bypass Pydantic validation for dynamic attributes
         # Nested classes no longer require server_type and priority parameters
-        object.__setattr__(self, "schema", self.Schema())
-        object.__setattr__(self, "acl", self.Acl())
-        object.__setattr__(self, "entry", self.Entry())
+        object.__setattr__(self, "schema", FlextLdifServersTivoli.Schema())
+        object.__setattr__(self, "acl", FlextLdifServersTivoli.Acl())
+        object.__setattr__(self, "entry", FlextLdifServersTivoli.Entry())
 
     class Schema(FlextLdifServersRfc.Schema):
         """IBM Tivoli Directory Server schema quirks implementation."""
@@ -102,8 +126,6 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
         # These methods are inherited from RFC base class:
         # - _parse_attribute(): Uses RFC parser
         # - _parse_objectclass(): Uses RFC parser
-        # - convert_attribute_from_rfc(): RFC conversion
-        # - convert_objectclass_from_rfc(): RFC conversion
         # - _write_attribute(): RFC writer
         # - _write_objectclass(): RFC writer
         # - should_filter_out_attribute(): Returns False (no filtering)
@@ -208,45 +230,16 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                 )
             return result
 
-        def convert_attribute_from_rfc(
-            self,
-            rfc_data: FlextLdifModels.SchemaAttribute,
-        ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
-            """Convert RFC attribute to Tivoli format with metadata.
-
-            Args:
-                rfc_data: RFC-compliant SchemaAttribute
-
-            Returns:
-                FlextResult with SchemaAttribute marked with Tivoli metadata
-
-            """
-            metadata = FlextLdifModels.QuirkMetadata.create_for_quirk("ibm_tivoli")
-            result_data = rfc_data.model_copy(update={"metadata": metadata})
-            return FlextResult[FlextLdifModels.SchemaAttribute].ok(result_data)
-
-        def convert_objectclass_from_rfc(
-            self,
-            rfc_data: FlextLdifModels.SchemaObjectClass,
-        ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
-            """Convert RFC objectClass to Tivoli format with metadata.
-
-            Args:
-                rfc_data: RFC-compliant SchemaObjectClass
-
-            Returns:
-                FlextResult with SchemaObjectClass marked with Tivoli metadata
-
-            """
-            return FlextLdifUtilities.Schema.set_server_type(
-                rfc_data, FlextLdifServersTivoli.Constants.SERVER_TYPE
-            )
-
-        # Nested class references for Schema - allows Schema().Entry() pattern
-        # These are references to the outer class definitions for proper architecture
-
     class Acl(FlextLdifServersRfc.Acl):
-        """IBM Tivoli DS ACL quirk."""
+        """IBM Tivoli Directory Server ACL quirks implementation."""
+
+        def _can_handle(self, acl: FlextLdifModels.Acl | str) -> bool:
+            """Check if this ACL is a Tivoli DS ACL."""
+            if isinstance(acl, str):
+                return self._can_handle_acl(acl)
+            if not acl.raw_acl:
+                return False
+            return self._can_handle_acl(acl.raw_acl)
 
         def _can_handle_acl(self, acl_line: str | FlextLdifModels.Acl) -> bool:
             """Detect Tivoli DS ACL values."""
@@ -254,9 +247,20 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                 normalized = acl_line.strip() if acl_line else ""
                 if not normalized:
                     return False
+                # Empty string should return False
+                if normalized == "":
+                    return False
+                # Reject non-Tivoli ACL formats (ACI, version 3.0, etc.)
+                normalized_lower = normalized.lower()
+                for marker in FlextLdifServersTivoli.Constants.ACL_NON_TIVOLI_MARKERS:
+                    if marker in normalized_lower:
+                        return False
                 attr_name, _, _ = normalized.partition(":")
+                attr_name_lower = attr_name.strip().lower()
+                if not attr_name_lower:
+                    return False
                 return (
-                    attr_name.strip().lower()
+                    attr_name_lower
                     in FlextLdifServersTivoli.Constants.ACL_ATTRIBUTE_NAMES
                 )
             if isinstance(acl_line, FlextLdifModels.Acl):
@@ -278,7 +282,11 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                 _, content = self._splitacl_line(acl_line)
 
                 # Extract access type from brace content
-                access_match = re.search(r'access\s+"(\w+)"', content, re.IGNORECASE)
+                access_match = re.search(
+                    FlextLdifServersTivoli.Constants.ACL_ACCESS_PATTERN,
+                    content,
+                    re.IGNORECASE,
+                )
                 access_type = (
                     access_match.group(1)
                     if access_match
@@ -289,12 +297,12 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                 acl = FlextLdifModels.Acl(
                     name=FlextLdifServersTivoli.Constants.ACL_DEFAULT_NAME,
                     target=FlextLdifModels.AclTarget(
-                        target_dn="",
+                        target_dn=FlextLdifServersTivoli.Constants.ACL_DEFAULT_TARGET_DN,
                         attributes=[],
                     ),
                     subject=FlextLdifModels.AclSubject(
-                        subject_type="",
-                        subject_value="",
+                        subject_type=FlextLdifServersTivoli.Constants.ACL_DEFAULT_SUBJECT_TYPE,
+                        subject_value=FlextLdifServersTivoli.Constants.ACL_DEFAULT_SUBJECT_VALUE,
                     ),
                     permissions=FlextLdifModels.AclPermissions(
                         read=(
@@ -327,11 +335,19 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
             """
             try:
                 # Use Tivoli-specific attribute name
-                # Use first ACL attribute name from Constants as default
-                acl_attribute = next(
-                    iter(FlextLdifServersTivoli.Constants.ACL_ATTRIBUTE_NAMES),
-                    "ibm-slapdaccesscontrol",
+                # Default to primary ACL attribute name from Constants
+                acl_attribute = (
+                    FlextLdifServersTivoli.Constants.ACL_PRIMARY_ATTRIBUTE_NAME
                 )
+                # Verify it's in the Constants set
+                if acl_attribute not in (
+                    FlextLdifServersTivoli.Constants.ACL_ATTRIBUTE_NAMES
+                ):
+                    # Fallback to first available attribute name
+                    acl_attribute = next(
+                        iter(FlextLdifServersTivoli.Constants.ACL_ATTRIBUTE_NAMES),
+                        FlextLdifServersTivoli.Constants.ACL_PRIMARY_ATTRIBUTE_NAME,
+                    )
 
                 # Check for raw_acl first (original ACL string)
                 if acl_data.raw_acl:
@@ -348,24 +364,26 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                 if acl_data.subject and acl_data.subject.subject_value:
                     parts.append(acl_data.subject.subject_value)
 
-                # Add rights (permissions) as individual strings
-                if acl_data.permissions:
-                    perms = acl_data.permissions
-                    if perms.read:
-                        parts.append(FlextLdifConstants.PermissionNames.READ)
-                    if perms.write:
-                        parts.append(FlextLdifConstants.PermissionNames.WRITE)
-                    if perms.add:
-                        parts.append(FlextLdifConstants.PermissionNames.ADD)
-                    if perms.delete:
-                        parts.append(FlextLdifConstants.PermissionNames.DELETE)
-                    if perms.search:
-                        parts.append(FlextLdifConstants.PermissionNames.SEARCH)
-                    if perms.compare:
-                        parts.append(FlextLdifConstants.PermissionNames.COMPARE)
+                # Add rights using DRY utility
+                active_perms = FlextLdifUtilities.ACL.collect_active_permissions(
+                    acl_data.permissions,
+                    [
+                        ("read", FlextLdifConstants.PermissionNames.READ),
+                        ("write", FlextLdifConstants.PermissionNames.WRITE),
+                        ("add", FlextLdifConstants.PermissionNames.ADD),
+                        ("delete", FlextLdifConstants.PermissionNames.DELETE),
+                        ("search", FlextLdifConstants.PermissionNames.SEARCH),
+                        ("compare", FlextLdifConstants.PermissionNames.COMPARE),
+                    ],
+                )
+                parts.extend(active_perms)
 
                 # Build ACL string
-                acl_content = "#".join(parts) if parts else ""
+                acl_content = (
+                    FlextLdifServersTivoli.Constants.ACL_SEPARATOR.join(parts)
+                    if parts
+                    else ""
+                )
                 acl_str = (
                     f"{acl_attribute}: {acl_content}"
                     if acl_content
@@ -391,7 +409,6 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
         # These methods override the base class with Tivoli DS-specific logic:
         # - _can_handle_entry(): Detects Tivoli DS entries by DN/attributes
         # - process_entry(): Normalizes Tivoli DS entries with metadata
-        # - convert_entry_to_rfc(): Converts Tivoli DS entries to RFC format
 
         def normalize_dn(self, entry_dn: str) -> str:
             """Normalize DN for Tivoli DS.
@@ -421,12 +438,14 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
             ):
                 return True
 
+            # Check for Tivoli-specific attribute prefixes
             normalized_attrs = {
                 name.lower(): value for name, value in attributes.items()
             }
             if any(
-                marker in normalized_attrs
-                for marker in FlextLdifServersTivoli.Constants.DETECTION_ATTRIBUTE_PREFIXES
+                attr_name.startswith(prefix)
+                for attr_name in normalized_attrs
+                for prefix in FlextLdifServersTivoli.Constants.DETECTION_ATTRIBUTE_PREFIXES
             ):
                 return True
 
@@ -446,68 +465,6 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                     for oc in object_classes
                 ),
             )
-
-        def convert_entry_to_rfc(
-            self,
-            entry_data: FlextLdifModels.Entry,
-        ) -> FlextResult[FlextLdifModels.Entry]:
-            """Strip IBM Tivoli DS metadata before RFC processing."""
-            try:
-                # Work directly with LdifAttributes
-                attributes = entry_data.attributes.attributes.copy()
-                # Remove Tivoli-specific metadata, preserve everything else
-                attributes.pop(FlextLdifConstants.QuirkMetadataKeys.SERVER_TYPE, None)
-                attributes.pop(
-                    FlextLdifConstants.QuirkMetadataKeys.IS_CONFIG_ENTRY, None
-                )
-
-                # Create new LdifAttributes directly from the dict
-                new_attrs = FlextLdifModels.LdifAttributes(attributes=attributes)
-
-                rfc_entry = entry_data.model_copy(
-                    update={"attributes": new_attrs},
-                )
-
-                return FlextResult[FlextLdifModels.Entry].ok(rfc_entry)
-
-            except (ValueError, TypeError, AttributeError) as exc:
-                return FlextResult[FlextLdifModels.Entry].fail(
-                    f"IBM Tivoli DS entry→RFC conversion failed: {exc}",
-                )
-
-        def convert_entry_from_rfc(
-            self,
-            entry_data: FlextLdifModels.Entry,
-        ) -> FlextResult[FlextLdifModels.Entry]:
-            """Convert RFC entry to Tivoli DS-specific format."""
-            try:
-                # Work directly with Entry model
-                entry_dn = entry_data.dn.value
-                attributes = entry_data.attributes.attributes.copy()
-
-                # Normalize DN for Tivoli DS
-                normalized_dn = self.normalize_dn(entry_dn)
-
-                # Normalize attribute names - work directly with dict[str, list[str]]
-                tivoli_attrs: dict[str, list[str]] = {}
-                for key, value in attributes.items():
-                    normalized_name = self.normalize_attribute_name(key)
-                    tivoli_attrs[normalized_name] = value
-
-                # Create new LdifAttributes directly
-                new_attrs = FlextLdifModels.LdifAttributes(attributes=tivoli_attrs)
-                new_dn = FlextLdifModels.DistinguishedName(value=normalized_dn)
-
-                tivoli_entry = entry_data.model_copy(
-                    update={"dn": new_dn, "attributes": new_attrs},
-                )
-
-                return FlextResult[FlextLdifModels.Entry].ok(tivoli_entry)
-
-            except (ValueError, TypeError, AttributeError) as exc:
-                return FlextResult[FlextLdifModels.Entry].fail(
-                    f"RFC→IBM Tivoli DS entry conversion failed: {exc}",
-                )
 
         def process_entry(
             self,

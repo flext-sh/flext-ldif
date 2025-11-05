@@ -1,4 +1,4 @@
-"""Comprehensive unit tests for FlextLdifParserService ParseFormatOptions.
+"""Comprehensive unit tests for FlextLdifParser ParseFormatOptions.
 
 Tests all parser format options with real LDIF content and edge cases.
 
@@ -14,17 +14,17 @@ import pytest
 
 from flext_ldif.config import FlextLdifConfig
 from flext_ldif.models import FlextLdifModels
-from flext_ldif.services.parser import FlextLdifParserService
+from flext_ldif.services.parser import FlextLdifParser
 
 
 class TestParserFormatOptions:
     """Test all ParseFormatOptions functionality."""
 
     @pytest.fixture
-    def parser_service(self) -> FlextLdifParserService:
+    def parser_service(self) -> FlextLdifParser:
         """Create parser service instance."""
         config = FlextLdifConfig()
-        return FlextLdifParserService(config=config)
+        return FlextLdifParser(config=config)
 
     @pytest.fixture
     def sample_ldif_with_schema(self) -> str:
@@ -97,7 +97,7 @@ sn:
 """
 
     def test_auto_parse_schema_enabled(
-        self, parser_service: FlextLdifParserService, sample_ldif_with_schema: str
+        self, parser_service: FlextLdifParser, sample_ldif_with_schema: str
     ) -> None:
         """Test auto_parse_schema=True functionality."""
         options = FlextLdifModels.ParseFormatOptions(auto_parse_schema=True)
@@ -119,7 +119,7 @@ sn:
         assert len(schema_entries) > 0
 
     def test_auto_parse_schema_disabled(
-        self, parser_service: FlextLdifParserService, sample_ldif_with_schema: str
+        self, parser_service: FlextLdifParser, sample_ldif_with_schema: str
     ) -> None:
         """Test auto_parse_schema=False functionality."""
         options = FlextLdifModels.ParseFormatOptions(auto_parse_schema=False)
@@ -138,7 +138,7 @@ sn:
         assert response.statistics.data_entries == len(response.entries)
 
     def test_auto_extract_acls_enabled(
-        self, parser_service: FlextLdifParserService, sample_ldif_with_acls: str
+        self, parser_service: FlextLdifParser, sample_ldif_with_acls: str
     ) -> None:
         """Test auto_extract_acls=True functionality."""
         options = FlextLdifModels.ParseFormatOptions(auto_extract_acls=True)
@@ -162,7 +162,7 @@ sn:
         assert len(acl_entries) > 0
 
     def test_auto_extract_acls_disabled(
-        self, parser_service: FlextLdifParserService, sample_ldif_with_acls: str
+        self, parser_service: FlextLdifParser, sample_ldif_with_acls: str
     ) -> None:
         """Test auto_extract_acls=False functionality."""
         options = FlextLdifModels.ParseFormatOptions(auto_extract_acls=False)
@@ -188,7 +188,7 @@ sn:
         assert len(response.entries) > 0
 
     def test_preserve_attribute_order_enabled(
-        self, parser_service: FlextLdifParserService
+        self, parser_service: FlextLdifParser
     ) -> None:
         """Test preserve_attribute_order=True functionality."""
         ldif_content = """version: 1
@@ -223,7 +223,7 @@ mail: test@example.com
                     assert len(attribute_order) > 0
 
     def test_preserve_attribute_order_disabled(
-        self, parser_service: FlextLdifParserService
+        self, parser_service: FlextLdifParser
     ) -> None:
         """Test preserve_attribute_order=False functionality."""
         ldif_content = """version: 1
@@ -253,7 +253,7 @@ cn: Test User
                 assert attribute_order is None
 
     def test_validate_entries_enabled_valid(
-        self, parser_service: FlextLdifParserService
+        self, parser_service: FlextLdifParser
     ) -> None:
         """Test validate_entries=True with valid entries."""
         ldif_content = """version: 1
@@ -281,7 +281,7 @@ sn: User
         assert response.statistics.parse_errors == 0
 
     def test_validate_entries_enabled_invalid_non_strict(
-        self, parser_service: FlextLdifParserService, invalid_ldif: str
+        self, parser_service: FlextLdifParser, invalid_ldif: str
     ) -> None:
         """Test validate_entries=True with invalid entries in non-strict mode."""
         options = FlextLdifModels.ParseFormatOptions(
@@ -302,7 +302,7 @@ sn: User
         assert len(response.entries) >= 0
 
     def test_validate_entries_strict_mode(
-        self, parser_service: FlextLdifParserService, invalid_ldif: str
+        self, parser_service: FlextLdifParser, invalid_ldif: str
     ) -> None:
         """Test strict_schema_validation=True with invalid entries."""
         options = FlextLdifModels.ParseFormatOptions(
@@ -327,9 +327,7 @@ sn: User
             error_msg = result.error or ""
             assert "validation failed" in error_msg.lower()
 
-    def test_normalize_dns_enabled(
-        self, parser_service: FlextLdifParserService
-    ) -> None:
+    def test_normalize_dns_enabled(self, parser_service: FlextLdifParser) -> None:
         """Test normalize_dns=True functionality."""
         ldif_content = """version: 1
 
@@ -357,9 +355,7 @@ sn: User
             # Should not have extra spaces at the beginning or end
             assert dn_str == dn_str.strip()
 
-    def test_normalize_dns_disabled(
-        self, parser_service: FlextLdifParserService
-    ) -> None:
+    def test_normalize_dns_disabled(self, parser_service: FlextLdifParser) -> None:
         """Test normalize_dns=False functionality."""
         ldif_content = """version: 1
 
@@ -382,9 +378,7 @@ sn: User
         response = result.unwrap()
         assert len(response.entries) > 0
 
-    def test_max_parse_errors_limit(
-        self, parser_service: FlextLdifParserService
-    ) -> None:
+    def test_max_parse_errors_limit(self, parser_service: FlextLdifParser) -> None:
         """Test max_parse_errors functionality."""
         # Create LDIF with multiple potential errors
         ldif_content = """version: 1
@@ -421,9 +415,7 @@ sn:
             response = result.unwrap()
             assert response.statistics.parse_errors <= 2
 
-    def test_max_parse_errors_unlimited(
-        self, parser_service: FlextLdifParserService
-    ) -> None:
+    def test_max_parse_errors_unlimited(self, parser_service: FlextLdifParser) -> None:
         """Test max_parse_errors=0 (unlimited) functionality."""
         ldif_content = """version: 1
 
@@ -453,7 +445,7 @@ sn: User2
 
     def test_include_operational_attrs_enabled(
         self,
-        parser_service: FlextLdifParserService,
+        parser_service: FlextLdifParser,
         sample_ldif_with_operational_attrs: str,
     ) -> None:
         """Test include_operational_attrs=True functionality."""
@@ -487,7 +479,7 @@ sn: User2
 
     def test_include_operational_attrs_disabled(
         self,
-        parser_service: FlextLdifParserService,
+        parser_service: FlextLdifParser,
         sample_ldif_with_operational_attrs: str,
     ) -> None:
         """Test include_operational_attrs=False functionality."""
@@ -521,7 +513,7 @@ sn: User2
             )
 
     def test_combined_options(
-        self, parser_service: FlextLdifParserService, sample_ldif_with_schema: str
+        self, parser_service: FlextLdifParser, sample_ldif_with_schema: str
     ) -> None:
         """Test combination of multiple options."""
         options = FlextLdifModels.ParseFormatOptions(
@@ -551,7 +543,7 @@ sn: User2
         assert response.statistics.parse_errors <= 10  # max_parse_errors
 
     def test_file_parsing_with_options(
-        self, parser_service: FlextLdifParserService, tmp_path: Path
+        self, parser_service: FlextLdifParser, tmp_path: Path
     ) -> None:
         """Test parsing from file with options."""
         ldif_content = """version: 1
@@ -582,9 +574,7 @@ sn: Test
         assert len(response.entries) == 1
         assert response.entries[0].dn.value == "cn=file-test,dc=example,dc=com"
 
-    def test_ldap3_parsing_with_options(
-        self, parser_service: FlextLdifParserService
-    ) -> None:
+    def test_ldap3_parsing_with_options(self, parser_service: FlextLdifParser) -> None:
         """Test parsing from ldap3 results with options."""
         # Mock ldap3 query results format: list[tuple[str, dict[str, list[str]]]]
         ldap3_results = [
@@ -626,9 +616,7 @@ sn: Test
         assert "objectclass" in attr_names
         assert "cn" in attr_names
 
-    def test_options_default_values(
-        self, parser_service: FlextLdifParserService
-    ) -> None:
+    def test_options_default_values(self, parser_service: FlextLdifParser) -> None:
         """Test that default options work correctly."""
         ldif_content = """version: 1
 
@@ -657,7 +645,7 @@ sn: Test
         # - etc.
         assert response.statistics.parse_errors == 0
 
-    def test_options_edge_cases(self, parser_service: FlextLdifParserService) -> None:
+    def test_options_edge_cases(self, parser_service: FlextLdifParser) -> None:
         """Test edge cases with options."""
         # Empty LDIF
         result = parser_service.parse(
@@ -673,7 +661,7 @@ sn: Test
         assert response.statistics.total_entries == 0
 
     def test_invalid_server_type_with_options(
-        self, parser_service: FlextLdifParserService
+        self, parser_service: FlextLdifParser
     ) -> None:
         """Test that options don't interfere with server type validation."""
         ldif_content = """version: 1

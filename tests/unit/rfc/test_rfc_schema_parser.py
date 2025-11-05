@@ -1,6 +1,6 @@
 """Test suite for RFC 4512 schema parser.
 
-Comprehensive testing for FlextLdifParserService automatic schema parsing
+Comprehensive testing for FlextLdifParser automatic schema parsing
 which parses LDAP schema definitions according to RFC 4512 specification.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -13,7 +13,7 @@ from __future__ import annotations
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 
-from flext_ldif.services.parser import FlextLdifParserService
+from flext_ldif.services.parser import FlextLdifParser
 
 
 class TestRfcSchemaParserInitialization:
@@ -21,7 +21,7 @@ class TestRfcSchemaParserInitialization:
 
     def test_parser_service_initialization(self) -> None:
         """Test parser service initialization."""
-        parser = FlextLdifParserService()
+        parser = FlextLdifParser()
 
         assert parser is not None
         assert hasattr(parser, "_quirk_registry")
@@ -42,7 +42,7 @@ attributeTypes: ( 2.5.4.4 NAME 'sn' DESC 'Surname' SYNTAX '1.3.6.1.4.1.1466.115.
 objectClasses: ( 2.5.6.6 NAME 'person' DESC 'RFC2256: a person' SUP top STRUCTURAL MUST ( sn $ cn ) )
 """
 
-        parser = FlextLdifParserService()
+        parser = FlextLdifParser()
         result = parser.parse(schema_content, input_source="string")
 
         assert result.is_success
@@ -68,7 +68,7 @@ objectClass: subschema
 attributeTypes: ( 2.5.4.3 NAME 'cn' DESC 'Common Name' SYNTAX '1.3.6.1.4.1.1466.115.121.1.15' )
 """
 
-        parser = FlextLdifParserService()
+        parser = FlextLdifParser()
         result = parser.parse(schema_content, input_source="string")
 
         assert result.is_success
@@ -88,7 +88,7 @@ objectClass: subschema
 attributeTypes: ( 2.5.4.0 NAME 'objectClass' DESC 'Object Class' SYNTAX '1.3.6.1.4.1.1466.115.121.1.38' )
 """
 
-        parser = FlextLdifParserService()
+        parser = FlextLdifParser()
         result = parser.parse(schema_content, input_source="string")
 
         assert result.is_success
@@ -109,7 +109,7 @@ cn: John Doe
 sn: Doe
 """
 
-        parser = FlextLdifParserService()
+        parser = FlextLdifParser()
         result = parser.parse(ldif_content, input_source="string")
 
         assert result.is_success
@@ -131,7 +131,7 @@ attributeTypes: ( 2.5.4.4 NAME 'sn' DESC 'Surname' SYNTAX '1.3.6.1.4.1.1466.115.
 attributeTypes: ( 0.9.2342.19200300.100.1.3 NAME 'mail' DESC 'Email' SYNTAX '1.3.6.1.4.1.1466.115.121.1.15' )
 """
 
-        parser = FlextLdifParserService()
+        parser = FlextLdifParser()
         result = parser.parse(schema_content, input_source="string")
 
         assert result.is_success
@@ -153,7 +153,7 @@ objectClasses: ( 2.5.6.6 NAME 'person' DESC 'Person' SUP top STRUCTURAL MUST ( s
 objectClasses: ( 2.5.6.7 NAME 'organizationalPerson' DESC 'Organizational Person' SUP person )
 """
 
-        parser = FlextLdifParserService()
+        parser = FlextLdifParser()
         result = parser.parse(schema_content, input_source="string")
 
         assert result.is_success
@@ -174,7 +174,7 @@ objectClass: subschema
 attributeTypes: ( 2.5.4.3 NAME 'cn' DESC 'Common Name' SYNTAX '1.3.6.1.4.1.1466.115.121.1.15' )
 """
 
-        parser = FlextLdifParserService()
+        parser = FlextLdifParser()
         # Parse with OUD-specific quirks
         result = parser.parse(schema_content, input_source="string", server_type="oud")
 
@@ -202,7 +202,7 @@ attributeTypes: ( 2.5.4.4 NAME 'sn' DESC 'Surname' SYNTAX '1.3.6.1.4.1.1466.115.
             schema_file = Path(f.name)
 
         try:
-            parser = FlextLdifParserService()
+            parser = FlextLdifParser()
             result = parser.parse_file(schema_file)
 
             assert result.is_success
@@ -219,7 +219,7 @@ attributeTypes: ( 2.5.4.4 NAME 'sn' DESC 'Surname' SYNTAX '1.3.6.1.4.1.1466.115.
 
     def test_empty_schema_content(self) -> None:
         """Test parsing empty schema content."""
-        parser = FlextLdifParserService()
+        parser = FlextLdifParser()
         result = parser.parse("", input_source="string")
 
         assert result.is_success
@@ -235,7 +235,7 @@ attributeTypes: ( 2.5.4.3 NAME 'cn' DESC 'Common Name - this is a very long desc
   that spans multiple lines' SYNTAX '1.3.6.1.4.1.1466.115.121.1.15' )
 """
 
-        parser = FlextLdifParserService()
+        parser = FlextLdifParser()
         result = parser.parse(schema_content, input_source="string")
 
         # Parser should successfully handle line folding per RFC 2849

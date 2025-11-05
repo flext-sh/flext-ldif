@@ -17,20 +17,18 @@ import pytest
 
 from flext_ldif.config import FlextLdifConfig
 from flext_ldif.models import FlextLdifModels
-from flext_ldif.services.parser import FlextLdifParserService
-from flext_ldif.services.writer import FlextLdifWriterService
+from flext_ldif.services.parser import FlextLdifParser
+from flext_ldif.services.writer import FlextLdifWriter
 
 
 class TestRfcLdifParserService:
     """Test RFC LDIF parser service."""
 
-    def test_initialization(self, real_parser_service: FlextLdifParserService) -> None:
+    def test_initialization(self, real_parser_service: FlextLdifParser) -> None:
         """Test parser initialization."""
         assert real_parser_service is not None
 
-    def test_parse_basic_entry(
-        self, real_parser_service: FlextLdifParserService
-    ) -> None:
+    def test_parse_basic_entry(self, real_parser_service: FlextLdifParser) -> None:
         """Test parsing basic LDIF entry."""
         # Skip if not implemented yet
         if not hasattr(real_parser_service, "parse_content"):
@@ -47,9 +45,7 @@ sn: user
         result = real_parser_service.parse(ldif_content, input_source="string")
         assert result.is_success or result.is_failure  # May not be fully implemented
 
-    def test_parse_invalid_dn(
-        self, real_parser_service: FlextLdifParserService
-    ) -> None:
+    def test_parse_invalid_dn(self, real_parser_service: FlextLdifParser) -> None:
         """Test parsing invalid DN."""
         if not hasattr(real_parser_service, "parse_content"):
             pytest.skip("Parser not fully implemented yet")
@@ -64,9 +60,7 @@ objectClass: person
         # Should either succeed or fail gracefully
         assert result.is_success or result.is_failure
 
-    def test_parse_multiple_entries(
-        self, real_parser_service: FlextLdifParserService
-    ) -> None:
+    def test_parse_multiple_entries(self, real_parser_service: FlextLdifParser) -> None:
         """Test parsing multiple entries."""
         if not hasattr(real_parser_service, "parse_content"):
             pytest.skip("Parser not fully implemented yet")
@@ -85,9 +79,7 @@ cn: user2
         result = real_parser_service.parse(ldif_content, input_source="string")
         assert result.is_success or result.is_failure
 
-    def test_parse_with_binary_data(
-        self, real_parser_service: FlextLdifParserService
-    ) -> None:
+    def test_parse_with_binary_data(self, real_parser_service: FlextLdifParser) -> None:
         """Test parsing entry with binary data."""
         if not hasattr(real_parser_service, "parse_content"):
             pytest.skip("Parser not fully implemented yet")
@@ -104,7 +96,7 @@ photo:: UGhvdG8gZGF0YQ==
         assert result.is_success or result.is_failure
 
     def test_base64_compatibility_patch(
-        self, real_parser_service: FlextLdifParserService
+        self, real_parser_service: FlextLdifParser
     ) -> None:
         """Test that base64 compatibility patch is applied correctly."""
         # The patch should be applied during module import
@@ -123,13 +115,13 @@ photo:: UGhvdG8gZGF0YQ==
 class TestRfcLdifWriterService:
     """Test RFC LDIF writer service."""
 
-    def test_initialization(self, real_writer_service: FlextLdifWriterService) -> None:
+    def test_initialization(self, real_writer_service: FlextLdifWriter) -> None:
         """Test writer initialization."""
         assert real_writer_service is not None
 
     def test_write_basic_entry(
         self,
-        real_writer_service: FlextLdifWriterService,
+        real_writer_service: FlextLdifWriter,
         ldif_test_entries: list[dict[str, object]],
     ) -> None:
         """Test writing basic LDIF entry."""
@@ -142,7 +134,7 @@ class TestRfcLdifWriterService:
 
     def test_write_to_file(
         self,
-        real_writer_service: FlextLdifWriterService,
+        real_writer_service: FlextLdifWriter,
         ldif_test_entries: list[dict[str, object]],
         tmp_path: Path,
     ) -> None:
@@ -158,7 +150,7 @@ class TestRfcLdifWriterService:
 
     def test_write_multiple_entries(
         self,
-        real_writer_service: FlextLdifWriterService,
+        real_writer_service: FlextLdifWriter,
         ldif_test_entries: list[dict[str, object]],
     ) -> None:
         """Test writing multiple entries."""
@@ -177,7 +169,7 @@ class TestRfcParserEdgeCases:
     """Test suite for RFC parser edge cases."""
 
     def test_parse_base64_encoded_values(
-        self, real_parser_service: FlextLdifParserService
+        self, real_parser_service: FlextLdifParser
     ) -> None:
         """Test parsing LDIF with base64-encoded attribute values."""
         parser = real_parser_service
@@ -193,7 +185,7 @@ description:: VGhpcyBpcyBhIGJhc2U2NCBlbmNvZGVkIHZhbHVl
         assert result.is_success or result.is_failure
 
     def test_parse_continuation_lines(
-        self, real_parser_service: FlextLdifParserService
+        self, real_parser_service: FlextLdifParser
     ) -> None:
         """Test parsing LDIF with continuation lines (lines starting with space)."""
         parser = real_parser_service
@@ -209,9 +201,7 @@ description: This is a very long description that spans multiple lines
         result = parser.parse(ldif_content, input_source="string")
         assert result.is_success or result.is_failure
 
-    def test_parse_unicode_values(
-        self, real_parser_service: FlextLdifParserService
-    ) -> None:
+    def test_parse_unicode_values(self, real_parser_service: FlextLdifParser) -> None:
         """Test parsing LDIF with Unicode characters."""
         parser = real_parser_service
 
@@ -226,7 +216,7 @@ sn: Üsër
         assert result.is_success or result.is_failure
 
     def test_parse_binary_attributes(
-        self, real_parser_service: FlextLdifParserService
+        self, real_parser_service: FlextLdifParser
     ) -> None:
         """Test parsing LDIF with binary attributes (ending with ;binary)."""
         parser = real_parser_service
@@ -242,7 +232,7 @@ userCertificate;binary:: VGVzdCBiaW5hcnkgZGF0YQ==
         assert result.is_success or result.is_failure
 
     def test_parse_empty_attribute_values(
-        self, real_parser_service: FlextLdifParserService
+        self, real_parser_service: FlextLdifParser
     ) -> None:
         """Test parsing LDIF with empty attribute values."""
         parser = real_parser_service
@@ -258,10 +248,10 @@ description:
         assert result.is_success or result.is_failure
 
     def test_parse_multiple_spaces_in_dn(
-        self, real_parser_service: FlextLdifParserService
+        self, real_parser_service: FlextLdifParser
     ) -> None:
         """Test parsing DN with multiple spaces."""
-        parser = FlextLdifParserService(
+        parser = FlextLdifParser(
             config=FlextLdifConfig(),
         )
 
@@ -275,10 +265,10 @@ cn: test
         assert result.is_success or result.is_failure
 
     def test_parse_comments_interspersed(
-        self, real_parser_service: FlextLdifParserService
+        self, real_parser_service: FlextLdifParser
     ) -> None:
         """Test parsing LDIF with comments interspersed with entries."""
-        parser = FlextLdifParserService(
+        parser = FlextLdifParser(
             config=FlextLdifConfig(),
         )
 
@@ -298,11 +288,9 @@ cn: test2
         result = parser.parse(ldif_content, input_source="string")
         assert result.is_success or result.is_failure
 
-    def test_parse_malformed_base64(
-        self, real_parser_service: FlextLdifParserService
-    ) -> None:
+    def test_parse_malformed_base64(self, real_parser_service: FlextLdifParser) -> None:
         """Test parsing LDIF with malformed base64 values."""
-        parser = FlextLdifParserService(
+        parser = FlextLdifParser(
             config=FlextLdifConfig(),
         )
 
@@ -318,10 +306,10 @@ description:: invalid-base64-content!!!
         assert result.is_success or result.is_failure
 
     def test_parse_extremely_long_lines(
-        self, real_parser_service: FlextLdifParserService
+        self, real_parser_service: FlextLdifParser
     ) -> None:
         """Test parsing LDIF with extremely long lines."""
-        parser = FlextLdifParserService(
+        parser = FlextLdifParser(
             config=FlextLdifConfig(),
         )
 
@@ -337,10 +325,10 @@ description: {long_value}
         assert result.is_success or result.is_failure
 
     def test_parse_empty_lines_between_entries(
-        self, real_parser_service: FlextLdifParserService
+        self, real_parser_service: FlextLdifParser
     ) -> None:
         """Test parsing LDIF with multiple empty lines between entries."""
-        parser = FlextLdifParserService(
+        parser = FlextLdifParser(
             config=FlextLdifConfig(),
         )
 
@@ -364,9 +352,9 @@ cn: test2
 class TestRfcParserQuirksIntegration:
     """Test suite for RFC parser quirks integration."""
 
-    def test_parse_with_oid(self, real_parser_service: FlextLdifParserService) -> None:
+    def test_parse_with_oid(self, real_parser_service: FlextLdifParser) -> None:
         """Test parsing with OID-specific quirks enabled."""
-        parser = FlextLdifParserService()
+        parser = FlextLdifParser()
 
         ldif_content = """dn: cn=test,dc=example,dc=com
 objectClass: person
@@ -378,11 +366,9 @@ orclguid: 12345678-1234-1234-1234-123456789012
         result = parser.parse(ldif_content, input_source="string", server_type="oid")
         assert result.is_success or result.is_failure
 
-    def test_parse_with_oud_quirks(
-        self, real_parser_service: FlextLdifParserService
-    ) -> None:
+    def test_parse_with_oud_quirks(self, real_parser_service: FlextLdifParser) -> None:
         """Test parsing with OUD-specific quirks enabled."""
-        parser = FlextLdifParserService()
+        parser = FlextLdifParser()
 
         ldif_content = """dn: cn=test,dc=example,dc=com
 objectClass: person
@@ -394,11 +380,9 @@ ds-sync-hist: 12345678901234567890
         result = parser.parse(ldif_content, input_source="string", server_type="oud")
         assert result.is_success or result.is_failure
 
-    def test_parse_with_openldap(
-        self, real_parser_service: FlextLdifParserService
-    ) -> None:
+    def test_parse_with_openldap(self, real_parser_service: FlextLdifParser) -> None:
         """Test parsing with OpenLDAP-specific quirks enabled."""
-        parser = FlextLdifParserService()
+        parser = FlextLdifParser()
 
         ldif_content = """dn: cn=test,dc=example,dc=com
 objectClass: person
@@ -413,10 +397,10 @@ olcRootDN: cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com
         assert result.is_success or result.is_failure
 
     def test_parse_with_auto_server_detection(
-        self, real_parser_service: FlextLdifParserService
+        self, real_parser_service: FlextLdifParser
     ) -> None:
         """Test parsing with automatic server type detection."""
-        parser = FlextLdifParserService()
+        parser = FlextLdifParser()
 
         ldif_content = """dn: cn=test,dc=example,dc=com
 objectClass: person
@@ -432,10 +416,10 @@ class TestRfcParserErrorHandling:
     """Test suite for RFC parser error handling."""
 
     def test_parse_invalid_dn_syntax(
-        self, real_parser_service: FlextLdifParserService
+        self, real_parser_service: FlextLdifParser
     ) -> None:
         """Test parsing LDIF with invalid DN syntax."""
-        parser = FlextLdifParserService(
+        parser = FlextLdifParser(
             config=FlextLdifConfig(),
         )
 
@@ -449,11 +433,9 @@ cn: test
         # Should handle gracefully - either fail or parse what it can
         assert result.is_success or result.is_failure
 
-    def test_parse_missing_dn(
-        self, real_parser_service: FlextLdifParserService
-    ) -> None:
+    def test_parse_missing_dn(self, real_parser_service: FlextLdifParser) -> None:
         """Test parsing LDIF entry missing DN."""
-        parser = FlextLdifParserService(
+        parser = FlextLdifParser(
             config=FlextLdifConfig(),
         )
 
@@ -467,10 +449,10 @@ sn: user
         assert result.is_success or result.is_failure
 
     def test_parse_malformed_continuation_line(
-        self, real_parser_service: FlextLdifParserService
+        self, real_parser_service: FlextLdifParser
     ) -> None:
         """Test parsing LDIF with malformed continuation lines."""
-        parser = FlextLdifParserService(
+        parser = FlextLdifParser(
             config=FlextLdifConfig(),
         )
 
@@ -486,10 +468,10 @@ but should be a continuation
         assert result.is_success or result.is_failure
 
     def test_parse_incomplete_base64(
-        self, real_parser_service: FlextLdifParserService
+        self, real_parser_service: FlextLdifParser
     ) -> None:
         """Test parsing LDIF with incomplete base64 data."""
-        parser = FlextLdifParserService(
+        parser = FlextLdifParser(
             config=FlextLdifConfig(),
         )
 
@@ -503,11 +485,9 @@ description::
         result = parser.parse(ldif_content, input_source="string")
         assert result.is_success or result.is_failure
 
-    def test_parse_empty_content(
-        self, real_parser_service: FlextLdifParserService
-    ) -> None:
+    def test_parse_empty_content(self, real_parser_service: FlextLdifParser) -> None:
         """Test parsing empty LDIF content."""
-        parser = FlextLdifParserService(
+        parser = FlextLdifParser(
             config=FlextLdifConfig(),
         )
 
@@ -517,10 +497,10 @@ description::
         assert len(parse_response.entries) == 0
 
     def test_parse_whitespace_only_content(
-        self, real_parser_service: FlextLdifParserService
+        self, real_parser_service: FlextLdifParser
     ) -> None:
         """Test parsing whitespace-only LDIF content."""
-        parser = FlextLdifParserService(
+        parser = FlextLdifParser(
             config=FlextLdifConfig(),
         )
 
@@ -534,10 +514,10 @@ class TestRfcParserLargeFiles:
     """Test suite for RFC parser large file handling."""
 
     def test_parse_large_number_of_entries(
-        self, real_parser_service: FlextLdifParserService
+        self, real_parser_service: FlextLdifParser
     ) -> None:
         """Test parsing a large number of entries."""
-        parser = FlextLdifParserService(
+        parser = FlextLdifParser(
             config=FlextLdifConfig(),
         )
 
@@ -558,10 +538,10 @@ sn: User{i}
         assert result.is_success or result.is_failure
 
     def test_parse_entries_with_many_attributes(
-        self, real_parser_service: FlextLdifParserService
+        self, real_parser_service: FlextLdifParser
     ) -> None:
         """Test parsing entries with many attributes."""
-        parser = FlextLdifParserService(
+        parser = FlextLdifParser(
             config=FlextLdifConfig(),
         )
 
@@ -579,10 +559,10 @@ cn: test
         assert result.is_success or result.is_failure
 
     def test_parse_entries_with_large_attribute_values(
-        self, real_parser_service: FlextLdifParserService
+        self, real_parser_service: FlextLdifParser
     ) -> None:
         """Test parsing entries with large attribute values."""
-        parser = FlextLdifParserService(
+        parser = FlextLdifParser(
             config=FlextLdifConfig(),
         )
 
@@ -635,18 +615,18 @@ class TestRfcLdifWriterComprehensive:
         return [sample_entry, entry2_result.unwrap()]
 
     def test_writer_initialization_basic(
-        self, real_parser_service: FlextLdifParserService
+        self, real_parser_service: FlextLdifParser
     ) -> None:
         """Test basic writer initialization."""
-        writer = FlextLdifWriterService()
+        writer = FlextLdifWriter()
 
         assert writer is not None
 
     def test_writer_initialization_with_params(
-        self, real_parser_service: FlextLdifParserService
+        self, real_parser_service: FlextLdifParser
     ) -> None:
         """Test writer initialization with parameters."""
-        writer = FlextLdifWriterService()
+        writer = FlextLdifWriter()
 
         assert writer is not None
 
@@ -654,7 +634,7 @@ class TestRfcLdifWriterComprehensive:
         self, sample_entry: FlextLdifModels.Entry
     ) -> None:
         """Test writing a single entry to string."""
-        writer = FlextLdifWriterService()
+        writer = FlextLdifWriter()
 
         result = writer.write(
             [sample_entry], target_server_type="rfc", output_target="string"
@@ -666,7 +646,7 @@ class TestRfcLdifWriterComprehensive:
         self, sample_entries: list[FlextLdifModels.Entry]
     ) -> None:
         """Test writing multiple entries to string."""
-        writer = FlextLdifWriterService()
+        writer = FlextLdifWriter()
 
         result = writer.write(
             sample_entries,
@@ -677,10 +657,10 @@ class TestRfcLdifWriterComprehensive:
         assert result.is_success or result.is_failure
 
     def test_write_empty_entries_list(
-        self, real_parser_service: FlextLdifParserService
+        self, real_parser_service: FlextLdifParser
     ) -> None:
         """Test writing empty entries list."""
-        writer = FlextLdifWriterService()
+        writer = FlextLdifWriter()
 
         result = writer.write([], target_server_type="rfc", output_target="string")
 
@@ -690,7 +670,7 @@ class TestRfcLdifWriterComprehensive:
         assert "version: 1" in content
 
     def test_write_entry_with_binary_data(
-        self, real_parser_service: FlextLdifParserService
+        self, real_parser_service: FlextLdifParser
     ) -> None:
         """Test writing entry with binary attribute data."""
         import base64
@@ -708,14 +688,14 @@ class TestRfcLdifWriterComprehensive:
         )
         entry = entry_result.unwrap()
 
-        writer = FlextLdifWriterService()
+        writer = FlextLdifWriter()
 
         result = writer.write([entry], target_server_type="rfc", output_target="string")
 
         assert result.is_success or result.is_failure
 
     def test_write_entry_with_unicode_data(
-        self, real_parser_service: FlextLdifParserService
+        self, real_parser_service: FlextLdifParser
     ) -> None:
         """Test writing entry with Unicode attribute data."""
         entry_result = FlextLdifModels.Entry.create(
@@ -729,14 +709,14 @@ class TestRfcLdifWriterComprehensive:
         )
         entry = entry_result.unwrap()
 
-        writer = FlextLdifWriterService()
+        writer = FlextLdifWriter()
 
         result = writer.write([entry], target_server_type="rfc", output_target="string")
 
         assert result.is_success or result.is_failure
 
     def test_write_entry_with_long_lines(
-        self, real_parser_service: FlextLdifParserService
+        self, real_parser_service: FlextLdifParser
     ) -> None:
         """Test writing entry with very long attribute values."""
         long_value = "x" * 1000  # 1000 character line
@@ -750,7 +730,7 @@ class TestRfcLdifWriterComprehensive:
         )
         entry = entry_result.unwrap()
 
-        writer = FlextLdifWriterService()
+        writer = FlextLdifWriter()
 
         result = writer.write([entry], target_server_type="rfc", output_target="string")
 
@@ -761,7 +741,7 @@ class TestRfcLdifWriterComprehensive:
     ) -> None:
         """Test writing entries to file."""
         output_file = tmp_path / "test_output.ldif"
-        writer = FlextLdifWriterService()
+        writer = FlextLdifWriter()
 
         result = writer.write(
             sample_entries,
@@ -781,7 +761,7 @@ class TestRfcLdifWriterComprehensive:
         nonexistent_dir = tmp_path / "nonexistent"
         output_file = nonexistent_dir / "test_output.ldif"
 
-        writer = FlextLdifWriterService()
+        writer = FlextLdifWriter()
 
         result = writer.write(
             sample_entries,
@@ -796,7 +776,7 @@ class TestRfcLdifWriterComprehensive:
             assert output_file.parent.exists()
 
     def test_writer_error_handling_invalid_entry(
-        self, real_parser_service: FlextLdifParserService
+        self, real_parser_service: FlextLdifParser
     ) -> None:
         """Test writer handles edge case entry with empty attributes."""
         # Create a valid entry first, then test what happens if we try to write invalid data
@@ -810,7 +790,7 @@ class TestRfcLdifWriterComprehensive:
             ),
         )
 
-        writer = FlextLdifWriterService()
+        writer = FlextLdifWriter()
 
         result = writer.write(
             [valid_entry], target_server_type="rfc", output_target="string"
@@ -820,10 +800,10 @@ class TestRfcLdifWriterComprehensive:
         assert result.is_success
 
     def test_writer_handles_none_input(
-        self, real_parser_service: FlextLdifParserService
+        self, real_parser_service: FlextLdifParser
     ) -> None:
         """Test writer handles None input gracefully."""
-        writer = FlextLdifWriterService()
+        writer = FlextLdifWriter()
 
         # This should not crash - intentionally testing invalid input
         result = writer.write(
@@ -835,7 +815,7 @@ class TestRfcLdifWriterComprehensive:
         assert result.is_failure
 
     def test_writer_handles_empty_attributes(
-        self, real_parser_service: FlextLdifParserService
+        self, real_parser_service: FlextLdifParser
     ) -> None:
         """Test writer handles entries with minimal attributes."""
         entry_result = FlextLdifModels.Entry.create(
@@ -844,7 +824,7 @@ class TestRfcLdifWriterComprehensive:
         )
         entry = entry_result.unwrap()
 
-        writer = FlextLdifWriterService()
+        writer = FlextLdifWriter()
 
         result = writer.write([entry], target_server_type="rfc", output_target="string")
 
@@ -862,7 +842,7 @@ class TestRfcLdifWriterFileOperations:
         ).unwrap()
 
         output_file = tmp_path / "test.ldif"
-        writer = FlextLdifWriterService()
+        writer = FlextLdifWriter()
 
         result = writer.write(
             [entry],
@@ -884,7 +864,7 @@ class TestRfcLdifWriterFileOperations:
         ).unwrap()
 
         output_file = tmp_path / "subdir" / "nested" / "test.ldif"
-        writer = FlextLdifWriterService()
+        writer = FlextLdifWriter()
 
         result = writer.write(
             [entry],
@@ -900,7 +880,7 @@ class TestRfcLdifWriterFileOperations:
     def test_write_entries_to_file_empty_list(self, tmp_path: Path) -> None:
         """Test write_entries_to_file() with empty entries list."""
         output_file = tmp_path / "empty.ldif"
-        writer = FlextLdifWriterService()
+        writer = FlextLdifWriter()
 
         result = writer.write(
             [], target_server_type="rfc", output_target="file", output_path=output_file

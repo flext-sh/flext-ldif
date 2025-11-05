@@ -27,7 +27,7 @@ def verify_imports() -> bool:
     """Verify all new modules can be imported."""
     logger.info("\n=== VERIFYING IMPORTS ===")
     try:
-        logger.info("✅ FlextLdifServerDetector imported successfully")
+        logger.info("✅ FlextLdifDetector imported successfully")
 
         logger.info("✅ Relaxed quirks imported successfully")
 
@@ -44,14 +44,14 @@ def verify_imports() -> bool:
         return False
 
 
-def verify_server_detector() -> bool:
-    """Verify FlextLdifServerDetector functionality."""
+def verify_detector() -> bool:
+    """Verify FlextLdifDetector functionality."""
     logger.info("\n=== VERIFYING SERVER DETECTOR ===")
     try:
-        from flext_ldif.services.server_detector import FlextLdifServerDetector
+        from flext_ldif.services.detector import FlextLdifDetector
 
-        detector = FlextLdifServerDetector()
-        logger.info("✅ FlextLdifServerDetector instantiated")
+        detector = FlextLdifDetector()
+        logger.info("✅ FlextLdifDetector instantiated")
 
         # Test with OID content
         oid_content = """version: 1
@@ -233,7 +233,7 @@ def main() -> int:
 
     results = {
         "Imports": verify_imports(),
-        "Server Detector": verify_server_detector(),
+        "Server Detector": verify_detector(),
         "Relaxed Quirks": verify_relaxed(),
         "Config Modes": verify_config_modes(),
         "API Integration": verify_api_integration(),

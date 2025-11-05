@@ -12,6 +12,7 @@ from __future__ import annotations
 import pytest
 from pathlib import Path
 
+from flext_core import FlextTypes
 from flext_ldif.typings import FlextLdifTypes, ServiceT
 
 

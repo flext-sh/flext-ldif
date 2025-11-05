@@ -577,9 +577,9 @@ class TestTypeSpecificValidators:
 
     def test_boolean_syntax_validator_true(self) -> None:
         """Test Boolean syntax validator accepts TRUE value."""
-        from flext_ldif.services.syntax import FlextLdifSyntaxService
+        from flext_ldif.services.syntax import FlextLdifSyntax
 
-        service = FlextLdifSyntaxService()
+        service = FlextLdifSyntax()
         # Boolean syntax OID: 1.3.6.1.4.1.1466.115.121.1.7
         result = service.validate_value(
             "TRUE",
@@ -590,9 +590,9 @@ class TestTypeSpecificValidators:
 
     def test_boolean_syntax_validator_false(self) -> None:
         """Test Boolean syntax validator accepts FALSE value."""
-        from flext_ldif.services.syntax import FlextLdifSyntaxService
+        from flext_ldif.services.syntax import FlextLdifSyntax
 
-        service = FlextLdifSyntaxService()
+        service = FlextLdifSyntax()
         result = service.validate_value(
             "FALSE",
             "1.3.6.1.4.1.1466.115.121.1.7",
@@ -602,9 +602,9 @@ class TestTypeSpecificValidators:
 
     def test_boolean_syntax_validator_invalid(self) -> None:
         """Test Boolean syntax validator rejects invalid values."""
-        from flext_ldif.services.syntax import FlextLdifSyntaxService
+        from flext_ldif.services.syntax import FlextLdifSyntax
 
-        service = FlextLdifSyntaxService()
+        service = FlextLdifSyntax()
         result = service.validate_value(
             "MAYBE",
             "1.3.6.1.4.1.1466.115.121.1.7",
@@ -614,9 +614,9 @@ class TestTypeSpecificValidators:
 
     def test_integer_syntax_validator_valid(self) -> None:
         """Test Integer syntax validator accepts numeric values."""
-        from flext_ldif.services.syntax import FlextLdifSyntaxService
+        from flext_ldif.services.syntax import FlextLdifSyntax
 
-        service = FlextLdifSyntaxService()
+        service = FlextLdifSyntax()
         # Integer syntax OID: 2.5.5.5
         result = service.validate_value(
             "12345",
@@ -627,9 +627,9 @@ class TestTypeSpecificValidators:
 
     def test_integer_syntax_validator_negative(self) -> None:
         """Test Integer syntax validator accepts negative numbers."""
-        from flext_ldif.services.syntax import FlextLdifSyntaxService
+        from flext_ldif.services.syntax import FlextLdifSyntax
 
-        service = FlextLdifSyntaxService()
+        service = FlextLdifSyntax()
         result = service.validate_value(
             "-999",
             "2.5.5.5",
@@ -639,9 +639,9 @@ class TestTypeSpecificValidators:
 
     def test_integer_syntax_validator_invalid(self) -> None:
         """Test Integer syntax validator rejects non-numeric values."""
-        from flext_ldif.services.syntax import FlextLdifSyntaxService
+        from flext_ldif.services.syntax import FlextLdifSyntax
 
-        service = FlextLdifSyntaxService()
+        service = FlextLdifSyntax()
         result = service.validate_value(
             "not_a_number",
             "2.5.5.5",
@@ -651,9 +651,9 @@ class TestTypeSpecificValidators:
 
     def test_directory_string_syntax_validator(self) -> None:
         """Test DirectoryString syntax validator accepts string values."""
-        from flext_ldif.services.syntax import FlextLdifSyntaxService
+        from flext_ldif.services.syntax import FlextLdifSyntax
 
-        service = FlextLdifSyntaxService()
+        service = FlextLdifSyntax()
         # DirectoryString syntax OID: 1.3.6.1.4.1.1466.115.121.1.15
         result = service.validate_value(
             "John Doe",
@@ -664,9 +664,9 @@ class TestTypeSpecificValidators:
 
     def test_directory_string_with_special_chars(self) -> None:
         """Test DirectoryString validator accepts special characters."""
-        from flext_ldif.services.syntax import FlextLdifSyntaxService
+        from flext_ldif.services.syntax import FlextLdifSyntax
 
-        service = FlextLdifSyntaxService()
+        service = FlextLdifSyntax()
         result = service.validate_value(
             "User Name (Office)",
             "1.3.6.1.4.1.1466.115.121.1.15",
@@ -676,9 +676,9 @@ class TestTypeSpecificValidators:
 
     def test_ia5_string_syntax_validator(self) -> None:
         """Test IA5String syntax validator accepts ASCII values."""
-        from flext_ldif.services.syntax import FlextLdifSyntaxService
+        from flext_ldif.services.syntax import FlextLdifSyntax
 
-        service = FlextLdifSyntaxService()
+        service = FlextLdifSyntax()
         # IA5String syntax OID: 1.3.6.1.4.1.1466.115.121.1.26
         result = service.validate_value(
             "test@example.com",

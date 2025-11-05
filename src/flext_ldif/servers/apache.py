@@ -63,6 +63,13 @@ class FlextLdifServersApache(FlextLdifServersRfc):
             "ou=partitions",
         ])
 
+        # Server detection pattern and weight (for server detector service)
+        APACHE_DS_PATTERN: Final[str] = r"\b(apacheDS|apache-.*)\b"
+        APACHE_DS_WEIGHT: Final[int] = 6
+
+        # Schema attribute parsing patterns
+        SCHEMA_ATTRIBUTE_NAME_REGEX: Final[str] = r"NAME\s+\(?\s*'([^']+)'"
+
         # ACL-specific constants (migrated from nested Acl class)
         ACL_ACI_ATTRIBUTE_NAMES: Final[frozenset[str]] = frozenset([
             "ads-aci",
@@ -71,6 +78,10 @@ class FlextLdifServersApache(FlextLdifServersRfc):
         ACL_CLAUSE_PATTERN: Final[str] = r"\([^()]+\)"
         ACL_VERSION_PATTERN: Final[str] = r"\(version"
         ACL_NAME_PREFIX: Final[str] = "apache-"
+
+        # ACL parsing constants (migrated from _parse_acl method)
+        ACL_SUBJECT_TYPE_ANONYMOUS: Final[str] = "anonymous"
+        ACL_SUBJECT_VALUE_WILDCARD: Final[str] = "*"
 
         # Entry detection constants (migrated from Entry class)
         DN_CONFIG_ENTRY_MARKER: Final[str] = "ou=config"
@@ -142,7 +153,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
 
                 # Check attribute name prefixes (use DETECTION_ATTRIBUTE_PREFIXES)
                 name_matches = re.findall(
-                    r"NAME\s+\(?\s*'([^']+)'",
+                    FlextLdifServersApache.Constants.SCHEMA_ATTRIBUTE_NAME_REGEX,
                     attr_definition,
                     re.IGNORECASE,
                 )
@@ -188,7 +199,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
                     return True
 
                 name_matches = re.findall(
-                    r"NAME\s+\(?\s*'([^']+)'",
+                    FlextLdifServersApache.Constants.SCHEMA_ATTRIBUTE_NAME_REGEX,
                     oc_definition,
                     re.IGNORECASE,
                 )
@@ -255,10 +266,10 @@ class FlextLdifServersApache(FlextLdifServersRfc):
                 oc_data = result.unwrap()
                 # Fix common ObjectClass issues (RFC 4512 compliance)
                 FlextLdifUtilities.ObjectClass.fix_missing_sup(
-                    oc_data, server_type=FlextLdifServersApache.Constants.SERVER_TYPE
+                    oc_data, _server_type=FlextLdifServersApache.Constants.SERVER_TYPE
                 )
                 FlextLdifUtilities.ObjectClass.fix_kind_mismatch(
-                    oc_data, server_type=FlextLdifServersApache.Constants.SERVER_TYPE
+                    oc_data, _server_type=FlextLdifServersApache.Constants.SERVER_TYPE
                 )
                 metadata = FlextLdifModels.QuirkMetadata.create_for_quirk(
                     "apache_directory"
@@ -276,19 +287,35 @@ class FlextLdifServersApache(FlextLdifServersRfc):
         Handles ApacheDS ACI (Access Control Instruction) format.
         """
 
+        def _can_handle(self, acl: str | FlextLdifModels.Acl) -> bool:
+            """Check if this is an ApacheDS ACI.
+
+            Override RFC's always-true behavior to check Apache-specific markers.
+
+            Args:
+                acl: ACL line string or Acl model
+
+            Returns:
+                True if this is ApacheDS ACI format
+
+            """
+            return self._can_handle_acl(acl)
+
         def _can_handle_acl(self, acl_line: str | FlextLdifModels.Acl) -> bool:
             """Detect ApacheDS ACI lines."""
             if isinstance(acl_line, str):
-                normalized = acl_line.strip() if acl_line else ""
-                if not normalized:
+                if not acl_line or not acl_line.strip():
                     return False
+                normalized = acl_line.strip()
                 attr_name, _, _ = normalized.partition(":")
                 if (
                     attr_name.strip().lower()
                     in FlextLdifServersApache.Constants.ACL_ACI_ATTRIBUTE_NAMES
                 ):
                     return True
-                return normalized.lower().startswith(FlextLdifServersApache.Constants.ACL_VERSION_PATTERN)
+                return normalized.lower().startswith(
+                    FlextLdifServersApache.Constants.ACL_VERSION_PATTERN
+                )
             if isinstance(acl_line, FlextLdifModels.Acl):
                 if not acl_line.raw_acl:
                     return False
@@ -303,7 +330,9 @@ class FlextLdifServersApache(FlextLdifServersRfc):
                 ):
                     return True
 
-                return normalized.lower().startswith(FlextLdifServersApache.Constants.ACL_VERSION_PATTERN)
+                return normalized.lower().startswith(
+                    FlextLdifServersApache.Constants.ACL_VERSION_PATTERN
+                )
             return False
 
         def _parse_acl(self, acl_line: str) -> FlextResult[FlextLdifModels.Acl]:
@@ -335,8 +364,8 @@ class FlextLdifServersApache(FlextLdifServersRfc):
                         attributes=[attr_name] if attr_name else [],
                     ),
                     subject=FlextLdifModels.AclSubject(
-                        subject_type="anonymous",
-                        subject_value="*",
+                        subject_type=FlextLdifServersApache.Constants.ACL_SUBJECT_TYPE_ANONYMOUS,
+                        subject_value=FlextLdifServersApache.Constants.ACL_SUBJECT_VALUE_WILDCARD,
                     ),
                     permissions=FlextLdifModels.AclPermissions(),
                     raw_acl=acl_line,

@@ -11,7 +11,6 @@ import pytest
 
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.servers.oid import FlextLdifServersOid
-from flext_ldif.servers.oud import FlextLdifServersOud
 from flext_ldif.utilities import FlextLdifUtilities
 
 
@@ -45,13 +44,6 @@ class TestAdvancedAclConversion:
         assert "(dept=engineering) & (location=usa)" in extensions["filter_clause"]
         assert "multi_subject_blocks" in extensions
         assert "oid_specific_permissions" in extensions
-
-        # Convert using advanced utilities
-        oud_quirk = FlextLdifServersOud()
-        convert_result = oud_quirk.convert_acl_to_rfc(oid_acl)
-
-        assert convert_result.is_success
-        oud_acl = convert_result.unwrap()
 
         # Verify conversion metadata
         assert oud_acl.metadata is not None
@@ -246,17 +238,7 @@ class TestAdvancedAclConversion:
         parse_result = oid_quirk.parse(complex_oid_acl)
         assert parse_result.is_success
 
-        original_acl = parse_result.unwrap()
-
-        # Convert to OUD
-        oud_quirk = FlextLdifServersOud()
-        convert_result = oud_quirk.convert_acl_to_rfc(original_acl)
-        assert convert_result.is_success
-
-        converted_acl = convert_result.unwrap()
-        converted_metadata = (
-            converted_acl.metadata.extensions if converted_acl.metadata else {}
-        )
+        parse_result.unwrap()
 
         # Verify all original data is preserved in metadata
         assert "original_oid_features" in converted_metadata

@@ -184,7 +184,7 @@ Container_Boundary(flext_ldif_lib, "FLEXT-LDIF Library") {
     Component_Boundary(quirks, "Quirks System") {
         Component(quirk_registry, "QuirkRegistry", "Python Class", "Server quirk discovery")
         Component(server_quirks, "ServerQuirks", "Python Classes", "9 server implementations")
-        Component(conversion_matrix, "ConversionMatrix", "Python Class", "Server-to-server mapping")
+        Component(conversion, "ConversionMatrix", "Python Class", "Server-to-server mapping")
     }
 
     Component_Boundary(models, "Domain Models") {
@@ -261,7 +261,7 @@ src/flext_ldif/
 │   ├── base.py                # Quirk base classes
 │   ├── registry.py            # Quirk auto-discovery
 │   ├── manager.py             # Quirk orchestration
-│   ├── conversion_matrix.py   # Universal conversions
+│   ├── conversion.py   # Universal conversions
 │   ├── dn_case_registry.py    # DN case consistency
 │   ├── entrys.py        # Entry-level quirks
 │   └── servers/               # Server implementations
@@ -297,7 +297,7 @@ src/flext_ldif/
 #### 1. Facade Pattern
 
 ```python
-class FlextLdif(FlextService[FlextTypes.Dict]):
+class FlextLdif(Flext[FlextTypes.Dict]):
     """Unified facade for all LDIF operations."""
 
     def parse(self, source: Path | str) -> FlextResult[list[FlextLdifModels.Entry]]:
@@ -323,7 +323,7 @@ class QuirkBase(ABC):
 #### 3. Registry Pattern
 
 ```python
-class FlextLdifRegistry:
+class FlextLdifServer:
     """Auto-discovery registry for quirk implementations."""
 
     def __init__(self) -> None:

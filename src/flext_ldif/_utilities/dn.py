@@ -1,0 +1,680 @@
+"""Extracted nested class from FlextLdifUtilities.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
+
+from __future__ import annotations
+
+import logging
+import string
+from typing import Any, overload
+
+from flext_core import FlextUtilities
+
+from flext_ldif.constants import FlextLdifConstants
+
+logger = logging.getLogger(__name__)
+
+
+class FlextLdifUtilitiesDN:
+    """RFC 4514 DN Operations - Works with both DN models and string values.
+
+    All methods return primitives (str, list, tuple, bool, int, None).
+    Pure functions: no server-specific logic, no side effects.
+
+    Supports both:
+    - FlextLdifModels.DistinguishedName (DN model)
+    - str (DN string value)
+
+    Methods:
+    - split: Split DN string into components
+    - norm_component: Normalize single DN component
+    - norm_string: Normalize full DN to RFC 4514 format
+    - validate: Validate DN format according to RFC 4514
+    - parse: Parse DN into (attr, value) tuples
+    - norm: Normalize DN per RFC 4514 (lowercase attrs, preserve values)
+    - clean_dn: Clean DN string to fix spacing and escaping issues
+    - esc: Escape special characters in DN value per RFC 4514
+    - unesc: Unescape special characters in DN value per RFC 4514
+    - compare_dns: Compare two DNs per RFC 4514 (case-insensitive)
+    - parse_rdn: Parse a single RDN component per RFC 4514
+
+    """
+
+    @staticmethod
+    def _get_dn_value(dn: Any) -> str:
+        """Extract DN string value from DN model or string.
+
+        Args:
+            dn: DN model (FlextLdifModels.DistinguishedName) or DN string
+
+        Returns:
+            DN string value
+
+        """
+        if isinstance(dn, str):
+            return dn
+        # Assume it's a DN model with .value attribute
+        return getattr(dn, "value", str(dn))
+
+    @overload
+    @staticmethod
+    def split(dn: str) -> list[str]:
+        ...
+
+    @overload
+    @staticmethod
+    def split(dn: "Any") -> list[str]:
+        ...
+
+    @staticmethod
+    def split(dn: "Any" | str) -> list[str]:
+        """Split DN string into individual components.
+
+        **Future DRY Optimization**: Can use FlextUtilities.StringParser.safe_strip_split()
+        once flext-core 0.9.10+ is released with the new method.
+        """
+        dn_str = FlextLdifUtilitiesDN._get_dn_value(dn)
+        if not dn_str:
+            return []
+        return [comp.strip() for comp in dn_str.split(",") if comp.strip()]
+
+    @staticmethod
+    def norm_component(component: str) -> str:
+        """Normalize single DN component (e.g., 'cn = John' → 'cn=John')."""
+        if "=" not in component:
+            return component
+        parts = component.split("=", 1)
+        return f"{parts[0].strip()}={parts[1].strip()}"
+
+    @overload
+    @staticmethod
+    def norm_string(dn: str) -> str:
+        ...
+
+    @overload
+    @staticmethod
+    def norm_string(dn: "Any") -> str:
+        ...
+
+    @staticmethod
+    def norm_string(dn: "Any" | str) -> str:
+        """Normalize full DN to RFC 4514 format."""
+        dn_str = FlextLdifUtilitiesDN._get_dn_value(dn)
+        if not dn_str or "=" not in dn_str:
+            return dn_str
+        components = FlextLdifUtilitiesDN.split(dn_str)
+        normalized = [FlextLdifUtilitiesDN.norm_component(comp) for comp in components]
+        return ",".join(normalized)
+
+    @overload
+    @staticmethod
+    def validate(dn: str) -> bool:
+        ...
+
+    @overload
+    @staticmethod
+    def validate(dn: "Any") -> bool:
+        ...
+
+    @staticmethod
+    def validate(dn: "Any" | str) -> bool:
+        """Validate DN format according to RFC 4514."""
+        dn_str = FlextLdifUtilitiesDN._get_dn_value(dn)
+        if not dn_str or "=" not in dn_str:
+            return False
+
+        # RFC 4514: Check for invalid patterns
+        # - Double commas (consecutive commas)
+        # - Trailing/leading commas
+        if ",," in dn_str or dn_str.startswith(",") or dn_str.endswith(","):
+            return False
+
+        try:
+            components = FlextLdifUtilitiesDN.split(dn_str)
+            if not components:
+                return False
+
+            # Check each component has attr=value with both non-empty
+            for comp in components:
+                if "=" not in comp:
+                    return False
+                attr, _, value = comp.partition("=")
+                attr = attr.strip()
+                value = value.strip()
+                # Both attribute and value must be non-empty
+                if not attr or not value:
+                    return False
+
+            return True
+        except Exception:
+            return False
+
+    @overload
+    @staticmethod
+    def parse(dn: str) -> list[tuple[str, str]] | None:
+        ...
+
+    @overload
+    @staticmethod
+    def parse(dn: "Any") -> list[tuple[str, str]] | None:
+        ...
+
+    @staticmethod
+    def parse(dn: "Any" | str) -> list[tuple[str, str]] | None:
+        """Parse DN into RFC 4514 components (attr, value pairs).
+
+        Pure RFC 4514 parsing without external dependencies.
+        Returns [(attr1, value1), (attr2, value2), ...] or None on error.
+        """
+        dn_str = FlextLdifUtilitiesDN._get_dn_value(dn)
+        if not dn_str or "=" not in dn_str:
+            return None
+
+        try:
+            components = FlextLdifUtilitiesDN.split(dn_str)
+            result: list[tuple[str, str]] = []
+
+            for comp in components:
+                if "=" not in comp:
+                    continue
+                attr, _, value = comp.partition("=")
+                result.append((attr.strip(), value.strip()))
+
+            return result or None
+        except Exception:
+            return None
+
+    @overload
+    @staticmethod
+    def norm(dn: str) -> str | None:
+        ...
+
+    @overload
+    @staticmethod
+    def norm(dn: "Any") -> str | None:
+        ...
+
+    @staticmethod
+    def norm(dn: "Any" | str) -> str | None:
+        """Normalize DN per RFC 4514 (lowercase attrs, preserve values).
+
+        Pure implementation without external dependencies.
+        """
+        dn_str = FlextLdifUtilitiesDN._get_dn_value(dn)
+        try:
+            if not dn_str or "=" not in dn_str:
+                return None
+
+            components = FlextLdifUtilitiesDN.split(dn_str)
+            normalized: list[str] = []
+
+            for comp in components:
+                if "=" not in comp:
+                    continue
+                attr, _, value = comp.partition("=")
+                # Lowercase attribute, preserve value per RFC 4514
+                normalized.append(f"{attr.strip().lower()}={value.strip()}")
+
+            return ",".join(normalized) if normalized else None
+        except Exception:
+            return None
+
+    @overload
+    @staticmethod
+    def clean_dn(dn: str) -> str:
+        ...
+
+    @overload
+    @staticmethod
+    def clean_dn(dn: "Any") -> str:
+        ...
+
+    @staticmethod
+    def clean_dn(dn: "Any" | str) -> str:
+        """Clean DN string to fix spacing and escaping issues.
+
+        Removes spaces before '=', fixes trailing backslash+space,
+        normalizes whitespace around commas.
+
+        **DRY Optimization**: Uses FlextUtilities.StringParser.apply_regex_pipeline()
+        to consolidate 5 sequential regex.sub() calls into one pipeline.
+        """
+        dn_str = FlextLdifUtilitiesDN._get_dn_value(dn)
+        if not dn_str:
+            return dn_str
+
+        # Define regex pipeline for DN cleaning
+        patterns = [
+            # Remove spaces ONLY BEFORE '=' in each RDN component
+            (r"\s+=", "="),
+            # Fix trailing backslash+space before commas
+            (
+                FlextLdifConstants.DnPatterns.DN_TRAILING_BACKSLASH_SPACE,
+                FlextLdifConstants.DnPatterns.DN_COMMA,
+            ),
+            # Normalize spaces around commas: ", cn=..." -> ",cn=..."
+            (
+                FlextLdifConstants.DnPatterns.DN_SPACES_AROUND_COMMA,
+                FlextLdifConstants.DnPatterns.DN_COMMA,
+            ),
+            # Remove unnecessary character escapes (RFC 4514 compliance)
+            (FlextLdifConstants.DnPatterns.DN_UNNECESSARY_ESCAPES, r"\1"),
+            # Normalize multiple spaces to single space
+            (FlextLdifConstants.DnPatterns.DN_MULTIPLE_SPACES, " "),
+        ]
+
+        # Apply regex pipeline using generic utility
+        result = FlextUtilities.StringParser.apply_regex_pipeline(dn_str, patterns)
+        return result.unwrap() if result.is_success else dn_str
+
+    @staticmethod
+    def esc(value: str) -> str:
+        """Escape special characters in DN value per RFC 4514."""
+        if not value:
+            return value
+
+        escape_chars = {",", "+", '"', "\\", "<", ">", ";", "#"}
+        result: list[str] = []
+
+        for i, char in enumerate(value):
+            is_special = char in escape_chars
+            is_edge_space = (i == 0 or i == len(value) - 1) and char == " "
+            if is_special or is_edge_space:
+                result.append(f"\\{ord(char):02x}")
+            else:
+                result.append(char)
+
+        return "".join(result)
+
+    @staticmethod
+    def unesc(value: str) -> str:
+        """Unescape special characters in DN value per RFC 4514."""
+        if not value or "\\" not in value:
+            return value
+
+        result: list[str] = []
+        i = 0
+        while i < len(value):
+            if value[i] == "\\" and i + 1 < len(value):
+                # Check if next two chars are hex digits
+                if i + 2 < len(value) and all(
+                    c in string.hexdigits for c in value[i + 1 : i + 3]
+                ):
+                    hex_code = value[i + 1 : i + 3]
+                    result.append(chr(int(hex_code, 16)))
+                    i += 3
+                else:
+                    result.append(value[i + 1])
+                    i += 2
+            else:
+                result.append(value[i])
+                i += 1
+
+        return "".join(result)
+
+    @overload
+    @staticmethod
+    def compare_dns(dn1: str, dn2: str) -> int | None:
+        ...
+
+    @overload
+    @staticmethod
+    def compare_dns(
+        dn1: FlextLdifModels.DistinguishedName, dn2: FlextLdifModels.DistinguishedName
+    ) -> int | None:
+        ...
+
+    @overload
+    @staticmethod
+    def compare_dns(
+        dn1: FlextLdifModels.DistinguishedName | str, dn2: str
+    ) -> int | None:
+        ...
+
+    @overload
+    @staticmethod
+    def compare_dns(
+        dn1: str, dn2: FlextLdifModels.DistinguishedName
+    ) -> int | None:
+        ...
+
+    @staticmethod
+    def compare_dns(
+        dn1: FlextLdifModels.DistinguishedName | str,
+        dn2: FlextLdifModels.DistinguishedName | str,
+    ) -> int | None:
+        """Compare two DNs per RFC 4514 (case-insensitive).
+
+        Returns: -1 if dn1 < dn2, 0 if equal, 1 if dn1 > dn2, None on error
+        """
+        try:
+            norm1 = FlextLdifUtilitiesDN.norm(dn1)
+            norm2 = FlextLdifUtilitiesDN.norm(dn2)
+
+            if norm1 is None or norm2 is None:
+                return None
+
+            norm1_lower = norm1.lower()
+            norm2_lower = norm2.lower()
+
+            if norm1_lower < norm2_lower:
+                return -1
+            if norm1_lower > norm2_lower:
+                return 1
+            return 0
+        except Exception:
+            return None
+
+    @staticmethod
+    def _process_rdn_escape(rdn: str, i: int, current_val: str) -> tuple[str, int]:
+        """Process escape sequence in RDN parsing (extracted to reduce complexity)."""
+        if i + 1 < len(rdn):
+            next_char = rdn[i + 1]
+            if i + 2 < len(rdn) and all(
+                c in string.hexdigits for c in rdn[i + 1 : i + 3]
+            ):
+                return current_val + rdn[i : i + 3], i + 3
+            return current_val + next_char, i + 2
+        return current_val, i + 1
+
+    @staticmethod
+    def _process_rdn_char(
+        char: str,
+        rdn: str,
+        i: int,
+        current_attr: str,
+        current_val: str,
+        in_value: bool,
+        pairs: list[tuple[str, str]],
+    ) -> tuple[str, str, bool, int, bool]:
+        """Process single character in RDN parsing.
+
+        Returns: (current_attr, current_val, in_value, next_i, should_continue)
+        should_continue=True means skip normal increment
+        """
+        if char == "\\" and i + 1 < len(rdn):
+            current_val, next_i = FlextLdifUtilitiesDN._process_rdn_escape(
+                rdn, i, current_val
+            )
+            return current_attr, current_val, in_value, next_i, True
+
+        if char == "=" and not in_value:
+            current_attr = current_attr.strip().lower()
+            return current_attr, current_val, True, i + 1, True
+
+        if char == "+" and in_value:
+            current_val = current_val.strip()
+            if current_attr:
+                pairs.append((current_attr, current_val))
+            return "", "", False, i + 1, True
+
+        if in_value:
+            current_val += char
+        else:
+            current_attr += char
+
+        return current_attr, current_val, in_value, i + 1, False
+
+    @staticmethod
+    def parse_rdn(rdn: str) -> list[tuple[str, str]] | None:
+        """Parse a single RDN component per RFC 4514.
+
+        Returns None on error.
+        """
+        if not rdn or not isinstance(rdn, str):
+            return None
+
+        try:
+            pairs: list[tuple[str, str]] = []
+            current_attr = ""
+            current_val = ""
+            in_value = False
+            i = 0
+
+            while i < len(rdn):
+                char = rdn[i]
+                current_attr, current_val, in_value, i, _ = (
+                    FlextLdifUtilitiesDN._process_rdn_char(
+                        char, rdn, i, current_attr, current_val, in_value, pairs
+                    )
+                )
+
+                if char == "=" and not in_value and not current_attr:
+                    return None
+
+            if not in_value or not current_attr:
+                return None
+
+            current_val = current_val.strip()
+            if not current_val:
+                return None
+            pairs.append((current_attr, current_val))
+
+            return pairs
+
+        except Exception:
+            return None
+
+    @staticmethod
+    def extract_rdn(dn: str) -> str | None:
+        """Extract leftmost RDN from DN.
+
+        For DN "cn=John,ou=Users,dc=example,dc=com", returns "cn=John".
+
+        Args:
+            dn: Distinguished Name string
+
+        Returns:
+            Leftmost RDN (attr=value) or None if DN is empty/invalid
+
+        """
+        if not dn or "=" not in dn:
+            return None
+
+        try:
+            components = FlextLdifUtilitiesDN.split(dn)
+            return components[0] if components else None
+        except Exception:
+            return None
+
+    @staticmethod
+    def extract_parent_dn(dn: str) -> str | None:
+        """Extract parent DN (remove leftmost RDN).
+
+        For DN "cn=John,ou=Users,dc=example,dc=com",
+        returns "ou=Users,dc=example,dc=com".
+
+        Args:
+            dn: Distinguished Name string
+
+        Returns:
+            Parent DN (without leftmost RDN) or None if DN has ≤1 component
+
+        """
+        if not dn or "=" not in dn:
+            return None
+
+        try:
+            components = FlextLdifUtilitiesDN.split(dn)
+            if len(components) <= 1:
+                return None
+            return ",".join(components[1:])
+        except Exception:
+            return None
+
+    @staticmethod
+    def is_config_dn(dn: str) -> bool:
+        """Check if DN is in cn=config tree (OpenLDAP dynamic config).
+
+        Used by OpenLDAP and other servers for config DN detection.
+
+        Args:
+            dn: Distinguished Name string
+
+        Returns:
+            True if DN contains cn=config component, False otherwise
+
+        """
+        if not dn:
+            return False
+        return "cn=config" in dn.lower()
+
+    @staticmethod
+    def contains_pattern(
+        dn: str,
+        pattern: str,
+        *,
+        case_sensitive: bool = False,
+    ) -> bool:
+        """Check if DN contains pattern substring.
+
+        Useful for DN filtering by organizational unit, DC, etc.
+
+        Args:
+            dn: Distinguished Name string
+            pattern: Pattern to search for (can be full component or substring)
+            case_sensitive: If True, match case exactly
+
+        Returns:
+            True if pattern is found in DN, False otherwise
+
+        Example:
+            contains_pattern("cn=REDACTED_LDAP_BIND_PASSWORD,ou=users,dc=example", "ou=users")
+            # Returns: True
+            contains_pattern("cn=REDACTED_LDAP_BIND_PASSWORD,ou=users,dc=example", "OU=USERS")
+            # Returns: False (case mismatch)
+            contains_pattern("cn=REDACTED_LDAP_BIND_PASSWORD,ou=users,dc=example", "OU=USERS", case_sensitive=False)
+            # Returns: True
+
+        """
+        if not dn or not pattern:
+            return False
+
+        search_dn = dn if case_sensitive else dn.lower()
+        search_pattern = pattern if case_sensitive else pattern.lower()
+
+        return search_pattern in search_dn
+
+    @overload
+    @staticmethod
+    def is_under_base(dn: str, base_dn: str) -> bool:
+        ...
+
+    @overload
+    @staticmethod
+    def is_under_base(
+        dn: "Any",
+        base_dn: "Any",
+    ) -> bool:
+        ...
+
+    @overload
+    @staticmethod
+    def is_under_base(
+        dn: "Any" | str, base_dn: str
+    ) -> bool:
+        ...
+
+    @overload
+    @staticmethod
+    def is_under_base(
+        dn: str, base_dn: "Any"
+    ) -> bool:
+        ...
+
+    @staticmethod
+    def is_under_base(
+        dn: "Any" | str,
+        base_dn: "Any" | str,
+    ) -> bool:
+        """Check if DN is under base DN (hierarchical check).
+
+        Returns True if:
+        - DN exactly equals base_dn (case-insensitive)
+        - DN is a child/descendant of base_dn
+
+        Args:
+            dn: Distinguished Name to check
+            base_dn: Base DN to check against
+
+        Returns:
+            True if DN is equal to or under base_dn, False otherwise
+
+        Example:
+            is_under_base("cn=REDACTED_LDAP_BIND_PASSWORD,ou=users,dc=example", "dc=example")
+            # Returns: True
+            is_under_base("cn=REDACTED_LDAP_BIND_PASSWORD,ou=users,dc=example", "ou=users,dc=example")
+            # Returns: True
+            is_under_base("cn=REDACTED_LDAP_BIND_PASSWORD,ou=users,dc=example", "ou=other,dc=example")
+            # Returns: False
+
+        """
+        dn_str = FlextLdifUtilitiesDN._get_dn_value(dn)
+        base_dn_str = FlextLdifUtilitiesDN._get_dn_value(base_dn)
+
+        if not dn_str or not base_dn_str:
+            return False
+
+        # Normalize both DNs for comparison (case-insensitive)
+        dn_lower = dn_str.lower().strip()
+        base_dn_lower = base_dn_str.lower().strip()
+
+        # Check if DN equals base_dn OR if DN ends with ",base_dn"
+        return dn_lower == base_dn_lower or dn_lower.endswith(f",{base_dn_lower}")
+
+    @overload
+    @staticmethod
+    def are_equal(dn1: str, dn2: str) -> bool:
+        ...
+
+    @overload
+    @staticmethod
+    def are_equal(
+        dn1: FlextLdifModels.DistinguishedName, dn2: FlextLdifModels.DistinguishedName
+    ) -> bool:
+        ...
+
+    @overload
+    @staticmethod
+    def are_equal(
+        dn1: FlextLdifModels.DistinguishedName | str, dn2: str
+    ) -> bool:
+        ...
+
+    @overload
+    @staticmethod
+    def are_equal(dn1: str, dn2: FlextLdifModels.DistinguishedName) -> bool:
+        ...
+
+    @staticmethod
+    def are_equal(
+        dn1: FlextLdifModels.DistinguishedName | str,
+        dn2: FlextLdifModels.DistinguishedName | str,
+    ) -> bool:
+        """Check if two DNs are equal (case-insensitive, normalized).
+
+        Wrapper around compare_dns() for boolean equality check.
+
+        Args:
+            dn1: First DN to compare
+            dn2: Second DN to compare
+
+        Returns:
+            True if DNs are equal (case-insensitive), False otherwise
+
+        Example:
+            are_equal("cn=Admin,dc=example,dc=com", "CN=REDACTED_LDAP_BIND_PASSWORD,DC=example,DC=com")
+            # Returns: True
+            are_equal("cn=REDACTED_LDAP_BIND_PASSWORD,dc=example", "cn=user,dc=example")
+            # Returns: False
+
+        """
+        result = FlextLdifUtilitiesDN.compare_dns(dn1, dn2)
+        return result == 0 if result is not None else False
+
+
+__all__ = [
+    "FlextLdifUtilitiesDN",
+]

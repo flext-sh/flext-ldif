@@ -16,6 +16,32 @@ r"""Distinguished Name (DN) Operations Service - RFC 4514 Compliant Parsing & No
 ╚══════════════════════════════════════════════════════════════════════════╝
 
 ═══════════════════════════════════════════════════════════════════════════
+ARCHITECTURE (Nested Class Organization)
+
+The DN service is organized with SRP-compliant nested classes:
+
+1. **Parser** - Handles all parsing and validation operations
+   - parse_components: Parse DN into components
+   - validate_format: Validate DN format
+   - parse_rdn: Parse RDN components
+   - Internal: _parse_operation, _validate_operation, _parse_rdn_operation
+
+2. **Normalizer** - Handles normalization, cleaning, and escaping
+   - normalize: Normalize DN per RFC 4514
+   - clean_dn: Fix spacing and escaping
+   - escape_dn_value/unescape_dn_value: RFC 4514 escaping
+   - hex_escape/hex_unescape: Hex format escaping
+   - Internal: _normalize_operation, _clean_operation, _escape_operation, _unescape_operation
+
+3. **Registry** - Tracks canonical DN case for conversions (unchanged)
+   - register_dn, get_canonical_dn, has_dn, validate_oud_consistency, etc.
+
+4. **FlextLdifDn** (Facade) - Routes operations to nested classes
+   - execute(): Main service execution
+   - Builder pattern: builder(), with_dn(), build()
+   - Delegates to nested classes for actual work
+
+═══════════════════════════════════════════════════════════════════════════
 RESPONSIBILITY (SRP)
 
 This service handles DN OPERATIONS ONLY:
@@ -29,44 +55,33 @@ This service handles DN OPERATIONS ONLY:
 - Tracking canonical DN case (CaseRegistry)
 
 What it does NOT do:
-- Filter entries (use FlextLdifFilterService)
-- Sort entries (use FlextLdifSortingService)
+- Filter entries (use FlextLdifFilter)
+- Sort entries (use FlextLdifSorting)
 - Validate schema (use validation services)
-
-═══════════════════════════════════════════════════════════════════════════
-ARCHITECTURE NOTE
-
-All pure DN operations are implemented in FlextLdifUtilities.DN.
-This service wraps them with FlextResult for FLEXT-compatible APIs:
-- execute() pattern for FlextService compliance
-- Classmethod helpers for direct usage
-- Builder pattern for fluent API
-
-No code duplication: All logic lives in utilities.DN.
 
 ═══════════════════════════════════════════════════════════════════════════
 QUICK REFERENCE
 
 # Parse DN components
-result = FlextLdifDnService.parse(dn)
+result = FlextLdifDn.parse(dn)
 components = result.unwrap()
 
 # Validate DN
-result = FlextLdifDnService.validate(dn)
+result = FlextLdifDn.validate(dn)
 is_valid = result.unwrap()
 
 # Normalize DN (RFC 4514)
-result = FlextLdifDnService.norm(dn)
+result = FlextLdifDn.norm(dn)
 normalized = result.unwrap()
 
 # Clean malformed DN
-cleaned = FlextLdifDnService.clean_dn(dn)
+cleaned = FlextLdifDn.clean_dn(dn)
 
 # Escape special chars
-escaped = FlextLdifDnService.esc("Smith, John")
+escaped = FlextLdifDn.esc("Smith, John")
 
 # Case registry for conversions
-registry = FlextLdifDnService.CaseRegistry()
+registry = FlextLdifDn.Registry()
 canonical = registry.register_dn(dn)
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -76,9 +91,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import override
-
-from flext_core import FlextDecorators, FlextModels, FlextResult, FlextService
+from flext_core import FlextModels, FlextResult, FlextService
 from pydantic import ConfigDict, Field, field_validator
 
 from flext_ldif.utilities import FlextLdifUtilities
@@ -86,11 +99,16 @@ from flext_ldif.utilities import FlextLdifUtilities
 type DN = str
 
 
-class FlextLdifDnService(FlextService[str]):
-    r"""RFC 4514 Compliant DN Operations Service.
+class FlextLdifDn(FlextService[str]):
+    r"""RFC 4514 Compliant DN Operations Service with Nested Classes.
 
-    Handles Distinguished Name parsing, validation, normalization, and escaping.
-    Uses ldap3.utils.dn for RFC 4514 compliant parsing.
+    Handles Distinguished Name parsing, validation, normalization, and escaping
+    using a hierarchical organization of nested classes for proper SRP compliance.
+
+    Nested Classes:
+        - Parser: Parsing and validation operations
+        - Normalizer: Normalization and escaping operations
+        - Registry: DN case tracking for conversions
 
     All pure DN operations are delegated to FlextLdifUtilities.DN
     to avoid code duplication.
@@ -163,37 +181,71 @@ class FlextLdifDnService(FlextService[str]):
     # CORE EXECUTION (V2 Universal Engine)
     # ════════════════════════════════════════════════════════════════════════
 
-    @override
-    @FlextDecorators.log_operation("dn_operation")
-    @FlextDecorators.track_performance()
+    def _dispatch_operation(self) -> FlextResult[str]:
+        """Dispatch operation to appropriate handler.
+
+        Returns:
+            FlextResult from the operation handler
+
+        """
+        # Map operations to their handler methods
+        handlers = {
+            "parse": lambda: self._parser._parse_operation(self.dn),
+            "validate": lambda: self._parser._validate_operation(self.dn),
+            "normalize": lambda: self._normalizer._normalize_operation(self.dn),
+            "clean": lambda: self._normalizer._clean_operation(self.dn),
+            "escape": lambda: self._normalizer._escape_operation(
+                self.dn, self.escape_mode
+            ),
+            "unescape": lambda: self._normalizer._unescape_operation(self.dn),
+            "compare": self._handle_compare,
+            "parse_rdn": lambda: self._parser._parse_rdn_operation(self.dn),
+        }
+
+        handler = handlers.get(self.operation)
+        if not handler:
+            return FlextResult[str].fail(f"Unknown operation: {self.operation}")
+
+        return handler()
+
+    def _handle_compare(self) -> FlextResult[str]:
+        """Handle compare operation with validation.
+
+        Returns:
+            FlextResult from compare operation
+
+        """
+        if not self.other_dn:
+            return FlextResult[str].fail("other_dn required for compare operation")
+        return self._parser._compare_operation(self.dn, self.other_dn)
+
     def execute(self) -> FlextResult[str]:
         """Execute DN operation based on configuration."""
         try:
-            match self.operation:
-                case "parse":
-                    return self._parse_operation()
-                case "validate":
-                    return self._validate_operation()
-                case "normalize":
-                    return self._normalize_operation()
-                case "clean":
-                    return self._clean_operation()
-                case "escape":
-                    return self._escape_operation()
-                case "unescape":
-                    return self._unescape_operation()
-                case "compare":
-                    return self._compare_operation()
-                case "parse_rdn":
-                    return self._parse_rdn_operation()
-                case _:
-                    return FlextResult[str].fail(f"Unknown operation: {self.operation}")
+            return self._dispatch_operation()
         except Exception as e:
             return FlextResult[str].fail(f"DN operation failed: {e}")
 
     # ════════════════════════════════════════════════════════════════════════
+    # LAZY-LOADED NESTED CLASS INSTANCES (for performance)
+    # ════════════════════════════════════════════════════════════════════════
+
+    @property
+    def _parser(self) -> FlextLdifDn.Parser:
+        """Get or create Parser instance."""
+        if not hasattr(self, "_parser_instance"):
+            self._parser_instance = FlextLdifDn.Parser()
+        return self._parser_instance
+
+    @property
+    def _normalizer(self) -> FlextLdifDn.Normalizer:
+        """Get or create Normalizer instance."""
+        if not hasattr(self, "_normalizer_instance"):
+            self._normalizer_instance = FlextLdifDn.Normalizer()
+        return self._normalizer_instance
+
+    # ════════════════════════════════════════════════════════════════════════
     # PUBLIC API - CLASSMETHOD HELPERS (Direct Entry Points)
-    # Delegates to FlextLdifUtilities.DN for pure functions
     # ════════════════════════════════════════════════════════════════════════
 
     @classmethod
@@ -207,14 +259,11 @@ class FlextLdifDnService(FlextService[str]):
             FlextResult with list of (attr, value, rdn) tuples
 
         Example:
-            result = FlextLdifDnService.parse("cn=John,dc=example,dc=com")
+            result = FlextLdifDn.parse("cn=John,dc=example,dc=com")
             components = result.unwrap()
 
         """
-        components = FlextLdifUtilities.DN.parse(dn)
-        if components is None:
-            return FlextResult[list[tuple[str, str, str]]].fail("Parse failed")
-        return FlextResult[list[tuple[str, str, str]]].ok(components)
+        return cls.Parser.parse_components(dn)
 
     @classmethod
     def validate_format(cls, dn: str) -> FlextResult[bool]:
@@ -227,8 +276,7 @@ class FlextLdifDnService(FlextService[str]):
             FlextResult with True if valid, False otherwise
 
         """
-        is_valid = FlextLdifUtilities.DN.validate(dn)
-        return FlextResult[bool].ok(is_valid)
+        return cls.Parser.validate_format(dn)
 
     @classmethod
     def normalize(cls, dn: str) -> FlextResult[str]:
@@ -241,14 +289,11 @@ class FlextLdifDnService(FlextService[str]):
             FlextResult with normalized DN string
 
         Example:
-            result = FlextLdifDnService.norm("CN=Admin,DC=Example,DC=Com")
+            result = FlextLdifDn.norm("CN=Admin,DC=Example,DC=Com")
             normalized = result.unwrap()  # "cn=Admin,dc=Example,dc=Com"
 
         """
-        normalized = FlextLdifUtilities.DN.norm(dn)
-        if normalized is None:
-            return FlextResult[str].fail("Normalize failed")
-        return FlextResult[str].ok(normalized)
+        return cls.Normalizer.normalize(dn)
 
     @classmethod
     def clean_dn(cls, dn: str) -> str:
@@ -267,11 +312,11 @@ class FlextLdifDnService(FlextService[str]):
             Cleaned DN string (static method, no FlextResult)
 
         Example:
-            cleaned = FlextLdifDnService.clean_dn("cn = John , dc = example , dc = com")
+            cleaned = FlextLdifDn.clean_dn("cn = John , dc = example , dc = com")
             # Result: "cn=John,dc=example,dc=com"
 
         """
-        return FlextLdifUtilities.DN.clean_dn(dn)
+        return cls.Normalizer.clean_dn(dn)
 
     @classmethod
     def escape_dn_value(cls, value: str) -> str:
@@ -284,11 +329,11 @@ class FlextLdifDnService(FlextService[str]):
             Escaped DN value per RFC 4514
 
         Example:
-            escaped = FlextLdifDnService.esc("Smith, John")
+            escaped = FlextLdifDn.esc("Smith, John")
             # Result: "Smith\\, John"
 
         """
-        return FlextLdifUtilities.DN.esc(value)
+        return cls.Normalizer.escape_dn_value(value)
 
     @classmethod
     def unescape_dn_value(cls, value: str) -> str:
@@ -303,11 +348,11 @@ class FlextLdifDnService(FlextService[str]):
             Unescaped DN value
 
         Example:
-            unescaped = FlextLdifDnService.unesc("Smith\\2c John")
+            unescaped = FlextLdifDn.unesc("Smith\\2c John")
             # Result: "Smith, John"
 
         """
-        return FlextLdifUtilities.DN.unesc(value)
+        return cls.Normalizer.unescape_dn_value(value)
 
     @classmethod
     def compare_dns(cls, dn1: str, dn2: str) -> FlextResult[int]:
@@ -321,17 +366,14 @@ class FlextLdifDnService(FlextService[str]):
             FlextResult with: -1 if dn1 < dn2, 0 if equal, 1 if dn1 > dn2
 
         Example:
-            result = FlextLdifDnService.compare_dns(
+            result = FlextLdifDn.compare_dns(
                 "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
                 "CN=ADMIN,DC=EXAMPLE,DC=COM"
             )
             comparison = result.unwrap()  # 0 (equal)
 
         """
-        comparison = FlextLdifUtilities.DN.compare_dns(dn1, dn2)
-        if comparison is None:
-            return FlextResult[int].fail("Comparison failed")
-        return FlextResult[int].ok(comparison)
+        return cls.Parser.compare_dns(dn1, dn2)
 
     @classmethod
     def parse_rdn(cls, rdn: str) -> FlextResult[list[tuple[str, str]]]:
@@ -346,14 +388,11 @@ class FlextLdifDnService(FlextService[str]):
             FlextResult with list of (attribute, value) tuples
 
         Example:
-            result = FlextLdifDnService.parse_rdn("cn=John+ou=people")
+            result = FlextLdifDn.parse_rdn("cn=John+ou=people")
             pairs = result.unwrap()  # [("cn", "John"), ("ou", "people")]
 
         """
-        pairs = FlextLdifUtilities.DN.parse_rdn(rdn)
-        if pairs is None:
-            return FlextResult[list[tuple[str, str]]].fail("RDN parse failed")
-        return FlextResult[list[tuple[str, str]]].ok(pairs)
+        return cls.Parser.parse_rdn(rdn)
 
     # ════════════════════════════════════════════════════════════════════════
     # INSTANCE METHOD SHORTCUTS (for execute pattern)
@@ -384,7 +423,7 @@ class FlextLdifDnService(FlextService[str]):
     # ════════════════════════════════════════════════════════════════════════
 
     @classmethod
-    def builder(cls) -> FlextLdifDnService:
+    def builder(cls) -> FlextLdifDn:
         """Create fluent builder instance.
 
         Returns:
@@ -392,7 +431,7 @@ class FlextLdifDnService(FlextService[str]):
 
         Example:
             normalized = (
-                FlextLdifDnService.builder()
+                FlextLdifDn.builder()
                 .with_dn("CN=Admin,DC=Example,DC=Com")
                 .with_operation("normalize")
                 .build()
@@ -401,17 +440,17 @@ class FlextLdifDnService(FlextService[str]):
         """
         return cls(dn="")
 
-    def with_dn(self, dn: str) -> FlextLdifDnService:
+    def with_dn(self, dn: str) -> FlextLdifDn:
         """Set DN to operate on (fluent builder)."""
         self.dn = dn
         return self
 
-    def with_operation(self, operation: str) -> FlextLdifDnService:
+    def with_operation(self, operation: str) -> FlextLdifDn:
         """Set operation to execute (fluent builder)."""
         self.operation = operation
         return self
 
-    def with_escape_mode(self, mode: str) -> FlextLdifDnService:
+    def with_escape_mode(self, mode: str) -> FlextLdifDn:
         """Set escape mode (fluent builder)."""
         self.escape_mode = mode
         return self
@@ -421,73 +460,209 @@ class FlextLdifDnService(FlextService[str]):
         return self.execute().unwrap()
 
     # ════════════════════════════════════════════════════════════════════════
-    # PRIVATE IMPLEMENTATION (DRY Core)
+    # NESTED PARSER CLASS (Parsing & Validation)
     # ════════════════════════════════════════════════════════════════════════
 
-    def _parse_operation(self) -> FlextResult[str]:
-        """Parse DN operation."""
-        result = self.parse(self.dn)
-        if result.is_failure:
-            return FlextResult[str].fail(result.error)
+    class Parser:
+        """Handles all DN parsing and validation operations.
 
-        components = result.unwrap()
-        components_str = ", ".join(f"{attr}={value}" for attr, value, _ in components)
-        return FlextResult[str].ok(components_str)
+        Responsibility (SRP):
+        - Parse DNs into components (RFC 4514)
+        - Validate DN format
+        - Parse RDN components
+        - Compare DNs
+        """
 
-    def _validate_operation(self) -> FlextResult[str]:
-        """Validate DN operation."""
-        result = self.validate_dn(self.dn)
-        if result.is_failure:
-            return FlextResult[str].fail(result.error)
-        is_valid = result.unwrap()
-        return FlextResult[str].ok(str(is_valid))
+        @staticmethod
+        def parse_components(dn: str) -> FlextResult[list[tuple[str, str, str]]]:
+            """Parse DN into RFC 4514 compliant components."""
+            components = FlextLdifUtilities.DN.parse(dn)
+            if components is None:
+                return FlextResult[list[tuple[str, str, str]]].fail("Invalid DN format")
+            return FlextResult[list[tuple[str, str, str]]].ok(components)
 
-    def _normalize_operation(self) -> FlextResult[str]:
-        """Normalize DN operation."""
-        return self.norm(self.dn)
+        @staticmethod
+        def validate_format(dn: str) -> FlextResult[bool]:
+            """Validate DN format against RFC 4514."""
+            is_valid = FlextLdifUtilities.DN.validate(dn)
+            return FlextResult[bool].ok(is_valid)
 
-    def _clean_operation(self) -> FlextResult[str]:
-        """Clean DN operation."""
-        cleaned = self.clean_dn(self.dn)
-        return FlextResult[str].ok(cleaned)
+        @staticmethod
+        def parse_rdn(rdn: str) -> FlextResult[list[tuple[str, str]]]:
+            """Parse a single RDN component."""
+            pairs = FlextLdifUtilities.DN.parse_rdn(rdn)
+            if pairs is None:
+                return FlextResult[list[tuple[str, str]]].fail("RDN parse failed")
+            return FlextResult[list[tuple[str, str]]].ok(pairs)
 
-    def _escape_operation(self) -> FlextResult[str]:
-        """Escape DN operation."""
-        escaped = self.esc(self.dn)
-        return FlextResult[str].ok(escaped)
+        @staticmethod
+        def compare_dns(dn1: str, dn2: str) -> FlextResult[int]:
+            """Compare two DNs per RFC 4514 (case-insensitive)."""
+            comparison = FlextLdifUtilities.DN.compare_dns(dn1, dn2)
+            if comparison is None:
+                return FlextResult[int].fail("RFC 4514 comparison failed")
+            return FlextResult[int].ok(comparison)
 
-    def _unescape_operation(self) -> FlextResult[str]:
-        """Unescape DN operation."""
-        unescaped = self.unesc(self.dn)
-        return FlextResult[str].ok(unescaped)
+        @staticmethod
+        def _parse_operation(dn: str) -> FlextResult[str]:
+            """Parse DN operation (internal)."""
+            result = FlextLdifDn.Parser.parse_components(dn)
+            if result.is_failure:
+                return FlextResult[str].fail(result.error)
+            components = result.unwrap()
+            components_str = ", ".join(
+                f"{attr}={value}" for attr, value, _ in components
+            )
+            return FlextResult[str].ok(components_str)
 
-    def _compare_operation(self) -> FlextResult[str]:
-        """Compare DN operation."""
-        if not self.other_dn:
-            return FlextResult[str].fail("other_dn required for compare operation")
+        @staticmethod
+        def _validate_operation(dn: str) -> FlextResult[str]:
+            """Validate DN operation (internal)."""
+            result = FlextLdifDn.Parser.validate_format(dn)
+            if result.is_failure:
+                return FlextResult[str].fail(result.error)
+            is_valid = result.unwrap()
+            return FlextResult[str].ok(str(is_valid))
 
-        result = self.compare_dns(self.dn, self.other_dn)
-        if result.is_failure:
-            return FlextResult[str].fail(result.error)
+        @staticmethod
+        def _compare_operation(dn1: str, dn2: str) -> FlextResult[str]:
+            """Compare DN operation (internal)."""
+            result = FlextLdifDn.Parser.compare_dns(dn1, dn2)
+            if result.is_failure:
+                return FlextResult[str].fail(result.error)
+            comparison = result.unwrap()
+            return FlextResult[str].ok(str(comparison))
 
-        comparison = result.unwrap()
-        return FlextResult[str].ok(str(comparison))
+        @staticmethod
+        def _parse_rdn_operation(dn: str) -> FlextResult[str]:
+            """Parse RDN operation (internal)."""
+            result = FlextLdifDn.Parser.parse_rdn(dn)
+            if result.is_failure:
+                return FlextResult[str].fail(result.error)
+            pairs = result.unwrap()
+            pairs_str = ", ".join(f"{attr}={value}" for attr, value in pairs)
+            return FlextResult[str].ok(pairs_str)
 
-    def _parse_rdn_operation(self) -> FlextResult[str]:
-        """Parse RDN operation."""
-        result = self.parse_rdn(self.dn)
-        if result.is_failure:
-            return FlextResult[str].fail(result.error)
+    # ════════════════════════════════════════════════════════════════════════
+    # NESTED NORMALIZER CLASS (Normalization & Escaping)
+    # ════════════════════════════════════════════════════════════════════════
 
-        pairs = result.unwrap()
-        pairs_str = ", ".join(f"{attr}={value}" for attr, value in pairs)
-        return FlextResult[str].ok(pairs_str)
+    class Normalizer:
+        """Handles DN normalization, cleaning, and escaping operations.
+
+        Responsibility (SRP):
+        - Normalize DN per RFC 4514
+        - Clean malformed DNs
+        - Escape/unescape DN values
+        - Hex escape/unescape operations
+        """
+
+        @staticmethod
+        def normalize(dn: str) -> FlextResult[str]:
+            """Normalize DN per RFC 4514."""
+            normalized = FlextLdifUtilities.DN.norm(dn)
+            if normalized is None:
+                return FlextResult[str].fail("Failed to normalize DN")
+            return FlextResult[str].ok(normalized)
+
+        @staticmethod
+        def clean_dn(dn: str) -> str:
+            """Clean DN string to fix spacing and escaping issues."""
+            return FlextLdifUtilities.DN.clean_dn(dn)
+
+        @staticmethod
+        def escape_dn_value(value: str) -> str:
+            """Escape special characters in DN value per RFC 4514."""
+            return FlextLdifUtilities.DN.esc(value)
+
+        @staticmethod
+        def unescape_dn_value(value: str) -> str:
+            """Unescape special characters in DN value per RFC 4514."""
+            return FlextLdifUtilities.DN.unesc(value)
+
+        @staticmethod
+        def hex_escape(value: str) -> str:
+            r"""Convert string to hex escape format (\XX for each character).
+
+            Converts each character to its hex representation in \XX format.
+
+            Args:
+                value: String to hex escape
+
+            Returns:
+                String with each character converted to \XX format
+
+            Example:
+                result = FlextLdifDn.Normalizer.hex_escape("abc")
+                # Result: "\61\62\63" (hex codes for a, b, c)
+
+            """
+            return "".join(f"\\{ord(char):02x}" for char in value)
+
+        @staticmethod
+        def hex_unescape(value: str) -> str:
+            r"""Convert hex escape format (\XX) back to string.
+
+            Converts \XX hex sequences back to their character representation.
+
+            Args:
+                value: String with hex escapes to decode
+
+            Returns:
+                Unescaped string
+
+            Example:
+                result = FlextLdifDn.Normalizer.hex_unescape("\61\62\63")
+                # Result: "abc"
+
+            """
+            result = ""
+            i = 0
+            while i < len(value):
+                if i + 3 <= len(value) and value[i] == "\\":
+                    try:
+                        hex_val = value[i + 1 : i + 3]
+                        result += chr(int(hex_val, 16))
+                        i += 3
+                    except (ValueError, OverflowError):
+                        result += value[i]
+                        i += 1
+                else:
+                    result += value[i]
+                    i += 1
+            return result
+
+        @staticmethod
+        def _normalize_operation(dn: str) -> FlextResult[str]:
+            """Normalize DN operation (internal)."""
+            return FlextLdifDn.Normalizer.normalize(dn)
+
+        @staticmethod
+        def _clean_operation(dn: str) -> FlextResult[str]:
+            """Clean DN operation (internal)."""
+            cleaned = FlextLdifDn.Normalizer.clean_dn(dn)
+            return FlextResult[str].ok(cleaned)
+
+        @staticmethod
+        def _escape_operation(dn: str, escape_mode: str) -> FlextResult[str]:
+            """Escape DN operation (internal)."""
+            if escape_mode == "hex":
+                escaped = FlextLdifDn.Normalizer.hex_escape(dn)
+            else:
+                escaped = FlextLdifDn.Normalizer.escape_dn_value(dn)
+            return FlextResult[str].ok(escaped)
+
+        @staticmethod
+        def _unescape_operation(dn: str) -> FlextResult[str]:
+            """Unescape DN operation (internal)."""
+            unescaped = FlextLdifDn.Normalizer.unescape_dn_value(dn)
+            return FlextResult[str].ok(unescaped)
 
     # ════════════════════════════════════════════════════════════════════════
     # NESTED CASE REGISTRY CLASS
     # ════════════════════════════════════════════════════════════════════════
 
-    class CaseRegistry(FlextModels.Value):
+    class Registry(FlextModels.Value):
         """Registry for tracking canonical DN case during conversions.
 
         This class maintains a mapping of DNs in normalized form (lowercase, no spaces)
@@ -495,7 +670,7 @@ class FlextLdifDnService(FlextService[str]):
         ensure DN case consistency.
 
         Examples:
-            registry = FlextLdifDnService.CaseRegistry()
+            registry = FlextLdifDn.Registry()
             canonical = registry.register_dn("CN=Admin,DC=Example,DC=Com")
             result = registry.get_canonical_dn("cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com")
 
@@ -510,8 +685,13 @@ class FlextLdifDnService(FlextService[str]):
             self._case_variants: dict[str, set[str]] = {}
 
         def _normalize_dn(self, dn: str) -> str:
-            """Normalize DN for case-insensitive comparison."""
-            return dn.lower().replace(" ", "")
+            """Normalize DN for case-insensitive comparison using FlextLdifUtilities."""
+            # Use FlextLdifUtilities.DN for RFC 4514 compliant normalization
+            normalized = FlextLdifUtilities.DN.norm(dn)
+            if normalized is None:
+                # Fallback for invalid DNs: simple lowercase normalization
+                return dn.lower().replace(" ", "")
+            return normalized
 
         def register_dn(self, dn: str, *, force: bool = False) -> str:
             """Register DN and return its canonical case.
@@ -636,8 +816,11 @@ class FlextLdifDnService(FlextService[str]):
                         if canonical:
                             normalized_data[field_name] = canonical
                         else:
-                            # Not registered, just normalize to lowercase
-                            normalized_data[field_name] = field_value.lower()
+                            # Not registered, use FlextLdifUtilities for proper RFC 4514 normalization
+                            normalized_dn = FlextLdifUtilities.DN.norm(field_value)
+                            normalized_data[field_name] = (
+                                normalized_dn or field_value.lower()
+                            )
 
                     # Handle list of DNs
                     elif isinstance(field_value, list):
@@ -648,7 +831,11 @@ class FlextLdifDnService(FlextService[str]):
                                 if canonical:
                                     normalized_list.append(canonical)
                                 else:
-                                    normalized_list.append(item.lower())
+                                    # Use FlextLdifUtilities for proper RFC 4514 normalization
+                                    normalized_dn = FlextLdifUtilities.DN.norm(item)
+                                    normalized_list.append(
+                                        normalized_dn or item.lower()
+                                    )
                             else:
                                 normalized_list.append(item)
                         normalized_data[field_name] = normalized_list
@@ -685,5 +872,12 @@ class FlextLdifDnService(FlextService[str]):
                 "dns_with_multiple_variants": multiple_variants,
             }
 
+    # ════════════════════════════════════════════════════════════════════════
+    # BACKWARD COMPATIBILITY ALIASES
+    # ════════════════════════════════════════════════════════════════════════
 
-__all__ = ["FlextLdifDnService"]
+    # Alias for old CaseRegistry name
+    CaseRegistry = Registry
+
+
+__all__ = ["FlextLdifDn"]

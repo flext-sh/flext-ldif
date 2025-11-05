@@ -20,7 +20,7 @@ from flext_ldif.servers.oid import FlextLdifServersOid
 from flext_ldif.servers.openldap import FlextLdifServersOpenldap
 from flext_ldif.servers.oud import FlextLdifServersOud
 from flext_ldif.servers.relaxed import FlextLdifServersRelaxed
-from flext_ldif.services.registry import FlextLdifRegistry
+from flext_ldif.services.server import FlextLdifServer
 
 
 class TestProtocolDefinitions:
@@ -41,7 +41,7 @@ class TestProtocolDefinitions:
         protocol = FlextLdifProtocols.Quirks.EntryProtocol
         assert protocol is not None
 
-    def test_conversion_matrix_protocol_is_defined(self) -> None:
+    def test_conversion_protocol_is_defined(self) -> None:
         """Test that ConversionMatrixProtocol is defined."""
         protocol = FlextLdifProtocols.Quirks.ConversionMatrixProtocol
         assert protocol is not None
@@ -61,16 +61,16 @@ class TestSchemaProtocol:
         assert isinstance(oid_schema, FlextLdifProtocols.Quirks.SchemaProtocol)
 
     def test_schema_quirk_protocol_has_server_type(self) -> None:
-        """Test that SchemaProtocol instances have server_type."""
-        oid_schema = FlextLdifServersOid.Schema()
-        assert hasattr(oid_schema, "server_type")
-        assert isinstance(oid_schema.server_type, str)
+        """Test that server quirks have server_type (on main class, not nested)."""
+        oid_server = FlextLdifServersOid()
+        assert hasattr(oid_server, "server_type")
+        assert isinstance(oid_server.server_type, str)
 
     def test_schema_quirk_protocol_has_priority(self) -> None:
-        """Test that SchemaProtocol instances have priority."""
-        oid_schema = FlextLdifServersOid.Schema()
-        assert hasattr(oid_schema, "priority")
-        assert isinstance(oid_schema.priority, int)
+        """Test that server quirks have priority (on main class, not nested)."""
+        oid_server = FlextLdifServersOid()
+        assert hasattr(oid_server, "priority")
+        assert isinstance(oid_server.priority, int)
 
     def test_schema_quirk_protocol_has_attribute_methods(self) -> None:
         """Test that SchemaProtocol has attribute methods."""
@@ -127,8 +127,6 @@ class TestSchemaProtocol:
         result = oid_schema.write(test_data)
         assert isinstance(result, FlextResult)
 
-    # NOTE: convert_*_to_rfc methods removed - no longer part of public API
-
 
 class TestProtocolNamespace:
     """Test protocol namespace organization."""
@@ -145,7 +143,7 @@ class TestProtocolNamespace:
         """Test Quirks namespace has EntryProtocol."""
         assert hasattr(FlextLdifProtocols.Quirks, "EntryProtocol")
 
-    def test_protocol_namespace_has_conversion_matrix_protocol(self) -> None:
+    def test_protocol_namespace_has_conversion_protocol(self) -> None:
         """Test Quirks namespace has ConversionMatrixProtocol."""
         assert hasattr(FlextLdifProtocols.Quirks, "ConversionMatrixProtocol")
 
@@ -159,7 +157,7 @@ class TestQuirkRegistry:
 
     def test_quirk_registry_has_register_methods(self) -> None:
         """Test that registry has registration methods."""
-        registry = FlextLdifRegistry()
+        registry = FlextLdifServer()
 
         assert callable(registry.register_schema_quirk)
         assert callable(registry.register_acl_quirk)
@@ -167,7 +165,7 @@ class TestQuirkRegistry:
 
     def test_quirk_registry_has_retrieval_methods(self) -> None:
         """Test that registry has retrieval methods."""
-        registry = FlextLdifRegistry()
+        registry = FlextLdifServer()
 
         # Verify retrieval methods exist and are callable
         assert callable(registry.get_schema_quirks)
@@ -181,18 +179,18 @@ class TestProtocolAttributes:
     """Test protocol attribute definitions."""
 
     def test_schema_quirk_protocol_server_type_attribute(self) -> None:
-        """Test SchemaProtocol defines server_type attribute."""
-        oid_schema = FlextLdifServersOid.Schema()
+        """Test server quirks define server_type attribute (on main class)."""
+        oid_server = FlextLdifServersOid()
         # Should have server_type attribute with string value
-        assert hasattr(oid_schema, "server_type")
-        assert isinstance(oid_schema.server_type, str)
+        assert hasattr(oid_server, "server_type")
+        assert isinstance(oid_server.server_type, str)
 
     def test_schema_quirk_protocol_priority_attribute(self) -> None:
-        """Test SchemaProtocol defines priority attribute."""
-        oid_schema = FlextLdifServersOid.Schema()
+        """Test server quirks define priority attribute (on main class)."""
+        oid_server = FlextLdifServersOid()
         # Should have priority attribute with int value
-        assert hasattr(oid_schema, "priority")
-        assert isinstance(oid_schema.priority, int)
+        assert hasattr(oid_server, "priority")
+        assert isinstance(oid_server.priority, int)
 
 
 class TestProtocolsExist:
@@ -214,7 +212,7 @@ class TestProtocolsExist:
         """Test that EntryProtocol is defined."""
         assert hasattr(FlextLdifProtocols.Quirks, "EntryProtocol")
 
-    def test_conversion_matrix_protocol_exists(self) -> None:
+    def test_conversion_protocol_exists(self) -> None:
         """Test that ConversionMatrixProtocol is defined."""
         assert hasattr(FlextLdifProtocols.Quirks, "ConversionMatrixProtocol")
 
@@ -255,19 +253,17 @@ class TestSchemaProtocolMethods:
         """Create OID Schema quirk instance."""
         return FlextLdifServersOid.Schema()
 
-    def test_schema_quirk_has_server_type(
-        self, oid_schema: FlextLdifServersOid.Schema
-    ) -> None:
-        """Test that quirk has server_type attribute."""
-        assert hasattr(oid_schema, "server_type")
-        assert isinstance(oid_schema.server_type, str)
+    def test_schema_quirk_has_server_type(self) -> None:
+        """Test that server quirks have server_type attribute (on main class)."""
+        oid_server = FlextLdifServersOid()
+        assert hasattr(oid_server, "server_type")
+        assert isinstance(oid_server.server_type, str)
 
-    def test_schema_quirk_has_priority(
-        self, oid_schema: FlextLdifServersOid.Schema
-    ) -> None:
-        """Test that quirk has priority attribute."""
-        assert hasattr(oid_schema, "priority")
-        assert isinstance(oid_schema.priority, int)
+    def test_schema_quirk_has_priority(self) -> None:
+        """Test that server quirks have priority attribute (on main class)."""
+        oid_server = FlextLdifServersOid()
+        assert hasattr(oid_server, "priority")
+        assert isinstance(oid_server.priority, int)
 
     def test_schema_quirk_has_attribute_methods(
         self, oid_schema: FlextLdifServersOid.Schema
@@ -311,8 +307,6 @@ class TestAclProtocolSatisfaction:
         has_acl_methods = (
             hasattr(quirk, "_can_handle")
             and hasattr(quirk, "parse")
-            and hasattr(quirk, "convert_acl_to_rfc")
-            and hasattr(quirk, "convert_acl_from_rfc")
             and hasattr(quirk, "write_acl_to_rfc")
         )
         # If methods exist, they should be callable
@@ -326,8 +320,6 @@ class TestAclProtocolSatisfaction:
         has_acl_methods = (
             hasattr(quirk, "_can_handle")
             and hasattr(quirk, "parse")
-            and hasattr(quirk, "convert_acl_to_rfc")
-            and hasattr(quirk, "convert_acl_from_rfc")
             and hasattr(quirk, "write_acl_to_rfc")
         )
         # If methods exist, they should be callable
@@ -359,11 +351,8 @@ class TestEntryProtocolSatisfaction:
         """Test that OID quirk defines entry methods if implemented."""
         quirk = FlextLdifServersOid()
         # Check if entry methods exist on the implementation
-        has_entry_methods = (
-            hasattr(quirk, "can_handle_entry")
-            and hasattr(quirk, "process_entry")
-            and hasattr(quirk, "convert_entry_to_rfc")
-            and hasattr(quirk, "convert_entry_from_rfc")
+        has_entry_methods = hasattr(quirk, "can_handle_entry") and hasattr(
+            quirk, "process_entry"
         )
         # If methods exist, they should be callable
         if has_entry_methods:
@@ -373,11 +362,8 @@ class TestEntryProtocolSatisfaction:
         """Test that OUD quirk defines entry methods if implemented."""
         quirk = FlextLdifServersOud()
         # Check if entry methods exist
-        has_entry_methods = (
-            hasattr(quirk, "can_handle_entry")
-            and hasattr(quirk, "process_entry")
-            and hasattr(quirk, "convert_entry_to_rfc")
-            and hasattr(quirk, "convert_entry_from_rfc")
+        has_entry_methods = hasattr(quirk, "can_handle_entry") and hasattr(
+            quirk, "process_entry"
         )
         # If methods exist, they should be callable
         if has_entry_methods:
@@ -404,8 +390,8 @@ class TestQuirkRegistryProtocolSatisfaction:
     """Test that QuirkRegistry has registry methods."""
 
     def test_quirk_registry_has_core_methods(self) -> None:
-        """Test that FlextLdifRegistry has core registry methods."""
-        registry = FlextLdifRegistry()
+        """Test that FlextLdifServer has core registry methods."""
+        registry = FlextLdifServer()
         # Check for key registry methods
         assert hasattr(registry, "register_schema_quirk") or hasattr(
             registry, "register_quirk"
@@ -417,13 +403,11 @@ class TestQuirkRegistryProtocolMethods:
     """Test that quirk registry has core methods."""
 
     @pytest.fixture
-    def registry(self) -> FlextLdifRegistry:
+    def registry(self) -> FlextLdifServer:
         """Create quirk registry instance."""
-        return FlextLdifRegistry()
+        return FlextLdifServer()
 
-    def test_registry_has_core_methods_defined(
-        self, registry: FlextLdifRegistry
-    ) -> None:
+    def test_registry_has_core_methods_defined(self, registry: FlextLdifServer) -> None:
         """Test that registry has core methods defined."""
         # Check for core registry methods if they exist
         if hasattr(registry, "register_schema_quirk"):
@@ -431,7 +415,7 @@ class TestQuirkRegistryProtocolMethods:
         if hasattr(registry, "get_global_instance"):
             assert callable(registry.get_global_instance)
 
-    def test_registry_can_retrieve_quirks(self, registry: FlextLdifRegistry) -> None:
+    def test_registry_can_retrieve_quirks(self, registry: FlextLdifServer) -> None:
         """Test that registry can retrieve quirks."""
         # Test retrieval methods if they exist
         if hasattr(registry, "get_schema_quirks"):
@@ -443,7 +427,7 @@ class TestQuirkRegistryProtocolMethods:
 
     def test_get_global_instance_returns_registry(self) -> None:
         """Test that get_global_instance returns something callable."""
-        instance = FlextLdifRegistry.get_global_instance()
+        instance = FlextLdifServer.get_global_instance()
         # Should return a registry instance
         assert instance is not None
 

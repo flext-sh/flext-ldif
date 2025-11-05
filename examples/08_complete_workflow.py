@@ -39,7 +39,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from pathlib import Path
 
-from flext_ldif import FlextLdif, ValidationService
+from flext_ldif import FlextLdif
 
 
 def railway_oriented_composition() -> None:

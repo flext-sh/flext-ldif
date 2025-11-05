@@ -1,4 +1,4 @@
-"""Comprehensive unit tests for FlextLdifEntryService.
+"""Comprehensive unit tests for FlextLdifEntry.
 
 Tests all ACTUAL entry transformation methods with REAL implementations.
 Validates DN cleaning, operational attribute removal, and attribute stripping.
@@ -27,7 +27,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent / "src"))
 import pytest
 
 from flext_ldif.models import FlextLdifModels
-from flext_ldif.services.entrys import FlextLdifEntryService
+from flext_ldif.services.entrys import FlextLdifEntry
 
 # ════════════════════════════════════════════════════════════════════════════
 # TEST FIXTURES
@@ -106,7 +106,7 @@ class TestPublicClassmethods:
     def test_clean_dn_with_spaces(self) -> None:
         """Test clean_dn removes spaces around equals signs."""
         messy_dn = "cn = John Doe , ou = users , dc = example , dc = com"
-        cleaned = FlextLdifEntryService.clean_dn(messy_dn)
+        cleaned = FlextLdifEntry.clean_dn(messy_dn)
 
         assert "=" in cleaned
         assert " = " not in cleaned
@@ -115,14 +115,14 @@ class TestPublicClassmethods:
     def test_clean_dn_already_clean(self) -> None:
         """Test clean_dn with already clean DN."""
         clean_dn = "cn=john,ou=users,dc=example,dc=com"
-        result = FlextLdifEntryService.clean_dn(clean_dn)
+        result = FlextLdifEntry.clean_dn(clean_dn)
 
         assert result == clean_dn
 
     def test_clean_dn_with_escaped_chars(self) -> None:
         """Test clean_dn handles escaped characters."""
         dn_with_escaped = r"cn=John\, Doe,ou=users,dc=example,dc=com"
-        cleaned = FlextLdifEntryService.clean_dn(dn_with_escaped)
+        cleaned = FlextLdifEntry.clean_dn(dn_with_escaped)
 
         assert isinstance(cleaned, str)
         assert len(cleaned) > 0
@@ -131,7 +131,7 @@ class TestPublicClassmethods:
         self, entry_with_operational_attrs: FlextLdifModels.Entry
     ) -> None:
         """Test remove_operational_attributes with single entry."""
-        result = FlextLdifEntryService.remove_operational_attributes(
+        result = FlextLdifEntry.remove_operational_attributes(
             entry_with_operational_attrs
         )
 
@@ -154,9 +154,7 @@ class TestPublicClassmethods:
         self, entries_batch: list[FlextLdifModels.Entry]
     ) -> None:
         """Test remove_operational_attributes_batch with multiple entries."""
-        result = FlextLdifEntryService.remove_operational_attributes_batch(
-            entries_batch
-        )
+        result = FlextLdifEntry.remove_operational_attributes_batch(entries_batch)
 
         assert result.is_success
         cleaned_entries = result.unwrap()
@@ -179,7 +177,7 @@ class TestPublicClassmethods:
         self, simple_entry: FlextLdifModels.Entry
     ) -> None:
         """Test remove_attributes with single entry."""
-        result = FlextLdifEntryService.remove_attributes(
+        result = FlextLdifEntry.remove_attributes(
             simple_entry, attributes=["mail", "sn"]
         )
 
@@ -196,7 +194,7 @@ class TestPublicClassmethods:
         self, entries_batch: list[FlextLdifModels.Entry]
     ) -> None:
         """Test remove_attributes_batch with multiple entries."""
-        result = FlextLdifEntryService.remove_attributes_batch(
+        result = FlextLdifEntry.remove_attributes_batch(
             entries_batch, attributes=["cn"]
         )
 
@@ -220,7 +218,7 @@ class TestExecutePattern:
         self, entries_batch: list[FlextLdifModels.Entry]
     ) -> None:
         """Test execute() with remove_operational_attributes operation."""
-        result = FlextLdifEntryService(
+        result = FlextLdifEntry(
             entries=entries_batch,
             operation="remove_operational_attributes",
         ).execute()
@@ -233,7 +231,7 @@ class TestExecutePattern:
         self, simple_entry: FlextLdifModels.Entry
     ) -> None:
         """Test execute() with remove_attributes operation."""
-        result = FlextLdifEntryService(
+        result = FlextLdifEntry(
             entries=[simple_entry],
             operation="remove_attributes",
             attributes_to_remove=["mail"],
@@ -247,7 +245,7 @@ class TestExecutePattern:
         self, simple_entry: FlextLdifModels.Entry
     ) -> None:
         """Test execute() with invalid operation fails gracefully."""
-        result = FlextLdifEntryService(
+        result = FlextLdifEntry(
             entries=[simple_entry],
             operation="invalid_operation",
         ).execute()
@@ -256,7 +254,7 @@ class TestExecutePattern:
 
     def test_execute_empty_entries(self) -> None:
         """Test execute() with empty entries list."""
-        result = FlextLdifEntryService(
+        result = FlextLdifEntry(
             entries=[],
             operation="remove_operational_attributes",
         ).execute()
@@ -276,7 +274,7 @@ class TestFluentBuilder:
     def test_builder_basic(self, simple_entry: FlextLdifModels.Entry) -> None:
         """Test builder().with_entries().with_operation().build()."""
         cleaned_entries = (
-            FlextLdifEntryService.builder()
+            FlextLdifEntry.builder()
             .with_entries([simple_entry])
             .with_operation("remove_operational_attributes")
             .build()
@@ -291,7 +289,7 @@ class TestFluentBuilder:
     ) -> None:
         """Test builder with attributes_to_remove."""
         cleaned_entries = (
-            FlextLdifEntryService.builder()
+            FlextLdifEntry.builder()
             .with_entries([simple_entry])
             .with_operation("remove_attributes")
             .with_attributes_to_remove(["mail", "sn"])
@@ -305,7 +303,7 @@ class TestFluentBuilder:
 
     def test_builder_chaining(self, simple_entry: FlextLdifModels.Entry) -> None:
         """Test builder method returns same instance for chaining."""
-        builder = FlextLdifEntryService.builder()
+        builder = FlextLdifEntry.builder()
         assert builder is not None
 
         builder2 = builder.with_entries([simple_entry])
@@ -338,7 +336,7 @@ class TestOperationalAttributeRemoval:
             },
         )
 
-        result = FlextLdifEntryService.remove_operational_attributes(entry)
+        result = FlextLdifEntry.remove_operational_attributes(entry)
         cleaned = result.unwrap()
 
         attrs = cleaned.attributes.attributes
@@ -363,7 +361,7 @@ class TestOperationalAttributeRemoval:
             },
         )
 
-        result = FlextLdifEntryService.remove_operational_attributes(entry)
+        result = FlextLdifEntry.remove_operational_attributes(entry)
         cleaned = result.unwrap()
 
         attrs = cleaned.attributes.attributes
@@ -383,9 +381,7 @@ class TestAttributeRemoval:
 
     def test_remove_single_attribute(self, simple_entry: FlextLdifModels.Entry) -> None:
         """Test removing a single attribute."""
-        result = FlextLdifEntryService.remove_attributes(
-            simple_entry, attributes=["mail"]
-        )
+        result = FlextLdifEntry.remove_attributes(simple_entry, attributes=["mail"])
 
         assert result.is_success
         cleaned = result.unwrap()
@@ -396,7 +392,7 @@ class TestAttributeRemoval:
         self, simple_entry: FlextLdifModels.Entry
     ) -> None:
         """Test removing multiple attributes."""
-        result = FlextLdifEntryService.remove_attributes(
+        result = FlextLdifEntry.remove_attributes(
             simple_entry, attributes=["mail", "sn", "objectClass"]
         )
 
@@ -411,7 +407,7 @@ class TestAttributeRemoval:
         self, simple_entry: FlextLdifModels.Entry
     ) -> None:
         """Test removing attribute that doesn't exist doesn't fail."""
-        result = FlextLdifEntryService.remove_attributes(
+        result = FlextLdifEntry.remove_attributes(
             simple_entry, attributes=["nonexistent"]
         )
 
@@ -425,7 +421,7 @@ class TestAttributeRemoval:
         self, simple_entry: FlextLdifModels.Entry
     ) -> None:
         """Test attribute removal is case-insensitive."""
-        result = FlextLdifEntryService.remove_attributes(
+        result = FlextLdifEntry.remove_attributes(
             simple_entry, attributes=["MAIL", "SN"]
         )
 
@@ -447,7 +443,7 @@ class TestDNCleaning:
     def test_clean_dn_with_multiple_spaces(self) -> None:
         """Test cleaning DN with multiple spaces."""
         messy = "cn  =  John  ,  ou  =  users  ,  dc  =  example"
-        cleaned = FlextLdifEntryService.clean_dn(messy)
+        cleaned = FlextLdifEntry.clean_dn(messy)
 
         # Should handle spaces properly
         assert isinstance(cleaned, str)
@@ -456,7 +452,7 @@ class TestDNCleaning:
     def test_clean_dn_preserves_values_with_spaces(self) -> None:
         """Test that spaces within values are preserved."""
         dn = r"cn=John Doe,ou=users,dc=example,dc=com"
-        cleaned = FlextLdifEntryService.clean_dn(dn)
+        cleaned = FlextLdifEntry.clean_dn(dn)
 
         # Spaces in value should be preserved
         assert "John Doe" in cleaned or "john doe" in cleaned.lower()
@@ -464,14 +460,14 @@ class TestDNCleaning:
     def test_clean_dn_with_special_characters(self) -> None:
         """Test cleaning DN with special characters."""
         dn = r"cn=John\, Doe,ou=users,dc=example,dc=com"
-        cleaned = FlextLdifEntryService.clean_dn(dn)
+        cleaned = FlextLdifEntry.clean_dn(dn)
 
         assert isinstance(cleaned, str)
         assert len(cleaned) > 0
 
     def test_clean_dn_empty_string(self) -> None:
         """Test cleaning empty DN string."""
-        cleaned = FlextLdifEntryService.clean_dn("")
+        cleaned = FlextLdifEntry.clean_dn("")
 
         assert cleaned == "" or cleaned is not None
 
@@ -491,7 +487,7 @@ class TestEdgeCases:
             {"cn": ["empty"]},
         )
 
-        result = FlextLdifEntryService.remove_operational_attributes(entry)
+        result = FlextLdifEntry.remove_operational_attributes(entry)
         assert result.is_success
         cleaned = result.unwrap()
         assert "cn" in cleaned.attributes.attributes
@@ -506,7 +502,7 @@ class TestEdgeCases:
             },
         )
 
-        result = FlextLdifEntryService.remove_operational_attributes(entry)
+        result = FlextLdifEntry.remove_operational_attributes(entry)
         assert result.is_success
         cleaned = result.unwrap()
         # Should have empty attributes after removal
@@ -519,7 +515,7 @@ class TestEdgeCases:
             {"cn": ["日本語"]},
         )
 
-        result = FlextLdifEntryService.remove_operational_attributes(entry)
+        result = FlextLdifEntry.remove_operational_attributes(entry)
         assert result.is_success
         cleaned = result.unwrap()
         assert "cn" in cleaned.attributes.attributes
@@ -532,9 +528,7 @@ class TestEdgeCases:
             {"cn": ["test"], "description": [long_value]},
         )
 
-        result = FlextLdifEntryService.remove_attributes(
-            entry, attributes=["description"]
-        )
+        result = FlextLdifEntry.remove_attributes(entry, attributes=["description"])
         assert result.is_success
         cleaned = result.unwrap()
         assert "description" not in cleaned.attributes.attributes
@@ -546,7 +540,7 @@ class TestEdgeCases:
         attrs["cn"] = ["test"]
         entry = create_entry("cn=test,dc=example,dc=com", attrs)
 
-        result = FlextLdifEntryService.remove_attributes(
+        result = FlextLdifEntry.remove_attributes(
             entry, attributes=[f"attr{i}" for i in range(50)]
         )
 
@@ -571,16 +565,14 @@ class TestIntegration:
     ) -> None:
         """Test realistic pipeline: remove operational attrs then remove specific ones."""
         # Stage 1: Remove operational attributes
-        result1 = FlextLdifEntryService.remove_operational_attributes(
+        result1 = FlextLdifEntry.remove_operational_attributes(
             entry_with_operational_attrs
         )
         assert result1.is_success
         intermediate = result1.unwrap()
 
         # Stage 2: Remove specific attributes
-        result2 = FlextLdifEntryService.remove_attributes(
-            intermediate, attributes=["mail"]
-        )
+        result2 = FlextLdifEntry.remove_attributes(intermediate, attributes=["mail"])
         assert result2.is_success
         final = result2.unwrap()
 
@@ -595,14 +587,12 @@ class TestIntegration:
     ) -> None:
         """Test realistic batch processing pipeline."""
         # Stage 1: Remove operational attributes from batch
-        result1 = FlextLdifEntryService.remove_operational_attributes_batch(
-            entries_batch
-        )
+        result1 = FlextLdifEntry.remove_operational_attributes_batch(entries_batch)
         assert result1.is_success
         cleaned_batch = result1.unwrap()
 
         # Stage 2: Remove specific attributes
-        result2 = FlextLdifEntryService.remove_attributes_batch(
+        result2 = FlextLdifEntry.remove_attributes_batch(
             cleaned_batch, attributes=["cn"]
         )
         assert result2.is_success
@@ -619,14 +609,14 @@ class TestIntegration:
 # ════════════════════════════════════════════════════════════════════════════
 
 
-class TestFlextLdifValidationService:
+class TestFlextLdifValidation:
     """RFC 4512/4514 LDAP attribute and DN component validation tests."""
 
     def test_validate_attribute_name_valid(self) -> None:
         """Test validation of valid attribute names."""
-        from flext_ldif.services.validation import FlextLdifValidationService
+        from flext_ldif.services.validation import FlextLdifValidation
 
-        service = FlextLdifValidationService()
+        service = FlextLdifValidation()
 
         valid_names = [
             "cn",
@@ -642,9 +632,9 @@ class TestFlextLdifValidationService:
 
     def test_validate_attribute_name_invalid(self) -> None:
         """Test validation of invalid attribute names."""
-        from flext_ldif.services.validation import FlextLdifValidationService
+        from flext_ldif.services.validation import FlextLdifValidation
 
-        service = FlextLdifValidationService()
+        service = FlextLdifValidation()
 
         invalid_names = ["2invalid", "user name", "", "user@name"]
         for name in invalid_names:
@@ -654,9 +644,9 @@ class TestFlextLdifValidationService:
 
     def test_validate_objectclass_name(self) -> None:
         """Test validation of objectClass names."""
-        from flext_ldif.services.validation import FlextLdifValidationService
+        from flext_ldif.services.validation import FlextLdifValidation
 
-        service = FlextLdifValidationService()
+        service = FlextLdifValidation()
 
         result = service.validate_objectclass_name("person")
         assert result.is_success
@@ -668,9 +658,9 @@ class TestFlextLdifValidationService:
 
     def test_validate_attribute_value(self) -> None:
         """Test attribute value length validation."""
-        from flext_ldif.services.validation import FlextLdifValidationService
+        from flext_ldif.services.validation import FlextLdifValidation
 
-        service = FlextLdifValidationService()
+        service = FlextLdifValidation()
 
         result = service.validate_attribute_value("John Smith")
         assert result.is_success
@@ -682,9 +672,9 @@ class TestFlextLdifValidationService:
 
     def test_validate_dn_component(self) -> None:
         """Test DN component validation (RFC 4514)."""
-        from flext_ldif.services.validation import FlextLdifValidationService
+        from flext_ldif.services.validation import FlextLdifValidation
 
-        service = FlextLdifValidationService()
+        service = FlextLdifValidation()
 
         result = service.validate_dn_component("cn", "John Smith")
         assert result.is_success
@@ -696,9 +686,9 @@ class TestFlextLdifValidationService:
 
     def test_validate_attribute_names_batch(self) -> None:
         """Test batch validation of attribute names."""
-        from flext_ldif.services.validation import FlextLdifValidationService
+        from flext_ldif.services.validation import FlextLdifValidation
 
-        service = FlextLdifValidationService()
+        service = FlextLdifValidation()
 
         names = ["cn", "mail", "2invalid", "objectClass"]
         result = service.validate_attribute_names(names)
@@ -716,83 +706,77 @@ class TestFlextLdifValidationService:
 # ════════════════════════════════════════════════════════════════════════════
 
 
-class TestFlextLdifSyntaxService:
+class TestFlextLdifSyntax:
     """RFC 4517 LDAP attribute syntax validation and resolution tests."""
 
     def test_validate_oid_format(self) -> None:
         """Test OID format validation."""
-        from flext_ldif.services.syntax import FlextLdifSyntaxService
+        from flext_ldif.services.syntax import FlextLdifSyntax
 
-        result = FlextLdifSyntaxService.is_valid_oid("1.3.6.1.4.1.1466.115.121.1.7")
+        result = FlextLdifSyntax.is_valid_oid("1.3.6.1.4.1.1466.115.121.1.7")
         assert result.is_success
         assert result.unwrap() is True
 
-        result = FlextLdifSyntaxService.is_valid_oid("invalid-oid")
+        result = FlextLdifSyntax.is_valid_oid("invalid-oid")
         assert result.is_success
         assert result.unwrap() is False
 
     def test_is_rfc4517_standard(self) -> None:
         """Test RFC 4517 standard OID detection."""
-        from flext_ldif.services.syntax import FlextLdifSyntaxService
+        from flext_ldif.services.syntax import FlextLdifSyntax
 
         # Boolean syntax is RFC 4517 standard
-        result = FlextLdifSyntaxService.is_rfc4517_standard(
-            "1.3.6.1.4.1.1466.115.121.1.7"
-        )
+        result = FlextLdifSyntax.is_rfc4517_standard("1.3.6.1.4.1.1466.115.121.1.7")
         assert result.is_success
 
     def test_lookup_syntax_name(self) -> None:
         """Test looking up syntax name by OID."""
-        from flext_ldif.services.syntax import FlextLdifSyntaxService
+        from flext_ldif.services.syntax import FlextLdifSyntax
 
-        result = FlextLdifSyntaxService.lookup_syntax_name(
-            "1.3.6.1.4.1.1466.115.121.1.7"
-        )
+        result = FlextLdifSyntax.lookup_syntax_name("1.3.6.1.4.1.1466.115.121.1.7")
         assert result.is_success
         # Name lookup depends on constants table
 
     def test_lookup_syntax_oid(self) -> None:
         """Test looking up OID by syntax name."""
-        from flext_ldif.services.syntax import FlextLdifSyntaxService
+        from flext_ldif.services.syntax import FlextLdifSyntax
 
-        result = FlextLdifSyntaxService.lookup_syntax_oid("Boolean")
+        result = FlextLdifSyntax.lookup_syntax_oid("Boolean")
         assert result.is_success
         # OID lookup depends on constants table
 
     def test_resolve_syntax_oid(self) -> None:
         """Test resolving OID to Syntax model."""
-        from flext_ldif.services.syntax import FlextLdifSyntaxService
+        from flext_ldif.services.syntax import FlextLdifSyntax
 
-        result = FlextLdifSyntaxService.resolve_syntax_oid(
-            "1.3.6.1.4.1.1466.115.121.1.7"
-        )
+        result = FlextLdifSyntax.resolve_syntax_oid("1.3.6.1.4.1.1466.115.121.1.7")
         assert result.is_success
         syntax = result.unwrap()
         assert syntax.oid == "1.3.6.1.4.1.1466.115.121.1.7"
 
     def test_validate_syntax_value(self) -> None:
         """Test value validation against syntax type."""
-        from flext_ldif.services.syntax import FlextLdifSyntaxService
+        from flext_ldif.services.syntax import FlextLdifSyntax
 
-        result = FlextLdifSyntaxService.validate_syntax_value(
+        result = FlextLdifSyntax.validate_syntax_value(
             "TRUE", "1.3.6.1.4.1.1466.115.121.1.7"
         )
         assert result.is_success
 
     def test_get_syntax_type(self) -> None:
         """Test getting syntax type category."""
-        from flext_ldif.services.syntax import FlextLdifSyntaxService
+        from flext_ldif.services.syntax import FlextLdifSyntax
 
-        result = FlextLdifSyntaxService.get_syntax_type("1.3.6.1.4.1.1466.115.121.1.7")
+        result = FlextLdifSyntax.get_syntax_type("1.3.6.1.4.1.1466.115.121.1.7")
         assert result.is_success
         category = result.unwrap()
         assert isinstance(category, str)
 
     def test_list_all_syntaxes(self) -> None:
         """Test listing all supported RFC 4517 syntaxes."""
-        from flext_ldif.services.syntax import FlextLdifSyntaxService
+        from flext_ldif.services.syntax import FlextLdifSyntax
 
-        result = FlextLdifSyntaxService.list_all_syntaxes()
+        result = FlextLdifSyntax.list_all_syntaxes()
         assert result.is_success
         oids = result.unwrap()
         assert isinstance(oids, list)

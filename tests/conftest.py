@@ -21,9 +21,9 @@ from flext_core import FlextConstants, FlextResult
 if not hasattr(base64, "decodestring"):
     base64.decodestring = base64.decodebytes
 
-from flext_ldif.services.parser import FlextLdifParserService
-from flext_ldif.services.registry import FlextLdifRegistry
-from flext_ldif.services.writer import FlextLdifWriterService
+from flext_ldif.services.parser import FlextLdifParser
+from flext_ldif.services.server import FlextLdifServer
+from flext_ldif.services.writer import FlextLdifWriter
 
 from .fixtures import FlextLdifFixtures
 from .support import (
@@ -203,25 +203,25 @@ def ldif_binary_file(test_ldif_dir: Path, sample_ldif_with_binary: str) -> Path:
 
 # Quirk registry fixture for RFC-first architecture enforcement
 @pytest.fixture
-def quirk_registry() -> FlextLdifRegistry:
+def quirk_registry() -> FlextLdifServer:
     """Provide quirk registry for RFC-first testing (MANDATORY)."""
     # Registry auto-discovers and registers all standard quirks
-    return FlextLdifRegistry()
+    return FlextLdifServer()
 
 
 # Real service fixtures for functional testing
 @pytest.fixture
 def real_parser_service(
-    quirk_registry: FlextLdifRegistry,
-) -> FlextLdifParserService:
+    quirk_registry: FlextLdifServer,
+) -> FlextLdifParser:
     """Real parser service for functional testing (RFC-first with quirks)."""
     return RealServiceFactory.create_parser()
 
 
 @pytest.fixture
 def real_writer_service(
-    quirk_registry: FlextLdifRegistry,
-) -> FlextLdifWriterService:
+    quirk_registry: FlextLdifServer,
+) -> FlextLdifWriter:
     """Real writer service for functional testing (RFC-first with quirks)."""
     return RealServiceFactory.create_writer(quirk_registry=quirk_registry)
 
@@ -720,3 +720,16 @@ def openldap_fixtures() -> FlextLdifFixtures.OpenLDAP:
 
     """
     return FlextLdifFixtures.OpenLDAP()
+
+
+@pytest.fixture
+def oid_quirk() -> object:
+    """OID quirk instance for tests.
+
+    Returns:
+        FlextLdifServersOid: OID server quirk instance
+
+    """
+    from flext_ldif.servers.oid import FlextLdifServersOid
+
+    return FlextLdifServersOid()

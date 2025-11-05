@@ -40,7 +40,7 @@ src/flext_ldif/
 ├── rfc_ldif_parser.py         # RFC 2849 LDIF parsing
 ├── rfc_ldif_writer.py         # RFC 2849 LDIF writing
 ├── rfc_schema_parser.py       # RFC 4512 schema parsing
-├── server_detector.py         # Server auto-detection
+├── detector.py         # Server auto-detection
 ├── validation_service.py      # Entry validation
 ├── statistics_service.py      # Analytics and statistics
 ├── dn_service.py              # DN operations
@@ -71,7 +71,7 @@ src/flext_ldif/
 └── quirks/                    # ONLY subdirectory
     ├── base.py
     ├── registry.py
-    ├── conversion_matrix.py
+    ├── conversion.py
     ├── dn_case_registry.py
     ├── entrys.py
     ├── manager.py
@@ -93,16 +93,16 @@ src/flext_ldif/
 ```python
 # ✅ NEW (v1.0+): Service imports
 from flext_ldif.services.rfc_ldif_parser import FlextLdifRfcLdifParser
-from flext_ldif.services.server_detector import FlextLdifServerDetector
+from flext_ldif.services.detector import FlextLdifDetector
 from flext_ldif.services.migration_pipeline import FlextLdifMigrationPipeline
 
 # ❌ OLD (v0.9): Nested imports (no longer valid)
 from flext_ldif.rfc.rfc_ldif_parser import RfcLdifParser
-from flext_ldif.services.server_detector import FlextLdifServerDetector
+from flext_ldif.services.detector import FlextLdifDetector
 from flext_ldif.pipelines.migration_pipeline import FlextLdifMigrationPipeline
 
 # ✅ UNCHANGED: Quirks still use subdirectory
-from flext_ldif.services.registry import FlextLdifRegistry
+from flext_ldif.services.server import FlextLdifServer
 from flext_ldif.servers.oid import FlextLdifServersOid
 ```
 
@@ -407,7 +407,7 @@ class SchemaQueryHandler(FlextMessageHandler):
 
 ## Core Components
 
-### FlextLdif - Application Service
+### FlextLdif - Application 
 
 The main entry point providing a unified interface to all LDIF operations:
 
@@ -440,7 +440,7 @@ class FlextLdif:
 Handles RFC 2849 compliant LDIF parsing:
 
 ```python
-class FlextLdifParserService:
+class FlextLdifParser:
     """RFC 2849 compliant LDIF parser."""
 
     def parse_string(self, content: str) -> FlextResult[list[FlextLdifModels.Entry]]:
@@ -461,7 +461,7 @@ class FlextLdifParserService:
 Provides comprehensive LDIF entry validation:
 
 ```python
-class FlextLdifValidatorService:
+class FlextLdifValidator:
     """LDIF entry validation service."""
 
     def validate_entries(self, entries: list[FlextLdifModels.Entry]) -> FlextResult[bool]:
@@ -482,7 +482,7 @@ class FlextLdifValidatorService:
 Generates RFC 2849 compliant LDIF output:
 
 ```python
-class FlextLdifWriterService:
+class FlextLdifWriter:
     """LDIF writer service for generating compliant output."""
 
     def write_entries(self, entries: list[FlextLdifModels.Entry]) -> FlextResult[str]:
@@ -737,7 +737,7 @@ Each service is tested independently with clear boundaries:
 ```python
 def test_parser_service_rfc_compliance():
     """Test RFC 2849 compliance in parser service."""
-    parser = FlextLdifParserService()
+    parser = FlextLdifParser()
 
     # Test various RFC 2849 scenarios
     result = parser.parse_string(sample_ldif)

@@ -13,7 +13,7 @@ import pytest
 
 from flext_ldif.servers.oid import FlextLdifServersOid
 from flext_ldif.servers.oud import FlextLdifServersOud
-from flext_ldif.services.conversion_matrix import FlextLdifQuirksConversionMatrix
+from flext_ldif.services.conversion import FlextLdifConversion
 from tests.fixtures import FlextLdifFixtures
 from tests.fixtures.helpers import (
     extract_attributes,
@@ -133,9 +133,9 @@ class TestConversionMatrixWithRealFixtures:
     """Test conversion matrix using real fixture data."""
 
     @pytest.fixture
-    def matrix(self) -> FlextLdifQuirksConversionMatrix:
+    def matrix(self) -> FlextLdifConversion:
         """Create conversion matrix."""
-        return FlextLdifQuirksConversionMatrix()
+        return FlextLdifConversion()
 
     @pytest.fixture
     def oid_quirk(self) -> FlextLdifServersOid.Schema:
@@ -160,7 +160,7 @@ class TestConversionMatrixWithRealFixtures:
 
     def test_oid_to_oud_conversion_with_real_attributes(
         self,
-        matrix: FlextLdifQuirksConversionMatrix,
+        matrix: FlextLdifConversion,
         oid_quirk: FlextLdifServersOid,
         oud_quirk: FlextLdifServersOud,
         oid_conversion_attributes: list[str],
@@ -196,7 +196,7 @@ class TestConversionMatrixWithRealFixtures:
 
     def test_roundtrip_oid_oud_oid_with_real_data(
         self,
-        matrix: FlextLdifQuirksConversionMatrix,
+        matrix: FlextLdifConversion,
         oid_quirk: FlextLdifServersOid,
         oud_quirk: FlextLdifServersOud,
         oid_conversion_attributes: list[str],

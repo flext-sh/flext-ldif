@@ -16,22 +16,22 @@ from pathlib import Path
 import pytest
 
 from flext_ldif.config import FlextLdifConfig
-from flext_ldif.services.parser import FlextLdifParserService
-from flext_ldif.services.registry import FlextLdifRegistry
-from flext_ldif.services.writer import FlextLdifWriterService
+from flext_ldif.services.parser import FlextLdifParser
+from flext_ldif.services.server import FlextLdifServer
+from flext_ldif.services.writer import FlextLdifWriter
 
 
 class TestRfcParserRealFixtures:
     """Test RFC parser with real fixture data."""
 
     @pytest.fixture
-    def quirk_registry(self) -> FlextLdifRegistry:
+    def quirk_registry(self) -> FlextLdifServer:
         """Create quirk registry."""
-        return FlextLdifRegistry()
+        return FlextLdifServer()
 
     def test_parse_oid_entries_fixture(
         self,
-        quirk_registry: FlextLdifRegistry,
+        quirk_registry: FlextLdifServer,
     ) -> None:
         """Test parsing real OID entries from fixtures."""
         entries_file = Path("tests/fixtures/oid/oid_entries_fixtures.ldif")
@@ -39,7 +39,7 @@ class TestRfcParserRealFixtures:
         if not entries_file.exists():
             pytest.skip(f"Fixture not found: {entries_file}")
 
-        parser = FlextLdifParserService(
+        parser = FlextLdifParser(
             config=FlextLdifConfig(),
         )
 
@@ -52,7 +52,7 @@ class TestRfcParserRealFixtures:
 
     def test_parse_oud_entries_fixture(
         self,
-        quirk_registry: FlextLdifRegistry,
+        quirk_registry: FlextLdifServer,
     ) -> None:
         """Test parsing real OUD entries from fixtures."""
         entries_file = Path("tests/fixtures/oud/oud_entries_fixtures.ldif")
@@ -60,7 +60,7 @@ class TestRfcParserRealFixtures:
         if not entries_file.exists():
             pytest.skip(f"Fixture not found: {entries_file}")
 
-        parser = FlextLdifParserService(
+        parser = FlextLdifParser(
             config=FlextLdifConfig(),
         )
 
@@ -72,7 +72,7 @@ class TestRfcParserRealFixtures:
 
     def test_parse_openldap_entries_fixture(
         self,
-        quirk_registry: FlextLdifRegistry,
+        quirk_registry: FlextLdifServer,
     ) -> None:
         """Test parsing real OpenLDAP entries from fixtures."""
         entries_file = Path("tests/fixtures/openldap2/openldap2_entries_fixtures.ldif")
@@ -80,7 +80,7 @@ class TestRfcParserRealFixtures:
         if not entries_file.exists():
             pytest.skip(f"Fixture not found: {entries_file}")
 
-        parser = FlextLdifParserService(
+        parser = FlextLdifParser(
             config=FlextLdifConfig(),
         )
 
@@ -95,13 +95,13 @@ class TestRfcSchemaParserRealFixtures:
     """Test RFC schema parser with real fixture data."""
 
     @pytest.fixture
-    def quirk_registry(self) -> FlextLdifRegistry:
+    def quirk_registry(self) -> FlextLdifServer:
         """Create quirk registry."""
-        return FlextLdifRegistry()
+        return FlextLdifServer()
 
     def test_parse_oid_schema_fixture(
         self,
-        quirk_registry: FlextLdifRegistry,
+        quirk_registry: FlextLdifServer,
     ) -> None:
         """Test parsing real OID schema from fixtures."""
         schema_file = Path("tests/fixtures/oid/oid_schema_fixtures.ldif")
@@ -109,7 +109,7 @@ class TestRfcSchemaParserRealFixtures:
         if not schema_file.exists():
             pytest.skip(f"Fixture not found: {schema_file}")
 
-        parser = FlextLdifParserService(
+        parser = FlextLdifParser(
             config=FlextLdifConfig(),
         )
 
@@ -122,7 +122,7 @@ class TestRfcSchemaParserRealFixtures:
 
     def test_parse_oud_schema_fixture(
         self,
-        quirk_registry: FlextLdifRegistry,
+        quirk_registry: FlextLdifServer,
     ) -> None:
         """Test parsing real OUD schema from fixtures."""
         schema_file = Path("tests/fixtures/oud/oud_schema_fixtures.ldif")
@@ -130,7 +130,7 @@ class TestRfcSchemaParserRealFixtures:
         if not schema_file.exists():
             pytest.skip(f"Fixture not found: {schema_file}")
 
-        parser = FlextLdifParserService(
+        parser = FlextLdifParser(
             config=FlextLdifConfig(),
         )
 
@@ -143,13 +143,13 @@ class TestRfcWriterRealFixtures:
     """Test RFC writer with real fixture data."""
 
     @pytest.fixture
-    def quirk_registry(self) -> FlextLdifRegistry:
+    def quirk_registry(self) -> FlextLdifServer:
         """Create quirk registry."""
-        return FlextLdifRegistry()
+        return FlextLdifServer()
 
     def test_write_and_reparse_oid_entries(
         self,
-        quirk_registry: FlextLdifRegistry,
+        quirk_registry: FlextLdifServer,
         tmp_path: Path,
     ) -> None:
         """Test roundtrip: parse OID fixture, write, and re-parse."""
@@ -159,7 +159,7 @@ class TestRfcWriterRealFixtures:
             pytest.skip(f"Fixture not found: {source_file}")
 
         # Parse original
-        parser = FlextLdifParserService(
+        parser = FlextLdifParser(
             config=FlextLdifConfig(),
         )
         parse_result = parser.parse_file(source_file)
@@ -171,7 +171,7 @@ class TestRfcWriterRealFixtures:
         # Write to file
         output_file = tmp_path / "roundtrip.ldif"
 
-        writer = FlextLdifWriterService(
+        writer = FlextLdifWriter(
             config=FlextLdifConfig(),
             quirk_registry=quirk_registry,
         )
@@ -186,7 +186,7 @@ class TestRfcWriterRealFixtures:
         assert output_file.exists()
 
         # Re-parse
-        reparser = FlextLdifParserService(
+        reparser = FlextLdifParser(
             config=FlextLdifConfig(),
         )
         reparse_result = reparser.parse_file(output_file)
@@ -199,7 +199,7 @@ class TestRfcWriterRealFixtures:
 
     def test_write_oud_acl_entries(
         self,
-        quirk_registry: FlextLdifRegistry,
+        quirk_registry: FlextLdifServer,
         tmp_path: Path,
     ) -> None:
         """Test writing OUD ACL entries to file."""
@@ -208,7 +208,7 @@ class TestRfcWriterRealFixtures:
         if not acl_file.exists():
             pytest.skip(f"Fixture not found: {acl_file}")
 
-        parser = FlextLdifParserService(
+        parser = FlextLdifParser(
             config=FlextLdifConfig(),
         )
 
@@ -222,7 +222,7 @@ class TestRfcWriterRealFixtures:
         # Write to file
         output_file = tmp_path / "acl_output.ldif"
 
-        writer = FlextLdifWriterService(
+        writer = FlextLdifWriter(
             config=FlextLdifConfig(),
             quirk_registry=quirk_registry,
         )
@@ -242,16 +242,16 @@ class TestRfcExceptionHandlingRealScenarios:
     """Test RFC exception handling with real scenarios."""
 
     @pytest.fixture
-    def quirk_registry(self) -> FlextLdifRegistry:
+    def quirk_registry(self) -> FlextLdifServer:
         """Create quirk registry."""
-        return FlextLdifRegistry()
+        return FlextLdifServer()
 
     def test_parse_nonexistent_file(
         self,
-        quirk_registry: FlextLdifRegistry,
+        quirk_registry: FlextLdifServer,
     ) -> None:
         """Test parsing nonexistent file returns error."""
-        parser = FlextLdifParserService(
+        parser = FlextLdifParser(
             config=FlextLdifConfig(),
         )
 
@@ -262,7 +262,7 @@ class TestRfcExceptionHandlingRealScenarios:
 
     def test_write_to_readonly_directory(
         self,
-        quirk_registry: FlextLdifRegistry,
+        quirk_registry: FlextLdifServer,
         tmp_path: Path,
     ) -> None:
         """Test write to read-only directory returns error."""
@@ -279,7 +279,7 @@ class TestRfcExceptionHandlingRealScenarios:
                 attributes=FlextLdifModels.LdifAttributes(attributes={"cn": ["test"]}),
             )
 
-            writer = FlextLdifWriterService(
+            writer = FlextLdifWriter(
                 config=FlextLdifConfig(),
                 quirk_registry=quirk_registry,
             )
@@ -302,14 +302,14 @@ class TestRfcExceptionHandlingRealScenarios:
 
     def test_parse_empty_file(
         self,
-        quirk_registry: FlextLdifRegistry,
+        quirk_registry: FlextLdifServer,
         tmp_path: Path,
     ) -> None:
         """Test parsing empty file."""
         empty_file = tmp_path / "empty.ldif"
         empty_file.write_text("")
 
-        parser = FlextLdifParserService(
+        parser = FlextLdifParser(
             config=FlextLdifConfig(),
         )
 

@@ -200,7 +200,7 @@ class TestOudRoutingValidation:
 
         # Verify that OUD entries can be written through OUD Entry quirk
         for entry in entries:
-            result = oud_quirk.write(entry)
+            result = oud_quirk.entry.write(entry)
             assert result.is_success, f"Failed to write OUD entry: {result.error}"
             written_str = result.unwrap()
             assert written_str is not None

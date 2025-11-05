@@ -1,6 +1,6 @@
 """Test suite for quirks registry service.
 
-This module provides comprehensive testing for FlextLdifRegistry which manages
+This module provides comprehensive testing for FlextLdifServer which manages
 discovery, registration, and retrieval of server-specific quirks.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -10,15 +10,15 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif.services.registry import FlextLdifRegistry
+from flext_ldif.services.server import FlextLdifServer
 
 
-class TestFlextLdifRegistry:
+class TestFlextLdifServer:
     """Test suite for quirk registry initialization and auto-discovery."""
 
     def test_initialization(self) -> None:
         """Test quirk registry initializes and auto-discovers all servers."""
-        registry = FlextLdifRegistry()
+        registry = FlextLdifServer()
 
         assert registry is not None
         # Registry auto-discovers all servers at initialization
@@ -30,14 +30,14 @@ class TestFlextLdifRegistry:
 
     def test_get_global_instance(self) -> None:
         """Test global instance singleton pattern."""
-        instance1 = FlextLdifRegistry.get_global_instance()
-        instance2 = FlextLdifRegistry.get_global_instance()
+        instance1 = FlextLdifServer.get_global_instance()
+        instance2 = FlextLdifServer.get_global_instance()
 
         assert instance1 is instance2  # Same instance
 
     def test_registry_stats(self) -> None:
         """Test registry statistics with auto-discovered servers."""
-        registry = FlextLdifRegistry()
+        registry = FlextLdifServer()
         stats = registry.get_registry_stats()
 
         # Registry should have auto-discovered servers
@@ -54,7 +54,7 @@ class TestSchemaRetrieval:
 
     def test_get_schema_quirks_oid(self) -> None:
         """Test retrieving schema quirks for OID server."""
-        registry = FlextLdifRegistry()
+        registry = FlextLdifServer()
 
         quirks = registry.get_schema_quirks("oid")
 
@@ -63,7 +63,7 @@ class TestSchemaRetrieval:
 
     def test_get_schema_quirks_oud(self) -> None:
         """Test retrieving schema quirks for OUD server."""
-        registry = FlextLdifRegistry()
+        registry = FlextLdifServer()
 
         quirks = registry.get_schema_quirks("oud")
 
@@ -72,7 +72,7 @@ class TestSchemaRetrieval:
 
     def test_get_schema_quirks_openldap(self) -> None:
         """Test retrieving schema quirks for OpenLDAP server."""
-        registry = FlextLdifRegistry()
+        registry = FlextLdifServer()
 
         quirks = registry.get_schema_quirks("openldap")
 
@@ -81,7 +81,7 @@ class TestSchemaRetrieval:
 
     def test_get_schema_quirks_nonexistent_server(self) -> None:
         """Test retrieving schema quirks for nonexistent server type."""
-        registry = FlextLdifRegistry()
+        registry = FlextLdifServer()
 
         quirks = registry.get_schema_quirks("unknown_server")
 
@@ -93,7 +93,7 @@ class TestQuirkPriorityOrdering:
 
     def test_schema_quirks_sorted_by_priority(self) -> None:
         """Test that schema quirks are sorted by priority."""
-        registry = FlextLdifRegistry()
+        registry = FlextLdifServer()
 
         quirks = registry.get_schema_quirks("oid")
 
@@ -104,7 +104,7 @@ class TestQuirkPriorityOrdering:
 
     def test_acl_quirks_sorted_by_priority(self) -> None:
         """Test that ACL quirks are sorted by priority."""
-        registry = FlextLdifRegistry()
+        registry = FlextLdifServer()
 
         quirks = registry.get_acl_quirks("oid")
 
@@ -115,7 +115,7 @@ class TestQuirkPriorityOrdering:
 
     def test_entrys_sorted_by_priority(self) -> None:
         """Test that entry quirks are sorted by priority."""
-        registry = FlextLdifRegistry()
+        registry = FlextLdifServer()
 
         quirks = registry.get_entrys("oid")
 
@@ -130,7 +130,7 @@ class TestQuirkFinding:
 
     def test_find_schema_quirk_for_attribute(self) -> None:
         """Test finding schema quirk that can handle attribute definition."""
-        registry = FlextLdifRegistry()
+        registry = FlextLdifServer()
 
         # OID attribute definition
         attr_def = "( 2.16.840.1.113894.1.1.1 NAME 'orclNetDescString' SYNTAX '1.3.6.1.4.1.1466.115.121.1.15' )"
@@ -142,7 +142,7 @@ class TestQuirkFinding:
 
     def test_find_schema_quirk_for_objectclass(self) -> None:
         """Test finding schema quirk that can handle objectClass definition."""
-        registry = FlextLdifRegistry()
+        registry = FlextLdifServer()
 
         # OID objectClass definition
         oc_def = "( 2.16.840.1.113894.1.1.2 NAME 'orclContainer' SUP top STRUCTURAL MUST cn )"
@@ -154,7 +154,7 @@ class TestQuirkFinding:
 
     def test_find_quirk_returns_none_for_unknown_server(self) -> None:
         """Test finding quirk returns None for unknown server type."""
-        registry = FlextLdifRegistry()
+        registry = FlextLdifServer()
 
         found_quirk = registry.find_schema_quirk_for_attribute("unknown", "attr def")
 
@@ -166,7 +166,7 @@ class TestNestedQuirks:
 
     def test_get_acl_quirks_for_oid(self) -> None:
         """Test retrieving ACL quirks for OID."""
-        registry = FlextLdifRegistry()
+        registry = FlextLdifServer()
 
         acl_quirks = registry.get_acl_quirks("oid")
 
@@ -176,7 +176,7 @@ class TestNestedQuirks:
 
     def test_get_entrys_for_oid(self) -> None:
         """Test retrieving entry quirks for OID."""
-        registry = FlextLdifRegistry()
+        registry = FlextLdifServer()
 
         entrys = registry.get_entrys("oid")
 
@@ -186,7 +186,7 @@ class TestNestedQuirks:
 
     def test_get_all_quirks_for_server(self) -> None:
         """Test retrieving all quirk types for a server."""
-        registry = FlextLdifRegistry()
+        registry = FlextLdifServer()
 
         all_quirks = registry.get_all_quirks_for_server("oid")
 
@@ -206,7 +206,7 @@ class TestRegistryStats:
 
     def test_registry_stats_all_servers(self) -> None:
         """Test registry statistics include all auto-discovered servers."""
-        registry = FlextLdifRegistry()
+        registry = FlextLdifServer()
 
         stats = registry.get_registry_stats()
 
@@ -223,7 +223,7 @@ class TestRegistryStats:
 
     def test_list_registered_servers(self) -> None:
         """Test listing all registered server types."""
-        registry = FlextLdifRegistry()
+        registry = FlextLdifServer()
 
         servers = registry.list_registered_servers()
 
@@ -237,7 +237,7 @@ class TestRegistryStats:
 
     def test_registry_stats_all_quirk_types(self) -> None:
         """Test that registry stats include all quirk types."""
-        registry = FlextLdifRegistry()
+        registry = FlextLdifServer()
 
         stats = registry.get_registry_stats()
 
@@ -252,7 +252,7 @@ class TestServerQuirksAvailability:
 
     def test_all_supported_servers_have_quirks(self) -> None:
         """Test that all registered servers have quirks available."""
-        registry = FlextLdifRegistry()
+        registry = FlextLdifServer()
 
         # Use actual registered server names from the registry
         # (not the constants which use different names like 'oracle_oid' vs 'oid')
@@ -285,14 +285,14 @@ class TestErrorHandling:
 
     def test_get_quirks_with_empty_server_type(self) -> None:
         """Test that getting quirks handles empty server type gracefully."""
-        registry = FlextLdifRegistry()
+        registry = FlextLdifServer()
 
         quirks = registry.get_schema_quirks("")
         assert quirks == []
 
     def test_find_quirk_with_empty_definition(self) -> None:
         """Test finding quirk with empty definition string."""
-        registry = FlextLdifRegistry()
+        registry = FlextLdifServer()
 
         found_quirk = registry.find_schema_quirk_for_attribute("oid", "")
 
@@ -301,7 +301,7 @@ class TestErrorHandling:
 
     def test_get_all_quirks_for_unknown_server(self) -> None:
         """Test getting all quirks for unknown server."""
-        registry = FlextLdifRegistry()
+        registry = FlextLdifServer()
 
         all_quirks = registry.get_all_quirks_for_server("unknown_server")
 

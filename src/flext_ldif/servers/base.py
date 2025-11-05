@@ -681,6 +681,41 @@ class FlextLdifServersBase(FlextService[list[FlextLdifModels.Entry] | str], ABC)
             # Final fallback
             return "rfc"
 
+        @property
+        def server_type(self) -> str:
+            """Server type identifier (e.g., 'oid', 'oud', 'openldap', 'rfc').
+
+            Returns the server_type from the parent class's Constants to satisfy
+            the SchemaProtocol requirement.
+
+            Returns:
+                Server type string from parent Constants
+
+            """
+            return self._get_server_type()
+
+        @property
+        def priority(self) -> int:
+            """Quirk priority (lower number = higher priority).
+
+            Returns the priority from the parent class's Constants to satisfy
+            the SchemaProtocol requirement.
+
+            Returns:
+                Priority integer from parent Constants, or 100 as fallback
+
+            """
+            cls = type(self)
+            # Walk up the MRO to find the parent server class
+            for parent_cls in cls.__mro__:
+                if (
+                    hasattr(parent_cls, "Constants")
+                    and hasattr(parent_cls.Constants, "PRIORITY")
+                ):
+                    return parent_cls.Constants.PRIORITY
+            # Fallback priority
+            return 100
+
         # Control auto-execution
         auto_execute: ClassVar[bool] = False
 
@@ -714,24 +749,40 @@ class FlextLdifServersBase(FlextService[list[FlextLdifModels.Entry] | str], ABC)
             definition_lower = definition_str.lower()
 
             # Check for objectClass-specific keywords (RFC 4512)
-            # ObjectClasses have: SUP, STRUCTURAL, AUXILIARY, ABSTRACT, MUST, MAY
-            # Attributes don't have these keywords
-            objectclass_keywords = [
-                "sup ",
+            # ObjectClasses have: STRUCTURAL, AUXILIARY, ABSTRACT, MUST, MAY
+            # (Note: SUP is valid for both attributes and objectClasses, so excluded)
+            # Attributes have: EQUALITY, SUBSTR, ORDERING, SYNTAX, USAGE, SINGLE-VALUE, NO-USER-MODIFICATION
+            objectclass_only_keywords = [
                 " structural",
                 " auxiliary",
                 " abstract",
                 " must (",
                 " may (",
             ]
-            for keyword in objectclass_keywords:
+            for keyword in objectclass_only_keywords:
                 if keyword in definition_lower:
                     return "objectclass"
+
+            # Check for attribute-specific keywords (more accurate detection)
+            # These keywords ONLY appear in attribute definitions
+            attribute_only_keywords = [
+                " equality ",
+                " substr ",
+                " ordering ",
+                " syntax ",
+                " usage ",
+                " single-value",
+                " no-user-modification",
+            ]
+            for keyword in attribute_only_keywords:
+                if keyword in definition_lower:
+                    return "attribute"
 
             # Legacy check for explicit objectclass keyword
             if "objectclass" in definition_lower or "oclass" in definition_lower:
                 return "objectclass"
 
+            # Default to attribute if ambiguous
             return "attribute"
 
         def _route_parse(
@@ -977,6 +1028,81 @@ class FlextLdifServersBase(FlextService[list[FlextLdifModels.Entry] | str], ABC)
                 | str
             ].fail("No write parameter provided")
 
+        def _auto_detect_operation(
+            self,
+            data: str
+            | FlextLdifModels.SchemaAttribute
+            | FlextLdifModels.SchemaObjectClass
+            | None,
+            operation: Literal["parse", "write"] | None,
+        ) -> Literal["parse", "write"] | FlextResult:
+            """Auto-detect operation from data type. Returns operation or error result."""
+            if operation is not None:
+                return operation
+
+            if isinstance(data, str):
+                return "parse"
+            if isinstance(
+                data,
+                (
+                    FlextLdifModels.SchemaAttribute,
+                    FlextLdifModels.SchemaObjectClass,
+                ),
+            ):
+                return "write"
+
+            return FlextResult[
+                FlextLdifModels.SchemaAttribute
+                | FlextLdifModels.SchemaObjectClass
+                | str
+            ].fail(
+                f"Unknown data type: {type(data).__name__}. Expected str, SchemaAttribute, or SchemaObjectClass"
+            )
+
+        def _route_operation(
+            self,
+            data: str
+            | FlextLdifModels.SchemaAttribute
+            | FlextLdifModels.SchemaObjectClass,
+            operation: Literal["parse", "write"],
+        ) -> FlextResult[
+            FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | str
+        ]:
+            """Route data to appropriate parse or write handler."""
+            if operation == "parse":
+                if not isinstance(data, str):
+                    return FlextResult[
+                        FlextLdifModels.SchemaAttribute
+                        | FlextLdifModels.SchemaObjectClass
+                        | str
+                    ].fail(f"parse operation requires str, got {type(data).__name__}")
+                if self._detect_schema_type(data) == "objectclass":
+                    return self._handle_parse_operation(
+                        attr_definition=None, oc_definition=data
+                    )
+                return self._handle_parse_operation(
+                    attr_definition=data, oc_definition=None
+                )
+
+            if operation == "write":
+                if isinstance(data, FlextLdifModels.SchemaAttribute):
+                    return self._handle_write_operation(attr_model=data, oc_model=None)
+                if isinstance(data, FlextLdifModels.SchemaObjectClass):
+                    return self._handle_write_operation(attr_model=None, oc_model=data)
+                return FlextResult[
+                    FlextLdifModels.SchemaAttribute
+                    | FlextLdifModels.SchemaObjectClass
+                    | str
+                ].fail(
+                    f"write operation requires SchemaAttribute or SchemaObjectClass, got {type(data).__name__}"
+                )
+
+            return FlextResult[
+                FlextLdifModels.SchemaAttribute
+                | FlextLdifModels.SchemaObjectClass
+                | str
+            ].fail(f"Unknown operation: {operation}")
+
         def execute(
             self,
             data: str
@@ -1024,69 +1150,13 @@ class FlextLdifServersBase(FlextService[list[FlextLdifModels.Entry] | str], ABC)
                     | str
                 ].ok(empty_str)
 
-            # Auto-detect operation from data type, unless overridden
-            detected_operation: Literal["parse", "write"] | None = operation
+            # Auto-detect or validate operation
+            detected_op = self._auto_detect_operation(data, operation)
+            if isinstance(detected_op, FlextResult):
+                return detected_op
 
-            if detected_operation is None:
-                # Type-based auto-detection
-                if isinstance(data, str):
-                    # String data → PARSE operation
-                    # Will auto-detect attribute vs objectclass in _handle_parse_operation
-                    detected_operation = "parse"
-                elif isinstance(
-                    data,
-                    (
-                        FlextLdifModels.SchemaAttribute,
-                        FlextLdifModels.SchemaObjectClass,
-                    ),
-                ):
-                    detected_operation = "write"
-                else:
-                    return FlextResult[
-                        FlextLdifModels.SchemaAttribute
-                        | FlextLdifModels.SchemaObjectClass
-                        | str
-                    ].fail(
-                        f"Unknown data type: {type(data).__name__}. Expected str, SchemaAttribute, or SchemaObjectClass"
-                    )
-
-            # Execute based on detected/forced operation
-            if detected_operation == "parse":
-                if not isinstance(data, str):
-                    return FlextResult[
-                        FlextLdifModels.SchemaAttribute
-                        | FlextLdifModels.SchemaObjectClass
-                        | str
-                    ].fail(f"parse operation requires str, got {type(data).__name__}")
-                # Auto-detect if it's attribute or objectclass definition
-                # Pass only the appropriate definition to _handle_parse_operation
-                if self._detect_schema_type(data) == "objectclass":
-                    return self._handle_parse_operation(
-                        attr_definition=None, oc_definition=data
-                    )
-                return self._handle_parse_operation(
-                    attr_definition=data, oc_definition=None
-                )
-
-            if detected_operation == "write":
-                if isinstance(data, FlextLdifModels.SchemaAttribute):
-                    return self._handle_write_operation(attr_model=data, oc_model=None)
-                if isinstance(data, FlextLdifModels.SchemaObjectClass):
-                    return self._handle_write_operation(attr_model=None, oc_model=data)
-                return FlextResult[
-                    FlextLdifModels.SchemaAttribute
-                    | FlextLdifModels.SchemaObjectClass
-                    | str
-                ].fail(
-                    f"write operation requires SchemaAttribute or SchemaObjectClass, got {type(data).__name__}"
-                )
-
-            # Should not reach here
-            return FlextResult[
-                FlextLdifModels.SchemaAttribute
-                | FlextLdifModels.SchemaObjectClass
-                | str
-            ].fail(f"Unknown operation: {detected_operation}")
+            # Route to appropriate handler
+            return self._route_operation(data, detected_op)
 
         @overload
         def __call__(
@@ -1344,6 +1414,40 @@ class FlextLdifServersBase(FlextService[list[FlextLdifModels.Entry] | str], ABC)
         # CONSOLIDATED into parse(definition, model_type=None)
         # See consolidated parse() method below
 
+        def can_handle_attribute(
+            self, attr_definition: str | FlextLdifModels.SchemaAttribute
+        ) -> bool:
+            """Public wrapper for _can_handle_attribute.
+
+            Used by tests and services to check if this quirk can handle an attribute definition.
+            Delegates to the private _can_handle_attribute() implementation.
+
+            Args:
+                attr_definition: Attribute definition (string or model)
+
+            Returns:
+                True if this quirk can handle the attribute
+
+            """
+            return self._can_handle_attribute(attr_definition)
+
+        def can_handle_objectclass(
+            self, oc_definition: str | FlextLdifModels.SchemaObjectClass
+        ) -> bool:
+            """Public wrapper for _can_handle_objectclass.
+
+            Used by tests and services to check if this quirk can handle an objectClass definition.
+            Delegates to the private _can_handle_objectclass() implementation.
+
+            Args:
+                oc_definition: ObjectClass definition (string or model)
+
+            Returns:
+                True if this quirk can handle the objectClass
+
+            """
+            return self._can_handle_objectclass(oc_definition)
+
         # REMOVED: convert_attribute - Entry is always RFC with metadata
         # All conversion is handled by quirk_metadata in the model itself
 
@@ -1392,6 +1496,70 @@ class FlextLdifServersBase(FlextService[list[FlextLdifModels.Entry] | str], ABC)
                 extensions=extensions or {},
             )
 
+        def parse_attribute(
+            self, attr_definition: str
+        ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
+            """Parse attribute definition (public API).
+
+            Delegates to _parse_attribute() for server-specific implementation.
+
+            Args:
+                attr_definition: Attribute definition string
+
+            Returns:
+                FlextResult with parsed SchemaAttribute model
+
+            """
+            return self._parse_attribute(attr_definition)
+
+        def parse_objectclass(
+            self, oc_definition: str
+        ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
+            """Parse objectClass definition (public API).
+
+            Delegates to _parse_objectclass() for server-specific implementation.
+
+            Args:
+                oc_definition: ObjectClass definition string
+
+            Returns:
+                FlextResult with parsed SchemaObjectClass model
+
+            """
+            return self._parse_objectclass(oc_definition)
+
+        def write_attribute(
+            self, attr_data: FlextLdifModels.SchemaAttribute
+        ) -> FlextResult[str]:
+            """Write attribute to RFC-compliant string format (public API).
+
+            Delegates to _write_attribute() for server-specific implementation.
+
+            Args:
+                attr_data: SchemaAttribute model
+
+            Returns:
+                FlextResult with RFC-compliant attribute string
+
+            """
+            return self._write_attribute(attr_data)
+
+        def write_objectclass(
+            self, oc_data: FlextLdifModels.SchemaObjectClass
+        ) -> FlextResult[str]:
+            """Write objectClass to RFC-compliant string format (public API).
+
+            Delegates to _write_objectclass() for server-specific implementation.
+
+            Args:
+                oc_data: SchemaObjectClass model
+
+            Returns:
+                FlextResult with RFC-compliant objectClass string
+
+            """
+            return self._write_objectclass(oc_data)
+
         @abstractmethod
         def _write_attribute(
             self,
@@ -1400,10 +1568,10 @@ class FlextLdifServersBase(FlextService[list[FlextLdifModels.Entry] | str], ABC)
             """Write attribute data to RFC-compliant string format (internal).
 
             Args:
-            attr_data: SchemaAttribute model
+                attr_data: SchemaAttribute model
 
             Returns:
-            FlextResult with RFC-compliant attribute string
+                FlextResult with RFC-compliant attribute string
 
             """
 
@@ -1520,6 +1688,41 @@ class FlextLdifServersBase(FlextService[list[FlextLdifModels.Entry] | str], ABC)
                                 return parent_class.Constants.SERVER_TYPE
             # Final fallback
             return "rfc"
+
+        @property
+        def server_type(self) -> str:
+            """Server type identifier (e.g., 'oid', 'oud', 'openldap', 'rfc').
+
+            Returns the server_type from the parent class's Constants to satisfy
+            the AclProtocol requirement.
+
+            Returns:
+                Server type string from parent Constants
+
+            """
+            return self._get_server_type()
+
+        @property
+        def priority(self) -> int:
+            """Quirk priority (lower number = higher priority).
+
+            Returns the priority from the parent class's Constants to satisfy
+            the AclProtocol requirement.
+
+            Returns:
+                Priority integer from parent Constants, or 100 as fallback
+
+            """
+            cls = type(self)
+            # Walk up the MRO to find the parent server class
+            for parent_cls in cls.__mro__:
+                if (
+                    hasattr(parent_cls, "Constants")
+                    and hasattr(parent_cls.Constants, "PRIORITY")
+                ):
+                    return parent_cls.Constants.PRIORITY
+            # Fallback priority
+            return 100
 
         # Control auto-execution
         auto_execute: ClassVar[bool] = False
@@ -1990,6 +2193,41 @@ class FlextLdifServersBase(FlextService[list[FlextLdifModels.Entry] | str], ABC)
             # Final fallback
             return "rfc"
 
+        @property
+        def server_type(self) -> str:
+            """Server type identifier (e.g., 'oid', 'oud', 'openldap', 'rfc').
+
+            Returns the server_type from the parent class's Constants to satisfy
+            the EntryProtocol requirement.
+
+            Returns:
+                Server type string from parent Constants
+
+            """
+            return self._get_server_type()
+
+        @property
+        def priority(self) -> int:
+            """Quirk priority (lower number = higher priority).
+
+            Returns the priority from the parent class's Constants to satisfy
+            the EntryProtocol requirement.
+
+            Returns:
+                Priority integer from parent Constants, or 100 as fallback
+
+            """
+            cls = type(self)
+            # Walk up the MRO to find the parent server class
+            for parent_cls in cls.__mro__:
+                if (
+                    hasattr(parent_cls, "Constants")
+                    and hasattr(parent_cls.Constants, "PRIORITY")
+                ):
+                    return parent_cls.Constants.PRIORITY
+            # Fallback priority
+            return 100
+
         # Control auto-execution
         auto_execute: ClassVar[bool] = False
 
@@ -2147,52 +2385,70 @@ class FlextLdifServersBase(FlextService[list[FlextLdifModels.Entry] | str], ABC)
                 empty_list: list[FlextLdifModels.Entry] = []
                 return FlextResult[list[FlextLdifModels.Entry] | str].ok(empty_list)
 
-            # Auto-detect operation from data type, unless overridden
-            detected_operation: Literal["parse", "write"] | None = operation
+            # Auto-detect operation from data type
+            detected_operation = self._auto_detect_entry_operation(data, operation)
+            if isinstance(detected_operation, FlextResult):
+                return detected_operation
 
-            if detected_operation is None:
-                # Type-based auto-detection
-                if isinstance(data, str):
-                    # String data → PARSE operation
-                    detected_operation = "parse"
-                elif isinstance(data, list):
-                    # Check if it's a list of Entry models
-                    if data and all(
-                        isinstance(item, FlextLdifModels.Entry) for item in data
-                    ):
-                        detected_operation = "write"
-                    elif not data:
-                        # Empty list → write (no entries to write)
-                        detected_operation = "write"
-                    else:
-                        return FlextResult[list[FlextLdifModels.Entry] | str].fail(
-                            f"list contains unknown types, not Entry models: {[type(item).__name__ for item in data[:3]]}"
-                        )
-                else:
-                    return FlextResult[list[FlextLdifModels.Entry] | str].fail(
-                        f"Unknown data type: {type(data).__name__}. Expected str or list[Entry]"
-                    )
+            # Route to appropriate handler
+            return self._route_entry_operation(data, detected_operation)
 
-            # Execute based on detected/forced operation
-            if detected_operation == "parse":
+        def _auto_detect_entry_operation(
+            self,
+            data: str | list[FlextLdifModels.Entry],
+            operation: Literal["parse", "write"] | None,
+        ) -> Literal["parse", "write"] | FlextResult[list[FlextLdifModels.Entry] | str]:
+            """Auto-detect entry operation from data type.
+
+            If operation is forced (not None), uses it. Otherwise detects from type:
+            - str → "parse"
+            - list[Entry] → "write"
+            - else → error
+
+            """
+            if operation is not None:
+                return operation
+
+            if isinstance(data, str):
+                return "parse"
+
+            if isinstance(data, list):
+                if not data or all(isinstance(item, FlextLdifModels.Entry) for item in data):
+                    return "write"
+                return FlextResult[list[FlextLdifModels.Entry] | str].fail(
+                    f"list contains unknown types, not Entry models: {[type(item).__name__ for item in data[:3]]}"
+                )
+
+            return FlextResult[list[FlextLdifModels.Entry] | str].fail(
+                f"Unknown data type: {type(data).__name__}. Expected str or list[Entry]"
+            )
+
+        def _route_entry_operation(
+            self,
+            data: str | list[FlextLdifModels.Entry],
+            operation: Literal["parse", "write"],
+        ) -> FlextResult[list[FlextLdifModels.Entry] | str]:
+            """Route entry data to appropriate parse or write handler.
+
+            Validates data type matches operation, then delegates to handler.
+
+            """
+            if operation == "parse":
                 if not isinstance(data, str):
                     return FlextResult[list[FlextLdifModels.Entry] | str].fail(
                         f"parse operation requires str, got {type(data).__name__}"
                     )
-                # Route to parse_content → list[Entry]
                 return self._handle_parse_entry(data)
 
-            if detected_operation == "write":
+            if operation == "write":
                 if not isinstance(data, list):
                     return FlextResult[list[FlextLdifModels.Entry] | str].fail(
                         f"write operation requires list[Entry], got {type(data).__name__}"
                     )
-                # Route to write_entry for each entry → str
                 return self._handle_write_entry(data)
 
-            # Should not reach here
             return FlextResult[list[FlextLdifModels.Entry] | str].fail(
-                f"Unknown operation: {detected_operation}"
+                f"Unknown operation: {operation}"
             )
 
         @overload
