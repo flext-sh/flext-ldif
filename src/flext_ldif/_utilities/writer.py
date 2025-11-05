@@ -200,7 +200,9 @@ class FlextLdifUtilitiesWriter:
 
     @staticmethod
     def write_file(
-        content: str, file_path: Path, encoding: str = "utf-8"
+        content: str,
+        file_path: Path,
+        encoding: str = "utf-8",
     ) -> FlextResult[dict[str, Any]]:
         """Write content to file (pure I/O operation).
 
@@ -266,7 +268,7 @@ class FlextLdifUtilitiesWriter:
         if attr_data.single_value:
             parts.append("SINGLE-VALUE")
         if attr_data.metadata and attr_data.metadata.extensions.get(
-            FlextLdifConstants.MetadataKeys.COLLECTIVE
+            FlextLdifConstants.MetadataKeys.COLLECTIVE,
         ):
             parts.append("COLLECTIVE")
         if attr_data.no_user_modification:
@@ -286,7 +288,7 @@ class FlextLdifUtilitiesWriter:
             parts.append(f"DESC '{attr_data.desc}'")
 
         if attr_data.metadata and attr_data.metadata.extensions.get(
-            FlextLdifConstants.MetadataKeys.OBSOLETE
+            FlextLdifConstants.MetadataKeys.OBSOLETE,
         ):
             parts.append("OBSOLETE")
 
@@ -355,12 +357,19 @@ class FlextLdifUtilitiesWriter:
             parts.append(f"DESC '{oc_data.desc}'")
 
         if oc_data.metadata and oc_data.metadata.extensions.get(
-            FlextLdifConstants.MetadataKeys.OBSOLETE
+            FlextLdifConstants.MetadataKeys.OBSOLETE,
         ):
             parts.append("OBSOLETE")
 
         if oc_data.sup:
-            parts.append(f"SUP {oc_data.sup}")
+            # Handle SUP as string or list
+            if isinstance(oc_data.sup, list):
+                # Multiple SUP values: format as ( value1 $ value2 $ ... )
+                sup_str = " $ ".join(oc_data.sup)
+                parts.append(f"SUP ( {sup_str} )")
+            else:
+                # Single SUP value
+                parts.append(f"SUP {oc_data.sup}")
 
         kind = oc_data.kind or FlextLdifConstants.Schema.STRUCTURAL
         parts.append(str(kind))

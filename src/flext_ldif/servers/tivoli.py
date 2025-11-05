@@ -5,7 +5,7 @@ from __future__ import annotations
 import base64
 import re
 from collections.abc import Mapping
-from typing import ClassVar, Final, cast
+from typing import ClassVar, cast
 
 from flext_core import FlextResult
 
@@ -70,18 +70,18 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
         ])
 
         # Server detection patterns and weights (migrated from FlextLdifConstants.ServerDetection)
-        DETECTION_PATTERN_STR: Final[str] = r"\b(ibm|tivoli|ldapdb)\b"
+        DETECTION_PATTERN_STR: ClassVar[str] = r"\b(ibm|tivoli|ldapdb)\b"
         DETECTION_PATTERN: ClassVar[re.Pattern[str]] = re.compile(
             DETECTION_PATTERN_STR,
             re.IGNORECASE,
         )
-        DETECTION_ATTRIBUTES: Final[frozenset[str]] = frozenset([
+        DETECTION_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset([
             "ibm-entryuuid",
             "ibm-entrychecksum",
             "ibm-slapdaccesscontrol",
             "ibm-slapdgroupacl",
         ])
-        DETECTION_WEIGHT: Final[int] = 6
+        DETECTION_WEIGHT: ClassVar[int] = 6
         DETECTION_OBJECTCLASS_NAMES: ClassVar[frozenset[str]] = frozenset([
             "ibmuser",
             "ibmuniversaldirectoryuser",
@@ -123,21 +123,21 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
             "version 3.0",
             "allow(",
         ])
-        ACL_DEFAULT_NAME: Final[str] = "Tivoli ACL"  # Default ACL name for Tivoli DS
+        ACL_DEFAULT_NAME: ClassVar[str] = "Tivoli ACL"  # Default ACL name for Tivoli DS
 
         # ACL parsing patterns (migrated from _parse_acl method)
-        ACL_ACCESS_PATTERN: Final[str] = r'access\s+"(\w+)"'
+        ACL_ACCESS_PATTERN: ClassVar[str] = r'access\s+"(\w+)"'
 
         # ACL default values (migrated from _parse_acl method)
-        ACL_DEFAULT_TARGET_DN: Final[str] = ""
-        ACL_DEFAULT_SUBJECT_TYPE: Final[str] = ""
-        ACL_DEFAULT_SUBJECT_VALUE: Final[str] = ""
+        ACL_DEFAULT_TARGET_DN: ClassVar[str] = ""
+        ACL_DEFAULT_SUBJECT_TYPE: ClassVar[str] = ""
+        ACL_DEFAULT_SUBJECT_VALUE: ClassVar[str] = ""
 
         # ACL attribute name constants (migrated from _write_acl method)
-        ACL_PRIMARY_ATTRIBUTE_NAME: Final[str] = "ibm-slapdaccesscontrol"
+        ACL_PRIMARY_ATTRIBUTE_NAME: ClassVar[str] = "ibm-slapdaccesscontrol"
 
         # ACL separator for Tivoli format (migrated from _write_acl method)
-        ACL_SEPARATOR: Final[str] = "#"
+        ACL_SEPARATOR: ClassVar[str] = "#"
 
     # =========================================================================
     # Server identification - accessed via Constants via properties in base.py
@@ -161,7 +161,8 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
         #
 
         def can_handle_attribute(
-            self, attr_definition: str | FlextLdifModels.SchemaAttribute,
+            self,
+            attr_definition: str | FlextLdifModels.SchemaAttribute,
         ) -> bool:
             """Detect Tivoli-specific attributes."""
             if isinstance(attr_definition, str):
@@ -187,7 +188,8 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
             return False
 
         def can_handle_objectclass(
-            self, oc_definition: str | FlextLdifModels.SchemaObjectClass,
+            self,
+            oc_definition: str | FlextLdifModels.SchemaObjectClass,
         ) -> bool:
             """Detect Tivoli objectClass definitions."""
             if isinstance(oc_definition, str):
@@ -360,18 +362,10 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
             try:
                 # Use Tivoli-specific attribute name
                 # Default to primary ACL attribute name from Constants
+                # Use primary ACL attribute name directly - no fallback
                 acl_attribute = (
                     FlextLdifServersTivoli.Constants.ACL_PRIMARY_ATTRIBUTE_NAME
                 )
-                # Verify it's in the Constants set
-                if acl_attribute not in (
-                    FlextLdifServersTivoli.Constants.ACL_ATTRIBUTE_NAMES
-                ):
-                    # Fallback to first available attribute name
-                    acl_attribute = next(
-                        iter(FlextLdifServersTivoli.Constants.ACL_ATTRIBUTE_NAMES),
-                        FlextLdifServersTivoli.Constants.ACL_PRIMARY_ATTRIBUTE_NAME,
-                    )
 
                 # Check for raw_acl first (original ACL string)
                 if acl_data.raw_acl:
@@ -397,7 +391,10 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                         ("add", FlextLdifServersTivoli.Constants.PERMISSION_ADD),
                         ("delete", FlextLdifServersTivoli.Constants.PERMISSION_DELETE),
                         ("search", FlextLdifServersTivoli.Constants.PERMISSION_SEARCH),
-                        ("compare", FlextLdifServersTivoli.Constants.PERMISSION_COMPARE),
+                        (
+                            "compare",
+                            FlextLdifServersTivoli.Constants.PERMISSION_COMPARE,
+                        ),
                     ],
                 )
                 parts.extend(active_perms)

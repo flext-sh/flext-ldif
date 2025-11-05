@@ -1528,9 +1528,7 @@ class TestSupportCheckingEdgeCases:
         assert support["acl"] is False
         assert support["entry"] is False
 
-    def test_get_supported_conversions_acl(
-        self, matrix: FlextLdifConversion
-    ) -> None:
+    def test_get_supported_conversions_acl(self, matrix: FlextLdifConversion) -> None:
         """Test support checking for quirk with ACL support."""
         quirk = AclOnlyQuirk()
         support = matrix.get_supported_conversions(quirk)
@@ -1540,9 +1538,7 @@ class TestSupportCheckingEdgeCases:
         assert support["acl"] is True
         assert support["entry"] is False
 
-    def test_get_supported_conversions_entry(
-        self, matrix: FlextLdifConversion
-    ) -> None:
+    def test_get_supported_conversions_entry(self, matrix: FlextLdifConversion) -> None:
         """Test support checking for quirk with entry support."""
         quirk = EntryOnlyQuirk()
         support = matrix.get_supported_conversions(quirk)

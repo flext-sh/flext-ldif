@@ -80,8 +80,8 @@ class TestOidQuirksTransformations:
         result = api.migrate(
             input_dir=input_dir,
             output_dir=output_dir,
-            from_server="oid",
-            to_server="openldap",
+            source_server="oid",
+            target_server="openldap",
         )
         assert result.is_success or result.is_failure
 

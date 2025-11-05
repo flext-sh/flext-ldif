@@ -79,9 +79,7 @@ class TestFlextLdifServer:
         # Test that the method exists and can be called without raising an exception
         # The result depends on the server type and line content
         try:
-            registry.find_acl(
-                FlextLdifConstants.LdapServers.OPENLDAP, "test line"
-            )
+            registry.find_acl(FlextLdifConstants.LdapServers.OPENLDAP, "test line")
             # If we got here, the method works
         except AttributeError as e:
             pytest.fail(f"find_acl method not found on FlextLdifServer: {e}")
@@ -119,9 +117,7 @@ class TestFlextLdifServer:
 
         for server_type in supported_servers:
             schemas = registry.get_schemas(server_type)
-            assert schemas is not None, (
-                f"Schema quirks not found for {server_type}"
-            )
+            assert schemas is not None, f"Schema quirks not found for {server_type}"
 
             acls = registry.get_acls(server_type)
             assert acls is not None, f"ACL quirks not found for {server_type}"

@@ -327,9 +327,7 @@ class TestAclProtocolMethods:
         """Create OID quirk instance."""
         return FlextLdifServersOid()
 
-    def test_acl_methods_callable_if_defined(
-        self, oid: FlextLdifServersOid
-    ) -> None:
+    def test_acl_methods_callable_if_defined(self, oid: FlextLdifServersOid) -> None:
         """Test that ACL methods are callable if defined on the quirk."""
         # Only test methods that actually exist on this implementation
         if hasattr(oid, "can_handle"):
@@ -370,9 +368,7 @@ class TestEntryProtocolMethods:
         """Create OID quirk instance."""
         return FlextLdifServersOid()
 
-    def test_entry_methods_callable_if_defined(
-        self, oid: FlextLdifServersOid
-    ) -> None:
+    def test_entry_methods_callable_if_defined(self, oid: FlextLdifServersOid) -> None:
         """Test that entry methods are callable if defined."""
         if hasattr(oid, "can_handle_entry"):
             assert callable(oid.can_handle_entry)
@@ -425,9 +421,7 @@ class TestProtocolUsagePatterns:
         """Test that protocol can be used for type checking."""
         oid_schema: object = FlextLdifServersOid.Schema()
         # This should work with isinstance and protocol
-        is_schema = isinstance(
-            oid_schema, FlextLdifProtocols.Quirks.SchemaProtocol
-        )
+        is_schema = isinstance(oid_schema, FlextLdifProtocols.Quirks.SchemaProtocol)
         assert is_schema
 
     def test_protocol_filterings_by_type(self) -> None:

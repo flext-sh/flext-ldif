@@ -173,7 +173,8 @@ class FlextLdifDetector(FlextService[FlextLdifModels.ClientStatus]):
 
     @staticmethod
     def resolve_from_config(
-        config: FlextLdifConfig, target_server_type: str | None = None
+        config: FlextLdifConfig,
+        target_server_type: str | None = None,
     ) -> str:
         """Determine effective server type based on a prioritized configuration hierarchy."""
         # Priority 1: Direct override from a service-level parameter
@@ -234,7 +235,7 @@ class FlextLdifDetector(FlextService[FlextLdifModels.ClientStatus]):
 
         except (ValueError, TypeError, AttributeError) as e:
             return FlextResult[str].fail(
-                f"Failed to resolve effective server type: {e}"
+                f"Failed to resolve effective server type: {e}",
             )
 
     def _update_server_scores(
@@ -420,7 +421,10 @@ class FlextLdifDetector(FlextService[FlextLdifModels.ClientStatus]):
 
     @staticmethod
     def _check_regex_pattern(
-        pattern: str, content: str, description: str, patterns: list[str]
+        pattern: str,
+        content: str,
+        description: str,
+        patterns: list[str],
     ) -> None:
         """Check if pattern exists in content, append description if found."""
         if re.search(pattern, content):
@@ -428,7 +432,10 @@ class FlextLdifDetector(FlextService[FlextLdifModels.ClientStatus]):
 
     @staticmethod
     def _check_substring_pattern(
-        value: str, content_lower: str, description: str, patterns: list[str]
+        value: str,
+        content_lower: str,
+        description: str,
+        patterns: list[str],
     ) -> None:
         """Check if substring exists in content (case-insensitive), append if found."""
         if value.lower() in content_lower:
@@ -497,7 +504,10 @@ class FlextLdifDetector(FlextService[FlextLdifModels.ClientStatus]):
             patterns,
         )
         self._check_substring_pattern(
-            "samaccountname", content_lower, "Active Directory attributes", patterns
+            "samaccountname",
+            content_lower,
+            "Active Directory attributes",
+            patterns,
         )
 
         # Novell eDirectory detection - use server Constants
@@ -515,7 +525,9 @@ class FlextLdifDetector(FlextService[FlextLdifModels.ClientStatus]):
 
         # Tivoli uses compiled regex pattern
         tivoli_pattern = FlextLdifServersTivoli.Constants.DETECTION_PATTERN
-        if isinstance(tivoli_pattern, re.Pattern) and tivoli_pattern.search(content_lower):
+        if isinstance(tivoli_pattern, re.Pattern) and tivoli_pattern.search(
+            content_lower,
+        ):
             patterns.append("IBM Tivoli attributes (ibm-*, tivoli, ldapdb)")
 
         # 389 DS detection - use server Constants

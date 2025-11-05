@@ -33,7 +33,7 @@ from flext_ldif.models import FlextLdifModels
 from flext_ldif.protocols import FlextLdifProtocols
 from flext_ldif.services.acl import FlextLdifAcl
 from flext_ldif.services.detector import FlextLdifDetector
-from flext_ldif.services.filters import FlextLdifFilter
+from flext_ldif.services.filters import FlextLdifFilters
 from flext_ldif.services.migration import FlextLdifMigrationPipeline
 from flext_ldif.services.parser import FlextLdifParser
 from flext_ldif.services.server import FlextLdifServer
@@ -262,7 +262,7 @@ class FlextLdif(FlextService[dict[str, object]]):
         container.register("writer", unified_writer)
 
         # Register filters service
-        container.register("filters", FlextLdifFilter())
+        container.register("filters", FlextLdifFilters())
 
         # Register statistics service
         container.register("statistics", FlextLdifStatistics())
@@ -279,8 +279,12 @@ class FlextLdif(FlextService[dict[str, object]]):
             input_dir_str = params.get("input_dir", ".")
             output_dir_str = params.get("output_dir", ".")
             return FlextLdifMigrationPipeline(
-                input_dir=Path(str(input_dir_str) if input_dir_str is not None else "."),
-                output_dir=Path(str(output_dir_str) if output_dir_str is not None else "."),
+                input_dir=Path(
+                    str(input_dir_str) if input_dir_str is not None else ".",
+                ),
+                output_dir=Path(
+                    str(output_dir_str) if output_dir_str is not None else ".",
+                ),
                 source_server=str(
                     params.get("source_server", FlextLdifConstants.ServerTypes.RFC),
                 ),
@@ -353,7 +357,9 @@ class FlextLdif(FlextService[dict[str, object]]):
                         "LDIF components registered with FlextRegistry",
                         extra={
                             "correlation_id": getattr(
-                                self.context, "correlation_id", None
+                                self.context,
+                                "correlation_id",
+                                None,
                             ),
                             "registered_components": [
                                 "ldif_config",
@@ -482,11 +488,12 @@ class FlextLdif(FlextService[dict[str, object]]):
 
         except Exception as e:
             return FlextResult[list[FlextLdifModels.Entry]].fail(
-                f"Failed to parse LDIF: {e}"
+                f"Failed to parse LDIF: {e}",
             )
 
     def _resolve_source_content(
-        self, source: str | Path
+        self,
+        source: str | Path,
     ) -> str | FlextResult[list[FlextLdifModels.Entry]]:
         """Resolve source (Path or string) to LDIF content string.
 
@@ -505,6 +512,10 @@ class FlextLdif(FlextService[dict[str, object]]):
 
         # Case 2: String with possible file path
         if isinstance(source, str) and "\n" not in source:
+            # Special case: empty string is content, not a file path
+            if not source:
+                return source
+
             try:
                 file_path = Path(source)
                 if file_path.is_file():
@@ -512,19 +523,19 @@ class FlextLdif(FlextService[dict[str, object]]):
                 if file_path.exists():
                     # Path exists but is not a file (e.g., directory)
                     return FlextResult[list[FlextLdifModels.Entry]].fail(
-                        f"Path exists but is not a file: {source}"
+                        f"Path exists but is not a file: {source}",
                     )
                 if "/" in source or "\\" in source or source.endswith(".ldif"):
                     # Looks like a file path but doesn't exist - return error
                     return FlextResult[list[FlextLdifModels.Entry]].fail(
-                        f"File not found: {source}"
+                        f"File not found: {source}",
                     )
                 # Doesn't look like a file path - treat as string content
                 return source
             except (OSError, PermissionError) as e:
                 # File system error - return error, don't treat as string
                 return FlextResult[list[FlextLdifModels.Entry]].fail(
-                    f"Failed to read file: {e}"
+                    f"Failed to read file: {e}",
                 )
             except (ValueError, UnicodeDecodeError):
                 # Not a valid path or encoding issue - treat as string content
@@ -1035,7 +1046,7 @@ class FlextLdif(FlextService[dict[str, object]]):
             # Validate requirements for simple mode
             if input_filename is not None and output_filename is None:
                 return FlextResult[FlextLdifModels.PipelineExecutionResult].fail(
-                    "output_filename is required when input_filename is specified"
+                    "output_filename is required when input_filename is specified",
                 )
 
             # Initialize migration pipeline with proper type safety
@@ -1064,7 +1075,7 @@ class FlextLdif(FlextService[dict[str, object]]):
 
         except (ValueError, TypeError, AttributeError) as e:
             return FlextResult[FlextLdifModels.PipelineExecutionResult].fail(
-                f"Migration failed: {e}"
+                f"Migration failed: {e}",
             )
 
     def _apply_standard_filters(
@@ -1090,8 +1101,10 @@ class FlextLdif(FlextService[dict[str, object]]):
         """
         # Apply objectclass filter if provided
         if objectclass is not None:
-            filter_result = FlextLdifFilter.by_objectclass(
-                entries, objectclass, mark_excluded=False
+            filter_result = FlextLdifFilters.by_objectclass(
+                entries,
+                objectclass,
+                mark_excluded=False,
             )
             if not filter_result.is_success:
                 return FlextResult[list[FlextLdifModels.Entry]].fail(
@@ -1103,8 +1116,10 @@ class FlextLdif(FlextService[dict[str, object]]):
         if dn_pattern is not None:
             # Convert simple substring pattern to fnmatch pattern
             fnmatch_pattern = f"*{dn_pattern}*" if "*" not in dn_pattern else dn_pattern
-            filter_result = FlextLdifFilter.by_dn(
-                entries, fnmatch_pattern, mark_excluded=False
+            filter_result = FlextLdifFilters.by_dn(
+                entries,
+                fnmatch_pattern,
+                mark_excluded=False,
             )
             if not filter_result.is_success:
                 return FlextResult[list[FlextLdifModels.Entry]].fail(
@@ -1115,8 +1130,10 @@ class FlextLdif(FlextService[dict[str, object]]):
         # Apply attributes filter if provided
         if attributes is not None:
             attr_list = list(attributes.keys())
-            filter_result = FlextLdifFilter.by_attributes(
-                entries, attr_list, mark_excluded=False
+            filter_result = FlextLdifFilters.by_attributes(
+                entries,
+                attr_list,
+                mark_excluded=False,
             )
             if not filter_result.is_success:
                 return FlextResult[list[FlextLdifModels.Entry]].fail(
@@ -1178,7 +1195,7 @@ class FlextLdif(FlextService[dict[str, object]]):
         filters_service = self._get_service_typed(
             self.container,
             "filters",
-            FlextLdifFilter,
+            FlextLdifFilters,
         )
         if filters_service is None:
             return FlextResult[list[FlextLdifModels.Entry]].fail(
@@ -1188,7 +1205,10 @@ class FlextLdif(FlextService[dict[str, object]]):
         # Apply standard filters first
         try:
             filter_result = self._apply_standard_filters(
-                entries, objectclass, dn_pattern, attributes
+                entries,
+                objectclass,
+                dn_pattern,
+                attributes,
             )
             if not filter_result.is_success:
                 return filter_result
@@ -1288,16 +1308,8 @@ class FlextLdif(FlextService[dict[str, object]]):
             return None, None
 
         # Extract ACL quirks from schema quirks
-        source_acl = (
-            getattr(source, "acl", None)
-            if hasattr(source, "acl")
-            else None
-        )
-        target_acl = (
-            getattr(target, "acl", None)
-            if hasattr(target, "acl")
-            else None
-        )
+        source_acl = getattr(source, "acl", None) if hasattr(source, "acl") else None
+        target_acl = getattr(target, "acl", None) if hasattr(target, "acl") else None
 
         return source_acl, target_acl
 
@@ -1337,7 +1349,8 @@ class FlextLdif(FlextService[dict[str, object]]):
 
         # Get ACL quirks for transformation
         source_acl, target_acl = self._get_acls_for_transformation(
-            source_type, target_type
+            source_type,
+            target_type,
         )
 
         if source_acl is None or target_acl is None:
@@ -1424,7 +1437,7 @@ class FlextLdif(FlextService[dict[str, object]]):
 
         except (ValueError, TypeError, AttributeError) as e:
             return FlextResult[FlextLdifModels.EntryAnalysisResult].fail(
-                f"Entry analysis failed: {e}"
+                f"Entry analysis failed: {e}",
             )
 
     def validate_entries(
@@ -1463,7 +1476,7 @@ class FlextLdif(FlextService[dict[str, object]]):
             )
             if validation_service is None:
                 return FlextResult[FlextLdifModels.ValidationResult].fail(
-                    "Validation service not available"
+                    "Validation service not available",
                 )
 
             errors: list[str] = []
@@ -1472,7 +1485,8 @@ class FlextLdif(FlextService[dict[str, object]]):
 
             for entry in entries:
                 is_entry_valid, entry_errors = self._validate_single_entry(
-                    entry, validation_service
+                    entry,
+                    validation_service,
                 )
                 errors.extend(entry_errors)
 
@@ -1496,7 +1510,7 @@ class FlextLdif(FlextService[dict[str, object]]):
 
         except (ValueError, TypeError, AttributeError) as e:
             return FlextResult[FlextLdifModels.ValidationResult].fail(
-                f"Entry validation failed: {e}"
+                f"Entry validation failed: {e}",
             )
 
     # =========================================================================
@@ -1629,7 +1643,9 @@ class FlextLdif(FlextService[dict[str, object]]):
             for entry in entries:
                 try:
                     transform_result = self._transform_acl_in_entry(
-                        entry, source_type, target_type
+                        entry,
+                        source_type,
+                        target_type,
                     )
                     if transform_result.is_success:
                         transformed_entries.append(transform_result.unwrap())

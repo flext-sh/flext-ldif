@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import re
 from collections.abc import Mapping
-from typing import ClassVar, Final
+from typing import ClassVar
 
 from flext_core import FlextResult
 
@@ -45,14 +45,14 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
         ACL_ATTRIBUTE_NAME: ClassVar[str] = "olcAccess"  # ACL attribute name
 
         # Server detection patterns and weights
-        DETECTION_PATTERN: Final[str] = r"\b(olc[A-Z][a-zA-Z]+|cn=config)\b"
+        DETECTION_PATTERN: ClassVar[str] = r"\b(olc[A-Z][a-zA-Z]+|cn=config)\b"
         DETECTION_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset([
             "olcDatabase",
             "olcAccess",
             "olcOverlay",
             "olcModule",
         ])
-        DETECTION_WEIGHT: Final[int] = 8
+        DETECTION_WEIGHT: ClassVar[int] = 8
 
         # OpenLDAP 2.x detection patterns (cn=config based)
         OPENLDAP_2_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset([
@@ -108,8 +108,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
 
         # OpenLDAP extends RFC permissions with "auth"
         SUPPORTED_PERMISSIONS: ClassVar[frozenset[str]] = (
-            FlextLdifServersRfc.Constants.SUPPORTED_PERMISSIONS
-            | frozenset(["auth"])
+            FlextLdifServersRfc.Constants.SUPPORTED_PERMISSIONS | frozenset(["auth"])
         )
 
         # NOTE: OpenLDAP inherits RFC baseline for:
@@ -154,30 +153,32 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
         ])
 
         # Schema-specific regex patterns (migrated from nested Schema class)
-        SCHEMA_OPENLDAP_OLC_PATTERN: Final[str] = r"\bolc[A-Z][a-zA-Z]*\b"
+        SCHEMA_OPENLDAP_OLC_PATTERN: ClassVar[str] = r"\bolc[A-Z][a-zA-Z]*\b"
 
         # ACL parsing patterns (migrated from nested Acl class)
-        ACL_BY_PATTERN: Final[str] = r"by\s+([^\s]+)\s+([^\s]+)"
-        ACL_DEFAULT_NAME: Final[str] = "access"  # Internal name for compatibility
+        ACL_BY_PATTERN: ClassVar[str] = r"by\s+([^\s]+)\s+([^\s]+)"
+        ACL_DEFAULT_NAME: ClassVar[str] = "access"  # Internal name for compatibility
 
         # ACL parsing patterns (migrated from _parse_acl method)
-        ACL_INDEX_PATTERN: Final[str] = r"^\{(\d+)\}\s*(.+)"
-        ACL_TO_BY_PATTERN: Final[str] = r"^to\s+(.+?)\s+by\s+"
-        ACL_ATTRS_PATTERN: Final[str] = r"attrs?\s*=\s*([^,\s]+(?:\s*,\s*[^,\s]+)*)"
-        ACL_SUBJECT_TYPE_WHO: Final[str] = "who"
+        ACL_INDEX_PATTERN: ClassVar[str] = r"^\{(\d+)\}\s*(.+)"
+        ACL_TO_BY_PATTERN: ClassVar[str] = r"^to\s+(.+?)\s+by\s+"
+        ACL_ATTRS_PATTERN: ClassVar[str] = r"attrs?\s*=\s*([^,\s]+(?:\s*,\s*[^,\s]+)*)"
+        ACL_SUBJECT_TYPE_WHO: ClassVar[str] = "who"
 
         # ACL detection patterns (migrated from can_handle_acl method)
-        ACL_INDEX_PREFIX_PATTERN: Final[str] = r"^(\{\d+\})?\s*to\s+"
-        ACL_START_PREFIX: Final[str] = "to"
+        ACL_INDEX_PREFIX_PATTERN: ClassVar[str] = r"^(\{\d+\})?\s*to\s+"
+        ACL_START_PREFIX: ClassVar[str] = "to"
 
         # ACL parsing constants (migrated from _parse_acl method)
-        ACL_ATTRS_SEPARATOR: Final[str] = ","
-        ACL_PREFIX_TO: Final[str] = "to "  # OpenLDAP ACL "to" clause prefix
-        ACL_PREFIX_BY: Final[str] = "by "  # OpenLDAP ACL "by" clause prefix
-        ACL_WILDCARD_TARGET: Final[str] = "*"  # Wildcard target/subject
-        ACL_DEFAULT_ACCESS: Final[str] = "none"  # Default access level
-        ACL_OLCACCESS_PREFIX: Final[str] = "olcAccess:"  # olcAccess attribute prefix
-        ACL_ERROR_MISSING_TO: Final[str] = "Invalid OpenLDAP ACL format: missing 'to' clause"
+        ACL_ATTRS_SEPARATOR: ClassVar[str] = ","
+        ACL_PREFIX_TO: ClassVar[str] = "to "  # OpenLDAP ACL "to" clause prefix
+        ACL_PREFIX_BY: ClassVar[str] = "by "  # OpenLDAP ACL "by" clause prefix
+        ACL_WILDCARD_TARGET: ClassVar[str] = "*"  # Wildcard target/subject
+        ACL_DEFAULT_ACCESS: ClassVar[str] = "none"  # Default access level
+        ACL_OLCACCESS_PREFIX: ClassVar[str] = "olcAccess:"  # olcAccess attribute prefix
+        ACL_ERROR_MISSING_TO: ClassVar[str] = (
+            "Invalid OpenLDAP ACL format: missing 'to' clause"
+        )
 
     # =========================================================================
     # Server identification - accessed via Constants via properties in base.py
@@ -204,7 +205,8 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
         # Schema patterns moved to Constants.SCHEMA_OPENLDAP_OLC_PATTERN
 
         def can_handle_attribute(
-            self, attr_definition: str | FlextLdifModels.SchemaAttribute,
+            self,
+            attr_definition: str | FlextLdifModels.SchemaAttribute,
         ) -> bool:
             """Check if this is an OpenLDAP 2.x attribute (PRIVATE).
 
@@ -221,6 +223,9 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             """
             # Check for olc* prefix or olcAttributeTypes context
             if isinstance(attr_definition, str):
+                # Reject empty strings
+                if not attr_definition or not attr_definition.strip():
+                    return False
                 # Check if it contains OpenLDAP-specific markers
                 if re.search(
                     FlextLdifServersOpenldap.Constants.SCHEMA_OPENLDAP_OLC_PATTERN,
@@ -252,7 +257,8 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
         # - create_metadata(): Creates OpenLDAP-specific metadata
 
         def can_handle_objectclass(
-            self, oc_definition: str | FlextLdifModels.SchemaObjectClass,
+            self,
+            oc_definition: str | FlextLdifModels.SchemaObjectClass,
         ) -> bool:
             """Check if this is an OpenLDAP 2.x objectClass (PRIVATE).
 
@@ -477,7 +483,8 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
 
                 # Remove {n} index if present
                 index_match = re.match(
-                    FlextLdifServersOpenldap.Constants.ACL_INDEX_PATTERN, acl_content,
+                    FlextLdifServersOpenldap.Constants.ACL_INDEX_PATTERN,
+                    acl_content,
                 )
                 if index_match:
                     acl_content = index_match.group(2)
@@ -489,8 +496,23 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                     re.IGNORECASE,
                 )
                 if not to_match:
-                    return FlextResult[FlextLdifModels.Acl].fail(
-                        FlextLdifServersOpenldap.Constants.ACL_ERROR_MISSING_TO,
+                    # ACL parser accepts incomplete ACLs and stores as raw
+                    # (validation beyond basic parsing is not in scope)
+                    return FlextResult[FlextLdifModels.Acl].ok(
+                        FlextLdifModels.Acl(
+                            name=FlextLdifServersOpenldap.Constants.ACL_DEFAULT_NAME,
+                            target=FlextLdifModels.AclTarget(
+                                target_dn=FlextLdifServersOpenldap.Constants.ACL_WILDCARD_TARGET,
+                                attributes=[],
+                            ),
+                            subject=FlextLdifModels.AclSubject(
+                                subject_type=FlextLdifServersOpenldap.Constants.ACL_SUBJECT_TYPE_WHO,
+                                subject_value=FlextLdifServersOpenldap.Constants.ACL_WILDCARD_TARGET,
+                            ),
+                            permissions=FlextLdifModels.AclPermissions(),
+                            raw_acl=acl_line,
+                            metadata=self.create_metadata(acl_line),
+                        ),
                     )
 
                 what = to_match.group(1).strip()

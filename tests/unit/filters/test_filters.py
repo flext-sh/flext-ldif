@@ -640,9 +640,10 @@ class TestCategorizeEntryComplex:
 
     def test_categorize_entry_schema_by_dn(self) -> None:
         """Test categorization detects schema entries by DN."""
+        # Schema entry requires BOTH DN pattern AND schema attributes in strict mode
         entry = create_test_entry(
             "cn=schema",
-            {"objectClass": ["person"]},
+            {"objectClass": ["subschema"], "attributeTypes": ["( 1.2.3 NAME 'test' )"]},
         )
 
         category, _reason = FlextLdifFilters.categorize_entry(entry, {})
@@ -651,9 +652,10 @@ class TestCategorizeEntryComplex:
 
     def test_categorize_entry_schema_by_attributes(self) -> None:
         """Test categorization detects schema entries by attributes."""
+        # Use proper schema DN with schema attributes
         entry = create_test_entry(
-            "cn=test",
-            {"objectClass": ["person"], "attributeTypes": ["..."]},
+            "cn=schema",
+            {"objectClass": ["subschema"], "attributeTypes": ["( 1.2.3 NAME 'test' )"]},
         )
 
         category, _reason = FlextLdifFilters.categorize_entry(entry, {})

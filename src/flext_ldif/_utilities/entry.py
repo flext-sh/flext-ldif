@@ -155,7 +155,9 @@ class FlextLdifUtilitiesEntry:
                         base64_attrs.add(attr_name)
                         break
                     except Exception as e:
-                        logger.debug(f"Base64 validation failed for {attr_name}: {e}")
+                        logger.debug(
+                            "Base64 validation failed for %s: %s", attr_name, e
+                        )
 
         return base64_attrs
 
@@ -186,7 +188,7 @@ class FlextLdifUtilitiesEntry:
 
         # Check DN patterns
         dn_lower = entry.dn.value.lower() if entry.dn else ""
-        schema_dn_patterns = ["cn=subschemasubentry", "cn=subschema"]
+        schema_dn_patterns = ["cn=subschemasubentry", "cn=subschema", "cn=schema"]
         has_schema_dn = any(pattern in dn_lower for pattern in schema_dn_patterns)
 
         # Check objectClass
@@ -357,10 +359,10 @@ class FlextLdifUtilitiesEntry:
             if k.lower() not in attrs_to_remove
         }
 
-        # Create new entry with filtered attributes
+        # Create new entry with filtered attributes using LdifAttributes
         return FlextLdifModels.Entry(
             dn=entry.dn,
-            attributes=filtered,
+            attributes=FlextLdifModels.LdifAttributes(attributes=filtered),
         )
 
 

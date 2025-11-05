@@ -96,7 +96,7 @@ class FlextLdifAcl(FlextService[FlextLdifModels.AclResponse]):
                         total_acls_extracted=0,
                         acl_attribute_name=None,
                     ),
-                )
+                ),
             )
 
         acl_values: list[str] = entry.get_attribute_values(acl_attribute)
@@ -111,7 +111,7 @@ class FlextLdifAcl(FlextService[FlextLdifModels.AclResponse]):
                         total_acls_extracted=0,
                         acl_attribute_name=acl_attribute,
                     ),
-                )
+                ),
             )
 
         acls: list[FlextLdifModels.Acl] = []
@@ -134,7 +134,7 @@ class FlextLdifAcl(FlextService[FlextLdifModels.AclResponse]):
                     total_acls_extracted=len(acls),
                     acl_attribute_name=acl_attribute,
                 ),
-            )
+            ),
         )
 
     def _get_acl_attribute_for_server(self, server_type: str) -> str | None:
@@ -164,7 +164,8 @@ class FlextLdifAcl(FlextService[FlextLdifModels.AclResponse]):
 
         except (AttributeError, TypeError, ValueError):
             self._logger.exception(
-                f"Failed to get ACL attribute for server type {server_type}",
+                "Failed to get ACL attribute for server type %s",
+                server_type,
             )
             return None
 
@@ -192,7 +193,7 @@ class FlextLdifAcl(FlextService[FlextLdifModels.AclResponse]):
                     total_acls_extracted=0,
                     acl_attribute_name=None,
                 ),
-            )
+            ),
         )
 
     def parse(
@@ -282,7 +283,8 @@ class FlextLdifAcl(FlextService[FlextLdifModels.AclResponse]):
 
                 if hasattr(target_acl, "convert_rfc_acl_to_aci"):
                     aci_result = target_acl.convert_rfc_acl_to_aci(
-                        rfc_acl_attrs, target_server
+                        rfc_acl_attrs,
+                        target_server,
                     )
                     if aci_result.is_failure:
                         return FlextResult[dict[str, object]].fail(
@@ -389,18 +391,19 @@ class FlextLdifAcl(FlextService[FlextLdifModels.AclResponse]):
         if subject_value and subject_value != "*":
             if not FlextLdifUtilities.DN.validate(subject_value):
                 return FlextResult[bool].fail(
-                    f"Invalid subject DN format per RFC 4514: {subject_value}"
+                    f"Invalid subject DN format per RFC 4514: {subject_value}",
                 )
 
         context_subject = context.get("subject_dn", "")
         if context_subject:
             # Use FlextLdifUtilities for case-insensitive DN comparison
             comparison_result = FlextLdifUtilities.DN.compare_dns(
-                str(context_subject), subject_value
+                str(context_subject),
+                subject_value,
             )
             if comparison_result != 0:  # 0 means equal
                 return FlextResult[bool].fail(
-                    f"Subject DN mismatch: {context_subject} != {subject_value}"
+                    f"Subject DN mismatch: {context_subject} != {subject_value}",
                 )
 
         return FlextResult[bool].ok(True)
@@ -431,18 +434,19 @@ class FlextLdifAcl(FlextService[FlextLdifModels.AclResponse]):
         if target_dn and target_dn != "*":
             if not FlextLdifUtilities.DN.validate(target_dn):
                 return FlextResult[bool].fail(
-                    f"Invalid target DN format per RFC 4514: {target_dn}"
+                    f"Invalid target DN format per RFC 4514: {target_dn}",
                 )
 
         context_target = context.get("target_dn", "")
         if context_target:
             # Use FlextLdifUtilities for case-insensitive DN comparison
             comparison_result = FlextLdifUtilities.DN.compare_dns(
-                str(context_target), target_dn
+                str(context_target),
+                target_dn,
             )
             if comparison_result != 0:  # 0 means equal
                 return FlextResult[bool].fail(
-                    f"Target DN mismatch: {context_target} != {target_dn}"
+                    f"Target DN mismatch: {context_target} != {target_dn}",
                 )
 
         return FlextResult[bool].ok(True)

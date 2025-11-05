@@ -27,7 +27,7 @@ from flext_ldif.models import FlextLdifModels
 from flext_ldif.services.acl import FlextLdifAcl
 from flext_ldif.services.dn import FlextLdifDn
 from flext_ldif.services.entry import FlextLdifEntry
-from flext_ldif.services.filters import FlextLdifFilter, FlextLdifFilters
+from flext_ldif.services.filters import FlextLdifFilters
 from flext_ldif.services.parser import FlextLdifParser
 from flext_ldif.services.server import FlextLdifServer
 from flext_ldif.services.sorting import FlextLdifSorting
@@ -315,7 +315,8 @@ class FlextLdifMigrationPipeline(
         return self._unified_migration_pipeline(entries, total_entries)
 
     def _validate_and_normalize_entry_dns(
-        self, entries: list[FlextLdifModels.Entry]
+        self,
+        entries: list[FlextLdifModels.Entry],
     ) -> list[FlextLdifModels.Entry]:
         """Validate and normalize all entry DNs using FlextLdifUtilities.
 
@@ -337,7 +338,8 @@ class FlextLdifMigrationPipeline(
                 # Validate DN using FlextLdifUtilities.DN
                 if not FlextLdifUtilities.DN.validate(entry_dn):
                     logger.warning(
-                        f"[MIGRATION] Invalid DN per RFC 4514: {entry_dn}, skipping entry"
+                        "[MIGRATION] Invalid DN per RFC 4514: %s, skipping entry",
+                        entry_dn,
                     )
                     continue
 
@@ -345,7 +347,8 @@ class FlextLdifMigrationPipeline(
                 normalized_dn = FlextLdifUtilities.DN.norm(entry_dn)
                 if not normalized_dn:
                     logger.warning(
-                        f"[MIGRATION] Failed to normalize DN: {entry_dn}, using original"
+                        "[MIGRATION] Failed to normalize DN: %s, using original",
+                        entry_dn,
                     )
                     normalized_dn = entry_dn
 
@@ -358,7 +361,7 @@ class FlextLdifMigrationPipeline(
                     validated_entries.append(entry)
 
             except Exception as e:
-                logger.exception(f"[MIGRATION] Error validating entry DN: {e}")
+                logger.exception("[MIGRATION] Error validating entry DN: %s", e)
                 continue
 
         return validated_entries
@@ -383,25 +386,27 @@ class FlextLdifMigrationPipeline(
         if not acl_config:
             return
 
-        logger.info(f"[PIPELINE] ACL config found: {acl_config}")
+        logger.info("[PIPELINE] ACL config found: %s", acl_config)
         acl_entries, acl_dns = [], set()
 
         for idx, entry in enumerate(entries):
             try:
-                if FlextLdifFilter.is_schema(entry):
+                if FlextLdifFilters.is_schema(entry):
                     continue
                 if any(attr in entry.attributes.attributes for attr in acl_config):
                     acl_entries.append(entry)
                     acl_dns.add(FlextLdifUtilities.DN._get_dn_value(entry.dn))
             except Exception as e:
-                logger.exception(f"[PIPELINE] Error processing entry {idx}: {e}")
+                logger.exception("[PIPELINE] Error processing entry %s: %s", idx, e)
                 raise
 
         categorized[FlextLdifConstants.Categories.ACL] = acl_entries
         for cat in list(categorized.keys()):
             if cat != FlextLdifConstants.Categories.ACL:
                 categorized[cat] = [
-                    e for e in categorized[cat] if FlextLdifUtilities.DN._get_dn_value(e.dn) not in acl_dns
+                    e
+                    for e in categorized[cat]
+                    if FlextLdifUtilities.DN._get_dn_value(e.dn) not in acl_dns
                 ]
 
     def _process_category(
@@ -420,18 +425,20 @@ class FlextLdifMigrationPipeline(
 
         """
         logger.info(
-            f"[PIPELINE] Processing {cat}: {len(cat_entries)} entries before filter"
+            f"[PIPELINE] Processing {cat}: {len(cat_entries)} entries before filter",
         )
 
         # Schema: only filter by OID whitelist
         if cat == FlextLdifConstants.Categories.SCHEMA:
             if self._schema_whitelist_rules and isinstance(
-                self._schema_whitelist_rules, dict
+                self._schema_whitelist_rules,
+                dict,
             ):
-                result = FlextLdifFilter.filter_schema_by_oids(
+                result = FlextLdifFilters.filter_schema_by_oids(
                     entries=cat_entries,
                     allowed_oids=cast(
-                        "dict[str, list[str]]", self._schema_whitelist_rules
+                        "dict[str, list[str]]",
+                        self._schema_whitelist_rules,
                     ),
                 )
                 filtered = result.unwrap() if result.is_success else cat_entries
@@ -500,19 +507,19 @@ class FlextLdifMigrationPipeline(
         Single code path for all 3 modes (simple/categorized/structured).
         Behavior adapts ONLY through parameters, NO God Patterns.
         """
-        logger.info(f"[PIPELINE START] Processing {total_entries} entries")
+        logger.info("[PIPELINE START] Processing %s entries", total_entries)
 
         # Step 0: Validate and normalize all entry DNs using FlextLdifUtilities
         logger.info("[PIPELINE] Validating and normalizing entry DNs using RFC 4514")
         validated_entries = self._validate_and_normalize_entry_dns(entries)
         logger.info(
-            f"[PIPELINE] DN validation complete: {len(validated_entries)}/{len(entries)} entries valid"
+            f"[PIPELINE] DN validation complete: {len(validated_entries)}/{len(entries)} entries valid",
         )
 
         # Step 1: Categorize entries (no categorization rules = simple mode)
         categorized = self._categorize_entries_unified(validated_entries)
         logger.info(
-            f"[PIPELINE] Categorized into {len(categorized)} categories: {list(categorized.keys())}"
+            f"[PIPELINE] Categorized into {len(categorized)} categories: {list(categorized.keys())}",
         )
 
         # Step 2: Extract and remove ACL entries if configured (using helper)
@@ -531,29 +538,33 @@ class FlextLdifMigrationPipeline(
 
         # Step 5: Build result
         processed = sum(len(e) for e in final.values())
+        stats = FlextLdifModels.PipelineStatistics(
+            total_entries=total_entries,
+            processed_entries=processed,
+            schema_entries=counts.get(FlextLdifConstants.Categories.SCHEMA, 0),
+            hierarchy_entries=counts.get(
+                FlextLdifConstants.Categories.HIERARCHY,
+                0,
+            ),
+            user_entries=counts.get(FlextLdifConstants.Categories.USERS, 0),
+            group_entries=counts.get(FlextLdifConstants.Categories.GROUPS, 0),
+            acl_entries=counts.get(FlextLdifConstants.Categories.ACL, 0),
+            rejected_entries=counts.get(
+                FlextLdifConstants.Categories.REJECTED,
+                0,
+            ),
+        )
         return FlextResult[FlextLdifModels.PipelineExecutionResult].ok(
             FlextLdifModels.PipelineExecutionResult(
                 entries_by_category=final,
-                statistics=FlextLdifModels.PipelineStatistics(
-                    total_entries=total_entries,
-                    processed_entries=processed,
-                    schema_entries=counts.get(FlextLdifConstants.Categories.SCHEMA, 0),
-                    hierarchy_entries=counts.get(
-                        FlextLdifConstants.Categories.HIERARCHY, 0
-                    ),
-                    user_entries=counts.get(FlextLdifConstants.Categories.USERS, 0),
-                    group_entries=counts.get(FlextLdifConstants.Categories.GROUPS, 0),
-                    acl_entries=counts.get(FlextLdifConstants.Categories.ACL, 0),
-                    rejected_entries=counts.get(
-                        FlextLdifConstants.Categories.REJECTED, 0
-                    ),
-                ),
+                statistics=stats.model_dump(),  # Convert to dict for Pydantic v2
                 file_paths=file_paths,
-            )
+            ),
         )
 
     def _categorize_entries_unified(
-        self, entries: list[FlextLdifModels.Entry]
+        self,
+        entries: list[FlextLdifModels.Entry],
     ) -> dict[str, list[FlextLdifModels.Entry]]:
         """Unified categorization - adapts based on mode and rules."""
         if not self._categorization_rules:
@@ -587,14 +598,16 @@ class FlextLdifMigrationPipeline(
         }
 
     def _filter_schema_by_oids(
-        self, entries: list[FlextLdifModels.Entry]
+        self,
+        entries: list[FlextLdifModels.Entry],
     ) -> list[FlextLdifModels.Entry]:
         """Filter schema by OID whitelist."""
         if not self._schema_whitelist_rules or not isinstance(
-            self._schema_whitelist_rules, dict
+            self._schema_whitelist_rules,
+            dict,
         ):
             return entries
-        result = FlextLdifFilter.filter_schema_by_oids(
+        result = FlextLdifFilters.filter_schema_by_oids(
             entries=entries,
             allowed_oids=self._schema_whitelist_rules,  # type: ignore[arg-type]
         )
@@ -630,13 +643,14 @@ class FlextLdifMigrationPipeline(
         parser = FlextLdifParser()
         for file_path in files_to_process:
             if not file_path.exists():
-                self.logger.warning(f"LDIF file not found: {file_path}")
+                self.logger.warning("LDIF file not found: %s", file_path)
                 continue
 
             logger.info(f"Parsing file: {file_path.name}")
 
             parse_result = parser.parse_ldif_file(
-                file_path, server_type=self._source_server
+                file_path,
+                server_type=self._source_server,
             )
             if parse_result.is_failure:
                 self.logger.warning(
@@ -649,19 +663,21 @@ class FlextLdifMigrationPipeline(
             logger.info(f"  → Parsed {len(file_entries)} entries from {file_path.name}")
 
             # Check if any are schema entries
-            schema_count = sum(1 for e in file_entries if FlextLdifFilter.is_schema(e))
+            schema_count = sum(1 for e in file_entries if FlextLdifFilters.is_schema(e))
             if schema_count > 0:
                 logger.info(
-                    f"  → Found {schema_count} SCHEMA entries in {file_path.name}"
+                    f"  → Found {schema_count} SCHEMA entries in {file_path.name}",
                 )
                 for e in file_entries:
-                    if FlextLdifFilter.is_schema(e):
-                        logger.info(f"     Schema DN: {FlextLdifUtilities.DN._get_dn_value(e.dn)}")
+                    if FlextLdifFilters.is_schema(e):
+                        logger.info(
+                            f"     Schema DN: {FlextLdifUtilities.DN._get_dn_value(e.dn)}",
+                        )
 
             entries.extend(file_entries)
 
         logger.info(
-            f"TOTAL PARSED: {len(entries)} entries from {len(files_to_process)} files"
+            f"TOTAL PARSED: {len(entries)} entries from {len(files_to_process)} files",
         )
         logger.info("")
 
@@ -750,24 +766,26 @@ class FlextLdifMigrationPipeline(
                     # Create or update metadata
                     metadata = entry.metadata or FlextLdifModels.QuirkMetadata()
                     metadata = metadata.model_copy(
-                        update={"removed_attributes": list(removed)}
+                        update={"removed_attributes": list(removed)},
                     )
 
                     # Create new entry with updated metadata
-                    new_attrs_result = FlextLdifModels.LdifAttributes.create(filtered_attrs)  # type: ignore[arg-type]
+                    new_attrs_result = FlextLdifModels.LdifAttributes.create(
+                        filtered_attrs,
+                    )  # type: ignore[arg-type]
                     if new_attrs_result.is_success:
                         updated_entry = entry.model_copy(
                             update={
                                 "attributes": new_attrs_result.unwrap(),
                                 "metadata": metadata,
-                            }
+                            },
                         )
             else:
                 # Just update attributes without metadata
                 new_attrs_result = FlextLdifModels.LdifAttributes.create(filtered_attrs)  # type: ignore[arg-type]
                 if new_attrs_result.is_success:
                     updated_entry = entry.model_copy(
-                        update={"attributes": new_attrs_result.unwrap()}
+                        update={"attributes": new_attrs_result.unwrap()},
                     )
 
             result_entries.append(updated_entry)
@@ -794,7 +812,10 @@ class FlextLdifMigrationPipeline(
         )
 
         # Use FlextLdifUtilities for case-insensitive attribute check
-        return FlextLdifUtilities.Entry.has_any_attributes(entry, list(filter_acl_attrs))
+        return FlextLdifUtilities.Entry.has_any_attributes(
+            entry,
+            list(filter_acl_attrs),
+        )
 
     def _filter_by_objectclasses(
         self,
@@ -843,48 +864,41 @@ class FlextLdifMigrationPipeline(
             current_entry = entry
 
             # Step 1: Filter operational attributes using FlextLdifEntry service
-            # NOTE: _operational_service removed - use FlextLdifEntry.remove_operational_attributes directly
-            operational_result = FlextLdifEntry.remove_operational_attributes(
-                entry
-            )
+            # NOTE: remove_operational_attributes returns Entry, not dict
+            operational_result = FlextLdifEntry.remove_operational_attributes(entry)
             if operational_result.is_success:
-                # Rebuild entry with operational attributes filtered out
-                filtered_op_attrs = operational_result.unwrap()
-                ldif_attrs_op = FlextLdifModels.LdifAttributes(
-                    attributes=filtered_op_attrs,
-                )
-                current_entry = FlextLdifModels.Entry(
-                    dn=entry.dn,
-                    attributes=ldif_attrs_op,
-                    metadata=entry.metadata,
-                )
+                # Get filtered entry directly (already an Entry model)
+                current_entry = operational_result.unwrap()
             else:
                 logger.warning(
-                    f"Failed to filter operational attributes for {FlextLdifUtilities.DN._get_dn_value(entry.dn)}: {operational_result.error}"
+                    f"Failed to filter operational attributes for {FlextLdifUtilities.DN._get_dn_value(entry.dn)}: {operational_result.error}",
                 )
+                current_entry = entry  # Keep original if filtering fails
 
             # Step 2: Filter forbidden attributes using FlextLdifFilters
             if self._forbidden_attributes:
                 forbidden_result = FlextLdifFilters.filter_entry_attributes(
-                    current_entry, self._forbidden_attributes
+                    current_entry,
+                    self._forbidden_attributes,
                 )
                 if forbidden_result.is_success:
                     current_entry = forbidden_result.unwrap()
                 else:
                     logger.warning(
-                        f"Failed to filter forbidden attributes for {FlextLdifUtilities.DN._get_dn_value(current_entry.dn)}: {forbidden_result.error}"
+                        f"Failed to filter forbidden attributes for {FlextLdifUtilities.DN._get_dn_value(current_entry.dn)}: {forbidden_result.error}",
                     )
 
             # Step 3: Filter forbidden objectClasses using FlextLdifFilters
             if self._forbidden_objectclasses:
                 oc_result = FlextLdifFilters.filter_entry_objectclasses(
-                    current_entry, self._forbidden_objectclasses
+                    current_entry,
+                    self._forbidden_objectclasses,
                 )
                 if oc_result.is_success:
                     current_entry = oc_result.unwrap()
                 else:
                     logger.warning(
-                        f"Failed to filter forbidden objectClasses for {FlextLdifUtilities.DN._get_dn_value(current_entry.dn)}: {oc_result.error}"
+                        f"Failed to filter forbidden objectClasses for {FlextLdifUtilities.DN._get_dn_value(current_entry.dn)}: {oc_result.error}",
                     )
 
             filtered.append(current_entry)
@@ -905,7 +919,8 @@ class FlextLdifMigrationPipeline(
             return FlextResult[None].fail(f"Failed to create directory: {e}")
 
     def _sort_entries_by_hierarchy(
-        self, entries: list[FlextLdifModels.Entry]
+        self,
+        entries: list[FlextLdifModels.Entry],
     ) -> list[FlextLdifModels.Entry]:
         """Sort entries hierarchically by DN depth then alphabetically.
 

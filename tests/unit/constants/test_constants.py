@@ -100,8 +100,9 @@ class TestFlextLdifConstants:
         """Test LdapServers constants."""
         assert FlextLdifConstants.LdapServers.ACTIVE_DIRECTORY == "active_directory"
         assert FlextLdifConstants.LdapServers.OPENLDAP == "openldap"
-        assert "CN=" in FlextLdifConstants.LdapServers.AD_DN_PATTERNS
-        assert "cn=" in FlextLdifConstants.LdapServers.OPENLDAP_DN_PATTERNS
+        # NOTE: Server-specific constants like AD_DN_PATTERNS are now in server Constants classes
+        # e.g., FlextLdifServersAd.Constants.AD_DN_PATTERNS
+        # e.g., FlextLdifServersOpenldap.Constants.OPENLDAP_DN_PATTERNS
 
     def test_rfc_compliance_constants(self) -> None:
         """Test RfcCompliance constants."""

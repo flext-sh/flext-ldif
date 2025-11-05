@@ -489,9 +489,7 @@ class TestOpenldapSchemaCanHandleAttribute:
         """Create OpenLDAP quirk instance."""
         return FlextLdifServersOpenldap()
 
-    def test_can_handle_olc_attribute(
-        self, openldap: FlextLdifServersOpenldap
-    ) -> None:
+    def test_can_handle_olc_attribute(self, openldap: FlextLdifServersOpenldap) -> None:
         """Test detection of olc* attributes."""
         attr_def = "( 2.5.4.3 NAME 'olcAttributeTypes' DESC 'OpenLDAP attribute' )"
         assert isinstance(openldap.schema.can_handle_attribute(attr_def), bool)
@@ -528,9 +526,7 @@ class TestOpenldapSchemaParseAttribute:
             / "openldap2_schema_fixtures.ldif"
         )
 
-    def test_parse_standard_attribute(
-        self, openldap: FlextLdifServersOpenldap
-    ) -> None:
+    def test_parse_standard_attribute(self, openldap: FlextLdifServersOpenldap) -> None:
         """Test parsing standard OpenLDAP RFC attribute."""
         attr_def = "( 2.5.4.3 NAME ( 'cn' 'commonName' ) DESC 'RFC2256: common name(s)' SUP name )"
         result = openldap.schema.parse(attr_def)
@@ -733,25 +729,19 @@ class TestOpenldapAclCanHandleAcl:
         """Create OpenLDAP quirk instance."""
         return FlextLdifServersOpenldap()
 
-    def test_can_handle_to_by_acl(
-        self, openldap: FlextLdifServersOpenldap
-    ) -> None:
+    def test_can_handle_to_by_acl(self, openldap: FlextLdifServersOpenldap) -> None:
         """Test detection of OpenLDAP 'to <what> by' ACL format."""
         acl_line = "to attrs=userPassword by self write by anonymous auth by * none"
         acl = openldap.acl
         assert isinstance(acl.can_handle(acl_line), bool)
 
-    def test_can_handle_indexed_acl(
-        self, openldap: FlextLdifServersOpenldap
-    ) -> None:
+    def test_can_handle_indexed_acl(self, openldap: FlextLdifServersOpenldap) -> None:
         """Test detection of indexed OpenLDAP ACL."""
         acl_line = "{0}to * by * read"
         acl = openldap.acl
         assert isinstance(acl.can_handle(acl_line), bool)
 
-    def test_can_handle_olcaccess_acl(
-        self, openldap: FlextLdifServersOpenldap
-    ) -> None:
+    def test_can_handle_olcaccess_acl(self, openldap: FlextLdifServersOpenldap) -> None:
         """Test detection of olcAccess attribute format."""
         acl_line = "olcAccess: to * by * read"
         acl = openldap.acl
@@ -794,9 +784,7 @@ class TestOpenldapAclParseAcl:
             acl_data = result.unwrap()
             assert hasattr(acl_data, "name")
 
-    def test_parse_attribute_acl(
-        self, openldap: FlextLdifServersOpenldap
-    ) -> None:
+    def test_parse_attribute_acl(self, openldap: FlextLdifServersOpenldap) -> None:
         """Test parsing attribute-specific ACL."""
         acl_line = "to attrs=userPassword by self write by anonymous auth by * none"
         acl = openldap.acl
@@ -810,9 +798,7 @@ class TestOpenldapAclParseAcl:
         result = acl.parse(acl_line)
         assert hasattr(result, "is_success")
 
-    def test_parse_olcaccess_acl(
-        self, openldap: FlextLdifServersOpenldap
-    ) -> None:
+    def test_parse_olcaccess_acl(self, openldap: FlextLdifServersOpenldap) -> None:
         """Test parsing olcAccess format ACL."""
         acl_line = "olcAccess: to * by * read"
         acl = openldap.acl
@@ -873,9 +859,7 @@ class TestOpenldapEntryCanHandleEntry:
         )
         FlextLdifModels.Entry(dn=dn, attributes=attributes)
         entry = openldap
-        assert isinstance(
-            entry.can_handle(dn.value, attributes.attributes), bool
-        )
+        assert isinstance(entry.can_handle(dn.value, attributes.attributes), bool)
 
     def test_can_handle_olc_attribute_entry(
         self, openldap: FlextLdifServersOpenldap.Entry
@@ -887,9 +871,7 @@ class TestOpenldapEntryCanHandleEntry:
         )
         FlextLdifModels.Entry(dn=dn, attributes=attributes)
         entry = openldap
-        assert isinstance(
-            entry.can_handle(dn.value, attributes.attributes), bool
-        )
+        assert isinstance(entry.can_handle(dn.value, attributes.attributes), bool)
 
     def test_can_handle_standard_entry(
         self, openldap: FlextLdifServersOpenldap.Entry
@@ -903,9 +885,7 @@ class TestOpenldapEntryCanHandleEntry:
         )
         FlextLdifModels.Entry(dn=dn, attributes=attributes)
         entry = openldap
-        assert isinstance(
-            entry.can_handle(dn.value, attributes.attributes), bool
-        )
+        assert isinstance(entry.can_handle(dn.value, attributes.attributes), bool)
 
 
 class TestOpenldapEntryProcessEntry:
@@ -949,9 +929,7 @@ class TestOpenldapProperties:
     ) -> None:
         """Test schema quirk has correct properties."""
 
-    def test_openldap_acl_properties(
-        self, openldap: FlextLdifServersOpenldap
-    ) -> None:
+    def test_openldap_acl_properties(self, openldap: FlextLdifServersOpenldap) -> None:
         """Test Acl has correct properties."""
         openldap.acl
         # OpenLDAP Acl quirks have openldap server_type and priority 10

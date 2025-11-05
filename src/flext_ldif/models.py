@@ -887,7 +887,8 @@ class FlextLdifModels(FlextModels):
 
         @staticmethod
         def resolve_syntax_oid(
-            oid: str, server_type: str = "rfc"
+            oid: str,
+            server_type: str = "rfc",
         ) -> FlextLdifModels.Syntax | None:
             """Resolve a syntax OID to a Syntax model using RFC 4517 validation.
 
@@ -916,7 +917,8 @@ class FlextLdifModels(FlextModels):
                 name = oid_to_name.get(oid)
                 type_category = (
                     FlextLdifConstants.RfcSyntaxOids.NAME_TO_TYPE_CATEGORY.get(
-                        name, "string"
+                        name,
+                        "string",
                     )
                     if name
                     else "string"
@@ -1156,7 +1158,7 @@ class FlextLdifModels(FlextModels):
                             server_type=server_type,
                             source_entry=source_entry,
                             extensions={
-                                "unconverted_attributes": unconverted_attributes or {}
+                                "unconverted_attributes": unconverted_attributes or {},
                             },
                         )
                 elif server_type or source_entry or unconverted_attributes:
@@ -1314,7 +1316,7 @@ class FlextLdifModels(FlextModels):
             List of DN components (e.g., ["cn=admin", "dc=example", "dc=com"])
 
             """
-            return self.dn.components
+            return self.dn.components()
 
         def matches_filter(
             self,
@@ -1789,8 +1791,8 @@ class FlextLdifModels(FlextModels):
             default_factory=dict,
             description="Entries organized by category",
         )
-        statistics: FlextLdifModels.PipelineStatistics = Field(
-            default_factory=lambda: FlextLdifModels.PipelineStatistics(),
+        statistics: dict[str, object] = Field(  # PipelineStatistics
+            default_factory=dict,
             description="Pipeline execution statistics",
         )
         file_paths: dict[str, str] = Field(
@@ -1893,8 +1895,8 @@ class FlextLdifModels(FlextModels):
 
             """
             return {
-                "attributes": self.total_attributes,
-                "object_classes": self.total_object_classes,
+                "attributes": self.total_attributes(),
+                "object_classes": self.total_object_classes(),
                 "server_type": self.server_type,
                 "entry_count": self.entry_count,
             }
@@ -1957,7 +1959,7 @@ class FlextLdifModels(FlextModels):
                 Sum of schema elements and entries
 
             """
-            return self.total_schema_elements + self.total_entries
+            return self.total_schema_elements() + self.total_entries
 
         @computed_field
         def has_schema(self) -> bool:
@@ -1967,7 +1969,7 @@ class FlextLdifModels(FlextModels):
                 True if attributes or object classes exist
 
             """
-            return self.total_schema_elements > 0
+            return self.total_schema_elements() > 0
 
         @computed_field
         def has_entries(self) -> bool:
@@ -2004,11 +2006,11 @@ class FlextLdifModels(FlextModels):
             return {
                 "schema_attributes": self.total_schema_attributes,
                 "schema_objectclasses": self.total_schema_objectclasses,
-                "total_schema": self.total_schema_elements,
+                "total_schema": self.total_schema_elements(),
                 "entries": self.total_entries,
                 "failed": self.failed_entries,
-                "total_items": self.total_items,
-                "success_rate": round(self.success_rate, 2),
+                "total_items": self.total_items(),
+                "success_rate": round(self.success_rate(), 2),
             }
 
     # =========================================================================
@@ -2052,7 +2054,7 @@ class FlextLdifModels(FlextModels):
 
         entries: list[FlextLdifModels.Entry] = Field(description="Parsed LDIF entries")
         statistics: FlextLdifModels.ParseStatistics = Field(
-            description="Parse operation statistics"
+            description="Parse operation statistics",
         )
         detected_server_type: str | None = Field(None)
 
@@ -2067,7 +2069,9 @@ class FlextLdifModels(FlextModels):
         entries_written: int = Field(ge=0, description="Number of entries written")
         output_file: str | None = Field(None, description="Output file path")
         file_size_bytes: int = Field(
-            ge=0, default=0, description="Written file size in bytes"
+            ge=0,
+            default=0,
+            description="Written file size in bytes",
         )
         encoding: str = Field(default="utf-8", description="File encoding used")
 
@@ -2081,7 +2085,7 @@ class FlextLdifModels(FlextModels):
 
         content: str | None = Field(None, description="Written LDIF content")
         statistics: FlextLdifModels.WriteStatistics = Field(
-            description="Write operation statistics"
+            description="Write operation statistics",
         )
 
     class WriteFormatOptions(FlextModels.Value):
@@ -2167,7 +2171,8 @@ class FlextLdifModels(FlextModels):
         total_entries_processed: int = Field(ge=0, description="Total entries analyzed")
         entries_with_acls: int = Field(ge=0, description="Entries containing ACLs")
         total_acls_extracted: int = Field(
-            ge=0, description="Total ACL objects extracted"
+            ge=0,
+            description="Total ACL objects extracted",
         )
         acl_attribute_name: str | None = Field(
             None,
@@ -2184,7 +2189,7 @@ class FlextLdifModels(FlextModels):
 
         acls: list[FlextLdifModels.Acl] = Field(description="Extracted ACL models")
         statistics: FlextLdifModels.AclStatistics = Field(
-            description="ACL extraction statistics"
+            description="ACL extraction statistics",
         )
 
     class MigrationPipelineResult(FlextModels.Value):
@@ -2215,9 +2220,9 @@ class FlextLdifModels(FlextModels):
             default_factory=list,
             description="List of migrated directory entries (Entry objects or dicts)",
         )
-        stats: FlextLdifModels.MigrationStatistics = Field(
-            default_factory=lambda: FlextLdifModels.MigrationStatistics(),
-            description="Migration statistics and metrics",
+        stats: dict[str, object] = Field(
+            default_factory=dict,
+            description="Migration statistics and metrics (will be MigrationStatistics)",
         )
         output_files: list[str] = Field(
             default_factory=list,
@@ -2548,17 +2553,10 @@ class FlextLdifModels(FlextModels):
 
     # Set the ConvertibleModel type alias after all classes are defined
     # Use type alias syntax with actual class references (no prefix needed inside class)
-    type ConvertibleModel = (
-        Entry
-        | SchemaAttribute
-        | SchemaObjectClass
-        | Acl
-    )
+    type ConvertibleModel = Entry | SchemaAttribute | SchemaObjectClass | Acl
 
     # Set the SchemaModel type alias after all classes are defined
-    type SchemaModel = (
-        SchemaAttribute | SchemaObjectClass
-    )
+    type SchemaModel = SchemaAttribute | SchemaObjectClass
 
 
 __all__ = ["FlextLdifModels"]

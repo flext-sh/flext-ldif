@@ -33,8 +33,8 @@ class TestOidBooleanAttributeParsing:
         """Test that BOOLEAN_ATTRIBUTES constant is defined."""
         boolean_attrs = FlextLdifServersOid.Constants.BOOLEAN_ATTRIBUTES
         assert len(boolean_attrs) > 0
-        # Should contain at least some known boolean attributes
-        assert "pwdlockout" in boolean_attrs.lower() or any(
+        # BOOLEAN_ATTRIBUTES is a frozenset, check membership directly
+        assert "pwdlockout" in boolean_attrs or any(
             "lockout" in attr.lower() for attr in boolean_attrs
         )
 

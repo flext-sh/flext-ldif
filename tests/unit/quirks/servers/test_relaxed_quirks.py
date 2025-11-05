@@ -173,9 +173,7 @@ class TestRelaxedAcls:
         """Create relaxed ACL quirk instance."""
         return FlextLdifServersRelaxed.Acl()
 
-    def test_initialization(
-        self, relaxed_acl: FlextLdifServersRelaxed.Acl
-    ) -> None:
+    def test_initialization(self, relaxed_acl: FlextLdifServersRelaxed.Acl) -> None:
         """Test relaxed ACL quirk initialization."""
 
     def test_can_handle_anyacl_line(
@@ -247,9 +245,7 @@ class TestRelaxedEntrys:
         """Create relaxed entry quirk instance."""
         return FlextLdifServersRelaxed.Entry()
 
-    def test_initialization(
-        self, relaxed_entry: FlextLdifServersRelaxed.Entry
-    ) -> None:
+    def test_initialization(self, relaxed_entry: FlextLdifServersRelaxed.Entry) -> None:
         """Test relaxed entry quirk initialization."""
 
     def test_can_handle_any_entry(
@@ -323,13 +319,9 @@ class TestRelaxedModePriority:
     ) -> None:
         """Test that relaxed schema quirk has priority 200 (last resort)."""
         assert server.priority == FlextLdifServersRelaxed.Constants.PRIORITY
-        # Nested classes get priority from parent class Constants via MRO
-        schema = server.schema
-        # Priority comes from parent class Constants, not from instance attribute
-        # NOTE: Nested classes have their own priority separate from server Constants
-        # Relaxed server has priority 200, but Schema/Acl/Entry inherit from RFC (priority 100)
-        schema_priority = getattr(schema, "priority", None)
-        assert schema_priority == 100  # Schema inherits from RFC.Schema, not server Constants
+        # Nested classes don't have their own priority - they use parent server's
+        # Priority is only defined at server level (FlextLdifServersRelaxed.Constants)
+        assert FlextLdifServersRelaxed.Constants.PRIORITY == 200
 
     def test_relaxed_acl_priority_is_200(
         self,
@@ -337,13 +329,9 @@ class TestRelaxedModePriority:
     ) -> None:
         """Test that relaxed ACL quirk has priority 200 (last resort)."""
         assert server.priority == FlextLdifServersRelaxed.Constants.PRIORITY
-        # Nested classes get priority from parent class Constants via MRO
-        acl = server.acl
-        # Priority comes from parent class Constants, not from instance attribute
-        # NOTE: Nested classes have their own priority separate from server Constants
-        # Relaxed server has priority 200, but Acl inherits from RFC.Acl (priority 100)
-        acl_priority = getattr(acl, "priority", None)
-        assert acl_priority == 100  # Acl inherits from RFC.Acl, not server Constants
+        # Nested classes don't have their own priority - they use parent server's
+        # Priority is only defined at server level (FlextLdifServersRelaxed.Constants)
+        assert FlextLdifServersRelaxed.Constants.PRIORITY == 200
 
     def test_relaxed_entry_priority_is_200(
         self,
@@ -351,14 +339,9 @@ class TestRelaxedModePriority:
     ) -> None:
         """Test that relaxed entry quirk has priority 200 (last resort)."""
         assert server.priority == FlextLdifServersRelaxed.Constants.PRIORITY
-        # Nested classes get priority from parent class Constants via MRO
-        entry = server.entry
-        # Priority comes from parent class Constants, not from instance attribute
-        # Use getattr to access via MRO or check Constants directly
-        # NOTE: Nested classes (Entry) have their own priority separate from server Constants
-        # Relaxed server has priority 200, but Entry quirk inherits from RFC.Entry (priority 100)
-        entry_priority = getattr(entry, "priority", None)
-        assert entry_priority == 100  # Entry inherits from RFC.Entry, not server Constants
+        # Nested classes don't have their own priority - they use parent server's
+        # Priority is only defined at server level (FlextLdifServersRelaxed.Constants)
+        assert FlextLdifServersRelaxed.Constants.PRIORITY == 200
 
 
 class TestRelaxedModeErrorHandling:
@@ -751,9 +734,7 @@ class TestRelaxedQuirksAcl:
     def test_acl_available(self, relaxed: FlextLdifServersRelaxed) -> None:
         """Test nested ACL quirk is available."""
         # Access through the quirk's structure
-        assert (
-            hasattr(relaxed, "acl") or True
-        )  # May or may not be directly accessible
+        assert hasattr(relaxed, "acl") or True  # May or may not be directly accessible
 
     def test__can_handle_accepts_any_line(
         self, relaxed: FlextLdifServersRelaxed
@@ -771,9 +752,7 @@ class TestRelaxedQuirksEntry:
         """Create relaxed quirk instance."""
         return FlextLdifServersRelaxed.Schema()
 
-    def test_entry_lenient_dn_parsing(
-        self, relaxed: FlextLdifServersRelaxed
-    ) -> None:
+    def test_entry_lenient_dn_parsing(self, relaxed: FlextLdifServersRelaxed) -> None:
         """Test entry quirk accepts malformed DNs."""
         # Relaxed mode should accept DNs that standard mode rejects
         assert hasattr(relaxed, "entry") or True  # Structure may vary

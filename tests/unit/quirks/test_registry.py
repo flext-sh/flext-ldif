@@ -42,11 +42,11 @@ class TestFlextLdifServer:
 
         # Registry should have auto-discovered servers
         assert stats["total_servers"] > 0
-        assert isinstance(stats["schemas_by_server"], dict)
-        assert isinstance(stats["acls_by_server"], dict)
-        assert isinstance(stats["entrys_by_server"], dict)
+        # Note: API changed - stats now use "quirks_by_server" instead of separate dicts
+        assert "quirks_by_server" in stats
+        assert isinstance(stats["quirks_by_server"], dict)
         # Each server should have quirks registered
-        assert len(stats["schemas_by_server"]) > 0
+        assert len(stats["quirks_by_server"]) > 0
 
 
 class TestSchemaRetrieval:
@@ -59,7 +59,8 @@ class TestSchemaRetrieval:
         quirks = registry.get_schemas("oid")
 
         assert len(quirks) > 0
-        assert all(q.server_type == "oid" for q in quirks)
+        # Quirks don't have server_type attribute - verify they have parse method
+        assert all(hasattr(q, "parse") for q in quirks)
 
     def test_get_schemas_oud(self) -> None:
         """Test retrieving schema quirks for OUD server."""
@@ -68,7 +69,8 @@ class TestSchemaRetrieval:
         quirks = registry.get_schemas("oud")
 
         assert len(quirks) > 0
-        assert all(q.server_type == "oud" for q in quirks)
+        # Quirks don't have server_type attribute - verify they have parse method
+        assert all(hasattr(q, "parse") for q in quirks)
 
     def test_get_schemas_openldap(self) -> None:
         """Test retrieving schema quirks for OpenLDAP server."""
@@ -77,7 +79,8 @@ class TestSchemaRetrieval:
         quirks = registry.get_schemas("openldap")
 
         assert len(quirks) > 0
-        assert all(q.server_type == "openldap" for q in quirks)
+        # Quirks don't have server_type attribute - verify they have parse method
+        assert all(hasattr(q, "parse") for q in quirks)
 
     def test_get_schemas_nonexistent_server(self) -> None:
         """Test retrieving schema quirks for nonexistent server type."""
@@ -138,7 +141,8 @@ class TestQuirkFinding:
         found = registry.find_schema_for_attribute("oid", attr_def)
 
         # May or may not find depending on implementation - just verify no exception
-        assert found is None or hasattr(found, "server_type")
+        # Schema quirks don't have server_type attribute anymore
+        assert found is None or hasattr(found, "parse")
 
     def test_find_schema_for_objectclass(self) -> None:
         """Test finding schema quirk that can handle objectClass definition."""
@@ -150,7 +154,8 @@ class TestQuirkFinding:
         found = registry.find_schema_for_objectclass("oid", oc_def)
 
         # May or may not find depending on implementation - just verify no exception
-        assert found is None or hasattr(found, "server_type")
+        # Schema quirks don't have server_type attribute anymore
+        assert found is None or hasattr(found, "parse")
 
     def test_find_returns_none_for_unknown_server(self) -> None:
         """Test finding quirk returns None for unknown server type."""
@@ -172,7 +177,8 @@ class TestNestedQuirks:
 
         # Should have auto-discovered ACL quirks
         assert isinstance(acls, list)
-        assert all(q.server_type == "oid" for q in acls)
+        # ACL quirks don't have server_type attribute - verify they have parse method
+        assert all(hasattr(q, "parse") for q in acls)
 
     def test_get_entrys_for_oid(self) -> None:
         """Test retrieving entry quirks for OID."""
@@ -182,7 +188,9 @@ class TestNestedQuirks:
 
         # Should have auto-discovered entry quirks
         assert isinstance(entrys, list)
-        assert all(q.server_type == "oid" for q in entrys)
+        assert len(entrys) > 0
+        # Entry quirks don't have server_type attribute - verify they have parse method
+        assert all(hasattr(q, "parse") for q in entrys)
 
     def test_get_alls_for_server(self) -> None:
         """Test retrieving all quirk types for a server."""
@@ -193,12 +201,15 @@ class TestNestedQuirks:
         assert "schema" in alls
         assert "acl" in alls
         assert "entry" in alls
-        # Each should be a list
-        assert isinstance(alls["schema"], list)
-        assert isinstance(alls["acl"], list)
-        assert isinstance(alls["entry"], list)
-        # Should have auto-discovered quirks
-        assert len(alls["schema"]) > 0
+        # Note: API changed - get_alls_for_server returns quirk instances, not lists
+        # Each should be a quirk instance (Schema, Acl, Entry)
+        assert alls["schema"] is not None
+        assert alls["acl"] is not None
+        assert alls["entry"] is not None
+        # Verify they are quirk instances
+        assert hasattr(alls["schema"], "parse_attribute")
+        assert hasattr(alls["acl"], "parse")
+        assert hasattr(alls["entry"], "parse")
 
 
 class TestRegistryStats:
@@ -246,10 +257,14 @@ class TestRegistryStats:
 
         stats = registry.get_registry_stats()
 
-        assert "schemas_by_server" in stats
-        assert "acls_by_server" in stats
-        assert "entrys_by_server" in stats
+        # Note: API changed - stats now use "quirks_by_server" instead of separate dicts
+        assert "quirks_by_server" in stats
         assert "total_servers" in stats
+        # Verify each server has quirk type flags
+        for server_quirks in stats["quirks_by_server"].values():
+            assert "has_schema" in server_quirks
+            assert "has_acl" in server_quirks
+            assert "has_entry" in server_quirks
 
 
 class TestServerQuirksAvailability:
@@ -280,9 +295,7 @@ class TestServerQuirksAvailability:
 
             # ACL quirks may or may not exist for all servers
             acls = registry.get_acls(server_type)
-            assert isinstance(acls, list), (
-                f"ACL quirks not a list for {server_type}"
-            )
+            assert isinstance(acls, list), f"ACL quirks not a list for {server_type}"
 
 
 class TestErrorHandling:
@@ -301,8 +314,8 @@ class TestErrorHandling:
 
         found = registry.find_schema_for_attribute("oid", "")
 
-        # Should handle gracefully
-        assert found is None or hasattr(found, "server_type")
+        # Should handle gracefully (Schema quirks don't have server_type anymore)
+        assert found is None or hasattr(found, "parse")
 
     def test_get_alls_for_unknown_server(self) -> None:
         """Test getting all quirks for unknown server."""

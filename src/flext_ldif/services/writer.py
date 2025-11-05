@@ -97,11 +97,9 @@ class FlextLdifWriter(FlextService[Any]):
             return validation_result
 
         try:
-            # format_options MUST be provided - we do NOT create defaults here
-            # Default creation should happen at API level based on migration mode
+            # Create default format_options if not provided
             if format_options is None:
-                msg = "format_options is required for write() method"
-                return FlextResult.fail(msg)
+                format_options = FlextLdifModels.WriteFormatOptions()
 
             # Step 1: Denormalize entries
             denormalize_result = self._denormalize_entries(entries, target_server_type)
@@ -111,7 +109,9 @@ class FlextLdifWriter(FlextService[Any]):
 
             # Step 2: Generate header
             header_result = self._generate_header(
-                denormalized_entries, header_template, template_data
+                denormalized_entries,
+                header_template,
+                template_data,
             )
             if header_result.is_failure:
                 return header_result
@@ -192,7 +192,8 @@ class FlextLdifWriter(FlextService[Any]):
         return content
 
     def _serialize_to_ldap3(
-        self, entries: Sequence[FlextLdifModels.Entry]
+        self,
+        entries: Sequence[FlextLdifModels.Entry],
     ) -> FlextResult[list[tuple[str, dict[str, list[str]]]]]:
         """Serialize a sequence of Entry models to the ldap3 format."""
         try:
@@ -211,8 +212,8 @@ class FlextLdifWriter(FlextService[Any]):
         """Execute service health check."""
         return FlextResult.ok(
             FlextLdifModels.WriteResponse(
-                statistics=FlextLdifModels.WriteStatistics(entries_written=0)
-            )
+                statistics=FlextLdifModels.WriteStatistics(entries_written=0),
+            ),
         )
 
     # ═══════════════════════════════════════════════════════════════════════════
@@ -220,7 +221,9 @@ class FlextLdifWriter(FlextService[Any]):
     # ═══════════════════════════════════════════════════════════════════════════
 
     def _validate_write_request(
-        self, output_target: str, output_path: Path | None
+        self,
+        output_target: str,
+        output_path: Path | None,
     ) -> FlextResult[None]:
         """Validate write request parameters.
 
@@ -237,7 +240,9 @@ class FlextLdifWriter(FlextService[Any]):
         return FlextResult.ok(None)
 
     def _denormalize_entries(
-        self, entries: Sequence[FlextLdifModels.Entry], target_server_type: str
+        self,
+        entries: Sequence[FlextLdifModels.Entry],
+        target_server_type: str,
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Denormalize entries to target server format.
 
@@ -255,7 +260,7 @@ class FlextLdifWriter(FlextService[Any]):
         quirks = self._registry.gets(target_server_type)
         if not quirks:
             return FlextResult.fail(
-                f"No quirk implementation found for server type: '{target_server_type}'"
+                f"No quirk implementation found for server type: '{target_server_type}'",
             )
 
         # For RFC and other modes, entries don't need pre-denormalization
@@ -289,11 +294,12 @@ class FlextLdifWriter(FlextService[Any]):
         # Render template
         template_context = {**(template_data or {}), "statistics": statistics}
         render_result = FlextLdifUtilities.Writer.render_template(
-            header_template, template_context
+            header_template,
+            template_context,
         )
         if render_result.is_failure:
             return FlextResult.fail(
-                f"Failed to render header template: {render_result.error}"
+                f"Failed to render header template: {render_result.error}",
             )
 
         return render_result
@@ -342,6 +348,44 @@ class FlextLdifWriter(FlextService[Any]):
 
         return FlextResult.fail(f"Unhandled output target: {output_target}")
 
+    def _apply_format_options(
+        self,
+        ldif_content: str,
+        format_options: FlextLdifModels.WriteFormatOptions,
+    ) -> str:
+        """Apply format options to LDIF content.
+
+        Args:
+            ldif_content: Raw LDIF content
+            format_options: Formatting options to apply
+
+        Returns:
+            Formatted LDIF content
+
+        """
+        # Determine line width to use:
+        # - If fold_long_lines=True: use format_options.line_width (customizable)
+        # - If fold_long_lines=False: still must fold at 76 bytes (RFC 2849 requirement)
+        line_width = (
+            format_options.line_width
+            if format_options.fold_long_lines
+            else 76  # RFC 2849 mandatory limit
+        )
+
+        # Apply line folding
+        lines = ldif_content.splitlines()
+        folded_lines: list[str] = []
+
+        for line in lines:
+            if len(line) <= line_width:
+                folded_lines.append(line)
+            else:
+                # Use utility method for RFC 2849 compliant folding
+                folded = FlextLdifUtilities.Writer.fold(line, line_width)
+                folded_lines.extend(folded)
+
+        return "\n".join(folded_lines) + "\n" if folded_lines else ""
+
     def _output_ldif_content(
         self,
         entries: list[FlextLdifModels.Entry],
@@ -368,10 +412,16 @@ class FlextLdifWriter(FlextService[Any]):
 
         """
         ldif_content = self._serialize_entries_to_ldif(
-            entries, format_options, target_server_type
+            entries,
+            format_options,
+            target_server_type,
         )
+
+        # Apply format options (line folding, etc.) to LDIF content
+        formatted_ldif = self._apply_format_options(ldif_content, format_options)
+
         final_content = (
-            f"{header_content}{ldif_content}" if header_content else ldif_content
+            f"{header_content}{formatted_ldif}" if header_content else formatted_ldif
         )
 
         if output_target == "string":
@@ -397,8 +447,8 @@ class FlextLdifWriter(FlextService[Any]):
                     output_file=file_stats["path"],
                     file_size_bytes=file_stats["bytes_written"],
                     encoding=file_stats["encoding"],
-                )
-            )
+                ),
+            ),
         )
 
 

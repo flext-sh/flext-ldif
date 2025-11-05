@@ -55,7 +55,7 @@ This service handles DN OPERATIONS ONLY:
 - Tracking canonical DN case (CaseRegistry)
 
 What it does NOT do:
-- Filter entries (use FlextLdifFilter)
+- Filter entries (use FlextLdifFilters)
 - Sort entries (use FlextLdifSorting)
 - Validate schema (use validation services)
 
@@ -197,7 +197,8 @@ class FlextLdifDn(FlextService[str]):
             "normalize": lambda: self._normalizer._normalize_operation(self.dn),
             "clean": lambda: self._normalizer._clean_operation(self.dn),
             "escape": lambda: self._normalizer._escape_operation(
-                self.dn, self.escape_mode
+                self.dn,
+                self.escape_mode,
             ),
             "unescape": lambda: self._normalizer._unescape_operation(self.dn),
             "compare": self._handle_compare,
@@ -791,19 +792,29 @@ class FlextLdifDn(FlextService[str]):
         def normalize_dn_references(
             self,
             data: dict[str, object],
-            dn_fields: list[str],
+            dn_fields: list[str] | None = None,
         ) -> FlextResult[dict[str, object]]:
             """Normalize DN references in data object to canonical case.
 
             Args:
                 data: Dictionary containing DN references
-                dn_fields: List of field names containing DNs or DN lists
+                dn_fields: List of field names containing DNs or DN lists.
+                          If None, uses default DN fields from FlextLdifConstants.
 
             Returns:
                 FlextResult with normalized data dict
 
             """
             try:
+                # Use default DN-valued attributes if dn_fields not specified
+                if dn_fields is None:
+                    from flext_ldif.constants import FlextLdifConstants
+
+                    # Include 'dn' itself plus all DN-valued attributes
+                    dn_fields = ["dn"] + list(
+                        FlextLdifConstants.DnValuedAttributes.ALL_DN_VALUED
+                    )
+
                 normalized_data = dict(data)
 
                 for field_name in dn_fields:
@@ -836,7 +847,7 @@ class FlextLdifDn(FlextService[str]):
                                     # Use FlextLdifUtilities for proper RFC 4514 normalization
                                     normalized_dn = FlextLdifUtilities.DN.norm(item)
                                     normalized_list.append(
-                                        normalized_dn or item.lower()
+                                        normalized_dn or item.lower(),
                                     )
                             else:
                                 normalized_list.append(item)

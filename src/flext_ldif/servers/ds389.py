@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 from collections.abc import Mapping
-from typing import ClassVar, Final
+from typing import ClassVar
 
 from flext_core import FlextResult
 
@@ -68,14 +68,14 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
 
         # Server detection patterns and weights
         # Migrated from FlextLdifConstants.ServerDetection
-        DETECTION_PATTERN: Final[str] = r"\b(389ds|redhat-ds|dirsrv)\b"
-        DETECTION_ATTRIBUTES: Final[frozenset[str]] = frozenset([
+        DETECTION_PATTERN: ClassVar[str] = r"\b(389ds|redhat-ds|dirsrv)\b"
+        DETECTION_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset([
             "nsuniqueId",
             "nsslapd-",
             "nsds5replica",
             "nsds5replicationagreement",
         ])
-        DETECTION_WEIGHT: Final[int] = 6
+        DETECTION_WEIGHT: ClassVar[int] = 6
         DETECTION_OBJECTCLASS_NAMES: ClassVar[frozenset[str]] = frozenset([
             "nscontainer",
             "nsperson",
@@ -117,44 +117,45 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
         ])
 
         # Schema attribute/objectClass parsing patterns
-        SCHEMA_ATTRIBUTE_NAME_REGEX: Final[str] = r"NAME\s+['\"]([\w-]+)['\"]"
-        SCHEMA_OBJECTCLASS_NAME_REGEX: Final[str] = r"NAME\s+['\"](\w+)['\"]"
+        SCHEMA_ATTRIBUTE_NAME_REGEX: ClassVar[str] = r"NAME\s+['\"]([\w-]+)['\"]"
+        SCHEMA_OBJECTCLASS_NAME_REGEX: ClassVar[str] = r"NAME\s+['\"](\w+)['\"]"
 
         # ACL-specific constants (migrated from nested Acl class)
-        ACL_CLAUSE_PATTERN: Final[str] = r"\([^()]+\)"
+        ACL_CLAUSE_PATTERN: ClassVar[str] = r"\([^()]+\)"
 
         # 389 DS ACI parsing patterns (migrated from Acl class)
-        ACL_NAME_PATTERN: Final[str] = r"acl\s+\"([^\"]+)\""
-        ACL_ALLOW_PATTERN: Final[str] = r"allow\s*\(([^)]+)\)"
-        ACL_TARGETATTR_PATTERN: Final[str] = r"targetattr\s*=\s*\"([^\"]+)\""
-        ACL_USERDN_PATTERN: Final[str] = r"userdn\s*=\s*\"([^\"]+)\""
-        ACL_TARGET_PATTERN: Final[str] = r"target\s*=\s*\"([^\"]+)\""
-        ACL_DEFAULT_NAME: Final[str] = "389 DS ACL"
-        ACL_TARGET_DN_PREFIX: Final[str] = "dn:"
+        ACL_NAME_PATTERN: ClassVar[str] = r"acl\s+\"([^\"]+)\""
+        ACL_ALLOW_PATTERN: ClassVar[str] = r"allow\s*\(([^)]+)\)"
+        ACL_TARGETATTR_PATTERN: ClassVar[str] = r"targetattr\s*=\s*\"([^\"]+)\""
+        # Override RFC pattern with 389DS-specific syntax
+        ACL_USERDN_PATTERN: ClassVar[str] = r"userdn\s*=\s*\"([^\"]+)\""
+        ACL_TARGET_PATTERN: ClassVar[str] = r"target\s*=\s*\"([^\"]+)\""
+        ACL_DEFAULT_NAME: ClassVar[str] = "389 DS ACL"
+        ACL_TARGET_DN_PREFIX: ClassVar[str] = "dn:"
         # Default anonymous subject for 389 DS
-        ACL_ANONYMOUS_SUBJECT: Final[str] = "ldap:///anyone"
-        ACL_VERSION_PREFIX: Final[str] = "(version 3.0)"
-        ACL_TARGETATTR_SEPARATOR: Final[str] = ","
-        ACL_TARGETATTR_SPACE_REPLACEMENT: Final[str] = " "
-        ACL_ACI_PREFIX: Final[str] = "aci:"  # ACL attribute prefix for 389 DS
-        ACL_ALLOW_PREFIX: Final[str] = (
+        ACL_ANONYMOUS_SUBJECT: ClassVar[str] = "ldap:///anyone"
+        ACL_VERSION_PREFIX: ClassVar[str] = "(version 3.0)"
+        ACL_TARGETATTR_SEPARATOR: ClassVar[str] = ","
+        ACL_TARGETATTR_SPACE_REPLACEMENT: ClassVar[str] = " "
+        ACL_ACI_PREFIX: ClassVar[str] = "aci:"  # ACL attribute prefix for 389 DS
+        ACL_ALLOW_PREFIX: ClassVar[str] = (
             "allow"  # ACL allow clause prefix (without parentheses)
         )
-        ACL_TARGETATTR_PREFIX: Final[str] = (
+        ACL_TARGETATTR_PREFIX: ClassVar[str] = (
             "targetattr"  # ACL targetattr prefix (without =)
         )
-        ACL_USERDN_PREFIX: Final[str] = "userdn"  # ACL userdn prefix (without =)
-        ACL_TARGET_PREFIX: Final[str] = 'target = "'  # ACL target prefix
-        ACL_WILDCARD_ATTRIBUTE: Final[str] = "*"  # Wildcard for all attributes
+        ACL_USERDN_PREFIX: ClassVar[str] = "userdn"  # ACL userdn prefix (without =)
+        ACL_TARGET_PREFIX: ClassVar[str] = 'target = "'  # ACL target prefix
+        ACL_WILDCARD_ATTRIBUTE: ClassVar[str] = "*"  # Wildcard for all attributes
 
         # Error messages
-        ERROR_ACL_PARSING_FAILED: Final[str] = (
+        ERROR_ACL_PARSING_FAILED: ClassVar[str] = (
             "389 Directory Server ACL parsing failed: {exc}"
         )
-        ERROR_ACL_WRITE_FAILED: Final[str] = (
+        ERROR_ACL_WRITE_FAILED: ClassVar[str] = (
             "389 Directory Server ACL write failed: {exc}"
         )
-        ERROR_ENTRY_PROCESSING_FAILED: Final[str] = (
+        ERROR_ENTRY_PROCESSING_FAILED: ClassVar[str] = (
             "389 Directory Server entry processing failed: {exc}"
         )
 
@@ -162,7 +163,8 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
         """Schema quirks for Red Hat / 389 Directory Server."""
 
         def can_handle_attribute(
-            self, attr_definition: str | FlextLdifModels.SchemaAttribute,
+            self,
+            attr_definition: str | FlextLdifModels.SchemaAttribute,
         ) -> bool:
             """Detect 389 DS attribute definitions using centralized constants."""
             if isinstance(attr_definition, str):
@@ -205,7 +207,8 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             return False
 
         def can_handle_objectclass(
-            self, oc_definition: str | FlextLdifModels.SchemaObjectClass,
+            self,
+            oc_definition: str | FlextLdifModels.SchemaObjectClass,
         ) -> bool:
             """Detect 389 DS objectClass definitions using centralized constants."""
             if isinstance(oc_definition, str):
@@ -453,7 +456,9 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
 
             except (ValueError, TypeError, AttributeError) as exc:
                 return FlextResult[FlextLdifModels.Acl].fail(
-                    FlextLdifServersDs389.Constants.ERROR_ACL_PARSING_FAILED.format(exc=exc),
+                    FlextLdifServersDs389.Constants.ERROR_ACL_PARSING_FAILED.format(
+                        exc=exc,
+                    ),
                 )
 
         def _write_acl(self, acl_data: FlextLdifModels.Acl) -> FlextResult[str]:
@@ -483,11 +488,14 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
 
             except (ValueError, TypeError, AttributeError) as exc:
                 return FlextResult[str].fail(
-                    FlextLdifServersDs389.Constants.ERROR_ACL_WRITE_FAILED.format(exc=exc),
+                    FlextLdifServersDs389.Constants.ERROR_ACL_WRITE_FAILED.format(
+                        exc=exc,
+                    ),
                 )
 
         def _extract_acl_permissions(
-            self, permissions_data: FlextLdifModels.AclPermissions | None,
+            self,
+            permissions_data: FlextLdifModels.AclPermissions | None,
         ) -> list[str]:
             """Extract permission names from Permissions model flags."""
             permissions: list[str] = []
@@ -618,7 +626,8 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             )
 
         def process_entry(
-            self, entry: FlextLdifModels.Entry,
+            self,
+            entry: FlextLdifModels.Entry,
         ) -> FlextResult[FlextLdifModels.Entry]:
             """Normalise 389 DS entries and attach metadata."""
             try:
@@ -647,7 +656,9 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
 
             except (ValueError, TypeError, AttributeError) as exc:
                 return FlextResult[FlextLdifModels.Entry].fail(
-                    FlextLdifServersDs389.Constants.ERROR_ENTRY_PROCESSING_FAILED.format(exc=exc),
+                    FlextLdifServersDs389.Constants.ERROR_ENTRY_PROCESSING_FAILED.format(
+                        exc=exc,
+                    ),
                 )
 
 

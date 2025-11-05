@@ -60,13 +60,11 @@ class FlextLdifUtilitiesDN:
 
     @overload
     @staticmethod
-    def split(dn: str) -> list[str]:
-        ...
+    def split(dn: str) -> list[str]: ...
 
     @overload
     @staticmethod
-    def split(dn: Any) -> list[str]:
-        ...
+    def split(dn: Any) -> list[str]: ...
 
     @staticmethod
     def split(dn: Any | str) -> list[str]:
@@ -90,13 +88,11 @@ class FlextLdifUtilitiesDN:
 
     @overload
     @staticmethod
-    def norm_string(dn: str) -> str:
-        ...
+    def norm_string(dn: str) -> str: ...
 
     @overload
     @staticmethod
-    def norm_string(dn: Any) -> str:
-        ...
+    def norm_string(dn: Any) -> str: ...
 
     @staticmethod
     def norm_string(dn: Any | str) -> str:
@@ -110,13 +106,11 @@ class FlextLdifUtilitiesDN:
 
     @overload
     @staticmethod
-    def validate(dn: str) -> bool:
-        ...
+    def validate(dn: str) -> bool: ...
 
     @overload
     @staticmethod
-    def validate(dn: Any) -> bool:
-        ...
+    def validate(dn: Any) -> bool: ...
 
     @staticmethod
     def validate(dn: Any | str) -> bool:
@@ -153,13 +147,11 @@ class FlextLdifUtilitiesDN:
 
     @overload
     @staticmethod
-    def parse(dn: str) -> list[tuple[str, str]] | None:
-        ...
+    def parse(dn: str) -> list[tuple[str, str]] | None: ...
 
     @overload
     @staticmethod
-    def parse(dn: Any) -> list[tuple[str, str]] | None:
-        ...
+    def parse(dn: Any) -> list[tuple[str, str]] | None: ...
 
     @staticmethod
     def parse(dn: Any | str) -> list[tuple[str, str]] | None:
@@ -188,13 +180,11 @@ class FlextLdifUtilitiesDN:
 
     @overload
     @staticmethod
-    def norm(dn: str) -> str | None:
-        ...
+    def norm(dn: str) -> str | None: ...
 
     @overload
     @staticmethod
-    def norm(dn: Any) -> str | None:
-        ...
+    def norm(dn: Any) -> str | None: ...
 
     @staticmethod
     def norm(dn: Any | str) -> str | None:
@@ -214,8 +204,9 @@ class FlextLdifUtilitiesDN:
                 if "=" not in comp:
                     continue
                 attr, _, value = comp.partition("=")
-                # Lowercase attribute, preserve value per RFC 4514
-                normalized.append(f"{attr.strip().lower()}={value.strip()}")
+                # Lowercase attribute AND value for case-insensitive comparison
+                # RFC 4514 says DN comparison is case-insensitive
+                normalized.append(f"{attr.strip().lower()}={value.strip().lower()}")
 
             return ",".join(normalized) if normalized else None
         except Exception:
@@ -223,13 +214,11 @@ class FlextLdifUtilitiesDN:
 
     @overload
     @staticmethod
-    def clean_dn(dn: str) -> str:
-        ...
+    def clean_dn(dn: str) -> str: ...
 
     @overload
     @staticmethod
-    def clean_dn(dn: Any) -> str:
-        ...
+    def clean_dn(dn: Any) -> str: ...
 
     @staticmethod
     def clean_dn(dn: Any | str) -> str:
@@ -316,29 +305,19 @@ class FlextLdifUtilitiesDN:
 
     @overload
     @staticmethod
-    def compare_dns(dn1: str, dn2: str) -> int | None:
-        ...
+    def compare_dns(dn1: str, dn2: str) -> int | None: ...
 
     @overload
     @staticmethod
-    def compare_dns(
-        dn1: Any, dn2: Any
-    ) -> int | None:
-        ...
+    def compare_dns(dn1: Any, dn2: Any) -> int | None: ...
 
     @overload
     @staticmethod
-    def compare_dns(
-        dn1: Any | str, dn2: str
-    ) -> int | None:
-        ...
+    def compare_dns(dn1: Any | str, dn2: str) -> int | None: ...
 
     @overload
     @staticmethod
-    def compare_dns(
-        dn1: str, dn2: Any
-    ) -> int | None:
-        ...
+    def compare_dns(dn1: str, dn2: Any) -> int | None: ...
 
     @staticmethod
     def compare_dns(
@@ -396,7 +375,9 @@ class FlextLdifUtilitiesDN:
         """
         if char == "\\" and i + 1 < len(rdn):
             current_val, next_i = FlextLdifUtilitiesDN._process_rdn_escape(
-                rdn, i, current_val
+                rdn,
+                i,
+                current_val,
             )
             return current_attr, current_val, in_value, next_i, True
 
@@ -437,7 +418,13 @@ class FlextLdifUtilitiesDN:
                 char = rdn[i]
                 current_attr, current_val, in_value, i, _ = (
                     FlextLdifUtilitiesDN._process_rdn_char(
-                        char, rdn, i, current_attr, current_val, in_value, pairs
+                        char,
+                        rdn,
+                        i,
+                        current_attr,
+                        current_val,
+                        in_value,
+                        pairs,
                     )
                 )
 
@@ -559,30 +546,22 @@ class FlextLdifUtilitiesDN:
 
     @overload
     @staticmethod
-    def is_under_base(dn: str, base_dn: str) -> bool:
-        ...
+    def is_under_base(dn: str, base_dn: str) -> bool: ...
 
     @overload
     @staticmethod
     def is_under_base(
         dn: Any,
         base_dn: Any,
-    ) -> bool:
-        ...
+    ) -> bool: ...
 
     @overload
     @staticmethod
-    def is_under_base(
-        dn: Any | str, base_dn: str
-    ) -> bool:
-        ...
+    def is_under_base(dn: Any | str, base_dn: str) -> bool: ...
 
     @overload
     @staticmethod
-    def is_under_base(
-        dn: str, base_dn: Any
-    ) -> bool:
-        ...
+    def is_under_base(dn: str, base_dn: Any) -> bool: ...
 
     @staticmethod
     def is_under_base(
@@ -626,27 +605,19 @@ class FlextLdifUtilitiesDN:
 
     @overload
     @staticmethod
-    def are_equal(dn1: str, dn2: str) -> bool:
-        ...
+    def are_equal(dn1: str, dn2: str) -> bool: ...
 
     @overload
     @staticmethod
-    def are_equal(
-        dn1: Any, dn2: Any
-    ) -> bool:
-        ...
+    def are_equal(dn1: Any, dn2: Any) -> bool: ...
 
     @overload
     @staticmethod
-    def are_equal(
-        dn1: Any | str, dn2: str
-    ) -> bool:
-        ...
+    def are_equal(dn1: Any | str, dn2: str) -> bool: ...
 
     @overload
     @staticmethod
-    def are_equal(dn1: str, dn2: Any) -> bool:
-        ...
+    def are_equal(dn1: str, dn2: Any) -> bool: ...
 
     @staticmethod
     def are_equal(

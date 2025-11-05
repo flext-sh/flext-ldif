@@ -90,7 +90,7 @@ class FlextLdifServer:
                         priority = instance.priority
                     except AttributeError as e:
                         logger.warning(
-                            f"Skipping {obj.__name__}: missing Constants - {e}"
+                            f"Skipping {obj.__name__}: missing Constants - {e}",
                         )
                         continue
 
@@ -99,7 +99,7 @@ class FlextLdifServer:
                     if validation_result.is_failure:
                         logger.warning(
                             f"Skipping {obj.__name__}: protocol validation failed - "
-                            f"{validation_result.error}"
+                            f"{validation_result.error}",
                         )
                         continue
 
@@ -107,7 +107,7 @@ class FlextLdifServer:
                     self._bases[server_type] = instance
                     logger.debug(
                         f"Registered base quirk: {obj.__name__} "
-                        f"(server_type={server_type}, priority={priority})"
+                        f"(server_type={server_type}, priority={priority})",
                     )
 
                 except TypeError:
@@ -117,7 +117,7 @@ class FlextLdifServer:
                     logger.debug(f"Failed to register {obj.__name__}: {e}")
 
         except ImportError as e:
-            logger.debug(f"Could not auto-discover quirks: {e}")
+            logger.debug("Could not auto-discover quirks: %s", e)
 
     def register(self, quirk: FlextLdifServersBase) -> FlextResult[None]:
         """Register a base quirk instance.
@@ -138,21 +138,21 @@ class FlextLdifServer:
                 server_type = quirk.server_type
             except AttributeError as e:
                 return FlextResult[None].fail(
-                    f"Quirk missing Constants.SERVER_TYPE: {e}"
+                    f"Quirk missing Constants.SERVER_TYPE: {e}",
                 )
 
             # Validate that all nested quirks satisfy their protocols
             validation_result = self._validate_protocols(quirk)
             if validation_result.is_failure:
                 return FlextResult[None].fail(
-                    f"Protocol validation failed: {validation_result.error}"
+                    f"Protocol validation failed: {validation_result.error}",
                 )
 
             # Register in dict by server_type
             self._bases[server_type] = quirk
             logger.info(
                 f"Registered base quirk: {quirk.__class__.__name__} "
-                f"(server_type={server_type})"
+                f"(server_type={server_type})",
             )
             return FlextResult[None].ok(None)
 
@@ -187,7 +187,11 @@ class FlextLdifServer:
             if schema_class is None or acl_class is None or entry_class is None:
                 return FlextResult[None].fail("Nested quirk classes not found")
 
-            if not inspect.isclass(schema_class) or not inspect.isclass(acl_class) or not inspect.isclass(entry_class):
+            if (
+                not inspect.isclass(schema_class)
+                or not inspect.isclass(acl_class)
+                or not inspect.isclass(entry_class)
+            ):
                 return FlextResult[None].fail("Nested quirks are not classes")
 
             return FlextResult[None].ok(None)
