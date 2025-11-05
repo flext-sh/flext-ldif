@@ -207,7 +207,7 @@ class FlextLdifTestFactory:
     def create_parser(
         cls,
         config: dict[str, object] | None = None,
-        _quirk_registry: FlextLdifServer | None = None,
+        _registry: FlextLdifServer | None = None,
     ) -> FlextLdifParser:
         """Create parser service with optional config."""
         return cls._RfcParserFactory.create_ldif_parser(config)
@@ -216,7 +216,7 @@ class FlextLdifTestFactory:
     def create_validator(
         cls,
         config: dict[str, object] | None = None,
-        _quirk_registry: FlextLdifServer | None = None,
+        _registry: FlextLdifServer | None = None,
     ) -> FlextLdifParser:
         """Create validator service (schema parser) with optional config.
 

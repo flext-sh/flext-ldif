@@ -77,7 +77,7 @@ src/flext_ldif/
     ├── manager.py
     └── servers/               # Per-server implementations
         ├── oid.py
-        ├── oud_quirks.py
+        ├── ouds.py
         ├── openldap.py
         ├── openldap1.py
         ├── ad.py
@@ -192,7 +192,7 @@ matrix = QuirksConversionMatrix()
 registry = matrix.dn_registry
 
 # Convert with automatic DN case handling
-result = matrix.convert(source_quirk, target_quirk, "attribute", data)
+result = matrix.convert(source, target, "attribute", data)
 ```
 
 ### Service-Oriented Architecture
@@ -841,7 +841,7 @@ graph TB
 
 #### 2. Oracle Unified Directory (OUD) - 422 Lines
 
-**File**: `src/flext_ldif/quirks/servers/oud_quirks.py`
+**File**: `src/flext_ldif/quirks/servers/ouds.py`
 
 - ✅ Schema with OUD-specific parsing
 - ✅ Nested Acl (117 lines, lines 215-331)
@@ -920,7 +920,7 @@ class OidSchema:
 
     class OidAcl:
         """Nested ACL quirk for OID."""
-        def _can_handle(self, acl_string: str) -> bool: ...
+        def can_handle(self, acl_string: str) -> bool: ...
         def parse(self, acl_string: str) -> FlextResult[FlextTypes.Dict]: ...
 ```
 
@@ -940,9 +940,9 @@ The RFC schema parser tries quirks first, then falls back to RFC:
 ```python
 def _parse_attribute_type(self, definition: str) -> FlextTypes.Dict | None:
     # Try quirks first if available and server_type specified
-    if self._quirk_registry and self._server_type:
-        schema_quirks = self._quirk_registry.get_schema_quirks(self._server_type)
-        for quirk in schema_quirks:
+    if self._registry and self._server_type:
+        schemas = self._registry.get_schemas(self._server_type)
+        for quirk in schemas:
             if quirk.can_handle_attribute(definition):
                 quirk_result = quirk.parse_attribute(definition)
                 if quirk_result.is_success:
@@ -1030,8 +1030,8 @@ def migrate_entries(
     """Migrate entries using Source → RFC → Target pipeline."""
 
     # Get source and target quirks from registry
-    source_entrys = self._quirk_registry.get_entrys(source_format)
-    target_entrys = self._quirk_registry.get_entrys(target_format)
+    source_entrys = self._registry.get_entrys(source_format)
+    target_entrys = self._registry.get_entrys(target_format)
 
     migrated_entries = []
     for entry in entries:
@@ -1071,7 +1071,7 @@ def migrate_entries(
 
 To add support for a new LDAP server:
 
-1. Create schema quirk in `src/flext_ldif/quirks/servers/{server}_quirks.py`
+1. Create schema quirk in `src/flext_ldif/quirks/servers/{server}s.py`
 2. Implement `can_handle_attribute()` and `parse_attribute()` methods
 3. Implement `can_handle_objectclass()` and `parse_objectclass()` methods
 4. Create nested `Entry` class if needed

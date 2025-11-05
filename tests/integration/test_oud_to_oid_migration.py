@@ -27,12 +27,12 @@ class TestOudToOidSchemaMigration:
     """Test OUD to OID schema migration."""
 
     @pytest.fixture
-    def oud_quirk(self) -> FlextLdifServersOud:
+    def oud(self) -> FlextLdifServersOud:
         """Create OUD schema quirk instance."""
         return FlextLdifServersOud()
 
     @pytest.fixture
-    def oid_quirk(self) -> FlextLdifServersOid:
+    def oid(self) -> FlextLdifServersOid:
         """Create OID schema quirk instance."""
         return FlextLdifServersOid()
 
@@ -47,12 +47,12 @@ class TestOudToOidAclMigration:
     """Test OUD to OID ACL migration."""
 
     @pytest.fixture
-    def oud_acl_quirk(self) -> FlextLdifServersOud.Acl:
+    def oud_acl(self) -> FlextLdifServersOud.Acl:
         """Create OUD ACL quirk instance."""
         return FlextLdifServersOud.Acl()
 
     @pytest.fixture
-    def oid_acl_quirk(self) -> FlextLdifServersOid.Acl:
+    def oid_acl(self) -> FlextLdifServersOid.Acl:
         """Create OID ACL quirk instance."""
         return FlextLdifServersOid.Acl()
 
@@ -61,7 +61,7 @@ class TestOudToOidEntryMigration:
     """Test OUD to OID entry migration."""
 
     @pytest.fixture
-    def oud_entry_quirk(self) -> FlextLdifServersOud.Entry:
+    def oud_entry(self) -> FlextLdifServersOud.Entry:
         """Create OUD entry quirk instance."""
         return FlextLdifServersOud.Entry()
 
@@ -75,22 +75,22 @@ class TestOudToOidFullMigration:
         return FlextLdifFixtures.OUD()
 
     @pytest.fixture
-    def oud_quirk(self) -> FlextLdifServersOud:
+    def oud(self) -> FlextLdifServersOud:
         """Create OUD schema quirk."""
         return FlextLdifServersOud()
 
     @pytest.fixture
-    def oid_quirk(self) -> FlextLdifServersOid:
+    def oid(self) -> FlextLdifServersOid:
         """Create OID schema quirk."""
         return FlextLdifServersOid()
 
     @pytest.fixture
-    def oud_entry_quirk(self) -> FlextLdifServersOud.Entry:
+    def oud_entry(self) -> FlextLdifServersOud.Entry:
         """Create OUD entry quirk."""
         return FlextLdifServersOud.Entry()
 
     @pytest.fixture
-    def oid_entry_quirk(self) -> FlextLdifServersOid.Entry:
+    def oid_entry(self) -> FlextLdifServersOid.Entry:
         """Create OID entry quirk."""
         return FlextLdifServersOid.Entry()
 

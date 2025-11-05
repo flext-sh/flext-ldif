@@ -90,7 +90,7 @@ class TestOudQuirksTransformations:
     """Test OUD quirks with actual data transformations."""
 
     @pytest.fixture
-    def oud_quirks(self) -> FlextLdifServersOud:
+    def ouds(self) -> FlextLdifServersOud:
         return FlextLdifServersOud()
 
     @pytest.fixture
@@ -188,7 +188,7 @@ class TestQuirksPropertyValidation:
         return FlextLdifServersOid()
 
     @pytest.fixture
-    def oud_quirks(self) -> FlextLdifServersOud:
+    def ouds(self) -> FlextLdifServersOud:
         return FlextLdifServersOud()
 
     def test_oid_properties(self, oid: FlextLdifServersOid) -> None:
@@ -197,8 +197,8 @@ class TestQuirksPropertyValidation:
         assert hasattr(oid, "priority")
         assert oid.priority >= 0
 
-    def test_oud_quirks_properties(self, oud_quirks: FlextLdifServersOud) -> None:
+    def test_ouds_properties(self, ouds: FlextLdifServersOud) -> None:
         """Test OUD quirks properties."""
-        assert oud_quirks.server_type == "oud"
-        assert hasattr(oud_quirks, "priority")
-        assert oud_quirks.priority >= 0
+        assert ouds.server_type == "oud"
+        assert hasattr(ouds, "priority")
+        assert ouds.priority >= 0

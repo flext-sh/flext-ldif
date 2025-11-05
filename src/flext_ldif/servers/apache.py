@@ -136,7 +136,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
         Inherits all parsing and conversion from RFC base.
         """
 
-        def _can_handle_attribute(
+        def can_handle_attribute(
             self, attr_definition: str | FlextLdifModels.SchemaAttribute
         ) -> bool:
             """Detect ApacheDS attribute definitions using centralized constants."""
@@ -187,7 +187,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
                 )
             return False
 
-        def _can_handle_objectclass(
+        def can_handle_objectclass(
             self, oc_definition: str | FlextLdifModels.SchemaObjectClass
         ) -> bool:
             """Detect ApacheDS objectClass definitions using centralized constants."""
@@ -240,7 +240,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
             result = super()._parse_attribute(attr_definition)
             if result.is_success:
                 attr_data = result.unwrap()
-                metadata = FlextLdifModels.QuirkMetadata.create_for_quirk(
+                metadata = FlextLdifModels.QuirkMetadata.create_for(
                     "apache_directory"
                 )
                 return FlextResult[FlextLdifModels.SchemaAttribute].ok(
@@ -271,7 +271,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
                 FlextLdifUtilities.ObjectClass.fix_kind_mismatch(
                     oc_data, _server_type=FlextLdifServersApache.Constants.SERVER_TYPE
                 )
-                metadata = FlextLdifModels.QuirkMetadata.create_for_quirk(
+                metadata = FlextLdifModels.QuirkMetadata.create_for(
                     "apache_directory"
                 )
                 return FlextResult[FlextLdifModels.SchemaObjectClass].ok(
@@ -287,7 +287,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
         Handles ApacheDS ACI (Access Control Instruction) format.
         """
 
-        def _can_handle(self, acl: str | FlextLdifModels.Acl) -> bool:
+        def can_handle(self, acl: str | FlextLdifModels.Acl) -> bool:
             """Check if this is an ApacheDS ACI.
 
             Override RFC's always-true behavior to check Apache-specific markers.
@@ -299,9 +299,9 @@ class FlextLdifServersApache(FlextLdifServersRfc):
                 True if this is ApacheDS ACI format
 
             """
-            return self._can_handle_acl(acl)
+            return self.can_handle(acl)
 
-        def _can_handle_acl(self, acl_line: str | FlextLdifModels.Acl) -> bool:
+        def can_handle_acl(self, acl_line: str | FlextLdifModels.Acl) -> bool:
             """Detect ApacheDS ACI lines."""
             if isinstance(acl_line, str):
                 if not acl_line or not acl_line.strip():

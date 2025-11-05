@@ -49,7 +49,7 @@ class FlextLdifServersOid(FlextLdifServersRfc):
 
     Example:
         quirk = FlextLdifServersOid()
-        if quirk.schema._can_handle_attribute(attr_def):
+        if quirk.schema.can_handle_attribute(attr_def):
             result = quirk.schema._parse_attribute(attr_def)
             if result.is_success:
                 parsed_attr = result.unwrap()
@@ -327,7 +327,7 @@ class FlextLdifServersOid(FlextLdifServersRfc):
             """
             super().__init__(**kwargs)
 
-        def _can_handle_attribute(
+        def can_handle_attribute(
             self, attr_definition: str | FlextLdifModels.SchemaAttribute
         ) -> bool:
             """Check if this attribute should be processed by OID quirks.
@@ -368,7 +368,7 @@ class FlextLdifServersOid(FlextLdifServersRfc):
         # - _write_objectclass(): Uses RFC writer with OID error handling
         # - should_filter_out_attribute(): Returns False (accept all in OID mode)
         # - should_filter_out_objectclass(): Returns False (accept all in OID mode)
-        # - create_quirk_metadata(): Creates OID-specific metadata
+        # - create_metadata(): Creates OID-specific metadata
 
         def _parse_attribute(
             self,
@@ -429,7 +429,7 @@ class FlextLdifServersOid(FlextLdifServersRfc):
 
                 # Ensure metadata is preserved with OID-specific information
                 if not schema_attr.metadata:
-                    schema_attr.metadata = self.create_quirk_metadata(
+                    schema_attr.metadata = self.create_metadata(
                         attr_definition.strip(),
                     )
 
@@ -440,7 +440,7 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                     f"OID attribute parsing failed: {e}",
                 )
 
-        def _can_handle_objectclass(
+        def can_handle_objectclass(
             self, oc_definition: str | FlextLdifModels.SchemaObjectClass
         ) -> bool:
             """Check if this objectClass should be processed by OID quirks.
@@ -509,7 +509,7 @@ class FlextLdifServersOid(FlextLdifServersRfc):
 
                 # Ensure metadata is preserved with OID-specific information
                 if not schema_oc.metadata:
-                    schema_oc.metadata = self.create_quirk_metadata(
+                    schema_oc.metadata = self.create_metadata(
                         oc_definition.strip(),
                     )
 
@@ -694,12 +694,12 @@ class FlextLdifServersOid(FlextLdifServersRfc):
 
         # OVERRIDDEN METHODS (from FlextLdifServersBase.Acl)
         # These methods override the base class with Oracle OID-specific logic:
-        # - _can_handle_acl(): Detects orclaci/orclentrylevelaci formats
+        # - can_handle_acl(): Detects orclaci/orclentrylevelaci formats
         # - parse_acl(): Normalizes Oracle OID ACL to RFC-compliant internal model
         # - write_acl(): Serializes RFC-compliant model to OID ACL format
         # - get_acl_attribute_name(): Returns "orclaci" (OID-specific, overridden)
 
-        def _can_handle(self, acl: str | FlextLdifModels.Acl) -> bool:
+        def can_handle(self, acl: str | FlextLdifModels.Acl) -> bool:
             """Check if this is an Oracle OID ACL (public method).
 
             Args:
@@ -709,9 +709,9 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                 True if this is Oracle OID ACL format
 
             """
-            return self._can_handle_acl(acl)
+            return self.can_handle(acl)
 
-        def _can_handle_acl(self, acl_line: str | FlextLdifModels.Acl) -> bool:
+        def can_handle_acl(self, acl_line: str | FlextLdifModels.Acl) -> bool:
             """Check if this is an Oracle OID ACL.
 
             Detects Oracle OID ACL by checking if the line starts with:
@@ -765,7 +765,7 @@ class FlextLdifServersOid(FlextLdifServersRfc):
             if parent_result.is_success:
                 acl_data = parent_result.unwrap()
                 # Check if this is an OID ACL and the parent parser populated it correctly
-                if self._can_handle_acl(acl_line):
+                if self.can_handle(acl_line):
                     # If this is an OID ACL and parent didn't parse it well (empty model),
                     # skip to OID-specific parsing
                     if acl_data.permissions is not None or acl_data.target is not None or acl_data.subject is not None:
@@ -946,13 +946,13 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                 # Fall back to parent's raw_acl approach
                 return super()._write_acl(acl_data)
 
-        def _can_handle_attribute(
+        def can_handle_attribute(
             self, _attribute: FlextLdifModels.SchemaAttribute
         ) -> bool:
             """Check if this ACL quirk should be aware of a specific attribute definition."""
             return False
 
-        def _can_handle_objectclass(
+        def can_handle_objectclass(
             self, _objectclass: FlextLdifModels.SchemaObjectClass
         ) -> bool:
             """Check if this ACL quirk should be aware of a specific objectClass definition."""

@@ -383,7 +383,7 @@ class FlextLdif(FlextService[dict[str, object]]):
                     "ldif_features": [
                         "rfc_2849_parsing",
                         "rfc_4512_compliance",
-                        "server_quirks",
+                        "servers",
                         "generic_migration",
                         "schema_validation",
                         "acl_processing",
@@ -1246,7 +1246,7 @@ class FlextLdif(FlextService[dict[str, object]]):
 
         return is_entry_valid, errors
 
-    def _get_acl_quirks_for_transformation(
+    def _get_acls_for_transformation(
         self,
         source_type: str,
         target_type: str,
@@ -1260,7 +1260,7 @@ class FlextLdif(FlextService[dict[str, object]]):
             target_type: Target server type string
 
         Returns:
-            Tuple of (source_acl_quirk, target_acl_quirk) or (None, None) if not available
+            Tuple of (source_acl, target_acl) or (None, None) if not available
 
         """
         # Get quirk registry from container
@@ -1273,27 +1273,27 @@ class FlextLdif(FlextService[dict[str, object]]):
             return None, None
 
         # Get schema quirks for source and target
-        source_schemas = quirk_registry.get_schema_quirks(source_type)
-        target_schemas = quirk_registry.get_schema_quirks(target_type)
-        source_quirk = source_schemas[0] if source_schemas else None
-        target_quirk = target_schemas[0] if target_schemas else None
+        source_schemas = quirk_registry.get_schemas(source_type)
+        target_schemas = quirk_registry.get_schemas(target_type)
+        source = source_schemas[0] if source_schemas else None
+        target = target_schemas[0] if target_schemas else None
 
-        if source_quirk is None or target_quirk is None:
+        if source is None or target is None:
             return None, None
 
         # Extract ACL quirks from schema quirks
-        source_acl_quirk = (
-            getattr(source_quirk, "acl_quirk", None)
-            if hasattr(source_quirk, "acl_quirk")
+        source_acl = (
+            getattr(source, "acl", None)
+            if hasattr(source, "acl")
             else None
         )
-        target_acl_quirk = (
-            getattr(target_quirk, "acl_quirk", None)
-            if hasattr(target_quirk, "acl_quirk")
+        target_acl = (
+            getattr(target, "acl", None)
+            if hasattr(target, "acl")
             else None
         )
 
-        return source_acl_quirk, target_acl_quirk
+        return source_acl, target_acl
 
     def _transform_acl_in_entry(
         self,
@@ -1330,11 +1330,11 @@ class FlextLdif(FlextService[dict[str, object]]):
             return FlextResult[FlextLdifModels.Entry].ok(entry)
 
         # Get ACL quirks for transformation
-        source_acl_quirk, target_acl_quirk = self._get_acl_quirks_for_transformation(
+        source_acl, target_acl = self._get_acls_for_transformation(
             source_type, target_type
         )
 
-        if source_acl_quirk is None or target_acl_quirk is None:
+        if source_acl is None or target_acl is None:
             # No ACL transformation available for this server pair
             self.logger.debug(
                 f"ACL quirks not available for {source_type}→{target_type}, "
@@ -1950,7 +1950,7 @@ class FlextLdif(FlextService[dict[str, object]]):
     # Use client methods for LDIF operations instead
 
     # INTERNAL: registry property is hidden from public API
-    # Use register_quirk() method for quirk management instead
+    # Use register() method for quirk management instead
 
     @property
     def acl_service(self) -> FlextLdifAcl:

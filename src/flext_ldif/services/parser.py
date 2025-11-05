@@ -22,7 +22,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Literal, cast, override
+from typing import Any, override
 
 from flext_core import FlextLogger, FlextResult, FlextService
 
@@ -91,7 +91,7 @@ class FlextLdifParser(FlextService[Any]):
 
     _logger: FlextLogger
     _config: FlextLdifConfig
-    _quirk_registry: FlextLdifServer
+    _registry: FlextLdifServer
     _acl_service: FlextLdifAcl
     _detector: FlextLdifDetector
 
@@ -115,7 +115,7 @@ class FlextLdifParser(FlextService[Any]):
         self._logger = FlextLogger(__name__)
 
         # Initialize parsing components
-        self._quirk_registry = FlextLdifServer()
+        self._registry = FlextLdifServer()
         self._acl_service = FlextLdifAcl()
         self._detector = FlextLdifDetector()
 
@@ -152,7 +152,7 @@ class FlextLdifParser(FlextService[Any]):
     def parse(
         self,
         content: str | Path | list[tuple[str, dict[str, list[str]]]],
-        input_source: Literal["string", "file", "ldap3"],
+        input_source: FlextLdifConstants.LiteralTypes.ParserInputSource,
         server_type: str | None = None,
         encoding: str = "utf-8",
         format_options: FlextLdifModels.ParseFormatOptions | None = None,
@@ -162,8 +162,8 @@ class FlextLdifParser(FlextService[Any]):
             options = format_options or FlextLdifModels.ParseFormatOptions()
 
             # Resolve effective server type based on configuration and auto-detection
-            ldif_path = cast("Path", content) if input_source == "file" else None
-            ldif_content = cast("str", content) if input_source == "string" else None
+            ldif_path = content if input_source == "file" and isinstance(content, Path) else None
+            ldif_content = content if input_source == "string" and isinstance(content, str) else None
 
             server_type_result = self._resolve_server_type(
                 server_type=server_type,
@@ -178,17 +178,13 @@ class FlextLdifParser(FlextService[Any]):
             effective_type = server_type_result.unwrap()
             entries_result: FlextResult[list[FlextLdifModels.Entry]]
 
-            if input_source == "string":
-                entries_result = self._parse_from_string(
-                    cast("str", content), effective_type
-                )
-            elif input_source == "file":
-                entries_result = self._parse_from_file(
-                    cast("Path", content), encoding, effective_type
-                )
+            if input_source == "string" and isinstance(content, str):
+                entries_result = self._parse_from_string(content, effective_type)
+            elif input_source == "file" and isinstance(content, Path):
+                entries_result = self._parse_from_file(content, encoding, effective_type)
             elif input_source == "ldap3":
                 entries_result = self._parse_from_ldap3(
-                    cast("list[tuple[str, dict[str, list[str]]]]", content),
+                    content,
                     effective_type,
                 )
             else:
@@ -223,7 +219,7 @@ class FlextLdifParser(FlextService[Any]):
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
         # Get the appropriate entry quirk for this server type from registry
         # Entry quirks handle LDIF content parsing via entry.parse_content method
-        quirks = self._quirk_registry.get_entrys(server_type)
+        quirks = self._registry.get_entrys(server_type)
         if not quirks:
             return FlextResult.fail(
                 f"Internal error: No entry quirk found for resolved server type '{server_type}'"
@@ -231,10 +227,10 @@ class FlextLdifParser(FlextService[Any]):
 
         # Use the first (highest priority) entry quirk for this server type
         # Note: get_entrys() returns Entry instances directly, not base quirks
-        entry_quirk = quirks[0]
+        entry = quirks[0]
 
         # Use public parse() interface to parse LDIF content
-        return entry_quirk.parse(content)
+        return entry.parse(content)
 
     def _parse_from_file(
         self,
@@ -260,7 +256,7 @@ class FlextLdifParser(FlextService[Any]):
         Uses the quirk's entry parsing to properly create Entry models
         from LDAP3 format (dn, attributes) tuples.
         """
-        quirks = self._quirk_registry.get_quirks(server_type)
+        quirks = self._registry.gets(server_type)
         if not quirks:
             return FlextResult.fail(
                 f"No quirk available for server type: {server_type}"
@@ -285,7 +281,7 @@ class FlextLdifParser(FlextService[Any]):
 
     def _validate_explicit_server_type(self, server_type: str) -> FlextResult[str]:
         """Validate explicitly provided server type."""
-        quirks = self._quirk_registry.get_quirks(server_type)
+        quirks = self._registry.gets(server_type)
         if not quirks:
             return FlextResult.fail(
                 f"No quirk implementation found for explicitly specified server type '{server_type}'. "
@@ -607,7 +603,7 @@ class FlextLdifParser(FlextService[Any]):
     def _parse_attribute_types_from_entry(
         self,
         entry: FlextLdifModels.Entry,
-        schema_quirks: list,
+        schemas: list,
     ) -> list:
         """Parse attributeTypes from entry using schema quirks."""
         schema_attributes = []
@@ -616,7 +612,7 @@ class FlextLdifParser(FlextService[Any]):
         )
         if attr_types:
             for attr_def in attr_types:
-                for quirk in schema_quirks:
+                for quirk in schemas:
                     if quirk.schema.can_handle_attribute(attr_def):
                         result = quirk.schema.parse_attribute(attr_def)
                         if result.is_success:
@@ -627,7 +623,7 @@ class FlextLdifParser(FlextService[Any]):
     def _parse_objectclasses_from_entry(
         self,
         entry: FlextLdifModels.Entry,
-        schema_quirks: list,
+        schemas: list,
     ) -> list:
         """Parse objectClasses from entry using schema quirks."""
         schema_objectclasses = []
@@ -636,7 +632,7 @@ class FlextLdifParser(FlextService[Any]):
         )
         if obj_classes:
             for oc_def in obj_classes:
-                for quirk in schema_quirks:
+                for quirk in schemas:
                     if quirk.schema.can_handle_objectclass(oc_def):
                         oc_result = quirk.schema.parse_objectclass(oc_def)
                         if oc_result.is_success:
@@ -660,17 +656,17 @@ class FlextLdifParser(FlextService[Any]):
 
         """
         try:
-            schema_quirks = self._quirk_registry.get_schema_quirks(server_type)
-            if not schema_quirks:
-                schema_quirks = self._quirk_registry.get_schema_quirks(
+            schemas = self._registry.get_schemas(server_type)
+            if not schemas:
+                schemas = self._registry.get_schemas(
                     FlextLdifConstants.ServerTypes.RFC,
                 )
 
             schema_attributes = self._parse_attribute_types_from_entry(
-                entry, schema_quirks
+                entry, schemas
             )
             schema_objectclasses = self._parse_objectclasses_from_entry(
-                entry, schema_quirks
+                entry, schemas
             )
 
             return entry.model_copy(

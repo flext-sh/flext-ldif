@@ -76,7 +76,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
         ACL_FORMAT: ClassVar[str] = "aci"  # RFC 4876 ACI attribute
         ACL_ATTRIBUTE_NAME: ClassVar[str] = "aci"  # ACL attribute name
 
-        # DN prefixes for pattern matching (used in Entry._can_handle_entry)
+        # DN prefixes for pattern matching (used in Entry.can_handle)
         DN_PREFIX_CN_CONFIG: Final[str] = "cn=config"
         DN_PREFIX_CN_SCHEMA: Final[str] = "cn=schema"
         DN_PREFIX_CN_DIRECTORY: Final[str] = "cn=directory"
@@ -329,7 +329,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
 
         Example:
             quirk = FlextLdifServersOud()
-            if quirk.schema._can_handle_attribute(attr_def):
+            if quirk.schema.can_handle_attribute(attr_def):
                 result = quirk.schema.parse(attr_def)
                 if result.is_success:
                     parsed_attr = result.unwrap()
@@ -619,7 +619,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
 
         Example:
             quirk = FlextLdifServersOud.Acl()
-            if quirk._can_handle(acl_line):
+            if quirk.can_handle(acl_line):
                 result = quirk.parse(acl_line)
 
         """
@@ -648,7 +648,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
         # AclConverter was moved to services/acl.py as FlextLdifAcl
         # Use FlextLdifAcl for OID→OUD ACL conversions instead
 
-        def _can_handle(self, acl: str | FlextLdifModels.Acl) -> bool:
+        def can_handle(self, acl: str | FlextLdifModels.Acl) -> bool:
             """Check if this is an Oracle OUD ACL (public method).
 
             Args:
@@ -658,9 +658,9 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 True if this is Oracle OUD ACL format
 
             """
-            return self._can_handle_acl(acl)
+            return self.can_handle(acl)
 
-        def _can_handle_acl(self, acl_line: str | FlextLdifModels.Acl) -> bool:
+        def can_handle_acl(self, acl_line: str | FlextLdifModels.Acl) -> bool:
             """Check if this is an Oracle OUD ACL line (implements abstract method from base.py).
 
             Detects Oracle OUD ACL by checking if the line starts with:
@@ -890,7 +890,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                         subject_value=subject_value,
                     ),
                     permissions=FlextLdifModels.AclPermissions(**permissions_data),
-                    metadata=FlextLdifModels.QuirkMetadata.create_for_quirk(
+                    metadata=FlextLdifModels.QuirkMetadata.create_for(
                         FlextLdifServersOud.Constants.SERVER_TYPE,
                         original_format=acl_line,
                     ),
@@ -1222,11 +1222,11 @@ class FlextLdifServersOud(FlextLdifServersRfc):
 
         # OVERRIDDEN METHODS (from FlextLdifServersBase.Entry)
         # These methods override the base class with Oracle OUD-specific logic:
-        # - _can_handle_entry(): Detects OUD entries by DN/attributes (PRIVATE)
+        # - can_handle(): Detects OUD entries by DN/attributes (PRIVATE)
         # - _parse_entry(): Normalizes OUD entries with metadata during parsing (PRIVATE)
         # - _write_entry(): Writes OUD entries with proper formatting (PRIVATE)
 
-        def _can_handle_entry(
+        def can_handle(
             self, entry_dn: str, attributes: Mapping[str, object]
         ) -> bool:
             """Check if this quirk should handle the entry (PRIVATE).
@@ -1507,7 +1507,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                     entry, final_attributes_for_new_entry
                 )
 
-                new_metadata = FlextLdifModels.QuirkMetadata.create_for_quirk(
+                new_metadata = FlextLdifModels.QuirkMetadata.create_for(
                     quirk_type=FlextLdifServersOud.Constants.SERVER_TYPE,
                     extensions=metadata_extensions,
                 )

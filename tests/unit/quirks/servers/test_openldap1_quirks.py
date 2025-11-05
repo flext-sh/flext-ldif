@@ -21,7 +21,7 @@ class TestOpenLDAP1xSchemas:
         assert server.server_type == "openldap1"
         assert server.priority == 20  # Lower priority than OpenLDAP 2.x
 
-    def test_can_handle_attribute_with_attributetype_prefix(self) -> None:
+    def testcan_handle_attribute_with_attributetype_prefix(self) -> None:
         """Test attribute detection with attributetype prefix."""
         quirk = FlextLdifServersOpenldap1.Schema()
 
@@ -39,9 +39,9 @@ class TestOpenLDAP1xSchemas:
 
         # Test with the model object
 
-        assert quirk._can_handle_attribute(attr_def) is True
+        assert quirk.can_handle_attribute(attr_def) is True
 
-    def test_can_handle_attribute_with_olc_rejected(self) -> None:
+    def testcan_handle_attribute_with_olc_rejected(self) -> None:
         """Test attribute detection rejects olc prefix (OpenLDAP 2.x)."""
         quirk = FlextLdifServersOpenldap1.Schema()
 
@@ -59,7 +59,7 @@ class TestOpenLDAP1xSchemas:
 
         # Test with the model object
 
-        assert quirk._can_handle_attribute(attr_def) is False
+        assert quirk.can_handle_attribute(attr_def) is False
 
     def test_parse_attribute_success(self) -> None:
         """Test successful attribute parsing."""
@@ -89,7 +89,7 @@ class TestOpenLDAP1xSchemas:
         assert result.error is not None
         assert "RFC attribute parsing failed: missing an OID" in result.error
 
-    def test_can_handle_objectclass_with_objectclass_prefix(self) -> None:
+    def testcan_handle_objectclass_with_objectclass_prefix(self) -> None:
         """Test objectClass detection with objectclass prefix."""
         quirk = FlextLdifServersOpenldap1.Schema()
 
@@ -106,9 +106,9 @@ class TestOpenLDAP1xSchemas:
 
         # Test with the model object
 
-        assert quirk._can_handle_objectclass(oc_def) is True
+        assert quirk.can_handle_objectclass(oc_def) is True
 
-    def test_can_handle_objectclass_with_olc_rejected(self) -> None:
+    def testcan_handle_objectclass_with_olc_rejected(self) -> None:
         """Test objectClass detection rejects olc (OpenLDAP 2.x)."""
         quirk = FlextLdifServersOpenldap1.Schema()
 
@@ -125,7 +125,7 @@ class TestOpenLDAP1xSchemas:
 
         # Test with the model object
 
-        assert quirk._can_handle_objectclass(oc_def) is False
+        assert quirk.can_handle_objectclass(oc_def) is False
 
     def test_parse_objectclass_success(self) -> None:
         """Test successful objectClass parsing."""
@@ -236,7 +236,7 @@ class TestOpenLDAP1xSchemas:
 class TestOpenLDAP1xAcls:
     """Tests for OpenLDAP 1.x ACL quirk handling."""
 
-    def test_acl_quirk_initialization(self) -> None:
+    def test_acl_initialization(self) -> None:
         """Test ACL quirk initialization."""
         openldap1_server = FlextLdifServersOpenldap1()
         openldap1_server.Acl()
@@ -244,12 +244,12 @@ class TestOpenLDAP1xAcls:
     def test__can_handle_with_access_to(self) -> None:
         """Test ACL detection with 'access to' prefix."""
         openldap1_server = FlextLdifServersOpenldap1()
-        acl_quirk = openldap1_server.Acl()
+        acl = openldap1_server.Acl()
 
         acl_line = "access to attrs=userPassword by self write by * auth"
         # Parse string ACL into model object
 
-        parse_result = acl_quirk.parse(acl_line)
+        parse_result = acl.parse(acl_line)
 
         assert parse_result.is_success, f"Failed to parse ACL: {parse_result.error}"
 
@@ -257,22 +257,22 @@ class TestOpenLDAP1xAcls:
 
         # Test with the model object
 
-        assert acl_quirk._can_handle(acl_line) is True
+        assert acl.can_handle(acl_line) is True
 
     def test__can_handle_negative(self) -> None:
         """Test ACL detection returns false for non-OpenLDAP 1.x ACL."""
         openldap1_server = FlextLdifServersOpenldap1()
-        acl_quirk = openldap1_server.Acl()
+        acl = openldap1_server.Acl()
 
         acl_line = "random text"
         # Parse string ACL into model object
-        parse_result = acl_quirk.parse(acl_line)
+        parse_result = acl.parse(acl_line)
 
         # For invalid ACL text, parsing may fail (which is expected)
-        # If parsing succeeds despite being invalid text, _can_handle should return False
+        # If parsing succeeds despite being invalid text, can_handle should return False
         if parse_result.is_success:
             parse_result.unwrap()
-            assert acl_quirk._can_handle(acl_line) is False
+            assert acl.can_handle(acl_line) is False
         else:
             # Invalid ACL that fails to parse is also correctly rejected
             assert parse_result.is_success is False
@@ -280,10 +280,10 @@ class TestOpenLDAP1xAcls:
     def test_parse_success(self) -> None:
         """Test successful ACL parsing."""
         openldap1_server = FlextLdifServersOpenldap1()
-        acl_quirk = openldap1_server.Acl()
+        acl = openldap1_server.Acl()
 
         acl_line = "access to attrs=userPassword by self write by * read"
-        result = acl_quirk.parse(acl_line)
+        result = acl.parse(acl_line)
 
         assert result.is_success
         acl_data = result.unwrap()
@@ -295,10 +295,10 @@ class TestOpenLDAP1xAcls:
     def test_parse_missing_to_clause(self) -> None:
         """Test ACL parsing fails without 'to' clause."""
         openldap1_server = FlextLdifServersOpenldap1()
-        acl_quirk = openldap1_server.Acl()
+        acl = openldap1_server.Acl()
 
         acl_line = "access by * read"
-        result = acl_quirk.parse(acl_line)
+        result = acl.parse(acl_line)
 
         assert result.is_failure
         assert result.error is not None
@@ -308,7 +308,7 @@ class TestOpenLDAP1xAcls:
 class TestOpenLDAP1xEntrys:
     """Tests for OpenLDAP 1.x entry quirk handling."""
 
-    def test_entry_quirk_initialization(self) -> None:
+    def test_entry_initialization(self) -> None:
         """Test entry quirk initialization."""
         openldap1_server = FlextLdifServersOpenldap1()
         openldap1_server.Entry()
@@ -316,33 +316,33 @@ class TestOpenLDAP1xEntrys:
     def test_can_handle_entry_traditional_dit(self) -> None:
         """Test entry detection for traditional DIT (no cn=config)."""
         openldap1_server = FlextLdifServersOpenldap1()
-        entry_quirk = openldap1_server.Entry()
+        entry = openldap1_server.Entry()
 
         dn = FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com")
         attributes = FlextLdifModels.LdifAttributes(
             attributes={"cn": ["test"], "objectclass": ["person"]}
         )
         FlextLdifModels.Entry(dn=dn, attributes=attributes)
-        assert entry_quirk._can_handle_entry(dn.value, attributes.attributes) is True
+        assert entry.can_handle(dn.value, attributes.attributes) is True
 
     def test_can_handle_entry_rejects_config_dn(self) -> None:
         """Test entry detection rejects cn=config DNs (OpenLDAP 2.x)."""
         openldap1_server = FlextLdifServersOpenldap1()
-        entry_quirk = openldap1_server.Entry()
+        entry = openldap1_server.Entry()
 
         dn = FlextLdifModels.DistinguishedName(value="cn=config")
         attributes = FlextLdifModels.LdifAttributes(attributes={"cn": ["config"]})
         FlextLdifModels.Entry(dn=dn, attributes=attributes)
-        assert entry_quirk._can_handle_entry(dn.value, attributes.attributes) is False
+        assert entry.can_handle(dn.value, attributes.attributes) is False
 
     def test_can_handle_entry_rejects_olc_attributes(self) -> None:
         """Test entry detection rejects olc* attributes (OpenLDAP 2.x)."""
         openldap1_server = FlextLdifServersOpenldap1()
-        entry_quirk = openldap1_server.Entry()
+        entry = openldap1_server.Entry()
 
         dn = FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com")
         attributes = FlextLdifModels.LdifAttributes(
             attributes={"olcDatabase": ["{1}mdb"]}
         )
         FlextLdifModels.Entry(dn=dn, attributes=attributes)
-        assert entry_quirk._can_handle_entry(dn.value, attributes.attributes) is False
+        assert entry.can_handle(dn.value, attributes.attributes) is False

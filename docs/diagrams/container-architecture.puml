@@ -18,7 +18,7 @@ Container_Boundary(flext_ecosystem, "FLEXT Ecosystem") {
 
         Container_Boundary(quirks_system, "Quirks System") {
             Container(quirk_registry, "QuirkRegistry", "Python Class", "Auto-discovery of server quirk implementations")
-            Container(server_quirks, "Server Quirks", "Python Classes", "9 server-specific quirk implementations")
+            Container(servers, "Server Quirks", "Python Classes", "9 server-specific quirk implementations")
         }
 
         Container_Boundary(domain_models, "Domain Models") {
@@ -42,12 +42,12 @@ Rel(api_facade, conversion, "Uses for conversions", "Server migration operations
 Rel(api_facade, rfc_parsing, "Uses for parsing", "RFC compliance with quirks")
 
 Rel(conversion, dn_registry, "Tracks case consistency", "OUD compatibility during conversions")
-Rel(conversion, server_quirks, "Uses server implementations", "Source/target format conversions")
+Rel(conversion, servers, "Uses server implementations", "Source/target format conversions")
 
 Rel(rfc_parsing, quirk_registry, "Applies server quirks", "Server-specific enhancements")
 Rel(rfc_parsing, domain_models, "Produces validated", "Type-safe domain objects")
 
-Rel(quirks_system, server_quirks, "Manages implementations", "Auto-discovery and instantiation")
+Rel(quirks_system, servers, "Manages implementations", "Auto-discovery and instantiation")
 
 Rel(client-a_oud_mig, api_facade, "Uses for", "Oracle directory migrations")
 Rel(flext_api, api_facade, "Integrates for", "LDIF processing in APIs")
@@ -70,7 +70,7 @@ note right of dn_registry
     First-seen-wins policy
 end note
 
-note right of server_quirks
+note right of servers
     **Server Support Status**
     ✅ Complete: OID, OUD, OpenLDAP 1.x/2.x
     ⚠️ Stubs: AD, Apache DS, 389 DS, Novell, Tivoli

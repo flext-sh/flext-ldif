@@ -366,7 +366,7 @@ orclguid: 12345678-1234-1234-1234-123456789012
         result = parser.parse(ldif_content, input_source="string", server_type="oid")
         assert result.is_success or result.is_failure
 
-    def test_parse_with_oud_quirks(self, real_parser_service: FlextLdifParser) -> None:
+    def test_parse_with_ouds(self, real_parser_service: FlextLdifParser) -> None:
         """Test parsing with OUD-specific quirks enabled."""
         parser = FlextLdifParser()
 

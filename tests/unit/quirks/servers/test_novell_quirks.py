@@ -27,7 +27,7 @@ class TestNovellSchemas:
         assert server.server_type == FlextLdifServersNovell.Constants.SERVER_TYPE
         assert server.priority == FlextLdifServersNovell.Constants.PRIORITY
 
-    def test_can_handle_attribute_with_novell_oid(self) -> None:
+    def testcan_handle_attribute_with_novell_oid(self) -> None:
         """Test attribute detection with Novell OID pattern."""
         quirk = FlextLdifServersNovell.Schema()
         attr_def = "( 2.16.840.1.113719.1.1.4.1.501 NAME 'nspmPasswordPolicyDN' SYNTAX 1.3.6.1.4.1.1466.115.121.1.12 )"
@@ -43,7 +43,7 @@ class TestNovellSchemas:
         assert attr_data.oid == "2.16.840.1.113719.1.1.4.1.501"
         assert attr_data.name == "nspmPasswordPolicyDN"
 
-    def test_can_handle_attribute_with_nspm_prefix(self) -> None:
+    def testcan_handle_attribute_with_nspm_prefix(self) -> None:
         """Test attribute detection with nspm prefix."""
         quirk = FlextLdifServersNovell.Schema()
         attr_def = (
@@ -60,7 +60,7 @@ class TestNovellSchemas:
         attr_data = parse_result.unwrap()
         assert attr_data.name == "nspmPasswordPolicy"
 
-    def test_can_handle_attribute_with_login_prefix(self) -> None:
+    def testcan_handle_attribute_with_login_prefix(self) -> None:
         """Test attribute detection with login prefix."""
         quirk = FlextLdifServersNovell.Schema()
         attr_def = (
@@ -77,7 +77,7 @@ class TestNovellSchemas:
         attr_data = parse_result.unwrap()
         assert attr_data.name == "loginDisabled"
 
-    def test_can_handle_attribute_with_dirxml_prefix(self) -> None:
+    def testcan_handle_attribute_with_dirxml_prefix(self) -> None:
         """Test attribute detection with dirxml- prefix."""
         quirk = FlextLdifServersNovell.Schema()
         attr_def = "( 1.2.3.4 NAME 'dirxml-associations' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
@@ -92,7 +92,7 @@ class TestNovellSchemas:
         attr_data = parse_result.unwrap()
         assert attr_data.name == "dirxml-associations"
 
-    def test_can_handle_attribute_negative(self) -> None:
+    def testcan_handle_attribute_negative(self) -> None:
         """Test attribute detection rejects non-Novell attributes."""
         quirk = FlextLdifServersNovell.Schema()
         attr_def = "( 2.5.4.3 NAME 'cn' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
@@ -143,7 +143,7 @@ class TestNovellSchemas:
         assert result.error is not None
         assert "missing an OID" in result.error
 
-    def test_can_handle_objectclass_with_novell_oid(self) -> None:
+    def testcan_handle_objectclass_with_novell_oid(self) -> None:
         """Test objectClass detection with Novell OID."""
         quirk = FlextLdifServersNovell.Schema()
         oc_def = "( 2.16.840.1.113719.2.2.6.1 NAME 'ndsPerson' SUP top STRUCTURAL )"
@@ -159,7 +159,7 @@ class TestNovellSchemas:
         assert oc_data.oid == "2.16.840.1.113719.2.2.6.1"
         assert oc_data.name == "ndsPerson"
 
-    def test_can_handle_objectclass_with_nds_name(self) -> None:
+    def testcan_handle_objectclass_with_nds_name(self) -> None:
         """Test objectClass detection with nds- name."""
         quirk = FlextLdifServersNovell.Schema()
         oc_def = "( 2.5.6.0 NAME 'ndsserver' SUP top STRUCTURAL )"
@@ -174,7 +174,7 @@ class TestNovellSchemas:
         oc_data = parse_result.unwrap()
         assert oc_data.name == "ndsserver"
 
-    def test_can_handle_objectclass_negative(self) -> None:
+    def testcan_handle_objectclass_negative(self) -> None:
         """Test objectClass detection rejects non-Novell classes."""
         quirk = FlextLdifServersNovell.Schema()
         oc_def = "( 2.5.6.6 NAME 'posixAccount' SUP top STRUCTURAL )"
@@ -282,7 +282,7 @@ class TestNovellSchemas:
 class TestNovellAcls:
     """Tests for Novell eDirectory ACL quirk handling."""
 
-    def test_acl_quirk_initialization(self) -> None:
+    def test_acl_initialization(self) -> None:
         """Test ACL quirk initialization."""
         novell_server = FlextLdifServersNovell()
         novell_server.Acl()
@@ -291,11 +291,11 @@ class TestNovellAcls:
     def test__can_handle_with_acl_attribute(self) -> None:
         """Test ACL detection with acl attribute."""
         novell_server = FlextLdifServersNovell()
-        acl_quirk = novell_server.Acl()
+        acl = novell_server.Acl()
         acl_line = "acl: [Entry Rights]#cn=Admin,o=Example#[BCDRSE]"
         # Parse string ACL into model object
 
-        parse_result = acl_quirk.parse(acl_line)
+        parse_result = acl.parse(acl_line)
 
         assert parse_result.is_success, f"Failed to parse ACL: {parse_result.error}"
 
@@ -304,17 +304,17 @@ class TestNovellAcls:
         # Test with the model object
 
         # Use parse which calls can_handle internally
-        result = acl_quirk.parse(acl_line)
+        result = acl.parse(acl_line)
         assert result.is_success  # Novell ACL should be handled
 
     def test__can_handle_with_inheritedacl_attribute(self) -> None:
         """Test ACL detection with inheritedacl attribute."""
         novell_server = FlextLdifServersNovell()
-        acl_quirk = novell_server.Acl()
+        acl = novell_server.Acl()
         acl_line = "inheritedacl: [Entry Rights]#cn=Admin,o=Example#[BCDRSE]"
         # Parse string ACL into model object
 
-        parse_result = acl_quirk.parse(acl_line)
+        parse_result = acl.parse(acl_line)
 
         assert parse_result.is_success, f"Failed to parse ACL: {parse_result.error}"
 
@@ -323,36 +323,36 @@ class TestNovellAcls:
         # Test with the model object
 
         # Use parse which calls can_handle internally
-        result = acl_quirk.parse(acl_line)
+        result = acl.parse(acl_line)
         assert result.is_success  # Novell ACL should be handled
 
     def test__can_handle_negative(self) -> None:
         """Test ACL detection rejects non-Novell ACLs."""
         novell_server = FlextLdifServersNovell()
-        acl_quirk = novell_server.Acl()
+        acl = novell_server.Acl()
         acl_line = "access to * by * read"
 
         # Non-Novell ACL should not be handled by Novell quirk
-        assert acl_quirk._can_handle(acl_line) is False
+        assert acl.can_handle(acl_line) is False
 
         # Parse may succeed if RFC can handle it, or fail if RFC can't
-        # The important thing is that _can_handle returns False
-        _ = acl_quirk.parse(
+        # The important thing is that can_handle returns False
+        _ = acl.parse(
             acl_line
         )  # Result can be success or failure depending on RFC's ability to parse
-        # But _can_handle should always return False for non-Novell ACLs
+        # But can_handle should always return False for non-Novell ACLs
 
     def test__can_handle_empty_line(self) -> None:
         """Test ACL detection rejects empty lines."""
         novell_server = FlextLdifServersNovell()
-        acl_quirk = novell_server.Acl()
+        acl = novell_server.Acl()
         acl_line = ""
 
         # Empty ACL should not be handled
-        assert acl_quirk._can_handle(acl_line) is False
+        assert acl.can_handle(acl_line) is False
 
         # Empty ACL should fail to parse (no fallback)
-        parse_result = acl_quirk.parse(acl_line)
+        parse_result = acl.parse(acl_line)
         assert parse_result.is_failure, "Empty ACL should fail to parse"
         assert parse_result.error is not None
         assert "Empty" in parse_result.error or "empty" in parse_result.error.lower()
@@ -360,9 +360,9 @@ class TestNovellAcls:
     def test_parse_success(self) -> None:
         """Test parsing Novell eDirectory ACL definition."""
         novell_server = FlextLdifServersNovell()
-        acl_quirk = novell_server.Acl()
+        acl = novell_server.Acl()
         acl_line = "acl: [Entry Rights]#cn=Admin,o=Example#[BCDRSE]"
-        result = acl_quirk.parse(acl_line)
+        result = acl.parse(acl_line)
 
         assert result.is_success
         acl_data = result.unwrap()
@@ -385,11 +385,11 @@ class TestNovellAcls:
     def test_parse_with_multiple_rights(self) -> None:
         """Test parsing ACL with multiple rights segments."""
         novell_server = FlextLdifServersNovell()
-        acl_quirk = novell_server.Acl()
+        acl = novell_server.Acl()
         acl_line = (
             "acl: [Entry Rights]#cn=Admin,o=Example#[BCDRSE]#[All Attributes Rights]"
         )
-        result = acl_quirk.parse(acl_line)
+        result = acl.parse(acl_line)
 
         assert result.is_success
         acl_data = result.unwrap()
@@ -402,7 +402,7 @@ class TestNovellAcls:
     def test_write_acl_to_rfc_with_content(self) -> None:
         """Test writing ACL with content to RFC string format."""
         novell_server = FlextLdifServersNovell()
-        acl_quirk = novell_server.Acl()
+        acl = novell_server.Acl()
         acl_data = FlextLdifModels.Acl(
             name="Novell eDirectory ACL",
             target=FlextLdifModels.AclTarget(
@@ -418,12 +418,12 @@ class TestNovellAcls:
                 write=True,
                 delete=True,
             ),
-            metadata=FlextLdifModels.QuirkMetadata.create_for_quirk(
+            metadata=FlextLdifModels.QuirkMetadata.create_for(
                 FlextLdifServersNovell.Constants.SERVER_TYPE
             ),
             raw_acl="acl: [Entry Rights]#cn=Admin,o=Example#[BCDRSE]",
         )
-        result = acl_quirk.write(acl_data)
+        result = acl.write(acl_data)
 
         assert result.is_success
         acl_str = result.unwrap()
@@ -432,7 +432,7 @@ class TestNovellAcls:
     def test_write_acl_to_rfc_with_segments(self) -> None:
         """Test writing ACL with segments to RFC string format."""
         novell_server = FlextLdifServersNovell()
-        acl_quirk = novell_server.Acl()
+        acl = novell_server.Acl()
         acl_data = FlextLdifModels.Acl(
             name="Novell eDirectory ACL",
             target=FlextLdifModels.AclTarget(
@@ -444,11 +444,11 @@ class TestNovellAcls:
                 subject_value="cn=Admin,o=Example",
             ),
             permissions=FlextLdifModels.AclPermissions(),
-            metadata=FlextLdifModels.QuirkMetadata.create_for_quirk(
+            metadata=FlextLdifModels.QuirkMetadata.create_for(
                 FlextLdifServersNovell.Constants.SERVER_TYPE
             ),
         )
-        result = acl_quirk.write(acl_data)
+        result = acl.write(acl_data)
 
         assert result.is_success
         acl_str = result.unwrap()
@@ -457,7 +457,7 @@ class TestNovellAcls:
     def test_write_acl_to_rfc_from_fields(self) -> None:
         """Test writing ACL from structured fields to RFC string format."""
         novell_server = FlextLdifServersNovell()
-        acl_quirk = novell_server.Acl()
+        acl = novell_server.Acl()
         acl_data = FlextLdifModels.Acl(
             name="Novell eDirectory ACL",
             target=FlextLdifModels.AclTarget(
@@ -471,11 +471,11 @@ class TestNovellAcls:
             permissions=FlextLdifModels.AclPermissions(
                 read=True,
             ),
-            metadata=FlextLdifModels.QuirkMetadata.create_for_quirk(
+            metadata=FlextLdifModels.QuirkMetadata.create_for(
                 FlextLdifServersNovell.Constants.SERVER_TYPE
             ),
         )
-        result = acl_quirk.write(acl_data)
+        result = acl.write(acl_data)
 
         assert result.is_success
         acl_str = result.unwrap()
@@ -486,7 +486,7 @@ class TestNovellAcls:
     def test_write_acl_to_rfc_empty(self) -> None:
         """Test writing empty ACL to RFC string format."""
         novell_server = FlextLdifServersNovell()
-        acl_quirk = novell_server.Acl()
+        acl = novell_server.Acl()
         acl_data = FlextLdifModels.Acl(
             name="Empty ACL",
             target=FlextLdifModels.AclTarget(
@@ -498,11 +498,11 @@ class TestNovellAcls:
                 subject_value="",
             ),
             permissions=FlextLdifModels.AclPermissions(),
-            metadata=FlextLdifModels.QuirkMetadata.create_for_quirk(
+            metadata=FlextLdifModels.QuirkMetadata.create_for(
                 FlextLdifServersNovell.Constants.SERVER_TYPE
             ),
         )
-        result = acl_quirk.write(acl_data)
+        result = acl.write(acl_data)
 
         assert result.is_success
         acl_str = result.unwrap()
@@ -512,7 +512,7 @@ class TestNovellAcls:
 class TestNovellEntrys:
     """Tests for Novell eDirectory entry quirk handling."""
 
-    def test_entry_quirk_initialization(self) -> None:
+    def test_entry_initialization(self) -> None:
         """Test entry quirk initialization."""
         novell_server = FlextLdifServersNovell()
         novell_server.Entry()
@@ -521,72 +521,72 @@ class TestNovellEntrys:
     def test_can_handle_entry_with_ou_services(self) -> None:
         """Test entry detection with ou=services DN marker."""
         novell_server = FlextLdifServersNovell()
-        entry_quirk = novell_server.Entry()
+        entry = novell_server.Entry()
         entry_dn = "ou=services,o=Example"
         attributes: dict[str, object] = {
             FlextLdifConstants.DictKeys.OBJECTCLASS: ["organizationalUnit"]
         }
-        assert entry_quirk._can_handle_entry(entry_dn, attributes) is True
+        assert entry.can_handle(entry_dn, attributes) is True
 
     def test_can_handle_entry_with_ou_apps(self) -> None:
         """Test entry detection with ou=apps DN marker."""
         novell_server = FlextLdifServersNovell()
-        entry_quirk = novell_server.Entry()
+        entry = novell_server.Entry()
         entry_dn = "ou=apps,o=Example"
         attributes: dict[str, object] = {
             FlextLdifConstants.DictKeys.OBJECTCLASS: ["organizationalUnit"]
         }
-        assert entry_quirk._can_handle_entry(entry_dn, attributes) is True
+        assert entry.can_handle(entry_dn, attributes) is True
 
     def test_can_handle_entry_with_ou_system(self) -> None:
         """Test entry detection with ou=system DN marker."""
         novell_server = FlextLdifServersNovell()
-        entry_quirk = novell_server.Entry()
+        entry = novell_server.Entry()
         entry_dn = "ou=system,o=Example"
         attributes: dict[str, object] = {
             FlextLdifConstants.DictKeys.OBJECTCLASS: ["organizationalUnit"]
         }
-        assert entry_quirk._can_handle_entry(entry_dn, attributes) is True
+        assert entry.can_handle(entry_dn, attributes) is True
 
     def test_can_handle_entry_with_password_policy_attribute(self) -> None:
         """Test entry detection with nspmpasswordpolicy attribute."""
         novell_server = FlextLdifServersNovell()
-        entry_quirk = novell_server.Entry()
+        entry = novell_server.Entry()
         entry_dn = "cn=user,o=Example"
         attributes: dict[str, object] = {
             "nspmpasswordpolicy": ["policy1"],
             FlextLdifConstants.DictKeys.OBJECTCLASS: ["top"],
         }
-        assert entry_quirk._can_handle_entry(entry_dn, attributes) is True
+        assert entry.can_handle(entry_dn, attributes) is True
 
     def test_can_handle_entry_with_login_attribute(self) -> None:
         """Test entry detection with loginDisabled attribute."""
         novell_server = FlextLdifServersNovell()
-        entry_quirk = novell_server.Entry()
+        entry = novell_server.Entry()
         entry_dn = "cn=user,o=Example"
         attributes: dict[str, object] = {
             "logindisabled": ["TRUE"],
             FlextLdifConstants.DictKeys.OBJECTCLASS: ["top"],
         }
-        assert entry_quirk._can_handle_entry(entry_dn, attributes) is True
+        assert entry.can_handle(entry_dn, attributes) is True
 
     def test_can_handle_entry_with_nds_objectclass(self) -> None:
         """Test entry detection with nds- objectClass."""
         novell_server = FlextLdifServersNovell()
-        entry_quirk = novell_server.Entry()
+        entry = novell_server.Entry()
         entry_dn = "cn=user,o=Example"
         attributes: dict[str, object] = {
             FlextLdifConstants.DictKeys.OBJECTCLASS: ["top", "ndsperson"]
         }
-        assert entry_quirk._can_handle_entry(entry_dn, attributes) is True
+        assert entry.can_handle(entry_dn, attributes) is True
 
     def test_can_handle_entry_negative(self) -> None:
         """Test entry detection rejects non-Novell entries."""
         novell_server = FlextLdifServersNovell()
-        entry_quirk = novell_server.Entry()
+        entry = novell_server.Entry()
         entry_dn = "cn=user,dc=example,dc=com"
         attributes: dict[str, object] = {
             FlextLdifConstants.DictKeys.OBJECTCLASS: ["person"],
             "cn": ["user"],
         }
-        assert entry_quirk._can_handle_entry(entry_dn, attributes) is False
+        assert entry.can_handle(entry_dn, attributes) is False

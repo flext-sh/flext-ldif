@@ -12,7 +12,6 @@ from __future__ import annotations
 import pytest
 from pathlib import Path
 
-from flext_core import FlextTypes
 from flext_ldif.typings import FlextLdifTypes, ServiceT
 
 
@@ -241,7 +240,7 @@ class TestModelsNamespace:
         assert data["inetOrgPerson"]["oid"] == "2.16.840.1.113730.3.2.2"
         assert "mail" in data["inetOrgPerson"]["may"]
 
-    def test_quirk_extensions_with_real_quirks(self) -> None:
+    def test_extensions_with_reals(self) -> None:
         """QuirkExtensions must support real quirk metadata."""
         extensions: FlextLdifTypes.Models.QuirkExtensions = {
             "supports_dn_case_registry": True,

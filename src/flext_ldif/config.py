@@ -165,8 +165,8 @@ class FlextLdifConfig(FlextConfig):
         description="Default server type for LDIF processing",
     )
 
-    ldif_server_specific_quirks: bool = Field(
-        default=FlextLdifConstants.ConfigDefaults.LDIF_SERVER_SPECIFIC_QUIRKS,
+    ldif_server_specifics: bool = Field(
+        default=FlextLdifConstants.ConfigDefaults.LDIF_SERVER_SPECIFICS,
         description="Enable server-specific quirk handling",
     )
 

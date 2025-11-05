@@ -183,7 +183,7 @@ Container_Boundary(flext_ldif_lib, "FLEXT-LDIF Library") {
 
     Component_Boundary(quirks, "Quirks System") {
         Component(quirk_registry, "QuirkRegistry", "Python Class", "Server quirk discovery")
-        Component(server_quirks, "ServerQuirks", "Python Classes", "9 server implementations")
+        Component(servers, "ServerQuirks", "Python Classes", "9 server implementations")
         Component(conversion, "ConversionMatrix", "Python Class", "Server-to-server mapping")
     }
 
@@ -205,7 +205,7 @@ Rel(facade, quirk_matrix, "Uses for conversion", "Server migration")
 Rel(facade, parsing, "Uses for parsing", "RFC compliance")
 Rel(quirk_matrix, dn_registry, "Tracks case consistency", "OUD compatibility")
 Rel(parsing, quirks, "Applies server quirks", "Server-specific adaptations")
-Rel(quirks, server_quirks, "Loads implementations", "Auto-discovery")
+Rel(quirks, servers, "Loads implementations", "Auto-discovery")
 Rel(models, parsing, "Defines data structures", "Type-safe processing")
 
 @enduml
@@ -266,7 +266,7 @@ src/flext_ldif/
 │   ├── entrys.py        # Entry-level quirks
 │   └── servers/               # Server implementations
 │       ├── oid.py      # Oracle Internet Directory
-│       ├── oud_quirks.py      # Oracle Unified Directory
+│       ├── ouds.py      # Oracle Unified Directory
 │       ├── openldap.py # OpenLDAP 2.x
 │       ├── openldap1.py# OpenLDAP 1.x
 │       ├── ad.py       # Active Directory (stub)
@@ -327,8 +327,8 @@ class FlextLdifServer:
     """Auto-discovery registry for quirk implementations."""
 
     def __init__(self) -> None:
-        self._quirks: dict[str, type[QuirkBase]] = {}
-        self._discover_quirks()
+        self.s: dict[str, type[QuirkBase]] = {}
+        self._discovers()
 ```
 
 ---

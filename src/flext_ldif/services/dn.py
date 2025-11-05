@@ -94,9 +94,11 @@ from __future__ import annotations
 from flext_core import FlextModels, FlextResult, FlextService
 from pydantic import ConfigDict, Field, field_validator
 
+from flext_ldif.typings import FlextLdifTypes
 from flext_ldif.utilities import FlextLdifUtilities
 
-type DN = str
+# Semantic type for Distinguished Name - imported from FlextLdifTypes.Service
+type DN = FlextLdifTypes.Service.DN
 
 
 class FlextLdifDn(FlextService[str]):

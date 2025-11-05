@@ -92,7 +92,7 @@ src/flext_ldif/
     ├── registry.py
     └── servers/
         ├── oid.py
-        └── oud_quirks.py
+        └── ouds.py
 ```
 
 ### **2. Delete Over-Engineered Processors**

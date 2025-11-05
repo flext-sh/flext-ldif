@@ -131,10 +131,10 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
         # - should_filter_out_attribute(): Returns False (no filtering)
         # - should_filter_out_objectclass(): Returns False (no filtering)
         #
-        # Only _can_handle_* methods are overridden with Tivoli-specific logic.
+        # Only can_handle_* methods are overridden with Tivoli-specific logic.
         #
 
-        def _can_handle_attribute(
+        def can_handle_attribute(
             self, attr_definition: str | FlextLdifModels.SchemaAttribute
         ) -> bool:
             """Detect Tivoli-specific attributes."""
@@ -160,7 +160,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                 )
             return False
 
-        def _can_handle_objectclass(
+        def can_handle_objectclass(
             self, oc_definition: str | FlextLdifModels.SchemaObjectClass
         ) -> bool:
             """Detect Tivoli objectClass definitions."""
@@ -202,7 +202,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
             result = super()._parse_attribute(attr_definition)
             if result.is_success:
                 attr_data = result.unwrap()
-                metadata = FlextLdifModels.QuirkMetadata.create_for_quirk("ibm_tivoli")
+                metadata = FlextLdifModels.QuirkMetadata.create_for("ibm_tivoli")
                 return FlextResult[FlextLdifModels.SchemaAttribute].ok(
                     attr_data.model_copy(update={"metadata": metadata})
                 )
@@ -224,7 +224,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
             result = super()._parse_objectclass(oc_definition)
             if result.is_success:
                 oc_data = result.unwrap()
-                metadata = FlextLdifModels.QuirkMetadata.create_for_quirk("ibm_tivoli")
+                metadata = FlextLdifModels.QuirkMetadata.create_for("ibm_tivoli")
                 return FlextResult[FlextLdifModels.SchemaObjectClass].ok(
                     oc_data.model_copy(update={"metadata": metadata})
                 )
@@ -233,15 +233,15 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
     class Acl(FlextLdifServersRfc.Acl):
         """IBM Tivoli Directory Server ACL quirks implementation."""
 
-        def _can_handle(self, acl: FlextLdifModels.Acl | str) -> bool:
+        def can_handle(self, acl: FlextLdifModels.Acl | str) -> bool:
             """Check if this ACL is a Tivoli DS ACL."""
             if isinstance(acl, str):
-                return self._can_handle_acl(acl)
+                return self.can_handle(acl)
             if not acl.raw_acl:
                 return False
-            return self._can_handle_acl(acl.raw_acl)
+            return self.can_handle(acl.raw_acl)
 
-        def _can_handle_acl(self, acl_line: str | FlextLdifModels.Acl) -> bool:
+        def can_handle_acl(self, acl_line: str | FlextLdifModels.Acl) -> bool:
             """Detect Tivoli DS ACL values."""
             if isinstance(acl_line, str):
                 normalized = acl_line.strip() if acl_line else ""
@@ -407,7 +407,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
 
         # OVERRIDDEN METHODS (from FlextLdifServersBase.Entry)
         # These methods override the base class with Tivoli DS-specific logic:
-        # - _can_handle_entry(): Detects Tivoli DS entries by DN/attributes
+        # - can_handle(): Detects Tivoli DS entries by DN/attributes
         # - process_entry(): Normalizes Tivoli DS entries with metadata
 
         def normalize_dn(self, entry_dn: str) -> str:
@@ -423,7 +423,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
             """Normalize attribute name for Tivoli DS."""
             return attr_name.lower()
 
-        def _can_handle_entry(
+        def can_handle(
             self,
             entry_dn: str,
             attributes: Mapping[str, object],

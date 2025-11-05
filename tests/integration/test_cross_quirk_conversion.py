@@ -30,12 +30,12 @@ class TestOidToOudSchemaConversion:
     """Test OID schema → OUD schema conversion."""
 
     @pytest.fixture
-    def oid_quirk(self) -> FlextLdifServersOid.Schema:
+    def oid(self) -> FlextLdifServersOid.Schema:
         """Create OID quirk instance."""
         return FlextLdifServersOid.Schema()
 
     @pytest.fixture
-    def oud_quirk(self) -> FlextLdifServersOud.Schema:
+    def oud(self) -> FlextLdifServersOud.Schema:
         """Create OUD quirk instance."""
         return FlextLdifServersOud.Schema()
 
@@ -47,15 +47,15 @@ class TestOidToOudSchemaConversion:
 
     def test_convert_oid_attribute_to_oud(
         self,
-        oid_quirk: FlextLdifServersOid.Schema,
-        oud_quirk: FlextLdifServersOud.Schema,
+        oid: FlextLdifServersOid.Schema,
+        oud: FlextLdifServersOud.Schema,
     ) -> None:
         """Test converting OID attribute definition to OUD format."""
         # OID attribute definition
         oid_attribute = """( 2.16.840.1.113894.1.1.1 NAME 'orclguid' DESC 'Oracle GUID' EQUALITY caseIgnoreMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 SINGLE-VALUE )"""
 
         # Parse with OID quirk
-        parse_result = oid_quirk.parse(oid_attribute)
+        parse_result = oid.parse(oid_attribute)
         assert parse_result.is_success, f"OID parse failed: {parse_result.error}"
         parsed_data = parse_result.unwrap()
 
@@ -67,12 +67,12 @@ class TestOidToOudSchemaConversion:
         )  # Metadata preserved
 
         # Convert to RFC format using OID quirk
-        rfc_result = oid_quirk.write(parsed_data)
+        rfc_result = oid.write(parsed_data)
         assert rfc_result.is_success, f"OID write failed: {rfc_result.error}"
         rfc_format = rfc_result.unwrap()
 
         # Parse RFC format with OUD quirk
-        oud_parse_result = oud_quirk.parse(rfc_format)
+        oud_parse_result = oud.parse(rfc_format)
         assert oud_parse_result.is_success, (
             f"OUD parse failed: {oud_parse_result.error}"
         )
@@ -85,15 +85,15 @@ class TestOidToOudSchemaConversion:
 
     def test_convert_oid_objectclass_to_oud(
         self,
-        oid_quirk: FlextLdifServersOid.Schema,
-        oud_quirk: FlextLdifServersOud.Schema,
+        oid: FlextLdifServersOid.Schema,
+        oud: FlextLdifServersOud.Schema,
     ) -> None:
         """Test converting OID objectClass definition to OUD format."""
         # OID objectClass definition
         oid_objectclass = """( 2.16.840.1.113894.2.1.1 NAME 'orclContainer' DESC 'Oracle Container' SUP top STRUCTURAL MUST cn MAY description )"""
 
         # Parse with OID quirk
-        parse_result = oid_quirk.parse(oid_objectclass)
+        parse_result = oid.parse(oid_objectclass)
         assert parse_result.is_success, f"OID parse failed: {parse_result.error}"
         parsed_data = parse_result.unwrap()
 
@@ -104,12 +104,12 @@ class TestOidToOudSchemaConversion:
         assert hasattr(parsed_data, "_metadata") or hasattr(parsed_data, "metadata")
 
         # Convert to RFC format using OID quirk
-        rfc_result = oid_quirk.write(parsed_data)
+        rfc_result = oid.write(parsed_data)
         assert rfc_result.is_success, f"OID write failed: {rfc_result.error}"
         rfc_format = rfc_result.unwrap()
 
         # Parse RFC format with OUD quirk
-        oud_parse_result = oud_quirk.parse(rfc_format)
+        oud_parse_result = oud.parse(rfc_format)
         assert oud_parse_result.is_success, (
             f"OUD parse failed: {oud_parse_result.error}"
         )
@@ -134,18 +134,18 @@ class TestOidToOudAclConversion:
     """
 
     @pytest.fixture
-    def oid_acl_quirk(self) -> FlextLdifServersOid.Acl:
+    def oid_acl(self) -> FlextLdifServersOid.Acl:
         """Create OID ACL quirk instance."""
         return FlextLdifServersOid.Acl()
 
     @pytest.fixture
-    def oud_acl_quirk(self) -> FlextLdifServersOud.Acl:
+    def oud_acl(self) -> FlextLdifServersOud.Acl:
         """Create OUD ACL quirk instance."""
         return FlextLdifServersOud.Acl()
 
     def test_oid_acl_parsing_and_roundtrip(
         self,
-        oid_acl_quirk: FlextLdifServersOid.Acl,
+        oid_acl: FlextLdifServersOid.Acl,
     ) -> None:
         """Test OID ACL parsing and round-trip within OID format."""
         # OID ACL definition
@@ -153,7 +153,7 @@ class TestOidToOudAclConversion:
 
         # Parse with OID ACL quirk
         # Note: parse internally converts OID format to RFC format
-        parse_result = oid_acl_quirk.parse(oid_acl)
+        parse_result = oid_acl.parse(oid_acl)
         assert parse_result.is_success, f"OID ACL parse failed: {parse_result.error}"
         parsed_data = parse_result.unwrap()
 
@@ -169,14 +169,14 @@ class TestOidToOudAclConversion:
 
     def test_oud_acl_parsing_and_roundtrip(
         self,
-        oud_acl_quirk: FlextLdifServersOud.Acl,
+        oud_acl: FlextLdifServersOud.Acl,
     ) -> None:
         """Test OUD ACL parsing and round-trip within OUD format."""
         # OUD ACI format
         oud_aci = """aci: (targetattr="*")(version 3.0; acl "Test ACL"; allow (read,search) userdn="ldap:///anyone";)"""
 
         # Parse with OUD ACL quirk
-        parse_result = oud_acl_quirk.parse(oud_aci)
+        parse_result = oud_acl.parse(oud_aci)
         assert parse_result.is_success, f"OUD ACL parse failed: {parse_result.error}"
         parsed_data = parse_result.unwrap()
 
@@ -194,7 +194,7 @@ class TestOidToOudAclConversion:
         assert hasattr(parsed_data, "metadata")  # Has metadata field
 
         # Write back to OUD format for round-trip
-        write_result = oud_acl_quirk.write(parsed_data)
+        write_result = oud_acl.write(parsed_data)
         assert write_result.is_success, f"OUD ACL write failed: {write_result.error}"
         written_format = write_result.unwrap()
 
@@ -206,12 +206,12 @@ class TestOidToOudIntegrationConversion:
     """Test complete OID fixture → OUD conversion workflow."""
 
     @pytest.fixture
-    def oid_quirk(self) -> FlextLdifServersOid.Schema:
+    def oid(self) -> FlextLdifServersOid.Schema:
         """Create OID quirk instance."""
         return FlextLdifServersOid.Schema()
 
     @pytest.fixture
-    def oud_quirk(self) -> FlextLdifServersOud.Schema:
+    def oud(self) -> FlextLdifServersOud.Schema:
         """Create OUD quirk instance."""
         return FlextLdifServersOud.Schema()
 
@@ -223,8 +223,8 @@ class TestOidToOudIntegrationConversion:
 
     def test_convert_oid_schema_fixture_to_oud(
         self,
-        oid_quirk: FlextLdifServersOid.Schema,
-        oud_quirk: FlextLdifServersOud.Schema,
+        oid: FlextLdifServersOid.Schema,
+        oud: FlextLdifServersOud.Schema,
         oid_schema_fixture: str,
     ) -> None:
         """Test converting OID schema fixture to OUD format."""
@@ -249,18 +249,18 @@ class TestOidToOudIntegrationConversion:
                 attr_def = line.split(":", 1)[1].strip()
 
                 # Parse with OID quirk
-                parse_result = oid_quirk.parse(attr_def)
+                parse_result = oid.parse(attr_def)
                 if not parse_result.is_success:
                     continue
 
                 parsed_data = parse_result.unwrap()
 
                 # Convert to RFC format
-                rfc_result = oid_quirk.write(parsed_data)
+                rfc_result = oid.write(parsed_data)
                 assert rfc_result.is_success
 
                 # Parse with OUD quirk
-                oud_result = oud_quirk.parse(rfc_result.unwrap())
+                oud_result = oud.parse(rfc_result.unwrap())
                 assert oud_result.is_success, (
                     "OUD quirk should parse converted attribute"
                 )

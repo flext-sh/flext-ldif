@@ -153,30 +153,30 @@ class TestQuirksWithRealLdifFixtures:
             pytest.skip(f"Fixture not found: {fixture_path}")
         return fixture_path.read_text(encoding="utf-8")
 
-    def test_oid_quirk_can_handle_real_oid_ldif(self, oid_schema_ldif: str) -> None:
+    def test_oid_can_handle_real_oid_ldif(self, oid_schema_ldif: str) -> None:
         """OID quirk must handle real OID LDIF data."""
-        oid_quirk = FlextLdifServersOid.Entry()
+        oid = FlextLdifServersOid.Entry()
 
         # Should be able to parse OID LDIF content
-        result = oid_quirk.parse(oid_schema_ldif)
+        result = oid.parse(oid_schema_ldif)
 
         # Either successful or gracefully fail, not crash
         assert result is not None
 
-    def test_rfc_quirk_handles_all_ldif(self, oid_schema_ldif: str) -> None:
+    def test_rfc_handles_all_ldif(self, oid_schema_ldif: str) -> None:
         """RFC quirk must handle any valid LDIF (lowest priority fallback)."""
-        rfc_quirk = FlextLdifServersRfc.Entry()
+        rfc = FlextLdifServersRfc.Entry()
 
         # RFC should handle any valid LDIF
-        result = rfc_quirk.parse(oid_schema_ldif)
+        result = rfc.parse(oid_schema_ldif)
         assert result is not None
 
-    def test_oud_quirk_can_handle_oud_ldif(self, oud_schema_ldif: str) -> None:
+    def test_oud_can_handle_oud_ldif(self, oud_schema_ldif: str) -> None:
         """OUD quirk must handle real OUD LDIF data."""
-        oud_quirk = FlextLdifServersOud.Entry()
+        oud = FlextLdifServersOud.Entry()
 
         # Should be able to parse OUD LDIF content
-        result = oud_quirk.parse(oud_schema_ldif)
+        result = oud.parse(oud_schema_ldif)
         assert result is not None
 
 

@@ -116,7 +116,7 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
     # Sort entries by custom predicate
     result = FlextLdifSorting.by_custom(
         my_entries,
-        lambda e: e.dn.value.count(",")  # By depth
+        lambda e: FlextLdifUtilities.DN._get_dn_value(e.dn).count(",")  # noqa: SLF001  # By depth
     )
 
     # Sort attributes in entries
@@ -174,7 +174,7 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
     sorted_entries = FlextLdifSorting(
         entries=my_entries,
         sort_by="custom",
-        custom_predicate=lambda e: len(e.dn.value)
+        custom_predicate=lambda e: len(FlextLdifUtilities.DN._get_dn_value(e.dn))  # noqa: SLF001
     ).execute().unwrap()
 
     # Custom sorting: sort by CN attribute value
@@ -235,7 +235,7 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
     # Sort with custom logic
     sorted = FlextLdifSorting.by_custom(
         entries,
-        lambda e: e.dn.value.count(",")  # By depth
+        lambda e: FlextLdifUtilities.DN._get_dn_value(e.dn).count(",")  # noqa: SLF001  # By depth
     ).unwrap()
 
     """
@@ -404,7 +404,7 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
 
             # With error handling
             sorted = Service.sort(entries, by="custom",
-                                 predicate=lambda e: len(e.dn.value)
+                                 predicate=lambda e: len(FlextLdifUtilities.DN._get_dn_value(e.dn))  # noqa: SLF001
                                 ).unwrap_or([])
 
         """
@@ -599,7 +599,7 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
             # Sort by DN depth
             result = FlextLdifSorting.by_custom(
                 entries,
-                lambda e: e.dn.value.count(",")
+                lambda e: FlextLdifUtilities.DN._get_dn_value(e.dn).count(",")  # noqa: SLF001
             )
             sorted_entries = result.unwrap()
 
@@ -730,7 +730,7 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
         """
 
         def sort_key(entry: FlextLdifModels.Entry) -> tuple[int, str]:
-            dn_value = str(entry.dn.value) if entry.dn else ""
+            dn_value = str(FlextLdifUtilities.DN._get_dn_value(entry.dn)) if entry.dn else ""  # noqa: SLF001
             if not dn_value:
                 return (0, "")
 
@@ -760,7 +760,7 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
         """
 
         def dn_sort_key(entry: FlextLdifModels.Entry) -> str:
-            dn_value = str(entry.dn.value) if entry.dn else ""
+            dn_value = str(FlextLdifUtilities.DN._get_dn_value(entry.dn)) if entry.dn else ""  # noqa: SLF001
             if not dn_value:
                 return ""
 
@@ -785,7 +785,7 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
                 priority = 2
                 oid_values = attrs[FlextLdifConstants.SchemaFields.OBJECT_CLASSES]
             else:
-                return (3, entry.dn.value.lower())
+                return (3, FlextLdifUtilities.DN._get_dn_value(entry.dn).lower())  # noqa: SLF001
 
             # Extract OID
             first_val = str(
@@ -925,7 +925,7 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
         try:
 
             def dn_depth_key(entry: FlextLdifModels.Entry) -> tuple[int, str]:
-                dn = entry.dn.value
+                dn = FlextLdifUtilities.DN._get_dn_value(entry.dn)  # noqa: SLF001
                 # Count RDNs (components separated by commas not in quotes)
                 rdn_count = dn.count(",") + 1
                 return (rdn_count, dn)
@@ -975,7 +975,7 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
             ) -> tuple[int, str]:
                 """Extract value from entry, with type-aware sorting."""
                 if key.lower() == "dn":
-                    value = entry.dn.value
+                    value = FlextLdifUtilities.DN._get_dn_value(entry.dn)  # noqa: SLF001
                     rdn_count = value.count(",") + 1
                     return (0, rdn_count, value if case_sensitive else value.lower())
                 # Try to find attribute in entry

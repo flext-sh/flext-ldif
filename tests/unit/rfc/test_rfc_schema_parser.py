@@ -24,7 +24,7 @@ class TestRfcSchemaParserInitialization:
         parser = FlextLdifParser()
 
         assert parser is not None
-        assert hasattr(parser, "_quirk_registry")
+        assert hasattr(parser, "_registry")
         assert hasattr(parser, "_config")
 
 
@@ -167,7 +167,7 @@ objectClasses: ( 2.5.6.7 NAME 'organizationalPerson' DESC 'Organizational Person
         assert entry.dn.value is not None
         assert len(entry.attributes.attributes) > 0
 
-    def test_parse_schema_with_server_specific_quirks(self) -> None:
+    def test_parse_schema_with_server_specifics(self) -> None:
         """Test schema parsing with server-specific quirks."""
         schema_content = """dn: cn=subschema
 objectClass: subschema

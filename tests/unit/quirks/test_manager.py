@@ -36,55 +36,55 @@ class TestFlextLdifServer:
         # Both should be the same instance (singleton)
         assert registry1 is registry2
 
-    def test_get_acl_quirks_oracle_oid(self) -> None:
+    def test_get_acls_oracle_oid(self) -> None:
         """Test getting ACL quirks for Oracle OID."""
         registry = FlextLdifServer()
 
         # Get the ACL quirks for Oracle OID
-        quirks = registry.get_acl_quirks(FlextLdifConstants.LdapServers.ORACLE_OID)
+        quirks = registry.get_acls(FlextLdifConstants.LdapServers.ORACLE_OID)
         assert quirks is not None
 
-    def test_get_acl_quirks_oracle_oud(self) -> None:
+    def test_get_acls_oracle_oud(self) -> None:
         """Test getting ACL quirks for Oracle OUD."""
         registry = FlextLdifServer()
 
-        quirks = registry.get_acl_quirks(FlextLdifConstants.LdapServers.ORACLE_OUD)
+        quirks = registry.get_acls(FlextLdifConstants.LdapServers.ORACLE_OUD)
         assert quirks is not None
 
-    def test_get_acl_quirks_openldap(self) -> None:
+    def test_get_acls_openldap(self) -> None:
         """Test getting ACL quirks for OpenLDAP."""
         registry = FlextLdifServer()
 
-        quirks = registry.get_acl_quirks(FlextLdifConstants.LdapServers.OPENLDAP_2)
+        quirks = registry.get_acls(FlextLdifConstants.LdapServers.OPENLDAP_2)
         assert quirks is not None
 
-    def test_get_schema_quirks_oracle_oid(self) -> None:
+    def test_get_schemas_oracle_oid(self) -> None:
         """Test getting schema quirks for Oracle OID."""
         registry = FlextLdifServer()
 
-        quirks = registry.get_schema_quirks(FlextLdifConstants.LdapServers.ORACLE_OID)
+        quirks = registry.get_schemas(FlextLdifConstants.LdapServers.ORACLE_OID)
         assert quirks is not None
 
-    def test_get_schema_quirks_openldap(self) -> None:
+    def test_get_schemas_openldap(self) -> None:
         """Test getting schema quirks for OpenLDAP."""
         registry = FlextLdifServer()
 
-        quirks = registry.get_schema_quirks(FlextLdifConstants.LdapServers.OPENLDAP_2)
+        quirks = registry.get_schemas(FlextLdifConstants.LdapServers.OPENLDAP_2)
         assert quirks is not None
 
-    def test_find_acl_quirk_is_callable(self) -> None:
-        """Test that find_acl_quirk method is available and callable."""
+    def test_find_acl_is_callable(self) -> None:
+        """Test that find_acl method is available and callable."""
         registry = FlextLdifServer()
 
         # Test that the method exists and can be called without raising an exception
         # The result depends on the server type and line content
         try:
-            registry.find_acl_quirk(
+            registry.find_acl(
                 FlextLdifConstants.LdapServers.OPENLDAP, "test line"
             )
             # If we got here, the method works
         except AttributeError as e:
-            pytest.fail(f"find_acl_quirk method not found on FlextLdifServer: {e}")
+            pytest.fail(f"find_acl method not found on FlextLdifServer: {e}")
 
     def test_get_entrys_oracle_oid(self) -> None:
         """Test getting entry quirks for Oracle OID."""
@@ -118,13 +118,13 @@ class TestFlextLdifServer:
         ]
 
         for server_type in supported_servers:
-            schema_quirks = registry.get_schema_quirks(server_type)
-            assert schema_quirks is not None, (
+            schemas = registry.get_schemas(server_type)
+            assert schemas is not None, (
                 f"Schema quirks not found for {server_type}"
             )
 
-            acl_quirks = registry.get_acl_quirks(server_type)
-            assert acl_quirks is not None, f"ACL quirks not found for {server_type}"
+            acls = registry.get_acls(server_type)
+            assert acls is not None, f"ACL quirks not found for {server_type}"
 
             entrys = registry.get_entrys(server_type)
             assert entrys is not None, f"Entry quirks not found for {server_type}"

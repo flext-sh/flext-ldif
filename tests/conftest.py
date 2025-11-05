@@ -723,7 +723,7 @@ def openldap_fixtures() -> FlextLdifFixtures.OpenLDAP:
 
 
 @pytest.fixture
-def oid_quirk() -> object:
+def oid() -> object:
     """OID quirk instance for tests.
 
     Returns:

@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import re
 from collections.abc import Callable, Iterator
-from typing import Any, ClassVar, cast
+from typing import Any, ClassVar
 
 from flext_core import FlextModels, FlextResult
 from pydantic import ConfigDict, Field, computed_field, field_validator, model_validator
@@ -186,7 +186,7 @@ class FlextLdifModels(FlextModels):
         )
 
         @classmethod
-        def create_for_quirk(
+        def create_for(
             cls,
             quirk_type: str,
             original_format: str | None = None,
@@ -356,9 +356,9 @@ class FlextLdifModels(FlextModels):
                 from flext_ldif.services.server import FlextLdifServer
 
                 registry = FlextLdifServer.get_global_instance()
-                base_quirk = registry.get_base_quirk(self.server_type)
-                if base_quirk and hasattr(base_quirk, "Constants"):
-                    constants = getattr(base_quirk, "Constants", None)
+                base = registry.get_base(self.server_type)
+                if base and hasattr(base, "Constants"):
+                    constants = getattr(base, "Constants", None)
                     if constants and hasattr(constants, "ACL_FORMAT"):
                         return constants.ACL_FORMAT
             except Exception:
@@ -652,7 +652,7 @@ class FlextLdifModels(FlextModels):
             default=None,
             description="LDAP server information from Root DSE",
         )
-        server_quirks: object = Field(
+        servers: object = Field(
             default=None,
             description="Server-specific quirks and behaviors",
         )
@@ -1089,10 +1089,9 @@ class FlextLdifModels(FlextModels):
         def unconverted_attributes(self) -> dict[str, object]:
             """Get unconverted attributes from metadata extensions (read-only view)."""
             if self.metadata and "unconverted_attributes" in self.metadata.extensions:
-                return cast(
-                    "dict[str, object]",
-                    self.metadata.extensions["unconverted_attributes"],
-                )
+                result = self.metadata.extensions["unconverted_attributes"]
+                if isinstance(result, dict):
+                    return result
             return {}
 
         @classmethod
@@ -1324,8 +1323,7 @@ class FlextLdifModels(FlextModels):
             List of DN components (e.g., ["cn=REDACTED_LDAP_BIND_PASSWORD", "dc=example", "dc=com"])
 
             """
-            components = self.dn.components
-            return cast("list[str]", components)
+            return self.dn.components
 
         def matches_filter(
             self,
@@ -1903,13 +1901,9 @@ class FlextLdifModels(FlextModels):
                 Dict with counts of attributes, object classes, server type, and entries
 
             """
-            # Access fields directly to avoid recursion with model_dump()
-            # Cast computed fields to proper types for Pyrefly compatibility
-            attrs: int = cast("int", self.total_attributes)
-            ocs: int = cast("int", self.total_object_classes)
             return {
-                "attributes": attrs,
-                "object_classes": ocs,
+                "attributes": self.total_attributes,
+                "object_classes": self.total_object_classes,
                 "server_type": self.server_type,
                 "entry_count": self.entry_count,
             }
@@ -1972,9 +1966,7 @@ class FlextLdifModels(FlextModels):
                 Sum of schema elements and entries
 
             """
-            # Cast computed field to proper type for Pyrefly compatibility
-            schema_elems: int = cast("int", self.total_schema_elements)
-            return schema_elems + self.total_entries
+            return self.total_schema_elements + self.total_entries
 
         @computed_field
         def has_schema(self) -> bool:
@@ -1984,9 +1976,7 @@ class FlextLdifModels(FlextModels):
                 True if attributes or object classes exist
 
             """
-            # Cast computed field to proper type for Pyrefly compatibility
-            schema_elems: int = cast("int", self.total_schema_elements)
-            return schema_elems > 0
+            return self.total_schema_elements > 0
 
         @computed_field
         def has_entries(self) -> bool:
@@ -2020,19 +2010,14 @@ class FlextLdifModels(FlextModels):
                 Dict with all counts and computed metrics
 
             """
-            # Access fields directly to avoid recursion with model_dump()
-            # Cast computed fields to proper types for Pyrefly compatibility
-            schema_elems: int = cast("int", self.total_schema_elements)
-            total_items: int = cast("int", self.total_items)
-            success: float = cast("float", self.success_rate)
             return {
                 "schema_attributes": self.total_schema_attributes,
                 "schema_objectclasses": self.total_schema_objectclasses,
-                "total_schema": schema_elems,
+                "total_schema": self.total_schema_elements,
                 "entries": self.total_entries,
                 "failed": self.failed_entries,
-                "total_items": total_items,
-                "success_rate": round(success, 2),
+                "total_items": self.total_items,
+                "success_rate": round(self.success_rate, 2),
             }
 
     # =========================================================================
@@ -2442,11 +2427,11 @@ class FlextLdifModels(FlextModels):
         server_type: str = Field(
             description="Server type identifier (e.g., 'oid', 'oud')",
         )
-        schema_quirks: list[object] = Field(
+        schemas: list[object] = Field(
             default_factory=list,
             description="List of Schema quirk model instances",
         )
-        acl_quirks: list[object] = Field(
+        acls: list[object] = Field(
             default_factory=list,
             description="List of ACL quirk model instances",
         )

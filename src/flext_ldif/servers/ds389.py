@@ -152,7 +152,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
     class Schema(FlextLdifServersRfc.Schema):
         """Schema quirks for Red Hat / 389 Directory Server."""
 
-        def _can_handle_attribute(
+        def can_handle_attribute(
             self, attr_definition: str | FlextLdifModels.SchemaAttribute
         ) -> bool:
             """Detect 389 DS attribute definitions using centralized constants."""
@@ -195,7 +195,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                 )
             return False
 
-        def _can_handle_objectclass(
+        def can_handle_objectclass(
             self, oc_definition: str | FlextLdifModels.SchemaObjectClass
         ) -> bool:
             """Detect 389 DS objectClass definitions using centralized constants."""
@@ -248,7 +248,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             result = super()._parse_attribute(attr_definition)
             if result.is_success:
                 attr_data = result.unwrap()
-                metadata = FlextLdifModels.QuirkMetadata.create_for_quirk(
+                metadata = FlextLdifModels.QuirkMetadata.create_for(
                     FlextLdifServersDs389.Constants.SERVER_TYPE
                 )
                 return FlextResult[FlextLdifModels.SchemaAttribute].ok(
@@ -275,7 +275,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                 # Fix common ObjectClass issues (RFC 4512 compliance)
                 FlextLdifUtilities.ObjectClass.fix_missing_sup(oc_data)
                 FlextLdifUtilities.ObjectClass.fix_kind_mismatch(oc_data)
-                metadata = FlextLdifModels.QuirkMetadata.create_for_quirk(
+                metadata = FlextLdifModels.QuirkMetadata.create_for(
                     FlextLdifServersDs389.Constants.SERVER_TYPE
                 )
                 return FlextResult[FlextLdifModels.SchemaObjectClass].ok(
@@ -286,7 +286,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
     class Acl(FlextLdifServersRfc.Acl):
         """389 Directory Server ACI quirk."""
 
-        def _can_handle(self, acl: str | FlextLdifModels.Acl) -> bool:
+        def can_handle(self, acl: str | FlextLdifModels.Acl) -> bool:
             """Check if this is a 389 Directory Server ACL (public method).
 
             Args:
@@ -296,9 +296,9 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                 True if this is 389 Directory Server ACL format
 
             """
-            return self._can_handle_acl(acl)
+            return self.can_handle(acl)
 
-        def _can_handle_acl(self, acl_line: str | FlextLdifModels.Acl) -> bool:
+        def can_handle_acl(self, acl_line: str | FlextLdifModels.Acl) -> bool:
             """Detect 389 DS ACI lines."""
             if isinstance(acl_line, str):
                 normalized = acl_line.strip() if acl_line else ""
@@ -394,7 +394,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                         target_dn = target_clause
 
                 # Build metadata
-                metadata = FlextLdifModels.QuirkMetadata.create_for_quirk(
+                metadata = FlextLdifModels.QuirkMetadata.create_for(
                     FlextLdifServersDs389.Constants.SERVER_TYPE
                 )
                 metadata.original_format = acl_line.strip()
@@ -556,7 +556,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
     class Entry(FlextLdifServersRfc.Entry):
         """Entry quirks for 389 Directory Server."""
 
-        def _can_handle_entry(
+        def can_handle(
             self,
             entry_dn: str,
             attributes: Mapping[str, object],

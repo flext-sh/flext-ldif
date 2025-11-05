@@ -196,11 +196,11 @@ class TestOudRoutingValidation:
         assert entries is not None
 
         # Get OUD quirk
-        oud_quirk = FlextLdifServersOud()
+        oud = FlextLdifServersOud()
 
         # Verify that OUD entries can be written through OUD Entry quirk
         for entry in entries:
-            result = oud_quirk.entry.write(entry)
+            result = oud.entry.write(entry)
             assert result.is_success, f"Failed to write OUD entry: {result.error}"
             written_str = result.unwrap()
             assert written_str is not None

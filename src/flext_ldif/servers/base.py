@@ -32,13 +32,81 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections.abc import Mapping
-from typing import ClassVar, Literal, Self, cast, overload
+from typing import ClassVar, Self, cast, overload
 
 from flext_core import FlextLogger, FlextResult, FlextService
 
 from flext_ldif.models import FlextLdifModels
 
 logger = FlextLogger(__name__)
+
+
+
+class BaseServerConstants:
+    r"""Base class for standardized server configuration constants.
+
+    This class provides a foundation for all server-specific Constants classes,
+    eliminating duplication of common fields across all 12 server implementations.
+
+    **Common Fields** (inherited by all servers):
+    - SERVER_TYPE: Server identifier (e.g., "oid", "oud", "rfc")
+    - CANONICAL_NAME: Canonical name for display
+    - ALIASES: Alternative names for server detection
+    - PRIORITY: Detection priority (lower = higher priority, 0-200 range)
+    - CAN_NORMALIZE_FROM: Server types this can normalize from
+    - CAN_DENORMALIZE_TO: Server types this can denormalize to
+    - ACL_FORMAT: ACL format identifier (e.g., "orclaci", "rfc_generic")
+    - ACL_ATTRIBUTE_NAME: LDAP attribute name for ACLs (e.g., "orclaci", "aci")
+    - SCHEMA_SUP_SEPARATOR: Character used to separate SUP fields (default: "$")
+    - DETECTION_OID_PATTERN: Regex pattern for server OID detection
+    - DETECTION_ATTRIBUTE_PREFIXES: Attribute name prefixes to detect server
+    - DETECTION_OBJECTCLASS_NAMES: ObjectClass names to detect server
+    - DETECTION_DN_MARKERS: DN patterns to detect server
+
+    **Usage:**
+
+        class Constants(BaseServerConstants):
+            # Override these for your server
+            SERVER_TYPE: ClassVar[str] = "myserver"
+            PRIORITY: ClassVar[int] = 50
+            DETECTION_OID_PATTERN: Final[str] = r"1\.2\.3\.4\.*"
+
+            # Add server-specific constants
+            MY_CUSTOM_FIELD: Final[str] = "value"
+
+    **Benefits:**
+    - Single source of truth for common fields
+    - Reduces duplication across 12 servers (2,000-3,000 lines saved)
+    - Type-safe with ClassVar and Final
+    - Easy to extend with server-specific fields
+    """
+
+    # =========================================================================
+    # STANDARDIZED CONSTANTS FOR AUTO-DISCOVERY (inherited by all servers)
+    # =========================================================================
+
+    # Server identification
+    SERVER_TYPE: ClassVar[str] = "base"  # Override in subclasses
+    CANONICAL_NAME: ClassVar[str] = "base"  # Override in subclasses
+    ALIASES: ClassVar[frozenset[str]] = frozenset(["base"])  # Override in subclasses
+    PRIORITY: ClassVar[int] = 255  # Override in subclasses (0-255 range, higher = lower priority)
+
+    # Server conversion capabilities
+    CAN_NORMALIZE_FROM: ClassVar[frozenset[str]] = frozenset(["base"])  # Override in subclasses
+    CAN_DENORMALIZE_TO: ClassVar[frozenset[str]] = frozenset(["base"])  # Override in subclasses
+
+    # ACL handling
+    ACL_FORMAT: ClassVar[str] = "rfc_generic"  # Override in subclasses (e.g., "orclaci", "ad_aci")
+    ACL_ATTRIBUTE_NAME: ClassVar[str] = "aci"  # Override in subclasses (e.g., "orclaci", "ntsecuritydescriptor")
+
+    # Schema parsing
+    SCHEMA_SUP_SEPARATOR: ClassVar[str] = "$"  # Common to all (RFC standard)
+
+    # Detection patterns (all server-specific, define in subclasses)
+    DETECTION_OID_PATTERN: ClassVar[str] = r".*"  # Match any OID by default, override in subclasses
+    DETECTION_ATTRIBUTE_PREFIXES: ClassVar[frozenset[str]] = frozenset([])  # Override in subclasses
+    DETECTION_OBJECTCLASS_NAMES: ClassVar[frozenset[str]] = frozenset([])  # Override in subclasses
+    DETECTION_DN_MARKERS: ClassVar[frozenset[str]] = frozenset([])  # Override in subclasses
 
 
 class FlextLdifServersBase(FlextService[list[FlextLdifModels.Entry] | str], ABC):
@@ -125,7 +193,7 @@ class FlextLdifServersBase(FlextService[list[FlextLdifModels.Entry] | str], ABC)
         self,
         ldif_text: str | None = None,
         entries: list[FlextLdifModels.Entry] | None = None,
-        operation: Literal["parse", "write"] | None = None,
+        operation: FlextLdifConstants.LiteralTypes.QuirkOperation | None = None,
     ) -> FlextResult[list[FlextLdifModels.Entry] | str]:
         r"""Execute quirk operation with auto-detection and V2 modes.
 
@@ -166,7 +234,7 @@ class FlextLdifServersBase(FlextService[list[FlextLdifModels.Entry] | str], ABC)
             return FlextResult[list[FlextLdifModels.Entry] | str].ok(empty_list)
 
         # Use explicit operation if provided, otherwise auto-detect
-        detected_operation: Literal["parse", "write"] | None = operation
+        detected_operation: FlextLdifConstants.LiteralTypes.QuirkOperation | None = operation
         if detected_operation is None:
             if ldif_text is not None:
                 detected_operation = "parse"
@@ -199,7 +267,7 @@ class FlextLdifServersBase(FlextService[list[FlextLdifModels.Entry] | str], ABC)
         ldif_text: str,
         *,
         entries: None = None,
-        operation: Literal["parse"] | None = None,
+        operation: FlextLdifConstants.LiteralTypes.SchemaParseOperation | None = None,
     ) -> list[FlextLdifModels.Entry]: ...
 
     @overload
@@ -208,7 +276,7 @@ class FlextLdifServersBase(FlextService[list[FlextLdifModels.Entry] | str], ABC)
         *,
         ldif_text: None = None,
         entries: list[FlextLdifModels.Entry],
-        operation: Literal["write"] | None = None,
+        operation: FlextLdifConstants.LiteralTypes.AclWriteOperation | None = None,
     ) -> str: ...
 
     @overload
@@ -216,14 +284,14 @@ class FlextLdifServersBase(FlextService[list[FlextLdifModels.Entry] | str], ABC)
         self,
         ldif_text: str | None = None,
         entries: list[FlextLdifModels.Entry] | None = None,
-        operation: Literal["parse", "write"] | None = None,
+        operation: FlextLdifConstants.LiteralTypes.QuirkOperation | None = None,
     ) -> list[FlextLdifModels.Entry] | str: ...
 
     def __call__(
         self,
         ldif_text: str | None = None,
         entries: list[FlextLdifModels.Entry] | None = None,
-        operation: Literal["parse", "write"] | None = None,
+        operation: FlextLdifConstants.LiteralTypes.QuirkOperation | None = None,
     ) -> list[FlextLdifModels.Entry] | str:
         r"""Callable interface - use as processor.
 
@@ -281,8 +349,8 @@ class FlextLdifServersBase(FlextService[list[FlextLdifModels.Entry] | str], ABC)
                 if "entries" in kwargs
                 else None
             )
-            operation: Literal["parse", "write"] | None = (
-                cast("Literal['parse', 'write'] | None", kwargs.get("operation"))
+            operation: FlextLdifConstants.LiteralTypes.QuirkOperation | None = (
+                cast("FlextLdifConstants.LiteralTypes.QuirkOperation | None", kwargs.get("operation"))
                 if "operation" in kwargs
                 else None
             )
@@ -316,10 +384,10 @@ class FlextLdifServersBase(FlextService[list[FlextLdifModels.Entry] | str], ABC)
             FlextResult[list[Entry]]
 
         """
-        entry_quirk = getattr(self, "entry", None)
-        if not entry_quirk:
+        entry = getattr(self, "entry", None)
+        if not entry:
             return FlextResult.fail("Entry quirk not available")
-        result = entry_quirk.parse(ldif_text)
+        result = entry.parse(ldif_text)
         return cast("FlextResult[list[FlextLdifModels.Entry]]", result)
 
     def write(self, entries: list[FlextLdifModels.Entry]) -> FlextResult[str]:
@@ -339,13 +407,13 @@ class FlextLdifServersBase(FlextService[list[FlextLdifModels.Entry] | str], ABC)
             FlextResult[str]
 
         """
-        entry_quirk = getattr(self, "entry", None)
-        if not entry_quirk:
+        entry = getattr(self, "entry", None)
+        if not entry:
             return FlextResult.fail("Entry quirk not available")
 
         ldif_lines: list[str] = []
         for entry in entries:
-            result = entry_quirk.write_entry(entry)
+            result = entry.write_entry(entry)
             if result.is_failure:
                 return cast("FlextResult[str]", result)
             ldif_lines.append(result.unwrap())
@@ -398,7 +466,7 @@ class FlextLdifServersBase(FlextService[list[FlextLdifModels.Entry] | str], ABC)
         raise AttributeError(msg)
 
     @classmethod
-    def _register_quirk_in_registry(
+    def _register_in_registry(
         cls, quirk_instance: object, registry: object
     ) -> None:
         """Helper method to register a quirk instance in the registry.
@@ -441,7 +509,7 @@ class FlextLdifServersBase(FlextService[list[FlextLdifModels.Entry] | str], ABC)
             return "acl"
         return "unknown"
 
-    def _get_quirk_for_model(self, model: object) -> object | None:
+    def _get_for_model(self, model: object) -> object | None:
         """Get appropriate quirk instance for a model type.
 
         Args:
@@ -931,14 +999,14 @@ class FlextLdifServersBase(FlextService[list[FlextLdifModels.Entry] | str], ABC)
 
             """
             if isinstance(definition, FlextLdifModels.SchemaAttribute):
-                return self._can_handle_attribute(definition)
+                return self.can_handle_attribute(definition)
             if isinstance(definition, FlextLdifModels.SchemaObjectClass):
-                return self._can_handle_objectclass(definition)
+                return self.can_handle_objectclass(definition)
             # For string definitions, try both methods
             schema_type = self._detect_schema_type(definition)
             if schema_type == "objectclass":
-                return self._can_handle_objectclass(definition)
-            return self._can_handle_attribute(definition)
+                return self.can_handle_objectclass(definition)
+            return self.can_handle_attribute(definition)
 
         def _handle_parse_operation(
             self,
@@ -1034,8 +1102,8 @@ class FlextLdifServersBase(FlextService[list[FlextLdifModels.Entry] | str], ABC)
             | FlextLdifModels.SchemaAttribute
             | FlextLdifModels.SchemaObjectClass
             | None,
-            operation: Literal["parse", "write"] | None,
-        ) -> Literal["parse", "write"] | FlextResult:
+            operation: FlextLdifConstants.LiteralTypes.QuirkOperation | None,
+        ) -> FlextLdifConstants.LiteralTypes.QuirkOperation | FlextResult:
             """Auto-detect operation from data type. Returns operation or error result."""
             if operation is not None:
                 return operation
@@ -1064,7 +1132,7 @@ class FlextLdifServersBase(FlextService[list[FlextLdifModels.Entry] | str], ABC)
             data: str
             | FlextLdifModels.SchemaAttribute
             | FlextLdifModels.SchemaObjectClass,
-            operation: Literal["parse", "write"],
+            operation: FlextLdifConstants.LiteralTypes.QuirkOperation,
         ) -> FlextResult[
             FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | str
         ]:
@@ -1109,7 +1177,7 @@ class FlextLdifServersBase(FlextService[list[FlextLdifModels.Entry] | str], ABC)
             | FlextLdifModels.SchemaAttribute
             | FlextLdifModels.SchemaObjectClass
             | None = None,
-            operation: Literal["parse", "write"] | None = None,
+            operation: FlextLdifConstants.LiteralTypes.QuirkOperation | None = None,
         ) -> FlextResult[
             FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | str
         ]:
@@ -1166,7 +1234,7 @@ class FlextLdifServersBase(FlextService[list[FlextLdifModels.Entry] | str], ABC)
             oc_definition: None = None,
             attr_model: None = None,
             oc_model: None = None,
-            operation: Literal["parse"] | None = None,
+            operation: FlextLdifConstants.LiteralTypes.SchemaParseOperation | None = None,
         ) -> FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass: ...
 
         @overload
@@ -1177,7 +1245,7 @@ class FlextLdifServersBase(FlextService[list[FlextLdifModels.Entry] | str], ABC)
             oc_definition: str,
             attr_model: None = None,
             oc_model: None = None,
-            operation: Literal["parse"] | None = None,
+            operation: FlextLdifConstants.LiteralTypes.SchemaParseOperation | None = None,
         ) -> FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass: ...
 
         @overload
@@ -1188,7 +1256,7 @@ class FlextLdifServersBase(FlextService[list[FlextLdifModels.Entry] | str], ABC)
             oc_definition: None = None,
             attr_model: FlextLdifModels.SchemaAttribute,
             oc_model: None = None,
-            operation: Literal["write"] | None = None,
+            operation: FlextLdifConstants.LiteralTypes.AclWriteOperation | None = None,
         ) -> str: ...
 
         @overload
@@ -1199,7 +1267,7 @@ class FlextLdifServersBase(FlextService[list[FlextLdifModels.Entry] | str], ABC)
             oc_definition: None = None,
             attr_model: None = None,
             oc_model: FlextLdifModels.SchemaObjectClass,
-            operation: Literal["write"] | None = None,
+            operation: FlextLdifConstants.LiteralTypes.AclWriteOperation | None = None,
         ) -> str: ...
 
         @overload
@@ -1209,7 +1277,7 @@ class FlextLdifServersBase(FlextService[list[FlextLdifModels.Entry] | str], ABC)
             oc_definition: str | None = None,
             attr_model: FlextLdifModels.SchemaAttribute | None = None,
             oc_model: FlextLdifModels.SchemaObjectClass | None = None,
-            operation: Literal["parse", "write"] | None = None,
+            operation: FlextLdifConstants.LiteralTypes.QuirkOperation | None = None,
         ) -> (
             FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | str
         ): ...
@@ -1220,7 +1288,7 @@ class FlextLdifServersBase(FlextService[list[FlextLdifModels.Entry] | str], ABC)
             oc_definition: str | None = None,
             attr_model: FlextLdifModels.SchemaAttribute | None = None,
             oc_model: FlextLdifModels.SchemaObjectClass | None = None,
-            operation: Literal["parse", "write"] | None = None,
+            operation: FlextLdifConstants.LiteralTypes.QuirkOperation | None = None,
         ) -> FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | str:
             """Callable interface - use as processor.
 
@@ -1285,8 +1353,8 @@ class FlextLdifServersBase(FlextService[list[FlextLdifModels.Entry] | str], ABC)
                     if "oc_model" in kwargs
                     else None
                 )
-                op: Literal["parse", "write"] | None = (
-                    cast("Literal['parse', 'write'] | None", kwargs.get("operation"))
+                op: FlextLdifConstants.LiteralTypes.QuirkOperation | None = (
+                    cast("FlextLdifConstants.LiteralTypes.QuirkOperation | None", kwargs.get("operation"))
                     if "operation" in kwargs
                     else None
                 )
@@ -1371,7 +1439,7 @@ class FlextLdifServersBase(FlextService[list[FlextLdifModels.Entry] | str], ABC)
             return FlextResult.ok(oc)
 
         @abstractmethod
-        def _can_handle_attribute(
+        def can_handle_attribute(
             self, attr_definition: str | FlextLdifModels.SchemaAttribute
         ) -> bool:
             """Check if this quirk can handle the attribute definition.
@@ -1393,7 +1461,7 @@ class FlextLdifServersBase(FlextService[list[FlextLdifModels.Entry] | str], ABC)
         # See consolidated parse() method below
 
         @abstractmethod
-        def _can_handle_objectclass(
+        def can_handle_objectclass(
             self, oc_definition: str | FlextLdifModels.SchemaObjectClass
         ) -> bool:
             """Check if this quirk can handle the objectClass definition.
@@ -1414,39 +1482,6 @@ class FlextLdifServersBase(FlextService[list[FlextLdifModels.Entry] | str], ABC)
         # CONSOLIDATED into parse(definition, model_type=None)
         # See consolidated parse() method below
 
-        def can_handle_attribute(
-            self, attr_definition: str | FlextLdifModels.SchemaAttribute
-        ) -> bool:
-            """Public wrapper for _can_handle_attribute.
-
-            Used by tests and services to check if this quirk can handle an attribute definition.
-            Delegates to the private _can_handle_attribute() implementation.
-
-            Args:
-                attr_definition: Attribute definition (string or model)
-
-            Returns:
-                True if this quirk can handle the attribute
-
-            """
-            return self._can_handle_attribute(attr_definition)
-
-        def can_handle_objectclass(
-            self, oc_definition: str | FlextLdifModels.SchemaObjectClass
-        ) -> bool:
-            """Public wrapper for _can_handle_objectclass.
-
-            Used by tests and services to check if this quirk can handle an objectClass definition.
-            Delegates to the private _can_handle_objectclass() implementation.
-
-            Args:
-                oc_definition: ObjectClass definition (string or model)
-
-            Returns:
-                True if this quirk can handle the objectClass
-
-            """
-            return self._can_handle_objectclass(oc_definition)
 
         # REMOVED: convert_attribute - Entry is always RFC with metadata
         # All conversion is handled by quirk_metadata in the model itself
@@ -1457,7 +1492,7 @@ class FlextLdifServersBase(FlextService[list[FlextLdifModels.Entry] | str], ABC)
 
         # REMOVED: convert_objectclass - See convert_attribute
 
-        def create_quirk_metadata(
+        def create_metadata(
             self,
             original_format: str,
             extensions: dict[str, object] | None = None,
@@ -1786,7 +1821,7 @@ class FlextLdifServersBase(FlextService[list[FlextLdifModels.Entry] | str], ABC)
         def execute(
             self,
             data: str | FlextLdifModels.Acl | None = None,
-            operation: Literal["parse", "write"] | None = None,
+            operation: FlextLdifConstants.LiteralTypes.QuirkOperation | None = None,
         ) -> FlextResult[FlextLdifModels.Acl | str]:
             """Execute ACL quirk operation with automatic type detection and routing.
 
@@ -1796,14 +1831,14 @@ class FlextLdifServersBase(FlextService[list[FlextLdifModels.Entry] | str], ABC)
             - None → health check
 
             **V2 Usage - Maximum Automation:**
-                >>> acl_quirk = FlextLdifServersRfc.Acl()
+                >>> acl = FlextLdifServersRfc.Acl()
                 >>> # Parse: pass ACL line string
-                >>> acl_model = acl_quirk.execute("(target=...)")  # → Acl
+                >>> acl_model = acl.execute("(target=...)")  # → Acl
                 >>> # Write: pass model
-                >>> acl_text = acl_quirk.execute(acl_model)  # → str
+                >>> acl_text = acl.execute(acl_model)  # → str
                 >>> # Or use as callable processor
-                >>> acl_model = acl_quirk("(target=...)")  # Parse
-                >>> acl_text = acl_quirk(acl_model)  # Write
+                >>> acl_model = acl("(target=...)")  # Parse
+                >>> acl_text = acl(acl_model)  # Write
 
             Args:
                 data: ACL line string OR Acl model
@@ -1820,7 +1855,7 @@ class FlextLdifServersBase(FlextService[list[FlextLdifModels.Entry] | str], ABC)
                 return FlextResult[FlextLdifModels.Acl | str].ok(empty_acl)
 
             # Auto-detect operation from data type, unless overridden
-            detected_operation: Literal["parse", "write"] | None = operation
+            detected_operation: FlextLdifConstants.LiteralTypes.QuirkOperation | None = operation
 
             if detected_operation is None:
                 # Type-based auto-detection
@@ -1861,7 +1896,7 @@ class FlextLdifServersBase(FlextService[list[FlextLdifModels.Entry] | str], ABC)
             self,
             data: str,
             *,
-            operation: Literal["parse"] | None = None,
+            operation: FlextLdifConstants.LiteralTypes.SchemaParseOperation | None = None,
         ) -> FlextLdifModels.Acl: ...
 
         @overload
@@ -1869,7 +1904,7 @@ class FlextLdifServersBase(FlextService[list[FlextLdifModels.Entry] | str], ABC)
             self,
             data: FlextLdifModels.Acl,
             *,
-            operation: Literal["write"] | None = None,
+            operation: FlextLdifConstants.LiteralTypes.AclWriteOperation | None = None,
         ) -> str: ...
 
         @overload
@@ -1877,14 +1912,14 @@ class FlextLdifServersBase(FlextService[list[FlextLdifModels.Entry] | str], ABC)
             self,
             data: str | FlextLdifModels.Acl | None = None,
             *,
-            operation: Literal["parse", "write"] | None = None,
+            operation: FlextLdifConstants.LiteralTypes.QuirkOperation | None = None,
         ) -> FlextLdifModels.Acl | str: ...
 
         def __call__(
             self,
             data: str | FlextLdifModels.Acl | None = None,
             *,
-            operation: Literal["parse", "write"] | None = None,
+            operation: FlextLdifConstants.LiteralTypes.QuirkOperation | None = None,
         ) -> FlextLdifModels.Acl | str:
             """Callable interface - automatic polymorphic processor.
 
@@ -1906,8 +1941,8 @@ class FlextLdifServersBase(FlextService[list[FlextLdifModels.Entry] | str], ABC)
                     if "data" in kwargs
                     else None
                 )
-                op: Literal["parse", "write"] | None = (
-                    cast("Literal['parse', 'write'] | None", kwargs.get("operation"))
+                op: FlextLdifConstants.LiteralTypes.QuirkOperation | None = (
+                    cast("FlextLdifConstants.LiteralTypes.QuirkOperation | None", kwargs.get("operation"))
                     if "operation" in kwargs
                     else None
                 )
@@ -1949,7 +1984,7 @@ class FlextLdifServersBase(FlextService[list[FlextLdifModels.Entry] | str], ABC)
             return FlextResult.ok(acl)
 
         @abstractmethod
-        def _can_handle_acl(self, acl_line: str | FlextLdifModels.Acl) -> bool:
+        def can_handle_acl(self, acl_line: str | FlextLdifModels.Acl) -> bool:
             """Check if this quirk can handle the ACL definition.
 
             Called BEFORE parsing to detect if this quirk should process the ACL line.
@@ -1976,6 +2011,20 @@ class FlextLdifServersBase(FlextService[list[FlextLdifModels.Entry] | str], ABC)
 
             """
             return self._parse_acl(acl_line)
+
+        def can_handle(self, acl_line: str | FlextLdifModels.Acl) -> bool:
+            """Check if this quirk can handle the ACL definition (public interface).
+
+            Delegates to can_handle_acl() for server-specific logic.
+
+            Args:
+                acl_line: ACL definition line string or Acl model
+
+            Returns:
+                True if this quirk can handle this ACL, False otherwise
+
+            """
+            return self.can_handle(acl_line)
 
         @abstractmethod
         def _parse_acl(self, acl_line: str) -> FlextResult[FlextLdifModels.Acl]:
@@ -2042,7 +2091,7 @@ class FlextLdifServersBase(FlextService[list[FlextLdifModels.Entry] | str], ABC)
             """
 
         @abstractmethod
-        def _can_handle_attribute(
+        def can_handle_attribute(
             self, attribute: FlextLdifModels.SchemaAttribute
         ) -> bool:
             """Check if this ACL quirk should be aware of a specific attribute definition.
@@ -2060,7 +2109,7 @@ class FlextLdifServersBase(FlextService[list[FlextLdifModels.Entry] | str], ABC)
             """
 
         @abstractmethod
-        def _can_handle_objectclass(
+        def can_handle_objectclass(
             self, objectclass: FlextLdifModels.SchemaObjectClass
         ) -> bool:
             """Check if this ACL quirk should be aware of a specific objectClass definition.
@@ -2349,7 +2398,7 @@ class FlextLdifServersBase(FlextService[list[FlextLdifModels.Entry] | str], ABC)
         def execute(
             self,
             data: str | list[FlextLdifModels.Entry] | None = None,
-            operation: Literal["parse", "write"] | None = None,
+            operation: FlextLdifConstants.LiteralTypes.QuirkOperation | None = None,
         ) -> FlextResult[list[FlextLdifModels.Entry] | str]:
             r"""Execute entry quirk operation with automatic type detection and routing.
 
@@ -2359,14 +2408,14 @@ class FlextLdifServersBase(FlextService[list[FlextLdifModels.Entry] | str], ABC)
             - None → health check
 
             **V2 Usage as Processor - Maximum Automation:**
-                >>> entry_quirk = FlextLdifServersRfc.Entry()
+                >>> entry = FlextLdifServersRfc.Entry()
                 >>> # Parse: pass LDIF string
-                >>> entries = entry_quirk.execute("dn: cn=test\n...")
+                >>> entries = entry.execute("dn: cn=test\n...")
                 >>> # Write: pass Entry list
-                >>> ldif = entry_quirk.execute([entry1, entry2])
+                >>> ldif = entry.execute([entry1, entry2])
                 >>> # Or use as callable processor
-                >>> entries = entry_quirk("dn: cn=test\n...")  # Parse
-                >>> ldif = entry_quirk([entry1, entry2])  # Write
+                >>> entries = entry("dn: cn=test\n...")  # Parse
+                >>> ldif = entry([entry1, entry2])  # Write
 
             Args:
                 data: LDIF content string OR list of Entry models
@@ -2396,8 +2445,8 @@ class FlextLdifServersBase(FlextService[list[FlextLdifModels.Entry] | str], ABC)
         def _auto_detect_entry_operation(
             self,
             data: str | list[FlextLdifModels.Entry],
-            operation: Literal["parse", "write"] | None,
-        ) -> Literal["parse", "write"] | FlextResult[list[FlextLdifModels.Entry] | str]:
+            operation: FlextLdifConstants.LiteralTypes.QuirkOperation | None,
+        ) -> FlextLdifConstants.LiteralTypes.QuirkOperation | FlextResult[list[FlextLdifModels.Entry] | str]:
             """Auto-detect entry operation from data type.
 
             If operation is forced (not None), uses it. Otherwise detects from type:
@@ -2426,7 +2475,7 @@ class FlextLdifServersBase(FlextService[list[FlextLdifModels.Entry] | str], ABC)
         def _route_entry_operation(
             self,
             data: str | list[FlextLdifModels.Entry],
-            operation: Literal["parse", "write"],
+            operation: FlextLdifConstants.LiteralTypes.QuirkOperation,
         ) -> FlextResult[list[FlextLdifModels.Entry] | str]:
             """Route entry data to appropriate parse or write handler.
 
@@ -2456,7 +2505,7 @@ class FlextLdifServersBase(FlextService[list[FlextLdifModels.Entry] | str], ABC)
             self,
             data: str,
             *,
-            operation: Literal["parse"] | None = None,
+            operation: FlextLdifConstants.LiteralTypes.SchemaParseOperation | None = None,
         ) -> list[FlextLdifModels.Entry]: ...
 
         @overload
@@ -2464,7 +2513,7 @@ class FlextLdifServersBase(FlextService[list[FlextLdifModels.Entry] | str], ABC)
             self,
             data: list[FlextLdifModels.Entry],
             *,
-            operation: Literal["write"] | None = None,
+            operation: FlextLdifConstants.LiteralTypes.AclWriteOperation | None = None,
         ) -> str: ...
 
         @overload
@@ -2472,14 +2521,14 @@ class FlextLdifServersBase(FlextService[list[FlextLdifModels.Entry] | str], ABC)
             self,
             data: str | list[FlextLdifModels.Entry] | None = None,
             *,
-            operation: Literal["parse", "write"] | None = None,
+            operation: FlextLdifConstants.LiteralTypes.QuirkOperation | None = None,
         ) -> list[FlextLdifModels.Entry] | str: ...
 
         def __call__(
             self,
             data: str | list[FlextLdifModels.Entry] | None = None,
             *,
-            operation: Literal["parse", "write"] | None = None,
+            operation: FlextLdifConstants.LiteralTypes.QuirkOperation | None = None,
         ) -> list[FlextLdifModels.Entry] | str:
             """Callable interface - automatic polymorphic processor.
 
@@ -2511,8 +2560,8 @@ class FlextLdifServersBase(FlextService[list[FlextLdifModels.Entry] | str], ABC)
                     if "entries" in kwargs
                     else None
                 )
-                op: Literal["parse", "write"] | None = (
-                    cast("Literal['parse', 'write'] | None", kwargs.get("operation"))
+                op: FlextLdifConstants.LiteralTypes.QuirkOperation | None = (
+                    cast("FlextLdifConstants.LiteralTypes.QuirkOperation | None", kwargs.get("operation"))
                     if "operation" in kwargs
                     else None
                 )
@@ -2598,7 +2647,7 @@ class FlextLdifServersBase(FlextService[list[FlextLdifModels.Entry] | str], ABC)
             return FlextResult.ok(entry)
 
         @abstractmethod
-        def _can_handle_entry(
+        def can_handle(
             self,
             entry_dn: str,
             attributes: Mapping[str, object],
@@ -2687,7 +2736,7 @@ class FlextLdifServersBase(FlextService[list[FlextLdifModels.Entry] | str], ABC)
             """
 
         @abstractmethod
-        def _can_handle_attribute(
+        def can_handle_attribute(
             self, attribute: FlextLdifModels.SchemaAttribute
         ) -> bool:
             """Check if this Entry quirk has special handling for an attribute definition.
@@ -2704,7 +2753,7 @@ class FlextLdifServersBase(FlextService[list[FlextLdifModels.Entry] | str], ABC)
             """
 
         @abstractmethod
-        def _can_handle_objectclass(
+        def can_handle_objectclass(
             self, objectclass: FlextLdifModels.SchemaObjectClass
         ) -> bool:
             """Check if this Entry quirk has special handling for an objectClass definition.
