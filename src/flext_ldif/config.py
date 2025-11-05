@@ -290,7 +290,7 @@ class FlextLdifConfig(FlextConfig):
 
         """
         # Server-specific encoding preferences
-        if self.server_type == FlextLdifConstants.LdapServers.ACTIVE_DIRECTORY:
+        if self.server_type == FlextLdifConstants.ServerTypes.AD:
             return "utf-16" if self.ldif_encoding == "utf-8" else self.ldif_encoding
         return self.ldif_encoding
 

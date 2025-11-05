@@ -10,11 +10,10 @@ schema, ACL, and entry quirks, including:
 
 from __future__ import annotations
 
-import base64
-
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.servers.tivoli import FlextLdifServersTivoli
+
 
 class TestTivoliSchemas:
     """Tests for IBM Tivoli Directory Server schema quirk handling."""
@@ -254,6 +253,7 @@ class TestTivoliSchemas:
         assert "MUST" in oc_str
         assert "MAY" in oc_str
 
+
 class TestTivoliAcls:
     """Tests for IBM Tivoli Directory Server ACL quirk handling."""
 
@@ -404,6 +404,7 @@ class TestTivoliAcls:
         acl_str = result.unwrap()
         assert "ibm-slapdaccesscontrol:" in acl_str
 
+
 class TestTivoliEntrys:
     """Tests for IBM Tivoli Directory Server entry quirk handling."""
 
@@ -465,4 +466,3 @@ class TestTivoliEntrys:
             }
         )
         assert not entry_quirk._can_handle_entry(dn.value, attributes.attributes)
-

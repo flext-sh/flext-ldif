@@ -19,26 +19,29 @@ from flext_core import FlextResult
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.servers.rfc import FlextLdifServersRfc
+from flext_ldif.utilities import FlextLdifUtilities
 
 
 class FlextLdifServersNovell(FlextLdifServersRfc):
     """Novell eDirectory quirks implementation."""
 
-    # =========================================================================
-    # Class-level attributes for server identification
-    # =========================================================================
-    server_type: ClassVar[str] = FlextLdifConstants.ServerTypes.NOVELL
-    priority: ClassVar[int] = 10
-
     # === STANDARDIZED CONSTANTS FOR AUTO-DISCOVERY ===
     class Constants(FlextLdifServersRfc.Constants):
         """Standardized constants for Novell eDirectory quirk."""
 
+        SERVER_TYPE: ClassVar[str] = FlextLdifConstants.ServerTypes.NOVELL
         CANONICAL_NAME: ClassVar[str] = "novell_edirectory"
         ALIASES: ClassVar[frozenset[str]] = frozenset(["novell_edirectory", "novell"])
         PRIORITY: ClassVar[int] = 30
         CAN_NORMALIZE_FROM: ClassVar[frozenset[str]] = frozenset(["novell_edirectory"])
-        CAN_DENORMALIZE_TO: ClassVar[frozenset[str]] = frozenset(["novell_edirectory", "rfc"])
+        CAN_DENORMALIZE_TO: ClassVar[frozenset[str]] = frozenset([
+            "novell_edirectory",
+            "rfc",
+        ])
+
+        # Novell eDirectory ACL format constants
+        ACL_FORMAT: ClassVar[str] = "aci"  # Novell uses standard ACI
+        ACL_ATTRIBUTE_NAME: ClassVar[str] = "aci"  # ACL attribute name
 
         # Novell eDirectory operational attributes (server-specific)
         OPERATIONAL_ATTRIBUTES: Final[frozenset[str]] = frozenset([
@@ -47,83 +50,120 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             "modifyTimestamp",
         ])
 
-    def __init__(self) -> None:
-        """Initialize Novell quirks."""
-        super().__init__()
-        # Use object.__setattr__ to bypass Pydantic validation for dynamic attributes
-        # Pass server_type and priority to nested class instances
-        object.__setattr__(self, "schema", self.Schema(server_type=self.server_type, priority=self.priority))
-        object.__setattr__(self, "acl", self.Acl(server_type=self.server_type, priority=self.priority))
-        object.__setattr__(self, "entry", self.Entry(server_type=self.server_type, priority=self.priority))
-
-    # Quirk detection patterns and prefixes for Novell (shared with Schema and Entry)
-    NOVELL_OID_PATTERN: ClassVar[re.Pattern[str]] = re.compile(
-        r"\b2\.16\.840\.1\.113719\.",
-        re.IGNORECASE,
-    )
-    NOVELL_ATTRIBUTE_PREFIXES: ClassVar[frozenset[str]] = frozenset([
-        "nspm",
-        "login",
-        "dirxml-",
-    ])
-    NOVELL_OBJECTCLASS_NAMES: ClassVar[frozenset[str]] = frozenset([
-        "ndsperson",
-        "nspmpasswordpolicy",
-        "ndsserver",
-        "ndstree",
-        "ndsloginproperties",
-    ])
-
-    class Schema(FlextLdifServersRfc.Schema):
-        """Novell eDirectory schema quirk."""
-
-        NOVELL_OID_PATTERN: ClassVar[re.Pattern[str]] = re.compile(
-            r"\b2\.16\.840\.1\.113719\.",
-            re.IGNORECASE,
-        )
-        NOVELL_ATTRIBUTE_PREFIXES: ClassVar[frozenset[str]] = frozenset([
+        # Detection constants (server-specific)
+        DETECTION_OID_PATTERN: Final[str] = r"2\.16\.840\.1\.113719\."
+        DETECTION_ATTRIBUTE_PREFIXES: Final[frozenset[str]] = frozenset([
             "nspm",
             "login",
             "dirxml-",
         ])
-        NOVELL_OBJECTCLASS_NAMES: ClassVar[frozenset[str]] = frozenset([
+        DETECTION_OBJECTCLASS_NAMES: Final[frozenset[str]] = frozenset([
             "ndsperson",
             "nspmpasswordpolicy",
             "ndsserver",
             "ndstree",
             "ndsloginproperties",
         ])
-        ATTRIBUTE_NAME_REGEX: ClassVar[re.Pattern[str]] = re.compile(
-            r"NAME\s+\(?\s*'([^']+)'",
-            re.IGNORECASE,
-        )
+        DETECTION_DN_MARKERS: Final[frozenset[str]] = frozenset([
+            "ou=services",
+            "ou=apps",
+            "ou=system",
+        ])
+        DETECTION_ATTRIBUTE_MARKERS: Final[frozenset[str]] = frozenset([
+            "nspmpasswordpolicy",
+            "nspmpasswordpolicydn",
+            "logindisabled",
+            "loginexpirationtime",
+        ])
+
+        # Novell ACL parsing indices (migrated from FlextLdifConstants.Acl)
+        NOVELL_SEGMENT_INDEX_TRUSTEE: Final[int] = 2
+        NOVELL_SEGMENT_INDEX_RIGHTS: Final[int] = 3
+
+        # Novell eDirectory specific attributes (migrated from FlextLdifConstants)
+        NOVELL_SPECIFIC: Final[frozenset[str]] = frozenset([
+            "guid",
+            "nspmpasswordpolicy",
+            "login",
+            "nspmldapaccessgroup",
+            "nspmldapuser",
+            "ndsserver",
+            "ndstree",
+            "ndsloginproperties",
+        ])
+
+        # Schema-specific constants (migrated from nested Schema class)
+        SCHEMA_ATTRIBUTE_NAME_REGEX: Final[str] = r"NAME\s+\(?\s*'([^']+)'"
+
+        # ACL-specific constants (migrated from nested Acl class)
+        ACL_ATTRIBUTE_NAMES: Final[frozenset[str]] = frozenset([
+            "acl",
+            "inheritedacl",
+        ])
+        ACL_SEGMENT_SEPARATOR: Final[str] = "#"
+        ACL_DEFAULT_NAME: Final[str] = "Novell eDirectory ACL"
+
+    # =========================================================================
+    # Class-level attributes for server identification (from Constants)
+    # =========================================================================
+    server_type: ClassVar[str] = Constants.SERVER_TYPE
+    priority: ClassVar[int] = Constants.PRIORITY
+
+    def __init__(self) -> None:
+        """Initialize Novell quirks."""
+        super().__init__()
+        # Use object.__setattr__ to bypass Pydantic validation for dynamic attributes
+        # Nested classes no longer require server_type and priority parameters
+        object.__setattr__(self, "schema", self.Schema())
+        object.__setattr__(self, "acl", self.Acl())
+        object.__setattr__(self, "entry", self.Entry())
+
+    class Schema(FlextLdifServersRfc.Schema):
+        """Novell eDirectory schema quirk."""
 
         def _can_handle_attribute(
             self, attr_definition: str | FlextLdifModels.SchemaAttribute
         ) -> bool:
-            """Detect eDirectory attribute definitions."""
+            """Detect eDirectory attribute definitions using Constants."""
             if isinstance(attr_definition, str):
                 attr_lower = attr_definition.lower()
-                if self.NOVELL_OID_PATTERN.search(attr_definition):
+                # Check OID pattern from Constants
+                if re.search(
+                    FlextLdifServersNovell.Constants.DETECTION_OID_PATTERN,
+                    attr_definition,
+                ):
                     return True
 
-                name_matches = self.ATTRIBUTE_NAME_REGEX.findall(attr_definition)
+                name_matches = re.findall(
+                    FlextLdifServersNovell.Constants.SCHEMA_ATTRIBUTE_NAME_REGEX,
+                    attr_definition,
+                    re.IGNORECASE,
+                )
                 if any(
-                    name.lower().startswith(tuple(self.NOVELL_ATTRIBUTE_PREFIXES))
+                    name.lower().startswith(
+                        tuple(
+                            FlextLdifServersNovell.Constants.DETECTION_ATTRIBUTE_PREFIXES
+                        )
+                    )
                     for name in name_matches
                 ):
                     return True
 
                 return any(
-                    prefix in attr_lower for prefix in self.NOVELL_ATTRIBUTE_PREFIXES
+                    prefix in attr_lower
+                    for prefix in FlextLdifServersNovell.Constants.DETECTION_ATTRIBUTE_PREFIXES
                 )
             if isinstance(attr_definition, FlextLdifModels.SchemaAttribute):
-                if self.NOVELL_OID_PATTERN.search(attr_definition.oid):
+                # Check OID pattern from Constants
+                if re.search(
+                    FlextLdifServersNovell.Constants.DETECTION_OID_PATTERN,
+                    attr_definition.oid,
+                ):
                     return True
                 attr_name_lower = attr_definition.name.lower()
                 return any(
                     attr_name_lower.startswith(prefix)
-                    for prefix in self.NOVELL_ATTRIBUTE_PREFIXES
+                    for prefix in FlextLdifServersNovell.Constants.DETECTION_ATTRIBUTE_PREFIXES
                 )
             return False
 
@@ -144,21 +184,38 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
         def _can_handle_objectclass(
             self, oc_definition: str | FlextLdifModels.SchemaObjectClass
         ) -> bool:
-            """Detect eDirectory objectClass definitions."""
+            """Detect eDirectory objectClass definitions using Constants."""
             if isinstance(oc_definition, str):
-                if self.NOVELL_OID_PATTERN.search(oc_definition):
+                # Check OID pattern from Constants
+                if re.search(
+                    FlextLdifServersNovell.Constants.DETECTION_OID_PATTERN,
+                    oc_definition,
+                ):
                     return True
 
-                name_matches = self.ATTRIBUTE_NAME_REGEX.findall(oc_definition)
+                # Use regex pattern from Constants
+                name_matches = re.findall(
+                    FlextLdifServersNovell.Constants.SCHEMA_ATTRIBUTE_NAME_REGEX,
+                    oc_definition,
+                    re.IGNORECASE,
+                )
                 return any(
-                    name.lower() in self.NOVELL_OBJECTCLASS_NAMES
+                    name.lower()
+                    in FlextLdifServersNovell.Constants.DETECTION_OBJECTCLASS_NAMES
                     for name in name_matches
                 )
             if isinstance(oc_definition, FlextLdifModels.SchemaObjectClass):
-                if self.NOVELL_OID_PATTERN.search(oc_definition.oid):
+                # Check OID pattern from Constants
+                if re.search(
+                    FlextLdifServersNovell.Constants.DETECTION_OID_PATTERN,
+                    oc_definition.oid,
+                ):
                     return True
                 oc_name_lower = oc_definition.name.lower()
-                return oc_name_lower in self.NOVELL_OBJECTCLASS_NAMES
+                return (
+                    oc_name_lower
+                    in FlextLdifServersNovell.Constants.DETECTION_OBJECTCLASS_NAMES
+                )
             return False
 
         def _parse_attribute(
@@ -241,60 +298,64 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                 FlextResult with SchemaObjectClass marked with Novell metadata
 
             """
-            return FlextLdifServersRfc.SchemaConverter.set_quirk_type(
-                rfc_data, self.server_type
+            return FlextLdifUtilities.Schema.set_server_type(
+                rfc_data, FlextLdifServersNovell.Constants.SERVER_TYPE
             )
 
         # Nested class references for Schema - allows Schema().Entry() pattern
         # These are references to the outer class definitions for proper architecture
+
     class Acl(FlextLdifServersRfc.Acl):
         """Novell eDirectory ACL quirk."""
 
-        ACL_ATTRIBUTE_NAMES: ClassVar[frozenset[str]] = frozenset([
-            "acl",
-            "inheritedacl",
-        ])
-
-        def _can_handle_acl(
-            self, acl_line: str | FlextLdifModels.Acl
-        ) -> bool:
+        def _can_handle_acl(self, acl_line: str | FlextLdifModels.Acl) -> bool:
             """Detect eDirectory ACL values."""
             if isinstance(acl_line, str):
                 normalized = acl_line.strip() if acl_line else ""
                 if not normalized:
                     return False
                 attr_name, _, _ = normalized.partition(":")
-                return attr_name.strip().lower() in self.ACL_ATTRIBUTE_NAMES
+                return (
+                    attr_name.strip().lower()
+                    in FlextLdifServersNovell.Constants.ACL_ATTRIBUTE_NAMES
+                )
             if isinstance(acl_line, FlextLdifModels.Acl):
                 normalized = acl_line.raw_acl.strip() if acl_line.raw_acl else ""
                 if not normalized:
                     return False
                 attr_name, _, _ = normalized.partition(":")
-                return attr_name.strip().lower() in self.ACL_ATTRIBUTE_NAMES
+                return (
+                    attr_name.strip().lower()
+                    in FlextLdifServersNovell.Constants.ACL_ATTRIBUTE_NAMES
+                )
             return False
 
         def _parse_acl(self, acl_line: str) -> FlextResult[FlextLdifModels.Acl]:
             """Parse eDirectory ACL definition."""
             try:
                 _, content = self._splitacl_line(acl_line)
-                segments = [segment for segment in content.split("#") if segment]
+                segments = [segment for segment in content.split(FlextLdifServersNovell.Constants.ACL_SEGMENT_SEPARATOR) if segment]
 
                 # Extract scope (target DN) from first segment
                 scope = segments[0] if segments else None
 
                 # Extract trustee (subject) from segment at trustee index
                 trustee = (
-                    segments[FlextLdifConstants.Acl.NOVELL_SEGMENT_INDEX_TRUSTEE]
+                    segments[
+                        FlextLdifServersNovell.Constants.NOVELL_SEGMENT_INDEX_TRUSTEE
+                    ]
                     if len(segments)
-                    > FlextLdifConstants.Acl.NOVELL_SEGMENT_INDEX_TRUSTEE
+                    > FlextLdifServersNovell.Constants.NOVELL_SEGMENT_INDEX_TRUSTEE
                     else None
                 )
 
                 # Extract rights (permissions) from segments after rights index
                 rights = (
-                    segments[FlextLdifConstants.Acl.NOVELL_SEGMENT_INDEX_RIGHTS :]
+                    segments[
+                        FlextLdifServersNovell.Constants.NOVELL_SEGMENT_INDEX_RIGHTS :
+                    ]
                     if len(segments)
-                    > FlextLdifConstants.Acl.NOVELL_SEGMENT_INDEX_RIGHTS
+                    > FlextLdifServersNovell.Constants.NOVELL_SEGMENT_INDEX_RIGHTS
                     else []
                 )
 
@@ -320,7 +381,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
 
                 # Build Acl model with nested models
                 acl = FlextLdifModels.Acl(
-                    name="Novell eDirectory ACL",
+                    name=FlextLdifServersNovell.Constants.ACL_DEFAULT_NAME,
                     target=FlextLdifModels.AclTarget(
                         target_dn=scope or "",  # Novell: scope is target DN
                         attributes=attributes,  # Novell: extracted from rights segments
@@ -355,7 +416,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                             else False
                         ),
                     ),
-                    server_type="novell_edirectory",
+                    server_type=FlextLdifServersNovell.Constants.SERVER_TYPE,  # type: ignore[arg-type]
                     raw_acl=acl_line,
                 )
                 return FlextResult[FlextLdifModels.Acl].ok(acl)
@@ -429,17 +490,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
     class Entry(FlextLdifServersRfc.Entry):
         """Novell eDirectory entry quirk."""
 
-        EDIR_DIRECTORY_MARKERS: ClassVar[frozenset[str]] = frozenset([
-            "ou=services",
-            "ou=apps",
-            "ou=system",
-        ])
-        EDIR_ATTRIBUTE_MARKERS: ClassVar[frozenset[str]] = frozenset([
-            "nspmpasswordpolicy",
-            "nspmpasswordpolicydn",
-            "logindisabled",
-            "loginexpirationtime",
-        ])
+        # Entry detection uses Constants.DETECTION_DN_MARKERS and Constants.DETECTION_ATTRIBUTE_MARKERS
 
         def model_post_init(self, _context: object, /) -> None:
             """Initialize eDirectory entry quirk."""
@@ -459,7 +510,10 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             if not entry_dn:
                 return False
             dn_lower = entry_dn.lower()
-            if any(marker in dn_lower for marker in self.EDIR_DIRECTORY_MARKERS):
+            if any(
+                marker in dn_lower
+                for marker in FlextLdifServersNovell.Constants.DETECTION_DN_MARKERS
+            ):
                 return True
 
             # attributes is already dict[str, list[str]], just need to normalize keys
@@ -467,18 +521,24 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                 name.lower(): values for name, values in attributes.items()
             }
             if any(
-                marker in normalized_attrs for marker in self.EDIR_ATTRIBUTE_MARKERS
+                marker in normalized_attrs
+                for marker in FlextLdifServersNovell.Constants.DETECTION_ATTRIBUTE_MARKERS
             ):
                 return True
 
             # objectClasses is already list[str] in LdifAttributes
-            object_classes = attributes.get(
+            object_classes_raw = attributes.get(
                 FlextLdifConstants.DictKeys.OBJECTCLASS,
                 [],
             )
+            # Ensure object_classes is a list
+            object_classes: list[str] = (
+                object_classes_raw if isinstance(object_classes_raw, list) else []
+            )
             return bool(
                 any(
-                    str(oc).lower() in FlextLdifServersNovell.NOVELL_OBJECTCLASS_NAMES
+                    str(oc).lower()
+                    in FlextLdifServersNovell.Constants.DETECTION_OBJECTCLASS_NAMES
                     for oc in object_classes
                 ),
             )
@@ -511,9 +571,9 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                     processed_attributes[attr_name] = processed_values
 
                 # Add metadata attributes
-                processed_attributes[FlextLdifConstants.QuirkMetadataKeys.SERVER_TYPE] = [
-                    FlextLdifConstants.LdapServers.NOVELL_EDIRECTORY
-                ]
+                processed_attributes[
+                    FlextLdifConstants.QuirkMetadataKeys.SERVER_TYPE
+                ] = [FlextLdifServersNovell.Constants.SERVER_TYPE]
                 processed_attributes[FlextLdifConstants.DictKeys.OBJECTCLASS] = (
                     object_classes
                 )
@@ -540,7 +600,9 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             try:
                 # Work directly with LdifAttributes
                 normalized_attributes = entry_data.attributes.attributes.copy()
-                normalized_attributes.pop(FlextLdifConstants.QuirkMetadataKeys.SERVER_TYPE, None)
+                normalized_attributes.pop(
+                    FlextLdifConstants.QuirkMetadataKeys.SERVER_TYPE, None
+                )
 
                 # Create new LdifAttributes directly
                 new_attrs = FlextLdifModels.LdifAttributes(

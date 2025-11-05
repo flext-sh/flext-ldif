@@ -172,9 +172,7 @@ class FlextLdifQuirksConversionMatrix:
             return FlextResult.ok(parsed_entries[0])
 
         except Exception as e:
-            return FlextResult.fail(
-                f"Entry conversion failed: {e}"
-            )
+            return FlextResult.fail(f"Entry conversion failed: {e}")
 
     def _convert_legacy(
         self,
@@ -320,7 +318,9 @@ class FlextLdifQuirksConversionMatrix:
             target_data = rfc_data
 
             # Step 4: Write target format
-            if not hasattr(target_quirk, "schema") or not hasattr(target_quirk.schema, "write_attribute_to_rfc"):
+            if not hasattr(target_quirk, "schema") or not hasattr(
+                target_quirk.schema, "write_attribute_to_rfc"
+            ):
                 return FlextResult[str | dict[str, object]].fail(
                     "Target quirk does not support attribute writing",
                 )
@@ -424,7 +424,9 @@ class FlextLdifQuirksConversionMatrix:
             target_data = rfc_data
 
             # Step 4: Write target format
-            if not hasattr(target_quirk, "schema") or not hasattr(target_quirk.schema, "write_objectclass_to_rfc"):
+            if not hasattr(target_quirk, "schema") or not hasattr(
+                target_quirk.schema, "write_objectclass_to_rfc"
+            ):
                 return FlextResult[str | dict[str, object]].fail(
                     "Target quirk does not support objectClass writing",
                 )
@@ -760,11 +762,15 @@ class FlextLdifQuirksConversionMatrix:
             "( 2.16.840.1.113894.1.2.1 NAME 'orclTest' SUP top STRUCTURAL MUST cn )"
         )
 
-        if hasattr(quirk.schema, "can_handle_attribute") and quirk.schema.can_handle_attribute(
+        if hasattr(
+            quirk.schema, "can_handle_attribute"
+        ) and quirk.schema.can_handle_attribute(
             test_attr_def,
         ):
             support["attribute"] = True
-        if hasattr(quirk.schema, "can_handle_objectclass") and quirk.schema.can_handle_objectclass(
+        if hasattr(
+            quirk.schema, "can_handle_objectclass"
+        ) and quirk.schema.can_handle_objectclass(
             test_oc_def,
         ):
             support[FlextLdifConstants.DictKeys.OBJECTCLASS] = True

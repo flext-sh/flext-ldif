@@ -12,6 +12,7 @@ from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.servers.ad import FlextLdifServersAd
 
+
 class TestActiveDirectorySchemas:
     """Tests for Active Directory schema quirk handling."""
 
@@ -30,7 +31,7 @@ class TestActiveDirectorySchemas:
     def test_initialization(self, ad_server: FlextLdifServersAd) -> None:
         """Test Active Directory quirk initialization."""
         assert ad_server.server_type == "active_directory"
-        assert ad_server.priority == 15
+        assert ad_server.priority == 30
 
     def test_can_handle_attribute_with_ad_oid(
         self, ad_schema_quirk: FlextLdifServersAd.Schema
@@ -248,6 +249,7 @@ class TestActiveDirectorySchemas:
         assert "STRUCTURAL" in oc_str
         assert "MUST ( cn $ objectGUID )" in oc_str
 
+
 class TestActiveDirectoryAcls:
     """Tests for Active Directory ACL quirk handling."""
 
@@ -306,9 +308,7 @@ class TestActiveDirectoryAcls:
 
         assert acl_quirk._can_handle(acl_model) is True
 
-    def test__can_handle_negative(
-        self, ad_acl_quirk: FlextLdifServersAd.Acl
-    ) -> None:
+    def test__can_handle_negative(self, ad_acl_quirk: FlextLdifServersAd.Acl) -> None:
         """Test ACL detection rejects non-AD ACLs."""
         acl_quirk = ad_acl_quirk
 
@@ -342,9 +342,7 @@ class TestActiveDirectoryAcls:
         # Base64 decoded value stored in subject_value
         assert acl_model.subject.subject_value is not None
 
-    def test_parse_with_sddl_string(
-        self, ad_acl_quirk: FlextLdifServersAd.Acl
-    ) -> None:
+    def test_parse_with_sddl_string(self, ad_acl_quirk: FlextLdifServersAd.Acl) -> None:
         """Test parsing ACL with SDDL string value."""
         acl_quirk = ad_acl_quirk
 
@@ -388,6 +386,7 @@ class TestActiveDirectoryAcls:
         acl_str = result.unwrap()
         assert "nTSecurityDescriptor:" in acl_str
         assert "O:BAG:BAD:S:" in acl_str
+
 
 class TestActiveDirectoryEntrys:
     """Tests for Active Directory entry quirk handling."""
@@ -468,4 +467,3 @@ class TestActiveDirectoryEntrys:
         FlextLdifModels.Entry(dn=dn, attributes=attributes)
 
         assert entry_quirk._can_handle_entry(dn.value, attributes.attributes) is False
-

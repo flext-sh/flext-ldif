@@ -777,7 +777,10 @@ class FlextLdifSortingService(FlextService[list[FlextLdifModels.Entry]]):
         if case_sensitive:
             key_func: Callable[[tuple[str, list[str]]], str] = operator.itemgetter(0)
         else:
-            key_func = lambda x: x[0].lower()
+
+            def key_func(x):
+                return x[0].lower()
+
         sorted_items = sorted(attrs_dict.items(), key=key_func)
         sorted_attrs = FlextLdifModels.LdifAttributes(**dict(sorted_items))
         return FlextResult[FlextLdifModels.Entry].ok(
@@ -843,7 +846,10 @@ class FlextLdifSortingService(FlextService[list[FlextLdifModels.Entry]]):
         if case_sensitive:
             key_func: Callable[[tuple[str, list[str]]], str] = operator.itemgetter(0)
         else:
-            key_func = lambda x: x[0].lower()
+
+            def key_func(x):
+                return x[0].lower()
+
         return sorted(attribute_items, key=key_func)
 
 

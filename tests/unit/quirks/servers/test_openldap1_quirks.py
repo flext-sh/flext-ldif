@@ -9,6 +9,7 @@ from __future__ import annotations
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.servers.openldap1 import FlextLdifServersOpenldap1
 
+
 class TestOpenLDAP1xSchemas:
     """Tests for OpenLDAP 1.x schema quirk handling."""
 
@@ -16,7 +17,6 @@ class TestOpenLDAP1xSchemas:
         """Test OpenLDAP 1.x schema quirk initialization."""
         # Schema accesses server_type and priority from main server class
         server = FlextLdifServersOpenldap1()
-        quirk = server.schema
         # server_type and priority are ClassVar on main class
         assert server.server_type == "openldap1"
         assert server.priority == 20  # Lower priority than OpenLDAP 2.x
@@ -232,6 +232,7 @@ class TestOpenLDAP1xSchemas:
         assert "MUST" in oc_str
         assert "MAY" in oc_str
 
+
 class TestOpenLDAP1xAcls:
     """Tests for OpenLDAP 1.x ACL quirk handling."""
 
@@ -303,6 +304,7 @@ class TestOpenLDAP1xAcls:
         assert result.error is not None
         assert "missing 'to' clause" in result.error.lower()
 
+
 class TestOpenLDAP1xEntrys:
     """Tests for OpenLDAP 1.x entry quirk handling."""
 
@@ -344,4 +346,3 @@ class TestOpenLDAP1xEntrys:
         )
         FlextLdifModels.Entry(dn=dn, attributes=attributes)
         assert entry_quirk._can_handle_entry(dn.value, attributes.attributes) is False
-

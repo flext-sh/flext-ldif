@@ -15,10 +15,12 @@ from flext_ldif.api import FlextLdif
 from flext_ldif.servers.openldap import FlextLdifServersOpenldap
 from tests.unit.quirks.servers.test_utils import FlextLdifTestUtils
 
+
 @pytest.fixture(scope="module")
 def ldif_api() -> FlextLdif:
     """Provides a FlextLdif API instance for the test module."""
     return FlextLdif()
+
 
 class TestOpenLdapFixtures:
     """Test OpenLDAP quirks with real fixture files."""
@@ -52,6 +54,7 @@ class TestOpenLdapFixtures:
         FlextLdifTestUtils.run_roundtrip_test(
             ldif_api, "openldap", "openldap_integration_fixtures.ldif", tmp_path
         )
+
 
 class TestOpenLDAP2xSchemas:
     """Tests for OpenLDAP 2.x schema quirk handling."""
@@ -295,6 +298,7 @@ class TestOpenLDAP2xSchemas:
         assert "MUST" in oc_str
         assert "MAY" in oc_str
 
+
 class TestOpenLDAP2xAcls:
     """Tests for OpenLDAP 2.x ACL quirk handling."""
 
@@ -415,6 +419,7 @@ class TestOpenLDAP2xAcls:
         # Raw ACL stores the incomplete rule as-is
         assert acl_model.raw_acl == acl_line
 
+
 class TestOpenLDAP2xEntrys:
     """Tests for OpenLDAP 2.x entry quirk handling."""
 
@@ -468,6 +473,7 @@ class TestOpenLDAP2xEntrys:
         FlextLdifModels.Entry(dn=dn, attributes=attributes)
         assert entry_quirk._can_handle_entry(dn.value, attributes.attributes) is False
 
+
 class TestOpenldapSchemaCanHandleAttribute:
     """Test OpenLDAP schema quirk can_handle_attribute detection."""
 
@@ -495,6 +501,7 @@ class TestOpenldapSchemaCanHandleAttribute:
     ) -> None:
         """Test handling of empty attribute definition."""
         assert not openldap_quirk._can_handle_attribute("")
+
 
 class TestOpenldapSchemaParseAttribute:
     """Test OpenLDAP schema quirk parse_attribute with real fixture data."""
@@ -568,6 +575,7 @@ class TestOpenldapSchemaParseAttribute:
         result = openldap_quirk.parse(attr_def)
         assert hasattr(result, "is_success")
 
+
 class TestOpenldapSchemaCanHandleObjectClass:
     """Test OpenLDAP schema quirk can_handle_objectclass detection."""
 
@@ -591,6 +599,7 @@ class TestOpenldapSchemaCanHandleObjectClass:
         """Test handling of standard RFC objectClasses."""
         oc_def = "( 2.5.6.6 NAME 'person' DESC 'RFC2256: person' )"
         assert isinstance(openldap_quirk._can_handle_objectclass(oc_def), bool)
+
 
 class TestOpenldapSchemaParseObjectClass:
     """Test OpenLDAP schema quirk parse_objectclass with real fixture data."""
@@ -635,6 +644,7 @@ class TestOpenldapSchemaParseObjectClass:
         result = openldap_quirk.parse(oc_def)
         assert hasattr(result, "is_success")
 
+
 class TestOpenldapSchemaConvertAttribute:
     """Test OpenLDAP schema quirk attribute conversion to/from RFC."""
 
@@ -643,6 +653,7 @@ class TestOpenldapSchemaConvertAttribute:
         """Create OpenLDAP quirk instance."""
         return FlextLdifServersOpenldap()
 
+
 class TestOpenldapSchemaConvertObjectClass:
     """Test OpenLDAP schema quirk objectClass conversion to/from RFC."""
 
@@ -650,6 +661,7 @@ class TestOpenldapSchemaConvertObjectClass:
     def openldap_quirk(self) -> FlextLdifServersOpenldap:
         """Create OpenLDAP quirk instance."""
         return FlextLdifServersOpenldap()
+
 
 class TestOpenldapSchemaWriteAttribute:
     """Test OpenLDAP schema quirk write_attribute_to_rfc."""
@@ -677,6 +689,7 @@ class TestOpenldapSchemaWriteAttribute:
             assert isinstance(attr_str, str)
             assert "2.5.4.3" in attr_str
 
+
 class TestOpenldapSchemaWriteObjectClass:
     """Test OpenLDAP schema quirk write_objectclass_to_rfc."""
 
@@ -703,6 +716,7 @@ class TestOpenldapSchemaWriteObjectClass:
             oc_str = result.unwrap()
             assert isinstance(oc_str, str)
             assert "2.5.6.6" in oc_str
+
 
 class TestOpenldapAclCanHandleAcl:
     """Test OpenLDAP Acl _can_handle detection."""
@@ -754,6 +768,7 @@ class TestOpenldapAclCanHandleAcl:
 
             assert acl_quirk._can_handle(acl_line) is False
 
+
 class TestOpenldapAclParseAcl:
     """Test OpenLDAP Acl parse with real fixture data."""
 
@@ -797,6 +812,7 @@ class TestOpenldapAclParseAcl:
         result = acl_quirk.parse(acl_line)
         assert hasattr(result, "is_success")
 
+
 class TestOpenldapAclConvertAcl:
     """Test OpenLDAP Acl ACL RFC conversion."""
 
@@ -828,6 +844,7 @@ class TestOpenldapAclConvertAcl:
         if result.is_success:
             acl_str = result.unwrap()
             assert isinstance(acl_str, str)
+
 
 class TestOpenldapEntryCanHandleEntry:
     """Test OpenLDAP Entry can_handle_entry detection."""
@@ -881,6 +898,7 @@ class TestOpenldapEntryCanHandleEntry:
             entry_quirk._can_handle_entry(dn.value, attributes.attributes), bool
         )
 
+
 class TestOpenldapEntryProcessEntry:
     """Test OpenLDAP Entry entry processing with real data."""
 
@@ -899,6 +917,7 @@ class TestOpenldapEntryProcessEntry:
             / "openldap2_entries_fixtures.ldif"
         )
 
+
 class TestOpenldapEntryConvertEntry:
     """Test OpenLDAP Entry entry RFC conversion."""
 
@@ -906,6 +925,7 @@ class TestOpenldapEntryConvertEntry:
     def openldap_quirk(self) -> FlextLdifServersOpenldap.Entry:
         """Create OpenLDAP Entry quirk instance."""
         return FlextLdifServersOpenldap.Entry()
+
 
 class TestOpenldapProperties:
     """Test OpenLDAP quirks properties and configuration."""

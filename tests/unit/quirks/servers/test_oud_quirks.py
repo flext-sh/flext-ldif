@@ -17,10 +17,12 @@ import pytest
 from flext_ldif.api import FlextLdif
 from tests.unit.quirks.servers.test_utils import FlextLdifTestUtils
 
+
 @pytest.fixture(scope="module")
 def ldif_api() -> FlextLdif:
     """Provides a FlextLdif API instance for the test module."""
     return FlextLdif()
+
 
 class TestOudQuirksWithRealFixtures:
     """Test OUD quirks with real fixture files."""
@@ -29,7 +31,9 @@ class TestOudQuirksWithRealFixtures:
         """Test parsing of a real OUD schema file."""
         # Schema fixtures contain only cn=schema entry with attributeTypes and objectClasses
         # May return 0 entries if parser treats it as schema-only file
-        fixture_path = FlextLdifTestUtils.get_fixture_path("oud", "oud_schema_fixtures.ldif")
+        fixture_path = FlextLdifTestUtils.get_fixture_path(
+            "oud", "oud_schema_fixtures.ldif"
+        )
         result = ldif_api.parse(fixture_path, server_type="oud")
         assert result.is_success, f"Failed to parse fixture: {result.error}"
 
@@ -163,6 +167,7 @@ class TestOudQuirksWithRealFixtures:
                     if has_ssha:
                         break
 
+
 class TestOudRoutingValidation:
     """Test OUD routing validation with real fixtures using test utilities.
 
@@ -175,9 +180,7 @@ class TestOudRoutingValidation:
         """Provides a FlextLdif API instance for the test module."""
         return FlextLdif()
 
-    def test_routing_write_validation_oud_entries(
-        self, ldif_api: FlextLdif
-    ) -> None:
+    def test_routing_write_validation_oud_entries(self, ldif_api: FlextLdif) -> None:
         """Test that OUD entries are correctly routed through write path.
 
         This test validates that the automatic write routing

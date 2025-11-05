@@ -163,7 +163,7 @@ class TestAttributeParserBasics:
         # With standard NAME field, parser extracts correctly
         assert attr.oid == "2.5.4.3"
         # Name may be extracted or fallback to OID depending on parser implementation
-        assert attr.name in ("cn", "2.5.4.3")  # Either extracted name or OID fallback
+        assert attr.name in {"cn", "2.5.4.3"}  # Either extracted name or OID fallback
         # Syntax extraction may vary - validate OID is correct
         assert attr.oid == "2.5.4.3"
 

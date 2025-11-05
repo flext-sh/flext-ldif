@@ -653,6 +653,130 @@ class FlextLdifUtilities:
             except Exception as e:
                 return FlextResult[dict[str, Any]].fail(f"File write failed: {e}")
 
+        @staticmethod
+        def write_rfc_attribute(
+            attr_data: "FlextLdifModels.SchemaAttribute",
+        ) -> "FlextResult[str]":
+            """Write attribute data to RFC 4512 format."""
+            try:
+                if not attr_data.oid:
+                    return FlextResult.fail("RFC attribute writing failed: missing OID")
+
+                parts: list[str] = [f"( {attr_data.oid}"]
+
+                if attr_data.name:
+                    parts.append(f"NAME '{attr_data.name}'")
+
+                if attr_data.desc:
+                    parts.append(f"DESC '{attr_data.desc}'")
+
+                if attr_data.metadata and attr_data.metadata.extensions.get(
+                    FlextLdifConstants.MetadataKeys.OBSOLETE
+                ):
+                    parts.append("OBSOLETE")
+
+                if attr_data.sup:
+                    parts.append(f"SUP {attr_data.sup}")
+
+                if attr_data.equality:
+                    parts.append(f"EQUALITY {attr_data.equality}")
+
+                if attr_data.ordering:
+                    parts.append(f"ORDERING {attr_data.ordering}")
+
+                if attr_data.substr:
+                    parts.append(f"SUBSTR {attr_data.substr}")
+
+                if attr_data.syntax:
+                    syntax_str = str(attr_data.syntax)
+                    if attr_data.length is not None:
+                        syntax_str += f"{{{attr_data.length}}}"
+                    parts.append(f"SYNTAX {syntax_str}")
+
+                if attr_data.single_value:
+                    parts.append("SINGLE-VALUE")
+
+                if attr_data.metadata and attr_data.metadata.extensions.get(
+                    FlextLdifConstants.MetadataKeys.COLLECTIVE
+                ):
+                    parts.append("COLLECTIVE")
+
+                if attr_data.no_user_modification:
+                    parts.append("NO-USER-MODIFICATION")
+
+                if attr_data.usage:
+                    parts.append(f"USAGE {attr_data.usage}")
+
+                if attr_data.metadata and attr_data.metadata.x_origin:
+                    parts.append(f"X-ORIGIN '{attr_data.metadata.x_origin}'")
+
+                parts.append(")")
+
+                return FlextResult.ok(" ".join(parts))
+
+            except (ValueError, TypeError, AttributeError) as e:
+                logger.exception("RFC attribute writing exception")
+                return FlextResult.fail(f"RFC attribute writing failed: {e}")
+
+        @staticmethod
+        def write_rfc_objectclass(
+            oc_data: "FlextLdifModels.SchemaObjectClass",
+        ) -> "FlextResult[str]":
+            """Write objectClass data to RFC 4512 format."""
+            try:
+                if not oc_data.oid:
+                    return FlextResult.fail("RFC objectClass writing failed: missing OID")
+
+                parts: list[str] = [f"( {oc_data.oid}"]
+
+                if oc_data.name:
+                    parts.append(f"NAME '{oc_data.name}'")
+
+                if oc_data.desc:
+                    parts.append(f"DESC '{oc_data.desc}'")
+
+                if oc_data.metadata and oc_data.metadata.extensions.get(
+                    FlextLdifConstants.MetadataKeys.OBSOLETE
+                ):
+                    parts.append("OBSOLETE")
+
+                if oc_data.sup:
+                    parts.append(f"SUP {oc_data.sup}")
+
+                kind = oc_data.kind or FlextLdifConstants.Schema.STRUCTURAL
+                parts.append(str(kind))
+
+                if oc_data.must:
+                    if isinstance(oc_data.must, list):
+                        if len(oc_data.must) == 1:
+                            parts.append(f"MUST {oc_data.must[0]}")
+                        else:
+                            must_str = " $ ".join(oc_data.must)
+                            parts.append(f"MUST ( {must_str} )")
+                    else:
+                        parts.append(f"MUST {oc_data.must}")
+
+                if oc_data.may:
+                    if isinstance(oc_data.may, list):
+                        if len(oc_data.may) == 1:
+                            parts.append(f"MAY {oc_data.may[0]}")
+                        else:
+                            may_str = " $ ".join(oc_data.may)
+                            parts.append(f"MAY ( {may_str} )")
+                    else:
+                        parts.append(f"MAY {oc_data.may}")
+
+                if oc_data.metadata and oc_data.metadata.x_origin:
+                    parts.append(f"X-ORIGIN '{oc_data.metadata.x_origin}'")
+
+                parts.append(")")
+
+                return FlextResult.ok(" ".join(parts))
+
+            except (ValueError, TypeError, AttributeError) as e:
+                logger.exception("RFC objectClass writing exception")
+                return FlextResult.fail(f"RFC objectClass writing failed: {e}")
+
     class Schema:
         """Generic attribute definition normalization utilities."""
 
@@ -722,7 +846,9 @@ class FlextLdifUtilities:
                 # The original equality value (e.g., "caseIgnoreSubstringsMatch") goes to substr
                 result_substr = equality  # The original equality value is a SUBSTR rule
                 # Set EQUALITY to the mapped correct EQUALITY rule
-                result_equality = substr_rules_in_equality[equality]  # e.g., "caseIgnoreMatch"
+                result_equality = substr_rules_in_equality[
+                    equality
+                ]  # e.g., "caseIgnoreMatch"
 
             # Normalize SUBSTR case variants
             if (
@@ -854,6 +980,76 @@ class FlextLdifUtilities:
                 return FlextResult[Any].ok(result)
             except Exception as e:
                 return FlextResult[Any].fail(f"Failed to set server type: {e}")
+
+        @staticmethod
+        def extract_attributes_from_lines(
+            ldif_content: str,
+            parse_callback: Any,
+        ) -> list[Any]:
+            """Extract and parse all attributeTypes from LDIF content lines.
+
+            Iterates through LDIF lines, identifies attributeTypes definitions
+            (case-insensitive), and parses them using the provided callback.
+
+            Args:
+                ldif_content: Raw LDIF content containing schema definitions
+                parse_callback: Parser function to call for each attribute definition
+
+            Returns:
+                List of successfully parsed attribute models
+
+            """
+            attributes: list[Any] = []
+
+            for raw_line in ldif_content.split("\n"):
+                line = raw_line.strip()
+
+                # Case-insensitive match: attributeTypes:, attributetypes:, etc.
+                if line.lower().startswith("attributetypes:"):
+                    attr_def = line.split(":", 1)[1].strip()
+                    result = parse_callback(attr_def)
+                    if hasattr(result, "is_success") and result.is_success:
+                        attributes.append(result.unwrap())
+                    elif isinstance(result, dict) or hasattr(result, "oid"):
+                        # Handle both FlextResult and raw dict returns
+                        attributes.append(result)
+
+            return attributes
+
+        @staticmethod
+        def extract_objectclasses_from_lines(
+            ldif_content: str,
+            parse_callback: Any,
+        ) -> list[Any]:
+            """Extract and parse all objectClasses from LDIF content lines.
+
+            Iterates through LDIF lines, identifies objectClasses definitions
+            (case-insensitive), and parses them using the provided callback.
+
+            Args:
+                ldif_content: Raw LDIF content containing schema definitions
+                parse_callback: Parser function to call for each objectClass definition
+
+            Returns:
+                List of successfully parsed objectClass models
+
+            """
+            objectclasses: list[Any] = []
+
+            for raw_line in ldif_content.split("\n"):
+                line = raw_line.strip()
+
+                # Case-insensitive match: objectClasses:, objectclasses:, etc.
+                if line.lower().startswith("objectclasses:"):
+                    oc_def = line.split(":", 1)[1].strip()
+                    result = parse_callback(oc_def)
+                    if hasattr(result, "is_success") and result.is_success:
+                        objectclasses.append(result.unwrap())
+                    elif isinstance(result, dict) or hasattr(result, "oid"):
+                        # Handle both FlextResult and raw dict returns
+                        objectclasses.append(result)
+
+            return objectclasses
 
         @staticmethod
         def build_metadata(
@@ -1393,7 +1589,8 @@ class FlextLdifUtilities:
 
         @staticmethod
         def extract_from_schema_object(
-            schema_obj: FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass,
+            schema_obj: FlextLdifModels.SchemaAttribute
+            | FlextLdifModels.SchemaObjectClass,
         ) -> str | None:
             """Extract OID from schema object metadata or model.
 
@@ -1414,7 +1611,9 @@ class FlextLdifUtilities:
             if schema_obj.metadata and schema_obj.metadata.original_format:
                 try:
                     # Look for OID in parentheses at start: ( 2.16.840.1.113894. ...
-                    match = re.search(r"\(\s*([\d.]+)", schema_obj.metadata.original_format)
+                    match = re.search(
+                        r"\(\s*([\d.]+)", schema_obj.metadata.original_format
+                    )
                     if match:
                         return match.group(1)
                 except (re.error, AttributeError):
@@ -1755,6 +1954,261 @@ class FlextLdifUtilities:
                         definitions.append(definition)
 
             return definitions
+
+        @staticmethod
+        def parse_rfc_attribute(
+            attr_definition: str,
+            *,
+            case_insensitive: bool = False,
+            allow_syntax_quotes: bool = False,
+        ) -> "FlextResult[FlextLdifModels.SchemaAttribute]":
+            """Parse RFC 4512 attribute definition."""
+            try:
+                oid_match = re.match(
+                    FlextLdifConstants.LdifPatterns.SCHEMA_OID_EXTRACTION,
+                    attr_definition,
+                )
+                if not oid_match:
+                    return FlextResult.fail("RFC attribute parsing failed: missing an OID")
+                oid = oid_match.group(1)
+
+                name_match = re.search(
+                    FlextLdifConstants.LdifPatterns.SCHEMA_NAME, attr_definition
+                )
+                name = name_match.group(1) if name_match else oid
+
+                desc_match = re.search(
+                    FlextLdifConstants.LdifPatterns.SCHEMA_DESC, attr_definition
+                )
+                desc = desc_match.group(1) if desc_match else None
+
+                syntax_match = re.search(
+                    FlextLdifConstants.LdifPatterns.SCHEMA_SYNTAX_LENGTH,
+                    attr_definition,
+                )
+                syntax = syntax_match.group(1) if syntax_match else None
+                length = (
+                    int(syntax_match.group(2))
+                    if syntax_match and syntax_match.group(2)
+                    else None
+                )
+
+                syntax_validation_error: str | None = None
+                if syntax is not None and syntax.strip():
+                    syntax_service = FlextLdifSyntaxService()
+                    validate_result = syntax_service.validate_oid(syntax)
+                    if validate_result.is_failure:
+                        syntax_validation_error = (
+                            f"Syntax OID validation failed: {validate_result.error}"
+                        )
+                    elif not validate_result.unwrap():
+                        syntax_validation_error = (
+                            f"Invalid syntax OID format: {syntax}"
+                        )
+
+                equality_match = re.search(
+                    FlextLdifConstants.LdifPatterns.SCHEMA_EQUALITY,
+                    attr_definition,
+                )
+                equality = equality_match.group(1) if equality_match else None
+
+                substr_match = re.search(
+                    FlextLdifConstants.LdifPatterns.SCHEMA_SUBSTR,
+                    attr_definition,
+                )
+                substr = substr_match.group(1) if substr_match else None
+
+                ordering_match = re.search(
+                    FlextLdifConstants.LdifPatterns.SCHEMA_ORDERING,
+                    attr_definition,
+                )
+                ordering = ordering_match.group(1) if ordering_match else None
+
+                single_value = (
+                    re.search(
+                        FlextLdifConstants.LdifPatterns.SCHEMA_SINGLE_VALUE,
+                        attr_definition,
+                    )
+                    is not None
+                )
+
+                no_user_modification = False
+                if case_insensitive:
+                    no_user_modification = (
+                        re.search(
+                            FlextLdifConstants.LdifPatterns.SCHEMA_NO_USER_MODIFICATION,
+                            attr_definition,
+                        )
+                        is not None
+                    )
+
+                sup_match = re.search(
+                    FlextLdifConstants.LdifPatterns.SCHEMA_SUP,
+                    attr_definition,
+                )
+                sup = sup_match.group(1) if sup_match else None
+
+                usage_match = re.search(
+                    FlextLdifConstants.LdifPatterns.SCHEMA_USAGE,
+                    attr_definition,
+                )
+                usage = usage_match.group(1) if usage_match else None
+
+                metadata_extensions = FlextLdifUtilities.Parser.extract_extensions(
+                    attr_definition
+                )
+
+                if syntax:
+                    metadata_extensions[
+                        FlextLdifConstants.MetadataKeys.SYNTAX_OID_VALID
+                    ] = syntax_validation_error is None
+                    if syntax_validation_error:
+                        metadata_extensions[
+                            FlextLdifConstants.MetadataKeys.SYNTAX_VALIDATION_ERROR
+                        ] = syntax_validation_error
+
+                metadata_extensions[FlextLdifConstants.MetadataKeys.ORIGINAL_FORMAT] = (
+                    attr_definition.strip()
+                )
+
+                metadata = (
+                    FlextLdifModels.QuirkMetadata(
+                        quirk_type="rfc",
+                        extensions=metadata_extensions,
+                    )
+                    if metadata_extensions
+                    else None
+                )
+
+                attribute = FlextLdifModels.SchemaAttribute(
+                    oid=oid,
+                    name=name,
+                    desc=desc,
+                    syntax=syntax,
+                    length=length,
+                    equality=equality,
+                    ordering=ordering,
+                    substr=substr,
+                    single_value=single_value,
+                    no_user_modification=no_user_modification,
+                    sup=sup,
+                    usage=usage,
+                    metadata=metadata,
+                )
+
+                return FlextResult.ok(attribute)
+
+            except (ValueError, TypeError, AttributeError) as e:
+                logger.exception("RFC attribute parsing exception")
+                return FlextResult.fail(f"RFC attribute parsing failed: {e}")
+
+        @staticmethod
+        def parse_rfc_objectclass(
+            oc_definition: str,
+            *,
+            case_insensitive: bool = False,
+        ) -> "FlextResult[FlextLdifModels.SchemaObjectClass]":
+            """Parse RFC 4512 objectClass definition."""
+            try:
+                oid_match = re.match(
+                    FlextLdifConstants.LdifPatterns.SCHEMA_OID_EXTRACTION, oc_definition
+                )
+                if not oid_match:
+                    return FlextResult.fail("RFC objectClass parsing failed: missing an OID")
+                oid = oid_match.group(1)
+
+                name_match = re.search(
+                    FlextLdifConstants.LdifPatterns.SCHEMA_NAME, oc_definition
+                )
+                name = name_match.group(1) if name_match else oid
+
+                desc_match = re.search(
+                    FlextLdifConstants.LdifPatterns.SCHEMA_DESC, oc_definition
+                )
+                desc = desc_match.group(1) if desc_match else None
+
+                sup = None
+                sup_match = re.search(
+                    FlextLdifConstants.LdifPatterns.SCHEMA_OBJECTCLASS_SUP,
+                    oc_definition,
+                )
+                if sup_match:
+                    sup_value = sup_match.group(1) or sup_match.group(2)
+                    sup_value = sup_value.strip()
+                    if "$" in sup_value:
+                        sup = next(s.strip() for s in sup_value.split("$"))
+                    else:
+                        sup = sup_value
+
+                kind_match = re.search(
+                    FlextLdifConstants.LdifPatterns.SCHEMA_OBJECTCLASS_KIND,
+                    oc_definition,
+                    re.IGNORECASE,
+                )
+                if kind_match:
+                    kind = kind_match.group(1).upper()
+                else:
+                    kind = FlextLdifConstants.Schema.STRUCTURAL
+
+                must = None
+                must_match = re.search(
+                    FlextLdifConstants.LdifPatterns.SCHEMA_OBJECTCLASS_MUST,
+                    oc_definition,
+                )
+                if must_match:
+                    must_value = must_match.group(1) or must_match.group(2)
+                    must_value = must_value.strip()
+                    if "$" in must_value:
+                        must = [m.strip() for m in must_value.split("$")]
+                    else:
+                        must = [must_value]
+
+                may = None
+                may_match = re.search(
+                    FlextLdifConstants.LdifPatterns.SCHEMA_OBJECTCLASS_MAY,
+                    oc_definition,
+                )
+                if may_match:
+                    may_value = may_match.group(1) or may_match.group(2)
+                    may_value = may_value.strip()
+                    if "$" in may_value:
+                        may = [m.strip() for m in may_value.split("$")]
+                    else:
+                        may = [may_value]
+
+                metadata_extensions = FlextLdifUtilities.Parser.extract_extensions(
+                    oc_definition
+                )
+
+                metadata_extensions[FlextLdifConstants.MetadataKeys.ORIGINAL_FORMAT] = (
+                    oc_definition.strip()
+                )
+
+                metadata = (
+                    FlextLdifModels.QuirkMetadata(
+                        quirk_type="rfc",
+                        extensions=metadata_extensions,
+                    )
+                    if metadata_extensions
+                    else None
+                )
+
+                objectclass = FlextLdifModels.SchemaObjectClass(
+                    oid=oid,
+                    name=name,
+                    desc=desc,
+                    sup=sup,
+                    kind=kind,
+                    must=must,
+                    may=may,
+                    metadata=metadata,
+                )
+
+                return FlextResult.ok(objectclass)
+
+            except (ValueError, TypeError, AttributeError) as e:
+                logger.exception("RFC objectClass parsing exception")
+                return FlextResult.fail(f"RFC objectClass parsing failed: {e}")
 
     class ACL:
         """Generic ACL parsing and writing utilities."""
@@ -2127,6 +2581,7 @@ class FlextLdifUtilities:
                             )
 
             return base64_attrs
+
 
 
 __all__ = [

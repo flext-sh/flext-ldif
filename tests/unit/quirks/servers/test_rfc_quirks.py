@@ -16,10 +16,12 @@ import pytest
 from flext_ldif.api import FlextLdif
 from tests.unit.quirks.servers.test_utils import FlextLdifTestUtils
 
+
 @pytest.fixture(scope="module")
 def ldif_api() -> FlextLdif:
     """Provides a FlextLdif API instance for the test module."""
     return FlextLdif()
+
 
 class TestRfcQuirksWithRealFixtures:
     """Test RFC quirks with real fixture files."""
@@ -123,7 +125,7 @@ class TestRfcQuirksWithRealFixtures:
         # Get the RFC quirk to access Schema routing methods
         from flext_ldif.servers.rfc import FlextLdifServersRfc
 
-        rfc_quirk = FlextLdifServersRfc()
+        FlextLdifServersRfc()
 
         # For each entry, verify that schema entries can be routed to Schema quirks
         for entry in entries:
@@ -132,7 +134,7 @@ class TestRfcQuirksWithRealFixtures:
             assert entry.dn.value
 
             # Schema entries should have attributes like 'cn', 'attributeTypes', 'objectClasses'
-            attr_names = {name.lower() for name in entry.attributes.keys()}
+            attr_names = {name.lower() for name in entry.attributes}
             assert len(attr_names) > 0, "Schema entries should have attributes"
 
     def test_routing_validation_entries_fixture(self, ldif_api: FlextLdif) -> None:
@@ -151,7 +153,7 @@ class TestRfcQuirksWithRealFixtures:
         # Get the RFC quirk to access Entry routing methods
         from flext_ldif.servers.rfc import FlextLdifServersRfc
 
-        rfc_quirk = FlextLdifServersRfc()
+        FlextLdifServersRfc()
 
         # For each entry, verify that entries can be processed by Entry quirks
         for entry in entries:
@@ -178,7 +180,7 @@ class TestRfcQuirksWithRealFixtures:
         # Get the RFC quirk to access Acl routing methods
         from flext_ldif.servers.rfc import FlextLdifServersRfc
 
-        rfc_quirk = FlextLdifServersRfc()
+        FlextLdifServersRfc()
 
         # Verify that ACL entries have expected structure
         for entry in entries:
@@ -230,7 +232,9 @@ class TestRfcQuirksWithRealFixtures:
 
         # Write to temporary file
         write_result = ldif_api.write(
-            original_entries, output_path=tmp_path / "routing_test.ldif", server_type="rfc"
+            original_entries,
+            output_path=tmp_path / "routing_test.ldif",
+            server_type="rfc",
         )
         assert write_result.is_success, f"Write failed: {write_result.error}"
 
@@ -245,7 +249,6 @@ class TestRfcQuirksWithRealFixtures:
         is_equal, differences = FlextLdifTestUtils.compare_entries(
             original_entries, roundtripped_entries
         )
-        assert (
-            is_equal
-        ), "Roundtrip routing validation failed:\n" + "\n".join(differences)
-
+        assert is_equal, "Roundtrip routing validation failed:\n" + "\n".join(
+            differences
+        )

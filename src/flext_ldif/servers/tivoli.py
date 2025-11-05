@@ -5,7 +5,7 @@ from __future__ import annotations
 import base64
 import re
 from collections.abc import Mapping
-from typing import ClassVar, Final
+from typing import ClassVar, Final, cast
 
 from flext_core import FlextResult
 
@@ -18,21 +18,20 @@ from flext_ldif.utilities import FlextLdifUtilities
 class FlextLdifServersTivoli(FlextLdifServersRfc):
     """Schema quirks for IBM Tivoli Directory Server."""
 
-    # =========================================================================
-    # Class-level attributes for server identification
-    # =========================================================================
-    server_type: ClassVar[str] = FlextLdifConstants.ServerTypes.IBM_TIVOLI
-    priority: ClassVar[int] = 15
-
     # === STANDARDIZED CONSTANTS FOR AUTO-DISCOVERY ===
     class Constants(FlextLdifServersRfc.Constants):
         """Standardized constants for IBM Tivoli Directory Server quirk."""
 
+        SERVER_TYPE: ClassVar[str] = FlextLdifConstants.ServerTypes.IBM_TIVOLI
         CANONICAL_NAME: ClassVar[str] = "ibm_tivoli"
         ALIASES: ClassVar[frozenset[str]] = frozenset(["ibm_tivoli", "tivoli"])
         PRIORITY: ClassVar[int] = 30
         CAN_NORMALIZE_FROM: ClassVar[frozenset[str]] = frozenset(["ibm_tivoli"])
         CAN_DENORMALIZE_TO: ClassVar[frozenset[str]] = frozenset(["ibm_tivoli", "rfc"])
+
+        # IBM Tivoli ACL format constants
+        ACL_FORMAT: ClassVar[str] = "aci"  # Tivoli uses standard ACI
+        ACL_ATTRIBUTE_NAME: ClassVar[str] = "aci"  # ACL attribute name
 
         # IBM Tivoli operational attributes (server-specific)
         OPERATIONAL_ATTRIBUTES: Final[frozenset[str]] = frozenset([
@@ -40,29 +39,61 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
             "ibm-entryChecksum",
         ])
 
+        # Detection constants (server-specific) - migrated from FlextLdifConstants.LdapServerDetection
+        DETECTION_OID_PATTERN: ClassVar[re.Pattern[str]] = re.compile(
+            r"\b1\.3\.18\.",
+            re.IGNORECASE,
+        )
+        DETECTION_ATTRIBUTE_PREFIXES: Final[frozenset[str]] = frozenset([
+            "ibm-",
+            "ids-",
+        ])
+        DETECTION_OBJECTCLASS_NAMES: Final[frozenset[str]] = frozenset([
+            "ibmuser",
+            "ibmuniversaldirectoryuser",
+            "ibmuniversaldirectorygroup",
+            "ibm-slapdaccesscontrolsubentry",
+            "ibm-ldapserver",
+            "ibm-filterentry",
+        ])
+        DETECTION_DN_MARKERS: Final[frozenset[str]] = frozenset([
+            "o=ibm,c=us",
+            "o=example,c=us",
+            "cn=REDACTED_LDAP_BIND_PASSWORD",
+        ])
+
+        # IBM Tivoli specific attributes (migrated from FlextLdifConstants)
+        IBM_TIVOLI_SPECIFIC: Final[frozenset[str]] = frozenset([
+            "ibm-entryuuid",
+            "ibm-entrychecksum",
+            "ibm-passwordchangedtime",
+            "ibm-passwordexpirationtime",
+            "ibm-passwordallowchangedate",
+            "ibm-creationName",
+            "ibm-modifyName",
+        ])
+
+        # ACL-specific constants (migrated from nested Acl class)
+        ACL_ATTRIBUTE_NAMES: Final[frozenset[str]] = frozenset([
+            "ibm-slapdaccesscontrol",
+            "ibm-slapdgroupacl",
+        ])
+        ACL_DEFAULT_NAME: Final[str] = "Tivoli ACL"  # Default ACL name for Tivoli DS
+
+    # =========================================================================
+    # Class-level attributes for server identification (from Constants)
+    # =========================================================================
+    server_type: ClassVar[str] = Constants.SERVER_TYPE
+    priority: ClassVar[int] = Constants.PRIORITY
+
     def __init__(self) -> None:
-        """Initialize Tivoli quirks."""
+        """Initialize IBM Tivoli Directory Server quirks."""
         super().__init__()
         # Use object.__setattr__ to bypass Pydantic validation for dynamic attributes
-        # Pass server_type and priority to nested class instances
-        object.__setattr__(self, "schema", self.Schema(server_type=self.server_type, priority=self.priority))
-        object.__setattr__(self, "acl", self.Acl(server_type=self.server_type, priority=self.priority))
-        object.__setattr__(self, "entry", self.Entry(server_type=self.server_type, priority=self.priority))
-
-    # Quirk detection patterns and prefixes for Tivoli (shared with Schema and Entry)
-    TIVOLI_OID_PATTERN: ClassVar[re.Pattern[str]] = re.compile(
-        r"\b1\.3\.18\.",
-        re.IGNORECASE,
-    )
-    TIVOLI_ATTRIBUTE_PREFIXES: ClassVar[frozenset[str]] = frozenset([
-        "ibm-",
-        "ids-",
-    ])
-    TIVOLI_OBJECTCLASS_NAMES: ClassVar[frozenset[str]] = frozenset([
-        "ibm-slapdaccesscontrolsubentry",
-        "ibm-ldapserver",
-        "ibm-filterentry",
-    ])
+        # Nested classes no longer require server_type and priority parameters
+        object.__setattr__(self, "schema", self.Schema())
+        object.__setattr__(self, "acl", self.Acl())
+        object.__setattr__(self, "entry", self.Entry())
 
     class Schema(FlextLdifServersRfc.Schema):
         """IBM Tivoli Directory Server schema quirks implementation."""
@@ -81,38 +112,29 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
         # Only _can_handle_* methods are overridden with Tivoli-specific logic.
         #
 
-        TIVOLI_OID_PATTERN: ClassVar[re.Pattern[str]] = re.compile(
-            r"\b1\.3\.18\.",
-            re.IGNORECASE,
-        )
-        TIVOLI_ATTRIBUTE_PREFIXES: ClassVar[frozenset[str]] = frozenset([
-            "ibm-",
-            "ids-",
-        ])
-        TIVOLI_OBJECTCLASS_NAMES: ClassVar[frozenset[str]] = frozenset([
-            "ibm-slapdaccesscontrolsubentry",
-            "ibm-ldapserver",
-            "ibm-filterentry",
-        ])
-
         def _can_handle_attribute(
             self, attr_definition: str | FlextLdifModels.SchemaAttribute
         ) -> bool:
             """Detect Tivoli-specific attributes."""
             if isinstance(attr_definition, str):
-                if self.TIVOLI_OID_PATTERN.search(attr_definition):
+                if FlextLdifServersTivoli.Constants.DETECTION_OID_PATTERN.search(
+                    attr_definition
+                ):
                     return True
                 attr_lower = attr_definition.lower()
                 return any(
-                    prefix in attr_lower for prefix in self.TIVOLI_ATTRIBUTE_PREFIXES
+                    prefix in attr_lower
+                    for prefix in FlextLdifServersTivoli.Constants.DETECTION_ATTRIBUTE_PREFIXES
                 )
             if isinstance(attr_definition, FlextLdifModels.SchemaAttribute):
-                if self.TIVOLI_OID_PATTERN.search(attr_definition.oid):
+                if FlextLdifServersTivoli.Constants.DETECTION_OID_PATTERN.search(
+                    attr_definition.oid
+                ):
                     return True
                 attr_name_lower = attr_definition.name.lower()
                 return any(
                     attr_name_lower.startswith(prefix)
-                    for prefix in self.TIVOLI_ATTRIBUTE_PREFIXES
+                    for prefix in FlextLdifServersTivoli.Constants.DETECTION_ATTRIBUTE_PREFIXES
                 )
             return False
 
@@ -121,17 +143,25 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
         ) -> bool:
             """Detect Tivoli objectClass definitions."""
             if isinstance(oc_definition, str):
-                if self.TIVOLI_OID_PATTERN.search(oc_definition):
+                if FlextLdifServersTivoli.Constants.DETECTION_OID_PATTERN.search(
+                    oc_definition
+                ):
                     return True
                 oc_lower = oc_definition.lower()
                 return any(
-                    oc_name in oc_lower for oc_name in self.TIVOLI_OBJECTCLASS_NAMES
+                    oc_name in oc_lower
+                    for oc_name in FlextLdifServersTivoli.Constants.DETECTION_OBJECTCLASS_NAMES
                 )
             if isinstance(oc_definition, FlextLdifModels.SchemaObjectClass):
-                if self.TIVOLI_OID_PATTERN.search(oc_definition.oid):
+                if FlextLdifServersTivoli.Constants.DETECTION_OID_PATTERN.search(
+                    oc_definition.oid
+                ):
                     return True
                 oc_name_lower = oc_definition.name.lower()
-                return oc_name_lower in self.TIVOLI_OBJECTCLASS_NAMES
+                return (
+                    oc_name_lower
+                    in FlextLdifServersTivoli.Constants.DETECTION_OBJECTCLASS_NAMES
+                )
             return False
 
         def _parse_attribute(
@@ -208,30 +238,27 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                 FlextResult with SchemaObjectClass marked with Tivoli metadata
 
             """
-            return FlextLdifServersRfc.SchemaConverter.set_quirk_type(
-                rfc_data, self.server_type
+            return FlextLdifUtilities.Schema.set_server_type(
+                rfc_data, FlextLdifServersTivoli.Constants.SERVER_TYPE
             )
 
         # Nested class references for Schema - allows Schema().Entry() pattern
         # These are references to the outer class definitions for proper architecture
+
     class Acl(FlextLdifServersRfc.Acl):
         """IBM Tivoli DS ACL quirk."""
 
-        ACL_ATTRIBUTE_NAMES: ClassVar[frozenset[str]] = frozenset([
-            "ibm-slapdaccesscontrol",
-            "ibm-slapdgroupacl",
-        ])
-
-        def _can_handle_acl(
-            self, acl_line: str | FlextLdifModels.Acl
-        ) -> bool:
+        def _can_handle_acl(self, acl_line: str | FlextLdifModels.Acl) -> bool:
             """Detect Tivoli DS ACL values."""
             if isinstance(acl_line, str):
                 normalized = acl_line.strip() if acl_line else ""
                 if not normalized:
                     return False
                 attr_name, _, _ = normalized.partition(":")
-                return attr_name.strip().lower() in self.ACL_ATTRIBUTE_NAMES
+                return (
+                    attr_name.strip().lower()
+                    in FlextLdifServersTivoli.Constants.ACL_ATTRIBUTE_NAMES
+                )
             if isinstance(acl_line, FlextLdifModels.Acl):
                 if not acl_line.raw_acl:
                     return False
@@ -239,7 +266,10 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                 if not normalized:
                     return False
                 attr_name, _, _ = normalized.partition(":")
-                return attr_name.strip().lower() in self.ACL_ATTRIBUTE_NAMES
+                return (
+                    attr_name.strip().lower()
+                    in FlextLdifServersTivoli.Constants.ACL_ATTRIBUTE_NAMES
+                )
             return False
 
         def _parse_acl(self, acl_line: str) -> FlextResult[FlextLdifModels.Acl]:
@@ -257,7 +287,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
 
                 # Build Acl model with minimal parsing
                 acl = FlextLdifModels.Acl(
-                    name="Tivoli ACL",
+                    name=FlextLdifServersTivoli.Constants.ACL_DEFAULT_NAME,
                     target=FlextLdifModels.AclTarget(
                         target_dn="",
                         attributes=[],
@@ -276,7 +306,10 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                             == FlextLdifConstants.PermissionNames.WRITE
                         ),
                     ),
-                    server_type="ibm_tivoli",
+                    server_type=cast(
+                        "FlextLdifConstants.LiteralTypes.ServerType",
+                        FlextLdifServersTivoli.Constants.SERVER_TYPE,
+                    ),
                     raw_acl=acl_line,
                 )
                 return FlextResult[FlextLdifModels.Acl].ok(acl)
@@ -294,7 +327,11 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
             """
             try:
                 # Use Tivoli-specific attribute name
-                acl_attribute = "ibm-slapdaccesscontrol"
+                # Use first ACL attribute name from Constants as default
+                acl_attribute = next(
+                    iter(FlextLdifServersTivoli.Constants.ACL_ATTRIBUTE_NAMES),
+                    "ibm-slapdaccesscontrol",
+                )
 
                 # Check for raw_acl first (original ACL string)
                 if acl_data.raw_acl:
@@ -348,16 +385,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
     class Entry(FlextLdifServersRfc.Entry):
         """IBM Tivoli DS entry quirk."""
 
-        TIVOLI_DIRECTORY_MARKERS: ClassVar[frozenset[str]] = frozenset([
-            "cn=ibm",
-            "cn=configuration",
-            "cn=schema",
-        ])
-        TIVOLI_ATTRIBUTE_MARKERS: ClassVar[frozenset[str]] = frozenset([
-            "ibm-entryuuid",
-            "ibm-slapdaccesscontrol",
-            "ibm-replicationchangecount",
-        ])
+        # Entry detection uses Constants.DETECTION_DN_MARKERS and Constants.DETECTION_ATTRIBUTE_PREFIXES
 
         # OVERRIDDEN METHODS (from FlextLdifServersBase.Entry)
         # These methods override the base class with Tivoli DS-specific logic:
@@ -387,14 +415,18 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
             if not entry_dn:
                 return False
             dn_lower = entry_dn.lower()
-            if any(marker in dn_lower for marker in self.TIVOLI_DIRECTORY_MARKERS):
+            if any(
+                marker in dn_lower
+                for marker in FlextLdifServersTivoli.Constants.DETECTION_DN_MARKERS
+            ):
                 return True
 
             normalized_attrs = {
                 name.lower(): value for name, value in attributes.items()
             }
             if any(
-                marker in normalized_attrs for marker in self.TIVOLI_ATTRIBUTE_MARKERS
+                marker in normalized_attrs
+                for marker in FlextLdifServersTivoli.Constants.DETECTION_ATTRIBUTE_PREFIXES
             ):
                 return True
 
@@ -409,7 +441,8 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
             )
             return bool(
                 any(
-                    str(oc).lower() in FlextLdifServersTivoli.TIVOLI_OBJECTCLASS_NAMES
+                    str(oc).lower()
+                    in FlextLdifServersTivoli.Constants.DETECTION_OBJECTCLASS_NAMES
                     for oc in object_classes
                 ),
             )
@@ -424,7 +457,9 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                 attributes = entry_data.attributes.attributes.copy()
                 # Remove Tivoli-specific metadata, preserve everything else
                 attributes.pop(FlextLdifConstants.QuirkMetadataKeys.SERVER_TYPE, None)
-                attributes.pop(FlextLdifConstants.QuirkMetadataKeys.IS_CONFIG_ENTRY, None)
+                attributes.pop(
+                    FlextLdifConstants.QuirkMetadataKeys.IS_CONFIG_ENTRY, None
+                )
 
                 # Create new LdifAttributes directly from the dict
                 new_attrs = FlextLdifModels.LdifAttributes(attributes=attributes)
@@ -507,12 +542,17 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                     processed_attributes[attr_name] = processed_values
 
                 # Add/update metadata attributes
-                processed_attributes[FlextLdifConstants.QuirkMetadataKeys.SERVER_TYPE] = [
-                    FlextLdifConstants.ServerTypes.IBM_TIVOLI
-                ]
-                processed_attributes[FlextLdifConstants.QuirkMetadataKeys.IS_CONFIG_ENTRY] = [
-                    str("cn=ibm" in dn_lower or "cn=configuration" in dn_lower)
-                ]
+                processed_attributes[
+                    FlextLdifConstants.QuirkMetadataKeys.SERVER_TYPE
+                ] = [FlextLdifServersTivoli.Constants.SERVER_TYPE]
+                # Check if entry is config entry using Constants markers
+                is_config = any(
+                    marker in dn_lower
+                    for marker in FlextLdifServersTivoli.Constants.DETECTION_DN_MARKERS
+                )
+                processed_attributes[
+                    FlextLdifConstants.QuirkMetadataKeys.IS_CONFIG_ENTRY
+                ] = [str(is_config)]
                 # Update objectClass (already in list format)
                 processed_attributes[FlextLdifConstants.DictKeys.OBJECTCLASS] = (
                     object_classes

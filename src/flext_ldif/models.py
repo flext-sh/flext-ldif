@@ -362,14 +362,25 @@ class FlextLdifModels(FlextModels):
         def get_acl_format(self) -> str:
             """Get ACL format for this server type.
 
-            Returns the RFC or server-specific ACL format constant.
-            Uses centralized mapping from FlextLdifConstants.AclFormats.SERVER_TYPE_TO_FORMAT
-            to ensure consistency across all ACL operations.
+            Returns the RFC or server-specific ACL format constant from server Constants.
+            Falls back to RFC ACI format if server type not found.
             """
-            return FlextLdifConstants.AclFormats.SERVER_TYPE_TO_FORMAT.get(
-                self.server_type,
-                FlextLdifConstants.AclFormats.ACI,
-            )
+            # Try to get ACL_FORMAT from server Constants via registry
+            try:
+                from flext_ldif.services.registry import FlextLdifRegistry
+
+                registry = FlextLdifRegistry.get_global_instance()
+                base_quirk = registry._get_base_quirk(self.server_type)  # type: ignore[attr-defined]
+                if base_quirk and hasattr(base_quirk, "Constants"):
+                    if hasattr(base_quirk.Constants, "ACL_FORMAT"):
+                        return base_quirk.Constants.ACL_FORMAT
+            except Exception:
+                pass
+
+            # Fallback to RFC ACI format
+            from flext_ldif.servers.rfc import FlextLdifServersRfc
+
+            return FlextLdifServersRfc.Constants.ACL_ATTRIBUTE_NAME
 
         def get_acl_type(self) -> str:
             """Get ACL type identifier for this server.

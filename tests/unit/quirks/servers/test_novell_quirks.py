@@ -2,13 +2,12 @@
 
 from __future__ import annotations
 
-import base64
-
 import pytest
 
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.servers.novell import FlextLdifServersNovell
+
 
 class TestNovellSchemas:
     """Tests for Novell eDirectory schema quirk handling."""
@@ -26,7 +25,7 @@ class TestNovellSchemas:
     def test_initialization(self, server: FlextLdifServersNovell) -> None:
         """Test Novell eDirectory quirk initialization."""
         assert server.server_type == FlextLdifConstants.LdapServers.NOVELL_EDIRECTORY
-        assert server.priority == 15
+        assert server.priority == 30
 
     def test_can_handle_attribute_with_novell_oid(self) -> None:
         """Test attribute detection with Novell OID pattern."""
@@ -296,6 +295,7 @@ class TestNovellSchemas:
         assert "ndsPerson" in oc_str
         assert "STRUCTURAL" in oc_str
 
+
 class TestNovellAcls:
     """Tests for Novell eDirectory ACL quirk handling."""
 
@@ -513,6 +513,7 @@ class TestNovellAcls:
         acl_str = result.unwrap()
         assert isinstance(acl_str, str)
 
+
 class TestNovellEntrys:
     """Tests for Novell eDirectory entry quirk handling."""
 
@@ -594,4 +595,3 @@ class TestNovellEntrys:
             "cn": ["user"],
         }
         assert entry_quirk._can_handle_entry(entry_dn, attributes) is False
-
