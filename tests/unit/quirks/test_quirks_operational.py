@@ -66,7 +66,7 @@ class TestOidQuirksWithRealFixtures:
             pytest.skip(f"Not enough attributes in fixture (need {attr_index + 1})")
 
         attr_def = oid_schema_attributes[attr_index]
-        result = oid.parse(attr_def)
+        result = oid.schema.parse(attr_def)
 
         assert result.is_success, f"Failed to parse attribute: {result.error}"
         parsed = result.unwrap()
@@ -92,7 +92,7 @@ class TestOidQuirksWithRealFixtures:
             pytest.skip(f"Not enough objectClasses in fixture (need {oc_index + 1})")
 
         oc_def = oid_schema_objectclasses[oc_index]
-        result = oid.parse(oc_def)
+        result = oid.schema.parse(oc_def)
 
         assert result.is_success, f"Failed to parse objectClass: {result.error}"
         parsed = result.unwrap()
@@ -211,9 +211,7 @@ class TestConversionMatrixWithRealFixtures:
         orig_name = extract_name(original_attr)
 
         # Forward: OID → OUD
-        forward_result = matrix.convert(
-            oid, oud, "attribute", original_attr
-        )
+        forward_result = matrix.convert(oid, oud, "attribute", original_attr)
         assert forward_result.is_success, (
             f"Forward conversion failed: {forward_result.error}"
         )

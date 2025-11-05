@@ -27,7 +27,7 @@ What it does NOT do:
 - Parse LDIF entries (use FlextLdifParser)
 - Transform entries (use FlextLdifEntry)
 - Sort entries (use FlextLdifSorting)
-- Filter entries (use FlextLdifFilter)
+- Filter entries (use FlextLdifFilters)
 
 ═══════════════════════════════════════════════════════════════════════════
 RFC COMPLIANCE
@@ -449,7 +449,7 @@ class FlextLdifValidation(FlextService[dict[str, object]]):
 
         except (ValueError, TypeError, AttributeError) as e:
             return FlextResult[dict[str, bool]].fail(
-                f"Failed to batch validate attribute names: {e}"
+                f"Failed to batch validate attribute names: {e}",
             )
 
 

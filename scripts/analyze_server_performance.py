@@ -90,7 +90,7 @@ def analyze_server(server_name: str, server_class: type) -> ServerMetrics:
     mem_before = get_process_memory()
 
     start_time = time.perf_counter()
-    instance = server_class()
+    server_class()
     creation_time = (time.perf_counter() - start_time) * 1000  # Convert to ms
 
     mem_after = get_process_memory()
@@ -234,7 +234,9 @@ def main() -> None:
     print("DEDUPLICATION IMPACT ANALYSIS")
     print("=" * 80)
 
-    inheritance_ratio = (total_inherited / total_constants * 100) if total_constants > 0 else 0
+    inheritance_ratio = (
+        (total_inherited / total_constants * 100) if total_constants > 0 else 0
+    )
     print(f"Total Constants: {total_constants}")
     print(f"Inherited from RFC: {total_inherited} ({inheritance_ratio:.1f}%)")
     print(f"Server-Specific: {total_overridden} ({100 - inheritance_ratio:.1f}%)")
@@ -254,19 +256,28 @@ def main() -> None:
     print("=" * 80)
 
     servers_with_low_override = [
-        m for m in metrics
+        m
+        for m in metrics
         if m.constants_count > 0 and (m.constants_overridden / m.constants_count) < 0.3
     ]
 
     if servers_with_low_override:
         print("Servers with high inheritance ratio (good):")
         for m in servers_with_low_override:
-            override_ratio = (m.constants_overridden / m.constants_count * 100) if m.constants_count > 0 else 0
+            override_ratio = (
+                (m.constants_overridden / m.constants_count * 100)
+                if m.constants_count > 0
+                else 0
+            )
             print(f"  - {m.server_name}: {100 - override_ratio:.1f}% inherited")
 
     print()
-    print(f"Overall deduplication: {inheritance_ratio:.1f}% of constants inherited from RFC")
-    print(f"Memory per server instance: ~{total_memory / len(metrics) / 1024:.2f} KB average")
+    print(
+        f"Overall deduplication: {inheritance_ratio:.1f}% of constants inherited from RFC"
+    )
+    print(
+        f"Memory per server instance: ~{total_memory / len(metrics) / 1024:.2f} KB average"
+    )
     print()
     print("✅ Deduplication is working effectively!")
     print()

@@ -46,10 +46,9 @@ from __future__ import annotations
 
 import re
 from collections.abc import Mapping
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
-if TYPE_CHECKING:
-    from flext_ldif.models import FlextLdifModels
+from flext_ldif.models import FlextLdifModels
 
 
 class FlextLdifUtilitiesDetection:
@@ -378,8 +377,8 @@ class FlextLdifUtilitiesDetection:
             # Get objectClass from attributes
             objectclasses = None
             if isinstance(attributes, (dict, Mapping)) or hasattr(attributes, "get"):
-                objectclasses = (
-                    attributes.get("objectClass") or attributes.get("objectclass")
+                objectclasses = attributes.get("objectClass") or attributes.get(
+                    "objectclass",
                 )
 
             if not objectclasses:

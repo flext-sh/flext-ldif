@@ -357,7 +357,7 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
                 return self._sort_combined()
             case _:
                 return FlextResult[list[FlextLdifModels.Entry]].fail(
-                    f"Unknown sort_target: {self.sort_target}"
+                    f"Unknown sort_target: {self.sort_target}",
                 )
 
     # ════════════════════════════════════════════════════════════════════════
@@ -442,7 +442,8 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
         return self
 
     def with_target(
-        self, target: str | FlextLdifConstants.SortTarget
+        self,
+        target: str | FlextLdifConstants.SortTarget,
     ) -> FlextLdifSorting:
         """Set sort target - WHAT to sort (fluent builder).
 
@@ -458,7 +459,8 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
         return self
 
     def with_strategy(
-        self, strategy: str | FlextLdifConstants.SortStrategy
+        self,
+        strategy: str | FlextLdifConstants.SortStrategy,
     ) -> FlextLdifSorting:
         """Set sort strategy - HOW to sort (fluent builder).
 
@@ -474,14 +476,18 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
         return self
 
     def with_predicate(
-        self, predicate: Callable[[FlextLdifModels.Entry], str | int | float]
+        self,
+        predicate: Callable[[FlextLdifModels.Entry], str | int | float],
     ) -> FlextLdifSorting:
         """Set custom predicate function (fluent builder)."""
         self.custom_predicate = predicate
         return self
 
     def with_attribute_sorting(
-        self, *, alphabetical: bool = False, order: list[str] | None = None
+        self,
+        *,
+        alphabetical: bool = False,
+        order: list[str] | None = None,
     ) -> FlextLdifSorting:
         """Enable attribute sorting (fluent builder).
 
@@ -499,7 +505,10 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
         return self
 
     def with_acl_sorting(
-        self, *, enabled: bool = True, acl_attrs: list[str] | None = None
+        self,
+        *,
+        enabled: bool = True,
+        acl_attrs: list[str] | None = None,
     ) -> FlextLdifSorting:
         """Enable ACL sorting (fluent builder).
 
@@ -523,7 +532,8 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
 
     @classmethod
     def by_hierarchy(
-        cls, entries: list[FlextLdifModels.Entry]
+        cls,
+        entries: list[FlextLdifModels.Entry],
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Sort entries by hierarchy (depth-first, then alphabetical).
 
@@ -539,12 +549,15 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
 
         """
         return cls(
-            entries=entries, sort_target="entries", sort_by="hierarchy"
+            entries=entries,
+            sort_target="entries",
+            sort_by="hierarchy",
         ).execute()
 
     @classmethod
     def by_dn(
-        cls, entries: list[FlextLdifModels.Entry]
+        cls,
+        entries: list[FlextLdifModels.Entry],
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Sort entries alphabetically by full DN.
 
@@ -563,7 +576,8 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
 
     @classmethod
     def by_schema(
-        cls, entries: list[FlextLdifModels.Entry]
+        cls,
+        entries: list[FlextLdifModels.Entry],
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Sort schema entries by OID (attributeTypes before objectClasses).
 
@@ -632,7 +646,7 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
                     return self._by_custom()
                 case _:
                     return FlextResult[list[FlextLdifModels.Entry]].fail(
-                        f"Unknown strategy: {self.sort_by}"
+                        f"Unknown strategy: {self.sort_by}",
                     )
         except Exception as e:
             return FlextResult[list[FlextLdifModels.Entry]].fail(f"Sort failed: {e}")
@@ -675,7 +689,8 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
         return FlextResult[list[FlextLdifModels.Entry]].ok(sorted_entries)
 
     def _sort_attributes_in_entries(
-        self, entries: list[FlextLdifModels.Entry]
+        self,
+        entries: list[FlextLdifModels.Entry],
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Sort attributes in all entries."""
         processed = []
@@ -687,14 +702,15 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
 
             if not result.is_success:
                 return FlextResult[list[FlextLdifModels.Entry]].fail(
-                    f"Attribute sort failed: {result.error}"
+                    f"Attribute sort failed: {result.error}",
                 )
             processed.append(result.unwrap())
 
         return FlextResult[list[FlextLdifModels.Entry]].ok(processed)
 
     def _sort_acl_in_entries(
-        self, entries: list[FlextLdifModels.Entry]
+        self,
+        entries: list[FlextLdifModels.Entry],
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Sort ACL attributes in all entries."""
         processed = []
@@ -709,7 +725,8 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
                     acl_values = attrs_dict[acl_attr]
                     if isinstance(acl_values, list) and len(acl_values) > 1:
                         attrs_dict[acl_attr] = sorted(
-                            acl_values, key=lambda x: str(x).lower()
+                            acl_values,
+                            key=lambda x: str(x).lower(),
                         )
                         modified = True
 
@@ -730,7 +747,9 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
         """
 
         def sort_key(entry: FlextLdifModels.Entry) -> tuple[int, str]:
-            dn_value = str(FlextLdifUtilities.DN._get_dn_value(entry.dn)) if entry.dn else ""
+            dn_value = (
+                str(FlextLdifUtilities.DN._get_dn_value(entry.dn)) if entry.dn else ""
+            )
             if not dn_value:
                 return (0, "")
 
@@ -760,7 +779,9 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
         """
 
         def dn_sort_key(entry: FlextLdifModels.Entry) -> str:
-            dn_value = str(FlextLdifUtilities.DN._get_dn_value(entry.dn)) if entry.dn else ""
+            dn_value = (
+                str(FlextLdifUtilities.DN._get_dn_value(entry.dn)) if entry.dn else ""
+            )
             if not dn_value:
                 return ""
 
@@ -789,7 +810,7 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
 
             # Extract OID
             first_val = str(
-                oid_values[0] if isinstance(oid_values, list) else oid_values
+                oid_values[0] if isinstance(oid_values, list) else oid_values,
             )
             oid_match = re.search(r"\b\d+(?:\.\d+)+\b", first_val)
             oid = oid_match.group(0) if oid_match else first_val
@@ -803,13 +824,16 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
         """Sort using custom predicate."""
         if self.custom_predicate is None:
             return FlextResult[list[FlextLdifModels.Entry]].fail(
-                "Custom predicate not provided"
+                "Custom predicate not provided",
             )
         sorted_entries = sorted(self.entries, key=self.custom_predicate)
         return FlextResult[list[FlextLdifModels.Entry]].ok(sorted_entries)
 
     def _sort_entry_attributes_alphabetically(
-        self, entry: FlextLdifModels.Entry, *, case_sensitive: bool = False
+        self,
+        entry: FlextLdifModels.Entry,
+        *,
+        case_sensitive: bool = False,
     ) -> FlextResult[FlextLdifModels.Entry]:
         """Sort entry attributes alphabetically."""
         attrs_dict = entry.attributes.model_dump()
@@ -823,11 +847,12 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
         sorted_items = sorted(attrs_dict.items(), key=key_func)
         sorted_attrs = FlextLdifModels.LdifAttributes(**dict(sorted_items))
         return FlextResult[FlextLdifModels.Entry].ok(
-            entry.model_copy(update={"attributes": sorted_attrs})
+            entry.model_copy(update={"attributes": sorted_attrs}),
         )
 
     def _sort_entry_attributes_by_order(
-        self, entry: FlextLdifModels.Entry
+        self,
+        entry: FlextLdifModels.Entry,
     ) -> FlextResult[FlextLdifModels.Entry]:
         """Sort entry attributes by custom order."""
         if not self.attribute_order:
@@ -841,7 +866,7 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
         )
         sorted_attrs = FlextLdifModels.LdifAttributes(**dict(ordered + remaining))
         return FlextResult[FlextLdifModels.Entry].ok(
-            entry.model_copy(update={"attributes": sorted_attrs})
+            entry.model_copy(update={"attributes": sorted_attrs}),
         )
 
     @staticmethod
@@ -939,7 +964,7 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
 
         except Exception as e:
             return FlextResult[list[FlextLdifModels.Entry]].fail(
-                f"Hierarchical DN sort failed: {e}"
+                f"Hierarchical DN sort failed: {e}",
             )
 
     @classmethod
@@ -971,7 +996,8 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
         try:
 
             def get_sort_value(
-                entry: FlextLdifModels.Entry, key: str
+                entry: FlextLdifModels.Entry,
+                key: str,
             ) -> tuple[int, str]:
                 """Extract value from entry, with type-aware sorting."""
                 if key.lower() == "dn":
@@ -1000,7 +1026,7 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
 
         except Exception as e:
             return FlextResult[list[FlextLdifModels.Entry]].fail(
-                f"Smart sort failed: {e}"
+                f"Smart sort failed: {e}",
             )
 
     @staticmethod
@@ -1072,7 +1098,7 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
 
         except Exception as e:
             return FlextResult[dict[str, list[FlextLdifModels.Entry]]].fail(
-                f"Group and sort failed: {e}"
+                f"Group and sort failed: {e}",
             )
 
 

@@ -19,7 +19,7 @@ import base64
 import binascii
 import re
 from collections.abc import Mapping
-from typing import ClassVar, Final
+from typing import ClassVar
 
 from flext_core import FlextResult
 
@@ -70,23 +70,23 @@ class FlextLdifServersAd(FlextLdifServersRfc):
 
         # Server detection patterns and weights
         # Migrated from FlextLdifConstants.ServerDetection
-        DETECTION_PATTERN: Final[str] = r"1\.2\.840\.113556\."
+        DETECTION_PATTERN: ClassVar[str] = r"1\.2\.840\.113556\."
         DETECTION_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset([
             "objectGUID",
             "samAccountName",
             "sIDHistory",
             "nTSecurityDescriptor",
         ])
-        DETECTION_WEIGHT: Final[int] = 8
+        DETECTION_WEIGHT: ClassVar[int] = 8
 
         # ACL-specific regex patterns (migrated from nested Acl class)
-        ACL_SDDL_PREFIX_PATTERN: Final[str] = r"^(O:|G:|D:|S:)"
+        ACL_SDDL_PREFIX_PATTERN: ClassVar[str] = r"^(O:|G:|D:|S:)"
 
         # Encoding constants (migrated from _parse_acl method)
-        ENCODING_UTF16LE: Final[str] = "utf-16-le"
-        ENCODING_UTF8: Final[str] = "utf-8"
-        ENCODING_ERROR_IGNORE: Final[str] = "ignore"
-        ACL_SUBJECT_TYPE_SDDL: Final[str] = "sddl"
+        ENCODING_UTF16LE: ClassVar[str] = "utf-16-le"
+        ENCODING_UTF8: ClassVar[str] = "utf-8"
+        ENCODING_ERROR_IGNORE: ClassVar[str] = "ignore"
+        ACL_SUBJECT_TYPE_SDDL: ClassVar[str] = "sddl"
 
         # Active Directory required object classes
         AD_REQUIRED_CLASSES: ClassVar[frozenset[str]] = frozenset([
@@ -169,8 +169,8 @@ class FlextLdifServersAd(FlextLdifServersRfc):
             "ou=domain controllers",
         ])
         # DN marker constants for can_handle
-        DN_MARKER_DC: Final[str] = "dc="
-        DN_MARKER_CN_CONFIGURATION: Final[str] = "cn=configuration"
+        DN_MARKER_DC: ClassVar[str] = "dc="
+        DN_MARKER_CN_CONFIGURATION: ClassVar[str] = "cn=configuration"
         DETECTION_ATTRIBUTE_MARKERS: ClassVar[frozenset[str]] = frozenset([
             "objectguid",
             "objectsid",
@@ -184,8 +184,10 @@ class FlextLdifServersAd(FlextLdifServersRfc):
         ])
 
         # AD-specific detection strings
-        DETECTION_MICROSOFT_ACTIVE_DIRECTORY: Final[str] = "microsoft active directory"
-        ACL_TARGET_WILDCARD: Final[str] = "*"
+        DETECTION_MICROSOFT_ACTIVE_DIRECTORY: ClassVar[str] = (
+            "microsoft active directory"
+        )
+        ACL_TARGET_WILDCARD: ClassVar[str] = "*"
 
     # =========================================================================
     # Server identification - accessed via Constants via properties in base.py
@@ -225,13 +227,15 @@ class FlextLdifServersAd(FlextLdifServersRfc):
         """Active Directory schema quirk."""
 
         def can_handle_attribute(
-            self, attr_definition: str | FlextLdifModels.SchemaAttribute,
+            self,
+            attr_definition: str | FlextLdifModels.SchemaAttribute,
         ) -> bool:
             """Detect AD attribute definitions using centralized constants."""
             if isinstance(attr_definition, str):
                 # Check OID pattern from constants
                 if re.search(
-                    FlextLdifServersAd.Constants.DETECTION_OID_PATTERN, attr_definition,
+                    FlextLdifServersAd.Constants.DETECTION_OID_PATTERN,
+                    attr_definition,
                 ):
                     return True
                 attr_lower = attr_definition.lower()
@@ -275,12 +279,14 @@ class FlextLdifServersAd(FlextLdifServersRfc):
             return False
 
         def can_handle_objectclass(
-            self, oc_definition: str | FlextLdifModels.SchemaObjectClass,
+            self,
+            oc_definition: str | FlextLdifModels.SchemaObjectClass,
         ) -> bool:
             """Detect AD objectClass definitions using centralized constants."""
             if isinstance(oc_definition, str):
                 if re.search(
-                    FlextLdifServersAd.Constants.DETECTION_OID_PATTERN, oc_definition,
+                    FlextLdifServersAd.Constants.DETECTION_OID_PATTERN,
+                    oc_definition,
                 ):
                     return True
                 oc_lower = oc_definition.lower()

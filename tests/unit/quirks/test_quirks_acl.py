@@ -437,9 +437,9 @@ class TestOIDAdvancedFeaturesConversion:
         assert result.is_success, f"Conversion failed: {result.error}"
         oud_aci = result.unwrap()
         assert isinstance(oud_aci, str)
-        # Current implementation: raw_acl is preserved during conversion
-        # TODO: Implement model-based ACL writing to generate OUD format with targetattr
-        assert "orclaci" in oud_aci.lower() or "access to attr" in oud_aci.lower()
+        # After removing fallback, OUD properly converts to its own format
+        assert "aci:" in oud_aci.lower(), "Should have OUD aci: prefix"
+        assert "targetattr" in oud_aci.lower(), "Should have targetattr in OUD format"
 
 
 class TestOUDSubjectTypesConversion:

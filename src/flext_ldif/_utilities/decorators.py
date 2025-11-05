@@ -38,13 +38,9 @@ from __future__ import annotations
 from collections.abc import Callable
 from datetime import UTC, datetime
 from functools import wraps
-from typing import TYPE_CHECKING, TypeVar
+from typing import TypeVar
 
-from flext_core import FlextLogger
-
-if TYPE_CHECKING:
-    from flext_core import FlextResult
-
+from flext_core import FlextLogger, FlextResult
 
 logger = FlextLogger(__name__)
 

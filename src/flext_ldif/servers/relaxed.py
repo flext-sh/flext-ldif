@@ -23,7 +23,7 @@ from __future__ import annotations
 
 import re
 from collections.abc import Mapping
-from typing import ClassVar, Final
+from typing import ClassVar
 
 from flext_core import FlextLogger, FlextResult
 
@@ -60,37 +60,37 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
         OID_PATTERN: ClassVar[re.Pattern[str]] = re.compile(r"\(?\s*([0-9a-zA-Z._\-]+)")
 
         # OID extraction patterns (migrated from _parse_attribute and _parse_objectclass methods)
-        OID_NUMERIC_WITH_PAREN: Final[str] = r"\(\s*([0-9]+(?:\.[0-9]+)+)"
-        OID_NUMERIC_ANYWHERE: Final[str] = r"([0-9]+\.[0-9]+(?:\.[0-9]+)*)"
-        OID_ALPHANUMERIC_RELAXED: Final[str] = r"\(\s*([a-zA-Z0-9._-]+)"
+        OID_NUMERIC_WITH_PAREN: ClassVar[str] = r"\(\s*([0-9]+(?:\.[0-9]+)+)"
+        OID_NUMERIC_ANYWHERE: ClassVar[str] = r"([0-9]+\.[0-9]+(?:\.[0-9]+)*)"
+        OID_ALPHANUMERIC_RELAXED: ClassVar[str] = r"\(\s*([a-zA-Z0-9._-]+)"
 
         # Schema parsing patterns (migrated from Schema class)
-        SCHEMA_MUST_SEPARATOR: Final[str] = "$"
-        SCHEMA_MAY_SEPARATOR: Final[str] = "$"
-        SCHEMA_NAME_PATTERN: Final[str] = r"NAME\s+['\"]?([^'\" ]+)['\"]?"
+        SCHEMA_MUST_SEPARATOR: ClassVar[str] = "$"
+        SCHEMA_MAY_SEPARATOR: ClassVar[str] = "$"
+        SCHEMA_NAME_PATTERN: ClassVar[str] = r"NAME\s+['\"]?([^'\" ]+)['\"]?"
 
         # ACL-specific constants (migrated from Acl class)
-        ACL_DEFAULT_NAME: Final[str] = "relaxed_acl"
-        ACL_DEFAULT_TARGET_DN: Final[str] = "*"
-        ACL_DEFAULT_SUBJECT_TYPE: Final[str] = "*"
-        ACL_DEFAULT_SUBJECT_VALUE: Final[str] = "*"
-        ACL_WRITE_PREFIX: Final[str] = "acl: "
+        ACL_DEFAULT_NAME: ClassVar[str] = "relaxed_acl"
+        ACL_DEFAULT_TARGET_DN: ClassVar[str] = "*"
+        ACL_DEFAULT_SUBJECT_TYPE: ClassVar[str] = "*"
+        ACL_DEFAULT_SUBJECT_VALUE: ClassVar[str] = "*"
+        ACL_WRITE_PREFIX: ClassVar[str] = "acl: "
 
         # Entry writing constants (migrated from _write_entry method)
-        LDIF_DN_PREFIX: Final[str] = "dn: "
-        LDIF_ATTR_SEPARATOR: Final[str] = ": "
+        LDIF_DN_PREFIX: ClassVar[str] = "dn: "
+        LDIF_ATTR_SEPARATOR: ClassVar[str] = ": "
 
         # Metadata extension keys (migrated from parsing methods)
-        METADATA_RELAXED_PARSED: Final[str] = "relaxed_parsed"
-        METADATA_RFC_PARSED: Final[str] = "rfc_parsed"
+        METADATA_RELAXED_PARSED: ClassVar[str] = "relaxed_parsed"
+        METADATA_RFC_PARSED: ClassVar[str] = "rfc_parsed"
 
         # Encoding constants (migrated from _parse_entry method)
-        ENCODING_UTF8: Final[str] = "utf-8"
-        ENCODING_ERROR_HANDLING: Final[str] = "replace"
+        ENCODING_UTF8: ClassVar[str] = "utf-8"
+        ENCODING_ERROR_HANDLING: ClassVar[str] = "replace"
 
         # LDIF formatting constants (migrated from _write_entry method)
-        LDIF_NEWLINE: Final[str] = "\n"
-        LDIF_JOIN_SEPARATOR: Final[str] = "\n"
+        LDIF_NEWLINE: ClassVar[str] = "\n"
+        LDIF_JOIN_SEPARATOR: ClassVar[str] = "\n"
 
     # =========================================================================
     # Server identification - accessed via Constants via properties in base.py
@@ -115,7 +115,8 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
         """
 
         def can_handle_attribute(
-            self, attr_definition: str | FlextLdifModels.SchemaAttribute,
+            self,
+            attr_definition: str | FlextLdifModels.SchemaAttribute,
         ) -> bool:
             """Accept any attribute definition in relaxed mode.
 
@@ -138,7 +139,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
         # - _write_attribute(): Uses RFC writer with relaxed error handling
         # - _write_objectclass(): Uses RFC writer with relaxed error handling
 
-        def _parse_attribute(
+        def _parse_attribute(  # noqa: C901
             self,
             attr_definition: str,
         ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
@@ -258,6 +259,11 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                         single_value=False,
                         no_user_modification=False,
                         metadata=metadata,
+                        x_origin=None,
+                        x_file_ref=None,
+                        x_name=None,
+                        x_alias=None,
+                        x_oid=None,
                     ),
                 )
             except Exception as e:
@@ -268,7 +274,8 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 )
 
         def can_handle_objectclass(
-            self, oc_definition: str | FlextLdifModels.SchemaObjectClass,
+            self,
+            oc_definition: str | FlextLdifModels.SchemaObjectClass,
         ) -> bool:
             """Accept any objectClass definition in relaxed mode.
 
@@ -684,7 +691,8 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             )
 
         def can_handle_attribute(
-            self, attribute: FlextLdifModels.SchemaAttribute,
+            self,
+            attribute: FlextLdifModels.SchemaAttribute,
         ) -> bool:
             """Check if this ACL quirk should be aware of a specific attribute definition.
 
@@ -701,7 +709,8 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             return True
 
         def can_handle_objectclass(
-            self, objectclass: FlextLdifModels.SchemaObjectClass,
+            self,
+            objectclass: FlextLdifModels.SchemaObjectClass,
         ) -> bool:
             """Check if this ACL quirk should be aware of a specific objectClass definition.
 
@@ -788,7 +797,8 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
 
             # Best-effort: create Entry with raw data if RFC parsing fails
             logger.debug(
-                "RFC entry parse failed, using relaxed mode: %s", parent_result.error,
+                "RFC entry parse failed, using relaxed mode: %s",
+                parent_result.error,
             )
             try:
                 # Validate DN
@@ -953,7 +963,8 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 return FlextResult[str].fail(f"Failed to write entry: {e}")
 
         def can_handle_attribute(
-            self, attribute: FlextLdifModels.SchemaAttribute,
+            self,
+            attribute: FlextLdifModels.SchemaAttribute,
         ) -> bool:
             """Check if this Entry quirk has special handling for an attribute definition.
 
@@ -970,7 +981,8 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             return True
 
         def can_handle_objectclass(
-            self, objectclass: FlextLdifModels.SchemaObjectClass,
+            self,
+            objectclass: FlextLdifModels.SchemaObjectClass,
         ) -> bool:
             """Check if this Entry quirk has special handling for an objectClass definition.
 

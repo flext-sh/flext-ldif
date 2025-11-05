@@ -2091,9 +2091,7 @@ class TestAclTransformation:
         assert len(transformed.get("users", [])) == 1
         assert len(transformed.get("groups", [])) == 1
 
-    def test_transform_with_acl_entries_nos(
-        self, temp_dirs: tuple[Path, Path]
-    ) -> None:
+    def test_transform_with_acl_entries_nos(self, temp_dirs: tuple[Path, Path]) -> None:
         """Test ACL transformation without parser/writer quirks."""
         input_dir, output_dir = temp_dirs
 

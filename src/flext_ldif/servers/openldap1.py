@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import re
 from collections.abc import Mapping
-from typing import ClassVar, Final
+from typing import ClassVar
 
 from flext_core import FlextResult
 
@@ -69,7 +69,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
         # OpenLDAP 1.x detection constants
         DETECTION_OID_PATTERN: ClassVar[str] = r"1\.3\.6\.1\.4\.1\.4203\."
         OBJECTCLASS_KEYWORD: ClassVar[str] = "objectclass"
-        DETECTION_PATTERN: Final[str] = r"\b(attributetype|objectclass|access)\b"
+        DETECTION_PATTERN: ClassVar[str] = r"\b(attributetype|objectclass|access)\b"
         DETECTION_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset([
             "attributetype",
             "objectclass",
@@ -98,23 +98,23 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
         ])
 
         # ACL parsing constants (migrated from _parse_acl method)
-        ACL_TARGET_DN_PREFIX: Final[str] = "dn="
-        ACL_TARGET_ATTRS_PREFIX: Final[str] = "attrs="
+        ACL_TARGET_DN_PREFIX: ClassVar[str] = "dn="
+        ACL_TARGET_ATTRS_PREFIX: ClassVar[str] = "attrs="
 
         # Schema-specific constants (migrated from nested Schema class)
-        SCHEMA_OPENLDAP1_ATTRIBUTE_PATTERN: Final[str] = r"^\s*attributetype\s+"
-        SCHEMA_OPENLDAP1_OBJECTCLASS_PATTERN: Final[str] = r"^\s*objectclass\s+"
+        SCHEMA_OPENLDAP1_ATTRIBUTE_PATTERN: ClassVar[str] = r"^\s*attributetype\s+"
+        SCHEMA_OPENLDAP1_OBJECTCLASS_PATTERN: ClassVar[str] = r"^\s*objectclass\s+"
 
         # ACL-specific constants (migrated from nested Acl class)
-        ACL_BY_PATTERN: Final[str] = r"by\s+([^\s]+)\s+([^\s]+)"
-        ACL_ACCESS_TO_PATTERN: Final[str] = r"^\s*access\s+to\s+"
+        ACL_BY_PATTERN: ClassVar[str] = r"by\s+([^\s]+)\s+([^\s]+)"
+        ACL_ACCESS_TO_PATTERN: ClassVar[str] = r"^\s*access\s+to\s+"
 
         # ACL parsing patterns (migrated from _parse_acl method)
-        ACL_TO_BY_PATTERN: Final[str] = r"^to\s+(.+?)\s+by\s+"
+        ACL_TO_BY_PATTERN: ClassVar[str] = r"^to\s+(.+?)\s+by\s+"
         ACL_SUBJECT_TYPE_USERDN: ClassVar[str] = "userdn"
 
         # ACL target parsing constants (migrated from _parse_acl method)
-        ACL_OPS_SEPARATOR: Final[str] = ","
+        ACL_OPS_SEPARATOR: ClassVar[str] = ","
 
     # =========================================================================
     # Server identification - accessed via Constants via properties in base.py
@@ -141,7 +141,8 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
         # Use patterns from Constants
 
         def can_handle_attribute(
-            self, attr_definition: str | FlextLdifModels.SchemaAttribute,
+            self,
+            attr_definition: str | FlextLdifModels.SchemaAttribute,
         ) -> bool:
             """Check if this is an OpenLDAP 1.x attribute.
 
@@ -185,7 +186,8 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
         # - create_metadata(): Creates OpenLDAP 1.x-specific metadata
 
         def can_handle_objectclass(
-            self, oc_definition: str | FlextLdifModels.SchemaObjectClass,
+            self,
+            oc_definition: str | FlextLdifModels.SchemaObjectClass,
         ) -> bool:
             """Check if this is an OpenLDAP 1.x objectClass.
 
@@ -563,9 +565,13 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
                     perms = []
                     # Use constants for permission names
                     if acl_data.permissions.read:
-                        perms.append(FlextLdifServersOpenldap1.Constants.PERMISSION_READ)
+                        perms.append(
+                            FlextLdifServersOpenldap1.Constants.PERMISSION_READ,
+                        )
                     if acl_data.permissions.write:
-                        perms.append(FlextLdifServersOpenldap1.Constants.PERMISSION_WRITE)
+                        perms.append(
+                            FlextLdifServersOpenldap1.Constants.PERMISSION_WRITE,
+                        )
                     if perms:
                         acl_str += f" {','.join(perms)}"
 
@@ -627,7 +633,8 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
             return not is_config_dn and not has_olc_attrs
 
         def process_entry(
-            self, entry: FlextLdifModels.Entry,
+            self,
+            entry: FlextLdifModels.Entry,
         ) -> FlextResult[FlextLdifModels.Entry]:
             """Process entry for OpenLDAP 1.x format.
 

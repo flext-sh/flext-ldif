@@ -22,9 +22,7 @@ class TestActiveDirectorySchemas:
         return FlextLdifServersAd()
 
     @pytest.fixture
-    def ad_schema(
-        self, ad_server: FlextLdifServersAd
-    ) -> FlextLdifServersAd.Schema:
+    def ad_schema(self, ad_server: FlextLdifServersAd) -> FlextLdifServersAd.Schema:
         """Create Active Directory schema quirk instance."""
         return ad_server.schema
 
@@ -104,9 +102,7 @@ class TestActiveDirectorySchemas:
         assert attr_data.equality == "caseIgnoreMatch"
         assert attr_data.single_value is True
 
-    def test_parse_attribute_no_oid(
-        self, ad_schema: FlextLdifServersAd.Schema
-    ) -> None:
+    def test_parse_attribute_no_oid(self, ad_schema: FlextLdifServersAd.Schema) -> None:
         """Test attribute parsing fails without OID."""
         quirk = ad_schema
 
@@ -214,9 +210,7 @@ class TestActiveDirectorySchemas:
         assert result.error is not None
         assert "missing an OID" in result.error
 
-    def test_write_attribute_to_rfc(
-        self, ad_schema: FlextLdifServersAd.Schema
-    ) -> None:
+    def test_write_attribute_to_rfc(self, ad_schema: FlextLdifServersAd.Schema) -> None:
         """Test writing attribute to RFC string format."""
         quirk = ad_schema
 
@@ -305,9 +299,7 @@ class TestActiveDirectoryAcls:
         )
         assert result.is_success  # AD ACL should be handled
 
-    def test__can_handle_with_sddl_prefix(
-        self, ad_acl: FlextLdifServersAd.Acl
-    ) -> None:
+    def test__can_handle_with_sddl_prefix(self, ad_acl: FlextLdifServersAd.Acl) -> None:
         """Test ACL detection with SDDL prefix (O:, G:, D:, S:)."""
         acl = ad_acl
 
@@ -355,9 +347,7 @@ class TestActiveDirectoryAcls:
         # Non-AD ACL may parse but AD quirk won't be selected
         assert hasattr(result, "is_success")
 
-    def test_parse_with_base64_value(
-        self, ad_acl: FlextLdifServersAd.Acl
-    ) -> None:
+    def test_parse_with_base64_value(self, ad_acl: FlextLdifServersAd.Acl) -> None:
         """Test parsing ACL with base64-encoded nTSecurityDescriptor."""
         acl = ad_acl
 
@@ -429,15 +419,11 @@ class TestActiveDirectoryEntrys:
         return FlextLdifServersAd()
 
     @pytest.fixture
-    def ad_entry(
-        self, ad_entry_server: FlextLdifServersAd
-    ) -> FlextLdifServersAd.Entry:
+    def ad_entry(self, ad_entry_server: FlextLdifServersAd) -> FlextLdifServersAd.Entry:
         """Create Active Directory entry quirk instance."""
         return ad_entry_server.entry
 
-    def test_entry_initialization(
-        self, ad_entry_server: FlextLdifServersAd
-    ) -> None:
+    def test_entry_initialization(self, ad_entry_server: FlextLdifServersAd) -> None:
         """Test entry quirk initialization."""
         assert ad_entry_server is not None
 

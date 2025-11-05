@@ -12,7 +12,7 @@ from __future__ import annotations
 import base64
 import re
 from collections.abc import Mapping
-from typing import ClassVar, Final
+from typing import ClassVar
 
 from flext_core import FlextResult
 
@@ -80,11 +80,11 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
         # Format: scope#trustee#rights
         # Example: "[Entry Rights]#cn=Admin,o=Example#[BCDRSE]"
         # Index 0 = scope, Index 1 = trustee, Index 2 = rights
-        NOVELL_SEGMENT_INDEX_TRUSTEE: Final[int] = 1
-        NOVELL_SEGMENT_INDEX_RIGHTS: Final[int] = 2
+        NOVELL_SEGMENT_INDEX_TRUSTEE: ClassVar[int] = 1
+        NOVELL_SEGMENT_INDEX_RIGHTS: ClassVar[int] = 2
 
         # Novell eDirectory specific attributes (migrated from FlextLdifConstants)
-        NOVELL_SPECIFIC: Final[frozenset[str]] = frozenset([
+        NOVELL_SPECIFIC: ClassVar[frozenset[str]] = frozenset([
             "guid",
             "nspmpasswordpolicy",
             "login",
@@ -96,38 +96,42 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
         ])
 
         # Schema-specific constants (migrated from nested Schema class)
-        SCHEMA_ATTRIBUTE_NAME_REGEX: Final[str] = r"NAME\s+\(?\s*'([^']+)'"
+        SCHEMA_ATTRIBUTE_NAME_REGEX: ClassVar[str] = r"NAME\s+\(?\s*'([^']+)'"
 
         # ACL default values (migrated from _parse_acl method)
-        ACL_DEFAULT_SUBJECT_TYPE: Final[str] = "trustee"
-        ACL_DEFAULT_SUBJECT_VALUE_UNKNOWN: Final[str] = "unknown"
+        ACL_DEFAULT_SUBJECT_TYPE: ClassVar[str] = "trustee"
+        ACL_DEFAULT_SUBJECT_VALUE_UNKNOWN: ClassVar[str] = "unknown"
 
         # ACL attribute name (migrated from _write_acl method)
-        ACL_ATTRIBUTE_NAME_WRITE: Final[str] = "acl"  # Novell standard attribute name
+        ACL_ATTRIBUTE_NAME_WRITE: ClassVar[str] = (
+            "acl"  # Novell standard attribute name
+        )
 
         # ACL-specific constants (migrated from nested Acl class)
-        ACL_ATTRIBUTE_NAMES: Final[frozenset[str]] = frozenset([
+        ACL_ATTRIBUTE_NAMES: ClassVar[frozenset[str]] = frozenset([
             "acl",
             "inheritedacl",
         ])
-        ACL_SEGMENT_SEPARATOR: Final[str] = "#"
-        ACL_DEFAULT_NAME: Final[str] = "Novell eDirectory ACL"
+        ACL_SEGMENT_SEPARATOR: ClassVar[str] = "#"
+        ACL_DEFAULT_NAME: ClassVar[str] = "Novell eDirectory ACL"
 
         # Novell rights parsing constants (migrated from _parse_acl method)
-        NOVELL_RIGHT_BROWSE: Final[str] = "B"  # Browse permission
-        NOVELL_RIGHT_COMPARE: Final[str] = "C"  # Compare permission
-        NOVELL_RIGHT_DELETE: Final[str] = "D"  # Delete permission
-        NOVELL_RIGHT_READ: Final[str] = "R"  # Read permission
-        NOVELL_RIGHT_WRITE: Final[str] = "W"  # Write permission
-        NOVELL_RIGHT_ADD: Final[str] = "A"  # Add permission
-        NOVELL_RIGHT_SUPERVISOR: Final[str] = "S"  # Supervisor permission
-        NOVELL_RIGHT_ENTRY: Final[str] = "E"  # Entry permission
-        NOVELL_RIGHTS_BRACKET_OPEN: Final[str] = "["  # Rights bracket start
-        NOVELL_RIGHTS_BRACKET_CLOSE: Final[str] = "]"  # Rights bracket end
-        NOVELL_PERMISSION_SUPERVISOR: Final[str] = (
+        NOVELL_RIGHT_BROWSE: ClassVar[str] = "B"  # Browse permission
+        NOVELL_RIGHT_COMPARE: ClassVar[str] = "C"  # Compare permission
+        NOVELL_RIGHT_DELETE: ClassVar[str] = "D"  # Delete permission
+        NOVELL_RIGHT_READ: ClassVar[str] = "R"  # Read permission
+        NOVELL_RIGHT_WRITE: ClassVar[str] = "W"  # Write permission
+        NOVELL_RIGHT_ADD: ClassVar[str] = "A"  # Add permission
+        NOVELL_RIGHT_SUPERVISOR: ClassVar[str] = "S"  # Supervisor permission
+        NOVELL_RIGHT_ENTRY: ClassVar[str] = "E"  # Entry permission
+        NOVELL_RIGHTS_BRACKET_OPEN: ClassVar[str] = "["  # Rights bracket start
+        NOVELL_RIGHTS_BRACKET_CLOSE: ClassVar[str] = "]"  # Rights bracket end
+        NOVELL_PERMISSION_SUPERVISOR: ClassVar[str] = (
             "supervisor"  # Novell-specific permission name
         )
-        NOVELL_PERMISSION_ENTRY: Final[str] = "entry"  # Novell-specific permission name
+        NOVELL_PERMISSION_ENTRY: ClassVar[str] = (
+            "entry"  # Novell-specific permission name
+        )
 
     # =========================================================================
     # Server identification (defined in Constants nested class above)
@@ -139,7 +143,8 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
         """Novell eDirectory schema quirk."""
 
         def can_handle_attribute(
-            self, attr_definition: str | FlextLdifModels.SchemaAttribute
+            self,
+            attr_definition: str | FlextLdifModels.SchemaAttribute,
         ) -> bool:
             """Detect eDirectory attribute definitions using Constants."""
             if isinstance(attr_definition, str):
@@ -159,8 +164,8 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                 if any(
                     name.lower().startswith(
                         tuple(
-                            FlextLdifServersNovell.Constants.DETECTION_ATTRIBUTE_PREFIXES
-                        )
+                            FlextLdifServersNovell.Constants.DETECTION_ATTRIBUTE_PREFIXES,
+                        ),
                     )
                     for name in name_matches
                 ):
@@ -197,7 +202,8 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
         #
 
         def can_handle_objectclass(
-            self, oc_definition: str | FlextLdifModels.SchemaObjectClass
+            self,
+            oc_definition: str | FlextLdifModels.SchemaObjectClass,
         ) -> bool:
             """Detect eDirectory objectClass definitions using Constants."""
             if isinstance(oc_definition, str):
@@ -250,10 +256,10 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             if result.is_success:
                 attr_data = result.unwrap()
                 metadata = FlextLdifModels.QuirkMetadata.create_for(
-                    FlextLdifServersNovell.Constants.SERVER_TYPE
+                    FlextLdifServersNovell.Constants.SERVER_TYPE,
                 )
                 return FlextResult[FlextLdifModels.SchemaAttribute].ok(
-                    attr_data.model_copy(update={"metadata": metadata})
+                    attr_data.model_copy(update={"metadata": metadata}),
                 )
             return result
 
@@ -274,10 +280,10 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             if result.is_success:
                 oc_data = result.unwrap()
                 metadata = FlextLdifModels.QuirkMetadata.create_for(
-                    FlextLdifServersNovell.Constants.SERVER_TYPE
+                    FlextLdifServersNovell.Constants.SERVER_TYPE,
                 )
                 return FlextResult[FlextLdifModels.SchemaObjectClass].ok(
-                    oc_data.model_copy(update={"metadata": metadata})
+                    oc_data.model_copy(update={"metadata": metadata}),
                 )
             return result
 
@@ -296,7 +302,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                 True if this is Novell eDirectory ACL format
 
             """
-            return self.can_handle(acl)
+            return self.can_handle_acl(acl)
 
         def can_handle_acl(self, acl_line: str | FlextLdifModels.Acl) -> bool:
             """Detect eDirectory ACL values."""
@@ -324,13 +330,13 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             """Parse eDirectory ACL definition."""
             try:
                 # Use static method correctly
-                attr_name, content = self.__class__._splitacl_line(acl_line)
+                attr_name, content = self.__class__._splitacl_line(acl_line)  # noqa: SLF001
                 if not content:
                     return FlextResult[FlextLdifModels.Acl].fail("Empty ACL content")
                 segments = [
                     segment
                     for segment in content.split(
-                        FlextLdifServersNovell.Constants.ACL_SEGMENT_SEPARATOR
+                        FlextLdifServersNovell.Constants.ACL_SEGMENT_SEPARATOR,
                     )
                     if segment
                 ]
@@ -417,7 +423,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                                 "search": FlextLdifConstants.PermissionNames.SEARCH,
                                 "compare": FlextLdifConstants.PermissionNames.COMPARE,
                             },
-                        )
+                        ),
                     ),
                     metadata=FlextLdifModels.QuirkMetadata.create_for(
                         FlextLdifServersNovell.Constants.SERVER_TYPE,
@@ -569,7 +575,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                     for value in attr_values:
                         if isinstance(value, bytes):
                             processed_values.append(
-                                base64.b64encode(value).decode("ascii")
+                                base64.b64encode(value).decode("ascii"),
                             )
                         else:
                             processed_values.append(str(value))
@@ -585,7 +591,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
 
                 # Create new LdifAttributes directly
                 new_attrs = FlextLdifModels.LdifAttributes(
-                    attributes=processed_attributes
+                    attributes=processed_attributes,
                 )
                 new_entry = entry.model_copy(
                     update={"attributes": new_attrs},

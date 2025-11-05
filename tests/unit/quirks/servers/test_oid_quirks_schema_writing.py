@@ -342,11 +342,11 @@ class TestOidObjectclassTypoFix:
         self, oid_schema: FlextLdifServersOid.Schema
     ) -> None:
         """Test that writing fixes AUXILLARY → AUXILIARY typo."""
-        # Create attribute with AUXILLARY (misspelled)
+        # Create attribute with AUXILIARY (correct spelling)
         oc_model = FlextLdifModels.SchemaObjectClass(
             oid="2.16.840.1.113894.4.2.1",
             name="testAux",
-            auxiliary=True,  # This should generate AUXILIARY in output
+            kind="AUXILIARY",  # Use kind instead of auxiliary
             desc="Test auxiliary class",
         )
 
@@ -375,7 +375,7 @@ class TestOidObjectclassTypoFix:
         parse_result = oid_schema.parse_objectclass(oc_def)
         assert parse_result.is_success
         parsed_oc = parse_result.unwrap()
-        assert parsed_oc.auxiliary is True
+        assert parsed_oc.is_auxiliary is True
 
 
 class TestOidSyntaxAndMatchingRuleTransformations:

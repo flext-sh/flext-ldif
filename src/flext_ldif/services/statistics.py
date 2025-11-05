@@ -90,7 +90,8 @@ class FlextLdifStatistics(FlextService[dict[str, object]]):
         return cls()
 
     def with_categorized(
-        self, categorized: dict[str, list[dict[str, object]]]
+        self,
+        categorized: dict[str, list[dict[str, object]]],
     ) -> FlextLdifStatistics:
         """Set categorized entries data (fluent builder)."""
         self.categorized = categorized
@@ -106,9 +107,7 @@ class FlextLdifStatistics(FlextService[dict[str, object]]):
         self.output_dir = output_dir
         return self
 
-    def with_output_files(
-        self, output_files: dict[str, object]
-    ) -> FlextLdifStatistics:
+    def with_output_files(self, output_files: dict[str, object]) -> FlextLdifStatistics:
         """Set output files mapping (fluent builder)."""
         self.output_files = output_files
         return self
@@ -211,7 +210,8 @@ class FlextLdifStatistics(FlextService[dict[str, object]]):
             )
 
     def calculate_for_entries(
-        self, entries: Sequence[FlextLdifModels.Entry]
+        self,
+        entries: Sequence[FlextLdifModels.Entry],
     ) -> FlextResult[dict[str, Any]]:
         """Calculate general-purpose statistics for a list of Entry models."""
         try:

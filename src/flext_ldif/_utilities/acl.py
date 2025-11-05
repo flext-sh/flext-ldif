@@ -592,7 +592,7 @@ class FlextLdifUtilitiesACL:
     def format_aci_subject(
         subject_type: str,
         subject_value: str,
-        constants: type,
+        constants: Any,  # Server-specific Constants class with ACL attributes
     ) -> str:
         """Format ACL subject into ACI bind rule format.
 
@@ -612,7 +612,8 @@ class FlextLdifUtilitiesACL:
         if subject_type == FlextLdifConstants.AclSubjectTypes.ANONYMOUS:
             return f'userdn="{constants.ACL_ANONYMOUS_SUBJECT_ALT}";)'
 
-        if subject_type == FlextLdifConstants.AclSubjectTypes.GROUP:
+        # Handle both "group" and "group_dn" subject types
+        if subject_type in {FlextLdifConstants.AclSubjectTypes.GROUP, "group_dn"}:
             # Ensure LDAP URL format
             if not subject_value.startswith(constants.ACL_LDAP_URL_PREFIX):
                 subject_value = f"{constants.ACL_LDAP_URL_PREFIX}{subject_value}"
@@ -704,7 +705,9 @@ class FlextLdifUtilitiesACL:
 
         # Use generic DataMapper to build flags dict
         result = FlextUtilities.DataMapper.build_flags_dict(
-            rights_list, permission_checks, default_value=False
+            rights_list,
+            permission_checks,
+            default_value=False,
         )
         return (
             result.unwrap()

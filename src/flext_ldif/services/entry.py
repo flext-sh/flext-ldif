@@ -23,7 +23,7 @@ This service handles ENTRY TRANSFORMATION ONLY:
 - Adapting entries for specific server targets
 
 What it does NOT do:
-- Filter entries (use FlextLdifFilter)
+- Filter entries (use FlextLdifFilters)
 - Sort entries (use FlextLdifSorting)
 - Validate schema (use FlextLdifValidation)
 
@@ -145,7 +145,7 @@ class FlextLdifEntry(FlextService[list[FlextLdifModels.Entry]]):
     - Adapt entries for server compatibility
 
     Does NOT handle:
-    - Filtering entries (use FlextLdifFilter)
+    - Filtering entries (use FlextLdifFilters)
     - Sorting entries (use FlextLdifSorting)
     - Validating schema (use FlextLdifValidation)
     """
@@ -180,7 +180,7 @@ class FlextLdifEntry(FlextService[list[FlextLdifModels.Entry]]):
             if self.operation == "remove_attributes":
                 return self._remove_attributes_batch()
             return FlextResult[list[FlextLdifModels.Entry]].fail(
-                f"Unknown operation: {self.operation}"
+                f"Unknown operation: {self.operation}",
             )
         except Exception as e:
             return FlextResult[list[FlextLdifModels.Entry]].fail(str(e))
@@ -215,7 +215,8 @@ class FlextLdifEntry(FlextService[list[FlextLdifModels.Entry]]):
 
     @classmethod
     def remove_operational_attributes(
-        cls, entry: FlextLdifModels.Entry
+        cls,
+        entry: FlextLdifModels.Entry,
     ) -> FlextResult[FlextLdifModels.Entry]:
         """Remove operational attributes from a single entry.
 
@@ -237,7 +238,8 @@ class FlextLdifEntry(FlextService[list[FlextLdifModels.Entry]]):
 
     @classmethod
     def remove_operational_attributes_batch(
-        cls, entries: list[FlextLdifModels.Entry]
+        cls,
+        entries: list[FlextLdifModels.Entry],
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Remove operational attributes from multiple entries.
 
@@ -397,9 +399,7 @@ class FlextLdifEntry(FlextService[list[FlextLdifModels.Entry]]):
         )
 
         if adapted_entry_result.is_failure:
-            error_msg = (
-                f"Failed to adapt entry {FlextLdifUtilities.DN._get_dn_value(entry.dn)}: {adapted_entry_result.error}"
-            )
+            error_msg = f"Failed to adapt entry {FlextLdifUtilities.DN._get_dn_value(entry.dn)}: {adapted_entry_result.error}"
             if self.logger is not None:
                 self.logger.error(error_msg)
             return FlextResult[FlextLdifModels.Entry].fail(error_msg)
@@ -438,12 +438,15 @@ class FlextLdifEntry(FlextService[list[FlextLdifModels.Entry]]):
 
         # Use utility for core removal logic
         try:
-            cleaned_entry = FlextLdifUtilities.Entry.remove_attributes(entry, attributes)
+            cleaned_entry = FlextLdifUtilities.Entry.remove_attributes(
+                entry,
+                attributes,
+            )
             return FlextResult[FlextLdifModels.Entry].ok(cleaned_entry)
         except Exception as e:
             error_msg = f"Failed to clean entry {FlextLdifUtilities.DN._get_dn_value(entry.dn)}: {e}"
             if self.logger is not None:
-                self.logger.error(error_msg)
+                self.logger.exception(error_msg)
             return FlextResult[FlextLdifModels.Entry].fail(error_msg)
 
 

@@ -49,7 +49,7 @@ class TestSchemaTransformerNormalizeAttributeName:
     def test_normalize_handles_empty_string(self) -> None:
         """Test that empty string is handled gracefully."""
         result = FlextLdifUtilities.Schema.normalize_name("")
-        assert result == ""
+        assert not result
 
     def test_normalize_handles_none(self) -> None:
         """Test that None is handled gracefully."""
@@ -65,9 +65,7 @@ class TestSchemaTransformerNormalizeMatchingRule:
         equality, substr = FlextLdifUtilities.Schema.normalize_matching_rules(
             "caseIgnoreSubstringsMatch",
             None,
-            substr_rules_in_equality={
-                "caseIgnoreSubstringsMatch": "caseIgnoreSubstringsMatch"
-            },
+            substr_rules_in_equality={"caseIgnoreSubstringsMatch": "caseIgnoreMatch"},
         )
         assert equality == "caseIgnoreMatch"
         assert substr == "caseIgnoreSubstringsMatch"
@@ -80,9 +78,7 @@ class TestSchemaTransformerNormalizeMatchingRule:
             normalized_substr_values={
                 "caseIgnoreSubStringsMatch": "caseIgnoreSubstringsMatch"
             },
-            substr_rules_in_equality={
-                "caseIgnoreSubStringsMatch": "caseIgnoreSubstringsMatch"
-            },
+            substr_rules_in_equality={"caseIgnoreSubStringsMatch": "caseIgnoreMatch"},
         )
         assert equality == "caseIgnoreMatch"
         assert substr == "caseIgnoreSubstringsMatch"

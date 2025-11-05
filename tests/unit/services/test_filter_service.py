@@ -1,4 +1,4 @@
-"""Comprehensive unit tests for FlextLdifFilter.
+"""Comprehensive unit tests for FlextLdifFilters.
 
 Tests all ACTUAL filtering methods, patterns, and edge cases with 100% coverage.
 Uses REAL implementations without mocks for authentic behavior validation.
@@ -27,7 +27,7 @@ import operator
 import pytest
 
 from flext_ldif.models import FlextLdifModels
-from flext_ldif.services.filters import FlextLdifFilter
+from flext_ldif.services.filters import FlextLdifFilters
 
 # ════════════════════════════════════════════════════════════════════════════
 # TEST FIXTURES
@@ -141,7 +141,9 @@ class TestPublicClassmethods:
         """Test by_dn() filters by DN pattern."""
         # With mark_excluded=True, filtered result contains all entries
         # but non-matching are marked as excluded in metadata
-        result = FlextLdifFilter.by_dn(user_entries, "*,ou=users,*", mark_excluded=True)
+        result = FlextLdifFilters.by_dn(
+            user_entries, "*,ou=users,*", mark_excluded=True
+        )
 
         assert result.is_success
         filtered = result.unwrap()
@@ -157,7 +159,7 @@ class TestPublicClassmethods:
         self, user_entries: list[FlextLdifModels.Entry]
     ) -> None:
         """Test by_dn() is case-insensitive."""
-        result = FlextLdifFilter.by_dn(user_entries, "*,OU=USERS,*")
+        result = FlextLdifFilters.by_dn(user_entries, "*,OU=USERS,*")
 
         assert result.is_success
         filtered = result.unwrap()
@@ -167,7 +169,7 @@ class TestPublicClassmethods:
         self, user_entries: list[FlextLdifModels.Entry]
     ) -> None:
         """Test by_dn() with exclude mode."""
-        result = FlextLdifFilter.by_dn(user_entries, "*,ou=users,*", mode="exclude")
+        result = FlextLdifFilters.by_dn(user_entries, "*,ou=users,*", mode="exclude")
 
         assert result.is_success
         filtered = result.unwrap()
@@ -178,7 +180,7 @@ class TestPublicClassmethods:
         self, user_entries: list[FlextLdifModels.Entry]
     ) -> None:
         """Test by_objectclass() filters by objectClass."""
-        result = FlextLdifFilter.by_objectclass(user_entries, "person")
+        result = FlextLdifFilters.by_objectclass(user_entries, "person")
 
         assert result.is_success
         filtered = result.unwrap()
@@ -188,7 +190,7 @@ class TestPublicClassmethods:
         self, user_entries: list[FlextLdifModels.Entry]
     ) -> None:
         """Test by_objectclass() with multiple objectClasses."""
-        result = FlextLdifFilter.by_objectclass(
+        result = FlextLdifFilters.by_objectclass(
             user_entries, ("person", "organizationalUnit")
         )
 
@@ -199,7 +201,7 @@ class TestPublicClassmethods:
         self, user_entries: list[FlextLdifModels.Entry]
     ) -> None:
         """Test by_objectclass() with required attributes."""
-        result = FlextLdifFilter.by_objectclass(
+        result = FlextLdifFilters.by_objectclass(
             user_entries, "person", required_attributes=["mail"]
         )
 
@@ -210,7 +212,7 @@ class TestPublicClassmethods:
 
     def test_by_attributes_any(self, user_entries: list[FlextLdifModels.Entry]) -> None:
         """Test by_attributes() with ANY match."""
-        result = FlextLdifFilter.by_attributes(user_entries, ["mail"], match_all=False)
+        result = FlextLdifFilters.by_attributes(user_entries, ["mail"], match_all=False)
 
         assert result.is_success
         filtered = result.unwrap()
@@ -225,7 +227,7 @@ class TestPublicClassmethods:
             create_entry("cn=e2,dc=x", {"cn": ["e2"], "mail": ["e2@x"]}),
         ]
 
-        result = FlextLdifFilter.by_attributes(
+        result = FlextLdifFilters.by_attributes(
             entries, ["mail", "phone"], match_all=True
         )
 
@@ -237,7 +239,7 @@ class TestPublicClassmethods:
         self, hierarchy_entries: list[FlextLdifModels.Entry]
     ) -> None:
         """Test by_base_dn() returns tuple."""
-        included, excluded = FlextLdifFilter.by_base_dn(
+        included, excluded = FlextLdifFilters.by_base_dn(
             hierarchy_entries, "dc=example,dc=com"
         )
 
@@ -253,7 +255,7 @@ class TestPublicClassmethods:
             create_entry("dc=other,dc=org", {"dc": ["other"]}),
         ]
 
-        included, excluded = FlextLdifFilter.by_base_dn(entries, "dc=example,dc=com")
+        included, excluded = FlextLdifFilters.by_base_dn(entries, "dc=example,dc=com")
 
         assert len(included) == 3
         assert len(excluded) == 1
@@ -262,20 +264,20 @@ class TestPublicClassmethods:
         self, schema_entries: list[FlextLdifModels.Entry]
     ) -> None:
         """Test is_schema() detects schema entries."""
-        assert FlextLdifFilter.is_schema(schema_entries[0])
-        assert FlextLdifFilter.is_schema(schema_entries[1])
+        assert FlextLdifFilters.is_schema(schema_entries[0])
+        assert FlextLdifFilters.is_schema(schema_entries[1])
 
     def test_is_schema_non_schema(
         self, user_entries: list[FlextLdifModels.Entry]
     ) -> None:
         """Test is_schema() returns False for non-schema."""
-        assert not FlextLdifFilter.is_schema(user_entries[0])
+        assert not FlextLdifFilters.is_schema(user_entries[0])
 
     def test_extract_acl_entries(
         self, mixed_entries: list[FlextLdifModels.Entry]
     ) -> None:
         """Test extract_acl_entries() extracts ACL entries."""
-        result = FlextLdifFilter.extract_acl_entries(mixed_entries)
+        result = FlextLdifFilters.extract_acl_entries(mixed_entries)
 
         assert result.is_success
         acl_entries = result.unwrap()
@@ -285,7 +287,7 @@ class TestPublicClassmethods:
     def test_remove_attributes(self, user_entries: list[FlextLdifModels.Entry]) -> None:
         """Test remove_attributes() removes attributes."""
         entry = user_entries[0]
-        result = FlextLdifFilter.remove_attributes(entry, ["mail"])
+        result = FlextLdifFilters.remove_attributes(entry, ["mail"])
 
         assert result.is_success
         filtered = result.unwrap()
@@ -302,7 +304,7 @@ class TestPublicClassmethods:
             {"cn": ["test"], "objectClass": ["top", "person"]},
         )
 
-        result = FlextLdifFilter.remove_objectclasses(entry, ["person"])
+        result = FlextLdifFilters.remove_objectclasses(entry, ["person"])
 
         assert result.is_success
         filtered = result.unwrap()
@@ -322,7 +324,7 @@ class TestPublicClassmethods:
             "hierarchy_objectclasses": ["organizationalUnit"],
         }
 
-        category, reason = FlextLdifFilter.categorize(entry, rules)
+        category, reason = FlextLdifFilters.categorize(entry, rules)
 
         assert category == "users"
         assert reason is None
@@ -339,7 +341,7 @@ class TestPublicClassmethods:
             "user_objectclasses": ["person"],
         }
 
-        category, _reason = FlextLdifFilter.categorize(entry, rules)
+        category, _reason = FlextLdifFilters.categorize(entry, rules)
 
         assert category == "hierarchy"
 
@@ -347,7 +349,7 @@ class TestPublicClassmethods:
         self, schema_entries: list[FlextLdifModels.Entry]
     ) -> None:
         """Test categorize() identifies schema."""
-        category, _reason = FlextLdifFilter.categorize(schema_entries[0], {})
+        category, _reason = FlextLdifFilters.categorize(schema_entries[0], {})
 
         assert category == "schema"
 
@@ -360,7 +362,7 @@ class TestPublicClassmethods:
 
         rules = {"acl_attributes": ["acl"]}
 
-        category, _reason = FlextLdifFilter.categorize(entry, rules)
+        category, _reason = FlextLdifFilters.categorize(entry, rules)
 
         assert category == "acl"
 
@@ -371,7 +373,7 @@ class TestPublicClassmethods:
             {"cn": ["unknown"]},
         )
 
-        category, reason = FlextLdifFilter.categorize(entry, {})
+        category, reason = FlextLdifFilters.categorize(entry, {})
 
         assert category == "rejected"
         assert reason is not None
@@ -387,14 +389,14 @@ class TestExecutePattern:
 
     def test_execute_empty_entries(self) -> None:
         """Test execute() with empty entries."""
-        result = FlextLdifFilter(entries=[], filter_criteria="dn").execute()
+        result = FlextLdifFilters(entries=[], filter_criteria="dn").execute()
 
         assert result.is_success
         assert result.unwrap() == []
 
     def test_execute_dn_filter(self, user_entries: list[FlextLdifModels.Entry]) -> None:
         """Test execute() with DN filter."""
-        result = FlextLdifFilter(
+        result = FlextLdifFilters(
             entries=user_entries, filter_criteria="dn", dn_pattern="*,ou=users,*"
         ).execute()
 
@@ -406,7 +408,7 @@ class TestExecutePattern:
         self, user_entries: list[FlextLdifModels.Entry]
     ) -> None:
         """Test execute() with objectClass filter."""
-        result = FlextLdifFilter(
+        result = FlextLdifFilters(
             entries=user_entries, filter_criteria="objectclass", objectclass="person"
         ).execute()
 
@@ -417,7 +419,7 @@ class TestExecutePattern:
         self, user_entries: list[FlextLdifModels.Entry]
     ) -> None:
         """Test execute() with attributes filter."""
-        result = FlextLdifFilter(
+        result = FlextLdifFilters(
             entries=user_entries, filter_criteria="attributes", attributes=["mail"]
         ).execute()
 
@@ -436,7 +438,7 @@ class TestClassmethodFilter:
 
     def test_filter_dn(self, user_entries: list[FlextLdifModels.Entry]) -> None:
         """Test filter() with DN criteria."""
-        result = FlextLdifFilter.filter(
+        result = FlextLdifFilters.filter(
             user_entries, criteria="dn", pattern="*,ou=users,*"
         )
 
@@ -448,7 +450,7 @@ class TestClassmethodFilter:
     ) -> None:
         """Test filter() with chainable map operations."""
         result = (
-            FlextLdifFilter.filter(
+            FlextLdifFilters.filter(
                 user_entries, criteria="dn", pattern="*,ou=users,*"
             ).map(operator.itemgetter(slice(1)))  # Take first
         )
@@ -460,7 +462,7 @@ class TestClassmethodFilter:
         self, user_entries: list[FlextLdifModels.Entry]
     ) -> None:
         """Test filter() with objectClass criteria."""
-        result = FlextLdifFilter.filter(
+        result = FlextLdifFilters.filter(
             user_entries,
             criteria="objectclass",
             objectclass="person",
@@ -483,7 +485,7 @@ class TestFluentBuilder:
     def test_builder_basic(self, user_entries: list[FlextLdifModels.Entry]) -> None:
         """Test builder().with_entries().with_dn_pattern().build()."""
         result = (
-            FlextLdifFilter.builder()
+            FlextLdifFilters.builder()
             .with_entries(user_entries)
             .with_dn_pattern("*,ou=users,*")
             .build()
@@ -497,7 +499,7 @@ class TestFluentBuilder:
     ) -> None:
         """Test builder with objectClass."""
         result = (
-            FlextLdifFilter.builder()
+            FlextLdifFilters.builder()
             .with_entries(user_entries)
             .with_objectclass("person")
             .with_required_attributes(["mail"])
@@ -514,7 +516,7 @@ class TestFluentBuilder:
         ]
 
         result = (
-            FlextLdifFilter.builder()
+            FlextLdifFilters.builder()
             .with_entries(entries)
             .with_attributes(["mail"])
             .build()
@@ -527,7 +529,7 @@ class TestFluentBuilder:
     ) -> None:
         """Test builder with exclude_matching()."""
         result = (
-            FlextLdifFilter.builder()
+            FlextLdifFilters.builder()
             .with_entries(user_entries)
             .with_dn_pattern("*,ou=users,*")
             .exclude_matching()
@@ -539,7 +541,7 @@ class TestFluentBuilder:
 
     def test_builder_chaining(self, user_entries: list[FlextLdifModels.Entry]) -> None:
         """Test builder method chaining returns same instance."""
-        builder = FlextLdifFilter.builder()
+        builder = FlextLdifFilters.builder()
         b2 = builder.with_entries(user_entries)
         b3 = b2.with_dn_pattern("*,ou=users,*")
 
@@ -557,14 +559,14 @@ class TestFilterModes:
 
     def test_mode_include(self, user_entries: list[FlextLdifModels.Entry]) -> None:
         """Test include mode keeps matches."""
-        result = FlextLdifFilter.by_dn(user_entries, "*,ou=users,*", mode="include")
+        result = FlextLdifFilters.by_dn(user_entries, "*,ou=users,*", mode="include")
 
         filtered = result.unwrap()
         assert all(",ou=users," in e.dn.value for e in filtered)
 
     def test_mode_exclude(self, user_entries: list[FlextLdifModels.Entry]) -> None:
         """Test exclude mode removes matches."""
-        result = FlextLdifFilter.by_dn(user_entries, "*,ou=users,*", mode="exclude")
+        result = FlextLdifFilters.by_dn(user_entries, "*,ou=users,*", mode="exclude")
 
         filtered = result.unwrap()
         assert all(",ou=users," not in e.dn.value for e in filtered)
@@ -586,7 +588,7 @@ class TestAttributeMatching:
             create_entry("cn=e3,dc=x", {}),
         ]
 
-        result = FlextLdifFilter.by_attributes(
+        result = FlextLdifFilters.by_attributes(
             entries, ["mail", "phone"], match_all=False
         )
 
@@ -600,7 +602,7 @@ class TestAttributeMatching:
             create_entry("cn=e2,dc=x", {"mail": ["m2"]}),
         ]
 
-        result = FlextLdifFilter.by_attributes(
+        result = FlextLdifFilters.by_attributes(
             entries, ["mail", "phone"], match_all=True
         )
 
@@ -623,7 +625,7 @@ class TestSchemaOperations:
             {"attributeTypes": ["( 2.5.4.3 NAME 'cn' )"]},
         )
 
-        assert FlextLdifFilter.is_schema(entry)
+        assert FlextLdifFilters.is_schema(entry)
 
     def test_is_schema_with_objectclasses(self) -> None:
         """Test is_schema() detects objectClasses."""
@@ -632,18 +634,18 @@ class TestSchemaOperations:
             {"objectClasses": ["( 2.5.6.6 NAME 'person' )"]},
         )
 
-        assert FlextLdifFilter.is_schema(entry)
+        assert FlextLdifFilters.is_schema(entry)
 
     def test_is_schema_with_dn(self) -> None:
         """Test is_schema() detects by DN pattern."""
         entry = create_entry("cn=schema", {})
-        assert FlextLdifFilter.is_schema(entry)
+        assert FlextLdifFilters.is_schema(entry)
 
     def test_filter_schema_by_oids(
         self, schema_entries: list[FlextLdifModels.Entry]
     ) -> None:
         """Test filter_schema_by_oids() filters by OID patterns."""
-        result = FlextLdifFilter.filter_schema_by_oids(
+        result = FlextLdifFilters.filter_schema_by_oids(
             schema_entries,
             {"attributes": ["2.5.4.*"], "objectclasses": ["2.5.6.*"]},
         )
@@ -666,7 +668,7 @@ class TestTransformation:
     ) -> None:
         """Test remove_attributes() is case-insensitive."""
         entry = user_entries[0]
-        result = FlextLdifFilter.remove_attributes(entry, ["MAIL"])
+        result = FlextLdifFilters.remove_attributes(entry, ["MAIL"])
 
         assert result.is_success
         filtered = result.unwrap()
@@ -679,7 +681,7 @@ class TestTransformation:
             {"cn": ["test"], "objectClass": ["person"]},
         )
 
-        result = FlextLdifFilter.remove_objectclasses(entry, ["person"])
+        result = FlextLdifFilters.remove_objectclasses(entry, ["person"])
 
         assert not result.is_success
         assert "All objectClasses would be removed" in result.error
@@ -697,7 +699,9 @@ class TestExclusionMarking:
         self, user_entries: list[FlextLdifModels.Entry]
     ) -> None:
         """Test excluded entries are marked."""
-        result = FlextLdifFilter.by_dn(user_entries, "*,ou=users,*", mark_excluded=True)
+        result = FlextLdifFilters.by_dn(
+            user_entries, "*,ou=users,*", mark_excluded=True
+        )
 
         filtered = result.unwrap()
         # Should have 3 entries: 2 included + 1 excluded marked
@@ -707,7 +711,7 @@ class TestExclusionMarking:
         self, user_entries: list[FlextLdifModels.Entry]
     ) -> None:
         """Test mark_excluded=False removes excluded."""
-        result = FlextLdifFilter.by_dn(
+        result = FlextLdifFilters.by_dn(
             user_entries, "*,ou=users,*", mark_excluded=False
         )
 
@@ -726,7 +730,7 @@ class TestEdgeCases:
 
     def test_empty_entries(self) -> None:
         """Test filtering empty entry list."""
-        result = FlextLdifFilter.by_dn([], "*,ou=users,*")
+        result = FlextLdifFilters.by_dn([], "*,ou=users,*")
 
         assert result.is_success
         assert result.unwrap() == []
@@ -735,7 +739,7 @@ class TestEdgeCases:
         """Test filtering single entry."""
         entry = create_entry("cn=test,ou=users,dc=x", {"cn": ["test"]})
 
-        result = FlextLdifFilter.by_dn([entry], "*,ou=users,*")
+        result = FlextLdifFilters.by_dn([entry], "*,ou=users,*")
 
         assert result.is_success
         assert len(result.unwrap()) == 1
@@ -747,7 +751,7 @@ class TestEdgeCases:
             create_entry("cn=English,dc=example,dc=com", {"cn": ["English"]}),
         ]
 
-        result = FlextLdifFilter.by_dn(entries, "*,dc=example,dc=com")
+        result = FlextLdifFilters.by_dn(entries, "*,dc=example,dc=com")
 
         assert result.is_success
         assert len(result.unwrap()) == 2
@@ -759,7 +763,7 @@ class TestEdgeCases:
             for i in range(100)
         ]
 
-        result = FlextLdifFilter.by_dn(entries, "*,dc=example,dc=com")
+        result = FlextLdifFilters.by_dn(entries, "*,dc=example,dc=com")
 
         assert result.is_success
         assert len(result.unwrap()) == 100
@@ -778,7 +782,7 @@ class TestErrorCases:
         from pydantic import ValidationError
 
         with pytest.raises(ValidationError, match="Invalid filter_criteria"):
-            FlextLdifFilter(
+            FlextLdifFilters(
                 filter_criteria="invalid",
             )
 
@@ -787,7 +791,7 @@ class TestErrorCases:
         from pydantic import ValidationError
 
         with pytest.raises(ValidationError, match="Invalid mode"):
-            FlextLdifFilter(
+            FlextLdifFilters(
                 mode="invalid",
             )
 
@@ -805,13 +809,13 @@ class TestIntegration:
     ) -> None:
         """Test multi-stage filtering pipeline."""
         # Stage 1: Filter by DN
-        result1 = FlextLdifFilter.filter(
+        result1 = FlextLdifFilters.filter(
             user_entries, criteria="dn", pattern="*,ou=users,*"
         )
         assert result1.is_success
 
         # Stage 2: Filter by objectClass
-        result2 = FlextLdifFilter.filter(
+        result2 = FlextLdifFilters.filter(
             result1.unwrap(), criteria="objectclass", objectclass="person"
         )
         assert result2.is_success
@@ -830,7 +834,7 @@ class TestIntegration:
 
         categories = {}
         for entry in mixed_entries:
-            category, _ = FlextLdifFilter.categorize(entry, rules)
+            category, _ = FlextLdifFilters.categorize(entry, rules)
             categories[entry.dn.value] = category
 
         assert categories["cn=users,ou=groups,dc=example,dc=com"] == "groups"

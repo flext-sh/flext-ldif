@@ -49,6 +49,60 @@ class FlextLdifConstants(FlextConstants):
         SCHEMA = "schema"
         COMBINED = "combined"
 
+    # ===== RFC 4876 ACL PERMISSION ENUMS (Type-Safe) =====
+    class RfcAclPermission(StrEnum):
+        """RFC 4876 standard ACL permissions (type-safe enum).
+
+        Base permissions supported by all RFC-compliant LDAP servers.
+        Server-specific extensions defined in respective server Constants classes:
+        - OUD: FlextLdifServersOud.Constants.OudPermission
+        - Other servers: Check respective server Constants classes
+        """
+
+        READ = "read"
+        WRITE = "write"
+        ADD = "add"
+        DELETE = "delete"
+        SEARCH = "search"
+        COMPARE = "compare"
+        ALL = "all"
+        NONE = "none"
+
+    # ===== CHARACTER ENCODING ENUMS (Type-Safe) =====
+    class Encoding(StrEnum):
+        """Standard character encodings used in LDIF processing.
+
+        Maps to Python codec names for encoding/decoding operations.
+        Server-specific encodings (if any) defined in respective server Constants.
+        """
+
+        UTF8 = "utf-8"
+        UTF16LE = "utf-16-le"
+        UTF16 = "utf-16"
+        UTF32 = "utf-32"
+        ASCII = "ascii"
+        LATIN1 = "latin-1"
+        CP1252 = "cp1252"
+        ISO8859_1 = "iso-8859-1"
+
+    # ===== ACL SUBJECT TYPE ENUMS (Type-Safe) =====
+    class AclSubjectType(StrEnum):
+        """ACL subject/who types for permission subjects.
+
+        Identifies what entity the ACL permission applies to.
+        Server-specific extensions in respective server Constants.
+        """
+
+        USER = "user"
+        GROUP = "group"
+        ROLE = "role"
+        SELF = "self"
+        ALL = "all"
+        PUBLIC = "public"
+        ANONYMOUS = "anonymous"
+        AUTHENTICATED = "authenticated"
+        DN = "dn"
+
     class DictKeys:
         """Dictionary keys for LDIF entry data access - CORE KEYS ONLY per SRP.
 
@@ -677,7 +731,10 @@ class FlextLdifConstants(FlextConstants):
         LENIENT: Final[str] = "lenient"
 
     class Acl:
-        """ACL-related constants."""
+        """ACL-related constants - RFC 4876 baseline ONLY.
+
+        NOTE: Extended permissions (OUD SELF_WRITE, PROXY, etc.) moved to server-specific Constants.
+        """
 
         # ACL operation types
         GRANT: Final[str] = "grant"
@@ -689,7 +746,7 @@ class FlextLdifConstants(FlextConstants):
         ONELEVEL: Final[str] = "onelevel"
         BASE: Final[str] = "base"
 
-        # ACL permissions
+        # RFC 4876 ACL permissions (baseline only - no extensions)
         READ: Final[str] = "read"
         WRITE: Final[str] = "write"
         SEARCH: Final[str] = "search"
@@ -697,9 +754,11 @@ class FlextLdifConstants(FlextConstants):
         ADD: Final[str] = "add"
         DELETE: Final[str] = "delete"
         MODIFY: Final[str] = "modify"
-        SELF_WRITE: Final[str] = "self_write"  # Self-modification permission (OUD)
-        PROXY: Final[str] = "proxy"  # Proxy rights (OUD/OID)
 
+        # NOTE: Server-specific permissions migrated to respective Constants classes:
+        # - SELF_WRITE (OUD/OID) → FlextLdifServersOud.Constants.OudPermission
+        # - PROXY (OUD/OID) → FlextLdifServersOud.Constants.OudPermission
+        # - BROWSE → Server-specific Constants
         # NOTE: Novell ACL parsing indices migrated to FlextLdifServersNovell.Constants:
         # - NOVELL_SEGMENT_INDEX_TRUSTEE → FlextLdifServersNovell.Constants.NOVELL_SEGMENT_INDEX_TRUSTEE
         # - NOVELL_SEGMENT_INDEX_RIGHTS → FlextLdifServersNovell.Constants.NOVELL_SEGMENT_INDEX_RIGHTS
@@ -861,43 +920,38 @@ class FlextLdifConstants(FlextConstants):
     # =============================================================================
 
     class AclAttributes:
-        """ACL attribute names used across different LDAP servers.
+        """RFC baseline ACL attribute names for LDAP.
 
-        Consolidates all ACL attribute references to prevent duplication
-        and ensure consistent ACL detection across the codebase.
-
-        NOTE: Server-specific ACL attributes (e.g., ORCLACI, ORCL_ENTRY_LEVEL_ACI)
-        are now defined in their respective server Constants classes.
+        Consolidates RFC-standard ACL attributes for universal detection.
+        Server-specific ACL attributes defined in respective server Constants classes:
+        - OID: ORCLACI, ORCL_ENTRY_LEVEL_ACI → FlextLdifServersOid.Constants
+        - AD: nTSecurityDescriptor → FlextLdifServersAd.Constants
+        - Apache DS: ads-aci → FlextLdifServersApache.Constants
+        - Tivoli: ibm-slapdaccesscontrol → FlextLdifServersTivoli.Constants
+        - Other servers: Check respective server Constants classes
         """
 
-        # Oracle Unified Directory (OUD) and RFC 4876 standard
-        ACI: Final[str] = "aci"  # RFC 4876 ACI attribute
+        # RFC 4876 standard
+        ACI: Final[str] = "aci"  # RFC 4876 ACI attribute (OUD, 389 DS standard)
 
-        # OpenLDAP ACL attributes
-        OLC_ACCESS: Final[str] = "olcAccess"  # OpenLDAP cn=config ACL
-
-        # Additional ACL-related attributes for filtering
+        # Common ACL-related attributes for filtering
         ACLRIGHTS: Final[str] = "aclrights"  # Generic ACL rights attribute
         ACLENTRY: Final[str] = "aclentry"  # Generic ACL entry attribute
-        ACCESS_CONTROL_LIST: Final[str] = (
-            "accessControlList"  # Active Directory ACL attribute
-        )
 
-        # Set of all known ACL attributes for quick membership testing
-        # NOTE: Server-specific attributes (e.g., ORCLACI, ORCL_ENTRY_LEVEL_ACI)
+        # Set of RFC baseline ACL attributes for quick membership testing
+        # NOTE: Server-specific attributes (e.g., orclaci, nTSecurityDescriptor, ads-aci)
         # are defined in their respective server Constants classes
         ALL_ACL_ATTRIBUTES: Final[frozenset[str]] = frozenset([
             ACI,  # RFC 4876 standard (OUD, 389 DS)
-            OLC_ACCESS,  # OpenLDAP
             ACLRIGHTS,
             ACLENTRY,
-            ACCESS_CONTROL_LIST,  # Active Directory
-            # Server-specific: "orclaci", "orclentrylevelaci" → FlextLdifServersOid.Constants
-            # Server-specific: "olcAccess" → already included above
-            # Server-specific: "nTSecurityDescriptor" → ACCESS_CONTROL_LIST above
-            # Server-specific: "ads-aci" → Apache DS Constants
-            # Server-specific: "ibm-slapdaccesscontrol" → Tivoli Constants
-            # Server-specific: "acl" → various servers
+            # Server-specific attributes moved to respective Constants:
+            # - "olcAccess" (OpenLDAP) → FlextLdifServersOpenldap.Constants
+            # - "orclaci", "orclentrylevelaci" (OID) → FlextLdifServersOid.Constants
+            # - "nTSecurityDescriptor" (AD) → FlextLdifServersAd.Constants
+            # - "ads-aci" (Apache DS) → FlextLdifServersApache.Constants
+            # - "ibm-slapdaccesscontrol" (Tivoli) → FlextLdifServersTivoli.Constants
+            # - Custom ACL attributes (various) → Respective server Constants
         ])
 
         # ACL attributes to filter/detect during migration
@@ -979,39 +1033,40 @@ class FlextLdifConstants(FlextConstants):
     # =============================================================================
 
     class PermissionNames:
-        """ACL permission type identifiers (magic strings).
+        """RFC 4876 ACL permission type identifiers (magic strings).
 
-        Used across OID, OUD, OpenLDAP, and other LDAP server ACLs.
-        These are different from actions (add/delete/modify in changetype).
+        DEPRECATED: Use FlextLdifConstants.RfcAclPermission (StrEnum) instead for type safety.
+        This class maintained for backward compatibility only.
 
-        Zero Tolerance: All permission name strings (read, write, etc.) MUST be here.
-        DO NOT hard-code permission names in servers/*.py
+        Standard LDAP ACL permissions (RFC baseline).
+        Server-specific permissions defined in respective server Constants classes:
+        - OUD: FlextLdifServersOud.Constants.OudPermission
+        - OID: FlextLdifServersOid.Constants (if any extensions)
+        - Others: Server-specific Constants classes
+
+        Note: These are different from actions (add/delete/modify in changetype).
         """
 
-        # Standard LDAP ACL permissions
+        # Standard LDAP ACL permissions (RFC 4876)
         READ: Final[str] = "read"
         WRITE: Final[str] = "write"
         ADD: Final[str] = "add"
         DELETE: Final[str] = "delete"
         SEARCH: Final[str] = "search"
         COMPARE: Final[str] = "compare"
-
-        # Extended permissions
-        SELF_WRITE: Final[str] = "self_write"
-        SELFWRITE: Final[str] = "selfwrite"  # Oracle variant
-        PROXY: Final[str] = "proxy"
-        BROWSE: Final[str] = "browse"
         ALL: Final[str] = "all"
         NONE: Final[str] = "none"
 
-        # Permission aliases/mappings
-        PERMISSION_MAPPINGS: Final[dict[str, list[str]]] = {
-            "browse": ["read", "search"],
-            "selfwrite": ["write"],
-            "proxy": ["proxy"],
-        }
+        # NOTE: Server-specific permissions migrated to respective Constants classes:
+        # - SELF_WRITE (OUD) → FlextLdifServersOud.Constants.OudPermission.SELF_WRITE
+        # - SELFWRITE (Oracle) → FlextLdifServersOud.Constants.OudPermission.SELFWRITE
+        # - PROXY (OUD/OID) → FlextLdifServersOud.Constants.OudPermission.PROXY
+        # - BROWSE → Server-specific Constants
+        # NOTE: PERMISSION_MAPPINGS migrated to server-specific Constants classes
+        # - OUD mappings → FlextLdifServersOud.Constants.PERMISSION_NORMALIZATION_MAP
+        # - Other mappings → Respective server Constants
 
-        # All permission names for validation
+        # All permission names for validation (RFC baseline only)
         ALL_PERMISSIONS: Final[frozenset[str]] = frozenset([
             READ,
             WRITE,
@@ -1019,10 +1074,6 @@ class FlextLdifConstants(FlextConstants):
             DELETE,
             SEARCH,
             COMPARE,
-            SELF_WRITE,
-            SELFWRITE,
-            PROXY,
-            BROWSE,
             ALL,
             NONE,
         ])
@@ -1389,7 +1440,8 @@ class FlextLdifConstants(FlextConstants):
 
             """
             return FlextLdifConstants.ServerTypes.FROM_LONG.get(
-                server_type, server_type
+                server_type,
+                server_type,
             )
 
         @staticmethod

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 from collections.abc import Mapping
-from typing import ClassVar, Final
+from typing import ClassVar
 
 from flext_core import FlextResult
 
@@ -74,7 +74,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
         ])
 
         # Server detection pattern and weight (for server detector service)
-        DETECTION_PATTERN: Final[str] = r"\b(apacheDS|apache-.*)\b"
+        DETECTION_PATTERN: ClassVar[str] = r"\b(apacheDS|apache-.*)\b"
         DETECTION_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset([
             "ads-directoryservice",
             "ads-base",
@@ -82,27 +82,27 @@ class FlextLdifServersApache(FlextLdifServersRfc):
             "ads-partition",
             "ads-interceptor",
         ])
-        DETECTION_WEIGHT: Final[int] = 6
+        DETECTION_WEIGHT: ClassVar[int] = 6
 
         # Schema attribute parsing patterns
-        SCHEMA_ATTRIBUTE_NAME_REGEX: Final[str] = r"NAME\s+\(?\s*'([^']+)'"
+        SCHEMA_ATTRIBUTE_NAME_REGEX: ClassVar[str] = r"NAME\s+\(?\s*'([^']+)'"
 
         # ACL-specific constants (migrated from nested Acl class)
         ACL_ACI_ATTRIBUTE_NAMES: ClassVar[frozenset[str]] = frozenset([
             "ads-aci",
             "aci",  # Apache DS uses standard ACI
         ])
-        ACL_CLAUSE_PATTERN: Final[str] = r"\([^()]+\)"
-        ACL_VERSION_PATTERN: Final[str] = r"\(version"
-        ACL_NAME_PREFIX: Final[str] = "apache-"
+        ACL_CLAUSE_PATTERN: ClassVar[str] = r"\([^()]+\)"
+        ACL_VERSION_PATTERN: ClassVar[str] = r"\(version"
+        ACL_NAME_PREFIX: ClassVar[str] = "apache-"
         # Note: PERMISSION_COMPARE is already defined above in line 72
 
         # ACL parsing constants (migrated from _parse_acl method)
-        ACL_SUBJECT_TYPE_ANONYMOUS: Final[str] = "anonymous"
-        ACL_SUBJECT_VALUE_WILDCARD: Final[str] = "*"
+        ACL_SUBJECT_TYPE_ANONYMOUS: ClassVar[str] = "anonymous"
+        ACL_SUBJECT_VALUE_WILDCARD: ClassVar[str] = "*"
 
         # Entry detection constants (migrated from Entry class)
-        DN_CONFIG_ENTRY_MARKER: Final[str] = "ou=config"
+        DN_CONFIG_ENTRY_MARKER: ClassVar[str] = "ou=config"
 
     # =========================================================================
     # Server identification - accessed via Constants via properties in base.py
@@ -147,7 +147,8 @@ class FlextLdifServersApache(FlextLdifServersRfc):
         """
 
         def can_handle_attribute(
-            self, attr_definition: str | FlextLdifModels.SchemaAttribute,
+            self,
+            attr_definition: str | FlextLdifModels.SchemaAttribute,
         ) -> bool:
             """Detect ApacheDS attribute definitions using centralized constants."""
             # Handle both string and model inputs
@@ -194,7 +195,8 @@ class FlextLdifServersApache(FlextLdifServersRfc):
             return False
 
         def can_handle_objectclass(
-            self, oc_definition: str | FlextLdifModels.SchemaObjectClass,
+            self,
+            oc_definition: str | FlextLdifModels.SchemaObjectClass,
         ) -> bool:
             """Detect ApacheDS objectClass definitions using centralized constants."""
             if isinstance(oc_definition, str):
@@ -272,10 +274,12 @@ class FlextLdifServersApache(FlextLdifServersRfc):
                 oc_data = result.unwrap()
                 # Fix common ObjectClass issues (RFC 4512 compliance)
                 FlextLdifUtilities.ObjectClass.fix_missing_sup(
-                    oc_data, _server_type=FlextLdifServersApache.Constants.SERVER_TYPE,
+                    oc_data,
+                    _server_type=FlextLdifServersApache.Constants.SERVER_TYPE,
                 )
                 FlextLdifUtilities.ObjectClass.fix_kind_mismatch(
-                    oc_data, _server_type=FlextLdifServersApache.Constants.SERVER_TYPE,
+                    oc_data,
+                    _server_type=FlextLdifServersApache.Constants.SERVER_TYPE,
                 )
                 metadata = FlextLdifModels.QuirkMetadata.create_for(
                     "apache_directory",
@@ -356,7 +360,15 @@ class FlextLdifServersApache(FlextLdifServersRfc):
             # Always try parent's _parse_acl first (RFC format)
             parent_result = super()._parse_acl(acl_line)
             if parent_result.is_success:
-                return parent_result
+                # RFC parser succeeded - enhance with Apache-specific name
+                acl_model = parent_result.unwrap()
+                if not acl_model.name:
+                    # Extract attribute name from ACL line for default name
+                    attr_name, _ = self._splitacl_line(acl_line)
+                    acl_model.name = (
+                        f"{FlextLdifServersApache.Constants.ACL_NAME_PREFIX}{attr_name}"
+                    )
+                return FlextResult[FlextLdifModels.Acl].ok(acl_model)
 
             # RFC parser failed - use Apache-specific parsing
             try:
@@ -366,7 +378,9 @@ class FlextLdifServersApache(FlextLdifServersRfc):
                 acl_model = FlextLdifModels.Acl(
                     name=f"{FlextLdifServersApache.Constants.ACL_NAME_PREFIX}{attr_name}",
                     target=FlextLdifModels.AclTarget(
-                        target_dn="*",
+                        target_dn=FlextLdifConstants.Acl.ACL_TARGET_DN_WILDCARD
+                        if hasattr(FlextLdifConstants.Acl, "ACL_TARGET_DN_WILDCARD")
+                        else "*",
                         attributes=[attr_name] if attr_name else [],
                     ),
                     subject=FlextLdifModels.AclSubject(
@@ -390,24 +404,28 @@ class FlextLdifServersApache(FlextLdifServersRfc):
                 )
 
         def _write_acl(self, acl_data: FlextLdifModels.Acl) -> FlextResult[str]:
-            """Write ACL data to RFC-compliant string format.
+            """Write ACL data to Apache Directory Server ACI format.
 
-            Apache Directory Server ACLs use ACI format.
+            Apache Directory Server ACLs use ACI format with 'aci:' prefix.
 
             Args:
                 acl_data: Acl model to write
 
             Returns:
-                FlextResult with RFC-compliant ACL string
+                FlextResult with Apache ACI string
 
             """
-            # Always try parent's write method first (RFC format)
+            # Try parent's write method first (RFC format)
             parent_result = super()._write_acl(acl_data)
             if parent_result.is_success:
+                acl_str = parent_result.unwrap()
+                # Ensure Apache ACI prefix is present
+                if acl_str and not acl_str.strip().startswith(("aci:", "ads-aci:")):
+                    # Add aci: prefix for Apache
+                    return FlextResult[str].ok(f"aci: {acl_str}")
                 return parent_result
 
-            # RFC write failed - return parent error (no fallback)
-            # If raw_acl is available, it should have been used by parent write method
+            # RFC write failed - return parent error
             return parent_result
 
         @staticmethod

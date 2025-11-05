@@ -607,7 +607,7 @@ class FlextLdifUtilitiesSchema:
             parts.append(f"DESC '{attr_data.desc}'")
 
         if attr_data.metadata and attr_data.metadata.extensions.get(
-            FlextLdifConstants.MetadataKeys.OBSOLETE
+            FlextLdifConstants.MetadataKeys.OBSOLETE,
         ):
             parts.append("OBSOLETE")
 
@@ -715,7 +715,7 @@ class FlextLdifUtilitiesSchema:
             parts.append(f"DESC '{oc_data.desc}'")
 
         if oc_data.metadata and oc_data.metadata.extensions.get(
-            FlextLdifConstants.MetadataKeys.OBSOLETE
+            FlextLdifConstants.MetadataKeys.OBSOLETE,
         ):
             parts.append("OBSOLETE")
 
@@ -724,8 +724,7 @@ class FlextLdifUtilitiesSchema:
         kind = oc_data.kind or FlextLdifConstants.Schema.STRUCTURAL
         parts.append(str(kind))
 
-        FlextLdifUtilitiesSchema._add_objectclass_must_may(oc_data.must, parts, "MUST")
-        FlextLdifUtilitiesSchema._add_objectclass_must_may(oc_data.may, parts, "MAY")
+        FlextLdifUtilitiesSchema._add_objectclass_must_may(oc_data, parts)
 
         if oc_data.metadata and oc_data.metadata.x_origin:
             parts.append(f"X-ORIGIN '{oc_data.metadata.x_origin}'")
@@ -789,7 +788,9 @@ class FlextLdifUtilitiesSchema:
             >>> FlextLdifUtilitiesSchema.normalize_attribute_name("givenName")
             "givenname"
 
-            >>> FlextLdifUtilitiesSchema.normalize_attribute_name("CN", case_sensitive=True)
+            >>> FlextLdifUtilitiesSchema.normalize_attribute_name(
+            ...     "CN", case_sensitive=True
+            ... )
             "CN"
 
         """
@@ -829,7 +830,7 @@ class FlextLdifUtilitiesSchema:
 
         # Normalize input attribute name
         normalized_input = FlextLdifUtilitiesSchema.normalize_attribute_name(
-            attribute_name
+            attribute_name,
         )
 
         # Normalize all items in the boolean attributes set for comparison
@@ -876,7 +877,7 @@ class FlextLdifUtilitiesSchema:
 
         # Normalize input attribute name
         normalized_input = FlextLdifUtilitiesSchema.normalize_attribute_name(
-            attribute_name
+            attribute_name,
         )
 
         # Check against normalized list/set items

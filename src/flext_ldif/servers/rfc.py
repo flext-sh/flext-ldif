@@ -32,6 +32,7 @@ References:
     - Section 4.1: Schema Definitions
 
 """
+
 from __future__ import annotations
 
 from collections.abc import Mapping
@@ -39,10 +40,19 @@ from typing import ClassVar
 
 from flext_core import FlextLogger, FlextResult
 
+# ===== TYPE ALIASES (Python 3.13 semantic types) =====
+# These document the semantic purpose of constants without formal definitions
+# Used in docstrings and type hints for better code clarity
+#
+# type PermissionSet = frozenset[str]  # Set of ACL permissions
+# type AttributeSet = frozenset[str]   # Set of LDAP attribute names
+# type PatternSet = frozenset[str]     # Set of regex/match patterns
+# type ReplacementMap = Mapping[str, str]  # Mapping for substitutions/normalization
+# type DetectionConfig = Mapping[str, str | int | frozenset[str]]  # Server detection config
+# type AclConfig = Mapping[str, str | int | frozenset[str]]  # ACL format config
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.servers.base import FlextLdifServersBase
-from flext_ldif.services.dn import FlextLdifDn
 from flext_ldif.utilities import FlextLdifUtilities
 
 logger = FlextLogger(__name__)
@@ -103,11 +113,17 @@ class FlextLdifServersRfc(FlextLdifServersBase):
     # STANDARDIZED CONSTANTS FOR AUTO-DISCOVERY
     # =========================================================================
     class Constants:
-        r"""Base server constants for all server quirks.
+        r"""Base server constants for all server quirks using Python 3.13 features.
 
         This class provides standardized configuration constants used by all
         server-specific Constants classes, eliminating duplication across all
         12 server implementations.
+
+        **Python 3.13 Design Patterns:**
+        - Type aliases using `type` keyword for semantic constants
+        - Frozen sets and mappings for immutable configuration
+        - Advanced mapping protocols for zero-cost abstractions
+        - ClassVar annotations for explicit class-level state
 
         **Standard Fields** (inherited by all servers):
         - SERVER_TYPE: Server identifier (e.g., "oid", "oud", "rfc")
@@ -127,42 +143,27 @@ class FlextLdifServersRfc(FlextLdifServersBase):
         **RFC baseline** - Universal intermediate format for all conversions.
         """
 
-        # Server identification
+        # =====================================================================
+        # CORE IDENTITY - Server identification and metadata
+        # =====================================================================
         SERVER_TYPE: ClassVar[str] = FlextLdifConstants.ServerTypes.RFC
         CANONICAL_NAME: ClassVar[str] = "rfc"
         ALIASES: ClassVar[frozenset[str]] = frozenset(["rfc", "generic"])
         PRIORITY: ClassVar[int] = 100  # Lowest priority - fallback only
 
-        # Server conversion capabilities
+        # =====================================================================
+        # CONVERSION CAPABILITIES - Server transformation support
+        # =====================================================================
         CAN_NORMALIZE_FROM: ClassVar[frozenset[str]] = frozenset(["rfc"])
         CAN_DENORMALIZE_TO: ClassVar[frozenset[str]] = frozenset(["rfc"])
 
-        # ACL handling
+        # =====================================================================
+        # ACL CONFIGURATION - Access control list settings
+        # =====================================================================
         ACL_FORMAT: ClassVar[str] = "rfc_generic"  # RFC generic ACL format
         ACL_ATTRIBUTE_NAME: ClassVar[str] = "aci"  # RFC 4876 ACI attribute (generic)
 
-        # Schema parsing
-        SCHEMA_SUP_SEPARATOR: ClassVar[str] = "$"  # Common to all (RFC standard)
-
-        # Detection patterns (all server-specific, define in subclasses)
-        DETECTION_OID_PATTERN: ClassVar[str] = r".*"  # Match any OID by default, override in subclasses
-        DETECTION_ATTRIBUTE_PREFIXES: ClassVar[frozenset[str]] = frozenset([])  # Override in subclasses
-        DETECTION_OBJECTCLASS_NAMES: ClassVar[frozenset[str]] = frozenset([])  # Override in subclasses
-        DETECTION_DN_MARKERS: ClassVar[frozenset[str]] = frozenset([])  # Override in subclasses
-
-        # RFC operational attributes (generic baseline)
-        # Migrated from FlextLdifConstants.OperationalAttributeMappings
-        # Using ClassVar to allow subclasses to override with their own operational attributes
-        OPERATIONAL_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset([
-            "createTimestamp",
-            "modifyTimestamp",
-            "creatorsName",
-            "modifiersName",
-            "subschemaSubentry",
-            "structuralObjectClass",
-        ])
-
-        # === RFC PERMISSION NAMES ===
+        # === ACL PERMISSION NAMES (RFC 4876 Standard) ===
         # Standard LDAP permission names (RFC baseline)
         # Servers inherit these and can add their own (e.g., PERMISSION_PROXY)
         PERMISSION_READ: ClassVar[str] = "read"
@@ -172,7 +173,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
         PERMISSION_SEARCH: ClassVar[str] = "search"
         PERMISSION_COMPARE: ClassVar[str] = "compare"
 
-        # === RFC SUPPORTED PERMISSIONS ===
+        # === ACL SUPPORTED PERMISSIONS (Python 3.13 frozenset) ===
         # Permissions that RFC supports (migrated from FlextLdifConstants.AclPermissionCompatibility)
         SUPPORTED_PERMISSIONS: ClassVar[frozenset[str]] = frozenset([
             PERMISSION_READ,
@@ -183,29 +184,100 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             PERMISSION_COMPARE,
         ])
 
-        # Schema attribute fields that are server-specific (migrated from FlextLdifConstants.SchemaConversionMappings)
-        # RFC is canonical - no special fields
+        # =====================================================================
+        # SCHEMA CONFIGURATION - Schema parsing and validation
+        # =====================================================================
+        SCHEMA_SUP_SEPARATOR: ClassVar[str] = "$"  # RFC 4512 standard SUP separator
+
+        # Schema attribute fields that are server-specific (RFC is canonical - no special fields)
         ATTRIBUTE_FIELDS: ClassVar[frozenset[str]] = frozenset([])
 
+        # === OBJECTCLASS REQUIREMENTS (Python 3.13 mapping) ===
         # ObjectClass requirements for RFC (migrated from FlextLdifConstants.SchemaConversionMappings)
-        OBJECTCLASS_REQUIREMENTS: ClassVar[dict[str, bool]] = {
+        OBJECTCLASS_REQUIREMENTS: ClassVar[Mapping[str, bool]] = {
             "requires_sup_for_auxiliary": True,
             "allows_multiple_sup": False,
             "requires_explicit_structural": False,
         }
 
-        # === RFC OPERATIONAL ATTRIBUTES TO PRESERVE ===
+        # === RFC ATTRIBUTE ALIASES (Python 3.13 mapping) ===
+        # RFC has no attribute aliases (canonical format)
+        # Subclasses can override with their own mappings
+        ATTRIBUTE_ALIASES: ClassVar[Mapping[str, list[str]]] = {}
+
+        # =====================================================================
+        # OPERATIONAL ATTRIBUTES - System-managed attributes
+        # =====================================================================
+        # RFC operational attributes (generic baseline)
+        # Using ClassVar[frozenset] to allow subclasses to extend with their own
+        OPERATIONAL_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset([
+            "createTimestamp",
+            "modifyTimestamp",
+            "creatorsName",
+            "modifiersName",
+            "subschemaSubentry",
+            "structuralObjectClass",
+        ])
+
+        # === PRESERVE ON MIGRATION (Python 3.13 frozenset) ===
         # Operational attributes to preserve during migration FROM RFC
-        # (migrated from FlextLdifConstants.OperationalAttributeMappings)
         PRESERVE_ON_MIGRATION: ClassVar[frozenset[str]] = frozenset([
             "createTimestamp",
             "modifyTimestamp",
         ])
 
-        # === RFC ATTRIBUTE ALIASES ===
-        # RFC has no attribute aliases (canonical format)
-        # (migrated from FlextLdifConstants.SchemaConversionMappings)
-        ATTRIBUTE_ALIASES: ClassVar[dict[str, list[str]]] = {}
+        # =====================================================================
+        # DETECTION PATTERNS - Server type detection rules
+        # =====================================================================
+        # Detection patterns (all server-specific, define in subclasses)
+        DETECTION_OID_PATTERN: ClassVar[str] = r".*"  # Match any OID by default
+        DETECTION_ATTRIBUTE_PREFIXES: ClassVar[frozenset[str]] = frozenset([])
+        DETECTION_OBJECTCLASS_NAMES: ClassVar[frozenset[str]] = frozenset([])
+        DETECTION_DN_MARKERS: ClassVar[frozenset[str]] = frozenset([])
+
+        # =====================================================================
+        # ENCODING CONSTANTS - DRY (shared across all servers)
+        # =====================================================================
+        # Character encodings used in LDIF processing (RFC baseline)
+        ENCODING_UTF8: ClassVar[str] = "utf-8"
+        ENCODING_UTF16LE: ClassVar[str] = "utf-16-le"
+        ENCODING_ASCII: ClassVar[str] = "ascii"
+        ENCODING_LATIN1: ClassVar[str] = "latin-1"
+
+        # Error handling strategies for encoding/decoding
+        ENCODING_ERROR_REPLACE: ClassVar[str] = "replace"
+        ENCODING_ERROR_IGNORE: ClassVar[str] = "ignore"
+        ENCODING_ERROR_STRICT: ClassVar[str] = "strict"
+
+        # =====================================================================
+        # LDIF FORMAT CONSTANTS - DRY (shared across all servers)
+        # =====================================================================
+        # RFC 2849 LDIF format specifications
+        LDIF_DN_PREFIX: ClassVar[str] = "dn: "
+        LDIF_ATTR_SEPARATOR: ClassVar[str] = ": "
+        LDIF_NEWLINE: ClassVar[str] = "\n"
+        LDIF_ENTRY_SEPARATOR: ClassVar[str] = "\n\n"
+        LDIF_COMMENT_PREFIX: ClassVar[str] = "# "
+        LDIF_VERSION_PREFIX: ClassVar[str] = "version: "
+        LDIF_CHANGETYPE_PREFIX: ClassVar[str] = "changetype: "
+        LDIF_BASE64_PREFIX: ClassVar[str] = ": "  # RFC 2849 base64 marker
+
+        # LDIF line length constraints (RFC 2849)
+        LDIF_LINE_LENGTH_LIMIT: ClassVar[int] = 76
+        LDIF_LINE_LENGTH_WITH_NEWLINE: ClassVar[int] = 77
+
+        # =====================================================================
+        # ACL PREFIX CONSTANTS - DRY (shared across all servers)
+        # =====================================================================
+        # Common ACL line prefixes used in parsing
+        ACL_PREFIX_DN: ClassVar[str] = "dn:"
+        ACL_PREFIX_VERSION: ClassVar[str] = "version 3.0"
+        ACL_PREFIX_LDAP_URL: ClassVar[str] = "ldap:///"
+        ACL_DEFAULT_VERSION: ClassVar[str] = "version 3.0"
+
+        # ACL subject constants
+        ACL_SELF_SUBJECT: ClassVar[str] = "ldap:///self"
+        ACL_ANONYMOUS_SUBJECT: ClassVar[str] = "ldap:///anyone"
 
     # =========================================================================
     # Server identification - accessed via Constants via properties in base.py
@@ -222,7 +294,8 @@ class FlextLdifServersRfc(FlextLdifServersBase):
         """RFC 4512 Compliant Schema Quirk - Base Implementation."""
 
         def can_handle_attribute(
-            self, attr_definition: str | FlextLdifModels.SchemaAttribute,
+            self,
+            attr_definition: str | FlextLdifModels.SchemaAttribute,
         ) -> bool:
             """Check if RFC quirk can handle attribute definitions (abstract impl).
 
@@ -232,7 +305,8 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             return True
 
         def can_handle_objectclass(
-            self, oc_definition: str | FlextLdifModels.SchemaObjectClass,
+            self,
+            oc_definition: str | FlextLdifModels.SchemaObjectClass,
         ) -> bool:
             """Check if RFC quirk can handle objectClass definitions (abstract impl).
 
@@ -242,7 +316,8 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             return True
 
         def should_filter_out_attribute(
-            self, _attribute: FlextLdifModels.SchemaAttribute,
+            self,
+            _attribute: FlextLdifModels.SchemaAttribute,
         ) -> bool:
             """RFC quirk does not filter attributes.
 
@@ -256,7 +331,8 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             return False
 
         def should_filter_out_objectclass(
-            self, _objectclass: FlextLdifModels.SchemaObjectClass,
+            self,
+            _objectclass: FlextLdifModels.SchemaObjectClass,
         ) -> bool:
             """RFC quirk does not filter objectClasses.
 
@@ -286,7 +362,8 @@ class FlextLdifServersRfc(FlextLdifServersBase):
         ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
             """Parse RFC-compliant objectClass definition (implements abstract method)."""
             return FlextLdifUtilities.Parser.parse_rfc_objectclass(
-                oc_definition=oc_definition, case_insensitive=False,
+                oc_definition=oc_definition,
+                case_insensitive=False,
             )
 
         # Schema conversion methods eliminated - use universal parse/write pipeline
@@ -454,7 +531,8 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             return True
 
         def can_handle_attribute(
-            self, attribute: FlextLdifModels.SchemaAttribute,
+            self,
+            attribute: FlextLdifModels.SchemaAttribute,
         ) -> bool:
             """RFC ACL quirk does not handle attributes.
 
@@ -469,7 +547,8 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             return False
 
         def can_handle_objectclass(
-            self, objectclass: FlextLdifModels.SchemaObjectClass,
+            self,
+            objectclass: FlextLdifModels.SchemaObjectClass,
         ) -> bool:
             """RFC ACL quirk does not handle objectClasses.
 
@@ -493,14 +572,19 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 A FlextResult containing the Acl model.
 
             """
-            if not acl_line or not isinstance(acl_line, str):
+            if not acl_line or not isinstance(acl_line, str) or not acl_line.strip():
                 return FlextResult.fail("ACL line must be a non-empty string.")
+
+            # Get server type from the actual server class (not hardcoded "rfc")
+            server_type_value = self._get_server_type()
 
             # RFC passthrough: store the raw line in the model.
             acl_model = FlextLdifModels.Acl(
                 raw_acl=acl_line,
+                server_type=server_type_value,
                 metadata=FlextLdifModels.QuirkMetadata(
-                    quirk_type=self._get_server_type(), original_format=acl_line,
+                    quirk_type=server_type_value,
+                    original_format=acl_line,
                 ),
             )
             return FlextResult.ok(acl_model)
@@ -533,7 +617,14 @@ class FlextLdifServersRfc(FlextLdifServersBase):
 
         def _write_acl(self, acl_data: FlextLdifModels.Acl) -> FlextResult[str]:
             """Write ACL to RFC-compliant string format (internal)."""
-            return FlextResult[str].ok(acl_data.raw_acl)
+            # Use raw_acl if available and non-empty
+            if acl_data.raw_acl and acl_data.raw_acl.strip():
+                return FlextResult[str].ok(acl_data.raw_acl)
+            # If raw_acl is empty but name exists, return minimal ACL with name
+            if acl_data.name and acl_data.name.strip():
+                return FlextResult[str].ok(f"{acl_data.name}:")
+            # No valid data to write
+            return FlextResult[str].fail("ACL has no raw_acl or name to write")
 
     class Entry(FlextLdifServersBase.Entry):
         """RFC 2849 Compliant Entry Quirk - Base Implementation."""
@@ -560,7 +651,8 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             return True
 
         def can_handle_attribute(
-            self, attribute: FlextLdifModels.SchemaAttribute,
+            self,
+            attribute: FlextLdifModels.SchemaAttribute,
         ) -> bool:
             """Check if this Entry quirk has special handling for an attribute definition.
 
@@ -577,7 +669,8 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             return False
 
         def can_handle_objectclass(
-            self, objectclass: FlextLdifModels.SchemaObjectClass,
+            self,
+            objectclass: FlextLdifModels.SchemaObjectClass,
         ) -> bool:
             """Check if this Entry quirk has special handling for an objectClass definition.
 
@@ -695,8 +788,8 @@ class FlextLdifServersRfc(FlextLdifServersBase):
 
             """
             try:
-                # Clean/normalize DN using DN service
-                cleaned_dn = FlextLdifDn.clean_dn(entry_dn)
+                # Clean/normalize DN using DN utility
+                cleaned_dn = FlextLdifUtilities.DN.clean_dn(entry_dn)
 
                 # Convert raw attributes to dict[str, list[str]] format
                 # Handle bytes values from ldif3 parser
