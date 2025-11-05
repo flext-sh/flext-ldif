@@ -18,6 +18,14 @@ from flext_ldif.utilities import FlextLdifUtilities
 class FlextLdifServersTivoli(FlextLdifServersRfc):
     """Schema quirks for IBM Tivoli Directory Server."""
 
+    # =========================================================================
+    # Server identification via descriptor - works at class and instance level
+    # =========================================================================
+    # NOTE: server_type and priority are accessed via descriptors that support
+    # both class-level and instance-level access. Enables:
+    # - Class level: FlextLdifServersOid.server_type → "oid"
+    # - Instance level: instance.server_type → "oid"
+
     # === STANDARDIZED CONSTANTS FOR AUTO-DISCOVERY ===
     class Constants(FlextLdifServersRfc.Constants):
         """Standardized constants for IBM Tivoli Directory Server quirk."""
@@ -34,21 +42,47 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
         ACL_ATTRIBUTE_NAME: ClassVar[str] = "aci"  # ACL attribute name
 
         # IBM Tivoli operational attributes (server-specific)
-        OPERATIONAL_ATTRIBUTES: Final[frozenset[str]] = frozenset([
+        # Migrated from FlextLdifConstants.OperationalAttributeMappings
+        OPERATIONAL_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset([
+            "createTimestamp",
+            "modifyTimestamp",
+            "creatorsName",
+            "modifiersName",
             "ibm-entryUUID",
             "ibm-entryChecksum",
         ])
 
+        # NOTE: PRESERVE_ON_MIGRATION inherited from RFC.Constants (createTimestamp, modifyTimestamp)
+        # NOTE: SUPPORTED_PERMISSIONS inherited from RFC.Constants (read, write, add, delete, search, compare)
+        # NOTE: ATTRIBUTE_ALIASES inherited from RFC.Constants (empty dict)
+        # NOTE: PERMISSION_* names inherited from RFC.Constants
+
         # Detection constants (server-specific) - migrated from FlextLdifConstants.LdapServerDetection
-        DETECTION_OID_PATTERN: ClassVar[re.Pattern[str]] = re.compile(
+        # Note: DETECTION_OID_PATTERN as string pattern (not compiled) for base class compatibility
+        DETECTION_OID_PATTERN: ClassVar[str] = r"\b1\.3\.18\."
+        DETECTION_OID_PATTERN_COMPILED: ClassVar[re.Pattern[str]] = re.compile(
             r"\b1\.3\.18\.",
             re.IGNORECASE,
         )
-        DETECTION_ATTRIBUTE_PREFIXES: Final[frozenset[str]] = frozenset([
+        DETECTION_ATTRIBUTE_PREFIXES: ClassVar[frozenset[str]] = frozenset([
             "ibm-",
             "ids-",
         ])
-        DETECTION_OBJECTCLASS_NAMES: Final[frozenset[str]] = frozenset([
+
+        # Server detection patterns and weights (migrated from FlextLdifConstants.ServerDetection)
+        DETECTION_PATTERN_STR: Final[str] = r"\b(ibm|tivoli|ldapdb)\b"
+        DETECTION_PATTERN: ClassVar[re.Pattern[str]] = re.compile(
+            DETECTION_PATTERN_STR,
+            re.IGNORECASE,
+        )
+        DETECTION_ATTRIBUTES: Final[frozenset[str]] = frozenset([
+            "ibm-entryuuid",
+            "ibm-entrychecksum",
+            "ibm-slapdaccesscontrol",
+            "ibm-slapdgroupacl",
+        ])
+        DETECTION_WEIGHT: Final[int] = 6
+        DETECTION_OBJECTCLASS_NAMES: ClassVar[frozenset[str]] = frozenset([
             "ibmuser",
             "ibmuniversaldirectoryuser",
             "ibmuniversaldirectorygroup",
@@ -56,7 +90,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
             "ibm-ldapserver",
             "ibm-filterentry",
         ])
-        DETECTION_DN_MARKERS: Final[frozenset[str]] = frozenset([
+        DETECTION_DN_MARKERS: ClassVar[frozenset[str]] = frozenset([
             "o=ibm",
             "o=example",
             "cn=admin",
@@ -65,7 +99,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
         ])
 
         # IBM Tivoli specific attributes (migrated from FlextLdifConstants)
-        IBM_TIVOLI_SPECIFIC: Final[frozenset[str]] = frozenset([
+        IBM_TIVOLI_SPECIFIC: ClassVar[frozenset[str]] = frozenset([
             "ibm-entryuuid",
             "ibm-entrychecksum",
             "ibm-passwordchangedtime",
@@ -75,13 +109,16 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
             "ibm-modifyName",
         ])
 
+        # NOTE: Tivoli inherits RFC baseline for:
+        # - ATTRIBUTE_FIELDS, OBJECTCLASS_REQUIREMENTS, ATTRIBUTE_ALIASES
+
         # ACL-specific constants (migrated from nested Acl class)
-        ACL_ATTRIBUTE_NAMES: Final[frozenset[str]] = frozenset([
+        ACL_ATTRIBUTE_NAMES: ClassVar[frozenset[str]] = frozenset([
             "ibm-slapdaccesscontrol",
             "ibm-slapdgroupacl",
         ])
         # Non-Tivoli ACL format markers (for rejection)
-        ACL_NON_TIVOLI_MARKERS: Final[frozenset[str]] = frozenset([
+        ACL_NON_TIVOLI_MARKERS: ClassVar[frozenset[str]] = frozenset([
             "aci:",
             "version 3.0",
             "allow(",
@@ -103,21 +140,10 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
         ACL_SEPARATOR: Final[str] = "#"
 
     # =========================================================================
-    # Class-level attributes for server identification (from Constants)
+    # Server identification - accessed via Constants via properties in base.py
     # =========================================================================
-    server_type: ClassVar[str] = Constants.SERVER_TYPE
-    priority: ClassVar[int] = Constants.PRIORITY
-
-    def __init__(self) -> None:
-        """Initialize IBM Tivoli Directory Server quirks."""
-        # Initialize RFC base first
-        super().__init__()
-        # Override with Tivoli-specific nested class instances
-        # Use object.__setattr__ to bypass Pydantic validation for dynamic attributes
-        # Nested classes no longer require server_type and priority parameters
-        object.__setattr__(self, "schema", FlextLdifServersTivoli.Schema())
-        object.__setattr__(self, "acl", FlextLdifServersTivoli.Acl())
-        object.__setattr__(self, "entry", FlextLdifServersTivoli.Entry())
+    # NOTE: server_type and priority are accessed via properties in base.py
+    # which read from Constants.SERVER_TYPE and Constants.PRIORITY
 
     class Schema(FlextLdifServersRfc.Schema):
         """IBM Tivoli Directory Server schema quirks implementation."""
@@ -135,12 +161,12 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
         #
 
         def can_handle_attribute(
-            self, attr_definition: str | FlextLdifModels.SchemaAttribute
+            self, attr_definition: str | FlextLdifModels.SchemaAttribute,
         ) -> bool:
             """Detect Tivoli-specific attributes."""
             if isinstance(attr_definition, str):
-                if FlextLdifServersTivoli.Constants.DETECTION_OID_PATTERN.search(
-                    attr_definition
+                if FlextLdifServersTivoli.Constants.DETECTION_OID_PATTERN_COMPILED.search(
+                    attr_definition,
                 ):
                     return True
                 attr_lower = attr_definition.lower()
@@ -149,8 +175,8 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                     for prefix in FlextLdifServersTivoli.Constants.DETECTION_ATTRIBUTE_PREFIXES
                 )
             if isinstance(attr_definition, FlextLdifModels.SchemaAttribute):
-                if FlextLdifServersTivoli.Constants.DETECTION_OID_PATTERN.search(
-                    attr_definition.oid
+                if FlextLdifServersTivoli.Constants.DETECTION_OID_PATTERN_COMPILED.search(
+                    attr_definition.oid,
                 ):
                     return True
                 attr_name_lower = attr_definition.name.lower()
@@ -161,12 +187,12 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
             return False
 
         def can_handle_objectclass(
-            self, oc_definition: str | FlextLdifModels.SchemaObjectClass
+            self, oc_definition: str | FlextLdifModels.SchemaObjectClass,
         ) -> bool:
             """Detect Tivoli objectClass definitions."""
             if isinstance(oc_definition, str):
-                if FlextLdifServersTivoli.Constants.DETECTION_OID_PATTERN.search(
-                    oc_definition
+                if FlextLdifServersTivoli.Constants.DETECTION_OID_PATTERN_COMPILED.search(
+                    oc_definition,
                 ):
                     return True
                 oc_lower = oc_definition.lower()
@@ -175,8 +201,8 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                     for oc_name in FlextLdifServersTivoli.Constants.DETECTION_OBJECTCLASS_NAMES
                 )
             if isinstance(oc_definition, FlextLdifModels.SchemaObjectClass):
-                if FlextLdifServersTivoli.Constants.DETECTION_OID_PATTERN.search(
-                    oc_definition.oid
+                if FlextLdifServersTivoli.Constants.DETECTION_OID_PATTERN_COMPILED.search(
+                    oc_definition.oid,
                 ):
                     return True
                 oc_name_lower = oc_definition.name.lower()
@@ -204,7 +230,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                 attr_data = result.unwrap()
                 metadata = FlextLdifModels.QuirkMetadata.create_for("ibm_tivoli")
                 return FlextResult[FlextLdifModels.SchemaAttribute].ok(
-                    attr_data.model_copy(update={"metadata": metadata})
+                    attr_data.model_copy(update={"metadata": metadata}),
                 )
             return result
 
@@ -226,29 +252,26 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                 oc_data = result.unwrap()
                 metadata = FlextLdifModels.QuirkMetadata.create_for("ibm_tivoli")
                 return FlextResult[FlextLdifModels.SchemaObjectClass].ok(
-                    oc_data.model_copy(update={"metadata": metadata})
+                    oc_data.model_copy(update={"metadata": metadata}),
                 )
             return result
 
     class Acl(FlextLdifServersRfc.Acl):
         """IBM Tivoli Directory Server ACL quirks implementation."""
 
-        def can_handle(self, acl: FlextLdifModels.Acl | str) -> bool:
+        def can_handle(self, acl_line: FlextLdifModels.Acl | str) -> bool:
             """Check if this ACL is a Tivoli DS ACL."""
-            if isinstance(acl, str):
-                return self.can_handle(acl)
-            if not acl.raw_acl:
+            if isinstance(acl_line, str):
+                return self.can_handle_acl(acl_line)
+            if not acl_line.raw_acl:
                 return False
-            return self.can_handle(acl.raw_acl)
+            return self.can_handle_acl(acl_line.raw_acl)
 
         def can_handle_acl(self, acl_line: str | FlextLdifModels.Acl) -> bool:
             """Detect Tivoli DS ACL values."""
             if isinstance(acl_line, str):
                 normalized = acl_line.strip() if acl_line else ""
                 if not normalized:
-                    return False
-                # Empty string should return False
-                if normalized == "":
                     return False
                 # Reject non-Tivoli ACL formats (ACI, version 3.0, etc.)
                 normalized_lower = normalized.lower()
@@ -279,7 +302,8 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
         def _parse_acl(self, acl_line: str) -> FlextResult[FlextLdifModels.Acl]:
             """Parse Tivoli DS ACL definition."""
             try:
-                _, content = self._splitacl_line(acl_line)
+                attr_name, content = self._splitacl_line(acl_line)
+                _ = attr_name  # Unused but required for tuple unpacking
 
                 # Extract access type from brace content
                 access_match = re.search(
@@ -290,7 +314,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                 access_type = (
                     access_match.group(1)
                     if access_match
-                    else FlextLdifConstants.PermissionNames.READ
+                    else FlextLdifServersTivoli.Constants.PERMISSION_READ
                 )
 
                 # Build Acl model with minimal parsing
@@ -307,11 +331,11 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                     permissions=FlextLdifModels.AclPermissions(
                         read=(
                             access_type.lower()
-                            == FlextLdifConstants.PermissionNames.READ
+                            == FlextLdifServersTivoli.Constants.PERMISSION_READ
                         ),
                         write=(
                             access_type.lower()
-                            == FlextLdifConstants.PermissionNames.WRITE
+                            == FlextLdifServersTivoli.Constants.PERMISSION_WRITE
                         ),
                     ),
                     server_type=cast(
@@ -368,12 +392,12 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                 active_perms = FlextLdifUtilities.ACL.collect_active_permissions(
                     acl_data.permissions,
                     [
-                        ("read", FlextLdifConstants.PermissionNames.READ),
-                        ("write", FlextLdifConstants.PermissionNames.WRITE),
-                        ("add", FlextLdifConstants.PermissionNames.ADD),
-                        ("delete", FlextLdifConstants.PermissionNames.DELETE),
-                        ("search", FlextLdifConstants.PermissionNames.SEARCH),
-                        ("compare", FlextLdifConstants.PermissionNames.COMPARE),
+                        ("read", FlextLdifServersTivoli.Constants.PERMISSION_READ),
+                        ("write", FlextLdifServersTivoli.Constants.PERMISSION_WRITE),
+                        ("add", FlextLdifServersTivoli.Constants.PERMISSION_ADD),
+                        ("delete", FlextLdifServersTivoli.Constants.PERMISSION_DELETE),
+                        ("search", FlextLdifServersTivoli.Constants.PERMISSION_SEARCH),
+                        ("compare", FlextLdifServersTivoli.Constants.PERMISSION_COMPARE),
                     ],
                 )
                 parts.extend(active_perms)
@@ -492,7 +516,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                     for value in attr_values:
                         if isinstance(value, bytes):
                             processed_values.append(
-                                base64.b64encode(value).decode("utf-8")
+                                base64.b64encode(value).decode("utf-8"),
                             )
                         else:
                             processed_values.append(str(value))
@@ -517,7 +541,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
 
                 # Create new LdifAttributes directly
                 new_attrs = FlextLdifModels.LdifAttributes(
-                    attributes=processed_attributes
+                    attributes=processed_attributes,
                 )
 
                 processed_entry = entry.model_copy(

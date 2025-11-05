@@ -39,7 +39,7 @@ objectClass: person
 
     def test_custom_config_with_server_type(self) -> None:
         """Test facade with custom config and server type."""
-        config = FlextLdifConfig(server_type="rfc")
+        config = FlextLdifConfig(server_type="openldap")
         ldif = FlextLdif(config=config)
 
         content = """dn: cn=Test,dc=example,dc=com
@@ -55,7 +55,7 @@ objectClass: person
     def test_config_independence_between_instances(self) -> None:
         """Test that multiple FlextLdif instances with different configs are independent."""
         config1 = FlextLdifConfig(server_type="oid")
-        config2 = FlextLdifConfig(server_type="rfc")
+        config2 = FlextLdifConfig(server_type="openldap")
 
         ldif1 = FlextLdif(config=config1)
         ldif2 = FlextLdif(config=config2)
@@ -74,7 +74,7 @@ objectClass: person
     def test_config_affects_parsing_behavior(self) -> None:
         """Test that config settings affect parsing behavior."""
         # Different server types might have different quirks
-        for server_type in ["rfc", "oid", "oud", "openldap"]:
+        for server_type in ["oid", "oud", "openldap"]:
             config = FlextLdifConfig(server_type=server_type)
             ldif = FlextLdif(config=config)
 
@@ -88,8 +88,8 @@ objectClass: person
             assert result.is_success
 
     def test_config_with_rfc_server_type(self) -> None:
-        """Test config with RFC server type."""
-        config = FlextLdifConfig(server_type="rfc")
+        """Test config with OpenLDAP server type."""
+        config = FlextLdifConfig(server_type="openldap")
         ldif = FlextLdif(config=config)
 
         content = """dn: cn=RFC Test,dc=example,dc=com

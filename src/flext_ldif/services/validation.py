@@ -134,11 +134,24 @@ class FlextLdifValidation(FlextService[dict[str, object]]):
     - DN component validation (attribute=value pair validation)
     - Batch validation for multiple attribute names
     - Proper error handling with FlextResult monadic composition
+    - Fluent builder pattern for batch validation operations
 
     All validation methods return FlextResult[bool] for consistent error handling
     and composable operations.
 
+    FlextService V2 Integration:
+    - Builder pattern for complex validation workflows
+    - Pydantic fields for validation parameters
+    - execute() method for health checks
     """
+
+    # ════════════════════════════════════════════════════════════════════════
+    # PYDANTIC FIELDS (for builder pattern)
+    # ════════════════════════════════════════════════════════════════════════
+
+    attribute_names: list[str] = []
+    objectclass_names: list[str] = []
+    max_attr_value_length: int | None = None
 
     def __init__(self) -> None:
         """Initialize validation service."""
@@ -169,6 +182,67 @@ class FlextLdifValidation(FlextService[dict[str, object]]):
                 "attribute_value",
             ],
         })
+
+    # ════════════════════════════════════════════════════════════════════════
+    # FLUENT BUILDER PATTERN
+    # ════════════════════════════════════════════════════════════════════════
+
+    @classmethod
+    def builder(cls) -> FlextLdifValidation:
+        """Create fluent builder for complex validation workflows.
+
+        Returns:
+            Service instance for method chaining
+
+        Example:
+            result = (FlextLdifValidation.builder()
+                .with_attribute_names(["cn", "mail"])
+                .with_objectclass_names(["person"])
+                .build())
+
+        """
+        return cls()
+
+    def with_attribute_names(self, names: list[str]) -> FlextLdifValidation:
+        """Set attribute names to validate (fluent builder)."""
+        self.attribute_names = names
+        return self
+
+    def with_objectclass_names(self, names: list[str]) -> FlextLdifValidation:
+        """Set objectClass names to validate (fluent builder)."""
+        self.objectclass_names = names
+        return self
+
+    def with_max_attr_value_length(self, length: int) -> FlextLdifValidation:
+        """Set maximum attribute value length (fluent builder)."""
+        self.max_attr_value_length = length
+        return self
+
+    def build(self) -> dict[str, bool]:
+        """Execute validation and return unwrapped result (fluent terminal).
+
+        Validates all configured attribute names and objectClass names,
+        returning a unified dictionary with validation results.
+
+        Returns:
+            Dictionary mapping validated items to their validation status
+
+        """
+        result: dict[str, bool] = {}
+
+        # Validate attribute names
+        if self.attribute_names:
+            attr_result = self.validate_attribute_names(self.attribute_names)
+            if attr_result.is_success:
+                result.update(attr_result.unwrap())
+
+        # Validate objectClass names
+        for name in self.objectclass_names:
+            oc_result = self.validate_objectclass_name(name)
+            if oc_result.is_success:
+                result[name] = oc_result.unwrap()
+
+        return result
 
     def validate_attribute_name(self, name: str) -> FlextResult[bool]:
         """Validate LDAP attribute name against RFC 4512 rules.

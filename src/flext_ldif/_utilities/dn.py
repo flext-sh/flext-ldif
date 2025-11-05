@@ -43,7 +43,7 @@ class FlextLdifUtilitiesDN:
     """
 
     @staticmethod
-    def _get_dn_value(dn: Any) -> str:  # noqa: ANN401
+    def _get_dn_value(dn: Any) -> str:
         """Extract DN string value from DN model or string.
 
         Args:
@@ -65,7 +65,7 @@ class FlextLdifUtilitiesDN:
 
     @overload
     @staticmethod
-    def split(dn: Any) -> list[str]:  # noqa: ANN401
+    def split(dn: Any) -> list[str]:
         ...
 
     @staticmethod
@@ -95,7 +95,7 @@ class FlextLdifUtilitiesDN:
 
     @overload
     @staticmethod
-    def norm_string(dn: Any) -> str:  # noqa: ANN401
+    def norm_string(dn: Any) -> str:
         ...
 
     @staticmethod
@@ -115,7 +115,7 @@ class FlextLdifUtilitiesDN:
 
     @overload
     @staticmethod
-    def validate(dn: Any) -> bool:  # noqa: ANN401
+    def validate(dn: Any) -> bool:
         ...
 
     @staticmethod
@@ -158,7 +158,7 @@ class FlextLdifUtilitiesDN:
 
     @overload
     @staticmethod
-    def parse(dn: Any) -> list[tuple[str, str]] | None:  # noqa: ANN401
+    def parse(dn: Any) -> list[tuple[str, str]] | None:
         ...
 
     @staticmethod
@@ -193,7 +193,7 @@ class FlextLdifUtilitiesDN:
 
     @overload
     @staticmethod
-    def norm(dn: Any) -> str | None:  # noqa: ANN401
+    def norm(dn: Any) -> str | None:
         ...
 
     @staticmethod
@@ -228,7 +228,7 @@ class FlextLdifUtilitiesDN:
 
     @overload
     @staticmethod
-    def clean_dn(dn: Any) -> str:  # noqa: ANN401
+    def clean_dn(dn: Any) -> str:
         ...
 
     @staticmethod
@@ -322,21 +322,21 @@ class FlextLdifUtilitiesDN:
     @overload
     @staticmethod
     def compare_dns(
-        dn1: Any, dn2: Any  # noqa: ANN401
+        dn1: Any, dn2: Any
     ) -> int | None:
         ...
 
     @overload
     @staticmethod
     def compare_dns(
-        dn1: Any | str, dn2: str  # noqa: ANN401
+        dn1: Any | str, dn2: str
     ) -> int | None:
         ...
 
     @overload
     @staticmethod
     def compare_dns(
-        dn1: str, dn2: Any  # noqa: ANN401
+        dn1: str, dn2: Any
     ) -> int | None:
         ...
 
@@ -386,7 +386,7 @@ class FlextLdifUtilitiesDN:
         i: int,
         current_attr: str,
         current_val: str,
-        in_value: bool,  # noqa: FBT001
+        in_value: bool,
         pairs: list[tuple[str, str]],
     ) -> tuple[str, str, bool, int, bool]:
         """Process single character in RDN parsing.
@@ -565,22 +565,22 @@ class FlextLdifUtilitiesDN:
     @overload
     @staticmethod
     def is_under_base(
-        dn: Any,  # noqa: ANN401
-        base_dn: Any,  # noqa: ANN401
+        dn: Any,
+        base_dn: Any,
     ) -> bool:
         ...
 
     @overload
     @staticmethod
     def is_under_base(
-        dn: Any | str, base_dn: str  # noqa: ANN401
+        dn: Any | str, base_dn: str
     ) -> bool:
         ...
 
     @overload
     @staticmethod
     def is_under_base(
-        dn: str, base_dn: Any  # noqa: ANN401
+        dn: str, base_dn: Any
     ) -> bool:
         ...
 
@@ -632,20 +632,20 @@ class FlextLdifUtilitiesDN:
     @overload
     @staticmethod
     def are_equal(
-        dn1: Any, dn2: Any  # noqa: ANN401
+        dn1: Any, dn2: Any
     ) -> bool:
         ...
 
     @overload
     @staticmethod
     def are_equal(
-        dn1: Any | str, dn2: str  # noqa: ANN401
+        dn1: Any | str, dn2: str
     ) -> bool:
         ...
 
     @overload
     @staticmethod
-    def are_equal(dn1: str, dn2: Any) -> bool:  # noqa: ANN401
+    def are_equal(dn1: str, dn2: Any) -> bool:
         ...
 
     @staticmethod

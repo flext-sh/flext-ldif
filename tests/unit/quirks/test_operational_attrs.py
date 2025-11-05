@@ -10,7 +10,7 @@ from __future__ import annotations
 import pytest
 
 from flext_ldif.models import FlextLdifModels
-from flext_ldif.services.entrys import FlextLdifEntry
+from flext_ldif.services.entry import FlextLdifEntry
 
 
 class TestOperationalAttributesStripping:

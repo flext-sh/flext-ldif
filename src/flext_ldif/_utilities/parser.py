@@ -474,7 +474,7 @@ class FlextLdifUtilitiesParser:
         attr_definition: str,
         *,
         case_insensitive: bool = False,
-        _allow_syntax_quotes: bool = False,
+        allow_syntax_quotes: bool = False,
     ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
         """Parse RFC 4512 attribute definition."""
         try:
@@ -618,7 +618,7 @@ class FlextLdifUtilitiesParser:
     def parse_rfc_objectclass(
         oc_definition: str,
         *,
-        _case_insensitive: bool = False,
+        case_insensitive: bool = False,
     ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
         """Parse RFC 4512 objectClass definition."""
         try:

@@ -43,33 +43,33 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
         ACL_FORMAT: ClassVar[str] = "aci"  # Novell uses standard ACI
         ACL_ATTRIBUTE_NAME: ClassVar[str] = "aci"  # ACL attribute name
 
-        # Novell eDirectory operational attributes (server-specific)
-        OPERATIONAL_ATTRIBUTES: Final[frozenset[str]] = frozenset([
+        # Novell eDirectory operational attributes (server-specific, extends RFC)
+        OPERATIONAL_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset([
             "GUID",
             "createTimestamp",
             "modifyTimestamp",
         ])
 
         # Detection constants (server-specific)
-        DETECTION_OID_PATTERN: Final[str] = r"2\.16\.840\.1\.113719\."
-        DETECTION_ATTRIBUTE_PREFIXES: Final[frozenset[str]] = frozenset([
+        DETECTION_OID_PATTERN: ClassVar[str] = r"2\.16\.840\.1\.113719\."
+        DETECTION_ATTRIBUTE_PREFIXES: ClassVar[frozenset[str]] = frozenset([
             "nspm",
             "login",
             "dirxml-",
         ])
-        DETECTION_OBJECTCLASS_NAMES: Final[frozenset[str]] = frozenset([
+        DETECTION_OBJECTCLASS_NAMES: ClassVar[frozenset[str]] = frozenset([
             "ndsperson",
             "nspmpasswordpolicy",
             "ndsserver",
             "ndstree",
             "ndsloginproperties",
         ])
-        DETECTION_DN_MARKERS: Final[frozenset[str]] = frozenset([
+        DETECTION_DN_MARKERS: ClassVar[frozenset[str]] = frozenset([
             "ou=services",
             "ou=apps",
             "ou=system",
         ])
-        DETECTION_ATTRIBUTE_MARKERS: Final[frozenset[str]] = frozenset([
+        DETECTION_ATTRIBUTE_MARKERS: ClassVar[frozenset[str]] = frozenset([
             "nspmpasswordpolicy",
             "nspmpasswordpolicydn",
             "logindisabled",
@@ -130,19 +130,10 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
         NOVELL_PERMISSION_ENTRY: Final[str] = "entry"  # Novell-specific permission name
 
     # =========================================================================
-    # Class-level attributes for server identification (from Constants)
+    # Server identification (defined in Constants nested class above)
     # =========================================================================
-    server_type: ClassVar[str] = Constants.SERVER_TYPE
-    priority: ClassVar[int] = Constants.PRIORITY
-
-    def __init__(self) -> None:
-        """Initialize Novell quirks."""
-        super().__init__()
-        # Use object.__setattr__ to bypass Pydantic validation for dynamic attributes
-        # Nested classes no longer require server_type and priority parameters
-        object.__setattr__(self, "schema", self.Schema())
-        object.__setattr__(self, "acl", self.Acl())
-        object.__setattr__(self, "entry", self.Entry())
+    # server_type and priority are accessed via Constants.SERVER_TYPE
+    # and Constants.PRIORITY respectively
 
     class Schema(FlextLdifServersRfc.Schema):
         """Novell eDirectory schema quirk."""

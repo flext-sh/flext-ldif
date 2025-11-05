@@ -109,7 +109,7 @@ FlextLdifServersOud (extends FlextLdifServersRfc)
 - [ ] Create ServerConfig abstraction
 - [ ] Design service composition pattern
 
-### Phase 2.B: Create SchemaValidationService
+### Phase 2.B: Create FlextLdiifSchema
 **Goal**: Centralize all schema parsing/validation/writing logic
 
 **Key Methods**:
@@ -127,7 +127,7 @@ FlextLdifServersOud (extends FlextLdifServersRfc)
 - `FlextLdifWriter` - LDIF writing
 - `FlextLdifUtilitiesSchema` - Schema utilities
 
-### Phase 2.C: Create AclProcessingService
+### Phase 2.C: Create FlextLdifAcl
 **Goal**: Centralize all ACL parsing/validation/writing logic
 
 **Key Methods**:
@@ -226,8 +226,8 @@ attribute = services.schema.parse_attribute(attr_def)
 - Keep backward compatibility with Constants
 
 ### Step 2: Create services with new functionality
-- SchemaValidationService
-- AclProcessingService
+- FlextLdiifSchema
+- FlextLdifAcl
 - EntryTransformationService
 
 ### Step 3: Integrate services gradually

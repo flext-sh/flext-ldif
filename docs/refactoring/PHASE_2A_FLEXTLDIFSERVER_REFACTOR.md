@@ -6,7 +6,7 @@
 
 ## Overview
 
-Instead of creating 3 separate service classes (SchemaValidationService, AclProcessingService, EntryTransformationService), we refactored **FlextLdifServer** itself to be a thin, DRY wrapper that provides service-like functionality through a clean interface.
+Instead of creating 3 separate service classes (FlextLdiifSchema, FlextLdifAcl, EntryTransformationService), we refactored **FlextLdifServer** itself to be a thin, DRY wrapper that provides service-like functionality through a clean interface.
 
 ## Key Changes
 

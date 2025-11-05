@@ -39,13 +39,6 @@ class FlextLdifModels(FlextModels):
     """
 
     # =========================================================================
-    # TYPE ALIASES - Semantic types for LDIF domain
-    # =========================================================================
-    # Type alias for any model that can be converted by the matrix
-    # Represents the union of all convertible model types
-    ConvertibleModel = None  # Will be set after class definition
-
-    # =========================================================================
     # DOMAIN MODELS - Core business entities
     # =========================================================================
     class DistinguishedName(FlextModels.Value):
@@ -1230,11 +1223,9 @@ class FlextLdifModels(FlextModels):
                         attrs_dict[attr_name] = [str(attr_value_list)]
 
                 # Use Entry.create to handle DN and attribute conversion
-                from typing import cast as typing_cast
-
                 return cls.create(
                     dn=dn_str,
-                    attributes=typing_cast("dict[str, list[str] | str]", attrs_dict),
+                    attributes=attrs_dict,  # type: ignore[arg-type]
                 )
 
             except Exception as e:
@@ -2555,13 +2546,19 @@ class FlextLdifModels(FlextModels):
             description="If True, applies strict schema validation and fails on violations.",
         )
 
+    # Set the ConvertibleModel type alias after all classes are defined
+    # Use type alias syntax with actual class references (no prefix needed inside class)
+    type ConvertibleModel = (
+        Entry
+        | SchemaAttribute
+        | SchemaObjectClass
+        | Acl
+    )
 
-# Set the ConvertibleModel type alias after all classes are defined
-FlextLdifModels.ConvertibleModel = (
-    FlextLdifModels.Entry
-    | FlextLdifModels.SchemaAttribute
-    | FlextLdifModels.SchemaObjectClass
-    | FlextLdifModels.Acl
-)
+    # Set the SchemaModel type alias after all classes are defined
+    type SchemaModel = (
+        SchemaAttribute | SchemaObjectClass
+    )
+
 
 __all__ = ["FlextLdifModels"]

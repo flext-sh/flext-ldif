@@ -173,9 +173,14 @@ class FlextLdifWriter(FlextService[Any]):
             output.write(f"# Total entries: {len(entries)}\n\n")
 
         # Delegate serialization to quirks - quirks handle ALL conversion logic
+        entry_quirk = quirk.entry
+        if entry_quirk is None:
+            msg = f"No entry quirk available for server type: '{target_server_type}'"
+            raise ValueError(msg)
+
         for entry in entries:
-            # Call quirk's Entry.write() method - this handles DN conversion, etc.
-            write_result = quirk.Entry.write(entry)
+            # Call entry quirk's write() method - this handles DN conversion, etc.
+            write_result = entry_quirk.write(entry)
             if write_result.is_failure:
                 msg = f"Failed to write entry {entry.dn}: {write_result.error}"
                 raise ValueError(msg)

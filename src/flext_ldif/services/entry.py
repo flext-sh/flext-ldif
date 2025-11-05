@@ -380,7 +380,7 @@ class FlextLdifEntry(FlextService[list[FlextLdifModels.Entry]]):
             if attr_name.lower() in operational_attrs_lower:
                 if self.logger is not None:
                     self.logger.debug(
-                        f"Removed operational attribute '{attr_name}' from {FlextLdifUtilities.DN._get_dn_value(entry.dn)}",  # noqa: SLF001
+                        f"Removed operational attribute '{attr_name}' from {FlextLdifUtilities.DN._get_dn_value(entry.dn)}",
                     )
                 continue
 
@@ -398,7 +398,7 @@ class FlextLdifEntry(FlextService[list[FlextLdifModels.Entry]]):
 
         if adapted_entry_result.is_failure:
             error_msg = (
-                f"Failed to adapt entry {FlextLdifUtilities.DN._get_dn_value(entry.dn)}: {adapted_entry_result.error}"  # noqa: SLF001
+                f"Failed to adapt entry {FlextLdifUtilities.DN._get_dn_value(entry.dn)}: {adapted_entry_result.error}"
             )
             if self.logger is not None:
                 self.logger.error(error_msg)
@@ -433,7 +433,7 @@ class FlextLdifEntry(FlextService[list[FlextLdifModels.Entry]]):
             for attr_name in entry.attributes.attributes:
                 if attr_name.lower() in attrs_to_remove_lower:
                     self.logger.debug(
-                        f"Removed attribute '{attr_name}' from {FlextLdifUtilities.DN._get_dn_value(entry.dn)}",  # noqa: SLF001
+                        f"Removed attribute '{attr_name}' from {FlextLdifUtilities.DN._get_dn_value(entry.dn)}",
                     )
 
         # Use utility for core removal logic
@@ -441,7 +441,7 @@ class FlextLdifEntry(FlextService[list[FlextLdifModels.Entry]]):
             cleaned_entry = FlextLdifUtilities.Entry.remove_attributes(entry, attributes)
             return FlextResult[FlextLdifModels.Entry].ok(cleaned_entry)
         except Exception as e:
-            error_msg = f"Failed to clean entry {FlextLdifUtilities.DN._get_dn_value(entry.dn)}: {e}"  # noqa: SLF001
+            error_msg = f"Failed to clean entry {FlextLdifUtilities.DN._get_dn_value(entry.dn)}: {e}"
             if self.logger is not None:
                 self.logger.error(error_msg)
             return FlextResult[FlextLdifModels.Entry].fail(error_msg)

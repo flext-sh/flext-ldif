@@ -29,7 +29,20 @@ class FlextLdifStatistics(FlextService[dict[str, object]]):
     This service replaces the utilities.py Statistics class with
     a proper service-oriented implementation.
 
+    FlextService V2 Integration:
+    - Builder pattern for statistics generation configuration
+    - Pydantic fields for statistics parameters
+    - execute() method for health checks
     """
+
+    # ════════════════════════════════════════════════════════════════════════
+    # PYDANTIC FIELDS (for builder pattern)
+    # ════════════════════════════════════════════════════════════════════════
+
+    categorized: dict[str, list[dict[str, object]]] | None = None
+    written_counts: dict[str, int] | None = None
+    output_dir: Path | None = None
+    output_files: dict[str, object] | None = None
 
     def __init__(self) -> None:
         """Initialize statistics service."""
@@ -54,6 +67,74 @@ class FlextLdifStatistics(FlextService[dict[str, object]]):
                 "analyze_rejections",
             ],
         })
+
+    # ════════════════════════════════════════════════════════════════════════
+    # FLUENT BUILDER PATTERN
+    # ════════════════════════════════════════════════════════════════════════
+
+    @classmethod
+    def builder(cls) -> FlextLdifStatistics:
+        """Create fluent builder for statistics generation.
+
+        Returns:
+            Service instance for method chaining
+
+        Example:
+            result = (FlextLdifStatistics.builder()
+                .with_categorized(categorized_data)
+                .with_written_counts(counts)
+                .with_output_dir(Path("output"))
+                .build())
+
+        """
+        return cls()
+
+    def with_categorized(
+        self, categorized: dict[str, list[dict[str, object]]]
+    ) -> FlextLdifStatistics:
+        """Set categorized entries data (fluent builder)."""
+        self.categorized = categorized
+        return self
+
+    def with_written_counts(self, counts: dict[str, int]) -> FlextLdifStatistics:
+        """Set written counts per category (fluent builder)."""
+        self.written_counts = counts
+        return self
+
+    def with_output_dir(self, output_dir: Path) -> FlextLdifStatistics:
+        """Set output directory (fluent builder)."""
+        self.output_dir = output_dir
+        return self
+
+    def with_output_files(
+        self, output_files: dict[str, object]
+    ) -> FlextLdifStatistics:
+        """Set output files mapping (fluent builder)."""
+        self.output_files = output_files
+        return self
+
+    def build(self) -> dict[str, object]:
+        """Execute statistics generation and return unwrapped result (fluent terminal).
+
+        Returns:
+            Dictionary with generated statistics
+
+        """
+        if (
+            self.categorized is None
+            or self.written_counts is None
+            or self.output_dir is None
+            or self.output_files is None
+        ):
+            return {}
+
+        result = self.generate_statistics(
+            categorized=self.categorized,
+            written_counts=self.written_counts,
+            output_dir=self.output_dir,
+            output_files=self.output_files,
+        )
+        return result.unwrap() if result.is_success else {}
 
     def generate_statistics(
         self,

@@ -238,7 +238,7 @@ class FlextLdifFilter(FlextService[list[FlextLdifModels.Entry]]):
                 filtered = []
                 for entry in entries:
                     # Use DN utility to get string value (supports both DN model and str)
-                    entry_dn_str = FlextLdifUtilities.DN._get_dn_value(entry.dn)  # noqa: SLF001
+                    entry_dn_str = FlextLdifUtilities.DN._get_dn_value(entry.dn)
                     matches = fnmatch.fnmatch(entry_dn_str.lower(), pattern.lower())
                     include = (
                         mode == FlextLdifConstants.Modes.INCLUDE and matches
@@ -744,7 +744,7 @@ class FlextLdifFilter(FlextService[list[FlextLdifModels.Entry]]):
             return reason if isinstance(reason, str) else None
 
         @staticmethod
-        def _matches_dn_pattern(dn: str | Any, patterns: list[str]) -> bool:  # noqa: ANN401
+        def _matches_dn_pattern(dn: str | Any, patterns: list[str]) -> bool:
             """Check if DN matches any of the regex patterns.
 
             Args:
@@ -759,7 +759,7 @@ class FlextLdifFilter(FlextService[list[FlextLdifModels.Entry]]):
                 return False
 
             # Extract DN string (supports both DN model and str)
-            dn_str = FlextLdifUtilities.DN._get_dn_value(dn)  # noqa: SLF001
+            dn_str = FlextLdifUtilities.DN._get_dn_value(dn)
 
             # First validate ALL patterns before matching
             invalid_patterns = []

@@ -15,7 +15,6 @@ OID-specific features:
 
 from __future__ import annotations
 
-import re
 from typing import ClassVar, Final, cast
 
 from flext_core import FlextLogger, FlextResult
@@ -71,60 +70,75 @@ class FlextLdifServersOid(FlextLdifServersRfc):
         ACL_ATTRIBUTE_NAME: ClassVar[str] = "orclaci"  # ACL attribute name
 
         # Matching rule replacements for OUD compatibility
-        MATCHING_RULE_REPLACEMENTS: Final[dict[str, str]] = {
+        MATCHING_RULE_REPLACEMENTS: ClassVar[dict[str, str]] = {
             "caseIgnoreSubStringsMatch": "caseIgnoreSubstringsMatch",  # Fix capitalization
             "accessDirectiveMatch": "caseIgnoreMatch",  # Replace OID-specific with standard
         }
 
         # Syntax OID replacements for OUD compatibility
-        SYNTAX_OID_REPLACEMENTS: Final[dict[str, str]] = {
+        SYNTAX_OID_REPLACEMENTS: ClassVar[dict[str, str]] = {
             "1.3.6.1.4.1.1466.115.121.1.1": "1.3.6.1.4.1.1466.115.121.1.15",  # ACI List → Directory String
         }
 
-        # Oracle OID operational attributes (server-specific)
-        OPERATIONAL_ATTRIBUTES: Final[frozenset[str]] = frozenset([
-            "orclGUID",
-            "orclOracleGUID",
-            "orclPassword",
-            "orclPasswordChangedTime",
-            "orclIsEnabled",
-        ])
+        # OID extends RFC operational attributes with Oracle-specific ones
+        OPERATIONAL_ATTRIBUTES: ClassVar[frozenset[str]] = (
+            FlextLdifServersRfc.Constants.OPERATIONAL_ATTRIBUTES
+            | frozenset([
+                "orclguid",
+                "orclobjectguid",
+                "orclentryid",
+                "orclaccount",
+                "pwdChangedTime",
+                "pwdHistory",
+                "pwdFailureTime",
+            ])
+        )
+
+        # NOTE: PRESERVE_ON_MIGRATION inherited from RFC.Constants
 
         # Detection constants (server-specific)
-        DETECTION_OID_PATTERN: Final[str] = r"2\.16\.840\.1\.113894\."
-        DETECTION_ATTRIBUTE_PREFIXES: Final[frozenset[str]] = frozenset([
+        DETECTION_OID_PATTERN: ClassVar[str] = r"2\.16\.840\.1\.113894\."
+        DETECTION_ATTRIBUTE_PREFIXES: ClassVar[frozenset[str]] = frozenset([
             "orcl",
             "orclguid",
         ])
-        DETECTION_OBJECTCLASS_NAMES: Final[frozenset[str]] = frozenset([
+        DETECTION_OBJECTCLASS_NAMES: ClassVar[frozenset[str]] = frozenset([
             "orcldirectory",
             "orcldomain",
             "orcldirectoryserverconfig",
         ])
-        DETECTION_DN_MARKERS: Final[frozenset[str]] = frozenset([
+        DETECTION_DN_MARKERS: ClassVar[frozenset[str]] = frozenset([
             "cn=orcl",
             "cn=subscriptions",
             "cn=oracle context",
         ])
 
         # === SCHEMA PROCESSING CONFIGURATION ===
+        # Schema field names (migrated from FlextLdifConstants.SchemaFields)
+        SCHEMA_FIELD_ATTRIBUTE_TYPES: Final[str] = "attributetypes"
+        SCHEMA_FIELD_ATTRIBUTE_TYPES_LOWER: Final[str] = "attributetypes"
+        SCHEMA_FIELD_OBJECT_CLASSES: Final[str] = "objectclasses"
+        SCHEMA_FIELD_OBJECT_CLASSES_LOWER: Final[str] = "objectclasses"
+        SCHEMA_FIELD_MATCHING_RULES: Final[str] = "matchingrules"
+        SCHEMA_FIELD_LDAP_SYNTAXES: Final[str] = "ldapsyntaxes"
+
         # Schema fields that should be processed with OID filtering
-        SCHEMA_FILTERABLE_FIELDS: Final[frozenset[str]] = frozenset([
-            FlextLdifConstants.SchemaFields.ATTRIBUTE_TYPES,
-            FlextLdifConstants.SchemaFields.ATTRIBUTE_TYPES_LOWER,
-            FlextLdifConstants.SchemaFields.OBJECT_CLASSES,
-            FlextLdifConstants.SchemaFields.OBJECT_CLASSES_LOWER,
-            FlextLdifConstants.SchemaFields.MATCHING_RULES,
-            FlextLdifConstants.SchemaFields.LDAP_SYNTAXES,
+        SCHEMA_FILTERABLE_FIELDS: ClassVar[frozenset[str]] = frozenset([
+            SCHEMA_FIELD_ATTRIBUTE_TYPES,
+            SCHEMA_FIELD_ATTRIBUTE_TYPES_LOWER,
+            SCHEMA_FIELD_OBJECT_CLASSES,
+            SCHEMA_FIELD_OBJECT_CLASSES_LOWER,
+            SCHEMA_FIELD_MATCHING_RULES,
+            SCHEMA_FIELD_LDAP_SYNTAXES,
         ])
 
         # Schema DN for OID (RFC 4512 standard)
-        SCHEMA_DN: Final[str] = "cn=subschemasubentry"
+        SCHEMA_DN: ClassVar[str] = "cn=subschemasubentry"
 
         # Oracle OID boolean attributes (non-RFC: use "0"/"1" not "TRUE"/"FALSE")
         # RFC 4517 Boolean syntax requires "TRUE" or "FALSE"
         # OID quirks convert "0"→"FALSE", "1"→"TRUE" during OID→RFC
-        BOOLEAN_ATTRIBUTES: Final[frozenset[str]] = frozenset([
+        BOOLEAN_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset([
             # Oracle DAS (Directory Application Server) boolean attributes
             "orcldasenableproductlogo",
             "orcldasenablesubscriberlogo",
@@ -144,10 +158,20 @@ class FlextLdifServersOid(FlextLdifServersRfc):
         ])
 
         # Server type variants (for compatibility checks)
-        VARIANTS: Final[frozenset[str]] = frozenset(["oid", "oracle_oid"])
+        VARIANTS: ClassVar[frozenset[str]] = frozenset(["oid", "oracle_oid"])
+
+        # Schema attribute fields that are server-specific (migrated from FlextLdifConstants.SchemaConversionMappings)
+        ATTRIBUTE_FIELDS: ClassVar[frozenset[str]] = frozenset(["usage", "x_origin"])
+
+        # ObjectClass requirements (extends RFC - allows multiple SUP)
+        OBJECTCLASS_REQUIREMENTS: ClassVar[dict[str, bool]] = {
+            "requires_sup_for_auxiliary": True,
+            "allows_multiple_sup": True,  # OID allows multiple SUP
+            "requires_explicit_structural": False,
+        }
 
         # Oracle OID specific operational attributes (extended set)
-        OID_SPECIFIC: Final[frozenset[str]] = frozenset([
+        OID_SPECIFIC: ClassVar[frozenset[str]] = frozenset([
             # Note: Using literal strings to avoid circular reference during class definition
             # These correspond to Constants.ACL_ATTRIBUTE_NAME and Constants.ORCLENTRYLEVELACI
             "orclaci",
@@ -159,7 +183,7 @@ class FlextLdifServersOid(FlextLdifServersRfc):
         ])
 
         # Oracle OID specific attributes (categorization - migrated from FlextLdifConstants.AttributeCategories)
-        OID_SPECIFIC_ATTRIBUTES: Final[frozenset[str]] = frozenset([
+        OID_SPECIFIC_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset([
             # Note: Using literal strings to avoid circular reference during class definition
             # These correspond to Constants.ACL_ATTRIBUTE_NAME and Constants.ORCLENTRYLEVELACI
             "orcloid",  # Oracle OID identifier
@@ -178,9 +202,30 @@ class FlextLdifServersOid(FlextLdifServersRfc):
         CAN_NORMALIZE_FROM: ClassVar[frozenset[str]] = frozenset(["oid"])
         CAN_DENORMALIZE_TO: ClassVar[frozenset[str]] = frozenset(["oid", "rfc"])
 
+        # Server detection patterns and weights (migrated from FlextLdifConstants.ServerDetection)
+        DETECTION_PATTERN: ClassVar[str] = r"2\.16\.840\.1\.113894\."
+        DETECTION_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset([
+            "orclOID",
+            "orclGUID",
+            "orclPassword",
+            "orclaci",
+            "orclentrylevelaci",
+            "orcldaslov",
+        ])
+        DETECTION_WEIGHT: ClassVar[int] = 10
+
         # Oracle OID metadata keys (migrated from FlextLdifConstants.QuirkMetadataKeys)
-        OID_SPECIFIC_RIGHTS: Final[str] = "oid_specific_rights"
-        OID_TO_OUD_TRANSFORMED: Final[str] = "oid_to_oud_transformed"
+        OID_SPECIFIC_RIGHTS: ClassVar[str] = "oid_specific_rights"
+        OID_TO_OUD_TRANSFORMED: ClassVar[str] = "oid_to_oud_transformed"
+
+        # Permission names inherited from RFC.Constants
+        # (PERMISSION_READ, PERMISSION_WRITE, PERMISSION_ADD, PERMISSION_DELETE, PERMISSION_SEARCH, PERMISSION_COMPARE)
+
+        # ACL subject types (migrated from FlextLdifConstants.AclSubjectTypes)
+        ACL_SUBJECT_TYPE_USER: ClassVar[str] = "user"
+        ACL_SUBJECT_TYPE_GROUP: ClassVar[str] = "group"
+        ACL_SUBJECT_TYPE_SELF: ClassVar[str] = "self"
+        ACL_SUBJECT_TYPE_ANONYMOUS: ClassVar[str] = "anonymous"
 
         # ACL parsing patterns (migrated from _parse_acl method)
         ACL_TYPE_PATTERN: Final[str] = r"^(orclaci|orclentrylevelaci):"
@@ -191,6 +236,14 @@ class FlextLdifServersOid(FlextLdifServersRfc):
         ACL_PERMISSIONS_PATTERN: Final[str] = r"\(([^)]+)\)(?:\s*$)"
         ACL_FILTER_PATTERN: Final[str] = r"filter=(\([^)]*(?:\([^)]*\)[^)]*)*\))"
         ACL_CONSTRAINT_PATTERN: Final[str] = r"added_object_constraint=\(([^)]+)\)"
+
+        # ACL pattern dictionary keys (used in _get_oid_patterns)
+        ACL_PATTERN_KEY_TYPE: Final[str] = "acl_type"
+        ACL_PATTERN_KEY_TARGET: Final[str] = "target"
+        ACL_PATTERN_KEY_SUBJECT: Final[str] = "subject"
+        ACL_PATTERN_KEY_PERMISSIONS: Final[str] = "permissions"
+        ACL_PATTERN_KEY_FILTER: Final[str] = "filter"
+        ACL_PATTERN_KEY_CONSTRAINT: Final[str] = "constraint"
 
         # ObjectClass typo fix constant (migrated from _post_write_objectclass method)
         OBJECTCLASS_TYPO_AUXILLARY: Final[str] = "AUXILLARY"
@@ -210,14 +263,14 @@ class FlextLdifServersOid(FlextLdifServersRfc):
         ZERO_OID: Final[str] = "0"
 
         # Boolean conversion mappings (using Constants for consistency)
-        OID_TO_RFC: Final[dict[str, str]] = {
+        OID_TO_RFC: ClassVar[dict[str, str]] = {
             ONE_OID: "TRUE",  # Use Constants.ONE_OID
             ZERO_OID: "FALSE",  # Use Constants.ZERO_OID
             "true": "TRUE",
             "false": "FALSE",
         }
 
-        RFC_TO_OID: Final[dict[str, str]] = {
+        RFC_TO_OID: ClassVar[dict[str, str]] = {
             "TRUE": ONE_OID,  # Use Constants.ONE_OID
             "FALSE": ZERO_OID,  # Use Constants.ZERO_OID
             "true": ONE_OID,  # Use Constants.ONE_OID
@@ -225,13 +278,13 @@ class FlextLdifServersOid(FlextLdifServersRfc):
         }
 
         # Universal boolean check
-        OID_TRUE_VALUES: Final[frozenset[str]] = frozenset([
+        OID_TRUE_VALUES: ClassVar[frozenset[str]] = frozenset([
             ONE_OID,
             "true",
             "True",
             "TRUE",
         ])
-        OID_FALSE_VALUES: Final[frozenset[str]] = frozenset([
+        OID_FALSE_VALUES: ClassVar[frozenset[str]] = frozenset([
             ZERO_OID,
             "false",
             "False",
@@ -239,7 +292,7 @@ class FlextLdifServersOid(FlextLdifServersRfc):
         ])
 
         # Matching rule replacement mappings for invalid substr rules
-        INVALID_SUBSTR_RULES: Final[dict[str, str | None]] = {
+        INVALID_SUBSTR_RULES: ClassVar[dict[str, str | None]] = {
             "caseIgnoreMatch": "caseIgnoreSubstringsMatch",
             "caseExactMatch": "caseExactSubstringsMatch",
             "distinguishedNameMatch": None,
@@ -249,20 +302,20 @@ class FlextLdifServersOid(FlextLdifServersRfc):
 
         # === OID ACL SUBJECT TRANSFORMATIONS (for OID → RFC → OUD conversion) ===
         # Subject type transformations from OID format to RFC format
-        OID_TO_RFC_SUBJECTS: Final[dict[str, tuple[str, str]]] = {
+        OID_TO_RFC_SUBJECTS: ClassVar[dict[str, tuple[str, str]]] = {
             "dynamic_group_dnattr": ("group_membership", 'memberOf="{value}"'),
             "dynamic_group_guidattr": ("user_attribute", 'guidattr="{value}"'),
             "dynamic_group_attr": ("group_attribute", 'groupattr="{value}"'),
         }
 
         # Subject type transformations from RFC format back to OID format
-        RFC_TO_OID_SUBJECTS: Final[dict[str, tuple[str, str]]] = {
+        RFC_TO_OID_SUBJECTS: ClassVar[dict[str, tuple[str, str]]] = {
             "group_membership": ("group_dn", 'group="{value}"'),
         }
 
         # === OID ATTRIBUTE TRANSFORMATIONS ===
         # Maps OID-specific attributes to RFC-compliant attributes during normalization
-        ATTRIBUTE_TRANSFORMATION_OID_TO_RFC: Final[dict[str, str]] = {
+        ATTRIBUTE_TRANSFORMATION_OID_TO_RFC: ClassVar[dict[str, str]] = {
             "orclguid": "entryUUID",
             "orclobjectguid": "entryUUID",
             "createTimestamp": "createTimestamp",  # Preserved as-is
@@ -270,19 +323,123 @@ class FlextLdifServersOid(FlextLdifServersRfc):
         }
 
         # Maps RFC attributes back to OID-specific attributes during denormalization
-        ATTRIBUTE_TRANSFORMATION_RFC_TO_OID: Final[dict[str, str]] = {
+        ATTRIBUTE_TRANSFORMATION_RFC_TO_OID: ClassVar[dict[str, str]] = {
             "entryUUID": "orclguid",
         }
 
-    # =========================================================================
-    # Class-level attributes for server identification (from Constants)
-    # =========================================================================
-    server_type: ClassVar[str] = Constants.SERVER_TYPE
-    priority: ClassVar[int] = Constants.PRIORITY
+        # === ACL FORMATTING CONSTANTS ===
+        ACL_ACCESS_TO: Final[str] = "access to"
+        ACL_BY: Final[str] = "by"
+        ACL_FORMAT_DEFAULT: Final[str] = "default"
+        ACL_FORMAT_ONELINE: Final[str] = "oneline"
+        ACL_NAME: Final[str] = "OID ACL"
 
-    def __init__(self) -> None:
-        """Initialize Oracle OID server quirks."""
-        super().__init__()
+        # === ACL SUBJECT PATTERNS ===
+        # Subject detection patterns for OID ACL parsing
+        ACL_SUBJECT_PATTERNS: ClassVar[dict[str, tuple[str | None, str, str]]] = {
+            " by self ": (None, "self", "ldap:///self"),
+            " by self)": (None, "self", "ldap:///self"),
+            ' by "': (r'by\s+"([^"]+)"', "user_dn", "ldap:///{0}"),
+            " by group=": (r'by\s+group\s*=\s*"([^"]+)"', "group_dn", "ldap:///{0}"),
+            " by dnattr=": (r"by\s+dnattr\s*=\s*\(([^)]+)\)", "dn_attr", "{0}#LDAPURL"),
+            " by guidattr=": (r"by\s+guidattr\s*=\s*\(([^)]+)\)", "guid_attr", "{0}#USERDN"),
+            " by groupattr=": (r"by\s+groupattr\s*=\s*\(([^)]+)\)", "group_attr", "{0}#GROUPDN"),
+        }
+
+        # === ACL SUBJECT FORMATTERS ===
+        # Subject formatters for OID ACL writing
+        ACL_SUBJECT_FORMATTERS: ClassVar[dict[str, tuple[str, bool]]] = {
+            "self": ("self", False),
+            "user_dn": ('"{0}"', True),
+            "group_dn": ('group="{0}"', True),
+            "dn_attr": ("dnattr=({0})", False),
+            "guid_attr": ("guidattr=({0})", False),
+            "group_attr": ("groupattr=({0})", False),
+        }
+
+        # === ACL PERMISSION MAPPINGS ===
+        # Permission name mappings for OID ACL parsing
+        ACL_PERMISSION_MAPPING: ClassVar[dict[str, list[str]]] = {
+            "all": ["read", "write", "add", "delete", "search", "compare", "proxy"],
+            "browse": ["read", "search"],  # OID: browse maps to read+search
+            "read": ["read"],
+            "write": ["write"],
+            "add": ["add"],
+            "delete": ["delete"],
+            "search": ["search"],
+            "compare": ["compare"],
+            "selfwrite": ["self_write"],
+            "proxy": ["proxy"],
+        }
+
+        # === ACL PERMISSION NAMES ===
+        # Permission name mappings for OID ACL writing
+        ACL_PERMISSION_NAMES: ClassVar[dict[str, str]] = {
+            "read": "read",
+            "write": "write",
+            "add": "add",
+            "delete": "delete",
+            "search": "search",
+            "compare": "compare",
+            "self_write": "selfwrite",
+            "proxy": "proxy",
+        }
+
+        # === OID SUPPORTED PERMISSIONS ===
+        # Permissions that OID supports (migrated from FlextLdifConstants.AclPermissionCompatibility)
+        SUPPORTED_PERMISSIONS: ClassVar[frozenset[str]] = frozenset([
+            "read",
+            "write",
+            "add",
+            "delete",
+            "search",
+            "compare",
+            "self_write",
+            "proxy",
+            "browse",
+            "auth",
+            "all",
+            "none",
+        ])
+
+        # === OID PERMISSION ALTERNATIVES ===
+        # Permission alternatives when converting FROM OID to other servers
+        # Format: (permission, target_server) -> [alternative_permissions]
+        # (migrated from FlextLdifConstants.AclPermissionCompatibility)
+        PERMISSION_ALTERNATIVES: ClassVar[dict[tuple[str, str], list[str]]] = {
+            ("self_write", "oud"): ["write"],
+            ("self_write", "oracle_oud"): ["write"],
+            ("self_write", "rfc"): ["write"],
+            ("self_write", "389ds"): ["write"],
+            ("self_write", "openldap"): ["write"],
+            ("proxy", "oud"): [],  # No equivalent
+            ("proxy", "oracle_oud"): [],
+            ("proxy", "rfc"): [],
+            ("proxy", "openldap"): [],
+            ("browse", "oud"): ["read", "search"],
+            ("browse", "oracle_oud"): ["read", "search"],
+            ("browse", "rfc"): ["read", "search"],
+            ("browse", "389ds"): ["read", "search"],
+            ("browse", "openldap"): ["read", "search"],
+            ("auth", "oud"): ["compare"],
+            ("auth", "oracle_oud"): ["compare"],
+            ("auth", "rfc"): ["compare"],
+        }
+
+        # === OID ATTRIBUTE ALIASES ===
+        # Attribute aliases for OID (multiple names for same semantic attribute)
+        # (migrated from FlextLdifConstants.SchemaConversionMappings)
+        ATTRIBUTE_ALIASES: ClassVar[dict[str, list[str]]] = {
+            "cn": ["commonName"],
+            "mail": ["rfc822Mailbox"],
+            "uid": ["userid"],
+        }
+
+    # =========================================================================
+    # Server identification - accessed via Constants via properties in base.py
+    # =========================================================================
+    # NOTE: server_type and priority are accessed via properties in base.py
+    # which read from Constants.SERVER_TYPE and Constants.PRIORITY
 
     # === PUBLIC INTERFACE FOR SCHEMA CONFIGURATION ===
 
@@ -305,15 +462,18 @@ class FlextLdifServersOid(FlextLdifServersRfc):
 
         """
         return cls.Constants.SCHEMA_DN
-        # Use object.__setattr__ to bypass Pydantic validation for dynamic attributes
-        # Pass server_type and priority to nested class instances
-        object.__setattr__(self, "schema", self.Schema())
-        object.__setattr__(self, "acl", self.Acl())
-        object.__setattr__(self, "entry", self.Entry())
-        return None
 
-    class Schema(FlextLdifServersRfc.Schema):
-        """Oracle OID schema quirks implementation."""
+    class Schema(
+        FlextLdifServersRfc.Schema,
+        FlextLdifUtilities.Detection.OidPatternMixin,  # type: ignore[name-defined]
+    ):
+        """Oracle OID schema quirks implementation.
+
+        Inherits OID pattern detection from OidPatternMixin, which provides
+        can_handle_attribute() and can_handle_objectclass() methods that
+        automatically detect OID-specific attributes using the pattern
+        defined in Constants.DETECTION_OID_PATTERN.
+        """
 
         def __init__(self, **kwargs: object) -> None:
             """Initialize OID schema quirk.
@@ -327,38 +487,6 @@ class FlextLdifServersOid(FlextLdifServersRfc):
             """
             super().__init__(**kwargs)
 
-        def can_handle_attribute(
-            self, attr_definition: str | FlextLdifModels.SchemaAttribute
-        ) -> bool:
-            """Check if this attribute should be processed by OID quirks.
-
-            Only handles Oracle OID-specific attributes (OID namespace 2.16.840.1.113894.*).
-            Standard RFC attributes are handled by the base RFC quirks.
-
-            Args:
-                attr_definition: The attribute definition string or model to check.
-
-            Returns:
-                True if attribute is Oracle OID-specific (namespace 2.16.840.1.113894.*)
-
-            """
-            if isinstance(attr_definition, str):
-                # Check if string contains OID pattern
-                return bool(
-                    re.search(
-                        FlextLdifServersOid.Constants.DETECTION_OID_PATTERN,
-                        attr_definition,
-                    )
-                )
-            # Check if model has OID pattern in oid field
-            return bool(
-                attr_definition.oid
-                and re.search(
-                    FlextLdifServersOid.Constants.DETECTION_OID_PATTERN,
-                    attr_definition.oid,
-                )
-            )
-
         # Schema parsing and conversion methods
         # OVERRIDDEN METHODS (from FlextLdifServersBase.Schema)
         # These methods override the base class with Oracle OID-specific logic:
@@ -370,6 +498,7 @@ class FlextLdifServersOid(FlextLdifServersRfc):
         # - should_filter_out_objectclass(): Returns False (accept all in OID mode)
         # - create_metadata(): Creates OID-specific metadata
 
+        @FlextLdifUtilities.Decorators.attach_parse_metadata("oid")
         def _parse_attribute(
             self,
             attr_definition: str,
@@ -393,7 +522,7 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                 result = FlextLdifUtilities.Parser.parse_rfc_attribute(
                     attr_definition,
                     case_insensitive=True,  # OID uses case-insensitive NAME
-                    _allow_syntax_quotes=True,  # OID allows 'OID' format for SYNTAX
+                    allow_syntax_quotes=True,  # OID allows 'OID' format for SYNTAX
                 )
 
                 if not result.is_success:
@@ -440,38 +569,7 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                     f"OID attribute parsing failed: {e}",
                 )
 
-        def can_handle_objectclass(
-            self, oc_definition: str | FlextLdifModels.SchemaObjectClass
-        ) -> bool:
-            """Check if this objectClass should be processed by OID quirks.
-
-            Only handles Oracle OID-specific objectClasses (OID namespace 2.16.840.1.113894.*).
-            Standard RFC objectClasses are handled by the base RFC quirks.
-
-            Args:
-                oc_definition: The objectClass definition string or model to check.
-
-            Returns:
-                True if objectClass is Oracle OID-specific (namespace 2.16.840.1.113894.*)
-
-            """
-            if isinstance(oc_definition, str):
-                # Check if string contains OID pattern
-                return bool(
-                    re.search(
-                        FlextLdifServersOid.Constants.DETECTION_OID_PATTERN,
-                        oc_definition,
-                    )
-                )
-            # Check if model has OID pattern in oid field
-            return bool(
-                oc_definition.oid
-                and re.search(
-                    FlextLdifServersOid.Constants.DETECTION_OID_PATTERN,
-                    oc_definition.oid,
-                )
-            )
-
+        @FlextLdifUtilities.Decorators.attach_parse_metadata("oid")
         def _parse_objectclass(
             self,
             oc_definition: str,
@@ -493,7 +591,7 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                 # Use RFC baseline parser with lenient mode for OID's case-insensitive NAME
                 result = FlextLdifUtilities.Parser.parse_rfc_objectclass(
                     oc_definition,
-                    _case_insensitive=True,  # OID uses case-insensitive NAME
+                    case_insensitive=True,  # OID uses case-insensitive NAME
                 )
 
                 if not result.is_success:
@@ -569,12 +667,12 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                 replacement = invalid_substr_rules[fixed_substr]
                 if replacement is not None:
                     logger.debug(
-                        f"Replacing invalid SUBSTR rule {fixed_substr} with {replacement}"
+                        "Replacing invalid SUBSTR rule %s with %s", fixed_substr, replacement,
                     )
                     fixed_substr = replacement
                 else:
                     logger.debug(
-                        f"Invalid SUBSTR rule {fixed_substr} has no replacement, keeping as-is"
+                        "Invalid SUBSTR rule %s has no replacement, keeping as-is", fixed_substr,
                     )
 
             # Check if this is a boolean attribute for special handling during write
@@ -586,7 +684,7 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                 }
             )
             if is_boolean:
-                logger.debug(f"Identified boolean attribute: {fixed_name}")
+                logger.debug("Identified boolean attribute: %s", fixed_name)
 
             # Create new attribute model with fixed values
             return FlextLdifModels.SchemaAttribute(
@@ -625,7 +723,7 @@ class FlextLdifServersOid(FlextLdifServersRfc):
             )
             if fixed != written_str:
                 logger.debug(
-                    f"Fixed {FlextLdifServersOid.Constants.OBJECTCLASS_TYPO_AUXILLARY} typo in objectClass definition"
+                    f"Fixed {FlextLdifServersOid.Constants.OBJECTCLASS_TYPO_AUXILLARY} typo in objectClass definition",
                 )
             return fixed
 
@@ -650,28 +748,22 @@ class FlextLdifServersOid(FlextLdifServersRfc):
 
             """
             dk = FlextLdifConstants.DictKeys
-            try:
-                # Use FlextLdifUtilities.Schema for case-insensitive line parsing
-                attributes = FlextLdifUtilities.Schema.extract_attributes_from_lines(
+            # Use FlextLdifUtilities.Schema for case-insensitive line parsing
+            attributes = FlextLdifUtilities.Schema.extract_attributes_from_lines(
+                ldif_content,
+                self._parse_attribute,
+            )
+            objectclasses = (
+                FlextLdifUtilities.Schema.extract_objectclasses_from_lines(
                     ldif_content,
-                    self._parse_attribute,
+                    self._parse_objectclass,
                 )
-                objectclasses = (
-                    FlextLdifUtilities.Schema.extract_objectclasses_from_lines(
-                        ldif_content,
-                        self._parse_objectclass,
-                    )
-                )
+            )
 
-                return FlextResult[FlextLdifTypes.Models.EntryAttributesDict].ok({
-                    dk.ATTRIBUTES: attributes,
-                    "objectclasses": objectclasses,
-                })
-
-            except Exception as e:
-                return FlextResult[FlextLdifTypes.Models.EntryAttributesDict].fail(
-                    f"OID schema extraction failed: {e}",
-                )
+            return FlextResult[FlextLdifTypes.Models.EntryAttributesDict].ok({
+                dk.ATTRIBUTES: attributes,
+                "objectclasses": objectclasses,
+            })
 
     class Acl(FlextLdifServersRfc.Acl):
         """Oracle OID ACL quirk using universal parser with OID-specific configuration.
@@ -699,17 +791,17 @@ class FlextLdifServersOid(FlextLdifServersRfc):
         # - write_acl(): Serializes RFC-compliant model to OID ACL format
         # - get_acl_attribute_name(): Returns "orclaci" (OID-specific, overridden)
 
-        def can_handle(self, acl: str | FlextLdifModels.Acl) -> bool:
+        def can_handle(self, acl_line: str | FlextLdifModels.Acl) -> bool:
             """Check if this is an Oracle OID ACL (public method).
 
             Args:
-                acl: ACL line string or Acl model to check.
+                acl_line: ACL line string or Acl model to check.
 
             Returns:
                 True if this is Oracle OID ACL format
 
             """
-            return self.can_handle(acl)
+            return self.can_handle_acl(acl_line)
 
         def can_handle_acl(self, acl_line: str | FlextLdifModels.Acl) -> bool:
             """Check if this is an Oracle OID ACL.
@@ -741,6 +833,7 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                 f"{FlextLdifServersOid.Constants.ORCLENTRYLEVELACI}:",
             ))
 
+        @FlextLdifUtilities.Decorators.attach_parse_metadata("oid")
         def _parse_acl(self, acl_line: str) -> FlextResult[FlextLdifModels.Acl]:
             """Parse Oracle OID ACL string to RFC-compliant internal model.
 
@@ -791,41 +884,23 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                 target_dn, target_attrs = FlextLdifUtilities.ACL.extract_oid_target(acl_line)
 
                 # Detect subject using DRY utility with OID patterns
-                subject_patterns = {
-                    " by self ": (None, "self", "ldap:///self"),
-                    " by self)": (None, "self", "ldap:///self"),
-                    ' by "': (r'by\s+"([^"]+)"', "user_dn", "ldap:///{0}"),
-                    " by group=": (r'by\s+group\s*=\s*"([^"]+)"', "group_dn", "ldap:///{0}"),
-                    " by dnattr=": (r'by\s+dnattr\s*=\s*\(([^)]+)\)', "dn_attr", "{0}#LDAPURL"),
-                    " by guidattr=": (r'by\s+guidattr\s*=\s*\(([^)]+)\)', "guid_attr", "{0}#USERDN"),
-                    " by groupattr=": (r'by\s+groupattr\s*=\s*\(([^)]+)\)', "group_attr", "{0}#GROUPDN"),
-                }
+                subject_patterns: dict[str, tuple[str | None, str, str]] = (
+                    FlextLdifServersOid.Constants.ACL_SUBJECT_PATTERNS
+                )
                 subject_type, subject_value = FlextLdifUtilities.ACL.detect_oid_subject(
                     acl_line,
                     subject_patterns,
                 )
 
                 # Parse permissions using DRY utility
-                permission_mapping = {
-                    "all": ["read", "write", "add", "delete", "search", "compare", "proxy"],
-                    "browse": ["read", "search"],  # OID: browse maps to read+search
-                    "read": ["read"],
-                    "write": ["write"],
-                    "add": ["add"],
-                    "delete": ["delete"],
-                    "search": ["search"],
-                    "compare": ["compare"],
-                    "selfwrite": ["self_write"],
-                    "proxy": ["proxy"],
-                }
                 perms_dict = FlextLdifUtilities.ACL.parse_oid_permissions(
                     acl_line,
-                    permission_mapping,
+                    FlextLdifServersOid.Constants.ACL_PERMISSION_MAPPING,
                 )
 
                 # Create ACL model with parsed data
                 acl_model = FlextLdifModels.Acl(
-                    name="OID ACL",
+                    name=FlextLdifServersOid.Constants.ACL_NAME,
                     target=FlextLdifModels.AclTarget(target_dn=target_dn, attributes=target_attrs or []),
                     subject=FlextLdifModels.AclSubject(
                         subject_type=subject_type,
@@ -860,15 +935,32 @@ class FlextLdifServersOid(FlextLdifServersRfc):
 
             """
             return {
-                "acl_type": FlextLdifServersOid.Constants.ACL_TYPE_PATTERN,
-                "target": FlextLdifServersOid.Constants.ACL_TARGET_PATTERN,
-                "subject": FlextLdifServersOid.Constants.ACL_SUBJECT_PATTERN,
-                "permissions": FlextLdifServersOid.Constants.ACL_PERMISSIONS_PATTERN,
-                "filter": FlextLdifServersOid.Constants.ACL_FILTER_PATTERN,
-                "constraint": FlextLdifServersOid.Constants.ACL_CONSTRAINT_PATTERN,
+                FlextLdifServersOid.Constants.ACL_PATTERN_KEY_TYPE: (
+                    FlextLdifServersOid.Constants.ACL_TYPE_PATTERN
+                ),
+                FlextLdifServersOid.Constants.ACL_PATTERN_KEY_TARGET: (
+                    FlextLdifServersOid.Constants.ACL_TARGET_PATTERN
+                ),
+                FlextLdifServersOid.Constants.ACL_PATTERN_KEY_SUBJECT: (
+                    FlextLdifServersOid.Constants.ACL_SUBJECT_PATTERN
+                ),
+                FlextLdifServersOid.Constants.ACL_PATTERN_KEY_PERMISSIONS: (
+                    FlextLdifServersOid.Constants.ACL_PERMISSIONS_PATTERN
+                ),
+                FlextLdifServersOid.Constants.ACL_PATTERN_KEY_FILTER: (
+                    FlextLdifServersOid.Constants.ACL_FILTER_PATTERN
+                ),
+                FlextLdifServersOid.Constants.ACL_PATTERN_KEY_CONSTRAINT: (
+                    FlextLdifServersOid.Constants.ACL_CONSTRAINT_PATTERN
+                ),
             }
 
-        def _write_acl(self, acl_data: FlextLdifModels.Acl, format_option: str = "default") -> FlextResult[str]:
+        @FlextLdifUtilities.Decorators.attach_write_metadata("oid")
+        def _write_acl(
+            self,
+            acl_data: FlextLdifModels.Acl,
+            format_option: str | None = None,
+        ) -> FlextResult[str]:
             """Write ACL to OID orclaci format with formatting options.
 
             Serializes the RFC-compliant internal model to Oracle OID orclaci format string.
@@ -881,97 +973,62 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                 FlextResult with OID orclaci formatted string
 
             """
-            try:
-                # If raw_acl is available and already in OID format, use it
-                if acl_data.raw_acl and acl_data.raw_acl.startswith(
-                    FlextLdifServersOid.Constants.ORCLACI + ":"
-                ):
-                    return FlextResult[str].ok(acl_data.raw_acl)
+            # Get default format if not provided
+            if format_option is None:
+                format_option = FlextLdifServersOid.Constants.ACL_FORMAT_DEFAULT
 
-                # Build orclaci format using DRY utilities
-                acl_parts = []
-                acl_parts.append(FlextLdifServersOid.Constants.ORCLACI + ":")
-                acl_parts.append("access to")
+            # If raw_acl is available and already in OID format, use it
+            if acl_data.raw_acl and acl_data.raw_acl.startswith(
+                FlextLdifServersOid.Constants.ORCLACI + ":",
+            ):
+                return FlextResult[str].ok(acl_data.raw_acl)
 
-                # Format target clause using DRY utility
-                target_str = FlextLdifUtilities.ACL.format_oid_target(acl_data.target)
-                acl_parts.append(target_str)
+            # Build orclaci format using DRY utilities
+            acl_parts = [
+                FlextLdifServersOid.Constants.ORCLACI + ":",
+                FlextLdifServersOid.Constants.ACL_ACCESS_TO,
+            ]
 
-                # Format subject clause using DRY utility
-                if acl_data.subject:
-                    acl_parts.append("by")
-                    subject_formatters = {
-                        "self": ("self", False),
-                        "user_dn": ('"{0}"', True),
-                        "group_dn": ('group="{0}"', True),
-                        "dn_attr": ("dnattr=({0})", False),
-                        "guid_attr": ("guidattr=({0})", False),
-                        "group_attr": ("groupattr=({0})", False),
-                    }
-                    subject_str = FlextLdifUtilities.ACL.format_oid_subject(
-                        acl_data.subject,
-                        subject_formatters,
-                    )
-                    acl_parts.append(subject_str)
+            # Format target clause using DRY utility
+            target_str = FlextLdifUtilities.ACL.format_oid_target(acl_data.target)
+            acl_parts.append(target_str)
 
-                    # Format permissions clause using DRY utility
-                    permission_names = {
-                        "read": "read",
-                        "write": "write",
-                        "add": "add",
-                        "delete": "delete",
-                        "search": "search",
-                        "compare": "compare",
-                        "self_write": "selfwrite",
-                        "proxy": "proxy",
-                    }
-                    perms_str = FlextLdifUtilities.ACL.format_oid_permissions(
-                        acl_data.permissions,
-                        permission_names,
-                    )
-                    acl_parts.append(perms_str)
+            # Format subject clause using DRY utility
+            if acl_data.subject:
+                acl_parts.append(FlextLdifServersOid.Constants.ACL_BY)
+                subject_str = FlextLdifUtilities.ACL.format_oid_subject(
+                    acl_data.subject,
+                    FlextLdifServersOid.Constants.ACL_SUBJECT_FORMATTERS,
+                )
+                acl_parts.append(subject_str)
 
-                # Join parts based on formatting option
-                if format_option == "oneline":
-                    # Single line with no breaks
-                    orclaci_str = " ".join(acl_parts)
-                else:
-                    # Default: single line (standard orclaci format)
-                    orclaci_str = " ".join(acl_parts)
+                # Format permissions clause using DRY utility
+                perms_str = FlextLdifUtilities.ACL.format_oid_permissions(
+                    acl_data.permissions,
+                    FlextLdifServersOid.Constants.ACL_PERMISSION_NAMES,
+                )
+                acl_parts.append(perms_str)
 
-                return FlextResult[str].ok(orclaci_str)
+            # Join parts based on formatting option
+            if format_option == FlextLdifServersOid.Constants.ACL_FORMAT_ONELINE:
+                # Single line with no breaks
+                orclaci_str = " ".join(acl_parts)
+            else:
+                # Default: single line (standard orclaci format)
+                orclaci_str = " ".join(acl_parts)
 
-            except Exception:
-                logger.exception("OID ACL write failed")
-                # Fall back to parent's raw_acl approach
-                return super()._write_acl(acl_data)
+            return FlextResult[str].ok(orclaci_str)
 
         def can_handle_attribute(
-            self, _attribute: FlextLdifModels.SchemaAttribute
+            self, attribute: FlextLdifModels.SchemaAttribute,
         ) -> bool:
             """Check if this ACL quirk should be aware of a specific attribute definition."""
+            _ = attribute
             return False
 
         def can_handle_objectclass(
-            self, _objectclass: FlextLdifModels.SchemaObjectClass
+            self, objectclass: FlextLdifModels.SchemaObjectClass,
         ) -> bool:
             """Check if this ACL quirk should be aware of a specific objectClass definition."""
+            _ = objectclass
             return False
-
-    def extract_schemas_from_ldif(
-        self, ldif_content: str
-    ) -> FlextResult[FlextLdifTypes.Models.EntryAttributesDict]:
-        """Public API: Extract and parse all schema definitions from LDIF content.
-
-        Delegates to the Schema's private _extract_schemas_from_ldif() method.
-
-        Args:
-            ldif_content: Raw LDIF content containing schema definitions
-
-        Returns:
-            FlextResult containing extracted attributes and objectclasses
-            as a dictionary with ATTRIBUTES and OBJECTCLASSES lists.
-
-        """
-        schema_instance = self.Schema()
-        return schema_instance._extract_schemas_from_ldif(ldif_content)  # noqa: SLF001

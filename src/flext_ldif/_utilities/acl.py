@@ -357,7 +357,7 @@ class FlextLdifUtilitiesACL:
     @staticmethod
     def detect_oid_subject(
         acl_line: str,
-        subject_patterns: dict[str, tuple[str, str, str]],
+        subject_patterns: dict[str, tuple[str | None, str, str]],
     ) -> tuple[str, str]:
         r"""Detect OID ACL subject type and value using pattern matching.
 

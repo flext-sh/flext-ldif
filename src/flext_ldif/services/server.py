@@ -159,6 +159,41 @@ class FlextLdifServer:
         except (ValueError, TypeError, AttributeError) as e:
             return FlextResult[None].fail(f"Failed to register quirk: {e}")
 
+    def _validate_protocols(self, quirk: FlextLdifServersBase) -> FlextResult[None]:
+        """Validate that quirk has all required nested quirks (schema, acl, entry).
+
+        Args:
+            quirk: Quirk instance to validate
+
+        Returns:
+            FlextResult indicating success or failure
+
+        """
+        try:
+            # Check that nested quirk classes exist (capitalized class names)
+            quirk_class = type(quirk)
+            if not hasattr(quirk_class, "Schema"):
+                return FlextResult[None].fail("Missing Schema nested class")
+            if not hasattr(quirk_class, "Acl"):
+                return FlextResult[None].fail("Missing Acl nested class")
+            if not hasattr(quirk_class, "Entry"):
+                return FlextResult[None].fail("Missing Entry nested class")
+
+            # Verify nested classes are properly defined
+            schema_class = getattr(quirk_class, "Schema", None)
+            acl_class = getattr(quirk_class, "Acl", None)
+            entry_class = getattr(quirk_class, "Entry", None)
+
+            if schema_class is None or acl_class is None or entry_class is None:
+                return FlextResult[None].fail("Nested quirk classes not found")
+
+            if not inspect.isclass(schema_class) or not inspect.isclass(acl_class) or not inspect.isclass(entry_class):
+                return FlextResult[None].fail("Nested quirks are not classes")
+
+            return FlextResult[None].ok(None)
+        except Exception as e:
+            return FlextResult[None].fail(f"Protocol validation error: {e}")
+
     def _normalize_server_type(self, server_type: str) -> str:
         """Normalize server type to canonical short form."""
         return FlextLdifConstants.ServerTypes.FROM_LONG.get(server_type, server_type)
@@ -393,24 +428,13 @@ class FlextLdifServer:
         return None
 
     # =========================================================================
-    # BACKWARD COMPATIBILITY - Old find_* method names
+    # BACKWARD COMPATIBILITY - Old find_* method names (removed duplicates)
     # =========================================================================
-
-    def find_schema_for_attribute(
-        self,
-        server_type: str,
-        attr_definition: str,
-    ) -> FlextLdifServersBase.Schema | None:
-        """Deprecated: Use find_schema_for_attribute() instead."""
-        return self.find_schema_for_attribute(server_type, attr_definition)
-
-    def find_schema_for_objectclass(
-        self,
-        server_type: str,
-        oc_definition: str,
-    ) -> FlextLdifServersBase.Schema | None:
-        """Deprecated: Use find_schema_for_objectclass() instead."""
-        return self.find_schema_for_objectclass(server_type, oc_definition)
+    # NOTE: Removed duplicate method definitions to fix F811 errors:
+    # - find_schema_for_attribute() already defined at line 338
+    # - find_schema_for_objectclass() already defined at line 358
+    # - find_acl_for_line() already defined at line 378
+    # - find_entry_for_data() already defined at line 398
 
     def find_acl(
         self,
