@@ -55,7 +55,7 @@ class TestOudToOidSchemaMigration:
         )
 
         # Step 1: Parse with OUD quirk
-        parse_result = oud_quirk.parse_attribute(oud_attr)
+        parse_result = oud_quirk.parse(oud_attr)
         assert parse_result.is_success, f"OUD parse failed: {parse_result.error}"
         oud_parsed = parse_result.unwrap()
 
@@ -70,7 +70,7 @@ class TestOudToOidSchemaMigration:
         oid_data = oid_result.unwrap()
 
         # Step 4: Write OID format to string
-        write_result = oid_quirk.write_attribute_to_rfc(oid_data)
+        write_result = oid_quirk.write(oid_data)
         assert write_result.is_success, f"OID write failed: {write_result.error}"
         oid_attr = write_result.unwrap()
 
@@ -93,7 +93,7 @@ class TestOudToOidSchemaMigration:
         )
 
         # Step 1: Parse with OUD quirk
-        parse_result = oud_quirk.parse_objectclass(oud_oc)
+        parse_result = oud_quirk.parse(oud_oc)
         assert parse_result.is_success, f"OUD parse failed: {parse_result.error}"
         oud_parsed = parse_result.unwrap()
 
@@ -108,7 +108,7 @@ class TestOudToOidSchemaMigration:
         oid_data = oid_result.unwrap()
 
         # Step 4: Write OID format to string
-        write_result = oid_quirk.write_objectclass_to_rfc(oid_data)
+        write_result = oid_quirk.write(oid_data)
         assert write_result.is_success, f"OID write failed: {write_result.error}"
         oid_oc = write_result.unwrap()
 
@@ -138,7 +138,7 @@ class TestOudToOidSchemaMigration:
         migrated_count = 0
         for oud_attr in oracle_attrs[:10]:  # Test first 10 attributes
             # Parse with OUD
-            parse_result = oud_quirk.parse_attribute(oud_attr)
+            parse_result = oud_quirk.parse(oud_attr)
             if not parse_result.is_success:
                 continue
 
@@ -154,7 +154,7 @@ class TestOudToOidSchemaMigration:
                 continue
 
             # Write OID format
-            write_result = oid_quirk.write_attribute_to_rfc(oid_result.unwrap())
+            write_result = oid_quirk.write(oid_result.unwrap())
             if write_result.is_success:
                 migrated_count += 1
 
@@ -190,7 +190,7 @@ class TestOudToOidAclMigration:
         )
 
         # Step 1: Parse with OUD ACL quirk
-        parse_result = oud_acl_quirk.parse_acl(oud_aci)
+        parse_result = oud_acl_quirk.parse(oud_aci)
         assert parse_result.is_success, f"OUD ACL parse failed: {parse_result.error}"
         oud_parsed = parse_result.unwrap()
 
@@ -209,7 +209,7 @@ class TestOudToOidAclMigration:
         oid_data = oid_result.unwrap()
 
         # Step 4: Write OID ACL format
-        write_result = oid_acl_quirk.write_acl_to_rfc(oid_data)
+        write_result = oid_acl_quirk.write(oid_data)
         assert write_result.is_success, f"OID ACL write failed: {write_result.error}"
         write_result.unwrap()
 
@@ -266,7 +266,7 @@ class TestOudToOidEntryMigration:
         oid_entry = oid_result.unwrap()
 
         # Step 4: Write OID entry to LDIF
-        write_result = oid_entry_quirk.write_entry_to_ldif(oid_entry)
+        write_result = oid_entry_quirk.write(oid_entry)
         assert write_result.is_success, f"OID entry write failed: {write_result.error}"
         oid_ldif = write_result.unwrap()
 
@@ -307,7 +307,7 @@ class TestOudToOidEntryMigration:
         assert oid_result.is_success
 
         # Write OID entry
-        write_result = oid_entry_quirk.write_entry_to_ldif(oid_result.unwrap())
+        write_result = oid_entry_quirk.write(oid_result.unwrap())
         assert write_result.is_success
         oid_ldif = write_result.unwrap()
 
@@ -412,7 +412,7 @@ class TestOudToOidFullMigration:
                 continue
 
             # Step 3: Write OID LDIF
-            write_result = oid_entry_quirk.write_entry_to_ldif(oid_result.unwrap())
+            write_result = oid_entry_quirk.write(oid_result.unwrap())
             if write_result.is_success:
                 oid_ldif = write_result.unwrap()
 
@@ -446,7 +446,7 @@ class TestOudToOidFullMigration:
         )
 
         # Parse with OUD (creates metadata)
-        parse_result = oud_quirk.parse_attribute(oud_attr)
+        parse_result = oud_quirk.parse(oud_attr)
         assert parse_result.is_success
         oud_parsed = parse_result.unwrap()
 
@@ -471,7 +471,7 @@ class TestOudToOidFullMigration:
         oid_data = oid_result.unwrap()
 
         # Write OID
-        write_result = oid_quirk.write_attribute_to_rfc(oid_data)
+        write_result = oid_quirk.write(oid_data)
         assert write_result.is_success
         oid_attr = write_result.unwrap()
 

@@ -77,35 +77,31 @@ class TestSchemaProtocol:
         oid_schema = FlextLdifServersOid.Schema()
 
         # Verify attribute methods exist and are callable
-        assert callable(oid_schema.can_handle_attribute)
-        assert callable(oid_schema.parse_attribute)
-        assert callable(oid_schema.convert_attribute_to_rfc)
-        assert callable(oid_schema.convert_attribute_from_rfc)
-        assert callable(oid_schema.write_attribute_to_rfc)
+        assert callable(oid_schema._can_handle_attribute)
+        assert callable(oid_schema.parse)  # Public API method
+        assert callable(oid_schema.write)  # Public API method
 
     def test_schema_quirk_protocol_has_objectclass_methods(self) -> None:
         """Test that SchemaProtocol has objectClass methods."""
         oid_schema = FlextLdifServersOid.Schema()
 
         # Verify objectClass methods exist and are callable
-        assert callable(oid_schema.can_handle_objectclass)
-        assert callable(oid_schema.parse_objectclass)
-        assert callable(oid_schema.convert_objectclass_to_rfc)
-        assert callable(oid_schema.convert_objectclass_from_rfc)
-        assert callable(oid_schema.write_objectclass_to_rfc)
+        assert callable(oid_schema._can_handle_objectclass)
+        assert callable(oid_schema.parse)  # Public API method
+        assert callable(oid_schema.write)  # Public API method
 
     def test_schema_quirk_parse_attribute_returns_flext_result(self) -> None:
         """Test parse_attribute returns FlextResult."""
         oid_schema = FlextLdifServersOid.Schema()
         attr_def = "( 2.5.4.3 NAME 'cn' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
-        result = oid_schema.parse_attribute(attr_def)
+        result = oid_schema.parse(attr_def)
         assert isinstance(result, FlextResult)
 
     def test_schema_quirk_parse_objectclass_returns_flext_result(self) -> None:
         """Test parse_objectclass returns FlextResult."""
         oid_schema = FlextLdifServersOid.Schema()
         oc_def = "( 2.5.6.0 NAME 'top' ABSTRACT )"
-        result = oid_schema.parse_objectclass(oc_def)
+        result = oid_schema.parse(oc_def)
         assert isinstance(result, FlextResult)
 
     def test_schema_quirk_can_handle_methods_return_bool(self) -> None:
@@ -113,11 +109,11 @@ class TestSchemaProtocol:
         oid_schema = FlextLdifServersOid.Schema()
 
         attr_def = "( 2.5.4.3 NAME 'cn' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
-        result = oid_schema.can_handle_attribute(attr_def)
+        result = oid_schema._can_handle_attribute(attr_def)
         assert isinstance(result, bool)
 
         oc_def = "( 2.5.6.0 NAME 'top' ABSTRACT )"
-        result = oid_schema.can_handle_objectclass(oc_def)
+        result = oid_schema._can_handle_objectclass(oc_def)
         assert isinstance(result, bool)
 
     def test_schema_quirk_write_methods_return_flext_result(self) -> None:
@@ -125,22 +121,13 @@ class TestSchemaProtocol:
         oid_schema = FlextLdifServersOid.Schema()
         test_data: dict[str, object] = {"oid": "2.5.4.3", "name": "cn"}
 
-        result = oid_schema.write_attribute_to_rfc(test_data)
+        result = oid_schema.write(test_data)
         assert isinstance(result, FlextResult)
 
-        result = oid_schema.write_objectclass_to_rfc(test_data)
+        result = oid_schema.write(test_data)
         assert isinstance(result, FlextResult)
 
-    def test_schema_quirk_convert_methods_return_flext_result(self) -> None:
-        """Test convert_* methods return FlextResult."""
-        oid_schema = FlextLdifServersOid.Schema()
-        test_data: dict[str, object] = {"oid": "2.5.4.3", "name": "cn"}
-
-        result = oid_schema.convert_attribute_to_rfc(test_data)
-        assert isinstance(result, FlextResult)
-
-        result = oid_schema.convert_objectclass_to_rfc(test_data)
-        assert isinstance(result, FlextResult)
+    # NOTE: convert_*_to_rfc methods removed - no longer part of public API
 
 
 class TestProtocolNamespace:
@@ -287,34 +274,30 @@ class TestSchemaProtocolMethods:
     ) -> None:
         """Test that quirk has all attribute processing methods."""
         assert callable(oid_schema.can_handle_attribute)
-        assert callable(oid_schema.parse_attribute)
-        assert callable(oid_schema.convert_attribute_to_rfc)
-        assert callable(oid_schema.convert_attribute_from_rfc)
-        assert callable(oid_schema.write_attribute_to_rfc)
+        assert callable(oid_schema.parse)  # Public API method
+        assert callable(oid_schema.write)  # Public API method
 
     def test_schema_quirk_has_objectclass_methods(
         self, oid_schema: FlextLdifServersOid.Schema
     ) -> None:
         """Test that quirk has all objectClass processing methods."""
         assert callable(oid_schema.can_handle_objectclass)
-        assert callable(oid_schema.parse_objectclass)
-        assert callable(oid_schema.convert_objectclass_to_rfc)
-        assert callable(oid_schema.convert_objectclass_from_rfc)
-        assert callable(oid_schema.write_objectclass_to_rfc)
+        assert callable(oid_schema.parse)  # Public API method
+        assert callable(oid_schema.write)  # Public API method
 
     def test_attribute_methods_return_flext_result(
         self, oid_schema: FlextLdifServersOid.Schema
     ) -> None:
         """Test that attribute methods return FlextResult."""
         # Test parse_attribute
-        result = oid_schema.parse_attribute("( 2.5.4.3 NAME 'cn' )")
+        result = oid_schema.parse("( 2.5.4.3 NAME 'cn' )")
         assert hasattr(result, "is_success")
 
     def test_can_handle_attribute_returns_bool(
         self, oid_schema: FlextLdifServersOid.Schema
     ) -> None:
         """Test that can_handle_attribute returns boolean."""
-        result = oid_schema.can_handle_attribute("( 2.5.4.3 NAME 'cn' )")
+        result = oid_schema._can_handle_attribute("( 2.5.4.3 NAME 'cn' )")
         assert isinstance(result, bool)
 
 
@@ -326,30 +309,30 @@ class TestAclProtocolSatisfaction:
         quirk = FlextLdifServersOid()
         # Check if ACL methods exist on the implementation
         has_acl_methods = (
-            hasattr(quirk, "can_handle_acl")
-            and hasattr(quirk, "parse_acl")
+            hasattr(quirk, "_can_handle")
+            and hasattr(quirk, "parse")
             and hasattr(quirk, "convert_acl_to_rfc")
             and hasattr(quirk, "convert_acl_from_rfc")
             and hasattr(quirk, "write_acl_to_rfc")
         )
         # If methods exist, they should be callable
         if has_acl_methods:
-            assert callable(quirk.can_handle_acl)
+            assert callable(quirk._can_handle)
 
     def test_oud_quirk_has_acl_methods_defined(self) -> None:
         """Test that OUD quirk defines ACL methods if implemented."""
         quirk = FlextLdifServersOud()
         # Check if ACL methods exist
         has_acl_methods = (
-            hasattr(quirk, "can_handle_acl")
-            and hasattr(quirk, "parse_acl")
+            hasattr(quirk, "_can_handle")
+            and hasattr(quirk, "parse")
             and hasattr(quirk, "convert_acl_to_rfc")
             and hasattr(quirk, "convert_acl_from_rfc")
             and hasattr(quirk, "write_acl_to_rfc")
         )
         # If methods exist, they should be callable
         if has_acl_methods:
-            assert callable(quirk.can_handle_acl)
+            assert callable(quirk._can_handle)
 
 
 class TestAclProtocolMethods:
@@ -365,8 +348,8 @@ class TestAclProtocolMethods:
     ) -> None:
         """Test that ACL methods are callable if defined on the quirk."""
         # Only test methods that actually exist on this implementation
-        if hasattr(oid_quirk, "can_handle_acl"):
-            assert callable(oid_quirk.can_handle_acl)
+        if hasattr(oid_quirk, "_can_handle"):
+            assert callable(oid_quirk._can_handle)
 
 
 class TestEntryProtocolSatisfaction:
@@ -510,11 +493,11 @@ class TestProtocolUsagePatterns:
         """Test calling protocol methods on implementation."""
         schema = FlextLdifServersOid.Schema()
         # Should be able to call protocol methods
-        result = schema.can_handle_attribute("( 2.5.4.3 NAME 'cn' )")
+        result = schema._can_handle_attribute("( 2.5.4.3 NAME 'cn' )")
         assert isinstance(result, bool)
 
         # Should be able to call other protocol methods
-        parse_result = schema.parse_attribute("( 2.5.4.3 NAME 'cn' )")
+        parse_result = schema.parse("( 2.5.4.3 NAME 'cn' )")
         assert hasattr(parse_result, "is_success")
 
 

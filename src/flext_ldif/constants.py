@@ -435,8 +435,8 @@ class FlextLdifConstants(FlextConstants):
             "modrdn",
         )
 
-        # NOTE: SERVER_TYPES removed - use ServerTypes class for server type identifiers
-        # All server types (short forms: oid, oud, openldap, etc.) are defined in ServerTypes class
+        # NOTE: SERVER_TYPES removed - use ServerTypes class for identifiers
+        # All server types (short forms: oid, oud, openldap, etc.) in ServerTypes
 
         # Encoding types
         ENCODING_TYPES: Final[tuple[str, ...]] = (
@@ -667,13 +667,8 @@ class FlextLdifConstants(FlextConstants):
             "olcSuffix",
         ])
 
-        OPENLDAP_2_OBJECTCLASSES: Final[frozenset[str]] = frozenset([
-            "olcConfig",
-            "olcDatabase",
-            "olcBackendConfig",
-            "olcOverlayConfig",
-            "olcSchemaConfig",
-        ])
+        # NOTE: OPENLDAP_2_OBJECTCLASSES moved to FlextLdifServersOpenldap.Constants.OPENLDAP_2_OBJECTCLASSES
+        # Server-specific constants should be defined in their respective server Constants classes
 
         OPENLDAP_2_DN_PATTERNS: Final[frozenset[str]] = frozenset([
             "cn=config",
@@ -849,9 +844,9 @@ class FlextLdifConstants(FlextConstants):
             "orclIsEnabled",
         ])
 
-        # Oracle OID boolean attributes (non-RFC compliant: use "0"/"1" instead of "TRUE"/"FALSE")
-        # RFC 4517 Boolean syntax (OID 1.3.6.1.4.1.1466.115.121.1.7) requires "TRUE" or "FALSE"
-        # OID quirks must convert "0"→"FALSE", "1"→"TRUE" during OID→RFC normalization
+        # Oracle OID boolean attributes (non-RFC: use "0"/"1" not "TRUE"/"FALSE")
+        # RFC 4517 Boolean syntax requires "TRUE" or "FALSE"
+        # OID quirks convert "0"→"FALSE", "1"→"TRUE" during OID→RFC
         OID_BOOLEAN_ATTRIBUTES: Final[frozenset[str]] = frozenset([
             # Oracle DAS (Directory Application Server) boolean attributes
             "orcldasenableproductlogo",
@@ -871,23 +866,8 @@ class FlextLdifConstants(FlextConstants):
             "pwdallowuserchange",
         ])
 
-        # Oracle OUD boolean attributes (RFC 4517 compliant: use "TRUE"/"FALSE")
-        # OUD password policy attributes require TRUE/FALSE format (not 0/1)
-        OUD_BOOLEAN_ATTRIBUTES: Final[frozenset[str]] = frozenset([
-            "pwdlockout",
-            "pwdmustchange",
-            "pwdallowuserchange",
-            "pwdexpirewarning",
-            "pwdgraceauthnlimit",
-            "pwdlockoutduration",
-            "pwdmaxfailure",
-            "pwdminage",
-            "pwdmaxage",
-            "pwdmaxlength",
-            "pwdminlength",
-            # Oracle OID/OUD directory server attributes that require TRUE/FALSE format
-            "orcldasselfmodifiable",
-        ])
+        # NOTE: OUD_BOOLEAN_ATTRIBUTES moved to FlextLdifServersOud.Constants.BOOLEAN_ATTRIBUTES
+        # Server-specific constants should be defined in their respective server Constants classes
 
         # Oracle OUD specific operational attributes
         OUD_SPECIFIC: Final[frozenset[str]] = frozenset([
@@ -939,19 +919,16 @@ class FlextLdifConstants(FlextConstants):
         # Common operational attributes to filter from ALL entries
         # These are always filtered regardless of entry type
         FILTER_FROM_ALL_ENTRIES: Final[frozenset[str]] = frozenset([
-            # "createtimestamp",
-            # "creatorsname",
-            # "modifytimestamp",
-            # "modifiersname",
-            # "entrycsn",
-            # "entryuuid",
-            # "structuralobjectclass",
-            # "hassubordinates",
-            # "1.1",
-            # "+",
-            # "*",
-            # "aci",
-            # "aclrights",
+            "createtimestamp",
+            "creatorsname",
+            "modifytimestamp",
+            "modifiersname",
+            "entrycsn",
+            "entryuuid",
+            "structuralobjectclass",
+            "hassubordinates",
+            "numsubordinates",
+            "subordinatecount",
         ])
 
         # Schema-related operational attributes to filter from NON-SCHEMA entries only
@@ -1017,13 +994,10 @@ class FlextLdifConstants(FlextConstants):
 
         Consolidates all ACL attribute references to prevent duplication
         and ensure consistent ACL detection across the codebase.
-        """
 
-        # Oracle Internet Directory (OID) ACL attributes
-        ORCLACI: Final[str] = "orclaci"  # Standard OID entry-level ACL
-        ORCL_ENTRY_LEVEL_ACI: Final[str] = (
-            "orclentrylevelaci"  # OID entry-level variant
-        )
+        NOTE: Server-specific ACL attributes (e.g., ORCLACI, ORCL_ENTRY_LEVEL_ACI)
+        are now defined in their respective server Constants classes.
+        """
 
         # Oracle Unified Directory (OUD) and RFC 4876 standard
         ACI: Final[str] = "aci"  # RFC 4876 ACI attribute
@@ -1039,18 +1013,24 @@ class FlextLdifConstants(FlextConstants):
         )
 
         # Set of all known ACL attributes for quick membership testing
+        # NOTE: Server-specific attributes (e.g., ORCLACI, ORCL_ENTRY_LEVEL_ACI)
+        # are defined in their respective server Constants classes
         ALL_ACL_ATTRIBUTES: Final[frozenset[str]] = frozenset([
-            ORCLACI,
-            ORCL_ENTRY_LEVEL_ACI,
-            ACI,
-            OLC_ACCESS,
+            ACI,  # RFC 4876 standard (OUD, 389 DS)
+            OLC_ACCESS,  # OpenLDAP
             ACLRIGHTS,
             ACLENTRY,
-            ACCESS_CONTROL_LIST,
+            ACCESS_CONTROL_LIST,  # Active Directory
+            # Server-specific: "orclaci", "orclentrylevelaci" → FlextLdifServersOid.Constants
+            # Server-specific: "olcAccess" → already included above
+            # Server-specific: "nTSecurityDescriptor" → ACCESS_CONTROL_LIST above
+            # Server-specific: "ads-aci" → Apache DS Constants
+            # Server-specific: "ibm-slapdaccesscontrol" → Tivoli Constants
+            # Server-specific: "acl" → various servers
         ])
 
         # ACL attributes to filter/detect during migration
-        # NOTE: All values are commented and list is empty - values should be added as needed
+        # NOTE: All values commented, list empty - add as needed
         FILTER_ACL_ATTRIBUTES: Final[frozenset[str]] = frozenset([
             # "aci",
             # "orclaci",
@@ -1058,13 +1038,11 @@ class FlextLdifConstants(FlextConstants):
             # "aclentry",
         ])
 
-        # Grouped by server type for server-specific processing
-        OID_ACL_ATTRS: Final[frozenset[str]] = frozenset([
-            ORCLACI,
-            ORCL_ENTRY_LEVEL_ACI,
-        ])
-        OUD_ACL_ATTRS: Final[frozenset[str]] = frozenset([ACI])
-        OPENLDAP_ACL_ATTRS: Final[frozenset[str]] = frozenset([OLC_ACCESS])
+        # NOTE: Server-specific ACL attribute sets should be defined in
+        # their respective server Constants classes:
+        # - OID: FlextLdifServersOid.Constants.ORCLACI, ORCL_ENTRY_LEVEL_ACI
+        # - OUD: FlextLdifServersOud.Constants.ACL_ATTRIBUTE_NAME ("aci")
+        # - OpenLDAP: FlextLdifServersOpenldap.Constants.ACL_ATTRIBUTE_NAME ("olcAccess")
 
     # =============================================================================
     # DN-VALUED ATTRIBUTES - Attributes that contain DN values
@@ -1130,9 +1108,9 @@ class FlextLdifConstants(FlextConstants):
     # =============================================================================
 
     class PermissionNames:
-        """ACL permission type identifiers (magic strings representing permission types).
+        """ACL permission type identifiers (magic strings).
 
-        Used across OID, OUD, OpenLDAP, and other LDAP server ACL definitions.
+        Used across OID, OUD, OpenLDAP, and other LDAP server ACLs.
         These are different from actions (add/delete/modify in changetype).
 
         Zero Tolerance: All permission name strings (read, write, etc.) MUST be here.
@@ -1477,7 +1455,8 @@ class FlextLdifConstants(FlextConstants):
         OID_ACL: Final[str] = "oracle_oid"
         OUD_ACL: Final[str] = "oracle_oud"
         OUD_DS_CFG: Final[str] = "ds-cfg"
-        ORCLACI: Final[str] = "orclaci"
+        # NOTE: ORCLACI format string moved to FlextLdifServersOid.Constants.ORCLACI
+        # Using string literal "orclaci" in SERVER_TYPE_TO_FORMAT mapping below
 
         # Generic/RFC ACL formats
         RFC_GENERIC: Final[str] = "rfc_generic"
@@ -1491,7 +1470,7 @@ class FlextLdifConstants(FlextConstants):
         # Maps server types (short and long forms) to their ACL format constants
         SERVER_TYPE_TO_FORMAT: Final[dict[str, str]] = {
             # Short forms (primary)
-            "oid": ORCLACI,
+            "oid": "orclaci",  # OID-specific format → FlextLdifServersOid.Constants.ORCLACI
             "oud": ACI,
             "openldap": OLCACCESS,
             "openldap1": ACCESS,
@@ -1501,7 +1480,7 @@ class FlextLdifConstants(FlextConstants):
             "rfc": RFC_GENERIC,
             "relaxed": RFC_GENERIC,  # Relaxed mode uses RFC format
             # Long forms (backward compatibility)
-            "oracle_oid": ORCLACI,
+            "oracle_oid": "orclaci",  # OID-specific format → FlextLdifServersOid.Constants.ORCLACI
             "oracle_oud": ACI,
         }
 
@@ -1883,7 +1862,7 @@ class FlextLdifConstants(FlextConstants):
         SCHEMA_SUP: Final[str] = r"SUP\s+(\w+)"
         SCHEMA_USAGE: Final[str] = r"USAGE\s+(\w+)"
         SCHEMA_X_ORIGIN: Final[str] = r"X-ORIGIN\s+'([^']+)'"
-        SCHEMA_SYNTAX_LENGTH: Final[str] = r"SYNTAX\s+([0-9.]+)(?:\{(\d+)\})?"
+        SCHEMA_SYNTAX_LENGTH: Final[str] = r"SYNTAX\s+(?:')?([0-9.]+)(?:')?(?:\{(\d+)\})?"
         SCHEMA_SINGLE_VALUE: Final[str] = r"\bSINGLE-VALUE\b"
         SCHEMA_COLLECTIVE: Final[str] = r"\bCOLLECTIVE\b"
         SCHEMA_NO_USER_MODIFICATION: Final[str] = r"\bNO-USER-MODIFICATION\b"
@@ -1891,9 +1870,9 @@ class FlextLdifConstants(FlextConstants):
 
         # ObjectClass specific schema parsing patterns
         SCHEMA_OBJECTCLASS_KIND: Final[str] = r"\b(ABSTRACT|STRUCTURAL|AUXILIARY)\b"
-        SCHEMA_OBJECTCLASS_SUP: Final[str] = r"SUP\s+\(?\s*([\w$ ]+?)\s*\)?"
-        SCHEMA_OBJECTCLASS_MUST: Final[str] = r"MUST\s+\(?\s*([\w$ ]+?)\s*\)?"
-        SCHEMA_OBJECTCLASS_MAY: Final[str] = r"MAY\s+\(?\s*([\w$ ]+?)\s*\)?"
+        SCHEMA_OBJECTCLASS_SUP: Final[str] = r"SUP\s+(?:\(\s*([^)]+)\s*\)|(\w+))"
+        SCHEMA_OBJECTCLASS_MUST: Final[str] = r"MUST\s+(?:\(\s*([^)]+)\s*\)|(\w+))"
+        SCHEMA_OBJECTCLASS_MAY: Final[str] = r"MAY\s+(?:\(\s*([^)]+)\s*\)|(\w+))"
 
         # Server detection patterns moved to ServerDetection class below
 
@@ -1955,9 +1934,6 @@ class FlextLdifConstants(FlextConstants):
 
         IBM_TIVOLI_PATTERN: Final[str] = r"\b(ibm|tivoli|ldapdb)\b"
         IBM_TIVOLI_WEIGHT: Final[int] = 6
-
-        APACHE_DS_PATTERN: Final[str] = r"\b(apacheDS|apache-.*)\b"
-        APACHE_DS_WEIGHT: Final[int] = 6
 
         DS_389_PATTERN: Final[str] = r"\b(389ds|redhat-ds|dirsrv)\b"
         DS_389_WEIGHT: Final[int] = 6
@@ -2174,6 +2150,61 @@ class FlextLdifConstants(FlextConstants):
         NOVELL_SEGMENT_INDEX_SCOPE: Final[int] = 0
         NOVELL_SEGMENT_INDEX_TRUSTEE: Final[int] = 1
         NOVELL_SEGMENT_INDEX_RIGHTS: Final[int] = 2
+
+        # ===== OPENLDAP (2.x and 1.x) =====
+        OPENLDAP_OID_PATTERN: Final[str] = r"1\.3\.6\.1\.4\.1\.4203\."
+        OPENLDAP_ATTRIBUTE_PREFIXES: Final[frozenset[str]] = frozenset([
+            "olc",
+            "structuralobjectclass",
+        ])
+        OPENLDAP_OBJECTCLASS_NAMES: Final[frozenset[str]] = frozenset([
+            "olcglobal",
+            "olcdatabaseconfig",
+            "olcldapconfig",
+            "olcmdbconfig",
+            "olcbdbconfig",
+        ])
+        OPENLDAP_DN_MARKERS: Final[frozenset[str]] = frozenset([
+            "cn=config",
+            "cn=schema",
+            "cn=monitor",
+        ])
+
+        # ===== ORACLE INTERNET DIRECTORY (OID) =====
+        OID_OID_PATTERN: Final[str] = r"2\.16\.840\.1\.113894\."
+        OID_ATTRIBUTE_PREFIXES: Final[frozenset[str]] = frozenset([
+            "orcl",
+            "orclguid",
+        ])
+        OID_OBJECTCLASS_NAMES: Final[frozenset[str]] = frozenset([
+            "orcldirectory",
+            "orcldomain",
+            "orcldirectoryserverconfig",
+        ])
+        OID_DN_MARKERS: Final[frozenset[str]] = frozenset([
+            "cn=orcl",
+            "cn=subscriptions",
+            "cn=oracle context",
+        ])
+
+        # ===== ORACLE UNIFIED DIRECTORY (OUD) =====
+        OUD_OID_PATTERN: Final[str] = r"(ds-sync-|ds-pwp-|ds-cfg-)"
+        OUD_ATTRIBUTE_PREFIXES: Final[frozenset[str]] = frozenset([
+            "ds-",
+            "ds-sync",
+            "ds-pwp",
+            "ds-cfg",
+        ])
+        OUD_OBJECTCLASS_NAMES: Final[frozenset[str]] = frozenset([
+            "ds-root-dse",
+            "ds-unbound-id-config",
+            "ds-cfg-backend",
+        ])
+        OUD_DN_MARKERS: Final[frozenset[str]] = frozenset([
+            "cn=config",
+            "cn=tasks",
+            "cn=monitor",
+        ])
 
         # ===== IBM TIVOLI DIRECTORY SERVER =====
         TIVOLI_OID_PATTERN: Final[str] = r"1\.3\.18\."
@@ -2588,7 +2619,6 @@ class FlextLdifConstants(FlextConstants):
         - denormalize_attribute_from_rfc(attr: SchemaAttribute) → FlextResult[SchemaAttribute]
         - normalize_objectclass_to_rfc(oc: SchemaObjectClass) → FlextResult[SchemaObjectClass]
         - denormalize_objectclass_from_rfc(oc: SchemaObjectClass) → FlextResult[SchemaObjectClass]
-        - normalize_acl_to_rfc(acl: Acl) → FlextResult[Acl]
         - denormalize_acl_from_rfc(acl: Acl) → FlextResult[Acl]
         """
 

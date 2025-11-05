@@ -116,7 +116,7 @@ class FlextLdifAclService(FlextService[FlextLdifModels.AclResponse]):
         acls: list[FlextLdifModels.Acl] = []
 
         for acl_value in acl_values:
-            parse_result: FlextResult[FlextLdifModels.Acl] = self.parse_acl(
+            parse_result: FlextResult[FlextLdifModels.Acl] = self.parse(
                 acl_value,
                 server_type,
             )
@@ -194,7 +194,7 @@ class FlextLdifAclService(FlextService[FlextLdifModels.AclResponse]):
             )
         )
 
-    def parse_acl(
+    def parse(
         self,
         acl_string: str,
         server_type: str,
@@ -213,7 +213,7 @@ class FlextLdifAclService(FlextService[FlextLdifModels.AclResponse]):
         """
         try:
             # Find the appropriate quirk that can handle this ACL line
-            # Registry returns the first quirk that can_handle_acl(acl_line)
+            # Registry returns the first quirk that _can_handle(acl_line)
             acl_quirk = self._registry.find_acl_quirk(server_type, acl_string)
             if not acl_quirk:
                 return FlextResult[FlextLdifModels.Acl].fail(
@@ -222,7 +222,7 @@ class FlextLdifAclService(FlextService[FlextLdifModels.AclResponse]):
 
             # Delegate to quirk for parsing - NO FALLBACK
             # If the quirk can't parse it, the parsing fails
-            return acl_quirk.parse_acl(acl_string)
+            return acl_quirk.acl.parse(acl_string)
 
         except (ValueError, TypeError, AttributeError) as e:
             return FlextResult[FlextLdifModels.Acl].fail(
@@ -268,13 +268,14 @@ class FlextLdifAclService(FlextService[FlextLdifModels.AclResponse]):
             )
             if source_server.lower() != FlextLdifConstants.ServerTypes.RFC.value:
                 source_quirk = self._registry.find_entry_quirk(source_server, "", {})
-                if source_quirk and hasattr(source_quirk, "convert_acl_to_rfc"):
-                    rfc_result = source_quirk.convert_acl_to_rfc(acl_attrs)
-                    if rfc_result.is_failure:
-                        return FlextResult[dict[str, object]].fail(
-                            f"Source ACL to RFC conversion failed: {rfc_result.error}",
-                        )
-                    rfc_acl_attrs = rfc_result.unwrap()
+                if source_quirk and hasattr(source_quirk, "acl"):
+                    if hasattr(source_quirk.acl, "convert_acl_to_rfc"):
+                        rfc_result = source_quirk.acl.convert_acl_to_rfc(acl_attrs)
+                        if rfc_result.is_failure:
+                            return FlextResult[dict[str, object]].fail(
+                                f"Source ACL to RFC conversion failed: {rfc_result.error}",
+                            )
+                        rfc_acl_attrs = rfc_result.unwrap()
 
             # Step 2: Convert RFC ACLs to target server ACI format using target server ACL quirks
             if target_server.lower() == FlextLdifConstants.ServerTypes.RFC.value:

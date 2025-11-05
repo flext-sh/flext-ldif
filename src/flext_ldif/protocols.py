@@ -22,40 +22,58 @@ from typing import Any, Protocol, runtime_checkable
 from flext_core import FlextProtocols, FlextResult
 
 from flext_ldif.models import FlextLdifModels
-from flext_ldif.typings import FlextLdifTypes
 
 
 class FlextLdifProtocols(FlextProtocols):
     """Unified LDIF protocol definitions extending FlextProtocols.
 
     This class extends the base FlextProtocols with LDIF-specific protocol
-    definitions, using Python's typing.Protocol for structural subtyping
-    (duck typing).
+    definitions for the minimal, streamlined public interfaces of quirks.
 
-    Provides strict interface contracts for:
-    1. Schema Processing Quirks (attributes, objectClasses)
-    2. ACL Processing Quirks (access control lists)
-    3. Entry Processing Quirks (LDAP entries)
-    4. Conversion Operations (format conversions)
-    5. Registry Operations (quirk management)
+    **Protocol Compliance Strategy:**
+    1. All quirk classes inherit from ABC base classes (Schema, Acl, Entry)
+    2. All base classes satisfy protocols through structural typing (duck typing)
+    3. isinstance() checks validate protocol compliance at runtime
+    4. All methods use FlextResult[T] for railway-oriented error handling
+    5. execute() method provides polymorphic type-based routing
 
-    Architecture:
-    - All protocols use @runtime_checkable for isinstance() validation
-    - All methods return FlextResult[T] for railway-oriented error handling
-    - All quirks must satisfy corresponding protocol for type safety
-    - Inheritance hierarchy allows shared method signatures
+    **Minimal Public Interface:**
+    - Schema: parse(), write()
+    - ACL: parse(), write()
+    - Entry: parse(), write()
+    - execute() method provides automatic type-detection routing for all operations
 
-    Usage Pattern:
-        >>> class MySchema:
-        ...     def can_handle_attribute(self, attr: str) -> bool:
-        ...         return "MY_" in attr
-        ...
-        ...     def parse_attribute(self, attr: str) -> FlextResult:
-        ...         # Parse logic
-        ...         return FlextResult.ok({})
-        >>> quirk = MySchema()
-        >>> isinstance(quirk, FlextLdifProtocols.Quirks.SchemaProtocol)
-        True  # Satisfies protocol through structural typing
+    **Private Methods (NOT in protocols):**
+    - _can_handle_* methods for internal detection logic
+    - _hook_* methods for customization points
+    - process_entry, convert_entry (handled via hooks or conversion_matrix)
+
+    **Usage Pattern - Maximum Automation:**
+        >>> from flext_ldif.servers.base import FlextLdifServersBase
+        >>> from flext_ldif.models import FlextLdifModels
+        >>>
+        >>> # Entry: auto-routes based on data type
+        >>> entry_quirk = FlextLdifServersRfc.Entry()
+        >>> entries = entry_quirk.execute("dn: cn=test\\n...")  # Parse
+        >>> ldif = entry_quirk.execute([entry1, entry2])  # Write
+        >>>
+        >>> # Schema: auto-routes based on data type
+        >>> schema = FlextLdifServersRfc.Schema()
+        >>> attr = schema.execute("( 1.3... )")  # Parse attribute
+        >>> text = schema.execute(attr)  # Write attribute
+        >>>
+        >>> # ACL: auto-routes based on data type
+        >>> acl = FlextLdifServersRfc.Acl()
+        >>> model = acl.execute("(target=...)")  # Parse
+        >>> line = acl.execute(model)  # Write
+
+    **Registration and Validation:**
+        The FlextLdifRegistry validates protocol compliance automatically when quirks are:
+        1. Auto-discovered during initialization
+        2. Registered manually via registry.register(quirk)
+
+        This happens at REGISTRATION TIME, not at type-checking time, ensuring all
+        quirks satisfy their protocols before being used by the framework.
     """
 
     # Define a type alias for any model that can be converted by the matrix.
@@ -87,7 +105,7 @@ class FlextLdifProtocols(FlextProtocols):
 
         @runtime_checkable
         class SchemaProtocol(Protocol):
-            """Protocol for schema-level quirks.
+            """Protocol for schema-level quirks - minimal public interface.
 
             Schema quirks handle RFC 4512 schema parsing with server-specific
             extensions for attributeTypes and objectClasses.
@@ -98,11 +116,17 @@ class FlextLdifProtocols(FlextProtocols):
             - FlextLdifServersOpenldap (OpenLDAP)
             - FlextLdifServersRfc (RFC baseline)
 
-            Responsibilities:
-            1. Determine if can handle an attribute/objectClass (can_handle_*)
-            2. Parse attribute/objectClass definitions (parse_*)
-            3. Convert to/from RFC format (convert_*_to_rfc, convert_*_from_rfc)
-            4. Write back to RFC-compliant format (write_*_to_rfc)
+            **PUBLIC INTERFACE** (protocol-required):
+            1. parse(str) → FlextResult[SchemaAttribute | SchemaObjectClass]
+            2. write(SchemaAttribute | SchemaObjectClass) → FlextResult[str]
+            3. execute(data, operation) → FlextResult[SchemaAttribute | SchemaObjectClass | str]
+
+            **Private Methods** (NOT in protocol, internal only):
+            - _can_handle_attribute() - Detection logic
+            - _can_handle_objectclass() - Detection logic
+            - _hook_post_parse_attribute() - Customization hook
+            - _hook_post_parse_objectclass() - Customization hook
+            - _detect_schema_type() - Helper for attribute vs objectClass detection
             """
 
             server_type: str
@@ -112,173 +136,61 @@ class FlextLdifProtocols(FlextProtocols):
             """Quirk priority (lower number = higher priority)."""
 
             # -----------------------------------------------------------------
-            # ATTRIBUTE PROCESSING METHODS
+            # PUBLIC METHODS - Required
             # -----------------------------------------------------------------
 
-            def can_handle_attribute(self, attr_definition: str) -> bool:
-                """Check if this quirk can handle the attribute definition.
-
-                Args:
-                    attr_definition: AttributeType definition string
-
-                Returns:
-                    True if this quirk should process this attribute
-
-                """
-                ...
-
-            def parse_attribute(
+            def parse(
                 self,
-                attr_definition: str,
-            ) -> FlextResult[dict[str, object]]:
-                """Parse server-specific attribute definition.
+                definition: str,
+            ) -> FlextResult:
+                """Parse schema definition (attribute or objectClass).
 
-                Extracts attribute metadata (OID, NAME, DESC, SYNTAX, etc.)
-                from RFC 4512 format and applies server-specific enhancements.
+                Auto-detects type from content and routes appropriately.
 
                 Args:
-                    attr_definition: AttributeType definition string
+                    definition: RFC 4512 AttributeType or ObjectClass definition string
 
                 Returns:
-                    FlextResult with parsed attribute data as dictionary
+                    FlextResult[SchemaAttribute | SchemaObjectClass]
 
                 """
                 ...
 
-            def convert_attribute_to_rfc(
+            def write(
                 self,
-                attr_data: dict[str, object],
-            ) -> FlextResult[dict[str, object]]:
-                """Convert server-specific attribute to RFC-compliant format.
+                model: object,
+            ) -> FlextResult:
+                """Write schema model to RFC-compliant string.
 
-                Transforms server-specific attribute extensions to standard
-                RFC 4512 format for universal compatibility.
+                Auto-detects model type and routes to appropriate writer.
 
                 Args:
-                    attr_data: Server-specific attribute data dictionary
+                    model: SchemaAttribute or SchemaObjectClass model
 
                 Returns:
-                    FlextResult with RFC-compliant attribute data
+                    FlextResult[str] with RFC 4512 schema definition
 
                 """
                 ...
 
-            def convert_attribute_from_rfc(
+            def execute(
                 self,
-                rfc_data: dict[str, object],
-            ) -> FlextResult[dict[str, object]]:
-                """Convert RFC-compliant attribute to server-specific format.
+                data: str | object | None = None,
+                operation: str | None = None,
+            ) -> FlextResult:
+                """Execute with automatic type detection and routing.
 
-                Enhances standard RFC attribute with server-specific extensions.
-
-                Args:
-                    rfc_data: RFC-compliant attribute data dictionary
-
-                Returns:
-                    FlextResult with server-specific attribute data
-
-                """
-                ...
-
-            def write_attribute_to_rfc(
-                self,
-                attr_data: dict[str, object],
-            ) -> FlextResult[str]:
-                """Write attribute data to RFC-compliant string format.
-
-                Serializes attribute data back to RFC 4512 string representation.
+                Polymorphic dispatch based on data type:
+                - str → auto-detect attribute vs OC → parse()
+                - SchemaAttribute → write()
+                - SchemaObjectClass → write()
 
                 Args:
-                    attr_data: Attribute data dictionary
+                    data: Schema definition string OR SchemaAttribute OR SchemaObjectClass
+                    operation: Force operation ('parse' or 'write'), optional
 
                 Returns:
-                    FlextResult with RFC-compliant attribute string
-
-                """
-                ...
-
-            # -----------------------------------------------------------------
-            # OBJECTCLASS PROCESSING METHODS
-            # -----------------------------------------------------------------
-
-            def can_handle_objectclass(self, oc_definition: str) -> bool:
-                """Check if this quirk can handle the objectClass definition.
-
-                Args:
-                    oc_definition: ObjectClass definition string
-
-                Returns:
-                    True if this quirk should process this objectClass
-
-                """
-                ...
-
-            def parse_objectclass(
-                self,
-                oc_definition: str,
-            ) -> FlextResult[dict[str, object]]:
-                """Parse server-specific objectClass definition.
-
-                Extracts objectClass metadata (OID, NAME, SUP, MUST, MAY, etc.)
-                from RFC 4512 format and applies server-specific enhancements.
-
-                Args:
-                    oc_definition: ObjectClass definition string
-
-                Returns:
-                    FlextResult with parsed objectClass data as dictionary
-
-                """
-                ...
-
-            def convert_objectclass_to_rfc(
-                self,
-                oc_data: dict[str, object],
-            ) -> FlextResult[dict[str, object]]:
-                """Convert server-specific objectClass to RFC-compliant format.
-
-                Transforms server-specific objectClass extensions to standard
-                RFC 4512 format for universal compatibility.
-
-                Args:
-                    oc_data: Server-specific objectClass data dictionary
-
-                Returns:
-                    FlextResult with RFC-compliant objectClass data
-
-                """
-                ...
-
-            def convert_objectclass_from_rfc(
-                self,
-                rfc_data: dict[str, object],
-            ) -> FlextResult[dict[str, object]]:
-                """Convert RFC-compliant objectClass to server-specific format.
-
-                Enhances standard RFC objectClass with server-specific extensions.
-
-                Args:
-                    rfc_data: RFC-compliant objectClass data dictionary
-
-                Returns:
-                    FlextResult with server-specific objectClass data
-
-                """
-                ...
-
-            def write_objectclass_to_rfc(
-                self,
-                oc_data: dict[str, object],
-            ) -> FlextResult[str]:
-                """Write objectClass data to RFC-compliant string format.
-
-                Serializes objectClass data back to RFC 4512 string representation.
-
-                Args:
-                    oc_data: ObjectClass data dictionary
-
-                Returns:
-                    FlextResult with RFC-compliant objectClass string
+                    FlextResult[SchemaAttribute | SchemaObjectClass | str]
 
                 """
                 ...
@@ -289,7 +201,7 @@ class FlextLdifProtocols(FlextProtocols):
 
         @runtime_checkable
         class AclProtocol(Protocol):
-            """Protocol for ACL-level quirks.
+            """Protocol for ACL-level quirks - minimal public interface.
 
             ACL quirks handle server-specific access control list processing
             for orclaci, orclentrylevelaci, olcAccess, and other ACL formats.
@@ -300,11 +212,15 @@ class FlextLdifProtocols(FlextProtocols):
             - FlextLdifServersOpenldap (OpenLDAP olcAccess format)
             - FlextLdifServersRfc (RFC-based ACL handling)
 
-            Responsibilities:
-            1. Determine if can handle an ACL definition (can_handle_acl)
-            2. Parse ACL definitions (parse_acl)
-            3. Convert to/from RFC format (convert_acl_to_rfc, convert_acl_from_rfc)
-            4. Write back to RFC-compliant format (write_acl_to_rfc)
+            **PUBLIC INTERFACE** (protocol-required):
+            1. parse(str) → FlextResult[Acl]
+            2. write(Acl) → FlextResult[str]
+            3. execute(data, operation) → FlextResult[Acl | str]
+
+            **Private Methods** (NOT in protocol, internal only):
+            - __can_handle() - Detection logic
+            - _hook_post_parse() - Customization hook
+            - Conversion handled via conversion_matrix service
             """
 
             server_type: str
@@ -313,76 +229,47 @@ class FlextLdifProtocols(FlextProtocols):
             priority: int
             """Quirk priority (lower number = higher priority)."""
 
-            def can_handle_acl(self, acl_line: str) -> bool:
-                """Check if this quirk can handle the ACL definition.
+            def parse(self, acl_line: str) -> FlextResult:
+                """Parse ACL line to Acl model.
 
                 Args:
-                    acl_line: ACL definition line
+                    acl_line: ACL definition line (e.g., orclaci, olcAccess)
 
                 Returns:
-                    True if this quirk should process this ACL
+                    FlextResult[FlextLdifModels.Acl]
 
                 """
                 ...
 
-            def parse_acl(self, acl_line: str) -> FlextResult[dict[str, object]]:
-                """Parse server-specific ACL definition.
-
-                Extracts ACL metadata and permissions from server-specific format.
+            def write(self, acl_data: object) -> FlextResult:
+                """Write Acl model to string format.
 
                 Args:
-                    acl_line: ACL definition line
+                    acl_data: FlextLdifModels.Acl
 
                 Returns:
-                    FlextResult with parsed ACL data as dictionary
+                    FlextResult[str] with ACL line
 
                 """
                 ...
 
-            def convert_acl_to_rfc(
+            def execute(
                 self,
-                acl_data: dict[str, object],
-            ) -> FlextResult[dict[str, object]]:
-                """Convert server-specific ACL to RFC-compliant format.
+                data: str | object | None = None,
+                operation: str | None = None,
+            ) -> FlextResult:
+                """Execute with automatic type detection and routing.
 
-                Transforms server-specific ACL extensions to standard format.
-
-                Args:
-                    acl_data: Server-specific ACL data dictionary
-
-                Returns:
-                    FlextResult with RFC-compliant ACL data
-
-                """
-                ...
-
-            def convert_acl_from_rfc(
-                self,
-                acl_data: dict[str, object],
-            ) -> FlextResult[dict[str, object]]:
-                """Convert RFC-compliant ACL to server-specific format.
-
-                Enhances standard RFC ACL with server-specific extensions.
+                Polymorphic dispatch based on data type:
+                - str → parse
+                - Acl → write
 
                 Args:
-                    acl_data: RFC-compliant ACL data dictionary
+                    data: ACL line string OR Acl model
+                    operation: Force operation ('parse' or 'write'), optional
 
                 Returns:
-                    FlextResult with server-specific ACL data
-
-                """
-                ...
-
-            def write_acl_to_rfc(self, acl_data: dict[str, object]) -> FlextResult[str]:
-                """Write ACL data to RFC-compliant string format.
-
-                Serializes ACL data back to RFC-based string representation.
-
-                Args:
-                    acl_data: ACL data dictionary
-
-                Returns:
-                    FlextResult with RFC-compliant ACL string
+                    FlextResult[Acl | str]
 
                 """
                 ...
@@ -393,7 +280,7 @@ class FlextLdifProtocols(FlextProtocols):
 
         @runtime_checkable
         class EntryProtocol(Protocol):
-            """Protocol for entry-level quirks.
+            """Protocol for entry-level quirks - minimal public interface.
 
             Entry quirks handle LDAP entry processing with server-specific
             attribute handling, DN normalization, and operational attributes.
@@ -404,10 +291,17 @@ class FlextLdifProtocols(FlextProtocols):
             - FlextLdifServersOpenldap (OpenLDAP entry handling)
             - FlextLdifServersRfc (RFC baseline)
 
-            Responsibilities:
-            1. Determine if can handle an entry (can_handle_entry)
-            2. Process entries with server logic (process_entry)
-            3. Convert to/from RFC format (convert_entry_to_rfc, etc.)
+            **PUBLIC INTERFACE** (protocol-required):
+            1. parse(str) → FlextResult[list[Entry]]
+            2. write(Entry) → FlextResult[str]
+            3. execute(data, operation) → FlextResult[list[Entry] | str]
+
+            **Private Methods** (NOT in protocol, internal only):
+            - _can_handle_entry() - Detection logic
+            - _can_handle_attribute() - Detection logic
+            - _can_handle_objectclass() - Detection logic
+            - Hooks: _hook_validate_entry_raw(), _hook_post_parse_entry(), _hook_pre_write_entry()
+            - process_entry, convert_entry handled via hooks or conversion_matrix
             """
 
             server_type: str
@@ -416,73 +310,53 @@ class FlextLdifProtocols(FlextProtocols):
             priority: int
             """Quirk priority (lower number = higher priority)."""
 
-            def can_handle_entry(
+            def parse(
                 self,
-                entry_dn: str,
-                attributes: FlextLdifTypes.Models.EntryAttributesDict,
-            ) -> bool:
-                """Check if this quirk can handle the entry.
+                ldif_content: str,
+            ) -> FlextResult:
+                """Parse LDIF content string into Entry models.
 
                 Args:
-                    entry_dn: Entry distinguished name
-                    attributes: Entry attributes dictionary
+                    ldif_content: Raw LDIF content as string
 
                 Returns:
-                    True if this quirk should process this entry
+                    FlextResult[list[FlextLdifModels.Entry]]
 
                 """
                 ...
 
-            def process_entry(
+            def write(
                 self,
-                entry_dn: str,
-                attributes: FlextLdifTypes.Models.EntryAttributesDict,
-            ) -> FlextResult[dict[str, object]]:
-                """Process entry with server-specific logic.
-
-                Applies server-specific transformations to entry data
-                (DN normalization, attribute filtering, etc.).
+                entry_data: object,
+            ) -> FlextResult:
+                """Write Entry model to RFC-compliant LDIF string.
 
                 Args:
-                    entry_dn: Entry distinguished name
-                    attributes: Entry attributes dictionary
+                    entry_data: FlextLdifModels.Entry or list[Entry]
 
                 Returns:
-                    FlextResult with processed entry data
+                    FlextResult[str] with LDIF string
 
                 """
                 ...
 
-            def convert_entry_to_rfc(
+            def execute(
                 self,
-                entry_data: dict[str, object],
-            ) -> FlextResult[dict[str, object]]:
-                """Convert server-specific entry to RFC-compliant format.
+                data: str | list | object | None = None,
+                operation: str | None = None,
+            ) -> FlextResult:
+                """Execute with automatic type detection and routing.
 
-                Transforms server-specific entry format to RFC 2849 standard.
+                Polymorphic dispatch based on data type:
+                - str → parse → list[Entry]
+                - list[Entry] → write → str
 
                 Args:
-                    entry_data: Server-specific entry data dictionary
+                    data: LDIF content string OR list of Entry models
+                    operation: Force operation ('parse' or 'write'), optional
 
                 Returns:
-                    FlextResult with RFC-compliant entry data
-
-                """
-                ...
-
-            def convert_entry_from_rfc(
-                self,
-                rfc_data: dict[str, object],
-            ) -> FlextResult[dict[str, object]]:
-                """Convert RFC-compliant entry to server-specific format.
-
-                Enhances standard RFC entry with server-specific extensions.
-
-                Args:
-                    rfc_data: RFC-compliant entry data dictionary
-
-                Returns:
-                    FlextResult with server-specific entry data
+                    FlextResult[list[Entry] | str]
 
                 """
                 ...
@@ -521,99 +395,33 @@ class FlextLdifProtocols(FlextProtocols):
             """
 
             # =====================================================================
-            # Model-to-Model Transformations
+            # Generalized Quirk Methods - Entry-by-Entry Routing Only
             # =====================================================================
+            # Only entry-by-entry routing methods are defined in the protocol.
+            # Individual item methods should be called directly on the quirk subclasses
+            # (entry, schema, acl) instead of through the base port.
+            # These methods route each entry to the appropriate quirk based on its type.
 
-            def normalize_entry_to_rfc(
-                self, entry: FlextLdifModels.Entry
-            ) -> FlextResult[FlextLdifModels.Entry]:
-                """Convert a server-specific Entry model to the canonical RFC model.
-
-                This process should strip server-specific attributes or translate
-                them into a standard representation, storing original data in the
-                `QuirkMetadata` if necessary for a round trip.
+            def parse(self, ldif_text: str) -> FlextResult[list[FlextLdifModels.Entry]]:
+                """Parse LDIF text to Entry models.
 
                 Args:
-                    entry: The server-specific Entry model to normalize.
+                    ldif_text: LDIF content as string.
 
                 Returns:
-                    A FlextResult containing the normalized, RFC-compliant Entry model.
+                    FlextResult with list of Entry models.
 
                 """
                 ...
 
-            def denormalize_entry_from_rfc(
-                self, entry: FlextLdifModels.Entry
-            ) -> FlextResult[FlextLdifModels.Entry]:
-                """Convert a canonical RFC Entry model to a server-specific model.
-
-                This process may involve adding server-specific operational attributes,
-                translating standard attributes back to a proprietary format, or
-                restoring data from `QuirkMetadata`.
+            def write(self, entries: list[FlextLdifModels.Entry]) -> FlextResult[str]:
+                """Write Entry models to LDIF text.
 
                 Args:
-                    entry: The RFC-compliant Entry model to denormalize.
+                    entries: List of Entry models to write.
 
                 Returns:
-                    A FlextResult containing the denormalized, server-specific Entry model.
-
-                """
-                ...
-
-            def normalize_attribute_to_rfc(
-                self, attribute: FlextLdifModels.SchemaAttribute
-            ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
-                """Convert a server-specific SchemaAttribute to the canonical RFC model."""
-                ...
-
-            def denormalize_attribute_from_rfc(
-                self, attribute: FlextLdifModels.SchemaAttribute
-            ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
-                """Convert a canonical RFC SchemaAttribute to a server-specific model."""
-                ...
-
-            def normalize_objectclass_to_rfc(
-                self, objectclass: FlextLdifModels.SchemaObjectClass
-            ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
-                """Convert a server-specific SchemaObjectClass to the canonical RFC model."""
-                ...
-
-            def denormalize_objectclass_from_rfc(
-                self, objectclass: FlextLdifModels.SchemaObjectClass
-            ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
-                """Convert a canonical RFC SchemaObjectClass to a server-specific model."""
-                ...
-
-            def normalize_acl_to_rfc(
-                self, acl: FlextLdifModels.Acl
-            ) -> FlextResult[FlextLdifModels.Acl]:
-                """Convert a server-specific Acl to the canonical RFC model."""
-                ...
-
-            def denormalize_acl_from_rfc(
-                self, acl: FlextLdifModels.Acl
-            ) -> FlextResult[FlextLdifModels.Acl]:
-                """Convert a canonical RFC Acl to a server-specific model."""
-                ...
-
-            # =====================================================================
-            # Raw-to-Model Parsing (for the Parser Service)
-            # =====================================================================
-
-            def parse_ldif_content(
-                self, content: str
-            ) -> FlextResult[list[FlextLdifModels.Entry]]:
-                """Parse a raw LDIF string into a list of Entry models.
-
-                This method encapsulates the entire parsing process, including
-                handling multi-entry LDIF, line folding, and decoding of values,
-                producing a clean list of `Entry` models with appropriate metadata.
-
-                Args:
-                    content: The raw LDIF content as a string.
-
-                Returns:
-                    A FlextResult containing a list of parsed Entry models.
+                    FlextResult with LDIF text as string.
 
                 """
                 ...

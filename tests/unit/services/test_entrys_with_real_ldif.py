@@ -125,7 +125,9 @@ def rfc_entries() -> list[FlextLdifModels.Entry]:
 class TestPublicClassmethodsWithRealLdif:
     """Test public classmethods with REAL LDIF fixture data."""
 
-    def test_clean_dn_with_real_oid_entries(self, oid_entries: list[FlextLdifModels.Entry]) -> None:
+    def test_clean_dn_with_real_oid_entries(
+        self, oid_entries: list[FlextLdifModels.Entry]
+    ) -> None:
         """Test DN cleaning with real OID LDIF entries."""
         assert len(oid_entries) > 0, "OID fixture should have entries"
 
@@ -256,7 +258,9 @@ class TestExecutePatternWithRealLdif:
 class TestFluentBuilderWithRealLdif:
     """Test fluent builder pattern with REAL LDIF fixture data."""
 
-    def test_builder_with_oid_entries(self, oid_entries: list[FlextLdifModels.Entry]) -> None:
+    def test_builder_with_oid_entries(
+        self, oid_entries: list[FlextLdifModels.Entry]
+    ) -> None:
         """Test fluent builder with real OID LDIF entries."""
         assert len(oid_entries) > 0
 
@@ -295,7 +299,9 @@ class TestRealWorldScenarios:
     """Test real-world scenarios with REAL LDIF data from multiple servers."""
 
     def test_ouid_migration_scenario_cleaning(
-        self, oid_entries: list[FlextLdifModels.Entry], oud_entries: list[FlextLdifModels.Entry]
+        self,
+        oid_entries: list[FlextLdifModels.Entry],
+        oud_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test cleaning OID entries for OUD migration."""
         assert len(oid_entries) > 0
@@ -359,7 +365,9 @@ class TestRealWorldScenarios:
         # Verify unnecessary attributes were removed
         for entry in cleaned_entries:
             for attr in unnecessary_attrs:
-                assert attr.lower() not in [k.lower() for k in entry.attributes.attributes.keys()]
+                assert attr.lower() not in [
+                    k.lower() for k in entry.attributes.attributes
+                ]
 
     def test_sequential_cleaning_pipeline(
         self, oid_entries: list[FlextLdifModels.Entry]
@@ -406,10 +414,12 @@ class TestEdgeCasesWithRealData:
 
         # Try removing all attributes except structural ones
         attrs_to_remove = [
-            attr for attr in original_attrs if attr.lower() not in ["dn", "objectclass"]
+            attr for attr in original_attrs if attr.lower() not in {"dn", "objectclass"}
         ]
 
-        result = FlextLdifEntryService.remove_attributes(entry, attributes=attrs_to_remove)
+        result = FlextLdifEntryService.remove_attributes(
+            entry, attributes=attrs_to_remove
+        )
 
         assert result.is_success
         cleaned = result.unwrap()
@@ -435,7 +445,7 @@ class TestEdgeCasesWithRealData:
         cleaned = result.unwrap()
 
         # Verify case-insensitive removal worked
-        cleaned_keys = {k.lower() for k in cleaned.attributes.attributes.keys()}
+        cleaned_keys = {k.lower() for k in cleaned.attributes.attributes}
         assert "description" not in cleaned_keys
         assert "mail" not in cleaned_keys
 
@@ -445,7 +455,9 @@ class TestEdgeCasesWithRealData:
         """Test operations on real entries with unicode and special characters."""
         assert len(openldap2_entries) > 0
 
-        result = FlextLdifEntryService.remove_operational_attributes_batch(openldap2_entries)
+        result = FlextLdifEntryService.remove_operational_attributes_batch(
+            openldap2_entries
+        )
 
         assert result.is_success
         cleaned = result.unwrap()
@@ -453,7 +465,10 @@ class TestEdgeCasesWithRealData:
         # All entries should survive unicode/special char handling
         for entry in cleaned:
             assert len(entry.dn.value) > 0
-            assert all(len(attr_values) > 0 for attr_values in entry.attributes.attributes.values())
+            assert all(
+                len(attr_values) > 0
+                for attr_values in entry.attributes.attributes.values()
+            )
 
     def test_empty_attributes_handling(
         self, oid_entries: list[FlextLdifModels.Entry]
@@ -505,7 +520,9 @@ class TestServerCompatibility:
 
             assert result.is_success, f"Cleaning {server_name} entries should succeed"
             cleaned = result.unwrap()
-            assert len(cleaned) == len(entries), f"{server_name} entry count should match"
+            assert len(cleaned) == len(entries), (
+                f"{server_name} entry count should match"
+            )
 
     def test_attribute_removal_all_servers(
         self,
@@ -527,7 +544,9 @@ class TestServerCompatibility:
                 entries, attributes=["description", "mail"]
             )
 
-            assert result.is_success, f"Attribute removal on {server_name} should succeed"
+            assert result.is_success, (
+                f"Attribute removal on {server_name} should succeed"
+            )
             cleaned = result.unwrap()
             assert len(cleaned) == len(entries)
 

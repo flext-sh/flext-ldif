@@ -57,10 +57,21 @@ class FlextLdifWriterService(FlextService[Any]):
 
     """
 
-    def __init__(self) -> None:
-        """Initialize the writer service."""
+    def __init__(
+        self,
+        config: Any | None = None,  # Backward compatibility parameter (ignored)
+        quirk_registry: Any | None = None,  # Backward compatibility parameter (ignored)
+    ) -> None:
+        """Initialize the writer service.
+
+        Args:
+            config: Deprecated parameter for backward compatibility (ignored)
+            quirk_registry: Deprecated parameter for backward compatibility (ignored)
+
+        """
         super().__init__()
         # The registry is a singleton, fetched at runtime.
+        # Parameters are accepted for backward compatibility but not used
         self._quirk_registry = FlextLdifRegistry.get_global_instance()
         self._statistics_service = FlextLdifStatisticsService()
 
@@ -126,7 +137,8 @@ class FlextLdifWriterService(FlextService[Any]):
         # CRITICAL: Do NOT create default options if None - this causes incorrect folding
         # If None, raise error - caller MUST provide options
         if format_options is None:
-            raise ValueError("format_options is required for _serialize_entries_to_ldif")
+            msg = "format_options is required for _serialize_entries_to_ldif"
+            raise ValueError(msg)
         options = format_options
         output = StringIO()
 
@@ -167,7 +179,8 @@ class FlextLdifWriterService(FlextService[Any]):
         # CRITICAL: Do NOT create default options if None - this causes incorrect folding
         # If None, raise error - caller MUST provide options
         if format_options is None:
-            raise ValueError("format_options is required for _serialize_entry_to_ldif")
+            msg = "format_options is required for _serialize_entry_to_ldif"
+            raise ValueError(msg)
         options = format_options
         ldif_lines = []
 
@@ -185,7 +198,9 @@ class FlextLdifWriterService(FlextService[Any]):
         attribute_items = self._apply_attribute_name_mapping(attribute_items, entry)
 
         # Handle attribute ordering
-        attribute_items = self._apply_attribute_ordering(attribute_items, entry, options)
+        attribute_items = self._apply_attribute_ordering(
+            attribute_items, entry, options
+        )
 
         # Process each attribute
         for attr_name, attr_values in attribute_items:
@@ -216,9 +231,7 @@ class FlextLdifWriterService(FlextService[Any]):
 
         # Use utility with folding configuration
         return FlextLdifUtilities.Writer.fmt_dn(
-            dn_value,
-            width=options.line_width,
-            fold=options.fold_long_lines
+            dn_value, width=options.line_width, fold=options.fold_long_lines
         )
 
     def _fold_line(
@@ -296,9 +309,15 @@ class FlextLdifWriterService(FlextService[Any]):
             comments.append(f"# Entry written at: {datetime.now().isoformat()}")
 
         # Removed attributes
-        if options.write_removed_attributes_as_comments and entry.metadata and entry.metadata.removed_attributes:
+        if (
+            options.write_removed_attributes_as_comments
+            and entry.metadata
+            and entry.metadata.removed_attributes
+        ):
             comments.append("# Removed attributes during migration:")
-            comments.extend(f"#   - {attr}" for attr in entry.metadata.removed_attributes)
+            comments.extend(
+                f"#   - {attr}" for attr in entry.metadata.removed_attributes
+            )
 
         # Entry metadata
         if options.write_metadata_as_comments and entry.metadata:
@@ -309,7 +328,9 @@ class FlextLdifWriterService(FlextService[Any]):
                 for key, value in entry.metadata.extensions.items():
                     if key == "source_file":
                         comments.append(f"# Source File: {value}")
-                    elif key != "aci_conversion_comments":  # Skip ACI comments (handled separately)
+                    elif (
+                        key != "aci_conversion_comments"
+                    ):  # Skip ACI comments (handled separately)
                         comments.append(f"# {key}: {value}")
 
         # DN comment
@@ -403,7 +424,7 @@ class FlextLdifWriterService(FlextService[Any]):
                         continue
 
                     # Remove attribute name prefix if present (from schema definitions)
-                    if value_str.startswith(f"{attr_name}:") or value_str.startswith(f"{display_attr_name}:"):
+                    if value_str.startswith((f"{attr_name}:", f"{display_attr_name}:")):
                         value_str = value_str.split(":", 1)[1].strip()
 
                     filtered_values.append(value_str)
@@ -503,7 +524,11 @@ class FlextLdifWriterService(FlextService[Any]):
 
         """
         # Priority 1: Respect metadata ordering if requested
-        if options.respect_attribute_order and entry.metadata and entry.metadata.extensions:
+        if (
+            options.respect_attribute_order
+            and entry.metadata
+            and entry.metadata.extensions
+        ):
             order = entry.metadata.extensions.get("attribute_order")
             if isinstance(order, list):
                 return FlextLdifSortingService.attributes_by_order(
@@ -648,12 +673,15 @@ class FlextLdifWriterService(FlextService[Any]):
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Denormalize entries to target server format.
 
+        For RFC mode, entries are already in RFC format and don't need conversion.
+        For other server types, entries are returned as-is (conversion happens during write).
+
         Args:
             entries: Entries to denormalize
             target_server_type: Target server type
 
         Returns:
-            FlextResult with denormalized entries
+            FlextResult with entries
 
         """
         quirks = self._quirk_registry.get_quirks(target_server_type)
@@ -661,18 +689,10 @@ class FlextLdifWriterService(FlextService[Any]):
             return FlextResult.fail(
                 f"No quirk implementation found for server type: '{target_server_type}'"
             )
-        quirk: FlextLdifProtocols.Quirks.QuirksPort = quirks[0]
 
-        denormalized_entries: list[FlextLdifModels.Entry] = []
-        for entry in entries:
-            result = quirk.denormalize_entry_from_rfc(entry)
-            if result.is_failure:
-                return FlextResult.fail(
-                    f"Failed to denormalize entry {entry.dn.value}: {result.error}"
-                )
-            denormalized_entries.append(result.unwrap())
-
-        return FlextResult.ok(denormalized_entries)
+        # For RFC and other modes, entries don't need pre-denormalization
+        # Conversion is handled during write() operations
+        return FlextResult.ok(list(entries))
 
     def _generate_header(
         self,
@@ -741,7 +761,12 @@ class FlextLdifWriterService(FlextService[Any]):
 
         if output_target in {"string", "file"}:
             return self._output_ldif_content(
-                entries, output_target, output_path, format_options, header_content, original_count
+                entries,
+                output_target,
+                output_path,
+                format_options,
+                header_content,
+                original_count,
             )
 
         return FlextResult.fail(f"Unhandled output target: {output_target}")
@@ -794,8 +819,8 @@ class FlextLdifWriterService(FlextService[Any]):
             FlextLdifModels.WriteResponse(
                 statistics=FlextLdifModels.WriteStatistics(
                     entries_written=original_count,
-                    output_file=file_stats["output_file"],
-                    file_size_bytes=file_stats["file_size_bytes"],
+                    output_file=file_stats["path"],
+                    file_size_bytes=file_stats["bytes_written"],
                     encoding=file_stats["encoding"],
                 )
             )

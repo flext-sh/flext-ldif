@@ -55,29 +55,29 @@ class TestFlextLdifAclService:
         assert acl_response.statistics.total_acls_extracted == 0
         assert acl_response.statistics.entries_with_acls == 0
 
-    def test_parse_acl_openldap(self, acl_service: FlextLdifAclService) -> None:
+    def test_parse_openldap(self, acl_service: FlextLdifAclService) -> None:
         """Test parsing OpenLDAP ACL format."""
         acl_line = 'access to * by dn.exact="cn=admin,dc=example,dc=com" write'
         # This will delegate to quirks
-        result = acl_service.parse_acl(acl_line, "openldap")
+        result = acl_service.parse(acl_line, "openldap")
 
         # Result depends on quirks implementation
         assert isinstance(result, FlextResult)
 
-    def test_parse_acl_oracle_oid(self, acl_service: FlextLdifAclService) -> None:
+    def test_parse_oracle_oid(self, acl_service: FlextLdifAclService) -> None:
         """Test parsing Oracle OID ACL format."""
         acl_line = 'orclaci: access to entry by dn="cn=admin,dc=example,dc=com" (read)'
-        result = acl_service.parse_acl(acl_line, "oracle_oid")
+        result = acl_service.parse(acl_line, "oracle_oid")
 
         assert isinstance(result, FlextResult)
 
-    def test_parse_acl_unsupported_server_type(
+    def test_parse_unsupported_server_type(
         self,
         acl_service: FlextLdifAclService,
     ) -> None:
         """Test parsing with unsupported server type fails."""
         acl_line = "some-acl-content"
-        result = acl_service.parse_acl(acl_line, "unknown-server")
+        result = acl_service.parse(acl_line, "unknown-server")
 
         # Should fail with unsupported server type
         assert isinstance(result, FlextResult)

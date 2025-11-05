@@ -174,9 +174,13 @@ class TestRfcWriterRealFixtures:
         writer = FlextLdifWriterService(
             config=FlextLdifConfig(),
             quirk_registry=quirk_registry,
-            target_server_type="rfc",
         )
-        write_result = writer.write(entries, output_file)
+        write_result = writer.write(
+            entries,
+            target_server_type="rfc",
+            output_target="file",
+            output_path=output_file,
+        )
 
         assert write_result.is_success, f"Failed to write: {write_result.error}"
         assert output_file.exists()
@@ -221,10 +225,14 @@ class TestRfcWriterRealFixtures:
         writer = FlextLdifWriterService(
             config=FlextLdifConfig(),
             quirk_registry=quirk_registry,
-            target_server_type="rfc",
         )
 
-        result = writer.write(entries, output_file)
+        result = writer.write(
+            entries,
+            target_server_type="rfc",
+            output_target="file",
+            output_path=output_file,
+        )
 
         assert result.is_success, f"Failed to write ACL entries: {result.error}"
         assert output_file.exists()
@@ -274,14 +282,18 @@ class TestRfcExceptionHandlingRealScenarios:
             writer = FlextLdifWriterService(
                 config=FlextLdifConfig(),
                 quirk_registry=quirk_registry,
-                target_server_type="rfc",
             )
 
-            result = writer.write([test_entry], readonly_dir / "test.ldif")
+            result = writer.write(
+                [test_entry],
+                target_server_type="rfc",
+                output_target="file",
+                output_path=readonly_dir / "test.ldif",
+            )
 
             # Should fail with permission error
             if not result.is_success:
-                assert (
+                assert result.error is not None and (
                     "Permission denied" in result.error
                     or "LDIF write failed" in result.error
                 )

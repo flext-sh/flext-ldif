@@ -613,7 +613,7 @@ class TestDnComparison:
 
         assert result.is_failure
         assert result.error is not None
-        assert "RFC 4514" in result.error or "comparison failed" in result.error
+        assert "RFC 4514" in result.error or "Comparison failed" in result.error
 
     def test_compare_invalid_dn_second(self) -> None:
         """Test comparing with invalid second DN returns failure."""
@@ -625,7 +625,7 @@ class TestDnComparison:
 
         assert result.is_failure
         assert result.error is not None
-        assert "RFC 4514" in result.error or "comparison failed" in result.error
+        assert "RFC 4514" in result.error or "Comparison failed" in result.error
 
     def test_compare_both_invalid_dns(self) -> None:
         """Test comparing with both invalid DNs returns failure."""

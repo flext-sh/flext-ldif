@@ -60,10 +60,22 @@ class FlextLdifTestServiceFactory:
             target_server_type: str = "oud",
         ) -> FlextLdifMigrationPipeline:
             """Create migration pipeline service."""
+            import tempfile
+            from pathlib import Path
+
+            # Create temporary directories for testing
+            temp_dir = Path(tempfile.gettempdir())
+            input_dir = temp_dir / "ldif_input"
+            output_dir = temp_dir / "ldif_output"
+            input_dir.mkdir(exist_ok=True)
+            output_dir.mkdir(exist_ok=True)
+
             return FlextLdifMigrationPipeline(
-                params=params or {},
-                source_server_type=source_server_type,
-                target_server_type=target_server_type,
+                input_dir=input_dir,
+                output_dir=output_dir,
+                mode="simple",
+                source_server=source_server_type,
+                target_server=target_server_type,
             )
 
     class _ConfigFactory:
@@ -184,7 +196,7 @@ class FlextLdifTestServiceFactory:
             "ldif_parser": cls._RfcParserFactory.create_ldif_parser(config),
             "schema_parser": cls._RfcParserFactory.create_schema_parser(config),
             "ldif_writer": cls._RfcParserFactory.create_ldif_writer(
-                config, quirk_registry
+                quirk_registry
             ),
             "migration_pipeline": cls._RfcParserFactory.create_migration_pipeline(
                 config

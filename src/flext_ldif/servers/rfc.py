@@ -109,9 +109,11 @@ class FlextLdifServersRfc(FlextLdifServersBase):
     def __init__(self) -> None:
         """Initialize RFC quirks."""
         super().__init__()
-        self.schema = self.Schema()
-        self.acl = self.Acl()
-        self.entry = self.Entry()
+        # Use object.__setattr__ to bypass Pydantic validation for dynamic attributes
+        # Pass server_type and priority to nested class instances
+        object.__setattr__(self, "schema", self.Schema(server_type=self.server_type, priority=self.priority))
+        object.__setattr__(self, "acl", self.Acl(server_type=self.server_type, priority=self.priority))
+        object.__setattr__(self, "entry", self.Entry(server_type=self.server_type, priority=self.priority))
 
     # =========================================================================
     # QuirksPort Protocol Implementation (Concrete Methods for RFC)
@@ -165,14 +167,42 @@ class FlextLdifServersRfc(FlextLdifServersBase):
         """Return the ACL as is, since RFC is the target format."""
         return FlextResult.ok(acl)
 
-    server_type = FlextLdifConstants.ServerTypes.RFC
-    priority = 100
+    # =========================================================================
+    # STANDARDIZED CONSTANTS FOR AUTO-DISCOVERY
+    # =========================================================================
+    class Constants:
+        """RFC 4512 baseline - universal intermediate format for all conversions."""
+
+        SERVER_TYPE: ClassVar[str] = FlextLdifConstants.ServerTypes.RFC
+        CANONICAL_NAME: ClassVar[str] = "rfc"
+        ALIASES: ClassVar[frozenset[str]] = frozenset(["rfc", "generic"])
+        PRIORITY: ClassVar[int] = 100  # Lowest priority - fallback only
+        CAN_NORMALIZE_FROM: ClassVar[frozenset[str]] = frozenset(["rfc"])
+        CAN_DENORMALIZE_TO: ClassVar[frozenset[str]] = frozenset(["rfc"])
+
+    # =========================================================================
+    # Class-level attributes for server identification (from Constants)
+    # =========================================================================
+    server_type: ClassVar[str] = Constants.SERVER_TYPE
+    priority: ClassVar[int] = Constants.PRIORITY
+
+    def parse(
+        self, ldif_text: str
+    ) -> FlextResult[list[FlextLdifModels.Entry]]:
+        """Parse LDIF text using base class routing."""
+        return super().parse(ldif_text)
+
+    def write(
+        self, entries: list[FlextLdifModels.Entry]
+    ) -> FlextResult[str]:
+        """Write entries using base class routing."""
+        return super().write(entries)
 
     def parse_ldif_content(
         self, content: str
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Delegate LDIF content parsing to the nested Entry quirk."""
-        return self.entry.parse_content(content)
+        return self.entry.parse(content)
 
     # =========================================================================
     # DELEGATION METHODS (for backward compatibility or internal use)
@@ -206,7 +236,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
         """Delegate to schema instance."""
         return self.schema.parse_objectclass(oc_definition)
 
-    def can_handle_acl(self, acl: FlextLdifModels.Acl) -> bool:
+    def _can_handle(self, acl: FlextLdifModels.Acl) -> bool:
         """Check if this ACL is RFC-compliant.
 
         The RFC quirk assumes any ACL that has been successfully parsed into
@@ -223,7 +253,10 @@ class FlextLdifServersRfc(FlextLdifServersBase):
 
     def parse_acl(self, acl_line: str) -> FlextResult[FlextLdifModels.Acl]:
         """Delegate ACL parsing to the nested Acl quirk."""
-        return self.acl.parse_acl(acl_line)
+        acl_quirk = getattr(self, "acl", None)
+        if not acl_quirk:
+            return FlextResult.fail("ACL quirk not available")
+        return acl_quirk.parse_acl(acl_line)
 
     def create_quirk_metadata(
         self,
@@ -237,36 +270,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             extensions=extensions or {},
         )
 
-    def convert_acl_to_rfc(
-        self,
-        acl_data: FlextLdifModels.Acl,
-    ) -> FlextResult[FlextLdifModels.Acl]:
-        """Convert ACL to RFC-compliant format (pass-through for RFC).
-
-        Args:
-            acl_data: Acl model
-
-        Returns:
-            FlextResult with RFC-compliant Acl (unchanged)
-
-        """
-        # RFC is already RFC-compliant, return unchanged
-        return FlextResult[FlextLdifModels.Acl].ok(acl_data)
-
-    def convert_acl_from_rfc(
-        self,
-        acl_data: FlextLdifModels.Acl,
-    ) -> FlextResult[FlextLdifModels.Acl]:
-        """Convert ACL from RFC format (pass-through for RFC).
-
-        Args:
-            acl_data: RFC-compliant Acl model
-
-        Returns:
-            FlextResult with Acl (unchanged)
-
-        """
-        return FlextResult[FlextLdifModels.Acl].ok(acl_data)
+    # Top-level ACL conversions eliminated - use universal parse/write pipeline
 
     def write_acl_to_rfc(self, acl_data: FlextLdifModels.Acl) -> FlextResult[str]:
         """Write ACL to RFC-compliant string format."""
@@ -1448,15 +1452,6 @@ class FlextLdifServersRfc(FlextLdifServersBase):
     class Schema(FlextLdifServersBase.Schema):
         """RFC 4512 Compliant Schema Quirk - Base Implementation."""
 
-        class Constants:
-            """RFC 4512 baseline - universal intermediate format for all conversions."""
-
-            CANONICAL_NAME: ClassVar[str] = "rfc"
-            ALIASES: ClassVar[frozenset[str]] = frozenset(["rfc", "generic"])
-            PRIORITY: ClassVar[int] = 100  # Lowest priority - fallback only
-            CAN_NORMALIZE_FROM: ClassVar[frozenset[str]] = frozenset(["rfc"])
-            CAN_DENORMALIZE_TO: ClassVar[frozenset[str]] = frozenset(["rfc"])
-
         def __init__(
             self,
             server_type: str | None = None,
@@ -1465,13 +1460,32 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             """Initialize RFC schema quirk.
 
             Args:
-                server_type: Optional server type (ignored for RFC - RFC is generic)
-                priority: Optional priority (ignored for RFC - uses ClassVar)
+                server_type: Server type identifier (e.g., "rfc", "oid")
+                priority: Priority for quirk selection (0-200 range)
+
             """
-            # RFC implementation uses ClassVar for server_type and priority
-            # Parameters are accepted for compatibility with base.py contract
-            # but are not used (RFC is generic, not server-specific)
-            # RFC implementation doesn't call super() as it's the base implementation
+            # Pass parameters to base class
+            server_type = server_type or "rfc"
+            priority = priority or 100
+            super().__init__(server_type=server_type, priority=priority)
+
+        def _can_handle_attribute(
+            self, attr_definition: str | FlextLdifModels.SchemaAttribute
+        ) -> bool:
+            """Check if RFC quirk can handle attribute definitions (abstract impl).
+
+            Accepts raw string or SchemaAttribute model.
+            """
+            return True
+
+        def _can_handle_objectclass(
+            self, oc_definition: str | FlextLdifModels.SchemaObjectClass
+        ) -> bool:
+            """Check if RFC quirk can handle objectClass definitions (abstract impl).
+
+            Accepts raw string or SchemaObjectClass model.
+            """
+            return True
 
         def can_handle_attribute(
             self, attribute: FlextLdifModels.SchemaAttribute
@@ -1536,119 +1550,48 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             """
             return False
 
-        def parse_attribute(
+        def _parse_attribute(
             self,
             attr_definition: str,
         ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
-            """Parse RFC 4512 attribute definition by delegating to AttributeParser."""
+            """Parse RFC 4512 attribute definition (implements abstract method)."""
             return FlextLdifServersRfc.AttributeParser.parse_common(
                 attr_definition=attr_definition,
                 case_insensitive=False,
                 allow_syntax_quotes=False,
             )
 
-        def parse_objectclass(
+        def _parse_objectclass(
             self,
             oc_definition: str,
         ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
-            """Parse RFC-compliant objectClass definition by delegating to ObjectClassParser."""
+            """Parse RFC-compliant objectClass definition (implements abstract method)."""
             return FlextLdifServersRfc.ObjectClassParser.parse_common(
                 oc_definition=oc_definition, case_insensitive=False
             )
 
-        def convert_attribute_to_rfc(
+        def _parse_attribute(
             self,
-            attr_data: FlextLdifModels.SchemaAttribute,
+            attr_definition: str,
         ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
-            """Convert attribute to RFC-compliant format (pass-through for RFC).
+            """Parse RFC 4512 attribute definition by delegating to AttributeParser (internal)."""
+            return FlextLdifServersRfc.AttributeParser.parse_common(
+                attr_definition=attr_definition,
+                case_insensitive=False,
+                allow_syntax_quotes=False,
+            )
 
-            Args:
-                attr_data: SchemaAttribute model
-
-            Returns:
-                FlextResult with RFC-compliant SchemaAttribute (unchanged)
-
-            """
-            try:
-                rfc_model = FlextLdifModels.SchemaAttribute(
-                    oid=attr_data.oid,
-                    name=attr_data.name,
-                    desc=attr_data.desc,
-                    syntax=attr_data.syntax,
-                    equality=attr_data.equality,
-                    ordering=attr_data.ordering,
-                    substr=attr_data.substr,
-                    single_value=attr_data.single_value,
-                    sup=attr_data.sup,
-                    length=attr_data.length,
-                    usage=attr_data.usage,
-                    metadata=None,
-                )
-                return FlextResult[FlextLdifModels.SchemaAttribute].ok(rfc_model)
-            except (ValueError, TypeError, AttributeError) as exc:
-                return FlextResult[FlextLdifModels.SchemaAttribute].fail(
-                    f"Attribute→RFC conversion failed: {exc}",
-                )
-
-        def convert_objectclass_to_rfc(
+        def _parse_objectclass(
             self,
-            oc_data: FlextLdifModels.SchemaObjectClass,
+            oc_definition: str,
         ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
-            """Convert objectClass to RFC-compliant format (pass-through for RFC).
+            """Parse RFC-compliant objectClass definition by delegating to ObjectClassParser (internal)."""
+            return FlextLdifServersRfc.ObjectClassParser.parse_common(
+                oc_definition=oc_definition,
+                case_insensitive=False,
+            )
 
-            Args:
-                oc_data: SchemaObjectClass model
-
-            Returns:
-                FlextResult with RFC-compliant SchemaObjectClass (unchanged)
-
-            """
-            try:
-                rfc_model = FlextLdifModels.SchemaObjectClass(
-                    oid=oc_data.oid,
-                    name=oc_data.name,
-                    desc=oc_data.desc,
-                    sup=oc_data.sup,
-                    kind=oc_data.kind,
-                    must=oc_data.must,
-                    may=oc_data.may,
-                    metadata=None,
-                )
-                return FlextResult[FlextLdifModels.SchemaObjectClass].ok(rfc_model)
-            except (ValueError, TypeError, AttributeError) as exc:
-                return FlextResult[FlextLdifModels.SchemaObjectClass].fail(
-                    f"ObjectClass→RFC conversion failed: {exc}",
-                )
-
-        def convert_attribute_from_rfc(
-            self,
-            rfc_data: FlextLdifModels.SchemaAttribute,
-        ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
-            """Convert attribute from RFC format (pass-through for RFC).
-
-            Args:
-                rfc_data: RFC-compliant SchemaAttribute
-
-            Returns:
-                FlextResult with SchemaAttribute (unchanged)
-
-            """
-            return FlextResult[FlextLdifModels.SchemaAttribute].ok(rfc_data)
-
-        def convert_objectclass_from_rfc(
-            self,
-            rfc_data: FlextLdifModels.SchemaObjectClass,
-        ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
-            """Convert objectClass from RFC format (pass-through for RFC).
-
-            Args:
-                rfc_data: RFC-compliant SchemaObjectClass
-
-            Returns:
-                FlextResult with SchemaObjectClass (unchanged)
-
-            """
-            return FlextResult[FlextLdifModels.SchemaObjectClass].ok(rfc_data)
+        # Schema conversion methods eliminated - use universal parse/write pipeline
 
         def _transform_objectclass_for_write(
             self,
@@ -1672,11 +1615,11 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             """Hook for subclasses to transform written attribute string."""
             return written_str
 
-        def write_attribute_to_rfc(
+        def _write_attribute(
             self,
             attr_data: FlextLdifModels.SchemaAttribute,
         ) -> FlextResult[str]:
-            """Write attribute to RFC-compliant string format.
+            """Write attribute to RFC-compliant string format (internal).
 
             Args:
                 attr_data: SchemaAttribute model
@@ -1729,11 +1672,11 @@ class FlextLdifServersRfc(FlextLdifServersBase):
 
             return result
 
-        def write_objectclass_to_rfc(
+        def _write_objectclass(
             self,
             oc_data: FlextLdifModels.SchemaObjectClass,
         ) -> FlextResult[str]:
-            """Write objectClass to RFC-compliant string format.
+            """Write objectClass to RFC-compliant string format (internal).
 
             Args:
                 oc_data: SchemaObjectClass model
@@ -1781,15 +1724,6 @@ class FlextLdifServersRfc(FlextLdifServersBase):
     class Acl(FlextLdifServersBase.Acl):
         """RFC 4516 Compliant ACL Quirk - Base Implementation."""
 
-        class Constants:
-            """RFC 4516 baseline - universal intermediate format for all ACL conversions."""
-
-            CANONICAL_NAME: ClassVar[str] = "rfc"
-            ALIASES: ClassVar[frozenset[str]] = frozenset(["rfc", "generic"])
-            PRIORITY: ClassVar[int] = 100  # Lowest priority - fallback only
-            CAN_NORMALIZE_FROM: ClassVar[frozenset[str]] = frozenset(["rfc"])
-            CAN_DENORMALIZE_TO: ClassVar[frozenset[str]] = frozenset(["rfc"])
-
         def __init__(
             self,
             server_type: str | None = None,
@@ -1798,15 +1732,32 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             """Initialize RFC ACL quirk.
 
             Args:
-                server_type: Optional server type (ignored for RFC - RFC is generic)
-                priority: Optional priority (ignored for RFC - uses ClassVar)
-            """
-            # RFC implementation uses ClassVar for server_type and priority
-            # Parameters are accepted for compatibility with base.py contract
-            # but are not used (RFC is generic, not server-specific)
-            # RFC implementation doesn't call super() as it's the base implementation
+                server_type: Server type identifier (e.g., "rfc", "oid")
+                priority: Priority for quirk selection (0-200 range)
 
-        def can_handle_acl(self, acl: FlextLdifModels.Acl) -> bool:
+            """
+            # Pass parameters to base class
+            server_type = server_type or "rfc"
+            priority = priority or 100
+            super().__init__(server_type=server_type, priority=priority)
+
+        def _can_handle_acl(
+            self, acl_line: str | FlextLdifModels.Acl
+        ) -> bool:
+            """Check if this quirk can handle the ACL definition.
+
+            RFC quirk handles all ACLs as it's the baseline implementation.
+
+            Args:
+                acl_line: ACL definition line string or Acl model
+
+            Returns:
+                True (RFC handles all ACLs)
+
+            """
+            return True
+
+        def _can_handle(self, acl: FlextLdifModels.Acl) -> bool:
             """Check if this ACL is RFC-compliant.
 
             The RFC quirk assumes any ACL that has been successfully parsed into
@@ -1830,7 +1781,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             """
             return self.acl_attribute_name
 
-        def can_handle_attribute(
+        def _can_handle_attribute(
             self, attribute: FlextLdifModels.SchemaAttribute
         ) -> bool:
             """RFC ACL quirk does not handle attributes.
@@ -1844,7 +1795,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             """
             return False
 
-        def can_handle_objectclass(
+        def _can_handle_objectclass(
             self, objectclass: FlextLdifModels.SchemaObjectClass
         ) -> bool:
             """RFC ACL quirk does not handle objectClasses.
@@ -1858,8 +1809,20 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             """
             return False
 
-        def parse_acl(self, acl_line: str) -> FlextResult[FlextLdifModels.Acl]:
-            """Parse RFC-compliant ACL line.
+        def can_handle_attribute(
+            self, attribute: FlextLdifModels.SchemaAttribute
+        ) -> bool:
+            """RFC ACL quirk does not handle attributes (delegates to _can_handle_attribute)."""
+            return self._can_handle_attribute(attribute)
+
+        def can_handle_objectclass(
+            self, objectclass: FlextLdifModels.SchemaObjectClass
+        ) -> bool:
+            """RFC ACL quirk does not handle objectClasses (delegates to _can_handle_objectclass)."""
+            return self._can_handle_objectclass(objectclass)
+
+        def _parse_acl(self, acl_line: str) -> FlextResult[FlextLdifModels.Acl]:
+            """Parse RFC-compliant ACL line (implements abstract method).
 
             Args:
                 acl_line: The raw ACL string from the LDIF.
@@ -1880,6 +1843,18 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             )
             return FlextResult.ok(acl_model)
 
+        def parse_acl(self, acl_line: str) -> FlextResult[FlextLdifModels.Acl]:
+            """Parse RFC-compliant ACL line.
+
+            Args:
+                acl_line: The raw ACL string from the LDIF.
+
+            Returns:
+                A FlextResult containing the Acl model.
+
+            """
+            return self._parse_acl(acl_line)
+
         def create_quirk_metadata(
             self,
             original_format: str,
@@ -1892,63 +1867,82 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 extensions=extensions or {},
             )
 
-        def convert_acl_to_rfc(
-            self,
-            acl_data: FlextLdifModels.Acl,
-        ) -> FlextResult[FlextLdifModels.Acl]:
-            """Convert ACL to RFC-compliant format (pass-through for RFC).
+        # Nested Acl conversion methods eliminated - use universal parse/write pipeline
 
-            Args:
-                acl_data: Acl model
-
-            Returns:
-                FlextResult with RFC-compliant Acl (unchanged)
-
-            """
-            # RFC is already RFC-compliant, return unchanged
-            return FlextResult[FlextLdifModels.Acl].ok(acl_data)
-
-        def convert_acl_from_rfc(
-            self,
-            acl_data: FlextLdifModels.Acl,
-        ) -> FlextResult[FlextLdifModels.Acl]:
-            """Convert ACL from RFC format (pass-through for RFC).
-
-            Args:
-                acl_data: RFC-compliant Acl model
-
-            Returns:
-                FlextResult with Acl (unchanged)
-
-            """
-            return FlextResult[FlextLdifModels.Acl].ok(acl_data)
-
-        def write_acl_to_rfc(self, acl_data: FlextLdifModels.Acl) -> FlextResult[str]:
-            """Write ACL to RFC-compliant string format."""
+        def _write_acl(self, acl_data: FlextLdifModels.Acl) -> FlextResult[str]:
+            """Write ACL to RFC-compliant string format (internal)."""
             return FlextResult[str].ok(acl_data.raw_acl)
 
     class Entry(FlextLdifServersBase.Entry):
         """RFC 2849 Compliant Entry Quirk - Base Implementation."""
-
-        class Constants:
-            """RFC 2849 baseline - universal intermediate format for all entry conversions."""
-
-            CANONICAL_NAME: ClassVar[str] = "rfc"
-            ALIASES: ClassVar[frozenset[str]] = frozenset(["rfc", "generic"])
-            PRIORITY: ClassVar[int] = 100  # Lowest priority - fallback only
-            CAN_NORMALIZE_FROM: ClassVar[frozenset[str]] = frozenset(["rfc"])
-            CAN_DENORMALIZE_TO: ClassVar[frozenset[str]] = frozenset(["rfc"])
-
-        server_type: ClassVar[str] = "rfc"
-        priority: ClassVar[int] = 100
 
         def __init__(
             self,
             server_type: str | None = None,
             priority: int | None = None,
         ) -> None:
-            """Initialize RFC entry quirk."""
-            # RFC implementation doesn't call super() as it's the base implementation
+            """Initialize RFC entry quirk.
+
+            Args:
+                server_type: Server type identifier (e.g., "rfc", "oid")
+                priority: Priority for quirk selection (0-200 range)
+
+            """
+            # Pass parameters to base class
+            server_type = server_type or "rfc"
+            priority = priority or 100
+            super().__init__(server_type=server_type, priority=priority)
+
+        def _can_handle_entry(
+            self,
+            entry_dn: str,
+            attributes: Mapping[str, object],
+        ) -> bool:
+            """Check if this quirk can handle the entry.
+
+            RFC quirk can handle any entry.
+
+            Args:
+                entry_dn: Entry distinguished name
+                attributes: Entry attributes mapping
+
+            Returns:
+                True - RFC quirk handles all entries as baseline
+
+            """
+            return True
+
+        def _can_handle_attribute(
+            self, attribute: FlextLdifModels.SchemaAttribute
+        ) -> bool:
+            """Check if this Entry quirk has special handling for an attribute definition.
+
+            Entry processing doesn't change based on schema.
+
+            Args:
+                attribute: The SchemaAttribute model to check.
+
+            Returns:
+                False - RFC entry quirk doesn't have attribute-specific logic
+
+            """
+            return False
+
+        def _can_handle_objectclass(
+            self, objectclass: FlextLdifModels.SchemaObjectClass
+        ) -> bool:
+            """Check if this Entry quirk has special handling for an objectClass definition.
+
+            Entry processing doesn't change based on objectClass.
+
+            Args:
+                objectclass: The SchemaObjectClass model to check.
+
+            Returns:
+                False - RFC entry quirk doesn't have objectClass-specific logic
+
+            """
+            return False
 
         def can_handle_entry(
             self,
@@ -2011,10 +2005,11 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             """
             return False
 
-        def parse_content(
+        def _parse_content(
             self,
             ldif_content: str,
         ) -> FlextResult[list[FlextLdifModels.Entry]]:
+            """Parse raw LDIF content string (implements abstract method)."""
             """Parse raw LDIF content string into Entry models.
 
             This is the PRIMARY interface - parser.py calls this with raw LDIF content.
@@ -2047,7 +2042,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
 
                 # Convert parsed (dn, attrs) tuples to Entry models
                 for dn, attrs in parsed_entries:
-                    entry_result = self.parse_entry(dn, attrs)
+                    entry_result = self._parse_entry(dn, attrs)
                     if entry_result.is_success:
                         entries.append(entry_result.unwrap())
 
@@ -2058,12 +2053,12 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                     f"Failed to parse LDIF content: {e}",
                 )
 
-        def parse_entry(
+        def _parse_entry(
             self,
             entry_dn: str,
             entry_attrs: Mapping[str, object],
         ) -> FlextResult[FlextLdifModels.Entry]:
-            """Parse raw LDIF entry data into Entry model.
+            """Parse raw LDIF entry data into Entry model (internal).
 
             Converts raw LDIF parser output (dict with bytes values) into
             an Entry model with string attributes. This is the boundary method
@@ -2116,9 +2111,10 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                         f"Failed to create Entry model: {entry_result.error}",
                     )
 
-                # Get the Entry model and apply server-specific processing
+                # Get the Entry model - no additional processing needed
+                # Entry model is already in RFC format with proper metadata
                 entry_model = entry_result.unwrap()
-                return self.process_entry(entry_model)
+                return FlextResult[FlextLdifModels.Entry].ok(entry_model)
 
             except Exception as e:
                 logger.exception("RFC entry parsing exception")
@@ -2126,44 +2122,50 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                     f"Failed to parse entry: {e}",
                 )
 
-        def process_entry(
-            self,
-            entry: FlextLdifModels.Entry,
-        ) -> FlextResult[FlextLdifModels.Entry]:
-            """Process entry with RFC baseline logic (pass-through)."""
-            # For RFC, no extra processing is needed.
-            return FlextResult.ok(entry)
-
-        def convert_entry_to_rfc(
+        def _write_entry(
             self,
             entry_data: FlextLdifModels.Entry,
-        ) -> FlextResult[FlextLdifModels.Entry]:
-            """Return the entry as is, as it's already RFC-compliant."""
-            return FlextResult.ok(entry_data)
+        ) -> FlextResult[str]:
+            """Write Entry model to RFC-compliant LDIF string format (internal).
 
-        def convert_entry_from_rfc(
-            self,
-            entry_data: FlextLdifModels.Entry,
-        ) -> FlextResult[FlextLdifModels.Entry]:
-            """Return the entry as is, as it's already in the target format."""
-            return FlextResult.ok(entry_data)
-
-        def denormalize_entry_from_rfc(
-            self,
-            entry: FlextLdifModels.Entry,
-        ) -> FlextResult[FlextLdifModels.Entry]:
-            """Convert RFC Entry model to RFC format (pass-through for RFC).
-
-            Since RFC is already the canonical format, this returns the entry unchanged.
+            Converts Entry model to LDIF format per RFC 2849.
 
             Args:
-                entry: RFC-compliant Entry model
+                entry_data: Entry model to write
 
             Returns:
-                FlextResult with Entry model (unchanged)
+                FlextResult with RFC-compliant LDIF string
 
             """
-            return FlextResult[FlextLdifModels.Entry].ok(entry)
+            try:
+                # Build LDIF string from Entry model
+                ldif_lines: list[str] = []
+
+                # DN line (required)
+                if entry_data.dn and entry_data.dn.value:
+                    ldif_lines.append(f"dn: {entry_data.dn.value}")
+                else:
+                    return FlextResult[str].fail("Entry DN is required for LDIF output")
+
+                # Attributes
+                if entry_data.attributes and entry_data.attributes.attributes:
+                    for attr_name, attr_values in entry_data.attributes.attributes.items():
+                        if isinstance(attr_values, list):
+                            for value in attr_values:
+                                ldif_lines.append(f"{attr_name}: {value}")
+                        else:
+                            ldif_lines.append(f"{attr_name}: {attr_values}")
+
+                # Join with newlines and ensure proper LDIF formatting
+                ldif_text = "\n".join(ldif_lines)
+                if ldif_text and not ldif_text.endswith("\n"):
+                    ldif_text += "\n"
+
+                return FlextResult[str].ok(ldif_text)
+            except (ValueError, TypeError, AttributeError) as e:
+                return FlextResult[str].fail(
+                    f"Failed to write entry to LDIF: {e}",
+                )
 
 
 __all__ = [

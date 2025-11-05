@@ -34,7 +34,9 @@ from flext_ldif.services.entrys import FlextLdifEntryService
 # ════════════════════════════════════════════════════════════════════════════
 
 
-def create_entry(dn_str: str, attributes: dict[str, list[str]]) -> FlextLdifModels.Entry:
+def create_entry(
+    dn_str: str, attributes: dict[str, list[str]]
+) -> FlextLdifModels.Entry:
     """Create test entry with DN and attributes."""
     dn = FlextLdifModels.DistinguishedName(value=dn_str)
     attrs = FlextLdifModels.LdifAttributes.create(attributes).unwrap()
@@ -152,7 +154,9 @@ class TestPublicClassmethods:
         self, entries_batch: list[FlextLdifModels.Entry]
     ) -> None:
         """Test remove_operational_attributes_batch with multiple entries."""
-        result = FlextLdifEntryService.remove_operational_attributes_batch(entries_batch)
+        result = FlextLdifEntryService.remove_operational_attributes_batch(
+            entries_batch
+        )
 
         assert result.is_success
         cleaned_entries = result.unwrap()
@@ -162,16 +166,18 @@ class TestPublicClassmethods:
         for entry in cleaned_entries:
             attrs = entry.attributes.attributes
             for attr_name in attrs:
-                assert attr_name not in [
+                assert attr_name not in {
                     "createTimestamp",
                     "modifyTimestamp",
                     "creatorsName",
                     "modifiersName",
                     "entryCSN",
                     "entryUUID",
-                ]
+                }
 
-    def test_remove_attributes_single(self, simple_entry: FlextLdifModels.Entry) -> None:
+    def test_remove_attributes_single(
+        self, simple_entry: FlextLdifModels.Entry
+    ) -> None:
         """Test remove_attributes with single entry."""
         result = FlextLdifEntryService.remove_attributes(
             simple_entry, attributes=["mail", "sn"]
@@ -200,6 +206,7 @@ class TestPublicClassmethods:
         # cn should be removed from all entries
         for entry in cleaned_entries:
             assert "cn" not in entry.attributes.attributes
+
 
 # ════════════════════════════════════════════════════════════════════════════
 # TEST EXECUTE PATTERN (V1 Style)
@@ -376,7 +383,9 @@ class TestAttributeRemoval:
 
     def test_remove_single_attribute(self, simple_entry: FlextLdifModels.Entry) -> None:
         """Test removing a single attribute."""
-        result = FlextLdifEntryService.remove_attributes(simple_entry, attributes=["mail"])
+        result = FlextLdifEntryService.remove_attributes(
+            simple_entry, attributes=["mail"]
+        )
 
         assert result.is_success
         cleaned = result.unwrap()
@@ -398,7 +407,9 @@ class TestAttributeRemoval:
         assert "objectClass" not in cleaned.attributes.attributes
         assert "cn" in cleaned.attributes.attributes
 
-    def test_remove_nonexistent_attribute(self, simple_entry: FlextLdifModels.Entry) -> None:
+    def test_remove_nonexistent_attribute(
+        self, simple_entry: FlextLdifModels.Entry
+    ) -> None:
         """Test removing attribute that doesn't exist doesn't fail."""
         result = FlextLdifEntryService.remove_attributes(
             simple_entry, attributes=["nonexistent"]
@@ -521,7 +532,9 @@ class TestEdgeCases:
             {"cn": ["test"], "description": [long_value]},
         )
 
-        result = FlextLdifEntryService.remove_attributes(entry, attributes=["description"])
+        result = FlextLdifEntryService.remove_attributes(
+            entry, attributes=["description"]
+        )
         assert result.is_success
         cleaned = result.unwrap()
         assert "description" not in cleaned.attributes.attributes
@@ -565,7 +578,9 @@ class TestIntegration:
         intermediate = result1.unwrap()
 
         # Stage 2: Remove specific attributes
-        result2 = FlextLdifEntryService.remove_attributes(intermediate, attributes=["mail"])
+        result2 = FlextLdifEntryService.remove_attributes(
+            intermediate, attributes=["mail"]
+        )
         assert result2.is_success
         final = result2.unwrap()
 
@@ -575,10 +590,14 @@ class TestIntegration:
         assert "createTimestamp" not in attrs
         assert "cn" in attrs
 
-    def test_batch_cleaning_pipeline(self, entries_batch: list[FlextLdifModels.Entry]) -> None:
+    def test_batch_cleaning_pipeline(
+        self, entries_batch: list[FlextLdifModels.Entry]
+    ) -> None:
         """Test realistic batch processing pipeline."""
         # Stage 1: Remove operational attributes from batch
-        result1 = FlextLdifEntryService.remove_operational_attributes_batch(entries_batch)
+        result1 = FlextLdifEntryService.remove_operational_attributes_batch(
+            entries_batch
+        )
         assert result1.is_success
         cleaned_batch = result1.unwrap()
 
@@ -599,6 +618,7 @@ class TestIntegration:
 # TESTS FOR FLEXTLDIFVALIDATIONSERVICE (RFC 4512/4514)
 # ════════════════════════════════════════════════════════════════════════════
 
+
 class TestFlextLdifValidationService:
     """RFC 4512/4514 LDAP attribute and DN component validation tests."""
 
@@ -608,7 +628,13 @@ class TestFlextLdifValidationService:
 
         service = FlextLdifValidationService()
 
-        valid_names = ["cn", "mail", "objectClass", "user-account", "extensionAttribute123"]
+        valid_names = [
+            "cn",
+            "mail",
+            "objectClass",
+            "user-account",
+            "extensionAttribute123",
+        ]
         for name in valid_names:
             result = service.validate_attribute_name(name)
             assert result.is_success
@@ -688,6 +714,7 @@ class TestFlextLdifValidationService:
 # ════════════════════════════════════════════════════════════════════════════
 # TESTS FOR FLEXTLDIFSYNT AXSERVICE (RFC 4517)
 # ════════════════════════════════════════════════════════════════════════════
+
 
 class TestFlextLdifSyntaxService:
     """RFC 4517 LDAP attribute syntax validation and resolution tests."""

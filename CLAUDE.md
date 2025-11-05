@@ -18,6 +18,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **[~/.claude/commands/flext.md](~/.claude/commands/flext.md)**: Optimization command for module refactoring (USE with `/flext` command)
 - **[../CLAUDE.md](../CLAUDE.md)**: FLEXT ecosystem standards and domain library rules
 - **[README.md](README.md)**: Project overview and usage documentation
+- **[HOOK_PATTERNS.md](HOOK_PATTERNS.md)**: Standardized hook patterns for server quirk customization (Private methods, design patterns)
 
 **Document Purpose**:
 - **This file (CLAUDE.md)**: Project-specific flext-ldif standards and LDIF processing patterns
@@ -454,6 +455,41 @@ result = registry.validate_oud_consistency()
 - **OUD Compatibility**: Ensures consistent DN case for OUD targets
 - **Conversion Pipeline**: Integrated into universal conversion matrix
 - **Statistics Tracking**: Monitors DN variants and conflicts
+
+### Server Quirk Hook Pattern Architecture
+
+**Purpose**: Enable server-specific customization without duplicating RFC baseline logic
+
+**Design**:
+- **RFC Base** provides all parsing/writing logic (single source of truth)
+- **Server Quirks** extend via hooks: `_can_handle_*`, `_hook_post_parse_*`, `_hook_pre_write_*`
+- **Private Methods**: All hooks use underscore prefix `_method_name` (internal only)
+- **Public Interface**: Only `parse_*`, `write_*`, and `execute()` are public (no underscore)
+
+**Hook Categories**:
+
+| Hook | When Called | Purpose | Example |
+|------|-------------|---------|---------|
+| `_can_handle_ITEM()` | Before parsing/writing | Detect if quirk should handle this item | OID checks for OID-specific patterns |
+| `_hook_post_parse_ITEM()` | After RFC parsing | Enrich model with server metadata | OID adds Oracle GUID tracking |
+| `_hook_pre_write_ITEM()` | Before RFC writing | Validate server constraints | OUD normalizes DN case |
+
+**Usage Pattern**:
+```python
+# Server extends RFC with specific hooks
+class FlextLdifServersOid(FlextLdifServersRfc):
+    class Schema(FlextLdifServersRfc.Schema):
+        def _can_handle_attribute(self, definition):
+            # OID: Check for 2.16.840.1.113894.* OIDs
+            return "2.16.840.1.113894" in definition
+
+        def _hook_post_parse_attribute(self, model):
+            # OID: Enrich with Oracle metadata
+            model.meta_oracle_syntax = "oid-specific"
+            return FlextResult.ok(model)
+```
+
+**Full Documentation**: See [HOOK_PATTERNS.md](HOOK_PATTERNS.md) for complete hook patterns, implementation examples, and inheritance patterns across all server types (OID, OUD, OpenLDAP, etc.)
 
 ---
 

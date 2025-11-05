@@ -1,14 +1,14 @@
 """Quirks conversion matrix for LDAP server translation.
 
 This module provides the QuirksConversionMatrix facade that enables
-conversion between LDAP server quirks (OUD, OID, OpenLDAP, etc.) by
-using RFC as an intermediate representation.
+conversion between LDAP server quirks (OUD, OID, OpenLDAP, etc.) using
+a universal Entry model as the pivot point.
 
 Conversion Pattern:
- Source Format → Source.to_rfc() → RFC Format → Target.from_rfc() → Target Format
+ Source → Write to LDIF → Parse with Target → Entry Model
 
-This creates an N×N translation matrix with only 2×N implementations
-(to_rfc and from_rfc per quirk type).
+All server conversions work through the universal Entry model, which stores
+server-specific metadata. This simplifies conversions to: write→parse pipeline.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -47,6 +47,10 @@ class _SimpleDnRegistry:
     def get_canonical_dn(self, dn: str) -> str | None:
         """Get canonical DN if registered."""
         return self._dns.get(dn.lower())
+
+    def has_dn(self, dn: str) -> bool:
+        """Check if a DN is registered."""
+        return dn.lower() in self._dns
 
     def clear(self) -> None:
         """Clear all registered DNs."""
@@ -123,62 +127,53 @@ class FlextLdifQuirksConversionMatrix:
         target_quirk: FlextLdifProtocols.Quirks.QuirksPort,
         model_instance: FlextLdifProtocols.ConvertibleModel,
     ) -> FlextResult[FlextLdifProtocols.ConvertibleModel]:
-        """Convert using new strategy pattern with models."""
+        """Convert Entry model between source and target server formats.
+
+        Uses universal Entry model as pivot point via write→parse pipeline.
+        Conversions are server-agnostic: write to LDIF, then parse with target quirk.
+
+        This approach eliminates the need for normalize_to_rfc/denormalize_from_rfc
+        and ensures all conversions go through the same parse/write codepath used
+        in normal parsing and writing operations.
+        """
         try:
-            # Step 1: Normalize the source model to the canonical RFC representation.
-            if isinstance(model_instance, FlextLdifModels.Entry):
-                normalize_result = source_quirk.normalize_entry_to_rfc(model_instance)
-            elif isinstance(model_instance, FlextLdifModels.SchemaAttribute):
-                normalize_result = source_quirk.normalize_attribute_to_rfc(
-                    model_instance
-                )
-            elif isinstance(model_instance, FlextLdifModels.SchemaObjectClass):
-                normalize_result = source_quirk.normalize_objectclass_to_rfc(
-                    model_instance
-                )
-            elif isinstance(model_instance, FlextLdifModels.Acl):
-                normalize_result = source_quirk.normalize_acl_to_rfc(model_instance)
-            else:
+            # Only Entry models can be converted (schema models are server-specific)
+            if not isinstance(model_instance, FlextLdifModels.Entry):
                 return FlextResult.fail(
-                    f"Unsupported model type for conversion: {type(model_instance).__name__}"
+                    f"Only Entry models can be converted between servers. "
+                    f"Got: {type(model_instance).__name__}"
                 )
 
-            if normalize_result.is_failure:
+            entry: FlextLdifModels.Entry = model_instance
+
+            # Step 1: Write Entry from source server format to RFC LDIF string
+            write_result = source_quirk.write_entry(entry)
+            if write_result.is_failure:
                 return FlextResult.fail(
-                    f"Failed to normalize {type(model_instance).__name__} to RFC: {normalize_result.error}"
+                    f"Failed to write entry in source format: {write_result.error}"
                 )
 
-            rfc_model = normalize_result.unwrap()
+            ldif_string: str = write_result.unwrap()
+            if not ldif_string or not ldif_string.strip():
+                return FlextResult.fail("Write operation returned empty LDIF")
 
-            # Step 2: Denormalize the RFC model to the target server's format.
-            if isinstance(rfc_model, FlextLdifModels.Entry):
-                denormalize_result = target_quirk.denormalize_entry_from_rfc(rfc_model)
-            elif isinstance(rfc_model, FlextLdifModels.SchemaAttribute):
-                denormalize_result = target_quirk.denormalize_attribute_from_rfc(
-                    rfc_model
-                )
-            elif isinstance(rfc_model, FlextLdifModels.SchemaObjectClass):
-                denormalize_result = target_quirk.denormalize_objectclass_from_rfc(
-                    rfc_model
-                )
-            elif isinstance(rfc_model, FlextLdifModels.Acl):
-                denormalize_result = target_quirk.denormalize_acl_from_rfc(rfc_model)
-            else:
-                # This case should be unreachable if the normalize step was successful
+            # Step 2: Parse LDIF string with target server to get Entry in target format
+            parse_result = target_quirk.parse(ldif_string)
+            if parse_result.is_failure:
                 return FlextResult.fail(
-                    "Mismatch in model type after RFC normalization."
+                    f"Failed to parse entry in target format: {parse_result.error}"
                 )
 
-            if denormalize_result.is_failure:
-                return FlextResult.fail(
-                    f"Failed to denormalize {type(rfc_model).__name__} from RFC: {denormalize_result.error}"
-                )
+            parsed_entries = parse_result.unwrap()
+            if not parsed_entries:
+                return FlextResult.fail("Parse operation returned empty entry list")
 
-            return FlextResult.ok(denormalize_result.unwrap())
+            # Return first parsed entry (conversion always produces one entry)
+            return FlextResult.ok(parsed_entries[0])
 
         except Exception as e:
             return FlextResult.fail(
-                f"An unexpected error occurred during conversion: {e}"
+                f"Entry conversion failed: {e}"
             )
 
     def _convert_legacy(
@@ -278,10 +273,10 @@ class FlextLdifQuirksConversionMatrix:
             source_data: FlextLdifModels.SchemaAttribute | str | dict[str, object]
             if isinstance(data, str):
                 # Use the quirk directly for parsing
-                if not hasattr(source_quirk, "parse_attribute"):
+                if not hasattr(source_quirk.schema, "parse_attribute"):
                     # Quirk doesn't support attribute parsing - pass through
                     return FlextResult[str | dict[str, object]].ok(data)
-                parse_result = source_quirk.parse_attribute(data)
+                parse_result = source_quirk.schema.parse_attribute(data)
                 if parse_result.is_failure:
                     # Graceful degradation: pass through unparseable data unchanged
                     # This allows the system to handle malformed attributes without failing
@@ -305,45 +300,31 @@ class FlextLdifQuirksConversionMatrix:
             else:
                 source_data = data
 
-            # Step 2: Convert source → RFC
-            if not hasattr(source_quirk, "convert_attribute_to_rfc"):
-                return FlextResult[str | dict[str, object]].fail(
-                    "Source quirk does not support attribute to RFC conversion",
-                )
-            # Type narrowing: source_data must be SchemaAttribute at this point
+            # Step 2: Convert source → RFC (router handles type automatically)
             if not isinstance(source_data, FlextLdifModels.SchemaAttribute):
                 source_data = cast("FlextLdifModels.SchemaAttribute", source_data)
-            to_rfc_result = source_quirk.convert_attribute_to_rfc(source_data)
-            if to_rfc_result.is_failure:
+            normalize_result = source_quirk.normalize_to_rfc(source_data)
+            if normalize_result.is_failure:
                 return FlextResult[str | dict[str, object]].fail(
-                    f"Failed to convert source→RFC: {to_rfc_result.error}",
+                    f"Failed to convert source→RFC: {normalize_result.error}",
                 )
-            rfc_data = to_rfc_result.unwrap()
+            normalized_list = normalize_result.unwrap()
+            if not normalized_list:
+                return FlextResult[str | dict[str, object]].fail(
+                    "Normalization returned empty list"
+                )
+            rfc_data = normalized_list[0]
 
-            # Step 3: Convert RFC → target
-            if not hasattr(target_quirk, "convert_attribute_from_rfc"):
-                return FlextResult[str | dict[str, object]].fail(
-                    "Target quirk does not support attribute from RFC conversion",
-                )
-            from_rfc_result = target_quirk.convert_attribute_from_rfc(rfc_data)
-            if from_rfc_result.is_failure:
-                error_msg = from_rfc_result.error
-                # Enhance error message if it looks like a type mismatch
-                if error_msg and "has no attribute" in error_msg:
-                    error_msg = (
-                        f"Target quirk does not support the data format: {error_msg}"
-                    )
-                return FlextResult[str | dict[str, object]].fail(
-                    f"Failed to convert RFC→target: {error_msg}",
-                )
-            target_data = from_rfc_result.unwrap()
+            # Step 3: Use RFC data as target (no denormalization needed for schema models)
+            # Schema models are server-specific and use RFC format as interchange
+            target_data = rfc_data
 
             # Step 4: Write target format
-            if not hasattr(target_quirk, "write_attribute_to_rfc"):
+            if not hasattr(target_quirk, "schema") or not hasattr(target_quirk.schema, "write_attribute_to_rfc"):
                 return FlextResult[str | dict[str, object]].fail(
                     "Target quirk does not support attribute writing",
                 )
-            write_result = target_quirk.write_attribute_to_rfc(target_data)
+            write_result = target_quirk.schema.write_attribute_to_rfc(target_data)
             if write_result.is_failure:
                 return FlextResult[str | dict[str, object]].fail(
                     f"Failed to write target format: {write_result.error}",
@@ -392,14 +373,14 @@ class FlextLdifQuirksConversionMatrix:
                 # Use a minimal valid Oracle definition for testing (recognized by all quirks)
                 test_oc_def = "( 2.16.840.1.113894.1.2.1 NAME 'orclTest' SUP top STRUCTURAL MUST cn )"
                 if hasattr(
-                    source_quirk,
+                    source_quirk.schema,
                     "can_handle_objectclass",
-                ) and not source_quirk.can_handle_objectclass(test_oc_def):
+                ) and not source_quirk.schema.can_handle_objectclass(test_oc_def):
                     # Quirk explicitly says it can't handle objectClass definitions - this is an error
                     return FlextResult[str | dict[str, object]].fail(
                         "Source quirk does not support objectClass parsing",
                     )
-                parse_result = source_quirk.parse_objectclass(data)
+                parse_result = source_quirk.schema.parse_objectclass(data)
                 if parse_result.is_failure:
                     # Graceful degradation: pass through unparseable data unchanged
                     # This allows the system to handle malformed objectClasses without failing
@@ -423,45 +404,31 @@ class FlextLdifQuirksConversionMatrix:
             else:
                 source_data = data
 
-            # Step 2: Convert source → RFC
-            if not hasattr(source_quirk, "convert_objectclass_to_rfc"):
-                return FlextResult[str | dict[str, object]].fail(
-                    "Source quirk does not support objectClass to RFC conversion",
-                )
-            # Type narrowing: source_data must be SchemaObjectClass at this point
+            # Step 2: Convert source → RFC (router handles type automatically)
             if not isinstance(source_data, FlextLdifModels.SchemaObjectClass):
                 source_data = cast("FlextLdifModels.SchemaObjectClass", source_data)
-            to_rfc_result = source_quirk.convert_objectclass_to_rfc(source_data)
-            if to_rfc_result.is_failure:
+            normalize_result = source_quirk.normalize_to_rfc(source_data)
+            if normalize_result.is_failure:
                 return FlextResult[str | dict[str, object]].fail(
-                    f"Failed to convert source→RFC: {to_rfc_result.error}",
+                    f"Failed to convert source→RFC: {normalize_result.error}",
                 )
-            rfc_data = to_rfc_result.unwrap()
+            normalized_list = normalize_result.unwrap()
+            if not normalized_list:
+                return FlextResult[str | dict[str, object]].fail(
+                    "Normalization returned empty list"
+                )
+            rfc_data = normalized_list[0]
 
-            # Step 3: Convert RFC → target
-            if not hasattr(target_quirk, "convert_objectclass_from_rfc"):
-                return FlextResult[str | dict[str, object]].fail(
-                    "Target quirk does not support objectClass from RFC conversion",
-                )
-            from_rfc_result = target_quirk.convert_objectclass_from_rfc(rfc_data)
-            if from_rfc_result.is_failure:
-                error_msg = from_rfc_result.error
-                # Enhance error message if it looks like a type mismatch
-                if error_msg and "has no attribute" in error_msg:
-                    error_msg = (
-                        f"Target quirk does not support the data format: {error_msg}"
-                    )
-                return FlextResult[str | dict[str, object]].fail(
-                    f"Failed to convert RFC→target: {error_msg}",
-                )
-            target_data = from_rfc_result.unwrap()
+            # Step 3: Use RFC data as target (no denormalization needed for schema models)
+            # Schema models are server-specific and use RFC format as interchange
+            target_data = rfc_data
 
             # Step 4: Write target format
-            if not hasattr(target_quirk, "write_objectclass_to_rfc"):
+            if not hasattr(target_quirk, "schema") or not hasattr(target_quirk.schema, "write_objectclass_to_rfc"):
                 return FlextResult[str | dict[str, object]].fail(
                     "Target quirk does not support objectClass writing",
                 )
-            write_result = target_quirk.write_objectclass_to_rfc(target_data)
+            write_result = target_quirk.schema.write_objectclass_to_rfc(target_data)
             if write_result.is_failure:
                 return FlextResult[str | dict[str, object]].fail(
                     f"Failed to write target format: {write_result.error}",
@@ -523,11 +490,11 @@ class FlextLdifQuirksConversionMatrix:
                 return FlextResult[str].fail("ACL quirk access failed")
 
             # Step 1: Parse source ACL string → Pydantic model
-            if not hasattr(source_acl_quirk, "parse_acl"):
+            if not hasattr(source_acl_quirk.acl, "parse"):
                 return FlextResult[str].fail(
                     "Source quirk does not support ACL parsing",
                 )
-            parse_result = source_acl_quirk.parse_acl(data)
+            parse_result = source_acl_quirk.acl.parse(data)
             if parse_result.is_failure:
                 return FlextResult[str].fail(
                     f"Failed to parse source ACL: {parse_result.error}",
@@ -537,29 +504,27 @@ class FlextLdifQuirksConversionMatrix:
             # Step 2: Extract and register DNs from model
             self._extract_and_register_dns(source_model, "acl")
 
-            # Step 3: Convert source model → RFC model
-            if not hasattr(source_acl_quirk, "convert_acl_to_rfc"):
+            # Step 3: Convert source model → RFC model using generalized method (router handles type)
+            normalize_result = source_quirk.normalize_to_rfc(source_model)
+            if normalize_result.is_failure:
                 return FlextResult[str].fail(
-                    "Source quirk does not support ACL to RFC conversion",
+                    f"Failed to convert source→RFC: {normalize_result.error}",
                 )
-            to_rfc_result = source_acl_quirk.convert_acl_to_rfc(source_model)
-            if to_rfc_result.is_failure:
-                return FlextResult[str].fail(
-                    f"Failed to convert source→RFC: {to_rfc_result.error}",
-                )
-            rfc_model: FlextLdifModels.Acl = to_rfc_result.unwrap()
+            normalized_list = normalize_result.unwrap()
+            if not normalized_list:
+                return FlextResult[str].fail("Normalization returned empty list")
+            rfc_model = normalized_list[0]
 
-            # Step 4: Convert RFC model → target model
-            if not hasattr(target_acl_quirk, "convert_acl_from_rfc"):
+            # Step 4: Convert RFC model → target model using generalized method (router handles type)
+            denormalize_result = target_quirk.denormalize_from_rfc(rfc_model)
+            if denormalize_result.is_failure:
                 return FlextResult[str].fail(
-                    "Target quirk does not support ACL from RFC conversion",
+                    f"Failed to convert RFC→target: {denormalize_result.error}",
                 )
-            from_rfc_result = target_acl_quirk.convert_acl_from_rfc(rfc_model)
-            if from_rfc_result.is_failure:
-                return FlextResult[str].fail(
-                    f"Failed to convert RFC→target: {from_rfc_result.error}",
-                )
-            target_model: FlextLdifModels.Acl = from_rfc_result.unwrap()
+            denormalized_list = denormalize_result.unwrap()
+            if not denormalized_list:
+                return FlextResult[str].fail("Denormalization returned empty list")
+            target_model = denormalized_list[0]
 
             # Step 5: Normalize DN references in model
             normalize_result = self._normalize_dns_in_model(target_model)
@@ -570,11 +535,11 @@ class FlextLdifQuirksConversionMatrix:
             normalized_model: FlextLdifModels.Acl = normalize_result.unwrap()
 
             # Step 6: Write target model → string
-            if not hasattr(target_acl_quirk, "write_acl_to_rfc"):
+            if not hasattr(target_acl_quirk.acl, "write_acl_to_rfc"):
                 return FlextResult[str].fail(
                     "Target quirk does not support ACL writing",
                 )
-            write_result = target_acl_quirk.write_acl_to_rfc(normalized_model)
+            write_result = target_acl_quirk.acl.write_acl_to_rfc(normalized_model)
             if write_result.is_failure:
                 return FlextResult[str].fail(
                     f"Failed to write target format: {write_result.error}",
@@ -621,21 +586,34 @@ class FlextLdifQuirksConversionMatrix:
             # Step 2: Extract and register DNs (skip for entries - only for ACLs)
             # Entry DN extraction would require different logic not yet implemented
 
-            # Step 3: Convert source → RFC
-            to_rfc_result = source_entry_quirk.convert_entry_to_rfc(source_data)
-            if to_rfc_result.is_failure:
+            # Step 3: Convert source → RFC (router handles type automatically)
+            # Note: source_data is dict, needs to be converted to Entry model first
+            # For now, we need to use entry quirk directly for dict conversion
+            # TODO: Consider converting dict to Entry model first, then use normalize_to_rfc
+            normalize_result = source_quirk.normalize_to_rfc(source_data)
+            if normalize_result.is_failure:
                 return FlextResult[str | dict[str, object]].fail(
-                    f"Failed to convert source→RFC: {to_rfc_result.error}",
+                    f"Failed to convert source→RFC: {normalize_result.error}",
                 )
-            rfc_data = to_rfc_result.unwrap()
+            normalized_list = normalize_result.unwrap()
+            if not normalized_list:
+                return FlextResult[str | dict[str, object]].fail(
+                    "Normalization returned empty list"
+                )
+            rfc_data = normalized_list[0]
 
-            # Step 4: Convert RFC → target
-            from_rfc_result = target_entry_quirk.convert_entry_from_rfc(rfc_data)
-            if from_rfc_result.is_failure:
+            # Step 4: Convert RFC → target (router handles type automatically)
+            denormalize_result = target_quirk.denormalize_from_rfc(rfc_data)
+            if denormalize_result.is_failure:
                 return FlextResult[str | dict[str, object]].fail(
-                    f"Failed to convert RFC→target: {from_rfc_result.error}",
+                    f"Failed to convert RFC→target: {denormalize_result.error}",
                 )
-            target_data = from_rfc_result.unwrap()
+            denormalized_list = denormalize_result.unwrap()
+            if not denormalized_list:
+                return FlextResult[str | dict[str, object]].fail(
+                    "Denormalization returned empty list"
+                )
+            target_data = denormalized_list[0]
 
             # Step 5: Normalize DN references to canonical case
             # (skip for entries - DN normalization for dict data not yet implemented)
@@ -782,11 +760,11 @@ class FlextLdifQuirksConversionMatrix:
             "( 2.16.840.1.113894.1.2.1 NAME 'orclTest' SUP top STRUCTURAL MUST cn )"
         )
 
-        if hasattr(quirk, "can_handle_attribute") and quirk.can_handle_attribute(
+        if hasattr(quirk.schema, "can_handle_attribute") and quirk.schema.can_handle_attribute(
             test_attr_def,
         ):
             support["attribute"] = True
-        if hasattr(quirk, "can_handle_objectclass") and quirk.can_handle_objectclass(
+        if hasattr(quirk.schema, "can_handle_objectclass") and quirk.schema.can_handle_objectclass(
             test_oc_def,
         ):
             support[FlextLdifConstants.DictKeys.OBJECTCLASS] = True
@@ -796,8 +774,8 @@ class FlextLdifQuirksConversionMatrix:
         test_acl_def = 'targetattr="*" (version 3.0; acl "test"; allow (read) userdn="ldap:///self";)'
         if (
             acl_quirk
-            and hasattr(acl_quirk, "can_handle_acl")
-            and acl_quirk.can_handle_acl(test_acl_def)
+            and hasattr(acl_quirk, "_can_handle")
+            and acl_quirk._can_handle(test_acl_def)
         ):
             support["acl"] = True
 

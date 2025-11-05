@@ -57,16 +57,33 @@ class FlextLdifServersOid(FlextLdifServersRfc):
 
     """
 
-    # Top-level configuration - mirrors Schema class for direct access
-    server_type = FlextLdifConstants.ServerTypes.OID
-    priority = 10
+    # =========================================================================
+    # Class-level attributes for server identification (from Constants)
+    # =========================================================================
+    server_type: ClassVar[str] = Constants.SERVER_TYPE
+    priority: ClassVar[int] = Constants.PRIORITY
 
-    class Constants:
+    def __init__(self) -> None:
+        """Initialize Oracle OID server quirks."""
+        super().__init__()
+        # Use object.__setattr__ to bypass Pydantic validation for dynamic attributes
+        # Pass server_type and priority to nested class instances
+        object.__setattr__(self, "schema", self.Schema(server_type=self.server_type, priority=self.priority))
+        object.__setattr__(self, "acl", self.Acl(server_type=self.server_type, priority=self.priority))
+        object.__setattr__(self, "entry", self.Entry(server_type=self.server_type, priority=self.priority))
+
+    class Constants(FlextLdifServersRfc.Constants):
         """Oracle Internet Directory-specific constants centralized for operations in oid.py.
 
         These constants follow a standardized naming pattern that can be replicated
         in other server quirks implementations for consistency.
         """
+
+        # Oracle OID ACL attribute names
+        ORCLACI: Final[str] = "orclaci"  # Standard Oracle OID ACL
+        ORCLENTRYLEVELACI: Final[str] = "orclentrylevelaci"  # Entry-level ACI
+        ACL_FORMAT: Final[str] = "orclaci"  # OID ACL format
+        ACL_ATTRIBUTE_NAME: Final[str] = "orclaci"  # ACL attribute name
 
         # OID pattern for server detection
         OID_PATTERN: Final[re.Pattern[str]] = re.compile(
@@ -84,12 +101,99 @@ class FlextLdifServersOid(FlextLdifServersRfc):
             "1.3.6.1.4.1.1466.115.121.1.1": "1.3.6.1.4.1.1466.115.121.1.15",  # ACI List → Directory String
         }
 
+        # Oracle OID operational attributes (server-specific)
+        OPERATIONAL_ATTRIBUTES: Final[frozenset[str]] = frozenset([
+            "orclGUID",
+            "orclOracleGUID",
+            "orclPassword",
+            "orclPasswordChangedTime",
+            "orclIsEnabled",
+        ])
+
+        # Detection constants (server-specific)
+        DETECTION_OID_PATTERN: Final[str] = r"2\.16\.840\.1\.113894\."
+        DETECTION_ATTRIBUTE_PREFIXES: Final[frozenset[str]] = frozenset([
+            "orcl",
+            "orclguid",
+        ])
+        DETECTION_OBJECTCLASS_NAMES: Final[frozenset[str]] = frozenset([
+            "orcldirectory",
+            "orcldomain",
+            "orcldirectoryserverconfig",
+        ])
+        DETECTION_DN_MARKERS: Final[frozenset[str]] = frozenset([
+            "cn=orcl",
+            "cn=subscriptions",
+            "cn=oracle context",
+        ])
+
+        # Oracle OID boolean attributes (non-RFC: use "0"/"1" not "TRUE"/"FALSE")
+        # RFC 4517 Boolean syntax requires "TRUE" or "FALSE"
+        # OID quirks convert "0"→"FALSE", "1"→"TRUE" during OID→RFC
+        BOOLEAN_ATTRIBUTES: Final[frozenset[str]] = frozenset([
+            # Oracle DAS (Directory Application Server) boolean attributes
+            "orcldasenableproductlogo",
+            "orcldasenablesubscriberlogo",
+            "orcldasshowproductlogo",
+            "orcldasenablebranding",
+            "orcldasisenabled",
+            "orcldasismandatory",
+            "orcldasispersonal",
+            "orcldassearchable",
+            "orcldasselfmodifiable",
+            "orcldasviewable",
+            "orcldasadminmodifiable",
+            # Oracle password policy boolean attributes
+            "pwdlockout",
+            "pwdmustchange",
+            "pwdallowuserchange",
+        ])
+
+        # Server type variants (for compatibility checks)
+        VARIANTS: Final[frozenset[str]] = frozenset(["oid", "oracle_oid"])
+
         # === STANDARDIZED CONSTANTS FOR AUTO-DISCOVERY ===
-        CANONICAL_NAME: Final[str] = "oid"
-        ALIASES: Final[frozenset[str]] = frozenset(["oid", "oracle_oid"])
-        PRIORITY: Final[int] = 10
-        CAN_NORMALIZE_FROM: Final[frozenset[str]] = frozenset(["oid"])
-        CAN_DENORMALIZE_TO: Final[frozenset[str]] = frozenset(["oid", "rfc"])
+        SERVER_TYPE: ClassVar[str] = FlextLdifConstants.ServerTypes.OID
+        CANONICAL_NAME: ClassVar[str] = "oid"
+        ALIASES: ClassVar[frozenset[str]] = frozenset(["oid", "oracle_oid"])
+        PRIORITY: ClassVar[int] = 10
+        CAN_NORMALIZE_FROM: ClassVar[frozenset[str]] = frozenset(["oid"])
+        CAN_DENORMALIZE_TO: ClassVar[frozenset[str]] = frozenset(["oid", "rfc"])
+
+        # Oracle OID boolean format constants (non-RFC compliant)
+        # RFC 4517 compliant uses "TRUE" / "FALSE"
+        # Oracle OID uses "1" / "0"
+        ONE_OID: Final[str] = "1"
+        ZERO_OID: Final[str] = "0"
+
+        # Boolean conversion mappings
+        OID_TO_RFC: Final[dict[str, str]] = {
+            "1": FlextLdifConstants.BooleanValues.TRUE_RFC,
+            "0": FlextLdifConstants.BooleanValues.FALSE_RFC,
+            "true": FlextLdifConstants.BooleanValues.TRUE_RFC,
+            "false": FlextLdifConstants.BooleanValues.FALSE_RFC,
+        }
+
+        RFC_TO_OID: Final[dict[str, str]] = {
+            FlextLdifConstants.BooleanValues.TRUE_RFC: ONE_OID,
+            FlextLdifConstants.BooleanValues.FALSE_RFC: ZERO_OID,
+            FlextLdifConstants.BooleanValues.TRUE_LOWER: ONE_OID,
+            FlextLdifConstants.BooleanValues.FALSE_LOWER: ZERO_OID,
+        }
+
+        # Universal boolean check
+        OID_TRUE_VALUES: Final[frozenset[str]] = frozenset([
+            ONE_OID,
+            "true",
+            "True",
+            "TRUE",
+        ])
+        OID_FALSE_VALUES: Final[frozenset[str]] = frozenset([
+            ZERO_OID,
+            "false",
+            "False",
+            "FALSE",
+        ])
 
     class AttributeWriter(FlextLdifServersRfc.AttributeWriter):
         """OID-specific attribute writer."""
@@ -115,19 +219,19 @@ class FlextLdifServersOid(FlextLdifServersRfc):
     class Schema(FlextLdifServersRfc.Schema):
         """Oracle OID schema quirks implementation."""
 
-        server_type: ClassVar[str] = FlextLdifConstants.ServerTypes.OID
-        priority: ClassVar[int] = 19
+        def __init__(
+            self,
+            server_type: str | None = None,
+            priority: int | None = None,
+        ) -> None:
+            """Initialize OID schema quirk.
 
-        # Oracle OID namespace pattern
+            Args:
+                server_type: Optional server type (inherited from parent)
+                priority: Optional priority (inherited from parent)
 
-        server_type: ClassVar[str] = FlextLdifConstants.ServerTypes.OID
-        priority: ClassVar[int] = 10
-
-        def __init__(self) -> None:
-            """Initialize OID schema quirk and nested ACL quirk."""
-            super().__init__()
-            # Instantiate nested ACL quirk for conversion matrix access
-            self.acl = FlextLdifServersOid.Acl()
+            """
+            super().__init__(server_type=server_type, priority=priority)
 
         def can_handle_attribute(
             self, attribute: FlextLdifModels.SchemaAttribute
@@ -153,10 +257,6 @@ class FlextLdifServersOid(FlextLdifServersRfc):
         # These methods override the base class with Oracle OID-specific logic:
         # - parse_attribute(): Custom parsing logic for Oracle OID schema with special OID replacements
         # - parse_objectclass(): Custom parsing logic for Oracle OID schema with special OID replacements
-        # - convert_attribute_to_rfc(): Strips OID-specific metadata
-        # - convert_objectclass_to_rfc(): Strips OID-specific metadata
-        # - convert_attribute_from_rfc(): Adds OID-specific metadata and OID replacements
-        # - convert_objectclass_from_rfc(): Adds OID-specific metadata and OID replacements
         # - write_attribute_to_rfc(): Uses RFC writer with OID error handling
         # - write_objectclass_to_rfc(): Uses RFC writer with OID error handling
         # - should_filter_out_attribute(): Returns False (accept all in OID mode)
@@ -294,78 +394,6 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                     f"OID objectClass parsing failed: {e}",
                 )
 
-        def convert_attribute_to_rfc(
-            self,
-            attr_data: FlextLdifModels.SchemaAttribute,
-        ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
-            """Convert OID attribute to RFC-compliant format.
-
-            Applies OID-to-RFC transformations:
-            - NAME: Remove ;binary suffix and underscore characters
-            - EQUALITY/SUBSTR: Fix misused SUBSTR rules and apply OID-specific replacements
-            - SYNTAX: Remove quotes and apply OID-specific OID replacements
-
-            Args:
-                attr_data: OID attribute data
-
-            Returns:
-                FlextResult with RFC-compliant attribute data
-
-            """
-            # Use generic SchemaTransformer with OID-specific callbacks
-            return FlextLdifServersRfc.SchemaTransformer.apply_attribute_transformations(
-                attr_data,
-                name_transform=FlextLdifServersRfc.SchemaTransformer.normalize_attribute_name,
-                equality_transform=lambda eq, sub: FlextLdifServersRfc.SchemaTransformer.normalize_matching_rule(
-                    eq, sub, self.Constants.MATCHING_RULE_REPLACEMENTS
-                ),
-                syntax_transform=lambda syn: FlextLdifServersRfc.SchemaTransformer.normalize_syntax_oid(
-                    syn, self.Constants.SYNTAX_OID_REPLACEMENTS
-                ),
-            )
-
-        def convert_objectclass_to_rfc(
-            self,
-            oc_data: FlextLdifModels.SchemaObjectClass,
-        ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
-            """Convert OID objectClass to RFC-compliant format.
-
-            Args:
-                oc_data: OID objectClass data
-
-            Returns:
-                FlextResult with RFC-compliant objectClass data
-
-            """
-            try:
-                # Convert Oracle OID objectClass to RFC format
-                # NOTE: Filtering is NOT the responsibility of quirks.
-                # All attribute/objectClass filtering is handled by AlgarOudMigConstants
-                # in the migration service. Quirks only perform format conversions.
-
-                # Create a working copy to apply validators
-                rfc_oc = FlextLdifModels.SchemaObjectClass(
-                    oid=oc_data.oid,
-                    name=oc_data.name,
-                    desc=oc_data.desc,
-                    sup=oc_data.sup,
-                    kind=oc_data.kind,
-                    must=oc_data.must,
-                    may=oc_data.may,
-                    metadata=oc_data.metadata,
-                )
-
-                # Apply validators to fix OID-specific issues
-                FlextLdifUtilities.ObjectClass.ensure_sup_for_auxiliary(rfc_oc)
-                FlextLdifUtilities.ObjectClass.align_kind_with_superior(rfc_oc, None)
-
-                return FlextResult[FlextLdifModels.SchemaObjectClass].ok(rfc_oc)
-
-            except Exception as e:
-                return FlextResult[FlextLdifModels.SchemaObjectClass].fail(
-                    f"OID→RFC conversion failed: {e}",
-                )
-
         def _transform_attribute_for_write(
             self,
             attr_data: FlextLdifModels.SchemaAttribute,
@@ -486,25 +514,6 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                     f"OID schema extraction failed: {e}",
                 )
 
-        def convert_objectclass_from_rfc(
-            self,
-            rfc_data: FlextLdifModels.SchemaObjectClass,
-        ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
-            """Convert RFC-compliant objectClass to OID-specific format.
-
-            Sets the server_type metadata field to identify the data as OID-format.
-
-            Args:
-                rfc_data: RFC-compliant objectClass data
-
-            Returns:
-                FlextResult with OID objectClass data
-
-            """
-            return FlextLdifServersRfc.SchemaConverter.set_quirk_type(
-                rfc_data, self.server_type
-            )
-
     class Acl(FlextLdifServersRfc.Acl):
         """Oracle OID ACL quirk using universal parser with OID-specific configuration.
 
@@ -521,20 +530,18 @@ class FlextLdifServersOid(FlextLdifServersRfc):
         - Entry-level constraints (added_object_constraint)
         """
 
-        acl_attribute_name = FlextLdifConstants.AclAttributes.ORCLACI
+        acl_attribute_name = "orclaci"  # Oracle OID ACL attribute
 
         # OVERRIDDEN METHODS (from FlextLdifServersBase.Acl)
         # These methods override the base class with Oracle OID-specific logic:
-        # - can_handle(): Detects orclaci/orclentrylevelaci formats
-        # - parse(): Normalizes Oracle OID ACL to RFC-compliant internal model
-        # - write(): Serializes RFC-compliant model to OID ACL format
-        # - get_attribute_name(): Returns "orclaci" (OID-specific, overridden)
+        # - _can_handle_acl(): Detects orclaci/orclentrylevelaci formats
+        # - parse_acl(): Normalizes Oracle OID ACL to RFC-compliant internal model
+        # - write_acl(): Serializes RFC-compliant model to OID ACL format
+        # - get_acl_attribute_name(): Returns "orclaci" (OID-specific, overridden)
 
-        # Oracle OID server configuration defaults
-        server_type: ClassVar[str] = FlextLdifConstants.ServerTypes.OID
-        priority: ClassVar[int] = 10
-
-        def can_handle(self, acl_line: str) -> bool:
+        def _can_handle_acl(
+            self, acl_line: str | FlextLdifModels.Acl
+        ) -> bool:
             """Check if this is an Oracle OID ACL.
 
             Detects Oracle OID ACL by checking if the line starts with:
@@ -542,17 +549,22 @@ class FlextLdifServersOid(FlextLdifServersRfc):
             - "orclentrylevelaci:" (Oracle entry-level ACI)
 
             Args:
-                acl_line: Raw ACL line from LDIF
+                acl_line: Raw ACL line from LDIF or Acl model
 
             Returns:
                 True if this is orclaci or orclentrylevelaci
 
             """
-            if not acl_line:
+            if isinstance(acl_line, FlextLdifModels.Acl):
+                # Check metadata for OID server type
+                if acl_line.metadata and acl_line.metadata.quirk_type:
+                    return acl_line.metadata.quirk_type == FlextLdifConstants.ServerTypes.OID
+                return False
+            if not acl_line or not isinstance(acl_line, str):
                 return False
             return acl_line.strip().startswith(("orclaci:", "orclentrylevelaci:"))
 
-        def parse(self, acl_line: str) -> FlextResult[FlextLdifModels.Acl]:
+        def parse_acl(self, acl_line: str) -> FlextResult[FlextLdifModels.Acl]:
             """Parse Oracle OID ACL string to RFC-compliant internal model.
 
             Normalizes Oracle OID-specific ACL format (orclaci/orclentrylevelaci)
@@ -601,3 +613,39 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                 "filter": r"filter=(\([^)]*(?:\([^)]*\)[^)]*)*\))",
                 "constraint": r"added_object_constraint=\(([^)]+)\)",
             }
+
+        def get_acl_attribute_name(self) -> str:
+            """Get Oracle OID ACL attribute name.
+
+            Returns:
+                'orclaci' - OID-specific ACL attribute name
+
+            """
+            return self.acl_attribute_name
+
+        def write_acl(self, acl_data: FlextLdifModels.Acl) -> FlextResult[str]:
+            """Write ACL to RFC-compliant string format (abstract impl).
+
+            Delegates to write_acl_to_rfc for implementation.
+            """
+            return self.write_acl_to_rfc(acl_data)
+
+        def write_acl_to_rfc(self, acl_data: FlextLdifModels.Acl) -> FlextResult[str]:
+            """Write ACL to RFC-compliant string format."""
+            # For OID, return raw_acl if available
+            if acl_data.raw_acl:
+                return FlextResult[str].ok(acl_data.raw_acl)
+            # If no raw_acl, return empty string (should not happen in normal flow)
+            return FlextResult[str].ok("")
+
+        def _can_handle_attribute(
+            self, attribute: FlextLdifModels.SchemaAttribute
+        ) -> bool:
+            """Check if this ACL quirk should be aware of a specific attribute definition."""
+            return False
+
+        def _can_handle_objectclass(
+            self, objectclass: FlextLdifModels.SchemaObjectClass
+        ) -> bool:
+            """Check if this ACL quirk should be aware of a specific objectClass definition."""
+            return False

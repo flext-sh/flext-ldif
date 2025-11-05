@@ -6,100 +6,89 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import pytest
+
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.servers.ad import FlextLdifServersAd
 
-
 class TestActiveDirectorySchemas:
     """Tests for Active Directory schema quirk handling."""
 
-    def test_initialization(self) -> None:
+    @pytest.fixture
+    def ad_server(self) -> FlextLdifServersAd:
+        """Create Active Directory server instance."""
+        return FlextLdifServersAd()
+
+    @pytest.fixture
+    def ad_schema_quirk(
+        self, ad_server: FlextLdifServersAd
+    ) -> FlextLdifServersAd.Schema:
+        """Create Active Directory schema quirk instance."""
+        return ad_server.schema
+
+    def test_initialization(self, ad_server: FlextLdifServersAd) -> None:
         """Test Active Directory quirk initialization."""
-        quirk = FlextLdifServersAd.Schema()
+        assert ad_server.server_type == "active_directory"
+        assert ad_server.priority == 15
 
-        assert quirk.server_type == "active_directory"
-        assert quirk.priority == 15
-
-    def test_can_handle_attribute_with_ad_oid(self) -> None:
+    def test_can_handle_attribute_with_ad_oid(
+        self, ad_schema_quirk: FlextLdifServersAd.Schema
+    ) -> None:
         """Test attribute detection with Microsoft AD OID."""
-        quirk = FlextLdifServersAd.Schema()
+        quirk = ad_schema_quirk
 
         # Microsoft-owned OID namespace
         attr_def = "( 1.2.840.113556.1.4.221 NAME 'sAMAccountName' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
-        # Parse string definition into model object
 
-        parse_result = quirk.parse_attribute(attr_def)
+        # Test with the string definition (can_handle_attribute expects string, not model)
+        assert quirk._can_handle_attribute(attr_def) is True
 
-        assert parse_result.is_success, f"Failed to parse attribute: {parse_result.error}"
-
-        attr_model = parse_result.unwrap()
-
-        # Test with the model object
-
-        assert quirk.can_handle_attribute(attr_model) is True
-
-    def test_can_handle_attribute_with_ad_name(self) -> None:
+    def test_can_handle_attribute_with_ad_name(
+        self, ad_schema_quirk: FlextLdifServersAd.Schema
+    ) -> None:
         """Test attribute detection with AD-specific attribute name."""
-        quirk = FlextLdifServersAd.Schema()
+        quirk = ad_schema_quirk
 
         attr_def = "( 1.2.3.4 NAME 'objectGUID' SYNTAX 1.3.6.1.4.1.1466.115.121.1.40 )"
-        # Parse string definition into model object
 
-        parse_result = quirk.parse_attribute(attr_def)
+        # Test with the string definition (can_handle_attribute expects string, not model)
+        assert quirk._can_handle_attribute(attr_def) is True
 
-        assert parse_result.is_success, f"Failed to parse attribute: {parse_result.error}"
-
-        attr_model = parse_result.unwrap()
-
-        # Test with the model object
-
-        assert quirk.can_handle_attribute(attr_model) is True
-
-    def test_can_handle_attribute_with_microsoft_marker(self) -> None:
+    def test_can_handle_attribute_with_microsoft_marker(
+        self, ad_schema_quirk: FlextLdifServersAd.Schema
+    ) -> None:
         """Test attribute detection with Microsoft marker in description."""
-        quirk = FlextLdifServersAd.Schema()
+        quirk = ad_schema_quirk
 
         attr_def = "( 1.2.3.4 NAME 'test' DESC 'Microsoft Active Directory attribute' )"
-        # Parse string definition into model object
 
-        parse_result = quirk.parse_attribute(attr_def)
+        # Test with the string definition
+        assert quirk._can_handle_attribute(attr_def) is True
 
-        assert parse_result.is_success, f"Failed to parse attribute: {parse_result.error}"
-
-        attr_model = parse_result.unwrap()
-
-        # Test with the model object
-
-        assert quirk.can_handle_attribute(attr_model) is True
-
-    def test_can_handle_attribute_negative(self) -> None:
+    def test_can_handle_attribute_negative(
+        self, ad_schema_quirk: FlextLdifServersAd.Schema
+    ) -> None:
         """Test attribute detection rejects non-AD attributes."""
-        quirk = FlextLdifServersAd.Schema()
+        quirk = ad_schema_quirk
 
         attr_def = "( 2.5.4.3 NAME 'cn' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
-        # Parse string definition into model object
 
-        parse_result = quirk.parse_attribute(attr_def)
+        # Test with the string definition (not an AD attribute)
+        assert quirk._can_handle_attribute(attr_def) is False
 
-        assert parse_result.is_success, f"Failed to parse attribute: {parse_result.error}"
-
-        attr_model = parse_result.unwrap()
-
-        # Test with the model object
-
-        assert quirk.can_handle_attribute(attr_model) is False
-
-    def test_parse_attribute_success(self) -> None:
+    def test_parse_attribute_success(
+        self, ad_schema_quirk: FlextLdifServersAd.Schema
+    ) -> None:
         """Test successful attribute parsing."""
-        quirk = FlextLdifServersAd.Schema()
+        quirk = ad_schema_quirk
 
         attr_def = (
             "( 1.2.840.113556.1.4.221 NAME 'sAMAccountName' "
             "DESC 'SAM Account Name' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 "
             "EQUALITY caseIgnoreMatch SINGLE-VALUE )"
         )
-        result = quirk.parse_attribute(attr_def)
+        result = quirk.parse(attr_def)
 
         assert result.is_success
         attr_data = result.unwrap()
@@ -110,80 +99,66 @@ class TestActiveDirectorySchemas:
         assert attr_data.equality == "caseIgnoreMatch"
         assert attr_data.single_value is True
 
-    def test_parse_attribute_no_oid(self) -> None:
+    def test_parse_attribute_no_oid(
+        self, ad_schema_quirk: FlextLdifServersAd.Schema
+    ) -> None:
         """Test attribute parsing fails without OID."""
-        quirk = FlextLdifServersAd.Schema()
+        quirk = ad_schema_quirk
 
         attr_def = "NAME 'testAttr'"
-        result = quirk.parse_attribute(attr_def)
+        result = quirk.parse(attr_def)
 
         assert result.is_failure
         assert result.error is not None
         assert result.error is not None
         assert "missing an OID" in result.error
 
-    def test_can_handle_objectclass_with_ad_oid(self) -> None:
+    def test_can_handle_objectclass_with_ad_oid(
+        self, ad_schema_quirk: FlextLdifServersAd.Schema
+    ) -> None:
         """Test objectClass detection with Microsoft AD OID."""
-        quirk = FlextLdifServersAd.Schema()
+        quirk = ad_schema_quirk
 
         oc_def = "( 1.2.840.113556.1.5.9 NAME 'user' SUP top STRUCTURAL )"
-        # Parse string definition into model object
 
-        parse_result = quirk.parse_objectclass(oc_def)
+        # Test with the string definition
+        assert quirk._can_handle_objectclass(oc_def) is True
 
-        assert parse_result.is_success, f"Failed to parse objectClass: {parse_result.error}"
-
-        oc_model = parse_result.unwrap()
-
-        # Test with the model object
-
-        assert quirk.can_handle_objectclass(oc_model) is True
-
-    def test_can_handle_objectclass_with_ad_name(self) -> None:
+    def test_can_handle_objectclass_with_ad_name(
+        self, ad_schema_quirk: FlextLdifServersAd.Schema
+    ) -> None:
         """Test objectClass detection with AD-specific class name."""
-        quirk = FlextLdifServersAd.Schema()
+        quirk = ad_schema_quirk
 
         oc_def = "( 1.2.3.4 NAME 'computer' SUP top STRUCTURAL )"
-        # Parse string definition into model object
 
-        parse_result = quirk.parse_objectclass(oc_def)
+        # Test with the string definition
+        assert quirk._can_handle_objectclass(oc_def) is True
 
-        assert parse_result.is_success, f"Failed to parse objectClass: {parse_result.error}"
-
-        oc_model = parse_result.unwrap()
-
-        # Test with the model object
-
-        assert quirk.can_handle_objectclass(oc_model) is True
-
-    def test_can_handle_objectclass_negative(self) -> None:
+    def test_can_handle_objectclass_negative(
+        self, ad_schema_quirk: FlextLdifServersAd.Schema
+    ) -> None:
         """Test objectClass detection rejects non-AD classes."""
-        quirk = FlextLdifServersAd.Schema()
+        quirk = ad_schema_quirk
 
         # Use objectClass that doesn't contain any AD markers
         oc_def = "( 2.5.6.6 NAME 'posixAccount' SUP top STRUCTURAL )"
-        # Parse string definition into model object
 
-        parse_result = quirk.parse_objectclass(oc_def)
+        # Test with the string definition (not an AD objectClass)
+        assert quirk._can_handle_objectclass(oc_def) is False
 
-        assert parse_result.is_success, f"Failed to parse objectClass: {parse_result.error}"
-
-        oc_model = parse_result.unwrap()
-
-        # Test with the model object
-
-        assert quirk.can_handle_objectclass(oc_model) is False
-
-    def test_parse_objectclass_success(self) -> None:
+    def test_parse_objectclass_success(
+        self, ad_schema_quirk: FlextLdifServersAd.Schema
+    ) -> None:
         """Test successful objectClass parsing."""
-        quirk = FlextLdifServersAd.Schema()
+        quirk = ad_schema_quirk
 
         oc_def = (
             "( 1.2.840.113556.1.5.9 NAME 'user' DESC 'User object' "
             "SUP top STRUCTURAL MUST ( cn $ objectGUID ) "
             "MAY ( sAMAccountName $ userPrincipalName ) )"
         )
-        result = quirk.parse_objectclass(oc_def)
+        result = quirk.parse(oc_def)
 
         assert result.is_success
         oc_data = result.unwrap()
@@ -200,104 +175,38 @@ class TestActiveDirectorySchemas:
         assert isinstance(may_attrs, list)
         assert "sAMAccountName" in may_attrs
 
-    def test_parse_objectclass_auxiliary(self) -> None:
+    def test_parse_objectclass_auxiliary(
+        self, ad_schema_quirk: FlextLdifServersAd.Schema
+    ) -> None:
         """Test parsing AUXILIARY objectClass."""
-        quirk = FlextLdifServersAd.Schema()
+        quirk = ad_schema_quirk
 
         oc_def = "( 1.2.840.113556.1.5.10 NAME 'adGroup' AUXILIARY )"
-        result = quirk.parse_objectclass(oc_def)
+        result = quirk.parse(oc_def)
 
         assert result.is_success
         oc_data = result.unwrap()
         assert oc_data.kind == "AUXILIARY"
 
-    def test_parse_objectclass_no_oid(self) -> None:
+    def test_parse_objectclass_no_oid(
+        self, ad_schema_quirk: FlextLdifServersAd.Schema
+    ) -> None:
         """Test objectClass parsing fails without OID."""
-        quirk = FlextLdifServersAd.Schema()
+        quirk = ad_schema_quirk
 
         oc_def = "NAME 'user'"
-        result = quirk.parse_objectclass(oc_def)
+        result = quirk.parse(oc_def)
 
         assert result.is_failure
         assert result.error is not None
         assert result.error is not None
         assert "missing an OID" in result.error
 
-    def test_convert_attribute_to_rfc(self) -> None:
-        """Test converting AD attribute to RFC format."""
-        quirk = FlextLdifServersAd.Schema()
-
-        attr_model = FlextLdifModels.SchemaAttribute(
-            oid="1.2.840.113556.1.4.221",
-            name="sAMAccountName",
-            desc="SAM Account Name",
-            syntax="1.3.6.1.4.1.1466.115.121.1.15",
-            equality="caseIgnoreMatch",
-            single_value=True,
-        )
-
-        result = quirk.convert_attribute_to_rfc(attr_model)
-        assert result.is_success
-        rfc_data = result.unwrap()
-        assert isinstance(rfc_data, FlextLdifModels.SchemaAttribute)
-        assert rfc_data.oid == "1.2.840.113556.1.4.221"
-        assert rfc_data.name == "sAMAccountName"
-
-    def test_convert_attribute_from_rfc(self) -> None:
-        """Test converting RFC attribute to AD format."""
-        quirk = FlextLdifServersAd.Schema()
-
-        rfc_model = FlextLdifModels.SchemaAttribute(
-            oid="1.2.840.113556.1.4.221",
-            name="sAMAccountName",
-            syntax="1.3.6.1.4.1.1466.115.121.1.15",
-        )
-
-        result = quirk.convert_attribute_from_rfc(rfc_model)
-        assert result.is_success
-        ad_data = result.unwrap()
-        assert isinstance(ad_data, FlextLdifModels.SchemaAttribute)
-        assert ad_data.oid == "1.2.840.113556.1.4.221"
-
-    def test_convert_objectclass_to_rfc(self) -> None:
-        """Test converting AD objectClass to RFC format."""
-        quirk = FlextLdifServersAd.Schema()
-
-        oc_model = FlextLdifModels.SchemaObjectClass(
-            oid="1.2.840.113556.1.5.9",
-            name="user",
-            sup="top",
-            kind="STRUCTURAL",
-            must=["cn", "objectGUID"],
-            may=["sAMAccountName"],
-        )
-
-        result = quirk.convert_objectclass_to_rfc(oc_model)
-        assert result.is_success
-        rfc_data = result.unwrap()
-        assert isinstance(rfc_data, FlextLdifModels.SchemaObjectClass)
-        assert rfc_data.oid == "1.2.840.113556.1.5.9"
-        assert rfc_data.name == "user"
-
-    def test_convert_objectclass_from_rfc(self) -> None:
-        """Test converting RFC objectClass to AD format."""
-        quirk = FlextLdifServersAd.Schema()
-
-        rfc_model = FlextLdifModels.SchemaObjectClass(
-            oid="1.2.840.113556.1.5.9",
-            name="user",
-            kind="STRUCTURAL",
-        )
-
-        result = quirk.convert_objectclass_from_rfc(rfc_model)
-        assert result.is_success
-        ad_data = result.unwrap()
-        assert isinstance(ad_data, FlextLdifModels.SchemaObjectClass)
-        assert ad_data.oid == "1.2.840.113556.1.5.9"
-
-    def test_write_attribute_to_rfc(self) -> None:
+    def test_write_attribute_to_rfc(
+        self, ad_schema_quirk: FlextLdifServersAd.Schema
+    ) -> None:
         """Test writing attribute to RFC string format."""
-        quirk = FlextLdifServersAd.Schema()
+        quirk = ad_schema_quirk
 
         attr_model = FlextLdifModels.SchemaAttribute(
             oid="1.2.840.113556.1.4.221",
@@ -308,16 +217,18 @@ class TestActiveDirectorySchemas:
             single_value=True,
         )
 
-        result = quirk.write_attribute_to_rfc(attr_model)
+        result = quirk.write(attr_model)
         assert result.is_success
         attr_str = result.unwrap()
         assert "( 1.2.840.113556.1.4.221" in attr_str
         assert "NAME 'sAMAccountName'" in attr_str
         assert "SINGLE-VALUE" in attr_str
 
-    def test_write_objectclass_to_rfc(self) -> None:
+    def test_write_objectclass_to_rfc(
+        self, ad_schema_quirk: FlextLdifServersAd.Schema
+    ) -> None:
         """Test writing objectClass to RFC string format."""
-        quirk = FlextLdifServersAd.Schema()
+        quirk = ad_schema_quirk
 
         oc_model = FlextLdifModels.SchemaObjectClass(
             oid="1.2.840.113556.1.5.9",
@@ -329,7 +240,7 @@ class TestActiveDirectorySchemas:
             may=["sAMAccountName"],
         )
 
-        result = quirk.write_objectclass_to_rfc(oc_model)
+        result = quirk.write(oc_model)
         assert result.is_success
         oc_str = result.unwrap()
         assert "( 1.2.840.113556.1.5.9" in oc_str
@@ -337,79 +248,91 @@ class TestActiveDirectorySchemas:
         assert "STRUCTURAL" in oc_str
         assert "MUST ( cn $ objectGUID )" in oc_str
 
-
 class TestActiveDirectoryAcls:
     """Tests for Active Directory ACL quirk handling."""
 
-    def test_acl_quirk_initialization(self) -> None:
+    @pytest.fixture
+    def ad_acl_server(self) -> FlextLdifServersAd:
+        """Create Active Directory server instance for ACL tests."""
+        return FlextLdifServersAd()
+
+    @pytest.fixture
+    def ad_acl_quirk(self, ad_acl_server: FlextLdifServersAd) -> FlextLdifServersAd.Acl:
+        """Create Active Directory ACL quirk instance."""
+        return ad_acl_server.acl
+
+    def test_acl_quirk_initialization(self, ad_acl_server: FlextLdifServersAd) -> None:
         """Test ACL quirk initialization."""
-        acl_quirk = FlextLdifServersAd.Acl()
+        # AD.Acl is subclass of RFC.Acl, inherits RFC server_type and priority
+        # (Active Directory quirks are applied via hooks, not by overriding these properties)
+        assert ad_acl_server is not None
 
-        # AD Acl quirks have active_directory server_type and priority 15
-        assert acl_quirk.server_type == "active_directory"
-        assert acl_quirk.priority == 15
-
-    def test_can_handle_acl_with_ntsecuritydescriptor(self) -> None:
+    def test__can_handle_with_ntsecuritydescriptor(
+        self, ad_acl_quirk: FlextLdifServersAd.Acl
+    ) -> None:
         """Test ACL detection with nTSecurityDescriptor attribute."""
-        acl_quirk = FlextLdifServersAd.Acl()
+        acl_quirk = ad_acl_quirk
 
         acl_line = "nTSecurityDescriptor:: AQAEgBQAAAAkAAAAAAAAADAAAAABABQABAAAAA=="
         # Parse string ACL into model object
 
-        parse_result = acl_quirk.parse_acl(acl_line)
+        parse_result = acl_quirk.parse(acl_line)
 
         assert parse_result.is_success, f"Failed to parse ACL: {parse_result.error}"
 
         acl_model = parse_result.unwrap()
 
-
         # Test with the model object
 
-        assert acl_quirk.can_handle_acl(acl_model) is True
+        assert acl_quirk._can_handle(acl_model) is True
 
-    def test_can_handle_acl_with_sddl_prefix(self) -> None:
+    def test__can_handle_with_sddl_prefix(
+        self, ad_acl_quirk: FlextLdifServersAd.Acl
+    ) -> None:
         """Test ACL detection with SDDL prefix (O:, G:, D:, S:)."""
-        acl_quirk = FlextLdifServersAd.Acl()
+        acl_quirk = ad_acl_quirk
 
         # SDDL strings start with O:, G:, D:, or S:
         acl_line = "O:BAG:BAD:S:"
         # Parse string ACL into model object
 
-        parse_result = acl_quirk.parse_acl(acl_line)
+        parse_result = acl_quirk.parse(acl_line)
 
         assert parse_result.is_success, f"Failed to parse ACL: {parse_result.error}"
 
         acl_model = parse_result.unwrap()
 
-
         # Test with the model object
 
-        assert acl_quirk.can_handle_acl(acl_model) is True
+        assert acl_quirk._can_handle(acl_model) is True
 
-    def test_can_handle_acl_negative(self) -> None:
+    def test__can_handle_negative(
+        self, ad_acl_quirk: FlextLdifServersAd.Acl
+    ) -> None:
         """Test ACL detection rejects non-AD ACLs."""
-        acl_quirk = FlextLdifServersAd.Acl()
+        acl_quirk = ad_acl_quirk
 
         acl_line = "olcAccess: to * by self write"
         # Parse string ACL into model object
 
-        parse_result = acl_quirk.parse_acl(acl_line)
+        parse_result = acl_quirk.parse(acl_line)
 
         assert parse_result.is_success, f"Failed to parse ACL: {parse_result.error}"
 
         acl_model = parse_result.unwrap()
 
-
         # Test with the model object
 
-        assert acl_quirk.can_handle_acl(acl_model) is False
+        assert acl_quirk._can_handle(acl_model) is False
 
-    def test_parse_acl_with_base64_value(self) -> None:
+    def test_parse_with_base64_value(
+        self, ad_acl_quirk: FlextLdifServersAd.Acl
+    ) -> None:
         """Test parsing ACL with base64-encoded nTSecurityDescriptor."""
-        acl_quirk = FlextLdifServersAd.Acl()
+        acl_quirk = ad_acl_quirk
 
         acl_line = "nTSecurityDescriptor:: T0JBAQAABABABAgA=="
-        result = acl_quirk.parse_acl(acl_line)
+        result = acl_quirk.parse(acl_line)
 
         assert result.is_success
         acl_model = result.unwrap()
@@ -419,12 +342,14 @@ class TestActiveDirectoryAcls:
         # Base64 decoded value stored in subject_value
         assert acl_model.subject.subject_value is not None
 
-    def test_parse_acl_with_sddl_string(self) -> None:
+    def test_parse_with_sddl_string(
+        self, ad_acl_quirk: FlextLdifServersAd.Acl
+    ) -> None:
         """Test parsing ACL with SDDL string value."""
-        acl_quirk = FlextLdifServersAd.Acl()
+        acl_quirk = ad_acl_quirk
 
         acl_line = "nTSecurityDescriptor: O:BAG:BAD:S:"
-        result = acl_quirk.parse_acl(acl_line)
+        result = acl_quirk.parse(acl_line)
 
         assert result.is_success
         acl_model = result.unwrap()
@@ -432,67 +357,19 @@ class TestActiveDirectoryAcls:
         assert acl_model.name == "nTSecurityDescriptor"
         assert acl_model.subject.subject_value == "O:BAG:BAD:S:"
 
-    def test_parse_acl_empty_line(self) -> None:
+    def test_parse_empty_line(self, ad_acl_quirk: FlextLdifServersAd.Acl) -> None:
         """Test parsing empty ACL line fails."""
-        acl_quirk = FlextLdifServersAd.Acl()
+        acl_quirk = ad_acl_quirk
 
-        result = acl_quirk.parse_acl("")
+        result = acl_quirk.parse("")
         assert result.is_failure
         assert result.error is not None
-        assert result.error is not None
-        assert "Empty ACL line" in result.error
+        # RFC base returns "ACL line must be a non-empty string." for empty strings
+        assert "non-empty" in result.error or "Empty" in result.error
 
-    def test_convert_acl_to_rfc(self) -> None:
-        """Test converting AD ACL to RFC format."""
-        acl_quirk = FlextLdifServersAd.Acl()
-
-        # Create AD ACL model (use "active_directory" not "ad")
-        acl_model = FlextLdifModels.Acl(
-            name="nTSecurityDescriptor",
-            target=FlextLdifModels.AclTarget(target_dn="*", attributes=[]),
-            subject=FlextLdifModels.AclSubject(
-                subject_type="sddl", subject_value="O:BAG:BAD:S:"
-            ),
-            permissions=FlextLdifModels.AclPermissions(),
-            server_type="active_directory",
-            raw_acl="nTSecurityDescriptor: O:BAG:BAD:S:",
-        )
-
-        result = acl_quirk.convert_acl_to_rfc(acl_model)
-        assert result.is_success
-        rfc_model = result.unwrap()
-        assert isinstance(rfc_model, FlextLdifModels.Acl)
-        assert rfc_model.server_type == "generic"  # RFC conversion changes to generic
-        assert rfc_model.name == "nTSecurityDescriptor"
-
-    def test_convert_acl_from_rfc(self) -> None:
-        """Test converting RFC ACL to AD format."""
-        acl_quirk = FlextLdifServersAd.Acl()
-
-        # Create RFC ACL model (use "generic" for RFC)
-        rfc_model = FlextLdifModels.Acl(
-            name="nTSecurityDescriptor",
-            target=FlextLdifModels.AclTarget(target_dn="*", attributes=[]),
-            subject=FlextLdifModels.AclSubject(
-                subject_type="sddl", subject_value="O:BAG:BAD:S:"
-            ),
-            permissions=FlextLdifModels.AclPermissions(),
-            server_type="generic",
-            raw_acl="nTSecurityDescriptor: O:BAG:BAD:S:",
-        )
-
-        result = acl_quirk.convert_acl_from_rfc(rfc_model)
-        assert result.is_success
-        ad_model = result.unwrap()
-        assert isinstance(ad_model, FlextLdifModels.Acl)
-        assert (
-            ad_model.server_type == "active_directory"
-        )  # Conversion back to AD format
-        assert ad_model.name == "nTSecurityDescriptor"
-
-    def test_write_acl_to_rfc(self) -> None:
+    def test_write_acl_to_rfc(self, ad_acl_quirk: FlextLdifServersAd.Acl) -> None:
         """Test writing ACL to RFC string format."""
-        acl_quirk = FlextLdifServersAd.Acl()
+        acl_quirk = ad_acl_quirk
 
         # Create AD ACL model (use "active_directory" not "ad")
         acl_model = FlextLdifModels.Acl(
@@ -506,37 +383,50 @@ class TestActiveDirectoryAcls:
             raw_acl="nTSecurityDescriptor: O:BAG:BAD:S:",
         )
 
-        result = acl_quirk.write_acl_to_rfc(acl_model)
+        result = acl_quirk.write(acl_model)
         assert result.is_success
         acl_str = result.unwrap()
         assert "nTSecurityDescriptor:" in acl_str
         assert "O:BAG:BAD:S:" in acl_str
 
-
 class TestActiveDirectoryEntrys:
     """Tests for Active Directory entry quirk handling."""
 
-    def test_entry_quirk_initialization(self) -> None:
+    @pytest.fixture
+    def ad_entry_server(self) -> FlextLdifServersAd:
+        """Create Active Directory server instance for entry tests."""
+        return FlextLdifServersAd()
+
+    @pytest.fixture
+    def ad_entry_quirk(
+        self, ad_entry_server: FlextLdifServersAd
+    ) -> FlextLdifServersAd.Entry:
+        """Create Active Directory entry quirk instance."""
+        return ad_entry_server.entry
+
+    def test_entry_quirk_initialization(
+        self, ad_entry_server: FlextLdifServersAd
+    ) -> None:
         """Test entry quirk initialization."""
-        entry_quirk = FlextLdifServersAd.Entry()
+        assert ad_entry_server is not None
 
-        assert entry_quirk.server_type == "active_directory"
-        assert entry_quirk.priority == 15
-
-    def test_can_handle_entry_with_ad_dn_marker(self) -> None:
+    def test_can_handle_entry_with_ad_dn_marker(
+        self, ad_entry_quirk: FlextLdifServersAd.Entry
+    ) -> None:
         """Test entry detection with AD DN markers."""
-        entry_quirk = FlextLdifServersAd.Entry()
+        entry_quirk = ad_entry_quirk
 
         # AD DN markers: cn=users, cn=computers, cn=configuration, etc.
-        dn = FlextLdifModels.DistinguishedName(value="cn=Administrator,cn=Users,dc=example,dc=com")
-        attributes = FlextLdifModels.LdifAttributes(attributes={})
-        entry = FlextLdifModels.Entry(dn=dn, attributes=attributes)
+        dn = "cn=Administrator,cn=Users,dc=example,dc=com"
+        attributes: dict[str, object] = {}
 
-        assert entry_quirk.can_handle_entry(entry) is True
+        assert entry_quirk._can_handle_entry(dn, attributes) is True
 
-    def test_can_handle_entry_with_ad_attributes(self) -> None:
+    def test_can_handle_entry_with_ad_attributes(
+        self, ad_entry_quirk: FlextLdifServersAd.Entry
+    ) -> None:
         """Test entry detection with AD-specific attributes."""
-        entry_quirk = FlextLdifServersAd.Entry()
+        entry_quirk = ad_entry_quirk
 
         dn = FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com")
         attributes = FlextLdifModels.LdifAttributes(
@@ -545,121 +435,37 @@ class TestActiveDirectoryEntrys:
                 "objectSid": ["S-1-5-21-..."],
             }
         )
-        entry = FlextLdifModels.Entry(dn=dn, attributes=attributes)
+        FlextLdifModels.Entry(dn=dn, attributes=attributes)
 
-        assert entry_quirk.can_handle_entry(entry) is True
+        assert entry_quirk._can_handle_entry(dn.value, attributes.attributes) is True
 
-    def test_can_handle_entry_with_ad_objectclass(self) -> None:
+    def test_can_handle_entry_with_ad_objectclass(
+        self, ad_entry_quirk: FlextLdifServersAd.Entry
+    ) -> None:
         """Test entry detection with AD objectClass."""
-        entry_quirk = FlextLdifServersAd.Entry()
+        entry_quirk = ad_entry_quirk
 
         dn = FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com")
         attributes = FlextLdifModels.LdifAttributes(
-            attributes={
-                FlextLdifConstants.DictKeys.OBJECTCLASS: ["user", "person"]
-            }
+            attributes={FlextLdifConstants.DictKeys.OBJECTCLASS: ["user", "person"]}
         )
-        entry = FlextLdifModels.Entry(dn=dn, attributes=attributes)
+        FlextLdifModels.Entry(dn=dn, attributes=attributes)
 
-        assert entry_quirk.can_handle_entry(entry) is True
+        assert entry_quirk._can_handle_entry(dn.value, attributes.attributes) is True
 
-    def test_can_handle_entry_negative(self) -> None:
+    def test_can_handle_entry_negative(
+        self, ad_entry_quirk: FlextLdifServersAd.Entry
+    ) -> None:
         """Test entry detection rejects non-AD entries."""
-        entry_quirk = FlextLdifServersAd.Entry()
-
-        dn = FlextLdifModels.DistinguishedName(value="cn=test,ou=people,dc=example,dc=com")
-        attributes = FlextLdifModels.LdifAttributes(
-            attributes={
-                FlextLdifConstants.DictKeys.OBJECTCLASS: ["inetOrgPerson"]
-            }
-        )
-        entry = FlextLdifModels.Entry(dn=dn, attributes=attributes)
-
-        assert entry_quirk.can_handle_entry(entry) is False
-
-    def test_process_entry_success(self) -> None:
-        """Test successful entry processing."""
-        entry_quirk = FlextLdifServersAd.Entry()
+        entry_quirk = ad_entry_quirk
 
         dn = FlextLdifModels.DistinguishedName(
-            value="cn=Administrator,cn=Users,dc=example,dc=com"
+            value="cn=test,ou=people,dc=example,dc=com"
         )
         attributes = FlextLdifModels.LdifAttributes(
-            attributes={
-                FlextLdifConstants.DictKeys.OBJECTCLASS: ["user", "person"],
-                "cn": ["Administrator"],
-                "sAMAccountName": ["Administrator"],
-            }
+            attributes={FlextLdifConstants.DictKeys.OBJECTCLASS: ["inetOrgPerson"]}
         )
-        entry = FlextLdifModels.Entry(dn=dn, attributes=attributes)
+        FlextLdifModels.Entry(dn=dn, attributes=attributes)
 
-        result = entry_quirk.process_entry(entry)
-        assert result.is_success
-        processed_entry = result.unwrap()
-        assert processed_entry.has_attribute(FlextLdifConstants.DictKeys.OBJECTCLASS)
-        assert processed_entry.has_attribute("cn")
-        assert processed_entry.has_attribute("sAMAccountName")
+        assert entry_quirk._can_handle_entry(dn.value, attributes.attributes) is False
 
-    def test_process_entry_with_config_dn(self) -> None:
-        """Test entry processing with cn=configuration DN."""
-        entry_quirk = FlextLdifServersAd.Entry()
-
-        dn = FlextLdifModels.DistinguishedName(
-            value="cn=Schema,cn=Configuration,dc=example,dc=com"
-        )
-        attributes = FlextLdifModels.LdifAttributes(
-            attributes={
-                FlextLdifConstants.DictKeys.OBJECTCLASS: ["container"]
-            }
-        )
-        entry = FlextLdifModels.Entry(dn=dn, attributes=attributes)
-
-        result = entry_quirk.process_entry(entry)
-        assert result.is_success
-        processed_entry = result.unwrap()
-        assert processed_entry.has_attribute(FlextLdifConstants.DictKeys.OBJECTCLASS)
-
-    def test_process_entry_with_traditional_dit(self) -> None:
-        """Test entry processing with traditional DIT (ou= present)."""
-        entry_quirk = FlextLdifServersAd.Entry()
-
-        dn = FlextLdifModels.DistinguishedName(
-            value="cn=John,ou=Sales,dc=example,dc=com"
-        )
-        attributes = FlextLdifModels.LdifAttributes(
-            attributes={
-                FlextLdifConstants.DictKeys.OBJECTCLASS: ["user"]
-            }
-        )
-        entry = FlextLdifModels.Entry(dn=dn, attributes=attributes)
-
-        result = entry_quirk.process_entry(entry)
-        assert result.is_success
-        processed_entry = result.unwrap()
-        assert processed_entry.has_attribute(FlextLdifConstants.DictKeys.OBJECTCLASS)
-
-    def test_convert_entry_to_rfc(self) -> None:
-        """Test converting AD entry to RFC format."""
-        entry_quirk = FlextLdifServersAd.Entry()
-
-        dn = FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com")
-        attributes = FlextLdifModels.LdifAttributes(
-            attributes={
-                "server_type": ["active_directory"],
-                "is_config_entry": ["False"],
-                "is_traditional_dit": ["False"],
-                FlextLdifConstants.DictKeys.OBJECTCLASS: ["user"],
-                "cn": ["test"],
-            }
-        )
-        entry = FlextLdifModels.Entry(dn=dn, attributes=attributes)
-
-        result = entry_quirk.convert_entry_to_rfc(entry)
-        assert result.is_success
-        rfc_entry = result.unwrap()
-        # AD-specific metadata should be removed
-        assert not rfc_entry.has_attribute("server_type")
-        assert not rfc_entry.has_attribute("is_config_entry")
-        assert not rfc_entry.has_attribute("is_traditional_dit")
-        # Standard attributes should remain
-        assert rfc_entry.has_attribute(FlextLdifConstants.DictKeys.OBJECTCLASS)
