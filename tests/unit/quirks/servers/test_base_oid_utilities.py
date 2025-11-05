@@ -87,9 +87,7 @@ class TestMatchesPattern:
         # matches_pattern expects a definition string, not a SchemaAttribute
         attr_definition = "( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' ... )"
 
-        result = FlextLdifUtilities.OID.matches_pattern(
-            attr_definition, oid_pattern
-        )
+        result = FlextLdifUtilities.OID.matches_pattern(attr_definition, oid_pattern)
         assert result is True
 
     def test_handle_oid_pattern_no_match(self) -> None:
@@ -98,9 +96,7 @@ class TestMatchesPattern:
         # matches_pattern expects a definition string, not a SchemaAttribute
         attr_definition = "( 2.5.4.3 NAME 'cn' ... )"
 
-        result = FlextLdifUtilities.OID.matches_pattern(
-            attr_definition, oid_pattern
-        )
+        result = FlextLdifUtilities.OID.matches_pattern(attr_definition, oid_pattern)
         assert result is False
 
     def test_handle_openldap_pattern(self) -> None:
@@ -120,9 +116,7 @@ class TestMatchesPattern:
         # matches_pattern expects a definition string, not a SchemaAttribute
         attr_definition = "( 2.5.4.3 NAME 'cn' ... )"
 
-        result = FlextLdifUtilities.OID.matches_pattern(
-            attr_definition, oid_pattern
-        )
+        result = FlextLdifUtilities.OID.matches_pattern(attr_definition, oid_pattern)
         assert result is False
 
     def test_handle_objectclass_with_pattern(self) -> None:
@@ -131,9 +125,7 @@ class TestMatchesPattern:
         # matches_pattern expects a definition string, not a SchemaObjectClass
         oc_definition = "( 2.5.6.0 NAME 'top' ... )"
 
-        result = FlextLdifUtilities.OID.matches_pattern(
-            oc_definition, oid_pattern
-        )
+        result = FlextLdifUtilities.OID.matches_pattern(oc_definition, oid_pattern)
         assert result is True
 
     def test_handle_invalid_input_type(self) -> None:

@@ -67,30 +67,42 @@ class FlextLdifOperationalService(FlextService[dict[str, object]]):
     def __init__(self) -> None:
         """Initialize Operational Attributes service."""
         super().__init__()
-        # Build operational attribute lookup tables from constants
+        # Build operational attribute lookup tables from server-specific constants
+        # Use server Constants classes instead of FlextLdifConstants
         self._common_operational: frozenset[str] = (
             FlextLdifConstants.OperationalAttributes.COMMON
         )
+        # Import server classes to access their Constants
+        from flext_ldif.servers import (
+            FlextLdifServersAd,
+            FlextLdifServersDs389,
+            FlextLdifServersNovell,
+            FlextLdifServersOid,
+            FlextLdifServersOpenldap,
+            FlextLdifServersOud,
+            FlextLdifServersTivoli,
+        )
+
         self._oid_specific: frozenset[str] = (
-            FlextLdifConstants.OperationalAttributes.OID_SPECIFIC
+            FlextLdifServersOid.Constants.OPERATIONAL_ATTRIBUTES
         )
         self._oud_specific: frozenset[str] = (
-            FlextLdifConstants.OperationalAttributes.OUD_SPECIFIC
+            FlextLdifServersOud.Constants.OPERATIONAL_ATTRIBUTES
         )
         self._openldap_specific: frozenset[str] = (
-            FlextLdifConstants.OperationalAttributes.OPENLDAP_SPECIFIC
+            FlextLdifServersOpenldap.Constants.OPERATIONAL_ATTRIBUTES
         )
         self._ds389_specific: frozenset[str] = (
-            FlextLdifConstants.OperationalAttributes.DS_389_SPECIFIC
+            FlextLdifServersDs389.Constants.OPERATIONAL_ATTRIBUTES
         )
         self._ad_specific: frozenset[str] = (
-            FlextLdifConstants.OperationalAttributes.AD_SPECIFIC
+            FlextLdifServersAd.Constants.OPERATIONAL_ATTRIBUTES
         )
         self._novell_specific: frozenset[str] = (
-            FlextLdifConstants.OperationalAttributes.NOVELL_SPECIFIC
+            FlextLdifServersNovell.Constants.OPERATIONAL_ATTRIBUTES
         )
         self._ibm_tivoli_specific: frozenset[str] = (
-            FlextLdifConstants.OperationalAttributes.IBM_TIVOLI_SPECIFIC
+            FlextLdifServersTivoli.Constants.OPERATIONAL_ATTRIBUTES
         )
 
     @override

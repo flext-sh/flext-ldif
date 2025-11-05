@@ -12,6 +12,7 @@ from __future__ import annotations
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.utilities import FlextLdifUtilities
 
+
 class TestSchemaTransformerNormalizeAttributeName:
     """Test normalize_attribute_name transformation."""
 
@@ -54,6 +55,7 @@ class TestSchemaTransformerNormalizeAttributeName:
         """Test that None is handled gracefully."""
         result = FlextLdifUtilities.Schema.normalize_name(None)
         assert result is None
+
 
 class TestSchemaTransformerNormalizeMatchingRule:
     """Test normalize_matching_rule transformation."""
@@ -116,6 +118,7 @@ class TestSchemaTransformerNormalizeMatchingRule:
         assert equality == "caseIgnoreMatch"
         assert substr == "caseIgnoreSubstringsMatch"
 
+
 class TestSchemaTransformerNormalizeSyntaxOid:
     """Test normalize_syntax_oid transformation."""
 
@@ -141,6 +144,7 @@ class TestSchemaTransformerNormalizeSyntaxOid:
             "1.3.6.1.4.1.1466.115.121.1.15"
         )
         assert result == "1.3.6.1.4.1.1466.115.121.1.15"
+
 
 class TestSchemaTransformerApplyAttributeTransformations:
     """Test apply_attribute_transformations pipeline."""
@@ -217,6 +221,7 @@ class TestSchemaTransformerApplyAttributeTransformations:
         transformed = result.unwrap()
         assert transformed.name == "cn"
         assert transformed.equality == "caseIgnoreMatch"
+
 
 class TestSchemaTransformerApplyObjectClassTransformations:
     """Test apply_objectclass_transformations pipeline."""

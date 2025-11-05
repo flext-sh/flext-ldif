@@ -267,7 +267,7 @@ class FlextLdifAclService(FlextService[FlextLdifModels.AclResponse]):
                 acl_attrs  # Assume _acl_attributes is already in internal format
             )
             if source_server.lower() != FlextLdifConstants.ServerTypes.RFC.value:
-                source_quirk = self._registry.find_entry_quirk(source_server, "", {})
+                source_quirk = self._registry.get_entry_quirk(source_server)
                 if source_quirk and hasattr(source_quirk, "acl"):
                     if hasattr(source_quirk.acl, "convert_acl_to_rfc"):
                         rfc_result = source_quirk.acl.convert_acl_to_rfc(acl_attrs)

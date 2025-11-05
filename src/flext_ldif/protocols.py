@@ -25,7 +25,7 @@ from flext_ldif.models import FlextLdifModels
 
 
 class FlextLdifProtocols(FlextProtocols):
-    """Unified LDIF protocol definitions extending FlextProtocols.
+    r"""Unified LDIF protocol definitions extending FlextProtocols.
 
     This class extends the base FlextProtocols with LDIF-specific protocol
     definitions for the minimal, streamlined public interfaces of quirks.

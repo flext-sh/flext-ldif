@@ -17,7 +17,6 @@ from __future__ import annotations
 
 import pytest
 
-from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.servers.oid import FlextLdifServersOid
 from flext_ldif.servers.oud import FlextLdifServersOud
 from flext_ldif.services.conversion_matrix import (
@@ -185,7 +184,11 @@ class TestOidToOudAclConversion:
         # Note: Parsed ACL is converted to generic (RFC) format after parsing OUD-specific format
         # Current implementation: OUD parsing sets server_type to "oud"
         # "generic" is an alias for "rfc" but the actual server_type is "oud" when parsed by OUD quirk
-        assert parsed_data.server_type in ("oud", "rfc", "generic")  # Accept current behavior
+        assert parsed_data.server_type in {
+            "oud",
+            "rfc",
+            "generic",
+        }  # Accept current behavior
         assert hasattr(parsed_data, "target")  # Has target field
         assert hasattr(parsed_data, "name")  # Has name field
         assert hasattr(parsed_data, "metadata")  # Has metadata field

@@ -96,7 +96,9 @@ objectClass: person
 
         # Create entry using Entry model directly
         entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(value="cn=Test User,dc=example,dc=com"),
+            dn=FlextLdifModels.DistinguishedName(
+                value="cn=Test User,dc=example,dc=com"
+            ),
             attributes=FlextLdifModels.LdifAttributes(
                 attributes={
                     "cn": ["Test User"],

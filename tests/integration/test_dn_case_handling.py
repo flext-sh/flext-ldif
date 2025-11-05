@@ -273,6 +273,7 @@ class TestConversionMatrixDnHandling:
 
         # Entry with different case - use dict format to match test pattern
         from flext_ldif.models import FlextLdifModels
+
         entry = FlextLdifModels.Entry(
             dn=FlextLdifModels.DistinguishedName(value="CN=Group,DC=Com"),
             attributes=FlextLdifModels.LdifAttributes(

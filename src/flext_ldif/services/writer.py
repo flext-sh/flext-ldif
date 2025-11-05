@@ -18,7 +18,6 @@ from flext_core import FlextResult, FlextService
 
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
-from flext_ldif.protocols import FlextLdifProtocols
 from flext_ldif.services.registry import FlextLdifRegistry
 from flext_ldif.services.sorting import FlextLdifSortingService
 from flext_ldif.services.statistics import FlextLdifStatisticsService

@@ -6,6 +6,7 @@ from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.servers.apache import FlextLdifServersApache
 
+
 class TestApacheDirectorySchemas:
     """Tests for Apache Directory Server schema quirk handling."""
 
@@ -18,10 +19,16 @@ class TestApacheDirectorySchemas:
         )
         assert FlextLdifServersApache.Constants.PRIORITY == 15
         # Verify class-level attributes are set from Constants
-        assert FlextLdifServersApache.Constants.SERVER_TYPE == FlextLdifConstants.LdapServers.APACHE_DIRECTORY
+        assert (
+            FlextLdifServersApache.Constants.SERVER_TYPE
+            == FlextLdifConstants.LdapServers.APACHE_DIRECTORY
+        )
         assert FlextLdifServersApache.Constants.PRIORITY == 15
         # Verify class-level attributes are set from Constants
-        assert FlextLdifServersApache.server_type == FlextLdifConstants.LdapServers.APACHE_DIRECTORY
+        assert (
+            FlextLdifServersApache.server_type
+            == FlextLdifConstants.LdapServers.APACHE_DIRECTORY
+        )
         assert FlextLdifServersApache.priority == 15
         # Verify nested instances exist
         assert quirk.schema is not None
@@ -297,23 +304,29 @@ class TestApacheDirectorySchemas:
         assert "ads-directoryService" in oc_str
         assert "STRUCTURAL" in oc_str
 
+
 class TestApacheDirectoryAcls:
     """Tests for Apache Directory Server ACL quirk handling."""
 
     def test_acl_quirk_initialization(self) -> None:
         """Test ACL quirk initialization."""
-        main_quirk = FlextLdifServersApache()
-        acl_quirk = main_quirk.acl
+        FlextLdifServersApache()
         assert (
             FlextLdifServersApache.Constants.SERVER_TYPE
             == FlextLdifConstants.LdapServers.APACHE_DIRECTORY
         )
         assert FlextLdifServersApache.Constants.PRIORITY == 15
         # Verify class-level attributes are set from Constants
-        assert FlextLdifServersApache.Constants.SERVER_TYPE == FlextLdifConstants.LdapServers.APACHE_DIRECTORY
+        assert (
+            FlextLdifServersApache.Constants.SERVER_TYPE
+            == FlextLdifConstants.LdapServers.APACHE_DIRECTORY
+        )
         assert FlextLdifServersApache.Constants.PRIORITY == 15
         # Verify class-level attributes are set from Constants
-        assert FlextLdifServersApache.server_type == FlextLdifConstants.LdapServers.APACHE_DIRECTORY
+        assert (
+            FlextLdifServersApache.server_type
+            == FlextLdifConstants.LdapServers.APACHE_DIRECTORY
+        )
         assert FlextLdifServersApache.priority == 15
 
     def test__can_handle_with_ads_aci(self) -> None:
@@ -481,6 +494,7 @@ class TestApacheDirectoryAcls:
         # The write method uses the ACL name field
         assert "ads-aci" in acl_str or "aci:" in acl_str
 
+
 class TestApacheDirectoryEntrys:
     """Tests for Apache Directory Server entry quirk handling."""
 
@@ -493,10 +507,16 @@ class TestApacheDirectoryEntrys:
         )
         assert FlextLdifServersApache.Constants.PRIORITY == 15
         # Verify class-level attributes are set from Constants
-        assert FlextLdifServersApache.Constants.SERVER_TYPE == FlextLdifConstants.LdapServers.APACHE_DIRECTORY
+        assert (
+            FlextLdifServersApache.Constants.SERVER_TYPE
+            == FlextLdifConstants.LdapServers.APACHE_DIRECTORY
+        )
         assert FlextLdifServersApache.Constants.PRIORITY == 15
         # Verify class-level attributes are set from Constants
-        assert FlextLdifServersApache.server_type == FlextLdifConstants.LdapServers.APACHE_DIRECTORY
+        assert (
+            FlextLdifServersApache.server_type
+            == FlextLdifConstants.LdapServers.APACHE_DIRECTORY
+        )
         assert FlextLdifServersApache.priority == 15
 
     def test_can_handle_entry_with_ou_config(self) -> None:
@@ -581,4 +601,3 @@ class TestApacheDirectoryEntrys:
             "cn": ["user"],
         }
         assert entry_quirk._can_handle_entry(entry_dn, attributes) is False
-

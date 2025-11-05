@@ -329,6 +329,7 @@ class FlextLdifServerDetector(FlextService[FlextLdifModels.ClientStatus]):
 
         # Apache DS detection
         from flext_ldif.servers.apache import FlextLdifServersApache
+
         if re.search(
             FlextLdifServersApache.Constants.APACHE_DS_PATTERN,
             content_lower,
@@ -394,6 +395,7 @@ class FlextLdifServerDetector(FlextService[FlextLdifModels.ClientStatus]):
             patterns.append("Oracle OID namespace (2.16.840.1.113894.*)")
         # Import OID constants for detection (server-specific constants)
         from flext_ldif.servers.oid import FlextLdifServersOid
+
         if (
             FlextLdifServersOid.Constants.ORCLACI.lower() in content_lower
             or FlextLdifServersOid.Constants.ORCL_ENTRY_LEVEL_ACI.lower()
@@ -446,6 +448,7 @@ class FlextLdifServerDetector(FlextService[FlextLdifModels.ClientStatus]):
 
         # Apache DS detection
         from flext_ldif.servers.apache import FlextLdifServersApache
+
         if re.search(
             FlextLdifServersApache.Constants.APACHE_DS_PATTERN,
             content_lower,

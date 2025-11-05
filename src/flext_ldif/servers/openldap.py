@@ -16,7 +16,7 @@ This implementation handles:
 from __future__ import annotations
 
 import re
-from typing import ClassVar
+from typing import ClassVar, Final
 
 from flext_core import FlextResult
 
@@ -28,12 +28,6 @@ from flext_ldif.servers.rfc import FlextLdifServersRfc
 class FlextLdifServersOpenldap(FlextLdifServersRfc):
     """OpenLDAP 2.x Quirks - Complete Implementation."""
 
-    # =========================================================================
-    # Class-level attributes for server identification (from Constants)
-    # =========================================================================
-    server_type: ClassVar[str] = Constants.SERVER_TYPE
-    priority: ClassVar[int] = Constants.PRIORITY
-
     # === STANDARDIZED CONSTANTS FOR AUTO-DISCOVERY ===
     class Constants(FlextLdifServersRfc.Constants):
         """Standardized constants for OpenLDAP 2.x quirk."""
@@ -44,13 +38,6 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
         PRIORITY: ClassVar[int] = 20
         CAN_NORMALIZE_FROM: ClassVar[frozenset[str]] = frozenset(["openldap"])
         CAN_DENORMALIZE_TO: ClassVar[frozenset[str]] = frozenset(["openldap", "rfc"])
-
-        # OpenLDAP specific operational attributes
-        OPERATIONAL_ATTRIBUTES: Final[frozenset[str]] = frozenset([
-            "structuralObjectClass",
-            "contextCSN",
-            "entryCSN",
-        ])
 
         # OpenLDAP 2.x ACL format constants
         ACL_FORMAT: ClassVar[str] = "olcAccess"  # OpenLDAP cn=config ACL attribute
@@ -87,12 +74,69 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             "uid=",
         ])
 
+        # OpenLDAP 2.x object classes (cn=config based)
+        OPENLDAP_2_OBJECTCLASSES: Final[frozenset[str]] = frozenset([
+            "olcDatabaseConfig",
+            "olcBackendConfig",
+            "olcOverlayConfig",
+            "olcSchemaConfig",
+        ])
+
         # OpenLDAP operational attributes (server-specific)
         OPERATIONAL_ATTRIBUTES: Final[frozenset[str]] = frozenset([
             "structuralObjectClass",
             "contextCSN",
             "entryCSN",
         ])
+
+        # Detection constants (server-specific)
+        DETECTION_OID_PATTERN: Final[str] = r"1\.3\.6\.1\.4\.1\.4203\."
+        DETECTION_ATTRIBUTE_PREFIXES: Final[frozenset[str]] = frozenset([
+            "olc",
+            "structuralobjectclass",
+        ])
+        DETECTION_OBJECTCLASS_NAMES: Final[frozenset[str]] = frozenset([
+            "olcglobal",
+            "olcdatabaseconfig",
+            "olcldapconfig",
+            "olcmdbconfig",
+            "olcbdbconfig",
+        ])
+        DETECTION_DN_MARKERS: Final[frozenset[str]] = frozenset([
+            "cn=config",
+            "cn=schema",
+            "cn=monitor",
+        ])
+
+        # OpenLDAP required object classes for valid entries
+        REQUIRED_CLASSES: Final[frozenset[str]] = frozenset([
+            "top",
+            "person",
+            "organizationalPerson",
+            "inetOrgPerson",
+        ])
+
+        # Schema-specific regex patterns (migrated from nested Schema class)
+        SCHEMA_OPENLDAP_OLC_PATTERN: Final[str] = r"\bolc[A-Z][a-zA-Z]*\b"
+
+        # ACL parsing patterns (migrated from nested Acl class)
+        ACL_BY_PATTERN: Final[str] = r"by\s+([^\s]+)\s+([^\s]+)"
+        ACL_DEFAULT_NAME: Final[str] = "access"  # Internal name for compatibility
+
+    # =========================================================================
+    # Class-level attributes for server identification (from Constants)
+    # =========================================================================
+    server_type: ClassVar[str] = Constants.SERVER_TYPE
+    priority: ClassVar[int] = Constants.PRIORITY
+
+    def __init__(self) -> None:
+        """Initialize OpenLDAP 2.x quirks."""
+        super().__init__()
+        # Use object.__setattr__ to bypass Pydantic validation for dynamic attributes
+        # Nested classes no longer require server_type and priority parameters
+        object.__setattr__(self, "schema", self.Schema())
+        object.__setattr__(self, "acl", self.Acl())
+        object.__setattr__(self, "entry", self.Entry())
 
     class Schema(FlextLdifServersRfc.Schema):
         """OpenLDAP 2.x schema quirk.
@@ -110,16 +154,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
 
         """
 
-        # OpenLDAP 2.x olc* attribute pattern
-        OPENLDAP_OLC_PATTERN: ClassVar[re.Pattern[str]] = re.compile(
-            r"\bolc[A-Z][a-zA-Z]*\b",
-        )
-
-        # OpenLDAP cn=config DN pattern - use constant
-        OPENLDAP_CONFIG_DN_PATTERN: ClassVar[re.Pattern[str]] = re.compile(
-            FlextLdifConstants.DnPatterns.CN_CONFIG,
-            re.IGNORECASE,
-        )
+        # Schema patterns moved to Constants.SCHEMA_OPENLDAP_OLC_PATTERN
 
         def can_handle_attribute(
             self, attribute: str | FlextLdifModels.SchemaAttribute
@@ -135,9 +170,21 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             """
             # Check for olc* prefix or olcAttributeTypes context
             if isinstance(attribute, str):
-                return bool(self.OPENLDAP_OLC_PATTERN.search(attribute))
+                return bool(
+                    re.search(
+                        FlextLdifServersOpenldap.Constants.SCHEMA_OPENLDAP_OLC_PATTERN,
+                        attribute,
+                        re.IGNORECASE,
+                    )
+                )
             if isinstance(attribute, FlextLdifModels.SchemaAttribute):
-                return bool(self.OPENLDAP_OLC_PATTERN.search(attribute.oid))
+                return bool(
+                    re.search(
+                        FlextLdifServersOpenldap.Constants.SCHEMA_OPENLDAP_OLC_PATTERN,
+                        attribute.oid,
+                        re.IGNORECASE,
+                    )
+                )
             return False
 
         # Schema parsing and conversion methods
@@ -166,9 +213,21 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
 
             """
             if isinstance(objectclass, str):
-                return bool(self.OPENLDAP_OLC_PATTERN.search(objectclass))
+                return bool(
+                    re.search(
+                        FlextLdifServersOpenldap.Constants.SCHEMA_OPENLDAP_OLC_PATTERN,
+                        objectclass,
+                        re.IGNORECASE,
+                    )
+                )
             if isinstance(objectclass, FlextLdifModels.SchemaObjectClass):
-                return bool(self.OPENLDAP_OLC_PATTERN.search(objectclass.oid))
+                return bool(
+                    re.search(
+                        FlextLdifServersOpenldap.Constants.SCHEMA_OPENLDAP_OLC_PATTERN,
+                        objectclass.oid,
+                        re.IGNORECASE,
+                    )
+                )
             return False
 
         def write(
@@ -269,21 +328,14 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
         """
 
         # OVERRIDE: OpenLDAP 2.x uses "olcAccess" for ACL attribute names
-        acl_attribute_name = "olcAccess"
-
-        def __init__(
-            self,
-            server_type: str | None = None,
-            priority: int | None = None,
-        ) -> None:
+        def __init__(self, **kwargs: object) -> None:
             """Initialize OpenLDAP 2.x ACL quirk with RFC format.
 
             Args:
-                server_type: Optional server type (inherited from parent)
-                priority: Optional priority (inherited from parent)
+                **kwargs: Passed to parent FlextService for initialization
 
             """
-            super().__init__(server_type=server_type, priority=priority)
+            super().__init__(**kwargs)
 
         def _can_handle(self, acl: FlextLdifModels.Acl) -> bool:
             """Check if this is an OpenLDAP 2.x ACL.
@@ -300,7 +352,9 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             # OpenLDAP 2.x ACLs start with "to" or "{n}to"
             return bool(
                 re.match(r"^(\{\d+\})?\s*to\s+", acl.raw_acl, re.IGNORECASE),
-            ) or acl.raw_acl.startswith(f"{FlextLdifServersOpenldap.Constants.ACL_ATTRIBUTE_NAME}:")
+            ) or acl.raw_acl.startswith(
+                f"{FlextLdifServersOpenldap.Constants.ACL_ATTRIBUTE_NAME}:"
+            )
 
         def parse(self, acl_line: str) -> FlextResult[FlextLdifModels.Acl]:
             """Parse OpenLDAP 2.x ACL definition.
@@ -318,8 +372,14 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             try:
                 # Remove olcAccess: prefix if present
                 acl_content = acl_line
-                if acl_line.startswith(f"{FlextLdifServersOpenldap.Constants.ACL_ATTRIBUTE_NAME}:"):
-                    acl_content = acl_line[len(FlextLdifServersOpenldap.Constants.ACL_ATTRIBUTE_NAME + ":") :].strip()
+                if acl_line.startswith(
+                    f"{FlextLdifServersOpenldap.Constants.ACL_ATTRIBUTE_NAME}:"
+                ):
+                    acl_content = acl_line[
+                        len(
+                            FlextLdifServersOpenldap.Constants.ACL_ATTRIBUTE_NAME + ":"
+                        ) :
+                    ].strip()
 
                 # Remove {n} index if present
                 index_match = re.match(r"^\{(\d+)\}\s*(.+)", acl_content)
@@ -352,8 +412,13 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                     attributes = [attr.strip() for attr in attr_string.split(",")]
 
                 # Parse "by <who> <access>" clauses - extract first by clause for model
-                by_pattern = re.compile(r"by\s+([^\s]+)\s+([^\s]+)", re.IGNORECASE)
-                by_matches = list(by_pattern.finditer(acl_content))
+                by_matches = list(
+                    re.finditer(
+                        FlextLdifServersOpenldap.Constants.ACL_BY_PATTERN,
+                        acl_content,
+                        re.IGNORECASE,
+                    )
+                )
 
                 # Extract subject from first by clause
                 subject_value = (
@@ -366,8 +431,10 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                 access = by_matches[0].group(2) if by_matches else "none"
 
                 # Build Acl model
+                # Note: "access" is OpenLDAP 1.x format, OpenLDAP 2.x uses "olcAccess"
+                # This is for compatibility/translation, actual format is from Constants.ACL_ATTRIBUTE_NAME
                 acl = FlextLdifModels.Acl(
-                    name="access",
+                    name=FlextLdifServersOpenldap.Constants.ACL_DEFAULT_NAME,
                     target=FlextLdifModels.AclTarget(
                         target_dn=what,  # OpenLDAP: "what" is target
                         attributes=attributes,  # OpenLDAP: extracted from what clause
@@ -388,7 +455,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                         compare=FlextLdifConstants.PermissionNames.READ
                         in access,  # OpenLDAP: read includes compare
                     ),
-                    server_type="openldap",
+                    server_type=FlextLdifServersOpenldap.Constants.SERVER_TYPE,  # type: ignore[arg-type]
                     raw_acl=acl_line,
                 )
 
@@ -444,13 +511,13 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
     def get_acl_attribute_name(self) -> str:
         """Get OpenLDAP-specific ACL attribute name.
 
-        OpenLDAP 2.x uses 'olcAccess' for ACL configuration in cn=config.
+        OpenLDAP 2.x uses Constants.ACL_ATTRIBUTE_NAME for ACL configuration in cn=config.
 
         Returns:
             'olcAccess' - OpenLDAP-specific ACL attribute name
 
         """
-        return "olcAccess"
+        return FlextLdifServersOpenldap.Constants.ACL_ATTRIBUTE_NAME
 
     class Entry(FlextLdifServersRfc.Entry):
         """OpenLDAP 2.x entry quirk (nested).
@@ -467,19 +534,14 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
 
         """
 
-        def __init__(
-            self,
-            server_type: str | None = None,
-            priority: int | None = None,
-        ) -> None:
+        def __init__(self, **kwargs: object) -> None:
             """Initialize OpenLDAP 2.x entry quirk with RFC format.
 
             Args:
-                server_type: Optional server type (inherited from parent)
-                priority: Optional priority (inherited from parent)
+                **kwargs: Passed to parent FlextService for initialization
 
             """
-            super().__init__(server_type=server_type, priority=priority)
+            super().__init__(**kwargs)
 
         # OVERRIDDEN METHODS (from FlextLdifServersBase.Entry)
         # These methods override the base class with OpenLDAP 2.x-specific logic:
@@ -507,8 +569,10 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                 return False
 
             # Check for cn=config DN or olc* attributes
-            is_config_dn = (
-                FlextLdifConstants.DnPatterns.CN_CONFIG.lower() in entry_dn.lower()
+            # Use Constants.DETECTION_DN_MARKERS which includes "cn=config"
+            is_config_dn = any(
+                marker in entry_dn.lower()
+                for marker in FlextLdifServersOpenldap.Constants.DETECTION_DN_MARKERS
             )
 
             # Check for olc* attributes
@@ -520,7 +584,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                 object_classes = [object_classes]
 
             has_olc_classes = any(
-                oc in FlextLdifConstants.LdapServers.OPENLDAP_2_OBJECTCLASSES
+                oc in FlextLdifServersOpenldap.Constants.OPENLDAP_2_OBJECTCLASSES
                 for oc in object_classes
             )
 

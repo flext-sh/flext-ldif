@@ -173,7 +173,9 @@ class FlextLdifRegistry:
         except (ValueError, TypeError, AttributeError) as e:
             return FlextResult[None].fail(f"Failed to register quirk: {e}")
 
-    def _validate_quirk_protocols(self, quirk: FlextLdifServersBase) -> FlextResult[None]:
+    def _validate_quirk_protocols(
+        self, quirk: FlextLdifServersBase
+    ) -> FlextResult[None]:
         """Validate that all nested quirks satisfy their protocols.
 
         Uses isinstance() checks to verify protocol compliance at registration time.
@@ -207,7 +209,9 @@ class FlextLdifRegistry:
             required_methods = ["parse", "write"]
             for method in required_methods:
                 if not hasattr(acl_quirk, method):
-                    msg = f"ACL quirk {type(acl_quirk).__name__} missing method: {method}"
+                    msg = (
+                        f"ACL quirk {type(acl_quirk).__name__} missing method: {method}"
+                    )
                     logger.warning(msg)
                     return FlextResult.fail(msg)
 
@@ -341,9 +345,7 @@ class FlextLdifRegistry:
         quirk = self.get_entry_quirk(server_type)
         return [quirk] if quirk else []
 
-    def get_quirks(
-        self, server_type: str
-    ) -> list[FlextLdifServersBase]:
+    def get_quirks(self, server_type: str) -> list[FlextLdifServersBase]:
         """Get base quirk implementation for a server type."""
         normalized_type = self._normalize_server_type(server_type)
         quirk = self._base_quirks.get(normalized_type)
@@ -352,7 +354,13 @@ class FlextLdifRegistry:
     def get_all_quirks_for_server(
         self,
         server_type: str,
-    ) -> dict[str, FlextLdifServersBase.Schema | FlextLdifServersBase.Acl | FlextLdifServersBase.Entry | None]:
+    ) -> dict[
+        str,
+        FlextLdifServersBase.Schema
+        | FlextLdifServersBase.Acl
+        | FlextLdifServersBase.Entry
+        | None,
+    ]:
         """Get all quirks (schema, ACL, entry) for a server type.
 
         Args:
