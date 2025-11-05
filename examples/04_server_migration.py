@@ -22,7 +22,7 @@ from typing import cast
 from flext_ldif import FlextLdif, FlextLdifModels
 
 
-def parse_with_server_quirks_example() -> None:
+def parse_with_servers_example() -> None:
     """Parse LDIF with different server quirks - library handles variations."""
     api = FlextLdif.get_instance()
 
@@ -177,7 +177,7 @@ sn: Test
     print("RFC normalization: " + ("Success" if result.is_success else "Failed"))
 
 
-def pipeline_with_server_quirks() -> None:
+def pipeline_with_servers() -> None:
     """Complete pipeline using railway composition with server quirks."""
     api = FlextLdif.get_instance()
 
@@ -222,7 +222,7 @@ if __name__ == "__main__":
     print("=== FlextLdif Server-Specific Operations Examples ===\n")
 
     print("1. Parse with Server Quirks:")
-    parse_with_server_quirks_example()
+    parse_with_servers_example()
 
     print("\n2. Compare Server Parsing:")
     compare_server_parsing()
@@ -237,4 +237,4 @@ if __name__ == "__main__":
     migrate_to_rfc_compliant()
 
     print("\n6. Pipeline with Server Quirks:")
-    pipeline_with_server_quirks()
+    pipeline_with_servers()

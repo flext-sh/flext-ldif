@@ -466,7 +466,7 @@ class TestFlextLdifConfig:
 class TestQuirksDetectionConfiguration:
     """Test suite for quirks detection configuration modes."""
 
-    def test_default_quirks_detection_mode(self) -> None:
+    def test_defaults_detection_mode(self) -> None:
         """Test that default quirks detection mode is 'auto'."""
         config = FlextLdifConfig()
         assert config.quirks_detection_mode == "auto"
@@ -566,7 +566,7 @@ class TestQuirksDetectionConfiguration:
             )
             assert config.quirks_server_type == server_type
 
-    def test_quirks_server_type_none_in_auto_mode(self) -> None:
+    def tests_server_type_none_in_auto_mode(self) -> None:
         """Test that quirks_server_type remains None in auto mode."""
         config = FlextLdifConfig(
             quirks_detection_mode="auto",
@@ -583,7 +583,7 @@ class TestQuirksDetectionConfiguration:
         )
         assert config is not None
 
-    def test_config_dict_with_quirks_settings(self) -> None:
+    def test_config_dict_withs_settings(self) -> None:
         """Test that quirks settings are included in config dict."""
         config = FlextLdifConfig(
             quirks_detection_mode="manual",
@@ -599,7 +599,7 @@ class TestQuirksDetectionConfiguration:
         assert config_dict["quirks_server_type"] == "oud"
         assert config_dict["enable_relaxed_parsing"] is True
 
-    def test_all_quirks_modes_with_all_combinations(self) -> None:
+    def test_alls_modes_with_all_combinations(self) -> None:
         """Test all combinations of quirks detection modes."""
         # Auto mode
         config_auto = FlextLdifConfig(quirks_detection_mode="auto")

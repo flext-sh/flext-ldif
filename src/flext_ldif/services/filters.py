@@ -237,7 +237,9 @@ class FlextLdifFilter(FlextService[list[FlextLdifModels.Entry]]):
                 pattern = dn_pattern  # Type narrowing
                 filtered = []
                 for entry in entries:
-                    matches = fnmatch.fnmatch(entry.dn.value.lower(), pattern.lower())
+                    # Use DN utility to get string value (supports both DN model and str)
+                    entry_dn_str = FlextLdifUtilities.DN._get_dn_value(entry.dn)  # noqa: SLF001
+                    matches = fnmatch.fnmatch(entry_dn_str.lower(), pattern.lower())
                     include = (
                         mode == FlextLdifConstants.Modes.INCLUDE and matches
                     ) or (mode == FlextLdifConstants.Modes.EXCLUDE and not matches)
@@ -350,8 +352,8 @@ class FlextLdifFilter(FlextService[list[FlextLdifModels.Entry]]):
             excluded = []
 
             for entry in entries:
-                # Use utility for consistent DN comparison
-                if FlextLdifUtilities.DN.is_under_base(entry.dn.value, base_dn):
+                # Use utility for consistent DN comparison (now supports DN models)
+                if FlextLdifUtilities.DN.is_under_base(entry.dn, base_dn):
                     included.append(entry)
                 elif mark_excluded:
                     excluded.append(
@@ -437,7 +439,7 @@ class FlextLdifFilter(FlextService[list[FlextLdifModels.Entry]]):
 
             try:
                 if not FlextLdifFilter.Exclusion._matches_dn_pattern(
-                    entry.dn.value, dn_patterns
+                    entry.dn, dn_patterns
                 ):
                     return (True, f"DN pattern does not match {category} rules")
             except ValueError:
@@ -742,10 +744,22 @@ class FlextLdifFilter(FlextService[list[FlextLdifModels.Entry]]):
             return reason if isinstance(reason, str) else None
 
         @staticmethod
-        def _matches_dn_pattern(dn: str, patterns: list[str]) -> bool:
-            """Check if DN matches any of the regex patterns."""
+        def _matches_dn_pattern(dn: str | Any, patterns: list[str]) -> bool:  # noqa: ANN401
+            """Check if DN matches any of the regex patterns.
+
+            Args:
+                dn: DN string or FlextLdifModels.DistinguishedName object
+                patterns: List of regex patterns to match against
+
+            Returns:
+                True if DN matches any pattern, False otherwise
+
+            """
             if not patterns:
                 return False
+
+            # Extract DN string (supports both DN model and str)
+            dn_str = FlextLdifUtilities.DN._get_dn_value(dn)  # noqa: SLF001
 
             # First validate ALL patterns before matching
             invalid_patterns = []
@@ -760,7 +774,7 @@ class FlextLdifFilter(FlextService[list[FlextLdifModels.Entry]]):
                 raise ValueError(msg)
 
             # Now do the matching
-            dn_lower = dn.lower()
+            dn_lower = dn_str.lower()
             for pattern in patterns:
                 try:
                     pattern_lower = pattern.lower()
@@ -809,7 +823,7 @@ class FlextLdifFilter(FlextService[list[FlextLdifModels.Entry]]):
                     # Check DN pattern if provided
                     if dn_pattern:
                         should_delete = FlextLdifFilter.Exclusion._matches_dn_pattern(
-                            entry.dn.value, [dn_pattern]
+                            entry.dn, [dn_pattern]
                         )
 
                     if should_delete:

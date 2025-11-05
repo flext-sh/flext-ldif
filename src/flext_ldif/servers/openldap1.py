@@ -123,14 +123,14 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
 
         Example:
             quirk = FlextLdifServersOpenldap1()
-            if quirk.schema._can_handle_attribute(attr_def):
+            if quirk.schema.can_handle_attribute(attr_def):
                 result = quirk.schema._parse_attribute(attr_def)
 
         """
 
         # Use patterns from Constants
 
-        def _can_handle_attribute(
+        def can_handle_attribute(
             self, attr_definition: str | FlextLdifModels.SchemaAttribute
         ) -> bool:
             """Check if this is an OpenLDAP 1.x attribute.
@@ -172,9 +172,9 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
         # - _parse_objectclass(): Custom parsing logic for slapd.conf format
         # - _write_attribute(): Uses RFC writer for attributeType format
         # - _write_objectclass(): Uses RFC writer for objectClass format
-        # - create_quirk_metadata(): Creates OpenLDAP 1.x-specific metadata
+        # - create_metadata(): Creates OpenLDAP 1.x-specific metadata
 
-        def _can_handle_objectclass(
+        def can_handle_objectclass(
             self, oc_definition: str | FlextLdifModels.SchemaObjectClass
         ) -> bool:
             """Check if this is an OpenLDAP 1.x objectClass.
@@ -231,7 +231,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
             result = super()._parse_attribute(stripped)
             if result.is_success:
                 attr_data = result.unwrap()
-                metadata = FlextLdifModels.QuirkMetadata.create_for_quirk("openldap1")
+                metadata = FlextLdifModels.QuirkMetadata.create_for("openldap1")
                 return FlextResult[FlextLdifModels.SchemaAttribute].ok(
                     attr_data.model_copy(update={"metadata": metadata})
                 )
@@ -259,7 +259,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
             result = super()._parse_objectclass(stripped)
             if result.is_success:
                 oc_data = result.unwrap()
-                metadata = FlextLdifModels.QuirkMetadata.create_for_quirk("openldap1")
+                metadata = FlextLdifModels.QuirkMetadata.create_for("openldap1")
                 return FlextResult[FlextLdifModels.SchemaObjectClass].ok(
                     oc_data.model_copy(update={"metadata": metadata})
                 )
@@ -357,7 +357,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
 
         # OVERRIDDEN METHODS (from FlextLdifServersBase.Acl)
         # These methods override the base class with OpenLDAP 1.x-specific logic:
-        # - _can_handle_acl(): Detects access directive formats
+        # - can_handle_acl(): Detects access directive formats
         # - _parse_acl(): Parses OpenLDAP 1.x ACL definitions
         # - _write_acl(): Writes RFC-compliant ACL strings
 
@@ -370,12 +370,12 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
 
         Example:
             quirk = FlextLdifServersOpenldap1.Acl()
-            if quirk._can_handle_acl(acl_line):
+            if quirk.can_handle(acl_line):
                 result = quirk._parse_acl(acl_line)
 
         """
 
-        def _can_handle(self, acl: str | FlextLdifModels.Acl) -> bool:
+        def can_handle(self, acl: str | FlextLdifModels.Acl) -> bool:
             """Check if this is an OpenLDAP 1.x ACL (public method).
 
             Args:
@@ -385,9 +385,9 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
                 True if this is OpenLDAP 1.x ACL format
 
             """
-            return self._can_handle_acl(acl)
+            return self.can_handle(acl)
 
-        def _can_handle_acl(self, acl_line: str | FlextLdifModels.Acl) -> bool:
+        def can_handle_acl(self, acl_line: str | FlextLdifModels.Acl) -> bool:
             """Check if this is an OpenLDAP 1.x ACL.
 
             Args:
@@ -511,7 +511,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
                         subject_value=first_who,
                     ),
                     permissions=permissions,
-                    metadata=FlextLdifModels.QuirkMetadata.create_for_quirk(
+                    metadata=FlextLdifModels.QuirkMetadata.create_for(
                         FlextLdifServersOpenldap1.Constants.SERVER_TYPE,
                         original_format=acl_line,
                     ),
@@ -574,17 +574,17 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
 
         Example:
             quirk = FlextLdifServersOpenldap1.Entry()
-            if quirk._can_handle_entry(dn, attributes):
+            if quirk.can_handle(dn, attributes):
                 result = quirk.process_entry(entry)
 
         """
 
         # OVERRIDDEN METHODS (from FlextLdifServersBase.Entry)
         # These methods override the base class with OpenLDAP 1.x-specific logic:
-        # - _can_handle_entry(): Detects OpenLDAP 1.x entries by DN/attributes
+        # - can_handle(): Detects OpenLDAP 1.x entries by DN/attributes
         # - _parse_entry(): Normalizes OpenLDAP 1.x entries with metadata
 
-        def _can_handle_entry(
+        def can_handle(
             self,
             entry_dn: str,
             attributes: Mapping[str, object],

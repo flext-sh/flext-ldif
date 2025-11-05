@@ -288,7 +288,7 @@ quirk_registry = QuirkRegistryService()
 # Get quirks for different servers
 openldap = quirk_registry.get_entrys("openldap")
 oid = quirk_registry.get_entrys("oid")
-oud_quirks = quirk_registry.get_entrys("oud")
+ouds = quirk_registry.get_entrys("oud")
 
 # Each quirk knows how to handle server-specific extensions
 # All quirks follow the same Protocol interface

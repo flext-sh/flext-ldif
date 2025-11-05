@@ -64,15 +64,15 @@ class QuirkBase(ABC):
 ```python
 # Auto-discovery and registration
 registry = FlextLdifServer()
-registry.load_all_quirks()
+registry.load_alls()
 
 # Priority-based resolution
-oid_quirk = registry.get_quirk_for_server("oid")  # Priority 10
-oud_quirk = registry.get_quirk_for_server("oud")  # Priority 20
+oid = registry.get_for_server("oid")  # Priority 10
+oud = registry.get_for_server("oud")  # Priority 20
 
 # RFC-first with quirks enhancement
-result = rfc_parser.parse_with_quirks(
-    content, server_quirk, data_type="schema"
+result = rfc_parser.parse_withs(
+    content, server, data_type="schema"
 )
 ```
 

@@ -43,7 +43,7 @@ class FlextLdifUtilitiesDN:
     """
 
     @staticmethod
-    def _get_dn_value(dn: Any) -> str:
+    def _get_dn_value(dn: Any) -> str:  # noqa: ANN401
         """Extract DN string value from DN model or string.
 
         Args:
@@ -65,11 +65,11 @@ class FlextLdifUtilitiesDN:
 
     @overload
     @staticmethod
-    def split(dn: "Any") -> list[str]:
+    def split(dn: Any) -> list[str]:  # noqa: ANN401
         ...
 
     @staticmethod
-    def split(dn: "Any" | str) -> list[str]:
+    def split(dn: Any | str) -> list[str]:
         """Split DN string into individual components.
 
         **Future DRY Optimization**: Can use FlextUtilities.StringParser.safe_strip_split()
@@ -95,11 +95,11 @@ class FlextLdifUtilitiesDN:
 
     @overload
     @staticmethod
-    def norm_string(dn: "Any") -> str:
+    def norm_string(dn: Any) -> str:  # noqa: ANN401
         ...
 
     @staticmethod
-    def norm_string(dn: "Any" | str) -> str:
+    def norm_string(dn: Any | str) -> str:
         """Normalize full DN to RFC 4514 format."""
         dn_str = FlextLdifUtilitiesDN._get_dn_value(dn)
         if not dn_str or "=" not in dn_str:
@@ -115,11 +115,11 @@ class FlextLdifUtilitiesDN:
 
     @overload
     @staticmethod
-    def validate(dn: "Any") -> bool:
+    def validate(dn: Any) -> bool:  # noqa: ANN401
         ...
 
     @staticmethod
-    def validate(dn: "Any" | str) -> bool:
+    def validate(dn: Any | str) -> bool:
         """Validate DN format according to RFC 4514."""
         dn_str = FlextLdifUtilitiesDN._get_dn_value(dn)
         if not dn_str or "=" not in dn_str:
@@ -158,11 +158,11 @@ class FlextLdifUtilitiesDN:
 
     @overload
     @staticmethod
-    def parse(dn: "Any") -> list[tuple[str, str]] | None:
+    def parse(dn: Any) -> list[tuple[str, str]] | None:  # noqa: ANN401
         ...
 
     @staticmethod
-    def parse(dn: "Any" | str) -> list[tuple[str, str]] | None:
+    def parse(dn: Any | str) -> list[tuple[str, str]] | None:
         """Parse DN into RFC 4514 components (attr, value pairs).
 
         Pure RFC 4514 parsing without external dependencies.
@@ -193,11 +193,11 @@ class FlextLdifUtilitiesDN:
 
     @overload
     @staticmethod
-    def norm(dn: "Any") -> str | None:
+    def norm(dn: Any) -> str | None:  # noqa: ANN401
         ...
 
     @staticmethod
-    def norm(dn: "Any" | str) -> str | None:
+    def norm(dn: Any | str) -> str | None:
         """Normalize DN per RFC 4514 (lowercase attrs, preserve values).
 
         Pure implementation without external dependencies.
@@ -228,11 +228,11 @@ class FlextLdifUtilitiesDN:
 
     @overload
     @staticmethod
-    def clean_dn(dn: "Any") -> str:
+    def clean_dn(dn: Any) -> str:  # noqa: ANN401
         ...
 
     @staticmethod
-    def clean_dn(dn: "Any" | str) -> str:
+    def clean_dn(dn: Any | str) -> str:
         """Clean DN string to fix spacing and escaping issues.
 
         Removes spaces before '=', fixes trailing backslash+space,
@@ -322,28 +322,28 @@ class FlextLdifUtilitiesDN:
     @overload
     @staticmethod
     def compare_dns(
-        dn1: FlextLdifModels.DistinguishedName, dn2: FlextLdifModels.DistinguishedName
+        dn1: Any, dn2: Any  # noqa: ANN401
     ) -> int | None:
         ...
 
     @overload
     @staticmethod
     def compare_dns(
-        dn1: FlextLdifModels.DistinguishedName | str, dn2: str
+        dn1: Any | str, dn2: str  # noqa: ANN401
     ) -> int | None:
         ...
 
     @overload
     @staticmethod
     def compare_dns(
-        dn1: str, dn2: FlextLdifModels.DistinguishedName
+        dn1: str, dn2: Any  # noqa: ANN401
     ) -> int | None:
         ...
 
     @staticmethod
     def compare_dns(
-        dn1: FlextLdifModels.DistinguishedName | str,
-        dn2: FlextLdifModels.DistinguishedName | str,
+        dn1: Any | str,
+        dn2: Any | str,
     ) -> int | None:
         """Compare two DNs per RFC 4514 (case-insensitive).
 
@@ -386,7 +386,7 @@ class FlextLdifUtilitiesDN:
         i: int,
         current_attr: str,
         current_val: str,
-        in_value: bool,
+        in_value: bool,  # noqa: FBT001
         pairs: list[tuple[str, str]],
     ) -> tuple[str, str, bool, int, bool]:
         """Process single character in RDN parsing.
@@ -565,29 +565,29 @@ class FlextLdifUtilitiesDN:
     @overload
     @staticmethod
     def is_under_base(
-        dn: "Any",
-        base_dn: "Any",
+        dn: Any,  # noqa: ANN401
+        base_dn: Any,  # noqa: ANN401
     ) -> bool:
         ...
 
     @overload
     @staticmethod
     def is_under_base(
-        dn: "Any" | str, base_dn: str
+        dn: Any | str, base_dn: str  # noqa: ANN401
     ) -> bool:
         ...
 
     @overload
     @staticmethod
     def is_under_base(
-        dn: str, base_dn: "Any"
+        dn: str, base_dn: Any  # noqa: ANN401
     ) -> bool:
         ...
 
     @staticmethod
     def is_under_base(
-        dn: "Any" | str,
-        base_dn: "Any" | str,
+        dn: Any | str,
+        base_dn: Any | str,
     ) -> bool:
         """Check if DN is under base DN (hierarchical check).
 
@@ -632,26 +632,26 @@ class FlextLdifUtilitiesDN:
     @overload
     @staticmethod
     def are_equal(
-        dn1: FlextLdifModels.DistinguishedName, dn2: FlextLdifModels.DistinguishedName
+        dn1: Any, dn2: Any  # noqa: ANN401
     ) -> bool:
         ...
 
     @overload
     @staticmethod
     def are_equal(
-        dn1: FlextLdifModels.DistinguishedName | str, dn2: str
+        dn1: Any | str, dn2: str  # noqa: ANN401
     ) -> bool:
         ...
 
     @overload
     @staticmethod
-    def are_equal(dn1: str, dn2: FlextLdifModels.DistinguishedName) -> bool:
+    def are_equal(dn1: str, dn2: Any) -> bool:  # noqa: ANN401
         ...
 
     @staticmethod
     def are_equal(
-        dn1: FlextLdifModels.DistinguishedName | str,
-        dn2: FlextLdifModels.DistinguishedName | str,
+        dn1: Any | str,
+        dn2: Any | str,
     ) -> bool:
         """Check if two DNs are equal (case-insensitive, normalized).
 

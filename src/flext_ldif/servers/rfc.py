@@ -40,7 +40,7 @@ from flext_core import FlextLogger, FlextResult
 
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
-from flext_ldif.servers.base import FlextLdifServersBase
+from flext_ldif.servers.base import BaseServerConstants, FlextLdifServersBase
 from flext_ldif.services.dn import FlextLdifDn
 from flext_ldif.utilities import FlextLdifUtilities
 
@@ -90,11 +90,11 @@ class FlextLdifServersRfc(FlextLdifServersBase):
         from flext_ldif.servers.rfc import FlextLdifServersRfc
 
         rfc_server = FlextLdifServersRfc()
-        schema_quirk = rfc_server.Schema()
+        schema = rfc_server.Schema()
 
         # RFC quirk handles all RFC-compliant attributes/objectClasses
-        if schema_quirk.can_handle_attribute(attr_def):
-            result = schema_quirk.parse_attribute(attr_def)
+        if schema.can_handle_attribute(attr_def):
+            result = schema.parse_attribute(attr_def)
             if result.is_success:
                 parsed_attr = result.unwrap()
                 # Use parsed attribute...
@@ -116,7 +116,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
     # =========================================================================
     # STANDARDIZED CONSTANTS FOR AUTO-DISCOVERY
     # =========================================================================
-    class Constants:
+    class Constants(BaseServerConstants):
         """RFC 4512 baseline - universal intermediate format for all conversions."""
 
         SERVER_TYPE: ClassVar[str] = FlextLdifConstants.ServerTypes.RFC
@@ -125,13 +125,8 @@ class FlextLdifServersRfc(FlextLdifServersBase):
         PRIORITY: ClassVar[int] = 100  # Lowest priority - fallback only
         CAN_NORMALIZE_FROM: ClassVar[frozenset[str]] = frozenset(["rfc"])
         CAN_DENORMALIZE_TO: ClassVar[frozenset[str]] = frozenset(["rfc"])
-
-        # RFC schema parsing constants (used by all servers)
-        SCHEMA_SUP_SEPARATOR: ClassVar[str] = "$"
-
-        # RFC/Generic ACL format constants
         ACL_FORMAT: ClassVar[str] = "rfc_generic"  # RFC generic ACL format
-        ACL_ATTRIBUTE_NAME: ClassVar[str] = "aci"  # RFC 4876 ACI attribute (generic)
+        ACL_ATTRIBUTE_NAME: ClassVar[str] = "aci"  # RFC 4876 ACI attribute (generic)  # RFC 4876 ACI attribute (generic)
 
     # =========================================================================
     # Class-level attributes for server identification (from Constants)
@@ -156,7 +151,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             """
             super().__init__(**kwargs)
 
-        def _can_handle_attribute(
+        def can_handle_attribute(
             self, attr_definition: str | FlextLdifModels.SchemaAttribute
         ) -> bool:
             """Check if RFC quirk can handle attribute definitions (abstract impl).
@@ -165,7 +160,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             """
             return True
 
-        def _can_handle_objectclass(
+        def can_handle_objectclass(
             self, oc_definition: str | FlextLdifModels.SchemaObjectClass
         ) -> bool:
             """Check if RFC quirk can handle objectClass definitions (abstract impl).
@@ -364,7 +359,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             """
             super().__init__(**kwargs)
 
-        def _can_handle_acl(self, acl_line: str | FlextLdifModels.Acl) -> bool:
+        def can_handle_acl(self, acl_line: str | FlextLdifModels.Acl) -> bool:
             """Check if this quirk can handle the ACL definition.
 
             RFC quirk handles all ACLs as it's the baseline implementation.
@@ -378,7 +373,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             """
             return True
 
-        def _can_handle(self, acl: str | FlextLdifModels.Acl) -> bool:
+        def can_handle(self, acl: str | FlextLdifModels.Acl) -> bool:
             """Check if this ACL is RFC-compliant.
 
             The RFC quirk assumes any ACL that has been successfully parsed into
@@ -393,7 +388,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             """
             return True
 
-        def _can_handle_attribute(
+        def can_handle_attribute(
             self, attribute: FlextLdifModels.SchemaAttribute
         ) -> bool:
             """RFC ACL quirk does not handle attributes.
@@ -407,7 +402,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             """
             return False
 
-        def _can_handle_objectclass(
+        def can_handle_objectclass(
             self, objectclass: FlextLdifModels.SchemaObjectClass
         ) -> bool:
             """RFC ACL quirk does not handle objectClasses.
@@ -455,7 +450,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             """
             return self._parse_acl(acl_line)
 
-        def create_quirk_metadata(
+        def create_metadata(
             self,
             original_format: str,
             extensions: dict[str, object] | None = None,
@@ -485,7 +480,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             """
             super().__init__(**kwargs)
 
-        def _can_handle_entry(
+        def can_handle(
             self,
             entry_dn: str,
             attributes: Mapping[str, object],
@@ -504,7 +499,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             """
             return True
 
-        def _can_handle_attribute(
+        def can_handle_attribute(
             self, attribute: FlextLdifModels.SchemaAttribute
         ) -> bool:
             """Check if this Entry quirk has special handling for an attribute definition.
@@ -520,7 +515,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             """
             return False
 
-        def _can_handle_objectclass(
+        def can_handle_objectclass(
             self, objectclass: FlextLdifModels.SchemaObjectClass
         ) -> bool:
             """Check if this Entry quirk has special handling for an objectClass definition.

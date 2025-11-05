@@ -27,8 +27,8 @@ class TestAdvancedAclConversion:
         )
 
         # Parse with OID quirk
-        oid_quirk = FlextLdifServersOid()
-        parse_result = oid_quirk.parse(oid_acl_content)
+        oid = FlextLdifServersOid()
+        parse_result = oid.parse(oid_acl_content)
 
         assert parse_result.is_success
         oid_acl = parse_result.unwrap()
@@ -234,8 +234,8 @@ class TestAdvancedAclConversion:
         )
 
         # Parse with OID
-        oid_quirk = FlextLdifServersOid()
-        parse_result = oid_quirk.parse(complex_oid_acl)
+        oid = FlextLdifServersOid()
+        parse_result = oid.parse(complex_oid_acl)
         assert parse_result.is_success
 
         parse_result.unwrap()

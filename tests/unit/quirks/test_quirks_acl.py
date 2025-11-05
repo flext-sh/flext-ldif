@@ -58,20 +58,20 @@ class TestOIDSubjectTypesConversion:
         return FlextLdifConversion()
 
     @pytest.fixture
-    def oid_quirk(self) -> FlextLdifServersOid:
+    def oid(self) -> FlextLdifServersOid:
         """Create OID quirk."""
         return FlextLdifServersOid()
 
     @pytest.fixture
-    def oud_quirk(self) -> FlextLdifServersOud:
+    def oud(self) -> FlextLdifServersOud:
         """Create OUD quirk."""
         return FlextLdifServersOud()
 
     def test_oid_self_subject_to_oud(
         self,
         conversion: FlextLdifConversion,
-        oid_quirk: FlextLdifServersOid,
-        oud_quirk: FlextLdifServersOud,
+        oid: FlextLdifServersOid,
+        oud: FlextLdifServersOud,
     ) -> None:
         """Test OID 'by self' subject conversion to OUD 'userdn=ldap:///self'.
 
@@ -81,8 +81,8 @@ class TestOIDSubjectTypesConversion:
         oid_acl = "orclaci: access to attr=(userPassword) by self (write)"
 
         result = conversion.convert(
-            source_quirk=oid_quirk,
-            target_quirk=oud_quirk,
+            source=oid,
+            target=oud,
             model_instance_or_data_type="acl",
             data=oid_acl,
         )
@@ -96,8 +96,8 @@ class TestOIDSubjectTypesConversion:
     def test_oid_dnattr_subject_to_oud(
         self,
         conversion: FlextLdifConversion,
-        oid_quirk: FlextLdifServersOid,
-        oud_quirk: FlextLdifServersOud,
+        oid: FlextLdifServersOid,
+        oud: FlextLdifServersOud,
     ) -> None:
         """Test OID 'by dnattr=(attr)' subject conversion to OUD 'userattr=attr#LDAPURL'.
 
@@ -107,8 +107,8 @@ class TestOIDSubjectTypesConversion:
         oid_acl = "orclaci: access to entry by dnattr=(manager) (read,search)"
 
         result = conversion.convert(
-            source_quirk=oid_quirk,
-            target_quirk=oud_quirk,
+            source=oid,
+            target=oud,
             model_instance_or_data_type="acl",
             data=oid_acl,
         )
@@ -123,8 +123,8 @@ class TestOIDSubjectTypesConversion:
     def test_oid_guidattr_subject_to_oud(
         self,
         conversion: FlextLdifConversion,
-        oid_quirk: FlextLdifServersOid,
-        oud_quirk: FlextLdifServersOud,
+        oid: FlextLdifServersOid,
+        oud: FlextLdifServersOud,
     ) -> None:
         """Test OID 'by guidattr=(attr)' subject conversion to OUD 'userattr=attr#USERDN'.
 
@@ -134,8 +134,8 @@ class TestOIDSubjectTypesConversion:
         oid_acl = "orclaci: access to entry by guidattr=(orclguid) (browse)"
 
         result = conversion.convert(
-            source_quirk=oid_quirk,
-            target_quirk=oud_quirk,
+            source=oid,
+            target=oud,
             model_instance_or_data_type="acl",
             data=oid_acl,
         )
@@ -150,8 +150,8 @@ class TestOIDSubjectTypesConversion:
     def test_oid_groupattr_subject_to_oud(
         self,
         conversion: FlextLdifConversion,
-        oid_quirk: FlextLdifServersOid,
-        oud_quirk: FlextLdifServersOud,
+        oid: FlextLdifServersOid,
+        oud: FlextLdifServersOud,
     ) -> None:
         """Test OID 'by groupattr=(attr)' subject conversion to OUD 'userattr=attr#GROUPDN'.
 
@@ -161,8 +161,8 @@ class TestOIDSubjectTypesConversion:
         oid_acl = "orclaci: access to entry by groupattr=(uniqueMember) (read,write)"
 
         result = conversion.convert(
-            source_quirk=oid_quirk,
-            target_quirk=oud_quirk,
+            source=oid,
+            target=oud,
             model_instance_or_data_type="acl",
             data=oid_acl,
         )
@@ -177,8 +177,8 @@ class TestOIDSubjectTypesConversion:
     def test_oid_user_dn_subject_to_oud(
         self,
         conversion: FlextLdifConversion,
-        oid_quirk: FlextLdifServersOid,
-        oud_quirk: FlextLdifServersOud,
+        oid: FlextLdifServersOid,
+        oud: FlextLdifServersOud,
     ) -> None:
         """Test OID user DN subject conversion to OUD 'userdn=ldap:///dn'.
 
@@ -188,8 +188,8 @@ class TestOIDSubjectTypesConversion:
         oid_acl = 'orclaci: access to entry by "cn=admin,dc=example,dc=com" (all)'
 
         result = conversion.convert(
-            source_quirk=oid_quirk,
-            target_quirk=oud_quirk,
+            source=oid,
+            target=oud,
             model_instance_or_data_type="acl",
             data=oid_acl,
         )
@@ -208,20 +208,20 @@ class TestOIDPermissionsConversion:
         return FlextLdifConversion()
 
     @pytest.fixture
-    def oid_quirk(self) -> FlextLdifServersOid:
+    def oid(self) -> FlextLdifServersOid:
         """Create OID quirk."""
         return FlextLdifServersOid()
 
     @pytest.fixture
-    def oud_quirk(self) -> FlextLdifServersOud:
+    def oud(self) -> FlextLdifServersOud:
         """Create OUD quirk."""
         return FlextLdifServersOud()
 
     def test_oid_selfwrite_permission_to_oud(
         self,
         conversion: FlextLdifConversion,
-        oid_quirk: FlextLdifServersOid,
-        oud_quirk: FlextLdifServersOud,
+        oid: FlextLdifServersOid,
+        oud: FlextLdifServersOud,
     ) -> None:
         """Test OID 'selfwrite' permission conversion to OUD 'write'.
 
@@ -233,8 +233,8 @@ class TestOIDPermissionsConversion:
         oid_acl = "orclaci: access to attr=(description) by self (selfwrite)"
 
         result = conversion.convert(
-            source_quirk=oid_quirk,
-            target_quirk=oud_quirk,
+            source=oid,
+            target=oud,
             model_instance_or_data_type="acl",
             data=oid_acl,
         )
@@ -247,8 +247,8 @@ class TestOIDPermissionsConversion:
     def test_oid_browse_permission_mapping_to_oud(
         self,
         conversion: FlextLdifConversion,
-        oid_quirk: FlextLdifServersOid,
-        oud_quirk: FlextLdifServersOud,
+        oid: FlextLdifServersOid,
+        oud: FlextLdifServersOud,
     ) -> None:
         """Test OID 'browse' permission mapping to OUD 'read,search'.
 
@@ -260,8 +260,8 @@ class TestOIDPermissionsConversion:
         oid_acl = "orclaci: access to entry by * (browse)"
 
         result = conversion.convert(
-            source_quirk=oid_quirk,
-            target_quirk=oud_quirk,
+            source=oid,
+            target=oud,
             model_instance_or_data_type="acl",
             data=oid_acl,
         )
@@ -276,8 +276,8 @@ class TestOIDPermissionsConversion:
     def test_oid_negative_permissions_to_oud(
         self,
         conversion: FlextLdifConversion,
-        oid_quirk: FlextLdifServersOid,
-        oud_quirk: FlextLdifServersOud,
+        oid: FlextLdifServersOid,
+        oud: FlextLdifServersOud,
     ) -> None:
         """Test OID negative permissions (nowrite, noadd) conversion to OUD deny rules.
 
@@ -289,8 +289,8 @@ class TestOIDPermissionsConversion:
         oid_acl = "orclentrylevelaci: access to entry by * (browse,noadd,nodelete)"
 
         result = conversion.convert(
-            source_quirk=oid_quirk,
-            target_quirk=oud_quirk,
+            source=oid,
+            target=oud,
             model_instance_or_data_type="acl",
             data=oid_acl,
         )
@@ -314,20 +314,20 @@ class TestOIDAdvancedFeaturesConversion:
         return FlextLdifConversion()
 
     @pytest.fixture
-    def oid_quirk(self) -> FlextLdifServersOid:
+    def oid(self) -> FlextLdifServersOid:
         """Create OID quirk."""
         return FlextLdifServersOid()
 
     @pytest.fixture
-    def oud_quirk(self) -> FlextLdifServersOud:
+    def oud(self) -> FlextLdifServersOud:
         """Create OUD quirk."""
         return FlextLdifServersOud()
 
     def test_oid_filter_conversion_to_oud(
         self,
         conversion: FlextLdifConversion,
-        oid_quirk: FlextLdifServersOid,
-        oud_quirk: FlextLdifServersOud,
+        oid: FlextLdifServersOid,
+        oud: FlextLdifServersOud,
     ) -> None:
         """Test OID filter conversion to OUD targetfilter.
 
@@ -339,8 +339,8 @@ class TestOIDAdvancedFeaturesConversion:
         oid_acl = "orclaci: access to entry filter=(objectClass=person) by * (browse)"
 
         result = conversion.convert(
-            source_quirk=oid_quirk,
-            target_quirk=oud_quirk,
+            source=oid,
+            target=oud,
             model_instance_or_data_type="acl",
             data=oid_acl,
         )
@@ -354,8 +354,8 @@ class TestOIDAdvancedFeaturesConversion:
     def test_oid_orclentrylevelaci_with_constraint_to_oud(
         self,
         conversion: FlextLdifConversion,
-        oid_quirk: FlextLdifServersOid,
-        oud_quirk: FlextLdifServersOud,
+        oid: FlextLdifServersOid,
+        oud: FlextLdifServersOud,
     ) -> None:
         """Test OID orclentrylevelaci with added_object_constraint to OUD targattrfilters.
 
@@ -367,8 +367,8 @@ class TestOIDAdvancedFeaturesConversion:
         oid_acl = "orclentrylevelaci: access to entry by * added_object_constraint=(objectClass=person) (browse)"
 
         result = conversion.convert(
-            source_quirk=oid_quirk,
-            target_quirk=oud_quirk,
+            source=oid,
+            target=oud,
             model_instance_or_data_type="acl",
             data=oid_acl,
         )
@@ -382,8 +382,8 @@ class TestOIDAdvancedFeaturesConversion:
     def test_oid_multiple_by_clauses_to_oud(
         self,
         conversion: FlextLdifConversion,
-        oid_quirk: FlextLdifServersOid,
-        oud_quirk: FlextLdifServersOud,
+        oid: FlextLdifServersOid,
+        oud: FlextLdifServersOud,
     ) -> None:
         """Test OID ACL with multiple 'by' clauses conversion to OUD multiple permission rules.
 
@@ -395,8 +395,8 @@ class TestOIDAdvancedFeaturesConversion:
         oid_acl = 'orclaci: access to entry by group="cn=Admins,dc=example,dc=com" (all) by * (browse)'
 
         result = conversion.convert(
-            source_quirk=oid_quirk,
-            target_quirk=oud_quirk,
+            source=oid,
+            target=oud,
             model_instance_or_data_type="acl",
             data=oid_acl,
         )
@@ -410,8 +410,8 @@ class TestOIDAdvancedFeaturesConversion:
     def test_oid_attribute_target_to_oud(
         self,
         conversion: FlextLdifConversion,
-        oid_quirk: FlextLdifServersOid,
-        oud_quirk: FlextLdifServersOud,
+        oid: FlextLdifServersOid,
+        oud: FlextLdifServersOud,
     ) -> None:
         """Test OID attribute-level ACL conversion to OUD.
 
@@ -428,8 +428,8 @@ class TestOIDAdvancedFeaturesConversion:
         oid_acl = "orclaci: access to attr=(cn,sn,mail) by * (read,search,compare)"
 
         result = conversion.convert(
-            source_quirk=oid_quirk,
-            target_quirk=oud_quirk,
+            source=oid,
+            target=oud,
             model_instance_or_data_type="acl",
             data=oid_acl,
         )
@@ -451,20 +451,20 @@ class TestOUDSubjectTypesConversion:
         return FlextLdifConversion()
 
     @pytest.fixture
-    def oid_quirk(self) -> FlextLdifServersOid:
+    def oid(self) -> FlextLdifServersOid:
         """Create OID quirk."""
         return FlextLdifServersOid()
 
     @pytest.fixture
-    def oud_quirk(self) -> FlextLdifServersOud:
+    def oud(self) -> FlextLdifServersOud:
         """Create OUD quirk."""
         return FlextLdifServersOud()
 
     def test_oud_self_userdn_to_oid(
         self,
         conversion: FlextLdifConversion,
-        oid_quirk: FlextLdifServersOid,
-        oud_quirk: FlextLdifServersOud,
+        oid: FlextLdifServersOid,
+        oud: FlextLdifServersOud,
     ) -> None:
         """Test OUD 'userdn=ldap:///self' conversion to OID 'by self'.
 
@@ -474,8 +474,8 @@ class TestOUDSubjectTypesConversion:
         oud_aci = 'aci: (targetattr="userPassword")(version 3.0; acl "Self write"; allow (write) userdn="ldap:///self";)'
 
         result = conversion.convert(
-            source_quirk=oud_quirk,
-            target_quirk=oid_quirk,
+            source=oud,
+            target=oid,
             model_instance_or_data_type="acl",
             data=oud_aci,
         )
@@ -489,8 +489,8 @@ class TestOUDSubjectTypesConversion:
     def test_oud_userattr_ldapurl_to_oid(
         self,
         conversion: FlextLdifConversion,
-        oid_quirk: FlextLdifServersOid,
-        oud_quirk: FlextLdifServersOud,
+        oid: FlextLdifServersOid,
+        oud: FlextLdifServersOud,
     ) -> None:
         """Test OUD 'userattr=attr#LDAPURL' conversion to OID 'by dnattr=(attr)'.
 
@@ -500,8 +500,8 @@ class TestOUDSubjectTypesConversion:
         oud_aci = 'aci: (targetattr="*")(version 3.0; acl "Manager access"; allow (read,search) userattr="manager#LDAPURL";)'
 
         result = conversion.convert(
-            source_quirk=oud_quirk,
-            target_quirk=oid_quirk,
+            source=oud,
+            target=oid,
             model_instance_or_data_type="acl",
             data=oud_aci,
         )
@@ -523,20 +523,20 @@ class TestOUDAdvancedFeaturesConversion:
         return FlextLdifConversion()
 
     @pytest.fixture
-    def oid_quirk(self) -> FlextLdifServersOid:
+    def oid(self) -> FlextLdifServersOid:
         """Create OID quirk."""
         return FlextLdifServersOid()
 
     @pytest.fixture
-    def oud_quirk(self) -> FlextLdifServersOud:
+    def oud(self) -> FlextLdifServersOud:
         """Create OUD quirk."""
         return FlextLdifServersOud()
 
     def test_oud_targetscope_to_oid(
         self,
         conversion: FlextLdifConversion,
-        oid_quirk: FlextLdifServersOid,
-        oud_quirk: FlextLdifServersOud,
+        oid: FlextLdifServersOid,
+        oud: FlextLdifServersOud,
     ) -> None:
         """Test OUD targetscope conversion to OID (metadata preservation).
 
@@ -548,8 +548,8 @@ class TestOUDAdvancedFeaturesConversion:
         oud_aci = 'aci: (targetattr="*")(targetscope="base")(version 3.0; acl "Base scope"; allow (read) userdn="ldap:///*";)'
 
         result = conversion.convert(
-            source_quirk=oud_quirk,
-            target_quirk=oid_quirk,
+            source=oud,
+            target=oid,
             model_instance_or_data_type="acl",
             data=oud_aci,
         )
@@ -564,8 +564,8 @@ class TestOUDAdvancedFeaturesConversion:
     def test_oud_deny_rules_to_oid(
         self,
         conversion: FlextLdifConversion,
-        oid_quirk: FlextLdifServersOid,
-        oud_quirk: FlextLdifServersOud,
+        oid: FlextLdifServersOid,
+        oud: FlextLdifServersOud,
     ) -> None:
         """Test OUD deny rules conversion to OID negative permissions.
 
@@ -577,8 +577,8 @@ class TestOUDAdvancedFeaturesConversion:
         oud_aci = 'aci: (targetattr="*")(version 3.0; acl "Deny write"; deny (write) userdn="ldap:///*";)'
 
         result = conversion.convert(
-            source_quirk=oud_quirk,
-            target_quirk=oid_quirk,
+            source=oud,
+            target=oid,
             model_instance_or_data_type="acl",
             data=oud_aci,
         )
@@ -592,8 +592,8 @@ class TestOUDAdvancedFeaturesConversion:
     def test_oud_targetattr_negation_to_oid(
         self,
         conversion: FlextLdifConversion,
-        oid_quirk: FlextLdifServersOid,
-        oud_quirk: FlextLdifServersOud,
+        oid: FlextLdifServersOid,
+        oud: FlextLdifServersOud,
     ) -> None:
         """Test OUD targetattr negation (!= operator) conversion to OID.
 
@@ -605,8 +605,8 @@ class TestOUDAdvancedFeaturesConversion:
         oud_aci = 'aci: (targetattr!="userPassword")(version 3.0; acl "All except password"; allow (read,search) userdn="ldap:///*";)'
 
         result = conversion.convert(
-            source_quirk=oud_quirk,
-            target_quirk=oid_quirk,
+            source=oud,
+            target=oid,
             model_instance_or_data_type="acl",
             data=oud_aci,
         )

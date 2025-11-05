@@ -233,7 +233,7 @@ class FlextLdifConstants(FlextConstants):
         ANALYTICS_DETAIL_LEVEL_HIGH: Final[str] = "high"
 
         # Server Configuration Defaults
-        LDIF_SERVER_SPECIFIC_QUIRKS: Final[bool] = True
+        LDIF_SERVER_SPECIFICS: Final[bool] = True
         STRICT_RFC_COMPLIANCE: Final[bool] = True
 
         # Error Handling Defaults
@@ -1533,6 +1533,20 @@ class FlextLdifConstants(FlextConstants):
 
         # Python 3.13 type alias from constants
         type DataType = Literal["attribute", "objectclass", "acl", "entry", "schema"]
+
+        # =====================================================================
+        # QUIRK OPERATION TYPES
+        # =====================================================================
+        type QuirkOperation = Literal["parse", "write"]
+        type SchemaParseOperation = Literal["parse"]
+        type AclWriteOperation = Literal["write"]
+
+        # =====================================================================
+        # SERVICE OPERATION TYPES
+        # =====================================================================
+        type ParserInputSource = Literal["string", "file", "ldap3"]
+        type WriterOutputTarget = Literal["string", "file", "ldap3", "model"]
+        type MigrationMode = Literal["simple", "categorized", "structured"]
 
     class RuleTypes:
         """ACL rule type constants.

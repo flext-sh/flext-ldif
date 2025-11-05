@@ -211,7 +211,7 @@ def test_write_empty_entries_list(writer: FlextLdifWriter) -> None:
     assert content.count("dn:") == 0
 
 
-def test_fallback_to_rfc_when_no_server_quirk(
+def test_fallback_to_rfc_when_no_server(
     rfc_config: FlextLdifConfig, registry: FlextLdifServer
 ) -> None:
     """Test that non-existent server type fails gracefully."""

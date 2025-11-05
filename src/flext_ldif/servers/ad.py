@@ -98,7 +98,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
 
         # === AD-SPECIFIC DETECTION PATTERNS ===
         # (migrated from FlextLdifConstants.LdapServerDetection)
-        DETECTION_OID_PATTERN: Final[str] = r"1\.2\.840\.113556\."
+        DETECTION_OID_PATTERN = r"1\.2\.840\.113556\."
         DETECTION_ATTRIBUTE_NAMES: Final[frozenset[str]] = frozenset([
             "samaccountname",
             "objectguid",
@@ -115,7 +115,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
             "serviceprincipalname",
             "distinguishedname",
         ])
-        DETECTION_OBJECTCLASS_NAMES: Final[frozenset[str]] = frozenset([
+        DETECTION_OBJECTCLASS_NAMES = frozenset([
             "user",
             "computer",
             "group",
@@ -128,14 +128,14 @@ class FlextLdifServersAd(FlextLdifServersRfc):
             "msds-groupmanagedserviceaccount",
             "msds-managedserviceaccount",
         ])
-        DETECTION_DN_MARKERS: Final[frozenset[str]] = frozenset([
+        DETECTION_DN_MARKERS = frozenset([
             "cn=users",
             "cn=computers",
             "cn=configuration",
             "cn=system",
             "ou=domain controllers",
         ])
-        # DN marker constants for _can_handle_entry
+        # DN marker constants for can_handle
         DN_MARKER_DC: Final[str] = "dc="
         DN_MARKER_CN_CONFIGURATION: Final[str] = "cn=configuration"
         DETECTION_ATTRIBUTE_MARKERS: Final[frozenset[str]] = frozenset([
@@ -196,7 +196,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
     class Schema(FlextLdifServersRfc.Schema):
         """Active Directory schema quirk."""
 
-        def _can_handle_attribute(
+        def can_handle_attribute(
             self, attr_definition: str | FlextLdifModels.SchemaAttribute
         ) -> bool:
             """Detect AD attribute definitions using centralized constants."""
@@ -240,7 +240,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
                 )
             return False
 
-        def _can_handle_objectclass(
+        def can_handle_objectclass(
             self, oc_definition: str | FlextLdifModels.SchemaObjectClass
         ) -> bool:
             """Detect AD objectClass definitions using centralized constants."""
@@ -292,7 +292,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
             result = super()._parse_attribute(attr_definition)
             if result.is_success:
                 attr_data = result.unwrap()
-                metadata = FlextLdifModels.QuirkMetadata.create_for_quirk(
+                metadata = FlextLdifModels.QuirkMetadata.create_for(
                     "active_directory"
                 )
                 return FlextResult[FlextLdifModels.SchemaAttribute].ok(
@@ -319,7 +319,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
                 # Fix common ObjectClass issues (RFC 4512 compliance)
                 FlextLdifUtilities.ObjectClass.fix_missing_sup(oc_data)
                 FlextLdifUtilities.ObjectClass.fix_kind_mismatch(oc_data)
-                metadata = FlextLdifModels.QuirkMetadata.create_for_quirk(
+                metadata = FlextLdifModels.QuirkMetadata.create_for(
                     "active_directory"
                 )
                 return FlextResult[FlextLdifModels.SchemaObjectClass].ok(
@@ -338,7 +338,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
         # ACL attribute name is obtained from Constants.ACL_ATTRIBUTE_NAME
         # No instance variable needed - use Constants directly
 
-        def _can_handle(self, acl: str | FlextLdifModels.Acl) -> bool:
+        def can_handle(self, acl: str | FlextLdifModels.Acl) -> bool:
             """Check if this is an Active Directory ACL (public method).
 
             Args:
@@ -348,9 +348,9 @@ class FlextLdifServersAd(FlextLdifServersRfc):
                 True if this is Active Directory ACL format
 
             """
-            return self._can_handle_acl(acl)
+            return self.can_handle(acl)
 
-        def _can_handle_acl(self, acl_line: str | FlextLdifModels.Acl) -> bool:
+        def can_handle_acl(self, acl_line: str | FlextLdifModels.Acl) -> bool:
             """Check whether the ACL line belongs to an AD security descriptor."""
             if isinstance(acl_line, str):
                 normalized = acl_line.strip() if acl_line else ""
@@ -454,7 +454,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
                         subject_value=decoded_sddl or raw_value or "",
                     ),
                     permissions=FlextLdifModels.AclPermissions(),
-                    metadata=FlextLdifModels.QuirkMetadata.create_for_quirk(
+                    metadata=FlextLdifModels.QuirkMetadata.create_for(
                         FlextLdifServersAd.Constants.SERVER_TYPE,
                         original_format=acl_line,
                     ),
@@ -508,9 +508,9 @@ class FlextLdifServersAd(FlextLdifServersRfc):
 
         # OVERRIDDEN METHODS (from FlextLdifServersBase.Entry)
         # These methods override the base class with AD-specific logic:
-        # - _can_handle_entry(): Detects AD entries by DN/attributes
+        # - can_handle(): Detects AD entries by DN/attributes
 
-        def _can_handle_entry(
+        def can_handle(
             self,
             entry_dn: str,
             attributes: Mapping[str, object],

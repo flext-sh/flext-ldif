@@ -306,16 +306,16 @@ class QuirksConversionMatrix:
 
     def convert(
         self,
-        source_quirk: object,
-        target_quirk: object,
+        source: object,
+        target: object,
         data_type: Literal["attribute", "objectclass", "acl", "entry"],
         data: str | dict[str, object],
     ) -> FlextResult[str | dict[str, object]]:
         """Convert data from source quirk format to target quirk format via RFC.
 
         Args:
-            source_quirk: Source quirk instance (e.g., OUD, OID)
-            target_quirk: Target quirk instance (e.g., OUD, OID)
+            source: Source quirk instance (e.g., OUD, OID)
+            target: Target quirk instance (e.g., OUD, OID)
             data_type: Type of data - "attribute", "objectclass", "acl", or "entry"
             data: Data to convert (string or dict)
 
@@ -326,16 +326,16 @@ class QuirksConversionMatrix:
 
     def batch_convert(
         self,
-        source_quirk: object,
-        target_quirk: object,
+        source: object,
+        target: object,
         data_type: Literal["attribute", "objectclass", "acl", "entry"],
         data_batch: Sequence[str | dict[str, object]],
     ) -> FlextResult[Sequence[str | dict[str, object]]]:
         """Convert batch of data from source to target quirk format via RFC.
 
         Args:
-            source_quirk: Source quirk instance
-            target_quirk: Target quirk instance
+            source: Source quirk instance
+            target: Target quirk instance
             data_type: Type of data being converted
             data_batch: Sequence of data items to convert
 
@@ -990,7 +990,7 @@ from flext_ldif.services.server import QuirkRegistryService
 class QuirkRegistryService:
     """Registry for managing LDAP server quirks."""
 
-    def get_schema_quirks(self, server_type: str) -> list[SchemaProtocol]:
+    def get_schemas(self, server_type: str) -> list[SchemaProtocol]:
         """Get schema quirks for server type.
 
         Args:
@@ -1010,7 +1010,7 @@ class QuirkRegistryService:
             List of entry quirks sorted by priority
         """
 
-    def get_acl_quirks(self, server_type: str) -> list[AclProtocol]:
+    def get_acls(self, server_type: str) -> list[AclProtocol]:
         """Get ACL quirks for server type.
 
         Args:
@@ -1028,9 +1028,9 @@ class QuirkRegistryService:
 registry = QuirkRegistryService()
 
 # Get quirks for different servers
-oid_schema_quirks = registry.get_schema_quirks("oid")
+oid_schemas = registry.get_schemas("oid")
 oud_entrys = registry.get_entrys("oud")
-openldap_acl_quirks = registry.get_acl_quirks("openldap")
+openldap_acls = registry.get_acls("openldap")
 
 # Quirks are automatically sorted by priority
 # Lower priority number = higher precedence

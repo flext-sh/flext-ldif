@@ -123,7 +123,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
         **Priority**: 200 (very low - last resort)
         """
 
-        def _can_handle_attribute(
+        def can_handle_attribute(
             self, attr_definition: str | FlextLdifModels.SchemaAttribute
         ) -> bool:
             """Accept any attribute definition in relaxed mode.
@@ -276,7 +276,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                     f"Failed to parse attribute definition: {e}"
                 )
 
-        def _can_handle_objectclass(
+        def can_handle_objectclass(
             self, oc_definition: str | FlextLdifModels.SchemaObjectClass
         ) -> bool:
             """Accept any objectClass definition in relaxed mode.
@@ -566,7 +566,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
 
         # OVERRIDDEN METHODS (from FlextLdifServersBase.Acl)
         # These methods override the base class with relaxed/lenient logic:
-        # - _can_handle_acl(): Accepts any ACL line in relaxed mode
+        # - can_handle_acl(): Accepts any ACL line in relaxed mode
         # - _parse_acl(): Parses ACL with best-effort approach
         # - _write_acl(): Writes ACL to RFC format - stringify in relaxed mode
 
@@ -579,7 +579,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
         **Priority**: 200 (very low - last resort)
         """
 
-        def _can_handle(self, acl: str | FlextLdifModels.Acl) -> bool:
+        def can_handle(self, acl: str | FlextLdifModels.Acl) -> bool:
             """Check if this is a relaxed ACL (public method).
 
             Args:
@@ -589,9 +589,9 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 Always True - relaxed mode accepts everything
 
             """
-            return self._can_handle_acl(acl)
+            return self.can_handle(acl)
 
-        def _can_handle_acl(self, acl_line: str | FlextLdifModels.Acl) -> bool:
+        def can_handle_acl(self, acl_line: str | FlextLdifModels.Acl) -> bool:
             """Accept any ACL line in relaxed mode.
 
             Args:
@@ -692,7 +692,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 f"{FlextLdifServersRelaxed.Constants.ACL_WRITE_PREFIX}{acl_data.name or FlextLdifServersRelaxed.Constants.ACL_DEFAULT_NAME}"
             )
 
-        def _can_handle_attribute(
+        def can_handle_attribute(
             self, attribute: FlextLdifModels.SchemaAttribute
         ) -> bool:
             """Check if this ACL quirk should be aware of a specific attribute definition.
@@ -709,7 +709,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             _ = attribute  # Relaxed mode accepts all, parameter not used
             return True
 
-        def _can_handle_objectclass(
+        def can_handle_objectclass(
             self, _objectclass: FlextLdifModels.SchemaObjectClass
         ) -> bool:
             """Check if this ACL quirk should be aware of a specific objectClass definition.
@@ -736,7 +736,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
 
         # OVERRIDDEN METHODS (from FlextLdifServersBase.Entry)
         # These methods override the base class with relaxed/lenient logic:
-        # - _can_handle_entry(): Accepts any entry in relaxed mode
+        # - can_handle(): Accepts any entry in relaxed mode
         # - process_entry(): Pass-through processing for relaxed mode
 
         def process_entry(
@@ -755,7 +755,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             # In relaxed mode, pass through entry unchanged
             return FlextResult[FlextLdifModels.Entry].ok(entry)
 
-        def _can_handle_entry(
+        def can_handle(
             self,
             _entry_dn: str,
             _attributes: Mapping[str, object],
@@ -958,7 +958,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 logger.debug("Write entry failed: %s", e)
                 return FlextResult[str].fail(f"Failed to write entry: {e}")
 
-        def _can_handle_attribute(
+        def can_handle_attribute(
             self, _attribute: FlextLdifModels.SchemaAttribute
         ) -> bool:
             """Check if this Entry quirk has special handling for an attribute definition.
@@ -974,7 +974,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             """
             return True
 
-        def _can_handle_objectclass(
+        def can_handle_objectclass(
             self, _objectclass: FlextLdifModels.SchemaObjectClass
         ) -> bool:
             """Check if this Entry quirk has special handling for an objectClass definition.

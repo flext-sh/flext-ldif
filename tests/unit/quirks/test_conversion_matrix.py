@@ -30,19 +30,19 @@ class FailingParseQuirk(FlextLdifServersBase.Schema):
         self.priority = 100
         self.error_msg = error_msg
 
-    def _can_handle_attribute(
+    def can_handle_attribute(
         self, attr_definition: str | FlextLdifModels.SchemaAttribute
     ) -> bool:
         """Always handle attributes for testing."""
         return True
 
-    def _can_handle_objectclass(
+    def can_handle_objectclass(
         self, oc_definition: str | FlextLdifModels.SchemaObjectClass
     ) -> bool:
         """Always handle objectClass for testing."""
         return True
 
-    def _can_handle_acl(self, acl_line: str | FlextLdifModels.Acl) -> bool:
+    def can_handle_acl(self, acl_line: str | FlextLdifModels.Acl) -> bool:
         """Always handle ACL for testing."""
         return True
 
@@ -74,13 +74,13 @@ class SuccessfulParseQuirk(FlextLdifServersBase.Schema):
         """Initialize quirk."""
         super().__init__()
 
-    def _can_handle_attribute(
+    def can_handle_attribute(
         self, attr_definition: str | FlextLdifModels.SchemaAttribute
     ) -> bool:
         """Always handle attributes for testing."""
         return True
 
-    def _can_handle_objectclass(
+    def can_handle_objectclass(
         self, oc_definition: str | FlextLdifModels.SchemaObjectClass
     ) -> bool:
         """Always handle objectClass for testing."""
@@ -120,19 +120,19 @@ class ConversionFailingQuirk(FlextLdifServersBase.Schema):
         self.priority = 100
         self.fail_on = fail_on
 
-    def _can_handle_attribute(
+    def can_handle_attribute(
         self, attr_definition: str | FlextLdifModels.SchemaAttribute
     ) -> bool:
         """Always handle attributes for testing."""
         return True
 
-    def _can_handle_objectclass(
+    def can_handle_objectclass(
         self, oc_definition: str | FlextLdifModels.SchemaObjectClass
     ) -> bool:
         """Always handle objectClass for testing."""
         return True
 
-    def _can_handle_acl(self, acl_line: str | FlextLdifModels.Acl) -> bool:
+    def can_handle_acl(self, acl_line: str | FlextLdifModels.Acl) -> bool:
         """Always handle ACL for testing."""
         return True
 
@@ -173,19 +173,19 @@ class ExceptionThrowingQuirk(FlextLdifServersBase.Schema):
         self.server_type = "test_exception_throwing"
         self.priority = 100
 
-    def _can_handle_attribute(
+    def can_handle_attribute(
         self, attr_definition: str | FlextLdifModels.SchemaAttribute
     ) -> bool:
         """Always handle attributes for testing."""
         return True
 
-    def _can_handle_objectclass(
+    def can_handle_objectclass(
         self, oc_definition: str | FlextLdifModels.SchemaObjectClass
     ) -> bool:
         """Always handle objectClass for testing."""
         return True
 
-    def _can_handle_acl(self, acl_line: str | FlextLdifModels.Acl) -> bool:
+    def can_handle_acl(self, acl_line: str | FlextLdifModels.Acl) -> bool:
         """Always handle ACL for testing."""
         return True
 
@@ -222,19 +222,19 @@ class MissingParseObjectClassQuirk(FlextLdifServersBase.Schema):
         self.server_type = "test_missing_parse_oc"
         self.priority = 100
 
-    def _can_handle_attribute(
+    def can_handle_attribute(
         self, attr_definition: str | FlextLdifModels.SchemaAttribute
     ) -> bool:
         """Always handle attributes for testing."""
         return True
 
-    def _can_handle_objectclass(
+    def can_handle_objectclass(
         self, oc_definition: str | FlextLdifModels.SchemaObjectClass
     ) -> bool:
         """Does NOT handle objectClass - that's the point of this test."""
         return False
 
-    def _can_handle_acl(self, acl_line: str | FlextLdifModels.Acl) -> bool:
+    def can_handle_acl(self, acl_line: str | FlextLdifModels.Acl) -> bool:
         """Always handle ACL for testing."""
         return True
 
@@ -271,17 +271,17 @@ class ObjectClassParseOnlyQuirk(FlextLdifServersBase.Schema):
         self.server_type = "test_parse_only"
         self.priority = 100
 
-    def _can_handle_attribute(
+    def can_handle_attribute(
         self, attr_definition: str | FlextLdifModels.SchemaAttribute
     ) -> bool:
         return True
 
-    def _can_handle_objectclass(
+    def can_handle_objectclass(
         self, oc_definition: str | FlextLdifModels.SchemaObjectClass
     ) -> bool:
         return True
 
-    def _can_handle_acl(self, acl_line: str | FlextLdifModels.Acl) -> bool:
+    def can_handle_acl(self, acl_line: str | FlextLdifModels.Acl) -> bool:
         return True
 
     def _parse_attribute(
@@ -317,17 +317,17 @@ class MissingParseAcl(FlextLdifServersBase.Schema):
         self.server_type = "test_missing_parse"
         self.priority = 100
 
-    def _can_handle_attribute(
+    def can_handle_attribute(
         self, attr_definition: str | FlextLdifModels.SchemaAttribute
     ) -> bool:
         return False
 
-    def _can_handle_objectclass(
+    def can_handle_objectclass(
         self, oc_definition: str | FlextLdifModels.SchemaObjectClass
     ) -> bool:
         return False
 
-    def _can_handle_acl(self, acl_line: str | FlextLdifModels.Acl) -> bool:
+    def can_handle_acl(self, acl_line: str | FlextLdifModels.Acl) -> bool:
         return True
 
     def _parse_attribute(
@@ -362,17 +362,17 @@ class MissingWriteAcl(FlextLdifServersBase.Schema):
         self.server_type = "test_missing_write_acl"
         self.priority = 100
 
-    def _can_handle_attribute(
+    def can_handle_attribute(
         self, attr_definition: str | FlextLdifModels.SchemaAttribute
     ) -> bool:
         return False
 
-    def _can_handle_objectclass(
+    def can_handle_objectclass(
         self, oc_definition: str | FlextLdifModels.SchemaObjectClass
     ) -> bool:
         return False
 
-    def _can_handle_acl(self, acl_line: str | FlextLdifModels.Acl) -> bool:
+    def can_handle_acl(self, acl_line: str | FlextLdifModels.Acl) -> bool:
         return True
 
     def _parse_attribute(
@@ -408,7 +408,7 @@ class EntryConversionQuirk(FlextLdifServersBase.Schema):
         self.priority = 100
         self.entry = True
 
-    def _can_handle_attribute(
+    def can_handle_attribute(
         self, attr_definition: str | FlextLdifModels.SchemaAttribute
     ) -> bool:
         return True  # Supports attribute parsing
@@ -420,7 +420,7 @@ class EntryConversionQuirk(FlextLdifServersBase.Schema):
             FlextLdifModels.SchemaAttribute(oid="1.2.3.4", name="test")
         )
 
-    def _can_handle_objectclass(
+    def can_handle_objectclass(
         self, oc_definition: str | FlextLdifModels.SchemaObjectClass
     ) -> bool:
         return False
@@ -451,7 +451,7 @@ class MinimalQuirk(FlextLdifServersBase.Schema):
         self.server_type = "test_minimal"
         self.priority = 100
 
-    def _can_handle_attribute(
+    def can_handle_attribute(
         self, attr_definition: str | FlextLdifModels.SchemaAttribute
     ) -> bool:
         return False
@@ -463,7 +463,7 @@ class MinimalQuirk(FlextLdifServersBase.Schema):
             FlextLdifModels.SchemaAttribute(oid="1.2.3.4", name="test")
         )
 
-    def _can_handle_objectclass(
+    def can_handle_objectclass(
         self, oc_definition: str | FlextLdifModels.SchemaObjectClass
     ) -> bool:
         return False
@@ -494,7 +494,7 @@ class PartialAttributeQuirk(FlextLdifServersBase.Schema):
         self.server_type = "test_partial_attr"
         self.priority = 100
 
-    def _can_handle_attribute(
+    def can_handle_attribute(
         self, attr_definition: str | FlextLdifModels.SchemaAttribute
     ) -> bool:
         return True
@@ -506,7 +506,7 @@ class PartialAttributeQuirk(FlextLdifServersBase.Schema):
             FlextLdifModels.SchemaAttribute(oid="1.2.3.4", name="test")
         )
 
-    def _can_handle_objectclass(
+    def can_handle_objectclass(
         self, oc_definition: str | FlextLdifModels.SchemaObjectClass
     ) -> bool:
         return False
@@ -533,7 +533,7 @@ class TestAclQuirk(FlextLdifServersBase.Acl):
     def __init__(self, server_type: str = "test_acl", priority: int = 100) -> None:
         """Initialize test ACL quirk."""
 
-    def _can_handle_acl(self, acl_line: str | FlextLdifModels.Acl) -> bool:
+    def can_handle_acl(self, acl_line: str | FlextLdifModels.Acl) -> bool:
         return True
 
     def _parse_acl(self, acl_line: str) -> FlextResult[FlextLdifModels.Acl]:
@@ -552,7 +552,7 @@ class AclOnlyQuirk(FlextLdifServersBase.Schema):
         self.priority = 100
         self.acl = TestAclQuirk()
 
-    def _can_handle_attribute(
+    def can_handle_attribute(
         self, attr_definition: str | FlextLdifModels.SchemaAttribute
     ) -> bool:
         return False
@@ -564,12 +564,12 @@ class AclOnlyQuirk(FlextLdifServersBase.Schema):
             FlextLdifModels.SchemaAttribute(oid="1.2.3.4", name="test")
         )
 
-    def _can_handle_objectclass(
+    def can_handle_objectclass(
         self, oc_definition: str | FlextLdifModels.SchemaObjectClass
     ) -> bool:
         return False
 
-    def _can_handle_acl(self, acl_line: str | FlextLdifModels.Acl) -> bool:
+    def can_handle_acl(self, acl_line: str | FlextLdifModels.Acl) -> bool:
         return True  # Only ACL support
 
     def _parse_objectclass(
@@ -602,7 +602,7 @@ class EntryOnlyQuirk(FlextLdifServersBase.Schema):
         self.priority = 100
         self.entry = True
 
-    def _can_handle_attribute(
+    def can_handle_attribute(
         self, attr_definition: str | FlextLdifModels.SchemaAttribute
     ) -> bool:
         return False
@@ -614,7 +614,7 @@ class EntryOnlyQuirk(FlextLdifServersBase.Schema):
             FlextLdifModels.SchemaAttribute(oid="1.2.3.4", name="test")
         )
 
-    def _can_handle_objectclass(
+    def can_handle_objectclass(
         self, oc_definition: str | FlextLdifModels.SchemaObjectClass
     ) -> bool:
         return False
@@ -1256,10 +1256,10 @@ class TestAttributeConversionErrorPaths:
         """Test attribute conversion fails when source quirk lacks parse method."""
         # Use SuccessfulParseQuirk which has parse_attribute
         # but may fail on write due to missing metadata
-        source_quirk = SuccessfulParseQuirk()
-        target_quirk = oid
+        source = SuccessfulParseQuirk()
+        target = oid
 
-        result = matrix.convert(source_quirk, target_quirk, "attribute", "(test)")
+        result = matrix.convert(source, target, "attribute", "(test)")
         # Conversion may fail due to implementation details of the test quirks
         # The important thing is it doesn't crash
         assert result is not None
@@ -1292,10 +1292,10 @@ class TestAttributeConversionErrorPaths:
     ) -> None:
         """Test attribute conversion fails when source quirk to_rfc fails."""
         # Use real test quirk that fails on to_rfc conversion
-        source_quirk = ConversionFailingQuirk(fail_on="to_rfc")
-        target_quirk = oid
+        source = ConversionFailingQuirk(fail_on="to_rfc")
+        target = oid
 
-        result = matrix.convert(source_quirk, target_quirk, "attribute", "(test)")
+        result = matrix.convert(source, target, "attribute", "(test)")
         assert result.is_failure
         assert (
             result.error is not None and "Failed to convert source→RFC" in result.error
@@ -1306,12 +1306,12 @@ class TestAttributeConversionErrorPaths:
     ) -> None:
         """Test attribute conversion fails when target quirk from_rfc fails."""
         # Use real test quirks: source that succeeds, target that fails on from_rfc
-        source_quirk = SuccessfulParseQuirk()
-        target_quirk = ConversionFailingQuirk(fail_on="from_rfc")
+        source = SuccessfulParseQuirk()
+        target = ConversionFailingQuirk(fail_on="from_rfc")
 
         result = matrix.convert(
-            source_quirk,
-            target_quirk,
+            source,
+            target,
             "attribute",
             "( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' SYNTAX 1.3.6.1.4.1.1466.115.121.1.40 )",
         )
@@ -1322,12 +1322,12 @@ class TestAttributeConversionErrorPaths:
 
     def test_convert_attribute_write_failure(self, matrix: FlextLdifConversion) -> None:
         """Test attribute conversion fails when target quirk write fails."""
-        source_quirk = SuccessfulParseQuirk()
-        target_quirk = ConversionFailingQuirk(fail_on="write")
+        source = SuccessfulParseQuirk()
+        target = ConversionFailingQuirk(fail_on="write")
 
         result = matrix.convert(
-            source_quirk,
-            target_quirk,
+            source,
+            target,
             "attribute",
             "( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' SYNTAX 1.3.6.1.4.1.1466.115.121.1.40 )",
         )
@@ -1342,10 +1342,10 @@ class TestAttributeConversionErrorPaths:
         oid: FlextLdifServersOid,
     ) -> None:
         """Test attribute conversion handles unexpected exceptions."""
-        source_quirk = ExceptionThrowingQuirk()
-        target_quirk = oid
+        source = ExceptionThrowingQuirk()
+        target = oid
 
-        result = matrix.convert(source_quirk, target_quirk, "attribute", "(test)")
+        result = matrix.convert(source, target, "attribute", "(test)")
         assert result.is_failure
         assert (
             result.error is not None and "Attribute conversion failed" in result.error
@@ -1377,15 +1377,15 @@ class TestEntryConversion:
         self, matrix: FlextLdifConversion, oud: FlextLdifServersOud
     ) -> None:
         """Test entry conversion fails for string input (not yet supported)."""
-        source_quirk = EntryConversionQuirk()
-        target_quirk = EntryConversionQuirk()
+        source = EntryConversionQuirk()
+        target = EntryConversionQuirk()
 
         ldif_string = """dn: cn=test,dc=example,dc=com
 objectClass: person
 cn: test
 sn: user"""
 
-        result = matrix.convert(source_quirk, target_quirk, "entry", ldif_string)
+        result = matrix.convert(source, target, "entry", ldif_string)
         assert result.is_failure
         assert (
             result.error is not None
@@ -1396,11 +1396,11 @@ sn: user"""
         self, matrix: FlextLdifConversion, oid: FlextLdifServersOid
     ) -> None:
         """Test entry conversion fails when source quirk lacks entry support."""
-        source_quirk = MinimalQuirk()
-        target_quirk = oid
+        source = MinimalQuirk()
+        target = oid
 
         entry_data: dict[str, object] = {"dn": "cn=test,dc=example,dc=com"}
-        result = matrix.convert(source_quirk, target_quirk, "entry", entry_data)
+        result = matrix.convert(source, target, "entry", entry_data)
         assert result.is_failure
         assert (
             result.error is not None and "does not have Entry support" in result.error
@@ -1410,11 +1410,11 @@ sn: user"""
         self, matrix: FlextLdifConversion, oud: FlextLdifServersOud
     ) -> None:
         """Test entry conversion fails when target quirk lacks entry support."""
-        source_quirk = oud
-        target_quirk = MinimalQuirk()
+        source = oud
+        target = MinimalQuirk()
 
         entry_data: dict[str, object] = {"dn": "cn=test,dc=example,dc=com"}
-        result = matrix.convert(source_quirk, target_quirk, "entry", entry_data)
+        result = matrix.convert(source, target, "entry", entry_data)
         assert result.is_failure
         assert (
             result.error is not None and "does not have Entry support" in result.error
@@ -1446,11 +1446,11 @@ class TestBatchConversionErrorHandling:
         self, matrix: FlextLdifConversion, oid: FlextLdifServersOid
     ) -> None:
         """Test batch conversion with all failing parse quirk returns items via pass-through."""
-        source_quirk = FailingParseQuirk()
-        target_quirk = oid
+        source = FailingParseQuirk()
+        target = oid
 
         items = ["(test1)", "(test2)", "(test3)"]
-        result = matrix.batch_convert(source_quirk, target_quirk, "attribute", items)
+        result = matrix.batch_convert(source, target, "attribute", items)
 
         # With graceful degradation, unparseable items are passed through unchanged
         # so batch_convert succeeds with the pass-through data
@@ -1462,12 +1462,12 @@ class TestBatchConversionErrorHandling:
         self, matrix: FlextLdifConversion, oid: FlextLdifServersOid
     ) -> None:
         """Test batch conversion passes through unparseable items via graceful degradation."""
-        source_quirk = FailingParseQuirk()
-        target_quirk = oid
+        source = FailingParseQuirk()
+        target = oid
 
         # Create 8 items that will fail parsing
         items = [f"(test{i})" for i in range(8)]
-        result = matrix.batch_convert(source_quirk, target_quirk, "attribute", items)
+        result = matrix.batch_convert(source, target, "attribute", items)
 
         # With graceful degradation, all items are passed through unchanged
         # so batch_convert succeeds with all items returned
@@ -1480,11 +1480,11 @@ class TestBatchConversionErrorHandling:
         self, matrix: FlextLdifConversion, oid: FlextLdifServersOid
     ) -> None:
         """Test batch conversion handles unexpected exceptions."""
-        source_quirk = ExceptionThrowingQuirk()
-        target_quirk = oid
+        source = ExceptionThrowingQuirk()
+        target = oid
 
         items = ["(test1)", "(test2)"]
-        result = matrix.batch_convert(source_quirk, target_quirk, "attribute", items)
+        result = matrix.batch_convert(source, target, "attribute", items)
 
         assert result.is_failure
         assert (
@@ -1504,7 +1504,7 @@ class TestSupportCheckingEdgeCases:
         """Create conversion matrix instance."""
         return FlextLdifConversion()
 
-    def test_get_supported_conversions_minimal_quirk(
+    def test_get_supported_conversions_minimal(
         self, matrix: FlextLdifConversion
     ) -> None:
         """Test support checking for quirk with minimal functionality."""
@@ -1516,7 +1516,7 @@ class TestSupportCheckingEdgeCases:
         assert support["acl"] is False
         assert support["entry"] is False
 
-    def test_get_supported_conversions_partial_quirk(
+    def test_get_supported_conversions_partial(
         self, matrix: FlextLdifConversion
     ) -> None:
         """Test support checking for quirk with partial functionality."""
@@ -1528,7 +1528,7 @@ class TestSupportCheckingEdgeCases:
         assert support["acl"] is False
         assert support["entry"] is False
 
-    def test_get_supported_conversions_acl_quirk(
+    def test_get_supported_conversions_acl(
         self, matrix: FlextLdifConversion
     ) -> None:
         """Test support checking for quirk with ACL support."""
@@ -1540,7 +1540,7 @@ class TestSupportCheckingEdgeCases:
         assert support["acl"] is True
         assert support["entry"] is False
 
-    def test_get_supported_conversions_entry_quirk(
+    def test_get_supported_conversions_entry(
         self, matrix: FlextLdifConversion
     ) -> None:
         """Test support checking for quirk with entry support."""

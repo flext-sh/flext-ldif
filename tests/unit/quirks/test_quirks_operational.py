@@ -27,7 +27,7 @@ class TestOidQuirksWithRealFixtures:
     """Test OID quirks with real fixture data."""
 
     @pytest.fixture
-    def oid_quirk(self) -> FlextLdifServersOid:
+    def oid(self) -> FlextLdifServersOid:
         """Create OID quirk instance."""
         return FlextLdifServersOid()
 
@@ -54,7 +54,7 @@ class TestOidQuirksWithRealFixtures:
     @pytest.mark.parametrize("attr_index", range(5))
     def test_parse_real_oid_attributes_from_fixtures(
         self,
-        oid_quirk: FlextLdifServersOid,
+        oid: FlextLdifServersOid,
         oid_schema_attributes: list[str],
         attr_index: int,
     ) -> None:
@@ -66,7 +66,7 @@ class TestOidQuirksWithRealFixtures:
             pytest.skip(f"Not enough attributes in fixture (need {attr_index + 1})")
 
         attr_def = oid_schema_attributes[attr_index]
-        result = oid_quirk.parse(attr_def)
+        result = oid.parse(attr_def)
 
         assert result.is_success, f"Failed to parse attribute: {result.error}"
         parsed = result.unwrap()
@@ -83,7 +83,7 @@ class TestOidQuirksWithRealFixtures:
     @pytest.mark.parametrize("oc_index", range(5))
     def test_parse_real_oid_objectclasses_from_fixtures(
         self,
-        oid_quirk: FlextLdifServersOid,
+        oid: FlextLdifServersOid,
         oid_schema_objectclasses: list[str],
         oc_index: int,
     ) -> None:
@@ -92,7 +92,7 @@ class TestOidQuirksWithRealFixtures:
             pytest.skip(f"Not enough objectClasses in fixture (need {oc_index + 1})")
 
         oc_def = oid_schema_objectclasses[oc_index]
-        result = oid_quirk.parse(oc_def)
+        result = oid.parse(oc_def)
 
         assert result.is_success, f"Failed to parse objectClass: {result.error}"
         parsed = result.unwrap()
@@ -103,7 +103,7 @@ class TestOidQuirksWithRealFixtures:
 
     def test_parse_all_oid_attributes_success_rate(
         self,
-        oid_quirk: FlextLdifServersOid,
+        oid: FlextLdifServersOid,
         oid_schema_attributes: list[str],
     ) -> None:
         """Test that high percentage of real OID attributes parse successfully."""
@@ -114,7 +114,7 @@ class TestOidQuirksWithRealFixtures:
         failures = []
 
         for attr in oid_schema_attributes:
-            result = oid_quirk.parse(attr)
+            result = oid.parse(attr)
             if result.is_success:
                 successes += 1
             else:
@@ -138,12 +138,12 @@ class TestConversionMatrixWithRealFixtures:
         return FlextLdifConversion()
 
     @pytest.fixture
-    def oid_quirk(self) -> FlextLdifServersOid.Schema:
+    def oid(self) -> FlextLdifServersOid.Schema:
         """Create OID schema quirk."""
         return FlextLdifServersOid.Schema()
 
     @pytest.fixture
-    def oud_quirk(self) -> FlextLdifServersOud.Schema:
+    def oud(self) -> FlextLdifServersOud.Schema:
         """Create OUD schema quirk."""
         return FlextLdifServersOud.Schema()
 
@@ -161,8 +161,8 @@ class TestConversionMatrixWithRealFixtures:
     def test_oid_to_oud_conversion_with_real_attributes(
         self,
         matrix: FlextLdifConversion,
-        oid_quirk: FlextLdifServersOid,
-        oud_quirk: FlextLdifServersOud,
+        oid: FlextLdifServersOid,
+        oud: FlextLdifServersOud,
         oid_conversion_attributes: list[str],
     ) -> None:
         """Test OID→OUD conversion with real fixture attributes."""
@@ -174,7 +174,7 @@ class TestConversionMatrixWithRealFixtures:
 
         # Test first 5 attributes
         for attr in oid_conversion_attributes[:5]:
-            result = matrix.convert(oid_quirk, oud_quirk, "attribute", attr)
+            result = matrix.convert(oid, oud, "attribute", attr)
 
             if result.is_success:
                 successes += 1
@@ -197,8 +197,8 @@ class TestConversionMatrixWithRealFixtures:
     def test_roundtrip_oid_oud_oid_with_real_data(
         self,
         matrix: FlextLdifConversion,
-        oid_quirk: FlextLdifServersOid,
-        oud_quirk: FlextLdifServersOud,
+        oid: FlextLdifServersOid,
+        oud: FlextLdifServersOud,
         oid_conversion_attributes: list[str],
     ) -> None:
         """Test OID→OUD→OID roundtrip preserves essential data."""
@@ -212,7 +212,7 @@ class TestConversionMatrixWithRealFixtures:
 
         # Forward: OID → OUD
         forward_result = matrix.convert(
-            oid_quirk, oud_quirk, "attribute", original_attr
+            oid, oud, "attribute", original_attr
         )
         assert forward_result.is_success, (
             f"Forward conversion failed: {forward_result.error}"
@@ -222,7 +222,7 @@ class TestConversionMatrixWithRealFixtures:
         forward_value = forward_result.unwrap()
         assert isinstance(forward_value, str)
         forward_str: str = forward_value
-        backward_result = matrix.convert(oud_quirk, oid_quirk, "attribute", forward_str)
+        backward_result = matrix.convert(oud, oid, "attribute", forward_str)
         assert backward_result.is_success, (
             f"Backward conversion failed: {backward_result.error}"
         )

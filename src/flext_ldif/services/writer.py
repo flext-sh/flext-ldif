@@ -12,7 +12,7 @@ from collections.abc import Sequence
 from datetime import datetime
 from io import StringIO
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any
 
 from flext_core import FlextResult, FlextService
 
@@ -70,14 +70,14 @@ class FlextLdifWriter(FlextService[Any]):
         super().__init__()
         # The registry is a singleton, fetched at runtime.
         # Parameters are accepted for backward compatibility but not used
-        self._quirk_registry = FlextLdifServer.get_global_instance()
+        self._registry = FlextLdifServer.get_global_instance()
         self._statistics_service = FlextLdifStatistics()
 
     def write(
         self,
         entries: Sequence[FlextLdifModels.Entry],
         target_server_type: str,
-        output_target: Literal["string", "file", "ldap3", "model"],
+        output_target: FlextLdifConstants.LiteralTypes.WriterOutputTarget,
         output_path: Path | None = None,
         format_options: FlextLdifModels.WriteFormatOptions | None = None,
         header_template: str | None = None,
@@ -150,7 +150,7 @@ class FlextLdifWriter(FlextService[Any]):
         options = format_options
 
         # Get quirks for target server (returns list, use first)
-        quirks_list = self._quirk_registry.get_quirks(target_server_type)
+        quirks_list = self._registry.gets(target_server_type)
         if not quirks_list:
             msg = (
                 f"No quirk implementation found for server type: '{target_server_type}'"
@@ -247,7 +247,7 @@ class FlextLdifWriter(FlextService[Any]):
             FlextResult with entries
 
         """
-        quirks = self._quirk_registry.get_quirks(target_server_type)
+        quirks = self._registry.gets(target_server_type)
         if not quirks:
             return FlextResult.fail(
                 f"No quirk implementation found for server type: '{target_server_type}'"

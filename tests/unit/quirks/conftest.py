@@ -25,7 +25,7 @@ class ObjectClassParseOnlyQuirk(FlextLdifServersBase.Schema):
     def can_handle_objectclass(self, oc_definition: str) -> bool:
         return True
 
-    def _can_handle(self, acl_definition: str) -> bool:
+    def can_handle(self, acl_definition: str) -> bool:
         return True
 
     def parse_attribute(self, data: str) -> FlextResult[dict[str, object]]:

@@ -25,35 +25,35 @@ class TestTivoliSchemas:
         assert server.server_type == "ibm_tivoli"
         assert server.priority == 30
 
-    def test_can_handle_attribute_tivoli_oid(self) -> None:
+    def testcan_handle_attribute_tivoli_oid(self) -> None:
         """Test Tivoli attribute detection by OID pattern."""
         server = FlextLdifServersTivoli()
         quirk = server.schema
         attr_def = "( 1.3.18.0.2.4.1 NAME 'ibm-entryUUID' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
-        assert quirk._can_handle_attribute(attr_def)
+        assert quirk.can_handle_attribute(attr_def)
 
-    def test_can_handle_attribute_ibm_prefix(self) -> None:
+    def testcan_handle_attribute_ibm_prefix(self) -> None:
         """Test Tivoli attribute detection by ibm- prefix."""
         server = FlextLdifServersTivoli()
         quirk = server.schema
         attr_def = "( 1.2.3.4 NAME 'ibm-slapdaccesscontrol' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
-        assert quirk._can_handle_attribute(attr_def)
+        assert quirk.can_handle_attribute(attr_def)
 
-    def test_can_handle_attribute_ids_prefix(self) -> None:
+    def testcan_handle_attribute_ids_prefix(self) -> None:
         """Test Tivoli attribute detection by ids- prefix."""
         server = FlextLdifServersTivoli()
         quirk = server.schema
         attr_def = (
             "( 1.2.3.4 NAME 'ids-pwdPolicy' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
         )
-        assert quirk._can_handle_attribute(attr_def)
+        assert quirk.can_handle_attribute(attr_def)
 
-    def test_can_handle_attribute_non_tivoli(self) -> None:
+    def testcan_handle_attribute_non_tivoli(self) -> None:
         """Test non-Tivoli attribute rejection."""
         server = FlextLdifServersTivoli()
         quirk = server.schema
         attr_def = "( 2.5.4.3 NAME 'cn' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
-        assert not quirk._can_handle_attribute(attr_def)
+        assert not quirk.can_handle_attribute(attr_def)
 
     def test_parse_attribute_success(self) -> None:
         """Test successful Tivoli attribute parsing."""
@@ -136,26 +136,26 @@ class TestTivoliSchemas:
         data = result.unwrap()
         assert data.sup == "name"
 
-    def test_can_handle_objectclass_tivoli_oid(self) -> None:
+    def testcan_handle_objectclass_tivoli_oid(self) -> None:
         """Test Tivoli objectClass detection by OID pattern."""
         server = FlextLdifServersTivoli()
         quirk = server.schema
         oc_def = "( 1.3.18.0.2.6.1 NAME 'ibm-ldapserver' SUP top STRUCTURAL )"
-        assert quirk._can_handle_objectclass(oc_def)
+        assert quirk.can_handle_objectclass(oc_def)
 
-    def test_can_handle_objectclass_tivoli_name(self) -> None:
+    def testcan_handle_objectclass_tivoli_name(self) -> None:
         """Test Tivoli objectClass detection by known names."""
         server = FlextLdifServersTivoli()
         quirk = server.schema
         oc_def = "( 1.2.3.4 NAME 'ibm-slapdaccesscontrolsubentry' SUP top AUXILIARY )"
-        assert quirk._can_handle_objectclass(oc_def)
+        assert quirk.can_handle_objectclass(oc_def)
 
-    def test_can_handle_objectclass_non_tivoli(self) -> None:
+    def testcan_handle_objectclass_non_tivoli(self) -> None:
         """Test non-Tivoli objectClass rejection."""
         server = FlextLdifServersTivoli()
         quirk = server.schema
         oc_def = "( 2.5.6.6 NAME 'person' SUP top STRUCTURAL )"
-        assert not quirk._can_handle_objectclass(oc_def)
+        assert not quirk.can_handle_objectclass(oc_def)
 
     def test_parse_objectclass_success(self) -> None:
         """Test successful Tivoli objectClass parsing."""
@@ -260,56 +260,56 @@ class TestTivoliAcls:
     def test_initialization(self) -> None:
         """Test Tivoli ACL quirk initialization."""
         server = FlextLdifServersTivoli()
-        acl_quirk = server.acl
-        assert acl_quirk is not None
+        acl = server.acl
+        assert acl is not None
 
     def test__can_handle_ibm_slapdaccesscontrol(self) -> None:
         """Test ACL detection with ibm-slapdaccesscontrol attribute."""
         server = FlextLdifServersTivoli()
-        acl_quirk = server.acl
+        acl = server.acl
         acl_line = 'ibm-slapdaccesscontrol: {access "read" permission "allow" userdn="cn=Admin,o=Example"}'
         # Parse string ACL into model object before testing
 
-        parse_result = acl_quirk.parse(acl_line)
+        parse_result = acl.parse(acl_line)
 
         if parse_result.is_success:
             parse_result.unwrap()
 
-            assert acl_quirk._can_handle(acl_line) is True
+            assert acl.can_handle(acl_line) is True
 
         else:
             # If parsing fails, assertion should be False
 
-            assert acl_quirk._can_handle(acl_line) is False
+            assert acl.can_handle(acl_line) is False
 
     def test__can_handle_ibm_slapdgroupacl(self) -> None:
         """Test ACL detection with ibm-slapdgroupacl attribute."""
         server = FlextLdifServersTivoli()
-        acl_quirk = server.acl
+        acl = server.acl
         acl_line = 'ibm-slapdgroupacl: {access "write" groupdn="cn=Admins,o=Example"}'
-        # _can_handle should work directly with string
-        assert acl_quirk._can_handle(acl_line) is True
+        # can_handle should work directly with string
+        assert acl.can_handle(acl_line) is True
 
     def test__can_handle_empty_line(self) -> None:
         """Test ACL rejection with empty line."""
         server = FlextLdifServersTivoli()
-        acl_quirk = server.acl
-        assert not acl_quirk._can_handle_acl("")
+        acl = server.acl
+        assert not acl.can_handle("")
 
     def test__can_handle_non_tivoli(self) -> None:
         """Test non-Tivoli ACL rejection."""
         server = FlextLdifServersTivoli()
-        acl_quirk = server.acl
+        acl = server.acl
         acl_line = "aci: (version 3.0; acl read-access; allow(read))"
-        # _can_handle_acl should reject non-Tivoli ACLs directly
-        assert acl_quirk._can_handle_acl(acl_line) is False
+        # can_handle_acl should reject non-Tivoli ACLs directly
+        assert acl.can_handle(acl_line) is False
 
     def test_parse_success(self) -> None:
         """Test successful Tivoli ACL parsing."""
         server = FlextLdifServersTivoli()
-        acl_quirk = server.acl
+        acl = server.acl
         acl_line = 'ibm-slapdaccesscontrol: {access "read" permission "allow" groupdn="cn=Admins,o=Example" userdn="cn=User,o=Example"}'
-        result = acl_quirk.parse(acl_line)
+        result = acl.parse(acl_line)
         assert result.is_success
         data = result.unwrap()
         assert data.name == "Tivoli ACL"
@@ -318,9 +318,9 @@ class TestTivoliAcls:
     def test_parse_without_braces(self) -> None:
         """Test ACL parsing without braces (raw format)."""
         server = FlextLdifServersTivoli()
-        acl_quirk = server.acl
+        acl = server.acl
         acl_line = 'ibm-slapdaccesscontrol: access "read" permission "allow"'
-        result = acl_quirk.parse(acl_line)
+        result = acl.parse(acl_line)
         assert result.is_success
         data = result.unwrap()
         assert data.name == "Tivoli ACL"
@@ -329,7 +329,7 @@ class TestTivoliAcls:
     def test_write_acl_to_rfc_with_content(self) -> None:
         """Test writing ACL with existing content."""
         server = FlextLdifServersTivoli()
-        acl_quirk = server.acl
+        acl = server.acl
         acl_data = FlextLdifModels.Acl(
             name="Tivoli ACL",
             target=FlextLdifModels.AclTarget(
@@ -347,7 +347,7 @@ class TestTivoliAcls:
             ),
             server_type="ibm_tivoli",
         )
-        result = acl_quirk.write(acl_data)
+        result = acl.write(acl_data)
         assert result.is_success
         acl_str = result.unwrap()
         assert "ibm-slapdaccesscontrol:" in acl_str
@@ -355,7 +355,7 @@ class TestTivoliAcls:
     def test_write_acl_to_rfc_with_structured_fields(self) -> None:
         """Test writing ACL with structured fields."""
         server = FlextLdifServersTivoli()
-        acl_quirk = server.acl
+        acl = server.acl
         acl_data = FlextLdifModels.Acl(
             name="Tivoli ACL",
             target=FlextLdifModels.AclTarget(
@@ -373,7 +373,7 @@ class TestTivoliAcls:
             ),
             server_type="ibm_tivoli",
         )
-        result = acl_quirk.write(acl_data)
+        result = acl.write(acl_data)
         assert result.is_success
         acl_str = result.unwrap()
         assert "ibm-slapdaccesscontrol:" in acl_str
@@ -381,7 +381,7 @@ class TestTivoliAcls:
     def test_write_acl_to_rfc_empty_data(self) -> None:
         """Test writing ACL with empty data."""
         server = FlextLdifServersTivoli()
-        acl_quirk = server.acl
+        acl = server.acl
         acl_data = FlextLdifModels.Acl(
             name="Tivoli ACL",
             target=FlextLdifModels.AclTarget(
@@ -399,7 +399,7 @@ class TestTivoliAcls:
             ),
             server_type="ibm_tivoli",
         )
-        result = acl_quirk.write(acl_data)
+        result = acl.write(acl_data)
         assert result.is_success
         acl_str = result.unwrap()
         assert "ibm-slapdaccesscontrol:" in acl_str
@@ -411,13 +411,13 @@ class TestTivoliEntrys:
     def test_initialization(self) -> None:
         """Test Tivoli entry quirk initialization."""
         server = FlextLdifServersTivoli()
-        entry_quirk = server.entry
-        assert entry_quirk is not None
+        entry = server.entry
+        assert entry is not None
 
     def test_can_handle_entry_tivoli_dn_marker(self) -> None:
         """Test entry detection by Tivoli DN markers."""
         server = FlextLdifServersTivoli()
-        entry_quirk = server.entry
+        entry = server.entry
         dn = FlextLdifModels.DistinguishedName(
             value="cn=ibm,cn=configuration,o=Example"
         )
@@ -425,12 +425,12 @@ class TestTivoliEntrys:
             attributes={FlextLdifConstants.DictKeys.OBJECTCLASS: ["top"]}
         )
         FlextLdifModels.Entry(dn=dn, attributes=attributes)
-        assert entry_quirk._can_handle_entry(dn.value, attributes.attributes) is True
+        assert entry.can_handle(dn.value, attributes.attributes) is True
 
     def test_can_handle_entry_tivoli_attribute(self) -> None:
         """Test entry detection by ibm- prefixed attributes."""
         server = FlextLdifServersTivoli()
-        entry_quirk = server.entry
+        entry = server.entry
         dn = FlextLdifModels.DistinguishedName(value="cn=test,o=Example")
         attributes = FlextLdifModels.LdifAttributes(
             attributes={
@@ -439,12 +439,12 @@ class TestTivoliEntrys:
             }
         )
         FlextLdifModels.Entry(dn=dn, attributes=attributes)
-        assert entry_quirk._can_handle_entry(dn.value, attributes.attributes) is True
+        assert entry.can_handle(dn.value, attributes.attributes) is True
 
     def test_can_handle_entry_tivoli_objectclass(self) -> None:
         """Test entry detection by Tivoli objectClass."""
         server = FlextLdifServersTivoli()
-        entry_quirk = server.entry
+        entry = server.entry
         dn = FlextLdifModels.DistinguishedName(value="cn=server,o=Example")
         attributes = FlextLdifModels.LdifAttributes(
             attributes={
@@ -452,12 +452,12 @@ class TestTivoliEntrys:
             }
         )
         FlextLdifModels.Entry(dn=dn, attributes=attributes)
-        assert entry_quirk._can_handle_entry(dn.value, attributes.attributes)
+        assert entry.can_handle(dn.value, attributes.attributes)
 
     def test_can_handle_entry_non_tivoli(self) -> None:
         """Test non-Tivoli entry rejection."""
         server = FlextLdifServersTivoli()
-        entry_quirk = server.entry
+        entry = server.entry
         dn = FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com")
         attributes = FlextLdifModels.LdifAttributes(
             attributes={
@@ -465,4 +465,4 @@ class TestTivoliEntrys:
                 "cn": ["test"],
             }
         )
-        assert not entry_quirk._can_handle_entry(dn.value, attributes.attributes)
+        assert not entry.can_handle(dn.value, attributes.attributes)

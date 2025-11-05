@@ -147,7 +147,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
     class Schema(FlextLdifServersRfc.Schema):
         """Novell eDirectory schema quirk."""
 
-        def _can_handle_attribute(
+        def can_handle_attribute(
             self, attr_definition: str | FlextLdifModels.SchemaAttribute
         ) -> bool:
             """Detect eDirectory attribute definitions using Constants."""
@@ -202,10 +202,10 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
         # - should_filter_out_attribute(): Returns False (no filtering)
         # - should_filter_out_objectclass(): Returns False (no filtering)
         #
-        # Only _can_handle_* methods are overridden with Novell-specific logic.
+        # Only can_handle_* methods are overridden with Novell-specific logic.
         #
 
-        def _can_handle_objectclass(
+        def can_handle_objectclass(
             self, oc_definition: str | FlextLdifModels.SchemaObjectClass
         ) -> bool:
             """Detect eDirectory objectClass definitions using Constants."""
@@ -258,7 +258,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             result = super()._parse_attribute(attr_definition)
             if result.is_success:
                 attr_data = result.unwrap()
-                metadata = FlextLdifModels.QuirkMetadata.create_for_quirk(
+                metadata = FlextLdifModels.QuirkMetadata.create_for(
                     FlextLdifServersNovell.Constants.SERVER_TYPE
                 )
                 return FlextResult[FlextLdifModels.SchemaAttribute].ok(
@@ -282,7 +282,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             result = super()._parse_objectclass(oc_definition)
             if result.is_success:
                 oc_data = result.unwrap()
-                metadata = FlextLdifModels.QuirkMetadata.create_for_quirk(
+                metadata = FlextLdifModels.QuirkMetadata.create_for(
                     FlextLdifServersNovell.Constants.SERVER_TYPE
                 )
                 return FlextResult[FlextLdifModels.SchemaObjectClass].ok(
@@ -293,7 +293,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
     class Acl(FlextLdifServersRfc.Acl):
         """Novell eDirectory ACL quirk."""
 
-        def _can_handle(self, acl: str | FlextLdifModels.Acl) -> bool:
+        def can_handle(self, acl: str | FlextLdifModels.Acl) -> bool:
             """Check if this is a Novell eDirectory ACL.
 
             Override RFC's always-true behavior to check Novell-specific markers.
@@ -305,9 +305,9 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                 True if this is Novell eDirectory ACL format
 
             """
-            return self._can_handle_acl(acl)
+            return self.can_handle(acl)
 
-        def _can_handle_acl(self, acl_line: str | FlextLdifModels.Acl) -> bool:
+        def can_handle_acl(self, acl_line: str | FlextLdifModels.Acl) -> bool:
             """Detect eDirectory ACL values."""
             if isinstance(acl_line, str):
                 if not acl_line or not acl_line.strip():
@@ -428,7 +428,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                             },
                         )
                     ),
-                    metadata=FlextLdifModels.QuirkMetadata.create_for_quirk(
+                    metadata=FlextLdifModels.QuirkMetadata.create_for(
                         FlextLdifServersNovell.Constants.SERVER_TYPE,
                         original_format=acl_line,
                     ),
@@ -512,10 +512,10 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
 
         # OVERRIDDEN METHODS (from FlextLdifServersBase.Entry)
         # These methods override the base class with Novell eDirectory-specific logic:
-        # - _can_handle_entry(): Detects eDirectory entries by DN/attributes
+        # - can_handle(): Detects eDirectory entries by DN/attributes
         # - _parse_entry(): Normalizes eDirectory entries with metadata
 
-        def _can_handle_entry(
+        def can_handle(
             self,
             entry_dn: str,
             attributes: Mapping[str, object],

@@ -44,7 +44,7 @@ class FlextLdifProtocols(FlextProtocols):
     - execute() method provides automatic type-detection routing for all operations
 
     **Private Methods (NOT in protocols):**
-    - _can_handle_* methods for internal detection logic
+    - can_handle_* methods for internal detection logic
     - _hook_* methods for customization points
     - process_entry, convert_entry (handled via hooks or conversion)
 
@@ -53,9 +53,9 @@ class FlextLdifProtocols(FlextProtocols):
         >>> from flext_ldif.models import FlextLdifModels
         >>>
         >>> # Entry: auto-routes based on data type
-        >>> entry_quirk = FlextLdifServersRfc.Entry()
-        >>> entries = entry_quirk.execute("dn: cn=test\\n...")  # Parse
-        >>> ldif = entry_quirk.execute([entry1, entry2])  # Write
+        >>> entry = FlextLdifServersRfc.Entry()
+        >>> entries = entry.execute("dn: cn=test\\n...")  # Parse
+        >>> ldif = entry.execute([entry1, entry2])  # Write
         >>>
         >>> # Schema: auto-routes based on data type
         >>> schema = FlextLdifServersRfc.Schema()
@@ -106,8 +106,8 @@ class FlextLdifProtocols(FlextProtocols):
             3. execute(data, operation) → FlextResult[SchemaAttribute | SchemaObjectClass | str]
 
             **Private Methods** (NOT in protocol, internal only):
-            - _can_handle_attribute() - Detection logic
-            - _can_handle_objectclass() - Detection logic
+            - can_handle_attribute() - Detection logic
+            - can_handle_objectclass() - Detection logic
             - _hook_post_parse_attribute() - Customization hook
             - _hook_post_parse_objectclass() - Customization hook
             - _detect_schema_type() - Helper for attribute vs objectClass detection
@@ -281,9 +281,9 @@ class FlextLdifProtocols(FlextProtocols):
             3. execute(data, operation) → FlextResult[list[Entry] | str]
 
             **Private Methods** (NOT in protocol, internal only):
-            - _can_handle_entry() - Detection logic
-            - _can_handle_attribute() - Detection logic
-            - _can_handle_objectclass() - Detection logic
+            - can_handle() - Detection logic
+            - can_handle_attribute() - Detection logic
+            - can_handle_objectclass() - Detection logic
             - Hooks: _hook_validate_entry_raw(), _hook_post_parse_entry(), _hook_pre_write_entry()
             - process_entry, convert_entry handled via hooks or conversion
             """
@@ -430,8 +430,8 @@ class FlextLdifProtocols(FlextProtocols):
 
             def convert(
                 self,
-                source_quirk: FlextLdifProtocols.Quirks.QuirksPort,
-                target_quirk: FlextLdifProtocols.Quirks.QuirksPort,
+                source: FlextLdifProtocols.Quirks.QuirksPort,
+                target: FlextLdifProtocols.Quirks.QuirksPort,
                 model_instance: FlextLdifModels.ConvertibleModel,
             ) -> FlextResult[FlextLdifModels.ConvertibleModel]:
                 """Convert a model from a source server format to a target server format.
@@ -442,8 +442,8 @@ class FlextLdifProtocols(FlextProtocols):
                 methods on the provided quirk ports.
 
                 Args:
-                    source_quirk: The quirk port implementation for the source server.
-                    target_quirk: The quirk port implementation for the target server.
+                    source: The quirk port implementation for the source server.
+                    target: The quirk port implementation for the target server.
                     model_instance: The Pydantic model instance to convert.
 
                 Returns:
@@ -470,64 +470,7 @@ class FlextLdifProtocols(FlextProtocols):
             4. Manage global registry singleton
             """
 
-            def register_schema_quirk(
-                self,
-                quirk: FlextLdifProtocols.Quirks.SchemaProtocol,
-            ) -> FlextResult[None]:
-                """Register a schema quirk.
-
-                Args:
-                    quirk: Schema quirk to register
-
-                Returns:
-                    FlextResult[None]: Registration success
-
-                """
-                ...
-
-            def register_acl_quirk(
-                self,
-                quirk: FlextLdifProtocols.Quirks.AclProtocol,
-            ) -> FlextResult[None]:
-                """Register an ACL quirk.
-
-                Args:
-                    quirk: ACL quirk to register
-
-                Returns:
-                    FlextResult[None]: Registration success
-
-                """
-                ...
-
-            def register_entry_quirk(
-                self,
-                quirk: FlextLdifProtocols.Quirks.EntryProtocol,
-            ) -> FlextResult[None]:
-                """Register an entry quirk.
-
-                Args:
-                    quirk: Entry quirk to register
-
-                Returns:
-                    FlextResult[None]: Registration success
-
-                """
-                ...
-
-            def get_schema_quirks(self, server_type: str) -> FlextResult[list[object]]:
-                """Get schema quirks for server type.
-
-                Args:
-                    server_type: Server type identifier
-
-                Returns:
-                    FlextResult with list of schema quirks ordered by priority
-
-                """
-                ...
-
-            def get_best_schema_quirk(
+            def get_best_schema(
                 self,
                 server_type: str,
             ) -> FlextResult[FlextLdifProtocols.Quirks.SchemaProtocol]:

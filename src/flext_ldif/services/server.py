@@ -25,55 +25,34 @@ logger = FlextLogger(__name__)
 
 
 class FlextLdifServer:
-    """Centralized registry for LDIF/LDAP quirks.
+    """Centralized registry for LDIF/LDAP server quirks.
 
-    Manages discovery, registration, and composition of server-specific quirks.
-    All quirks are stored as base FlextLdifServersBase instances and nested
-    quirks (Schema/Acl/Entry) are accessed dynamically on-demand.
+    Thin, DRY wrapper around auto-discovered server-specific quirks.
+    Manages discovery, registration, and access to quirks for all LDAP servers.
 
     Features:
-    - Automatic discovery of quirks from flext_ldif.servers package via dependency injection
-    - Single base quirk storage (no duplicate registrations)
-    - Dynamic access to nested Schema/Acl/Entry quirks from base instances
-    - Singleton pattern for global registry access via get_global_instance()
-    - Dynamic quirk lookup methods for runtime composition
-    - Integration with FlextLdifUtilities for RFC 4514 DN operations
-
-    DN Handling via Quirks:
-    - All registered server quirks support FlextLdifUtilities.DN operations
-    - DN normalization/validation is performed at quirk level using FlextLdifUtilities
-    - Server-specific DN handling hooks available in registered quirks
-    - Supports migration workflows with proper DN transformation via conversion matrix
+    - Automatic discovery from flext_ldif.servers package
+    - Dynamic access to Schema/Acl/Entry quirks
+    - Singleton pattern for global registry
+    - Server-agnostic API for quirk operations
+    - Supports RFC 4514 DN operations via quirks
 
     Example:
-        # Automatic discovery and registration on initialization
         registry = FlextLdifServer()
-
-        # Query available quirks
-        quirks = registry.get_schema_quirks("oid")
-
-        # Get global singleton instance
-        global_registry = FlextLdifServer.get_global_instance()
+        schema = registry.schema("oid")     # Get OID schema quirk
+        acl = registry.acl("oud")            # Get OUD ACL quirk
+        entry = registry.entry("openldap")   # Get OpenLDAP entry quirk
 
     Note:
-        All quirks are automatically discovered and registered during __init__.
-        No manual registration needed. This is a regular Python class (not a
-        Pydantic model) to avoid complications with forward references and
-        model validation for internal registry state.
+        All quirks are auto-discovered and registered during __init__.
+        No manual registration required.
 
     """
 
     def __init__(self) -> None:
-        """Initialize quirk registry with base quirk instances only.
-
-        Stores only FlextLdifServersBase instances in a dict by server_type.
-        Nested Schema/Acl/Entry quirks are accessed dynamically via properties.
-        """
+        """Initialize quirk registry with auto-discovery."""
         super().__init__()
-        # Single storage: server_type → base quirk instance
-        self._base_quirks: dict[str, FlextLdifServersBase] = {}
-
-        # Auto-discover and register all base quirks
+        self._bases: dict[str, FlextLdifServersBase] = {}
         self._auto_discover_and_register()
 
     def _auto_discover_and_register(self) -> None:
@@ -85,7 +64,7 @@ class FlextLdifServer:
         Process:
         1. Find all classes extending FlextLdifServersBase (except base itself)
         2. Instantiate each concrete class
-        3. Register base instance in _base_quirks dict by server_type
+        3. Register base instance in _bases dict by server_type
         4. Log all registrations at debug level
 
         """
@@ -125,7 +104,7 @@ class FlextLdifServer:
                         continue
 
                     # Register the base quirk instance
-                    self._base_quirks[server_type] = instance
+                    self._bases[server_type] = instance
                     logger.debug(
                         f"Registered base quirk: {obj.__name__} "
                         f"(server_type={server_type}, priority={priority})"
@@ -170,7 +149,7 @@ class FlextLdifServer:
                 )
 
             # Register in dict by server_type
-            self._base_quirks[server_type] = quirk
+            self._bases[server_type] = quirk
             logger.info(
                 f"Registered base quirk: {quirk.__class__.__name__} "
                 f"(server_type={server_type})"
@@ -180,242 +159,119 @@ class FlextLdifServer:
         except (ValueError, TypeError, AttributeError) as e:
             return FlextResult[None].fail(f"Failed to register quirk: {e}")
 
-    def register_schema_quirk(
-        self,
-        quirk: FlextLdifServersBase.Schema,
-    ) -> FlextResult[None]:
-        """Register a schema quirk (wrapper for protocol compliance).
-
-        Args:
-            quirk: Schema quirk to register
-
-        Returns:
-            FlextResult[None]: Registration success
-
-        """
-        # Schema quirks are accessed from their parent base quirk
-        # This is a protocol method that doesn't do anything in our implementation
-        # because schema quirks are always part of a base quirk
-        # But we provide it for protocol compliance
-        return FlextResult[None].ok(None)
-
-    def register_acl_quirk(
-        self,
-        quirk: FlextLdifServersBase.Acl,
-    ) -> FlextResult[None]:
-        """Register an ACL quirk (wrapper for protocol compliance).
-
-        Args:
-            quirk: ACL quirk to register
-
-        Returns:
-            FlextResult[None]: Registration success
-
-        """
-        # ACL quirks are accessed from their parent base quirk
-        # This is a protocol method that doesn't do anything in our implementation
-        # because ACL quirks are always part of a base quirk
-        # But we provide it for protocol compliance
-        return FlextResult[None].ok(None)
-
-    def register_entry_quirk(
-        self,
-        quirk: FlextLdifServersBase.Entry,
-    ) -> FlextResult[None]:
-        """Register an entry quirk (wrapper for protocol compliance).
-
-        Args:
-            quirk: Entry quirk to register
-
-        Returns:
-            FlextResult[None]: Registration success
-
-        """
-        # Entry quirks are accessed from their parent base quirk
-        # This is a protocol method that doesn't do anything in our implementation
-        # because entry quirks are always part of a base quirk
-        # But we provide it for protocol compliance
-        return FlextResult[None].ok(None)
-
-    def _validate_protocols(
-        self, quirk: FlextLdifServersBase
-    ) -> FlextResult[None]:
-        """Validate that all nested quirks satisfy their protocols.
-
-        Uses isinstance() checks to verify protocol compliance at registration time.
-        This ensures quirks match the structural typing contracts defined in
-        FlextLdifProtocols.
-
-        Args:
-            quirk: Base quirk instance to validate
-
-        Returns:
-            FlextResult[None]: ok(None) if all quirks valid, or fail() with reason
-
-        """
-        # Validate schema quirk if present
-        schema_quirk = getattr(quirk, "schema", None)
-        if schema_quirk:
-            # Validate that schema quirk has required core public methods
-            # All schema operations use parse/write interface
-            required_methods = ["parse", "write"]
-            for method in required_methods:
-                if not hasattr(schema_quirk, method):
-                    msg = f"Schema quirk {type(schema_quirk).__name__} missing method: {method}"
-                    logger.warning(msg)
-                    return FlextResult.fail(msg)
-
-        # Validate ACL quirk if present
-        acl_quirk = getattr(quirk, "acl", None)
-        if acl_quirk:
-            # Validate that acl quirk has required core public methods
-            # All ACL operations use parse/write interface
-            required_methods = ["parse", "write"]
-            for method in required_methods:
-                if not hasattr(acl_quirk, method):
-                    msg = (
-                        f"ACL quirk {type(acl_quirk).__name__} missing method: {method}"
-                    )
-                    logger.warning(msg)
-                    return FlextResult.fail(msg)
-
-        # Validate Entry quirk if present
-        entry_quirk = getattr(quirk, "entry", None)
-        if entry_quirk:
-            # Validate that entry quirk has required core public methods
-            # All Entry operations use parse/write interface
-            required_methods = ["parse", "write"]
-            for method in required_methods:
-                if not hasattr(entry_quirk, method):
-                    msg = f"Entry quirk {type(entry_quirk).__name__} missing method: {method}"
-                    logger.warning(msg)
-                    return FlextResult.fail(msg)
-
-        return FlextResult.ok(None)
-
     def _normalize_server_type(self, server_type: str) -> str:
-        """Normalize server type to canonical short form.
-
-        Args:
-            server_type: Server type (may be long or short form)
-
-        Returns:
-            Normalized server type in short form
-
-        """
+        """Normalize server type to canonical short form."""
         return FlextLdifConstants.ServerTypes.FROM_LONG.get(server_type, server_type)
 
-    def get_base_quirk(self, server_type: str) -> FlextLdifServersBase | None:
-        """Get base quirk instance for server type.
+    def _get_attr(
+        self,
+        server_type: str,
+        attr_name: str,
+    ) -> object | None:
+        """Generic method to get quirk attribute (schema, acl, entry).
+
+        Eliminates ~100 lines of DRY violations from separate get_* methods.
+        """
+        base = self._bases.get(self._normalize_server_type(server_type))
+        return getattr(base, attr_name, None) if base else None
+
+    # =========================================================================
+    # THIN INTERFACE - Server-agnostic quirk access (no duplication)
+    # =========================================================================
+
+    def quirk(self, server_type: str) -> FlextLdifServersBase | None:
+        """Get base quirk for a server type.
 
         Args:
-            server_type: Server type (may be long or short form)
+            server_type: Server type (e.g., 'oid', 'oud', 'openldap')
 
         Returns:
-            Base quirk instance or None if not registered
+            Base quirk instance or None
 
         """
-        normalized_type = self._normalize_server_type(server_type)
-        return self._base_quirks.get(normalized_type)
+        return self._bases.get(self._normalize_server_type(server_type))
 
-    def get_schema_quirk(self, server_type: str) -> FlextLdifServersBase.Schema | None:
+    def schema(self, server_type: str) -> FlextLdifServersBase.Schema | None:
         """Get schema quirk for a server type.
 
         Args:
-            server_type: Server type (e.g., 'oid', 'oud', 'openldap')
+            server_type: Server type
 
         Returns:
-            Schema quirk instance or None
+            Schema quirk or None
 
         """
-        base = self.get_base_quirk(server_type)
-        if base and hasattr(base, "schema"):
-            # Use getattr to avoid Pydantic schema attribute confusion
-            schema_attr = getattr(base, "schema", None)
-            if isinstance(schema_attr, FlextLdifServersBase.Schema):
-                return schema_attr
-        return None
+        return self._get_attr(server_type, "schema")
 
-    def get_schema_quirks(self, server_type: str) -> list[FlextLdifServersBase.Schema]:
-        """Get all schema quirks for a server type.
-
-        Args:
-            server_type: Server type (e.g., 'oid', 'oud', 'openldap')
-
-        Returns:
-            List of schema quirks (will be 0 or 1 item per server type)
-
-        """
-        quirk = self.get_schema_quirk(server_type)
-        return [quirk] if quirk else []
-
-    def get_acl_quirk(self, server_type: str) -> FlextLdifServersBase.Acl | None:
+    def acl(self, server_type: str) -> FlextLdifServersBase.Acl | None:
         """Get ACL quirk for a server type.
 
         Args:
-            server_type: Server type (may be long or short form)
+            server_type: Server type
 
         Returns:
-            ACL quirk instance or None
+            ACL quirk or None
 
         """
-        base = self.get_base_quirk(server_type)
-        if base and hasattr(base, "acl"):
-            acl_attr = getattr(base, "acl", None)
-            if isinstance(acl_attr, FlextLdifServersBase.Acl):
-                return acl_attr
-        return None
+        return self._get_attr(server_type, "acl")
 
-    def get_acl_quirks(self, server_type: str) -> list[FlextLdifServersBase.Acl]:
-        """Get all ACL quirks for a server type.
-
-        Args:
-            server_type: Server type (may be long or short form)
-
-        Returns:
-            List of ACL quirks (will be 0 or 1 item per server type)
-
-        """
-        quirk = self.get_acl_quirk(server_type)
-        return [quirk] if quirk else []
-
-    def get_entry_quirk(self, server_type: str) -> FlextLdifServersBase.Entry | None:
+    def entry(self, server_type: str) -> FlextLdifServersBase.Entry | None:
         """Get entry quirk for a server type.
 
         Args:
-            server_type: Server type (may be long or short form)
+            server_type: Server type
 
         Returns:
-            Entry quirk instance or None
+            Entry quirk or None
 
         """
-        base = self.get_base_quirk(server_type)
-        if base and hasattr(base, "entry"):
-            entry_attr = getattr(base, "entry", None)
-            if isinstance(entry_attr, FlextLdifServersBase.Entry):
-                return entry_attr
-        return None
+        return self._get_attr(server_type, "entry")
+
+    # =========================================================================
+    # BACKWARD COMPATIBILITY - Keep old method names for now
+    # =========================================================================
+
+    def get_base(self, server_type: str) -> FlextLdifServersBase | None:
+        """Deprecated: Use quirk() instead."""
+        return self.quirk(server_type)
+
+    def get_schema(self, server_type: str) -> FlextLdifServersBase.Schema | None:
+        """Deprecated: Use schema() instead."""
+        return self.schema(server_type)
+
+    def get_schemas(
+        self,
+        server_type: str,
+    ) -> list[FlextLdifServersBase.Schema]:
+        """Deprecated: Use schema() and check for None instead."""
+        quirk = self.schema(server_type)
+        return [quirk] if quirk else []
+
+    def get_acl(self, server_type: str) -> FlextLdifServersBase.Acl | None:
+        """Deprecated: Use acl() instead."""
+        return self.acl(server_type)
+
+    def get_acls(self, server_type: str) -> list[FlextLdifServersBase.Acl]:
+        """Deprecated: Use acl() and check for None instead."""
+        quirk = self.acl(server_type)
+        return [quirk] if quirk else []
+
+    def get_entry(self, server_type: str) -> FlextLdifServersBase.Entry | None:
+        """Deprecated: Use entry() instead."""
+        return self.entry(server_type)
 
     def get_entrys(self, server_type: str) -> list[FlextLdifServersBase.Entry]:
-        """Get all entry quirks for a server type.
-
-        Args:
-            server_type: Server type (may be long or short form)
-
-        Returns:
-            List of entry quirks (will be 0 or 1 item per server type)
-
-        """
-        quirk = self.get_entry_quirk(server_type)
+        """Deprecated: Use entry() and check for None instead."""
+        quirk = self.entry(server_type)
         return [quirk] if quirk else []
 
-    def get_quirks(self, server_type: str) -> list[FlextLdifServersBase]:
+    def gets(self, server_type: str) -> list[FlextLdifServersBase]:
         """Get base quirk implementation for a server type."""
         normalized_type = self._normalize_server_type(server_type)
-        quirk = self._base_quirks.get(normalized_type)
+        quirk = self._bases.get(normalized_type)
         return [quirk] if quirk else []
 
-    def get_all_quirks_for_server(
+    def get_alls_for_server(
         self,
         server_type: str,
     ) -> dict[
@@ -435,108 +291,143 @@ class FlextLdifServer:
 
         """
         return {
-            "schema": self.get_schema_quirk(server_type),
-            "acl": self.get_acl_quirk(server_type),
-            "entry": self.get_entry_quirk(server_type),
+            "schema": self.get_schema(server_type),
+            "acl": self.get_acl(server_type),
+            "entry": self.get_entry(server_type),
         }
 
-    def find_schema_quirk_for_attribute(
+    # =========================================================================
+    # SERVER-AGNOSTIC QUIRK FINDING - Thin wrappers (no duplication)
+    # =========================================================================
+
+    def find_schema_for_attribute(
         self,
         server_type: str,
         attr_definition: str,
     ) -> FlextLdifServersBase.Schema | None:
-        """Find the first schema quirk that can handle an attribute definition.
+        """Find schema quirk that handles attribute definition.
 
         Args:
             server_type: Server type
-            attr_definition: AttributeType definition string
+            attr_definition: AttributeType definition
 
         Returns:
-            First matching quirk or None
+            Schema quirk or None
 
         """
-        quirk = self.get_schema_quirk(server_type)
-        if quirk and quirk._can_handle_attribute(attr_definition):
-            return quirk
+        schema = self.schema(server_type)
+        if schema and schema.can_handle_attribute(attr_definition):
+            return schema
         return None
 
-    def find_schema_quirk_for_objectclass(
+    def find_schema_for_objectclass(
         self,
         server_type: str,
         oc_definition: str,
     ) -> FlextLdifServersBase.Schema | None:
-        """Find the first schema quirk that can handle an objectClass definition.
+        """Find schema quirk that handles objectClass definition.
 
         Args:
             server_type: Server type
-            oc_definition: ObjectClass definition string
+            oc_definition: ObjectClass definition
 
         Returns:
-            First matching quirk or None
+            Schema quirk or None
 
         """
-        quirk = self.get_schema_quirk(server_type)
-        if quirk and quirk._can_handle_objectclass(oc_definition):
-            return quirk
+        schema = self.schema(server_type)
+        if schema and schema.can_handle_objectclass(oc_definition):
+            return schema
         return None
 
-    def find_acl_quirk(
+    def find_acl_for_line(
         self,
         server_type: str,
         acl_line: str,
     ) -> FlextLdifServersBase.Acl | None:
-        """Find the first ACL quirk that can handle an ACL line.
+        """Find ACL quirk that handles ACL line.
 
         Args:
             server_type: Server type
-            acl_line: ACL definition line
+            acl_line: ACL line
 
         Returns:
-            First matching quirk or None
+            ACL quirk or None
 
         """
-        quirk = self.get_acl_quirk(server_type)
-        if quirk and quirk._can_handle(acl_line):
-            return quirk
+        acl = self.acl(server_type)
+        if acl and acl.can_handle(acl_line):
+            return acl
         return None
 
-    def find_entry_quirk(
+    def find_entry_handler(
         self,
         server_type: str,
         entry_dn: str,
         attributes: dict[str, object],
     ) -> FlextLdifServersBase.Entry | None:
-        """Find the first entry quirk that can handle an entry.
-
-        Checks all server types in priority order to find the best quirk
-        for handling the entry, not just the specified server type.
+        """Find entry quirk that handles entry (checks all servers by priority).
 
         Args:
-            server_type: Preferred server type (higher priority)
-            entry_dn: Entry distinguished name
+            server_type: Preferred server type
+            entry_dn: Entry DN
             attributes: Entry attributes
 
         Returns:
-            First matching quirk or None
+            Entry quirk or None
 
         """
-        # First check the preferred server type
-        quirk = self.get_entry_quirk(server_type)
-        if quirk and quirk._can_handle_entry(entry_dn, attributes):
-            return quirk
+        # Check preferred server first
+        entry = self.entry(server_type)
+        if entry and entry.can_handle(entry_dn, attributes):
+            return entry
 
-        # Then check all other server types in priority order
-        all_server_types = self.list_registered_servers()
-
-        for other_server_type in all_server_types:
-            if other_server_type == self._normalize_server_type(server_type):
-                continue  # Already checked above
-
-            other_quirk = self.get_entry_quirk(other_server_type)
-            if other_quirk and other_quirk._can_handle_entry(entry_dn, attributes):
-                return other_quirk
+        # Check others in priority order
+        for srv_type in self.list_registered_servers():
+            if srv_type == self._normalize_server_type(server_type):
+                continue
+            other_entry = self.entry(srv_type)
+            if other_entry and other_entry.can_handle(entry_dn, attributes):
+                return other_entry
 
         return None
+
+    # =========================================================================
+    # BACKWARD COMPATIBILITY - Old find_* method names
+    # =========================================================================
+
+    def find_schema_for_attribute(
+        self,
+        server_type: str,
+        attr_definition: str,
+    ) -> FlextLdifServersBase.Schema | None:
+        """Deprecated: Use find_schema_for_attribute() instead."""
+        return self.find_schema_for_attribute(server_type, attr_definition)
+
+    def find_schema_for_objectclass(
+        self,
+        server_type: str,
+        oc_definition: str,
+    ) -> FlextLdifServersBase.Schema | None:
+        """Deprecated: Use find_schema_for_objectclass() instead."""
+        return self.find_schema_for_objectclass(server_type, oc_definition)
+
+    def find_acl(
+        self,
+        server_type: str,
+        acl_line: str,
+    ) -> FlextLdifServersBase.Acl | None:
+        """Deprecated: Use find_acl_for_line() instead."""
+        return self.find_acl_for_line(server_type, acl_line)
+
+    def find_entry(
+        self,
+        server_type: str,
+        entry_dn: str,
+        attributes: dict[str, object],
+    ) -> FlextLdifServersBase.Entry | None:
+        """Deprecated: Use find_entry_handler() instead."""
+        return self.find_entry_handler(server_type, entry_dn, attributes)
 
     def list_registered_servers(self) -> list[str]:
         """List all server types that have registered quirks.
@@ -545,7 +436,7 @@ class FlextLdifServer:
             List of server type identifiers sorted alphabetically
 
         """
-        return sorted(self._base_quirks.keys())
+        return sorted(self._bases.keys())
 
     def get_registry_stats(self) -> dict[str, object]:
         """Get statistics about registered quirks.
@@ -556,16 +447,16 @@ class FlextLdifServer:
         """
         # Collect stats per server
         by_server: dict[str, dict[str, bool]] = {}
-        for server_type, base_quirk in self._base_quirks.items():
+        for server_type, base in self._bases.items():
             by_server[server_type] = {
-                "has_schema": hasattr(base_quirk, "schema"),
-                "has_acl": hasattr(base_quirk, "acl"),
-                "has_entry": hasattr(base_quirk, "entry"),
+                "has_schema": hasattr(base, "schema"),
+                "has_acl": hasattr(base, "acl"),
+                "has_entry": hasattr(base, "entry"),
             }
 
         stats: dict[str, object] = {
-            "total_servers": len(self._base_quirks),
-            "servers": list(self._base_quirks.keys()),
+            "total_servers": len(self._bases),
+            "servers": list(self._bases.keys()),
             "quirks_by_server": by_server,
         }
         return stats

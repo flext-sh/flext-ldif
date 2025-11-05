@@ -342,6 +342,19 @@ class FlextLdifTypes(FlextTypes):
     # ACL server types - use the same types as ServerType for consistency
     type AclServerType = FlextLdifConstants.LiteralTypes.ServerType
 
+    # =========================================================================
+    # SERVICE TYPES - Semantic types for service modules
+    # =========================================================================
+
+    class Service:
+        """Type definitions for LDIF service modules.
+
+        Contains semantic types used across service implementations.
+        """
+
+        # DN (Distinguished Name) - RFC 4514 compliant
+        type DN = str
+
 
 # =============================================================================
 # PUBLIC API EXPORTS - LDIF TypeVars and types

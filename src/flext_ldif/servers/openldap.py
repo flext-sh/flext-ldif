@@ -130,7 +130,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
         ACL_ATTRS_PATTERN: Final[str] = r"attrs?\s*=\s*([^,\s]+(?:\s*,\s*[^,\s]+)*)"
         ACL_SUBJECT_TYPE_WHO: Final[str] = "who"
 
-        # ACL detection patterns (migrated from _can_handle_acl method)
+        # ACL detection patterns (migrated from can_handle_acl method)
         ACL_INDEX_PREFIX_PATTERN: Final[str] = r"^(\{\d+\})?\s*to\s+"
         ACL_START_PREFIX: Final[str] = "to"
 
@@ -175,7 +175,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
 
         # Schema patterns moved to Constants.SCHEMA_OPENLDAP_OLC_PATTERN
 
-        def _can_handle_attribute(
+        def can_handle_attribute(
             self, attr_definition: str | FlextLdifModels.SchemaAttribute
         ) -> bool:
             """Check if this is an OpenLDAP 2.x attribute (PRIVATE).
@@ -201,7 +201,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                 ):
                     return True
                 # Otherwise, delegate to RFC base (RFC attributes are also valid)
-                return super()._can_handle_attribute(attr_definition)
+                return super().can_handle_attribute(attr_definition)
             if isinstance(attr_definition, FlextLdifModels.SchemaAttribute):
                 # Check if it contains OpenLDAP-specific markers
                 if attr_definition.oid and re.search(
@@ -211,7 +211,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                 ):
                     return True
                 # Otherwise, delegate to RFC base (RFC attributes are also valid)
-                return super()._can_handle_attribute(attr_definition)
+                return super().can_handle_attribute(attr_definition)
             return False
 
         # Schema parsing and conversion methods
@@ -221,9 +221,9 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
         # - _parse_objectclass(): Private - strips OpenLDAP-specific metadata
         # - should_filter_out_attribute(): Returns False (accept all in OpenLDAP mode)
         # - should_filter_out_objectclass(): Returns False (accept all in OpenLDAP mode)
-        # - create_quirk_metadata(): Creates OpenLDAP-specific metadata
+        # - create_metadata(): Creates OpenLDAP-specific metadata
 
-        def _can_handle_objectclass(
+        def can_handle_objectclass(
             self, oc_definition: str | FlextLdifModels.SchemaObjectClass
         ) -> bool:
             """Check if this is an OpenLDAP 2.x objectClass (PRIVATE).
@@ -248,7 +248,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                 ):
                     return True
                 # Otherwise, delegate to RFC base (RFC objectClasses are also valid)
-                return super()._can_handle_objectclass(oc_definition)
+                return super().can_handle_objectclass(oc_definition)
             if isinstance(oc_definition, FlextLdifModels.SchemaObjectClass):
                 # Check if it contains OpenLDAP-specific markers
                 if oc_definition.oid and re.search(
@@ -258,7 +258,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                 ):
                     return True
                 # Otherwise, delegate to RFC base (RFC objectClasses are also valid)
-                return super()._can_handle_objectclass(oc_definition)
+                return super().can_handle_objectclass(oc_definition)
             return False
 
         def _transform_attribute_for_write(
@@ -310,7 +310,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
 
         Example:
             quirk = FlextLdifServersOpenldap.Acl()
-            if quirk._can_handle(acl_line):
+            if quirk.can_handle(acl_line):
                 result = quirk.parse(acl_line)
 
         """
@@ -325,7 +325,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             """
             super().__init__(**kwargs)
 
-        def _can_handle(self, acl: str | FlextLdifModels.Acl) -> bool:
+        def can_handle(self, acl: str | FlextLdifModels.Acl) -> bool:
             """Check if this is an OpenLDAP 2.x ACL.
 
             Args:
@@ -335,9 +335,9 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                 True if this is OpenLDAP 2.x ACL format
 
             """
-            return self._can_handle_acl(acl)
+            return self.can_handle(acl)
 
-        def _can_handle_acl(self, acl_line: str | FlextLdifModels.Acl) -> bool:
+        def can_handle_acl(self, acl_line: str | FlextLdifModels.Acl) -> bool:
             """Check if this is an OpenLDAP 2.x ACL (internal).
 
             Args:
@@ -533,7 +533,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                         compare=FlextLdifConstants.PermissionNames.READ
                         in access,  # OpenLDAP: read includes compare
                     ),
-                    metadata=FlextLdifModels.QuirkMetadata.create_for_quirk(
+                    metadata=FlextLdifModels.QuirkMetadata.create_for(
                         FlextLdifServersOpenldap.Constants.SERVER_TYPE,
                         original_format=acl_line,
                     ),
@@ -573,10 +573,10 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
 
         # OVERRIDDEN METHODS (from FlextLdifServersBase.Entry)
         # These methods override the base class with OpenLDAP 2.x-specific logic:
-        # - _can_handle_entry(): PRIVATE - Detects OpenLDAP 2.x entries by DN/attributes
+        # - can_handle(): PRIVATE - Detects OpenLDAP 2.x entries by DN/attributes
         # - _parse_entry(): Normalizes OpenLDAP 2.x entries with metadata
 
-        def _can_handle_entry(
+        def can_handle(
             self,
             entry_dn: str,
             attributes: Mapping[str, object],

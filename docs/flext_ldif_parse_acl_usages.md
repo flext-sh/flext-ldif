@@ -57,18 +57,18 @@ class AclProtocol(Protocol):
 | #   | File                  | Location                                         | Server Type             |
 | --- | --------------------- | ------------------------------------------------ | ----------------------- |
 | 1   | `oid.py`              | `/flext_ldif/quirks/servers/oid.py`              | Oracle OID              |
-| 2   | `oud_quirks.py`       | `/flext_ldif/quirks/servers/oud_quirks.py`       | Oracle OUD              |
+| 2   | `ouds.py`       | `/flext_ldif/quirks/servers/ouds.py`       | Oracle OUD              |
 | 3   | `openldap.py`         | `/flext_ldif/quirks/servers/openldap.py`         | OpenLDAP (generic)      |
 | 4   | `openldap1.py`        | `/flext_ldif/quirks/servers/openldap1.py`        | OpenLDAP 1.x            |
-| 5   | `openldap2_quirks.py` | `/flext_ldif/quirks/servers/openldap2_quirks.py` | OpenLDAP 2.x            |
+| 5   | `openldap2s.py` | `/flext_ldif/quirks/servers/openldap2s.py` | OpenLDAP 2.x            |
 | 6   | `tivoli.py`           | `/flext_ldif/quirks/servers/tivoli.py`           | IBM Tivoli              |
 | 7   | `novell.py`           | `/flext_ldif/quirks/servers/novell.py`           | Novell eDirectory       |
 | 8   | `ad.py`               | `/flext_ldif/quirks/servers/ad.py`               | Active Directory        |
 | 9   | `ds389.py`            | `/flext_ldif/quirks/servers/ds389.py`            | 389 Directory Server    |
 | 10  | `apache.py`           | `/flext_ldif/quirks/servers/apache.py`           | Apache DS               |
 | 11  | `relaxed.py`          | `/flext_ldif/quirks/servers/relaxed.py`          | RFC-compliant (relaxed) |
-| 12  | `rfc_quirks.py`       | `/flext_ldif/quirks/servers/rfc_quirks.py`       | RFC baseline            |
-| 13  | `generic_quirks.py`   | `/flext_ldif/quirks/servers/generic_quirks.py`   | Generic fallback        |
+| 12  | `rfcs.py`       | `/flext_ldif/quirks/servers/rfcs.py`       | RFC baseline            |
+| 13  | `generics.py`   | `/flext_ldif/quirks/servers/generics.py`   | Generic fallback        |
 
 ### Implementation Pattern
 
@@ -99,7 +99,7 @@ def parse(
 
     Delegates to quirks.parse() internally.
     """
-    quirk_result = self._get_quirk_for_server(server_type)
+    quirk_result = self._get_for_server(server_type)
     if quirk_result.is_failure:
         return FlextResult[FlextLdifModels.Acl].fail(...)
 
@@ -126,7 +126,7 @@ def _transform_categories(
     # Lines 668-771: Complete ACL transformation logic
     for entry in categorized.get("acl", []):
         for acl_attr in ["orclaci", "orclentrylevelaci"]:
-            parse_result = oid_acl_quirk.parse(f"{acl_attr}: {acl_value}")
+            parse_result = oid_acl.parse(f"{acl_attr}: {acl_value}")
             # ↑ Uses parse() to parse OID format
 ```
 
@@ -140,8 +140,8 @@ def _transform_categories(
 
 | File                                 | Location                                           | Test Count   |
 | ------------------------------------ | -------------------------------------------------- | ------------ |
-| `test_quirks_acl.py`                 | `/tests/unit/quirks/test_quirks_acl.py`            | 20+ tests    |
-| `test_quirks_acl_conversion.py`      | `/tests/unit/quirks/test_quirks_acl_conversion.py` | 15+ tests    |
+| `tests_acl.py`                 | `/tests/unit/quirks/tests_acl.py`            | 20+ tests    |
+| `tests_acl_conversion.py`      | `/tests/unit/quirks/tests_acl_conversion.py` | 15+ tests    |
 | `test_acl_service.py`                | `/tests/unit/test_acl_service.py`                  | 10+ tests    |
 | `test_acl_utils.py`                  | `/tests/unit/test_acl_utils.py`                    | 5+ tests     |
 | `test_acl_service_operations.py.bak` | Backup file                                        | Legacy tests |

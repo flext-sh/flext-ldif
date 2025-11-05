@@ -31,7 +31,7 @@ Container_Boundary(flext_ldif_lib, "FLEXT-LDIF Library") {
 
         Component_Boundary(server_implementations, "Server Implementations") {
             Component(oid, "OidQuirks", "Python Class", "Oracle Internet Directory", "Complete implementation")
-            Component(oud_quirks, "OudQuirks", "Python Class", "Oracle Unified Directory", "Complete implementation")
+            Component(ouds, "OudQuirks", "Python Class", "Oracle Unified Directory", "Complete implementation")
             Component(openldap, "OpenLdapQuirks", "Python Class", "OpenLDAP 2.x", "Complete implementation")
             Component(openldap1, "OpenLdap1Quirks", "Python Class", "OpenLDAP 1.x", "Complete implementation")
             Component(ad_stub, "ActiveDirectoryStub", "Python Class", "Active Directory", "Stub implementation")

@@ -416,7 +416,7 @@ Source Format → Source.to_rfc() → RFC Format → Target.from_rfc() → Targe
 
 ```python
 from flext_ldif.services.conversion import QuirksConversionMatrix
-from flext_ldif.servers.oud_quirks import FlextLdifServersOud
+from flext_ldif.servers.ouds import FlextLdifServersOud
 from flext_ldif.servers.oid import FlextLdifServersOid
 
 matrix = QuirksConversionMatrix()

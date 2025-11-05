@@ -205,11 +205,11 @@ class TestRfcQuirksWithRealFixtures:
         # Get RFC quirk
         from flext_ldif.servers.rfc import FlextLdifServersRfc
 
-        rfc_quirk = FlextLdifServersRfc()
+        rfc = FlextLdifServersRfc()
 
         # Verify that entries can be written through Entry quirk
         for entry in entries:
-            result = rfc_quirk.entry.write(entry)
+            result = rfc.entry.write(entry)
             assert result.is_success, f"Failed to write entry: {result.error}"
             written_str = result.unwrap()
             assert written_str is not None

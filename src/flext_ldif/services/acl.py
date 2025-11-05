@@ -149,10 +149,10 @@ class FlextLdifAcl(FlextService[FlextLdifModels.AclResponse]):
         """
         # Get ACL attribute name from quirks - no fallback
         try:
-            acl_quirks = self._registry.get_acl_quirks(server_type)
-            if acl_quirks:
+            acls = self._registry.get_acls(server_type)
+            if acls:
                 # Get the ACL attribute name from the first quirk class variable
-                for quirk in acl_quirks:
+                for quirk in acls:
                     if hasattr(quirk, "acl_attribute_name"):
                         attr_name = getattr(quirk, "acl_attribute_name", None)
                         if attr_name:
@@ -214,16 +214,16 @@ class FlextLdifAcl(FlextService[FlextLdifModels.AclResponse]):
         """
         try:
             # Find the appropriate quirk that can handle this ACL line
-            # Registry returns the first quirk that _can_handle(acl_line)
-            acl_quirk = self._registry.find_acl_quirk(server_type, acl_string)
-            if not acl_quirk:
+            # Registry returns the first quirk that can_handle(acl_line)
+            acl = self._registry.find_acl(server_type, acl_string)
+            if not acl:
                 return FlextResult[FlextLdifModels.Acl].fail(
                     f"No ACL quirk available to parse for {server_type}: {acl_string[:50]}...",
                 )
 
             # Delegate to quirk for parsing - NO FALLBACK
             # If the quirk can't parse it, the parsing fails
-            return acl_quirk.acl.parse(acl_string)
+            return acl.acl.parse(acl_string)
 
         except (ValueError, TypeError, AttributeError) as e:
             return FlextResult[FlextLdifModels.Acl].fail(
@@ -274,14 +274,14 @@ class FlextLdifAcl(FlextService[FlextLdifModels.AclResponse]):
             else:
                 # Use ACL quirk for the target server to convert RFC ACLs to ACI format
                 # ACL quirks handle the conversion from internal format to server-specific ACI format
-                target_acl_quirk = self._registry.find_acl_quirk(target_server, "")
-                if not target_acl_quirk:
+                target_acl = self._registry.find_acl(target_server, "")
+                if not target_acl:
                     return FlextResult[dict[str, object]].fail(
                         f"No ACL quirk available for target server {target_server}",
                     )
 
-                if hasattr(target_acl_quirk, "convert_rfc_acl_to_aci"):
-                    aci_result = target_acl_quirk.convert_rfc_acl_to_aci(
+                if hasattr(target_acl, "convert_rfc_acl_to_aci"):
+                    aci_result = target_acl.convert_rfc_acl_to_aci(
                         rfc_acl_attrs, target_server
                     )
                     if aci_result.is_failure:

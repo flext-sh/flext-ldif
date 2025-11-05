@@ -18,7 +18,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Literal, cast, override
+from typing import cast, override
 
 from flext_core import FlextLogger, FlextResult, FlextService
 
@@ -120,7 +120,7 @@ class FlextLdifMigrationPipeline(
         self,
         input_dir: str | Path,
         output_dir: str | Path,
-        mode: Literal["simple", "categorized", "structured"] = "simple",
+        mode: FlextLdifConstants.LiteralTypes.MigrationMode = "simple",
         # Simple mode parameters
         input_filename: str | None = None,
         output_filename: str = "migrated.ldif",
@@ -251,7 +251,7 @@ class FlextLdifMigrationPipeline(
         self._sort_entries_hierarchically = sort_entries_hierarchically
 
         # Service dependencies
-        self._quirk_registry = FlextLdifServer.get_global_instance()
+        self._registry = FlextLdifServer.get_global_instance()
         self._acl_service = FlextLdifAcl()
         self._dn_service = FlextLdifDn()
 
@@ -331,7 +331,7 @@ class FlextLdifMigrationPipeline(
 
         for entry in entries:
             try:
-                entry_dn = str(entry.dn.value)
+                entry_dn = str(FlextLdifUtilities.DN._get_dn_value(entry.dn))  # noqa: SLF001
 
                 # Validate DN using FlextLdifUtilities.DN
                 if not FlextLdifUtilities.DN.validate(entry_dn):
@@ -391,7 +391,7 @@ class FlextLdifMigrationPipeline(
                     continue
                 if any(attr in entry.attributes.attributes for attr in acl_config):
                     acl_entries.append(entry)
-                    acl_dns.add(entry.dn.value)
+                    acl_dns.add(FlextLdifUtilities.DN._get_dn_value(entry.dn))  # noqa: SLF001
             except Exception as e:
                 logger.exception(f"[PIPELINE] Error processing entry {idx}: {e}")
                 raise
@@ -400,7 +400,7 @@ class FlextLdifMigrationPipeline(
         for cat in list(categorized.keys()):
             if cat != FlextLdifConstants.Categories.ACL:
                 categorized[cat] = [
-                    e for e in categorized[cat] if e.dn.value not in acl_dns
+                    e for e in categorized[cat] if FlextLdifUtilities.DN._get_dn_value(e.dn) not in acl_dns  # noqa: SLF001
                 ]
 
     def _process_category(
@@ -655,7 +655,7 @@ class FlextLdifMigrationPipeline(
                 )
                 for e in file_entries:
                     if FlextLdifFilter.is_schema(e):
-                        logger.info(f"     Schema DN: {e.dn.value}")
+                        logger.info(f"     Schema DN: {FlextLdifUtilities.DN._get_dn_value(e.dn)}")  # noqa: SLF001
 
             entries.extend(file_entries)
 
@@ -897,7 +897,7 @@ class FlextLdifMigrationPipeline(
                 )
             else:
                 logger.warning(
-                    f"Failed to filter operational attributes for {entry.dn.value}: {operational_result.error}"
+                    f"Failed to filter operational attributes for {FlextLdifUtilities.DN._get_dn_value(entry.dn)}: {operational_result.error}"  # noqa: SLF001
                 )
 
             # Step 2: Filter forbidden attributes using FlextLdifFilters
@@ -909,7 +909,7 @@ class FlextLdifMigrationPipeline(
                     current_entry = forbidden_result.unwrap()
                 else:
                     logger.warning(
-                        f"Failed to filter forbidden attributes for {current_entry.dn.value}: {forbidden_result.error}"
+                        f"Failed to filter forbidden attributes for {FlextLdifUtilities.DN._get_dn_value(current_entry.dn)}: {forbidden_result.error}"  # noqa: SLF001
                     )
 
             # Step 3: Filter forbidden objectClasses using FlextLdifFilters
@@ -921,7 +921,7 @@ class FlextLdifMigrationPipeline(
                     current_entry = oc_result.unwrap()
                 else:
                     logger.warning(
-                        f"Failed to filter forbidden objectClasses for {current_entry.dn.value}: {oc_result.error}"
+                        f"Failed to filter forbidden objectClasses for {FlextLdifUtilities.DN._get_dn_value(current_entry.dn)}: {oc_result.error}"  # noqa: SLF001
                     )
 
             filtered.append(current_entry)

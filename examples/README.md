@@ -77,7 +77,7 @@ Handle server differences:
 
 **Key Functions**:
 
-- `parse_with_server_quirks()` - Server-specific parsing
+- `parse_with_servers()` - Server-specific parsing
 - `migrate_between_servers()` - Full migration workflow
 - `migrate_openldap_to_oud()` - OpenLDAP → OUD migration
 - `migrate_to_rfc_compliant()` - Normalize to RFC format

@@ -40,8 +40,8 @@ matrix = QuirksConversionMatrix()
 
 # Convert between any server combination
 result = matrix.convert(
-    source_quirk=oud_quirk,
-    target_quirk=oid_quirk,
+    source=oud,
+    target=oid,
     data_type="attribute",
     data=oud_attribute_string
 )
