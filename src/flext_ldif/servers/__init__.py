@@ -36,8 +36,10 @@ from flext_ldif.servers.tivoli import FlextLdifServersTivoli
 from flext_ldif.typings import FlextLdifTypes
 
 __all__ = [
+    # Server implementations
     "FlextLdifServersAd",
     "FlextLdifServersApache",
+    # Base classes
     "FlextLdifServersBase",
     "FlextLdifServersDs389",
     "FlextLdifServersNovell",
@@ -48,5 +50,6 @@ __all__ = [
     "FlextLdifServersRelaxed",
     "FlextLdifServersRfc",
     "FlextLdifServersTivoli",
+    # Types
     "FlextLdifTypes",
 ]

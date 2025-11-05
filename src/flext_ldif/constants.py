@@ -1036,11 +1036,15 @@ class FlextLdifConstants(FlextConstants):
 
         Different servers use different boolean formats:
         - RFC 4517 compliant: "TRUE" / "FALSE"
-        - Oracle OID: "1" / "0"
         - Legacy formats: "true" / "false", "yes" / "no"
 
         Zero Tolerance: Boolean conversions MUST use these constants.
         DO NOT hard-code boolean strings like "TRUE" or "1" in servers/*.py
+
+        NOTE: Server-specific boolean formats (e.g., Oracle OID "1"/"0") are defined
+        in their respective server Constants classes:
+        - OID: FlextLdifServersOid.Constants.ONE_OID, ZERO_OID, OID_TO_RFC, RFC_TO_OID
+        - OUD: Uses RFC 4517 compliant format (TRUE/FALSE)
         """
 
         # RFC 4517 compliant (OUD, modern servers)
@@ -1051,40 +1055,9 @@ class FlextLdifConstants(FlextConstants):
         TRUE_LOWER: Final[str] = "true"
         FALSE_LOWER: Final[str] = "false"
 
-        # Oracle OID format (non-RFC compliant)
-        ONE_OID: Final[str] = "1"
-        ZERO_OID: Final[str] = "0"
-
-        # Boolean conversion mappings
-        OID_TO_RFC: Final[dict[str, str]] = {
-            "1": TRUE_RFC,
-            "0": FALSE_RFC,
-            "true": TRUE_RFC,
-            "false": FALSE_RFC,
-        }
-
-        RFC_TO_OID: Final[dict[str, str]] = {
-            TRUE_RFC: ONE_OID,
-            FALSE_RFC: ZERO_OID,
-            TRUE_LOWER: ONE_OID,
-            FALSE_LOWER: ZERO_OID,
-        }
-
-        # Universal boolean check
+        # Universal boolean check (RFC-compliant values only)
         RFC_TRUE_VALUES: Final[frozenset[str]] = frozenset([TRUE_RFC, TRUE_LOWER])
         RFC_FALSE_VALUES: Final[frozenset[str]] = frozenset([FALSE_RFC, FALSE_LOWER])
-        OID_TRUE_VALUES: Final[frozenset[str]] = frozenset([
-            ONE_OID,
-            "true",
-            "True",
-            "TRUE",
-        ])
-        OID_FALSE_VALUES: Final[frozenset[str]] = frozenset([
-            ZERO_OID,
-            "false",
-            "False",
-            "FALSE",
-        ])
 
     # =============================================================================
     # METADATA KEYS - Quirk Processing and Entry Extension Metadata
@@ -1751,56 +1724,14 @@ class FlextLdifConstants(FlextConstants):
         Higher weight values indicate more specific patterns.
         """
 
-        # Detection score weights (higher = more specific)
-        ORACLE_OID_PATTERN: Final[str] = r"2\.16\.840\.1\.113894\."
-        ORACLE_OID_ATTRIBUTES: Final[frozenset[str]] = frozenset([
-            "orclOID",
-            "orclGUID",
-            "orclPassword",
-            "orclaci",
-            "orclentrylevelaci",
-            "orcldaslov",
-        ])
-        ORACLE_OID_WEIGHT: Final[int] = 10
-
-        ORACLE_OUD_PATTERN: Final[str] = r"(ds-sync-|ds-pwp-|ds-cfg-)"
-        ORACLE_OUD_ATTRIBUTES: Final[frozenset[str]] = frozenset([
-            "ds-sync-hist",
-            "ds-sync-state",
-            "ds-pwp-account-disabled",
-            "ds-cfg-backend-id",
-            "entryUUID",
-        ])
-        ORACLE_OUD_WEIGHT: Final[int] = 10
-
-        OPENLDAP_PATTERN: Final[str] = r"\b(olc[A-Z][a-zA-Z]+|cn=config)\b"
-        OPENLDAP_ATTRIBUTES: Final[frozenset[str]] = frozenset([
-            "olcDatabase",
-            "olcAccess",
-            "olcOverlay",
-            "olcModule",
-        ])
-        OPENLDAP_WEIGHT: Final[int] = 8
-
-        ACTIVE_DIRECTORY_PATTERN: Final[str] = r"1\.2\.840\.113556\."
-        ACTIVE_DIRECTORY_ATTRIBUTES: Final[frozenset[str]] = frozenset([
-            "objectGUID",
-            "samAccountName",
-            "sIDHistory",
-            "nTSecurityDescriptor",
-        ])
-        ACTIVE_DIRECTORY_WEIGHT: Final[int] = 8
-
-        NOVELL_EDIR_PATTERN: Final[str] = (
-            r"\b(GUID|Modifiers|nrpDistributionPassword)\b"
-        )
-        NOVELL_EDIR_WEIGHT: Final[int] = 6
-
-        IBM_TIVOLI_PATTERN: Final[str] = r"\b(ibm|tivoli|ldapdb)\b"
-        IBM_TIVOLI_WEIGHT: Final[int] = 6
-
-        DS_389_PATTERN: Final[str] = r"\b(389ds|redhat-ds|dirsrv)\b"
-        DS_389_WEIGHT: Final[int] = 6
+        # NOTE: Server-specific detection patterns have been moved to their respective server Constants classes:
+        # - ORACLE_OID_PATTERN, ORACLE_OID_ATTRIBUTES, ORACLE_OID_WEIGHT → FlextLdifServersOid.Constants.DETECTION_*
+        # - ORACLE_OUD_PATTERN, ORACLE_OUD_ATTRIBUTES, ORACLE_OUD_WEIGHT → FlextLdifServersOud.Constants.DETECTION_*
+        # - OPENLDAP_PATTERN, OPENLDAP_ATTRIBUTES, OPENLDAP_WEIGHT → FlextLdifServersOpenldap.Constants.DETECTION_*
+        # - ACTIVE_DIRECTORY_PATTERN, ACTIVE_DIRECTORY_ATTRIBUTES, ACTIVE_DIRECTORY_WEIGHT → FlextLdifServersAd.Constants.DETECTION_*
+        # - NOVELL_EDIR_PATTERN, NOVELL_EDIR_WEIGHT → FlextLdifServersNovell.Constants.DETECTION_*
+        # - IBM_TIVOLI_PATTERN, IBM_TIVOLI_WEIGHT → FlextLdifServersTivoli.Constants.DETECTION_*
+        # - DS_389_PATTERN, DS_389_WEIGHT → FlextLdifServersDs389.Constants.DETECTION_*
 
         # Detection thresholds
         DETECTION_THRESHOLD: Final[int] = 5
@@ -2326,27 +2257,11 @@ class FlextLdifConstants(FlextConstants):
         Wildcard "*" matches any server for generic transformations.
         """
 
-        # Subject type transformations for OID → OUD via RFC
-        OID_TO_RFC_SUBJECTS: Final[dict[str, tuple[str, str]]] = {
-            "dynamic_group_dnattr": ("group_membership", 'memberOf="{value}"'),
-            "dynamic_group_guidattr": ("user_attribute", 'guidattr="{value}"'),
-            "dynamic_group_attr": ("group_attribute", 'groupattr="{value}"'),
-        }
-
-        RFC_TO_OUD_SUBJECTS: Final[dict[str, tuple[str, str]]] = {
-            "group_membership": ("bind_rules", 'userattr="{value}#LDAPURL"'),
-            "user_attribute": ("bind_rules", 'userattr="{value}#USERDN"'),
-            "group_attribute": ("bind_rules", 'userattr="{value}#GROUPDN"'),
-        }
-
-        # Reverse: OUD → RFC → OID
-        OUD_TO_RFC_SUBJECTS: Final[dict[str, tuple[str, str]]] = {
-            "bind_rules": ("group_membership", "{value}"),
-        }
-
-        RFC_TO_OID_SUBJECTS: Final[dict[str, tuple[str, str]]] = {
-            "group_membership": ("group_dn", 'group="{value}"'),
-        }
+        # NOTE: Server-specific ACL subject transformations moved to respective server Constants:
+        # - OID_TO_RFC_SUBJECTS → FlextLdifServersOid.Constants.OID_TO_RFC_SUBJECTS
+        # - RFC_TO_OID_SUBJECTS → FlextLdifServersOid.Constants.RFC_TO_OID_SUBJECTS
+        # - RFC_TO_OUD_SUBJECTS → FlextLdifServersOud.Constants.RFC_TO_OUD_SUBJECTS
+        # - OUD_TO_RFC_SUBJECTS → FlextLdifServersOud.Constants.OUD_TO_RFC_SUBJECTS
 
         # 389DS transformations via RFC
         DS389_TO_RFC_SUBJECTS: Final[dict[str, tuple[str, str]]] = {
@@ -2364,113 +2279,22 @@ class FlextLdifConstants(FlextConstants):
     class AclPermissionCompatibility:
         """Permission compatibility matrix for server types.
 
-        Defines which permissions each server type supports.
-        Used for validation and alternative suggestion during conversion.
+        NOTE: Server-specific constants (SUPPORTED_PERMISSIONS, PERMISSION_ALTERNATIVES)
+        have been migrated to each server's Constants class:
+        - OID: FlextLdifServersOid.Constants.SUPPORTED_PERMISSIONS, PERMISSION_ALTERNATIVES
+        - OUD: FlextLdifServersOud.Constants.SUPPORTED_PERMISSIONS
+        - RFC: FlextLdifServersRfc.Constants.SUPPORTED_PERMISSIONS
+        - OpenLDAP: FlextLdifServersOpenldap.Constants.SUPPORTED_PERMISSIONS
+        - AD: FlextLdifServersAd.Constants.SUPPORTED_PERMISSIONS
+        - 389DS: FlextLdifServersDs389.Constants.SUPPORTED_PERMISSIONS
+        - Novell: FlextLdifServersNovell.Constants.SUPPORTED_PERMISSIONS
+        - Tivoli: FlextLdifServersTivoli.Constants.SUPPORTED_PERMISSIONS
+        - Apache: FlextLdifServersApache.Constants.SUPPORTED_PERMISSIONS
+        - OpenLDAP1: FlextLdifServersOpenldap1.Constants.SUPPORTED_PERMISSIONS
+
+        This class is kept for backward compatibility but should not be used for new code.
+        Use the server-specific Constants classes instead.
         """
-
-        # Permission support matrix
-        SUPPORTED_PERMISSIONS: Final[dict[str, frozenset[str]]] = {
-            "rfc": frozenset(["read", "write", "add", "delete", "search", "compare"]),
-            "oid": frozenset([
-                "read",
-                "write",
-                "add",
-                "delete",
-                "search",
-                "compare",
-                "self_write",
-                "proxy",
-                "browse",
-                "auth",
-                "all",
-                "none",
-            ]),
-            "oracle_oid": frozenset([
-                "read",
-                "write",
-                "add",
-                "delete",
-                "search",
-                "compare",
-                "self_write",
-                "proxy",
-                "browse",
-                "auth",
-                "all",
-                "none",
-            ]),
-            "oud": frozenset([
-                "read",
-                "write",
-                "add",
-                "delete",
-                "search",
-                "compare",
-                "all",
-            ]),
-            "oracle_oud": frozenset([
-                "read",
-                "write",
-                "add",
-                "delete",
-                "search",
-                "compare",
-                "all",
-            ]),
-            "389ds": frozenset([
-                "read",
-                "write",
-                "add",
-                "delete",
-                "search",
-                "compare",
-                "proxy",
-                "all",
-            ]),
-            "openldap": frozenset([
-                "read",
-                "write",
-                "add",
-                "delete",
-                "search",
-                "compare",
-                "auth",
-            ]),
-            "active_directory": frozenset([
-                "read",
-                "write",
-                "add",
-                "delete",
-                "search",
-                "compare",
-                "control_access",
-            ]),
-        }
-
-        # Permission alternatives when converting to servers with limited support
-        PERMISSION_ALTERNATIVES: Final[dict[tuple[str, str], list[str]]] = {
-            # When converting to OUD, these OID permissions map to alternatives
-            ("self_write", "oud"): ["write"],
-            ("self_write", "oracle_oud"): ["write"],
-            ("proxy", "oud"): [],  # No equivalent - will be documented in comments
-            ("proxy", "oracle_oud"): [],
-            ("browse", "oud"): ["read", "search"],
-            ("browse", "oracle_oud"): ["read", "search"],
-            ("auth", "oud"): ["compare"],
-            ("auth", "oracle_oud"): ["compare"],
-            # When converting to RFC (canonical), simplify extended permissions
-            ("self_write", "rfc"): ["write"],
-            ("proxy", "rfc"): [],
-            ("browse", "rfc"): ["read", "search"],
-            ("auth", "rfc"): ["compare"],
-            # When converting to 389DS
-            ("self_write", "389ds"): ["write"],
-            ("browse", "389ds"): ["read", "search"],
-            # When converting to OpenLDAP
-            ("self_write", "openldap"): ["write"],
-            ("proxy", "openldap"): [],
-            ("browse", "openldap"): ["read", "search"],
-        }
 
     class SchemaConversionMappings:
         """Schema attribute and objectClass conversion mappings.
@@ -2479,38 +2303,17 @@ class FlextLdifConstants(FlextConstants):
         All mappings use RFC-as-hub strategy.
         """
 
-        # Attribute fields that are server-specific and need special handling
-        SERVER_SPECIFIC_ATTRIBUTE_FIELDS: Final[dict[str, frozenset[str]]] = {
-            "oid": frozenset(["usage", "x_origin"]),
-            "oud": frozenset(["x_origin"]),
-            "openldap": frozenset(["x_origin", "ordering"]),
-            "389ds": frozenset(["x_origin", "x_ds_use"]),
-            "rfc": frozenset([]),  # RFC is canonical - no special fields
-        }
-
-        # ObjectClass kinds that require special handling per server
-        OBJECTCLASS_KIND_REQUIREMENTS: Final[dict[str, dict[str, bool]]] = {
-            "rfc": {
-                "requires_sup_for_auxiliary": True,
-                "allows_multiple_sup": False,
-                "requires_explicit_structural": False,
-            },
-            "oid": {
-                "requires_sup_for_auxiliary": True,
-                "allows_multiple_sup": True,
-                "requires_explicit_structural": False,
-            },
-            "oud": {
-                "requires_sup_for_auxiliary": True,
-                "allows_multiple_sup": False,
-                "requires_explicit_structural": True,
-            },
-            "openldap": {
-                "requires_sup_for_auxiliary": True,
-                "allows_multiple_sup": False,
-                "requires_explicit_structural": False,
-            },
-        }
+        # NOTE: SERVER_SPECIFIC_ATTRIBUTE_FIELDS and OBJECTCLASS_KIND_REQUIREMENTS have been removed.
+        # These constants have been migrated to each server's Constants class:
+        # - ATTRIBUTE_FIELDS → Each server's Constants.ATTRIBUTE_FIELDS
+        # - OBJECTCLASS_REQUIREMENTS → Each server's Constants.OBJECTCLASS_REQUIREMENTS
+        # - OID: FlextLdifServersOid.Constants.ATTRIBUTE_FIELDS, OBJECTCLASS_REQUIREMENTS
+        # - OUD: FlextLdifServersOud.Constants.ATTRIBUTE_FIELDS, OBJECTCLASS_REQUIREMENTS
+        # - OpenLDAP: FlextLdifServersOpenldap.Constants.ATTRIBUTE_FIELDS, OBJECTCLASS_REQUIREMENTS
+        # - 389DS: FlextLdifServersDs389.Constants.ATTRIBUTE_FIELDS, OBJECTCLASS_REQUIREMENTS
+        # - RFC: FlextLdifServersRfc.Constants.ATTRIBUTE_FIELDS, OBJECTCLASS_REQUIREMENTS
+        # - AD, Novell, Tivoli, Apache, OpenLDAP1: Inherit RFC baseline (empty ATTRIBUTE_FIELDS, RFC OBJECTCLASS_REQUIREMENTS)
+        # Use the server-specific Constants classes instead.
 
         # Matching rule normalizations (moved from utilities)
         MATCHING_RULE_NORMALIZATIONS: Final[dict[str, str]] = {
@@ -2518,163 +2321,32 @@ class FlextLdifConstants(FlextConstants):
             "caseIgnoreOrdinalMatch": "caseIgnoreMatch",
         }
 
-        # Attribute name transformations via RFC (OID→RFC→OUD strategy)
-        ATTRIBUTE_TRANSFORMATION_OID_TO_RFC: Final[dict[str, str]] = {
-            "orclguid": "entryUUID",
-            "orclobjectguid": "entryUUID",
-            "createTimestamp": "createTimestamp",  # Preserved
-            "modifyTimestamp": "modifyTimestamp",  # Preserved
-        }
+        # NOTE: Server-specific attribute transformations moved to respective server Constants:
+        # - ATTRIBUTE_TRANSFORMATION_OID_TO_RFC → FlextLdifServersOid.Constants.ATTRIBUTE_TRANSFORMATION_OID_TO_RFC
+        # - ATTRIBUTE_TRANSFORMATION_RFC_TO_OID → FlextLdifServersOid.Constants.ATTRIBUTE_TRANSFORMATION_RFC_TO_OID
+        # - ATTRIBUTE_TRANSFORMATION_RFC_TO_OUD → FlextLdifServersOud.Constants.ATTRIBUTE_TRANSFORMATION_RFC_TO_OUD
+        # - ATTRIBUTE_TRANSFORMATION_OUD_TO_RFC → FlextLdifServersOud.Constants.ATTRIBUTE_TRANSFORMATION_OUD_TO_RFC
 
-        ATTRIBUTE_TRANSFORMATION_RFC_TO_OUD: Final[dict[str, str]] = {
-            "entryUUID": "entryUUID",  # Same in OUD
-        }
+        # NOTE: Server-specific attribute aliases have been migrated to each server's Constants class:
+        # - OID: FlextLdifServersOid.Constants.ATTRIBUTE_ALIASES
+        # - OUD: FlextLdifServersOud.Constants.ATTRIBUTE_ALIASES
+        # Other servers have empty ATTRIBUTE_ALIASES (use RFC standard)
+        # This comment is kept for reference but the constant has been removed.
 
-        ATTRIBUTE_TRANSFORMATION_OUD_TO_RFC: Final[dict[str, str]] = {
-            "entryUUID": "entryUUID",  # Already RFC
-        }
-
-        ATTRIBUTE_TRANSFORMATION_RFC_TO_OID: Final[dict[str, str]] = {
-            "entryUUID": "orclguid",
-        }
-
-        # Attribute aliases (multiple names for same semantic attribute)
-        ATTRIBUTE_ALIASES: Final[dict[str, dict[str, list[str]]]] = {
-            "oud": {
-                "cn": ["commonName"],
-                "sn": ["surname"],
-                "givenName": ["gn"],
-                "mail": ["rfc822Mailbox", "emailAddress"],
-                "telephoneNumber": ["phone"],
-                "uid": ["userid", "username"],
-            },
-            "oid": {"cn": ["commonName"], "mail": ["rfc822Mailbox"], "uid": ["userid"]},
-        }
-
-    class OperationalAttributeMappings:
-        """Operational attribute definitions per server type.
-
-        Operational attributes are maintained by the server and typically
-        read-only. Important for filtering during migrations.
-        """
-
-        OPERATIONAL_ATTRIBUTES: Final[dict[str, frozenset[str]]] = {
-            "oid": frozenset({
-                "createTimestamp",
-                "modifyTimestamp",
-                "creatorsName",
-                "modifiersName",
-                "orclguid",
-                "orclobjectguid",
-                "orclentryid",
-                "orclaccount",
-                "pwdChangedTime",
-                "pwdHistory",
-                "pwdFailureTime",
-            }),
-            "oracle_oid": frozenset({
-                "createTimestamp",
-                "modifyTimestamp",
-                "creatorsName",
-                "modifiersName",
-                "orclguid",
-                "orclobjectguid",
-                "orclentryid",
-                "orclaccount",
-                "pwdChangedTime",
-                "pwdHistory",
-                "pwdFailureTime",
-            }),
-            "oud": frozenset({
-                "createTimestamp",
-                "modifyTimestamp",
-                "creatorsName",
-                "modifiersName",
-                "entryUUID",
-                "entryDN",
-                "subschemaSubentry",
-                "hasSubordinates",
-                "pwdChangedTime",
-                "pwdHistory",
-                "pwdFailureTime",
-                "ds-sync-hist",
-            }),
-            "oracle_oud": frozenset({
-                "createTimestamp",
-                "modifyTimestamp",
-                "creatorsName",
-                "modifiersName",
-                "entryUUID",
-                "entryDN",
-                "subschemaSubentry",
-                "hasSubordinates",
-                "pwdChangedTime",
-                "pwdHistory",
-                "pwdFailureTime",
-                "ds-sync-hist",
-            }),
-            "active_directory": frozenset({
-                "objectGUID",
-                "objectSid",
-                "whenCreated",
-                "whenChanged",
-                "uSNCreated",
-                "uSNChanged",
-                "distinguishedName",
-                "canonicalName",
-                "lastLogon",
-                "logonCount",
-                "badPwdCount",
-                "pwdLastSet",
-            }),
-            "389ds": frozenset({
-                "createTimestamp",
-                "modifyTimestamp",
-                "creatorsName",
-                "modifiersName",
-                "nsUniqueId",
-                "entryid",
-                "dncomp",
-                "parentid",
-                "passwordExpirationTime",
-                "passwordHistory",
-            }),
-            "openldap": frozenset({
-                "createTimestamp",
-                "modifyTimestamp",
-                "creatorsName",
-                "modifiersName",
-                "entryUUID",
-                "entryCSN",
-                "contextCSN",
-                "hasSubordinates",
-                "subschemaSubentry",
-                "structuralObjectClass",
-            }),
-            "rfc": frozenset({
-                "createTimestamp",
-                "modifyTimestamp",
-                "creatorsName",
-                "modifiersName",
-                "subschemaSubentry",
-                "structuralObjectClass",
-            }),
-        }
-
-        # Operational attributes to preserve during migration
-        PRESERVE_ON_MIGRATION: Final[dict[str, frozenset[str]]] = {
-            "oid": frozenset({"createTimestamp", "modifyTimestamp"}),
-            "oracle_oid": frozenset({"createTimestamp", "modifyTimestamp"}),
-            "oud": frozenset({"createTimestamp", "modifyTimestamp", "pwdChangedTime"}),
-            "oracle_oud": frozenset({
-                "createTimestamp",
-                "modifyTimestamp",
-                "pwdChangedTime",
-            }),
-            "active_directory": frozenset({"whenCreated", "whenChanged"}),
-            "389ds": frozenset({"createTimestamp", "modifyTimestamp"}),
-            "openldap": frozenset({"createTimestamp", "modifyTimestamp"}),
-        }
+    # NOTE: OperationalAttributeMappings class has been removed.
+    # Server-specific constants (OPERATIONAL_ATTRIBUTES, PRESERVE_ON_MIGRATION)
+    # have been migrated to each server's Constants class:
+    # - OID: FlextLdifServersOid.Constants.OPERATIONAL_ATTRIBUTES, PRESERVE_ON_MIGRATION
+    # - OUD: FlextLdifServersOud.Constants.OPERATIONAL_ATTRIBUTES, PRESERVE_ON_MIGRATION
+    # - RFC: FlextLdifServersRfc.Constants.OPERATIONAL_ATTRIBUTES, PRESERVE_ON_MIGRATION
+    # - OpenLDAP: FlextLdifServersOpenldap.Constants.OPERATIONAL_ATTRIBUTES, PRESERVE_ON_MIGRATION
+    # - AD: FlextLdifServersAd.Constants.OPERATIONAL_ATTRIBUTES, PRESERVE_ON_MIGRATION
+    # - 389DS: FlextLdifServersDs389.Constants.OPERATIONAL_ATTRIBUTES, PRESERVE_ON_MIGRATION
+    # - Novell: FlextLdifServersNovell.Constants.OPERATIONAL_ATTRIBUTES, PRESERVE_ON_MIGRATION
+    # - Tivoli: FlextLdifServersTivoli.Constants.OPERATIONAL_ATTRIBUTES, PRESERVE_ON_MIGRATION
+    # - Apache: FlextLdifServersApache.Constants.OPERATIONAL_ATTRIBUTES, PRESERVE_ON_MIGRATION
+    # - OpenLDAP1: FlextLdifServersOpenldap1.Constants.OPERATIONAL_ATTRIBUTES, PRESERVE_ON_MIGRATION
+    # Use the server-specific Constants classes instead.
 
 
 __all__ = [

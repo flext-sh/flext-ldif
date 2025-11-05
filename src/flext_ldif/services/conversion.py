@@ -18,9 +18,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import cast
+from typing import cast, override
 
-from flext_core import FlextResult
+from flext_core import FlextResult, FlextService
 
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
@@ -29,7 +29,7 @@ from flext_ldif.services.dn import FlextLdifDn
 from flext_ldif.utilities import FlextLdifUtilities
 
 
-class FlextLdifConversion:
+class FlextLdifConversion(FlextService[FlextLdifModels.ConvertibleModel]):
     """Facade for universal, model-driven quirk-to-quirk conversion.
 
     This class provides a unified interface for converting LDIF data models between
@@ -40,6 +40,11 @@ class FlextLdifConversion:
     The conversion pipeline is:
     1.  `source.normalize_to_rfc(model)` -> RFC Model
     2.  `target.denormalize_from_rfc(RFC Model)` -> Target Model
+
+    FlextService V2 Integration:
+    - Inherits from FlextService[FlextLdifModels.ConvertibleModel]
+    - Implements execute() method for health checks
+    - Provides stateless conversion operations
     """
 
     # Maximum number of errors to show in batch conversion
@@ -47,7 +52,34 @@ class FlextLdifConversion:
 
     def __init__(self) -> None:
         """Initialize the conversion facade with DN case registry."""
-        self.dn_registry: FlextLdifDn.Registry = FlextLdifDn.Registry()
+        super().__init__()
+        object.__setattr__(self, "dn_registry", FlextLdifDn.Registry())  # type: ignore[attr-defined]
+
+    @override
+    def execute(self) -> FlextResult[dict[str, object]]:
+        """Execute conversion service health check.
+
+        Returns:
+            FlextResult with conversion service status and capabilities
+
+        """
+        try:
+            return FlextResult[dict[str, object]].ok({
+                "service": "ConversionService",
+                "status": "operational",
+                "capabilities": [
+                    "convert_entries",
+                    "convert_attributes",
+                    "convert_objectclasses",
+                    "convert_acls",
+                    "batch_convert",
+                ],
+                "dn_registry_active": True,
+            })
+        except Exception as e:
+            return FlextResult[dict[str, object]].fail(
+                f"Conversion service health check failed: {e}"
+            )
 
     def convert(
         self,
@@ -114,7 +146,7 @@ class FlextLdifConversion:
             entry: FlextLdifModels.Entry = model_instance
 
             # Validate entry DN using FlextLdifUtilities.DN before conversion
-            entry_dn = str(FlextLdifUtilities.DN._get_dn_value(entry.dn)) if entry.dn else ""  # noqa: SLF001
+            entry_dn = str(FlextLdifUtilities.DN._get_dn_value(entry.dn)) if entry.dn else ""
             if not FlextLdifUtilities.DN.validate(entry_dn):
                 return FlextResult.fail(
                     f"Entry DN failed RFC 4514 validation: {entry_dn}"

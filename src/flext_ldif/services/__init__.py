@@ -20,8 +20,9 @@ from __future__ import annotations
 
 from flext_ldif.services.acl import FlextLdifAcl
 from flext_ldif.services.dn import FlextLdifDn
-from flext_ldif.services.entrys import FlextLdifEntry
+from flext_ldif.services.entry import FlextLdifEntry
 from flext_ldif.services.parser import FlextLdifParser
+from flext_ldif.services.schema import FlextLdifSchema
 from flext_ldif.services.server import FlextLdifServer
 from flext_ldif.services.statistics import FlextLdifStatistics
 from flext_ldif.services.syntax import FlextLdifSyntax
@@ -33,6 +34,7 @@ __all__ = [
     "FlextLdifDn",
     "FlextLdifEntry",
     "FlextLdifParser",
+    "FlextLdifSchema",
     "FlextLdifServer",
     "FlextLdifStatistics",
     "FlextLdifSyntax",

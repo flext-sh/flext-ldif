@@ -35,21 +35,48 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
         ACL_ATTRIBUTE_NAME: ClassVar[str] = "aci"  # ACL attribute name
 
         # 389 Directory Server operational attributes (server-specific)
-        OPERATIONAL_ATTRIBUTES: Final[frozenset[str]] = frozenset([
+        # Migrated from FlextLdifConstants.OperationalAttributeMappings
+        OPERATIONAL_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset([
+            "createTimestamp",
+            "modifyTimestamp",
+            "creatorsName",
+            "modifiersName",
             "nsUniqueId",
+            "entryid",
+            "dncomp",
+            "parentid",
+            "passwordExpirationTime",
+            "passwordHistory",
             "nscpEntryDN",
             "nsds5ReplConflict",
         ])
 
+        # 389DS extends RFC permissions with "proxy" and "all"
+        SUPPORTED_PERMISSIONS: ClassVar[frozenset[str]] = (
+            FlextLdifServersRfc.Constants.SUPPORTED_PERMISSIONS
+            | frozenset(["proxy", "all"])
+        )
+
         # Detection constants (server-specific)
         # Migrated from FlextLdifConstants.LdapServerDetection
-        DETECTION_OID_PATTERN: Final[str] = r"2\.16\.840\.1\.113730\."
-        DETECTION_ATTRIBUTE_PREFIXES: Final[frozenset[str]] = frozenset([
+        DETECTION_OID_PATTERN: ClassVar[str] = r"2\.16\.840\.1\.113730\."
+        DETECTION_ATTRIBUTE_PREFIXES: ClassVar[frozenset[str]] = frozenset([
             "nsslapd-",
             "nsds",
             "nsuniqueid",
         ])
-        DETECTION_OBJECTCLASS_NAMES: Final[frozenset[str]] = frozenset([
+
+        # Server detection patterns and weights
+        # Migrated from FlextLdifConstants.ServerDetection
+        DETECTION_PATTERN: Final[str] = r"\b(389ds|redhat-ds|dirsrv)\b"
+        DETECTION_ATTRIBUTES: Final[frozenset[str]] = frozenset([
+            "nsuniqueId",
+            "nsslapd-",
+            "nsds5replica",
+            "nsds5replicationagreement",
+        ])
+        DETECTION_WEIGHT: Final[int] = 6
+        DETECTION_OBJECTCLASS_NAMES: ClassVar[frozenset[str]] = frozenset([
             "nscontainer",
             "nsperson",
             "nsds5replica",
@@ -57,14 +84,29 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             "nsorganizationalunit",
             "nsorganizationalperson",
         ])
-        DETECTION_DN_MARKERS: Final[frozenset[str]] = frozenset([
+        DETECTION_DN_MARKERS: ClassVar[frozenset[str]] = frozenset([
             "cn=config",
             "cn=monitor",
             "cn=changelog",
         ])
 
+        # Schema DN for 389 DS (RFC 4512 standard)
+        SCHEMA_DN: ClassVar[str] = "cn=subschemasubentry"
+
+        # Schema attribute fields that are server-specific
+        # (migrated from FlextLdifConstants.SchemaConversionMappings)
+        ATTRIBUTE_FIELDS: ClassVar[frozenset[str]] = frozenset(["x_origin", "x_ds_use"])
+
+        # NOTE: Permission names inherited from RFC.Constants
+
+        # ACL subject types specific to 389 DS
+        ACL_SUBJECT_TYPE_USER: ClassVar[str] = "user"
+        ACL_SUBJECT_TYPE_GROUP: ClassVar[str] = "group"
+        ACL_SUBJECT_TYPE_SELF: ClassVar[str] = "self"
+        ACL_SUBJECT_TYPE_ANONYMOUS: ClassVar[str] = "anyone"
+
         # 389 Directory Server specific attributes (migrated from FlextLdifConstants)
-        DS_389_SPECIFIC: Final[frozenset[str]] = frozenset([
+        DS_389_SPECIFIC: ClassVar[frozenset[str]] = frozenset([
             "nsuniqueId",
             "nscpentrydn",
             "nsds5replconflict",
@@ -105,55 +147,22 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
         ACL_TARGET_PREFIX: Final[str] = 'target = "'  # ACL target prefix
         ACL_WILDCARD_ATTRIBUTE: Final[str] = "*"  # Wildcard for all attributes
 
-    # =========================================================================
-    # Class-level attributes for server identification (from Constants)
-    # =========================================================================
-    server_type: ClassVar[str] = Constants.SERVER_TYPE
-    priority: ClassVar[int] = Constants.PRIORITY
-
-    def __init__(self) -> None:
-        """Initialize 389 Directory Server quirks."""
-        super().__init__()
-        # Use object.__setattr__ to bypass Pydantic validation for dynamic attributes
-        # Nested classes no longer require server_type and priority parameters
-        object.__setattr__(self, "schema", self.Schema())
-        object.__setattr__(self, "acl", self.Acl())
-        object.__setattr__(self, "entry", self.Entry())
-
-    def __getattr__(self, name: str) -> object:
-        """Delegate method calls to nested Schema, Acl, or Entry.
-
-        This enables calling schema/acl/entry methods directly
-        on the main server instance.
-
-        Args:
-            name: Method or attribute name to look up
-
-        Returns:
-            Method or attribute from nested instance
-
-        Raises:
-            AttributeError: If attribute not found in any nested instance
-
-        """
-        # Try schema methods first (most common)
-        if hasattr(self.schema, name):
-            return getattr(self.schema, name)
-        # Try acl methods
-        if hasattr(self.acl, name):
-            return getattr(self.acl, name)
-        # Try entry methods
-        if hasattr(self.entry, name):
-            return getattr(self.entry, name)
-        # Not found in any nested instance
-        msg = f"'{type(self).__name__}' object has no attribute '{name}'"
-        raise AttributeError(msg)
+        # Error messages
+        ERROR_ACL_PARSING_FAILED: Final[str] = (
+            "389 Directory Server ACL parsing failed: {exc}"
+        )
+        ERROR_ACL_WRITE_FAILED: Final[str] = (
+            "389 Directory Server ACL write failed: {exc}"
+        )
+        ERROR_ENTRY_PROCESSING_FAILED: Final[str] = (
+            "389 Directory Server entry processing failed: {exc}"
+        )
 
     class Schema(FlextLdifServersRfc.Schema):
         """Schema quirks for Red Hat / 389 Directory Server."""
 
         def can_handle_attribute(
-            self, attr_definition: str | FlextLdifModels.SchemaAttribute
+            self, attr_definition: str | FlextLdifModels.SchemaAttribute,
         ) -> bool:
             """Detect 389 DS attribute definitions using centralized constants."""
             if isinstance(attr_definition, str):
@@ -196,7 +205,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             return False
 
         def can_handle_objectclass(
-            self, oc_definition: str | FlextLdifModels.SchemaObjectClass
+            self, oc_definition: str | FlextLdifModels.SchemaObjectClass,
         ) -> bool:
             """Detect 389 DS objectClass definitions using centralized constants."""
             if isinstance(oc_definition, str):
@@ -249,10 +258,10 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             if result.is_success:
                 attr_data = result.unwrap()
                 metadata = FlextLdifModels.QuirkMetadata.create_for(
-                    FlextLdifServersDs389.Constants.SERVER_TYPE
+                    FlextLdifServersDs389.Constants.SERVER_TYPE,
                 )
                 return FlextResult[FlextLdifModels.SchemaAttribute].ok(
-                    attr_data.model_copy(update={"metadata": metadata})
+                    attr_data.model_copy(update={"metadata": metadata}),
                 )
             return result
 
@@ -276,27 +285,27 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                 FlextLdifUtilities.ObjectClass.fix_missing_sup(oc_data)
                 FlextLdifUtilities.ObjectClass.fix_kind_mismatch(oc_data)
                 metadata = FlextLdifModels.QuirkMetadata.create_for(
-                    FlextLdifServersDs389.Constants.SERVER_TYPE
+                    FlextLdifServersDs389.Constants.SERVER_TYPE,
                 )
                 return FlextResult[FlextLdifModels.SchemaObjectClass].ok(
-                    oc_data.model_copy(update={"metadata": metadata})
+                    oc_data.model_copy(update={"metadata": metadata}),
                 )
             return result
 
     class Acl(FlextLdifServersRfc.Acl):
         """389 Directory Server ACI quirk."""
 
-        def can_handle(self, acl: str | FlextLdifModels.Acl) -> bool:
+        def can_handle(self, acl_line: str | FlextLdifModels.Acl) -> bool:
             """Check if this is a 389 Directory Server ACL (public method).
 
             Args:
-                acl: ACL line string or Acl model to check.
+                acl_line: ACL line string or Acl model to check.
 
             Returns:
                 True if this is 389 Directory Server ACL format
 
             """
-            return self.can_handle(acl)
+            return self.can_handle_acl(acl_line)
 
         def can_handle_acl(self, acl_line: str | FlextLdifModels.Acl) -> bool:
             """Detect 389 DS ACI lines."""
@@ -331,7 +340,8 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
         def _parse_acl(self, acl_line: str) -> FlextResult[FlextLdifModels.Acl]:
             """Parse 389 DS ACI definition."""
             try:
-                _attr_name, content = self._splitacl_line(acl_line)
+                attr_name, content = self._splitacl_line(acl_line)
+                _ = attr_name  # Unused but required for tuple unpacking
                 acl_name_match = re.search(
                     FlextLdifServersDs389.Constants.ACL_NAME_PATTERN,
                     content,
@@ -346,7 +356,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                     [
                         perm.strip()
                         for perm in permissions_match.group(1).split(
-                            FlextLdifServersDs389.Constants.ACL_TARGETATTR_SEPARATOR
+                            FlextLdifServersDs389.Constants.ACL_TARGETATTR_SEPARATOR,
                         )
                     ]
                     if permissions_match
@@ -395,7 +405,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
 
                 # Build metadata
                 metadata = FlextLdifModels.QuirkMetadata.create_for(
-                    FlextLdifServersDs389.Constants.SERVER_TYPE
+                    FlextLdifServersDs389.Constants.SERVER_TYPE,
                 )
                 metadata.original_format = acl_line.strip()
 
@@ -405,6 +415,21 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                     if acl_name_match
                     else FlextLdifServersDs389.Constants.ACL_DEFAULT_NAME
                 )
+                # DS389: set permissions based on parsed permission list
+                perm_read = "read" in permissions
+                perm_write = "write" in permissions
+                perm_add = "add" in permissions
+                perm_delete = "delete" in permissions
+                perm_search = "search" in permissions
+                perm_compare = "compare" in permissions
+                permissions_data = FlextLdifModels.AclPermissions(
+                    read=perm_read,
+                    write=perm_write,
+                    add=perm_add,
+                    delete=perm_delete,
+                    search=perm_search,
+                    compare=perm_compare,
+                )
                 acl = FlextLdifModels.Acl(
                     name=acl_name,
                     target=FlextLdifModels.AclTarget(
@@ -412,24 +437,14 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                         attributes=target_attributes,
                     ),
                     subject=FlextLdifModels.AclSubject(
-                        subject_type=FlextLdifConstants.AclSubjectTypes.USER,
+                        subject_type="user",
                         subject_value=(
                             userdn_matches[0]
                             if userdn_matches
                             else FlextLdifServersDs389.Constants.ACL_ANONYMOUS_SUBJECT
                         ),
                     ),
-                    permissions=FlextLdifModels.AclPermissions(
-                        # DS389: set permissions based on parsed permission list
-                        read=FlextLdifConstants.PermissionNames.READ in permissions,
-                        write=FlextLdifConstants.PermissionNames.WRITE in permissions,
-                        add=FlextLdifConstants.PermissionNames.ADD in permissions,
-                        delete=FlextLdifConstants.PermissionNames.DELETE in permissions,
-                        search=FlextLdifConstants.PermissionNames.SEARCH in permissions,
-                        compare=(
-                            FlextLdifConstants.PermissionNames.COMPARE in permissions
-                        ),
-                    ),
+                    permissions=permissions_data,
                     metadata=metadata,
                     raw_acl=acl_line,
                 )
@@ -438,7 +453,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
 
             except (ValueError, TypeError, AttributeError) as exc:
                 return FlextResult[FlextLdifModels.Acl].fail(
-                    f"389 Directory Server ACL parsing failed: {exc}",
+                    FlextLdifServersDs389.Constants.ERROR_ACL_PARSING_FAILED.format(exc=exc),
                 )
 
         def _write_acl(self, acl_data: FlextLdifModels.Acl) -> FlextResult[str]:
@@ -468,11 +483,11 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
 
             except (ValueError, TypeError, AttributeError) as exc:
                 return FlextResult[str].fail(
-                    f"389 Directory Server ACL write failed: {exc}",
+                    FlextLdifServersDs389.Constants.ERROR_ACL_WRITE_FAILED.format(exc=exc),
                 )
 
         def _extract_acl_permissions(
-            self, permissions_data: FlextLdifModels.AclPermissions | None
+            self, permissions_data: FlextLdifModels.AclPermissions | None,
         ) -> list[str]:
             """Extract permission names from Permissions model flags."""
             permissions: list[str] = []
@@ -480,17 +495,17 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                 return permissions
 
             if permissions_data.read:
-                permissions.append(FlextLdifConstants.PermissionNames.READ)
+                permissions.append("read")
             if permissions_data.write:
-                permissions.append(FlextLdifConstants.PermissionNames.WRITE)
+                permissions.append("write")
             if permissions_data.add:
-                permissions.append(FlextLdifConstants.PermissionNames.ADD)
+                permissions.append("add")
             if permissions_data.delete:
-                permissions.append(FlextLdifConstants.PermissionNames.DELETE)
+                permissions.append("delete")
             if permissions_data.search:
-                permissions.append(FlextLdifConstants.PermissionNames.SEARCH)
+                permissions.append("search")
             if permissions_data.compare:
-                permissions.append(FlextLdifConstants.PermissionNames.COMPARE)
+                permissions.append("compare")
 
             return permissions
 
@@ -498,9 +513,10 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
         def _resolve_acl_targetattr(target: FlextLdifModels.AclTarget | None) -> str:
             """Resolve target attributes to formatted string."""
             if target and target.attributes:
-                return FlextLdifServersDs389.Constants.ACL_TARGETATTR_SPACE_REPLACEMENT.join(
-                    target.attributes
+                separator = (
+                    FlextLdifServersDs389.Constants.ACL_TARGETATTR_SPACE_REPLACEMENT
                 )
+                return separator.join(target.attributes)
             return FlextLdifServersDs389.Constants.ACL_WILDCARD_ATTRIBUTE
 
         @staticmethod
@@ -523,18 +539,17 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
 
             if permissions:
                 perms = FlextLdifServersDs389.Constants.ACL_TARGETATTR_SEPARATOR.join(
-                    permissions
+                    permissions,
                 )
                 parts.append(
-                    f"{FlextLdifServersDs389.Constants.ACL_ALLOW_PREFIX} ({perms})"
+                    f"{FlextLdifServersDs389.Constants.ACL_ALLOW_PREFIX} ({perms})",
                 )
             if targetattr:
-                parts.append(
-                    f'{FlextLdifServersDs389.Constants.ACL_TARGETATTR_PREFIX} = "{targetattr}"'
-                )
+                prefix = FlextLdifServersDs389.Constants.ACL_TARGETATTR_PREFIX
+                parts.append(f'{prefix} = "{targetattr}"')
             if userdn:
                 parts.append(
-                    f'{FlextLdifServersDs389.Constants.ACL_USERDN_PREFIX} = "{userdn}"'
+                    f'{FlextLdifServersDs389.Constants.ACL_USERDN_PREFIX} = "{userdn}"',
                 )
 
             acl_separator = FlextLdifServersDs389.Constants.ACL_TARGETATTR_SEPARATOR
@@ -577,14 +592,16 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             }
             if any(
                 attr.startswith(
-                    tuple(FlextLdifServersDs389.Constants.DETECTION_ATTRIBUTE_PREFIXES)
+                    tuple(FlextLdifServersDs389.Constants.DETECTION_ATTRIBUTE_PREFIXES),
                 )
                 for attr in normalized_attrs
             ):
                 return True
 
+            # Use lowercase objectClass key for normalized attributes
+            objectclass_key = FlextLdifConstants.DictKeys.OBJECTCLASS.lower()
             object_classes_raw = normalized_attrs.get(
-                "objectclass",
+                objectclass_key,
                 [],
             )
             object_classes = (
@@ -601,7 +618,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             )
 
         def process_entry(
-            self, entry: FlextLdifModels.Entry
+            self, entry: FlextLdifModels.Entry,
         ) -> FlextResult[FlextLdifModels.Entry]:
             """Normalise 389 DS entries and attach metadata."""
             try:
@@ -630,10 +647,8 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
 
             except (ValueError, TypeError, AttributeError) as exc:
                 return FlextResult[FlextLdifModels.Entry].fail(
-                    f"389 Directory Server entry processing failed: {exc}",
+                    FlextLdifServersDs389.Constants.ERROR_ENTRY_PROCESSING_FAILED.format(exc=exc),
                 )
 
-
-__all__ = ["FlextLdifServersDs389"]
 
 __all__ = ["FlextLdifServersDs389"]

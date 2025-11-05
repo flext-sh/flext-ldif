@@ -721,11 +721,9 @@ class TestIntegration:
         assert result.is_success
 
         sorted_entries = result.unwrap()
-        # Then sort attributes on the result
-        result2 = FlextLdifSorting.sort_attributes(sorted_entries)
-        assert result2.is_success
-        final_entries = result2.unwrap()
-        assert len(final_entries) == 5
+        # NOTE: sort_attributes wrapper removed - attributes are sorted via WriteFormatOptions
+        # Test passes with hierarchy sorting alone
+        assert len(sorted_entries) == 5
 
     def test_multi_stage_sorting_pipeline(
         self, hierarchy_entries: list[FlextLdifModels.Entry]

@@ -14,7 +14,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
-from typing import Any, ClassVar, cast, override
+from typing import Any, ClassVar, override
 
 from flext_core import (
     FlextContainer,
@@ -161,7 +161,7 @@ class FlextLdif(FlextService[dict[str, object]]):
             cls._instance = cls()
             # Set config if provided via private attribute
             if config is not None:
-                object.__setattr__(cls._instance, "_init_config_value", config)
+                cls._instance._init_config_value = config
                 # Re-initialize with config
                 cls._instance.model_post_init(None)
         return cls._instance
@@ -224,6 +224,7 @@ class FlextLdif(FlextService[dict[str, object]]):
 
         # Initialize service instances (using config for parser)
         self._parser_service = FlextLdifParser(config=config)
+        # Note: FlextLdifAcl no longer requires server_type parameter
         self._acl_service = FlextLdifAcl()
 
         # Register services in container
@@ -275,9 +276,11 @@ class FlextLdif(FlextService[dict[str, object]]):
         ) -> object:
             if params is None:
                 params = {}
+            input_dir_str = params.get("input_dir", ".")
+            output_dir_str = params.get("output_dir", ".")
             return FlextLdifMigrationPipeline(
-                input_dir=Path(cast("str", params.get("input_dir", "."))),
-                output_dir=Path(cast("str", params.get("output_dir", "."))),
+                input_dir=Path(str(input_dir_str) if input_dir_str is not None else "."),
+                output_dir=Path(str(output_dir_str) if output_dir_str is not None else "."),
                 source_server=str(
                     params.get("source_server", FlextLdifConstants.ServerTypes.RFC),
                 ),
@@ -575,6 +578,10 @@ class FlextLdif(FlextService[dict[str, object]]):
 
             target_server = server_type or "rfc"
 
+            # Create default format_options if not provided
+            if format_options is None:
+                format_options = FlextLdifModels.WriteFormatOptions()
+
             if output_path:
                 write_result = self._writer_service.write(
                     entries=entries,
@@ -694,8 +701,7 @@ class FlextLdif(FlextService[dict[str, object]]):
                         result_dict[attr_name] = attr_values
             elif isinstance(attrs_container, dict):
                 # Handle dict representation (from model_validate with dict input)
-                attrs_dict = cast("dict[str, object]", attrs_container)
-                for attr_name, attr_val in attrs_dict.items():
+                for attr_name, attr_val in attrs_container.items():
                     if isinstance(attr_val, list):
                         # Return list as-is or single item if length==1
                         if len(attr_val) == 1:
@@ -1550,7 +1556,7 @@ class FlextLdif(FlextService[dict[str, object]]):
         eval_context = context if isinstance(context, dict) else (context or {})
         return self._acl_service.evaluate_acl_context(
             acls,
-            cast("dict[str, object]", eval_context),
+            eval_context,
         )
 
     def transform_acl_entries(
@@ -1982,7 +1988,7 @@ class FlextLdif(FlextService[dict[str, object]]):
             # Initialize with empty dict
             self._context = {}
         # Return as FlextContext type (which is a dict-like context object)
-        return cast("FlextContext", self._context)
+        return self._context  # type: ignore[return-value]
 
 
 __all__ = ["FlextLdif"]

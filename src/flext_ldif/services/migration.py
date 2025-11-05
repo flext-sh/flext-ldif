@@ -26,6 +26,7 @@ from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.services.acl import FlextLdifAcl
 from flext_ldif.services.dn import FlextLdifDn
+from flext_ldif.services.entry import FlextLdifEntry
 from flext_ldif.services.filters import FlextLdifFilter, FlextLdifFilters
 from flext_ldif.services.parser import FlextLdifParser
 from flext_ldif.services.server import FlextLdifServer
@@ -331,7 +332,7 @@ class FlextLdifMigrationPipeline(
 
         for entry in entries:
             try:
-                entry_dn = str(FlextLdifUtilities.DN._get_dn_value(entry.dn))  # noqa: SLF001
+                entry_dn = str(FlextLdifUtilities.DN._get_dn_value(entry.dn))
 
                 # Validate DN using FlextLdifUtilities.DN
                 if not FlextLdifUtilities.DN.validate(entry_dn):
@@ -391,7 +392,7 @@ class FlextLdifMigrationPipeline(
                     continue
                 if any(attr in entry.attributes.attributes for attr in acl_config):
                     acl_entries.append(entry)
-                    acl_dns.add(FlextLdifUtilities.DN._get_dn_value(entry.dn))  # noqa: SLF001
+                    acl_dns.add(FlextLdifUtilities.DN._get_dn_value(entry.dn))
             except Exception as e:
                 logger.exception(f"[PIPELINE] Error processing entry {idx}: {e}")
                 raise
@@ -400,7 +401,7 @@ class FlextLdifMigrationPipeline(
         for cat in list(categorized.keys()):
             if cat != FlextLdifConstants.Categories.ACL:
                 categorized[cat] = [
-                    e for e in categorized[cat] if FlextLdifUtilities.DN._get_dn_value(e.dn) not in acl_dns  # noqa: SLF001
+                    e for e in categorized[cat] if FlextLdifUtilities.DN._get_dn_value(e.dn) not in acl_dns
                 ]
 
     def _process_category(
@@ -595,7 +596,7 @@ class FlextLdifMigrationPipeline(
             return entries
         result = FlextLdifFilter.filter_schema_by_oids(
             entries=entries,
-            allowed_oids=cast("dict[str, list[str]]", self._schema_whitelist_rules),
+            allowed_oids=self._schema_whitelist_rules,  # type: ignore[arg-type]
         )
         return result.unwrap() if result.is_success else entries
 
@@ -655,7 +656,7 @@ class FlextLdifMigrationPipeline(
                 )
                 for e in file_entries:
                     if FlextLdifFilter.is_schema(e):
-                        logger.info(f"     Schema DN: {FlextLdifUtilities.DN._get_dn_value(e.dn)}")  # noqa: SLF001
+                        logger.info(f"     Schema DN: {FlextLdifUtilities.DN._get_dn_value(e.dn)}")
 
             entries.extend(file_entries)
 
@@ -694,43 +695,8 @@ class FlextLdifMigrationPipeline(
 
         return FlextResult[dict[str, list[FlextLdifModels.Entry]]].ok(categorized)
 
-    def _extract_acl_entries(
-        self,
-        entries: list[FlextLdifModels.Entry],
-    ) -> FlextResult[list[FlextLdifModels.Entry]]:
-        """Extract ACL entries from all entries.
-
-        CRITICAL: Excludes schema entries even if they have ACL attributes.
-        Schema entries with ACL attributes should stay in schema category, not ACL category.
-
-        Args:
-            entries: All entries to search for ACLs
-
-        Returns:
-            FlextResult containing ACL entries (excluding schema entries)
-
-        """
-        acl_attributes_obj = self._categorization_rules.get("acl_attributes", [])
-        acl_attributes: list[str] = (
-            acl_attributes_obj if isinstance(acl_attributes_obj, list) else []
-        )
-        if not acl_attributes:
-            return FlextResult[list[FlextLdifModels.Entry]].ok([])
-
-        acl_entries = []
-        for entry in entries:
-            # CRITICAL: Exclude schema entries even if they have ACL attributes
-            # Schema entries should stay in schema category for proper processing
-            if FlextLdifFilter.is_schema(entry):
-                continue
-
-            has_acl = any(
-                acl_attr in entry.attributes.attributes for acl_attr in acl_attributes
-            )
-            if has_acl:
-                acl_entries.append(entry)
-
-        return FlextResult[list[FlextLdifModels.Entry]].ok(acl_entries)
+    # NOTE: Duplicate method removed - _extract_acl_entries(self, entries) -> FlextResult
+    # The correct method is _extract_acl_entries(self, entries, categorized) -> None at line 365
 
     def _transform_and_filter_with_tracking(
         self,
@@ -788,8 +754,7 @@ class FlextLdifMigrationPipeline(
                     )
 
                     # Create new entry with updated metadata
-                    attrs_data = cast("dict[str, object]", filtered_attrs)
-                    new_attrs_result = FlextLdifModels.LdifAttributes.create(attrs_data)
+                    new_attrs_result = FlextLdifModels.LdifAttributes.create(filtered_attrs)  # type: ignore[arg-type]
                     if new_attrs_result.is_success:
                         updated_entry = entry.model_copy(
                             update={
@@ -799,8 +764,7 @@ class FlextLdifMigrationPipeline(
                         )
             else:
                 # Just update attributes without metadata
-                attrs_data = cast("dict[str, object]", filtered_attrs)
-                new_attrs_result = FlextLdifModels.LdifAttributes.create(attrs_data)
+                new_attrs_result = FlextLdifModels.LdifAttributes.create(filtered_attrs)  # type: ignore[arg-type]
                 if new_attrs_result.is_success:
                     updated_entry = entry.model_copy(
                         update={"attributes": new_attrs_result.unwrap()}
@@ -878,11 +842,10 @@ class FlextLdifMigrationPipeline(
         for entry in entries:
             current_entry = entry
 
-            # Step 1: Filter operational attributes for target server
-            operational_result = (
-                self._operational_service.filter_operational_attributes(
-                    entry.attributes.attributes, self._target_server
-                )
+            # Step 1: Filter operational attributes using FlextLdifEntry service
+            # NOTE: _operational_service removed - use FlextLdifEntry.remove_operational_attributes directly
+            operational_result = FlextLdifEntry.remove_operational_attributes(
+                entry
             )
             if operational_result.is_success:
                 # Rebuild entry with operational attributes filtered out
@@ -897,7 +860,7 @@ class FlextLdifMigrationPipeline(
                 )
             else:
                 logger.warning(
-                    f"Failed to filter operational attributes for {FlextLdifUtilities.DN._get_dn_value(entry.dn)}: {operational_result.error}"  # noqa: SLF001
+                    f"Failed to filter operational attributes for {FlextLdifUtilities.DN._get_dn_value(entry.dn)}: {operational_result.error}"
                 )
 
             # Step 2: Filter forbidden attributes using FlextLdifFilters
@@ -909,7 +872,7 @@ class FlextLdifMigrationPipeline(
                     current_entry = forbidden_result.unwrap()
                 else:
                     logger.warning(
-                        f"Failed to filter forbidden attributes for {FlextLdifUtilities.DN._get_dn_value(current_entry.dn)}: {forbidden_result.error}"  # noqa: SLF001
+                        f"Failed to filter forbidden attributes for {FlextLdifUtilities.DN._get_dn_value(current_entry.dn)}: {forbidden_result.error}"
                     )
 
             # Step 3: Filter forbidden objectClasses using FlextLdifFilters
@@ -921,7 +884,7 @@ class FlextLdifMigrationPipeline(
                     current_entry = oc_result.unwrap()
                 else:
                     logger.warning(
-                        f"Failed to filter forbidden objectClasses for {FlextLdifUtilities.DN._get_dn_value(current_entry.dn)}: {oc_result.error}"  # noqa: SLF001
+                        f"Failed to filter forbidden objectClasses for {FlextLdifUtilities.DN._get_dn_value(current_entry.dn)}: {oc_result.error}"
                     )
 
             filtered.append(current_entry)

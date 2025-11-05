@@ -13,7 +13,7 @@ from __future__ import annotations
 from flext_core import FlextResult
 
 from flext_ldif.models import FlextLdifModels
-from flext_ldif.services.entrys import FlextLdifEntry
+from flext_ldif.services.entry import FlextLdifEntry
 
 
 class TestFlextLdifEntryInitialization:

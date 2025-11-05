@@ -134,7 +134,7 @@ class TestOidToOudAclConversion:
     """
 
     @pytest.fixture
-    def oid_acl(self) -> FlextLdifServersOid.Acl:
+    def oid_acl_quirk(self) -> FlextLdifServersOid.Acl:
         """Create OID ACL quirk instance."""
         return FlextLdifServersOid.Acl()
 
@@ -145,15 +145,15 @@ class TestOidToOudAclConversion:
 
     def test_oid_acl_parsing_and_roundtrip(
         self,
-        oid_acl: FlextLdifServersOid.Acl,
+        oid_acl_quirk: FlextLdifServersOid.Acl,
     ) -> None:
         """Test OID ACL parsing and round-trip within OID format."""
         # OID ACL definition
-        oid_acl = """orclaci: access to entry by * (browse)"""
+        oid_acl_str = """orclaci: access to entry by * (browse)"""
 
         # Parse with OID ACL quirk
         # Note: parse internally converts OID format to RFC format
-        parse_result = oid_acl.parse(oid_acl)
+        parse_result = oid_acl_quirk.parse(oid_acl_str)
         assert parse_result.is_success, f"OID ACL parse failed: {parse_result.error}"
         parsed_data = parse_result.unwrap()
 

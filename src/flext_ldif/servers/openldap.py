@@ -44,8 +44,18 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
         ACL_FORMAT: ClassVar[str] = "olcAccess"  # OpenLDAP cn=config ACL attribute
         ACL_ATTRIBUTE_NAME: ClassVar[str] = "olcAccess"  # ACL attribute name
 
+        # Server detection patterns and weights
+        DETECTION_PATTERN: Final[str] = r"\b(olc[A-Z][a-zA-Z]+|cn=config)\b"
+        DETECTION_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset([
+            "olcDatabase",
+            "olcAccess",
+            "olcOverlay",
+            "olcModule",
+        ])
+        DETECTION_WEIGHT: Final[int] = 8
+
         # OpenLDAP 2.x detection patterns (cn=config based)
-        OPENLDAP_2_ATTRIBUTES: Final[frozenset[str]] = frozenset([
+        OPENLDAP_2_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset([
             "olcAccess",
             "olcAttributeTypes",
             "olcObjectClasses",
@@ -57,14 +67,14 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             "olcSuffix",
         ])
 
-        OPENLDAP_2_DN_PATTERNS: Final[frozenset[str]] = frozenset([
+        OPENLDAP_2_DN_PATTERNS: ClassVar[frozenset[str]] = frozenset([
             "cn=config",
             "olcDatabase=",
             "olcOverlay=",
         ])
 
         # OpenLDAP DN patterns
-        OPENLDAP_DN_PATTERNS: Final[frozenset[str]] = frozenset([
+        OPENLDAP_DN_PATTERNS: ClassVar[frozenset[str]] = frozenset([
             "cn=",
             "ou=",
             "dc=",
@@ -75,42 +85,68 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             "uid=",
         ])
 
+        # NOTE: Permission names inherited from RFC.Constants
+
+        # ACL subject types specific to OpenLDAP
+        ACL_SUBJECT_ANONYMOUS: ClassVar[str] = "*"
+        ACL_SUBJECT_TYPE_DN: ClassVar[str] = "dn"
+        ACL_SUBJECT_TYPE_GROUP: ClassVar[str] = "group"
+
         # OpenLDAP 2.x object classes (cn=config based)
-        OPENLDAP_2_OBJECTCLASSES: Final[frozenset[str]] = frozenset([
+        OPENLDAP_2_OBJECTCLASSES: ClassVar[frozenset[str]] = frozenset([
             "olcDatabaseConfig",
             "olcBackendConfig",
             "olcOverlayConfig",
             "olcSchemaConfig",
         ])
 
-        # OpenLDAP operational attributes (server-specific)
-        OPERATIONAL_ATTRIBUTES: Final[frozenset[str]] = frozenset([
-            "structuralObjectClass",
-            "contextCSN",
-            "entryCSN",
-        ])
+        # OpenLDAP 2.x extends RFC operational attributes
+        OPERATIONAL_ATTRIBUTES: ClassVar[frozenset[str]] = (
+            FlextLdifServersRfc.Constants.OPERATIONAL_ATTRIBUTES
+            | frozenset(["entryUUID", "entryCSN", "contextCSN", "hasSubordinates"])
+        )
+
+        # OpenLDAP extends RFC permissions with "auth"
+        SUPPORTED_PERMISSIONS: ClassVar[frozenset[str]] = (
+            FlextLdifServersRfc.Constants.SUPPORTED_PERMISSIONS
+            | frozenset(["auth"])
+        )
+
+        # NOTE: OpenLDAP inherits RFC baseline for:
+        # - PRESERVE_ON_MIGRATION (createTimestamp, modifyTimestamp)
+        # - ATTRIBUTE_ALIASES (empty)
+
+        # Schema attribute fields specific to OpenLDAP
+        ATTRIBUTE_FIELDS: ClassVar[frozenset[str]] = frozenset(["x_origin", "ordering"])
+
+        # ObjectClass requirements (extends RFC - allows multiple SUP)
+        OBJECTCLASS_REQUIREMENTS: ClassVar[dict[str, bool]] = {
+            "requires_sup_for_auxiliary": True,
+            "allows_multiple_sup": True,  # OpenLDAP allows multiple SUP
+            "requires_explicit_structural": False,
+        }
 
         # Detection constants (server-specific)
-        DETECTION_OID_PATTERN: Final[str] = r"1\.3\.6\.1\.4\.1\.4203\."
-        DETECTION_ATTRIBUTE_PREFIXES: Final[frozenset[str]] = frozenset([
+        DETECTION_OID_PATTERN: ClassVar[str] = r"1\.3\.6\.1\.4\.1\.4203\."
+        DETECTION_ATTRIBUTE_PREFIXES: ClassVar[frozenset[str]] = frozenset([
             "olc",
             "structuralobjectclass",
         ])
-        DETECTION_OBJECTCLASS_NAMES: Final[frozenset[str]] = frozenset([
+        DETECTION_OBJECTCLASS_NAMES: ClassVar[frozenset[str]] = frozenset([
             "olcglobal",
             "olcdatabaseconfig",
             "olcldapconfig",
             "olcmdbconfig",
             "olcbdbconfig",
         ])
-        DETECTION_DN_MARKERS: Final[frozenset[str]] = frozenset([
+        DETECTION_DN_MARKERS: ClassVar[frozenset[str]] = frozenset([
             "cn=config",
             "cn=schema",
             "cn=monitor",
         ])
 
         # OpenLDAP required object classes for valid entries
-        REQUIRED_CLASSES: Final[frozenset[str]] = frozenset([
+        REQUIRED_CLASSES: ClassVar[frozenset[str]] = frozenset([
             "top",
             "person",
             "organizationalPerson",
@@ -141,21 +177,13 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
         ACL_WILDCARD_TARGET: Final[str] = "*"  # Wildcard target/subject
         ACL_DEFAULT_ACCESS: Final[str] = "none"  # Default access level
         ACL_OLCACCESS_PREFIX: Final[str] = "olcAccess:"  # olcAccess attribute prefix
+        ACL_ERROR_MISSING_TO: Final[str] = "Invalid OpenLDAP ACL format: missing 'to' clause"
 
     # =========================================================================
-    # Class-level attributes for server identification (from Constants)
+    # Server identification - accessed via Constants via properties in base.py
     # =========================================================================
-    server_type: ClassVar[str] = Constants.SERVER_TYPE
-    priority: ClassVar[int] = Constants.PRIORITY
-
-    def __init__(self) -> None:
-        """Initialize OpenLDAP 2.x quirks."""
-        super().__init__()
-        # Use object.__setattr__ to bypass Pydantic validation for dynamic attributes
-        # Nested classes no longer require server_type and priority parameters
-        object.__setattr__(self, "schema", self.Schema())
-        object.__setattr__(self, "acl", self.Acl())
-        object.__setattr__(self, "entry", self.Entry())
+    # NOTE: server_type and priority are accessed via properties in base.py
+    # which read from Constants.SERVER_TYPE and Constants.PRIORITY
 
     class Schema(FlextLdifServersRfc.Schema):
         """OpenLDAP 2.x schema quirk.
@@ -176,7 +204,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
         # Schema patterns moved to Constants.SCHEMA_OPENLDAP_OLC_PATTERN
 
         def can_handle_attribute(
-            self, attr_definition: str | FlextLdifModels.SchemaAttribute
+            self, attr_definition: str | FlextLdifModels.SchemaAttribute,
         ) -> bool:
             """Check if this is an OpenLDAP 2.x attribute (PRIVATE).
 
@@ -224,7 +252,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
         # - create_metadata(): Creates OpenLDAP-specific metadata
 
         def can_handle_objectclass(
-            self, oc_definition: str | FlextLdifModels.SchemaObjectClass
+            self, oc_definition: str | FlextLdifModels.SchemaObjectClass,
         ) -> bool:
             """Check if this is an OpenLDAP 2.x objectClass (PRIVATE).
 
@@ -233,7 +261,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             - Standard RFC objectClasses (inherits from RFC base)
 
             Args:
-                objectclass: ObjectClass definition string or model
+                oc_definition: ObjectClass definition string or model
 
             Returns:
                 True if this is an OpenLDAP 2.x or RFC objectClass
@@ -325,17 +353,17 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             """
             super().__init__(**kwargs)
 
-        def can_handle(self, acl: str | FlextLdifModels.Acl) -> bool:
+        def can_handle(self, acl_line: str | FlextLdifModels.Acl) -> bool:
             """Check if this is an OpenLDAP 2.x ACL.
 
             Args:
-                acl: ACL line string or Acl model to check.
+                acl_line: ACL line string or Acl model to check.
 
             Returns:
                 True if this is OpenLDAP 2.x ACL format
 
             """
-            return self.can_handle(acl)
+            return self.can_handle_acl(acl_line)
 
         def can_handle_acl(self, acl_line: str | FlextLdifModels.Acl) -> bool:
             """Check if this is an OpenLDAP 2.x ACL (internal).
@@ -365,7 +393,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                 ),
             ) or acl_content.startswith(
                 FlextLdifServersOpenldap.Constants.ACL_START_PREFIX
-                + f"{FlextLdifServersOpenldap.Constants.ACL_ATTRIBUTE_NAME}:"
+                + f"{FlextLdifServersOpenldap.Constants.ACL_ATTRIBUTE_NAME}:",
             )
 
         def _write_acl(
@@ -401,7 +429,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
 
                 # Format as OpenLDAP 2.x ACL
                 acl_parts = [
-                    f"{constants.ACL_PREFIX_TO}{what}"
+                    f"{constants.ACL_PREFIX_TO}{what}",
                 ]
                 acl_parts.append(f"{constants.ACL_PREFIX_BY}{who}")
 
@@ -409,9 +437,9 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                     # Add permissions if available
                     perms = []
                     if acl_data.permissions.read:
-                        perms.append(FlextLdifConstants.PermissionNames.READ)
+                        perms.append("read")
                     if acl_data.permissions.write:
-                        perms.append(FlextLdifConstants.PermissionNames.WRITE)
+                        perms.append("write")
                     if perms:
                         acl_parts.append(",".join(perms))
 
@@ -439,17 +467,17 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                 # Remove olcAccess: prefix if present
                 acl_content = acl_line
                 if acl_line.startswith(
-                    f"{FlextLdifServersOpenldap.Constants.ACL_ATTRIBUTE_NAME}:"
+                    f"{FlextLdifServersOpenldap.Constants.ACL_ATTRIBUTE_NAME}:",
                 ):
                     acl_content = acl_line[
                         len(
-                            FlextLdifServersOpenldap.Constants.ACL_ATTRIBUTE_NAME + ":"
+                            FlextLdifServersOpenldap.Constants.ACL_ATTRIBUTE_NAME + ":",
                         ) :
                     ].strip()
 
                 # Remove {n} index if present
                 index_match = re.match(
-                    FlextLdifServersOpenldap.Constants.ACL_INDEX_PATTERN, acl_content
+                    FlextLdifServersOpenldap.Constants.ACL_INDEX_PATTERN, acl_content,
                 )
                 if index_match:
                     acl_content = index_match.group(2)
@@ -462,7 +490,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                 )
                 if not to_match:
                     return FlextResult[FlextLdifModels.Acl].fail(
-                        "Invalid OpenLDAP ACL format: missing 'to' clause",
+                        FlextLdifServersOpenldap.Constants.ACL_ERROR_MISSING_TO,
                     )
 
                 what = to_match.group(1).strip()
@@ -480,7 +508,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                     attributes = [
                         attr.strip()
                         for attr in attr_string.split(
-                            FlextLdifServersOpenldap.Constants.ACL_ATTRS_SEPARATOR
+                            FlextLdifServersOpenldap.Constants.ACL_ATTRS_SEPARATOR,
                         )
                     ]
 
@@ -490,14 +518,14 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                         FlextLdifServersOpenldap.Constants.ACL_BY_PATTERN,
                         acl_content,
                         re.IGNORECASE,
-                    )
+                    ),
                 )
 
                 # Extract subject from first by clause
                 subject_value = (
                     by_matches[0].group(1)
                     if by_matches
-                    else FlextLdifConstants.AclSubjectTypes.ANONYMOUS
+                    else FlextLdifServersOpenldap.Constants.ACL_SUBJECT_ANONYMOUS
                 )
 
                 # Extract access permissions from first by clause
@@ -522,16 +550,12 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                         subject_value=subject_value,
                     ),
                     permissions=FlextLdifModels.AclPermissions(
-                        read=FlextLdifConstants.PermissionNames.READ in access,
-                        write=FlextLdifConstants.PermissionNames.WRITE in access,
-                        add=FlextLdifConstants.PermissionNames.WRITE
-                        in access,  # OpenLDAP: write includes add
-                        delete=FlextLdifConstants.PermissionNames.WRITE
-                        in access,  # OpenLDAP: write includes delete
-                        search=FlextLdifConstants.PermissionNames.READ
-                        in access,  # OpenLDAP: read includes search
-                        compare=FlextLdifConstants.PermissionNames.READ
-                        in access,  # OpenLDAP: read includes compare
+                        read="read" in access,
+                        write="write" in access,
+                        add="write" in access,  # OpenLDAP: write includes add
+                        delete="write" in access,  # OpenLDAP: write includes delete
+                        search="read" in access,  # OpenLDAP: read includes search
+                        compare="read" in access,  # OpenLDAP: read includes compare
                     ),
                     metadata=FlextLdifModels.QuirkMetadata.create_for(
                         FlextLdifServersOpenldap.Constants.SERVER_TYPE,

@@ -216,10 +216,15 @@ class TestRegistryStats:
             total_servers >= 8
         )  # At least OID, OUD, OpenLDAP, AD, 389DS, Apache, Novell, Tivoli
 
-        schemas = stats["schemas_by_server"]
-        assert "oid" in schemas
-        assert "oud" in schemas
-        assert "openldap" in schemas
+        # Updated API: get_registry_stats() returns quirks_by_server, not schemas_by_server
+        quirks = stats["quirks_by_server"]
+        assert "oid" in quirks
+        assert "oud" in quirks
+        assert "openldap" in quirks
+        # Verify nested quirks
+        assert quirks["oid"]["has_schema"]
+        assert quirks["oud"]["has_schema"]
+        assert quirks["openldap"]["has_schema"]
 
     def test_list_registered_servers(self) -> None:
         """Test listing all registered server types."""
@@ -305,4 +310,5 @@ class TestErrorHandling:
 
         alls = registry.get_alls_for_server("unknown_server")
 
-        assert alls == {"schema": [], "acl": [], "entry": []}
+        # Updated API: Unknown server returns None for all quirks, not empty lists
+        assert alls == {"schema": None, "acl": None, "entry": None}

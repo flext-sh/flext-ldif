@@ -407,7 +407,7 @@ class SchemaQueryHandler(FlextMessageHandler):
 
 ## Core Components
 
-### FlextLdif - Application 
+### FlextLdif - Application
 
 The main entry point providing a unified interface to all LDIF operations:
 

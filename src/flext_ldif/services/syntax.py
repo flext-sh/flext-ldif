@@ -148,7 +148,18 @@ class FlextLdifSyntax(FlextService[dict[str, object]]):
     operations. The service maintains internal lookup tables for fast OID/name
     resolution based on RFC 4517 standard syntax definitions.
 
+    FlextService V2 Integration:
+    - Builder pattern for OID and syntax name lookups
+    - Pydantic fields for query configuration
+    - execute() method for health checks
     """
+
+    # ════════════════════════════════════════════════════════════════════════
+    # PYDANTIC FIELDS (for builder pattern)
+    # ════════════════════════════════════════════════════════════════════════
+
+    oid_to_lookup: str | None = None
+    name_to_lookup: str | None = None
 
     def __init__(self) -> None:
         """Initialize Syntax service."""
@@ -190,6 +201,56 @@ class FlextLdifSyntax(FlextService[dict[str, object]]):
             "total_syntaxes": len(self._oid_to_name),
             "common_syntaxes": len(self._common_syntaxes),
         })
+
+    # ════════════════════════════════════════════════════════════════════════
+    # FLUENT BUILDER PATTERN
+    # ════════════════════════════════════════════════════════════════════════
+
+    @classmethod
+    def builder(cls) -> FlextLdifSyntax:
+        """Create fluent builder for OID and syntax name lookups.
+
+        Returns:
+            Service instance for method chaining
+
+        Example:
+            result = (FlextLdifSyntax.builder()
+                .with_oid_to_lookup("1.3.6.1.4.1.1466.115.121.1.7")
+                .build())
+
+        """
+        return cls()
+
+    def with_oid_to_lookup(self, oid: str) -> FlextLdifSyntax:
+        """Set OID to lookup (fluent builder)."""
+        self.oid_to_lookup = oid
+        return self
+
+    def with_name_to_lookup(self, name: str) -> FlextLdifSyntax:
+        """Set syntax name to lookup (fluent builder)."""
+        self.name_to_lookup = name
+        return self
+
+    def build(self) -> dict[str, str | None]:
+        """Execute lookups and return results (fluent terminal).
+
+        Returns:
+            Dictionary with lookup results
+
+        """
+        result: dict[str, str | None] = {}
+
+        if self.oid_to_lookup:
+            lookup_result = self.lookup_oid(self.oid_to_lookup)
+            if lookup_result.is_success:
+                result["oid_lookup"] = lookup_result.unwrap()
+
+        if self.name_to_lookup:
+            lookup_result = self.lookup_name(self.name_to_lookup)
+            if lookup_result.is_success:
+                result["name_lookup"] = lookup_result.unwrap()
+
+        return result
 
     def validate_oid(self, oid: str) -> FlextResult[bool]:
         """Validate OID format compliance with LDAP OID syntax.

@@ -11,7 +11,7 @@ from __future__ import annotations
 import operator
 import re
 from collections.abc import Mapping
-from typing import ClassVar, Final
+from typing import ClassVar, Final, cast
 
 from flext_core import FlextLogger, FlextResult
 
@@ -44,7 +44,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
         CAN_DENORMALIZE_TO: ClassVar[frozenset[str]] = frozenset(["oud", "rfc"])
 
         # Server-specific boolean attributes
-        BOOLEAN_ATTRIBUTES: Final[frozenset[str]] = frozenset(
+        BOOLEAN_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset(
             [
                 "pwdlockout",
                 "pwdmustchange",
@@ -58,18 +58,32 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 "pwdmaxlength",
                 "pwdminlength",
                 "orcldasselfmodifiable",
-            ]
+            ],
         )
 
         # Oracle OUD operational attributes (server-specific)
-        OPERATIONAL_ATTRIBUTES: Final[frozenset[str]] = frozenset(
-            [
-                "ds-sync-hist",
-                "ds-sync-state",
-                "ds-pwp-account-disabled",
-                "ds-cfg-backend-id",
-                "entryUUID",  # OUD specific version
-            ]
+        # Migrated from FlextLdifConstants.OperationalAttributeMappings
+        OPERATIONAL_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset([
+            "createTimestamp",
+            "modifyTimestamp",
+            "creatorsName",
+            "modifiersName",
+            "entryUUID",
+            "entryDN",
+            "subschemaSubentry",
+            "hasSubordinates",
+            "pwdChangedTime",
+            "pwdHistory",
+            "pwdFailureTime",
+            "ds-sync-hist",
+            "ds-sync-state",
+            "ds-pwp-account-disabled",
+            "ds-cfg-backend-id",
+        ])
+
+        # Extends RFC PRESERVE_ON_MIGRATION with OUD-specific timestamps
+        PRESERVE_ON_MIGRATION: ClassVar[frozenset[str]] = (
+            FlextLdifServersRfc.Constants.PRESERVE_ON_MIGRATION | frozenset(["pwdChangedTime"])
         )
 
         # Oracle Unified Directory ACL format constants
@@ -83,60 +97,99 @@ class FlextLdifServersOud(FlextLdifServersRfc):
         DN_PREFIX_CN_DS: Final[str] = "cn=ds"
 
         # Detection constants (server-specific)
-        DETECTION_OID_PATTERN: Final[str] = r"(ds-sync-|ds-pwp-|ds-cfg-)"
-        DETECTION_ATTRIBUTE_PREFIXES: Final[frozenset[str]] = frozenset(
+        DETECTION_OID_PATTERN: ClassVar[str] = r"(ds-sync-|ds-pwp-|ds-cfg-)"
+        DETECTION_ATTRIBUTE_PREFIXES: ClassVar[frozenset[str]] = frozenset(
             [
                 "ds-",
                 "ds-sync",
                 "ds-pwp",
                 "ds-cfg",
-            ]
+            ],
         )
-        DETECTION_OBJECTCLASS_NAMES: Final[frozenset[str]] = frozenset(
+        # OID/Oracle prefixes for exclusion (OUD entries should not have these)
+        OID_PREFIXES: Final[tuple[str, ...]] = ("orcl", "oracle")
+        DETECTION_OBJECTCLASS_NAMES: ClassVar[frozenset[str]] = frozenset(
             [
                 "ds-root-dse",
                 "ds-unbound-id-config",
                 "ds-cfg-backend",
-            ]
+            ],
         )
-        DETECTION_DN_MARKERS: Final[frozenset[str]] = frozenset(
+        DETECTION_DN_MARKERS: ClassVar[frozenset[str]] = frozenset(
             [
                 "cn=config",
                 "cn=tasks",
                 "cn=monitor",
-            ]
+            ],
         )
         DETECTION_ACL_PREFIX: Final[str] = "ds-cfg-"  # OUD configuration ACL prefix
 
+        # Server detection patterns and weights (migrated from FlextLdifConstants.ServerDetection)
+        DETECTION_PATTERN: ClassVar[str] = r"(ds-sync-|ds-pwp-|ds-cfg-)"
+        DETECTION_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset([
+            "ds-sync-hist",
+            "ds-sync-state",
+            "ds-pwp-account-disabled",
+            "ds-cfg-backend-id",
+            "entryUUID",
+        ])
+        DETECTION_WEIGHT: Final[int] = 10
+
+        # NOTE: Permission names inherited from RFC.Constants
+
+        # OUD-specific permissions (not in RFC)
+        PERMISSION_SELFWRITE: Final[str] = "selfwrite"
+        PERMISSION_SELF_WRITE: Final[str] = "self_write"
+        PERMISSION_PROXY: Final[str] = "proxy"
+        PERMISSION_ALL: Final[str] = "all"
+
         # === SCHEMA PROCESSING CONFIGURATION ===
-        # Schema fields that should be processed with OID filtering
-        SCHEMA_FILTERABLE_FIELDS: Final[frozenset[str]] = frozenset(
+        # Schema field names (migrated from FlextLdifConstants.SchemaFields)
+        SCHEMA_FIELD_ATTRIBUTE_TYPES: Final[str] = "attributetypes"
+        SCHEMA_FIELD_ATTRIBUTE_TYPES_LOWER: Final[str] = "attributetypes"
+        SCHEMA_FIELD_OBJECT_CLASSES: Final[str] = "objectclasses"
+        SCHEMA_FIELD_OBJECT_CLASSES_LOWER: Final[str] = "objectclasses"
+        SCHEMA_FIELD_MATCHING_RULES: Final[str] = "matchingrules"
+        SCHEMA_FIELD_LDAP_SYNTAXES: Final[str] = "ldapsyntaxes"
+
+        # Schema fields that should be processed with OUD filtering
+        SCHEMA_FILTERABLE_FIELDS: ClassVar[frozenset[str]] = frozenset(
             [
-                FlextLdifConstants.SchemaFields.ATTRIBUTE_TYPES,
-                FlextLdifConstants.SchemaFields.ATTRIBUTE_TYPES_LOWER,
-                FlextLdifConstants.SchemaFields.OBJECT_CLASSES,
-                FlextLdifConstants.SchemaFields.OBJECT_CLASSES_LOWER,
-                FlextLdifConstants.SchemaFields.MATCHING_RULES,
-                FlextLdifConstants.SchemaFields.LDAP_SYNTAXES,
-            ]
+                SCHEMA_FIELD_ATTRIBUTE_TYPES,
+                SCHEMA_FIELD_ATTRIBUTE_TYPES_LOWER,
+                SCHEMA_FIELD_OBJECT_CLASSES,
+                SCHEMA_FIELD_OBJECT_CLASSES_LOWER,
+                SCHEMA_FIELD_MATCHING_RULES,
+                SCHEMA_FIELD_LDAP_SYNTAXES,
+            ],
         )
 
         # Schema DN for OUD (different from OID's cn=subschemasubentry)
         SCHEMA_DN: Final[str] = "cn=schema"
 
+        # Schema attribute fields that are server-specific (migrated from FlextLdifConstants.SchemaConversionMappings)
+        ATTRIBUTE_FIELDS: ClassVar[frozenset[str]] = frozenset(["x_origin"])
+
+        # ObjectClass requirements specific to OUD (migrated from FlextLdifConstants.SchemaConversionMappings)
+        OBJECTCLASS_REQUIREMENTS: ClassVar[dict[str, bool]] = {
+            "requires_sup_for_auxiliary": True,
+            "allows_multiple_sup": False,
+            "requires_explicit_structural": True,
+        }
+
         # OUD specific operational attributes (alias for OPERATIONAL_ATTRIBUTES for compatibility)
-        OUD_SPECIFIC: Final[frozenset[str]] = frozenset(
+        OUD_SPECIFIC: ClassVar[frozenset[str]] = frozenset(
             [
                 "ds-sync-hist",
                 "ds-sync-state",
                 "ds-pwp-account-disabled",
                 "ds-cfg-backend-id",
                 "entryUUID",  # OUD specific version
-            ]
+            ],
         )
 
         # ACL-specific subject constants (migrated from nested Acl class)
-        ACL_DEFAULT_NAME: Final[str] = "Anonymous ACL"  # Default ACL name for OUD
+        ACL_DEFAULT_NAME: Final[str] = "OUD ACL"  # Default ACL name for OUD
         ACL_SELF_SUBJECT: Final[str] = "ldap:///self"  # OUD self subject
         ACL_ANONYMOUS_SUBJECT: Final[str] = "ldap:///anyone"  # OUD anonymous subject
         ACL_ANONYMOUS_SUBJECT_ALT: Final[str] = (
@@ -194,11 +247,11 @@ class FlextLdifServersOud(FlextLdifServersRfc):
         # Attribute name casing map: lowercase source → proper OUD camelCase
         # Maps common LDAP attributes with incorrect casing to OUD-expected camelCase
         # Note: ACL_ATTRIBUTE_NAME is "aci" (OUD uses RFC 4876 ACI)
-        ATTRIBUTE_CASE_MAP: Final[dict[str, str]] = {
+        ATTRIBUTE_CASE_MAP: ClassVar[dict[str, str]] = {
             "uniquemember": "uniqueMember",
             "displayname": "displayName",
             "distinguishedname": "distinguishedName",
-            "objectclass": "objectClass",
+            FlextLdifConstants.DictKeys.OBJECTCLASS.lower(): FlextLdifConstants.DictKeys.OBJECTCLASS,
             "memberof": "memberOf",
             "seealsodescription": "seeAlsoDescription",
             "orclaci": ACL_ATTRIBUTE_NAME,  # Oracle OID ACI → OUD RFC ACI
@@ -207,7 +260,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
         }
 
         # OUD supported ACL rights (migrated from _parse_acl method)
-        OUD_SUPPORTED_RIGHTS: Final[frozenset[str]] = frozenset(
+        OUD_SUPPORTED_RIGHTS: ClassVar[frozenset[str]] = frozenset(
             [
                 "read",
                 "write",
@@ -217,7 +270,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 "compare",
                 "selfwrite",
                 "proxy",
-            ]
+            ],
         )
 
         # OUD ACL parsing constants (migrated from Acl class)
@@ -230,20 +283,20 @@ class FlextLdifServersOud(FlextLdifServersRfc):
 
         # === OUD ACL SUBJECT TRANSFORMATIONS ===
         # Subject type transformations from RFC format to OUD format
-        RFC_TO_OUD_SUBJECTS: Final[dict[str, tuple[str, str]]] = {
+        RFC_TO_OUD_SUBJECTS: ClassVar[dict[str, tuple[str, str]]] = {
             "group_membership": ("bind_rules", 'userattr="{value}#LDAPURL"'),
             "user_attribute": ("bind_rules", 'userattr="{value}#USERDN"'),
             "group_attribute": ("bind_rules", 'userattr="{value}#GROUPDN"'),
         }
 
         # Subject type transformations from OUD format back to RFC format
-        OUD_TO_RFC_SUBJECTS: Final[dict[str, tuple[str, str]]] = {
+        OUD_TO_RFC_SUBJECTS: ClassVar[dict[str, tuple[str, str]]] = {
             "bind_rules": ("group_membership", "{value}"),
         }
 
         # === MATCHING RULE VALIDATIONS & REPLACEMENTS ===
         # Matching rules that are invalid for SUBSTR operations
-        INVALID_SUBSTR_RULES: Final[dict[str, str | None]] = {
+        INVALID_SUBSTR_RULES: ClassVar[dict[str, str | None]] = {
             "caseIgnoreMatch": "caseIgnoreSubstringsMatch",  # Common SUBSTR mistake
             "distinguishedNameMatch": None,  # No valid SUBSTR replacement
             "caseIgnoreOrderingMatch": None,  # No SUBSTR variant
@@ -251,40 +304,55 @@ class FlextLdifServersOud(FlextLdifServersRfc):
         }
 
         # Matching rules that need replacement for OUD compatibility
-        MATCHING_RULE_REPLACEMENTS: Final[dict[str, str]] = {
+        MATCHING_RULE_REPLACEMENTS: ClassVar[dict[str, str]] = {
             "caseIgnoreMatch": "caseIgnoreMatch",  # Keep as-is in OUD
             "caseIgnoreSubstringsMatch": "caseIgnoreSubstringsMatch",  # Standard
         }
 
         # === ATTRIBUTE TRANSFORMATION MAPPINGS ===
         # OUD→RFC attribute name transformations (for compatibility)
-        ATTRIBUTE_TRANSFORMATION_OUD_TO_RFC: Final[dict[str, str]] = {
+        ATTRIBUTE_TRANSFORMATION_OUD_TO_RFC: ClassVar[dict[str, str]] = {
             "ds-sync-hist": "dsyncHist",  # OUD proprietary
             "ds-pwp-account-disabled": "accountDisabled",  # OUD password policy
             "entryUUID": "entryUUID",  # Standard RFC, OUD version
         }
 
         # RFC→OUD attribute name transformations (for reverse mapping)
-        ATTRIBUTE_TRANSFORMATION_RFC_TO_OUD: Final[dict[str, str]] = {
+        ATTRIBUTE_TRANSFORMATION_RFC_TO_OUD: ClassVar[dict[str, str]] = {
             "dsyncHist": "ds-sync-hist",
             "accountDisabled": "ds-pwp-account-disabled",
             "entryUUID": "entryUUID",
         }
 
-    # =========================================================================
-    # Class-level attributes for server identification (from Constants)
-    # =========================================================================
-    server_type: ClassVar[str] = Constants.SERVER_TYPE
-    priority: ClassVar[int] = Constants.PRIORITY
+        # === OUD SUPPORTED PERMISSIONS ===
+        # Permissions that OUD supports (migrated from FlextLdifConstants.AclPermissionCompatibility)
+        SUPPORTED_PERMISSIONS: ClassVar[frozenset[str]] = frozenset([
+            "read",
+            "write",
+            "add",
+            "delete",
+            "search",
+            "compare",
+            "all",
+        ])
 
-    def __init__(self) -> None:
-        """Initialize Oracle Unified Directory quirks."""
-        super().__init__()
-        # Use object.__setattr__ to bypass Pydantic validation for dynamic attributes
-        # Nested classes no longer require server_type and priority parameters
-        object.__setattr__(self, "schema", self.Schema())
-        object.__setattr__(self, "acl", self.Acl())
-        object.__setattr__(self, "entry", self.Entry())
+        # === OUD ATTRIBUTE ALIASES ===
+        # Attribute aliases for OUD (multiple names for same semantic attribute)
+        # (migrated from FlextLdifConstants.SchemaConversionMappings)
+        ATTRIBUTE_ALIASES: ClassVar[dict[str, list[str]]] = {
+            "cn": ["commonName"],
+            "sn": ["surname"],
+            "givenName": ["gn"],
+            "mail": ["rfc822Mailbox", "emailAddress"],
+            "telephoneNumber": ["phone"],
+            "uid": ["userid", "username"],
+        }
+
+    # =========================================================================
+    # Server identification - accessed via Constants via properties in base.py
+    # =========================================================================
+    # NOTE: server_type and priority are accessed via properties in base.py
+    # which read from Constants.SERVER_TYPE and Constants.PRIORITY
 
     # === PUBLIC INTERFACE FOR SCHEMA CONFIGURATION ===
 
@@ -368,7 +436,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 return FlextLdifUtilities.Parser.parse_rfc_attribute(
                     attr_definition,
                     case_insensitive=False,  # OUD uses strict RFC-compliant NAME matching
-                    _allow_syntax_quotes=False,  # OUD uses standard SYNTAX format (private param)
+                    allow_syntax_quotes=False,  # OUD uses standard SYNTAX format
                 )
             except Exception as e:
                 return FlextResult[FlextLdifModels.SchemaAttribute].fail(
@@ -395,7 +463,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 # Use OUD-specific parser which will handle extensions via hooks
                 return FlextLdifUtilities.Parser.parse_rfc_objectclass(
                     oc_definition,
-                    _case_insensitive=False,  # OUD uses strict RFC-compliant NAME matching (private param)
+                    case_insensitive=False,  # OUD uses strict RFC-compliant NAME matching
                 )
             except Exception as e:
                 return FlextResult[FlextLdifModels.SchemaObjectClass].fail(
@@ -441,11 +509,11 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             # Validate required fields - no fallbacks
             if not oc_data.name:
                 return FlextResult[bool].fail(
-                    "ObjectClass name is required for validation"
+                    "ObjectClass name is required for validation",
                 )
             if not oc_data.oid:
                 return FlextResult[bool].fail(
-                    "ObjectClass OID is required for validation"
+                    "ObjectClass OID is required for validation",
                 )
             oc_name = str(oc_data.name)
             oc_oid = str(oc_data.oid)
@@ -457,11 +525,12 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 must_list: list[str] = (
                     must_attrs if isinstance(must_attrs, list) else [str(must_attrs)]
                 )
-                for attr in must_list:
+                missing_attrs.extend([
+                    str(attr) for attr in must_list
                     if not FlextLdifUtilities.Schema.is_attribute_in_list(
-                        str(attr), available_attributes
-                    ):
-                        missing_attrs.append(str(attr))
+                        str(attr), available_attributes,
+                    )
+                ])
 
             # PHASE 2: Check MAY attributes (optional - failure if missing)
             # CRITICAL FIX: MAY attributes MUST also be present in schema
@@ -471,11 +540,12 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 may_list: list[str] = (
                     may_attrs if isinstance(may_attrs, list) else [str(may_attrs)]
                 )
-                for attr in may_list:
+                missing_attrs.extend([
+                    str(attr) for attr in may_list
                     if not FlextLdifUtilities.Schema.is_attribute_in_list(
-                        str(attr), available_attributes
-                    ):
-                        missing_attrs.append(str(attr))
+                        str(attr), available_attributes,
+                    )
+                ])
 
             # Report validation failure if any attributes missing
             if missing_attrs:
@@ -522,7 +592,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 replacement = invalid_substr_rules[fixed_substr]
                 if replacement is not None:
                     logger.debug(
-                        f"Replacing invalid SUBSTR rule {fixed_substr} with {replacement}"
+                        "Replacing invalid SUBSTR rule %s with %s", fixed_substr, replacement,
                     )
                     fixed_substr = replacement
 
@@ -532,7 +602,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 set(FlextLdifServersOud.Constants.BOOLEAN_ATTRIBUTES),
             )
             if is_boolean:
-                logger.debug(f"Identified boolean attribute: {fixed_name}")
+                logger.debug("Identified boolean attribute: %s", fixed_name)
 
             # Create modified copy with fixed values using Pydantic v2 pattern
             return attr_data.model_copy(
@@ -540,7 +610,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                     "name": fixed_name,
                     "equality": fixed_equality,
                     "substr": fixed_substr,
-                }
+                },
             )
 
         def extract_schemas_from_ldif(
@@ -601,8 +671,8 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 return FlextResult[FlextLdifTypes.Models.EntryAttributesDict].ok(
                     {
                         FlextLdifConstants.DictKeys.ATTRIBUTES: attributes_parsed,
-                        "objectclasses": objectclasses_parsed,
-                    }
+                        FlextLdifConstants.DictKeys.OBJECTCLASS: objectclasses_parsed,
+                    },
                 )
 
             except Exception as e:
@@ -648,17 +718,17 @@ class FlextLdifServersOud(FlextLdifServersRfc):
         # AclConverter was moved to services/acl.py as FlextLdifAcl
         # Use FlextLdifAcl for OID→OUD ACL conversions instead
 
-        def can_handle(self, acl: str | FlextLdifModels.Acl) -> bool:
+        def can_handle(self, acl_line: str | FlextLdifModels.Acl) -> bool:
             """Check if this is an Oracle OUD ACL (public method).
 
             Args:
-                acl: ACL line string or Acl model to check.
+                acl_line: ACL line string or Acl model to check.
 
             Returns:
                 True if this is Oracle OUD ACL format
 
             """
-            return self.can_handle(acl)
+            return self.can_handle_acl(acl_line)
 
         def can_handle_acl(self, acl_line: str | FlextLdifModels.Acl) -> bool:
             """Check if this is an Oracle OUD ACL line (implements abstract method from base.py).
@@ -688,12 +758,12 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 if acl_line.name:
                     acl_attr_normalized = (
                         FlextLdifUtilities.Schema.normalize_attribute_name(
-                            acl_line.name
+                            acl_line.name,
                         )
                     )
                     const_attr_normalized = (
                         FlextLdifUtilities.Schema.normalize_attribute_name(
-                            FlextLdifServersOud.Constants.ACL_ATTRIBUTE_NAME
+                            FlextLdifServersOud.Constants.ACL_ATTRIBUTE_NAME,
                         )
                     )
                     return acl_attr_normalized == const_attr_normalized
@@ -715,7 +785,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                         targetattr_prefix,
                         targetscope_prefix,
                         version_prefix,
-                    )
+                    ),
                 )
                 or "ds-cfg-" in normalized.lower()
             )
@@ -763,7 +833,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
 
                 # Parse ACI components if it's ACI format
                 if not acl_line.startswith(
-                    FlextLdifServersOud.Constants.ACL_ACI_PREFIX
+                    FlextLdifServersOud.Constants.ACL_ACI_PREFIX,
                 ):
                     return FlextResult[FlextLdifModels.Acl].fail(
                         "Not an OUD ACI format",
@@ -821,25 +891,25 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                         break
 
                 # Build permissions dict using DRY utility
-                permission_mapping = {
-                    FlextLdifConstants.PermissionNames.READ.lower(): FlextLdifServersOud.Constants.ACL_PERM_KEY_READ,
-                    FlextLdifConstants.PermissionNames.WRITE.lower(): FlextLdifServersOud.Constants.ACL_PERM_KEY_WRITE,
-                    FlextLdifConstants.PermissionNames.ADD.lower(): FlextLdifServersOud.Constants.ACL_PERM_KEY_ADD,
-                    FlextLdifConstants.PermissionNames.DELETE.lower(): FlextLdifServersOud.Constants.ACL_PERM_KEY_DELETE,
-                    FlextLdifConstants.PermissionNames.SEARCH.lower(): FlextLdifServersOud.Constants.ACL_PERM_KEY_SEARCH,
-                    FlextLdifConstants.PermissionNames.COMPARE.lower(): FlextLdifServersOud.Constants.ACL_PERM_KEY_COMPARE,
-                    FlextLdifConstants.PermissionNames.SELFWRITE.lower(): FlextLdifServersOud.Constants.ACL_PERMISSION_SELF_WRITE,
-                    FlextLdifConstants.PermissionNames.SELF_WRITE.lower(): FlextLdifServersOud.Constants.ACL_PERMISSION_SELF_WRITE,
-                    FlextLdifConstants.PermissionNames.PROXY.lower(): FlextLdifServersOud.Constants.ACL_PERM_KEY_PROXY,
+                perm_map = {
+                    "read": FlextLdifServersOud.Constants.ACL_PERM_KEY_READ,
+                    "write": FlextLdifServersOud.Constants.ACL_PERM_KEY_WRITE,
+                    "add": FlextLdifServersOud.Constants.ACL_PERM_KEY_ADD,
+                    "delete": FlextLdifServersOud.Constants.ACL_PERM_KEY_DELETE,
+                    "search": FlextLdifServersOud.Constants.ACL_PERM_KEY_SEARCH,
+                    "compare": FlextLdifServersOud.Constants.ACL_PERM_KEY_COMPARE,
+                    "selfwrite": FlextLdifServersOud.Constants.ACL_PERMISSION_SELF_WRITE,
+                    "self_write": FlextLdifServersOud.Constants.ACL_PERMISSION_SELF_WRITE,
+                    "proxy": FlextLdifServersOud.Constants.ACL_PERM_KEY_PROXY,
                 }
                 permissions_data = FlextLdifUtilities.ACL.build_permissions_dict(
                     permissions_list,
-                    permission_mapping,
+                    perm_map,
                 )
 
                 # Handle "all" permission special case
                 if FlextLdifUtilities.Schema.is_attribute_in_list(
-                    FlextLdifConstants.PermissionNames.ALL, permissions_list
+                    FlextLdifServersOud.Constants.PERMISSION_ALL, permissions_list,
                 ):
                     for key in permissions_data:
                         permissions_data[key] = True
@@ -847,19 +917,19 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 # Build AclSubject using DRY utility
                 subject_type_map = {
                     FlextLdifServersOud.Constants.ACL_BIND_RULE_TYPE_USERDN: FlextLdifServersOud.Constants.ACL_SUBJECT_TYPE_BIND_RULES,
-                    FlextLdifServersOud.Constants.ACL_BIND_RULE_TYPE_GROUPDN: FlextLdifConstants.AclSubjectTypes.GROUP,
+                    FlextLdifServersOud.Constants.ACL_BIND_RULE_TYPE_GROUPDN: "group",
                 }
                 special_values = {
                     FlextLdifServersOud.Constants.ACL_SELF_SUBJECT: (
-                        FlextLdifConstants.AclSubjectTypes.SELF,
+                        "self",
                         FlextLdifServersOud.Constants.ACL_SELF_SUBJECT,
                     ),
                     FlextLdifServersOud.Constants.ACL_ANONYMOUS_SUBJECT: (
-                        FlextLdifConstants.AclSubjectTypes.ANONYMOUS,
+                        "anonymous",
                         "*",
                     ),
                     FlextLdifServersOud.Constants.ACL_ANONYMOUS_SUBJECT_ALT: (
-                        FlextLdifConstants.AclSubjectTypes.ANONYMOUS,
+                        "anonymous",
                         "*",
                     ),
                 }
@@ -919,7 +989,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
 
             # Use raw_acl if already in OUD format
             if acl_data.raw_acl.startswith(
-                FlextLdifServersOud.Constants.ACL_ACI_PREFIX
+                FlextLdifServersOud.Constants.ACL_ACI_PREFIX,
             ):
                 return True
 
@@ -930,9 +1000,9 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 and len(acl_data.target.attributes) > 1
                 and (
                     "attr" in acl_data.raw_acl.lower()
-                    or "attributes" in acl_data.raw_acl.lower()
+                    or FlextLdifConstants.DictKeys.ATTRIBUTES.lower() in acl_data.raw_acl.lower()
                 )
-                and acl_data.raw_acl.startswith(("orclaci:", "access to"))
+                and acl_data.raw_acl.startswith(("orclaci:", "access to")),
             )
 
         def _build_aci_target(self, acl_data: FlextLdifModels.Acl) -> str:
@@ -953,7 +1023,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             return f'(targetattr="{target}")'
 
         def _build_aci_permissions(
-            self, acl_data: FlextLdifModels.Acl
+            self, acl_data: FlextLdifModels.Acl,
         ) -> FlextResult[str]:
             """Build ACI permissions part.
 
@@ -987,12 +1057,12 @@ class FlextLdifServersOud(FlextLdifServersRfc):
 
             if not filtered_ops:
                 return FlextResult[str].fail(
-                    f"ACL model has no OUD-supported permissions (all were OID-specific like {FlextLdifServersOud.Constants.ACL_PERMISSION_SELF_WRITE})"
+                    f"ACL model has no OUD-supported permissions (all were OID-specific like {FlextLdifServersOud.Constants.ACL_PERMISSION_SELF_WRITE})",
                 )
 
             ops_str = ",".join(filtered_ops)
             return FlextResult[str].ok(
-                f"{FlextLdifServersOud.Constants.ACL_ALLOW_PREFIX}{ops_str})"
+                f"{FlextLdifServersOud.Constants.ACL_ALLOW_PREFIX}{ops_str})",
             )
 
         def _build_aci_subject(self, acl_data: FlextLdifModels.Acl) -> str:
@@ -1035,7 +1105,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
 
             """
             try:
-                aci_output_lines = []
+                aci_output_lines: list[str] = []
 
                 # Generate OID→OUD Conversion Comments
                 if (
@@ -1047,10 +1117,10 @@ class FlextLdifServersOud(FlextLdifServersRfc):
 
                     if extensions.get("converted_from_oid"):
                         conversion_comments = extensions.get(
-                            "oud_conversion_comments", []
+                            "oud_conversion_comments", [],
                         )
                         if conversion_comments and isinstance(
-                            conversion_comments, list
+                            conversion_comments, list,
                         ):
                             aci_output_lines.extend(
                                 str(comment) for comment in conversion_comments
@@ -1069,19 +1139,18 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 aci_parts.append(self._build_aci_target(acl_data))
 
                 # Version and ACL name
-                acl_name = acl_data.name or "OUD ACL"
+                acl_name = acl_data.name or FlextLdifServersOud.Constants.ACL_DEFAULT_NAME
                 aci_parts.append(
-                    f'({FlextLdifServersOud.Constants.ACL_DEFAULT_VERSION}; acl "{acl_name}";'
+                    f'({FlextLdifServersOud.Constants.ACL_DEFAULT_VERSION}; acl "{acl_name}";',
                 )
 
-                # Permissions using helper
+                # Permissions and bind rules (subject) using helpers
                 perms_result = self._build_aci_permissions(acl_data)
                 if perms_result.is_failure:
                     return FlextResult[str].fail(perms_result.error)
-                aci_parts.append(perms_result.unwrap())
 
-                # Bind rules (subject) using helper
-                aci_parts.append(self._build_aci_subject(acl_data))
+                # Add permissions and subject in one extend call
+                aci_parts.extend([perms_result.unwrap(), self._build_aci_subject(acl_data)])
 
                 # Build final ACI string
                 aci_string = (
@@ -1107,7 +1176,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
 
             """
             return line.lower().startswith(
-                FlextLdifServersOud.Constants.ACL_ACI_PREFIX.lower()
+                FlextLdifServersOud.Constants.ACL_ACI_PREFIX.lower(),
             )
 
         @staticmethod
@@ -1121,7 +1190,9 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 True if line starts with 'ds-cfg-' (case-insensitive)
 
             """
-            return line.lower().startswith("ds-cfg-")
+            return line.lower().startswith(
+                FlextLdifServersOud.Constants.ACL_DS_CFG_PREFIX.lower(),
+            )
 
         def _finalize_aci(
             self,
@@ -1227,7 +1298,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
         # - _write_entry(): Writes OUD entries with proper formatting (PRIVATE)
 
         def can_handle(
-            self, entry_dn: str, attributes: Mapping[str, object]
+            self, entry_dn: str, attributes: Mapping[str, object],
         ) -> bool:
             """Check if this quirk should handle the entry (PRIVATE).
 
@@ -1255,20 +1326,20 @@ class FlextLdifServersOud(FlextLdifServersRfc):
 
             # Use utility methods for DN pattern matching
             if FlextLdifUtilities.DN.contains_pattern(
-                entry_dn, FlextLdifServersOud.Constants.DN_PREFIX_CN_CONFIG
+                entry_dn, FlextLdifServersOud.Constants.DN_PREFIX_CN_CONFIG,
             ) and FlextLdifUtilities.DN.contains_pattern(
-                entry_dn, FlextLdifServersOud.Constants.DN_PREFIX_CN_SCHEMA
+                entry_dn, FlextLdifServersOud.Constants.DN_PREFIX_CN_SCHEMA,
             ):
                 return True
 
             if FlextLdifUtilities.DN.contains_pattern(
-                entry_dn, FlextLdifServersOud.Constants.DN_PREFIX_CN_CONFIG
+                entry_dn, FlextLdifServersOud.Constants.DN_PREFIX_CN_CONFIG,
             ) and (
                 FlextLdifUtilities.DN.contains_pattern(
-                    entry_dn, FlextLdifServersOud.Constants.DN_PREFIX_CN_DIRECTORY
+                    entry_dn, FlextLdifServersOud.Constants.DN_PREFIX_CN_DIRECTORY,
                 )
                 or FlextLdifUtilities.DN.contains_pattern(
-                    entry_dn, FlextLdifServersOud.Constants.DN_PREFIX_CN_DS
+                    entry_dn, FlextLdifServersOud.Constants.DN_PREFIX_CN_DS,
                 )
             ):
                 return True
@@ -1296,15 +1367,14 @@ class FlextLdifServersOud(FlextLdifServersRfc):
 
             # Check for OID-specific attributes (not OUD)
             # OID attributes start with "orcl" - these are not OUD entries
-            oid_prefixes = ("orcl", "oracle")
             if any(
                 attr_name.lower().startswith(prefix)
                 for attr_name in entry_attrs
-                for prefix in oid_prefixes
+                for prefix in FlextLdifServersOud.Constants.OID_PREFIXES
             ):
                 return False
 
-            return "objectclass" in entry_attrs
+            return FlextLdifConstants.DictKeys.OBJECTCLASS.lower() in entry_attrs
 
         # Oracle OUD boolean attributes that expect TRUE/FALSE instead of 0/1
         # This IS format-specific - OUD requires TRUE/FALSE, not 0/1
@@ -1368,7 +1438,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                         attr_values
                         if isinstance(attr_values, list)
                         else [str(attr_values)]
-                    )
+                    ),
                 }
                 converted_dict = FlextLdifUtilities.Entry.convert_boolean_attributes(
                     attr_dict,
@@ -1378,8 +1448,12 @@ class FlextLdifServersOud(FlextLdifServersRfc):
 
             # Validate telephone numbers
             if attr_lower == "telephonenumber":
+                # Ensure attr_values is list[str] for validation
+                values_list: list[object] = (
+                    attr_values if isinstance(attr_values, list) else [attr_values])
+                telephone_values = [str(v) for v in values_list]
                 valid_numbers = FlextLdifUtilities.Entry.validate_telephone_numbers(
-                    attr_values if isinstance(attr_values, list) else [attr_values]
+                    telephone_values,
                 )
                 if valid_numbers:
                     return valid_numbers
@@ -1416,7 +1490,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             # Preserve attribute order
             if processed_attributes:
                 metadata_extensions["attribute_order"] = list(
-                    processed_attributes.keys()
+                    processed_attributes.keys(),
                 )
 
             # Detect Oracle objectClasses
@@ -1429,7 +1503,8 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                         str(oc)
                         for oc in oc_values
                         if any(
-                            prefix in str(oc).lower() for prefix in ("orcl", "oracle")
+                            prefix in str(oc).lower()
+                            for prefix in FlextLdifServersOud.Constants.OID_PREFIXES
                         )
                     ]
                     if oracle_ocs:
@@ -1482,7 +1557,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                     attr_lower = attr_name.lower()
                     normalized_name = (
                         FlextLdifServersOud.Constants.ATTRIBUTE_CASE_MAP.get(
-                            attr_lower, attr_name
+                            attr_lower, attr_name,
                         )
                     )
                     if not normalized_name:
@@ -1496,15 +1571,15 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 # Create LdifAttributes model, combining processed and internal attributes
                 combined_attributes = final_attributes_for_new_entry.copy()
                 combined_attributes.update(
-                    {k: v for k, v in processed_attrs_dict.items() if k.startswith("_")}
+                    {k: v for k, v in processed_attrs_dict.items() if k.startswith("_")},
                 )
                 new_ldif_attributes = FlextLdifModels.LdifAttributes(
-                    attributes=combined_attributes
+                    attributes=combined_attributes,
                 )
 
                 # Build metadata extensions using helper
                 metadata_extensions = self._build_metadata_extensions(
-                    entry, final_attributes_for_new_entry
+                    entry, final_attributes_for_new_entry,
                 )
 
                 new_metadata = FlextLdifModels.QuirkMetadata.create_for(
@@ -1518,7 +1593,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                         dn=entry.dn,
                         attributes=new_ldif_attributes,
                         metadata=new_metadata,
-                    ).unwrap()
+                    ).unwrap(),
                 )
 
             except Exception as e:
@@ -1540,8 +1615,6 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 Formatted ACI with semicolons inserted after each 'by' clause (except last)
 
             """
-            import re
-
             # CRITICAL: This method only does semantic transformation (add semicolons).
             # Line formatting (folding/unfolding) is the writer's responsibility, NOT the quirk's.
             # Always normalize whitespace and remove newlines - let writer handle formatting.
@@ -1553,8 +1626,8 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             # OUD format requires semicolons after each "by" clause (except the last one)
             # Format: "by group=\"...\" ;" or "by *" (no semicolon if last)
             # Find all "by group=\"...\"" and "by *" clauses
-            by_group_pattern = r"by\s+group=\"[^\"]+\""
-            by_star_pattern = r"by\s+\*"
+            by_group_pattern = FlextLdifServersOud.Constants.ACL_BY_GROUP_PATTERN
+            by_star_pattern = FlextLdifServersOud.Constants.ACL_BY_STAR_PATTERN
 
             # Find all by clauses with their end positions
             by_clauses = [
@@ -1618,7 +1691,10 @@ class FlextLdifServersOud(FlextLdifServersRfc):
 
             """
             # Convert Entry model to dict format expected by write_entry_to_ldif
-            entry_dict = {"dn": str(entry.dn), **entry.attributes.attributes}
+            entry_dict: dict[str, object] = {
+                FlextLdifConstants.DictKeys.DN: str(entry.dn),
+                **cast("dict[str, object]", entry.attributes.attributes),
+            }
             return self.write_entry_to_ldif(entry_dict)
 
         def write_entry_to_ldif(
@@ -1650,10 +1726,13 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                         "Missing required FlextLdifConstants.DictKeys.DN field",
                     )
 
-                dn = entry_data[FlextLdifConstants.DictKeys.DN]
+                dn_raw = entry_data[FlextLdifConstants.DictKeys.DN]
+                # Ensure dn is str for string operations
+                dn = str(dn_raw) if dn_raw is not None else ""
 
                 # Auto-convert RFC schema DN to OUD schema DN
-                if dn.lower().startswith("cn=subschemasubentry"):
+                schema_dn_prefix = "cn=subschemasubentry"
+                if dn.lower().startswith(schema_dn_prefix):
                     dn = FlextLdifServersOud.Constants.SCHEMA_DN
 
                 ldif_lines = [f"dn: {dn}"]
@@ -1671,7 +1750,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                     or "_modify_add_objectclasses" in entry_data
                 ):
                     ldif_lines.extend(
-                        FlextLdifUtilities.Writer.write_modify_operations(entry_data)
+                        FlextLdifUtilities.Writer.write_modify_operations(entry_data),
                     )
                 else:
                     # Standard entry format - determine attribute order using utility
@@ -1696,7 +1775,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
 
                     # Extract base64 attributes using utility
                     base64_attrs = FlextLdifUtilities.Writer.extract_base64_attrs(
-                        entry_data
+                        entry_data,
                     )
 
                     # Write attributes using utilities
@@ -1725,13 +1804,13 @@ class FlextLdifServersOud(FlextLdifServersRfc):
         def _finalize_and_parse_entry(
             self,
             entry_dict: dict[str, object],
-            entries_list: list[dict[str, object]],
+            entries_list: list[FlextLdifModels.Entry],
         ) -> None:
             """Finalize entry dict and parse into entries list.
 
             Args:
                 entry_dict: Entry dictionary with DN and attributes
-                entries_list: Target list to append parsed entry
+                entries_list: Target list to append parsed Entry models
 
             """
             if FlextLdifConstants.DictKeys.DN not in entry_dict:
@@ -1745,7 +1824,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
         def extract_entries_from_ldif(
             self,
             ldif_content: str,
-        ) -> FlextResult[list[dict[str, object]]]:
+        ) -> FlextResult[list[FlextLdifModels.Entry]]:
             """Extract and parse all directory entries from LDIF content.
 
             Strategy pattern: OUD-specific approach to extract entries from LDIF.
@@ -1754,11 +1833,11 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             ldif_content: Raw LDIF content containing directory entries
 
             Returns:
-            FlextResult with list of parsed entry dictionaries
+            FlextResult with list of parsed Entry models
 
             """
             try:
-                entries = []
+                entries: list[FlextLdifModels.Entry] = []
                 current_entry: dict[str, object] = {}
                 current_attr: str | None = None
                 current_values: list[str] = []
@@ -1769,7 +1848,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                         if current_entry:
                             # Finalize and process entry
                             FlextLdifUtilities.Parser.finalize_pending_attribute(
-                                current_attr, current_values, current_entry
+                                current_attr, current_values, current_entry,
                             )
                             self._finalize_and_parse_entry(current_entry, entries)
                             current_entry = {}
@@ -1789,21 +1868,21 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                     # Process new attribute line using utility
                     current_attr, current_values = (
                         FlextLdifUtilities.Parser.process_ldif_attribute_line(
-                            line, current_attr, current_values, current_entry
+                            line, current_attr, current_values, current_entry,
                         )
                     )
 
                 # Process final entry
                 if current_entry:
                     FlextLdifUtilities.Parser.finalize_pending_attribute(
-                        current_attr, current_values, current_entry
+                        current_attr, current_values, current_entry,
                     )
                     self._finalize_and_parse_entry(current_entry, entries)
 
-                return FlextResult[list[dict[str, object]]].ok(entries)
+                return FlextResult[list[FlextLdifModels.Entry]].ok(entries)
 
             except Exception as e:
-                return FlextResult[list[dict[str, object]]].fail(
+                return FlextResult[list[FlextLdifModels.Entry]].fail(
                     f"OUD entry extraction failed: {e}",
                 )
 

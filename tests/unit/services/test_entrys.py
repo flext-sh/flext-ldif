@@ -27,7 +27,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent / "src"))
 import pytest
 
 from flext_ldif.models import FlextLdifModels
-from flext_ldif.services.entrys import FlextLdifEntry
+from flext_ldif.services.entry import FlextLdifEntry
 
 # ════════════════════════════════════════════════════════════════════════════
 # TEST FIXTURES

@@ -29,7 +29,7 @@ import pytest
 
 from flext_ldif import FlextLdif
 from flext_ldif.models import FlextLdifModels
-from flext_ldif.services.entrys import FlextLdifEntry
+from flext_ldif.services.entry import FlextLdifEntry
 
 # Add fixtures path
 FIXTURES_ROOT = Path(__file__).parent.parent.parent / "fixtures"
