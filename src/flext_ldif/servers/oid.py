@@ -15,6 +15,7 @@ OID-specific features:
 
 from __future__ import annotations
 
+import enum as enum_module
 from collections.abc import Mapping
 from typing import ClassVar
 
@@ -404,6 +405,40 @@ class FlextLdifServersOid(FlextLdifServersRfc):
             "entryUUID": "orclguid",
             "aci": "orclaci",
         }
+
+        # === NESTED STRENUM DEFINITIONS ===
+        # StrEnum definitions for type-safe permission, action, and encoding handling
+
+        class AclPermission(enum_module.StrEnum):
+            """OID-specific ACL permissions."""
+
+            READ = "read"
+            WRITE = "write"
+            ADD = "add"
+            DELETE = "delete"
+            SEARCH = "search"
+            COMPARE = "compare"
+            SELF_WRITE = "self_write"
+            PROXY = "proxy"
+            BROWSE = "browse"
+            AUTH = "auth"
+            ALL = "all"
+            NONE = "none"
+
+        class AclAction(enum_module.StrEnum):
+            """OID ACL action types."""
+
+            ALLOW = "allow"
+            DENY = "deny"
+
+        class Encoding(enum_module.StrEnum):
+            """OID-supported encodings."""
+
+            UTF_8 = "utf-8"
+            UTF_16 = "utf-16"
+            ASCII = "ascii"
+            LATIN_1 = "latin-1"
+            ISO_8859_1 = "iso-8859-1"
 
     # =========================================================================
     # Server identification - accessed via Constants via properties in base.py

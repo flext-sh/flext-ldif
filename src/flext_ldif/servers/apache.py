@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 from collections.abc import Mapping
+from enum import StrEnum
 from typing import ClassVar
 
 from flext_core import FlextResult
@@ -103,6 +104,35 @@ class FlextLdifServersApache(FlextLdifServersRfc):
 
         # Entry detection constants (migrated from Entry class)
         DN_CONFIG_ENTRY_MARKER: ClassVar[str] = "ou=config"
+
+        # === NESTED STRENUM DEFINITIONS ===
+        # StrEnum definitions for type-safe permission, action, and encoding handling
+
+        class AclPermission(StrEnum):
+            """Apache Directory Server-specific ACL permissions."""
+
+            READ = "read"
+            WRITE = "write"
+            ADD = "add"
+            DELETE = "delete"
+            SEARCH = "search"
+            AUTH = "auth"
+            ALL = "all"
+            NONE = "none"
+
+        class AclAction(StrEnum):
+            """Apache Directory Server ACL action types."""
+
+            ALLOW = "allow"
+            DENY = "deny"
+
+        class Encoding(StrEnum):
+            """Apache Directory Server-supported encodings."""
+
+            UTF_8 = "utf-8"
+            UTF_16 = "utf-16"
+            ASCII = "ascii"
+            LATIN_1 = "latin-1"
 
     # =========================================================================
     # Server identification - accessed via Constants via properties in base.py

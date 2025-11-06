@@ -11,6 +11,7 @@ from __future__ import annotations
 import operator
 import re
 from collections.abc import Mapping
+from enum import StrEnum
 from typing import ClassVar, cast
 
 from flext_core import FlextLogger, FlextResult
@@ -338,6 +339,37 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             "cn=tasks",
             "cn=monitor",
         ])
+
+        # === NESTED STRENUM DEFINITIONS ===
+        # StrEnum definitions for type-safe permission, action, and encoding handling
+
+        class AclPermission(StrEnum):
+            """OUD-specific ACL permissions."""
+
+            READ = "read"
+            WRITE = "write"
+            ADD = "add"
+            DELETE = "delete"
+            SEARCH = "search"
+            COMPARE = "compare"
+            AUTH = "auth"
+            ALL = "all"
+            NONE = "none"
+
+        class AclAction(StrEnum):
+            """OUD ACL action types."""
+
+            ALLOW = "allow"
+            DENY = "deny"
+
+        class Encoding(StrEnum):
+            """OUD-supported encodings."""
+
+            UTF_8 = "utf-8"
+            UTF_16 = "utf-16"
+            ASCII = "ascii"
+            LATIN_1 = "latin-1"
+            ISO_8859_1 = "iso-8859-1"
 
     # =========================================================================
     # Server identification - accessed via Constants via properties in base.py

@@ -295,10 +295,10 @@ class FlextLdifMigrationPipeline(
                 # Empty input is OK - return empty result
                 empty_result = FlextLdifModels.PipelineExecutionResult(
                     entries_by_category={},
-                    statistics=FlextLdifModels.PipelineStatistics(
-                        total_entries=0,
-                        processed_entries=0,
-                    ),
+                    statistics={
+                        "total_entries": 0,
+                        "processed_entries": 0,
+                    },
                     file_paths={},
                 )
                 return FlextResult[FlextLdifModels.PipelineExecutionResult].ok(

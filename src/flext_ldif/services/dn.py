@@ -91,8 +91,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextModels, FlextResult, FlextService
-from pydantic import ConfigDict, Field, field_validator
+from flext_core import FlextResult, FlextService
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from flext_ldif.typings import FlextLdifTypes
 from flext_ldif.utilities import FlextLdifUtilities
@@ -252,14 +252,14 @@ class FlextLdifDn(FlextService[str]):
     # ════════════════════════════════════════════════════════════════════════
 
     @classmethod
-    def parse_components(cls, dn: str) -> FlextResult[list[tuple[str, str, str]]]:
+    def parse_components(cls, dn: str) -> FlextResult[list[tuple[str, str]]]:
         """Parse DN into RFC 4514 compliant components.
 
         Args:
             dn: Distinguished name string
 
         Returns:
-            FlextResult with list of (attr, value, rdn) tuples
+            FlextResult with list of (attr, value) tuples
 
         Example:
             result = FlextLdifDn.parse("cn=John,dc=example,dc=com")
@@ -401,7 +401,7 @@ class FlextLdifDn(FlextService[str]):
     # INSTANCE METHOD SHORTCUTS (for execute pattern)
     # ════════════════════════════════════════════════════════════════════════
 
-    def parse(self, dn: str) -> FlextResult[list[tuple[str, str, str]]]:
+    def parse(self, dn: str) -> FlextResult[list[tuple[str, str]]]:
         """Instance method shortcut for parse_components."""
         return self.parse_components(dn)
 
@@ -477,12 +477,12 @@ class FlextLdifDn(FlextService[str]):
         """
 
         @staticmethod
-        def parse_components(dn: str) -> FlextResult[list[tuple[str, str, str]]]:
+        def parse_components(dn: str) -> FlextResult[list[tuple[str, str]]]:
             """Parse DN into RFC 4514 compliant components."""
             components = FlextLdifUtilities.DN.parse(dn)
             if components is None:
-                return FlextResult[list[tuple[str, str, str]]].fail("Invalid DN format")
-            return FlextResult[list[tuple[str, str, str]]].ok(components)
+                return FlextResult[list[tuple[str, str]]].fail("Invalid DN format")
+            return FlextResult[list[tuple[str, str]]].ok(components)
 
         @staticmethod
         def validate_format(dn: str) -> FlextResult[bool]:
@@ -514,7 +514,7 @@ class FlextLdifDn(FlextService[str]):
                 return FlextResult[str].fail(result.error)
             components = result.unwrap()
             components_str = ", ".join(
-                f"{attr}={value}" for attr, value, _ in components
+                f"{attr}={value}" for attr, value in components
             )
             return FlextResult[str].ok(components_str)
 
@@ -665,7 +665,7 @@ class FlextLdifDn(FlextService[str]):
     # NESTED CASE REGISTRY CLASS
     # ════════════════════════════════════════════════════════════════════════
 
-    class Registry(FlextModels.Value):
+    class Registry(BaseModel):
         """Registry for tracking canonical DN case during conversions.
 
         This class maintains a mapping of DNs in normalized form (lowercase, no spaces)
@@ -694,7 +694,8 @@ class FlextLdifDn(FlextService[str]):
             if normalized is None:
                 # Fallback for invalid DNs: simple lowercase normalization
                 return dn.lower().replace(" ", "")
-            return normalized
+            # Ensure lowercase for case-insensitive comparison
+            return normalized.lower()
 
         def register_dn(self, dn: str, *, force: bool = False) -> str:
             """Register DN and return its canonical case.
@@ -823,35 +824,15 @@ class FlextLdifDn(FlextService[str]):
 
                     field_value = normalized_data[field_name]
 
-                    # Handle single DN (string)
+                    # Delegate to helper based on type
                     if isinstance(field_value, str):
-                        canonical = self.get_canonical_dn(field_value)
-                        if canonical:
-                            normalized_data[field_name] = canonical
-                        else:
-                            # Not registered, use FlextLdifUtilities for proper RFC 4514 normalization
-                            normalized_dn = FlextLdifUtilities.DN.norm(field_value)
-                            normalized_data[field_name] = (
-                                normalized_dn or field_value.lower()
-                            )
-
-                    # Handle list of DNs
+                        normalized_data[field_name] = self._normalize_single_dn(
+                            field_value
+                        )
                     elif isinstance(field_value, list):
-                        normalized_list: list[object] = []
-                        for item in field_value:
-                            if isinstance(item, str):
-                                canonical = self.get_canonical_dn(item)
-                                if canonical:
-                                    normalized_list.append(canonical)
-                                else:
-                                    # Use FlextLdifUtilities for proper RFC 4514 normalization
-                                    normalized_dn = FlextLdifUtilities.DN.norm(item)
-                                    normalized_list.append(
-                                        normalized_dn or item.lower(),
-                                    )
-                            else:
-                                normalized_list.append(item)
-                        normalized_data[field_name] = normalized_list
+                        normalized_data[field_name] = self._normalize_dn_list(
+                            field_value
+                        )
 
                 return FlextResult[dict[str, object]].ok(normalized_data)
 
@@ -859,6 +840,41 @@ class FlextLdifDn(FlextService[str]):
                 return FlextResult[dict[str, object]].fail(
                     f"Failed to normalize DN references: {e}",
                 )
+
+        def _normalize_single_dn(self, dn: str) -> str:
+            """Normalize a single DN string to canonical case.
+
+            Args:
+                dn: DN string to normalize
+
+            Returns:
+                Normalized DN string
+
+            """
+            canonical = self.get_canonical_dn(dn)
+            if canonical:
+                return canonical
+            # Not registered, use FlextLdifUtilities for proper RFC 4514 normalization
+            normalized_dn = FlextLdifUtilities.DN.norm(dn)
+            return normalized_dn or dn.lower()
+
+        def _normalize_dn_list(self, dn_list: list[object]) -> list[object]:
+            """Normalize a list of DN values, preserving non-string items.
+
+            Args:
+                dn_list: List that may contain DN strings and other items
+
+            Returns:
+                List with DN strings normalized
+
+            """
+            normalized_list: list[object] = []
+            for item in dn_list:
+                if isinstance(item, str):
+                    normalized_list.append(self._normalize_single_dn(item))
+                else:
+                    normalized_list.append(item)
+            return normalized_list
 
         def clear(self) -> None:
             """Clear all DN registrations."""

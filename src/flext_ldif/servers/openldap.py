@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import re
 from collections.abc import Mapping
+from enum import StrEnum
 from typing import ClassVar
 
 from flext_core import FlextResult
@@ -179,6 +180,35 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
         ACL_ERROR_MISSING_TO: ClassVar[str] = (
             "Invalid OpenLDAP ACL format: missing 'to' clause"
         )
+
+        # === NESTED STRENUM DEFINITIONS ===
+        # StrEnum definitions for type-safe permission, action, and encoding handling
+
+        class AclPermission(StrEnum):
+            """OpenLDAP-specific ACL permissions."""
+
+            READ = "read"
+            WRITE = "write"
+            SEARCH = "search"
+            COMPARE = "compare"
+            AUTH = "auth"
+            ALL = "all"
+            NONE = "none"
+
+        class AclAction(StrEnum):
+            """OpenLDAP ACL action types."""
+
+            ALLOW = "allow"
+            DENY = "deny"
+
+        class Encoding(StrEnum):
+            """OpenLDAP-supported encodings."""
+
+            UTF_8 = "utf-8"
+            UTF_16 = "utf-16"
+            ASCII = "ascii"
+            LATIN_1 = "latin-1"
+            ISO_8859_1 = "iso-8859-1"
 
     # =========================================================================
     # Server identification - accessed via Constants via properties in base.py

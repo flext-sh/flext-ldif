@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import base64
+import enum
 import re
 from collections.abc import Mapping
 from typing import ClassVar, cast
@@ -138,6 +139,35 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
 
         # ACL separator for Tivoli format (migrated from _write_acl method)
         ACL_SEPARATOR: ClassVar[str] = "#"
+
+        # === NESTED STRENUM DEFINITIONS ===
+        # StrEnum definitions for type-safe permission, action, and encoding handling
+
+        class AclPermission(enum.StrEnum):
+            """IBM Tivoli Directory Server-specific ACL permissions."""
+
+            READ = "read"
+            WRITE = "write"
+            ADD = "add"
+            DELETE = "delete"
+            SEARCH = "search"
+            AUTH = "auth"
+            ALL = "all"
+            NONE = "none"
+
+        class AclAction(enum.StrEnum):
+            """IBM Tivoli Directory Server ACL action types."""
+
+            ALLOW = "allow"
+            DENY = "deny"
+
+        class Encoding(enum.StrEnum):
+            """IBM Tivoli Directory Server-supported encodings."""
+
+            UTF_8 = "utf-8"
+            UTF_16 = "utf-16"
+            ASCII = "ascii"
+            LATIN_1 = "latin-1"
 
     # =========================================================================
     # Server identification - accessed via Constants via properties in base.py

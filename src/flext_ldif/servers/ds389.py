@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 from collections.abc import Mapping
+from enum import StrEnum
 from typing import ClassVar
 
 from flext_core import FlextResult
@@ -158,6 +159,35 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
         ERROR_ENTRY_PROCESSING_FAILED: ClassVar[str] = (
             "389 Directory Server entry processing failed: {exc}"
         )
+
+        # === NESTED STRENUM DEFINITIONS ===
+        # StrEnum definitions for type-safe permission, action, and encoding handling
+
+        class AclPermission(StrEnum):
+            """389 Directory Server-specific ACL permissions."""
+
+            READ = "read"
+            WRITE = "write"
+            ADD = "add"
+            DELETE = "delete"
+            SEARCH = "search"
+            AUTH = "auth"
+            ALL = "all"
+            NONE = "none"
+
+        class AclAction(StrEnum):
+            """389 Directory Server ACL action types."""
+
+            ALLOW = "allow"
+            DENY = "deny"
+
+        class Encoding(StrEnum):
+            """389 Directory Server-supported encodings."""
+
+            UTF_8 = "utf-8"
+            UTF_16 = "utf-16"
+            ASCII = "ascii"
+            LATIN_1 = "latin-1"
 
     class Schema(FlextLdifServersRfc.Schema):
         """Schema quirks for Red Hat / 389 Directory Server."""

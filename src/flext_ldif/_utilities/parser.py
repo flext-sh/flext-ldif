@@ -484,7 +484,14 @@ class FlextLdifUtilitiesParser:
         case_insensitive: bool = False,
         allow_syntax_quotes: bool = False,
     ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
-        """Parse RFC 4512 attribute definition."""
+        """Parse RFC 4512 attribute definition.
+
+        Args:
+            attr_definition: RFC 4512 attribute definition string
+            case_insensitive: Whether to use case-insensitive pattern matching
+            allow_syntax_quotes: Whether to allow quoted syntax values (for lenient parsing)
+
+        """
         try:
             oid_match = re.match(
                 FlextLdifConstants.LdifPatterns.SCHEMA_OID_EXTRACTION,
@@ -511,6 +518,11 @@ class FlextLdifUtilitiesParser:
                 attr_definition,
             )
             syntax = syntax_match.group(1) if syntax_match else None
+
+            # Handle quoted syntax values if lenient parsing is enabled
+            if allow_syntax_quotes and syntax and syntax.startswith('"'):
+                syntax = syntax.strip('"')
+
             length = (
                 int(syntax_match.group(2))
                 if syntax_match and syntax_match.group(2)

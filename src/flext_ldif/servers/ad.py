@@ -19,6 +19,7 @@ import base64
 import binascii
 import re
 from collections.abc import Mapping
+from enum import StrEnum
 from typing import ClassVar
 
 from flext_core import FlextResult
@@ -188,6 +189,36 @@ class FlextLdifServersAd(FlextLdifServersRfc):
             "microsoft active directory"
         )
         ACL_TARGET_WILDCARD: ClassVar[str] = "*"
+
+        # === NESTED STRENUM DEFINITIONS ===
+        # StrEnum definitions for type-safe permission, action, and encoding handling
+
+        class AclPermission(StrEnum):
+            """Active Directory-specific ACL permissions."""
+
+            READ = "read"
+            WRITE = "write"
+            DELETE = "delete"
+            CREATE = "create"
+            CONTROL_ACCESS = "control_access"
+            AUTH = "auth"
+            ALL = "all"
+            NONE = "none"
+
+        class AclAction(StrEnum):
+            """Active Directory ACL action types."""
+
+            ALLOW = "allow"
+            DENY = "deny"
+
+        class Encoding(StrEnum):
+            """Active Directory-supported encodings."""
+
+            UTF_8 = "utf-8"
+            UTF_16_LE = "utf-16-le"
+            ASCII = "ascii"
+            LATIN_1 = "latin-1"
+            CP1252 = "cp1252"
 
     # =========================================================================
     # Server identification - accessed via Constants via properties in base.py

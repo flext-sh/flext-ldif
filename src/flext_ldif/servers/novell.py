@@ -12,6 +12,7 @@ from __future__ import annotations
 import base64
 import re
 from collections.abc import Mapping
+from enum import StrEnum
 from typing import ClassVar
 
 from flext_core import FlextResult
@@ -132,6 +133,36 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
         NOVELL_PERMISSION_ENTRY: ClassVar[str] = (
             "entry"  # Novell-specific permission name
         )
+
+        # === NESTED STRENUM DEFINITIONS ===
+        # StrEnum definitions for type-safe permission, action, and encoding handling
+
+        class AclPermission(StrEnum):
+            """Novell eDirectory-specific ACL permissions."""
+
+            OBJECT_RIGHTS = "object_rights"
+            ATTR_RIGHTS = "attr_rights"
+            COMPARE = "compare"
+            READ = "read"
+            WRITE = "write"
+            ADD = "add"
+            DELETE = "delete"
+            ALL = "all"
+            NONE = "none"
+
+        class AclAction(StrEnum):
+            """Novell eDirectory ACL action types."""
+
+            ALLOW = "allow"
+            DENY = "deny"
+
+        class Encoding(StrEnum):
+            """Novell eDirectory-supported encodings."""
+
+            UTF_8 = "utf-8"
+            UTF_16 = "utf-16"
+            ASCII = "ascii"
+            LATIN_1 = "latin-1"
 
     # =========================================================================
     # Server identification (defined in Constants nested class above)

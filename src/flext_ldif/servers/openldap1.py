@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import re
 from collections.abc import Mapping
+from enum import StrEnum
 from typing import ClassVar
 
 from flext_core import FlextResult
@@ -115,6 +116,31 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
 
         # ACL target parsing constants (migrated from _parse_acl method)
         ACL_OPS_SEPARATOR: ClassVar[str] = ","
+
+        # === NESTED STRENUM DEFINITIONS ===
+        # StrEnum definitions for type-safe permission, action, and encoding handling
+
+        class AclPermission(StrEnum):
+            """OpenLDAP 1.x-specific ACL permissions."""
+
+            READ = "read"
+            WRITE = "write"
+            COMPARE = "compare"
+            AUTH = "auth"
+            NONE = "none"
+
+        class AclAction(StrEnum):
+            """OpenLDAP 1.x ACL action types."""
+
+            ALLOW = "allow"
+            DENY = "deny"
+
+        class Encoding(StrEnum):
+            """OpenLDAP 1.x-supported encodings."""
+
+            UTF_8 = "utf-8"
+            ASCII = "ascii"
+            LATIN_1 = "latin-1"
 
     # =========================================================================
     # Server identification - accessed via Constants via properties in base.py

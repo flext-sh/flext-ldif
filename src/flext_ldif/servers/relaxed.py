@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import re
 from collections.abc import Mapping
+from enum import StrEnum
 from typing import ClassVar
 
 from flext_core import FlextLogger, FlextResult
@@ -91,6 +92,38 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
         # LDIF formatting constants (migrated from _write_entry method)
         LDIF_NEWLINE: ClassVar[str] = "\n"
         LDIF_JOIN_SEPARATOR: ClassVar[str] = "\n"
+
+        # === NESTED STRENUM DEFINITIONS ===
+        # StrEnum definitions for type-safe permission, action, and encoding handling
+
+        class AclPermission(StrEnum):
+            """Relaxed mode-specific ACL permissions (lenient parsing)."""
+
+            READ = "read"
+            WRITE = "write"
+            ADD = "add"
+            DELETE = "delete"
+            SEARCH = "search"
+            COMPARE = "compare"
+            AUTH = "auth"
+            ALL = "all"
+            NONE = "none"
+
+        class AclAction(StrEnum):
+            """Relaxed mode ACL action types."""
+
+            ALLOW = "allow"
+            DENY = "deny"
+
+        class Encoding(StrEnum):
+            """Relaxed mode-supported encodings."""
+
+            UTF_8 = "utf-8"
+            UTF_16 = "utf-16"
+            UTF_32 = "utf-32"
+            ASCII = "ascii"
+            LATIN_1 = "latin-1"
+            CP1252 = "cp1252"
 
     # =========================================================================
     # Server identification - accessed via Constants via properties in base.py

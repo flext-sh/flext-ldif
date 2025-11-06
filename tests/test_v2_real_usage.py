@@ -145,7 +145,10 @@ class TestFlextServiceV2BuilderPattern:
 
         # Builder pattern returns FlextResult for railway-oriented composition
         result = (
-            FlextLdifSorting.builder().with_entries(entries).by_hierarchy().execute()
+            FlextLdifSorting.builder()
+            .with_entries(entries)
+            .with_strategy("hierarchy")
+            .execute()
         )
 
         assert isinstance(result, FlextResult)
