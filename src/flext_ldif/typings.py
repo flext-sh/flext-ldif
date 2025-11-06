@@ -7,7 +7,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TypeVar
+from typing import Literal, TypeVar
 
 from flext_core import FlextTypes
 
@@ -34,16 +34,37 @@ class FlextLdifTypes(FlextTypes):
     """
 
     # =========================================================================
-    # SERVICE RETURN TYPE ALIASES - Used by servers and services
+    # SERVICE RETURN TYPE ALIASES - Top-level types used by servers and services
     # =========================================================================
 
-    # Type aliases for service polymorphic returns
     type EntryOrString = list[FlextLdifModels.Entry] | str
     type SchemaModel = FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass
     type SchemaModelOrString = FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | str
-
-    # DN input type (string or DN model)
     type DnInput = str | FlextLdifModels.DistinguishedName
+    type AclOrString = FlextLdifModels.Acl | str
+    type ConvertibleModel = (
+        FlextLdifModels.Entry
+        | FlextLdifModels.SchemaAttribute
+        | FlextLdifModels.SchemaObjectClass
+        | FlextLdifModels.Acl
+    )
+
+    # =========================================================================
+    # API FLEXIBLE INPUT/OUTPUT TYPES - For FlextLdif public API methods
+    # =========================================================================
+
+    # Attribute input - accepts dict or LdifAttributes model
+    type AttributeInput = dict[str, str | list[str]] | FlextLdifModels.LdifAttributes
+
+    # Entry input - accepts Entry model or dict representation
+    # Dict format: {"dn": str, "attribute_name": str | list[str], ...}
+    type EntryInput = FlextLdifModels.Entry | dict[str, str | list[str]]
+
+    # Entry dict representation (pure dict without models)
+    type EntryDict = dict[str, str | list[str]]
+
+    # Output format selection for API methods
+    type OutputFormat = Literal["model", "dict"]
 
     # =========================================================================
     # LDIF ENTRY TYPES
@@ -111,20 +132,18 @@ class FlextLdifTypes(FlextTypes):
 
         # Entry or string union - FlextService domain result types
         # USED: servers/base.py FlextService[EntryOrString]
+        # Real type (not string) - FlextLdifModels is imported directly at module level
         type EntryOrString = list[FlextLdifModels.Entry] | str
 
         # Schema model or string union - For schema quirk service types
         # USED: servers/base.py Schema nested class FlextService parameter
+        # Real type (not string) - FlextLdifModels is imported directly at module level
         type SchemaModelOrString = FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | str
 
         # Service response types - All possible FlextLdif service return types
         # USED: api.py FlextLdif class FlextService[ServiceResponseTypes]
-        type ServiceResponseTypes = (
-            FlextLdifModels.ParseResponse
-            | FlextLdifModels.WriteResponse
-            | FlextLdifModels.MigrationPipelineResult
-            | FlextLdifModels.ValidationResult
-        )
+        # Real type (not string) - FlextLdifModels is imported directly at module level
+        type ServiceResponseTypes = FlextLdifModels.ParseResponse | FlextLdifModels.WriteResponse | FlextLdifModels.MigrationPipelineResult | FlextLdifModels.ValidationResult
 
         # Entry DN value (string) - Canonical distinguished name
         type EntryDnValue = str
@@ -142,16 +161,13 @@ class FlextLdifTypes(FlextTypes):
 
         # ACL or string union - For ACL quirk service types
         # USED: servers/*.py ACL nested class FlextService parameter
+        # Real type (not string) - FlextLdifModels is imported directly at module level
         type AclOrString = FlextLdifModels.Acl | str
 
         # Convertible model union - All models convertible via transformation matrix
         # USED: services/conversion.py QuirksConversionMatrix[ConvertibleModel]
-        type ConvertibleModel = (
-            FlextLdifModels.Entry
-            | FlextLdifModels.SchemaAttribute
-            | FlextLdifModels.SchemaObjectClass
-            | FlextLdifModels.Acl
-        )
+        # Real type (not string) - FlextLdifModels is imported directly at module level
+        type ConvertibleModel = FlextLdifModels.Entry | FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | FlextLdifModels.Acl
 
         # =====================================================================
         # SCHEMA TYPES - RFC 4512 schema definition structures
@@ -403,9 +419,49 @@ class FlextLdifTypes(FlextTypes):
 
 
 # =============================================================================
+# MODULE-LEVEL TYPE ALIASES - REQUIRED FOR RUNTIME ACCESS
+# =============================================================================
+#
+# ⚠️  CRITICAL: DO NOT REMOVE THESE MODULE-LEVEL ALIASES! ⚠️
+#
+# **Technical Reason:**
+# Python 3.13 `type` statements inside class bodies create types in a LOCAL
+# namespace that is NOT accessible as class attributes at runtime.
+#
+# Example that FAILS at runtime:
+#   class FlextLdifTypes:
+#       type EntryOrString = list[FlextLdifModels.Entry] | str
+#
+#   FlextService[FlextLdifTypes.EntryOrString]  # ❌ AttributeError!
+#
+# **Why?** PEP 695 `type` statements are:
+# 1. Lazily evaluated
+# 2. Scoped to the class body during definition
+# 3. NOT added to the class __dict__ as attributes
+# 4. Only accessible to type checkers, not runtime code
+#
+# **Solution:** Module-level type aliases (below) are:
+# 1. Immediately evaluated at module import time
+# 2. Available as module attributes at runtime
+# 3. Can be imported: `from flext_ldif.typings import EntryOrString`
+# 4. Work with Pydantic generics: `FlextService[EntryOrString]` ✅
+#
+# **References:**
+# - PEP 695: Type Parameter Syntax (https://peps.python.org/pep-0695/)
+# - Python 3.13 type statement docs
+# =============================================================================
 # PUBLIC API EXPORTS - LDIF TypeVars and types
 # =============================================================================
-
+#
+# ALL type aliases are defined INSIDE FlextLdifTypes class hierarchy:
+#   - FlextLdifTypes.EntryOrString
+#   - FlextLdifTypes.SchemaModelOrString
+#   - FlextLdifTypes.Models.EntryAttributesDict
+#   - FlextLdifTypes.Models.AclOrString
+#   - etc.
+#
+# NO module-level type aliases - import FlextLdifTypes and use nested types
+#
 __all__: list[str] = [
     "FlextLdifModels",
     "FlextLdifTypes",

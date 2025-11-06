@@ -251,7 +251,7 @@ class TestRegexPatternErrors:
     def test_matches_dn_pattern_with_invalid_regex(self) -> None:
         """Test _matches_dn_pattern with invalid regex pattern."""
         with pytest.raises(ValueError, match="Invalid regex patterns"):
-            FlextLdifFilters._matches_dn_pattern(
+            FlextLdifFilters.matches_dn_pattern(
                 "cn=test,dc=example,dc=com",
                 ["[invalid(regex"],
             )
@@ -259,14 +259,14 @@ class TestRegexPatternErrors:
     def test_matches_dn_pattern_with_multiple_invalid_patterns(self) -> None:
         """Test _matches_dn_pattern with multiple invalid patterns."""
         with pytest.raises(ValueError, match="Invalid regex patterns"):
-            FlextLdifFilters._matches_dn_pattern(
+            FlextLdifFilters.matches_dn_pattern(
                 "cn=test,dc=example,dc=com",
                 ["[bad", "(also bad", "valid.*"],
             )
 
     def test_matches_dn_pattern_with_valid_regex(self) -> None:
         """Test _matches_dn_pattern with valid regex pattern."""
-        result = FlextLdifFilters._matches_dn_pattern(
+        result = FlextLdifFilters.matches_dn_pattern(
             "cn=test,dc=example,dc=com",
             ["cn=.*,dc=example"],
         )
@@ -274,7 +274,7 @@ class TestRegexPatternErrors:
 
     def test_matches_dn_pattern_no_match(self) -> None:
         """Test _matches_dn_pattern when no patterns match."""
-        result = FlextLdifFilters._matches_dn_pattern(
+        result = FlextLdifFilters.matches_dn_pattern(
             "cn=test,dc=example,dc=com",
             ["cn=other.*"],
         )
@@ -282,7 +282,7 @@ class TestRegexPatternErrors:
 
     def test_matches_dn_pattern_empty_patterns(self) -> None:
         """Test _matches_dn_pattern with empty patterns list."""
-        result = FlextLdifFilters._matches_dn_pattern("cn=test,dc=example,dc=com", [])
+        result = FlextLdifFilters.matches_dn_pattern("cn=test,dc=example,dc=com", [])
         assert result is False
 
 

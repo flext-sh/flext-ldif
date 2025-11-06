@@ -373,7 +373,7 @@ class FlextLdifSyntax(FlextService[dict[str, object]]):
         oid: str,
         name: str | None = None,
         desc: str | None = None,
-        server_type: str = "rfc",
+        server_type: str = FlextLdifConstants.ServerTypes.RFC,
     ) -> FlextResult[FlextLdifModels.Syntax]:
         """Resolve OID to complete Syntax model with validation.
 
@@ -424,7 +424,7 @@ class FlextLdifSyntax(FlextService[dict[str, object]]):
         self,
         value: str,
         syntax_oid: str,
-        server_type: str = "rfc",
+        server_type: str = FlextLdifConstants.ServerTypes.RFC,
     ) -> FlextResult[bool]:
         """Validate a value against its syntax type.
 

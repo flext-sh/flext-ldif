@@ -122,7 +122,7 @@ portable_entries = result.unwrap()
 
 from __future__ import annotations
 
-from typing import override
+from typing import cast, override
 
 from flext_core import FlextResult, FlextService
 from pydantic import Field
@@ -363,7 +363,7 @@ class FlextLdifEntry(FlextService[list[FlextLdifModels.Entry]]):
         for entry in self.entries:
             result = self._remove_operational_attributes_single(entry)
             if result.is_failure:
-                return result
+                return cast("FlextResult[list[FlextLdifModels.Entry]]", result)
             adapted_entries.append(result.unwrap())
 
         return FlextResult[list[FlextLdifModels.Entry]].ok(adapted_entries)
@@ -414,7 +414,7 @@ class FlextLdifEntry(FlextService[list[FlextLdifModels.Entry]]):
         for entry in self.entries:
             result = self._remove_attributes_single(entry, self.attributes_to_remove)
             if result.is_failure:
-                return result
+                return cast("FlextResult[list[FlextLdifModels.Entry]]", result)
             adapted_entries.append(result.unwrap())
 
         return FlextResult[list[FlextLdifModels.Entry]].ok(adapted_entries)

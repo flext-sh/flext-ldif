@@ -634,12 +634,15 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 logger.debug("Identified boolean attribute: %s", fixed_name)
 
             # Create modified copy with fixed values using Pydantic v2 pattern
-            return attr_data.model_copy(
-                update={
-                    "name": fixed_name,
-                    "equality": fixed_equality,
-                    "substr": fixed_substr,
-                },
+            return cast(
+                FlextLdifModels.SchemaAttribute,
+                attr_data.model_copy(
+                    update={
+                        "name": fixed_name,
+                        "equality": fixed_equality,
+                        "substr": fixed_substr,
+                    },
+                ),
             )
 
         def extract_schemas_from_ldif(
@@ -747,7 +750,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
         # AclConverter was moved to services/acl.py as FlextLdifAcl
         # Use FlextLdifAcl for OID→OUD ACL conversions instead
 
-        def can_handle(self, acl_line: FlextLdifTypes.AclOrString) -> bool:
+        def can_handle(self, acl_line: FlextLdifTypes.Models.AclOrString) -> bool:
             """Check if this is an Oracle OUD ACL (public method).
 
             Args:
@@ -759,7 +762,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             """
             return self.can_handle_acl(acl_line)
 
-        def can_handle_acl(self, acl_line: FlextLdifTypes.AclOrString) -> bool:
+        def can_handle_acl(self, acl_line: FlextLdifTypes.Models.AclOrString) -> bool:
             """Check if this is an Oracle OUD ACL line (implements abstract method from base.py).
 
             Detects Oracle OUD ACL by checking if the line starts with:

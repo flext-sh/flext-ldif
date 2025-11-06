@@ -52,7 +52,7 @@ class FlextLdifConversion(
     2.  `target.denormalize_from_rfc(RFC Model)` -> Target Model
 
     FlextService V2 Integration:
-    - Inherits from FlextService[FlextLdifTypes.ConvertibleModel]
+    - Inherits from FlextService[FlextLdifTypes.Models.ConvertibleModel]
     - Implements execute() method for health checks
     - Provides stateless conversion operations
     """
@@ -63,14 +63,18 @@ class FlextLdifConversion(
     def __init__(self) -> None:
         """Initialize the conversion facade with DN case registry."""
         super().__init__()
-        object.__setattr__(self, "dn_registry", FlextLdifDn.Registry())  # type: ignore[attr-defined]
+        object.__setattr__(self, "dn_registry", FlextLdifDn.Registry())
 
     @override
-    def execute(self) -> FlextResult[dict[str, object]]:
+    def execute(self) -> FlextResult[dict[str, object]]:  # type: ignore[override]
         """Execute conversion service health check.
 
         Returns:
             FlextResult with conversion service status and capabilities
+
+        Note:
+            Returns dict for health check info instead of ConvertibleModel types.
+            This is intentional for service status reporting.
 
         """
         try:
@@ -95,10 +99,10 @@ class FlextLdifConversion(
         self,
         source: FlextLdifProtocols.Quirks.QuirksPort,
         target: FlextLdifProtocols.Quirks.QuirksPort,
-        model_instance_or_data_type: FlextLdifTypes.ConvertibleModel | str,
+        model_instance_or_data_type: FlextLdifTypes.Models.ConvertibleModel | str,
         data: str | dict[str, object] | None = None,
     ) -> (
-        FlextResult[FlextLdifTypes.ConvertibleModel]
+        FlextResult[FlextLdifTypes.Models.ConvertibleModel]
         | FlextResult[str | dict[str, object]]
     ):
         """Convert a model from a source server format to a target server format.
@@ -135,8 +139,8 @@ class FlextLdifConversion(
         self,
         source: FlextLdifProtocols.Quirks.QuirksPort,
         target: FlextLdifProtocols.Quirks.QuirksPort,
-        model_instance: FlextLdifTypes.ConvertibleModel,
-    ) -> FlextResult[FlextLdifTypes.ConvertibleModel]:
+        model_instance: FlextLdifTypes.Models.ConvertibleModel,
+    ) -> FlextResult[FlextLdifTypes.Models.ConvertibleModel]:
         """Convert Entry model between source and target server formats with FlextLdifUtilities.
 
         Uses universal Entry model as pivot point via write→parse pipeline.

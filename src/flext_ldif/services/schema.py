@@ -93,7 +93,7 @@ class FlextLdifSchema:
         """
         try:
             if not attr_definition or not attr_definition.strip():
-                return FlextResult.error("Attribute definition is empty")
+                return FlextResult.fail("Attribute definition is empty")
 
             # Use utilities to parse - parse_rfc_attribute returns FlextResult[SchemaAttribute]
             return FlextLdifUtilities.Parser.parse_rfc_attribute(attr_definition)
@@ -101,7 +101,7 @@ class FlextLdifSchema:
         except Exception as e:
             error_msg = f"Error parsing attribute: {e}"
             logger.exception(error_msg)
-            return FlextResult.error(error_msg)
+            return FlextResult.fail(error_msg)
 
     def parse_objectclass(
         self,
@@ -119,7 +119,7 @@ class FlextLdifSchema:
         """
         try:
             if not oc_definition or not oc_definition.strip():
-                return FlextResult.error("ObjectClass definition is empty")
+                return FlextResult.fail("ObjectClass definition is empty")
 
             # Use utilities to parse - parse_rfc_objectclass returns FlextResult[SchemaObjectClass]
             return FlextLdifUtilities.Parser.parse_rfc_objectclass(oc_definition)
@@ -127,7 +127,7 @@ class FlextLdifSchema:
         except Exception as e:
             error_msg = f"Error parsing objectClass: {e}"
             logger.exception(error_msg)
-            return FlextResult.error(error_msg)
+            return FlextResult.fail(error_msg)
 
     def validate_attribute(
         self,
@@ -144,25 +144,21 @@ class FlextLdifSchema:
         """
         try:
             if not attr:
-                return FlextResult.error("Attribute model is None")  # type: ignore[bad-return]
-
+                return FlextResult.fail("Attribute model is None")
             # Basic validation
             if not attr.name:
-                return FlextResult.error("Attribute has no NAME")  # type: ignore[bad-return]
-
+                return FlextResult.fail("Attribute has no NAME")
             if not attr.oid:
-                return FlextResult.error("Attribute has no OID")  # type: ignore[bad-return]
-
+                return FlextResult.fail("Attribute has no OID")
             # Check syntax if present and validate OID format
             if attr.syntax and not self._is_valid_oid(attr.syntax):
-                return FlextResult.error(f"Invalid SYNTAX OID: {attr.syntax}")  # type: ignore[bad-return]
-
+                return FlextResult.fail(f"Invalid SYNTAX OID: {attr.syntax}")
             return FlextResult.ok(True)
 
         except Exception as e:
             error_msg = f"Error validating attribute: {e}"
             logger.exception(error_msg)
-            return FlextResult.error(error_msg)  # type: ignore[bad-return]
+            return FlextResult.fail(error_msg)
 
     def validate_objectclass(
         self,
@@ -179,25 +175,25 @@ class FlextLdifSchema:
         """
         try:
             if not oc:
-                return FlextResult.error("ObjectClass model is None")
+                return FlextResult.fail("ObjectClass model is None")
 
             # Basic validation
             if not oc.name:
-                return FlextResult.error("ObjectClass has no NAME")
+                return FlextResult.fail("ObjectClass has no NAME")
 
             if not oc.oid:
-                return FlextResult.error("ObjectClass has no OID")
+                return FlextResult.fail("ObjectClass has no OID")
 
             # Check objectclass kind
             if oc.kind not in {"ABSTRACT", "STRUCTURAL", "AUXILIARY"}:
-                return FlextResult.error(f"Invalid objectClass KIND: {oc.kind}")
+                return FlextResult.fail(f"Invalid objectClass KIND: {oc.kind}")
 
             return FlextResult.ok(True)
 
         except Exception as e:
             error_msg = f"Error validating objectClass: {e}"
             logger.exception(error_msg)
-            return FlextResult.error(error_msg)
+            return FlextResult.fail(error_msg)
 
     def write_attribute(
         self,
@@ -216,7 +212,7 @@ class FlextLdifSchema:
             # Validate first
             validation = self.validate_attribute(attr)
             if not validation.is_success:
-                return FlextResult.error(validation.error)
+                return FlextResult.fail(validation.error)
 
             # Use utilities to write - write_rfc_attribute returns FlextResult[str]
             return FlextLdifUtilities.Writer.write_rfc_attribute(attr)
@@ -224,7 +220,7 @@ class FlextLdifSchema:
         except Exception as e:
             error_msg = f"Error writing attribute: {e}"
             logger.exception(error_msg)
-            return FlextResult.error(error_msg)
+            return FlextResult.fail(error_msg)
 
     def write_objectclass(
         self,
@@ -243,7 +239,7 @@ class FlextLdifSchema:
             # Validate first
             validation = self.validate_objectclass(oc)
             if not validation.is_success:
-                return FlextResult.error(validation.error)
+                return FlextResult.fail(validation.error)
 
             # Use utilities to write - write_rfc_objectclass returns FlextResult[str]
             return FlextLdifUtilities.Writer.write_rfc_objectclass(oc)
@@ -251,7 +247,7 @@ class FlextLdifSchema:
         except Exception as e:
             error_msg = f"Error writing objectClass: {e}"
             logger.exception(error_msg)
-            return FlextResult.error(error_msg)
+            return FlextResult.fail(error_msg)
 
     def can_handle_attribute(self, attr_definition: str) -> bool:
         """Check if this service can handle the attribute definition.
@@ -274,7 +270,7 @@ class FlextLdifSchema:
             return "(" in attr_definition and ")" in attr_definition
 
         except Exception as e:
-            logger.exception("Error checking if can handle attribute: %s", e)
+            logger.exception(f"Error checking if can handle attribute: {e}")
             return False
 
     def can_handle_objectclass(self, oc_definition: str) -> bool:
@@ -298,7 +294,7 @@ class FlextLdifSchema:
             return "(" in oc_definition and ")" in oc_definition
 
         except Exception as e:
-            logger.exception("Error checking if can handle objectClass: %s", e)
+            logger.exception(f"Error checking if can handle objectClass: {e}")
             return False
 
     # =========================================================================

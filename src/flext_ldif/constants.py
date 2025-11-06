@@ -163,8 +163,9 @@ class FlextLdifConstants(FlextConstants):
         ACL_ATTRIBUTE: Final[str] = "acl"
         ACI: Final[str] = "aci"
         ACCESS: Final[str] = "access"
-        OLCACCESS: Final[str] = "olcAccess"
-        NTSECURITYDESCRIPTOR: Final[str] = "nTSecurityDescriptor"
+        # NOTE: Server-specific ACL attributes moved to their Constants:
+        # - OLCACCESS → FlextLdifServersOpenldap.Constants.ACL_ATTRIBUTE_NAME
+        # - NTSECURITYDESCRIPTOR → FlextLdifServersAd.Constants.ACL_ATTRIBUTE_NAME
 
     class Format:
         """LDIF format specifications."""
@@ -1146,9 +1147,11 @@ class FlextLdifConstants(FlextConstants):
         # =========================
 
         PROXY_PERMISSIONS: Final[str] = "proxy_permissions"
-        ORIGINAL_OID_PERMS: Final[str] = "original_oid_perms"
         SELF_WRITE_TO_WRITE: Final[str] = "self_write_to_write"
-        # NOTE: OID_SPECIFIC_RIGHTS and OID_TO_OUD_TRANSFORMED moved to FlextLdifServersOid.Constants
+        # NOTE: OID metadata keys moved to FlextLdifServersOid.Constants:
+        # - ORIGINAL_OID_PERMS → FlextLdifServersOid.Constants.ORIGINAL_OID_PERMS
+        # - OID_SPECIFIC_RIGHTS → FlextLdifServersOid.Constants.OID_SPECIFIC_RIGHTS
+        # - OID_TO_OUD_TRANSFORMED → FlextLdifServersOid.Constants.OID_TO_OUD_TRANSFORMED
         # Server-specific metadata keys should be defined in their respective server Constants classes
 
         # =========================
@@ -1226,15 +1229,8 @@ class FlextLdifConstants(FlextConstants):
         # All Metadata Keys Registry
         # =========================
 
-        # NOTE: ALL_OID_KEYS should include server-specific keys from FlextLdifServersOid.Constants
-        # when building complete OID metadata key sets. For now, only generic keys are included.
-        ALL_OID_KEYS: Final[frozenset[str]] = frozenset([
-            PROXY_PERMISSIONS,
-            ORIGINAL_OID_PERMS,
-            SELF_WRITE_TO_WRITE,
-            # OID_SPECIFIC_RIGHTS, OID_TO_OUD_TRANSFORMED → FlextLdifServersOid.Constants
-            # To get complete set: combine with FlextLdifServersOid.Constants.OID_SPECIFIC_RIGHTS, etc.
-        ])
+        # NOTE: ALL_OID_KEYS moved to FlextLdifServersOid.Constants.ALL_OID_KEYS
+        # Use FlextLdifServersOid.Constants for OID-specific metadata keys
 
         ALL_SCHEMA_KEYS: Final[frozenset[str]] = frozenset([
             X_ORIGIN,
@@ -1283,12 +1279,11 @@ class FlextLdifConstants(FlextConstants):
         # Configuration DNs
         CN_CONFIG: Final[str] = "cn=config"
 
-        # Oracle-specific DNs
-        CN_ORCL: Final[str] = "cn=orcl"
-        OU_ORACLE: Final[str] = "ou=oracle"
-        DC_ORACLE: Final[str] = "dc=oracle"
-
-        # NOTE: ORACLE_OID_NAMESPACE removed - server-specific constant, use oid.py Constants instead
+        # NOTE: Oracle-specific DNs moved to FlextLdifServersOid.Constants:
+        # - CN_ORCL → FlextLdifServersOid.Constants.CN_ORCL
+        # - OU_ORACLE → FlextLdifServersOid.Constants.OU_ORACLE
+        # - DC_ORACLE → FlextLdifServersOid.Constants.DC_ORACLE
+        # - ORACLE_DN_PATTERNS → FlextLdifServersOid.Constants.ORACLE_DN_PATTERNS
 
         # DN component patterns
         DN_EQUALS: Final[str] = "="
@@ -1322,9 +1317,9 @@ class FlextLdifConstants(FlextConstants):
         ST_PREFIX: Final[str] = "st="
         C_PREFIX: Final[str] = "c="
 
-        # OpenLDAP config-specific patterns
-        OLCDATABASE_PREFIX: Final[str] = "olcDatabase="
-        OLCOVERLAY_PREFIX: Final[str] = "olcOverlay="
+        # NOTE: OpenLDAP config-specific patterns moved to server Constants:
+        # - OLCDATABASE_PREFIX → FlextLdifServersOpenldap.Constants.OLCDATABASE_PREFIX
+        # - OLCOVERLAY_PREFIX → FlextLdifServersOpenldap.Constants.OLCOVERLAY_PREFIX
 
         # All schema subentry patterns
         SCHEMA_SUBENTRY_PATTERNS: Final[frozenset[str]] = frozenset([
@@ -1340,12 +1335,7 @@ class FlextLdifConstants(FlextConstants):
             CN_SCHEMA_CN_CONFIG,
         ])
 
-        # All Oracle DN patterns
-        ORACLE_DN_PATTERNS: Final[frozenset[str]] = frozenset([
-            CN_ORCL,
-            OU_ORACLE,
-            DC_ORACLE,
-        ])
+        # NOTE: ORACLE_DN_PATTERNS moved to FlextLdifServersOid.Constants.ORACLE_DN_PATTERNS
 
     # =============================================================================
     # ACL FORMATS - ACL format identifiers

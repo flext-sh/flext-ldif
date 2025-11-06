@@ -87,6 +87,10 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             "uid=",
         ])
 
+        # OpenLDAP DN prefix constants
+        OLCDATABASE_PREFIX: ClassVar[str] = "olcDatabase="
+        OLCOVERLAY_PREFIX: ClassVar[str] = "olcOverlay="
+
         # NOTE: Permission names inherited from RFC.Constants
 
         # ACL subject types specific to OpenLDAP
@@ -390,7 +394,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             """
             super().__init__(**kwargs)
 
-        def can_handle(self, acl_line: FlextLdifTypes.AclOrString) -> bool:
+        def can_handle(self, acl_line: FlextLdifTypes.Models.AclOrString) -> bool:
             """Check if this is an OpenLDAP 2.x ACL.
 
             Args:
@@ -402,7 +406,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             """
             return self.can_handle_acl(acl_line)
 
-        def can_handle_acl(self, acl_line: FlextLdifTypes.AclOrString) -> bool:
+        def can_handle_acl(self, acl_line: FlextLdifTypes.Models.AclOrString) -> bool:
             """Check if this is an OpenLDAP 2.x ACL (internal).
 
             Args:

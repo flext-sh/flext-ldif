@@ -14,6 +14,7 @@ from the flext_ldif.servers package and registered automatically.
 from __future__ import annotations
 
 import inspect
+from typing import cast
 
 from flext_core import FlextLogger, FlextResult
 
@@ -240,7 +241,8 @@ class FlextLdifServer:
             Schema quirk or None
 
         """
-        return self._get_attr(server_type, "schema")
+        result = self._get_attr(server_type, "schema")
+        return cast("FlextLdifServersBase.Schema | None", result)
 
     def acl(self, server_type: str) -> FlextLdifServersBase.Acl | None:
         """Get ACL quirk for a server type.
@@ -252,7 +254,8 @@ class FlextLdifServer:
             ACL quirk or None
 
         """
-        return self._get_attr(server_type, "acl")
+        result = self._get_attr(server_type, "acl")
+        return cast("FlextLdifServersBase.Acl | None", result)
 
     def entry(self, server_type: str) -> FlextLdifServersBase.Entry | None:
         """Get entry quirk for a server type.
@@ -264,7 +267,8 @@ class FlextLdifServer:
             Entry quirk or None
 
         """
-        return self._get_attr(server_type, "entry")
+        result = self._get_attr(server_type, "entry")
+        return cast("FlextLdifServersBase.Entry | None", result)
 
     # =========================================================================
     # BACKWARD COMPATIBILITY - Keep old method names for now

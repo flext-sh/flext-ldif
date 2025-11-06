@@ -300,7 +300,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                 return False
             return self.can_handle_acl(acl_line.raw_acl)
 
-        def can_handle_acl(self, acl_line: FlextLdifTypes.AclOrString) -> bool:
+        def can_handle_acl(self, acl_line: FlextLdifTypes.Models.AclOrString) -> bool:
             """Detect Tivoli DS ACL values."""
             if isinstance(acl_line, str):
                 normalized = acl_line.strip() if acl_line else ""

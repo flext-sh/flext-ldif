@@ -14,11 +14,12 @@ from flext_core import FlextUtilities
 
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
-
-# Type alias for DN input (string or DN model)
-type DnInput = str | FlextLdifModels.DistinguishedName
+from flext_ldif.typings import FlextLdifTypes
 
 logger = logging.getLogger(__name__)
+
+# Type alias from FlextLdifTypes
+DnInput = FlextLdifTypes.DnInput
 
 
 class FlextLdifUtilitiesDN:
@@ -257,9 +258,9 @@ class FlextLdifUtilitiesDN:
                 if "=" not in comp:
                     continue
                 attr, _, value = comp.partition("=")
-                # Lowercase attribute AND value for case-insensitive comparison
-                # RFC 4514 says DN comparison is case-insensitive
-                normalized.append(f"{attr.strip().lower()}={value.strip().lower()}")
+                # RFC 4514 normalization: lowercase attribute TYPE, preserve value case
+                # Attribute types are case-insensitive, values are case-preserving
+                normalized.append(f"{attr.strip().lower()}={value.strip()}")
 
             return ",".join(normalized) if normalized else None
         except Exception:

@@ -46,7 +46,7 @@ from __future__ import annotations
 
 import re
 from collections.abc import Mapping
-from typing import Any
+from typing import Any, cast
 
 from flext_ldif.models import FlextLdifModels
 
@@ -207,7 +207,7 @@ class FlextLdifUtilitiesDetection:
                 ):
                     constants = cls.Constants
                     if constants and hasattr(constants, "DETECTION_OID_PATTERN"):
-                        return constants
+                        return cast(type[Any], constants)
             return None
 
         def can_handle_attribute(
@@ -287,7 +287,7 @@ class FlextLdifUtilitiesDetection:
                 ):
                     constants = cls.Constants
                     if constants and hasattr(constants, "DETECTION_ATTRIBUTE_PREFIXES"):
-                        return constants
+                        return cast(type[Any], constants)
             return None
 
         def can_handle_attribute(
@@ -343,7 +343,7 @@ class FlextLdifUtilitiesDetection:
                 ):
                     constants = cls.Constants
                     if constants and hasattr(constants, "DETECTION_OBJECTCLASS_NAMES"):
-                        return constants
+                        return cast(type[Any], constants)
             return None
 
         def can_handle(
@@ -424,7 +424,7 @@ class FlextLdifUtilitiesDetection:
                 ):
                     constants = cls.Constants
                     if constants and hasattr(constants, "DETECTION_DN_MARKERS"):
-                        return constants
+                        return cast(type[Any], constants)
             return None
 
         def can_handle(
@@ -487,7 +487,7 @@ class FlextLdifUtilitiesDetection:
                 ):
                     constants = cls.Constants
                     if constants and hasattr(constants, "ACL_ATTRIBUTE_NAME"):
-                        return constants
+                        return cast(type[Any], constants)
             return None
 
         def can_handle_acl(

@@ -219,6 +219,28 @@ class FlextLdifServersOid(FlextLdifServersRfc):
         # Oracle OID metadata keys (migrated from FlextLdifConstants.QuirkMetadataKeys)
         OID_SPECIFIC_RIGHTS: ClassVar[str] = "oid_specific_rights"
         OID_TO_OUD_TRANSFORMED: ClassVar[str] = "oid_to_oud_transformed"
+        ORIGINAL_OID_PERMS: ClassVar[str] = "original_oid_perms"
+
+        # All OID metadata keys
+        ALL_OID_KEYS: ClassVar[frozenset[str]] = frozenset([
+            OID_SPECIFIC_RIGHTS,
+            OID_TO_OUD_TRANSFORMED,
+            ORIGINAL_OID_PERMS,
+        ])
+
+        # =====================================================================
+        # DN PATTERNS - OID-specific DN markers
+        # =====================================================================
+        CN_ORCL: ClassVar[str] = "cn=orcl"
+        OU_ORACLE: ClassVar[str] = "ou=oracle"
+        DC_ORACLE: ClassVar[str] = "dc=oracle"
+
+        # All Oracle DN patterns
+        ORACLE_DN_PATTERNS: ClassVar[frozenset[str]] = frozenset([
+            CN_ORCL,
+            OU_ORACLE,
+            DC_ORACLE,
+        ])
 
         # Permission names inherited from RFC.Constants
         # (PERMISSION_READ, PERMISSION_WRITE, PERMISSION_ADD, PERMISSION_DELETE, PERMISSION_SEARCH, PERMISSION_COMPARE)
