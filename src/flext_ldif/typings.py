@@ -401,6 +401,9 @@ class FlextLdifTypes(FlextTypes):
     type EncodingType = FlextLdifConstants.LiteralTypes.EncodingType
     type ValidationLevel = FlextLdifConstants.LiteralTypes.ValidationLevel
     type ProjectType = FlextLdifConstants.LiteralTypes.ProjectType
+    type MigrationMode = FlextLdifConstants.LiteralTypes.MigrationMode
+    type ParserInputSource = FlextLdifConstants.LiteralTypes.ParserInputSource
+    type WriterOutputTarget = FlextLdifConstants.LiteralTypes.WriterOutputTarget
     # ACL server types - use the same types as ServerType for consistency
     type AclServerType = FlextLdifConstants.LiteralTypes.ServerType
 

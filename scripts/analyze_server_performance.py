@@ -120,8 +120,8 @@ def main() -> None:
     # Add src to path
     sys.path.insert(0, "src")
 
-    # Import servers after path is set
-    from flext_ldif.servers import (
+    # Import servers after path is set (required: sys.path modified above)
+    from flext_ldif.servers import (  # noqa: PLC0415
         FlextLdifServersAd,
         FlextLdifServersApache,
         FlextLdifServersDs389,
@@ -134,7 +134,7 @@ def main() -> None:
         FlextLdifServersRfc,
         FlextLdifServersTivoli,
     )
-    from flext_ldif.services.server import FlextLdifServer
+    from flext_ldif.services.server import FlextLdifServer  # noqa: PLC0415
 
     # Note: Imports moved to top-level for linting compliance
     # Import time benchmarking removed (use profiling tools if needed)
@@ -144,17 +144,17 @@ def main() -> None:
 
     # Analyze each server
     servers = [
-        ("RFC", FlextLdifServersRfc),
-        ("OID", FlextLdifServersOid),
-        ("OUD", FlextLdifServersOud),
-        ("OpenLDAP", FlextLdifServersOpenldap),
-        ("OpenLDAP1", FlextLdifServersOpenldap1),
         ("389DS", FlextLdifServersDs389),
         ("AD", FlextLdifServersAd),
         ("Apache", FlextLdifServersApache),
         ("Novell", FlextLdifServersNovell),
-        ("Tivoli", FlextLdifServersTivoli),
+        ("OID", FlextLdifServersOid),
+        ("OpenLDAP", FlextLdifServersOpenldap),
+        ("OpenLDAP1", FlextLdifServersOpenldap1),
+        ("OUD", FlextLdifServersOud),
         ("Relaxed", FlextLdifServersRelaxed),
+        ("RFC", FlextLdifServersRfc),
+        ("Tivoli", FlextLdifServersTivoli),
     ]
 
     metrics: list[ServerMetrics] = []

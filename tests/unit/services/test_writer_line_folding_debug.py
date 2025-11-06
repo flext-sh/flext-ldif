@@ -144,5 +144,5 @@ class TestWriterLineFoldingDebug:
                     over_limit.append((i, length, line[:80]))
 
         if over_limit:
-            for _line_no, length, _content in over_limit:
+            for _line_no, _length, _content in over_limit:
                 pass

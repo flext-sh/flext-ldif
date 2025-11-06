@@ -137,6 +137,18 @@ class FlextLdifUtilitiesDN:
         normalized = [FlextLdifUtilitiesDN.norm_component(comp) for comp in components]
         return ",".join(normalized)
 
+    @staticmethod
+    def _validate_components(components: list[str]) -> bool:
+        """Validate each DN component has attr=value format (helper method)."""
+        for comp in components:
+            if "=" not in comp:
+                return False
+            attr, _, value = comp.partition("=")
+            # RFC 4514: both attribute and value must be non-empty
+            if not attr.strip() or not value.strip():
+                return False
+        return True
+
     @overload
     @staticmethod
     def validate(dn: str) -> bool: ...
@@ -144,6 +156,48 @@ class FlextLdifUtilitiesDN:
     @overload
     @staticmethod
     def validate(dn: FlextLdifModels.DistinguishedName) -> bool: ...
+
+    @staticmethod
+    def validate(dn: str | FlextLdifModels.DistinguishedName) -> bool:
+        r"""Validate DN format according to RFC 4514.
+
+        Properly handles escaped characters. Checks for:
+        - No double unescaped commas
+        - No leading/trailing unescaped commas
+        - All components have attr=value format
+        - Valid hex escape sequences (\XX where X is hex digit)
+        """
+        dn_str = FlextLdifUtilitiesDN.get_dn_value(dn)
+        if not dn_str or "=" not in dn_str:
+            return False
+
+        # Validate hex escape sequences
+        if not FlextLdifUtilitiesDN._validate_escape_sequences(dn_str):
+            return False
+
+        # Check for invalid patterns with unescaped commas
+        if FlextLdifUtilitiesDN._has_double_unescaped_commas(dn_str):
+            return False
+
+        # Leading unescaped comma
+        if dn_str.startswith(","):
+            return False
+
+        # Trailing unescaped comma
+        if dn_str.endswith(",") and (
+            len(dn_str) < FlextLdifUtilitiesDN.MIN_DN_LENGTH or dn_str[-2] != "\\"
+        ):
+            return False
+
+        try:
+            # Use split() which properly handles escaped characters
+            components = FlextLdifUtilitiesDN.split(dn_str)
+            if not components:
+                return False
+            # Check each component has attr=value format with non-empty attr and value
+            return FlextLdifUtilitiesDN._validate_components(components)
+        except (ValueError, TypeError):
+            return False
 
     @staticmethod
     def _has_double_unescaped_commas(dn_str: str) -> bool:
@@ -160,50 +214,48 @@ class FlextLdifUtilitiesDN:
         return False
 
     @staticmethod
-    def validate(dn: str | FlextLdifModels.DistinguishedName) -> bool:
-        """Validate DN format according to RFC 4514.
+    def _validate_escape_sequences(dn_str: str) -> bool:
+        r"""Validate escape sequences in DN string.
 
-        Properly handles escaped characters. Checks for:
-        - No double unescaped commas
-        - No leading/trailing unescaped commas
-        - All components have attr=value format
+        Checks for:
+        - Valid hex escapes: \XX where X is hex digit (0-9, A-F, a-f)
+        - No incomplete hex escapes: \X or \
+        - No invalid hex escapes: \ZZ
+
+        Returns:
+            True if all escape sequences are valid
+
         """
-        dn_str = FlextLdifUtilitiesDN.get_dn_value(dn)
-        if not dn_str or "=" not in dn_str:
-            return False
+        hex_escape_length = 2  # Length of hex digits in escape sequence
+        i = 0
+        while i < len(dn_str):
+            if dn_str[i] == "\\":
+                # Check if we have at least 2 more characters for hex escape
+                if i + hex_escape_length >= len(dn_str):
+                    # Dangling backslash or incomplete hex escape
+                    return False
 
-        # Check for invalid patterns with unescaped commas
-        if FlextLdifUtilitiesDN._has_double_unescaped_commas(dn_str):
-            return False
-
-        # Leading unescaped comma
-        if dn_str.startswith(","):
-            return False
-
-        # Trailing unescaped comma
-        if dn_str.endswith(",") and (len(dn_str) < FlextLdifUtilitiesDN.MIN_DN_LENGTH or dn_str[-2] != "\\"):
-            return False
-
-        try:
-            # Use split() which properly handles escaped characters
-            components = FlextLdifUtilitiesDN.split(dn_str)
-            if not components:
+                # Check if next two chars are hex digits
+                next_two = dn_str[i + 1 : i + 1 + hex_escape_length]
+                if len(next_two) == hex_escape_length:
+                    # If it looks like a hex escape (both chars could be hex)
+                    # validate that both are actually hex digits
+                    if all(c in "0123456789ABCDEFabcdef" for c in next_two):
+                        # Valid hex escape, skip all 3 chars
+                        i += 3
+                        continue
+                    # Check if it's a valid special char escape (not hex)
+                    # RFC 4514 allows: \ escaping special chars like ,+=\<>#;
+                    if next_two[0] in ' ,+"\\<>;=':
+                        # Valid special char escape, skip backslash
+                        i += 1
+                        continue
+                    # Invalid hex escape
+                    return False
+                # Incomplete escape
                 return False
-
-            # Check each component has attr=value with both non-empty
-            for comp in components:
-                if "=" not in comp:
-                    return False
-                attr, _, value = comp.partition("=")
-                attr = attr.strip()
-                value = value.strip()
-                # Both attribute and value must be non-empty
-                if not attr or not value:
-                    return False
-
-            return True
-        except Exception:
-            return False
+            i += 1
+        return True
 
     @overload
     @staticmethod
@@ -473,8 +525,8 @@ class FlextLdifUtilitiesDN:
                         i,
                         current_attr,
                         current_val,
-                        in_value,
-                        pairs,
+                        in_value=in_value,
+                        pairs=pairs,
                     )
                 )
 

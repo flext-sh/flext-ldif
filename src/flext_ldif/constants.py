@@ -633,6 +633,9 @@ class FlextLdifConstants(FlextConstants):
         type AnalyticsDetailLevel = Literal["low", "medium", "high"]
         type DetectionMode = Literal["auto", "manual", "disabled"]
         type ErrorRecoveryMode = Literal["continue", "stop", "skip"]
+        type MigrationMode = Literal["simple", "categorized", "structured"]
+        type ParserInputSource = Literal["string", "file", "ldap3"]
+        type WriterOutputTarget = Literal["string", "file", "ldap3", "model"]
         type ProjectType = Literal[
             "library",
             "application",
@@ -1579,7 +1582,6 @@ class FlextLdifConstants(FlextConstants):
         # =====================================================================
         type ParserInputSource = Literal["string", "file", "ldap3"]
         type WriterOutputTarget = Literal["string", "file", "ldap3", "model"]
-        type MigrationMode = Literal["simple", "categorized", "structured"]
 
     class RuleTypes:
         """ACL rule type constants.
@@ -1721,8 +1723,11 @@ class FlextLdifConstants(FlextConstants):
         PYTHON_CODING: Final[str] = r"#.*-\*-.*coding:\s*([^\s;]+)"
         LDIF_ENCODING: Final[str] = r"#\s*encoding:\s*([^\s\n]+)"
 
-        # DN validation patterns
-        DN_COMPONENT: Final[str] = r"^[a-zA-Z][a-zA-Z0-9-]*="
+        # DN validation patterns (RFC 4514)
+        # attribute=value where attribute starts with letter, value can be anything (including escaped chars)
+        # This pattern ensures each component has both attribute and = sign
+        # Full validation happens in DistinguishedName validator which parses escaped characters
+        DN_COMPONENT: Final[str] = r"^[a-zA-Z][a-zA-Z0-9-]*=(?:[^\\,]|\\.)*$"
         DN_SEPARATOR: Final[str] = r"(?<!\\),"
 
         # LDAP filter pattern (RFC 4515)

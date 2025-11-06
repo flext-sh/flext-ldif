@@ -982,11 +982,13 @@ class TestEscapeSequenceValidation:
     def test_validate_dangling_backslash(self) -> None:
         """Test validation rejects dangling backslash at end."""
         service = FlextLdifDn()
-        # Backslash at end with no escape character
-        result = service.validate_format(r"cn=test\,dc=example,dc=com")
+        # Backslash at end with no following character (actual dangling backslash)
+        # Use concatenation to avoid raw string issue with trailing backslash
+        dn_with_trailing_backslash = "cn=test" + chr(92)  # chr(92) is backslash
+        result = service.validate_format(dn_with_trailing_backslash)
         # This should fail during parsing because \ at end is incomplete
         assert result.is_success
-        # ldap3 should reject this as invalid
+        # Should reject this as invalid (dangling backslash)
         assert result.unwrap() is False
 
     def test_validate_escaped_comma(self) -> None:

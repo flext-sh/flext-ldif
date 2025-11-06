@@ -134,10 +134,8 @@ class FlextLdifUtilitiesEntry:
 
         for attr_name, values in attributes.items():
             for value in values:
-                if not isinstance(value, str):
-                    continue
-
                 # Check for base64 markers or non-UTF8 patterns
+                # Note: value is guaranteed to be str from type annotation
                 try:
                     value.encode("utf-8").decode("utf-8")
                 except (UnicodeDecodeError, AttributeError):
@@ -331,7 +329,7 @@ class FlextLdifUtilitiesEntry:
         # Create new entry with filtered attributes
         return FlextLdifModels.Entry(
             dn=entry.dn,
-            attributes=filtered,
+            attributes=FlextLdifModels.LdifAttributes(attributes=filtered),
         )
 
     @staticmethod

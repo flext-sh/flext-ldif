@@ -133,7 +133,7 @@ class FlextLdifDetector(FlextService[FlextLdifModels.ClientStatus]):
             lines = ldif_content.split("\n")
             content_sample = "\n".join(lines[:max_lines])
 
-            # Run detection
+            # Run detection - let exceptions propagate with clear error messages
             scores = self._calculate_scores(content_sample)
             detected_type, confidence = self._determine_server_type(scores)
 
@@ -150,19 +150,11 @@ class FlextLdifDetector(FlextService[FlextLdifModels.ClientStatus]):
             return FlextResult[FlextLdifModels.ServerDetectionResult].ok(
                 detection_result,
             )
-        except (ValueError, TypeError, AttributeError):
-            logger.exception("Server detection failed")
-            fallback_result = FlextLdifModels.ServerDetectionResult(
-                detected_server_type=FlextLdifConstants.ServerTypes.RFC,
-                confidence=0.0,
-                scores={},
-                patterns_found=[],
-                is_confident=False,
-                detection_error="Detection failed with exception",
-                fallback_reason="Detection failed with exception",
-            )
-            return FlextResult[FlextLdifModels.ServerDetectionResult].ok(
-                fallback_result,
+        except (ValueError, TypeError, AttributeError) as e:
+            error_msg = f"Server detection failed: {e.__class__.__name__}: {e}"
+            logger.exception(error_msg)
+            return FlextResult[FlextLdifModels.ServerDetectionResult].fail(
+                error_msg,
             )
 
     def execute(self) -> FlextResult[FlextLdifModels.ClientStatus]:

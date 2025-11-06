@@ -13,12 +13,9 @@ class TestDs389Schemas:
     def test_initialization(self) -> None:
         """Test 389 DS quirk initialization."""
         FlextLdifServersDs389()
-        # server_type and priority are ClassVar - access via Constants
-        assert FlextLdifServersDs389.Constants.SERVER_TYPE == "389ds"
-        assert FlextLdifServersDs389.Constants.PRIORITY == 30
-        # Verify class-level attributes are set from Constants
-        assert FlextLdifServersDs389.server_type == "389ds"  # ClassVar from Constants
-        assert FlextLdifServersDs389.priority == 30  # ClassVar from Constants
+        # server_type and priority are class-level ClassVar (moved from Constants in FASE 2)
+        assert FlextLdifServersDs389.server_type == "389ds"
+        assert FlextLdifServersDs389.priority == 30
 
     def testcan_handle_attribute_with_ds389_oid(self) -> None:
         """Test attribute detection with 389 DS OID pattern."""
@@ -262,11 +259,9 @@ class TestDs389Acls:
         assert result.is_success
         acl_data = result.unwrap()
         # Check basic ACL properties
-        # server_type comes from metadata.quirk_type, which should match Constants.SERVER_TYPE
+        # server_type comes from metadata.quirk_type, which should match class-level server_type
         assert acl_data.metadata is not None
-        assert (
-            acl_data.metadata.quirk_type == FlextLdifServersDs389.Constants.SERVER_TYPE
-        )
+        assert acl_data.metadata.quirk_type == "389ds"
         assert acl_data.name == "Admin Access"
         assert acl_data.raw_acl == acl_line
         # Check target attributes
@@ -314,7 +309,7 @@ class TestDs389Acls:
             ),
             permissions=FlextLdifModels.AclPermissions(read=True),
             metadata=FlextLdifModels.QuirkMetadata.create_for(
-                FlextLdifServersDs389.Constants.SERVER_TYPE,
+                "389ds",
             ),
             raw_acl='(version 3.0; acl "Admin"; allow (read) userdn = "ldap:///cn=REDACTED_LDAP_BIND_PASSWORD";)',
         )
@@ -341,7 +336,7 @@ class TestDs389Acls:
                 write=True,
             ),
             metadata=FlextLdifModels.QuirkMetadata.create_for(
-                FlextLdifServersDs389.Constants.SERVER_TYPE,
+                "389ds",
             ),
         )
         result = acl.write(acl_data)
@@ -363,7 +358,7 @@ class TestDs389Acls:
             subject=FlextLdifModels.AclSubject(subject_type="user", subject_value="*"),
             permissions=FlextLdifModels.AclPermissions(),
             metadata=FlextLdifModels.QuirkMetadata.create_for(
-                FlextLdifServersDs389.Constants.SERVER_TYPE,
+                "389ds",
             ),
         )
         result = acl.write(acl_data)

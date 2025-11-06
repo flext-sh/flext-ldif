@@ -177,14 +177,16 @@ class FlextLdifServersRfc(FlextLdifServersBase):
 
         # === ACL SUPPORTED PERMISSIONS (Python 3.13 frozenset) ===
         # Permissions that RFC supports (migrated from FlextLdifConstants.AclPermissionCompatibility)
-        SUPPORTED_PERMISSIONS: ClassVar[frozenset[str]] = frozenset([
-            PERMISSION_READ,
-            PERMISSION_WRITE,
-            PERMISSION_ADD,
-            PERMISSION_DELETE,
-            PERMISSION_SEARCH,
-            PERMISSION_COMPARE,
-        ])
+        SUPPORTED_PERMISSIONS: ClassVar[frozenset[str]] = frozenset(
+            [
+                PERMISSION_READ,
+                PERMISSION_WRITE,
+                PERMISSION_ADD,
+                PERMISSION_DELETE,
+                PERMISSION_SEARCH,
+                PERMISSION_COMPARE,
+            ],
+        )
 
         # =====================================================================
         # SCHEMA CONFIGURATION - Schema parsing and validation
@@ -212,21 +214,25 @@ class FlextLdifServersRfc(FlextLdifServersBase):
         # =====================================================================
         # RFC operational attributes (generic baseline)
         # Using ClassVar[frozenset] to allow subclasses to extend with their own
-        OPERATIONAL_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset([
-            "createTimestamp",
-            "modifyTimestamp",
-            "creatorsName",
-            "modifiersName",
-            "subschemaSubentry",
-            "structuralObjectClass",
-        ])
+        OPERATIONAL_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset(
+            [
+                "createTimestamp",
+                "modifyTimestamp",
+                "creatorsName",
+                "modifiersName",
+                "subschemaSubentry",
+                "structuralObjectClass",
+            ],
+        )
 
         # === PRESERVE ON MIGRATION (Python 3.13 frozenset) ===
         # Operational attributes to preserve during migration FROM RFC
-        PRESERVE_ON_MIGRATION: ClassVar[frozenset[str]] = frozenset([
-            "createTimestamp",
-            "modifyTimestamp",
-        ])
+        PRESERVE_ON_MIGRATION: ClassVar[frozenset[str]] = frozenset(
+            [
+                "createTimestamp",
+                "modifyTimestamp",
+            ],
+        )
 
         # =====================================================================
         # DETECTION PATTERNS - Server type detection rules
@@ -831,9 +837,11 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                     string_values: list[str] = []
                     if isinstance(attr_values, list):
                         string_values = [
-                            value.decode("utf-8", errors="replace")
-                            if isinstance(value, bytes)
-                            else str(value)
+                            (
+                                value.decode("utf-8", errors="replace")
+                                if isinstance(value, bytes)
+                                else str(value)
+                            )
                             for value in attr_values
                         ]
                     elif isinstance(attr_values, bytes):
@@ -877,13 +885,131 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                     f"Failed to parse entry: {e}",
                 )
 
+        def _write_entry_comments_dn(
+            self,
+            ldif_lines: list[str],
+            entry_data: FlextLdifModels.Entry,
+            write_options: FlextLdifModels.WriteFormatOptions,
+        ) -> None:
+            """Add DN comment if requested."""
+            if write_options.include_dn_comments:
+                dn_value = entry_data.dn.value if entry_data.dn else ""
+                ldif_lines.append(f"# Complex DN: {dn_value}")
+
+        def _write_entry_comments_metadata(
+            self,
+            ldif_lines: list[str],
+            entry_data: FlextLdifModels.Entry,
+            write_options: FlextLdifModels.WriteFormatOptions,
+        ) -> None:
+            """Add metadata comments if requested."""
+            if not (write_options.write_metadata_as_comments and entry_data.metadata):
+                return
+            ldif_lines.append("# Entry Metadata:")
+
+            # Add server type
+            if entry_data.metadata.server_type:
+                ldif_lines.append(
+                    f"# Server Type: {entry_data.metadata.server_type}",
+                )
+
+            # Add parsed timestamp
+            if entry_data.metadata.parsed_timestamp:
+                ldif_lines.append(
+                    f"# Parsed: {entry_data.metadata.parsed_timestamp}",
+                )
+
+            # Add source file if available in extensions
+            extensions = entry_data.metadata.extensions or {}
+            if source_file := extensions.get("source_file"):
+                ldif_lines.append(f"# Source File: {source_file}")
+
+            # Add quirk type if available
+            if entry_data.metadata.quirk_type:
+                ldif_lines.append(
+                    f"# Quirk Type: {entry_data.metadata.quirk_type}",
+                )
+
+        def _write_entry_hidden_attrs(
+            self,
+            ldif_lines: list[str],
+            attr_name: str,
+            attr_values: list[str] | str,
+            hidden_attrs: set[str],
+        ) -> bool:
+            """Write hidden attributes as comments if in hidden set. Returns True if written."""
+            if attr_name not in hidden_attrs:
+                return False
+            if isinstance(attr_values, list):
+                ldif_lines.extend(
+                    f"# {attr_name}: {value}" for value in attr_values
+                )
+            else:
+                ldif_lines.append(f"# {attr_name}: {attr_values}")
+            return True
+
+        def _get_hidden_attributes(
+            self,
+            entry_data: FlextLdifModels.Entry,
+            write_options: FlextLdifModels.WriteFormatOptions,
+        ) -> set[str]:
+            """Extract hidden attributes from metadata if requested."""
+            if (
+                not write_options.write_hidden_attributes_as_comments
+                or not entry_data.metadata
+            ):
+                return set()
+            extensions = entry_data.metadata.extensions or {}
+            hidden_list = extensions.get("hidden_attributes")
+            return set(hidden_list) if isinstance(hidden_list, list) else set()
+
+        def _write_entry_attribute_value(
+            self,
+            ldif_lines: list[str],
+            attr_name: str,
+            value: str,
+        ) -> None:
+            """Write a single attribute value, handling base64 encoding."""
+            if isinstance(value, str) and value.startswith("__BASE64__:"):
+                base64_value = value[11:]  # Remove "__BASE64__:"
+                ldif_lines.append(f"{attr_name}:: {base64_value}")
+            else:
+                ldif_lines.append(f"{attr_name}: {value}")
+
+        def _write_entry_process_attributes(
+            self,
+            ldif_lines: list[str],
+            entry_data: FlextLdifModels.Entry,
+            hidden_attrs: set[str],
+        ) -> None:
+            """Process and write all entry attributes."""
+            if not (entry_data.attributes and entry_data.attributes.attributes):
+                return
+            for attr_name, attr_values in entry_data.attributes.attributes.items():
+                # Write hidden attributes as comments if requested
+                if self._write_entry_hidden_attrs(
+                    ldif_lines, attr_name, attr_values, hidden_attrs,
+                ):
+                    continue
+
+                # Write normal attributes
+                if isinstance(attr_values, list):
+                    for value in attr_values:
+                        self._write_entry_attribute_value(
+                            ldif_lines, attr_name, value,
+                        )
+                elif attr_values:
+                    # Single non-list value
+                    ldif_lines.append(f"{attr_name}: {attr_values}")
+
         def _write_entry(
             self,
             entry_data: FlextLdifModels.Entry,
         ) -> FlextResult[str]:
             """Write Entry model to RFC-compliant LDIF string format (internal).
 
-            Converts Entry model to LDIF format per RFC 2849.
+            Converts Entry model to LDIF format per RFC 2849, with support for
+            WriteFormatOptions stored in entry_metadata["_write_options"].
 
             Args:
                 entry_data: Entry model to write
@@ -893,27 +1019,42 @@ class FlextLdifServersRfc(FlextLdifServersBase):
 
             """
             try:
+                # Extract WriteFormatOptions if available (passed by writer)
+                write_options: FlextLdifModels.WriteFormatOptions | None = None
+                if entry_data.entry_metadata:
+                    write_options = entry_data.entry_metadata.get(
+                        "_write_options",
+                    )
+
                 # Build LDIF string from Entry model
                 ldif_lines: list[str] = []
 
-                # DN line (required)
-                if entry_data.dn and entry_data.dn.value:
-                    ldif_lines.append(f"dn: {entry_data.dn.value}")
-                else:
-                    return FlextResult[str].fail("Entry DN is required for LDIF output")
+                # Add DN comment if requested
+                if write_options:
+                    self._write_entry_comments_dn(ldif_lines, entry_data, write_options)
 
-                # Attributes
-                if entry_data.attributes and entry_data.attributes.attributes:
-                    for (
-                        attr_name,
-                        attr_values,
-                    ) in entry_data.attributes.attributes.items():
-                        if isinstance(attr_values, list):
-                            ldif_lines.extend(
-                                f"{attr_name}: {value}" for value in attr_values
-                            )
-                        else:
-                            ldif_lines.append(f"{attr_name}: {attr_values}")
+                # DN line (required)
+                if not (entry_data.dn and entry_data.dn.value):
+                    return FlextResult[str].fail("Entry DN is required for LDIF output")
+                ldif_lines.append(f"dn: {entry_data.dn.value}")
+
+                # Add metadata comments if requested
+                if write_options:
+                    self._write_entry_comments_metadata(
+                        ldif_lines, entry_data, write_options,
+                    )
+
+                # Get hidden attributes if needed
+                hidden_attrs = (
+                    self._get_hidden_attributes(entry_data, write_options)
+                    if write_options
+                    else set()
+                )
+
+                # Process attributes
+                self._write_entry_process_attributes(
+                    ldif_lines, entry_data, hidden_attrs,
+                )
 
                 # Join with newlines and ensure proper LDIF formatting
                 ldif_text = "\n".join(ldif_lines)

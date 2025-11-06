@@ -26,14 +26,12 @@ class FlextLdifServersApache(FlextLdifServersRfc):
     """
 
     # =========================================================================
-    # STANDARDIZED CONSTANTS FOR AUTO-DISCOVERY
-    # =========================================================================
-    # Top-level server identity attributes (moved from Constants)
-    SERVER_TYPE: ClassVar[str] = FlextLdifConstants.ServerTypes.APACHE
-    PRIORITY: ClassVar[int] = 10
-
     class Constants(FlextLdifServersRfc.Constants):
         """Standardized constants for Apache Directory Server quirk."""
+
+        # Server identity and priority (defined at Constants level)
+        SERVER_TYPE: ClassVar[str] = FlextLdifConstants.ServerTypes.APACHE
+        PRIORITY: ClassVar[int] = 15
 
         # Server identification
 
@@ -41,10 +39,12 @@ class FlextLdifServersApache(FlextLdifServersRfc):
         CANONICAL_NAME: ClassVar[str] = "apache_directory"
         ALIASES: ClassVar[frozenset[str]] = frozenset(["apache_directory", "apache"])
         CAN_NORMALIZE_FROM: ClassVar[frozenset[str]] = frozenset(["apache_directory"])
-        CAN_DENORMALIZE_TO: ClassVar[frozenset[str]] = frozenset([
-            "apache_directory",
-            "rfc",
-        ])
+        CAN_DENORMALIZE_TO: ClassVar[frozenset[str]] = frozenset(
+            [
+                "apache_directory",
+                "rfc",
+            ],
+        )
 
         # Apache Directory Server ACL format constants
         ACL_FORMAT: ClassVar[str] = "aci"  # Apache DS uses standard ACI
@@ -61,43 +61,53 @@ class FlextLdifServersApache(FlextLdifServersRfc):
         # Detection constants (server-specific)
         # Migrated from FlextLdifConstants.LdapServerDetection
         DETECTION_OID_PATTERN: ClassVar[str] = r"1\.3\.6\.1\.4\.1\.18060\."
-        DETECTION_ATTRIBUTE_PREFIXES: ClassVar[frozenset[str]] = frozenset([
-            "ads-",
-            "apacheds",
-        ])
-        DETECTION_OBJECTCLASS_NAMES: ClassVar[frozenset[str]] = frozenset([
-            "ads-directoryservice",
-            "ads-base",
-            "ads-server",
-            "ads-partition",
-            "ads-interceptor",
-        ])
-        DETECTION_DN_MARKERS: ClassVar[frozenset[str]] = frozenset([
-            "ou=config",
-            "ou=services",
-            "ou=system",
-            "ou=partitions",
-        ])
+        DETECTION_ATTRIBUTE_PREFIXES: ClassVar[frozenset[str]] = frozenset(
+            [
+                "ads-",
+                "apacheds",
+            ],
+        )
+        DETECTION_OBJECTCLASS_NAMES: ClassVar[frozenset[str]] = frozenset(
+            [
+                "ads-directoryservice",
+                "ads-base",
+                "ads-server",
+                "ads-partition",
+                "ads-interceptor",
+            ],
+        )
+        DETECTION_DN_MARKERS: ClassVar[frozenset[str]] = frozenset(
+            [
+                "ou=config",
+                "ou=services",
+                "ou=system",
+                "ou=partitions",
+            ],
+        )
 
         # Server detection pattern and weight (for server detector service)
         DETECTION_PATTERN: ClassVar[str] = r"\b(apacheDS|apache-.*)\b"
-        DETECTION_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset([
-            "ads-directoryservice",
-            "ads-base",
-            "ads-server",
-            "ads-partition",
-            "ads-interceptor",
-        ])
+        DETECTION_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset(
+            [
+                "ads-directoryservice",
+                "ads-base",
+                "ads-server",
+                "ads-partition",
+                "ads-interceptor",
+            ],
+        )
         DETECTION_WEIGHT: ClassVar[int] = 6
 
         # Schema attribute parsing patterns
         SCHEMA_ATTRIBUTE_NAME_REGEX: ClassVar[str] = r"NAME\s+\(?\s*'([^']+)'"
 
         # ACL-specific constants (migrated from nested Acl class)
-        ACL_ACI_ATTRIBUTE_NAMES: ClassVar[frozenset[str]] = frozenset([
-            "ads-aci",
-            "aci",  # Apache DS uses standard ACI
-        ])
+        ACL_ACI_ATTRIBUTE_NAMES: ClassVar[frozenset[str]] = frozenset(
+            [
+                "ads-aci",
+                "aci",  # Apache DS uses standard ACI
+            ],
+        )
         ACL_CLAUSE_PATTERN: ClassVar[str] = r"\([^()]+\)"
         ACL_VERSION_PATTERN: ClassVar[str] = r"\(version"
         ACL_NAME_PREFIX: ClassVar[str] = "apache-"
@@ -310,14 +320,14 @@ class FlextLdifServersApache(FlextLdifServersRfc):
                 # Fix common ObjectClass issues (RFC 4512 compliance)
                 FlextLdifUtilities.ObjectClass.fix_missing_sup(
                     oc_data,
-                    _server_type=FlextLdifServersApache.Constants.SERVER_TYPE,
+                    server_type=self._get_server_type(),
                 )
                 FlextLdifUtilities.ObjectClass.fix_kind_mismatch(
                     oc_data,
-                    _server_type=FlextLdifServersApache.Constants.SERVER_TYPE,
+                    _server_type=self._get_server_type(),
                 )
                 metadata = FlextLdifModels.QuirkMetadata.create_for(
-                    "apache_directory",
+                    self._get_server_type(),
                 )
                 return FlextResult[FlextLdifModels.SchemaObjectClass].ok(
                     oc_data.model_copy(update={"metadata": metadata}),
@@ -413,9 +423,11 @@ class FlextLdifServersApache(FlextLdifServersRfc):
                 acl_model = FlextLdifModels.Acl(
                     name=f"{FlextLdifServersApache.Constants.ACL_NAME_PREFIX}{attr_name}",
                     target=FlextLdifModels.AclTarget(
-                        target_dn=FlextLdifConstants.Acl.ACL_TARGET_DN_WILDCARD
-                        if hasattr(FlextLdifConstants.Acl, "ACL_TARGET_DN_WILDCARD")
-                        else "*",
+                        target_dn=(
+                            FlextLdifConstants.Acl.ACL_TARGET_DN_WILDCARD
+                            if hasattr(FlextLdifConstants.Acl, "ACL_TARGET_DN_WILDCARD")
+                            else "*"
+                        ),
                         attributes=[attr_name] if attr_name else [],
                     ),
                     subject=FlextLdifModels.AclSubject(
@@ -425,7 +437,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
                     permissions=FlextLdifModels.AclPermissions(),
                     raw_acl=acl_line,
                     metadata=FlextLdifModels.QuirkMetadata(
-                        quirk_type=FlextLdifServersApache.Constants.SERVER_TYPE,
+                        quirk_type=self._get_server_type(),
                         original_format=acl_line.strip(),
                         extensions={},
                     ),
@@ -503,14 +515,16 @@ class FlextLdifServersApache(FlextLdifServersRfc):
             try:
                 # Store metadata in extensions
                 metadata = entry.metadata or FlextLdifModels.QuirkMetadata(
-                    quirk_type=FlextLdifServersApache.Constants.SERVER_TYPE,
+                    quirk_type=self._get_server_type(),
                 )
                 dn_lower = entry.dn.value.lower()
                 if not metadata.extensions:
                     metadata.extensions = {}
                 metadata.extensions[
                     FlextLdifConstants.QuirkMetadataKeys.IS_CONFIG_ENTRY
-                ] = FlextLdifServersApache.Constants.DN_CONFIG_ENTRY_MARKER in dn_lower
+                ] = (
+                    FlextLdifServersApache.Constants.DN_CONFIG_ENTRY_MARKER in dn_lower
+                )
 
                 processed_entry = entry.model_copy(update={"metadata": metadata})
 

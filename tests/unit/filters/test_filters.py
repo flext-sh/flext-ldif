@@ -287,33 +287,33 @@ class TestRegexPatternErrors:
 
 
 class TestHasAclAttributesEdgeCases:
-    """Test edge cases in _has_acl_attributes."""
+    """Test edge cases in has_acl_attributes."""
 
     def test_has_acl_attributes_with_non_dict_attributes(self) -> None:
-        """Test _has_acl_attributes when entry has no ACL attributes."""
+        """Test has_acl_attributes when entry has no ACL attributes."""
         entry = create_test_entry(
             "cn=test",
             {"cn": ["test"]},  # No ACL attributes
         )
-        result = FlextLdifFilters._has_acl_attributes(entry, ["orclaci"])
+        result = FlextLdifFilters.has_acl_attributes(entry, ["orclaci"])
         assert result is False
 
     def test_has_acl_attributes_with_empty_list(self) -> None:
-        """Test _has_acl_attributes with empty ACL attributes list."""
+        """Test has_acl_attributes with empty ACL attributes list."""
         entry = create_test_entry(
             "cn=test",
             {"cn": ["test"]},
         )
-        result = FlextLdifFilters._has_acl_attributes(entry, [])
+        result = FlextLdifFilters.has_acl_attributes(entry, [])
         assert result is False
 
     def test_has_acl_attributes_case_insensitive(self) -> None:
-        """Test _has_acl_attributes is case-insensitive."""
+        """Test has_acl_attributes is case-insensitive."""
         entry = create_test_entry(
             "cn=test",
             {"ORCLACI": ["some acl"]},  # Uppercase attribute name
         )
-        result = FlextLdifFilters._has_acl_attributes(entry, ["orclaci"])
+        result = FlextLdifFilters.has_acl_attributes(entry, ["orclaci"])
         assert result is True
 
 

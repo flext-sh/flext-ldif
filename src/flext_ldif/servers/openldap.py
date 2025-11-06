@@ -34,12 +34,12 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
     # =========================================================================
     # STANDARDIZED CONSTANTS FOR AUTO-DISCOVERY
     # =========================================================================
-    # Top-level server identity attributes (moved from Constants)
-    SERVER_TYPE: ClassVar[str] = FlextLdifConstants.ServerTypes.OPENLDAP
-    PRIORITY: ClassVar[int] = 10
-
     class Constants(FlextLdifServersRfc.Constants):
         """Standardized constants for OpenLDAP 2.x quirk."""
+
+        # Server identity and priority (defined at Constants level)
+        SERVER_TYPE: ClassVar[str] = FlextLdifConstants.ServerTypes.OPENLDAP
+        PRIORITY: ClassVar[int] = 20
 
         CANONICAL_NAME: ClassVar[str] = "openldap"
         ALIASES: ClassVar[frozenset[str]] = frozenset(["openldap", "openldap2"])
@@ -52,44 +52,52 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
 
         # Server detection patterns and weights
         DETECTION_PATTERN: ClassVar[str] = r"\b(olc[A-Z][a-zA-Z]+|cn=config)\b"
-        DETECTION_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset([
-            "olcDatabase",
-            "olcAccess",
-            "olcOverlay",
-            "olcModule",
-        ])
+        DETECTION_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset(
+            [
+                "olcDatabase",
+                "olcAccess",
+                "olcOverlay",
+                "olcModule",
+            ],
+        )
         DETECTION_WEIGHT: ClassVar[int] = 8
 
         # OpenLDAP 2.x detection patterns (cn=config based)
-        OPENLDAP_2_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset([
-            "olcAccess",
-            "olcAttributeTypes",
-            "olcObjectClasses",
-            "olcDatabase",
-            "olcBackend",
-            "olcOverlay",
-            "olcRootDN",
-            "olcRootPW",
-            "olcSuffix",
-        ])
+        OPENLDAP_2_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset(
+            [
+                "olcAccess",
+                "olcAttributeTypes",
+                "olcObjectClasses",
+                "olcDatabase",
+                "olcBackend",
+                "olcOverlay",
+                "olcRootDN",
+                "olcRootPW",
+                "olcSuffix",
+            ],
+        )
 
-        OPENLDAP_2_DN_PATTERNS: ClassVar[frozenset[str]] = frozenset([
-            "cn=config",
-            "olcDatabase=",
-            "olcOverlay=",
-        ])
+        OPENLDAP_2_DN_PATTERNS: ClassVar[frozenset[str]] = frozenset(
+            [
+                "cn=config",
+                "olcDatabase=",
+                "olcOverlay=",
+            ],
+        )
 
         # OpenLDAP DN patterns
-        OPENLDAP_DN_PATTERNS: ClassVar[frozenset[str]] = frozenset([
-            "cn=",
-            "ou=",
-            "dc=",
-            "o=",
-            "l=",
-            "st=",
-            "c=",
-            "uid=",
-        ])
+        OPENLDAP_DN_PATTERNS: ClassVar[frozenset[str]] = frozenset(
+            [
+                "cn=",
+                "ou=",
+                "dc=",
+                "o=",
+                "l=",
+                "st=",
+                "c=",
+                "uid=",
+            ],
+        )
 
         # OpenLDAP DN prefix constants
         OLCDATABASE_PREFIX: ClassVar[str] = "olcDatabase="
@@ -103,12 +111,14 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
         ACL_SUBJECT_TYPE_GROUP: ClassVar[str] = "group"
 
         # OpenLDAP 2.x object classes (cn=config based)
-        OPENLDAP_2_OBJECTCLASSES: ClassVar[frozenset[str]] = frozenset([
-            "olcDatabaseConfig",
-            "olcBackendConfig",
-            "olcOverlayConfig",
-            "olcSchemaConfig",
-        ])
+        OPENLDAP_2_OBJECTCLASSES: ClassVar[frozenset[str]] = frozenset(
+            [
+                "olcDatabaseConfig",
+                "olcBackendConfig",
+                "olcOverlayConfig",
+                "olcSchemaConfig",
+            ],
+        )
 
         # OpenLDAP 2.x extends RFC operational attributes
         OPERATIONAL_ATTRIBUTES: ClassVar[frozenset[str]] = (
@@ -137,30 +147,38 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
 
         # Detection constants (server-specific)
         DETECTION_OID_PATTERN: ClassVar[str] = r"1\.3\.6\.1\.4\.1\.4203\."
-        DETECTION_ATTRIBUTE_PREFIXES: ClassVar[frozenset[str]] = frozenset([
-            "olc",
-            "structuralobjectclass",
-        ])
-        DETECTION_OBJECTCLASS_NAMES: ClassVar[frozenset[str]] = frozenset([
-            "olcglobal",
-            "olcdatabaseconfig",
-            "olcldapconfig",
-            "olcmdbconfig",
-            "olcbdbconfig",
-        ])
-        DETECTION_DN_MARKERS: ClassVar[frozenset[str]] = frozenset([
-            "cn=config",
-            "cn=schema",
-            "cn=monitor",
-        ])
+        DETECTION_ATTRIBUTE_PREFIXES: ClassVar[frozenset[str]] = frozenset(
+            [
+                "olc",
+                "structuralobjectclass",
+            ],
+        )
+        DETECTION_OBJECTCLASS_NAMES: ClassVar[frozenset[str]] = frozenset(
+            [
+                "olcglobal",
+                "olcdatabaseconfig",
+                "olcldapconfig",
+                "olcmdbconfig",
+                "olcbdbconfig",
+            ],
+        )
+        DETECTION_DN_MARKERS: ClassVar[frozenset[str]] = frozenset(
+            [
+                "cn=config",
+                "cn=schema",
+                "cn=monitor",
+            ],
+        )
 
         # OpenLDAP required object classes for valid entries
-        REQUIRED_CLASSES: ClassVar[frozenset[str]] = frozenset([
-            "top",
-            "person",
-            "organizationalPerson",
-            "inetOrgPerson",
-        ])
+        REQUIRED_CLASSES: ClassVar[frozenset[str]] = frozenset(
+            [
+                "top",
+                "person",
+                "organizationalPerson",
+                "inetOrgPerson",
+            ],
+        )
 
         # Schema-specific regex patterns (migrated from nested Schema class)
         SCHEMA_OPENLDAP_OLC_PATTERN: ClassVar[str] = r"\bolc[A-Z][a-zA-Z]*\b"
@@ -240,10 +258,6 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                 result = quirk.schema.parse(attr_def)
 
         """
-
-        # Server identification (override RFC base - required for Constants access)
-        SERVER_TYPE: ClassVar[str] = FlextLdifConstants.ServerTypes.OPENLDAP
-        PRIORITY: ClassVar[int] = 20
 
         # Schema patterns moved to Constants.SCHEMA_OPENLDAP_OLC_PATTERN
 
@@ -623,7 +637,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                         compare="read" in access,  # OpenLDAP: read includes compare
                     ),
                     metadata=FlextLdifModels.QuirkMetadata.create_for(
-                        FlextLdifServersOpenldap.Constants.SERVER_TYPE,
+                        self._get_server_type(),
                         original_format=acl_line,
                     ),
                     raw_acl=acl_line,

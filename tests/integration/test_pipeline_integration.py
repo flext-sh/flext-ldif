@@ -134,8 +134,7 @@ sn: Test
         result = ldif.parse(ldif_file)
 
         if result.is_success:
-            parse_response = result.unwrap()
-            entries = parse_response.entries
+            entries = result.unwrap()
             assert len(entries) == 1
 
     def test_parse_handles_encoding(self, tmp_path: Path) -> None:

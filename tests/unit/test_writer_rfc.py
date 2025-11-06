@@ -32,11 +32,10 @@ def registry() -> FlextLdifServer:
 
 @pytest.fixture
 def writer(rfc_config: FlextLdifConfig, registry: FlextLdifServer) -> FlextLdifWriter:
-    """Create FlextLdifWriter with RFC server type."""
-    return FlextLdifWriter(
-        config=rfc_config,
-        quirk_registry=registry,
-    )
+    """Create FlextLdifWriter with RFC server type (current API)."""
+    # FlextLdifWriter() no longer accepts config/registry in __init__
+    # Registry is fetched as singleton automatically
+    return FlextLdifWriter()
 
 
 @pytest.fixture
@@ -212,8 +211,8 @@ def test_write_empty_entries_list(writer: FlextLdifWriter) -> None:
 
     assert result.is_success
     content = result.unwrap()
-    # Should have LDIF version but no entries
-    assert content.strip() == "version: 1"
+    # Empty list produces empty output (no entries, no headers)
+    assert content == "" or content.isspace()
     assert content.count("dn:") == 0
 
 

@@ -111,9 +111,10 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import re
-from typing import ClassVar, override
+from typing import override
 
 from flext_core import FlextDecorators, FlextResult, FlextService
+from pydantic import Field
 
 from flext_ldif.constants import FlextLdifConstants
 
@@ -149,13 +150,9 @@ class FlextLdifValidation(FlextService[dict[str, object]]):
     # PYDANTIC FIELDS (for builder pattern)
     # ════════════════════════════════════════════════════════════════════════
 
-    attribute_names: ClassVar[list[str]] = []
-    objectclass_names: ClassVar[list[str]] = []
-    max_attr_value_length: int | None = None
-
-    def __init__(self) -> None:
-        """Initialize validation service."""
-        super().__init__()
+    attribute_names: list[str] = Field(default_factory=list)
+    objectclass_names: list[str] = Field(default_factory=list)
+    max_attr_value_length: int | None = Field(default=None)
 
     @override
     @FlextDecorators.log_operation("validation_service_check")

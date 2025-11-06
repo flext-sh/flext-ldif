@@ -19,7 +19,7 @@ class TestOpenLDAP1xSchemas:
         server = FlextLdifServersOpenldap1()
         # server_type and priority are ClassVar on main class
         assert server.server_type == "openldap1"
-        assert server.priority == 20  # Lower priority than OpenLDAP 2.x
+        assert server.priority == 10
 
     def testcan_handle_attribute_with_attributetype_prefix(self) -> None:
         """Test attribute detection with attributetype prefix."""

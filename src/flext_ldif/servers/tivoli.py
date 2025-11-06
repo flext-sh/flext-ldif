@@ -21,14 +21,12 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
     """Schema quirks for IBM Tivoli Directory Server."""
 
     # =========================================================================
-    # STANDARDIZED CONSTANTS FOR AUTO-DISCOVERY
-    # =========================================================================
-    # Top-level server identity attributes (moved from Constants)
-    SERVER_TYPE: ClassVar[str] = FlextLdifConstants.ServerTypes.IBM_TIVOLI
-    PRIORITY: ClassVar[int] = 10
-
     class Constants(FlextLdifServersRfc.Constants):
         """Standardized constants for IBM Tivoli Directory Server quirk."""
+
+        # Server identity and priority (defined at Constants level)
+        SERVER_TYPE: ClassVar[str] = FlextLdifConstants.ServerTypes.IBM_TIVOLI
+        PRIORITY: ClassVar[int] = 30
 
         CANONICAL_NAME: ClassVar[str] = "ibm_tivoli"
         ALIASES: ClassVar[frozenset[str]] = frozenset(["ibm_tivoli", "tivoli"])
@@ -41,14 +39,16 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
 
         # IBM Tivoli operational attributes (server-specific)
         # Migrated from FlextLdifConstants.OperationalAttributeMappings
-        OPERATIONAL_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset([
-            "createTimestamp",
-            "modifyTimestamp",
-            "creatorsName",
-            "modifiersName",
-            "ibm-entryUUID",
-            "ibm-entryChecksum",
-        ])
+        OPERATIONAL_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset(
+            [
+                "createTimestamp",
+                "modifyTimestamp",
+                "creatorsName",
+                "modifiersName",
+                "ibm-entryUUID",
+                "ibm-entryChecksum",
+            ],
+        )
 
         # NOTE: PRESERVE_ON_MIGRATION inherited from RFC.Constants (createTimestamp, modifyTimestamp)
         # NOTE: SUPPORTED_PERMISSIONS inherited from RFC.Constants (read, write, add, delete, search, compare)
@@ -62,10 +62,12 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
             r"\b1\.3\.18\.",
             re.IGNORECASE,
         )
-        DETECTION_ATTRIBUTE_PREFIXES: ClassVar[frozenset[str]] = frozenset([
-            "ibm-",
-            "ids-",
-        ])
+        DETECTION_ATTRIBUTE_PREFIXES: ClassVar[frozenset[str]] = frozenset(
+            [
+                "ibm-",
+                "ids-",
+            ],
+        )
 
         # Server detection patterns and weights (migrated from FlextLdifConstants.ServerDetection)
         DETECTION_PATTERN_STR: ClassVar[str] = r"\b(ibm|tivoli|ldapdb)\b"
@@ -73,54 +75,66 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
             DETECTION_PATTERN_STR,
             re.IGNORECASE,
         )
-        DETECTION_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset([
-            "ibm-entryuuid",
-            "ibm-entrychecksum",
-            "ibm-slapdaccesscontrol",
-            "ibm-slapdgroupacl",
-        ])
+        DETECTION_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset(
+            [
+                "ibm-entryuuid",
+                "ibm-entrychecksum",
+                "ibm-slapdaccesscontrol",
+                "ibm-slapdgroupacl",
+            ],
+        )
         DETECTION_WEIGHT: ClassVar[int] = 6
-        DETECTION_OBJECTCLASS_NAMES: ClassVar[frozenset[str]] = frozenset([
-            "ibmuser",
-            "ibmuniversaldirectoryuser",
-            "ibmuniversaldirectorygroup",
-            "ibm-slapdaccesscontrolsubentry",
-            "ibm-ldapserver",
-            "ibm-filterentry",
-        ])
-        DETECTION_DN_MARKERS: ClassVar[frozenset[str]] = frozenset([
-            "o=ibm",
-            "o=example",
-            "cn=REDACTED_LDAP_BIND_PASSWORD",
-            "cn=configuration",
-            "cn=ibm",
-        ])
+        DETECTION_OBJECTCLASS_NAMES: ClassVar[frozenset[str]] = frozenset(
+            [
+                "ibmuser",
+                "ibmuniversaldirectoryuser",
+                "ibmuniversaldirectorygroup",
+                "ibm-slapdaccesscontrolsubentry",
+                "ibm-ldapserver",
+                "ibm-filterentry",
+            ],
+        )
+        DETECTION_DN_MARKERS: ClassVar[frozenset[str]] = frozenset(
+            [
+                "o=ibm",
+                "o=example",
+                "cn=REDACTED_LDAP_BIND_PASSWORD",
+                "cn=configuration",
+                "cn=ibm",
+            ],
+        )
 
         # IBM Tivoli specific attributes (migrated from FlextLdifConstants)
-        IBM_TIVOLI_SPECIFIC: ClassVar[frozenset[str]] = frozenset([
-            "ibm-entryuuid",
-            "ibm-entrychecksum",
-            "ibm-passwordchangedtime",
-            "ibm-passwordexpirationtime",
-            "ibm-passwordallowchangedate",
-            "ibm-creationName",
-            "ibm-modifyName",
-        ])
+        IBM_TIVOLI_SPECIFIC: ClassVar[frozenset[str]] = frozenset(
+            [
+                "ibm-entryuuid",
+                "ibm-entrychecksum",
+                "ibm-passwordchangedtime",
+                "ibm-passwordexpirationtime",
+                "ibm-passwordallowchangedate",
+                "ibm-creationName",
+                "ibm-modifyName",
+            ],
+        )
 
         # NOTE: Tivoli inherits RFC baseline for:
         # - ATTRIBUTE_FIELDS, OBJECTCLASS_REQUIREMENTS, ATTRIBUTE_ALIASES
 
         # ACL-specific constants (migrated from nested Acl class)
-        ACL_ATTRIBUTE_NAMES: ClassVar[frozenset[str]] = frozenset([
-            "ibm-slapdaccesscontrol",
-            "ibm-slapdgroupacl",
-        ])
+        ACL_ATTRIBUTE_NAMES: ClassVar[frozenset[str]] = frozenset(
+            [
+                "ibm-slapdaccesscontrol",
+                "ibm-slapdgroupacl",
+            ],
+        )
         # Non-Tivoli ACL format markers (for rejection)
-        ACL_NON_TIVOLI_MARKERS: ClassVar[frozenset[str]] = frozenset([
-            "aci:",
-            "version 3.0",
-            "allow(",
-        ])
+        ACL_NON_TIVOLI_MARKERS: ClassVar[frozenset[str]] = frozenset(
+            [
+                "aci:",
+                "version 3.0",
+                "allow(",
+            ],
+        )
         ACL_DEFAULT_NAME: ClassVar[str] = "Tivoli ACL"  # Default ACL name for Tivoli DS
 
         # ACL parsing patterns (migrated from _parse_acl method)
@@ -174,10 +188,6 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
 
     class Schema(FlextLdifServersRfc.Schema):
         """IBM Tivoli Directory Server schema quirks implementation."""
-
-        # Server identification (override RFC base - required for Constants access)
-        SERVER_TYPE: ClassVar[str] = FlextLdifConstants.ServerTypes.IBM_TIVOLI
-        PRIORITY: ClassVar[int] = 30
 
         # INHERITED METHODS (from FlextLdifServersRfc.Schema)
         # These methods are inherited from RFC base class:
@@ -373,7 +383,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                     ),
                     server_type=cast(
                         "FlextLdifConstants.LiteralTypes.ServerType",
-                        FlextLdifServersTivoli.Constants.SERVER_TYPE,
+                        self._get_server_type(),
                     ),
                     raw_acl=acl_line,
                 )
@@ -553,7 +563,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                 # Add/update metadata attributes
                 processed_attributes[
                     FlextLdifConstants.QuirkMetadataKeys.SERVER_TYPE
-                ] = [FlextLdifServersTivoli.Constants.SERVER_TYPE]
+                ] = [self._get_server_type()]
                 # Check if entry is config entry using Constants markers
                 is_config = any(
                     marker in dn_lower

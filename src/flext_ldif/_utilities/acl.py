@@ -594,7 +594,7 @@ class FlextLdifUtilitiesACL:
     def format_aci_subject(
         subject_type: str,
         subject_value: str,
-        constants: type,  # Server-specific Constants class with ACL attributes
+        constants: object,  # Server-specific Constants class with ACL attributes
     ) -> str:
         """Format ACL subject into ACI bind rule format.
 
@@ -609,19 +609,23 @@ class FlextLdifUtilitiesACL:
         """
         # Map subject type to ACI format
         if subject_type == FlextLdifConstants.AclSubjectTypes.SELF:
-            return f'userdn="{constants.ACL_SELF_SUBJECT}";)'
+            acl_self = getattr(constants, "ACL_SELF_SUBJECT", "self")
+            return f'userdn="{acl_self}";)'
 
         if subject_type == FlextLdifConstants.AclSubjectTypes.ANONYMOUS:
-            return f'userdn="{constants.ACL_ANONYMOUS_SUBJECT_ALT}";)'
+            acl_anon = getattr(constants, "ACL_ANONYMOUS_SUBJECT_ALT", "anyone")
+            return f'userdn="{acl_anon}";)'
 
         # Handle both "group" and "group_dn" subject types
         if subject_type in {FlextLdifConstants.AclSubjectTypes.GROUP, "group_dn"}:
             # Ensure LDAP URL format
-            if not subject_value.startswith(constants.ACL_LDAP_URL_PREFIX):
-                subject_value = f"{constants.ACL_LDAP_URL_PREFIX}{subject_value}"
+            acl_ldap_url_prefix = getattr(constants, "ACL_LDAP_URL_PREFIX", "ldap:///")
+            if not subject_value.startswith(acl_ldap_url_prefix):
+                subject_value = f"{acl_ldap_url_prefix}{subject_value}"
             return f'groupdn="{subject_value}";)'
 
-        if subject_type == constants.ACL_SUBJECT_TYPE_BIND_RULES:
+        acl_subject_type_bind_rules = getattr(constants, "ACL_SUBJECT_TYPE_BIND_RULES", "bind_rules")
+        if subject_type == acl_subject_type_bind_rules:
             return f"{subject_value};)"
 
         if subject_type == "dn_attr":
@@ -634,8 +638,9 @@ class FlextLdifUtilitiesACL:
             return f'userattr="{subject_value}";)'
 
         # Default: treat as userdn
-        if not subject_value.startswith(constants.ACL_LDAP_URL_PREFIX):
-            subject_value = f"{constants.ACL_LDAP_URL_PREFIX}{subject_value}"
+        acl_ldap_url_prefix = getattr(constants, "ACL_LDAP_URL_PREFIX", "ldap:///")
+        if not subject_value.startswith(acl_ldap_url_prefix):
+            subject_value = f"{acl_ldap_url_prefix}{subject_value}"
         return f'userdn="{subject_value}";)'
 
     @staticmethod

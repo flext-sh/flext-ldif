@@ -24,8 +24,8 @@ class TestNovellSchemas:
 
     def test_initialization(self, server: FlextLdifServersNovell) -> None:
         """Test Novell eDirectory quirk initialization."""
-        assert server.server_type == FlextLdifServersNovell.Constants.SERVER_TYPE
-        assert server.priority == FlextLdifServersNovell.Constants.PRIORITY
+        assert server.server_type == "novell_edirectory"
+        assert server.priority == 20
 
     def testcan_handle_attribute_with_novell_oid(self) -> None:
         """Test attribute detection with Novell OID pattern."""
@@ -368,9 +368,7 @@ class TestNovellAcls:
         acl_data = result.unwrap()
         assert acl_data.name == "Novell eDirectory ACL"
         assert acl_data.metadata is not None
-        assert (
-            acl_data.metadata.quirk_type == FlextLdifServersNovell.Constants.SERVER_TYPE
-        )
+        assert acl_data.metadata.quirk_type == "novell_edirectory"
 
         # Verify ACL structure from parsed segments
         # Segments: [0]="[Entry Rights]", [1]="cn=Admin,o=Example", [2]="[BCDRSE]"
@@ -419,7 +417,7 @@ class TestNovellAcls:
                 delete=True,
             ),
             metadata=FlextLdifModels.QuirkMetadata.create_for(
-                FlextLdifServersNovell.Constants.SERVER_TYPE,
+                "novell_edirectory",
             ),
             raw_acl="acl: [Entry Rights]#cn=Admin,o=Example#[BCDRSE]",
         )
@@ -445,7 +443,7 @@ class TestNovellAcls:
             ),
             permissions=FlextLdifModels.AclPermissions(),
             metadata=FlextLdifModels.QuirkMetadata.create_for(
-                FlextLdifServersNovell.Constants.SERVER_TYPE,
+                "novell_edirectory",
             ),
         )
         result = acl.write(acl_data)
@@ -472,7 +470,7 @@ class TestNovellAcls:
                 read=True,
             ),
             metadata=FlextLdifModels.QuirkMetadata.create_for(
-                FlextLdifServersNovell.Constants.SERVER_TYPE,
+                "novell_edirectory",
             ),
         )
         result = acl.write(acl_data)
@@ -499,7 +497,7 @@ class TestNovellAcls:
             ),
             permissions=FlextLdifModels.AclPermissions(),
             metadata=FlextLdifModels.QuirkMetadata.create_for(
-                FlextLdifServersNovell.Constants.SERVER_TYPE,
+                "novell_edirectory",
             ),
         )
         result = acl.write(acl_data)

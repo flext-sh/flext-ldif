@@ -604,7 +604,9 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
         """
         # Check if already Entry models
         if entries and not isinstance(entries[0], dict):
-            return FlextResult[list[FlextLdifModels.Entry]].ok(entries)
+            return FlextResult[list[FlextLdifModels.Entry]].ok(
+                cast("list[FlextLdifModels.Entry]", entries),
+            )
 
         # Convert list[dict] to list[Entry]
         resolved_entries: list[FlextLdifModels.Entry] = []
@@ -623,7 +625,7 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
             )
             if entry_result.is_failure:
                 return FlextResult[list[FlextLdifModels.Entry]].fail(
-                    f"Failed to convert dict to Entry: {entry_result.error}"
+                    f"Failed to convert dict to Entry: {entry_result.error}",
                 )
             resolved_entries.append(entry_result.unwrap())
 
@@ -2125,7 +2127,7 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
             # Initialize with empty dict
             self._context = {}
         # Return as FlextContext type (which is a dict-like context object)
-        return self._context
+        return cast("FlextContext", self._context)
 
 
 __all__ = ["FlextLdif"]

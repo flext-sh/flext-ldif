@@ -11,16 +11,10 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
-
 from flext_ldif.api import FlextLdif
 from tests.unit.quirks.servers.test_utils import FlextLdifTestUtils
 
-
-@pytest.fixture(scope="module")
-def ldif_api() -> FlextLdif:
-    """Provides a FlextLdif API instance for the test module."""
-    return FlextLdif()
+# Removed: use shared fixture from conftest.py
 
 
 class TestRfcQuirksWithRealFixtures:

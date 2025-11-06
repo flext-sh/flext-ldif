@@ -60,20 +60,19 @@ class FlextLdifServersOid(FlextLdifServersRfc):
     # =========================================================================
     # STANDARDIZED CONSTANTS FOR AUTO-DISCOVERY
     # =========================================================================
-    # Top-level server identity attributes (moved from Constants)
-    SERVER_TYPE: ClassVar[str] = FlextLdifConstants.ServerTypes.OID
-    PRIORITY: ClassVar[int] = 10
-
-    # === STANDARDIZED CONSTANTS FOR AUTO-DISCOVERY ===
     class Constants(FlextLdifServersRfc.Constants):
         """Oracle Internet Directory-specific constants for server operations.
 
         Extends RFC baseline constants with OID-specific patterns for detection,
         ACL format, attribute mappings, and schema configuration.
 
-        **Note**: SERVER_TYPE and PRIORITY are now at class level (not in Constants).
-        These are set once per server implementation for initialization via __init_subclass__.
+        All configuration including SERVER_TYPE and PRIORITY are defined here
+        following the standardized pattern used across all server implementations.
         """
+
+        # Server identity and priority (defined at Constants level)
+        SERVER_TYPE: ClassVar[str] = FlextLdifConstants.ServerTypes.OID
+        PRIORITY: ClassVar[int] = 10
 
         # Oracle OID ACL attribute names
         ORCLACI: ClassVar[str] = "orclaci"  # Standard Oracle OID ACL
@@ -95,35 +94,43 @@ class FlextLdifServersOid(FlextLdifServersRfc):
         # OID extends RFC operational attributes with Oracle-specific ones
         OPERATIONAL_ATTRIBUTES: ClassVar[frozenset[str]] = (
             FlextLdifServersRfc.Constants.OPERATIONAL_ATTRIBUTES
-            | frozenset([
-                "orclguid",
-                "orclobjectguid",
-                "orclentryid",
-                "orclaccount",
-                "pwdChangedTime",
-                "pwdHistory",
-                "pwdFailureTime",
-            ])
+            | frozenset(
+                [
+                    "orclguid",
+                    "orclobjectguid",
+                    "orclentryid",
+                    "orclaccount",
+                    "pwdChangedTime",
+                    "pwdHistory",
+                    "pwdFailureTime",
+                ],
+            )
         )
 
         # NOTE: PRESERVE_ON_MIGRATION inherited from RFC.Constants
 
         # Detection constants (server-specific)
         DETECTION_OID_PATTERN: ClassVar[str] = r"2\.16\.840\.1\.113894\."
-        DETECTION_ATTRIBUTE_PREFIXES: ClassVar[frozenset[str]] = frozenset([
-            "orcl",
-            "orclguid",
-        ])
-        DETECTION_OBJECTCLASS_NAMES: ClassVar[frozenset[str]] = frozenset([
-            "orcldirectory",
-            "orcldomain",
-            "orcldirectoryserverconfig",
-        ])
-        DETECTION_DN_MARKERS: ClassVar[frozenset[str]] = frozenset([
-            "cn=orcl",
-            "cn=subscriptions",
-            "cn=oracle context",
-        ])
+        DETECTION_ATTRIBUTE_PREFIXES: ClassVar[frozenset[str]] = frozenset(
+            [
+                "orcl",
+                "orclguid",
+            ],
+        )
+        DETECTION_OBJECTCLASS_NAMES: ClassVar[frozenset[str]] = frozenset(
+            [
+                "orcldirectory",
+                "orcldomain",
+                "orcldirectoryserverconfig",
+            ],
+        )
+        DETECTION_DN_MARKERS: ClassVar[frozenset[str]] = frozenset(
+            [
+                "cn=orcl",
+                "cn=subscriptions",
+                "cn=oracle context",
+            ],
+        )
 
         # === SCHEMA PROCESSING CONFIGURATION ===
         # Schema field names (migrated from FlextLdifConstants.SchemaFields)
@@ -135,14 +142,16 @@ class FlextLdifServersOid(FlextLdifServersRfc):
         SCHEMA_FIELD_LDAP_SYNTAXES: ClassVar[str] = "ldapsyntaxes"
 
         # Schema fields that should be processed with OID filtering
-        SCHEMA_FILTERABLE_FIELDS: ClassVar[frozenset[str]] = frozenset([
-            SCHEMA_FIELD_ATTRIBUTE_TYPES,
-            SCHEMA_FIELD_ATTRIBUTE_TYPES_LOWER,
-            SCHEMA_FIELD_OBJECT_CLASSES,
-            SCHEMA_FIELD_OBJECT_CLASSES_LOWER,
-            SCHEMA_FIELD_MATCHING_RULES,
-            SCHEMA_FIELD_LDAP_SYNTAXES,
-        ])
+        SCHEMA_FILTERABLE_FIELDS: ClassVar[frozenset[str]] = frozenset(
+            [
+                SCHEMA_FIELD_ATTRIBUTE_TYPES,
+                SCHEMA_FIELD_ATTRIBUTE_TYPES_LOWER,
+                SCHEMA_FIELD_OBJECT_CLASSES,
+                SCHEMA_FIELD_OBJECT_CLASSES_LOWER,
+                SCHEMA_FIELD_MATCHING_RULES,
+                SCHEMA_FIELD_LDAP_SYNTAXES,
+            ],
+        )
 
         # Schema DN for OID (RFC 4512 standard)
         SCHEMA_DN: ClassVar[str] = "cn=subschemasubentry"
@@ -150,24 +159,26 @@ class FlextLdifServersOid(FlextLdifServersRfc):
         # Oracle OID boolean attributes (non-RFC: use "0"/"1" not "TRUE"/"FALSE")
         # RFC 4517 Boolean syntax requires "TRUE" or "FALSE"
         # OID quirks convert "0"→"FALSE", "1"→"TRUE" during OID→RFC
-        BOOLEAN_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset([
-            # Oracle DAS (Directory Application Server) boolean attributes
-            "orcldasenableproductlogo",
-            "orcldasenablesubscriberlogo",
-            "orcldasshowproductlogo",
-            "orcldasenablebranding",
-            "orcldasisenabled",
-            "orcldasismandatory",
-            "orcldasispersonal",
-            "orcldassearchable",
-            "orcldasselfmodifiable",
-            "orcldasviewable",
-            "orcldasREDACTED_LDAP_BIND_PASSWORDmodifiable",
-            # Oracle password policy boolean attributes
-            "pwdlockout",
-            "pwdmustchange",
-            "pwdallowuserchange",
-        ])
+        BOOLEAN_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset(
+            [
+                # Oracle DAS (Directory Application Server) boolean attributes
+                "orcldasenableproductlogo",
+                "orcldasenablesubscriberlogo",
+                "orcldasshowproductlogo",
+                "orcldasenablebranding",
+                "orcldasisenabled",
+                "orcldasismandatory",
+                "orcldasispersonal",
+                "orcldassearchable",
+                "orcldasselfmodifiable",
+                "orcldasviewable",
+                "orcldasREDACTED_LDAP_BIND_PASSWORDmodifiable",
+                # Oracle password policy boolean attributes
+                "pwdlockout",
+                "pwdmustchange",
+                "pwdallowuserchange",
+            ],
+        )
 
         # Server type variants (for compatibility checks)
         VARIANTS: ClassVar[frozenset[str]] = frozenset(["oid", "oracle_oid"])
@@ -183,28 +194,32 @@ class FlextLdifServersOid(FlextLdifServersRfc):
         }
 
         # Oracle OID specific operational attributes (extended set)
-        OID_SPECIFIC: ClassVar[frozenset[str]] = frozenset([
-            # Note: Using literal strings to avoid circular reference during class definition
-            # These correspond to Constants.ACL_ATTRIBUTE_NAME and Constants.ORCLENTRYLEVELACI
-            "orclaci",
-            "orclentrylevelaci",
-            "orclguid",  # Oracle GUID
-            "orclmailaddr",  # Mail address
-            "orcluseractivefrom",  # User active from date
-            "orcluserinactivefrom",  # User inactive from date
-        ])
+        OID_SPECIFIC: ClassVar[frozenset[str]] = frozenset(
+            [
+                # Note: Using literal strings to avoid circular reference during class definition
+                # These correspond to Constants.ACL_ATTRIBUTE_NAME and Constants.ORCLENTRYLEVELACI
+                "orclaci",
+                "orclentrylevelaci",
+                "orclguid",  # Oracle GUID
+                "orclmailaddr",  # Mail address
+                "orcluseractivefrom",  # User active from date
+                "orcluserinactivefrom",  # User inactive from date
+            ],
+        )
 
         # Oracle OID specific attributes (categorization - migrated from FlextLdifConstants.AttributeCategories)
-        OID_SPECIFIC_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset([
-            # Note: Using literal strings to avoid circular reference during class definition
-            # These correspond to Constants.ACL_ATTRIBUTE_NAME and Constants.ORCLENTRYLEVELACI
-            "orcloid",  # Oracle OID identifier
-            "orclguid",  # Oracle GUID
-            "orclpassword",  # Oracle password attribute
-            "orclaci",
-            "orclentrylevelaci",
-            "orcldaslov",  # Oracle DASLOV configuration
-        ])
+        OID_SPECIFIC_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset(
+            [
+                # Note: Using literal strings to avoid circular reference during class definition
+                # These correspond to Constants.ACL_ATTRIBUTE_NAME and Constants.ORCLENTRYLEVELACI
+                "orcloid",  # Oracle OID identifier
+                "orclguid",  # Oracle GUID
+                "orclpassword",  # Oracle password attribute
+                "orclaci",
+                "orclentrylevelaci",
+                "orcldaslov",  # Oracle DASLOV configuration
+            ],
+        )
 
         # === STANDARDIZED CONSTANTS FOR AUTO-DISCOVERY ===
         CANONICAL_NAME: ClassVar[str] = "oid"
@@ -214,14 +229,16 @@ class FlextLdifServersOid(FlextLdifServersRfc):
 
         # Server detection patterns and weights (migrated from FlextLdifConstants.ServerDetection)
         DETECTION_PATTERN: ClassVar[str] = r"2\.16\.840\.1\.113894\."
-        DETECTION_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset([
-            "orclOID",
-            "orclGUID",
-            "orclPassword",
-            "orclaci",
-            "orclentrylevelaci",
-            "orcldaslov",
-        ])
+        DETECTION_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset(
+            [
+                "orclOID",
+                "orclGUID",
+                "orclPassword",
+                "orclaci",
+                "orclentrylevelaci",
+                "orcldaslov",
+            ],
+        )
         DETECTION_WEIGHT: ClassVar[int] = 10
 
         # Oracle OID metadata keys (migrated from FlextLdifConstants.QuirkMetadataKeys)
@@ -230,11 +247,13 @@ class FlextLdifServersOid(FlextLdifServersRfc):
         ORIGINAL_OID_PERMS: ClassVar[str] = "original_oid_perms"
 
         # All OID metadata keys
-        ALL_OID_KEYS: ClassVar[frozenset[str]] = frozenset([
-            OID_SPECIFIC_RIGHTS,
-            OID_TO_OUD_TRANSFORMED,
-            ORIGINAL_OID_PERMS,
-        ])
+        ALL_OID_KEYS: ClassVar[frozenset[str]] = frozenset(
+            [
+                OID_SPECIFIC_RIGHTS,
+                OID_TO_OUD_TRANSFORMED,
+                ORIGINAL_OID_PERMS,
+            ],
+        )
 
         # =====================================================================
         # DN PATTERNS - OID-specific DN markers
@@ -244,11 +263,13 @@ class FlextLdifServersOid(FlextLdifServersRfc):
         DC_ORACLE: ClassVar[str] = "dc=oracle"
 
         # All Oracle DN patterns
-        ORACLE_DN_PATTERNS: ClassVar[frozenset[str]] = frozenset([
-            CN_ORCL,
-            OU_ORACLE,
-            DC_ORACLE,
-        ])
+        ORACLE_DN_PATTERNS: ClassVar[frozenset[str]] = frozenset(
+            [
+                CN_ORCL,
+                OU_ORACLE,
+                DC_ORACLE,
+            ],
+        )
 
         # Permission names inherited from RFC.Constants
         # (PERMISSION_READ, PERMISSION_WRITE, PERMISSION_ADD, PERMISSION_DELETE, PERMISSION_SEARCH, PERMISSION_COMPARE)
@@ -312,18 +333,22 @@ class FlextLdifServersOid(FlextLdifServersRfc):
         }
 
         # Universal boolean check
-        OID_TRUE_VALUES: ClassVar[frozenset[str]] = frozenset([
-            ONE_OID,
-            "true",
-            "True",
-            "TRUE",
-        ])
-        OID_FALSE_VALUES: ClassVar[frozenset[str]] = frozenset([
-            ZERO_OID,
-            "false",
-            "False",
-            "FALSE",
-        ])
+        OID_TRUE_VALUES: ClassVar[frozenset[str]] = frozenset(
+            [
+                ONE_OID,
+                "true",
+                "True",
+                "TRUE",
+            ],
+        )
+        OID_FALSE_VALUES: ClassVar[frozenset[str]] = frozenset(
+            [
+                ZERO_OID,
+                "false",
+                "False",
+                "FALSE",
+            ],
+        )
 
         # Matching rule replacement mappings for invalid substr rules
         INVALID_SUBSTR_RULES: ClassVar[dict[str, str | None]] = {
@@ -406,20 +431,22 @@ class FlextLdifServersOid(FlextLdifServersRfc):
 
         # === OID SUPPORTED PERMISSIONS ===
         # Permissions that OID supports (migrated from FlextLdifConstants.AclPermissionCompatibility)
-        SUPPORTED_PERMISSIONS: ClassVar[frozenset[str]] = frozenset([
-            "read",
-            "write",
-            "add",
-            "delete",
-            "search",
-            "compare",
-            "self_write",
-            "proxy",
-            "browse",
-            "auth",
-            "all",
-            "none",
-        ])
+        SUPPORTED_PERMISSIONS: ClassVar[frozenset[str]] = frozenset(
+            [
+                "read",
+                "write",
+                "add",
+                "delete",
+                "search",
+                "compare",
+                "self_write",
+                "proxy",
+                "browse",
+                "auth",
+                "all",
+                "none",
+            ],
+        )
 
         # === ATTRIBUTE NAME TRANSFORMATIONS ===
         # OID→RFC attribute name transformations (for compatibility)
@@ -839,10 +866,12 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                 self._parse_objectclass,
             )
 
-            return FlextResult[FlextLdifTypes.Models.EntryAttributesDict].ok({
-                dk.ATTRIBUTES: attributes,
-                "objectclasses": objectclasses,
-            })
+            return FlextResult[FlextLdifTypes.Models.EntryAttributesDict].ok(
+                {
+                    dk.ATTRIBUTES: attributes,
+                    "objectclasses": objectclasses,
+                },
+            )
 
         def extract_schemas_from_ldif(
             self,
@@ -919,16 +948,18 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                 if acl_line.metadata and acl_line.metadata.quirk_type:
                     return (
                         acl_line.metadata.quirk_type
-                        == FlextLdifServersOid.Constants.SERVER_TYPE
+                        == self._get_server_type()
                     )
                 return False
             if not acl_line or not isinstance(acl_line, str):
                 return False
             acl_line_lower = acl_line.strip().lower()
-            return acl_line_lower.startswith((
-                f"{FlextLdifServersOid.Constants.ORCLACI}:",
-                f"{FlextLdifServersOid.Constants.ORCLENTRYLEVELACI}:",
-            ))
+            return acl_line_lower.startswith(
+                (
+                    f"{FlextLdifServersOid.Constants.ORCLACI}:",
+                    f"{FlextLdifServersOid.Constants.ORCLENTRYLEVELACI}:",
+                ),
+            )
 
         @FlextLdifUtilities.Decorators.attach_parse_metadata("oid")
         def _parse_acl(self, acl_line: str) -> FlextResult[FlextLdifModels.Acl]:
@@ -974,18 +1005,18 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                         if updated_metadata:
                             updated_metadata = updated_metadata.model_copy(
                                 update={
-                                    "quirk_type": FlextLdifServersOid.Constants.SERVER_TYPE,
+                                    "quirk_type": self._get_server_type(),
                                 },
                             )
                         else:
                             updated_metadata = FlextLdifModels.QuirkMetadata.create_for(
-                                FlextLdifServersOid.Constants.SERVER_TYPE,
+                                self._get_server_type(),
                                 original_format=acl_line.strip(),
                             )
 
                         acl_data = acl_data.model_copy(
                             update={
-                                "server_type": FlextLdifServersOid.Constants.SERVER_TYPE,
+                                "server_type": self._get_server_type(),
                                 "metadata": updated_metadata,
                             },
                         )
@@ -1030,9 +1061,9 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                         subject_value=subject_value,
                     ),
                     permissions=FlextLdifModels.AclPermissions(**perms_dict),
-                    server_type=FlextLdifServersOid.Constants.SERVER_TYPE,
+                    server_type=self._get_server_type(),
                     metadata=FlextLdifModels.QuirkMetadata(
-                        quirk_type=FlextLdifServersOid.Constants.SERVER_TYPE,
+                        quirk_type=self._get_server_type(),
                         original_format=acl_line.strip(),
                         extensions={"oid_parsed": True, "rfc_parsed": False},
                     ),
@@ -1158,3 +1189,103 @@ class FlextLdifServersOid(FlextLdifServersRfc):
             """Check if this ACL quirk should be aware of a specific objectClass definition."""
             _ = objectclass
             return False
+
+    class Entry(FlextLdifServersRfc.Entry):
+        """Oracle OID Entry Quirk - Transforms OID-specific boolean values to RFC format.
+
+        Handles OID-specific entry transformations:
+        - Converts boolean attribute values from OID format ("0"/"1") to RFC format ("TRUE"/"FALSE")
+        - Stores conversion metadata for audit and round-trip compatibility
+        """
+
+        def _parse_entry(
+            self,
+            entry_dn: str,
+            entry_attrs: Mapping[str, object],
+        ) -> FlextResult[FlextLdifModels.Entry]:
+            """Parse OID entry and convert boolean attributes to RFC format.
+
+            OID uses "0"/"1" for boolean values, but RFC4517 requires "TRUE"/"FALSE".
+            This method:
+            1. Calls parent RFC parser to create base Entry
+            2. Converts boolean attribute values from OID format to RFC format
+            3. Stores metadata about conversions for tracking
+
+            Args:
+                entry_dn: Entry distinguished name
+                entry_attrs: Raw attribute mapping from LDIF parser
+
+            Returns:
+                FlextResult with Entry model with boolean values converted to RFC format
+
+            """
+            # Step 1: Call RFC parser to create base Entry
+            result = super()._parse_entry(entry_dn, entry_attrs)
+            if result.is_failure:
+                return result
+
+            entry = result.unwrap()
+
+            # Step 2: Convert OID boolean values to RFC format
+            boolean_attributes = FlextLdifServersOid.Constants.BOOLEAN_ATTRIBUTES
+            converted_attrs: set[str] = set()
+
+            # Create new attributes dict with converted boolean values
+            converted_attributes: dict[str, list[str]] = {}
+            for attr_name, attr_values in entry.attributes.attributes.items():
+                if attr_name.lower() in boolean_attributes:
+                    # Convert boolean values
+                    converted_values: list[str] = []
+                    for value in attr_values:
+                        value_lower = value.lower()
+                        # Map OID values to RFC format
+                        if value_lower in {"1", "true"}:
+                            converted_values.append("TRUE")
+                            converted_attrs.add(attr_name)
+                        elif value_lower in {"0", "false"}:
+                            converted_values.append("FALSE")
+                            converted_attrs.add(attr_name)
+                        else:
+                            # Keep unexpected values as-is
+                            converted_values.append(value)
+
+                    converted_attributes[attr_name] = converted_values
+                else:
+                    converted_attributes[attr_name] = attr_values
+
+            # Step 3: Create new Entry with converted attributes and metadata
+            ldif_attrs = FlextLdifModels.LdifAttributes(
+                attributes=converted_attributes,
+            )
+
+            # Create metadata with conversion information
+            conversion_metadata: dict[str, object] = {}
+            if converted_attrs:
+                conversion_metadata["boolean_attributes_converted"] = list(
+                    converted_attrs,
+                )
+                logger.debug(
+                    "Converted OID boolean attributes to RFC format: %s",
+                    converted_attrs,
+                )
+
+            metadata = FlextLdifModels.QuirkMetadata(
+                quirk_type=FlextLdifConstants.ServerTypes.OID,
+                original_format=f"OID Entry with {len(converted_attrs)} boolean conversions",
+                extensions=conversion_metadata,
+            )
+
+            # Create new Entry with converted attributes
+            new_entry_result = FlextLdifModels.Entry.create(
+                dn=entry.dn,
+                attributes=ldif_attrs,
+                server_type=FlextLdifConstants.ServerTypes.OID,
+                metadata=metadata,
+            )
+
+            if new_entry_result.is_failure:
+                return FlextResult[FlextLdifModels.Entry].fail(
+                    f"Failed to create Entry with converted attributes: {new_entry_result.error}",
+                )
+
+            return new_entry_result

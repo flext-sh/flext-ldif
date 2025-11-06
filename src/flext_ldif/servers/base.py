@@ -93,41 +93,45 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
         extra="allow",
     )
 
+    # Type annotations for dynamically set attributes (set in __init_subclass__)
+    server_type: ClassVar[str]
+    priority: ClassVar[int]
+
     def __init_subclass__(cls, **kwargs: object) -> None:
-        """Initialize subclass with server_type and priority ClassVars.
+        """Initialize subclass with server_type and priority from Constants.
 
-        Supports TWO patterns:
-        1. NEW: SERVER_TYPE and PRIORITY defined directly on the class
-        2. OLD: SERVER_TYPE and PRIORITY in Constants (for backward compatibility)
-
-        Automatically ensures both cls.server_type and cls.Constants.SERVER_TYPE
-        are set correctly, supporting gradual migration.
+        Single source of truth: SERVER_TYPE and PRIORITY must be defined in
+        the nested Constants class. No fallbacks, no dual patterns.
 
         This ensures:
-        - FlextLdifServersOid.server_type == FlextLdifServersOid.SERVER_TYPE
-        - FlextLdifServersOid.Constants.SERVER_TYPE == FlextLdifServersOid.SERVER_TYPE
+        - FlextLdifServersOid.server_type comes from FlextLdifServersOid.Constants.SERVER_TYPE
+        - Descriptors expose them at instance level via _ServerTypeDescriptor
 
         Args:
             **kwargs: Passed to parent __init_subclass__
 
+        Raises:
+            AttributeError: If Constants class is missing or lacks required attributes
+
         """
         super().__init_subclass__(**kwargs)
 
-        # Support both patterns during migration
-        if hasattr(cls, "Constants"):
-            # Get values from class first (new pattern), then Constants (old pattern)
-            server_type = getattr(cls, "SERVER_TYPE", None) or cls.Constants.SERVER_TYPE
-            priority = getattr(cls, "PRIORITY", None) or cls.Constants.PRIORITY
-        else:
-            # Old-style class without Constants
-            server_type = getattr(cls, "SERVER_TYPE", None)
-            priority = getattr(cls, "PRIORITY", None)
+        # Require Constants class with SERVER_TYPE and PRIORITY
+        if not hasattr(cls, "Constants"):
+            msg = f"{cls.__name__} must define a Constants nested class"
+            raise AttributeError(msg)
 
-        # Set class-level attributes for both patterns
-        if server_type:
-            cls.server_type = server_type
-        if priority is not None:
-            cls.priority = priority
+        # Validate required attributes exist
+        if not hasattr(cls.Constants, "SERVER_TYPE"):
+            msg = f"{cls.__name__}.Constants must define SERVER_TYPE"
+            raise AttributeError(msg)
+        if not hasattr(cls.Constants, "PRIORITY"):
+            msg = f"{cls.__name__}.Constants must define PRIORITY"
+            raise AttributeError(msg)
+
+        # Set class-level attributes from Constants (single source)
+        cls.server_type = cls.Constants.SERVER_TYPE
+        cls.priority = cls.Constants.PRIORITY
 
     def __init__(self, **kwargs: object) -> None:
         """Initialize server base class and nested quirk classes.
@@ -365,42 +369,41 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
         return instance
 
     def _initialize_nested_classes(self) -> None:
-        """Initialize nested Schema, Acl, and Entry classes.
+        """Initialize nested Schema, Acl, and Entry classes with server_type.
 
         Protected template method called during server initialization to set up
-        nested quirks classes. Override in subclasses to customize initialization
-        with additional parameters (e.g., service layer dependencies).
+        nested quirks classes with access to parent's server_type.
 
-        This method handles the common pattern:
+        This method:
+        - Passes server_type to nested classes so they don't need _get_server_type()
         - Uses object.__setattr__ to bypass Pydantic validation
         - Sets schema, acl, and entry nested class instances
-        - Works with any server quirks implementation
 
         Called by:
-        - FlextLdifServersRfc.__init__ (after service layer setup)
+        - FlextLdifServersBase.__init__ after Constants are set
         - All child servers via super().__init__()
 
         Example:
             class CustomServer(FlextLdifServersRfc):
                 def __init__(self) -> None:
                     super().__init__()
-                    # service layer initialized by RFC
+                    # Nested classes initialized with server_type automatically
                     self._initialize_nested_classes()  # sets schema, acl, entry
 
         """
         # Initialize nested class instances with private names to avoid
         # Pydantic conflicts. Type ignore: These are concrete implementations
         # in subclasses, not abstract base
-        self._schema_quirk = self.Schema()
-        self._acl_quirk = self.Acl()
-        self._entry_quirk = self.Entry()
+        self._schema_quirk = self.Schema()  # type: ignore[abstract]
+        self._acl_quirk = self.Acl()  # type: ignore[abstract]
+        self._entry_quirk = self.Entry()  # type: ignore[abstract]
 
     # =========================================================================
     # Properties for accessing nested quirks (bypasses Pydantic's schema() method)
     # =========================================================================
 
     @property
-    def schema(self) -> Schema:
+    def schema(self) -> Schema:  # type: ignore[override]
         """Get the Schema quirk instance."""
         return self._schema_quirk
 
@@ -701,7 +704,9 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
             return FlextResult.ok([])
         # All entries should be Entry models
         if not all(isinstance(entry, FlextLdifModels.Entry) for entry in entries):
-            invalid = next(e for e in entries if not isinstance(e, FlextLdifModels.Entry))
+            invalid = next(
+                e for e in entries if not isinstance(e, FlextLdifModels.Entry)
+            )
             return FlextResult.fail(f"Invalid entry type: {type(invalid).__name__}")
         return FlextResult.ok(entries)
 
@@ -784,25 +789,37 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
         # =====================================================================
 
         def _get_server_type(self) -> str:
-            """Get server_type from parent class Constants.
+            """Get server_type from parent server class via __qualname__.
+
+            For nested classes like FlextLdifServersAd.Schema, extracts parent
+            class name from __qualname__ and gets SERVER_TYPE from parent.Constants.
 
             Returns:
-                Server type from parent class Constants.SERVER_TYPE
+                Server type from parent Constants.SERVER_TYPE
+
+            Raises:
+                AttributeError: If parent server class or SERVER_TYPE not found
 
             """
-            # Get the parent class (e.g., FlextLdifServersApache from Schema)
-            # by looking up the module where this class is defined
             cls = type(self)
-            # Walk up the MRO to find the parent server class
-            for parent_cls in cls.__mro__:
-                if (
-                    hasattr(parent_cls, "__module__")
-                    and hasattr(parent_cls, "Constants")
-                    and hasattr(parent_cls.Constants, "SERVER_TYPE")
-                ):
-                    return cast("str", parent_cls.Constants.SERVER_TYPE)
-            # No fallback - raise error if not found
-            msg = f"{cls.__name__} or its parent classes must define Constants.SERVER_TYPE"
+
+            # For nested classes, extract parent server class from __qualname__
+            # Example: "FlextLdifServersAd.Schema" -> "FlextLdifServersAd"
+            if hasattr(cls, "__qualname__") and "." in cls.__qualname__:
+                parent_class_name = cls.__qualname__.split(".")[0]
+                try:
+                    # Import parent class from module
+                    parent_module = __import__(cls.__module__, fromlist=[parent_class_name])
+                    if hasattr(parent_module, parent_class_name):
+                        parent_server_cls = getattr(parent_module, parent_class_name)
+                        # Get SERVER_TYPE from parent.Constants
+                        if hasattr(parent_server_cls, "Constants") and hasattr(parent_server_cls.Constants, "SERVER_TYPE"):
+                            return cast("str", parent_server_cls.Constants.SERVER_TYPE)
+                except (ImportError, AttributeError):
+                    pass
+
+            # No parent found - error
+            msg = f"{cls.__name__} nested class must have parent with Constants.SERVER_TYPE"
             raise AttributeError(msg)
 
         # Control auto-execution
@@ -814,9 +831,11 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
 
         def _detect_schema_type(
             self,
-            definition: str
-            | FlextLdifModels.SchemaAttribute
-            | FlextLdifModels.SchemaObjectClass,
+            definition: (
+                str
+                | FlextLdifModels.SchemaAttribute
+                | FlextLdifModels.SchemaObjectClass
+            ),
         ) -> str:
             """Detect schema type (attribute or objectclass) for automatic routing.
 
@@ -995,9 +1014,11 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
 
         def _route_can_handle(
             self,
-            definition: str
-            | FlextLdifModels.SchemaAttribute
-            | FlextLdifModels.SchemaObjectClass,
+            definition: (
+                str
+                | FlextLdifModels.SchemaAttribute
+                | FlextLdifModels.SchemaObjectClass
+            ),
         ) -> bool:
             """Route can_handle check to appropriate method.
 
@@ -1024,9 +1045,7 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
             self,
             attr_definition: str | None,
             oc_definition: str | None,
-        ) -> FlextResult[
-            FlextLdifTypes.SchemaModelOrString
-        ]:
+        ) -> FlextResult[FlextLdifTypes.SchemaModelOrString]:
             """Handle parse operation for schema quirk."""
             if attr_definition:
                 attr_result = self.parse_attribute(attr_definition)
@@ -1068,9 +1087,7 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
             self,
             attr_model: FlextLdifModels.SchemaAttribute | None,
             oc_model: FlextLdifModels.SchemaObjectClass | None,
-        ) -> FlextResult[
-            FlextLdifTypes.SchemaModelOrString
-        ]:
+        ) -> FlextResult[FlextLdifTypes.SchemaModelOrString]:
             """Handle write operation for schema quirk."""
             if attr_model:
                 write_result = self.write_attribute(attr_model)
@@ -1110,10 +1127,12 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
 
         def _auto_detect_operation(
             self,
-            data: str
-            | FlextLdifModels.SchemaAttribute
-            | FlextLdifModels.SchemaObjectClass
-            | None,
+            data: (
+                str
+                | FlextLdifModels.SchemaAttribute
+                | FlextLdifModels.SchemaObjectClass
+                | None
+            ),
             operation: Literal["parse", "write"] | None,
         ) -> (
             Literal["parse", "write"]
@@ -1148,13 +1167,13 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
 
         def _route_operation(
             self,
-            data: str
-            | FlextLdifModels.SchemaAttribute
-            | FlextLdifModels.SchemaObjectClass,
+            data: (
+                str
+                | FlextLdifModels.SchemaAttribute
+                | FlextLdifModels.SchemaObjectClass
+            ),
             operation: Literal["parse", "write"],
-        ) -> FlextResult[
-            FlextLdifTypes.SchemaModelOrString
-        ]:
+        ) -> FlextResult[FlextLdifTypes.SchemaModelOrString]:
             """Route data to appropriate parse or write handler."""
             if operation == "parse":
                 if not isinstance(data, str):
@@ -1192,14 +1211,14 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
 
         def execute(
             self,
-            data: str
-            | FlextLdifModels.SchemaAttribute
-            | FlextLdifModels.SchemaObjectClass
-            | None = None,
+            data: (
+                str
+                | FlextLdifModels.SchemaAttribute
+                | FlextLdifModels.SchemaObjectClass
+                | None
+            ) = None,
             operation: Literal["parse", "write"] | None = None,
-        ) -> FlextResult[
-            FlextLdifTypes.SchemaModelOrString
-        ]:
+        ) -> FlextResult[FlextLdifTypes.SchemaModelOrString]:
             """Execute schema quirk operation with automatic type detection and routing.
 
             Fully automatic polymorphic dispatch based on data type:
@@ -1297,9 +1316,7 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
             attr_model: FlextLdifModels.SchemaAttribute | None = None,
             oc_model: FlextLdifModels.SchemaObjectClass | None = None,
             operation: Literal["parse", "write"] | None = None,
-        ) -> (
-            FlextLdifTypes.SchemaModelOrString
-        ): ...
+        ) -> FlextLdifTypes.SchemaModelOrString: ...
 
         def __call__(
             self,
@@ -1741,40 +1758,38 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
             self._acl_service = acl_service  # Store for use by subclasses
 
         def _get_server_type(self) -> str:
-            """Get server_type from parent class Constants.
+            """Get server_type from parent server class via __qualname__.
+
+            For nested classes like FlextLdifServersAd.Schema, extracts parent
+            class name from __qualname__ and gets SERVER_TYPE from parent.Constants.
 
             Returns:
-                Server type from parent class Constants.SERVER_TYPE
+                Server type from parent Constants.SERVER_TYPE
+
+            Raises:
+                AttributeError: If parent server class or SERVER_TYPE not found
 
             """
-            # Get the parent class (e.g., FlextLdifServersApache from Acl)
-            # by looking up the module where this class is defined
             cls = type(self)
-            # Walk up the MRO to find the parent server class
-            for parent_cls in cls.__mro__:
-                if (
-                    hasattr(parent_cls, "__module__")
-                    and hasattr(parent_cls, "Constants")
-                    and hasattr(parent_cls.Constants, "SERVER_TYPE")
-                ):
-                    return cast("str", parent_cls.Constants.SERVER_TYPE)
-            # Fallback: try to get from outer class if nested
-            module = cls.__module__
-            if hasattr(cls, "__qualname__"):
-                qualname_parts = cls.__qualname__.split(".")
-                if len(qualname_parts) > 1:
-                    # This is a nested class, try to get parent
-                    parent_name = qualname_parts[0]
-                    parent_module = __import__(module, fromlist=[parent_name])
-                    if hasattr(parent_module, parent_name):
-                        parent_class = getattr(parent_module, parent_name)
-                        if hasattr(parent_class, "Constants") and hasattr(
-                            parent_class.Constants,
-                            "SERVER_TYPE",
-                        ):
-                            return cast("str", parent_class.Constants.SERVER_TYPE)
-            # Final fallback
-            return "rfc"
+
+            # For nested classes, extract parent server class from __qualname__
+            # Example: "FlextLdifServersAd.Schema" -> "FlextLdifServersAd"
+            if hasattr(cls, "__qualname__") and "." in cls.__qualname__:
+                parent_class_name = cls.__qualname__.split(".")[0]
+                try:
+                    # Import parent class from module
+                    parent_module = __import__(cls.__module__, fromlist=[parent_class_name])
+                    if hasattr(parent_module, parent_class_name):
+                        parent_server_cls = getattr(parent_module, parent_class_name)
+                        # Get SERVER_TYPE from parent.Constants
+                        if hasattr(parent_server_cls, "Constants") and hasattr(parent_server_cls.Constants, "SERVER_TYPE"):
+                            return cast("str", parent_server_cls.Constants.SERVER_TYPE)
+                except (ImportError, AttributeError):
+                    pass
+
+            # No parent found - error
+            msg = f"{cls.__name__} nested class must have parent with Constants.SERVER_TYPE"
+            raise AttributeError(msg)
 
         # Control auto-execution
         auto_execute: ClassVar[bool] = False
@@ -2221,25 +2236,37 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
             self._entry_service = entry_service  # Store for use by subclasses
 
         def _get_server_type(self) -> str:
-            """Get server_type from parent class Constants.
+            """Get server_type from parent server class via __qualname__.
+
+            For nested classes like FlextLdifServersAd.Schema, extracts parent
+            class name from __qualname__ and gets SERVER_TYPE from parent.Constants.
 
             Returns:
-                Server type from parent class Constants.SERVER_TYPE
+                Server type from parent Constants.SERVER_TYPE
+
+            Raises:
+                AttributeError: If parent server class or SERVER_TYPE not found
 
             """
-            # Get the parent class (e.g., FlextLdifServersApache from Entry)
-            # by looking up the module where this class is defined
             cls = type(self)
-            # Walk up the MRO to find the parent server class
-            for parent_cls in cls.__mro__:
-                if (
-                    hasattr(parent_cls, "__module__")
-                    and hasattr(parent_cls, "Constants")
-                    and hasattr(parent_cls.Constants, "SERVER_TYPE")
-                ):
-                    return cast("str", parent_cls.Constants.SERVER_TYPE)
-            # No fallback - raise error if not found
-            msg = f"{cls.__name__} or its parent classes must define Constants.SERVER_TYPE"
+
+            # For nested classes, extract parent server class from __qualname__
+            # Example: "FlextLdifServersAd.Schema" -> "FlextLdifServersAd"
+            if hasattr(cls, "__qualname__") and "." in cls.__qualname__:
+                parent_class_name = cls.__qualname__.split(".")[0]
+                try:
+                    # Import parent class from module
+                    parent_module = __import__(cls.__module__, fromlist=[parent_class_name])
+                    if hasattr(parent_module, parent_class_name):
+                        parent_server_cls = getattr(parent_module, parent_class_name)
+                        # Get SERVER_TYPE from parent.Constants
+                        if hasattr(parent_server_cls, "Constants") and hasattr(parent_server_cls.Constants, "SERVER_TYPE"):
+                            return cast("str", parent_server_cls.Constants.SERVER_TYPE)
+                except (ImportError, AttributeError):
+                    pass
+
+            # No parent found - error
+            msg = f"{cls.__name__} nested class must have parent with Constants.SERVER_TYPE"
             raise AttributeError(msg)
 
         # Control auto-execution
@@ -2714,11 +2741,19 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
                 return FlextResult[FlextLdifModels.Entry].fail("DN is None or empty")
 
             # Convert attributes to FlextLdifModels.LdifAttributes
-            converted_attrs = FlextLdifModels.LdifAttributes.create(dict(entry_attrs))
+            attrs_result = FlextLdifModels.LdifAttributes.create(dict(entry_attrs))
+            if not attrs_result.is_success:
+                return FlextResult[FlextLdifModels.Entry].fail(
+                    f"Failed to create LdifAttributes: {attrs_result.error}",
+                )
+            converted_attrs = attrs_result.unwrap()
+
+            # Create DistinguishedName object from DN string
+            dn_obj = FlextLdifModels.DistinguishedName(value=entry_dn)
 
             # Create Entry model with defaults
             entry = FlextLdifModels.Entry(
-                dn=entry_dn,
+                dn=dn_obj,
                 attributes=converted_attrs,
             )
 
@@ -2796,23 +2831,52 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
 
 
 class _ServerTypeDescriptor:
-    """Descriptor that returns SERVER_TYPE from Constants at class or instance level."""
+    """Descriptor that returns SERVER_TYPE from Constants (single source of truth)."""
 
     def __get__(self, obj: object | None, objtype: type | None = None) -> str:
-        """Get SERVER_TYPE from Constants."""
+        """Get SERVER_TYPE from Constants class - no fallbacks.
+
+        __init_subclass__ already sets cls.server_type from Constants.SERVER_TYPE,
+        so we look in MRO for the class-level attribute set there.
+        """
         if objtype is None:
             objtype = type(obj) if obj is not None else FlextLdifServersBase
-        return cast("str", objtype.Constants.SERVER_TYPE)
+
+        # Get class-level server_type set by __init_subclass__
+        for cls in objtype.__mro__:
+            if "server_type" in cls.__dict__:
+                return cast("str", cls.__dict__["server_type"])
+
+        # Should never reach here - __init_subclass__ enforces Constants.SERVER_TYPE
+        msg = f"{objtype.__name__} missing server_type (Constants.SERVER_TYPE not set)"
+        raise AttributeError(msg)
 
 
 class _PriorityDescriptor:
-    """Descriptor that returns PRIORITY from Constants at class or instance level."""
+    """Descriptor that returns PRIORITY from Constants (single source of truth)."""
 
     def __get__(self, obj: object | None, objtype: type | None = None) -> int:
-        """Get PRIORITY from Constants."""
+        """Get PRIORITY from Constants class - no fallbacks.
+
+        __init_subclass__ already sets cls.priority from Constants.PRIORITY,
+        so we look in MRO for the class-level attribute set there.
+        """
         if objtype is None:
             objtype = type(obj) if obj is not None else FlextLdifServersBase
-        return cast("int", objtype.Constants.PRIORITY)
+
+        # Get class-level priority set by __init_subclass__
+        for cls in objtype.__mro__:
+            if "priority" in cls.__dict__:
+                return cast("int", cls.__dict__["priority"])
+
+        # Should never reach here - __init_subclass__ enforces Constants.PRIORITY
+        msg = f"{objtype.__name__} missing priority (Constants.PRIORITY not set)"
+        raise AttributeError(msg)
+
+
+# Attach descriptors to FlextLdifServersBase for class and instance access
+FlextLdifServersBase.server_type = _ServerTypeDescriptor()  # type: ignore[assignment]
+FlextLdifServersBase.priority = _PriorityDescriptor()  # type: ignore[assignment]
 
 
 __all__ = [

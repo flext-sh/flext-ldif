@@ -28,8 +28,8 @@ class TestActiveDirectorySchemas:
 
     def test_initialization(self, ad_server: FlextLdifServersAd) -> None:
         """Test Active Directory quirk initialization."""
-        assert ad_server.server_type == FlextLdifServersAd.Constants.SERVER_TYPE
-        assert ad_server.priority == FlextLdifServersAd.Constants.PRIORITY
+        assert ad_server.server_type == "active_directory"
+        assert ad_server.priority == 10
 
     def testcan_handle_attribute_with_ad_oid(
         self,
@@ -412,7 +412,7 @@ class TestActiveDirectoryAcls:
             ),
             permissions=FlextLdifModels.AclPermissions(),
             metadata=FlextLdifModels.QuirkMetadata.create_for(
-                FlextLdifServersAd.Constants.SERVER_TYPE,
+                "active_directory",
             ),
             raw_acl="nTSecurityDescriptor: O:BAG:BAD:S:",
         )

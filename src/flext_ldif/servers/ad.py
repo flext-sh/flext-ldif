@@ -41,48 +41,52 @@ class FlextLdifServersAd(FlextLdifServersRfc):
     """
 
     # =========================================================================
-    # STANDARDIZED CONSTANTS FOR AUTO-DISCOVERY
-    # =========================================================================
-    # Top-level server identity attributes (moved from Constants)
-    SERVER_TYPE: ClassVar[str] = FlextLdifConstants.ServerTypes.AD
-    PRIORITY: ClassVar[int] = 10
-
     class Constants(FlextLdifServersRfc.Constants):
         """Standardized constants for Active Directory quirk."""
+
+        # Server identity and priority (defined at Constants level)
+        SERVER_TYPE: ClassVar[str] = FlextLdifConstants.ServerTypes.AD
+        PRIORITY: ClassVar[int] = 10
 
         # === STANDARDIZED CONSTANTS (from FlextLdifServersRfc.Constants) ===
         CANONICAL_NAME: ClassVar[str] = "active_directory"
         ALIASES: ClassVar[frozenset[str]] = frozenset(["active_directory", "ad"])
         CAN_NORMALIZE_FROM: ClassVar[frozenset[str]] = frozenset(["active_directory"])
-        CAN_DENORMALIZE_TO: ClassVar[frozenset[str]] = frozenset([
-            "active_directory",
-            "rfc",
-        ])
+        CAN_DENORMALIZE_TO: ClassVar[frozenset[str]] = frozenset(
+            [
+                "active_directory",
+                "rfc",
+            ],
+        )
 
         # Active Directory ACL format constants
         ACL_FORMAT: ClassVar[str] = "nTSecurityDescriptor"  # AD ACL format
         ACL_ATTRIBUTE_NAME: ClassVar[str] = "nTSecurityDescriptor"  # ACL attribute name
 
         # Active Directory DN patterns
-        AD_DN_PATTERNS: ClassVar[frozenset[str]] = frozenset([
-            "CN=",
-            "OU=",
-            "DC=",
-            "O=",
-            "L=",
-            "ST=",
-            "C=",
-        ])
+        AD_DN_PATTERNS: ClassVar[frozenset[str]] = frozenset(
+            [
+                "CN=",
+                "OU=",
+                "DC=",
+                "O=",
+                "L=",
+                "ST=",
+                "C=",
+            ],
+        )
 
         # Server detection patterns and weights
         # Migrated from FlextLdifConstants.ServerDetection
         DETECTION_PATTERN: ClassVar[str] = r"1\.2\.840\.113556\."
-        DETECTION_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset([
-            "objectGUID",
-            "samAccountName",
-            "sIDHistory",
-            "nTSecurityDescriptor",
-        ])
+        DETECTION_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset(
+            [
+                "objectGUID",
+                "samAccountName",
+                "sIDHistory",
+                "nTSecurityDescriptor",
+            ],
+        )
         DETECTION_WEIGHT: ClassVar[int] = 8
 
         # ACL-specific regex patterns (migrated from nested Acl class)
@@ -95,36 +99,42 @@ class FlextLdifServersAd(FlextLdifServersRfc):
         ACL_SUBJECT_TYPE_SDDL: ClassVar[str] = "sddl"
 
         # Active Directory required object classes
-        AD_REQUIRED_CLASSES: ClassVar[frozenset[str]] = frozenset([
-            "top",
-            "person",
-            "organizationalPerson",
-            "user",
-        ])
+        AD_REQUIRED_CLASSES: ClassVar[frozenset[str]] = frozenset(
+            [
+                "top",
+                "person",
+                "organizationalPerson",
+                "user",
+            ],
+        )
 
         # Active Directory operational attributes (server-specific)
         # Migrated from FlextLdifConstants.OperationalAttributeMappings
-        OPERATIONAL_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset([
-            "objectGUID",
-            "objectSid",
-            "whenCreated",
-            "whenChanged",
-            "uSNCreated",
-            "uSNChanged",
-            "distinguishedName",
-            "canonicalName",
-            "lastLogon",
-            "logonCount",
-            "badPwdCount",
-            "pwdLastSet",
-            "dSCorePropagationData",
-        ])
+        OPERATIONAL_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset(
+            [
+                "objectGUID",
+                "objectSid",
+                "whenCreated",
+                "whenChanged",
+                "uSNCreated",
+                "uSNChanged",
+                "distinguishedName",
+                "canonicalName",
+                "lastLogon",
+                "logonCount",
+                "badPwdCount",
+                "pwdLastSet",
+                "dSCorePropagationData",
+            ],
+        )
 
         # Operational attributes to preserve during migration
-        PRESERVE_ON_MIGRATION: ClassVar[frozenset[str]] = frozenset([
-            "whenCreated",
-            "whenChanged",
-        ])
+        PRESERVE_ON_MIGRATION: ClassVar[frozenset[str]] = frozenset(
+            [
+                "whenCreated",
+                "whenChanged",
+            ],
+        )
 
         # AD extends RFC permissions with "control_access"
         SUPPORTED_PERMISSIONS: ClassVar[frozenset[str]] = (
@@ -138,56 +148,64 @@ class FlextLdifServersAd(FlextLdifServersRfc):
         # === AD-SPECIFIC DETECTION PATTERNS ===
         # (migrated from FlextLdifConstants.LdapServerDetection)
         DETECTION_OID_PATTERN: ClassVar[str] = r"1\.2\.840\.113556\."
-        DETECTION_ATTRIBUTE_NAMES: ClassVar[frozenset[str]] = frozenset([
-            "samaccountname",
-            "objectguid",
-            "objectsid",
-            "userprincipalname",
-            "unicodepwd",
-            "useraccountcontrol",
-            "primarygroupid",
-            "logonhours",
-            "lockouttime",
-            "pwdlastset",
-            "memberof",
-            "msds-supportedencryptiontypes",
-            "serviceprincipalname",
-            "distinguishedname",
-        ])
-        DETECTION_OBJECTCLASS_NAMES: ClassVar[frozenset[str]] = frozenset([
-            "user",
-            "computer",
-            "group",
-            "organizationalunit",
-            "organizationalperson",
-            "person",
-            "domain",
-            "domainpolicy",
-            "foreignsecurityprincipal",
-            "msds-groupmanagedserviceaccount",
-            "msds-managedserviceaccount",
-        ])
-        DETECTION_DN_MARKERS: ClassVar[frozenset[str]] = frozenset([
-            "cn=users",
-            "cn=computers",
-            "cn=configuration",
-            "cn=system",
-            "ou=domain controllers",
-        ])
+        DETECTION_ATTRIBUTE_NAMES: ClassVar[frozenset[str]] = frozenset(
+            [
+                "samaccountname",
+                "objectguid",
+                "objectsid",
+                "userprincipalname",
+                "unicodepwd",
+                "useraccountcontrol",
+                "primarygroupid",
+                "logonhours",
+                "lockouttime",
+                "pwdlastset",
+                "memberof",
+                "msds-supportedencryptiontypes",
+                "serviceprincipalname",
+                "distinguishedname",
+            ],
+        )
+        DETECTION_OBJECTCLASS_NAMES: ClassVar[frozenset[str]] = frozenset(
+            [
+                "user",
+                "computer",
+                "group",
+                "organizationalunit",
+                "organizationalperson",
+                "person",
+                "domain",
+                "domainpolicy",
+                "foreignsecurityprincipal",
+                "msds-groupmanagedserviceaccount",
+                "msds-managedserviceaccount",
+            ],
+        )
+        DETECTION_DN_MARKERS: ClassVar[frozenset[str]] = frozenset(
+            [
+                "cn=users",
+                "cn=computers",
+                "cn=configuration",
+                "cn=system",
+                "ou=domain controllers",
+            ],
+        )
         # DN marker constants for can_handle
         DN_MARKER_DC: ClassVar[str] = "dc="
         DN_MARKER_CN_CONFIGURATION: ClassVar[str] = "cn=configuration"
-        DETECTION_ATTRIBUTE_MARKERS: ClassVar[frozenset[str]] = frozenset([
-            "objectguid",
-            "objectsid",
-            "samaccountname",
-            "userprincipalname",
-            "ntsecuritydescriptor",
-            "useraccountcontrol",
-            "serviceprincipalname",
-            "lastlogontimestamp",
-            "pwdlastset",
-        ])
+        DETECTION_ATTRIBUTE_MARKERS: ClassVar[frozenset[str]] = frozenset(
+            [
+                "objectguid",
+                "objectsid",
+                "samaccountname",
+                "userprincipalname",
+                "ntsecuritydescriptor",
+                "useraccountcontrol",
+                "serviceprincipalname",
+                "lastlogontimestamp",
+                "pwdlastset",
+            ],
+        )
 
         # AD-specific detection strings
         DETECTION_MICROSOFT_ACTIVE_DIRECTORY: ClassVar[str] = (
@@ -365,7 +383,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
             if result.is_success:
                 attr_data = result.unwrap()
                 metadata = FlextLdifModels.QuirkMetadata.create_for(
-                    FlextLdifServersAd.Constants.SERVER_TYPE,
+                    self._get_server_type(),
                 )
                 return FlextResult[FlextLdifModels.SchemaAttribute].ok(
                     attr_data.model_copy(update={"metadata": metadata}),
@@ -392,7 +410,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
                 FlextLdifUtilities.ObjectClass.fix_missing_sup(oc_data)
                 FlextLdifUtilities.ObjectClass.fix_kind_mismatch(oc_data)
                 metadata = FlextLdifModels.QuirkMetadata.create_for(
-                    FlextLdifServersAd.Constants.SERVER_TYPE,
+                    self._get_server_type(),
                 )
                 return FlextResult[FlextLdifModels.SchemaObjectClass].ok(
                     oc_data.model_copy(update={"metadata": metadata}),
@@ -527,7 +545,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
                     ),
                     permissions=FlextLdifModels.AclPermissions(),
                     metadata=FlextLdifModels.QuirkMetadata.create_for(
-                        FlextLdifServersAd.Constants.SERVER_TYPE,
+                        self._get_server_type(),
                         original_format=acl_line,
                     ),
                     raw_acl=acl_line,

@@ -610,7 +610,7 @@ class RoundTripValidator:
         mismatches: list[dict[str, object]] = []
 
         for i, (original, roundtrip) in enumerate(
-            zip(original_entries, roundtrip_entries, strict=False)
+            zip(original_entries, roundtrip_entries, strict=False),
         ):
             comparison = helpers.compare_entries_deep(original, roundtrip)
 
@@ -633,7 +633,7 @@ class RoundTripValidator:
 
         if len(mismatches) > 0:
             error_msg = f"Round-trip validation failed: {len(mismatches)}/{len(original_entries)} entries mismatched"
-            return FlextResult.fail(error_msg, report)
+            return FlextResult.fail(error_msg, error_data=report)
 
         return FlextResult.ok(report)
 
@@ -660,7 +660,7 @@ class RoundTripValidator:
         attr_reports: dict[str, dict[str, object]] = {}
 
         for _i, (original, roundtrip) in enumerate(
-            zip(original_entries, roundtrip_entries, strict=False)
+            zip(original_entries, roundtrip_entries, strict=False),
         ):
             # Get all attributes to check
             original_attrs = {k.lower() for k in original if k.lower() != "dn"}
@@ -684,7 +684,7 @@ class RoundTripValidator:
                 round_values = helpers.get_entry_attribute_values(roundtrip, attr_name)
 
                 if (not orig_values and not round_values) or sorted(
-                    orig_values
+                    orig_values,
                 ) == sorted(round_values):
                     attr_reports[attr_lower]["matches"] += 1
                 else:
@@ -707,7 +707,7 @@ class RoundTripValidator:
 
         if total_perfect < total_attrs:
             error_msg = f"Attribute preservation failed: {total_perfect}/{total_attrs} attributes perfectly preserved"
-            return FlextResult.fail(error_msg, report)
+            return FlextResult.fail(error_msg, error_data=report)
 
         return FlextResult.ok(report)
 
@@ -735,14 +735,14 @@ class RfcComplianceValidator:
             error_parts = []
             if validation.get("line_length_issues"):
                 error_parts.append(
-                    f"{len(validation['line_length_issues'])} lines exceed 76 chars"
+                    f"{len(validation['line_length_issues'])} lines exceed 76 chars",
                 )
             if validation.get("missing_dn_entries"):
                 error_parts.append(
-                    f"{validation['missing_dn_entries']} entries missing DN"
+                    f"{validation['missing_dn_entries']} entries missing DN",
                 )
             error_msg = f"RFC 2849 compliance failed: {'; '.join(error_parts)}"
-            return FlextResult.fail(error_msg, validation)
+            return FlextResult.fail(error_msg, error_data=validation)
 
         return FlextResult.ok(validation)
 
@@ -788,7 +788,7 @@ class RfcComplianceValidator:
 
         # Valid schema has at least attributes or objectclasses
         is_valid = report.get("has_attributetypes", False) or report.get(
-            "has_objectclasses", False
+            "has_objectclasses", False,
         )
         report["is_valid"] = is_valid
 
@@ -816,7 +816,7 @@ class RfcComplianceValidator:
         if not validation.get("is_valid"):
             errors = validation.get("errors", [])
             error_msg = f"RFC 4514 compliance failed: {'; '.join(errors)}"
-            return FlextResult.fail(error_msg, validation)
+            return FlextResult.fail(error_msg, error_data=validation)
 
         return FlextResult.ok(validation)
 
