@@ -75,10 +75,6 @@ class FlextLdifServersOid(FlextLdifServersRfc):
         These are set once per server implementation for initialization via __init_subclass__.
         """
 
-        # Server identification (override RFC base - required for Constants access)
-        SERVER_TYPE: ClassVar[str] = FlextLdifConstants.ServerTypes.OID
-        PRIORITY: ClassVar[int] = 10
-
         # Oracle OID ACL attribute names
         ORCLACI: ClassVar[str] = "orclaci"  # Standard Oracle OID ACL
         ORCLENTRYLEVELACI: ClassVar[str] = "orclentrylevelaci"  # Entry-level ACI

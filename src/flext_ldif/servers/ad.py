@@ -50,10 +50,6 @@ class FlextLdifServersAd(FlextLdifServersRfc):
     class Constants(FlextLdifServersRfc.Constants):
         """Standardized constants for Active Directory quirk."""
 
-        # Server identification (override RFC base)
-        SERVER_TYPE: ClassVar[str] = FlextLdifConstants.ServerTypes.AD
-        PRIORITY: ClassVar[int] = 10
-
         # === STANDARDIZED CONSTANTS (from FlextLdifServersRfc.Constants) ===
         CANONICAL_NAME: ClassVar[str] = "active_directory"
         ALIASES: ClassVar[frozenset[str]] = frozenset(["active_directory", "ad"])

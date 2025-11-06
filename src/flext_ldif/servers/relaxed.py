@@ -50,10 +50,6 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
     class Constants(FlextLdifServersRfc.Constants):
         """Standardized constants for Relaxed (lenient) quirk."""
 
-        # Server identification (override RFC base - required for Constants access)
-        SERVER_TYPE: ClassVar[str] = FlextLdifConstants.ServerTypes.RELAXED
-        PRIORITY: ClassVar[int] = 200
-
         # Server identification
 
         # Auto-discovery constants

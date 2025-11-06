@@ -37,10 +37,6 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
     class Constants(FlextLdifServersRfc.Constants):
         """Standardized constants for Novell eDirectory quirk."""
 
-        # Server identification (override RFC base - required for Constants access)
-        SERVER_TYPE: ClassVar[str] = FlextLdifConstants.ServerTypes.NOVELL
-        PRIORITY: ClassVar[int] = 30
-
         CANONICAL_NAME: ClassVar[str] = "novell_edirectory"
         ALIASES: ClassVar[frozenset[str]] = frozenset(["novell_edirectory", "novell"])
         CAN_NORMALIZE_FROM: ClassVar[frozenset[str]] = frozenset(["novell_edirectory"])

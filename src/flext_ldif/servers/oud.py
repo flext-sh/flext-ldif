@@ -46,10 +46,6 @@ class FlextLdifServersOud(FlextLdifServersRfc):
         - Consolidated patterns to reduce code duplication
         """
 
-        # Server identification (override RFC base - required for Constants access)
-        SERVER_TYPE: ClassVar[str] = FlextLdifConstants.ServerTypes.OUD
-        PRIORITY: ClassVar[int] = 10
-
         # =====================================================================
         # CORE IDENTITY - Server identification and metadata
         # =====================================================================
