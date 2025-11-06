@@ -281,7 +281,7 @@ class FlextLdifParser(FlextService[Any]):
         for dn, attrs in results:
             # Use quirk's _parse_entry method to properly create Entry model
             # This ensures proper DN and attributes handling per server type
-            entry_result = quirk.entry._parse_entry(dn, attrs)
+            entry_result = quirk.entry.parse_entry(dn, attrs)
 
             if entry_result.is_success:
                 entries.append(entry_result.unwrap())
@@ -556,8 +556,7 @@ class FlextLdifParser(FlextService[Any]):
 
         """
         has_objectclass = any(
-            attr_name.lower()
-            == FlextLdifConstants.DictKeys.OBJECTCLASS.lower()
+            attr_name.lower() == FlextLdifConstants.DictKeys.OBJECTCLASS.lower()
             for attr_name in entry.attributes.attributes
         )
         if not has_objectclass and strict:
@@ -588,9 +587,8 @@ class FlextLdifParser(FlextService[Any]):
             else:
                 values = [attr_value]
 
-            if not values or all(not v for v in values):
-                if strict:
-                    errors.append(f"Attribute '{attr_name}' has empty values")
+            if (not values or all(not v for v in values)) and strict:
+                errors.append(f"Attribute '{attr_name}' has empty values")
 
     def _filter_operational_attributes(
         self,

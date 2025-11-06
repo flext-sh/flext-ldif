@@ -85,9 +85,18 @@ class FlextLdifConstants(FlextConstants):
         CP1252 = "cp1252"
         ISO8859_1 = "iso-8859-1"
 
-        # Class-level constants (not enum values)
-        DEFAULT_ENCODING: Final[str] = UTF8
-        SUPPORTED_ENCODINGS: Final[frozenset[str]] = frozenset([UTF8, UTF16, ASCII])
+    # Encoding constants (referenced by tests and code)
+    DEFAULT_ENCODING: Final[str] = "utf-8"
+    SUPPORTED_ENCODINGS: Final[frozenset[str]] = frozenset({
+        "utf-8",
+        "utf-16-le",
+        "utf-16",
+        "utf-32",
+        "ascii",
+        "latin-1",
+        "cp1252",
+        "iso-8859-1",
+    })
 
     # ===== ACL SUBJECT TYPE ENUMS (Type-Safe) =====
     class AclSubjectType(StrEnum):
@@ -759,9 +768,14 @@ class FlextLdifConstants(FlextConstants):
         DELETE: Final[str] = "delete"
         MODIFY: Final[str] = "modify"
 
-        # NOTE: Server-specific permissions migrated to respective Constants classes:
-        # - SELF_WRITE (OUD/OID) → FlextLdifServersOud.Constants.OudPermission
-        # - PROXY (OUD/OID) → FlextLdifServersOud.Constants.OudPermission
+        # Extended permissions (used by OID, OUD, etc.)
+        # NOTE: Also defined in server-specific Constants for server-specific use
+        SELF_WRITE: Final[str] = "self_write"
+        PROXY: Final[str] = "proxy"
+
+        # NOTE: Server-specific permissions may have additional definitions:
+        # - SELF_WRITE variations in FlextLdifServersOud.Constants.OudPermission
+        # - PROXY variations in FlextLdifServersOud.Constants.OudPermission
         # - BROWSE → Server-specific Constants
         # NOTE: Novell ACL parsing indices migrated to FlextLdifServersNovell.Constants:
         # - NOVELL_SEGMENT_INDEX_TRUSTEE → FlextLdifServersNovell.Constants.NOVELL_SEGMENT_INDEX_TRUSTEE
@@ -2219,16 +2233,6 @@ class FlextLdifConstants(FlextConstants):
         # Service and initialization keys
         SERVICE_NAMES: Final[str] = "service_names"
         DATA: Final[str] = "data"
-
-    # Default encoding for LDIF files (moved from duplicate Encoding class)
-    DEFAULT_ENCODING: Final[str] = "utf-8"
-
-    # Supported encodings for LDIF processing
-    SUPPORTED_ENCODINGS: Final[frozenset[str]] = frozenset([
-        "utf-8",
-        "utf-16",
-        "ascii",
-    ])
 
     class LdifFormat:
         """LDIF formatting constants.

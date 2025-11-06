@@ -21,9 +21,11 @@ from __future__ import annotations
 from flext_ldif.services.acl import FlextLdifAcl
 from flext_ldif.services.dn import FlextLdifDn
 from flext_ldif.services.entry import FlextLdifEntry
+from flext_ldif.services.filters import FlextLdifFilters
 from flext_ldif.services.parser import FlextLdifParser
 from flext_ldif.services.schema import FlextLdifSchema
 from flext_ldif.services.server import FlextLdifServer
+from flext_ldif.services.sorting import FlextLdifSorting
 from flext_ldif.services.statistics import FlextLdifStatistics
 from flext_ldif.services.syntax import FlextLdifSyntax
 from flext_ldif.services.validation import FlextLdifValidation
@@ -33,9 +35,11 @@ __all__ = [
     "FlextLdifAcl",
     "FlextLdifDn",
     "FlextLdifEntry",
+    "FlextLdifFilters",
     "FlextLdifParser",
     "FlextLdifSchema",
     "FlextLdifServer",
+    "FlextLdifSorting",
     "FlextLdifStatistics",
     "FlextLdifSyntax",
     "FlextLdifValidation",

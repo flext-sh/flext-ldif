@@ -74,7 +74,9 @@ class FlextLdifUtilitiesDecorators:
             # Result automatically has metadata attached with quirk_type="oid"
 
         """
-        from flext_ldif.models import FlextLdifModels
+        from flext_ldif.models import (
+            FlextLdifModels,
+        )
 
         def decorator(
             func: Callable[..., FlextResult[T]],

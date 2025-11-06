@@ -64,7 +64,7 @@ mail: railway@example.com
         api.parse(ldif_content)
         .flat_map(lambda entries: api.validate_entries(entries).map(lambda _: entries))
         .flat_map(
-            lambda entries: api.analyze(entries).map(lambda stats: (entries, stats))
+            lambda entries: api.analyze(entries).map(lambda stats: (entries, stats)),
         )
         .flat_map(lambda data: api.write(data[0]).map(lambda ldif: (ldif, data[1])))
     )
@@ -429,9 +429,10 @@ def access_all_namespace_classes() -> None:
 
     # Access Utilities (updated to use services)
     timestamp = datetime.now(UTC).timestamp()
-    # Use ValidationService instead of ValidationUtilities
-    validation_service = ValidationService()
-    attr_valid = validation_service.validate_attribute_name("cn")
+    # NOTE: ValidationService was removed - validation now integrated in models/services
+    # validation_service = ValidationService()  # REMOVED - no longer exists
+    # attr_valid = validation_service.validate_attribute_name("cn")  # Use model validation instead
+    attr_valid = True  # Placeholder - use FlextLdif models for validation
 
     # Processors doesn't have create_processor method
     # processor = api.processors.get_processors()
@@ -488,7 +489,7 @@ cn: test
             obj_class_values = entry.attributes.get("objectClass", [])
             if not isinstance(obj_class_values, list):
                 print(
-                    f"ERROR: Expected list obj_class_values, got {type(obj_class_values)}"
+                    f"ERROR: Expected list obj_class_values, got {type(obj_class_values)}",
                 )
                 continue
             if "person" in obj_class_values and "sn" not in entry.attributes.attributes:

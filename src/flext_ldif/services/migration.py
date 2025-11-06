@@ -333,7 +333,7 @@ class FlextLdifMigrationPipeline(
 
         for entry in entries:
             try:
-                entry_dn = str(FlextLdifUtilities.DN._get_dn_value(entry.dn))
+                entry_dn = str(FlextLdifUtilities.DN.get_dn_value(entry.dn))
 
                 # Validate DN using FlextLdifUtilities.DN
                 if not FlextLdifUtilities.DN.validate(entry_dn):
@@ -395,7 +395,7 @@ class FlextLdifMigrationPipeline(
                     continue
                 if any(attr in entry.attributes.attributes for attr in acl_config):
                     acl_entries.append(entry)
-                    acl_dns.add(FlextLdifUtilities.DN._get_dn_value(entry.dn))
+                    acl_dns.add(FlextLdifUtilities.DN.get_dn_value(entry.dn))
             except Exception as e:
                 logger.exception("[PIPELINE] Error processing entry %s: %s", idx, e)
                 raise
@@ -406,7 +406,7 @@ class FlextLdifMigrationPipeline(
                 categorized[cat] = [
                     e
                     for e in categorized[cat]
-                    if FlextLdifUtilities.DN._get_dn_value(e.dn) not in acl_dns
+                    if FlextLdifUtilities.DN.get_dn_value(e.dn) not in acl_dns
                 ]
 
     def _process_category(
@@ -671,7 +671,7 @@ class FlextLdifMigrationPipeline(
                 for e in file_entries:
                     if FlextLdifFilters.is_schema(e):
                         logger.info(
-                            f"     Schema DN: {FlextLdifUtilities.DN._get_dn_value(e.dn)}",
+                            f"     Schema DN: {FlextLdifUtilities.DN.get_dn_value(e.dn)}",
                         )
 
             entries.extend(file_entries)
@@ -871,7 +871,7 @@ class FlextLdifMigrationPipeline(
                 current_entry = operational_result.unwrap()
             else:
                 logger.warning(
-                    f"Failed to filter operational attributes for {FlextLdifUtilities.DN._get_dn_value(entry.dn)}: {operational_result.error}",
+                    f"Failed to filter operational attributes for {FlextLdifUtilities.DN.get_dn_value(entry.dn)}: {operational_result.error}",
                 )
                 current_entry = entry  # Keep original if filtering fails
 
@@ -885,7 +885,7 @@ class FlextLdifMigrationPipeline(
                     current_entry = forbidden_result.unwrap()
                 else:
                     logger.warning(
-                        f"Failed to filter forbidden attributes for {FlextLdifUtilities.DN._get_dn_value(current_entry.dn)}: {forbidden_result.error}",
+                        f"Failed to filter forbidden attributes for {FlextLdifUtilities.DN.get_dn_value(current_entry.dn)}: {forbidden_result.error}",
                     )
 
             # Step 3: Filter forbidden objectClasses using FlextLdifFilters
@@ -898,7 +898,7 @@ class FlextLdifMigrationPipeline(
                     current_entry = oc_result.unwrap()
                 else:
                     logger.warning(
-                        f"Failed to filter forbidden objectClasses for {FlextLdifUtilities.DN._get_dn_value(current_entry.dn)}: {oc_result.error}",
+                        f"Failed to filter forbidden objectClasses for {FlextLdifUtilities.DN.get_dn_value(current_entry.dn)}: {oc_result.error}",
                     )
 
             filtered.append(current_entry)

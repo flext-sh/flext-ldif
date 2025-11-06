@@ -131,7 +131,7 @@ mail: pipeline@example.com
                 result = analyze_result
             else:
                 result = FlextResult[dict[str, object]].fail(
-                    f"Validation failed: {validation_report}"
+                    f"Validation failed: {validation_report}",
                 )
         else:
             result = validate_result

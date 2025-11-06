@@ -359,7 +359,8 @@ attributeTypes: ( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' )
             assert detection.confidence >= 0
 
     def test_detect_from_file_with_encoding_error(
-        self, detector: FlextLdifDetector
+        self,
+        detector: FlextLdifDetector,
     ) -> None:
         """Test handling encoding errors in LDIF file."""
         with tempfile.TemporaryDirectory() as tmpdir:

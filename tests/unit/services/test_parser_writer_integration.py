@@ -80,7 +80,9 @@ mail: jane.smith@example.com
         """Test basic parse -> write roundtrip."""
         # Parse with default options
         parse_result = parser_service.parse(
-            content=complex_ldif_content, input_source="string", server_type="rfc"
+            content=complex_ldif_content,
+            input_source="string",
+            server_type="rfc",
         )
 
         assert parse_result.is_success
@@ -127,7 +129,7 @@ telephoneNumber: 123-456-7890
 
         # Parse with attribute order preservation
         parse_options = FlextLdifModels.ParseFormatOptions(
-            preserve_attribute_order=True
+            preserve_attribute_order=True,
         )
         parse_result = parser_service.parse(
             content=ldif_content,
@@ -173,7 +175,7 @@ telephoneNumber: 123-456-7890
         """Test roundtrip with operational attributes filtering."""
         # Parse excluding operational attributes
         parse_options = FlextLdifModels.ParseFormatOptions(
-            include_operational_attrs=False
+            include_operational_attrs=False,
         )
         parse_result = parser_service.parse(
             content=complex_ldif_content,
@@ -196,7 +198,9 @@ telephoneNumber: 123-456-7890
 
         # Write the filtered entries
         write_result = writer_service.write(
-            entries=entries, target_server_type="rfc", output_target="string"
+            entries=entries,
+            target_server_type="rfc",
+            output_target="string",
         )
 
         assert write_result.is_success
@@ -231,7 +235,9 @@ telephoneNumber: 123-456-7890
 
         # Write all entries back
         write_result = writer_service.write(
-            entries=response.entries, target_server_type="rfc", output_target="string"
+            entries=response.entries,
+            target_server_type="rfc",
+            output_target="string",
         )
 
         assert write_result.is_success
@@ -263,7 +269,7 @@ telephoneNumber: 123-456-7890
 
         # Write back with metadata comments to see ACL processing results
         write_options = FlextLdifModels.WriteFormatOptions(
-            write_metadata_as_comments=True
+            write_metadata_as_comments=True,
         )
         write_result = writer_service.write(
             entries=entries,
@@ -304,7 +310,9 @@ sn: Empty Values
 
         # Parse with validation but non-strict mode
         parse_options = FlextLdifModels.ParseFormatOptions(
-            validate_entries=True, strict_schema_validation=False, max_parse_errors=5
+            validate_entries=True,
+            strict_schema_validation=False,
+            max_parse_errors=5,
         )
         parse_result = parser_service.parse(
             content=problematic_ldif,
@@ -348,7 +356,9 @@ sn: Empty Values
 
         # Parse from file
         parse_result = parser_service.parse(
-            content=input_file, input_source="file", server_type="rfc"
+            content=input_file,
+            input_source="file",
+            server_type="rfc",
         )
 
         assert parse_result.is_success
@@ -357,7 +367,8 @@ sn: Empty Values
         # Write to file
         output_file = tmp_path / "output.ldif"
         write_options = FlextLdifModels.WriteFormatOptions(
-            include_version_header=True, include_timestamps=True
+            include_version_header=True,
+            include_timestamps=True,
         )
         write_result = writer_service.write(
             entries=entries,
@@ -406,7 +417,9 @@ sn: Empty Values
 
         # Parse from ldap3 format
         parse_result = parser_service.parse(
-            content=ldap3_data, input_source="ldap3", server_type="rfc"
+            content=ldap3_data,
+            input_source="ldap3",
+            server_type="rfc",
         )
 
         assert parse_result.is_success
@@ -415,7 +428,9 @@ sn: Empty Values
 
         # Write back to ldap3 format
         write_result = writer_service.write(
-            entries=entries, target_server_type="rfc", output_target="ldap3"
+            entries=entries,
+            target_server_type="rfc",
+            output_target="ldap3",
         )
 
         assert write_result.is_success
@@ -523,7 +538,7 @@ entryUUID: 12345678-1234-1234-1234-123456789abc
         valid_entry = FlextLdifModels.Entry(
             dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
             attributes=FlextLdifModels.LdifAttributes(
-                attributes={"objectClass": ["person"], "cn": ["test"]}
+                attributes={"objectClass": ["person"], "cn": ["test"]},
             ),
         )
 
@@ -564,7 +579,9 @@ description: Test user number {i} for performance testing
 
         # Parse the large dataset
         parse_result = parser_service.parse(
-            content=large_ldif, input_source="string", server_type="rfc"
+            content=large_ldif,
+            input_source="string",
+            server_type="rfc",
         )
 
         assert parse_result.is_success
@@ -573,7 +590,9 @@ description: Test user number {i} for performance testing
 
         # Write the large dataset
         write_result = writer_service.write(
-            entries=entries, target_server_type="rfc", output_target="string"
+            entries=entries,
+            target_server_type="rfc",
+            output_target="string",
         )
 
         assert write_result.is_success
@@ -607,7 +626,9 @@ multiLine: This is a very
 
         # Parse edge cases
         parse_result = parser_service.parse(
-            content=edge_case_ldif, input_source="string", server_type="rfc"
+            content=edge_case_ldif,
+            input_source="string",
+            server_type="rfc",
         )
 
         assert parse_result.is_success
@@ -615,7 +636,9 @@ multiLine: This is a very
 
         # Write with special handling
         write_options = FlextLdifModels.WriteFormatOptions(
-            write_empty_values=True, base64_encode_binary=True, fold_long_lines=True
+            write_empty_values=True,
+            base64_encode_binary=True,
+            fold_long_lines=True,
         )
 
         write_result = writer_service.write(

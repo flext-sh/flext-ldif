@@ -271,10 +271,6 @@ class FlextLdifValidation(FlextService[dict[str, object]]):
 
         """
         try:
-            # Check type
-            if not isinstance(name, str):
-                return FlextResult[bool].ok(False)
-
             # Check empty
             if not name:
                 return FlextResult[bool].ok(False)
@@ -347,10 +343,6 @@ class FlextLdifValidation(FlextService[dict[str, object]]):
 
         """
         try:
-            # Check if value is a string
-            if not isinstance(value, str):
-                return FlextResult[bool].ok(False)
-
             # Allow empty values (valid in LDAP)
             if not value:
                 return FlextResult[bool].ok(True)

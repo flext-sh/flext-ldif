@@ -67,7 +67,9 @@ mail: bob@example.com
 """
 
     def test_parse_from_string_content(
-        self, api: FlextLdif, simple_ldif_content: str
+        self,
+        api: FlextLdif,
+        simple_ldif_content: str,
     ) -> None:
         """Test parse() with LDIF content string."""
         result = api.parse(simple_ldif_content)
@@ -80,7 +82,10 @@ mail: bob@example.com
         assert entries[1].dn.value == "cn=Bob Smith,ou=People,dc=example,dc=com"
 
     def test_parse_from_file_path_object(
-        self, api: FlextLdif, tmp_path: Path, simple_ldif_content: str
+        self,
+        api: FlextLdif,
+        tmp_path: Path,
+        simple_ldif_content: str,
     ) -> None:
         """Test parse() with file Path object."""
         ldif_file = tmp_path / "test.ldif"
@@ -94,7 +99,10 @@ mail: bob@example.com
         assert len(entries) == 2
 
     def test_parse_from_file_path_string(
-        self, api: FlextLdif, tmp_path: Path, simple_ldif_content: str
+        self,
+        api: FlextLdif,
+        tmp_path: Path,
+        simple_ldif_content: str,
     ) -> None:
         """Test parse() with file path as string."""
         ldif_file = tmp_path / "test.ldif"
@@ -183,7 +191,8 @@ objectClass: person
         assert result.error is not None
 
     def test_parse_multiple_entries_separated_by_blank_lines(
-        self, api: FlextLdif
+        self,
+        api: FlextLdif,
     ) -> None:
         """Test parse() correctly separates entries by blank lines."""
         content = """dn: cn=First,dc=example,dc=com
@@ -255,7 +264,9 @@ ds-sync-state: sync
 """
 
     def test_parse_with_rfc_server_type(
-        self, api: FlextLdif, oid_specific_content: str
+        self,
+        api: FlextLdif,
+        oid_specific_content: str,
     ) -> None:
         """Test parse() with RFC server type (no quirks)."""
         result = api.parse(oid_specific_content, server_type="rfc")
@@ -265,7 +276,9 @@ ds-sync-state: sync
         assert len(entries) == 1
 
     def test_parse_with_oid_server_type(
-        self, api: FlextLdif, oid_specific_content: str
+        self,
+        api: FlextLdif,
+        oid_specific_content: str,
     ) -> None:
         """Test parse() with OID server type applies OID quirks."""
         result = api.parse(oid_specific_content, server_type="oid")
@@ -275,7 +288,9 @@ ds-sync-state: sync
         assert len(entries) == 1
 
     def test_parse_with_oud_server_type(
-        self, api: FlextLdif, oud_specific_content: str
+        self,
+        api: FlextLdif,
+        oud_specific_content: str,
     ) -> None:
         """Test parse() with OUD server type applies OUD quirks."""
         result = api.parse(oud_specific_content, server_type="oud")
@@ -298,7 +313,9 @@ olcSortVals: mail cn
         assert len(entries) == 1
 
     def test_parse_with_auto_server_type(
-        self, api: FlextLdif, oid_specific_content: str
+        self,
+        api: FlextLdif,
+        oid_specific_content: str,
     ) -> None:
         """Test parse() with auto server type detection."""
         # Auto-detection is enabled when server_type is None (default)
@@ -380,7 +397,9 @@ class TestAPIWriting:
         return entries
 
     def test_write_entries_to_string(
-        self, api: FlextLdif, sample_entries: list[FlextLdifModels.Entry]
+        self,
+        api: FlextLdif,
+        sample_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test write() returns LDIF string."""
         result = api.write(sample_entries)
@@ -408,7 +427,9 @@ class TestAPIWriting:
             assert "Bob" in content
 
     def test_write_single_entry(
-        self, api: FlextLdif, sample_entries: list[FlextLdifModels.Entry]
+        self,
+        api: FlextLdif,
+        sample_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test write() with single entry."""
         single_entry = sample_entries[:1]
@@ -463,7 +484,7 @@ class TestAPIEntryOperations:
     def sample_entry(self) -> FlextLdifModels.Entry:
         """Create a sample entry for testing."""
         dn = FlextLdifModels.DistinguishedName(
-            value="cn=Test User,ou=People,dc=example,dc=com"
+            value="cn=Test User,ou=People,dc=example,dc=com",
         )
         attrs_result = FlextLdifModels.LdifAttributes.create({
             "cn": ["Test User"],
@@ -475,7 +496,9 @@ class TestAPIEntryOperations:
         return FlextLdifModels.Entry(dn=dn, attributes=attrs_result.unwrap())
 
     def test_get_entry_dn(
-        self, api: FlextLdif, sample_entry: FlextLdifModels.Entry
+        self,
+        api: FlextLdif,
+        sample_entry: FlextLdifModels.Entry,
     ) -> None:
         """Test get_entry_dn() extracts DN correctly."""
         result = api.get_entry_dn(sample_entry)
@@ -485,7 +508,9 @@ class TestAPIEntryOperations:
         assert dn == "cn=Test User,ou=People,dc=example,dc=com"
 
     def test_get_entry_attributes(
-        self, api: FlextLdif, sample_entry: FlextLdifModels.Entry
+        self,
+        api: FlextLdif,
+        sample_entry: FlextLdifModels.Entry,
     ) -> None:
         """Test get_entry_attributes() extracts attributes correctly."""
         result = api.get_entry_attributes(sample_entry)
@@ -517,7 +542,9 @@ class TestAPIEntryOperations:
         assert "cn" in entry.attributes.attributes
 
     def test_get_entry_objectclasses(
-        self, api: FlextLdif, sample_entry: FlextLdifModels.Entry
+        self,
+        api: FlextLdif,
+        sample_entry: FlextLdifModels.Entry,
     ) -> None:
         """Test get_entry_objectclasses() extracts objectClasses."""
         result = api.get_entry_objectclasses(sample_entry)
@@ -528,7 +555,9 @@ class TestAPIEntryOperations:
         assert "inetOrgPerson" in classes
 
     def test_get_attribute_values_existing_attribute(
-        self, api: FlextLdif, sample_entry: FlextLdifModels.Entry
+        self,
+        api: FlextLdif,
+        sample_entry: FlextLdifModels.Entry,
     ) -> None:
         """Test get_attribute_values() for existing attribute."""
         result = api.get_entry_attributes(sample_entry)
@@ -647,7 +676,9 @@ objectClass: person
         assert result.is_success or result.is_failure
 
     def test_parse_relaxed_handles_broken_ldif(
-        self, api: FlextLdif, tmp_path: Path
+        self,
+        api: FlextLdif,
+        tmp_path: Path,
     ) -> None:
         """Test parse() handles broken LDIF content."""
         # Create a broken LDIF file (missing some attributes)
@@ -737,7 +768,9 @@ class TestAPIValidationOperations:
         return entries
 
     def test_validate_entries_with_valid_entries(
-        self, api: FlextLdif, sample_entries: list[FlextLdifModels.Entry]
+        self,
+        api: FlextLdif,
+        sample_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test validate_entries() with valid entries."""
         result = api.validate_entries(sample_entries)
@@ -760,7 +793,9 @@ class TestAPIValidationOperations:
         assert report.total_entries == 0
 
     def test_validate_entries_returns_validation_report(
-        self, api: FlextLdif, sample_entries: list[FlextLdifModels.Entry]
+        self,
+        api: FlextLdif,
+        sample_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test validate_entries() returns proper ValidationResult structure."""
         result = api.validate_entries(sample_entries)
@@ -795,7 +830,7 @@ class TestAPIACLOperations:
         attrs_result = FlextLdifModels.LdifAttributes.create({
             "cn": ["ACL Test"],
             "aci": [
-                "(targetattr=*)(version 3.0; acl rule; allow (all) userdn=ldap:///anyone;)"
+                "(targetattr=*)(version 3.0; acl rule; allow (all) userdn=ldap:///anyone;)",
             ],
             "objectClass": ["person"],
         })
@@ -835,7 +870,7 @@ class TestAPIAdvancedOperations:
         entries = []
         for i in range(3):
             dn = FlextLdifModels.DistinguishedName(
-                value=f"cn=User{i},ou=People,dc=example,dc=com"
+                value=f"cn=User{i},ou=People,dc=example,dc=com",
             )
             attrs_result = FlextLdifModels.LdifAttributes.create({
                 "cn": [f"User{i}"],
@@ -845,7 +880,7 @@ class TestAPIAdvancedOperations:
             })
             if attrs_result.is_success:
                 entries.append(
-                    FlextLdifModels.Entry(dn=dn, attributes=attrs_result.unwrap())
+                    FlextLdifModels.Entry(dn=dn, attributes=attrs_result.unwrap()),
                 )
         return entries
 
@@ -866,7 +901,9 @@ class TestAPIAdvancedOperations:
     #         assert result.is_failure
 
     def test_filter_entries_by_objectclass(
-        self, api: FlextLdif, sample_entries: list[FlextLdifModels.Entry]
+        self,
+        api: FlextLdif,
+        sample_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test filter() method filters entries by objectClass."""
         result = api.filter(sample_entries, objectclass="inetOrgPerson")
@@ -878,7 +915,9 @@ class TestAPIAdvancedOperations:
                     assert isinstance(entry, FlextLdifModels.Entry)
 
     def test_filter_entries_by_dn_pattern(
-        self, api: FlextLdif, sample_entries: list[FlextLdifModels.Entry]
+        self,
+        api: FlextLdif,
+        sample_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test filter() method filters entries by DN pattern."""
         result = api.filter(sample_entries, dn_pattern="People")
@@ -887,7 +926,9 @@ class TestAPIAdvancedOperations:
             assert isinstance(filtered, list)
 
     def test_process_entries_with_builtin_processor(
-        self, api: FlextLdif, sample_entries: list[FlextLdifModels.Entry]
+        self,
+        api: FlextLdif,
+        sample_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test process() method applies processors to entries."""
 
@@ -951,7 +992,8 @@ class TestAPIBuildOperations:
     def test_create_person_entry_missing_required_fields(self, api: FlextLdif) -> None:
         """Test creating person entry succeeds even without required fields."""
         result = api.create_entry(
-            dn="cn=John Doe,ou=People,dc=example,dc=com", attributes={"cn": "John Doe"}
+            dn="cn=John Doe,ou=People,dc=example,dc=com",
+            attributes={"cn": "John Doe"},
         )
         assert result.is_success  # create_entry doesn't validate required fields
 
@@ -974,7 +1016,8 @@ class TestAPIBuildOperations:
     def test_create_group_entry_missing_required_fields(self, api: FlextLdif) -> None:
         """Test creating group entry succeeds even without required fields."""
         result = api.create_entry(
-            dn="cn=Admins,ou=Groups,dc=example,dc=com", attributes={"cn": "Admins"}
+            dn="cn=Admins,ou=Groups,dc=example,dc=com",
+            attributes={"cn": "Admins"},
         )
         assert result.is_success  # create_entry doesn't validate required fields
 
@@ -996,7 +1039,8 @@ class TestAPIBuildOperations:
     def test_create_ou_entry_missing_required_fields(self, api: FlextLdif) -> None:
         """Test creating OU entry succeeds even without required fields."""
         result = api.create_entry(
-            dn="ou=People,dc=example,dc=com", attributes={"ou": "People"}
+            dn="ou=People,dc=example,dc=com",
+            attributes={"ou": "People"},
         )
         assert result.is_success  # create_entry doesn't validate required fields
 
@@ -1018,7 +1062,8 @@ class TestAPIBuildOperations:
     def test_create_custom_entry_minimal(self, api: FlextLdif) -> None:
         """Test creating custom entry with minimal attributes."""
         result = api.create_entry(
-            dn="cn=test,dc=example,dc=com", attributes={"cn": "test"}
+            dn="cn=test,dc=example,dc=com",
+            attributes={"cn": "test"},
         )
         assert result.is_success
 
@@ -1026,7 +1071,8 @@ class TestAPIBuildOperations:
         """Test that create_entry doesn't validate entry types."""
         # create_entry doesn't validate entry types, it just creates entries
         result = api.create_entry(
-            dn="cn=Test,dc=example,dc=com", attributes={"cn": "Test"}
+            dn="cn=Test,dc=example,dc=com",
+            attributes={"cn": "Test"},
         )
         assert result.is_success
 
@@ -1063,7 +1109,7 @@ class TestAPIConversionOperations:
     def sample_entry(self) -> FlextLdifModels.Entry:
         """Create a sample entry for testing."""
         dn = FlextLdifModels.DistinguishedName(
-            value="cn=Test,ou=People,dc=example,dc=com"
+            value="cn=Test,ou=People,dc=example,dc=com",
         )
         attrs_result = FlextLdifModels.LdifAttributes.create({
             "cn": ["Test"],
@@ -1079,7 +1125,7 @@ class TestAPIConversionOperations:
         entries = []
         for i in range(2):
             dn = FlextLdifModels.DistinguishedName(
-                value=f"cn=User{i},ou=People,dc=example,dc=com"
+                value=f"cn=User{i},ou=People,dc=example,dc=com",
             )
             attrs_result = FlextLdifModels.LdifAttributes.create({
                 "cn": [f"User{i}"],
@@ -1088,12 +1134,14 @@ class TestAPIConversionOperations:
             })
             if attrs_result.is_success:
                 entries.append(
-                    FlextLdifModels.Entry(dn=dn, attributes=attrs_result.unwrap())
+                    FlextLdifModels.Entry(dn=dn, attributes=attrs_result.unwrap()),
                 )
         return entries
 
     def test_get_entry_attributes(
-        self, api: FlextLdif, sample_entry: FlextLdifModels.Entry
+        self,
+        api: FlextLdif,
+        sample_entry: FlextLdifModels.Entry,
     ) -> None:
         """Test getting entry attributes."""
         result = api.get_entry_attributes(sample_entry)
@@ -1102,7 +1150,9 @@ class TestAPIConversionOperations:
         assert isinstance(attributes, dict)
 
     def test_get_multiple_entry_attributes(
-        self, api: FlextLdif, sample_entries: list[FlextLdifModels.Entry]
+        self,
+        api: FlextLdif,
+        sample_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test getting attributes from multiple entries."""
         # Test getting attributes from first entry
@@ -1123,7 +1173,9 @@ class TestAPIConversionOperations:
         assert isinstance(entry, FlextLdifModels.Entry)
 
     def test_write_entries(
-        self, api: FlextLdif, sample_entries: list[FlextLdifModels.Entry]
+        self,
+        api: FlextLdif,
+        sample_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test writing entries to LDIF string."""
         result = api.write(entries=sample_entries)
@@ -1148,7 +1200,8 @@ objectClass: person
         """Test create_entry validates required parameters."""
         # Test with valid DN
         result = api.create_entry(
-            dn="cn=test,dc=example,dc=com", attributes={"cn": "test"}
+            dn="cn=test,dc=example,dc=com",
+            attributes={"cn": "test"},
         )
         assert result.is_success
 
@@ -1174,7 +1227,9 @@ class TestAPIMigrationOperations:
         return FlextLdif()
 
     def test_migrate_with_valid_directories(
-        self, api: FlextLdif, tmp_path: Path
+        self,
+        api: FlextLdif,
+        tmp_path: Path,
     ) -> None:
         """Test migrate() with valid source/target directories."""
         # Create temporary directories
@@ -1186,7 +1241,7 @@ class TestAPIMigrationOperations:
         # Create a minimal LDIF file in input
         ldif_file = input_dir / "entries.ldif"
         ldif_file.write_text(
-            "dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test\n\n"
+            "dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test\n\n",
         )
 
         # Attempt migration
@@ -1204,7 +1259,9 @@ class TestAPIMigrationOperations:
             assert isinstance(migration, FlextLdifModels.PipelineExecutionResult)
 
     def test_migrate_missing_input_directory(
-        self, api: FlextLdif, tmp_path: Path
+        self,
+        api: FlextLdif,
+        tmp_path: Path,
     ) -> None:
         """Test migrate() fails with non-existent input directory."""
         output_dir = tmp_path / "output"
@@ -1222,7 +1279,9 @@ class TestAPIMigrationOperations:
         assert result.is_failure or result.is_success
 
     def test_migrate_with_schema_processing(
-        self, api: FlextLdif, tmp_path: Path
+        self,
+        api: FlextLdif,
+        tmp_path: Path,
     ) -> None:
         """Test migrate() with schema processing enabled."""
         input_dir = tmp_path / "input"
@@ -1240,7 +1299,9 @@ class TestAPIMigrationOperations:
         assert result.is_success or result.is_failure
 
     def test_migrate_without_entries_processing(
-        self, api: FlextLdif, tmp_path: Path
+        self,
+        api: FlextLdif,
+        tmp_path: Path,
     ) -> None:
         """Test migrate() with only schema processing."""
         input_dir = tmp_path / "input"
@@ -1282,7 +1343,9 @@ class TestAPIProcessing:
         )
 
     def test_process_transform_batch(
-        self, api: FlextLdif, sample_entry: FlextLdifModels.Entry
+        self,
+        api: FlextLdif,
+        sample_entry: FlextLdifModels.Entry,
     ) -> None:
         """Test process() with transform processor (batch mode)."""
         result = api.process("transform", [sample_entry], parallel=False, batch_size=10)
@@ -1293,7 +1356,9 @@ class TestAPIProcessing:
             assert isinstance(processed, list)
 
     def test_process_validate_batch(
-        self, api: FlextLdif, sample_entry: FlextLdifModels.Entry
+        self,
+        api: FlextLdif,
+        sample_entry: FlextLdifModels.Entry,
     ) -> None:
         """Test process() with validate processor (batch mode)."""
         result = api.process("validate", [sample_entry], parallel=False)
@@ -1304,7 +1369,9 @@ class TestAPIProcessing:
             assert isinstance(processed, list)
 
     def test_process_parallel_mode(
-        self, api: FlextLdif, sample_entry: FlextLdifModels.Entry
+        self,
+        api: FlextLdif,
+        sample_entry: FlextLdifModels.Entry,
     ) -> None:
         """Test process() with parallel mode enabled."""
         entries = [sample_entry] * 3  # Multiple entries for parallel processing
@@ -1316,7 +1383,9 @@ class TestAPIProcessing:
             assert isinstance(processed, list)
 
     def test_process_unknown_processor(
-        self, api: FlextLdif, sample_entry: FlextLdifModels.Entry
+        self,
+        api: FlextLdif,
+        sample_entry: FlextLdifModels.Entry,
     ) -> None:
         """Test process() fails with unknown processor."""
         result = api.process("unknown_processor", [sample_entry])

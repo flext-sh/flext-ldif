@@ -126,7 +126,8 @@ class TestPublicClassmethodsWithRealLdif:
     """Test public classmethods with REAL LDIF fixture data."""
 
     def test_clean_dn_with_real_oid_entries(
-        self, oid_entries: list[FlextLdifModels.Entry]
+        self,
+        oid_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test DN cleaning with real OID LDIF entries."""
         assert len(oid_entries) > 0, "OID fixture should have entries"
@@ -139,7 +140,8 @@ class TestPublicClassmethodsWithRealLdif:
         assert "=" in cleaned_dn  # Should have attribute=value pairs
 
     def test_remove_operational_attributes_from_real_oid_entry(
-        self, oid_entries: list[FlextLdifModels.Entry]
+        self,
+        oid_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test removing operational attributes from real OID LDIF entry."""
         assert len(oid_entries) > 0
@@ -156,7 +158,8 @@ class TestPublicClassmethodsWithRealLdif:
         assert cleaned_entry.dn.value == entry.dn.value
 
     def test_remove_operational_attributes_batch_real_oid(
-        self, oid_entries: list[FlextLdifModels.Entry]
+        self,
+        oid_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test batch operational attribute removal with real OID LDIF entries."""
         assert len(oid_entries) > 0
@@ -175,7 +178,8 @@ class TestPublicClassmethodsWithRealLdif:
             assert len(entry.attributes.attributes) > 0
 
     def test_remove_specific_attributes_from_real_entry(
-        self, oid_entries: list[FlextLdifModels.Entry]
+        self,
+        oid_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test removing specific attributes from real LDIF entry."""
         assert len(oid_entries) > 0
@@ -185,7 +189,8 @@ class TestPublicClassmethodsWithRealLdif:
 
         # Remove common unnecessary attributes
         result = FlextLdifEntry.remove_attributes(
-            entry, attributes=["description", "employeeNumber", "telephoneNumber"]
+            entry,
+            attributes=["description", "employeeNumber", "telephoneNumber"],
         )
 
         assert result.is_success
@@ -195,13 +200,15 @@ class TestPublicClassmethodsWithRealLdif:
         assert len(cleaned_entry.attributes.attributes) <= original_attr_count
 
     def test_remove_attributes_batch_real_oud(
-        self, oud_entries: list[FlextLdifModels.Entry]
+        self,
+        oud_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test batch attribute removal with real OUD LDIF entries."""
         assert len(oud_entries) > 0
 
         result = FlextLdifEntry.remove_attributes_batch(
-            oud_entries, attributes=["description"]
+            oud_entries,
+            attributes=["description"],
         )
 
         assert result.is_success
@@ -220,13 +227,15 @@ class TestExecutePatternWithRealLdif:
     """Test V1 FlextService execute pattern with REAL LDIF data."""
 
     def test_execute_remove_operational_attributes_with_real_data(
-        self, oid_entries: list[FlextLdifModels.Entry]
+        self,
+        oid_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test execute() pattern for operational attribute removal with real data."""
         assert len(oid_entries) > 0
 
         result = FlextLdifEntry(
-            entries=oid_entries, operation="remove_operational_attributes"
+            entries=oid_entries,
+            operation="remove_operational_attributes",
         ).execute()
 
         assert result.is_success
@@ -234,7 +243,8 @@ class TestExecutePatternWithRealLdif:
         assert len(cleaned_entries) == len(oid_entries)
 
     def test_execute_remove_attributes_with_real_openldap2(
-        self, openldap2_entries: list[FlextLdifModels.Entry]
+        self,
+        openldap2_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test execute() pattern for attribute removal with real OpenLDAP2 data."""
         assert len(openldap2_entries) > 0
@@ -259,7 +269,8 @@ class TestFluentBuilderWithRealLdif:
     """Test fluent builder pattern with REAL LDIF fixture data."""
 
     def test_builder_with_oid_entries(
-        self, oid_entries: list[FlextLdifModels.Entry]
+        self,
+        oid_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test fluent builder with real OID LDIF entries."""
         assert len(oid_entries) > 0
@@ -274,7 +285,8 @@ class TestFluentBuilderWithRealLdif:
         assert len(result) == len(oid_entries)
 
     def test_builder_with_attribute_removal_oud(
-        self, oud_entries: list[FlextLdifModels.Entry]
+        self,
+        oud_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test builder with attribute removal on real OUD data."""
         assert len(oud_entries) > 0
@@ -342,7 +354,8 @@ class TestRealWorldScenarios:
         assert len(cleaned_entries) == len(all_entries)
 
     def test_batch_attribute_cleanup_real_data(
-        self, oid_entries: list[FlextLdifModels.Entry]
+        self,
+        oid_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test batch cleanup of unnecessary attributes from real LDIF."""
         assert len(oid_entries) > 0
@@ -356,7 +369,8 @@ class TestRealWorldScenarios:
         ]
 
         result = FlextLdifEntry.remove_attributes_batch(
-            oid_entries, attributes=unnecessary_attrs
+            oid_entries,
+            attributes=unnecessary_attrs,
         )
 
         assert result.is_success
@@ -370,7 +384,8 @@ class TestRealWorldScenarios:
                 ]
 
     def test_sequential_cleaning_pipeline(
-        self, oid_entries: list[FlextLdifModels.Entry]
+        self,
+        oid_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test sequential cleaning operations on real LDIF data."""
         assert len(oid_entries) > 0
@@ -381,13 +396,15 @@ class TestRealWorldScenarios:
 
         cleaned1 = result1.unwrap()
         result2 = FlextLdifEntry.remove_attributes_batch(
-            cleaned1, attributes=["description"]
+            cleaned1,
+            attributes=["description"],
         )
         assert result2.is_success
 
         cleaned2 = result2.unwrap()
         result3 = FlextLdifEntry.remove_attributes_batch(
-            cleaned2, attributes=["telephoneNumber"]
+            cleaned2,
+            attributes=["telephoneNumber"],
         )
         assert result3.is_success
 
@@ -404,7 +421,8 @@ class TestEdgeCasesWithRealData:
     """Test edge cases and special scenarios with REAL LDIF data."""
 
     def test_remove_all_removable_attributes(
-        self, oid_entries: list[FlextLdifModels.Entry]
+        self,
+        oid_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test removing all removable attributes while preserving structure."""
         assert len(oid_entries) > 0
@@ -427,7 +445,8 @@ class TestEdgeCasesWithRealData:
         assert len(cleaned.attributes.attributes) > 0
 
     def test_mixed_case_attribute_removal(
-        self, oud_entries: list[FlextLdifModels.Entry]
+        self,
+        oud_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test that attribute removal is case-insensitive on real data."""
         assert len(oud_entries) > 0
@@ -436,7 +455,8 @@ class TestEdgeCasesWithRealData:
 
         # Remove with different case
         result = FlextLdifEntry.remove_attributes(
-            entry, attributes=["DESCRIPTION", "TelephoneNumber", "mail"]
+            entry,
+            attributes=["DESCRIPTION", "TelephoneNumber", "mail"],
         )
 
         assert result.is_success
@@ -448,7 +468,8 @@ class TestEdgeCasesWithRealData:
         assert "mail" not in cleaned_keys
 
     def test_entries_with_unicode_and_special_chars(
-        self, openldap2_entries: list[FlextLdifModels.Entry]
+        self,
+        openldap2_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test operations on real entries with unicode and special characters."""
         assert len(openldap2_entries) > 0
@@ -467,7 +488,8 @@ class TestEdgeCasesWithRealData:
             )
 
     def test_empty_attributes_handling(
-        self, oid_entries: list[FlextLdifModels.Entry]
+        self,
+        oid_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test handling of entries with various attribute value scenarios."""
         assert len(oid_entries) > 0
@@ -537,7 +559,8 @@ class TestServerCompatibility:
             assert len(entries) > 0
 
             result = FlextLdifEntry.remove_attributes_batch(
-                entries, attributes=["description", "mail"]
+                entries,
+                attributes=["description", "mail"],
             )
 
             assert result.is_success, (

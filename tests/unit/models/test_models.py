@@ -55,7 +55,7 @@ class TestFlextLdifModels:
             attributes={
                 "cn": ["test"],
                 "sn": ["user"],
-            }
+            },
         )
         assert len(attrs.attributes) == 2
         assert "cn" in attrs.attributes
@@ -66,7 +66,7 @@ class TestFlextLdifModels:
         attrs = FlextLdifModels.LdifAttributes(
             attributes={
                 "cn": ["test"],
-            }
+            },
         )
 
         # Test getting existing attribute
@@ -98,7 +98,7 @@ class TestFlextLdifModels:
         attrs = FlextLdifModels.LdifAttributes(
             attributes={
                 "cn": ["test"],
-            }
+            },
         )
 
         attrs.remove_attribute("cn")
@@ -120,7 +120,7 @@ class TestFlextLdifModels:
                 attributes={
                     "cn": ["test"],
                     "objectclass": ["person"],
-                }
+                },
             ),
         )
         assert entry.dn.value == "cn=test,dc=example,dc=com"
@@ -134,7 +134,7 @@ class TestFlextLdifModels:
             attributes=FlextLdifModels.LdifAttributes(
                 attributes={
                     "objectclass": ["person"],
-                }
+                },
             ),
         )
         assert entry.dn.value == "cn=test,dc=example,dc=com"
@@ -147,7 +147,7 @@ class TestFlextLdifModels:
                 attributes={
                     "cn": ["test"],
                     "objectclass": ["person"],
-                }
+                },
             ),
         )
 
@@ -200,7 +200,7 @@ class TestFlextLdifModels:
         attrs = FlextLdifModels.LdifAttributes(
             attributes={
                 "cn;lang-en": ["test"],
-            }
+            },
         )
         assert "cn;lang-en" in attrs.attributes
 
@@ -208,7 +208,7 @@ class TestFlextLdifModels:
         attrs = FlextLdifModels.LdifAttributes(
             attributes={
                 "cn": [""],
-            }
+            },
         )
         cn_attr = attrs.get("cn")
         assert cn_attr == [""]
@@ -268,14 +268,14 @@ class TestFlextLdifModels:
                 "person": {
                     "oid": "2.5.6.6",
                     "description": "Person class",
-                }
+                },
             },
             attributes={
                 "cn": {
                     "oid": "2.5.4.3",
                     "description": "Common name",
                     "syntax": "1.3.6.1.4.1.1466.115.121.1.15",
-                }
+                },
             },
             total_attributes=1,
             total_objectclasses=1,
@@ -429,7 +429,7 @@ class TestFlextLdifModelsLdifAttributes:
         }
 
         result = FlextLdifModels.LdifAttributes.create(
-            cast("dict[str, object]", attrs_data)
+            cast("dict[str, object]", attrs_data),
         )
 
         assert result.is_success
@@ -455,7 +455,7 @@ class TestFlextLdifModelsLdifAttributes:
         }
 
         result = FlextLdifModels.LdifAttributes.create(
-            cast("dict[str, object]", attrs_data)
+            cast("dict[str, object]", attrs_data),
         )
 
         assert result.is_success

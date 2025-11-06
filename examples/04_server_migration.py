@@ -45,7 +45,7 @@ mail: server@example.com
 
     print(
         "Parsed with quirks: "
-        + ", ".join([f"{s}={len(e)}" for s, e in results.items()])
+        + ", ".join([f"{s}={len(e)}" for s, e in results.items()]),
     )
 
 
@@ -111,7 +111,7 @@ cn: schema
     ).map(
         lambda stats: (
             f"Migrated {stats.entries_by_category} entries in {len(stats.file_paths)} files"
-        )
+        ),
     )
 
     print(result.unwrap_or("Migration failed"))

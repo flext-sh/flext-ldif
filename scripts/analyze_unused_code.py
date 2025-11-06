@@ -191,7 +191,8 @@ def analyze_codebase(src_dir: Path) -> tuple[dict[str, CodeDefinition], set[str]
 
 
 def identify_unused(
-    definitions: dict[str, CodeDefinition], references: set[str]
+    definitions: dict[str, CodeDefinition],
+    references: set[str],
 ) -> UnusedCodeReport:
     """Identify unused definitions based on references."""
     report = UnusedCodeReport()
@@ -292,7 +293,7 @@ def print_report(report: UnusedCodeReport) -> None:
     print(f"  Unused Functions:        {len(report.unused_functions)}")
     print(f"  Unused Methods:          {len(report.unused_methods)}")
     print(
-        f"  Total Unused:            {len(report.unused_classes) + len(report.unused_functions) + len(report.unused_methods)}"
+        f"  Total Unused:            {len(report.unused_classes) + len(report.unused_functions) + len(report.unused_methods)}",
     )
 
     if report.unused_classes:
@@ -308,7 +309,8 @@ def print_report(report: UnusedCodeReport) -> None:
     if report.unused_methods:
         print(f"\n🗑️  UNUSED METHODS ({len(report.unused_methods)}):")
         for method in sorted(
-            report.unused_methods, key=lambda m: (m.file_path, m.name)
+            report.unused_methods,
+            key=lambda m: (m.file_path, m.name),
         ):
             print(f"  {method.name:40} {method.file_path}:{method.line_number}")
 
@@ -325,7 +327,7 @@ def print_report(report: UnusedCodeReport) -> None:
 def main() -> None:
     """Main entry point for analyzer."""
     parser = argparse.ArgumentParser(
-        description="Analyze flext-ldif codebase for unused code"
+        description="Analyze flext-ldif codebase for unused code",
     )
     parser.add_argument(
         "--output",

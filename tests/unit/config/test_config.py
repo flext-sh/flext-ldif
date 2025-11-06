@@ -330,7 +330,7 @@ class TestFlextLdifConfig:
             FlextLdifConfig(ldif_encoding="invalid-encoding")
         # Pydantic v2 error message format
         assert "Input should be" in str(exc_info.value) or "ldif_encoding" in str(
-            exc_info.value
+            exc_info.value,
         )
 
     def test_validate_max_workers_below_minimum(self) -> None:
@@ -354,7 +354,7 @@ class TestFlextLdifConfig:
             FlextLdifConfig(validation_level="invalid")
         # Pydantic v2 error message format
         assert "Input should be" in str(exc_info.value) or "validation_level" in str(
-            exc_info.value
+            exc_info.value,
         )
 
     def test_validate_server_type_invalid(self) -> None:
@@ -363,7 +363,7 @@ class TestFlextLdifConfig:
             # Test validation with intentionally invalid enum value
             FlextLdifConfig(server_type="unknown_server")
         assert "Input should be" in str(exc_info.value) or "server_type" in str(
-            exc_info.value
+            exc_info.value,
         )
 
     def test_validate_analytics_detail_level_invalid(self) -> None:
@@ -372,7 +372,7 @@ class TestFlextLdifConfig:
             FlextLdifConfig(analytics_detail_level="ultra")
         # Pydantic v2 error message format
         assert "Input should be" in str(
-            exc_info.value
+            exc_info.value,
         ) or "analytics_detail_level" in str(exc_info.value)
 
     def test_validate_error_recovery_mode_invalid(self) -> None:
@@ -381,7 +381,7 @@ class TestFlextLdifConfig:
             FlextLdifConfig(error_recovery_mode="abort")
         # Pydantic v2 error message format
         assert "Input should be" in str(exc_info.value) or "error_recovery_mode" in str(
-            exc_info.value
+            exc_info.value,
         )
 
     def test_get_effective_encoding(self) -> None:
@@ -486,7 +486,8 @@ class TestQuirksDetectionConfiguration:
     def test_manual_detection_mode_with_server_type(self) -> None:
         """Test manual detection mode with server type specified."""
         config = FlextLdifConfig(
-            quirks_detection_mode="manual", quirks_server_type="oud"
+            quirks_detection_mode="manual",
+            quirks_server_type="oud",
         )
         assert config.quirks_detection_mode == "manual"
         assert config.quirks_server_type == "oud"
@@ -500,7 +501,8 @@ class TestQuirksDetectionConfiguration:
         """Test that disabled mode works with or without server_type."""
         # Disabled mode with server type specified (should be ignored)
         config1 = FlextLdifConfig(
-            quirks_detection_mode="disabled", quirks_server_type="oid"
+            quirks_detection_mode="disabled",
+            quirks_server_type="oid",
         )
         assert config1.quirks_detection_mode == "disabled"
 
@@ -521,7 +523,8 @@ class TestQuirksDetectionConfiguration:
     def test_relaxed_parsing_with_auto_detection(self) -> None:
         """Test relaxed parsing combined with auto detection."""
         config = FlextLdifConfig(
-            quirks_detection_mode="auto", enable_relaxed_parsing=True
+            quirks_detection_mode="auto",
+            enable_relaxed_parsing=True,
         )
         assert config.quirks_detection_mode == "auto"
         assert config.enable_relaxed_parsing is True
@@ -540,7 +543,8 @@ class TestQuirksDetectionConfiguration:
     def test_relaxed_parsing_with_disabled_mode(self) -> None:
         """Test relaxed parsing combined with disabled (RFC-only) mode."""
         config = FlextLdifConfig(
-            quirks_detection_mode="disabled", enable_relaxed_parsing=True
+            quirks_detection_mode="disabled",
+            enable_relaxed_parsing=True,
         )
         assert config.quirks_detection_mode == "disabled"
         assert config.enable_relaxed_parsing is True
@@ -562,7 +566,8 @@ class TestQuirksDetectionConfiguration:
 
         for server_type in supported_types:
             config = FlextLdifConfig(
-                quirks_detection_mode="manual", quirks_server_type=server_type
+                quirks_detection_mode="manual",
+                quirks_server_type=server_type,
             )
             assert config.quirks_server_type == server_type
 
@@ -579,7 +584,8 @@ class TestQuirksDetectionConfiguration:
         """Test configuration consistency validation."""
         # Manual mode with server type - should pass
         config = FlextLdifConfig(
-            quirks_detection_mode="manual", quirks_server_type="oud"
+            quirks_detection_mode="manual",
+            quirks_server_type="oud",
         )
         assert config is not None
 
@@ -608,7 +614,8 @@ class TestQuirksDetectionConfiguration:
         # Manual mode with different servers
         for server in ["oid", "oud", "openldap", "ad"]:
             config_manual = FlextLdifConfig(
-                quirks_detection_mode="manual", quirks_server_type=server
+                quirks_detection_mode="manual",
+                quirks_server_type=server,
             )
             assert config_manual.quirks_server_type == server
 
@@ -638,7 +645,7 @@ class TestEnvVariableLoading:
         config = FlextLdifConfig()
 
         # Verify defaults match constants
-        assert config.ldif_encoding == FlextLdifConstants.Encoding.DEFAULT_ENCODING
+        assert config.ldif_encoding == FlextLdifConstants.DEFAULT_ENCODING
         assert config.ldif_max_line_length == FlextLdifConstants.Format.MAX_LINE_LENGTH
         assert (
             config.ldif_skip_comments
@@ -675,7 +682,8 @@ class TestEnvVariableLoading:
         assert config.max_workers == 8
 
     def test_direct_instantiation_override(
-        self, monkeypatch: pytest.MonkeyPatch
+        self,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Test direct parameters override environment variables (highest priority)."""
         # Set environment variables
@@ -701,7 +709,7 @@ class TestEnvVariableLoading:
         config = FlextLdifConfig()
 
         # Should use default, not FLEXT_ENCODING
-        assert config.ldif_encoding == FlextLdifConstants.Encoding.DEFAULT_ENCODING
+        assert config.ldif_encoding == FlextLdifConstants.DEFAULT_ENCODING
 
         # Correct prefix
         monkeypatch.setenv("FLEXT_LDIF_ENCODING", "utf-16")
@@ -747,7 +755,9 @@ class TestDotEnvFileLoading:
     """Test .env file loading with Pydantic 2 Settings."""
 
     def test_env_file_loading(
-        self, tmp_path: pytest.TempPathFactory, monkeypatch: pytest.MonkeyPatch
+        self,
+        tmp_path: pytest.TempPathFactory,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Test .env file is automatically loaded."""
         # Create .env file
@@ -757,7 +767,7 @@ class TestDotEnvFileLoading:
 FLEXT_LDIF_ENCODING=utf-16
 FLEXT_MAX_WORKERS=6
 FLEXT_LDIF_SKIP_COMMENTS=true
-"""
+""",
         )
 
         # Change to temp directory
@@ -771,7 +781,9 @@ FLEXT_LDIF_SKIP_COMMENTS=true
         assert config.ldif_skip_comments is True
 
     def test_env_var_overrides_env_file(
-        self, tmp_path: pytest.TempPathFactory, monkeypatch: pytest.MonkeyPatch
+        self,
+        tmp_path: pytest.TempPathFactory,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Test environment variables override .env file values."""
         # Create .env file
@@ -810,13 +822,15 @@ class TestOrderOfPrecedence:
     """Test complete order of precedence for configuration loading."""
 
     def test_complete_precedence_chain(
-        self, tmp_path: pytest.TempPathFactory, monkeypatch: pytest.MonkeyPatch
+        self,
+        tmp_path: pytest.TempPathFactory,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Test complete order: direct > env var > .env file > defaults."""
         from pathlib import Path
 
         # 1. Default from FlextLdifConstants
-        default_encoding = FlextLdifConstants.Encoding.DEFAULT_ENCODING
+        default_encoding = FlextLdifConstants.DEFAULT_ENCODING
 
         # 2. .env file (lower priority)
         env_file = tmp_path / ".env"

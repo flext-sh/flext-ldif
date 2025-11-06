@@ -66,7 +66,8 @@ class TestFilterByDN:
     """Test DN pattern filtering with real LDIF data."""
 
     def test_filter_users_ou_pattern(
-        self, oid_entries: list[FlextLdifModels.Entry]
+        self,
+        oid_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test filtering by DN pattern: *,ou=people,*."""
         result = FlextLdifFilters.by_dn(oid_entries, "*,ou=people,*", mode="include")
@@ -77,7 +78,8 @@ class TestFilterByDN:
         assert all("ou=people" in e.dn.value.lower() for e in filtered)
 
     def test_filter_groups_ou_pattern(
-        self, oid_entries: list[FlextLdifModels.Entry]
+        self,
+        oid_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test filtering by DN pattern: *,ou=groups,*."""
         result = FlextLdifFilters.by_dn(oid_entries, "*,ou=groups,*", mode="include")
@@ -88,11 +90,15 @@ class TestFilterByDN:
         assert all("ou=groups" in e.dn.value.lower() for e in filtered)
 
     def test_filter_excludes_non_matching(
-        self, oid_entries: list[FlextLdifModels.Entry]
+        self,
+        oid_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test that non-matching entries are excluded (mark_excluded=False)."""
         result = FlextLdifFilters.by_dn(
-            oid_entries, "*,ou=people,*", mode="include", mark_excluded=False
+            oid_entries,
+            "*,ou=people,*",
+            mode="include",
+            mark_excluded=False,
         )
 
         assert result.is_success
@@ -101,13 +107,17 @@ class TestFilterByDN:
         assert not any(e.dn.value == "dc=example,dc=com" for e in filtered)
 
     def test_filter_with_mark_excluded(
-        self, oid_entries: list[FlextLdifModels.Entry]
+        self,
+        oid_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test mark_excluded=True returns matching + marked excluded."""
         original_count = len(oid_entries)
 
         result = FlextLdifFilters.by_dn(
-            oid_entries, "*,ou=people,*", mode="include", mark_excluded=True
+            oid_entries,
+            "*,ou=people,*",
+            mode="include",
+            mark_excluded=True,
         )
 
         assert result.is_success
@@ -124,7 +134,8 @@ class TestFilterByDN:
         assert len(excluded_entries) > 0
 
     def test_filter_exclude_mode(
-        self, oid_entries: list[FlextLdifModels.Entry]
+        self,
+        oid_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test exclude mode removes matching entries."""
         # Count entries with ou=people in DN (case-insensitive)
@@ -152,7 +163,8 @@ class TestFilterByObjectClass:
     """Test objectClass filtering with real LDIF data."""
 
     def test_filter_inetorgperson(
-        self, oid_entries: list[FlextLdifModels.Entry]
+        self,
+        oid_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test filtering by inetOrgPerson objectClass."""
         result = FlextLdifFilters.by_objectclass(oid_entries, "inetOrgPerson")
@@ -166,7 +178,8 @@ class TestFilterByObjectClass:
             assert any(oc.lower() == "inetorgperson" for oc in ocs)
 
     def test_filter_groupofnames(
-        self, oid_entries: list[FlextLdifModels.Entry]
+        self,
+        oid_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test filtering by groupOfNames objectClass."""
         result = FlextLdifFilters.by_objectclass(oid_entries, "groupOfNames")
@@ -180,11 +193,14 @@ class TestFilterByObjectClass:
             assert any(oc.lower() == "groupofnames" for oc in ocs)
 
     def test_filter_with_required_attributes(
-        self, oid_entries: list[FlextLdifModels.Entry]
+        self,
+        oid_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test filtering by objectClass with required attributes."""
         result = FlextLdifFilters.by_objectclass(
-            oid_entries, "inetOrgPerson", required_attributes=["mail"]
+            oid_entries,
+            "inetOrgPerson",
+            required_attributes=["mail"],
         )
 
         assert result.is_success
@@ -197,7 +213,8 @@ class TestFilterByObjectClass:
             assert any(oc.lower() == "inetorgperson" for oc in ocs)
 
     def test_filter_organizational_unit(
-        self, oid_entries: list[FlextLdifModels.Entry]
+        self,
+        oid_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test filtering by organizationalUnit objectClass."""
         result = FlextLdifFilters.by_objectclass(oid_entries, "organizationalUnit")
@@ -220,7 +237,8 @@ class TestFilterByAttributes:
     """Test attribute-based filtering with real LDIF data."""
 
     def test_filter_entries_with_mail(
-        self, oid_entries: list[FlextLdifModels.Entry]
+        self,
+        oid_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test filtering entries that have mail attribute."""
         result = FlextLdifFilters.by_attributes(oid_entries, ["mail"], match_all=False)
@@ -233,11 +251,14 @@ class TestFilterByAttributes:
             assert entry.has_attribute("mail")
 
     def test_filter_entries_with_multiple_attributes_any(
-        self, oid_entries: list[FlextLdifModels.Entry]
+        self,
+        oid_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test filtering entries with ANY of the specified attributes."""
         result = FlextLdifFilters.by_attributes(
-            oid_entries, ["mail", "telephoneNumber"], match_all=False
+            oid_entries,
+            ["mail", "telephoneNumber"],
+            match_all=False,
         )
 
         assert result.is_success
@@ -250,11 +271,14 @@ class TestFilterByAttributes:
             assert has_mail or has_phone
 
     def test_filter_entries_with_multiple_attributes_all(
-        self, oid_entries: list[FlextLdifModels.Entry]
+        self,
+        oid_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test filtering entries with ALL specified attributes."""
         result = FlextLdifFilters.by_attributes(
-            oid_entries, ["mail", "cn"], match_all=True
+            oid_entries,
+            ["mail", "cn"],
+            match_all=True,
         )
 
         assert result.is_success
@@ -275,11 +299,13 @@ class TestFilterByBaseDN:
     """Test base DN hierarchy filtering with real LDIF data."""
 
     def test_filter_base_dn_hierarchy(
-        self, oid_entries: list[FlextLdifModels.Entry]
+        self,
+        oid_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test filtering entries under base DN."""
         included, excluded = FlextLdifFilters.by_base_dn(
-            oid_entries, "dc=example,dc=com"
+            oid_entries,
+            "dc=example,dc=com",
         )
 
         # All entries should be under dc=example,dc=com
@@ -299,7 +325,8 @@ class TestSchemaDetection:
     """Test schema entry detection with real LDIF data."""
 
     def test_detect_schema_entries(
-        self, oid_schema_entries: list[FlextLdifModels.Entry]
+        self,
+        oid_schema_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test detecting schema entries from real schema fixture."""
         schema_entries = [
@@ -309,11 +336,13 @@ class TestSchemaDetection:
         assert len(schema_entries) > 0
 
     def test_extract_acl_entries(
-        self, oid_entries: list[FlextLdifModels.Entry]
+        self,
+        oid_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test extracting ACL entries if present in fixtures."""
         result = FlextLdifFilters.extract_acl_entries(
-            oid_entries, acl_attributes=["acl", "aci", "orclaci"]
+            oid_entries,
+            acl_attributes=["acl", "aci", "orclaci"],
         )
 
         assert result.is_success
@@ -331,7 +360,8 @@ class TestCategorization:
     """Test entry categorization with real LDIF data."""
 
     def test_categorize_real_entries(
-        self, oid_entries: list[FlextLdifModels.Entry]
+        self,
+        oid_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test categorizing real LDIF entries."""
         rules = {
@@ -360,12 +390,14 @@ class TestTransformation:
     """Test attribute/objectClass removal with real LDIF data."""
 
     def test_remove_attributes_from_real_entry(
-        self, oid_entries: list[FlextLdifModels.Entry]
+        self,
+        oid_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test removing attributes from real entries."""
         # Find an entry with mail attribute
         entry_with_mail = next(
-            (e for e in oid_entries if e.has_attribute("mail")), None
+            (e for e in oid_entries if e.has_attribute("mail")),
+            None,
         )
 
         if not entry_with_mail:
@@ -379,7 +411,8 @@ class TestTransformation:
         assert filtered.has_attribute("cn")  # Should keep other attributes
 
     def test_remove_objectclasses_from_real_entry(
-        self, oid_entries: list[FlextLdifModels.Entry]
+        self,
+        oid_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test removing objectClasses from real entries."""
         # Find an entry with multiple objectClasses (need 3+ to remove one and still have 2+)
@@ -396,7 +429,8 @@ class TestTransformation:
         oc_to_remove = original_ocs[0]
 
         result = FlextLdifFilters.remove_objectclasses(
-            entry_with_multiple_ocs, [oc_to_remove]
+            entry_with_multiple_ocs,
+            [oc_to_remove],
         )
 
         assert result.is_success
@@ -427,7 +461,8 @@ class TestFluentBuilder:
         assert all("ou=people" in e.dn.value.lower() for e in result)
 
     def test_builder_objectclass_with_attributes(
-        self, oid_entries: list[FlextLdifModels.Entry]
+        self,
+        oid_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test builder with objectClass and required attributes."""
         result = (
@@ -454,12 +489,15 @@ class TestIntegration:
     """Integration tests with real LDIF data."""
 
     def test_multi_stage_filtering(
-        self, oid_entries: list[FlextLdifModels.Entry]
+        self,
+        oid_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test multi-stage filtering pipeline with real data."""
         # Stage 1: Filter by DN pattern
         result1 = FlextLdifFilters.filter(
-            oid_entries, criteria="dn", pattern="*,ou=people,*"
+            oid_entries,
+            criteria="dn",
+            pattern="*,ou=people,*",
         )
         assert result1.is_success
         stage1 = result1.unwrap()
@@ -467,7 +505,9 @@ class TestIntegration:
 
         # Stage 2: Filter by objectClass
         result2 = FlextLdifFilters.filter(
-            stage1, criteria="objectclass", objectclass="inetOrgPerson"
+            stage1,
+            criteria="objectclass",
+            objectclass="inetOrgPerson",
         )
         assert result2.is_success
         stage2 = result2.unwrap()

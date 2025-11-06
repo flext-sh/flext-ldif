@@ -31,6 +31,7 @@ from flext_core import FlextLogger, FlextResult
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.servers.rfc import FlextLdifServersRfc
+from flext_ldif.typings import FlextLdifTypes
 from flext_ldif.utilities import FlextLdifUtilities
 
 logger = FlextLogger(__name__)
@@ -610,7 +611,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
         **Priority**: 200 (very low - last resort)
         """
 
-        def can_handle(self, acl: str | FlextLdifModels.Acl) -> bool:
+        def can_handle(self, acl: FlextLdifTypes.AclOrString) -> bool:
             """Check if this is a relaxed ACL (public method).
 
             Args:
@@ -622,7 +623,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             """
             return self.can_handle_acl(acl)
 
-        def can_handle_acl(self, acl_line: str | FlextLdifModels.Acl) -> bool:
+        def can_handle_acl(self, acl_line: FlextLdifTypes.AclOrString) -> bool:
             """Accept any ACL line in relaxed mode.
 
             Args:

@@ -13,6 +13,7 @@ from typing import Any
 from flext_core import FlextUtilities
 
 from flext_ldif.constants import FlextLdifConstants
+from flext_ldif.models import FlextLdifModels
 
 logger = logging.getLogger(__name__)
 
@@ -460,7 +461,7 @@ class FlextLdifUtilitiesACL:
 
     @staticmethod
     def format_oid_target(
-        target: Any,
+        target: FlextLdifModels.AclTarget | None,
     ) -> str:
         """Format OID ACL target clause.
 
@@ -491,7 +492,7 @@ class FlextLdifUtilitiesACL:
 
     @staticmethod
     def format_oid_subject(
-        subject: Any,
+        subject: FlextLdifModels.AclSubject | None,
         subject_formatters: dict[str, tuple[str, bool]],
     ) -> str:
         """Format OID ACL subject clause.
@@ -542,7 +543,7 @@ class FlextLdifUtilitiesACL:
 
     @staticmethod
     def format_oid_permissions(
-        permissions: Any,
+        permissions: FlextLdifModels.AclPermissions | None,
         permission_names: dict[str, str],
     ) -> str:
         """Format OID ACL permissions clause.
@@ -592,7 +593,7 @@ class FlextLdifUtilitiesACL:
     def format_aci_subject(
         subject_type: str,
         subject_value: str,
-        constants: Any,  # Server-specific Constants class with ACL attributes
+        constants: type,  # Server-specific Constants class with ACL attributes
     ) -> str:
         """Format ACL subject into ACI bind rule format.
 
@@ -717,7 +718,7 @@ class FlextLdifUtilitiesACL:
 
     @staticmethod
     def collect_active_permissions(
-        permissions: Any,
+        permissions: FlextLdifModels.AclPermissions | None,
         permission_attrs: list[tuple[str, str]],
     ) -> list[str]:
         """Collect list of active permission names from permissions model.

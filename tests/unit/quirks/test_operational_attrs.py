@@ -17,7 +17,9 @@ class TestOperationalAttributesStripping:
     """Test operational attributes stripping functionality."""
 
     def _create_entry(
-        self, dn_string: str, attributes: dict[str, list[str]]
+        self,
+        dn_string: str,
+        attributes: dict[str, list[str]],
     ) -> FlextLdifModels.Entry:
         """Helper to create entry with DN and attributes.
 
@@ -255,10 +257,10 @@ class TestOperationalAttributesStripping:
                 "objectclass": ["person"],
                 "structuralObjectClass": ["person"],  # OpenLDAP-specific, NOT in COMMON
                 "contextCSN": [
-                    "20250113100000.000000Z#000000#000#000000"
+                    "20250113100000.000000Z#000000#000#000000",
                 ],  # OpenLDAP-specific, NOT in COMMON
                 "entryCSN": [
-                    "20250113100000.000000Z#000000#000#000000"
+                    "20250113100000.000000Z#000000#000#000000",
                 ],  # Both COMMON and OpenLDAP-specific
                 "createTimestamp": ["20250113100000Z"],  # COMMON operational attr
             },

@@ -38,9 +38,21 @@ from flext_ldif.config import FlextLdifConfig
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.services.dn import FlextLdifDn as Dn
+from flext_ldif.services.migration import FlextLdifMigrationPipeline
 from flext_ldif.services.validation import (
     FlextLdifValidation as Validation,
 )
+from flext_ldif.typings import FlextLdifTypes
+
+# Rebuild models that use FlextLdifTypes forward references
+# This is needed because FlextLdifTypes contains forward references to FlextLdifModels
+# Pass namespace so Pydantic can evaluate string annotations
+_types_namespace = {
+    "FlextLdifTypes": FlextLdifTypes,
+    "FlextLdifModels": FlextLdifModels,
+}
+FlextLdif.model_rebuild(_types_namespace=_types_namespace)
+FlextLdifMigrationPipeline.model_rebuild(_types_namespace=_types_namespace)
 
 __email__ = "dev@flext.com"
 

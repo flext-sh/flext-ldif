@@ -7,9 +7,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import logging
-from typing import Any
 
 from flext_ldif.constants import FlextLdifConstants
+from flext_ldif.models import FlextLdifModels
 
 logger = logging.getLogger(__name__)
 
@@ -52,7 +52,7 @@ class FlextLdifUtilitiesObjectClass:
 
     @staticmethod
     def fix_missing_sup(
-        schema_oc: Any,
+        schema_oc: FlextLdifModels.SchemaObjectClass,
         _server_type: str = "oid",
     ) -> None:
         """Fix missing SUP for AUXILIARY objectClasses (server-specific fixes).
@@ -96,7 +96,7 @@ class FlextLdifUtilitiesObjectClass:
 
     @staticmethod
     def fix_kind_mismatch(
-        schema_oc: Any,
+        schema_oc: FlextLdifModels.SchemaObjectClass,
         _server_type: str = "oid",
     ) -> None:
         """Fix objectClass kind mismatches with superior classes (server-specific).
@@ -152,7 +152,7 @@ class FlextLdifUtilitiesObjectClass:
 
     @staticmethod
     def ensure_sup_for_auxiliary(
-        schema_oc: Any,
+        schema_oc: FlextLdifModels.SchemaObjectClass,
         default_sup: str = "top",
     ) -> None:
         """Ensure AUXILIARY objectClasses have a SUP clause.
@@ -176,7 +176,7 @@ class FlextLdifUtilitiesObjectClass:
 
     @staticmethod
     def align_kind_with_superior(
-        schema_oc: Any,
+        schema_oc: FlextLdifModels.SchemaObjectClass,
         superior_kind: str | None,
     ) -> None:
         """Align ObjectClass kind with its superior class kind.

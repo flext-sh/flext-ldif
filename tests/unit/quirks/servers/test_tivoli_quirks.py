@@ -419,10 +419,10 @@ class TestTivoliEntrys:
         server = FlextLdifServersTivoli()
         entry = server.entry
         dn = FlextLdifModels.DistinguishedName(
-            value="cn=ibm,cn=configuration,o=Example"
+            value="cn=ibm,cn=configuration,o=Example",
         )
         attributes = FlextLdifModels.LdifAttributes(
-            attributes={FlextLdifConstants.DictKeys.OBJECTCLASS: ["top"]}
+            attributes={FlextLdifConstants.DictKeys.OBJECTCLASS: ["top"]},
         )
         FlextLdifModels.Entry(dn=dn, attributes=attributes)
         assert entry.can_handle(dn.value, attributes.attributes) is True
@@ -436,7 +436,7 @@ class TestTivoliEntrys:
             attributes={
                 FlextLdifConstants.DictKeys.OBJECTCLASS: ["top"],
                 "ibm-entryUUID": ["123456"],
-            }
+            },
         )
         FlextLdifModels.Entry(dn=dn, attributes=attributes)
         assert entry.can_handle(dn.value, attributes.attributes) is True
@@ -448,8 +448,8 @@ class TestTivoliEntrys:
         dn = FlextLdifModels.DistinguishedName(value="cn=server,o=Example")
         attributes = FlextLdifModels.LdifAttributes(
             attributes={
-                FlextLdifConstants.DictKeys.OBJECTCLASS: ["top", "ibm-ldapserver"]
-            }
+                FlextLdifConstants.DictKeys.OBJECTCLASS: ["top", "ibm-ldapserver"],
+            },
         )
         FlextLdifModels.Entry(dn=dn, attributes=attributes)
         assert entry.can_handle(dn.value, attributes.attributes)
@@ -463,6 +463,6 @@ class TestTivoliEntrys:
             attributes={
                 FlextLdifConstants.DictKeys.OBJECTCLASS: ["person"],
                 "cn": ["test"],
-            }
+            },
         )
         assert not entry.can_handle(dn.value, attributes.attributes)

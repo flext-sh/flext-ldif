@@ -90,7 +90,10 @@ class TestMigrationPipelineInitialization:
         ],
     )
     def test_initialization_with_different_server_types(
-        self, source: str, target: str, tmp_path: Path
+        self,
+        source: str,
+        target: str,
+        tmp_path: Path,
     ) -> None:
         """Test pipeline initialization with various server type combinations."""
         input_dir = tmp_path / "input"
@@ -112,7 +115,8 @@ class TestMigrationPipelineValidation:
     """Test suite for parameter validation."""
 
     def test_execute_with_nonexistent_input_dir_returns_empty_result(
-        self, tmp_path: Path
+        self,
+        tmp_path: Path,
     ) -> None:
         """Test pipeline succeeds but returns empty result when input directory doesn't exist."""
         nonexistent_input = tmp_path / "nonexistent"
@@ -141,7 +145,7 @@ class TestMigrationPipelineValidation:
 
         # Create a simple LDIF file
         (input_dir / "test.ldif").write_text(
-            "dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test\n"
+            "dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test\n",
         )
 
         pipeline = FlextLdifMigrationPipeline(
@@ -224,7 +228,10 @@ class TestMigrationPipelineServerConversions:
         ],
     )
     def test_server_conversion_modes(
-        self, source: str, target: str, tmp_path: Path
+        self,
+        source: str,
+        target: str,
+        tmp_path: Path,
     ) -> None:
         """Test server-specific conversion modes."""
         input_dir = tmp_path / "input"
@@ -233,7 +240,7 @@ class TestMigrationPipelineServerConversions:
         output_dir.mkdir()
 
         (input_dir / "test.ldif").write_text(
-            "dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test\n"
+            "dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test\n",
         )
 
         pipeline = FlextLdifMigrationPipeline(

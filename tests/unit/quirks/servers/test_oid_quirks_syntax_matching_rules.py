@@ -42,7 +42,8 @@ class TestOidSyntaxOidReplacements:
         assert replacements.get(aci_list_oid) == directory_string_oid
 
     def test_parse_applies_aci_list_replacement(
-        self, oid_schema: FlextLdifServersOid.Schema
+        self,
+        oid_schema: FlextLdifServersOid.Schema,
     ) -> None:
         """Test that parsing applies ACI List → Directory String replacement."""
         attr_def = (
@@ -59,7 +60,8 @@ class TestOidSyntaxOidReplacements:
         assert parsed_attr.syntax == "1.3.6.1.4.1.1466.115.121.1.15"
 
     def test_parse_preserves_unreplaced_syntax_oids(
-        self, oid_schema: FlextLdifServersOid.Schema
+        self,
+        oid_schema: FlextLdifServersOid.Schema,
     ) -> None:
         """Test that parsing preserves syntax OIDs not in replacement table."""
         # Directory String syntax (should not be replaced)
@@ -76,7 +78,8 @@ class TestOidSyntaxOidReplacements:
         assert parsed_attr.syntax == "1.3.6.1.4.1.1466.115.121.1.15"
 
     def test_write_preserves_replaced_syntax_oids(
-        self, oid_schema: FlextLdifServersOid.Schema
+        self,
+        oid_schema: FlextLdifServersOid.Schema,
     ) -> None:
         """Test that writing preserves replaced syntax OIDs."""
         attr_def = (
@@ -136,7 +139,8 @@ class TestOidMatchingRuleReplacements:
             assert replacements.get("accessDirectiveMatch") == "caseIgnoreMatch"
 
     def test_parse_applies_case_ignore_substr_fix(
-        self, oid_schema: FlextLdifServersOid.Schema
+        self,
+        oid_schema: FlextLdifServersOid.Schema,
     ) -> None:
         """Test that parsing applies caseIgnoreSubStringsMatch fix."""
         attr_def = (
@@ -153,7 +157,8 @@ class TestOidMatchingRuleReplacements:
         assert parsed_attr.substr == "caseIgnoreSubstringsMatch"  # lowercase s
 
     def test_parse_preserves_standard_matching_rules(
-        self, oid_schema: FlextLdifServersOid.Schema
+        self,
+        oid_schema: FlextLdifServersOid.Schema,
     ) -> None:
         """Test that parsing preserves standard matching rules."""
         attr_def = (
@@ -170,7 +175,8 @@ class TestOidMatchingRuleReplacements:
         assert parsed_attr.equality == "caseIgnoreMatch"
 
     def test_write_preserves_fixed_matching_rules(
-        self, oid_schema: FlextLdifServersOid.Schema
+        self,
+        oid_schema: FlextLdifServersOid.Schema,
     ) -> None:
         """Test that writing preserves fixed matching rules."""
         attr_def = (
@@ -209,7 +215,8 @@ class TestOidOudCompatibilityTransformations:
         return FlextLdifFixtures.OID()
 
     def test_roundtrip_applies_transformations(
-        self, oid_schema: FlextLdifServersOid.Schema
+        self,
+        oid_schema: FlextLdifServersOid.Schema,
     ) -> None:
         """Test that roundtrip (parse → write) applies OUD transformations."""
         # Original has ACI List syntax

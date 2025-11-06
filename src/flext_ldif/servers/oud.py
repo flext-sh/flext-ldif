@@ -747,7 +747,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
         # AclConverter was moved to services/acl.py as FlextLdifAcl
         # Use FlextLdifAcl for OID→OUD ACL conversions instead
 
-        def can_handle(self, acl_line: str | FlextLdifModels.Acl) -> bool:
+        def can_handle(self, acl_line: FlextLdifTypes.AclOrString) -> bool:
             """Check if this is an Oracle OUD ACL (public method).
 
             Args:
@@ -759,7 +759,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             """
             return self.can_handle_acl(acl_line)
 
-        def can_handle_acl(self, acl_line: str | FlextLdifModels.Acl) -> bool:
+        def can_handle_acl(self, acl_line: FlextLdifTypes.AclOrString) -> bool:
             """Check if this is an Oracle OUD ACL line (implements abstract method from base.py).
 
             Detects Oracle OUD ACL by checking if the line starts with:

@@ -57,8 +57,9 @@ class FlextLdifWriter(FlextService[Any]):
 
     def __init__(
         self,
-        config: Any | None = None,  # Backward compatibility parameter (ignored)
-        quirk_registry: Any | None = None,  # Backward compatibility parameter (ignored)
+        config: object | None = None,  # Backward compatibility parameter (ignored)
+        quirk_registry: object
+        | None = None,  # Backward compatibility parameter (ignored)
     ) -> None:
         """Initialize the writer service.
 
@@ -77,7 +78,7 @@ class FlextLdifWriter(FlextService[Any]):
         self,
         entries: Sequence[FlextLdifModels.Entry],
         target_server_type: str,
-        output_target: FlextLdifConstants.LiteralTypes.WriterOutputTarget,
+        output_target: str,  # Literal["string", "file", "ldap3", "model"]
         output_path: Path | None = None,
         format_options: FlextLdifModels.WriteFormatOptions | None = None,
         header_template: str | None = None,
@@ -434,7 +435,7 @@ class FlextLdifWriter(FlextService[Any]):
         write_result = FlextLdifUtilities.Writer.write_file(
             final_content,
             output_path,
-            encoding=FlextLdifConstants.DEFAULT_ENCODING,
+            encoding=FlextLdifConstants.Encoding.UTF8,
         )
         if write_result.is_failure:
             return FlextResult.fail(f"Failed to write file: {write_result.error}")

@@ -28,7 +28,8 @@ class TestOidBooleanAttributeParsing:
         return FlextLdifServersOid().entry
 
     def test_boolean_attributes_constant_exists(
-        self, oid_schema: FlextLdifServersOid.Schema
+        self,
+        oid_schema: FlextLdifServersOid.Schema,
     ) -> None:
         """Test that BOOLEAN_ATTRIBUTES constant is defined."""
         boolean_attrs = FlextLdifServersOid.Constants.BOOLEAN_ATTRIBUTES
@@ -72,7 +73,8 @@ class TestOidBooleanAttributeRoundtrip:
         return FlextLdifServersOid().schema
 
     def test_parse_boolean_attribute_definition(
-        self, oid_schema: FlextLdifServersOid.Schema
+        self,
+        oid_schema: FlextLdifServersOid.Schema,
     ) -> None:
         """Test parsing boolean attribute definitions."""
         # Boolean attributes in OID use standard RFC format for schema definition
@@ -93,7 +95,8 @@ class TestOidBooleanAttributeRoundtrip:
         assert "orcldasenabled" in parsed_attr.name.lower()
 
     def test_write_boolean_attribute_definition(
-        self, oid_schema: FlextLdifServersOid.Schema
+        self,
+        oid_schema: FlextLdifServersOid.Schema,
     ) -> None:
         """Test writing boolean attribute definitions."""
         attr_def = (
@@ -118,7 +121,8 @@ class TestOidBooleanAttributeRoundtrip:
         assert "orcldasenabled" in written.lower()
 
     def test_boolean_attribute_roundtrip(
-        self, oid_schema: FlextLdifServersOid.Schema
+        self,
+        oid_schema: FlextLdifServersOid.Schema,
     ) -> None:
         """Test parse → write → parse roundtrip for boolean attributes."""
         original = (
@@ -181,7 +185,8 @@ class TestOidKnownBooleanAttributes:
         )
 
     def test_parse_password_policy_boolean_attribute(
-        self, oid_schema: FlextLdifServersOid.Schema
+        self,
+        oid_schema: FlextLdifServersOid.Schema,
     ) -> None:
         """Test parsing password policy boolean attribute."""
         attr_def = (
@@ -198,7 +203,8 @@ class TestOidKnownBooleanAttributes:
             assert parsed_attr is not None
 
     def test_parse_orcl_das_boolean_attribute(
-        self, oid_schema: FlextLdifServersOid.Schema
+        self,
+        oid_schema: FlextLdifServersOid.Schema,
     ) -> None:
         """Test parsing Oracle DAS boolean attribute."""
         attr_def = (

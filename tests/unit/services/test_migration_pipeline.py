@@ -93,7 +93,10 @@ class TestMigrationPipelineInitialization:
         ],
     )
     def test_initialization_with_different_server_types(
-        self, source: str, target: str, tmp_path: Path
+        self,
+        source: str,
+        target: str,
+        tmp_path: Path,
     ) -> None:
         """Test pipeline initialization with various server type combinations."""
         input_dir = tmp_path / "input"
@@ -143,7 +146,7 @@ class TestMigrationPipelineValidation:
 
         # Create a simple LDIF file
         (input_dir / "test.ldif").write_text(
-            "dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test\n"
+            "dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test\n",
         )
 
         pipeline = FlextLdifMigrationPipeline(
@@ -397,10 +400,10 @@ class TestMigrationPipelineMultipleFiles:
 
         # Create multiple LDIF files
         (input_dir / "schema.ldif").write_text(
-            "dn: cn=schema\nobjectClass: top\ncn: schema\n"
+            "dn: cn=schema\nobjectClass: top\ncn: schema\n",
         )
         (input_dir / "data.ldif").write_text(
-            "dn: cn=admin,dc=example,dc=com\nobjectClass: person\ncn: admin\n"
+            "dn: cn=admin,dc=example,dc=com\nobjectClass: person\ncn: admin\n",
         )
 
         pipeline = FlextLdifMigrationPipeline(
@@ -424,7 +427,7 @@ class TestMigrationPipelineMultipleFiles:
         output_dir.mkdir()
 
         (input_dir / "test.ldif").write_text(
-            "dn: cn=admin,dc=example,dc=com\nobjectClass: person\ncn: admin\n"
+            "dn: cn=admin,dc=example,dc=com\nobjectClass: person\ncn: admin\n",
         )
 
         categorization_rules = {
@@ -470,7 +473,10 @@ class TestMigrationPipelineServerConversions:
         ],
     )
     def test_server_conversion_modes(
-        self, source: str, target: str, tmp_path: Path
+        self,
+        source: str,
+        target: str,
+        tmp_path: Path,
     ) -> None:
         """Test server-specific conversion modes."""
         input_dir = tmp_path / "input"
@@ -479,7 +485,7 @@ class TestMigrationPipelineServerConversions:
         output_dir.mkdir()
 
         (input_dir / "test.ldif").write_text(
-            "dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test\n"
+            "dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test\n",
         )
 
         pipeline = FlextLdifMigrationPipeline(

@@ -80,7 +80,9 @@ class TestEntryAdaptation:
     """Test suite for entry adaptation functionality."""
 
     def _create_entry(
-        self, dn_string: str, attributes: dict[str, list[str]]
+        self,
+        dn_string: str,
+        attributes: dict[str, list[str]],
     ) -> FlextLdifModels.Entry:
         """Helper to create entry with DN and attributes."""
         dn = FlextLdifModels.DistinguishedName(value=dn_string)

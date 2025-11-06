@@ -25,6 +25,7 @@ from flext_core import FlextResult
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.servers.rfc import FlextLdifServersRfc
+from flext_ldif.typings import FlextLdifTypes
 
 
 class FlextLdifServersOpenldap(FlextLdifServersRfc):
@@ -389,7 +390,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             """
             super().__init__(**kwargs)
 
-        def can_handle(self, acl_line: str | FlextLdifModels.Acl) -> bool:
+        def can_handle(self, acl_line: FlextLdifTypes.AclOrString) -> bool:
             """Check if this is an OpenLDAP 2.x ACL.
 
             Args:
@@ -401,7 +402,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             """
             return self.can_handle_acl(acl_line)
 
-        def can_handle_acl(self, acl_line: str | FlextLdifModels.Acl) -> bool:
+        def can_handle_acl(self, acl_line: FlextLdifTypes.AclOrString) -> bool:
             """Check if this is an OpenLDAP 2.x ACL (internal).
 
             Args:

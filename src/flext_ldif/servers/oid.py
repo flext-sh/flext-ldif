@@ -942,8 +942,8 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                         if updated_metadata:
                             updated_metadata = updated_metadata.model_copy(
                                 update={
-                                    "quirk_type": FlextLdifServersOid.Constants.SERVER_TYPE
-                                }
+                                    "quirk_type": FlextLdifServersOid.Constants.SERVER_TYPE,
+                                },
                             )
                         else:
                             updated_metadata = FlextLdifModels.QuirkMetadata.create_for(
@@ -955,7 +955,7 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                             update={
                                 "server_type": FlextLdifServersOid.Constants.SERVER_TYPE,
                                 "metadata": updated_metadata,
-                            }
+                            },
                         )
                         return FlextResult[FlextLdifModels.Acl].ok(acl_data)
                     # Otherwise fall through to OID-specific parsing

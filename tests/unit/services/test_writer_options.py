@@ -30,7 +30,7 @@ class TestWriterFormatOptions:
         """Create a sample entry for testing."""
         return FlextLdifModels.Entry(
             dn=FlextLdifModels.DistinguishedName(
-                value="cn=John Doe,ou=people,dc=example,dc=com"
+                value="cn=John Doe,ou=people,dc=example,dc=com",
             ),
             attributes=FlextLdifModels.LdifAttributes(
                 attributes={
@@ -41,9 +41,9 @@ class TestWriterFormatOptions:
                     "mail": ["john.doe@example.com"],
                     "telephoneNumber": ["+1-555-123-4567"],
                     "description": [
-                        "A very long description that should definitely exceed the normal line width limit for LDIF formatting and trigger line folding behavior according to RFC 2849 specifications"
+                        "A very long description that should definitely exceed the normal line width limit for LDIF formatting and trigger line folding behavior according to RFC 2849 specifications",
                     ],
-                }
+                },
             ),
         )
 
@@ -67,7 +67,7 @@ class TestWriterFormatOptions:
 
         return FlextLdifModels.Entry(
             dn=FlextLdifModels.DistinguishedName(
-                value="cn=Jane Smith,ou=people,dc=example,dc=com"
+                value="cn=Jane Smith,ou=people,dc=example,dc=com",
             ),
             attributes=FlextLdifModels.LdifAttributes(
                 attributes={
@@ -78,7 +78,7 @@ class TestWriterFormatOptions:
                     "telephoneNumber": ["+1-555-987-6543"],
                     "emptyAttr": [""],
                     "description": [""],
-                }
+                },
             ),
             metadata=metadata,
         )
@@ -88,7 +88,7 @@ class TestWriterFormatOptions:
         """Create an entry with binary/special data for base64 testing."""
         return FlextLdifModels.Entry(
             dn=FlextLdifModels.DistinguishedName(
-                value="cn=binary-test,dc=example,dc=com"
+                value="cn=binary-test,dc=example,dc=com",
             ),
             attributes=FlextLdifModels.LdifAttributes(
                 attributes={
@@ -96,15 +96,15 @@ class TestWriterFormatOptions:
                     "cn": ["binary-test"],
                     "sn": ["Test"],
                     "userPassword": [
-                        "{SSHA}abcdefghijklmnopqrstuvwxyz0123456789=="
+                        "{SSHA}abcdefghijklmnopqrstuvwxyz0123456789==",
                     ],  # Base64-like
                     "jpegPhoto": [
-                        "binary data with \x00 null bytes and \x01 control chars"
+                        "binary data with \x00 null bytes and \x01 control chars",
                     ],
                     "description": [" starts with space"],
                     "comment": ["ends with space "],
                     "specialChars": [": colon at start"],
-                }
+                },
             ),
         )
 
@@ -219,7 +219,8 @@ class TestWriterFormatOptions:
     ) -> None:
         """Test respect_attribute_order=False functionality."""
         options = FlextLdifModels.WriteFormatOptions(
-            respect_attribute_order=False, sort_attributes=False
+            respect_attribute_order=False,
+            sort_attributes=False,
         )
 
         result = writer_service.write(
@@ -288,7 +289,7 @@ class TestWriterFormatOptions:
     ) -> None:
         """Test write_hidden_attributes_as_comments=True functionality."""
         options = FlextLdifModels.WriteFormatOptions(
-            write_hidden_attributes_as_comments=True
+            write_hidden_attributes_as_comments=True,
         )
 
         result = writer_service.write(
@@ -499,7 +500,8 @@ class TestWriterFormatOptions:
     ) -> None:
         """Test fold_long_lines=True functionality."""
         options = FlextLdifModels.WriteFormatOptions(
-            fold_long_lines=True, line_width=50
+            fold_long_lines=True,
+            line_width=50,
         )
 
         result = writer_service.write(
@@ -615,7 +617,7 @@ class TestWriterFormatOptions:
                     "CN": ["Test User"],
                     "SN": ["User"],
                     "GivenName": ["Test"],
-                }
+                },
             ),
         )
 
@@ -643,7 +645,8 @@ class TestWriterFormatOptions:
         assert "GivenName:" not in output
 
     def test_normalize_attribute_names_disabled(
-        self, writer_service: FlextLdifWriter
+        self,
+        writer_service: FlextLdifWriter,
     ) -> None:
         """Test normalize_attribute_names=False functionality."""
         # Create entry with mixed-case attribute names
@@ -654,7 +657,7 @@ class TestWriterFormatOptions:
                     "ObjectClass": ["person"],
                     "CN": ["Test User"],
                     "SN": ["User"],
-                }
+                },
             ),
         )
 
@@ -682,7 +685,7 @@ class TestWriterFormatOptions:
         entry = FlextLdifModels.Entry(
             dn=FlextLdifModels.DistinguishedName(value=long_dn),
             attributes=FlextLdifModels.LdifAttributes(
-                attributes={"objectClass": ["person"], "cn": ["Test"]}
+                attributes={"objectClass": ["person"], "cn": ["Test"]},
             ),
         )
 
@@ -702,14 +705,15 @@ class TestWriterFormatOptions:
         assert "# Complex DN:" in output
 
     def test_include_dn_comments_disabled(
-        self, writer_service: FlextLdifWriter
+        self,
+        writer_service: FlextLdifWriter,
     ) -> None:
         """Test include_dn_comments=False functionality."""
         long_dn = "cn=Very Long Common Name That Exceeds Normal Length,ou=people,dc=example,dc=com"
         entry = FlextLdifModels.Entry(
             dn=FlextLdifModels.DistinguishedName(value=long_dn),
             attributes=FlextLdifModels.LdifAttributes(
-                attributes={"objectClass": ["person"], "cn": ["Test"]}
+                attributes={"objectClass": ["person"], "cn": ["Test"]},
             ),
         )
 
@@ -782,7 +786,9 @@ class TestWriterFormatOptions:
         output_file = tmp_path / "test_output.ldif"
 
         options = FlextLdifModels.WriteFormatOptions(
-            include_version_header=True, include_timestamps=True, line_width=50
+            include_version_header=True,
+            include_timestamps=True,
+            line_width=50,
         )
 
         result = writer_service.write(
@@ -840,7 +846,8 @@ class TestWriterFormatOptions:
     ) -> None:
         """Test model output format (options shouldn't affect model format)."""
         options = FlextLdifModels.WriteFormatOptions(
-            normalize_attribute_names=True, sort_attributes=True
+            normalize_attribute_names=True,
+            sort_attributes=True,
         )
 
         result = writer_service.write(
@@ -871,7 +878,8 @@ class TestWriterFormatOptions:
         """
         # Test with minimal line width
         options = FlextLdifModels.WriteFormatOptions(
-            line_width=10, fold_long_lines=True
+            line_width=10,
+            fold_long_lines=True,
         )
 
         result = writer_service.write(
@@ -903,7 +911,8 @@ class TestWriterFormatOptions:
     def test_empty_entries_list(self, writer_service: FlextLdifWriter) -> None:
         """Test writing empty entries list with options."""
         options = FlextLdifModels.WriteFormatOptions(
-            include_version_header=True, include_timestamps=True
+            include_version_header=True,
+            include_timestamps=True,
         )
 
         result = writer_service.write(

@@ -32,7 +32,8 @@ class TestActiveDirectorySchemas:
         assert ad_server.priority == FlextLdifServersAd.Constants.PRIORITY
 
     def testcan_handle_attribute_with_ad_oid(
-        self, ad_schema: FlextLdifServersAd.Schema
+        self,
+        ad_schema: FlextLdifServersAd.Schema,
     ) -> None:
         """Test attribute detection with Microsoft AD OID."""
         quirk = ad_schema
@@ -45,7 +46,8 @@ class TestActiveDirectorySchemas:
         assert result.is_success  # AD OID namespace should be handled
 
     def testcan_handle_attribute_with_ad_name(
-        self, ad_schema: FlextLdifServersAd.Schema
+        self,
+        ad_schema: FlextLdifServersAd.Schema,
     ) -> None:
         """Test attribute detection with AD-specific attribute name."""
         quirk = ad_schema
@@ -57,7 +59,8 @@ class TestActiveDirectorySchemas:
         assert result.is_success  # AD OID namespace should be handled
 
     def testcan_handle_attribute_with_microsoft_marker(
-        self, ad_schema: FlextLdifServersAd.Schema
+        self,
+        ad_schema: FlextLdifServersAd.Schema,
     ) -> None:
         """Test attribute detection with Microsoft marker in description."""
         quirk = ad_schema
@@ -68,7 +71,8 @@ class TestActiveDirectorySchemas:
         assert quirk.can_handle_attribute(attr_def) is True
 
     def testcan_handle_attribute_negative(
-        self, ad_schema: FlextLdifServersAd.Schema
+        self,
+        ad_schema: FlextLdifServersAd.Schema,
     ) -> None:
         """Test attribute detection rejects non-AD attributes."""
         quirk = ad_schema
@@ -81,7 +85,8 @@ class TestActiveDirectorySchemas:
         assert hasattr(result, "is_success")
 
     def test_parse_attribute_success(
-        self, ad_schema: FlextLdifServersAd.Schema
+        self,
+        ad_schema: FlextLdifServersAd.Schema,
     ) -> None:
         """Test successful attribute parsing."""
         quirk = ad_schema
@@ -115,7 +120,8 @@ class TestActiveDirectorySchemas:
         assert "missing an OID" in result.error
 
     def testcan_handle_objectclass_with_ad_oid(
-        self, ad_schema: FlextLdifServersAd.Schema
+        self,
+        ad_schema: FlextLdifServersAd.Schema,
     ) -> None:
         """Test objectClass detection with Microsoft AD OID."""
         quirk = ad_schema
@@ -128,7 +134,8 @@ class TestActiveDirectorySchemas:
         assert result.is_success  # AD objectClass should be handled
 
     def testcan_handle_objectclass_with_ad_name(
-        self, ad_schema: FlextLdifServersAd.Schema
+        self,
+        ad_schema: FlextLdifServersAd.Schema,
     ) -> None:
         """Test objectClass detection with AD-specific class name."""
         quirk = ad_schema
@@ -141,7 +148,8 @@ class TestActiveDirectorySchemas:
         assert result.is_success  # AD objectClass should be handled
 
     def testcan_handle_objectclass_negative(
-        self, ad_schema: FlextLdifServersAd.Schema
+        self,
+        ad_schema: FlextLdifServersAd.Schema,
     ) -> None:
         """Test objectClass detection rejects non-AD classes."""
         quirk = ad_schema
@@ -156,7 +164,8 @@ class TestActiveDirectorySchemas:
         assert hasattr(result, "is_success")
 
     def test_parse_objectclass_success(
-        self, ad_schema: FlextLdifServersAd.Schema
+        self,
+        ad_schema: FlextLdifServersAd.Schema,
     ) -> None:
         """Test successful objectClass parsing."""
         quirk = ad_schema
@@ -184,7 +193,8 @@ class TestActiveDirectorySchemas:
         assert "sAMAccountName" in may_attrs
 
     def test_parse_objectclass_auxiliary(
-        self, ad_schema: FlextLdifServersAd.Schema
+        self,
+        ad_schema: FlextLdifServersAd.Schema,
     ) -> None:
         """Test parsing AUXILIARY objectClass."""
         quirk = ad_schema
@@ -197,7 +207,8 @@ class TestActiveDirectorySchemas:
         assert oc_data.kind == "AUXILIARY"
 
     def test_parse_objectclass_no_oid(
-        self, ad_schema: FlextLdifServersAd.Schema
+        self,
+        ad_schema: FlextLdifServersAd.Schema,
     ) -> None:
         """Test objectClass parsing fails without OID."""
         quirk = ad_schema
@@ -231,7 +242,8 @@ class TestActiveDirectorySchemas:
         assert "SINGLE-VALUE" in attr_str
 
     def test_write_objectclass_to_rfc(
-        self, ad_schema: FlextLdifServersAd.Schema
+        self,
+        ad_schema: FlextLdifServersAd.Schema,
     ) -> None:
         """Test writing objectClass to RFC string format."""
         quirk = ad_schema
@@ -275,7 +287,8 @@ class TestActiveDirectoryAcls:
         assert ad_acl_server is not None
 
     def test__can_handle_with_ntsecuritydescriptor(
-        self, ad_acl: FlextLdifServersAd.Acl
+        self,
+        ad_acl: FlextLdifServersAd.Acl,
     ) -> None:
         """Test ACL detection with nTSecurityDescriptor attribute."""
         acl = ad_acl
@@ -295,7 +308,7 @@ class TestActiveDirectoryAcls:
         result = acl.parse(
             acl_model.raw_acl
             if hasattr(acl_model, "raw_acl") and acl_model.raw_acl
-            else str(acl_model)
+            else str(acl_model),
         )
         assert result.is_success  # AD ACL should be handled
 
@@ -319,7 +332,7 @@ class TestActiveDirectoryAcls:
         result = acl.parse(
             acl_model.raw_acl
             if hasattr(acl_model, "raw_acl") and acl_model.raw_acl
-            else str(acl_model)
+            else str(acl_model),
         )
         assert result.is_success  # AD ACL should be handled
 
@@ -342,7 +355,7 @@ class TestActiveDirectoryAcls:
         result = acl.parse(
             acl_model.raw_acl
             if hasattr(acl_model, "raw_acl") and acl_model.raw_acl
-            else str(acl_model)
+            else str(acl_model),
         )
         # Non-AD ACL may parse but AD quirk won't be selected
         assert hasattr(result, "is_success")
@@ -394,11 +407,12 @@ class TestActiveDirectoryAcls:
             name="nTSecurityDescriptor",
             target=FlextLdifModels.AclTarget(target_dn="*", attributes=[]),
             subject=FlextLdifModels.AclSubject(
-                subject_type="sddl", subject_value="O:BAG:BAD:S:"
+                subject_type="sddl",
+                subject_value="O:BAG:BAD:S:",
             ),
             permissions=FlextLdifModels.AclPermissions(),
             metadata=FlextLdifModels.QuirkMetadata.create_for(
-                FlextLdifServersAd.Constants.SERVER_TYPE
+                FlextLdifServersAd.Constants.SERVER_TYPE,
             ),
             raw_acl="nTSecurityDescriptor: O:BAG:BAD:S:",
         )
@@ -428,7 +442,8 @@ class TestActiveDirectoryEntrys:
         assert ad_entry_server is not None
 
     def test_can_handle_entry_with_ad_dn_marker(
-        self, ad_entry: FlextLdifServersAd.Entry
+        self,
+        ad_entry: FlextLdifServersAd.Entry,
     ) -> None:
         """Test entry detection with AD DN markers."""
         entry = ad_entry
@@ -453,7 +468,8 @@ class TestActiveDirectoryEntrys:
         assert result.is_success or result.is_failure  # Either is acceptable
 
     def test_can_handle_entry_with_ad_attributes(
-        self, ad_entry: FlextLdifServersAd.Entry
+        self,
+        ad_entry: FlextLdifServersAd.Entry,
     ) -> None:
         """Test entry detection with AD-specific attributes."""
         entry = ad_entry
@@ -463,7 +479,7 @@ class TestActiveDirectoryEntrys:
             attributes={
                 "objectGUID": ["12345678-1234-1234-1234-123456789012"],
                 "objectSid": ["S-1-5-21-..."],
-            }
+            },
         )
         FlextLdifModels.Entry(dn=dn, attributes=attributes)
 
@@ -481,14 +497,15 @@ class TestActiveDirectoryEntrys:
         assert result.is_success or result.is_failure  # Either is acceptable
 
     def test_can_handle_entry_with_ad_objectclass(
-        self, ad_entry: FlextLdifServersAd.Entry
+        self,
+        ad_entry: FlextLdifServersAd.Entry,
     ) -> None:
         """Test entry detection with AD objectClass."""
         entry = ad_entry
 
         dn = FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com")
         attributes = FlextLdifModels.LdifAttributes(
-            attributes={FlextLdifConstants.DictKeys.OBJECTCLASS: ["user", "person"]}
+            attributes={FlextLdifConstants.DictKeys.OBJECTCLASS: ["user", "person"]},
         )
         FlextLdifModels.Entry(dn=dn, attributes=attributes)
 
@@ -506,16 +523,17 @@ class TestActiveDirectoryEntrys:
         assert result.is_success or result.is_failure  # Either is acceptable
 
     def test_can_handle_entry_negative(
-        self, ad_entry: FlextLdifServersAd.Entry
+        self,
+        ad_entry: FlextLdifServersAd.Entry,
     ) -> None:
         """Test entry detection rejects non-AD entries."""
         entry = ad_entry
 
         dn = FlextLdifModels.DistinguishedName(
-            value="cn=test,ou=people,dc=example,dc=com"
+            value="cn=test,ou=people,dc=example,dc=com",
         )
         attributes = FlextLdifModels.LdifAttributes(
-            attributes={FlextLdifConstants.DictKeys.OBJECTCLASS: ["inetOrgPerson"]}
+            attributes={FlextLdifConstants.DictKeys.OBJECTCLASS: ["inetOrgPerson"]},
         )
         FlextLdifModels.Entry(dn=dn, attributes=attributes)
 

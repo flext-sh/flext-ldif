@@ -76,7 +76,8 @@ class TestOidSchemas:
         assert hasattr(result, "is_success")
 
     def testcan_handle_attribute_non_string_input(
-        self, oid: FlextLdifServersOid.Schema
+        self,
+        oid: FlextLdifServersOid.Schema,
     ) -> None:
         """Test can_handle_attribute with non-string input returns False."""
         # Test with None
@@ -94,7 +95,8 @@ class TestOidSchemas:
         assert result.is_failure  # Invalid input should fail
 
     def test_parse_oracle_attribute_basic(
-        self, oid: FlextLdifServersOid.Schema
+        self,
+        oid: FlextLdifServersOid.Schema,
     ) -> None:
         """Test parsing basic Oracle attribute definition."""
         attr_def = (
@@ -116,7 +118,9 @@ class TestOidSchemas:
         assert hasattr(parsed, "name")
 
     def test_parse_oracle_attribute_from_fixtures(
-        self, oid: FlextLdifServersOid.Schema, oid_fixtures: FlextLdifFixtures.OID
+        self,
+        oid: FlextLdifServersOid.Schema,
+        oid_fixtures: FlextLdifFixtures.OID,
     ) -> None:
         """Test parsing Oracle attributes from real OID schema fixtures."""
         schema_content = oid_fixtures.schema()
@@ -145,7 +149,8 @@ class TestOidSchemas:
         assert hasattr(parsed, "oid") or "name" in parsed
 
     def test_can_handle_oracle_objectclass(
-        self, oid: FlextLdifServersOid.Schema
+        self,
+        oid: FlextLdifServersOid.Schema,
     ) -> None:
         """Test detection of Oracle OID objectClasses."""
         # Oracle objectClass
@@ -162,7 +167,8 @@ class TestOidSchemas:
         assert hasattr(result, "is_success")
 
     def test_parse_oracle_objectclass_basic(
-        self, oid: FlextLdifServersOid.Schema
+        self,
+        oid: FlextLdifServersOid.Schema,
     ) -> None:
         """Test parsing basic Oracle objectClass definition."""
         oc_def = (
@@ -184,7 +190,9 @@ class TestOidSchemas:
         assert hasattr(parsed, "name")
 
     def test_parse_oracle_objectclass_from_fixtures(
-        self, oid: FlextLdifServersOid.Schema, oid_fixtures: FlextLdifFixtures.OID
+        self,
+        oid: FlextLdifServersOid.Schema,
+        oid_fixtures: FlextLdifFixtures.OID,
     ) -> None:
         """Test parsing Oracle objectClasses from real OID schema fixtures."""
         schema_content = oid_fixtures.schema()
@@ -212,7 +220,8 @@ class TestOidSchemas:
         assert hasattr(parsed, "oid") or "name" in parsed
 
     def test_parse_oracle_objectclass_with_all_options(
-        self, oid: FlextLdifServersOid.Schema
+        self,
+        oid: FlextLdifServersOid.Schema,
     ) -> None:
         """Test parsing Oracle objectClass with all possible options."""
         complex_oc = (
@@ -240,7 +249,8 @@ class TestOidSchemas:
         assert parsed.may == ["description", "orclVersion", "orclNetDescName"]
 
     def test_parse_oracle_objectclass_minimal(
-        self, oid: FlextLdifServersOid.Schema
+        self,
+        oid: FlextLdifServersOid.Schema,
     ) -> None:
         """Test parsing minimal Oracle objectClass."""
         minimal_oc = "( 2.16.840.1.113894.2.1.1 NAME 'orclContext' SUP top )"
@@ -296,7 +306,8 @@ class TestOidSchemas:
         assert parsed.kind == "ABSTRACT"
 
     def test_parse_oracle_objectclass_multiple_sup(
-        self, oid: FlextLdifServersOid
+        self,
+        oid: FlextLdifServersOid,
     ) -> None:
         """Test parsing Oracle objectClass with multiple SUP (captures first only).
 
@@ -356,7 +367,8 @@ class TestOidSchemas:
         assert "orclguid" in written
 
     def test_parse_oracle_attribute_with_all_options(
-        self, oid: FlextLdifServersOid
+        self,
+        oid: FlextLdifServersOid,
     ) -> None:
         """Test parsing Oracle attribute with all possible options."""
         # Test attribute with all possible regex patterns
@@ -408,7 +420,8 @@ class TestOidSchemas:
         assert parsed.no_user_modification is False
 
     def test_parse_oracle_attribute_invalid_syntax_length(
-        self, oid: FlextLdifServersOid
+        self,
+        oid: FlextLdifServersOid,
     ) -> None:
         """Test parsing Oracle attribute with invalid syntax length."""
         invalid_attr = (
@@ -425,7 +438,8 @@ class TestOidSchemas:
         assert "syntax_length" not in parsed
 
     def test_parse_oracle_attribute_with_sup_number(
-        self, oid: FlextLdifServersOid
+        self,
+        oid: FlextLdifServersOid,
     ) -> None:
         """Test parsing Oracle attribute with numeric SUP."""
         numeric_sup_attr = (
@@ -441,7 +455,8 @@ class TestOidSchemas:
         assert parsed.sup == "name"
 
     def test_parse_oracle_attribute_malformed_regex(
-        self, oid: FlextLdifServersOid
+        self,
+        oid: FlextLdifServersOid,
     ) -> None:
         """Test parsing Oracle attribute with malformed regex patterns."""
         # Missing closing parenthesis in SYNTAX
@@ -518,7 +533,8 @@ class TestOidAcls:
         assert parsed.raw_acl == simple_orclaci
 
     def test_parse_complex_orclaci_with_filter(
-        self, acl: FlextLdifServersOid.Acl
+        self,
+        acl: FlextLdifServersOid.Acl,
     ) -> None:
         """Test parsing complex orclaci with filter and multiple 'by' clauses - WORST CASE."""
         # Worst case: filter + 3 "by" clauses + multiple groups
@@ -592,7 +608,8 @@ class TestOidAcls:
         assert parsed.metadata.quirk_type == FlextLdifServersOid.Constants.SERVER_TYPE
 
     def test_parse_orclentrylevelaci_with_constraint(
-        self, acl: FlextLdifServersOid.Acl
+        self,
+        acl: FlextLdifServersOid.Acl,
     ) -> None:
         """Test parsing orclentrylevelaci with added_object_constraint - WORST CASE."""
         # Worst case: added_object_constraint with OR operator
@@ -673,7 +690,7 @@ class TestOidEntrys:
             "cn": ["OracleContext"],
             "objectclass": ["top", "orclContext"],
             "orclguid": [
-                "12345678-1234-1234-1234-123456789012"
+                "12345678-1234-1234-1234-123456789012",
             ],  # OID-specific attribute
         }
 
@@ -802,7 +819,8 @@ orclobjectguid: 87654321-4321-4321-4321-210987654321
         assert "orclobjectguid" in entry.attributes.attributes
 
     def test_write_entry_with_oracle_attributes(
-        self, entry: FlextLdifServersOid.Entry
+        self,
+        entry: FlextLdifServersOid.Entry,
     ) -> None:
         """Test writing OID entry with Oracle-specific attributes."""
         # Create model entry
@@ -813,7 +831,7 @@ orclobjectguid: 87654321-4321-4321-4321-210987654321
                     "cn": ["test"],
                     "objectclass": ["person"],
                     "orclguid": ["12345678-1234-1234-1234-123456789012"],
-                }
+                },
             ),
         )
 
@@ -902,7 +920,8 @@ orclguid: 12345678-1234-1234-1234-123456789012
         assert result.is_failure  # Empty input fails
 
     def test_write_attribute_to_rfc_error_handling(
-        self, oid: FlextLdifServersOid
+        self,
+        oid: FlextLdifServersOid,
     ) -> None:
         """Test error handling in attribute to RFC writing."""
         # Test with missing required fields
@@ -918,7 +937,8 @@ orclguid: 12345678-1234-1234-1234-123456789012
         assert result.is_failure  # Should fail due to missing required fields
 
     def test_write_objectclass_to_rfc_error_handling(
-        self, oid: FlextLdifServersOid
+        self,
+        oid: FlextLdifServersOid,
     ) -> None:
         """Test error handling in objectClass to RFC writing."""
         # Test with missing required fields
@@ -943,7 +963,8 @@ class TestOidQuirksIntegration:
         return FlextLdifFixtures.OID()
 
     def test_fixture_loader_availability(
-        self, oid_fixtures: FlextLdifFixtures.OID
+        self,
+        oid_fixtures: FlextLdifFixtures.OID,
     ) -> None:
         """Test that OID fixtures are available and loadable."""
         # Schema fixture
@@ -963,7 +984,8 @@ class TestOidQuirksIntegration:
         assert "dn:" in integration
 
     def test_parse_multiple_fixture_entries(
-        self, oid_fixtures: FlextLdifFixtures.OID
+        self,
+        oid_fixtures: FlextLdifFixtures.OID,
     ) -> None:
         """Test parsing multiple entries from integration fixtures."""
         integration_content = oid_fixtures.integration()
@@ -980,7 +1002,8 @@ class TestOidQuirksIntegration:
         assert entry_count >= 100, f"Expected at least 100 entries, found {entry_count}"
 
     def test_parse_oracle_schemas_from_fixtures(
-        self, oid_fixtures: FlextLdifFixtures.OID
+        self,
+        oid_fixtures: FlextLdifFixtures.OID,
     ) -> None:
         """Test parsing Oracle schema definitions from fixtures."""
         schema_content = oid_fixtures.schema()
@@ -1044,7 +1067,9 @@ class TestOidSchemaExtractionWithRealFixtures:
         return FlextLdifFixtures.OID()
 
     def test_extract_complete_oid_schema_fixtures(
-        self, oid: FlextLdifServersOid.Schema, oid_fixtures: FlextLdifFixtures.OID
+        self,
+        oid: FlextLdifServersOid.Schema,
+        oid_fixtures: FlextLdifFixtures.OID,
     ) -> None:
         """Test extraction of COMPLETE OID schema fixture file.
 
@@ -1149,7 +1174,9 @@ class TestOidSchemaExtractionWithRealFixtures:
         )
 
     def test_extract_oid_schema_no_parsing_failures(
-        self, oid: FlextLdifServersOid.Schema, oid_fixtures: FlextLdifFixtures.OID
+        self,
+        oid: FlextLdifServersOid.Schema,
+        oid_fixtures: FlextLdifFixtures.OID,
     ) -> None:
         """Verify no parsing failures occur with complete OID fixture.
 
@@ -1207,7 +1234,8 @@ class TestOidAclFixtures:
     """Test OID ACL parsing using real oid_acl_fixtures.ldif."""
 
     def test_parse_oid_acl_fixtures_complete(
-        self, oid_fixtures: FlextLdifFixtures.OID
+        self,
+        oid_fixtures: FlextLdifFixtures.OID,
     ) -> None:
         """Test parsing complete OID ACL fixture file."""
         from flext_ldif import FlextLdif
@@ -1233,7 +1261,7 @@ class TestOidAclFixtures:
             if hasattr(entry, "attributes"):
                 attrs = entry.attributes
                 if attrs.has_attribute("orclaci") or attrs.has_attribute(
-                    "orclentrylevelaci"
+                    "orclentrylevelaci",
                 ):
                     acl_count += 1
 
@@ -1256,7 +1284,8 @@ class TestOidEntriesFixtures:
     """Test OID entry parsing using real oid_entries_fixtures.ldif."""
 
     def test_parse_oid_entries_fixtures_complete(
-        self, oid_fixtures: FlextLdifFixtures.OID
+        self,
+        oid_fixtures: FlextLdifFixtures.OID,
     ) -> None:
         """Test parsing complete OID entries fixture file."""
         from flext_ldif import FlextLdif
@@ -1283,7 +1312,8 @@ class TestOidEntriesFixtures:
             assert len(dn_str) > 0, f"Entry has empty DN: {entry}"
 
     def test_oid_entries_have_objectclass(
-        self, oid_fixtures: FlextLdifFixtures.OID
+        self,
+        oid_fixtures: FlextLdifFixtures.OID,
     ) -> None:
         """Test that OID entries contain objectClass attributes."""
         from flext_ldif import FlextLdif
@@ -1301,7 +1331,7 @@ class TestOidEntriesFixtures:
                 attrs = entry.attributes
 
         assert attrs.has_attribute("objectClass") or attrs.has_attribute(
-            "objectclass"
+            "objectclass",
         ), (
             f"Entry missing objectClass: {entry.dn if hasattr(entry, 'dn') else 'unknown'}"
         )
@@ -1311,7 +1341,8 @@ class TestOidIntegrationFixtures:
     """Test OID integration fixtures (mixed schema + entries + ACLs)."""
 
     def test_parse_oid_integration_fixtures_complete(
-        self, oid_fixtures: FlextLdifFixtures.OID
+        self,
+        oid_fixtures: FlextLdifFixtures.OID,
     ) -> None:
         """Test parsing complete OID integration fixture (mixed content)."""
         from flext_ldif import FlextLdif
@@ -1331,7 +1362,8 @@ class TestOidIntegrationFixtures:
         assert len(entries) > 0, "No entries parsed from integration fixture"
 
     def test_oid_integration_contains_multiple_types(
-        self, oid_fixtures: FlextLdifFixtures.OID
+        self,
+        oid_fixtures: FlextLdifFixtures.OID,
     ) -> None:
         """Test that integration fixture contains schema, ACL, and entries."""
         integration_content = oid_fixtures.integration()
@@ -1443,7 +1475,8 @@ class TestOidQuirksErrorHandling:
             assert hasattr(parsed, "metadata")
 
     def test_parse_objectclass_exception_handling(
-        self, oid: FlextLdifServersOid
+        self,
+        oid: FlextLdifServersOid,
     ) -> None:
         """Test parse_objectclass exception handling with malformed input."""
         # Test with invalid input
@@ -1469,7 +1502,8 @@ class TestOidQuirksWriteAttributeToRfc:
         return FlextLdifServersOid().schema
 
     def test_write_attribute_with_metadata_roundtrip(
-        self, oid: FlextLdifServersOid
+        self,
+        oid: FlextLdifServersOid,
     ) -> None:
         """Test write_attribute_to_rfc uses metadata.original_format for round-trip."""
         original_format = (
@@ -1541,7 +1575,8 @@ class TestOidQuirksWriteAttributeToRfc:
         assert "1.3.6.1.4.1.1466.115.121.1.15" in rfc_str
 
     def test_write_attribute_removes_binary_suffix(
-        self, oid: FlextLdifServersOid
+        self,
+        oid: FlextLdifServersOid,
     ) -> None:
         """Test write_attribute_to_rfc removes ;binary suffix from attribute names."""
         attr_data = FlextLdifModels.SchemaAttribute(
@@ -1560,7 +1595,8 @@ class TestOidQuirksWriteAttributeToRfc:
         assert "orclGUID" in rfc_str
 
     def test_write_attribute_replaces_underscore_with_hyphen(
-        self, oid: FlextLdifServersOid
+        self,
+        oid: FlextLdifServersOid,
     ) -> None:
         """Test write_attribute_to_rfc replaces underscores with hyphens."""
         attr_data = FlextLdifModels.SchemaAttribute(
@@ -1611,7 +1647,8 @@ class TestOidQuirksWriteAttributeToRfc:
         assert "SUP name" in rfc_str
 
     def test_write_attribute_with_equality_replacement(
-        self, oid: FlextLdifServersOid
+        self,
+        oid: FlextLdifServersOid,
     ) -> None:
         """Test write_attribute_to_rfc replaces invalid matching rules."""
         attr_data = FlextLdifModels.SchemaAttribute(
@@ -1768,7 +1805,8 @@ class TestOidQuirksWriteObjectclassToRfc:
         return FlextLdifServersOid().schema
 
     def test_write_objectclass_with_metadata_roundtrip(
-        self, oid: FlextLdifServersOid
+        self,
+        oid: FlextLdifServersOid,
     ) -> None:
         """Test write_objectclass_to_rfc uses metadata for round-trip."""
         original_format = (
@@ -1803,7 +1841,8 @@ class TestOidQuirksWriteObjectclassToRfc:
         assert "oid" in result.error.lower() or "missing" in result.error.lower()
 
     def test_write_objectclass_from_scratch_basic(
-        self, oid: FlextLdifServersOid
+        self,
+        oid: FlextLdifServersOid,
     ) -> None:
         """Test write_objectclass_to_rfc builds RFC format from scratch."""
         oc_data = FlextLdifModels.SchemaObjectClass(
@@ -1829,7 +1868,10 @@ class TestOidQuirksWriteObjectclassToRfc:
     def test_write_objectclass_with_desc(self, oid: FlextLdifServersOid.Schema) -> None:
         """Test write_objectclass_to_rfc includes DESC field."""
         oc_data = FlextLdifModels.SchemaObjectClass(
-            oid="2.5.6.6", name="person", desc="Oracle Context", kind="STRUCTURAL"
+            oid="2.5.6.6",
+            name="person",
+            desc="Oracle Context",
+            kind="STRUCTURAL",
         )
         result = oid.write(oc_data)
 
@@ -1839,11 +1881,15 @@ class TestOidQuirksWriteObjectclassToRfc:
         assert "DESC 'Oracle Context'" in rfc_str
 
     def test_write_objectclass_with_multiple_sup(
-        self, oid: FlextLdifServersOid
+        self,
+        oid: FlextLdifServersOid,
     ) -> None:
         """Test write_objectclass_to_rfc handles multiple superior classes."""
         oc_data = FlextLdifModels.SchemaObjectClass(
-            oid="2.5.6.6", name="person", kind="STRUCTURAL", sup=["top", "person"]
+            oid="2.5.6.6",
+            name="person",
+            kind="STRUCTURAL",
+            sup=["top", "person"],
         )
         result = oid.write(oc_data)
 
@@ -1853,11 +1899,15 @@ class TestOidQuirksWriteObjectclassToRfc:
         assert "SUP ( top $ person )" in rfc_str
 
     def test_write_objectclass_with_must_attributes(
-        self, oid: FlextLdifServersOid
+        self,
+        oid: FlextLdifServersOid,
     ) -> None:
         """Test write_objectclass_to_rfc includes MUST attributes."""
         oc_data = FlextLdifModels.SchemaObjectClass(
-            oid="2.5.6.6", name="person", kind="STRUCTURAL", must=["cn", "objectClass"]
+            oid="2.5.6.6",
+            name="person",
+            kind="STRUCTURAL",
+            must=["cn", "objectClass"],
         )
         result = oid.write(oc_data)
 
@@ -1867,7 +1917,8 @@ class TestOidQuirksWriteObjectclassToRfc:
         assert "MUST ( cn $ objectClass )" in rfc_str
 
     def test_write_objectclass_with_may_attributes(
-        self, oid: FlextLdifServersOid
+        self,
+        oid: FlextLdifServersOid,
     ) -> None:
         """Test write_objectclass_to_rfc includes MAY attributes."""
         oc_data = FlextLdifModels.SchemaObjectClass(
@@ -1886,7 +1937,9 @@ class TestOidQuirksWriteObjectclassToRfc:
     def test_write_objectclass_auxiliary(self, oid: FlextLdifServersOid.Schema) -> None:
         """Test write_objectclass_to_rfc with AUXILIARY objectClass."""
         oc_data = FlextLdifModels.SchemaObjectClass(
-            oid="2.5.6.6", name="person", kind="AUXILIARY"
+            oid="2.5.6.6",
+            name="person",
+            kind="AUXILIARY",
         )
         result = oid.write(oc_data)
 
@@ -1898,7 +1951,9 @@ class TestOidQuirksWriteObjectclassToRfc:
     def test_write_objectclass_abstract(self, oid: FlextLdifServersOid.Schema) -> None:
         """Test write_objectclass_to_rfc with ABSTRACT objectClass."""
         oc_data = FlextLdifModels.SchemaObjectClass(
-            oid="2.5.6.6", name="person", kind="ABSTRACT"
+            oid="2.5.6.6",
+            name="person",
+            kind="ABSTRACT",
         )
         result = oid.write(oc_data)
 
@@ -1923,7 +1978,8 @@ class TestOidQuirksWriteObjectclassToRfc:
         assert "X-ORIGIN 'Oracle OID'" in rfc_str
 
     def test_write_objectclass_exception_handling(
-        self, oid: FlextLdifServersOid
+        self,
+        oid: FlextLdifServersOid,
     ) -> None:
         """Test write_objectclass_to_rfc handles exceptions gracefully."""
         # Test with invalid data
@@ -2020,7 +2076,8 @@ OBJECTCLASSES: ( 2.16.840.1.113894.2.1.1 NAME 'orclContext' SUP top STRUCTURAL )
         assert len(schemas.get("objectclasses", [])) == 0
 
     def test_extract_schemas_skips_malformed_entries(
-        self, oid: FlextLdifServersOid
+        self,
+        oid: FlextLdifServersOid,
     ) -> None:
         """Test extraction skips malformed schema entries."""
         ldif_content = """
@@ -2057,7 +2114,7 @@ objectClasses: ( 2.16.840.1.113894.2.1.1 NAME 'orclContext' SUP top STRUCTURAL )
         """Test extraction handles exceptions gracefully."""
         # This shouldn't cause exceptions, but test defensive handling
         result = oid.extract_schemas_from_ldif(
-            "Some completely invalid content\x00\x01"
+            "Some completely invalid content\x00\x01",
         )
         # Should return result (success or failure), not crash
 
@@ -2179,7 +2236,8 @@ class TestOidWriteMethods:
         assert isinstance(written, str)
 
     def test_write_objectclass_to_rfc_oid(
-        self, oid: FlextLdifServersOid.Schema
+        self,
+        oid: FlextLdifServersOid.Schema,
     ) -> None:
         """Test writing OID objectClass to RFC format."""
         oc_data = FlextLdifModels.SchemaObjectClass(
@@ -2232,7 +2290,8 @@ class TestOidCanHandleMethods:
         assert result.is_success  # OID namespace should be handled
 
     def test_can_handle_oid_namespace_objectclass(
-        self, oid: FlextLdifServersOid.Schema
+        self,
+        oid: FlextLdifServersOid.Schema,
     ) -> None:
         """Test can_handle for OID namespace objectClass."""
         oid_oc = "( 2.16.840.1.113894.1.2.1 NAME 'orclContext' STRUCTURAL )"
@@ -2253,7 +2312,8 @@ class TestOidQuirksCanHandleAttribute:
         return FlextLdifServersOid().schema
 
     def test_can_handle_oid_namespace_attribute(
-        self, oid: FlextLdifServersOid.Schema
+        self,
+        oid: FlextLdifServersOid.Schema,
     ) -> None:
         """Test handling of Oracle OID namespace attributes."""
         attr_def = "( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' )"
@@ -2262,7 +2322,8 @@ class TestOidQuirksCanHandleAttribute:
         assert parse_result.is_success
 
     def test_can_handle_multiple_oid_attributes(
-        self, oid: FlextLdifServersOid.Schema
+        self,
+        oid: FlextLdifServersOid.Schema,
     ) -> None:
         """Test various OID namespace attributes."""
         oid_attrs = [
@@ -2276,7 +2337,8 @@ class TestOidQuirksCanHandleAttribute:
             assert parse_result.is_success, f"Failed to parse: {attr_def}"
 
     def test_cannot_handle_non_oid_attribute(
-        self, oid: FlextLdifServersOid.Schema
+        self,
+        oid: FlextLdifServersOid.Schema,
     ) -> None:
         """Test that non-OID attributes are not handled."""
         attr_def = "( 2.5.4.3 NAME 'cn' )"
@@ -2301,7 +2363,8 @@ class TestOidQuirksCanHandleAttribute:
         assert result.is_failure  # Invalid input should fail
 
     def test_cannot_handle_malformed_attribute(
-        self, oid: FlextLdifServersOid.Schema
+        self,
+        oid: FlextLdifServersOid.Schema,
     ) -> None:
         """Test handling of malformed attribute definitions."""
         malformed = [
@@ -2360,7 +2423,9 @@ class TestOidQuirksParseAttribute:
         assert hasattr(result, "is_success")
 
     def test_parse_with_schema_fixture(
-        self, oid: FlextLdifServersOid.Schema, oid_schema_fixture: Path
+        self,
+        oid: FlextLdifServersOid.Schema,
+        oid_schema_fixture: Path,
     ) -> None:
         """Test parsing real OID attributes from fixture."""
         if not oid_schema_fixture.exists():
@@ -2397,7 +2462,8 @@ class TestOidQuirksConvertAttribute:
         assert result.is_success  # OID objectClass should be handled
 
     def test_parse_objectclass_with_must_attributes(
-        self, oid: FlextLdifServersOid
+        self,
+        oid: FlextLdifServersOid,
     ) -> None:
         """Test parsing objectClass with MUST attributes."""
         objclass_def = (
@@ -2408,7 +2474,8 @@ class TestOidQuirksConvertAttribute:
         assert hasattr(result, "is_success")
 
     def test_incompatible_attributes_handled_throughs(
-        self, oid: FlextLdifServersOid
+        self,
+        oid: FlextLdifServersOid,
     ) -> None:
         """Test that incompatible attributes are handled through quirk system.
 
@@ -2461,7 +2528,9 @@ class TestOidQuirksACLHandling:
         assert result.is_success  # OID ACL should be handled
 
     def test_parse_from_fixture(
-        self, oid: FlextLdifServersOid.Acl, oid_acl_fixture: Path
+        self,
+        oid: FlextLdifServersOid.Acl,
+        oid_acl_fixture: Path,
     ) -> None:
         """Test parsing real ACL data from fixture."""
         if not oid_acl_fixture.exists():
@@ -2491,7 +2560,8 @@ class TestOidQuirksEntryHandling:
         )
 
     def test_can_handle_oid_entry_attributes(
-        self, oid: FlextLdifServersOid.Schema
+        self,
+        oid: FlextLdifServersOid.Schema,
     ) -> None:
         """Test handling OID-specific entry attributes."""
         # Test entry-level quirks for OID attributes
@@ -2504,7 +2574,9 @@ class TestOidQuirksEntryHandling:
         assert isinstance(result, bool)
 
     def test_process_oid_entry(
-        self, oid: FlextLdifServersOid.Schema, oid_entries_fixture: Path
+        self,
+        oid: FlextLdifServersOid.Schema,
+        oid_entries_fixture: Path,
     ) -> None:
         """Test processing real OID entries from fixture."""
         if not oid_entries_fixture.exists():
@@ -2543,7 +2615,8 @@ class TestOidQuirksProperties:
         )
 
     def test_matching_rule_replacements_defined(
-        self, oid: FlextLdifServersOid.Schema
+        self,
+        oid: FlextLdifServersOid.Schema,
     ) -> None:
         """Test matching rule replacements are configured."""
         # Access constants from the server class, not nested class
@@ -2557,14 +2630,16 @@ class TestOidQuirksProperties:
         )
 
     def test_syntax_oid_replacements_defined(
-        self, oid: FlextLdifServersOid.Schema
+        self,
+        oid: FlextLdifServersOid.Schema,
     ) -> None:
         """Test syntax OID replacements are configured."""
         # Access constants from the server class, not nested class
         assert len(FlextLdifServersOid.Constants.SYNTAX_OID_REPLACEMENTS) > 0
 
     def test_skip_objectclass_attributes_handled(
-        self, oid: FlextLdifServersOid.Schema
+        self,
+        oid: FlextLdifServersOid.Schema,
     ) -> None:
         """Test that incompatible attributes (orclaci, orclentrylevelaci) are handled correctly.
 
@@ -2601,7 +2676,9 @@ class TestOidQuirksIntegrationWithFixtures:
         )
 
     def test_parse_full_oid_ldif_fixture(
-        self, oid: FlextLdifServersOid.Schema, oid_integration_fixture: Path
+        self,
+        oid: FlextLdifServersOid.Schema,
+        oid_integration_fixture: Path,
     ) -> None:
         """Test parsing full OID integration fixture."""
         if not oid_integration_fixture.exists():
@@ -2688,7 +2765,8 @@ class TestOidAclParseAcl:
         assert acl_data.server_type == "oid"
 
     def test_parse_entry_level_orclentrylevelaci(
-        self, oid: FlextLdifServersOid.Acl
+        self,
+        oid: FlextLdifServersOid.Acl,
     ) -> None:
         """Test parsing entry-level Oracle OID ACL."""
         acl_line = 'orclentrylevelaci: (version 3.0;acl "Entry";allow(read)userdn="ldap:///anyone";)'
@@ -2706,7 +2784,8 @@ class TestOidAclParseAcl:
         assert hasattr(result, "is_success")
 
     def test_parse_with_added_object_constraint(
-        self, oid: FlextLdifServersOid.Acl
+        self,
+        oid: FlextLdifServersOid.Acl,
     ) -> None:
         """Test parsing ACL with added_object_constraint."""
         acl_line = 'orclentrylevelaci: (added_object_constraint="(objectClass=person)")(version 3.0;acl "Constraint";allow(write)userdn="ldap:///cn=admin";)'
@@ -2724,7 +2803,9 @@ class TestOidAclParseAcl:
         assert hasattr(result, "is_success")
 
     def test_parse_from_real_fixture(
-        self, oid: FlextLdifServersOid.Acl, oid_acl_fixture: Path
+        self,
+        oid: FlextLdifServersOid.Acl,
+        oid_acl_fixture: Path,
     ) -> None:
         """Test parsing real OID ACL from fixture file."""
         if not oid_acl_fixture.exists():
@@ -2839,7 +2920,9 @@ class TestOidQuirksWithRealFixtures:
         return FlextLdif()
 
     def test_parse_oid_schema_fixture(
-        self, api: FlextLdif, oid_fixture_dir: Path
+        self,
+        api: FlextLdif,
+        oid_fixture_dir: Path,
     ) -> None:
         """Test parsing real OID schema fixture file."""
         schema_file = oid_fixture_dir / "oid_schema_fixtures.ldif"
@@ -2853,7 +2936,9 @@ class TestOidQuirksWithRealFixtures:
         assert len(entries) > 0, "OID schema fixture should contain schema entries"
 
     def test_parse_oid_entries_fixture(
-        self, api: FlextLdif, oid_fixture_dir: Path
+        self,
+        api: FlextLdif,
+        oid_fixture_dir: Path,
     ) -> None:
         """Test parsing real OID directory entries fixture."""
         entries_file = oid_fixture_dir / "oid_entries_fixtures.ldif"
@@ -2882,10 +2967,13 @@ class TestOidQuirksWithRealFixtures:
         assert result.is_success
 
     @pytest.mark.skip(
-        reason="Roundtrip tests - complex LDIF writing/parsing edge cases not fully implemented"
+        reason="Roundtrip tests - complex LDIF writing/parsing edge cases not fully implemented",
     )
     def test_roundtrip_oid_entries(
-        self, api: FlextLdif, oid_fixture_dir: Path, tmp_path: Path
+        self,
+        api: FlextLdif,
+        oid_fixture_dir: Path,
+        tmp_path: Path,
     ) -> None:
         """Test parsing OID entries and writing them back maintains data integrity."""
         entries_file = oid_fixture_dir / "oid_entries_fixtures.ldif"
@@ -2911,7 +2999,9 @@ class TestOidQuirksWithRealFixtures:
         assert len(entries) == len(reparsed_entries)
 
     def test_oid_server_type_detection(
-        self, api: FlextLdif, oid_fixture_dir: Path
+        self,
+        api: FlextLdif,
+        oid_fixture_dir: Path,
     ) -> None:
         """Test that OID server type is correctly detected from OID entries."""
         entries_file = oid_fixture_dir / "oid_entries_fixtures.ldif"
@@ -2965,7 +3055,9 @@ class TestOidRoutingValidation:
 
         # Load fixture
         entries = FlextLdifTestUtils.load_fixture(
-            ldif_api, "oid", "oid_entries_fixtures.ldif"
+            ldif_api,
+            "oid",
+            "oid_entries_fixtures.ldif",
         )
         assert entries is not None
 
@@ -2989,7 +3081,8 @@ class TestOidAttributeTransformations:
         return FlextLdifServersOid().schema
 
     def test_transform_validates_invalid_substr_rules(
-        self, oid_schema: FlextLdifServersOid.Schema
+        self,
+        oid_schema: FlextLdifServersOid.Schema,
     ) -> None:
         """Test that invalid SUBSTR rules are detected and replaced."""
         # Create attribute with invalid SUBSTR rule
@@ -3007,7 +3100,8 @@ class TestOidAttributeTransformations:
         assert transformed.substr == "caseIgnoreSubstringsMatch"
 
     def test_transform_identifies_boolean_attributes(
-        self, oid_schema: FlextLdifServersOid.Schema
+        self,
+        oid_schema: FlextLdifServersOid.Schema,
     ) -> None:
         """Test that boolean attributes are identified during transformation."""
         # Create attribute for known boolean: pwdlockout
@@ -3026,7 +3120,8 @@ class TestOidAttributeTransformations:
         assert transformed.syntax == attr.syntax
 
     def test_transform_preserves_non_boolean_attributes(
-        self, oid_schema: FlextLdifServersOid.Schema
+        self,
+        oid_schema: FlextLdifServersOid.Schema,
     ) -> None:
         """Test that non-boolean attributes are processed correctly."""
         attr = FlextLdifModels.SchemaAttribute(
@@ -3044,7 +3139,8 @@ class TestOidAttributeTransformations:
         assert transformed.syntax == attr.syntax
 
     def test_transform_fixes_matching_rules(
-        self, oid_schema: FlextLdifServersOid.Schema
+        self,
+        oid_schema: FlextLdifServersOid.Schema,
     ) -> None:
         """Test that matching rules are normalized."""
         attr = FlextLdifModels.SchemaAttribute(
@@ -3063,7 +3159,8 @@ class TestOidAttributeTransformations:
         assert transformed.substr == "caseIgnoreSubstringsMatch"  # Fixed to lowercase s
 
     def test_transform_roundtrip_with_transformations(
-        self, oid_schema: FlextLdifServersOid.Schema
+        self,
+        oid_schema: FlextLdifServersOid.Schema,
     ) -> None:
         """Test parse → transform → write roundtrip preserves essential properties."""
         original = (
@@ -3088,7 +3185,8 @@ class TestOidAttributeTransformations:
         assert transformed.name == parsed.name  # Preserved
 
     def test_transform_handles_oracle_das_boolean(
-        self, oid_schema: FlextLdifServersOid.Schema
+        self,
+        oid_schema: FlextLdifServersOid.Schema,
     ) -> None:
         """Test that Oracle DAS boolean attributes are processed correctly."""
         # Oracle DAS attribute from BOOLEAN_ATTRIBUTES

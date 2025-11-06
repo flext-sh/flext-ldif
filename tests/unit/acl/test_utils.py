@@ -40,7 +40,7 @@ def create_acl_components_helper() -> FlextResult[
     """
     # Create ACL components using direct instantiation
     target = FlextLdifModels.AclTarget(
-        target_dn=FlextLdifConstants.ServerDetection.ACL_WILDCARD_DN
+        target_dn=FlextLdifConstants.ServerDetection.ACL_WILDCARD_DN,
     )
     subject = FlextLdifModels.AclSubject(
         subject_type=FlextLdifConstants.ServerDetection.ACL_WILDCARD_TYPE,
@@ -294,10 +294,13 @@ class TestComponentFactory:
         """Test that created ACL preserves all input properties."""
         target = FlextLdifModels.AclTarget(target_dn="cn=test,dc=example,dc=com")
         subject = FlextLdifModels.AclSubject(
-            subject_type="group", subject_value="cn=admins,dc=example,dc=com"
+            subject_type="group",
+            subject_value="cn=admins,dc=example,dc=com",
         )
         permissions = FlextLdifModels.AclPermissions(
-            read=True, write=True, delete=False
+            read=True,
+            write=True,
+            delete=False,
         )
 
         result = create_unified_acl_helper(
@@ -355,7 +358,8 @@ class TestComponentFactory:
         assert result.is_success
 
     def test_create_acl_components_isinstance_validation_target(
-        self, monkeypatch: pytest.MonkeyPatch
+        self,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Test isinstance validation for target (line 72 coverage).
 

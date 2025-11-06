@@ -8,11 +8,15 @@ from __future__ import annotations
 
 import logging
 import string
-from typing import Any, overload
+from typing import overload
 
 from flext_core import FlextUtilities
 
 from flext_ldif.constants import FlextLdifConstants
+from flext_ldif.models import FlextLdifModels
+
+# Type alias for DN input (string or DN model)
+type DnInput = str | FlextLdifModels.DistinguishedName
 
 logger = logging.getLogger(__name__)
 
@@ -43,8 +47,8 @@ class FlextLdifUtilitiesDN:
     """
 
     @staticmethod
-    def _get_dn_value(dn: Any) -> str:
-        """Extract DN string value from DN model or string.
+    def get_dn_value(dn: DnInput) -> str:
+        """Extract DN string value from DN model or string (public utility method).
 
         Args:
             dn: DN model (FlextLdifModels.DistinguishedName) or DN string
@@ -64,19 +68,44 @@ class FlextLdifUtilitiesDN:
 
     @overload
     @staticmethod
-    def split(dn: Any) -> list[str]: ...
+    def split(dn: FlextLdifModels.DistinguishedName) -> list[str]: ...
 
     @staticmethod
-    def split(dn: Any | str) -> list[str]:
-        """Split DN string into individual components.
+    def split(dn: str | FlextLdifModels.DistinguishedName) -> list[str]:
+        r"""Split DN string into individual components respecting RFC 4514 escapes.
 
-        **Future DRY Optimization**: Can use FlextUtilities.StringParser.safe_strip_split()
-        once flext-core 0.9.10+ is released with the new method.
+        Properly handles escaped commas (\\,) and other special characters.
+        Does NOT treat escaped commas as component separators.
         """
-        dn_str = FlextLdifUtilitiesDN._get_dn_value(dn)
+        dn_str = FlextLdifUtilitiesDN.get_dn_value(dn)
         if not dn_str:
             return []
-        return [comp.strip() for comp in dn_str.split(",") if comp.strip()]
+
+        # Split by commas but respect backslash escapes
+        components: list[str] = []
+        current = ""
+        i = 0
+        while i < len(dn_str):
+            char = dn_str[i]
+            if char == "\\" and i + 1 < len(dn_str):
+                # Escaped character - include both backslash and next char
+                current += char + dn_str[i + 1]
+                i += 2
+            elif char == ",":
+                # Unescaped comma - component boundary
+                if current.strip():
+                    components.append(current.strip())
+                current = ""
+                i += 1
+            else:
+                current += char
+                i += 1
+
+        # Add final component
+        if current.strip():
+            components.append(current.strip())
+
+        return components
 
     @staticmethod
     def norm_component(component: str) -> str:
@@ -92,12 +121,12 @@ class FlextLdifUtilitiesDN:
 
     @overload
     @staticmethod
-    def norm_string(dn: Any) -> str: ...
+    def norm_string(dn: FlextLdifModels.DistinguishedName) -> str: ...
 
     @staticmethod
-    def norm_string(dn: Any | str) -> str:
+    def norm_string(dn: str | FlextLdifModels.DistinguishedName) -> str:
         """Normalize full DN to RFC 4514 format."""
-        dn_str = FlextLdifUtilitiesDN._get_dn_value(dn)
+        dn_str = FlextLdifUtilitiesDN.get_dn_value(dn)
         if not dn_str or "=" not in dn_str:
             return dn_str
         components = FlextLdifUtilitiesDN.split(dn_str)
@@ -110,22 +139,44 @@ class FlextLdifUtilitiesDN:
 
     @overload
     @staticmethod
-    def validate(dn: Any) -> bool: ...
+    def validate(dn: FlextLdifModels.DistinguishedName) -> bool: ...
 
     @staticmethod
-    def validate(dn: Any | str) -> bool:
-        """Validate DN format according to RFC 4514."""
-        dn_str = FlextLdifUtilitiesDN._get_dn_value(dn)
+    def validate(dn: str | FlextLdifModels.DistinguishedName) -> bool:
+        """Validate DN format according to RFC 4514.
+
+        Properly handles escaped characters. Checks for:
+        - No double unescaped commas
+        - No leading/trailing unescaped commas
+        - All components have attr=value format
+        """
+        dn_str = FlextLdifUtilitiesDN.get_dn_value(dn)
         if not dn_str or "=" not in dn_str:
             return False
 
-        # RFC 4514: Check for invalid patterns
-        # - Double commas (consecutive commas)
-        # - Trailing/leading commas
-        if ",," in dn_str or dn_str.startswith(",") or dn_str.endswith(","):
+        # Check for invalid patterns with unescaped commas
+        # Double commas: look for ,, where first comma is not escaped
+        i = 0
+        while i < len(dn_str) - 1:
+            # Check for consecutive commas where first is not escaped
+            if (
+                dn_str[i] == ","
+                and dn_str[i + 1] == ","
+                and (i == 0 or dn_str[i - 1] != "\\")
+            ):
+                return False
+            i += 1
+
+        # Leading unescaped comma
+        if dn_str.startswith(","):
+            return False
+
+        # Trailing unescaped comma
+        if dn_str.endswith(",") and (len(dn_str) < 2 or dn_str[-2] != "\\"):
             return False
 
         try:
+            # Use split() which properly handles escaped characters
             components = FlextLdifUtilitiesDN.split(dn_str)
             if not components:
                 return False
@@ -151,16 +202,18 @@ class FlextLdifUtilitiesDN:
 
     @overload
     @staticmethod
-    def parse(dn: Any) -> list[tuple[str, str]] | None: ...
+    def parse(
+        dn: FlextLdifModels.DistinguishedName,
+    ) -> list[tuple[str, str]] | None: ...
 
     @staticmethod
-    def parse(dn: Any | str) -> list[tuple[str, str]] | None:
+    def parse(dn: DnInput) -> list[tuple[str, str]] | None:
         """Parse DN into RFC 4514 components (attr, value pairs).
 
         Pure RFC 4514 parsing without external dependencies.
         Returns [(attr1, value1), (attr2, value2), ...] or None on error.
         """
-        dn_str = FlextLdifUtilitiesDN._get_dn_value(dn)
+        dn_str = FlextLdifUtilitiesDN.get_dn_value(dn)
         if not dn_str or "=" not in dn_str:
             return None
 
@@ -184,15 +237,15 @@ class FlextLdifUtilitiesDN:
 
     @overload
     @staticmethod
-    def norm(dn: Any) -> str | None: ...
+    def norm(dn: FlextLdifModels.DistinguishedName) -> str | None: ...
 
     @staticmethod
-    def norm(dn: Any | str) -> str | None:
+    def norm(dn: DnInput) -> str | None:
         """Normalize DN per RFC 4514 (lowercase attrs, preserve values).
 
         Pure implementation without external dependencies.
         """
-        dn_str = FlextLdifUtilitiesDN._get_dn_value(dn)
+        dn_str = FlextLdifUtilitiesDN.get_dn_value(dn)
         try:
             if not dn_str or "=" not in dn_str:
                 return None
@@ -218,10 +271,10 @@ class FlextLdifUtilitiesDN:
 
     @overload
     @staticmethod
-    def clean_dn(dn: Any) -> str: ...
+    def clean_dn(dn: FlextLdifModels.DistinguishedName) -> str: ...
 
     @staticmethod
-    def clean_dn(dn: Any | str) -> str:
+    def clean_dn(dn: DnInput) -> str:
         """Clean DN string to fix spacing and escaping issues.
 
         Removes spaces before '=', fixes trailing backslash+space,
@@ -230,7 +283,7 @@ class FlextLdifUtilitiesDN:
         **DRY Optimization**: Uses FlextUtilities.StringParser.apply_regex_pipeline()
         to consolidate 5 sequential regex.sub() calls into one pipeline.
         """
-        dn_str = FlextLdifUtilitiesDN._get_dn_value(dn)
+        dn_str = FlextLdifUtilitiesDN.get_dn_value(dn)
         if not dn_str:
             return dn_str
 
@@ -303,32 +356,19 @@ class FlextLdifUtilitiesDN:
 
         return "".join(result)
 
-    @overload
-    @staticmethod
-    def compare_dns(dn1: str, dn2: str) -> int | None: ...
-
-    @overload
-    @staticmethod
-    def compare_dns(dn1: Any, dn2: Any) -> int | None: ...
-
-    @overload
-    @staticmethod
-    def compare_dns(dn1: Any | str, dn2: str) -> int | None: ...
-
-    @overload
-    @staticmethod
-    def compare_dns(dn1: str, dn2: Any) -> int | None: ...
-
     @staticmethod
     def compare_dns(
-        dn1: Any | str,
-        dn2: Any | str,
+        dn1: str | None,
+        dn2: str | None,
     ) -> int | None:
         """Compare two DNs per RFC 4514 (case-insensitive).
 
         Returns: -1 if dn1 < dn2, 0 if equal, 1 if dn1 > dn2, None on error
         """
         try:
+            # Validate inputs first
+            if not dn1 or not dn2:
+                return None
             norm1 = FlextLdifUtilitiesDN.norm(dn1)
             norm2 = FlextLdifUtilitiesDN.norm(dn2)
 
@@ -544,29 +584,10 @@ class FlextLdifUtilitiesDN:
 
         return search_pattern in search_dn
 
-    @overload
-    @staticmethod
-    def is_under_base(dn: str, base_dn: str) -> bool: ...
-
-    @overload
     @staticmethod
     def is_under_base(
-        dn: Any,
-        base_dn: Any,
-    ) -> bool: ...
-
-    @overload
-    @staticmethod
-    def is_under_base(dn: Any | str, base_dn: str) -> bool: ...
-
-    @overload
-    @staticmethod
-    def is_under_base(dn: str, base_dn: Any) -> bool: ...
-
-    @staticmethod
-    def is_under_base(
-        dn: Any | str,
-        base_dn: Any | str,
+        dn: str | None,
+        base_dn: str | None,
     ) -> bool:
         """Check if DN is under base DN (hierarchical check).
 
@@ -590,8 +611,12 @@ class FlextLdifUtilitiesDN:
             # Returns: False
 
         """
-        dn_str = FlextLdifUtilitiesDN._get_dn_value(dn)
-        base_dn_str = FlextLdifUtilitiesDN._get_dn_value(base_dn)
+        # Validate inputs first
+        if not dn or not base_dn:
+            return False
+
+        dn_str = FlextLdifUtilitiesDN.get_dn_value(dn)
+        base_dn_str = FlextLdifUtilitiesDN.get_dn_value(base_dn)
 
         if not dn_str or not base_dn_str:
             return False
@@ -603,26 +628,10 @@ class FlextLdifUtilitiesDN:
         # Check if DN equals base_dn OR if DN ends with ",base_dn"
         return dn_lower == base_dn_lower or dn_lower.endswith(f",{base_dn_lower}")
 
-    @overload
-    @staticmethod
-    def are_equal(dn1: str, dn2: str) -> bool: ...
-
-    @overload
-    @staticmethod
-    def are_equal(dn1: Any, dn2: Any) -> bool: ...
-
-    @overload
-    @staticmethod
-    def are_equal(dn1: Any | str, dn2: str) -> bool: ...
-
-    @overload
-    @staticmethod
-    def are_equal(dn1: str, dn2: Any) -> bool: ...
-
     @staticmethod
     def are_equal(
-        dn1: Any | str,
-        dn2: Any | str,
+        dn1: str | None,
+        dn2: str | None,
     ) -> bool:
         """Check if two DNs are equal (case-insensitive, normalized).
 

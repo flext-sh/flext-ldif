@@ -159,7 +159,7 @@ def execute_acl_service() -> None:
                     '(target="ldap:///ou=Test,dc=example,dc=com")'
                     '(targetattr="*")'
                     '(version 3.0; acl "Test ACL"; allow (read) userdn="ldap:///anyone";)'
-                )
+                ),
             ],
         },
     )

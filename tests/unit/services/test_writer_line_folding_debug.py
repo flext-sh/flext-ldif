@@ -30,12 +30,14 @@ class TestWriterLineFoldingDebug:
                     "cn": ["test"],
                     "description": [long_value],  # Very long
                     "objectClass": ["person"],
-                }
+                },
             ),
         )
 
     def test_fold_long_lines_enabled_explicit(
-        self, writer: FlextLdifWriter, long_value_entry: FlextLdifModels.Entry
+        self,
+        writer: FlextLdifWriter,
+        long_value_entry: FlextLdifModels.Entry,
     ) -> None:
         """Test line folding WITH fold_long_lines=True explicitly."""
         result = writer.write(
@@ -62,7 +64,9 @@ class TestWriterLineFoldingDebug:
         any(line.startswith(" ") for line in lines if line)
 
     def test_fold_long_lines_disabled_explicit(
-        self, writer: FlextLdifWriter, long_value_entry: FlextLdifModels.Entry
+        self,
+        writer: FlextLdifWriter,
+        long_value_entry: FlextLdifModels.Entry,
     ) -> None:
         """Test line folding WITH fold_long_lines=False explicitly."""
         result = writer.write(
@@ -86,7 +90,9 @@ class TestWriterLineFoldingDebug:
         any(line.startswith(" ") for line in lines if line)
 
     def test_disable_line_folding_true(
-        self, writer: FlextLdifWriter, long_value_entry: FlextLdifModels.Entry
+        self,
+        writer: FlextLdifWriter,
+        long_value_entry: FlextLdifModels.Entry,
     ) -> None:
         """Test line folding WITH disable_line_folding=True."""
         result = writer.write(
@@ -110,7 +116,9 @@ class TestWriterLineFoldingDebug:
         any(line.startswith(" ") for line in lines if line)
 
     def test_check_actual_line_lengths(
-        self, writer: FlextLdifWriter, long_value_entry: FlextLdifModels.Entry
+        self,
+        writer: FlextLdifWriter,
+        long_value_entry: FlextLdifModels.Entry,
     ) -> None:
         """Check actual line lengths when folding should occur."""
         result = writer.write(

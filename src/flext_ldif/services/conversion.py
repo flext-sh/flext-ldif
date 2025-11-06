@@ -18,7 +18,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import ClassVar, cast, override
+from typing import ClassVar, Union, cast, override
 
 from flext_core import FlextResult, FlextService
 
@@ -26,10 +26,20 @@ from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.protocols import FlextLdifProtocols
 from flext_ldif.services.dn import FlextLdifDn
+from flext_ldif.typings import FlextLdifTypes
 from flext_ldif.utilities import FlextLdifUtilities
 
 
-class FlextLdifConversion(FlextService[FlextLdifModels.ConvertibleModel]):
+class FlextLdifConversion(
+    FlextService[
+        Union[
+            "FlextLdifModels.Entry",
+            "FlextLdifModels.SchemaAttribute",
+            "FlextLdifModels.SchemaObjectClass",
+            "FlextLdifModels.Acl",
+        ]
+    ]
+):
     """Facade for universal, model-driven quirk-to-quirk conversion.
 
     This class provides a unified interface for converting LDIF data models between
@@ -42,7 +52,7 @@ class FlextLdifConversion(FlextService[FlextLdifModels.ConvertibleModel]):
     2.  `target.denormalize_from_rfc(RFC Model)` -> Target Model
 
     FlextService V2 Integration:
-    - Inherits from FlextService[FlextLdifModels.ConvertibleModel]
+    - Inherits from FlextService[FlextLdifTypes.ConvertibleModel]
     - Implements execute() method for health checks
     - Provides stateless conversion operations
     """
@@ -85,10 +95,10 @@ class FlextLdifConversion(FlextService[FlextLdifModels.ConvertibleModel]):
         self,
         source: FlextLdifProtocols.Quirks.QuirksPort,
         target: FlextLdifProtocols.Quirks.QuirksPort,
-        model_instance_or_data_type: FlextLdifModels.ConvertibleModel | str,
+        model_instance_or_data_type: FlextLdifTypes.ConvertibleModel | str,
         data: str | dict[str, object] | None = None,
     ) -> (
-        FlextResult[FlextLdifModels.ConvertibleModel]
+        FlextResult[FlextLdifTypes.ConvertibleModel]
         | FlextResult[str | dict[str, object]]
     ):
         """Convert a model from a source server format to a target server format.
@@ -125,8 +135,8 @@ class FlextLdifConversion(FlextService[FlextLdifModels.ConvertibleModel]):
         self,
         source: FlextLdifProtocols.Quirks.QuirksPort,
         target: FlextLdifProtocols.Quirks.QuirksPort,
-        model_instance: FlextLdifModels.ConvertibleModel,
-    ) -> FlextResult[FlextLdifModels.ConvertibleModel]:
+        model_instance: FlextLdifTypes.ConvertibleModel,
+    ) -> FlextResult[FlextLdifTypes.ConvertibleModel]:
         """Convert Entry model between source and target server formats with FlextLdifUtilities.
 
         Uses universal Entry model as pivot point via write→parse pipeline.
@@ -148,7 +158,7 @@ class FlextLdifConversion(FlextService[FlextLdifModels.ConvertibleModel]):
 
             # Validate entry DN using FlextLdifUtilities.DN before conversion
             entry_dn = (
-                str(FlextLdifUtilities.DN._get_dn_value(entry.dn)) if entry.dn else ""
+                str(FlextLdifUtilities.DN.get_dn_value(entry.dn)) if entry.dn else ""
             )
             if not FlextLdifUtilities.DN.validate(entry_dn):
                 return FlextResult.fail(
@@ -195,15 +205,18 @@ class FlextLdifConversion(FlextService[FlextLdifModels.ConvertibleModel]):
     ) -> FlextResult[str | dict[str, object]]:
         """Convert using legacy string-based pattern."""
         try:
-            if data_type == "attribute":
+            # Normalize data_type to lowercase for case-insensitive matching
+            data_type_lower = data_type.lower()
+
+            if data_type_lower == "attribute":
                 return self._convert_attribute(source, target, data)
-            if data_type == "objectClass":
+            if data_type_lower in ("objectclass", "objectclasses"):
                 return self._convert_objectclass(source, target, data)
-            if data_type == "acl":
+            if data_type_lower == "acl":
                 if isinstance(data, str):
                     return self._convert_acl(source, target, data)
                 return FlextResult.fail("ACL conversion requires string input")
-            if data_type == "entry":
+            if data_type_lower == "entry":
                 return self._convert_entry(source, target, data)
             return FlextResult.fail(f"Invalid data_type: {data_type}")
         except Exception as e:

@@ -161,7 +161,8 @@ class FixtureValidator:
 
     @staticmethod
     def validate_roundtrip(
-        original: str, backward: str
+        original: str,
+        backward: str,
     ) -> FlextResult[dict[str, object]]:
         """Validate roundtrip conversion preserves key information.
 
@@ -180,7 +181,7 @@ class FixtureValidator:
 
             if orig_oid != back_oid:
                 return FlextResult.fail(
-                    f"OID not preserved in roundtrip: {orig_oid} → {back_oid}"
+                    f"OID not preserved in roundtrip: {orig_oid} → {back_oid}",
                 )
 
             # Check NAMEs preserved
@@ -189,7 +190,7 @@ class FixtureValidator:
 
             if orig_name != back_name:
                 return FlextResult.fail(
-                    f"NAME not preserved in roundtrip: {orig_name} → {back_name}"
+                    f"NAME not preserved in roundtrip: {orig_name} → {back_name}",
                 )
 
             stats: dict[str, object] = {
@@ -449,7 +450,7 @@ class FlextLdifFixtureDiscovery:
             result["entry_count_matches"] = True
         else:
             result["differences"].append(
-                f"Entry count mismatch: actual={actual_count}, expected={expected_count}"
+                f"Entry count mismatch: actual={actual_count}, expected={expected_count}",
             )
             result["matches"] = False
 
@@ -458,8 +459,10 @@ class FlextLdifFixtureDiscovery:
             entries_match = True
             for i, (actual_entry, expected_entry) in enumerate(
                 zip(
-                    actual.get("entries", []), expected.get("entries", []), strict=False
-                )
+                    actual.get("entries", []),
+                    expected.get("entries", []),
+                    strict=False,
+                ),
             ):
                 # Convert Pydantic Entry to dict if needed
                 if hasattr(actual_entry, "model_dump"):
@@ -478,7 +481,7 @@ class FlextLdifFixtureDiscovery:
 
                 if actual_dn != expected_dn:
                     result["differences"].append(
-                        f"Entry {i}: DN mismatch: {actual_dn} != {expected_dn}"
+                        f"Entry {i}: DN mismatch: {actual_dn} != {expected_dn}",
                     )
                     entries_match = False
 
@@ -495,7 +498,7 @@ class FlextLdifFixtureDiscovery:
 
                 if actual_attrs != expected_attrs:
                     result["differences"].append(
-                        f"Entry {i}: Attributes mismatch for {actual_dn}"
+                        f"Entry {i}: Attributes mismatch for {actual_dn}",
                     )
                     entries_match = False
 
@@ -576,9 +579,253 @@ class FlextLdifFixtureDiscovery:
         )
 
 
+class RoundTripValidator:
+    """Deep round-trip validation comparing content, not just counts.
+
+    Provides comprehensive validation for parse → write → parse cycles
+    to ensure data integrity across conversions.
+    """
+
+    @staticmethod
+    def validate_entries_deep(
+        original_entries: list[dict[str, object]],
+        roundtrip_entries: list[dict[str, object]],
+    ) -> FlextResult[dict[str, object]]:
+        """Deeply validate entry preservation across round-trip.
+
+        Args:
+            original_entries: Original entries before round-trip
+            roundtrip_entries: Entries after write and re-parse
+
+        Returns:
+            FlextResult with detailed comparison report
+
+        """
+        if len(original_entries) != len(roundtrip_entries):
+            return FlextResult.fail(
+                f"Entry count mismatch: {len(original_entries)} vs {len(roundtrip_entries)}",
+            )
+
+        total_matches = 0
+        mismatches: list[dict[str, object]] = []
+
+        for i, (original, roundtrip) in enumerate(
+            zip(original_entries, roundtrip_entries, strict=False)
+        ):
+            comparison = helpers.compare_entries_deep(original, roundtrip)
+
+            if comparison.get("matches"):
+                total_matches += 1
+            else:
+                mismatches.append({
+                    "entry_index": i,
+                    "dn": comparison.get("dn_original"),
+                    "comparison": comparison,
+                })
+
+        report: dict[str, object] = {
+            "total_entries": len(original_entries),
+            "matching_entries": total_matches,
+            "mismatched_entries": len(mismatches),
+            "perfect_roundtrip": len(mismatches) == 0,
+            "mismatches": mismatches,
+        }
+
+        if len(mismatches) > 0:
+            error_msg = f"Round-trip validation failed: {len(mismatches)}/{len(original_entries)} entries mismatched"
+            return FlextResult.fail(error_msg, report)
+
+        return FlextResult.ok(report)
+
+    @staticmethod
+    def validate_attribute_values(
+        original_entries: list[dict[str, object]],
+        roundtrip_entries: list[dict[str, object]],
+        attribute_names: list[str] | None = None,
+    ) -> FlextResult[dict[str, object]]:
+        """Validate specific attribute values across round-trip.
+
+        Args:
+            original_entries: Original entries
+            roundtrip_entries: Entries after round-trip
+            attribute_names: Specific attributes to validate (None for all)
+
+        Returns:
+            FlextResult with attribute-level validation
+
+        """
+        if len(original_entries) != len(roundtrip_entries):
+            return FlextResult.fail("Entry count mismatch")
+
+        attr_reports: dict[str, dict[str, object]] = {}
+
+        for _i, (original, roundtrip) in enumerate(
+            zip(original_entries, roundtrip_entries, strict=False)
+        ):
+            # Get all attributes to check
+            original_attrs = {k.lower() for k in original if k.lower() != "dn"}
+            {k.lower() for k in roundtrip if k.lower() != "dn"}
+
+            # Filter if specific attributes requested
+            attrs_to_check = attribute_names or original_attrs
+
+            for attr_name in attrs_to_check:
+                attr_lower = attr_name.lower()
+
+                if attr_lower not in attr_reports:
+                    attr_reports[attr_lower] = {
+                        "matches": 0,
+                        "mismatches": 0,
+                        "missing_roundtrip": 0,
+                        "extra_roundtrip": 0,
+                    }
+
+                orig_values = helpers.get_entry_attribute_values(original, attr_name)
+                round_values = helpers.get_entry_attribute_values(roundtrip, attr_name)
+
+                if (not orig_values and not round_values) or sorted(
+                    orig_values
+                ) == sorted(round_values):
+                    attr_reports[attr_lower]["matches"] += 1
+                else:
+                    attr_reports[attr_lower]["mismatches"] += 1
+                    if not round_values:
+                        attr_reports[attr_lower]["missing_roundtrip"] += 1
+
+        report: dict[str, object] = {
+            "attribute_count": len(attr_reports),
+            "perfectly_preserved": sum(
+                1
+                for attr in attr_reports.values()
+                if attr.get("mismatches") == 0 and attr.get("missing_roundtrip") == 0
+            ),
+            "attribute_reports": attr_reports,
+        }
+
+        total_perfect = report.get("perfectly_preserved", 0)
+        total_attrs = report.get("attribute_count", 0)
+
+        if total_perfect < total_attrs:
+            error_msg = f"Attribute preservation failed: {total_perfect}/{total_attrs} attributes perfectly preserved"
+            return FlextResult.fail(error_msg, report)
+
+        return FlextResult.ok(report)
+
+
+class RfcComplianceValidator:
+    """RFC compliance validation for LDIF format and schema.
+
+    Validates conformance to RFC 2849 (LDIF) and RFC 4512 (Schema).
+    """
+
+    @staticmethod
+    def validate_ldif_format(content: str) -> FlextResult[dict[str, object]]:
+        """Validate LDIF conforms to RFC 2849 format.
+
+        Args:
+            content: LDIF formatted string
+
+        Returns:
+            FlextResult with RFC 2849 compliance report
+
+        """
+        validation = helpers.validate_ldif_rfc2849_format(content)
+
+        if not validation.get("is_valid"):
+            error_parts = []
+            if validation.get("line_length_issues"):
+                error_parts.append(
+                    f"{len(validation['line_length_issues'])} lines exceed 76 chars"
+                )
+            if validation.get("missing_dn_entries"):
+                error_parts.append(
+                    f"{validation['missing_dn_entries']} entries missing DN"
+                )
+            error_msg = f"RFC 2849 compliance failed: {'; '.join(error_parts)}"
+            return FlextResult.fail(error_msg, validation)
+
+        return FlextResult.ok(validation)
+
+    @staticmethod
+    def validate_schema_format(
+        entry: dict[str, object],
+    ) -> FlextResult[dict[str, object]]:
+        """Validate schema entry conforms to RFC 4512.
+
+        Args:
+            entry: Schema entry dictionary
+
+        Returns:
+            FlextResult with RFC 4512 compliance report
+
+        """
+        report: dict[str, object] = {
+            "has_attributetypes": False,
+            "has_objectclasses": False,
+            "attribute_count": 0,
+            "objectclass_count": 0,
+            "is_valid": False,
+        }
+
+        # Check for schema attributes
+        for key in entry:
+            if isinstance(key, str):
+                key_lower = key.lower()
+                if key_lower == "attributetypes":
+                    value = entry[key]
+                    if isinstance(value, list):
+                        report["attribute_count"] = len(value)
+                    else:
+                        report["attribute_count"] = 1
+                    report["has_attributetypes"] = True
+                elif key_lower == "objectclasses":
+                    value = entry[key]
+                    if isinstance(value, list):
+                        report["objectclass_count"] = len(value)
+                    else:
+                        report["objectclass_count"] = 1
+                    report["has_objectclasses"] = True
+
+        # Valid schema has at least attributes or objectclasses
+        is_valid = report.get("has_attributetypes", False) or report.get(
+            "has_objectclasses", False
+        )
+        report["is_valid"] = is_valid
+
+        if not is_valid:
+            return FlextResult.fail(
+                "RFC 4512 compliance failed: No attributeTypes or objectClasses found",
+                report,
+            )
+
+        return FlextResult.ok(report)
+
+    @staticmethod
+    def validate_dn_format(dn: str) -> FlextResult[dict[str, object]]:
+        """Validate DN conforms to RFC 4514.
+
+        Args:
+            dn: DN string
+
+        Returns:
+            FlextResult with RFC 4514 compliance report
+
+        """
+        validation = helpers.validate_dn_rfc4514_format(dn)
+
+        if not validation.get("is_valid"):
+            errors = validation.get("errors", [])
+            error_msg = f"RFC 4514 compliance failed: {'; '.join(errors)}"
+            return FlextResult.fail(error_msg, validation)
+
+        return FlextResult.ok(validation)
+
+
 __all__ = [
     "FixtureCoverageReport",
     "FixtureMetadata",
     "FixtureValidator",
     "FlextLdifFixtureDiscovery",
+    "RfcComplianceValidator",
+    "RoundTripValidator",
 ]

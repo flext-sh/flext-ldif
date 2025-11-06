@@ -338,7 +338,7 @@ class TestNovellAcls:
         # Parse may succeed if RFC can handle it, or fail if RFC can't
         # The important thing is that can_handle returns False
         _ = acl.parse(
-            acl_line
+            acl_line,
         )  # Result can be success or failure depending on RFC's ability to parse
         # But can_handle should always return False for non-Novell ACLs
 
@@ -419,7 +419,7 @@ class TestNovellAcls:
                 delete=True,
             ),
             metadata=FlextLdifModels.QuirkMetadata.create_for(
-                FlextLdifServersNovell.Constants.SERVER_TYPE
+                FlextLdifServersNovell.Constants.SERVER_TYPE,
             ),
             raw_acl="acl: [Entry Rights]#cn=Admin,o=Example#[BCDRSE]",
         )
@@ -445,7 +445,7 @@ class TestNovellAcls:
             ),
             permissions=FlextLdifModels.AclPermissions(),
             metadata=FlextLdifModels.QuirkMetadata.create_for(
-                FlextLdifServersNovell.Constants.SERVER_TYPE
+                FlextLdifServersNovell.Constants.SERVER_TYPE,
             ),
         )
         result = acl.write(acl_data)
@@ -472,7 +472,7 @@ class TestNovellAcls:
                 read=True,
             ),
             metadata=FlextLdifModels.QuirkMetadata.create_for(
-                FlextLdifServersNovell.Constants.SERVER_TYPE
+                FlextLdifServersNovell.Constants.SERVER_TYPE,
             ),
         )
         result = acl.write(acl_data)
@@ -499,7 +499,7 @@ class TestNovellAcls:
             ),
             permissions=FlextLdifModels.AclPermissions(),
             metadata=FlextLdifModels.QuirkMetadata.create_for(
-                FlextLdifServersNovell.Constants.SERVER_TYPE
+                FlextLdifServersNovell.Constants.SERVER_TYPE,
             ),
         )
         result = acl.write(acl_data)
@@ -524,7 +524,7 @@ class TestNovellEntrys:
         entry = novell_server.Entry()
         entry_dn = "ou=services,o=Example"
         attributes: dict[str, object] = {
-            FlextLdifConstants.DictKeys.OBJECTCLASS: ["organizationalUnit"]
+            FlextLdifConstants.DictKeys.OBJECTCLASS: ["organizationalUnit"],
         }
         assert entry.can_handle(entry_dn, attributes) is True
 
@@ -534,7 +534,7 @@ class TestNovellEntrys:
         entry = novell_server.Entry()
         entry_dn = "ou=apps,o=Example"
         attributes: dict[str, object] = {
-            FlextLdifConstants.DictKeys.OBJECTCLASS: ["organizationalUnit"]
+            FlextLdifConstants.DictKeys.OBJECTCLASS: ["organizationalUnit"],
         }
         assert entry.can_handle(entry_dn, attributes) is True
 
@@ -544,7 +544,7 @@ class TestNovellEntrys:
         entry = novell_server.Entry()
         entry_dn = "ou=system,o=Example"
         attributes: dict[str, object] = {
-            FlextLdifConstants.DictKeys.OBJECTCLASS: ["organizationalUnit"]
+            FlextLdifConstants.DictKeys.OBJECTCLASS: ["organizationalUnit"],
         }
         assert entry.can_handle(entry_dn, attributes) is True
 
@@ -576,7 +576,7 @@ class TestNovellEntrys:
         entry = novell_server.Entry()
         entry_dn = "cn=user,o=Example"
         attributes: dict[str, object] = {
-            FlextLdifConstants.DictKeys.OBJECTCLASS: ["top", "ndsperson"]
+            FlextLdifConstants.DictKeys.OBJECTCLASS: ["top", "ndsperson"],
         }
         assert entry.can_handle(entry_dn, attributes) is True
 

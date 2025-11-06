@@ -50,13 +50,14 @@ def simple_entry() -> FlextLdifModels.Entry:
                 "objectClass": ["person", "inetOrgPerson"],
                 "sn": ["test-user"],
                 "mail": ["test@example.com"],
-            }
+            },
         ),
     )
 
 
 def test_write_single_entry_to_string(
-    writer: FlextLdifWriter, simple_entry: FlextLdifModels.Entry
+    writer: FlextLdifWriter,
+    simple_entry: FlextLdifModels.Entry,
 ) -> None:
     """Test writing a single entry to string."""
     # Disable base64 encoding for readable output
@@ -86,7 +87,8 @@ def test_write_single_entry_to_string(
 
 
 def test_write_multiple_entries_to_string(
-    writer: FlextLdifWriter, simple_entry: FlextLdifModels.Entry
+    writer: FlextLdifWriter,
+    simple_entry: FlextLdifModels.Entry,
 ) -> None:
     """Test writing multiple entries to string."""
     entry2 = FlextLdifModels.Entry(
@@ -95,7 +97,7 @@ def test_write_multiple_entries_to_string(
             attributes={
                 "cn": ["test2"],
                 "objectClass": ["person"],
-            }
+            },
         ),
     )
 
@@ -117,7 +119,9 @@ def test_write_multiple_entries_to_string(
 
 
 def test_write_to_file(
-    tmp_path: Path, writer: FlextLdifWriter, simple_entry: FlextLdifModels.Entry
+    tmp_path: Path,
+    writer: FlextLdifWriter,
+    simple_entry: FlextLdifModels.Entry,
 ) -> None:
     """Test writing entries to file."""
     output_file = tmp_path / "output.ldif"
@@ -142,7 +146,9 @@ def test_write_to_file(
 
 
 def test_write_entries_counted(
-    writer: FlextLdifWriter, simple_entry: FlextLdifModels.Entry, tmp_path: Path
+    writer: FlextLdifWriter,
+    simple_entry: FlextLdifModels.Entry,
+    tmp_path: Path,
 ) -> None:
     """Test that entry count is correct."""
     output_file = tmp_path / "count_test.ldif"
@@ -178,7 +184,7 @@ def test_write_with_multiple_attribute_values(writer: FlextLdifWriter) -> None:
                     "cn=user2,dc=example,dc=com",
                     "cn=user3,dc=example,dc=com",
                 ],
-            }
+            },
         ),
     )
 
@@ -212,7 +218,8 @@ def test_write_empty_entries_list(writer: FlextLdifWriter) -> None:
 
 
 def test_fallback_to_rfc_when_no_server(
-    rfc_config: FlextLdifConfig, registry: FlextLdifServer
+    rfc_config: FlextLdifConfig,
+    registry: FlextLdifServer,
 ) -> None:
     """Test that non-existent server type fails gracefully."""
     # Use non-existent server type - should fail
@@ -224,7 +231,7 @@ def test_fallback_to_rfc_when_no_server(
     entry = FlextLdifModels.Entry(
         dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
         attributes=FlextLdifModels.LdifAttributes(
-            attributes={"cn": ["test"], "objectClass": ["person"]}
+            attributes={"cn": ["test"], "objectClass": ["person"]},
         ),
     )
 

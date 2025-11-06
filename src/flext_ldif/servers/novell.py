@@ -20,6 +20,7 @@ from flext_core import FlextResult
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.servers.rfc import FlextLdifServersRfc
+from flext_ldif.typings import FlextLdifTypes
 from flext_ldif.utilities import FlextLdifUtilities
 
 
@@ -321,7 +322,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
     class Acl(FlextLdifServersRfc.Acl):
         """Novell eDirectory ACL quirk."""
 
-        def can_handle(self, acl: str | FlextLdifModels.Acl) -> bool:
+        def can_handle(self, acl: FlextLdifTypes.AclOrString) -> bool:
             """Check if this is a Novell eDirectory ACL.
 
             Override RFC's always-true behavior to check Novell-specific markers.
@@ -335,7 +336,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             """
             return self.can_handle_acl(acl)
 
-        def can_handle_acl(self, acl_line: str | FlextLdifModels.Acl) -> bool:
+        def can_handle_acl(self, acl_line: FlextLdifTypes.AclOrString) -> bool:
             """Detect eDirectory ACL values."""
             if isinstance(acl_line, str):
                 if not acl_line or not acl_line.strip():

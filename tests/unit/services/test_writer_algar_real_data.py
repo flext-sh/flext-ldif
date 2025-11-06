@@ -35,7 +35,7 @@ class TestWriterAlgarRealData:
         """
         # Use real algar-oud-mig LDIF file - small config file for testing
         input_file = Path(
-            "/home/marlonsc/flext/algar-oud-mig/data/input/2_ldap_configset.ldif"
+            "/home/marlonsc/flext/algar-oud-mig/data/input/2_ldap_configset.ldif",
         )
 
         # Skip test if file doesn't exist (for CI/CD environments)
@@ -52,11 +52,11 @@ class TestWriterAlgarRealData:
                         "objectClass": ["top", "configserver"],
                         "cn": ["config"],
                         "description": [
-                            "A very long description that simulates configuration entries from real LDIF files that have extended attributes requiring proper line folding"
+                            "A very long description that simulates configuration entries from real LDIF files that have extended attributes requiring proper line folding",
                         ],
-                    }
+                    },
                 ),
-            )
+            ),
         ]
 
         # Write with RFC 2849 compliance (fold_long_lines=False)

@@ -35,7 +35,8 @@ class TestOidSchemaWriting:
         return FlextLdifFixtures.OID()
 
     def test_write_attribute_minimal(
-        self, oid_schema: FlextLdifServersOid.Schema
+        self,
+        oid_schema: FlextLdifServersOid.Schema,
     ) -> None:
         """Test writing minimal attribute (OID and NAME only)."""
         # Minimal attribute: just OID and NAME
@@ -63,7 +64,8 @@ class TestOidSchemaWriting:
         assert "orclguid" in written
 
     def test_write_attribute_with_all_rfc_options(
-        self, oid_schema: FlextLdifServersOid.Schema
+        self,
+        oid_schema: FlextLdifServersOid.Schema,
     ) -> None:
         """Test writing attribute with all RFC 4512 options."""
         attr_def = (
@@ -96,7 +98,8 @@ class TestOidSchemaWriting:
         assert "USAGE" in written or "usage" in written.lower()
 
     def test_write_objectclass_structural(
-        self, oid_schema: FlextLdifServersOid.Schema
+        self,
+        oid_schema: FlextLdifServersOid.Schema,
     ) -> None:
         """Test writing STRUCTURAL objectClass."""
         oc_def = (
@@ -123,7 +126,8 @@ class TestOidSchemaWriting:
         assert "STRUCTURAL" in written or "structural" in written.lower()
 
     def test_write_objectclass_auxiliary(
-        self, oid_schema: FlextLdifServersOid.Schema
+        self,
+        oid_schema: FlextLdifServersOid.Schema,
     ) -> None:
         """Test writing AUXILIARY objectClass (with AUXILLARY typo fix)."""
         oc_def = (
@@ -148,7 +152,8 @@ class TestOidSchemaWriting:
         assert "AUXILLARY" not in written
 
     def test_write_objectclass_abstract(
-        self, oid_schema: FlextLdifServersOid.Schema
+        self,
+        oid_schema: FlextLdifServersOid.Schema,
     ) -> None:
         """Test writing ABSTRACT objectClass."""
         oc_def = (
@@ -172,7 +177,8 @@ class TestOidSchemaWriting:
         assert "ABSTRACT" in written or "abstract" in written.lower()
 
     def test_write_objectclass_with_sup(
-        self, oid_schema: FlextLdifServersOid.Schema
+        self,
+        oid_schema: FlextLdifServersOid.Schema,
     ) -> None:
         """Test writing objectClass with SUP (superclass) inheritance."""
         oc_def = (
@@ -197,7 +203,8 @@ class TestOidSchemaWriting:
         assert "SUP" in written or "sup" in written.lower()
 
     def test_write_roundtrip_attribute(
-        self, oid_schema: FlextLdifServersOid.Schema
+        self,
+        oid_schema: FlextLdifServersOid.Schema,
     ) -> None:
         """Test parse → write → parse roundtrip for attribute (stability)."""
         original = (
@@ -230,7 +237,8 @@ class TestOidSchemaWriting:
         assert parsed1.single_value == parsed2.single_value
 
     def test_write_roundtrip_objectclass(
-        self, oid_schema: FlextLdifServersOid.Schema
+        self,
+        oid_schema: FlextLdifServersOid.Schema,
     ) -> None:
         """Test parse → write → parse roundtrip for objectClass (stability)."""
         original = (
@@ -339,7 +347,8 @@ class TestOidObjectclassTypoFix:
         return FlextLdifServersOid().schema
 
     def test_write_fixes_auxillary_typo(
-        self, oid_schema: FlextLdifServersOid.Schema
+        self,
+        oid_schema: FlextLdifServersOid.Schema,
     ) -> None:
         """Test that writing fixes AUXILLARY → AUXILIARY typo."""
         # Create attribute with AUXILIARY (correct spelling)
@@ -360,7 +369,8 @@ class TestOidObjectclassTypoFix:
         assert "AUXILLARY" not in written
 
     def test_parse_handles_auxillary_typo(
-        self, oid_schema: FlextLdifServersOid.Schema
+        self,
+        oid_schema: FlextLdifServersOid.Schema,
     ) -> None:
         """Test that parsing handles AUXILLARY typo gracefully."""
         # Some OID exports may contain the typo AUXILLARY
@@ -387,7 +397,8 @@ class TestOidSyntaxAndMatchingRuleTransformations:
         return FlextLdifServersOid().schema
 
     def test_parse_applies_syntax_oid_replacement(
-        self, oid_schema: FlextLdifServersOid.Schema
+        self,
+        oid_schema: FlextLdifServersOid.Schema,
     ) -> None:
         """Test that parsing applies syntax OID replacement (ACI List → Directory String)."""
         # ACI List syntax: 1.3.6.1.4.1.1466.115.121.1.1
@@ -408,7 +419,8 @@ class TestOidSyntaxAndMatchingRuleTransformations:
         )
 
     def test_parse_preserves_non_replaced_syntax_oids(
-        self, oid_schema: FlextLdifServersOid.Schema
+        self,
+        oid_schema: FlextLdifServersOid.Schema,
     ) -> None:
         """Test that parsing preserves non-replaced syntax OIDs."""
         attr_def = (
@@ -424,7 +436,8 @@ class TestOidSyntaxAndMatchingRuleTransformations:
         assert parsed_attr.syntax == "1.3.6.1.4.1.1466.115.121.1.15"
 
     def test_parse_applies_matching_rule_replacement(
-        self, oid_schema: FlextLdifServersOid.Schema
+        self,
+        oid_schema: FlextLdifServersOid.Schema,
     ) -> None:
         """Test that parsing applies matching rule replacement."""
         # caseIgnoreSubStringsMatch should be replaced with caseIgnoreSubstringsMatch
@@ -444,7 +457,8 @@ class TestOidSyntaxAndMatchingRuleTransformations:
         )
 
     def test_parse_preserves_standard_matching_rules(
-        self, oid_schema: FlextLdifServersOid.Schema
+        self,
+        oid_schema: FlextLdifServersOid.Schema,
     ) -> None:
         """Test that parsing preserves standard matching rules."""
         attr_def = (
@@ -461,7 +475,8 @@ class TestOidSyntaxAndMatchingRuleTransformations:
         assert parsed_attr.equality == "caseIgnoreMatch"
 
     def test_write_preserves_syntax_oids(
-        self, oid_schema: FlextLdifServersOid.Schema
+        self,
+        oid_schema: FlextLdifServersOid.Schema,
     ) -> None:
         """Test that writing preserves replaced syntax OIDs."""
         attr_def = (
@@ -492,7 +507,8 @@ class TestOidAttributeNameTransformations:
         return FlextLdifServersOid().schema
 
     def test_write_preserves_attribute_names(
-        self, oid_schema: FlextLdifServersOid.Schema
+        self,
+        oid_schema: FlextLdifServersOid.Schema,
     ) -> None:
         """Test that writing preserves attribute names."""
         attr_def = (

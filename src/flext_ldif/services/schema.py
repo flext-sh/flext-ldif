@@ -153,11 +153,9 @@ class FlextLdifSchema:
             if not attr.oid:
                 return FlextResult.error("Attribute has no OID")  # type: ignore[bad-return]
 
-            # Check syntax if present
-            if attr.syntax:
-                # Validate syntax OID format
-                if not self._is_valid_oid(attr.syntax):
-                    return FlextResult.error(f"Invalid SYNTAX OID: {attr.syntax}")  # type: ignore[bad-return]
+            # Check syntax if present and validate OID format
+            if attr.syntax and not self._is_valid_oid(attr.syntax):
+                return FlextResult.error(f"Invalid SYNTAX OID: {attr.syntax}")  # type: ignore[bad-return]
 
             return FlextResult.ok(True)
 

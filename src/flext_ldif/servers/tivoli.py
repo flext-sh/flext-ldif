@@ -13,6 +13,7 @@ from flext_core import FlextResult
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.servers.rfc import FlextLdifServersRfc
+from flext_ldif.typings import FlextLdifTypes
 from flext_ldif.utilities import FlextLdifUtilities
 
 
@@ -299,7 +300,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                 return False
             return self.can_handle_acl(acl_line.raw_acl)
 
-        def can_handle_acl(self, acl_line: str | FlextLdifModels.Acl) -> bool:
+        def can_handle_acl(self, acl_line: FlextLdifTypes.AclOrString) -> bool:
             """Detect Tivoli DS ACL values."""
             if isinstance(acl_line, str):
                 normalized = acl_line.strip() if acl_line else ""

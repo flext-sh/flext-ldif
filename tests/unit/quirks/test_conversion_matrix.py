@@ -31,13 +31,15 @@ class FailingParseQuirk(FlextLdifServersBase.Schema):
         self.error_msg = error_msg
 
     def can_handle_attribute(
-        self, attr_definition: str | FlextLdifModels.SchemaAttribute
+        self,
+        attr_definition: str | FlextLdifModels.SchemaAttribute,
     ) -> bool:
         """Always handle attributes for testing."""
         return True
 
     def can_handle_objectclass(
-        self, oc_definition: str | FlextLdifModels.SchemaObjectClass
+        self,
+        oc_definition: str | FlextLdifModels.SchemaObjectClass,
     ) -> bool:
         """Always handle objectClass for testing."""
         return True
@@ -47,22 +49,26 @@ class FailingParseQuirk(FlextLdifServersBase.Schema):
         return True
 
     def _parse_attribute(
-        self, attr_definition: str
+        self,
+        attr_definition: str,
     ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
         return FlextResult.fail(self.error_msg)
 
     def _parse_objectclass(
-        self, oc_definition: str
+        self,
+        oc_definition: str,
     ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
         return FlextResult.fail(self.error_msg)
 
     def _write_attribute(
-        self, attr_data: FlextLdifModels.SchemaAttribute
+        self,
+        attr_data: FlextLdifModels.SchemaAttribute,
     ) -> FlextResult[str]:
         return FlextResult.fail(self.error_msg)
 
     def _write_objectclass(
-        self, oc_data: FlextLdifModels.SchemaObjectClass
+        self,
+        oc_data: FlextLdifModels.SchemaObjectClass,
     ) -> FlextResult[str]:
         return FlextResult.fail(self.error_msg)
 
@@ -75,38 +81,44 @@ class SuccessfulParseQuirk(FlextLdifServersBase.Schema):
         super().__init__()
 
     def can_handle_attribute(
-        self, attr_definition: str | FlextLdifModels.SchemaAttribute
+        self,
+        attr_definition: str | FlextLdifModels.SchemaAttribute,
     ) -> bool:
         """Always handle attributes for testing."""
         return True
 
     def can_handle_objectclass(
-        self, oc_definition: str | FlextLdifModels.SchemaObjectClass
+        self,
+        oc_definition: str | FlextLdifModels.SchemaObjectClass,
     ) -> bool:
         """Always handle objectClass for testing."""
         return True
 
     def _parse_attribute(
-        self, attr_definition: str
+        self,
+        attr_definition: str,
     ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
         return FlextResult.ok(
-            FlextLdifModels.SchemaAttribute(oid="1.2.3.4.5", name="test")
+            FlextLdifModels.SchemaAttribute(oid="1.2.3.4.5", name="test"),
         )
 
     def _parse_objectclass(
-        self, oc_definition: str
+        self,
+        oc_definition: str,
     ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
         return FlextResult.ok(
-            FlextLdifModels.SchemaObjectClass(oid="1.2.3.4.6", name="test")
+            FlextLdifModels.SchemaObjectClass(oid="1.2.3.4.6", name="test"),
         )
 
     def _write_attribute(
-        self, attr_data: FlextLdifModels.SchemaAttribute
+        self,
+        attr_data: FlextLdifModels.SchemaAttribute,
     ) -> FlextResult[str]:
         return FlextResult.ok("(test)")
 
     def _write_objectclass(
-        self, oc_data: FlextLdifModels.SchemaObjectClass
+        self,
+        oc_data: FlextLdifModels.SchemaObjectClass,
     ) -> FlextResult[str]:
         return FlextResult.ok("(test)")
 
@@ -121,13 +133,15 @@ class ConversionFailingQuirk(FlextLdifServersBase.Schema):
         self.fail_on = fail_on
 
     def can_handle_attribute(
-        self, attr_definition: str | FlextLdifModels.SchemaAttribute
+        self,
+        attr_definition: str | FlextLdifModels.SchemaAttribute,
     ) -> bool:
         """Always handle attributes for testing."""
         return True
 
     def can_handle_objectclass(
-        self, oc_definition: str | FlextLdifModels.SchemaObjectClass
+        self,
+        oc_definition: str | FlextLdifModels.SchemaObjectClass,
     ) -> bool:
         """Always handle objectClass for testing."""
         return True
@@ -137,28 +151,32 @@ class ConversionFailingQuirk(FlextLdifServersBase.Schema):
         return True
 
     def _parse_attribute(
-        self, attr_definition: str
+        self,
+        attr_definition: str,
     ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
         return FlextResult.ok(
-            FlextLdifModels.SchemaAttribute(oid="1.2.3.4", name="test")
+            FlextLdifModels.SchemaAttribute(oid="1.2.3.4", name="test"),
         )
 
     def _write_attribute(
-        self, attr_data: FlextLdifModels.SchemaAttribute
+        self,
+        attr_data: FlextLdifModels.SchemaAttribute,
     ) -> FlextResult[str]:
         if self.fail_on == "write":
             return FlextResult.fail("write failed")
         return FlextResult.ok(f"({attr_data.oid} NAME '{attr_data.name}')")
 
     def _parse_objectclass(
-        self, oc_definition: str
+        self,
+        oc_definition: str,
     ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
         return FlextResult.ok(
-            FlextLdifModels.SchemaObjectClass(oid="1.2.3.5", name="test")
+            FlextLdifModels.SchemaObjectClass(oid="1.2.3.5", name="test"),
         )
 
     def _write_objectclass(
-        self, oc_data: FlextLdifModels.SchemaObjectClass
+        self,
+        oc_data: FlextLdifModels.SchemaObjectClass,
     ) -> FlextResult[str]:
         if self.fail_on == "write":
             return FlextResult.fail("write failed")
@@ -174,13 +192,15 @@ class ExceptionThrowingQuirk(FlextLdifServersBase.Schema):
         self.priority = 100
 
     def can_handle_attribute(
-        self, attr_definition: str | FlextLdifModels.SchemaAttribute
+        self,
+        attr_definition: str | FlextLdifModels.SchemaAttribute,
     ) -> bool:
         """Always handle attributes for testing."""
         return True
 
     def can_handle_objectclass(
-        self, oc_definition: str | FlextLdifModels.SchemaObjectClass
+        self,
+        oc_definition: str | FlextLdifModels.SchemaObjectClass,
     ) -> bool:
         """Always handle objectClass for testing."""
         return True
@@ -190,25 +210,29 @@ class ExceptionThrowingQuirk(FlextLdifServersBase.Schema):
         return True
 
     def _parse_attribute(
-        self, attr_definition: str
+        self,
+        attr_definition: str,
     ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
         msg = "unexpected error"
         raise RuntimeError(msg)
 
     def _parse_objectclass(
-        self, oc_definition: str
+        self,
+        oc_definition: str,
     ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
         msg = "unexpected error"
         raise RuntimeError(msg)
 
     def _write_attribute(
-        self, attr_data: FlextLdifModels.SchemaAttribute
+        self,
+        attr_data: FlextLdifModels.SchemaAttribute,
     ) -> FlextResult[str]:
         msg = "unexpected error"
         raise RuntimeError(msg)
 
     def _write_objectclass(
-        self, oc_data: FlextLdifModels.SchemaObjectClass
+        self,
+        oc_data: FlextLdifModels.SchemaObjectClass,
     ) -> FlextResult[str]:
         msg = "unexpected error"
         raise RuntimeError(msg)
@@ -223,13 +247,15 @@ class MissingParseObjectClassQuirk(FlextLdifServersBase.Schema):
         self.priority = 100
 
     def can_handle_attribute(
-        self, attr_definition: str | FlextLdifModels.SchemaAttribute
+        self,
+        attr_definition: str | FlextLdifModels.SchemaAttribute,
     ) -> bool:
         """Always handle attributes for testing."""
         return True
 
     def can_handle_objectclass(
-        self, oc_definition: str | FlextLdifModels.SchemaObjectClass
+        self,
+        oc_definition: str | FlextLdifModels.SchemaObjectClass,
     ) -> bool:
         """Does NOT handle objectClass - that's the point of this test."""
         return False
@@ -239,26 +265,30 @@ class MissingParseObjectClassQuirk(FlextLdifServersBase.Schema):
         return True
 
     def _parse_attribute(
-        self, attr_definition: str
+        self,
+        attr_definition: str,
     ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
         """Dummy implementation."""
         return FlextResult.ok(
-            FlextLdifModels.SchemaAttribute(oid="1.2.3.4", name="test")
+            FlextLdifModels.SchemaAttribute(oid="1.2.3.4", name="test"),
         )
 
     def _parse_objectclass(
-        self, oc_definition: str
+        self,
+        oc_definition: str,
     ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
         """Should never be called since can_handle_objectclass returns False."""
         return FlextResult.fail("Not implemented")
 
     def _write_attribute(
-        self, attr_data: FlextLdifModels.SchemaAttribute
+        self,
+        attr_data: FlextLdifModels.SchemaAttribute,
     ) -> FlextResult[str]:
         return FlextResult.ok("(test)")
 
     def _write_objectclass(
-        self, oc_data: FlextLdifModels.SchemaObjectClass
+        self,
+        oc_data: FlextLdifModels.SchemaObjectClass,
     ) -> FlextResult[str]:
         return FlextResult.ok("(test)")
 
@@ -272,12 +302,14 @@ class ObjectClassParseOnlyQuirk(FlextLdifServersBase.Schema):
         self.priority = 100
 
     def can_handle_attribute(
-        self, attr_definition: str | FlextLdifModels.SchemaAttribute
+        self,
+        attr_definition: str | FlextLdifModels.SchemaAttribute,
     ) -> bool:
         return True
 
     def can_handle_objectclass(
-        self, oc_definition: str | FlextLdifModels.SchemaObjectClass
+        self,
+        oc_definition: str | FlextLdifModels.SchemaObjectClass,
     ) -> bool:
         return True
 
@@ -285,26 +317,30 @@ class ObjectClassParseOnlyQuirk(FlextLdifServersBase.Schema):
         return True
 
     def _parse_attribute(
-        self, attr_definition: str
+        self,
+        attr_definition: str,
     ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
         return FlextResult.ok(
-            FlextLdifModels.SchemaAttribute(oid="1.2.3.4", name="test")
+            FlextLdifModels.SchemaAttribute(oid="1.2.3.4", name="test"),
         )
 
     def _parse_objectclass(
-        self, oc_definition: str
+        self,
+        oc_definition: str,
     ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
         return FlextResult.ok(
-            FlextLdifModels.SchemaObjectClass(oid="1.2.3.5", name="test")
+            FlextLdifModels.SchemaObjectClass(oid="1.2.3.5", name="test"),
         )
 
     def _write_attribute(
-        self, attr_data: FlextLdifModels.SchemaAttribute
+        self,
+        attr_data: FlextLdifModels.SchemaAttribute,
     ) -> FlextResult[str]:
         return FlextResult.ok("(test)")
 
     def _write_objectclass(
-        self, oc_data: FlextLdifModels.SchemaObjectClass
+        self,
+        oc_data: FlextLdifModels.SchemaObjectClass,
     ) -> FlextResult[str]:
         return FlextResult.ok("(test)")
 
@@ -318,12 +354,14 @@ class MissingParseAcl(FlextLdifServersBase.Schema):
         self.priority = 100
 
     def can_handle_attribute(
-        self, attr_definition: str | FlextLdifModels.SchemaAttribute
+        self,
+        attr_definition: str | FlextLdifModels.SchemaAttribute,
     ) -> bool:
         return False
 
     def can_handle_objectclass(
-        self, oc_definition: str | FlextLdifModels.SchemaObjectClass
+        self,
+        oc_definition: str | FlextLdifModels.SchemaObjectClass,
     ) -> bool:
         return False
 
@@ -331,22 +369,26 @@ class MissingParseAcl(FlextLdifServersBase.Schema):
         return True
 
     def _parse_attribute(
-        self, attr_definition: str
+        self,
+        attr_definition: str,
     ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
         return FlextResult.fail("Not implemented")
 
     def _write_attribute(
-        self, attr_data: FlextLdifModels.SchemaAttribute
+        self,
+        attr_data: FlextLdifModels.SchemaAttribute,
     ) -> FlextResult[str]:
         return FlextResult.fail("Not implemented")
 
     def _parse_objectclass(
-        self, oc_definition: str
+        self,
+        oc_definition: str,
     ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
         return FlextResult.fail("Not implemented")
 
     def _write_objectclass(
-        self, oc_data: FlextLdifModels.SchemaObjectClass
+        self,
+        oc_data: FlextLdifModels.SchemaObjectClass,
     ) -> FlextResult[str]:
         return FlextResult.fail("Not implemented")
 
@@ -363,12 +405,14 @@ class MissingWriteAcl(FlextLdifServersBase.Schema):
         self.priority = 100
 
     def can_handle_attribute(
-        self, attr_definition: str | FlextLdifModels.SchemaAttribute
+        self,
+        attr_definition: str | FlextLdifModels.SchemaAttribute,
     ) -> bool:
         return False
 
     def can_handle_objectclass(
-        self, oc_definition: str | FlextLdifModels.SchemaObjectClass
+        self,
+        oc_definition: str | FlextLdifModels.SchemaObjectClass,
     ) -> bool:
         return False
 
@@ -376,22 +420,26 @@ class MissingWriteAcl(FlextLdifServersBase.Schema):
         return True
 
     def _parse_attribute(
-        self, attr_definition: str
+        self,
+        attr_definition: str,
     ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
         return FlextResult.fail("Not implemented")
 
     def _write_attribute(
-        self, attr_data: FlextLdifModels.SchemaAttribute
+        self,
+        attr_data: FlextLdifModels.SchemaAttribute,
     ) -> FlextResult[str]:
         return FlextResult.fail("Not implemented")
 
     def _parse_objectclass(
-        self, oc_definition: str
+        self,
+        oc_definition: str,
     ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
         return FlextResult.fail("Not implemented")
 
     def _write_objectclass(
-        self, oc_data: FlextLdifModels.SchemaObjectClass
+        self,
+        oc_data: FlextLdifModels.SchemaObjectClass,
     ) -> FlextResult[str]:
         return FlextResult.fail("Not implemented")
 
@@ -409,36 +457,42 @@ class EntryConversionQuirk(FlextLdifServersBase.Schema):
         self.entry = True
 
     def can_handle_attribute(
-        self, attr_definition: str | FlextLdifModels.SchemaAttribute
+        self,
+        attr_definition: str | FlextLdifModels.SchemaAttribute,
     ) -> bool:
         return True  # Supports attribute parsing
 
     def _parse_attribute(
-        self, attr_definition: str
+        self,
+        attr_definition: str,
     ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
         return FlextResult.ok(
-            FlextLdifModels.SchemaAttribute(oid="1.2.3.4", name="test")
+            FlextLdifModels.SchemaAttribute(oid="1.2.3.4", name="test"),
         )
 
     def can_handle_objectclass(
-        self, oc_definition: str | FlextLdifModels.SchemaObjectClass
+        self,
+        oc_definition: str | FlextLdifModels.SchemaObjectClass,
     ) -> bool:
         return False
 
     def _parse_objectclass(
-        self, oc_definition: str
+        self,
+        oc_definition: str,
     ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
         return FlextResult.ok(
-            FlextLdifModels.SchemaObjectClass(oid="1.2.3.5", name="test")
+            FlextLdifModels.SchemaObjectClass(oid="1.2.3.5", name="test"),
         )
 
     def _write_attribute(
-        self, attr_data: FlextLdifModels.SchemaAttribute
+        self,
+        attr_data: FlextLdifModels.SchemaAttribute,
     ) -> FlextResult[str]:
         return FlextResult.ok("(test)")
 
     def _write_objectclass(
-        self, oc_data: FlextLdifModels.SchemaObjectClass
+        self,
+        oc_data: FlextLdifModels.SchemaObjectClass,
     ) -> FlextResult[str]:
         return FlextResult.ok("(test)")
 
@@ -452,36 +506,42 @@ class MinimalQuirk(FlextLdifServersBase.Schema):
         self.priority = 100
 
     def can_handle_attribute(
-        self, attr_definition: str | FlextLdifModels.SchemaAttribute
+        self,
+        attr_definition: str | FlextLdifModels.SchemaAttribute,
     ) -> bool:
         return False
 
     def _parse_attribute(
-        self, attr_definition: str
+        self,
+        attr_definition: str,
     ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
         return FlextResult.ok(
-            FlextLdifModels.SchemaAttribute(oid="1.2.3.4", name="test")
+            FlextLdifModels.SchemaAttribute(oid="1.2.3.4", name="test"),
         )
 
     def can_handle_objectclass(
-        self, oc_definition: str | FlextLdifModels.SchemaObjectClass
+        self,
+        oc_definition: str | FlextLdifModels.SchemaObjectClass,
     ) -> bool:
         return False
 
     def _parse_objectclass(
-        self, oc_definition: str
+        self,
+        oc_definition: str,
     ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
         return FlextResult.ok(
-            FlextLdifModels.SchemaObjectClass(oid="1.2.3.5", name="test")
+            FlextLdifModels.SchemaObjectClass(oid="1.2.3.5", name="test"),
         )
 
     def _write_attribute(
-        self, attr_data: FlextLdifModels.SchemaAttribute
+        self,
+        attr_data: FlextLdifModels.SchemaAttribute,
     ) -> FlextResult[str]:
         return FlextResult.ok("(test)")
 
     def _write_objectclass(
-        self, oc_data: FlextLdifModels.SchemaObjectClass
+        self,
+        oc_data: FlextLdifModels.SchemaObjectClass,
     ) -> FlextResult[str]:
         return FlextResult.ok("(test)")
 
@@ -495,34 +555,40 @@ class PartialAttributeQuirk(FlextLdifServersBase.Schema):
         self.priority = 100
 
     def can_handle_attribute(
-        self, attr_definition: str | FlextLdifModels.SchemaAttribute
+        self,
+        attr_definition: str | FlextLdifModels.SchemaAttribute,
     ) -> bool:
         return True
 
     def _parse_attribute(
-        self, attr_definition: str
+        self,
+        attr_definition: str,
     ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
         return FlextResult.ok(
-            FlextLdifModels.SchemaAttribute(oid="1.2.3.4", name="test")
+            FlextLdifModels.SchemaAttribute(oid="1.2.3.4", name="test"),
         )
 
     def can_handle_objectclass(
-        self, oc_definition: str | FlextLdifModels.SchemaObjectClass
+        self,
+        oc_definition: str | FlextLdifModels.SchemaObjectClass,
     ) -> bool:
         return False
 
     def _parse_objectclass(
-        self, oc_definition: str
+        self,
+        oc_definition: str,
     ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
         return FlextResult.fail("Not supported")
 
     def _write_attribute(
-        self, attr_data: FlextLdifModels.SchemaAttribute
+        self,
+        attr_data: FlextLdifModels.SchemaAttribute,
     ) -> FlextResult[str]:
         return FlextResult.ok("(test)")
 
     def _write_objectclass(
-        self, oc_data: FlextLdifModels.SchemaObjectClass
+        self,
+        oc_data: FlextLdifModels.SchemaObjectClass,
     ) -> FlextResult[str]:
         return FlextResult.fail("Not supported")
 
@@ -553,19 +619,22 @@ class AclOnlyQuirk(FlextLdifServersBase.Schema):
         self.acl = TestAclQuirk()
 
     def can_handle_attribute(
-        self, attr_definition: str | FlextLdifModels.SchemaAttribute
+        self,
+        attr_definition: str | FlextLdifModels.SchemaAttribute,
     ) -> bool:
         return False
 
     def _parse_attribute(
-        self, attr_definition: str
+        self,
+        attr_definition: str,
     ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
         return FlextResult.ok(
-            FlextLdifModels.SchemaAttribute(oid="1.2.3.4", name="test")
+            FlextLdifModels.SchemaAttribute(oid="1.2.3.4", name="test"),
         )
 
     def can_handle_objectclass(
-        self, oc_definition: str | FlextLdifModels.SchemaObjectClass
+        self,
+        oc_definition: str | FlextLdifModels.SchemaObjectClass,
     ) -> bool:
         return False
 
@@ -573,19 +642,22 @@ class AclOnlyQuirk(FlextLdifServersBase.Schema):
         return True  # Only ACL support
 
     def _parse_objectclass(
-        self, oc_definition: str
+        self,
+        oc_definition: str,
     ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
         return FlextResult.ok(
-            FlextLdifModels.SchemaObjectClass(oid="1.2.3.5", name="test")
+            FlextLdifModels.SchemaObjectClass(oid="1.2.3.5", name="test"),
         )
 
     def _write_attribute(
-        self, attr_data: FlextLdifModels.SchemaAttribute
+        self,
+        attr_data: FlextLdifModels.SchemaAttribute,
     ) -> FlextResult[str]:
         return FlextResult.ok("(test)")
 
     def _write_objectclass(
-        self, oc_data: FlextLdifModels.SchemaObjectClass
+        self,
+        oc_data: FlextLdifModels.SchemaObjectClass,
     ) -> FlextResult[str]:
         return FlextResult.ok("(test)")
 
@@ -603,36 +675,42 @@ class EntryOnlyQuirk(FlextLdifServersBase.Schema):
         self.entry = True
 
     def can_handle_attribute(
-        self, attr_definition: str | FlextLdifModels.SchemaAttribute
+        self,
+        attr_definition: str | FlextLdifModels.SchemaAttribute,
     ) -> bool:
         return False
 
     def _parse_attribute(
-        self, attr_definition: str
+        self,
+        attr_definition: str,
     ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
         return FlextResult.ok(
-            FlextLdifModels.SchemaAttribute(oid="1.2.3.4", name="test")
+            FlextLdifModels.SchemaAttribute(oid="1.2.3.4", name="test"),
         )
 
     def can_handle_objectclass(
-        self, oc_definition: str | FlextLdifModels.SchemaObjectClass
+        self,
+        oc_definition: str | FlextLdifModels.SchemaObjectClass,
     ) -> bool:
         return False
 
     def _parse_objectclass(
-        self, oc_definition: str
+        self,
+        oc_definition: str,
     ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
         return FlextResult.ok(
-            FlextLdifModels.SchemaObjectClass(oid="1.2.3.5", name="test")
+            FlextLdifModels.SchemaObjectClass(oid="1.2.3.5", name="test"),
         )
 
     def _write_attribute(
-        self, attr_data: FlextLdifModels.SchemaAttribute
+        self,
+        attr_data: FlextLdifModels.SchemaAttribute,
     ) -> FlextResult[str]:
         return FlextResult.ok("(test)")
 
     def _write_objectclass(
-        self, oc_data: FlextLdifModels.SchemaObjectClass
+        self,
+        oc_data: FlextLdifModels.SchemaObjectClass,
     ) -> FlextResult[str]:
         return FlextResult.ok("(test)")
 
@@ -676,7 +754,9 @@ class TestGetSupportedConversions:
         return FlextLdifServersOid()
 
     def test_get_supported_conversions_oud(
-        self, matrix: FlextLdifConversion, oud: FlextLdifServersOud
+        self,
+        matrix: FlextLdifConversion,
+        oud: FlextLdifServersOud,
     ) -> None:
         """Test checking supported conversions for OUD quirk."""
         supported = matrix.get_supported_conversions(oud)
@@ -692,7 +772,9 @@ class TestGetSupportedConversions:
         assert supported["objectClass"] is True
 
     def test_get_supported_conversions_oid(
-        self, matrix: FlextLdifConversion, oid: FlextLdifServersOid
+        self,
+        matrix: FlextLdifConversion,
+        oid: FlextLdifServersOid,
     ) -> None:
         """Test checking supported conversions for OID quirk."""
         supported = matrix.get_supported_conversions(oid)
@@ -1039,7 +1121,7 @@ class TestBidirectionalConversion:
 
 
 @pytest.mark.skip(
-    reason="Error handling tests for conversion matrix - edge cases not fully implemented"
+    reason="Error handling tests for conversion matrix - edge cases not fully implemented",
 )
 class TestErrorHandling:
     """Test error handling in conversion matrix."""
@@ -1162,7 +1244,8 @@ class TestDnExtractionAndRegistration:
         return FlextLdifServersOid()
 
     def test_extract_and_register_dns_entry_dn(
-        self, matrix: FlextLdifConversion
+        self,
+        matrix: FlextLdifConversion,
     ) -> None:
         """Test extracting and registering entry DN."""
         data: dict[str, object] = {"dn": "cn=test,dc=example,dc=com"}
@@ -1170,7 +1253,8 @@ class TestDnExtractionAndRegistration:
         # DN should be registered - we can't directly test registry state but no exception should be raised
 
     def test_extract_and_register_dns_group_members(
-        self, matrix: FlextLdifConversion
+        self,
+        matrix: FlextLdifConversion,
     ) -> None:
         """Test extracting and registering group membership DNs."""
         data: dict[str, object] = {
@@ -1183,7 +1267,8 @@ class TestDnExtractionAndRegistration:
         # Multiple DNs should be registered - no exception should be raised
 
     def test_extract_and_register_dns_acl_by_clauses(
-        self, matrix: FlextLdifConversion
+        self,
+        matrix: FlextLdifConversion,
     ) -> None:
         """Test extracting DNs from ACL by clauses."""
         # Test that DN registry exists and can be used
@@ -1193,7 +1278,8 @@ class TestDnExtractionAndRegistration:
         assert registered_dn is not None
 
     def test_extract_and_register_dns_mixed_case(
-        self, matrix: FlextLdifConversion
+        self,
+        matrix: FlextLdifConversion,
     ) -> None:
         """Test DN registration handles mixed case properly."""
         data: dict[str, object] = {"dn": "CN=Test,DC=Example,DC=Com"}
@@ -1201,7 +1287,8 @@ class TestDnExtractionAndRegistration:
         # Mixed case DN should be registered without issues
 
     def test_extract_and_register_dns_empty_data(
-        self, matrix: FlextLdifConversion
+        self,
+        matrix: FlextLdifConversion,
     ) -> None:
         """Test DN extraction with empty data."""
         data: dict[str, object] = {}
@@ -1230,7 +1317,7 @@ class TestDnExtractionAndRegistration:
 
 
 @pytest.mark.skip(
-    reason="Error path tests for conversion matrix - edge cases not fully implemented"
+    reason="Error path tests for conversion matrix - edge cases not fully implemented",
 )
 class TestAttributeConversionErrorPaths:
     """Test error paths in attribute conversion."""
@@ -1251,7 +1338,9 @@ class TestAttributeConversionErrorPaths:
         return FlextLdifServersOid()
 
     def test_convert_attribute_missing_parse_method(
-        self, matrix: FlextLdifConversion, oid: FlextLdifServersOid
+        self,
+        matrix: FlextLdifConversion,
+        oid: FlextLdifServersOid,
     ) -> None:
         """Test attribute conversion fails when source quirk lacks parse method."""
         # Use SuccessfulParseQuirk which has parse_attribute
@@ -1302,7 +1391,8 @@ class TestAttributeConversionErrorPaths:
         )
 
     def test_convert_attribute_from_rfc_failure(
-        self, matrix: FlextLdifConversion
+        self,
+        matrix: FlextLdifConversion,
     ) -> None:
         """Test attribute conversion fails when target quirk from_rfc fails."""
         # Use real test quirks: source that succeeds, target that fails on from_rfc
@@ -1353,7 +1443,7 @@ class TestAttributeConversionErrorPaths:
 
 
 @pytest.mark.skip(
-    reason="Entry conversion tests - advanced functionality not fully implemented"
+    reason="Entry conversion tests - advanced functionality not fully implemented",
 )
 class TestEntryConversion:
     """Test entry conversion functionality."""
@@ -1374,7 +1464,9 @@ class TestEntryConversion:
         return FlextLdifServersOid()
 
     def test_convert_entry_string_input_fails(
-        self, matrix: FlextLdifConversion, oud: FlextLdifServersOud
+        self,
+        matrix: FlextLdifConversion,
+        oud: FlextLdifServersOud,
     ) -> None:
         """Test entry conversion fails for string input (not yet supported)."""
         source = EntryConversionQuirk()
@@ -1393,7 +1485,9 @@ sn: user"""
         )
 
     def test_convert_entry_missing_source_support(
-        self, matrix: FlextLdifConversion, oid: FlextLdifServersOid
+        self,
+        matrix: FlextLdifConversion,
+        oid: FlextLdifServersOid,
     ) -> None:
         """Test entry conversion fails when source quirk lacks entry support."""
         source = MinimalQuirk()
@@ -1407,7 +1501,9 @@ sn: user"""
         )
 
     def test_convert_entry_missing_target_support(
-        self, matrix: FlextLdifConversion, oud: FlextLdifServersOud
+        self,
+        matrix: FlextLdifConversion,
+        oud: FlextLdifServersOud,
     ) -> None:
         """Test entry conversion fails when target quirk lacks entry support."""
         source = oud
@@ -1422,7 +1518,7 @@ sn: user"""
 
 
 @pytest.mark.skip(
-    reason="Batch conversion error handling tests - edge cases not fully implemented"
+    reason="Batch conversion error handling tests - edge cases not fully implemented",
 )
 class TestBatchConversionErrorHandling:
     """Test batch conversion error scenarios."""
@@ -1443,7 +1539,9 @@ class TestBatchConversionErrorHandling:
         return FlextLdifServersOid()
 
     def test_batch_convert_all_items_fail(
-        self, matrix: FlextLdifConversion, oid: FlextLdifServersOid
+        self,
+        matrix: FlextLdifConversion,
+        oid: FlextLdifServersOid,
     ) -> None:
         """Test batch conversion with all failing parse quirk returns items via pass-through."""
         source = FailingParseQuirk()
@@ -1459,7 +1557,9 @@ class TestBatchConversionErrorHandling:
         assert converted == items  # Items passed through unchanged
 
     def test_batch_convert_error_truncation(
-        self, matrix: FlextLdifConversion, oid: FlextLdifServersOid
+        self,
+        matrix: FlextLdifConversion,
+        oid: FlextLdifServersOid,
     ) -> None:
         """Test batch conversion passes through unparseable items via graceful degradation."""
         source = FailingParseQuirk()
@@ -1477,7 +1577,9 @@ class TestBatchConversionErrorHandling:
         assert len(converted) == 8  # 8 - 5 = 3 more
 
     def test_batch_convert_unexpected_exception(
-        self, matrix: FlextLdifConversion, oid: FlextLdifServersOid
+        self,
+        matrix: FlextLdifConversion,
+        oid: FlextLdifServersOid,
     ) -> None:
         """Test batch conversion handles unexpected exceptions."""
         source = ExceptionThrowingQuirk()
@@ -1494,7 +1596,7 @@ class TestBatchConversionErrorHandling:
 
 
 @pytest.mark.skip(
-    reason="Support checking edge case tests - advanced functionality not fully implemented"
+    reason="Support checking edge case tests - advanced functionality not fully implemented",
 )
 class TestSupportCheckingEdgeCases:
     """Test edge cases in support checking."""
@@ -1505,7 +1607,8 @@ class TestSupportCheckingEdgeCases:
         return FlextLdifConversion()
 
     def test_get_supported_conversions_minimal(
-        self, matrix: FlextLdifConversion
+        self,
+        matrix: FlextLdifConversion,
     ) -> None:
         """Test support checking for quirk with minimal functionality."""
         quirk = MinimalQuirk()
@@ -1517,7 +1620,8 @@ class TestSupportCheckingEdgeCases:
         assert support["entry"] is False
 
     def test_get_supported_conversions_partial(
-        self, matrix: FlextLdifConversion
+        self,
+        matrix: FlextLdifConversion,
     ) -> None:
         """Test support checking for quirk with partial functionality."""
         quirk = PartialAttributeQuirk()

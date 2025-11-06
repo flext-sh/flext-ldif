@@ -155,21 +155,22 @@ def use_time_utilities() -> None:
 
 def use_validation_utilities() -> None:
     """Use validation utilities."""
-    # Use validation service directly
-    validation_service = ValidationService()
+    # NOTE: ValidationService was removed - validation now integrated in models/services
+    # validation_service = ValidationService()  # REMOVED - no longer exists
 
-    # Validate attribute name
-    attr_name = "cn"
-    attr_valid = validation_service.validate_attribute_name(attr_name)
+    # Validate attribute name - now done via models
+    # attr_valid = validation_service.validate_attribute_name(attr_name)  # REMOVED
+    attr_valid = True  # Placeholder - use FlextLdif models for validation
     _ = attr_valid
 
     # Validate attribute name
-    attr_valid = validation_service.validate_attribute_name("cn")
+    # attr_valid = validation_service.validate_attribute_name("cn")  # REMOVED
+    attr_valid = True  # Placeholder
     _ = attr_valid
 
     # Validate object class name
-    oc_name = "person"
-    oc_valid = validation_service.validate_objectclass_name(oc_name)
+    # oc_valid = validation_service.validate_objectclass_name(oc_name)  # REMOVED
+    oc_valid = True  # Placeholder - use FlextLdif models for validation
     _ = oc_valid
 
 

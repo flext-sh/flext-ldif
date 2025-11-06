@@ -80,8 +80,17 @@ class FlextLdifUtilitiesConstants:
 
         """
         valid_types = {
-            "rfc", "oid", "oud", "openldap", "openldap1",
-            "ad", "apache", "389ds", "novell", "tivoli", "relaxed"
+            "rfc",
+            "oid",
+            "oud",
+            "openldap",
+            "openldap1",
+            "ad",
+            "apache",
+            "389ds",
+            "novell",
+            "tivoli",
+            "relaxed",
         }
         return server_type.lower() in valid_types
 
@@ -99,8 +108,17 @@ class FlextLdifUtilitiesConstants:
 
         """
         return {
-            "rfc", "oid", "oud", "openldap", "openldap1",
-            "ad", "apache", "389ds", "novell", "tivoli", "relaxed"
+            "rfc",
+            "oid",
+            "oud",
+            "openldap",
+            "openldap1",
+            "ad",
+            "apache",
+            "389ds",
+            "novell",
+            "tivoli",
+            "relaxed",
         }
 
     # SECTION 2: PERMISSION VALIDATION
@@ -126,18 +144,32 @@ class FlextLdifUtilitiesConstants:
         if not constants or not hasattr(constants, "AclPermission"):
             # Return RFC baseline permissions
             return {
-                "read", "write", "add", "delete",
-                "search", "compare", "auth", "all", "none"
+                "read",
+                "write",
+                "add",
+                "delete",
+                "search",
+                "compare",
+                "auth",
+                "all",
+                "none",
             }
 
         try:
             perm_enum = constants.AclPermission
-            return {item.value for item in perm_enum}  # type: ignore[attr-defined]
+            return {item.value for item in perm_enum}
         except (AttributeError, TypeError):
             # Fallback to RFC baseline
             return {
-                "read", "write", "add", "delete",
-                "search", "compare", "auth", "all", "none"
+                "read",
+                "write",
+                "add",
+                "delete",
+                "search",
+                "compare",
+                "auth",
+                "all",
+                "none",
             }
 
     @staticmethod
@@ -187,7 +219,7 @@ class FlextLdifUtilitiesConstants:
 
         try:
             action_enum = constants.AclAction
-            return {item.value for item in action_enum}  # type: ignore[attr-defined]
+            return {item.value for item in action_enum}
         except (AttributeError, TypeError):
             # Fallback to defaults
             return {"allow", "deny"}
@@ -234,18 +266,30 @@ class FlextLdifUtilitiesConstants:
         if not constants or not hasattr(constants, "Encoding"):
             # Return RFC baseline encodings
             return {
-                "utf-8", "utf-16", "utf-16-le", "utf-32",
-                "ascii", "latin-1", "cp1252", "iso-8859-1"
+                "utf-8",
+                "utf-16",
+                "utf-16-le",
+                "utf-32",
+                "ascii",
+                "latin-1",
+                "cp1252",
+                "iso-8859-1",
             }
 
         try:
             encoding_enum = constants.Encoding
-            return {item.value for item in encoding_enum}  # type: ignore[attr-defined]
+            return {item.value for item in encoding_enum}
         except (AttributeError, TypeError):
             # Fallback to RFC baseline
             return {
-                "utf-8", "utf-16", "utf-16-le", "utf-32",
-                "ascii", "latin-1", "cp1252", "iso-8859-1"
+                "utf-8",
+                "utf-16",
+                "utf-16-le",
+                "utf-32",
+                "ascii",
+                "latin-1",
+                "cp1252",
+                "iso-8859-1",
             }
 
     @staticmethod
@@ -342,7 +386,9 @@ class FlextLdifUtilitiesConstants:
             Mapping of source permission -> target permission
 
         Example:
-            >>> mapping = FlextLdifUtilitiesConstants.get_permission_mapping("oid", "oud")
+            >>> mapping = FlextLdifUtilitiesConstants.get_permission_mapping(
+            ...     "oid", "oud"
+            ... )
             >>> mapping.get("read")
             'read'
 
@@ -360,61 +406,72 @@ class FlextLdifUtilitiesConstants:
 # SECTION 6: LAZY LOADERS FOR SERVER CONSTANTS
 # =============================================================================
 
+
 def _get_oid_constants() -> type[Any]:
     """Lazy load OID server constants."""
     from flext_ldif.servers.oid import FlextLdifServersOid  # noqa: PLC0415
+
     return FlextLdifServersOid.Constants
 
 
 def _get_oud_constants() -> type[Any]:
     """Lazy load OUD server constants."""
     from flext_ldif.servers.oud import FlextLdifServersOud  # noqa: PLC0415
+
     return FlextLdifServersOud.Constants
 
 
 def _get_openldap_constants() -> type[Any]:
     """Lazy load OpenLDAP 2.x server constants."""
     from flext_ldif.servers.openldap import FlextLdifServersOpenldap  # noqa: PLC0415
+
     return FlextLdifServersOpenldap.Constants
 
 
 def _get_openldap1_constants() -> type[Any]:
     """Lazy load OpenLDAP 1.x server constants."""
     from flext_ldif.servers.openldap1 import FlextLdifServersOpenldap1  # noqa: PLC0415
+
     return FlextLdifServersOpenldap1.Constants
 
 
 def _get_ad_constants() -> type[Any]:
     """Lazy load Active Directory server constants."""
     from flext_ldif.servers.ad import FlextLdifServersAd  # noqa: PLC0415
+
     return FlextLdifServersAd.Constants
 
 
 def _get_apache_constants() -> type[Any]:
     """Lazy load Apache Directory Server constants."""
     from flext_ldif.servers.apache import FlextLdifServersApache  # noqa: PLC0415
+
     return FlextLdifServersApache.Constants
 
 
 def _get_ds389_constants() -> type[Any]:
     """Lazy load 389 Directory Server constants."""
     from flext_ldif.servers.ds389 import FlextLdifServersDs389  # noqa: PLC0415
+
     return FlextLdifServersDs389.Constants
 
 
 def _get_novell_constants() -> type[Any]:
     """Lazy load Novell eDirectory constants."""
     from flext_ldif.servers.novell import FlextLdifServersNovell  # noqa: PLC0415
+
     return FlextLdifServersNovell.Constants
 
 
 def _get_tivoli_constants() -> type[Any]:
     """Lazy load IBM Tivoli Directory Server constants."""
     from flext_ldif.servers.tivoli import FlextLdifServersTivoli  # noqa: PLC0415
+
     return FlextLdifServersTivoli.Constants
 
 
 def _get_relaxed_constants() -> type[Any]:
     """Lazy load Relaxed mode constants."""
     from flext_ldif.servers.relaxed import FlextLdifServersRelaxed  # noqa: PLC0415
+
     return FlextLdifServersRelaxed.Constants

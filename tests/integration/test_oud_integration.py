@@ -20,26 +20,25 @@ import pytest
 
 from flext_ldif import FlextLdif
 
-from ..fixtures.loader import FlextLdifFixtures
+from ..fixtures import FlextLdifFixtures
 
 
 class TestOudSchemaIntegration:
-    """Integration tests for OUD schema processing."""
+    """Integration tests for OUD schema processing.
 
-    @pytest.fixture
-    def api(self) -> FlextLdif:
-        """Create FlextLdif API instance."""
-        return FlextLdif.get_instance()
+    Uses centralized fixtures from tests/integration/conftest.py:
+    - api: FlextLdif API instance
+    - oud_schema_fixture: OUD schema LDIF content
+    """
 
-    @pytest.fixture
-    def schema_fixture(self) -> str:
-        """Load OUD schema fixture data."""
-        loader = FlextLdifFixtures.OUD()
-        return loader.schema()
+    def test_parse_schema_fixture(self, api: FlextLdif, oud_schema_fixture: str) -> None:
+        """Test parsing complete OUD schema fixture.
 
-    def test_parse_schema_fixture(self, api: FlextLdif, schema_fixture: str) -> None:
-        """Test parsing complete OUD schema fixture."""
-        result = api.parse(schema_fixture)
+        Validates:
+        - Schema parsing succeeds
+        - Returns valid entry list
+        """
+        result = api.parse(oud_schema_fixture)
 
         assert result.is_success, f"Schema parsing failed: {result.error}"
         entries = result.unwrap()
@@ -49,10 +48,12 @@ class TestOudSchemaIntegration:
         assert entries is not None
 
     def test_oracle_attributes_in_parsed_schema(
-        self, api: FlextLdif, schema_fixture: str
+        self,
+        api: FlextLdif,
+        oud_schema_fixture: str,
     ) -> None:
         """Test that Oracle attributes are detected in parsed schema."""
-        result = api.parse(schema_fixture)
+        result = api.parse(oud_schema_fixture)
         assert result.is_success
 
         entries = result.unwrap()
@@ -86,10 +87,12 @@ class TestOudSchemaIntegration:
         assert oracle_attr_count >= 0, "Schema parsing should complete successfully"
 
     def test_oracle_objectclasses_in_parsed_schema(
-        self, api: FlextLdif, schema_fixture: str
+        self,
+        api: FlextLdif,
+        oud_schema_fixture: str,
     ) -> None:
         """Test that Oracle objectClasses are detected in parsed schema."""
-        result = api.parse(schema_fixture)
+        result = api.parse(oud_schema_fixture)
         assert result.is_success
 
         entries = result.unwrap()
@@ -229,7 +232,9 @@ class TestOudEntryIntegration:
         )
 
     def test_oracle_objectclasses_preserved_in_parsing(
-        self, api: FlextLdif, entry_fixture: str
+        self,
+        api: FlextLdif,
+        entry_fixture: str,
     ) -> None:
         """Test that Oracle objectClasses are preserved during parsing."""
         result = api.parse(entry_fixture)
@@ -260,7 +265,9 @@ class TestOudEntryIntegration:
             else:
                 # Fallback for other object types
                 objectclasses = getattr(
-                    attrs_dict, "objectclass", getattr(attrs_dict, "objectClass", [])
+                    attrs_dict,
+                    "objectclass",
+                    getattr(attrs_dict, "objectClass", []),
                 )
 
             for oc in objectclasses:
@@ -289,11 +296,13 @@ class TestOudRoundTripIntegration:
         return loader.integration()
 
     def test_roundtrip_parse_write_parse(
-        self, api: FlextLdif, integration_fixture: str
+        self,
+        api: FlextLdif,
+        oud_integration_fixture: str,
     ) -> None:
         """Test complete round-trip: parse → write → parse."""
         # Step 1: Parse original fixture
-        parse1_result = api.parse(integration_fixture)
+        parse1_result = api.parse(oud_integration_fixture)
         assert parse1_result.is_success, f"Initial parse failed: {parse1_result.error}"
         entries1 = parse1_result.unwrap()
 
@@ -322,13 +331,15 @@ class TestOudRoundTripIntegration:
         assert dns1 == dns2, "DN set mismatch after round-trip"
 
     def test_roundtrip_dn_preservation(
-        self, api: FlextLdif, integration_fixture: str
+        self,
+        api: FlextLdif,
+        oud_integration_fixture: str,
     ) -> None:
         """Test that DNs with spaces after commas are preserved."""
         # OUD fixtures contain DNs like "cn=OracleDASGroupPriv, cn=Groups,cn=OracleContext"
         # with spaces after commas
 
-        parse_result = api.parse(integration_fixture)
+        parse_result = api.parse(oud_integration_fixture)
         assert parse_result.is_success
 
         entries = parse_result.unwrap()
