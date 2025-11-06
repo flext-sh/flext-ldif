@@ -428,8 +428,6 @@ class FlextLdifUtilitiesWriter:
             return None
 
         # Build ordered list from attr_order
-        from flext_ldif.constants import FlextLdifConstants
-
         skip_keys = {
             FlextLdifConstants.DictKeys.DN,
             "_metadata",
@@ -476,8 +474,6 @@ class FlextLdifUtilitiesWriter:
             True if attribute should be skipped
 
         """
-        from flext_ldif.constants import FlextLdifConstants
-
         # Skip DN (written separately)
         if attr_name.lower() == FlextLdifConstants.DictKeys.DN:
             return True

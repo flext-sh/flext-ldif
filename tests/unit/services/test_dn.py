@@ -66,7 +66,7 @@ class TestDnValidation:
     def test_validate_complex_dn(self, dn_service: FlextLdifDn) -> None:
         """Validate complex DN with multiple components."""
         result = dn_service.validate_format(
-            "cn=John,ou=People,o=Company,c=US,dc=example,dc=com"
+            "cn=John,ou=People,o=Company,c=US,dc=example,dc=com",
         )
         assert result.is_success
         assert result.unwrap() is True
@@ -223,7 +223,8 @@ class TestDnComparison:
     def test_compare_equal_dns(self, dn_service: FlextLdifDn) -> None:
         """Compare equal DNs (different case)."""
         result = dn_service.compare_dns(
-            "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com", "CN=ADMIN,DC=EXAMPLE,DC=COM"
+            "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
+            "CN=ADMIN,DC=EXAMPLE,DC=COM",
         )
         assert result.is_success
         assert result.unwrap() == 0
@@ -231,7 +232,8 @@ class TestDnComparison:
     def test_compare_different_dns(self, dn_service: FlextLdifDn) -> None:
         """Compare different DNs."""
         result = dn_service.compare_dns(
-            "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com", "cn=user,dc=example,dc=com"
+            "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
+            "cn=user,dc=example,dc=com",
         )
         assert result.is_success
         comparison = result.unwrap()
@@ -319,7 +321,8 @@ class TestDnServiceExecutePattern:
     def test_execute_normalize(self, dn_service: FlextLdifDn) -> None:
         """Execute normalize operation."""
         result = FlextLdifDn(
-            dn="CN=Admin,DC=Example,DC=Com", operation="normalize"
+            dn="CN=Admin,DC=Example,DC=Com",
+            operation="normalize",
         ).execute()
         assert result.is_success
         assert result.unwrap()
@@ -327,7 +330,8 @@ class TestDnServiceExecutePattern:
     def test_execute_validate_valid(self, dn_service: FlextLdifDn) -> None:
         """Execute validate operation on valid DN."""
         result = FlextLdifDn(
-            dn="cn=test,dc=example,dc=com", operation="validate"
+            dn="cn=test,dc=example,dc=com",
+            operation="validate",
         ).execute()
         assert result.is_success
         assert result.unwrap() == "True"
@@ -390,7 +394,8 @@ class TestCaseRegistry:
         assert result.unwrap() is True
 
     def test_validate_oud_consistency_inconsistent(
-        self, dn_service: FlextLdifDn
+        self,
+        dn_service: FlextLdifDn,
     ) -> None:
         """Validate OUD consistency with multiple case variants."""
         registry = FlextLdifDn.CaseRegistry()

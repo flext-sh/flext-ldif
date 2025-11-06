@@ -9,6 +9,7 @@ from __future__ import annotations
 import copy
 import logging
 import re
+from collections.abc import Callable
 from typing import Any
 
 from flext_core import FlextResult
@@ -146,9 +147,9 @@ class FlextLdifUtilitiesSchema:
 
     @staticmethod
     def apply_transformations(
-        schema_obj: Any,
+        schema_obj: FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass,
         *,
-        field_transforms: dict[str, Any] | None = None,
+        field_transforms: dict[str, str | list[str] | None] | None = None,
     ) -> FlextResult[Any]:
         """Apply transformation pipeline to schema object.
 
@@ -189,9 +190,12 @@ class FlextLdifUtilitiesSchema:
 
     @staticmethod
     def set_server_type(
-        model_instance: Any,
+        model_instance: FlextLdifModels.SchemaAttribute
+        | FlextLdifModels.SchemaObjectClass,
         server_type: str,
-    ) -> FlextResult[Any]:
+    ) -> FlextResult[
+        FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass
+    ]:
         """Copy schema model and set server_type in metadata.
 
         Common pattern used by quirks when converting from RFC format.
@@ -229,8 +233,8 @@ class FlextLdifUtilitiesSchema:
     @staticmethod
     def extract_attributes_from_lines(
         ldif_content: str,
-        parse_callback: Any,
-    ) -> list[Any]:
+        parse_callback: Callable[[str], FlextResult[FlextLdifModels.SchemaAttribute]],
+    ) -> list[FlextLdifModels.SchemaAttribute]:
         """Extract and parse all attributeTypes from LDIF content lines.
 
         Iterates through LDIF lines, identifies attributeTypes definitions
@@ -264,8 +268,8 @@ class FlextLdifUtilitiesSchema:
     @staticmethod
     def extract_objectclasses_from_lines(
         ldif_content: str,
-        parse_callback: Any,
-    ) -> list[Any]:
+        parse_callback: Callable[[str], FlextResult[FlextLdifModels.SchemaObjectClass]],
+    ) -> list[FlextLdifModels.SchemaObjectClass]:
         """Extract and parse all objectClasses from LDIF content lines.
 
         Iterates through LDIF lines, identifies objectClasses definitions
@@ -630,7 +634,7 @@ class FlextLdifUtilitiesSchema:
 
     @staticmethod
     def write_attribute(
-        attr_data: Any,
+        attr_data: FlextLdifModels.SchemaAttribute,
     ) -> str:
         """Write RFC 4512 attribute definition string from SchemaAttribute model.
 
@@ -735,7 +739,7 @@ class FlextLdifUtilitiesSchema:
 
     @staticmethod
     def write_objectclass(
-        oc_data: Any,
+        oc_data: FlextLdifModels.SchemaObjectClass,
     ) -> str:
         """Write RFC 4512 objectClass definition string from SchemaObjectClass model.
 

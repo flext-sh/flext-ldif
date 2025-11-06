@@ -97,14 +97,14 @@ objectClass: person
         # Create entry using Entry model directly
         entry = FlextLdifModels.Entry(
             dn=FlextLdifModels.DistinguishedName(
-                value="cn=Test User,dc=example,dc=com"
+                value="cn=Test User,dc=example,dc=com",
             ),
             attributes=FlextLdifModels.LdifAttributes(
                 attributes={
                     "cn": ["Test User"],
                     "sn": ["User"],
                     "objectClass": ["person"],
-                }
+                },
             ),
         )
         assert entry.dn.value.startswith("cn=")

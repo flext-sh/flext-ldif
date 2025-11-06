@@ -29,7 +29,9 @@ class TestRfcQuirksWithRealFixtures:
     def test_parse_rfc_schema_fixture(self, ldif_api: FlextLdif) -> None:
         """Test parsing of a real RFC schema file."""
         entries = FlextLdifTestUtils.load_fixture(
-            ldif_api, "rfc", "rfc_schema_fixtures.ldif"
+            ldif_api,
+            "rfc",
+            "rfc_schema_fixtures.ldif",
         )
         assert entries is not None
         assert len(entries) > 0
@@ -43,7 +45,9 @@ class TestRfcQuirksWithRealFixtures:
     def test_parse_rfc_entries_fixture(self, ldif_api: FlextLdif) -> None:
         """Test parsing of a real RFC entries file."""
         entries = FlextLdifTestUtils.load_fixture(
-            ldif_api, "rfc", "rfc_entries_fixtures.ldif"
+            ldif_api,
+            "rfc",
+            "rfc_entries_fixtures.ldif",
         )
         assert entries is not None
         assert len(entries) > 0
@@ -70,7 +74,9 @@ class TestRfcQuirksWithRealFixtures:
     def test_parse_rfc_acl_fixture(self, ldif_api: FlextLdif) -> None:
         """Test parsing of a real RFC ACL file."""
         entries = FlextLdifTestUtils.load_fixture(
-            ldif_api, "rfc", "rfc_acl_fixtures.ldif"
+            ldif_api,
+            "rfc",
+            "rfc_acl_fixtures.ldif",
         )
         assert entries is not None
         assert len(entries) > 0
@@ -78,25 +84,36 @@ class TestRfcQuirksWithRealFixtures:
     def test_roundtrip_rfc_entries(self, ldif_api: FlextLdif, tmp_path: Path) -> None:
         """Test roundtrip of RFC entries."""
         FlextLdifTestUtils.run_roundtrip_test(
-            ldif_api, "rfc", "rfc_entries_fixtures.ldif", tmp_path
+            ldif_api,
+            "rfc",
+            "rfc_entries_fixtures.ldif",
+            tmp_path,
         )
 
     def test_roundtrip_rfc_schema(self, ldif_api: FlextLdif, tmp_path: Path) -> None:
         """Test roundtrip of RFC schema."""
         FlextLdifTestUtils.run_roundtrip_test(
-            ldif_api, "rfc", "rfc_schema_fixtures.ldif", tmp_path
+            ldif_api,
+            "rfc",
+            "rfc_schema_fixtures.ldif",
+            tmp_path,
         )
 
     def test_roundtrip_rfc_acl(self, ldif_api: FlextLdif, tmp_path: Path) -> None:
         """Test roundtrip of RFC ACL."""
         FlextLdifTestUtils.run_roundtrip_test(
-            ldif_api, "rfc", "rfc_acl_fixtures.ldif", tmp_path
+            ldif_api,
+            "rfc",
+            "rfc_acl_fixtures.ldif",
+            tmp_path,
         )
 
     def test_rfc_compliance_validation(self, ldif_api: FlextLdif) -> None:
         """Test that RFC parsing follows RFC 2849 and RFC 4512 standards."""
         entries = FlextLdifTestUtils.load_fixture(
-            ldif_api, "rfc", "rfc_entries_fixtures.ldif"
+            ldif_api,
+            "rfc",
+            "rfc_entries_fixtures.ldif",
         )
 
         # All entries should have proper structure
@@ -117,7 +134,9 @@ class TestRfcQuirksWithRealFixtures:
         """
         # Load schema fixture
         entries = FlextLdifTestUtils.load_fixture(
-            ldif_api, "rfc", "rfc_schema_fixtures.ldif"
+            ldif_api,
+            "rfc",
+            "rfc_schema_fixtures.ldif",
         )
         assert entries is not None
         assert len(entries) > 0
@@ -145,7 +164,9 @@ class TestRfcQuirksWithRealFixtures:
         """
         # Load entry fixture
         entries = FlextLdifTestUtils.load_fixture(
-            ldif_api, "rfc", "rfc_entries_fixtures.ldif"
+            ldif_api,
+            "rfc",
+            "rfc_entries_fixtures.ldif",
         )
         assert entries is not None
         assert len(entries) > 0
@@ -172,7 +193,9 @@ class TestRfcQuirksWithRealFixtures:
         """
         # Load ACL fixture
         entries = FlextLdifTestUtils.load_fixture(
-            ldif_api, "rfc", "rfc_acl_fixtures.ldif"
+            ldif_api,
+            "rfc",
+            "rfc_acl_fixtures.ldif",
         )
         assert entries is not None
         assert len(entries) > 0
@@ -198,7 +221,9 @@ class TestRfcQuirksWithRealFixtures:
         """
         # Load fixture
         entries = FlextLdifTestUtils.load_fixture(
-            ldif_api, "rfc", "rfc_entries_fixtures.ldif"
+            ldif_api,
+            "rfc",
+            "rfc_entries_fixtures.ldif",
         )
         assert entries is not None
 
@@ -216,7 +241,9 @@ class TestRfcQuirksWithRealFixtures:
             assert len(written_str) > 0
 
     def test_routing_roundtrip_with_validation(
-        self, ldif_api: FlextLdif, tmp_path: Path
+        self,
+        ldif_api: FlextLdif,
+        tmp_path: Path,
     ) -> None:
         """Test roundtrip with explicit routing validation.
 
@@ -225,7 +252,9 @@ class TestRfcQuirksWithRealFixtures:
         """
         # Load original entries
         original_entries = FlextLdifTestUtils.load_fixture(
-            ldif_api, "rfc", "rfc_entries_fixtures.ldif"
+            ldif_api,
+            "rfc",
+            "rfc_entries_fixtures.ldif",
         )
         assert original_entries is not None
         assert len(original_entries) > 0
@@ -240,15 +269,17 @@ class TestRfcQuirksWithRealFixtures:
 
         # Re-read the written file
         re_read_result = ldif_api.parse(
-            tmp_path / "routing_test.ldif", server_type="rfc"
+            tmp_path / "routing_test.ldif",
+            server_type="rfc",
         )
         assert re_read_result.is_success, f"Re-read failed: {re_read_result.error}"
         roundtripped_entries = re_read_result.unwrap()
 
         # Validate entries are semantically identical after routing
         is_equal, differences = FlextLdifTestUtils.compare_entries(
-            original_entries, roundtripped_entries
+            original_entries,
+            roundtripped_entries,
         )
         assert is_equal, "Roundtrip routing validation failed:\n" + "\n".join(
-            differences
+            differences,
         )

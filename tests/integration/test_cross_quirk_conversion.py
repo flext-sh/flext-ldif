@@ -19,15 +19,16 @@ import pytest
 
 from flext_ldif.servers.oid import FlextLdifServersOid
 from flext_ldif.servers.oud import FlextLdifServersOud
-from flext_ldif.services.conversion import (
-    FlextLdifConversion,
-)
-
-from ..fixtures.loader import FlextLdifFixtures
+from flext_ldif.services.conversion import FlextLdifConversion
 
 
 class TestOidToOudSchemaConversion:
-    """Test OID schema → OUD schema conversion."""
+    """Test OID schema → OUD schema conversion.
+
+    Uses centralized fixtures from tests/integration/conftest.py:
+    - oid_schema_fixture: OID schema LDIF content
+    - oud_schema_fixture: OUD schema LDIF content
+    """
 
     @pytest.fixture
     def oid(self) -> FlextLdifServersOid.Schema:
@@ -38,12 +39,6 @@ class TestOidToOudSchemaConversion:
     def oud(self) -> FlextLdifServersOud.Schema:
         """Create OUD quirk instance."""
         return FlextLdifServersOud.Schema()
-
-    @pytest.fixture
-    def oid_schema_fixture(self) -> str:
-        """Load OID schema fixture."""
-        loader = FlextLdifFixtures.OID()
-        return loader.schema()
 
     def test_convert_oid_attribute_to_oud(
         self,
@@ -63,7 +58,8 @@ class TestOidToOudSchemaConversion:
         assert parsed_data.oid == "2.16.840.1.113894.1.1.1"
         assert parsed_data.name == "orclguid"
         assert hasattr(parsed_data, "_metadata") or hasattr(
-            parsed_data, "metadata"
+            parsed_data,
+            "metadata",
         )  # Metadata preserved
 
         # Convert to RFC format using OID quirk
@@ -203,7 +199,11 @@ class TestOidToOudAclConversion:
 
 
 class TestOidToOudIntegrationConversion:
-    """Test complete OID fixture → OUD conversion workflow."""
+    """Test complete OID fixture → OUD conversion workflow.
+
+    Uses centralized fixtures from tests/integration/conftest.py:
+    - oid_schema_fixture: OID schema LDIF content
+    """
 
     @pytest.fixture
     def oid(self) -> FlextLdifServersOid.Schema:
@@ -215,19 +215,24 @@ class TestOidToOudIntegrationConversion:
         """Create OUD quirk instance."""
         return FlextLdifServersOud.Schema()
 
-    @pytest.fixture
-    def oid_schema_fixture(self) -> str:
-        """Load OID schema fixture."""
-        loader = FlextLdifFixtures.OID()
-        return loader.schema()
-
     def test_convert_oid_schema_fixture_to_oud(
         self,
         oid: FlextLdifServersOid.Schema,
         oud: FlextLdifServersOud.Schema,
         oid_schema_fixture: str,
     ) -> None:
-        """Test converting OID schema fixture to OUD format."""
+        """Test converting OID schema fixture to OUD format.
+
+        Uses fixtures:
+        - oid: OID schema quirk instance (internal)
+        - oud: OUD schema quirk instance (internal)
+        - oid_schema_fixture: OID schema LDIF content (conftest)
+
+        Validates:
+        - OID schema parsing succeeds
+        - Attributes with Oracle OIDs (2.16.840.1.113894.*) are extracted
+        - Conversion to OUD format preserves key fields (OID, name)
+        """
         # Extract attribute definitions from fixture
         # In a real scenario, we'd parse the LDIF entry and extract attributeTypes
         # For this test, we'll test the conversion pipeline works
@@ -297,7 +302,9 @@ class TestQuirksConversionMatrixFacade:
         assert matrix is not None
 
     def test_get_supported_conversions(
-        self, matrix: FlextLdifConversion, oud: FlextLdifServersOud
+        self,
+        matrix: FlextLdifConversion,
+        oud: FlextLdifServersOud,
     ) -> None:
         """Test checking supported conversions."""
         supported = matrix.get_supported_conversions(oud)

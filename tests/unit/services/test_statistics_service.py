@@ -75,7 +75,7 @@ class TestGenerateStatisticsBasic:
                 {"dn": "cn=user1,dc=example,dc=com", "attributes": {}},
                 {"dn": "cn=user2,dc=example,dc=com", "attributes": {}},
                 {"dn": "cn=user3,dc=example,dc=com", "attributes": {}},
-            ]
+            ],
         }
         written_counts: dict[str, int] = {"users": 3}
         output_dir = Path("/tmp/ldif")
@@ -266,7 +266,7 @@ class TestGenerateStatisticsWithRejections:
                     "dn": "cn=invalid4,dc=example,dc=com",
                     "attributes": {"rejectionReason": "Duplicate DN"},
                 },
-            ]
+            ],
         }
         written_counts: dict[str, int] = {"rejected": 0}
         output_dir = Path("/tmp/ldif")
@@ -307,7 +307,7 @@ class TestGenerateStatisticsRejectionReasons:
                     "dn": "cn=test2,dc=example,dc=com",
                     "attributes": {"rejectionReason": "Test reason 2"},
                 },
-            ]
+            ],
         }
         written_counts: dict[str, int] = {"rejected": 0}
         output_dir = Path("/tmp")
@@ -345,10 +345,10 @@ class TestGenerateStatisticsRejectionReasons:
                 {
                     "dn": "cn=test3,dc=example,dc=com",
                     "attributes": {
-                        "rejectionReason": ["list", "value"]
+                        "rejectionReason": ["list", "value"],
                     },  # Non-string value
                 },
-            ]
+            ],
         }
         written_counts: dict[str, int] = {"rejected": 0}
         output_dir = Path("/tmp")
@@ -384,7 +384,7 @@ class TestGenerateStatisticsRejectionReasons:
                     "dn": "cn=test2,dc=example,dc=com",
                     "attributes": {"rejectionReason": ""},  # Empty string is included
                 },
-            ]
+            ],
         }
         written_counts: dict[str, int] = {"rejected": 0}
         output_dir = Path("/tmp")
@@ -524,7 +524,7 @@ class TestGenerateStatisticsErrorHandling:
             "entries": [
                 {"dn": "cn=test1,dc=example,dc=com"},  # No attributes key
                 {"dn": "cn=test2,dc=example,dc=com", "attributes": {}},
-            ]
+            ],
         }
         written_counts: dict[str, int] = {"entries": 2}
         output_dir = Path("/tmp")
@@ -622,7 +622,7 @@ class TestGenerateStatisticsEdgeCases:
                     "attributes": {"rejectionReason": "Invalid format"},
                 }
                 for i in range(10)
-            ]
+            ],
         }
         written_counts: dict[str, int] = {"rejected": 0}
         output_dir = Path("/tmp")

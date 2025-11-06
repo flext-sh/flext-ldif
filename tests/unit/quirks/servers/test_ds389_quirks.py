@@ -309,11 +309,12 @@ class TestDs389Acls:
             name="Admin",
             target=FlextLdifModels.AclTarget(target_dn="*", attributes=[]),
             subject=FlextLdifModels.AclSubject(
-                subject_type="userdn", subject_value="ldap:///cn=REDACTED_LDAP_BIND_PASSWORD"
+                subject_type="userdn",
+                subject_value="ldap:///cn=REDACTED_LDAP_BIND_PASSWORD",
             ),
             permissions=FlextLdifModels.AclPermissions(read=True),
             metadata=FlextLdifModels.QuirkMetadata.create_for(
-                FlextLdifServersDs389.Constants.SERVER_TYPE
+                FlextLdifServersDs389.Constants.SERVER_TYPE,
             ),
             raw_acl='(version 3.0; acl "Admin"; allow (read) userdn = "ldap:///cn=REDACTED_LDAP_BIND_PASSWORD";)',
         )
@@ -340,7 +341,7 @@ class TestDs389Acls:
                 write=True,
             ),
             metadata=FlextLdifModels.QuirkMetadata.create_for(
-                FlextLdifServersDs389.Constants.SERVER_TYPE
+                FlextLdifServersDs389.Constants.SERVER_TYPE,
             ),
         )
         result = acl.write(acl_data)
@@ -362,7 +363,7 @@ class TestDs389Acls:
             subject=FlextLdifModels.AclSubject(subject_type="user", subject_value="*"),
             permissions=FlextLdifModels.AclPermissions(),
             metadata=FlextLdifModels.QuirkMetadata.create_for(
-                FlextLdifServersDs389.Constants.SERVER_TYPE
+                FlextLdifServersDs389.Constants.SERVER_TYPE,
             ),
         )
         result = acl.write(acl_data)
@@ -387,7 +388,7 @@ class TestDs389Entrys:
         entry = main.entry
         entry_dn = "cn=config"
         attributes: dict[str, object] = {
-            FlextLdifConstants.DictKeys.OBJECTCLASS: ["nscontainer"]
+            FlextLdifConstants.DictKeys.OBJECTCLASS: ["nscontainer"],
         }
         assert entry.can_handle(entry_dn, attributes) is True
 
@@ -397,7 +398,7 @@ class TestDs389Entrys:
         entry = main.entry
         entry_dn = "cn=monitor"
         attributes: dict[str, object] = {
-            FlextLdifConstants.DictKeys.OBJECTCLASS: ["top"]
+            FlextLdifConstants.DictKeys.OBJECTCLASS: ["top"],
         }
         assert entry.can_handle(entry_dn, attributes) is True
 
@@ -407,7 +408,7 @@ class TestDs389Entrys:
         entry = main.entry
         entry_dn = "cn=changelog"
         attributes: dict[str, object] = {
-            FlextLdifConstants.DictKeys.OBJECTCLASS: ["top"]
+            FlextLdifConstants.DictKeys.OBJECTCLASS: ["top"],
         }
         assert entry.can_handle(entry_dn, attributes) is True
 
@@ -450,7 +451,7 @@ class TestDs389Entrys:
         entry = main.entry
         entry_dn = "cn=test,dc=example,dc=com"
         attributes: dict[str, object] = {
-            FlextLdifConstants.DictKeys.OBJECTCLASS: ["top", "nscontainer"]
+            FlextLdifConstants.DictKeys.OBJECTCLASS: ["top", "nscontainer"],
         }
         assert entry.can_handle(entry_dn, attributes) is True
 

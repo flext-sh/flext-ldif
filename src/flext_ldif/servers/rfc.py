@@ -53,6 +53,7 @@ from flext_core import FlextLogger, FlextResult
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.servers.base import FlextLdifServersBase
+from flext_ldif.typings import FlextLdifTypes
 from flext_ldif.utilities import FlextLdifUtilities
 
 logger = FlextLogger(__name__)
@@ -475,7 +476,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             transformed_oc = self._transform_objectclass_for_write(oc_data)
 
             # Write to RFC format (call static method)
-            result = FlextLdifUtilities.Writer.write_rfc_objectclass(transformed_oc)  # type: ignore[arg-type]
+            result = FlextLdifUtilities.Writer.write_rfc_objectclass(transformed_oc)
 
             # Apply post-write transformations
             if result.is_success:
@@ -499,7 +500,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
     class Acl(FlextLdifServersBase.Acl):
         """RFC 4516 Compliant ACL Quirk - Base Implementation."""
 
-        def can_handle_acl(self, acl_line: str | FlextLdifModels.Acl) -> bool:
+        def can_handle_acl(self, acl_line: FlextLdifTypes.AclOrString) -> bool:
             """Check if this quirk can handle the ACL definition.
 
             RFC quirk handles all ACLs as it's the baseline implementation.
@@ -514,7 +515,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             _ = acl_line  # Unused - RFC handles all ACLs
             return True
 
-        def can_handle(self, acl_line: str | FlextLdifModels.Acl) -> bool:
+        def can_handle(self, acl_line: FlextLdifTypes.AclOrString) -> bool:
             """Check if this ACL is RFC-compliant.
 
             The RFC quirk assumes any ACL that has been successfully parsed into

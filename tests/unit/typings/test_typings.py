@@ -9,8 +9,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import pytest
 from pathlib import Path
+
+import pytest
 
 from flext_ldif.typings import FlextLdifTypes, ServiceT
 
@@ -32,6 +33,7 @@ class TestFlextLdifTypesNamespace:
     def test_srp_compliance_no_functions(self) -> None:
         """typings.py must not contain functions (SRP violation)."""
         import inspect
+
         import flext_ldif.typings
 
         members = inspect.getmembers(flext_ldif.typings)
@@ -42,7 +44,12 @@ class TestFlextLdifTypesNamespace:
         assert len(user_functions) == 0, "typings.py must not contain functions"
 
     def test_only_required_imports(self) -> None:
-        """typings.py must only import from flext_core and flext_ldif.constants."""
+        """typings.py must only import from flext_core, flext_ldif.constants, and flext_ldif.models.
+
+        NOTE: flext_ldif.models IS imported directly (not through TYPE_CHECKING) to avoid
+        TYPE_CHECKING complexity. This is SAFE because models.py does not import typings.py,
+        preventing circular dependencies.
+        """
         import ast
         from pathlib import Path
 
@@ -55,8 +62,9 @@ class TestFlextLdifTypesNamespace:
                 if node.module and "flext_ldif" in node.module:
                     flext_ldif_imports.append(node.module)
 
-        # Only flext_ldif.constants should be imported from flext_ldif
-        assert flext_ldif_imports == ["flext_ldif.constants"]
+        # Only flext_ldif.constants and flext_ldif.models should be imported from flext_ldif
+        # models is imported to use FlextLdifModels directly without TYPE_CHECKING
+        assert sorted(flext_ldif_imports) == ["flext_ldif.constants", "flext_ldif.models"]
 
 
 class TestCommonDictionaryTypes:

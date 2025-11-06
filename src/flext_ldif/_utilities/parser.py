@@ -9,13 +9,13 @@ from __future__ import annotations
 import base64
 import logging
 import re
+from collections.abc import Callable
 from typing import Any
 
 from flext_core import FlextResult
 
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
-from flext_ldif.services.syntax import FlextLdifSyntax
 
 logger = logging.getLogger(__name__)
 
@@ -435,8 +435,8 @@ class FlextLdifUtilitiesParser:
     def extract_schema_definitions(
         ldif_content: str,
         definition_type: str = "attributeTypes",
-        parse_callback: Any | None = None,
-    ) -> list[Any]:
+        parse_callback: Callable[[str], object] | None = None,
+    ) -> list[object]:
         """Extract and parse schema definitions from LDIF content.
 
         Generic line-by-line parser that:
@@ -531,6 +531,9 @@ class FlextLdifUtilitiesParser:
 
             syntax_validation_error: str | None = None
             if syntax is not None and syntax.strip():
+                # Lazy import to avoid circular dependency
+                from flext_ldif.services.syntax import FlextLdifSyntax
+
                 syntax_service = FlextLdifSyntax()
                 validate_result = syntax_service.validate_oid(syntax)
                 if validate_result.is_failure:

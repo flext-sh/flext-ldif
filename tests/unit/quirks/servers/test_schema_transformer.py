@@ -76,7 +76,7 @@ class TestSchemaTransformerNormalizeMatchingRule:
             "caseIgnoreSubStringsMatch",
             None,
             normalized_substr_values={
-                "caseIgnoreSubStringsMatch": "caseIgnoreSubstringsMatch"
+                "caseIgnoreSubStringsMatch": "caseIgnoreSubstringsMatch",
             },
             substr_rules_in_equality={"caseIgnoreSubStringsMatch": "caseIgnoreMatch"},
         )
@@ -121,7 +121,7 @@ class TestSchemaTransformerNormalizeSyntaxOid:
     def test_remove_quotes_from_syntax(self) -> None:
         """Test that quotes are removed from syntax OIDs."""
         result = FlextLdifUtilities.Schema.normalize_syntax_oid(
-            "'1.3.6.1.4.1.1466.115.121.1.15'"
+            "'1.3.6.1.4.1.1466.115.121.1.15'",
         )
         assert result == "1.3.6.1.4.1.1466.115.121.1.15"
 
@@ -137,7 +137,7 @@ class TestSchemaTransformerNormalizeSyntaxOid:
     def test_rfc_compliant_syntax_unchanged(self) -> None:
         """Test that RFC-compliant syntax OIDs are unchanged."""
         result = FlextLdifUtilities.Schema.normalize_syntax_oid(
-            "1.3.6.1.4.1.1466.115.121.1.15"
+            "1.3.6.1.4.1.1466.115.121.1.15",
         )
         assert result == "1.3.6.1.4.1.1466.115.121.1.15"
 
@@ -164,20 +164,20 @@ class TestSchemaTransformerApplyAttributeTransformations:
                 str(eq) if eq else None,
                 None,  # substr is None initially
                 substr_rules_in_equality={
-                    "caseIgnoreSubstringsMatch": "caseIgnoreMatch"
+                    "caseIgnoreSubstringsMatch": "caseIgnoreMatch",
                 },
             )[0],
             "substr": lambda sub: FlextLdifUtilities.Schema.normalize_matching_rules(
                 attr.equality,
                 str(sub) if sub else None,
                 substr_rules_in_equality={
-                    "caseIgnoreSubstringsMatch": "caseIgnoreMatch"
+                    "caseIgnoreSubstringsMatch": "caseIgnoreMatch",
                 },
             )[1],
             "syntax": lambda syn: FlextLdifUtilities.Schema.normalize_syntax_oid(
                 str(syn) if syn else None,
                 replacements={
-                    "1.3.6.1.4.1.1466.115.121.1.1": "1.3.6.1.4.1.1466.115.121.1.15"
+                    "1.3.6.1.4.1.1466.115.121.1.1": "1.3.6.1.4.1.1466.115.121.1.15",
                 },
             ),
         }

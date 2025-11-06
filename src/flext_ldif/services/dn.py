@@ -94,6 +94,7 @@ from __future__ import annotations
 from flext_core import FlextResult, FlextService
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.typings import FlextLdifTypes
 from flext_ldif.utilities import FlextLdifUtilities
 
@@ -192,17 +193,17 @@ class FlextLdifDn(FlextService[str]):
         """
         # Map operations to their handler methods
         handlers = {
-            "parse": lambda: self._parser._parse_operation(self.dn),
-            "validate": lambda: self._parser._validate_operation(self.dn),
-            "normalize": lambda: self._normalizer._normalize_operation(self.dn),
-            "clean": lambda: self._normalizer._clean_operation(self.dn),
-            "escape": lambda: self._normalizer._escape_operation(
+            "parse": lambda: self._parser.parse_operation(self.dn),
+            "validate": lambda: self._parser.validate_operation(self.dn),
+            "normalize": lambda: self._normalizer.normalize_operation(self.dn),
+            "clean": lambda: self._normalizer.clean_operation(self.dn),
+            "escape": lambda: self._normalizer.escape_operation(
                 self.dn,
                 self.escape_mode,
             ),
-            "unescape": lambda: self._normalizer._unescape_operation(self.dn),
+            "unescape": lambda: self._normalizer.unescape_operation(self.dn),
             "compare": self._handle_compare,
-            "parse_rdn": lambda: self._parser._parse_rdn_operation(self.dn),
+            "parse_rdn": lambda: self._parser.parse_rdn_operation(self.dn),
         }
 
         handler = handlers.get(self.operation)
@@ -220,7 +221,7 @@ class FlextLdifDn(FlextService[str]):
         """
         if not self.other_dn:
             return FlextResult[str].fail("other_dn required for compare operation")
-        return self._parser._compare_operation(self.dn, self.other_dn)
+        return self._parser.compare_operation(self.dn, self.other_dn)
 
     def execute(self) -> FlextResult[str]:
         """Execute DN operation based on configuration."""
@@ -507,19 +508,17 @@ class FlextLdifDn(FlextService[str]):
             return FlextResult[int].ok(comparison)
 
         @staticmethod
-        def _parse_operation(dn: str) -> FlextResult[str]:
+        def parse_operation(dn: str) -> FlextResult[str]:
             """Parse DN operation (internal)."""
             result = FlextLdifDn.Parser.parse_components(dn)
             if result.is_failure:
                 return FlextResult[str].fail(result.error)
             components = result.unwrap()
-            components_str = ", ".join(
-                f"{attr}={value}" for attr, value in components
-            )
+            components_str = ", ".join(f"{attr}={value}" for attr, value in components)
             return FlextResult[str].ok(components_str)
 
         @staticmethod
-        def _validate_operation(dn: str) -> FlextResult[str]:
+        def validate_operation(dn: str) -> FlextResult[str]:
             """Validate DN operation (internal)."""
             result = FlextLdifDn.Parser.validate_format(dn)
             if result.is_failure:
@@ -528,7 +527,7 @@ class FlextLdifDn(FlextService[str]):
             return FlextResult[str].ok(str(is_valid))
 
         @staticmethod
-        def _compare_operation(dn1: str, dn2: str) -> FlextResult[str]:
+        def compare_operation(dn1: str, dn2: str) -> FlextResult[str]:
             """Compare DN operation (internal)."""
             result = FlextLdifDn.Parser.compare_dns(dn1, dn2)
             if result.is_failure:
@@ -537,7 +536,7 @@ class FlextLdifDn(FlextService[str]):
             return FlextResult[str].ok(str(comparison))
 
         @staticmethod
-        def _parse_rdn_operation(dn: str) -> FlextResult[str]:
+        def parse_rdn_operation(dn: str) -> FlextResult[str]:
             """Parse RDN operation (internal)."""
             result = FlextLdifDn.Parser.parse_rdn(dn)
             if result.is_failure:
@@ -636,18 +635,18 @@ class FlextLdifDn(FlextService[str]):
             return result
 
         @staticmethod
-        def _normalize_operation(dn: str) -> FlextResult[str]:
+        def normalize_operation(dn: str) -> FlextResult[str]:
             """Normalize DN operation (internal)."""
             return FlextLdifDn.Normalizer.normalize(dn)
 
         @staticmethod
-        def _clean_operation(dn: str) -> FlextResult[str]:
+        def clean_operation(dn: str) -> FlextResult[str]:
             """Clean DN operation (internal)."""
             cleaned = FlextLdifDn.Normalizer.clean_dn(dn)
             return FlextResult[str].ok(cleaned)
 
         @staticmethod
-        def _escape_operation(dn: str, escape_mode: str) -> FlextResult[str]:
+        def escape_operation(dn: str, escape_mode: str) -> FlextResult[str]:
             """Escape DN operation (internal)."""
             if escape_mode == "hex":
                 escaped = FlextLdifDn.Normalizer.hex_escape(dn)
@@ -656,7 +655,7 @@ class FlextLdifDn(FlextService[str]):
             return FlextResult[str].ok(escaped)
 
         @staticmethod
-        def _unescape_operation(dn: str) -> FlextResult[str]:
+        def unescape_operation(dn: str) -> FlextResult[str]:
             """Unescape DN operation (internal)."""
             unescaped = FlextLdifDn.Normalizer.unescape_dn_value(dn)
             return FlextResult[str].ok(unescaped)
@@ -809,11 +808,9 @@ class FlextLdifDn(FlextService[str]):
             try:
                 # Use default DN-valued attributes if dn_fields not specified
                 if dn_fields is None:
-                    from flext_ldif.constants import FlextLdifConstants
-
                     # Include 'dn' itself plus all DN-valued attributes
                     dn_fields = ["dn"] + list(
-                        FlextLdifConstants.DnValuedAttributes.ALL_DN_VALUED
+                        FlextLdifConstants.DnValuedAttributes.ALL_DN_VALUED,
                     )
 
                 normalized_data = dict(data)
@@ -827,11 +824,11 @@ class FlextLdifDn(FlextService[str]):
                     # Delegate to helper based on type
                     if isinstance(field_value, str):
                         normalized_data[field_name] = self._normalize_single_dn(
-                            field_value
+                            field_value,
                         )
                     elif isinstance(field_value, list):
                         normalized_data[field_name] = self._normalize_dn_list(
-                            field_value
+                            field_value,
                         )
 
                 return FlextResult[dict[str, object]].ok(normalized_data)

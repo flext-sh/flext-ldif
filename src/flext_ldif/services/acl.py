@@ -388,11 +388,14 @@ class FlextLdifAcl(FlextService[FlextLdifModels.AclResponse]):
             return FlextResult[bool].ok(True)
 
         # Validate subject DN using FlextLdifUtilities.DN
-        if subject_value and subject_value != "*":
-            if not FlextLdifUtilities.DN.validate(subject_value):
-                return FlextResult[bool].fail(
-                    f"Invalid subject DN format per RFC 4514: {subject_value}",
-                )
+        if (
+            subject_value
+            and subject_value != "*"
+            and not FlextLdifUtilities.DN.validate(subject_value)
+        ):
+            return FlextResult[bool].fail(
+                f"Invalid subject DN format per RFC 4514: {subject_value}",
+            )
 
         context_subject = context.get("subject_dn", "")
         if context_subject:
@@ -431,11 +434,14 @@ class FlextLdifAcl(FlextService[FlextLdifModels.AclResponse]):
             return FlextResult[bool].ok(True)
 
         # Validate target DN using FlextLdifUtilities.DN
-        if target_dn and target_dn != "*":
-            if not FlextLdifUtilities.DN.validate(target_dn):
-                return FlextResult[bool].fail(
-                    f"Invalid target DN format per RFC 4514: {target_dn}",
-                )
+        if (
+            target_dn
+            and target_dn != "*"
+            and not FlextLdifUtilities.DN.validate(target_dn)
+        ):
+            return FlextResult[bool].fail(
+                f"Invalid target DN format per RFC 4514: {target_dn}",
+            )
 
         context_target = context.get("target_dn", "")
         if context_target:

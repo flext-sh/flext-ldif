@@ -156,7 +156,9 @@ class FlextLdifUtilitiesEntry:
                         break
                     except Exception as e:
                         logger.debug(
-                            "Base64 validation failed for %s: %s", attr_name, e
+                            "Base64 validation failed for %s: %s",
+                            attr_name,
+                            e,
                         )
 
         return base64_attrs

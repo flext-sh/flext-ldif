@@ -31,7 +31,7 @@ class TestWriterValidationIntegration:
         """Create a valid LDAP entry with RFC-compliant attributes."""
         return FlextLdifModels.Entry(
             dn=FlextLdifModels.DistinguishedName(
-                value="cn=John Doe,ou=people,dc=example,dc=com"
+                value="cn=John Doe,ou=people,dc=example,dc=com",
             ),
             attributes=FlextLdifModels.LdifAttributes(
                 attributes={
@@ -39,7 +39,7 @@ class TestWriterValidationIntegration:
                     "sn": ["Doe"],
                     "mail": ["john@example.com"],
                     "objectClass": ["person", "inetOrgPerson"],
-                }
+                },
             ),
         )
 
@@ -48,14 +48,14 @@ class TestWriterValidationIntegration:
         """Create entry with invalid attribute name (contains spaces)."""
         return FlextLdifModels.Entry(
             dn=FlextLdifModels.DistinguishedName(
-                value="cn=Jane Smith,ou=people,dc=example,dc=com"
+                value="cn=Jane Smith,ou=people,dc=example,dc=com",
             ),
             attributes=FlextLdifModels.LdifAttributes(
                 attributes={
                     "cn": ["Jane Smith"],
                     "invalid attr": ["value"],  # Invalid: contains space
                     "objectClass": ["person"],
-                }
+                },
             ),
         )
 
@@ -74,7 +74,8 @@ class TestWriterValidationIntegration:
             assert is_valid, f"Expected '{attr_name}' to be valid RFC attribute name"
 
     def test_invalid_attribute_name_detected(
-        self, validation_service: FlextLdifValidation
+        self,
+        validation_service: FlextLdifValidation,
     ) -> None:
         """Test that invalid attribute names are rejected."""
         # Space in name is invalid
@@ -113,7 +114,9 @@ class TestWriterValidationIntegration:
         assert "dc=" in dn_value, "DN should contain dc component"
 
     def test_write_valid_entry_to_string(
-        self, writer: FlextLdifWriter, valid_entry: FlextLdifModels.Entry
+        self,
+        writer: FlextLdifWriter,
+        valid_entry: FlextLdifModels.Entry,
     ) -> None:
         """Test writing valid entry to LDIF string format."""
         result = writer.write(
@@ -140,7 +143,9 @@ class TestWriterValidationIntegration:
         )
 
     def test_write_entry_with_base64_encoding(
-        self, writer: FlextLdifWriter, valid_entry: FlextLdifModels.Entry
+        self,
+        writer: FlextLdifWriter,
+        valid_entry: FlextLdifModels.Entry,
     ) -> None:
         """Test writing entry with base64 encoding for binary values."""
         result = writer.write(
@@ -158,20 +163,22 @@ class TestWriterValidationIntegration:
         assert "dn: cn=John Doe,ou=people,dc=example,dc=com" in output
 
     def test_validate_multiple_entries_in_batch(
-        self, writer: FlextLdifWriter, validation_service: FlextLdifValidation
+        self,
+        writer: FlextLdifWriter,
+        validation_service: FlextLdifValidation,
     ) -> None:
         """Test validation of multiple entries before writing."""
         entries = [
             FlextLdifModels.Entry(
                 dn=FlextLdifModels.DistinguishedName(
-                    value=f"cn=User{i},ou=people,dc=example,dc=com"
+                    value=f"cn=User{i},ou=people,dc=example,dc=com",
                 ),
                 attributes=FlextLdifModels.LdifAttributes(
                     attributes={
                         "cn": [f"User{i}"],
                         "objectClass": ["person"],
                         "mail": [f"user{i}@example.com"],
-                    }
+                    },
                 ),
             )
             for i in range(1, 4)

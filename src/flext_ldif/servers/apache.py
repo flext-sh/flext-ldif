@@ -12,6 +12,7 @@ from flext_core import FlextResult
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.servers.rfc import FlextLdifServersRfc
+from flext_ldif.typings import FlextLdifTypes
 from flext_ldif.utilities import FlextLdifUtilities
 
 
@@ -327,7 +328,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
         Handles ApacheDS ACI (Access Control Instruction) format.
         """
 
-        def can_handle(self, acl_line: str | FlextLdifModels.Acl) -> bool:
+        def can_handle(self, acl_line: FlextLdifTypes.AclOrString) -> bool:
             """Check if this is an ApacheDS ACI.
 
             Override RFC's always-true behavior to check Apache-specific markers.
@@ -341,7 +342,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
             """
             return self.can_handle_acl(acl_line)
 
-        def can_handle_acl(self, acl_line: str | FlextLdifModels.Acl) -> bool:
+        def can_handle_acl(self, acl_line: FlextLdifTypes.AclOrString) -> bool:
             """Detect ApacheDS ACI lines."""
             if isinstance(acl_line, str):
                 if not acl_line or not acl_line.strip():

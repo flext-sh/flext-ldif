@@ -320,7 +320,7 @@ class TestOpenLDAP1xEntrys:
 
         dn = FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com")
         attributes = FlextLdifModels.LdifAttributes(
-            attributes={"cn": ["test"], "objectclass": ["person"]}
+            attributes={"cn": ["test"], "objectclass": ["person"]},
         )
         FlextLdifModels.Entry(dn=dn, attributes=attributes)
         assert entry.can_handle(dn.value, attributes.attributes) is True
@@ -342,7 +342,7 @@ class TestOpenLDAP1xEntrys:
 
         dn = FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com")
         attributes = FlextLdifModels.LdifAttributes(
-            attributes={"olcDatabase": ["{1}mdb"]}
+            attributes={"olcDatabase": ["{1}mdb"]},
         )
         FlextLdifModels.Entry(dn=dn, attributes=attributes)
         assert entry.can_handle(dn.value, attributes.attributes) is False

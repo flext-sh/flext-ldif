@@ -19,7 +19,8 @@ from flext_ldif.services.sorting import FlextLdifSorting
 
 
 def create_test_entry(
-    dn_str: str, attributes: dict[str, list[str]]
+    dn_str: str,
+    attributes: dict[str, list[str]],
 ) -> FlextLdifModels.Entry:
     """Helper to create test entries."""
     dn = FlextLdifModels.DistinguishedName(value=dn_str)
@@ -30,7 +31,8 @@ def create_test_entry(
 def create_test_entries() -> list[FlextLdifModels.Entry]:
     """Create test entries for sorting tests."""
     entry1 = create_test_entry(
-        "dc=example,dc=com", {"dc": ["example"], "objectClass": ["top", "domain"]}
+        "dc=example,dc=com",
+        {"dc": ["example"], "objectClass": ["top", "domain"]},
     )
     entry2 = create_test_entry(
         "ou=users,dc=example,dc=com",
@@ -203,12 +205,14 @@ class TestFlextServiceV2Comparison:
 
         # V2: IDE knows type is list[Entry]
         sorted_v2: list[FlextLdifModels.Entry] = FlextLdifSorting(
-            entries=entries, sort_by="hierarchy"
+            entries=entries,
+            sort_by="hierarchy",
         ).result
 
         # V1: IDE knows type is FlextResult[list[Entry]]
         result_v1: FlextResult[list[FlextLdifModels.Entry]] = FlextLdifSorting(
-            entries=entries, sort_by="hierarchy"
+            entries=entries,
+            sort_by="hierarchy",
         ).execute()
 
         # Both work, but V2 is more direct

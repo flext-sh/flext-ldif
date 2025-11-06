@@ -29,7 +29,9 @@ class TestOidQuirksWithRealFixtures:
     def test_parse_oid_schema_fixture(self, ldif_api: FlextLdif) -> None:
         """Test parsing of a real OID schema file."""
         entries = FlextLdifTestUtils.load_fixture(
-            ldif_api, "oid", "oid_schema_fixtures.ldif"
+            ldif_api,
+            "oid",
+            "oid_schema_fixtures.ldif",
         )
         assert entries is not None
         assert len(entries) > 0
@@ -43,7 +45,9 @@ class TestOidQuirksWithRealFixtures:
     def test_parse_oid_entries_fixture(self, ldif_api: FlextLdif) -> None:
         """Test parsing of a real OID entries file."""
         entries = FlextLdifTestUtils.load_fixture(
-            ldif_api, "oid", "oid_entries_fixtures.ldif"
+            ldif_api,
+            "oid",
+            "oid_entries_fixtures.ldif",
         )
         assert entries is not None
         assert len(entries) > 0
@@ -70,7 +74,9 @@ class TestOidQuirksWithRealFixtures:
     def test_parse_oid_acl_fixture(self, ldif_api: FlextLdif) -> None:
         """Test parsing of a real OID ACL file."""
         entries = FlextLdifTestUtils.load_fixture(
-            ldif_api, "oid", "oid_acl_fixtures.ldif"
+            ldif_api,
+            "oid",
+            "oid_acl_fixtures.ldif",
         )
         assert entries is not None
         assert len(entries) > 0
@@ -78,27 +84,39 @@ class TestOidQuirksWithRealFixtures:
     def test_roundtrip_oid_entries(self, ldif_api: FlextLdif, tmp_path: Path) -> None:
         """Test roundtrip of OID entries."""
         FlextLdifTestUtils.run_roundtrip_test(
-            ldif_api, "oid", "oid_entries_fixtures.ldif", tmp_path
+            ldif_api,
+            "oid",
+            "oid_entries_fixtures.ldif",
+            tmp_path,
         )
 
     def test_roundtrip_oid_schema(self, ldif_api: FlextLdif, tmp_path: Path) -> None:
         """Test roundtrip of OID schema."""
         FlextLdifTestUtils.run_roundtrip_test(
-            ldif_api, "oid", "oid_schema_fixtures.ldif", tmp_path
+            ldif_api,
+            "oid",
+            "oid_schema_fixtures.ldif",
+            tmp_path,
         )
 
     def test_roundtrip_oid_acl(self, ldif_api: FlextLdif, tmp_path: Path) -> None:
         """Test roundtrip of OID ACL."""
         FlextLdifTestUtils.run_roundtrip_test(
-            ldif_api, "oid", "oid_acl_fixtures.ldif", tmp_path
+            ldif_api,
+            "oid",
+            "oid_acl_fixtures.ldif",
+            tmp_path,
         )
 
     def test_oid_oracle_specific_attributes_preserved(
-        self, ldif_api: FlextLdif
+        self,
+        ldif_api: FlextLdif,
     ) -> None:
         """Test that Oracle-specific attributes are properly preserved."""
         entries = FlextLdifTestUtils.load_fixture(
-            ldif_api, "oid", "oid_entries_fixtures.ldif"
+            ldif_api,
+            "oid",
+            "oid_entries_fixtures.ldif",
         )
 
         # Find Oracle-specific entries (orclguid, etc.)
@@ -116,7 +134,9 @@ class TestOidQuirksWithRealFixtures:
     def test_oid_password_hashes_preserved(self, ldif_api: FlextLdif) -> None:
         """Test that OID password hashes are properly preserved."""
         entries = FlextLdifTestUtils.load_fixture(
-            ldif_api, "oid", "oid_entries_fixtures.ldif"
+            ldif_api,
+            "oid",
+            "oid_entries_fixtures.ldif",
         )
 
         # Find entries with userPassword

@@ -196,7 +196,10 @@ attributeTypes: ( 2.5.4.4 NAME 'sn' DESC 'Surname' SYNTAX '1.3.6.1.4.1.1466.115.
 """
 
         with NamedTemporaryFile(
-            mode="w", suffix=".ldif", delete=False, encoding="utf-8"
+            mode="w",
+            suffix=".ldif",
+            delete=False,
+            encoding="utf-8",
         ) as f:
             f.write(schema_content)
             schema_file = Path(f.name)

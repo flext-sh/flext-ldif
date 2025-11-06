@@ -14,30 +14,27 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import pytest
-
 from flext_ldif import FlextLdif, FlextLdifModels
-
-from ..fixtures.loader import FlextLdifFixtures
 
 
 class TestOidSchemaIntegration:
-    """Integration tests for OID schema processing."""
+    """Integration tests for OID schema processing.
 
-    @pytest.fixture
-    def api(self) -> FlextLdif:
-        """Create FlextLdif API instance."""
-        return FlextLdif.get_instance()
+    Uses centralized fixtures from tests/integration/conftest.py:
+    - api: FlextLdif API instance
+    - oid_schema_fixture: OID schema LDIF content
+    - oid_entries_fixture: OID entries LDIF content
+    """
 
-    @pytest.fixture
-    def schema_fixture(self) -> str:
-        """Load OID schema fixture data."""
-        loader = FlextLdifFixtures.OID()
-        return loader.schema()
+    def test_parse_schema_fixture(self, api: FlextLdif, oid_schema_fixture: str) -> None:
+        """Test parsing complete OID schema fixture.
 
-    def test_parse_schema_fixture(self, api: FlextLdif, schema_fixture: str) -> None:
-        """Test parsing complete OID schema fixture."""
-        result = api.parse(schema_fixture)
+        Validates:
+        - Schema parsing succeeds
+        - At least one schema entry is parsed
+        - Entry has valid DN
+        """
+        result = api.parse(oid_schema_fixture)
 
         assert result.is_success, f"Schema parsing failed: {result.error}"
         entries = result.unwrap()
@@ -50,10 +47,17 @@ class TestOidSchemaIntegration:
         assert schema_entry.dn is not None
 
     def test_oracle_attributes_in_parsed_schema(
-        self, api: FlextLdif, schema_fixture: str
+        self,
+        api: FlextLdif,
+        oid_schema_fixture: str,
     ) -> None:
-        """Test that Oracle attributes are detected in parsed schema."""
-        result = api.parse(schema_fixture)
+        """Test that Oracle attributes are detected in parsed schema.
+
+        Validates:
+        - Oracle-specific OID patterns (2.16.840.1.113894.*) are detected
+        - Schema parsing completes successfully
+        """
+        result = api.parse(oid_schema_fixture)
         assert result.is_success
 
         entries = result.unwrap()
@@ -67,7 +71,8 @@ class TestOidSchemaIntegration:
         )
         if isinstance(attrs_dict, dict):
             attrs = attrs_dict.get(
-                "attributetypes", attrs_dict.get("attributeTypes", [])
+                "attributetypes",
+                attrs_dict.get("attributeTypes", []),
             )
         else:
             attrs = (
@@ -88,10 +93,17 @@ class TestOidSchemaIntegration:
         assert oracle_attr_count >= 0, "Schema parsing should complete successfully"
 
     def test_oracle_objectclasses_in_parsed_schema(
-        self, api: FlextLdif, schema_fixture: str
+        self,
+        api: FlextLdif,
+        oid_schema_fixture: str,
     ) -> None:
-        """Test that Oracle objectClasses are detected in parsed schema."""
-        result = api.parse(schema_fixture)
+        """Test that Oracle objectClasses are detected in parsed schema.
+
+        Validates:
+        - Oracle-specific objectClass OIDs are detected
+        - ObjectClass parsing completes successfully
+        """
+        result = api.parse(oid_schema_fixture)
         assert result.is_success
 
         entries = result.unwrap()
@@ -105,7 +117,8 @@ class TestOidSchemaIntegration:
         )
         if isinstance(attrs_dict, dict):
             object_classes = attrs_dict.get(
-                "objectclasses", attrs_dict.get("objectClasses", [])
+                "objectclasses",
+                attrs_dict.get("objectClasses", []),
             )
         else:
             object_classes = (
@@ -129,24 +142,25 @@ class TestOidSchemaIntegration:
 
 
 class TestOidEntryIntegration:
-    """Integration tests for OID entry processing."""
+    """Integration tests for OID entry processing.
 
-    @pytest.fixture
-    def api(self) -> FlextLdif:
-        """Create FlextLdif API instance."""
-        return FlextLdif.get_instance()
-
-    @pytest.fixture
-    def integration_fixture(self) -> str:
-        """Load OID integration fixture data."""
-        loader = FlextLdifFixtures.OID()
-        return loader.integration()
+    Uses centralized fixtures from tests/integration/conftest.py:
+    - api: FlextLdif API instance
+    - oid_integration_fixture: OID integration LDIF content
+    """
 
     def test_parse_integration_fixture(
-        self, api: FlextLdif, integration_fixture: str
+        self,
+        api: FlextLdif,
+        oid_integration_fixture: str,
     ) -> None:
-        """Test parsing complete OID integration fixture."""
-        result = api.parse(integration_fixture)
+        """Test parsing complete OID integration fixture.
+
+        Validates:
+        - Integration fixture parsing succeeds
+        - All entries parse with valid structure
+        """
+        result = api.parse(oid_integration_fixture)
 
         assert result.is_success, f"Integration fixture parsing failed: {result.error}"
         entries = result.unwrap()
@@ -158,10 +172,17 @@ class TestOidEntryIntegration:
         )
 
     def test_oracle_acls_preserved_in_parsing(
-        self, api: FlextLdif, integration_fixture: str
+        self,
+        api: FlextLdif,
+        oid_integration_fixture: str,
     ) -> None:
-        """Test that Oracle ACLs are preserved during parsing."""
-        result = api.parse(integration_fixture)
+        """Test that Oracle ACLs are preserved during parsing.
+
+        Validates:
+        - orclaci attributes are detected
+        - orclentrylevelaci attributes are detected
+        """
+        result = api.parse(oid_integration_fixture)
         assert result.is_success
 
         entries = result.unwrap()
@@ -180,10 +201,17 @@ class TestOidEntryIntegration:
         )
 
     def test_oracle_attributes_preserved_in_parsing(
-        self, api: FlextLdif, integration_fixture: str
+        self,
+        api: FlextLdif,
+        oid_integration_fixture: str,
     ) -> None:
-        """Test that Oracle-specific attributes are preserved during parsing."""
-        result = api.parse(integration_fixture)
+        """Test that Oracle-specific attributes are preserved during parsing.
+
+        Validates:
+        - orclisenabled attributes are found
+        - orclpassword attributes are found
+        """
+        result = api.parse(oid_integration_fixture)
         assert result.is_success
 
         entries = result.unwrap()
@@ -202,25 +230,27 @@ class TestOidEntryIntegration:
 
 
 class TestOidRoundTripIntegration:
-    """Integration tests for OID round-trip: parse → write → parse."""
+    """Integration tests for OID round-trip: parse → write → parse.
 
-    @pytest.fixture
-    def api(self) -> FlextLdif:
-        """Create FlextLdif API instance."""
-        return FlextLdif.get_instance()
-
-    @pytest.fixture
-    def integration_fixture(self) -> str:
-        """Load OID integration fixture data."""
-        loader = FlextLdifFixtures.OID()
-        return loader.integration()
+    Uses centralized fixtures from tests/integration/conftest.py:
+    - api: FlextLdif API instance
+    - oid_integration_fixture: OID integration LDIF content
+    """
 
     def test_roundtrip_parse_write_parse(
-        self, api: FlextLdif, integration_fixture: str
+        self,
+        api: FlextLdif,
+        oid_integration_fixture: str,
     ) -> None:
-        """Test round-trip: parse OID fixture → write to LDIF → parse again."""
+        """Test round-trip: parse OID fixture → write to LDIF → parse again.
+
+        Validates:
+        - Original parsing succeeds
+        - Write output is valid LDIF
+        - Re-parsing maintains entry count
+        """
         # Parse original
-        parse_result_1 = api.parse(integration_fixture)
+        parse_result_1 = api.parse(oid_integration_fixture)
         assert parse_result_1.is_success, f"First parse failed: {parse_result_1.error}"
         entries_1 = parse_result_1.unwrap()
 
@@ -244,11 +274,18 @@ class TestOidRoundTripIntegration:
         )
 
     def test_roundtrip_dn_preservation(
-        self, api: FlextLdif, integration_fixture: str
+        self,
+        api: FlextLdif,
+        oid_integration_fixture: str,
     ) -> None:
-        """Test that DNs are preserved in round-trip."""
+        """Test that DNs are preserved in round-trip.
+
+        Validates:
+        - All entry DNs preserved exactly
+        - DN count matches after round-trip
+        """
         # Parse original
-        parse_result_1 = api.parse(integration_fixture)
+        parse_result_1 = api.parse(oid_integration_fixture)
         assert parse_result_1.is_success
         entries_1 = parse_result_1.unwrap()
 
@@ -268,17 +305,25 @@ class TestOidRoundTripIntegration:
         assert original_dns == roundtrip_dns, "DN mismatch after round-trip"
 
     def test_roundtrip_oracle_acl_preservation(
-        self, api: FlextLdif, integration_fixture: str
+        self,
+        api: FlextLdif,
+        oid_integration_fixture: str,
     ) -> None:
-        """Test that Oracle ACLs are preserved in round-trip."""
+        """Test that Oracle ACLs are preserved in round-trip.
+
+        Validates:
+        - ACL attribute counts preserved
+        - orclaci and orclentrylevelaci survive round-trip
+        """
         # Parse original
-        parse_result_1 = api.parse(integration_fixture)
+        parse_result_1 = api.parse(oid_integration_fixture)
         assert parse_result_1.is_success
         entries_1 = parse_result_1.unwrap()
 
         # Count ACLs in original
         def get_attribute_values_count(
-            entry: FlextLdifModels.Entry, attr_name: str
+            entry: FlextLdifModels.Entry,
+            attr_name: str,
         ) -> int:
             attr_values = entry.attributes.attributes.get(attr_name)
             if attr_values is None:

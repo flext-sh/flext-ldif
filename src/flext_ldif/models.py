@@ -24,7 +24,9 @@ from flext_core import FlextModels, FlextResult
 from pydantic import ConfigDict, Field, computed_field, field_validator, model_validator
 
 from flext_ldif.constants import FlextLdifConstants
-from flext_ldif.typings import FlextLdifTypes
+
+# Type checking: FlextModels nested classes are runtime-available but mypy can't resolve them
+# We suppress type errors for base class inheritance from FlextModels.* to avoid false positives
 
 
 class FlextLdifModels(FlextModels):
@@ -41,7 +43,7 @@ class FlextLdifModels(FlextModels):
     # =========================================================================
     # DOMAIN MODELS - Core business entities
     # =========================================================================
-    class DistinguishedName(FlextModels.Value):
+    class DistinguishedName(FlextModels.Value):  # type: ignore[misc,valid-type]
         """Distinguished Name value object."""
 
         model_config = ConfigDict(
@@ -105,7 +107,7 @@ class FlextLdifModels(FlextModels):
             """Return the DN string value for proper str() conversion."""
             return self.value
 
-    class QuirkMetadata(FlextModels.ArbitraryTypesModel):
+    class QuirkMetadata(FlextModels.ArbitraryTypesModel):  # type: ignore[misc,valid-type]
         """Universal metadata container for quirk-specific data preservation.
 
         This model supports ANY quirk type and prevents data loss during RFC conversion.
@@ -199,7 +201,7 @@ class FlextLdifModels(FlextModels):
                 source_entry=source_entry,
             )
 
-    class AclPermissions(FlextModels.ArbitraryTypesModel):
+    class AclPermissions(FlextModels.ArbitraryTypesModel):  # type: ignore[misc,valid-type]
         """ACL permissions for LDAP operations."""
 
         read: bool = Field(default=False, description="Read permission")
@@ -265,7 +267,7 @@ class FlextLdifModels(FlextModels):
                 perms.append(FlextLdifConstants.Acl.PROXY)
             return perms
 
-    class AclTarget(FlextModels.ArbitraryTypesModel):
+    class AclTarget(FlextModels.ArbitraryTypesModel):  # type: ignore[misc,valid-type]
         """ACL target specification."""
 
         target_dn: str = Field(..., description="Target DN pattern")
@@ -274,13 +276,13 @@ class FlextLdifModels(FlextModels):
             description="Target attributes",
         )
 
-    class AclSubject(FlextModels.ArbitraryTypesModel):
+    class AclSubject(FlextModels.ArbitraryTypesModel):  # type: ignore[misc,valid-type]
         """ACL subject specification."""
 
         subject_type: str = Field(..., description="Subject type (user, group, etc.)")
         subject_value: str = Field(..., description="Subject value/pattern")
 
-    class Acl(FlextModels.ArbitraryTypesModel):
+    class Acl(FlextModels.ArbitraryTypesModel):  # type: ignore[misc,valid-type]
         r"""Universal ACL model for all LDAP server types.
 
         Consolidated model replacing 7 separate ACL classes (FlextLdifModels.Acl, OpenLdapAcl,
@@ -353,7 +355,9 @@ class FlextLdifModels(FlextModels):
                 if base and hasattr(base, "Constants"):
                     constants = getattr(base, "Constants", None)
                     if constants and hasattr(constants, "ACL_FORMAT"):
-                        return constants.ACL_FORMAT
+                        acl_format = constants.ACL_FORMAT
+                        if isinstance(acl_format, str):
+                            return acl_format
             except Exception:
                 pass
 
@@ -380,7 +384,7 @@ class FlextLdifModels(FlextModels):
     # Note: CQRS classes (ParseLdifCommand, WriteLdifCommand, etc.) are
     # exported from flext_ldif.__init__.py to avoid circular imports.
 
-    class LdifValidationResult(FlextModels.ArbitraryTypesModel):
+    class LdifValidationResult(FlextModels.ArbitraryTypesModel):  # type: ignore[misc,valid-type]
         """Result of LDIF validation operations."""
 
         model_config = ConfigDict(
@@ -424,14 +428,14 @@ class FlextLdifModels(FlextModels):
                 return f"Valid ({self.warning_count} warnings)"
             return f"Invalid ({self.error_count} errors, {self.warning_count} warnings)"
 
-    class AnalysisResult(FlextModels.ArbitraryTypesModel):
+    class AnalysisResult(FlextModels.ArbitraryTypesModel):  # type: ignore[misc,valid-type]
         """Result of LDIF analytics operations."""
 
         total_entries: int = Field(
             default=0,
             description="Total number of entries analyzed",
         )
-        object_class_distribution: FlextLdifTypes.CommonDict.DistributionDict = Field(
+        object_class_distribution: dict[str, int] = Field(
             default_factory=dict,
             description="Distribution of object classes",
         )
@@ -472,7 +476,7 @@ class FlextLdifModels(FlextModels):
     # SearchConfig deleted (0 usages) - use dict[str, object] for LDAP search config
     # DiffItem and DiffResult deleted (0 usages) - use dict[str, list[dict]] for diff operations
 
-    class FilterCriteria(FlextModels.ArbitraryTypesModel):
+    class FilterCriteria(FlextModels.ArbitraryTypesModel):  # type: ignore[misc,valid-type]
         """Criteria for filtering LDIF entries.
 
         Supports multiple filter types:
@@ -515,7 +519,7 @@ class FlextLdifModels(FlextModels):
             description="Mode: 'include' keep, 'exclude' remove",
         )
 
-    class ExclusionInfo(FlextModels.ArbitraryTypesModel):
+    class ExclusionInfo(FlextModels.ArbitraryTypesModel):  # type: ignore[misc,valid-type]
         """Metadata for excluded entries/schema items.
 
         Stored in QuirkMetadata.extensions['exclusion_info'] to track why
@@ -550,7 +554,7 @@ class FlextLdifModels(FlextModels):
             description="ISO 8601 timestamp when exclusion was marked",
         )
 
-    class CategorizedEntries(FlextModels.ArbitraryTypesModel):
+    class CategorizedEntries(FlextModels.ArbitraryTypesModel):  # type: ignore[misc,valid-type]
         """Result of entry categorization by objectClass.
 
         Categorizes LDIF entries into users, groups, containers, and uncategorized
@@ -585,7 +589,7 @@ class FlextLdifModels(FlextModels):
         )
 
         @computed_field
-        def summary(self) -> FlextLdifTypes.CommonDict.DistributionDict:
+        def summary(self) -> dict[str, int]:
             """Get summary of entry counts by category."""
             return {
                 "users": len(self.users),
@@ -614,14 +618,14 @@ class FlextLdifModels(FlextModels):
                 uncategorized=[],
             )
 
-    class SchemaDiscoveryResult(FlextModels.ArbitraryTypesModel):
+    class SchemaDiscoveryResult(FlextModels.ArbitraryTypesModel):  # type: ignore[misc,valid-type]
         """Result of schema discovery operations."""
 
-        attributes: FlextLdifTypes.Models.AttributesData = Field(
+        attributes: dict[str, dict[str, object]] = Field(
             default_factory=dict,
             description="Discovered attributes with their metadata",
         )
-        objectclasses: FlextLdifTypes.Models.ObjectClassesData = Field(
+        objectclasses: dict[str, dict[str, object]] = Field(
             default_factory=dict,
             description="Discovered object classes with their metadata",
         )
@@ -701,7 +705,7 @@ class FlextLdifModels(FlextModels):
                 f"{self.entry_count} entries ({self.server_type})"
             )
 
-    class SchemaAttribute(FlextModels.ArbitraryTypesModel):
+    class SchemaAttribute(FlextModels.ArbitraryTypesModel):  # type: ignore[misc,valid-type]
         """LDAP schema attribute definition model (RFC 4512 compliant).
 
         Represents an LDAP attribute type definition from schema with full RFC 4512 support.
@@ -808,7 +812,7 @@ class FlextLdifModels(FlextModels):
                 server_type="rfc",
             )
 
-    class Syntax(FlextModels.ArbitraryTypesModel):
+    class Syntax(FlextModels.ArbitraryTypesModel):  # type: ignore[misc,valid-type]
         """LDAP attribute syntax definition model (RFC 4517 compliant).
 
         Represents an LDAP attribute syntax OID and its validation rules per RFC 4517.
@@ -950,7 +954,7 @@ class FlextLdifModels(FlextModels):
                 # This prevents the model from being invalid due to service failures
                 return None
 
-    class SchemaObjectClass(FlextModels.ArbitraryTypesModel):
+    class SchemaObjectClass(FlextModels.ArbitraryTypesModel):  # type: ignore[misc,valid-type]
         """LDAP schema object class definition model (RFC 4512 compliant).
 
         Represents an LDAP object class definition from schema with full RFC 4512 support.
@@ -1006,7 +1010,7 @@ class FlextLdifModels(FlextModels):
             return must_count + may_count
 
         @computed_field
-        def attribute_summary(self) -> FlextLdifTypes.CommonDict.DistributionDict:
+        def attribute_summary(self) -> dict[str, int]:
             """Get summary of required and optional attributes."""
             must_count = len(self.must) if self.must else 0
             may_count = len(self.may) if self.may else 0
@@ -1016,7 +1020,7 @@ class FlextLdifModels(FlextModels):
                 "total": must_count + may_count,
             }
 
-    class Entry(FlextModels.Entity):
+    class Entry(FlextModels.Entity):  # type: ignore[misc,valid-type]
         """LDIF entry domain model."""
 
         model_config = ConfigDict(
@@ -1094,7 +1098,7 @@ class FlextLdifModels(FlextModels):
             cls,
             dn: str | FlextLdifModels.DistinguishedName,
             attributes: (
-                FlextLdifTypes.CommonDict.AttributeDict | FlextLdifModels.LdifAttributes
+                dict[str, str | list[str]] | FlextLdifModels.LdifAttributes
             ),
             metadata: FlextLdifModels.QuirkMetadata | None = None,
             acls: list[FlextLdifModels.Acl] | None = None,
@@ -1422,7 +1426,7 @@ class FlextLdifModels(FlextModels):
             """Get list of objectClass attribute values from entry."""
             return self.get_attribute_values(FlextLdifConstants.DictKeys.OBJECTCLASS)
 
-    class LdifAttributes(FlextModels.ArbitraryTypesModel):
+    class LdifAttributes(FlextModels.ArbitraryTypesModel):  # type: ignore[misc,valid-type]
         """LDIF attributes container - simplified dict-like interface."""
 
         model_config = ConfigDict(extra="allow")  # Allow dynamic attribute fields
@@ -1572,7 +1576,7 @@ class FlextLdifModels(FlextModels):
         def to_ldap3(
             self,
             exclude: list[str] | None = None,
-        ) -> FlextLdifTypes.CommonDict.AttributeDict:
+        ) -> dict[str, str | list[str]]:
             """Convert to ldap3-compatible attributes dict.
 
             Args:
@@ -1583,7 +1587,7 @@ class FlextLdifModels(FlextModels):
 
             """
             exclude_set = set(exclude or [])
-            result: FlextLdifTypes.CommonDict.AttributeDict = {}
+            result: dict[str, str | list[str]] = {}
 
             for attr_name, values in self.attributes.items():
                 if attr_name not in exclude_set:
@@ -1701,7 +1705,7 @@ class FlextLdifModels(FlextModels):
                 if meta.get("status") == "deleted"
             }
 
-    class PipelineStatistics(FlextModels.ArbitraryTypesModel):
+    class PipelineStatistics(FlextModels.ArbitraryTypesModel):  # type: ignore[misc,valid-type]
         """Statistics for LDIF pipeline operations.
 
         Tracks counts of entries processed, categorized, validated, and rejected
@@ -1768,7 +1772,7 @@ class FlextLdifModels(FlextModels):
             description="Processing duration in seconds",
         )
 
-    class PipelineExecutionResult(FlextModels.Value):
+    class PipelineExecutionResult(FlextModels.Value):  # type: ignore[misc,valid-type]
         """Result of pipeline execution containing categorized entries and statistics.
 
         Contains the complete result of a pipeline execution including entries
@@ -1800,7 +1804,7 @@ class FlextLdifModels(FlextModels):
             description="Output file paths for each category",
         )
 
-    class SchemaBuilderResult(FlextModels.Value):
+    class SchemaBuilderResult(FlextModels.Value):  # type: ignore[misc,valid-type]
         """Result of schema builder build() operation.
 
         Contains attributes, object classes, server type, and metadata about the schema.
@@ -1901,7 +1905,7 @@ class FlextLdifModels(FlextModels):
                 "entry_count": self.entry_count,
             }
 
-    class MigrationStatistics(FlextModels.Value):
+    class MigrationStatistics(FlextModels.Value):  # type: ignore[misc,valid-type]
         """Statistics from LDIF migration pipeline execution.
 
         Tracks counts of migrated schema elements and entries with computed metrics
@@ -2017,7 +2021,7 @@ class FlextLdifModels(FlextModels):
     # RESPONSE MODELS - Composed from domain models and statistics
     # =========================================================================
 
-    class ParseStatistics(FlextModels.Value):
+    class ParseStatistics(FlextModels.Value):  # type: ignore[misc,valid-type]
         """Statistics from LDIF parsing operation (composed from PipelineStatistics pattern)."""
 
         model_config = ConfigDict(
@@ -2043,7 +2047,7 @@ class FlextLdifModels(FlextModels):
                 (self.total_entries - self.parse_errors) / self.total_entries
             ) * 100.0
 
-    class ParseResponse(FlextModels.Value):
+    class ParseResponse(FlextModels.Value):  # type: ignore[misc,valid-type]
         """Composed response from parsing operation.
 
         Combines Entry models with statistics from parse operation.
@@ -2058,7 +2062,7 @@ class FlextLdifModels(FlextModels):
         )
         detected_server_type: str | None = Field(None)
 
-    class WriteStatistics(FlextModels.Value):
+    class WriteStatistics(FlextModels.Value):  # type: ignore[misc,valid-type]
         """Statistics from LDIF write operation."""
 
         model_config = ConfigDict(
@@ -2075,7 +2079,7 @@ class FlextLdifModels(FlextModels):
         )
         encoding: str = Field(default="utf-8", description="File encoding used")
 
-    class WriteResponse(FlextModels.Value):
+    class WriteResponse(FlextModels.Value):  # type: ignore[misc,valid-type]
         """Composed response from write operation.
 
         Contains written LDIF content and statistics using model composition.
@@ -2088,7 +2092,7 @@ class FlextLdifModels(FlextModels):
             description="Write operation statistics",
         )
 
-    class WriteFormatOptions(FlextModels.Value):
+    class WriteFormatOptions(FlextModels.Value):  # type: ignore[misc,valid-type]
         """Formatting options for LDIF serialization.
 
         Provides detailed control over the output format, including line width
@@ -2160,7 +2164,7 @@ class FlextLdifModels(FlextModels):
             description="If set to 'modify', writes entries in LDIF modify add format (changetype: modify). Otherwise uses add format.",
         )
 
-    class AclStatistics(FlextModels.Value):
+    class AclStatistics(FlextModels.Value):  # type: ignore[misc,valid-type]
         """Statistics from ACL extraction operation."""
 
         model_config = ConfigDict(
@@ -2179,7 +2183,7 @@ class FlextLdifModels(FlextModels):
             description="Primary ACL attribute name found",
         )
 
-    class AclResponse(FlextModels.Value):
+    class AclResponse(FlextModels.Value):  # type: ignore[misc,valid-type]
         """Composed response from ACL extraction.
 
         Combines extracted Acl models with extraction statistics.
@@ -2192,7 +2196,7 @@ class FlextLdifModels(FlextModels):
             description="ACL extraction statistics",
         )
 
-    class MigrationPipelineResult(FlextModels.Value):
+    class MigrationPipelineResult(FlextModels.Value):  # type: ignore[misc,valid-type]
         """Result of migration pipeline execution.
 
         Contains migrated schema, entries, statistics, and output file paths
@@ -2238,11 +2242,12 @@ class FlextLdifModels(FlextModels):
 
             """
             # Compute directly instead of accessing computed field properties
+            # stats can be dict or MigrationStatistics object - type: ignore for dynamic access
             has_schema: bool = (
-                self.stats.total_schema_attributes > 0
-                or self.stats.total_schema_objectclasses > 0
+                self.stats.total_schema_attributes > 0  # type: ignore[attr-defined]
+                or self.stats.total_schema_objectclasses > 0  # type: ignore[attr-defined]
             )
-            has_entries: bool = self.stats.total_entries > 0
+            has_entries: bool = self.stats.total_entries > 0  # type: ignore[attr-defined]
             return not has_schema and not has_entries
 
         @computed_field
@@ -2274,7 +2279,7 @@ class FlextLdifModels(FlextModels):
 
             """
             return {
-                "statistics": self.stats.statistics_summary,
+                "statistics": self.stats.statistics_summary,  # type: ignore[attr-defined]
                 "entry_count": self.entry_count,
                 "output_files": self.output_file_count,
                 "is_empty": self.is_empty,
@@ -2284,7 +2289,7 @@ class FlextLdifModels(FlextModels):
     # CLIENT AND SERVICE RESULT MODELS
     # =========================================================================
 
-    class ClientStatus(FlextModels.Value):
+    class ClientStatus(FlextModels.Value):  # type: ignore[misc,valid-type]
         """Client status information."""
 
         model_config = ConfigDict(
@@ -2302,7 +2307,7 @@ class FlextLdifModels(FlextModels):
             description="Active configuration settings",
         )
 
-    class ValidationResult(FlextModels.Value):
+    class ValidationResult(FlextModels.Value):  # type: ignore[misc,valid-type]
         """Entry validation result."""
 
         model_config = ConfigDict(
@@ -2329,7 +2334,7 @@ class FlextLdifModels(FlextModels):
                 return 100.0
             return (self.valid_entries / self.total_entries) * 100.0
 
-    class MigrationEntriesResult(FlextModels.Value):
+    class MigrationEntriesResult(FlextModels.Value):  # type: ignore[misc,valid-type]
         """Result from migrating entries between servers."""
 
         model_config = ConfigDict(
@@ -2353,7 +2358,7 @@ class FlextLdifModels(FlextModels):
                 return 100.0
             return (self.migrated_entries / self.total_entries) * 100.0
 
-    class EntryAnalysisResult(FlextModels.Value):
+    class EntryAnalysisResult(FlextModels.Value):  # type: ignore[misc,valid-type]
         """Result from entry analysis operations."""
 
         model_config = ConfigDict(
@@ -2376,7 +2381,7 @@ class FlextLdifModels(FlextModels):
             """Count of unique object classes."""
             return len(self.objectclass_distribution)
 
-    class ServerDetectionResult(FlextModels.Value):
+    class ServerDetectionResult(FlextModels.Value):  # type: ignore[misc,valid-type]
         """Result from LDAP server type detection."""
 
         model_config = ConfigDict(
@@ -2408,7 +2413,7 @@ class FlextLdifModels(FlextModels):
             description="Reason for fallback to RFC mode",
         )
 
-    class QuirkCollection(FlextModels.Value):
+    class QuirkCollection(FlextModels.Value):  # type: ignore[misc,valid-type]
         """Collection of all quirks (Schema, ACL, Entry) for a single server type.
 
         Stores all three quirk types together for unified access and management.
@@ -2436,7 +2441,7 @@ class FlextLdifModels(FlextModels):
             description="List of Entry quirk model instances",
         )
 
-    class MigrationConfig(FlextModels.Value):
+    class MigrationConfig(FlextModels.Value):  # type: ignore[misc,valid-type]
         """Configuration for migration pipeline from YAML or dict.
 
         Supports structured 6-file output (00-06) with flexible categorization,
@@ -2511,7 +2516,7 @@ class FlextLdifModels(FlextModels):
             description="Data to pass to header template",
         )
 
-    class ParseFormatOptions(FlextModels.Value):
+    class ParseFormatOptions(FlextModels.Value):  # type: ignore[misc,valid-type]
         """Formatting options for LDIF parsing."""
 
         model_config = ConfigDict(frozen=True)
@@ -2551,12 +2556,188 @@ class FlextLdifModels(FlextModels):
             description="If True, applies strict schema validation and fails on violations.",
         )
 
-    # Set the ConvertibleModel type alias after all classes are defined
-    # Use type alias syntax with actual class references (no prefix needed inside class)
-    type ConvertibleModel = Entry | SchemaAttribute | SchemaObjectClass | Acl
+    # =========================================================================
+    # SERVICE PARAMETER MODELS - Typed parameters for service factories
+    # =========================================================================
+    class MigrationPipelineParams(FlextModels.Value):  # type: ignore[misc,valid-type]
+        """Typed parameters for migration pipeline factory.
 
-    # Set the SchemaModel type alias after all classes are defined
-    type SchemaModel = SchemaAttribute | SchemaObjectClass
+        Replaces dict-based parameter passing with type-safe Pydantic model.
+        """
+
+        model_config = ConfigDict(
+            frozen=True,
+            validate_default=True,
+        )
+
+        input_dir: str = Field(
+            default=".",
+            description="Input directory containing LDIF files to migrate",
+        )
+        output_dir: str = Field(
+            default=".",
+            description="Output directory for migrated LDIF files",
+        )
+        source_server: str = Field(
+            default=FlextLdifConstants.ServerTypes.RFC,
+            description="Source LDAP server type (e.g., 'oid', 'oud', 'rfc')",
+        )
+        target_server: str = Field(
+            default=FlextLdifConstants.ServerTypes.RFC,
+            description="Target LDAP server type (e.g., 'oid', 'oud', 'rfc')",
+        )
+        migration_config: FlextLdifModels.MigrationConfig | None = Field(
+            default=None,
+            description="Optional migration configuration for file organization and filtering",
+        )
+        enable_quirks_detection: bool = Field(
+            default=True,
+            description="If True, auto-detect server type from content",
+        )
+        enable_relaxed_parsing: bool = Field(
+            default=False,
+            description="If True, use lenient parsing for broken/non-compliant LDIF",
+        )
+
+    class ParserParams(FlextModels.Value):  # type: ignore[misc,valid-type]
+        """Typed parameters for parser service factory.
+
+        Provides type-safe configuration for LDIF parsing operations.
+        """
+
+        model_config = ConfigDict(
+            frozen=True,
+            validate_default=True,
+        )
+
+        file_path: str = Field(
+            description="Path to LDIF file to parse",
+        )
+        server_type: str = Field(
+            default=FlextLdifConstants.ServerTypes.RFC,
+            description="LDAP server type to use for parsing quirks",
+        )
+        enable_auto_detection: bool = Field(
+            default=False,
+            description="If True, auto-detect server type from file content",
+        )
+        enable_relaxed_parsing: bool = Field(
+            default=False,
+            description="If True, use lenient parsing mode",
+        )
+        parse_schema: bool = Field(
+            default=True,
+            description="If True, parses schema definitions from entries",
+        )
+        parse_acls: bool = Field(
+            default=True,
+            description="If True, extracts ACLs from entry attributes",
+        )
+        validate_entries: bool = Field(
+            default=True,
+            description="If True, validates entries against schema rules",
+        )
+
+    class WriterParams(FlextModels.Value):  # type: ignore[misc,valid-type]
+        """Typed parameters for writer service factory.
+
+        Provides type-safe configuration for LDIF writing operations.
+        """
+
+        model_config = ConfigDict(
+            frozen=True,
+            validate_default=True,
+        )
+
+        output_path: str = Field(
+            description="Path where LDIF file will be written",
+        )
+        server_type: str = Field(
+            default=FlextLdifConstants.ServerTypes.RFC,
+            description="LDAP server type to use for writing quirks",
+        )
+        encoding: str = Field(
+            default=FlextLdifConstants.Encoding.UTF8,
+            description="Character encoding for output file",
+        )
+        max_line_length: int = Field(
+            default=FlextLdifConstants.Format.MAX_LINE_LENGTH,
+            description="Maximum line length for LDIF output",
+            ge=50,
+            le=1000,
+        )
+        include_operational_attrs: bool = Field(
+            default=False,
+            description="If True, includes operational attributes in output",
+        )
+        sort_attributes: bool = Field(
+            default=False,
+            description="If True, sorts attributes alphabetically",
+        )
+        strict_rfc_compliance: bool = Field(
+            default=True,
+            description="If True, enforces strict RFC 2849 compliance",
+        )
+
+    class ConfigInfo(FlextModels.Value):  # type: ignore[misc,valid-type]
+        """Configuration information for logging and introspection.
+
+        Structured representation of FlextLdifConfig for reporting and diagnostics.
+        """
+
+        model_config = ConfigDict(frozen=True)
+
+        ldif_encoding: str = Field(
+            description="LDIF encoding setting",
+        )
+        strict_rfc_compliance: bool = Field(
+            description="Whether strict RFC compliance is enabled",
+        )
+        ldif_chunk_size: int = Field(
+            description="Chunk size for LDIF processing",
+        )
+        max_workers: int = Field(
+            description="Maximum number of worker processes",
+        )
+        debug: bool = Field(
+            description="Whether debug mode is enabled",
+        )
+        log_level: str = Field(
+            description="Logging level",
+        )
+        quirks_detection_mode: str = Field(
+            description="Server quirks detection mode (auto/manual/disabled)",
+        )
+        quirks_server_type: str | None = Field(
+            default=None,
+            description="Configured server type for quirks (None if auto-detect)",
+        )
+        enable_relaxed_parsing: bool = Field(
+            description="Whether relaxed parsing mode is enabled",
+        )
+
+        @classmethod
+        def from_config(cls, config: FlextLdifConfig) -> FlextLdifModels.ConfigInfo:
+            """Create ConfigInfo from FlextLdifConfig.
+
+            Args:
+                config: FlextLdifConfig instance
+
+            Returns:
+                ConfigInfo with values extracted from config
+
+            """
+            return cls(
+                ldif_encoding=config.ldif_encoding,
+                strict_rfc_compliance=config.strict_rfc_compliance,
+                ldif_chunk_size=config.ldif_chunk_size,
+                max_workers=config.max_workers,
+                debug=config.debug,
+                log_level=config.log_level,
+                quirks_detection_mode=config.quirks_detection_mode,
+                quirks_server_type=config.quirks_server_type,
+                enable_relaxed_parsing=config.enable_relaxed_parsing,
+            )
 
 
 __all__ = ["FlextLdifModels"]

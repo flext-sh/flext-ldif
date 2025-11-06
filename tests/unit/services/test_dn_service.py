@@ -58,7 +58,7 @@ class TestParseComponents:
         service = FlextLdifDn()
         # DN with escaped comma in value
         result = service.parse_components(
-            r"cn=Smith\, John,ou=People,dc=example,dc=com"
+            r"cn=Smith\, John,ou=People,dc=example,dc=com",
         )
 
         assert result.is_success
@@ -74,7 +74,7 @@ class TestParseComponents:
         service = FlextLdifDn()
         # In RFC 4514, quotes within values must be escaped
         result = service.parse_components(
-            r"cn=Smith\, John,ou=People,dc=example,dc=com"
+            r"cn=Smith\, John,ou=People,dc=example,dc=com",
         )
 
         assert result.is_success
@@ -446,7 +446,7 @@ class TestDnEscaping:
 
     def test_hex_escape_simple_string(self) -> None:
         """Test hex escaping of simple string."""
-        result = FlextLdifDn.hex_escape("abc")
+        result = FlextLdifDn.Normalizer.hex_escape("abc")
         # Each character converted to \XX format
         assert "\\61" in result  # 'a'
         assert "\\62" in result  # 'b'
@@ -454,7 +454,7 @@ class TestDnEscaping:
 
     def test_hex_escape_with_special_chars(self) -> None:
         """Test hex escaping with special characters."""
-        result = FlextLdifDn.hex_escape("a#b")
+        result = FlextLdifDn.Normalizer.hex_escape("a#b")
         # 'a' = \61, '#' = \23, 'b' = \62
         assert "\\61" in result
         assert "\\23" in result
@@ -462,27 +462,27 @@ class TestDnEscaping:
 
     def test_hex_escape_empty_string(self) -> None:
         """Test hex escaping empty string."""
-        result = FlextLdifDn.hex_escape("")
+        result = FlextLdifDn.Normalizer.hex_escape("")
         assert not result
 
     def test_hex_unescape_simple_string(self) -> None:
         """Test hex unescaping of simple string."""
-        result = FlextLdifDn.hex_unescape("\\61\\62\\63")
+        result = FlextLdifDn.Normalizer.hex_unescape("\\61\\62\\63")
         assert result == "abc"
 
     def test_hex_unescape_with_special_chars(self) -> None:
         """Test hex unescaping with special characters."""
-        result = FlextLdifDn.hex_unescape("\\61\\23\\62")
+        result = FlextLdifDn.Normalizer.hex_unescape("\\61\\23\\62")
         assert result == "a#b"
 
     def test_hex_unescape_no_escapes(self) -> None:
         """Test hex unescaping with no hex escapes."""
-        result = FlextLdifDn.hex_unescape("simple")
+        result = FlextLdifDn.Normalizer.hex_unescape("simple")
         assert result == "simple"
 
     def test_hex_unescape_empty_string(self) -> None:
         """Test hex unescaping empty string."""
-        result = FlextLdifDn.hex_unescape("")
+        result = FlextLdifDn.Normalizer.hex_unescape("")
         assert not result
 
     def test_escape_unescape_roundtrip(self) -> None:
@@ -495,8 +495,8 @@ class TestDnEscaping:
     def test_hex_escape_unescape_roundtrip(self) -> None:
         """Test that hex_escape followed by hex_unescape returns original."""
         original = "Test#Value"
-        hex_escaped = FlextLdifDn.hex_escape(original)
-        hex_unescaped = FlextLdifDn.hex_unescape(hex_escaped)
+        hex_escaped = FlextLdifDn.Normalizer.hex_escape(original)
+        hex_unescaped = FlextLdifDn.Normalizer.hex_unescape(hex_escaped)
         assert hex_unescaped == original
 
     def test_escape_all_special_characters(self) -> None:
@@ -1009,7 +1009,7 @@ class TestEscapeSequenceValidation:
         service = FlextLdifDn()
         # Mix of backslash and hex escapes
         result = service.validate_format(
-            r"cn=Smith\,John\2BDeveloper,dc=example,dc=com"
+            r"cn=Smith\,John\2BDeveloper,dc=example,dc=com",
         )
         assert result.is_success
         assert result.unwrap() is True
@@ -1126,7 +1126,7 @@ class TestDnPatternValidation:
         """Test validation of deep DN hierarchy."""
         service = FlextLdifDn()
         result = service.validate_format(
-            "cn=test,ou=users,ou=department,o=company,c=US"
+            "cn=test,ou=users,ou=department,o=company,c=US",
         )
         assert result.is_success
         assert result.unwrap() is True

@@ -31,10 +31,12 @@ class TestOpenLdapFixtures:
         # which is OpenLDAP's internal schema storage format, not standard LDIF entries.
         # This test verifies the file parses without error.
         fixture_path = FlextLdifTestUtils.get_fixture_path(
-            "openldap", "openldap_schema_fixtures.ldif"
+            "openldap",
+            "openldap_schema_fixtures.ldif",
         )
         result = ldif_api.parse(
-            fixture_path, server_type=FlextLdifServersOpenldap.Constants.SERVER_TYPE
+            fixture_path,
+            server_type=FlextLdifServersOpenldap.Constants.SERVER_TYPE,
         )
         assert result.is_success, f"Failed to parse schema fixture: {result.error}"
         # cn=config schema files don't parse as regular entries
@@ -44,17 +46,24 @@ class TestOpenLdapFixtures:
     def test_parse_openldap_integration_fixture(self, ldif_api: FlextLdif) -> None:
         """Test parsing of OpenLDAP integration fixture with real directory entries."""
         entries = FlextLdifTestUtils.load_fixture(
-            ldif_api, "openldap", "openldap_integration_fixtures.ldif"
+            ldif_api,
+            "openldap",
+            "openldap_integration_fixtures.ldif",
         )
         assert entries is not None
         assert len(entries) > 0
 
     def test_roundtrip_openldap_integration(
-        self, ldif_api: FlextLdif, tmp_path: Path
+        self,
+        ldif_api: FlextLdif,
+        tmp_path: Path,
     ) -> None:
         """Test roundtrip of OpenLDAP integration fixture."""
         FlextLdifTestUtils.run_roundtrip_test(
-            ldif_api, "openldap", "openldap_integration_fixtures.ldif", tmp_path
+            ldif_api,
+            "openldap",
+            "openldap_integration_fixtures.ldif",
+            tmp_path,
         )
 
 
@@ -68,7 +77,8 @@ class TestOpenLDAP2xSchemas:
 
     @pytest.fixture
     def quirk(
-        self, server: FlextLdifServersOpenldap
+        self,
+        server: FlextLdifServersOpenldap,
     ) -> FlextLdifServersOpenldap.Schema:
         """Create OpenLDAP schema quirk instance."""
         return server.schema
@@ -79,7 +89,8 @@ class TestOpenLDAP2xSchemas:
         assert server.priority == FlextLdifServersOpenldap.Constants.PRIORITY
 
     def testcan_handle_attribute_with_olc_prefix(
-        self, quirk: FlextLdifServersOpenldap.Schema
+        self,
+        quirk: FlextLdifServersOpenldap.Schema,
     ) -> None:
         """Test attribute detection with olc prefix."""
         # Test can_handle with LDIF line format (olcAttributeTypes: ...)
@@ -103,7 +114,8 @@ class TestOpenLDAP2xSchemas:
         assert parsed_attr.name == "test"
 
     def testcan_handle_attribute_without_olc(
-        self, quirk: FlextLdifServersOpenldap.Schema
+        self,
+        quirk: FlextLdifServersOpenldap.Schema,
     ) -> None:
         """Test attribute detection without olc prefix."""
         # Should handle RFC attributes (pure RFC format, no olc prefix)
@@ -124,7 +136,8 @@ class TestOpenLDAP2xSchemas:
         assert parsed_attr.name == "test"
 
     def test_parse_attribute_success(
-        self, quirk: FlextLdifServersOpenldap.Schema
+        self,
+        quirk: FlextLdifServersOpenldap.Schema,
     ) -> None:
         """Test successful attribute parsing."""
         attr_def = "( 1.2.3.4 NAME 'testAttr' DESC 'Test attribute' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 EQUALITY caseIgnoreMatch SINGLE-VALUE )"
@@ -140,7 +153,8 @@ class TestOpenLDAP2xSchemas:
         assert attr_data.single_value is True
 
     def test_parse_attribute_no_oid(
-        self, quirk: FlextLdifServersOpenldap.Schema
+        self,
+        quirk: FlextLdifServersOpenldap.Schema,
     ) -> None:
         """Test attribute parsing fails without OID."""
         attr_def = "NAME 'testAttr'"
@@ -151,7 +165,8 @@ class TestOpenLDAP2xSchemas:
         assert "RFC attribute parsing failed: missing an OID" in result.error
 
     def testcan_handle_objectclass_with_olc(
-        self, quirk: FlextLdifServersOpenldap.Schema
+        self,
+        quirk: FlextLdifServersOpenldap.Schema,
     ) -> None:
         """Test objectClass detection with olc prefix."""
         # Test can_handle with LDIF line format (olcObjectClasses: ...)
@@ -175,7 +190,8 @@ class TestOpenLDAP2xSchemas:
         assert parsed_oc.name == "testClass"
 
     def testcan_handle_objectclass_without_olc(
-        self, quirk: FlextLdifServersOpenldap.Schema
+        self,
+        quirk: FlextLdifServersOpenldap.Schema,
     ) -> None:
         """Test objectClass detection without olc prefix."""
         # Should handle RFC objectClasses (pure RFC format, no olc prefix)
@@ -196,7 +212,8 @@ class TestOpenLDAP2xSchemas:
         assert parsed_oc.name == "testClass"
 
     def test_parse_objectclass_success(
-        self, quirk: FlextLdifServersOpenldap.Schema
+        self,
+        quirk: FlextLdifServersOpenldap.Schema,
     ) -> None:
         """Test successful objectClass parsing."""
         oc_def = "( 1.2.3.4 NAME 'testClass' DESC 'Test class' SUP top STRUCTURAL MUST ( cn $ sn ) MAY ( description ) )"
@@ -219,7 +236,8 @@ class TestOpenLDAP2xSchemas:
         assert "description" in may_attr
 
     def test_parse_objectclass_auxiliary(
-        self, quirk: FlextLdifServersOpenldap.Schema
+        self,
+        quirk: FlextLdifServersOpenldap.Schema,
     ) -> None:
         """Test parsing AUXILIARY objectClass."""
         oc_def = "( 1.2.3.5 NAME 'auxClass' AUXILIARY )"
@@ -230,7 +248,8 @@ class TestOpenLDAP2xSchemas:
         assert oc_data.kind == "AUXILIARY"
 
     def test_parse_objectclass_abstract(
-        self, quirk: FlextLdifServersOpenldap.Schema
+        self,
+        quirk: FlextLdifServersOpenldap.Schema,
     ) -> None:
         """Test parsing ABSTRACT objectClass."""
         oc_def = "( 1.2.3.6 NAME 'absClass' ABSTRACT )"
@@ -241,7 +260,8 @@ class TestOpenLDAP2xSchemas:
         assert oc_data.kind == "ABSTRACT"
 
     def test_parse_objectclass_no_oid(
-        self, quirk: FlextLdifServersOpenldap.Schema
+        self,
+        quirk: FlextLdifServersOpenldap.Schema,
     ) -> None:
         """Test objectClass parsing fails without OID."""
         # Use a valid objectClass definition format but without OID
@@ -254,7 +274,8 @@ class TestOpenLDAP2xSchemas:
         assert "RFC objectClass parsing failed: missing an OID" in result.error
 
     def test_write_attribute_to_rfc(
-        self, quirk: FlextLdifServersOpenldap.Schema
+        self,
+        quirk: FlextLdifServersOpenldap.Schema,
     ) -> None:
         """Test writing attribute to RFC string format."""
         attr_model = FlextLdifModels.SchemaAttribute(
@@ -278,7 +299,8 @@ class TestOpenLDAP2xSchemas:
         assert ")" in attr_str
 
     def test_write_objectclass_to_rfc(
-        self, quirk: FlextLdifServersOpenldap.Schema
+        self,
+        quirk: FlextLdifServersOpenldap.Schema,
     ) -> None:
         """Test writing objectClass to RFC string format."""
         oc_model = FlextLdifModels.SchemaObjectClass(
@@ -453,7 +475,7 @@ class TestOpenLDAP2xEntrys:
             attributes={
                 "olcDatabase": ["{1}mdb"],
                 "olcSuffix": ["dc=example,dc=com"],
-            }
+            },
         )
         FlextLdifModels.Entry(dn=dn, attributes=attributes)
         assert entry.can_handle(dn.value, attributes.attributes) is True
@@ -464,7 +486,7 @@ class TestOpenLDAP2xEntrys:
 
         dn = FlextLdifModels.DistinguishedName(value="cn=schema,cn=config")
         attributes = FlextLdifModels.LdifAttributes(
-            attributes={"objectclass": ["olcSchemaConfig"]}
+            attributes={"objectclass": ["olcSchemaConfig"]},
         )
         FlextLdifModels.Entry(dn=dn, attributes=attributes)
         assert entry.can_handle(dn.value, attributes.attributes) is True
@@ -475,7 +497,7 @@ class TestOpenLDAP2xEntrys:
 
         dn = FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com")
         attributes = FlextLdifModels.LdifAttributes(
-            attributes={"cn": ["test"], "objectclass": ["person"]}
+            attributes={"cn": ["test"], "objectclass": ["person"]},
         )
         FlextLdifModels.Entry(dn=dn, attributes=attributes)
         assert entry.can_handle(dn.value, attributes.attributes) is False
@@ -495,14 +517,16 @@ class TestOpenldapSchemaCanHandleAttribute:
         assert isinstance(openldap.schema.can_handle_attribute(attr_def), bool)
 
     def test_can_handle_standard_attribute(
-        self, openldap: FlextLdifServersOpenldap
+        self,
+        openldap: FlextLdifServersOpenldap,
     ) -> None:
         """Test handling of standard RFC attributes."""
         attr_def = "( 2.5.4.3 NAME 'cn' DESC 'RFC2256: common name' )"
         assert isinstance(openldap.schema.can_handle_attribute(attr_def), bool)
 
     def test_can_handle_empty_attribute(
-        self, openldap: FlextLdifServersOpenldap
+        self,
+        openldap: FlextLdifServersOpenldap,
     ) -> None:
         """Test handling of empty attribute definition."""
         assert not openldap.schema.can_handle_attribute("")
@@ -536,7 +560,8 @@ class TestOpenldapSchemaParseAttribute:
             assert hasattr(attr_data, "name")
 
     def test_parse_attribute_with_syntax(
-        self, openldap: FlextLdifServersOpenldap
+        self,
+        openldap: FlextLdifServersOpenldap,
     ) -> None:
         """Test parsing attribute with SYNTAX clause."""
         attr_def = "( 2.5.4.2 NAME 'knowledgeInformation' DESC 'RFC2256' EQUALITY caseIgnoreMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{32768} )"
@@ -544,7 +569,8 @@ class TestOpenldapSchemaParseAttribute:
         assert hasattr(result, "is_success")
 
     def test_parse_attribute_with_single_value(
-        self, openldap: FlextLdifServersOpenldap
+        self,
+        openldap: FlextLdifServersOpenldap,
     ) -> None:
         """Test parsing attribute with SINGLE-VALUE constraint."""
         attr_def = (
@@ -571,7 +597,8 @@ class TestOpenldapSchemaParseAttribute:
                 break
 
     def test_parse_attribute_missing_oid(
-        self, openldap: FlextLdifServersOpenldap
+        self,
+        openldap: FlextLdifServersOpenldap,
     ) -> None:
         """Test error handling for attribute without OID."""
         attr_def = "( NAME 'invalid' DESC 'No OID' )"
@@ -588,7 +615,8 @@ class TestOpenldapSchemaCanHandleObjectClass:
         return FlextLdifServersOpenldap()
 
     def test_can_handle_olc_objectclass(
-        self, openldap: FlextLdifServersOpenldap
+        self,
+        openldap: FlextLdifServersOpenldap,
     ) -> None:
         """Test detection of olc* objectClasses."""
         oc_def = (
@@ -597,7 +625,8 @@ class TestOpenldapSchemaCanHandleObjectClass:
         assert isinstance(openldap.schema.can_handle_objectclass(oc_def), bool)
 
     def test_can_handle_standard_objectclass(
-        self, openldap: FlextLdifServersOpenldap
+        self,
+        openldap: FlextLdifServersOpenldap,
     ) -> None:
         """Test handling of standard RFC objectClasses."""
         oc_def = "( 2.5.6.6 NAME 'person' DESC 'RFC2256: person' )"
@@ -613,7 +642,8 @@ class TestOpenldapSchemaParseObjectClass:
         return FlextLdifServersOpenldap()
 
     def test_parse_standard_objectclass(
-        self, openldap: FlextLdifServersOpenldap
+        self,
+        openldap: FlextLdifServersOpenldap,
     ) -> None:
         """Test parsing standard RFC objectClass."""
         oc_def = "( 2.5.6.6 NAME 'person' DESC 'RFC2256: person' MUST ( sn $ cn ) MAY ( userPassword ) )"
@@ -624,7 +654,8 @@ class TestOpenldapSchemaParseObjectClass:
             assert hasattr(oc_data, "name")
 
     def test_parse_structural_objectclass(
-        self, openldap: FlextLdifServersOpenldap
+        self,
+        openldap: FlextLdifServersOpenldap,
     ) -> None:
         """Test parsing STRUCTURAL objectClass."""
         oc_def = "( 1.3.6.1.4.1.4203.1.4.1 NAME 'olcDatabaseConfig' STRUCTURAL SUP olcConfig )"
@@ -632,7 +663,8 @@ class TestOpenldapSchemaParseObjectClass:
         assert hasattr(result, "is_success")
 
     def test_parse_auxiliary_objectclass(
-        self, openldap: FlextLdifServersOpenldap
+        self,
+        openldap: FlextLdifServersOpenldap,
     ) -> None:
         """Test parsing AUXILIARY objectClass."""
         oc_def = "( 1.3.6.1.4.1.4203.1.4.2 NAME 'olcModuleList' AUXILIARY SUP top )"
@@ -640,7 +672,8 @@ class TestOpenldapSchemaParseObjectClass:
         assert hasattr(result, "is_success")
 
     def test_parse_abstract_objectclass(
-        self, openldap: FlextLdifServersOpenldap
+        self,
+        openldap: FlextLdifServersOpenldap,
     ) -> None:
         """Test parsing ABSTRACT objectClass."""
         oc_def = "( 2.5.6.0 NAME 'top' ABSTRACT )"
@@ -675,7 +708,8 @@ class TestOpenldapSchemaWriteAttribute:
         return FlextLdifServersOpenldap.Schema()
 
     def test_write_attribute_to_rfc(
-        self, openldap: FlextLdifServersOpenldap.Schema
+        self,
+        openldap: FlextLdifServersOpenldap.Schema,
     ) -> None:
         """Test writing attribute to RFC format string."""
         attr_data = FlextLdifModels.SchemaAttribute(
@@ -702,7 +736,8 @@ class TestOpenldapSchemaWriteObjectClass:
         return FlextLdifServersOpenldap.Schema()
 
     def test_write_objectclass_to_rfc(
-        self, openldap: FlextLdifServersOpenldap.Schema
+        self,
+        openldap: FlextLdifServersOpenldap.Schema,
     ) -> None:
         """Test writing objectClass to RFC format string."""
         oc_data = FlextLdifModels.SchemaObjectClass(
@@ -830,7 +865,7 @@ class TestOpenldapAclConvertAcl:
             ),
             permissions=FlextLdifModels.AclPermissions(write=True),
             metadata=FlextLdifModels.QuirkMetadata.create_for(
-                FlextLdifServersOpenldap.Constants.SERVER_TYPE
+                FlextLdifServersOpenldap.Constants.SERVER_TYPE,
             ),
             raw_acl="to attrs=userPassword by self write by * none",
         )
@@ -850,38 +885,41 @@ class TestOpenldapEntryCanHandleEntry:
         return FlextLdifServersOpenldap.Entry()
 
     def test_can_handle_config_entry(
-        self, openldap: FlextLdifServersOpenldap.Entry
+        self,
+        openldap: FlextLdifServersOpenldap.Entry,
     ) -> None:
         """Test detection of cn=config entries."""
         dn = FlextLdifModels.DistinguishedName(value="cn=config")
         attributes = FlextLdifModels.LdifAttributes(
-            attributes={"objectClass": ["olcBackendConfig"]}
+            attributes={"objectClass": ["olcBackendConfig"]},
         )
         FlextLdifModels.Entry(dn=dn, attributes=attributes)
         entry = openldap
         assert isinstance(entry.can_handle(dn.value, attributes.attributes), bool)
 
     def test_can_handle_olc_attribute_entry(
-        self, openldap: FlextLdifServersOpenldap.Entry
+        self,
+        openldap: FlextLdifServersOpenldap.Entry,
     ) -> None:
         """Test detection of entries with olc* attributes."""
         dn = FlextLdifModels.DistinguishedName(value="cn=module,cn=config")
         attributes = FlextLdifModels.LdifAttributes(
-            attributes={"olcModuleLoad": ["back_ldif"]}
+            attributes={"olcModuleLoad": ["back_ldif"]},
         )
         FlextLdifModels.Entry(dn=dn, attributes=attributes)
         entry = openldap
         assert isinstance(entry.can_handle(dn.value, attributes.attributes), bool)
 
     def test_can_handle_standard_entry(
-        self, openldap: FlextLdifServersOpenldap.Entry
+        self,
+        openldap: FlextLdifServersOpenldap.Entry,
     ) -> None:
         """Test handling of standard LDAP entries."""
         dn = FlextLdifModels.DistinguishedName(
-            value="uid=user,ou=people,dc=example,dc=com"
+            value="uid=user,ou=people,dc=example,dc=com",
         )
         attributes = FlextLdifModels.LdifAttributes(
-            attributes={"objectClass": ["inetOrgPerson"], "uid": ["user"]}
+            attributes={"objectClass": ["inetOrgPerson"], "uid": ["user"]},
         )
         FlextLdifModels.Entry(dn=dn, attributes=attributes)
         entry = openldap
@@ -925,7 +963,8 @@ class TestOpenldapProperties:
         return FlextLdifServersOpenldap()
 
     def test_openldap_schema_properties(
-        self, openldap: FlextLdifServersOpenldap
+        self,
+        openldap: FlextLdifServersOpenldap,
     ) -> None:
         """Test schema quirk has correct properties."""
 

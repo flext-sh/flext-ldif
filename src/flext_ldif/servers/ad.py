@@ -27,6 +27,7 @@ from flext_core import FlextResult
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.servers.rfc import FlextLdifServersRfc
+from flext_ldif.typings import FlextLdifTypes
 from flext_ldif.utilities import FlextLdifUtilities
 
 
@@ -405,7 +406,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
         # ACL attribute name is obtained from Constants.ACL_ATTRIBUTE_NAME
         # No instance variable needed - use Constants directly
 
-        def can_handle(self, acl_line: str | FlextLdifModels.Acl) -> bool:
+        def can_handle(self, acl_line: FlextLdifTypes.AclOrString) -> bool:
             """Check if this is an Active Directory ACL (public method).
 
             Args:
@@ -417,7 +418,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
             """
             return self.can_handle_acl(acl_line)
 
-        def can_handle_acl(self, acl_line: str | FlextLdifModels.Acl) -> bool:
+        def can_handle_acl(self, acl_line: FlextLdifTypes.AclOrString) -> bool:
             """Check whether the ACL line belongs to an AD security descriptor."""
             if isinstance(acl_line, str):
                 normalized = acl_line.strip() if acl_line else ""

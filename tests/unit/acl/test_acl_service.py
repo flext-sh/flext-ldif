@@ -43,7 +43,9 @@ class TestFlextLdifAclWithRealFixtures:
         assert service is not None
 
     def test_acl_service_read_oid_acl_fixture(
-        self, acl_service: FlextLdifAcl, oid_acl_fixture: Path
+        self,
+        acl_service: FlextLdifAcl,
+        oid_acl_fixture: Path,
     ) -> None:
         """Test reading OID ACL fixture file."""
         if not oid_acl_fixture.exists():
@@ -54,7 +56,9 @@ class TestFlextLdifAclWithRealFixtures:
         assert "orclaci:" in content or "aci:" in content, "Should have ACL attributes"
 
     def test_acl_service_read_oud_acl_fixture(
-        self, acl_service: FlextLdifAcl, oud_acl_fixture: Path
+        self,
+        acl_service: FlextLdifAcl,
+        oud_acl_fixture: Path,
     ) -> None:
         """Test reading OUD ACL fixture file."""
         if not oud_acl_fixture.exists():
@@ -64,7 +68,9 @@ class TestFlextLdifAclWithRealFixtures:
         assert len(content) > 0, "OUD ACL fixture should have content"
 
     def test_acl_service_parse_oid_acl_lines(
-        self, acl_service: FlextLdifAcl, oid_acl_fixture: Path
+        self,
+        acl_service: FlextLdifAcl,
+        oid_acl_fixture: Path,
     ) -> None:
         """Test parsing ACL lines from OID fixture."""
         if not oid_acl_fixture.exists():
@@ -109,7 +115,9 @@ class TestFlextLdifAclWithRealFixtures:
         assert oid_content != oud_content, "OID and OUD ACL should be different"
 
     def test_acl_service_validate_acl_structure(
-        self, acl_service: FlextLdifAcl, oid_acl_fixture: Path
+        self,
+        acl_service: FlextLdifAcl,
+        oid_acl_fixture: Path,
     ) -> None:
         """Test validating ACL structure from real fixture."""
         if not oid_acl_fixture.exists():
@@ -123,7 +131,9 @@ class TestFlextLdifAclWithRealFixtures:
         assert acl_count > 0, "Should find ACL entries"
 
     def test_acl_service_fixture_line_count(
-        self, acl_service: FlextLdifAcl, oid_acl_fixture: Path
+        self,
+        acl_service: FlextLdifAcl,
+        oid_acl_fixture: Path,
     ) -> None:
         """Test that ACL fixture has expected content."""
         if not oid_acl_fixture.exists():
@@ -136,7 +146,9 @@ class TestFlextLdifAclWithRealFixtures:
         assert len(lines) > 5, "ACL fixture should have multiple lines"
 
     def test_acl_service_handle_acl_attributes(
-        self, acl_service: FlextLdifAcl, oid_acl_fixture: Path
+        self,
+        acl_service: FlextLdifAcl,
+        oid_acl_fixture: Path,
     ) -> None:
         """Test handling various ACL attributes."""
         if not oid_acl_fixture.exists():
@@ -152,7 +164,9 @@ class TestFlextLdifAclWithRealFixtures:
         assert entry_count > 0, "Should have LDIF entries with ACL data"
 
     def test_acl_service_fixture_encoding(
-        self, acl_service: FlextLdifAcl, oid_acl_fixture: Path
+        self,
+        acl_service: FlextLdifAcl,
+        oid_acl_fixture: Path,
     ) -> None:
         """Test that ACL fixture has valid UTF-8 encoding."""
         if not oid_acl_fixture.exists():

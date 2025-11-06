@@ -80,21 +80,21 @@ class TestFlextLdifConstants:
     def test_encoding_constants(self) -> None:
         """Test Encoding constants."""
         # Test default encoding
-        assert FlextLdifConstants.Encoding.DEFAULT_ENCODING == "utf-8"
+        assert FlextLdifConstants.DEFAULT_ENCODING == "utf-8"
 
         # Test supported encodings set
-        assert "utf-8" in FlextLdifConstants.Encoding.SUPPORTED_ENCODINGS
-        assert "utf-16" in FlextLdifConstants.Encoding.SUPPORTED_ENCODINGS
-        assert "ascii" in FlextLdifConstants.Encoding.SUPPORTED_ENCODINGS
+        assert "utf-8" in FlextLdifConstants.SUPPORTED_ENCODINGS
+        assert "utf-16" in FlextLdifConstants.SUPPORTED_ENCODINGS
+        assert "ascii" in FlextLdifConstants.SUPPORTED_ENCODINGS
 
         # Test that default is in supported set
         assert (
-            FlextLdifConstants.Encoding.DEFAULT_ENCODING
-            in FlextLdifConstants.Encoding.SUPPORTED_ENCODINGS
+            FlextLdifConstants.DEFAULT_ENCODING
+            in FlextLdifConstants.SUPPORTED_ENCODINGS
         )
 
         # Test that it's a frozenset
-        assert isinstance(FlextLdifConstants.Encoding.SUPPORTED_ENCODINGS, frozenset)
+        assert isinstance(FlextLdifConstants.SUPPORTED_ENCODINGS, frozenset)
 
     def test_ldap_servers_constants(self) -> None:
         """Test LdapServers constants."""
@@ -149,20 +149,24 @@ class TestFlextLdifConstantsEncoding:
 
     def test_default_encoding(self) -> None:
         """Test default encoding constant."""
-        assert FlextLdifConstants.Encoding.DEFAULT_ENCODING == "utf-8"
-        assert isinstance(FlextLdifConstants.Encoding.DEFAULT_ENCODING, str)
+        assert FlextLdifConstants.DEFAULT_ENCODING == "utf-8"
+        assert isinstance(FlextLdifConstants.DEFAULT_ENCODING, str)
 
     def test_supported_encodings(self) -> None:
         """Test supported encodings set."""
-        encodings = FlextLdifConstants.Encoding.SUPPORTED_ENCODINGS
+        encodings = FlextLdifConstants.SUPPORTED_ENCODINGS
         assert isinstance(encodings, frozenset)
         assert "utf-8" in encodings
         assert "utf-16" in encodings
 
     def test_encoding_constants_exist(self) -> None:
         """Test that all encoding constants exist."""
-        assert hasattr(FlextLdifConstants.Encoding, "DEFAULT_ENCODING")
-        assert hasattr(FlextLdifConstants.Encoding, "SUPPORTED_ENCODINGS")
+        # Encoding is a StrEnum - constants are at FlextLdifConstants level
+        assert hasattr(FlextLdifConstants, "DEFAULT_ENCODING")
+        assert hasattr(FlextLdifConstants, "SUPPORTED_ENCODINGS")
+        # Verify enum values exist
+        assert hasattr(FlextLdifConstants.Encoding, "UTF8")
+        assert hasattr(FlextLdifConstants.Encoding, "UTF16")
 
 
 class TestFlextLdifConstantsFormat:
@@ -199,7 +203,8 @@ class TestFlextLdifConstantsProcessing:
         """Test performance minimum workers."""
         assert FlextLdifConstants.LdifProcessing.PERFORMANCE_MIN_WORKERS == 4
         assert isinstance(
-            FlextLdifConstants.LdifProcessing.PERFORMANCE_MIN_WORKERS, int
+            FlextLdifConstants.LdifProcessing.PERFORMANCE_MIN_WORKERS,
+            int,
         )
 
     def test_processing_constants_exist(self) -> None:
@@ -236,8 +241,8 @@ class TestFlextLdifConstantsNamespace:
         """Test that constant values are reasonable."""
         # Encoding
         assert (
-            FlextLdifConstants.Encoding.DEFAULT_ENCODING
-            in FlextLdifConstants.Encoding.SUPPORTED_ENCODINGS
+            FlextLdifConstants.DEFAULT_ENCODING
+            in FlextLdifConstants.SUPPORTED_ENCODINGS
         )
 
         # Format

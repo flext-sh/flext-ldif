@@ -37,7 +37,7 @@ def verify_imports() -> bool:
 
         return True
     except (ValueError, TypeError, AttributeError) as e:
-        logger.info(f"❌ Import failed: {e}")
+        logger.info("❌ Import failed: %s", e)
         import traceback
 
         traceback.print_exc()
@@ -63,17 +63,17 @@ attributeTypes: ( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' SYNTAX 1.3.6.1.4.1.146
             detection = result.unwrap()
             if detection["detected_server_type"] == "oid":
                 logger.info(
-                    f"✅ OID detection works (confidence: {detection['confidence']:.2f})"
+                    f"✅ OID detection works (confidence: {detection['confidence']:.2f})",
                 )
                 return True
             logger.info(
-                f"⚠️  Detected as {detection['detected_server_type']} instead of oid"
+                f"⚠️  Detected as {detection['detected_server_type']} instead of oid",
             )
             return True  # Still OK if detection logic is working
         logger.info(f"❌ Detection failed: {result.error}")
         return False
     except (ValueError, TypeError, AttributeError) as e:
-        logger.info(f"❌ Server detector verification failed: {e}")
+        logger.info("❌ Server detector verification failed: %s", e)
         import traceback
 
         traceback.print_exc()
@@ -122,7 +122,7 @@ def verify_relaxed() -> bool:
 
         return True
     except (ValueError, TypeError, AttributeError) as e:
-        logger.info(f"❌ Relaxed quirks verification failed: {e}")
+        logger.info("❌ Relaxed quirks verification failed: %s", e)
         import traceback
 
         traceback.print_exc()
@@ -145,7 +145,8 @@ def verify_config_modes() -> bool:
 
         # Test manual mode
         config_manual = FlextLdifConfig(
-            quirks_detection_mode="manual", quirks_server_type="oud"
+            quirks_detection_mode="manual",
+            quirks_server_type="oud",
         )
         if (
             config_manual.quirks_detection_mode == "manual"
@@ -174,7 +175,7 @@ def verify_config_modes() -> bool:
 
         return True
     except (ValueError, TypeError, AttributeError) as e:
-        logger.info(f"❌ Config modes verification failed: {e}")
+        logger.info("❌ Config modes verification failed: %s", e)
         import traceback
 
         traceback.print_exc()
@@ -217,7 +218,7 @@ def verify_api_integration() -> bool:
 
         return True
     except (ValueError, TypeError, AttributeError) as e:
-        logger.info(f"❌ API integration verification failed: {e}")
+        logger.info("❌ API integration verification failed: %s", e)
         import traceback
 
         traceback.print_exc()
@@ -243,7 +244,7 @@ def main() -> int:
     all_passed = True
     for test_name, result in results.items():
         status = "✅ PASS" if result else "❌ FAIL"
-        logger.info(f"{test_name}: {status}")
+        logger.info("%s: %s", test_name, status)
         if not result:
             all_passed = False
 

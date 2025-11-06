@@ -104,7 +104,8 @@ class TestSortingWithRealOIDEntries:
     """Test sorting with real OID LDIF entries."""
 
     def test_by_hierarchy_real_ldif(
-        self, oid_entries: list[FlextLdifModels.Entry]
+        self,
+        oid_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test by_hierarchy with real OID LDIF data."""
         if not oid_entries:
@@ -141,14 +142,17 @@ class TestSortingWithRealOIDEntries:
         assert dns == sorted(dns)
 
     def test_execute_hierarchy_real_ldif(
-        self, oid_entries: list[FlextLdifModels.Entry]
+        self,
+        oid_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test execute() with hierarchy sorting on real data."""
         if not oid_entries:
             pytest.skip("No OID entries loaded")
 
         result = FlextLdifSorting(
-            entries=oid_entries, sort_target="entries", sort_by="hierarchy"
+            entries=oid_entries,
+            sort_target="entries",
+            sort_by="hierarchy",
         ).execute()
 
         assert result.is_success
@@ -156,7 +160,8 @@ class TestSortingWithRealOIDEntries:
         assert len(sorted_entries) == len(oid_entries)
 
     def test_execute_attributes_sorting_real_ldif(
-        self, oid_entries: list[FlextLdifModels.Entry]
+        self,
+        oid_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test attributes sorting on real LDIF data."""
         if not oid_entries:
@@ -180,7 +185,8 @@ class TestSortingWithRealOIDEntries:
         assert attr_names == sorted(attr_names, key=str.lower)
 
     def test_execute_combined_sorting_real_ldif(
-        self, oid_entries: list[FlextLdifModels.Entry]
+        self,
+        oid_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test combined sorting (entries + attributes) on real data."""
         if not oid_entries:
@@ -222,14 +228,17 @@ class TestSortingWithRealOIDSchema:
         assert len(sorted_entries) == len(oid_schema)
 
     def test_execute_schema_target_real_ldif(
-        self, oid_schema: list[FlextLdifModels.Entry]
+        self,
+        oid_schema: list[FlextLdifModels.Entry],
     ) -> None:
         """Test execute with schema target on real data."""
         if not oid_schema:
             pytest.skip("No OID schema loaded")
 
         result = FlextLdifSorting(
-            entries=oid_schema, sort_target="schema", sort_by="schema"
+            entries=oid_schema,
+            sort_target="schema",
+            sort_by="schema",
         ).execute()
 
         assert result.is_success
@@ -246,7 +255,8 @@ class TestSortingWithRealOIDACL:
     """Test sorting with real OID ACL LDIF."""
 
     def test_execute_acl_target_real_ldif(
-        self, oid_acl: list[FlextLdifModels.Entry]
+        self,
+        oid_acl: list[FlextLdifModels.Entry],
     ) -> None:
         """Test ACL sorting on real data."""
         if not oid_acl:
@@ -273,7 +283,8 @@ class TestRealWorldSortingPipelines:
     """Test real-world sorting scenarios with LDIF data."""
 
     def test_hierarchy_then_attributes_pipeline(
-        self, oid_entries: list[FlextLdifModels.Entry]
+        self,
+        oid_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test realistic pipeline: sort by hierarchy then sort attributes."""
         if not oid_entries:
@@ -286,7 +297,8 @@ class TestRealWorldSortingPipelines:
 
         # Stage 2: Sort attributes within those entries
         result2 = FlextLdifSorting(
-            entries=entries_by_hierarchy, sort_target="attributes"
+            entries=entries_by_hierarchy,
+            sort_target="attributes",
         ).execute()
         assert result2.is_success
         final_entries = result2.unwrap()
@@ -298,7 +310,8 @@ class TestRealWorldSortingPipelines:
             assert len(entry.attributes.attributes) > 0
 
     def test_custom_sorting_by_dn_length(
-        self, oid_entries: list[FlextLdifModels.Entry]
+        self,
+        oid_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test custom sorting - order by DN length."""
         if not oid_entries:
@@ -317,7 +330,8 @@ class TestRealWorldSortingPipelines:
         assert lengths == sorted(lengths)
 
     def test_custom_sorting_by_dn_depth(
-        self, oid_entries: list[FlextLdifModels.Entry]
+        self,
+        oid_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test custom sorting - order by DN depth (comma count)."""
         if not oid_entries:
@@ -336,7 +350,8 @@ class TestRealWorldSortingPipelines:
         assert depths == sorted(depths)
 
     def test_multiple_custom_sorts_via_classmethod(
-        self, oid_entries: list[FlextLdifModels.Entry]
+        self,
+        oid_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test multiple sorting strategies via classmethod."""
         if not oid_entries:
@@ -368,7 +383,8 @@ class TestEdgeCasesWithRealLDIF:
     """Test edge cases with real LDIF data."""
 
     def test_sorting_preserves_data_integrity(
-        self, oid_entries: list[FlextLdifModels.Entry]
+        self,
+        oid_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Verify sorting doesn't lose or corrupt data."""
         if not oid_entries:
@@ -393,7 +409,8 @@ class TestEdgeCasesWithRealLDIF:
             assert len(sorted_entry.attributes.attributes) > 0
 
     def test_sorting_large_entry_set(
-        self, oid_entries: list[FlextLdifModels.Entry]
+        self,
+        oid_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test sorting performance with real large LDIF datasets."""
         if len(oid_entries) < 10:
@@ -412,7 +429,8 @@ class TestEdgeCasesWithRealLDIF:
             assert len(sorted_entries) == len(oid_entries)
 
     def test_sorting_with_special_characters_in_dn(
-        self, oid_entries: list[FlextLdifModels.Entry]
+        self,
+        oid_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test sorting handles special characters in DNs correctly."""
         if not oid_entries:
@@ -436,7 +454,8 @@ class TestComprehensiveAPIUsage:
     """Comprehensive tests covering all public APIs."""
 
     def test_all_entry_sorting_methods(
-        self, oid_entries: list[FlextLdifModels.Entry]
+        self,
+        oid_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test all entry sorting classmethods."""
         if not oid_entries:
@@ -454,7 +473,8 @@ class TestComprehensiveAPIUsage:
             assert len(result.unwrap()) == len(oid_entries)
 
     def test_all_sort_targets_via_execute(
-        self, oid_entries: list[FlextLdifModels.Entry]
+        self,
+        oid_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test all sort targets via execute() method."""
         if not oid_entries:
@@ -472,7 +492,8 @@ class TestComprehensiveAPIUsage:
             assert result.is_success, f"Failed for target: {target}"
 
     def test_builder_pattern_with_real_data(
-        self, oid_entries: list[FlextLdifModels.Entry]
+        self,
+        oid_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test fluent builder pattern with real data."""
         if not oid_entries:
@@ -490,14 +511,17 @@ class TestComprehensiveAPIUsage:
         assert len(sorted_entries) == len(oid_entries)
 
     def test_classmethod_sort_with_real_data(
-        self, oid_entries: list[FlextLdifModels.Entry]
+        self,
+        oid_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test classmethod sort() with real data."""
         if not oid_entries:
             pytest.skip("No OID entries loaded")
 
         result = FlextLdifSorting.sort(
-            oid_entries, by="hierarchy", sort_attributes=True
+            oid_entries,
+            by="hierarchy",
+            sort_attributes=True,
         )
 
         assert result.is_success

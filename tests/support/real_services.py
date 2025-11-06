@@ -164,7 +164,8 @@ class FlextLdifTestFactory:
             "ldif_parser": cls._RfcParserFactory.create_ldif_parser(config),
             "schema_parser": cls._RfcParserFactory.create_schema_parser(config),
             "ldif_writer": cls._RfcParserFactory.create_ldif_writer(
-                config, quirk_registry
+                config,
+                quirk_registry,
             ),
             "config": config,
             "quirk_registry": quirk_registry,
@@ -197,7 +198,7 @@ class FlextLdifTestFactory:
             "schema_parser": cls._RfcParserFactory.create_schema_parser(config),
             "ldif_writer": cls._RfcParserFactory.create_ldif_writer(quirk_registry),
             "migration_pipeline": cls._RfcParserFactory.create_migration_pipeline(
-                config
+                config,
             ),
             "quirk_registry": quirk_registry,
             "config": config,
@@ -254,16 +255,19 @@ class FlextLdifTestFactory:
 
     @classmethod
     def create_lenient_api(
-        cls, quirk_registry: FlextLdifServer | None = None
+        cls,
+        quirk_registry: FlextLdifServer | None = None,
     ) -> dict[str, object]:
         """Create API with lenient parsing."""
         return cls.create_api(
-            cls._ConfigFactory.create_lenient_config(), quirk_registry
+            cls._ConfigFactory.create_lenient_config(),
+            quirk_registry,
         )
 
     @classmethod
     def create_strict_api(
-        cls, quirk_registry: FlextLdifServer | None = None
+        cls,
+        quirk_registry: FlextLdifServer | None = None,
     ) -> dict[str, object]:
         """Create API with strict parsing and validation."""
         return cls.create_api(cls._ConfigFactory.create_strict_config(), quirk_registry)
@@ -276,7 +280,8 @@ class FlextLdifTestFactory:
     ) -> dict[str, object]:
         """Create API optimized for performance testing."""
         return cls.create_api(
-            cls._ConfigFactory.create_performance_config(max_entries), quirk_registry
+            cls._ConfigFactory.create_performance_config(max_entries),
+            quirk_registry,
         )
 
     @classmethod
@@ -300,7 +305,8 @@ class FlextLdifTestFactory:
 
     @classmethod
     def services_for_integration_test(
-        cls, quirk_registry: FlextLdifServer | None = None
+        cls,
+        quirk_registry: FlextLdifServer | None = None,
     ) -> dict[str, object]:
         """Create all services configured for integration testing."""
         config = cls.create_test_config()
@@ -319,7 +325,8 @@ class FlextLdifTestFactory:
 
     @classmethod
     def minimal_services(
-        cls, quirk_registry: FlextLdifServer | None = None
+        cls,
+        quirk_registry: FlextLdifServer | None = None,
     ) -> dict[str, object]:
         """Create minimal service set for basic testing."""
         if quirk_registry is None:

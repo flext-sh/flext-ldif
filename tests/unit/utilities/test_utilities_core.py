@@ -182,7 +182,8 @@ class TestAttributeFixer:
     def test_normalize_matching_rules_both(self) -> None:
         """Test normalizing matching rules with both equality and substr."""
         result = FlextLdifUtilities.Schema.normalize_matching_rules(
-            "caseIgnoreMatch", "caseIgnoreSubstringsMatch"
+            "caseIgnoreMatch",
+            "caseIgnoreSubstringsMatch",
         )
         assert result == ("caseIgnoreMatch", "caseIgnoreSubstringsMatch")
 
@@ -375,7 +376,8 @@ class TestObjectClassUtilities:
             sup=None,
         )
         FlextLdifUtilities.ObjectClass.ensure_sup_for_auxiliary(
-            oc, default_sup="custom"
+            oc,
+            default_sup="custom",
         )
         assert oc.sup == "custom"
 
@@ -416,7 +418,8 @@ class TestObjectClassUtilities:
             sup="someSuperior",
         )
         FlextLdifUtilities.ObjectClass.align_kind_with_superior(
-            oc, FlextLdifConstants.Schema.STRUCTURAL
+            oc,
+            FlextLdifConstants.Schema.STRUCTURAL,
         )
         assert oc.kind == FlextLdifConstants.Schema.STRUCTURAL
 
@@ -431,7 +434,8 @@ class TestObjectClassUtilities:
             sup="someSuperior",
         )
         FlextLdifUtilities.ObjectClass.align_kind_with_superior(
-            oc, FlextLdifConstants.Schema.AUXILIARY
+            oc,
+            FlextLdifConstants.Schema.AUXILIARY,
         )
         assert oc.kind == FlextLdifConstants.Schema.AUXILIARY
 
@@ -447,6 +451,7 @@ class TestObjectClassUtilities:
         )
         original_kind = oc.kind
         FlextLdifUtilities.ObjectClass.align_kind_with_superior(
-            oc, FlextLdifConstants.Schema.STRUCTURAL
+            oc,
+            FlextLdifConstants.Schema.STRUCTURAL,
         )
         assert oc.kind == original_kind

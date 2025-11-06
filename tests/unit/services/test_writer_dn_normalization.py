@@ -126,7 +126,9 @@ class TestWriterDnNormalization:
         assert "," in unescaped, "Hex-escaped comma should be unescaped"
 
     def test_write_entry_with_normalized_dn(
-        self, writer: FlextLdifWriter, dn_service: FlextLdifDn
+        self,
+        writer: FlextLdifWriter,
+        dn_service: FlextLdifDn,
     ) -> None:
         """Test writing entry with DN normalized before writing."""
         # Create entry with non-normalized DN
@@ -145,7 +147,7 @@ class TestWriterDnNormalization:
                 attributes={
                     "cn": ["John Doe"],
                     "objectClass": ["person"],
-                }
+                },
             ),
         )
 

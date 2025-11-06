@@ -51,7 +51,9 @@ def check_file_has_class(filepath: Path, class_name: str) -> tuple[bool, str]:
 
 
 def check_file_has_method(
-    filepath: Path, class_name: str, method_name: str
+    filepath: Path,
+    class_name: str,
+    method_name: str,
 ) -> tuple[bool, str]:
     """Check if a class in a file has a specific method."""
     try:
@@ -85,22 +87,22 @@ def verify_detector() -> bool:
 
     # Check file exists
     if not base_path.exists():
-        logger.info(f"❌ File not found: {base_path}")
+        logger.info("❌ File not found: %s", base_path)
         return False
 
     # Check syntax
     ok, msg = check_file_syntax(base_path)
     if not ok:
-        logger.info(f"❌ Syntax error: {msg}")
+        logger.info("❌ Syntax error: %s", msg)
         return False
     logger.info("✅ Valid Python syntax")
 
     # Check class exists
     ok, msg = check_file_has_class(base_path, "FlextLdifDetector")
     if not ok:
-        logger.info(f"❌ {msg}")
+        logger.info("❌ %s", msg)
         return False
-    logger.info(f"✅ {msg}")
+    logger.info("✅ %s", msg)
 
     # Check methods
     methods_to_check = [
@@ -114,9 +116,9 @@ def verify_detector() -> bool:
     for method in methods_to_check:
         ok, msg = check_file_has_method(base_path, "FlextLdifDetector", method)
         if not ok:
-            logger.info(f"❌ {msg}")
+            logger.info("❌ %s", msg)
             return False
-        logger.info(f"✅ {msg}")
+        logger.info("✅ %s", msg)
 
     return True
 
@@ -128,22 +130,22 @@ def verify_relaxed() -> bool:
 
     # Check file exists
     if not base_path.exists():
-        logger.info(f"❌ File not found: {base_path}")
+        logger.info("❌ File not found: %s", base_path)
         return False
 
     # Check syntax
     ok, msg = check_file_syntax(base_path)
     if not ok:
-        logger.info(f"❌ Syntax error: {msg}")
+        logger.info("❌ Syntax error: %s", msg)
         return False
     logger.info("✅ Valid Python syntax")
 
     # Check main relaxed class exists
     ok, msg = check_file_has_class(base_path, "FlextLdifServersRelaxed")
     if not ok:
-        logger.info(f"❌ {msg}")
+        logger.info("❌ %s", msg)
         return False
-    logger.info(f"✅ {msg}")
+    logger.info("✅ %s", msg)
 
     # Check key methods for schema quirk
     schema_methods = [
@@ -157,12 +159,14 @@ def verify_relaxed() -> bool:
 
     for method in schema_methods:
         ok, msg = check_file_has_method(
-            base_path, "FlextLdifServersRelaxedSchema", method
+            base_path,
+            "FlextLdifServersRelaxedSchema",
+            method,
         )
         if not ok:
-            logger.info(f"❌ {msg}")
+            logger.info("❌ %s", msg)
             return False
-        logger.info(f"✅ {msg}")
+        logger.info("✅ %s", msg)
 
     return True
 
@@ -174,13 +178,13 @@ def verify_config_modes() -> bool:
 
     # Check file exists
     if not base_path.exists():
-        logger.info(f"❌ File not found: {base_path}")
+        logger.info("❌ File not found: %s", base_path)
         return False
 
     # Check syntax
     ok, msg = check_file_syntax(base_path)
     if not ok:
-        logger.info(f"❌ Syntax error: {msg}")
+        logger.info("❌ Syntax error: %s", msg)
         return False
     logger.info("✅ Valid Python syntax")
 
@@ -196,9 +200,9 @@ def verify_config_modes() -> bool:
 
     for field in required_fields:
         if field in content:
-            logger.info(f"✅ Configuration field '{field}' defined")
+            logger.info("✅ Configuration field '%s' defined", field)
         else:
-            logger.info(f"❌ Configuration field '{field}' not found")
+            logger.info("❌ Configuration field '%s' not found", field)
             return False
 
     return True
@@ -211,12 +215,12 @@ def verify_client_api() -> bool:
     # Check client.py
     client_path = Path("src/flext_ldif/client.py")
     if not client_path.exists():
-        logger.info(f"❌ File not found: {client_path}")
+        logger.info("❌ File not found: %s", client_path)
         return False
 
     ok, msg = check_file_syntax(client_path)
     if not ok:
-        logger.info(f"❌ Client syntax error: {msg}")
+        logger.info("❌ Client syntax error: %s", msg)
         return False
     logger.info("✅ Client.py has valid syntax")
 
@@ -227,20 +231,20 @@ def verify_client_api() -> bool:
     client_methods = ["get_effective_server_type", "detect_server_type"]
     for method in client_methods:
         if f"def {method}" in client_content:
-            logger.info(f"✅ Client method '{method}' defined")
+            logger.info("✅ Client method '%s' defined", method)
         else:
-            logger.info(f"❌ Client method '{method}' not found")
+            logger.info("❌ Client method '%s' not found", method)
             return False
 
     # Check api.py
     api_path = Path("src/flext_ldif/api.py")
     if not api_path.exists():
-        logger.info(f"❌ File not found: {api_path}")
+        logger.info("❌ File not found: %s", api_path)
         return False
 
     ok, msg = check_file_syntax(api_path)
     if not ok:
-        logger.info(f"❌ API syntax error: {msg}")
+        logger.info("❌ API syntax error: %s", msg)
         return False
     logger.info("✅ API.py has valid syntax")
 
@@ -256,9 +260,9 @@ def verify_client_api() -> bool:
     ]
     for method in api_methods:
         if f"def {method}" in api_content:
-            logger.info(f"✅ API method '{method}' defined")
+            logger.info("✅ API method '%s' defined", method)
         else:
-            logger.info(f"❌ API method '{method}' not found")
+            logger.info("❌ API method '%s' not found", method)
             return False
 
     return True
@@ -275,7 +279,7 @@ def verify_test_files() -> bool:
 
     for test_file in test_files:
         if not test_file.exists():
-            logger.info(f"❌ Test file not found: {test_file}")
+            logger.info("❌ Test file not found: %s", test_file)
             return False
 
         ok, msg = check_file_syntax(test_file)
@@ -288,7 +292,7 @@ def verify_test_files() -> bool:
     config_test = Path("tests/unit/test_config.py")
     ok, msg = check_file_syntax(config_test)
     if not ok:
-        logger.info(f"❌ test_config.py syntax error: {msg}")
+        logger.info("❌ test_config.py syntax error: %s", msg)
         return False
     logger.info("✅ test_config.py has valid syntax")
 
@@ -300,7 +304,7 @@ def verify_test_files() -> bool:
         logger.info("✅ TestQuirksDetectionConfiguration class found in test_config.py")
     else:
         logger.info(
-            "❌ TestQuirksDetectionConfiguration class not found in test_config.py"
+            "❌ TestQuirksDetectionConfiguration class not found in test_config.py",
         )
         return False
 
@@ -326,7 +330,7 @@ def main() -> int:
     all_passed = True
     for test_name, result in results.items():
         status = "✅ PASS" if result else "❌ FAIL"
-        logger.info(f"{test_name}: {status}")
+        logger.info("%s: %s", test_name, status)
         if not result:
             all_passed = False
 
@@ -335,7 +339,7 @@ def main() -> int:
         logger.info("✅ ALL VERIFICATIONS PASSED - Phase 4 Syntax Check Complete")
         logger.info("\nNote: Full runtime testing blocked by pre-existing flext-core")
         logger.info(
-            "      IndentationError in models.py (not caused by flext-ldif changes)"
+            "      IndentationError in models.py (not caused by flext-ldif changes)",
         )
         return 0
     logger.info("❌ SOME VERIFICATIONS FAILED - Check output above")

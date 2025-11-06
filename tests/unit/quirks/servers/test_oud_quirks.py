@@ -32,7 +32,8 @@ class TestOudQuirksWithRealFixtures:
         # Schema fixtures contain only cn=schema entry with attributeTypes and objectClasses
         # May return 0 entries if parser treats it as schema-only file
         fixture_path = FlextLdifTestUtils.get_fixture_path(
-            "oud", "oud_schema_fixtures.ldif"
+            "oud",
+            "oud_schema_fixtures.ldif",
         )
         result = ldif_api.parse(fixture_path, server_type="oud")
         assert result.is_success, f"Failed to parse fixture: {result.error}"
@@ -45,7 +46,9 @@ class TestOudQuirksWithRealFixtures:
     def test_parse_oud_entries_fixture(self, ldif_api: FlextLdif) -> None:
         """Test parsing of a real OUD entries file."""
         entries = FlextLdifTestUtils.load_fixture(
-            ldif_api, "oud", "oud_entries_fixtures.ldif"
+            ldif_api,
+            "oud",
+            "oud_entries_fixtures.ldif",
         )
         assert entries is not None
         assert len(entries) > 0
@@ -80,7 +83,9 @@ class TestOudQuirksWithRealFixtures:
     def test_parse_oud_acl_fixture(self, ldif_api: FlextLdif) -> None:
         """Test parsing of a real OUD ACL file."""
         entries = FlextLdifTestUtils.load_fixture(
-            ldif_api, "oud", "oud_acl_fixtures.ldif"
+            ldif_api,
+            "oud",
+            "oud_acl_fixtures.ldif",
         )
         assert entries is not None
         assert len(entries) > 0
@@ -88,27 +93,39 @@ class TestOudQuirksWithRealFixtures:
     def test_roundtrip_oud_entries(self, ldif_api: FlextLdif, tmp_path: Path) -> None:
         """Test roundtrip of OUD entries."""
         FlextLdifTestUtils.run_roundtrip_test(
-            ldif_api, "oud", "oud_entries_fixtures.ldif", tmp_path
+            ldif_api,
+            "oud",
+            "oud_entries_fixtures.ldif",
+            tmp_path,
         )
 
     def test_roundtrip_oud_schema(self, ldif_api: FlextLdif, tmp_path: Path) -> None:
         """Test roundtrip of OUD schema."""
         FlextLdifTestUtils.run_roundtrip_test(
-            ldif_api, "oud", "oud_schema_fixtures.ldif", tmp_path
+            ldif_api,
+            "oud",
+            "oud_schema_fixtures.ldif",
+            tmp_path,
         )
 
     def test_roundtrip_oud_acl(self, ldif_api: FlextLdif, tmp_path: Path) -> None:
         """Test roundtrip of OUD ACL."""
         FlextLdifTestUtils.run_roundtrip_test(
-            ldif_api, "oud", "oud_acl_fixtures.ldif", tmp_path
+            ldif_api,
+            "oud",
+            "oud_acl_fixtures.ldif",
+            tmp_path,
         )
 
     def test_oud_oracle_specific_attributes_preserved(
-        self, ldif_api: FlextLdif
+        self,
+        ldif_api: FlextLdif,
     ) -> None:
         """Test that Oracle-specific attributes are properly preserved."""
         entries = FlextLdifTestUtils.load_fixture(
-            ldif_api, "oud", "oud_entries_fixtures.ldif"
+            ldif_api,
+            "oud",
+            "oud_entries_fixtures.ldif",
         )
 
         # Find OracleContext entries
@@ -139,7 +156,9 @@ class TestOudQuirksWithRealFixtures:
     def test_oud_password_hashes_preserved(self, ldif_api: FlextLdif) -> None:
         """Test that OUD password hashes are properly preserved."""
         entries = FlextLdifTestUtils.load_fixture(
-            ldif_api, "oud", "oud_entries_fixtures.ldif"
+            ldif_api,
+            "oud",
+            "oud_entries_fixtures.ldif",
         )
 
         # Find entries with userPassword
@@ -191,7 +210,9 @@ class TestOudRoutingValidation:
 
         # Load fixture
         entries = FlextLdifTestUtils.load_fixture(
-            ldif_api, "oud", "oud_entries_fixtures.ldif"
+            ldif_api,
+            "oud",
+            "oud_entries_fixtures.ldif",
         )
         assert entries is not None
 

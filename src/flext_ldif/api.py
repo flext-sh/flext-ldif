@@ -43,7 +43,7 @@ from flext_ldif.services.writer import FlextLdifWriter
 from flext_ldif.typings import FlextLdifTypes, ServiceT
 
 
-class FlextLdif(FlextService[dict[str, object]]):
+class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
     r"""Main API facade for LDIF processing operations.
 
     This is the sole entry point for all LDIF operations, consolidating all
@@ -161,7 +161,7 @@ class FlextLdif(FlextService[dict[str, object]]):
             cls._instance = cls()
             # Set config if provided via private attribute
             if config is not None:
-                cls._instance._init_config_value = config
+                cls._instance.init_config_value = config
                 # Re-initialize with config
                 cls._instance.model_post_init(None)
         return cls._instance
@@ -235,13 +235,8 @@ class FlextLdif(FlextService[dict[str, object]]):
 
         # Log config initialization
         if self.logger and self._config:
-            config_info: dict[str, object] = {
-                "ldif_encoding": self._config.ldif_encoding,
-                "strict_rfc_compliance": self._config.strict_rfc_compliance,
-                "ldif_chunk_size": self._config.ldif_chunk_size,
-                "max_workers": self._config.max_workers,
-            }
-            self._log_config_once(config_info, message="FlextLdif facade initialized")
+            config_info = FlextLdifModels.ConfigInfo.from_config(self._config)
+            self._log_config_once(config_info.model_dump(), message="FlextLdif facade initialized")
             self.logger.debug("Services setup and default quirks registered")
 
     # =========================================================================
@@ -270,27 +265,16 @@ class FlextLdif(FlextService[dict[str, object]]):
         # Register validation service
         container.register("validation", FlextLdifValidation())
 
-        # Register migration pipeline (params provided at call time by handlers)
+        # Register migration pipeline with typed parameter model
         def migration_pipeline_factory(
-            params: dict[str, object] | None,
-        ) -> object:
-            if params is None:
-                params = {}
-            input_dir_str = params.get("input_dir", ".")
-            output_dir_str = params.get("output_dir", ".")
+            params: FlextLdifModels.MigrationPipelineParams,
+        ) -> FlextLdifMigrationPipeline:
             return FlextLdifMigrationPipeline(
-                input_dir=Path(
-                    str(input_dir_str) if input_dir_str is not None else ".",
-                ),
-                output_dir=Path(
-                    str(output_dir_str) if output_dir_str is not None else ".",
-                ),
-                source_server=str(
-                    params.get("source_server", FlextLdifConstants.ServerTypes.RFC),
-                ),
-                target_server=str(
-                    params.get("target_server", FlextLdifConstants.ServerTypes.RFC),
-                ),
+                input_dir=Path(params.input_dir),
+                output_dir=Path(params.output_dir),
+                source_server=params.source_server,
+                target_server=params.target_server,
+                migration_config=params.migration_config,
             )
 
         container.register("migration_pipeline", migration_pipeline_factory)

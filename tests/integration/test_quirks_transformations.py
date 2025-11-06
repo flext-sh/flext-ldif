@@ -33,7 +33,10 @@ class TestOidQuirksTransformations:
         return Path(__file__).parent.parent / "fixtures"
 
     def test_oid_parse_and_transform_schema(
-        self, api: FlextLdif, fixtures_dir: Path, tmp_path: Path
+        self,
+        api: FlextLdif,
+        fixtures_dir: Path,
+        tmp_path: Path,
     ) -> None:
         """Test OID schema parsing and transformation."""
         fixture_path = fixtures_dir / "oid" / "oid_schema_fixtures.ldif"
@@ -47,7 +50,10 @@ class TestOidQuirksTransformations:
             assert write_result.is_success or write_result.is_failure
 
     def test_oid_parse_and_transform_acl(
-        self, api: FlextLdif, fixtures_dir: Path, tmp_path: Path
+        self,
+        api: FlextLdif,
+        fixtures_dir: Path,
+        tmp_path: Path,
     ) -> None:
         """Test OID ACL parsing and transformation."""
         fixture_path = fixtures_dir / "oid" / "oid_acl_fixtures.ldif"
@@ -61,7 +67,10 @@ class TestOidQuirksTransformations:
             assert write_result.is_success or write_result.is_failure
 
     def test_oid_to_openldap_migration(
-        self, api: FlextLdif, fixtures_dir: Path, tmp_path: Path
+        self,
+        api: FlextLdif,
+        fixtures_dir: Path,
+        tmp_path: Path,
     ) -> None:
         """Test OID to OpenLDAP migration."""
         fixture_path = fixtures_dir / "oid" / "oid_integration_fixtures.ldif"
@@ -102,7 +111,10 @@ class TestOudQuirksTransformations:
         return Path(__file__).parent.parent / "fixtures"
 
     def test_oud_parse_and_transform_schema(
-        self, api: FlextLdif, fixtures_dir: Path, tmp_path: Path
+        self,
+        api: FlextLdif,
+        fixtures_dir: Path,
+        tmp_path: Path,
     ) -> None:
         """Test OUD schema parsing and transformation."""
         fixture_path = fixtures_dir / "oud" / "oud_schema_fixtures.ldif"
@@ -116,7 +128,10 @@ class TestOudQuirksTransformations:
             assert write_result.is_success or write_result.is_failure
 
     def test_oud_parse_and_transform_acl(
-        self, api: FlextLdif, fixtures_dir: Path, tmp_path: Path
+        self,
+        api: FlextLdif,
+        fixtures_dir: Path,
+        tmp_path: Path,
     ) -> None:
         """Test OUD ACL parsing and transformation."""
         fixture_path = fixtures_dir / "oud" / "oud_acl_fixtures.ldif"
@@ -130,7 +145,10 @@ class TestOudQuirksTransformations:
             assert write_result.is_success or write_result.is_failure
 
     def test_oid_to_oud_migration(
-        self, api: FlextLdif, fixtures_dir: Path, tmp_path: Path
+        self,
+        api: FlextLdif,
+        fixtures_dir: Path,
+        tmp_path: Path,
     ) -> None:
         """Test OID to OUD migration."""
         fixture_path = fixtures_dir / "oid" / "oid_integration_fixtures.ldif"
@@ -155,7 +173,10 @@ class TestOudQuirksTransformations:
         assert result.is_success or result.is_failure
 
     def test_oud_to_openldap_migration(
-        self, api: FlextLdif, fixtures_dir: Path, tmp_path: Path
+        self,
+        api: FlextLdif,
+        fixtures_dir: Path,
+        tmp_path: Path,
     ) -> None:
         """Test OUD to OpenLDAP migration."""
         fixture_path = fixtures_dir / "oud" / "oud_integration_fixtures.ldif"

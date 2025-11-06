@@ -42,7 +42,8 @@ class TestOidQuirksWithRealFixtures:
 
     @pytest.fixture
     def oid_schema_objectclasses(
-        self, oid_fixtures: FlextLdifFixtures.OID
+        self,
+        oid_fixtures: FlextLdifFixtures.OID,
     ) -> list[str]:
         """Extract OID objectClasses from schema fixture."""
         try:
@@ -149,7 +150,8 @@ class TestConversionMatrixWithRealFixtures:
 
     @pytest.fixture
     def oid_conversion_attributes(
-        self, oid_fixtures: FlextLdifFixtures.OID
+        self,
+        oid_fixtures: FlextLdifFixtures.OID,
     ) -> list[str]:
         """Extract OID attributes for conversion testing."""
         try:

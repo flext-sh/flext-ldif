@@ -49,7 +49,8 @@ class TestEdgeCases:
     def test_deep_dn(self, ldif_api: FlextLdif) -> None:
         """Test parsing of entries with very deep DN hierarchies."""
         result = ldif_api.parse(
-            Path("tests/fixtures/edge_cases/size/deep_dn.ldif"), server_type="rfc"
+            Path("tests/fixtures/edge_cases/size/deep_dn.ldif"),
+            server_type="rfc",
         )
         assert result.is_success, f"Failed to parse deep DN fixture: {result.error}"
         entries = result.unwrap()
@@ -96,19 +97,30 @@ class TestEdgeCases:
     def test_roundtrip_unicode(self, ldif_api: FlextLdif, tmp_path: Path) -> None:
         """Test roundtrip of unicode entries."""
         FlextLdifTestUtils.run_roundtrip_test(
-            ldif_api, "rfc", "../edge_cases/unicode/unicode_names.ldif", tmp_path
+            ldif_api,
+            "rfc",
+            "../edge_cases/unicode/unicode_names.ldif",
+            tmp_path,
         )
 
     def test_roundtrip_deep_dn(self, ldif_api: FlextLdif, tmp_path: Path) -> None:
         """Test roundtrip of deep DN entries."""
         FlextLdifTestUtils.run_roundtrip_test(
-            ldif_api, "rfc", "../edge_cases/size/deep_dn.ldif", tmp_path
+            ldif_api,
+            "rfc",
+            "../edge_cases/size/deep_dn.ldif",
+            tmp_path,
         )
 
     def test_roundtrip_large_multivalue(
-        self, ldif_api: FlextLdif, tmp_path: Path
+        self,
+        ldif_api: FlextLdif,
+        tmp_path: Path,
     ) -> None:
         """Test roundtrip of large multivalue entries."""
         FlextLdifTestUtils.run_roundtrip_test(
-            ldif_api, "rfc", "../edge_cases/size/large_multivalue.ldif", tmp_path
+            ldif_api,
+            "rfc",
+            "../edge_cases/size/large_multivalue.ldif",
+            tmp_path,
         )

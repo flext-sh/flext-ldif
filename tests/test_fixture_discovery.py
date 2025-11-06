@@ -120,7 +120,7 @@ class TestFixtureDiscovery:
         comparison = discovery.compare_results({"entries": parsed_entries}, expected)
 
         assert comparison is not None, "Comparison should return results"
-        logger.info(f"Fixture parsing comparison result: {comparison}")
+        logger.info("Fixture parsing comparison result: %s", comparison)
 
     def test_multivalue_fixture(self) -> None:
         """Test multivalue attribute fixture."""

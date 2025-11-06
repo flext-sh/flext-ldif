@@ -29,13 +29,13 @@ class TestValidators:
         validations: dict[str, bool] = {
             "has_dn": bool(entry.dn and str(entry.dn).strip()),
             "has_attributes": bool(
-                entry.attributes and len(entry.attributes.attributes) > 0
+                entry.attributes and len(entry.attributes.attributes) > 0,
             ),
             "has_object_class": bool(
-                entry.attributes and "objectclass" in entry.attributes.attributes
+                entry.attributes and "objectclass" in entry.attributes.attributes,
             ),
             "dn_format_valid": bool(
-                entry.dn and "=" in str(entry.dn) and "," in str(entry.dn)
+                entry.dn and "=" in str(entry.dn) and "," in str(entry.dn),
             ),
         }
 
@@ -309,7 +309,8 @@ class TestValidators:
 
     @staticmethod
     def assert_flext_result_composition(
-        results: list[FlextResult[object]], expected_success_rate: float = 1.0
+        results: list[FlextResult[object]],
+        expected_success_rate: float = 1.0,
     ) -> None:
         """Assert FlextResult composition meets expectations."""
         composition = TestValidators.validate_flext_result_composition(results)
@@ -331,7 +332,9 @@ class TestValidators:
 
     @staticmethod
     def assert_flext_result_chain(
-        results: list[FlextResult[object]], *, expect_all_success: bool = True
+        results: list[FlextResult[object]],
+        *,
+        expect_all_success: bool = True,
     ) -> None:
         """Assert FlextResult chain operations."""
         chain_info = TestValidators.validate_flext_result_chain(results)

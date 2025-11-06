@@ -12,6 +12,7 @@ from typing import TypeVar
 from flext_core import FlextTypes
 
 from flext_ldif.constants import FlextLdifConstants
+from flext_ldif.models import FlextLdifModels
 
 # =============================================================================
 # LDIF-SPECIFIC TYPE VARIABLES - Domain-specific TypeVars for LDIF operations
@@ -31,6 +32,18 @@ class FlextLdifTypes(FlextTypes):
     Contains ONLY complex LDIF-specific types, no simple aliases.
     Uses Python 3.13+ type syntax and patterns.
     """
+
+    # =========================================================================
+    # SERVICE RETURN TYPE ALIASES - Used by servers and services
+    # =========================================================================
+
+    # Type aliases for service polymorphic returns
+    type EntryOrString = list[FlextLdifModels.Entry] | str
+    type SchemaModel = FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass
+    type SchemaModelOrString = FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | str
+
+    # DN input type (string or DN model)
+    type DnInput = str | FlextLdifModels.DistinguishedName
 
     # =========================================================================
     # LDIF ENTRY TYPES
@@ -96,6 +109,23 @@ class FlextLdifTypes(FlextTypes):
         # BASIC ENTRY & DIFF TYPES - Foundation types for entry processing
         # =====================================================================
 
+        # Entry or string union - FlextService domain result types
+        # USED: servers/base.py FlextService[EntryOrString]
+        type EntryOrString = list[FlextLdifModels.Entry] | str
+
+        # Schema model or string union - For schema quirk service types
+        # USED: servers/base.py Schema nested class FlextService parameter
+        type SchemaModelOrString = FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | str
+
+        # Service response types - All possible FlextLdif service return types
+        # USED: api.py FlextLdif class FlextService[ServiceResponseTypes]
+        type ServiceResponseTypes = (
+            FlextLdifModels.ParseResponse
+            | FlextLdifModels.WriteResponse
+            | FlextLdifModels.MigrationPipelineResult
+            | FlextLdifModels.ValidationResult
+        )
+
         # Entry DN value (string) - Canonical distinguished name
         type EntryDnValue = str
 
@@ -109,6 +139,19 @@ class FlextLdifTypes(FlextTypes):
 
         # Diff item metadata - Tracks origin and metadata for diff items
         type ItemMetadata = dict[str, object]
+
+        # ACL or string union - For ACL quirk service types
+        # USED: servers/*.py ACL nested class FlextService parameter
+        type AclOrString = FlextLdifModels.Acl | str
+
+        # Convertible model union - All models convertible via transformation matrix
+        # USED: services/conversion.py QuirksConversionMatrix[ConvertibleModel]
+        type ConvertibleModel = (
+            FlextLdifModels.Entry
+            | FlextLdifModels.SchemaAttribute
+            | FlextLdifModels.SchemaObjectClass
+            | FlextLdifModels.Acl
+        )
 
         # =====================================================================
         # SCHEMA TYPES - RFC 4512 schema definition structures
@@ -283,6 +326,9 @@ class FlextLdifTypes(FlextTypes):
         #     | FlextLdifModels.Acl
         # )
 
+        # NOTE: ServiceResponseTypes defined in Services.Models section (line 126)
+        # to avoid duplication
+
     # =========================================================================
     # OPTIMIZED DIRECTORY TYPES - Consolidated high-frequency patterns
     # =========================================================================
@@ -361,6 +407,7 @@ class FlextLdifTypes(FlextTypes):
 # =============================================================================
 
 __all__: list[str] = [
+    "FlextLdifModels",
     "FlextLdifTypes",
     "ServiceT",
 ]

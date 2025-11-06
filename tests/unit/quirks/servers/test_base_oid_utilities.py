@@ -24,7 +24,7 @@ class TestExtractOidFromSchemaObject:
             oid="2.16.840.1.113894.1.1.1",
             name="orclGUID",
             metadata=FlextLdifModels.QuirkMetadata(
-                original_format="( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' ... )"
+                original_format="( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' ... )",
             ),
         )
 
@@ -47,7 +47,7 @@ class TestExtractOidFromSchemaObject:
             oid="2.16.840.1.113894.1.1.5",
             name="orcldASObject",
             metadata=FlextLdifModels.QuirkMetadata(
-                original_format="( 2.16.840.1.113894.1.1.5 NAME 'orcldASObject' ... )"
+                original_format="( 2.16.840.1.113894.1.1.5 NAME 'orcldASObject' ... )",
             ),
         )
 
@@ -70,7 +70,7 @@ class TestExtractOidFromSchemaObject:
             oid="2.5.6.0",
             name="top",
             metadata=FlextLdifModels.QuirkMetadata(
-                original_format="(   2.5.6.0   NAME 'top' ... )"
+                original_format="(   2.5.6.0   NAME 'top' ... )",
             ),
         )
 
@@ -106,7 +106,8 @@ class TestMatchesPattern:
         attr_definition = "( 1.3.6.1.4.1.4203.1.1.1 NAME 'olcBackend' ... )"
 
         result = FlextLdifUtilities.OID.matches_pattern(
-            attr_definition, openldap_pattern
+            attr_definition,
+            openldap_pattern,
         )
         assert result is True
 
@@ -133,7 +134,8 @@ class TestMatchesPattern:
         oid_pattern = re.compile(r"2\.16\.840\.1\.113894\.")
 
         result = FlextLdifUtilities.OID.matches_pattern(
-            "not a schema object", oid_pattern
+            "not a schema object",
+            oid_pattern,
         )
         assert result is False
 
@@ -146,7 +148,8 @@ class TestMatchesPattern:
         oracle_attr_definition = "( 2.16.840.1.113894.1.1.1 NAME 'orclAttr' ... )"
         assert (
             FlextLdifUtilities.OID.matches_pattern(
-                oracle_attr_definition, oracle_or_novell
+                oracle_attr_definition,
+                oracle_or_novell,
             )
             is True
         )
@@ -154,7 +157,8 @@ class TestMatchesPattern:
         novell_attr_definition = "( 2.16.840.1.113719.1.1.1 NAME 'ndsAttr' ... )"
         assert (
             FlextLdifUtilities.OID.matches_pattern(
-                novell_attr_definition, oracle_or_novell
+                novell_attr_definition,
+                oracle_or_novell,
             )
             is True
         )
@@ -162,7 +166,8 @@ class TestMatchesPattern:
         rfc_attr_definition = "( 2.5.4.3 NAME 'cn' ... )"
         assert (
             FlextLdifUtilities.OID.matches_pattern(
-                rfc_attr_definition, oracle_or_novell
+                rfc_attr_definition,
+                oracle_or_novell,
             )
             is False
         )

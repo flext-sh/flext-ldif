@@ -349,7 +349,7 @@ class TestApacheDirectoryAcls:
         result = acl.parse(
             acl_model.raw_acl
             if hasattr(acl_model, "raw_acl") and acl_model.raw_acl
-            else str(acl_model)
+            else str(acl_model),
         )
         assert result.is_success  # Apache ACL should be handled
 
@@ -372,7 +372,7 @@ class TestApacheDirectoryAcls:
         result = acl.parse(
             acl_model.raw_acl
             if hasattr(acl_model, "raw_acl") and acl_model.raw_acl
-            else str(acl_model)
+            else str(acl_model),
         )
         assert result.is_success  # Apache ACL should be handled
 
@@ -395,7 +395,7 @@ class TestApacheDirectoryAcls:
         result = acl.parse(
             acl_model.raw_acl
             if hasattr(acl_model, "raw_acl") and acl_model.raw_acl
-            else str(acl_model)
+            else str(acl_model),
         )
         assert result.is_success  # Apache ACL should be handled
 
@@ -545,7 +545,7 @@ class TestApacheDirectoryEntrys:
         entry = main.entry
         entry_dn = "ou=config,dc=example,dc=com"
         attributes: dict[str, object] = {
-            FlextLdifConstants.DictKeys.OBJECTCLASS: ["organizationalUnit"]
+            FlextLdifConstants.DictKeys.OBJECTCLASS: ["organizationalUnit"],
         }
         # Can handle is internal - test through parse which calls can_handle internally
         # Build LDIF format for testing
@@ -566,7 +566,7 @@ class TestApacheDirectoryEntrys:
         entry = main.entry
         entry_dn = "ou=services,dc=example,dc=com"
         attributes: dict[str, object] = {
-            FlextLdifConstants.DictKeys.OBJECTCLASS: ["organizationalUnit"]
+            FlextLdifConstants.DictKeys.OBJECTCLASS: ["organizationalUnit"],
         }
         # Can handle is internal - test through parse which calls can_handle internally
         # Build LDIF format for testing
@@ -587,7 +587,7 @@ class TestApacheDirectoryEntrys:
         entry = main.entry
         entry_dn = "ou=system,dc=example,dc=com"
         attributes: dict[str, object] = {
-            FlextLdifConstants.DictKeys.OBJECTCLASS: ["organizationalUnit"]
+            FlextLdifConstants.DictKeys.OBJECTCLASS: ["organizationalUnit"],
         }
         # Can handle is internal - test through parse which calls can_handle internally
         # Build LDIF format for testing
@@ -608,7 +608,7 @@ class TestApacheDirectoryEntrys:
         entry = main.entry
         entry_dn = "ou=partitions,dc=example,dc=com"
         attributes: dict[str, object] = {
-            FlextLdifConstants.DictKeys.OBJECTCLASS: ["organizationalUnit"]
+            FlextLdifConstants.DictKeys.OBJECTCLASS: ["organizationalUnit"],
         }
         # Can handle is internal - test through parse which calls can_handle internally
         # Build LDIF format for testing
@@ -673,7 +673,7 @@ class TestApacheDirectoryEntrys:
         entry = main.entry
         entry_dn = "cn=test,dc=example,dc=com"
         attributes: dict[str, object] = {
-            FlextLdifConstants.DictKeys.OBJECTCLASS: ["top", "ads-directory"]
+            FlextLdifConstants.DictKeys.OBJECTCLASS: ["top", "ads-directory"],
         }
         # Can handle is internal - test through parse which calls can_handle internally
         # Build LDIF format for testing

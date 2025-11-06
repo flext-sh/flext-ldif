@@ -22,7 +22,8 @@ from flext_ldif.services.sorting import FlextLdifSorting
 
 
 def create_entry(
-    dn_str: str, attributes: dict[str, list[str]]
+    dn_str: str,
+    attributes: dict[str, list[str]],
 ) -> FlextLdifModels.Entry:
     """Create test entry with DN and attributes."""
     dn = FlextLdifModels.DistinguishedName(value=dn_str)
@@ -122,7 +123,8 @@ def test_execute_hierarchy() -> None:
             {"uid": ["jdoe"], "objectClass": ["person"]},
         ),
         create_entry(
-            "dc=example,dc=com", {"dc": ["example"], "objectClass": ["domain"]}
+            "dc=example,dc=com",
+            {"dc": ["example"], "objectClass": ["domain"]},
         ),
         create_entry(
             "ou=users,dc=example,dc=com",
@@ -131,7 +133,9 @@ def test_execute_hierarchy() -> None:
     ]
 
     result = FlextLdifSorting(
-        entries=entries, sort_target="entries", sort_by="hierarchy"
+        entries=entries,
+        sort_target="entries",
+        sort_by="hierarchy",
     ).execute()
 
     assert result.is_success
@@ -148,7 +152,9 @@ def test_execute_alphabetical() -> None:
     ]
 
     result = FlextLdifSorting(
-        entries=entries, sort_target="entries", sort_by="alphabetical"
+        entries=entries,
+        sort_target="entries",
+        sort_by="alphabetical",
     ).execute()
 
     assert result.is_success
@@ -317,7 +323,8 @@ def test_builder_with_attribute_order() -> None:
     """Test builder with custom attribute order."""
     entries = [
         create_entry(
-            "cn=test,dc=example,dc=com", {"zzz": ["z"], "cn": ["test"], "aaa": ["a"]}
+            "cn=test,dc=example,dc=com",
+            {"zzz": ["z"], "cn": ["test"], "aaa": ["a"]},
         ),
     ]
 

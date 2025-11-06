@@ -53,7 +53,8 @@ class TestDnNormalization:
         assert normalized == "cn=test,dc=example,dc=com"
 
     def test_normalize_converts_to_lowercase(
-        self, registry: FlextLdifDn.CaseRegistry
+        self,
+        registry: FlextLdifDn.CaseRegistry,
     ) -> None:
         """Test that DN normalization converts to lowercase."""
         dn_uppercase = "CN=ADMIN,DC=EXAMPLE,DC=COM"
@@ -62,7 +63,8 @@ class TestDnNormalization:
         assert normalized.islower()
 
     def test_normalize_preserves_structure(
-        self, registry: FlextLdifDn.CaseRegistry
+        self,
+        registry: FlextLdifDn.CaseRegistry,
     ) -> None:
         """Test that normalization preserves DN structure (commas, equals)."""
         dn = "CN=Test,OU=Users,DC=Example,DC=Com"
@@ -73,7 +75,8 @@ class TestDnNormalization:
         assert "ou=users" in normalized
 
     def test_normalize_handles_multiple_spaces(
-        self, registry: FlextLdifDn.CaseRegistry
+        self,
+        registry: FlextLdifDn.CaseRegistry,
     ) -> None:
         """Test that normalization handles multiple consecutive spaces."""
         dn_multi_spaces = "CN=Test,  DC=Example,   DC=Com"
@@ -98,7 +101,8 @@ class TestDnRegistration:
         return FlextLdifDn.CaseRegistry()
 
     def test_register_first_dn_becomes_canonical(
-        self, registry: FlextLdifDn.CaseRegistry
+        self,
+        registry: FlextLdifDn.CaseRegistry,
     ) -> None:
         """Test that first registered DN becomes canonical case."""
         dn = "CN=Admin,DC=Example,DC=Com"
@@ -106,7 +110,8 @@ class TestDnRegistration:
         assert canonical == dn
 
     def test_register_same_dn_different_case_returns_canonical(
-        self, registry: FlextLdifDn.CaseRegistry
+        self,
+        registry: FlextLdifDn.CaseRegistry,
     ) -> None:
         """Test that registering same DN with different case returns canonical."""
         first_dn = "CN=Admin,DC=Example,DC=Com"
@@ -123,7 +128,8 @@ class TestDnRegistration:
         assert result3 == first_dn  # Returns first canonical
 
     def test_register_tracks_all_case_variants(
-        self, registry: FlextLdifDn.CaseRegistry
+        self,
+        registry: FlextLdifDn.CaseRegistry,
     ) -> None:
         """Test that registration tracks all case variants."""
         registry.register_dn("cn=test,dc=com")
@@ -137,7 +143,8 @@ class TestDnRegistration:
         assert "cn=TEST,dc=COM" in variants
 
     def test_register_with_force_overrides_canonical(
-        self, registry: FlextLdifDn.CaseRegistry
+        self,
+        registry: FlextLdifDn.CaseRegistry,
     ) -> None:
         """Test that force=True overrides existing canonical case."""
         first_dn = "cn=REDACTED_LDAP_BIND_PASSWORD,dc=com"
@@ -152,7 +159,8 @@ class TestDnRegistration:
         assert registry.get_canonical_dn(first_dn) == second_dn
 
     def test_register_multiple_different_dns(
-        self, registry: FlextLdifDn.CaseRegistry
+        self,
+        registry: FlextLdifDn.CaseRegistry,
     ) -> None:
         """Test registering multiple different DNs."""
         dn1 = "cn=user1,dc=com"
@@ -167,7 +175,8 @@ class TestDnRegistration:
         assert stats["total_dns"] == 3
 
     def test_register_dn_with_spaces_normalizes_correctly(
-        self, registry: FlextLdifDn.CaseRegistry
+        self,
+        registry: FlextLdifDn.CaseRegistry,
     ) -> None:
         """Test that DNs with spaces are normalized for matching."""
         dn_with_spaces = "CN=Test, DC=Example, DC=Com"
@@ -192,28 +201,32 @@ class TestCanonicalDnRetrieval:
         return reg
 
     def test_get_canonical_exact_match(
-        self, registry: FlextLdifDn.CaseRegistry
+        self,
+        registry: FlextLdifDn.CaseRegistry,
     ) -> None:
         """Test getting canonical DN with exact match."""
         canonical = registry.get_canonical_dn("cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com")
         assert canonical == "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com"
 
     def test_get_canonical_different_case(
-        self, registry: FlextLdifDn.CaseRegistry
+        self,
+        registry: FlextLdifDn.CaseRegistry,
     ) -> None:
         """Test getting canonical DN with different case."""
         canonical = registry.get_canonical_dn("CN=Admin,DC=Example,DC=Com")
         assert canonical == "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com"
 
     def test_get_canonical_with_spaces(
-        self, registry: FlextLdifDn.CaseRegistry
+        self,
+        registry: FlextLdifDn.CaseRegistry,
     ) -> None:
         """Test getting canonical DN with spaces."""
         canonical = registry.get_canonical_dn("cn=REDACTED_LDAP_BIND_PASSWORD, dc=example, dc=com")
         assert canonical == "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com"
 
     def test_get_canonical_unregistered_returns_none(
-        self, registry: FlextLdifDn.CaseRegistry
+        self,
+        registry: FlextLdifDn.CaseRegistry,
     ) -> None:
         """Test that unregistered DN returns None."""
         canonical = registry.get_canonical_dn("cn=unknown,dc=com")
@@ -254,7 +267,8 @@ class TestDnExistenceCheck:
         assert registry.has_dn("ou=users, dc=com")
 
     def test_has_dn_unregistered_returns_false(
-        self, registry: FlextLdifDn.CaseRegistry
+        self,
+        registry: FlextLdifDn.CaseRegistry,
     ) -> None:
         """Test that unregistered DN returns False."""
         assert not registry.has_dn("cn=unknown,dc=com")
@@ -275,7 +289,8 @@ class TestCaseVariantsTracking:
         return FlextLdifDn.CaseRegistry()
 
     def test_get_case_variants_single_variant(
-        self, registry: FlextLdifDn.CaseRegistry
+        self,
+        registry: FlextLdifDn.CaseRegistry,
     ) -> None:
         """Test getting variants when only one case registered."""
         registry.register_dn("cn=test,dc=com")
@@ -284,7 +299,8 @@ class TestCaseVariantsTracking:
         assert "cn=test,dc=com" in variants
 
     def test_get_case_variants_multiple_variants(
-        self, registry: FlextLdifDn.CaseRegistry
+        self,
+        registry: FlextLdifDn.CaseRegistry,
     ) -> None:
         """Test getting all case variants."""
         registry.register_dn("cn=test,dc=com")
@@ -299,7 +315,8 @@ class TestCaseVariantsTracking:
         )
 
     def test_get_case_variants_case_insensitive_lookup(
-        self, registry: FlextLdifDn.CaseRegistry
+        self,
+        registry: FlextLdifDn.CaseRegistry,
     ) -> None:
         """Test that variant lookup is case-insensitive."""
         registry.register_dn("cn=test,dc=com")
@@ -314,7 +331,8 @@ class TestCaseVariantsTracking:
         assert len(variants1) == 2
 
     def test_get_case_variants_unregistered_returns_empty(
-        self, registry: FlextLdifDn.CaseRegistry
+        self,
+        registry: FlextLdifDn.CaseRegistry,
     ) -> None:
         """Test that unregistered DN returns empty set."""
         variants = registry.get_case_variants("cn=unknown,dc=com")
@@ -331,7 +349,8 @@ class TestOudConsistencyValidation:
         return FlextLdifDn.CaseRegistry()
 
     def test_validate_empty_registry_success(
-        self, registry: FlextLdifDn.CaseRegistry
+        self,
+        registry: FlextLdifDn.CaseRegistry,
     ) -> None:
         """Test validation passes on empty registry."""
         result = registry.validate_oud_consistency()
@@ -339,7 +358,8 @@ class TestOudConsistencyValidation:
         assert result.unwrap() is True
 
     def test_validate_single_case_variant_success(
-        self, registry: FlextLdifDn.CaseRegistry
+        self,
+        registry: FlextLdifDn.CaseRegistry,
     ) -> None:
         """Test validation passes with single case variant."""
         registry.register_dn("cn=REDACTED_LDAP_BIND_PASSWORD,dc=com")
@@ -348,7 +368,8 @@ class TestOudConsistencyValidation:
         assert result.unwrap() is True
 
     def test_validate_multiple_dns_single_case_each(
-        self, registry: FlextLdifDn.CaseRegistry
+        self,
+        registry: FlextLdifDn.CaseRegistry,
     ) -> None:
         """Test validation passes with multiple DNs each with single case."""
         registry.register_dn("cn=user1,dc=com")
@@ -360,7 +381,8 @@ class TestOudConsistencyValidation:
         assert result.unwrap() is True
 
     def test_validate_detects_case_inconsistencies(
-        self, registry: FlextLdifDn.CaseRegistry
+        self,
+        registry: FlextLdifDn.CaseRegistry,
     ) -> None:
         """Test validation detects multiple case variants."""
         registry.register_dn("cn=REDACTED_LDAP_BIND_PASSWORD,dc=com")
@@ -371,7 +393,8 @@ class TestOudConsistencyValidation:
         assert result.unwrap() is False  # Has inconsistencies
 
     def test_validate_provides_inconsistency_metadata(
-        self, registry: FlextLdifDn.CaseRegistry
+        self,
+        registry: FlextLdifDn.CaseRegistry,
     ) -> None:
         """Test that validation returns detailed inconsistency metadata."""
         registry.register_dn("cn=REDACTED_LDAP_BIND_PASSWORD,dc=com")
@@ -390,7 +413,8 @@ class TestOudConsistencyValidation:
         assert inconsistencies[0]["canonical_case"] == "cn=REDACTED_LDAP_BIND_PASSWORD,dc=com"
 
     def test_validate_multiple_inconsistent_dns(
-        self, registry: FlextLdifDn.CaseRegistry
+        self,
+        registry: FlextLdifDn.CaseRegistry,
     ) -> None:
         """Test validation with multiple DNs having case issues."""
         # DN 1 - inconsistent
@@ -427,7 +451,8 @@ class TestDnReferenceNormalization:
         return reg
 
     def test_normalize_single_dn_field(
-        self, registry: FlextLdifDn.CaseRegistry
+        self,
+        registry: FlextLdifDn.CaseRegistry,
     ) -> None:
         """Test normalizing single DN field."""
         data: dict[str, object] = {"dn": "CN=Admin,DC=Com", "cn": ["REDACTED_LDAP_BIND_PASSWORD"]}
@@ -451,7 +476,8 @@ class TestDnReferenceNormalization:
         assert normalized["member"] == ["cn=user1,dc=com", "cn=user2,dc=com"]
 
     def test_normalize_multiple_dn_fields(
-        self, registry: FlextLdifDn.CaseRegistry
+        self,
+        registry: FlextLdifDn.CaseRegistry,
     ) -> None:
         """Test normalizing multiple DN fields."""
         data: dict[str, object] = {
@@ -468,7 +494,8 @@ class TestDnReferenceNormalization:
         assert normalized["secretary"] == "cn=user2,dc=com"
 
     def test_normalize_unregistered_dn_unchanged(
-        self, registry: FlextLdifDn.CaseRegistry
+        self,
+        registry: FlextLdifDn.CaseRegistry,
     ) -> None:
         """Test that unregistered DNs are left unchanged."""
         data: dict[str, object] = {"dn": "cn=unknown,dc=com"}
@@ -479,7 +506,8 @@ class TestDnReferenceNormalization:
         assert normalized["dn"] == "cn=unknown,dc=com"  # Unchanged
 
     def test_normalize_with_none_dn_fields_uses_defaults(
-        self, registry: FlextLdifDn.CaseRegistry
+        self,
+        registry: FlextLdifDn.CaseRegistry,
     ) -> None:
         """Test that None dn_fields uses default DN fields."""
         data: dict[str, object] = {
@@ -496,7 +524,8 @@ class TestDnReferenceNormalization:
         assert normalized["owner"] == "cn=user2,dc=com"
 
     def test_normalize_missing_fields_unchanged(
-        self, registry: FlextLdifDn.CaseRegistry
+        self,
+        registry: FlextLdifDn.CaseRegistry,
     ) -> None:
         """Test that missing fields don't cause errors."""
         data: dict[str, object] = {"cn": ["REDACTED_LDAP_BIND_PASSWORD"]}
@@ -507,7 +536,8 @@ class TestDnReferenceNormalization:
         assert normalized == data  # Unchanged
 
     def test_normalize_mixed_registered_unregistered(
-        self, registry: FlextLdifDn.CaseRegistry
+        self,
+        registry: FlextLdifDn.CaseRegistry,
     ) -> None:
         """Test normalizing mix of registered and unregistered DNs."""
         data: dict[str, object] = {

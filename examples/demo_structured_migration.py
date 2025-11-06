@@ -145,7 +145,7 @@ description: Application data entry
                 size = file_path.stat().st_size
                 lines = len(file_path.read_text(encoding="utf-8").splitlines())
                 print(
-                    f"  {category:12} → {file_path.name:20} ({size:5} bytes, {lines:3} lines)"
+                    f"  {category:12} → {file_path.name:20} ({size:5} bytes, {lines:3} lines)",
                 )
 
         # Show sample output

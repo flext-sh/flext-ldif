@@ -125,6 +125,7 @@ from __future__ import annotations
 from typing import override
 
 from flext_core import FlextResult, FlextService
+from pydantic import Field
 
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
@@ -154,9 +155,9 @@ class FlextLdifEntry(FlextService[list[FlextLdifModels.Entry]]):
     # PYDANTIC FIELDS
     # ════════════════════════════════════════════════════════════════════════
 
-    entries: list[FlextLdifModels.Entry] = []
+    entries: list[FlextLdifModels.Entry] = Field(default_factory=list)
     operation: str = "remove_operational_attributes"
-    attributes_to_remove: list[str] = []
+    attributes_to_remove: list[str] = Field(default_factory=list)
 
     # ════════════════════════════════════════════════════════════════════════
     # EXECUTE PATTERN (V1 FlextService)
@@ -234,7 +235,7 @@ class FlextLdifEntry(FlextService[list[FlextLdifModels.Entry]]):
             portable_entry = result.unwrap()
 
         """
-        return cls()._remove_operational_attributes_single(entry)
+        return cls().remove_operational_attributes_single(entry)
 
     @classmethod
     def remove_operational_attributes_batch(
@@ -279,7 +280,7 @@ class FlextLdifEntry(FlextService[list[FlextLdifModels.Entry]]):
             cleaned_entry = result.unwrap()
 
         """
-        return cls()._remove_attributes_single(entry, attributes)
+        return cls().remove_attributes_single(entry, attributes)
 
     @classmethod
     def remove_attributes_batch(
@@ -367,7 +368,7 @@ class FlextLdifEntry(FlextService[list[FlextLdifModels.Entry]]):
 
         return FlextResult[list[FlextLdifModels.Entry]].ok(adapted_entries)
 
-    def _remove_operational_attributes_single(
+    def remove_operational_attributes_single(
         self,
         entry: FlextLdifModels.Entry,
     ) -> FlextResult[FlextLdifModels.Entry]:
@@ -382,7 +383,7 @@ class FlextLdifEntry(FlextService[list[FlextLdifModels.Entry]]):
             if attr_name.lower() in operational_attrs_lower:
                 if self.logger is not None:
                     self.logger.debug(
-                        f"Removed operational attribute '{attr_name}' from {FlextLdifUtilities.DN._get_dn_value(entry.dn)}",
+                        f"Removed operational attribute '{attr_name}' from {FlextLdifUtilities.DN.get_dn_value(entry.dn)}",
                     )
                 continue
 
@@ -399,7 +400,7 @@ class FlextLdifEntry(FlextService[list[FlextLdifModels.Entry]]):
         )
 
         if adapted_entry_result.is_failure:
-            error_msg = f"Failed to adapt entry {FlextLdifUtilities.DN._get_dn_value(entry.dn)}: {adapted_entry_result.error}"
+            error_msg = f"Failed to adapt entry {FlextLdifUtilities.DN.get_dn_value(entry.dn)}: {adapted_entry_result.error}"
             if self.logger is not None:
                 self.logger.error(error_msg)
             return FlextResult[FlextLdifModels.Entry].fail(error_msg)
@@ -418,7 +419,7 @@ class FlextLdifEntry(FlextService[list[FlextLdifModels.Entry]]):
 
         return FlextResult[list[FlextLdifModels.Entry]].ok(adapted_entries)
 
-    def _remove_attributes_single(
+    def remove_attributes_single(
         self,
         entry: FlextLdifModels.Entry,
         attributes: list[str],
@@ -433,7 +434,7 @@ class FlextLdifEntry(FlextService[list[FlextLdifModels.Entry]]):
             for attr_name in entry.attributes.attributes:
                 if attr_name.lower() in attrs_to_remove_lower:
                     self.logger.debug(
-                        f"Removed attribute '{attr_name}' from {FlextLdifUtilities.DN._get_dn_value(entry.dn)}",
+                        f"Removed attribute '{attr_name}' from {FlextLdifUtilities.DN.get_dn_value(entry.dn)}",
                     )
 
         # Use utility for core removal logic
@@ -444,7 +445,7 @@ class FlextLdifEntry(FlextService[list[FlextLdifModels.Entry]]):
             )
             return FlextResult[FlextLdifModels.Entry].ok(cleaned_entry)
         except Exception as e:
-            error_msg = f"Failed to clean entry {FlextLdifUtilities.DN._get_dn_value(entry.dn)}: {e}"
+            error_msg = f"Failed to clean entry {FlextLdifUtilities.DN.get_dn_value(entry.dn)}: {e}"
             if self.logger is not None:
                 self.logger.exception(error_msg)
             return FlextResult[FlextLdifModels.Entry].fail(error_msg)

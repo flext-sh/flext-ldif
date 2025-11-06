@@ -35,7 +35,8 @@ from flext_ldif.services.entry import FlextLdifEntry
 
 
 def create_entry(
-    dn_str: str, attributes: dict[str, list[str]]
+    dn_str: str,
+    attributes: dict[str, list[str]],
 ) -> FlextLdifModels.Entry:
     """Create test entry with DN and attributes."""
     dn = FlextLdifModels.DistinguishedName(value=dn_str)
@@ -128,11 +129,12 @@ class TestPublicClassmethods:
         assert len(cleaned) > 0
 
     def test_remove_operational_attributes_single(
-        self, entry_with_operational_attrs: FlextLdifModels.Entry
+        self,
+        entry_with_operational_attrs: FlextLdifModels.Entry,
     ) -> None:
         """Test remove_operational_attributes with single entry."""
         result = FlextLdifEntry.remove_operational_attributes(
-            entry_with_operational_attrs
+            entry_with_operational_attrs,
         )
 
         assert result.is_success
@@ -151,7 +153,8 @@ class TestPublicClassmethods:
         assert "mail" in attrs
 
     def test_remove_operational_attributes_batch(
-        self, entries_batch: list[FlextLdifModels.Entry]
+        self,
+        entries_batch: list[FlextLdifModels.Entry],
     ) -> None:
         """Test remove_operational_attributes_batch with multiple entries."""
         result = FlextLdifEntry.remove_operational_attributes_batch(entries_batch)
@@ -174,11 +177,13 @@ class TestPublicClassmethods:
                 }
 
     def test_remove_attributes_single(
-        self, simple_entry: FlextLdifModels.Entry
+        self,
+        simple_entry: FlextLdifModels.Entry,
     ) -> None:
         """Test remove_attributes with single entry."""
         result = FlextLdifEntry.remove_attributes(
-            simple_entry, attributes=["mail", "sn"]
+            simple_entry,
+            attributes=["mail", "sn"],
         )
 
         assert result.is_success
@@ -191,11 +196,13 @@ class TestPublicClassmethods:
         assert "objectClass" in attrs
 
     def test_remove_attributes_batch(
-        self, entries_batch: list[FlextLdifModels.Entry]
+        self,
+        entries_batch: list[FlextLdifModels.Entry],
     ) -> None:
         """Test remove_attributes_batch with multiple entries."""
         result = FlextLdifEntry.remove_attributes_batch(
-            entries_batch, attributes=["cn"]
+            entries_batch,
+            attributes=["cn"],
         )
 
         assert result.is_success
@@ -215,7 +222,8 @@ class TestExecutePattern:
     """Test execute() method for FlextService V1 pattern."""
 
     def test_execute_remove_operational_attributes(
-        self, entries_batch: list[FlextLdifModels.Entry]
+        self,
+        entries_batch: list[FlextLdifModels.Entry],
     ) -> None:
         """Test execute() with remove_operational_attributes operation."""
         result = FlextLdifEntry(
@@ -228,7 +236,8 @@ class TestExecutePattern:
         assert len(cleaned_entries) == 3
 
     def test_execute_remove_attributes(
-        self, simple_entry: FlextLdifModels.Entry
+        self,
+        simple_entry: FlextLdifModels.Entry,
     ) -> None:
         """Test execute() with remove_attributes operation."""
         result = FlextLdifEntry(
@@ -242,7 +251,8 @@ class TestExecutePattern:
         assert "mail" not in cleaned_entries[0].attributes.attributes
 
     def test_execute_invalid_operation(
-        self, simple_entry: FlextLdifModels.Entry
+        self,
+        simple_entry: FlextLdifModels.Entry,
     ) -> None:
         """Test execute() with invalid operation fails gracefully."""
         result = FlextLdifEntry(
@@ -285,7 +295,8 @@ class TestFluentBuilder:
         assert "cn" in cleaned_entries[0].attributes.attributes
 
     def test_builder_with_attributes_to_remove(
-        self, simple_entry: FlextLdifModels.Entry
+        self,
+        simple_entry: FlextLdifModels.Entry,
     ) -> None:
         """Test builder with attributes_to_remove."""
         cleaned_entries = (
@@ -389,11 +400,13 @@ class TestAttributeRemoval:
         assert "cn" in cleaned.attributes.attributes
 
     def test_remove_multiple_attributes(
-        self, simple_entry: FlextLdifModels.Entry
+        self,
+        simple_entry: FlextLdifModels.Entry,
     ) -> None:
         """Test removing multiple attributes."""
         result = FlextLdifEntry.remove_attributes(
-            simple_entry, attributes=["mail", "sn", "objectClass"]
+            simple_entry,
+            attributes=["mail", "sn", "objectClass"],
         )
 
         assert result.is_success
@@ -404,11 +417,13 @@ class TestAttributeRemoval:
         assert "cn" in cleaned.attributes.attributes
 
     def test_remove_nonexistent_attribute(
-        self, simple_entry: FlextLdifModels.Entry
+        self,
+        simple_entry: FlextLdifModels.Entry,
     ) -> None:
         """Test removing attribute that doesn't exist doesn't fail."""
         result = FlextLdifEntry.remove_attributes(
-            simple_entry, attributes=["nonexistent"]
+            simple_entry,
+            attributes=["nonexistent"],
         )
 
         assert result.is_success
@@ -418,11 +433,13 @@ class TestAttributeRemoval:
         assert "mail" in cleaned.attributes.attributes
 
     def test_case_insensitive_attribute_removal(
-        self, simple_entry: FlextLdifModels.Entry
+        self,
+        simple_entry: FlextLdifModels.Entry,
     ) -> None:
         """Test attribute removal is case-insensitive."""
         result = FlextLdifEntry.remove_attributes(
-            simple_entry, attributes=["MAIL", "SN"]
+            simple_entry,
+            attributes=["MAIL", "SN"],
         )
 
         assert result.is_success
@@ -541,7 +558,8 @@ class TestEdgeCases:
         entry = create_entry("cn=test,dc=example,dc=com", attrs)
 
         result = FlextLdifEntry.remove_attributes(
-            entry, attributes=[f"attr{i}" for i in range(50)]
+            entry,
+            attributes=[f"attr{i}" for i in range(50)],
         )
 
         assert result.is_success
@@ -561,12 +579,13 @@ class TestIntegration:
     """Integration tests for real-world scenarios."""
 
     def test_clean_and_adapt_entry_pipeline(
-        self, entry_with_operational_attrs: FlextLdifModels.Entry
+        self,
+        entry_with_operational_attrs: FlextLdifModels.Entry,
     ) -> None:
         """Test realistic pipeline: remove operational attrs then remove specific ones."""
         # Stage 1: Remove operational attributes
         result1 = FlextLdifEntry.remove_operational_attributes(
-            entry_with_operational_attrs
+            entry_with_operational_attrs,
         )
         assert result1.is_success
         intermediate = result1.unwrap()
@@ -583,7 +602,8 @@ class TestIntegration:
         assert "cn" in attrs
 
     def test_batch_cleaning_pipeline(
-        self, entries_batch: list[FlextLdifModels.Entry]
+        self,
+        entries_batch: list[FlextLdifModels.Entry],
     ) -> None:
         """Test realistic batch processing pipeline."""
         # Stage 1: Remove operational attributes from batch
@@ -593,7 +613,8 @@ class TestIntegration:
 
         # Stage 2: Remove specific attributes
         result2 = FlextLdifEntry.remove_attributes_batch(
-            cleaned_batch, attributes=["cn"]
+            cleaned_batch,
+            attributes=["cn"],
         )
         assert result2.is_success
         final_batch = result2.unwrap()
@@ -765,7 +786,8 @@ class TestFlextLdifSyntax:
 
         syntax = FlextLdifSyntax()
         result = syntax.validate_value(
-            "TRUE", "1.3.6.1.4.1.1466.115.121.1.7"
+            "TRUE",
+            "1.3.6.1.4.1.1466.115.121.1.7",
         )
         assert result.is_success
 

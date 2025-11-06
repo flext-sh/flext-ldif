@@ -126,7 +126,7 @@ class FlextLdifProtocols(FlextProtocols):
             def parse(
                 self,
                 definition: str,
-            ) -> FlextResult:
+            ) -> FlextResult[object]:
                 """Parse schema definition (attribute or objectClass).
 
                 Auto-detects type from content and routes appropriately.
@@ -143,7 +143,7 @@ class FlextLdifProtocols(FlextProtocols):
             def write(
                 self,
                 model: object,
-            ) -> FlextResult:
+            ) -> FlextResult[object]:
                 """Write schema model to RFC-compliant string.
 
                 Auto-detects model type and routes to appropriate writer.
@@ -161,7 +161,7 @@ class FlextLdifProtocols(FlextProtocols):
                 self,
                 data: str | object | None = None,
                 operation: str | None = None,
-            ) -> FlextResult:
+            ) -> FlextResult[object]:
                 """Execute with automatic type detection and routing.
 
                 Polymorphic dispatch based on data type:
@@ -213,7 +213,7 @@ class FlextLdifProtocols(FlextProtocols):
             priority: int
             """Quirk priority (lower number = higher priority)."""
 
-            def parse(self, acl_line: str) -> FlextResult:
+            def parse(self, acl_line: str) -> FlextResult[object]:
                 """Parse ACL line to Acl model.
 
                 Args:
@@ -225,7 +225,7 @@ class FlextLdifProtocols(FlextProtocols):
                 """
                 ...
 
-            def write(self, acl_data: object) -> FlextResult:
+            def write(self, acl_data: object) -> FlextResult[object]:
                 """Write Acl model to string format.
 
                 Args:
@@ -241,7 +241,7 @@ class FlextLdifProtocols(FlextProtocols):
                 self,
                 data: str | object | None = None,
                 operation: str | None = None,
-            ) -> FlextResult:
+            ) -> FlextResult[object]:
                 """Execute with automatic type detection and routing.
 
                 Polymorphic dispatch based on data type:
@@ -297,7 +297,7 @@ class FlextLdifProtocols(FlextProtocols):
             def parse(
                 self,
                 ldif_content: str,
-            ) -> FlextResult:
+            ) -> FlextResult[object]:
                 """Parse LDIF content string into Entry models.
 
                 Args:
@@ -312,7 +312,7 @@ class FlextLdifProtocols(FlextProtocols):
             def write(
                 self,
                 entry_data: object,
-            ) -> FlextResult:
+            ) -> FlextResult[object]:
                 """Write Entry model to RFC-compliant LDIF string.
 
                 Args:
@@ -326,9 +326,9 @@ class FlextLdifProtocols(FlextProtocols):
 
             def execute(
                 self,
-                data: str | list | object | None = None,
+                data: str | list[object] | object | None = None,
                 operation: str | None = None,
-            ) -> FlextResult:
+            ) -> FlextResult[object]:
                 """Execute with automatic type detection and routing.
 
                 Polymorphic dispatch based on data type:
@@ -432,8 +432,8 @@ class FlextLdifProtocols(FlextProtocols):
                 self,
                 source: FlextLdifProtocols.Quirks.QuirksPort,
                 target: FlextLdifProtocols.Quirks.QuirksPort,
-                model_instance: FlextLdifModels.ConvertibleModel,
-            ) -> FlextResult[FlextLdifModels.ConvertibleModel]:
+                model_instance: FlextLdifModels.Entry | FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | FlextLdifModels.Acl,
+            ) -> FlextResult[FlextLdifModels.Entry | FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | FlextLdifModels.Acl]:
                 """Convert a model from a source server format to a target server format.
 
                 This is the core method for all transformations. It orchestrates the

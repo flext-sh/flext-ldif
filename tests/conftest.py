@@ -284,7 +284,8 @@ def validate_flext_result_failure() -> Callable[[FlextResult[object]], dict[str,
 
 @pytest.fixture
 def flext_result_composition_helper() -> Callable[
-    [list[FlextResult[object]]], dict[str, object]
+    [list[FlextResult[object]]],
+    dict[str, object],
 ]:
     """Helper for testing FlextResult composition patterns."""
 

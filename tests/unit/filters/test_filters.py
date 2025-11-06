@@ -22,7 +22,8 @@ from flext_ldif.services.filters import FlextLdifFilters
 
 
 def create_test_entry(
-    dn_str: str, attributes: dict[str, list[str]]
+    dn_str: str,
+    attributes: dict[str, list[str]],
 ) -> FlextLdifModels.Entry:
     """Helper function to create test entries with proper attribute wrapping.
 
@@ -50,7 +51,8 @@ class TestExclusionMetadataTypeGuards:
     def test_is_entry_excluded_with_none_metadata(self) -> None:
         """Test is_entry_excluded when metadata is None."""
         entry = create_test_entry(
-            "cn=test,dc=example,dc=com", {"cn": ["test"], "objectClass": ["person"]}
+            "cn=test,dc=example,dc=com",
+            {"cn": ["test"], "objectClass": ["person"]},
         )
         # Entry has no metadata
         assert not FlextLdifFilters.is_entry_excluded(entry)
@@ -58,7 +60,8 @@ class TestExclusionMetadataTypeGuards:
     def test_is_entry_excluded_with_no_exclusion_info(self) -> None:
         """Test is_entry_excluded when metadata exists but has no exclusion_info."""
         entry = create_test_entry(
-            "cn=test,dc=example,dc=com", {"cn": ["test"], "objectClass": ["person"]}
+            "cn=test,dc=example,dc=com",
+            {"cn": ["test"], "objectClass": ["person"]},
         )
         # Manually add metadata without exclusion_info
         metadata = FlextLdifModels.QuirkMetadata(original_format="ldif", extensions={})
@@ -70,7 +73,8 @@ class TestExclusionMetadataTypeGuards:
     def test_is_entry_excluded_with_non_dict_exclusion_info(self) -> None:
         """Test is_entry_excluded when exclusion_info is not a dict."""
         entry = create_test_entry(
-            "cn=test,dc=example,dc=com", {"cn": ["test"], "objectClass": ["person"]}
+            "cn=test,dc=example,dc=com",
+            {"cn": ["test"], "objectClass": ["person"]},
         )
         # Create metadata with non-dict exclusion_info
         metadata = FlextLdifModels.QuirkMetadata(
@@ -85,15 +89,16 @@ class TestExclusionMetadataTypeGuards:
     def test_is_entry_excluded_with_missing_excluded_field(self) -> None:
         """Test is_entry_excluded when excluded field is missing."""
         entry = create_test_entry(
-            "cn=test,dc=example,dc=com", {"cn": ["test"], "objectClass": ["person"]}
+            "cn=test,dc=example,dc=com",
+            {"cn": ["test"], "objectClass": ["person"]},
         )
         # Create metadata with exclusion_info but missing 'excluded' field
         metadata = FlextLdifModels.QuirkMetadata(
             original_format="ldif",
             extensions={
                 "exclusion_info": {
-                    "exclusion_reason": "test reason"
-                }  # Missing 'excluded'
+                    "exclusion_reason": "test reason",
+                },  # Missing 'excluded'
             },
         )
         entry_with_metadata = entry.model_copy(update={"metadata": metadata})
@@ -104,7 +109,8 @@ class TestExclusionMetadataTypeGuards:
     def test_is_entry_excluded_with_non_bool_excluded(self) -> None:
         """Test is_entry_excluded when excluded value is not bool."""
         entry = create_test_entry(
-            "cn=test,dc=example,dc=com", {"cn": ["test"], "objectClass": ["person"]}
+            "cn=test,dc=example,dc=com",
+            {"cn": ["test"], "objectClass": ["person"]},
         )
         # Create metadata with non-bool excluded value
         metadata = FlextLdifModels.QuirkMetadata(
@@ -113,7 +119,7 @@ class TestExclusionMetadataTypeGuards:
                 "exclusion_info": {
                     "excluded": "true",  # String instead of bool
                     "exclusion_reason": "test",
-                }
+                },
             },
         )
         entry_with_metadata = entry.model_copy(update={"metadata": metadata})
@@ -124,7 +130,8 @@ class TestExclusionMetadataTypeGuards:
     def test_is_entry_excluded_with_true_excluded(self) -> None:
         """Test is_entry_excluded when excluded is True."""
         entry = create_test_entry(
-            "cn=test,dc=example,dc=com", {"cn": ["test"], "objectClass": ["person"]}
+            "cn=test,dc=example,dc=com",
+            {"cn": ["test"], "objectClass": ["person"]},
         )
         # Create metadata with excluded=True
         metadata = FlextLdifModels.QuirkMetadata(
@@ -133,7 +140,7 @@ class TestExclusionMetadataTypeGuards:
                 "exclusion_info": {
                     "excluded": True,
                     "exclusion_reason": "test reason",
-                }
+                },
             },
         )
         entry_with_metadata = entry.model_copy(update={"metadata": metadata})
@@ -144,7 +151,8 @@ class TestExclusionMetadataTypeGuards:
     def test_get_exclusion_reason_with_none_metadata(self) -> None:
         """Test get_exclusion_reason when metadata is None."""
         entry = create_test_entry(
-            "cn=test,dc=example,dc=com", {"cn": ["test"], "objectClass": ["person"]}
+            "cn=test,dc=example,dc=com",
+            {"cn": ["test"], "objectClass": ["person"]},
         )
         # Entry has no metadata
         assert FlextLdifFilters.get_exclusion_reason(entry) is None
@@ -152,7 +160,8 @@ class TestExclusionMetadataTypeGuards:
     def test_get_exclusion_reason_with_no_exclusion_info(self) -> None:
         """Test get_exclusion_reason when metadata exists but has no exclusion_info."""
         entry = create_test_entry(
-            "cn=test,dc=example,dc=com", {"cn": ["test"], "objectClass": ["person"]}
+            "cn=test,dc=example,dc=com",
+            {"cn": ["test"], "objectClass": ["person"]},
         )
         # Manually add metadata without exclusion_info
         metadata = FlextLdifModels.QuirkMetadata(original_format="ldif", extensions={})
@@ -164,7 +173,8 @@ class TestExclusionMetadataTypeGuards:
     def test_get_exclusion_reason_with_non_dict_exclusion_info(self) -> None:
         """Test get_exclusion_reason when exclusion_info is not a dict."""
         entry = create_test_entry(
-            "cn=test,dc=example,dc=com", {"cn": ["test"], "objectClass": ["person"]}
+            "cn=test,dc=example,dc=com",
+            {"cn": ["test"], "objectClass": ["person"]},
         )
         # Create metadata with non-dict exclusion_info
         metadata = FlextLdifModels.QuirkMetadata(
@@ -179,7 +189,8 @@ class TestExclusionMetadataTypeGuards:
     def test_get_exclusion_reason_with_missing_reason_field(self) -> None:
         """Test get_exclusion_reason when reason field is missing."""
         entry = create_test_entry(
-            "cn=test,dc=example,dc=com", {"cn": ["test"], "objectClass": ["person"]}
+            "cn=test,dc=example,dc=com",
+            {"cn": ["test"], "objectClass": ["person"]},
         )
         # Create metadata with exclusion_info but missing reason
         metadata = FlextLdifModels.QuirkMetadata(
@@ -194,13 +205,14 @@ class TestExclusionMetadataTypeGuards:
     def test_get_exclusion_reason_with_non_string_reason(self) -> None:
         """Test get_exclusion_reason when reason is not a string."""
         entry = create_test_entry(
-            "cn=test,dc=example,dc=com", {"cn": ["test"], "objectClass": ["person"]}
+            "cn=test,dc=example,dc=com",
+            {"cn": ["test"], "objectClass": ["person"]},
         )
         # Create metadata with non-string reason
         metadata = FlextLdifModels.QuirkMetadata(
             original_format="ldif",
             extensions={
-                "exclusion_info": {"excluded": True, "exclusion_reason": 123}
+                "exclusion_info": {"excluded": True, "exclusion_reason": 123},
             },  # Number instead of string
         )
         entry_with_metadata = entry.model_copy(update={"metadata": metadata})
@@ -211,7 +223,8 @@ class TestExclusionMetadataTypeGuards:
     def test_get_exclusion_reason_with_valid_reason(self) -> None:
         """Test get_exclusion_reason with valid reason string."""
         entry = create_test_entry(
-            "cn=test,dc=example,dc=com", {"cn": ["test"], "objectClass": ["person"]}
+            "cn=test,dc=example,dc=com",
+            {"cn": ["test"], "objectClass": ["person"]},
         )
         # Create metadata with valid exclusion_info
         metadata = FlextLdifModels.QuirkMetadata(
@@ -220,7 +233,7 @@ class TestExclusionMetadataTypeGuards:
                 "exclusion_info": {
                     "excluded": True,
                     "exclusion_reason": "test exclusion reason",
-                }
+                },
             },
         )
         entry_with_metadata = entry.model_copy(update={"metadata": metadata})
@@ -239,27 +252,31 @@ class TestRegexPatternErrors:
         """Test _matches_dn_pattern with invalid regex pattern."""
         with pytest.raises(ValueError, match="Invalid regex patterns"):
             FlextLdifFilters._matches_dn_pattern(
-                "cn=test,dc=example,dc=com", ["[invalid(regex"]
+                "cn=test,dc=example,dc=com",
+                ["[invalid(regex"],
             )
 
     def test_matches_dn_pattern_with_multiple_invalid_patterns(self) -> None:
         """Test _matches_dn_pattern with multiple invalid patterns."""
         with pytest.raises(ValueError, match="Invalid regex patterns"):
             FlextLdifFilters._matches_dn_pattern(
-                "cn=test,dc=example,dc=com", ["[bad", "(also bad", "valid.*"]
+                "cn=test,dc=example,dc=com",
+                ["[bad", "(also bad", "valid.*"],
             )
 
     def test_matches_dn_pattern_with_valid_regex(self) -> None:
         """Test _matches_dn_pattern with valid regex pattern."""
         result = FlextLdifFilters._matches_dn_pattern(
-            "cn=test,dc=example,dc=com", ["cn=.*,dc=example"]
+            "cn=test,dc=example,dc=com",
+            ["cn=.*,dc=example"],
         )
         assert result is True
 
     def test_matches_dn_pattern_no_match(self) -> None:
         """Test _matches_dn_pattern when no patterns match."""
         result = FlextLdifFilters._matches_dn_pattern(
-            "cn=test,dc=example,dc=com", ["cn=other.*"]
+            "cn=test,dc=example,dc=com",
+            ["cn=other.*"],
         )
         assert result is False
 
@@ -317,7 +334,10 @@ class TestExclusionMarkingInFilters:
         ]
 
         result = FlextLdifFilters.filter_entries_by_dn(
-            entries, "*,ou=users,*", mode="include", mark_excluded=True
+            entries,
+            "*,ou=users,*",
+            mode="include",
+            mark_excluded=True,
         )
 
         assert result.is_success
@@ -344,7 +364,10 @@ class TestExclusionMarkingInFilters:
         ]
 
         result = FlextLdifFilters.filter_entries_by_objectclass(
-            entries, "person", mode="include", mark_excluded=True
+            entries,
+            "person",
+            mode="include",
+            mark_excluded=True,
         )
 
         assert result.is_success
@@ -375,7 +398,10 @@ class TestExclusionMarkingInFilters:
         ]
 
         result = FlextLdifFilters.filter_entries_by_attributes(
-            entries, ["mail"], mode="include", mark_excluded=True
+            entries,
+            ["mail"],
+            mode="include",
+            mark_excluded=True,
         )
 
         assert result.is_success
@@ -396,7 +422,8 @@ class TestFilterEntriesByDnException:
         """Test filter_entries_by_dn handles exceptions gracefully."""
         # Create an entry and then manually corrupt it (break the contract)
         entry = create_test_entry(
-            "cn=test,dc=example,dc=com", {"cn": ["test"], "objectClass": ["person"]}
+            "cn=test,dc=example,dc=com",
+            {"cn": ["test"], "objectClass": ["person"]},
         )
 
         # For this test, we'll test the exception path by mocking a bad state
@@ -404,7 +431,10 @@ class TestFilterEntriesByDnException:
         # This is hard to test without mocking, so we test the success path thoroughly
         entries = [entry]
         result = FlextLdifFilters.filter_entries_by_dn(
-            entries, "*", mode="include", mark_excluded=False
+            entries,
+            "*",
+            mode="include",
+            mark_excluded=False,
         )
 
         assert result.is_success
@@ -419,11 +449,14 @@ class TestFilterEntriesByObjectClassException:
             create_test_entry(
                 "cn=test,dc=example,dc=com",
                 {"cn": ["test"], "objectClass": ["person"]},
-            )
+            ),
         ]
 
         result = FlextLdifFilters.filter_entries_by_objectclass(
-            entries, "person", mode="include", mark_excluded=False
+            entries,
+            "person",
+            mode="include",
+            mark_excluded=False,
         )
 
         assert result.is_success
@@ -439,11 +472,14 @@ class TestFilterEntriesByAttributesException:
             create_test_entry(
                 "cn=test,dc=example,dc=com",
                 {"cn": ["test"], "mail": ["test@ex"], "objectClass": ["person"]},
-            )
+            ),
         ]
 
         result = FlextLdifFilters.filter_entries_by_attributes(
-            entries, ["mail"], mode="include", mark_excluded=False
+            entries,
+            ["mail"],
+            mode="include",
+            mark_excluded=False,
         )
 
         assert result.is_success
@@ -509,7 +545,8 @@ class TestFilterEntryObjectClassesException:
     def test_filter_entry_objectclasses_removes_all(self) -> None:
         """Test filter_entry_objectclasses when all objectClasses would be removed."""
         entry = create_test_entry(
-            "cn=test,dc=example,dc=com", {"cn": ["test"], "objectClass": ["person"]}
+            "cn=test,dc=example,dc=com",
+            {"cn": ["test"], "objectClass": ["person"]},
         )
 
         # Try to remove the only objectClass
@@ -522,7 +559,8 @@ class TestFilterEntryObjectClassesException:
     def test_filter_entry_objectclasses_non_existent_to_filter(self) -> None:
         """Test filter_entry_objectclasses when filtering non-existent objectClasses."""
         entry = create_test_entry(
-            "cn=test,dc=example,dc=com", {"cn": ["test"], "objectClass": ["person"]}
+            "cn=test,dc=example,dc=com",
+            {"cn": ["test"], "objectClass": ["person"]},
         )
 
         # Try to filter a non-existent objectClass (should succeed, nothing to remove)
@@ -544,7 +582,8 @@ class TestCategorizeEntryTypeGuards:
         )
 
         category, _reason = FlextLdifFilters.categorize_entry(
-            entry, {"hierarchy_objectclasses": []}
+            entry,
+            {"hierarchy_objectclasses": []},
         )
 
         # Should handle minimal DN gracefully
@@ -559,7 +598,8 @@ class TestCategorizeEntryTypeGuards:
         )
 
         category, _reason = FlextLdifFilters.categorize_entry(
-            entry, {"hierarchy_objectclasses": []}
+            entry,
+            {"hierarchy_objectclasses": []},
         )
 
         # Should handle numeric value in DN gracefully
@@ -574,7 +614,8 @@ class TestCategorizeEntryTypeGuards:
         )
 
         category, _reason = FlextLdifFilters.categorize_entry(
-            entry, {"hierarchy_objectclasses": []}
+            entry,
+            {"hierarchy_objectclasses": []},
         )
 
         # Entry model enforces list format, so objectClass will be valid
@@ -603,7 +644,8 @@ class TestCategorizeEntryTypeGuards:
         )
 
         category, _reason = FlextLdifFilters.categorize_entry(
-            entry, {"hierarchy_objectclasses": []}
+            entry,
+            {"hierarchy_objectclasses": []},
         )
 
         # Should handle properly with valid attributes
@@ -627,7 +669,9 @@ class TestCategorizeEntryBlockedObjectClasses:
         whitelist_rules = {"blocked_objectclasses": ["blockedClass"]}
 
         category, reason = FlextLdifFilters.categorize_entry(
-            entry, rules, whitelist_rules
+            entry,
+            rules,
+            whitelist_rules,
         )
 
         assert category == "rejected"

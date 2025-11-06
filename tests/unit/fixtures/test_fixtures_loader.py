@@ -23,7 +23,8 @@ class TestFlextLdifFixturesLoader:
         """Test loading OID schema fixtures."""
         loader = FlextLdifFixtures.Loader()
         schema = loader.load(
-            FlextLdifFixtures.ServerType.OID, FlextLdifFixtures.FixtureType.SCHEMA
+            FlextLdifFixtures.ServerType.OID,
+            FlextLdifFixtures.FixtureType.SCHEMA,
         )
 
         assert schema
@@ -35,7 +36,8 @@ class TestFlextLdifFixturesLoader:
         """Test loading OID ACL fixtures."""
         loader = FlextLdifFixtures.Loader()
         acl = loader.load(
-            FlextLdifFixtures.ServerType.OID, FlextLdifFixtures.FixtureType.ACL
+            FlextLdifFixtures.ServerType.OID,
+            FlextLdifFixtures.FixtureType.ACL,
         )
 
         assert acl
@@ -46,7 +48,8 @@ class TestFlextLdifFixturesLoader:
         """Test loading OID entry fixtures."""
         loader = FlextLdifFixtures.Loader()
         entries = loader.load(
-            FlextLdifFixtures.ServerType.OID, FlextLdifFixtures.FixtureType.ENTRIES
+            FlextLdifFixtures.ServerType.OID,
+            FlextLdifFixtures.FixtureType.ENTRIES,
         )
 
         assert entries
@@ -99,7 +102,8 @@ class TestFlextLdifFixturesLoader:
         """Test getting fixture metadata."""
         loader = FlextLdifFixtures.Loader()
         metadata = loader.get_metadata(
-            FlextLdifFixtures.ServerType.OID, FlextLdifFixtures.FixtureType.SCHEMA
+            FlextLdifFixtures.ServerType.OID,
+            FlextLdifFixtures.FixtureType.SCHEMA,
         )
 
         assert metadata.server_type == FlextLdifFixtures.ServerType.OID
@@ -114,10 +118,12 @@ class TestFlextLdifFixturesLoader:
         loader = FlextLdifFixtures.Loader()
 
         assert loader.fixture_exists(
-            FlextLdifFixtures.ServerType.OID, FlextLdifFixtures.FixtureType.SCHEMA
+            FlextLdifFixtures.ServerType.OID,
+            FlextLdifFixtures.FixtureType.SCHEMA,
         )
         assert not loader.fixture_exists(
-            FlextLdifFixtures.ServerType.AD, FlextLdifFixtures.FixtureType.SCHEMA
+            FlextLdifFixtures.ServerType.AD,
+            FlextLdifFixtures.FixtureType.SCHEMA,
         )
 
 
@@ -271,7 +277,8 @@ class TestFlextLdifFixturesPytestIntegration:
         assert "inetorgperson" in oid_integration
 
     def test_fixtures_loader_fixture(
-        self, fixtures_loader: FlextLdifFixtures.Loader
+        self,
+        fixtures_loader: FlextLdifFixtures.Loader,
     ) -> None:
         """Test using fixtures_loader pytest fixture."""
         servers = fixtures_loader.get_available_servers()

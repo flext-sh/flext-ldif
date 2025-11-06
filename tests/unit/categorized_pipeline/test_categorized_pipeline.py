@@ -18,7 +18,7 @@ from flext_ldif.services.migration import (
 )
 
 pytestmark = pytest.mark.skip(
-    reason="Categorized pipeline functionality was removed - tests reflect old API"
+    reason="Categorized pipeline functionality was removed - tests reflect old API",
 )
 
 
@@ -380,14 +380,14 @@ class TestQuirksIntegration:
 
         categorized: dict[str, list[dict[str, object]]] = {
             "schema": [
-                {"dn": "cn=schema", "objectclass": ["subschema"], "attributes": {}}
+                {"dn": "cn=schema", "objectclass": ["subschema"], "attributes": {}},
             ],
             "hierarchy": [
                 {
                     "dn": "ou=test",
                     "objectclass": ["organizationalUnit"],
                     "attributes": {},
-                }
+                },
             ],
             "users": [],
             "groups": [],
@@ -507,7 +507,7 @@ class TestCategorizeEntries:
                 "dn": "cn=schema",
                 "objectClass": ["subschema"],
                 "attributeTypes": ["(1.3.6.1.4.1.1 NAME 'test')"],
-            }
+            },
         ]
 
         result = pipeline._categorize_entries(entries)
@@ -532,7 +532,7 @@ class TestCategorizeEntries:
                 "uid": "user1",
                 "cn": "User One",
                 "sn": "One",
-            }
+            },
         ]
 
         result = pipeline._categorize_entries(entries)
@@ -551,7 +551,8 @@ class TestCategorizeEntries:
         assert total_entries >= 1
 
     def test_categorize_with_organizational_entries(
-        self, temp_dirs: tuple[Path, Path]
+        self,
+        temp_dirs: tuple[Path, Path],
     ) -> None:
         """Test categorization of organizational/hierarchy entries."""
         input_dir, output_dir = temp_dirs
@@ -566,7 +567,7 @@ class TestCategorizeEntries:
                 "dn": "ou=users,dc=example,dc=com",
                 "objectClass": ["organizationalUnit"],
                 "ou": "users",
-            }
+            },
         ]
 
         result = pipeline._categorize_entries(entries)
@@ -575,7 +576,8 @@ class TestCategorizeEntries:
         assert isinstance(categorized["hierarchy"], list)
 
     def test_categorize_with_base_dn_filtering(
-        self, temp_dirs: tuple[Path, Path]
+        self,
+        temp_dirs: tuple[Path, Path],
     ) -> None:
         """Test categorization with base DN filtering."""
         input_dir, output_dir = temp_dirs
@@ -608,7 +610,8 @@ class TestCategorizeEntries:
         assert "rejected" in categorized
 
     def test_categorize_returns_proper_structure(
-        self, temp_dirs: tuple[Path, Path]
+        self,
+        temp_dirs: tuple[Path, Path],
     ) -> None:
         """Test that categorization returns proper structure."""
         input_dir, output_dir = temp_dirs
@@ -623,7 +626,7 @@ class TestCategorizeEntries:
                 "dn": "uid=test,ou=users,dc=example,dc=com",
                 "objectClass": ["person"],
                 "uid": "test",
-            }
+            },
         ]
 
         result = pipeline._categorize_entries(entries)
@@ -694,7 +697,8 @@ class TestTransformCategories:
         return input_dir, output_dir
 
     def test_transform_empty_categorized_entries(
-        self, temp_dirs: tuple[Path, Path]
+        self,
+        temp_dirs: tuple[Path, Path],
     ) -> None:
         """Test transformation of empty categorized dictionary."""
         input_dir, output_dir = temp_dirs
@@ -721,7 +725,8 @@ class TestTransformCategories:
         assert len(transformed) == 6
 
     def test_transform_with_forbidden_attributes(
-        self, temp_dirs: tuple[Path, Path]
+        self,
+        temp_dirs: tuple[Path, Path],
     ) -> None:
         """Test transformation filtering forbidden attributes."""
         input_dir, output_dir = temp_dirs
@@ -744,7 +749,7 @@ class TestTransformCategories:
                         "cn": "User One",
                         "userPassword": "secret",
                     },
-                }
+                },
             ],
             "groups": [],
             "acl": [],
@@ -758,7 +763,8 @@ class TestTransformCategories:
         assert len(transformed.get("users", [])) >= 1
 
     def test_transform_with_forbidden_objectclasses(
-        self, temp_dirs: tuple[Path, Path]
+        self,
+        temp_dirs: tuple[Path, Path],
     ) -> None:
         """Test transformation filtering forbidden objectClasses."""
         input_dir, output_dir = temp_dirs
@@ -776,7 +782,7 @@ class TestTransformCategories:
                     "dn": "ou=users,dc=example,dc=com",
                     "objectClass": ["organizationalUnit"],
                     "attributes": {"ou": "users"},
-                }
+                },
             ],
             "users": [],
             "groups": [],
@@ -791,7 +797,8 @@ class TestTransformCategories:
         assert isinstance(transformed["hierarchy"], list)
 
     def test_transform_with_both_forbidden_attributes_and_objectclasses(
-        self, temp_dirs: tuple[Path, Path]
+        self,
+        temp_dirs: tuple[Path, Path],
     ) -> None:
         """Test transformation with both attribute and objectClass filtering."""
         input_dir, output_dir = temp_dirs
@@ -815,7 +822,7 @@ class TestTransformCategories:
                         "cn": "Test",
                         "userPassword": "secret123",
                     },
-                }
+                },
             ],
             "groups": [],
             "acl": [],
@@ -829,7 +836,8 @@ class TestTransformCategories:
         assert len(transformed.get("users", [])) >= 0
 
     def test_transform_preserves_entry_structure(
-        self, temp_dirs: tuple[Path, Path]
+        self,
+        temp_dirs: tuple[Path, Path],
     ) -> None:
         """Test that transformation preserves entry structure."""
         input_dir, output_dir = temp_dirs
@@ -867,7 +875,8 @@ class TestTransformCategories:
             assert isinstance(user_entry, dict)
 
     def test_transform_handles_entries_without_attributes(
-        self, temp_dirs: tuple[Path, Path]
+        self,
+        temp_dirs: tuple[Path, Path],
     ) -> None:
         """Test transformation of entries without attributes key."""
         input_dir, output_dir = temp_dirs
@@ -885,7 +894,7 @@ class TestTransformCategories:
                 {
                     "dn": "ou=users,dc=example,dc=com",
                     "objectClass": ["organizationalUnit"],
-                }
+                },
             ],
             "users": [],
             "groups": [],
@@ -900,7 +909,8 @@ class TestTransformCategories:
         assert len(transformed) == 6
 
     def test_transform_filters_all_objectclasses_returns_failure(
-        self, temp_dirs: tuple[Path, Path]
+        self,
+        temp_dirs: tuple[Path, Path],
     ) -> None:
         """Test transformation fails when all objectClasses are filtered."""
         input_dir, output_dir = temp_dirs
@@ -922,7 +932,7 @@ class TestTransformCategories:
                         "uid": "user1",
                         "cn": "User",
                     },
-                }
+                },
             ],
             "groups": [],
             "acl": [],
@@ -936,7 +946,8 @@ class TestTransformCategories:
         assert len(transformed) == 6
 
     def test_transform_multiple_categories_independently(
-        self, temp_dirs: tuple[Path, Path]
+        self,
+        temp_dirs: tuple[Path, Path],
     ) -> None:
         """Test that each category is transformed independently."""
         input_dir, output_dir = temp_dirs
@@ -953,21 +964,21 @@ class TestTransformCategories:
                     "dn": "cn=schema",
                     "objectClass": ["subschema"],
                     "attributes": {"attributeTypes": "(1.1 NAME 'test')"},
-                }
+                },
             ],
             "hierarchy": [
                 {
                     "dn": "ou=users,dc=example,dc=com",
                     "objectClass": ["organizationalUnit"],
                     "attributes": {"ou": "users"},
-                }
+                },
             ],
             "users": [
                 {
                     "dn": "uid=user1,ou=users,dc=example,dc=com",
                     "objectClass": ["person"],
                     "attributes": {"uid": "user1", "cn": "User"},
-                }
+                },
             ],
             "groups": [],
             "acl": [],
@@ -995,7 +1006,8 @@ class TestPipelineExecute:
         return input_dir, output_dir
 
     def test_execute_with_empty_input_directory(
-        self, temp_dirs: tuple[Path, Path]
+        self,
+        temp_dirs: tuple[Path, Path],
     ) -> None:
         """Test execute on empty input directory returns empty result."""
         input_dir, output_dir = temp_dirs
@@ -1041,7 +1053,8 @@ cn: Test User
         assert execution is not None
 
     def test_execute_with_multiple_ldif_files(
-        self, temp_dirs: tuple[Path, Path]
+        self,
+        temp_dirs: tuple[Path, Path],
     ) -> None:
         """Test execute with multiple LDIF files."""
         input_dir, output_dir = temp_dirs
@@ -1053,7 +1066,7 @@ cn: Test User
         # Create second file
         ldif2 = input_dir / "users.ldif"
         ldif2.write_text(
-            "dn: uid=user1,dc=example,dc=com\nobjectClass: person\nuid: user1\n"
+            "dn: uid=user1,dc=example,dc=com\nobjectClass: person\nuid: user1\n",
         )
 
         pipeline = FlextLdifMigrationPipeline(
@@ -1068,7 +1081,8 @@ cn: Test User
         assert execution is not None
 
     def test_execute_creates_output_directory(
-        self, temp_dirs: tuple[Path, Path]
+        self,
+        temp_dirs: tuple[Path, Path],
     ) -> None:
         """Test that execute creates output directory if missing."""
         input_dir, _output_dir = temp_dirs
@@ -1076,7 +1090,7 @@ cn: Test User
         # Create LDIF file
         ldif_file = input_dir / "test.ldif"
         ldif_file.write_text(
-            "dn: dc=example,dc=com\nobjectClass: domain\ndc: example\n"
+            "dn: dc=example,dc=com\nobjectClass: domain\ndc: example\n",
         )
 
         # Use non-existent output directory
@@ -1095,7 +1109,8 @@ cn: Test User
             assert True
 
     def test_execute_with_categorization_rules(
-        self, temp_dirs: tuple[Path, Path]
+        self,
+        temp_dirs: tuple[Path, Path],
     ) -> None:
         """Test execute with complex categorization rules."""
         input_dir, output_dir = temp_dirs
@@ -1158,7 +1173,8 @@ uid: user2
         assert result.is_success
 
     def test_execute_with_forbidden_attributes(
-        self, temp_dirs: tuple[Path, Path]
+        self,
+        temp_dirs: tuple[Path, Path],
     ) -> None:
         """Test execute with forbidden attributes filtering."""
         input_dir, output_dir = temp_dirs
@@ -1183,7 +1199,8 @@ userPassword: secret123
         assert result.is_success
 
     def test_execute_with_forbidden_objectclasses(
-        self, temp_dirs: tuple[Path, Path]
+        self,
+        temp_dirs: tuple[Path, Path],
     ) -> None:
         """Test execute with forbidden objectClasses filtering."""
         input_dir, output_dir = temp_dirs
@@ -1241,7 +1258,8 @@ class TestBaseEntryValidation:
         assert pipeline._output_dir == output_dir
 
     def test_pipeline_stores_categorization_rules(
-        self, temp_dirs: tuple[Path, Path]
+        self,
+        temp_dirs: tuple[Path, Path],
     ) -> None:
         """Test that pipeline stores categorization rules."""
         input_dir, output_dir = temp_dirs
@@ -1373,7 +1391,8 @@ class TestFilterConfigStorage:
         assert pipeline._forbidden_attributes == forbidden_attrs
 
     def test_forbidden_objectclasses_storage(
-        self, temp_dirs: tuple[Path, Path]
+        self,
+        temp_dirs: tuple[Path, Path],
     ) -> None:
         """Test that forbidden objectClasses are stored in pipeline."""
         input_dir, output_dir = temp_dirs
@@ -1423,7 +1442,8 @@ class TestBasePipelineCapabilities:
         return input_dir, output_dir
 
     def test_pipeline_initializes_output_files(
-        self, temp_dirs: tuple[Path, Path]
+        self,
+        temp_dirs: tuple[Path, Path],
     ) -> None:
         """Test that pipeline initializes default output files mapping."""
         input_dir, output_dir = temp_dirs
@@ -1441,7 +1461,8 @@ class TestBasePipelineCapabilities:
         assert "users" in pipeline._output_files
 
     def test_pipeline_initializes_acl_service(
-        self, temp_dirs: tuple[Path, Path]
+        self,
+        temp_dirs: tuple[Path, Path],
     ) -> None:
         """Test that pipeline initializes ACL service."""
         input_dir, output_dir = temp_dirs
@@ -1455,7 +1476,8 @@ class TestBasePipelineCapabilities:
         assert pipeline._acl_service is not None
 
     def test_pipeline_initializes_dn_service(
-        self, temp_dirs: tuple[Path, Path]
+        self,
+        temp_dirs: tuple[Path, Path],
     ) -> None:
         """Test that pipeline initializes DN service."""
         input_dir, output_dir = temp_dirs
@@ -1469,7 +1491,8 @@ class TestBasePipelineCapabilities:
         assert pipeline._dn_service is not None
 
     def test_pipeline_initializes_dn_valued_attributes(
-        self, temp_dirs: tuple[Path, Path]
+        self,
+        temp_dirs: tuple[Path, Path],
     ) -> None:
         """Test that pipeline initializes DN-valued attributes list."""
         input_dir, output_dir = temp_dirs
@@ -1558,7 +1581,8 @@ class TestCreateOutputDirectory:
         return input_dir, output_dir
 
     def test_create_output_directory_success(
-        self, temp_dirs: tuple[Path, Path]
+        self,
+        temp_dirs: tuple[Path, Path],
     ) -> None:
         """Test successful output directory creation."""
         input_dir, output_dir = temp_dirs
@@ -1625,7 +1649,8 @@ class TestForbiddenAttributeFiltering:
 
     @pytest.fixture
     def pipeline_with_forbidden(
-        self, temp_dirs: tuple[Path, Path]
+        self,
+        temp_dirs: tuple[Path, Path],
     ) -> FlextLdifMigrationPipeline:
         """Create pipeline with forbidden attributes."""
         input_dir, output_dir = temp_dirs
@@ -1637,7 +1662,8 @@ class TestForbiddenAttributeFiltering:
         )
 
     def test_filter_removes_forbidden_attributes(
-        self, pipeline_with_forbidden: FlextLdifMigrationPipeline
+        self,
+        pipeline_with_forbidden: FlextLdifMigrationPipeline,
     ) -> None:
         """Test that forbidden attributes are removed."""
         attributes: dict[str, object] = {
@@ -1653,7 +1679,8 @@ class TestForbiddenAttributeFiltering:
         assert "mail" in result
 
     def test_filter_case_insensitive_matching(
-        self, pipeline_with_forbidden: FlextLdifMigrationPipeline
+        self,
+        pipeline_with_forbidden: FlextLdifMigrationPipeline,
     ) -> None:
         """Test case-insensitive attribute filtering."""
         attributes: dict[str, object] = {
@@ -1685,7 +1712,8 @@ class TestForbiddenAttributeFiltering:
         assert result == attributes
 
     def test_filter_all_attributes_forbidden(
-        self, pipeline_with_forbidden: FlextLdifMigrationPipeline
+        self,
+        pipeline_with_forbidden: FlextLdifMigrationPipeline,
     ) -> None:
         """Test filtering when all attributes are forbidden."""
         attributes: dict[str, object] = {
@@ -1697,7 +1725,8 @@ class TestForbiddenAttributeFiltering:
         assert result == {}
 
     def test_filter_preserves_other_attributes(
-        self, pipeline_with_forbidden: FlextLdifMigrationPipeline
+        self,
+        pipeline_with_forbidden: FlextLdifMigrationPipeline,
     ) -> None:
         """Test that non-forbidden attributes are preserved."""
         attributes: dict[str, object] = {
@@ -1729,7 +1758,8 @@ class TestForbiddenObjectClassFiltering:
 
     @pytest.fixture
     def pipeline_with_forbidden_oc(
-        self, temp_dirs: tuple[Path, Path]
+        self,
+        temp_dirs: tuple[Path, Path],
     ) -> FlextLdifMigrationPipeline:
         """Create pipeline with forbidden objectClasses."""
         input_dir, output_dir = temp_dirs
@@ -1741,17 +1771,19 @@ class TestForbiddenObjectClassFiltering:
         )
 
     def test_filter_invalid_entry_type(
-        self, pipeline_with_forbidden_oc: FlextLdifMigrationPipeline
+        self,
+        pipeline_with_forbidden_oc: FlextLdifMigrationPipeline,
     ) -> None:
         """Test that non-Entry types are rejected."""
         invalid_entry = {"dn": "cn=test,dc=example,dc=com"}
         result = pipeline_with_forbidden_oc._filter_forbidden_objectclasses(
-            invalid_entry
+            invalid_entry,
         )
         assert result.is_failure
 
     def test_pipeline_has_forbidden_objectclass_configuration(
-        self, pipeline_with_forbidden_oc: FlextLdifMigrationPipeline
+        self,
+        pipeline_with_forbidden_oc: FlextLdifMigrationPipeline,
     ) -> None:
         """Test that pipeline stores forbidden objectClass configuration."""
         assert hasattr(pipeline_with_forbidden_oc, "_forbidden_objectclasses")
@@ -1759,7 +1791,8 @@ class TestForbiddenObjectClassFiltering:
         assert "orclContainer" in pipeline_with_forbidden_oc._forbidden_objectclasses
 
     def test_pipeline_accepts_empty_forbidden_objectclass_list(
-        self, temp_dirs: tuple[Path, Path]
+        self,
+        temp_dirs: tuple[Path, Path],
     ) -> None:
         """Test that pipeline accepts empty forbidden objectClass list."""
         input_dir, output_dir = temp_dirs
@@ -1828,7 +1861,9 @@ class TestCategorizedPipelineWithRealFixtures:
         )
 
     def test_pipeline_with_real_oid_fixture_data(
-        self, temp_dirs: tuple[Path, Path], oid_fixture_path: Path
+        self,
+        temp_dirs: tuple[Path, Path],
+        oid_fixture_path: Path,
     ) -> None:
         """Test pipeline processing with real OID LDIF fixture data."""
         if not oid_fixture_path.exists():
@@ -1863,7 +1898,9 @@ class TestCategorizedPipelineWithRealFixtures:
             assert isinstance(output_data.entries_by_category, dict)
 
     def test_pipeline_attribute_filtering_with_fixture(
-        self, temp_dirs: tuple[Path, Path], oid_fixture_path: Path
+        self,
+        temp_dirs: tuple[Path, Path],
+        oid_fixture_path: Path,
     ) -> None:
         """Test attribute filtering on real fixture data."""
         if not oid_fixture_path.exists():
@@ -1904,7 +1941,8 @@ class TestCategorizedPipelineWithRealFixtures:
         assert "telephonenumber" in filtered
 
     def test_pipeline_base_dn_filtering_with_fixture(
-        self, temp_dirs: tuple[Path, Path]
+        self,
+        temp_dirs: tuple[Path, Path],
     ) -> None:
         """Test base DN filtering functionality."""
         input_dir, output_dir = temp_dirs
@@ -1932,7 +1970,8 @@ class TestCategorizedPipelineWithRealFixtures:
             assert result == expected_result, f"Failed for DN: {dn}"
 
     def test_pipeline_schema_whitelist_filtering(
-        self, temp_dirs: tuple[Path, Path]
+        self,
+        temp_dirs: tuple[Path, Path],
     ) -> None:
         """Test schema whitelist filtering."""
         input_dir, output_dir = temp_dirs
@@ -1953,7 +1992,8 @@ class TestCategorizedPipelineWithRealFixtures:
         assert pipeline._schema_whitelist_rules == schema_rules
 
     def test_pipeline_multiple_forbidden_configurations(
-        self, temp_dirs: tuple[Path, Path]
+        self,
+        temp_dirs: tuple[Path, Path],
     ) -> None:
         """Test pipeline with multiple filtering configurations."""
         input_dir, output_dir = temp_dirs
@@ -1978,7 +2018,8 @@ class TestCategorizedPipelineWithRealFixtures:
         assert "groups" in pipeline._categorization_rules
 
     def test_pipeline_output_directory_creation(
-        self, temp_dirs: tuple[Path, Path]
+        self,
+        temp_dirs: tuple[Path, Path],
     ) -> None:
         """Test that pipeline creates output directory structure."""
         input_dir, output_dir = temp_dirs
@@ -1994,7 +2035,8 @@ class TestCategorizedPipelineWithRealFixtures:
         assert pipeline._output_dir.exists()
 
     def test_pipeline_configuration_immutability(
-        self, temp_dirs: tuple[Path, Path]
+        self,
+        temp_dirs: tuple[Path, Path],
     ) -> None:
         """Test that pipeline configurations are properly initialized."""
         input_dir, output_dir = temp_dirs
@@ -2052,7 +2094,8 @@ class TestAclTransformation:
         assert len(transformed.get("acl", [])) == 0
 
     def test_transform_preserves_non_acl_entries(
-        self, temp_dirs: tuple[Path, Path]
+        self,
+        temp_dirs: tuple[Path, Path],
     ) -> None:
         """Test that non-ACL entries are preserved during transformation."""
         input_dir, output_dir = temp_dirs
@@ -2107,8 +2150,8 @@ class TestAclTransformation:
             "objectClass": ["access"],
             "attributes": {
                 "aci": [
-                    "(targetattr=*) (version 3.0; acl test; allow(read) userdn=ldap:///anyone;)"
-                ]
+                    "(targetattr=*) (version 3.0; acl test; allow(read) userdn=ldap:///anyone;)",
+                ],
             },
         }
 
@@ -2128,7 +2171,8 @@ class TestAclTransformation:
         assert len(transformed.get("acl", [])) >= 0
 
     def test_transform_with_forbidden_attributes_in_acl(
-        self, temp_dirs: tuple[Path, Path]
+        self,
+        temp_dirs: tuple[Path, Path],
     ) -> None:
         """Test forbidden attribute filtering is applied to ACL entries."""
         input_dir, output_dir = temp_dirs
@@ -2184,7 +2228,8 @@ class TestEntryConversion:
         return input_dir, output_dir
 
     def test_convert_preserves_entry_structure(
-        self, temp_dirs: tuple[Path, Path]
+        self,
+        temp_dirs: tuple[Path, Path],
     ) -> None:
         """Test that entry quirk conversion preserves DN and basic structure."""
         input_dir, output_dir = temp_dirs
@@ -2220,7 +2265,8 @@ class TestEntryConversion:
             assert users[0].get("dn") == "uid=user1,dc=example,dc=com"
 
     def test_convert_with_multiple_categories(
-        self, temp_dirs: tuple[Path, Path]
+        self,
+        temp_dirs: tuple[Path, Path],
     ) -> None:
         """Test entry conversion works across all 6 categories."""
         input_dir, output_dir = temp_dirs
@@ -2277,7 +2323,8 @@ class TestDnNormalization:
         return input_dir, output_dir
 
     def test_normalize_dn_with_group_members(
-        self, temp_dirs: tuple[Path, Path]
+        self,
+        temp_dirs: tuple[Path, Path],
     ) -> None:
         """Test DN normalization for group member references."""
         input_dir, output_dir = temp_dirs
@@ -2351,7 +2398,8 @@ class TestDnNormalization:
         assert len(transformed.get("schema", [])) == 1
 
     def test_normalize_with_no_dn_references(
-        self, temp_dirs: tuple[Path, Path]
+        self,
+        temp_dirs: tuple[Path, Path],
     ) -> None:
         """Test normalization with entries that have no DN references."""
         input_dir, output_dir = temp_dirs
@@ -2389,7 +2437,8 @@ class TestDnNormalization:
         assert len(transformed.get("users", [])) == 1
 
     def test_normalize_dn_references_in_multiple_categories(
-        self, temp_dirs: tuple[Path, Path]
+        self,
+        temp_dirs: tuple[Path, Path],
     ) -> None:
         """Test DN normalization works across multiple categories."""
         input_dir, output_dir = temp_dirs

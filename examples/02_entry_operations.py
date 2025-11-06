@@ -84,7 +84,7 @@ def build_custom_entry_example() -> None:
     print(
         f"Custom entry: {result.unwrap().dn}"
         if result.is_success
-        else f"Error: {result.error}"
+        else f"Error: {result.error}",
     )
 
 
@@ -159,7 +159,7 @@ def entry_model_usage() -> None:
     print(
         f"Wrote {len(ldif_output.unwrap())} bytes"
         if ldif_output.is_success
-        else f"Error: {ldif_output.error}"
+        else f"Error: {ldif_output.error}",
     )
 
 
@@ -202,7 +202,8 @@ def convert_formats_pipeline() -> None:
             parse_result = api.parse(Path("temp.json"))
             if parse_result.is_success:
                 entries_from_json = cast(
-                    "list[FlextLdifModels.Entry]", parse_result.unwrap()
+                    "list[FlextLdifModels.Entry]",
+                    parse_result.unwrap(),
                 )
                 print(f"Round-trip: {len(entries_from_json)} entries recovered")
 
