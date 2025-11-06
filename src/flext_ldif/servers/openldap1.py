@@ -32,14 +32,12 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
     """OpenLDAP 1.x Legacy Quirks - Complete Implementation."""
 
     # =========================================================================
-    # STANDARDIZED CONSTANTS FOR AUTO-DISCOVERY
-    # =========================================================================
-    # Top-level server identity attributes (moved from Constants)
-    SERVER_TYPE: ClassVar[str] = FlextLdifConstants.ServerTypes.OPENLDAP1
-    PRIORITY: ClassVar[int] = 10
-
     class Constants(FlextLdifServersRfc.Constants):
         """Standardized constants for OpenLDAP 1.x quirk."""
+
+        # Server identity and priority (defined at Constants level)
+        SERVER_TYPE: ClassVar[str] = FlextLdifConstants.ServerTypes.OPENLDAP1
+        PRIORITY: ClassVar[int] = 10
 
         CANONICAL_NAME: ClassVar[str] = "openldap1"
         ALIASES: ClassVar[frozenset[str]] = frozenset(["openldap1"])
@@ -63,45 +61,55 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
         )
 
         # OpenLDAP 1.x detection patterns (traditional slapd.conf)
-        OPENLDAP_1_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset([
-            "attributetype",
-            FlextLdifConstants.DictKeys.OBJECTCLASS.lower(),
-            "access",
-            "rootdn",
-            "rootpw",
-            "suffix",
-        ])
+        OPENLDAP_1_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset(
+            [
+                "attributetype",
+                FlextLdifConstants.DictKeys.OBJECTCLASS.lower(),
+                "access",
+                "rootdn",
+                "rootpw",
+                "suffix",
+            ],
+        )
 
         # OpenLDAP 1.x detection constants
         DETECTION_OID_PATTERN: ClassVar[str] = r"1\.3\.6\.1\.4\.1\.4203\."
         OBJECTCLASS_KEYWORD: ClassVar[str] = "objectclass"
         DETECTION_PATTERN: ClassVar[str] = r"\b(attributetype|objectclass|access)\b"
-        DETECTION_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset([
-            "attributetype",
-            "objectclass",
-            "access",
-            "rootdn",
-            "rootpw",
-            "suffix",
-        ])
+        DETECTION_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset(
+            [
+                "attributetype",
+                "objectclass",
+                "access",
+                "rootdn",
+                "rootpw",
+                "suffix",
+            ],
+        )
         DETECTION_WEIGHT: ClassVar[int] = 6
-        DETECTION_ATTRIBUTE_PREFIXES: ClassVar[frozenset[str]] = frozenset([
-            "attributetype",
-            "objectclass",
-            "access",
-            "rootdn",
-        ])
-        DETECTION_OBJECTCLASS_NAMES: ClassVar[frozenset[str]] = frozenset([
-            "top",
-            "domain",
-            "organizationalunit",
-            "person",
-            "groupofnames",
-        ])
-        DETECTION_DN_MARKERS: ClassVar[frozenset[str]] = frozenset([
-            "dc=",
-            "ou=",
-        ])
+        DETECTION_ATTRIBUTE_PREFIXES: ClassVar[frozenset[str]] = frozenset(
+            [
+                "attributetype",
+                "objectclass",
+                "access",
+                "rootdn",
+            ],
+        )
+        DETECTION_OBJECTCLASS_NAMES: ClassVar[frozenset[str]] = frozenset(
+            [
+                "top",
+                "domain",
+                "organizationalunit",
+                "person",
+                "groupofnames",
+            ],
+        )
+        DETECTION_DN_MARKERS: ClassVar[frozenset[str]] = frozenset(
+            [
+                "dc=",
+                "ou=",
+            ],
+        )
 
         # ACL parsing constants (migrated from _parse_acl method)
         ACL_TARGET_DN_PREFIX: ClassVar[str] = "dn="
@@ -168,10 +176,6 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
                 result = quirk.schema._parse_attribute(attr_def)
 
         """
-
-        # Server identification (override RFC base - required for Constants access)
-        SERVER_TYPE: ClassVar[str] = FlextLdifConstants.ServerTypes.OPENLDAP1
-        PRIORITY: ClassVar[int] = 20
 
         # Use patterns from Constants
 
@@ -559,7 +563,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
                     ),
                     permissions=permissions,
                     metadata=FlextLdifModels.QuirkMetadata.create_for(
-                        FlextLdifServersOpenldap1.Constants.SERVER_TYPE,
+                        self._get_server_type(),
                         original_format=acl_line,
                     ),
                     raw_acl=acl_line,

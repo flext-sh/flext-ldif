@@ -36,7 +36,7 @@ class TestOpenLdapFixtures:
         )
         result = ldif_api.parse(
             fixture_path,
-            server_type=FlextLdifServersOpenldap.Constants.SERVER_TYPE,
+            server_type="openldap",
         )
         assert result.is_success, f"Failed to parse schema fixture: {result.error}"
         # cn=config schema files don't parse as regular entries
@@ -85,8 +85,8 @@ class TestOpenLDAP2xSchemas:
 
     def test_initialization(self, server: FlextLdifServersOpenldap) -> None:
         """Test OpenLDAP 2.x schema quirk initialization."""
-        assert server.server_type == FlextLdifServersOpenldap.Constants.SERVER_TYPE
-        assert server.priority == FlextLdifServersOpenldap.Constants.PRIORITY
+        assert server.server_type == "openldap"
+        assert server.priority == 20
 
     def testcan_handle_attribute_with_olc_prefix(
         self,
@@ -401,10 +401,7 @@ class TestOpenLDAP2xAcls:
         assert acl_model.raw_acl == acl_line
         # name is optional, defaults to empty string
         assert acl_model.metadata is not None
-        assert (
-            acl_model.metadata.quirk_type
-            == FlextLdifServersOpenldap.Constants.SERVER_TYPE
-        )
+        assert acl_model.metadata.quirk_type == "openldap"
 
     def test_parse_with_index(self) -> None:
         """Test ACL parsing with index prefix."""
@@ -865,7 +862,7 @@ class TestOpenldapAclConvertAcl:
             ),
             permissions=FlextLdifModels.AclPermissions(write=True),
             metadata=FlextLdifModels.QuirkMetadata.create_for(
-                FlextLdifServersOpenldap.Constants.SERVER_TYPE,
+                "openldap",
             ),
             raw_acl="to attrs=userPassword by self write by * none",
         )

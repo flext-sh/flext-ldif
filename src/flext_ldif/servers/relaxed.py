@@ -41,16 +41,12 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
     """Relaxed mode server quirks for non-compliant LDIF."""
 
     # =========================================================================
-    # STANDARDIZED CONSTANTS FOR AUTO-DISCOVERY
-    # =========================================================================
-    # Top-level server identity attributes (moved from Constants)
-    SERVER_TYPE: ClassVar[str] = FlextLdifConstants.ServerTypes.RELAXED
-    PRIORITY: ClassVar[int] = 200
-
     class Constants(FlextLdifServersRfc.Constants):
         """Standardized constants for Relaxed (lenient) quirk."""
 
-        # Server identification
+        # Server identity and priority (defined at Constants level)
+        SERVER_TYPE: ClassVar[str] = FlextLdifConstants.ServerTypes.RELAXED
+        PRIORITY: ClassVar[int] = 200  # Lowest priority - fallback for broken LDIF
 
         # Auto-discovery constants
         CANONICAL_NAME: ClassVar[str] = "relaxed"
@@ -253,7 +249,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 attribute = parent_result.unwrap()
                 if not attribute.metadata:
                     attribute.metadata = FlextLdifModels.QuirkMetadata(
-                        quirk_type=FlextLdifServersRelaxed.Constants.SERVER_TYPE,
+                        quirk_type=self._get_server_type(),
                         original_format=attr_definition.strip(),
                         extensions={
                             FlextLdifServersRelaxed.Constants.METADATA_RELAXED_PARSED: True,
@@ -267,7 +263,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                         FlextLdifServersRelaxed.Constants.METADATA_RELAXED_PARSED
                     ] = True
                     attribute.metadata.quirk_type = (
-                        FlextLdifServersRelaxed.Constants.SERVER_TYPE
+                        self._get_server_type()
                     )
                     # Ensure original_format is set
                     if not attribute.metadata.original_format:
@@ -295,7 +291,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
 
                 # Return minimal attribute with relaxed metadata
                 metadata = FlextLdifModels.QuirkMetadata(
-                    quirk_type=FlextLdifServersRelaxed.Constants.SERVER_TYPE,
+                    quirk_type=self._get_server_type(),
                     original_format=attr_definition.strip(),
                     extensions={
                         FlextLdifServersRelaxed.Constants.METADATA_RELAXED_PARSED: True,
@@ -366,7 +362,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             """
             if not objectclass.metadata:
                 objectclass.metadata = FlextLdifModels.QuirkMetadata(
-                    quirk_type=FlextLdifServersRelaxed.Constants.SERVER_TYPE,
+                    quirk_type=self._get_server_type(),
                     original_format=original_definition.strip(),
                     extensions={
                         FlextLdifServersRelaxed.Constants.METADATA_RELAXED_PARSED: True,
@@ -380,7 +376,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                     FlextLdifServersRelaxed.Constants.METADATA_RELAXED_PARSED
                 ] = True
                 objectclass.metadata.quirk_type = (
-                    FlextLdifServersRelaxed.Constants.SERVER_TYPE
+                    self._get_server_type()
                 )
                 # Ensure original_format is set
                 if not objectclass.metadata.original_format:
@@ -513,7 +509,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             extensions[FlextLdifServersRelaxed.Constants.METADATA_RFC_PARSED] = False
 
             metadata = FlextLdifModels.QuirkMetadata(
-                quirk_type=FlextLdifServersRelaxed.Constants.SERVER_TYPE,
+                quirk_type=self._get_server_type(),
                 original_format=oc_definition.strip(),
                 extensions=extensions,
             )
@@ -681,7 +677,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                     # Enhance metadata to indicate relaxed mode
                     if not acl.metadata:
                         acl.metadata = FlextLdifModels.QuirkMetadata(
-                            quirk_type=FlextLdifServersRelaxed.Constants.SERVER_TYPE,
+                            quirk_type=self._get_server_type(),
                             original_format=acl_line.strip(),
                             extensions={
                                 FlextLdifServersRelaxed.Constants.METADATA_RELAXED_PARSED: True,
@@ -695,7 +691,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                             FlextLdifServersRelaxed.Constants.METADATA_RELAXED_PARSED
                         ] = True
                         acl.metadata.quirk_type = (
-                            FlextLdifServersRelaxed.Constants.SERVER_TYPE
+                            self._get_server_type()
                         )
                     return FlextResult[FlextLdifModels.Acl].ok(acl)
                 # Create minimal Acl model with relaxed parsing
@@ -712,7 +708,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                     permissions=FlextLdifModels.AclPermissions(),
                     raw_acl=acl_line,
                     metadata=FlextLdifModels.QuirkMetadata(
-                        quirk_type=FlextLdifServersRelaxed.Constants.SERVER_TYPE,
+                        quirk_type=self._get_server_type(),
                         original_format=acl_line.strip(),
                         extensions={
                             FlextLdifServersRelaxed.Constants.METADATA_RELAXED_PARSED: True,

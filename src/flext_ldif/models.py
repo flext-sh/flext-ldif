@@ -17,7 +17,7 @@ Notes:
 from __future__ import annotations
 
 import re
-from collections.abc import Callable, Iterator
+from collections.abc import Callable, Iterator, Mapping
 from typing import ClassVar
 
 from flext_core import FlextLogger, FlextModels, FlextResult
@@ -27,9 +27,6 @@ from flext_ldif.config import FlextLdifConfig
 from flext_ldif.constants import FlextLdifConstants
 
 logger = FlextLogger(__name__)
-
-# Type checking: FlextModels nested classes are runtime-available but mypy can't resolve them
-# We suppress type errors for base class inheritance from FlextModels.* to avoid false positives
 
 
 class FlextLdifModels(FlextModels):
@@ -363,7 +360,7 @@ class FlextLdifModels(FlextModels):
                             return acl_format
             except Exception as e:
                 # Quirk registry access failed - log and fall through to fallback
-                logger.debug(f"Failed to get ACL format from quirks: {e}")
+                logger.debug("Failed to get ACL format from quirks: %s", e)
 
             # Fallback to RFC ACI format
             from flext_ldif.servers.rfc import FlextLdifServersRfc
@@ -1215,8 +1212,8 @@ class FlextLdifModels(FlextModels):
                 # Extract DN
                 dn_str = str(getattr(ldap3_entry, "entry_dn", ""))
 
-                # Extract attributes - ldap3 provides dict[str, list[str]]
-                entry_attrs: dict[str, list[str]] = (
+                # Extract attributes - ldap3 provides dict with various types
+                entry_attrs_raw: object = (
                     getattr(ldap3_entry, "entry_attributes_as_dict", {})
                     if hasattr(ldap3_entry, "entry_attributes_as_dict")
                     else {}
@@ -1224,18 +1221,20 @@ class FlextLdifModels(FlextModels):
 
                 # Normalize to dict[str, list[str]] (ensure all values are lists of strings)
                 attrs_dict: dict[str, list[str]] = {}
-                for attr_name, attr_value_list in entry_attrs.items():
-                    if isinstance(attr_value_list, list):
-                        attrs_dict[attr_name] = [str(v) for v in attr_value_list]
-                    elif isinstance(attr_value_list, str):
-                        attrs_dict[attr_name] = [attr_value_list]
-                    else:
-                        attrs_dict[attr_name] = [str(attr_value_list)]
+                if isinstance(entry_attrs_raw, dict):
+                    for attr_name, attr_value_list in entry_attrs_raw.items():
+                        if isinstance(attr_value_list, list):
+                            attrs_dict[str(attr_name)] = [str(v) for v in attr_value_list]
+                        elif isinstance(attr_value_list, str):
+                            attrs_dict[str(attr_name)] = [attr_value_list]
+                        else:
+                            attrs_dict[str(attr_name)] = [str(attr_value_list)]
 
                 # Use Entry.create to handle DN and attribute conversion
+                # attrs_dict is already dict[str, list[str]], compatible with expected type
                 return cls.create(
                     dn=dn_str,
-                    attributes=attrs_dict,
+                    attributes=attrs_dict,  # type: ignore[arg-type]
                 )
 
             except Exception as e:
@@ -1328,7 +1327,7 @@ class FlextLdifModels(FlextModels):
 
         def matches_filter(
             self,
-            filter_func: Callable[[dict[str, list[str]]], bool] | None = None,
+            filter_func: Callable[[FlextLdifModels.Entry], bool] | None = None,
         ) -> bool:
             """Check if entry matches a filter function.
 
@@ -1345,7 +1344,9 @@ class FlextLdifModels(FlextModels):
             if filter_func is None:
                 return True
             try:
-                return filter_func(self)
+                # filter_func expects dict[str, list[str]] format
+                entry_dict = self.to_dict()
+                return filter_func(entry_dict)  # type: ignore[arg-type]
             except Exception:
                 return False
 
@@ -1545,7 +1546,7 @@ class FlextLdifModels(FlextModels):
             """Get attribute values lists."""
             return list(self.attributes.values())
 
-        def __iter__(self) -> Iterator[str]:
+        def __iter__(self) -> Iterator[str]:  # type: ignore[override]
             """Iterate over attribute names.
 
             Allows: for name in attributes_obj: ...
@@ -1600,12 +1601,12 @@ class FlextLdifModels(FlextModels):
         @classmethod
         def create(
             cls,
-            attrs_data: dict[str, object],
+            attrs_data: Mapping[str, object],
         ) -> FlextResult[FlextLdifModels.LdifAttributes]:
             """Create an LdifAttributes instance from data.
 
             Args:
-                attrs_data: Dictionary mapping attribute names to values
+                attrs_data: Mapping of attribute names to values (str, list[str], or object)
 
             Returns:
                 FlextResult with LdifAttributes instance or error
@@ -1797,8 +1798,8 @@ class FlextLdifModels(FlextModels):
             default_factory=dict,
             description="Entries organized by category",
         )
-        statistics: dict[str, object] = Field(  # PipelineStatistics
-            default_factory=dict,
+        statistics: FlextLdifModels.PipelineStatistics = Field(
+            default_factory=lambda: FlextLdifModels.PipelineStatistics(),
             description="Pipeline execution statistics",
         )
         file_paths: dict[str, str] = Field(
@@ -2226,9 +2227,9 @@ class FlextLdifModels(FlextModels):
             default_factory=list,
             description="List of migrated directory entries (Entry objects or dicts)",
         )
-        stats: dict[str, object] = Field(
+        stats: object = Field(
             default_factory=dict,
-            description="Migration statistics and metrics (will be MigrationStatistics)",
+            description="Migration statistics and metrics (MigrationStatistics or dict)",
         )
         output_files: list[str] = Field(
             default_factory=list,
@@ -2244,12 +2245,19 @@ class FlextLdifModels(FlextModels):
 
             """
             # Compute directly instead of accessing computed field properties
-            # stats can be dict or MigrationStatistics object - type: ignore for dynamic access
-            has_schema: bool = (
-                self.stats.total_schema_attributes > 0
-                or self.stats.total_schema_objectclasses > 0
-            )
-            has_entries: bool = self.stats.total_entries > 0
+            # stats can be dict or MigrationStatistics object
+            if isinstance(self.stats, dict):
+                has_schema = (
+                    self.stats.get("total_schema_attributes", 0) > 0
+                    or self.stats.get("total_schema_objectclasses", 0) > 0
+                )
+                has_entries = self.stats.get("total_entries", 0) > 0
+            else:
+                has_schema = (
+                    self.stats.total_schema_attributes > 0  # type: ignore[attr-defined]
+                    or self.stats.total_schema_objectclasses > 0  # type: ignore[attr-defined]
+                )
+                has_entries = self.stats.total_entries > 0  # type: ignore[attr-defined]
             return not has_schema and not has_entries
 
         @computed_field
@@ -2280,8 +2288,13 @@ class FlextLdifModels(FlextModels):
                 Dict with statistics, entry count, and output file count
 
             """
+            stats_summary = (
+                self.stats.statistics_summary
+                if hasattr(self.stats, "statistics_summary")
+                else self.stats
+            )
             return {
-                "statistics": self.stats.statistics_summary,
+                "statistics": stats_summary,
                 "entry_count": self.entry_count,
                 "output_files": self.output_file_count,
                 "is_empty": self.is_empty,

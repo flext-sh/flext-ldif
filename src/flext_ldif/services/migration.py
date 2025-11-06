@@ -18,7 +18,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pathlib import Path
-from typing import cast, override
+from typing import override
 
 from flext_core import FlextLogger, FlextResult, FlextService
 
@@ -126,10 +126,10 @@ class FlextLdifMigrationPipeline(
         input_filename: str | None = None,
         output_filename: str = "migrated.ldif",
         # Categorized mode parameters
-        categorization_rules: dict[str, object] | None = None,
+        categorization_rules: dict[str, list[str]] | None = None,
         input_files: list[str] | None = None,
         output_files: dict[str, str] | None = None,
-        schema_whitelist_rules: dict[str, object] | None = None,
+        schema_whitelist_rules: dict[str, list[str]] | None = None,
         # Structured mode (6-file) parameters
         migration_config: FlextLdifModels.MigrationConfig | None = None,
         write_options: FlextLdifModels.WriteFormatOptions | None = None,
@@ -201,7 +201,7 @@ class FlextLdifMigrationPipeline(
         # Mode-specific parameters
         self._input_filename = input_filename
         self._output_filename = output_filename
-        self._categorization_rules = categorization_rules or {}
+        self._categorization_rules: dict[str, list[str]] = categorization_rules or {}
         self._input_files = input_files
         self._migration_config = migration_config
         self._write_options = write_options
@@ -220,7 +220,7 @@ class FlextLdifMigrationPipeline(
                 FlextLdifConstants.Categories.ACL: "04-acl.ldif",
                 FlextLdifConstants.Categories.REJECTED: "05-rejected.ldif",
             }
-        self._schema_whitelist_rules = schema_whitelist_rules
+        self._schema_whitelist_rules: dict[str, list[str]] = schema_whitelist_rules or {}
 
         # Common parameters
         self._source_server = source_server
@@ -295,10 +295,10 @@ class FlextLdifMigrationPipeline(
                 # Empty input is OK - return empty result
                 empty_result = FlextLdifModels.PipelineExecutionResult(
                     entries_by_category={},
-                    statistics={
-                        "total_entries": 0,
-                        "processed_entries": 0,
-                    },
+                    statistics=FlextLdifModels.PipelineStatistics(
+                        total_entries=0,
+                        processed_entries=0,
+                    ),
                     file_paths={},
                 )
                 return FlextResult[FlextLdifModels.PipelineExecutionResult].ok(
@@ -396,8 +396,8 @@ class FlextLdifMigrationPipeline(
                 if any(attr in entry.attributes.attributes for attr in acl_config):
                     acl_entries.append(entry)
                     acl_dns.add(FlextLdifUtilities.DN.get_dn_value(entry.dn))
-            except Exception:
-                logger.exception("[PIPELINE] Error processing entry %s", idx)
+            except Exception as e:
+                logger.exception(f"[PIPELINE] Error processing entry {idx}", exception=e)
                 raise
 
         categorized[FlextLdifConstants.Categories.ACL] = acl_entries
@@ -436,10 +436,7 @@ class FlextLdifMigrationPipeline(
             ):
                 result = FlextLdifFilters.filter_schema_by_oids(
                     entries=cat_entries,
-                    allowed_oids=cast(
-                        "dict[str, list[str]]",
-                        self._schema_whitelist_rules,
-                    ),
+                    allowed_oids=self._schema_whitelist_rules,
                 )
                 filtered = result.unwrap() if result.is_success else cat_entries
             else:
@@ -557,7 +554,7 @@ class FlextLdifMigrationPipeline(
         return FlextResult[FlextLdifModels.PipelineExecutionResult].ok(
             FlextLdifModels.PipelineExecutionResult(
                 entries_by_category=final,
-                statistics=stats.model_dump(),  # Convert to dict for Pydantic v2
+                statistics=stats,
                 file_paths=file_paths,
             ),
         )

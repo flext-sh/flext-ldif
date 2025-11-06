@@ -20,14 +20,12 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
     """389 Directory Server quirks implementation."""
 
     # =========================================================================
-    # STANDARDIZED CONSTANTS FOR AUTO-DISCOVERY
-    # =========================================================================
-    # Top-level server identity attributes (moved from Constants)
-    SERVER_TYPE: ClassVar[str] = FlextLdifConstants.ServerTypes.DS_389
-    PRIORITY: ClassVar[int] = 10
-
     class Constants(FlextLdifServersRfc.Constants):
         """Standardized constants for 389 Directory Server quirk."""
+
+        # Server identity and priority (defined at Constants level)
+        SERVER_TYPE: ClassVar[str] = FlextLdifConstants.ServerTypes.DS_389
+        PRIORITY: ClassVar[int] = 30
 
         CANONICAL_NAME: ClassVar[str] = "389ds"
         ALIASES: ClassVar[frozenset[str]] = frozenset(["389ds"])
@@ -42,20 +40,22 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
 
         # 389 Directory Server operational attributes (server-specific)
         # Migrated from FlextLdifConstants.OperationalAttributeMappings
-        OPERATIONAL_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset([
-            "createTimestamp",
-            "modifyTimestamp",
-            "creatorsName",
-            "modifiersName",
-            "nsUniqueId",
-            "entryid",
-            "dncomp",
-            "parentid",
-            "passwordExpirationTime",
-            "passwordHistory",
-            "nscpEntryDN",
-            "nsds5ReplConflict",
-        ])
+        OPERATIONAL_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset(
+            [
+                "createTimestamp",
+                "modifyTimestamp",
+                "creatorsName",
+                "modifiersName",
+                "nsUniqueId",
+                "entryid",
+                "dncomp",
+                "parentid",
+                "passwordExpirationTime",
+                "passwordHistory",
+                "nscpEntryDN",
+                "nsds5ReplConflict",
+            ],
+        )
 
         # 389DS extends RFC permissions with "proxy" and "all"
         SUPPORTED_PERMISSIONS: ClassVar[frozenset[str]] = (
@@ -66,35 +66,43 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
         # Detection constants (server-specific)
         # Migrated from FlextLdifConstants.LdapServerDetection
         DETECTION_OID_PATTERN: ClassVar[str] = r"2\.16\.840\.1\.113730\."
-        DETECTION_ATTRIBUTE_PREFIXES: ClassVar[frozenset[str]] = frozenset([
-            "nsslapd-",
-            "nsds",
-            "nsuniqueid",
-        ])
+        DETECTION_ATTRIBUTE_PREFIXES: ClassVar[frozenset[str]] = frozenset(
+            [
+                "nsslapd-",
+                "nsds",
+                "nsuniqueid",
+            ],
+        )
 
         # Server detection patterns and weights
         # Migrated from FlextLdifConstants.ServerDetection
         DETECTION_PATTERN: ClassVar[str] = r"\b(389ds|redhat-ds|dirsrv)\b"
-        DETECTION_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset([
-            "nsuniqueId",
-            "nsslapd-",
-            "nsds5replica",
-            "nsds5replicationagreement",
-        ])
+        DETECTION_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset(
+            [
+                "nsuniqueId",
+                "nsslapd-",
+                "nsds5replica",
+                "nsds5replicationagreement",
+            ],
+        )
         DETECTION_WEIGHT: ClassVar[int] = 6
-        DETECTION_OBJECTCLASS_NAMES: ClassVar[frozenset[str]] = frozenset([
-            "nscontainer",
-            "nsperson",
-            "nsds5replica",
-            "nsds5replicationagreement",
-            "nsorganizationalunit",
-            "nsorganizationalperson",
-        ])
-        DETECTION_DN_MARKERS: ClassVar[frozenset[str]] = frozenset([
-            "cn=config",
-            "cn=monitor",
-            "cn=changelog",
-        ])
+        DETECTION_OBJECTCLASS_NAMES: ClassVar[frozenset[str]] = frozenset(
+            [
+                "nscontainer",
+                "nsperson",
+                "nsds5replica",
+                "nsds5replicationagreement",
+                "nsorganizationalunit",
+                "nsorganizationalperson",
+            ],
+        )
+        DETECTION_DN_MARKERS: ClassVar[frozenset[str]] = frozenset(
+            [
+                "cn=config",
+                "cn=monitor",
+                "cn=changelog",
+            ],
+        )
 
         # Schema DN for 389 DS (RFC 4512 standard)
         SCHEMA_DN: ClassVar[str] = "cn=subschemasubentry"
@@ -112,15 +120,17 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
         ACL_SUBJECT_TYPE_ANONYMOUS: ClassVar[str] = "anyone"
 
         # 389 Directory Server specific attributes (migrated from FlextLdifConstants)
-        DS_389_SPECIFIC: ClassVar[frozenset[str]] = frozenset([
-            "nsuniqueId",
-            "nscpentrydn",
-            "nsds5replconflict",
-            "nsds5replicareferencen",
-            "nsds5beginreplicarefresh",
-            "nsds7windowsreplicasubentry",
-            "nsds7DirectoryReplicaSubentry",
-        ])
+        DS_389_SPECIFIC: ClassVar[frozenset[str]] = frozenset(
+            [
+                "nsuniqueId",
+                "nscpentrydn",
+                "nsds5replconflict",
+                "nsds5replicareferencen",
+                "nsds5beginreplicarefresh",
+                "nsds7windowsreplicasubentry",
+                "nsds7DirectoryReplicaSubentry",
+            ],
+        )
 
         # Schema attribute/objectClass parsing patterns
         SCHEMA_ATTRIBUTE_NAME_REGEX: ClassVar[str] = r"NAME\s+['\"]([\w-]+)['\"]"
@@ -296,7 +306,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             if result.is_success:
                 attr_data = result.unwrap()
                 metadata = FlextLdifModels.QuirkMetadata.create_for(
-                    FlextLdifServersDs389.Constants.SERVER_TYPE,
+                    self._get_server_type(),
                 )
                 return FlextResult[FlextLdifModels.SchemaAttribute].ok(
                     attr_data.model_copy(update={"metadata": metadata}),
@@ -323,7 +333,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                 FlextLdifUtilities.ObjectClass.fix_missing_sup(oc_data)
                 FlextLdifUtilities.ObjectClass.fix_kind_mismatch(oc_data)
                 metadata = FlextLdifModels.QuirkMetadata.create_for(
-                    FlextLdifServersDs389.Constants.SERVER_TYPE,
+                    self._get_server_type(),
                 )
                 return FlextResult[FlextLdifModels.SchemaObjectClass].ok(
                     oc_data.model_copy(update={"metadata": metadata}),
@@ -443,7 +453,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
 
                 # Build metadata
                 metadata = FlextLdifModels.QuirkMetadata.create_for(
-                    FlextLdifServersDs389.Constants.SERVER_TYPE,
+                    self._get_server_type(),
                 )
                 metadata.original_format = acl_line.strip()
 

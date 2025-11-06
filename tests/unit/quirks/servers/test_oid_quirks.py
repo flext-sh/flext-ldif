@@ -42,11 +42,9 @@ class TestOidSchemas:
 
     def test_initialization(self, oid_server: FlextLdifServersOid) -> None:
         """Test OID schema quirk initialization."""
-        # server_type and priority are ClassVar from Constants
-        assert (
-            FlextLdifServersOid.server_type == FlextLdifServersOid.Constants.SERVER_TYPE
-        )
-        assert FlextLdifServersOid.priority == FlextLdifServersOid.Constants.PRIORITY
+        # server_type and priority are class-level constants (moved from Constants in FASE 2)
+        assert FlextLdifServersOid.server_type == "oid"
+        assert FlextLdifServersOid.priority == 10
         # Verify nested quirks are initialized
         assert hasattr(oid_server, "schema")
         assert hasattr(oid_server, "acl")
@@ -528,7 +526,7 @@ class TestOidAcls:
 
         # Check it's an OID ACL model
         assert parsed.metadata is not None
-        assert parsed.metadata.quirk_type == FlextLdifServersOid.Constants.SERVER_TYPE
+        assert parsed.metadata.quirk_type == "oid"
 
         assert parsed.raw_acl == simple_orclaci
 
@@ -553,7 +551,7 @@ class TestOidAcls:
 
         # Check it's an OID ACL model
         assert parsed.metadata is not None
-        assert parsed.metadata.quirk_type == FlextLdifServersOid.Constants.SERVER_TYPE
+        assert parsed.metadata.quirk_type == "oid"
 
         assert parsed.raw_acl == complex_orclaci
 
@@ -576,7 +574,7 @@ class TestOidAcls:
 
         # Check it's an OID ACL model
         assert parsed.metadata is not None
-        assert parsed.metadata.quirk_type == FlextLdifServersOid.Constants.SERVER_TYPE
+        assert parsed.metadata.quirk_type == "oid"
 
     def test_parse_orclaci_from_fixtures(
         self,
@@ -605,7 +603,7 @@ class TestOidAcls:
 
         # Check it's an OID ACL model
         assert parsed.metadata is not None
-        assert parsed.metadata.quirk_type == FlextLdifServersOid.Constants.SERVER_TYPE
+        assert parsed.metadata.quirk_type == "oid"
 
     def test_parse_orclentrylevelaci_with_constraint(
         self,
@@ -626,7 +624,7 @@ class TestOidAcls:
 
         # Check it's an OID ACL model (entry-level type)
         assert parsed.metadata is not None
-        assert parsed.metadata.quirk_type == FlextLdifServersOid.Constants.SERVER_TYPE
+        assert parsed.metadata.quirk_type == "oid"
 
     def test_parse_orclentrylevelaci_from_fixtures(
         self,
@@ -657,7 +655,7 @@ class TestOidAcls:
 
         # Check it's an OID ACL model (entry-level type)
         assert parsed.metadata is not None
-        assert parsed.metadata.quirk_type == FlextLdifServersOid.Constants.SERVER_TYPE
+        assert parsed.metadata.quirk_type == "oid"
 
 
 class TestOidEntrys:

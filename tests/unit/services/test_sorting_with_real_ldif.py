@@ -486,7 +486,7 @@ class TestComprehensiveAPIUsage:
             result = FlextLdifSorting(
                 entries=oid_entries,
                 sort_target=target,
-                sort_by="hierarchy" if target == "entries" else "hierarchy",
+                sort_by="hierarchy",
             ).execute()
 
             assert result.is_success, f"Failed for target: {target}"

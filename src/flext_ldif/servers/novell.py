@@ -28,59 +28,79 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
     """Novell eDirectory quirks implementation."""
 
     # =========================================================================
-    # STANDARDIZED CONSTANTS FOR AUTO-DISCOVERY
-    # =========================================================================
-    # Top-level server identity attributes (moved from Constants)
-    SERVER_TYPE: ClassVar[str] = FlextLdifConstants.ServerTypes.NOVELL
-    PRIORITY: ClassVar[int] = 10
-
     class Constants(FlextLdifServersRfc.Constants):
         """Standardized constants for Novell eDirectory quirk."""
+
+        # Server identity and priority (defined at Constants level)
+        SERVER_TYPE: ClassVar[str] = FlextLdifConstants.ServerTypes.NOVELL
+        PRIORITY: ClassVar[int] = 20
 
         CANONICAL_NAME: ClassVar[str] = "novell_edirectory"
         ALIASES: ClassVar[frozenset[str]] = frozenset(["novell_edirectory", "novell"])
         CAN_NORMALIZE_FROM: ClassVar[frozenset[str]] = frozenset(["novell_edirectory"])
-        CAN_DENORMALIZE_TO: ClassVar[frozenset[str]] = frozenset([
-            "novell_edirectory",
-            "rfc",
-        ])
+        CAN_DENORMALIZE_TO: ClassVar[frozenset[str]] = frozenset(
+            [
+                "novell_edirectory",
+                "rfc",
+            ],
+        )
 
         # Novell eDirectory ACL format constants
         ACL_FORMAT: ClassVar[str] = "aci"  # Novell uses standard ACI
         ACL_ATTRIBUTE_NAME: ClassVar[str] = "aci"  # ACL attribute name
 
         # Novell eDirectory operational attributes (server-specific, extends RFC)
-        OPERATIONAL_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset([
-            "GUID",
-            "createTimestamp",
-            "modifyTimestamp",
-        ])
+        OPERATIONAL_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset(
+            [
+                "GUID",
+                "createTimestamp",
+                "modifyTimestamp",
+            ],
+        )
 
         # Detection constants (server-specific)
         DETECTION_OID_PATTERN: ClassVar[str] = r"2\.16\.840\.1\.113719\."
-        DETECTION_ATTRIBUTE_PREFIXES: ClassVar[frozenset[str]] = frozenset([
-            "nspm",
-            "login",
-            "dirxml-",
-        ])
-        DETECTION_OBJECTCLASS_NAMES: ClassVar[frozenset[str]] = frozenset([
-            "ndsperson",
-            "nspmpasswordpolicy",
-            "ndsserver",
-            "ndstree",
-            "ndsloginproperties",
-        ])
-        DETECTION_DN_MARKERS: ClassVar[frozenset[str]] = frozenset([
-            "ou=services",
-            "ou=apps",
-            "ou=system",
-        ])
-        DETECTION_ATTRIBUTE_MARKERS: ClassVar[frozenset[str]] = frozenset([
-            "nspmpasswordpolicy",
-            "nspmpasswordpolicydn",
-            "logindisabled",
-            "loginexpirationtime",
-        ])
+        DETECTION_PATTERN: ClassVar[str] = r"2\.16\.840\.1\.113719\."
+        DETECTION_WEIGHT: ClassVar[int] = 6
+        DETECTION_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset(
+            [
+                "guid",
+                "logintime",
+                "logingraceremaining",
+                "ndsloginproperties",
+            ],
+        )
+        DETECTION_ATTRIBUTE_PREFIXES: ClassVar[frozenset[str]] = frozenset(
+            [
+                "nspm",
+                "login",
+                "dirxml-",
+            ],
+        )
+        DETECTION_OBJECTCLASS_NAMES: ClassVar[frozenset[str]] = frozenset(
+            [
+                "ndsperson",
+                "nspmpasswordpolicy",
+                "ndsserver",
+                "ndstree",
+                "ndsloginproperties",
+            ],
+        )
+        DETECTION_DN_MARKERS: ClassVar[frozenset[str]] = frozenset(
+            [
+                "ou=services",
+                "ou=apps",
+                "ou=system",
+            ],
+        )
+        DETECTION_ATTRIBUTE_MARKERS: ClassVar[frozenset[str]] = frozenset(
+            [
+                "nspmpasswordpolicy",
+                "nspmpasswordpolicydn",
+                "logindisabled",
+                "loginexpirationtime",
+            ],
+        )
 
         # Novell ACL parsing indices (migrated from FlextLdifConstants.Acl)
         # Format: scope#trustee#rights
@@ -90,16 +110,18 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
         NOVELL_SEGMENT_INDEX_RIGHTS: ClassVar[int] = 2
 
         # Novell eDirectory specific attributes (migrated from FlextLdifConstants)
-        NOVELL_SPECIFIC: ClassVar[frozenset[str]] = frozenset([
-            "guid",
-            "nspmpasswordpolicy",
-            "login",
-            "nspmldapaccessgroup",
-            "nspmldapuser",
-            "ndsserver",
-            "ndstree",
-            "ndsloginproperties",
-        ])
+        NOVELL_SPECIFIC: ClassVar[frozenset[str]] = frozenset(
+            [
+                "guid",
+                "nspmpasswordpolicy",
+                "login",
+                "nspmldapaccessgroup",
+                "nspmldapuser",
+                "ndsserver",
+                "ndstree",
+                "ndsloginproperties",
+            ],
+        )
 
         # Schema-specific constants (migrated from nested Schema class)
         SCHEMA_ATTRIBUTE_NAME_REGEX: ClassVar[str] = r"NAME\s+\(?\s*'([^']+)'"
@@ -114,10 +136,12 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
         )
 
         # ACL-specific constants (migrated from nested Acl class)
-        ACL_ATTRIBUTE_NAMES: ClassVar[frozenset[str]] = frozenset([
-            "acl",
-            "inheritedacl",
-        ])
+        ACL_ATTRIBUTE_NAMES: ClassVar[frozenset[str]] = frozenset(
+            [
+                "acl",
+                "inheritedacl",
+            ],
+        )
         ACL_SEGMENT_SEPARATOR: ClassVar[str] = "#"
         ACL_DEFAULT_NAME: ClassVar[str] = "Novell eDirectory ACL"
 
@@ -292,7 +316,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             if result.is_success:
                 attr_data = result.unwrap()
                 metadata = FlextLdifModels.QuirkMetadata.create_for(
-                    FlextLdifServersNovell.Constants.SERVER_TYPE,
+                    self._get_server_type(),
                 )
                 return FlextResult[FlextLdifModels.SchemaAttribute].ok(
                     attr_data.model_copy(update={"metadata": metadata}),
@@ -316,7 +340,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             if result.is_success:
                 oc_data = result.unwrap()
                 metadata = FlextLdifModels.QuirkMetadata.create_for(
-                    FlextLdifServersNovell.Constants.SERVER_TYPE,
+                    self._get_server_type(),
                 )
                 return FlextResult[FlextLdifModels.SchemaObjectClass].ok(
                     oc_data.model_copy(update={"metadata": metadata}),
@@ -462,7 +486,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                         ),
                     ),
                     metadata=FlextLdifModels.QuirkMetadata.create_for(
-                        FlextLdifServersNovell.Constants.SERVER_TYPE,
+                        self._get_server_type(),
                         original_format=acl_line,
                     ),
                     raw_acl=acl_line,
@@ -537,10 +561,6 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
 
     class Entry(FlextLdifServersRfc.Entry):
         """Novell eDirectory entry quirk."""
-
-        # Server identification (override RFC base - required for Constants access)
-        SERVER_TYPE: ClassVar[str] = FlextLdifConstants.ServerTypes.NOVELL
-        PRIORITY: ClassVar[int] = 30
 
         # Entry detection uses Constants.DETECTION_DN_MARKERS and Constants.DETECTION_ATTRIBUTE_MARKERS
 
@@ -624,7 +644,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                 # Add metadata attributes
                 processed_attributes[
                     FlextLdifConstants.QuirkMetadataKeys.SERVER_TYPE
-                ] = [FlextLdifServersNovell.Constants.SERVER_TYPE]
+                ] = [self._get_server_type()]
                 processed_attributes[FlextLdifConstants.DictKeys.OBJECTCLASS] = (
                     object_classes
                 )

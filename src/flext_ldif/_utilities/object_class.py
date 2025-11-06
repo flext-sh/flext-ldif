@@ -53,7 +53,7 @@ class FlextLdifUtilitiesObjectClass:
     @staticmethod
     def fix_missing_sup(
         schema_oc: FlextLdifModels.SchemaObjectClass,
-        _server_type: str = "oid",
+        server_type: str = "oid",  # noqa: ARG004  # Reserved for server-specific logic
     ) -> None:
         """Fix missing SUP for AUXILIARY objectClasses (server-specific fixes).
 
@@ -65,7 +65,7 @@ class FlextLdifUtilitiesObjectClass:
 
         Args:
             schema_oc: ObjectClass model to potentially fix (modified in-place)
-            _server_type: Server type hint for logging (e.g., "oid", "oud") (unused)
+            server_type: Server type hint for logging (e.g., "oid", "oud") (unused)
 
         Returns:
             None - modifies schema_oc in-place

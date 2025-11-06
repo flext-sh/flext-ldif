@@ -8,6 +8,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import base64
 from collections.abc import Sequence
 from datetime import UTC, datetime
 from io import StringIO
@@ -16,6 +17,7 @@ from typing import Any
 
 from flext_core import FlextResult, FlextService
 
+from flext_ldif.config import FlextLdifConfig
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.services.server import FlextLdifServer
@@ -57,13 +59,22 @@ class FlextLdifWriter(FlextService[Any]):
 
     def __init__(
         self,
+        config: FlextLdifConfig | None = None,
+        quirk_registry: FlextLdifServer | None = None,
     ) -> None:
-        """Initialize the writer service."""
+        """Initialize the writer service.
+
+        Args:
+            config: Optional configuration (primarily for testing/injection)
+            quirk_registry: Optional quirk registry (primarily for testing/injection)
+
+        """
         super().__init__()
-        # The registry is a singleton, fetched at runtime.
-        # Parameters are accepted for backward compatibility but not used
-        self._registry = FlextLdifServer.get_global_instance()
+        # Use injected registry for testing, fallback to singleton for production
+        self._registry = quirk_registry or FlextLdifServer.get_global_instance()
         self._statistics_service = FlextLdifStatistics()
+        # Store config for potential use (not currently utilized in write operations)
+        self._config = config
 
     def write(
         self,
@@ -157,15 +168,17 @@ class FlextLdifWriter(FlextService[Any]):
 
         output = StringIO()
 
-        # Include version header if requested
-        if options.include_version_header:
-            output.write(FlextLdifConstants.ConfigDefaults.LDIF_VERSION_STRING + "\n")
+        # Only include headers and metadata if there are entries to write
+        if processed_entries:
+            # Include version header if requested
+            if options.include_version_header:
+                output.write(FlextLdifConstants.ConfigDefaults.LDIF_VERSION_STRING + "\n")
 
-        # Include global timestamp comment if requested
-        if options.include_timestamps:
-            timestamp = datetime.now(UTC).isoformat()
-            output.write(f"# Generated on: {timestamp}\n")
-            output.write(f"# Total entries: {len(processed_entries)}\n\n")
+            # Include global timestamp comment if requested
+            if options.include_timestamps:
+                timestamp = datetime.now(UTC).isoformat()
+                output.write(f"# Generated on: {timestamp}\n")
+                output.write(f"# Total entries: {len(processed_entries)}\n\n")
 
         # Delegate serialization to quirks - quirks handle ALL conversion logic
         entry_quirk = quirk.entry
@@ -174,6 +187,12 @@ class FlextLdifWriter(FlextService[Any]):
             raise ValueError(msg)
 
         for entry in processed_entries:
+            # Store write format options in entry metadata for quirk to access during write()
+            # This follows the pattern used by RFC Entry._write_entry() method
+            if entry.entry_metadata is None:
+                entry.entry_metadata = {}
+            entry.entry_metadata["_write_options"] = options
+
             # Call entry quirk's write() method - this handles DN conversion, etc.
             write_result = entry_quirk.write(entry)
             if write_result.is_failure:
@@ -209,7 +228,11 @@ class FlextLdifWriter(FlextService[Any]):
         """Execute service health check."""
         return FlextResult.ok(
             FlextLdifModels.WriteResponse(
-                statistics=FlextLdifModels.WriteStatistics(entries_written=0),
+                content=None,
+                statistics=FlextLdifModels.WriteStatistics(
+                    entries_written=0,
+                    output_file=None,
+                ),
             ),
         )
 
@@ -224,62 +247,167 @@ class FlextLdifWriter(FlextService[Any]):
     ) -> list[FlextLdifModels.Entry]:
         """Apply write formatting options to entries.
 
-        Processes entries according to format options like normalize_attribute_names
-        and sort_attributes.
+        Processes entries according to format options including:
+        - normalize_attribute_names: Convert attribute names to lowercase
+        - sort_attributes: Alphabetically sort attributes
+        - base64_encode_binary: Base64 encode binary/special values
+        - write_empty_values: Include/exclude empty string values
+        - respect_attribute_order: Respect metadata attribute order
 
         Args:
             entries: Original entries
             options: Format options to apply
 
         Returns:
-            List of processed entries
+            List of processed entries with formatting applied
 
         """
         # Check if any formatting is needed
         needs_formatting = (
-            options.normalize_attribute_names or options.sort_attributes
+            options.normalize_attribute_names
+            or options.sort_attributes
+            or options.base64_encode_binary
+            or not options.write_empty_values
+            or options.respect_attribute_order
         )
 
         if not needs_formatting:
             # No formatting needed, return as list
             return list(entries)
 
-        # Apply formatting options
-        processed: list[FlextLdifModels.Entry] = []
-        for entry in entries:
-            # Build new attributes dict with optional transformations
-            formatted_attrs: dict[str, list[str]] = {}
+        # Apply formatting options - delegate to helper method
+        return [self._format_single_entry(entry, options) for entry in entries]
 
-            for attr_name, values in entry.attributes.attributes.items():
-                # Normalize attribute name to lowercase if requested
-                final_attr_name = (
-                    attr_name.lower()
-                    if options.normalize_attribute_names
-                    else attr_name
-                )
+    def _format_single_entry(
+        self,
+        entry: FlextLdifModels.Entry,
+        options: FlextLdifModels.WriteFormatOptions,
+    ) -> FlextLdifModels.Entry:
+        """Format a single entry according to write options.
 
-                formatted_attrs[final_attr_name] = values
+        Args:
+            entry: Entry to format
+            options: Formatting options
 
-            # Sort attributes by key if requested
-            if options.sort_attributes:
-                # Sort case-insensitively to match expected behavior
-                sorted_attrs: dict[str, list[str]] = {}
-                for attr_name in sorted(
-                    formatted_attrs.keys(), key=str.lower
-                ):
-                    sorted_attrs[attr_name] = formatted_attrs[attr_name]
-                formatted_attrs = sorted_attrs
+        Returns:
+            Formatted entry with options attached for quirk server consumption
 
-            # Create new entry with formatted attributes
-            formatted_entry = FlextLdifModels.Entry(
-                dn=entry.dn,
-                attributes=FlextLdifModels.LdifAttributes(
-                    attributes=formatted_attrs
-                ),
+        """
+        formatted_attrs = self._format_attributes(
+            entry.attributes.attributes,
+            entry.metadata,
+            options,
+        )
+
+        # Sort attributes by key if requested
+        if options.sort_attributes:
+            sorted_attrs: dict[str, list[str]] = {}
+            for attr_name in sorted(formatted_attrs.keys(), key=str.lower):
+                sorted_attrs[attr_name] = formatted_attrs[attr_name]
+            formatted_attrs = sorted_attrs
+
+        # Store format options in entry_metadata so quirk server can access them
+        entry_metadata = entry.entry_metadata or {}
+        entry_metadata["_write_options"] = options
+
+        # Create new entry with formatted attributes
+        return FlextLdifModels.Entry(
+            dn=entry.dn,
+            attributes=FlextLdifModels.LdifAttributes(attributes=formatted_attrs),
+            metadata=entry.metadata,  # Preserve metadata
+            entry_metadata=entry_metadata,  # Pass options to quirk server
+        )
+
+    def _format_attributes(
+        self,
+        attributes: dict[str, list[str]],
+        metadata: FlextLdifModels.QuirkMetadata | None,
+        options: FlextLdifModels.WriteFormatOptions,
+    ) -> dict[str, list[str]]:
+        """Format entry attributes according to options.
+
+        Args:
+            attributes: Original attributes
+            metadata: Entry metadata for attribute ordering
+            options: Formatting options
+
+        Returns:
+            Formatted attributes dictionary
+
+        """
+        formatted_attrs: dict[str, list[str]] = {}
+
+        # Get attribute order from metadata
+        attr_order: list[str] | None = None
+        if options.respect_attribute_order and metadata:
+            extensions = metadata.extensions or {}
+            order_value = extensions.get("attribute_order")
+            if isinstance(order_value, list):
+                attr_order = order_value
+
+        # Process attributes in order
+        attrs_to_process = attributes
+        if attr_order:
+            ordered_attrs: dict[str, list[str]] = {}
+            for attr_name in attr_order:
+                if attr_name in attrs_to_process:
+                    ordered_attrs[attr_name] = attrs_to_process[attr_name]
+            for attr_name, values in attrs_to_process.items():
+                if attr_name not in ordered_attrs:
+                    ordered_attrs[attr_name] = values
+            attrs_to_process = ordered_attrs
+
+        for attr_name, values in attrs_to_process.items():
+            # Normalize attribute name if requested
+            final_attr_name = (
+                attr_name.lower() if options.normalize_attribute_names else attr_name
             )
-            processed.append(formatted_entry)
 
-        return processed
+            # Process values
+            processed_values = [
+                self._format_value(v, options)
+                for v in values
+                if options.write_empty_values or v
+            ]
+
+            if processed_values or options.write_empty_values:
+                formatted_attrs[final_attr_name] = processed_values
+
+        return formatted_attrs
+
+    def _format_value(
+        self,
+        value: str,
+        options: FlextLdifModels.WriteFormatOptions,
+    ) -> str:
+        """Format a single attribute value.
+
+        Args:
+            value: Value to format
+            options: Formatting options
+
+        Returns:
+            Formatted value
+
+        """
+        if not options.base64_encode_binary:
+            return value
+
+        # Check if value needs base64 encoding (binary, special chars, leading/trailing space)
+        min_printable = 32
+        max_printable = 126
+        needs_encoding = (
+            not isinstance(value, str)
+            or any(ord(c) < min_printable or ord(c) > max_printable for c in value)
+            or value.startswith((" ", ":"))
+            or value.endswith(" ")
+        )
+
+        if needs_encoding:
+            encoded = base64.b64encode(value.encode("utf-8")).decode("ascii")
+            return f"__BASE64__:{encoded}"
+
+        return value
 
     def _validate_write_request(
         self,
@@ -503,11 +631,12 @@ class FlextLdifWriter(FlextService[Any]):
         file_stats = write_result.unwrap()
         return FlextResult.ok(
             FlextLdifModels.WriteResponse(
+                content=None,
                 statistics=FlextLdifModels.WriteStatistics(
                     entries_written=original_count,
-                    output_file=file_stats["path"],
-                    file_size_bytes=file_stats["bytes_written"],
-                    encoding=file_stats["encoding"],
+                    output_file=str(file_stats.get("path", "")),
+                    file_size_bytes=int(file_stats.get("bytes_written", 0)) if isinstance(file_stats.get("bytes_written"), (int, str)) else 0,
+                    encoding=str(file_stats.get("encoding", "utf-8")),
                 ),
             ),
         )

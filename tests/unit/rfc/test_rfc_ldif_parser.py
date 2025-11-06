@@ -693,8 +693,8 @@ class TestRfcLdifWriterComprehensive:
 
         assert result.is_success
         content = result.unwrap()
-        # Empty entry list still includes LDIF version header
-        assert "version: 1" in content
+        # Empty entry list produces empty output (no entries, no headers)
+        assert content == "" or content.isspace()
 
     def test_write_entry_with_binary_data(
         self,

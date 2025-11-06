@@ -162,9 +162,10 @@ class FlextLdifAcl(FlextService[FlextLdifModels.AclResponse]):
             # (Caller will handle appropriately)
             return None
 
-        except (AttributeError, TypeError, ValueError):
+        except (AttributeError, TypeError, ValueError) as e:
             self._logger.exception(
-                f"Failed to get ACL attribute for server type {server_type}"
+                f"Failed to get ACL attribute for server type {server_type}",
+                exception=e,
             )
             return None
 

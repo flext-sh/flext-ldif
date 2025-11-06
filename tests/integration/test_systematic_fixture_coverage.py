@@ -77,7 +77,7 @@ class TestSystematicFixtureCoverage:
         assert roundtrip_result.is_success, f"Roundtrip parse failed: {roundtrip_result.error}"
         roundtrip_entries = roundtrip_result.unwrap()
         assert len(roundtrip_entries) == len(
-            entries
+            entries,
         ), f"Entry count mismatch: {len(roundtrip_entries)} != {len(entries)}"
 
     @pytest.mark.parametrize(
@@ -171,7 +171,7 @@ class TestSystematicFixtureCoverage:
         assert roundtrip_result.is_success, f"Roundtrip parse failed: {roundtrip_result.error}"
         roundtrip_entries = roundtrip_result.unwrap()
         assert len(roundtrip_entries) == len(
-            entries
+            entries,
         ), f"Entry count mismatch in roundtrip: {len(roundtrip_entries)} != {len(entries)}"
 
     @pytest.mark.parametrize(
@@ -235,7 +235,7 @@ class TestSystematicFixtureCoverage:
 
         # Validate roundtrip integrity
         assert len(roundtrip_entries) == len(
-            entries
+            entries,
         ), f"Entry count mismatch: {len(roundtrip_entries)} != {len(entries)}"
 
         # Validate DN preservation
@@ -274,12 +274,12 @@ class TestSystematicFixtureCoverage:
                     fixture_data = request.getfixturevalue(fixture_name)
                     assert fixture_data is not None, f"{fixture_name} returned None"
                     assert isinstance(
-                        fixture_data, str
+                        fixture_data, str,
                     ), f"{fixture_name} not a string: {type(fixture_data)}"
                     assert len(fixture_data) > 0, f"{fixture_name} is empty"
                 except Exception as e:
                     pytest.fail(
-                        f"Fixture {fixture_name} ({fixture_type}) not available: {e}"
+                        f"Fixture {fixture_name} ({fixture_type}) not available: {e}",
                     )
 
     def test_all_servers_support_basic_ldif_operations(

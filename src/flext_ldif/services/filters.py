@@ -563,7 +563,7 @@ class FlextLdifFilters(FlextService[list[FlextLdifModels.Entry]]):
 
                 # Create new LdifAttributes
                 attrs_result = FlextLdifModels.LdifAttributes.create(
-                    cast("dict[str, object]", filtered_attrs)
+                    cast("dict[str, object]", filtered_attrs),
                 )
                 if not attrs_result.is_success:
                     return FlextResult[FlextLdifModels.Entry].fail(attrs_result.error)
@@ -608,7 +608,7 @@ class FlextLdifFilters(FlextService[list[FlextLdifModels.Entry]]):
 
                 # Create new LdifAttributes
                 attrs_result = FlextLdifModels.LdifAttributes.create(
-                    cast("dict[str, object]", filtered_attrs)
+                    cast("dict[str, object]", filtered_attrs),
                 )
                 if not attrs_result.is_success:
                     return FlextResult[FlextLdifModels.Entry].fail(attrs_result.error)
@@ -652,7 +652,7 @@ class FlextLdifFilters(FlextService[list[FlextLdifModels.Entry]]):
             - cn=Schema,cn=Directory Integration Platform (ODIP config, NOT
             schema)
             """
-            return FlextLdifUtilities.Entry.is_schema_entry(entry, strict=True)
+            return FlextLdifUtilities.Entry.is_schema_entry(entry, strict=False)
 
         @staticmethod
         def has_acl_attributes(
@@ -1356,8 +1356,17 @@ class FlextLdifFilters(FlextService[list[FlextLdifModels.Entry]]):
         if not entries or not allowed_oids:
             return FlextResult[list[FlextLdifModels.Entry]].ok(entries)
 
-        allowed_attr_oids = allowed_oids.get("allowed_attribute_oids", [])
-        allowed_oc_oids = allowed_oids.get("allowed_objectclass_oids", [])
+        # Support multiple key formats
+        allowed_attr_oids = (
+            allowed_oids.get("allowed_attribute_oids")
+            or allowed_oids.get("attributes")
+            or []
+        )
+        allowed_oc_oids = (
+            allowed_oids.get("allowed_objectclass_oids")
+            or allowed_oids.get("objectclasses")
+            or []
+        )
 
         filtered = []
         for entry in entries:
@@ -1593,7 +1602,7 @@ class FlextLdifFilters(FlextService[list[FlextLdifModels.Entry]]):
     @staticmethod
     def virtual_delete(
         entries: list[FlextLdifModels.Entry],
-        filter_criteria: str | None = None,
+        filter_criteria: str | None = None,  # Reserved for future use
         dn_pattern: str | None = None,
     ) -> FlextResult[dict[str, list[FlextLdifModels.Entry]]]:
         """Perform virtual (soft) delete - marks entries as deleted."""

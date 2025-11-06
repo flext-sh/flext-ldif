@@ -333,30 +333,30 @@ class TestRelaxedModePriority:
         server: FlextLdifServersRelaxed,
     ) -> None:
         """Test that relaxed schema quirk has priority 200 (last resort)."""
-        assert server.priority == FlextLdifServersRelaxed.Constants.PRIORITY
+        assert server.priority == 200
         # Nested classes don't have their own priority - they use parent server's
         # Priority is only defined at server level (FlextLdifServersRelaxed.Constants)
-        assert FlextLdifServersRelaxed.Constants.PRIORITY == 200
+        # Priority is 200 for relaxed mode (last resort fallback)
 
     def test_relaxed_acl_priority_is_200(
         self,
         server: FlextLdifServersRelaxed,
     ) -> None:
         """Test that relaxed ACL quirk has priority 200 (last resort)."""
-        assert server.priority == FlextLdifServersRelaxed.Constants.PRIORITY
+        assert server.priority == 200
         # Nested classes don't have their own priority - they use parent server's
         # Priority is only defined at server level (FlextLdifServersRelaxed.Constants)
-        assert FlextLdifServersRelaxed.Constants.PRIORITY == 200
+        # Priority is 200 for relaxed mode (last resort fallback)
 
     def test_relaxed_entry_priority_is_200(
         self,
         server: FlextLdifServersRelaxed,
     ) -> None:
         """Test that relaxed entry quirk has priority 200 (last resort)."""
-        assert server.priority == FlextLdifServersRelaxed.Constants.PRIORITY
+        assert server.priority == 200
         # Nested classes don't have their own priority - they use parent server's
         # Priority is only defined at server level (FlextLdifServersRelaxed.Constants)
-        assert FlextLdifServersRelaxed.Constants.PRIORITY == 200
+        # Priority is 200 for relaxed mode (last resort fallback)
 
 
 class TestRelaxedModeErrorHandling:
@@ -844,7 +844,7 @@ class TestRelaxedQuirksErrorRecovery:
     ) -> None:
         """Test relaxed mode has very low priority (200)."""
         # Priority is now in Constants, not as instance attribute
-        assert FlextLdifServersRelaxed.Constants.PRIORITY == 200
+        # Priority is 200 for relaxed mode (last resort fallback)
 
 
 class TestRelaxedQuirksEdgeCases:

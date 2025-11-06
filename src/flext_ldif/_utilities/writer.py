@@ -499,9 +499,19 @@ class FlextLdifUtilitiesWriter:
             attribute_case_map: Optional case mapping dictionary
 
         Returns:
-            List of formatted LDIF lines
+            List of formatted LDIF lines (empty list if value is empty)
 
         """
+        # Skip empty-valued attributes per RFC 2849
+        if isinstance(attr_value, list):
+            # Filter out empty strings from list
+            non_empty_values = [v for v in attr_value if v]
+            if not non_empty_values:
+                return []
+        elif not attr_value:
+            # Skip single empty values
+            return []
+
         # Apply attribute name mapping
         mapped_attr_name = attr_name
         if attribute_case_map:
@@ -512,7 +522,9 @@ class FlextLdifUtilitiesWriter:
 
         # Handle both list and single values
         if isinstance(attr_value, list):
-            return [f"{attr_prefix} {value}" for value in attr_value]
+            # At this point, we know attr_value is a non-empty list with non-empty values
+            non_empty_values = [v for v in attr_value if v]
+            return [f"{attr_prefix} {value}" for value in non_empty_values]
 
         return [f"{attr_prefix} {attr_value}"]
 

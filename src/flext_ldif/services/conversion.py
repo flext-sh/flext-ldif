@@ -38,7 +38,7 @@ class FlextLdifConversion(
             "FlextLdifModels.SchemaObjectClass",
             "FlextLdifModels.Acl",
         ]
-    ]
+    ],
 ):
     """Facade for universal, model-driven quirk-to-quirk conversion.
 

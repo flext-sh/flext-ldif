@@ -13,14 +13,8 @@ class TestApacheDirectorySchemas:
     def test_initialization(self) -> None:
         """Test Apache Directory Server quirk initialization."""
         quirk = FlextLdifServersApache()
-        # Verify Constants are correctly defined
-        assert (
-            FlextLdifServersApache.Constants.SERVER_TYPE
-            == FlextLdifConstants.LdapServers.APACHE_DIRECTORY
-        )
-        assert FlextLdifServersApache.Constants.PRIORITY == 15
         # Verify instance properties work correctly
-        assert quirk.server_type == FlextLdifConstants.LdapServers.APACHE_DIRECTORY
+        assert quirk.server_type == "apache_directory"
         assert quirk.priority == 15
         # Verify nested instances exist
         assert quirk.schema is not None
@@ -310,24 +304,9 @@ class TestApacheDirectoryAcls:
 
     def test_acl_initialization(self) -> None:
         """Test ACL quirk initialization."""
-        FlextLdifServersApache()
-        assert (
-            FlextLdifServersApache.Constants.SERVER_TYPE
-            == FlextLdifConstants.LdapServers.APACHE_DIRECTORY
-        )
-        assert FlextLdifServersApache.Constants.PRIORITY == 15
-        # Verify class-level attributes are set from Constants
-        assert (
-            FlextLdifServersApache.Constants.SERVER_TYPE
-            == FlextLdifConstants.LdapServers.APACHE_DIRECTORY
-        )
-        assert FlextLdifServersApache.Constants.PRIORITY == 15
-        # Verify instance properties work correctly
         apache_instance = FlextLdifServersApache()
-        assert (
-            apache_instance.server_type
-            == FlextLdifConstants.LdapServers.APACHE_DIRECTORY
-        )
+        # Verify instance properties work correctly
+        assert apache_instance.server_type == "apache_directory"
         assert apache_instance.priority == 15
 
     def test__can_handle_with_ads_aci(self) -> None:
@@ -519,24 +498,9 @@ class TestApacheDirectoryEntrys:
 
     def test_entry_initialization(self) -> None:
         """Test entry quirk initialization."""
-        FlextLdifServersApache()
-        assert (
-            FlextLdifServersApache.Constants.SERVER_TYPE
-            == FlextLdifConstants.LdapServers.APACHE_DIRECTORY
-        )
-        assert FlextLdifServersApache.Constants.PRIORITY == 15
-        # Verify class-level attributes are set from Constants
-        assert (
-            FlextLdifServersApache.Constants.SERVER_TYPE
-            == FlextLdifConstants.LdapServers.APACHE_DIRECTORY
-        )
-        assert FlextLdifServersApache.Constants.PRIORITY == 15
-        # Verify instance properties work correctly
         apache_instance = FlextLdifServersApache()
-        assert (
-            apache_instance.server_type
-            == FlextLdifConstants.LdapServers.APACHE_DIRECTORY
-        )
+        # Verify instance properties work correctly
+        assert apache_instance.server_type == "apache_directory"
         assert apache_instance.priority == 15
 
     def test_can_handle_entry_with_ou_config(self) -> None:
