@@ -66,6 +66,9 @@ class FlextLdifSchema:
 
     """
 
+    # OID validation configuration
+    MIN_OID_PARTS: int = 2  # Minimum parts in OID (e.g., "1.2")
+
     def __init__(self, server_type: str) -> None:
         """Initialize schema service for a server type.
 
@@ -315,9 +318,9 @@ class FlextLdifSchema:
         if not oid:
             return False
 
-        # OID should be digits separated by dots (minimum 2 parts, e.g., "1.2")
+        # OID should be digits separated by dots (minimum parts required)
         parts = oid.split(".")
-        if len(parts) < 2:  # noqa: PLR2004
+        if len(parts) < FlextLdifSchema.MIN_OID_PARTS:
             return False
 
         return all(part.isdigit() for part in parts)
