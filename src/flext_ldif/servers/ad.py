@@ -40,15 +40,23 @@ class FlextLdifServersAd(FlextLdifServersRfc):
     - Entry: AD-specific entry transformations and normalization
     """
 
-    # === STANDARDIZED CONSTANTS FOR AUTO-DISCOVERY ===
+    # =========================================================================
+    # STANDARDIZED CONSTANTS FOR AUTO-DISCOVERY
+    # =========================================================================
+    # Top-level server identity attributes (moved from Constants)
+    SERVER_TYPE: ClassVar[str] = FlextLdifConstants.ServerTypes.AD
+    PRIORITY: ClassVar[int] = 10
+
     class Constants(FlextLdifServersRfc.Constants):
         """Standardized constants for Active Directory quirk."""
 
-        # === STANDARDIZED CONSTANTS (from FlextLdifServersRfc.Constants) ===
+        # Server identification (override RFC base)
         SERVER_TYPE: ClassVar[str] = FlextLdifConstants.ServerTypes.AD
+        PRIORITY: ClassVar[int] = 10
+
+        # === STANDARDIZED CONSTANTS (from FlextLdifServersRfc.Constants) ===
         CANONICAL_NAME: ClassVar[str] = "active_directory"
         ALIASES: ClassVar[frozenset[str]] = frozenset(["active_directory", "ad"])
-        PRIORITY: ClassVar[int] = 30
         CAN_NORMALIZE_FROM: ClassVar[frozenset[str]] = frozenset(["active_directory"])
         CAN_DENORMALIZE_TO: ClassVar[frozenset[str]] = frozenset([
             "active_directory",

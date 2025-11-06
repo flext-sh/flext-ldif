@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import enum as enum_module
 from collections.abc import Mapping
-from typing import ClassVar
+from typing import ClassVar, cast
 
 from flext_core import FlextLogger, FlextResult
 
@@ -57,13 +57,27 @@ class FlextLdifServersOid(FlextLdifServersRfc):
 
     """
 
+    # =========================================================================
+    # STANDARDIZED CONSTANTS FOR AUTO-DISCOVERY
+    # =========================================================================
+    # Top-level server identity attributes (moved from Constants)
+    SERVER_TYPE: ClassVar[str] = FlextLdifConstants.ServerTypes.OID
+    PRIORITY: ClassVar[int] = 10
+
     # === STANDARDIZED CONSTANTS FOR AUTO-DISCOVERY ===
     class Constants(FlextLdifServersRfc.Constants):
-        """Oracle Internet Directory-specific constants centralized for operations in oid.py.
+        """Oracle Internet Directory-specific constants for server operations.
 
-        These constants follow a standardized naming pattern that can be replicated
-        in other server quirks implementations for consistency.
+        Extends RFC baseline constants with OID-specific patterns for detection,
+        ACL format, attribute mappings, and schema configuration.
+
+        **Note**: SERVER_TYPE and PRIORITY are now at class level (not in Constants).
+        These are set once per server implementation for initialization via __init_subclass__.
         """
+
+        # Server identification (override RFC base - required for Constants access)
+        SERVER_TYPE: ClassVar[str] = FlextLdifConstants.ServerTypes.OID
+        PRIORITY: ClassVar[int] = 10
 
         # Oracle OID ACL attribute names
         ORCLACI: ClassVar[str] = "orclaci"  # Standard Oracle OID ACL
@@ -197,10 +211,8 @@ class FlextLdifServersOid(FlextLdifServersRfc):
         ])
 
         # === STANDARDIZED CONSTANTS FOR AUTO-DISCOVERY ===
-        SERVER_TYPE: ClassVar[str] = FlextLdifConstants.ServerTypes.OID
         CANONICAL_NAME: ClassVar[str] = "oid"
         ALIASES: ClassVar[frozenset[str]] = frozenset(["oid", "oracle_oid"])
-        PRIORITY: ClassVar[int] = 10
         CAN_NORMALIZE_FROM: ClassVar[frozenset[str]] = frozenset(["oid"])
         CAN_DENORMALIZE_TO: ClassVar[frozenset[str]] = frozenset(["oid", "rfc"])
 
@@ -505,11 +517,12 @@ class FlextLdifServersOid(FlextLdifServersRfc):
             FlextResult containing extracted attributes and objectclasses
 
         """
-        return self.schema.extract_schemas_from_ldif(ldif_content)
+        result = self.schema.extract_schemas_from_ldif(ldif_content)
+        return cast("FlextResult[dict[str, object]]", result)
 
     class Schema(
         FlextLdifServersRfc.Schema,
-        FlextLdifUtilities.Detection.OidPatternMixin,  # type: ignore[name-defined]
+        FlextLdifUtilities.Detection.OidPatternMixin,
     ):
         """Oracle OID schema quirks implementation.
 
@@ -654,10 +667,11 @@ class FlextLdifServersOid(FlextLdifServersRfc):
 
             """
             try:
-                # Use RFC baseline parser with lenient mode for OID's case-insensitive NAME
+                # Use RFC baseline parser for objectClass parsing
+                # Note: parse_rfc_objectclass does not support case_insensitive parameter
+                # OID case-insensitivity is handled during attribute NAME matching, not objectClass parsing
                 result = FlextLdifUtilities.Parser.parse_rfc_objectclass(
                     oc_definition,
-                    case_insensitive=True,  # OID uses case-insensitive NAME
                 )
 
                 if not result.is_success:

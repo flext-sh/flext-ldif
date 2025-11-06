@@ -16,6 +16,7 @@ from flext_core import FlextResult
 
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
+from flext_ldif.services.syntax import FlextLdifSyntax
 
 logger = logging.getLogger(__name__)
 
@@ -531,9 +532,6 @@ class FlextLdifUtilitiesParser:
 
             syntax_validation_error: str | None = None
             if syntax is not None and syntax.strip():
-                # Lazy import to avoid circular dependency
-                from flext_ldif.services.syntax import FlextLdifSyntax
-
                 syntax_service = FlextLdifSyntax()
                 validate_result = syntax_service.validate_oid(syntax)
                 if validate_result.is_failure:
@@ -647,10 +645,13 @@ class FlextLdifUtilitiesParser:
     @staticmethod
     def parse_rfc_objectclass(
         oc_definition: str,
-        *,
-        case_insensitive: bool = False,
     ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
-        """Parse RFC 4512 objectClass definition."""
+        """Parse RFC 4512 objectClass definition.
+
+        Args:
+            oc_definition: ObjectClass definition string
+
+        """
         try:
             oid_match = re.match(
                 FlextLdifConstants.LdifPatterns.SCHEMA_OID_EXTRACTION,

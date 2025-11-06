@@ -40,17 +40,25 @@ logger = FlextLogger(__name__)
 class FlextLdifServersRelaxed(FlextLdifServersRfc):
     """Relaxed mode server quirks for non-compliant LDIF."""
 
-    # === STANDARDIZED CONSTANTS FOR AUTO-DISCOVERY ===
+    # =========================================================================
+    # STANDARDIZED CONSTANTS FOR AUTO-DISCOVERY
+    # =========================================================================
+    # Top-level server identity attributes (moved from Constants)
+    SERVER_TYPE: ClassVar[str] = FlextLdifConstants.ServerTypes.RELAXED
+    PRIORITY: ClassVar[int] = 200
+
     class Constants(FlextLdifServersRfc.Constants):
         """Standardized constants for Relaxed (lenient) quirk."""
 
-        # Server identification
+        # Server identification (override RFC base - required for Constants access)
         SERVER_TYPE: ClassVar[str] = FlextLdifConstants.ServerTypes.RELAXED
+        PRIORITY: ClassVar[int] = 200
+
+        # Server identification
 
         # Auto-discovery constants
         CANONICAL_NAME: ClassVar[str] = "relaxed"
         ALIASES: ClassVar[frozenset[str]] = frozenset(["relaxed", "lenient"])
-        PRIORITY: ClassVar[int] = 200
         CAN_NORMALIZE_FROM: ClassVar[frozenset[str]] = frozenset(["relaxed"])
         CAN_DENORMALIZE_TO: ClassVar[frozenset[str]] = frozenset(["relaxed", "rfc"])
 
@@ -173,7 +181,54 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
         # - _write_attribute(): Uses RFC writer with relaxed error handling
         # - _write_objectclass(): Uses RFC writer with relaxed error handling
 
-        def _parse_attribute(  # noqa: C901
+        def _extract_oid_from_attribute(self, attr_definition: str) -> str | None:
+            """Extract OID from attribute definition using multiple strategies.
+
+            Tries in order:
+            1. RFC-compliant extraction using utilities
+            2. Numeric OID with parentheses
+            3. Numeric OID anywhere in string
+            4. Alphanumeric identifier (relaxed mode)
+
+            Args:
+                attr_definition: Attribute definition string
+
+            Returns:
+                Extracted OID string or None if not found
+
+            """
+            # Try RFC-compliant extraction first
+            oid = FlextLdifUtilities.Parser.extract_oid(attr_definition)
+            if oid:
+                return oid
+
+            # Try numeric OID with parentheses
+            oid_match = re.search(
+                FlextLdifServersRelaxed.Constants.OID_NUMERIC_WITH_PAREN,
+                attr_definition,
+            )
+            if oid_match:
+                return oid_match.group(1)
+
+            # Try numeric OID anywhere in string
+            oid_match = re.search(
+                FlextLdifServersRelaxed.Constants.OID_NUMERIC_ANYWHERE,
+                attr_definition,
+            )
+            if oid_match:
+                return oid_match.group(1)
+
+            # Try alphanumeric identifier (relaxed mode)
+            oid_match = re.search(
+                FlextLdifServersRelaxed.Constants.OID_ALPHANUMERIC_RELAXED,
+                attr_definition,
+            )
+            if oid_match:
+                return oid_match.group(1)
+
+            return None
+
+        def _parse_attribute(
             self,
             attr_definition: str,
         ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
@@ -228,34 +283,8 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 f"RFC parser failed, using best-effort parsing: {parent_result.error}",
             )
             try:
-                # Try to extract OID using utilities first (proper RFC-compliant extraction)
-                oid = FlextLdifUtilities.Parser.extract_oid(attr_definition)
-                if not oid:
-                    # If utilities can't extract numeric OID, try relaxed pattern (numeric OID)
-                    oid_match = re.search(
-                        FlextLdifServersRelaxed.Constants.OID_NUMERIC_WITH_PAREN,
-                        attr_definition,
-                    )
-                    if oid_match:
-                        oid = oid_match.group(1)
-                    else:
-                        # Last attempt: look for any numeric OID pattern (at least 2 numbers with dot)
-                        oid_match = re.search(
-                            FlextLdifServersRelaxed.Constants.OID_NUMERIC_ANYWHERE,
-                            attr_definition,
-                        )
-                        if oid_match:
-                            oid = oid_match.group(1)
-                    # Relaxed mode: if no numeric OID found, try alphanumeric identifier
-                    if not oid:
-                        # Match alphanumeric identifier after opening paren (relaxed mode)
-                        oid_match = re.search(
-                            FlextLdifServersRelaxed.Constants.OID_ALPHANUMERIC_RELAXED,
-                            attr_definition,
-                        )
-                        if oid_match:
-                            oid = oid_match.group(1)
-
+                # Extract OID using helper method with multiple strategies
+                oid = self._extract_oid_from_attribute(attr_definition)
                 if not oid:
                     return FlextResult[FlextLdifModels.SchemaAttribute].fail(
                         "Cannot extract OID from attribute definition",

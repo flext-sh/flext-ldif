@@ -376,8 +376,8 @@ class FlextLdifParser(FlextService[Any]):
             )
             return FlextResult.ok(default_type)
 
-        except (ValueError, TypeError, AttributeError) as e:
-            self._logger.exception(f"Error resolving server type: {e}")
+        except (ValueError, TypeError, AttributeError):
+            self._logger.exception("Error resolving server type")
             return FlextResult.ok(FlextLdifConstants.ServerTypes.RELAXED)
 
     def _process_single_entry(
@@ -510,10 +510,10 @@ class FlextLdifParser(FlextService[Any]):
             self._validate_entry_dn(entry, validation_errors)
 
             # Validate objectClass
-            self._validate_entry_objectclass(entry, strict, validation_errors)
+            self._validate_entry_objectclass(entry, strict=strict, errors=validation_errors)
 
             # Validate attribute values
-            self._validate_entry_attributes(entry, strict, validation_errors)
+            self._validate_entry_attributes(entry, strict=strict, errors=validation_errors)
 
             if validation_errors:
                 return FlextResult.fail("; ".join(validation_errors))
@@ -544,6 +544,7 @@ class FlextLdifParser(FlextService[Any]):
     def _validate_entry_objectclass(
         self,
         entry: FlextLdifModels.Entry,
+        *,
         strict: bool,
         errors: list[str],
     ) -> None:
@@ -565,6 +566,7 @@ class FlextLdifParser(FlextService[Any]):
     def _validate_entry_attributes(
         self,
         entry: FlextLdifModels.Entry,
+        *,
         strict: bool,
         errors: list[str],
     ) -> None:

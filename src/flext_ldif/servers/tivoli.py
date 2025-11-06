@@ -21,21 +21,21 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
     """Schema quirks for IBM Tivoli Directory Server."""
 
     # =========================================================================
-    # Server identification via descriptor - works at class and instance level
+    # STANDARDIZED CONSTANTS FOR AUTO-DISCOVERY
     # =========================================================================
-    # NOTE: server_type and priority are accessed via descriptors that support
-    # both class-level and instance-level access. Enables:
-    # - Class level: FlextLdifServersOid.server_type → "oid"
-    # - Instance level: instance.server_type → "oid"
+    # Top-level server identity attributes (moved from Constants)
+    SERVER_TYPE: ClassVar[str] = FlextLdifConstants.ServerTypes.IBM_TIVOLI
+    PRIORITY: ClassVar[int] = 10
 
-    # === STANDARDIZED CONSTANTS FOR AUTO-DISCOVERY ===
     class Constants(FlextLdifServersRfc.Constants):
         """Standardized constants for IBM Tivoli Directory Server quirk."""
 
+        # Server identification (override RFC base - required for Constants access)
         SERVER_TYPE: ClassVar[str] = FlextLdifConstants.ServerTypes.IBM_TIVOLI
+        PRIORITY: ClassVar[int] = 30
+
         CANONICAL_NAME: ClassVar[str] = "ibm_tivoli"
         ALIASES: ClassVar[frozenset[str]] = frozenset(["ibm_tivoli", "tivoli"])
-        PRIORITY: ClassVar[int] = 30
         CAN_NORMALIZE_FROM: ClassVar[frozenset[str]] = frozenset(["ibm_tivoli"])
         CAN_DENORMALIZE_TO: ClassVar[frozenset[str]] = frozenset(["ibm_tivoli", "rfc"])
 
@@ -178,6 +178,10 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
 
     class Schema(FlextLdifServersRfc.Schema):
         """IBM Tivoli Directory Server schema quirks implementation."""
+
+        # Server identification (override RFC base - required for Constants access)
+        SERVER_TYPE: ClassVar[str] = FlextLdifConstants.ServerTypes.IBM_TIVOLI
+        PRIORITY: ClassVar[int] = 30
 
         # INHERITED METHODS (from FlextLdifServersRfc.Schema)
         # These methods are inherited from RFC base class:

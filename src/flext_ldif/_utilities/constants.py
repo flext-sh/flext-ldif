@@ -15,10 +15,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
-
-if TYPE_CHECKING:
-    from collections.abc import Mapping
+from collections.abc import Mapping
 
 
 class FlextLdifUtilitiesConstants:
@@ -28,7 +25,7 @@ class FlextLdifUtilitiesConstants:
     # =========================================================================
 
     @staticmethod
-    def get_server_constants(server_type: str) -> type[Any] | None:
+    def get_server_constants(server_type: str) -> type[object] | None:
         """Get server-specific Constants class by server type.
 
         Args:
@@ -407,70 +404,70 @@ class FlextLdifUtilitiesConstants:
 # =============================================================================
 
 
-def _get_oid_constants() -> type[Any]:
+def _get_oid_constants() -> type[object]:
     """Lazy load OID server constants."""
     from flext_ldif.servers.oid import FlextLdifServersOid  # noqa: PLC0415
 
     return FlextLdifServersOid.Constants
 
 
-def _get_oud_constants() -> type[Any]:
+def _get_oud_constants() -> type[object]:
     """Lazy load OUD server constants."""
     from flext_ldif.servers.oud import FlextLdifServersOud  # noqa: PLC0415
 
     return FlextLdifServersOud.Constants
 
 
-def _get_openldap_constants() -> type[Any]:
+def _get_openldap_constants() -> type[object]:
     """Lazy load OpenLDAP 2.x server constants."""
     from flext_ldif.servers.openldap import FlextLdifServersOpenldap  # noqa: PLC0415
 
     return FlextLdifServersOpenldap.Constants
 
 
-def _get_openldap1_constants() -> type[Any]:
+def _get_openldap1_constants() -> type[object]:
     """Lazy load OpenLDAP 1.x server constants."""
     from flext_ldif.servers.openldap1 import FlextLdifServersOpenldap1  # noqa: PLC0415
 
     return FlextLdifServersOpenldap1.Constants
 
 
-def _get_ad_constants() -> type[Any]:
+def _get_ad_constants() -> type[object]:
     """Lazy load Active Directory server constants."""
     from flext_ldif.servers.ad import FlextLdifServersAd  # noqa: PLC0415
 
     return FlextLdifServersAd.Constants
 
 
-def _get_apache_constants() -> type[Any]:
+def _get_apache_constants() -> type[object]:
     """Lazy load Apache Directory Server constants."""
     from flext_ldif.servers.apache import FlextLdifServersApache  # noqa: PLC0415
 
     return FlextLdifServersApache.Constants
 
 
-def _get_ds389_constants() -> type[Any]:
+def _get_ds389_constants() -> type[object]:
     """Lazy load 389 Directory Server constants."""
     from flext_ldif.servers.ds389 import FlextLdifServersDs389  # noqa: PLC0415
 
     return FlextLdifServersDs389.Constants
 
 
-def _get_novell_constants() -> type[Any]:
+def _get_novell_constants() -> type[object]:
     """Lazy load Novell eDirectory constants."""
     from flext_ldif.servers.novell import FlextLdifServersNovell  # noqa: PLC0415
 
     return FlextLdifServersNovell.Constants
 
 
-def _get_tivoli_constants() -> type[Any]:
+def _get_tivoli_constants() -> type[object]:
     """Lazy load IBM Tivoli Directory Server constants."""
     from flext_ldif.servers.tivoli import FlextLdifServersTivoli  # noqa: PLC0415
 
     return FlextLdifServersTivoli.Constants
 
 
-def _get_relaxed_constants() -> type[Any]:
+def _get_relaxed_constants() -> type[object]:
     """Lazy load Relaxed mode constants."""
     from flext_ldif.servers.relaxed import FlextLdifServersRelaxed  # noqa: PLC0415
 

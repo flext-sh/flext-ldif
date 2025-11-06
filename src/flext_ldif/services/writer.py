@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Sequence
-from datetime import datetime
+from datetime import UTC, datetime
 from io import StringIO
 from pathlib import Path
 from typing import Any
@@ -57,17 +57,8 @@ class FlextLdifWriter(FlextService[Any]):
 
     def __init__(
         self,
-        config: object | None = None,  # Backward compatibility parameter (ignored)
-        quirk_registry: object
-        | None = None,  # Backward compatibility parameter (ignored)
     ) -> None:
-        """Initialize the writer service.
-
-        Args:
-            config: Deprecated parameter for backward compatibility (ignored)
-            quirk_registry: Deprecated parameter for backward compatibility (ignored)
-
-        """
+        """Initialize the writer service."""
         super().__init__()
         # The registry is a singleton, fetched at runtime.
         # Parameters are accepted for backward compatibility but not used
@@ -150,6 +141,9 @@ class FlextLdifWriter(FlextService[Any]):
             raise ValueError(msg)
         options = format_options
 
+        # Normalize attribute names if requested
+        processed_entries = self._apply_write_formatting(entries, options)
+
         # Get quirks for target server (returns list, use first)
         quirks_list = self._registry.gets(target_server_type)
         if not quirks_list:
@@ -169,9 +163,9 @@ class FlextLdifWriter(FlextService[Any]):
 
         # Include global timestamp comment if requested
         if options.include_timestamps:
-            timestamp = datetime.now().isoformat()
+            timestamp = datetime.now(UTC).isoformat()
             output.write(f"# Generated on: {timestamp}\n")
-            output.write(f"# Total entries: {len(entries)}\n\n")
+            output.write(f"# Total entries: {len(processed_entries)}\n\n")
 
         # Delegate serialization to quirks - quirks handle ALL conversion logic
         entry_quirk = quirk.entry
@@ -179,7 +173,7 @@ class FlextLdifWriter(FlextService[Any]):
             msg = f"No entry quirk available for server type: '{target_server_type}'"
             raise ValueError(msg)
 
-        for entry in entries:
+        for entry in processed_entries:
             # Call entry quirk's write() method - this handles DN conversion, etc.
             write_result = entry_quirk.write(entry)
             if write_result.is_failure:
@@ -187,6 +181,8 @@ class FlextLdifWriter(FlextService[Any]):
                 raise ValueError(msg)
             ldif_text = write_result.unwrap()
             output.write(ldif_text)
+            # RFC 2849: Add blank line separator between entries
+            output.write("\n")
 
         content = output.getvalue()
         output.close()
@@ -220,6 +216,70 @@ class FlextLdifWriter(FlextService[Any]):
     # ═══════════════════════════════════════════════════════════════════════════
     # PRIVATE PIPELINE METHODS (V2 Pattern - Single Responsibility)
     # ═══════════════════════════════════════════════════════════════════════════
+
+    def _apply_write_formatting(
+        self,
+        entries: Sequence[FlextLdifModels.Entry],
+        options: FlextLdifModels.WriteFormatOptions,
+    ) -> list[FlextLdifModels.Entry]:
+        """Apply write formatting options to entries.
+
+        Processes entries according to format options like normalize_attribute_names
+        and sort_attributes.
+
+        Args:
+            entries: Original entries
+            options: Format options to apply
+
+        Returns:
+            List of processed entries
+
+        """
+        # Check if any formatting is needed
+        needs_formatting = (
+            options.normalize_attribute_names or options.sort_attributes
+        )
+
+        if not needs_formatting:
+            # No formatting needed, return as list
+            return list(entries)
+
+        # Apply formatting options
+        processed: list[FlextLdifModels.Entry] = []
+        for entry in entries:
+            # Build new attributes dict with optional transformations
+            formatted_attrs: dict[str, list[str]] = {}
+
+            for attr_name, values in entry.attributes.attributes.items():
+                # Normalize attribute name to lowercase if requested
+                final_attr_name = (
+                    attr_name.lower()
+                    if options.normalize_attribute_names
+                    else attr_name
+                )
+
+                formatted_attrs[final_attr_name] = values
+
+            # Sort attributes by key if requested
+            if options.sort_attributes:
+                # Sort case-insensitively to match expected behavior
+                sorted_attrs: dict[str, list[str]] = {}
+                for attr_name in sorted(
+                    formatted_attrs.keys(), key=str.lower
+                ):
+                    sorted_attrs[attr_name] = formatted_attrs[attr_name]
+                formatted_attrs = sorted_attrs
+
+            # Create new entry with formatted attributes
+            formatted_entry = FlextLdifModels.Entry(
+                dn=entry.dn,
+                attributes=FlextLdifModels.LdifAttributes(
+                    attributes=formatted_attrs
+                ),
+            )
+            processed.append(formatted_entry)
+
+        return processed
 
     def _validate_write_request(
         self,

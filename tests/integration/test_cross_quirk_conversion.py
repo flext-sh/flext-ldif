@@ -311,12 +311,12 @@ class TestQuirksConversionMatrixFacade:
 
         # Schema support should be detected
         assert supported["attribute"] is True
-        assert supported["objectclass"] is True
+        assert supported["objectClass"] is True
 
-        # ACL and Entry are nested classes, not directly accessible
-        # So they appear as not supported in this check
-        assert supported["acl"] is False  # Nested class pattern
-        assert supported["entry"] is False  # Nested class pattern
+        # ACL support is not available for this check
+        # Entry support is available
+        assert supported["acl"] is False
+        assert supported["entry"] is True
 
     def test_convert_attribute_oud_to_oid(
         self,

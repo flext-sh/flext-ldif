@@ -111,7 +111,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import re
-from typing import override
+from typing import ClassVar, override
 
 from flext_core import FlextDecorators, FlextResult, FlextService
 
@@ -149,8 +149,8 @@ class FlextLdifValidation(FlextService[dict[str, object]]):
     # PYDANTIC FIELDS (for builder pattern)
     # ════════════════════════════════════════════════════════════════════════
 
-    attribute_names: list[str] = []
-    objectclass_names: list[str] = []
+    attribute_names: ClassVar[list[str]] = []
+    objectclass_names: ClassVar[list[str]] = []
     max_attr_value_length: int | None = None
 
     def __init__(self) -> None:

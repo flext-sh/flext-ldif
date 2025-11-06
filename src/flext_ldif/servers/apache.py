@@ -25,17 +25,25 @@ class FlextLdifServersApache(FlextLdifServersRfc):
     logic across servers.
     """
 
-    # === STANDARDIZED CONSTANTS FOR AUTO-DISCOVERY ===
+    # =========================================================================
+    # STANDARDIZED CONSTANTS FOR AUTO-DISCOVERY
+    # =========================================================================
+    # Top-level server identity attributes (moved from Constants)
+    SERVER_TYPE: ClassVar[str] = FlextLdifConstants.ServerTypes.APACHE
+    PRIORITY: ClassVar[int] = 10
+
     class Constants(FlextLdifServersRfc.Constants):
         """Standardized constants for Apache Directory Server quirk."""
 
-        # Server identification
+        # Server identification (override RFC base - required for Constants access)
         SERVER_TYPE: ClassVar[str] = FlextLdifConstants.ServerTypes.APACHE
+        PRIORITY: ClassVar[int] = 15
+
+        # Server identification
 
         # Auto-discovery constants
         CANONICAL_NAME: ClassVar[str] = "apache_directory"
         ALIASES: ClassVar[frozenset[str]] = frozenset(["apache_directory", "apache"])
-        PRIORITY: ClassVar[int] = 15
         CAN_NORMALIZE_FROM: ClassVar[frozenset[str]] = frozenset(["apache_directory"])
         CAN_DENORMALIZE_TO: ClassVar[frozenset[str]] = frozenset([
             "apache_directory",

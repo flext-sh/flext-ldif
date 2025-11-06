@@ -802,7 +802,7 @@ class FlextLdifFilters(FlextService[list[FlextLdifModels.Entry]]):
         @staticmethod
         def virtual_delete(
             entries: list[FlextLdifModels.Entry],
-            filter_criteria: str | None = None,
+            filter_criteria: str | None = None,  # noqa: ARG004 - reserved for future use
             dn_pattern: str | None = None,
         ) -> FlextResult[dict[str, list[FlextLdifModels.Entry]]]:
             """Perform virtual (soft) delete.

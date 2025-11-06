@@ -505,7 +505,7 @@ class FlextLdifDetector(FlextService[FlextLdifModels.ClientStatus]):
         )
 
         # IBM Tivoli detection - use server Constants
-                # Tivoli uses compiled regex pattern
+        # Tivoli uses compiled regex pattern
         tivoli_pattern = FlextLdifServersTivoli.Constants.DETECTION_PATTERN
         if isinstance(tivoli_pattern, re.Pattern) and tivoli_pattern.search(
             content_lower,

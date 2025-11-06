@@ -114,11 +114,11 @@ class FlextLdifServersRfc(FlextLdifServersBase):
     # STANDARDIZED CONSTANTS FOR AUTO-DISCOVERY
     # =========================================================================
     class Constants:
-        r"""Base server constants for all server quirks using Python 3.13 features.
+        r"""Server configuration constants for RFC baseline (RFC 4512 compliant).
 
         This class provides standardized configuration constants used by all
         server-specific Constants classes, eliminating duplication across all
-        12 server implementations.
+        server implementations.
 
         **Python 3.13 Design Patterns:**
         - Type aliases using `type` keyword for semantic constants
@@ -126,11 +126,12 @@ class FlextLdifServersRfc(FlextLdifServersBase):
         - Advanced mapping protocols for zero-cost abstractions
         - ClassVar annotations for explicit class-level state
 
+        **Note**: SERVER_TYPE and PRIORITY are now at class level (not in Constants).
+        These are set once per server implementation for initialization via __init_subclass__.
+
         **Standard Fields** (inherited by all servers):
-        - SERVER_TYPE: Server identifier (e.g., "oid", "oud", "rfc")
         - CANONICAL_NAME: Canonical name for display
         - ALIASES: Alternative names for server detection
-        - PRIORITY: Detection priority (0-255, lower = higher priority)
         - CAN_NORMALIZE_FROM: Server types this can normalize from
         - CAN_DENORMALIZE_TO: Server types this can denormalize to
         - ACL_FORMAT: ACL format identifier (e.g., "orclaci", "rfc_generic")
@@ -148,9 +149,9 @@ class FlextLdifServersRfc(FlextLdifServersBase):
         # CORE IDENTITY - Server identification and metadata
         # =====================================================================
         SERVER_TYPE: ClassVar[str] = FlextLdifConstants.ServerTypes.RFC
+        PRIORITY: ClassVar[int] = 100  # Lowest priority - fallback only
         CANONICAL_NAME: ClassVar[str] = "rfc"
         ALIASES: ClassVar[frozenset[str]] = frozenset(["rfc", "generic"])
-        PRIORITY: ClassVar[int] = 100  # Lowest priority - fallback only
 
         # =====================================================================
         # CONVERSION CAPABILITIES - Server transformation support
@@ -364,7 +365,6 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             """Parse RFC-compliant objectClass definition (implements abstract method)."""
             return FlextLdifUtilities.Parser.parse_rfc_objectclass(
                 oc_definition=oc_definition,
-                case_insensitive=False,
             )
 
         # Schema conversion methods eliminated - use universal parse/write pipeline
@@ -768,6 +768,30 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                     f"Failed to parse LDIF content: {e}",
                 )
 
+        def _normalize_attribute_name(self, attr_name: str) -> str:
+            """Normalize attribute name to RFC 2849 canonical form.
+
+            RFC 2849: Attribute names are case-insensitive.
+            This method normalizes to canonical form for consistent matching.
+
+            Key rule: objectclass (any case) → objectClass (canonical)
+            All other attributes: preserved as-is (most are already lowercase)
+
+            Args:
+                attr_name: Attribute name from LDIF (any case)
+
+            Returns:
+                Canonical form of the attribute name
+
+            """
+            if not attr_name:
+                return attr_name
+            # Normalize objectclass variants to canonical objectClass
+            if attr_name.lower() == "objectclass":
+                return FlextLdifConstants.DictKeys.OBJECTCLASS
+            # Other attributes: preserve as-is (cn, mail, uid, etc.)
+            return attr_name
+
         def _parse_entry(
             self,
             entry_dn: str,
@@ -779,6 +803,9 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             an Entry model with string attributes. This is the boundary method
             that converts raw parser data to Entry models - all subsequent
             processing uses Entry models.
+
+            RFC 2849 Compliance: Attribute names are normalized to canonical form
+            to ensure case-insensitive matching works correctly.
 
             Args:
                 entry_dn: Raw DN string from LDIF parser
@@ -794,24 +821,37 @@ class FlextLdifServersRfc(FlextLdifServersBase):
 
                 # Convert raw attributes to dict[str, list[str]] format
                 # Handle bytes values from ldif3 parser
+                # RFC 2849 COMPLIANCE: Normalize attribute names to canonical form
                 converted_attrs: dict[str, list[str]] = {}
                 for attr_name, attr_values in entry_attrs.items():
+                    # Normalize attribute name to canonical case (RFC 2849 case-insensitive)
+                    canonical_attr_name = self._normalize_attribute_name(attr_name)
+
+                    # Convert values to strings
+                    string_values: list[str] = []
                     if isinstance(attr_values, list):
-                        converted_attrs[attr_name] = [
+                        string_values = [
                             value.decode("utf-8", errors="replace")
                             if isinstance(value, bytes)
                             else str(value)
                             for value in attr_values
                         ]
                     elif isinstance(attr_values, bytes):
-                        converted_attrs[attr_name] = [
+                        string_values = [
                             attr_values.decode("utf-8", errors="replace"),
                         ]
                     else:
-                        converted_attrs[attr_name] = [str(attr_values)]
+                        string_values = [str(attr_values)]
+
+                    # RFC 2849: If attribute already exists (case-insensitive), append values
+                    # This handles cases where LDIF has both "objectclass: top" and "objectClass: person"
+                    if canonical_attr_name in converted_attrs:
+                        converted_attrs[canonical_attr_name].extend(string_values)
+                    else:
+                        converted_attrs[canonical_attr_name] = string_values
 
                 # Create LdifAttributes directly from converted_attrs
-                # converted_attrs is already dict[str, list[str]]
+                # converted_attrs now has normalized attribute names
                 ldif_attrs = FlextLdifModels.LdifAttributes(attributes=converted_attrs)
 
                 # Create Entry model using Entry.create factory method

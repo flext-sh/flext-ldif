@@ -27,14 +27,22 @@ from flext_ldif.utilities import FlextLdifUtilities
 class FlextLdifServersNovell(FlextLdifServersRfc):
     """Novell eDirectory quirks implementation."""
 
-    # === STANDARDIZED CONSTANTS FOR AUTO-DISCOVERY ===
+    # =========================================================================
+    # STANDARDIZED CONSTANTS FOR AUTO-DISCOVERY
+    # =========================================================================
+    # Top-level server identity attributes (moved from Constants)
+    SERVER_TYPE: ClassVar[str] = FlextLdifConstants.ServerTypes.NOVELL
+    PRIORITY: ClassVar[int] = 10
+
     class Constants(FlextLdifServersRfc.Constants):
         """Standardized constants for Novell eDirectory quirk."""
 
+        # Server identification (override RFC base - required for Constants access)
         SERVER_TYPE: ClassVar[str] = FlextLdifConstants.ServerTypes.NOVELL
+        PRIORITY: ClassVar[int] = 30
+
         CANONICAL_NAME: ClassVar[str] = "novell_edirectory"
         ALIASES: ClassVar[frozenset[str]] = frozenset(["novell_edirectory", "novell"])
-        PRIORITY: ClassVar[int] = 30
         CAN_NORMALIZE_FROM: ClassVar[frozenset[str]] = frozenset(["novell_edirectory"])
         CAN_DENORMALIZE_TO: ClassVar[frozenset[str]] = frozenset([
             "novell_edirectory",
@@ -362,7 +370,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             """Parse eDirectory ACL definition."""
             try:
                 # Use static method correctly
-                attr_name, content = self.__class__._splitacl_line(acl_line)  # noqa: SLF001
+                attr_name, content = self.__class__.splitacl_line(acl_line)
                 if not content:
                     return FlextResult[FlextLdifModels.Acl].fail("Empty ACL content")
                 segments = [
@@ -526,13 +534,17 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                 )
 
         @staticmethod
-        def _splitacl_line(acl_line: str) -> tuple[str, str]:
+        def splitacl_line(acl_line: str) -> tuple[str, str]:
             """Split an ACL line into attribute name and payload."""
             attr_name, _, remainder = acl_line.partition(":")
             return attr_name.strip(), remainder.strip()
 
     class Entry(FlextLdifServersRfc.Entry):
         """Novell eDirectory entry quirk."""
+
+        # Server identification (override RFC base - required for Constants access)
+        SERVER_TYPE: ClassVar[str] = FlextLdifConstants.ServerTypes.NOVELL
+        PRIORITY: ClassVar[int] = 30
 
         # Entry detection uses Constants.DETECTION_DN_MARKERS and Constants.DETECTION_ATTRIBUTE_MARKERS
 

@@ -19,14 +19,22 @@ from flext_ldif.utilities import FlextLdifUtilities
 class FlextLdifServersDs389(FlextLdifServersRfc):
     """389 Directory Server quirks implementation."""
 
-    # === STANDARDIZED CONSTANTS FOR AUTO-DISCOVERY ===
+    # =========================================================================
+    # STANDARDIZED CONSTANTS FOR AUTO-DISCOVERY
+    # =========================================================================
+    # Top-level server identity attributes (moved from Constants)
+    SERVER_TYPE: ClassVar[str] = FlextLdifConstants.ServerTypes.DS_389
+    PRIORITY: ClassVar[int] = 10
+
     class Constants(FlextLdifServersRfc.Constants):
         """Standardized constants for 389 Directory Server quirk."""
 
+        # Server identification (override RFC base - required for Constants access)
         SERVER_TYPE: ClassVar[str] = FlextLdifConstants.ServerTypes.DS_389
+        PRIORITY: ClassVar[int] = 10
+
         CANONICAL_NAME: ClassVar[str] = "389ds"
         ALIASES: ClassVar[frozenset[str]] = frozenset(["389ds"])
-        PRIORITY: ClassVar[int] = 30
         CAN_NORMALIZE_FROM: ClassVar[frozenset[str]] = frozenset(["389ds"])
         CAN_DENORMALIZE_TO: ClassVar[frozenset[str]] = frozenset(["389ds", "rfc"])
 

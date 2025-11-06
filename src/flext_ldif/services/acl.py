@@ -21,7 +21,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import override
+from typing import cast, override
 
 from flext_core import FlextDecorators, FlextLogger, FlextResult, FlextService
 
@@ -156,7 +156,7 @@ class FlextLdifAcl(FlextService[FlextLdifModels.AclResponse]):
                     if hasattr(quirk, "acl_attribute_name"):
                         attr_name = getattr(quirk, "acl_attribute_name", None)
                         if attr_name:
-                            return attr_name
+                            return cast("str", attr_name)
 
             # No quirks available for this server type - return None
             # (Caller will handle appropriately)
@@ -223,7 +223,7 @@ class FlextLdifAcl(FlextService[FlextLdifModels.AclResponse]):
 
             # Delegate to quirk for parsing - NO FALLBACK
             # If the quirk can't parse it, the parsing fails
-            return acl.acl.parse(acl_string)
+            return acl.parse(acl_string)
 
         except (ValueError, TypeError, AttributeError) as e:
             return FlextResult[FlextLdifModels.Acl].fail(
@@ -268,7 +268,7 @@ class FlextLdifAcl(FlextService[FlextLdifModels.AclResponse]):
             rfc_acl_attrs = acl_attrs
 
             # Step 2: Convert RFC ACLs to target server ACI format using target server ACL quirks
-            if target_server.lower() == FlextLdifConstants.ServerTypes.RFC.value:
+            if target_server.lower() == FlextLdifConstants.ServerTypes.RFC:
                 # Target is RFC, use the RFC ACLs directly
                 final_aci_attrs = rfc_acl_attrs
             else:
@@ -324,9 +324,9 @@ class FlextLdifAcl(FlextService[FlextLdifModels.AclResponse]):
 
         perms_data = acl.permissions
         if isinstance(perms_data, dict):
-            return perms_data
+            return cast("dict[str, object]", perms_data)
         if hasattr(perms_data, "model_dump"):
-            return perms_data.model_dump()
+            return cast("dict[str, object]", perms_data.model_dump())
 
         return {}
 

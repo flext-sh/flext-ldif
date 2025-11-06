@@ -172,7 +172,7 @@ class FlextLdifUtilitiesWriter:
         return f"{attr_name}: {value_str}"
 
     @staticmethod
-    def render_template(template_str: str, context: dict[str, Any]) -> FlextResult[str]:
+    def render_template(template_str: str, context: dict[str, object]) -> FlextResult[str]:
         """Render Jinja2 template with context.
 
         Args:
@@ -203,7 +203,7 @@ class FlextLdifUtilitiesWriter:
         content: str,
         file_path: Path,
         encoding: str = "utf-8",
-    ) -> FlextResult[dict[str, Any]]:
+    ) -> FlextResult[dict[str, object]]:
         """Write content to file (pure I/O operation).
 
         Args:
@@ -235,7 +235,7 @@ class FlextLdifUtilitiesWriter:
             return FlextResult[dict[str, Any]].fail(f"File write failed: {e}")
 
     @staticmethod
-    def _add_attribute_matching_rules(
+    def add_attribute_matching_rules(
         attr_data: FlextLdifModels.SchemaAttribute,
         parts: list[str],
     ) -> None:
@@ -248,7 +248,7 @@ class FlextLdifUtilitiesWriter:
             parts.append(f"SUBSTR {attr_data.substr}")
 
     @staticmethod
-    def _add_attribute_syntax(
+    def add_attribute_syntax(
         attr_data: FlextLdifModels.SchemaAttribute,
         parts: list[str],
     ) -> None:
@@ -260,7 +260,7 @@ class FlextLdifUtilitiesWriter:
             parts.append(f"SYNTAX {syntax_str}")
 
     @staticmethod
-    def _add_attribute_flags(
+    def add_attribute_flags(
         attr_data: FlextLdifModels.SchemaAttribute,
         parts: list[str],
     ) -> None:
@@ -295,9 +295,9 @@ class FlextLdifUtilitiesWriter:
         if attr_data.sup:
             parts.append(f"SUP {attr_data.sup}")
 
-        FlextLdifUtilitiesWriter._add_attribute_matching_rules(attr_data, parts)
-        FlextLdifUtilitiesWriter._add_attribute_syntax(attr_data, parts)
-        FlextLdifUtilitiesWriter._add_attribute_flags(attr_data, parts)
+        FlextLdifUtilitiesWriter.add_attribute_matching_rules(attr_data, parts)
+        FlextLdifUtilitiesWriter.add_attribute_syntax(attr_data, parts)
+        FlextLdifUtilitiesWriter.add_attribute_flags(attr_data, parts)
 
         if attr_data.usage:
             parts.append(f"USAGE {attr_data.usage}")
@@ -384,15 +384,16 @@ class FlextLdifUtilitiesWriter:
 
         return parts
 
+    @staticmethod
     def write_rfc_objectclass(
-        self: FlextLdifModels.SchemaObjectClass,
+        objectclass: FlextLdifModels.SchemaObjectClass,
     ) -> FlextResult[str]:
         """Write objectClass data to RFC 4512 format."""
         try:
-            if not self.oid:
+            if not objectclass.oid:
                 return FlextResult.fail("RFC objectClass writing failed: missing OID")
 
-            parts = FlextLdifUtilitiesWriter._build_objectclass_parts(self)
+            parts = FlextLdifUtilitiesWriter._build_objectclass_parts(objectclass)
             return FlextResult.ok(" ".join(parts))
 
         except (ValueError, TypeError, AttributeError) as e:
@@ -485,6 +486,7 @@ class FlextLdifUtilitiesWriter:
     def format_attribute_line(
         attr_name: str,
         attr_value: object,
+        *,
         is_base64: bool,
         attribute_case_map: dict[str, str] | None = None,
     ) -> list[str]:

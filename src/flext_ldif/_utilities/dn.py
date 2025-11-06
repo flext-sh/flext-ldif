@@ -47,6 +47,9 @@ class FlextLdifUtilitiesDN:
 
     """
 
+    # Minimum length for valid DN strings (to check trailing escape)
+    MIN_DN_LENGTH: int = 2
+
     @staticmethod
     def get_dn_value(dn: DnInput) -> str:
         """Extract DN string value from DN model or string (public utility method).
@@ -143,6 +146,20 @@ class FlextLdifUtilitiesDN:
     def validate(dn: FlextLdifModels.DistinguishedName) -> bool: ...
 
     @staticmethod
+    def _has_double_unescaped_commas(dn_str: str) -> bool:
+        """Check for consecutive unescaped commas in DN string."""
+        i = 0
+        while i < len(dn_str) - 1:
+            if (
+                dn_str[i] == ","
+                and dn_str[i + 1] == ","
+                and (i == 0 or dn_str[i - 1] != "\\")
+            ):
+                return True
+            i += 1
+        return False
+
+    @staticmethod
     def validate(dn: str | FlextLdifModels.DistinguishedName) -> bool:
         """Validate DN format according to RFC 4514.
 
@@ -156,24 +173,15 @@ class FlextLdifUtilitiesDN:
             return False
 
         # Check for invalid patterns with unescaped commas
-        # Double commas: look for ,, where first comma is not escaped
-        i = 0
-        while i < len(dn_str) - 1:
-            # Check for consecutive commas where first is not escaped
-            if (
-                dn_str[i] == ","
-                and dn_str[i + 1] == ","
-                and (i == 0 or dn_str[i - 1] != "\\")
-            ):
-                return False
-            i += 1
+        if FlextLdifUtilitiesDN._has_double_unescaped_commas(dn_str):
+            return False
 
         # Leading unescaped comma
         if dn_str.startswith(","):
             return False
 
         # Trailing unescaped comma
-        if dn_str.endswith(",") and (len(dn_str) < 2 or dn_str[-2] != "\\"):
+        if dn_str.endswith(",") and (len(dn_str) < FlextLdifUtilitiesDN.MIN_DN_LENGTH or dn_str[-2] != "\\"):
             return False
 
         try:
@@ -406,6 +414,7 @@ class FlextLdifUtilitiesDN:
         i: int,
         current_attr: str,
         current_val: str,
+        *,
         in_value: bool,
         pairs: list[tuple[str, str]],
     ) -> tuple[str, str, bool, int, bool]:
