@@ -29,10 +29,6 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
     class Constants(FlextLdifServersRfc.Constants):
         """Standardized constants for 389 Directory Server quirk."""
 
-        # Server identification (override RFC base - required for Constants access)
-        SERVER_TYPE: ClassVar[str] = FlextLdifConstants.ServerTypes.DS_389
-        PRIORITY: ClassVar[int] = 10
-
         CANONICAL_NAME: ClassVar[str] = "389ds"
         ALIASES: ClassVar[frozenset[str]] = frozenset(["389ds"])
         CAN_NORMALIZE_FROM: ClassVar[frozenset[str]] = frozenset(["389ds"])

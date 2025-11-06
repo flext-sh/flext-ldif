@@ -30,10 +30,6 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
     class Constants(FlextLdifServersRfc.Constants):
         """Standardized constants for IBM Tivoli Directory Server quirk."""
 
-        # Server identification (override RFC base - required for Constants access)
-        SERVER_TYPE: ClassVar[str] = FlextLdifConstants.ServerTypes.IBM_TIVOLI
-        PRIORITY: ClassVar[int] = 30
-
         CANONICAL_NAME: ClassVar[str] = "ibm_tivoli"
         ALIASES: ClassVar[frozenset[str]] = frozenset(["ibm_tivoli", "tivoli"])
         CAN_NORMALIZE_FROM: ClassVar[frozenset[str]] = frozenset(["ibm_tivoli"])

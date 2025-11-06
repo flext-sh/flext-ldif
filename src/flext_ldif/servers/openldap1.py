@@ -41,10 +41,6 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
     class Constants(FlextLdifServersRfc.Constants):
         """Standardized constants for OpenLDAP 1.x quirk."""
 
-        # Server identification (override RFC base - required for Constants access)
-        SERVER_TYPE: ClassVar[str] = FlextLdifConstants.ServerTypes.OPENLDAP1
-        PRIORITY: ClassVar[int] = 20
-
         CANONICAL_NAME: ClassVar[str] = "openldap1"
         ALIASES: ClassVar[frozenset[str]] = frozenset(["openldap1"])
         CAN_NORMALIZE_FROM: ClassVar[frozenset[str]] = frozenset(["openldap1"])

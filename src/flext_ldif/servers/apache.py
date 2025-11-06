@@ -35,10 +35,6 @@ class FlextLdifServersApache(FlextLdifServersRfc):
     class Constants(FlextLdifServersRfc.Constants):
         """Standardized constants for Apache Directory Server quirk."""
 
-        # Server identification (override RFC base - required for Constants access)
-        SERVER_TYPE: ClassVar[str] = FlextLdifConstants.ServerTypes.APACHE
-        PRIORITY: ClassVar[int] = 15
-
         # Server identification
 
         # Auto-discovery constants
