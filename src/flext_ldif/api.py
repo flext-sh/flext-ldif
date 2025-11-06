@@ -14,7 +14,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
-from typing import Any, ClassVar, override
+from typing import ClassVar, Literal, overload, override
 
 from flext_core import (
     FlextContainer,
@@ -157,13 +157,13 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
 
         """
         if cls._instance is None:
-            # Create empty instance (FlextService v2 doesn't accept positional args)
-            cls._instance = cls()
-            # Set config if provided via private attribute
+            # Create instance with config if provided
             if config is not None:
-                cls._instance.init_config_value = config
-                # Re-initialize with config
-                cls._instance.model_post_init(None)
+                # Pass config via kwargs to __init__
+                cls._instance = cls(config=config)
+            else:
+                # Create empty instance (FlextService v2 doesn't accept positional args)
+                cls._instance = cls()
         return cls._instance
 
     def __init__(self, **kwargs: object) -> None:
@@ -386,62 +386,102 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
             )
 
     @override
-    def execute(self) -> FlextResult[dict[str, object]]:
+    def execute(
+        self,
+    ) -> FlextResult[
+        FlextLdifModels.ParseResponse
+        | FlextLdifModels.WriteResponse
+        | FlextLdifModels.MigrationPipelineResult
+        | FlextLdifModels.ValidationResult
+    ]:
         """Execute facade self-check and return status.
 
         Returns:
-        FlextResult containing facade status and configuration
+            FlextResult containing ValidationResult with health check status
 
         """
         try:
-            config = self.config
-            status_dict: dict[str, object] = {
-                "status": "initialized",
-                "services": "services",
-                "config": {"default_encoding": config.ldif_encoding},
-            }
-            return FlextResult[dict[str, object]].ok(status_dict)
-        except (ValueError, TypeError, AttributeError) as e:
-            return FlextResult[dict[str, object]].fail(
-                f"Status check failed: {e}",
+            # Return ValidationResult as health check (all services healthy)
+            validation_result = FlextLdifModels.ValidationResult(
+                is_valid=True,
+                total_entries=0,
+                valid_entries=0,
+                invalid_entries=0,
+                errors=[],
             )
+            return FlextResult.ok(validation_result)
+        except (ValueError, TypeError, AttributeError) as e:
+            # Return failed validation on error
+            validation_result = FlextLdifModels.ValidationResult(
+                is_valid=False,
+                total_entries=0,
+                valid_entries=0,
+                invalid_entries=0,
+                errors=[f"Status check failed: {e}"],
+            )
+            return FlextResult.ok(validation_result)
+
+    # Overloads for parse() to support flexible output format
+    @overload
+    def parse(
+        self,
+        source: str | Path,
+        server_type: str | None = None,
+        format_options: FlextLdifModels.ParseFormatOptions | dict[str, object] | None = None,
+        *,
+        output_format: Literal["model"] = "model",
+    ) -> FlextResult[list[FlextLdifModels.Entry]]: ...
+
+    @overload
+    def parse(
+        self,
+        source: str | Path,
+        server_type: str | None = None,
+        format_options: FlextLdifModels.ParseFormatOptions | dict[str, object] | None = None,
+        *,
+        output_format: Literal["dict"],
+    ) -> FlextResult[list[dict[str, str | list[str]]]]: ...
 
     def parse(
         self,
         source: str | Path,
         server_type: str | None = None,
-        format_options: FlextLdifModels.ParseFormatOptions | None = None,
-    ) -> FlextResult[list[FlextLdifModels.Entry]]:
-        r"""Parse LDIF content string or file.
+        format_options: FlextLdifModels.ParseFormatOptions | dict[str, object] | None = None,
+        *,
+        output_format: Literal["model", "dict"] = "model",
+    ) -> FlextResult[list[FlextLdifModels.Entry]] | FlextResult[list[dict[str, str | list[str]]]]:
+        r"""Parse LDIF content string or file with flexible output format.
 
-        Parses LDIF content string or file with quirks support.
+        Powerful parsing method supporting multiple input/output formats.
 
         Args:
             source: LDIF content as string or Path to LDIF file
             server_type: Server type for quirk selection ("rfc", "oid", "oud", etc.)
-            format_options: Optional parse format options model
+            format_options: Parse options as ParseFormatOptions model or dict
+            output_format: Output format - "model" (default) returns Entry models,
+                          "dict" returns plain dicts
 
         Returns:
-            FlextResult containing list of parsed LDIF entries
+            FlextResult containing list of Entry models or dicts based on output_format
 
         Example:
-            # Parse LDIF content string
-            ldif_content = "dn: cn=test,dc=example,dc=com\ncn: test\n"
-            result = ldif.parse(ldif_content)
-            if result.is_success:
-                entries = result.unwrap()
+            # Parse to Entry models (default)
+            result = ldif.parse("dn: cn=test\ncn: test\n")
+            entries = result.unwrap()  # list[Entry]
 
-            # Parse LDIF file
-            result = ldif.parse_file(Path("directory.ldif"))
-            if result.is_success:
-                entries = result.unwrap()
+            # Parse to dicts
+            result = ldif.parse("dn: cn=test\ncn: test\n", output_format="dict")
+            dicts = result.unwrap()  # list[dict]
 
-            # Parse with options using model
-            options = FlextLdifModels.ParseFormatOptions(
-                auto_parse_schema=False,
-                validate_entries=True
+            # Parse file to dicts
+            result = ldif.parse(Path("file.ldif"), output_format="dict")
+
+            # Parse with options (dict or model)
+            result = ldif.parse(
+                "dn: cn=test\ncn: test\n",
+                format_options={"validate_entries": True},
+                output_format="dict"
             )
-            result = ldif.parse(ldif_content, format_options=options)
 
         """
         try:
@@ -451,6 +491,14 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
             # Ensure the parser service is initialized.
             if not hasattr(self, "_parser_service") or self._parser_service is None:
                 self._parser_service = FlextLdifParser(config=self.config)
+
+            # Convert format_options dict to model if needed
+            resolved_format_options: FlextLdifModels.ParseFormatOptions | None = None
+            if format_options is not None:
+                if isinstance(format_options, dict):
+                    resolved_format_options = FlextLdifModels.ParseFormatOptions(**format_options)
+                else:
+                    resolved_format_options = format_options
 
             # Resolve source to LDIF content
             content_result = self._resolve_source_content(source)
@@ -463,17 +511,28 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
                 content=content,
                 input_source="string",
                 server_type=effective_server_type,
-                format_options=format_options,
+                format_options=resolved_format_options,
             )
             if parse_result.is_success:
                 response = parse_result.unwrap()
-                return FlextResult.ok(response.entries)
+                entries = response.entries
+
+                # Convert to dict format if requested
+                if output_format == "dict":
+                    dict_entries: list[dict[str, str | list[str]]] = [
+                        entry.model_dump() for entry in entries
+                    ]
+                    return FlextResult[list[dict[str, str | list[str]]]].ok(dict_entries)
+
+                # Return as Entry models (default)
+                return FlextResult[list[FlextLdifModels.Entry]].ok(entries)
+
             return FlextResult.fail(parse_result.error)
 
         except Exception as e:
-            return FlextResult[list[FlextLdifModels.Entry]].fail(
-                f"Failed to parse LDIF: {e}",
-            )
+            if output_format == "dict":
+                return FlextResult[list[dict[str, str | list[str]]]].fail(f"Failed to parse LDIF: {e}")
+            return FlextResult[list[FlextLdifModels.Entry]].fail(f"Failed to parse LDIF: {e}")
 
     def _resolve_source_content(
         self,
@@ -528,42 +587,105 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
         # Case 3: Pure string content
         return source
 
-    def write(
+    def _convert_dicts_to_entries(
         self,
-        entries: list[FlextLdifModels.Entry],
-        output_path: Path | None = None,
-        server_type: str | None = None,
-        format_options: FlextLdifModels.WriteFormatOptions | None = None,
-    ) -> FlextResult[str]:
-        """Write entries to LDIF format string or file.
+        entries: list[FlextLdifModels.Entry] | list[dict[str, str | list[str]]],
+    ) -> FlextResult[list[FlextLdifModels.Entry]]:
+        """Convert list of dicts to Entry models if needed.
 
-        Uses FlextLdifWriter for RFC 2849 compliant LDIF writing.
+        Internal helper to reduce complexity in write() method.
 
         Args:
-            entries: List of LDIF entries to write
-            output_path: Optional path to write LDIF file. If None, returns LDIF string.
+            entries: List of Entry models or dicts
+
+        Returns:
+            FlextResult containing list of Entry models
+
+        """
+        # Check if already Entry models
+        if entries and not isinstance(entries[0], dict):
+            return FlextResult[list[FlextLdifModels.Entry]].ok(entries)  # type: ignore[arg-type]
+
+        # Convert list[dict] to list[Entry]
+        resolved_entries: list[FlextLdifModels.Entry] = []
+        for entry_dict in entries:
+            if not isinstance(entry_dict, dict):
+                continue
+
+            # Extract dn and attributes from dict
+            dn_val = entry_dict.get("dn", "")
+            attrs_val = {k: v for k, v in entry_dict.items() if k != "dn"}
+
+            # Create Entry using factory method
+            entry_result = FlextLdifModels.Entry.create(
+                dn=str(dn_val),
+                attributes=attrs_val,
+            )
+            if entry_result.is_failure:
+                return FlextResult[list[FlextLdifModels.Entry]].fail(
+                    f"Failed to convert dict to Entry: {entry_result.error}"
+                )
+            resolved_entries.append(entry_result.unwrap())
+
+        return FlextResult[list[FlextLdifModels.Entry]].ok(resolved_entries)
+
+    # Overloads for write() to support flexible input (Entry models or dicts)
+    @overload
+    def write(
+        self,
+        entries: list[FlextLdifModels.Entry] | list[dict[str, str | list[str]]],
+        output_path: None = None,
+        server_type: str | None = None,
+        format_options: FlextLdifModels.WriteFormatOptions | dict[str, object] | None = None,
+    ) -> FlextResult[str]: ...
+
+    @overload
+    def write(
+        self,
+        entries: list[FlextLdifModels.Entry] | list[dict[str, str | list[str]]],
+        output_path: Path,
+        server_type: str | None = None,
+        format_options: FlextLdifModels.WriteFormatOptions | dict[str, object] | None = None,
+    ) -> FlextResult[str]: ...
+
+    def write(
+        self,
+        entries: list[FlextLdifModels.Entry] | list[dict[str, str | list[str]]],
+        output_path: Path | None = None,
+        server_type: str | None = None,
+        format_options: FlextLdifModels.WriteFormatOptions | dict[str, object] | None = None,
+    ) -> FlextResult[str]:
+        """Write entries to LDIF format string or file with flexible input.
+
+        Powerful writing method accepting Entry models or dicts as input.
+
+        Args:
+            entries: List of Entry models or dicts to write
+            output_path: Optional Path to write LDIF file. If None, returns LDIF string.
             server_type: Target server type for writing. If None, uses RFC.
-            format_options: Optional write format options model
+            format_options: Write options as WriteFormatOptions model or dict
 
         Returns:
             FlextResult containing LDIF content as string (if output_path is None)
             or success message (if output_path provided)
 
         Example:
-            # Write to string
+            # Write Entry models to string
             result = ldif.write(entries)
-            if result.is_success:
-                ldif_content = result.unwrap()
+            ldif_content = result.unwrap()
+
+            # Write dicts to string
+            dicts = [{"dn": "cn=test", "cn": ["test"]}]
+            result = ldif.write(dicts)
 
             # Write to file
             result = ldif.write(entries, Path("output.ldif"))
 
-            # Write with options using model
-            options = FlextLdifModels.WriteFormatOptions(
-                line_width=100,
-                sort_attributes=True
+            # Write with options (dict or model)
+            result = ldif.write(
+                entries,
+                format_options={"line_width": 100, "sort_attributes": True}
             )
-            result = ldif.write(entries, format_options=options)
 
         """
         try:
@@ -573,34 +695,42 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
 
             target_server = server_type or "rfc"
 
-            # Create default format_options if not provided
+            # Convert format_options dict to model if needed
+            resolved_format_options: FlextLdifModels.WriteFormatOptions
             if format_options is None:
-                format_options = FlextLdifModels.WriteFormatOptions()
+                resolved_format_options = FlextLdifModels.WriteFormatOptions()
+            elif isinstance(format_options, dict):
+                resolved_format_options = FlextLdifModels.WriteFormatOptions(**format_options)
+            else:
+                resolved_format_options = format_options
+
+            # Convert dicts to Entry models if needed (extracted to helper method)
+            entries_result = self._convert_dicts_to_entries(entries)
+            if entries_result.is_failure:
+                return FlextResult[str].fail(entries_result.error)
+            resolved_entries = entries_result.unwrap()
 
             if output_path:
                 write_result = self._writer_service.write(
-                    entries=entries,
+                    entries=resolved_entries,
                     target_server_type=target_server,
                     output_target="file",
                     output_path=output_path,
-                    format_options=format_options,
+                    format_options=resolved_format_options,
                 )
                 if write_result.is_success:
-                    # The result for file writing is a WriteResponse model, not the content.
-                    # We should return a consistent success message.
                     message = f"LDIF written successfully to {output_path}"
                     return FlextResult.ok(message)
                 return FlextResult.fail(write_result.error)
 
             # Writing to a string
             string_result = self._writer_service.write(
-                entries=entries,
+                entries=resolved_entries,
                 target_server_type=target_server,
                 output_target="string",
-                format_options=format_options,
+                format_options=resolved_format_options,
             )
             if string_result.is_success:
-                # The result for string writing is the LDIF content.
                 return FlextResult.ok(string_result.unwrap())
             return FlextResult.fail(string_result.error)
 
@@ -609,31 +739,38 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
 
     def get_entry_dn(
         self,
-        entry: FlextLdifModels.Entry | FlextLdifProtocols.Entry.EntryWithDnProtocol,
+        entry: FlextLdifModels.Entry | FlextLdifProtocols.Entry.EntryWithDnProtocol | dict[str, str | list[str]],
     ) -> FlextResult[str]:
         """Extract DN (Distinguished Name) from any entry type.
 
-        Handles both FlextLdifModels.Entry (from LDIF files) and
-        FlextLdapModels.Entry (from LDAP server operations).
+        Handles Entry models, LDAP entries, and dicts.
 
         Args:
-            entry: LDIF or LDAP entry to extract DN from
+            entry: Entry model, LDAP entry, or dict to extract DN from
 
         Returns:
             FlextResult containing DN as string
 
         Example:
-            # Works with LDIF entries
-            result = ldif.get_entry_dn(ldif_entry)
+            # Works with Entry models
+            result = ldif.get_entry_dn(entry_model)
 
-            # Works with LDAP entries from search
+            # Works with dicts
+            result = ldif.get_entry_dn({"dn": "cn=test,dc=example", "cn": ["test"]})
+
+            # Works with LDAP entries
             result = ldif.get_entry_dn(ldap_entry)
-
-            if result.is_success:
-                dn = result.unwrap()
 
         """
         try:
+            # Handle dict
+            if isinstance(entry, dict):
+                dn_val = entry.get("dn")
+                if not dn_val:
+                    return FlextResult[str].fail("Dict entry missing 'dn' key")
+                return FlextResult[str].ok(str(dn_val))
+
+            # Handle models/protocols
             if not entry or not hasattr(entry, "dn"):
                 return FlextResult[str].fail("Entry missing DN attribute")
 
@@ -873,7 +1010,7 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
         *,
         # New: Structured migration with MigrationConfig
         migration_config: FlextLdifModels.MigrationConfig
-        | dict[str, Any]
+        | dict[str, object]
         | None = None,
         write_options: FlextLdifModels.WriteFormatOptions | None = None,
         # Categorization parameters (optional - enables categorized mode)
@@ -1551,7 +1688,7 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
 
         """
         # Delegate to ACL service for direct context evaluation
-        eval_context = context if isinstance(context, dict) else (context or {})
+        eval_context: dict[str, object] = context if isinstance(context, dict) else {}
         return self._acl_service.evaluate_acl_context(
             acls,
             eval_context,

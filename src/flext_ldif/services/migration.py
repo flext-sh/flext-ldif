@@ -134,8 +134,8 @@ class FlextLdifMigrationPipeline(
         migration_config: FlextLdifModels.MigrationConfig | None = None,
         write_options: FlextLdifModels.WriteFormatOptions | None = None,
         # Common parameters
-        source_server: str = "rfc",
-        target_server: str = "rfc",
+        source_server: str = FlextLdifConstants.ServerTypes.RFC,
+        target_server: str = FlextLdifConstants.ServerTypes.RFC,
         # Filtering parameters
         forbidden_attributes: list[str] | None = None,
         forbidden_objectclasses: list[str] | None = None,
@@ -360,8 +360,8 @@ class FlextLdifMigrationPipeline(
                 else:
                     validated_entries.append(entry)
 
-            except Exception as e:
-                logger.exception("[MIGRATION] Error validating entry DN: %s", e)
+            except Exception:
+                logger.exception("[MIGRATION] Error validating entry DN")
                 continue
 
         return validated_entries
@@ -396,8 +396,8 @@ class FlextLdifMigrationPipeline(
                 if any(attr in entry.attributes.attributes for attr in acl_config):
                     acl_entries.append(entry)
                     acl_dns.add(FlextLdifUtilities.DN.get_dn_value(entry.dn))
-            except Exception as e:
-                logger.exception("[PIPELINE] Error processing entry %s: %s", idx, e)
+            except Exception:
+                logger.exception("[PIPELINE] Error processing entry %s", idx)
                 raise
 
         categorized[FlextLdifConstants.Categories.ACL] = acl_entries

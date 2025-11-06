@@ -23,6 +23,7 @@ from typing import Any, ClassVar
 from flext_core import FlextModels, FlextResult
 from pydantic import ConfigDict, Field, computed_field, field_validator, model_validator
 
+from flext_ldif.config import FlextLdifConfig
 from flext_ldif.constants import FlextLdifConstants
 
 # Type checking: FlextModels nested classes are runtime-available but mypy can't resolve them

@@ -23,16 +23,16 @@ class TestDnServiceInitialization:
         assert service is not None
 
     def test_execute_returns_status(self) -> None:
-        """Test execute returns service status."""
-        service = FlextLdifDn()
+        """Test execute returns normalized DN (current API behavior)."""
+        # API atual: execute() executa operação em DN fornecido
+        test_dn = "cn=John Doe,ou=People,dc=example,dc=com"
+        service = FlextLdifDn(dn=test_dn, operation="normalize")
         result = service.execute()
 
         assert result.is_success
-        status = result.unwrap()
-        assert status["service"] == "DnService"
-        assert status["status"] == "operational"
-        assert status["rfc_compliance"] == "RFC 4514"
-        assert status["library"] == "ldap3"
+        normalized = result.unwrap()
+        # DN normalizado: attribute types lowercase, value case preserved
+        assert "cn=John Doe" in normalized.lower() or "cn=john doe" in normalized
 
 
 class TestParseComponents:

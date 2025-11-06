@@ -841,7 +841,7 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
             key_func: Callable[[tuple[str, list[str]]], str] = operator.itemgetter(0)
         else:
 
-            def key_func(x):
+            def key_func(x: tuple[str, list[str]]) -> str:
                 return x[0].lower()
 
         sorted_items = sorted(attrs_dict.items(), key=key_func)
@@ -912,7 +912,7 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
             key_func: Callable[[tuple[str, list[str]]], str] = operator.itemgetter(0)
         else:
 
-            def key_func(x):
+            def key_func(x: tuple[str, list[str]]) -> str:
                 return x[0].lower()
 
         return sorted(attribute_items, key=key_func)
@@ -998,7 +998,7 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
             def get_sort_value(
                 entry: FlextLdifModels.Entry,
                 key: str,
-            ) -> tuple[int, str]:
+            ) -> tuple[int, int, str]:
                 """Extract value from entry, with type-aware sorting."""
                 if key.lower() == "dn":
                     value = FlextLdifUtilities.DN.get_dn_value(entry.dn)

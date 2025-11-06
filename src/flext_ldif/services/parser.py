@@ -377,7 +377,7 @@ class FlextLdifParser(FlextService[Any]):
             return FlextResult.ok(default_type)
 
         except (ValueError, TypeError, AttributeError) as e:
-            self._logger.exception("Error resolving server type: %s", e)
+            self._logger.exception(f"Error resolving server type: {e}")
             return FlextResult.ok(FlextLdifConstants.ServerTypes.RELAXED)
 
     def _process_single_entry(

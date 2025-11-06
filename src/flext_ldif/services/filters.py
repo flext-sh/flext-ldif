@@ -834,7 +834,7 @@ class FlextLdifFilters(FlextService[list[FlextLdifModels.Entry]]):
 
                     # Check DN pattern if provided
                     if dn_pattern:
-                        should_delete = FlextLdifFilters.Exclusion._matches_dn_pattern(
+                        should_delete = FlextLdifFilters.Exclusion.matches_dn_pattern(
                             entry.dn,
                             [dn_pattern],
                         )
@@ -1104,7 +1104,7 @@ class FlextLdifFilters(FlextService[list[FlextLdifModels.Entry]]):
     # ════════════════════════════════════════════════════════════════════════
 
     @classmethod
-    def filter_by_dn(
+    def _filter_by_dn(
         cls,
         entries: list[FlextLdifModels.Entry],
         pattern: str,
@@ -1114,7 +1114,7 @@ class FlextLdifFilters(FlextService[list[FlextLdifModels.Entry]]):
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Filter entries by DN pattern."""
         # Delegate to nested Filter class
-        return cls.Filter._filter_by_dn(entries, pattern, mode, mark_excluded)
+        return cls.Filter._filter_by_dn(entries, pattern, mode, mark_excluded)  # noqa: SLF001
 
     @classmethod
     def by_dn(
@@ -1125,8 +1125,8 @@ class FlextLdifFilters(FlextService[list[FlextLdifModels.Entry]]):
         *,
         mark_excluded: bool = False,
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
-        """Filter entries by DN pattern (alias for filter_by_dn)."""
-        return cls.filter_by_dn(entries, pattern, mode, mark_excluded=mark_excluded)
+        """Filter entries by DN pattern (alias for filter_entries_by_dn)."""
+        return cls.filter_entries_by_dn(entries, pattern, mode, mark_excluded=mark_excluded)
 
     @classmethod
     def by_objectclass(
@@ -1139,7 +1139,7 @@ class FlextLdifFilters(FlextService[list[FlextLdifModels.Entry]]):
         mark_excluded: bool = False,
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Filter entries by objectClass."""
-        return cls.Filter._filter_by_objectclass(
+        return cls.Filter._filter_by_objectclass(  # noqa: SLF001
             entries,
             objectclass,
             required_attributes,
@@ -1158,7 +1158,7 @@ class FlextLdifFilters(FlextService[list[FlextLdifModels.Entry]]):
         mark_excluded: bool = False,
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Filter entries by attribute presence."""
-        return cls.Filter._filter_by_attributes(
+        return cls.Filter._filter_by_attributes(  # noqa: SLF001
             entries,
             attributes,
             match_all,
@@ -1175,7 +1175,7 @@ class FlextLdifFilters(FlextService[list[FlextLdifModels.Entry]]):
         mark_excluded: bool = False,
     ) -> tuple[list[FlextLdifModels.Entry], list[FlextLdifModels.Entry]]:
         """Filter entries by base DN (hierarchy)."""
-        return cls.Filter._filter_by_base_dn(entries, base_dn, mark_excluded)
+        return cls.Filter._filter_by_base_dn(entries, base_dn, mark_excluded)  # noqa: SLF001
 
     @classmethod
     def is_schema(cls, entry: FlextLdifModels.Entry) -> bool:
@@ -1288,7 +1288,7 @@ class FlextLdifFilters(FlextService[list[FlextLdifModels.Entry]]):
 
             # Check attributeTypes using helper
             attr_keys = ["attributeTypes", "attributetypes"]
-            has_attr_match = cls.AclDetector._matches_oid_pattern(
+            has_attr_match = cls.AclDetector._matches_oid_pattern(  # noqa: SLF001
                 attrs,
                 attr_keys,
                 allowed_attr_oids,
@@ -1296,7 +1296,7 @@ class FlextLdifFilters(FlextService[list[FlextLdifModels.Entry]]):
 
             # Check objectClasses using helper
             oc_keys = ["objectClasses", "objectclasses"]
-            has_oc_match = cls.AclDetector._matches_oid_pattern(
+            has_oc_match = cls.AclDetector._matches_oid_pattern(  # noqa: SLF001
                 attrs,
                 oc_keys,
                 allowed_oc_oids,
@@ -1318,7 +1318,7 @@ class FlextLdifFilters(FlextService[list[FlextLdifModels.Entry]]):
             return FlextResult[list[FlextLdifModels.Entry]].fail(
                 "dn_pattern required for dn filter",
             )
-        return self.Filter._filter_by_dn(
+        return self.Filter._filter_by_dn(  # noqa: SLF001
             self.entries,
             self.dn_pattern,
             self.mode,
@@ -1331,7 +1331,7 @@ class FlextLdifFilters(FlextService[list[FlextLdifModels.Entry]]):
         """Filter by objectClass."""
         if not self.objectclass:
             return FlextResult[list[FlextLdifModels.Entry]].fail("objectclass required")
-        return self.Filter._filter_by_objectclass(
+        return self.Filter._filter_by_objectclass(  # noqa: SLF001
             self.entries,
             self.objectclass,
             self.required_attributes,
@@ -1345,7 +1345,7 @@ class FlextLdifFilters(FlextService[list[FlextLdifModels.Entry]]):
         """Filter by attribute presence."""
         if not self.attributes:
             return FlextResult[list[FlextLdifModels.Entry]].fail("attributes required")
-        return self.Filter._filter_by_attributes(
+        return self.Filter._filter_by_attributes(  # noqa: SLF001
             self.entries,
             self.attributes,
             self.match_all,
@@ -1359,7 +1359,7 @@ class FlextLdifFilters(FlextService[list[FlextLdifModels.Entry]]):
         """Filter by base DN."""
         if not self.base_dn:
             return (self.entries, [])
-        return self.Filter._filter_by_base_dn(
+        return self.Filter._filter_by_base_dn(  # noqa: SLF001
             self.entries,
             self.base_dn,
             self.mark_excluded,
@@ -1416,7 +1416,7 @@ class FlextLdifFilters(FlextService[list[FlextLdifModels.Entry]]):
         attributes: list[str],
     ) -> bool:
         """Check if entry has any of the specified ACL attributes."""
-        return FlextLdifFilters.AclDetector._has_acl_attributes(entry, attributes)
+        return FlextLdifFilters.AclDetector._has_acl_attributes(entry, attributes)  # noqa: SLF001
 
     @staticmethod
     def _check_blocked_objectclasses(
@@ -1424,7 +1424,7 @@ class FlextLdifFilters(FlextService[list[FlextLdifModels.Entry]]):
         whitelist_rules: dict[str, Any] | None,
     ) -> tuple[bool, str | None]:
         """Check if entry has blocked objectClasses."""
-        return FlextLdifFilters.Categorizer._check_blocked_objectclasses(
+        return FlextLdifFilters.Categorizer._check_blocked_objectclasses(  # noqa: SLF001
             entry,
             whitelist_rules,
         )
@@ -1436,7 +1436,7 @@ class FlextLdifFilters(FlextService[list[FlextLdifModels.Entry]]):
         rules: dict[str, Any],
     ) -> tuple[bool, str | None]:
         """Validate DN pattern for specific category."""
-        return FlextLdifFilters.Categorizer._validate_category_dn_pattern(
+        return FlextLdifFilters.Categorizer._validate_category_dn_pattern(  # noqa: SLF001
             entry,
             category,
             rules,
@@ -1455,7 +1455,7 @@ class FlextLdifFilters(FlextService[list[FlextLdifModels.Entry]]):
 
         """
         # Check for blocked objectClasses first using helper
-        is_blocked, reason = FlextLdifFilters.Categorizer._check_blocked_objectclasses(
+        is_blocked, reason = FlextLdifFilters.Categorizer._check_blocked_objectclasses(  # noqa: SLF001
             entry,
             whitelist_rules,
         )
@@ -1468,7 +1468,7 @@ class FlextLdifFilters(FlextService[list[FlextLdifModels.Entry]]):
         # Validate DN patterns for category-specific matching using helper
         if category in {"users", "groups"}:
             is_rejected, reject_reason = (
-                FlextLdifFilters.Categorizer._validate_category_dn_pattern(
+                FlextLdifFilters.Categorizer._validate_category_dn_pattern(  # noqa: SLF001
                     entry,
                     category,
                     rules,
@@ -1488,11 +1488,11 @@ class FlextLdifFilters(FlextService[list[FlextLdifModels.Entry]]):
         mark_excluded: bool = False,
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Filter entries by DN pattern."""
-        return FlextLdifFilters.filter_by_dn(
+        return FlextLdifFilters._filter_by_dn(
             entries,
             pattern,
             mode,
-            mark_excluded=mark_excluded,
+            mark_excluded,
         )
 
     @staticmethod

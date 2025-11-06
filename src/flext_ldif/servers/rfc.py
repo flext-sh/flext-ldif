@@ -500,7 +500,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
     class Acl(FlextLdifServersBase.Acl):
         """RFC 4516 Compliant ACL Quirk - Base Implementation."""
 
-        def can_handle_acl(self, acl_line: FlextLdifTypes.AclOrString) -> bool:
+        def can_handle_acl(self, acl_line: FlextLdifTypes.Models.AclOrString) -> bool:
             """Check if this quirk can handle the ACL definition.
 
             RFC quirk handles all ACLs as it's the baseline implementation.
@@ -515,7 +515,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             _ = acl_line  # Unused - RFC handles all ACLs
             return True
 
-        def can_handle(self, acl_line: FlextLdifTypes.AclOrString) -> bool:
+        def can_handle(self, acl_line: FlextLdifTypes.Models.AclOrString) -> bool:
             """Check if this ACL is RFC-compliant.
 
             The RFC quirk assumes any ACL that has been successfully parsed into

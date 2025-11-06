@@ -91,6 +91,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Callable
+
 from flext_core import FlextResult, FlextService
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -192,7 +194,7 @@ class FlextLdifDn(FlextService[str]):
 
         """
         # Map operations to their handler methods
-        handlers = {
+        handlers: dict[str, Callable[[], FlextResult[str]]] = {
             "parse": lambda: self._parser.parse_operation(self.dn),
             "validate": lambda: self._parser.validate_operation(self.dn),
             "normalize": lambda: self._normalizer.normalize_operation(self.dn),
@@ -206,7 +208,7 @@ class FlextLdifDn(FlextService[str]):
             "parse_rdn": lambda: self._parser.parse_rdn_operation(self.dn),
         }
 
-        handler = handlers.get(self.operation)
+        handler: Callable[[], FlextResult[str]] | None = handlers.get(self.operation)
         if not handler:
             return FlextResult[str].fail(f"Unknown operation: {self.operation}")
 
