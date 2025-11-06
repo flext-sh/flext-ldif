@@ -105,12 +105,12 @@ class FlextLdifServersBase(FlextService[list[FlextLdifModels.Entry] | str], ABC)
 
         """
         super().__init_subclass__(**kwargs)
-        # Automatically add server_type and priority as ClassVars if not already present
-        if hasattr(cls, "Constants"):
-            if not hasattr(cls, "server_type"):
-                cls.server_type = cls.Constants.SERVER_TYPE
-            if not hasattr(cls, "priority"):
-                cls.priority = cls.Constants.PRIORITY
+        # Always set server_type and priority in subclasses if Constants is defined
+        # This ensures subclass Constants override parent values
+        if hasattr(cls, "Constants") and cls.__name__ != "FlextLdifServersRfc":
+            # Only override if this is a direct server implementation (not RFC base)
+            cls.server_type = cls.Constants.SERVER_TYPE
+            cls.priority = cls.Constants.PRIORITY
 
     def __init__(self, **kwargs: object) -> None:
         """Initialize server base class and nested quirk classes.
@@ -2809,11 +2809,6 @@ class _PriorityDescriptor:
         if objtype is None:
             objtype = type(obj) if obj is not None else FlextLdifServersBase
         return objtype.Constants.PRIORITY  # type: ignore[attr-defined]
-
-
-# Add descriptors to FlextLdifServersBase after class definition
-FlextLdifServersBase.server_type = _ServerTypeDescriptor()  # type: ignore[assignment]
-FlextLdifServersBase.priority = _PriorityDescriptor()  # type: ignore[assignment]
 
 
 __all__ = [

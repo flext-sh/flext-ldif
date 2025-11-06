@@ -85,6 +85,10 @@ class FlextLdifConstants(FlextConstants):
         CP1252 = "cp1252"
         ISO8859_1 = "iso-8859-1"
 
+        # Class-level constants (not enum values)
+        DEFAULT_ENCODING: Final[str] = UTF8
+        SUPPORTED_ENCODINGS: Final[frozenset[str]] = frozenset([UTF8, UTF16, ASCII])
+
     # ===== ACL SUBJECT TYPE ENUMS (Type-Safe) =====
     class AclSubjectType(StrEnum):
         """ACL subject/who types for permission subjects.
@@ -2216,21 +2220,15 @@ class FlextLdifConstants(FlextConstants):
         SERVICE_NAMES: Final[str] = "service_names"
         DATA: Final[str] = "data"
 
-    class Encoding:
-        """Encoding constants for LDIF processing.
+    # Default encoding for LDIF files (moved from duplicate Encoding class)
+    DEFAULT_ENCODING: Final[str] = "utf-8"
 
-        Defines encoding-related constants used throughout the LDIF processing system.
-        """
-
-        # Default encoding for LDIF files
-        DEFAULT_ENCODING: Final[str] = "utf-8"
-
-        # Supported encodings for LDIF processing
-        SUPPORTED_ENCODINGS: Final[frozenset[str]] = frozenset([
-            "utf-8",
-            "utf-16",
-            "ascii",
-        ])
+    # Supported encodings for LDIF processing
+    SUPPORTED_ENCODINGS: Final[frozenset[str]] = frozenset([
+        "utf-8",
+        "utf-16",
+        "ascii",
+    ])
 
     class LdifFormat:
         """LDIF formatting constants.

@@ -713,11 +713,12 @@ class TestFlextLdifSyntax:
         """Test OID format validation."""
         from flext_ldif.services.syntax import FlextLdifSyntax
 
-        result = FlextLdifSyntax.is_valid_oid("1.3.6.1.4.1.1466.115.121.1.7")
+        syntax = FlextLdifSyntax()
+        result = syntax.validate_oid("1.3.6.1.4.1.1466.115.121.1.7")
         assert result.is_success
         assert result.unwrap() is True
 
-        result = FlextLdifSyntax.is_valid_oid("invalid-oid")
+        result = syntax.validate_oid("invalid-oid")
         assert result.is_success
         assert result.unwrap() is False
 
@@ -725,15 +726,17 @@ class TestFlextLdifSyntax:
         """Test RFC 4517 standard OID detection."""
         from flext_ldif.services.syntax import FlextLdifSyntax
 
+        syntax = FlextLdifSyntax()
         # Boolean syntax is RFC 4517 standard
-        result = FlextLdifSyntax.is_rfc4517_standard("1.3.6.1.4.1.1466.115.121.1.7")
+        result = syntax.is_rfc4517_standard("1.3.6.1.4.1.1466.115.121.1.7")
         assert result.is_success
 
     def test_lookup_syntax_name(self) -> None:
         """Test looking up syntax name by OID."""
         from flext_ldif.services.syntax import FlextLdifSyntax
 
-        result = FlextLdifSyntax.lookup_syntax_name("1.3.6.1.4.1.1466.115.121.1.7")
+        syntax = FlextLdifSyntax()
+        result = syntax.lookup_name("1.3.6.1.4.1.1466.115.121.1.7")
         assert result.is_success
         # Name lookup depends on constants table
 
@@ -741,7 +744,8 @@ class TestFlextLdifSyntax:
         """Test looking up OID by syntax name."""
         from flext_ldif.services.syntax import FlextLdifSyntax
 
-        result = FlextLdifSyntax.lookup_syntax_oid("Boolean")
+        syntax = FlextLdifSyntax()
+        result = syntax.lookup_oid("Boolean")
         assert result.is_success
         # OID lookup depends on constants table
 
@@ -749,16 +753,18 @@ class TestFlextLdifSyntax:
         """Test resolving OID to Syntax model."""
         from flext_ldif.services.syntax import FlextLdifSyntax
 
-        result = FlextLdifSyntax.resolve_syntax_oid("1.3.6.1.4.1.1466.115.121.1.7")
+        syntax = FlextLdifSyntax()
+        result = syntax.resolve_syntax("1.3.6.1.4.1.1466.115.121.1.7")
         assert result.is_success
-        syntax = result.unwrap()
-        assert syntax.oid == "1.3.6.1.4.1.1466.115.121.1.7"
+        syntax_model = result.unwrap()
+        assert syntax_model.oid == "1.3.6.1.4.1.1466.115.121.1.7"
 
     def test_validate_syntax_value(self) -> None:
         """Test value validation against syntax type."""
         from flext_ldif.services.syntax import FlextLdifSyntax
 
-        result = FlextLdifSyntax.validate_syntax_value(
+        syntax = FlextLdifSyntax()
+        result = syntax.validate_value(
             "TRUE", "1.3.6.1.4.1.1466.115.121.1.7"
         )
         assert result.is_success
@@ -767,7 +773,8 @@ class TestFlextLdifSyntax:
         """Test getting syntax type category."""
         from flext_ldif.services.syntax import FlextLdifSyntax
 
-        result = FlextLdifSyntax.get_syntax_type("1.3.6.1.4.1.1466.115.121.1.7")
+        syntax = FlextLdifSyntax()
+        result = syntax.get_syntax_category("1.3.6.1.4.1.1466.115.121.1.7")
         assert result.is_success
         category = result.unwrap()
         assert isinstance(category, str)
@@ -776,7 +783,8 @@ class TestFlextLdifSyntax:
         """Test listing all supported RFC 4517 syntaxes."""
         from flext_ldif.services.syntax import FlextLdifSyntax
 
-        result = FlextLdifSyntax.list_all_syntaxes()
+        syntax = FlextLdifSyntax()
+        result = syntax.list_all_syntaxes()
         assert result.is_success
         oids = result.unwrap()
         assert isinstance(oids, list)

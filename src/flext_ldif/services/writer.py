@@ -434,7 +434,7 @@ class FlextLdifWriter(FlextService[Any]):
         write_result = FlextLdifUtilities.Writer.write_file(
             final_content,
             output_path,
-            encoding=FlextLdifConstants.Encoding.DEFAULT_ENCODING,
+            encoding=FlextLdifConstants.DEFAULT_ENCODING,
         )
         if write_result.is_failure:
             return FlextResult.fail(f"Failed to write file: {write_result.error}")

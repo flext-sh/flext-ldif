@@ -504,43 +504,16 @@ class FlextLdifParser(FlextService[Any]):
     ) -> FlextResult[bool]:
         """Validate entry against LDAP schema rules using FlextLdifUtilities."""
         try:
-            # Basic entry validation
             validation_errors = []
 
-            # 1. Check DN is not empty using FlextLdifUtilities.DN validation
-            dn_str = str(entry.dn.value) if entry.dn else None
-            if not dn_str:
-                validation_errors.append("Entry DN cannot be empty")
-            elif not FlextLdifUtilities.DN.validate(dn_str):
-                validation_errors.append(f"Invalid DN format per RFC 4514: {dn_str}")
+            # Validate DN
+            self._validate_entry_dn(entry, validation_errors)
 
-            # 2. Check for required objectClass attribute
-            # Note: objectClass may be removed/transformed by quirks during migration
-            # Only warn in strict mode, not in normal validation
-            has_objectclass = any(
-                attr_name.lower() == FlextLdifConstants.DictKeys.OBJECTCLASS.lower()
-                for attr_name in entry.attributes.attributes
-            )
-            if not has_objectclass and strict:
-                validation_errors.append("Entry must have objectClass attribute")
+            # Validate objectClass
+            self._validate_entry_objectclass(entry, strict, validation_errors)
 
-            # 3. Check for empty attribute values (optional validation)
-            for attr_name, attr_value in entry.attributes.attributes.items():
-                if isinstance(attr_value, list):
-                    values = attr_value
-                elif hasattr(attr_value, "values") and isinstance(
-                    attr_value.values,
-                    list,
-                ):
-                    values = attr_value.values
-                else:
-                    values = [attr_value]
-
-                if not values or all(not v for v in values):
-                    if strict:
-                        validation_errors.append(
-                            f"Attribute '{attr_name}' has empty values",
-                        )
+            # Validate attribute values
+            self._validate_entry_attributes(entry, strict, validation_errors)
 
             if validation_errors:
                 return FlextResult.fail("; ".join(validation_errors))
@@ -549,6 +522,75 @@ class FlextLdifParser(FlextService[Any]):
 
         except Exception as e:
             return FlextResult.fail(f"Validation error: {e}")
+
+    def _validate_entry_dn(
+        self,
+        entry: FlextLdifModels.Entry,
+        errors: list[str],
+    ) -> None:
+        """Validate entry DN.
+
+        Args:
+            entry: Entry to validate
+            errors: List to append error messages to
+
+        """
+        dn_str = str(entry.dn.value) if entry.dn else None
+        if not dn_str:
+            errors.append("Entry DN cannot be empty")
+        elif not FlextLdifUtilities.DN.validate(dn_str):
+            errors.append(f"Invalid DN format per RFC 4514: {dn_str}")
+
+    def _validate_entry_objectclass(
+        self,
+        entry: FlextLdifModels.Entry,
+        strict: bool,
+        errors: list[str],
+    ) -> None:
+        """Validate entry has objectClass attribute.
+
+        Args:
+            entry: Entry to validate
+            strict: Whether to enforce objectClass requirement
+            errors: List to append error messages to
+
+        """
+        has_objectclass = any(
+            attr_name.lower()
+            == FlextLdifConstants.DictKeys.OBJECTCLASS.lower()
+            for attr_name in entry.attributes.attributes
+        )
+        if not has_objectclass and strict:
+            errors.append("Entry must have objectClass attribute")
+
+    def _validate_entry_attributes(
+        self,
+        entry: FlextLdifModels.Entry,
+        strict: bool,
+        errors: list[str],
+    ) -> None:
+        """Validate entry attribute values.
+
+        Args:
+            entry: Entry to validate
+            strict: Whether to check for empty values
+            errors: List to append error messages to
+
+        """
+        for attr_name, attr_value in entry.attributes.attributes.items():
+            if isinstance(attr_value, list):
+                values = attr_value
+            elif hasattr(attr_value, "values") and isinstance(
+                attr_value.values,
+                list,
+            ):
+                values = attr_value.values
+            else:
+                values = [attr_value]
+
+            if not values or all(not v for v in values):
+                if strict:
+                    errors.append(f"Attribute '{attr_name}' has empty values")
 
     def _filter_operational_attributes(
         self,
