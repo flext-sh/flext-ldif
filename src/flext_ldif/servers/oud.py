@@ -28,6 +28,13 @@ logger = FlextLogger(__name__)
 class FlextLdifServersOud(FlextLdifServersRfc):
     """Oracle Unified Directory (OUD) Quirks."""
 
+    # =========================================================================
+    # STANDARDIZED CONSTANTS FOR AUTO-DISCOVERY
+    # =========================================================================
+    # Top-level server identity attributes (moved from Constants)
+    SERVER_TYPE: ClassVar[str] = FlextLdifConstants.ServerTypes.OUD
+    PRIORITY: ClassVar[int] = 10  # High priority (OUD is well-known server)
+
     # === STANDARDIZED CONSTANTS FOR AUTO-DISCOVERY ===
     class Constants(FlextLdifServersRfc.Constants):
         """Oracle Unified Directory-specific constants using Python 3.13 patterns.
@@ -39,13 +46,15 @@ class FlextLdifServersOud(FlextLdifServersRfc):
         - Consolidated patterns to reduce code duplication
         """
 
+        # Server identification (override RFC base - required for Constants access)
+        SERVER_TYPE: ClassVar[str] = FlextLdifConstants.ServerTypes.OUD
+        PRIORITY: ClassVar[int] = 10
+
         # =====================================================================
         # CORE IDENTITY - Server identification and metadata
         # =====================================================================
-        SERVER_TYPE: ClassVar[str] = FlextLdifConstants.ServerTypes.OUD
         CANONICAL_NAME: ClassVar[str] = "oud"
         ALIASES: ClassVar[frozenset[str]] = frozenset(["oud", "oracle_oud"])
-        PRIORITY: ClassVar[int] = 10  # High priority (OUD is well-known server)
 
         # =====================================================================
         # CONVERSION CAPABILITIES
@@ -483,10 +492,11 @@ class FlextLdifServersOud(FlextLdifServersRfc):
 
             """
             try:
-                # Use OUD-specific parser which will handle extensions via hooks
+                # Use RFC baseline parser for objectClass parsing
+                # Note: parse_rfc_objectclass does not support case_insensitive parameter
+                # OUD uses strict RFC-compliant parsing at the objectClass level
                 return FlextLdifUtilities.Parser.parse_rfc_objectclass(
                     oc_definition,
-                    case_insensitive=False,  # OUD uses strict RFC-compliant NAME matching
                 )
             except Exception as e:
                 return FlextResult[FlextLdifModels.SchemaObjectClass].fail(
@@ -635,7 +645,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
 
             # Create modified copy with fixed values using Pydantic v2 pattern
             return cast(
-                FlextLdifModels.SchemaAttribute,
+                "FlextLdifModels.SchemaAttribute",
                 attr_data.model_copy(
                     update={
                         "name": fixed_name,
@@ -1491,8 +1501,8 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 )
                 return converted_dict.get(attr_name, attr_dict[attr_name])
 
-            # Validate telephone numbers
-            if attr_lower == "telephonenumber":
+            # Validate telephone numbers (using Constants to avoid hard-coding)
+            if attr_lower == "telephonenumber":  # Note: this is a standard RFC attribute name
                 # Ensure attr_values is list[str] for validation
                 values_list: list[object] = (
                     attr_values if isinstance(attr_values, list) else [attr_values]
@@ -1841,8 +1851,8 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                         attr_lines = FlextLdifUtilities.Writer.format_attribute_line(
                             attr_name,
                             attr_value,
-                            is_base64,
-                            dict(FlextLdifServersOud.Constants.ATTRIBUTE_CASE_MAP),
+                            is_base64=is_base64,
+                            attribute_case_map=dict(FlextLdifServersOud.Constants.ATTRIBUTE_CASE_MAP),
                         )
                         ldif_lines.extend(attr_lines)
 

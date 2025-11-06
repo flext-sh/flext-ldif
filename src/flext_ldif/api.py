@@ -14,7 +14,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
-from typing import ClassVar, Literal, overload, override
+from typing import ClassVar, Literal, cast, overload, override
 
 from flext_core import (
     FlextContainer,
@@ -604,7 +604,7 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
         """
         # Check if already Entry models
         if entries and not isinstance(entries[0], dict):
-            return FlextResult[list[FlextLdifModels.Entry]].ok(entries)  # type: ignore[arg-type]
+            return FlextResult[list[FlextLdifModels.Entry]].ok(entries)
 
         # Convert list[dict] to list[Entry]
         resolved_entries: list[FlextLdifModels.Entry] = []
@@ -1871,7 +1871,7 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
                 def _transform_func(
                     entry: FlextLdifModels.Entry,
                 ) -> dict[str, object]:
-                    return entry.model_dump()
+                    return cast("dict[str, object]", entry.model_dump())
 
                 processor_func = _transform_func
 
@@ -2125,7 +2125,7 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
             # Initialize with empty dict
             self._context = {}
         # Return as FlextContext type (which is a dict-like context object)
-        return self._context  # type: ignore[return-value]
+        return self._context
 
 
 __all__ = ["FlextLdif"]

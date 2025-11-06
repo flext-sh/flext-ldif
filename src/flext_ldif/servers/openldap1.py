@@ -31,14 +31,22 @@ from flext_ldif.typings import FlextLdifTypes
 class FlextLdifServersOpenldap1(FlextLdifServersRfc):
     """OpenLDAP 1.x Legacy Quirks - Complete Implementation."""
 
-    # === STANDARDIZED CONSTANTS FOR AUTO-DISCOVERY ===
+    # =========================================================================
+    # STANDARDIZED CONSTANTS FOR AUTO-DISCOVERY
+    # =========================================================================
+    # Top-level server identity attributes (moved from Constants)
+    SERVER_TYPE: ClassVar[str] = FlextLdifConstants.ServerTypes.OPENLDAP1
+    PRIORITY: ClassVar[int] = 10
+
     class Constants(FlextLdifServersRfc.Constants):
         """Standardized constants for OpenLDAP 1.x quirk."""
 
+        # Server identification (override RFC base - required for Constants access)
         SERVER_TYPE: ClassVar[str] = FlextLdifConstants.ServerTypes.OPENLDAP1
+        PRIORITY: ClassVar[int] = 20
+
         CANONICAL_NAME: ClassVar[str] = "openldap1"
         ALIASES: ClassVar[frozenset[str]] = frozenset(["openldap1"])
-        PRIORITY: ClassVar[int] = 20
         CAN_NORMALIZE_FROM: ClassVar[frozenset[str]] = frozenset(["openldap1"])
         CAN_DENORMALIZE_TO: ClassVar[frozenset[str]] = frozenset(["openldap1", "rfc"])
 
@@ -164,6 +172,10 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
                 result = quirk.schema._parse_attribute(attr_def)
 
         """
+
+        # Server identification (override RFC base - required for Constants access)
+        SERVER_TYPE: ClassVar[str] = FlextLdifConstants.ServerTypes.OPENLDAP1
+        PRIORITY: ClassVar[int] = 20
 
         # Use patterns from Constants
 

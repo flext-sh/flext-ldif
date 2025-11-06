@@ -618,9 +618,9 @@ class FlextLdifUtilitiesSchema:
         if attr_data.sup:
             parts.append(f"SUP {attr_data.sup}")
 
-        FlextLdifUtilitiesWriter._add_attribute_matching_rules(attr_data, parts)
-        FlextLdifUtilitiesWriter._add_attribute_syntax(attr_data, parts)
-        FlextLdifUtilitiesWriter._add_attribute_flags(attr_data, parts)
+        FlextLdifUtilitiesWriter.add_attribute_matching_rules(attr_data, parts)
+        FlextLdifUtilitiesWriter.add_attribute_syntax(attr_data, parts)
+        FlextLdifUtilitiesWriter.add_attribute_flags(attr_data, parts)
 
         if attr_data.usage:
             parts.append(f"USAGE {attr_data.usage}")
@@ -771,6 +771,7 @@ class FlextLdifUtilitiesSchema:
     @staticmethod
     def normalize_attribute_name(
         attribute_name: str | None,
+        *,
         case_sensitive: bool = False,
     ) -> str | None:
         """Normalize attribute name for case-insensitive comparisons.

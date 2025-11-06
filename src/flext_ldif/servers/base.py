@@ -96,24 +96,38 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
     def __init_subclass__(cls, **kwargs: object) -> None:
         """Initialize subclass with server_type and priority ClassVars.
 
-        Automatically adds ClassVar attributes that point to Constants.SERVER_TYPE
-        and Constants.PRIORITY, so subclasses don't need to duplicate them.
+        Supports TWO patterns:
+        1. NEW: SERVER_TYPE and PRIORITY defined directly on the class
+        2. OLD: SERVER_TYPE and PRIORITY in Constants (for backward compatibility)
+
+        Automatically ensures both cls.server_type and cls.Constants.SERVER_TYPE
+        are set correctly, supporting gradual migration.
 
         This ensures:
-        - FlextLdifServersOid.server_type == FlextLdifServersOid.Constants.SERVER_TYPE
-        - FlextLdifServersOid.priority == FlextLdifServersOid.Constants.PRIORITY
+        - FlextLdifServersOid.server_type == FlextLdifServersOid.SERVER_TYPE
+        - FlextLdifServersOid.Constants.SERVER_TYPE == FlextLdifServersOid.SERVER_TYPE
 
         Args:
             **kwargs: Passed to parent __init_subclass__
 
         """
         super().__init_subclass__(**kwargs)
-        # Always set server_type and priority in subclasses if Constants is defined
-        # This ensures subclass Constants override parent values
+
+        # Support both patterns during migration
         if hasattr(cls, "Constants"):
-            # Set for all concrete server implementations including RFC
-            cls.server_type = cls.Constants.SERVER_TYPE
-            cls.priority = cls.Constants.PRIORITY
+            # Get values from class first (new pattern), then Constants (old pattern)
+            server_type = getattr(cls, "SERVER_TYPE", None) or cls.Constants.SERVER_TYPE
+            priority = getattr(cls, "PRIORITY", None) or cls.Constants.PRIORITY
+        else:
+            # Old-style class without Constants
+            server_type = getattr(cls, "SERVER_TYPE", None)
+            priority = getattr(cls, "PRIORITY", None)
+
+        # Set class-level attributes for both patterns
+        if server_type:
+            cls.server_type = server_type
+        if priority is not None:
+            cls.priority = priority
 
     def __init__(self, **kwargs: object) -> None:
         """Initialize server base class and nested quirk classes.
@@ -686,9 +700,9 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
         if not entries:
             return FlextResult.ok([])
         # All entries should be Entry models
-        for entry in entries:
-            if not isinstance(entry, FlextLdifModels.Entry):
-                return FlextResult.fail(f"Invalid entry type: {type(entry).__name__}")
+        if not all(isinstance(entry, FlextLdifModels.Entry) for entry in entries):
+            invalid = next(e for e in entries if not isinstance(e, FlextLdifModels.Entry))
+            return FlextResult.fail(f"Invalid entry type: {type(invalid).__name__}")
         return FlextResult.ok(entries)
 
     # =========================================================================
@@ -920,9 +934,8 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
             """
             if isinstance(model, FlextLdifModels.SchemaAttribute):
                 return self._write_attribute(model)
-            if isinstance(model, FlextLdifModels.SchemaObjectClass):
-                return self._write_objectclass(model)
-            return FlextResult.fail(f"Unknown schema model type: {type(model)}")
+            # isinstance narrowed to SchemaObjectClass by type checker
+            return self._write_objectclass(model)
 
         @abstractmethod
         def _parse_attribute(
@@ -977,12 +990,8 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
             """
             if isinstance(model, FlextLdifModels.SchemaAttribute):
                 return self.write_attribute(model)
-            if isinstance(model, FlextLdifModels.SchemaObjectClass):
-                return self.write_objectclass(model)
-            # Type checker doesn't know model is always one of the two types
-            return FlextResult.fail(
-                f"Unknown schema model type: {type(model).__name__}",
-            )
+            # isinstance narrowed to SchemaObjectClass by type checker
+            return self.write_objectclass(model)
 
         def _route_can_handle(
             self,
@@ -1177,11 +1186,9 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
                     f"write operation requires SchemaAttribute or SchemaObjectClass, got {type(data).__name__}",
                 )
 
-            return FlextResult[
-                FlextLdifModels.SchemaAttribute
-                | FlextLdifModels.SchemaObjectClass
-                | str
-            ].fail(f"Unknown operation: {operation}")
+            # Should not reach here (Literal type ensures only parse or write)
+            msg = f"Unknown operation: {operation}"
+            raise AssertionError(msg)
 
         def execute(
             self,
@@ -1869,15 +1876,7 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
 
             if detected_operation is None:
                 # Type-based auto-detection
-                if isinstance(data, str):
-                    # String data → PARSE operation
-                    detected_operation = "parse"
-                elif isinstance(data, FlextLdifModels.Acl):
-                    detected_operation = "write"
-                else:
-                    return FlextResult[FlextLdifModels.Acl | str].fail(
-                        f"Unknown data type: {type(data).__name__}. Expected str or Acl",
-                    )
+                detected_operation = "parse" if isinstance(data, str) else "write"
 
             # Execute based on detected/forced operation
             if detected_operation == "parse":
@@ -1888,18 +1887,13 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
                 # Route to parse_acl → Acl
                 return self._handle_parse_acl(data)
 
-            if detected_operation == "write":
-                if not isinstance(data, FlextLdifModels.Acl):
-                    return FlextResult[FlextLdifModels.Acl | str].fail(
-                        f"write operation requires Acl, got {type(data).__name__}",
-                    )
-                # Route to write_acl → str
-                return self._handle_write_acl(data)
-
-            # Should not reach here
-            return FlextResult[FlextLdifModels.Acl | str].fail(
-                f"Unknown operation: {detected_operation}",
-            )
+            # detected_operation == "write"
+            if not isinstance(data, FlextLdifModels.Acl):
+                return FlextResult[FlextLdifModels.Acl | str].fail(
+                    f"write operation requires Acl, got {type(data).__name__}",
+                )
+            # Route to write_acl → str
+            return self._handle_write_acl(data)
 
         @overload
         def __call__(
@@ -2434,17 +2428,13 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
             if isinstance(data, str):
                 return "parse"
 
-            if isinstance(data, list):
-                if not data or all(
-                    isinstance(item, FlextLdifModels.Entry) for item in data
-                ):
-                    return "write"
-                return FlextResult[FlextLdifTypes.EntryOrString].fail(
-                    f"list contains unknown types, not Entry models: {[type(item).__name__ for item in data[:3]]}",
-                )
-
+            # isinstance narrowed to list by type checker (data: str | list[Entry])
+            if not data or all(
+                isinstance(item, FlextLdifModels.Entry) for item in data
+            ):
+                return "write"
             return FlextResult[FlextLdifTypes.EntryOrString].fail(
-                f"Unknown data type: {type(data).__name__}. Expected str or list[Entry]",
+                f"list contains unknown types, not Entry models: {[type(item).__name__ for item in data[:3]]}",
             )
 
         def _route_entry_operation(
@@ -2471,9 +2461,9 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
                     )
                 return self._handle_write_entry(data)
 
-            return FlextResult[FlextLdifTypes.EntryOrString].fail(
-                f"Unknown operation: {operation}",
-            )
+            # Should not reach here (Literal type ensures only parse or write)
+            msg = f"Unknown operation: {operation}"
+            raise AssertionError(msg)
 
         @overload
         def __call__(
@@ -2723,9 +2713,6 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
             if not entry_dn:
                 return FlextResult[FlextLdifModels.Entry].fail("DN is None or empty")
 
-            if entry_attrs is None:
-                return FlextResult[FlextLdifModels.Entry].fail("Attributes is None")
-
             # Convert attributes to FlextLdifModels.LdifAttributes
             converted_attrs = FlextLdifModels.LdifAttributes.create(dict(entry_attrs))
 
@@ -2815,7 +2802,7 @@ class _ServerTypeDescriptor:
         """Get SERVER_TYPE from Constants."""
         if objtype is None:
             objtype = type(obj) if obj is not None else FlextLdifServersBase
-        return cast("str", objtype.Constants.SERVER_TYPE)  # type: ignore[attr-defined]
+        return cast("str", objtype.Constants.SERVER_TYPE)
 
 
 class _PriorityDescriptor:
@@ -2825,7 +2812,7 @@ class _PriorityDescriptor:
         """Get PRIORITY from Constants."""
         if objtype is None:
             objtype = type(obj) if obj is not None else FlextLdifServersBase
-        return cast("int", objtype.Constants.PRIORITY)  # type: ignore[attr-defined]
+        return cast("int", objtype.Constants.PRIORITY)
 
 
 __all__ = [

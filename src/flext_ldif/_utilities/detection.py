@@ -65,7 +65,7 @@ class FlextLdifUtilitiesDetection:
         """
 
         @staticmethod
-        def can_handle_pattern(data: Any, pattern: str) -> bool:  # noqa: ANN401
+        def can_handle_pattern(data: object, pattern: str) -> bool:
             """Check if data matches regex pattern.
 
             Handles:
@@ -104,7 +104,7 @@ class FlextLdifUtilitiesDetection:
                 return False
 
         @staticmethod
-        def can_handle_prefix(data: Any, prefixes: frozenset[str]) -> bool:  # noqa: ANN401
+        def can_handle_prefix(data: object, prefixes: frozenset[str]) -> bool:
             """Check if data starts with any prefix (case-insensitive).
 
             Handles:
@@ -142,7 +142,7 @@ class FlextLdifUtilitiesDetection:
             return False
 
         @staticmethod
-        def can_handle_in_set(data: Any, items: frozenset[str]) -> bool:  # noqa: ANN401
+        def can_handle_in_set(data: object, items: frozenset[str]) -> bool:
             """Check if data is in set (case-insensitive).
 
             Handles:
@@ -207,12 +207,12 @@ class FlextLdifUtilitiesDetection:
                 ):
                     constants = cls.Constants
                     if constants and hasattr(constants, "DETECTION_OID_PATTERN"):
-                        return cast(type[Any], constants)
+                        return cast("type[Any]", constants)
             return None
 
         def can_handle_attribute(
             self,
-            attr_definition: str | FlextLdifModels.SchemaAttribute | Any,  # noqa: ANN401
+            attr_definition: str | FlextLdifModels.SchemaAttribute | object,
         ) -> bool:
             """Check if attribute matches OID detection pattern.
 
@@ -236,7 +236,7 @@ class FlextLdifUtilitiesDetection:
 
         def can_handle_objectclass(
             self,
-            oc_definition: str | FlextLdifModels.SchemaObjectClass | Any,  # noqa: ANN401
+            oc_definition: str | FlextLdifModels.SchemaObjectClass | object,
         ) -> bool:
             """Check if objectClass matches OID detection pattern.
 
@@ -287,12 +287,12 @@ class FlextLdifUtilitiesDetection:
                 ):
                     constants = cls.Constants
                     if constants and hasattr(constants, "DETECTION_ATTRIBUTE_PREFIXES"):
-                        return cast(type[Any], constants)
+                        return cast("type[Any]", constants)
             return None
 
         def can_handle_attribute(
             self,
-            attr_definition: str | FlextLdifModels.SchemaAttribute | Any,  # noqa: ANN401
+            attr_definition: str | FlextLdifModels.SchemaAttribute | object,
         ) -> bool:
             """Check if attribute name matches detection prefixes.
 
@@ -343,20 +343,20 @@ class FlextLdifUtilitiesDetection:
                 ):
                     constants = cls.Constants
                     if constants and hasattr(constants, "DETECTION_OBJECTCLASS_NAMES"):
-                        return cast(type[Any], constants)
+                        return cast("type[Any]", constants)
             return None
 
         def can_handle(
             self,
-            entry_dn: str,  # noqa: ARG002
-            attributes: Mapping[str, Any] | dict[str, Any] | Any,  # noqa: ANN401
+            _entry_dn: str,
+            attributes: Mapping[str, object] | dict[str, object] | object,
         ) -> bool:
             """Check if entry objectClasses match detection list.
 
             Override in subclass and set DETECTION_OBJECTCLASS_NAMES constant.
 
             Args:
-                entry_dn: Entry distinguished name
+                _entry_dn: Entry distinguished name (unused in base implementation)
                 attributes: Entry attributes dict with 'objectClass' key
 
             Returns:
@@ -424,13 +424,13 @@ class FlextLdifUtilitiesDetection:
                 ):
                     constants = cls.Constants
                     if constants and hasattr(constants, "DETECTION_DN_MARKERS"):
-                        return cast(type[Any], constants)
+                        return cast("type[Any]", constants)
             return None
 
         def can_handle(
             self,
             entry_dn: str,
-            attributes: Mapping[str, Any] | dict[str, Any] | Any,  # noqa: ARG002, ANN401
+            _attributes: Mapping[str, object] | dict[str, object] | object,
         ) -> bool:
             """Check if entry DN matches detection markers.
 
@@ -438,7 +438,7 @@ class FlextLdifUtilitiesDetection:
 
             Args:
                 entry_dn: Entry distinguished name
-                attributes: Entry attributes (used if DN is empty)
+                _attributes: Entry attributes (unused in base implementation)
 
             Returns:
                 True if DN contains any detection marker
@@ -487,12 +487,12 @@ class FlextLdifUtilitiesDetection:
                 ):
                     constants = cls.Constants
                     if constants and hasattr(constants, "ACL_ATTRIBUTE_NAME"):
-                        return cast(type[Any], constants)
+                        return cast("type[Any]", constants)
             return None
 
         def can_handle_acl(
             self,
-            acl_line: str | FlextLdifModels.Acl | Any,  # noqa: ANN401
+            acl_line: str | FlextLdifModels.Acl | object,
         ) -> bool:
             """Check if ACL uses the expected ACL attribute.
 

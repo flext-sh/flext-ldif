@@ -269,8 +269,8 @@ class FlextLdifSchema:
             # Basic check: looks like an attribute definition
             return "(" in attr_definition and ")" in attr_definition
 
-        except Exception as e:
-            logger.exception(f"Error checking if can handle attribute: {e}")
+        except Exception:
+            logger.exception("Error checking if can handle attribute")
             return False
 
     def can_handle_objectclass(self, oc_definition: str) -> bool:
@@ -293,8 +293,8 @@ class FlextLdifSchema:
             # Basic check: looks like an objectClass definition
             return "(" in oc_definition and ")" in oc_definition
 
-        except Exception as e:
-            logger.exception(f"Error checking if can handle objectClass: {e}")
+        except Exception:
+            logger.exception("Error checking if can handle objectClass")
             return False
 
     # =========================================================================
@@ -315,9 +315,9 @@ class FlextLdifSchema:
         if not oid:
             return False
 
-        # OID should be digits separated by dots
+        # OID should be digits separated by dots (minimum 2 parts, e.g., "1.2")
         parts = oid.split(".")
-        if len(parts) < 2:
+        if len(parts) < 2:  # noqa: PLR2004
             return False
 
         return all(part.isdigit() for part in parts)

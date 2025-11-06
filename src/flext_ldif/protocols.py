@@ -17,7 +17,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Any, Protocol, runtime_checkable
+from typing import Protocol, runtime_checkable
 
 from flext_core import FlextProtocols, FlextResult
 
@@ -522,10 +522,10 @@ class FlextLdifProtocols(FlextProtocols):
             protocol through structural typing (duck typing).
             """
 
-            dn: Any  # Can be str or object with .value property
+            dn: str | object  # Can be str or object with .value property
             """Entry distinguished name (DN). Can be string or object with .value."""
 
-            attributes: Any  # Entry attributes dictionary
+            attributes: dict[str, list[str]] | object  # Entry attributes dictionary
             """Entry attributes as dictionary mapping attribute names to values."""
 
 

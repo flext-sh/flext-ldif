@@ -609,7 +609,7 @@ class FlextLdifMigrationPipeline(
             return entries
         result = FlextLdifFilters.filter_schema_by_oids(
             entries=entries,
-            allowed_oids=self._schema_whitelist_rules,  # type: ignore[arg-type]
+            allowed_oids=self._schema_whitelist_rules,
         )
         return result.unwrap() if result.is_success else entries
 
@@ -772,7 +772,7 @@ class FlextLdifMigrationPipeline(
                     # Create new entry with updated metadata
                     new_attrs_result = FlextLdifModels.LdifAttributes.create(
                         filtered_attrs,
-                    )  # type: ignore[arg-type]
+                    )
                     if new_attrs_result.is_success:
                         updated_entry = entry.model_copy(
                             update={
@@ -782,7 +782,7 @@ class FlextLdifMigrationPipeline(
                         )
             else:
                 # Just update attributes without metadata
-                new_attrs_result = FlextLdifModels.LdifAttributes.create(filtered_attrs)  # type: ignore[arg-type]
+                new_attrs_result = FlextLdifModels.LdifAttributes.create(filtered_attrs)
                 if new_attrs_result.is_success:
                     updated_entry = entry.model_copy(
                         update={"attributes": new_attrs_result.unwrap()},

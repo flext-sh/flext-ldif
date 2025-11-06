@@ -272,6 +272,7 @@ class FlextLdifUtilitiesACL:
     @staticmethod
     def build_metadata_extensions(
         line_breaks: list[int] | None = None,
+        *,
         dn_spaces: bool = False,
         targetscope: str | None = None,
         version: str | None = None,

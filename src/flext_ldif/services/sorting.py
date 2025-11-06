@@ -921,6 +921,7 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
     def hierarchical_sort_by_dn(
         cls,
         entries: list[FlextLdifModels.Entry],
+        *,
         reverse: bool = False,
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Sort entries in hierarchical order following LDAP DN tree structure.
@@ -973,6 +974,7 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
         entries: list[FlextLdifModels.Entry],
         primary_key: str = "dn",
         secondary_key: str | None = None,
+        *,
         case_sensitive: bool = False,
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Intelligent sorting supporting multiple attribute types and fallbacks.
@@ -1056,6 +1058,7 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
         cls,
         entries: list[FlextLdifModels.Entry],
         group_by: str = "objectclass",
+        *,
         sort_within_group: bool = True,
     ) -> FlextResult[dict[str, list[FlextLdifModels.Entry]]]:
         """Group entries by an attribute and sort within groups.
@@ -1089,8 +1092,8 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
 
             # Sort within groups if requested
             if sort_within_group:
-                for group_key in groups:
-                    result = cls.hierarchical_sort_by_dn(groups[group_key])
+                for group_key, group_entries in groups.items():
+                    result = cls.hierarchical_sort_by_dn(group_entries)
                     if result.is_success:
                         groups[group_key] = result.unwrap()
 

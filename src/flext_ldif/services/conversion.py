@@ -66,7 +66,7 @@ class FlextLdifConversion(
         object.__setattr__(self, "dn_registry", FlextLdifDn.Registry())
 
     @override
-    def execute(self) -> FlextResult[dict[str, object]]:  # type: ignore[override]
+    def execute(self) -> FlextResult[dict[str, object]]:
         """Execute conversion service health check.
 
         Returns:
@@ -214,7 +214,7 @@ class FlextLdifConversion(
 
             if data_type_lower == "attribute":
                 return self._convert_attribute(source, target, data)
-            if data_type_lower in ("objectclass", "objectclasses"):
+            if data_type_lower in {"objectclass", "objectclasses"}:
                 return self._convert_objectclass(source, target, data)
             if data_type_lower == "acl":
                 if isinstance(data, str):

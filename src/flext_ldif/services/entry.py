@@ -361,7 +361,7 @@ class FlextLdifEntry(FlextService[list[FlextLdifModels.Entry]]):
         adapted_entries: list[FlextLdifModels.Entry] = []
 
         for entry in self.entries:
-            result = self._remove_operational_attributes_single(entry)
+            result = self.remove_operational_attributes_single(entry)
             if result.is_failure:
                 return cast("FlextResult[list[FlextLdifModels.Entry]]", result)
             adapted_entries.append(result.unwrap())
@@ -412,7 +412,7 @@ class FlextLdifEntry(FlextService[list[FlextLdifModels.Entry]]):
         adapted_entries: list[FlextLdifModels.Entry] = []
 
         for entry in self.entries:
-            result = self._remove_attributes_single(entry, self.attributes_to_remove)
+            result = self.remove_attributes_single(entry, self.attributes_to_remove)
             if result.is_failure:
                 return cast("FlextResult[list[FlextLdifModels.Entry]]", result)
             adapted_entries.append(result.unwrap())

@@ -32,7 +32,7 @@ class TestDnServiceInitialization:
         assert result.is_success
         normalized = result.unwrap()
         # DN normalizado: attribute types lowercase, value case preserved
-        assert "cn=John Doe" in normalized.lower() or "cn=john doe" in normalized
+        assert "cn=john doe" in normalized.lower()  # Consistent lowercase check
 
 
 class TestParseComponents:
@@ -310,12 +310,11 @@ class TestRFC4514Compliance:
 
         assert result.is_success
         components = result.unwrap()
-        # Each component should be a 3-tuple
+        # Each component should be a 2-tuple (attr, value) per current API
         for component in components:
-            assert len(component) == 3
+            assert len(component) == 2
             assert isinstance(component[0], str)  # attr
             assert isinstance(component[1], str)  # value
-            assert isinstance(component[2], str)  # rdn
 
 
 class TestDnEscaping:

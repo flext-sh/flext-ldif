@@ -42,6 +42,8 @@ from typing import TypeVar
 
 from flext_core import FlextLogger, FlextResult
 
+from flext_ldif.models import FlextLdifModels
+
 logger = FlextLogger(__name__)
 
 T = TypeVar("T")
@@ -74,10 +76,6 @@ class FlextLdifUtilitiesDecorators:
             # Result automatically has metadata attached with quirk_type="oid"
 
         """
-        from flext_ldif.models import (
-            FlextLdifModels,
-        )
-
         def decorator(
             func: Callable[..., FlextResult[T]],
         ) -> Callable[..., FlextResult[T]]:
@@ -129,7 +127,7 @@ class FlextLdifUtilitiesDecorators:
 
     @staticmethod
     def attach_write_metadata(
-        quirk_type: str,
+        _quirk_type: str,
     ) -> Callable[[Callable[..., FlextResult[T]]], Callable[..., FlextResult[T]]]:
         """Decorator to automatically attach metadata to write method results.
 
@@ -137,7 +135,7 @@ class FlextLdifUtilitiesDecorators:
         to attach consistent metadata during serialization operations.
 
         Args:
-            quirk_type: Server type (e.g., "oid", "oud", "rfc") - reserved for future use
+            _quirk_type: Server type (e.g., "oid", "oud", "rfc") - reserved for future use
 
         Returns:
             Decorator function that wraps write methods
@@ -192,8 +190,6 @@ class FlextLdifUtilitiesDecorators:
                 return FlextResult.ok(parsed_attr)
 
         """
-        from flext_core import FlextResult
-
         def decorator(
             func: Callable[..., FlextResult[T]],
         ) -> Callable[..., FlextResult[T]]:
@@ -238,8 +234,6 @@ class FlextLdifUtilitiesDecorators:
                 return FlextResult.ok(ldif_str)
 
         """
-        from flext_core import FlextResult
-
         def decorator(
             func: Callable[..., FlextResult[T]],
         ) -> Callable[..., FlextResult[T]]:
