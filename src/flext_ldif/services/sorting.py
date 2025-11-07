@@ -740,34 +740,40 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
         return FlextResult[list[FlextLdifModels.Entry]].ok(processed)
 
     def _by_hierarchy(self) -> FlextResult[list[FlextLdifModels.Entry]]:
-        """Sort by DN hierarchy (depth-first) using RFC 4514 DN structure.
+        """Sort by DN hierarchy (depth-first) using simple and effective rule.
 
-        Uses FlextLdifUtilities.DN.get_depth() for RFC 4514 compliant DN depth calculation
-        instead of naive comma counting, ensuring accurate hierarchical ordering.
+        Sorting rule: (depth, normalized_dn)
+        - Depth 1 entries first (sorted alphabetically)
+        - Depth 2 entries next (sorted alphabetically)
+        - And so on...
+
+        This naturally preserves parent-before-children ordering for proper LDAP
+        synchronization since parents (lower depth) always appear before children
+        (higher depth).
+
+        Uses FlextLdifUtilities.DN.norm() for RFC 4514 compliant DN normalization.
         """
 
         def sort_key(entry: FlextLdifModels.Entry) -> tuple[int, str]:
+            """Generate hierarchical sort key: (depth, normalized_dn)."""
             dn_value = (
                 str(FlextLdifUtilities.DN.get_dn_value(entry.dn)) if entry.dn else ""
             )
             if not dn_value:
                 return (0, "")
 
-            # Use FlextLdifUtilities.DN.get_depth() for RFC 4514 compliant depth
-            # Fallback to comma count if get_depth() is not available
-            if hasattr(FlextLdifUtilities.DN, "get_depth"):
-                depth = FlextLdifUtilities.DN.get_depth(dn_value) or (
-                    dn_value.count(",") + 1
-                )
-            else:
-                depth = dn_value.count(",") + 1
+            # Calculate depth (number of RDN components)
+            depth = dn_value.count(",") + 1
 
             # Normalize DN for consistent sorting using FlextLdifUtilities
             normalized = FlextLdifUtilities.DN.norm(dn_value)
             sort_dn = normalized.lower() if normalized else dn_value.lower()
 
+            # Return tuple: (depth, normalized_dn)
+            # Sorting by this ensures all parents come before children
             return (depth, sort_dn)
 
+        # Sort entries using hierarchical key
         sorted_entries = sorted(self.entries, key=sort_key)
         return FlextResult[list[FlextLdifModels.Entry]].ok(sorted_entries)
 
@@ -864,7 +870,9 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
             [(k, v) for k, v in attrs_dict.items() if k not in order],
             key=lambda x: x[0].lower(),
         )
-        sorted_attrs = FlextLdifModels.LdifAttributes(attributes=dict(ordered + remaining))
+        sorted_attrs = FlextLdifModels.LdifAttributes(
+            attributes=dict(ordered + remaining)
+        )
         return FlextResult[FlextLdifModels.Entry].ok(
             entry.model_copy(update={"attributes": sorted_attrs}),
         )

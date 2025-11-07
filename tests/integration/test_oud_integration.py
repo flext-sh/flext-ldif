@@ -31,7 +31,9 @@ class TestOudSchemaIntegration:
     - oud_schema_fixture: OUD schema LDIF content
     """
 
-    def test_parse_schema_fixture(self, api: FlextLdif, oud_schema_fixture: str) -> None:
+    def test_parse_schema_fixture(
+        self, api: FlextLdif, oud_schema_fixture: str
+    ) -> None:
         """Test parsing complete OUD schema fixture.
 
         Validates:

@@ -360,7 +360,11 @@ class FlextLdifModels(FlextModels):
                             return acl_format
             except Exception as e:
                 # Quirk registry access failed - log and fall through to fallback
-                logger.debug("Failed to get ACL format from quirks: %s", e)
+                logger.warning(
+                    "Failed to get ACL format from quirks, using RFC fallback: %s",
+                    e,
+                    exc_info=True,
+                )
 
             # Fallback to RFC ACI format
             from flext_ldif.servers.rfc import FlextLdifServersRfc
@@ -950,9 +954,14 @@ class FlextLdifModels(FlextModels):
                     metadata=metadata,
                 )
 
-            except (ImportError, Exception):
+            except (ImportError, Exception) as e:
                 # Log and return None for any resolution errors
                 # This prevents the model from being invalid due to service failures
+                logger.warning(
+                    "Failed to resolve syntax for field, returning None: %s",
+                    e,
+                    exc_info=True,
+                )
                 return None
 
     class SchemaObjectClass(FlextModels.ArbitraryTypesModel):
@@ -1098,9 +1107,7 @@ class FlextLdifModels(FlextModels):
         def create(
             cls,
             dn: str | FlextLdifModels.DistinguishedName,
-            attributes: (
-                dict[str, str | list[str]] | FlextLdifModels.LdifAttributes
-            ),
+            attributes: (dict[str, str | list[str]] | FlextLdifModels.LdifAttributes),
             metadata: FlextLdifModels.QuirkMetadata | None = None,
             acls: list[FlextLdifModels.Acl] | None = None,
             objectclasses: list[FlextLdifModels.SchemaObjectClass] | None = None,
@@ -1224,7 +1231,9 @@ class FlextLdifModels(FlextModels):
                 if isinstance(entry_attrs_raw, dict):
                     for attr_name, attr_value_list in entry_attrs_raw.items():
                         if isinstance(attr_value_list, list):
-                            attrs_dict[str(attr_name)] = [str(v) for v in attr_value_list]
+                            attrs_dict[str(attr_name)] = [
+                                str(v) for v in attr_value_list
+                            ]
                         elif isinstance(attr_value_list, str):
                             attrs_dict[str(attr_name)] = [attr_value_list]
                         else:
@@ -1234,7 +1243,7 @@ class FlextLdifModels(FlextModels):
                 # attrs_dict is already dict[str, list[str]], compatible with expected type
                 return cls.create(
                     dn=dn_str,
-                    attributes=attrs_dict,  # type: ignore[arg-type]
+                    attributes=attrs_dict,
                 )
 
             except Exception as e:
@@ -1346,7 +1355,7 @@ class FlextLdifModels(FlextModels):
             try:
                 # filter_func expects dict[str, list[str]] format
                 entry_dict = self.to_dict()
-                return filter_func(entry_dict)  # type: ignore[arg-type]
+                return filter_func(entry_dict)
             except Exception:
                 return False
 
@@ -1546,7 +1555,7 @@ class FlextLdifModels(FlextModels):
             """Get attribute values lists."""
             return list(self.attributes.values())
 
-        def __iter__(self) -> Iterator[str]:  # type: ignore[override]
+        def __iter__(self) -> Iterator[str]:
             """Iterate over attribute names.
 
             Allows: for name in attributes_obj: ...
@@ -1799,7 +1808,7 @@ class FlextLdifModels(FlextModels):
             description="Entries organized by category",
         )
         statistics: FlextLdifModels.PipelineStatistics = Field(
-            default_factory=lambda: FlextLdifModels.PipelineStatistics(),
+            default_factory=FlextLdifModels.PipelineStatistics,
             description="Pipeline execution statistics",
         )
         file_paths: dict[str, str] = Field(
@@ -2254,10 +2263,10 @@ class FlextLdifModels(FlextModels):
                 has_entries = self.stats.get("total_entries", 0) > 0
             else:
                 has_schema = (
-                    self.stats.total_schema_attributes > 0  # type: ignore[attr-defined]
-                    or self.stats.total_schema_objectclasses > 0  # type: ignore[attr-defined]
+                    self.stats.total_schema_attributes > 0
+                    or self.stats.total_schema_objectclasses > 0
                 )
-                has_entries = self.stats.total_entries > 0  # type: ignore[attr-defined]
+                has_entries = self.stats.total_entries > 0
             return not has_schema and not has_entries
 
         @computed_field

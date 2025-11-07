@@ -432,8 +432,16 @@ class FlextLdifProtocols(FlextProtocols):
                 self,
                 source: FlextLdifProtocols.Quirks.QuirksPort,
                 target: FlextLdifProtocols.Quirks.QuirksPort,
-                model_instance: FlextLdifModels.Entry | FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | FlextLdifModels.Acl,
-            ) -> FlextResult[FlextLdifModels.Entry | FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | FlextLdifModels.Acl]:
+                model_instance: FlextLdifModels.Entry
+                | FlextLdifModels.SchemaAttribute
+                | FlextLdifModels.SchemaObjectClass
+                | FlextLdifModels.Acl,
+            ) -> FlextResult[
+                FlextLdifModels.Entry
+                | FlextLdifModels.SchemaAttribute
+                | FlextLdifModels.SchemaObjectClass
+                | FlextLdifModels.Acl
+            ]:
                 """Convert a model from a source server format to a target server format.
 
                 This is the core method for all transformations. It orchestrates the

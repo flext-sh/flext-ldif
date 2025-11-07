@@ -31,7 +31,7 @@ import sys
 # Python 3.9+ Compatibility: base64.decodestring was removed in Python 3.9
 # but ldif3 still uses it. Patch it here before any ldif3 imports.
 if sys.version_info >= (3, 9) and not hasattr(base64, "decodestring"):
-    base64.decodestring = base64.decodebytes  # type: ignore[attr-defined]
+    base64.decodestring = base64.decodebytes
 
 from flext_ldif.api import FlextLdif
 from flext_ldif.config import FlextLdifConfig
@@ -44,15 +44,7 @@ from flext_ldif.services.validation import (
 )
 from flext_ldif.typings import FlextLdifTypes
 
-# Rebuild models that use FlextLdifTypes forward references
-# This is needed because FlextLdifTypes contains forward references to FlextLdifModels
-# Pass namespace so Pydantic can evaluate string annotations
-_types_namespace = {
-    "FlextLdifTypes": FlextLdifTypes,
-    "FlextLdifModels": FlextLdifModels,
-}
-FlextLdif.model_rebuild(_types_namespace=_types_namespace)
-FlextLdifMigrationPipeline.model_rebuild(_types_namespace=_types_namespace)
+# Note: model_rebuild removed - Pydantic v2 handles forward references automatically
 
 __email__ = "dev@flext.com"
 
@@ -62,7 +54,9 @@ __all__ = [
     "FlextLdif",
     "FlextLdifConfig",
     "FlextLdifConstants",
+    "FlextLdifMigrationPipeline",
     "FlextLdifModels",
+    "FlextLdifTypes",
     "Validation",
     "ValidationService",
 ]

@@ -13,9 +13,8 @@ Original: 235 lines | Optimized: ~120 lines (49% reduction)
 from __future__ import annotations
 
 from pathlib import Path
-from typing import cast
 
-from flext_ldif import FlextLdif, FlextLdifModels
+from flext_ldif import FlextLdif
 
 
 def build_entries_pipeline() -> None:
@@ -112,7 +111,7 @@ sn: Williams
     # Railway pattern - parse → filter (auto error handling)
     parse_result = api.parse(ldif_content)
     if parse_result.is_success:
-        entries = cast("list[FlextLdifModels.Entry]", parse_result.unwrap())
+        entries = parse_result.unwrap()
         person_result = api.filter(entries, objectclass="person")
         if person_result.is_success:
             filtered_entries = person_result.unwrap()
@@ -125,7 +124,7 @@ sn: Williams
     # Alternative: filter entries by objectclass
     parse_result2 = api.parse(ldif_content)
     if parse_result2.is_success:
-        entries2 = cast("list[FlextLdifModels.Entry]", parse_result2.unwrap())
+        entries2 = parse_result2.unwrap()
         all_persons_result = api.filter(entries2, objectclass="person")
         if all_persons_result.is_success:
             all_persons = all_persons_result.unwrap()
@@ -201,10 +200,7 @@ def convert_formats_pipeline() -> None:
         if write_result.is_success:
             parse_result = api.parse(Path("temp.json"))
             if parse_result.is_success:
-                entries_from_json = cast(
-                    "list[FlextLdifModels.Entry]",
-                    parse_result.unwrap(),
-                )
+                entries_from_json = parse_result.unwrap()
                 print(f"Round-trip: {len(entries_from_json)} entries recovered")
 
         # Batch: entries → dicts (NEW - eliminates manual loops!)

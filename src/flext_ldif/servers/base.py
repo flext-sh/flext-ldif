@@ -394,16 +394,16 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
         # Initialize nested class instances with private names to avoid
         # Pydantic conflicts. Type ignore: These are concrete implementations
         # in subclasses, not abstract base
-        self._schema_quirk = self.Schema()  # type: ignore[abstract]
-        self._acl_quirk = self.Acl()  # type: ignore[abstract]
-        self._entry_quirk = self.Entry()  # type: ignore[abstract]
+        self._schema_quirk = self.Schema()
+        self._acl_quirk = self.Acl()
+        self._entry_quirk = self.Entry()
 
     # =========================================================================
     # Properties for accessing nested quirks (bypasses Pydantic's schema() method)
     # =========================================================================
 
     @property
-    def schema(self) -> Schema:  # type: ignore[override]
+    def schema(self) -> Schema:
         """Get the Schema quirk instance."""
         return self._schema_quirk
 
@@ -809,11 +809,15 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
                 parent_class_name = cls.__qualname__.split(".")[0]
                 try:
                     # Import parent class from module
-                    parent_module = __import__(cls.__module__, fromlist=[parent_class_name])
+                    parent_module = __import__(
+                        cls.__module__, fromlist=[parent_class_name]
+                    )
                     if hasattr(parent_module, parent_class_name):
                         parent_server_cls = getattr(parent_module, parent_class_name)
                         # Get SERVER_TYPE from parent.Constants
-                        if hasattr(parent_server_cls, "Constants") and hasattr(parent_server_cls.Constants, "SERVER_TYPE"):
+                        if hasattr(parent_server_cls, "Constants") and hasattr(
+                            parent_server_cls.Constants, "SERVER_TYPE"
+                        ):
                             return cast("str", parent_server_cls.Constants.SERVER_TYPE)
                 except (ImportError, AttributeError):
                     pass
@@ -1778,11 +1782,15 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
                 parent_class_name = cls.__qualname__.split(".")[0]
                 try:
                     # Import parent class from module
-                    parent_module = __import__(cls.__module__, fromlist=[parent_class_name])
+                    parent_module = __import__(
+                        cls.__module__, fromlist=[parent_class_name]
+                    )
                     if hasattr(parent_module, parent_class_name):
                         parent_server_cls = getattr(parent_module, parent_class_name)
                         # Get SERVER_TYPE from parent.Constants
-                        if hasattr(parent_server_cls, "Constants") and hasattr(parent_server_cls.Constants, "SERVER_TYPE"):
+                        if hasattr(parent_server_cls, "Constants") and hasattr(
+                            parent_server_cls.Constants, "SERVER_TYPE"
+                        ):
                             return cast("str", parent_server_cls.Constants.SERVER_TYPE)
                 except (ImportError, AttributeError):
                     pass
@@ -2256,11 +2264,15 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
                 parent_class_name = cls.__qualname__.split(".")[0]
                 try:
                     # Import parent class from module
-                    parent_module = __import__(cls.__module__, fromlist=[parent_class_name])
+                    parent_module = __import__(
+                        cls.__module__, fromlist=[parent_class_name]
+                    )
                     if hasattr(parent_module, parent_class_name):
                         parent_server_cls = getattr(parent_module, parent_class_name)
                         # Get SERVER_TYPE from parent.Constants
-                        if hasattr(parent_server_cls, "Constants") and hasattr(parent_server_cls.Constants, "SERVER_TYPE"):
+                        if hasattr(parent_server_cls, "Constants") and hasattr(
+                            parent_server_cls.Constants, "SERVER_TYPE"
+                        ):
                             return cast("str", parent_server_cls.Constants.SERVER_TYPE)
                 except (ImportError, AttributeError):
                     pass
@@ -2875,8 +2887,8 @@ class _PriorityDescriptor:
 
 
 # Attach descriptors to FlextLdifServersBase for class and instance access
-FlextLdifServersBase.server_type = _ServerTypeDescriptor()  # type: ignore[assignment]
-FlextLdifServersBase.priority = _PriorityDescriptor()  # type: ignore[assignment]
+FlextLdifServersBase.server_type = _ServerTypeDescriptor()
+FlextLdifServersBase.priority = _PriorityDescriptor()
 
 
 __all__ = [

@@ -522,9 +522,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
                     metadata.extensions = {}
                 metadata.extensions[
                     FlextLdifConstants.QuirkMetadataKeys.IS_CONFIG_ENTRY
-                ] = (
-                    FlextLdifServersApache.Constants.DN_CONFIG_ENTRY_MARKER in dn_lower
-                )
+                ] = FlextLdifServersApache.Constants.DN_CONFIG_ENTRY_MARKER in dn_lower
 
                 processed_entry = entry.model_copy(update={"metadata": metadata})
 

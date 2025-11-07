@@ -941,9 +941,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             if attr_name not in hidden_attrs:
                 return False
             if isinstance(attr_values, list):
-                ldif_lines.extend(
-                    f"# {attr_name}: {value}" for value in attr_values
-                )
+                ldif_lines.extend(f"# {attr_name}: {value}" for value in attr_values)
             else:
                 ldif_lines.append(f"# {attr_name}: {attr_values}")
             return True
@@ -988,7 +986,10 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             for attr_name, attr_values in entry_data.attributes.attributes.items():
                 # Write hidden attributes as comments if requested
                 if self._write_entry_hidden_attrs(
-                    ldif_lines, attr_name, attr_values, hidden_attrs,
+                    ldif_lines,
+                    attr_name,
+                    attr_values,
+                    hidden_attrs,
                 ):
                     continue
 
@@ -996,7 +997,9 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 if isinstance(attr_values, list):
                     for value in attr_values:
                         self._write_entry_attribute_value(
-                            ldif_lines, attr_name, value,
+                            ldif_lines,
+                            attr_name,
+                            value,
                         )
                 elif attr_values:
                     # Single non-list value
@@ -1011,6 +1014,9 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             Converts Entry model to LDIF format per RFC 2849, with support for
             WriteFormatOptions stored in entry_metadata["_write_options"].
 
+            Supports LDIF modify format when ldif_changetype="modify" is specified
+            in WriteFormatOptions (RFC 2849 § 4 - Change Records).
+
             Args:
                 entry_data: Entry model to write
 
@@ -1022,50 +1028,163 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 # Extract WriteFormatOptions if available (passed by writer)
                 write_options: FlextLdifModels.WriteFormatOptions | None = None
                 if entry_data.entry_metadata:
-                    write_options = entry_data.entry_metadata.get(
-                        "_write_options",
-                    )
+                    write_options_obj = entry_data.entry_metadata.get("_write_options")
+                    if isinstance(
+                        write_options_obj, FlextLdifModels.WriteFormatOptions
+                    ):
+                        write_options = write_options_obj
 
-                # Build LDIF string from Entry model
-                ldif_lines: list[str] = []
+                # Check if LDIF modify format requested
+                if write_options and write_options.ldif_changetype == "modify":
+                    # DEBUG
+                    return self._write_entry_modify_format(entry_data, write_options)
 
-                # Add DN comment if requested
-                if write_options:
-                    self._write_entry_comments_dn(ldif_lines, entry_data, write_options)
+                # Standard ADD format (RFC 2849 § 3)
+                return self._write_entry_add_format(entry_data, write_options)
 
-                # DN line (required)
-                if not (entry_data.dn and entry_data.dn.value):
-                    return FlextResult[str].fail("Entry DN is required for LDIF output")
-                ldif_lines.append(f"dn: {entry_data.dn.value}")
-
-                # Add metadata comments if requested
-                if write_options:
-                    self._write_entry_comments_metadata(
-                        ldif_lines, entry_data, write_options,
-                    )
-
-                # Get hidden attributes if needed
-                hidden_attrs = (
-                    self._get_hidden_attributes(entry_data, write_options)
-                    if write_options
-                    else set()
-                )
-
-                # Process attributes
-                self._write_entry_process_attributes(
-                    ldif_lines, entry_data, hidden_attrs,
-                )
-
-                # Join with newlines and ensure proper LDIF formatting
-                ldif_text = "\n".join(ldif_lines)
-                if ldif_text and not ldif_text.endswith("\n"):
-                    ldif_text += "\n"
-
-                return FlextResult[str].ok(ldif_text)
             except (ValueError, TypeError, AttributeError) as e:
                 return FlextResult[str].fail(
                     f"Failed to write entry to LDIF: {e}",
                 )
+
+        def _write_entry_add_format(
+            self,
+            entry_data: FlextLdifModels.Entry,
+            write_options: FlextLdifModels.WriteFormatOptions | None,
+        ) -> FlextResult[str]:
+            """Write Entry in standard ADD format (default RFC 2849 format).
+
+            Args:
+                entry_data: Entry model to write
+                write_options: Optional formatting options
+
+            Returns:
+                FlextResult with LDIF string in ADD format
+
+            """
+            # Build LDIF string from Entry model
+            ldif_lines: list[str] = []
+
+            # Add DN comment if requested
+            if write_options:
+                self._write_entry_comments_dn(ldif_lines, entry_data, write_options)
+
+            # DN line (required)
+            if not (entry_data.dn and entry_data.dn.value):
+                return FlextResult[str].fail("Entry DN is required for LDIF output")
+            ldif_lines.append(f"dn: {entry_data.dn.value}")
+
+            # Add metadata comments if requested
+            if write_options:
+                self._write_entry_comments_metadata(
+                    ldif_lines,
+                    entry_data,
+                    write_options,
+                )
+
+            # Get hidden attributes if needed
+            hidden_attrs = (
+                self._get_hidden_attributes(entry_data, write_options)
+                if write_options
+                else set()
+            )
+
+            # Process attributes
+            self._write_entry_process_attributes(
+                ldif_lines,
+                entry_data,
+                hidden_attrs,
+            )
+
+            # Join with newlines and ensure proper LDIF formatting
+            ldif_text = "\n".join(ldif_lines)
+            if ldif_text and not ldif_text.endswith("\n"):
+                ldif_text += "\n"
+
+            return FlextResult[str].ok(ldif_text)
+
+        def _write_entry_modify_format(
+            self,
+            entry_data: FlextLdifModels.Entry,
+            write_options: FlextLdifModels.WriteFormatOptions,
+        ) -> FlextResult[str]:
+            """Write Entry in LDIF modify format (RFC 2849 § 4 - Change Records).
+
+            Generates LDIF with changetype: modify and operation directives.
+            For ACL entries, generates one replace: aci block per ACI attribute value.
+
+            Example output:
+            ```
+            dn: cn=OracleContext
+            changetype: modify
+            replace: aci
+            aci: access to entry by group="cn=Admins" (browse,add,delete)
+            -
+            replace: aci
+            aci: access to entry filter=(objectclass=person) by * (browse)
+            -
+            ```
+
+            Args:
+                entry_data: Entry model to write
+                write_options: Formatting options (must have ldif_changetype="modify")
+
+            Returns:
+                FlextResult with LDIF string in modify format
+
+            """
+            ldif_lines: list[str] = []
+
+            # DN line (required)
+            if not (entry_data.dn and entry_data.dn.value):
+                return FlextResult[str].fail("Entry DN is required for LDIF output")
+            ldif_lines.append(f"dn: {entry_data.dn.value}")
+
+            # Changetype directive (required for modify format)
+            ldif_lines.append("changetype: modify")
+
+            # Get attributes to process
+            if not entry_data.attributes or not entry_data.attributes.attributes:
+                # No attributes to process
+                ldif_text = "\n".join(ldif_lines) + "\n"
+                return FlextResult[str].ok(ldif_text)
+
+            attrs_dict = entry_data.attributes.attributes
+            first_attr = True
+
+            # For modify format: generate replace operation for each attribute
+            # For ACL entries, each ACI value gets its own replace block
+            for attr_name, values in attrs_dict.items():
+                if not values:
+                    continue
+
+                # Generate replace operation for each value in this attribute
+                for value in values:
+                    # Add separator between replace blocks (not before first)
+                    if not first_attr:
+                        ldif_lines.append("-")
+                    first_attr = False
+
+                    # Add replace directive
+                    ldif_lines.append(f"replace: {attr_name}")
+
+                    # Add attribute value(s)
+                    if isinstance(value, bytes):
+                        encoded_value = base64.b64encode(value).decode("ascii")
+                        ldif_lines.append(f"{attr_name}:: {encoded_value}")
+                    else:
+                        ldif_lines.append(f"{attr_name}: {value}")
+
+            # Final separator
+            if ldif_lines[-1] != "-":
+                ldif_lines.append("-")
+
+            # Join with newlines and ensure proper LDIF formatting
+            ldif_text = "\n".join(ldif_lines)
+            if ldif_text and not ldif_text.endswith("\n"):
+                ldif_text += "\n"
+
+            return FlextResult[str].ok(ldif_text)
 
 
 __all__ = [

@@ -364,7 +364,8 @@ class FlextLdifFilters(FlextService[list[FlextLdifModels.Entry]]):
 
             for entry in entries:
                 # Use utility for consistent DN comparison (now supports DN models)
-                if FlextLdifUtilities.DN.is_under_base(entry.dn, base_dn):
+                dn_str = entry.dn.value if entry.dn else None
+                if FlextLdifUtilities.DN.is_under_base(dn_str, base_dn):
                     included.append(entry)
                 elif mark_excluded:
                     excluded.append(
@@ -780,7 +781,11 @@ class FlextLdifFilters(FlextService[list[FlextLdifModels.Entry]]):
                 return False
 
             # Extract DN string (supports both DN model and str)
-            dn_str = FlextLdifUtilities.DN.get_dn_value(dn)
+            dn_str = (
+                FlextLdifUtilities.DN.get_dn_value(dn)
+                if isinstance(dn, (str, FlextLdifModels.DistinguishedName))
+                else str(dn)
+            )
 
             # First validate ALL patterns before matching
             invalid_patterns = []
@@ -1000,6 +1005,10 @@ class FlextLdifFilters(FlextService[list[FlextLdifModels.Entry]]):
         try:
             match self.filter_criteria:
                 case "dn":
+                    if self.dn_pattern is None:
+                        return FlextResult[list[FlextLdifModels.Entry]].fail(
+                            "dn_pattern is required for dn filter"
+                        )
                     return self.filter_by_dn(
                         self.entries,
                         self.dn_pattern,
@@ -1007,6 +1016,10 @@ class FlextLdifFilters(FlextService[list[FlextLdifModels.Entry]]):
                         mark_excluded=self.mark_excluded,
                     )
                 case "objectclass":
+                    if self.objectclass is None:
+                        return FlextResult[list[FlextLdifModels.Entry]].fail(
+                            "objectclass is required for objectclass filter"
+                        )
                     return self.filter_by_objectclass(
                         self.entries,
                         self.objectclass,
@@ -1015,6 +1028,10 @@ class FlextLdifFilters(FlextService[list[FlextLdifModels.Entry]]):
                         mark_excluded=self.mark_excluded,
                     )
                 case "attributes":
+                    if self.attributes is None:
+                        return FlextResult[list[FlextLdifModels.Entry]].fail(
+                            "attributes is required for attributes filter"
+                        )
                     return self.filter_by_attributes(
                         self.entries,
                         self.attributes,
@@ -1024,6 +1041,10 @@ class FlextLdifFilters(FlextService[list[FlextLdifModels.Entry]]):
                     )
                 case "base_dn":
                     # base_dn returns tuple, wrap in Result
+                    if self.base_dn is None:
+                        return FlextResult[list[FlextLdifModels.Entry]].fail(
+                            "base_dn is required for base_dn filter"
+                        )
                     included, _excluded = self.filter_by_base_dn(
                         self.entries,
                         self.base_dn,
@@ -1142,7 +1163,9 @@ class FlextLdifFilters(FlextService[list[FlextLdifModels.Entry]]):
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Filter entries by DN pattern."""
         # Delegate to nested Filter class
-        return cls.Filter.filter_by_dn(entries, pattern, mode, mark_excluded=mark_excluded)
+        return cls.Filter.filter_by_dn(
+            entries, pattern, mode, mark_excluded=mark_excluded
+        )
 
     @classmethod
     def filter_by_objectclass(
@@ -1191,7 +1214,9 @@ class FlextLdifFilters(FlextService[list[FlextLdifModels.Entry]]):
         mark_excluded: bool = False,
     ) -> tuple[list[FlextLdifModels.Entry], list[FlextLdifModels.Entry]]:
         """Filter entries by base DN (hierarchy)."""
-        return cls.Filter.filter_by_base_dn(entries, base_dn, mark_excluded=mark_excluded)
+        return cls.Filter.filter_by_base_dn(
+            entries, base_dn, mark_excluded=mark_excluded
+        )
 
     @classmethod
     def by_dn(
@@ -1203,7 +1228,9 @@ class FlextLdifFilters(FlextService[list[FlextLdifModels.Entry]]):
         mark_excluded: bool = False,
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Filter entries by DN pattern (alias for filter_entries_by_dn)."""
-        return cls.filter_entries_by_dn(entries, pattern, mode, mark_excluded=mark_excluded)
+        return cls.filter_entries_by_dn(
+            entries, pattern, mode, mark_excluded=mark_excluded
+        )
 
     @classmethod
     def by_objectclass(
@@ -1252,7 +1279,9 @@ class FlextLdifFilters(FlextService[list[FlextLdifModels.Entry]]):
         mark_excluded: bool = False,
     ) -> tuple[list[FlextLdifModels.Entry], list[FlextLdifModels.Entry]]:
         """Filter entries by base DN (hierarchy)."""
-        return cls.Filter.filter_by_base_dn(entries, base_dn, mark_excluded=mark_excluded)
+        return cls.Filter.filter_by_base_dn(
+            entries, base_dn, mark_excluded=mark_excluded
+        )
 
     @classmethod
     def is_schema(cls, entry: FlextLdifModels.Entry) -> bool:
@@ -1352,7 +1381,16 @@ class FlextLdifFilters(FlextService[list[FlextLdifModels.Entry]]):
         entries: list[FlextLdifModels.Entry],
         allowed_oids: dict[str, list[str]],
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
-        """Filter schema entries by allowed OID patterns."""
+        """Filter schema entries by allowed OID patterns.
+
+        Filters INDIVIDUAL DEFINITIONS within schema attributes (attributeTypes,
+        objectClasses, matchingRules, matchingRuleUse) to keep only those with
+        OIDs matching the allowed patterns.
+
+        Key improvement: Instead of filtering entire entries based on whether they
+        contain ANY whitelisted OID, this method filters the DEFINITIONS WITHIN
+        each attribute to keep only whitelisted ones.
+        """
         if not entries or not allowed_oids:
             return FlextResult[list[FlextLdifModels.Entry]].ok(entries)
 
@@ -1367,32 +1405,155 @@ class FlextLdifFilters(FlextService[list[FlextLdifModels.Entry]]):
             or allowed_oids.get("objectclasses")
             or []
         )
+        allowed_mr_oids = (
+            allowed_oids.get("allowed_matchingrule_oids")
+            or allowed_oids.get("matchingrules")
+            or []
+        )
+        allowed_mru_oids = (
+            allowed_oids.get("allowed_matchingruleuse_oids")
+            or allowed_oids.get("matchingruleuse")
+            or []
+        )
 
         filtered = []
         for entry in entries:
-            attrs = dict(entry.attributes.attributes)
+            attrs_copy = dict(entry.attributes.attributes)
 
-            # Check attributeTypes using helper
-            attr_keys = ["attributeTypes", "attributetypes"]
-            has_attr_match = cls.AclDetector.matches_oid_pattern(
-                attrs,
-                attr_keys,
-                allowed_attr_oids,
+            # Filter attributeTypes definitions individually
+            if "attributeTypes" in attrs_copy or "attributetypes" in attrs_copy:
+                attr_key = (
+                    "attributeTypes"
+                    if "attributeTypes" in attrs_copy
+                    else "attributetypes"
+                )
+                if allowed_attr_oids:
+                    filtered_attrs = cls._filter_definitions(
+                        attrs_copy[attr_key],
+                        allowed_attr_oids,
+                    )
+                    if len(filtered_attrs) < len(attrs_copy[attr_key]):
+                        pass
+                    attrs_copy[attr_key] = filtered_attrs
+
+            # Filter objectClasses definitions individually
+            if "objectClasses" in attrs_copy or "objectclasses" in attrs_copy:
+                oc_key = (
+                    "objectClasses"
+                    if "objectClasses" in attrs_copy
+                    else "objectclasses"
+                )
+                if allowed_oc_oids:
+                    filtered_ocs = cls._filter_definitions(
+                        attrs_copy[oc_key],
+                        allowed_oc_oids,
+                    )
+                    if len(filtered_ocs) < len(attrs_copy[oc_key]):
+                        pass
+                    attrs_copy[oc_key] = filtered_ocs
+
+            # Filter matchingRules definitions individually
+            if "matchingRules" in attrs_copy or "matchingrules" in attrs_copy:
+                mr_key = (
+                    "matchingRules"
+                    if "matchingRules" in attrs_copy
+                    else "matchingrules"
+                )
+                if allowed_mr_oids:
+                    filtered_mrs = cls._filter_definitions(
+                        attrs_copy[mr_key],
+                        allowed_mr_oids,
+                    )
+                    if len(filtered_mrs) < len(attrs_copy[mr_key]):
+                        pass
+                    attrs_copy[mr_key] = filtered_mrs
+
+            # Filter matchingRuleUse definitions individually
+            if "matchingRuleUse" in attrs_copy or "matchingruleuse" in attrs_copy:
+                mru_key = (
+                    "matchingRuleUse"
+                    if "matchingRuleUse" in attrs_copy
+                    else "matchingruleuse"
+                )
+                if allowed_mru_oids:
+                    filtered_mrus = cls._filter_definitions(
+                        attrs_copy[mru_key],
+                        allowed_mru_oids,
+                    )
+                    if len(filtered_mrus) < len(attrs_copy[mru_key]):
+                        pass
+                    attrs_copy[mru_key] = filtered_mrus
+
+            # Only keep entry if it has definitions remaining after filtering
+            has_definitions = (
+                bool(
+                    attrs_copy.get("attributeTypes") or attrs_copy.get("attributetypes")
+                )
+                or bool(
+                    attrs_copy.get("objectClasses") or attrs_copy.get("objectclasses")
+                )
+                or bool(
+                    attrs_copy.get("matchingRules") or attrs_copy.get("matchingrules")
+                )
+                or bool(
+                    attrs_copy.get("matchingRuleUse")
+                    or attrs_copy.get("matchingruleuse")
+                )
             )
 
-            # Check objectClasses using helper
-            oc_keys = ["objectClasses", "objectclasses"]
-            has_oc_match = cls.AclDetector.matches_oid_pattern(
-                attrs,
-                oc_keys,
-                allowed_oc_oids,
-            )
-
-            # Keep entry if any pattern matched
-            if has_attr_match or has_oc_match:
-                filtered.append(entry)
+            if has_definitions:
+                # Create new entry with filtered attributes
+                filtered_entry_result = FlextLdifModels.Entry.create(
+                    dn=entry.dn.value,
+                    attributes=attrs_copy,
+                    entry_metadata=entry.entry_metadata
+                    if hasattr(entry, "entry_metadata")
+                    else None,
+                )
+                if filtered_entry_result.is_success:
+                    filtered.append(filtered_entry_result.unwrap())
 
         return FlextResult[list[FlextLdifModels.Entry]].ok(filtered)
+
+    @staticmethod
+    def _filter_definitions(
+        definitions: list[str] | str,
+        allowed_oids: list[str],
+    ) -> list[str]:
+        """Filter individual schema definitions by OID patterns.
+
+        Keeps only definitions whose OIDs match one of the allowed patterns.
+
+        Args:
+            definitions: List of schema definitions or single definition string
+            allowed_oids: List of allowed OID patterns (supports wildcards like "99.*")
+
+        Returns:
+            List of filtered definitions matching allowed OIDs
+
+        """
+        if isinstance(definitions, str):
+            definitions = [definitions]
+
+        if not definitions or not allowed_oids:
+            return definitions
+
+        filtered = []
+        for definition in definitions:
+            # Extract OID from definition (first OID in parentheses)
+            oid_match = re.search(r"\(\s*(\d+(?:\.\d+)*)", str(definition))
+            if not oid_match:
+                continue
+
+            oid = oid_match.group(1)
+
+            # Check if OID matches any allowed pattern
+            for pattern in allowed_oids:
+                if fnmatch.fnmatch(oid, pattern):
+                    filtered.append(definition)
+                    break  # Found a match, no need to check other patterns
+
+        return filtered
 
     # ════════════════════════════════════════════════════════════════════════
     # PRIVATE IMPLEMENTATION (DRY Core)
@@ -1425,11 +1586,43 @@ class FlextLdifFilters(FlextService[list[FlextLdifModels.Entry]]):
             # Apply the appropriate filter
             match self.filter_criteria:
                 case "dn":
-                    result = self.filter_by_dn()
+                    if self.dn_pattern is None:
+                        result = FlextResult[list[FlextLdifModels.Entry]].fail(
+                            "dn_pattern is required"
+                        )
+                    else:
+                        result = self.filter_by_dn(
+                            self.entries,
+                            self.dn_pattern,
+                            self.mode,
+                            mark_excluded=self.mark_excluded,
+                        )
                 case "objectclass":
-                    result = self.filter_by_objectclass()
+                    if self.objectclass is None:
+                        result = FlextResult[list[FlextLdifModels.Entry]].fail(
+                            "objectclass is required"
+                        )
+                    else:
+                        result = self.filter_by_objectclass(
+                            self.entries,
+                            self.objectclass,
+                            self.required_attributes,
+                            self.mode,
+                            mark_excluded=self.mark_excluded,
+                        )
                 case "attributes":
-                    result = self.filter_by_attributes()
+                    if self.attributes is None:
+                        result = FlextResult[list[FlextLdifModels.Entry]].fail(
+                            "attributes is required"
+                        )
+                    else:
+                        result = self.filter_by_attributes(
+                            self.entries,
+                            self.attributes,
+                            match_all=self.match_all,
+                            mode=self.mode,
+                            mark_excluded=self.mark_excluded,
+                        )
                 case _:
                     result = FlextResult[list[FlextLdifModels.Entry]].fail(
                         f"Cannot exclude with criteria: {self.filter_criteria}",
@@ -1602,15 +1795,11 @@ class FlextLdifFilters(FlextService[list[FlextLdifModels.Entry]]):
     @staticmethod
     def virtual_delete(
         entries: list[FlextLdifModels.Entry],
-        filter_criteria: str | None = None,  # Reserved for future use
-        dn_pattern: str | None = None,
+        _filter_criteria: str | None = None,  # Reserved for future use
+        _dn_pattern: str | None = None,
     ) -> FlextResult[dict[str, list[FlextLdifModels.Entry]]]:
         """Perform virtual (soft) delete - marks entries as deleted."""
-        return FlextLdifFilters.Exclusion.virtual_delete(
-            entries,
-            filter_criteria,
-            dn_pattern,
-        )
+        return FlextLdifFilters.Exclusion.virtual_delete(entries)
 
     @staticmethod
     def restore_virtual_deleted(

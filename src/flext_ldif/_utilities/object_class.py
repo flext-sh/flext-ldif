@@ -53,7 +53,7 @@ class FlextLdifUtilitiesObjectClass:
     @staticmethod
     def fix_missing_sup(
         schema_oc: FlextLdifModels.SchemaObjectClass,
-        server_type: str = "oid",  # noqa: ARG004  # Reserved for server-specific logic
+        _server_type: str = "oid",
     ) -> None:
         """Fix missing SUP for AUXILIARY objectClasses (server-specific fixes).
 
@@ -97,7 +97,7 @@ class FlextLdifUtilitiesObjectClass:
     @staticmethod
     def fix_kind_mismatch(
         schema_oc: FlextLdifModels.SchemaObjectClass,
-        _server_type: str = "oid",
+        __server_type: str = "oid",
     ) -> None:
         """Fix objectClass kind mismatches with superior classes (server-specific).
 

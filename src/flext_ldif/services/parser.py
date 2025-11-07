@@ -29,7 +29,7 @@ from flext_core import FlextLogger, FlextResult, FlextService
 from flext_ldif.config import FlextLdifConfig
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
-from flext_ldif.protocols import FlextLdifProtocols
+from flext_ldif.servers.base import FlextLdifServersBase
 from flext_ldif.services.acl import FlextLdifAcl
 from flext_ldif.services.detector import FlextLdifDetector
 from flext_ldif.services.server import FlextLdifServer
@@ -195,6 +195,8 @@ class FlextLdifParser(FlextService[Any]):
                     effective_type,
                 )
             elif input_source == "ldap3":
+                if not isinstance(content, list):
+                    return FlextResult.fail("ldap3 input source requires list content")
                 entries_result = self._parse_from_ldap3(
                     content,
                     effective_type,
@@ -275,7 +277,7 @@ class FlextLdifParser(FlextService[Any]):
             return FlextResult.fail(
                 f"No quirk available for server type: {server_type}",
             )
-        quirk: FlextLdifProtocols.Quirks.QuirksPort = quirks[0]
+        quirk = quirks[0]
 
         entries = []
         for dn, attrs in results:
@@ -424,7 +426,9 @@ class FlextLdifParser(FlextService[Any]):
         if not options.include_operational_attrs:
             processed_entry = self._filter_operational_attributes(processed_entry)
 
-        return processed_entry, schema_count, data_count, validation_errors
+        # Filter out None values from validation_errors
+        filtered_errors = [e for e in validation_errors if e is not None]
+        return processed_entry, schema_count, data_count, filtered_errors
 
     def _post_process_entries(
         self,
@@ -504,16 +508,20 @@ class FlextLdifParser(FlextService[Any]):
     ) -> FlextResult[bool]:
         """Validate entry against LDAP schema rules using FlextLdifUtilities."""
         try:
-            validation_errors = []
+            validation_errors: list[str] = []
 
             # Validate DN
             self._validate_entry_dn(entry, validation_errors)
 
             # Validate objectClass
-            self._validate_entry_objectclass(entry, strict=strict, errors=validation_errors)
+            self._validate_entry_objectclass(
+                entry, strict=strict, errors=validation_errors
+            )
 
             # Validate attribute values
-            self._validate_entry_attributes(entry, strict=strict, errors=validation_errors)
+            self._validate_entry_attributes(
+                entry, strict=strict, errors=validation_errors
+            )
 
             if validation_errors:
                 return FlextResult.fail("; ".join(validation_errors))
@@ -667,8 +675,8 @@ class FlextLdifParser(FlextService[Any]):
     def _parse_attribute_types_from_entry(
         self,
         entry: FlextLdifModels.Entry,
-        schemas: list,
-    ) -> list:
+        schemas: list[FlextLdifServersBase],
+    ) -> list[FlextLdifModels.SchemaAttribute]:
         """Parse attributeTypes from entry using schema quirks."""
         schema_attributes = []
         attr_types = entry.attributes.get(
@@ -688,8 +696,8 @@ class FlextLdifParser(FlextService[Any]):
     def _parse_objectclasses_from_entry(
         self,
         entry: FlextLdifModels.Entry,
-        schemas: list,
-    ) -> list:
+        schemas: list[FlextLdifServersBase],
+    ) -> list[FlextLdifModels.SchemaObjectClass]:
         """Parse objectClasses from entry using schema quirks."""
         schema_objectclasses = []
         obj_classes = entry.attributes.get(

@@ -236,7 +236,9 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
         # Log config initialization
         if self.logger and self._config:
             config_info = FlextLdifModels.ConfigInfo.from_config(self._config)
-            self._log_config_once(config_info.model_dump(), message="FlextLdif facade initialized")
+            self._log_config_once(
+                config_info.model_dump(), message="FlextLdif facade initialized"
+            )
             self.logger.debug("Services setup and default quirks registered")
 
     # =========================================================================
@@ -427,7 +429,9 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
         self,
         source: str | Path,
         server_type: str | None = None,
-        format_options: FlextLdifModels.ParseFormatOptions | dict[str, object] | None = None,
+        format_options: FlextLdifModels.ParseFormatOptions
+        | dict[str, object]
+        | None = None,
         *,
         output_format: Literal["model"] = "model",
     ) -> FlextResult[list[FlextLdifModels.Entry]]: ...
@@ -437,7 +441,9 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
         self,
         source: str | Path,
         server_type: str | None = None,
-        format_options: FlextLdifModels.ParseFormatOptions | dict[str, object] | None = None,
+        format_options: FlextLdifModels.ParseFormatOptions
+        | dict[str, object]
+        | None = None,
         *,
         output_format: Literal["dict"],
     ) -> FlextResult[list[dict[str, str | list[str]]]]: ...
@@ -446,10 +452,15 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
         self,
         source: str | Path,
         server_type: str | None = None,
-        format_options: FlextLdifModels.ParseFormatOptions | dict[str, object] | None = None,
+        format_options: FlextLdifModels.ParseFormatOptions
+        | dict[str, object]
+        | None = None,
         *,
         output_format: Literal["model", "dict"] = "model",
-    ) -> FlextResult[list[FlextLdifModels.Entry]] | FlextResult[list[dict[str, str | list[str]]]]:
+    ) -> (
+        FlextResult[list[FlextLdifModels.Entry]]
+        | FlextResult[list[dict[str, str | list[str]]]]
+    ):
         r"""Parse LDIF content string or file with flexible output format.
 
         Powerful parsing method supporting multiple input/output formats.
@@ -496,7 +507,11 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
             resolved_format_options: FlextLdifModels.ParseFormatOptions | None = None
             if format_options is not None:
                 if isinstance(format_options, dict):
-                    resolved_format_options = FlextLdifModels.ParseFormatOptions(**format_options)
+                    resolved_format_options = (
+                        FlextLdifModels.ParseFormatOptions.model_validate(
+                            format_options
+                        )
+                    )
                 else:
                     resolved_format_options = format_options
 
@@ -522,7 +537,9 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
                     dict_entries: list[dict[str, str | list[str]]] = [
                         entry.model_dump() for entry in entries
                     ]
-                    return FlextResult[list[dict[str, str | list[str]]]].ok(dict_entries)
+                    return FlextResult[list[dict[str, str | list[str]]]].ok(
+                        dict_entries
+                    )
 
                 # Return as Entry models (default)
                 return FlextResult[list[FlextLdifModels.Entry]].ok(entries)
@@ -531,8 +548,12 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
 
         except Exception as e:
             if output_format == "dict":
-                return FlextResult[list[dict[str, str | list[str]]]].fail(f"Failed to parse LDIF: {e}")
-            return FlextResult[list[FlextLdifModels.Entry]].fail(f"Failed to parse LDIF: {e}")
+                return FlextResult[list[dict[str, str | list[str]]]].fail(
+                    f"Failed to parse LDIF: {e}"
+                )
+            return FlextResult[list[FlextLdifModels.Entry]].fail(
+                f"Failed to parse LDIF: {e}"
+            )
 
     def _resolve_source_content(
         self,
@@ -638,7 +659,9 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
         entries: list[FlextLdifModels.Entry] | list[dict[str, str | list[str]]],
         output_path: None = None,
         server_type: str | None = None,
-        format_options: FlextLdifModels.WriteFormatOptions | dict[str, object] | None = None,
+        format_options: FlextLdifModels.WriteFormatOptions
+        | dict[str, object]
+        | None = None,
     ) -> FlextResult[str]: ...
 
     @overload
@@ -647,7 +670,9 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
         entries: list[FlextLdifModels.Entry] | list[dict[str, str | list[str]]],
         output_path: Path,
         server_type: str | None = None,
-        format_options: FlextLdifModels.WriteFormatOptions | dict[str, object] | None = None,
+        format_options: FlextLdifModels.WriteFormatOptions
+        | dict[str, object]
+        | None = None,
     ) -> FlextResult[str]: ...
 
     def write(
@@ -655,7 +680,9 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
         entries: list[FlextLdifModels.Entry] | list[dict[str, str | list[str]]],
         output_path: Path | None = None,
         server_type: str | None = None,
-        format_options: FlextLdifModels.WriteFormatOptions | dict[str, object] | None = None,
+        format_options: FlextLdifModels.WriteFormatOptions
+        | dict[str, object]
+        | None = None,
     ) -> FlextResult[str]:
         """Write entries to LDIF format string or file with flexible input.
 
@@ -702,7 +729,9 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
             if format_options is None:
                 resolved_format_options = FlextLdifModels.WriteFormatOptions()
             elif isinstance(format_options, dict):
-                resolved_format_options = FlextLdifModels.WriteFormatOptions(**format_options)
+                resolved_format_options = (
+                    FlextLdifModels.WriteFormatOptions.model_validate(format_options)
+                )
             else:
                 resolved_format_options = format_options
 
@@ -741,7 +770,9 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
 
     def get_entry_dn(
         self,
-        entry: FlextLdifModels.Entry | FlextLdifProtocols.Entry.EntryWithDnProtocol | dict[str, str | list[str]],
+        entry: FlextLdifModels.Entry
+        | FlextLdifProtocols.Entry.EntryWithDnProtocol
+        | dict[str, str | list[str]],
     ) -> FlextResult[str]:
         """Extract DN (Distinguished Name) from any entry type.
 
@@ -1016,10 +1047,10 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
         | None = None,
         write_options: FlextLdifModels.WriteFormatOptions | None = None,
         # Categorization parameters (optional - enables categorized mode)
-        categorization_rules: dict[str, object] | None = None,
+        categorization_rules: dict[str, list[str]] | None = None,
         input_files: list[str] | None = None,
         output_files: dict[str, str] | None = None,
-        schema_whitelist_rules: dict[str, object] | None = None,
+        schema_whitelist_rules: dict[str, list[str]] | None = None,
         # Simple migration parameters
         input_filename: str | None = None,
         output_filename: str | None = None,
@@ -1138,7 +1169,9 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
             config_model: FlextLdifModels.MigrationConfig | None = None
             if migration_config is not None:
                 if isinstance(migration_config, dict):
-                    config_model = FlextLdifModels.MigrationConfig(**migration_config)
+                    config_model = FlextLdifModels.MigrationConfig.model_validate(
+                        migration_config
+                    )
                 else:
                     config_model = migration_config
 
