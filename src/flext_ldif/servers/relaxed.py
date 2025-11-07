@@ -262,9 +262,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                     attribute.metadata.extensions[
                         FlextLdifServersRelaxed.Constants.METADATA_RELAXED_PARSED
                     ] = True
-                    attribute.metadata.quirk_type = (
-                        self._get_server_type()
-                    )
+                    attribute.metadata.quirk_type = self._get_server_type()
                     # Ensure original_format is set
                     if not attribute.metadata.original_format:
                         attribute.metadata.original_format = attr_definition.strip()
@@ -375,9 +373,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 objectclass.metadata.extensions[
                     FlextLdifServersRelaxed.Constants.METADATA_RELAXED_PARSED
                 ] = True
-                objectclass.metadata.quirk_type = (
-                    self._get_server_type()
-                )
+                objectclass.metadata.quirk_type = self._get_server_type()
                 # Ensure original_format is set
                 if not objectclass.metadata.original_format:
                     objectclass.metadata.original_format = original_definition.strip()
@@ -690,9 +686,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                         acl.metadata.extensions[
                             FlextLdifServersRelaxed.Constants.METADATA_RELAXED_PARSED
                         ] = True
-                        acl.metadata.quirk_type = (
-                            self._get_server_type()
-                        )
+                        acl.metadata.quirk_type = self._get_server_type()
                     return FlextResult[FlextLdifModels.Acl].ok(acl)
                 # Create minimal Acl model with relaxed parsing
                 acl = FlextLdifModels.Acl(

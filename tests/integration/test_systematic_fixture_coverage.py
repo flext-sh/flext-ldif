@@ -74,7 +74,9 @@ class TestSystematicFixtureCoverage:
 
         # Parse written content (roundtrip)
         roundtrip_result = api.parse(written_content)
-        assert roundtrip_result.is_success, f"Roundtrip parse failed: {roundtrip_result.error}"
+        assert roundtrip_result.is_success, (
+            f"Roundtrip parse failed: {roundtrip_result.error}"
+        )
         roundtrip_entries = roundtrip_result.unwrap()
         assert len(roundtrip_entries) == len(
             entries,
@@ -168,11 +170,15 @@ class TestSystematicFixtureCoverage:
 
         # Roundtrip parse
         roundtrip_result = api.parse(written_content)
-        assert roundtrip_result.is_success, f"Roundtrip parse failed: {roundtrip_result.error}"
+        assert roundtrip_result.is_success, (
+            f"Roundtrip parse failed: {roundtrip_result.error}"
+        )
         roundtrip_entries = roundtrip_result.unwrap()
         assert len(roundtrip_entries) == len(
             entries,
-        ), f"Entry count mismatch in roundtrip: {len(roundtrip_entries)} != {len(entries)}"
+        ), (
+            f"Entry count mismatch in roundtrip: {len(roundtrip_entries)} != {len(entries)}"
+        )
 
     @pytest.mark.parametrize(
         "server_fixture",
@@ -213,7 +219,9 @@ class TestSystematicFixtureCoverage:
 
         # Validate diverse entry structure
         entry_count = len(entries)
-        assert entry_count >= 5, f"Integration fixture should have multiple entries, got {entry_count}"
+        assert entry_count >= 5, (
+            f"Integration fixture should have multiple entries, got {entry_count}"
+        )
 
         # Check for diversity in entries
         dn_list = [str(entry.dn) for entry in entries]
@@ -230,7 +238,9 @@ class TestSystematicFixtureCoverage:
 
         # Full roundtrip validation
         roundtrip_result = api.parse(written_content)
-        assert roundtrip_result.is_success, f"Roundtrip parse failed: {roundtrip_result.error}"
+        assert roundtrip_result.is_success, (
+            f"Roundtrip parse failed: {roundtrip_result.error}"
+        )
         roundtrip_entries = roundtrip_result.unwrap()
 
         # Validate roundtrip integrity
@@ -274,7 +284,8 @@ class TestSystematicFixtureCoverage:
                     fixture_data = request.getfixturevalue(fixture_name)
                     assert fixture_data is not None, f"{fixture_name} returned None"
                     assert isinstance(
-                        fixture_data, str,
+                        fixture_data,
+                        str,
                     ), f"{fixture_name} not a string: {type(fixture_data)}"
                     assert len(fixture_data) > 0, f"{fixture_name} is empty"
                 except Exception as e:

@@ -172,7 +172,9 @@ class FlextLdifUtilitiesWriter:
         return f"{attr_name}: {value_str}"
 
     @staticmethod
-    def render_template(template_str: str, context: dict[str, object]) -> FlextResult[str]:
+    def render_template(
+        template_str: str, context: dict[str, object]
+    ) -> FlextResult[str]:
         """Render Jinja2 template with context.
 
         Args:

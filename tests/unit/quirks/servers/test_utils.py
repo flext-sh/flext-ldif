@@ -39,8 +39,14 @@ class FlextLdifTestUtils:
         # Try multiple possible paths
         test_file_path = Path(__file__)
         possible_paths = [
-            test_file_path.parent.parent.parent.parent / "fixtures" / server_type / fixture_filename,
-            test_file_path.parent.parent.parent / "fixtures" / server_type / fixture_filename,
+            test_file_path.parent.parent.parent.parent
+            / "fixtures"
+            / server_type
+            / fixture_filename,
+            test_file_path.parent.parent.parent
+            / "fixtures"
+            / server_type
+            / fixture_filename,
             test_file_path.parent / "fixtures" / server_type / fixture_filename,
         ]
 
@@ -69,7 +75,9 @@ class FlextLdifTestUtils:
 
         """
         # Get fixture path using helper method
-        fixture_path = FlextLdifTestUtils.get_fixture_path(server_type, fixture_filename)
+        fixture_path = FlextLdifTestUtils.get_fixture_path(
+            server_type, fixture_filename
+        )
 
         # Parse the fixture
         parse_result = ldif_api.parse(
@@ -178,7 +186,9 @@ class FlextLdifTestUtils:
             return False, differences
 
         # Compare each entry
-        for i, (orig, roundtrip) in enumerate(zip(original_entries, roundtrip_entries, strict=True)):
+        for i, (orig, roundtrip) in enumerate(
+            zip(original_entries, roundtrip_entries, strict=True)
+        ):
             # Compare DNs
             orig_dn = str(orig.dn) if orig.dn else ""
             roundtrip_dn = str(roundtrip.dn) if roundtrip.dn else ""
@@ -189,7 +199,9 @@ class FlextLdifTestUtils:
 
             # Compare attributes
             orig_attrs = orig.attributes.attributes if orig.attributes else {}
-            roundtrip_attrs = roundtrip.attributes.attributes if roundtrip.attributes else {}
+            roundtrip_attrs = (
+                roundtrip.attributes.attributes if roundtrip.attributes else {}
+            )
 
             orig_keys = {k.lower() for k in orig_attrs}
             roundtrip_keys = {k.lower() for k in roundtrip_attrs}
@@ -213,7 +225,11 @@ class FlextLdifTestUtils:
 
                 # Normalize values for comparison
                 orig_set = set(orig_val) if isinstance(orig_val, list) else {orig_val}
-                roundtrip_set = set(roundtrip_val) if isinstance(roundtrip_val, list) else {roundtrip_val}
+                roundtrip_set = (
+                    set(roundtrip_val)
+                    if isinstance(roundtrip_val, list)
+                    else {roundtrip_val}
+                )
 
                 if orig_set != roundtrip_set:
                     differences.append(

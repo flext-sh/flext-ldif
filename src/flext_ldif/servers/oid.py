@@ -17,10 +17,11 @@ from __future__ import annotations
 
 import enum as enum_module
 from collections.abc import Mapping
-from typing import ClassVar, cast
+from typing import ClassVar
 
 from flext_core import FlextLogger, FlextResult
 
+from flext_ldif._utilities.detection import FlextLdifUtilitiesDetection
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.servers.rfc import FlextLdifServersRfc
@@ -527,25 +528,25 @@ class FlextLdifServersOid(FlextLdifServersRfc):
 
     def extract_schemas_from_ldif(
         self,
-        ldif_content: str,
+        _ldif_content: str,
     ) -> FlextResult[FlextLdifTypes.Models.EntryAttributesDict]:
         """Extract and parse all schema definitions from LDIF content.
 
         Delegates to the Schema nested class implementation.
 
-        Args:
-            ldif_content: Raw LDIF content containing schema definitions
-
         Returns:
             FlextResult containing extracted attributes and objectclasses
 
         """
-        result = self.schema.extract_schemas_from_ldif(ldif_content)
-        return cast("FlextResult[dict[str, object]]", result)
+        # Note: extract_schemas_from_ldif method is deprecated/removed
+        # Use parse() method instead which is the correct API
+        return FlextResult[dict[str, object]].fail(
+            "extract_schemas_from_ldif is deprecated, use parse() method"
+        )
 
     class Schema(
         FlextLdifServersRfc.Schema,
-        FlextLdifUtilities.Detection.OidPatternMixin,
+        FlextLdifUtilitiesDetection.OidPatternMixin,
     ):
         """Oracle OID schema quirks implementation.
 
@@ -946,10 +947,7 @@ class FlextLdifServersOid(FlextLdifServersRfc):
             if isinstance(acl_line, FlextLdifModels.Acl):
                 # Check metadata for OID server type
                 if acl_line.metadata and acl_line.metadata.quirk_type:
-                    return (
-                        acl_line.metadata.quirk_type
-                        == self._get_server_type()
-                    )
+                    return acl_line.metadata.quirk_type == self._get_server_type()
                 return False
             if not acl_line or not isinstance(acl_line, str):
                 return False

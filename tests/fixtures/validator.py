@@ -788,7 +788,8 @@ class RfcComplianceValidator:
 
         # Valid schema has at least attributes or objectclasses
         is_valid = report.get("has_attributetypes", False) or report.get(
-            "has_objectclasses", False,
+            "has_objectclasses",
+            False,
         )
         report["is_valid"] = is_valid
 

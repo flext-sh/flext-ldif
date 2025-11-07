@@ -17,7 +17,6 @@ Original: 252 lines | Optimized: ~140 lines (44% reduction)
 from __future__ import annotations
 
 from pathlib import Path
-from typing import cast
 
 from flext_ldif import FlextLdif, FlextLdifModels
 
@@ -192,7 +191,7 @@ sn: Test
     if parse_result.is_failure:
         return
 
-    entries = cast("list[FlextLdifModels.Entry]", parse_result.unwrap())
+    entries = parse_result.unwrap()
     validation_result = api.validate_entries(entries)
 
     if validation_result.is_failure:

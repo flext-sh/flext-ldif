@@ -16,8 +16,6 @@ Original: 246 lines | Optimized: ~130 lines (47% reduction)
 
 from __future__ import annotations
 
-from typing import cast
-
 from flext_core import FlextResult
 
 from flext_ldif import FlextLdif, FlextLdifModels
@@ -94,7 +92,7 @@ ou: People
     # Railway pattern - parse → analyze (auto error handling)
     parse_result = api.parse(ldif_content)
     if parse_result.is_success:
-        entries = cast("list[FlextLdifModels.Entry]", parse_result.unwrap())
+        entries = parse_result.unwrap()
         analyze_result = api.analyze(entries)
         if analyze_result.is_success:
             stats = analyze_result.unwrap()
@@ -122,7 +120,7 @@ mail: pipeline@example.com
     # Chain operations - parse → validate → analyze (auto error propagation)
     parse_result = api.parse(ldif_content)
     if parse_result.is_success:
-        entries = cast("list[FlextLdifModels.Entry]", parse_result.unwrap())
+        entries = parse_result.unwrap()
         validate_result = api.validate_entries(entries)
         if validate_result.is_success:
             validation_report = validate_result.unwrap()
@@ -208,7 +206,7 @@ member: cn=Person1,ou=People,dc=example,dc=com
     # Railway pattern - parse → analyze → filter by each objectClass
     parse_result = api.parse(ldif_content)
     if parse_result.is_success:
-        entries = cast("list[FlextLdifModels.Entry]", parse_result.unwrap())
+        entries = parse_result.unwrap()
         analyze_result = api.analyze(entries)
         if analyze_result.is_success:
             stats = analyze_result.unwrap()

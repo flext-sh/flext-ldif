@@ -787,15 +787,12 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 logger.debug("Identified boolean attribute: %s", fixed_name)
 
             # Create modified copy with fixed values using Pydantic v2 pattern
-            return cast(
-                "FlextLdifModels.SchemaAttribute",
-                attr_data.model_copy(
-                    update={
-                        "name": fixed_name,
-                        "equality": fixed_equality,
-                        "substr": fixed_substr,
-                    },
-                ),
+            return attr_data.model_copy(
+                update={
+                    "name": fixed_name,
+                    "equality": fixed_equality,
+                    "substr": fixed_substr,
+                },
             )
 
         def extract_schemas_from_ldif(
@@ -935,10 +932,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             if isinstance(acl_line, FlextLdifModels.Acl):
                 # Check metadata for quirk type
                 if acl_line.metadata and acl_line.metadata.quirk_type:
-                    return (
-                        acl_line.metadata.quirk_type
-                        == self._get_server_type()
-                    )
+                    return acl_line.metadata.quirk_type == self._get_server_type()
                 # Check attribute name
                 if acl_line.name:
                     acl_attr_normalized = (
@@ -1906,7 +1900,9 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             # Step 1: Apply pre-write hook for OUD-specific normalization
             hook_result = self._hook_pre_write_entry(entry)
             if hook_result.is_failure:
-                return FlextResult[str].fail(f"Pre-write hook failed: {hook_result.error}")
+                return FlextResult[str].fail(
+                    f"Pre-write hook failed: {hook_result.error}"
+                )
 
             normalized_entry = hook_result.unwrap()
 
@@ -1964,7 +1960,9 @@ class FlextLdifServersOud(FlextLdifServersRfc):
 
                 # Log if macros were found (metadata is immutable - just log)
                 if has_macros:
-                    logger.debug("Entry contains OUD ACI macros - preserved for runtime expansion")
+                    logger.debug(
+                        "Entry contains OUD ACI macros - preserved for runtime expansion"
+                    )
 
             # Entry is RFC-canonical - return unchanged
             return FlextResult[FlextLdifModels.Entry].ok(entry)
@@ -2007,7 +2005,9 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 )
 
             # Both ($dn) and [$dn] require ($dn) in target - already checked above
-            logger.debug("ACI macro validation passed: subject/target macro consistency OK")
+            logger.debug(
+                "ACI macro validation passed: subject/target macro consistency OK"
+            )
             return FlextResult[None].ok(None)
 
         def _hook_pre_write_entry(

@@ -273,7 +273,8 @@ class TestSchemaProtocolMethods:
         assert isinstance(oid_server.priority, int)
 
     def test_schema_has_attribute_methods(
-        self, oid_schema: FlextLdifServersOid.Schema,
+        self,
+        oid_schema: FlextLdifServersOid.Schema,
     ) -> None:
         """Test that quirk has all attribute processing methods."""
         assert callable(oid_schema.can_handle_attribute)
@@ -281,7 +282,8 @@ class TestSchemaProtocolMethods:
         assert callable(oid_schema.write)  # Public API method
 
     def test_schema_has_objectclass_methods(
-        self, oid_schema: FlextLdifServersOid.Schema,
+        self,
+        oid_schema: FlextLdifServersOid.Schema,
     ) -> None:
         """Test that quirk has all objectClass processing methods."""
         assert callable(oid_schema.can_handle_objectclass)
@@ -289,7 +291,8 @@ class TestSchemaProtocolMethods:
         assert callable(oid_schema.write)  # Public API method
 
     def test_attribute_methods_return_flext_result(
-        self, oid_schema: FlextLdifServersOid.Schema,
+        self,
+        oid_schema: FlextLdifServersOid.Schema,
     ) -> None:
         """Test that attribute methods return FlextResult."""
         # Test parse_attribute
@@ -297,7 +300,8 @@ class TestSchemaProtocolMethods:
         assert hasattr(result, "is_success")
 
     def testcan_handle_attribute_returns_bool(
-        self, oid_schema: FlextLdifServersOid.Schema,
+        self,
+        oid_schema: FlextLdifServersOid.Schema,
     ) -> None:
         """Test that can_handle_attribute returns boolean."""
         result = oid_schema.can_handle_attribute("( 2.5.4.3 NAME 'cn' )")
@@ -357,7 +361,8 @@ class TestEntryProtocolSatisfaction:
         quirk = FlextLdifServersOid()
         # Check if entry methods exist on the implementation
         has_entry_methods = hasattr(quirk, "can_handle_entry") and hasattr(
-            quirk, "process_entry",
+            quirk,
+            "process_entry",
         )
         # If methods exist, they should be callable
         if has_entry_methods:
@@ -368,7 +373,8 @@ class TestEntryProtocolSatisfaction:
         quirk = FlextLdifServersOud()
         # Check if entry methods exist
         has_entry_methods = hasattr(quirk, "can_handle_entry") and hasattr(
-            quirk, "process_entry",
+            quirk,
+            "process_entry",
         )
         # If methods exist, they should be callable
         if has_entry_methods:
@@ -448,9 +454,7 @@ class TestProtocolUsagePatterns:
             FlextLdifServersOpenldap.Schema(),
         ]
         schemas = [
-            q
-            for q in schemas_list
-            if hasattr(q, "parse") and hasattr(q, "write")
+            q for q in schemas_list if hasattr(q, "parse") and hasattr(q, "write")
         ]
         assert len(schemas) == 3
 

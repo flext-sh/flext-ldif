@@ -76,6 +76,7 @@ class FlextLdifUtilitiesDecorators:
             # Result automatically has metadata attached with quirk_type="oid"
 
         """
+
         def decorator(
             func: Callable[..., FlextResult[T]],
         ) -> Callable[..., FlextResult[T]]:
@@ -190,6 +191,7 @@ class FlextLdifUtilitiesDecorators:
                 return FlextResult.ok(parsed_attr)
 
         """
+
         def decorator(
             func: Callable[..., FlextResult[T]],
         ) -> Callable[..., FlextResult[T]]:
@@ -234,6 +236,7 @@ class FlextLdifUtilitiesDecorators:
                 return FlextResult.ok(ldif_str)
 
         """
+
         def decorator(
             func: Callable[..., FlextResult[T]],
         ) -> Callable[..., FlextResult[T]]:

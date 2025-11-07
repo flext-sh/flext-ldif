@@ -17,6 +17,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 from typing import override
 
@@ -220,7 +221,9 @@ class FlextLdifMigrationPipeline(
                 FlextLdifConstants.Categories.ACL: "04-acl.ldif",
                 FlextLdifConstants.Categories.REJECTED: "05-rejected.ldif",
             }
-        self._schema_whitelist_rules: dict[str, list[str]] = schema_whitelist_rules or {}
+        self._schema_whitelist_rules: dict[str, list[str]] = (
+            schema_whitelist_rules or {}
+        )
 
         # Common parameters
         self._source_server = source_server
@@ -244,6 +247,7 @@ class FlextLdifMigrationPipeline(
 
         # DN normalization and sorting
         # Use FlextLdifUtilities.DN for RFC 4514 compliant base DN normalization
+        self._base_dn: str | None
         if base_dn:
             normalized_base = FlextLdifUtilities.DN.norm(base_dn)
             self._base_dn = normalized_base or base_dn.lower()
@@ -397,7 +401,9 @@ class FlextLdifMigrationPipeline(
                     acl_entries.append(entry)
                     acl_dns.add(FlextLdifUtilities.DN.get_dn_value(entry.dn))
             except Exception as e:
-                logger.exception(f"[PIPELINE] Error processing entry {idx}", exception=e)
+                logger.exception(
+                    f"[PIPELINE] Error processing entry {idx}", exception=e
+                )
                 raise
 
         categorized[FlextLdifConstants.Categories.ACL] = acl_entries
@@ -408,6 +414,139 @@ class FlextLdifMigrationPipeline(
                     for e in categorized[cat]
                     if FlextLdifUtilities.DN.get_dn_value(e.dn) not in acl_dns
                 ]
+
+    def _transform_schema_to_modify_format(
+        self,
+        schema_entries: list[FlextLdifModels.Entry],
+    ) -> list[FlextLdifModels.Entry]:
+        """Transform schema entries to OUD modify-add format.
+
+        Converts schema entries to LDIF modify format with 4 separate add blocks:
+        - attributeTypes
+        - objectClasses
+        - matchingRules
+        - matchingRuleUse
+
+        All definitions are ordered by OID within each category.
+
+        Args:
+            schema_entries: Filtered schema entries
+
+        Returns:
+            Transformed schema entries in OUD modify-add format
+
+        """
+        if not schema_entries or self._target_server != "oud":
+            return schema_entries
+
+        logger.info(
+            "[PIPELINE] Transforming schema to OUD modify-add format",
+        )
+
+        # Extract schema definitions by category
+        attributetypes = []
+        objectclasses = []
+        matchingrules = []
+        matchingruleuse = []
+
+        for entry in schema_entries:
+            attrs = entry.attributes.attributes
+
+            # Extract each schema category
+            if "attributetypes" in attrs:
+                attrs_val = attrs.get("attributetypes", [])
+                if isinstance(attrs_val, list):
+                    attributetypes.extend(attrs_val)
+
+            if "objectclasses" in attrs:
+                ocs_val = attrs.get("objectclasses", [])
+                if isinstance(ocs_val, list):
+                    objectclasses.extend(ocs_val)
+
+            if "matchingrules" in attrs:
+                mrs_val = attrs.get("matchingrules", [])
+                if isinstance(mrs_val, list):
+                    matchingrules.extend(mrs_val)
+
+            if "matchingruleuse" in attrs:
+                mru_val = attrs.get("matchingruleuse", [])
+                if isinstance(mru_val, list):
+                    matchingruleuse.extend(mru_val)
+
+        # Sort each category by OID
+        def extract_oid(definition: str) -> str:
+            """Extract OID from schema definition (first OID in parens)."""
+            # Match first OID pattern: ( OID ... )
+            match = re.search(r"\(\s*([0-9\.]+)", definition)
+            if match:
+                return match.group(1)
+            return definition  # Fallback: use full definition for sorting
+
+        attributetypes = sorted(attributetypes, key=extract_oid)
+        objectclasses = sorted(objectclasses, key=extract_oid)
+        matchingrules = sorted(matchingrules, key=extract_oid)
+        matchingruleuse = sorted(matchingruleuse, key=extract_oid)
+
+        # Create new schema entry with OUD modify-add format
+        # Format: each category gets its own "add:" block with entries separated by "-"
+        schema_attributes_dict = {}
+
+        # Only include categories that have definitions
+        if attributetypes:
+            schema_attributes_dict["attributeTypes"] = attributetypes
+
+        if objectclasses:
+            schema_attributes_dict["objectClasses"] = objectclasses
+
+        if matchingrules:
+            schema_attributes_dict["matchingRules"] = matchingrules
+
+        if matchingruleuse:
+            schema_attributes_dict["matchingRuleUse"] = matchingruleuse
+
+        # Set changetype to modify
+        schema_attributes_dict["changetype"] = ["modify"]
+
+        # Store metadata for OUD writer to generate correct format with "add:" lines
+        entry_metadata = {
+            "changetype": ["modify"],
+            "_modify_format": "add",  # Signal to writer to use "add:" format
+            "_modify_blocks": [  # List of blocks in order
+                "attributeTypes" if attributetypes else None,
+                "objectClasses" if objectclasses else None,
+                "matchingRules" if matchingrules else None,
+                "matchingRuleUse" if matchingruleuse else None,
+            ],
+        }
+        # Filter out None values
+        entry_metadata["_modify_blocks"] = [
+            b for b in entry_metadata["_modify_blocks"] if b is not None
+        ]
+
+        # Create the entry
+        oud_schema_entry_result = FlextLdifModels.Entry.create(
+            dn="cn=schema",
+            attributes=schema_attributes_dict,
+            entry_metadata=entry_metadata,
+        )
+
+        if oud_schema_entry_result.is_failure:
+            logger.warning(
+                "[PIPELINE] Failed to create OUD schema entry: %s",
+                oud_schema_entry_result.error,
+            )
+            return schema_entries
+
+        logger.info(
+            "[PIPELINE] Schema transformed to OUD modify-add format: "
+            "%d attributeTypes, %d objectClasses, %d matchingRules, %d matchingRuleUse",
+            len(attributetypes),
+            len(objectclasses),
+            len(matchingrules),
+            len(matchingruleuse),
+        )
+
+        return [oud_schema_entry_result.unwrap()]
 
     def _process_category(
         self,
@@ -441,6 +580,10 @@ class FlextLdifMigrationPipeline(
                 filtered = result.unwrap() if result.is_success else cat_entries
             else:
                 filtered = cat_entries
+
+            # Transform to OUD modify-add format if target is OUD
+            if self._target_server == "oud":
+                filtered = self._transform_schema_to_modify_format(filtered)
         else:
             # Non-schema: apply normal filtering
             filter_result = self._filter_entries(cat_entries)
@@ -461,6 +604,8 @@ class FlextLdifMigrationPipeline(
     ) -> tuple[dict[str, str], dict[str, int]]:
         """Write category entries to files.
 
+        ACL entries are written in LDIF modify replace format with hierarchical ordering.
+
         Args:
             final: Final categorized entries
 
@@ -476,13 +621,45 @@ class FlextLdifMigrationPipeline(
             path = self._output_dir / filename
 
             if cat_entries:
-                result = writer.write(
-                    entries=cat_entries,
-                    target_server_type=self._target_server,
-                    output_target="file",
-                    output_path=path,
-                    format_options=self._write_options,
-                )
+                # Special handling for ACL entries: hierarchical ordering + LDIF modify
+                if cat == FlextLdifConstants.Categories.ACL:
+                    # Sort ACL entries by DN hierarchy (depth first)
+                    sort_result = FlextLdifSorting.sort(
+                        cat_entries,
+                        by="hierarchy",
+                    )
+                    sorted_entries = (
+                        sort_result.unwrap() if sort_result.is_success else cat_entries
+                    )
+
+                    # Create copy of format_options with LDIF modify enabled
+                    acl_options = (
+                        self._write_options.model_copy(
+                            update={"ldif_changetype": "modify"}
+                        )
+                        if self._write_options
+                        else FlextLdifModels.WriteFormatOptions(
+                            ldif_changetype="modify"
+                        )
+                    )
+
+                    result = writer.write(
+                        entries=sorted_entries,
+                        target_server_type=self._target_server,
+                        output_target="file",
+                        output_path=path,
+                        format_options=acl_options,
+                    )
+                else:
+                    # Standard write for non-ACL categories
+                    result = writer.write(
+                        entries=cat_entries,
+                        target_server_type=self._target_server,
+                        output_target="file",
+                        output_path=path,
+                        format_options=self._write_options,
+                    )
+
                 if result.is_success:
                     file_paths[cat] = str(path)
                     counts[cat] = len(cat_entries)

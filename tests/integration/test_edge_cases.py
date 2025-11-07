@@ -124,9 +124,7 @@ class TestLargeAndComplexCases:
         - All attributes preserved
         - No truncation or loss
         """
-        attributes = "".join(
-            f"mail: user{i}@example.com\n" for i in range(100)
-        )
+        attributes = "".join(f"mail: user{i}@example.com\n" for i in range(100))
         ldif_content = f"""dn: cn=ManyAttrs,dc=example,dc=com
 objectClass: person
 cn: ManyAttrs

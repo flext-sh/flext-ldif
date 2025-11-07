@@ -12,9 +12,8 @@ Original: 195 lines | Optimized: ~60 lines (70% reduction)
 from __future__ import annotations
 
 from pathlib import Path
-from typing import cast
 
-from flext_ldif import FlextLdif, FlextLdifModels
+from flext_ldif import FlextLdif
 
 
 def parse_and_write_pipeline() -> None:
@@ -32,7 +31,7 @@ mail: john.doe@example.com
     # Parse and write LDIF
     parse_result = api.parse(ldif_content)
     if parse_result.is_success:
-        entries = cast("list[FlextLdifModels.Entry]", parse_result.unwrap())
+        entries = parse_result.unwrap()
         write_result = api.write(entries, Path("output.ldif"))
         if write_result.is_success:
             content = write_result.unwrap()
@@ -52,7 +51,7 @@ def parse_file_example() -> None:
         # Single operation - library handles opening, reading, closing
         result = api.parse(sample_file)
         if result.is_success:
-            entries = cast("list[FlextLdifModels.Entry]", result.unwrap())
+            entries = result.unwrap()
             print(f"Parsed {len(entries)} entries")
         else:
             print(f"Failed to parse: {result.error}")
@@ -71,7 +70,7 @@ sn: User
     # Compose operations - parse → write (automatic file handling)
     parse_result = api.parse(ldif_content)
     if parse_result.is_success:
-        entries = cast("list[FlextLdifModels.Entry]", parse_result.unwrap())
+        entries = parse_result.unwrap()
         write_result = api.write(entries, Path("examples/output.ldif"))
         print("Written" if write_result.is_success else f"Error: {write_result.error}")
     else:
@@ -90,7 +89,7 @@ mail: inspect@example.com
 
     # Safe access with error handling
     if result.is_success:
-        entries = cast("list[FlextLdifModels.Entry]", result.unwrap())
+        entries = result.unwrap()
         for entry in entries:
             print(f"DN: {entry.dn}")
             print(f"Attributes: {list(entry.attributes.attributes.keys())}")

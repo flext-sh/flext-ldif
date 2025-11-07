@@ -38,8 +38,12 @@ class FlextLdifTypes(FlextTypes):
     # =========================================================================
 
     type EntryOrString = list[FlextLdifModels.Entry] | str
-    type SchemaModel = FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass
-    type SchemaModelOrString = FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | str
+    type SchemaModel = (
+        FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass
+    )
+    type SchemaModelOrString = (
+        FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | str
+    )
     type DnInput = str | FlextLdifModels.DistinguishedName
     type AclOrString = FlextLdifModels.Acl | str
     type ConvertibleModel = (
@@ -138,12 +142,19 @@ class FlextLdifTypes(FlextTypes):
         # Schema model or string union - For schema quirk service types
         # USED: servers/base.py Schema nested class FlextService parameter
         # Real type (not string) - FlextLdifModels is imported directly at module level
-        type SchemaModelOrString = FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | str
+        type SchemaModelOrString = (
+            FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | str
+        )
 
         # Service response types - All possible FlextLdif service return types
         # USED: api.py FlextLdif class FlextService[ServiceResponseTypes]
         # Real type (not string) - FlextLdifModels is imported directly at module level
-        type ServiceResponseTypes = FlextLdifModels.ParseResponse | FlextLdifModels.WriteResponse | FlextLdifModels.MigrationPipelineResult | FlextLdifModels.ValidationResult
+        type ServiceResponseTypes = (
+            FlextLdifModels.ParseResponse
+            | FlextLdifModels.WriteResponse
+            | FlextLdifModels.MigrationPipelineResult
+            | FlextLdifModels.ValidationResult
+        )
 
         # Entry DN value (string) - Canonical distinguished name
         type EntryDnValue = str
@@ -167,7 +178,12 @@ class FlextLdifTypes(FlextTypes):
         # Convertible model union - All models convertible via transformation matrix
         # USED: services/conversion.py QuirksConversionMatrix[ConvertibleModel]
         # Real type (not string) - FlextLdifModels is imported directly at module level
-        type ConvertibleModel = FlextLdifModels.Entry | FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | FlextLdifModels.Acl
+        type ConvertibleModel = (
+            FlextLdifModels.Entry
+            | FlextLdifModels.SchemaAttribute
+            | FlextLdifModels.SchemaObjectClass
+            | FlextLdifModels.Acl
+        )
 
         # =====================================================================
         # SCHEMA TYPES - RFC 4512 schema definition structures

@@ -172,7 +172,9 @@ class FlextLdifWriter(FlextService[Any]):
         if processed_entries:
             # Include version header if requested
             if options.include_version_header:
-                output.write(FlextLdifConstants.ConfigDefaults.LDIF_VERSION_STRING + "\n")
+                output.write(
+                    FlextLdifConstants.ConfigDefaults.LDIF_VERSION_STRING + "\n"
+                )
 
             # Include global timestamp comment if requested
             if options.include_timestamps:
@@ -629,13 +631,16 @@ class FlextLdifWriter(FlextService[Any]):
             return FlextResult.fail(f"Failed to write file: {write_result.error}")
 
         file_stats = write_result.unwrap()
+        bytes_written = file_stats.get("bytes_written", 0)
+        file_size = int(bytes_written) if isinstance(bytes_written, (int, str)) else 0
+
         return FlextResult.ok(
             FlextLdifModels.WriteResponse(
                 content=None,
                 statistics=FlextLdifModels.WriteStatistics(
                     entries_written=original_count,
                     output_file=str(file_stats.get("path", "")),
-                    file_size_bytes=int(file_stats.get("bytes_written", 0)) if isinstance(file_stats.get("bytes_written"), (int, str)) else 0,
+                    file_size_bytes=file_size,
                     encoding=str(file_stats.get("encoding", "utf-8")),
                 ),
             ),

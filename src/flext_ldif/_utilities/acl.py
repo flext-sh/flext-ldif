@@ -624,7 +624,9 @@ class FlextLdifUtilitiesACL:
                 subject_value = f"{acl_ldap_url_prefix}{subject_value}"
             return f'groupdn="{subject_value}";)'
 
-        acl_subject_type_bind_rules = getattr(constants, "ACL_SUBJECT_TYPE_BIND_RULES", "bind_rules")
+        acl_subject_type_bind_rules = getattr(
+            constants, "ACL_SUBJECT_TYPE_BIND_RULES", "bind_rules"
+        )
         if subject_type == acl_subject_type_bind_rules:
             return f"{subject_value};)"
 

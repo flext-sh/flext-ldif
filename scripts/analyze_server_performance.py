@@ -121,7 +121,7 @@ def main() -> None:
     sys.path.insert(0, "src")
 
     # Import servers after path is set (required: sys.path modified above)
-    from flext_ldif.servers import (  # noqa: PLC0415
+    from flext_ldif.servers import (
         FlextLdifServersAd,
         FlextLdifServersApache,
         FlextLdifServersDs389,
@@ -134,7 +134,7 @@ def main() -> None:
         FlextLdifServersRfc,
         FlextLdifServersTivoli,
     )
-    from flext_ldif.services.server import FlextLdifServer  # noqa: PLC0415
+    from flext_ldif.services.server import FlextLdifServer
 
     # Note: Imports moved to top-level for linting compliance
     # Import time benchmarking removed (use profiling tools if needed)
