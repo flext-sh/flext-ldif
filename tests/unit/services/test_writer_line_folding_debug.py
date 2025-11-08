@@ -46,7 +46,6 @@ class TestWriterLineFoldingDebug:
             output_target="string",
             format_options=FlextLdifModels.WriteFormatOptions(
                 fold_long_lines=True,
-                disable_line_folding=False,  # Explicitly enable
                 line_width=76,  # RFC 2849 recommendation
             ),
         )
@@ -75,7 +74,6 @@ class TestWriterLineFoldingDebug:
             output_target="string",
             format_options=FlextLdifModels.WriteFormatOptions(
                 fold_long_lines=False,
-                disable_line_folding=False,
                 line_width=76,
             ),
         )
@@ -89,19 +87,18 @@ class TestWriterLineFoldingDebug:
         lines = output.split("\n")
         any(line.startswith(" ") for line in lines if line)
 
-    def test_disable_line_folding_true(
+    def test_fold_long_lines_override(
         self,
         writer: FlextLdifWriter,
         long_value_entry: FlextLdifModels.Entry,
     ) -> None:
-        """Test line folding WITH disable_line_folding=True."""
+        """Test fold_long_lines=False to disable line folding."""
         result = writer.write(
             entries=[long_value_entry],
             target_server_type="rfc",
             output_target="string",
             format_options=FlextLdifModels.WriteFormatOptions(
-                fold_long_lines=True,  # Try to enable
-                disable_line_folding=True,  # But disable here
+                fold_long_lines=False,  # Disable line folding
                 line_width=76,
             ),
         )
@@ -127,7 +124,6 @@ class TestWriterLineFoldingDebug:
             output_target="string",
             format_options=FlextLdifModels.WriteFormatOptions(
                 fold_long_lines=True,
-                disable_line_folding=False,
                 line_width=76,
             ),
         )

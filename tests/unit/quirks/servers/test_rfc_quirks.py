@@ -228,7 +228,7 @@ class TestRfcQuirksWithRealFixtures:
 
         # Verify that entries can be written through Entry quirk
         for entry in entries:
-            result = rfc.entry.write(entry)
+            result = rfc.entry_quirk.write(entry)
             assert result.is_success, f"Failed to write entry: {result.error}"
             written_str = result.unwrap()
             assert written_str is not None

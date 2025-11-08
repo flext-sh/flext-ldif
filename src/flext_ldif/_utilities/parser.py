@@ -185,7 +185,12 @@ class FlextLdifUtilitiesParser:
             key = key[:-1]
             try:
                 value = base64.b64decode(value.lstrip()).decode("utf-8")
-            except Exception:
+            except Exception as e:
+                # Log warning for malformed base64 - helps debugging LDIF quality issues
+                logger.warning(
+                    f"Base64 decode failed for attribute '{key}', using raw value. "
+                    f"This may indicate malformed LDIF data. Error: {e!r}",
+                )
                 value = value.lstrip()
         return key.strip(), value.lstrip()
 
@@ -465,10 +470,14 @@ class FlextLdifUtilitiesParser:
                 definition = line.split(":", 1)[1].strip()
                 if parse_callback and callable(parse_callback):
                     result = parse_callback(definition)
-                    # Handle FlextResult returns
-                    if hasattr(result, "is_success") and hasattr(result, "unwrap"):
-                        if result.is_success:
-                            definitions.append(result.unwrap())
+                    # Handle FlextResult returns - check for both attributes
+                    is_success_attr = getattr(result, "is_success", None)
+                    unwrap_method = getattr(result, "unwrap", None)
+
+                    if is_success_attr is not None and unwrap_method is not None:
+                        # This is a FlextResult
+                        if is_success_attr:
+                            definitions.append(unwrap_method())
                     # Direct return value (not FlextResult)
                     elif result is not None:
                         definitions.append(result)

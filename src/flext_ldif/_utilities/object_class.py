@@ -38,10 +38,10 @@ class FlextLdifUtilitiesObjectClass:
         from flext_ldif.utilities import FlextLdifUtilities
 
         FlextLdifUtilitiesObjectClass.fix_missing_sup(
-            schema_oc, server_type="oid"
+            schema_oc, _server_type="oid"
         )
         FlextLdifUtilitiesObjectClass.fix_kind_mismatch(
-            schema_oc, server_type="oid"
+            schema_oc, _server_type="oid"
         )
         FlextLdifUtilitiesObjectClass.ensure_sup_for_auxiliary(schema_oc)
         FlextLdifUtilitiesObjectClass.align_kind_with_superior(
@@ -65,7 +65,6 @@ class FlextLdifUtilitiesObjectClass:
 
         Args:
             schema_oc: ObjectClass model to potentially fix (modified in-place)
-            server_type: Server type hint for logging (e.g., "oid", "oud") (unused)
 
         Returns:
             None - modifies schema_oc in-place
@@ -97,7 +96,7 @@ class FlextLdifUtilitiesObjectClass:
     @staticmethod
     def fix_kind_mismatch(
         schema_oc: FlextLdifModels.SchemaObjectClass,
-        __server_type: str = "oid",
+        _server_type: str = "oid",
     ) -> None:
         """Fix objectClass kind mismatches with superior classes (server-specific).
 

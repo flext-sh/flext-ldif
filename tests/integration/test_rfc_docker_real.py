@@ -60,7 +60,7 @@ class TestRfcDockerRealData:
             config=FlextLdifConfig(),
         )
 
-        result = parser.parse_file(schema_file)
+        result = parser.parse_ldif_file(schema_file)
 
         assert result.is_success, f"Failed to parse OID schema: {result.error}"
         entries = result.unwrap()
@@ -89,7 +89,7 @@ class TestRfcDockerRealData:
             config=FlextLdifConfig(),
         )
 
-        result = parser.parse_file(entries_file)
+        result = parser.parse_ldif_file(entries_file)
 
         assert result.is_success, f"Failed to parse OUD entries: {result.error}"
         entries = result.unwrap()
@@ -113,7 +113,7 @@ class TestRfcDockerRealData:
             config=FlextLdifConfig(),
         )
 
-        result = parser.parse_file(integration_file)
+        result = parser.parse_ldif_file(integration_file)
 
         assert result.is_success or (
             result.error is not None and "Failed to parse" in result.error
@@ -138,7 +138,7 @@ class TestRfcDockerRealData:
         parser = FlextLdifParser(
             config=FlextLdifConfig(),
         )
-        parse_result = parser.parse_file(source_file)
+        parse_result = parser.parse_ldif_file(source_file)
 
         if not parse_result.is_success:
             pytest.skip(f"Could not parse source: {parse_result.error}")
@@ -166,7 +166,7 @@ class TestRfcDockerRealData:
         reparser = FlextLdifParser(
             config=FlextLdifConfig(),
         )
-        reparse_result = reparser.parse_file(output_file)
+        reparse_result = reparser.parse_ldif_file(output_file)
 
         assert reparse_result.is_success, f"Failed to re-parse: {reparse_result.error}"
         reparsed_entries = reparse_result.unwrap()
@@ -189,7 +189,7 @@ class TestRfcDockerRealData:
             config=FlextLdifConfig(),
         )
 
-        result = parser.parse_file(acl_file)
+        result = parser.parse_ldif_file(acl_file)
 
         if result.is_success:
             entries = result.unwrap()
@@ -215,7 +215,7 @@ class TestRfcDockerRealData:
                 config=FlextLdifConfig(),
             )
 
-            result = parser.parse_file(ldif_file)
+            result = parser.parse_ldif_file(ldif_file)
 
             # Should handle Unicode gracefully
             assert result.is_success or result.error, (
@@ -283,7 +283,7 @@ class TestRfcDockerRealData:
                 # Use relaxed mode for broken LDIF
             )
 
-            result = parser.parse_file(broken_file)
+            result = parser.parse_ldif_file(broken_file)
 
             # Relaxed mode should attempt to parse even broken LDIF
             if result.is_success:
@@ -304,7 +304,7 @@ class TestRfcDockerRealData:
             config=FlextLdifConfig(),
         )
 
-        result = parser.parse_file(schema_file)
+        result = parser.parse_ldif_file(schema_file)
 
         if result.is_success:
             entries = result.unwrap()
@@ -343,7 +343,7 @@ class TestRfcIntegrationRealWorld:
             config=FlextLdifConfig(),
         )
 
-        result = parser.parse_file(schema_file)
+        result = parser.parse_ldif_file(schema_file)
 
         assert result.is_success, f"Failed to parse large schema: {result.error}"
 
@@ -361,7 +361,7 @@ class TestRfcIntegrationRealWorld:
             config=FlextLdifConfig(),
         )
 
-        result = parser.parse_file(integration_file)
+        result = parser.parse_ldif_file(integration_file)
 
         if result.is_success:
             entries = result.unwrap()

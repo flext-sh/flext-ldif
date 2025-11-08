@@ -40,7 +40,10 @@ class FlextLdifUtilitiesConstants:
             ...     perms = constants.AclPermission
 
         """
-        server_map = {
+        # Import here to avoid circular dependencies with server modules
+        from collections.abc import Callable  # noqa: PLC0415
+
+        server_map: dict[str, Callable[[], type[object]] | None] = {
             "rfc": None,  # RFC has no server-specific constants
             "oid": _get_oid_constants,
             "oud": _get_oud_constants,
@@ -57,7 +60,7 @@ class FlextLdifUtilitiesConstants:
         loader = server_map.get(server_type.lower())
         if loader is None:
             return None
-        return loader() if callable(loader) else loader
+        return loader()
 
     @staticmethod
     def is_valid_server_type(server_type: str) -> bool:
@@ -153,7 +156,10 @@ class FlextLdifUtilitiesConstants:
             }
 
         try:
-            perm_enum = constants.AclPermission
+            perm_enum = getattr(constants, "AclPermission", None)
+            if perm_enum is None:
+                msg = "AclPermission not found"
+                raise AttributeError(msg)
             return {item.value for item in perm_enum}
         except (AttributeError, TypeError):
             # Fallback to RFC baseline
@@ -215,7 +221,10 @@ class FlextLdifUtilitiesConstants:
             return {"allow", "deny"}
 
         try:
-            action_enum = constants.AclAction
+            action_enum = getattr(constants, "AclAction", None)
+            if action_enum is None:
+                msg = "AclAction not found"
+                raise AttributeError(msg)
             return {item.value for item in action_enum}
         except (AttributeError, TypeError):
             # Fallback to defaults
@@ -274,7 +283,10 @@ class FlextLdifUtilitiesConstants:
             }
 
         try:
-            encoding_enum = constants.Encoding
+            encoding_enum = getattr(constants, "Encoding", None)
+            if encoding_enum is None:
+                msg = "Encoding not found"
+                raise AttributeError(msg)
             return {item.value for item in encoding_enum}
         except (AttributeError, TypeError):
             # Fallback to RFC baseline
@@ -406,69 +418,69 @@ class FlextLdifUtilitiesConstants:
 
 def _get_oid_constants() -> type[object]:
     """Lazy load OID server constants."""
-    from flext_ldif.servers.oid import FlextLdifServersOid
+    from flext_ldif.servers.oid import FlextLdifServersOid  # noqa: PLC0415
 
     return FlextLdifServersOid.Constants
 
 
 def _get_oud_constants() -> type[object]:
     """Lazy load OUD server constants."""
-    from flext_ldif.servers.oud import FlextLdifServersOud
+    from flext_ldif.servers.oud import FlextLdifServersOud  # noqa: PLC0415
 
     return FlextLdifServersOud.Constants
 
 
 def _get_openldap_constants() -> type[object]:
     """Lazy load OpenLDAP 2.x server constants."""
-    from flext_ldif.servers.openldap import FlextLdifServersOpenldap
+    from flext_ldif.servers.openldap import FlextLdifServersOpenldap  # noqa: PLC0415
 
     return FlextLdifServersOpenldap.Constants
 
 
 def _get_openldap1_constants() -> type[object]:
     """Lazy load OpenLDAP 1.x server constants."""
-    from flext_ldif.servers.openldap1 import FlextLdifServersOpenldap1
+    from flext_ldif.servers.openldap1 import FlextLdifServersOpenldap1  # noqa: PLC0415
 
     return FlextLdifServersOpenldap1.Constants
 
 
 def _get_ad_constants() -> type[object]:
     """Lazy load Active Directory server constants."""
-    from flext_ldif.servers.ad import FlextLdifServersAd
+    from flext_ldif.servers.ad import FlextLdifServersAd  # noqa: PLC0415
 
     return FlextLdifServersAd.Constants
 
 
 def _get_apache_constants() -> type[object]:
     """Lazy load Apache Directory Server constants."""
-    from flext_ldif.servers.apache import FlextLdifServersApache
+    from flext_ldif.servers.apache import FlextLdifServersApache  # noqa: PLC0415
 
     return FlextLdifServersApache.Constants
 
 
 def _get_ds389_constants() -> type[object]:
     """Lazy load 389 Directory Server constants."""
-    from flext_ldif.servers.ds389 import FlextLdifServersDs389
+    from flext_ldif.servers.ds389 import FlextLdifServersDs389  # noqa: PLC0415
 
     return FlextLdifServersDs389.Constants
 
 
 def _get_novell_constants() -> type[object]:
     """Lazy load Novell eDirectory constants."""
-    from flext_ldif.servers.novell import FlextLdifServersNovell
+    from flext_ldif.servers.novell import FlextLdifServersNovell  # noqa: PLC0415
 
     return FlextLdifServersNovell.Constants
 
 
 def _get_tivoli_constants() -> type[object]:
     """Lazy load IBM Tivoli Directory Server constants."""
-    from flext_ldif.servers.tivoli import FlextLdifServersTivoli
+    from flext_ldif.servers.tivoli import FlextLdifServersTivoli  # noqa: PLC0415
 
     return FlextLdifServersTivoli.Constants
 
 
 def _get_relaxed_constants() -> type[object]:
     """Lazy load Relaxed mode constants."""
-    from flext_ldif.servers.relaxed import FlextLdifServersRelaxed
+    from flext_ldif.servers.relaxed import FlextLdifServersRelaxed  # noqa: PLC0415
 
     return FlextLdifServersRelaxed.Constants

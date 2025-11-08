@@ -4,4 +4,5 @@ Temporary module containing the refactored constants structure.
 This module will be removed after migration is complete.
 """
 
-__all__ = ["constants_new"]
+# No public API - migration module only
+__all__: list[str] = []

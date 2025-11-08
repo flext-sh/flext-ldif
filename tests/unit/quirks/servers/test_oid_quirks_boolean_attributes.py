@@ -20,12 +20,12 @@ class TestOidBooleanAttributeParsing:
     @pytest.fixture
     def oid_schema(self) -> FlextLdifServersOid.Schema:
         """Create OID schema quirk instance."""
-        return FlextLdifServersOid().schema
+        return FlextLdifServersOid().schema_quirk
 
     @pytest.fixture
     def oid_entry(self) -> FlextLdifServersOid.Entry:
         """Create OID entry quirk instance."""
-        return FlextLdifServersOid().entry
+        return FlextLdifServersOid().entry_quirk
 
     def test_boolean_attributes_constant_exists(
         self,
@@ -70,7 +70,7 @@ class TestOidBooleanAttributeRoundtrip:
     @pytest.fixture
     def oid_schema(self) -> FlextLdifServersOid.Schema:
         """Create OID schema quirk instance."""
-        return FlextLdifServersOid().schema
+        return FlextLdifServersOid().schema_quirk
 
     def test_parse_boolean_attribute_definition(
         self,
@@ -157,7 +157,7 @@ class TestOidKnownBooleanAttributes:
     @pytest.fixture
     def oid_schema(self) -> FlextLdifServersOid.Schema:
         """Create OID schema quirk instance."""
-        return FlextLdifServersOid().schema
+        return FlextLdifServersOid().schema_quirk
 
     # Test helper to check if attribute is in boolean list
     def _is_boolean_attribute(self, attr_name: str) -> bool:

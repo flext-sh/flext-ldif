@@ -159,7 +159,7 @@ class FlextLdifConstants(FlextConstants):
                 return False
 
         @classmethod
-        def from_string(cls, value: str) -> ServerTypes:
+        def from_string(cls, value: str) -> FlextLdifConstants.ServerTypes:
             """Convert string to ServerTypes with validation."""
             try:
                 return cls(value.lower())

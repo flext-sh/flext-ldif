@@ -164,7 +164,7 @@ class FlextLdifModels(FlextModels):
                 """
                 if not isinstance(v, str):
                     msg = f"DN must be string, got {type(v).__name__}"
-                    raise ValueError(msg)
+                    raise TypeError(msg)
 
                 v = v.strip()
 
@@ -231,7 +231,7 @@ class FlextLdifModels(FlextModels):
                 return v
 
             # ✅ BUSINESS METHODS (Not getters/setters)
-            def is_child_of(self, parent: DistinguishedName) -> bool:
+            def is_child_of(self, parent: FlextLdifModels.DistinguishedName) -> bool:
                 """Check if this DN is a child of parent DN.
 
                 Args:
@@ -250,7 +250,7 @@ class FlextLdifModels(FlextModels):
                     or self.value == parent.value
                 )
 
-            def is_ancestor_of(self, child: DistinguishedName) -> bool:
+            def is_ancestor_of(self, child: FlextLdifModels.DistinguishedName) -> bool:
                 """Check if this DN is an ancestor of child DN.
 
                 Args:
@@ -321,7 +321,7 @@ class FlextLdifModels(FlextModels):
                 """
                 if not isinstance(v, dict):
                     msg = f"Attributes must be dict, got {type(v).__name__}"
-                    raise ValueError(msg)
+                    raise TypeError(msg)
 
                 normalized = {}
                 for key, val in v.items():
@@ -442,7 +442,7 @@ class FlextLdifModels(FlextModels):
             objectclasses: Annotated[
                 list[str],
                 Field(default_factory=list, description="LDAP objectClass values"),
-            ] = []
+            ]
 
             # Extensible metadata (documented for each server)
             metadata: Annotated[
@@ -469,17 +469,17 @@ class FlextLdifModels(FlextModels):
                     default_factory=list,
                     description="ACLs applying to this entry",
                 ),
-            ] = []
+            ]
 
             # Metadata
             entry_metadata: Annotated[
                 dict[str, object],
                 Field(default_factory=dict, description="Entry processing metadata"),
-            ] = {}
+            ]
             validation_metadata: Annotated[
                 dict[str, object],
                 Field(default_factory=dict, description="Validation results"),
-            ] = {}
+            ]
 
             # ✅ FIELD VALIDATORS - Automatic coercion (eliminates create() factory)
             @field_validator("dn", mode="before")
@@ -510,7 +510,9 @@ class FlextLdifModels(FlextModels):
 
             # ✅ MODEL VALIDATOR - Server-specific logic via context
             @model_validator(mode="after")
-            def validate_for_server(self, info: ValidationInfo) -> Entry:
+            def validate_for_server(
+                self, info: ValidationInfo
+            ) -> FlextLdifModels.Entry:
                 """Server-specific validation using context.
 
                 Args:
@@ -670,8 +672,8 @@ class FlextLdifModels(FlextModels):
             oid: Annotated[str | None, Field(default=None)]
             superior: Annotated[list[str], Field(default_factory=list)]
             structural: Annotated[bool, Field(default=True)] = True
-            required_attrs: Annotated[list[str], Field(default_factory=list)] = []
-            optional_attrs: Annotated[list[str], Field(default_factory=list)] = []
+            required_attrs: Annotated[list[str], Field(default_factory=list)]
+            optional_attrs: Annotated[list[str], Field(default_factory=list)]
 
             @computed_field
             @property
@@ -895,7 +897,7 @@ class FlextLdifModels(FlextModels):
             malformed_entries: Annotated[int, Field(default=0, ge=0)] = 0
 
             @model_validator(mode="after")
-            def validate_consistency(self) -> ParseStatistics:
+            def validate_consistency(self) -> FlextLdifModels.ParseStatistics:
                 """Ensure statistics are internally consistent."""
                 if self.entries_with_acls > self.total_entries:
                     msg = "entries_with_acls > total_entries"

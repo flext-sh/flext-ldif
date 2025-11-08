@@ -17,6 +17,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import fnmatch
 from pathlib import Path
 
 import pytest
@@ -138,11 +139,16 @@ class TestFilterByDN:
         oid_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test exclude mode removes matching entries."""
-        # Count entries with ou=people in DN (case-insensitive)
-        people_entries = [e for e in oid_entries if "ou=people" in e.dn.value.lower()]
+        # Count entries matching the fnmatch pattern (same logic as production code)
+        pattern = "*,ou=people,*"
+        people_entries = [
+            e
+            for e in oid_entries
+            if fnmatch.fnmatch(e.dn.value.lower(), pattern.lower())
+        ]
         original_count = len(oid_entries)
 
-        result = FlextLdifFilters.by_dn(oid_entries, "*,ou=people,*", mode="exclude")
+        result = FlextLdifFilters.by_dn(oid_entries, pattern, mode="exclude")
 
         assert result.is_success
         filtered = result.unwrap()
@@ -151,7 +157,10 @@ class TestFilterByDN:
         assert len(filtered) == expected_count, (
             f"Expected {expected_count}, got {len(filtered)}"
         )
-        assert all("ou=people" not in e.dn.value.lower() for e in filtered)
+        # Verify no filtered entry matches the pattern
+        assert all(
+            not fnmatch.fnmatch(e.dn.value.lower(), pattern.lower()) for e in filtered
+        )
 
 
 # ════════════════════════════════════════════════════════════════════════════

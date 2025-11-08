@@ -206,7 +206,7 @@ attributeTypes: ( 2.5.4.4 NAME 'sn' DESC 'Surname' SYNTAX '1.3.6.1.4.1.1466.115.
 
         try:
             parser = FlextLdifParser()
-            result = parser.parse_file(schema_file)
+            result = parser.parse_ldif_file(schema_file)
 
             assert result.is_success
             entries = result.unwrap()

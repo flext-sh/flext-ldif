@@ -59,14 +59,13 @@ class TestWriterAlgarRealData:
             ),
         ]
 
-        # Write with RFC 2849 compliance (fold_long_lines=False)
+        # Write with RFC 2849 compliance (fold_long_lines=True)
         write_result = writer.write(
             entries=entries,
             target_server_type="rfc",
             output_target="string",
             format_options=FlextLdifModels.WriteFormatOptions(
-                fold_long_lines=False,
-                disable_line_folding=False,
+                fold_long_lines=True,
                 line_width=76,
             ),
         )

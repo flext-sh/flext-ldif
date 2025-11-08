@@ -24,7 +24,7 @@ class TestActiveDirectorySchemas:
     @pytest.fixture
     def ad_schema(self, ad_server: FlextLdifServersAd) -> FlextLdifServersAd.Schema:
         """Create Active Directory schema quirk instance."""
-        return ad_server.schema
+        return ad_server.schema_quirk
 
     def test_initialization(self, ad_server: FlextLdifServersAd) -> None:
         """Test Active Directory quirk initialization."""
@@ -278,7 +278,7 @@ class TestActiveDirectoryAcls:
     @pytest.fixture
     def ad_acl(self, ad_acl_server: FlextLdifServersAd) -> FlextLdifServersAd.Acl:
         """Create Active Directory ACL quirk instance."""
-        return ad_acl_server.acl
+        return ad_acl_server.acl_quirk
 
     def test_acl_initialization(self, ad_acl_server: FlextLdifServersAd) -> None:
         """Test ACL quirk initialization."""
@@ -435,7 +435,7 @@ class TestActiveDirectoryEntrys:
     @pytest.fixture
     def ad_entry(self, ad_entry_server: FlextLdifServersAd) -> FlextLdifServersAd.Entry:
         """Create Active Directory entry quirk instance."""
-        return ad_entry_server.entry
+        return ad_entry_server.entry_quirk
 
     def test_entry_initialization(self, ad_entry_server: FlextLdifServersAd) -> None:
         """Test entry quirk initialization."""

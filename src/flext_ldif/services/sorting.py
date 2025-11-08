@@ -307,7 +307,8 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
     @classmethod
     def validate_sort_target(cls, v: str) -> str:
         """Validate sort_target is valid."""
-        valid = {t.value for t in FlextLdifConstants.SortTarget}
+        # Use __members__.values() for type-safe enum iteration
+        valid = {t.value for t in FlextLdifConstants.SortTarget.__members__.values()}
         if v not in valid:
             msg = f"Invalid sort_target: {v!r}. Valid: {', '.join(sorted(valid))}"
             raise ValueError(msg)
@@ -317,7 +318,8 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
     @classmethod
     def validate_sort_strategy(cls, v: str) -> str:
         """Validate sort_by is valid."""
-        valid = {s.value for s in FlextLdifConstants.SortStrategy}
+        # Use __members__.values() for type-safe enum iteration
+        valid = {s.value for s in FlextLdifConstants.SortStrategy.__members__.values()}
         if v not in valid:
             msg = f"Invalid sort_by: {v!r}. Valid: {', '.join(sorted(valid))}"
             raise ValueError(msg)

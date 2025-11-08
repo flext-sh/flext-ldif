@@ -265,14 +265,14 @@ class FlextLdifServersAd(FlextLdifServersRfc):
 
         """
         # Try schema methods first (most common)
-        if hasattr(self.schema, name):
-            return getattr(self.schema, name)
+        if hasattr(self.schema_quirk, name):
+            return getattr(self.schema_quirk, name)
         # Try acl methods
-        if hasattr(self.acl, name):
-            return getattr(self.acl, name)
+        if hasattr(self.acl_quirk, name):
+            return getattr(self.acl_quirk, name)
         # Try entry methods
-        if hasattr(self.entry, name):
-            return getattr(self.entry, name)
+        if hasattr(self.entry_quirk, name):
+            return getattr(self.entry_quirk, name)
         # Not found in any nested instance
         msg = f"'{type(self).__name__}' object has no attribute '{name}'"
         raise AttributeError(msg)

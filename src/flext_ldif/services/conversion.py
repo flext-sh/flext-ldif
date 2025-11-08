@@ -21,6 +21,7 @@ from collections.abc import Sequence
 from typing import TYPE_CHECKING, ClassVar, Union, cast, override
 
 from flext_core import FlextResult, FlextService
+from pydantic import Field
 
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
@@ -65,12 +66,11 @@ class FlextLdifConversion(
     MAX_ERRORS_TO_SHOW: ClassVar[int] = 5
 
     # DN registry for tracking DN case consistency during conversions
-    dn_registry: FlextLdifDn.Registry
+    dn_registry: FlextLdifDn.Registry = Field(default_factory=FlextLdifDn.Registry)
 
     def __init__(self) -> None:
         """Initialize the conversion facade with DN case registry."""
         super().__init__()
-        self.dn_registry = FlextLdifDn.Registry()
 
     @override
     def execute(

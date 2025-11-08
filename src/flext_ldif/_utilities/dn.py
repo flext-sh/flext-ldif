@@ -514,21 +514,23 @@ class FlextLdifUtilitiesDN:
             current_attr = ""
             current_val = ""
             in_value = False
-            i = 0
+            i: int = 0
 
             while i < len(rdn):
                 char = rdn[i]
-                current_attr, current_val, in_value, i, _ = (
-                    FlextLdifUtilitiesDN._process_rdn_char(
-                        char,
-                        rdn,
-                        i,
-                        current_attr,
-                        current_val,
-                        in_value=in_value,
-                        pairs=pairs,
-                    )
+                from typing import cast
+
+                result = FlextLdifUtilitiesDN._process_rdn_char(
+                    char,
+                    rdn,
+                    cast("int", i),
+                    current_attr,
+                    current_val,
+                    in_value=in_value,
+                    pairs=pairs,
                 )
+                current_attr, current_val, in_value, next_i, _ = result
+                i = next_i
 
                 if char == "=" and not in_value and not current_attr:
                     return None

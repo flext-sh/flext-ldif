@@ -8,11 +8,12 @@ Provides OUD-specific quirks for schema, ACL, and entry processing.
 
 from __future__ import annotations
 
+import base64
 import operator
 import re
 from collections.abc import Mapping
 from enum import StrEnum
-from typing import ClassVar, cast
+from typing import ClassVar
 
 from flext_core import FlextLogger, FlextResult
 
@@ -875,6 +876,47 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 result = quirk.parse(acl_line)
 
         """
+
+        # =====================================================================
+        # PROTOCOL IMPLEMENTATION: FlextLdifProtocols.ServerAclProtocol
+        # =====================================================================
+
+        # RFC Foundation - Standard LDAP attributes (all servers start here)
+        RFC_ACL_ATTRIBUTES: ClassVar[list[str]] = [
+            "aci",  # Standard LDAP (RFC 4876)
+            "acl",  # Alternative format
+            "olcAccess",  # OpenLDAP
+            "aclRights",  # Generic rights
+            "aclEntry",  # ACL entry
+        ]
+
+        # OUD-specific extensions (fewer than OID)
+        OUD_ACL_ATTRIBUTES: ClassVar[list[str]] = [
+            "orclaci",  # OUD uses Oracle ACIs (compatibility)
+            "orclentrylevelaci",  # OUD entry-level ACI
+        ]
+
+        def get_acl_attributes(self) -> list[str]:
+            """Get RFC + OUD extensions.
+
+            Returns:
+                List of ACL attribute names (RFC foundation + OUD-specific)
+
+            """
+            return self.RFC_ACL_ATTRIBUTES + self.OUD_ACL_ATTRIBUTES
+
+        def is_acl_attribute(self, attribute_name: str) -> bool:
+            """Check if ACL attribute (case-insensitive).
+
+            Args:
+                attribute_name: Attribute name to check
+
+            Returns:
+                True if attribute is ACL attribute, False otherwise
+
+            """
+            all_attrs = self.get_acl_attributes()
+            return attribute_name.lower() in [a.lower() for a in all_attrs]
 
         # OVERRIDDEN METHODS (from FlextLdifServersBase.Acl)
         # These methods override the base class with Oracle OUD-specific logic:
@@ -1877,6 +1919,238 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             # Always return single-line normalized string - writer will handle line folding if needed
             # NEVER preserve newlines - that's the writer's job based on format_options
 
+        def _is_schema_entry(
+            self,
+            entry: FlextLdifModels.Entry,
+        ) -> bool:
+            """Check if entry is a schema entry (cn=subschemasubentry).
+
+            Schema entries contain attributeTypes, objectClasses, matchingRules, etc.
+
+            Args:
+                entry: Entry model to check
+
+            Returns:
+                True if this is a schema entry
+
+            """
+            if not entry or not entry.dn or not entry.dn.value:
+                return False
+
+            dn_lower = entry.dn.value.lower()
+            # Schema entry DN can be: cn=subschemasubentry, cn=subschema, or cn=schema
+            return "cn=subschema" in dn_lower or dn_lower.startswith("cn=schema")
+
+        def _filter_and_sort_schema_values(
+            self,
+            values: list[str],
+            allowed_oids: set[str],
+            oid_pattern: re.Pattern[str],
+        ) -> list[tuple[tuple[int, ...], str]]:
+            """Filter schema values by whitelist and sort by OID."""
+            filtered_values: list[tuple[tuple[int, ...], str]] = []
+
+            for value in values:
+                # Extract OID from RFC format: ( 1.2.3.4 NAME ...
+                match = oid_pattern.search(value)
+                if not match:
+                    continue
+
+                oid_str = match.group(1)
+
+                # Check if OID in whitelist
+                if oid_str not in allowed_oids:
+                    continue
+
+                # Parse OID for sorting (convert to tuple of ints)
+                try:
+                    oid_tuple = tuple(int(x) for x in oid_str.split("."))
+                except ValueError:
+                    continue
+
+                filtered_values.append((oid_tuple, value))
+
+            # Sort by OID numerically
+            filtered_values.sort(key=operator.itemgetter(0))
+            return filtered_values
+
+        def _add_ldif_block(
+            self,
+            ldif_lines: list[str],
+            schema_type: str,
+            value: str | bytes,
+            *,
+            is_first_block: bool,
+        ) -> bool:
+            """Add a single LDIF block for schema value.
+
+            Returns: False (next block won't be first)
+            """
+            # Add separator before block (not before first)
+            if not is_first_block:
+                ldif_lines.append("-")
+
+            # Add directive
+            ldif_lines.append(f"add: {schema_type}")
+
+            # Value (already in RFC format)
+            if isinstance(value, bytes):
+                encoded_value = base64.b64encode(value).decode("ascii")
+                ldif_lines.append(f"{schema_type}:: {encoded_value}")
+            else:
+                ldif_lines.append(f"{schema_type}: {value}")
+
+            return False  # Next block won't be first
+
+        def _write_entry_modify_add_format(
+            self,
+            entry_data: FlextLdifModels.Entry,
+        ) -> FlextResult[str]:
+            """Write schema entry in OUD modify-add format.
+
+            Generates LDIF with changetype: modify and add: blocks.
+            CRITICAL: One add block PER SCHEMA VALUE, not per type.
+            Ordered by OID numerically, with whitelist filtering.
+
+            Example output:
+            ```
+            dn: cn=subschemasubentry
+            changetype: modify
+            add: attributeTypes
+            attributeTypes: ( 2.16.840.1.113894.1.1.321 NAME ... )
+            -
+            add: attributeTypes
+            attributeTypes: ( 2.16.840.1.113894.1.1.322 NAME ... )
+            -
+            add: objectClasses
+            objectClasses: ( 2.16.840.1.113894.1.2.9 NAME ... )
+            -
+            ```
+
+            Whitelist filtering:
+            - attributeTypes: Only in ALLOWED_SCHEMA_OIDS
+            - objectClasses: Only in ALLOWED_SCHEMA_OIDS
+            - matchingRules: EXCLUDED (empty list)
+            - matchingRuleUse: EXCLUDED (empty list)
+
+            Args:
+                entry_data: Schema entry to write
+
+            Returns:
+                FlextResult with LDIF string in OUD modify-add format
+
+            """
+            import re  # noqa: PLC0415
+
+            from algar_oud_mig.constants import AlgarOudMigConstants  # noqa: PLC0415
+
+            ldif_lines: list[str] = []
+
+            # DN line (required)
+            if not (entry_data.dn and entry_data.dn.value):
+                return FlextResult[str].fail("Entry DN is required for LDIF output")
+            ldif_lines.extend([
+                f"dn: {entry_data.dn.value}",
+                "changetype: modify",
+            ])
+
+            # Get attributes
+            if not entry_data.attributes or not entry_data.attributes.attributes:
+                ldif_text = "\n".join(ldif_lines) + "\n"
+                return FlextResult[str].ok(ldif_text)
+
+            attrs_dict = entry_data.attributes.attributes
+            allowed_oids = set(AlgarOudMigConstants.Schema.ALLOWED_SCHEMA_OIDS)
+
+            # OID pattern: ( number.number.number... NAME ...
+            oid_pattern = re.compile(r"\(\s*(\d+(?:\.\d+)*)\s+")
+
+            # Schema attribute types to process (in order)
+            schema_types_order = [
+                "attributeTypes",
+                "objectClasses",
+                "matchingRules",
+                "matchingRuleUse",
+            ]
+
+            first_block = True
+
+            # Process each schema type in order
+            for schema_type in schema_types_order:
+                # Match both cases (attributeTypes, attributetypes, etc.)
+                attr_key = next(
+                    (key for key in attrs_dict if key.lower() == schema_type.lower()),
+                    None,
+                )
+
+                if not attr_key or not attrs_dict[attr_key]:
+                    continue
+
+                # Filter: matchingRules and matchingRuleUse are EXCLUDED (not in whitelist)
+                if schema_type.lower() in {"matchingrules", "matchingruleuse"}:
+                    continue
+
+                # Filter and sort by OID for other types
+                filtered_values = self._filter_and_sort_schema_values(
+                    attrs_dict[attr_key],
+                    allowed_oids,
+                    oid_pattern,
+                )
+
+                # Write each value as separate add block (CRITICAL: ONE VALUE PER BLOCK)
+                for _oid, value in filtered_values:
+                    first_block = self._add_ldif_block(
+                        ldif_lines,
+                        schema_type,
+                        value,
+                        is_first_block=first_block,
+                    )
+
+            # Final separator (if we added any blocks)
+            if not first_block and ldif_lines[-1] != "-":
+                ldif_lines.append("-")
+
+            # Join with newlines and ensure proper LDIF formatting
+            ldif_text = "\n".join(ldif_lines)
+            if ldif_text and not ldif_text.endswith("\n"):
+                ldif_text += "\n"
+
+            return FlextResult[str].ok(ldif_text)
+
+        def _write_entry(
+            self,
+            entry_data: FlextLdifModels.Entry,
+        ) -> FlextResult[str]:
+            """Write Entry to LDIF format (override RFC to handle schema entries).
+
+            For schema entries, uses OUD modify-add format.
+            For other entries, delegates to RFC implementation.
+
+            Args:
+                entry_data: Entry model to write
+
+            Returns:
+                FlextResult with LDIF string
+
+            """
+            # Check if this is a schema entry
+            if self._is_schema_entry(entry_data):
+                # Check if write_options request modify format
+                write_options: FlextLdifModels.WriteFormatOptions | None = None
+                if entry_data.entry_metadata:
+                    write_options_obj = entry_data.entry_metadata.get("_write_options")
+                    if isinstance(
+                        write_options_obj, FlextLdifModels.WriteFormatOptions
+                    ):
+                        write_options = write_options_obj
+
+                if write_options and write_options.ldif_changetype == "modify":
+                    # Use schema modify-add format
+                    return self._write_entry_modify_add_format(entry_data)
+
+            # Non-schema or no modify format requested: use RFC implementation
+            return super()._write_entry(entry_data)
+
         def write(
             self,
             entry: FlextLdifModels.Entry,
@@ -1887,8 +2161,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
 
             Flow:
             1. Call _hook_pre_write_entry() for OUD-specific validation/normalization
-            2. Convert Entry model to dict format
-            3. Delegate to write_entry_to_ldif() for actual LDIF output
+            2. Call parent RFC._write_entry() to handle LDIF output (including modify format)
 
             Args:
                 entry: Entry model object (RFC canonical from parsing)
@@ -1906,14 +2179,10 @@ class FlextLdifServersOud(FlextLdifServersRfc):
 
             normalized_entry = hook_result.unwrap()
 
-            # Step 2: Convert Entry model to dict format expected by write_entry_to_ldif
-            entry_dict: dict[str, object] = {
-                FlextLdifConstants.DictKeys.DN: str(normalized_entry.dn),
-                **cast("dict[str, object]", normalized_entry.attributes.attributes),
-            }
-
-            # Step 3: Delegate to write_entry_to_ldif for actual output
-            return self.write_entry_to_ldif(entry_dict)
+            # Step 2: Call OUD _write_entry() which handles schema entries specially
+            # For schema entries, uses modify-add format
+            # For other entries, delegates to RFC implementation
+            return self._write_entry(normalized_entry)
 
         def _hook_post_parse_entry(
             self,

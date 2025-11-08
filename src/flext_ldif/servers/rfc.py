@@ -35,6 +35,7 @@ References:
 
 from __future__ import annotations
 
+import base64
 from collections.abc import Mapping
 from typing import ClassVar
 
@@ -1036,7 +1037,6 @@ class FlextLdifServersRfc(FlextLdifServersBase):
 
                 # Check if LDIF modify format requested
                 if write_options and write_options.ldif_changetype == "modify":
-                    # DEBUG
                     return self._write_entry_modify_format(entry_data, write_options)
 
                 # Standard ADD format (RFC 2849 § 3)
@@ -1072,7 +1072,10 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             # DN line (required)
             if not (entry_data.dn and entry_data.dn.value):
                 return FlextResult[str].fail("Entry DN is required for LDIF output")
-            ldif_lines.append(f"dn: {entry_data.dn.value}")
+            ldif_lines.extend([
+                f"dn: {entry_data.dn.value}",
+                "changetype: add",
+            ])
 
             # Add metadata comments if requested
             if write_options:
@@ -1106,7 +1109,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
         def _write_entry_modify_format(
             self,
             entry_data: FlextLdifModels.Entry,
-            write_options: FlextLdifModels.WriteFormatOptions,
+            _write_options: FlextLdifModels.WriteFormatOptions,
         ) -> FlextResult[str]:
             """Write Entry in LDIF modify format (RFC 2849 § 4 - Change Records).
 
@@ -1127,7 +1130,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
 
             Args:
                 entry_data: Entry model to write
-                write_options: Formatting options (must have ldif_changetype="modify")
+                _write_options: Formatting options (reserved for future use)
 
             Returns:
                 FlextResult with LDIF string in modify format
@@ -1138,10 +1141,10 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             # DN line (required)
             if not (entry_data.dn and entry_data.dn.value):
                 return FlextResult[str].fail("Entry DN is required for LDIF output")
-            ldif_lines.append(f"dn: {entry_data.dn.value}")
-
-            # Changetype directive (required for modify format)
-            ldif_lines.append("changetype: modify")
+            ldif_lines.extend([
+                f"dn: {entry_data.dn.value}",
+                "changetype: modify",
+            ])
 
             # Get attributes to process
             if not entry_data.attributes or not entry_data.attributes.attributes:
@@ -1168,12 +1171,14 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                     # Add replace directive
                     ldif_lines.append(f"replace: {attr_name}")
 
-                    # Add attribute value(s)
+                    # Add attribute value(s) - handle bytes or str
                     if isinstance(value, bytes):
                         encoded_value = base64.b64encode(value).decode("ascii")
                         ldif_lines.append(f"{attr_name}:: {encoded_value}")
                     else:
-                        ldif_lines.append(f"{attr_name}: {value}")
+                        # Ensure value is str for type checker
+                        str_value = str(value)
+                        ldif_lines.append(f"{attr_name}: {str_value}")
 
             # Final separator
             if ldif_lines[-1] != "-":

@@ -20,7 +20,7 @@ class TestNovellSchemas:
     @pytest.fixture
     def quirk(self, server: FlextLdifServersNovell) -> FlextLdifServersNovell.Schema:
         """Create Novell schema quirk instance."""
-        return server.schema
+        return server.schema_quirk
 
     def test_initialization(self, server: FlextLdifServersNovell) -> None:
         """Test Novell eDirectory quirk initialization."""
