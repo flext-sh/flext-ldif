@@ -579,7 +579,6 @@ class FlextLdifServersOid(FlextLdifServersRfc):
         # - should_filter_out_objectclass(): Returns False (accept all in OID mode)
         # - create_metadata(): Creates OID-specific metadata
 
-        @FlextLdifUtilities.Decorators.attach_parse_metadata("oid")
         def _parse_attribute(
             self,
             attr_definition: str,
@@ -598,6 +597,8 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                 FlextResult with parsed OID attribute data with metadata
 
             """
+            from datetime import UTC, datetime
+
             try:
                 # Use RFC baseline parser with lenient mode for OID's non-standard syntax
                 result = FlextLdifUtilities.Parser.parse_rfc_attribute(
@@ -665,6 +666,12 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                         attr_definition.strip(),
                     )
 
+                # Attach timestamp metadata (previously done by decorator)
+                if schema_attr.metadata:
+                    schema_attr.metadata.parsed_timestamp = datetime.now(
+                        UTC
+                    ).isoformat()
+
                 return FlextResult[FlextLdifModels.SchemaAttribute].ok(schema_attr)
 
             except Exception as e:
@@ -672,7 +679,6 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                     f"OID attribute parsing failed: {e}",
                 )
 
-        @FlextLdifUtilities.Decorators.attach_parse_metadata("oid")
         def _parse_objectclass(
             self,
             oc_definition: str,
@@ -690,6 +696,8 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                 FlextResult with parsed OID objectClass data with metadata
 
             """
+            from datetime import UTC, datetime
+
             try:
                 # Use RFC baseline parser for objectClass parsing
                 # Note: parse_rfc_objectclass does not support case_insensitive parameter
@@ -714,6 +722,10 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                     schema_oc.metadata = self.create_metadata(
                         oc_definition.strip(),
                     )
+
+                # Attach timestamp metadata (previously done by decorator)
+                if schema_oc.metadata:
+                    schema_oc.metadata.parsed_timestamp = datetime.now(UTC).isoformat()
 
                 return FlextResult[FlextLdifModels.SchemaObjectClass].ok(schema_oc)
 
@@ -911,6 +923,48 @@ class FlextLdifServersOid(FlextLdifServersRfc):
         # ACL attribute name is obtained from Constants.ACL_ATTRIBUTE_NAME
         # No instance variable needed - use Constants directly
 
+        # =====================================================================
+        # PROTOCOL IMPLEMENTATION: FlextLdifProtocols.ServerAclProtocol
+        # =====================================================================
+
+        # RFC Foundation - Standard LDAP attributes (all servers start here)
+        RFC_ACL_ATTRIBUTES: ClassVar[list[str]] = [
+            "aci",  # Standard LDAP (RFC 4876)
+            "acl",  # Alternative format
+            "olcAccess",  # OpenLDAP
+            "aclRights",  # Generic rights
+            "aclEntry",  # ACL entry
+        ]
+
+        # OID-specific extensions
+        OID_ACL_ATTRIBUTES: ClassVar[list[str]] = [
+            "orclaci",  # OID-specific ACI
+            "orclentrylevelaci",  # OID entry-level ACI
+            "orclContainerLevelACL",  # OID container ACL
+        ]
+
+        def get_acl_attributes(self) -> list[str]:
+            """Get RFC + OID extensions.
+
+            Returns:
+                List of ACL attribute names (RFC foundation + OID-specific)
+
+            """
+            return self.RFC_ACL_ATTRIBUTES + self.OID_ACL_ATTRIBUTES
+
+        def is_acl_attribute(self, attribute_name: str) -> bool:
+            """Check if ACL attribute (case-insensitive).
+
+            Args:
+                attribute_name: Attribute name to check
+
+            Returns:
+                True if attribute is ACL attribute, False otherwise
+
+            """
+            all_attrs = self.get_acl_attributes()
+            return attribute_name.lower() in [a.lower() for a in all_attrs]
+
         # OVERRIDDEN METHODS (from FlextLdifServersBase.Acl)
         # These methods override the base class with Oracle OID-specific logic:
         # - can_handle_acl(): Detects orclaci/orclentrylevelaci formats
@@ -959,7 +1013,6 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                 ),
             )
 
-        @FlextLdifUtilities.Decorators.attach_parse_metadata("oid")
         def _parse_acl(self, acl_line: str) -> FlextResult[FlextLdifModels.Acl]:
             """Parse Oracle OID ACL string to RFC-compliant internal model.
 
@@ -1108,7 +1161,6 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                 ),
             }
 
-        @FlextLdifUtilities.Decorators.attach_write_metadata("oid")
         def _write_acl(
             self,
             acl_data: FlextLdifModels.Acl,

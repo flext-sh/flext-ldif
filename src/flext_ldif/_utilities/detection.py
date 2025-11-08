@@ -88,12 +88,14 @@ class FlextLdifUtilitiesDetection:
                     return bool(re.search(pattern, data))
 
                 # Model with oid field (attributes, objectClasses)
-                if hasattr(data, "oid") and data.oid:
-                    return bool(re.search(pattern, str(data.oid)))
+                oid = getattr(data, "oid", None)
+                if oid:
+                    return bool(re.search(pattern, str(oid)))
 
                 # Model with name field
-                if hasattr(data, "name") and data.name:
-                    return bool(re.search(pattern, str(data.name)))
+                name = getattr(data, "name", None)
+                if name:
+                    return bool(re.search(pattern, str(name)))
 
                 # Try to convert to string
                 if data is not None:
@@ -127,8 +129,9 @@ class FlextLdifUtilitiesDetection:
                 return any(data_lower.startswith(p.lower()) for p in prefixes)
 
             # Model with name field
-            if hasattr(data, "name") and data.name:
-                name_lower = str(data.name).lower()
+            name = getattr(data, "name", None)
+            if name:
+                name_lower = str(name).lower()
                 return any(name_lower.startswith(p.lower()) for p in prefixes)
 
             # Try converting to string
@@ -164,9 +167,10 @@ class FlextLdifUtilitiesDetection:
                 return data.lower() in items_lower
 
             # Model with name field
-            if hasattr(data, "name") and data.name:
+            name = getattr(data, "name", None)
+            if name:
                 items_lower = {item.lower() for item in items}
-                return str(data.name).lower() in items_lower
+                return str(name).lower() in items_lower
 
             # Try converting to string
             try:
@@ -376,10 +380,17 @@ class FlextLdifUtilitiesDetection:
 
             # Get objectClass from attributes
             objectclasses = None
-            if isinstance(attributes, (dict, Mapping)) or hasattr(attributes, "get"):
+            if isinstance(attributes, (dict, Mapping)):
                 objectclasses = attributes.get("objectClass") or attributes.get(
                     "objectclass",
                 )
+            elif hasattr(attributes, "get"):
+                # Duck-typed dict-like object
+                get_method = getattr(attributes, "get", None)
+                if get_method and callable(get_method):
+                    objectclasses = get_method("objectClass") or get_method(
+                        "objectclass"
+                    )
 
             if not objectclasses:
                 return False
@@ -518,11 +529,10 @@ class FlextLdifUtilitiesDetection:
                 return acl_line.lower().startswith(acl_attr_name.lower() + ":")
 
             # Model with attribute field
-            if hasattr(acl_line, "attribute"):
-                attr_value = getattr(acl_line, "attribute", None)
-                if attr_value is not None:
-                    attr_set = frozenset([acl_attr_name])
-                    return self.can_handle_in_set(attr_value, attr_set)
+            attr_value = getattr(acl_line, "attribute", None)
+            if attr_value is not None:
+                attr_set = frozenset([acl_attr_name])
+                return self.can_handle_in_set(attr_value, attr_set)
 
             return False
 

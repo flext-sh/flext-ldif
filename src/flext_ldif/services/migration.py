@@ -17,14 +17,19 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import re
 from pathlib import Path
-from typing import override
+from typing import cast, override
 
 from flext_core import FlextLogger, FlextResult, FlextService
 
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
+from flext_ldif.protocols import FlextLdifProtocols
+from flext_ldif.servers import (
+    FlextLdifServersOid,
+    FlextLdifServersOud,
+    FlextLdifServersRfc,
+)
 from flext_ldif.services.acl import FlextLdifAcl
 from flext_ldif.services.dn import FlextLdifDn
 from flext_ldif.services.entry import FlextLdifEntry
@@ -255,10 +260,57 @@ class FlextLdifMigrationPipeline(
             self._base_dn = None
         self._sort_entries_hierarchically = sort_entries_hierarchically
 
+        # Validate categorization_rules for categorized mode
+        if mode == "categorized":
+            self._validate_categorization_rules()
+
         # Service dependencies
         self._registry = FlextLdifServer.get_global_instance()
         self._acl_service = FlextLdifAcl()
         self._dn_service = FlextLdifDn()
+
+    def _validate_categorization_rules(self) -> None:
+        """Validate that categorization_rules contains required keys for categorized mode.
+
+        Raises:
+            ValueError: If categorization_rules is missing required keys
+
+        """
+        required_keys = {
+            "hierarchy_objectclasses",
+            "user_objectclasses",
+            "group_objectclasses",
+            "acl_attributes",
+        }
+
+        if not self._categorization_rules:
+            msg = (
+                "categorization_rules is required for categorized mode. "
+                f"Must contain keys: {required_keys}"
+            )
+            raise ValueError(msg)
+
+        missing_keys = required_keys - set(self._categorization_rules.keys())
+        if missing_keys:
+            msg = (
+                f"categorization_rules is missing required keys: {missing_keys}. "
+                f"Required keys: {required_keys}"
+            )
+            raise ValueError(msg)
+
+        # Validate that acl_attributes is a list (can be empty to disable ACL)
+        acl_attrs = self._categorization_rules.get("acl_attributes")
+        if not isinstance(acl_attrs, list):
+            msg = (
+                f"categorization_rules['acl_attributes'] must be a list, "
+                f"got {type(acl_attrs).__name__}"
+            )
+            raise TypeError(msg)
+
+        logger.info(
+            "[MIGRATION] categorization_rules validated successfully: %s",
+            list(self._categorization_rules.keys()),
+        )
 
     @override
     def execute(self) -> FlextResult[FlextLdifModels.PipelineExecutionResult]:
@@ -312,8 +364,18 @@ class FlextLdifMigrationPipeline(
                 f"Failed to parse entries: {error_msg}",
             )
 
-        entries = parse_result.unwrap()
+        # Unpack tuple: (entries, failed_files_count, failed_file_details)
+        # Note: failed_file_details are already logged in _parse_entries
+        entries, failed_files_count, _ = parse_result.unwrap()
         total_entries = len(entries)
+
+        # Log file parse failures prominently
+        if failed_files_count > 0:
+            logger.error(
+                f"[EXECUTE] {failed_files_count} input files FAILED to parse and were SKIPPED. "
+                f"Proceeding with {total_entries} entries from successful files. "
+                f"See detailed failure list in _parse_entries logs above.",
+            )
 
         # Unified generic pipeline: parse → categorize → filter → sort → write
         return self._unified_migration_pipeline(entries, total_entries)
@@ -321,7 +383,7 @@ class FlextLdifMigrationPipeline(
     def _validate_and_normalize_entry_dns(
         self,
         entries: list[FlextLdifModels.Entry],
-    ) -> list[FlextLdifModels.Entry]:
+    ) -> tuple[list[FlextLdifModels.Entry], int, dict[str, int]]:
         """Validate and normalize all entry DNs using FlextLdifUtilities.
 
         Ensures all DNs comply with RFC 4514 and registers them for migration tracking.
@@ -330,10 +392,15 @@ class FlextLdifMigrationPipeline(
             entries: Entries to validate and normalize
 
         Returns:
-            Entries with validated and normalized DNs
+            Tuple of (validated_entries, failed_count, rejected_reasons):
+                - validated_entries: Entries with validated and normalized DNs
+                - failed_count: Count of entries that failed DN validation
+                - rejected_reasons: Dict mapping rejection reason to count
 
         """
         validated_entries = []
+        failed_count = 0
+        rejected_reasons: dict[str, int] = {}
 
         for entry in entries:
             try:
@@ -341,8 +408,12 @@ class FlextLdifMigrationPipeline(
 
                 # Validate DN using FlextLdifUtilities.DN
                 if not FlextLdifUtilities.DN.validate(entry_dn):
-                    logger.warning(
-                        "[MIGRATION] Invalid DN per RFC 4514: %s, skipping entry",
+                    failed_count += 1
+                    rejected_reasons["invalid_dn_rfc4514"] = (
+                        rejected_reasons.get("invalid_dn_rfc4514", 0) + 1
+                    )
+                    logger.error(
+                        "[MIGRATION] FAILED - Invalid DN per RFC 4514: %s, entry REJECTED",
                         entry_dn,
                     )
                     continue
@@ -365,39 +436,122 @@ class FlextLdifMigrationPipeline(
                     validated_entries.append(entry)
 
             except Exception:
-                logger.exception("[MIGRATION] Error validating entry DN")
+                failed_count += 1
+                rejected_reasons["dn_validation_exception"] = (
+                    rejected_reasons.get("dn_validation_exception", 0) + 1
+                )
+                logger.exception(
+                    "[MIGRATION] FAILED - Exception validating entry DN, entry REJECTED",
+                )
                 continue
 
-        return validated_entries
+        # Log summary if failures occurred
+        if failed_count > 0:
+            logger.error(
+                "[MIGRATION] DN validation completed with %d FAILURES out of %d total entries. "
+                "Successful: %d, Failed: %d, Reasons: %s",
+                failed_count,
+                len(entries),
+                len(validated_entries),
+                failed_count,
+                rejected_reasons,
+            )
+
+        return validated_entries, failed_count, rejected_reasons
+
+    def _get_acl_attributes_from_server(self) -> list[str]:
+        """Get ACL attributes from source server using Protocol-based detection.
+
+        HIERARCHY PATTERN:
+        1. RFC foundation attributes (aci, acl, olcAccess, aclRights, aclEntry)
+        2. Server-specific extensions (OID: orclaci, orclentrylevelaci, orclContainerLevelACL)
+                                      (OUD: orclaci, orclentrylevelaci)
+
+        Returns:
+            List of ACL attribute names for the source server.
+
+        """
+        source_lower = self._source_server.lower()
+
+        # Map source server to Protocol-based ACL implementation
+        if "oid" in source_lower or "oracle_oid" in source_lower:
+            acl_impl = cast(
+                "FlextLdifProtocols.ServerAclProtocol",
+                FlextLdifServersOid.Acl(),
+            )
+        elif "oud" in source_lower or "oracle_oud" in source_lower:
+            acl_impl = cast(
+                "FlextLdifProtocols.ServerAclProtocol",
+                FlextLdifServersOud.Acl(),
+            )
+        else:
+            # Default to RFC foundation (generic LDAP servers)
+            acl_impl = cast(
+                "FlextLdifProtocols.ServerAclProtocol",
+                FlextLdifServersRfc.Acl(),
+            )
+
+        attrs = acl_impl.get_acl_attributes()
+        logger.info(
+            f"[PIPELINE] ACL detection: source_server={self._source_server}, "
+            f"ACL attributes={attrs}",
+        )
+        return attrs
 
     def _extract_acl_entries(
         self,
         entries: list[FlextLdifModels.Entry],
         categorized: dict[str, list[FlextLdifModels.Entry]],
     ) -> None:
-        """Extract ACL entries if configured and update categorized dict.
+        """Extract ACL entries using intelligent detection.
+
+        **HIERARCHY PATTERN**:
+        1. Check if acl_attributes is explicitly provided in categorization_rules
+           → Use provided list if available
+        2. Otherwise, use Protocol-based server detection
+           → RFC foundation + server-specific quirks
+           → Automatic detection based on source_server
 
         Args:
             entries: Original entry list
             categorized: Dictionary to update with ACL entries
 
         """
-        acl_config_obj = self._categorization_rules.get("acl_attributes", [])
-        acl_config: list[str] = (
-            acl_config_obj if isinstance(acl_config_obj, list) else []
+        # Step 1: Check for explicit acl_attributes in categorization_rules
+        acl_config_obj = self._categorization_rules.get("acl_attributes")
+        acl_config: list[str] | None = (
+            acl_config_obj if isinstance(acl_config_obj, list) else None
         )
 
+        # Step 2: If not provided, use intelligent Protocol-based detection
+        if acl_config is None:
+            acl_config = self._get_acl_attributes_from_server()
+            logger.info(
+                "[PIPELINE] ACL attributes auto-detected from source_server: %s",
+                acl_config,
+            )
+        else:
+            logger.info(
+                "[PIPELINE] ACL attributes from categorization_rules: %s",
+                acl_config,
+            )
+
+        # Step 3: If empty list after detection, ACL extraction is disabled
         if not acl_config:
+            logger.info("[PIPELINE] ACL extraction disabled (empty acl_attributes)")
             return
 
-        logger.info("[PIPELINE] ACL config found: %s", acl_config)
+        # Step 4: Extract ACL entries
         acl_entries, acl_dns = [], set()
 
         for idx, entry in enumerate(entries):
             try:
                 if FlextLdifFilters.is_schema(entry):
                     continue
-                if any(attr in entry.attributes.attributes for attr in acl_config):
+                if any(
+                    attr.lower() in [a.lower() for a in acl_config]
+                    for attr in entry.attributes.attributes
+                ):
                     acl_entries.append(entry)
                     acl_dns.add(FlextLdifUtilities.DN.get_dn_value(entry.dn))
             except Exception as e:
@@ -406,6 +560,7 @@ class FlextLdifMigrationPipeline(
                 )
                 raise
 
+        # Step 5: Add ACL entries to categorized dict and remove from other categories
         categorized[FlextLdifConstants.Categories.ACL] = acl_entries
         for cat in list(categorized.keys()):
             if cat != FlextLdifConstants.Categories.ACL:
@@ -415,138 +570,10 @@ class FlextLdifMigrationPipeline(
                     if FlextLdifUtilities.DN.get_dn_value(e.dn) not in acl_dns
                 ]
 
-    def _transform_schema_to_modify_format(
-        self,
-        schema_entries: list[FlextLdifModels.Entry],
-    ) -> list[FlextLdifModels.Entry]:
-        """Transform schema entries to OUD modify-add format.
-
-        Converts schema entries to LDIF modify format with 4 separate add blocks:
-        - attributeTypes
-        - objectClasses
-        - matchingRules
-        - matchingRuleUse
-
-        All definitions are ordered by OID within each category.
-
-        Args:
-            schema_entries: Filtered schema entries
-
-        Returns:
-            Transformed schema entries in OUD modify-add format
-
-        """
-        if not schema_entries or self._target_server != "oud":
-            return schema_entries
-
         logger.info(
-            "[PIPELINE] Transforming schema to OUD modify-add format",
+            "[PIPELINE] ACL extraction complete: %d entries with ACL attributes",
+            len(acl_entries),
         )
-
-        # Extract schema definitions by category
-        attributetypes = []
-        objectclasses = []
-        matchingrules = []
-        matchingruleuse = []
-
-        for entry in schema_entries:
-            attrs = entry.attributes.attributes
-
-            # Extract each schema category
-            if "attributetypes" in attrs:
-                attrs_val = attrs.get("attributetypes", [])
-                if isinstance(attrs_val, list):
-                    attributetypes.extend(attrs_val)
-
-            if "objectclasses" in attrs:
-                ocs_val = attrs.get("objectclasses", [])
-                if isinstance(ocs_val, list):
-                    objectclasses.extend(ocs_val)
-
-            if "matchingrules" in attrs:
-                mrs_val = attrs.get("matchingrules", [])
-                if isinstance(mrs_val, list):
-                    matchingrules.extend(mrs_val)
-
-            if "matchingruleuse" in attrs:
-                mru_val = attrs.get("matchingruleuse", [])
-                if isinstance(mru_val, list):
-                    matchingruleuse.extend(mru_val)
-
-        # Sort each category by OID
-        def extract_oid(definition: str) -> str:
-            """Extract OID from schema definition (first OID in parens)."""
-            # Match first OID pattern: ( OID ... )
-            match = re.search(r"\(\s*([0-9\.]+)", definition)
-            if match:
-                return match.group(1)
-            return definition  # Fallback: use full definition for sorting
-
-        attributetypes = sorted(attributetypes, key=extract_oid)
-        objectclasses = sorted(objectclasses, key=extract_oid)
-        matchingrules = sorted(matchingrules, key=extract_oid)
-        matchingruleuse = sorted(matchingruleuse, key=extract_oid)
-
-        # Create new schema entry with OUD modify-add format
-        # Format: each category gets its own "add:" block with entries separated by "-"
-        schema_attributes_dict = {}
-
-        # Only include categories that have definitions
-        if attributetypes:
-            schema_attributes_dict["attributeTypes"] = attributetypes
-
-        if objectclasses:
-            schema_attributes_dict["objectClasses"] = objectclasses
-
-        if matchingrules:
-            schema_attributes_dict["matchingRules"] = matchingrules
-
-        if matchingruleuse:
-            schema_attributes_dict["matchingRuleUse"] = matchingruleuse
-
-        # Set changetype to modify
-        schema_attributes_dict["changetype"] = ["modify"]
-
-        # Store metadata for OUD writer to generate correct format with "add:" lines
-        entry_metadata = {
-            "changetype": ["modify"],
-            "_modify_format": "add",  # Signal to writer to use "add:" format
-            "_modify_blocks": [  # List of blocks in order
-                "attributeTypes" if attributetypes else None,
-                "objectClasses" if objectclasses else None,
-                "matchingRules" if matchingrules else None,
-                "matchingRuleUse" if matchingruleuse else None,
-            ],
-        }
-        # Filter out None values
-        entry_metadata["_modify_blocks"] = [
-            b for b in entry_metadata["_modify_blocks"] if b is not None
-        ]
-
-        # Create the entry
-        oud_schema_entry_result = FlextLdifModels.Entry.create(
-            dn="cn=schema",
-            attributes=schema_attributes_dict,
-            entry_metadata=entry_metadata,
-        )
-
-        if oud_schema_entry_result.is_failure:
-            logger.warning(
-                "[PIPELINE] Failed to create OUD schema entry: %s",
-                oud_schema_entry_result.error,
-            )
-            return schema_entries
-
-        logger.info(
-            "[PIPELINE] Schema transformed to OUD modify-add format: "
-            "%d attributeTypes, %d objectClasses, %d matchingRules, %d matchingRuleUse",
-            len(attributetypes),
-            len(objectclasses),
-            len(matchingrules),
-            len(matchingruleuse),
-        )
-
-        return [oud_schema_entry_result.unwrap()]
 
     def _process_category(
         self,
@@ -567,7 +594,7 @@ class FlextLdifMigrationPipeline(
             f"[PIPELINE] Processing {cat}: {len(cat_entries)} entries before filter",
         )
 
-        # Schema: only filter by OID whitelist
+        # Schema: only filter by OID whitelist (NO base_dn filter - schema is universal)
         if cat == FlextLdifConstants.Categories.SCHEMA:
             if self._schema_whitelist_rules and isinstance(
                 self._schema_whitelist_rules,
@@ -581,14 +608,42 @@ class FlextLdifMigrationPipeline(
             else:
                 filtered = cat_entries
 
-            # Transform to OUD modify-add format if target is OUD
-            if self._target_server == "oud":
-                filtered = self._transform_schema_to_modify_format(filtered)
+            # NOTE: Schema transformation (RFC → OUD modify-add format) is handled by
+            # OUD quirks in the writer layer, NOT in pipeline. This follows the
+            # architecture: pipeline filters, quirks transform for target server.
+        # Rejected: NO filtering - keep ALL rejections (pedra base de auditoria)
+        elif cat == FlextLdifConstants.Categories.REJECTED:
+            filtered = cat_entries
+            logger.info(
+                f"[PIPELINE] {cat}: keeping ALL {len(filtered)} rejected entries (no filtering)"
+            )
         else:
-            # Non-schema: apply normal filtering
-            filter_result = self._filter_entries(cat_entries)
+            # Data categories (HIERARCHY, USERS, GROUPS, ACL): apply base_dn filter + normal filtering
+            current_entries = cat_entries
+
+            # CRITICAL: Filter by base_dn for data categories (phases 01-04)
+            if self._base_dn:
+                logger.info(f"[PIPELINE] {cat}: Filtering by base DN: {self._base_dn}")
+                base_dn_filtered, excluded = FlextLdifFilters.by_base_dn(
+                    entries=current_entries,
+                    base_dn=self._base_dn,
+                )
+                logger.info(
+                    f"[PIPELINE] {cat}: Base DN filter: {len(base_dn_filtered)} included, "
+                    f"{len(excluded)} excluded (not under {self._base_dn})"
+                )
+                # CRITICAL: Add excluded entries to rejected accumulator (pedra base de auditoria)
+                if excluded:
+                    self._base_dn_rejected.extend(excluded)
+                    logger.info(
+                        f"[PIPELINE] {cat}: Added {len(excluded)} excluded entries to rejected accumulator"
+                    )
+                current_entries = base_dn_filtered
+
+            # Apply normal attribute/objectClass filtering
+            filter_result = self._filter_entries(current_entries)
             filtered = (
-                filter_result.unwrap() if filter_result.is_success else cat_entries
+                filter_result.unwrap() if filter_result.is_success else current_entries
             )
 
             # Sort if configured
@@ -621,8 +676,31 @@ class FlextLdifMigrationPipeline(
             path = self._output_dir / filename
 
             if cat_entries:
+                # Special handling for SCHEMA entries in OUD: LDIF modify-add format
+                if (
+                    cat == FlextLdifConstants.Categories.SCHEMA
+                    and self._target_server == "oud"
+                ):
+                    # Create copy of format_options with LDIF modify enabled
+                    schema_options = (
+                        self._write_options.model_copy(
+                            update={"ldif_changetype": "modify"}
+                        )
+                        if self._write_options
+                        else FlextLdifModels.WriteFormatOptions(
+                            ldif_changetype="modify"
+                        )
+                    )
+
+                    result = writer.write(
+                        entries=cat_entries,
+                        target_server_type=self._target_server,
+                        output_target="file",
+                        output_path=path,
+                        format_options=schema_options,
+                    )
                 # Special handling for ACL entries: hierarchical ordering + LDIF modify
-                if cat == FlextLdifConstants.Categories.ACL:
+                elif cat == FlextLdifConstants.Categories.ACL:
                     # Sort ACL entries by DN hierarchy (depth first)
                     sort_result = FlextLdifSorting.sort(
                         cat_entries,
@@ -651,7 +729,7 @@ class FlextLdifMigrationPipeline(
                         format_options=acl_options,
                     )
                 else:
-                    # Standard write for non-ACL categories
+                    # Standard write for non-SCHEMA/ACL categories (ADD format by default)
                     result = writer.write(
                         entries=cat_entries,
                         target_server_type=self._target_server,
@@ -683,12 +761,23 @@ class FlextLdifMigrationPipeline(
         """
         logger.info("[PIPELINE START] Processing %s entries", total_entries)
 
+        # Initialize rejected entries accumulator for base_dn filtering
+        self._base_dn_rejected: list[FlextLdifModels.Entry] = []
+
         # Step 0: Validate and normalize all entry DNs using FlextLdifUtilities
         logger.info("[PIPELINE] Validating and normalizing entry DNs using RFC 4514")
-        validated_entries = self._validate_and_normalize_entry_dns(entries)
-        logger.info(
-            f"[PIPELINE] DN validation complete: {len(validated_entries)}/{len(entries)} entries valid",
+        validated_entries, dn_failed_count, dn_rejected_reasons = (
+            self._validate_and_normalize_entry_dns(entries)
         )
+        logger.info(
+            f"[PIPELINE] DN validation complete: {len(validated_entries)}/{len(entries)} entries valid, "
+            f"{dn_failed_count} REJECTED",
+        )
+        if dn_failed_count > 0:
+            logger.error(
+                f"[PIPELINE] {dn_failed_count} entries REJECTED during DN validation. "
+                f"Rejection reasons: {dn_rejected_reasons}",
+            )
 
         # Step 1: Categorize entries (no categorization rules = simple mode)
         categorized = self._categorize_entries_unified(validated_entries)
@@ -707,11 +796,34 @@ class FlextLdifMigrationPipeline(
         for cat, cat_entries in categorized.items():
             final[cat] = self._process_category(cat, cat_entries)
 
+        # Step 3.5: Add base_dn rejected entries to REJECTED category (pedra base de auditoria)
+        if self._base_dn_rejected:
+            rejected_cat = FlextLdifConstants.Categories.REJECTED
+            if rejected_cat not in final:
+                final[rejected_cat] = []
+            final[rejected_cat].extend(self._base_dn_rejected)
+            logger.info(
+                f"[PIPELINE] Added {len(self._base_dn_rejected)} base_dn rejected entries to {rejected_cat}. "
+                f"Total rejected: {len(final[rejected_cat])}"
+            )
+
         # Step 4: Write files (using helper)
         file_paths, counts = self._write_category_files(final)
 
         # Step 5: Build result
         processed = sum(len(e) for e in final.values())
+
+        # Combine rejected entries from DN validation and categorization
+        categorization_rejected = counts.get(FlextLdifConstants.Categories.REJECTED, 0)
+        total_rejected = dn_failed_count + categorization_rejected
+
+        # Merge rejection reasons from DN validation and categorization
+        combined_rejection_reasons = dn_rejected_reasons.copy()
+        if categorization_rejected > 0:
+            combined_rejection_reasons["categorization_rejected"] = (
+                categorization_rejected
+            )
+
         stats = FlextLdifModels.PipelineStatistics(
             total_entries=total_entries,
             processed_entries=processed,
@@ -723,10 +835,8 @@ class FlextLdifMigrationPipeline(
             user_entries=counts.get(FlextLdifConstants.Categories.USERS, 0),
             group_entries=counts.get(FlextLdifConstants.Categories.GROUPS, 0),
             acl_entries=counts.get(FlextLdifConstants.Categories.ACL, 0),
-            rejected_entries=counts.get(
-                FlextLdifConstants.Categories.REJECTED,
-                0,
-            ),
+            rejected_entries=total_rejected,
+            rejection_reasons=combined_rejection_reasons,
         )
         return FlextResult[FlextLdifModels.PipelineExecutionResult].ok(
             FlextLdifModels.PipelineExecutionResult(
@@ -789,14 +899,19 @@ class FlextLdifMigrationPipeline(
 
     def _parse_entries(
         self,
-    ) -> FlextResult[list[FlextLdifModels.Entry]]:
+    ) -> FlextResult[tuple[list[FlextLdifModels.Entry], int, list[str]]]:
         """Parse all entries from input directory.
 
         Returns:
-            FlextResult containing list of parsed entries
+            FlextResult containing tuple of (entries, failed_files_count, failed_file_details):
+                - entries: Successfully parsed entries from all files
+                - failed_files_count: Count of files that failed to parse or were not found
+                - failed_file_details: List of failure descriptions
 
         """
         entries: list[FlextLdifModels.Entry] = []
+        failed_files_count = 0
+        failed_file_details: list[str] = []
 
         # Determine files to process
         if self._input_files:
@@ -805,7 +920,7 @@ class FlextLdifMigrationPipeline(
             files_to_process = sorted(self._input_dir.glob("*.ldif"))
 
         if not files_to_process:
-            return FlextResult[list[FlextLdifModels.Entry]].fail(
+            return FlextResult[tuple[list[FlextLdifModels.Entry], int, list[str]]].fail(
                 f"No LDIF files found in {self._input_dir}",
             )
 
@@ -817,7 +932,10 @@ class FlextLdifMigrationPipeline(
         parser = FlextLdifParser()
         for file_path in files_to_process:
             if not file_path.exists():
-                self.logger.warning("LDIF file not found: %s", file_path)
+                failed_files_count += 1
+                error_msg = f"File not found: {file_path}"
+                failed_file_details.append(error_msg)
+                self.logger.error("FAILED - LDIF file not found: %s", file_path)
                 continue
 
             logger.info(f"Parsing file: {file_path.name}")
@@ -827,8 +945,11 @@ class FlextLdifMigrationPipeline(
                 server_type=self._source_server,
             )
             if parse_result.is_failure:
-                self.logger.warning(
-                    f"Failed to parse {file_path}: {parse_result.error}",
+                failed_files_count += 1
+                error_msg = f"Parse failed for {file_path.name}: {parse_result.error}"
+                failed_file_details.append(error_msg)
+                self.logger.error(
+                    f"FAILED - Could not parse {file_path.name}: {parse_result.error}",
                 )
                 continue
 
@@ -850,12 +971,27 @@ class FlextLdifMigrationPipeline(
 
             entries.extend(file_entries)
 
+        # Log summary
+        successful_files = len(files_to_process) - failed_files_count
         logger.info(
-            f"TOTAL PARSED: {len(entries)} entries from {len(files_to_process)} files",
+            f"TOTAL PARSED: {len(entries)} entries from {successful_files}/{len(files_to_process)} files",
         )
+
+        # Log failures if any occurred
+        if failed_files_count > 0:
+            logger.error(
+                f"FILE PARSE FAILURES: {failed_files_count} out of {len(files_to_process)} files FAILED to parse. "
+                f"Successful: {successful_files}, Failed: {failed_files_count}. "
+                f"Failed files: {failed_file_details[:5]}"  # Show first 5
+            )
+
         logger.info("")
 
-        return FlextResult[list[FlextLdifModels.Entry]].ok(entries)
+        return FlextResult[tuple[list[FlextLdifModels.Entry], int, list[str]]].ok((
+            entries,
+            failed_files_count,
+            failed_file_details,
+        ))
 
     def _categorize_entries(
         self,
@@ -870,12 +1006,26 @@ class FlextLdifMigrationPipeline(
             FlextResult containing categorized entries dict
 
         """
+        # Pre-analyze hierarchy to identify parent DNs
+        parent_dns: set[str] = set()
+        for entry in entries:
+            dn_value = FlextLdifUtilities.DN.get_dn_value(entry.dn)
+            # Extract parent DN by removing the first RDN component
+            dn_parts = dn_value.split(",", 1)
+            if len(dn_parts) > 1:
+                parent_dn = dn_parts[1]
+                parent_dns.add(parent_dn.lower())  # Normalize to lowercase
+
+        # Add parent_dns to categorization rules as list
+        rules_with_parents = self._categorization_rules.copy()
+        rules_with_parents["parent_dns"] = list(parent_dns)
+
         categorized: dict[str, list[FlextLdifModels.Entry]] = {}
 
         for entry in entries:
             category, _reason = FlextLdifFilters.categorize_entry(
                 entry,
-                rules=self._categorization_rules,
+                rules=rules_with_parents,
                 whitelist_rules=self._schema_whitelist_rules,
             )
 

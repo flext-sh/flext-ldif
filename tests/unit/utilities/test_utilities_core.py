@@ -319,7 +319,7 @@ class TestObjectClassUtilities:
         assert oc.sup is None
 
         # Fix should add SUP
-        FlextLdifUtilities.ObjectClass.fix_missing_sup(oc, server_type="oid")
+        FlextLdifUtilities.ObjectClass.fix_missing_sup(oc, _server_type="oid")
         assert oc.sup == "top"
 
     def test_fix_missing_sup_auxiliary_with_sup(self) -> None:

@@ -17,7 +17,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Protocol, runtime_checkable
+from typing import ClassVar, Protocol, runtime_checkable
 
 from flext_core import FlextProtocols, FlextResult
 
@@ -535,6 +535,76 @@ class FlextLdifProtocols(FlextProtocols):
 
             attributes: dict[str, list[str]] | object  # Entry attributes dictionary
             """Entry attributes as dictionary mapping attribute names to values."""
+
+    # =========================================================================
+    # SERVER ACL PROTOCOLS - For server-specific ACL attribute handling
+    # =========================================================================
+
+    @runtime_checkable
+    class ServerAclProtocol(Protocol):
+        """Protocol for LDAP server ACL attribute handling.
+
+        Defines interface for servers to customize ACL attributes.
+        RFC Foundation is base for all servers, customization per server type.
+
+        Each server implementation (OID, OUD, OpenLDAP, etc.) provides:
+        1. RFC_ACL_ATTRIBUTES - Standard LDAP ACL attributes (RFC foundation)
+        2. Server-specific extensions (e.g., OID_ACL_ATTRIBUTES, OUD_ACL_ATTRIBUTES)
+        3. get_acl_attributes() - Returns RFC + server-specific attributes
+        4. is_acl_attribute() - Checks if attribute is ACL (case-insensitive)
+
+        Usage:
+            >>> from flext_ldif.servers.oid import FlextLdifServersOid
+            >>> acl = FlextLdifServersOid.Acl()
+            >>> attrs = acl.get_acl_attributes()
+            >>> # Returns RFC + OID-specific ACL attributes
+            >>> assert "aci" in attrs  # RFC foundation
+            >>> assert "orclaci" in attrs  # OID-specific
+            >>> assert acl.is_acl_attribute("ACI")  # Case-insensitive
+
+        Implementation Pattern:
+            class FlextLdifServerOidAcl:
+                RFC_ACL_ATTRIBUTES: ClassVar[list[str]] = [
+                    "aci", "acl", "olcAccess", "aclRights", "aclEntry"
+                ]
+                OID_ACL_ATTRIBUTES: ClassVar[list[str]] = [
+                    "orclaci", "orclentrylevelaci"
+                ]
+
+                def get_acl_attributes(self) -> list[str]:
+                    return self.RFC_ACL_ATTRIBUTES + self.OID_ACL_ATTRIBUTES
+
+                def is_acl_attribute(self, attribute_name: str) -> bool:
+                    all_attrs = self.get_acl_attributes()
+                    return attribute_name.lower() in [a.lower() for a in all_attrs]
+        """
+
+        # RFC Foundation - Standard LDAP attributes (all servers start here)
+        RFC_ACL_ATTRIBUTES: ClassVar[list[str]]
+
+        def get_acl_attributes(self) -> list[str]:
+            """Get ACL attributes for this server.
+
+            Returns RFC foundation + server-specific customizations/expansions.
+            Each server implements to return appropriate attributes.
+
+            Returns:
+                List of ACL attribute names (lowercase)
+
+            """
+            ...
+
+        def is_acl_attribute(self, attribute_name: str) -> bool:
+            """Check if attribute is ACL attribute for this server.
+
+            Args:
+                attribute_name: Attribute name to check (case-insensitive)
+
+            Returns:
+                True if attribute is ACL attribute, False otherwise
+
+            """
+            ...
 
 
 __all__ = [

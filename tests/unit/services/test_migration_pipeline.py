@@ -68,6 +68,7 @@ class TestMigrationPipelineInitialization:
             "hierarchy_objectclasses": ["organization"],
             "user_objectclasses": ["inetOrgPerson"],
             "group_objectclasses": ["groupOfNames"],
+            "acl_attributes": [],
         }
 
         pipeline = FlextLdifMigrationPipeline(
@@ -199,6 +200,7 @@ class TestMigrationPipelineWithEmptyInput:
             "hierarchy_objectclasses": ["organization"],
             "user_objectclasses": ["inetOrgPerson"],
             "group_objectclasses": ["groupOfNames"],
+            "acl_attributes": [],
         }
 
         pipeline = FlextLdifMigrationPipeline(
@@ -300,6 +302,7 @@ cn: REDACTED_LDAP_BIND_PASSWORD
             "hierarchy_objectclasses": ["top"],
             "user_objectclasses": ["person"],
             "group_objectclasses": ["groupOfNames"],
+            "acl_attributes": [],
         }
 
         pipeline = FlextLdifMigrationPipeline(
@@ -336,6 +339,7 @@ cn: user
             "hierarchy_objectclasses": ["top"],
             "user_objectclasses": ["person"],
             "group_objectclasses": ["groupOfNames"],
+            "acl_attributes": [],
         }
 
         pipeline = FlextLdifMigrationPipeline(
@@ -371,6 +375,7 @@ userPassword: secret
             "hierarchy_objectclasses": ["top"],
             "user_objectclasses": ["person"],
             "group_objectclasses": ["groupOfNames"],
+            "acl_attributes": [],
         }
 
         pipeline = FlextLdifMigrationPipeline(
@@ -434,6 +439,7 @@ class TestMigrationPipelineMultipleFiles:
             "hierarchy_objectclasses": ["top"],
             "user_objectclasses": ["person"],
             "group_objectclasses": ["groupOfNames"],
+            "acl_attributes": [],
         }
 
         output_files = {

@@ -16,9 +16,10 @@ Notes:
 
 from __future__ import annotations
 
+import operator
 import re
 from collections.abc import Callable, Iterator, Mapping
-from typing import ClassVar
+from typing import Any, ClassVar, Literal
 
 from flext_core import FlextLogger, FlextModels, FlextResult
 from pydantic import ConfigDict, Field, computed_field, field_validator, model_validator
@@ -1240,10 +1241,13 @@ class FlextLdifModels(FlextModels):
                             attrs_dict[str(attr_name)] = [str(attr_value_list)]
 
                 # Use Entry.create to handle DN and attribute conversion
-                # attrs_dict is already dict[str, list[str]], compatible with expected type
+                # Cast attrs_dict to expected type for type safety
+                from typing import cast
+
+                attributes_typed = cast("dict[str, str | list[str]]", attrs_dict)
                 return cls.create(
                     dn=dn_str,
-                    attributes=attrs_dict,
+                    attributes=attributes_typed,
                 )
 
             except Exception as e:
@@ -1353,9 +1357,8 @@ class FlextLdifModels(FlextModels):
             if filter_func is None:
                 return True
             try:
-                # filter_func expects dict[str, list[str]] format
-                entry_dict = self.to_dict()
-                return filter_func(entry_dict)
+                # filter_func expects Entry object (per signature)
+                return filter_func(self)
             except Exception:
                 return False
 
@@ -1717,83 +1720,18 @@ class FlextLdifModels(FlextModels):
                 if meta.get("status") == "deleted"
             }
 
-    class PipelineStatistics(FlextModels.ArbitraryTypesModel):
-        """Statistics for LDIF pipeline operations.
+    class EntryResult(FlextModels.Value):
+        """Result of LDIF processing containing categorized entries and statistics.
 
-        Tracks counts of entries processed, categorized, validated, and rejected
-        during pipeline execution for monitoring and troubleshooting.
+        This is the UNIFIED result model for all LDIF operations. Contains entries
+        organized by category, comprehensive statistics, and output file paths.
 
-        Attributes:
-        total_entries: Total entries processed
-        processed_entries: Successfully processed entries
-        schema_entries: Entries categorized as schema
-        hierarchy_entries: Entries categorized as hierarchy
-        user_entries: Entries categorized as users
-        group_entries: Entries categorized as groups
-        acl_entries: Entries categorized as ACLs
-        rejected_entries: Entries rejected due to validation failures
-        rejected_reasons: Map of rejection reason to entry count
-        processing_duration: Time in seconds for processing
-
-        """
-
-        model_config = ConfigDict(
-            arbitrary_types_allowed=True,
-            validate_default=True,
-        )
-
-        total_entries: int = Field(
-            default=0,
-            ge=0,
-            description="Total entries encountered",
-        )
-        processed_entries: int = Field(
-            default=0,
-            ge=0,
-            description="Successfully processed entries",
-        )
-        schema_entries: int = Field(
-            default=0,
-            ge=0,
-            description="Schema entries categorized",
-        )
-        hierarchy_entries: int = Field(
-            default=0,
-            ge=0,
-            description="Hierarchy entries categorized",
-        )
-        user_entries: int = Field(
-            default=0,
-            ge=0,
-            description="User entries categorized",
-        )
-        group_entries: int = Field(
-            default=0,
-            ge=0,
-            description="Group entries categorized",
-        )
-        acl_entries: int = Field(default=0, ge=0, description="ACL entries categorized")
-        rejected_entries: int = Field(default=0, ge=0, description="Entries rejected")
-        rejected_reasons: dict[str, int] = Field(
-            default_factory=dict,
-            description="Rejection reason distribution",
-        )
-        processing_duration: float = Field(
-            default=0.0,
-            ge=0.0,
-            description="Processing duration in seconds",
-        )
-
-    class PipelineExecutionResult(FlextModels.Value):
-        """Result of pipeline execution containing categorized entries and statistics.
-
-        Contains the complete result of a pipeline execution including entries
-        organized by category, statistics, and output file paths. Immutable value
-        object following DDD patterns.
+        Immutable value object following DDD patterns.
 
         Attributes:
             entries_by_category: Entries organized by their categorization
-            statistics: Pipeline execution statistics (always present)
+                                (schema, hierarchy, users, groups, acl, data, rejected)
+            statistics: Comprehensive execution statistics (counts, durations, reasons)
             file_paths: Output file paths for each category
 
         """
@@ -1807,14 +1745,1530 @@ class FlextLdifModels(FlextModels):
             default_factory=dict,
             description="Entries organized by category",
         )
-        statistics: FlextLdifModels.PipelineStatistics = Field(
-            default_factory=FlextLdifModels.PipelineStatistics,
+        statistics: FlextLdifModels.Statistics | None = Field(
+            default=None,
             description="Pipeline execution statistics",
         )
         file_paths: dict[str, str] = Field(
             default_factory=dict,
             description="Output file paths for each category",
         )
+
+        def get_all_entries(self) -> list[FlextLdifModels.Entry]:
+            """Flatten all categories into single list.
+
+            Returns:
+                List of all entries from all categories combined.
+
+            """
+            all_entries: list[FlextLdifModels.Entry] = []
+            for entries in self.entries_by_category.values():
+                all_entries.extend(entries)
+            return all_entries
+
+        def get_category(
+            self,
+            category: str,
+            default: list[FlextLdifModels.Entry] | None = None,
+        ) -> list[FlextLdifModels.Entry]:
+            """Get entries from specific category safely.
+
+            Args:
+                category: Category name to retrieve
+                default: Default value if category not found
+
+            Returns:
+                List of entries in the category, or default if not found.
+
+            """
+            return self.entries_by_category.get(category, default or [])
+
+        @classmethod
+        def from_entries(
+            cls,
+            entries: list[FlextLdifModels.Entry],
+            category: str = "all",
+            statistics: FlextLdifModels.Statistics | None = None,
+        ) -> FlextLdifModels.EntryResult:
+            """Create EntryResult from list of entries.
+
+            Args:
+                entries: List of Entry objects
+                category: Category name for the entries (default: "all")
+                statistics: Optional statistics object (creates default if None)
+
+            Returns:
+                New EntryResult instance.
+
+            """
+            stats = statistics or FlextLdifModels.Statistics.for_pipeline(
+                total=len(entries)
+            )
+            return cls(
+                entries_by_category={category: entries},
+                statistics=stats,
+            )
+
+        @classmethod
+        def empty(cls) -> FlextLdifModels.EntryResult:
+            """Create empty EntryResult.
+
+            Returns:
+                Empty EntryResult with no entries and default statistics.
+
+            """
+            return cls(
+                entries_by_category={},
+                statistics=FlextLdifModels.Statistics.for_pipeline(),
+            )
+
+        def merge(
+            self, other: FlextLdifModels.EntryResult
+        ) -> FlextLdifModels.EntryResult:
+            """Merge two EntryResults.
+
+            Combines entries from both results, with categories merged.
+            If same category exists in both, entries are concatenated.
+            Statistics are summed for numeric fields.
+
+            Args:
+                other: Another EntryResult to merge with this one
+
+            Returns:
+                New EntryResult with merged data.
+
+            """
+            # Merge categories - concatenate entries for duplicate categories
+            merged_categories: dict[str, list[FlextLdifModels.Entry]] = {
+                **self.entries_by_category
+            }
+            for cat, entries in other.entries_by_category.items():
+                if cat in merged_categories:
+                    merged_categories[cat] = list(merged_categories[cat]) + list(
+                        entries
+                    )
+                else:
+                    merged_categories[cat] = list(entries)
+
+            # Merge statistics (sum counters)
+            # Handle None statistics by creating defaults
+            self_stats = self.statistics or FlextLdifModels.Statistics.for_pipeline()
+            other_stats = other.statistics or FlextLdifModels.Statistics.for_pipeline()
+
+            merged_stats = self_stats.model_copy(
+                update={
+                    "total_entries": self_stats.total_entries
+                    + other_stats.total_entries,
+                }
+            )
+
+            # Merge file paths
+            merged_paths = {**self.file_paths, **other.file_paths}
+
+            return self.__class__(
+                entries_by_category=merged_categories,
+                statistics=merged_stats,
+                file_paths=merged_paths,
+            )
+
+        # =====================================================================
+        # DOMAIN EVENT ACCESS (v1.0.0+)
+        # =====================================================================
+
+        @property
+        def events(
+            self,
+        ) -> list[
+            FlextLdifModels.ParseEvent
+            | FlextLdifModels.FilterEvent
+            | FlextLdifModels.CategoryEvent
+            | FlextLdifModels.WriteEvent
+            | FlextLdifModels.AclEvent
+        ]:
+            """Access domain events from statistics.
+
+            Returns empty list if statistics is None or has no events.
+            Provides convenient access to audit trail.
+
+            Returns:
+                List of domain events from statistics.events
+
+            Example:
+                >>> result = parser.parse(content)
+                >>> for event in result.events:
+                ...     print(f"{event.timestamp}: {type(event).__name__}")
+
+            """
+            return self.statistics.events if self.statistics else []
+
+        @property
+        def has_events(self) -> bool:
+            """Indicates whether domain events are tracked in this result.
+
+            Returns:
+                True if events list is not empty.
+
+            """
+            return bool(self.events)
+
+        def add_event(
+            self,
+            event: (
+                FlextLdifModels.ParseEvent
+                | FlextLdifModels.FilterEvent
+                | FlextLdifModels.CategoryEvent
+                | FlextLdifModels.WriteEvent
+                | FlextLdifModels.AclEvent
+            ),
+        ) -> FlextLdifModels.EntryResult:
+            """Add domain event to statistics (immutable operation).
+
+            Creates new EntryResult with event added to statistics.events.
+            If statistics is None, creates new Statistics with single event.
+
+            Args:
+                event: Domain event to add
+
+            Returns:
+                New EntryResult with event added
+
+            Example:
+                >>> filter_event = FlextLdifModels.FilterEvent(
+                ...     event_id="evt_001",
+                ...     timestamp=datetime.now(timezone.utc),
+                ...     filter_operation="filter_by_dn",
+                ...     entries_before=100,
+                ...     entries_after=50,
+                ...     filter_duration_ms=25.0,
+                ... )
+                >>> new_result = result.add_event(filter_event)
+                >>> assert len(new_result.events) == len(result.events) + 1
+
+            """
+            if not self.statistics:
+                new_stats = FlextLdifModels.Statistics(events=[event])
+            else:
+                new_stats = self.statistics.add_event(event)
+
+            return self.model_copy(update={"statistics": new_stats})
+
+        def get_events_by_type(
+            self, event_type: type[FlextModels.DomainEvent]
+        ) -> list[FlextModels.DomainEvent]:
+            """Filter events by type.
+
+            Args:
+                event_type: Event class to filter
+
+            Returns:
+                List of events matching type
+
+            Example:
+                >>> parse_events = result.get_events_by_type(FlextLdifModels.ParseEvent)
+                >>> for event in parse_events:
+                ...     print(f"Parsed {event.entries_parsed} entries")
+
+            """
+            return [e for e in self.events if isinstance(e, event_type)]
+
+    # Backward compatibility alias (deprecated, will be removed in v2.0)
+    PipelineExecutionResult = EntryResult
+
+    class Statistics(FlextModels.Value):
+        """Unified statistics model for all LDIF operations.
+
+        Consolidates PipelineStatistics, ParseStatistics, WriteStatistics,
+        and AclStatistics into a single model following the EntryResult pattern.
+
+        Uses helper methods to create operation-specific statistics while
+        maintaining a single source of truth for all statistical data.
+
+        Attributes:
+            Core counters (all operations):
+                total_entries: Total entries encountered/processed
+                processed_entries: Successfully processed entries
+                failed_entries: Entries that failed processing
+
+            Category counters (pipeline operations):
+                schema_entries: Schema entries categorized
+                data_entries: Data entries (non-schema)
+                hierarchy_entries: Hierarchy/organizational entries
+                user_entries: User entries
+                group_entries: Group entries
+                acl_entries: ACL entries
+
+            Schema migration counters:
+                schema_attributes: Schema attributes migrated
+                schema_objectclasses: Schema object classes migrated
+
+            ACL extraction counters:
+                acls_extracted: Total ACL objects extracted
+                acls_failed: ACL parsing failures
+                acl_attribute_name: Primary ACL attribute name
+
+            Parsing counters:
+                parse_errors: Parse errors encountered
+                detected_server_type: Auto-detected LDAP server type
+
+            Writing counters:
+                entries_written: Entries successfully written
+                output_file: Output file path
+                file_size_bytes: Written file size
+                encoding: File encoding used
+
+            Metadata:
+                processing_duration: Processing time in seconds
+                rejection_reasons: Map of rejection reason to count
+
+        Example:
+            >>> # Parsing statistics
+            >>> stats = Statistics.for_parsing(total=100, schema=10, data=90, errors=2)
+            >>>
+            >>> # Pipeline statistics
+            >>> stats = Statistics.for_pipeline(
+            ...     total=100, processed=98, schema=10, users=50, groups=38
+            ... )
+            >>>
+            >>> # Merge statistics
+            >>> combined = stats1.merge(stats2)
+
+        """
+
+        model_config = ConfigDict(
+            frozen=True,
+            validate_default=True,
+        )
+
+        # CORE COUNTERS
+        total_entries: int = Field(
+            default=0,
+            ge=0,
+            description="Total entries encountered/processed",
+        )
+        processed_entries: int = Field(
+            default=0,
+            ge=0,
+            description="Successfully processed entries",
+        )
+        failed_entries: int = Field(
+            default=0,
+            ge=0,
+            description="Entries that failed processing",
+        )
+
+        # CATEGORY COUNTERS
+        schema_entries: int = Field(
+            default=0,
+            ge=0,
+            description="Schema entries categorized",
+        )
+        data_entries: int = Field(
+            default=0,
+            ge=0,
+            description="Data entries (non-schema)",
+        )
+        hierarchy_entries: int = Field(
+            default=0,
+            ge=0,
+            description="Hierarchy/organizational entries",
+        )
+        user_entries: int = Field(
+            default=0,
+            ge=0,
+            description="User entries",
+        )
+        group_entries: int = Field(
+            default=0,
+            ge=0,
+            description="Group entries",
+        )
+        acl_entries: int = Field(
+            default=0,
+            ge=0,
+            description="ACL entries",
+        )
+        rejected_entries: int = Field(
+            default=0,
+            ge=0,
+            description="Entries rejected during processing",
+        )
+
+        # SCHEMA MIGRATION COUNTERS
+        schema_attributes: int = Field(
+            default=0,
+            ge=0,
+            description="Schema attributes migrated",
+        )
+        schema_objectclasses: int = Field(
+            default=0,
+            ge=0,
+            description="Schema object classes migrated",
+        )
+
+        # ACL EXTRACTION COUNTERS
+        acls_extracted: int = Field(
+            default=0,
+            ge=0,
+            description="Total ACL objects extracted",
+        )
+        acls_failed: int = Field(
+            default=0,
+            ge=0,
+            description="ACL parsing failures",
+        )
+        acl_attribute_name: str | None = Field(
+            default=None,
+            description="Primary ACL attribute name",
+        )
+
+        # PARSING COUNTERS
+        parse_errors: int = Field(
+            default=0,
+            ge=0,
+            description="Parse errors encountered",
+        )
+        detected_server_type: str | None = Field(
+            default=None,
+            description="Auto-detected LDAP server type",
+        )
+
+        # WRITING COUNTERS
+        entries_written: int = Field(
+            default=0,
+            ge=0,
+            description="Entries successfully written",
+        )
+        output_file: str | None = Field(
+            default=None,
+            description="Output file path",
+        )
+        file_size_bytes: int = Field(
+            default=0,
+            ge=0,
+            description="Written file size in bytes",
+        )
+        encoding: str = Field(
+            default="utf-8",
+            description="File encoding used",
+        )
+
+        # METADATA
+        processing_duration: float = Field(
+            default=0.0,
+            ge=0.0,
+            description="Processing duration in seconds",
+        )
+        rejection_reasons: dict[str, int] = Field(
+            default_factory=dict,
+            description="Rejection reason distribution",
+        )
+
+        # DOMAIN EVENTS (v1.0.0+)
+        events: list[
+            FlextLdifModels.ParseEvent
+            | FlextLdifModels.FilterEvent
+            | FlextLdifModels.CategoryEvent
+            | FlextLdifModels.WriteEvent
+            | FlextLdifModels.AclEvent
+        ] = Field(
+            default_factory=list,
+            description="Domain events capturing operation history (v1.0.0+)",
+        )
+
+        # COMPUTED FIELDS
+        @computed_field
+        def success_rate(self) -> float:
+            """Calculate success rate percentage.
+
+            Returns:
+                Success rate as percentage (0.0-100.0).
+
+            """
+            if self.total_entries == 0:
+                return 100.0
+            return (
+                (self.total_entries - self.failed_entries) / self.total_entries
+            ) * 100.0
+
+        @computed_field
+        def has_schema(self) -> bool:
+            """Check if schema elements exist.
+
+            Returns:
+                True if any schema attributes or objectclasses present.
+
+            """
+            return (self.schema_attributes + self.schema_objectclasses) > 0
+
+        @computed_field
+        def has_entries(self) -> bool:
+            """Check if entries exist.
+
+            Returns:
+                True if total_entries > 0.
+
+            """
+            return self.total_entries > 0
+
+        @computed_field
+        def has_events(self) -> bool:
+            """Check if domain events are tracked.
+
+            Returns:
+                True if events list is not empty.
+
+            """
+            return len(self.events) > 0
+
+        @computed_field
+        def event_count(self) -> int:
+            """Get total number of domain events recorded.
+
+            Returns:
+                Number of events in the events list.
+
+            """
+            return len(self.events)
+
+        @computed_field
+        def event_types(self) -> list[str]:
+            """Get list of unique event types in history.
+
+            Returns:
+                List of event class names (e.g., ["ParseEvent", "FilterEvent"]).
+
+            """
+            return list({type(e).__name__ for e in self.events})
+
+        # HELPER METHODS
+        @classmethod
+        def for_parsing(
+            cls,
+            total: int,
+            schema: int = 0,
+            data: int = 0,
+            errors: int = 0,
+            detected_type: str | None = None,
+        ) -> FlextLdifModels.Statistics:
+            """Create statistics for parsing operations.
+
+            Args:
+                total: Total entries parsed
+                schema: Schema entries count
+                data: Data entries count
+                errors: Parse errors encountered
+                detected_type: Auto-detected server type
+
+            Returns:
+                Statistics instance for parsing.
+
+            """
+            return cls(
+                total_entries=total,
+                schema_entries=schema,
+                data_entries=data,
+                parse_errors=errors,
+                detected_server_type=detected_type,
+            )
+
+        @classmethod
+        def for_writing(
+            cls,
+            written: int,
+            output_file: str | None = None,
+            size: int = 0,
+            encoding: str = "utf-8",
+        ) -> FlextLdifModels.Statistics:
+            """Create statistics for writing operations.
+
+            Args:
+                written: Number of entries written
+                output_file: Output file path
+                size: File size in bytes
+                encoding: File encoding
+
+            Returns:
+                Statistics instance for writing.
+
+            """
+            return cls(
+                entries_written=written,
+                total_entries=written,
+                output_file=output_file,
+                file_size_bytes=size,
+                encoding=encoding,
+            )
+
+        @classmethod
+        def for_acl_extraction(
+            cls,
+            processed: int,
+            with_acls: int = 0,  # noqa: ARG003 - Reserved for future use
+            extracted: int = 0,
+            failed: int = 0,
+            attribute_name: str | None = None,
+        ) -> FlextLdifModels.Statistics:
+            """Create statistics for ACL extraction operations.
+
+            Args:
+                processed: Total entries processed
+                with_acls: Entries containing ACLs (reserved for future)
+                extracted: Total ACLs extracted
+                failed: ACL parsing failures
+                attribute_name: Primary ACL attribute name
+
+            Returns:
+                Statistics instance for ACL extraction.
+
+            """
+            return cls(
+                total_entries=processed,
+                acls_extracted=extracted,
+                acls_failed=failed,
+                acl_attribute_name=attribute_name,
+            )
+
+        @classmethod
+        def for_pipeline(
+            cls,
+            total: int = 0,
+            processed: int = 0,
+            schema: int = 0,
+            hierarchy: int = 0,
+            users: int = 0,
+            groups: int = 0,
+            acls: int = 0,
+            rejected: int = 0,
+            duration: float = 0.0,
+        ) -> FlextLdifModels.Statistics:
+            """Create statistics for pipeline operations.
+
+            Args:
+                total: Total entries encountered
+                processed: Successfully processed entries
+                schema: Schema entries
+                hierarchy: Hierarchy entries
+                users: User entries
+                groups: Group entries
+                acls: ACL entries
+                rejected: Rejected entries
+                duration: Processing duration
+
+            Returns:
+                Statistics instance for pipeline.
+
+            """
+            return cls(
+                total_entries=total,
+                processed_entries=processed,
+                schema_entries=schema,
+                hierarchy_entries=hierarchy,
+                user_entries=users,
+                group_entries=groups,
+                acl_entries=acls,
+                failed_entries=rejected,
+                processing_duration=duration,
+            )
+
+        @classmethod
+        def empty(cls) -> FlextLdifModels.Statistics:
+            """Create empty statistics.
+
+            Returns:
+                Statistics instance with all counters at zero.
+
+            """
+            return cls()
+
+        def merge(
+            self, other: FlextLdifModels.Statistics
+        ) -> FlextLdifModels.Statistics:
+            """Merge two Statistics instances by summing counters.
+
+            Combines statistics from multiple operations by adding all
+            numeric counters. Useful for aggregating statistics across
+            pipeline stages or parallel operations.
+
+            Args:
+                other: Another Statistics instance to merge
+
+            Returns:
+                New Statistics with merged counters.
+
+            Example:
+                >>> stats1 = Statistics.for_parsing(total=50, errors=2)
+                >>> stats2 = Statistics.for_parsing(total=30, errors=1)
+                >>> combined = stats1.merge(stats2)
+                >>> combined.total_entries  # 80
+                >>> combined.parse_errors  # 3
+
+            """
+            # Merge rejection reasons dictionaries
+            merged_reasons = {**self.rejection_reasons}
+            for reason, count in other.rejection_reasons.items():
+                merged_reasons[reason] = merged_reasons.get(reason, 0) + count
+
+            return self.__class__(
+                # Core counters
+                total_entries=self.total_entries + other.total_entries,
+                processed_entries=self.processed_entries + other.processed_entries,
+                failed_entries=self.failed_entries + other.failed_entries,
+                # Category counters
+                schema_entries=self.schema_entries + other.schema_entries,
+                data_entries=self.data_entries + other.data_entries,
+                hierarchy_entries=self.hierarchy_entries + other.hierarchy_entries,
+                user_entries=self.user_entries + other.user_entries,
+                group_entries=self.group_entries + other.group_entries,
+                acl_entries=self.acl_entries + other.acl_entries,
+                # Schema migration counters
+                schema_attributes=self.schema_attributes + other.schema_attributes,
+                schema_objectclasses=self.schema_objectclasses
+                + other.schema_objectclasses,
+                # ACL extraction counters
+                acls_extracted=self.acls_extracted + other.acls_extracted,
+                acls_failed=self.acls_failed + other.acls_failed,
+                acl_attribute_name=self.acl_attribute_name or other.acl_attribute_name,
+                # Parsing counters
+                parse_errors=self.parse_errors + other.parse_errors,
+                detected_server_type=self.detected_server_type
+                or other.detected_server_type,
+                # Writing counters (take from other if not set in self)
+                entries_written=self.entries_written + other.entries_written,
+                output_file=self.output_file or other.output_file,
+                file_size_bytes=self.file_size_bytes + other.file_size_bytes,
+                encoding=self.encoding if self.encoding != "utf-8" else other.encoding,
+                # Metadata
+                processing_duration=self.processing_duration
+                + other.processing_duration,
+                rejection_reasons=merged_reasons,
+                # Domain events (v1.0.0+)
+                events=[*self.events, *other.events],
+            )
+
+        def add_event(
+            self,
+            event: (
+                FlextLdifModels.ParseEvent
+                | FlextLdifModels.FilterEvent
+                | FlextLdifModels.CategoryEvent
+                | FlextLdifModels.WriteEvent
+                | FlextLdifModels.AclEvent
+            ),
+        ) -> FlextLdifModels.Statistics:
+            """Add domain event to history (immutable operation).
+
+            Creates new Statistics instance with event appended to events list.
+            Preserves all existing statistics counters and metadata.
+
+            Args:
+                event: Domain event to add to history
+
+            Returns:
+                New Statistics instance with event added
+
+            Example:
+                >>> parse_event = FlextLdifModels.ParseEvent(
+                ...     event_id="evt_001",
+                ...     timestamp=datetime.now(timezone.utc),
+                ...     entries_parsed=100,
+                ...     parse_duration_ms=50.0,
+                ...     detected_server_type="oud",
+                ... )
+                >>> new_stats = stats.add_event(parse_event)
+                >>> assert len(new_stats.events) == len(stats.events) + 1
+
+            """
+            return self.model_copy(update={"events": [*self.events, event]})
+
+        def get_events_by_type(
+            self, event_type: type[FlextModels.DomainEvent]
+        ) -> list[FlextModels.DomainEvent]:
+            """Filter events by type.
+
+            Args:
+                event_type: Event class to filter (e.g., FlextLdifModels.ParseEvent)
+
+            Returns:
+                List of events matching the specified type
+
+            Example:
+                >>> parse_events = stats.get_events_by_type(FlextLdifModels.ParseEvent)
+                >>> filter_events = stats.get_events_by_type(
+                ...     FlextLdifModels.FilterEvent
+                ... )
+                >>> for event in parse_events:
+                ...     print(f"Parsed {event.entries_parsed} entries")
+
+            """
+            return [e for e in self.events if isinstance(e, event_type)]
+
+        def get_latest_event(
+            self, event_type: type[FlextModels.DomainEvent] | None = None
+        ) -> FlextModels.DomainEvent | None:
+            """Get latest event, optionally filtered by type.
+
+            Args:
+                event_type: Optional event class to filter
+
+            Returns:
+                Latest event matching criteria, or None if no events
+
+            Example:
+                >>> # Get latest parse event
+                >>> latest_parse = stats.get_latest_event(FlextLdifModels.ParseEvent)
+                >>> if latest_parse:
+                ...     print(f"Last parse: {latest_parse.entries_parsed} entries")
+                >>>
+                >>> # Get latest event of any type
+                >>> latest_any = stats.get_latest_event()
+                >>> if latest_any:
+                ...     print(f"Last operation: {type(latest_any).__name__}")
+
+            """
+            if event_type:
+                filtered = self.get_events_by_type(event_type)
+                return filtered[-1] if filtered else None
+            return self.events[-1] if self.events else None
+
+    # Backward compatibility aliases (deprecated, will be removed in v2.0)
+    # Use Statistics with helper methods instead:
+    # - Statistics.for_parsing() instead of ParseStatistics()
+    # - Statistics.for_writing() instead of WriteStatistics()
+    # - Statistics.for_acl_extraction() instead of AclStatistics()
+    # - Statistics.for_pipeline() instead of PipelineStatistics()
+    ParseStatistics = Statistics
+    WriteStatistics = Statistics
+    AclStatistics = Statistics
+    PipelineStatistics = Statistics
+
+    # =========================================================================
+    # DOMAIN EVENTS - Event Sourcing & Audit Trail (v1.0.0+)
+    # =========================================================================
+
+    class ParseEvent(FlextModels.DomainEvent):
+        """Event emitted when LDIF parsing operation completes.
+
+        Captures parsing operation metadata including entry counts, duration,
+        server type detection, and errors for audit trails and monitoring.
+
+        Architecture:
+            - Layer: Domain (Event)
+            - Pattern: Event Sourcing / Domain Event
+            - Immutability: Yes (frozen=True via FlextModels.DomainEvent)
+            - Base: FlextModels.DomainEvent from flext-core
+
+        Used for:
+            - Audit trails and compliance logging
+            - Performance monitoring and analytics
+            - Debug and troubleshooting
+            - Pipeline operation tracking
+
+        Example:
+            >>> from datetime import datetime, timezone
+            >>> event = FlextLdifModels.ParseEvent(
+            ...     event_id="parse_20250108_001",
+            ...     timestamp=datetime.now(timezone.utc),
+            ...     entries_parsed=1500,
+            ...     schema_entries=50,
+            ...     data_entries=1450,
+            ...     parse_duration_ms=234.5,
+            ...     source_file="directory.ldif",
+            ...     detected_server_type="oud",
+            ...     quirks_applied=["oud_acl_parsing", "oud_schema_extensions"],
+            ... )
+            >>> print(
+            ...     f"Parsed {event.entries_parsed} entries in {event.parse_duration_ms}ms"
+            ... )
+            Parsed 1500 entries in 234.5ms
+            >>> print(f"Success rate: {event.success_rate:.2f}%")
+            Success rate: 100.00%
+            >>> print(f"Throughput: {event.throughput_entries_per_sec:.0f} entries/sec")
+            Throughput: 6396 entries/sec
+
+        Attributes:
+            entries_parsed: Total number of entries parsed from LDIF source
+            schema_entries: Number of schema definition entries
+            data_entries: Number of data entries (users, groups, etc.)
+            parse_duration_ms: Parse operation duration in milliseconds
+            source_file: Source LDIF file path (if parsing from file)
+            source_type: Type of source ("file", "string", "stream", "ldap3")
+            detected_server_type: Auto-detected server type (oid, oud, openldap, etc.)
+            detection_confidence: Confidence score for server detection (0.0-1.0)
+            quirks_applied: Server-specific quirks applied during parsing
+            errors_encountered: Non-fatal parse errors encountered
+            fatal_errors: Fatal errors that halted processing
+
+        Computed Fields:
+            success_rate: Parse success rate as percentage
+            throughput_entries_per_sec: Parsing throughput in entries per second
+            has_errors: Indicates if any errors were encountered
+            schema_to_data_ratio: Ratio of schema entries to data entries
+
+        """
+
+        model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
+
+        # Core metrics
+        entries_parsed: int = Field(
+            ...,
+            ge=0,
+            description="Total number of entries parsed from LDIF source",
+        )
+        schema_entries: int = Field(
+            default=0,
+            ge=0,
+            description="Number of schema definition entries (objectClass, attributeType, etc.)",
+        )
+        data_entries: int = Field(
+            default=0,
+            ge=0,
+            description="Number of data entries (user, group, ou, etc.)",
+        )
+
+        # Performance
+        parse_duration_ms: float = Field(
+            ...,
+            ge=0.0,
+            description="Parse operation duration in milliseconds",
+        )
+
+        # Context
+        source_file: str | None = Field(
+            None,
+            description="Source LDIF file path (if parsing from file)",
+        )
+        source_type: Literal["file", "string", "stream", "ldap3"] = Field(
+            default="string",
+            description="Type of source being parsed",
+        )
+
+        # Server detection
+        detected_server_type: str = Field(
+            default="rfc",
+            description="Auto-detected LDAP server type (oid, oud, openldap, ad, etc.)",
+        )
+        detection_confidence: float = Field(
+            default=1.0,
+            ge=0.0,
+            le=1.0,
+            description="Confidence score for server type detection (0.0-1.0)",
+        )
+
+        # Quirks
+        quirks_applied: list[str] = Field(
+            default_factory=list,
+            description="List of server-specific quirks applied during parsing",
+        )
+
+        # Errors
+        errors_encountered: list[str] = Field(
+            default_factory=list,
+            description="Parse errors encountered (non-fatal)",
+        )
+        fatal_errors: list[str] = Field(
+            default_factory=list,
+            description="Fatal parse errors that halted processing",
+        )
+
+        # Computed metrics
+        @computed_field
+        @property
+        def success_rate(self) -> float:
+            """Calculate parse success rate as percentage."""
+            if self.entries_parsed == 0:
+                return 100.0
+            total_errors = len(self.errors_encountered) + len(self.fatal_errors)
+            return ((self.entries_parsed - total_errors) / self.entries_parsed) * 100.0
+
+        @computed_field
+        @property
+        def throughput_entries_per_sec(self) -> float:
+            """Calculate parsing throughput in entries per second."""
+            if self.parse_duration_ms == 0:
+                return 0.0
+            return (self.entries_parsed / self.parse_duration_ms) * 1000.0
+
+        @computed_field
+        @property
+        def has_errors(self) -> bool:
+            """Indicates if any errors were encountered."""
+            return len(self.errors_encountered) > 0 or len(self.fatal_errors) > 0
+
+        @computed_field
+        @property
+        def schema_to_data_ratio(self) -> float:
+            """Calculate ratio of schema entries to data entries."""
+            if self.data_entries == 0:
+                return float("inf") if self.schema_entries > 0 else 0.0
+            return self.schema_entries / self.data_entries
+
+    class FilterEvent(FlextModels.DomainEvent):
+        """Event emitted when entry filtering operation is applied.
+
+        Captures filtering metadata including counts, criteria, exclusions,
+        and performance metrics for audit trails and pipeline monitoring.
+
+        Architecture:
+            - Layer: Domain (Event)
+            - Pattern: Event Sourcing / Domain Event
+            - Immutability: Yes (frozen=True)
+            - Base: FlextModels.DomainEvent from flext-core
+
+        Used for:
+            - Audit trails of data transformations
+            - Understanding data loss in pipeline stages
+            - Debug and validation of filtering rules
+            - Performance optimization of filter operations
+
+        Example:
+            >>> event = FlextLdifModels.FilterEvent(
+            ...     event_id="filter_20250108_001",
+            ...     timestamp=datetime.now(timezone.utc),
+            ...     filter_operation="filter_by_objectclass",
+            ...     entries_before=1500,
+            ...     entries_after=800,
+            ...     filter_criteria=[
+            ...         {"field": "objectClass", "value": "inetOrgPerson"}
+            ...     ],
+            ...     filter_duration_ms=45.2,
+            ... )
+            >>> print(f"Filtered {event.entries_excluded} entries")
+            Filtered 700 entries
+            >>> print(f"Retention: {event.filter_efficiency:.2f}%")
+            Retention: 53.33%
+
+        Attributes:
+            filter_operation: Specific filter operation name
+            entries_before: Entry count before filtering
+            entries_after: Entry count after filtering
+            filter_criteria: Applied filter criteria (serialized)
+            exclusion_reasons: Map of exclusion reason to count
+            excluded_dns: DNs of excluded entries (for audit)
+            filter_duration_ms: Filter operation duration in milliseconds
+
+        Computed Fields:
+            entries_excluded: Number of entries excluded by filter
+            filter_efficiency: Filtering efficiency (percentage retained)
+            exclusion_rate: Exclusion rate as percentage
+            throughput_entries_per_sec: Filtering throughput
+
+        """
+
+        model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
+
+        # Operation
+        filter_operation: str = Field(
+            ...,
+            description="Specific filter operation name (filter_by_dn, filter_by_objectclass, etc.)",
+        )
+
+        # Counts
+        entries_before: int = Field(
+            ...,
+            ge=0,
+            description="Entry count before filtering",
+        )
+        entries_after: int = Field(
+            ...,
+            ge=0,
+            description="Entry count after filtering",
+        )
+
+        # Criteria
+        filter_criteria: list[dict[str, Any]] = Field(
+            default_factory=list,
+            description="Applied filter criteria (serialized)",
+        )
+
+        # Exclusions
+        exclusion_reasons: dict[str, int] = Field(
+            default_factory=dict,
+            description="Map of exclusion reason to count",
+        )
+        excluded_dns: list[str] = Field(
+            default_factory=list,
+            description="DNs of excluded entries (for audit)",
+        )
+
+        # Performance
+        filter_duration_ms: float = Field(
+            default=0.0,
+            ge=0.0,
+            description="Filter operation duration in milliseconds",
+        )
+
+        # Computed metrics
+        @computed_field
+        @property
+        def entries_excluded(self) -> int:
+            """Calculate number of entries excluded by filter."""
+            return self.entries_before - self.entries_after
+
+        @computed_field
+        @property
+        def filter_efficiency(self) -> float:
+            """Calculate filtering efficiency (percentage retained)."""
+            if self.entries_before == 0:
+                return 100.0
+            return (self.entries_after / self.entries_before) * 100.0
+
+        @computed_field
+        @property
+        def exclusion_rate(self) -> float:
+            """Calculate exclusion rate as percentage."""
+            return 100.0 - self.filter_efficiency
+
+        @computed_field
+        @property
+        def throughput_entries_per_sec(self) -> float:
+            """Calculate filtering throughput in entries per second."""
+            if self.filter_duration_ms == 0:
+                return 0.0
+            return (self.entries_before / self.filter_duration_ms) * 1000.0
+
+    class CategoryEvent(FlextModels.DomainEvent):
+        """Event emitted when entry categorization operation completes.
+
+        Captures categorization metadata including distribution, rules,
+        and performance for audit trails and analytics.
+
+        Architecture:
+            - Layer: Domain (Event)
+            - Pattern: Event Sourcing / Domain Event
+            - Immutability: Yes (frozen=True)
+            - Base: FlextModels.DomainEvent from flext-core
+
+        Used for:
+            - Audit trail of categorization logic
+            - Understanding data distribution across categories
+            - Validation of categorization rules
+            - Performance monitoring of categorization
+
+        Example:
+            >>> event = FlextLdifModels.CategoryEvent(
+            ...     event_id="cat_20250108_001",
+            ...     timestamp=datetime.now(timezone.utc),
+            ...     categorization_operation="categorize_by_objectclass",
+            ...     entries_categorized=1500,
+            ...     category_distribution={
+            ...         "schema": 50,
+            ...         "users": 800,
+            ...         "groups": 300,
+            ...         "organizational_units": 200,
+            ...         "other": 150,
+            ...     },
+            ...     categorization_duration_ms=67.8,
+            ... )
+            >>> print(f"Categories: {event.category_count}")
+            Categories: 5
+            >>> print(f"Diversity: {event.diversity_score:.2f}")
+            Diversity: 85.42
+
+        Attributes:
+            categorization_operation: Categorization operation name
+            entries_categorized: Total entries categorized
+            category_distribution: Map of category name to entry count
+            uncategorized_count: Number of uncategorizable entries
+            categorization_rules: Categorization rules applied
+            categorization_duration_ms: Operation duration in milliseconds
+
+        Computed Fields:
+            category_count: Total number of distinct categories
+            largest_category: Name and size of largest category
+            smallest_category: Name and size of smallest category
+            diversity_score: Category diversity score (0-100, Shannon entropy)
+            throughput_entries_per_sec: Categorization throughput
+
+        """
+
+        model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
+
+        # Operation
+        categorization_operation: str = Field(
+            ...,
+            description="Categorization operation name (categorize_by_objectclass, etc.)",
+        )
+
+        # Counts
+        entries_categorized: int = Field(
+            ...,
+            ge=0,
+            description="Total entries categorized",
+        )
+
+        # Distribution
+        category_distribution: dict[str, int] = Field(
+            ...,
+            description="Map of category name to entry count",
+        )
+        uncategorized_count: int = Field(
+            default=0,
+            ge=0,
+            description="Number of entries that couldn't be categorized",
+        )
+
+        # Rules
+        categorization_rules: list[dict[str, Any]] = Field(
+            default_factory=list,
+            description="Categorization rules applied (serialized)",
+        )
+
+        # Performance
+        categorization_duration_ms: float = Field(
+            default=0.0,
+            ge=0.0,
+            description="Categorization operation duration in milliseconds",
+        )
+
+        # Computed metrics
+        @computed_field
+        @property
+        def category_count(self) -> int:
+            """Total number of distinct categories."""
+            return len(self.category_distribution)
+
+        @computed_field
+        @property
+        def largest_category(self) -> tuple[str, int]:
+            """Returns name and size of largest category."""
+            if not self.category_distribution:
+                return ("", 0)
+            return max(self.category_distribution.items(), key=operator.itemgetter(1))
+
+        @computed_field
+        @property
+        def smallest_category(self) -> tuple[str, int]:
+            """Returns name and size of smallest category."""
+            if not self.category_distribution:
+                return ("", 0)
+            return min(self.category_distribution.items(), key=operator.itemgetter(1))
+
+        @computed_field
+        @property
+        def diversity_score(self) -> float:
+            """Calculate category diversity score (0-100).
+
+            Higher score = more evenly distributed across categories.
+            Uses Shannon entropy normalized to 0-100 scale.
+
+            Returns:
+                Diversity score from 0.0 (all in one category) to 100.0 (perfectly distributed)
+
+            """
+            if not self.category_distribution or self.entries_categorized == 0:
+                return 0.0
+
+            import math
+
+            total = sum(self.category_distribution.values())
+            entropy = 0.0
+
+            for count in self.category_distribution.values():
+                if count > 0:
+                    p = count / total
+                    entropy -= p * math.log2(p)
+
+            # Normalize to 0-100 scale
+            max_entropy = math.log2(len(self.category_distribution))
+            if max_entropy == 0:
+                return 0.0
+
+            return (entropy / max_entropy) * 100.0
+
+        @computed_field
+        @property
+        def throughput_entries_per_sec(self) -> float:
+            """Calculate categorization throughput in entries per second."""
+            if self.categorization_duration_ms == 0:
+                return 0.0
+            return (self.entries_categorized / self.categorization_duration_ms) * 1000.0
+
+    class WriteEvent(FlextModels.DomainEvent):
+        """Event emitted when LDIF write operation completes.
+
+        Captures write operation metadata including counts, file paths,
+        target server, and performance for audit trails.
+
+        Architecture:
+            - Layer: Domain (Event)
+            - Pattern: Event Sourcing / Domain Event
+            - Immutability: Yes (frozen=True)
+            - Base: FlextModels.DomainEvent from flext-core
+
+        Used for:
+            - Audit trail of output files
+            - Performance monitoring of write operations
+            - Validation of format transformations
+            - Output format and encoding tracking
+
+        Example:
+            >>> event = FlextLdifModels.WriteEvent(
+            ...     event_id="write_20250108_001",
+            ...     timestamp=datetime.now(timezone.utc),
+            ...     entries_written=800,
+            ...     write_duration_ms=123.4,
+            ...     output_file="/path/to/output.ldif",
+            ...     target_server_type="oud",
+            ...     encoding="utf-8",
+            ...     quirks_applied=["oud_acl_format", "oud_schema_syntax"],
+            ...     bytes_written=1_234_567,
+            ... )
+            >>> print(
+            ...     f"Wrote {event.entries_written} entries at {event.throughput_entries_per_sec:.0f} entries/sec"
+            ... )
+            Wrote 800 entries at 6483 entries/sec
+            >>> print(f"Throughput: {event.throughput_mb_per_sec:.2f} MB/sec")
+            Throughput: 9.53 MB/sec
+
+        Attributes:
+            entries_written: Number of entries written to output
+            output_file: Output file path (if writing to file)
+            output_type: Type of output target ("file", "string", "stream")
+            target_server_type: Target LDAP server type
+            encoding: File encoding used
+            quirks_applied: Server-specific quirks applied
+            transformations_applied: Transformations applied to entries
+            bytes_written: Total bytes written
+            lines_written: Total lines written
+            write_duration_ms: Operation duration in milliseconds
+
+        Computed Fields:
+            throughput_entries_per_sec: Write throughput in entries per second
+            throughput_mb_per_sec: Write throughput in MB per second
+            avg_bytes_per_entry: Average bytes per entry
+            compression_potential: Estimated compression potential ratio
+
+        """
+
+        model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
+
+        # Counts
+        entries_written: int = Field(
+            ...,
+            ge=0,
+            description="Number of entries written to output",
+        )
+
+        # Output
+        output_file: str | None = Field(
+            None,
+            description="Output file path (if writing to file)",
+        )
+        output_type: Literal["file", "string", "stream"] = Field(
+            default="file",
+            description="Type of output target",
+        )
+
+        # Server
+        target_server_type: str = Field(
+            default="rfc",
+            description="Target LDAP server type (oid, oud, openldap, ad, etc.)",
+        )
+
+        # Encoding
+        encoding: str = Field(
+            default="utf-8",
+            description="File encoding used for write operation",
+        )
+
+        # Quirks
+        quirks_applied: list[str] = Field(
+            default_factory=list,
+            description="Server-specific quirks applied during write",
+        )
+        transformations_applied: list[str] = Field(
+            default_factory=list,
+            description="Transformations applied to entries before write",
+        )
+
+        # Size
+        bytes_written: int = Field(
+            default=0,
+            ge=0,
+            description="Total bytes written to output",
+        )
+        lines_written: int = Field(
+            default=0,
+            ge=0,
+            description="Total lines written to output",
+        )
+
+        # Performance
+        write_duration_ms: float = Field(
+            default=0.0,
+            ge=0.0,
+            description="Write operation duration in milliseconds",
+        )
+
+        # Computed metrics
+        @computed_field
+        @property
+        def throughput_entries_per_sec(self) -> float:
+            """Calculate write throughput in entries per second."""
+            if self.write_duration_ms == 0:
+                return 0.0
+            return (self.entries_written / self.write_duration_ms) * 1000.0
+
+        @computed_field
+        @property
+        def throughput_mb_per_sec(self) -> float:
+            """Calculate write throughput in MB per second."""
+            if self.write_duration_ms == 0:
+                return 0.0
+            mb_written = self.bytes_written / (1024 * 1024)
+            return (mb_written / self.write_duration_ms) * 1000.0
+
+        @computed_field
+        @property
+        def avg_bytes_per_entry(self) -> float:
+            """Calculate average bytes per entry."""
+            if self.entries_written == 0:
+                return 0.0
+            return self.bytes_written / self.entries_written
+
+        @computed_field
+        @property
+        def compression_potential(self) -> float:
+            """Estimate compression potential based on avg entry size.
+
+            Returns ratio: higher = more compressible.
+            Assumes LDIF text is typically 60-70% compressible.
+
+            Returns:
+                Estimated compression ratio (e.g., 0.65 = 65% compression)
+
+            """
+            # Placeholder - can be refined with actual compression statistics
+            return 0.65
+
+    class AclEvent(FlextModels.DomainEvent):
+        """Event emitted when ACL extraction/processing operation completes.
+
+        Captures ACL operation metadata including counts, formats, errors,
+        and performance for audit trails and security compliance.
+
+        Architecture:
+            - Layer: Domain (Event)
+            - Pattern: Event Sourcing / Domain Event
+            - Immutability: Yes (frozen=True)
+            - Base: FlextModels.DomainEvent from flext-core
+
+        Used for:
+            - Audit trail of ACL operations
+            - Validation of ACL parsing correctness
+            - Security compliance tracking
+            - Performance monitoring of ACL extraction
+
+        Example:
+            >>> event = FlextLdifModels.AclEvent(
+            ...     event_id="acl_20250108_001",
+            ...     timestamp=datetime.now(timezone.utc),
+            ...     acl_operation="extract_acls",
+            ...     entries_processed=800,
+            ...     acls_extracted=250,
+            ...     acls_failed=10,
+            ...     server_type="oud",
+            ...     acl_format="orclaci",
+            ...     extraction_duration_ms=89.3,
+            ... )
+            >>> print(
+            ...     f"Extracted {event.acls_extracted} ACLs with {event.extraction_success_rate:.2f}% success"
+            ... )
+            Extracted 250 ACLs with 96.15% success
+            >>> print(f"Average: {event.acls_per_entry:.2f} ACLs per entry")
+            Average: 0.31 ACLs per entry
+
+        Attributes:
+            acl_operation: ACL operation name (extract_acls, parse_acls, etc.)
+            entries_processed: Number of entries processed for ACLs
+            acls_extracted: Number of ACLs successfully extracted
+            acls_failed: Number of ACLs that failed extraction/parsing
+            server_type: Server type for ACL format
+            acl_format: Specific ACL format (orclaci, aclentry, olcAccess, etc.)
+            error_details: Detailed error information for failures
+            extraction_duration_ms: Operation duration in milliseconds
+
+        Computed Fields:
+            extraction_success_rate: ACL extraction success rate percentage
+            acls_per_entry: Average ACLs per entry
+            throughput_acls_per_sec: ACL extraction throughput
+
+        """
+
+        model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
+
+        # Operation
+        acl_operation: str = Field(
+            ...,
+            description="ACL operation name (extract_acls, parse_acls, transform_acls, etc.)",
+        )
+
+        # Counts
+        entries_processed: int = Field(
+            ...,
+            ge=0,
+            description="Number of entries processed for ACLs",
+        )
+        acls_extracted: int = Field(
+            default=0,
+            ge=0,
+            description="Number of ACLs successfully extracted",
+        )
+        acls_failed: int = Field(
+            default=0,
+            ge=0,
+            description="Number of ACLs that failed extraction/parsing",
+        )
+
+        # Format
+        server_type: str = Field(
+            ...,
+            description="Server type for ACL format (oid, oud, openldap, etc.)",
+        )
+        acl_format: str = Field(
+            ...,
+            description="Specific ACL format (orclaci, aclentry, olcAccess, etc.)",
+        )
+
+        # Errors
+        error_details: list[dict[str, Any]] = Field(
+            default_factory=list,
+            description="Detailed error information for failed ACL extractions",
+        )
+
+        # Performance
+        extraction_duration_ms: float = Field(
+            default=0.0,
+            ge=0.0,
+            description="ACL extraction duration in milliseconds",
+        )
+
+        # Computed metrics
+        @computed_field
+        @property
+        def extraction_success_rate(self) -> float:
+            """Calculate ACL extraction success rate as percentage."""
+            total_acls = self.acls_extracted + self.acls_failed
+            if total_acls == 0:
+                return 100.0
+            return (self.acls_extracted / total_acls) * 100.0
+
+        @computed_field
+        @property
+        def acls_per_entry(self) -> float:
+            """Calculate average ACLs per entry."""
+            if self.entries_processed == 0:
+                return 0.0
+            return self.acls_extracted / self.entries_processed
+
+        @computed_field
+        @property
+        def throughput_acls_per_sec(self) -> float:
+            """Calculate ACL extraction throughput in ACLs per second."""
+            if self.extraction_duration_ms == 0:
+                return 0.0
+            total_acls = self.acls_extracted + self.acls_failed
+            return (total_acls / self.extraction_duration_ms) * 1000.0
 
     class SchemaBuilderResult(FlextModels.Value):
         """Result of schema builder build() operation.
@@ -1917,147 +3371,9 @@ class FlextLdifModels(FlextModels):
                 "entry_count": self.entry_count,
             }
 
-    class MigrationStatistics(FlextModels.Value):
-        """Statistics from LDIF migration pipeline execution.
-
-        Tracks counts of migrated schema elements and entries with computed metrics
-        for success rate and completeness assessment.
-
-        Attributes:
-            total_schema_attributes: Count of schema attributes migrated
-            total_schema_objectclasses: Count of schema object classes migrated
-            total_entries: Count of directory entries migrated
-            failed_entries: Count of entries that failed migration (default 0)
-
-        """
-
-        model_config = ConfigDict(
-            frozen=True,
-            validate_default=True,
-        )
-
-        total_schema_attributes: int = Field(
-            default=0,
-            ge=0,
-            description="Number of schema attributes migrated",
-        )
-        total_schema_objectclasses: int = Field(
-            default=0,
-            ge=0,
-            description="Number of schema object classes migrated",
-        )
-        total_entries: int = Field(
-            default=0,
-            ge=0,
-            description="Number of directory entries migrated",
-        )
-        failed_entries: int = Field(
-            default=0,
-            ge=0,
-            description="Number of entries that failed migration",
-        )
-
-        @computed_field
-        def total_schema_elements(self) -> int:
-            """Total count of schema elements (attributes + object classes).
-
-            Returns:
-                Sum of attributes and object classes
-
-            """
-            return self.total_schema_attributes + self.total_schema_objectclasses
-
-        @computed_field
-        def total_items(self) -> int:
-            """Total count of all migrated items (schema + entries).
-
-            Returns:
-                Sum of schema elements and entries
-
-            """
-            return self.total_schema_elements() + self.total_entries
-
-        @computed_field
-        def has_schema(self) -> bool:
-            """Check if any schema elements were migrated.
-
-            Returns:
-                True if attributes or object classes exist
-
-            """
-            return self.total_schema_elements() > 0
-
-        @computed_field
-        def has_entries(self) -> bool:
-            """Check if any entries were migrated.
-
-            Returns:
-                True if entry count > 0
-
-            """
-            return self.total_entries > 0
-
-        @computed_field
-        def success_rate(self) -> float:
-            """Calculate migration success rate as percentage.
-
-            Returns:
-                Success rate 0.0-100.0, or 100.0 if no entries to migrate
-
-            """
-            total_attempted = self.total_entries + self.failed_entries
-            if total_attempted == 0:
-                return 100.0
-            successful = self.total_entries
-            return (successful / total_attempted) * 100.0
-
-        @computed_field
-        def statistics_summary(self) -> dict[str, int | float]:
-            """Comprehensive statistics summary.
-
-            Returns:
-                Dict with all counts and computed metrics
-
-            """
-            return {
-                "schema_attributes": self.total_schema_attributes,
-                "schema_objectclasses": self.total_schema_objectclasses,
-                "total_schema": self.total_schema_elements(),
-                "entries": self.total_entries,
-                "failed": self.failed_entries,
-                "total_items": self.total_items(),
-                "success_rate": round(self.success_rate(), 2),
-            }
-
     # =========================================================================
     # RESPONSE MODELS - Composed from domain models and statistics
     # =========================================================================
-
-    class ParseStatistics(FlextModels.Value):
-        """Statistics from LDIF parsing operation (composed from PipelineStatistics pattern)."""
-
-        model_config = ConfigDict(
-            frozen=True,
-            validate_default=True,
-        )
-
-        total_entries: int = Field(ge=0, description="Total entries parsed")
-        schema_entries: int = Field(ge=0, description="Schema type entries")
-        data_entries: int = Field(ge=0, description="Data entries")
-        parse_errors: int = Field(ge=0, description="Parse errors encountered")
-        detected_server_type: str | None = Field(
-            None,
-            description="Auto-detected server type from content",
-        )
-
-        @computed_field
-        def success_rate(self) -> float:
-            """Success rate as percentage."""
-            if self.total_entries == 0:
-                return 100.0
-            return (
-                (self.total_entries - self.parse_errors) / self.total_entries
-            ) * 100.0
 
     class ParseResponse(FlextModels.Value):
         """Composed response from parsing operation.
@@ -2073,23 +3389,6 @@ class FlextLdifModels(FlextModels):
             description="Parse operation statistics",
         )
         detected_server_type: str | None = Field(None)
-
-    class WriteStatistics(FlextModels.Value):
-        """Statistics from LDIF write operation."""
-
-        model_config = ConfigDict(
-            frozen=True,
-            validate_default=True,
-        )
-
-        entries_written: int = Field(ge=0, description="Number of entries written")
-        output_file: str | None = Field(None, description="Output file path")
-        file_size_bytes: int = Field(
-            ge=0,
-            default=0,
-            description="Written file size in bytes",
-        )
-        encoding: str = Field(default="utf-8", description="File encoding used")
 
     class WriteResponse(FlextModels.Value):
         """Composed response from write operation.
@@ -2117,11 +3416,7 @@ class FlextLdifModels(FlextModels):
             default=FlextLdifConstants.LdifFormat.DEFAULT_LINE_WIDTH,
             ge=10,
             le=100000,
-            description="Maximum line width before folding (RFC 2849 recommends 76). Set high for no folding.",
-        )
-        disable_line_folding: bool = Field(
-            default=False,
-            description="If True, disables line folding completely (ignores line_width).",
+            description="Maximum line width before folding (RFC 2849 recommends 76). Only used if fold_long_lines=True.",
         )
         respect_attribute_order: bool = Field(
             default=True,
@@ -2176,25 +3471,6 @@ class FlextLdifModels(FlextModels):
             description="If set to 'modify', writes entries in LDIF modify add format (changetype: modify). Otherwise uses add format.",
         )
 
-    class AclStatistics(FlextModels.Value):
-        """Statistics from ACL extraction operation."""
-
-        model_config = ConfigDict(
-            frozen=True,
-            validate_default=True,
-        )
-
-        total_entries_processed: int = Field(ge=0, description="Total entries analyzed")
-        entries_with_acls: int = Field(ge=0, description="Entries containing ACLs")
-        total_acls_extracted: int = Field(
-            ge=0,
-            description="Total ACL objects extracted",
-        )
-        acl_attribute_name: str | None = Field(
-            None,
-            description="Primary ACL attribute name found",
-        )
-
     class AclResponse(FlextModels.Value):
         """Composed response from ACL extraction.
 
@@ -2236,9 +3512,9 @@ class FlextLdifModels(FlextModels):
             default_factory=list,
             description="List of migrated directory entries (Entry objects or dicts)",
         )
-        stats: object = Field(
+        stats: dict[str, int] | FlextLdifModels.Statistics = Field(
             default_factory=dict,
-            description="Migration statistics and metrics (MigrationStatistics or dict)",
+            description="Migration statistics and metrics (Statistics or dict)",
         )
         output_files: list[str] = Field(
             default_factory=list,
@@ -2263,8 +3539,8 @@ class FlextLdifModels(FlextModels):
                 has_entries = self.stats.get("total_entries", 0) > 0
             else:
                 has_schema = (
-                    self.stats.total_schema_attributes > 0
-                    or self.stats.total_schema_objectclasses > 0
+                    self.stats.schema_attributes > 0
+                    or self.stats.schema_objectclasses > 0
                 )
                 has_entries = self.stats.total_entries > 0
             return not has_schema and not has_entries

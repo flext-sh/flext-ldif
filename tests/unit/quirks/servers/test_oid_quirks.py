@@ -33,7 +33,7 @@ class TestOidSchemas:
     @pytest.fixture
     def oid(self, oid_server: FlextLdifServersOid) -> FlextLdifServersOid.Schema:
         """Create OID schema quirk instance."""
-        return oid_server.schema
+        return oid_server.schema_quirk
 
     @pytest.fixture
     def oid_fixtures(self) -> FlextLdifFixtures.OID:
@@ -664,7 +664,7 @@ class TestOidEntrys:
     @pytest.fixture
     def oid(self) -> FlextLdifServersOid.Schema:
         """Create OID schema quirk instance."""
-        return FlextLdifServersOid().schema
+        return FlextLdifServersOid().schema_quirk
 
     @pytest.fixture
     def entry(self) -> FlextLdifServersOid.Entry:
@@ -1413,7 +1413,7 @@ class TestOidQuirksErrorHandling:
     @pytest.fixture
     def oid(self) -> FlextLdifServersOid.Schema:
         """Create OID quirk instance."""
-        return FlextLdifServersOid().schema
+        return FlextLdifServersOid().schema_quirk
 
     def testcan_handle_attribute_regex_error(self, oid: FlextLdifServersOid) -> None:
         """Test can_handle_attribute with malformed definition causing regex error."""
@@ -1497,7 +1497,7 @@ class TestOidQuirksWriteAttributeToRfc:
     @pytest.fixture
     def oid(self) -> FlextLdifServersOid.Schema:
         """Create OID quirk instance."""
-        return FlextLdifServersOid().schema
+        return FlextLdifServersOid().schema_quirk
 
     def test_write_attribute_with_metadata_roundtrip(
         self,
@@ -1800,7 +1800,7 @@ class TestOidQuirksWriteObjectclassToRfc:
     @pytest.fixture
     def oid(self) -> FlextLdifServersOid.Schema:
         """Create OID quirk instance."""
-        return FlextLdifServersOid().schema
+        return FlextLdifServersOid().schema_quirk
 
     def test_write_objectclass_with_metadata_roundtrip(
         self,
@@ -2128,7 +2128,7 @@ class TestOidParseAttributeComprehensive:
     @pytest.fixture
     def oid(self) -> FlextLdifServersOid.Schema:
         """Create OID quirk instance."""
-        return FlextLdifServersOid().schema
+        return FlextLdifServersOid().schema_quirk
 
     def test_parse_attribute_oid_namespace(self, oid: FlextLdifServersOid) -> None:
         """Test parsing OID namespace attribute."""
@@ -2180,7 +2180,7 @@ class TestOidParseObjectClassComprehensive:
     @pytest.fixture
     def oid(self) -> FlextLdifServersOid.Schema:
         """Create OID quirk instance."""
-        return FlextLdifServersOid().schema
+        return FlextLdifServersOid().schema_quirk
 
     def test_parse_objectclass_oid_namespace(self, oid: FlextLdifServersOid) -> None:
         """Test parsing OID namespace objectClass."""
@@ -2217,7 +2217,7 @@ class TestOidWriteMethods:
     @pytest.fixture
     def oid(self) -> FlextLdifServersOid.Schema:
         """Create OID quirk instance."""
-        return FlextLdifServersOid().schema
+        return FlextLdifServersOid().schema_quirk
 
     def test_write_attribute_to_rfc_oid(self, oid: FlextLdifServersOid.Schema) -> None:
         """Test writing OID attribute to RFC format."""
@@ -2278,7 +2278,7 @@ class TestOidCanHandleMethods:
     @pytest.fixture
     def oid(self) -> FlextLdifServersOid.Schema:
         """Create OID quirk instance."""
-        return FlextLdifServersOid().schema
+        return FlextLdifServersOid().schema_quirk
 
     def test_can_handle_oid_namespace_attribute(self, oid: FlextLdifServersOid) -> None:
         """Test can_handle for OID namespace attribute."""
@@ -2307,7 +2307,7 @@ class TestOidQuirksCanHandleAttribute:
     @pytest.fixture
     def oid(self) -> FlextLdifServersOid.Schema:
         """Create OID quirk instance."""
-        return FlextLdifServersOid().schema
+        return FlextLdifServersOid().schema_quirk
 
     def test_can_handle_oid_namespace_attribute(
         self,
@@ -2383,7 +2383,7 @@ class TestOidQuirksParseAttribute:
     @pytest.fixture
     def oid(self) -> FlextLdifServersOid.Schema:
         """Create OID quirk instance."""
-        return FlextLdifServersOid().schema
+        return FlextLdifServersOid().schema_quirk
 
     @pytest.fixture
     def oid_schema_fixture(self) -> Path:
@@ -2448,7 +2448,7 @@ class TestOidQuirksConvertAttribute:
     @pytest.fixture
     def oid(self) -> FlextLdifServersOid.Schema:
         """Create OID quirk instance."""
-        return FlextLdifServersOid().schema
+        return FlextLdifServersOid().schema_quirk
 
     def test_can_handle_oid_objectclass(self, oid: FlextLdifServersOid.Schema) -> None:
         """Test handling OID objectClass definitions."""
@@ -2545,7 +2545,7 @@ class TestOidQuirksEntryHandling:
     @pytest.fixture
     def oid(self) -> FlextLdifServersOid.Schema:
         """Create OID quirk instance."""
-        return FlextLdifServersOid().schema
+        return FlextLdifServersOid().schema_quirk
 
     @pytest.fixture
     def oid_entries_fixture(self) -> Path:
@@ -2592,7 +2592,7 @@ class TestOidQuirksProperties:
     @pytest.fixture
     def oid(self) -> FlextLdifServersOid.Schema:
         """Create OID quirk instance."""
-        return FlextLdifServersOid().schema
+        return FlextLdifServersOid().schema_quirk
 
     def test_oid_server_type(self, oid: FlextLdifServersOid.Schema) -> None:
         """Test OID quirk has correct server type."""
@@ -2661,7 +2661,7 @@ class TestOidQuirksIntegrationWithFixtures:
     @pytest.fixture
     def oid(self) -> FlextLdifServersOid.Schema:
         """Create OID quirk instance."""
-        return FlextLdifServersOid().schema
+        return FlextLdifServersOid().schema_quirk
 
     @pytest.fixture
     def oid_integration_fixture(self) -> Path:
@@ -2878,7 +2878,7 @@ class TestOidEntryProcessEntry:
     @pytest.fixture
     def oid(self) -> FlextLdifServersOid.Schema:
         """Create OID quirk instance."""
-        return FlextLdifServersOid().schema
+        return FlextLdifServersOid().schema_quirk
 
     @pytest.fixture
     def oid_entries_fixture(self) -> Path:
@@ -2910,7 +2910,7 @@ class TestOidQuirksWithRealFixtures:
     @pytest.fixture
     def oid(self) -> FlextLdifServersOid.Schema:
         """Create OID quirk instance."""
-        return FlextLdifServersOid().schema
+        return FlextLdifServersOid().schema_quirk
 
     @pytest.fixture
     def api(self) -> FlextLdif:
@@ -3076,7 +3076,7 @@ class TestOidAttributeTransformations:
     @pytest.fixture
     def oid_schema(self) -> FlextLdifServersOid.Schema:
         """Create OID schema quirk instance."""
-        return FlextLdifServersOid().schema
+        return FlextLdifServersOid().schema_quirk
 
     def test_transform_validates_invalid_substr_rules(
         self,

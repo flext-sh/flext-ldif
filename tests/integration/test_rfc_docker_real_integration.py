@@ -43,7 +43,7 @@ class TestRfcParserRealFixtures:
             config=FlextLdifConfig(),
         )
 
-        result = parser.parse_file(entries_file)
+        result = parser.parse_ldif_file(entries_file)
 
         assert result.is_success, f"Failed to parse: {result.error}"
         entries = result.unwrap()
@@ -64,7 +64,7 @@ class TestRfcParserRealFixtures:
             config=FlextLdifConfig(),
         )
 
-        result = parser.parse_file(entries_file)
+        result = parser.parse_ldif_file(entries_file)
 
         assert result.is_success, f"Failed to parse: {result.error}"
         entries = result.unwrap()
@@ -84,7 +84,7 @@ class TestRfcParserRealFixtures:
             config=FlextLdifConfig(),
         )
 
-        result = parser.parse_file(entries_file)
+        result = parser.parse_ldif_file(entries_file)
 
         assert result.is_success, f"Failed to parse: {result.error}"
         entries = result.unwrap()
@@ -113,7 +113,7 @@ class TestRfcSchemaParserRealFixtures:
             config=FlextLdifConfig(),
         )
 
-        result = parser.parse_file(schema_file)
+        result = parser.parse_ldif_file(schema_file)
 
         assert result.is_success, f"Failed to parse: {result.error}"
         entries = result.unwrap()
@@ -134,7 +134,7 @@ class TestRfcSchemaParserRealFixtures:
             config=FlextLdifConfig(),
         )
 
-        result = parser.parse_file(schema_file)
+        result = parser.parse_ldif_file(schema_file)
 
         assert result.is_success, f"Failed to parse: {result.error}"
 
@@ -162,7 +162,7 @@ class TestRfcWriterRealFixtures:
         parser = FlextLdifParser(
             config=FlextLdifConfig(),
         )
-        parse_result = parser.parse_file(source_file)
+        parse_result = parser.parse_ldif_file(source_file)
 
         assert parse_result.is_success, f"Failed to parse source: {parse_result.error}"
         entries = parse_result.unwrap()
@@ -189,7 +189,7 @@ class TestRfcWriterRealFixtures:
         reparser = FlextLdifParser(
             config=FlextLdifConfig(),
         )
-        reparse_result = reparser.parse_file(output_file)
+        reparse_result = reparser.parse_ldif_file(output_file)
 
         assert reparse_result.is_success, f"Failed to re-parse: {reparse_result.error}"
         reparsed_entries = reparse_result.unwrap()
@@ -212,7 +212,7 @@ class TestRfcWriterRealFixtures:
             config=FlextLdifConfig(),
         )
 
-        parse_result = parser.parse_file(acl_file)
+        parse_result = parser.parse_ldif_file(acl_file)
 
         if not parse_result.is_success:
             pytest.skip(f"Failed to parse ACL fixture: {parse_result.error}")
@@ -255,7 +255,7 @@ class TestRfcExceptionHandlingRealScenarios:
             config=FlextLdifConfig(),
         )
 
-        result = parser.parse_file(Path("/nonexistent/file.ldif"))
+        result = parser.parse_ldif_file(Path("/nonexistent/file.ldif"))
 
         assert not result.is_success
         assert result.error is not None
@@ -313,7 +313,7 @@ class TestRfcExceptionHandlingRealScenarios:
             config=FlextLdifConfig(),
         )
 
-        result = parser.parse_file(empty_file)
+        result = parser.parse_ldif_file(empty_file)
 
         # Empty file should parse successfully with 0 entries
         assert result.is_success

@@ -168,22 +168,20 @@ class FlextLdifWriter(FlextService[Any]):
 
         output = StringIO()
 
-        # Only include headers and metadata if there are entries to write
-        if processed_entries:
-            # Include version header if requested
-            if options.include_version_header:
-                output.write(
-                    FlextLdifConstants.ConfigDefaults.LDIF_VERSION_STRING + "\n"
-                )
+        # Include version header if requested (even for empty entry lists)
+        if options.include_version_header:
+            output.write(FlextLdifConstants.ConfigDefaults.LDIF_VERSION_STRING + "\n")
 
-            # Include global timestamp comment if requested
-            if options.include_timestamps:
-                timestamp = datetime.now(UTC).isoformat()
-                output.write(f"# Generated on: {timestamp}\n")
-                output.write(f"# Total entries: {len(processed_entries)}\n\n")
+        # Include global timestamp comment if requested (even for empty entry lists)
+        if options.include_timestamps:
+            timestamp = datetime.now(UTC).isoformat()
+            output.write(f"# Generated on: {timestamp}\n")
+            output.write(f"# Total entries: {len(processed_entries)}\n")
+            if processed_entries:
+                output.write("\n")  # Extra newline only if there are entries
 
         # Delegate serialization to quirks - quirks handle ALL conversion logic
-        entry_quirk = quirk.entry
+        entry_quirk = quirk.entry_quirk
         if entry_quirk is None:
             msg = f"No entry quirk available for server type: '{target_server_type}'"
             raise ValueError(msg)
@@ -271,6 +269,8 @@ class FlextLdifWriter(FlextService[Any]):
             or options.base64_encode_binary
             or not options.write_empty_values
             or options.respect_attribute_order
+            or options.ldif_changetype is not None
+            or not options.fold_long_lines  # Include folding check for entry metadata
         )
 
         if not needs_formatting:
@@ -554,14 +554,13 @@ class FlextLdifWriter(FlextService[Any]):
             Formatted LDIF content
 
         """
-        # Determine line width to use:
-        # - If fold_long_lines=True: use format_options.line_width (customizable)
-        # - If fold_long_lines=False: still must fold at 76 bytes (RFC 2849 requirement)
-        line_width = (
-            format_options.line_width
-            if format_options.fold_long_lines
-            else 76  # RFC 2849 mandatory limit
-        )
+        # Determine if line folding should be applied
+        # fold_long_lines=False disables all line folding
+        if not format_options.fold_long_lines:
+            return ldif_content
+
+        # Determine line width to use for folding
+        line_width = format_options.line_width
 
         # Apply line folding
         lines = ldif_content.splitlines()

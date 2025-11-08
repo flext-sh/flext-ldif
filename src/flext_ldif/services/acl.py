@@ -85,8 +85,18 @@ class FlextLdifAcl(FlextService[FlextLdifModels.AclResponse]):
             )
 
         # Get ACL attribute name for this server type (from quirk)
-        acl_attribute = self._get_acl_attribute_for_server(server_type)
+        acl_attribute_result = self._get_acl_attribute_for_server(server_type)
+
+        # Handle error case - propagate failure
+        if acl_attribute_result.is_failure:
+            return FlextResult[FlextLdifModels.AclResponse].fail(
+                f"Failed to determine ACL attribute: {acl_attribute_result.error}",
+            )
+
+        # Extract attribute name (may be None if server has no ACL support)
+        acl_attribute = acl_attribute_result.unwrap()
         if not acl_attribute:
+            # Server has no ACL attributes - return empty response (success case)
             return FlextResult[FlextLdifModels.AclResponse].ok(
                 FlextLdifModels.AclResponse(
                     acls=[],
@@ -115,15 +125,43 @@ class FlextLdifAcl(FlextService[FlextLdifModels.AclResponse]):
             )
 
         acls: list[FlextLdifModels.Acl] = []
+        failed_acls = 0
+        total_acl_values = len(acl_values)
+        max_acl_log_length = 100  # Maximum ACL value length to include in error logs
 
-        for acl_value in acl_values:
+        for idx, acl_value in enumerate(acl_values):
             parse_result: FlextResult[FlextLdifModels.Acl] = self.parse(
                 acl_value,
                 server_type,
             )
             if not parse_result.is_success:
+                failed_acls += 1
+                truncated_acl = (
+                    acl_value[:max_acl_log_length]
+                    if len(acl_value) > max_acl_log_length
+                    else acl_value
+                )
+                self._logger.error(
+                    "FAILED to parse ACL value %d/%d: %s. Entry DN: %s, Error: %s",
+                    idx + 1,
+                    total_acl_values,
+                    truncated_acl,
+                    entry.dn.value if entry.dn else "Unknown",
+                    parse_result.error,
+                )
                 continue
             acls.append(parse_result.value)
+
+        # Log summary if failures occurred
+        if failed_acls > 0:
+            self._logger.error(
+                "ACL extraction completed with %d FAILURES out of %d ACL values. "
+                "Successful: %d, Failed: %d",
+                failed_acls,
+                total_acl_values,
+                len(acls),
+                failed_acls,
+            )
 
         return FlextResult[FlextLdifModels.AclResponse].ok(
             FlextLdifModels.AclResponse(
@@ -132,19 +170,24 @@ class FlextLdifAcl(FlextService[FlextLdifModels.AclResponse]):
                     total_entries_processed=1,
                     entries_with_acls=1 if acls else 0,
                     total_acls_extracted=len(acls),
+                    failed_acls=failed_acls,
                     acl_attribute_name=acl_attribute,
                 ),
             ),
         )
 
-    def _get_acl_attribute_for_server(self, server_type: str) -> str | None:
+    def _get_acl_attribute_for_server(
+        self,
+        server_type: str,
+    ) -> FlextResult[str | None]:
         """Get ACL attribute name for a given server type using quirks.
 
         Args:
             server_type: LDAP server type
 
         Returns:
-            ACL attribute name or None if server type has no ACL attributes
+            FlextResult containing ACL attribute name or None if server has no ACL attributes
+            Returns FlextResult.fail() if error occurs during quirk lookup
 
         """
         # Get ACL attribute name from quirks - no fallback
@@ -156,18 +199,21 @@ class FlextLdifAcl(FlextService[FlextLdifModels.AclResponse]):
                     if hasattr(quirk, "acl_attribute_name"):
                         attr_name = getattr(quirk, "acl_attribute_name", None)
                         if attr_name:
-                            return cast("str", attr_name)
+                            return FlextResult[str | None].ok(cast("str", attr_name))
 
-            # No quirks available for this server type - return None
-            # (Caller will handle appropriately)
-            return None
+            # No quirks available for this server type - return success with None
+            # This is a legitimate case (not all servers have ACL attributes)
+            return FlextResult[str | None].ok(None)
 
         except (AttributeError, TypeError, ValueError) as e:
+            # Error occurred - return failure (not silent None)
             self._logger.exception(
                 f"Failed to get ACL attribute for server type {server_type}",
                 exception=e,
             )
-            return None
+            return FlextResult[str | None].fail(
+                f"Error retrieving ACL attribute for {server_type}: {e}",
+            )
 
     @override
     @FlextDecorators.log_operation("acl_service_health_check")

@@ -27,7 +27,7 @@ class TestOidSchemaWriting:
     @pytest.fixture
     def oid_schema(self, oid_server: FlextLdifServersOid) -> FlextLdifServersOid.Schema:
         """Create OID schema quirk instance."""
-        return oid_server.schema
+        return oid_server.schema_quirk
 
     @pytest.fixture
     def oid_fixtures(self) -> FlextLdifFixtures.OID:
@@ -344,7 +344,7 @@ class TestOidObjectclassTypoFix:
     @pytest.fixture
     def oid_schema(self) -> FlextLdifServersOid.Schema:
         """Create OID schema quirk instance."""
-        return FlextLdifServersOid().schema
+        return FlextLdifServersOid().schema_quirk
 
     def test_write_fixes_auxillary_typo(
         self,
@@ -394,7 +394,7 @@ class TestOidSyntaxAndMatchingRuleTransformations:
     @pytest.fixture
     def oid_schema(self) -> FlextLdifServersOid.Schema:
         """Create OID schema quirk instance."""
-        return FlextLdifServersOid().schema
+        return FlextLdifServersOid().schema_quirk
 
     def test_parse_applies_syntax_oid_replacement(
         self,
@@ -504,7 +504,7 @@ class TestOidAttributeNameTransformations:
     @pytest.fixture
     def oid_schema(self) -> FlextLdifServersOid.Schema:
         """Create OID schema quirk instance."""
-        return FlextLdifServersOid().schema
+        return FlextLdifServersOid().schema_quirk
 
     def test_write_preserves_attribute_names(
         self,

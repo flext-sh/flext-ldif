@@ -37,7 +37,9 @@ References:
 
 from __future__ import annotations
 
-from flext_core import FlextLogger, FlextResult
+from typing import override
+
+from flext_core import FlextLogger, FlextResult, FlextService
 
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.utilities import FlextLdifUtilities
@@ -45,7 +47,7 @@ from flext_ldif.utilities import FlextLdifUtilities
 logger = FlextLogger(__name__)
 
 
-class FlextLdifSchema:
+class FlextLdifSchema(FlextService[dict[str, object]]):
     """Unified schema validation and transformation service.
 
     Centralizes all schema-related operations that were previously scattered
@@ -53,6 +55,12 @@ class FlextLdifSchema:
 
     Provides a clean, server-agnostic interface for schema parsing, validation,
     and transformation using server configuration.
+
+    FlextService V2 Integration:
+    - Pydantic fields for service configuration
+    - Builder pattern for complex workflows
+    - execute() method returns service status
+    - Direct methods for immediate operations
 
     Methods:
         - parse_attribute(): Parse attribute definition
@@ -69,16 +77,79 @@ class FlextLdifSchema:
     # OID validation configuration
     MIN_OID_PARTS: int = 2  # Minimum parts in OID (e.g., "1.2")
 
-    def __init__(self, server_type: str) -> None:
-        """Initialize schema service for a server type.
+    # ════════════════════════════════════════════════════════════════════════
+    # PYDANTIC FIELDS (for builder pattern)
+    # ════════════════════════════════════════════════════════════════════════
+
+    server_type: str = "rfc"
+
+    @override
+    def execute(self) -> FlextResult[dict[str, object]]:
+        """Execute schema service self-check.
+
+        Returns:
+            FlextResult containing service status
+
+        """
+        return FlextResult[dict[str, object]].ok({
+            "service": "SchemaService",
+            "server_type": self.server_type,
+            "status": "operational",
+            "rfc_compliance": "RFC 4512",
+            "operations": [
+                "parse_attribute",
+                "parse_objectclass",
+                "validate_attribute",
+                "validate_objectclass",
+                "write_attribute",
+                "write_objectclass",
+            ],
+        })
+
+    # ════════════════════════════════════════════════════════════════════════
+    # FLUENT BUILDER PATTERN
+    # ════════════════════════════════════════════════════════════════════════
+
+    @classmethod
+    def builder(cls) -> FlextLdifSchema:
+        """Create fluent builder for schema operations.
+
+        Returns:
+            Service instance for method chaining
+
+        Example:
+            schema = (FlextLdifSchema.builder()
+                .with_server_type("oud")
+                .build())
+
+        """
+        return cls()
+
+    def with_server_type(self, server_type: str) -> FlextLdifSchema:
+        """Set server type (fluent builder).
 
         Args:
             server_type: Server type (e.g., "oud", "oid", "rfc")
 
+        Returns:
+            Self for chaining
+
         """
         self.server_type = server_type
-        self.service_name = f"FlextLdifSchema[{server_type}]"
-        logger.debug(f"Initialized {self.service_name}")
+        return self
+
+    def build(self) -> FlextLdifSchema:
+        """Build and return schema service instance (fluent terminal).
+
+        Returns:
+            Configured schema service instance
+
+        """
+        return self
+
+    # ════════════════════════════════════════════════════════════════════════
+    # DIRECT SCHEMA OPERATIONS
+    # ════════════════════════════════════════════════════════════════════════
 
     def parse_attribute(
         self,
@@ -327,7 +398,7 @@ class FlextLdifSchema:
 
     def __repr__(self) -> str:
         """String representation."""
-        return f"{self.service_name}"
+        return f"FlextLdifSchema[{self.server_type}]"
 
 
 __all__ = [

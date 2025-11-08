@@ -172,14 +172,14 @@ class FlextLdifServersApache(FlextLdifServersRfc):
 
         """
         # Try schema methods first (most common)
-        if hasattr(self.schema, name):
-            return getattr(self.schema, name)
+        if hasattr(self.schema_quirk, name):
+            return getattr(self.schema_quirk, name)
         # Try acl methods
-        if hasattr(self.acl, name):
-            return getattr(self.acl, name)
+        if hasattr(self.acl_quirk, name):
+            return getattr(self.acl_quirk, name)
         # Try entry methods
-        if hasattr(self.entry, name):
-            return getattr(self.entry, name)
+        if hasattr(self.entry_quirk, name):
+            return getattr(self.entry_quirk, name)
         # Not found in any nested instance
         msg = f"'{type(self).__name__}' object has no attribute '{name}'"
         raise AttributeError(msg)
@@ -320,7 +320,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
                 # Fix common ObjectClass issues (RFC 4512 compliance)
                 FlextLdifUtilities.ObjectClass.fix_missing_sup(
                     oc_data,
-                    server_type=self._get_server_type(),
+                    _server_type=self._get_server_type(),
                 )
                 FlextLdifUtilities.ObjectClass.fix_kind_mismatch(
                     oc_data,

@@ -25,14 +25,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import base64
-import sys
-
-# Python 3.9+ Compatibility: base64.decodestring was removed in Python 3.9
-# but ldif3 still uses it. Patch it here before any ldif3 imports.
-if sys.version_info >= (3, 9) and not hasattr(base64, "decodestring"):
-    base64.decodestring = base64.decodebytes
-
 from flext_ldif.api import FlextLdif
 from flext_ldif.config import FlextLdifConfig
 from flext_ldif.constants import FlextLdifConstants
@@ -50,7 +42,6 @@ __email__ = "dev@flext.com"
 
 __all__ = [
     "Dn",
-    "DnService",
     "FlextLdif",
     "FlextLdifConfig",
     "FlextLdifConstants",
@@ -58,5 +49,4 @@ __all__ = [
     "FlextLdifModels",
     "FlextLdifTypes",
     "Validation",
-    "ValidationService",
 ]

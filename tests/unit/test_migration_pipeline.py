@@ -65,6 +65,7 @@ class TestMigrationPipelineInitialization:
             "hierarchy_objectclasses": ["organization"],
             "user_objectclasses": ["inetOrgPerson"],
             "group_objectclasses": ["groupOfNames"],
+            "acl_attributes": [],
         }
 
         pipeline = FlextLdifMigrationPipeline(

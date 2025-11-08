@@ -19,6 +19,7 @@ Usage:
     python scripts/analyze_and_replace.py --execute
 """
 
+import argparse
 import sys
 from collections import defaultdict
 from dataclasses import dataclass
@@ -41,6 +42,7 @@ class ConstantsAnalyzer:
     """Analyze ALL constant usage in codebase."""
 
     def __init__(self, project_root: Path) -> None:
+        """Initialize the analyzer with project root path."""
         self.project_root = project_root
         self.references: list[Reference] = []
 
@@ -138,19 +140,20 @@ class ConstantsAnalyzer:
             for line_num, line in enumerate(lines, 1):
                 # Check for hard-coded values
                 for old_val, new_val in self.hardcoded_map.items():
-                    if old_val in line:
-                        # Verify context (not in comment, not in string that shouldn't be replaced)
-                        if self._should_replace_hardcoded(line, old_val):
-                            refs.append(
-                                Reference(
-                                    file=file_path,
-                                    line_number=line_num,
-                                    line_content=line,
-                                    old_value=old_val,
-                                    new_value=new_val,
-                                    reference_type="hardcoded",
-                                )
+                    # Verify context (not in comment, not in string that shouldn't be replaced)
+                    if old_val in line and self._should_replace_hardcoded(
+                        line, old_val
+                    ):
+                        refs.append(
+                            Reference(
+                                file=file_path,
+                                line_number=line_num,
+                                line_content=line,
+                                old_value=old_val,
+                                new_value=new_val,
+                                reference_type="hardcoded",
                             )
+                        )
 
                 # Check for old references
                 for old_ref, new_ref in self.reference_map.items():
@@ -218,14 +221,14 @@ class ConstantsAnalyzer:
         )
         reference_count = total_refs - hardcoded_count
 
-        lines.append(f"Total references found: {total_refs}")
-        lines.append(f"  - Hard-coded values: {hardcoded_count}")
-        lines.append(f"  - Old references: {reference_count}")
-        lines.append(f"Files affected: {len(references)}")
-        lines.append("")
-
-        # By type
-        lines.append("HARD-CODED VALUES TO REPLACE:")
+        lines.extend([
+            f"Total references found: {total_refs}",
+            f"  - Hard-coded values: {hardcoded_count}",
+            f"  - Old references: {reference_count}",
+            f"Files affected: {len(references)}",
+            "",
+            "HARD-CODED VALUES TO REPLACE:",
+        ])
         hardcoded_by_value = defaultdict(int)
         for refs in references.values():
             for ref in refs:
@@ -234,10 +237,7 @@ class ConstantsAnalyzer:
 
         for value, count in sorted(hardcoded_by_value.items(), key=lambda x: -x[1]):
             lines.append(f"  {value}: {count} occurrences")
-        lines.append("")
-
-        # By file
-        lines.append("REPLACEMENTS BY FILE:")
+        lines.extend(["", "REPLACEMENTS BY FILE:"])
         for file_path, refs in sorted(references.items()):
             lines.append(f"\n{file_path}: {len(refs)} replacements")
             # Show first 5
@@ -253,6 +253,7 @@ class ConstantsAnalyzer:
 
     def dry_run_replace(self, references: dict[str, list[Reference]]) -> dict[str, str]:
         """Dry-run: show what would be replaced.
+
         Returns dict of {file_path: new_content}.
         """
         dry_run_results = {}
@@ -292,8 +293,6 @@ class ConstantsAnalyzer:
 
 def main() -> None:
     """Main entry point."""
-    import argparse
-
     parser = argparse.ArgumentParser(description="Analyze and replace constants")
     parser.add_argument(
         "--dry-run",

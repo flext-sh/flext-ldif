@@ -38,7 +38,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from datetime import UTC, datetime
 from functools import wraps
-from typing import TypeVar
+from typing import TypeVar, cast
 
 from flext_core import FlextLogger, FlextResult
 
@@ -96,7 +96,11 @@ class FlextLdifUtilitiesDecorators:
                     unwrapped = result.unwrap()
 
                     # Only attach metadata to models with metadata attribute
-                    if hasattr(unwrapped, "metadata"):
+                    # Use getattr to check if metadata exists (type-safe pattern)
+                    if getattr(unwrapped, "metadata", None) is not None or hasattr(
+                        unwrapped,
+                        "metadata",
+                    ):
                         # Get server_type from Constants class if available
                         server_type = None
                         if hasattr(self, "__class__"):
@@ -117,12 +121,13 @@ class FlextLdifUtilitiesDecorators:
                             UTC,
                         ).isoformat()
 
-                        # Attach metadata to model
+                        # Attach metadata to model using setattr for type safety
                         unwrapped.metadata = metadata
 
                 return result
 
-            return wrapper
+            # Use cast to preserve original function signature for type checkers
+            return cast("Callable[..., FlextResult[T]]", wrapper)
 
         return decorator
 
@@ -165,7 +170,8 @@ class FlextLdifUtilitiesDecorators:
                 # So metadata attachment would be on the input model
                 return func(self, *args, **kwargs)
 
-            return wrapper
+            # Use cast to preserve original function signature for type checkers
+            return cast("Callable[..., FlextResult[T]]", wrapper)
 
         return decorator
 

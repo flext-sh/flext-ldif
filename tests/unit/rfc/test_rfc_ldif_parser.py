@@ -95,23 +95,6 @@ photo:: UGhvdG8gZGF0YQ==
         result = real_parser_service.parse(ldif_content, input_source="string")
         assert result.is_success or result.is_failure
 
-    def test_base64_compatibility_patch(
-        self,
-        real_parser_service: FlextLdifParser,
-    ) -> None:
-        """Test that base64 compatibility patch is applied correctly."""
-        # The patch should be applied during module import
-        # This test verifies that decodestring exists and works
-        # Use getattr to avoid type checker issues
-        decodestring_func = getattr(base64, "decodestring", None)
-        assert decodestring_func is not None
-        assert decodestring_func == base64.decodebytes
-
-        # Test that it actually works
-        test_data = b"SGVsbG8gV29ybGQ="  # "Hello World" in base64
-        decoded = decodestring_func(test_data)
-        assert decoded == b"Hello World"
-
 
 class TestRfcLdifWriterService:
     """Test RFC LDIF writer service."""
@@ -701,8 +684,6 @@ class TestRfcLdifWriterComprehensive:
         real_parser_service: FlextLdifParser,
     ) -> None:
         """Test writing entry with binary attribute data."""
-        import base64
-
         binary_data = b"binary content for testing"
         # Base64 encode the binary data for LDIF compatibility
         encoded_data = base64.b64encode(binary_data).decode("ascii")

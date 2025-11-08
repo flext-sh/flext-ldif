@@ -184,13 +184,14 @@ class TestWriterFormatOptions:
         assert result.is_success
         output = result.unwrap()
 
-        # Extract attribute lines (skip dn and empty lines)
+        # Extract attribute lines (skip dn, version, changetype, and empty lines)
         lines = [
             line.strip()
             for line in output.split("\n")
             if line.strip()
             and not line.startswith("dn:")
             and not line.startswith("version:")
+            and not line.startswith("changetype:")
         ]
         attribute_lines = [
             line for line in lines if ":" in line and not line.startswith("#")

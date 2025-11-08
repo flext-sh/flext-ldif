@@ -403,17 +403,17 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
     # =========================================================================
 
     @property
-    def schema(self) -> Schema:
+    def schema_quirk(self) -> FlextLdifServersBase.Schema:
         """Get the Schema quirk instance."""
         return self._schema_quirk
 
     @property
-    def acl(self) -> Acl:
+    def acl_quirk(self) -> FlextLdifServersBase.Acl:
         """Get the Acl quirk instance."""
         return self._acl_quirk
 
     @property
-    def entry(self) -> Entry:
+    def entry_quirk(self) -> FlextLdifServersBase.Entry:
         """Get the Entry quirk instance."""
         return self._entry_quirk
 
@@ -1798,6 +1798,44 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
             # No parent found - error
             msg = f"{cls.__name__} nested class must have parent with Constants.SERVER_TYPE"
             raise AttributeError(msg)
+
+        # =====================================================================
+        # ServerAclProtocol Implementation - Required by Protocol
+        # =====================================================================
+
+        # RFC Foundation - Standard LDAP ACL attributes (all servers start here)
+        RFC_ACL_ATTRIBUTES: ClassVar[list[str]] = [
+            "aci",  # Standard LDAP (RFC 4876)
+            "acl",  # Alternative format
+            "olcAccess",  # OpenLDAP
+            "aclRights",  # Generic rights
+            "aclEntry",  # ACL entry
+        ]
+
+        def get_acl_attributes(self) -> list[str]:
+            """Get ACL attributes for this server.
+
+            Returns RFC foundation attributes. Subclasses should override to add
+            server-specific attributes.
+
+            Returns:
+                List of ACL attribute names (lowercase)
+
+            """
+            return self.RFC_ACL_ATTRIBUTES
+
+        def is_acl_attribute(self, attribute_name: str) -> bool:
+            """Check if attribute is ACL attribute (case-insensitive).
+
+            Args:
+                attribute_name: Attribute name to check
+
+            Returns:
+                True if attribute is ACL attribute, False otherwise
+
+            """
+            all_attrs = self.get_acl_attributes()
+            return attribute_name.lower() in [a.lower() for a in all_attrs]
 
         # Control auto-execution
         auto_execute: ClassVar[bool] = False

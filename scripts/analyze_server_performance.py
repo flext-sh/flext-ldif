@@ -21,6 +21,24 @@ from dataclasses import dataclass
 
 import psutil
 
+# Add src to path for script execution
+sys.path.insert(0, "src")
+
+from flext_ldif.servers import (
+    FlextLdifServersAd,
+    FlextLdifServersApache,
+    FlextLdifServersDs389,
+    FlextLdifServersNovell,
+    FlextLdifServersOid,
+    FlextLdifServersOpenldap,
+    FlextLdifServersOpenldap1,
+    FlextLdifServersOud,
+    FlextLdifServersRelaxed,
+    FlextLdifServersRfc,
+    FlextLdifServersTivoli,
+)
+from flext_ldif.services.server import FlextLdifServer
+
 
 @dataclass
 class ServerMetrics:
@@ -117,27 +135,6 @@ def main() -> None:
     print("=" * 80)
     print()
 
-    # Add src to path
-    sys.path.insert(0, "src")
-
-    # Import servers after path is set (required: sys.path modified above)
-    from flext_ldif.servers import (
-        FlextLdifServersAd,
-        FlextLdifServersApache,
-        FlextLdifServersDs389,
-        FlextLdifServersNovell,
-        FlextLdifServersOid,
-        FlextLdifServersOpenldap,
-        FlextLdifServersOpenldap1,
-        FlextLdifServersOud,
-        FlextLdifServersRelaxed,
-        FlextLdifServersRfc,
-        FlextLdifServersTivoli,
-    )
-    from flext_ldif.services.server import FlextLdifServer
-
-    # Note: Imports moved to top-level for linting compliance
-    # Import time benchmarking removed (use profiling tools if needed)
     print("Server Performance Analysis")
     print("=" * 50)
     print()

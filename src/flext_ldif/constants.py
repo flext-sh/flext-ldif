@@ -3,6 +3,18 @@
 This module defines constant values and enumerations used throughout the
 LDIF library. Types, protocols, and models are defined in separate modules.
 
+ACL Attribute Detection Strategy
+================================
+Uses HIERARCHY pattern with RFC foundation + server quirks
+- RFC Foundation: aci, acl, olcAccess (all LDAP servers)
+- Server Quirks: Added per server type (OID, OUD, AD)
+- Override: categorization_rules parameter can override completely
+
+This allows:
+1. Auto-detection: acl_attrs = AclAttributeRegistry.get_acl_attributes("oid")
+2. Override: acl_attrs = categorization_rules["acl_attributes"]
+3. Type-safe: AclAttributeRegistry.is_acl_attribute(attr, "oud")
+
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 
@@ -2396,6 +2408,69 @@ class FlextLdifConstants(FlextConstants):
     # - Apache: FlextLdifServersApache.Constants.OPERATIONAL_ATTRIBUTES, PRESERVE_ON_MIGRATION
     # - OpenLDAP1: FlextLdifServersOpenldap1.Constants.OPERATIONAL_ATTRIBUTES, PRESERVE_ON_MIGRATION
     # Use the server-specific Constants classes instead.
+
+    class AclAttributeRegistry:
+        """LDAP Server-specific ACL attributes with RFC foundation.
+
+        Implements HIERARCHY pattern:
+        - RFC Foundation: aci, acl, olcAccess (all servers)
+        - Server Quirks: Incremental additions per server type
+        - Override: categorization_rules can override completely
+        """
+
+        # RFC Foundation - Standard LDAP (all servers)
+        RFC_FOUNDATION: Final[list[str]] = [
+            "aci",  # Standard LDAP ACL
+            "acl",  # Alternative ACL format
+            "olcAccess",  # OpenLDAP Access Control
+            "aclRights",  # Generic ACL Rights
+            "aclEntry",  # ACL Entry reference
+        ]
+
+        # Server-specific additions (incremental over RFC)
+        SERVER_QUIRKS: Final[dict[str, list[str]]] = {
+            "oid": [
+                "orclaci",  # Oracle Internet Directory ACI
+                "orclentrylevelaci",  # OID entry-level ACI
+                "orclContainerLevelACL",  # OID container ACL
+            ],
+            "oud": [
+                "orclaci",  # Oracle Unified Directory ACI
+                "orclentrylevelaci",  # OUD entry-level ACI
+            ],
+            "ad": [
+                "nTSecurityDescriptor",  # Active Directory security descriptor
+            ],
+            "generic": [],  # No additions, just RFC
+        }
+
+        @classmethod
+        def get_acl_attributes(cls, server_type: str | None = None) -> list[str]:
+            """Get ACL attributes with RFC foundation + server quirks.
+
+            Args:
+                server_type: 'oid', 'oud', 'ad', 'generic', or None
+                    (defaults to generic)
+
+            Returns:
+                List of ACL attribute names (RFC + server-specific)
+
+            """
+            base = cls.RFC_FOUNDATION.copy()
+
+            # Add server-specific quirks if provided
+            if server_type and server_type in cls.SERVER_QUIRKS:
+                base.extend(cls.SERVER_QUIRKS[server_type])
+
+            return base
+
+        @classmethod
+        def is_acl_attribute(
+            cls, attribute_name: str, server_type: str | None = None
+        ) -> bool:
+            """Check if attribute is an ACL attribute for given server."""
+            acl_attrs = cls.get_acl_attributes(server_type)
+            return attribute_name.lower() in [a.lower() for a in acl_attrs]
 
 
 __all__ = [

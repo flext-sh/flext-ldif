@@ -633,12 +633,13 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                 for attr_name, attr_values in attributes.items():
                     processed_values: list[str] = []
                     for value in attr_values:
+                        # Explicitly handle both bytes and str types
+                        str_value: str
                         if isinstance(value, bytes):
-                            processed_values.append(
-                                base64.b64encode(value).decode("ascii"),
-                            )
+                            str_value = base64.b64encode(value).decode("ascii")
                         else:
-                            processed_values.append(str(value))
+                            str_value = str(value)
+                        processed_values.append(str_value)
                     processed_attributes[attr_name] = processed_values
 
                 # Add metadata attributes
