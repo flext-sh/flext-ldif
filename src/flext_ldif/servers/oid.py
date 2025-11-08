@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import enum as enum_module
 from collections.abc import Mapping
+from datetime import UTC, datetime
 from typing import ClassVar
 
 from flext_core import FlextLogger, FlextResult
@@ -597,8 +598,6 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                 FlextResult with parsed OID attribute data with metadata
 
             """
-            from datetime import UTC, datetime
-
             try:
                 # Use RFC baseline parser with lenient mode for OID's non-standard syntax
                 result = FlextLdifUtilities.Parser.parse_rfc_attribute(
@@ -696,8 +695,6 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                 FlextResult with parsed OID objectClass data with metadata
 
             """
-            from datetime import UTC, datetime
-
             try:
                 # Use RFC baseline parser for objectClass parsing
                 # Note: parse_rfc_objectclass does not support case_insensitive parameter
@@ -1246,7 +1243,40 @@ class FlextLdifServersOid(FlextLdifServersRfc):
         Handles OID-specific entry transformations:
         - Converts boolean attribute values from OID format ("0"/"1") to RFC format ("TRUE"/"FALSE")
         - Stores conversion metadata for audit and round-trip compatibility
+        - Converts OID-specific attribute names to RFC-canonical format (orclaci → aci)
         """
+
+        def _normalize_attribute_name(self, attr_name: str) -> str:
+            """Normalize OID attribute names to RFC-canonical format.
+
+            Converts Oracle OID-specific attribute names to RFC standard equivalents.
+            This transformation happens during the PARSING phase (Phase 1) to create
+            RFC-canonical entries that can be processed uniformly by downstream logic.
+
+            Transformations:
+            - orclaci → aci: OID access control list to RFC ACI
+            - orclentrylevelaci → aci: OID entry-level ACL to RFC ACI
+
+            All other attributes are delegated to the RFC base implementation for
+            standard normalization (e.g., objectclass → objectClass).
+
+            Args:
+                attr_name: Raw attribute name from LDIF
+
+            Returns:
+                RFC-canonical attribute name
+
+            """
+            attr_lower = attr_name.lower()
+
+            # OID ACL attributes → RFC ACI (Phase 1: Parsing transformation)
+            if attr_lower == "orclaci":
+                return "aci"  # Oracle OID ACL → RFC standard ACI
+            if attr_lower == "orclentrylevelaci":
+                return "aci"  # Oracle OID entry-level ACI → RFC standard ACI
+
+            # Delegate to RFC for standard normalization (objectclass, etc.)
+            return super()._normalize_attribute_name(attr_name)
 
         def _parse_entry(
             self,

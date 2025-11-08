@@ -9,11 +9,13 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import base64
+import time
+import uuid
 from collections.abc import Sequence
 from datetime import UTC, datetime
 from io import StringIO
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from flext_core import FlextResult, FlextService
 
@@ -94,6 +96,10 @@ class FlextLdifWriter(FlextService[Any]):
         3. Header generation
         4. Output routing
         """
+        # Track write metrics (MANDATORY - eventos obrigatórios)
+        start_time = time.perf_counter()
+        entries_count = len(entries)
+
         # Pre-flight validation
         validation_result = self._validate_write_request(output_target, output_path)
         if validation_result.is_failure:
@@ -121,7 +127,7 @@ class FlextLdifWriter(FlextService[Any]):
             header_content = header_result.unwrap()
 
             # Step 3: Route to output
-            return self._route_output(
+            result = self._route_output(
                 denormalized_entries,
                 output_target,
                 output_path,
@@ -130,6 +136,42 @@ class FlextLdifWriter(FlextService[Any]):
                 len(entries),
                 target_server_type,
             )
+
+            # Emit WriteEvent ALWAYS when write succeeded (MANDATORY - eventos obrigatórios)
+            if result.is_success:
+                write_duration_ms = (time.perf_counter() - start_time) * 1000.0
+
+                # Map output_target to WriteEvent.output_type Literal values
+                output_type_mapping: dict[str, Literal["file", "string", "stream"]] = {
+                    "file": "file",
+                    "string": "string",
+                    "model": "stream",
+                    "ldap3": "stream",
+                }
+                mapped_output_type = output_type_mapping.get(output_target, "file")
+
+                write_event = FlextLdifModels.WriteEvent(
+                    unique_id=f"write_{uuid.uuid4().hex[:8]}",
+                    event_type="ldif.write",
+                    aggregate_id=str(output_path)
+                    if output_path
+                    else f"write_{uuid.uuid4().hex[:8]}",
+                    created_at=datetime.now(UTC),
+                    entries_written=entries_count,
+                    write_duration_ms=write_duration_ms,
+                    output_type=mapped_output_type,
+                    output_file=str(output_path) if output_path else None,
+                    target_server_type=target_server_type,
+                )
+
+                # Attach event to WriteResponse statistics
+                response = result.unwrap()
+                if isinstance(response, FlextLdifModels.WriteResponse):
+                    updated_stats = response.statistics.add_event(write_event)
+                    response = response.model_copy(update={"statistics": updated_stats})
+                    result = FlextResult.ok(response)
+
+            return result
 
         except Exception as e:
             return FlextResult.fail(f"An unexpected error occurred during write: {e}")
@@ -168,17 +210,21 @@ class FlextLdifWriter(FlextService[Any]):
 
         output = StringIO()
 
-        # Include version header if requested (even for empty entry lists)
-        if options.include_version_header:
-            output.write(FlextLdifConstants.ConfigDefaults.LDIF_VERSION_STRING + "\n")
+        # Only write headers if there are entries to write
+        # Empty entry list produces empty output (RFC 2849 compliance)
+        if processed_entries:
+            # Include version header if requested
+            if options.include_version_header:
+                output.write(
+                    FlextLdifConstants.ConfigDefaults.LDIF_VERSION_STRING + "\n"
+                )
 
-        # Include global timestamp comment if requested (even for empty entry lists)
-        if options.include_timestamps:
-            timestamp = datetime.now(UTC).isoformat()
-            output.write(f"# Generated on: {timestamp}\n")
-            output.write(f"# Total entries: {len(processed_entries)}\n")
-            if processed_entries:
-                output.write("\n")  # Extra newline only if there are entries
+            # Include global timestamp comment if requested
+            if options.include_timestamps:
+                timestamp = datetime.now(UTC).isoformat()
+                output.write(f"# Generated on: {timestamp}\n")
+                output.write(f"# Total entries: {len(processed_entries)}\n")
+                output.write("\n")  # Extra newline before entries
 
         # Delegate serialization to quirks - quirks handle ALL conversion logic
         entry_quirk = quirk.entry_quirk
@@ -229,7 +275,7 @@ class FlextLdifWriter(FlextService[Any]):
         return FlextResult.ok(
             FlextLdifModels.WriteResponse(
                 content=None,
-                statistics=FlextLdifModels.WriteStatistics(
+                statistics=FlextLdifModels.Statistics(
                     entries_written=0,
                     output_file=None,
                 ),
@@ -554,10 +600,9 @@ class FlextLdifWriter(FlextService[Any]):
             Formatted LDIF content
 
         """
-        # Determine if line folding should be applied
-        # fold_long_lines=False disables all line folding
-        if not format_options.fold_long_lines:
-            return ldif_content
+        # RFC 2849 ALWAYS requires lines > 76 bytes to be folded
+        # fold_long_lines=False only prevents aggressive folding of shorter lines
+        rfc_max_line_length = 76
 
         # Determine line width to use for folding
         line_width = format_options.line_width
@@ -567,12 +612,17 @@ class FlextLdifWriter(FlextService[Any]):
         folded_lines: list[str] = []
 
         for line in lines:
-            if len(line) <= line_width:
-                folded_lines.append(line)
-            else:
+            # RFC 2849 compliance: ALWAYS fold lines > 76 bytes
+            if len(line) > rfc_max_line_length:
                 # Use utility method for RFC 2849 compliant folding
+                folded = FlextLdifUtilities.Writer.fold(line, rfc_max_line_length)
+                folded_lines.extend(folded)
+            elif format_options.fold_long_lines and len(line) > line_width:
+                # Optional additional folding when fold_long_lines=True
                 folded = FlextLdifUtilities.Writer.fold(line, line_width)
                 folded_lines.extend(folded)
+            else:
+                folded_lines.append(line)
 
         return "\n".join(folded_lines) + "\n" if folded_lines else ""
 
@@ -636,7 +686,7 @@ class FlextLdifWriter(FlextService[Any]):
         return FlextResult.ok(
             FlextLdifModels.WriteResponse(
                 content=None,
-                statistics=FlextLdifModels.WriteStatistics(
+                statistics=FlextLdifModels.Statistics(
                     entries_written=original_count,
                     output_file=str(file_stats.get("path", "")),
                     file_size_bytes=file_size,

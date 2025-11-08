@@ -37,7 +37,7 @@ from __future__ import annotations
 
 import base64
 from collections.abc import Mapping
-from typing import ClassVar
+from typing import ClassVar, cast
 
 from flext_core import FlextLogger, FlextResult
 
@@ -589,7 +589,9 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             # RFC passthrough: store the raw line in the model.
             acl_model = FlextLdifModels.Acl(
                 raw_acl=acl_line,
-                server_type=server_type_value,
+                server_type=cast(
+                    "FlextLdifConstants.LiteralTypes.ServerType", server_type_value
+                ),
                 metadata=FlextLdifModels.QuirkMetadata(
                     quirk_type=server_type_value,
                     original_format=acl_line,
@@ -1162,6 +1164,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                     continue
 
                 # Generate replace operation for each value in this attribute
+                value: bytes | str
                 for value in values:
                     # Add separator between replace blocks (not before first)
                     if not first_attr:

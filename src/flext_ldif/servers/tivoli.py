@@ -551,6 +551,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                 # Process binary values if any (convert bytes to base64 strings)
                 for attr_name, attr_values in processed_attributes.items():
                     processed_values: list[str] = []
+                    value: bytes | str
                     for value in attr_values:
                         # Explicitly handle both bytes and str types
                         str_value: str

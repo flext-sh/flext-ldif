@@ -13,6 +13,7 @@ from flext_ldif._utilities.decorators import FlextLdifUtilitiesDecorators
 from flext_ldif._utilities.detection import FlextLdifUtilitiesDetection
 from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
 from flext_ldif._utilities.entry import FlextLdifUtilitiesEntry
+from flext_ldif._utilities.events import FlextLdifUtilitiesEvents
 from flext_ldif._utilities.object_class import FlextLdifUtilitiesObjectClass
 from flext_ldif._utilities.oid import FlextLdifUtilitiesOID
 from flext_ldif._utilities.parser import FlextLdifUtilitiesParser
@@ -26,6 +27,7 @@ __all__ = [
     "FlextLdifUtilitiesDecorators",
     "FlextLdifUtilitiesDetection",
     "FlextLdifUtilitiesEntry",
+    "FlextLdifUtilitiesEvents",
     "FlextLdifUtilitiesOID",
     "FlextLdifUtilitiesObjectClass",
     "FlextLdifUtilitiesParser",

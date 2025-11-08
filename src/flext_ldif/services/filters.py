@@ -166,11 +166,13 @@ from __future__ import annotations
 
 import fnmatch
 import re
+import time
+import uuid
 from datetime import UTC, datetime
 from typing import Any, cast
 
 from flext_core import FlextResult, FlextService
-from pydantic import Field, field_validator
+from pydantic import Field, PrivateAttr, field_validator
 
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
@@ -966,6 +968,9 @@ class FlextLdifFilters(FlextService[list[FlextLdifModels.Entry]]):
         description="Mark excluded entries in metadata (returns both matched + marked excluded). Default: False (returns only matched).",
     )
 
+    # Private attributes (Pydantic v2 PrivateAttr for internal state)
+    _last_event: FlextLdifModels.FilterEvent | None = PrivateAttr(default=None)
+
     # ════════════════════════════════════════════════════════════════════════
     # PYDANTIC VALIDATORS
     # ════════════════════════════════════════════════════════════════════════
@@ -1055,22 +1060,76 @@ class FlextLdifFilters(FlextService[list[FlextLdifModels.Entry]]):
         if not self.entries:
             return FlextResult[list[FlextLdifModels.Entry]].ok([])
 
+        # Track filtering metrics (MANDATORY - eventos obrigatórios)
+        start_time = time.perf_counter()
+        entries_before = len(self.entries)
+
         try:
             match self.filter_criteria:
                 case "dn":
-                    return self._execute_dn_filter()
+                    result = self._execute_dn_filter()
                 case "objectclass":
-                    return self._execute_objectclass_filter()
+                    result = self._execute_objectclass_filter()
                 case "attributes":
-                    return self._execute_attributes_filter()
+                    result = self._execute_attributes_filter()
                 case "base_dn":
-                    return self._execute_base_dn_filter()
+                    result = self._execute_base_dn_filter()
                 case _:
                     return FlextResult[list[FlextLdifModels.Entry]].fail(
                         f"Unknown filter_criteria: {self.filter_criteria}",
                     )
+
+            # Emit FilterEvent ALWAYS when filtering succeeded (MANDATORY - eventos obrigatórios)
+            if result.is_success:
+                filtered_entries = result.unwrap()
+                filter_duration_ms = (time.perf_counter() - start_time) * 1000.0
+                entries_after = len(filtered_entries)
+
+                filter_event = FlextLdifModels.FilterEvent(
+                    unique_id=f"filter_{uuid.uuid4().hex[:8]}",
+                    event_type="ldif.filter",
+                    aggregate_id=f"filter_{uuid.uuid4().hex[:8]}",
+                    created_at=datetime.now(UTC),
+                    filter_operation=f"filter_by_{self.filter_criteria}",
+                    entries_before=entries_before,
+                    entries_after=entries_after,
+                    filter_criteria=[
+                        {
+                            "type": self.filter_criteria,
+                            "pattern": self.dn_pattern,
+                            "objectclass": str(self.objectclass)
+                            if self.objectclass
+                            else None,
+                            "attributes": self.attributes,
+                            "base_dn": self.base_dn,
+                            "mode": self.mode,
+                        }
+                    ],
+                    filter_duration_ms=filter_duration_ms,
+                )
+                # Store event for retrieval via get_last_event()
+                # Note: Current architecture returns FlextResult[list[Entry]] without statistics
+                # Event is stored in instance for backward compatibility
+                # Future: Migrate to return EntryResult with embedded events
+                self._last_event = filter_event
+
+            return result
+
         except Exception as e:
             return FlextResult[list[FlextLdifModels.Entry]].fail(f"Filter failed: {e}")
+
+    def get_last_event(self) -> FlextLdifModels.FilterEvent | None:
+        """Retrieve last emitted FilterEvent.
+
+        Returns:
+            Last FilterEvent if enable_events=True and execute() was called, None otherwise.
+
+        Note:
+            This is a workaround for current architecture limitations.
+            Prefer using EntryResult-based APIs when available.
+
+        """
+        return self._last_event
 
     # ════════════════════════════════════════════════════════════════════════
     # PUBLIC API - MINIMAL ESSENTIALS

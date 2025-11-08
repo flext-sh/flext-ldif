@@ -628,17 +628,17 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
         **Priority**: 200 (very low - last resort)
         """
 
-        def can_handle(self, acl: FlextLdifTypes.Models.AclOrString) -> bool:
+        def can_handle(self, acl_line: FlextLdifTypes.Models.AclOrString) -> bool:
             """Check if this is a relaxed ACL (public method).
 
             Args:
-                acl: ACL line string or Acl model to check.
+                acl_line: ACL line string or Acl model to check.
 
             Returns:
                 Always True - relaxed mode accepts everything
 
             """
-            return self.can_handle_acl(acl)
+            return self.can_handle_acl(acl_line)
 
         def can_handle_acl(self, acl_line: FlextLdifTypes.Models.AclOrString) -> bool:
             """Accept any ACL line in relaxed mode.

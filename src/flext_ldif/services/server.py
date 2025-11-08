@@ -213,7 +213,11 @@ class FlextLdifServer:
         Eliminates ~100 lines of DRY violations from separate get_* methods.
         """
         base = self._bases.get(self._normalize_server_type(server_type))
-        return getattr(base, attr_name, None) if base else None
+        if not base:
+            return None
+        # Quirk attributes are named with _quirk suffix: schema_quirk, acl_quirk, entry_quirk
+        quirk_attr_name = f"{attr_name}_quirk"
+        return getattr(base, quirk_attr_name, None)
 
     # =========================================================================
     # THIN INTERFACE - Server-agnostic quirk access (no duplication)
