@@ -60,7 +60,7 @@ class TestEntryResultHelpers:
                 "users": [entry1],
                 "groups": [entry2],
             },
-            statistics=FlextLdifModels.PipelineStatistics(total_entries=2),
+            statistics=FlextLdifModels.Statistics(total_entries=2),
         )
 
         all_entries = result.get_all_entries()
@@ -84,7 +84,7 @@ class TestEntryResultHelpers:
                 "users": [entry1],
                 "groups": [entry2],
             },
-            statistics=FlextLdifModels.PipelineStatistics(total_entries=2),
+            statistics=FlextLdifModels.Statistics(total_entries=2),
         )
 
         users = result.get_category("users")
@@ -118,12 +118,12 @@ class TestEntryResultHelpers:
 
         result1 = FlextLdifModels.EntryResult(
             entries_by_category={"users": [entry1]},
-            statistics=FlextLdifModels.PipelineStatistics(total_entries=1),
+            statistics=FlextLdifModels.Statistics(total_entries=1),
         )
 
         result2 = FlextLdifModels.EntryResult(
             entries_by_category={"users": [entry2]},
-            statistics=FlextLdifModels.PipelineStatistics(total_entries=1),
+            statistics=FlextLdifModels.Statistics(total_entries=1),
         )
 
         merged = result1.merge(result2)
@@ -149,12 +149,12 @@ class TestEntryResultHelpers:
 
         result1 = FlextLdifModels.EntryResult(
             entries_by_category={"users": [entry1]},
-            statistics=FlextLdifModels.PipelineStatistics(total_entries=1),
+            statistics=FlextLdifModels.Statistics(total_entries=1),
         )
 
         result2 = FlextLdifModels.EntryResult(
             entries_by_category={"groups": [entry2]},
-            statistics=FlextLdifModels.PipelineStatistics(total_entries=1),
+            statistics=FlextLdifModels.Statistics(total_entries=1),
         )
 
         merged = result1.merge(result2)
@@ -173,7 +173,7 @@ class TestEntryResultHelpers:
 
         result1 = FlextLdifModels.EntryResult(
             entries_by_category={"users": [entry1]},
-            statistics=FlextLdifModels.PipelineStatistics(total_entries=1),
+            statistics=FlextLdifModels.Statistics(total_entries=1),
         )
 
         result2 = FlextLdifModels.EntryResult.empty()

@@ -39,7 +39,9 @@ import re
 from typing import (
     Annotated,
     Final,
+    Self,
     TypeVar,
+    cast,
 )
 
 from flext_core import FlextLogger, FlextModels
@@ -141,7 +143,7 @@ class FlextLdifModels(FlextModels):
             ] = None
 
             # ✅ CLASS VARIABLE - Compiled regex for validation
-            _DN_COMPONENT_PATTERN: Final = re.compile(
+            _DN_COMPONENT_PATTERN: Final[re.Pattern[str]] = re.compile(
                 FlextLdifConstants.LdifPatterns.DN_COMPONENT,
                 re.IGNORECASE,
             )
@@ -183,7 +185,6 @@ class FlextLdifModels(FlextModels):
 
             # ✅ COMPUTED FIELDS - Lazy-evaluated properties with dependencies
             @computed_field
-            @property
             def rdn(self) -> str:
                 """Relative Distinguished Name - First component only.
 
@@ -194,7 +195,6 @@ class FlextLdifModels(FlextModels):
                 return self.value.split(",")[0]
 
             @computed_field
-            @property
             def parent_dn(self) -> str | None:
                 """Parent DN - All components except the first.
 
@@ -210,7 +210,6 @@ class FlextLdifModels(FlextModels):
                 return ",".join(parts[1:]) if len(parts) > 1 else None
 
             @computed_field
-            @property
             def depth(self) -> int:
                 """DN depth - Number of RDN components.
 
@@ -231,7 +230,7 @@ class FlextLdifModels(FlextModels):
                 return v
 
             # ✅ BUSINESS METHODS (Not getters/setters)
-            def is_child_of(self, parent: FlextLdifModels.DistinguishedName) -> bool:
+            def is_child_of(self, parent: Self) -> bool:
                 """Check if this DN is a child of parent DN.
 
                 Args:
@@ -250,7 +249,7 @@ class FlextLdifModels(FlextModels):
                     or self.value == parent.value
                 )
 
-            def is_ancestor_of(self, child: FlextLdifModels.DistinguishedName) -> bool:
+            def is_ancestor_of(self, child: Self) -> bool:
                 """Check if this DN is an ancestor of child DN.
 
                 Args:
@@ -335,25 +334,21 @@ class FlextLdifModels(FlextModels):
 
             # ✅ COMPUTED FIELDS - Lazy counts with dependencies
             @computed_field
-            @property
             def attribute_count(self) -> int:
                 """Number of distinct attributes."""
                 return len(self.attributes)
 
             @computed_field
-            @property
             def total_values(self) -> int:
                 """Total number of values across all attributes."""
                 return sum(len(vals) for vals in self.attributes.values())
 
             @computed_field
-            @property
             def single_valued_attrs(self) -> list[str]:
                 """Attribute names with exactly one value."""
                 return [k for k, v in self.attributes.items() if len(v) == 1]
 
             @computed_field
-            @property
             def multi_valued_attrs(self) -> list[str]:
                 """Attribute names with multiple values."""
                 return [k for k, v in self.attributes.items() if len(v) > 1]
@@ -510,9 +505,7 @@ class FlextLdifModels(FlextModels):
 
             # ✅ MODEL VALIDATOR - Server-specific logic via context
             @model_validator(mode="after")
-            def validate_for_server(
-                self, info: ValidationInfo
-            ) -> FlextLdifModels.Entry:
+            def validate_for_server(self, info: ValidationInfo) -> Self:
                 """Server-specific validation using context.
 
                 Args:
@@ -548,34 +541,31 @@ class FlextLdifModels(FlextModels):
 
             # ✅ COMPUTED FIELDS - Reusable, efficient statistics
             @computed_field
-            @property
             def attribute_count(self) -> int:
                 """Number of attributes (reuses LdifAttributes.attribute_count)."""
-                return self.attributes.attribute_count
+                return cast("int", self.attributes.attribute_count)
 
             @computed_field
-            @property
             def total_attribute_values(self) -> int:
                 """Total number of values across all attributes."""
-                return self.attributes.total_values
+                return cast("int", self.attributes.total_values)
 
             @computed_field
-            @property
             def acl_count(self) -> int:
                 """Number of ACLs."""
                 return len(self.acls)
 
             @computed_field
-            @property
             def has_acls(self) -> bool:
                 """Whether entry has ACLs (reuses acl_count)."""
-                return self.acl_count > 0
+                return cast("int", self.acl_count) > 0
 
             @computed_field
-            @property
             def is_valid(self) -> bool:
                 """Whether entry is valid (has DN and attributes)."""
-                return bool(self.dn and self.attributes.attribute_count > 0)
+                return bool(
+                    self.dn and cast("int", self.attributes.attribute_count) > 0
+                )
 
             # ✅ BUSINESS METHODS (not property getters)
             def get_attribute_value(self, name: str) -> str | None:
@@ -631,13 +621,11 @@ class FlextLdifModels(FlextModels):
             ] = True
 
             @computed_field
-            @property
             def is_multi_valued(self) -> bool:
                 """Whether attribute can have multiple values."""
                 return not self.single_value
 
             @computed_field
-            @property
             def is_operational(self) -> bool:
                 """Whether attribute is operational (not user-modifiable)."""
                 return not self.user_modifiable
@@ -676,28 +664,26 @@ class FlextLdifModels(FlextModels):
             optional_attrs: Annotated[list[str], Field(default_factory=list)]
 
             @computed_field
-            @property
             def is_abstract(self) -> bool:
                 """Whether this is an abstract objectClass."""
                 return not self.structural
 
             @computed_field
-            @property
             def total_required_attrs(self) -> int:
                 """Number of required attributes."""
                 return len(self.required_attrs)
 
             @computed_field
-            @property
             def total_optional_attrs(self) -> int:
                 """Number of optional attributes."""
                 return len(self.optional_attrs)
 
             @computed_field
-            @property
             def total_attrs(self) -> int:
                 """Total attributes (reuses computed fields!)."""
-                return self.total_required_attrs + self.total_optional_attrs
+                return cast("int", self.total_required_attrs) + cast(
+                    "int", self.total_optional_attrs
+                )
 
         class QuirkMetadata(BaseModel):
             """Quirk metadata tracking for server-specific processing."""
@@ -774,40 +760,34 @@ class FlextLdifModels(FlextModels):
             ] = []
 
             @computed_field
-            @property
             def entry_count(self) -> int:
                 """Number of entries parsed."""
                 return len(self.entries)
 
             @computed_field
-            @property
             def error_count(self) -> int:
                 """Number of errors."""
                 return len(self.errors)
 
             @computed_field
-            @property
             def warning_count(self) -> int:
                 """Number of warnings."""
                 return len(self.warnings)
 
             @computed_field
-            @property
             def total_issues(self) -> int:
                 """Total issues (reuses computed fields!)."""
-                return self.error_count + self.warning_count
+                return cast("int", self.error_count) + cast("int", self.warning_count)
 
             @computed_field
-            @property
             def is_successful(self) -> bool:
                 """Whether parse was successful (no errors)."""
-                return self.error_count == 0
+                return cast("int", self.error_count) == 0
 
             @computed_field
-            @property
             def has_warnings(self) -> bool:
                 """Whether there are warnings."""
-                return self.warning_count > 0
+                return cast("int", self.warning_count) > 0
 
     # =========================================================================
     # CONFIGURATION MODELS - Service initialization (Frozen)
@@ -854,7 +834,6 @@ class FlextLdifModels(FlextModels):
                 return v
 
             @computed_field
-            @property
             def should_wrap(self) -> bool:
                 """Whether to wrap lines based on wrap_length."""
                 return self.wrap_length > 0
@@ -897,7 +876,7 @@ class FlextLdifModels(FlextModels):
             malformed_entries: Annotated[int, Field(default=0, ge=0)] = 0
 
             @model_validator(mode="after")
-            def validate_consistency(self) -> FlextLdifModels.ParseStatistics:
+            def validate_consistency(self) -> Self:
                 """Ensure statistics are internally consistent."""
                 if self.entries_with_acls > self.total_entries:
                     msg = "entries_with_acls > total_entries"
@@ -908,7 +887,6 @@ class FlextLdifModels(FlextModels):
                 return self
 
             @computed_field
-            @property
             def acl_coverage_pct(self) -> float:
                 """Percentage of entries with ACLs."""
                 if self.total_entries == 0:
@@ -916,7 +894,6 @@ class FlextLdifModels(FlextModels):
                 return (self.entries_with_acls / self.total_entries) * 100
 
             @computed_field
-            @property
             def schema_coverage_pct(self) -> float:
                 """Percentage of entries with schema."""
                 if self.total_entries == 0:
@@ -924,7 +901,6 @@ class FlextLdifModels(FlextModels):
                 return (self.entries_with_schema / self.total_entries) * 100
 
             @computed_field
-            @property
             def error_rate_pct(self) -> float:
                 """Percentage of malformed entries."""
                 if self.total_entries == 0:
@@ -932,7 +908,6 @@ class FlextLdifModels(FlextModels):
                 return (self.malformed_entries / self.total_entries) * 100
 
             @computed_field
-            @property
             def is_valid(self) -> bool:
                 """Whether parse was valid (no malformed entries)."""
                 return self.malformed_entries == 0

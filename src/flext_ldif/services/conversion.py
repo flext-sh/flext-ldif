@@ -17,10 +17,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import time
 from collections.abc import Sequence
 from typing import TYPE_CHECKING, ClassVar, Union, cast, override
 
-from flext_core import FlextResult, FlextService
+from flext_core import FlextLogger, FlextResult, FlextService
 from pydantic import Field
 
 from flext_ldif.constants import FlextLdifConstants
@@ -33,6 +34,9 @@ from flext_ldif.utilities import FlextLdifUtilities
 # Import for type casting
 if TYPE_CHECKING:
     from flext_ldif.servers.base import FlextLdifServersBase
+
+# Module-level logger
+logger = FlextLogger(__name__)
 
 
 class FlextLdifConversion(
@@ -126,6 +130,7 @@ class FlextLdifConversion(
         """Convert a model from a source server format to a target server format.
 
         Supports both new strategy pattern (model-based) and legacy string-based conversions.
+        Emits ConversionEvent for all conversions (MANDATORY - eventos obrigatórios).
 
         Args:
             source: Source quirk instance
@@ -137,21 +142,59 @@ class FlextLdifConversion(
             FlextResult with converted model or string data
 
         """
-        # Determine if this is legacy (string-based) or new (model-based) conversion
+        # Track conversion duration (MANDATORY - eventos obrigatórios)
+        start_time = time.perf_counter()
+
+        # Determine conversion type and get source/target format names
+        source_format = getattr(source, "server_name", "unknown")
+        target_format = getattr(target, "server_name", "unknown")
+
+        if isinstance(model_instance_or_data_type, str):
+            # Legacy string-based conversion
+            conversion_operation = f"convert_{model_instance_or_data_type}"
+        else:
+            # Model-based conversion
+            model_type = type(model_instance_or_data_type).__name__
+            conversion_operation = f"convert_{model_type}"
+
+        # Execute conversion
         if isinstance(model_instance_or_data_type, str) and data is not None:
             # Legacy string-based conversion
-            return self._convert_legacy(
+            result = self._convert_legacy(
                 source,
                 target,
                 model_instance_or_data_type,
                 data,
             )
-        if data is None and not isinstance(model_instance_or_data_type, str):
+        elif data is None and not isinstance(model_instance_or_data_type, str):
             # New model-based conversion - type guard ensures it's a model
-            return self._convert_model(source, target, model_instance_or_data_type)
-        return FlextResult.fail(
-            "Invalid arguments: provide either (model) or (data_type, data)",
+            result = self._convert_model(source, target, model_instance_or_data_type)
+        else:
+            result = FlextResult.fail(
+                "Invalid arguments: provide either (model) or (data_type, data)",
+            )
+
+        # Calculate duration and emit ConversionEvent (MANDATORY - eventos obrigatórios)
+        duration_ms = (time.perf_counter() - start_time) * 1000.0
+
+        # Emit ConversionEvent with results
+        items_converted = 1 if result.is_success else 0
+        items_failed = 0 if result.is_success else 1
+
+        FlextLdifUtilities.Events.log_and_emit_conversion_event(
+            logger=logger,
+            conversion_operation=conversion_operation,
+            source_format=source_format,
+            target_format=target_format,
+            items_processed=1,
+            items_converted=items_converted,
+            items_failed=items_failed,
+            conversion_duration_ms=duration_ms,
+            error_details=[{"error": str(result.error)}] if result.is_failure else None,
+            log_level="info" if result.is_success else "error",
         )
+
+        return result
 
     def _convert_model(
         self,
@@ -771,6 +814,7 @@ class FlextLdifConversion(
 
         This is a convenience method that applies convert() to a list of items.
         DN registry is shared across all conversions to ensure case consistency.
+        Emits ConversionEvent with aggregated statistics (MANDATORY - eventos obrigatórios).
 
         Args:
             source: Source quirk instance (must satisfy QuirksPort protocol)
@@ -789,9 +833,18 @@ class FlextLdifConversion(
             ...     print(f"Converted {len(converted)} attributes")
 
         """
+        # Track batch conversion duration (MANDATORY - eventos obrigatórios)
+        start_time = time.perf_counter()
+
+        # Get source/target format names
+        source_format = getattr(source, "server_name", "unknown")
+        target_format = getattr(target, "server_name", "unknown")
+        conversion_operation = f"batch_convert_{data_type}"
+
         try:
             converted = []
             errors = []
+            error_details = []
 
             for idx, item in enumerate(data_list):
                 result = self.convert(source, target, data_type, item)
@@ -802,11 +855,39 @@ class FlextLdifConversion(
                         converted.append(unwrapped)
                     # ConvertibleModel types not expected in batch_convert legacy API
                     else:
-                        errors.append(
+                        error_msg = (
                             f"Item {idx}: Unexpected model type in legacy batch convert"
                         )
+                        errors.append(error_msg)
+                        error_details.append({"item_index": idx, "error": error_msg})
                 else:
-                    errors.append(f"Item {idx}: {result.error}")
+                    error_msg = f"Item {idx}: {result.error}"
+                    errors.append(error_msg)
+                    error_details.append({
+                        "item_index": idx,
+                        "error": str(result.error),
+                    })
+
+            # Calculate duration and emit ConversionEvent (MANDATORY - eventos obrigatórios)
+            duration_ms = (time.perf_counter() - start_time) * 1000.0
+
+            items_processed = len(data_list)
+            items_converted = len(converted)
+            items_failed = len(errors)
+
+            # Emit ConversionEvent with batch statistics
+            FlextLdifUtilities.Events.log_and_emit_conversion_event(
+                logger=logger,
+                conversion_operation=conversion_operation,
+                source_format=source_format,
+                target_format=target_format,
+                items_processed=items_processed,
+                items_converted=items_converted,
+                items_failed=items_failed,
+                conversion_duration_ms=duration_ms,
+                error_details=error_details or None,
+                log_level="warning" if errors else "info",
+            )
 
             if errors:
                 error_msg = (
@@ -822,6 +903,22 @@ class FlextLdifConversion(
             return FlextResult[list[str | dict[str, object]]].ok(converted)
 
         except (ValueError, TypeError, AttributeError, RuntimeError, Exception) as e:
+            # Emit ConversionEvent for exception case (MANDATORY - eventos obrigatórios)
+            duration_ms = (time.perf_counter() - start_time) * 1000.0
+
+            FlextLdifUtilities.Events.log_and_emit_conversion_event(
+                logger=logger,
+                conversion_operation=conversion_operation,
+                source_format=source_format,
+                target_format=target_format,
+                items_processed=len(data_list),
+                items_converted=0,
+                items_failed=len(data_list),
+                conversion_duration_ms=duration_ms,
+                error_details=[{"error": f"Batch conversion failed: {e}"}],
+                log_level="error",
+            )
+
             return FlextResult[list[str | dict[str, object]]].fail(
                 f"Batch conversion failed: {e}",
             )

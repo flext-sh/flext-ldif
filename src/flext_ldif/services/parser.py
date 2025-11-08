@@ -165,10 +165,10 @@ class FlextLdifParser(FlextService[Any]):
 
         # Create and return ParseEvent with DomainEvent required fields
         return FlextLdifModels.ParseEvent(
-            event_id=f"parse_{uuid.uuid4().hex[:8]}",
+            unique_id=f"parse_{uuid.uuid4().hex[:8]}",
             event_type="ldif.parse",
             aggregate_id=source_file or f"parse_{uuid.uuid4().hex[:8]}",
-            timestamp=datetime.now(UTC),
+            created_at=datetime.now(UTC),
             entries_parsed=len(processed_entries),
             schema_entries=schema_count,
             data_entries=data_count,
@@ -192,7 +192,7 @@ class FlextLdifParser(FlextService[Any]):
         """
         try:
             # Health check - return empty ParseResponse indicating operational status
-            empty_statistics = FlextLdifModels.ParseStatistics(
+            empty_statistics = FlextLdifModels.Statistics(
                 total_entries=0,
                 schema_entries=0,
                 data_entries=0,
@@ -553,7 +553,7 @@ class FlextLdifParser(FlextService[Any]):
         entries: list[FlextLdifModels.Entry],
         server_type: str,
         options: FlextLdifModels.ParseFormatOptions,
-    ) -> tuple[list[FlextLdifModels.Entry], FlextLdifModels.ParseStatistics]:
+    ) -> tuple[list[FlextLdifModels.Entry], FlextLdifModels.Statistics]:
         processed_entries = []
         schema_count = 0
         data_count = 0
@@ -584,7 +584,7 @@ class FlextLdifParser(FlextService[Any]):
                     )
                     break
 
-        statistics = FlextLdifModels.ParseStatistics(
+        statistics = FlextLdifModels.Statistics(
             total_entries=len(processed_entries),
             schema_entries=schema_count,
             data_entries=data_count,
@@ -946,52 +946,6 @@ class FlextLdifParser(FlextService[Any]):
             server_type=server_type,
             format_options=format_options,
         )
-
-    def parse_ldif_file(
-        self,
-        path: Path,
-        server_type: str | None = None,
-        encoding: str = "utf-8",
-        format_options: FlextLdifModels.ParseFormatOptions | None = None,
-    ) -> FlextResult[list[FlextLdifModels.Entry]]:
-        """Parse LDIF file and return entries directly.
-
-        This method is a convenience wrapper around parse_ldif_file that
-        returns entries directly instead of ParseResponse, for backward
-        compatibility with existing tests.
-
-        Note: This method name intentionally conflicts with Pydantic BaseModel.parse_file,
-        but serves a different purpose (parsing LDIF files, not Pydantic model files).
-        The type: ignore comment is used to suppress the override warning.
-
-        Args:
-            path: Path to LDIF file to parse
-            server_type: Optional server type (auto-detected if not provided)
-            encoding: File encoding (default: utf-8)
-            format_options: Optional parsing format options
-
-        Returns:
-            FlextResult containing list of parsed entries
-
-        Example:
-            >>> parser = FlextLdifParser()
-            >>> result = parser.parse_file(Path("directory.ldif"))
-            >>> if result.is_success:
-            ...     entries = result.unwrap()
-
-        """
-        parse_result = self.parse_ldif_file(
-            path=path,
-            server_type=server_type,
-            encoding=encoding,
-            format_options=format_options,
-        )
-
-        if parse_result.is_failure:
-            return FlextResult.fail(parse_result.error)
-
-        parse_response = parse_result.unwrap()
-        return FlextResult.ok(parse_response.entries)
 
 
 __all__ = ["FlextLdifParser"]

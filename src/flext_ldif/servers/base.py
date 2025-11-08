@@ -392,11 +392,11 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
 
         """
         # Initialize nested class instances with private names to avoid
-        # Pydantic conflicts. Type ignore: These are concrete implementations
-        # in subclasses, not abstract base
-        self._schema_quirk = self.Schema()
-        self._acl_quirk = self.Acl()
-        self._entry_quirk = self.Entry()
+        # Pydantic conflicts. Safe cast: These are concrete implementations
+        # in subclasses - never called on abstract base directly
+        self._schema_quirk = cast("FlextLdifServersBase.Schema", self.Schema())
+        self._acl_quirk = cast("FlextLdifServersBase.Acl", self.Acl())
+        self._entry_quirk = cast("FlextLdifServersBase.Entry", self.Entry())
 
     # =========================================================================
     # Properties for accessing nested quirks (bypasses Pydantic's schema() method)

@@ -123,6 +123,7 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
     _parser_service: FlextLdifParser = PrivateAttr()
     _acl_service: FlextLdifAcl = PrivateAttr()
     _writer_service: FlextLdifWriter | None = PrivateAttr(default=None)
+    _config: FlextLdifConfig | None = PrivateAttr(default=None)
 
     _container: FlextContainer = PrivateAttr(
         default_factory=FlextContainer.get_global,
@@ -130,12 +131,15 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
     _context: dict[str, object] = PrivateAttr(default_factory=dict)
     _handlers: dict[str, object] = PrivateAttr(default_factory=dict)
     _init_config_value: FlextLdifConfig | None = PrivateAttr(default=None)
+    _initialized: bool = PrivateAttr(default=False)
 
     # Direct class access for builders and services (no wrappers)
     AclService: ClassVar[type[FlextLdifAcl]] = FlextLdifAcl
 
     # Singleton instance storage
     _instance: ClassVar[FlextLdif | None] = None
+    # Track initialized instances to prevent duplicate model_post_init() calls
+    _initialized_instances: ClassVar[set[int]] = set()
 
     @classmethod
     def get_instance(cls, config: FlextLdifConfig | None = None) -> FlextLdif:
@@ -205,10 +209,21 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
         - Default quirk registration for all supported LDAP servers
         - Context and handler initialization
 
+        Uses instance ID tracking to prevent duplicate initialization when
+        Pydantic v2 calls this method multiple times on the same instance.
+
         Args:
             _context: Pydantic's validation context dictionary or None (unused).
 
         """
+        # Guard: Check if this specific instance was already initialized
+        instance_id = id(self)
+        if instance_id in FlextLdif._initialized_instances:
+            return
+
+        # Mark this instance as initialized IMMEDIATELY to prevent re-entry
+        FlextLdif._initialized_instances.add(instance_id)
+
         # Initialize dispatcher, registry, and logger FIRST
         # These are needed by _register_components() below
         dispatcher = FlextDispatcher()
@@ -1059,7 +1074,7 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
         forbidden_objectclasses: list[str] | None = None,
         base_dn: str | None = None,
         sort_entries_hierarchically: bool = False,
-    ) -> FlextResult[FlextLdifModels.PipelineExecutionResult]:
+    ) -> FlextResult[FlextLdifModels.EntryResult]:
         r"""Unified LDIF migration supporting simple, categorized, and structured modes.
 
         Automatically detects migration mode based on parameters:
@@ -1187,7 +1202,7 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
             if write_options is None:
                 if mode == "structured":
                     write_options = FlextLdifModels.WriteFormatOptions(
-                        disable_line_folding=True,
+                        fold_long_lines=False,
                         write_removed_attributes_as_comments=config_model.write_removed_as_comments
                         if config_model
                         else False,
@@ -1195,29 +1210,29 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
                 elif mode == "categorized":
                     # Default write options for categorized mode (disable folding by default)
                     write_options = FlextLdifModels.WriteFormatOptions(
-                        disable_line_folding=True,
+                        fold_long_lines=False,
                     )
                 # Simple mode: write_options remains None, writer will use defaults
 
             # Validate requirements for simple mode
             if input_filename is not None and output_filename is None:
-                return FlextResult[FlextLdifModels.PipelineExecutionResult].fail(
+                return FlextResult[FlextLdifModels.EntryResult].fail(
                     "output_filename is required when input_filename is specified",
                 )
 
             # Initialize migration pipeline with proper type safety
             # All parameters passed directly with correct types
+            # Type cast mode to satisfy MyPy (mode is always one of the three literals)
             migration_pipeline = FlextLdifMigrationPipeline(
                 input_dir=input_dir,
                 output_dir=output_dir,
-                mode=mode,
+                mode=cast("FlextLdifConstants.LiteralTypes.MigrationMode", mode),
                 source_server=source_server,
                 target_server=target_server,
                 forbidden_attributes=forbidden_attributes,
                 forbidden_objectclasses=forbidden_objectclasses,
                 base_dn=base_dn,
                 sort_entries_hierarchically=sort_entries_hierarchically,
-                migration_config=config_model,
                 write_options=write_options,
                 categorization_rules=categorization_rules,
                 input_files=input_files,
@@ -1230,7 +1245,7 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
             return migration_pipeline.execute()
 
         except (ValueError, TypeError, AttributeError) as e:
-            return FlextResult[FlextLdifModels.PipelineExecutionResult].fail(
+            return FlextResult[FlextLdifModels.EntryResult].fail(
                 f"Migration failed: {e}",
             )
 

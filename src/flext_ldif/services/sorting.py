@@ -299,6 +299,15 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
         description="ACL attribute names to sort.",
     )
 
+    # ──────────────────────────────────────────────────────────────────────
+    # HIERARCHY TRAVERSAL MODE
+    # ──────────────────────────────────────────────────────────────────────
+
+    traversal: str = Field(
+        default="depth-first",
+        description="Hierarchy traversal mode: depth-first|level-order",
+    )
+
     # ════════════════════════════════════════════════════════════════════════
     # PYDANTIC VALIDATORS
     # ════════════════════════════════════════════════════════════════════════
@@ -322,6 +331,16 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
         valid = {s.value for s in FlextLdifConstants.SortStrategy.__members__.values()}
         if v not in valid:
             msg = f"Invalid sort_by: {v!r}. Valid: {', '.join(sorted(valid))}"
+            raise ValueError(msg)
+        return v
+
+    @field_validator("traversal")
+    @classmethod
+    def validate_traversal(cls, v: str) -> str:
+        """Validate traversal mode is valid."""
+        valid = {"depth-first", "level-order"}
+        if v not in valid:
+            msg = f"Invalid traversal: {v!r}. Valid: {', '.join(sorted(valid))}"
             raise ValueError(msg)
         return v
 
@@ -374,6 +393,7 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
         target: str = FlextLdifConstants.SortTarget.ENTRIES.value,
         by: str
         | FlextLdifConstants.SortStrategy = FlextLdifConstants.SortStrategy.HIERARCHY,
+        traversal: str = "depth-first",
         predicate: Callable[[FlextLdifModels.Entry], str | int | float] | None = None,
         sort_attributes: bool = False,
         attribute_order: list[str] | None = None,
@@ -386,6 +406,7 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
             entries: Entries to sort
             target: WHAT to sort (entries|attributes|acl|schema|combined)
             by: HOW to sort entries (hierarchy|alphabetical|schema|custom)
+            traversal: Hierarchy traversal mode (depth-first|level-order)
             predicate: Custom sort function (required if by="custom")
             sort_attributes: Auto-sort attributes alphabetically
             attribute_order: Custom attribute order list
@@ -396,8 +417,14 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
             FlextResult[list[Entry]] for chaining with .map/.and_then/.unwrap
 
         Examples:
-            # Simple sort with unwrap
+            # Simple sort with default depth-first traversal
             sorted = Service.sort(entries, by="hierarchy").unwrap()
+
+            # Explicit depth-first traversal (proper parent→child order)
+            sorted = Service.sort(entries, by="hierarchy", traversal="depth-first").unwrap()
+
+            # Level-order traversal (backward compatibility)
+            sorted = Service.sort(entries, by="hierarchy", traversal="level-order").unwrap()
 
             # Chainable pipeline
             result = (Service.sort(entries, by="hierarchy")
@@ -415,6 +442,7 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
             entries=entries,
             sort_target=target,
             sort_by=strategy,
+            traversal=traversal,
             custom_predicate=predicate,
             sort_attributes=sort_attributes,
             attribute_order=attribute_order,
@@ -741,43 +769,220 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
 
         return FlextResult[list[FlextLdifModels.Entry]].ok(processed)
 
-    def _by_hierarchy(self) -> FlextResult[list[FlextLdifModels.Entry]]:
-        """Sort by DN hierarchy (depth-first) using simple and effective rule.
+    @staticmethod
+    def _build_dn_tree(
+        entries: list[FlextLdifModels.Entry],
+    ) -> tuple[dict[str, list[str]], dict[str, FlextLdifModels.Entry], list[str]]:
+        """Build DN tree structure for depth-first traversal.
 
-        Sorting rule: (depth, normalized_dn)
-        - Depth 1 entries first (sorted alphabetically)
-        - Depth 2 entries next (sorted alphabetically)
-        - And so on...
+        Returns:
+            Tuple of (parent_to_children, dn_to_entry, root_dns)
+            - parent_to_children: Dict mapping parent DN to list of child DNs
+            - dn_to_entry: Dict mapping DN to Entry object
+            - root_dns: List of root DNs (depth 1-2)
 
-        This naturally preserves parent-before-children ordering for proper LDAP
-        synchronization since parents (lower depth) always appear before children
-        (higher depth).
+        """
+        parent_to_children: dict[str, list[str]] = {}
+        dn_to_entry: dict[str, FlextLdifModels.Entry] = {}
 
-        Uses FlextLdifUtilities.DN.norm() for RFC 4514 compliant DN normalization.
+        # First pass: build dn_to_entry and parent_to_children mappings
+        for entry in entries:
+            dn_value = (
+                str(FlextLdifUtilities.DN.get_dn_value(entry.dn)) if entry.dn else ""
+            )
+            if not dn_value:
+                continue
+
+            # Normalize DN for consistent handling
+            normalized_dn = FlextLdifUtilities.DN.norm(dn_value)
+            dn_key = normalized_dn.lower() if normalized_dn else dn_value.lower()
+
+            # Store entry
+            dn_to_entry[dn_key] = entry
+
+            # Extract parent DN (everything after first comma)
+            if "," in dn_value:
+                parent_dn = dn_value.split(",", 1)[1]
+                parent_normalized = FlextLdifUtilities.DN.norm(parent_dn)
+                parent_key = (
+                    parent_normalized.lower()
+                    if parent_normalized
+                    else parent_dn.lower()
+                )
+
+                # Add to parent's children
+                if parent_key not in parent_to_children:
+                    parent_to_children[parent_key] = []
+                parent_to_children[parent_key].append(dn_key)
+
+        # Second pass: identify root DNs (entries whose parents are not in the list)
+        root_dns: list[str] = []
+        for dn_key, entry in dn_to_entry.items():
+            # A DN is a root if:
+            # 1. It has no comma (true root like "o=example")
+            # 2. Its parent DN is not in dn_to_entry (orphaned entry acting as root)
+            dn_value = (
+                str(FlextLdifUtilities.DN.get_dn_value(entry.dn)) if entry.dn else ""
+            )
+
+            if "," not in dn_value:
+                # True root (no parent)
+                root_dns.append(dn_key)
+            else:
+                # Check if parent exists in entry list
+                parent_dn = dn_value.split(",", 1)[1]
+                parent_normalized = FlextLdifUtilities.DN.norm(parent_dn)
+                parent_key = (
+                    parent_normalized.lower()
+                    if parent_normalized
+                    else parent_dn.lower()
+                )
+
+                if parent_key not in dn_to_entry:
+                    # Parent not in list, so this is a root
+                    root_dns.append(dn_key)
+
+        # Sort children alphabetically for consistent ordering
+        for children in parent_to_children.values():
+            children.sort()
+
+        # Sort roots alphabetically
+        root_dns.sort()
+
+        return parent_to_children, dn_to_entry, root_dns
+
+    @staticmethod
+    def _dfs_traverse(
+        dn: str,
+        parent_to_children: dict[str, list[str]],
+        dn_to_entry: dict[str, FlextLdifModels.Entry],
+        visited: set[str],
+    ) -> list[FlextLdifModels.Entry]:
+        """Depth-first traversal of DN tree.
+
+        Visits parent, then recursively visits all children before moving to siblings.
+        This ensures proper LDAP sync order (parents before children).
+
+        Args:
+            dn: Current DN to visit
+            parent_to_children: Tree structure mapping parent→children
+            dn_to_entry: Mapping DN→Entry
+            visited: Set of already visited DNs (prevents infinite loops)
+
+        Returns:
+            List of entries in depth-first order
+
+        """
+        if dn in visited or dn not in dn_to_entry:
+            return []
+
+        visited.add(dn)
+        result = [dn_to_entry[dn]]
+
+        # Recursively visit all children (already sorted alphabetically)
+        for child_dn in parent_to_children.get(dn, []):
+            result.extend(
+                FlextLdifSorting._dfs_traverse(
+                    child_dn, parent_to_children, dn_to_entry, visited
+                )
+            )
+
+        return result
+
+    @staticmethod
+    def _levelorder_traverse(
+        entries: list[FlextLdifModels.Entry],
+    ) -> list[FlextLdifModels.Entry]:
+        """Level-order traversal (original behavior for backward compatibility).
+
+        Sorts by (depth, normalized_dn) - all depth=1, then all depth=2, etc.
+        This is NOT proper depth-first but provided for backward compatibility.
+
+        Args:
+            entries: Entries to sort
+
+        Returns:
+            List of entries in level-order (grouped by depth)
+
         """
 
         def sort_key(entry: FlextLdifModels.Entry) -> tuple[int, str]:
-            """Generate hierarchical sort key: (depth, normalized_dn)."""
             dn_value = (
                 str(FlextLdifUtilities.DN.get_dn_value(entry.dn)) if entry.dn else ""
             )
             if not dn_value:
                 return (0, "")
 
-            # Calculate depth (number of RDN components)
             depth = dn_value.count(",") + 1
-
-            # Normalize DN for consistent sorting using FlextLdifUtilities
             normalized = FlextLdifUtilities.DN.norm(dn_value)
             sort_dn = normalized.lower() if normalized else dn_value.lower()
 
-            # Return tuple: (depth, normalized_dn)
-            # Sorting by this ensures all parents come before children
             return (depth, sort_dn)
 
-        # Sort entries using hierarchical key
-        sorted_entries = sorted(self.entries, key=sort_key)
-        return FlextResult[list[FlextLdifModels.Entry]].ok(sorted_entries)
+        return sorted(entries, key=sort_key)
+
+    def _by_hierarchy(self) -> FlextResult[list[FlextLdifModels.Entry]]:
+        """Sort by DN hierarchy using configurable traversal strategy.
+
+        Traversal Modes:
+            depth-first (default):
+                - Proper parent→child ordering
+                - Each parent immediately followed by ALL its descendants
+                - Ensures LDAP sync works (parents added before children)
+                - Example order: dc=com, ou=users,dc=com, cn=john,ou=users,dc=com
+
+            level-order (backward compatibility):
+                - Groups entries by depth level
+                - All depth=1, then all depth=2, etc.
+                - May fail LDAP sync if children span many levels
+                - Example order: dc=com, ou=users,dc=com, ou=groups,dc=com, cn=john,...
+
+        Uses FlextLdifUtilities.DN.norm() for RFC 4514 compliant DN normalization.
+        """
+        if not self.entries:
+            return FlextResult[list[FlextLdifModels.Entry]].ok([])
+
+        # Choose traversal strategy based on self.traversal
+        if self.traversal == "depth-first":
+            # Build DN tree structure
+            parent_to_children, dn_to_entry, root_dns = self._build_dn_tree(
+                self.entries
+            )
+
+            # DFS traverse from each root
+            sorted_entries: list[FlextLdifModels.Entry] = []
+            visited: set[str] = set()
+            for root_dn in root_dns:
+                sorted_entries.extend(
+                    self._dfs_traverse(
+                        root_dn, parent_to_children, dn_to_entry, visited
+                    )
+                )
+
+            # Handle any orphaned entries (entries whose parents weren't in the list)
+            for entry in self.entries:
+                dn_value = (
+                    str(FlextLdifUtilities.DN.get_dn_value(entry.dn))
+                    if entry.dn
+                    else ""
+                )
+                if dn_value:
+                    normalized = FlextLdifUtilities.DN.norm(dn_value)
+                    dn_key = normalized.lower() if normalized else dn_value.lower()
+                    if dn_key not in visited:
+                        sorted_entries.append(entry)
+
+            return FlextResult[list[FlextLdifModels.Entry]].ok(sorted_entries)
+
+        if self.traversal == "level-order":
+            # Use level-order traversal (original behavior)
+            sorted_entries = self._levelorder_traverse(self.entries)
+            return FlextResult[list[FlextLdifModels.Entry]].ok(sorted_entries)
+
+        # Should never happen due to validator, but handle gracefully
+        return FlextResult[list[FlextLdifModels.Entry]].fail(
+            f"Unknown traversal mode: {self.traversal}"
+        )
 
     def _by_dn(self) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Sort alphabetically by DN using RFC 4514 normalization.

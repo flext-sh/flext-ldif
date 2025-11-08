@@ -91,12 +91,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import time
 from collections.abc import Callable
 
 from flext_core import FlextResult, FlextService
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, PrivateAttr, field_validator
 
 from flext_ldif.constants import FlextLdifConstants
+from flext_ldif.models import FlextLdifModels
 from flext_ldif.typings import FlextLdifTypes
 from flext_ldif.utilities import FlextLdifUtilities
 
@@ -148,6 +150,14 @@ class FlextLdifDn(FlextService[str]):
         default="standard",
         description="Escape mode: standard (backslash) or hex",
     )
+
+    enable_events: bool = Field(
+        default=False,
+        description="Enable domain event emission for operations",
+    )
+
+    # Private attributes (Pydantic v2 PrivateAttr for internal state)
+    _last_event: FlextLdifModels.DnEvent | None = PrivateAttr(default=None)
 
     # ════════════════════════════════════════════════════════════════════════
     # PYDANTIC VALIDATORS
@@ -227,10 +237,57 @@ class FlextLdifDn(FlextService[str]):
 
     def execute(self) -> FlextResult[str]:
         """Execute DN operation based on configuration."""
+        start_time = time.perf_counter() if self.enable_events else 0
+
         try:
-            return self._dispatch_operation()
+            result = self._dispatch_operation()
+
+            # Emit domain event if enabled
+            if self.enable_events and hasattr(self, "logger"):
+                duration_ms = (time.perf_counter() - start_time) * 1000.0
+
+                # Parse components if operation was parse
+                parse_components = None
+                if self.operation == "parse" and result.is_success:
+                    # Result value is string representation, need to parse
+                    parse_result = self.parse_components(self.dn)
+                    if parse_result.is_success:
+                        parse_components = parse_result.unwrap()
+
+                # Create and log event
+                event = FlextLdifUtilities.Events.log_and_emit_dn_event(
+                    logger=self.logger,
+                    dn_operation=self.operation,
+                    input_dn=self.dn,
+                    output_dn=result.unwrap() if result.is_success else None,
+                    operation_duration_ms=duration_ms,
+                    validation_result=result.is_success
+                    if self.operation == "validate"
+                    else None,
+                    parse_components=parse_components,
+                    log_level="info" if result.is_success else "error",
+                )
+
+                # Store event in instance
+                self._last_event = event
+
+            return result
         except Exception as e:
             return FlextResult[str].fail(f"DN operation failed: {e}")
+
+    def get_last_event(self) -> FlextLdifModels.DnEvent | None:
+        """Retrieve last emitted DnEvent.
+
+        Returns:
+            Last DnEvent if events are enabled and operation was executed, None otherwise
+
+        Example:
+            service = FlextLdifDn(dn="cn=test", operation="normalize", enable_events=True)
+            result = service.execute()
+            event = service.get_last_event()
+
+        """
+        return self._last_event if hasattr(self, "_last_event") else None
 
     # ════════════════════════════════════════════════════════════════════════
     # LAZY-LOADED NESTED CLASS INSTANCES (for performance)

@@ -1256,7 +1256,7 @@ class TestAPIMigrationOperations:
         assert result.is_success or result.is_failure
         if result.is_success:
             migration = result.unwrap()
-            assert isinstance(migration, FlextLdifModels.PipelineExecutionResult)
+            assert isinstance(migration, FlextLdifModels.EntryResult)
 
     def test_migrate_missing_input_directory(
         self,

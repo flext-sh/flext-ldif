@@ -38,7 +38,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from datetime import UTC, datetime
 from functools import wraps
-from typing import TypeVar, cast
+from typing import Protocol, TypeVar, cast
 
 from flext_core import FlextLogger, FlextResult
 
@@ -47,6 +47,12 @@ from flext_ldif.models import FlextLdifModels
 logger = FlextLogger(__name__)
 
 T = TypeVar("T")
+
+
+class _HasMetadata(Protocol):
+    """Protocol for objects that have a metadata attribute."""
+
+    metadata: FlextLdifModels.QuirkMetadata
 
 
 class FlextLdifUtilitiesDecorators:
@@ -121,8 +127,11 @@ class FlextLdifUtilitiesDecorators:
                             UTC,
                         ).isoformat()
 
-                        # Attach metadata to model using setattr for type safety
-                        unwrapped.metadata = metadata
+                        # Attach metadata - use Protocol cast after hasattr check
+                        # PyRefly: hasattr confirms metadata exists, Protocol provides type
+                        # Ruff: Direct assignment preferred over setattr with constant
+                        obj_with_metadata = cast("_HasMetadata", unwrapped)
+                        obj_with_metadata.metadata = metadata
 
                 return result
 

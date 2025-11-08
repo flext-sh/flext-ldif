@@ -518,12 +518,10 @@ class FlextLdifUtilitiesDN:
 
             while i < len(rdn):
                 char = rdn[i]
-                from typing import cast
-
                 result = FlextLdifUtilitiesDN._process_rdn_char(
                     char,
                     rdn,
-                    cast("int", i),
+                    i,
                     current_attr,
                     current_val,
                     in_value=in_value,

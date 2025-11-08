@@ -350,19 +350,19 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
     class Acl(FlextLdifServersRfc.Acl):
         """Novell eDirectory ACL quirk."""
 
-        def can_handle(self, acl: FlextLdifTypes.Models.AclOrString) -> bool:
+        def can_handle(self, acl_line: FlextLdifTypes.Models.AclOrString) -> bool:
             """Check if this is a Novell eDirectory ACL.
 
             Override RFC's always-true behavior to check Novell-specific markers.
 
             Args:
-                acl: ACL line string or Acl model
+                acl_line: ACL line string or Acl model
 
             Returns:
                 True if this is Novell eDirectory ACL format
 
             """
-            return self.can_handle_acl(acl)
+            return self.can_handle_acl(acl_line)
 
         def can_handle_acl(self, acl_line: FlextLdifTypes.Models.AclOrString) -> bool:
             """Detect eDirectory ACL values."""
@@ -632,6 +632,8 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                 processed_attributes: dict[str, list[str]] = {}
                 for attr_name, attr_values in attributes.items():
                     processed_values: list[str] = []
+                    # Type annotation to help type checker understand bytes | str union
+                    value: bytes | str
                     for value in attr_values:
                         # Explicitly handle both bytes and str types
                         str_value: str
