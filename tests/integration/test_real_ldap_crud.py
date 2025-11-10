@@ -148,13 +148,16 @@ class TestRealLdapCRUD:
     ) -> None:
         """Test Create→Read→Update→Delete cycle."""
         # CREATE: Build entry using FlextLdif API
-        person_result = flext_api.build(
-            "person",
-            cn="CRUD Test User",
-            sn="User",
-            base_dn=clean_test_ou,
-            mail="crud@example.com",
-            uid="crud_user",
+        person_dn = f"cn=CRUD Test User,{clean_test_ou}"
+        person_result = flext_api.create_entry(
+            dn=person_dn,
+            attributes={
+                "cn": "CRUD Test User",
+                "sn": "User",
+                "mail": "crud@example.com",
+                "uid": "crud_user",
+            },
+            objectclasses=["inetOrgPerson", "person", "top"]
         )
         assert person_result.is_success
         person_entry = person_result.unwrap()
@@ -215,12 +218,15 @@ class TestRealLdapBatchOperations:
         # Build 20 entries using API (no manual loops!)
         entries = []
         for i in range(20):
-            result = flext_api.build(
-                "person",
-                cn=f"Batch User {i}",
-                sn=f"User{i}",
-                base_dn=clean_test_ou,
-                mail=f"batch{i}@example.com",
+            person_dn = f"cn=Batch User {i},{clean_test_ou}"
+            result = flext_api.create_entry(
+                dn=person_dn,
+                attributes={
+                    "cn": f"Batch User {i}",
+                    "sn": f"User{i}",
+                    "mail": f"batch{i}@example.com",
+                },
+                objectclasses=["inetOrgPerson", "person", "top"]
             )
             if result.is_success:
                 entries.append(result.unwrap())

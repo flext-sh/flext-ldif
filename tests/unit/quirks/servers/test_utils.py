@@ -203,8 +203,16 @@ class FlextLdifTestUtils:
                 roundtrip.attributes.attributes if roundtrip.attributes else {}
             )
 
-            orig_keys = {k.lower() for k in orig_attrs}
-            roundtrip_keys = {k.lower() for k in roundtrip_attrs}
+            # Exclude LDIF metadata attributes that are added during formatting
+            ldif_metadata_attrs = {"changetype", "modifytimestamp", "modifiersname"}
+            orig_keys = {
+                k.lower() for k in orig_attrs if k.lower() not in ldif_metadata_attrs
+            }
+            roundtrip_keys = {
+                k.lower()
+                for k in roundtrip_attrs
+                if k.lower() not in ldif_metadata_attrs
+            }
 
             if orig_keys != roundtrip_keys:
                 missing = orig_keys - roundtrip_keys
@@ -218,10 +226,19 @@ class FlextLdifTestUtils:
                         f"Entry {i}: Extra attributes in roundtrip: {sorted(extra)}",
                     )
 
-            # Compare attribute values for common attributes
-            for attr_name in orig_keys & roundtrip_keys:
-                orig_val = orig_attrs.get(attr_name)
-                roundtrip_val = roundtrip_attrs.get(attr_name)
+            # Compare attribute values for common attributes (excluding LDIF metadata)
+            common_attrs = orig_keys & roundtrip_keys
+            for attr_name_lower in common_attrs:
+                # Find the original case of the attribute name
+                orig_attr_name = next(
+                    k for k in orig_attrs if k.lower() == attr_name_lower
+                )
+                roundtrip_attr_name = next(
+                    k for k in roundtrip_attrs if k.lower() == attr_name_lower
+                )
+
+                orig_val = orig_attrs[orig_attr_name]
+                roundtrip_val = roundtrip_attrs[roundtrip_attr_name]
 
                 # Normalize values for comparison
                 orig_set = set(orig_val) if isinstance(orig_val, list) else {orig_val}

@@ -528,8 +528,10 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
                 format_options=resolved_format_options,
             )
             if parse_result.is_success:
-                response = parse_result.unwrap()
-                entries = response.entries
+                parse_response = parse_result.unwrap()
+                # ParseResponse is a Pydantic model with .entries field
+                # Extract entries from the ParseResponse
+                entries = parse_response.entries
                 return self._convert_output_format(entries, output_format)
 
             return FlextResult.fail(parse_result.error)

@@ -168,11 +168,12 @@ import fnmatch
 import re
 import time
 import uuid
+from collections.abc import Mapping, Sequence
 from datetime import UTC, datetime
 from typing import Any, cast
 
 from flext_core import FlextResult, FlextService
-from pydantic import Field, PrivateAttr, field_validator
+from pydantic import Field, PrivateAttr, ValidationError, field_validator
 
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
@@ -212,6 +213,99 @@ class FlextLdifFilters(FlextService[list[FlextLdifModels.Entry]]):
     - match_all=False  Entry must have ANY attribute (OR logic)
 
     """
+
+    # ════════════════════════════════════════════════════════════════════════
+    # INTERNAL NORMALIZATION HELPERS
+    # ════════════════════════════════════════════════════════════════════════
+    @staticmethod
+    def _ensure_str_list(value: object) -> list[str]:
+        """Ensure configuration values are normalized to list[str]."""
+        if value is None:
+            return []
+        if isinstance(value, str):
+            return [value]
+        if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+            return [item for item in value if isinstance(item, str)]
+        return []
+
+    @staticmethod
+    def _normalize_category_rules(
+        rules: FlextLdifModels.CategoryRules | Mapping[str, object] | None,
+    ) -> FlextResult[FlextLdifModels.CategoryRules]:
+        """Coerce dict inputs into CategoryRules models (backwards compatibility)."""
+        if isinstance(rules, FlextLdifModels.CategoryRules):
+            return FlextResult.ok(rules)
+
+        if rules is None:
+            return FlextResult.ok(FlextLdifModels.CategoryRules())
+
+        if not isinstance(rules, Mapping):
+            return FlextResult.fail(
+                "Category rules must be a mapping or CategoryRules model"
+            )
+
+        normalized: dict[str, list[str]] = {}
+
+        # Consolidate field normalization into loop (reduces cyclomatic complexity)
+        fields = [
+            "user_dn_patterns",
+            "group_dn_patterns",
+            "hierarchy_dn_patterns",
+            "schema_dn_patterns",
+            "user_objectclasses",
+            "group_objectclasses",
+            "hierarchy_objectclasses",
+        ]
+        for field in fields:
+            if field in rules:
+                normalized[field] = FlextLdifFilters._ensure_str_list(
+                    rules.get(field),
+                )
+
+        try:
+            return FlextResult.ok(
+                FlextLdifModels.CategoryRules.model_validate(
+                    normalized,
+                ),
+            )
+        except ValidationError as exc:
+            return FlextResult.fail(
+                f"Invalid category rules: {exc.errors(include_context=False)}"
+            )
+
+    @staticmethod
+    def _normalize_whitelist_rules(
+        rules: FlextLdifModels.WhitelistRules | Mapping[str, object] | None,
+    ) -> FlextResult[FlextLdifModels.WhitelistRules]:
+        """Coerce dict inputs into WhitelistRules models (backwards compatibility)."""
+        if isinstance(rules, FlextLdifModels.WhitelistRules):
+            return FlextResult.ok(rules)
+
+        if rules is None:
+            return FlextResult.ok(FlextLdifModels.WhitelistRules())
+
+        if not isinstance(rules, Mapping):
+            return FlextResult.fail(
+                "Whitelist rules must be a mapping or WhitelistRules model"
+            )
+
+        normalized = {
+            "blocked_objectclasses": FlextLdifFilters._ensure_str_list(
+                rules.get("blocked_objectclasses"),
+            ),
+            "allowed_objectclasses": FlextLdifFilters._ensure_str_list(
+                rules.get("allowed_objectclasses"),
+            ),
+        }
+
+        try:
+            return FlextResult.ok(
+                FlextLdifModels.WhitelistRules.model_validate(normalized),
+            )
+        except ValidationError as exc:
+            return FlextResult.fail(
+                f"Invalid whitelist rules: {exc.errors(include_context=False)}"
+            )
 
     # ════════════════════════════════════════════════════════════════════════
     # NESTED CLASSES - SRP COMPLIANT COMPONENTS
@@ -419,16 +513,21 @@ class FlextLdifFilters(FlextService[list[FlextLdifModels.Entry]]):
         @staticmethod
         def check_blocked_objectclasses(
             entry: FlextLdifModels.Entry,
-            whitelist_rules: FlextLdifModels.WhitelistRules | None,
+            whitelist_rules: FlextLdifModels.WhitelistRules
+            | Mapping[str, object]
+            | None,
         ) -> tuple[bool, str | None]:
             """Check if entry has blocked objectClasses.
 
             Uses type-safe WhitelistRules model instead of dict[str, Any].
             """
-            if not whitelist_rules:
-                return (False, None)
+            rules_result = FlextLdifFilters._normalize_whitelist_rules(whitelist_rules)
+            if rules_result.is_failure:
+                return (True, rules_result.error)
 
-            blocked_ocs = whitelist_rules.blocked_objectclasses
+            rules_model = rules_result.unwrap()
+
+            blocked_ocs = rules_model.blocked_objectclasses
             if not blocked_ocs:
                 return (False, None)
 
@@ -447,18 +546,23 @@ class FlextLdifFilters(FlextService[list[FlextLdifModels.Entry]]):
         def validate_category_dn_pattern(
             entry: FlextLdifModels.Entry,
             category: str,
-            rules: FlextLdifModels.CategoryRules,
+            rules: FlextLdifModels.CategoryRules | Mapping[str, object] | None,
         ) -> tuple[bool, str | None]:
             """Validate DN pattern for specific category.
 
             Uses type-safe CategoryRules model instead of dict[str, Any].
             """
+            rules_result = FlextLdifFilters._normalize_category_rules(rules)
+            if rules_result.is_failure:
+                return (True, rules_result.error)
+            normalized_rules = rules_result.unwrap()
+
             # Map category to pattern attribute
             pattern_map = {
-                "users": rules.user_dn_patterns,
-                "groups": rules.group_dn_patterns,
-                "hierarchy": rules.hierarchy_dn_patterns,
-                "schema": rules.schema_dn_patterns,
+                "users": normalized_rules.user_dn_patterns,
+                "groups": normalized_rules.group_dn_patterns,
+                "hierarchy": normalized_rules.hierarchy_dn_patterns,
+                "schema": normalized_rules.schema_dn_patterns,
             }
 
             dn_patterns = pattern_map.get(category, [])
@@ -1418,7 +1522,7 @@ class FlextLdifFilters(FlextService[list[FlextLdifModels.Entry]]):
     def categorize(
         cls,
         entry: FlextLdifModels.Entry,
-        rules: FlextLdifModels.CategoryRules,
+        rules: FlextLdifModels.CategoryRules | Mapping[str, object] | None,
     ) -> tuple[str, str | None]:
         """Categorize entry into 6 categories.
 
@@ -1436,14 +1540,19 @@ class FlextLdifFilters(FlextService[list[FlextLdifModels.Entry]]):
             Tuple of (category, rejection_reason)
 
         """
+        rules_result = cls._normalize_category_rules(rules)
+        if rules_result.is_failure:
+            return ("rejected", rules_result.error)
+        normalized_rules = rules_result.unwrap()
+
         # Check schema first
         if cls.is_schema(entry):
             return ("schema", None)
 
         # Get objectClasses from CategoryRules model
-        hierarchy_classes = tuple(rules.hierarchy_objectclasses)
-        user_classes = tuple(rules.user_objectclasses)
-        group_classes = tuple(rules.group_objectclasses)
+        hierarchy_classes = tuple(normalized_rules.hierarchy_objectclasses)
+        user_classes = tuple(normalized_rules.user_objectclasses)
+        group_classes = tuple(normalized_rules.group_objectclasses)
 
         # Check users FIRST
         if user_classes and cls.Filter.has_objectclass(entry, user_classes):
@@ -1793,14 +1902,21 @@ class FlextLdifFilters(FlextService[list[FlextLdifModels.Entry]]):
     @staticmethod
     def categorize_entry(
         entry: FlextLdifModels.Entry,
-        rules: FlextLdifModels.CategoryRules,
-        whitelist_rules: FlextLdifModels.WhitelistRules | None = None,
+        rules: FlextLdifModels.CategoryRules | Mapping[str, object] | None,
+        whitelist_rules: FlextLdifModels.WhitelistRules
+        | Mapping[str, object]
+        | None = None,
     ) -> tuple[str, str | None]:
         """Categorize entry into 6 categories.
 
         Uses type-safe Pydantic models instead of dict[str, Any].
         Delegates to FlextLdifFilters.categorize, with optional whitelist validation.
         """
+        rules_result = FlextLdifFilters._normalize_category_rules(rules)
+        if rules_result.is_failure:
+            return ("rejected", rules_result.error)
+        normalized_rules = rules_result.unwrap()
+
         # Check for blocked objectClasses first using helper
         is_blocked, reason = FlextLdifFilters.Categorizer.check_blocked_objectclasses(
             entry,
@@ -1810,7 +1926,7 @@ class FlextLdifFilters(FlextService[list[FlextLdifModels.Entry]]):
             return ("rejected", reason)
 
         # Delegate to FilterService for main categorization
-        category, reason = FlextLdifFilters.categorize(entry, rules)
+        category, reason = FlextLdifFilters.categorize(entry, normalized_rules)
 
         # Validate DN patterns for category-specific matching using helper
         if category in {"users", "groups"}:
@@ -1818,7 +1934,7 @@ class FlextLdifFilters(FlextService[list[FlextLdifModels.Entry]]):
                 FlextLdifFilters.Categorizer.validate_category_dn_pattern(
                     entry,
                     category,
-                    rules,
+                    normalized_rules,
                 )
             )
             if is_rejected:

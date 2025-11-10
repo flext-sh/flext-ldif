@@ -27,18 +27,14 @@ class TestOidQuirksWithRealFixtures:
     """Test OID quirks with real fixture data."""
 
     @pytest.fixture
-    def oid(self) -> FlextLdifServersOid:
-        """Create OID quirk instance."""
-        return FlextLdifServersOid()
+    def oid(self) -> FlextLdifServersOid.Schema:
+        """Create OID schema quirk."""
+        return FlextLdifServersOid.Schema()
 
     @pytest.fixture
-    def oid_schema_attributes(self, oid_fixtures: FlextLdifFixtures.OID) -> list[str]:
-        """Extract OID attributes from schema fixture."""
-        try:
-            schema = oid_fixtures.schema()
-        except AttributeError:
-            pytest.skip("OID schema fixture not available")
-        return extract_attributes(schema)
+    def oud(self) -> FlextLdifServersOud.Schema:
+        """Create OUD schema quirk."""
+        return FlextLdifServersOud.Schema()
 
     @pytest.fixture
     def oid_schema_objectclasses(

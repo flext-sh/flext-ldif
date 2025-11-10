@@ -845,61 +845,31 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                 )
             return fixed
 
-        def _extract_schemas_from_ldif(
-            self,
-            ldif_content: str,
-        ) -> FlextResult[FlextLdifTypes.Models.EntryAttributesDict]:
-            """Extract and parse all schema definitions from LDIF content.
-
-            Strategy pattern: OID-specific approach to extract attributeTypes
-            and objectClasses from cn=schema LDIF entries, handling OID's
-            format variations.
-
-            This is a private helper method for internal schema extraction.
-
-            Args:
-                ldif_content: Raw LDIF content containing schema definitions
-
-            Returns:
-                FlextResult containing extracted attributes and objectclasses
-                as a dictionary with ATTRIBUTES and OBJECTCLASSES lists.
-
-            """
-            dk = FlextLdifConstants.DictKeys
-            # Use FlextLdifUtilities.Schema for case-insensitive line parsing
-            attributes = FlextLdifUtilities.Schema.extract_attributes_from_lines(
-                ldif_content,
-                self._parse_attribute,
-            )
-            objectclasses = FlextLdifUtilities.Schema.extract_objectclasses_from_lines(
-                ldif_content,
-                self._parse_objectclass,
-            )
-
-            return FlextResult[FlextLdifTypes.Models.EntryAttributesDict].ok(
-                {
-                    dk.ATTRIBUTES: attributes,
-                    "objectclasses": objectclasses,
-                },
-            )
-
         def extract_schemas_from_ldif(
             self,
             ldif_content: str,
+            *,  # keyword-only parameter
+            validate_dependencies: bool = False,
         ) -> FlextResult[FlextLdifTypes.Models.EntryAttributesDict]:
-            """Public method to extract and parse all schema definitions from LDIF content.
+            """Extract and parse all schema definitions from LDIF content.
 
-            Delegates to the private _extract_schemas_from_ldif implementation.
+            OID-specific implementation: Uses base template method without dependency
+            validation (OID has simpler schema requirements than OUD).
 
             Args:
                 ldif_content: Raw LDIF content containing schema definitions
+                validate_dependencies: Whether to validate attribute dependencies
+                    (default False for OID as it has simpler schema)
 
             Returns:
                 FlextResult containing extracted attributes and objectclasses
-                as a dictionary with ATTRIBUTES and OBJECTCLASSES lists.
+                as a dictionary with ATTRIBUTES and OBJECTCLASS lists.
 
             """
-            return self._extract_schemas_from_ldif(ldif_content)
+            return super().extract_schemas_from_ldif(
+                ldif_content,
+                validate_dependencies=validate_dependencies,
+            )
 
     class Acl(FlextLdifServersRfc.Acl):
         """Oracle OID ACL quirk using universal parser with OID-specific configuration.

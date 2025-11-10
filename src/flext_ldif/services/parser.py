@@ -205,10 +205,10 @@ class FlextLdifParser(FlextService[FlextLdifModels.ParseResponse]):
                 detected_server_type=None,
             )
 
-            return FlextResult[FlextLdifModels.ParseResponse].ok(response)
+            return FlextResult.ok(response)
 
         except (ValueError, TypeError, AttributeError) as e:
-            return FlextResult[FlextLdifModels.ParseResponse].fail(
+            return FlextResult.fail(
                 f"Parser service health check failed: {e}",
             )
 
@@ -372,11 +372,13 @@ class FlextLdifParser(FlextService[FlextLdifModels.ParseResponse]):
                 effective_type,
             )
 
+            # Create ParseResponse with entries and statistics
             response = FlextLdifModels.ParseResponse(
                 entries=processed_entries,
                 statistics=stats,
                 detected_server_type=effective_type,
             )
+
             return FlextResult.ok(response)
 
         except Exception as e:
@@ -388,7 +390,7 @@ class FlextLdifParser(FlextService[FlextLdifModels.ParseResponse]):
         self,
         content: str,
         server_type: str,
-    ) -> FlextResult[list[FlextLdifModels.Entry]]:
+    ) -> FlextResult[FlextLdifModels.ParseResult]:
         # Get the appropriate entry quirk for this server type from registry
         # Entry quirks handle LDIF content parsing via entry.parse_content method
         quirks = self._registry.get_entrys(server_type)
@@ -402,14 +404,14 @@ class FlextLdifParser(FlextService[FlextLdifModels.ParseResponse]):
         entry = quirks[0]
 
         # Use public parse() interface to parse LDIF content
-        return entry.parse(content)
+        return cast("FlextResult[FlextLdifModels.ParseResult]", entry.parse(content))
 
     def _parse_from_file(
         self,
         path: Path,
         encoding: str,
         server_type: str,
-    ) -> FlextResult[list[FlextLdifModels.Entry]]:
+    ) -> FlextResult[FlextLdifModels.ParseResult]:
         if not path.exists():
             return FlextResult.fail(f"LDIF file not found: {path}")
         try:
@@ -422,7 +424,7 @@ class FlextLdifParser(FlextService[FlextLdifModels.ParseResponse]):
         self,
         results: list[tuple[str, dict[str, list[str]]]],
         server_type: str,
-    ) -> FlextResult[tuple[list[FlextLdifModels.Entry], int, list[str]]]:
+    ) -> FlextResult[FlextLdifModels.ParseResult]:
         """Parse LDAP3 search results into Entry models.
 
         Uses the quirk's entry parsing to properly create Entry models

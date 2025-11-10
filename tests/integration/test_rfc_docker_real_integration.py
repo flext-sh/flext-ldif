@@ -46,9 +46,9 @@ class TestRfcParserRealFixtures:
         result = parser.parse_ldif_file(entries_file)
 
         assert result.is_success, f"Failed to parse: {result.error}"
-        entries = result.unwrap()
-        assert len(entries) > 0, "No entries parsed"
-        assert all(hasattr(entry, "dn") for entry in entries)
+        parse_response = result.unwrap()
+        assert len(parse_response.entries) > 0, "No entries parsed"
+        assert all(hasattr(entry, "dn") for entry in parse_response.entries)
 
     def test_parse_oud_entries_fixture(
         self,
@@ -67,8 +67,8 @@ class TestRfcParserRealFixtures:
         result = parser.parse_ldif_file(entries_file)
 
         assert result.is_success, f"Failed to parse: {result.error}"
-        entries = result.unwrap()
-        assert len(entries) > 0
+        parse_response = result.unwrap()
+        assert len(parse_response.entries) > 0
 
     def test_parse_openldap_entries_fixture(
         self,
@@ -87,8 +87,8 @@ class TestRfcParserRealFixtures:
         result = parser.parse_ldif_file(entries_file)
 
         assert result.is_success, f"Failed to parse: {result.error}"
-        entries = result.unwrap()
-        assert len(entries) > 0
+        parse_response = result.unwrap()
+        assert len(parse_response.entries) > 0
 
 
 class TestRfcSchemaParserRealFixtures:
@@ -116,9 +116,9 @@ class TestRfcSchemaParserRealFixtures:
         result = parser.parse_ldif_file(schema_file)
 
         assert result.is_success, f"Failed to parse: {result.error}"
-        entries = result.unwrap()
+        parse_response = result.unwrap()
         # Schema entries should be parsed with automatic schema extraction
-        assert len(entries) > 0
+        assert len(parse_response.entries) > 0
 
     def test_parse_oud_schema_fixture(
         self,
@@ -165,7 +165,8 @@ class TestRfcWriterRealFixtures:
         parse_result = parser.parse_ldif_file(source_file)
 
         assert parse_result.is_success, f"Failed to parse source: {parse_result.error}"
-        entries = parse_result.unwrap()
+        parse_response = parse_result.unwrap()
+        entries = parse_response.entries
         original_count = len(entries)
 
         # Write to file
@@ -192,10 +193,10 @@ class TestRfcWriterRealFixtures:
         reparse_result = reparser.parse_ldif_file(output_file)
 
         assert reparse_result.is_success, f"Failed to re-parse: {reparse_result.error}"
-        reparsed_entries = reparse_result.unwrap()
+        reparsed_response = reparse_result.unwrap()
 
         # Verify counts match
-        assert len(reparsed_entries) == original_count
+        assert len(reparsed_response.entries) == original_count
 
     def test_write_oud_acl_entries(
         self,
@@ -217,7 +218,8 @@ class TestRfcWriterRealFixtures:
         if not parse_result.is_success:
             pytest.skip(f"Failed to parse ACL fixture: {parse_result.error}")
 
-        entries = parse_result.unwrap()
+        parse_response = parse_result.unwrap()
+        entries = parse_response.entries
 
         # Write to file
         output_file = tmp_path / "acl_output.ldif"

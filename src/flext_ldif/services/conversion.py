@@ -260,11 +260,11 @@ class FlextLdifConversion(
                 )
 
             parsed_entries = parse_result.unwrap()
-            if not parsed_entries:
+            if not parsed_entries:  # type: ignore[truthy-function]
                 return FlextResult.fail("Parse operation returned empty entry list")
 
             # Return first parsed entry (conversion always produces one entry)
-            return FlextResult.ok(parsed_entries[0])
+            return FlextResult.ok(parsed_entries[0])  # type: ignore[index]
 
         except Exception as e:
             return FlextResult.fail(f"Entry conversion failed: {e}")
@@ -453,13 +453,17 @@ class FlextLdifConversion(
     ) -> FlextResult[FlextLdifModels.SchemaAttribute | dict[str, object] | str]:
         """Parse source attribute data into model or pass-through."""
         if isinstance(data, str):
-            if not hasattr(source, "schema") or not hasattr(
-                source.schema_quirk,
-                "parse_attribute",
-            ):
+            # Check if source is already a Schema object (direct usage)
+            if hasattr(source, "parse_attribute"):
+                # Source is a Schema object, use it directly
+                schema_parser = source
+            elif hasattr(source, "schema") and hasattr(source.schema_quirk, "parse_attribute"):
+                # Source is a server object, use its schema_quirk
+                schema_parser = source.schema_quirk
+            else:
                 return FlextResult.ok(data)  # Pass-through if no parser
 
-            parse_result = source.schema_quirk.parse_attribute(data)
+            parse_result = schema_parser.parse_attribute(data)
             if parse_result.is_failure:
                 return FlextResult.ok(data)  # Pass-through on parse error
             return FlextResult.ok(parse_result.unwrap())
@@ -475,17 +479,21 @@ class FlextLdifConversion(
         if isinstance(source_attr, str):
             return FlextResult.ok(source_attr)
 
-        if not hasattr(source, "schema") or not hasattr(
-            source.schema_quirk,
-            "write_attribute",
-        ):
+        # Check if source is already a Schema object (direct usage)
+        if hasattr(source, "write_attribute"):
+            # Source is a Schema object, use it directly
+            schema_writer = source
+        elif hasattr(source, "schema") and hasattr(source.schema_quirk, "write_attribute"):
+            # Source is a server object, use its schema_quirk
+            schema_writer = source.schema_quirk
+        else:
             return FlextResult.ok(source_attr)  # Return as-is if no writer
 
         # Type narrowing: ensure source_attr is SchemaAttribute
         if not isinstance(source_attr, FlextLdifModels.SchemaAttribute):
             return FlextResult.ok(source_attr)  # Pass-through if not SchemaAttribute
 
-        write_result = source.schema_quirk.write_attribute(source_attr)
+        write_result = schema_writer.write_attribute(source_attr)
         if write_result.is_failure:
             return FlextResult.ok(source_attr)  # Return as-is on write error
 
@@ -497,13 +505,17 @@ class FlextLdifConversion(
         attr_string: str,
     ) -> FlextResult[FlextLdifModels.SchemaAttribute | dict[str, object] | str]:
         """Parse RFC string with target quirk."""
-        if not hasattr(target, "schema") or not hasattr(
-            target.schema_quirk,
-            "parse_attribute",
-        ):
+        # Check if target is already a Schema object (direct usage)
+        if hasattr(target, "parse_attribute"):
+            # Target is a Schema object, use it directly
+            schema_parser = target
+        elif hasattr(target, "schema") and hasattr(target.schema_quirk, "parse_attribute"):
+            # Target is a server object, use its schema_quirk
+            schema_parser = target.schema_quirk
+        else:
             return FlextResult.ok(attr_string)  # Return string if no parser
 
-        parse_result = target.schema_quirk.parse_attribute(attr_string)
+        parse_result = schema_parser.parse_attribute(attr_string)
         if parse_result.is_failure:
             return FlextResult.ok(attr_string)  # Return string on parse error
 
@@ -543,10 +555,15 @@ class FlextLdifConversion(
             parsed_attr = target_result.unwrap()
 
             # Step 4: Write target attribute to final format
-            if not hasattr(target, "schema") or not hasattr(
-                target.schema_quirk,
-                "write_attribute",
-            ):
+            # Check if target is already a Schema object (direct usage)
+            if hasattr(target, "write_attribute"):
+                # Target is a Schema object, use it directly
+                schema_writer = target
+            elif hasattr(target, "schema") and hasattr(target.schema_quirk, "write_attribute"):
+                # Target is a server object, use its schema_quirk
+                schema_writer = target.schema_quirk
+            else:
+                # No schema writer available, return parsed attribute as-is
                 return FlextResult.ok(parsed_attr)
 
             # Type narrowing: write_attribute requires SchemaAttribute
@@ -557,7 +574,7 @@ class FlextLdifConversion(
 
             return cast(
                 "FlextResult[FlextLdifModels.SchemaAttribute | str | dict[str, object]]",
-                target.schema_quirk.write_attribute(parsed_attr),
+                schema_writer.write_attribute(parsed_attr),
             )
 
         except (AttributeError, ValueError, TypeError, RuntimeError, Exception) as e:
@@ -627,13 +644,17 @@ class FlextLdifConversion(
     ) -> FlextResult[FlextLdifModels.SchemaObjectClass | dict[str, object] | str]:
         """Parse source objectClass data into model or pass-through."""
         if isinstance(data, str):
-            if not hasattr(source, "schema") or not hasattr(
-                source.schema_quirk,
-                "parse_objectclass",
-            ):
+            # Check if source is already a Schema object (direct usage)
+            if hasattr(source, "parse_objectclass"):
+                # Source is a Schema object, use it directly
+                schema_parser = source
+            elif hasattr(source, "schema") and hasattr(source.schema_quirk, "parse_objectclass"):
+                # Source is a server object, use its schema_quirk
+                schema_parser = source.schema_quirk
+            else:
                 return FlextResult.ok(data)  # Pass-through if no parser
 
-            parse_result = source.schema_quirk.parse_objectclass(data)
+            parse_result = schema_parser.parse_objectclass(data)
             if parse_result.is_failure:
                 return FlextResult.ok(data)  # Pass-through on parse error
             return FlextResult.ok(parse_result.unwrap())
@@ -649,17 +670,21 @@ class FlextLdifConversion(
         if isinstance(source_oc, str):
             return FlextResult.ok(source_oc)
 
-        if not hasattr(source, "schema") or not hasattr(
-            source.schema_quirk,
-            "write_objectclass",
-        ):
+        # Check if source is already a Schema object (direct usage)
+        if hasattr(source, "write_objectclass"):
+            # Source is a Schema object, use it directly
+            schema_writer = source
+        elif hasattr(source, "schema") and hasattr(source.schema_quirk, "write_objectclass"):
+            # Source is a server object, use its schema_quirk
+            schema_writer = source.schema_quirk
+        else:
             return FlextResult.ok(source_oc)  # Return as-is if no writer
 
         # Type narrowing: ensure source_oc is SchemaObjectClass
         if not isinstance(source_oc, FlextLdifModels.SchemaObjectClass):
             return FlextResult.ok(source_oc)  # Pass-through if not SchemaObjectClass
 
-        write_result = source.schema_quirk.write_objectclass(source_oc)
+        write_result = schema_writer.write_objectclass(source_oc)
         if write_result.is_failure:
             return FlextResult.ok(source_oc)  # Return as-is on write error
 
@@ -671,13 +696,17 @@ class FlextLdifConversion(
         oc_string: str,
     ) -> FlextResult[FlextLdifModels.SchemaObjectClass | dict[str, object] | str]:
         """Parse RFC string with target quirk."""
-        if not hasattr(target, "schema") or not hasattr(
-            target.schema_quirk,
-            "parse_objectclass",
-        ):
+        # Check if target is already a Schema object (direct usage)
+        if hasattr(target, "parse_objectclass"):
+            # Target is a Schema object, use it directly
+            schema_parser = target
+        elif hasattr(target, "schema") and hasattr(target.schema_quirk, "parse_objectclass"):
+            # Target is a server object, use its schema_quirk
+            schema_parser = target.schema_quirk
+        else:
             return FlextResult.ok(oc_string)  # Return string if no parser
 
-        parse_result = target.schema_quirk.parse_objectclass(oc_string)
+        parse_result = schema_parser.parse_objectclass(oc_string)
         if parse_result.is_failure:
             return FlextResult.ok(oc_string)  # Return string on parse error
 

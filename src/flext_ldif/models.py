@@ -26,6 +26,7 @@ from pydantic import (
     BaseModel,
     ConfigDict,
     Field,
+    ValidationError,
     computed_field,
     field_validator,
     model_validator,
@@ -105,6 +106,43 @@ class FlextLdifModels(FlextModels):
                     raise ValueError(msg)
 
             return v
+
+        @classmethod
+        def create(
+            cls,
+            value: str | FlextLdifModels.DistinguishedName,
+            *,
+            metadata: dict[str, object] | None = None,
+        ) -> FlextResult[FlextLdifModels.DistinguishedName]:
+            """Factory helper for DistinguishedName value object."""
+            if isinstance(value, cls):
+                if metadata is None or value.metadata == metadata:
+                    return FlextResult[FlextLdifModels.DistinguishedName].ok(value)
+
+                try:
+                    updated_value = value.model_copy(update={"metadata": metadata})
+                except ValidationError as exc:
+                    logger.exception(
+                        "Failed to update DN metadata",
+                        extra={"error": str(exc), "value": value.value},
+                    )
+                    return FlextResult[FlextLdifModels.DistinguishedName].fail(
+                        f"Invalid distinguished name metadata: {exc}",
+                    )
+                return FlextResult[FlextLdifModels.DistinguishedName].ok(updated_value)
+
+            try:
+                dn = cls(value=value, metadata=metadata)
+            except ValidationError as exc:
+                logger.exception(
+                    "Invalid distinguished name",
+                    extra={"error": str(exc), "value": value},
+                )
+                return FlextResult[FlextLdifModels.DistinguishedName].fail(
+                    f"Invalid distinguished name: {exc}",
+                )
+
+            return FlextResult[FlextLdifModels.DistinguishedName].ok(dn)
 
         @computed_field
         def components(self) -> list[str]:
@@ -4566,7 +4604,28 @@ class FlextLdifModels(FlextModels):
             description="Count of entries per server type",
         )
 
-    class ServiceStatus(FlextModels.Value):
+    class DictAccessibleValue(FlextModels.Value):
+        """Base value model providing dict-style access (backwards compatibility)."""
+
+        def __getitem__(self, key: str) -> object:
+            """Get attribute value by key (dict-style access)."""
+            if hasattr(self, key):
+                return getattr(self, key)
+            raise KeyError(key)
+
+        def get(self, key: str, default: object | None = None) -> object | None:
+            """Get attribute value with optional default (dict-style access)."""
+            return getattr(self, key, default)
+
+        def keys(self) -> list[str]:
+            """Return list of attribute keys (dict-style access)."""
+            return list(self.model_dump().keys())
+
+        def items(self) -> list[tuple[str, object]]:
+            """Return list of (key, value) tuples (dict-style access)."""
+            return list(self.model_dump().items())
+
+    class ServiceStatus(DictAccessibleValue):
         """Generic service status model for execute() health checks.
 
         Base model for all service health check responses providing
@@ -4589,7 +4648,7 @@ class FlextLdifModels(FlextModels):
             description="RFC standards implemented by this service",
         )
 
-    class SchemaServiceStatus(FlextModels.Value):
+    class SchemaServiceStatus(DictAccessibleValue):
         """Schema service status with server-specific metadata.
 
         Extended status model for FlextLdifSchema service including
@@ -4620,7 +4679,7 @@ class FlextLdifModels(FlextModels):
             description="List of available schema operations",
         )
 
-    class SyntaxServiceStatus(FlextModels.Value):
+    class SyntaxServiceStatus(DictAccessibleValue):
         """Syntax service status with lookup table metadata.
 
         Extended status model for FlextLdifSyntax service including
@@ -4672,7 +4731,7 @@ class FlextLdifModels(FlextModels):
             description="Resolved OID for name lookup",
         )
 
-    class ValidationServiceStatus(FlextModels.Value):
+    class ValidationServiceStatus(DictAccessibleValue):
         """Validation service status with validation type metadata.
 
         Status model for FlextLdifValidation service including
