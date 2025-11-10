@@ -58,18 +58,17 @@ class FlextLdifStatistics(FlextService[FlextLdifModels.StatisticsResult]):
             FlextResult containing empty statistics (service health check)
 
         """
-        # Return empty statistics for health check
-        return FlextResult[FlextLdifModels.StatisticsResult].ok(
-            FlextLdifModels.StatisticsResult(
-                total_entries=0,
-                categorized={},
-                rejection_rate=0.0,
-                rejection_count=0,
-                rejection_reasons=[],
-                written_counts={},
-                output_files={},
-            )
-        )
+        # Return service status for health check
+        return FlextResult[dict[str, object]].ok({
+            "service": "StatisticsService",
+            "status": "operational",
+            "capabilities": [
+                "generate_statistics",
+                "count_entries",
+                "analyze_rejections",
+            ],
+            "version": "1.0.0",
+        })
 
     # ════════════════════════════════════════════════════════════════════════
     # FLUENT BUILDER PATTERN

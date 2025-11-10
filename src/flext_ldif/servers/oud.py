@@ -799,12 +799,17 @@ class FlextLdifServersOud(FlextLdifServersRfc):
         def extract_schemas_from_ldif(
             self,
             ldif_content: str,
+            *,
+            validate_dependencies: bool = True,  # OUD defaults to True (needs validation)
         ) -> FlextResult[FlextLdifTypes.Models.EntryAttributesDict]:
             """Extract and parse all schema definitions from LDIF content.
 
-            Strategy pattern: OUD-specific approach to extract attributeTypes
-            and objectClasses from cn=schema LDIF entries, handling OUD's
-            case variations.
+            OUD-specific implementation: Uses base template method with dependency
+            validation enabled by default. The template method handles attribute
+            extraction, available_attributes set building, and objectClass extraction.
+
+            Strategy pattern: OUD requires dependency validation to ensure all
+            attributes referenced in objectClass MUST/MAY lists are available.
 
             Filters only Oracle internal objectClasses that OUD already provides built-in.
             All custom objectClasses pass through, including those with unresolved
@@ -812,56 +817,19 @@ class FlextLdifServersOud(FlextLdifServersRfc):
 
             Args:
                 ldif_content: Raw LDIF content containing schema definitions
+                validate_dependencies: Enable dependency validation (default: True for OUD)
 
             Returns:
                 FlextResult with dict containing ATTRIBUTES and
                 objectclasses lists (filtered only for Oracle internal classes)
 
             """
-            try:
-                objectclasses_parsed: list[FlextLdifModels.SchemaObjectClass] = []
-
-                # PHASE 1: Extract all attributeTypes first using FlextLdifUtilities.Schema
-                attributes_parsed = (
-                    FlextLdifUtilities.Schema.extract_attributes_from_lines(
-                        ldif_content,
-                        self.parse_attribute,
-                    )
-                )
-
-                # Build set of available attribute names (lowercase) for dependency validation
-                available_attributes: set[str] = set()
-                for attr_data in attributes_parsed:
-                    if isinstance(
-                        attr_data,
-                        FlextLdifModels.SchemaAttribute,
-                    ) and hasattr(attr_data, "name"):
-                        attr_name = str(attr_data.name).lower()
-                        available_attributes.add(attr_name)
-
-                # PHASE 2: Extract objectClasses with dependency validation using FlextLdifUtilities.Schema
-                # Must happen AFTER all attributes are collected
-                objectclasses_raw_data = (
-                    FlextLdifUtilities.Schema.extract_objectclasses_from_lines(
-                        ldif_content,
-                        self.parse_objectclass,
-                    )
-                )
-
-                # PHASE 3: Pass all objectClasses through to migration service
-                objectclasses_parsed.extend(objectclasses_raw_data)
-
-                return FlextResult[FlextLdifTypes.Models.EntryAttributesDict].ok(
-                    {
-                        FlextLdifConstants.DictKeys.ATTRIBUTES: attributes_parsed,
-                        FlextLdifConstants.DictKeys.OBJECTCLASS: objectclasses_parsed,
-                    },
-                )
-
-            except Exception as e:
-                return FlextResult[FlextLdifTypes.Models.EntryAttributesDict].fail(
-                    f"OUD schema extraction failed: {e}",
-                )
+            # Use base template method with OUD's dependency validation
+            # This replaces 66 lines of duplicated code with a 3-line call
+            return super().extract_schemas_from_ldif(
+                ldif_content,
+                validate_dependencies=validate_dependencies,
+            )
 
     class Acl(FlextLdifServersRfc.Acl):
         """Oracle OUD ACL quirk (nested).

@@ -174,8 +174,8 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
         """Handle parse operation for main quirk."""
         parse_result = self.parse(ldif_text)
         if parse_result.is_success:
-            parsed_entries: list[FlextLdifModels.Entry] = parse_result.unwrap()
-            return FlextResult[FlextLdifTypes.EntryOrString].ok(parsed_entries)
+            parse_response = parse_result.unwrap()
+            return FlextResult[FlextLdifTypes.EntryOrString].ok(parse_response)  # type: ignore[arg-type]
         error_msg: str = parse_result.error or "Parse failed"
         return FlextResult[FlextLdifTypes.EntryOrString].fail(error_msg)
 
@@ -232,8 +232,18 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
         """
         # Health check: no parameters provided
         if not ldif_text and not entries:
-            empty_list: list[FlextLdifModels.Entry] = []
-            return FlextResult[FlextLdifTypes.EntryOrString].ok(empty_list)
+            detected_server = getattr(self, "server_type", None)
+            statistics = FlextLdifModels.Statistics(
+                total_entries=0,
+                processed_entries=0,
+                detected_server_type=detected_server,
+            )
+            empty_response = FlextLdifModels.ParseResponse(
+                entries=[],
+                statistics=statistics,
+                detected_server_type=detected_server,
+            )
+            return FlextResult[FlextLdifTypes.EntryOrString].ok(empty_response)  # type: ignore[arg-type]
 
         # Use explicit operation if provided, otherwise auto-detect
         detected_operation: Literal["parse", "write"] | None = operation
@@ -397,6 +407,13 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
         self._acl_quirk = self.Acl()
         self._entry_quirk = self.Entry()
 
+        # Expose backwards-compatible public attributes expected by legacy callers.
+        # Must use object.__setattr__ to bypass Pydantic's attribute protection.
+        # PLC2801 suppressed: setattr() doesn't work here due to Pydantic conflicts.
+        object.__setattr__(self, "schema", self._schema_quirk)  # noqa: PLC2801
+        object.__setattr__(self, "acl", self._acl_quirk)  # noqa: PLC2801
+        object.__setattr__(self, "entry", self._entry_quirk)  # noqa: PLC2801
+
     # =========================================================================
     # Properties for accessing nested quirks (bypasses Pydantic's schema() method)
     # =========================================================================
@@ -420,7 +437,10 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
     # Core Quirk Methods - Parsing and Writing (Primary Interface)
     # =========================================================================
 
-    def parse(self, ldif_text: str) -> FlextResult[list[FlextLdifModels.Entry]]:
+    def parse(
+        self,
+        ldif_text: str,
+    ) -> FlextResult[FlextLdifModels.ParseResponse]:
         """Parse LDIF text to Entry models.
 
         Routes to Entry quirk for server-specific parsing logic.
@@ -434,14 +454,32 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
             ldif_text: LDIF content string
 
         Returns:
-            FlextResult[list[Entry]]
+            FlextResult[ParseResponse]
 
         """
-        entry = getattr(self, "entry", None)
-        if not entry:
+        entry_quirk = getattr(self, "entry", None)
+        if not entry_quirk:
             return FlextResult.fail("Entry quirk not available")
-        result: FlextResult[list[FlextLdifModels.Entry]] = entry.parse(ldif_text)
-        return result
+        entries_result: FlextResult[list[FlextLdifModels.Entry]] = entry_quirk.parse(
+            ldif_text,
+        )
+        if entries_result.is_failure:
+            error_msg = entries_result.error or "Entry parsing failed"
+            return FlextResult[FlextLdifModels.ParseResponse].fail(error_msg)
+
+        entries = entries_result.unwrap()
+        detected_server = getattr(self, "server_type", None)
+        statistics = FlextLdifModels.Statistics(
+            total_entries=len(entries),
+            processed_entries=len(entries),
+            detected_server_type=detected_server,
+        )
+        parse_response = FlextLdifModels.ParseResponse(
+            entries=entries,
+            statistics=statistics,
+            detected_server_type=detected_server,
+        )
+        return FlextResult[FlextLdifModels.ParseResponse].ok(parse_response)
 
     def write(self, entries: list[FlextLdifModels.Entry]) -> FlextResult[str]:
         """Write Entry models to LDIF text.

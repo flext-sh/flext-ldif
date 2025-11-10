@@ -63,7 +63,8 @@ class TestRfcDockerRealData:
         result = parser.parse_ldif_file(schema_file)
 
         assert result.is_success, f"Failed to parse OID schema: {result.error}"
-        entries = result.unwrap()
+        parse_response = result.unwrap()
+        entries = parse_response.entries
 
         # Verify schema entries are parsed
         assert len(entries) > 0, "No schema entries parsed"
@@ -92,7 +93,8 @@ class TestRfcDockerRealData:
         result = parser.parse_ldif_file(entries_file)
 
         assert result.is_success, f"Failed to parse OUD entries: {result.error}"
-        entries = result.unwrap()
+        parse_response = result.unwrap()
+        entries = parse_response.entries
 
         # Verify entries
         assert len(entries) > 0, "No entries parsed from OUD fixtures"
@@ -119,7 +121,8 @@ class TestRfcDockerRealData:
             result.error is not None and "Failed to parse" in result.error
         )
         if result.is_success:
-            entries = result.unwrap()
+            parse_response = result.unwrap()
+            entries = parse_response.entries
             assert len(entries) > 0
 
     def test_roundtrip_oid_to_file(
@@ -143,7 +146,8 @@ class TestRfcDockerRealData:
         if not parse_result.is_success:
             pytest.skip(f"Could not parse source: {parse_result.error}")
 
-        entries = parse_result.unwrap()
+        parse_response = parse_result.unwrap()
+        entries = parse_response.entries
 
         # Write to new file
         output_file = tmp_path / "roundtrip.ldif"
@@ -169,7 +173,8 @@ class TestRfcDockerRealData:
         reparse_result = reparser.parse_ldif_file(output_file)
 
         assert reparse_result.is_success, f"Failed to re-parse: {reparse_result.error}"
-        reparsed_entries = reparse_result.unwrap()
+        reparsed_response = reparse_result.unwrap()
+        reparsed_entries = reparsed_response.entries
 
         # Verify counts match
         assert len(reparsed_entries) == len(entries)
@@ -192,7 +197,8 @@ class TestRfcDockerRealData:
         result = parser.parse_ldif_file(acl_file)
 
         if result.is_success:
-            entries = result.unwrap()
+            parse_response = result.unwrap()
+        entries = parse_response.entries
             # OUD ACLs should have 'aci' attributes
             # LdifAttributes is a wrapper - access inner dict via .attributes
             acl_entries = [e for e in entries if "aci" in e.attributes.attributes]
@@ -287,7 +293,8 @@ class TestRfcDockerRealData:
 
             # Relaxed mode should attempt to parse even broken LDIF
             if result.is_success:
-                entries = result.unwrap()
+                parse_response = result.unwrap()
+        entries = parse_response.entries
                 assert isinstance(entries, list)
 
     def test_rfc_schema_parser_with_real_data(
@@ -307,7 +314,8 @@ class TestRfcDockerRealData:
         result = parser.parse_ldif_file(schema_file)
 
         if result.is_success:
-            entries = result.unwrap()
+            parse_response = result.unwrap()
+        entries = parse_response.entries
             # Should have schema entries with attributeTypes or objectClasses
             assert len(entries) > 0
             assert any(
@@ -364,7 +372,8 @@ class TestRfcIntegrationRealWorld:
         result = parser.parse_ldif_file(integration_file)
 
         if result.is_success:
-            entries = result.unwrap()
+            parse_response = result.unwrap()
+            entries = parse_response.entries
             assert len(entries) > 0, "Integration file should have entries"
 
     def test_write_large_dataset(

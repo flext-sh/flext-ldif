@@ -167,8 +167,8 @@ class TestOudQuirksTransformations:
         result = api.migrate(
             input_dir=input_dir,
             output_dir=output_dir,
-            from_server="oid",
-            to_server="oud",
+            source_server="oid",
+            target_server="oud",
         )
         assert result.is_success or result.is_failure
 
@@ -195,8 +195,8 @@ class TestOudQuirksTransformations:
         result = api.migrate(
             input_dir=input_dir,
             output_dir=output_dir,
-            from_server="oud",
-            to_server="openldap",
+            source_server="oud",
+            target_server="openldap",
         )
         assert result.is_success or result.is_failure
 

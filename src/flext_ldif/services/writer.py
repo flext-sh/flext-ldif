@@ -697,10 +697,14 @@ class FlextLdifWriter(FlextService[FlextLdifModels.WriteResponse]):
 
                 return FlextResult.ok(
                     FlextLdifModels.WriteResponse(
-                        entries_written=original_count,
-                        file_path=str(path),
-                        file_size=file_size,
-                    )
+                        content=None,
+                        statistics=FlextLdifModels.Statistics(
+                            entries_written=original_count,
+                            output_file=str(path),
+                            file_size_bytes=file_size,
+                            encoding=str(file_stats.get("encoding", "utf-8")),
+                        ),
+                    ),
                 )
             case ("file", str() as path):
                 # String path - convert to Path object for write_file
