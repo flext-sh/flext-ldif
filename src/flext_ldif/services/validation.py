@@ -117,9 +117,10 @@ from flext_core import FlextDecorators, FlextResult, FlextService
 from pydantic import Field
 
 from flext_ldif.constants import FlextLdifConstants
+from flext_ldif.models import FlextLdifModels
 
 
-class FlextLdifValidation(FlextService[dict[str, object]]):
+class FlextLdifValidation(FlextService[FlextLdifModels.ValidationServiceStatus]):
     """RFC 2849/4512 Compliant LDIF Validation Service.
 
     Provides comprehensive validation for LDAP attribute names, object class names,
@@ -157,7 +158,7 @@ class FlextLdifValidation(FlextService[dict[str, object]]):
     @override
     @FlextDecorators.log_operation("validation_service_check")
     @FlextDecorators.track_performance()
-    def execute(self) -> FlextResult[dict[str, object]]:
+    def execute(self) -> FlextResult[FlextLdifModels.ValidationServiceStatus]:
         """Execute validation service self-check.
 
         FlextDecorators automatically:
@@ -169,16 +170,18 @@ class FlextLdifValidation(FlextService[dict[str, object]]):
         FlextResult containing service status
 
         """
-        return FlextResult[dict[str, object]].ok({
-            "service": "ValidationService",
-            "status": "operational",
-            "rfc_compliance": "RFC 2849, RFC 4512",
-            "validation_types": [
-                "attribute_name",
-                "objectclass_name",
-                "attribute_value",
-            ],
-        })
+        return FlextResult[FlextLdifModels.ValidationServiceStatus].ok(
+            FlextLdifModels.ValidationServiceStatus(
+                service="ValidationService",
+                status="operational",
+                rfc_compliance="RFC 2849, RFC 4512",
+                validation_types=[
+                    "attribute_name",
+                    "objectclass_name",
+                    "attribute_value",
+                ],
+            )
+        )
 
     # ════════════════════════════════════════════════════════════════════════
     # FLUENT BUILDER PATTERN
@@ -215,14 +218,14 @@ class FlextLdifValidation(FlextService[dict[str, object]]):
         self.max_attr_value_length = length
         return self
 
-    def build(self) -> dict[str, bool]:
+    def build(self) -> FlextLdifModels.ValidationBatchResult:
         """Execute validation and return unwrapped result (fluent terminal).
 
         Validates all configured attribute names and objectClass names,
-        returning a unified dictionary with validation results.
+        returning a unified model with validation results.
 
         Returns:
-            Dictionary mapping validated items to their validation status
+            ValidationBatchResult model mapping validated items to their validation status
 
         """
         result: dict[str, bool] = {}
@@ -239,7 +242,7 @@ class FlextLdifValidation(FlextService[dict[str, object]]):
             if oc_result.is_success:
                 result[name] = oc_result.unwrap()
 
-        return result
+        return FlextLdifModels.ValidationBatchResult(results=result)
 
     def validate_attribute_name(self, name: str) -> FlextResult[bool]:
         """Validate LDAP attribute name against RFC 4512 rules.

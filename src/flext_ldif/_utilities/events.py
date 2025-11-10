@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Any
+from flext_core import FlextLogger
 
 from flext_ldif.models import FlextLdifModels
 
@@ -66,7 +66,7 @@ class FlextLdifUtilitiesEvents:
         entries_migrated: int = 0,
         entries_failed: int = 0,
         migration_duration_ms: float = 0.0,
-        error_details: list[dict[str, Any]] | None = None,
+        error_details: list[FlextLdifModels.ErrorDetail] | None = None,
     ) -> FlextLdifModels.MigrationEvent:
         """Create MigrationEvent with standardized fields.
 
@@ -108,7 +108,7 @@ class FlextLdifUtilitiesEvents:
         items_converted: int = 0,
         items_failed: int = 0,
         conversion_duration_ms: float = 0.0,
-        error_details: list[dict[str, Any]] | None = None,
+        error_details: list[FlextLdifModels.ErrorDetail] | None = None,
     ) -> FlextLdifModels.ConversionEvent:
         """Create ConversionEvent with standardized fields.
 
@@ -149,7 +149,7 @@ class FlextLdifUtilitiesEvents:
         items_failed: int = 0,
         operation_duration_ms: float = 0.0,
         server_type: str = "rfc",
-        error_details: list[dict[str, Any]] | None = None,
+        error_details: list[FlextLdifModels.ErrorDetail] | None = None,
     ) -> FlextLdifModels.SchemaEvent:
         """Create SchemaEvent with standardized fields.
 
@@ -203,7 +203,7 @@ class FlextLdifUtilitiesEvents:
             store_event_in_instance(self, event)
 
         """
-        object.__setattr__(instance, attr_name, event)  # noqa: PLC2801
+        setattr(instance, attr_name, event)
 
     # ════════════════════════════════════════════════════════════════════════
     # STATISTICS HELPERS
@@ -273,7 +273,7 @@ class FlextLdifUtilitiesEvents:
 
     @staticmethod
     def log_and_emit_dn_event(
-        logger: Any,  # noqa: ANN401 - FlextLogger instance
+        logger: FlextLogger,
         *,
         dn_operation: str,
         input_dn: str,
@@ -282,7 +282,7 @@ class FlextLdifUtilitiesEvents:
         validation_result: bool | None = None,
         parse_components: list[tuple[str, str]] | None = None,
         log_level: str = "info",
-        **extra_context: Any,  # noqa: ANN401 - Dynamic logging context
+        **extra_context: object,
     ) -> FlextLdifModels.DnEvent:
         """Create DnEvent, log with context, and attach to logger context.
 
@@ -350,7 +350,7 @@ class FlextLdifUtilitiesEvents:
 
     @staticmethod
     def log_and_emit_migration_event(
-        logger: Any,  # noqa: ANN401 - FlextLogger instance
+        logger: FlextLogger,
         *,
         migration_operation: str,
         source_server: str,
@@ -359,9 +359,9 @@ class FlextLdifUtilitiesEvents:
         entries_migrated: int = 0,
         entries_failed: int = 0,
         migration_duration_ms: float = 0.0,
-        error_details: list[dict[str, Any]] | None = None,
+        error_details: list[FlextLdifModels.ErrorDetail] | None = None,
         log_level: str = "info",
-        **extra_context: Any,  # noqa: ANN401 - Dynamic logging context
+        **extra_context: object,
     ) -> FlextLdifModels.MigrationEvent:
         """Create MigrationEvent, log with context, and attach to logger context.
 
@@ -439,7 +439,7 @@ class FlextLdifUtilitiesEvents:
 
     @staticmethod
     def log_and_emit_conversion_event(
-        logger: Any,  # noqa: ANN401 - FlextLogger instance
+        logger: FlextLogger,
         *,
         conversion_operation: str,
         source_format: str,
@@ -448,9 +448,9 @@ class FlextLdifUtilitiesEvents:
         items_converted: int = 0,
         items_failed: int = 0,
         conversion_duration_ms: float = 0.0,
-        error_details: list[dict[str, Any]] | None = None,
+        error_details: list[FlextLdifModels.ErrorDetail] | None = None,
         log_level: str = "info",
-        **extra_context: Any,  # noqa: ANN401 - Dynamic logging context
+        **extra_context: object,
     ) -> FlextLdifModels.ConversionEvent:
         """Create ConversionEvent, log with context, and attach to logger context.
 
@@ -528,7 +528,7 @@ class FlextLdifUtilitiesEvents:
 
     @staticmethod
     def log_and_emit_schema_event(
-        logger: Any,  # noqa: ANN401 - FlextLogger instance
+        logger: FlextLogger,
         *,
         schema_operation: str,
         items_processed: int,
@@ -536,9 +536,9 @@ class FlextLdifUtilitiesEvents:
         items_failed: int = 0,
         operation_duration_ms: float = 0.0,
         server_type: str = "rfc",
-        error_details: list[dict[str, Any]] | None = None,
+        error_details: list[FlextLdifModels.ErrorDetail] | None = None,
         log_level: str = "info",
-        **extra_context: Any,  # noqa: ANN401 - Dynamic logging context
+        **extra_context: object,
     ) -> FlextLdifModels.SchemaEvent:
         """Create SchemaEvent, log with context, and attach to logger context.
 

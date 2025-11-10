@@ -14,9 +14,9 @@ from typing import Any
 
 from flext_core import FlextResult
 
+from flext_ldif._utilities.oid import FlextLdifUtilitiesOID
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
-from flext_ldif.services.syntax import FlextLdifSyntax
 
 logger = logging.getLogger(__name__)
 
@@ -541,8 +541,7 @@ class FlextLdifUtilitiesParser:
 
             syntax_validation_error: str | None = None
             if syntax is not None and syntax.strip():
-                syntax_service = FlextLdifSyntax()
-                validate_result = syntax_service.validate_oid(syntax)
+                validate_result = FlextLdifUtilitiesOID.validate_format(syntax)
                 if validate_result.is_failure:
                     syntax_validation_error = (
                         f"Syntax OID validation failed: {validate_result.error}"

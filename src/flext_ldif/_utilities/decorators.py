@@ -129,7 +129,7 @@ class FlextLdifUtilitiesDecorators:
 
                         # Attach metadata - use Protocol cast after hasattr check
                         # PyRefly: hasattr confirms metadata exists, Protocol provides type
-                        # Ruff: Direct assignment preferred over setattr with constant
+
                         obj_with_metadata = cast("_HasMetadata", unwrapped)
                         obj_with_metadata.metadata = metadata
 

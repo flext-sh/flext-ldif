@@ -87,8 +87,9 @@ class FlextLdifServer:
 
                     # Validate it has required properties
                     try:
-                        server_type = instance.server_type
-                        priority = instance.priority
+                        # Descriptors return str/int when accessed
+                        server_type = cast("str", instance.server_type)
+                        priority = cast("int", instance.priority)
                     except AttributeError as e:
                         logger.warning(
                             f"Skipping {obj.__name__}: missing Constants - {e}",
@@ -136,7 +137,8 @@ class FlextLdifServer:
         try:
             # Validate it has required properties by accessing server_type
             try:
-                server_type = quirk.server_type
+                # Descriptor returns str when accessed
+                server_type = cast("str", quirk.server_type)
             except AttributeError as e:
                 return FlextResult[None].fail(
                     f"Quirk missing Constants.SERVER_TYPE: {e}",

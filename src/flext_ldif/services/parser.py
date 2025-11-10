@@ -28,7 +28,7 @@ import time
 import uuid
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, cast, override
+from typing import cast, override
 
 from flext_core import FlextLogger, FlextResult, FlextService
 
@@ -42,7 +42,7 @@ from flext_ldif.services.server import FlextLdifServer
 from flext_ldif.utilities import FlextLdifUtilities
 
 
-class FlextLdifParser(FlextService[Any]):
+class FlextLdifParser(FlextService[FlextLdifModels.ParseResponse]):
     r"""LDIF parsing service - PARSING ONLY with SRP-compliant nested classes.
 
     PARSING MONOPOLY: All operations are parsing-related. File I/O, writing, and
@@ -212,7 +212,97 @@ class FlextLdifParser(FlextService[Any]):
                 f"Parser service health check failed: {e}",
             )
 
-    def parse(  # noqa: C901
+    def _handle_input_routing(
+        self,
+        input_source: FlextLdifConstants.LiteralTypes.ParserInputSource,
+        content: str | Path | list[tuple[str, dict[str, list[str]]]],
+        effective_type: str,
+        encoding: str,
+    ) -> FlextResult[FlextLdifModels.ParseResult]:
+        """Route input to appropriate parser based on input source."""
+        result: FlextResult[FlextLdifModels.ParseResult]
+
+        match (input_source, content):
+            case ("string", str() as content_str):
+                result = cast(
+                    "FlextResult[FlextLdifModels.ParseResult]",
+                    self._parse_from_string(content_str, effective_type),
+                )
+            case ("file", Path() as content_path):
+                result = cast(
+                    "FlextResult[FlextLdifModels.ParseResult]",
+                    self._parse_from_file(content_path, encoding, effective_type),
+                )
+            case ("ldap3", list() as ldap3_content):
+                result = cast(
+                    "FlextResult[FlextLdifModels.ParseResult]",
+                    self._parse_from_ldap3(ldap3_content, effective_type),
+                )
+            case ("ldap3", _):
+                return FlextResult.fail("ldap3 input source requires list content")
+            case _:
+                return FlextResult.fail(f"Unsupported input source: {input_source}")
+
+        return result
+
+    def _extract_parse_results(
+        self,
+        input_source: FlextLdifConstants.LiteralTypes.ParserInputSource,
+        entries_data: FlextLdifModels.ParseResult,
+    ) -> tuple[list[FlextLdifModels.Entry], int, list[str]]:
+        """Extract entries, failed count, and failed details from parse results."""
+        match (input_source, entries_data):
+            case (
+                "ldap3",
+                (
+                    list() as entries,
+                    int() as failed_count,
+                    list() as failed_details,
+                ),
+            ):
+                return entries, failed_count, failed_details
+            case _:
+                entries = cast("list[FlextLdifModels.Entry]", entries_data)
+                return entries, 0, []
+
+    def _finalize_statistics(
+        self,
+        stats: FlextLdifModels.Statistics,
+        failed_count: int,
+        failed_details: list[str],
+        processed_entries: list[FlextLdifModels.Entry],
+        parse_duration_ms: float,
+        input_source: FlextLdifConstants.LiteralTypes.ParserInputSource,
+        content: str | Path | list[tuple[str, dict[str, list[str]]]],
+        effective_type: str,
+    ) -> FlextLdifModels.Statistics:
+        """Finalize statistics with failure info and optional event emission."""
+        # Update statistics with failures
+        if failed_count > 0:
+            stats = stats.model_copy(
+                update={"parse_errors": stats.parse_errors + failed_count},
+            )
+            self._logger.error(
+                f"Parse completed with {failed_count} entry failures. "
+                f"See details in parse_errors field. Failed entries: {failed_details[:5]}"
+            )
+
+        # Emit ParseEvent if enabled
+        if self._enable_events:
+            parse_event = self._create_parse_event(
+                processed_entries=processed_entries,
+                parse_duration_ms=parse_duration_ms,
+                input_source=input_source,
+                content=content,
+                effective_type=effective_type,
+                failed_count=failed_count,
+                failed_details=failed_details,
+            )
+            stats = stats.add_event(parse_event)
+
+        return stats
+
+    def parse(
         self,
         content: str | Path | list[tuple[str, dict[str, list[str]]]],
         input_source: FlextLdifConstants.LiteralTypes.ParserInputSource,
@@ -221,13 +311,12 @@ class FlextLdifParser(FlextService[Any]):
         format_options: FlextLdifModels.ParseFormatOptions | None = None,
     ) -> FlextResult[FlextLdifModels.ParseResponse]:
         """Unified method to parse LDIF content from various sources."""
-        # Start timing for event metrics
         start_time = time.perf_counter()
 
         try:
             options = format_options or FlextLdifModels.ParseFormatOptions()
 
-            # Resolve effective server type based on configuration and auto-detection
+            # Resolve effective server type
             ldif_path = (
                 content
                 if input_source == "file" and isinstance(content, Path)
@@ -250,75 +339,38 @@ class FlextLdifParser(FlextService[Any]):
                 )
 
             effective_type = server_type_result.unwrap()
-            entries_result: (
-                FlextResult[list[FlextLdifModels.Entry]]
-                | FlextResult[tuple[list[FlextLdifModels.Entry], int, list[str]]]
+
+            # Route to appropriate parser
+            entries_result = self._handle_input_routing(
+                input_source, content, effective_type, encoding
             )
-
-            if input_source == "string" and isinstance(content, str):
-                entries_result = self._parse_from_string(content, effective_type)
-            elif input_source == "file" and isinstance(content, Path):
-                entries_result = self._parse_from_file(
-                    content,
-                    encoding,
-                    effective_type,
-                )
-            elif input_source == "ldap3":
-                if not isinstance(content, list):
-                    return FlextResult.fail("ldap3 input source requires list content")
-                entries_result = self._parse_from_ldap3(
-                    content,
-                    effective_type,
-                )
-            else:
-                return FlextResult.fail(f"Unsupported input source: {input_source}")
-
             if entries_result.is_failure:
                 return FlextResult.fail(
                     f"Failed to parse LDIF content: {entries_result.error}",
                 )
 
-            # Unpack tuple: (entries, failed_count, failed_details) for ldap3 source
-            entries_data = entries_result.unwrap()
-            if input_source == "ldap3" and isinstance(entries_data, tuple):
-                entries, failed_count, failed_details = entries_data
-            else:
-                entries = cast("list[FlextLdifModels.Entry]", entries_data)
-                failed_count = 0
-                failed_details = []
-
-            processed_entries, stats = self._post_process_entries(
-                entries,
-                effective_type,
-                options,
+            # Extract results (handles both list and tuple returns)
+            entries, failed_count, failed_details = self._extract_parse_results(
+                input_source, entries_result.unwrap()
             )
 
-            # Update parse_errors in statistics with failures from ldap3 parsing
-            if failed_count > 0:
-                stats = stats.model_copy(
-                    update={"parse_errors": stats.parse_errors + failed_count},
-                )
-                # Log critical summary
-                self._logger.error(
-                    f"Parse completed with {failed_count} entry failures. "
-                    f"See details in parse_errors field. Failed entries: {failed_details[:5]}"  # Log first 5
-                )
+            # Post-process entries
+            processed_entries, stats = self._post_process_entries(
+                entries, effective_type, options
+            )
 
-            # Calculate parse duration
+            # Calculate parse duration and finalize statistics
             parse_duration_ms = (time.perf_counter() - start_time) * 1000.0
-
-            # Emit ParseEvent if enabled
-            if self._enable_events:
-                parse_event = self._create_parse_event(
-                    processed_entries=processed_entries,
-                    parse_duration_ms=parse_duration_ms,
-                    input_source=input_source,
-                    content=content,
-                    effective_type=effective_type,
-                    failed_count=failed_count,
-                    failed_details=failed_details,
-                )
-                stats = stats.add_event(parse_event)
+            stats = self._finalize_statistics(
+                stats,
+                failed_count,
+                failed_details,
+                processed_entries,
+                parse_duration_ms,
+                input_source,
+                content,
+                effective_type,
+            )
 
             response = FlextLdifModels.ParseResponse(
                 entries=processed_entries,
@@ -476,18 +528,24 @@ class FlextLdifParser(FlextService[Any]):
 
             config = self._config
 
-            if config.enable_relaxed_parsing:
-                return FlextResult.ok(FlextLdifConstants.ServerTypes.RELAXED)
+            # Use structural pattern matching for server type resolution (Python 3.13)
+            match config:
+                case FlextLdifConfig(enable_relaxed_parsing=True):
+                    return FlextResult.ok(FlextLdifConstants.ServerTypes.RELAXED)
 
-            if config.quirks_detection_mode == "manual":
-                if config.quirks_server_type:
-                    return FlextResult.ok(config.quirks_server_type)
-                return FlextResult.fail(
-                    "Manual mode requires quirks_server_type to be set in configuration",
-                )
+                case FlextLdifConfig(
+                    quirks_detection_mode="manual",
+                    quirks_server_type=str() as server_type,
+                ):
+                    return FlextResult.ok(server_type)
 
-            if config.quirks_detection_mode == "auto":
-                return self._resolve_auto_detection(ldif_path, ldif_content)
+                case FlextLdifConfig(quirks_detection_mode="manual"):
+                    return FlextResult.fail(
+                        "Manual mode requires quirks_server_type to be set in configuration",
+                    )
+
+                case FlextLdifConfig(quirks_detection_mode="auto"):
+                    return self._resolve_auto_detection(ldif_path, ldif_content)
 
             default_type = getattr(
                 config,

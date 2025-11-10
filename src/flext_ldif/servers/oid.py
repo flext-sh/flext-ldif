@@ -18,7 +18,7 @@ from __future__ import annotations
 import enum as enum_module
 from collections.abc import Mapping
 from datetime import UTC, datetime
-from typing import ClassVar
+from typing import ClassVar, cast
 
 from flext_core import FlextLogger, FlextResult
 
@@ -1109,7 +1109,10 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                         subject_value=subject_value,
                     ),
                     permissions=FlextLdifModels.AclPermissions(**perms_dict),
-                    server_type=self._get_server_type(),
+                    server_type=cast(
+                        "FlextLdifConstants.LiteralTypes.ServerType",
+                        self._get_server_type(),
+                    ),
                     metadata=FlextLdifModels.QuirkMetadata(
                         quirk_type=self._get_server_type(),
                         original_format=acl_line.strip(),

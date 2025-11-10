@@ -1385,6 +1385,10 @@ class FlextLdifConstants(FlextConstants):
             "aci"  # RFC 4876 standard ACI attribute (used by multiple servers)
         )
 
+        # RFC Baseline defaults (for core modules that cannot access services/*)
+        DEFAULT_ACL_FORMAT: Final[str] = ACI
+        DEFAULT_ACL_ATTRIBUTE_NAME: Final[str] = ACI
+
     # =============================================================================
     # SERVER TYPE SHORTCUTS - Short server type identifiers
     # =============================================================================

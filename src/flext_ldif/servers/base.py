@@ -9,8 +9,7 @@ RFC-compliant LDIF/LDAP parsing with vendor-specific features.
 Quirks allow extending the RFC base without modifying core parser logic.
 
 ARCHITECTURE:
-    Base classes use Python 3.13+ abstract base classes (ABC) with @abstractmethod
-    decorators for explicit inheritance contracts, while also implementing all
+    Base classes use Python 3.13+ abstract base classes (ABC) with    decorators for explicit inheritance contracts, while also implementing all
     methods required by FlextLdifProtocols for structural typing validation.
 
     This dual approach provides:
@@ -30,9 +29,9 @@ PROTOCOL COMPLIANCE:
 
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
+from abc import ABC
 from collections.abc import Mapping
-from typing import ClassVar, Literal, Self, cast, overload
+from typing import ClassVar, Literal, Protocol, Self, cast, overload
 
 from flext_core import FlextLogger, FlextResult, FlextService
 from pydantic import ConfigDict
@@ -93,9 +92,9 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
         extra="allow",
     )
 
-    # Type annotations for dynamically set attributes (set in __init_subclass__)
-    server_type: ClassVar[str]
-    priority: ClassVar[int]
+    # Type annotations - descriptors behave as their return types when accessed
+    server_type: ClassVar[str | _DescriptorProtocol]
+    priority: ClassVar[int | _DescriptorProtocol]
 
     def __init_subclass__(cls, **kwargs: object) -> None:
         """Initialize subclass with server_type and priority from Constants.
@@ -392,11 +391,10 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
 
         """
         # Initialize nested class instances with private names to avoid
-        # Pydantic conflicts. Safe cast: These are concrete implementations
-        # in subclasses - never called on abstract base directly
-        self._schema_quirk = cast("FlextLdifServersBase.Schema", self.Schema())
-        self._acl_quirk = cast("FlextLdifServersBase.Acl", self.Acl())
-        self._entry_quirk = cast("FlextLdifServersBase.Entry", self.Entry())
+        # Pydantic conflicts. Concrete implementations in subclasses.
+        self._schema_quirk = self.Schema()
+        self._acl_quirk = self.Acl()
+        self._entry_quirk = self.Entry()
 
     # =========================================================================
     # Properties for accessing nested quirks (bypasses Pydantic's schema() method)
@@ -714,10 +712,7 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
     # Nested Abstract Base Classes for Internal Implementation
     # =========================================================================
 
-    class Schema(
-        FlextService[FlextLdifTypes.SchemaModelOrString],
-        ABC,
-    ):
+    class Schema(FlextService[FlextLdifTypes.SchemaModelOrString]):
         """Base class for schema quirks - FlextService V2 with enhanced usability.
 
         NOTE: This is an implementation detail - DO NOT import directly.
@@ -960,7 +955,6 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
             # isinstance narrowed to SchemaObjectClass by type checker
             return self._write_objectclass(model)
 
-        @abstractmethod
         def _parse_attribute(
             self,
             attr_definition: str,
@@ -977,8 +971,9 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
                 FlextResult with parsed SchemaAttribute model
 
             """
+            del attr_definition  # Unused in base, required by protocol
+            return FlextResult.fail("Must be implemented by subclass")
 
-        @abstractmethod
         def _parse_objectclass(
             self,
             oc_definition: str,
@@ -995,6 +990,8 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
                 FlextResult with parsed SchemaObjectClass model
 
             """
+            _ = oc_definition  # Explicitly mark as intentionally unused in base
+            return FlextResult.fail("Must be implemented by subclass")
 
         def _route_write(
             self,
@@ -1502,7 +1499,6 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
             """
             return FlextResult.ok(oc)
 
-        @abstractmethod
         def can_handle_attribute(
             self,
             attr_definition: str | FlextLdifModels.SchemaAttribute,
@@ -1514,18 +1510,18 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
             OR SchemaAttribute model object (for convenience in tests).
 
             Args:
-                attr_definition: AttributeType definition string (before parsing)
-                    OR SchemaAttribute model object
+                attr_definition: AttributeType definition string
 
             Returns:
                 True if this quirk can parse this attribute definition
 
             """
+            _ = attr_definition  # Explicitly mark as intentionally unused in base
+            return False  # CONSOLIDATED into parse(definition, model_type=None)  # CONSOLIDATED into parse(definition, model_type=None)
 
         # CONSOLIDATED into parse(definition, model_type=None)
         # See consolidated parse() method below
 
-        @abstractmethod
         def can_handle_objectclass(
             self,
             oc_definition: str | FlextLdifModels.SchemaObjectClass,
@@ -1537,13 +1533,14 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
             OR SchemaObjectClass model object (for convenience in tests).
 
             Args:
-                oc_definition: ObjectClass definition string (before parsing)
-                    OR SchemaObjectClass model object
+                oc_definition: ObjectClass definition string or model
 
             Returns:
                 True if this quirk can parse this objectClass definition
 
             """
+            _ = oc_definition  # Explicitly mark as intentionally unused in base
+            return False  # CONSOLIDATED into parse(definition, model_type=None)
 
         # CONSOLIDATED into parse(definition, model_type=None)
         # See consolidated parse() method below
@@ -1664,7 +1661,6 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
             """
             return self._write_objectclass(oc_data)
 
-        @abstractmethod
         def _write_attribute(
             self,
             attr_data: FlextLdifModels.SchemaAttribute,
@@ -1672,14 +1668,17 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
             """Write attribute data to RFC-compliant string format (internal).
 
             Args:
-                attr_data: SchemaAttribute model
+                attr_data: SchemaAttribute model to write
 
             Returns:
                 FlextResult with RFC-compliant attribute string
 
             """
+            _ = attr_data  # Explicitly mark as intentionally unused in base
+            return FlextResult.fail(
+                "Must be implemented by subclass"
+            )  # Must be implemented by subclass
 
-        @abstractmethod
         def _write_objectclass(
             self,
             oc_data: FlextLdifModels.SchemaObjectClass,
@@ -1693,12 +1692,14 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
                 FlextResult with RFC-compliant objectClass string
 
             """
+            _ = oc_data  # Explicitly mark as intentionally unused in base
+            return FlextResult.fail("Must be implemented by subclass")
 
         # REMOVED: should_filter_out_attribute - Roteamento interno, não deve ser abstrato
 
         # REMOVED: should_filter_out_objectclass - Roteamento interno, não deve ser abstrato
 
-    class Acl(FlextService[FlextLdifTypes.AclOrString], ABC):
+    class Acl(FlextService[FlextLdifTypes.AclOrString]):
         """Base class for ACL quirks - satisfies FlextLdifProtocols.Quirks.AclProtocol.
 
         NOTE: This is an implementation detail - DO NOT import directly.
@@ -2048,7 +2049,6 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
             """
             return FlextResult.ok(acl)
 
-        @abstractmethod
         def can_handle_acl(self, acl_line: str | FlextLdifModels.Acl) -> bool:
             """Check if this quirk can handle the ACL definition.
 
@@ -2056,12 +2056,14 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
             Receives the raw ACL line string (e.g., "orclaci: { ... }") or Acl model.
 
             Args:
-                acl_line: ACL definition line string (before parsing)
+                acl_line: ACL definition line string
 
             Returns:
                 True if this quirk can handle this ACL definition
 
             """
+            _ = acl_line  # Explicitly mark as intentionally unused in base
+            return False  # Must be implemented by subclass  # Must be implemented by subclass
 
         def parse(self, acl_line: str) -> FlextResult[FlextLdifModels.Acl]:
             """Parse ACL definition line.
@@ -2091,7 +2093,6 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
             """
             return self.can_handle_acl(acl_line)
 
-        @abstractmethod
         def _parse_acl(self, acl_line: str) -> FlextResult[FlextLdifModels.Acl]:
             r"""🔴 REQUIRED: Parse server-specific ACL definition (internal).
 
@@ -2122,40 +2123,17 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
             Args:
                 acl_line: ACL definition line (server-specific format)
 
-            Examples:
-                         - OpenLDAP: "access to attrs=cn by * read"
-                         - OUD: "aci: (targetdn=\"...\") (version 3.0;...)"
-
             Returns:
                 FlextResult with Acl model or fail(message) on error
 
-            **Example (OpenLDAP-style):**
-                def parse_acl(self, line):
-                    try:
-                        # Parse OpenLDAP access control format
-                        # access to <what> [by <who> [<access>] ]+
-
-                        parts = parse_acl_line(line)  # Custom parser for your server
-
-                        acl = FlextLdifModels.Acl(
-                            target=parts.get('target'),
-                            subject=parts.get('subject'),
-                            permissions=parts.get('permissions'),
-                            # ... other fields
-                        )
-
-                        # Call hook (if implementing)
-                        hook_result = self._hook_post_parse_acl(acl)
-                        if hook_result.is_failure:
-                            return hook_result
-
-                        return FlextResult.ok(hook_result.unwrap())
-                    except Exception as e:
-                        return FlextResult.fail(f"Failed to parse ACL: {e}")
+            Examples:
+                - OpenLDAP: "access to attrs=cn by * read"
+                - OUD: "aci: (targetdn=\"...\") (version 3.0;...)"
 
             """
+            _ = acl_line  # Explicitly mark as intentionally unused in base
+            return FlextResult.fail("Must be implemented by subclass")
 
-        @abstractmethod
         def can_handle_attribute(
             self,
             attribute: FlextLdifModels.SchemaAttribute,
@@ -2167,14 +2145,15 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
             if it has special handling for a given attribute model.
 
             Args:
-                attribute: The SchemaAttribute model to check.
+                attribute: The SchemaAttribute model.
 
             Returns:
                 True if this quirk has specific logic related to this attribute.
 
             """
+            _ = attribute  # Explicitly mark as intentionally unused in base
+            return False  # Must be implemented by subclass  # Must be implemented by subclass
 
-        @abstractmethod
         def can_handle_objectclass(
             self,
             objectclass: FlextLdifModels.SchemaObjectClass,
@@ -2184,12 +2163,14 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
             ACL quirks may need to evaluate rules based on objectClass properties.
 
             Args:
-                objectclass: The SchemaObjectClass model to check.
+                objectclass: The SchemaObjectClass model.
 
             Returns:
                 True if this quirk has specific logic related to this objectClass.
 
             """
+            _ = objectclass  # Explicitly mark as intentionally unused in base
+            return False  # Must be implemented by subclass  # Must be implemented by subclass
 
         def write(self, acl_data: FlextLdifModels.Acl) -> FlextResult[str]:
             """Write ACL data to RFC-compliant string format.
@@ -2205,7 +2186,6 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
             """
             return self._write_acl(acl_data)
 
-        @abstractmethod
         def _write_acl(self, acl_data: FlextLdifModels.Acl) -> FlextResult[str]:
             """Write ACL data to RFC-compliant string format (internal).
 
@@ -2216,8 +2196,10 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
                 FlextResult with RFC-compliant ACL string
 
             """
+            _ = acl_data  # Explicitly mark as intentionally unused in base
+            return FlextResult.fail("Must be implemented by subclass")
 
-    class Entry(FlextService[FlextLdifTypes.EntryOrString], ABC):
+    class Entry(FlextService[FlextLdifTypes.EntryOrString]):
         """Base class for entry processing quirks - satisfies FlextLdifProtocols.Quirks.EntryProtocol.
 
         NOTE: This is an implementation detail - DO NOT import directly.
@@ -2698,7 +2680,6 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
             """
             return FlextResult.ok(entry)
 
-        @abstractmethod
         def can_handle(
             self,
             entry_dn: str,
@@ -2710,15 +2691,17 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
             Receives raw entry data (DN and attributes) from LDIF parser.
 
             Args:
-                entry_dn: Entry distinguished name (raw string from LDIF)
-                attributes: Entry attributes mapping (raw from LDIF parser)
+                entry_dn: Entry distinguished name
+                attributes: Entry attributes mapping
 
             Returns:
                 True if this quirk should process this entry
 
             """
+            _ = entry_dn  # Explicitly mark as intentionally unused in base
+            _ = attributes  # Explicitly mark as intentionally unused in base
+            return False  # Must be implemented by subclass  # Must be implemented by subclass
 
-        @abstractmethod
         def _parse_content(
             self,
             ldif_content: str,
@@ -2750,6 +2733,8 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
                 FlextResult with list[Entry] on success or fail(message)
 
             """
+            _ = ldif_content  # Explicitly mark as intentionally unused in base
+            return FlextResult.fail("Must be implemented by subclass")
 
         def parse_entry(
             self,
@@ -2809,7 +2794,6 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
 
             return FlextResult[FlextLdifModels.Entry].ok(entry)
 
-        @abstractmethod
         def can_handle_attribute(
             self,
             attribute: FlextLdifModels.SchemaAttribute,
@@ -2826,8 +2810,9 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
                 True if this quirk has specific processing logic for this attribute.
 
             """
+            _ = attribute  # Explicitly mark as intentionally unused in base
+            return False  # Must be implemented by subclass
 
-        @abstractmethod
         def can_handle_objectclass(
             self,
             objectclass: FlextLdifModels.SchemaObjectClass,
@@ -2843,8 +2828,9 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
                 True if this quirk has specific processing logic for this objectClass.
 
             """
+            _ = objectclass  # Explicitly mark as intentionally unused in base
+            return False  # Must be implemented by subclass
 
-        @abstractmethod
         def _write_entry(
             self,
             entry_data: FlextLdifModels.Entry,
@@ -2873,11 +2859,17 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
                 FlextResult with LDIF string or fail(message)
 
             """
+            _ = entry_data  # Explicitly mark as intentionally unused in base
+            return FlextResult.fail("Must be implemented by subclass")
 
 
 # =========================================================================
-# Descriptors for server_type and priority - Work at class and instance level
-# =========================================================================
+
+
+class _DescriptorProtocol(Protocol):
+    """Protocol for descriptors that behave like their return type."""
+
+    def __get__(self, obj: object | None, objtype: type | None = None) -> str | int: ...
 
 
 class _ServerTypeDescriptor:
@@ -2925,6 +2917,7 @@ class _PriorityDescriptor:
 
 
 # Attach descriptors to FlextLdifServersBase for class and instance access
+# Descriptors implement __get__ returning str/int, satisfying the type annotations above
 FlextLdifServersBase.server_type = _ServerTypeDescriptor()
 FlextLdifServersBase.priority = _PriorityDescriptor()
 

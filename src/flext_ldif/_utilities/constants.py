@@ -21,46 +21,13 @@ from collections.abc import Mapping
 class FlextLdifUtilitiesConstants:
     """Utilities for accessing and validating standardized constants."""
 
-    # SECTION 1: SERVER CONSTANTS LOOKUP
+    # SECTION 1: SERVER TYPE VALIDATION
     # =========================================================================
-
-    @staticmethod
-    def get_server_constants(server_type: str) -> type[object] | None:
-        """Get server-specific Constants class by server type.
-
-        Args:
-            server_type: Server type identifier (e.g., "oid", "oud", "openldap")
-
-        Returns:
-            Constants class for the server, or None if not found
-
-        Example:
-            >>> constants = FlextLdifUtilitiesConstants.get_server_constants("oid")
-            >>> if constants:
-            ...     perms = constants.AclPermission
-
-        """
-        # Import here to avoid circular dependencies with server modules
-        from collections.abc import Callable  # noqa: PLC0415
-
-        server_map: dict[str, Callable[[], type[object]] | None] = {
-            "rfc": None,  # RFC has no server-specific constants
-            "oid": _get_oid_constants,
-            "oud": _get_oud_constants,
-            "openldap": _get_openldap_constants,
-            "openldap1": _get_openldap1_constants,
-            "ad": _get_ad_constants,
-            "apache": _get_apache_constants,
-            "389ds": _get_ds389_constants,
-            "novell": _get_novell_constants,
-            "tivoli": _get_tivoli_constants,
-            "relaxed": _get_relaxed_constants,
-        }
-
-        loader = server_map.get(server_type.lower())
-        if loader is None:
-            return None
-        return loader()
+    #
+    # NOTE: Server-specific constants access removed due to architectural constraints.
+    # Core modules (_utilities/*) cannot import from services/* or servers/*.
+    # Methods below provide RFC baseline only. For server-specific constants,
+    # use services layer (e.g., FlextLdifServer registry).
 
     @staticmethod
     def is_valid_server_type(server_type: str) -> bool:
@@ -125,55 +92,34 @@ class FlextLdifUtilitiesConstants:
     # =========================================================================
 
     @staticmethod
-    def get_server_permissions(server_type: str) -> set[str]:
+    def get_server_permissions(server_type: str) -> set[str]:  # noqa: ARG004
         """Get all valid ACL permissions for a server type.
 
+        Returns RFC baseline permissions only. Core modules cannot access server-specific constants.
+
         Args:
-            server_type: Server type identifier
+            server_type: Server type identifier (unused, kept for API compatibility)
 
         Returns:
-            Set of valid permission strings for the server
+            Set of RFC baseline permission strings
 
-        Example:
-            >>> perms = FlextLdifUtilitiesConstants.get_server_permissions("oid")
-            >>> "read" in perms
-            True
+        Note:
+            This method returns RFC baseline only due to architectural constraints.
+            For server-specific permissions, use services layer (FlextLdifServer registry).
 
         """
-        constants = FlextLdifUtilitiesConstants.get_server_constants(server_type)
-        if not constants or not hasattr(constants, "AclPermission"):
-            # Return RFC baseline permissions
-            return {
-                "read",
-                "write",
-                "add",
-                "delete",
-                "search",
-                "compare",
-                "auth",
-                "all",
-                "none",
-            }
-
-        try:
-            perm_enum = getattr(constants, "AclPermission", None)
-            if perm_enum is None:
-                msg = "AclPermission not found"
-                raise AttributeError(msg)
-            return {item.value for item in perm_enum}
-        except (AttributeError, TypeError):
-            # Fallback to RFC baseline
-            return {
-                "read",
-                "write",
-                "add",
-                "delete",
-                "search",
-                "compare",
-                "auth",
-                "all",
-                "none",
-            }
+        # Return RFC baseline permissions
+        return {
+            "read",
+            "write",
+            "add",
+            "delete",
+            "search",
+            "compare",
+            "auth",
+            "all",
+            "none",
+        }
 
     @staticmethod
     def is_valid_permission(permission: str, server_type: str = "rfc") -> bool:
@@ -200,35 +146,24 @@ class FlextLdifUtilitiesConstants:
     # =========================================================================
 
     @staticmethod
-    def get_server_acl_actions(server_type: str) -> set[str]:
+    def get_server_acl_actions(server_type: str) -> set[str]:  # noqa: ARG004
         """Get valid ACL actions for a server type.
 
+        Returns RFC baseline ACL actions only. Core modules cannot access server-specific constants.
+
         Args:
-            server_type: Server type identifier
+            server_type: Server type identifier (unused, kept for API compatibility)
 
         Returns:
-            Set of valid ACL action strings (typically "allow", "deny")
+            Set of RFC baseline ACL action strings
 
-        Example:
-            >>> actions = FlextLdifUtilitiesConstants.get_server_acl_actions("oid")
-            >>> "allow" in actions
-            True
+        Note:
+            This method returns RFC baseline only due to architectural constraints.
+            For server-specific actions, use services layer (FlextLdifServer registry).
 
         """
-        constants = FlextLdifUtilitiesConstants.get_server_constants(server_type)
-        if not constants or not hasattr(constants, "AclAction"):
-            # Return default ACL actions
-            return {"allow", "deny"}
-
-        try:
-            action_enum = getattr(constants, "AclAction", None)
-            if action_enum is None:
-                msg = "AclAction not found"
-                raise AttributeError(msg)
-            return {item.value for item in action_enum}
-        except (AttributeError, TypeError):
-            # Fallback to defaults
-            return {"allow", "deny"}
+        # Return RFC baseline ACL actions
+        return {"allow", "deny"}
 
     @staticmethod
     def is_valid_acl_action(action: str, server_type: str = "rfc") -> bool:
@@ -253,53 +188,33 @@ class FlextLdifUtilitiesConstants:
     # =========================================================================
 
     @staticmethod
-    def get_server_encodings(server_type: str) -> set[str]:
+    def get_server_encodings(server_type: str) -> set[str]:  # noqa: ARG004
         """Get supported encodings for a server type.
 
+        Returns RFC baseline encodings only. Core modules cannot access server-specific constants.
+
         Args:
-            server_type: Server type identifier
+            server_type: Server type identifier (unused, kept for API compatibility)
 
         Returns:
-            Set of valid encoding strings for the server
+            Set of RFC baseline encoding strings
 
-        Example:
-            >>> encodings = FlextLdifUtilitiesConstants.get_server_encodings("oid")
-            >>> "utf-8" in encodings
-            True
+        Note:
+            This method returns RFC baseline only due to architectural constraints.
+            For server-specific encodings, use services layer (FlextLdifServer registry).
 
         """
-        constants = FlextLdifUtilitiesConstants.get_server_constants(server_type)
-        if not constants or not hasattr(constants, "Encoding"):
-            # Return RFC baseline encodings
-            return {
-                "utf-8",
-                "utf-16",
-                "utf-16-le",
-                "utf-32",
-                "ascii",
-                "latin-1",
-                "cp1252",
-                "iso-8859-1",
-            }
-
-        try:
-            encoding_enum = getattr(constants, "Encoding", None)
-            if encoding_enum is None:
-                msg = "Encoding not found"
-                raise AttributeError(msg)
-            return {item.value for item in encoding_enum}
-        except (AttributeError, TypeError):
-            # Fallback to RFC baseline
-            return {
-                "utf-8",
-                "utf-16",
-                "utf-16-le",
-                "utf-32",
-                "ascii",
-                "latin-1",
-                "cp1252",
-                "iso-8859-1",
-            }
+        # Return RFC baseline encodings
+        return {
+            "utf-8",
+            "utf-16",
+            "utf-16-le",
+            "utf-32",
+            "ascii",
+            "latin-1",
+            "cp1252",
+            "iso-8859-1",
+        }
 
     @staticmethod
     def is_valid_encoding(encoding: str, server_type: str = "rfc") -> bool:
@@ -412,75 +327,6 @@ class FlextLdifUtilitiesConstants:
         return {perm: perm for perm in common_perms}
 
 
-# SECTION 6: LAZY LOADERS FOR SERVER CONSTANTS
-# =============================================================================
-
-
-def _get_oid_constants() -> type[object]:
-    """Lazy load OID server constants."""
-    from flext_ldif.servers.oid import FlextLdifServersOid  # noqa: PLC0415
-
-    return FlextLdifServersOid.Constants
-
-
-def _get_oud_constants() -> type[object]:
-    """Lazy load OUD server constants."""
-    from flext_ldif.servers.oud import FlextLdifServersOud  # noqa: PLC0415
-
-    return FlextLdifServersOud.Constants
-
-
-def _get_openldap_constants() -> type[object]:
-    """Lazy load OpenLDAP 2.x server constants."""
-    from flext_ldif.servers.openldap import FlextLdifServersOpenldap  # noqa: PLC0415
-
-    return FlextLdifServersOpenldap.Constants
-
-
-def _get_openldap1_constants() -> type[object]:
-    """Lazy load OpenLDAP 1.x server constants."""
-    from flext_ldif.servers.openldap1 import FlextLdifServersOpenldap1  # noqa: PLC0415
-
-    return FlextLdifServersOpenldap1.Constants
-
-
-def _get_ad_constants() -> type[object]:
-    """Lazy load Active Directory server constants."""
-    from flext_ldif.servers.ad import FlextLdifServersAd  # noqa: PLC0415
-
-    return FlextLdifServersAd.Constants
-
-
-def _get_apache_constants() -> type[object]:
-    """Lazy load Apache Directory Server constants."""
-    from flext_ldif.servers.apache import FlextLdifServersApache  # noqa: PLC0415
-
-    return FlextLdifServersApache.Constants
-
-
-def _get_ds389_constants() -> type[object]:
-    """Lazy load 389 Directory Server constants."""
-    from flext_ldif.servers.ds389 import FlextLdifServersDs389  # noqa: PLC0415
-
-    return FlextLdifServersDs389.Constants
-
-
-def _get_novell_constants() -> type[object]:
-    """Lazy load Novell eDirectory constants."""
-    from flext_ldif.servers.novell import FlextLdifServersNovell  # noqa: PLC0415
-
-    return FlextLdifServersNovell.Constants
-
-
-def _get_tivoli_constants() -> type[object]:
-    """Lazy load IBM Tivoli Directory Server constants."""
-    from flext_ldif.servers.tivoli import FlextLdifServersTivoli  # noqa: PLC0415
-
-    return FlextLdifServersTivoli.Constants
-
-
-def _get_relaxed_constants() -> type[object]:
-    """Lazy load Relaxed mode constants."""
-    from flext_ldif.servers.relaxed import FlextLdifServersRelaxed  # noqa: PLC0415
-
-    return FlextLdifServersRelaxed.Constants
+# NOTE: Server-specific constants access removed due to architectural constraints.
+# Core modules (_utilities/*) cannot import from services/* or servers/*.
+# For server-specific constants, use services layer (e.g., FlextLdifServer registry).

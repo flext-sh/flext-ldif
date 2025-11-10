@@ -27,7 +27,7 @@ from flext_ldif.services.statistics import FlextLdifStatistics
 from flext_ldif.utilities import FlextLdifUtilities
 
 
-class FlextLdifWriter(FlextService[Any]):
+class FlextLdifWriter(FlextService[FlextLdifModels.WriteResponse]):
     """Unified, stateless LDIF Writer Service.
 
     This service acts as a versatile serializer, converting Entry models into
@@ -472,9 +472,14 @@ class FlextLdifWriter(FlextService[Any]):
             FlextResult indicating validation success or failure
 
         """
-        if output_target == "file" and not output_path:
-            return FlextResult.fail("An output_path is required for the 'file' target.")
-        return FlextResult.ok(None)
+        # Use structural pattern matching for validation (Python 3.13)
+        match (output_target, output_path):
+            case ("file", None | ""):
+                return FlextResult[None].fail(
+                    "An output_path is required for the 'file' target."
+                )
+            case _:
+                return FlextResult[None].ok(None)
 
     def _denormalize_entries(
         self,
@@ -526,7 +531,9 @@ class FlextLdifWriter(FlextService[Any]):
 
         # Calculate statistics
         stats_result = self._statistics_service.calculate_for_entries(entries)
-        statistics = stats_result.unwrap() if stats_result.is_success else {}
+        statistics: FlextLdifModels.EntriesStatistics | None = (
+            stats_result.unwrap() if stats_result.is_success else None
+        )
 
         # Render template
         template_context = {**(template_data or {}), "statistics": statistics}
@@ -566,22 +573,22 @@ class FlextLdifWriter(FlextService[Any]):
             FlextResult with output-specific result
 
         """
-        if output_target == "model":
-            return FlextResult.ok(entries)
-
-        if output_target == "ldap3":
-            return self._serialize_to_ldap3(entries)
-
-        if output_target in {"string", "file"}:
-            return self._output_ldif_content(
-                entries,
-                output_target,
-                output_path,
-                format_options,
-                header_content,
-                original_count,
-                target_server_type,
-            )
+        # Use structural pattern matching for output routing (Python 3.13)
+        match output_target:
+            case "model":
+                return FlextResult.ok(entries)
+            case "ldap3":
+                return self._serialize_to_ldap3(entries)
+            case "string" | "file":
+                return self._output_ldif_content(
+                    entries,
+                    output_target,
+                    output_path,
+                    format_options,
+                    header_content,
+                    original_count,
+                    target_server_type,
+                )
 
         return FlextResult.fail(f"Unhandled output target: {output_target}")
 
@@ -664,36 +671,45 @@ class FlextLdifWriter(FlextService[Any]):
             f"{header_content}{formatted_ldif}" if header_content else formatted_ldif
         )
 
-        if output_target == "string":
-            return FlextResult.ok(final_content)
+        # Use structural pattern matching for final output routing (Python 3.13)
+        match (output_target, output_path):
+            case ("string", _):
+                return FlextResult.ok(final_content)
+            case ("file", None | ""):
+                return FlextResult.fail("output_path is required for file target")
+            case ("file", str() as path):
+                # Convert path string to Path object for write_file
+                write_result = FlextLdifUtilities.Writer.write_file(
+                    final_content,
+                    Path(path),
+                    encoding=FlextLdifConstants.Encoding.UTF8,
+                )
+                if write_result.is_failure:
+                    return FlextResult.fail(
+                        f"Failed to write file: {write_result.error}"
+                    )
 
-        # File output
-        if not output_path:
-            return FlextResult.fail("output_path is required for file target")
+                file_stats = write_result.unwrap()
+                bytes_written = file_stats.get("bytes_written", 0)
+                file_size = (
+                    int(bytes_written) if isinstance(bytes_written, (int, str)) else 0
+                )
 
-        write_result = FlextLdifUtilities.Writer.write_file(
-            final_content,
-            output_path,
-            encoding=FlextLdifConstants.Encoding.UTF8,
-        )
-        if write_result.is_failure:
-            return FlextResult.fail(f"Failed to write file: {write_result.error}")
-
-        file_stats = write_result.unwrap()
-        bytes_written = file_stats.get("bytes_written", 0)
-        file_size = int(bytes_written) if isinstance(bytes_written, (int, str)) else 0
-
-        return FlextResult.ok(
-            FlextLdifModels.WriteResponse(
-                content=None,
-                statistics=FlextLdifModels.Statistics(
-                    entries_written=original_count,
-                    output_file=str(file_stats.get("path", "")),
-                    file_size_bytes=file_size,
-                    encoding=str(file_stats.get("encoding", "utf-8")),
-                ),
-            ),
-        )
+                return FlextResult.ok(
+                    FlextLdifModels.WriteResponse(
+                        content=None,
+                        statistics=FlextLdifModels.Statistics(
+                            entries_written=original_count,
+                            output_file=str(file_stats.get("path", "")),
+                            file_size_bytes=file_size,
+                            encoding=str(file_stats.get("encoding", "utf-8")),
+                        ),
+                    ),
+                )
+            case _:
+                return FlextResult.fail(
+                    f"Invalid output configuration: target={output_target}, path={output_path}"
+                )
 
 
 __all__ = ["FlextLdifWriter"]

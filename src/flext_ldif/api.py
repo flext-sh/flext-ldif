@@ -14,7 +14,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
-from typing import ClassVar, Literal, cast, overload, override
+from typing import Any, ClassVar, Literal, cast, overload, override
 
 from flext_core import (
     FlextContainer,
@@ -120,8 +120,8 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
     _dispatcher: FlextDispatcher | None = PrivateAttr(default=None)
     _registry: FlextRegistry | None = PrivateAttr(default=None)
     _logger: FlextLogger | None = PrivateAttr(default=None)
-    _parser_service: FlextLdifParser = PrivateAttr()
-    _acl_service: FlextLdifAcl = PrivateAttr()
+    _parser_service: FlextLdifParser | None = PrivateAttr(default=None)
+    _acl_service: FlextLdifAcl | None = PrivateAttr(default=None)
     _writer_service: FlextLdifWriter | None = PrivateAttr(default=None)
     _config: FlextLdifConfig | None = PrivateAttr(default=None)
 
@@ -291,7 +291,6 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
                 output_dir=Path(params.output_dir),
                 source_server=params.source_server,
                 target_server=params.target_server,
-                migration_config=params.migration_config,
             )
 
         container.register("migration_pipeline", migration_pipeline_factory)
@@ -518,23 +517,8 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
             if not hasattr(self, "_parser_service") or self._parser_service is None:
                 self._parser_service = FlextLdifParser(config=self.config)
 
-            # Convert format_options dict to model if needed
-            resolved_format_options: FlextLdifModels.ParseFormatOptions | None = None
-            if format_options is not None:
-                if isinstance(format_options, dict):
-                    resolved_format_options = (
-                        FlextLdifModels.ParseFormatOptions.model_validate(
-                            format_options
-                        )
-                    )
-                else:
-                    resolved_format_options = format_options
-
-            # Resolve source to LDIF content
-            content_result = self._resolve_source_content(source)
-            if isinstance(content_result, FlextResult):
-                return content_result
-            content = content_result
+            resolved_format_options = self._resolve_format_options(format_options)
+            content = self._get_source_content(source)
 
             # Delegate parsing to the parser service.
             parse_result = self._parser_service.parse(
@@ -546,29 +530,66 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
             if parse_result.is_success:
                 response = parse_result.unwrap()
                 entries = response.entries
-
-                # Convert to dict format if requested
-                if output_format == "dict":
-                    dict_entries: list[dict[str, str | list[str]]] = [
-                        entry.model_dump() for entry in entries
-                    ]
-                    return FlextResult[list[dict[str, str | list[str]]]].ok(
-                        dict_entries
-                    )
-
-                # Return as Entry models (default)
-                return FlextResult[list[FlextLdifModels.Entry]].ok(entries)
+                return self._convert_output_format(entries, output_format)
 
             return FlextResult.fail(parse_result.error)
 
         except Exception as e:
-            if output_format == "dict":
-                return FlextResult[list[dict[str, str | list[str]]]].fail(
-                    f"Failed to parse LDIF: {e}"
-                )
-            return FlextResult[list[FlextLdifModels.Entry]].fail(
-                f"Failed to parse LDIF: {e}"
-            )
+            # Use structural pattern matching for error handling (Python 3.13)
+            match output_format:
+                case "dict":
+                    return FlextResult[list[dict[str, str | list[str]]]].fail(
+                        f"Failed to parse LDIF: {e}"
+                    )
+                case "model":
+                    return FlextResult[list[FlextLdifModels.Entry]].fail(
+                        f"Failed to parse LDIF: {e}"
+                    )
+                case _:
+                    # Should never reach here due to Literal type, but pyrefly needs explicit return
+                    return FlextResult[list[FlextLdifModels.Entry]].fail(
+                        f"Failed to parse LDIF: {e}"
+                    )
+
+    def _resolve_format_options(
+        self,
+        format_options: FlextLdifModels.ParseFormatOptions | dict[str, object] | None,
+    ) -> FlextLdifModels.ParseFormatOptions | None:
+        """Convert format_options dict to model if needed."""
+        if format_options is not None:
+            if isinstance(format_options, dict):
+                return FlextLdifModels.ParseFormatOptions.model_validate(format_options)
+            return format_options
+        return None
+
+    def _get_source_content(self, source: str | Path) -> str:
+        """Get LDIF content from source (Path or string)."""
+        content_result = self._resolve_source_content(source)
+        if isinstance(content_result, FlextResult):
+            # Re-raise as exception to be caught by outer try block
+            raise TypeError(content_result.error)
+        return content_result
+
+    def _convert_output_format(
+        self,
+        entries: list[FlextLdifModels.Entry],
+        output_format: Literal["model", "dict"],
+    ) -> (
+        FlextResult[list[FlextLdifModels.Entry]]
+        | FlextResult[list[dict[str, str | list[str]]]]
+    ):
+        """Convert entries to requested output format."""
+        match output_format:
+            case "dict":
+                dict_entries: list[dict[str, str | list[str]]] = [
+                    entry.model_dump() for entry in entries
+                ]
+                return FlextResult[list[dict[str, str | list[str]]]].ok(dict_entries)
+            case "model":
+                return FlextResult[list[FlextLdifModels.Entry]].ok(entries)
+            case _:
+                # Should never reach here due to Literal type, but pyrefly needs explicit return
+                return FlextResult[list[FlextLdifModels.Entry]].ok(entries)
 
     def _resolve_source_content(
         self,
@@ -1049,6 +1070,66 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
                 f"Failed to extract attribute values: {e}",
             )
 
+    def _normalize_migration_config(
+        self,
+        migration_config: FlextLdifModels.MigrationConfig | dict[str, object] | None,
+    ) -> FlextLdifModels.MigrationConfig | None:
+        """Convert dict to MigrationConfig model if needed."""
+        if migration_config is None:
+            return None
+        if isinstance(migration_config, dict):
+            return FlextLdifModels.MigrationConfig.model_validate(migration_config)
+        return migration_config
+
+    def _detect_migration_mode(
+        self,
+        config_model: FlextLdifModels.MigrationConfig | None,
+        categorization_rules: dict[str, list[str]] | None,
+    ) -> str:
+        """Auto-detect migration mode based on parameters."""
+        if config_model is not None:
+            return "structured"
+        if categorization_rules is not None:
+            return "categorized"
+        return "simple"
+
+    def _get_write_options_for_mode(
+        self,
+        mode: str,
+        write_options: FlextLdifModels.WriteFormatOptions | None,
+        config_model: FlextLdifModels.MigrationConfig | None,
+    ) -> FlextLdifModels.WriteFormatOptions | None:
+        """Set default write options for structured and categorized modes."""
+        if write_options is not None:
+            return write_options
+
+        match mode:
+            case "structured":
+                return FlextLdifModels.WriteFormatOptions(
+                    fold_long_lines=False,
+                    write_removed_attributes_as_comments=(
+                        config_model.write_removed_as_comments
+                        if config_model
+                        else False
+                    ),
+                )
+            case "categorized":
+                return FlextLdifModels.WriteFormatOptions(fold_long_lines=False)
+            case _:
+                return None
+
+    def _validate_simple_mode_params(
+        self,
+        input_filename: str | None,
+        output_filename: str | None,
+    ) -> FlextResult[None]:
+        """Validate requirements for simple mode."""
+        if input_filename is not None and output_filename is None:
+            return FlextResult[None].fail(
+                "output_filename is required when input_filename is specified"
+            )
+        return FlextResult[None].ok(None)
+
     def migrate(
         self,
         input_dir: Path,
@@ -1181,43 +1262,21 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
         """
         try:
             # Convert dict to MigrationConfig model if needed
-            config_model: FlextLdifModels.MigrationConfig | None = None
-            if migration_config is not None:
-                if isinstance(migration_config, dict):
-                    config_model = FlextLdifModels.MigrationConfig.model_validate(
-                        migration_config
-                    )
-                else:
-                    config_model = migration_config
+            config_model = self._normalize_migration_config(migration_config)
 
-            # Auto-detect mode based on parameters
-            if config_model is not None:
-                mode = "structured"
-            elif categorization_rules is not None:
-                mode = "categorized"
-            else:
-                mode = "simple"
-
-            # Set default write options for structured and categorized modes
-            if write_options is None:
-                if mode == "structured":
-                    write_options = FlextLdifModels.WriteFormatOptions(
-                        fold_long_lines=False,
-                        write_removed_attributes_as_comments=config_model.write_removed_as_comments
-                        if config_model
-                        else False,
-                    )
-                elif mode == "categorized":
-                    # Default write options for categorized mode (disable folding by default)
-                    write_options = FlextLdifModels.WriteFormatOptions(
-                        fold_long_lines=False,
-                    )
-                # Simple mode: write_options remains None, writer will use defaults
+            # Auto-detect mode and create write options
+            mode = self._detect_migration_mode(config_model, categorization_rules)
+            write_options = self._get_write_options_for_mode(
+                mode, write_options, config_model
+            )
 
             # Validate requirements for simple mode
-            if input_filename is not None and output_filename is None:
+            validation_result = self._validate_simple_mode_params(
+                input_filename, output_filename
+            )
+            if validation_result.is_failure:
                 return FlextResult[FlextLdifModels.EntryResult].fail(
-                    "output_filename is required when input_filename is specified",
+                    validation_result.error
                 )
 
             # Initialize migration pipeline with proper type safety
@@ -1710,12 +1769,16 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
 
         """
         # Resolve ACL service via container
+        if self._acl_service is None:
+            return FlextResult[FlextLdifModels.AclResponse].fail(
+                "ACL service not initialized"
+            )
         return self._acl_service.extract_acls_from_entry(entry, server_type)
 
     def evaluate_acl_rules(
         self,
         acls: list[FlextLdifModels.Acl],
-        context: object = None,
+        context: dict[str, Any] | None = None,
     ) -> FlextResult[bool]:
         """Evaluate ACL rules and return evaluation result.
 
@@ -1738,6 +1801,8 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
 
         """
         # Delegate to ACL service for direct context evaluation
+        if self._acl_service is None:
+            return FlextResult[bool].fail("ACL service not initialized")
         eval_context: dict[str, object] = context if isinstance(context, dict) else {}
         return self._acl_service.evaluate_acl_context(
             acls,
@@ -2056,32 +2121,38 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
         try:
             config = self.config
 
-            # Relaxed mode takes precedence
-            if config.enable_relaxed_parsing:
-                return FlextResult[str].ok(FlextLdifConstants.ServerTypes.RELAXED)
+            # Use structural pattern matching for server type resolution (Python 3.13)
+            match config:
+                case FlextLdifConfig(enable_relaxed_parsing=True):
+                    return FlextResult[str].ok(FlextLdifConstants.ServerTypes.RELAXED)
 
-            # Manual mode uses specified server type
-            if config.quirks_detection_mode == "manual":
-                if config.quirks_server_type:
-                    return FlextResult[str].ok(config.quirks_server_type)
-                return FlextResult[str].fail(
-                    "Manual mode requires quirks_server_type to be set",
-                )
-
-            # Auto-detection mode
-            if config.quirks_detection_mode == "auto" and ldif_path:
-                detector = FlextLdifDetector()
-                detection_result = detector.detect_server_type(ldif_path=ldif_path)
-                if detection_result.is_success:
-                    detected_data = detection_result.unwrap()
-                    # ServerDetectionResult is now a Pydantic model
-                    server_type = (
-                        detected_data.detected_server_type or config.server_type
-                    )
+                case FlextLdifConfig(
+                    quirks_detection_mode="manual",
+                    quirks_server_type=str() as server_type,
+                ):
                     return FlextResult[str].ok(server_type)
 
-            # Default to configured server type
-            return FlextResult[str].ok(config.server_type)
+                case FlextLdifConfig(quirks_detection_mode="manual"):
+                    return FlextResult[str].fail(
+                        "Manual mode requires quirks_server_type to be set",
+                    )
+
+                case FlextLdifConfig(quirks_detection_mode="auto") if ldif_path:
+                    detector = FlextLdifDetector()
+                    detection_result = detector.detect_server_type(ldif_path=ldif_path)
+                    if detection_result.is_success:
+                        detected_data = detection_result.unwrap()
+                        # ServerDetectionResult is now a Pydantic model
+                        server_type = (
+                            detected_data.detected_server_type or config.server_type
+                        )
+                        return FlextResult[str].ok(server_type)
+                    # Auto-detection failed, fall back to configured server type
+                    return FlextResult[str].ok(config.server_type)
+
+                case _:
+                    # Default to configured server type
+                    return FlextResult[str].ok(config.server_type)
 
         except (ValueError, TypeError, AttributeError) as e:
             return FlextResult[str].fail(f"Error determining server type: {e}")
@@ -2156,6 +2227,8 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
             acls = ldif.acl_service.extract_acls_from_entry(entry)
 
         """
+        if self._acl_service is None:
+            self._acl_service = FlextLdifAcl()
         return self._acl_service
 
     @property

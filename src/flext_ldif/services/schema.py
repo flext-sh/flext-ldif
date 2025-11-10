@@ -47,7 +47,7 @@ from flext_ldif.utilities import FlextLdifUtilities
 logger = FlextLogger(__name__)
 
 
-class FlextLdifSchema(FlextService[dict[str, object]]):
+class FlextLdifSchema(FlextService[FlextLdifModels.SchemaServiceStatus]):
     """Unified schema validation and transformation service.
 
     Centralizes all schema-related operations that were previously scattered
@@ -84,27 +84,29 @@ class FlextLdifSchema(FlextService[dict[str, object]]):
     server_type: str = "rfc"
 
     @override
-    def execute(self) -> FlextResult[dict[str, object]]:
+    def execute(self) -> FlextResult[FlextLdifModels.SchemaServiceStatus]:
         """Execute schema service self-check.
 
         Returns:
             FlextResult containing service status
 
         """
-        return FlextResult[dict[str, object]].ok({
-            "service": "SchemaService",
-            "server_type": self.server_type,
-            "status": "operational",
-            "rfc_compliance": "RFC 4512",
-            "operations": [
-                "parse_attribute",
-                "parse_objectclass",
-                "validate_attribute",
-                "validate_objectclass",
-                "write_attribute",
-                "write_objectclass",
-            ],
-        })
+        return FlextResult[FlextLdifModels.SchemaServiceStatus].ok(
+            FlextLdifModels.SchemaServiceStatus(
+                service="SchemaService",
+                server_type=self.server_type,
+                status="operational",
+                rfc_compliance="RFC 4512",
+                operations=[
+                    "parse_attribute",
+                    "parse_objectclass",
+                    "validate_attribute",
+                    "validate_objectclass",
+                    "write_attribute",
+                    "write_objectclass",
+                ],
+            )
+        )
 
     # ════════════════════════════════════════════════════════════════════════
     # FLUENT BUILDER PATTERN
