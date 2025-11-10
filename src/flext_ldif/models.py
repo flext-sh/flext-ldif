@@ -22,7 +22,14 @@ from collections.abc import Callable, Generator, Mapping
 from typing import Any, ClassVar, Literal, cast
 
 from flext_core import FlextLogger, FlextModels, FlextResult
-from pydantic import ConfigDict, Field, computed_field, field_validator, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    computed_field,
+    field_validator,
+    model_validator,
+)
 
 from flext_ldif.config import FlextLdifConfig
 from flext_ldif.constants import FlextLdifConstants
@@ -202,6 +209,36 @@ class FlextLdifModels(FlextModels):
                 source_entry=source_entry,
             )
 
+    class ErrorDetail(FlextModels.Value):
+        """Error detail information for failed operations.
+
+        Replaces dict[str, Any] with type-safe error tracking.
+        """
+
+        model_config = ConfigDict(
+            strict=True,
+            validate_default=True,
+            validate_assignment=True,
+            extra="allow",  # Allow additional error context
+        )
+
+        item: str = Field(
+            ...,
+            description="Item that failed (DN, entry, attribute name, etc.)",
+        )
+        error: str = Field(
+            ...,
+            description="Error message describing the failure",
+        )
+        error_code: str | None = Field(
+            default=None,
+            description="Optional error code for categorization",
+        )
+        context: dict[str, object] = Field(
+            default_factory=dict,
+            description="Additional context information for the error",
+        )
+
     class AclPermissions(FlextModels.ArbitraryTypesModel):
         """ACL permissions for LDAP operations."""
 
@@ -344,33 +381,16 @@ class FlextLdifModels(FlextModels):
         def get_acl_format(self) -> str:
             """Get ACL format for this server type.
 
-            Returns the RFC or server-specific ACL format constant from server Constants.
-            Falls back to RFC ACI format if server type not found.
+            Returns the RFC baseline ACL format constant.
+
+            NOTE: Core modules (models.py) cannot access services/* or servers/* per architecture.
+            For server-specific formats, the services layer should query FlextLdifServer registry
+            and pass the value when creating Acl models.
             """
-            # Try to get ACL_FORMAT from server Constants via registry
-            try:
-                from flext_ldif.services.server import FlextLdifServer
+            from flext_ldif.constants import FlextLdifConstants
 
-                registry = FlextLdifServer.get_global_instance()
-                base = registry.get_base(self.server_type)
-                if base and hasattr(base, "Constants"):
-                    constants = getattr(base, "Constants", None)
-                    if constants and hasattr(constants, "ACL_FORMAT"):
-                        acl_format = constants.ACL_FORMAT
-                        if isinstance(acl_format, str):
-                            return acl_format
-            except Exception as e:
-                # Quirk registry access failed - log and fall through to fallback
-                logger.warning(
-                    "Failed to get ACL format from quirks, using RFC fallback: %s",
-                    e,
-                    exc_info=True,
-                )
-
-            # Fallback to RFC ACI format
-            from flext_ldif.servers.rfc import FlextLdifServersRfc
-
-            return FlextLdifServersRfc.Constants.ACL_ATTRIBUTE_NAME
+            # Return RFC baseline ACL format
+            return FlextLdifConstants.AclFormats.DEFAULT_ACL_FORMAT
 
         def get_acl_type(self) -> str:
             """Get ACL type identifier for this server.
@@ -525,6 +545,66 @@ class FlextLdifModels(FlextModels):
             description="Mode: 'include' keep, 'exclude' remove",
         )
 
+    class CategoryRules(BaseModel):
+        """Rules for entry categorization.
+
+        Contains DN patterns and objectClass lists for each category.
+        Replaces dict[str, Any] with type-safe Pydantic model.
+        """
+
+        user_dn_patterns: list[str] = Field(
+            default_factory=list,
+            description="DN patterns for user entries (e.g., '*,ou=users,*')",
+        )
+        group_dn_patterns: list[str] = Field(
+            default_factory=list,
+            description="DN patterns for group entries",
+        )
+        hierarchy_dn_patterns: list[str] = Field(
+            default_factory=list,
+            description="DN patterns for organizational hierarchy",
+        )
+        schema_dn_patterns: list[str] = Field(
+            default_factory=list,
+            description="DN patterns for schema entries",
+        )
+        user_objectclasses: list[str] = Field(
+            default_factory=lambda: ["person", "inetOrgPerson", "orclUser"],
+            description="ObjectClasses identifying user entries",
+        )
+        group_objectclasses: list[str] = Field(
+            default_factory=lambda: ["groupOfUniqueNames", "groupOfNames", "orclGroup"],
+            description="ObjectClasses identifying group entries",
+        )
+        hierarchy_objectclasses: list[str] = Field(
+            default_factory=lambda: ["organizationalUnit", "organization"],
+            description="ObjectClasses identifying organizational units",
+        )
+
+    class WhitelistRules(BaseModel):
+        """Whitelist rules for entry validation.
+
+        Defines blocked objectClasses and validation rules.
+        Replaces dict[str, Any] with type-safe Pydantic model.
+        """
+
+        blocked_objectclasses: list[str] = Field(
+            default_factory=list,
+            description="ObjectClasses that should be blocked/rejected",
+        )
+        allowed_objectclasses: list[str] = Field(
+            default_factory=list,
+            description="ObjectClasses that are explicitly allowed",
+        )
+        required_attributes: list[str] = Field(
+            default_factory=list,
+            description="Attributes that must be present",
+        )
+        blocked_attributes: list[str] = Field(
+            default_factory=list,
+            description="Attributes that should be blocked",
+        )
+
     class ExclusionInfo(FlextModels.ArbitraryTypesModel):
         """Metadata for excluded entries/schema items.
 
@@ -651,11 +731,11 @@ class FlextLdifModels(FlextModels):
             default=0,
             description="Number of entries used for schema discovery",
         )
-        server_info: object = Field(
+        server_info: Any = Field(
             default=None,
             description="LDAP server information from Root DSE",
         )
-        servers: object = Field(
+        servers: Any = Field(
             default=None,
             description="Server-specific quirks and behaviors",
         )
@@ -1206,7 +1286,7 @@ class FlextLdifModels(FlextModels):
                 )
 
         @classmethod
-        def from_ldap3(cls, ldap3_entry: object) -> FlextResult[FlextLdifModels.Entry]:
+        def from_ldap3(cls, ldap3_entry: Any) -> FlextResult[FlextLdifModels.Entry]:
             """Create Entry from ldap3 Entry object.
 
             Args:
@@ -1221,7 +1301,7 @@ class FlextLdifModels(FlextModels):
                 dn_str = str(getattr(ldap3_entry, "entry_dn", ""))
 
                 # Extract attributes - ldap3 provides dict with various types
-                entry_attrs_raw: object = (
+                entry_attrs_raw: Any = (
                     getattr(ldap3_entry, "entry_attributes_as_dict", {})
                     if hasattr(ldap3_entry, "entry_attributes_as_dict")
                     else {}
@@ -1885,6 +1965,10 @@ class FlextLdifModels(FlextModels):
             | FlextLdifModels.CategoryEvent
             | FlextLdifModels.WriteEvent
             | FlextLdifModels.AclEvent
+            | FlextLdifModels.DnEvent
+            | FlextLdifModels.MigrationEvent
+            | FlextLdifModels.ConversionEvent
+            | FlextLdifModels.SchemaEvent
         ]:
             """Access domain events from statistics.
 
@@ -2309,7 +2393,6 @@ class FlextLdifModels(FlextModels):
         def for_acl_extraction(
             cls,
             processed: int,
-            with_acls: int = 0,  # noqa: ARG003 - Reserved for future use
             extracted: int = 0,
             failed: int = 0,
             attribute_name: str | None = None,
@@ -2318,7 +2401,6 @@ class FlextLdifModels(FlextModels):
 
             Args:
                 processed: Total entries processed
-                with_acls: Entries containing ACLs (reserved for future)
                 extracted: Total ACLs extracted
                 failed: ACL parsing failures
                 attribute_name: Primary ACL attribute name
@@ -3213,7 +3295,7 @@ class FlextLdifModels(FlextModels):
         )
 
         # Errors
-        error_details: list[dict[str, Any]] = Field(
+        error_details: list[FlextLdifModels.ErrorDetail] = Field(
             default_factory=list,
             description="Detailed error information for failed ACL extractions",
         )
@@ -3446,7 +3528,7 @@ class FlextLdifModels(FlextModels):
         )
 
         # Errors
-        error_details: list[dict[str, Any]] = Field(
+        error_details: list[FlextLdifModels.ErrorDetail] = Field(
             default_factory=list,
             description="Detailed error information for failed entries",
         )
@@ -3561,7 +3643,7 @@ class FlextLdifModels(FlextModels):
         )
 
         # Errors
-        error_details: list[dict[str, Any]] = Field(
+        error_details: list[FlextLdifModels.ErrorDetail] = Field(
             default_factory=list,
             description="Detailed error information for failed conversions",
         )
@@ -3630,7 +3712,7 @@ class FlextLdifModels(FlextModels):
         )
 
         # Errors
-        error_details: list[dict[str, Any]] = Field(
+        error_details: list[FlextLdifModels.ErrorDetail] = Field(
             default_factory=list,
             description="Detailed error information for failed items",
         )
@@ -4418,6 +4500,225 @@ class FlextLdifModels(FlextModels):
                 quirks_server_type=config.quirks_server_type,
                 enable_relaxed_parsing=config.enable_relaxed_parsing,
             )
+
+    # ═══════════════════════════════════════════════════════════════════════
+    # STATISTICS MODELS
+    # ═══════════════════════════════════════════════════════════════════════
+
+    class StatisticsResult(FlextModels.Value):
+        """Statistics result from LDIF processing pipeline.
+
+        Contains comprehensive statistics about categorized entries, rejections,
+        and output files generated during migration.
+
+        Attributes:
+            total_entries: Total number of entries processed
+            categorized: Count of entries per category
+            rejection_rate: Percentage of entries rejected (0.0-1.0)
+            rejection_count: Number of rejected entries
+            rejection_reasons: List of unique rejection reasons
+            written_counts: Count of entries written per category
+            output_files: Mapping of categories to output file paths
+
+        """
+
+        total_entries: int = Field(
+            description="Total number of entries processed",
+        )
+        categorized: dict[str, int] = Field(
+            description="Count of entries per category",
+        )
+        rejection_rate: float = Field(
+            description="Percentage of entries rejected (0.0-1.0)",
+        )
+        rejection_count: int = Field(
+            description="Number of rejected entries",
+        )
+        rejection_reasons: list[str] = Field(
+            description="List of unique rejection reasons",
+        )
+        written_counts: dict[str, int] = Field(
+            description="Count of entries written per category",
+        )
+        output_files: dict[str, str] = Field(
+            description="Mapping of categories to output file paths",
+        )
+
+    class EntriesStatistics(FlextModels.Value):
+        """Statistics calculated from a list of Entry models.
+
+        Provides distribution analysis of objectClasses and server types
+        across a collection of LDIF entries.
+
+        Attributes:
+            total_entries: Total number of entries analyzed
+            object_class_distribution: Count of entries per objectClass
+            server_type_distribution: Count of entries per server type
+
+        """
+
+        total_entries: int = Field(
+            description="Total number of entries analyzed",
+        )
+        object_class_distribution: dict[str, int] = Field(
+            description="Count of entries per objectClass",
+        )
+        server_type_distribution: dict[str, int] = Field(
+            description="Count of entries per server type",
+        )
+
+    class ServiceStatus(FlextModels.Value):
+        """Generic service status model for execute() health checks.
+
+        Base model for all service health check responses providing
+        standard status information across all FLEXT LDIF services.
+
+        Attributes:
+            service: Service name identifier
+            status: Operational status (e.g., "operational", "degraded")
+            rfc_compliance: RFC standards implemented (e.g., "RFC 2849", "RFC 4512")
+
+        """
+
+        service: str = Field(
+            description="Service name identifier",
+        )
+        status: str = Field(
+            description="Operational status",
+        )
+        rfc_compliance: str = Field(
+            description="RFC standards implemented by this service",
+        )
+
+    class SchemaServiceStatus(FlextModels.Value):
+        """Schema service status with server-specific metadata.
+
+        Extended status model for FlextLdifSchema service including
+        server type configuration and available operations.
+
+        Attributes:
+            service: Service name identifier
+            server_type: Server type configuration (e.g., "oud", "oid", "rfc")
+            status: Operational status
+            rfc_compliance: RFC 4512 compliance
+            operations: List of available schema operations
+
+        """
+
+        service: str = Field(
+            description="Service name identifier",
+        )
+        server_type: str = Field(
+            description="Server type configuration",
+        )
+        status: str = Field(
+            description="Operational status",
+        )
+        rfc_compliance: str = Field(
+            description="RFC 4512 compliance",
+        )
+        operations: list[str] = Field(
+            description="List of available schema operations",
+        )
+
+    class SyntaxServiceStatus(FlextModels.Value):
+        """Syntax service status with lookup table metadata.
+
+        Extended status model for FlextLdifSyntax service including
+        counts of registered syntax OIDs and common syntaxes.
+
+        Attributes:
+            service: Service name identifier
+            status: Operational status
+            rfc_compliance: RFC 4517 compliance
+            total_syntaxes: Total number of registered syntax OIDs
+            common_syntaxes: Number of commonly used syntax OIDs
+
+        """
+
+        service: str = Field(
+            description="Service name identifier",
+        )
+        status: str = Field(
+            description="Operational status",
+        )
+        rfc_compliance: str = Field(
+            description="RFC 4517 compliance",
+        )
+        total_syntaxes: int = Field(
+            description="Total number of registered syntax OIDs",
+        )
+        common_syntaxes: int = Field(
+            description="Number of commonly used syntax OIDs",
+        )
+
+    class SyntaxLookupResult(FlextModels.Value):
+        """Result of syntax OID/name lookup operations.
+
+        Contains results from bidirectional OID ↔ name lookups
+        performed by FlextLdifSyntax builder pattern.
+
+        Attributes:
+            oid_lookup: Resolved name for OID lookup (None if not found or not requested)
+            name_lookup: Resolved OID for name lookup (None if not found or not requested)
+
+        """
+
+        oid_lookup: str | None = Field(
+            default=None,
+            description="Resolved name for OID lookup",
+        )
+        name_lookup: str | None = Field(
+            default=None,
+            description="Resolved OID for name lookup",
+        )
+
+    class ValidationServiceStatus(FlextModels.Value):
+        """Validation service status with validation type metadata.
+
+        Status model for FlextLdifValidation service including
+        list of supported validation types.
+
+        Attributes:
+            service: Service name identifier
+            status: Operational status
+            rfc_compliance: RFC 2849/4512 compliance
+            validation_types: List of supported validation types
+
+        """
+
+        service: str = Field(
+            description="Service name identifier",
+        )
+        status: str = Field(
+            description="Operational status",
+        )
+        rfc_compliance: str = Field(
+            description="RFC 2849/4512 compliance",
+        )
+        validation_types: list[str] = Field(
+            description="List of supported validation types",
+        )
+
+    ParseResult = (
+        list["FlextLdifModels.Entry"]
+        | tuple[list["FlextLdifModels.Entry"], int, list[str]]
+    )
+
+    class ValidationBatchResult(FlextModels.Value):
+        """Result of batch validation operations.
+
+        Contains validation results for multiple attribute names
+        and objectClass names validated in a single operation.
+
+        Attributes:
+            results: Mapping of validated item names to validation status (True=valid, False=invalid)
+
+        """
+
+        results: dict[str, bool] = Field(
+            description="Mapping of validated items to validation status",
+        )
 
 
 __all__ = ["FlextLdifModels"]

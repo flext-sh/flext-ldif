@@ -9,6 +9,8 @@ from __future__ import annotations
 import logging
 import re
 
+from flext_core import FlextResult
+
 from flext_ldif.models import FlextLdifModels
 
 logger = logging.getLogger(__name__)
@@ -135,6 +137,48 @@ class FlextLdifUtilitiesOID:
 
         # Check if OID matches server's pattern
         return bool(oid_pattern.match(oid))
+
+    @staticmethod
+    def validate_format(oid: str) -> FlextResult[bool]:
+        """Validate OID format compliance with LDAP OID syntax.
+
+        Validates that OID follows the numeric dot-separated format:
+        - Must start with 0, 1, or 2 (standard LDAP root)
+        - Must contain at least one dot
+        - All segments must be numeric
+        - No leading zeros in segments (except single "0")
+
+        Args:
+            oid: OID string to validate (e.g., "1.3.6.1.4.1.1466.115.121.1.7")
+
+        Returns:
+            FlextResult containing True if valid OID format, False otherwise
+
+        Example:
+            >>> result = FlextLdifUtilitiesOID.validate_format(
+            ...     "1.3.6.1.4.1.1466.115.121.1.7"
+            ... )
+            >>> if result.is_success:
+            >>>     is_valid = result.unwrap()  # True
+
+        Note:
+            This is the canonical OID validation for all _utilities modules.
+            Replaces duplicated local validation functions.
+
+        """
+        if not oid:
+            return FlextResult[bool].ok(False)
+
+        # OID pattern: numeric.numeric.numeric... (no leading zeros)
+        oid_pattern = r"^[0-2](\.[0-9]+)*$"
+
+        try:
+            is_valid = bool(re.match(oid_pattern, oid))
+            return FlextResult[bool].ok(is_valid)
+        except (TypeError, re.error) as e:
+            return FlextResult[bool].fail(
+                f"Failed to validate OID format: {e}",
+            )
 
 
 __all__ = [

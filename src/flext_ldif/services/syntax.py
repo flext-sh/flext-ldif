@@ -129,7 +129,7 @@ from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 
 
-class FlextLdifSyntax(FlextService[dict[str, object]]):
+class FlextLdifSyntax(FlextService[FlextLdifModels.SyntaxServiceStatus]):
     """RFC 4517 Compliant Attribute Syntax Validation and Resolution Service.
 
     Provides comprehensive syntax OID validation, lookup, resolution, and
@@ -182,7 +182,7 @@ class FlextLdifSyntax(FlextService[dict[str, object]]):
     @override
     @FlextDecorators.log_operation("syntax_service_check")
     @FlextDecorators.track_performance()
-    def execute(self) -> FlextResult[dict[str, object]]:
+    def execute(self) -> FlextResult[FlextLdifModels.SyntaxServiceStatus]:
         """Execute Syntax service self-check.
 
         FlextDecorators automatically:
@@ -194,13 +194,15 @@ class FlextLdifSyntax(FlextService[dict[str, object]]):
             FlextResult containing service status
 
         """
-        return FlextResult[dict[str, object]].ok({
-            "service": "SyntaxService",
-            "status": "operational",
-            "rfc_compliance": "RFC 4517",
-            "total_syntaxes": len(self._oid_to_name),
-            "common_syntaxes": len(self._common_syntaxes),
-        })
+        return FlextResult[FlextLdifModels.SyntaxServiceStatus].ok(
+            FlextLdifModels.SyntaxServiceStatus(
+                service="SyntaxService",
+                status="operational",
+                rfc_compliance="RFC 4517",
+                total_syntaxes=len(self._oid_to_name),
+                common_syntaxes=len(self._common_syntaxes),
+            )
+        )
 
     # ════════════════════════════════════════════════════════════════════════
     # FLUENT BUILDER PATTERN
@@ -231,26 +233,30 @@ class FlextLdifSyntax(FlextService[dict[str, object]]):
         self.name_to_lookup = name
         return self
 
-    def build(self) -> dict[str, str | None]:
+    def build(self) -> FlextLdifModels.SyntaxLookupResult:
         """Execute lookups and return results (fluent terminal).
 
         Returns:
-            Dictionary with lookup results
+            SyntaxLookupResult model with lookup results
 
         """
-        result: dict[str, str | None] = {}
+        oid_result: str | None = None
+        name_result: str | None = None
 
         if self.oid_to_lookup:
             lookup_result = self.lookup_oid(self.oid_to_lookup)
             if lookup_result.is_success:
-                result["oid_lookup"] = lookup_result.unwrap()
+                oid_result = lookup_result.unwrap()
 
         if self.name_to_lookup:
             lookup_result = self.lookup_name(self.name_to_lookup)
             if lookup_result.is_success:
-                result["name_lookup"] = lookup_result.unwrap()
+                name_result = lookup_result.unwrap()
 
-        return result
+        return FlextLdifModels.SyntaxLookupResult(
+            oid_lookup=oid_result,
+            name_lookup=name_result,
+        )
 
     def validate_oid(self, oid: str) -> FlextResult[bool]:
         """Validate OID format compliance with LDAP OID syntax.

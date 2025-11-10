@@ -1944,7 +1944,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
         def _filter_and_sort_schema_values(
             self,
             values: list[str],
-            allowed_oids: set[str],
+            allowed_oids: set[str] | None,
             oid_pattern: re.Pattern[str],
         ) -> list[tuple[tuple[int, ...], str]]:
             """Filter schema values by whitelist and sort by OID."""
@@ -1959,7 +1959,8 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 oid_str = match.group(1)
 
                 # Check if OID in whitelist
-                if oid_str not in allowed_oids:
+                # Filter only if allowed_oids is provided
+                if allowed_oids is not None and oid_str not in allowed_oids:
                     continue
 
                 # Parse OID for sorting (convert to tuple of ints)
@@ -2005,6 +2006,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
         def _write_entry_modify_add_format(
             self,
             entry_data: FlextLdifModels.Entry,
+            allowed_schema_oids: frozenset[str] | None = None,
         ) -> FlextResult[str]:
             """Write schema entry in OUD modify-add format.
 
@@ -2035,15 +2037,15 @@ class FlextLdifServersOud(FlextLdifServersRfc):
 
             Args:
                 entry_data: Schema entry to write
+                allowed_schema_oids: Optional set of allowed OIDs for filtering.
+                    If None, all OIDs are accepted (no filtering).
+                    Should be passed from migration configuration.
 
             Returns:
                 FlextResult with LDIF string in OUD modify-add format
 
             """
-            import re  # noqa: PLC0415
-
-            from algar_oud_mig.constants import AlgarOudMigConstants  # noqa: PLC0415
-
+            # Lazy import for optional external dependency
             ldif_lines: list[str] = []
 
             # DN line (required)
@@ -2060,7 +2062,8 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 return FlextResult[str].ok(ldif_text)
 
             attrs_dict = entry_data.attributes.attributes
-            allowed_oids = set(AlgarOudMigConstants.Schema.ALLOWED_SCHEMA_OIDS)
+            # Use provided allowed OIDs or accept all if None
+            allowed_oids = set(allowed_schema_oids) if allowed_schema_oids else None
 
             # OID pattern: ( number.number.number... NAME ...
             oid_pattern = re.compile(r"\(\s*(\d+(?:\.\d+)*)\s+")

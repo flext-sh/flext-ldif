@@ -6,8 +6,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import logging
 import string
+from collections.abc import Generator
 from typing import overload
 
 from flext_core import FlextUtilities
@@ -15,8 +15,6 @@ from flext_core import FlextUtilities
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.typings import FlextLdifTypes
-
-logger = logging.getLogger(__name__)
 
 # Type alias from FlextLdifTypes
 DnInput = FlextLdifTypes.DnInput
@@ -61,10 +59,11 @@ class FlextLdifUtilitiesDN:
             DN string value
 
         """
+        if isinstance(dn, FlextLdifModels.DistinguishedName):
+            return dn.value
         if isinstance(dn, str):
             return dn
-        # Assume it's a DN model with .value attribute
-        return getattr(dn, "value", str(dn))
+        return str(dn)
 
     @overload
     @staticmethod
@@ -85,31 +84,33 @@ class FlextLdifUtilitiesDN:
         if not dn_str:
             return []
 
-        # Split by commas but respect backslash escapes
-        components: list[str] = []
-        current = ""
-        i = 0
-        while i < len(dn_str):
-            char = dn_str[i]
-            if char == "\\" and i + 1 < len(dn_str):
-                # Escaped character - include both backslash and next char
-                current += char + dn_str[i + 1]
-                i += 2
-            elif char == ",":
-                # Unescaped comma - component boundary
-                if current.strip():
-                    components.append(current.strip())
-                current = ""
-                i += 1
-            else:
-                current += char
-                i += 1
+        # Split by commas but respect backslash escapes (functional approach with generator)
+        def split_components() -> Generator[str]:
+            """Generator that yields DN components respecting RFC 4514 escapes."""
+            current = ""
+            chars = iter(dn_str)
 
-        # Add final component
-        if current.strip():
-            components.append(current.strip())
+            for char in chars:
+                if char == "\\":
+                    # Escaped character - include both backslash and next char
+                    try:
+                        next_char = next(chars)
+                        current += char + next_char
+                    except StopIteration:
+                        current += char  # Trailing backslash
+                elif char == ",":
+                    # Unescaped comma - component boundary
+                    if current.strip():
+                        yield current.strip()
+                        current = ""
+                else:
+                    current += char
 
-        return components
+            # Add final component if exists
+            if current.strip():
+                yield current.strip()
+
+        return list(split_components())
 
     @staticmethod
     def norm_component(component: str) -> str:
@@ -501,6 +502,33 @@ class FlextLdifUtilitiesDN:
         return current_attr, current_val, in_value, i + 1, False
 
     @staticmethod
+    def _advance_rdn_position(
+        char: str,
+        rdn: str,
+        position: int,
+        current_attr: str,
+        current_val: str,
+        *,
+        in_value: bool,
+        pairs: list[tuple[str, str]],
+    ) -> tuple[str, str, bool, int]:
+        """Advance position during RDN parsing and return new state.
+
+        Returns: (current_attr, current_val, in_value, next_position)
+        """
+        result = FlextLdifUtilitiesDN._process_rdn_char(
+            char,
+            rdn,
+            position,
+            current_attr,
+            current_val,
+            in_value=in_value,
+            pairs=pairs,
+        )
+        attr, val, in_val, next_pos, _ = result
+        return (attr, val, in_val, next_pos)
+
+    @staticmethod
     def parse_rdn(rdn: str) -> list[tuple[str, str]] | None:
         """Parse a single RDN component per RFC 4514.
 
@@ -514,23 +542,27 @@ class FlextLdifUtilitiesDN:
             current_attr = ""
             current_val = ""
             in_value = False
-            i: int = 0
+            rdn_len: int = len(rdn)
+            position: int = 0
 
-            while i < len(rdn):
-                char = rdn[i]
-                result = FlextLdifUtilitiesDN._process_rdn_char(
-                    char,
-                    rdn,
-                    i,
-                    current_attr,
-                    current_val,
-                    in_value=in_value,
-                    pairs=pairs,
+            while position < rdn_len:
+                # Extract character first to avoid type checker confusion
+                idx: int = position
+                char_at_pos: str = rdn[idx]
+                # Advance position using helper method that returns explicit int
+                current_attr, current_val, in_value, position = (
+                    FlextLdifUtilitiesDN._advance_rdn_position(
+                        char_at_pos,
+                        rdn,
+                        idx,
+                        current_attr,
+                        current_val,
+                        in_value=in_value,
+                        pairs=pairs,
+                    )
                 )
-                current_attr, current_val, in_value, next_i, _ = result
-                i = next_i
 
-                if char == "=" and not in_value and not current_attr:
+                if char_at_pos == "=" and not in_value and not current_attr:
                     return None
 
             if not in_value or not current_attr:
@@ -689,32 +721,6 @@ class FlextLdifUtilitiesDN:
 
         # Check if DN equals base_dn OR if DN ends with ",base_dn"
         return dn_lower == base_dn_lower or dn_lower.endswith(f",{base_dn_lower}")
-
-    @staticmethod
-    def are_equal(
-        dn1: str | None,
-        dn2: str | None,
-    ) -> bool:
-        """Check if two DNs are equal (case-insensitive, normalized).
-
-        Wrapper around compare_dns() for boolean equality check.
-
-        Args:
-            dn1: First DN to compare
-            dn2: Second DN to compare
-
-        Returns:
-            True if DNs are equal (case-insensitive), False otherwise
-
-        Example:
-            are_equal("cn=Admin,dc=example,dc=com", "CN=admin,DC=example,DC=com")
-            # Returns: True
-            are_equal("cn=admin,dc=example", "cn=user,dc=example")
-            # Returns: False
-
-        """
-        result = FlextLdifUtilitiesDN.compare_dns(dn1, dn2)
-        return result == 0 if result is not None else False
 
 
 __all__ = [

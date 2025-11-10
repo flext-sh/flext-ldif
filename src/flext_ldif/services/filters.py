@@ -419,13 +419,16 @@ class FlextLdifFilters(FlextService[list[FlextLdifModels.Entry]]):
         @staticmethod
         def check_blocked_objectclasses(
             entry: FlextLdifModels.Entry,
-            whitelist_rules: dict[str, Any] | None,
+            whitelist_rules: FlextLdifModels.WhitelistRules | None,
         ) -> tuple[bool, str | None]:
-            """Check if entry has blocked objectClasses."""
+            """Check if entry has blocked objectClasses.
+
+            Uses type-safe WhitelistRules model instead of dict[str, Any].
+            """
             if not whitelist_rules:
                 return (False, None)
 
-            blocked_ocs = whitelist_rules.get("blocked_objectclasses", [])
+            blocked_ocs = whitelist_rules.blocked_objectclasses
             if not blocked_ocs:
                 return (False, None)
 
@@ -444,12 +447,21 @@ class FlextLdifFilters(FlextService[list[FlextLdifModels.Entry]]):
         def validate_category_dn_pattern(
             entry: FlextLdifModels.Entry,
             category: str,
-            rules: dict[str, Any],
+            rules: FlextLdifModels.CategoryRules,
         ) -> tuple[bool, str | None]:
-            """Validate DN pattern for specific category."""
-            pattern_key = f"{category[:-1]}_dn_patterns"  # users -> user_dn_patterns
-            dn_patterns = rules.get(pattern_key, [])
+            """Validate DN pattern for specific category.
 
+            Uses type-safe CategoryRules model instead of dict[str, Any].
+            """
+            # Map category to pattern attribute
+            pattern_map = {
+                "users": rules.user_dn_patterns,
+                "groups": rules.group_dn_patterns,
+                "hierarchy": rules.hierarchy_dn_patterns,
+                "schema": rules.schema_dn_patterns,
+            }
+
+            dn_patterns = pattern_map.get(category, [])
             if not dn_patterns:
                 return (False, None)
 
@@ -666,7 +678,9 @@ class FlextLdifFilters(FlextService[list[FlextLdifModels.Entry]]):
             if not attributes:
                 return False
 
-            entry_attrs_lower = {attr.lower() for attr in entry.attributes}
+            # Type annotation to help pyrefly understand attr is str
+            attrs_keys: list[str] = entry.attributes.keys()
+            entry_attrs_lower = {attr.lower() for attr in attrs_keys}
             return any(attr.lower() in entry_attrs_lower for attr in attributes)
 
         @staticmethod
@@ -1404,16 +1418,18 @@ class FlextLdifFilters(FlextService[list[FlextLdifModels.Entry]]):
     def categorize(
         cls,
         entry: FlextLdifModels.Entry,
-        rules: dict[str, Any],
+        rules: FlextLdifModels.CategoryRules,
     ) -> tuple[str, str | None]:
         """Categorize entry into 6 categories.
 
+        Uses type-safe CategoryRules model instead of dict[str, Any].
+
         Categories (in priority order):
         - schema: Has attributeTypes/objectClasses
-        - hierarchy: Containers (organizationalUnit, etc) OR parent DNs
-        - users: User accounts
-        - groups: Group entries
-        - acl: Entries with ACL attributes (only if not hierarchy)
+        - users: User accounts (person, inetOrgPerson, orcluser)
+        - groups: Group entries (groupOfUniqueNames, orclgroup)
+        - hierarchy: Containers (organizationalUnit, etc)
+        - acl: Entries with ACL attributes
         - rejected: No match
 
         Returns:
@@ -1424,34 +1440,25 @@ class FlextLdifFilters(FlextService[list[FlextLdifModels.Entry]]):
         if cls.is_schema(entry):
             return ("schema", None)
 
-        # Parse rules
-        hierarchy_classes = tuple(rules.get("hierarchy_objectclasses", []))
-        user_classes = tuple(rules.get("user_objectclasses", []))
-        group_classes = tuple(rules.get("group_objectclasses", []))
-        acl_attributes = rules.get("acl_attributes", ["acl", "aci", "olcAccess"])
-        parent_dns = set(rules.get("parent_dns", []))
+        # Get objectClasses from CategoryRules model
+        hierarchy_classes = tuple(rules.hierarchy_objectclasses)
+        user_classes = tuple(rules.user_objectclasses)
+        group_classes = tuple(rules.group_objectclasses)
 
-        # Check if entry is a parent DN in the hierarchy
-        # This must happen BEFORE ACL check to prevent parent containers from being
-        # categorized as ACL entries just because they have ACL attributes
-        if parent_dns:
-            entry_dn = FlextLdifUtilities.DN.get_dn_value(entry.dn).lower()
-            if entry_dn in parent_dns:
-                return ("hierarchy", "Parent DN in hierarchy")
-
-        # Check objectClass hierarchy BEFORE ACL (important!)
-        if hierarchy_classes and cls.Filter.has_objectclass(entry, hierarchy_classes):
-            return ("hierarchy", None)
-
-        # Check users
+        # Check users FIRST
         if user_classes and cls.Filter.has_objectclass(entry, user_classes):
             return ("users", None)
 
-        # Check groups
+        # Check groups SECOND (BEFORE hierarchy - prevents misclassification)
         if group_classes and cls.Filter.has_objectclass(entry, group_classes):
             return ("groups", None)
 
-        # Check ACL (only for non-hierarchy entries)
+        # Check hierarchy AFTER groups
+        if hierarchy_classes and cls.Filter.has_objectclass(entry, hierarchy_classes):
+            return ("hierarchy", None)
+
+        # Check ACL (default ACL attributes - can be made configurable later)
+        acl_attributes = ["acl", "aci", "olcAccess"]
         if cls.Filter.has_attributes(entry, acl_attributes, match_any=True):
             return ("acl", None)
 
@@ -1562,7 +1569,7 @@ class FlextLdifFilters(FlextService[list[FlextLdifModels.Entry]]):
             if cls._has_remaining_definitions(attrs_copy):
                 # Create new entry with filtered attributes
                 # Cast attrs_copy to match Entry.create signature
-                from typing import cast  # noqa: PLC0415
+                from typing import cast  # noqa: PLC0415 - Avoid circular import
 
                 attributes_typed = cast("dict[str, list[str] | str]", attrs_copy)
                 filtered_entry_result = FlextLdifModels.Entry.create(
@@ -1742,38 +1749,57 @@ class FlextLdifFilters(FlextService[list[FlextLdifModels.Entry]]):
     @staticmethod
     def check_blocked_objectclasses(
         entry: FlextLdifModels.Entry,
-        whitelist_rules: dict[str, Any] | None,
+        whitelist_rules: FlextLdifModels.WhitelistRules | dict[str, list[str]] | None,
     ) -> tuple[bool, str | None]:
-        """Check if entry has blocked objectClasses."""
+        """Check if entry has blocked objectClasses.
+
+        Accepts WhitelistRules model or dict for backward compatibility.
+        """
+        # Convert dict to model if needed
+        if isinstance(whitelist_rules, dict):
+            rules_model = FlextLdifModels.WhitelistRules(**whitelist_rules)
+        elif whitelist_rules is None:
+            rules_model = None
+        else:
+            rules_model = whitelist_rules
+
         return FlextLdifFilters.Categorizer.check_blocked_objectclasses(
             entry,
-            whitelist_rules,
+            rules_model,
         )
 
     @staticmethod
     def validate_category_dn_pattern(
         entry: FlextLdifModels.Entry,
         category: str,
-        rules: dict[str, Any],
+        rules: FlextLdifModels.CategoryRules | dict[str, list[str]],
     ) -> tuple[bool, str | None]:
-        """Validate DN pattern for specific category."""
+        """Validate DN pattern for specific category.
+
+        Accepts CategoryRules model or dict for backward compatibility.
+        """
+        # Convert dict to model if needed
+        if isinstance(rules, dict):
+            rules_model = FlextLdifModels.CategoryRules(**rules)
+        else:
+            rules_model = rules
+
         return FlextLdifFilters.Categorizer.validate_category_dn_pattern(
             entry,
             category,
-            rules,
+            rules_model,
         )
 
     @staticmethod
     def categorize_entry(
         entry: FlextLdifModels.Entry,
-        rules: dict[str, Any],
-        whitelist_rules: dict[str, Any] | None = None,
+        rules: FlextLdifModels.CategoryRules,
+        whitelist_rules: FlextLdifModels.WhitelistRules | None = None,
     ) -> tuple[str, str | None]:
         """Categorize entry into 6 categories.
 
-        Delegates to FlextLdifFilters.categorize, with optional whitelist
-        validation.
-
+        Uses type-safe Pydantic models instead of dict[str, Any].
+        Delegates to FlextLdifFilters.categorize, with optional whitelist validation.
         """
         # Check for blocked objectClasses first using helper
         is_blocked, reason = FlextLdifFilters.Categorizer.check_blocked_objectclasses(

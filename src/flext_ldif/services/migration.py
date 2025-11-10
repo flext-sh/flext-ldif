@@ -119,32 +119,33 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifModels.EntryResult]):
         self._parser = FlextLdifParser()
         self._writer = FlextLdifWriter()
 
-    def execute(self) -> FlextResult[FlextLdifModels.EntryResult]:  # noqa: C901
-        """Execute migration - pure railway pattern with public services."""
-        start_time = time.time()
-
-        # Create output directory
+    def _create_output_directory(self) -> FlextResult[None]:
+        """Create output directory with proper error handling."""
         try:
             self._output_dir.mkdir(parents=True, exist_ok=True)
+            return FlextResult[None].ok(None)
         except OSError as e:
-            return FlextResult[FlextLdifModels.EntryResult].fail(
-                f"Failed to create output dir: {e}"
-            )
+            return FlextResult[None].fail(f"Failed to create output dir: {e}")
 
-        # Determine files to parse
+    def _determine_files(self) -> list[str]:
+        """Determine which LDIF files to parse based on mode."""
         if self._mode == "simple":
-            files = (
+            return (
                 [self._input_filename]
                 if self._input_filename
                 else sorted([f.name for f in self._input_dir.glob("*.ldif")])
             )
-        else:
-            files = self._input_files or sorted([
-                f.name for f in self._input_dir.glob("*.ldif")
-            ])
+        return self._input_files or sorted([
+            f.name for f in self._input_dir.glob("*.ldif")
+        ])
 
-        # Parse all files using parser service
+    def _parse_files(
+        self,
+        files: list[str],
+    ) -> FlextResult[list[FlextLdifModels.Entry]]:
+        """Parse all input LDIF files using parser service."""
         all_entries: list[FlextLdifModels.Entry] = []
+
         for filename in files:
             file_path = self._input_dir / filename
             if not file_path.exists():
@@ -155,7 +156,7 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifModels.EntryResult]):
                 file_path, server_type=self._source_server
             )
             if parse_result.is_failure:
-                return FlextResult[FlextLdifModels.EntryResult].fail(
+                return FlextResult[list[FlextLdifModels.Entry]].fail(
                     f"Parse failed: {parse_result.error}"
                 )
 
@@ -169,25 +170,25 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifModels.EntryResult]):
             logger.info(f"Parsed {len(entries)} from {filename}")
 
         logger.info(f"Total parsed: {len(all_entries)}")
+        return FlextResult[list[FlextLdifModels.Entry]].ok(all_entries)
 
-        # Railway pattern: categorization service chain
+    def _apply_categorization(
+        self,
+        entries: list[FlextLdifModels.Entry],
+    ) -> FlextResult[dict[str, list[FlextLdifModels.Entry]]]:
+        """Apply categorization chain using railway pattern."""
         categorized_result = (
             FlextResult[list[FlextLdifModels.Entry]]
-            .ok(all_entries)
-            # Validate DNs (public method)
+            .ok(entries)
             .flat_map(self._categorization.validate_dns)
-            # Categorize entries (public method)
             .flat_map(self._categorization.categorize_entries)
-            # Filter by base DN (public method)
             .map(self._categorization.filter_by_base_dn)
-            # Remove forbidden attributes (public method)
             .map(self._categorization.remove_forbidden_attributes)
-            # Remove forbidden objectClasses (public method)
             .map(self._categorization.remove_forbidden_objectclasses)
         )
 
         if categorized_result.is_failure:
-            return FlextResult[FlextLdifModels.EntryResult].fail(
+            return FlextResult[dict[str, list[FlextLdifModels.Entry]]].fail(
                 categorized_result.error
             )
 
@@ -203,27 +204,38 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifModels.EntryResult]):
                     schema_result.unwrap()
                 )
 
-        # Sort if configured (using sorting service builder)
-        if self._sort_hierarchically:
-            for cat in {
-                FlextLdifConstants.Categories.HIERARCHY,
-                FlextLdifConstants.Categories.USERS,
-                FlextLdifConstants.Categories.GROUPS,
-            }:
-                cat_entries = categories.get(cat)
-                if cat_entries:
-                    # build() already executes and returns unwrapped result
-                    sorted_entries = (
-                        FlextLdifSorting.builder()
-                        .with_entries(cat_entries)
-                        .with_target("entries")
-                        .with_strategy("hierarchy")
-                        .build()
-                    )
-                    categories[cat] = sorted_entries
-                    logger.info(f"Sorted '{cat}' hierarchically")
+        return FlextResult[dict[str, list[FlextLdifModels.Entry]]].ok(categories)
 
-        # Write outputs using writer service
+    def _sort_categories(
+        self,
+        categories: dict[str, list[FlextLdifModels.Entry]],
+    ) -> None:
+        """Sort hierarchical categories in-place if configured."""
+        if not self._sort_hierarchically:
+            return
+
+        for cat in {
+            FlextLdifConstants.Categories.HIERARCHY,
+            FlextLdifConstants.Categories.USERS,
+            FlextLdifConstants.Categories.GROUPS,
+        }:
+            cat_entries = categories.get(cat)
+            if cat_entries:
+                sorted_entries = (
+                    FlextLdifSorting.builder()
+                    .with_entries(cat_entries)
+                    .with_target("entries")
+                    .with_strategy("hierarchy")
+                    .build()
+                )
+                categories[cat] = sorted_entries
+                logger.info(f"Sorted '{cat}' hierarchically")
+
+    def _write_categories(
+        self,
+        categories: dict[str, list[FlextLdifModels.Entry]],
+    ) -> FlextResult[tuple[dict[str, str], dict[str, int]]]:
+        """Write categorized entries to output files."""
         file_paths: dict[str, str] = {}
         entry_counts: dict[str, int] = {}
 
@@ -243,16 +255,15 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifModels.EntryResult]):
             )
 
             if write_result.is_failure:
-                return FlextResult[FlextLdifModels.EntryResult].fail(
+                return FlextResult[tuple[dict[str, str], dict[str, int]]].fail(
                     f"Write failed: {write_result.error}"
                 )
 
             file_paths["output"] = str(output_path)
             entry_counts["output"] = len(all_output_entries)
             logger.info(f"Wrote {len(all_output_entries)} entries to {output_path}")
-
         else:
-            # Categorized mode: 6 files
+            # Categorized mode: multiple files
             for category, entries in categories.items():
                 if not entries:
                     continue
@@ -272,7 +283,7 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifModels.EntryResult]):
                 )
 
                 if write_result.is_failure:
-                    return FlextResult[FlextLdifModels.EntryResult].fail(
+                    return FlextResult[tuple[dict[str, str], dict[str, int]]].fail(
                         f"Write {category} failed: {write_result.error}"
                     )
 
@@ -282,7 +293,48 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifModels.EntryResult]):
                     f"Wrote {len(entries)} entries to {output_path} ({category})"
                 )
 
-        # Build statistics (inline, no private method)
+        return FlextResult[tuple[dict[str, str], dict[str, int]]].ok((
+            file_paths,
+            entry_counts,
+        ))
+
+    def execute(self) -> FlextResult[FlextLdifModels.EntryResult]:
+        """Execute migration - pure railway pattern with public services."""
+        start_time = time.time()
+
+        # Step 1: Create output directory
+        dir_result = self._create_output_directory()
+        if dir_result.is_failure:
+            return FlextResult[FlextLdifModels.EntryResult].fail(dir_result.error)
+
+        # Step 2: Determine files to parse
+        files = self._determine_files()
+
+        # Step 3: Parse all input files
+        entries_result = self._parse_files(files)
+        if entries_result.is_failure:
+            return FlextResult[FlextLdifModels.EntryResult].fail(entries_result.error)
+
+        # Step 4: Apply categorization chain
+        categories_result = self._apply_categorization(entries_result.unwrap())
+        if categories_result.is_failure:
+            return FlextResult[FlextLdifModels.EntryResult].fail(
+                categories_result.error
+            )
+
+        categories = categories_result.unwrap()
+
+        # Step 5: Sort hierarchically if configured
+        self._sort_categories(categories)
+
+        # Step 6: Write output files
+        write_result = self._write_categories(categories)
+        if write_result.is_failure:
+            return FlextResult[FlextLdifModels.EntryResult].fail(write_result.error)
+
+        file_paths, entry_counts = write_result.unwrap()
+
+        # Step 7: Build statistics and emit event
         duration_ms = int((time.time() - start_time) * 1000)
         total_entries = sum(entry_counts.values())
         total_rejected = sum(
@@ -292,9 +344,12 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifModels.EntryResult]):
             FlextLdifConstants.Categories.REJECTED, 0
         )
 
-        # Emit event using utilities service
         error_details = [
-            {"reason": reason, "count": len(entries)}
+            FlextLdifModels.ErrorDetail(
+                item=f"rejected_{reason}",
+                error=f"Rejected {len(entries)} entries: {reason}",
+                context={"reason": reason, "count": len(entries)},
+            )
             for reason, entries in self._categorization.rejection_tracker.items()
         ]
         event = FlextLdifUtilities.Events.log_and_emit_migration_event(

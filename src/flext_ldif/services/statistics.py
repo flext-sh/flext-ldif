@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from pathlib import Path
-from typing import Any, override
+from typing import override
 
 from flext_core import FlextDecorators, FlextResult, FlextService
 
@@ -20,7 +20,7 @@ from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 
 
-class FlextLdifStatistics(FlextService[dict[str, object]]):
+class FlextLdifStatistics(FlextService[FlextLdifModels.StatisticsResult]):
     """Statistics service for LDIF processing pipeline.
 
     Provides methods for generating comprehensive statistics about
@@ -51,22 +51,25 @@ class FlextLdifStatistics(FlextService[dict[str, object]]):
     @override
     @FlextDecorators.log_operation("statistics_service_check")
     @FlextDecorators.track_performance()
-    def execute(self) -> FlextResult[dict[str, object]]:
+    def execute(self) -> FlextResult[FlextLdifModels.StatisticsResult]:
         """Execute statistics service self-check.
 
         Returns:
-            FlextResult containing service status
+            FlextResult containing empty statistics (service health check)
 
         """
-        return FlextResult[dict[str, object]].ok({
-            "service": "StatisticsService",
-            "status": "operational",
-            "capabilities": [
-                "generate_statistics",
-                "count_entries",
-                "analyze_rejections",
-            ],
-        })
+        # Return empty statistics for health check
+        return FlextResult[FlextLdifModels.StatisticsResult].ok(
+            FlextLdifModels.StatisticsResult(
+                total_entries=0,
+                categorized={},
+                rejection_rate=0.0,
+                rejection_count=0,
+                rejection_reasons=[],
+                written_counts={},
+                output_files={},
+            )
+        )
 
     # ════════════════════════════════════════════════════════════════════════
     # FLUENT BUILDER PATTERN
@@ -112,11 +115,11 @@ class FlextLdifStatistics(FlextService[dict[str, object]]):
         self.output_files = output_files
         return self
 
-    def build(self) -> dict[str, object]:
+    def build(self) -> FlextLdifModels.StatisticsResult | None:
         """Execute statistics generation and return unwrapped result (fluent terminal).
 
         Returns:
-            Dictionary with generated statistics
+            StatisticsResult model or None if data incomplete
 
         """
         if (
@@ -125,7 +128,7 @@ class FlextLdifStatistics(FlextService[dict[str, object]]):
             or self.output_dir is None
             or self.output_files is None
         ):
-            return {}
+            return None
 
         result = self.generate_statistics(
             categorized=self.categorized,
@@ -133,7 +136,7 @@ class FlextLdifStatistics(FlextService[dict[str, object]]):
             output_dir=self.output_dir,
             output_files=self.output_files,
         )
-        return result.unwrap() if result.is_success else {}
+        return result.unwrap() if result.is_success else None
 
     def generate_statistics(
         self,
@@ -141,7 +144,7 @@ class FlextLdifStatistics(FlextService[dict[str, object]]):
         written_counts: dict[str, int],
         output_dir: Path,
         output_files: dict[str, object],
-    ) -> FlextResult[dict[str, object]]:
+    ) -> FlextResult[FlextLdifModels.StatisticsResult]:
         """Generate complete statistics for categorized migration.
 
         Args:
@@ -151,7 +154,7 @@ class FlextLdifStatistics(FlextService[dict[str, object]]):
             output_files: Dictionary mapping category to output filename
 
         Returns:
-            FlextResult containing statistics dictionary with counts, rejection info, and metadata
+            FlextResult containing StatisticsResult model with counts, rejection info, and metadata
 
         """
         try:
@@ -159,7 +162,7 @@ class FlextLdifStatistics(FlextService[dict[str, object]]):
             total_entries = sum(len(entries) for entries in categorized.values())
 
             # Build categorized counts
-            categorized_counts: dict[str, object] = {}
+            categorized_counts: dict[str, int] = {}
             for category, entries in categorized.items():
                 categorized_counts[category] = len(entries)
 
@@ -184,7 +187,7 @@ class FlextLdifStatistics(FlextService[dict[str, object]]):
             )
 
             # Build output files info (LDIF files, not directories)
-            output_files_info: dict[str, object] = {}
+            output_files_info: dict[str, str] = {}
             for category in written_counts:
                 filename_obj = output_files.get(category, f"{category}.ldif")
                 category_filename = (
@@ -195,25 +198,35 @@ class FlextLdifStatistics(FlextService[dict[str, object]]):
                 output_path = output_dir / category_filename
                 output_files_info[category] = str(output_path)
 
-            return FlextResult[dict[str, object]].ok({
-                "total_entries": total_entries,
-                "categorized": categorized_counts,
-                "rejection_rate": rejection_rate,
-                "rejection_count": rejection_count,
-                "rejection_reasons": rejection_reasons,
-                "written_counts": written_counts,
-                "output_files": output_files_info,
-            })
+            return FlextResult[FlextLdifModels.StatisticsResult].ok(
+                FlextLdifModels.StatisticsResult(
+                    total_entries=total_entries,
+                    categorized=categorized_counts,
+                    rejection_rate=rejection_rate,
+                    rejection_count=rejection_count,
+                    rejection_reasons=rejection_reasons,
+                    written_counts=written_counts,
+                    output_files=output_files_info,
+                )
+            )
         except (ValueError, TypeError, AttributeError) as e:
-            return FlextResult[dict[str, object]].fail(
+            return FlextResult[FlextLdifModels.StatisticsResult].fail(
                 f"Failed to generate statistics: {e}",
             )
 
     def calculate_for_entries(
         self,
         entries: Sequence[FlextLdifModels.Entry],
-    ) -> FlextResult[dict[str, Any]]:
-        """Calculate general-purpose statistics for a list of Entry models."""
+    ) -> FlextResult[FlextLdifModels.EntriesStatistics]:
+        """Calculate general-purpose statistics for a list of Entry models.
+
+        Args:
+            entries: Sequence of Entry models to analyze
+
+        Returns:
+            FlextResult containing EntriesStatistics model with distributions
+
+        """
         try:
             total_entries = len(entries)
             object_class_distribution: dict[str, int] = {}
@@ -233,13 +246,17 @@ class FlextLdifStatistics(FlextService[dict[str, object]]):
                         server_type_distribution.get(st, 0) + 1
                     )
 
-            return FlextResult.ok({
-                "total_entries": total_entries,
-                "object_class_distribution": object_class_distribution,
-                "server_type_distribution": server_type_distribution,
-            })
+            return FlextResult[FlextLdifModels.EntriesStatistics].ok(
+                FlextLdifModels.EntriesStatistics(
+                    total_entries=total_entries,
+                    object_class_distribution=object_class_distribution,
+                    server_type_distribution=server_type_distribution,
+                )
+            )
         except Exception as e:
-            return FlextResult.fail(f"Failed to calculate statistics for entries: {e}")
+            return FlextResult[FlextLdifModels.EntriesStatistics].fail(
+                f"Failed to calculate statistics for entries: {e}"
+            )
 
 
 __all__ = ["FlextLdifStatistics"]

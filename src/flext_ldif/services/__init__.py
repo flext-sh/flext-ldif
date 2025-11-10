@@ -28,6 +28,8 @@ from flext_ldif.services.server import FlextLdifServer
 from flext_ldif.services.sorting import FlextLdifSorting
 from flext_ldif.services.statistics import FlextLdifStatistics
 from flext_ldif.services.syntax import FlextLdifSyntax
+
+# Import after other services to avoid circular dependency with models
 from flext_ldif.services.validation import FlextLdifValidation
 from flext_ldif.services.writer import FlextLdifWriter
 

@@ -82,8 +82,12 @@ class FlextLdifCategorization(FlextService[dict[str, list[FlextLdifModels.Entry]
 
     def __init__(
         self,
-        categorization_rules: dict[str, list[str]] | None = None,
-        schema_whitelist_rules: dict[str, list[str]] | None = None,
+        categorization_rules: FlextLdifModels.CategoryRules
+        | dict[str, list[str]]
+        | None = None,
+        schema_whitelist_rules: FlextLdifModels.WhitelistRules
+        | dict[str, list[str]]
+        | None = None,
         forbidden_attributes: list[str] | None = None,
         forbidden_objectclasses: list[str] | None = None,
         base_dn: str | None = None,
@@ -91,16 +95,32 @@ class FlextLdifCategorization(FlextService[dict[str, list[FlextLdifModels.Entry]
         """Initialize categorization service.
 
         Args:
-            categorization_rules: Rules for categorizing entries
-            schema_whitelist_rules: OID whitelist for schema filtering
+            categorization_rules: Rules for categorizing entries (CategoryRules model or dict)
+            schema_whitelist_rules: Whitelist rules (WhitelistRules model or dict)
             forbidden_attributes: Attributes to remove from all entries
             forbidden_objectclasses: ObjectClasses to remove
             base_dn: Base DN for filtering (optional, used by filter_by_base_dn)
 
         """
         super().__init__()
-        self._categorization_rules = categorization_rules or {}
-        self._schema_whitelist_rules = schema_whitelist_rules or {}
+        # Convert dict to model if needed (backward compatibility)
+        if isinstance(categorization_rules, dict):
+            self._categorization_rules = FlextLdifModels.CategoryRules(
+                **categorization_rules
+            )
+        elif categorization_rules is None:
+            self._categorization_rules = FlextLdifModels.CategoryRules()
+        else:
+            self._categorization_rules = categorization_rules
+
+        if isinstance(schema_whitelist_rules, dict):
+            self._schema_whitelist_rules = FlextLdifModels.WhitelistRules(
+                **schema_whitelist_rules
+            )
+        elif schema_whitelist_rules is None:
+            self._schema_whitelist_rules = FlextLdifModels.WhitelistRules()
+        else:
+            self._schema_whitelist_rules = schema_whitelist_rules
         self._forbidden_attributes = forbidden_attributes or []
         self._forbidden_objectclasses = forbidden_objectclasses or []
         self._base_dn = base_dn
@@ -326,9 +346,10 @@ class FlextLdifCategorization(FlextService[dict[str, list[FlextLdifModels.Entry]
         if not self._schema_whitelist_rules:
             return FlextResult[list[FlextLdifModels.Entry]].ok(schema_entries)
 
+        # Convert WhitelistRules model to dict for filter_schema_by_oids
         result = FlextLdifFilters.filter_schema_by_oids(
             entries=schema_entries,
-            allowed_oids=self._schema_whitelist_rules,
+            allowed_oids=self._schema_whitelist_rules.model_dump(),
         )
 
         if result.is_success:
