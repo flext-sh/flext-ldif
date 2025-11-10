@@ -677,8 +677,33 @@ class FlextLdifWriter(FlextService[FlextLdifModels.WriteResponse]):
                 return FlextResult.ok(final_content)
             case ("file", None | ""):
                 return FlextResult.fail("output_path is required for file target")
+            case ("file", Path() as path):
+                # Path object - use directly (no conversion needed)
+                write_result = FlextLdifUtilities.Writer.write_file(
+                    final_content,
+                    path,
+                    encoding=FlextLdifConstants.Encoding.UTF8,
+                )
+                if write_result.is_failure:
+                    return FlextResult.fail(
+                        f"Failed to write file: {write_result.error}"
+                    )
+
+                file_stats = write_result.unwrap()
+                bytes_written = file_stats.get("bytes_written", 0)
+                file_size = (
+                    int(bytes_written) if isinstance(bytes_written, (int, str)) else 0
+                )
+
+                return FlextResult.ok(
+                    FlextLdifModels.WriteResponse(
+                        entries_written=original_count,
+                        file_path=str(path),
+                        file_size=file_size,
+                    )
+                )
             case ("file", str() as path):
-                # Convert path string to Path object for write_file
+                # String path - convert to Path object for write_file
                 write_result = FlextLdifUtilities.Writer.write_file(
                     final_content,
                     Path(path),

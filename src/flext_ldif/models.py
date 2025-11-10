@@ -1574,6 +1574,17 @@ class FlextLdifModels(FlextModels):
             """Check if attribute exists."""
             return key in self.attributes
 
+        def __iter__(self) -> Generator[str]:
+            """Iterate over attribute names.
+
+            Allows: for name in entry.attributes: ...
+
+            Returns:
+                Generator of attribute names
+
+            """
+            yield from self.attributes.keys()
+
         def get(self, key: str, default: list[str] | None = None) -> list[str]:
             """Get attribute values with optional default.
 
@@ -1637,18 +1648,6 @@ class FlextLdifModels(FlextModels):
         def values(self) -> list[list[str]]:
             """Get attribute values lists."""
             return list(self.attributes.values())
-
-        def __iter__(self) -> Generator[tuple[str, Any]]:
-            """Iterate over attribute items (name, values).
-
-            Conforms to Pydantic BaseModel __iter__ contract.
-            Allows: for name, values in attributes_obj: ...
-
-            Returns:
-                Generator of (attribute_name, attribute_values) tuples
-
-            """
-            yield from self.attributes.items()
 
         def add_attribute(self, key: str, values: str | list[str]) -> None:
             """Add or update an attribute with values.
@@ -4700,10 +4699,7 @@ class FlextLdifModels(FlextModels):
             description="List of supported validation types",
         )
 
-    ParseResult = (
-        list["FlextLdifModels.Entry"]
-        | tuple[list["FlextLdifModels.Entry"], int, list[str]]
-    )
+    type ParseResult = list[Entry] | tuple[list[Entry], int, list[str]]
 
     class ValidationBatchResult(FlextModels.Value):
         """Result of batch validation operations.

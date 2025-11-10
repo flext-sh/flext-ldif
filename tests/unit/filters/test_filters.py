@@ -581,9 +581,10 @@ class TestCategorizeEntryTypeGuards:
             {"objectClass": ["person"]},
         )
 
+        rules = FlextLdifModels.CategoryRules(hierarchy_objectclasses=[])
         category, _reason = FlextLdifFilters.categorize_entry(
             entry,
-            {"hierarchy_objectclasses": []},
+            rules,
         )
 
         # Should handle minimal DN gracefully
@@ -597,9 +598,10 @@ class TestCategorizeEntryTypeGuards:
             {"objectClass": ["person"]},
         )
 
+        rules = FlextLdifModels.CategoryRules(hierarchy_objectclasses=[])
         category, _reason = FlextLdifFilters.categorize_entry(
             entry,
-            {"hierarchy_objectclasses": []},
+            rules,
         )
 
         # Should handle numeric value in DN gracefully
@@ -613,9 +615,10 @@ class TestCategorizeEntryTypeGuards:
             {"objectClass": ["person"]},  # Always a list in Entry model
         )
 
+        rules = FlextLdifModels.CategoryRules(hierarchy_objectclasses=[])
         category, _reason = FlextLdifFilters.categorize_entry(
             entry,
-            {"hierarchy_objectclasses": []},
+            rules,
         )
 
         # Entry model enforces list format, so objectClass will be valid
@@ -628,7 +631,8 @@ class TestCategorizeEntryTypeGuards:
             {"objectClass": ["person"]},
         )
 
-        rules = {"hierarchy_objectclasses": "person"}  # String instead of list
+        # Test with valid model - Pydantic validates types
+        rules = FlextLdifModels.CategoryRules(hierarchy_objectclasses=["person"])
 
         category, _reason = FlextLdifFilters.categorize_entry(entry, rules)
 
@@ -643,9 +647,10 @@ class TestCategorizeEntryTypeGuards:
             {"objectClass": ["person"]},  # Valid dict format
         )
 
+        rules = FlextLdifModels.CategoryRules(hierarchy_objectclasses=[])
         category, _reason = FlextLdifFilters.categorize_entry(
             entry,
-            {"hierarchy_objectclasses": []},
+            rules,
         )
 
         # Should handle properly with valid attributes
@@ -662,11 +667,13 @@ class TestCategorizeEntryBlockedObjectClasses:
             {"objectClass": ["person", "blockedClass"]},
         )
 
-        rules = {
-            "hierarchy_objectclasses": [],
-            "user_objectclasses": ["person"],
-        }
-        whitelist_rules = {"blocked_objectclasses": ["blockedClass"]}
+        rules = FlextLdifModels.CategoryRules(
+            hierarchy_objectclasses=[],
+            user_objectclasses=["person"],
+        )
+        whitelist_rules = FlextLdifModels.WhitelistRules(
+            blocked_objectclasses=["blockedClass"]
+        )
 
         category, reason = FlextLdifFilters.categorize_entry(
             entry,
@@ -713,10 +720,10 @@ class TestCategorizeEntryComplex:
             {"objectClass": ["orclContainer"], "orclACI": ["some acl"]},
         )
 
-        rules = {
-            "hierarchy_objectclasses": ["orclContainer"],
-            "acl_attributes": ["orclACI"],
-        }
+        rules = FlextLdifModels.CategoryRules(
+            hierarchy_objectclasses=["orclContainer"],
+            acl_attributes=["orclACI"],
+        )
 
         category, _reason = FlextLdifFilters.categorize_entry(entry, rules)
 
@@ -730,10 +737,10 @@ class TestCategorizeEntryComplex:
             {"objectClass": ["person"]},
         )
 
-        rules = {
-            "user_objectclasses": ["person"],
-            "user_dn_patterns": [".*,ou=users,.*"],
-        }
+        rules = FlextLdifModels.CategoryRules(
+            user_objectclasses=["person"],
+            user_dn_patterns=[".*,ou=users,.*"],
+        )
 
         category, _reason = FlextLdifFilters.categorize_entry(entry, rules)
 
@@ -746,10 +753,10 @@ class TestCategorizeEntryComplex:
             {"objectClass": ["person"]},
         )
 
-        rules = {
-            "user_objectclasses": ["person"],
-            "user_dn_patterns": [".*,ou=users,.*"],
-        }
+        rules = FlextLdifModels.CategoryRules(
+            user_objectclasses=["person"],
+            user_dn_patterns=[".*,ou=users,.*"],
+        )
 
         category, reason = FlextLdifFilters.categorize_entry(entry, rules)
 

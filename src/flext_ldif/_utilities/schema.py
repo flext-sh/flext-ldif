@@ -301,6 +301,51 @@ class FlextLdifUtilitiesSchema:
         return objectclasses
 
     @staticmethod
+    def build_available_attributes_set(
+        attributes: list[FlextLdifModels.SchemaAttribute],
+    ) -> set[str]:
+        """Build set of available attribute names (lowercase) for dependency validation.
+
+        Used during schema extraction to build a set of all available attribute names
+        that can be referenced by objectClass definitions (in MUST/MAY lists).
+
+        This is commonly used by OUD, OID, and other servers that need to validate
+        objectClass dependencies during schema extraction.
+
+        Args:
+            attributes: List of parsed SchemaAttribute models
+
+        Returns:
+            Set of lowercase attribute names
+
+        Example:
+            >>> attrs = [SchemaAttribute(name="cn"), SchemaAttribute(name="sn")]
+            >>> available = FlextLdifUtilitiesSchema.build_available_attributes_set(
+            ...     attrs
+            ... )
+            >>> "cn" in available
+            True
+            >>> "uid" in available
+            False
+
+        """
+        available: set[str] = set()
+
+        for attr_data in attributes:
+            # Validate it's a SchemaAttribute with a name
+            if not isinstance(attr_data, FlextLdifModels.SchemaAttribute):
+                continue
+
+            if not hasattr(attr_data, "name") or attr_data.name is None:
+                continue
+
+            # Add lowercase name to set
+            attr_name = str(attr_data.name).lower()
+            available.add(attr_name)
+
+        return available
+
+    @staticmethod
     def build_metadata(
         definition: str,
         additional_extensions: dict[str, object] | None = None,

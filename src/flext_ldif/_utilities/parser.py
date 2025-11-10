@@ -111,6 +111,48 @@ class FlextLdifUtilitiesParser:
         return re.search(pattern, definition) is not None
 
     @staticmethod
+    def split_and_clean(
+        value: str,
+        sep: str = ",",
+        *,
+        strip: bool = True,
+        remove_empty: bool = True,
+    ) -> list[str]:
+        """Split string and clean parts.
+
+        Generic utility to split a string by separator and clean the resulting parts.
+        Commonly used for parsing comma-separated values in LDIF/schema definitions.
+
+        Args:
+            value: String to split and clean
+            sep: Separator character (default: ",")
+            strip: Whether to strip whitespace from parts (default: True)
+            remove_empty: Whether to remove empty strings from result (default: True)
+
+        Returns:
+            List of cleaned string parts
+
+        Example:
+            >>> FlextLdifUtilitiesParser.split_and_clean("cn, sn, uid")
+            ['cn', 'sn', 'uid']
+            >>> FlextLdifUtilitiesParser.split_and_clean("a,  , b,c", remove_empty=True)
+            ['a', 'b', 'c']
+
+        """
+        if not value or not isinstance(value, str):
+            return []
+
+        parts = value.split(sep)
+
+        if strip:
+            parts = [p.strip() for p in parts]
+
+        if remove_empty:
+            parts = [p for p in parts if p]
+
+        return parts
+
+    @staticmethod
     def extract_extensions(definition: str) -> dict[str, Any]:
         """Extract extension information from schema definition string.
 
