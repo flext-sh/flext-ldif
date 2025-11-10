@@ -180,6 +180,147 @@ class FlextLdifUtilitiesOID:
                 f"Failed to validate OID format: {e}",
             )
 
+    @staticmethod
+    def is_oracle_oid(definition_or_oid: str) -> bool:
+        """Check if definition/OID matches Oracle Internet Directory pattern.
+
+        Convenience method that checks for Oracle OID pattern (2.16.840.1.113894.*).
+        Works with both raw definitions and extracted OIDs.
+
+        Args:
+            definition_or_oid: Either raw schema definition or extracted OID string
+
+        Returns:
+            True if matches Oracle pattern, False otherwise
+
+        Example:
+            >>> FlextLdifUtilitiesOID.is_oracle_oid("( 2.16.840.1.113894.1.1.1 ...)")
+            True
+            >>> FlextLdifUtilitiesOID.is_oracle_oid("2.16.840.1.113894.1.1.1")
+            True
+
+        """
+        if not definition_or_oid:
+            return False
+
+        # Try as raw definition first
+        if definition_or_oid.startswith("("):
+            return FlextLdifUtilitiesOID.matches_pattern(
+                definition_or_oid,
+                FlextLdifUtilitiesOID.ORACLE_OID_PATTERN,
+            )
+
+        # Try as extracted OID
+        return bool(FlextLdifUtilitiesOID.ORACLE_OID_PATTERN.match(definition_or_oid))
+
+    @staticmethod
+    def is_microsoft_ad_oid(definition_or_oid: str) -> bool:
+        """Check if definition/OID matches Microsoft Active Directory pattern.
+
+        Convenience method that checks for AD OID pattern (1.2.840.113556.*).
+        Works with both raw definitions and extracted OIDs.
+
+        Args:
+            definition_or_oid: Either raw schema definition or extracted OID string
+
+        Returns:
+            True if matches AD pattern, False otherwise
+
+        """
+        if not definition_or_oid:
+            return False
+
+        if definition_or_oid.startswith("("):
+            return FlextLdifUtilitiesOID.matches_pattern(
+                definition_or_oid,
+                FlextLdifUtilitiesOID.MICROSOFT_AD_PATTERN,
+            )
+
+        return bool(FlextLdifUtilitiesOID.MICROSOFT_AD_PATTERN.match(definition_or_oid))
+
+    @staticmethod
+    def is_openldap_oid(definition_or_oid: str) -> bool:
+        """Check if definition/OID matches OpenLDAP pattern.
+
+        Convenience method that checks for OpenLDAP OID pattern (1.3.6.1.4.1.4203.*).
+        Works with both raw definitions and extracted OIDs.
+
+        Args:
+            definition_or_oid: Either raw schema definition or extracted OID string
+
+        Returns:
+            True if matches OpenLDAP pattern, False otherwise
+
+        """
+        if not definition_or_oid:
+            return False
+
+        if definition_or_oid.startswith("("):
+            return FlextLdifUtilitiesOID.matches_pattern(
+                definition_or_oid,
+                FlextLdifUtilitiesOID.OPENLDAP_PATTERN,
+            )
+
+        return bool(FlextLdifUtilitiesOID.OPENLDAP_PATTERN.match(definition_or_oid))
+
+    @staticmethod
+    def get_server_type_from_oid(definition_or_oid: str) -> str | None:
+        """Detect server type from OID pattern.
+
+        Analyzes OID and returns the likely server type based on OID prefix.
+        Useful for auto-detection logic.
+
+        Args:
+            definition_or_oid: Either raw schema definition or extracted OID string
+
+        Returns:
+            Server type string ("oid", "ad", "openldap", etc.) or None if unknown
+
+        Example:
+            >>> FlextLdifUtilitiesOID.get_server_type_from_oid(
+            ...     "2.16.840.1.113894.1.1.1"
+            ... )
+            'oid'
+            >>> FlextLdifUtilitiesOID.get_server_type_from_oid("1.2.840.113556.1.2.1")
+            'ad'
+
+        """
+        if FlextLdifUtilitiesOID.is_oracle_oid(definition_or_oid):
+            return "oid"
+        if FlextLdifUtilitiesOID.is_microsoft_ad_oid(definition_or_oid):
+            return "ad"
+        if FlextLdifUtilitiesOID.is_openldap_oid(definition_or_oid):
+            return "openldap"
+
+        # Check other patterns
+        if not definition_or_oid:
+            return None
+
+        oid = definition_or_oid
+        if definition_or_oid.startswith("("):
+            extracted = FlextLdifUtilitiesOID.extract_from_definition(definition_or_oid)
+            if not extracted:
+                return None
+            oid = extracted
+
+        if FlextLdifUtilitiesOID.REDHAT_389DS_PATTERN.match(oid):
+            return "ds389"
+        if FlextLdifUtilitiesOID.NOVELL_PATTERN.match(oid):
+            return "novell"
+        if FlextLdifUtilitiesOID.IBM_TIVOLI_PATTERN.match(oid):
+            return "tivoli"
+
+        return None
+
+    # Pre-compiled OID patterns for common LDAP servers
+    # These eliminate the need for repeated re.compile() calls in server code
+    ORACLE_OID_PATTERN: re.Pattern[str] = re.compile(r"2\.16\.840\.1\.113894\..*")
+    MICROSOFT_AD_PATTERN: re.Pattern[str] = re.compile(r"1\.2\.840\.113556\..*")
+    OPENLDAP_PATTERN: re.Pattern[str] = re.compile(r"1\.3\.6\.1\.4\.1\.4203\..*")
+    REDHAT_389DS_PATTERN: re.Pattern[str] = re.compile(r"2\.16\.840\.1\.113730\..*")
+    NOVELL_PATTERN: re.Pattern[str] = re.compile(r"2\.16\.840\.1\.113719\..*")
+    IBM_TIVOLI_PATTERN: re.Pattern[str] = re.compile(r"1\.3\.18\.0\.2\..*")
+
 
 __all__ = [
     "FlextLdifUtilitiesOID",

@@ -39,6 +39,7 @@ from pydantic import ConfigDict
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.typings import FlextLdifTypes
+from flext_ldif.utilities import FlextLdifUtilities
 
 logger = FlextLogger(__name__)
 
@@ -1694,6 +1695,130 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
             """
             _ = oc_data  # Explicitly mark as intentionally unused in base
             return FlextResult.fail("Must be implemented by subclass")
+
+        def _hook_validate_attributes(
+            self,
+            attributes: list[FlextLdifModels.SchemaAttribute],
+            available_attrs: set[str],
+        ) -> FlextResult[None]:
+            """Hook for server-specific attribute validation during schema extraction.
+
+            Subclasses can override this to perform validation of attribute dependencies
+            before objectClass extraction. This is called only when validate_dependencies=True.
+
+            Default implementation: No validation (pass-through).
+
+            Args:
+                attributes: List of parsed SchemaAttribute models
+                available_attrs: Set of lowercase attribute names available
+
+            Returns:
+                FlextResult[None] - Success or failure with validation error
+
+            Example Override (in OUD):
+                def _hook_validate_attributes(self, attributes, available_attrs):
+                    # OUD-specific validation logic
+                    for attr in attributes:
+                        if attr.requires_dependency not in available_attrs:
+                            return FlextResult.fail("Missing dependency")
+                    return FlextResult.ok(None)
+
+            """
+            # Default: No validation needed
+            _ = attributes
+            _ = available_attrs
+            return FlextResult[None].ok(None)
+
+        def extract_schemas_from_ldif(
+            self,
+            ldif_content: str,
+            *,
+            validate_dependencies: bool = False,
+        ) -> FlextResult[FlextLdifTypes.Models.EntryAttributesDict]:
+            """Extract and parse all schema definitions from LDIF content (template method).
+
+            Generic template method that consolidates schema extraction logic across all servers.
+            Uses FlextLdifUtilities for parsing and provides hook for server-specific validation.
+
+            This template method replaces duplicated extract_schemas_from_ldif implementations
+            in OID (37 lines), OUD (66 lines), and OpenLDAP servers.
+
+            Process:
+                1. Extract attributes using FlextLdifUtilities.Schema
+                2. If validate_dependencies: build available_attrs set and call validation hook
+                3. Extract objectClasses using FlextLdifUtilities.Schema
+                4. Return combined result
+
+            Args:
+                ldif_content: Raw LDIF content containing schema definitions
+                validate_dependencies: If True, validate attribute dependencies before
+                                     objectClass extraction (used by OUD for dep checking)
+
+            Returns:
+                FlextResult with dict containing:
+                    - ATTRIBUTES: list[SchemaAttribute]
+                    - OBJECTCLASS: list[SchemaObjectClass]
+
+            Example Usage (OID - simple):
+                result = self.extract_schemas_from_ldif(ldif_content)
+
+            Example Usage (OUD - with validation):
+                result = self.extract_schemas_from_ldif(
+                    ldif_content,
+                    validate_dependencies=True
+                )
+
+            """
+            try:
+                # PHASE 1: Extract all attributeTypes using FlextLdifUtilities
+                attributes_parsed = (
+                    FlextLdifUtilities.Schema.extract_attributes_from_lines(
+                        ldif_content,
+                        self.parse_attribute,
+                    )
+                )
+
+                # PHASE 2: Build available attributes set (if validation requested)
+                if validate_dependencies:
+                    available_attrs = (
+                        FlextLdifUtilities.Schema.build_available_attributes_set(
+                            attributes_parsed,
+                        )
+                    )
+
+                    # Call server-specific validation hook
+                    validation_result = self._hook_validate_attributes(
+                        attributes_parsed,
+                        available_attrs,
+                    )
+                    if not validation_result.is_success:
+                        return FlextResult[
+                            FlextLdifTypes.Models.EntryAttributesDict
+                        ].fail(
+                            f"Attribute validation failed: {validation_result.error}",
+                        )
+
+                # PHASE 3: Extract objectClasses using FlextLdifUtilities
+                objectclasses_parsed = (
+                    FlextLdifUtilities.Schema.extract_objectclasses_from_lines(
+                        ldif_content,
+                        self.parse_objectclass,
+                    )
+                )
+
+                # Return combined result
+                dk = FlextLdifConstants.DictKeys
+                return FlextResult[FlextLdifTypes.Models.EntryAttributesDict].ok(
+                    {
+                        dk.ATTRIBUTES: attributes_parsed,
+                        dk.OBJECTCLASS: objectclasses_parsed,
+                    },
+                )
+
+            except Exception as e:
+                return FlextResult[FlextLdifTypes.Models.EntryAttributesDict].fail(
+                    f"Schema extraction failed: {e}",
+                )
 
         # REMOVED: should_filter_out_attribute - Roteamento interno, não deve ser abstrato
 

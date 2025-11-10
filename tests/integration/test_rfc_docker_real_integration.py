@@ -317,5 +317,5 @@ class TestRfcExceptionHandlingRealScenarios:
 
         # Empty file should parse successfully with 0 entries
         assert result.is_success
-        entries = result.unwrap()
-        assert len(entries) == 0
+        parse_response = result.unwrap()
+        assert len(parse_response.entries) == 0
