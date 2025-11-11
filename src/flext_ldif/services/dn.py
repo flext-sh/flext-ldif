@@ -254,9 +254,8 @@ class FlextLdifDn(FlextService[str]):
                     if parse_result.is_success:
                         parse_components = parse_result.unwrap()
 
-                # Create and log event
-                event = FlextLdifUtilities.Events.log_and_emit_dn_event(
-                    logger=self.logger,
+                # Create DN event config
+                dn_config = FlextLdifModels.DnEventConfig(
                     dn_operation=self.operation,
                     input_dn=self.dn,
                     output_dn=result.unwrap() if result.is_success else None,
@@ -265,6 +264,10 @@ class FlextLdifDn(FlextService[str]):
                     if self.operation == "validate"
                     else None,
                     parse_components=parse_components,
+                )
+                event = FlextLdifUtilities.Events.log_and_emit_dn_event(
+                    logger=self.logger,
+                    config=dn_config,
                     log_level="info" if result.is_success else "error",
                 )
 

@@ -352,8 +352,8 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifModels.EntryResult]):
             )
             for reason, entries in self._categorization.rejection_tracker.items()
         ]
-        event = FlextLdifUtilities.Events.log_and_emit_migration_event(
-            logger=logger,
+        # Create migration event config
+        migration_config = FlextLdifModels.MigrationEventConfig(
             migration_operation=f"pipeline_{self._mode}",
             source_server=self._source_server,
             target_server=self._target_server,
@@ -362,6 +362,10 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifModels.EntryResult]):
             entries_failed=total_rejected,
             migration_duration_ms=duration_ms,
             error_details=error_details,
+        )
+        event = FlextLdifUtilities.Events.log_and_emit_migration_event(
+            logger=logger,
+            config=migration_config,
         )
 
         # Create statistics model

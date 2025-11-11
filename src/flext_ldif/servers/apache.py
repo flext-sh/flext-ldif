@@ -423,10 +423,10 @@ class FlextLdifServersApache(FlextLdifServersRfc):
                 acl_model = FlextLdifModels.Acl(
                     name=f"{FlextLdifServersApache.Constants.ACL_NAME_PREFIX}{attr_name}",
                     target=FlextLdifModels.AclTarget(
-                        target_dn=(
-                            FlextLdifConstants.Acl.ACL_TARGET_DN_WILDCARD
-                            if hasattr(FlextLdifConstants.Acl, "ACL_TARGET_DN_WILDCARD")
-                            else "*"
+                        target_dn=getattr(
+                            FlextLdifConstants.Acl,
+                            "ACL_TARGET_DN_WILDCARD",
+                            "*",
                         ),
                         attributes=[attr_name] if attr_name else [],
                     ),

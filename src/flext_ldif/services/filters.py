@@ -180,7 +180,7 @@ from flext_ldif.models import FlextLdifModels
 from flext_ldif.utilities import FlextLdifUtilities
 
 
-class FlextLdifFilters(FlextService[list[FlextLdifModels.Entry]]):
+class FlextLdifFilters(FlextService[FlextLdifModels.EntryResult]):
     """Universal LDIF Entry Filtering and Categorization Service.
 
     ╔══════════════════════════════════════════════════════════════════════════╗
@@ -1173,10 +1173,12 @@ class FlextLdifFilters(FlextService[list[FlextLdifModels.Entry]]):
         )
         return FlextResult[list[FlextLdifModels.Entry]].ok(included)
 
-    def execute(self) -> FlextResult[list[FlextLdifModels.Entry]]:
+    def execute(self) -> FlextResult[FlextLdifModels.EntryResult]:
         """Execute filtering based on filter_criteria and mode."""
         if not self.entries:
-            return FlextResult[list[FlextLdifModels.Entry]].ok([])
+            return FlextResult[FlextLdifModels.EntryResult].ok(
+                FlextLdifModels.EntryResult.empty()
+            )
 
         # Track filtering metrics (MANDATORY - eventos obrigatórios)
         start_time = time.perf_counter()
@@ -1193,7 +1195,7 @@ class FlextLdifFilters(FlextService[list[FlextLdifModels.Entry]]):
                 case "base_dn":
                     result = self._execute_base_dn_filter()
                 case _:
-                    return FlextResult[list[FlextLdifModels.Entry]].fail(
+                    return FlextResult[FlextLdifModels.EntryResult].fail(
                         f"Unknown filter_criteria: {self.filter_criteria}",
                     )
 
@@ -1226,15 +1228,19 @@ class FlextLdifFilters(FlextService[list[FlextLdifModels.Entry]]):
                     filter_duration_ms=filter_duration_ms,
                 )
                 # Store event for retrieval via get_last_event()
-                # Note: Current architecture returns FlextResult[list[Entry]] without statistics
-                # Event is stored in instance for backward compatibility
-                # Future: Migrate to return EntryResult with embedded events
                 self._last_event = filter_event
 
-            return result
+                # Wrap filtered entries in EntryResult for API consistency
+                entry_result = FlextLdifModels.EntryResult.from_entries(
+                    filtered_entries
+                )
+                return FlextResult[FlextLdifModels.EntryResult].ok(entry_result)
+
+            # If result is failure, propagate the error
+            return FlextResult[FlextLdifModels.EntryResult].fail(result.error)
 
         except Exception as e:
-            return FlextResult[list[FlextLdifModels.Entry]].fail(f"Filter failed: {e}")
+            return FlextResult[FlextLdifModels.EntryResult].fail(f"Filter failed: {e}")
 
     def get_last_event(self) -> FlextLdifModels.FilterEvent | None:
         """Retrieve last emitted FilterEvent.
@@ -1267,7 +1273,7 @@ class FlextLdifFilters(FlextService[list[FlextLdifModels.Entry]]):
         mode: str = FlextLdifConstants.Modes.INCLUDE,
         match_all: bool = False,
         mark_excluded: bool = False,
-    ) -> FlextResult[list[FlextLdifModels.Entry]]:
+    ) -> FlextResult[FlextLdifModels.EntryResult]:
         """Quick filter with FlextResult for composable/chainable operations."""
         return cls(
             entries=entries,
@@ -1336,7 +1342,7 @@ class FlextLdifFilters(FlextService[list[FlextLdifModels.Entry]]):
         self.mode = FlextLdifConstants.Modes.EXCLUDE
         return self
 
-    def build(self) -> list[FlextLdifModels.Entry]:
+    def build(self) -> FlextLdifModels.EntryResult:
         """Execute and return unwrapped result (fluent terminal)."""
         return self.execute().unwrap()
 
@@ -1678,8 +1684,6 @@ class FlextLdifFilters(FlextService[list[FlextLdifModels.Entry]]):
             if cls._has_remaining_definitions(attrs_copy):
                 # Create new entry with filtered attributes
                 # Cast attrs_copy to match Entry.create signature
-                from typing import cast  # noqa: PLC0415 - Avoid circular import
-
                 attributes_typed = cast("dict[str, list[str] | str]", attrs_copy)
                 filtered_entry_result = FlextLdifModels.Entry.create(
                     dn=entry.dn.value,
@@ -1692,22 +1696,6 @@ class FlextLdifFilters(FlextService[list[FlextLdifModels.Entry]]):
                     filtered.append(filtered_entry_result.unwrap())
 
         return FlextResult[list[FlextLdifModels.Entry]].ok(filtered)
-
-    @staticmethod
-    def _extract_oid_from_definition(definition: str) -> str:
-        """Extract OID from schema definition (first OID in parentheses).
-
-        Args:
-            definition: Schema definition string
-
-        Returns:
-            OID string or full definition if OID not found
-
-        """
-        oid_match = re.search(r"\(\s*(\d+(?:\.\d+)*)", str(definition))
-        if oid_match:
-            return oid_match.group(1)
-        return definition
 
     @staticmethod
     def _filter_definitions(
@@ -1742,7 +1730,7 @@ class FlextLdifFilters(FlextService[list[FlextLdifModels.Entry]]):
         filtered = []
         for definition in definitions:
             # Extract OID from definition (first OID in parentheses)
-            oid = FlextLdifFilters._extract_oid_from_definition(definition)
+            oid = FlextLdifUtilities.OID.extract_from_definition(definition) or definition
 
             # Check if OID matches any allowed pattern
             for pattern in allowed_oids:
@@ -1751,7 +1739,10 @@ class FlextLdifFilters(FlextService[list[FlextLdifModels.Entry]]):
                     break  # Found a match, no need to check other patterns
 
         # Sort filtered results by OID
-        return sorted(filtered, key=FlextLdifFilters._extract_oid_from_definition)
+        return sorted(
+            filtered,
+            key=lambda d: FlextLdifUtilities.OID.extract_from_definition(d) or d
+        )
 
     # ════════════════════════════════════════════════════════════════════════
     # PRIVATE IMPLEMENTATION (DRY Core)

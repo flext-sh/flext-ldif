@@ -250,7 +250,7 @@ class FlextLdifTestUtils:
 
                 if orig_set != roundtrip_set:
                     differences.append(
-                        f"Entry {i}: Attribute '{attr_name}' value mismatch",
+                        f"Entry {i}: Attribute '{orig_attr_name}' value mismatch",
                     )
 
         is_identical = len(differences) == 0

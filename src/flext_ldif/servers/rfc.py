@@ -964,17 +964,82 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             hidden_list = extensions.get("hidden_attributes")
             return set(hidden_list) if isinstance(hidden_list, list) else set()
 
+        @staticmethod
+        def _needs_base64_encoding(value: str) -> bool:
+            """Check if value needs base64 encoding per RFC 2849.
+
+            RFC 2849 section 3 requires base64 encoding for values that:
+            - Start with space ' ', colon ':', or less-than '<'
+            - End with space ' '
+            - Contain null bytes or control characters (< 0x20, > 0x7E)
+
+            Args:
+                value: The attribute value to check
+
+            Returns:
+                True if value needs base64 encoding, False otherwise
+
+            """
+            if not value:
+                return False
+
+            # RFC 2849 unsafe start characters
+            unsafe_start_chars = {" ", ":", "<"}
+
+            # Check if starts with unsafe characters (space, colon, less-than)
+            if value[0] in unsafe_start_chars:
+                return True
+
+            # Check if ends with space
+            if value[-1] == " ":
+                return True
+
+            # RFC 2849 control character boundaries
+            min_printable = 0x20  # Space (first printable ASCII)
+            max_printable = 0x7E  # Tilde (last printable ASCII)
+
+            # Check for control characters or non-printable ASCII
+            for char in value:
+                byte_val = ord(char)
+                # Control chars (< 0x20) or non-ASCII (> 0x7E) require base64
+                if byte_val < min_printable or byte_val > max_printable:
+                    return True
+
+            return False
+
         def _write_entry_attribute_value(
             self,
             ldif_lines: list[str],
             attr_name: str,
             value: str,
+            write_options: FlextLdifModels.WriteFormatOptions | None = None,
         ) -> None:
-            """Write a single attribute value, handling base64 encoding."""
+            """Write a single attribute value, handling RFC 2849 base64 encoding.
+
+            Implements automatic base64 encoding detection per RFC 2849 section 3.
+            Values are base64-encoded if they contain unsafe characters AND
+            base64_encode_binary option is enabled (default: True).
+            """
+            # Handle pre-encoded base64 values (from parsing with __BASE64__ marker)
             if isinstance(value, str) and value.startswith("__BASE64__:"):
-                base64_value = value[11:]  # Remove "__BASE64__:"
+                base64_value = value[11:]  # Remove "__BASE64__:" marker
                 ldif_lines.append(f"{attr_name}:: {base64_value}")
+                return
+
+            # Check if base64 encoding is enabled (default: True if not specified)
+            base64_enabled = (
+                write_options.base64_encode_binary
+                if write_options and hasattr(write_options, "base64_encode_binary")
+                else True
+            )
+
+            # Only apply base64 encoding if enabled AND value needs it
+            if base64_enabled and self._needs_base64_encoding(value):
+                # Encode to base64
+                encoded_value = base64.b64encode(value.encode("utf-8")).decode("ascii")
+                ldif_lines.append(f"{attr_name}:: {encoded_value}")
             else:
+                # Safe value or encoding disabled - write as plain text
                 ldif_lines.append(f"{attr_name}: {value}")
 
         def _write_entry_process_attributes(
@@ -982,6 +1047,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             ldif_lines: list[str],
             entry_data: FlextLdifModels.Entry,
             hidden_attrs: set[str],
+            write_options: FlextLdifModels.WriteFormatOptions | None = None,
         ) -> None:
             """Process and write all entry attributes."""
             if not (entry_data.attributes and entry_data.attributes.attributes):
@@ -1003,6 +1069,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                             ldif_lines,
                             attr_name,
                             value,
+                            write_options,
                         )
                 elif attr_values:
                     # Single non-list value
@@ -1074,10 +1141,14 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             # DN line (required)
             if not (entry_data.dn and entry_data.dn.value):
                 return FlextResult[str].fail("Entry DN is required for LDIF output")
-            ldif_lines.extend([
-                f"dn: {entry_data.dn.value}",
-                "changetype: add",
-            ])
+            ldif_lines.append(f"dn: {entry_data.dn.value}")
+
+            # RFC 2849: Only include changetype if entry has it
+            # Content records (no changetype) vs Change records (with changetype)
+            if "changetype" in entry_data.attributes.attributes:
+                changetype_values = entry_data.attributes.attributes["changetype"]
+                if changetype_values:
+                    ldif_lines.append(f"changetype: {changetype_values[0]}")
 
             # Add metadata comments if requested
             if write_options:
@@ -1094,11 +1165,16 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 else set()
             )
 
+            # RFC 2849: changetype is not a regular attribute - hide it from attribute processing
+            # It was already written above if present
+            hidden_attrs.add("changetype")
+
             # Process attributes
             self._write_entry_process_attributes(
                 ldif_lines,
                 entry_data,
                 hidden_attrs,
+                write_options,
             )
 
             # Join with newlines and ensure proper LDIF formatting

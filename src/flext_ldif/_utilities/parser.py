@@ -530,6 +530,126 @@ class FlextLdifUtilitiesParser:
         return definitions
 
     @staticmethod
+    def _extract_regex_field(
+        definition: str,
+        pattern: str,
+        default: str | None = None,
+    ) -> str | None:
+        """Extract field from definition using regex pattern.
+
+        Generic helper to reduce duplication in schema parsing.
+
+        Args:
+            definition: Schema definition string
+            pattern: Regex pattern to match
+            default: Default value if not found
+
+        Returns:
+            Extracted value or default
+
+        """
+        match = re.search(pattern, definition)
+        return match.group(1) if match else default
+
+    @staticmethod
+    def _extract_syntax_and_length(
+        definition: str,
+        *,
+        allow_syntax_quotes: bool = False,
+    ) -> tuple[str | None, int | None]:
+        """Extract syntax OID and optional length from definition.
+
+        Args:
+            definition: Schema definition string
+            allow_syntax_quotes: Whether to allow quoted syntax values
+
+        Returns:
+            Tuple of (syntax_oid, length)
+
+        """
+        syntax_match = re.search(
+            FlextLdifConstants.LdifPatterns.SCHEMA_SYNTAX_LENGTH,
+            definition,
+        )
+        if not syntax_match:
+            return (None, None)
+
+        syntax = syntax_match.group(1)
+
+        # Handle quoted syntax values if lenient parsing is enabled
+        if allow_syntax_quotes and syntax and syntax.startswith('"'):
+            syntax = syntax.strip('"')
+
+        length = int(syntax_match.group(2)) if syntax_match.group(2) else None
+
+        return (syntax, length)
+
+    @staticmethod
+    def _validate_syntax_oid(syntax: str | None) -> str | None:
+        """Validate syntax OID format.
+
+        Args:
+            syntax: Syntax OID to validate
+
+        Returns:
+            Error message if validation fails, None otherwise
+
+        """
+        if syntax is None or not syntax.strip():
+            return None
+
+        validate_result = FlextLdifUtilitiesOID.validate_format(syntax)
+        if validate_result.is_failure:
+            return f"Syntax OID validation failed: {validate_result.error}"
+        if not validate_result.unwrap():
+            return f"Invalid syntax OID format: {syntax}"
+
+        return None
+
+    @staticmethod
+    def _build_attribute_metadata(
+        attr_definition: str,
+        syntax: str | None,
+        syntax_validation_error: str | None,
+    ) -> FlextLdifModels.QuirkMetadata | None:
+        """Build metadata for attribute including extensions.
+
+        Args:
+            attr_definition: Original attribute definition
+            syntax: Syntax OID
+            syntax_validation_error: Validation error if any
+
+        Returns:
+            QuirkMetadata or None
+
+        """
+        metadata_extensions = FlextLdifUtilitiesParser.extract_extensions(
+            attr_definition,
+        )
+
+        if syntax:
+            metadata_extensions[FlextLdifConstants.MetadataKeys.SYNTAX_OID_VALID] = (
+                syntax_validation_error is None
+            )
+            if syntax_validation_error:
+                metadata_extensions[
+                    FlextLdifConstants.MetadataKeys.SYNTAX_VALIDATION_ERROR
+                ] = syntax_validation_error
+
+        metadata_extensions[FlextLdifConstants.MetadataKeys.ORIGINAL_FORMAT] = (
+            attr_definition.strip()
+        )
+
+        return (
+            FlextLdifModels.QuirkMetadata(
+                quirk_type="rfc",
+                extensions=metadata_extensions,
+            )
+            if metadata_extensions
+            else None
+        )
+
+    @staticmethod
     def parse_rfc_attribute(
         attr_definition: str,
         *,
@@ -553,62 +673,49 @@ class FlextLdifUtilitiesParser:
                 return FlextResult.fail("RFC attribute parsing failed: missing an OID")
             oid = oid_match.group(1)
 
-            name_match = re.search(
+            # Extract all string fields using helper
+            name = FlextLdifUtilitiesParser._extract_regex_field(
+                attr_definition,
                 FlextLdifConstants.LdifPatterns.SCHEMA_NAME,
-                attr_definition,
+                default=oid,
             )
-            name = name_match.group(1) if name_match else oid
-
-            desc_match = re.search(
+            desc = FlextLdifUtilitiesParser._extract_regex_field(
+                attr_definition,
                 FlextLdifConstants.LdifPatterns.SCHEMA_DESC,
+            )
+            equality = FlextLdifUtilitiesParser._extract_regex_field(
                 attr_definition,
-            )
-            desc = desc_match.group(1) if desc_match else None
-
-            syntax_match = re.search(
-                FlextLdifConstants.LdifPatterns.SCHEMA_SYNTAX_LENGTH,
-                attr_definition,
-            )
-            syntax = syntax_match.group(1) if syntax_match else None
-
-            # Handle quoted syntax values if lenient parsing is enabled
-            if allow_syntax_quotes and syntax and syntax.startswith('"'):
-                syntax = syntax.strip('"')
-
-            length = (
-                int(syntax_match.group(2))
-                if syntax_match and syntax_match.group(2)
-                else None
-            )
-
-            syntax_validation_error: str | None = None
-            if syntax is not None and syntax.strip():
-                validate_result = FlextLdifUtilitiesOID.validate_format(syntax)
-                if validate_result.is_failure:
-                    syntax_validation_error = (
-                        f"Syntax OID validation failed: {validate_result.error}"
-                    )
-                elif not validate_result.unwrap():
-                    syntax_validation_error = f"Invalid syntax OID format: {syntax}"
-
-            equality_match = re.search(
                 FlextLdifConstants.LdifPatterns.SCHEMA_EQUALITY,
-                attr_definition,
             )
-            equality = equality_match.group(1) if equality_match else None
-
-            substr_match = re.search(
+            substr = FlextLdifUtilitiesParser._extract_regex_field(
+                attr_definition,
                 FlextLdifConstants.LdifPatterns.SCHEMA_SUBSTR,
-                attr_definition,
             )
-            substr = substr_match.group(1) if substr_match else None
-
-            ordering_match = re.search(
+            ordering = FlextLdifUtilitiesParser._extract_regex_field(
+                attr_definition,
                 FlextLdifConstants.LdifPatterns.SCHEMA_ORDERING,
-                attr_definition,
             )
-            ordering = ordering_match.group(1) if ordering_match else None
+            sup = FlextLdifUtilitiesParser._extract_regex_field(
+                attr_definition,
+                FlextLdifConstants.LdifPatterns.SCHEMA_SUP,
+            )
+            usage = FlextLdifUtilitiesParser._extract_regex_field(
+                attr_definition,
+                FlextLdifConstants.LdifPatterns.SCHEMA_USAGE,
+            )
 
+            # Extract syntax and length using helper
+            syntax, length = FlextLdifUtilitiesParser._extract_syntax_and_length(
+                attr_definition,
+                allow_syntax_quotes=allow_syntax_quotes,
+            )
+
+            # Validate syntax using helper
+            syntax_validation_error = FlextLdifUtilitiesParser._validate_syntax_oid(
+                syntax
+            )
+
+            # Extract boolean flags
             single_value = (
                 re.search(
                     FlextLdifConstants.LdifPatterns.SCHEMA_SINGLE_VALUE,
@@ -627,47 +734,16 @@ class FlextLdifUtilitiesParser:
                     is not None
                 )
 
-            sup_match = re.search(
-                FlextLdifConstants.LdifPatterns.SCHEMA_SUP,
+            # Build metadata using helper
+            metadata = FlextLdifUtilitiesParser._build_attribute_metadata(
                 attr_definition,
-            )
-            sup = sup_match.group(1) if sup_match else None
-
-            usage_match = re.search(
-                FlextLdifConstants.LdifPatterns.SCHEMA_USAGE,
-                attr_definition,
-            )
-            usage = usage_match.group(1) if usage_match else None
-
-            metadata_extensions = FlextLdifUtilitiesParser.extract_extensions(
-                attr_definition,
-            )
-
-            if syntax:
-                metadata_extensions[
-                    FlextLdifConstants.MetadataKeys.SYNTAX_OID_VALID
-                ] = syntax_validation_error is None
-                if syntax_validation_error:
-                    metadata_extensions[
-                        FlextLdifConstants.MetadataKeys.SYNTAX_VALIDATION_ERROR
-                    ] = syntax_validation_error
-
-            metadata_extensions[FlextLdifConstants.MetadataKeys.ORIGINAL_FORMAT] = (
-                attr_definition.strip()
-            )
-
-            metadata = (
-                FlextLdifModels.QuirkMetadata(
-                    quirk_type="rfc",
-                    extensions=metadata_extensions,
-                )
-                if metadata_extensions
-                else None
+                syntax,
+                syntax_validation_error,
             )
 
             attribute = FlextLdifModels.SchemaAttribute(
                 oid=oid,
-                name=name,
+                name=name or oid,  # Fallback to OID if NAME not present
                 desc=desc,
                 syntax=syntax,
                 length=length,

@@ -16,7 +16,6 @@ from pathlib import Path
 import pytest
 
 from flext_ldif.config import FlextLdifConfig
-from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.services.parser import FlextLdifParser
 from flext_ldif.services.server import FlextLdifServer
 from flext_ldif.services.writer import FlextLdifWriter
@@ -61,7 +60,6 @@ class TestRfcDockerRealData:
         )
 
         result = parser.parse_ldif_file(schema_file)
-
         assert result.is_success, f"Failed to parse OID schema: {result.error}"
         parse_response = result.unwrap()
         entries = parse_response.entries
@@ -69,9 +67,10 @@ class TestRfcDockerRealData:
         # Verify schema entries are parsed
         assert len(entries) > 0, "No schema entries parsed"
         # Schema entries should have attributeTypes or objectClasses
+        # RFC 4512: Attribute names are case-insensitive
         assert any(
-            "attributeTypes" in entry.attributes.attributes
-            or "objectClasses" in entry.attributes.attributes
+            any(attr.lower() in {"attributetypes", "objectclasses"}
+                for attr in entry.attributes.attributes)
             for entry in entries
         )
 
@@ -91,11 +90,9 @@ class TestRfcDockerRealData:
         )
 
         result = parser.parse_ldif_file(entries_file)
-
         assert result.is_success, f"Failed to parse OUD entries: {result.error}"
         parse_response = result.unwrap()
         entries = parse_response.entries
-
         # Verify entries
         assert len(entries) > 0, "No entries parsed from OUD fixtures"
         assert all(hasattr(entry, "dn") for entry in entries)
@@ -116,7 +113,6 @@ class TestRfcDockerRealData:
         )
 
         result = parser.parse_ldif_file(integration_file)
-
         assert result.is_success or (
             result.error is not None and "Failed to parse" in result.error
         )
@@ -136,8 +132,7 @@ class TestRfcDockerRealData:
 
         if not source_file.exists():
             pytest.skip(f"OID entries fixtures not found: {source_file}")
-
-        # Parse original
+            # Parse original
         parser = FlextLdifParser(
             config=FlextLdifConfig(),
         )
@@ -148,7 +143,6 @@ class TestRfcDockerRealData:
 
         parse_response = parse_result.unwrap()
         entries = parse_response.entries
-
         # Write to new file
         output_file = tmp_path / "roundtrip.ldif"
 
@@ -162,20 +156,16 @@ class TestRfcDockerRealData:
             output_target="file",
             output_path=output_file,
         )
-
         assert write_result.is_success, f"Failed to write: {write_result.error}"
         assert output_file.exists()
-
         # Re-parse written file
         reparser = FlextLdifParser(
             config=FlextLdifConfig(),
         )
         reparse_result = reparser.parse_ldif_file(output_file)
-
         assert reparse_result.is_success, f"Failed to re-parse: {reparse_result.error}"
         reparsed_response = reparse_result.unwrap()
         reparsed_entries = reparsed_response.entries
-
         # Verify counts match
         assert len(reparsed_entries) == len(entries)
 
@@ -198,11 +188,11 @@ class TestRfcDockerRealData:
 
         if result.is_success:
             parse_response = result.unwrap()
-        entries = parse_response.entries
+            entries = parse_response.entries
             # OUD ACLs should have 'aci' attributes
             # LdifAttributes is a wrapper - access inner dict via .attributes
             acl_entries = [e for e in entries if "aci" in e.attributes.attributes]
-            assert len(acl_entries) > 0, "No ACL entries found in OUD fixtures"
+        assert len(acl_entries) > 0, "No ACL entries found in OUD fixtures"
 
     def test_parse_edge_case_unicode(
         self,
@@ -222,11 +212,10 @@ class TestRfcDockerRealData:
             )
 
             result = parser.parse_ldif_file(ldif_file)
-
             # Should handle Unicode gracefully
-            assert result.is_success or result.error, (
-                f"Parsing {ldif_file.name} should return valid result"
-            )
+        assert result.is_success or result.error, (
+            f"Parsing {ldif_file.name} should return valid result"
+        )
 
     def test_write_with_exception_handling(
         self,
@@ -243,7 +232,6 @@ class TestRfcDockerRealData:
 
         try:
             output_file = readonly_dir / "test.ldif"
-
             # Create test entry
             test_entry = FlextLdifModels.Entry(
                 dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
@@ -261,7 +249,6 @@ class TestRfcDockerRealData:
                 output_target="file",
                 output_path=output_file,
             )
-
             # Should fail with permission error (not silently)
             if not result.is_success:
                 assert result.error is not None and (
@@ -290,11 +277,10 @@ class TestRfcDockerRealData:
             )
 
             result = parser.parse_ldif_file(broken_file)
-
             # Relaxed mode should attempt to parse even broken LDIF
             if result.is_success:
                 parse_response = result.unwrap()
-        entries = parse_response.entries
+                entries = parse_response.entries
                 assert isinstance(entries, list)
 
     def test_rfc_schema_parser_with_real_data(
@@ -315,14 +301,15 @@ class TestRfcDockerRealData:
 
         if result.is_success:
             parse_response = result.unwrap()
-        entries = parse_response.entries
+            entries = parse_response.entries
             # Should have schema entries with attributeTypes or objectClasses
-            assert len(entries) > 0
-            assert any(
-                "attributeTypes" in e.attributes.attributes
-                or "objectClasses" in e.attributes.attributes
-                for e in entries
-            )
+        assert len(entries) > 0
+        # RFC 4512: Attribute names are case-insensitive
+        assert any(
+            any(attr.lower() in {"attributetypes", "objectclasses"}
+                for attr in e.attributes.attributes)
+            for e in entries
+        )
 
 
 class TestRfcIntegrationRealWorld:
@@ -342,8 +329,7 @@ class TestRfcIntegrationRealWorld:
 
         if not schema_file.exists():
             pytest.skip("OID schema fixtures not found")
-
-        # This is a large real-world schema file
+            # This is a large real-world schema file
         file_size = schema_file.stat().st_size
         assert file_size > 300000, "Expected large schema file"
 
@@ -352,7 +338,6 @@ class TestRfcIntegrationRealWorld:
         )
 
         result = parser.parse_ldif_file(schema_file)
-
         assert result.is_success, f"Failed to parse large schema: {result.error}"
 
     def test_large_oud_integration_data(
@@ -383,16 +368,23 @@ class TestRfcIntegrationRealWorld:
     ) -> None:
         """Test writing large dataset to file."""
         # Create 100 test entries
-        entries = [
-            {
-                FlextLdifConstants.DictKeys.DN: f"cn=user{i},ou=people,dc=example,dc=com",
-                FlextLdifConstants.DictKeys.ATTRIBUTES: {
-                    "cn": [f"user{i}"],
-                    "objectClass": ["person", "inetOrgPerson"],
-                    "mail": [f"user{i}@example.com"],
-                    "userPassword": [f"password{i}"],
-                },
-            }
+        from flext_ldif.models import FlextLdifModels
+
+        # Create Entry models directly (writer expects Entry objects, not dicts)
+        entry_models = [
+            FlextLdifModels.Entry(
+                dn=FlextLdifModels.DistinguishedName(
+                    value=f"cn=user{i},ou=people,dc=example,dc=com",
+                ),
+                attributes=FlextLdifModels.LdifAttributes(
+                    attributes={
+                        "cn": [f"user{i}"],
+                        "objectClass": ["person", "inetOrgPerson"],
+                        "mail": [f"user{i}@example.com"],
+                        "userPassword": [f"password{i}"],
+                    },
+                ),
+            )
             for i in range(100)
         ]
 
@@ -403,23 +395,14 @@ class TestRfcIntegrationRealWorld:
             quirk_registry=quirk_registry,
         )
 
-        # Convert entries to Entry models
-        from flext_ldif.models import FlextLdifModels
-
-        entry_models = [
-            FlextLdifModels.Entry.model_validate(entry) for entry in entries
-        ]
-
         result = writer.write(
             entry_models,
             target_server_type="rfc",
             output_target="file",
             output_path=output_file,
         )
-
         assert result.is_success, f"Failed to write large dataset: {result.error}"
         assert output_file.exists()
-
         # Verify file contains all entries
         content = output_file.read_text(encoding="utf-8")
         assert content.count("dn: cn=user") == 100, "Not all entries written"

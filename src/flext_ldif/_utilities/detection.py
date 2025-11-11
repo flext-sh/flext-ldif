@@ -54,7 +54,40 @@ from flext_ldif.models import FlextLdifModels
 class FlextLdifUtilitiesDetection:
     """Detection utilities for LDIF server quirks."""
 
-    class PatternDetectionMixin:
+    class BaseDetectionMixin:
+        """Base mixin with shared _get_constants method.
+
+        Eliminates duplications of _get_constants across all detection mixins.
+        """
+
+        def _get_constants(self, required_attr: str | None = None) -> type[Any] | None:
+            """Get Constants class from server class via MRO traversal.
+
+            Args:
+                required_attr: Optional attribute name that Constants must have
+
+            Returns:
+                Constants class from parent server class, or None if not found
+
+            """
+            # Traverse MRO to find the server class that has Constants
+            for cls in self.__class__.__mro__:
+                # Look for server classes (FlextLdifServers*) with Constants
+                if (
+                    cls.__name__.startswith("FlextLdifServers")
+                    and hasattr(cls, "Constants")
+                    and not isinstance(getattr(cls, "Constants", None), dict)
+                ):
+                    constants = cls.Constants
+                    # If no required attribute specified, return any Constants class
+                    if required_attr is None:
+                        return cast("type[Any]", constants)
+                    # Otherwise check if it has the required attribute
+                    if constants and hasattr(constants, required_attr):
+                        return cast("type[Any]", constants)
+            return None
+
+    class PatternDetectionMixin(BaseDetectionMixin):
         """Mixin for regex pattern matching across different data types.
 
         Core utility for matching patterns in:
@@ -194,26 +227,6 @@ class FlextLdifUtilitiesDetection:
         - Any data type sent to detection methods
         """
 
-        def _get_constants(self) -> type[Any] | None:
-            """Get Constants class from server class via MRO traversal.
-
-            Returns:
-                Constants class from parent server class, or None if not found
-
-            """
-            # Traverse MRO to find the server class that has Constants
-            for cls in self.__class__.__mro__:
-                # Look for server classes (FlextLdifServers*) with Constants
-                if (
-                    cls.__name__.startswith("FlextLdifServers")
-                    and hasattr(cls, "Constants")
-                    and not isinstance(getattr(cls, "Constants", None), dict)
-                ):
-                    constants = cls.Constants
-                    if constants and hasattr(constants, "DETECTION_OID_PATTERN"):
-                        return cast("type[Any]", constants)
-            return None
-
         def can_handle_attribute(
             self,
             attr_definition: str | FlextLdifModels.SchemaAttribute,
@@ -274,26 +287,6 @@ class FlextLdifUtilitiesDetection:
         - Any data type sent to detection methods
         """
 
-        def _get_constants(self) -> type[Any] | None:
-            """Get Constants class from server class via MRO traversal.
-
-            Returns:
-                Constants class from parent server class, or None if not found
-
-            """
-            # Traverse MRO to find the server class that has Constants
-            for cls in self.__class__.__mro__:
-                # Look for server classes (FlextLdifServers*) with Constants
-                if (
-                    cls.__name__.startswith("FlextLdifServers")
-                    and hasattr(cls, "Constants")
-                    and not isinstance(getattr(cls, "Constants", None), dict)
-                ):
-                    constants = cls.Constants
-                    if constants and hasattr(constants, "DETECTION_ATTRIBUTE_PREFIXES"):
-                        return cast("type[Any]", constants)
-            return None
-
         def can_handle_attribute(
             self,
             attr_definition: str | FlextLdifModels.SchemaAttribute | object,
@@ -329,26 +322,6 @@ class FlextLdifUtilitiesDetection:
         - Entry attributes (dict with objectClass key)
         - Any combination of attribute values
         """
-
-        def _get_constants(self) -> type[Any] | None:
-            """Get Constants class from server class via MRO traversal.
-
-            Returns:
-                Constants class from parent server class, or None if not found
-
-            """
-            # Traverse MRO to find the server class that has Constants
-            for cls in self.__class__.__mro__:
-                # Look for server classes (FlextLdifServers*) with Constants
-                if (
-                    cls.__name__.startswith("FlextLdifServers")
-                    and hasattr(cls, "Constants")
-                    and not isinstance(getattr(cls, "Constants", None), dict)
-                ):
-                    constants = cls.Constants
-                    if constants and hasattr(constants, "DETECTION_OBJECTCLASS_NAMES"):
-                        return cast("type[Any]", constants)
-            return None
 
         def can_handle(
             self,
@@ -418,26 +391,6 @@ class FlextLdifUtilitiesDetection:
         - Entry attributes (dict) - DN check is independent
         """
 
-        def _get_constants(self) -> type[Any] | None:
-            """Get Constants class from server class via MRO traversal.
-
-            Returns:
-                Constants class from parent server class, or None if not found
-
-            """
-            # Traverse MRO to find the server class that has Constants
-            for cls in self.__class__.__mro__:
-                # Look for server classes (FlextLdifServers*) with Constants
-                if (
-                    cls.__name__.startswith("FlextLdifServers")
-                    and hasattr(cls, "Constants")
-                    and not isinstance(getattr(cls, "Constants", None), dict)
-                ):
-                    constants = cls.Constants
-                    if constants and hasattr(constants, "DETECTION_DN_MARKERS"):
-                        return cast("type[Any]", constants)
-            return None
-
         def can_handle(
             self,
             entry_dn: str,
@@ -481,26 +434,6 @@ class FlextLdifUtilitiesDetection:
         - Any data type sent to detection methods
         """
 
-        def _get_constants(self) -> type[Any] | None:
-            """Get Constants class from server class via MRO traversal.
-
-            Returns:
-                Constants class from parent server class, or None if not found
-
-            """
-            # Traverse MRO to find the server class that has Constants
-            for cls in self.__class__.__mro__:
-                # Look for server classes (FlextLdifServers*) with Constants
-                if (
-                    cls.__name__.startswith("FlextLdifServers")
-                    and hasattr(cls, "Constants")
-                    and not isinstance(getattr(cls, "Constants", None), dict)
-                ):
-                    constants = cls.Constants
-                    if constants and hasattr(constants, "ACL_ATTRIBUTE_NAME"):
-                        return cast("type[Any]", constants)
-            return None
-
         def can_handle_acl(
             self,
             acl_line: str | FlextLdifModels.Acl | object,
@@ -535,6 +468,10 @@ class FlextLdifUtilitiesDetection:
                 return self.can_handle_in_set(attr_value, attr_set)
 
             return False
+
+    # ════════════════════════════════════════════════════════════════════════
+    # Base Mixin - DRY Helper (reduces 95 lines of duplication)
+    # ════════════════════════════════════════════════════════════════════════
 
 
 __all__ = [

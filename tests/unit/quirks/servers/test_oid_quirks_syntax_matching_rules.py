@@ -98,9 +98,17 @@ class TestOidSyntaxOidReplacements:
         written = write_result.unwrap()
 
         # Verify replaced OID in output
-        assert "1.3.6.1.4.1.1466.115.121.1.15" in written
-        # Original should not appear
-        assert "1.3.6.1.4.1.1466.115.121.1.1" not in written
+        # Use word boundary check to avoid false positives from substring matching
+        import re
+
+        # Check replaced OID appears (with word boundaries)
+        assert re.search(r"\b1\.3\.6\.1\.4\.1\.1466\.115\.121\.1\.15\b", written), (
+            f"Expected replaced OID 1.3.6.1.4.1.1466.115.121.1.15 not found in: {written}"
+        )
+        # Check original OID does not appear (with word boundaries)
+        assert not re.search(r"\b1\.3\.6\.1\.4\.1\.1466\.115\.121\.1\.1\b", written), (
+            f"Original OID 1.3.6.1.4.1.1466.115.121.1.1 should not appear in: {written}"
+        )
 
 
 class TestOidMatchingRuleReplacements:

@@ -772,20 +772,20 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
     @staticmethod
     def _build_dn_tree(
         entries: list[FlextLdifModels.Entry],
-    ) -> tuple[dict[str, list[str]], dict[str, FlextLdifModels.Entry], list[str]]:
+    ) -> tuple[dict[str, list[str]], dict[str, list[FlextLdifModels.Entry]], list[str]]:
         """Build DN tree structure for depth-first traversal.
 
         Returns:
-            Tuple of (parent_to_children, dn_to_entry, root_dns)
+            Tuple of (parent_to_children, dn_to_entries, root_dns)
             - parent_to_children: Dict mapping parent DN to list of child DNs
-            - dn_to_entry: Dict mapping DN to Entry object
+            - dn_to_entries: Dict mapping DN to list of Entry objects (supports duplicates)
             - root_dns: List of root DNs (depth 1-2)
 
         """
         parent_to_children: dict[str, list[str]] = {}
-        dn_to_entry: dict[str, FlextLdifModels.Entry] = {}
+        dn_to_entries: dict[str, list[FlextLdifModels.Entry]] = {}
 
-        # First pass: build dn_to_entry and parent_to_children mappings
+        # First pass: build dn_to_entries and parent_to_children mappings
         for entry in entries:
             dn_value = (
                 str(FlextLdifUtilities.DN.get_dn_value(entry.dn)) if entry.dn else ""
@@ -797,8 +797,10 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
             normalized_dn = FlextLdifUtilities.DN.norm(dn_value)
             dn_key = normalized_dn.lower() if normalized_dn else dn_value.lower()
 
-            # Store entry
-            dn_to_entry[dn_key] = entry
+            # Store entry (append to list to support duplicates)
+            if dn_key not in dn_to_entries:
+                dn_to_entries[dn_key] = []
+            dn_to_entries[dn_key].append(entry)
 
             # Extract parent DN (everything after first comma)
             if "," in dn_value:
@@ -810,17 +812,79 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
                     else parent_dn.lower()
                 )
 
-                # Add to parent's children
+                # Add to parent's children (only once per unique DN)
                 if parent_key not in parent_to_children:
                     parent_to_children[parent_key] = []
-                parent_to_children[parent_key].append(dn_key)
+                if dn_key not in parent_to_children[parent_key]:
+                    parent_to_children[parent_key].append(dn_key)
 
-        # Second pass: identify root DNs (entries whose parents are not in the list)
+        # Sort children alphabetically for consistent ordering
+        for children in parent_to_children.values():
+            children.sort()
+
+        # Identify root DNs using helper method
+        root_dns = FlextLdifSorting._identify_root_dns(dn_to_entries)
+
+        return parent_to_children, dn_to_entries, root_dns
+
+    @staticmethod
+    def _dfs_traverse(
+        dn: str,
+        parent_to_children: dict[str, list[str]],
+        dn_to_entries: dict[str, list[FlextLdifModels.Entry]],
+        visited: set[str],
+    ) -> list[FlextLdifModels.Entry]:
+        """Depth-first traversal of DN tree.
+
+        Visits parent, then recursively visits all children before moving to siblings.
+        This ensures proper LDAP sync order (parents before children).
+        Preserves duplicate DNs by including all entries for each DN.
+
+        Args:
+            dn: Current DN to visit
+            parent_to_children: Tree structure mapping parent→children
+            dn_to_entries: Mapping DN→list of Entry objects (supports duplicates)
+            visited: Set of already visited DNs (prevents infinite loops)
+
+        Returns:
+            List of entries in depth-first order
+
+        """
+        if dn in visited or dn not in dn_to_entries:
+            return []
+
+        visited.add(dn)
+        # Include ALL entries with this DN (preserves duplicates)
+        result = list(dn_to_entries[dn])
+
+        # Recursively visit all children (already sorted alphabetically)
+        for child_dn in parent_to_children.get(dn, []):
+            result.extend(
+                FlextLdifSorting._dfs_traverse(
+                    child_dn, parent_to_children, dn_to_entries, visited
+                )
+            )
+
+        return result
+
+    @staticmethod
+    def _identify_root_dns(
+        dn_to_entries: dict[str, list[FlextLdifModels.Entry]],
+    ) -> list[str]:
+        """Identify root DNs (entries whose parents are not in the list).
+
+        Args:
+            dn_to_entries: Mapping DN→list of Entry objects
+
+        Returns:
+            List of root DNs sorted by depth (shallowest first), then alphabetically
+
+        """
         root_dns: list[str] = []
-        for dn_key, entry in dn_to_entry.items():
-            # A DN is a root if:
-            # 1. It has no comma (true root like "o=example")
-            # 2. Its parent DN is not in dn_to_entry (orphaned entry acting as root)
+
+        for dn_key, entry_list in dn_to_entries.items():
+            # Use first entry to check root status (all duplicates have same DN)
+            entry = entry_list[0]
             dn_value = (
                 str(FlextLdifUtilities.DN.get_dn_value(entry.dn)) if entry.dn else ""
             )
@@ -838,56 +902,14 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
                     else parent_dn.lower()
                 )
 
-                if parent_key not in dn_to_entry:
+                if parent_key not in dn_to_entries:
                     # Parent not in list, so this is a root
                     root_dns.append(dn_key)
 
-        # Sort children alphabetically for consistent ordering
-        for children in parent_to_children.values():
-            children.sort()
+        # Sort roots by depth (shallowest first), then alphabetically
+        root_dns.sort(key=lambda dn_key: (dn_key.count(","), dn_key))
 
-        # Sort roots alphabetically
-        root_dns.sort()
-
-        return parent_to_children, dn_to_entry, root_dns
-
-    @staticmethod
-    def _dfs_traverse(
-        dn: str,
-        parent_to_children: dict[str, list[str]],
-        dn_to_entry: dict[str, FlextLdifModels.Entry],
-        visited: set[str],
-    ) -> list[FlextLdifModels.Entry]:
-        """Depth-first traversal of DN tree.
-
-        Visits parent, then recursively visits all children before moving to siblings.
-        This ensures proper LDAP sync order (parents before children).
-
-        Args:
-            dn: Current DN to visit
-            parent_to_children: Tree structure mapping parent→children
-            dn_to_entry: Mapping DN→Entry
-            visited: Set of already visited DNs (prevents infinite loops)
-
-        Returns:
-            List of entries in depth-first order
-
-        """
-        if dn in visited or dn not in dn_to_entry:
-            return []
-
-        visited.add(dn)
-        result = [dn_to_entry[dn]]
-
-        # Recursively visit all children (already sorted alphabetically)
-        for child_dn in parent_to_children.get(dn, []):
-            result.extend(
-                FlextLdifSorting._dfs_traverse(
-                    child_dn, parent_to_children, dn_to_entry, visited
-                )
-            )
-
-        return result
+        return root_dns
 
     @staticmethod
     def _levelorder_traverse(
@@ -938,6 +960,7 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
                 - Example order: dc=com, ou=users,dc=com, ou=groups,dc=com, cn=john,...
 
         Uses FlextLdifUtilities.DN.norm() for RFC 4514 compliant DN normalization.
+        Preserves duplicate DNs (same DN but different attributes).
         """
         if not self.entries:
             return FlextResult[list[FlextLdifModels.Entry]].ok([])
@@ -945,7 +968,7 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
         # Choose traversal strategy based on self.traversal
         if self.traversal == "depth-first":
             # Build DN tree structure
-            parent_to_children, dn_to_entry, root_dns = self._build_dn_tree(
+            parent_to_children, dn_to_entries, root_dns = self._build_dn_tree(
                 self.entries
             )
 
@@ -955,11 +978,13 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
             for root_dn in root_dns:
                 sorted_entries.extend(
                     self._dfs_traverse(
-                        root_dn, parent_to_children, dn_to_entry, visited
+                        root_dn, parent_to_children, dn_to_entries, visited
                     )
                 )
 
             # Handle any orphaned entries (entries whose parents weren't in the list)
+            # Note: All entries with same DN share the same dn_key, so if dn_key is
+            # visited, all duplicate entries are already included
             for entry in self.entries:
                 dn_value = (
                     str(FlextLdifUtilities.DN.get_dn_value(entry.dn))
@@ -970,7 +995,9 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
                     normalized = FlextLdifUtilities.DN.norm(dn_value)
                     dn_key = normalized.lower() if normalized else dn_value.lower()
                     if dn_key not in visited:
-                        sorted_entries.append(entry)
+                        # Add all entries with this DN
+                        sorted_entries.extend(dn_to_entries.get(dn_key, []))
+                        visited.add(dn_key)
 
             return FlextResult[list[FlextLdifModels.Entry]].ok(sorted_entries)
 
@@ -1051,13 +1078,9 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
         """Sort entry attributes alphabetically."""
         attrs_dict = entry.attributes.attributes  # Get the actual attributes dict
         if case_sensitive:
-            key_func: Callable[[tuple[str, list[str]]], str] = operator.itemgetter(0)
+            sorted_items = sorted(attrs_dict.items(), key=operator.itemgetter(0))
         else:
-
-            def key_func(x: tuple[str, list[str]]) -> str:
-                return x[0].lower()
-
-        sorted_items = sorted(attrs_dict.items(), key=key_func)
+            sorted_items = sorted(attrs_dict.items(), key=lambda x: x[0].lower())
         sorted_attrs = FlextLdifModels.LdifAttributes(attributes=dict(sorted_items))
         return FlextResult[FlextLdifModels.Entry].ok(
             entry.model_copy(update={"attributes": sorted_attrs}),
@@ -1124,13 +1147,8 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
 
         """
         if case_sensitive:
-            key_func: Callable[[tuple[str, list[str]]], str] = operator.itemgetter(0)
-        else:
-
-            def key_func(x: tuple[str, list[str]]) -> str:
-                return x[0].lower()
-
-        return sorted(attribute_items, key=key_func)
+            return sorted(attribute_items, key=operator.itemgetter(0))
+        return sorted(attribute_items, key=lambda x: x[0].lower())
 
     @classmethod
     def hierarchical_sort_by_dn(
@@ -1183,6 +1201,95 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
                 f"Hierarchical DN sort failed: {e}",
             )
 
+    @staticmethod
+    def _get_dn_sort_value(
+        entry: FlextLdifModels.Entry,
+        *,
+        case_sensitive: bool = False,
+    ) -> tuple[int, int, str]:
+        """Extract DN value for sorting with hierarchy awareness.
+
+        Args:
+            entry: Entry to extract DN from
+            case_sensitive: Whether to preserve case
+
+        Returns:
+            Tuple of (priority=0, rdn_count, dn_value) for DN sorting
+
+        """
+        value = FlextLdifUtilities.DN.get_dn_value(entry.dn)
+        rdn_count = value.count(",") + 1
+        return (0, rdn_count, value if case_sensitive else value.lower())
+
+    @staticmethod
+    def _find_attribute_sort_value(
+        entry: FlextLdifModels.Entry,
+        key: str,
+        *,
+        case_sensitive: bool = False,
+    ) -> tuple[int, int, str] | None:
+        """Find and extract attribute value for sorting.
+
+        Args:
+            entry: Entry to search in
+            key: Attribute name to find
+            case_sensitive: Whether to preserve case
+
+        Returns:
+            Tuple of (priority=1, 0, attr_value) if found, None otherwise
+
+        """
+        for attr_name, attr_values in entry.attributes.items():
+            if attr_name.lower() == key.lower():
+                # Convert list to first value for sorting
+                if isinstance(attr_values, list) and attr_values:
+                    val = str(attr_values[0])
+                else:
+                    val = str(attr_values) if attr_values else ""
+                return (1, 0, val if case_sensitive else val.lower())
+        return None
+
+    @staticmethod
+    def _get_smart_sort_key(
+        entry: FlextLdifModels.Entry,
+        primary_key: str,
+        secondary_key: str | None,
+        *,
+        case_sensitive: bool = False,
+    ) -> tuple[int, int, str]:
+        """Extract sort key from entry with fallback logic.
+
+        Handles DN sorting, attribute sorting, and secondary key fallback
+        with reduced complexity via helper methods.
+
+        Args:
+            entry: Entry to extract key from
+            primary_key: Primary attribute to sort by
+            secondary_key: Fallback key if primary not found
+            case_sensitive: Whether to use case-sensitive comparison
+
+        Returns:
+            Tuple of (priority, rdn_count, value) for sorting
+
+        """
+        # DN sorting
+        if primary_key.lower() == "dn":
+            return FlextLdifSorting._get_dn_sort_value(
+                entry, case_sensitive=case_sensitive
+            )
+
+        # Attribute sorting
+        attr_result = FlextLdifSorting._find_attribute_sort_value(
+            entry, primary_key, case_sensitive=case_sensitive
+        )
+        if attr_result is not None:
+            return attr_result
+
+        # Fallback to secondary key or empty
+        if secondary_key:
+            return (2, 0, secondary_key)
+        return (3, 0, "")
+
     @classmethod
     def smart_sort_entries(
         cls,
@@ -1211,33 +1318,11 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
 
         """
         try:
-
-            def get_sort_value(
-                entry: FlextLdifModels.Entry,
-                key: str,
-            ) -> tuple[int, int, str]:
-                """Extract value from entry, with type-aware sorting."""
-                if key.lower() == "dn":
-                    value = FlextLdifUtilities.DN.get_dn_value(entry.dn)
-                    rdn_count = value.count(",") + 1
-                    return (0, rdn_count, value if case_sensitive else value.lower())
-                # Try to find attribute in entry
-                for attr_name, attr_values in entry.attributes.items():
-                    if attr_name.lower() == key.lower():
-                        # Convert list to first value for sorting
-                        if isinstance(attr_values, list) and attr_values:
-                            val = str(attr_values[0])
-                        else:
-                            val = str(attr_values) if attr_values else ""
-                        return (1, 0, val if case_sensitive else val.lower())
-                # Attribute not found, try secondary key
-                if secondary_key:
-                    return (2, 0, secondary_key)
-                return (3, 0, "")
-
             sorted_entries = sorted(
                 entries,
-                key=lambda e: get_sort_value(e, primary_key),
+                key=lambda e: cls._get_smart_sort_key(
+                    e, primary_key, secondary_key, case_sensitive=case_sensitive
+                ),
             )
             return FlextResult[list[FlextLdifModels.Entry]].ok(sorted_entries)
 

@@ -121,17 +121,21 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
             msg = f"{cls.__name__} must define a Constants nested class"
             raise AttributeError(msg)
 
+        # Get Constants - type: ignore needed for __init_subclass__ metaclass hook
+        # Pyright can't know subclass attributes, but hasattr validates at runtime
+        constants_class = cls.Constants
+
         # Validate required attributes exist
-        if not hasattr(cls.Constants, "SERVER_TYPE"):
+        if not hasattr(constants_class, "SERVER_TYPE"):
             msg = f"{cls.__name__}.Constants must define SERVER_TYPE"
             raise AttributeError(msg)
-        if not hasattr(cls.Constants, "PRIORITY"):
+        if not hasattr(constants_class, "PRIORITY"):
             msg = f"{cls.__name__}.Constants must define PRIORITY"
             raise AttributeError(msg)
 
         # Set class-level attributes from Constants (single source)
-        cls.server_type = cls.Constants.SERVER_TYPE
-        cls.priority = cls.Constants.PRIORITY
+        cls.server_type = constants_class.SERVER_TYPE
+        cls.priority = constants_class.PRIORITY
 
     def __init__(self, **kwargs: object) -> None:
         """Initialize server base class and nested quirk classes.
@@ -175,7 +179,8 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
         parse_result = self.parse(ldif_text)
         if parse_result.is_success:
             parse_response = parse_result.unwrap()
-            return FlextResult[FlextLdifTypes.EntryOrString].ok(parse_response)  # type: ignore[arg-type]
+            # Extract entries from ParseResponse
+            return FlextResult[FlextLdifTypes.EntryOrString].ok(parse_response.entries)
         error_msg: str = parse_result.error or "Parse failed"
         return FlextResult[FlextLdifTypes.EntryOrString].fail(error_msg)
 
@@ -243,7 +248,8 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
                 statistics=statistics,
                 detected_server_type=detected_server,
             )
-            return FlextResult[FlextLdifTypes.EntryOrString].ok(empty_response)  # type: ignore[arg-type]
+            # Extract entries from ParseResponse (empty list in this case)
+            return FlextResult[FlextLdifTypes.EntryOrString].ok(empty_response.entries)
 
         # Use explicit operation if provided, otherwise auto-detect
         detected_operation: Literal["parse", "write"] | None = operation
@@ -407,12 +413,8 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
         self._acl_quirk = self.Acl()
         self._entry_quirk = self.Entry()
 
-        # Expose backwards-compatible public attributes expected by legacy callers.
-        # Must use object.__setattr__ to bypass Pydantic's attribute protection.
-        # PLC2801 suppressed: setattr() doesn't work here due to Pydantic conflicts.
-        object.__setattr__(self, "schema", self._schema_quirk)  # noqa: PLC2801
-        object.__setattr__(self, "acl", self._acl_quirk)  # noqa: PLC2801
-        object.__setattr__(self, "entry", self._entry_quirk)  # noqa: PLC2801
+        # Legacy compatibility removed - use schema_quirk, acl_quirk, entry_quirk properties
+        # Old: object.__setattr__(self, "schema", self._schema_quirk) - removed per zero-tolerance policy
 
     # =========================================================================
     # Properties for accessing nested quirks (bypasses Pydantic's schema() method)
@@ -457,9 +459,11 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
             FlextResult[ParseResponse]
 
         """
-        entry_quirk = getattr(self, "entry", None)
-        if not entry_quirk:
-            return FlextResult.fail("Entry quirk not available")
+        # Instantiate Entry nested class for parsing
+        entry_class = getattr(type(self), "Entry", None)
+        if not entry_class:
+            return FlextResult.fail("Entry nested class not available")
+        entry_quirk = entry_class()
         entries_result: FlextResult[list[FlextLdifModels.Entry]] = entry_quirk.parse(
             ldif_text,
         )
@@ -498,13 +502,13 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
             FlextResult[str]
 
         """
-        entry = getattr(self, "entry", None)
-        if not entry:
+        entry_quirk = getattr(self, "entry_quirk", None)
+        if not entry_quirk:
             return FlextResult.fail("Entry quirk not available")
 
         ldif_lines: list[str] = []
         for entry_model in entries:
-            result: FlextResult[str] = entry.write(entry_model)
+            result: FlextResult[str] = entry_quirk.write(entry_model)
             if result.is_failure:
                 return result
             ldif_lines.append(result.unwrap())
@@ -624,11 +628,14 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
         """
         model_type = self._detect_model_type(model)
         if model_type == "entry":
-            return getattr(self, "entry", None)
+            entry_class = getattr(type(self), "Entry", None)
+            return entry_class() if entry_class else None
         if model_type in {"schema_attribute", "schema_objectclass"}:
-            return getattr(self, "schema", None)
+            schema_class = getattr(type(self), "Schema", None)
+            return schema_class() if schema_class else None
         if model_type == "acl":
-            return getattr(self, "acl", None)
+            acl_class = getattr(type(self), "Acl", None)
+            return acl_class() if acl_class else None
         return None
 
     def _route_model_to_write(self, model: object) -> FlextResult[str]:
@@ -644,27 +651,31 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
 
         """
         if isinstance(model, FlextLdifModels.Entry):
-            quirk = getattr(self, "entry", None)
-            if not quirk:
-                return FlextResult.fail("Entry quirk not available")
+            entry_class = getattr(type(self), "Entry", None)
+            if not entry_class:
+                return FlextResult.fail("Entry nested class not available")
+            quirk = entry_class()
             result: FlextResult[str] = quirk.write_entry(model)
             return result
         if isinstance(model, FlextLdifModels.SchemaAttribute):
-            quirk = getattr(self, "schema", None)
-            if not quirk:
-                return FlextResult.fail("Schema quirk not available")
+            schema_class = getattr(type(self), "Schema", None)
+            if not schema_class:
+                return FlextResult.fail("Schema nested class not available")
+            quirk = schema_class()
             result2: FlextResult[str] = quirk.write_attribute(model)
             return result2
         if isinstance(model, FlextLdifModels.SchemaObjectClass):
-            quirk = getattr(self, "schema", None)
-            if not quirk:
-                return FlextResult.fail("Schema quirk not available")
+            schema_class = getattr(type(self), "Schema", None)
+            if not schema_class:
+                return FlextResult.fail("Schema nested class not available")
+            quirk = schema_class()
             result3: FlextResult[str] = quirk.write_objectclass(model)
             return result3
         if isinstance(model, FlextLdifModels.Acl):
-            quirk = getattr(self, "acl", None)
-            if not quirk:
-                return FlextResult.fail("ACL quirk not available")
+            acl_class = getattr(type(self), "Acl", None)
+            if not acl_class:
+                return FlextResult.fail("Acl nested class not available")
+            quirk = acl_class()
             result4: FlextResult[str] = quirk.write_acl(model)
             return result4
         return FlextResult.fail(f"Unknown model type: {type(model).__name__}")

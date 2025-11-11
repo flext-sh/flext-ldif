@@ -432,98 +432,6 @@ class FlextLdifAcl(FlextService[FlextLdifModels.AclResponse]):
 
         return FlextResult[bool].ok(True)
 
-    @staticmethod
-    def _validate_subject_dn(
-        acl: FlextLdifModels.Acl,
-        context: dict[str, object],
-    ) -> FlextResult[bool]:
-        """Validate subject DN against context using FlextLdifUtilities.
-
-        Args:
-            acl: ACL model instance
-            context: Evaluation context
-
-        Returns:
-            FlextResult with validation result
-
-        """
-        if not hasattr(acl, "subject") or not acl.subject:
-            return FlextResult[bool].ok(True)
-
-        subject_value = getattr(acl.subject, "subject_value", None)
-        if not subject_value or subject_value == "*":
-            return FlextResult[bool].ok(True)
-
-        # Validate subject DN using FlextLdifUtilities.DN
-        if (
-            subject_value
-            and subject_value != "*"
-            and not FlextLdifUtilities.DN.validate(subject_value)
-        ):
-            return FlextResult[bool].fail(
-                f"Invalid subject DN format per RFC 4514: {subject_value}",
-            )
-
-        context_subject = context.get("subject_dn", "")
-        if context_subject:
-            # Use FlextLdifUtilities for case-insensitive DN comparison
-            comparison_result = FlextLdifUtilities.DN.compare_dns(
-                str(context_subject),
-                subject_value,
-            )
-            if comparison_result != 0:  # 0 means equal
-                return FlextResult[bool].fail(
-                    f"Subject DN mismatch: {context_subject} != {subject_value}",
-                )
-
-        return FlextResult[bool].ok(True)
-
-    @staticmethod
-    def _validate_target_dn(
-        acl: FlextLdifModels.Acl,
-        context: dict[str, object],
-    ) -> FlextResult[bool]:
-        """Validate target DN against context using FlextLdifUtilities.
-
-        Args:
-            acl: ACL model instance
-            context: Evaluation context
-
-        Returns:
-            FlextResult with validation result
-
-        """
-        if not hasattr(acl, "target") or not acl.target:
-            return FlextResult[bool].ok(True)
-
-        target_dn = getattr(acl.target, "target_dn", None)
-        if not target_dn or target_dn == "*":
-            return FlextResult[bool].ok(True)
-
-        # Validate target DN using FlextLdifUtilities.DN
-        if (
-            target_dn
-            and target_dn != "*"
-            and not FlextLdifUtilities.DN.validate(target_dn)
-        ):
-            return FlextResult[bool].fail(
-                f"Invalid target DN format per RFC 4514: {target_dn}",
-            )
-
-        context_target = context.get("target_dn", "")
-        if context_target:
-            # Use FlextLdifUtilities for case-insensitive DN comparison
-            comparison_result = FlextLdifUtilities.DN.compare_dns(
-                str(context_target),
-                target_dn,
-            )
-            if comparison_result != 0:  # 0 means equal
-                return FlextResult[bool].fail(
-                    f"Target DN mismatch: {context_target} != {target_dn}",
-                )
-
-        return FlextResult[bool].ok(True)
-
     def evaluate_acl_context(
         self,
         acls: list[FlextLdifModels.Acl],
@@ -557,13 +465,37 @@ class FlextLdifAcl(FlextService[FlextLdifModels.AclResponse]):
                     if result.is_failure:
                         return result
 
-                # Validate subject DN using helper
-                result = self._validate_subject_dn(acl, eval_context)
+                # Validate subject DN using FlextLdifUtilities
+                subject_value = (
+                    getattr(acl.subject, "subject_value", None)
+                    if hasattr(acl, "subject") and acl.subject
+                    else None
+                )
+                context_subject = (
+                    str(eval_context.get("subject_dn"))
+                    if eval_context.get("subject_dn")
+                    else None
+                )
+                result = FlextLdifUtilities.DN.validate_dn_with_context(
+                    subject_value, context_subject, "subject DN"
+                )
                 if result.is_failure:
                     return result
 
-                # Validate target DN using helper
-                result = self._validate_target_dn(acl, eval_context)
+                # Validate target DN using FlextLdifUtilities
+                target_dn = (
+                    getattr(acl.target, "target_dn", None)
+                    if hasattr(acl, "target") and acl.target
+                    else None
+                )
+                context_target = (
+                    str(eval_context.get("target_dn"))
+                    if eval_context.get("target_dn")
+                    else None
+                )
+                result = FlextLdifUtilities.DN.validate_dn_with_context(
+                    target_dn, context_target, "target DN"
+                )
                 if result.is_failure:
                     return result
 

@@ -413,7 +413,7 @@ class TestExecutePattern:
         result = FlextLdifFilters(entries=[], filter_criteria="dn").execute()
 
         assert result.is_success
-        assert result.unwrap() == []
+        assert len(result.unwrap()) == 0
 
     def test_execute_dn_filter(self, user_entries: list[FlextLdifModels.Entry]) -> None:
         """Test execute() with DN filter."""
@@ -526,7 +526,7 @@ class TestFluentBuilder:
             .build()
         )
 
-        assert isinstance(result, list)
+        # build() returns EntryResult which acts like a list via __len__ and __iter__
         assert len(result) == 2
 
     def test_builder_objectclass(

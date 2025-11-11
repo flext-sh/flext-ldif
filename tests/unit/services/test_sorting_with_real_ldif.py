@@ -470,6 +470,7 @@ class TestComprehensiveAPIUsage:
         for method in methods:
             result = method(oid_entries)
             assert result.is_success, f"Failed for method: {method.__name__}"
+            # Fixed: API returns list directly, not wrapper with .content
             assert len(result.unwrap()) == len(oid_entries)
 
     def test_all_sort_targets_via_execute(
@@ -525,6 +526,7 @@ class TestComprehensiveAPIUsage:
         )
 
         assert result.is_success
+        # Fixed: API returns list directly, not wrapper with .content
         assert len(result.unwrap()) == len(oid_entries)
 
 

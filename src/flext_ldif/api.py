@@ -510,8 +510,17 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
 
         """
         try:
-            # Determine the server type, defaulting to RFC if not provided.
-            effective_server_type = server_type or FlextLdifConstants.ServerTypes.RFC
+            # Determine the server type, respecting config when not explicitly provided
+            if server_type is not None:
+                effective_server_type = server_type
+            else:
+                # Use config-aware resolution (respects quirks_detection_mode and quirks_server_type)
+                server_type_result = self.get_effective_server_type(
+                    ldif_path=source if isinstance(source, Path) else None
+                )
+                if server_type_result.is_failure:
+                    return FlextResult.fail(server_type_result.error)
+                effective_server_type = server_type_result.unwrap()
 
             # Ensure the parser service is initialized.
             if not hasattr(self, "_parser_service") or self._parser_service is None:
@@ -855,6 +864,69 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
         except (ValueError, TypeError, AttributeError) as e:
             return FlextResult[str].fail(f"Failed to extract DN: {e}")
 
+    @staticmethod
+    def _normalize_attribute_value(attr_values: list[str]) -> str | list[str]:
+        """Normalize attribute values to str or list[str].
+
+        Args:
+            attr_values: List of attribute values
+
+        Returns:
+            Single string if length==1, otherwise list
+
+        """
+        if len(attr_values) == 1:
+            return attr_values[0]
+        return attr_values
+
+    @staticmethod
+    def _extract_from_ldif_attributes(
+        attrs_container: FlextLdifModels.LdifAttributes,
+    ) -> FlextLdifTypes.CommonDict.AttributeDict:
+        """Extract attributes from LdifAttributes container.
+
+        Args:
+            attrs_container: LdifAttributes object
+
+        Returns:
+            AttributeDict with normalized values
+
+        """
+        result_dict: FlextLdifTypes.CommonDict.AttributeDict = {}
+
+        for attr_name, attr_values in attrs_container.attributes.items():
+            # attr_values is always a list[str] in LdifAttributes
+            result_dict[attr_name] = FlextLdif._normalize_attribute_value(attr_values)
+
+        return result_dict
+
+    @staticmethod
+    def _extract_from_dict_attributes(
+        attrs_container: dict[str, Any],
+    ) -> FlextLdifTypes.CommonDict.AttributeDict:
+        """Extract attributes from dict representation.
+
+        Args:
+            attrs_container: Dict of attributes
+
+        Returns:
+            AttributeDict with normalized values
+
+        """
+        result_dict: FlextLdifTypes.CommonDict.AttributeDict = {}
+
+        for attr_name, attr_val in attrs_container.items():
+            if isinstance(attr_val, list):
+                # Return list as-is or single item if length==1
+                result_dict[attr_name] = FlextLdif._normalize_attribute_value([
+                    str(v) for v in attr_val
+                ])
+            else:
+                # Single value - return as string
+                result_dict[attr_name] = str(attr_val)
+
+        return result_dict
+
     def get_entry_attributes(
         self,
         entry: FlextLdifModels.Entry | FlextLdifProtocols.Entry.EntryWithDnProtocol,
@@ -891,29 +963,16 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
                 )
 
             attrs_container = entry.attributes
-            result_dict: FlextLdifTypes.CommonDict.AttributeDict = {}
 
             # Handle both LdifAttributes and dict-like access
             if isinstance(attrs_container, FlextLdifModels.LdifAttributes):
-                # Extract attributes from LdifAttributes container
-                for attr_name, attr_values in attrs_container.attributes.items():
-                    # attr_values is always a list[str] in LdifAttributes
-                    if len(attr_values) == 1:
-                        result_dict[attr_name] = attr_values[0]
-                    else:
-                        result_dict[attr_name] = attr_values
+                result_dict = FlextLdif._extract_from_ldif_attributes(attrs_container)
             elif isinstance(attrs_container, dict):
-                # Handle dict representation (from model_validate with dict input)
-                for attr_name, attr_val in attrs_container.items():
-                    if isinstance(attr_val, list):
-                        # Return list as-is or single item if length==1
-                        if len(attr_val) == 1:
-                            result_dict[attr_name] = attr_val[0]
-                        else:
-                            result_dict[attr_name] = attr_val
-                    else:
-                        # Single value - return as string
-                        result_dict[attr_name] = str(attr_val)
+                result_dict = FlextLdif._extract_from_dict_attributes(attrs_container)
+            else:
+                return FlextResult[FlextLdifTypes.CommonDict.AttributeDict].fail(
+                    f"Unknown attributes container type: {type(attrs_container)}",
+                )
 
             return FlextResult[FlextLdifTypes.CommonDict.AttributeDict].ok(result_dict)
 
@@ -1139,24 +1198,7 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
         source_server: str,
         target_server: str,
         *,
-        # New: Structured migration with MigrationConfig
-        migration_config: FlextLdifModels.MigrationConfig
-        | dict[str, object]
-        | None = None,
-        write_options: FlextLdifModels.WriteFormatOptions | None = None,
-        # Categorization parameters (optional - enables categorized mode)
-        categorization_rules: dict[str, list[str]] | None = None,
-        input_files: list[str] | None = None,
-        output_files: dict[str, str] | None = None,
-        schema_whitelist_rules: dict[str, list[str]] | None = None,
-        # Simple migration parameters
-        input_filename: str | None = None,
-        output_filename: str | None = None,
-        # Common parameters
-        forbidden_attributes: list[str] | None = None,
-        forbidden_objectclasses: list[str] | None = None,
-        base_dn: str | None = None,
-        sort_entries_hierarchically: bool = False,
+        options: FlextLdifModels.MigrateOptions | None = None,
     ) -> FlextResult[FlextLdifModels.EntryResult]:
         r"""Unified LDIF migration supporting simple, categorized, and structured modes.
 
@@ -1173,41 +1215,17 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
             output_dir: Directory for output files
             source_server: Source server type identifier (e.g., "oracle_oid", "openldap")
             target_server: Target server type identifier (e.g., "oracle_oud", "ad")
-
-            # Structured migration parameters (preferred for production)
-            migration_config: MigrationConfig model or dict with:
-                - output_file_mapping: Dict of category -> filename
-                - hierarchy_objectclasses, user_objectclasses, group_objectclasses: Lists for categorization
-                - attribute_whitelist/blacklist, objectclass_whitelist/blacklist: Filtering rules
-                - track_removed_attributes, write_removed_as_comments: Tracking options
-                - header_template, header_data: Jinja2 header template and data
-            write_options: WriteFormatOptions model with:
-                - disable_line_folding: True to disable line wrapping
-                - write_removed_attributes_as_comments: True to write removed attrs as comments
-                - line_width: Maximum line width (default 100000 for effectively unlimited)
-
-            # Categorized mode parameters (legacy)
-            categorization_rules: Dict defining entry categories (enables categorized mode)
-                Keys: category_name + "_objectclasses" or category_name + "_attributes"
-                Example: {
-                    "hierarchy_objectclasses": ["organization", "organizationalUnit"],
-                    "user_objectclasses": ["inetOrgPerson", "person"],
-                    "group_objectclasses": ["groupOfNames"],
-                    "acl_attributes": ["aci"],  # Empty list = disable ACL
-                }
-            input_files: Ordered list of LDIF files to process (categorized mode)
-            output_files: Category→filename mapping (categorized mode)
-            schema_whitelist_rules: Dict of allowed schema elements (categorized mode)
-
-            # Simple mode parameters
-            input_filename: Specific input file to process (simple mode only)
-            output_filename: Output filename (simple mode only, optional, defaults to "migrated.ldif")
-
-            # Common parameters
-            forbidden_attributes: Optional list of attributes to remove
-            forbidden_objectclasses: Optional list of objectClasses to remove
-            base_dn: Optional target base DN for DN normalization
-            sort_entries_hierarchically: If True, sort entries by DN hierarchy depth then alphabetically (default: False)
+            options: Optional MigrateOptions Model consolidating all migration parameters:
+                - migration_config: MigrationConfig for structured 6-file output
+                - write_options: WriteFormatOptions for formatting control
+                - categorization_rules: Dict for categorized mode (legacy)
+                - input_files/output_files: File lists for categorized mode
+                - schema_whitelist_rules: Schema filtering rules
+                - input_filename/output_filename: Simple mode file names
+                - forbidden_attributes/forbidden_objectclasses: Filter lists
+                - base_dn: Target base DN for normalization
+                - sort_entries_hierarchically: Hierarchical sorting flag
+                See FlextLdifModels.MigrateOptions for complete field documentation.
 
         Returns:
             FlextResult containing PipelineExecutionResult with:
@@ -1224,57 +1242,64 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
                 target_server="oracle_oud"
             )
 
-            # Structured migration - 6 files with removed attribute tracking
-            config = FlextLdifModels.MigrationConfig(
-                hierarchy_objectclasses=["organization", "organizationalUnit"],
-                user_objectclasses=["inetOrgPerson", "person"],
-                group_objectclasses=["groupOfNames"],
-                attribute_blacklist=["pwdChangedTime", "modifiersName"],
-                track_removed_attributes=True,
-                write_removed_as_comments=True,
-                header_template="# Migration from {{source}} to {{target}}\\n",
-                header_data={"source": "OID", "target": "OUD"}
-            )
-            write_opts = FlextLdifModels.WriteFormatOptions(
-                disable_line_folding=True
+            # Structured migration - 6 files with tracking
+            options = FlextLdifModels.MigrateOptions(
+                migration_config=FlextLdifModels.MigrationConfig(
+                    hierarchy_objectclasses=["organization", "organizationalUnit"],
+                    user_objectclasses=["inetOrgPerson", "person"],
+                    group_objectclasses=["groupOfNames"],
+                    attribute_blacklist=["pwdChangedTime", "modifiersName"],
+                    track_removed_attributes=True,
+                    write_removed_as_comments=True,
+                    header_template="# Migration from {{source}} to {{target}}\\n",
+                    header_data={"source": "OID", "target": "OUD"}
+                ),
+                write_options=FlextLdifModels.WriteFormatOptions(
+                    disable_line_folding=True
+                ),
             )
             result = ldif.migrate(
                 input_dir=Path("source"),
                 output_dir=Path("target"),
                 source_server="oracle_oid",
                 target_server="oracle_oud",
-                migration_config=config,
-                write_options=write_opts
+                options=options,
             )
 
             # Categorized migration - legacy approach
-            result = ldif.migrate(
-                input_dir=Path("source"),
-                output_dir=Path("target"),
-                source_server="oracle_oid",
-                target_server="oracle_oud",
+            options = FlextLdifModels.MigrateOptions(
                 categorization_rules={
                     "hierarchy_objectclasses": ["organization", "organizationalUnit"],
                     "user_objectclasses": ["inetOrgPerson", "person"],
                     "group_objectclasses": ["groupOfNames"],
                     "acl_attributes": ["aci"],
-                }
+                },
+            )
+            result = ldif.migrate(
+                input_dir=Path("source"),
+                output_dir=Path("target"),
+                source_server="oracle_oid",
+                target_server="oracle_oud",
+                options=options,
             )
 
         """
         try:
+            # Use default options if not provided
+            opts = options or FlextLdifModels.MigrateOptions()
+
             # Convert dict to MigrationConfig model if needed
-            config_model = self._normalize_migration_config(migration_config)
+            config_model = self._normalize_migration_config(opts.migration_config)
 
             # Auto-detect mode and create write options
-            mode = self._detect_migration_mode(config_model, categorization_rules)
+            mode = self._detect_migration_mode(config_model, opts.categorization_rules)
             write_options = self._get_write_options_for_mode(
-                mode, write_options, config_model
+                mode, opts.write_options, config_model
             )
 
             # Validate requirements for simple mode
             validation_result = self._validate_simple_mode_params(
-                input_filename, output_filename
+                opts.input_filename, opts.output_filename
             )
             if validation_result.is_failure:
                 return FlextResult[FlextLdifModels.EntryResult].fail(
@@ -1290,17 +1315,17 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
                 mode=cast("FlextLdifConstants.LiteralTypes.MigrationMode", mode),
                 source_server=source_server,
                 target_server=target_server,
-                forbidden_attributes=forbidden_attributes,
-                forbidden_objectclasses=forbidden_objectclasses,
-                base_dn=base_dn,
-                sort_entries_hierarchically=sort_entries_hierarchically,
+                forbidden_attributes=opts.forbidden_attributes,
+                forbidden_objectclasses=opts.forbidden_objectclasses,
+                base_dn=opts.base_dn,
+                sort_entries_hierarchically=opts.sort_entries_hierarchically,
                 write_options=write_options,
-                categorization_rules=categorization_rules,
-                input_files=input_files,
-                output_files=output_files,
-                schema_whitelist_rules=schema_whitelist_rules,
-                input_filename=input_filename,
-                output_filename=output_filename or "migrated.ldif",
+                categorization_rules=opts.categorization_rules,
+                input_files=opts.input_files,
+                output_files=opts.output_files,
+                schema_whitelist_rules=opts.schema_whitelist_rules,
+                input_filename=opts.input_filename,
+                output_filename=opts.output_filename or "migrated.ldif",
             )
 
             return migration_pipeline.execute()
@@ -2146,15 +2171,15 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
                         detected_data = detection_result.unwrap()
                         # ServerDetectionResult is now a Pydantic model
                         server_type = (
-                            detected_data.detected_server_type or config.server_type
+                            detected_data.detected_server_type or config.ldif_default_server_type
                         )
                         return FlextResult[str].ok(server_type)
                     # Auto-detection failed, fall back to configured server type
-                    return FlextResult[str].ok(config.server_type)
+                    return FlextResult[str].ok(config.ldif_default_server_type)
 
                 case _:
                     # Default to configured server type
-                    return FlextResult[str].ok(config.server_type)
+                    return FlextResult[str].ok(config.ldif_default_server_type)
 
         except (ValueError, TypeError, AttributeError) as e:
             return FlextResult[str].fail(f"Error determining server type: {e}")

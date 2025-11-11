@@ -112,7 +112,9 @@ class FlextLdifServersOid(FlextLdifServersRfc):
         # NOTE: PRESERVE_ON_MIGRATION inherited from RFC.Constants
 
         # Detection constants (server-specific)
-        DETECTION_OID_PATTERN: ClassVar[str] = r"2\.16\.840\.1\.113894\."
+        DETECTION_OID_PATTERN: ClassVar[str] = (
+            r"(?i)(2\.16\.840\.1\.113894\.|orcl)"  # Match Oracle OIDs OR orcl* attributes (case-insensitive)
+        )
         DETECTION_ATTRIBUTE_PREFIXES: ClassVar[frozenset[str]] = frozenset(
             [
                 "orcl",
@@ -124,6 +126,7 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                 "orcldirectory",
                 "orcldomain",
                 "orcldirectoryserverconfig",
+                "orclcontainer",  # Oracle OID container objectClass (case-insensitive match)
             ],
         )
         DETECTION_DN_MARKERS: ClassVar[frozenset[str]] = frozenset(
@@ -189,7 +192,7 @@ class FlextLdifServersOid(FlextLdifServersRfc):
         ATTRIBUTE_FIELDS: ClassVar[frozenset[str]] = frozenset(["usage", "x_origin"])
 
         # ObjectClass requirements (extends RFC - allows multiple SUP)
-        OBJECTCLASS_REQUIREMENTS: ClassVar[dict[str, bool]] = {
+        OBJECTCLASS_REQUIREMENTS: ClassVar[Mapping[str, bool]] = {
             "requires_sup_for_auxiliary": True,
             "allows_multiple_sup": True,  # OID allows multiple SUP
             "requires_explicit_structural": False,
@@ -230,7 +233,9 @@ class FlextLdifServersOid(FlextLdifServersRfc):
         CAN_DENORMALIZE_TO: ClassVar[frozenset[str]] = frozenset(["oid", "rfc"])
 
         # Server detection patterns and weights (migrated from FlextLdifConstants.ServerDetection)
-        DETECTION_PATTERN: ClassVar[str] = r"2\.16\.840\.1\.113894\."
+        DETECTION_PATTERN: ClassVar[str] = (
+            r"(?i)(2\.16\.840\.1\.113894\.|orcl)"  # Match Oracle OIDs OR orcl* attributes (case-insensitive)
+        )
         DETECTION_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset(
             [
                 "orclOID",
@@ -241,7 +246,9 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                 "orcldaslov",
             ],
         )
-        DETECTION_WEIGHT: ClassVar[int] = 10
+        DETECTION_WEIGHT: ClassVar[int] = (
+            12  # Increased to ensure OID detection wins over other servers when OID-specific attributes/objectClasses are present
+        )
 
         # Oracle OID metadata keys (migrated from FlextLdifConstants.QuirkMetadataKeys)
         OID_SPECIFIC_RIGHTS: ClassVar[str] = "oid_specific_rights"
@@ -529,7 +536,7 @@ class FlextLdifServersOid(FlextLdifServersRfc):
 
     def extract_schemas_from_ldif(
         self,
-        _ldif_content: str,
+        ldif_content: str,
     ) -> FlextResult[FlextLdifTypes.Models.EntryAttributesDict]:
         """Extract and parse all schema definitions from LDIF content.
 
@@ -539,11 +546,18 @@ class FlextLdifServersOid(FlextLdifServersRfc):
             FlextResult containing extracted attributes and objectclasses
 
         """
-        # Note: extract_schemas_from_ldif method is deprecated/removed
-        # Use parse() method instead which is the correct API
-        return FlextResult[dict[str, object]].fail(
-            "extract_schemas_from_ldif is deprecated, use parse() method"
+        # Instantiate Schema nested class
+        schema_class = getattr(type(self), "Schema", None)
+        if not schema_class:
+            return FlextResult[dict[str, object]].fail(
+                "Schema nested class not available"
+            )
+
+        schema_quirk = schema_class()
+        result: FlextResult[FlextLdifTypes.Models.EntryAttributesDict] = (
+            schema_quirk.extract_schemas_from_ldif(ldif_content)
         )
+        return result
 
     class Schema(
         FlextLdifServersRfc.Schema,

@@ -271,32 +271,24 @@ class FlextLdifUtilitiesACL:
 
     @staticmethod
     def build_metadata_extensions(
-        line_breaks: list[int] | None = None,
-        *,
-        dn_spaces: bool = False,
-        targetscope: str | None = None,
-        version: str | None = None,
-        default_version: str = "3.0",
+        config: FlextLdifModels.AclMetadataConfig,
     ) -> dict[str, object]:
-        """Build QuirkMetadata extensions dict from parsed ACL components.
+        """Build QuirkMetadata extensions dict from ACL metadata configuration.
 
         Args:
-            line_breaks: List of line break positions
-            dn_spaces: Whether DN contains spaces after commas
-            targetscope: Target scope value
-            version: ACL version string
-            default_version: Default version to compare against
+            config: ACL metadata configuration model
 
         Returns:
             Dict of metadata extensions
 
         Example:
-            >>> build_metadata_extensions(
+            >>> config = FlextLdifModels.AclMetadataConfig(
             ...     line_breaks=[10, 20],
             ...     dn_spaces=True,
             ...     targetscope="subtree",
             ...     version="3.0",
             ... )
+            >>> build_metadata_extensions(config)
             {
                 "line_breaks": [10, 20],
                 "is_multiline": True,
@@ -307,18 +299,18 @@ class FlextLdifUtilitiesACL:
         """
         extensions: dict[str, object] = {}
 
-        if line_breaks:
-            extensions["line_breaks"] = line_breaks
+        if config.line_breaks:
+            extensions["line_breaks"] = config.line_breaks
             extensions["is_multiline"] = True
 
-        if dn_spaces:
+        if config.dn_spaces:
             extensions["dn_spaces"] = True
 
-        if targetscope:
-            extensions["targetscope"] = targetscope
+        if config.targetscope:
+            extensions["targetscope"] = config.targetscope
 
-        if version and version != default_version:
-            extensions["version"] = version
+        if config.version and config.version != config.default_version:
+            extensions["version"] = config.version
 
         return extensions
 
@@ -501,22 +493,12 @@ class FlextLdifUtilitiesACL:
         Args:
             subject: AclSubject model with subject_type and subject_value
             subject_formatters: Dict mapping subject_type to (format_str, needs_dn_extraction)
-                Example: {
-                    "self": ("self", False),
-                    "user_dn": ('"{0}"', True),
-                    "group_dn": ('group="{0}"', True),
-                    "dn_attr": ("dnattr=({0})", False)
-                }
 
         Returns:
-            Formatted subject string
-
-        Example:
-            >>> formatters = {"self": ("self", False), "user_dn": ('"{0}"', True)}
-            >>> format_oid_subject(AclSubject(subject_type="self"), formatters)
-            "self"
+            Formatted subject string (default: "*")
 
         """
+        # Guard clause: no subject or unknown type
         if not subject:
             return "*"
 
@@ -528,19 +510,26 @@ class FlextLdifUtilitiesACL:
 
         format_str, needs_dn_extraction = subject_formatters[subject_type]
 
-        # Extract DN from LDAP URL if needed
-        if needs_dn_extraction and "ldap:///" in subject_value:
-            dn = subject_value.split("ldap:///", 1)[1].split("?", 1)[0]
-            if not dn or dn == "*":
-                return "*"
-            return format_str.format(dn)
+        # Determine value to format based on extraction needs
         if needs_dn_extraction:
-            return format_str.format(subject_value)
-        # Extract attribute name from value (before #)
-        attr_name = (
-            subject_value.split("#", 1)[0] if "#" in subject_value else subject_value
-        )
-        return format_str.format(attr_name)
+            # Extract DN from LDAP URL if present
+            value = (
+                subject_value.split("ldap:///", 1)[1].split("?", 1)[0]
+                if "ldap:///" in subject_value
+                else subject_value
+            )
+            # Guard clause: invalid DN
+            if not value or value == "*":
+                return "*"
+        else:
+            # Extract attribute name (before #)
+            value = (
+                subject_value.split("#", 1)[0]
+                if "#" in subject_value
+                else subject_value
+            )
+
+        return format_str.format(value)
 
     @staticmethod
     def format_oid_permissions(
@@ -607,7 +596,13 @@ class FlextLdifUtilitiesACL:
             Formatted bind rule string
 
         """
-        # Map subject type to ACI format
+
+        # Helper to ensure LDAP URL format
+        def ensure_ldap_url(value: str) -> str:
+            prefix = getattr(constants, "ACL_LDAP_URL_PREFIX", "ldap:///")
+            return value if value.startswith(prefix) else f"{prefix}{value}"
+
+        # Strategy mapping for subject types (reduces 8 returns to 3)
         if subject_type == FlextLdifConstants.AclSubjectTypes.SELF:
             acl_self = getattr(constants, "ACL_SELF_SUBJECT", "self")
             return f'userdn="{acl_self}";)'
@@ -616,34 +611,23 @@ class FlextLdifUtilitiesACL:
             acl_anon = getattr(constants, "ACL_ANONYMOUS_SUBJECT_ALT", "anyone")
             return f'userdn="{acl_anon}";)'
 
-        # Handle both "group" and "group_dn" subject types
+        # Group handling (group, group_dn)
         if subject_type in {FlextLdifConstants.AclSubjectTypes.GROUP, "group_dn"}:
-            # Ensure LDAP URL format
-            acl_ldap_url_prefix = getattr(constants, "ACL_LDAP_URL_PREFIX", "ldap:///")
-            if not subject_value.startswith(acl_ldap_url_prefix):
-                subject_value = f"{acl_ldap_url_prefix}{subject_value}"
-            return f'groupdn="{subject_value}";)'
+            return f'groupdn="{ensure_ldap_url(subject_value)}";)'
 
-        acl_subject_type_bind_rules = getattr(
+        # Attribute-based subjects (dn_attr, guid_attr, group_attr)
+        if subject_type in {"dn_attr", "guid_attr", "group_attr"}:
+            return f'userattr="{subject_value}";)'
+
+        # Bind rules (pass through)
+        bind_rules_type = getattr(
             constants, "ACL_SUBJECT_TYPE_BIND_RULES", "bind_rules"
         )
-        if subject_type == acl_subject_type_bind_rules:
+        if subject_type == bind_rules_type:
             return f"{subject_value};)"
 
-        if subject_type == "dn_attr":
-            return f'userattr="{subject_value}";)'
-
-        if subject_type == "guid_attr":
-            return f'userattr="{subject_value}";)'
-
-        if subject_type == "group_attr":
-            return f'userattr="{subject_value}";)'
-
-        # Default: treat as userdn
-        acl_ldap_url_prefix = getattr(constants, "ACL_LDAP_URL_PREFIX", "ldap:///")
-        if not subject_value.startswith(acl_ldap_url_prefix):
-            subject_value = f"{acl_ldap_url_prefix}{subject_value}"
-        return f'userdn="{subject_value}";)'
+        # Default: userdn with LDAP URL
+        return f'userdn="{ensure_ldap_url(subject_value)}";)'
 
     @staticmethod
     def parse_novell_rights(

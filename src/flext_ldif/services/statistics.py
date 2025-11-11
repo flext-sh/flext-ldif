@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from pathlib import Path
-from typing import override
+from typing import cast, override
 
 from flext_core import FlextDecorators, FlextResult, FlextService
 
@@ -58,17 +58,20 @@ class FlextLdifStatistics(FlextService[FlextLdifModels.StatisticsResult]):
             FlextResult containing empty statistics (service health check)
 
         """
-        # Return service status for health check
-        return FlextResult[dict[str, object]].ok({
-            "service": "StatisticsService",
-            "status": "operational",
-            "capabilities": [
-                "generate_statistics",
-                "count_entries",
-                "analyze_rejections",
-            ],
-            "version": "1.0.0",
-        })
+        # Return service status for health check (cast to StatisticsResult)
+        return cast(
+            "FlextResult[FlextLdifModels.StatisticsResult]",
+            FlextResult[dict[str, object]].ok({
+                "service": "StatisticsService",
+                "status": "operational",
+                "capabilities": [
+                    "generate_statistics",
+                    "count_entries",
+                    "analyze_rejections",
+                ],
+                "version": "1.0.0",
+            }),
+        )
 
     # ════════════════════════════════════════════════════════════════════════
     # FLUENT BUILDER PATTERN

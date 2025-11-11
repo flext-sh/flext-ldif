@@ -211,8 +211,8 @@ def test_write_empty_entries_list(writer: FlextLdifWriter) -> None:
 
     assert result.is_success
     content = result.unwrap()
-    # Empty list produces empty output (no entries, no headers)
-    assert content == "" or content.isspace()
+    # Empty list produces LDIF version header but no entries (RFC 2849 compliant)
+    assert content == "version: 1\n"
     assert content.count("dn:") == 0
 
 
@@ -243,4 +243,4 @@ def test_fallback_to_rfc_when_no_server(
     )
     # Should fail with clear error message
     assert result.is_failure
-    assert "No quirk implementation found" in result.error or ""
+    assert "no quirk found" in result.error or ""

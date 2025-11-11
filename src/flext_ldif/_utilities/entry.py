@@ -26,6 +26,53 @@ class FlextLdifUtilitiesEntry:
     _MIN_BASE64_LENGTH: int = 8
 
     @staticmethod
+    def _convert_single_boolean_value(
+        value: str,
+        source_format: str,
+        target_format: str,
+    ) -> str:
+        """Convert a single boolean value between formats.
+
+        Args:
+            value: Boolean value to convert
+            source_format: Input format ("0/1" or "TRUE/FALSE")
+            target_format: Output format ("0/1" or "TRUE/FALSE")
+
+        Returns:
+            Converted boolean value or original value if no conversion needed
+
+        """
+        if source_format == "0/1" and target_format == "TRUE/FALSE":
+            return "TRUE" if value == "1" else "FALSE"
+        if source_format == "TRUE/FALSE" and target_format == "0/1":
+            return "1" if value.upper() == "TRUE" else "0"
+        return value
+
+    @staticmethod
+    def _convert_attribute_values(
+        values: list[str],
+        source_format: str,
+        target_format: str,
+    ) -> list[str]:
+        """Convert all boolean values in an attribute's value list.
+
+        Args:
+            values: List of attribute values
+            source_format: Input format ("0/1" or "TRUE/FALSE")
+            target_format: Output format ("0/1" or "TRUE/FALSE")
+
+        Returns:
+            List of converted boolean values
+
+        """
+        return [
+            FlextLdifUtilitiesEntry._convert_single_boolean_value(
+                value, source_format, target_format
+            )
+            for value in values
+        ]
+
+    @staticmethod
     def convert_boolean_attributes(
         attributes: dict[str, list[str]],
         boolean_attr_names: set[str],
@@ -52,17 +99,9 @@ class FlextLdifUtilitiesEntry:
 
         for attr_name, values in result.items():
             if attr_name.lower() in boolean_attr_names:
-                converted = []
-
-                for value in values:
-                    if source_format == "0/1" and target_format == "TRUE/FALSE":
-                        converted.append("TRUE" if value == "1" else "FALSE")
-                    elif source_format == "TRUE/FALSE" and target_format == "0/1":
-                        converted.append("1" if value.upper() == "TRUE" else "0")
-                    else:
-                        converted.append(value)
-
-                result[attr_name] = converted
+                result[attr_name] = FlextLdifUtilitiesEntry._convert_attribute_values(
+                    values, source_format, target_format
+                )
 
         return result
 

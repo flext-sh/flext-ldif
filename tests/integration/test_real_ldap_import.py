@@ -247,13 +247,13 @@ jpegPhoto:: {encoded_photo}
         if "jpegPhoto" in attrs_dict:
             attrs_dict["jpegPhoto"] = binary_data
 
+        # Add objectClass to attrs_dict
+        attrs_dict["objectClass"] = entry.get_attribute_values("objectclass")
+
         ldap_connection.add(
             str(entry.dn),
             entry.get_attribute_values("objectclass"),
-            attributes={
-                attr: entry.attributes.attributes[attr]
-                for attr in entry.attributes.attributes
-            },
+            attributes=attrs_dict,  # Use attrs_dict with corrected binary data
         )
 
         # Verify

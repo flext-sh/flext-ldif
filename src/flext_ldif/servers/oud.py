@@ -323,11 +323,16 @@ class FlextLdifServersOud(FlextLdifServersRfc):
         OID_PREFIXES: ClassVar[tuple[str, ...]] = ("orcl", "oracle")
 
         # === DETECTION PATTERNS ===
-        DETECTION_OID_PATTERN: ClassVar[str] = r"(ds-sync-|ds-pwp-|ds-cfg-)"
-        DETECTION_PATTERN: ClassVar[str] = (
-            r"(ds-sync-|ds-pwp-|ds-cfg-)"  # Alias for compatibility
+        # Case-insensitive pattern ((?i) flag) because detector searches in lowercase content
+        DETECTION_OID_PATTERN: ClassVar[str] = (
+            r"(?i)(ds-sync-|ds-pwp-|ds-cfg-|root dns)"
         )
-        DETECTION_WEIGHT: ClassVar[int] = 10  # Detection confidence weight
+        DETECTION_PATTERN: ClassVar[str] = (
+            r"(?i)(ds-sync-|ds-pwp-|ds-cfg-|root dns)"  # Alias for compatibility
+        )
+        DETECTION_WEIGHT: ClassVar[int] = (
+            14  # Detection confidence weight (increased to overcome OpenLDAP cn=config ambiguity)
+        )
         DETECTION_ACL_PREFIX: ClassVar[str] = "ds-cfg-"  # OUD configuration ACL prefix
 
         # === DETECTION COLLECTIONS (Python 3.13 frozenset) ===
@@ -346,6 +351,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 "ds-sync-state",
                 "ds-pwp-account-disabled",
                 "ds-cfg-backend-id",
+                "ds-privilege-name",
                 "entryUUID",
             ],
         )
@@ -353,6 +359,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
         DETECTION_OBJECTCLASS_NAMES: ClassVar[frozenset[str]] = frozenset(
             [
                 "ds-root-dse",
+                "ds-root-dn-user",
                 "ds-unbound-id-config",
                 "ds-cfg-backend",
             ],
@@ -1139,12 +1146,15 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 )
 
                 # Build QuirkMetadata extensions using DRY utility
-                FlextLdifUtilities.ACL.build_metadata_extensions(
+                metadata_config = FlextLdifModels.AclMetadataConfig(
                     line_breaks=line_breaks,
                     dn_spaces=dn_spaces,
                     targetscope=targetscope,
                     version=version,
                     default_version="3.0",
+                )
+                extensions = FlextLdifUtilities.ACL.build_metadata_extensions(
+                    metadata_config
                 )
 
                 # Create Acl model
@@ -1162,6 +1172,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                     metadata=FlextLdifModels.QuirkMetadata.create_for(
                         self._get_server_type(),
                         original_format=acl_line,
+                        extensions=extensions,
                     ),
                     raw_acl=acl_line,
                 )

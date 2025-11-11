@@ -54,7 +54,7 @@ objectClass: groupOfNames
 
         parse_result = ldif.parse(content)
         assert parse_result.is_success
-        entries: list[FlextLdifModels.Entry] = parse_result.unwrap()
+        entries = parse_result.unwrap()
 
         # Filter by objectclass
         result = ldif.filter(entries, objectclass="person")
@@ -77,7 +77,7 @@ objectClass: person
 
         parse_result = ldif.parse(content)
         assert parse_result.is_success
-        entries: list[FlextLdifModels.Entry] = parse_result.unwrap()
+        entries = parse_result.unwrap()
 
         # Filter by DN pattern
         result = ldif.filter(entries, dn_pattern="ou=People")
@@ -120,7 +120,7 @@ objectClass: person
 
         parse_result = ldif.parse(content)
         assert parse_result.is_success
-        entries: list[FlextLdifModels.Entry] = parse_result.unwrap()
+        entries = parse_result.unwrap()
 
         result = ldif.validate_entries(entries)
         assert result.is_success
@@ -165,7 +165,7 @@ objectClass: person
 
         parse_result = ldif.parse(content)
         assert parse_result.is_success
-        entries: list[FlextLdifModels.Entry] = parse_result.unwrap()
+        entries = parse_result.unwrap()
         assert len(entries) == 3
 
         # Filter by DN and attributes
