@@ -59,6 +59,63 @@ class FlextLdifUtilitiesDecorators:
     """Decorators for LDIF server quirk metadata assignment."""
 
     @staticmethod
+    def _get_server_type_from_class(obj: object) -> str | None:
+        """Extract SERVER_TYPE from class Constants via MRO traversal.
+
+        Internal helper to reduce complexity in attach_parse_metadata.
+
+        Args:
+            obj: Object instance to extract server type from
+
+        Returns:
+            Server type string or None if not found
+
+        """
+        if not hasattr(obj, "__class__"):
+            return None
+
+        for cls in obj.__class__.__mro__:
+            if hasattr(cls, "Constants") and hasattr(cls.Constants, "SERVER_TYPE"):
+                return str(cls.Constants.SERVER_TYPE)
+
+        return None
+
+    @staticmethod
+    def _attach_metadata_if_present(
+        result_value: object,
+        quirk_type: str,
+        server_type: str | None,
+    ) -> None:
+        """Attach metadata to result value if it has metadata attribute.
+
+        Internal helper to reduce complexity in attach_parse_metadata.
+        Mutates result_value by setting metadata attribute.
+
+        Args:
+            result_value: Unwrapped result value from FlextResult
+            quirk_type: Quirk type for metadata
+            server_type: Server type from Constants
+
+        """
+        # Only attach metadata to models with metadata attribute
+        if not (
+            getattr(result_value, "metadata", None) is not None
+            or hasattr(result_value, "metadata")
+        ):
+            return
+
+        # Create metadata
+        metadata = FlextLdifModels.QuirkMetadata.create_for(
+            quirk_type=quirk_type,
+            server_type=server_type,
+        )
+        metadata.parsed_timestamp = datetime.now(UTC).isoformat()
+
+        # Attach metadata - Protocol cast after hasattr check
+        obj_with_metadata = cast("_HasMetadata", result_value)
+        obj_with_metadata.metadata = metadata
+
+    @staticmethod
     def attach_parse_metadata(
         quirk_type: str,
     ) -> Callable[[Callable[..., FlextResult[T]]], Callable[..., FlextResult[T]]]:
@@ -97,41 +154,17 @@ class FlextLdifUtilitiesDecorators:
                 """Call original function and attach metadata to result."""
                 result = func(self, *args, **kwargs)
 
-                # If result is successful, attach metadata
+                # If result is successful, attach metadata using helper methods
                 if result.is_success:
                     unwrapped = result.unwrap()
-
-                    # Only attach metadata to models with metadata attribute
-                    # Use getattr to check if metadata exists (type-safe pattern)
-                    if getattr(unwrapped, "metadata", None) is not None or hasattr(
+                    server_type = (
+                        FlextLdifUtilitiesDecorators._get_server_type_from_class(self)
+                    )
+                    FlextLdifUtilitiesDecorators._attach_metadata_if_present(
                         unwrapped,
-                        "metadata",
-                    ):
-                        # Get server_type from Constants class if available
-                        server_type = None
-                        if hasattr(self, "__class__"):
-                            for cls in self.__class__.__mro__:
-                                if hasattr(cls, "Constants") and hasattr(
-                                    cls.Constants,
-                                    "SERVER_TYPE",
-                                ):
-                                    server_type = cls.Constants.SERVER_TYPE
-                                    break
-
-                        # Create or update metadata
-                        metadata = FlextLdifModels.QuirkMetadata.create_for(
-                            quirk_type=quirk_type,
-                            server_type=server_type,
-                        )
-                        metadata.parsed_timestamp = datetime.now(
-                            UTC,
-                        ).isoformat()
-
-                        # Attach metadata - use Protocol cast after hasattr check
-                        # PyRefly: hasattr confirms metadata exists, Protocol provides type
-
-                        obj_with_metadata = cast("_HasMetadata", unwrapped)
-                        obj_with_metadata.metadata = metadata
+                        quirk_type,
+                        server_type,
+                    )
 
                 return result
 
@@ -185,25 +218,19 @@ class FlextLdifUtilitiesDecorators:
         return decorator
 
     @staticmethod
-    def safe_parse(
+    def _safe_operation(
         operation_name: str,
     ) -> Callable[[Callable[..., FlextResult[T]]], Callable[..., FlextResult[T]]]:
-        """Decorator to wrap parse methods with standardized error handling.
+        """Generic decorator to wrap methods with standardized error handling.
 
-        Consolidates try/except patterns across all servers (eliminates 200-300 lines).
-        Automatically catches exceptions and returns FlextResult.fail with context.
+        Internal helper used by safe_parse and safe_write decorators.
+        Eliminates 89 lines of duplication between parse/write decorators.
 
         Args:
-            operation_name: Operation name for error messages (e.g., "OID attribute parsing")
+            operation_name: Operation name for error messages
 
         Returns:
             Decorator that adds error handling
-
-        Example:
-            @FlextLdifUtilities.Decorators.safe_parse("OID attribute parsing")
-            def _parse_attribute(self, definition: str) -> FlextResult[SchemaAttribute]:
-                # Parse logic - exceptions automatically caught
-                return FlextResult.ok(parsed_attr)
 
         """
 
@@ -231,6 +258,30 @@ class FlextLdifUtilitiesDecorators:
         return decorator
 
     @staticmethod
+    def safe_parse(
+        operation_name: str,
+    ) -> Callable[[Callable[..., FlextResult[T]]], Callable[..., FlextResult[T]]]:
+        """Decorator to wrap parse methods with standardized error handling.
+
+        Consolidates try/except patterns across all servers (eliminates 200-300 lines).
+        Automatically catches exceptions and returns FlextResult.fail with context.
+
+        Args:
+            operation_name: Operation name for error messages (e.g., "OID attribute parsing")
+
+        Returns:
+            Decorator that adds error handling
+
+        Example:
+            @FlextLdifUtilities.Decorators.safe_parse("OID attribute parsing")
+            def _parse_attribute(self, definition: str) -> FlextResult[SchemaAttribute]:
+                # Parse logic - exceptions automatically caught
+                return FlextResult.ok(parsed_attr)
+
+        """
+        return FlextLdifUtilitiesDecorators._safe_operation(operation_name)
+
+    @staticmethod
     def safe_write(
         operation_name: str,
     ) -> Callable[[Callable[..., FlextResult[T]]], Callable[..., FlextResult[T]]]:
@@ -251,29 +302,7 @@ class FlextLdifUtilitiesDecorators:
                 return FlextResult.ok(ldif_str)
 
         """
-
-        def decorator(
-            func: Callable[..., FlextResult[T]],
-        ) -> Callable[..., FlextResult[T]]:
-            """Wrapper that adds error handling."""
-
-            @wraps(func)
-            def wrapper(
-                self: object,
-                *args: object,
-                **kwargs: object,
-            ) -> FlextResult[T]:
-                """Execute function with automatic error handling."""
-                try:
-                    return func(self, *args, **kwargs)
-                except Exception as e:
-                    error_msg = f"{operation_name} failed: {e}"
-                    logger.exception(error_msg)
-                    return FlextResult.fail(error_msg)
-
-            return wrapper
-
-        return decorator
+        return FlextLdifUtilitiesDecorators._safe_operation(operation_name)
 
 
 # Export standalone functions for backward compatibility

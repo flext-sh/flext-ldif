@@ -139,7 +139,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
         ATTRIBUTE_FIELDS: ClassVar[frozenset[str]] = frozenset(["x_origin", "ordering"])
 
         # ObjectClass requirements (extends RFC - allows multiple SUP)
-        OBJECTCLASS_REQUIREMENTS: ClassVar[dict[str, bool]] = {
+        OBJECTCLASS_REQUIREMENTS: ClassVar[Mapping[str, bool]] = {
             "requires_sup_for_auxiliary": True,
             "allows_multiple_sup": True,  # OpenLDAP allows multiple SUP
             "requires_explicit_structural": False,

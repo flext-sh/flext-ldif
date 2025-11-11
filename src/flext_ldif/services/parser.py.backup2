@@ -146,11 +146,20 @@ class FlextLdifParser(FlextService[FlextLdifModels.ParseResponse]):
 
             match (input_source, content):
                 case ("string", str() as content_str):
-                    result = self.parse_string(content_str, effective_type)
+                    result = cast(
+                        "FlextResult[FlextLdifModels.ParseResult]",
+                        self.parse_string(content_str, effective_type),
+                    )
                 case ("file", Path() as content_path):
-                    result = self.parse_file(content_path, encoding, effective_type)
+                    result = cast(
+                        "FlextResult[FlextLdifModels.ParseResult]",
+                        self.parse_file(content_path, encoding, effective_type),
+                    )
                 case ("ldap3", list() as ldap3_content):
-                    result = self.parse_ldap3(ldap3_content, effective_type)
+                    result = cast(
+                        "FlextResult[FlextLdifModels.ParseResult]",
+                        self.parse_ldap3(ldap3_content, effective_type),
+                    )
                 case ("ldap3", _):
                     return FlextResult.fail("ldap3 input source requires list content")
                 case _:
@@ -171,9 +180,7 @@ class FlextLdifParser(FlextService[FlextLdifModels.ParseResponse]):
                 )
 
             entry = quirks[0]
-            return cast(
-                "FlextResult[FlextLdifModels.ParseResult]", entry.parse(content)
-            )
+            return cast("FlextResult[FlextLdifModels.ParseResult]", entry.parse(content))
 
         def parse_file(
             self,
@@ -244,37 +251,6 @@ class FlextLdifParser(FlextService[FlextLdifModels.ParseResponse]):
             self.detector = detector
             self.logger = logger
 
-        def _validate_explicit_server_type(self, server_type: str) -> FlextResult[str]:
-            """Validate explicitly specified server type."""
-            quirks = self.registry.gets(server_type)
-            if not quirks:
-                return FlextResult.fail(
-                    f"No quirk implementation found for server type '{server_type}'. "
-                    "Ensure server type is registered in quirks registry."
-                )
-            return FlextResult.ok(server_type)
-
-        def _try_auto_detect(
-            self, ldif_path: Path | None, ldif_content: str | None
-        ) -> FlextResult[str]:
-            """Attempt auto-detection from LDIF content."""
-            if not ldif_path and not ldif_content:
-                return FlextResult.fail("No content for auto-detection")
-
-            detection_result = self.detector.detect_server_type(
-                ldif_path=ldif_path, ldif_content=ldif_content
-            )
-            if detection_result.is_failure:
-                return FlextResult.fail("Auto-detection failed")
-
-            detected_data = detection_result.unwrap()
-            detected_type = detected_data.detected_server_type
-            if not detected_type:
-                return FlextResult.fail("No server type detected")
-
-            self.logger.info("Auto-detected server type: %s", detected_type)
-            return FlextResult.ok(detected_type)
-
         def resolve(
             self,
             server_type: str | None,
@@ -283,9 +259,15 @@ class FlextLdifParser(FlextService[FlextLdifModels.ParseResponse]):
         ) -> FlextResult[str]:
             """Resolve the effective server type based on configuration and auto-detection."""
             try:
-                # Validate explicit server type if provided
+                # Validate explicit server type
                 if server_type is not None:
-                    return self._validate_explicit_server_type(server_type)
+                    quirks = self.registry.gets(server_type)
+                    if not quirks:
+                        return FlextResult.fail(
+                            f"No quirk implementation found for explicitly specified server type '{server_type}'. "
+                            f"Please ensure the server type is registered in the quirks registry.",
+                        )
+                    return FlextResult.ok(server_type)
 
                 config = self.config
 
@@ -296,31 +278,40 @@ class FlextLdifParser(FlextService[FlextLdifModels.ParseResponse]):
 
                     case FlextLdifConfig(
                         quirks_detection_mode="manual",
-                        quirks_server_type=str() as manual_type,
+                        quirks_server_type=str() as server_type,
                     ):
-                        return FlextResult.ok(manual_type)
+                        return FlextResult.ok(server_type)
 
                     case FlextLdifConfig(quirks_detection_mode="manual"):
                         return FlextResult.fail(
-                            "Manual mode requires quirks_server_type in configuration"
+                            "Manual mode requires quirks_server_type to be set in configuration",
                         )
 
                     case FlextLdifConfig(quirks_detection_mode="auto"):
-                        # Try auto-detection
-                        detect_result = self._try_auto_detect(ldif_path, ldif_content)
-                        if detect_result.is_success:
-                            return detect_result
+                        # Auto-detection inline
+                        if ldif_path or ldif_content:
+                            detection_result = self.detector.detect_server_type(
+                                ldif_path=ldif_path,
+                                ldif_content=ldif_content,
+                            )
+                            if detection_result.is_success:
+                                detected_data = detection_result.unwrap()
+                                detected_type = detected_data.detected_server_type
+                                if detected_type:
+                                    self.logger.info("Auto-detected server type: %s", detected_type)
+                                    return FlextResult.ok(detected_type)
 
-                        self.logger.warning("Auto-detection failed, using RELAXED mode")
+                        self.logger.warning(
+                            "Auto-detection failed or no content provided, using RELAXED mode",
+                        )
                         return FlextResult.ok(FlextLdifConstants.ServerTypes.RELAXED)
 
-                # Default fallback
-                default = getattr(
+                default_type = getattr(
                     config,
                     "ldif_default_server_type",
                     FlextLdifConstants.ServerTypes.RELAXED,
                 )
-                return FlextResult.ok(default)
+                return FlextResult.ok(default_type)
 
             except (ValueError, TypeError, AttributeError):
                 self.logger.exception("Error resolving server type")
@@ -361,16 +352,12 @@ class FlextLdifParser(FlextService[FlextLdifModels.ParseResponse]):
                 processed_entry, strict=False
             ):
                 schema_count = 1
-                processed_entry = self.schema_extractor.parse_schema_entry(
-                    processed_entry, server_type
-                )
+                processed_entry = self.schema_extractor.parse_schema_entry(processed_entry, server_type)
             else:
                 data_count = 1
 
             if options.auto_extract_acls:
-                processed_entry = self.acl_extractor.extract_acls(
-                    processed_entry, server_type
-                )
+                processed_entry = self.acl_extractor.extract_acls(processed_entry, server_type)
 
             if options.validate_entries:
                 validation_result = self.validator.validate_entry(
@@ -518,9 +505,7 @@ class FlextLdifParser(FlextService[FlextLdifModels.ParseResponse]):
                 validation_errors: list[str] = []
 
                 self.validate_dn(entry, validation_errors)
-                self.validate_objectclass(
-                    entry, strict=strict, errors=validation_errors
-                )
+                self.validate_objectclass(entry, strict=strict, errors=validation_errors)
                 self.validate_attributes(entry, strict=strict, errors=validation_errors)
 
                 if validation_errors:
@@ -691,7 +676,7 @@ class FlextLdifParser(FlextService[FlextLdifModels.ParseResponse]):
     class StatisticsBuilder:
         """Handles statistics finalization - replaces _finalize_statistics method."""
 
-        def __init__(self, *, enable_events: bool, logger: FlextLogger) -> None:
+        def __init__(self, enable_events: bool, logger: FlextLogger) -> None:
             """Initialize with event enablement flag and logger."""
             self.enable_events = enable_events
             self.logger = logger
@@ -721,9 +706,7 @@ class FlextLdifParser(FlextService[FlextLdifModels.ParseResponse]):
             # Emit ParseEvent if enabled
             if self.enable_events:
                 schema_count = sum(
-                    1
-                    for entry in processed_entries
-                    if "cn=schema" in str(entry.dn).lower()
+                    1 for entry in processed_entries if "cn=schema" in str(entry.dn).lower()
                 )
 
                 if input_source == "file" and isinstance(content, Path):
@@ -786,6 +769,99 @@ class FlextLdifParser(FlextService[FlextLdifModels.ParseResponse]):
                 f"Parser service health check failed: {e}",
             )
 
+    def _handle_input_routing(
+        self,
+        input_source: FlextLdifConstants.LiteralTypes.ParserInputSource,
+        content: str | Path | list[tuple[str, dict[str, list[str]]]],
+        effective_type: str,
+        encoding: str,
+    ) -> FlextResult[FlextLdifModels.ParseResult]:
+        """Route input to appropriate parser based on input source."""
+        result: FlextResult[FlextLdifModels.ParseResult]
+
+        match (input_source, content):
+            case ("string", str() as content_str):
+                result = cast(
+                    "FlextResult[FlextLdifModels.ParseResult]",
+                    self._parse_from_string(content_str, effective_type),
+                )
+            case ("file", Path() as content_path):
+                result = cast(
+                    "FlextResult[FlextLdifModels.ParseResult]",
+                    self._parse_from_file(content_path, encoding, effective_type),
+                )
+            case ("ldap3", list() as ldap3_content):
+                result = cast(
+                    "FlextResult[FlextLdifModels.ParseResult]",
+                    self._parse_from_ldap3(ldap3_content, effective_type),
+                )
+            case ("ldap3", _):
+                return FlextResult.fail("ldap3 input source requires list content")
+            case _:
+                return FlextResult.fail(f"Unsupported input source: {input_source}")
+
+        return result
+
+    def _finalize_statistics(
+        self,
+        stats: FlextLdifModels.Statistics,
+        failed_count: int,
+        failed_details: list[str],
+        processed_entries: list[FlextLdifModels.Entry],
+        parse_duration_ms: float,
+        input_source: FlextLdifConstants.LiteralTypes.ParserInputSource,
+        content: str | Path | list[tuple[str, dict[str, list[str]]]],
+        effective_type: str,
+    ) -> FlextLdifModels.Statistics:
+        """Finalize statistics with failure info and optional event emission."""
+        # Update statistics with failures
+        if failed_count > 0:
+            stats = stats.model_copy(
+                update={"parse_errors": stats.parse_errors + failed_count},
+            )
+            self._logger.error(
+                f"Parse completed with {failed_count} entry failures. "
+                f"See details in parse_errors field. Failed entries: {failed_details[:5]}"
+            )
+
+        # Emit ParseEvent if enabled
+        if self._enable_events:
+            # Count schema entries (cn=schema)
+            schema_count = sum(
+                1 for entry in processed_entries if "cn=schema" in str(entry.dn).lower()
+            )
+
+            # Create ParseEvent using appropriate mnemonic constructor
+            if input_source == "file" and isinstance(content, Path):
+                parse_event = FlextLdifModels.ParseEvent.for_file(
+                    file_path=content,
+                    entries_parsed=len(processed_entries),
+                    schema_entries=schema_count,
+                    parse_duration_ms=parse_duration_ms,
+                    detected_server_type=effective_type,
+                    errors_encountered=failed_details if failed_count > 0 else None,
+                )
+            elif input_source == "ldap3":
+                parse_event = FlextLdifModels.ParseEvent.for_ldap3(
+                    entries_parsed=len(processed_entries),
+                    schema_entries=schema_count,
+                    parse_duration_ms=parse_duration_ms,
+                    detected_server_type=effective_type,
+                    errors_encountered=failed_details if failed_count > 0 else None,
+                )
+            else:  # string
+                parse_event = FlextLdifModels.ParseEvent.for_string(
+                    entries_parsed=len(processed_entries),
+                    schema_entries=schema_count,
+                    parse_duration_ms=parse_duration_ms,
+                    detected_server_type=effective_type,
+                    errors_encountered=failed_details if failed_count > 0 else None,
+                )
+
+            stats = stats.add_event(parse_event)
+
+        return stats
+
     def parse(
         self,
         content: str | Path | list[tuple[str, dict[str, list[str]]]],
@@ -811,9 +887,7 @@ class FlextLdifParser(FlextService[FlextLdifModels.ParseResponse]):
             processor = self.EntryProcessor(
                 schema_extractor, acl_extractor, validator, self._logger
             )
-            stats_builder = self.StatisticsBuilder(
-                enable_events=self._enable_events, logger=self._logger
-            )
+            stats_builder = self.StatisticsBuilder(self._enable_events, self._logger)
 
             # Resolve effective server type
             ldif_path = (
@@ -887,6 +961,557 @@ class FlextLdifParser(FlextService[FlextLdifModels.ParseResponse]):
             return FlextResult.fail(
                 f"An unexpected error occurred in parser service: {e}",
             )
+
+    def _parse_from_string(
+        self,
+        content: str,
+        server_type: str,
+    ) -> FlextResult[FlextLdifModels.ParseResult]:
+        # Get the appropriate entry quirk for this server type from registry
+        # Entry quirks handle LDIF content parsing via entry.parse_content method
+        quirks = self._registry.get_entrys(server_type)
+        if not quirks:
+            return FlextResult.fail(
+                f"Internal error: No entry quirk found for resolved server type '{server_type}'",
+            )
+
+        # Use the first (highest priority) entry quirk for this server type
+        # Note: get_entrys() returns Entry instances directly, not base quirks
+        entry = quirks[0]
+
+        # Use public parse() interface to parse LDIF content
+        return cast("FlextResult[FlextLdifModels.ParseResult]", entry.parse(content))
+
+    def _parse_from_file(
+        self,
+        path: Path,
+        encoding: str,
+        server_type: str,
+    ) -> FlextResult[FlextLdifModels.ParseResult]:
+        if not path.exists():
+            return FlextResult.fail(f"LDIF file not found: {path}")
+        try:
+            content = path.read_text(encoding=encoding)
+            return self._parse_from_string(content, server_type)
+        except (FileNotFoundError, OSError, Exception) as e:
+            return FlextResult.fail(f"Failed to read LDIF file: {e}")
+
+    def _parse_from_ldap3(
+        self,
+        results: list[tuple[str, dict[str, list[str]]]],
+        server_type: str,
+    ) -> FlextResult[FlextLdifModels.ParseResult]:
+        """Parse LDAP3 search results into Entry models.
+
+        Uses the quirk's entry parsing to properly create Entry models
+        from LDAP3 format (dn, attributes) tuples.
+        """
+        quirks = self._registry.gets(server_type)
+        if not quirks:
+            return FlextResult.fail(
+                f"No quirk available for server type: {server_type}",
+            )
+        quirk = quirks[0]
+
+        entries = []
+        failed_count = 0
+        failed_details: list[str] = []
+
+        for dn, attrs in results:
+            # Use quirk's _parse_entry method to properly create Entry model
+            # This ensures proper DN and attributes handling per server type
+            entry_result = quirk.entry_quirk.parse_entry(dn, attrs)
+
+            if entry_result.is_success:
+                entries.append(entry_result.unwrap())
+            else:
+                # Count and log failures - CRITICAL: do not silently drop entries!
+                failed_count += 1
+                error_msg = f"DN: {dn}, Error: {entry_result.error}"
+                failed_details.append(error_msg)
+                self._logger.error(
+                    f"FAILED to parse LDAP3 entry {dn}: {entry_result.error}",
+                )
+
+        # Log summary if there were failures
+        if failed_count > 0:
+            self._logger.error(
+                f"LDAP3 parse completed with {failed_count} FAILURES out of {len(results)} total entries. "
+                f"Successful: {len(entries)}, Failed: {failed_count}",
+            )
+
+        # Return tuple with success entries and failure count for statistics
+        return FlextResult.ok((entries, failed_count, failed_details))
+
+    def _resolve_server_type(
+        self,
+        server_type: str | None,
+        ldif_path: Path | None = None,
+        ldif_content: str | None = None,
+    ) -> FlextResult[str]:
+        """Resolve the effective server type based on configuration and auto-detection.
+
+        Resolution priority:
+        1. Explicitly provided server_type (hard errors if invalid)
+        2. Relaxed mode (if enabled in config)
+        3. Manual mode (uses configured server type)
+        4. Auto-detection mode (detects from content/file)
+        5. Fallback to configured default or RELAXED
+
+        Args:
+            server_type: Explicitly provided server type (takes precedence)
+            ldif_path: Optional path for auto-detection
+            ldif_content: Optional content for auto-detection
+
+        Returns:
+            FlextResult with resolved server type string
+
+        """
+        try:
+            # Validate explicit server type (inline)
+            if server_type is not None:
+                quirks = self._registry.gets(server_type)
+                if not quirks:
+                    return FlextResult.fail(
+                        f"No quirk implementation found for explicitly specified server type '{server_type}'. "
+                        f"Please ensure the server type is registered in the quirks registry.",
+                    )
+                return FlextResult.ok(server_type)
+
+            config = self._config
+
+            # Use structural pattern matching for server type resolution (Python 3.13)
+            match config:
+                case FlextLdifConfig(enable_relaxed_parsing=True):
+                    return FlextResult.ok(FlextLdifConstants.ServerTypes.RELAXED)
+
+                case FlextLdifConfig(
+                    quirks_detection_mode="manual",
+                    quirks_server_type=str() as server_type,
+                ):
+                    return FlextResult.ok(server_type)
+
+                case FlextLdifConfig(quirks_detection_mode="manual"):
+                    return FlextResult.fail(
+                        "Manual mode requires quirks_server_type to be set in configuration",
+                    )
+
+                case FlextLdifConfig(quirks_detection_mode="auto"):
+                    # Auto-detection inline (merged from _resolve_auto_detection)
+                    if ldif_path or ldif_content:
+                        detection_result = self._detector.detect_server_type(
+                            ldif_path=ldif_path,
+                            ldif_content=ldif_content,
+                        )
+                        if detection_result.is_success:
+                            detected_data = detection_result.unwrap()
+                            detected_type = detected_data.detected_server_type
+                            if detected_type:
+                                self._logger.info("Auto-detected server type: %s", detected_type)
+                                return FlextResult.ok(detected_type)
+
+                    self._logger.warning(
+                        "Auto-detection failed or no content provided, using RELAXED mode",
+                    )
+                    return FlextResult.ok(FlextLdifConstants.ServerTypes.RELAXED)
+
+            default_type = getattr(
+                config,
+                "ldif_default_server_type",
+                FlextLdifConstants.ServerTypes.RELAXED,
+            )
+            return FlextResult.ok(default_type)
+
+        except (ValueError, TypeError, AttributeError):
+            self._logger.exception("Error resolving server type")
+            return FlextResult.ok(FlextLdifConstants.ServerTypes.RELAXED)
+
+    def _process_single_entry(
+        self,
+        entry: FlextLdifModels.Entry,
+        server_type: str,
+        options: FlextLdifModels.ParseFormatOptions,
+    ) -> tuple[FlextLdifModels.Entry, int, int, list[str]]:
+        """Process single entry with all transformations.
+
+        Returns: (processed_entry, schema_count, data_count, validation_errors)
+        """
+        processed_entry = entry
+        schema_count = 0
+        data_count = 0
+        validation_errors = []
+
+        if options.normalize_dns:
+            processed_entry = self._normalize_entry_dn(processed_entry)
+
+        if options.auto_parse_schema and FlextLdifUtilities.Entry.is_schema_entry(
+            processed_entry, strict=False
+        ):
+            schema_count = 1
+            processed_entry = self._parse_schema_entry(processed_entry, server_type)
+        else:
+            data_count = 1
+
+        if options.auto_extract_acls:
+            processed_entry = self._extract_acls(processed_entry, server_type)
+
+        if options.validate_entries:
+            validation_result = self._validate_entry(
+                processed_entry,
+                strict=options.strict_schema_validation,
+            )
+            if validation_result.is_failure:
+                if options.strict_schema_validation:
+                    msg = f"Strict validation failed for entry {processed_entry.dn}: {validation_result.error}"
+                    raise ValueError(msg)
+                self._logger.warning(
+                    f"Entry validation warning for {processed_entry.dn}: {validation_result.error}",
+                )
+                validation_errors.append(validation_result.error)
+
+        if not options.include_operational_attrs:
+            processed_entry = self._filter_operational_attributes(processed_entry)
+
+        # Filter out None values from validation_errors
+        filtered_errors = [e for e in validation_errors if e is not None]
+        return processed_entry, schema_count, data_count, filtered_errors
+
+    def _post_process_entries(
+        self,
+        entries: list[FlextLdifModels.Entry],
+        server_type: str,
+        options: FlextLdifModels.ParseFormatOptions,
+    ) -> tuple[list[FlextLdifModels.Entry], FlextLdifModels.Statistics]:
+        processed_entries = []
+        schema_count = 0
+        data_count = 0
+        parse_errors = 0
+        validation_errors = []
+
+        for entry in entries:
+            try:
+                processed_entry, schema_inc, data_inc, val_errs = (
+                    self._process_single_entry(entry, server_type, options)
+                )
+                schema_count += schema_inc
+                data_count += data_inc
+                validation_errors.extend(val_errs)
+                processed_entries.append(processed_entry)
+
+            except Exception as e:
+                parse_errors += 1
+                error_msg = f"Error processing entry {entry.dn if hasattr(entry, 'dn') else 'unknown'}: {e}"
+                self._logger.exception(error_msg)
+
+                if (
+                    options.max_parse_errors > 0
+                    and parse_errors >= options.max_parse_errors
+                ):
+                    self._logger.exception(
+                        f"Maximum parse errors ({options.max_parse_errors}) reached, stopping processing",
+                    )
+                    break
+
+        statistics = FlextLdifModels.Statistics(
+            total_entries=len(processed_entries),
+            schema_entries=schema_count,
+            data_entries=data_count,
+            parse_errors=parse_errors,
+            detected_server_type=server_type,
+        )
+        return processed_entries, statistics
+
+    def _normalize_entry_dn(
+        self,
+        entry: FlextLdifModels.Entry,
+    ) -> FlextLdifModels.Entry:
+        """Normalize DN formatting to RFC 4514 standard using FlextLdifUtilities."""
+        try:
+            # Use FlextLdifUtilities.DN for RFC 4514 compliant DN normalization
+            dn_str = str(entry.dn.value)
+            normalized_str = FlextLdifUtilities.DN.norm(dn_str)
+
+            # Fallback to clean_dn if norm returns None
+            if normalized_str is None:
+                normalized_str = FlextLdifUtilities.DN.clean_dn(dn_str)
+
+            # Create new entry with normalized DN
+            normalized_dn = FlextLdifModels.DistinguishedName(value=normalized_str)
+
+            # Create new entry with normalized DN
+            entry_dict = entry.model_dump()
+            entry_dict["dn"] = normalized_dn
+            return FlextLdifModels.Entry.model_validate(entry_dict)
+        except Exception as e:
+            self._logger.warning(f"Failed to normalize DN for entry {entry.dn}: {e}")
+            return entry
+
+    def _validate_entry(
+        self,
+        entry: FlextLdifModels.Entry,
+        *,
+        strict: bool = False,
+    ) -> FlextResult[bool]:
+        """Validate entry against LDAP schema rules using FlextLdifUtilities."""
+        try:
+            validation_errors: list[str] = []
+
+            # Validate DN
+            self._validate_entry_dn(entry, validation_errors)
+
+            # Validate objectClass
+            self._validate_entry_objectclass(
+                entry, strict=strict, errors=validation_errors
+            )
+
+            # Validate attribute values
+            self._validate_entry_attributes(
+                entry, strict=strict, errors=validation_errors
+            )
+
+            if validation_errors:
+                return FlextResult.fail("; ".join(validation_errors))
+
+            return FlextResult.ok(True)
+
+        except Exception as e:
+            return FlextResult.fail(f"Validation error: {e}")
+
+    def _validate_entry_dn(
+        self,
+        entry: FlextLdifModels.Entry,
+        errors: list[str],
+    ) -> None:
+        """Validate entry DN.
+
+        Args:
+            entry: Entry to validate
+            errors: List to append error messages to
+
+        """
+        dn_str = str(entry.dn.value) if entry.dn else None
+        if not dn_str:
+            errors.append("Entry DN cannot be empty")
+        elif not FlextLdifUtilities.DN.validate(dn_str):
+            errors.append(f"Invalid DN format per RFC 4514: {dn_str}")
+
+    def _validate_entry_objectclass(
+        self,
+        entry: FlextLdifModels.Entry,
+        *,
+        strict: bool,
+        errors: list[str],
+    ) -> None:
+        """Validate entry has objectClass attribute.
+
+        Args:
+            entry: Entry to validate
+            strict: Whether to enforce objectClass requirement
+            errors: List to append error messages to
+
+        """
+        has_objectclass = any(
+            attr_name.lower() == FlextLdifConstants.DictKeys.OBJECTCLASS.lower()
+            for attr_name in entry.attributes.attributes
+        )
+        if not has_objectclass and strict:
+            errors.append("Entry must have objectClass attribute")
+
+    def _validate_entry_attributes(
+        self,
+        entry: FlextLdifModels.Entry,
+        *,
+        strict: bool,
+        errors: list[str],
+    ) -> None:
+        """Validate entry attribute values.
+
+        Args:
+            entry: Entry to validate
+            strict: Whether to check for empty values
+            errors: List to append error messages to
+
+        """
+        for attr_name, attr_value in entry.attributes.attributes.items():
+            if isinstance(attr_value, list):
+                values = attr_value
+            elif hasattr(attr_value, "values") and isinstance(
+                attr_value.values,
+                list,
+            ):
+                values = attr_value.values
+            else:
+                values = [attr_value]
+
+            if (not values or all(not v for v in values)) and strict:
+                errors.append(f"Attribute '{attr_name}' has empty values")
+
+    def _filter_operational_attributes(
+        self,
+        entry: FlextLdifModels.Entry,
+    ) -> FlextLdifModels.Entry:
+        """Filter out operational attributes from entry.
+
+        IMPORTANT: For schema entries, preserve attributetypes and objectclasses
+        as they are the core content of schema entries and needed for filtering.
+        """
+        try:
+            # Check if this is a schema entry - if so, preserve schema attributes
+            is_schema_entry = FlextLdifUtilities.Entry.is_schema_entry(
+                entry, strict=False
+            )
+
+            # Common operational attributes to filter from ALL entries
+            # These are always filtered regardless of entry type
+            operational_attrs = {
+                attr.lower()
+                for attr in FlextLdifConstants.OperationalAttributes.FILTER_FROM_ALL_ENTRIES
+            }
+
+            # Schema-related attributes should ONLY be filtered for non-schema entries
+            # For schema entries, these are the actual content, not operational attributes
+            if not is_schema_entry:
+                schema_operational_attrs = {
+                    attr.lower()
+                    for attr in FlextLdifConstants.OperationalAttributes.FILTER_FROM_NON_SCHEMA_ENTRIES
+                }
+                operational_attrs.update(schema_operational_attrs)
+
+            # Filter attributes
+            filtered_attrs = {
+                attr_name: attr_value
+                for attr_name, attr_value in entry.attributes.attributes.items()
+                if attr_name.lower() not in operational_attrs
+            }
+
+            # Create new LdifAttributes with filtered attributes
+            new_attributes = FlextLdifModels.LdifAttributes(
+                attributes=filtered_attrs,
+                attribute_metadata=entry.attributes.attribute_metadata,
+                metadata=entry.attributes.metadata,
+            )
+
+            # Return entry with filtered attributes
+            return entry.model_copy(update={"attributes": new_attributes})
+
+        except Exception as e:
+            self._logger.warning(
+                f"Failed to filter operational attributes for entry {entry.dn}: {e}",
+            )
+            return entry
+
+    # ==================== AUTOMATIC INTERNAL METHODS ====================
+
+    def _parse_attribute_types_from_entry(
+        self,
+        entry: FlextLdifModels.Entry,
+        schemas: list[FlextLdifServersBase],
+    ) -> list[FlextLdifModels.SchemaAttribute]:
+        """Parse attributeTypes from entry using schema quirks."""
+        schema_attributes = []
+        attr_types = entry.attributes.get(
+            FlextLdifConstants.SchemaFields.ATTRIBUTE_TYPES,
+            [],
+        )
+        if attr_types:
+            for attr_def in attr_types:
+                for quirk in schemas:
+                    if quirk.schema_quirk.can_handle_attribute(attr_def):
+                        result = quirk.schema_quirk.parse_attribute(attr_def)
+                        if result.is_success:
+                            schema_attributes.append(result.unwrap())
+                            break
+        return schema_attributes
+
+    def _parse_objectclasses_from_entry(
+        self,
+        entry: FlextLdifModels.Entry,
+        schemas: list[FlextLdifServersBase],
+    ) -> list[FlextLdifModels.SchemaObjectClass]:
+        """Parse objectClasses from entry using schema quirks."""
+        schema_objectclasses = []
+        obj_classes = entry.attributes.get(
+            FlextLdifConstants.SchemaFields.OBJECT_CLASSES,
+            [],
+        )
+        if obj_classes:
+            for oc_def in obj_classes:
+                for quirk in schemas:
+                    if quirk.schema_quirk.can_handle_objectclass(oc_def):
+                        oc_result = quirk.schema_quirk.parse_objectclass(oc_def)
+                        if oc_result.is_success:
+                            schema_objectclasses.append(oc_result.unwrap())
+                            break
+        return schema_objectclasses
+
+    def _parse_schema_entry(
+        self,
+        entry: FlextLdifModels.Entry,
+        server_type: str,
+    ) -> FlextLdifModels.Entry:
+        """Parse schema entry attributes into models (AUTOMATIC internal).
+
+        Args:
+            entry: Entry to parse
+            server_type: Server type for quirk selection
+
+        Returns:
+            Entry with populated attributes_schema and objectclasses
+
+        """
+        try:
+            schemas = self._registry.gets(server_type)
+            if not schemas:
+                schemas = self._registry.gets(
+                    FlextLdifConstants.ServerTypes.RFC,
+                )
+
+            schema_attributes = self._parse_attribute_types_from_entry(entry, schemas)
+            schema_objectclasses = self._parse_objectclasses_from_entry(entry, schemas)
+
+            return entry.model_copy(
+                update={
+                    "attributes_schema": (schema_attributes or None),
+                    "objectclasses": (schema_objectclasses or None),
+                },
+            )
+
+        except (ValueError, TypeError, AttributeError, Exception) as e:
+            self._logger.warning("Error parsing schema entry: %s", e)
+            return entry
+
+    def _extract_acls(
+        self,
+        entry: FlextLdifModels.Entry,
+        server_type: str,
+    ) -> FlextLdifModels.Entry:
+        """Extract ACLs from entry attributes (AUTOMATIC internal).
+
+        Args:
+            entry: Entry to extract ACLs from
+            server_type: Server type for quirk selection
+
+        Returns:
+            Entry with Entry.acls populated if ACLs found
+
+        """
+        try:
+            acl_result = self._acl_service.extract_acls_from_entry(
+                entry,
+                server_type=server_type,
+            )
+
+            if acl_result.is_success and acl_result.value:
+                # Extract just the acls list from AclResponse
+                acl_response = acl_result.value
+                if acl_response.acls:
+                    return entry.model_copy(update={"acls": acl_response.acls})
+
+            return entry
+
+        except (ValueError, TypeError, AttributeError, Exception) as e:
+            self._logger.warning("Error extracting ACLs: %s", e)
+            return entry
 
     # ==================== CONVENIENCE METHODS ====================
 

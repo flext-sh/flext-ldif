@@ -157,7 +157,7 @@ class TestRealLdapCRUD:
                 "mail": "crud@example.com",
                 "uid": "crud_user",
             },
-            objectclasses=["inetOrgPerson", "person", "top"]
+            objectclasses=["inetOrgPerson", "person", "top"],
         )
         assert person_result.is_success
         person_entry = person_result.unwrap()
@@ -226,7 +226,7 @@ class TestRealLdapBatchOperations:
                     "sn": f"User{i}",
                     "mail": f"batch{i}@example.com",
                 },
-                objectclasses=["inetOrgPerson", "person", "top"]
+                objectclasses=["inetOrgPerson", "person", "top"],
             )
             if result.is_success:
                 entries.append(result.unwrap())

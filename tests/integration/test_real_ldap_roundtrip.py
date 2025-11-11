@@ -204,10 +204,13 @@ class TestRealLdapRoundtrip:
         reimport_entry = parsed_entries[0]
         # Change DN for reimport
         # Build reimport_attrs from FlextLdif entry attributes
+        # Filter out LDIF-specific attributes (changetype, control, etc.)
+        ldif_special_attrs = {"changetype", "control", "modifyTimestamp", "modifiersName"}
         reimport_attrs: dict[str, list[str]] = {
             attr_name: attr_values
             for attr_name, attr_values in reimport_entry.attributes.attributes.items()
-            if attr_name.lower() != "objectclass"
+            if attr_name.lower() not in ldif_special_attrs
+            and attr_name.lower() != "objectclass"
         }
         reimport_attrs["cn"] = ["Roundtrip Test Copy"]
 
@@ -219,6 +222,8 @@ class TestRealLdapRoundtrip:
             attributes={
                 attr: reimport_entry.attributes.attributes[attr]
                 for attr in reimport_entry.attributes.attributes
+                if attr.lower() not in ldif_special_attrs
+                and attr.lower() != "objectclass"
             },
         )
 

@@ -18,8 +18,11 @@ from __future__ import annotations
 
 import operator
 import re
-from collections.abc import Callable, Generator, Mapping
-from typing import Any, ClassVar, Literal, cast
+from collections.abc import Callable, Generator, Iterator, Mapping
+from typing import TYPE_CHECKING, Any, ClassVar, Literal, Self, cast, overload
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 from flext_core import FlextLogger, FlextModels, FlextResult
 from pydantic import (
@@ -115,6 +118,7 @@ class FlextLdifModels(FlextModels):
             metadata: dict[str, object] | None = None,
         ) -> FlextResult[FlextLdifModels.DistinguishedName]:
             """Factory helper for DistinguishedName value object."""
+            # Handle DistinguishedName input
             if isinstance(value, cls):
                 if metadata is None or value.metadata == metadata:
                     return FlextResult[FlextLdifModels.DistinguishedName].ok(value)
@@ -130,6 +134,12 @@ class FlextLdifModels(FlextModels):
                         f"Invalid distinguished name metadata: {exc}",
                     )
                 return FlextResult[FlextLdifModels.DistinguishedName].ok(updated_value)
+
+            # Handle str input - type is narrowed by if/else
+            if not isinstance(value, str):
+                return FlextResult[FlextLdifModels.DistinguishedName].fail(
+                    f"Invalid value type: {type(value)}",
+                )
 
             try:
                 dn = cls(value=value, metadata=metadata)
@@ -357,6 +367,414 @@ class FlextLdifModels(FlextModels):
 
         subject_type: str = Field(..., description="Subject type (user, group, etc.)")
         subject_value: str = Field(..., description="Subject value/pattern")
+
+    class AclMetadataConfig(FlextModels.Value):
+        """Configuration for ACL metadata extensions.
+
+        Consolidates parameters for build_metadata_extensions utility function.
+        Reduces function signature from 6 parameters to 1 model.
+
+        Example:
+            config = FlextLdifModels.AclMetadataConfig(
+                line_breaks=[10, 20],
+                dn_spaces=True,
+                targetscope="subtree",
+                version="3.0",
+            )
+            extensions = FlextLdifUtilities.ACL.build_metadata_extensions(config)
+
+        """
+
+        model_config = ConfigDict(
+            extra="forbid",
+            validate_assignment=True,
+        )
+
+        line_breaks: list[int] | None = Field(
+            default=None,
+            description="List of line break positions in ACL",
+        )
+        dn_spaces: bool = Field(
+            default=False,
+            description="Whether DN contains spaces after commas",
+        )
+        targetscope: str | None = Field(
+            default=None,
+            description="Target scope value (subtree, base, one)",
+        )
+        version: str | None = Field(
+            default=None,
+            description="ACL version string",
+        )
+        default_version: str = Field(
+            default="3.0",
+            description="Default version to compare against",
+        )
+
+    class LogContextExtras(FlextModels.Value):
+        """Additional context fields for logging events.
+
+        Replaces **extra_context: object pattern with typed Model.
+        Eliminates use of object and Any types in logging functions.
+
+        Example:
+            extras = FlextLdifModels.LogContextExtras(
+                user_id="admin",
+                session_id="abc123",
+                request_id="req-456",
+            )
+            event = FlextLdifUtilities.Events.log_and_emit_dn_event(
+                logger=logger,
+                config=dn_config,
+                extras=extras,
+            )
+
+        """
+
+        model_config = ConfigDict(
+            extra="allow",  # Allow arbitrary context fields
+            validate_assignment=True,
+        )
+
+        # Common context fields (all optional)
+        user_id: str | None = Field(
+            default=None,
+            description="User identifier for audit trail",
+        )
+        session_id: str | None = Field(
+            default=None,
+            description="Session identifier for correlation",
+        )
+        request_id: str | None = Field(
+            default=None,
+            description="Request identifier for tracing",
+        )
+        component: str | None = Field(
+            default=None,
+            description="Component name for context",
+        )
+        # Note: extra="allow" permits additional custom fields without declaring them
+
+    class DnEventConfig(FlextModels.Value):
+        """Configuration for DN event creation.
+
+        Consolidates parameters for create_dn_event utility function.
+        Reduces function signature from 6 parameters to 1 model.
+
+        Example:
+            config = FlextLdifModels.DnEventConfig(
+                dn_operation="normalize",
+                input_dn="CN=Admin,DC=Example",
+                output_dn="cn=admin,dc=example",
+                operation_duration_ms=1.2,
+            )
+            event = FlextLdifUtilities.Events.create_dn_event(config)
+
+        """
+
+        model_config = ConfigDict(
+            extra="forbid",
+            validate_assignment=True,
+        )
+
+        dn_operation: str = Field(
+            ...,
+            description="Operation name (parse, validate, normalize, etc.)",
+        )
+        input_dn: str = Field(
+            ...,
+            description="Input DN before operation",
+        )
+        output_dn: str | None = Field(
+            default=None,
+            description="Output DN after operation (None if failed)",
+        )
+        operation_duration_ms: float = Field(
+            default=0.0,
+            description="Duration in milliseconds",
+        )
+        validation_result: bool | None = Field(
+            default=None,
+            description="Validation result (None if not validated)",
+        )
+        parse_components: list[tuple[str, str]] | None = Field(
+            default=None,
+            description="Parsed DN components",
+        )
+
+    class MigrationEventConfig(FlextModels.Value):
+        """Configuration for migration event creation.
+
+        Consolidates parameters for create_migration_event utility function.
+        Reduces function signature from 8 parameters to 1 model.
+
+        Example:
+            config = FlextLdifModels.MigrationEventConfig(
+                migration_operation="full_migration",
+                source_server="oid",
+                target_server="oud",
+                entries_processed=1000,
+                entries_migrated=980,
+                entries_failed=20,
+                migration_duration_ms=5420.5,
+            )
+            event = FlextLdifUtilities.Events.create_migration_event(config)
+
+        """
+
+        model_config = ConfigDict(
+            extra="forbid",
+            validate_assignment=True,
+        )
+
+        migration_operation: str = Field(
+            ...,
+            description="Operation name (full_migration, incremental, etc.)",
+        )
+        source_server: str = Field(
+            ...,
+            description="Source LDAP server type",
+        )
+        target_server: str = Field(
+            ...,
+            description="Target LDAP server type",
+        )
+        entries_processed: int = Field(
+            ...,
+            description="Total entries processed",
+        )
+        entries_migrated: int = Field(
+            default=0,
+            description="Entries successfully migrated",
+        )
+        entries_failed: int = Field(
+            default=0,
+            description="Entries that failed migration",
+        )
+        migration_duration_ms: float = Field(
+            default=0.0,
+            description="Duration in milliseconds",
+        )
+        error_details: list[FlextLdifModels.ErrorDetail] | None = Field(
+            default=None,
+            description="Error information for failed entries",
+        )
+
+    class ConversionEventConfig(FlextModels.Value):
+        """Configuration for conversion event creation.
+
+        Consolidates parameters for create_conversion_event utility function.
+        Reduces function signature from 8 parameters to 1 model.
+
+        Example:
+            config = FlextLdifModels.ConversionEventConfig(
+                conversion_operation="acl_transform",
+                source_format="orclaci",
+                target_format="olcAccess",
+                items_processed=50,
+                items_converted=48,
+                items_failed=2,
+                conversion_duration_ms=125.3,
+            )
+            event = FlextLdifUtilities.Events.create_conversion_event(config)
+
+        """
+
+        model_config = ConfigDict(
+            extra="forbid",
+            validate_assignment=True,
+        )
+
+        conversion_operation: str = Field(
+            ...,
+            description="Operation name (acl_transform, schema_convert, etc.)",
+        )
+        source_format: str = Field(
+            ...,
+            description="Source format type",
+        )
+        target_format: str = Field(
+            ...,
+            description="Target format type",
+        )
+        items_processed: int = Field(
+            ...,
+            description="Total items processed",
+        )
+        items_converted: int = Field(
+            default=0,
+            description="Items successfully converted",
+        )
+        items_failed: int = Field(
+            default=0,
+            description="Items that failed conversion",
+        )
+        conversion_duration_ms: float = Field(
+            default=0.0,
+            description="Duration in milliseconds",
+        )
+        error_details: list[FlextLdifModels.ErrorDetail] | None = Field(
+            default=None,
+            description="Error information for failed conversions",
+        )
+
+    class SchemaEventConfig(FlextModels.Value):
+        """Configuration for schema event creation.
+
+        Consolidates parameters for create_schema_event utility function.
+        Reduces function signature from 7 parameters to 1 model.
+
+        Example:
+            config = FlextLdifModels.SchemaEventConfig(
+                schema_operation="parse_attribute",
+                items_processed=50,
+                items_succeeded=48,
+                items_failed=2,
+                operation_duration_ms=125.3,
+                server_type="oud",
+            )
+            event = FlextLdifUtilities.Events.create_schema_event(config)
+
+        """
+
+        model_config = ConfigDict(
+            extra="forbid",
+            validate_assignment=True,
+        )
+
+        schema_operation: str = Field(
+            ...,
+            description="Operation name (parse_attribute, parse_objectclass, validate, etc.)",
+        )
+        items_processed: int = Field(
+            ...,
+            description="Total number of schema items processed",
+        )
+        items_succeeded: int = Field(
+            default=0,
+            description="Number of items processed successfully",
+        )
+        items_failed: int = Field(
+            default=0,
+            description="Number of items that failed processing",
+        )
+        operation_duration_ms: float = Field(
+            default=0.0,
+            description="Total operation duration in milliseconds",
+        )
+        server_type: str = Field(
+            default="rfc",
+            description="LDAP server type (oid, oud, openldap, etc.)",
+        )
+        error_details: list[FlextLdifModels.ErrorDetail] | None = Field(
+            default=None,
+            description="Detailed error information for failed items",
+        )
+
+    class MigrateOptions(FlextModels.Value):
+        """Options for FlextLdif.migrate() operation.
+
+        Consolidates 12+ optional parameters into single typed Model.
+        Reduces migrate() signature from 16 parameters to 5 parameters.
+
+        Supports three migration modes:
+        - Structured: 6-file output with full tracking (via migration_config)
+        - Categorized: Custom multi-file output (via categorization_rules)
+        - Simple: Single output file (default)
+
+        Example:
+            # Simple migration (defaults)
+            options = FlextLdifModels.MigrateOptions()
+
+            # Structured migration with tracking
+            options = FlextLdifModels.MigrateOptions(
+                migration_config=FlextLdifModels.MigrationConfig(...),
+                write_options=FlextLdifModels.WriteFormatOptions(
+                    write_removed_attributes_as_comments=True,
+                ),
+            )
+
+            # Categorized migration
+            options = FlextLdifModels.MigrateOptions(
+                categorization_rules={
+                    "hierarchy_objectclasses": ["organization"],
+                    "user_objectclasses": ["person"],
+                },
+                input_files=["schema.ldif", "data.ldif"],
+                output_files={"users": "users.ldif"},
+            )
+
+            # Simple migration with filtering
+            options = FlextLdifModels.MigrateOptions(
+                input_filename="source.ldif",
+                output_filename="target.ldif",
+                forbidden_attributes=["pwdChangedTime"],
+                base_dn="dc=example,dc=com",
+                sort_entries_hierarchically=True,
+            )
+
+        """
+
+        model_config = ConfigDict(
+            extra="forbid",
+            validate_assignment=True,
+        )
+
+        # Structured migration (preferred for production)
+        migration_config: FlextLdifModels.MigrationConfig | dict[str, object] | None = Field(
+            default=None,
+            description="Structured migration config with 6-file output and tracking",
+        )
+        write_options: FlextLdifModels.WriteFormatOptions | None = Field(
+            default=None,
+            description="Write format options (line folding, removed attrs as comments)",
+        )
+
+        # Categorized mode parameters (legacy)
+        categorization_rules: dict[str, list[str]] | None = Field(
+            default=None,
+            description="Entry categorization rules (enables categorized mode)",
+        )
+        input_files: list[str] | None = Field(
+            default=None,
+            description="Ordered list of LDIF files to process (categorized mode)",
+        )
+        output_files: dict[str, str] | None = Field(
+            default=None,
+            description="Category to filename mapping (categorized mode)",
+        )
+        schema_whitelist_rules: dict[str, list[str]] | None = Field(
+            default=None,
+            description="Allowed schema elements whitelist (categorized mode)",
+        )
+
+        # Simple mode parameters
+        input_filename: str | None = Field(
+            default=None,
+            description="Specific input file to process (simple mode only)",
+        )
+        output_filename: str | None = Field(
+            default=None,
+            description="Output filename (simple mode, defaults to 'migrated.ldif')",
+        )
+
+        # Common filtering parameters
+        forbidden_attributes: list[str] | None = Field(
+            default=None,
+            description="Attributes to remove from entries",
+        )
+        forbidden_objectclasses: list[str] | None = Field(
+            default=None,
+            description="ObjectClasses to remove from entries",
+        )
+        base_dn: str | None = Field(
+            default=None,
+            description="Target base DN for DN normalization",
+        )
+        sort_entries_hierarchically: bool = Field(
+            default=False,
+            description="Sort entries by DN hierarchy depth then alphabetically",
+        )
 
     class Acl(FlextModels.ArbitraryTypesModel):
         r"""Universal ACL model for all LDAP server types.
@@ -1613,7 +2031,10 @@ class FlextLdifModels(FlextModels):
             return key in self.attributes
 
         def __iter__(self) -> Generator[str]:
-            """Iterate over attribute names.
+            """Iterate over attribute names (intentionally overrides BaseModel).
+
+            BaseModel.__iter__ yields (name, value) tuples, but we only yield names
+            for dict-like behavior. This is intentional for LDIF attribute access.
 
             Allows: for name in entry.attributes: ...
 
@@ -1883,6 +2304,39 @@ class FlextLdifModels(FlextModels):
             for entries in self.entries_by_category.values():
                 all_entries.extend(entries)
             return all_entries
+
+        @property
+        def content(self) -> list[FlextLdifModels.Entry]:
+            """Alias for get_all_entries() for backward compatibility.
+
+            Returns:
+                List of all entries from all categories combined.
+
+            """
+            return self.get_all_entries()
+
+        def __len__(self) -> int:
+            """Return the number of entries (makes EntryResult behave like a list)."""
+            return len(self.get_all_entries())
+
+        def __iter__(self) -> Iterator[FlextLdifModels.Entry]:
+            """Iterate over entries (makes EntryResult behave like a list)."""
+            return iter(self.get_all_entries())
+
+        @overload
+        def __getitem__(self, key: int) -> FlextLdifModels.Entry: ...
+
+        @overload
+        def __getitem__(self, key: slice) -> list[FlextLdifModels.Entry]: ...
+
+        def __getitem__(
+            self, key: int | slice
+        ) -> FlextLdifModels.Entry | list[FlextLdifModels.Entry]:
+            """Get entry by index or slice (makes EntryResult behave like a list)."""
+            entries = self.get_all_entries()
+            if isinstance(key, int):
+                return entries[key]
+            return entries[key]
 
         def get_category(
             self,
@@ -2815,6 +3269,196 @@ class FlextLdifModels(FlextModels):
             if self.data_entries == 0:
                 return float("inf") if self.schema_entries > 0 else 0.0
             return self.schema_entries / self.data_entries
+
+        @classmethod
+        def _create_parse_event(
+            cls,
+            *,
+            entries_parsed: int,
+            schema_entries: int,
+            parse_duration_ms: float,
+            detected_server_type: str,
+            source_type: Literal["file", "string", "stream", "ldap3"],
+            source_file: str | None = None,
+            aggregate_id_override: str | None = None,
+            detection_confidence: float = 1.0,
+            quirks_applied: list[str] | None = None,
+            errors_encountered: list[str] | None = None,
+            fatal_errors: list[str] | None = None,
+        ) -> Self:
+            """Generic ParseEvent factory (eliminates 228 lines of duplication).
+
+            Internal helper used by for_file, for_string, and for_ldap3 constructors.
+
+            Args:
+                entries_parsed: Total number of entries parsed
+                schema_entries: Number of schema entries (cn=schema)
+                parse_duration_ms: Duration of parse operation in milliseconds
+                detected_server_type: Detected or configured server type
+                source_type: Source type ("file", "string", "ldap3")
+                source_file: Optional path to source file
+                aggregate_id_override: Optional override for aggregate_id
+                detection_confidence: Server detection confidence (0.0-1.0)
+                quirks_applied: List of quirk names applied during parsing
+                errors_encountered: Non-fatal errors encountered
+                fatal_errors: Fatal errors that stopped parsing
+
+            Returns:
+                ParseEvent instance
+
+            """
+            import uuid
+            from datetime import UTC, datetime
+
+            data_entries = entries_parsed - schema_entries
+            aggregate_id = aggregate_id_override or f"parse_{uuid.uuid4().hex[:8]}"
+
+            return cls(
+                unique_id=f"parse_{uuid.uuid4().hex[:8]}",
+                event_type="ldif.parse",
+                aggregate_id=aggregate_id,
+                created_at=datetime.now(UTC),
+                entries_parsed=entries_parsed,
+                schema_entries=schema_entries,
+                data_entries=data_entries,
+                parse_duration_ms=parse_duration_ms,
+                source_file=source_file,
+                source_type=source_type,
+                detected_server_type=detected_server_type,
+                detection_confidence=detection_confidence,
+                quirks_applied=quirks_applied or [],
+                errors_encountered=errors_encountered or [],
+                fatal_errors=fatal_errors or [],
+            )
+
+        @classmethod
+        def for_file(
+            cls,
+            file_path: Path,
+            entries_parsed: int,
+            schema_entries: int,
+            parse_duration_ms: float,
+            detected_server_type: str,
+            *,
+            detection_confidence: float = 1.0,
+            quirks_applied: list[str] | None = None,
+            errors_encountered: list[str] | None = None,
+            fatal_errors: list[str] | None = None,
+        ) -> Self:
+            """Create ParseEvent for file input (mnemonic constructor).
+
+            Args:
+                file_path: Path to source LDIF file
+                entries_parsed: Total number of entries parsed
+                schema_entries: Number of schema entries (cn=schema)
+                parse_duration_ms: Duration of parse operation in milliseconds
+                detected_server_type: Detected or configured server type
+                detection_confidence: Server detection confidence (0.0-1.0)
+                quirks_applied: List of quirk names applied during parsing
+                errors_encountered: Non-fatal errors encountered
+                fatal_errors: Fatal errors that stopped parsing
+
+            Returns:
+                ParseEvent with file-specific metadata
+
+            """
+            return cls._create_parse_event(
+                entries_parsed=entries_parsed,
+                schema_entries=schema_entries,
+                parse_duration_ms=parse_duration_ms,
+                detected_server_type=detected_server_type,
+                source_type="file",
+                source_file=str(file_path),
+                aggregate_id_override=str(file_path),
+                detection_confidence=detection_confidence,
+                quirks_applied=quirks_applied,
+                errors_encountered=errors_encountered,
+                fatal_errors=fatal_errors,
+            )
+
+        @classmethod
+        def for_string(
+            cls,
+            entries_parsed: int,
+            schema_entries: int,
+            parse_duration_ms: float,
+            detected_server_type: str,
+            *,
+            detection_confidence: float = 1.0,
+            quirks_applied: list[str] | None = None,
+            errors_encountered: list[str] | None = None,
+            fatal_errors: list[str] | None = None,
+        ) -> Self:
+            """Create ParseEvent for string input (mnemonic constructor).
+
+            Args:
+                entries_parsed: Total number of entries parsed
+                schema_entries: Number of schema entries (cn=schema)
+                parse_duration_ms: Duration of parse operation in milliseconds
+                detected_server_type: Detected or configured server type
+                detection_confidence: Server detection confidence (0.0-1.0)
+                quirks_applied: List of quirk names applied during parsing
+                errors_encountered: Non-fatal errors encountered
+                fatal_errors: Fatal errors that stopped parsing
+
+            Returns:
+                ParseEvent with string-specific metadata
+
+            """
+            return cls._create_parse_event(
+                entries_parsed=entries_parsed,
+                schema_entries=schema_entries,
+                parse_duration_ms=parse_duration_ms,
+                detected_server_type=detected_server_type,
+                source_type="string",
+                source_file=None,
+                detection_confidence=detection_confidence,
+                quirks_applied=quirks_applied,
+                errors_encountered=errors_encountered,
+                fatal_errors=fatal_errors,
+            )
+
+        @classmethod
+        def for_ldap3(
+            cls,
+            entries_parsed: int,
+            schema_entries: int,
+            parse_duration_ms: float,
+            detected_server_type: str,
+            *,
+            detection_confidence: float = 1.0,
+            quirks_applied: list[str] | None = None,
+            errors_encountered: list[str] | None = None,
+            fatal_errors: list[str] | None = None,
+        ) -> Self:
+            """Create ParseEvent for ldap3 input (mnemonic constructor).
+
+            Args:
+                entries_parsed: Total number of entries parsed
+                schema_entries: Number of schema entries (cn=schema)
+                parse_duration_ms: Duration of parse operation in milliseconds
+                detected_server_type: Detected or configured server type
+                detection_confidence: Server detection confidence (0.0-1.0)
+                quirks_applied: List of quirk names applied during parsing
+                errors_encountered: Non-fatal errors encountered
+                fatal_errors: Fatal errors that stopped parsing
+
+            Returns:
+                ParseEvent with ldap3-specific metadata
+
+            """
+            return cls._create_parse_event(
+                entries_parsed=entries_parsed,
+                schema_entries=schema_entries,
+                parse_duration_ms=parse_duration_ms,
+                detected_server_type=detected_server_type,
+                source_type="ldap3",
+                source_file=None,
+                detection_confidence=detection_confidence,
+                quirks_applied=quirks_applied,
+                errors_encountered=errors_encountered,
+                fatal_errors=fatal_errors,
+            )
 
     class FilterEvent(FlextModels.DomainEvent):
         """Event emitted when entry filtering operation is applied.
@@ -4072,11 +4716,7 @@ class FlextLdifModels(FlextModels):
                 Dict with statistics, entry count, and output file count
 
             """
-            stats_summary = (
-                self.stats.statistics_summary
-                if hasattr(self.stats, "statistics_summary")
-                else self.stats
-            )
+            stats_summary = getattr(self.stats, "statistics_summary", self.stats)
             return {
                 "statistics": stats_summary,
                 "entry_count": self.entry_count,

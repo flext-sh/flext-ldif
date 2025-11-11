@@ -7,10 +7,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import string
+import re
 from collections.abc import Generator
 from typing import overload
 
-from flext_core import FlextUtilities
+from flext_core import FlextResult, FlextUtilities
 
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
@@ -721,6 +722,65 @@ class FlextLdifUtilitiesDN:
 
         # Check if DN equals base_dn OR if DN ends with ",base_dn"
         return dn_lower == base_dn_lower or dn_lower.endswith(f",{base_dn_lower}")
+
+    @staticmethod
+    def validate_dn_with_context(
+        dn_value: str | None,
+        context_dn: str | None,
+        dn_label: str = "DN",
+    ) -> FlextResult[bool]:
+        """Validate DN format and compare against context DN if provided.
+
+        Generic DN validation combining RFC 4514 format check and context comparison.
+        Used for ACL subject/target DN validation and similar use cases.
+
+        Args:
+            dn_value: DN string to validate (None or "*" treated as wildcard)
+            context_dn: Optional context DN to compare against
+            dn_label: Label for error messages (e.g., "subject DN", "target DN")
+
+        Returns:
+            FlextResult[bool]: Success if valid, failure with descriptive error
+
+        Example:
+            # Validate subject DN
+            result = validate_dn_with_context(
+                "cn=admin,dc=example,dc=com",
+                "cn=admin,dc=example,dc=com",
+                "subject DN"
+            )
+
+            # Wildcard DN (always valid)
+            result = validate_dn_with_context("*", None, "target DN")
+            # Returns: FlextResult.ok(True)
+
+            # Invalid DN format
+            result = validate_dn_with_context("invalid", None, "DN")
+            # Returns: FlextResult.fail("Invalid DN format per RFC 4514: invalid")
+
+        """
+        # Wildcard or None is always valid
+        if not dn_value or dn_value == "*":
+            return FlextResult[bool].ok(True)
+
+        # Validate DN format per RFC 4514
+        if not FlextLdifUtilitiesDN.validate(dn_value):
+            return FlextResult[bool].fail(
+                f"Invalid {dn_label} format per RFC 4514: {dn_value}",
+            )
+
+        # If context DN provided, compare case-insensitively
+        if context_dn:
+            comparison_result = FlextLdifUtilitiesDN.compare_dns(
+                str(context_dn),
+                dn_value,
+            )
+            if comparison_result != 0:  # 0 means equal
+                return FlextResult[bool].fail(
+                    f"{dn_label.capitalize()} mismatch: {context_dn} != {dn_value}",
+                )
+
+        return FlextResult[bool].ok(True)
 
 
 __all__ = [

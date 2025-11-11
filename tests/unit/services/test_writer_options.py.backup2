@@ -177,7 +177,9 @@ class TestWriterFormatOptions:
         )
 
         assert result.is_success
-        output = result.unwrap()
+        response = result.unwrap()
+
+        output = response.content
 
         lines = output.split("\n")
         # Check that lines are folded at 50 characters
@@ -204,7 +206,9 @@ class TestWriterFormatOptions:
         )
 
         assert result.is_success
-        output = result.unwrap()
+        response = result.unwrap()
+
+        output = response.content
 
         # Extract attribute lines (skip dn, version, changetype, and empty lines)
         lines = [
@@ -254,7 +258,9 @@ class TestWriterFormatOptions:
         )
 
         assert result.is_success
-        output = result.unwrap()
+        response = result.unwrap()
+
+        output = response.content
 
         # Should contain all attributes but not necessarily in metadata order
         assert "objectClass:" in output
@@ -280,7 +286,9 @@ class TestWriterFormatOptions:
         )
 
         assert result.is_success
-        output = result.unwrap()
+        response = result.unwrap()
+
+        output = response.content
 
         # Extract attribute names in order they appear
         lines = output.split("\n")
@@ -323,7 +331,9 @@ class TestWriterFormatOptions:
         )
 
         assert result.is_success
-        output = result.unwrap()
+        response = result.unwrap()
+
+        output = response.content
 
         # telephoneNumber should be written as a comment (it's in hidden_attributes)
         assert "# telephoneNumber:" in output
@@ -346,7 +356,9 @@ class TestWriterFormatOptions:
         )
 
         assert result.is_success
-        output = result.unwrap()
+        response = result.unwrap()
+
+        output = response.content
 
         # Should contain metadata comments
         assert "# Entry Metadata:" in output
@@ -369,7 +381,9 @@ class TestWriterFormatOptions:
         )
 
         assert result.is_success
-        output = result.unwrap()
+        response = result.unwrap()
+
+        output = response.content
 
         # Should not contain metadata comments
         assert "# Entry Metadata:" not in output
@@ -391,7 +405,9 @@ class TestWriterFormatOptions:
         )
 
         assert result.is_success
-        output = result.unwrap()
+        response = result.unwrap()
+
+        output = response.content
 
         # Should start with version header
         lines = output.strip().split("\n")
@@ -413,7 +429,9 @@ class TestWriterFormatOptions:
         )
 
         assert result.is_success
-        output = result.unwrap()
+        response = result.unwrap()
+
+        output = response.content
 
         # Should not contain version header
         assert "version: 1" not in output
@@ -434,7 +452,9 @@ class TestWriterFormatOptions:
         )
 
         assert result.is_success
-        output = result.unwrap()
+        response = result.unwrap()
+
+        output = response.content
 
         # Should contain timestamp comments
         assert "# Generated on:" in output
@@ -462,7 +482,9 @@ class TestWriterFormatOptions:
         )
 
         assert result.is_success
-        output = result.unwrap()
+        response = result.unwrap()
+
+        output = response.content
 
         # Should not contain timestamp comments
         assert "# Generated on:" not in output
@@ -484,7 +506,9 @@ class TestWriterFormatOptions:
         )
 
         assert result.is_success
-        output = result.unwrap()
+        response = result.unwrap()
+
+        output = response.content
 
         # Should have base64-encoded values (indicated by ::)
         assert "jpegPhoto::" in output  # Binary data should be base64 encoded
@@ -508,7 +532,9 @@ class TestWriterFormatOptions:
         )
 
         assert result.is_success
-        output = result.unwrap()
+        response = result.unwrap()
+
+        output = response.content
 
         # Should not have base64-encoded values (no ::)
         double_colon_count = output.count("::")
@@ -535,7 +561,9 @@ class TestWriterFormatOptions:
         )
 
         assert result.is_success
-        output = result.unwrap()
+        response = result.unwrap()
+
+        output = response.content
 
         lines = output.split("\n")
         # Should have folded lines (starting with space)
@@ -562,7 +590,9 @@ class TestWriterFormatOptions:
         )
 
         assert result.is_success
-        output = result.unwrap()
+        response = result.unwrap()
+
+        output = response.content
 
         lines = output.split("\n")
         # With fold_long_lines=False, lines exceeding 76 bytes MUST still be folded per RFC 2849
@@ -598,7 +628,9 @@ class TestWriterFormatOptions:
         )
 
         assert result.is_success
-        output = result.unwrap()
+        response = result.unwrap()
+
+        output = response.content
 
         # Should contain empty attributes
         assert "emptyAttr:" in output
@@ -620,7 +652,9 @@ class TestWriterFormatOptions:
         )
 
         assert result.is_success
-        output = result.unwrap()
+        response = result.unwrap()
+
+        output = response.content
 
         # Should not contain empty attributes
         assert "emptyAttr:" not in output
@@ -654,7 +688,9 @@ class TestWriterFormatOptions:
         )
 
         assert result.is_success
-        output = result.unwrap()
+        response = result.unwrap()
+
+        output = response.content
 
         # All attribute names should be lowercase
         assert "objectclass:" in output
@@ -694,7 +730,9 @@ class TestWriterFormatOptions:
         )
 
         assert result.is_success
-        output = result.unwrap()
+        response = result.unwrap()
+
+        output = response.content
 
         # Attribute names should preserve original case
         assert "ObjectClass:" in output
@@ -722,7 +760,9 @@ class TestWriterFormatOptions:
         )
 
         assert result.is_success
-        output = result.unwrap()
+        response = result.unwrap()
+
+        output = response.content
 
         # Should include DN comment for complex DN
         assert "# Complex DN:" in output
@@ -750,7 +790,9 @@ class TestWriterFormatOptions:
         )
 
         assert result.is_success
-        output = result.unwrap()
+        response = result.unwrap()
+
+        output = response.content
 
         # Should not include DN comments
         assert "# Complex DN:" not in output
@@ -781,7 +823,9 @@ class TestWriterFormatOptions:
         )
 
         assert result.is_success
-        output = result.unwrap()
+        response = result.unwrap()
+
+        output = response.content
 
         # Verify multiple options working together
         assert "version: 1" in output  # include_version_header
@@ -913,7 +957,9 @@ class TestWriterFormatOptions:
         )
 
         assert result.is_success
-        output = result.unwrap()
+        response = result.unwrap()
+
+        output = response.content
 
         # Should still produce valid LDIF even with very narrow line width
         # Check that key attributes are present (may be folded)
@@ -946,7 +992,9 @@ class TestWriterFormatOptions:
         )
 
         assert result.is_success
-        output = result.unwrap()
+        response = result.unwrap()
+
+        output = response.content
 
         # Should still include headers if requested
         assert "version: 1" in output
@@ -988,7 +1036,9 @@ class TestWriterFormatOptions:
         )
 
         assert result.is_success
-        output = result.unwrap()
+        response = result.unwrap()
+
+        output = response.content
 
         # With defaults:
         # - include_version_header=True

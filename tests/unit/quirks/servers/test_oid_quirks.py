@@ -45,10 +45,10 @@ class TestOidSchemas:
         # server_type and priority are class-level constants (moved from Constants in FASE 2)
         assert FlextLdifServersOid.server_type == "oid"
         assert FlextLdifServersOid.priority == 10
-        # Verify nested quirks are initialized
-        assert hasattr(oid_server, "schema")
-        assert hasattr(oid_server, "acl")
-        assert hasattr(oid_server, "entry")
+        # Verify nested quirk classes exist (Schema, Acl, Entry are nested classes)
+        assert hasattr(FlextLdifServersOid, "Schema")
+        assert hasattr(FlextLdifServersOid, "Acl")
+        assert hasattr(FlextLdifServersOid, "Entry")
 
     def test_can_handle_oracle_attribute(self, oid: FlextLdifServersOid.Schema) -> None:
         """Test detection of Oracle OID attributes by OID namespace."""
@@ -766,14 +766,14 @@ orclentrylevelaci: access to entry by * (browse,noadd,nodelete)
         entry = entries[0]
         assert entry.dn.value == "cn=OracleContext,dc=network,dc=example"
 
-        # ACL attributes should be preserved in the entry attributes
+        # ACL attributes are normalized to RFC standard format during parse
+        # OID-specific orclaci/orclentrylevelaci → RFC standard 'aci'
         attrs = entry.attributes.attributes
-        has_orclaci = "orclaci" in attrs
-        has_orclentrylevelaci = "orclentrylevelaci" in attrs
+        has_aci = "aci" in attrs
 
-        # At least one ACL attribute should be present
-        assert has_orclaci or has_orclentrylevelaci, (
-            "Expected at least one ACL attribute to be present"
+        # Normalized RFC ACL attribute should be present
+        assert has_aci, (
+            "Expected normalized RFC 'aci' attribute to be present after OID ACL parsing"
         )
 
     def test_parse_entry_from_fixtures(
@@ -1108,14 +1108,14 @@ class TestOidSchemaExtractionWithRealFixtures:
         for entry in entries:
             if entry.attributes and entry.attributes.attributes:
                 for attr_name, attr_values in entry.attributes.attributes.items():
-                    if attr_name.lower() in ("attributetypes", "attributeTypes"):
+                    if attr_name.lower() in {"attributetypes", "attributeTypes"}:
                         for attr_def in attr_values:
                             if isinstance(attr_def, str):
                                 # Parse individual attribute definition
                                 attr_result = oid.schema_quirk.parse_attribute(attr_def)
                                 if attr_result.is_success:
                                     attributes.append(attr_result.unwrap())
-                    elif attr_name.lower() in ("objectclasses", "objectClasses"):
+                    elif attr_name.lower() in {"objectclasses", "objectClasses"}:
                         for oc_def in attr_values:
                             if isinstance(oc_def, str):
                                 # Parse individual objectClass definition
@@ -1215,9 +1215,9 @@ class TestOidSchemaExtractionWithRealFixtures:
         for entry in entries:
             if entry.attributes and entry.attributes.attributes:
                 for attr_name, attr_values in entry.attributes.attributes.items():
-                    if attr_name.lower() in ("attributetypes", "attributeTypes"):
+                    if attr_name.lower() in {"attributetypes", "attributeTypes"}:
                         schemas["attributes"].extend(attr_values)
-                    elif attr_name.lower() in ("objectclasses", "objectClasses"):
+                    elif attr_name.lower() in {"objectclasses", "objectClasses"}:
                         schemas["objectclasses"].extend(attr_values)
 
         # Count total attribute lines in fixture
@@ -2042,10 +2042,10 @@ objectClasses: ( 2.16.840.1.113894.2.1.1 NAME 'orclContext' SUP top STRUCTURAL M
 
         assert FlextLdifConstants.DictKeys.ATTRIBUTES in schemas
 
-        assert "objectclasses" in schemas
+        assert FlextLdifConstants.DictKeys.OBJECTCLASS in schemas
 
         attributes = schemas[FlextLdifConstants.DictKeys.ATTRIBUTES]
-        objectclasses = schemas["objectclasses"]
+        objectclasses = schemas[FlextLdifConstants.DictKeys.OBJECTCLASS]
 
         assert isinstance(attributes, list)
 
@@ -2068,7 +2068,7 @@ OBJECTCLASSES: ( 2.16.840.1.113894.2.1.1 NAME 'orclContext' SUP top STRUCTURAL )
 
         schemas = result.unwrap()
         attributes = schemas[FlextLdifConstants.DictKeys.ATTRIBUTES]
-        objectclasses = schemas["objectclasses"]
+        objectclasses = schemas[FlextLdifConstants.DictKeys.OBJECTCLASS]
 
         # Type guards for Pyrefly strict mode
 
@@ -2093,13 +2093,13 @@ OBJECTCLASSES: ( 2.16.840.1.113894.2.1.1 NAME 'orclContext' SUP top STRUCTURAL )
         # Type guards for Pyrefly strict mode - schemas is a dict
         assert isinstance(schemas, dict)
 
-        assert "attributes" in schemas
+        assert FlextLdifConstants.DictKeys.ATTRIBUTES in schemas
 
-        assert "objectclasses" in schemas
+        assert FlextLdifConstants.DictKeys.OBJECTCLASS in schemas
 
-        assert len(schemas.get("attributes", [])) == 0
+        assert len(schemas.get(FlextLdifConstants.DictKeys.ATTRIBUTES, [])) == 0
 
-        assert len(schemas.get("objectclasses", [])) == 0
+        assert len(schemas.get(FlextLdifConstants.DictKeys.OBJECTCLASS, [])) == 0
 
     def test_extract_schemas_skips_malformed_entries(
         self,
@@ -2120,7 +2120,7 @@ objectClasses: ( 2.16.840.1.113894.2.1.1 NAME 'orclContext' SUP top STRUCTURAL )
         schemas = result.unwrap()
         # Should extract only valid entries
         attributes = schemas[FlextLdifConstants.DictKeys.ATTRIBUTES]
-        objectclasses = schemas["objectclasses"]
+        objectclasses = schemas[FlextLdifConstants.DictKeys.OBJECTCLASS]
 
         # Type guards for Pyrefly strict mode
 

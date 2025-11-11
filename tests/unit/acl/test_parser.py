@@ -52,8 +52,8 @@ class TestFlextLdifAcl:
         acl_response = result.unwrap()
         assert isinstance(acl_response, FlextLdifModels.AclResponse)
         assert acl_response.acls == []
-        assert acl_response.statistics.total_acls_extracted == 0
-        assert acl_response.statistics.entries_with_acls == 0
+        assert acl_response.statistics.acls_extracted == 0
+        assert acl_response.statistics.acl_entries == 0
 
     def test_parse_openldap(self, acl_service: FlextLdifAcl) -> None:
         """Test parsing OpenLDAP ACL format."""

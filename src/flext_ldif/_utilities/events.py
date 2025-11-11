@@ -23,160 +23,150 @@ class FlextLdifUtilitiesEvents:
 
     @staticmethod
     def create_dn_event(
-        *,
-        dn_operation: str,
-        input_dn: str,
-        output_dn: str | None = None,
-        operation_duration_ms: float = 0.0,
-        validation_result: bool | None = None,
-        parse_components: list[tuple[str, str]] | None = None,
+        config: FlextLdifModels.DnEventConfig,
     ) -> FlextLdifModels.DnEvent:
-        """Create DnEvent with standardized fields.
+        """Create DnEvent with standardized fields from config Model.
 
         Args:
-            dn_operation: Operation name (parse, validate, normalize, etc.)
-            input_dn: Input DN before operation
-            output_dn: Output DN after operation (None if failed)
-            operation_duration_ms: Duration in milliseconds
-            validation_result: Validation result (None if not validated)
-            parse_components: Parsed DN components
+            config: DN event configuration Model
 
         Returns:
             Configured DnEvent instance
 
+        Example:
+            config = FlextLdifModels.DnEventConfig(
+                dn_operation="normalize",
+                input_dn="CN=Admin,DC=Example",
+                output_dn="cn=admin,dc=example",
+                operation_duration_ms=1.2,
+            )
+            event = FlextLdifUtilities.Events.create_dn_event(config)
+
         """
         return FlextLdifModels.DnEvent(
             event_type="ldif.dn",
-            aggregate_id=input_dn,  # Use input DN as aggregate identifier
-            dn_operation=dn_operation,
-            input_dn=input_dn,
-            output_dn=output_dn,
-            operation_duration_ms=operation_duration_ms,
-            validation_result=validation_result,
-            parse_components=parse_components,
+            aggregate_id=config.input_dn,  # Use input DN as aggregate identifier
+            dn_operation=config.dn_operation,
+            input_dn=config.input_dn,
+            output_dn=config.output_dn,
+            operation_duration_ms=config.operation_duration_ms,
+            validation_result=config.validation_result,
+            parse_components=config.parse_components,
         )
 
     @staticmethod
     def create_migration_event(
-        *,
-        migration_operation: str,
-        source_server: str,
-        target_server: str,
-        entries_processed: int,
-        entries_migrated: int = 0,
-        entries_failed: int = 0,
-        migration_duration_ms: float = 0.0,
-        error_details: list[FlextLdifModels.ErrorDetail] | None = None,
+        config: FlextLdifModels.MigrationEventConfig,
     ) -> FlextLdifModels.MigrationEvent:
-        """Create MigrationEvent with standardized fields.
+        """Create MigrationEvent with standardized fields from config Model.
 
         Args:
-            migration_operation: Operation name (full_migration, incremental, etc.)
-            source_server: Source LDAP server type
-            target_server: Target LDAP server type
-            entries_processed: Total entries processed
-            entries_migrated: Entries successfully migrated
-            entries_failed: Entries that failed migration
-            migration_duration_ms: Duration in milliseconds
-            error_details: Error information for failed entries
+            config: Migration event configuration Model
 
         Returns:
             Configured MigrationEvent instance
 
+        Example:
+            config = FlextLdifModels.MigrationEventConfig(
+                migration_operation="full_migration",
+                source_server="oid",
+                target_server="oud",
+                entries_processed=1000,
+                entries_migrated=980,
+                entries_failed=20,
+                migration_duration_ms=5420.5,
+            )
+            event = FlextLdifUtilities.Events.create_migration_event(config)
+
         """
-        aggregate_id = f"{source_server}_to_{target_server}_{migration_operation}"
+        aggregate_id = f"{config.source_server}_to_{config.target_server}_{config.migration_operation}"
         return FlextLdifModels.MigrationEvent(
             event_type="ldif.migration",
             aggregate_id=aggregate_id,  # Unique identifier for this migration
-            migration_operation=migration_operation,
-            source_server=source_server,
-            target_server=target_server,
-            entries_processed=entries_processed,
-            entries_migrated=entries_migrated,
-            entries_failed=entries_failed,
-            migration_duration_ms=migration_duration_ms,
-            error_details=error_details or [],
+            migration_operation=config.migration_operation,
+            source_server=config.source_server,
+            target_server=config.target_server,
+            entries_processed=config.entries_processed,
+            entries_migrated=config.entries_migrated,
+            entries_failed=config.entries_failed,
+            migration_duration_ms=config.migration_duration_ms,
+            error_details=config.error_details or [],
         )
 
     @staticmethod
     def create_conversion_event(
-        *,
-        conversion_operation: str,
-        source_format: str,
-        target_format: str,
-        items_processed: int,
-        items_converted: int = 0,
-        items_failed: int = 0,
-        conversion_duration_ms: float = 0.0,
-        error_details: list[FlextLdifModels.ErrorDetail] | None = None,
+        config: FlextLdifModels.ConversionEventConfig,
     ) -> FlextLdifModels.ConversionEvent:
-        """Create ConversionEvent with standardized fields.
+        """Create ConversionEvent with standardized fields from config Model.
 
         Args:
-            conversion_operation: Operation name (acl_transform, schema_convert, etc.)
-            source_format: Source format type
-            target_format: Target format type
-            items_processed: Total items processed
-            items_converted: Items successfully converted
-            items_failed: Items that failed conversion
-            conversion_duration_ms: Duration in milliseconds
-            error_details: Error information for failed conversions
+            config: Conversion event configuration Model
 
         Returns:
             Configured ConversionEvent instance
 
+        Example:
+            config = FlextLdifModels.ConversionEventConfig(
+                conversion_operation="acl_transform",
+                source_format="orclaci",
+                target_format="olcAccess",
+                items_processed=50,
+                items_converted=48,
+                items_failed=2,
+                conversion_duration_ms=125.3,
+            )
+            event = FlextLdifUtilities.Events.create_conversion_event(config)
+
         """
-        aggregate_id = f"{source_format}_to_{target_format}_{conversion_operation}"
+        aggregate_id = f"{config.source_format}_to_{config.target_format}_{config.conversion_operation}"
         return FlextLdifModels.ConversionEvent(
             event_type="ldif.conversion",
             aggregate_id=aggregate_id,  # Unique identifier for this conversion
-            conversion_operation=conversion_operation,
-            source_format=source_format,
-            target_format=target_format,
-            items_processed=items_processed,
-            items_converted=items_converted,
-            items_failed=items_failed,
-            conversion_duration_ms=conversion_duration_ms,
-            error_details=error_details or [],
+            conversion_operation=config.conversion_operation,
+            source_format=config.source_format,
+            target_format=config.target_format,
+            items_processed=config.items_processed,
+            items_converted=config.items_converted,
+            items_failed=config.items_failed,
+            conversion_duration_ms=config.conversion_duration_ms,
+            error_details=config.error_details or [],
         )
 
     @staticmethod
     def create_schema_event(
-        *,
-        schema_operation: str,
-        items_processed: int,
-        items_succeeded: int = 0,
-        items_failed: int = 0,
-        operation_duration_ms: float = 0.0,
-        server_type: str = "rfc",
-        error_details: list[FlextLdifModels.ErrorDetail] | None = None,
+        config: FlextLdifModels.SchemaEventConfig,
     ) -> FlextLdifModels.SchemaEvent:
-        """Create SchemaEvent with standardized fields.
+        """Create SchemaEvent with standardized fields from config Model.
 
         Args:
-            schema_operation: Operation name (parse_attribute, parse_objectclass, validate, etc.)
-            items_processed: Total number of schema items processed
-            items_succeeded: Number of items processed successfully
-            items_failed: Number of items that failed processing
-            operation_duration_ms: Total operation duration in milliseconds
-            server_type: LDAP server type (oid, oud, openldap, etc.)
-            error_details: Detailed error information for failed items
+            config: Schema event configuration Model
 
         Returns:
             Configured SchemaEvent instance
 
+        Example:
+            config = FlextLdifModels.SchemaEventConfig(
+                schema_operation="parse_attribute",
+                items_processed=50,
+                items_succeeded=48,
+                items_failed=2,
+                operation_duration_ms=125.3,
+                server_type="oud",
+            )
+            event = FlextLdifUtilities.Events.create_schema_event(config)
+
         """
-        aggregate_id = f"{server_type}_schema_{schema_operation}"
+        aggregate_id = f"{config.server_type}_schema_{config.schema_operation}"
         return FlextLdifModels.SchemaEvent(
             event_type="ldif.schema",
             aggregate_id=aggregate_id,
-            schema_operation=schema_operation,
-            items_processed=items_processed,
-            items_succeeded=items_succeeded,
-            items_failed=items_failed,
-            operation_duration_ms=operation_duration_ms,
-            server_type=server_type,
-            error_details=error_details or [],
+            schema_operation=config.schema_operation,
+            items_processed=config.items_processed,
+            items_succeeded=config.items_succeeded,
+            items_failed=config.items_failed,
+            operation_duration_ms=config.operation_duration_ms,
+            server_type=config.server_type,
+            error_details=config.error_details or [],
         )
 
     # ════════════════════════════════════════════════════════════════════════
@@ -274,15 +264,9 @@ class FlextLdifUtilitiesEvents:
     @staticmethod
     def log_and_emit_dn_event(
         logger: FlextLogger,
-        *,
-        dn_operation: str,
-        input_dn: str,
-        output_dn: str | None = None,
-        operation_duration_ms: float = 0.0,
-        validation_result: bool | None = None,
-        parse_components: list[tuple[str, str]] | None = None,
+        config: FlextLdifModels.DnEventConfig,
         log_level: str = "info",
-        **extra_context: object,
+        extras: FlextLdifModels.LogContextExtras | None = None,
     ) -> FlextLdifModels.DnEvent:
         """Create DnEvent, log with context, and attach to logger context.
 
@@ -290,53 +274,56 @@ class FlextLdifUtilitiesEvents:
 
         Args:
             logger: FlextLogger instance
-            dn_operation: Operation name (parse, validate, normalize, etc.)
-            input_dn: Input DN before operation
-            output_dn: Output DN after operation (None if failed)
-            operation_duration_ms: Duration in milliseconds
-            validation_result: Validation result (None if not validated)
-            parse_components: Parsed DN components
+            config: DN event configuration Model
             log_level: Log level (info, debug, warning, error)
-            **extra_context: Additional context fields for logging
+            extras: Additional typed context fields for logging
 
         Returns:
             Created DnEvent instance
 
         Example:
-            event = FlextLdifUtilities.Events.log_and_emit_dn_event(
-                logger=self.logger,
+            config = FlextLdifModels.DnEventConfig(
                 dn_operation="normalize",
                 input_dn="CN=Admin,DC=Example",
                 output_dn="cn=admin,dc=example",
                 operation_duration_ms=1.2,
             )
+            extras = FlextLdifModels.LogContextExtras(user_id="admin")
+            event = FlextLdifUtilities.Events.log_and_emit_dn_event(
+                logger=logger,
+                config=config,
+                extras=extras,
+            )
 
         """
         # Create event
-        event = FlextLdifUtilitiesEvents.create_dn_event(
-            dn_operation=dn_operation,
-            input_dn=input_dn,
-            output_dn=output_dn,
-            operation_duration_ms=operation_duration_ms,
-            validation_result=validation_result,
-            parse_components=parse_components,
-        )
+        event = FlextLdifUtilitiesEvents.create_dn_event(config)
 
-        # Build log context with event data
+        # Build log context with event data (type inferred from values)
         log_context = {
             "event_id": event.unique_id,  # From IdentifiableMixin
             "aggregate_id": event.aggregate_id,
-            "dn_operation": dn_operation,
-            "input_dn": input_dn,
-            "output_dn": output_dn,
-            "operation_duration_ms": operation_duration_ms,
+            "dn_operation": config.dn_operation,
+            "input_dn": config.input_dn,
+            "output_dn": config.output_dn,
+            "operation_duration_ms": config.operation_duration_ms,
             "has_output": event.has_output,
             "component_count": event.component_count,
-            **extra_context,
         }
 
+        # Add extras if provided
+        if extras:
+            extras_dict = extras.model_dump(exclude_none=True)
+            # Filter and update with typed values only
+            filtered_extras = {
+                key: value
+                for key, value in extras_dict.items()
+                if isinstance(value, str | int | float | bool | type(None))
+            }
+            log_context.update(filtered_extras)
+
         # Log with appropriate level
-        log_message = f"DN operation '{dn_operation}' completed"
+        log_message = f"DN operation '{config.dn_operation}' completed"
         if log_level == "debug":
             logger.debug(log_message, **log_context)
         elif log_level == "warning":
@@ -351,17 +338,9 @@ class FlextLdifUtilitiesEvents:
     @staticmethod
     def log_and_emit_migration_event(
         logger: FlextLogger,
-        *,
-        migration_operation: str,
-        source_server: str,
-        target_server: str,
-        entries_processed: int,
-        entries_migrated: int = 0,
-        entries_failed: int = 0,
-        migration_duration_ms: float = 0.0,
-        error_details: list[FlextLdifModels.ErrorDetail] | None = None,
+        config: FlextLdifModels.MigrationEventConfig,
         log_level: str = "info",
-        **extra_context: object,
+        extras: FlextLdifModels.LogContextExtras | None = None,
     ) -> FlextLdifModels.MigrationEvent:
         """Create MigrationEvent, log with context, and attach to logger context.
 
@@ -369,23 +348,15 @@ class FlextLdifUtilitiesEvents:
 
         Args:
             logger: FlextLogger instance
-            migration_operation: Operation name (full_migration, incremental, etc.)
-            source_server: Source LDAP server type
-            target_server: Target LDAP server type
-            entries_processed: Total entries processed
-            entries_migrated: Entries successfully migrated
-            entries_failed: Entries that failed migration
-            migration_duration_ms: Duration in milliseconds
-            error_details: Error information for failed entries
+            config: Migration event configuration Model
             log_level: Log level (info, debug, warning, error)
-            **extra_context: Additional context fields for logging
+            extras: Additional typed context fields for logging
 
         Returns:
             Created MigrationEvent instance
 
         Example:
-            event = FlextLdifUtilities.Events.log_and_emit_migration_event(
-                logger=self.logger,
+            config = FlextLdifModels.MigrationEventConfig(
                 migration_operation="full_migration",
                 source_server="oid",
                 target_server="oud",
@@ -394,38 +365,43 @@ class FlextLdifUtilitiesEvents:
                 entries_failed=20,
                 migration_duration_ms=5420.5,
             )
+            event = FlextLdifUtilities.Events.log_and_emit_migration_event(
+                logger=logger,
+                config=config,
+            )
 
         """
         # Create event
-        event = FlextLdifUtilitiesEvents.create_migration_event(
-            migration_operation=migration_operation,
-            source_server=source_server,
-            target_server=target_server,
-            entries_processed=entries_processed,
-            entries_migrated=entries_migrated,
-            entries_failed=entries_failed,
-            migration_duration_ms=migration_duration_ms,
-            error_details=error_details,
-        )
+        event = FlextLdifUtilitiesEvents.create_migration_event(config)
 
-        # Build log context with event data + computed metrics
+        # Build log context with event data + computed metrics (type inferred from values)
         log_context = {
             "event_id": event.unique_id,  # From IdentifiableMixin
             "aggregate_id": event.aggregate_id,
-            "migration_operation": migration_operation,
-            "source_server": source_server,
-            "target_server": target_server,
-            "entries_processed": entries_processed,
-            "entries_migrated": entries_migrated,
-            "entries_failed": entries_failed,
-            "migration_duration_ms": migration_duration_ms,
+            "migration_operation": config.migration_operation,
+            "source_server": config.source_server,
+            "target_server": config.target_server,
+            "entries_processed": config.entries_processed,
+            "entries_migrated": config.entries_migrated,
+            "entries_failed": config.entries_failed,
+            "migration_duration_ms": config.migration_duration_ms,
             "success_rate_pct": event.migration_success_rate,
             "throughput_entries_per_sec": event.throughput_entries_per_sec,
-            **extra_context,
         }
 
+        # Add extras if provided
+        if extras:
+            extras_dict = extras.model_dump(exclude_none=True)
+            # Filter and update with typed values only
+            filtered_extras = {
+                key: value
+                for key, value in extras_dict.items()
+                if isinstance(value, str | int | float | bool | type(None))
+            }
+            log_context.update(filtered_extras)
+
         # Log with appropriate level
-        log_message = f"Migration '{migration_operation}' from {source_server} to {target_server} completed"
+        log_message = f"Migration '{config.migration_operation}' from {config.source_server} to {config.target_server} completed"
         if log_level == "debug":
             logger.debug(log_message, **log_context)
         elif log_level == "warning":
@@ -440,17 +416,9 @@ class FlextLdifUtilitiesEvents:
     @staticmethod
     def log_and_emit_conversion_event(
         logger: FlextLogger,
-        *,
-        conversion_operation: str,
-        source_format: str,
-        target_format: str,
-        items_processed: int,
-        items_converted: int = 0,
-        items_failed: int = 0,
-        conversion_duration_ms: float = 0.0,
-        error_details: list[FlextLdifModels.ErrorDetail] | None = None,
+        config: FlextLdifModels.ConversionEventConfig,
         log_level: str = "info",
-        **extra_context: object,
+        extras: FlextLdifModels.LogContextExtras | None = None,
     ) -> FlextLdifModels.ConversionEvent:
         """Create ConversionEvent, log with context, and attach to logger context.
 
@@ -458,23 +426,15 @@ class FlextLdifUtilitiesEvents:
 
         Args:
             logger: FlextLogger instance
-            conversion_operation: Operation name (acl_transform, schema_convert, etc.)
-            source_format: Source format type
-            target_format: Target format type
-            items_processed: Total items processed
-            items_converted: Items successfully converted
-            items_failed: Items that failed conversion
-            conversion_duration_ms: Duration in milliseconds
-            error_details: Error information for failed conversions
+            config: Conversion event configuration Model
             log_level: Log level (info, debug, warning, error)
-            **extra_context: Additional context fields for logging
+            extras: Additional typed context fields for logging
 
         Returns:
             Created ConversionEvent instance
 
         Example:
-            event = FlextLdifUtilities.Events.log_and_emit_conversion_event(
-                logger=self.logger,
+            config = FlextLdifModels.ConversionEventConfig(
                 conversion_operation="acl_transform",
                 source_format="orclaci",
                 target_format="olcAccess",
@@ -483,38 +443,43 @@ class FlextLdifUtilitiesEvents:
                 items_failed=2,
                 conversion_duration_ms=125.3,
             )
+            event = FlextLdifUtilities.Events.log_and_emit_conversion_event(
+                logger=logger,
+                config=config,
+            )
 
         """
         # Create event
-        event = FlextLdifUtilitiesEvents.create_conversion_event(
-            conversion_operation=conversion_operation,
-            source_format=source_format,
-            target_format=target_format,
-            items_processed=items_processed,
-            items_converted=items_converted,
-            items_failed=items_failed,
-            conversion_duration_ms=conversion_duration_ms,
-            error_details=error_details,
-        )
+        event = FlextLdifUtilitiesEvents.create_conversion_event(config)
 
-        # Build log context with event data + computed metrics
+        # Build log context with event data + computed metrics (type inferred from values)
         log_context = {
             "event_id": event.unique_id,  # From IdentifiableMixin
             "aggregate_id": event.aggregate_id,
-            "conversion_operation": conversion_operation,
-            "source_format": source_format,
-            "target_format": target_format,
-            "items_processed": items_processed,
-            "items_converted": items_converted,
-            "items_failed": items_failed,
-            "conversion_duration_ms": conversion_duration_ms,
+            "conversion_operation": config.conversion_operation,
+            "source_format": config.source_format,
+            "target_format": config.target_format,
+            "items_processed": config.items_processed,
+            "items_converted": config.items_converted,
+            "items_failed": config.items_failed,
+            "conversion_duration_ms": config.conversion_duration_ms,
             "success_rate_pct": event.conversion_success_rate,
             "throughput_items_per_sec": event.throughput_items_per_sec,
-            **extra_context,
         }
 
+        # Add extras if provided
+        if extras:
+            extras_dict = extras.model_dump(exclude_none=True)
+            # Filter and update with typed values only
+            filtered_extras = {
+                key: value
+                for key, value in extras_dict.items()
+                if isinstance(value, str | int | float | bool | type(None))
+            }
+            log_context.update(filtered_extras)
+
         # Log with appropriate level
-        log_message = f"Conversion '{conversion_operation}' from {source_format} to {target_format} completed"
+        log_message = f"Conversion '{config.conversion_operation}' from {config.source_format} to {config.target_format} completed"
         if log_level == "debug":
             logger.debug(log_message, **log_context)
         elif log_level == "warning":
@@ -529,16 +494,9 @@ class FlextLdifUtilitiesEvents:
     @staticmethod
     def log_and_emit_schema_event(
         logger: FlextLogger,
-        *,
-        schema_operation: str,
-        items_processed: int,
-        items_succeeded: int = 0,
-        items_failed: int = 0,
-        operation_duration_ms: float = 0.0,
-        server_type: str = "rfc",
-        error_details: list[FlextLdifModels.ErrorDetail] | None = None,
+        config: FlextLdifModels.SchemaEventConfig,
         log_level: str = "info",
-        **extra_context: object,
+        extras: FlextLdifModels.LogContextExtras | None = None,
     ) -> FlextLdifModels.SchemaEvent:
         """Create SchemaEvent, log with context, and attach to logger context.
 
@@ -546,22 +504,15 @@ class FlextLdifUtilitiesEvents:
 
         Args:
             logger: FlextLogger instance
-            schema_operation: Operation name (parse_attribute, parse_objectclass, validate, etc.)
-            items_processed: Total number of schema items processed
-            items_succeeded: Number of items processed successfully
-            items_failed: Number of items that failed processing
-            operation_duration_ms: Total operation duration in milliseconds
-            server_type: LDAP server type (oid, oud, openldap, etc.)
-            error_details: Detailed error information for failed items
+            config: Schema event configuration Model
             log_level: Log level (info, debug, warning, error)
-            **extra_context: Additional context fields for logging
+            extras: Additional typed context fields for logging
 
         Returns:
             Created SchemaEvent instance
 
         Example:
-            event = FlextLdifUtilities.Events.log_and_emit_schema_event(
-                logger=logger,
+            config = FlextLdifModels.SchemaEventConfig(
                 schema_operation="parse_attribute",
                 items_processed=50,
                 items_succeeded=48,
@@ -569,37 +520,43 @@ class FlextLdifUtilitiesEvents:
                 operation_duration_ms=125.3,
                 server_type="oud",
             )
+            event = FlextLdifUtilities.Events.log_and_emit_schema_event(
+                logger=logger,
+                config=config,
+            )
 
         """
         # Create event
-        event = FlextLdifUtilitiesEvents.create_schema_event(
-            schema_operation=schema_operation,
-            items_processed=items_processed,
-            items_succeeded=items_succeeded,
-            items_failed=items_failed,
-            operation_duration_ms=operation_duration_ms,
-            server_type=server_type,
-            error_details=error_details,
-        )
+        event = FlextLdifUtilitiesEvents.create_schema_event(config)
 
-        # Build log context with event data + computed metrics
+        # Build log context with event data + computed metrics (type inferred from values)
         log_context = {
             "event_id": event.unique_id,  # From IdentifiableMixin
             "aggregate_id": event.aggregate_id,
-            "schema_operation": schema_operation,
-            "items_processed": items_processed,
-            "items_succeeded": items_succeeded,
-            "items_failed": items_failed,
-            "operation_duration_ms": operation_duration_ms,
-            "server_type": server_type,
+            "schema_operation": config.schema_operation,
+            "items_processed": config.items_processed,
+            "items_succeeded": config.items_succeeded,
+            "items_failed": config.items_failed,
+            "operation_duration_ms": config.operation_duration_ms,
+            "server_type": config.server_type,
             "success_rate_pct": event.schema_success_rate,
             "throughput_items_per_sec": event.throughput_items_per_sec,
-            **extra_context,
         }
+
+        # Add extras if provided
+        if extras:
+            extras_dict = extras.model_dump(exclude_none=True)
+            # Filter and update with typed values only
+            filtered_extras = {
+                key: value
+                for key, value in extras_dict.items()
+                if isinstance(value, str | int | float | bool | type(None))
+            }
+            log_context.update(filtered_extras)
 
         # Log with appropriate level
         log_message = (
-            f"Schema operation '{schema_operation}' on {server_type} completed"
+            f"Schema operation '{config.schema_operation}' on {config.server_type} completed"
         )
         if log_level == "debug":
             logger.debug(log_message, **log_context)

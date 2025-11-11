@@ -31,7 +31,7 @@ Usage:
 References:
     - RFC 4512: LDAP Schema Definitions
     - PHASE_2_SERVICE_LAYER.md: Service layer design
-    - FlextLdifUtilities.Schema: Schema utilities
+    - FlextLdifUtilitiesParser, FlextLdifUtilitiesWriter, FlextLdifUtilitiesOID: Schema utilities
 
 """
 
@@ -73,9 +73,6 @@ class FlextLdifSchema(FlextService[FlextLdifModels.SchemaServiceStatus]):
         - can_handle_objectclass(): Check if server handles objectClass
 
     """
-
-    # OID validation configuration
-    MIN_OID_PARTS: int = 2  # Minimum parts in OID (e.g., "1.2")
 
     # ════════════════════════════════════════════════════════════════════════
     # PYDANTIC FIELDS (for builder pattern)
@@ -226,9 +223,11 @@ class FlextLdifSchema(FlextService[FlextLdifModels.SchemaServiceStatus]):
                 return FlextResult.fail("Attribute has no NAME")
             if not attr.oid:
                 return FlextResult.fail("Attribute has no OID")
-            # Check syntax if present and validate OID format
-            if attr.syntax and not self._is_valid_oid(attr.syntax):
-                return FlextResult.fail(f"Invalid SYNTAX OID: {attr.syntax}")
+            # Check syntax if present and validate OID format using utilities
+            if attr.syntax:
+                validation_result = FlextLdifUtilities.OID.validate_format(attr.syntax)
+                if validation_result.is_failure or not validation_result.unwrap():
+                    return FlextResult.fail(f"Invalid SYNTAX OID: {attr.syntax}")
             return FlextResult.ok(True)
 
         except Exception as e:
@@ -372,31 +371,6 @@ class FlextLdifSchema(FlextService[FlextLdifModels.SchemaServiceStatus]):
         except Exception:
             logger.exception("Error checking if can handle objectClass")
             return False
-
-    # =========================================================================
-    # HELPER METHODS
-    # =========================================================================
-
-    @staticmethod
-    def _is_valid_oid(oid: str) -> bool:
-        """Check if string is a valid OID format.
-
-        Args:
-            oid: OID string (e.g., "1.3.6.1.4.1.9999")
-
-        Returns:
-            True if valid OID format, False otherwise
-
-        """
-        if not oid:
-            return False
-
-        # OID should be digits separated by dots (minimum parts required)
-        parts = oid.split(".")
-        if len(parts) < FlextLdifSchema.MIN_OID_PARTS:
-            return False
-
-        return all(part.isdigit() for part in parts)
 
     def __repr__(self) -> str:
         """String representation."""

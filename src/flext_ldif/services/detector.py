@@ -249,8 +249,9 @@ class FlextLdifDetector(FlextService[FlextLdifModels.ClientStatus]):
         scores: dict[str, int],
         *,
         case_sensitive: bool = False,
+        objectclasses: list[str] | frozenset[str] | None = None,
     ) -> None:
-        """Update scores for a server type based on pattern and attribute matches."""
+        """Update scores for a server type based on pattern, attribute, and objectClass matches."""
         search_content = content if case_sensitive else content_lower
         if re.search(pattern, search_content):
             scores[server_type] += weight
@@ -260,6 +261,14 @@ class FlextLdifDetector(FlextService[FlextLdifModels.ClientStatus]):
                 scores[server_type] += (
                     FlextLdifConstants.ServerDetection.ATTRIBUTE_MATCH_SCORE
                 )
+
+        # Also score objectClass matches
+        if objectclasses:
+            for objclass in objectclasses:
+                if objclass.lower() in content_lower:
+                    scores[server_type] += (
+                        FlextLdifConstants.ServerDetection.ATTRIBUTE_MATCH_SCORE
+                    )
 
     def _calculate_scores(self, content: str) -> dict[str, int]:
         """Calculate detection scores for each server type.
@@ -290,6 +299,7 @@ class FlextLdifDetector(FlextService[FlextLdifModels.ClientStatus]):
             content_lower,
             scores,
             case_sensitive=True,
+            objectclasses=FlextLdifServersOid.Constants.DETECTION_OBJECTCLASS_NAMES,
         )
 
         # Oracle OUD detection - use server Constants
@@ -301,6 +311,7 @@ class FlextLdifDetector(FlextService[FlextLdifModels.ClientStatus]):
             content,
             content_lower,
             scores,
+            objectclasses=FlextLdifServersOud.Constants.DETECTION_OBJECTCLASS_NAMES,
         )
 
         # OpenLDAP detection - use server Constants
@@ -312,6 +323,7 @@ class FlextLdifDetector(FlextService[FlextLdifModels.ClientStatus]):
             content,
             content_lower,
             scores,
+            objectclasses=FlextLdifServersOpenldap.Constants.DETECTION_OBJECTCLASS_NAMES,
         )
 
         # Active Directory detection - use server Constants
@@ -324,6 +336,7 @@ class FlextLdifDetector(FlextService[FlextLdifModels.ClientStatus]):
             content_lower,
             scores,
             case_sensitive=True,
+            objectclasses=FlextLdifServersAd.Constants.DETECTION_OBJECTCLASS_NAMES,
         )
 
         # Novell eDirectory detection - use server Constants

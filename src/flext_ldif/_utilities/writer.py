@@ -422,8 +422,13 @@ class FlextLdifUtilitiesWriter:
         attr_order = None
 
         # Extract attribute_order from metadata
-        if hasattr(metadata, "extensions"):
-            attr_order = metadata.extensions.get("attribute_order")
+        extensions = getattr(metadata, "extensions", None)
+        if extensions is not None:
+            attr_order = (
+                extensions.get("attribute_order")
+                if hasattr(extensions, "get")
+                else None
+            )
         elif isinstance(metadata, dict):
             attr_order = metadata.get("extensions", {}).get("attribute_order")
 
