@@ -264,6 +264,63 @@ class FlextLdifServersOid(FlextLdifServersRfc):
         )
 
         # =====================================================================
+        # CATEGORIZATION RULES - OID-specific entry categorization
+        # =====================================================================
+        # These define how entries are categorized during migration
+        # Priority order determines which category is checked first
+        # CRITICAL for entries with multiple objectClasses (e.g., cn=PERFIS)
+
+        # Categorization priority: users → hierarchy → groups → acl
+        # HIERARCHY before GROUPS ensures structural containers are preserved
+        CATEGORIZATION_PRIORITY: ClassVar[list[str]] = [
+            "users",  # User accounts checked first
+            "hierarchy",  # Structural containers (orclContainer, ou, o)
+            "groups",  # Groups (groupOfNames, orclGroup)
+            "acl",  # ACL entries
+        ]
+
+        # ObjectClasses defining each category
+        CATEGORY_OBJECTCLASSES: ClassVar[dict[str, frozenset[str]]] = {
+            "users": frozenset([
+                "person",
+                "inetOrgPerson",
+                "orclUser",  # OID-specific user
+                "orclUserV2",
+            ]),
+            "hierarchy": frozenset([
+                "organizationalUnit",
+                "organization",
+                "domain",
+                "country",
+                "locality",
+                "orclContainer",  # OID structural container
+                "orclContext",  # OID context
+            ]),
+            "groups": frozenset([
+                "groupOfNames",
+                "groupOfUniqueNames",
+                "orclGroup",  # OID group
+                "orclPrivilegeGroup",  # OID privilege (unless has orclContainer!)
+            ]),
+        }
+
+        # ObjectClasses that ALWAYS categorize as hierarchy
+        # Even if entry also has group objectClasses
+        # Solves cn=PERFIS: orclContainer + orclPrivilegeGroup → hierarchy
+        HIERARCHY_PRIORITY_OBJECTCLASSES: ClassVar[frozenset[str]] = frozenset([
+            "orclContainer",  # Always hierarchy
+            "organizationalUnit",
+            "organization",
+            "domain",
+        ])
+
+        # ACL attributes (reuse existing constant)
+        CATEGORIZATION_ACL_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset([
+            "orclaci",
+            "orclentrylevelaci",
+        ])
+
+        # =====================================================================
         # DN PATTERNS - OID-specific DN markers
         # =====================================================================
         CN_ORCL: ClassVar[str] = "cn=orcl"
@@ -815,6 +872,13 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                 logger.debug("Identified boolean attribute: %s", fixed_name)
 
             # Create new attribute model with fixed values
+            # Extract x_origin from metadata.extensions if available
+            x_origin_value = (
+                attr_data.metadata.extensions.get("x_origin")
+                if attr_data.metadata and attr_data.metadata.extensions
+                else None
+            )
+
             return FlextLdifModels.SchemaAttribute(
                 oid=attr_data.oid,
                 name=fixed_name,
@@ -829,7 +893,7 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                 single_value=attr_data.single_value,
                 no_user_modification=attr_data.no_user_modification,
                 metadata=attr_data.metadata,
-                x_origin=attr_data.extensions.get("x_origin"),
+                x_origin=cast("str | None", x_origin_value),
                 x_file_ref=attr_data.x_file_ref,
                 x_name=attr_data.x_name,
                 x_alias=attr_data.x_alias,
@@ -865,7 +929,7 @@ class FlextLdifServersOid(FlextLdifServersRfc):
             ldif_content: str,
             *,  # keyword-only parameter
             validate_dependencies: bool = False,
-        ) -> FlextResult[dict[str, list[str] | str]]:
+        ) -> FlextResult[dict[str, object]]:
             """Extract and parse all schema definitions from LDIF content.
 
             OID-specific implementation: Uses base template method without dependency
@@ -1149,6 +1213,32 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                 ),
             }
 
+        def convert_rfc_acl_to_aci(
+            self,
+            rfc_acl_attrs: dict[str, list[str]],
+            target_server: str,  # noqa: ARG002
+        ) -> FlextResult[dict[str, list[str]]]:
+            """Convert RFC ACL format to Oracle OID orclaci format.
+
+            Transforms RFC ACL attributes into OID-specific orclaci format with
+            proper target, subject, and permissions formatting.
+
+            Args:
+                rfc_acl_attrs: ACL attributes in RFC format
+                target_server: Target server type (expected: "oid")
+
+            Returns:
+                FlextResult with OID orclaci formatted attributes
+
+            Note:
+                Placeholder implementation - returns RFC format unchanged.
+                Future: Parse RFC ACL structure and format as orclaci.
+
+            """
+            # Placeholder: Return RFC format unchanged
+            # Real implementation would parse RFC structure and format as orclaci
+            return FlextResult.ok(rfc_acl_attrs)
+
         def _write_acl(
             self,
             acl_data: FlextLdifModels.Acl,
@@ -1269,7 +1359,7 @@ class FlextLdifServersOid(FlextLdifServersRfc):
             # Delegate to RFC for standard normalization (objectclass, etc.)
             return super()._normalize_attribute_name(attr_name)
 
-        def _parse_entry(
+        def _parse_entry(  # noqa: C901
             self,
             entry_dn: str,
             entry_attrs: Mapping[str, object],
@@ -1277,25 +1367,39 @@ class FlextLdifServersOid(FlextLdifServersRfc):
             """Parse OID entry and convert boolean attributes to RFC format.
 
             OID uses "0"/"1" for boolean values, but RFC4517 requires "TRUE"/"FALSE".
+            OID also exports DNs with quirks (spaces, unescaped UTF-8, etc.).
+
             This method:
-            1. Calls parent RFC parser to create base Entry
-            2. Converts boolean attribute values from OID format to RFC format
-            3. Stores metadata about conversions for tracking
+            1. Cleans DN to fix OID quirks (spaces before commas, UTF-8, etc.)
+            2. Calls parent RFC parser with cleaned DN to create base Entry
+            3. Converts boolean attribute values from OID format to RFC format
+            4. Stores metadata about conversions and DN cleaning for tracking
 
             Args:
-                entry_dn: Entry distinguished name
+                entry_dn: Entry distinguished name (may have OID quirks)
                 entry_attrs: Raw attribute mapping from LDIF parser
 
             Returns:
                 FlextResult with Entry model with boolean values converted to RFC format
+                and DN cleaned to RFC-compliant format, with original DN preserved in metadata
 
             """
-            # Step 1: Call RFC parser to create base Entry
-            result = super()._parse_entry(entry_dn, entry_attrs)
+            # Step 0: Clean DN to fix OID quirks BEFORE RFC parser validation
+            # OID exports DNs with spaces (e.g., "cn=user ,ou=..." instead of "cn=user,ou=...")
+            # and unescaped UTF-8 (e.g., "cn=josé" instead of "cn=jos\C3\A9")
+            original_dn = entry_dn
+            cleaned_dn = FlextLdifUtilities.DN.clean_dn(entry_dn)
+
+            # Step 1: Call RFC parser with CLEANED DN to create base Entry
+            result = super()._parse_entry(cleaned_dn, entry_attrs)
             if result.is_failure:
                 return result
 
             entry = result.unwrap()
+
+            # Check if entry has attributes
+            if not entry.attributes:
+                return result
 
             # Step 2: Convert OID boolean values to RFC format
             boolean_attributes = FlextLdifServersOid.Constants.BOOLEAN_ATTRIBUTES
@@ -1329,7 +1433,7 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                 attributes=converted_attributes,
             )
 
-            # Create metadata with conversion information
+            # Create metadata with conversion information and DN cleaning
             conversion_metadata: dict[str, object] = {}
             if converted_attrs:
                 conversion_metadata["boolean_attributes_converted"] = list(
@@ -1340,17 +1444,43 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                     converted_attrs,
                 )
 
+            # Add DN cleaning metadata if DN was modified
+            dn_metadata: dict[str, object] = {}
+            if original_dn != cleaned_dn:
+                dn_metadata["original_dn"] = original_dn
+                dn_metadata["cleaned_dn"] = cleaned_dn
+                dn_metadata["dn_was_cleaned"] = True
+                logger.debug(
+                    "Cleaned OID DN quirks: %s -> %s",
+                    original_dn,
+                    cleaned_dn,
+                )
+
             metadata = FlextLdifModels.QuirkMetadata.create_for(
                 FlextLdifConstants.ServerTypes.OID,
                 extensions={
                     **conversion_metadata,
+                    **dn_metadata,
                     "original_format": f"OID Entry with {len(converted_attrs)} boolean conversions",
                 },
             )
 
+            # Check DN is not None before creating entry
+            if not entry.dn:
+                return FlextResult[FlextLdifModels.Entry].fail("Entry has no DN")
+
+            # Preserve original DN in DistinguishedName metadata if it was cleaned
+            dn_to_use = entry.dn
+            if original_dn != cleaned_dn:
+                # Create new DN with metadata containing original DN
+                dn_to_use = FlextLdifModels.DistinguishedName(
+                    value=entry.dn.value,
+                    metadata=dn_metadata,
+                )
+
             # Create new Entry with converted attributes
             new_entry_result = FlextLdifModels.Entry.create(
-                dn=entry.dn,
+                dn=dn_to_use,
                 attributes=ldif_attrs,
                 server_type=FlextLdifConstants.ServerTypes.OID,
                 metadata=metadata,

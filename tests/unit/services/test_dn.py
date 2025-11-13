@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import pytest
 
+from flext_ldif.models import FlextLdifModels
 from flext_ldif.services.dn import FlextLdifDn
 
 
@@ -128,29 +129,29 @@ class TestDnCleaning:
     def test_clean_spaces_around_equals(self, dn_service: FlextLdifDn) -> None:
         """Clean DN with spaces around equals."""
         # clean_dn removes spaces BEFORE = but not after (preserves value spaces)
-        cleaned = dn_service.clean_dn("cn = John , dc = example , dc = com")
+        cleaned = FlextLdifDn.Normalizer.clean_dn("cn = John , dc = example , dc = com")
         assert "cn=" in cleaned  # Spaces before = removed
         assert " John" in cleaned  # Spaces in values preserved
 
     def test_clean_trailing_backslash_space(self, dn_service: FlextLdifDn) -> None:
         """Clean DN with trailing backslash+space."""
-        cleaned = dn_service.clean_dn(r"cn=OIM-TEST\ ,ou=Users,dc=com")
+        cleaned = FlextLdifDn.Normalizer.clean_dn(r"cn=OIM-TEST\ ,ou=Users,dc=com")
         assert cleaned == "cn=OIM-TEST,ou=Users,dc=com"
 
     def test_clean_empty_dn(self, dn_service: FlextLdifDn) -> None:
         """Clean empty DN."""
-        cleaned = dn_service.clean_dn("")
+        cleaned = FlextLdifDn.Normalizer.clean_dn("")
         assert cleaned == ""
 
     def test_clean_already_clean_dn(self, dn_service: FlextLdifDn) -> None:
         """Clean already clean DN (no changes)."""
         original = "cn=John,dc=example,dc=com"
-        cleaned = dn_service.clean_dn(original)
+        cleaned = FlextLdifDn.Normalizer.clean_dn(original)
         assert cleaned == original
 
     def test_clean_multiple_spaces(self, dn_service: FlextLdifDn) -> None:
         """Clean DN with multiple spaces."""
-        cleaned = dn_service.clean_dn("cn  =  John  ,  dc  =  example")
+        cleaned = FlextLdifDn.Normalizer.clean_dn("cn  =  John  ,  dc  =  example")
         assert "  " not in cleaned  # Multiple spaces removed
 
 
@@ -358,27 +359,27 @@ class TestCaseRegistry:
 
     def test_register_dn(self, dn_service: FlextLdifDn) -> None:
         """Register DN and get canonical case."""
-        registry = FlextLdifDn.CaseRegistry()
+        registry = FlextLdifModels.DnRegistry()
         canonical = registry.register_dn("CN=Admin,DC=Example,DC=Com")
         assert canonical == "CN=Admin,DC=Example,DC=Com"
 
     def test_get_canonical_dn(self, dn_service: FlextLdifDn) -> None:
         """Get canonical DN for variant case."""
-        registry = FlextLdifDn.CaseRegistry()
+        registry = FlextLdifModels.DnRegistry()
         registry.register_dn("CN=Admin,DC=Example,DC=Com")
         canonical = registry.get_canonical_dn("cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com")
         assert canonical == "CN=Admin,DC=Example,DC=Com"
 
     def test_has_dn(self, dn_service: FlextLdifDn) -> None:
         """Check if DN is registered."""
-        registry = FlextLdifDn.CaseRegistry()
+        registry = FlextLdifModels.DnRegistry()
         registry.register_dn("CN=Admin,DC=Example,DC=Com")
         assert registry.has_dn("cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com") is True
         assert registry.has_dn("cn=unknown,dc=example,dc=com") is False
 
     def test_get_case_variants(self, dn_service: FlextLdifDn) -> None:
         """Get all case variants for DN."""
-        registry = FlextLdifDn.CaseRegistry()
+        registry = FlextLdifModels.DnRegistry()
         registry.register_dn("CN=Admin,DC=Example,DC=Com")
         registry.register_dn("cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com")
         registry.register_dn("cn=ADMIN,dc=EXAMPLE,dc=COM")
@@ -387,7 +388,7 @@ class TestCaseRegistry:
 
     def test_validate_oud_consistency_consistent(self, dn_service: FlextLdifDn) -> None:
         """Validate OUD consistency when all variants are same case."""
-        registry = FlextLdifDn.CaseRegistry()
+        registry = FlextLdifModels.DnRegistry()
         registry.register_dn("cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com")
         result = registry.validate_oud_consistency()
         assert result.is_success
@@ -398,7 +399,7 @@ class TestCaseRegistry:
         dn_service: FlextLdifDn,
     ) -> None:
         """Validate OUD consistency with multiple case variants."""
-        registry = FlextLdifDn.CaseRegistry()
+        registry = FlextLdifModels.DnRegistry()
         registry.register_dn("CN=Admin,DC=Example,DC=Com")
         registry.register_dn("cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com")  # Different case
         result = registry.validate_oud_consistency()
@@ -407,7 +408,7 @@ class TestCaseRegistry:
 
     def test_registry_clear(self, dn_service: FlextLdifDn) -> None:
         """Clear registry."""
-        registry = FlextLdifDn.CaseRegistry()
+        registry = FlextLdifModels.DnRegistry()
         registry.register_dn("cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com")
         assert registry.has_dn("cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com") is True
         registry.clear()
@@ -415,7 +416,7 @@ class TestCaseRegistry:
 
     def test_registry_stats(self, dn_service: FlextLdifDn) -> None:
         """Get registry statistics."""
-        registry = FlextLdifDn.CaseRegistry()
+        registry = FlextLdifModels.DnRegistry()
         registry.register_dn("CN=Admin,DC=Example,DC=Com")
         registry.register_dn("cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com")
         stats = registry.get_stats()
@@ -454,7 +455,7 @@ class TestDnServiceIntegration:
         malformed = "CN = Smith, John , OU = Users , DC = Example"
 
         # Clean
-        cleaned = dn_service.clean_dn(malformed)
+        cleaned = FlextLdifDn.Normalizer.clean_dn(malformed)
         assert "  " not in cleaned
 
         # Extract and escape value
@@ -469,7 +470,7 @@ class TestDnServiceIntegration:
             "cn=ADMIN,dc=example,dc=com",
         ]
 
-        registry = FlextLdifDn.CaseRegistry()
+        registry = FlextLdifModels.DnRegistry()
         for dn in source_dns:
             registry.register_dn(dn)
 

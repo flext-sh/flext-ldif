@@ -8,24 +8,29 @@ from __future__ import annotations
 
 import logging
 import re
-from typing import Any
+from typing import Union
 
 from flext_ldif._models.config import FlextLdifModelsConfig
+from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.constants import FlextLdifConstants
 
 logger = logging.getLogger(__name__)
+
+
+# Type for parsed ACL components
+AclComponent = dict[str, Union[str, object]]
 
 
 class FlextLdifUtilitiesACL:
     """Generic ACL parsing and writing utilities."""
 
     @staticmethod
-    def parser(acl_line: str) -> dict[str, Any] | None:
+    def parser(acl_line: str) -> AclComponent | None:
         """Parse ACL line into components."""
         if not acl_line or not acl_line.strip():
             return None
 
-        result: dict[str, Any] = {}
+        result: AclComponent = {}
         line = acl_line.strip()
 
         if line.startswith("("):
@@ -452,7 +457,7 @@ class FlextLdifUtilitiesACL:
 
     @staticmethod
     def format_oid_target(
-        target: object | None,
+        target: FlextLdifModelsDomains.AclTarget | None,
     ) -> str:
         """Format OID ACL target clause.
 
@@ -690,10 +695,6 @@ class FlextLdifUtilitiesACL:
             {"read": True, "write": True, "add": False}
 
         """
-        if not isinstance(rights_list, list):
-            # Return all False if invalid input
-            return dict.fromkeys(permission_checks, False)
-
         # Build flags dict locally to avoid dependency issues
         result = {}
         for permission_name, check_value in permission_checks.items():

@@ -682,6 +682,10 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
         ) -> FlextResult[FlextLdifModels.Entry]:
             """Normalise 389 DS entries and attach metadata."""
             try:
+                # Check if entry has attributes and DN
+                if not entry.attributes or not entry.dn:
+                    return FlextResult[FlextLdifModels.Entry].ok(entry)
+
                 attributes = entry.attributes.attributes.copy()
                 entry_dn = entry.dn.value
                 dn_lower = entry_dn.lower()

@@ -15,12 +15,19 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import logging
-from typing import Any, TypeVar
+from typing import Protocol, TypeVar
 
 logger = logging.getLogger(__name__)
 
+
+class ModelWithValidationMetadata(Protocol):
+    """Protocol for models that have validation_metadata attribute."""
+
+    validation_metadata: dict[str, object] | None
+
+
 # Generic type for models with validation_metadata field
-ModelT = TypeVar("ModelT", bound=Any)
+ModelT = TypeVar("ModelT", bound=ModelWithValidationMetadata)
 
 
 class FlextLdifUtilitiesMetadata:
@@ -61,7 +68,9 @@ class FlextLdifUtilitiesMetadata:
             ]
 
     @staticmethod
-    def _set_model_metadata(model: ModelT, metadata: dict[str, object]) -> None:
+    def _set_model_metadata(
+        model: ModelWithValidationMetadata, metadata: dict[str, object]
+    ) -> None:
         """Set validation_metadata on model (handles both mutable and frozen models).
 
         Args:
@@ -144,7 +153,7 @@ class FlextLdifUtilitiesMetadata:
         return target_model
 
     @staticmethod
-    def extract_rfc_violations(model: ModelT) -> list[str]:
+    def extract_rfc_violations(model: ModelWithValidationMetadata) -> list[str]:
         """Extract all RFC violations from model validation_metadata.
 
         Aggregates violations from:

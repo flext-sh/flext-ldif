@@ -534,6 +534,10 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
         ) -> FlextResult[FlextLdifModels.Entry]:
             """Normalise IBM Tivoli DS entries and attach metadata."""
             try:
+                # Check if entry has DN and attributes
+                if not entry.dn or not entry.attributes:
+                    return FlextResult[FlextLdifModels.Entry].ok(entry)
+
                 entry_dn = entry.dn.value
                 attributes = entry.attributes.attributes.copy()
                 dn_lower = entry_dn.lower()

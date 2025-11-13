@@ -360,7 +360,6 @@ class FlextLdifDn(FlextService[str]):
         return cls.Normalizer.normalize(dn)
 
     @classmethod
-    @classmethod
     def escape_dn_value(cls, value: str) -> str:
         r"""Escape special characters in DN value per RFC 4514.
 

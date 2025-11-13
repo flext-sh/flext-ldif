@@ -12,10 +12,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import base64
+import contextlib
+import logging
 import re
 from collections.abc import Callable, Iterator, Mapping
 from datetime import UTC, datetime
-from typing import Any, ClassVar, cast
+from typing import ClassVar, cast
 
 from flext_core import (
     FlextLogger,
@@ -73,6 +76,44 @@ class FlextLdifModelsDomains:
 
         # NOTE: DN validation moved to Entry.validate_entry_rfc_compliance()
         # DistinguishedName is a frozen Value Object and cannot be modified after construction
+
+        @computed_field
+        def components(self) -> list[str]:
+            """Parse DN into individual RDN components.
+
+            Returns:
+                List of RDN components (e.g., ['cn=test', 'ou=users', 'dc=example', 'dc=com'])
+
+            """
+            if not self.value:
+                return []
+
+            # Split by comma and clean up whitespace
+            raw_components = [comp.strip() for comp in self.value.split(",")]
+            # Filter out empty components
+            return [comp for comp in raw_components if comp]
+
+        @computed_field
+        @property
+        def was_base64_encoded(self) -> bool:
+            """Check if DN was originally base64-encoded per RFC 2849.
+
+            Uses metadata to track if DN had :: indicator in original LDIF.
+            Useful for round-trip conversions between servers (OID → OUD).
+
+            Returns:
+                True if DN was base64-encoded in source LDIF, False otherwise
+
+            Example:
+                # DN with UTF-8 characters in LDIF:
+                dn:: Y249am9zw6ksZGM9ZXhhbXBsZSxkYz1jb20=
+                # Decoded to: cn=josé,dc=example,dc=com
+                # entry.dn.was_base64_encoded → True
+
+            """
+            if not self.metadata:
+                return False
+            return self.metadata.get("original_format") == "base64"
 
         def __str__(self) -> str:
             """Return DN value as string for str() conversion."""
@@ -1147,8 +1188,8 @@ class FlextLdifModelsDomains:
             default=None,
             description="Entry-level metadata (changetype, modifyTimestamp, etc.)",
         )
-        validation_metadata: dict[str, object] | None = Field(
-            default=None,
+        validation_metadata: dict[str, object] = Field(
+            default_factory=dict,
             description="Validation results and metadata from entry processing",
         )
 
@@ -1157,17 +1198,48 @@ class FlextLdifModelsDomains:
         def coerce_dn_from_string(
             cls, value: object
         ) -> FlextLdifModelsDomains.DistinguishedName | None:
-            """Convert string DN to DistinguishedName instance.
+            """Convert string DN to DistinguishedName instance with base64 detection.
+
+            Pydantic v2 Advanced Pattern: Emergency base64 decode at model level.
 
             Allows tests and direct instantiation to pass strings for DN field.
+            Also handles emergency base64 decoding if parser failed to decode.
+
+            Per RFC 2849: DN values starting with ": " indicate failed base64 decode.
+            This validator provides a safety net for data quality issues.
+
+            Args:
+                value: DN value (str, DistinguishedName, or None)
+
+            Returns:
+                DistinguishedName instance or None
+
             """
             if value is None or isinstance(
                 value, FlextLdifModelsDomains.DistinguishedName
             ):
                 return value
+
             if isinstance(value, str):
+                # Emergency base64 decode detection (fallback if parser failed)
+                # RFC 2849: ": base64..." indicates malformed LDIF that needs fixing
+                if value.startswith(": "):
+                    # Try to decode base64 (emergency recovery)
+                    original_value = value
+                    with contextlib.suppress(Exception):
+                        # Remove ": " prefix and decode
+                        base64_str = value[2:].strip()
+                        value = base64.b64decode(base64_str).decode("utf-8")
+
+                    # If decode succeeded, log warning about LDIF quality
+                    if value != original_value:
+                        logging.getLogger(__name__).warning(
+                            f"Emergency base64 decode in Entry model. "
+                            f"DN was not decoded by parser: {original_value[:50]}..."
+                        )
+
                 return FlextLdifModelsDomains.DistinguishedName(value=value)
-            return value
+            return None
 
         @model_validator(mode="after")
         def validate_entry_consistency(self) -> FlextLdifModelsDomains.Entry:
@@ -1435,7 +1507,7 @@ class FlextLdifModelsDomains:
             )
 
         @classmethod
-        def _create_entry(
+        def _create_entry(  # noqa: C901
             cls,
             dn: str | FlextLdifModelsDomains.DistinguishedName,
             attributes: (
@@ -1564,7 +1636,7 @@ class FlextLdifModelsDomains:
                 dn_str = str(getattr(ldap3_entry, "entry_dn", ""))
 
                 # Extract attributes - ldap3 provides dict with various types
-                entry_attrs_raw: Any = (
+                entry_attrs_raw: dict[str, object] = (
                     getattr(ldap3_entry, "entry_attributes_as_dict", {})
                     if hasattr(ldap3_entry, "entry_attributes_as_dict")
                     else {}

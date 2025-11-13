@@ -476,7 +476,7 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
         output_format: Literal["dict"],
     ) -> FlextResult[list[dict[str, str | list[str]]]]: ...
 
-    def parse(
+    def parse(  # noqa: C901
         self,
         source: str | Path,
         server_type: str | None = None,
@@ -558,7 +558,9 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
             # Extract entries from ParseResponse
             if parse_result.is_success:
                 parse_response = parse_result.unwrap()
-                return FlextResult.ok(parse_response.entries)
+                # Cast to narrow type - FlextLdifModels.Entry is alias for domain.Entry
+                entries = cast("list[FlextLdifModels.Entry]", parse_response.entries)
+                return FlextResult.ok(entries)
             return FlextResult.fail(parse_result.error)
 
         # Use functional composition with error handling

@@ -46,7 +46,9 @@ from __future__ import annotations
 
 import re
 from collections.abc import Mapping
-from typing import Any, Protocol, cast
+from typing import Protocol, cast
+
+from flext_ldif.models import FlextLdifModels
 
 
 class ServerConstantsProtocol(Protocol):
@@ -69,7 +71,9 @@ class FlextLdifUtilitiesDetection:
         Eliminates duplications of _get_constants across all detection mixins.
         """
 
-        def _get_constants(self, required_attr: str | None = None) -> type[ServerConstantsProtocol] | None:
+        def _get_constants(
+            self, required_attr: str | None = None
+        ) -> type[ServerConstantsProtocol] | None:
             """Get Constants class from server class via MRO traversal.
 
             Args:
@@ -263,7 +267,7 @@ class FlextLdifUtilitiesDetection:
 
         def can_handle_attribute(
             self,
-            attr_definition: str | object,  # SchemaAttribute,
+            attr_definition: str | FlextLdifModels.SchemaAttribute,
         ) -> bool:
             """Check if attribute matches OID detection pattern.
 
@@ -280,7 +284,7 @@ class FlextLdifUtilitiesDetection:
 
         def can_handle_objectclass(
             self,
-            oc_definition: str | object,  # SchemaObjectClass,
+            oc_definition: str | FlextLdifModels.SchemaObjectClass,
         ) -> bool:
             """Check if objectClass matches OID detection pattern.
 
@@ -309,14 +313,14 @@ class FlextLdifUtilitiesDetection:
 
         def can_handle_attribute(
             self,
-            attr_definition: str | object,  # SchemaAttribute | object,
+            attr_definition: str | FlextLdifModels.SchemaAttribute,
         ) -> bool:
             """Check if attribute name matches detection prefixes.
 
             Override in subclass and set DETECTION_ATTRIBUTE_PREFIXES constant.
 
             Args:
-                attr_definition: Attribute definition (string or model or any type)
+                attr_definition: Attribute definition (string or model)
 
             Returns:
                 True if attribute name starts with any detection prefix

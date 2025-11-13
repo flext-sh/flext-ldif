@@ -178,6 +178,7 @@ from pydantic import Field, PrivateAttr, ValidationError, field_validator
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
+from flext_ldif.servers import get_server_quirk
 from flext_ldif.utilities import FlextLdifUtilities
 
 
@@ -1598,60 +1599,144 @@ class FlextLdifFilters(FlextService[FlextLdifModels.EntryResult]):
         return cls.Transformer.remove_objectclasses(entry, objectclasses)
 
     @classmethod
-    def categorize(
+    def _check_hierarchy_priority(
+        cls, entry: FlextLdifModels.Entry, constants: type
+    ) -> bool:
+        """Check if entry matches HIERARCHY_PRIORITY_OBJECTCLASSES.
+
+        Args:
+            entry: Entry to check
+            constants: Server Constants class
+
+        Returns:
+            True if entry has priority hierarchy objectClass
+
+        """
+        if not hasattr(constants, "HIERARCHY_PRIORITY_OBJECTCLASSES"):
+            return False
+
+        priority_classes = constants.HIERARCHY_PRIORITY_OBJECTCLASSES
+        entry_ocs = {oc.lower() for oc in entry.get_objectclass_names()}
+        return any(oc.lower() in entry_ocs for oc in priority_classes)
+
+    @classmethod
+    def _get_server_constants(cls, server_type: str) -> tuple[type, str | None]:
+        """Get and validate server constants.
+
+        Args:
+            server_type: Server type identifier
+
+        Returns:
+            Tuple of (constants_class, error_message)
+
+        """
+        quirk = get_server_quirk(server_type)
+
+        if not hasattr(quirk, "Constants"):
+            return (None, f"Server type {server_type} missing Constants class")  # type: ignore[return-value]
+
+        constants = quirk.Constants  # type: ignore[attr-defined]
+
+        if not hasattr(constants, "CATEGORIZATION_PRIORITY"):
+            return (None, f"Server {server_type} missing CATEGORIZATION_PRIORITY")  # type: ignore[return-value]
+        if not hasattr(constants, "CATEGORY_OBJECTCLASSES"):
+            return (None, f"Server {server_type} missing CATEGORY_OBJECTCLASSES")  # type: ignore[return-value]
+
+        return (constants, None)
+
+    @classmethod
+    def _categorize_by_priority(
         cls,
         entry: FlextLdifModels.Entry,
-        rules: FlextLdifModels.CategoryRules | Mapping[str, object] | None,
+        constants: type,
+        priority_order: list[str],
+        category_map: dict[str, frozenset[str]],
     ) -> tuple[str, str | None]:
-        """Categorize entry into 6 categories.
+        """Categorize entry by iterating through priority order.
 
-        Uses type-safe CategoryRules model instead of dict[str, Any].
-
-        Categories (in priority order):
-        - schema: Has attributeTypes/objectClasses
-        - users: User accounts (person, inetOrgPerson, orcluser)
-        - groups: Group entries (groupOfUniqueNames, orclgroup)
-        - hierarchy: Containers (organizationalUnit, etc)
-        - acl: Entries with ACL attributes
-        - rejected: No match
+        Args:
+            entry: Entry to categorize
+            constants: Server Constants class
+            priority_order: Category priority order
+            category_map: Category to objectClasses mapping
 
         Returns:
             Tuple of (category, rejection_reason)
 
         """
+        for category in priority_order:
+            if category == "acl":
+                if hasattr(constants, "CATEGORIZATION_ACL_ATTRIBUTES"):
+                    acl_attributes = list(constants.CATEGORIZATION_ACL_ATTRIBUTES)  # type: ignore[attr-defined]
+                    if cls.Filter.has_attributes(entry, acl_attributes, match_any=True):
+                        return ("acl", None)
+                continue
+
+            category_objectclasses = category_map.get(category)
+            if not category_objectclasses:
+                continue
+
+            if cls.Filter.has_objectclass(entry, tuple(category_objectclasses)):
+                return (category, None)
+
+        return ("rejected", "No category match")
+
+    @classmethod
+    def categorize(
+        cls,
+        entry: FlextLdifModels.Entry,
+        rules: FlextLdifModels.CategoryRules | Mapping[str, object] | None,
+        server_type: str = "rfc",
+    ) -> tuple[str, str | None]:
+        """Categorize entry using SERVER-SPECIFIC rules.
+
+        Uses server-specific constants from servers/oid.py, servers/oud.py, etc.
+        for objectClass prioritization and ACL detection.
+
+        Categories (server-specific priority):
+        - schema: Has attributeTypes/objectClasses
+        - users: User accounts (person, inetOrgPerson, orcluser for OID)
+        - hierarchy: Containers (organizationalUnit, orclContainer for OID)
+        - groups: Group entries (groupOfNames, orclGroup for OID)
+        - acl: Entries with ACL attributes (orclaci for OID, aci for OUD)
+        - rejected: No match
+
+        Args:
+            entry: LDIF entry to categorize
+            rules: Category rules (can override server defaults)
+            server_type: Server type ("oid", "oud", "rfc") determines constants
+
+        Returns:
+            Tuple of (category, rejection_reason)
+
+        """
+        # Normalize rules (validates but we use server constants, not rules)
         rules_result = cls._normalize_category_rules(rules)
         if rules_result.is_failure:
             return ("rejected", rules_result.error)
-        normalized_rules = rules_result.unwrap()
 
-        # Check schema first
+        # Check schema first (universal across all servers)
         if cls.is_schema(entry):
             return ("schema", None)
 
-        # Get objectClasses from CategoryRules model
-        hierarchy_classes = tuple(normalized_rules.hierarchy_objectclasses)
-        user_classes = tuple(normalized_rules.user_objectclasses)
-        group_classes = tuple(normalized_rules.group_objectclasses)
+        # Get and validate server constants
+        constants, error = cls._get_server_constants(server_type)
+        if error:
+            return ("rejected", error)
 
-        # Check users FIRST
-        if user_classes and cls.Filter.has_objectclass(entry, user_classes):
-            return ("users", None)
-
-        # Check groups SECOND (BEFORE hierarchy - prevents misclassification)
-        if group_classes and cls.Filter.has_objectclass(entry, group_classes):
-            return ("groups", None)
-
-        # Check hierarchy AFTER groups
-        if hierarchy_classes and cls.Filter.has_objectclass(entry, hierarchy_classes):
+        # Check for HIERARCHY PRIORITY objectClasses first
+        # This solves entries like cn=PERFIS with both orclContainer + orclprivilegegroup
+        if cls._check_hierarchy_priority(entry, constants):
             return ("hierarchy", None)
 
-        # Check ACL (default ACL attributes - can be made configurable later)
-        acl_attributes = ["acl", "aci", "olcAccess"]
-        if cls.Filter.has_attributes(entry, acl_attributes, match_any=True):
-            return ("acl", None)
+        # Get server-specific categorization priority and mappings
+        priority_order = constants.CATEGORIZATION_PRIORITY  # type: ignore[attr-defined]
+        category_map = constants.CATEGORY_OBJECTCLASSES  # type: ignore[attr-defined]
 
-        # Rejected
-        return ("rejected", "No category match")
+        # Categorize by priority order
+        return cls._categorize_by_priority(
+            entry, constants, priority_order, category_map
+        )
 
     @staticmethod
     def _extract_allowed_oids(
@@ -1997,8 +2082,17 @@ class FlextLdifFilters(FlextService[FlextLdifModels.EntryResult]):
         if is_blocked:
             return ("rejected", reason)
 
-        # Delegate to FilterService for main categorization
-        category, reason = FlextLdifFilters.categorize(entry, normalized_rules)
+        # Extract server_type from entry metadata quirk_type
+        server_type = (
+            entry.metadata.quirk_type
+            if entry.metadata and hasattr(entry.metadata, "quirk_type")
+            else "rfc"
+        )
+
+        # Delegate to FilterService for main categorization with server_type
+        category, reason = FlextLdifFilters.categorize(
+            entry, normalized_rules, server_type
+        )
 
         # Validate DN patterns for category-specific matching using helper
         if category in {"users", "groups"}:

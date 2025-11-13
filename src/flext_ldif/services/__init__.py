@@ -1,49 +1,16 @@
-"""FLEXT-LDIF Services - Business Logic Layer.
+"""FLEXT-LDIF Services - Internal Business Logic Layer.
 
-This package contains all service classes for FLEXT-LDIF operations:
-- Parser: LDIF file parsing with auto-detection and relaxed mode
-- Validation: RFC 2849/4512 compliant validation
-- DN: Distinguished Name operations
-- Syntax: RFC 4517 attribute syntax validation and resolution
-- ACL: Access Control List processing
-- Schema: Schema building and validation
-- File Writer: LDIF file writing operations
-- Statistics: Pipeline statistics and metrics generation
-- Server Detection: LDAP server type detection
+Internal services for FLEXT-LDIF operations. These services are NOT part of
+the public API and should NOT be imported directly by external consumers.
+
+Use the FlextLdif facade for all LDIF operations instead.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
-
 """
 
 from __future__ import annotations
 
-from flext_ldif.services.acl import FlextLdifAcl
-from flext_ldif.services.dn import FlextLdifDn
-from flext_ldif.services.entry import FlextLdifEntry
-from flext_ldif.services.filters import FlextLdifFilters
-from flext_ldif.services.parser import FlextLdifParser
-from flext_ldif.services.schema import FlextLdifSchema
-from flext_ldif.services.server import FlextLdifServer
-from flext_ldif.services.sorting import FlextLdifSorting
-from flext_ldif.services.statistics import FlextLdifStatistics
-from flext_ldif.services.syntax import FlextLdifSyntax
-
-# Import after other services to avoid circular dependency with models
-from flext_ldif.services.validation import FlextLdifValidation
-from flext_ldif.services.writer import FlextLdifWriter
-
-__all__ = [
-    "FlextLdifAcl",
-    "FlextLdifDn",
-    "FlextLdifEntry",
-    "FlextLdifFilters",
-    "FlextLdifParser",
-    "FlextLdifSchema",
-    "FlextLdifServer",
-    "FlextLdifSorting",
-    "FlextLdifStatistics",
-    "FlextLdifSyntax",
-    "FlextLdifValidation",
-    "FlextLdifWriter",
-]
+# NO EXPORTS - Services are internal only
+# Use FlextLdif facade: from flext_ldif import FlextLdif
+__all__: list[str] = []

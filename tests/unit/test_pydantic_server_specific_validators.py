@@ -27,7 +27,7 @@ class TestOidServerSpecificValidation:
         entry = FlextLdifModels.Entry(
             dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
             attributes=FlextLdifModels.LdifAttributes(attributes={"cn": ["test"]}),
-            metadata=FlextLdifModels.QuirkMetadata(server_type="oid"),
+            metadata=FlextLdifModels.QuirkMetadata(quirk_type="oid"),
         )
 
         # Should validate without errors (OID is lenient)
@@ -53,7 +53,7 @@ class TestOidServerSpecificValidation:
                     # Missing 'cn' attribute
                 }
             ),
-            metadata=FlextLdifModels.QuirkMetadata(server_type="oid"),
+            metadata=FlextLdifModels.QuirkMetadata(quirk_type="oid"),
         )
 
         # Check RFC violation is captured (SHOULD have naming attr)
@@ -77,7 +77,7 @@ class TestOidServerSpecificValidation:
                     "userCertificate": ["\x00\x01\x02\x03"],  # Binary data
                 }
             ),
-            metadata=FlextLdifModels.QuirkMetadata(server_type="oid"),
+            metadata=FlextLdifModels.QuirkMetadata(quirk_type="oid"),
         )
 
         # Check RFC violation is captured (MAY need ;binary)
@@ -96,7 +96,7 @@ class TestOudServerSpecificValidation:
         entry = FlextLdifModels.Entry(
             dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
             attributes=FlextLdifModels.LdifAttributes(attributes={"cn": ["test"]}),
-            metadata=FlextLdifModels.QuirkMetadata(server_type="oud"),
+            metadata=FlextLdifModels.QuirkMetadata(quirk_type="oud"),
         )
 
         # Check server-specific violation is captured (OUD REQUIRES objectClass)
@@ -117,7 +117,7 @@ class TestOudServerSpecificValidation:
                     # Missing 'cn' attribute
                 }
             ),
-            metadata=FlextLdifModels.QuirkMetadata(server_type="oud"),
+            metadata=FlextLdifModels.QuirkMetadata(quirk_type="oud"),
         )
 
         # Check server-specific violation is captured (OUD REQUIRES naming attr)
@@ -139,7 +139,7 @@ class TestOudServerSpecificValidation:
                     "userCertificate": ["\x00\x01\x02\x03"],  # Binary data
                 }
             ),
-            metadata=FlextLdifModels.QuirkMetadata(server_type="oud"),
+            metadata=FlextLdifModels.QuirkMetadata(quirk_type="oud"),
         )
 
         # Check server-specific violation is captured (OUD REQUIRES ;binary)
@@ -161,7 +161,7 @@ class TestOudServerSpecificValidation:
                     "userCertificate;binary": ["base64encodeddata"],
                 }
             ),
-            metadata=FlextLdifModels.QuirkMetadata(server_type="oud"),
+            metadata=FlextLdifModels.QuirkMetadata(quirk_type="oud"),
         )
 
         # No violations
@@ -178,7 +178,7 @@ class TestOpenLdapServerSpecificValidation:
         entry = FlextLdifModels.Entry(
             dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
             attributes=FlextLdifModels.LdifAttributes(attributes={"cn": ["test"]}),
-            metadata=FlextLdifModels.QuirkMetadata(server_type="openldap"),
+            metadata=FlextLdifModels.QuirkMetadata(quirk_type="openldap"),
         )
 
         # RFC violation captured (SHOULD have objectClass)
@@ -199,7 +199,7 @@ class TestOpenLdapServerSpecificValidation:
                     "userCertificate": ["\x00\x01\x02\x03"],  # Binary data
                 }
             ),
-            metadata=FlextLdifModels.QuirkMetadata(server_type="openldap"),
+            metadata=FlextLdifModels.QuirkMetadata(quirk_type="openldap"),
         )
 
         # Check server-specific violation is captured (OpenLDAP REQUIRES ;binary)
@@ -219,7 +219,7 @@ class TestOpenLdapServerSpecificValidation:
                     "attributeTypes": ["( 1.2.3.4 NAME 'test' )"],
                 }
             ),
-            metadata=FlextLdifModels.QuirkMetadata(server_type="openldap"),
+            metadata=FlextLdifModels.QuirkMetadata(quirk_type="openldap"),
         )
 
         # Schema entries are exempt from objectClass requirement
@@ -239,7 +239,7 @@ class TestActiveDirectoryServerSpecificValidation:
         entry = FlextLdifModels.Entry(
             dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
             attributes=FlextLdifModels.LdifAttributes(attributes={"cn": ["test"]}),
-            metadata=FlextLdifModels.QuirkMetadata(server_type="ad"),
+            metadata=FlextLdifModels.QuirkMetadata(quirk_type="ad"),
         )
 
         # Check server-specific violation is captured (AD REQUIRES objectClass)
@@ -260,7 +260,7 @@ class TestActiveDirectoryServerSpecificValidation:
                     # Missing 'cn' attribute
                 }
             ),
-            metadata=FlextLdifModels.QuirkMetadata(server_type="ad"),
+            metadata=FlextLdifModels.QuirkMetadata(quirk_type="ad"),
         )
 
         # Check server-specific violation is captured (AD REQUIRES naming attr)
@@ -282,7 +282,7 @@ class TestActiveDirectoryServerSpecificValidation:
                     "objectGUID": ["\x00\x01\x02\x03"],  # Binary GUID
                 }
             ),
-            metadata=FlextLdifModels.QuirkMetadata(server_type="ad"),
+            metadata=FlextLdifModels.QuirkMetadata(quirk_type="ad"),
         )
 
         # RFC violation captured (MAY need ;binary)
@@ -301,7 +301,7 @@ class TestRfcBaselineValidation:
         entry = FlextLdifModels.Entry(
             dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
             attributes=FlextLdifModels.LdifAttributes(attributes={"cn": ["test"]}),
-            metadata=FlextLdifModels.QuirkMetadata(server_type="rfc"),
+            metadata=FlextLdifModels.QuirkMetadata(quirk_type="rfc"),
         )
 
         # RFC violation captured (SHOULD have objectClass)
@@ -325,7 +325,7 @@ class TestRfcBaselineValidation:
                     # Missing 'cn' attribute
                 }
             ),
-            metadata=FlextLdifModels.QuirkMetadata(server_type="rfc"),
+            metadata=FlextLdifModels.QuirkMetadata(quirk_type="rfc"),
         )
 
         # RFC violation captured (SHOULD have naming attr)
@@ -350,7 +350,7 @@ class TestRfcBaselineValidation:
                     "userCertificate": ["\x00\x01\x02\x03"],  # Binary data
                 }
             ),
-            metadata=FlextLdifModels.QuirkMetadata(server_type="rfc"),
+            metadata=FlextLdifModels.QuirkMetadata(quirk_type="rfc"),
         )
 
         # RFC violation captured (MAY need ;binary)
@@ -375,7 +375,7 @@ class TestRfcBaselineValidation:
                     "sn": ["Test"],
                 }
             ),
-            metadata=FlextLdifModels.QuirkMetadata(server_type="rfc"),
+            metadata=FlextLdifModels.QuirkMetadata(quirk_type="rfc"),
         )
 
         # No violations
@@ -397,7 +397,7 @@ class TestMetadataCapture:
                     "cn": ["test"],
                 }
             ),
-            metadata=FlextLdifModels.QuirkMetadata(server_type="oud"),
+            metadata=FlextLdifModels.QuirkMetadata(quirk_type="oud"),
         )
 
         # Check validation_server_type is captured
@@ -412,7 +412,7 @@ class TestMetadataCapture:
             attributes=FlextLdifModels.LdifAttributes(
                 attributes={}
             ),  # Missing objectClass and cn
-            metadata=FlextLdifModels.QuirkMetadata(server_type="rfc"),
+            metadata=FlextLdifModels.QuirkMetadata(quirk_type="rfc"),
         )
 
         # Check RFC violations in both locations
@@ -431,7 +431,7 @@ class TestMetadataCapture:
             attributes=FlextLdifModels.LdifAttributes(
                 attributes={}
             ),  # Missing objectClass and cn
-            metadata=FlextLdifModels.QuirkMetadata(server_type="oud"),
+            metadata=FlextLdifModels.QuirkMetadata(quirk_type="oud"),
         )
 
         # Check server-specific violations in both locations

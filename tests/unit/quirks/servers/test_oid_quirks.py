@@ -1543,7 +1543,10 @@ class TestOidQuirksWriteAttributeToRfc:
             name="orclGUID",
             syntax="1.3.6.1.4.1.1466.115.121.1.15",
             single_value=True,
-            metadata=FlextLdifModels.QuirkMetadata(original_format=original_format),
+            metadata=FlextLdifModels.QuirkMetadata(
+                quirk_type="oid",
+                original_format=original_format,
+            ),
         )
 
         result = oid.write(attr_data)
@@ -1559,7 +1562,10 @@ class TestOidQuirksWriteAttributeToRfc:
             oid="2.16.840.1.113894.1.1.1",
             name="orclGUID",
             syntax="1.3.6.1.4.1.1466.115.121.1.15",
-            metadata=FlextLdifModels.QuirkMetadata(original_format=original_format),
+            metadata=FlextLdifModels.QuirkMetadata(
+                quirk_type="oid",
+                original_format=original_format,
+            ),
         )
 
         result = oid.write(attr_data)
@@ -1844,7 +1850,10 @@ class TestOidQuirksWriteObjectclassToRfc:
             kind="STRUCTURAL",
             sup="top",
             must=["cn"],
-            metadata=FlextLdifModels.QuirkMetadata(original_format=original_format),
+            metadata=FlextLdifModels.QuirkMetadata(
+                quirk_type="oid",
+                original_format=original_format,
+            ),
         )
         result = oid.write(oc_data)
 
@@ -1994,7 +2003,10 @@ class TestOidQuirksWriteObjectclassToRfc:
             oid="2.5.6.6",
             name="person",
             kind="STRUCTURAL",
-            metadata=FlextLdifModels.QuirkMetadata(x_origin="Oracle OID"),
+            metadata=FlextLdifModels.QuirkMetadata(
+                quirk_type="oid",
+                x_origin="Oracle OID",
+            ),
         )
         result = oid.write(oc_data)
 

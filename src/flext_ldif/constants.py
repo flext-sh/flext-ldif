@@ -110,6 +110,29 @@ class FlextLdifConstants(FlextConstants):
         "iso-8859-1",
     })
 
+    # ===== RFC 2849 LDIF FORMAT CONSTANTS =====
+    class LdifFormat(StrEnum):
+        """RFC 2849 LDIF format indicators for attribute value encoding.
+
+        - REGULAR: Single colon (:) for regular text values
+        - BASE64: Double colon (::) for base64-encoded values (UTF-8, binary, special chars)
+        - URL: Less than and colon (:<) for URL-referenced values
+
+        Per RFC 2849 Section 2:
+        - Use :: when value contains non-ASCII, leading/trailing space, or special chars
+        - Base64 encoding preserves exact byte sequence for round-trip
+        """
+
+        REGULAR = ":"
+        BASE64 = "::"
+        URL = ":<"
+
+    # LDIF format detection constants
+    LDIF_BASE64_INDICATOR: Final[str] = "::"
+    LDIF_REGULAR_INDICATOR: Final[str] = ":"
+    LDIF_URL_INDICATOR: Final[str] = ":<"
+    LDIF_DEFAULT_ENCODING: Final[str] = "utf-8"
+
     # ===== ACL SUBJECT TYPE ENUMS (Type-Safe) =====
     class AclSubjectType(StrEnum):
         """ACL subject/who types for permission subjects.
@@ -2439,11 +2462,12 @@ class FlextLdifConstants(FlextConstants):
         SERVICE_NAMES: Final[str] = "service_names"
         DATA: Final[str] = "data"
 
-    class LdifFormat:
-        """LDIF formatting constants.
+    class LdifFormatting:
+        """LDIF formatting constants (line width, folding).
 
         Defines constants for LDIF formatting options including line width
-        and other formatting preferences.
+        and other formatting preferences. Different from LdifFormat which
+        defines RFC 2849 value indicators (::, :, :<).
         """
 
         # Default line width for LDIF folding (RFC 2849 recommends 76)

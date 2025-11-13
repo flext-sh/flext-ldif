@@ -372,6 +372,11 @@ class FlextLdifEntry(FlextService[list[FlextLdifModels.Entry]]):
 
         # Create adapted entry
         ldif_attributes = FlextLdifModels.LdifAttributes(attributes=adapted_attrs)
+
+        # Check DN is not None before creating entry
+        if not entry.dn:
+            return FlextResult[FlextLdifModels.Entry].fail("Entry has no DN")
+
         adapted_entry_result: FlextResult[FlextLdifModels.Entry] = (
             FlextLdifModels.Entry.create(
                 dn=entry.dn,
@@ -408,6 +413,10 @@ class FlextLdifEntry(FlextService[list[FlextLdifModels.Entry]]):
 
         Uses FlextLdifUtilities.Entry.remove_attributes() for core logic.
         """
+        # Check if entry has attributes
+        if not entry.attributes:
+            return FlextResult[FlextLdifModels.Entry].ok(entry)
+
         # Log attributes being removed
         if self.logger is not None:
             attrs_to_remove_lower = {attr.lower() for attr in attributes}

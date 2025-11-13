@@ -29,24 +29,18 @@ from flext_ldif.api import FlextLdif
 from flext_ldif.config import FlextLdifConfig
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
-from flext_ldif.services.acl import FlextLdifAcl
-from flext_ldif.services.dn import FlextLdifDn as Dn
 from flext_ldif.services.migration import FlextLdifMigrationPipeline
-from flext_ldif.services.validation import FlextLdifValidation
 from flext_ldif.typings import FlextLdifTypes
 from flext_ldif.utilities import FlextLdifUtilities
 
 __email__ = "dev@flext.com"
 
 __all__ = [
-    "Dn",
-    "FlextLdif",
-    "FlextLdifAcl",
-    "FlextLdifConfig",
-    "FlextLdifConstants",
-    "FlextLdifMigrationPipeline",
-    "FlextLdifModels",
-    "FlextLdifTypes",
-    "FlextLdifUtilities",
-    "FlextLdifValidation",
+    "FlextLdif",  # ✅ Facade (single entry point)
+    "FlextLdifConfig",  # ✅ Configuration
+    "FlextLdifConstants",  # ✅ Constants
+    "FlextLdifMigrationPipeline",  # ✅ High-level service (OK to expose)
+    "FlextLdifModels",  # ✅ Domain models
+    "FlextLdifTypes",  # ✅ Type definitions
+    "FlextLdifUtilities",  # ✅ Public helpers
 ]

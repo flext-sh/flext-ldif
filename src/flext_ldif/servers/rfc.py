@@ -607,7 +607,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 ),
                 metadata=FlextLdifModels.QuirkMetadata(
                     quirk_type=server_type_value,
-                    original_format=acl_line,
+                    extensions={"original_format": acl_line},
                 ),
             )
             return FlextResult.ok(acl_model)
@@ -630,13 +630,34 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             extensions: dict[str, object] | None = None,
         ) -> FlextLdifModels.QuirkMetadata:
             """Create ACL quirk metadata."""
+            all_extensions: dict[str, object] = {"original_format": original_format}
+            if extensions:
+                all_extensions.update(extensions)
             return FlextLdifModels.QuirkMetadata(
                 quirk_type=self._get_server_type(),
-                original_format=original_format,
-                extensions=extensions or {},
+                extensions=all_extensions,
             )
 
         # Nested Acl conversion methods eliminated - use universal parse/write pipeline
+
+        def convert_rfc_acl_to_aci(
+            self,
+            rfc_acl_attrs: dict[str, list[str]],
+            target_server: str,  # noqa: ARG002
+        ) -> FlextResult[dict[str, list[str]]]:
+            """Convert RFC ACL format to server-specific ACI format.
+
+            RFC implementation: Pass-through (RFC ACLs are already in RFC format).
+
+            Args:
+                rfc_acl_attrs: ACL attributes in RFC format
+                target_server: Target server type identifier (unused in RFC)
+
+            Returns:
+                FlextResult with same RFC ACL attributes (no conversion needed)
+
+            """
+            return FlextResult.ok(rfc_acl_attrs)
 
         def _write_acl(self, acl_data: FlextLdifModels.Acl) -> FlextResult[str]:
             """Write ACL to RFC-compliant string format (internal)."""
@@ -874,14 +895,27 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                     else:
                         converted_attrs[canonical_attr_name] = string_values
 
+                # Check if DN was base64-encoded (parser sets _base64_dn flag)
+                dn_was_base64 = converted_attrs.pop("_base64_dn", None) is not None
+
                 # Create LdifAttributes directly from converted_attrs
-                # converted_attrs now has normalized attribute names
+                # converted_attrs now has normalized attribute names (_base64_dn removed)
                 ldif_attrs = FlextLdifModels.LdifAttributes(attributes=converted_attrs)
+
+                # Create DistinguishedName with metadata if it was base64-encoded
+                if dn_was_base64:
+                    # Preserve RFC 2849 base64 indicator for round-trip
+                    dn_obj = FlextLdifModels.DistinguishedName(
+                        value=cleaned_dn,
+                        metadata={"original_format": "base64"},
+                    )
+                else:
+                    dn_obj = cleaned_dn  # Entry.create will coerce to DistinguishedName
 
                 # Create Entry model using Entry.create factory method
                 # This ensures proper validation and model construction
                 entry_result = FlextLdifModels.Entry.create(
-                    dn=cleaned_dn,
+                    dn=dn_obj,  # type: ignore[arg-type]
                     attributes=ldif_attrs,
                 )
 
@@ -1160,7 +1194,10 @@ class FlextLdifServersRfc(FlextLdifServersBase):
 
             # RFC 2849: Only include changetype if entry has it
             # Content records (no changetype) vs Change records (with changetype)
-            if entry_data.attributes and "changetype" in entry_data.attributes.attributes:
+            if (
+                entry_data.attributes
+                and "changetype" in entry_data.attributes.attributes
+            ):
                 changetype_values = entry_data.attributes.attributes["changetype"]
                 if changetype_values:
                     ldif_lines.append(f"changetype: {changetype_values[0]}")

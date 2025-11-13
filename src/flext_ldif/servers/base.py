@@ -123,7 +123,7 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
 
         # Get Constants - type: ignore needed for __init_subclass__ metaclass hook
         # Pyright can't know subclass attributes, but hasattr validates at runtime
-        constants_class = cls.Constants
+        constants_class = cls.Constants  # type: ignore[attr-defined]
 
         # Validate required attributes exist
         if not hasattr(constants_class, "SERVER_TYPE"):
@@ -547,12 +547,12 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
 
         def is_valid_server_class(mro_cls: type[object]) -> bool:
             """Check if MRO class is a valid server class with SERVER_TYPE."""
-            return (
-                mro_cls.__name__.startswith("FlextLdifServers")
-                and not mro_cls.__name__.endswith(("Schema", "Acl", "Entry"))
-                and hasattr(mro_cls, "Constants")
-                and hasattr(mro_cls.Constants, "SERVER_TYPE")
-            )
+            if not mro_cls.__name__.startswith("FlextLdifServers"):
+                return False
+            if mro_cls.__name__.endswith(("Schema", "Acl", "Entry")):
+                return False
+            constants = getattr(mro_cls, "Constants", None)
+            return constants is not None and hasattr(constants, "SERVER_TYPE")
 
         def extract_server_type(mro_cls: type[object]) -> str | None:
             """Extract server type if it's a valid string."""
@@ -591,12 +591,12 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
 
         def is_valid_server_class(mro_cls: type[object]) -> bool:
             """Check if MRO class is a valid server class with PRIORITY."""
-            return (
-                mro_cls.__name__.startswith("FlextLdifServers")
-                and not mro_cls.__name__.endswith(("Schema", "Acl", "Entry"))
-                and hasattr(mro_cls, "Constants")
-                and hasattr(mro_cls.Constants, "PRIORITY")
-            )
+            if not mro_cls.__name__.startswith("FlextLdifServers"):
+                return False
+            if mro_cls.__name__.endswith(("Schema", "Acl", "Entry")):
+                return False
+            constants = getattr(mro_cls, "Constants", None)
+            return constants is not None and hasattr(constants, "PRIORITY")
 
         def extract_priority(mro_cls: type[object]) -> int | None:
             """Extract priority if it's a valid integer."""
@@ -1718,10 +1718,14 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
                     server_type = cls.Constants.SERVER_TYPE
                     break
 
+            # Build extensions with original_format
+            all_extensions: dict[str, object] = {"original_format": original_format}
+            if extensions:
+                all_extensions.update(extensions)
+
             return FlextLdifModels.QuirkMetadata(
                 quirk_type=server_type,
-                original_format=original_format,
-                extensions=extensions or {},
+                extensions=all_extensions,
             )
 
         def parse_attribute(
@@ -1864,7 +1868,7 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
             ldif_content: str,
             *,
             validate_dependencies: bool = False,
-        ) -> FlextResult[dict[str, list[str] | str]]:
+        ) -> FlextResult[dict[str, object]]:
             """Extract and parse all schema definitions from LDIF content (template method).
 
             Generic template method that consolidates schema extraction logic across all servers.
@@ -1922,7 +1926,7 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
                         available_attrs,
                     )
                     if not validation_result.is_success:
-                        return FlextResult[dict[str, list[str] | str]].fail(
+                        return FlextResult[dict[str, object]].fail(
                             f"Attribute validation failed: {validation_result.error}",
                         )
 
@@ -1936,14 +1940,14 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
 
                 # Return combined result
                 dk = FlextLdifConstants.DictKeys
-                schema_dict: dict[str, list[str] | str] = {
-                    dk.ATTRIBUTES: cast("list[str] | str", attributes_parsed),
-                    dk.OBJECTCLASS: cast("list[str] | str", objectclasses_parsed),
+                schema_dict: dict[str, object] = {
+                    dk.ATTRIBUTES: attributes_parsed,
+                    dk.OBJECTCLASS: objectclasses_parsed,
                 }
-                return FlextResult[dict[str, list[str] | str]].ok(schema_dict)
+                return FlextResult[dict[str, object]].ok(schema_dict)
 
             except Exception as e:
-                return FlextResult[dict[str, list[str] | str]].fail(
+                return FlextResult[dict[str, object]].fail(
                     f"Schema extraction failed: {e}",
                 )
 

@@ -319,7 +319,7 @@ class FlextLdifModelsConfig:
         model_config = ConfigDict(frozen=True)
 
         line_width: int = Field(
-            default=FlextLdifConstants.LdifFormat.DEFAULT_LINE_WIDTH,
+            default=FlextLdifConstants.LdifFormatting.DEFAULT_LINE_WIDTH,
             ge=10,
             le=100000,
             description="Maximum line width before folding (RFC 2849 recommends 76). Only used if fold_long_lines=True.",

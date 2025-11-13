@@ -7,6 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import base64
+import contextlib
 import logging
 import re
 from collections.abc import Callable
@@ -17,6 +18,11 @@ from flext_core import FlextResult
 from flext_ldif._utilities.oid import FlextLdifUtilitiesOID
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
+
+# RFC 2849 LDIF format constants for inline use
+_BASE64_INDICATOR = FlextLdifConstants.LDIF_BASE64_INDICATOR
+_REGULAR_INDICATOR = FlextLdifConstants.LDIF_REGULAR_INDICATOR
+_DEFAULT_ENCODING = FlextLdifConstants.LDIF_DEFAULT_ENCODING
 
 logger = logging.getLogger(__name__)
 
@@ -221,45 +227,76 @@ class FlextLdifUtilitiesParser:
         return lines
 
     @staticmethod
-    def _decode_ldif_value(key: str, value: str) -> tuple[str, str]:
-        """Handle base64-encoded LDIF values (attr:: base64value)."""
-        if key.endswith(":"):
-            key = key[:-1]
-            try:
-                value = base64.b64decode(value.lstrip()).decode("utf-8")
-            except Exception as e:
-                # Log warning for malformed base64 - helps debugging LDIF quality issues
-                logger.warning(
-                    f"Base64 decode failed for attribute '{key}', using raw value. "
-                    f"This may indicate malformed LDIF data. Error: {e!r}",
-                )
-                value = value.lstrip()
-        return key.strip(), value.lstrip()
-
-    @staticmethod
     def _process_ldif_line(
         line: str,
         current_dn: str | None,
         current_attrs: dict[str, list[str]],
         entries: list[tuple[str, dict[str, list[str]]]],
     ) -> tuple[str | None, dict[str, list[str]]]:
-        """Process single LDIF line, return updated (dn, attrs)."""
+        """Process single LDIF line with RFC 2849 base64 detection.
+
+        Root Cause Fix: Correctly handle :: (base64) vs : (regular) indicators.
+
+        RFC 2849 Section 2:
+        - attr: value  → Regular value (text)
+        - attr:: base64 → Base64-encoded value (UTF-8, binary, special chars)
+        - attr:< URL   → URL-referenced value
+
+        Previous Bug: line.partition(":") split on FIRST colon only.
+        For "dn:: Y249...", it produced key="dn:", value=": Y249..." (extra colon!)
+        This caused base64.b64decode(": Y249...") to fail silently.
+
+        Args:
+            line: Unfolded LDIF line
+            current_dn: Current entry DN (or None if no entry yet)
+            current_attrs: Current entry attributes
+            entries: List to append completed entries
+
+        Returns:
+            Tuple of (updated_dn, updated_attrs)
+
+        """
         if not line:
             if current_dn is not None:
                 entries.append((current_dn, current_attrs))
             return None, {}
 
-        if ":" not in line:
+        if _REGULAR_INDICATOR not in line:
             return current_dn, current_attrs
 
-        key, _, value = line.partition(":")
-        key, value = FlextLdifUtilitiesParser._decode_ldif_value(key, value)
+        # RFC 2849: Detect base64 (::) vs regular (:) indicator
+        is_base64 = False
+        if _BASE64_INDICATOR in line:
+            # Base64-encoded value (RFC 2849 Section 2)
+            # Split on :: to get key and base64 value
+            key, value = line.split(_BASE64_INDICATOR, 1)
+            key = key.strip()
+            value = value.strip()
+            is_base64 = True
 
+            # Decode base64 to UTF-8 string
+            with contextlib.suppress(ValueError, UnicodeDecodeError):
+                value = base64.b64decode(value).decode(_DEFAULT_ENCODING)
+        else:
+            # Regular text value (RFC 2849 Section 2)
+            key, _, value = line.partition(_REGULAR_INDICATOR)
+            key = key.strip()
+            value = value.lstrip()  # Preserve trailing spaces per RFC 2849
+
+        # Handle DN line (starts new entry)
         if key.lower() == "dn":
             if current_dn is not None:
                 entries.append((current_dn, current_attrs))
-            return value, {}
 
+            # Track if DN was base64-encoded (for metadata preservation)
+            new_attrs: dict[str, list[str]] = {}
+            if is_base64:
+                # Store metadata flag for server layer to preserve
+                new_attrs["_base64_dn"] = ["true"]
+
+            return value, new_attrs
+
+        # Regular attribute line (add to current entry)
         current_attrs.setdefault(key, []).append(value)
         return current_dn, current_attrs
 
@@ -437,9 +474,12 @@ class FlextLdifUtilitiesParser:
             entry_dict,
         )
 
-        # Track base64 encoding
+        # Decode base64 values (RFC 2849: :: indicates base64)
         if is_base64:
             FlextLdifUtilitiesParser.track_base64_attribute(attr_name, entry_dict)
+            # Decode base64 to UTF-8 string (keep original if decode fails)
+            with contextlib.suppress(ValueError, UnicodeDecodeError):
+                attr_value = base64.b64decode(attr_value).decode("utf-8")
 
         # Handle multi-valued attributes
         if FlextLdifUtilitiesParser.handle_multivalued_attribute(
@@ -936,7 +976,7 @@ class FlextLdifUtilitiesParser:
 
         # Try schema_quirk.method_name if quirk_object has schema_quirk
         if hasattr(quirk_object, "schema_quirk"):
-            schema_quirk = quirk_object.schema_quirk
+            schema_quirk = quirk_object.schema_quirk  # type: ignore[attr-defined]
             parse_method = getattr(schema_quirk, method_name, None)
             if parse_method is not None and callable(parse_method):
                 parse_result = parse_method(data)
