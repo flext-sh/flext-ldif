@@ -34,6 +34,7 @@ from flext_ldif.config import FlextLdifConfig
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.servers.base import FlextLdifServersBase
+from flext_ldif.servers.oid import FlextLdifServersOid
 from flext_ldif.services.acl import FlextLdifAcl
 from flext_ldif.services.detector import FlextLdifDetector
 from flext_ldif.services.server import FlextLdifServer
@@ -342,6 +343,72 @@ class FlextLdifParser(FlextService[FlextLdifModels.ParseResponse]):
             self.validator = validator
             self.logger = logger
 
+        def apply_schema_quirks_inline(
+            self,
+            entry: FlextLdifModels.Entry,
+            server_type: str,
+        ) -> FlextLdifModels.Entry:
+            """Apply schema quirks to inline schema attributes (CRITICAL for OID matching rule typos).
+
+            Schema entries have attributes like:
+            - attributetypes: [list of attribute definitions]
+            - objectclasses: [list of objectclass definitions]
+
+            These are LDIF entries, not parsed schema. We need to apply quirks normalization
+            to the VALUES of these attributes to fix typos like:
+            - EQUALITY caseIgnoreSubStringsMatch → SUBSTR caseIgnoreSubstringsMatch
+
+            This is PHASE 7 fix for the 3 typos found in OID schema fixture.
+            """
+            if server_type != "oid":
+                # Only apply to OID for now (other servers can be added later)
+                return entry
+
+            # Schema attribute names (case-insensitive)
+            schema_attrs = {
+                "attributetypes",
+                "objectclasses",
+                "matchingrules",
+                "ldapsyntaxes",
+            }
+
+            # Check if entry has schema attributes
+            has_schema = any(
+                attr_name.lower() in schema_attrs
+                for attr_name in entry.attributes.attributes
+            )
+
+            if not has_schema:
+                return entry
+
+            # Apply OID matching rule normalization to attribute values
+            replacements = FlextLdifServersOid.Constants.MATCHING_RULE_REPLACEMENTS
+
+            # Create new attributes dict with normalized values
+            new_attributes = {}
+            for attr_name, attr_values in entry.attributes.attributes.items():
+                if attr_name.lower() not in schema_attrs:
+                    # Not a schema attribute, keep as-is
+                    new_attributes[attr_name] = attr_values
+                    continue
+
+                # Normalize each value by applying matching rule replacements
+                normalized_values = []
+                for value in attr_values:
+                    normalized_value = value
+                    for typo, correct in replacements.items():
+                        # Replace typos in the schema definition string
+                        normalized_value = normalized_value.replace(typo, correct)
+                    normalized_values.append(normalized_value)
+
+                new_attributes[attr_name] = normalized_values
+
+            # Create new entry with normalized attributes
+            return FlextLdifModels.Entry(
+                dn=entry.dn,
+                attributes=FlextLdifModels.LdifAttributes(attributes=new_attributes),
+            )
+
         def process_single_entry(
             self,
             entry: FlextLdifModels.Entry,
@@ -356,6 +423,12 @@ class FlextLdifParser(FlextService[FlextLdifModels.ParseResponse]):
 
             if options.normalize_dns:
                 processed_entry = self.normalize_entry_dn(processed_entry)
+
+            # PHASE 7 FIX: Apply schema quirks normalization to inline schema attributes
+            # This fixes OID matching rule typos in attributetypes/objectclasses values
+            processed_entry = self.apply_schema_quirks_inline(
+                processed_entry, server_type
+            )
 
             if options.auto_parse_schema and FlextLdifUtilities.Entry.is_schema_entry(
                 processed_entry, strict=False
@@ -720,7 +793,8 @@ class FlextLdifParser(FlextService[FlextLdifModels.ParseResponse]):
 
             # Emit ParseEvent if enabled
             if self.enable_events:
-                schema_count = sum(
+                # Calculate schema entries count (for future use in events)
+                sum(
                     1
                     for entry in processed_entries
                     if "cn=schema" in str(entry.dn).lower()
@@ -730,26 +804,22 @@ class FlextLdifParser(FlextService[FlextLdifModels.ParseResponse]):
                     parse_event = FlextLdifModels.ParseEvent.for_file(
                         file_path=content,
                         entries_parsed=len(processed_entries),
-                        schema_entries=schema_count,
                         parse_duration_ms=parse_duration_ms,
-                        detected_server_type=effective_type,
-                        errors_encountered=failed_details if failed_count > 0 else None,
+                        error_details=failed_details if failed_count > 0 else None,
                     )
                 elif input_source == "ldap3":
                     parse_event = FlextLdifModels.ParseEvent.for_ldap3(
+                        connection_info=f"ldap3_{effective_type}",
                         entries_parsed=len(processed_entries),
-                        schema_entries=schema_count,
                         parse_duration_ms=parse_duration_ms,
-                        detected_server_type=effective_type,
-                        errors_encountered=failed_details if failed_count > 0 else None,
+                        error_details=failed_details if failed_count > 0 else None,
                     )
                 else:  # string
                     parse_event = FlextLdifModels.ParseEvent.for_string(
+                        content_length=len(content) if isinstance(content, str) else 0,
                         entries_parsed=len(processed_entries),
-                        schema_entries=schema_count,
                         parse_duration_ms=parse_duration_ms,
-                        detected_server_type=effective_type,
-                        errors_encountered=failed_details if failed_count > 0 else None,
+                        error_details=failed_details if failed_count > 0 else None,
                     )
 
                 stats = stats.add_event(parse_event)

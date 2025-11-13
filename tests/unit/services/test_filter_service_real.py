@@ -514,7 +514,7 @@ class TestIntegration:
 
         # Stage 2: Filter by objectClass
         result2 = FlextLdifFilters.filter(
-            stage1,
+            stage1.get_all_entries(),
             criteria="objectclass",
             objectclass="inetOrgPerson",
         )

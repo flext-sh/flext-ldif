@@ -140,6 +140,26 @@ class FlextLdifCategorization(FlextService[dict[str, list[FlextLdifModels.Entry]
         """
         return self._rejection_tracker
 
+    @property
+    def forbidden_attributes(self) -> list[str]:
+        """Get forbidden attributes list (read-only).
+
+        Returns:
+            List of forbidden attribute names
+
+        """
+        return self._forbidden_attributes
+
+    @property
+    def forbidden_objectclasses(self) -> list[str]:
+        """Get forbidden objectClasses list (read-only).
+
+        Returns:
+            List of forbidden objectClass names
+
+        """
+        return self._forbidden_objectclasses
+
     def validate_dns(
         self, entries: list[FlextLdifModels.Entry]
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
@@ -264,70 +284,6 @@ class FlextLdifCategorization(FlextService[dict[str, list[FlextLdifModels.Entry]
                 filtered[category] = entries
 
         return filtered
-
-    def remove_forbidden_attributes(
-        self, categories: dict[str, list[FlextLdifModels.Entry]]
-    ) -> dict[str, list[FlextLdifModels.Entry]]:
-        """Remove forbidden attributes from all entries (except rejected).
-
-        Public method using FlextLdifFilters.remove_attributes service.
-
-        Args:
-            categories: Entries grouped by category
-
-        Returns:
-            dict with entries having forbidden attributes removed
-
-        """
-        if not self._forbidden_attributes:
-            return categories
-
-        for category, entries in categories.items():
-            # Don't modify rejected entries (audit trail)
-            if category != FlextLdifConstants.Categories.REJECTED:
-                for entry in entries:
-                    FlextLdifFilters.remove_attributes(
-                        entry, self._forbidden_attributes
-                    )
-
-        logger.info(
-            f"Removed forbidden attributes from all entries "
-            f"(except {FlextLdifConstants.Categories.REJECTED})"
-        )
-
-        return categories
-
-    def remove_forbidden_objectclasses(
-        self, categories: dict[str, list[FlextLdifModels.Entry]]
-    ) -> dict[str, list[FlextLdifModels.Entry]]:
-        """Remove forbidden objectClasses from all entries (except rejected).
-
-        Public method using FlextLdifFilters.remove_objectclasses service.
-
-        Args:
-            categories: Entries grouped by category
-
-        Returns:
-            dict with entries having forbidden objectClasses removed
-
-        """
-        if not self._forbidden_objectclasses:
-            return categories
-
-        for category, entries in categories.items():
-            # Don't modify rejected entries (audit trail)
-            if category != FlextLdifConstants.Categories.REJECTED:
-                for entry in entries:
-                    FlextLdifFilters.remove_objectclasses(
-                        entry, self._forbidden_objectclasses
-                    )
-
-        logger.info(
-            f"Removed forbidden objectClasses from all entries "
-            f"(except {FlextLdifConstants.Categories.REJECTED})"
-        )
-
-        return categories
 
     def filter_schema_by_oids(
         self, schema_entries: list[FlextLdifModels.Entry]

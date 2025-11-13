@@ -33,7 +33,7 @@ REAL USAGE EXAMPLES
 # PATTERN 1: Direct Classmethod API (Most Common)
 ────────────────────────────────────────────────
 # Clean DN strings
-cleaned_dn = FlextLdifEntry.clean_dn("cn = John , dc = example , dc = com")
+cleaned_dn = FlextLdifUtilities.DN.clean_dn("cn = John , dc = example , dc = com")
 # Result: "cn=John,dc=example,dc=com"
 
 # Remove operational attributes from entry
@@ -129,7 +129,6 @@ from pydantic import Field
 
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
-from flext_ldif.services.dn import FlextLdifDn
 from flext_ldif.utilities import FlextLdifUtilities
 
 
@@ -189,30 +188,6 @@ class FlextLdifEntry(FlextService[list[FlextLdifModels.Entry]]):
     # ════════════════════════════════════════════════════════════════════════
     # PUBLIC CLASSMETHOD API (Direct Entry Points)
     # ════════════════════════════════════════════════════════════════════════
-
-    @classmethod
-    def clean_dn(cls, dn: str) -> str:
-        """Clean a DN string to RFC 4514 compliance.
-
-        Fixes common issues in DN strings:
-        - Removes spaces around '=' in RDN components
-        - Fixes malformed escape sequences
-        - Normalizes whitespace
-        - Makes DN RFC 4514 compliant
-
-        Args:
-            dn: Raw DN string from LDIF
-
-        Returns:
-            RFC 4514 compliant DN string
-
-        Example:
-            >>> dn = "cn = John Doe , dc = example , dc = com"
-            >>> FlextLdifEntry.clean_dn(dn)
-            'cn=John Doe,dc=example,dc=com'
-
-        """
-        return FlextLdifDn.clean_dn(dn)
 
     @classmethod
     def remove_operational_attributes(
@@ -396,7 +371,7 @@ class FlextLdifEntry(FlextService[list[FlextLdifModels.Entry]]):
             FlextLdifModels.Entry.create(
                 dn=entry.dn,
                 attributes=ldif_attributes,
-            )
+            ).map(lambda e: cast("FlextLdifModels.Entry", e))
         )
 
         if adapted_entry_result.is_failure:

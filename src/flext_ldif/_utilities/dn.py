@@ -6,13 +6,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import string
 import re
+import string
 from collections.abc import Generator
 from typing import overload
 
-from flext_core import FlextResult, FlextUtilities
+from flext_core import FlextResult
 
+from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.typings import FlextLdifTypes
@@ -28,7 +29,7 @@ class FlextLdifUtilitiesDN:
     Pure functions: no server-specific logic, no side effects.
 
     Supports both:
-    - FlextLdifModels.DistinguishedName (DN model)
+    - Any (DN model)
     - str (DN string value)
 
     Methods:
@@ -50,16 +51,23 @@ class FlextLdifUtilitiesDN:
     MIN_DN_LENGTH: int = 2
 
     @staticmethod
-    def get_dn_value(dn: DnInput) -> str:
+    def get_dn_value(
+        dn: FlextLdifModelsDomains.DistinguishedName
+        | FlextLdifModels.DistinguishedName
+        | str
+        | object,
+    ) -> str:
         """Extract DN string value from DN model or string (public utility method).
 
         Args:
-            dn: DN model (FlextLdifModels.DistinguishedName) or DN string
+            dn: DN model (Any) or DN string
 
         Returns:
             DN string value
 
         """
+        # Check if it's a DistinguishedName model (local import to avoid circular dependency)
+
         if isinstance(dn, FlextLdifModels.DistinguishedName):
             return dn.value
         if isinstance(dn, str):
@@ -75,7 +83,7 @@ class FlextLdifUtilitiesDN:
     def split(dn: FlextLdifModels.DistinguishedName) -> list[str]: ...
 
     @staticmethod
-    def split(dn: str | FlextLdifModels.DistinguishedName) -> list[str]:
+    def split(dn: str | object) -> list[str]:
         r"""Split DN string into individual components respecting RFC 4514 escapes.
 
         Properly handles escaped commas (\\,) and other special characters.
@@ -130,7 +138,7 @@ class FlextLdifUtilitiesDN:
     def norm_string(dn: FlextLdifModels.DistinguishedName) -> str: ...
 
     @staticmethod
-    def norm_string(dn: str | FlextLdifModels.DistinguishedName) -> str:
+    def norm_string(dn: str | object) -> str:
         """Normalize full DN to RFC 4514 format."""
         dn_str = FlextLdifUtilitiesDN.get_dn_value(dn)
         if not dn_str or "=" not in dn_str:
@@ -160,7 +168,7 @@ class FlextLdifUtilitiesDN:
     def validate(dn: FlextLdifModels.DistinguishedName) -> bool: ...
 
     @staticmethod
-    def validate(dn: str | FlextLdifModels.DistinguishedName) -> bool:
+    def validate(dn: str | object) -> bool:
         r"""Validate DN format according to RFC 4514.
 
         Properly handles escaped characters. Checks for:
@@ -370,9 +378,14 @@ class FlextLdifUtilitiesDN:
             (FlextLdifConstants.DnPatterns.DN_MULTIPLE_SPACES, " "),
         ]
 
-        # Apply regex pipeline using generic utility
-        result = FlextUtilities.StringParser.apply_regex_pipeline(dn_str, patterns)
-        return result.unwrap() if result.is_success else dn_str
+        # Apply regex pipeline using local implementation
+        try:
+            result = dn_str
+            for pattern, replacement in patterns:
+                result = re.sub(pattern, replacement, result)
+            return result
+        except Exception:
+            return dn_str
 
     @staticmethod
     def esc(value: str) -> str:

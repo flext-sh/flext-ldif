@@ -350,7 +350,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
     class Acl(FlextLdifServersRfc.Acl):
         """Novell eDirectory ACL quirk."""
 
-        def can_handle(self, acl_line: FlextLdifTypes.Models.AclOrString) -> bool:
+        def can_handle(self, acl_line: FlextLdifTypes.AclOrString) -> bool:
             """Check if this is a Novell eDirectory ACL.
 
             Override RFC's always-true behavior to check Novell-specific markers.
@@ -364,7 +364,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             """
             return self.can_handle_acl(acl_line)
 
-        def can_handle_acl(self, acl_line: FlextLdifTypes.Models.AclOrString) -> bool:
+        def can_handle_acl(self, acl_line: FlextLdifTypes.AclOrString) -> bool:
             """Detect eDirectory ACL values."""
             if isinstance(acl_line, str):
                 if not acl_line or not acl_line.strip():

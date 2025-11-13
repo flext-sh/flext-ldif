@@ -416,7 +416,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             """
             super().__init__(**kwargs)
 
-        def can_handle(self, acl_line: FlextLdifTypes.Models.AclOrString) -> bool:
+        def can_handle(self, acl_line: FlextLdifTypes.AclOrString) -> bool:
             """Check if this is an OpenLDAP 2.x ACL.
 
             Args:
@@ -428,7 +428,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             """
             return self.can_handle_acl(acl_line)
 
-        def can_handle_acl(self, acl_line: FlextLdifTypes.Models.AclOrString) -> bool:
+        def can_handle_acl(self, acl_line: FlextLdifTypes.AclOrString) -> bool:
             """Check if this is an OpenLDAP 2.x ACL (internal).
 
             Args:

@@ -15,7 +15,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import re
 from collections.abc import Callable, Mapping
+
+from flext_ldif.constants import FlextLdifConstants
 
 
 class FlextLdifUtilitiesConstants:
@@ -320,6 +323,41 @@ class FlextLdifUtilitiesConstants:
         # Returns identity mapping for RFC baseline permissions
         rfc_perms = FlextLdifUtilitiesConstants.get_server_permissions()
         return {perm: perm for perm in rfc_perms}
+
+    @staticmethod
+    def validate_attribute_name(name: str) -> bool:
+        """Validate LDAP attribute name against RFC 4512 rules.
+
+        RFC 4512 Section 2.5: Attribute Type Definitions
+        - AttributeType names must start with a letter
+        - Can contain letters, digits, and hyphens
+        - Case-insensitive comparison
+        - Limited to reasonable length (1-255 chars)
+
+        Args:
+            name: Attribute name to validate
+
+        Returns:
+            True if valid, False otherwise
+
+        Example:
+            >>> FlextLdifUtilitiesConstants.validate_attribute_name("cn")
+            True
+            >>> FlextLdifUtilitiesConstants.validate_attribute_name("2invalid")
+            False
+
+        """
+        # Import moved to module level
+
+        # Check empty or too long
+        if (
+            not name
+            or len(name) > FlextLdifConstants.LdifValidation.MAX_ATTRIBUTE_NAME_LENGTH
+        ):
+            return False
+
+        # Check pattern
+        return bool(re.match(FlextLdifConstants.LdifPatterns.ATTRIBUTE_NAME, name))
 
 
 # NOTE: Server-specific constants access removed due to architectural constraints.

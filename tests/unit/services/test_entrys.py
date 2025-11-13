@@ -26,7 +26,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent / "src"))
 
 import pytest
 
-from flext_ldif.models import FlextLdifModels
+from flext_ldif import FlextLdifModels, FlextLdifUtilities
 from flext_ldif.services.entry import FlextLdifEntry
 
 # ════════════════════════════════════════════════════════════════════════════
@@ -107,7 +107,7 @@ class TestPublicClassmethods:
     def test_clean_dn_with_spaces(self) -> None:
         """Test clean_dn removes spaces around equals signs."""
         messy_dn = "cn = John Doe , ou = users , dc = example , dc = com"
-        cleaned = FlextLdifEntry.clean_dn(messy_dn)
+        cleaned = FlextLdifUtilities.DN.clean_dn(messy_dn)
 
         assert "=" in cleaned
         assert " = " not in cleaned
@@ -116,14 +116,14 @@ class TestPublicClassmethods:
     def test_clean_dn_already_clean(self) -> None:
         """Test clean_dn with already clean DN."""
         clean_dn = "cn=john,ou=users,dc=example,dc=com"
-        result = FlextLdifEntry.clean_dn(clean_dn)
+        result = FlextLdifUtilities.DN.clean_dn(clean_dn)
 
         assert result == clean_dn
 
     def test_clean_dn_with_escaped_chars(self) -> None:
         """Test clean_dn handles escaped characters."""
         dn_with_escaped = r"cn=John\, Doe,ou=users,dc=example,dc=com"
-        cleaned = FlextLdifEntry.clean_dn(dn_with_escaped)
+        cleaned = FlextLdifUtilities.DN.clean_dn(dn_with_escaped)
 
         assert isinstance(cleaned, str)
         assert len(cleaned) > 0
@@ -460,7 +460,7 @@ class TestDNCleaning:
     def test_clean_dn_with_multiple_spaces(self) -> None:
         """Test cleaning DN with multiple spaces."""
         messy = "cn  =  John  ,  ou  =  users  ,  dc  =  example"
-        cleaned = FlextLdifEntry.clean_dn(messy)
+        cleaned = FlextLdifUtilities.DN.clean_dn(messy)
 
         # Should handle spaces properly
         assert isinstance(cleaned, str)
@@ -469,7 +469,7 @@ class TestDNCleaning:
     def test_clean_dn_preserves_values_with_spaces(self) -> None:
         """Test that spaces within values are preserved."""
         dn = r"cn=John Doe,ou=users,dc=example,dc=com"
-        cleaned = FlextLdifEntry.clean_dn(dn)
+        cleaned = FlextLdifUtilities.DN.clean_dn(dn)
 
         # Spaces in value should be preserved
         assert "John Doe" in cleaned or "john doe" in cleaned.lower()
@@ -477,14 +477,14 @@ class TestDNCleaning:
     def test_clean_dn_with_special_characters(self) -> None:
         """Test cleaning DN with special characters."""
         dn = r"cn=John\, Doe,ou=users,dc=example,dc=com"
-        cleaned = FlextLdifEntry.clean_dn(dn)
+        cleaned = FlextLdifUtilities.DN.clean_dn(dn)
 
         assert isinstance(cleaned, str)
         assert len(cleaned) > 0
 
     def test_clean_dn_empty_string(self) -> None:
         """Test cleaning empty DN string."""
-        cleaned = FlextLdifEntry.clean_dn("")
+        cleaned = FlextLdifUtilities.DN.clean_dn("")
 
         assert cleaned == "" or cleaned is not None
 
@@ -806,7 +806,7 @@ class TestFlextLdifSyntax:
         from flext_ldif.services.syntax import FlextLdifSyntax
 
         syntax = FlextLdifSyntax()
-        result = syntax.list_all_syntaxes()
+        result = syntax.list_common_syntaxes()
         assert result.is_success
         oids = result.unwrap()
         assert isinstance(oids, list)

@@ -14,7 +14,7 @@ from collections.abc import Sequence
 from datetime import UTC, datetime
 from io import StringIO
 from pathlib import Path
-from typing import Any, Literal, cast
+from typing import Any, cast
 
 from flext_core import FlextResult, FlextService
 
@@ -558,26 +558,16 @@ class FlextLdifWriter(FlextService[FlextLdifModels.WriteResponse]):
             if result.is_success:
                 write_duration_ms = (time.perf_counter() - start_time) * 1000.0
 
-                output_type_mapping: dict[str, Literal["file", "string", "stream"]] = {
-                    "file": "file",
-                    "string": "string",
-                    "model": "stream",
-                    "ldap3": "stream",
-                }
-                mapped_output_type = output_type_mapping.get(output_target, "file")
-
                 write_event = FlextLdifModels.WriteEvent(
                     unique_id=f"write_{uuid.uuid4().hex[:8]}",
                     event_type="ldif.write",
                     aggregate_id=str(output_path)
                     if output_path
                     else f"write_{uuid.uuid4().hex[:8]}",
-                    created_at=datetime.now(UTC),
+                    write_operation="write_file",
+                    target_type="file",
                     entries_written=entries_count,
                     write_duration_ms=write_duration_ms,
-                    output_type=mapped_output_type,
-                    output_file=str(output_path) if output_path else None,
-                    target_server_type=target_server_type,
                 )
 
                 response = result.unwrap()

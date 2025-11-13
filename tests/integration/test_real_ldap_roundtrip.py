@@ -205,7 +205,12 @@ class TestRealLdapRoundtrip:
         # Change DN for reimport
         # Build reimport_attrs from FlextLdif entry attributes
         # Filter out LDIF-specific attributes (changetype, control, etc.)
-        ldif_special_attrs = {"changetype", "control", "modifyTimestamp", "modifiersName"}
+        ldif_special_attrs = {
+            "changetype",
+            "control",
+            "modifyTimestamp",
+            "modifiersName",
+        }
         reimport_attrs: dict[str, list[str]] = {
             attr_name: attr_values
             for attr_name, attr_values in reimport_entry.attributes.attributes.items()

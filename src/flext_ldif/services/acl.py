@@ -21,9 +21,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import time
-import uuid
-from datetime import UTC, datetime
 from typing import cast, override
 
 from flext_core import FlextDecorators, FlextLogger, FlextResult, FlextService
@@ -80,9 +77,6 @@ class FlextLdifAcl(FlextService[FlextLdifModels.AclResponse]):
             FlextResult containing composed AclResponse with extracted ACLs and statistics
 
         """
-        # Track ACL extraction metrics (MANDATORY - eventos obrigatórios)
-        start_time = time.perf_counter()
-
         # Handle None entry case
         if entry is None:
             return FlextResult[FlextLdifModels.AclResponse].fail(
@@ -166,7 +160,7 @@ class FlextLdifAcl(FlextService[FlextLdifModels.AclResponse]):
                 failed_acls,
             )
 
-        # Create response
+        # Create response with statistics
         response = FlextLdifModels.AclResponse(
             acls=acls,
             statistics=FlextLdifModels.Statistics(
@@ -176,25 +170,6 @@ class FlextLdifAcl(FlextService[FlextLdifModels.AclResponse]):
                 acl_attribute_name=acl_attribute,
             ),
         )
-
-        # Emit AclEvent ALWAYS (MANDATORY - eventos obrigatórios)
-        acl_duration_ms = (time.perf_counter() - start_time) * 1000.0
-
-        acl_event = FlextLdifModels.AclEvent(
-            unique_id=f"acl_{uuid.uuid4().hex[:8]}",
-            event_type="ldif.acl",
-            aggregate_id=str(entry.dn) if entry.dn else f"acl_{uuid.uuid4().hex[:8]}",
-            created_at=datetime.now(UTC),
-            acl_operation="extract_from_entry",
-            entries_processed=1,
-            acls_extracted=len(acls),
-            extraction_duration_ms=acl_duration_ms,
-            server_type=server_type,
-            acl_format=server_type,
-        )
-        # Attach event to AclResponse statistics
-        updated_stats = response.statistics.add_event(acl_event)
-        response = response.model_copy(update={"statistics": updated_stats})
 
         return FlextResult[FlextLdifModels.AclResponse].ok(response)
 

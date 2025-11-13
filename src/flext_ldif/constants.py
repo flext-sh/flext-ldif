@@ -438,6 +438,200 @@ class FlextLdifConstants(FlextConstants):
             DOMAIN,
         ])
 
+    class RfcBinaryAttributes:
+        """RFC 4517 Binary attribute names that typically require ;binary option.
+
+        These attributes are defined as binary in LDAP schemas and SHOULD use
+        the ;binary transfer option when transmitted in LDIF format (RFC 4522).
+
+        Common binary attributes from RFC standards and practical LDAP usage.
+        """
+
+        # RFC 4523 - X.509 Certificate attributes
+        USER_CERTIFICATE: Final[str] = "usercertificate"
+        CA_CERTIFICATE: Final[str] = "cacertificate"
+        CERTIFICATE_REVOCATION_LIST: Final[str] = "certificaterevocationlist"
+        AUTHORITY_REVOCATION_LIST: Final[str] = "authorityrevocationlist"
+        CROSS_CERTIFICATE_PAIR: Final[str] = "crosscertificatepair"
+
+        # RFC 4524 - Common multimedia attributes
+        PHOTO: Final[str] = "photo"
+        JPEG_PHOTO: Final[str] = "jpegphoto"
+        AUDIO: Final[str] = "audio"
+
+        # PKCS#12 and other security attributes
+        USER_PKCS12: Final[str] = "userpkcs12"
+        USER_SMIME_CERTIFICATE: Final[str] = "usersmimecertificate"
+
+        # Microsoft Active Directory binary attributes
+        THUMBNAIL_PHOTO: Final[str] = "thumbnailphoto"
+        THUMBNAIL_LOGO: Final[str] = "thumbnaillogo"
+        OBJECT_GUID: Final[str] = "objectguid"
+        OBJECT_SID: Final[str] = "objectsid"
+
+        # Convenience set for validation
+        BINARY_ATTRIBUTE_NAMES: Final[frozenset[str]] = frozenset([
+            USER_CERTIFICATE,
+            CA_CERTIFICATE,
+            CERTIFICATE_REVOCATION_LIST,
+            AUTHORITY_REVOCATION_LIST,
+            CROSS_CERTIFICATE_PAIR,
+            PHOTO,
+            JPEG_PHOTO,
+            AUDIO,
+            USER_PKCS12,
+            USER_SMIME_CERTIFICATE,
+            THUMBNAIL_PHOTO,
+            THUMBNAIL_LOGO,
+            OBJECT_GUID,
+            OBJECT_SID,
+        ])
+
+    class ServerValidationRules:
+        """Server-specific validation rules for Entry model validators.
+
+        Defines how different LDAP servers handle RFC compliance variations.
+        Used by Entry.validate_entry_consistency to apply server-specific rules
+        while maintaining RFC baseline.
+
+        Design Pattern: RFC baseline + server-specific extensions
+        - All servers get RFC validation
+        - Server-specific rules add/modify checks based on server_type
+        - Violations captured in metadata for round-trip conversions
+        """
+
+        # =============================================================================
+        # OBJECTCLASS REQUIREMENTS
+        # =============================================================================
+
+        # Servers that REQUIRE objectClass attribute (stricter than RFC SHOULD)
+        OBJECTCLASS_REQUIRED_SERVERS: Final[frozenset[str]] = frozenset([
+            "oud",  # Oracle Unified Directory - strict schema enforcement
+            "ad",  # Active Directory - requires objectClass for all entries
+        ])
+
+        # Servers that allow missing objectClass (lenient mode)
+        OBJECTCLASS_OPTIONAL_SERVERS: Final[frozenset[str]] = frozenset([
+            "oid",  # Oracle Internet Directory - allows schema-less entries
+            "openldap",  # OpenLDAP - flexible objectClass handling
+            "openldap1",  # OpenLDAP 1.x - legacy lenient mode
+            "relaxed",  # Relaxed mode - best-effort parsing
+        ])
+
+        # =============================================================================
+        # SCHEMA ENTRY DETECTION PATTERNS
+        # =============================================================================
+
+        # Schema entry DN patterns per server (case-insensitive)
+        SCHEMA_ENTRY_PATTERNS: Final[dict[str, list[str]]] = {
+            "rfc": ["cn=schema"],  # RFC 4512 standard
+            "oid": ["cn=schema", "cn=subschema"],  # OID uses both
+            "oud": ["cn=schema"],  # OUD follows RFC
+            "openldap": ["cn=schema", "cn=subschema"],  # OpenLDAP flexible
+            "openldap1": ["cn=schema"],  # OpenLDAP 1.x
+            "ad": ["cn=schema", "cn=aggregate"],  # AD schema container
+            "389ds": ["cn=schema"],  # 389 DS
+            "apache_directory": ["ou=schema"],  # Apache DS uses ou=schema
+            "novell_edirectory": ["cn=schema"],  # Novell
+            "ibm_tivoli": ["cn=schema"],  # IBM Tivoli
+            "relaxed": ["cn=schema", "cn=subschema", "ou=schema"],  # Accept all
+        }
+
+        # =============================================================================
+        # NAMING ATTRIBUTE (RDN) REQUIREMENTS
+        # =============================================================================
+
+        # Servers that REQUIRE naming attribute in entry (stricter than RFC SHOULD)
+        NAMING_ATTR_REQUIRED_SERVERS: Final[frozenset[str]] = frozenset([
+            "oud",  # OUD enforces naming attribute presence
+            "ad",  # AD requires RDN attribute in entry
+        ])
+
+        # Servers that allow missing naming attribute (lenient mode)
+        NAMING_ATTR_OPTIONAL_SERVERS: Final[frozenset[str]] = frozenset([
+            "oid",  # OID allows missing RDN attribute
+            "openldap",  # OpenLDAP flexible
+            "openldap1",  # OpenLDAP 1.x legacy
+            "relaxed",  # Relaxed mode
+        ])
+
+        # =============================================================================
+        # BINARY ATTRIBUTE HANDLING
+        # =============================================================================
+
+        # Servers that REQUIRE ;binary option for binary attributes
+        BINARY_OPTION_REQUIRED_SERVERS: Final[frozenset[str]] = frozenset([
+            "oud",  # OUD strict ;binary enforcement
+            "openldap",  # OpenLDAP 2.x requires ;binary
+        ])
+
+        # Servers that make ;binary optional (auto-detect or lenient)
+        BINARY_OPTION_OPTIONAL_SERVERS: Final[frozenset[str]] = frozenset([
+            "oid",  # OID auto-detects binary
+            "openldap1",  # OpenLDAP 1.x no ;binary support
+            "ad",  # AD auto-detects binary attributes
+            "relaxed",  # Relaxed mode
+        ])
+
+        # Server-specific binary attributes (in addition to RFC standard)
+        SERVER_BINARY_ATTRIBUTES: Final[dict[str, frozenset[str]]] = {
+            "oid": frozenset([
+                "orclguid",  # Oracle GUID
+                "userpassword",  # OID may store binary passwords
+            ]),
+            "oud": frozenset([
+                "ds-sync-hist",  # OUD synchronization history
+                "ds-sync-state",  # OUD sync state
+            ]),
+            "ad": frozenset([
+                "objectguid",  # AD GUID (already in RFC list but emphasizing)
+                "objectsid",  # AD Security ID
+                "msexchmailboxguid",  # Exchange mailbox GUID
+                "msexchmailboxsecuritydescriptor",  # Exchange security
+            ]),
+            "openldap": frozenset([
+                "entryuuid",  # OpenLDAP entry UUID (binary format)
+            ]),
+        }
+
+        # =============================================================================
+        # SPECIAL ATTRIBUTES PER SERVER
+        # =============================================================================
+
+        # Operational attributes that may be missing and should not trigger warnings
+        OPERATIONAL_ATTRIBUTES: Final[dict[str, frozenset[str]]] = {
+            "oid": frozenset([
+                "orclguid",
+                "createtimestamp",
+                "modifytimestamp",
+                "creatorsname",
+                "modifiersname",
+            ]),
+            "oud": frozenset([
+                "entryuuid",
+                "ds-sync-generation-id",
+                "ds-sync-state",
+                "createtimestamp",
+                "modifytimestamp",
+            ]),
+            "ad": frozenset([
+                "objectguid",
+                "objectsid",
+                "whencreated",
+                "whenchanged",
+                "usnchanged",
+                "usncreated",
+            ]),
+            "openldap": frozenset([
+                "entryuuid",
+                "entrycsn",
+                "createtimestamp",
+                "modifytimestamp",
+                "creatorsname",
+                "modifiersname",
+            ]),
+        }
+
     # NOTE: ErrorMessages class removed (removed unused error message constants)
     # Error messages are now defined in appropriate validation modules
 

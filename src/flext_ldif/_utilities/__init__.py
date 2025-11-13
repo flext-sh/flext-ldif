@@ -14,6 +14,7 @@ from flext_ldif._utilities.detection import FlextLdifUtilitiesDetection
 from flext_ldif._utilities.dn import FlextLdifUtilitiesDN
 from flext_ldif._utilities.entry import FlextLdifUtilitiesEntry
 from flext_ldif._utilities.events import FlextLdifUtilitiesEvents
+from flext_ldif._utilities.metadata import FlextLdifUtilitiesMetadata
 from flext_ldif._utilities.object_class import FlextLdifUtilitiesObjectClass
 from flext_ldif._utilities.oid import FlextLdifUtilitiesOID
 from flext_ldif._utilities.parser import FlextLdifUtilitiesParser
@@ -28,6 +29,7 @@ __all__ = [
     "FlextLdifUtilitiesDetection",
     "FlextLdifUtilitiesEntry",
     "FlextLdifUtilitiesEvents",
+    "FlextLdifUtilitiesMetadata",
     "FlextLdifUtilitiesOID",
     "FlextLdifUtilitiesObjectClass",
     "FlextLdifUtilitiesParser",

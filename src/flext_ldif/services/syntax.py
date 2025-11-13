@@ -374,12 +374,13 @@ class FlextLdifSyntax(FlextService[FlextLdifModels.SyntaxServiceStatus]):
                 f"Failed to lookup syntax name: {e}",
             )
 
+    @FlextDecorators.track_performance()
     def resolve_syntax(
         self,
         oid: str,
         name: str | None = None,
         desc: str | None = None,
-        server_type: str = FlextLdifConstants.ServerTypes.RFC,
+        _server_type: str = FlextLdifConstants.ServerTypes.RFC,
     ) -> FlextResult[FlextLdifModels.Syntax]:
         """Resolve OID to complete Syntax model with validation.
 
@@ -390,7 +391,6 @@ class FlextLdifSyntax(FlextService[FlextLdifModels.SyntaxServiceStatus]):
             oid: Syntax OID (required, must be valid format)
             name: Human-readable syntax name (optional, auto-looked-up if not provided)
             desc: Syntax description (optional)
-            server_type: LDAP server type for quirk metadata (default: "rfc")
 
         Returns:
             FlextResult containing fully resolved Syntax model
@@ -410,12 +410,18 @@ class FlextLdifSyntax(FlextService[FlextLdifModels.SyntaxServiceStatus]):
                 f"Invalid OID format: {oid}",
             )
 
-        # Use the static method from models.py
-        syntax = FlextLdifModels.Syntax.resolve_syntax_oid(oid, server_type=server_type)
-
-        if syntax is None:
+        # Create syntax using the public model constructor
+        try:
+            syntax = FlextLdifModels.Syntax(
+                oid=oid,
+                name=None,
+                desc=None,
+                max_length=None,
+                validation_pattern=None,
+            )
+        except Exception:
             return FlextResult[FlextLdifModels.Syntax].fail(
-                f"Failed to resolve syntax: {oid}",
+                f"Failed to create syntax: {oid}",
             )
 
         # Update with optional parameters
@@ -426,11 +432,12 @@ class FlextLdifSyntax(FlextService[FlextLdifModels.SyntaxServiceStatus]):
 
         return FlextResult[FlextLdifModels.Syntax].ok(syntax)
 
+    @FlextDecorators.track_performance()
     def validate_value(
         self,
         value: str,
         syntax_oid: str,
-        server_type: str = FlextLdifConstants.ServerTypes.RFC,
+        _server_type: str = FlextLdifConstants.ServerTypes.RFC,
     ) -> FlextResult[bool]:
         """Validate a value against its syntax type.
 
@@ -440,7 +447,6 @@ class FlextLdifSyntax(FlextService[FlextLdifModels.SyntaxServiceStatus]):
         Args:
             value: Value to validate
             syntax_oid: Syntax OID that defines validation rules
-            server_type: LDAP server type for server-specific validation
 
         Returns:
             FlextResult containing True if value is valid for syntax, False otherwise
@@ -458,7 +464,7 @@ class FlextLdifSyntax(FlextService[FlextLdifModels.SyntaxServiceStatus]):
             return FlextResult[bool].ok(True)  # Empty values pass validation
 
         # Resolve syntax to get type category
-        resolve_result = self.resolve_syntax(syntax_oid, server_type=server_type)
+        resolve_result = self.resolve_syntax(syntax_oid)
         if resolve_result.is_failure:
             return FlextResult[bool].fail(
                 f"Cannot validate - unknown syntax OID: {syntax_oid}",
@@ -486,6 +492,42 @@ class FlextLdifSyntax(FlextService[FlextLdifModels.SyntaxServiceStatus]):
             return FlextResult[bool].fail(
                 f"Failed to validate value for syntax {syntax_oid}: {e}",
             )
+
+    def _validate_by_category(
+        self, value: str, type_category: str
+    ) -> FlextResult[bool]:
+        """Validate value using functional validator lookup with error handling.
+
+        Uses a functional approach with validator mapping and railway pattern
+        for clean error propagation and reduced complexity.
+
+        Args:
+            value: Value to validate
+            type_category: Syntax type category (boolean, integer, dn, time, etc.)
+
+        Returns:
+            FlextResult containing validation result
+
+        """
+        # Functional validator mapping with railway pattern
+        validator_map = {
+            "boolean": self._validate_boolean,
+            "integer": self._validate_integer,
+            "dn": self._validate_dn,
+            "time": self._validate_time,
+            "binary": lambda _: FlextResult.ok(True),  # Base64 assumed valid
+        }
+
+        # Get validator with default pass-through for extensibility
+        validator = validator_map.get(type_category, lambda _: FlextResult.ok(True))
+
+        # Apply validation with railway error handling
+        result = FlextResult.ok(value).flat_map(validator)
+        if result.is_failure:
+            return FlextResult[bool].fail(
+                f"Validation failed for {type_category}: {result.error}"
+            )
+        return result
 
     @staticmethod
     def _validate_boolean(value: str) -> FlextResult[bool]:
@@ -563,22 +605,3 @@ class FlextLdifSyntax(FlextService[FlextLdifModels.SyntaxServiceStatus]):
             return FlextResult[list[str]].fail(
                 f"Failed to list common syntaxes: {e}",
             )
-
-    @classmethod
-    def list_all_syntaxes(cls) -> FlextResult[list[str]]:
-        """List all supported RFC 4517 syntax OIDs (classmethod).
-
-        This is a convenience classmethod wrapper around list_common_syntaxes().
-
-        Returns:
-            FlextResult containing sorted list of OIDs
-
-        Example:
-            >>> result = FlextLdifSyntax.list_all_syntaxes()
-            >>> if result.is_success:
-            >>>     oids = result.unwrap()
-            >>>     assert "1.3.6.1.4.1.1466.115.121.1.7" in oids
-
-        """
-        service = cls()
-        return service.list_common_syntaxes()

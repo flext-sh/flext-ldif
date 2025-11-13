@@ -18,6 +18,7 @@ from flext_ldif._utilities import (
     FlextLdifUtilitiesDN,
     FlextLdifUtilitiesEntry,
     FlextLdifUtilitiesEvents,
+    FlextLdifUtilitiesMetadata,
     FlextLdifUtilitiesObjectClass,
     FlextLdifUtilitiesOID,
     FlextLdifUtilitiesParser,
@@ -37,6 +38,7 @@ class FlextLdifUtilities:
     DN = FlextLdifUtilitiesDN
     Entry = FlextLdifUtilitiesEntry
     Events = FlextLdifUtilitiesEvents
+    Metadata = FlextLdifUtilitiesMetadata
     ObjectClass = FlextLdifUtilitiesObjectClass
     OID = FlextLdifUtilitiesOID
     Parser = FlextLdifUtilitiesParser

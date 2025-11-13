@@ -231,14 +231,51 @@ class FlextLdifUtilitiesSchema:
             return FlextResult[Any].fail(f"Failed to set server type: {e}")
 
     @staticmethod
+    def _extract_schema_items_from_lines(
+        ldif_content: str,
+        parse_callback: Callable[[str], FlextResult[Any]],
+        line_prefix: str,
+    ) -> list[Any]:
+        """Generic extraction of schema items from LDIF content lines.
+
+        Consolidated logic for extracting both attributes and objectClasses.
+        Iterates through LDIF lines, identifies definitions by prefix
+        (case-insensitive), and parses them using the provided callback.
+
+        Args:
+            ldif_content: Raw LDIF content containing schema definitions
+            parse_callback: Parser function to call for each definition
+            line_prefix: Prefix to match (e.g., "attributetypes:", "objectclasses:")
+
+        Returns:
+            List of successfully parsed schema items
+
+        """
+        items: list[Any] = []
+
+        for raw_line in ldif_content.split("\n"):
+            line = raw_line.strip()
+
+            # Case-insensitive prefix match
+            if line.lower().startswith(line_prefix.lower()):
+                item_def = line.split(":", 1)[1].strip()
+                result = parse_callback(item_def)
+                if hasattr(result, "is_success") and result.is_success:
+                    items.append(result.unwrap())
+                elif isinstance(result, dict) or hasattr(result, "oid"):
+                    # Handle both FlextResult and raw dict returns
+                    items.append(result)
+
+        return items
+
+    @staticmethod
     def extract_attributes_from_lines(
         ldif_content: str,
         parse_callback: Callable[[str], FlextResult[FlextLdifModels.SchemaAttribute]],
     ) -> list[FlextLdifModels.SchemaAttribute]:
         """Extract and parse all attributeTypes from LDIF content lines.
 
-        Iterates through LDIF lines, identifies attributeTypes definitions
-        (case-insensitive), and parses them using the provided callback.
+        Delegates to generic extraction method.
 
         Args:
             ldif_content: Raw LDIF content containing schema definitions
@@ -248,22 +285,9 @@ class FlextLdifUtilitiesSchema:
             List of successfully parsed attribute models
 
         """
-        attributes: list[Any] = []
-
-        for raw_line in ldif_content.split("\n"):
-            line = raw_line.strip()
-
-            # Case-insensitive match: attributeTypes:, attributetypes:, etc.
-            if line.lower().startswith("attributetypes:"):
-                attr_def = line.split(":", 1)[1].strip()
-                result = parse_callback(attr_def)
-                if hasattr(result, "is_success") and result.is_success:
-                    attributes.append(result.unwrap())
-                elif isinstance(result, dict) or hasattr(result, "oid"):
-                    # Handle both FlextResult and raw dict returns
-                    attributes.append(result)
-
-        return attributes
+        return FlextLdifUtilitiesSchema._extract_schema_items_from_lines(
+            ldif_content, parse_callback, "attributetypes:"
+        )
 
     @staticmethod
     def extract_objectclasses_from_lines(
@@ -272,8 +296,7 @@ class FlextLdifUtilitiesSchema:
     ) -> list[FlextLdifModels.SchemaObjectClass]:
         """Extract and parse all objectClasses from LDIF content lines.
 
-        Iterates through LDIF lines, identifies objectClasses definitions
-        (case-insensitive), and parses them using the provided callback.
+        Delegates to generic extraction method.
 
         Args:
             ldif_content: Raw LDIF content containing schema definitions
@@ -283,22 +306,9 @@ class FlextLdifUtilitiesSchema:
             List of successfully parsed objectClass models
 
         """
-        objectclasses: list[Any] = []
-
-        for raw_line in ldif_content.split("\n"):
-            line = raw_line.strip()
-
-            # Case-insensitive match: objectClasses:, objectclasses:, etc.
-            if line.lower().startswith("objectclasses:"):
-                oc_def = line.split(":", 1)[1].strip()
-                result = parse_callback(oc_def)
-                if hasattr(result, "is_success") and result.is_success:
-                    objectclasses.append(result.unwrap())
-                elif isinstance(result, dict) or hasattr(result, "oid"):
-                    # Handle both FlextResult and raw dict returns
-                    objectclasses.append(result)
-
-        return objectclasses
+        return FlextLdifUtilitiesSchema._extract_schema_items_from_lines(
+            ldif_content, parse_callback, "objectclasses:"
+        )
 
     @staticmethod
     def build_available_attributes_set(
@@ -646,6 +656,8 @@ class FlextLdifUtilitiesSchema:
         attr_data: FlextLdifModels.SchemaAttribute,
     ) -> list[str]:
         """Build RFC 4512 attribute definition parts (extracted to reduce complexity)."""
+        # Import directly from _utilities submodule to avoid circular dependency
+
         parts: list[str] = [f"( {attr_data.oid}"]
 
         if attr_data.name:

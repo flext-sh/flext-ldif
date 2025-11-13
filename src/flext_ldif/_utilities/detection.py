@@ -48,8 +48,6 @@ import re
 from collections.abc import Mapping
 from typing import Any, cast
 
-from flext_ldif.models import FlextLdifModels
-
 
 class FlextLdifUtilitiesDetection:
     """Detection utilities for LDIF server quirks."""
@@ -227,53 +225,64 @@ class FlextLdifUtilitiesDetection:
         - Any data type sent to detection methods
         """
 
-        def can_handle_attribute(
+        def _can_handle_schema_item_by_pattern(
             self,
-            attr_definition: str | FlextLdifModels.SchemaAttribute,
+            schema_item: str | object,
         ) -> bool:
-            """Check if attribute matches OID detection pattern.
+            """Generic method to check if schema item matches OID detection pattern.
 
+            Consolidated logic for both attributes and objectClasses.
             Override in subclass and set DETECTION_OID_PATTERN constant.
 
             Args:
-                attr_definition: Attribute definition (string or model or any type)
+                schema_item: Schema definition (attribute or objectClass, string or model)
+
+            Returns:
+                True if schema item OID matches pattern, True if no pattern (match all)
+
+            """
+            # Get pattern from Constants class
+            constants = self._get_constants()
+            if constants is None:
+                return True  # No Constants class or pattern = match all
+            pattern = getattr(constants, "DETECTION_OID_PATTERN", None)
+            if not pattern:
+                return True  # No pattern = match all
+            return self.can_handle_pattern(schema_item, pattern)
+
+        def can_handle_attribute(
+            self,
+            attr_definition: str | object,  # SchemaAttribute,
+        ) -> bool:
+            """Check if attribute matches OID detection pattern.
+
+            Delegates to generic schema item handler.
+
+            Args:
+                attr_definition: Attribute definition (string or model)
 
             Returns:
                 True if attribute OID matches pattern
 
             """
-            # Get pattern from Constants class
-            constants = self._get_constants()
-            if constants is None:
-                return True  # No Constants class or pattern = match all
-            pattern = getattr(constants, "DETECTION_OID_PATTERN", None)
-            if not pattern:
-                return True  # No pattern = match all
-            return self.can_handle_pattern(attr_definition, pattern)
+            return self._can_handle_schema_item_by_pattern(attr_definition)
 
         def can_handle_objectclass(
             self,
-            oc_definition: str | FlextLdifModels.SchemaObjectClass,
+            oc_definition: str | object,  # SchemaObjectClass,
         ) -> bool:
             """Check if objectClass matches OID detection pattern.
 
-            Override in subclass and set DETECTION_OID_PATTERN constant.
+            Delegates to generic schema item handler.
 
             Args:
-                oc_definition: ObjectClass definition (string or model or any type)
+                oc_definition: ObjectClass definition (string or model)
 
             Returns:
                 True if objectClass OID matches pattern
 
             """
-            # Get pattern from Constants class
-            constants = self._get_constants()
-            if constants is None:
-                return True  # No Constants class or pattern = match all
-            pattern = getattr(constants, "DETECTION_OID_PATTERN", None)
-            if not pattern:
-                return True  # No pattern = match all
-            return self.can_handle_pattern(oc_definition, pattern)
+            return self._can_handle_schema_item_by_pattern(oc_definition)
 
     class PrefixDetectionMixin(PatternDetectionMixin):
         """Mixin for attribute name prefix-based detection in Schema.
@@ -289,7 +298,7 @@ class FlextLdifUtilitiesDetection:
 
         def can_handle_attribute(
             self,
-            attr_definition: str | FlextLdifModels.SchemaAttribute | object,
+            attr_definition: str | object,  # SchemaAttribute | object,
         ) -> bool:
             """Check if attribute name matches detection prefixes.
 
@@ -436,7 +445,7 @@ class FlextLdifUtilitiesDetection:
 
         def can_handle_acl(
             self,
-            acl_line: str | FlextLdifModels.Acl | object,
+            acl_line: str | object,  # Acl | object,
         ) -> bool:
             """Check if ACL uses the expected ACL attribute.
 
