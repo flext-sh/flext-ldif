@@ -680,7 +680,7 @@ class FlextLdifServersOid(FlextLdifServersRfc):
 
                 # Attach timestamp metadata (previously done by decorator)
                 if schema_attr.metadata:
-                    schema_attr.metadata.parsed_timestamp = datetime.now(
+                    schema_attr.metadata.extensions["parsed_timestamp"] = datetime.now(
                         UTC
                     ).isoformat()
 
@@ -735,7 +735,9 @@ class FlextLdifServersOid(FlextLdifServersRfc):
 
                 # Attach timestamp metadata (previously done by decorator)
                 if schema_oc.metadata:
-                    schema_oc.metadata.parsed_timestamp = datetime.now(UTC).isoformat()
+                    schema_oc.metadata.extensions["parsed_timestamp"] = datetime.now(
+                        UTC
+                    ).isoformat()
 
                 return FlextResult[FlextLdifModels.SchemaObjectClass].ok(schema_oc)
 
@@ -827,7 +829,7 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                 single_value=attr_data.single_value,
                 no_user_modification=attr_data.no_user_modification,
                 metadata=attr_data.metadata,
-                x_origin=attr_data.x_origin,
+                x_origin=attr_data.extensions.get("x_origin"),
                 x_file_ref=attr_data.x_file_ref,
                 x_name=attr_data.x_name,
                 x_alias=attr_data.x_alias,
@@ -1042,7 +1044,7 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                         else:
                             updated_metadata = FlextLdifModels.QuirkMetadata.create_for(
                                 self._get_server_type(),
-                                original_format=acl_line.strip(),
+                                extensions={"original_format": acl_line.strip()},
                             )
 
                         acl_data = acl_data.model_copy(
@@ -1098,8 +1100,11 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                     ),
                     metadata=FlextLdifModels.QuirkMetadata(
                         quirk_type=self._get_server_type(),
-                        original_format=acl_line.strip(),
-                        extensions={"oid_parsed": True, "rfc_parsed": False},
+                        extensions={
+                            "original_format": acl_line.strip(),
+                            "oid_parsed": True,
+                            "rfc_parsed": False,
+                        },
                     ),
                     raw_acl=acl_line,
                 )
@@ -1335,10 +1340,12 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                     converted_attrs,
                 )
 
-            metadata = FlextLdifModels.QuirkMetadata(
-                quirk_type=FlextLdifConstants.ServerTypes.OID,
-                original_format=f"OID Entry with {len(converted_attrs)} boolean conversions",
-                extensions=conversion_metadata,
+            metadata = FlextLdifModels.QuirkMetadata.create_for(
+                FlextLdifConstants.ServerTypes.OID,
+                extensions={
+                    **conversion_metadata,
+                    "original_format": f"OID Entry with {len(converted_attrs)} boolean conversions",
+                },
             )
 
             # Create new Entry with converted attributes

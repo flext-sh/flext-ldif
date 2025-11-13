@@ -224,7 +224,7 @@ class FlextLdifUtilitiesSchema:
                 and result.metadata is not None
                 and hasattr(result.metadata, "server_type")
             ):
-                result.metadata.server_type = server_type
+                result.metadata.extensions["server_type"] = server_type
 
             return FlextResult[Any].ok(result)
         except Exception as e:
@@ -681,8 +681,8 @@ class FlextLdifUtilitiesSchema:
         if attr_data.usage:
             parts.append(f"USAGE {attr_data.usage}")
 
-        if attr_data.metadata and attr_data.metadata.x_origin:
-            parts.append(f"X-ORIGIN '{attr_data.metadata.x_origin}'")
+        if attr_data.metadata and attr_data.metadata.extensions.get("x_origin"):
+            parts.append(f"X-ORIGIN '{attr_data.metadata.extensions.get('x_origin')}'")
 
         parts.append(")")
 
@@ -786,8 +786,8 @@ class FlextLdifUtilitiesSchema:
 
         FlextLdifUtilitiesSchema._add_objectclass_must_may(oc_data, parts)
 
-        if oc_data.metadata and oc_data.metadata.x_origin:
-            parts.append(f"X-ORIGIN '{oc_data.metadata.x_origin}'")
+        if oc_data.metadata and oc_data.metadata.extensions.get("x_origin"):
+            parts.append(f"X-ORIGIN '{oc_data.metadata.extensions.get('x_origin')}'")
 
         parts.append(")")
 

@@ -348,6 +348,11 @@ class FlextLdifEntry(FlextService[list[FlextLdifModels.Entry]]):
         entry: FlextLdifModels.Entry,
     ) -> FlextResult[FlextLdifModels.Entry]:
         """Remove operational attributes from single entry."""
+        if entry.attributes is None:
+            return FlextResult[FlextLdifModels.Entry].fail(
+                f"Entry {FlextLdifUtilities.DN.get_dn_value(entry.dn)} has no attributes"
+            )
+
         operational_attrs = set(FlextLdifConstants.OperationalAttributes.COMMON)
         operational_attrs_lower = {attr.lower() for attr in operational_attrs}
 

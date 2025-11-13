@@ -298,7 +298,6 @@ class FlextLdifUtilitiesEvents:
 
         # Build log context with event data (type inferred from values)
         log_context = {
-            "event_id": event.unique_id,  # From IdentifiableMixin
             "aggregate_id": event.aggregate_id,
             "dn_operation": config.dn_operation,
             "input_dn": config.input_dn,
@@ -415,7 +414,6 @@ class FlextLdifUtilitiesEvents:
 
         # Build log context with event data + computed metrics
         log_context = {
-            "event_id": event.unique_id,  # From IdentifiableMixin
             "aggregate_id": event.aggregate_id,
             "migration_operation": config.migration_operation,
             "source_server": config.source_server,
@@ -479,7 +477,6 @@ class FlextLdifUtilitiesEvents:
 
         # Build log context with event data + computed metrics
         log_context = {
-            "event_id": event.unique_id,  # From IdentifiableMixin
             "aggregate_id": event.aggregate_id,
             "conversion_operation": config.conversion_operation,
             "source_format": config.source_format,
@@ -542,7 +539,6 @@ class FlextLdifUtilitiesEvents:
 
         # Build log context with event data + computed metrics (type inferred from values)
         log_context = {
-            "event_id": event.unique_id,  # From IdentifiableMixin
             "aggregate_id": event.aggregate_id,
             "schema_operation": config.schema_operation,
             "items_processed": config.items_processed,

@@ -13,7 +13,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import re
-from collections.abc import Callable, Generator, Mapping
+from collections.abc import Callable, Iterator, Mapping
 from datetime import UTC, datetime
 from typing import Any, ClassVar, cast
 
@@ -71,182 +71,12 @@ class FlextLdifModelsDomains:
             re.IGNORECASE,
         )
 
-        @model_validator(mode="after")
-        def validate_dn_rfc4514_format(
-            self,
-        ) -> FlextLdifModelsDomains.DistinguishedName:
-            """Validate DN RFC 4514 format - capture violations in metadata, DON'T reject.
-
-            RFC 4514 § 2.4: DN = [ relativeDistinguishedName *( COMMA relativeDistinguishedName ) ]
-            RFC 4514 § 2.3: attributeTypeAndValue = attributeType EQUALS attributeValue
-
-            Strategy: PRESERVE problematic DNs for round-trip conversions, capture violations in metadata.
-            """
-            violations: list[str] = []
-
-            # Parse components
-            components = [
-                comp.strip() for comp in self.value.split(",") if comp.strip()
-            ]
-
-            if not components:
-                violations.append("RFC 4514 § 2.4: DN is empty (no RDN components)")
-
-            # Validate each component format
-            for idx, comp in enumerate(components):
-                if not self._DN_COMPONENT_PATTERN.match(comp):
-                    violations.append(
-                        f"RFC 4514 § 2.3: Component {idx} '{comp}' invalid format - "
-                        f"expected 'attribute=value' pattern"
-                    )
-
-            # Capture violations in metadata (DON'T reject)
-            if violations:
-                if self.metadata is None:
-                    new_metadata = FlextLdifModelsDomains.QuirkMetadata.create_for(
-                        quirk_type="dn_validation",
-                        extensions={
-                            "rfc_violations": violations,
-                            "validation_context": {
-                                "validator": "validate_dn_rfc4514_format",
-                                "rfc_section": "RFC 4514 § 2.3, 2.4",
-                                "total_violations": len(violations),
-                            },
-                        },
-                    )
-                    # Create new instance with updated metadata (since model is frozen)
-                    return self.model_copy(update={"metadata": new_metadata})
-                # Update existing metadata extensions
-                if isinstance(self.metadata, dict) and "extensions" in self.metadata:
-                    updated_extensions = dict(
-                        cast("dict[str, object]", self.metadata["extensions"])
-                    )
-                    updated_extensions.update({
-                        "rfc_violations": violations,
-                        "validation_context": {
-                            "validator": "validate_dn_rfc4514_format",
-                            "rfc_section": "RFC 4514 § 2.3, 2.4",
-                            "total_violations": len(violations),
-                        },
-                    })
-                    updated_metadata = dict(self.metadata)
-                    updated_metadata["extensions"] = updated_extensions
-                    return self.model_copy(update={"metadata": updated_metadata})
-                # Fallback: create new metadata
-                new_metadata = {
-                    "extensions": {
-                        "rfc_violations": violations,
-                        "validation_context": {
-                            "validator": "validate_dn_rfc4514_format",
-                            "rfc_section": "RFC 4514 § 2.3, 2.4",
-                            "total_violations": len(violations),
-                        },
-                    }
-                }
-                return self.model_copy(update={"metadata": new_metadata})
-
-            return self
-
-        @computed_field
-        def components(self) -> list[str]:
-            """Get DN components as a list."""
-            return [comp.strip() for comp in self.value.split(",") if comp.strip()]
+        # NOTE: DN validation moved to Entry.validate_entry_rfc_compliance()
+        # DistinguishedName is a frozen Value Object and cannot be modified after construction
 
         def __str__(self) -> str:
-            """Return the DN string value for proper str() conversion."""
+            """Return DN value as string for str() conversion."""
             return self.value
-
-    class QuirkMetadata(FlextModels.ArbitraryTypesModel):
-        """Universal metadata container for quirk-specific data preservation."""
-
-        model_config = ConfigDict(extra="forbid", validate_assignment=True)
-
-        original_format: str | None = Field(default=None)
-        quirk_type: str | None = Field(default=None)
-        extensions: dict[str, object] = Field(default_factory=dict)
-        custom_data: dict[str, object] = Field(default_factory=dict)
-        server_type: str | None = Field(default=None)
-        source_entry: str | None = Field(default=None)
-        x_origin: str | None = Field(default=None)
-        parsed_timestamp: str | None = Field(default=None)
-
-        @classmethod
-        def create_for(
-            cls,
-            quirk_type: str,
-            original_format: str | None = None,
-            extensions: dict[str, object] | None = None,
-            custom_data: dict[str, object] | None = None,
-            server_type: str | None = None,
-            source_entry: str | None = None,
-        ) -> FlextLdifModelsDomains.QuirkMetadata:
-            """Create QuirkMetadata for a specific quirk type."""
-            return cls(
-                quirk_type=quirk_type,
-                original_format=original_format,
-                extensions=extensions or {},
-                custom_data=custom_data or {},
-                server_type=server_type,
-                source_entry=source_entry,
-            )
-
-        def add_extension(self, key: str, value: object) -> None:
-            """Add an extension value using DRY pattern."""
-            self.extensions[key] = value
-
-        def get_extension(self, key: str, default: object = None) -> object:
-            """Get an extension value with default (DRY pattern)."""
-            return self.extensions.get(key, default)
-
-        def validate_with_flext_utilities(
-            self,
-        ) -> FlextResult[FlextLdifModelsDomains.QuirkMetadata]:
-            """Advanced validation using built-in validators (monadic pattern)."""
-            try:
-                # Use direct validation for dict types
-                if self.extensions is not None and not isinstance(
-                    self.extensions, dict
-                ):
-                    return FlextResult[FlextLdifModelsDomains.QuirkMetadata].fail(
-                        "Invalid extensions format"
-                    )
-
-                if self.custom_data is not None and not isinstance(
-                    self.custom_data, dict
-                ):
-                    return FlextResult[FlextLdifModelsDomains.QuirkMetadata].fail(
-                        "Invalid custom_data format"
-                    )
-
-                return FlextResult[FlextLdifModelsDomains.QuirkMetadata].ok(self)
-            except Exception as e:
-                return FlextResult[FlextLdifModelsDomains.QuirkMetadata].fail(
-                    f"Validation failed: {e}"
-                )
-
-        def merge_metadata(
-            self,
-            other: FlextLdifModelsDomains.QuirkMetadata,
-        ) -> FlextResult[FlextLdifModelsDomains.QuirkMetadata]:
-            """Merge two QuirkMetadata instances using builder pattern (monadic)."""
-            try:
-                # Use builder pattern for merging
-                merged = FlextLdifModelsDomains.QuirkMetadata(
-                    quirk_type=self.quirk_type or other.quirk_type,
-                    original_format=self.original_format or other.original_format,
-                    server_type=self.server_type or other.server_type,
-                    source_entry=self.source_entry or other.source_entry,
-                )
-
-                # Merge extensions and custom_data using DRY pattern
-                merged.extensions = {**self.extensions, **other.extensions}
-                merged.custom_data = {**self.custom_data, **other.custom_data}
-
-                return FlextResult[FlextLdifModelsDomains.QuirkMetadata].ok(merged)
-            except Exception as e:
-                return FlextResult[FlextLdifModelsDomains.QuirkMetadata].fail(
-                    f"Merge failed: {e}"
-                )
 
     class ExclusionInfo(FlextModels.ArbitraryTypesModel):
         """Metadata for excluded entries/schema items.
@@ -616,48 +446,8 @@ class FlextLdifModelsDomains:
             description="Metadata for preserving ordering and formats",
         )
 
-        @model_validator(mode="after")
-        def validate_attribute_names_rfc4512(
-            self,
-        ) -> FlextLdifModelsDomains.LdifAttributes:
-            """Validate attribute names RFC 4512 § 2.5 format - capture violations, DON'T reject.
-
-            RFC 4512 § 2.5: attributedescription = attributetype options
-            attributetype = oid / ( leadkeychar *keychar )
-            leadkeychar = ALPHA
-            keychar = ALPHA / DIGIT / HYPHEN
-
-            Strategy: PRESERVE problematic attribute names for round-trip conversions,
-            capture violations in metadata for downstream handling.
-            """
-            violations: list[str] = []
-
-            # RFC 4512 § 2.5: attribute names = keystring = leadkeychar *keychar
-            # leadkeychar = ALPHA
-            # keychar = ALPHA / DIGIT / HYPHEN
-            attr_name_pattern = re.compile(r"^[a-zA-Z][a-zA-Z0-9-]*$")
-
-            violations.extend(
-                f"RFC 4512 § 2.5 violation: Invalid attribute name '{attr_name}' - "
-                f"must start with letter and contain only letters, digits, hyphens"
-                for attr_name in self.attributes
-                if not attr_name_pattern.match(attr_name)
-            )
-
-            # Capture violations in metadata (DON'T reject)
-            if violations:
-                if self.metadata is None:
-                    self.metadata = {}
-
-                self.metadata["rfc_violations"] = violations
-                self.metadata["validation_context"] = {
-                    "validator": "validate_attribute_names_rfc4512",
-                    "rfc_section": "RFC 4512 § 2.5",
-                    "total_violations": len(violations),
-                    "total_attributes": len(self.attributes),
-                }
-
-            return self
+        # NOTE: Attribute name validation moved to Entry.validate_entry_rfc_compliance()
+        # LdifAttributes is a frozen Value Object and cannot be modified after construction
 
         def __len__(self) -> int:
             """Return the number of attributes."""
@@ -692,7 +482,7 @@ class FlextLdifModelsDomains:
             """Check if attribute exists."""
             return key in self.attributes
 
-        def __iter__(self) -> Generator[str]:
+        def __iter__(self) -> Iterator[str]:
             """Iterate over attribute names (intentionally overrides BaseModel).
 
             BaseModel.__iter__ yields (name, value) tuples, but we only yield names
@@ -1329,13 +1119,13 @@ class FlextLdifModelsDomains:
             extra="allow",  # Allow dynamic fields from conversions and transformations
         )
 
-        dn: FlextLdifModelsDomains.DistinguishedName = Field(
-            ...,
-            description="Distinguished Name of the entry",
+        dn: FlextLdifModelsDomains.DistinguishedName | None = Field(
+            default=None,
+            description="Distinguished Name of the entry (Optional to capture None violations)",
         )
-        attributes: FlextLdifModelsDomains.LdifAttributes = Field(
-            ...,
-            description="Entry attributes container",
+        attributes: FlextLdifModelsDomains.LdifAttributes | None = Field(
+            default=None,
+            description="Entry attributes container (Optional to capture None violations)",
         )
         metadata: FlextLdifModelsDomains.QuirkMetadata | None = Field(
             default=None,
@@ -1362,6 +1152,23 @@ class FlextLdifModelsDomains:
             description="Validation results and metadata from entry processing",
         )
 
+        @field_validator("dn", mode="before")
+        @classmethod
+        def coerce_dn_from_string(
+            cls, value: object
+        ) -> FlextLdifModelsDomains.DistinguishedName | None:
+            """Convert string DN to DistinguishedName instance.
+
+            Allows tests and direct instantiation to pass strings for DN field.
+            """
+            if value is None or isinstance(
+                value, FlextLdifModelsDomains.DistinguishedName
+            ):
+                return value
+            if isinstance(value, str):
+                return FlextLdifModelsDomains.DistinguishedName(value=value)
+            return value
+
         @model_validator(mode="after")
         def validate_entry_consistency(self) -> FlextLdifModelsDomains.Entry:
             """Validate cross-field consistency in Entry model.
@@ -1384,42 +1191,85 @@ class FlextLdifModelsDomains:
             return self
 
         @model_validator(mode="after")
-        def validate_entry_composition(self) -> FlextLdifModelsDomains.Entry:
-            """Validate Entry composition - consolidate sub-model violations.
+        def validate_entry_rfc_compliance(self) -> FlextLdifModelsDomains.Entry:
+            """Validate Entry RFC compliance - capture violations, DON'T reject.
 
-            Strategy: Entry validator only consolidates violations from sub-models.
-            Individual component validation happens in DistinguishedName, LdifAttributes, etc.
+            RFC 2849 § 2: DN and at least one attribute required
+            RFC 4514 § 2.3, 2.4: DN format validation
+            RFC 4512 § 2.5: Attribute name format validation
 
-            This validator propagates violations from DN/attributes to Entry.validation_metadata
-            for unified violation reporting.
+            Strategy: PRESERVE problematic entries for round-trip conversions,
+            capture violations in validation_metadata for downstream handling.
+
+            Since Entry is NOT frozen (it's an Entity), we can directly modify
+            self.validation_metadata in this mode="after" validator.
             """
-            # Consolidate violations from DN (if any)
-            if (
-                self.dn
-                and hasattr(self.dn, "metadata")
-                and self.dn.metadata
-                and "rfc_violations" in self.dn.metadata
-            ):
-                if self.validation_metadata is None:
-                    self.validation_metadata = {}
+            violations: list[str] = []
 
-                self.validation_metadata["dn_violations"] = self.dn.metadata[
-                    "rfc_violations"
+            # RFC 2849 § 2 + RFC 4514 § 2.3, 2.4: DN validation
+            dn_value = str(self.dn.value) if self.dn else None
+
+            if dn_value is None:
+                violations.append("RFC 2849 § 2: DN is required (received None)")
+            elif not dn_value or not dn_value.strip():
+                violations.append(
+                    "RFC 2849 § 2: DN is required (empty or whitespace DN)"
+                )
+            else:
+                # Validate DN format (RFC 4514 § 2.3, 2.4)
+                components = [
+                    comp.strip() for comp in dn_value.split(",") if comp.strip()
                 ]
 
-            # Consolidate violations from attributes (if any)
-            if (
-                self.attributes
-                and hasattr(self.attributes, "metadata")
-                and self.attributes.metadata
-                and "rfc_violations" in self.attributes.metadata
-            ):
+                if not components:
+                    violations.append("RFC 4514 § 2.4: DN is empty (no RDN components)")
+                else:
+                    # Validate each component format
+                    dn_component_pattern = re.compile(
+                        FlextLdifConstants.LdifPatterns.DN_COMPONENT,
+                        re.IGNORECASE,
+                    )
+                    for idx, comp in enumerate(components):
+                        if not dn_component_pattern.match(comp):
+                            violations.append(
+                                f"RFC 4514 § 2.3: Component {idx} '{comp}' invalid format - "
+                                f"expected 'attribute=value' pattern"
+                            )
+
+            # RFC 2849 § 2: Attributes validation
+            if self.attributes is None:
+                violations.append(
+                    "RFC 2849 § 2: Entry must have at least one attribute (received None)"
+                )
+            elif not self.attributes.attributes or len(self.attributes.attributes) == 0:
+                violations.append(
+                    "RFC 2849 § 2: Entry must have at least one attribute (empty attributes)"
+                )
+            else:
+                # RFC 4512 § 2.5: Attribute name format validation
+                attr_name_pattern = re.compile(r"^[a-zA-Z][a-zA-Z0-9-]*$")
+
+                violations.extend(
+                    f"RFC 4512 § 2.5 violation: Invalid attribute name '{attr_name}' - "
+                    f"must start with letter and contain only letters, digits, hyphens"
+                    for attr_name in self.attributes.attributes
+                    if not attr_name_pattern.match(attr_name)
+                )
+
+            # Capture violations in validation_metadata (Entry is NOT frozen, so we can modify it)
+            if violations:
                 if self.validation_metadata is None:
                     self.validation_metadata = {}
 
-                self.validation_metadata["attribute_violations"] = (
-                    self.attributes.metadata["rfc_violations"]
-                )
+                self.validation_metadata["rfc_violations"] = violations
+                self.validation_metadata["validation_context"] = {
+                    "validator": "validate_entry_rfc_compliance",
+                    "dn": dn_value,
+                    "attribute_count": len(self.attributes.attributes)
+                    if self.attributes
+                    else 0,
+                    "total_violations": len(violations),
+                }
 
             return self
 
@@ -1427,7 +1277,7 @@ class FlextLdifModelsDomains:
         def unconverted_attributes(self) -> dict[str, object]:
             """Get unconverted attributes from metadata extensions (read-only view, DRY pattern)."""
             result = (
-                self.metadata.get_extension("unconverted_attributes", {})
+                self.metadata.extensions.get("unconverted_attributes", {})
                 if self.metadata
                 else {}
             )
@@ -1652,20 +1502,28 @@ class FlextLdifModelsDomains:
                 # Handle metadata creation and update
                 if metadata is None:
                     if server_type or source_entry or unconverted_attributes:
+                        extensions_dict: dict[str, object] = {}
+                        if server_type:
+                            extensions_dict["server_type"] = server_type
+                        if source_entry:
+                            extensions_dict["source_entry"] = source_entry
+                        if unconverted_attributes:
+                            extensions_dict["unconverted_attributes"] = (
+                                unconverted_attributes
+                            )
                         metadata = FlextLdifModelsDomains.QuirkMetadata(
-                            server_type=server_type,
-                            source_entry=source_entry,
-                            extensions={
-                                "unconverted_attributes": unconverted_attributes or {},
-                            },
+                            quirk_type="entry_builder",
+                            extensions=extensions_dict,
                         )
                 elif server_type or source_entry or unconverted_attributes:
                     # Update existing metadata if new values are provided
-                    metadata.server_type = server_type or metadata.server_type
-                    metadata.source_entry = source_entry or metadata.source_entry
+                    if server_type:
+                        metadata.extensions["server_type"] = server_type
+                    if source_entry:
+                        metadata.extensions["source_entry"] = source_entry
                     if unconverted_attributes:
-                        metadata.add_extension(
-                            "unconverted_attributes", unconverted_attributes
+                        metadata.extensions["unconverted_attributes"] = (
+                            unconverted_attributes
                         )
 
                 # Use model_validate to ensure Pydantic handles
@@ -1749,6 +1607,8 @@ class FlextLdifModelsDomains:
 
             """
             # Case-insensitive attribute lookup (LDAP standard)
+            if self.attributes is None:
+                return []
             attr_name_lower = attribute_name.lower()
             for stored_name, attr_values in self.attributes.attributes.items():
                 if stored_name.lower() == attr_name_lower:
@@ -1790,6 +1650,8 @@ class FlextLdifModelsDomains:
             List of attribute names (case as stored in entry)
 
             """
+            if self.attributes is None:
+                return []
             return list(self.attributes.attributes.keys())
 
         def get_all_attributes(self) -> dict[str, list[str]]:
@@ -1799,6 +1661,8 @@ class FlextLdifModelsDomains:
             Dictionary of attribute_name -> list[str] (deep copy)
 
             """
+            if self.attributes is None:
+                return {}
             return dict(self.attributes.attributes)
 
         def count_attributes(self) -> int:
@@ -1808,6 +1672,8 @@ class FlextLdifModelsDomains:
             Number of attributes (including multivalued attributes count as 1)
 
             """
+            if self.attributes is None:
+                return 0
             return len(self.attributes.attributes)
 
         def get_dn_components(self) -> list[str]:
@@ -1817,7 +1683,9 @@ class FlextLdifModelsDomains:
             List of DN components (e.g., ["cn=admin", "dc=example", "dc=com"])
 
             """
-            return self.dn.components()
+            if self.dn is None:
+                return []
+            return [comp.strip() for comp in self.dn.value.split(",") if comp.strip()]
 
         def matches_filter(
             self,
@@ -1853,7 +1721,7 @@ class FlextLdifModelsDomains:
 
             """
             return {
-                "dn": self.dn.value,
+                "dn": self.dn.value if self.dn else None,
                 "attributes": self.get_all_attributes(),
                 "metadata": self.metadata,
                 "acls": self.acls,
@@ -1871,8 +1739,12 @@ class FlextLdifModelsDomains:
             """
             return FlextLdifModelsDomains.Entry(
                 dn=self.dn,
-                attributes=FlextLdifModelsDomains.LdifAttributes(
-                    attributes=dict(self.attributes.attributes),
+                attributes=(
+                    FlextLdifModelsDomains.LdifAttributes(
+                        attributes=dict(self.attributes.attributes),
+                    )
+                    if self.attributes
+                    else None
                 ),
                 metadata=self.metadata,
                 acls=list(self.acls) if self.acls else None,
@@ -1923,3 +1795,33 @@ class FlextLdifModelsDomains:
         def get_objectclass_names(self) -> list[str]:
             """Get list of objectClass attribute values from entry."""
             return self.get_attribute_values(FlextLdifConstants.DictKeys.OBJECTCLASS)
+
+    class QuirkMetadata(BaseModel):
+        """Universal metadata container for quirk-specific data preservation.
+
+        Used to store server-specific quirks, transformations, and metadata
+        that needs to be preserved during LDIF processing operations.
+        """
+
+        model_config = ConfigDict(extra="allow", frozen=False)
+
+        quirk_type: str = Field(
+            ...,
+            description="Type of quirk this metadata represents",
+        )
+        extensions: dict[str, object] = Field(
+            default_factory=dict,
+            description="Extensible metadata storage for quirk-specific data",
+        )
+
+        @classmethod
+        def create_for(
+            cls,
+            quirk_type: str,
+            extensions: dict[str, object] | None = None,
+        ) -> FlextLdifModelsDomains.QuirkMetadata:
+            """Factory method to create QuirkMetadata with extensions."""
+            return cls(
+                quirk_type=quirk_type,
+                extensions=extensions or {},
+            )

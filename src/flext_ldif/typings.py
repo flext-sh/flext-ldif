@@ -36,20 +36,20 @@ class FlextLdifTypes(FlextTypes):
     # SERVICE RETURN TYPE ALIASES - Top-level types used by servers and services
     # =========================================================================
 
-    type EntryOrString = "FlextLdifModels.Entry" | str
+    type EntryOrString = FlextLdifModels.Entry | str
     type SchemaModel = (
-        "FlextLdifModels.SchemaAttribute" | "FlextLdifModels.SchemaObjectClass"
+        FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass
     )
     type SchemaModelOrString = (
-        "FlextLdifModels.SchemaAttribute" | "FlextLdifModels.SchemaObjectClass" | str
+        FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | str
     )
-    type DnInput = str | "FlextLdifModels.DistinguishedName"
-    type AclOrString = "FlextLdifModels.Acl" | str
+    type DnInput = str | FlextLdifModels.DistinguishedName
+    type AclOrString = FlextLdifModels.Acl | str
     type ConvertibleModel = (
-        "FlextLdifModels.Entry"
-        | "FlextLdifModels.SchemaAttribute"
-        | "FlextLdifModels.SchemaObjectClass"
-        | "FlextLdifModels.Acl"
+        FlextLdifModels.Entry
+        | FlextLdifModels.SchemaAttribute
+        | FlextLdifModels.SchemaObjectClass
+        | FlextLdifModels.Acl
     )
 
     # =============================================================================

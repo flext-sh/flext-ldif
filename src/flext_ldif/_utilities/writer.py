@@ -304,8 +304,8 @@ class FlextLdifUtilitiesWriter:
         if attr_data.usage:
             parts.append(f"USAGE {attr_data.usage}")
 
-        if attr_data.metadata and attr_data.metadata.x_origin:
-            parts.append(f"X-ORIGIN '{attr_data.metadata.x_origin}'")
+        if attr_data.metadata and attr_data.metadata.extensions.get("x_origin"):
+            parts.append(f"X-ORIGIN '{attr_data.metadata.extensions.get('x_origin')}'")
 
         parts.append(")")
         return parts
@@ -379,8 +379,8 @@ class FlextLdifUtilitiesWriter:
         FlextLdifUtilitiesWriter._add_oc_must_may(parts, oc_data.must, "MUST")
         FlextLdifUtilitiesWriter._add_oc_must_may(parts, oc_data.may, "MAY")
 
-        if oc_data.metadata and oc_data.metadata.x_origin:
-            parts.append(f"X-ORIGIN '{oc_data.metadata.x_origin}'")
+        if oc_data.metadata and oc_data.metadata.extensions.get("x_origin"):
+            parts.append(f"X-ORIGIN '{oc_data.metadata.extensions.get('x_origin')}'")
 
         parts.append(")")
 

@@ -242,11 +242,12 @@ class FlextLdifStatistics(FlextService[FlextLdifModels.StatisticsResult]):
                     )
 
                 # Tally server types from metadata
-                if entry.metadata and entry.metadata.server_type:
-                    st = entry.metadata.server_type
-                    server_type_distribution[st] = (
-                        server_type_distribution.get(st, 0) + 1
-                    )
+                if entry.metadata:
+                    st_value = entry.metadata.extensions.get("server_type")
+                    if st_value and isinstance(st_value, str):
+                        server_type_distribution[st_value] = (
+                            server_type_distribution.get(st_value, 0) + 1
+                        )
 
             return FlextResult[FlextLdifModels.EntriesStatistics].ok(
                 FlextLdifModels.EntriesStatistics(

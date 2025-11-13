@@ -92,13 +92,14 @@ class FlextLdifUtilitiesDecorators:
         ):
             return
 
-        # Create metadata
+        # Create metadata with extensions
         metadata = FlextLdifModels.QuirkMetadata.create_for(
             quirk_type=quirk_type,
-            server_type=server_type,
+            extensions={
+                "server_type": server_type,
+                "parsed_timestamp": datetime.now(UTC).isoformat(),
+            },
         )
-        # Store parsed_timestamp in extensions dict (QuirkMetadata has extra="forbid")
-        metadata.add_extension("parsed_timestamp", datetime.now(UTC).isoformat())
 
         # Attach metadata - Protocol cast after hasattr check
         obj_with_metadata = cast("_HasMetadata", result_value)

@@ -544,17 +544,22 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
             content: str,
             server_type: str,
             options: FlextLdifModels.ParseFormatOptions | dict[str, object] | None,
-        ) -> FlextResult:
+        ) -> FlextResult[list[FlextLdifModels.Entry]]:
             """Execute parsing using service delegation (command pattern)."""
             parser = ensure_parser_service()
             # Cast to narrow type - dict[str, object] is handled by _resolve_format_options
             format_opts = cast("FlextLdifModels.ParseFormatOptions | None", options)
-            return parser.parse(
+            parse_result = parser.parse(
                 content=content,
                 input_source="string",
                 server_type=server_type,
                 format_options=format_opts,
             )
+            # Extract entries from ParseResponse
+            if parse_result.is_success:
+                parse_response = parse_result.unwrap()
+                return FlextResult.ok(parse_response.entries)
+            return FlextResult.fail(parse_result.error)
 
         # Use functional composition with error handling
         try:
@@ -563,17 +568,14 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
             content = self._get_source_content(source)
 
             # Execute parsing with error handling
-            parse_result = execute_parsing(
+            entries_result = execute_parsing(
                 content, effective_server_type, resolved_format_options
             )
-            if parse_result.is_success:
-                parse_response = parse_result.unwrap()
-                # ParseResponse is a Pydantic model with .entries field
-                # Extract entries from the ParseResponse
-                entries = parse_response.entries
+            if entries_result.is_success:
+                entries = entries_result.unwrap()
                 return self._convert_output_format(entries, output_format)
 
-            return FlextResult.fail(parse_result.error)
+            return FlextResult.fail(entries_result.error)
 
         except Exception as e:
             # Use structural pattern matching for error handling (Python 3.13)
@@ -1562,12 +1564,22 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
         is_entry_valid = True
 
         # Validate DN
-        dn_str = entry.dn.value
-        if not dn_str or not isinstance(dn_str, str):
-            errors.append(f"Entry has invalid DN: {entry.dn}")
+        if not entry.dn:
+            errors.append("Entry has no DN")
             is_entry_valid = False
+            dn_str = "unknown"
+        else:
+            dn_str = entry.dn.value
+            if not dn_str or not isinstance(dn_str, str):
+                errors.append(f"Entry has invalid DN: {entry.dn}")
+                is_entry_valid = False
 
         # Validate each attribute name
+        if not entry.attributes:
+            errors.append(f"Entry {dn_str} has no attributes")
+            is_entry_valid = False
+            return (is_entry_valid, errors)
+
         for attr_name in entry.attributes.attributes:
             attr_result = validation_service.validate_attribute_name(attr_name)
             if attr_result.is_failure or not attr_result.unwrap():
@@ -1668,16 +1680,18 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
 
         if source_acl is None or target_acl is None:
             # No ACL transformation available for this server pair
+            dn_str = entry.dn.value if entry.dn else "unknown"
             self.logger.debug(
                 f"ACL quirks not available for {source_type}→{target_type}, "
-                f"passing entry unchanged: {entry.dn.value}",
+                f"passing entry unchanged: {dn_str}",
             )
             return FlextResult[FlextLdifModels.Entry].ok(entry)
 
         # For now, pass entry unchanged as full ACL transformation is not fully implemented
+        dn_value = entry.dn.value if entry.dn is not None else "unknown"
         self.logger.debug(
             f"ACL transformation placeholder for {source_type}→{target_type}, "
-            f"passing entry unchanged: {entry.dn.value}",
+            f"passing entry unchanged: {dn_value}",
         )
         return FlextResult[FlextLdifModels.Entry].ok(entry)
 
@@ -1969,18 +1983,20 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
                     if transform_result.is_success:
                         transformed_entries.append(transform_result.unwrap())
                     else:
+                        dn_str = entry.dn.value if entry.dn else "unknown"
                         transformation_errors.append((
-                            entry.dn.value,
+                            dn_str,
                             f"Transformation failed: {transform_result.error}",
                         ))
 
                 except (ValueError, TypeError, AttributeError, KeyError) as e:
+                    dn_str = entry.dn.value if entry.dn else "unknown"
                     transformation_errors.append((
-                        entry.dn.value,
+                        dn_str,
                         f"Transformation error: {e!s}",
                     ))
                     self.logger.debug(
-                        f"Exception during ACL transformation for {entry.dn.value}: {e}",
+                        f"Exception during ACL transformation for {dn_str}: {e}",
                     )
                     continue
 
@@ -2079,10 +2095,16 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
                     entry: FlextLdifModels.Entry,
                 ) -> dict[str, object]:
                     # Basic validation: entry has DN and attributes
+                    dn_value = entry.dn.value if entry.dn is not None else ""
+                    attrs_dict = (
+                        entry.attributes.attributes
+                        if entry.attributes is not None
+                        else {}
+                    )
                     return {
-                        "dn": entry.dn.value,
-                        "valid": bool(entry.dn.value and entry.attributes),
-                        "attribute_count": len(entry.attributes.attributes),
+                        "dn": dn_value,
+                        "valid": bool(dn_value and entry.attributes),
+                        "attribute_count": len(attrs_dict),
                     }
 
                 processor_func = _validate_func

@@ -84,18 +84,23 @@ class FlextLdifUtilitiesOID:
 
         """
         # First try: Extract from original_format if available
-        if schema_obj.metadata and schema_obj.metadata.original_format:
+        if schema_obj.metadata and schema_obj.metadata.extensions.get(
+            "original_format"
+        ):
             try:
                 # Look for OID in parentheses at start: ( 2.16.840.1.113894. ...
-                match = re.search(r"\(\s*([\d.]+)", schema_obj.metadata.original_format)
+                match = re.search(
+                    r"\(\s*([\d.]+)",
+                    schema_obj.metadata.extensions.get("original_format"),
+                )
                 if match:
                     return match.group(1)
             except (re.error, AttributeError):
                 # Regex error or original_format type issue - continue to fallback
                 logger.debug(
                     "Failed to extract OID from original_format: %s",
-                    schema_obj.metadata.original_format[:100]
-                    if schema_obj.metadata.original_format
+                    schema_obj.metadata.extensions.get("original_format")[:100]
+                    if schema_obj.metadata.extensions.get("original_format")
                     else "None",
                 )
 

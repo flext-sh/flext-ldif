@@ -1129,8 +1129,8 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 metadata_config = FlextLdifModels.AclMetadataConfig(
                     line_breaks=[],  # Will be set from context
                     dn_spaces=dn_spaces,
-                    targetscope=context.get("targetscope"),
-                    version=context.get("version", "3.0"),
+                    targetscope=cast("str | None", context.get("targetscope")),
+                    version=cast("str", context.get("version", "3.0")),
                     default_version="3.0",
                 )
                 extensions = FlextLdifUtilities.ACL.build_metadata_extensions(
@@ -1236,9 +1236,9 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 # Create ACL model using functional composition
                 acl_line = context.get("original_acl_line", "")
                 acl = FlextLdifModels.Acl(
-                    name=context["acl_name"],
+                    name=cast("str", context["acl_name"]),
                     target=FlextLdifModels.AclTarget(
-                        target_dn=context["targetattr"],
+                        target_dn=cast("str", context["targetattr"]),
                         attributes=[],
                     ),
                     subject=FlextLdifModels.AclSubject(
@@ -1248,8 +1248,10 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                     permissions=FlextLdifModels.AclPermissions(**permissions_data),
                     metadata=FlextLdifModels.QuirkMetadata.create_for(
                         self._get_server_type(),
-                        original_format=cast("str", acl_line),
-                        extensions=extensions,
+                        extensions={
+                            **extensions,
+                            "original_format": cast("str", acl_line),
+                        },
                     ),
                     raw_acl=cast("str", acl_line),
                 )
@@ -1330,7 +1332,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             # Check metadata bridge for self_write promotion
             if (
                 acl_data.metadata
-                and acl_data.metadata.get_extension("self_write_to_write")
+                and acl_data.metadata.extensions.get("self_write_to_write")
                 and FlextLdifServersOud.Constants.PERMISSION_SELF_WRITE in ops
                 and "write" not in filtered_ops
             ):
@@ -1693,21 +1695,24 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             """
             processed_attrs_dict: dict[str, list[str]] = {}
 
+            # Extract attributes dict with None check for type safety
+            attrs_dict = (
+                entry.attributes.attributes if entry.attributes is not None else {}
+            )
+
             # Preserve base64 encoding metadata
-            if "_base64_attrs" in entry.attributes.attributes:
-                processed_attrs_dict["_base64_attrs"] = entry.attributes.attributes[
-                    "_base64_attrs"
-                ]
+            if "_base64_attrs" in attrs_dict:
+                processed_attrs_dict["_base64_attrs"] = attrs_dict["_base64_attrs"]
 
             # Preserve special LDIF modify markers for schema entries
-            if "_modify_add_attributetypes" in entry.attributes.attributes:
-                processed_attrs_dict["_modify_add_attributetypes"] = (
-                    entry.attributes.attributes["_modify_add_attributetypes"]
-                )
-            if "_modify_add_objectclasses" in entry.attributes.attributes:
-                processed_attrs_dict["_modify_add_objectclasses"] = (
-                    entry.attributes.attributes["_modify_add_objectclasses"]
-                )
+            if "_modify_add_attributetypes" in attrs_dict:
+                processed_attrs_dict["_modify_add_attributetypes"] = attrs_dict[
+                    "_modify_add_attributetypes"
+                ]
+            if "_modify_add_objectclasses" in attrs_dict:
+                processed_attrs_dict["_modify_add_objectclasses"] = attrs_dict[
+                    "_modify_add_objectclasses"
+                ]
 
             return processed_attrs_dict
 
@@ -1784,7 +1789,9 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             metadata_extensions: dict[str, object] = {}
 
             # Preserve DN spaces
-            if FlextLdifUtilities.DN.contains_pattern(entry.dn.value, ", "):
+            if entry.dn is not None and FlextLdifUtilities.DN.contains_pattern(
+                entry.dn.value, ", "
+            ):
                 metadata_extensions["dn_spaces"] = True
 
             # Preserve attribute order
@@ -1846,9 +1853,14 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 # Preserve internal metadata attributes using helper
                 processed_attrs_dict = self._preserve_internal_attributes(entry)
 
+                # Extract attributes dict with None check for type safety
+                attrs_dict = (
+                    entry.attributes.attributes if entry.attributes is not None else {}
+                )
+
                 # Normalize attribute names and apply OUD-specific transformations
                 final_attributes_for_new_entry: dict[str, list[str]] = {}
-                for attr_name, attr_values in entry.attributes.attributes.items():
+                for attr_name, attr_values in attrs_dict.items():
                     # Skip internal metadata attributes
                     if attr_name.startswith("_"):
                         continue
@@ -1892,6 +1904,10 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                     quirk_type=self._get_server_type(),
                     extensions=metadata_extensions,
                 )
+
+                # Validate DN is present before creating entry
+                if entry.dn is None:
+                    return FlextResult.fail("Entry DN cannot be None for OUD parsing")
 
                 # Create and return the new Entry model
                 return FlextResult.ok(
@@ -2277,8 +2293,13 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 FlextResult[Entry] - validated entry, unchanged if valid
 
             """
+            # Extract attributes dict with None check for type safety
+            attrs_dict = (
+                entry.attributes.attributes if entry.attributes is not None else {}
+            )
+
             # Validate ACI macros if present
-            aci_attrs = entry.attributes.attributes.get("aci")
+            aci_attrs = attrs_dict.get("aci")
             if aci_attrs and isinstance(aci_attrs, list):
                 has_macros = False
                 for aci_value in aci_attrs:
@@ -2372,8 +2393,13 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 FlextResult[Entry] - entry unchanged if valid, fail() if macro errors
 
             """
+            # Extract attributes dict with None check for type safety
+            attrs_dict = (
+                entry.attributes.attributes if entry.attributes is not None else {}
+            )
+
             # Validate ACI macros if present
-            aci_attrs = entry.attributes.attributes.get("aci")
+            aci_attrs = attrs_dict.get("aci")
             if aci_attrs and isinstance(aci_attrs, list):
                 for aci_value in aci_attrs:
                     if isinstance(aci_value, str):

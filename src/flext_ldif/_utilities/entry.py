@@ -218,6 +218,10 @@ class FlextLdifUtilitiesEntry:
             True if entry is a schema entry, False otherwise
 
         """
+        # Entry with no attributes cannot be a schema entry
+        if entry.attributes is None:
+            return False
+
         # Get attributes as lowercase set
         attrs_lower = {k.lower() for k in entry.attributes.attributes}
 
@@ -344,6 +348,10 @@ class FlextLdifUtilitiesEntry:
             New entry with operational attributes removed
 
         """
+        # Entry with no attributes - return as-is
+        if entry.attributes is None:
+            return entry
+
         # Common operational attributes (case-insensitive)
         operational_attrs = {
             "createtimestamp",
@@ -387,6 +395,10 @@ class FlextLdifUtilitiesEntry:
 
         """
         if not attributes:
+            return entry
+
+        # Entry with no attributes - return as-is
+        if entry.attributes is None:
             return entry
 
         # Case-insensitive removal

@@ -563,8 +563,8 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
                     ),
                     permissions=permissions,
                     metadata=FlextLdifModels.QuirkMetadata.create_for(
-                        self._get_server_type(),
-                        original_format=acl_line,
+                        quirk_type=self._get_server_type(),
+                        extensions={"original_format": acl_line},
                     ),
                     raw_acl=acl_line,
                 )
@@ -686,7 +686,9 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
             """
             try:
                 # OpenLDAP 1.x entries are RFC-compliant
-                metadata = entry.metadata or FlextLdifModels.QuirkMetadata()
+                metadata = entry.metadata or FlextLdifModels.QuirkMetadata(
+                    quirk_type="openldap1"
+                )
                 metadata.extensions[
                     FlextLdifConstants.QuirkMetadataKeys.IS_TRADITIONAL_DIT
                 ] = True

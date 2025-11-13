@@ -10,7 +10,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import uuid
 from pathlib import Path
 
 from flext_core import FlextModels
@@ -272,7 +271,6 @@ class FlextLdifModelsEvents:
         ) -> FlextLdifModelsEvents.ParseEvent:
             """Create ParseEvent for file parsing operation."""
             return cls(
-                unique_id=f"parse_file_{uuid.uuid4().hex[:8]}",
                 event_type="ldif.parse",
                 aggregate_id=str(file_path),
                 parse_operation="parse_file",
@@ -294,7 +292,6 @@ class FlextLdifModelsEvents:
         ) -> FlextLdifModelsEvents.ParseEvent:
             """Create ParseEvent for LDAP3 parsing operation."""
             return cls(
-                unique_id=f"parse_ldap3_{uuid.uuid4().hex[:8]}",
                 event_type="ldif.parse",
                 aggregate_id=connection_info,
                 parse_operation="parse_ldap3",
@@ -316,7 +313,6 @@ class FlextLdifModelsEvents:
         ) -> FlextLdifModelsEvents.ParseEvent:
             """Create ParseEvent for string parsing operation."""
             return cls(
-                unique_id=f"parse_string_{uuid.uuid4().hex[:8]}",
                 event_type="ldif.parse",
                 aggregate_id=f"content_{content_length}chars",
                 parse_operation="parse_string",

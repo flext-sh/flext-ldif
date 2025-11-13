@@ -487,7 +487,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                     ),
                     metadata=FlextLdifModels.QuirkMetadata.create_for(
                         self._get_server_type(),
-                        original_format=acl_line,
+                        extensions={"original_format": acl_line},
                     ),
                     raw_acl=acl_line,
                 )
