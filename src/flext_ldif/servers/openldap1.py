@@ -39,6 +39,11 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
         SERVER_TYPE: ClassVar[str] = FlextLdifConstants.ServerTypes.OPENLDAP1
         PRIORITY: ClassVar[int] = 10
 
+        # LDAP Connection Defaults (RFC 4511 §4.1 - Standard LDAP ports)
+        DEFAULT_PORT: ClassVar[int] = 389  # Standard LDAP port
+        DEFAULT_SSL_PORT: ClassVar[int] = 636  # Standard LDAPS port (LDAP over SSL/TLS)
+        DEFAULT_PAGE_SIZE: ClassVar[int] = 1000  # RFC 2696 Simple Paged Results default
+
         CANONICAL_NAME: ClassVar[str] = "openldap1"
         ALIASES: ClassVar[frozenset[str]] = frozenset(["openldap1"])
         CAN_NORMALIZE_FROM: ClassVar[frozenset[str]] = frozenset(["openldap1"])

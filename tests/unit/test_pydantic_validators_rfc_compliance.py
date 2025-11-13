@@ -10,7 +10,6 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
-
 from flext_ldif.models import FlextLdifModels
 
 

@@ -283,11 +283,20 @@ class FlextLdifWriter(FlextService[FlextLdifModels.WriteResponse]):
                     ])
 
             # Add removed attributes comments if enabled
-            if format_options.write_removed_attributes_as_comments and entry.entry_metadata:
-                removed_attrs = entry.entry_metadata.get("removed_attributes_with_values", {})
+            if (
+                format_options.write_removed_attributes_as_comments
+                and entry.entry_metadata
+            ):
+                removed_attrs = entry.entry_metadata.get(
+                    "removed_attributes_with_values", {}
+                )
                 if removed_attrs and isinstance(removed_attrs, dict):
-                    if comment_lines:  # Add separator if we already have rejection comments
-                        comment_lines.append(FlextLdifConstants.CommentFormats.SEPARATOR_EMPTY)
+                    if (
+                        comment_lines
+                    ):  # Add separator if we already have rejection comments
+                        comment_lines.append(
+                            FlextLdifConstants.CommentFormats.SEPARATOR_EMPTY
+                        )
                     comment_lines.extend([
                         FlextLdifConstants.CommentFormats.SEPARATOR_SINGLE,
                         FlextLdifConstants.CommentFormats.HEADER_REMOVED_ATTRIBUTES,
@@ -297,9 +306,15 @@ class FlextLdifWriter(FlextService[FlextLdifModels.WriteResponse]):
                     comment_lines.extend([
                         f"{FlextLdifConstants.CommentFormats.PREFIX_COMMENT}{attr_name}: {value}"
                         for attr_name, attr_values in removed_attrs.items()
-                        for value in (attr_values if isinstance(attr_values, list) else [attr_values])
+                        for value in (
+                            attr_values
+                            if isinstance(attr_values, list)
+                            else [attr_values]
+                        )
                     ])
-                    comment_lines.append(FlextLdifConstants.CommentFormats.SEPARATOR_EMPTY)
+                    comment_lines.append(
+                        FlextLdifConstants.CommentFormats.SEPARATOR_EMPTY
+                    )
 
             # Return comments with trailing newline if non-empty
             if comment_lines:
@@ -352,7 +367,9 @@ class FlextLdifWriter(FlextService[FlextLdifModels.WriteResponse]):
                     entry.entry_metadata["_write_options"] = format_options
 
                     # Generate and write comments BEFORE the entry
-                    entry_comments = self._generate_entry_comments(entry, format_options)
+                    entry_comments = self._generate_entry_comments(
+                        entry, format_options
+                    )
                     if entry_comments:
                         output.write(entry_comments)
 
@@ -561,7 +578,10 @@ class FlextLdifWriter(FlextService[FlextLdifModels.WriteResponse]):
             """
             # Determine template source (explicit > format_options > none)
             if not template and format_options:
-                if format_options.write_migration_header and format_options.migration_header_template:
+                if (
+                    format_options.write_migration_header
+                    and format_options.migration_header_template
+                ):
                     template = format_options.migration_header_template
                 elif format_options.write_migration_header:
                     # Use default template from constants
@@ -586,8 +606,14 @@ class FlextLdifWriter(FlextService[FlextLdifModels.WriteResponse]):
                 # Calculate percentages
                 total = data.get("total_entries", len(entries))
                 if total > 0:
-                    data.setdefault("processed_percentage", (data.get("processed_entries", 0) / total) * 100)
-                    data.setdefault("rejected_percentage", (data.get("rejected_entries", 0) / total) * 100)
+                    data.setdefault(
+                        "processed_percentage",
+                        (data.get("processed_entries", 0) / total) * 100,
+                    )
+                    data.setdefault(
+                        "rejected_percentage",
+                        (data.get("rejected_entries", 0) / total) * 100,
+                    )
                 else:
                     data.setdefault("processed_percentage", 0.0)
                     data.setdefault("rejected_percentage", 0.0)

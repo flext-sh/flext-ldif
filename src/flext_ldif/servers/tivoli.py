@@ -29,7 +29,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
         PRIORITY: ClassVar[int] = 30
 
         CANONICAL_NAME: ClassVar[str] = "ibm_tivoli"
-        ALIASES: ClassVar[frozenset[str]] = frozenset(["ibm_tivoli", "tivoli"])
+        ALIASES: ClassVar[frozenset[str]] = frozenset(["tivoli", "ibm_tivoli"])
         CAN_NORMALIZE_FROM: ClassVar[frozenset[str]] = frozenset(["ibm_tivoli"])
         CAN_DENORMALIZE_TO: ClassVar[frozenset[str]] = frozenset(["ibm_tivoli", "rfc"])
 

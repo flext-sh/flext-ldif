@@ -36,7 +36,7 @@ class TestFlextLdifModels:
         long_dn_value = "cn=" + "x" * 2048 + ",dc=example,dc=com"
         long_dn = FlextLdifModels.DistinguishedName(value=long_dn_value)
         assert long_dn.value == long_dn_value
-        
+
         # Note: RFC violations are captured at Entry level in validation_metadata
 
     def test_dn_case_preservation(self) -> None:
@@ -176,18 +176,20 @@ class TestFlextLdifModels:
         """Test model validation with lenient processing pattern."""
         # Lenient processing: Empty DN is ACCEPTED but captured in validation_metadata
         entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(value=""),  # Empty DN triggers RFC violation
+            dn=FlextLdifModels.DistinguishedName(
+                value=""
+            ),  # Empty DN triggers RFC violation
             attributes=FlextLdifModels.LdifAttributes(attributes={}),
         )
-        
+
         # Entry creation succeeds (lenient processing)
         assert entry is not None
-        
+
         # Verify RFC violations were captured
         assert entry.validation_metadata is not None
         assert "rfc_violations" in entry.validation_metadata
         violations = entry.validation_metadata["rfc_violations"]
-        
+
         # Should have 2 violations: empty DN + no attributes
         assert len(violations) >= 2
         assert any("DN" in v for v in violations)
@@ -377,7 +379,7 @@ class TestFlextLdifModelsEntry:
         )
         assert result.is_success  # Entry NOT rejected (lenient processing)
         entry = result.unwrap()
-        
+
         # Verify RFC violation was captured in validation_metadata
         assert entry.validation_metadata is not None
         assert "rfc_violations" in entry.validation_metadata
@@ -428,7 +430,7 @@ class TestFlextLdifModelsDistinguishedName:
 
     def test_invalid_dn(self) -> None:
         """Test invalid DN format is PRESERVED (lenient processing).
-        
+
         DistinguishedName accepts ANY string to preserve server-specific DN formats.
         RFC validation happens at Entry level, where violations are captured in metadata.
         """
@@ -436,10 +438,10 @@ class TestFlextLdifModelsDistinguishedName:
 
         # Lenient processing: DistinguishedName accepts ANY string
         dn = FlextLdifModels.DistinguishedName(value=invalid_dn)
-        
+
         # DN is accepted (preserves server quirks)
         assert dn.value == invalid_dn
-        
+
         # Note: Entry-level validation will capture RFC violation in validation_metadata
         # See test_pydantic_validators_rfc_compliance.py for Entry validation tests
 
@@ -592,10 +594,20 @@ class TestFlextLdifModelsAclPermissions:
         assert perms.write is True
         assert perms.add is False
         assert perms.delete is False
-        
+
         # Verify computed list of active permissions manually
         active_permissions = [
-            perm for perm in ["read", "write", "add", "delete", "search", "compare", "self_write", "proxy"]
+            perm
+            for perm in [
+                "read",
+                "write",
+                "add",
+                "delete",
+                "search",
+                "compare",
+                "self_write",
+                "proxy",
+            ]
             if getattr(perms, perm, False)
         ]
         assert len(active_permissions) == 2

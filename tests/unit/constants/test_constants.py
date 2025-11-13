@@ -66,7 +66,8 @@ class TestFlextLdifConstants:
         assert FlextLdifConstants.LdifValidation.MAX_VALUES_PER_ATTRIBUTE == 100
         assert FlextLdifConstants.LdifValidation.MAX_ATTRIBUTE_VALUE_LENGTH == 10000
         assert FlextLdifConstants.LdifValidation.MIN_ATTRIBUTE_NAME_LENGTH == 1
-        assert FlextLdifConstants.LdifValidation.MAX_ATTRIBUTE_NAME_LENGTH == 255
+        # RFC 4512 constraint: attribute names must not exceed 127 characters
+        assert FlextLdifConstants.LdifValidation.MAX_ATTRIBUTE_NAME_LENGTH == 127
         assert FlextLdifConstants.LdifValidation.MIN_URL_LENGTH == 1
         assert FlextLdifConstants.LdifValidation.MAX_URL_LENGTH == 2048
         assert FlextLdifConstants.LdifValidation.MIN_ENCODING_LENGTH == 1

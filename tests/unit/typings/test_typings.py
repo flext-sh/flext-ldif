@@ -53,7 +53,9 @@ class TestFlextLdifTypesNamespace:
         import ast
         from pathlib import Path
 
-        typings_path = Path("src/flext_ldif/typings.py")
+        # Use path relative to project root
+        project_root = Path(__file__).parent.parent.parent.parent
+        typings_path = project_root / "src" / "flext_ldif" / "typings.py"
         tree = ast.parse(typings_path.read_text())
 
         flext_ldif_imports = []

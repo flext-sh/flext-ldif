@@ -51,8 +51,8 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifModels.EntryResult]):
                 "group_objectclasses": ["groupOfNames"],
                 "acl_attributes": ["aci"],
             },
-            source_server="oracle_oid",
-            target_server="oracle_oud",
+            source_server="oid",
+            target_server="oud",
         )
         result = pipeline.execute()
 
@@ -237,6 +237,37 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifModels.EntryResult]):
                     schema_result.unwrap()
                 )
 
+        # DUPLICATE entries with ACL attributes to ACL category
+        # Entries categorized as hierarchy/users/groups that have ACL attributes
+        # must appear in BOTH their primary category (without ACL) AND acl category (with ACL)
+        acl_attr_names = {"aci"}  # Normalized ACL attribute names (orclaci→aci already transformed)
+        for category in [
+            FlextLdifConstants.Categories.HIERARCHY,
+            FlextLdifConstants.Categories.USERS,
+            FlextLdifConstants.Categories.GROUPS,
+        ]:
+            if category not in categories:
+                continue
+
+            for entry in categories[category]:
+                # Check if entry has ACL attributes
+                if entry.attributes:
+                    attrs_dict = entry.attributes.attributes
+                    has_acl = any(
+                        attr_name.lower() in acl_attr_names
+                        for attr_name in attrs_dict
+                    )
+
+                    if has_acl:
+                        # Duplicate entry to ACL category (deep copy to avoid shared references)
+                        acl_copy = entry.model_copy(deep=True)
+                        if FlextLdifConstants.Categories.ACL not in categories:
+                            categories[FlextLdifConstants.Categories.ACL] = []
+                        categories[FlextLdifConstants.Categories.ACL].append(acl_copy)
+                        logger.info(
+                            f"Duplicated entry with ACL to acl category: {entry.dn.value if entry.dn else 'unknown'}"
+                        )
+
         return FlextResult[dict[str, list[FlextLdifModels.Entry]]].ok(categories)
 
     def _sort_categories(
@@ -336,12 +367,18 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifModels.EntryResult]):
                     "server_type": self._target_server,
                 }
 
+                # Create category-specific WriteFormatOptions for phase-aware processing
+                # This allows OUD quirks to apply different formatting based on output file category
+                category_write_opts = self._write_opts.model_copy(
+                    update={"entry_category": category}
+                )
+
                 write_result = self._writer.write(
                     entries=entries,
                     target_server_type=self._target_server,
                     output_target="file",
                     output_path=output_path,
-                    format_options=self._write_opts,
+                    format_options=category_write_opts,  # ← Category-specific options
                     template_data=template_data,
                 )
 

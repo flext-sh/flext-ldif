@@ -289,6 +289,12 @@ class FlextLdifConstants(FlextConstants):
     MEDIUM_ENTRY_COUNT_THRESHOLD: Final[int] = 1000  # Threshold for medium entry counts
     MIN_ATTRIBUTE_PARTS: Final[int] = 2  # Minimum parts for attribute parsing
 
+    # Text and Binary Processing constants (RFC 2849 § 2)
+    ASCII_SPACE_CHAR: Final[int] = 32  # ASCII code for space (first printable char)
+    ASCII_TILDE_CHAR: Final[int] = 126  # ASCII code for tilde (last printable char)
+    DN_TRUNCATE_LENGTH: Final[int] = 100  # Maximum DN length for error messages
+    DN_LOG_PREVIEW_LENGTH: Final[int] = 80  # DN preview length in logging
+
     # Search configuration defaults
     DEFAULT_SEARCH_TIME_LIMIT: Final[int] = 30  # Default search time limit in seconds
     DEFAULT_SEARCH_SIZE_LIMIT: Final[int] = (
@@ -1471,7 +1477,7 @@ class FlextLdifConstants(FlextConstants):
         # NOTE: OID metadata keys moved to FlextLdifServersOid.Constants:
         # - ORIGINAL_OID_PERMS → FlextLdifServersOid.Constants.ORIGINAL_OID_PERMS
         # - OID_SPECIFIC_RIGHTS → FlextLdifServersOid.Constants.OID_SPECIFIC_RIGHTS
-        # - OID_TO_OUD_TRANSFORMED → FlextLdifServersOid.Constants.OID_TO_OUD_TRANSFORMED
+        # - RFC_NORMALIZED → FlextLdifServersOid.Constants.RFC_NORMALIZED (generic RFC transformation tracking)
         # Server-specific metadata keys should be defined in their respective server Constants classes
 
         # =========================
@@ -1543,6 +1549,29 @@ class FlextLdifConstants(FlextConstants):
         )
         IS_RELAXED_PARSED: Final[str] = (
             "_is_relaxed_parsed"  # Parsed using relaxed mode
+        )
+
+        # =========================
+        # Conversion/Migration Metadata
+        # =========================
+
+        CONVERTED_FROM_SERVER: Final[str] = (
+            "converted_from_server"  # Source server type for conversion
+        )
+        CONVERSION_COMMENTS: Final[str] = (
+            "conversion_comments"  # Comments about conversion process
+        )
+        ORIGINAL_ENTRY: Final[str] = (
+            "original_entry"  # Original entry before conversion
+        )
+        REMOVED_ATTRIBUTES: Final[str] = (
+            "removed_attributes"  # Attributes removed/commented during processing
+        )
+        REMOVED_ATTRIBUTES_WITH_VALUES: Final[str] = (
+            "removed_attributes_with_values"  # Attributes with values for RFC writer
+        )
+        WRITE_OPTIONS: Final[str] = (
+            "_write_options"  # Write format options for LDIF output
         )
 
         # =========================
@@ -1723,6 +1752,10 @@ class FlextLdifConstants(FlextConstants):
         NOVELL: Final[str] = "novell_edirectory"
         IBM_TIVOLI: Final[str] = "ibm_tivoli"
 
+        # Backward compatibility aliases (deprecated, use OID/OUD instead)
+        ORACLE_OID: Final[str] = OID  # Alias for backward compatibility
+        ORACLE_OUD: Final[str] = OUD  # Alias for backward compatibility
+
         # Mapping from short forms to long forms (for backward compatibility)
         LONG_NAMES: Final[dict[str, str]] = {
             OID: "oracle_oid",
@@ -1743,6 +1776,18 @@ class FlextLdifConstants(FlextConstants):
         # Reverse mapping from long forms to short forms
         FROM_LONG: Final[dict[str, str]] = {v: k for k, v in LONG_NAMES.items()}
 
+        # Common short aliases (used in tests and user input)
+        ALIASES: Final[dict[str, str]] = {
+            "ad": AD,  # active_directory
+            "ds389": DS_389,  # 389ds
+            "389": DS_389,  # 389ds
+            "apache": APACHE,  # apache_directory
+            "novell": NOVELL,  # novell_edirectory
+            "tivoli": IBM_TIVOLI,  # ibm_tivoli
+            "oracle_oid": OID,  # backward compat
+            "oracle_oud": OUD,  # backward compat
+        }
+
         # Server type variants (for compatibility checks)
         ORACLE_OID_VARIANTS: Final[frozenset[str]] = frozenset(["oid", "oracle_oid"])
         ORACLE_OUD_VARIANTS: Final[frozenset[str]] = frozenset(["oud", "oracle_oud"])
@@ -1756,7 +1801,12 @@ class FlextLdifConstants(FlextConstants):
         def normalize(server_type: str) -> str:
             """Normalize server type aliases to canonical form.
 
-            Converts aliases like 'oracle_oid' → 'oid', 'oracle_oud' → 'oud'.
+            Converts aliases like 'oracle_oid' → 'oid', 'ad' → 'active_directory'.
+
+            Handles:
+            - Short aliases (ad → active_directory, ds389 → 389ds)
+            - Long to short (oracle_oid → oid)
+            - Already canonical forms (returns as-is)
 
             Args:
                 server_type: Server type string (may be alias)
@@ -1765,12 +1815,18 @@ class FlextLdifConstants(FlextConstants):
                 Canonical server type
 
             Example:
+                >>> ServerTypes.normalize("ad")
+                'active_directory'
                 >>> ServerTypes.normalize("oracle_oid")
                 'oid'
                 >>> ServerTypes.normalize("oid")
                 'oid'
 
             """
+            # First try short aliases (ad → active_directory)
+            if server_type in FlextLdifConstants.ServerTypes.ALIASES:
+                return FlextLdifConstants.ServerTypes.ALIASES[server_type]
+            # Then try long to short (oracle_oid → oid)
             return FlextLdifConstants.ServerTypes.FROM_LONG.get(
                 server_type,
                 server_type,
@@ -1796,39 +1852,6 @@ class FlextLdifConstants(FlextConstants):
             """
             normalized = FlextLdifConstants.ServerTypes.normalize(server_type)
             return normalized in canonical_types or server_type in canonical_types
-
-    class ServerValidationRules:
-        """Server-specific validation rules for Entry consistency checking.
-
-        Defines which RFC violations are allowed/forbidden per server type.
-        Used by Entry.validate_entry_consistency() @model_validator.
-
-        Architecture:
-        - LENIENT servers: Allow RFC violations (OID)
-        - STRICT servers: Require RFC compliance (OUD, AD)
-        - FLEXIBLE servers: Mixed rules (OpenLDAP)
-        """
-
-        # OID (Oracle Internet Directory) - LENIENT
-        OID_ALLOWS_MISSING_OBJECTCLASS: Final[bool] = True
-        OID_ALLOWS_MISSING_NAMING_ATTR: Final[bool] = True
-        OID_AUTO_DETECT_BINARY: Final[bool] = True  # Doesn't require ;binary
-
-        # OUD (Oracle Unified Directory) - STRICT
-        OUD_REQUIRES_OBJECTCLASS: Final[bool] = True
-        OUD_REQUIRES_NAMING_ATTR: Final[bool] = True
-        OUD_REQUIRES_BINARY_OPTION: Final[bool] = True  # Requires ;binary for binary attrs
-
-        # OpenLDAP - FLEXIBLE
-        OPENLDAP_FLEXIBLE_SCHEMA: Final[bool] = True
-        OPENLDAP_STRICT_BINARY: Final[bool] = True  # Requires ;binary
-
-        # Active Directory - STRICT
-        AD_REQUIRES_OBJECTCLASS: Final[bool] = True
-        AD_AUTO_DETECT_BINARY: Final[bool] = True  # Doesn't require ;binary
-
-        # RFC baseline - PURE RFC
-        RFC_STRICT_COMPLIANCE: Final[bool] = True
 
     # =============================================================================
     # OPERATION CONSTANTS - Filter types, modes, categories, data types
@@ -2648,12 +2671,16 @@ class FlextLdifConstants(FlextConstants):
 """
 
         # Minimal header template
-        MINIMAL_TEMPLATE: Final[str] = """# Phase: {phase} | {timestamp} | Entries: {total_entries}
+        MINIMAL_TEMPLATE: Final[
+            str
+        ] = """# Phase: {phase} | {timestamp} | Entries: {total_entries}
 #
 """
 
         # Detailed header template
-        DETAILED_TEMPLATE: Final[str] = """# ============================================================================
+        DETAILED_TEMPLATE: Final[
+            str
+        ] = """# ============================================================================
 # LDIF MIGRATION - {phase_name}
 # ============================================================================
 # Migration Phase: {phase}

@@ -649,7 +649,11 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
 
         # Execute conversion with fallback
         converter = format_dispatch.get(output_format, format_dispatch["model"])
-        return converter()
+        result = converter()
+        return cast(
+            "FlextResult[list[FlextLdifModels.Entry]] | FlextResult[list[dict[str, str | list[str]]]]",
+            result,
+        )
 
     def _resolve_source_content(
         self,
@@ -1273,8 +1277,8 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
         Args:
             input_dir: Directory containing source LDIF files
             output_dir: Directory for output files
-            source_server: Source server type identifier (e.g., "oracle_oid", "openldap")
-            target_server: Target server type identifier (e.g., "oracle_oud", "ad")
+            source_server: Source server type identifier (e.g., "oid", "openldap", "ad")
+            target_server: Target server type identifier (e.g., "oud", "openldap", "ad")
             options: Optional MigrateOptions Model consolidating all migration parameters:
                 - migration_config: MigrationConfig for structured 6-file output
                 - write_options: WriteFormatOptions for formatting control
@@ -1298,8 +1302,8 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
             result = ldif.migrate(
                 input_dir=Path("source"),
                 output_dir=Path("target"),
-                source_server="oracle_oid",
-                target_server="oracle_oud"
+                source_server="oid",
+                target_server="oud"
             )
 
             # Structured migration - 6 files with tracking
@@ -1321,8 +1325,8 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
             result = ldif.migrate(
                 input_dir=Path("source"),
                 output_dir=Path("target"),
-                source_server="oracle_oid",
-                target_server="oracle_oud",
+                source_server="oid",
+                target_server="oud",
                 options=options,
             )
 
@@ -1338,8 +1342,8 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
             result = ldif.migrate(
                 input_dir=Path("source"),
                 output_dir=Path("target"),
-                source_server="oracle_oid",
-                target_server="oracle_oud",
+                source_server="oid",
+                target_server="oud",
                 options=options,
             )
 

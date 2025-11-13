@@ -396,6 +396,23 @@ class FlextLdifModelsConfig:
             default=None,
             description="If set to 'modify', writes entries in LDIF modify add format (changetype: modify). Otherwise uses add format.",
         )
+        # NEW FIELDS FOR ALGAR OUD MIGRATION - Phase-aware ACL handling and original entry commenting
+        write_original_entry_as_comment: bool = Field(
+            default=False,
+            description="If True, writes original source entry as commented LDIF block before converted entry.",
+        )
+        entry_category: str | None = Field(
+            default=None,
+            description="Migration category (e.g., 'hierarchy', 'users', 'groups', 'acl'). Used for phase-specific formatting.",
+        )
+        acl_attribute_names: frozenset[str] = Field(
+            default_factory=frozenset,
+            description="Set of ACL attribute names (e.g., {'orclaci', 'orclentrylevelaci'}). Used to identify ACL attributes.",
+        )
+        comment_acl_in_non_acl_phases: bool = Field(
+            default=True,
+            description="If True, ACL attributes are written as comments when entry_category != 'acl'.",
+        )
 
     class MigrationConfig(FlextModels.Value):
         """Configuration for migration pipeline from YAML or dict.

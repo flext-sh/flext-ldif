@@ -432,7 +432,7 @@ class FlextLdifSyntax(FlextService[FlextLdifModels.SyntaxServiceStatus]):
         if desc:
             syntax.desc = desc
 
-        return FlextResult[FlextLdifModels.Syntax].ok(syntax)
+        return FlextResult[FlextLdifModels.Syntax].ok(syntax)  # type: ignore[arg-type]
 
     @FlextDecorators.track_performance()
     def validate_value(

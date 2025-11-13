@@ -550,26 +550,28 @@ class TestQuirksDetectionConfiguration:
         assert config.enable_relaxed_parsing is True
 
     def test_supported_server_types(self) -> None:
-        """Test that manual mode accepts all supported server types."""
-        supported_types = [
-            "oid",
-            "oud",
-            "openldap",
-            "openldap1",
-            "ad",
-            "ds389",
-            "apache",
-            "novell",
-            "tivoli",
-            "relaxed",
-        ]
+        """Test that manual mode accepts all supported server types (including aliases)."""
+        # Map of input → expected canonical form
+        supported_types = {
+            "oid": "oid",
+            "oud": "oud",
+            "openldap": "openldap",
+            "openldap1": "openldap1",
+            "ad": "active_directory",  # Short alias
+            "ds389": "389ds",  # Short alias
+            "apache": "apache_directory",
+            "novell": "novell_edirectory",
+            "tivoli": "ibm_tivoli",  # Short alias
+            "relaxed": "relaxed",
+        }
 
-        for server_type in supported_types:
+        for server_type, expected_canonical in supported_types.items():
             config = FlextLdifConfig(
                 quirks_detection_mode="manual",
                 quirks_server_type=server_type,
             )
-            assert config.quirks_server_type == server_type
+            # Should be normalized to canonical form
+            assert config.quirks_server_type == expected_canonical
 
     def tests_server_type_none_in_auto_mode(self) -> None:
         """Test that quirks_server_type remains None in auto mode."""
@@ -611,13 +613,21 @@ class TestQuirksDetectionConfiguration:
         config_auto = FlextLdifConfig(quirks_detection_mode="auto")
         assert config_auto.quirks_detection_mode == "auto"
 
-        # Manual mode with different servers
-        for server in ["oid", "oud", "openldap", "ad"]:
+        # Manual mode with different servers (including aliases)
+        # Map input → expected canonical form
+        server_tests = {
+            "oid": "oid",
+            "oud": "oud",
+            "openldap": "openldap",
+            "ad": "active_directory",  # Short alias
+        }
+        for server_input, expected_canonical in server_tests.items():
             config_manual = FlextLdifConfig(
                 quirks_detection_mode="manual",
-                quirks_server_type=server,
+                quirks_server_type=server_input,
             )
-            assert config_manual.quirks_server_type == server
+            # Should be normalized to canonical form
+            assert config_manual.quirks_server_type == expected_canonical
 
         # Disabled mode
         config_disabled = FlextLdifConfig(quirks_detection_mode="disabled")

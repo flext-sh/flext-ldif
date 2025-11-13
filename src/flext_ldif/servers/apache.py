@@ -37,7 +37,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
 
         # Auto-discovery constants
         CANONICAL_NAME: ClassVar[str] = "apache_directory"
-        ALIASES: ClassVar[frozenset[str]] = frozenset(["apache_directory", "apache"])
+        ALIASES: ClassVar[frozenset[str]] = frozenset(["apache", "apache_directory"])
         CAN_NORMALIZE_FROM: ClassVar[frozenset[str]] = frozenset(["apache_directory"])
         CAN_DENORMALIZE_TO: ClassVar[frozenset[str]] = frozenset(
             [

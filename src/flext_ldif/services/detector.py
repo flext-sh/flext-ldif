@@ -17,20 +17,13 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
+from typing import Any
 
 from flext_core import FlextLogger, FlextResult, FlextService
 
 from flext_ldif.config import FlextLdifConfig
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
-from flext_ldif.servers.ad import FlextLdifServersAd
-from flext_ldif.servers.apache import FlextLdifServersApache
-from flext_ldif.servers.ds389 import FlextLdifServersDs389
-from flext_ldif.servers.novell import FlextLdifServersNovell
-from flext_ldif.servers.oid import FlextLdifServersOid
-from flext_ldif.servers.openldap import FlextLdifServersOpenldap
-from flext_ldif.servers.oud import FlextLdifServersOud
-from flext_ldif.servers.tivoli import FlextLdifServersTivoli
 
 logger = FlextLogger(__name__)
 
@@ -270,7 +263,7 @@ class FlextLdifDetector(FlextService[FlextLdifModels.ClientStatus]):
                         FlextLdifConstants.ServerDetection.ATTRIBUTE_MATCH_SCORE
                     )
 
-    def _calculate_scores(self, content: str) -> dict[str, int]:
+    def _calculate_scores(self, content: str) -> dict[str, int]:  # noqa: C901
         """Calculate detection scores for each server type.
 
         Args:
@@ -289,94 +282,117 @@ class FlextLdifDetector(FlextService[FlextLdifModels.ClientStatus]):
         # Lowercase content for case-insensitive matching
         content_lower = content.lower()
 
-        # Oracle OID detection - use server Constants
-        self._update_server_scores(
-            FlextLdifConstants.ServerTypes.OID,
-            FlextLdifServersOid.Constants.DETECTION_OID_PATTERN,
-            FlextLdifServersOid.Constants.DETECTION_WEIGHT,
-            FlextLdifServersOid.Constants.DETECTION_ATTRIBUTES,
-            content,
-            content_lower,
-            scores,
-            case_sensitive=True,
-            objectclasses=FlextLdifServersOid.Constants.DETECTION_OBJECTCLASS_NAMES,
-        )
+        # Oracle OID detection - use registry to get server Constants
+        oid_constants = self._get_server_constants(FlextLdifConstants.ServerTypes.OID)
+        if oid_constants:
+            self._update_server_scores(
+                FlextLdifConstants.ServerTypes.OID,
+                oid_constants.DETECTION_OID_PATTERN,
+                oid_constants.DETECTION_WEIGHT,
+                oid_constants.DETECTION_ATTRIBUTES,
+                content,
+                content_lower,
+                scores,
+                case_sensitive=True,
+                objectclasses=oid_constants.DETECTION_OBJECTCLASS_NAMES,
+            )
 
-        # Oracle OUD detection - use server Constants
-        self._update_server_scores(
-            FlextLdifConstants.ServerTypes.OUD,
-            FlextLdifServersOud.Constants.DETECTION_OID_PATTERN,
-            FlextLdifServersOud.Constants.DETECTION_WEIGHT,
-            FlextLdifServersOud.Constants.DETECTION_ATTRIBUTES,
-            content,
-            content_lower,
-            scores,
-            objectclasses=FlextLdifServersOud.Constants.DETECTION_OBJECTCLASS_NAMES,
-        )
+        # Oracle OUD detection - use registry to get server Constants
+        oud_constants = self._get_server_constants(FlextLdifConstants.ServerTypes.OUD)
+        if oud_constants:
+            self._update_server_scores(
+                FlextLdifConstants.ServerTypes.OUD,
+                oud_constants.DETECTION_OID_PATTERN,
+                oud_constants.DETECTION_WEIGHT,
+                oud_constants.DETECTION_ATTRIBUTES,
+                content,
+                content_lower,
+                scores,
+                objectclasses=oud_constants.DETECTION_OBJECTCLASS_NAMES,
+            )
 
-        # OpenLDAP detection - use server Constants
-        self._update_server_scores(
-            FlextLdifConstants.ServerTypes.OPENLDAP,
-            FlextLdifServersOpenldap.Constants.DETECTION_PATTERN,
-            FlextLdifServersOpenldap.Constants.DETECTION_WEIGHT,
-            FlextLdifServersOpenldap.Constants.DETECTION_ATTRIBUTES,
-            content,
-            content_lower,
-            scores,
-            objectclasses=FlextLdifServersOpenldap.Constants.DETECTION_OBJECTCLASS_NAMES,
+        # OpenLDAP detection - use registry to get server Constants
+        openldap_constants = self._get_server_constants(
+            FlextLdifConstants.ServerTypes.OPENLDAP
         )
+        if openldap_constants:
+            self._update_server_scores(
+                FlextLdifConstants.ServerTypes.OPENLDAP,
+                openldap_constants.DETECTION_PATTERN,
+                openldap_constants.DETECTION_WEIGHT,
+                openldap_constants.DETECTION_ATTRIBUTES,
+                content,
+                content_lower,
+                scores,
+                objectclasses=openldap_constants.DETECTION_OBJECTCLASS_NAMES,
+            )
 
-        # Active Directory detection - use server Constants
-        self._update_server_scores(
-            FlextLdifConstants.ServerTypes.AD,
-            FlextLdifServersAd.Constants.DETECTION_PATTERN,
-            FlextLdifServersAd.Constants.DETECTION_WEIGHT,
-            FlextLdifServersAd.Constants.DETECTION_ATTRIBUTES,
-            content,
-            content_lower,
-            scores,
-            case_sensitive=True,
-            objectclasses=FlextLdifServersAd.Constants.DETECTION_OBJECTCLASS_NAMES,
+        # Active Directory detection - use registry to get server Constants
+        ad_constants = self._get_server_constants(FlextLdifConstants.ServerTypes.AD)
+        if ad_constants:
+            self._update_server_scores(
+                FlextLdifConstants.ServerTypes.AD,
+                ad_constants.DETECTION_PATTERN,
+                ad_constants.DETECTION_WEIGHT,
+                ad_constants.DETECTION_ATTRIBUTES,
+                content,
+                content_lower,
+                scores,
+                case_sensitive=True,
+                objectclasses=ad_constants.DETECTION_OBJECTCLASS_NAMES,
+            )
+
+        # Novell eDirectory detection - use registry to get server Constants
+        novell_constants = self._get_server_constants(
+            FlextLdifConstants.ServerTypes.NOVELL
         )
-
-        # Novell eDirectory detection - use server Constants
-        if re.search(
-            FlextLdifServersNovell.Constants.DETECTION_PATTERN,
+        if novell_constants and re.search(
+            novell_constants.DETECTION_PATTERN,
             content_lower,
         ):
             scores[FlextLdifConstants.ServerTypes.NOVELL] += (
-                FlextLdifServersNovell.Constants.DETECTION_WEIGHT
+                novell_constants.DETECTION_WEIGHT
             )
 
-        # IBM Tivoli detection - use server Constants
+        # IBM Tivoli detection - use registry to get server Constants
         # Tivoli uses compiled Pattern, others use string
-        tivoli_pattern = FlextLdifServersTivoli.Constants.DETECTION_PATTERN
-        if isinstance(tivoli_pattern, re.Pattern):
-            if tivoli_pattern.search(content_lower):
+        tivoli_constants = self._get_server_constants(
+            FlextLdifConstants.ServerTypes.IBM_TIVOLI
+        )
+        if tivoli_constants:
+            tivoli_pattern = tivoli_constants.DETECTION_PATTERN
+            if isinstance(tivoli_pattern, re.Pattern):
+                if tivoli_pattern.search(content_lower):
+                    scores[FlextLdifConstants.ServerTypes.IBM_TIVOLI] += (
+                        tivoli_constants.DETECTION_WEIGHT
+                    )
+            elif isinstance(tivoli_pattern, str) and re.search(
+                tivoli_pattern,
+                content_lower,
+            ):
                 scores[FlextLdifConstants.ServerTypes.IBM_TIVOLI] += (
-                    FlextLdifServersTivoli.Constants.DETECTION_WEIGHT
+                    tivoli_constants.DETECTION_WEIGHT
                 )
-        elif isinstance(tivoli_pattern, str) and re.search(
-            tivoli_pattern,
-            content_lower,
-        ):
-            scores[FlextLdifConstants.ServerTypes.IBM_TIVOLI] += (
-                FlextLdifServersTivoli.Constants.DETECTION_WEIGHT
-            )
 
-        # 389 DS detection - use server Constants
-        if re.search(FlextLdifServersDs389.Constants.DETECTION_PATTERN, content_lower):
+        # 389 DS detection - use registry to get server Constants
+        ds389_constants = self._get_server_constants(
+            FlextLdifConstants.ServerTypes.DS_389
+        )
+        if ds389_constants and re.search(ds389_constants.DETECTION_PATTERN, content_lower):
             scores[FlextLdifConstants.ServerTypes.DS_389] += (
-                FlextLdifServersDs389.Constants.DETECTION_WEIGHT
+                ds389_constants.DETECTION_WEIGHT
             )
 
-        # Apache DS detection - use server Constants
-        if re.search(
-            FlextLdifServersApache.Constants.DETECTION_PATTERN,
+        # Apache DS detection - use registry to get server Constants
+        apache_constants = self._get_server_constants(
+            FlextLdifConstants.ServerTypes.APACHE
+        )
+        if apache_constants and re.search(
+            apache_constants.DETECTION_PATTERN,
             content_lower,
         ):
             scores[FlextLdifConstants.ServerTypes.APACHE] += (
-                FlextLdifServersApache.Constants.DETECTION_WEIGHT
+                apache_constants.DETECTION_WEIGHT
             )
 
         return scores
@@ -440,7 +456,7 @@ class FlextLdifDetector(FlextService[FlextLdifModels.ClientStatus]):
         if value.lower() in content_lower:
             patterns.append(description)
 
-    def _extract_patterns(self, content: str) -> list[str]:
+    def _extract_patterns(self, content: str) -> list[str]:  # noqa: C901
         """Extract detected patterns from content.
 
         Args:
@@ -453,87 +469,140 @@ class FlextLdifDetector(FlextService[FlextLdifModels.ClientStatus]):
         patterns: list[str] = []
         content_lower = content.lower()
 
-        # Oracle OID detection - use server Constants
-        self._check_regex_pattern(
-            FlextLdifServersOid.Constants.DETECTION_OID_PATTERN,
-            content,
-            "Oracle OID namespace (2.16.840.1.113894.*)",
-            patterns,
-        )
-        self._check_substring_pattern(
-            FlextLdifServersOid.Constants.ORCLACI,
-            content_lower,
-            "Oracle OID ACLs",
-            patterns,
-        )
-        if (
-            FlextLdifServersOid.Constants.ORCLENTRYLEVELACI.lower() in content_lower
-        ) and "Oracle OID ACLs" not in patterns:
-            patterns.append("Oracle OID ACLs")
+        # Oracle OID detection - use registry to get server Constants
+        oid_constants = self._get_server_constants(FlextLdifConstants.ServerTypes.OID)
+        if oid_constants:
+            self._check_regex_pattern(
+                oid_constants.DETECTION_OID_PATTERN,
+                content,
+                "Oracle OID namespace (2.16.840.1.113894.*)",
+                patterns,
+            )
+            self._check_substring_pattern(
+                oid_constants.ORCLACI,
+                content_lower,
+                "Oracle OID ACLs",
+                patterns,
+            )
+            if (
+                oid_constants.ORCLENTRYLEVELACI.lower() in content_lower
+            ) and "Oracle OID ACLs" not in patterns:
+                patterns.append("Oracle OID ACLs")
 
-        # Oracle OUD detection - use server Constants
-        self._check_regex_pattern(
-            FlextLdifServersOud.Constants.DETECTION_OID_PATTERN,
-            content_lower,
-            "Oracle OUD attributes (ds-sync-*)",
-            patterns,
-        )
+        # Oracle OUD detection - use registry to get server Constants
+        oud_constants = self._get_server_constants(FlextLdifConstants.ServerTypes.OUD)
+        if oud_constants:
+            self._check_regex_pattern(
+                oud_constants.DETECTION_OID_PATTERN,
+                content_lower,
+                "Oracle OUD attributes (ds-sync-*)",
+                patterns,
+            )
 
-        # OpenLDAP detection - use server Constants
-        self._check_regex_pattern(
-            FlextLdifServersOpenldap.Constants.DETECTION_OID_PATTERN,
-            content_lower,
-            "OpenLDAP configuration (olc*)",
-            patterns,
+        # OpenLDAP detection - use registry to get server Constants
+        openldap_constants = self._get_server_constants(
+            FlextLdifConstants.ServerTypes.OPENLDAP
         )
+        if openldap_constants:
+            self._check_regex_pattern(
+                openldap_constants.DETECTION_OID_PATTERN,
+                content_lower,
+                "OpenLDAP configuration (olc*)",
+                patterns,
+            )
 
-        # Active Directory detection - use server Constants
-        self._check_regex_pattern(
-            FlextLdifServersAd.Constants.DETECTION_OID_PATTERN,
-            content,
-            "Active Directory namespace (1.2.840.113556.*)",
-            patterns,
-        )
-        self._check_substring_pattern(
-            "samaccountname",
-            content_lower,
-            "Active Directory attributes",
-            patterns,
-        )
+        # Active Directory detection - use registry to get server Constants
+        ad_constants = self._get_server_constants(FlextLdifConstants.ServerTypes.AD)
+        if ad_constants:
+            self._check_regex_pattern(
+                ad_constants.DETECTION_OID_PATTERN,
+                content,
+                "Active Directory namespace (1.2.840.113556.*)",
+                patterns,
+            )
+            self._check_substring_pattern(
+                "samaccountname",
+                content_lower,
+                "Active Directory attributes",
+                patterns,
+            )
 
-        # Novell eDirectory detection - use server Constants
-        self._check_regex_pattern(
-            FlextLdifServersNovell.Constants.DETECTION_PATTERN,
-            content_lower,
-            "Novell eDirectory attributes (GUID, Modifiers, etc.)",
-            patterns,
+        # Novell eDirectory detection - use registry to get server Constants
+        novell_constants = self._get_server_constants(
+            FlextLdifConstants.ServerTypes.NOVELL
         )
+        if novell_constants:
+            self._check_regex_pattern(
+                novell_constants.DETECTION_PATTERN,
+                content_lower,
+                "Novell eDirectory attributes (GUID, Modifiers, etc.)",
+                patterns,
+            )
 
-        # IBM Tivoli detection - use server Constants
+        # IBM Tivoli detection - use registry to get server Constants
         # Tivoli uses compiled regex pattern
-        tivoli_pattern = FlextLdifServersTivoli.Constants.DETECTION_PATTERN
-        if isinstance(tivoli_pattern, re.Pattern) and tivoli_pattern.search(
-            content_lower,
-        ):
-            patterns.append("IBM Tivoli attributes (ibm-*, tivoli, ldapdb)")
-
-        # 389 DS detection - use server Constants
-        self._check_regex_pattern(
-            FlextLdifServersDs389.Constants.DETECTION_PATTERN,
-            content_lower,
-            "389 Directory Server attributes (389ds, redhat-ds, dirsrv)",
-            patterns,
+        tivoli_constants = self._get_server_constants(
+            FlextLdifConstants.ServerTypes.IBM_TIVOLI
         )
+        if tivoli_constants:
+            tivoli_pattern = tivoli_constants.DETECTION_PATTERN
+            if isinstance(tivoli_pattern, re.Pattern) and tivoli_pattern.search(
+                content_lower,
+            ):
+                patterns.append("IBM Tivoli attributes (ibm-*, tivoli, ldapdb)")
 
-        # Apache DS detection - use server Constants
-        self._check_regex_pattern(
-            FlextLdifServersApache.Constants.DETECTION_PATTERN,
-            content_lower,
-            "Apache DS attributes (apacheDS, apache-*)",
-            patterns,
+        # 389 DS detection - use registry to get server Constants
+        ds389_constants = self._get_server_constants(
+            FlextLdifConstants.ServerTypes.DS_389
         )
+        if ds389_constants:
+            self._check_regex_pattern(
+                ds389_constants.DETECTION_PATTERN,
+                content_lower,
+                "389 Directory Server attributes (389ds, redhat-ds, dirsrv)",
+                patterns,
+            )
+
+        # Apache DS detection - use registry to get server Constants
+        apache_constants = self._get_server_constants(
+            FlextLdifConstants.ServerTypes.APACHE
+        )
+        if apache_constants:
+            self._check_regex_pattern(
+                apache_constants.DETECTION_PATTERN,
+                content_lower,
+                "Apache DS attributes (apacheDS, apache-*)",
+                patterns,
+            )
 
         return patterns
+
+    @staticmethod
+    def _get_server_constants(server_type: str) -> Any:  # noqa: ANN401
+        """Get server Constants class dynamically via FlextLdifServer registry.
+
+        Uses runtime attribute access to get detection constants from server quirk classes.
+        Type is Any because each server quirk has a different Constants nested class structure.
+
+        Args:
+            server_type: Server type identifier (e.g., "oid", "oud", "openldap")
+
+        Returns:
+            Server Constants class if available, None otherwise
+
+        """
+        try:
+            # Import here to avoid circular dependency (services -> servers -> services)
+            from flext_ldif.services.server import FlextLdifServer
+
+            registry = FlextLdifServer.get_global_instance()
+            server_quirk = registry.quirk(server_type)
+            if not server_quirk or not hasattr(type(server_quirk), "Constants"):
+                return None
+            return type(server_quirk).Constants
+        except (ValueError, ImportError):
+            # Unknown server type or import error
+            return None
 
 
 __all__ = ["FlextLdifDetector"]

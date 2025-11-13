@@ -254,8 +254,15 @@ class FlextLdifUtilitiesWriter:
         attr_data: FlextLdifModels.SchemaAttribute,
         parts: list[str],
     ) -> None:
-        """Add syntax and length to attribute parts list."""
+        """Add syntax and length to attribute parts list.
+
+        ARCHITECTURE: Writer ONLY formats data, does NOT transform
+        Quirks are responsible for ensuring correct syntax format:
+        - RFC/OUD quirks: ensure syntax has no quotes before calling writer
+        - Writer preserves syntax value from model as-is
+        """
         if attr_data.syntax:
+            # Format syntax as-is from model (quirks ensure correct format)
             syntax_str = str(attr_data.syntax)
             if attr_data.length is not None:
                 syntax_str += f"{{{attr_data.length}}}"

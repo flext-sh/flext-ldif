@@ -57,7 +57,7 @@ def inject_ad_validation_rules() -> dict[str, object]:
     """Create Active Directory validation rules dict for injection into metadata.extensions."""
     return {
         "requires_objectclass": True,  # AD is STRICT on objectClass
-        "requires_naming_attr": True,   # AD is STRICT - REQUIRES naming attr in entry
+        "requires_naming_attr": True,  # AD is STRICT - REQUIRES naming attr in entry
         "requires_binary_option": False,
         "auto_detect_binary": True,  # AD auto-detects binary
     }

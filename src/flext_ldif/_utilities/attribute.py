@@ -97,7 +97,9 @@ class FlextLdifUtilitiesAttribute:
             >>> validate_attribute_name("cn")  # ✓ Valid
             True
 
-            >>> validate_attribute_name("displayname;lang-ar")  # ❌ Invalid (has option)
+            >>> validate_attribute_name(
+            ...     "displayname;lang-ar"
+            ... )  # ❌ Invalid (has option)
             False
 
             >>> validate_attribute_name("123invalid")  # ❌ Invalid (starts with digit)
@@ -108,7 +110,10 @@ class FlextLdifUtilitiesAttribute:
             return False
 
         # RFC 4512 constraint: attribute names must not exceed 127 characters
-        if len(attribute_name) > FlextLdifConstants.LdifPatterns.MAX_ATTRIBUTE_NAME_LENGTH:
+        if (
+            len(attribute_name)
+            > FlextLdifConstants.LdifPatterns.MAX_ATTRIBUTE_NAME_LENGTH
+        ):
             return False
 
         # Must match pattern: starts with letter, followed by letters/digits/hyphens

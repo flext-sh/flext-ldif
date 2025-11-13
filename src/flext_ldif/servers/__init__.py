@@ -35,6 +35,9 @@ from flext_ldif.servers.rfc import FlextLdifServersRfc
 from flext_ldif.servers.tivoli import FlextLdifServersTivoli
 from flext_ldif.typings import FlextLdifTypes
 
+# Compatibility alias - FlextLdifServer is base class for all server quirks
+FlextLdifServer = FlextLdifServersBase
+
 
 def get_server_quirk(server_type: str) -> type[FlextLdifServersBase]:
     """Get server-specific quirk class by server type.
@@ -72,6 +75,7 @@ def get_server_quirk(server_type: str) -> type[FlextLdifServersBase]:
 
 
 __all__ = [
+    "FlextLdifServer",  # Compatibility alias
     "FlextLdifServersAd",
     "FlextLdifServersApache",
     "FlextLdifServersBase",

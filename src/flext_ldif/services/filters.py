@@ -178,7 +178,6 @@ from pydantic import Field, PrivateAttr, ValidationError, field_validator
 from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
-from flext_ldif.servers import get_server_quirk
 from flext_ldif.utilities import FlextLdifUtilities
 
 
@@ -673,9 +672,11 @@ class FlextLdifFilters(FlextService[FlextLdifModels.EntryResult]):
                 )
 
                 if entry_result.is_failure:
-                    return entry_result
+                    # Cast FlextResult type (Entry inherits from domain Entry)
+                    return cast("FlextResult[FlextLdifModels.Entry]", entry_result)
 
-                new_entry = entry_result.unwrap()
+                # Cast to public type
+                new_entry = cast("FlextLdifModels.Entry", entry_result.unwrap())
 
                 # Store removed attributes with values using model_copy
                 if removed_attrs_with_values:
@@ -694,7 +695,9 @@ class FlextLdifFilters(FlextService[FlextLdifModels.EntryResult]):
                     # Track in statistics (only names) if statistics exist
                     if new_entry.statistics:
                         for attr_name in removed_attrs_with_values:
-                            new_entry.statistics.track_attribute_change("removed", attr_name)
+                            new_entry.statistics.track_attribute_change(
+                                "removed", attr_name
+                            )
 
                 return FlextResult[FlextLdifModels.Entry].ok(new_entry)
 
@@ -750,9 +753,11 @@ class FlextLdifFilters(FlextService[FlextLdifModels.EntryResult]):
                 )
 
                 if entry_result.is_failure:
-                    return entry_result
+                    # Cast FlextResult type (Entry inherits from domain Entry)
+                    return cast("FlextResult[FlextLdifModels.Entry]", entry_result)
 
-                new_entry = entry_result.unwrap()
+                # Cast to public type
+                new_entry = cast("FlextLdifModels.Entry", entry_result.unwrap())
 
                 # CRITICAL: Preserve entry_metadata from original entry using model_copy
                 # This ensures metadata (including removed_attributes_with_values) is not lost
@@ -1678,7 +1683,7 @@ class FlextLdifFilters(FlextService[FlextLdifModels.EntryResult]):
 
     @classmethod
     def _get_server_constants(cls, server_type: str) -> tuple[type, str | None]:
-        """Get and validate server constants.
+        """Get and validate server constants via FlextLdifServer registry.
 
         Args:
             server_type: Server type identifier
@@ -1687,19 +1692,30 @@ class FlextLdifFilters(FlextService[FlextLdifModels.EntryResult]):
             Tuple of (constants_class, error_message)
 
         """
-        quirk = get_server_quirk(server_type)
+        try:
+            # Import here to avoid circular dependency (services -> servers -> services)
+            from flext_ldif.services.server import FlextLdifServer
 
-        if not hasattr(quirk, "Constants"):
-            return (None, f"Server type {server_type} missing Constants class")  # type: ignore[return-value]
+            registry = FlextLdifServer.get_global_instance()
+            server_quirk = registry.quirk(server_type)
 
-        constants = quirk.Constants  # type: ignore[attr-defined]
+            if not server_quirk:
+                return (None, f"Unknown server type: {server_type}")  # type: ignore[return-value]
 
-        if not hasattr(constants, "CATEGORIZATION_PRIORITY"):
-            return (None, f"Server {server_type} missing CATEGORIZATION_PRIORITY")  # type: ignore[return-value]
-        if not hasattr(constants, "CATEGORY_OBJECTCLASSES"):
-            return (None, f"Server {server_type} missing CATEGORY_OBJECTCLASSES")  # type: ignore[return-value]
+            quirk_class = type(server_quirk)
+            if not hasattr(quirk_class, "Constants"):
+                return (None, f"Server type {server_type} missing Constants class")  # type: ignore[return-value]
 
-        return (constants, None)
+            constants = quirk_class.Constants  # type: ignore[attr-defined]
+
+            if not hasattr(constants, "CATEGORIZATION_PRIORITY"):
+                return (None, f"Server {server_type} missing CATEGORIZATION_PRIORITY")  # type: ignore[return-value]
+            if not hasattr(constants, "CATEGORY_OBJECTCLASSES"):
+                return (None, f"Server {server_type} missing CATEGORY_OBJECTCLASSES")  # type: ignore[return-value]
+
+            return (constants, None)
+        except (ImportError, ValueError) as e:
+            return (None, f"Failed to get server constants: {e}")  # type: ignore[return-value]
 
     @classmethod
     def _categorize_by_priority(
@@ -2136,6 +2152,7 @@ class FlextLdifFilters(FlextService[FlextLdifModels.EntryResult]):
         Returns:
             Tuple of (category, reason) where category is one of:
                 schema, hierarchy, users, groups, acl, rejected
+
         """
         rules_result = FlextLdifFilters._normalize_category_rules(rules)
         if rules_result.is_failure:
@@ -2155,7 +2172,11 @@ class FlextLdifFilters(FlextService[FlextLdifModels.EntryResult]):
         # constants are used even if entries don't have metadata set.
         # Priority: parameter > entry.metadata.quirk_type > "rfc" fallback
         effective_server_type = server_type
-        if entry.metadata and hasattr(entry.metadata, "quirk_type") and entry.metadata.quirk_type:
+        if (
+            entry.metadata
+            and hasattr(entry.metadata, "quirk_type")
+            and entry.metadata.quirk_type
+        ):
             effective_server_type = entry.metadata.quirk_type
 
         # Delegate to FilterService for main categorization with server_type

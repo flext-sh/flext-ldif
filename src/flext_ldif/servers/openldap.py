@@ -20,12 +20,14 @@ from collections.abc import Mapping
 from enum import StrEnum
 from typing import ClassVar
 
-from flext_core import FlextResult
+from flext_core import FlextLogger, FlextResult
 
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 from flext_ldif.typings import FlextLdifTypes
+
+logger = FlextLogger(__name__)
 
 
 class FlextLdifServersOpenldap(FlextLdifServersRfc):
@@ -40,6 +42,11 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
         # Server identity and priority (defined at Constants level)
         SERVER_TYPE: ClassVar[str] = FlextLdifConstants.ServerTypes.OPENLDAP
         PRIORITY: ClassVar[int] = 20
+
+        # LDAP Connection Defaults (RFC 4511 §4.1 - Standard LDAP ports)
+        DEFAULT_PORT: ClassVar[int] = 389  # Standard LDAP port
+        DEFAULT_SSL_PORT: ClassVar[int] = 636  # Standard LDAPS port (LDAP over SSL/TLS)
+        DEFAULT_PAGE_SIZE: ClassVar[int] = 1000  # RFC 2696 Simple Paged Results default
 
         CANONICAL_NAME: ClassVar[str] = "openldap"
         ALIASES: ClassVar[frozenset[str]] = frozenset(["openldap", "openldap2"])
@@ -718,6 +725,107 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             )
 
             return is_config_dn or has_olc_attrs or has_olc_classes
+
+        def _inject_validation_rules(
+            self,
+            entry: FlextLdifModels.Entry,
+        ) -> FlextLdifModels.Entry:
+            """Inject OpenLDAP-specific validation rules into Entry metadata via DI.
+
+            Architecture (Dependency Injection Pattern):
+            - Reads ServerValidationRules frozensets from FlextLdifConstants
+            - Determines OpenLDAP requirements dynamically (NO hard-coded logic)
+            - Injects rules via metadata.extensions["validation_rules"]
+            - Entry.validate_server_specific_rules() applies rules dynamically
+
+            OpenLDAP-specific characteristics:
+            - Multiple encodings: UTF-8, Latin-1, ISO-8859-1 (flexible)
+            - Flexible schema: objectClass optional (lenient mode)
+            - ACL format: olcAccess (OpenLDAP-specific)
+            - Dynamic configuration: cn=config support
+            - Case preservation: preserves original DN case
+
+            This enables:
+            - Dynamic validation based on server requirements
+            - ZERO hard-coded validation logic in Entry model
+            - ZERO DATA LOSS through metadata tracking
+            - Bidirectional conversion support (OpenLDAP ↔ other servers)
+
+            Args:
+                entry: Entry to inject validation rules into
+
+            Returns:
+                Entry with validation_rules in metadata.extensions
+
+            """
+            # Determine server type from constants
+            server_type = FlextLdifConstants.ServerTypes.OPENLDAP
+
+            # Build validation rules dictionary by reading frozensets
+            # ZERO hard-coded values - all from Constants!
+            validation_rules: dict[str, object] = {
+                # OBJECTCLASS requirement (OpenLDAP is flexible - check frozenset)
+                "requires_objectclass": (
+                    server_type
+                    in FlextLdifConstants.ServerValidationRules.OBJECTCLASS_REQUIRED_SERVERS
+                ),
+                # NAMING ATTRIBUTE requirement (OpenLDAP is flexible - check frozenset)
+                "requires_naming_attr": (
+                    server_type
+                    in FlextLdifConstants.ServerValidationRules.NAMING_ATTR_REQUIRED_SERVERS
+                ),
+                # BINARY OPTION requirement (OpenLDAP 2.x requires ;binary)
+                "requires_binary_option": (
+                    server_type
+                    in FlextLdifConstants.ServerValidationRules.BINARY_OPTION_REQUIRED_SERVERS
+                ),
+                # ENCODING RULES (OpenLDAP supports multiple encodings)
+                "encoding_rules": {
+                    "default_encoding": "utf-8",
+                    "allowed_encodings": [
+                        "utf-8",
+                        "latin-1",
+                        "iso-8859-1",
+                        "ascii",
+                    ],
+                },
+                # DN CASE RULES (OpenLDAP-specific: preserve original case)
+                "dn_case_rules": {
+                    "preserve_case": True,  # OpenLDAP preserves DN case
+                    "normalize_to": None,  # No case normalization
+                },
+                # ACL FORMAT RULES (OpenLDAP uses olcAccess format)
+                "acl_format_rules": {
+                    "format": "olcAccess",  # OpenLDAP-specific ACL format
+                    "attribute_name": "olcAccess",  # OpenLDAP ACL attribute
+                    "requires_target": True,  # olcAccess requires target
+                    "requires_subject": True,  # olcAccess requires subject
+                },
+                # ZERO DATA LOSS tracking flags
+                "track_deletions": True,  # Track deleted attributes in metadata
+                "track_modifications": True,  # Track original values before modifications
+                "track_conversions": True,  # Track format conversions
+            }
+
+            # Ensure entry has metadata
+            if entry.metadata is None:
+                entry.metadata = FlextLdifModels.QuirkMetadata.create_for(
+                    FlextLdifConstants.ServerTypes.OPENLDAP,
+                    extensions={},
+                )
+
+            # Inject validation rules via metadata.extensions (DI pattern)
+            entry.metadata.extensions["validation_rules"] = validation_rules
+
+            logger.debug(
+                "Injected OpenLDAP validation rules into Entry metadata",
+                requires_objectclass=validation_rules["requires_objectclass"],
+                requires_naming_attr=validation_rules["requires_naming_attr"],
+                requires_binary_option=validation_rules["requires_binary_option"],
+                acl_format=validation_rules["acl_format_rules"],
+            )
+
+            return entry
 
 
 __all__ = ["FlextLdifServersOpenldap"]

@@ -20,9 +20,9 @@ ARCHITECTURE:
 
 PROTOCOL COMPLIANCE:
     All base classes and implementations MUST satisfy corresponding protocols:
-    - FlextLdifServersBase.Schema → FlextLdifProtocols.Quirks.SchemaProtocol
-    - FlextLdifServersBase.Acl → FlextLdifProtocols.Quirks.AclProtocol
-    - FlextLdifServersBase.Entry → FlextLdifProtocols.Quirks.EntryProtocol
+    - FlextLdifServersBase.Schema -> FlextLdifProtocols.Quirks.SchemaProtocol
+    - FlextLdifServersBase.Acl -> FlextLdifProtocols.Quirks.AclProtocol
+    - FlextLdifServersBase.Entry -> FlextLdifProtocols.Quirks.EntryProtocol
 
     All method signatures must match protocol definitions exactly for type safety.
 """
@@ -34,7 +34,7 @@ from collections.abc import Mapping
 from typing import ClassVar, Literal, Protocol, Self, cast, overload
 
 from flext_core import FlextLogger, FlextResult, FlextService
-from pydantic import ConfigDict
+from pydantic import ConfigDict, Field
 
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
@@ -48,7 +48,7 @@ logger = FlextLogger(__name__)
 # All server-specific Constants should inherit from FlextLdifServersRfc.Constants
 
 
-class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
+class FlextLdifServersBase(FlextService[FlextLdifModels.Entry | str], ABC):
     r"""Abstract base class for LDIF/LDAP server quirks as FlextService V2.
 
     Configuration:
@@ -97,6 +97,25 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
     server_type: ClassVar[str | _DescriptorProtocol]
     priority: ClassVar[int | _DescriptorProtocol]
 
+    # Instance attributes for nested quirks (initialized in __init__)
+    # schema_quirk: Self.Schema  # Commented out to avoid forward reference issues
+    # acl_quirk: Self.Acl  # Commented out to avoid forward reference issues
+    # entry_quirk: Self.Entry  # Commented out to avoid forward reference issues
+
+    def __init__(self, **kwargs: object) -> None:
+        """Initialize base quirk and its nested quirks.
+
+        Args:
+            **kwargs: Passed to parent FlextService.__init__.
+
+        """
+        super().__init__(**kwargs)
+        # Instantiate nested quirks, passing self as parent_quirk
+        # Use private attributes as properties are read-only
+        self._schema_quirk = self.Schema(parent_quirk=self)
+        self._acl_quirk = self.Acl(parent_quirk=self)
+        self._entry_quirk = self.Entry(parent_quirk=self)
+
     def __init_subclass__(cls, **kwargs: object) -> None:
         """Initialize subclass with server_type and priority from Constants.
 
@@ -133,24 +152,60 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
             msg = f"{cls.__name__}.Constants must define PRIORITY"
             raise AttributeError(msg)
 
-        # Set class-level attributes from Constants (single source)
-        cls.server_type = constants_class.SERVER_TYPE
-        cls.priority = constants_class.PRIORITY
+        # Set descriptors for server_type and priority
+        cls.server_type = _ServerTypeDescriptor(constants_class.SERVER_TYPE)
+        cls.priority = _PriorityDescriptor(constants_class.PRIORITY)
 
-    def __init__(self, **kwargs: object) -> None:
-        """Initialize server base class and nested quirk classes.
+    # @overload # type: ignore[misc]
+    # def schema(self, server_type: Literal["oid"]) -> FlextLdifServersOid.Schema: ...
 
-        Calls parent FlextService.__init__ and then initializes all nested
-        Schema, Acl, and Entry quirk classes. Subclasses can override
-        _initialize_nested_classes() to customize initialization.
+    @overload
+    def schema(self, server_type: Literal["rfc"]) -> FlextLdifServersRfc.Schema: ...
 
-        Args:
-            **kwargs: Passed to FlextService.__init__
+    @overload
+    def schema(self) -> Self.Schema: ...  # Access via self.schema_quirk
 
-        """
-        super().__init__(**kwargs)
-        # Initialize nested quirk classes (schema, acl, entry)
-        self._initialize_nested_classes()
+    def schema(self, server_type: str | None = None) -> Self.Schema | FlextLdifServersBase.Schema | None:
+        """Get schema quirk for a server type, or self.schema_quirk."""
+        if server_type:  # Fallback to registry lookup if server_type is provided
+            # Lazy import to avoid circular import
+            from flext_ldif.services.server import FlextLdifServer
+            return FlextLdifServer.get_global_instance().schema(server_type)
+        return self.schema_quirk
+
+    # @overload # type: ignore[misc]
+    # def acl(self, server_type: Literal["oid"]) -> FlextLdifServersOid.Acl: ...
+
+    @overload
+    def acl(self, server_type: Literal["rfc"]) -> FlextLdifServersRfc.Acl: ...
+
+    @overload
+    def acl(self) -> Self.Acl: ...  # Access via self.acl_quirk
+
+    def acl(self, server_type: str | None = None) -> Self.Acl | FlextLdifServersBase.Acl | None:
+        """Get ACL quirk for a server type, or self.acl_quirk."""
+        if server_type:  # Fallback to registry lookup if server_type is provided
+            # Lazy import to avoid circular import
+            from flext_ldif.services.server import FlextLdifServer
+            return FlextLdifServer.get_global_instance().acl(server_type)
+        return self.acl_quirk
+
+    # @overload # type: ignore[misc]
+    # def entry(self, server_type: Literal["oid"]) -> FlextLdifServersOid.Entry: ...
+
+    @overload
+    def entry(self, server_type: Literal["rfc"]) -> FlextLdifServersRfc.Entry: ...
+
+    @overload
+    def entry(self) -> Self.Entry: ...  # Access via self.entry_quirk
+
+    def entry(self, server_type: str | None = None) -> Self.Entry | FlextLdifServersBase.Entry | None:
+        """Get entry quirk for a server type, or self.entry_quirk."""
+        if server_type:  # Fallback to registry lookup if server_type is provided
+            # Lazy import to avoid circular import
+            from flext_ldif.services.server import FlextLdifServer
+            return FlextLdifServer.get_global_instance().entry(server_type)
+        return self.entry_quirk
 
     # =========================================================================
     # Server identification - accessed via descriptors (class + instance level)
@@ -158,8 +213,8 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
     # NOTE: server_type and priority are defined in Constants nested class
     # in subclasses (e.g., FlextLdifServersRfc.Constants.SERVER_TYPE)
     # They are accessed via descriptors that work at both class and instance level
-    # - Class level: FlextLdifServersOid.server_type → "oid"
-    # - Instance level: instance.server_type → "oid"
+    # - Class level: FlextLdifServersOid.server_type -> "oid"
+    # - Instance level: instance.server_type -> "oid"
     # The descriptors are set AFTER the class definition to avoid Pydantic issues
 
     # =========================================================================
@@ -209,7 +264,7 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
         Auto-detects operation from parameters:
         - ldif_text: parse operation
         - entries: write operation
-        - No params → health check
+        - No params -> health check
         - operation parameter is for V2 DI compatibility
 
         **V2 Auto-execute Mode:**
@@ -425,7 +480,7 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
     # =========================================================================
 
     @property
-    def schema_quirk(self) -> FlextLdifServersBase.Schema:
+    def schema_quirk(self) -> "FlextLdifServersBase.Schema":
         """Get the Schema quirk instance."""
         return self._schema_quirk
 
@@ -793,9 +848,9 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
         """Validate LDIF text before parsing - handles edge cases.
 
         Edge cases handled:
-        - None/empty string → returns ok (will result in empty entry list)
-        - Whitespace only → returns ok (will result in empty entry list)
-        - Encoding issues → any decoding happens in parse_content
+        - None/empty string -> returns ok (will result in empty entry list)
+        - Whitespace only -> returns ok (will result in empty entry list)
+        - Encoding issues -> any decoding happens in parse_content
 
         Args:
             ldif_text: LDIF content to validate
@@ -816,9 +871,9 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
         """Validate entry list before writing - handles edge cases.
 
         Edge cases handled:
-        - None → returns empty list
-        - Empty list → returns empty list
-        - Invalid entries → returns fail
+        - None -> returns empty list
+        - Empty list -> returns empty list
+        - Invalid entries -> returns fail
 
         Args:
             entries: Entry list to validate
@@ -843,7 +898,7 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
     # Nested Abstract Base Classes for Internal Implementation
     # =========================================================================
 
-    class Schema(FlextService[FlextLdifTypes.SchemaModelOrString]):
+    class Schema(FlextService[FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | str]):
         """Base class for schema quirks - FlextService V2 with enhanced usability.
 
         NOTE: This is an implementation detail - DO NOT import directly.
@@ -882,13 +937,21 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
         **Validation**: Use isinstance(quirk, FlextLdifProtocols.Quirks.SchemaProtocol)
         to check protocol compliance at runtime.
 
-        Example vendors:
-        - Oracle OID: orclOID prefix, Oracle-specific syntaxes
-        - Oracle OUD: Enhanced schema features
-        - OpenLDAP: olc* configuration attributes
-        - Active Directory: AD-specific schema extensions
-        - RFC: RFC 4512 compliant baseline (no extensions)
+        Common schema extension patterns:
+        - Vendor-specific prefixes (e.g., vendor prefix + attribute name)
+        - Enhanced schema features beyond RFC baseline
+        - Configuration-specific attributes
+        - Vendor-specific schema extensions
+        - RFC 4512 compliant baseline (no extensions)
         """
+
+        # Parent quirk reference for accessing server-level configuration
+        parent_quirk: object | None = Field(
+            default=None,
+            exclude=True,
+            repr=False,
+            description="Reference to parent FlextLdifServersBase instance for server-level access",
+        )
 
         def __init__(
             self,
@@ -899,7 +962,7 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
 
             Args:
                 schema_service: Injected FlextLdifSchema service (optional, lazy-created if None)
-                **kwargs: Passed to FlextService for initialization
+                **kwargs: Passed to FlextService for initialization (includes parent_quirk)
 
             Note:
                 server_type and priority are no longer passed to nested classes.
@@ -1354,19 +1417,19 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
             """Execute schema quirk operation with automatic type detection and routing.
 
             Fully automatic polymorphic dispatch based on data type:
-            - str (schema definition) → parse_attribute() OR parse_objectclass() → SchemaAttribute OR SchemaObjectClass
-            - SchemaAttribute (model) → write_attribute() → str
-            - SchemaObjectClass (model) → write_objectclass() → str
-            - None → health check
+            - str (schema definition) -> parse_attribute() OR parse_objectclass() -> SchemaAttribute OR SchemaObjectClass
+            - SchemaAttribute (model) -> write_attribute() -> str
+            - SchemaObjectClass (model) -> write_objectclass() -> str
+            - None -> health check
 
             **V2 Usage - Maximum Automation:**
                 >>> schema = FlextLdifServersRfc.Schema()
                 >>> # Parse: pass schema definition string
                 >>> attr = schema.execute(
                 ...     "( 2.5.4.3 NAME 'cn' ...)"
-                ... )  # → SchemaAttribute
+                ... )  # -> SchemaAttribute
                 >>> # Write: pass model
-                >>> text = schema.execute(attr)  # → str
+                >>> text = schema.execute(attr)  # -> str
                 >>> # Auto-detect which type of schema definition
                 >>> attr_or_oc = schema.execute("( 2.5.6.6 ... )")  # Detects & parses
 
@@ -1874,8 +1937,8 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
             Generic template method that consolidates schema extraction logic across all servers.
             Uses FlextLdifUtilities for parsing and provides hook for server-specific validation.
 
-            This template method replaces duplicated extract_schemas_from_ldif implementations
-            in OID (37 lines), OUD (66 lines), and OpenLDAP servers.
+            This template method provides unified schema extraction logic,
+            replacing duplicated implementations across multiple server quirk classes.
 
             Process:
                 1. Extract attributes using FlextLdifUtilities.Schema
@@ -1955,7 +2018,7 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
 
         # REMOVED: should_filter_out_objectclass - Roteamento interno, não deve ser abstrato
 
-    class Acl(FlextService[FlextLdifTypes.AclOrString]):
+    class Acl(FlextService[FlextLdifModels.Acl | str]):
         """Base class for ACL quirks - satisfies FlextLdifProtocols.Quirks.AclProtocol.
 
         NOTE: This is an implementation detail - DO NOT import directly.
@@ -1979,12 +2042,12 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
         **Validation**: Use isinstance(quirk, FlextLdifProtocols.Quirks.AclProtocol)
         to check protocol compliance at runtime.
 
-        Example vendors:
-        - Oracle OID: orclaci, orclentrylevelaci
-        - Oracle OUD: Enhanced ACI format
-        - OpenLDAP: olcAccess directives
-        - Active Directory: NT Security Descriptors
-        - RFC: RFC 4516 compliant baseline
+        Common ACL patterns:
+        - Vendor-specific ACI attributes
+        - Enhanced ACI formats beyond RFC baseline
+        - Access control directives
+        - Vendor-specific security descriptors
+        - RFC 4516 compliant baseline
 
         **FlextService V2 Integration:**
         - Inherits from FlextService for dependency injection, logging, and validation
@@ -2002,12 +2065,20 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
         # (e.g., FlextLdifServersOid.server_type, FlextLdifServersOid.priority)
         # All constants must be in FlextLdifServers[Server].Constants, NOT in subclasses
 
+        # Parent quirk reference for accessing server-level configuration
+        parent_quirk: object | None = Field(
+            default=None,
+            exclude=True,
+            repr=False,
+            description="Reference to parent FlextLdifServersBase instance for server-level access",
+        )
+
         def __init__(self, acl_service: object | None = None, **kwargs: object) -> None:
             """Initialize ACL quirk service with optional DI service injection.
 
             Args:
                 acl_service: Injected FlextLdifAcl service (optional, lazy-created if None)
-                **kwargs: Passed to FlextService for initialization
+                **kwargs: Passed to FlextService for initialization (includes parent_quirk)
 
             Note:
                 server_type and priority are no longer passed to nested classes.
@@ -2064,7 +2135,7 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
         RFC_ACL_ATTRIBUTES: ClassVar[list[str]] = [
             "aci",  # Standard LDAP (RFC 4876)
             "acl",  # Alternative format
-            "olcAccess",  # OpenLDAP
+            "olcAccess",  # Configuration-based access control
             "aclRights",  # Generic rights
             "aclEntry",  # ACL entry
         ]
@@ -2161,16 +2232,16 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
             """Execute ACL quirk operation with automatic type detection and routing.
 
             Fully automatic polymorphic dispatch based on data type:
-            - str (ACL line) → parse_acl() → Acl
-            - Acl (model) → write_acl() → str
-            - None → health check
+            - str (ACL line) -> parse_acl() -> Acl
+            - Acl (model) -> write_acl() -> str
+            - None -> health check
 
             **V2 Usage - Maximum Automation:**
                 >>> acl = FlextLdifServersRfc.Acl()
                 >>> # Parse: pass ACL line string
-                >>> acl_model = acl.execute("(target=...)")  # → Acl
+                >>> acl_model = acl.execute("(target=...)")  # -> Acl
                 >>> # Write: pass model
-                >>> acl_text = acl.execute(acl_model)  # → str
+                >>> acl_text = acl.execute(acl_model)  # -> str
                 >>> # Or use as callable processor
                 >>> acl_model = acl("(target=...)")  # Parse
                 >>> acl_text = acl(acl_model)  # Write
@@ -2202,7 +2273,7 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
                     return FlextResult[FlextLdifModels.Acl | str].fail(
                         f"parse operation requires str, got {type(data).__name__}",
                     )
-                # Route to parse_acl → Acl
+                # Route to parse_acl -> Acl
                 return self._handle_parse_acl(data)
 
             # detected_operation == "write"
@@ -2210,7 +2281,7 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
                 return FlextResult[FlextLdifModels.Acl | str].fail(
                     f"write operation requires Acl, got {type(data).__name__}",
                 )
-            # Route to write_acl → str
+            # Route to write_acl -> str
             return self._handle_write_acl(data)
 
         @overload
@@ -2366,15 +2437,15 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
             - NEVER raise exceptions - return FlextResult.fail()
             - Handle malformed ACL rules gracefully with best-effort parsing
             - Preserve server-specific syntax in quirk_metadata
-            - Different servers have different ACL syntax (OpenLDAP vs OUD vs AD, etc.)
+            - Different servers have different ACL syntax (vendor-specific formats)
 
             **Edge cases to handle:**
-            - Empty string → return fail("ACL line is empty")
-            - Malformed rule → handle gracefully or reject with clear message
-            - Unknown permission types → preserve as string for server-specific handling
-            - Complex nested rules → flatten or preserve structure as appropriate
-            - Server-specific extensions → preserve in quirk_metadata for round-trip conversion
-            - Partial/incomplete rules → validate completeness if needed
+            - Empty string -> return fail("ACL line is empty")
+            - Malformed rule -> handle gracefully or reject with clear message
+            - Unknown permission types -> preserve as string for server-specific handling
+            - Complex nested rules -> flatten or preserve structure as appropriate
+            - Server-specific extensions -> preserve in quirk_metadata for round-trip conversion
+            - Partial/incomplete rules -> validate completeness if needed
 
             Args:
                 acl_line: ACL definition line (server-specific format)
@@ -2382,9 +2453,9 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
             Returns:
                 FlextResult with Acl model or fail(message) on error
 
-            Examples:
-                - OpenLDAP: "access to attrs=cn by * read"
-                - OUD: "aci: (targetdn=\"...\") (version 3.0;...)"
+            Examples of vendor-specific ACL formats:
+                - Configuration-based: "access to attrs=cn by * read"
+                - ACI-based: "aci: (targetdn=\"...\") (version 3.0;...)"
 
             """
             _ = acl_line  # Explicitly mark as intentionally unused in base
@@ -2455,7 +2526,7 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
             _ = acl_data  # Explicitly mark as intentionally unused in base
             return FlextResult.fail("Must be implemented by subclass")
 
-    class Entry(FlextService[FlextLdifTypes.EntryOrString]):
+    class Entry(FlextService[FlextLdifModels.Entry | str]):
         """Base class for entry processing quirks - satisfies FlextLdifProtocols.Quirks.EntryProtocol.
 
         NOTE: This is an implementation detail - DO NOT import directly.
@@ -2479,10 +2550,10 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
         **Validation**: Use isinstance(quirk, FlextLdifProtocols.Quirks.EntryProtocol)
         to check protocol compliance at runtime.
 
-        Example use cases:
-        - Oracle operational attributes
-        - OpenLDAP configuration entries (cn=config)
-        - Active Directory specific attributes
+        Common entry transformation patterns:
+        - Vendor operational attributes
+        - Configuration entries (e.g., cn=config subtree)
+        - Vendor-specific attributes
         - Server-specific DN formats
         - RFC baseline entry handling
 
@@ -2499,6 +2570,14 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
         # (e.g., FlextLdifServersOid.server_type, FlextLdifServersOid.priority)
         # All constants must be in FlextLdifServers[Server].Constants, NOT in subclasses
 
+        # Parent quirk reference for accessing server-level configuration
+        parent_quirk: object | None = Field(
+            default=None,
+            exclude=True,
+            repr=False,
+            description="Reference to parent FlextLdifServersBase instance for server-level access",
+        )
+
         def __init__(
             self,
             entry_service: object | None = None,
@@ -2508,7 +2587,7 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
 
             Args:
                 entry_service: Injected FlextLdifEntry service (optional, lazy-created if None)
-                **kwargs: Passed to FlextService for initialization
+                **kwargs: Passed to FlextService for initialization (includes parent_quirk)
 
             Note:
                 server_type and priority are no longer passed to nested classes.
@@ -2687,9 +2766,9 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
             r"""Execute entry quirk operation with automatic type detection and routing.
 
             Fully automatic polymorphic dispatch based on data type:
-            - str (LDIF content) → parse_content() → list[Entry]
-            - list[Entry] (models) → write_entry() for each → str (LDIF)
-            - None → health check
+            - str (LDIF content) -> parse_content() -> list[Entry]
+            - list[Entry] (models) -> write_entry() for each -> str (LDIF)
+            - None -> health check
 
             **V2 Usage as Processor - Maximum Automation:**
                 >>> entry = FlextLdifServersRfc.Entry()
@@ -2736,9 +2815,9 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
             """Auto-detect entry operation from data type.
 
             If operation is forced (not None), uses it. Otherwise detects from type:
-            - str → "parse"
-            - list[Entry] → "write"
-            - else → error
+            - str -> "parse"
+            - list[Entry] -> "write"
+            - else -> error
 
             """
             if operation is not None:
@@ -2979,10 +3058,10 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
             3. Return list of all parsed entries
 
             **Edge cases:**
-            - Empty string → return ok([])
-            - Whitespace only → return ok([])
-            - Malformed LDIF → return fail(message)
-            - Encoding errors → catch UnicodeDecodeError, return fail()
+            - Empty string -> return ok([])
+            - Whitespace only -> return ok([])
+            - Malformed LDIF -> return fail(message)
+            - Encoding errors -> catch UnicodeDecodeError, return fail()
 
             **NEVER raise exceptions** - return FlextResult.fail()
 
@@ -3015,12 +3094,12 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
             That hook is called by _parse_content() after you return.
 
             **Edge cases:**
-            - Null DN → return fail("DN is None")
-            - Empty DN string → return fail("DN is empty")
-            - Null attributes → return fail("Attributes is None")
-            - Empty attributes dict → return ok(entry) (valid!)
-            - Bytes in attributes → convert to str
-            - Non-string values → convert with str()
+            - Null DN -> return fail("DN is None")
+            - Empty DN string -> return fail("DN is empty")
+            - Null attributes -> return fail("Attributes is None")
+            - Empty attributes dict -> return ok(entry) (valid!)
+            - Bytes in attributes -> convert to str
+            - Non-string values -> convert with str()
 
             Args:
                 entry_dn: Raw DN string from LDIF parser
@@ -3107,10 +3186,10 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
             - Proper line continuations for long values
 
             **Edge cases:**
-            - Null entry → return fail("Entry is None")
-            - Missing DN → return fail("Entry DN is None")
-            - Empty attributes → return ok("dn: ...\n\n")
-            - Special chars in DN → proper escaping
+            - Null entry -> return fail("Entry is None")
+            - Missing DN -> return fail("Entry DN is None")
+            - Empty attributes -> return ok("dn: ...\n\n")
+            - Special chars in DN -> proper escaping
 
             Args:
                 entry_data: Entry model to write
@@ -3135,51 +3214,29 @@ class _DescriptorProtocol(Protocol):
 class _ServerTypeDescriptor:
     """Descriptor that returns SERVER_TYPE from Constants (single source of truth)."""
 
+    def __init__(self, value: str) -> None:
+        self.value = value
+
     def __get__(self, obj: object | None, objtype: type | None = None) -> str:
-        """Get SERVER_TYPE from Constants class - no fallbacks.
-
-        __init_subclass__ already sets cls.server_type from Constants.SERVER_TYPE,
-        so we look in MRO for the class-level attribute set there.
-        """
-        if objtype is None:
-            objtype = type(obj) if obj is not None else FlextLdifServersBase
-
-        # Get class-level server_type set by __init_subclass__
-        for cls in objtype.__mro__:
-            if "server_type" in cls.__dict__:
-                return cast("str", cls.__dict__["server_type"])
-
-        # Should never reach here - __init_subclass__ enforces Constants.SERVER_TYPE
-        msg = f"{objtype.__name__} missing server_type (Constants.SERVER_TYPE not set)"
-        raise AttributeError(msg)
+        """Return the stored SERVER_TYPE value."""
+        return self.value
 
 
 class _PriorityDescriptor:
     """Descriptor that returns PRIORITY from Constants (single source of truth)."""
 
+    def __init__(self, value: int) -> None:
+        self.value = value
+
     def __get__(self, obj: object | None, objtype: type | None = None) -> int:
-        """Get PRIORITY from Constants class - no fallbacks.
-
-        __init_subclass__ already sets cls.priority from Constants.PRIORITY,
-        so we look in MRO for the class-level attribute set there.
-        """
-        if objtype is None:
-            objtype = type(obj) if obj is not None else FlextLdifServersBase
-
-        # Get class-level priority set by __init_subclass__
-        for cls in objtype.__mro__:
-            if "priority" in cls.__dict__:
-                return cast("int", cls.__dict__["priority"])
-
-        # Should never reach here - __init_subclass__ enforces Constants.PRIORITY
-        msg = f"{objtype.__name__} missing priority (Constants.PRIORITY not set)"
-        raise AttributeError(msg)
+        """Return the stored PRIORITY value."""
+        return self.value
 
 
 # Attach descriptors to FlextLdifServersBase for class and instance access
 # Descriptors implement __get__ returning str/int, satisfying the type annotations above
-FlextLdifServersBase.server_type = _ServerTypeDescriptor()
-FlextLdifServersBase.priority = _PriorityDescriptor()
+FlextLdifServersBase.server_type = _ServerTypeDescriptor("unknown")
+FlextLdifServersBase.priority = _PriorityDescriptor(0)
 
 
 __all__ = [

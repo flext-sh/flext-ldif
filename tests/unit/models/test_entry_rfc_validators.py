@@ -146,6 +146,7 @@ class TestEntryRfcComplianceValidator:
         entry_result = FlextLdifModels.Entry.create(
             dn="cn=test,dc=example,dc=com",
             attributes={
+                "cn": ["test"],  # RFC 4512 § 2.3: naming attribute from RDN
                 "given-name": ["John"],
                 "family-name": ["Doe"],
                 "objectClass": ["person"],  # Required for RFC 4512 § 2.4.1
@@ -335,6 +336,7 @@ class TestEntryRfcComplianceValidator:
             entry_result = FlextLdifModels.Entry.create(
                 dn="cn=test,dc=example,dc=com",
                 attributes={
+                    "cn": ["test"],  # RFC 4512 § 2.3: naming attribute from RDN
                     name: ["value"],
                     "objectClass": ["person"],  # Required for RFC 4512 § 2.4.1
                 },
@@ -361,6 +363,6 @@ class TestEntryRfcComplianceValidator:
                 f"Invalid name '{name}' should have violations"
             )
             violations = entry.validation_metadata["rfc_violations"]
-            assert any(
-                name in v and "RFC 4512 § 2.5" in v for v in violations
-            ), f"Violation should mention invalid attribute name '{name}'"
+            assert any(name in v and "RFC 4512 § 2.5" in v for v in violations), (
+                f"Violation should mention invalid attribute name '{name}'"
+            )
