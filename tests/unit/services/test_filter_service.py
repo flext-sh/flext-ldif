@@ -868,7 +868,7 @@ class TestIntegration:
 
         # Stage 2: Filter by objectClass
         result2 = FlextLdifFilters.filter(
-            result1.unwrap(),
+            result1.unwrap().get_all_entries(),
             criteria="objectclass",
             objectclass="person",
         )

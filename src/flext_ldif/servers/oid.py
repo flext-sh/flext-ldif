@@ -26,7 +26,6 @@ from flext_ldif._utilities.detection import FlextLdifUtilitiesDetection
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.servers.rfc import FlextLdifServersRfc
-from flext_ldif.typings import FlextLdifTypes
 from flext_ldif.utilities import FlextLdifUtilities
 
 logger = FlextLogger(__name__)
@@ -537,7 +536,7 @@ class FlextLdifServersOid(FlextLdifServersRfc):
     def extract_schemas_from_ldif(
         self,
         ldif_content: str,
-    ) -> FlextResult[FlextLdifTypes.Models.EntryAttributesDict]:
+    ) -> FlextResult[dict[str, object]]:
         """Extract and parse all schema definitions from LDIF content.
 
         Delegates to the Schema nested class implementation.
@@ -554,10 +553,10 @@ class FlextLdifServersOid(FlextLdifServersRfc):
             )
 
         schema_quirk = schema_class()
-        result: FlextResult[FlextLdifTypes.Models.EntryAttributesDict] = (
+        result: FlextResult[dict[str, list[str] | str]] = (
             schema_quirk.extract_schemas_from_ldif(ldif_content)
         )
-        return result
+        return result.map(lambda d: cast("dict[str, object]", d))
 
     class Schema(
         FlextLdifServersRfc.Schema,
@@ -864,7 +863,7 @@ class FlextLdifServersOid(FlextLdifServersRfc):
             ldif_content: str,
             *,  # keyword-only parameter
             validate_dependencies: bool = False,
-        ) -> FlextResult[FlextLdifTypes.Models.EntryAttributesDict]:
+        ) -> FlextResult[dict[str, list[str] | str]]:
             """Extract and parse all schema definitions from LDIF content.
 
             OID-specific implementation: Uses base template method without dependency
@@ -1355,4 +1354,4 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                     f"Failed to create Entry with converted attributes: {new_entry_result.error}",
                 )
 
-            return new_entry_result
+            return new_entry_result.map(lambda e: cast("FlextLdifModels.Entry", e))

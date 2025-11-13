@@ -13,7 +13,7 @@ import operator
 import re
 from collections.abc import Mapping
 from enum import StrEnum
-from typing import ClassVar
+from typing import ClassVar, cast
 
 from flext_core import FlextLogger, FlextResult
 
@@ -808,7 +808,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             ldif_content: str,
             *,
             validate_dependencies: bool = True,  # OUD defaults to True (needs validation)
-        ) -> FlextResult[FlextLdifTypes.Models.EntryAttributesDict]:
+        ) -> FlextResult[dict[str, list[str] | str]]:
             """Extract and parse all schema definitions from LDIF content.
 
             OUD-specific implementation: Uses base template method with dependency
@@ -917,7 +917,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
         # AclConverter was moved to services/acl.py as FlextLdifAcl
         # Use FlextLdifAcl for OID→OUD ACL conversions instead
 
-        def can_handle(self, acl_line: FlextLdifTypes.Models.AclOrString) -> bool:
+        def can_handle(self, acl_line: FlextLdifTypes.AclOrString) -> bool:
             """Check if this is an Oracle OUD ACL (public method).
 
             Args:
@@ -929,7 +929,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             """
             return self.can_handle_acl(acl_line)
 
-        def can_handle_acl(self, acl_line: FlextLdifTypes.Models.AclOrString) -> bool:
+        def can_handle_acl(self, acl_line: FlextLdifTypes.AclOrString) -> bool:
             """Check if this is an Oracle OUD ACL line (implements abstract method from base.py).
 
             Detects Oracle OUD ACL by checking if the line starts with:
@@ -949,7 +949,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             if isinstance(acl_line, FlextLdifModels.Acl):
                 # Check metadata for quirk type
                 if acl_line.metadata and acl_line.metadata.quirk_type:
-                    return acl_line.metadata.quirk_type == self._get_server_type()
+                    return str(acl_line.metadata.quirk_type) == self._get_server_type()
                 # Check attribute name
                 if acl_line.name:
                     acl_attr_normalized = (
@@ -987,24 +987,10 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             )
 
         def _parse_acl(self, acl_line: str) -> FlextResult[FlextLdifModels.Acl]:
-            """Parse Oracle OUD ACL string to RFC-compliant internal model.
+            """Parse Oracle OUD ACL string to RFC-compliant internal model using functional composition.
 
             Normalizes OUD ACI (Access Control Instruction) format to RFC-compliant
-            internal representation.
-
-            Parses ACI format used by OUD, extracting:
-            - targetattr: Target attributes
-            - targetscope: Target scope (base, onelevel, subtree)
-            - version: ACI version
-            - acl_name: ACL description name
-            - permissions: List of permissions (read, write, search, etc.)
-            - bind_rules: Bind rules (userdn, groupdn, etc.)
-
-            Handles complex multi-line ACIs with:
-            - Line continuations (multiple allow/deny rules)
-            - Varied indentation patterns
-            - Spaces after commas in DNs
-            - Multiple permission rules per ACI (4+ rules)
+            internal representation using monadic patterns and functional composition.
 
             Args:
             acl_line: ACL definition line (may contain newlines for multi-line ACIs)
@@ -1013,41 +999,46 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             FlextResult with OUD ACL Pydantic model
 
             """
-            try:
-                # Initialize parsed values from Constants
-                acl_name = FlextLdifServersOud.Constants.ACL_DEFAULT_NAME
-                targetattr = FlextLdifServersOud.Constants.ACL_DEFAULT_TARGETATTR
-                targetscope = None
-                version = FlextLdifServersOud.Constants.ACL_DEFAULT_VERSION
-                dn_spaces = False
 
-                # Detect line breaks using utility
-                line_breaks = FlextLdifUtilities.ACL.detect_line_breaks(
-                    acl_line,
-                    FlextLdifServersOud.Constants.ACL_NEWLINE_SEPARATOR,
-                )
-
-                # Parse ACI components if it's ACI format
+            def validate_aci_format(acl_line: str) -> FlextResult[str]:
+                """Validate and extract ACI content using monadic validation."""
                 if not acl_line.startswith(
-                    FlextLdifServersOud.Constants.ACL_ACI_PREFIX,
+                    FlextLdifServersOud.Constants.ACL_ACI_PREFIX
                 ):
-                    return FlextResult[FlextLdifModels.Acl].fail(
-                        "Not an OUD ACI format",
-                    )
-
+                    return FlextResult[str].fail("Not an OUD ACI format")
                 aci_content = acl_line.split(":", 1)[1].strip()
+                return FlextResult[str].ok(aci_content)
 
-                # Extract components using DRY utilities
-                targetattr = (
+            def initialize_parse_context() -> dict[str, object]:
+                """Initialize parsing context with default values."""
+                return {
+                    "acl_name": FlextLdifServersOud.Constants.ACL_DEFAULT_NAME,
+                    "targetattr": FlextLdifServersOud.Constants.ACL_DEFAULT_TARGETATTR,
+                    "targetscope": None,
+                    "version": FlextLdifServersOud.Constants.ACL_DEFAULT_VERSION,
+                    "dn_spaces": False,
+                }
+
+            def extract_components(
+                context: dict[str, object], aci_content: str
+            ) -> dict[str, object]:
+                """Extract all ACI components using functional composition."""
+                # Store aci_content in context for later use
+                context["aci_content"] = aci_content
+                context["original_acl_line"] = acl_line
+
+                # Extract target attributes
+                context["targetattr"] = (
                     FlextLdifUtilities.ACL.extract_component(
                         aci_content,
                         FlextLdifServersOud.Constants.ACL_TARGETATTR_PATTERN,
                         group=2,
                     )
-                    or targetattr
+                    or context["targetattr"]
                 )
 
-                targetscope = FlextLdifUtilities.ACL.extract_component(
+                # Extract target scope
+                context["targetscope"] = FlextLdifUtilities.ACL.extract_component(
                     aci_content,
                     FlextLdifServersOud.Constants.ACL_TARGETSCOPE_PATTERN,
                     group=1,
@@ -1059,12 +1050,40 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                     aci_content,
                 )
                 if version_match:
-                    version = version_match.group(1)
-                    acl_name = version_match.group(2)
+                    context["version"] = version_match.group(1)
+                    context["acl_name"] = version_match.group(2)
+
+                return context
+
+            try:
+                # Validate ACI format first
+                validation_result = validate_aci_format(acl_line)
+                if not validation_result.is_success:
+                    return FlextResult[FlextLdifModels.Acl].fail(
+                        validation_result.error
+                    )
+
+                # Extract components and build model
+                aci_content = validation_result.unwrap()
+                context = extract_components(initialize_parse_context(), aci_content)
+                return self._build_acl_model(context)
+
+            except Exception as e:
+                return FlextResult[FlextLdifModels.Acl].fail(
+                    f"Failed to parse OUD ACL: {e}"
+                )
+
+        def _build_acl_model(
+            self, context: dict[str, object]
+        ) -> FlextResult[FlextLdifModels.Acl]:
+            """Build ACL model from parsed context using functional composition."""
+            try:
+                # Extract values from context
+                aci_content = context.get("aci_content", "")
 
                 # Extract permissions using DRY utility
                 permissions_list = FlextLdifUtilities.ACL.extract_permissions(
-                    aci_content,
+                    cast("str", aci_content),
                     FlextLdifServersOud.Constants.ACL_ALLOW_DENY_PATTERN,
                     ops_separator=FlextLdifServersOud.Constants.ACL_OPS_SEPARATOR,
                     action_filter=FlextLdifServersOud.Constants.ACL_ACTION_ALLOW,
@@ -1072,15 +1091,15 @@ class FlextLdifServersOud(FlextLdifServersRfc):
 
                 # Extract bind rules using DRY utility with centralized patterns
                 bind_rules_data = FlextLdifUtilities.ACL.extract_bind_rules(
-                    aci_content,
+                    cast("str", aci_content),
                     dict(FlextLdifServersOud.Constants.ACL_BIND_PATTERNS),
                 )
 
                 # Check for DN spaces in bind rules
-                for rule in bind_rules_data:
-                    if FlextLdifUtilities.DN.contains_pattern(rule["value"], ", "):
-                        dn_spaces = True
-                        break
+                dn_spaces = any(
+                    FlextLdifUtilities.DN.contains_pattern(rule["value"], ", ")
+                    for rule in bind_rules_data
+                )
 
                 # Build permissions dict using DRY utility
                 perm_map = {
@@ -1104,10 +1123,79 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                     FlextLdifServersOud.Constants.PERMISSION_ALL,
                     permissions_list,
                 ):
-                    for key in permissions_data:
-                        permissions_data[key] = True
+                    permissions_data = dict.fromkeys(permissions_data, True)
 
-                # Build AclSubject using DRY utility
+                # Build QuirkMetadata extensions using DRY utility
+                metadata_config = FlextLdifModels.AclMetadataConfig(
+                    line_breaks=[],  # Will be set from context
+                    dn_spaces=dn_spaces,
+                    targetscope=context.get("targetscope"),
+                    version=context.get("version", "3.0"),
+                    default_version="3.0",
+                )
+                extensions = FlextLdifUtilities.ACL.build_metadata_extensions(
+                    metadata_config
+                )
+
+                # Create Acl model using functional composition
+                return self._create_acl_from_context(
+                    context, extensions, cast("str", aci_content)
+                )
+
+            except Exception as e:
+                return FlextResult[FlextLdifModels.Acl].fail(
+                    f"Failed to build OUD ACL model: {e}"
+                )
+
+        def _create_acl_from_context(
+            self,
+            context: dict[str, object],
+            extensions: dict[str, object],
+            aci_content: str,
+        ) -> FlextResult[FlextLdifModels.Acl]:
+            """Create ACL model from context using functional composition."""
+            try:
+                # Extract values from context
+
+                # Extract permissions and bind rules from aci_content
+                permissions_list = FlextLdifUtilities.ACL.extract_permissions(
+                    aci_content,
+                    FlextLdifServersOud.Constants.ACL_ALLOW_DENY_PATTERN,
+                    ops_separator=FlextLdifServersOud.Constants.ACL_OPS_SEPARATOR,
+                    action_filter=FlextLdifServersOud.Constants.ACL_ACTION_ALLOW,
+                )
+
+                bind_rules_data = FlextLdifUtilities.ACL.extract_bind_rules(
+                    aci_content,
+                    dict(FlextLdifServersOud.Constants.ACL_BIND_PATTERNS),
+                )
+
+                # Build permissions and subject using functional utilities
+                perm_map = {
+                    "read": FlextLdifServersOud.Constants.PERMISSION_READ,
+                    "write": FlextLdifServersOud.Constants.PERMISSION_WRITE,
+                    "add": FlextLdifServersOud.Constants.PERMISSION_ADD,
+                    "delete": FlextLdifServersOud.Constants.PERMISSION_DELETE,
+                    "search": FlextLdifServersOud.Constants.PERMISSION_SEARCH,
+                    "compare": FlextLdifServersOud.Constants.PERMISSION_COMPARE,
+                    "selfwrite": FlextLdifServersOud.Constants.PERMISSION_SELF_WRITE,
+                    "self_write": FlextLdifServersOud.Constants.PERMISSION_SELF_WRITE,
+                    "proxy": FlextLdifServersOud.Constants.PERMISSION_PROXY,
+                }
+
+                permissions_data = FlextLdifUtilities.ACL.build_permissions_dict(
+                    permissions_list,
+                    perm_map,
+                )
+
+                # Handle "all" permission special case
+                if FlextLdifUtilities.Schema.is_attribute_in_list(
+                    FlextLdifServersOud.Constants.PERMISSION_ALL,
+                    permissions_list,
+                ):
+                    permissions_data = dict.fromkeys(permissions_data, True)
+
+                # Build subject using functional utilities
                 subject_type_map = {
                     FlextLdifServersOud.Constants.ACL_BIND_RULE_TYPE_USERDN: FlextLdifServersOud.Constants.ACL_SUBJECT_TYPE_BIND_RULES,
                     FlextLdifServersOud.Constants.ACL_BIND_RULE_TYPE_GROUPDN: "group",
@@ -1145,23 +1233,12 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                     special_values,
                 )
 
-                # Build QuirkMetadata extensions using DRY utility
-                metadata_config = FlextLdifModels.AclMetadataConfig(
-                    line_breaks=line_breaks,
-                    dn_spaces=dn_spaces,
-                    targetscope=targetscope,
-                    version=version,
-                    default_version="3.0",
-                )
-                extensions = FlextLdifUtilities.ACL.build_metadata_extensions(
-                    metadata_config
-                )
-
-                # Create Acl model
+                # Create ACL model using functional composition
+                acl_line = context.get("original_acl_line", "")
                 acl = FlextLdifModels.Acl(
-                    name=acl_name,
+                    name=context["acl_name"],
                     target=FlextLdifModels.AclTarget(
-                        target_dn=targetattr,
+                        target_dn=context["targetattr"],
                         attributes=[],
                     ),
                     subject=FlextLdifModels.AclSubject(
@@ -1171,17 +1248,17 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                     permissions=FlextLdifModels.AclPermissions(**permissions_data),
                     metadata=FlextLdifModels.QuirkMetadata.create_for(
                         self._get_server_type(),
-                        original_format=acl_line,
+                        original_format=cast("str", acl_line),
                         extensions=extensions,
                     ),
-                    raw_acl=acl_line,
+                    raw_acl=cast("str", acl_line),
                 )
 
                 return FlextResult[FlextLdifModels.Acl].ok(acl)
 
             except Exception as e:
                 return FlextResult[FlextLdifModels.Acl].fail(
-                    f"OUD ACL parsing failed: {e}",
+                    f"Failed to create ACL model: {e}"
                 )
 
         def _should_use_raw_acl(self, acl_data: FlextLdifModels.Acl) -> bool:
@@ -1236,8 +1313,13 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             if not acl_data.permissions:
                 return FlextResult[str].fail("ACL model has no permissions object")
 
-            ops_property = acl_data.permissions.permissions
-            ops: list[str] = ops_property() if callable(ops_property) else ops_property
+            # Extract permission names from boolean fields using Pydantic model_dump()
+            permission_dict = acl_data.permissions.model_dump()
+            ops: list[str] = [
+                field_name
+                for field_name, value in permission_dict.items()
+                if isinstance(value, bool) and value
+            ]
 
             # Filter to only OUD-supported rights using utility
             filtered_ops = FlextLdifUtilities.ACL.filter_supported_permissions(
@@ -1248,7 +1330,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             # Check metadata bridge for self_write promotion
             if (
                 acl_data.metadata
-                and acl_data.metadata.self_write_to_write
+                and acl_data.metadata.get_extension("self_write_to_write")
                 and FlextLdifServersOud.Constants.PERMISSION_SELF_WRITE in ops
                 and "write" not in filtered_ops
             ):
@@ -1813,11 +1895,14 @@ class FlextLdifServersOud(FlextLdifServersRfc):
 
                 # Create and return the new Entry model
                 return FlextResult.ok(
-                    FlextLdifModels.Entry.create(
-                        dn=entry.dn,
-                        attributes=new_ldif_attributes,
-                        metadata=new_metadata,
-                    ).unwrap(),
+                    cast(
+                        "FlextLdifModels.Entry",
+                        FlextLdifModels.Entry.create(
+                            dn=entry.dn,
+                            attributes=new_ldif_attributes,
+                            metadata=new_metadata,
+                        ).unwrap(),
+                    ),
                 )
 
             except Exception as e:

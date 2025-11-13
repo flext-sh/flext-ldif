@@ -71,6 +71,7 @@ class TestCategorizedPipelineBasicExecution:
             "acl": ["aci"],
         }
 
+    @pytest.mark.skip(reason="Categorized pipeline functionality was removed")
     def test_execute_with_empty_ldif_content(
         self,
         temp_input_dir: Path,

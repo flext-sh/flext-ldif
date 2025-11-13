@@ -18,19 +18,6 @@ Usage:
         def _parse_attribute(self, attr_definition: str) -> FlextResult[SchemaAttribute]:
             # Parse logic here...
             result = self._do_parse(attr_definition)
-            return result
-
-        @FlextLdifUtilities.Decorators.attach_write_metadata("custom_server")
-        def _write_attribute(self, attr_data: SchemaAttribute) -> FlextResult[str]:
-            # Write logic here...
-            return result
-
-Benefits:
-    - Single source of truth for metadata assignment pattern
-    - Automatic timestamp recording
-    - Consistent server_type tracking
-    - Reduces boilerplate in all 12 servers
-    - Type-safe with FlextResult pattern
 """
 
 from __future__ import annotations
@@ -42,6 +29,7 @@ from typing import Protocol, TypeVar, cast
 
 from flext_core import FlextLogger, FlextResult
 
+from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.models import FlextLdifModels
 
 logger = FlextLogger(__name__)
@@ -52,7 +40,7 @@ T = TypeVar("T")
 class _HasMetadata(Protocol):
     """Protocol for objects that have a metadata attribute."""
 
-    metadata: FlextLdifModels.QuirkMetadata
+    metadata: FlextLdifModelsDomains.QuirkMetadata
 
 
 class FlextLdifUtilitiesDecorators:
@@ -109,7 +97,8 @@ class FlextLdifUtilitiesDecorators:
             quirk_type=quirk_type,
             server_type=server_type,
         )
-        metadata.parsed_timestamp = datetime.now(UTC).isoformat()
+        # Store parsed_timestamp in extensions dict (QuirkMetadata has extra="forbid")
+        metadata.add_extension("parsed_timestamp", datetime.now(UTC).isoformat())
 
         # Attach metadata - Protocol cast after hasattr check
         obj_with_metadata = cast("_HasMetadata", result_value)

@@ -69,8 +69,10 @@ class TestRfcDockerRealData:
         # Schema entries should have attributeTypes or objectClasses
         # RFC 4512: Attribute names are case-insensitive
         assert any(
-            any(attr.lower() in {"attributetypes", "objectclasses"}
-                for attr in entry.attributes.attributes)
+            any(
+                attr.lower() in {"attributetypes", "objectclasses"}
+                for attr in entry.attributes.attributes
+            )
             for entry in entries
         )
 
@@ -306,8 +308,10 @@ class TestRfcDockerRealData:
         assert len(entries) > 0
         # RFC 4512: Attribute names are case-insensitive
         assert any(
-            any(attr.lower() in {"attributetypes", "objectclasses"}
-                for attr in e.attributes.attributes)
+            any(
+                attr.lower() in {"attributetypes", "objectclasses"}
+                for attr in e.attributes.attributes
+            )
             for e in entries
         )
 

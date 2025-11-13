@@ -286,7 +286,7 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
         *,
         entries: None = None,
         operation: Literal["parse"] | None = None,
-    ) -> list[FlextLdifModels.Entry]: ...
+    ) -> FlextLdifTypes.EntryOrString: ...
 
     @overload
     def __call__(
@@ -502,21 +502,30 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
             FlextResult[str]
 
         """
+        # Get entry quirk with validation
         entry_quirk = getattr(self, "entry_quirk", None)
         if not entry_quirk:
-            return FlextResult.fail("Entry quirk not available")
+            return FlextResult[str].fail("Entry quirk not available")
 
+        # Use functional composition to write all entries
+        def write_single_entry(entry_model: FlextLdifModels.Entry) -> FlextResult[str]:
+            """Write single entry using entry quirk."""
+            return entry_quirk.write(entry_model)
+
+        # Process all entries with early return on first failure
         ldif_lines: list[str] = []
         for entry_model in entries:
-            result: FlextResult[str] = entry_quirk.write(entry_model)
+            result = write_single_entry(entry_model)
             if result.is_failure:
-                return result
+                return FlextResult[str].fail(f"Failed to write entry: {result.error}")
             ldif_lines.append(result.unwrap())
 
+        # Finalize LDIF with proper formatting
         ldif = "\n".join(ldif_lines)
         if ldif and not ldif.endswith("\n"):
             ldif += "\n"
-        return FlextResult.ok(ldif)
+
+        return FlextResult[str].ok(ldif)
 
     # =========================================================================
     # Registry method for DI-based automatic registration
@@ -528,20 +537,39 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
 
     @classmethod
     def _get_server_type_from_mro(cls, quirk_class: type[object]) -> str:
-        """Get server_type from parent class Constants via MRO traversal."""
-        # Traverse MRO to find the server class (not Schema/Acl/Entry)
-        # that has Constants
-        for mro_cls in quirk_class.__mro__:
-            # Skip Schema/Acl/Entry classes, look for server classes
-            if (
+        """Get server_type from parent class Constants via MRO traversal using functional patterns."""
+
+        def is_valid_server_class(mro_cls: type[object]) -> bool:
+            """Check if MRO class is a valid server class with SERVER_TYPE."""
+            return (
                 mro_cls.__name__.startswith("FlextLdifServers")
                 and not mro_cls.__name__.endswith(("Schema", "Acl", "Entry"))
                 and hasattr(mro_cls, "Constants")
                 and hasattr(mro_cls.Constants, "SERVER_TYPE")
-            ):
-                server_type = mro_cls.Constants.SERVER_TYPE
-                if isinstance(server_type, str):
-                    return server_type
+            )
+
+        def extract_server_type(mro_cls: type[object]) -> str | None:
+            """Extract server type if it's a valid string."""
+            server_type = mro_cls.Constants.SERVER_TYPE
+            return server_type if isinstance(server_type, str) else None
+
+        # Use functional composition: filter + map + first valid result
+        try:
+            server_type = next(
+                (
+                    st
+                    for cls in quirk_class.__mro__
+                    if is_valid_server_class(cls)
+                    and (st := extract_server_type(cls)) is not None
+                ),
+                None,
+            )
+            if server_type:
+                return server_type
+        except StopIteration:
+            pass
+
+        # Fallback error message
         msg = (
             f"Cannot find SERVER_TYPE in Constants for quirk class: "
             f"{quirk_class.__name__}"
@@ -550,20 +578,39 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
 
     @classmethod
     def _get_priority_from_mro(cls, quirk_class: type[object]) -> int:
-        """Get priority from parent class Constants via MRO traversal."""
-        # Traverse MRO to find the server class (not Schema/Acl/Entry)
-        # that has Constants
-        for mro_cls in quirk_class.__mro__:
-            # Skip Schema/Acl/Entry classes, look for server classes
-            if (
+        """Get priority from parent class Constants via MRO traversal using functional patterns."""
+
+        def is_valid_server_class(mro_cls: type[object]) -> bool:
+            """Check if MRO class is a valid server class with PRIORITY."""
+            return (
                 mro_cls.__name__.startswith("FlextLdifServers")
                 and not mro_cls.__name__.endswith(("Schema", "Acl", "Entry"))
                 and hasattr(mro_cls, "Constants")
                 and hasattr(mro_cls.Constants, "PRIORITY")
-            ):
-                priority = mro_cls.Constants.PRIORITY
-                if isinstance(priority, int):
-                    return priority
+            )
+
+        def extract_priority(mro_cls: type[object]) -> int | None:
+            """Extract priority if it's a valid integer."""
+            priority = mro_cls.Constants.PRIORITY
+            return priority if isinstance(priority, int) else None
+
+        # Use functional composition: filter + map + first valid result
+        try:
+            priority = next(
+                (
+                    p
+                    for cls in quirk_class.__mro__
+                    if is_valid_server_class(cls)
+                    and (p := extract_priority(cls)) is not None
+                ),
+                None,
+            )
+            if priority is not None:
+                return priority
+        except StopIteration:
+            pass
+
+        # Fallback error message
         msg = (
             f"Cannot find PRIORITY in Constants for quirk class: {quirk_class.__name__}"
         )
@@ -575,7 +622,7 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
         quirk_instance: object,
         registry: object,
     ) -> None:
-        """Helper method to register a quirk instance in the registry.
+        """Helper method to register a quirk instance in the registry using functional validation.
 
         This method can be used by subclasses or registry to automatically register
         quirks. The base class itself does NOT register automatically - this is
@@ -586,17 +633,27 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
             registry: Registry instance to register the quirk (has register)
 
         """
-        # Simply call the registry's register method - it will handle routing internally
-        register_method = getattr(registry, "register", None)
-        if register_method:
-            register_method(quirk_instance)
+
+        # Functional composition: validate + register
+        def validate_registry(registry_obj: object) -> object | None:
+            """Validate registry has register method."""
+            return getattr(registry_obj, "register", None)
+
+        def perform_registration(register_func: object, instance: object) -> None:
+            """Execute registration if method is available."""
+            if register_func and callable(register_func):
+                register_func(instance)
+
+        # Compose validation and registration
+        register_method = validate_registry(registry)
+        perform_registration(register_method, quirk_instance)
 
     # =========================================================================
     # Automatic Routing Methods - Helper methods for automatic quirk routing
     # =========================================================================
 
     def _detect_model_type(self, model: object) -> str:
-        """Detect model type for automatic routing.
+        """Detect model type for automatic routing using functional type mapping.
 
         Args:
             model: Model instance to detect type for.
@@ -606,18 +663,23 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
             "schema_objectclass", or "acl".
 
         """
-        if isinstance(model, FlextLdifModels.Entry):
-            return "entry"
-        if isinstance(model, FlextLdifModels.SchemaAttribute):
-            return "schema_attribute"
-        if isinstance(model, FlextLdifModels.SchemaObjectClass):
-            return "schema_objectclass"
-        if isinstance(model, FlextLdifModels.Acl):
-            return "acl"
+        # Functional type mapping with pattern matching
+        type_mappings = {
+            FlextLdifModels.Entry: "entry",
+            FlextLdifModels.SchemaAttribute: "schema_attribute",
+            FlextLdifModels.SchemaObjectClass: "schema_objectclass",
+            FlextLdifModels.Acl: "acl",
+        }
+
+        # Find first matching type using functional composition
+        for model_type, type_name in type_mappings.items():
+            if isinstance(model, model_type):
+                return type_name
+
         return "unknown"
 
     def _get_for_model(self, model: object) -> object | None:
-        """Get appropriate quirk instance for a model type.
+        """Get appropriate quirk instance for a model type using functional routing.
 
         Args:
             model: Model instance to get quirk for.
@@ -626,17 +688,24 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
             Appropriate quirk instance (Schema, Acl, or Entry) or None if not found.
 
         """
+        # Functional routing mapping: model_type -> quirk_class_name
+        routing_map = {
+            "entry": "Entry",
+            "schema_attribute": "Schema",
+            "schema_objectclass": "Schema",
+            "acl": "Acl",
+        }
+
+        def get_quirk_instance(class_name: str) -> object | None:
+            """Get quirk instance by class name using reflection."""
+            quirk_class = getattr(type(self), class_name, None)
+            return quirk_class() if quirk_class else None
+
+        # Compose detection and routing using functional approach
         model_type = self._detect_model_type(model)
-        if model_type == "entry":
-            entry_class = getattr(type(self), "Entry", None)
-            return entry_class() if entry_class else None
-        if model_type in {"schema_attribute", "schema_objectclass"}:
-            schema_class = getattr(type(self), "Schema", None)
-            return schema_class() if schema_class else None
-        if model_type == "acl":
-            acl_class = getattr(type(self), "Acl", None)
-            return acl_class() if acl_class else None
-        return None
+        quirk_class_name = routing_map.get(model_type)
+
+        return get_quirk_instance(quirk_class_name) if quirk_class_name else None
 
     def _route_model_to_write(self, model: object) -> FlextResult[str]:
         """Route a single model to appropriate write method.
@@ -1783,7 +1852,7 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
             ldif_content: str,
             *,
             validate_dependencies: bool = False,
-        ) -> FlextResult[FlextLdifTypes.Models.EntryAttributesDict]:
+        ) -> FlextResult[dict[str, list[str] | str]]:
             """Extract and parse all schema definitions from LDIF content (template method).
 
             Generic template method that consolidates schema extraction logic across all servers.
@@ -1841,9 +1910,7 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
                         available_attrs,
                     )
                     if not validation_result.is_success:
-                        return FlextResult[
-                            FlextLdifTypes.Models.EntryAttributesDict
-                        ].fail(
+                        return FlextResult[dict[str, list[str] | str]].fail(
                             f"Attribute validation failed: {validation_result.error}",
                         )
 
@@ -1857,7 +1924,7 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
 
                 # Return combined result
                 dk = FlextLdifConstants.DictKeys
-                return FlextResult[FlextLdifTypes.Models.EntryAttributesDict].ok(
+                return FlextResult[dict[str, list[str] | str]].ok(
                     {
                         dk.ATTRIBUTES: attributes_parsed,
                         dk.OBJECTCLASS: objectclasses_parsed,
@@ -1865,7 +1932,7 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
                 )
 
             except Exception as e:
-                return FlextResult[FlextLdifTypes.Models.EntryAttributesDict].fail(
+                return FlextResult[dict[str, list[str] | str]].fail(
                     f"Schema extraction failed: {e}",
                 )
 
@@ -2704,7 +2771,7 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
             data: str,
             *,
             operation: Literal["parse"] | None = None,
-        ) -> list[FlextLdifModels.Entry]: ...
+        ) -> FlextLdifTypes.EntryOrString: ...
 
         @overload
         def __call__(

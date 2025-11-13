@@ -507,7 +507,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
     class Acl(FlextLdifServersBase.Acl):
         """RFC 4516 Compliant ACL Quirk - Base Implementation."""
 
-        def can_handle_acl(self, acl_line: FlextLdifTypes.Models.AclOrString) -> bool:
+        def can_handle_acl(self, acl_line: FlextLdifTypes.AclOrString) -> bool:
             """Check if this quirk can handle the ACL definition.
 
             RFC quirk handles all ACLs as it's the baseline implementation.
@@ -522,7 +522,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             _ = acl_line  # Unused - RFC handles all ACLs
             return True
 
-        def can_handle(self, acl_line: FlextLdifTypes.Models.AclOrString) -> bool:
+        def can_handle(self, acl_line: FlextLdifTypes.AclOrString) -> bool:
             """Check if this ACL is RFC-compliant.
 
             The RFC quirk assumes any ACL that has been successfully parsed into
@@ -880,7 +880,9 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 # Get the Entry model - no additional processing needed
                 # Entry model is already in RFC format with proper metadata
                 entry_model = entry_result.unwrap()
-                return FlextResult[FlextLdifModels.Entry].ok(entry_model)
+                return FlextResult[FlextLdifModels.Entry].ok(
+                    cast("FlextLdifModels.Entry", entry_model)
+                )
 
             except Exception as e:
                 logger.exception("RFC entry parsing exception")

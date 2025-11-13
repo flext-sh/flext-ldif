@@ -110,12 +110,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import re
 from typing import override
 
 from flext_core import FlextDecorators, FlextResult, FlextService
 from pydantic import Field
 
+from flext_ldif._utilities.constants import FlextLdifUtilitiesConstants
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 
@@ -218,6 +218,7 @@ class FlextLdifValidation(FlextService[FlextLdifModels.ValidationServiceStatus])
         self.max_attr_value_length = length
         return self
 
+    @FlextDecorators.track_performance()
     def build(self) -> FlextLdifModels.ValidationBatchResult:
         """Execute validation and return unwrapped result (fluent terminal).
 
@@ -228,9 +229,10 @@ class FlextLdifValidation(FlextService[FlextLdifModels.ValidationServiceStatus])
             ValidationBatchResult model mapping validated items to their validation status
 
         """
+        # Start with empty result
         result: dict[str, bool] = {}
 
-        # Validate attribute names
+        # Validate attribute names (if any)
         if self.attribute_names:
             attr_result = self.validate_attribute_names(self.attribute_names)
             if attr_result.is_success:
@@ -238,20 +240,22 @@ class FlextLdifValidation(FlextService[FlextLdifModels.ValidationServiceStatus])
 
         # Validate objectClass names
         for name in self.objectclass_names:
-            oc_result = self.validate_objectclass_name(name)
-            if oc_result.is_success:
-                result[name] = oc_result.unwrap()
+            obj_result = self.validate_objectclass_name(name)
+            if obj_result.is_success:
+                result[name] = obj_result.unwrap()
 
         return FlextLdifModels.ValidationBatchResult(results=result)
 
     def validate_attribute_name(self, name: str) -> FlextResult[bool]:
         """Validate LDAP attribute name against RFC 4512 rules.
 
+        Uses FlextLdifUtilitiesConstants.validate_attribute_name() for core validation logic.
+
         RFC 4512 Section 2.5: Attribute Type Definitions
         - AttributeType names must start with a letter
         - Can contain letters, digits, and hyphens
         - Case-insensitive comparison
-        - Typically limited to 127 characters
+        - Limited to reasonable length (1-255 chars)
 
         Args:
             name: Attribute name to validate
@@ -271,24 +275,10 @@ class FlextLdifValidation(FlextService[FlextLdifModels.ValidationServiceStatus])
 
         """
         try:
-            # Check empty
-            if not name:
-                return FlextResult[bool].ok(False)
+            is_valid = FlextLdifUtilitiesConstants.validate_attribute_name(name)
+            return FlextResult[bool].ok(is_valid)
 
-            # Check length (RFC 4512 typical limit)
-            if (
-                len(name)
-                > FlextLdifConstants.ValidationRules.TYPICAL_ATTR_NAME_LENGTH_LIMIT
-            ):
-                return FlextResult[bool].ok(False)
-
-            # Check pattern (RFC 4512: starts with letter, contains letters/digits/hyphens)
-            if not re.match(FlextLdifConstants.LdifPatterns.ATTRIBUTE_NAME, name):
-                return FlextResult[bool].ok(False)
-
-            return FlextResult[bool].ok(True)
-
-        except (ValueError, TypeError, AttributeError) as e:
+        except Exception as e:
             return FlextResult[bool].fail(f"Failed to validate attribute name: {e}")
 
     def validate_objectclass_name(self, name: str) -> FlextResult[bool]:

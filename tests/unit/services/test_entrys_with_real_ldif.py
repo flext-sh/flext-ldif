@@ -27,8 +27,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent / "src"))
 
 import pytest
 
-from flext_ldif import FlextLdif
-from flext_ldif.models import FlextLdifModels
+from flext_ldif import FlextLdif, FlextLdifModels, FlextLdifUtilities
 from flext_ldif.services.entry import FlextLdifEntry
 
 # Add fixtures path
@@ -133,7 +132,7 @@ class TestPublicClassmethodsWithRealLdif:
         assert len(oid_entries) > 0, "OID fixture should have entries"
 
         # Clean DN from first OID entry
-        cleaned_dn = FlextLdifEntry.clean_dn(oid_entries[0].dn.value)
+        cleaned_dn = FlextLdifUtilities.DN.clean_dn(oid_entries[0].dn.value)
 
         # Verify DN is RFC 4514 compliant (no spaces around =)
         assert " = " not in cleaned_dn

@@ -11,13 +11,14 @@ from __future__ import annotations
 
 import time
 from pathlib import Path
-from typing import Final
+from typing import Final, cast
 
 from flext_core import FlextLogger, FlextResult, FlextService
 
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.services.categorization import FlextLdifCategorization
+from flext_ldif.services.filters import FlextLdifFilters
 from flext_ldif.services.parser import FlextLdifParser
 from flext_ldif.services.sorting import FlextLdifSorting
 from flext_ldif.services.writer import FlextLdifWriter
@@ -166,7 +167,7 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifModels.EntryResult]):
                 if isinstance(parse_response, list)
                 else parse_response.entries
             )
-            all_entries.extend(entries)
+            all_entries.extend(cast("list[FlextLdifModels.Entry]", entries))
             logger.info(f"Parsed {len(entries)} from {filename}")
 
         logger.info(f"Total parsed: {len(all_entries)}")
@@ -183,8 +184,6 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifModels.EntryResult]):
             .flat_map(self._categorization.validate_dns)
             .flat_map(self._categorization.categorize_entries)
             .map(self._categorization.filter_by_base_dn)
-            .map(self._categorization.remove_forbidden_attributes)
-            .map(self._categorization.remove_forbidden_objectclasses)
         )
 
         if categorized_result.is_failure:
@@ -193,6 +192,20 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifModels.EntryResult]):
             )
 
         categories = categorized_result.unwrap()
+
+        # Apply FlextLdifFilters directly - remove forbidden attributes/objectclasses
+        forbidden_attrs = self._categorization.forbidden_attributes
+        forbidden_ocs = self._categorization.forbidden_objectclasses
+
+        if forbidden_attrs or forbidden_ocs:
+            for category, cat_entries in categories.items():
+                # Don't modify rejected entries (audit trail)
+                if category != FlextLdifConstants.Categories.REJECTED:
+                    for entry in cat_entries:
+                        if forbidden_attrs:
+                            FlextLdifFilters.remove_attributes(entry, forbidden_attrs)
+                        if forbidden_ocs:
+                            FlextLdifFilters.remove_objectclasses(entry, forbidden_ocs)
 
         # Filter schema by OIDs if needed
         if FlextLdifConstants.Categories.SCHEMA in categories:

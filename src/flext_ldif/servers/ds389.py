@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 from collections.abc import Mapping
 from enum import StrEnum
-from typing import ClassVar
+from typing import ClassVar, cast
 
 from flext_core import FlextResult
 
@@ -343,7 +343,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
     class Acl(FlextLdifServersRfc.Acl):
         """389 Directory Server ACI quirk."""
 
-        def can_handle(self, acl_line: FlextLdifTypes.Models.AclOrString) -> bool:
+        def can_handle(self, acl_line: FlextLdifTypes.AclOrString) -> bool:
             """Check if this is a 389 Directory Server ACL (public method).
 
             Args:
@@ -355,7 +355,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             """
             return self.can_handle_acl(acl_line)
 
-        def can_handle_acl(self, acl_line: FlextLdifTypes.Models.AclOrString) -> bool:
+        def can_handle_acl(self, acl_line: FlextLdifTypes.AclOrString) -> bool:
             """Detect 389 DS ACI lines."""
             if isinstance(acl_line, str):
                 normalized = acl_line.strip() if acl_line else ""
@@ -524,9 +524,15 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                 acl_name = (
                     acl_data.name or FlextLdifServersDs389.Constants.ACL_DEFAULT_NAME
                 )
-                permissions = self._extract_acl_permissions(acl_data.permissions)
-                targetattr = self._resolve_acl_targetattr(acl_data.target)
-                userdn = self._resolve_acl_userdn(acl_data.subject)
+                permissions = self._extract_acl_permissions(
+                    cast("FlextLdifModels.AclPermissions | None", acl_data.permissions)
+                )
+                targetattr = self._resolve_acl_targetattr(
+                    cast("FlextLdifModels.AclTarget | None", acl_data.target)
+                )
+                userdn = self._resolve_acl_userdn(
+                    cast("FlextLdifModels.AclSubject | None", acl_data.subject)
+                )
 
                 # Build ACI string from structured fields
                 return self._build_acl_string(acl_name, permissions, targetattr, userdn)

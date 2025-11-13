@@ -123,8 +123,8 @@ class TestWriterFormatOptions:
                     "jpegPhoto": [
                         "binary data with \x00 null bytes and \x01 control chars",
                     ],
-                    "description": [" starts with space"],
-                    "comment": ["ends with space "],
+                    "description": ["value\x00with\x01null"],
+                    "comment": ["ends with null\x00"],
                     "specialChars": [": colon at start"],
                 },
             ),
@@ -488,8 +488,10 @@ class TestWriterFormatOptions:
 
         # Should have base64-encoded values (indicated by ::)
         assert "jpegPhoto::" in output  # Binary data should be base64 encoded
-        assert "description::" in output  # Starts with space, should be base64 encoded
-        assert "comment::" in output  # Ends with space, should be base64 encoded
+        assert (
+            "description::" in output
+        )  # Contains null bytes, should be base64 encoded
+        assert "comment::" in output  # Ends with null byte, should be base64 encoded
         assert "specialChars::" in output  # Starts with colon, should be base64 encoded
 
     def test_base64_encode_binary_disabled(

@@ -9,8 +9,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import codecs
+
 from flext_core import FlextConfig, FlextConstants
-from pydantic import Field, model_validator
+from pydantic import Field, ValidationInfo, field_validator, model_validator
 
 from flext_ldif.constants import FlextLdifConstants
 
@@ -30,8 +32,9 @@ class FlextLdifConfig(FlextConfig):
     eliminating duplication and ensuring consistency across the FLEXT ecosystem.
     """
 
-    # Inherit model_config from FlextConfig (includes debug, trace, all parent fields)
-    # NO model_config override - Pydantic v2 pattern for proper field inheritance
+    # Override model_config to disable str_strip_whitespace for LDIF fields that need whitespace
+    model_config = FlextConfig.model_config.copy()
+    model_config["str_strip_whitespace"] = False
 
     # LDIF Format Configuration using FlextLdifConstants for defaults
     ldif_encoding: FlextLdifConstants.LiteralTypes.EncodingType = Field(
@@ -212,6 +215,173 @@ class FlextLdifConfig(FlextConfig):
     # Development and Debug Configuration
     # debug, trace inherited from FlextConfig (use self.debug, self.trace)
     # log_verbosity inherited from FlextConfig (use self.log_verbosity for detailed logging)
+
+    # =========================================================================
+    # FIELD VALIDATORS - Pydantic v2 Advanced Usage
+    # =========================================================================
+
+    @field_validator("ldif_encoding", mode="after")
+    @classmethod
+    def validate_ldif_encoding(cls, v: str, info: ValidationInfo) -> str:
+        """Validate ldif_encoding is a valid Python codec.
+
+        RFC 2849 § 2: LDIF files SHOULD use UTF-8 encoding.
+        This validator ensures the specified encoding is supported by Python.
+
+        Args:
+            v: Encoding string to validate
+            info: Pydantic ValidationInfo context
+
+        Returns:
+            Validated encoding string
+
+        Raises:
+            ValueError: If encoding is not supported by Python
+
+        """
+        try:
+            codecs.lookup(v)
+        except LookupError as e:
+            # Suggest RFC-recommended encoding
+            suggestion = "utf-8 (RFC 2849 recommended)"
+            msg = (
+                f"Invalid encoding '{v}' in field '{info.field_name}': {e}\n"
+                f"Suggestion: Use '{suggestion}' for maximum compatibility."
+            )
+            raise ValueError(msg) from e
+        return v
+
+    @field_validator("server_type", mode="after")
+    @classmethod
+    def validate_server_type(cls, v: str, info: ValidationInfo) -> str:
+        """Validate server_type is a recognized LDAP server.
+
+        Ensures server_type is one of the supported server types defined in
+        FlextLdifConstants.ServerTypes.
+
+        Args:
+            v: Server type string to validate
+            info: Pydantic ValidationInfo context
+
+        Returns:
+            Validated server type string
+
+        Raises:
+            ValueError: If server_type is not recognized
+
+        """
+        valid_servers = [
+            FlextLdifConstants.ServerTypes.RFC,
+            FlextLdifConstants.ServerTypes.OID,
+            FlextLdifConstants.ServerTypes.OUD,
+            FlextLdifConstants.ServerTypes.OPENLDAP,
+            FlextLdifConstants.ServerTypes.OPENLDAP1,
+            FlextLdifConstants.ServerTypes.AD,
+            FlextLdifConstants.ServerTypes.DS_389,  # Fixed: DS_389 not DS389
+            FlextLdifConstants.ServerTypes.APACHE,
+            FlextLdifConstants.ServerTypes.NOVELL,
+            FlextLdifConstants.ServerTypes.IBM_TIVOLI,  # Fixed: IBM_TIVOLI not TIVOLI
+            FlextLdifConstants.ServerTypes.RELAXED,
+            FlextLdifConstants.ServerTypes.GENERIC,  # Use constant instead of hardcoded
+        ]
+        if v not in valid_servers:
+            # Suggest most common/useful server types
+            common_servers = [
+                FlextLdifConstants.ServerTypes.RFC,
+                FlextLdifConstants.ServerTypes.OUD,
+                FlextLdifConstants.ServerTypes.OID,
+                FlextLdifConstants.ServerTypes.OPENLDAP,
+            ]
+            msg = (
+                f"Invalid server_type '{v}' in field '{info.field_name}'.\n"
+                f"Valid options: {', '.join(valid_servers)}\n"
+                f"Common choices: {', '.join(common_servers)}"
+            )
+            raise ValueError(msg)
+        return v
+
+    @field_validator("ldif_line_separator", mode="after")
+    @classmethod
+    def validate_ldif_line_separator(cls, v: str, info: ValidationInfo) -> str:
+        """Validate ldif_line_separator is RFC 2849 compliant.
+
+        RFC 2849 § 2: Line separator can be LF, CRLF, or CR.
+
+        Args:
+            v: Line separator string to validate
+            info: Pydantic ValidationInfo context
+
+        Returns:
+            Validated line separator string
+
+        Raises:
+            ValueError: If line separator is not RFC compliant
+
+        """
+        # RFC 2849 valid line separators
+        valid_separators = ["\n", "\r\n", "\r"]
+        if v not in valid_separators:
+            # Suggest most common separator
+            msg = (
+                f"Invalid ldif_line_separator '{v!r}' in field '{info.field_name}'.\n"
+                f"Must be one of: {', '.join(repr(s) for s in valid_separators)} (RFC 2849 § 2)\n"
+                f"Suggestion: Use '\\n' (LF) for Unix/Linux or '\\r\\n' (CRLF) for Windows."
+            )
+            raise ValueError(msg)
+        return v
+
+    @field_validator("ldif_version_string", mode="after")
+    @classmethod
+    def validate_ldif_version_string(cls, v: str, info: ValidationInfo) -> str:
+        """Validate ldif_version_string is RFC 2849 compliant.
+
+        RFC 2849 § 2: version-spec = "version:" FILL version-number
+        Currently only version 1 is defined.
+
+        Args:
+            v: Version string to validate
+            info: Pydantic ValidationInfo context
+
+        Returns:
+            Validated version string
+
+        Raises:
+            ValueError: If version string is not RFC 2849 compliant
+
+        """
+        # RFC 2849 version format: "version: 1"
+        if not v.startswith("version:"):
+            msg = (
+                f"Invalid ldif_version_string '{v}' in field '{info.field_name}'. "
+                f"Must start with 'version:' (RFC 2849 § 2)\n"
+                f"Suggestion: Use 'version: 1' (RFC 2849 standard)"
+            )
+            raise ValueError(msg)
+
+        # Extract version number
+        try:
+            version_part = v.split(":", 1)[1].strip()
+            version_num = int(version_part)
+            if version_num != 1:
+                msg = (
+                    f"Unsupported LDIF version {version_num} in field '{info.field_name}'. "
+                    f"Only version 1 is supported (RFC 2849)\n"
+                    f"Suggestion: Use 'version: 1'"
+                )
+                raise ValueError(msg)
+        except (IndexError, ValueError) as e:
+            msg = (
+                f"Invalid ldif_version_string format '{v}' in field '{info.field_name}'. "
+                f"Expected 'version: 1' (RFC 2849 § 2)\n"
+                f"Suggestion: Use exactly 'version: 1'"
+            )
+            raise ValueError(msg) from e
+
+        return v
+
+    # =========================================================================
+    # MODEL VALIDATOR - Cross-Field Validation
+    # =========================================================================
 
     @model_validator(mode="after")
     def validate_ldif_configuration_consistency(self) -> FlextLdifConfig:

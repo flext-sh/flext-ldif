@@ -10,10 +10,8 @@ import logging
 import re
 from typing import Any
 
-from flext_core import FlextUtilities
-
+from flext_ldif._models.config import FlextLdifModelsConfig
 from flext_ldif.constants import FlextLdifConstants
-from flext_ldif.models import FlextLdifModels
 
 logger = logging.getLogger(__name__)
 
@@ -271,7 +269,7 @@ class FlextLdifUtilitiesACL:
 
     @staticmethod
     def build_metadata_extensions(
-        config: FlextLdifModels.AclMetadataConfig,
+        config: FlextLdifModelsConfig.AclMetadataConfig,
     ) -> dict[str, object]:
         """Build QuirkMetadata extensions dict from ACL metadata configuration.
 
@@ -282,7 +280,7 @@ class FlextLdifUtilitiesACL:
             Dict of metadata extensions
 
         Example:
-            >>> config = FlextLdifModels.AclMetadataConfig(
+            >>> config = FlextLdifModelsConfig.AclMetadataConfig(
             ...     line_breaks=[10, 20],
             ...     dn_spaces=True,
             ...     targetscope="subtree",
@@ -454,7 +452,7 @@ class FlextLdifUtilitiesACL:
 
     @staticmethod
     def format_oid_target(
-        target: FlextLdifModels.AclTarget | None,
+        target: object | None,
     ) -> str:
         """Format OID ACL target clause.
 
@@ -485,7 +483,7 @@ class FlextLdifUtilitiesACL:
 
     @staticmethod
     def format_oid_subject(
-        subject: FlextLdifModels.AclSubject | None,
+        subject: object | None,
         subject_formatters: dict[str, tuple[str, bool]],
     ) -> str:
         """Format OID ACL subject clause.
@@ -533,7 +531,7 @@ class FlextLdifUtilitiesACL:
 
     @staticmethod
     def format_oid_permissions(
-        permissions: FlextLdifModels.AclPermissions | None,
+        permissions: object | None,
         permission_names: dict[str, str],
     ) -> str:
         """Format OID ACL permissions clause.
@@ -675,7 +673,7 @@ class FlextLdifUtilitiesACL:
     ) -> dict[str, bool]:
         """Build Novell permissions dict from rights list.
 
-        **DRY Optimization**: Uses FlextUtilities.DataMapper.build_flags_dict()
+        **DRY Optimization**: Builds permission flags dict locally
         to eliminate duplicated permission-building logic.
 
         Args:
@@ -696,21 +694,15 @@ class FlextLdifUtilitiesACL:
             # Return all False if invalid input
             return dict.fromkeys(permission_checks, False)
 
-        # Use generic DataMapper to build flags dict
-        result = FlextUtilities.DataMapper.build_flags_dict(
-            rights_list,
-            permission_checks,
-            default_value=False,
-        )
-        return (
-            result.unwrap()
-            if result.is_success
-            else dict.fromkeys(permission_checks, False)
-        )
+        # Build flags dict locally to avoid dependency issues
+        result = {}
+        for permission_name, check_value in permission_checks.items():
+            result[permission_name] = check_value in rights_list
+        return result
 
     @staticmethod
     def collect_active_permissions(
-        permissions: FlextLdifModels.AclPermissions | None,
+        permissions: object | None,
         permission_attrs: list[tuple[str, str]],
     ) -> list[str]:
         """Collect list of active permission names from permissions model.

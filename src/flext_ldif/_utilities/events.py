@@ -9,6 +9,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import Any
+
 from flext_core import FlextLogger
 
 from flext_ldif.models import FlextLdifModels
@@ -49,9 +51,8 @@ class FlextLdifUtilitiesEvents:
             dn_operation=config.dn_operation,
             input_dn=config.input_dn,
             output_dn=config.output_dn,
-            operation_duration_ms=config.operation_duration_ms,
+            dn_duration_ms=config.operation_duration_ms,
             validation_result=config.validation_result,
-            parse_components=config.parse_components,
         )
 
     @staticmethod
@@ -86,7 +87,6 @@ class FlextLdifUtilitiesEvents:
             migration_operation=config.migration_operation,
             source_server=config.source_server,
             target_server=config.target_server,
-            entries_processed=config.entries_processed,
             entries_migrated=config.entries_migrated,
             entries_failed=config.entries_failed,
             migration_duration_ms=config.migration_duration_ms,
@@ -125,7 +125,6 @@ class FlextLdifUtilitiesEvents:
             conversion_operation=config.conversion_operation,
             source_format=config.source_format,
             target_format=config.target_format,
-            items_processed=config.items_processed,
             items_converted=config.items_converted,
             items_failed=config.items_failed,
             conversion_duration_ms=config.conversion_duration_ms,
@@ -164,9 +163,7 @@ class FlextLdifUtilitiesEvents:
             items_processed=config.items_processed,
             items_succeeded=config.items_succeeded,
             items_failed=config.items_failed,
-            operation_duration_ms=config.operation_duration_ms,
-            server_type=config.server_type,
-            error_details=config.error_details or [],
+            schema_duration_ms=config.operation_duration_ms,
         )
 
     # ════════════════════════════════════════════════════════════════════════
@@ -336,6 +333,48 @@ class FlextLdifUtilitiesEvents:
         return event
 
     @staticmethod
+    def _log_and_emit_generic_event(
+        logger: FlextLogger,
+        log_context: dict[str, Any],
+        log_message: str,
+        log_level: str = "info",
+        extras: FlextLdifModels.LogContextExtras | None = None,
+    ) -> None:
+        """Generic helper for logging events with context and extras.
+
+        Consolidated logic for all log_and_emit_* methods to eliminate duplication.
+        Handles extras filtering and log level routing.
+
+        Args:
+            logger: FlextLogger instance
+            log_context: Base log context dict (will be modified in-place)
+            log_message: Log message template
+            log_level: Log level (info, debug, warning, error)
+            extras: Additional typed context fields for logging
+
+        """
+        # Add extras if provided (common logic for all event types)
+        if extras:
+            extras_dict = extras.model_dump(exclude_none=True)
+            # Filter and update with typed values only
+            filtered_extras = {
+                key: value
+                for key, value in extras_dict.items()
+                if isinstance(value, str | int | float | bool | type(None))
+            }
+            log_context.update(filtered_extras)
+
+        # Log with appropriate level (common logic for all event types)
+        if log_level == "debug":
+            logger.debug(log_message, **log_context)
+        elif log_level == "warning":
+            logger.warning(log_message, **log_context)
+        elif log_level == "error":
+            logger.error(log_message, **log_context)
+        else:
+            logger.info(log_message, **log_context)
+
+    @staticmethod
     def log_and_emit_migration_event(
         logger: FlextLogger,
         config: FlextLdifModels.MigrationEventConfig,
@@ -374,7 +413,7 @@ class FlextLdifUtilitiesEvents:
         # Create event
         event = FlextLdifUtilitiesEvents.create_migration_event(config)
 
-        # Build log context with event data + computed metrics (type inferred from values)
+        # Build log context with event data + computed metrics
         log_context = {
             "event_id": event.unique_id,  # From IdentifiableMixin
             "aggregate_id": event.aggregate_id,
@@ -389,27 +428,13 @@ class FlextLdifUtilitiesEvents:
             "throughput_entries_per_sec": event.throughput_entries_per_sec,
         }
 
-        # Add extras if provided
-        if extras:
-            extras_dict = extras.model_dump(exclude_none=True)
-            # Filter and update with typed values only
-            filtered_extras = {
-                key: value
-                for key, value in extras_dict.items()
-                if isinstance(value, str | int | float | bool | type(None))
-            }
-            log_context.update(filtered_extras)
-
-        # Log with appropriate level
+        # Build log message
         log_message = f"Migration '{config.migration_operation}' from {config.source_server} to {config.target_server} completed"
-        if log_level == "debug":
-            logger.debug(log_message, **log_context)
-        elif log_level == "warning":
-            logger.warning(log_message, **log_context)
-        elif log_level == "error":
-            logger.error(log_message, **log_context)
-        else:
-            logger.info(log_message, **log_context)
+
+        # Delegate to generic helper for extras and logging
+        FlextLdifUtilitiesEvents._log_and_emit_generic_event(
+            logger, log_context, log_message, log_level, extras
+        )
 
         return event
 
@@ -452,7 +477,7 @@ class FlextLdifUtilitiesEvents:
         # Create event
         event = FlextLdifUtilitiesEvents.create_conversion_event(config)
 
-        # Build log context with event data + computed metrics (type inferred from values)
+        # Build log context with event data + computed metrics
         log_context = {
             "event_id": event.unique_id,  # From IdentifiableMixin
             "aggregate_id": event.aggregate_id,
@@ -467,27 +492,13 @@ class FlextLdifUtilitiesEvents:
             "throughput_items_per_sec": event.throughput_items_per_sec,
         }
 
-        # Add extras if provided
-        if extras:
-            extras_dict = extras.model_dump(exclude_none=True)
-            # Filter and update with typed values only
-            filtered_extras = {
-                key: value
-                for key, value in extras_dict.items()
-                if isinstance(value, str | int | float | bool | type(None))
-            }
-            log_context.update(filtered_extras)
-
-        # Log with appropriate level
+        # Build log message
         log_message = f"Conversion '{config.conversion_operation}' from {config.source_format} to {config.target_format} completed"
-        if log_level == "debug":
-            logger.debug(log_message, **log_context)
-        elif log_level == "warning":
-            logger.warning(log_message, **log_context)
-        elif log_level == "error":
-            logger.error(log_message, **log_context)
-        else:
-            logger.info(log_message, **log_context)
+
+        # Delegate to generic helper for extras and logging
+        FlextLdifUtilitiesEvents._log_and_emit_generic_event(
+            logger, log_context, log_message, log_level, extras
+        )
 
         return event
 
@@ -555,9 +566,7 @@ class FlextLdifUtilitiesEvents:
             log_context.update(filtered_extras)
 
         # Log with appropriate level
-        log_message = (
-            f"Schema operation '{config.schema_operation}' on {config.server_type} completed"
-        )
+        log_message = f"Schema operation '{config.schema_operation}' on {config.server_type} completed"
         if log_level == "debug":
             logger.debug(log_message, **log_context)
         elif log_level == "warning":

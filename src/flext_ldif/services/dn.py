@@ -95,15 +95,13 @@ import time
 from collections.abc import Callable
 
 from flext_core import FlextResult, FlextService
-from pydantic import BaseModel, ConfigDict, Field, PrivateAttr, field_validator
+from pydantic import Field, PrivateAttr, field_validator
 
-from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
-from flext_ldif.typings import FlextLdifTypes
 from flext_ldif.utilities import FlextLdifUtilities
 
-# Semantic type for Distinguished Name - imported from FlextLdifTypes.Service
-type DN = FlextLdifTypes.Service.DN
+# Semantic type for Distinguished Name operations
+type DN = str
 
 
 class FlextLdifDn(FlextService[str]):
@@ -362,28 +360,6 @@ class FlextLdifDn(FlextService[str]):
         return cls.Normalizer.normalize(dn)
 
     @classmethod
-    def clean_dn(cls, dn: str) -> str:
-        r"""Clean DN string to fix spacing and escaping issues.
-
-        Fixes common formatting issues found in LDAP exports:
-        - Removes spaces around '=' in RDN components
-        - Fixes trailing backslash+space patterns
-        - Normalizes whitespace around commas
-        - Removes unnecessary character escapes
-
-        Args:
-            dn: Raw DN string from LDIF
-
-        Returns:
-            Cleaned DN string (static method, no FlextResult)
-
-        Example:
-            cleaned = FlextLdifDn.clean_dn("cn = John , dc = example , dc = com")
-            # Result: "cn=John,dc=example,dc=com"
-
-        """
-        return cls.Normalizer.clean_dn(dn)
-
     @classmethod
     def escape_dn_value(cls, value: str) -> str:
         r"""Escape special characters in DN value per RFC 4514.
@@ -726,246 +702,9 @@ class FlextLdifDn(FlextService[str]):
     # NESTED CASE REGISTRY CLASS
     # ════════════════════════════════════════════════════════════════════════
 
-    class Registry(BaseModel):
-        """Registry for tracking canonical DN case during conversions.
-
-        This class maintains a mapping of DNs in normalized form (lowercase, no spaces)
-        to their canonical case representation. Used during server conversions to
-        ensure DN case consistency.
-
-        Examples:
-            registry = FlextLdifDn.Registry()
-            canonical = registry.register_dn("CN=Admin,DC=Example,DC=Com")
-            result = registry.get_canonical_dn("cn=admin,dc=example,dc=com")
-
-        """
-
-        model_config = ConfigDict(frozen=False)
-
-        def __init__(self) -> None:
-            """Initialize empty DN case registry."""
-            super().__init__()
-            self._registry: dict[str, str] = {}
-            self._case_variants: dict[str, set[str]] = {}
-
-        def _normalize_dn(self, dn: str) -> str:
-            """Normalize DN for case-insensitive comparison using FlextLdifUtilities."""
-            # Use FlextLdifUtilities.DN for RFC 4514 compliant normalization
-            normalized = FlextLdifUtilities.DN.norm(dn)
-            if normalized is None:
-                # Fallback for invalid DNs: simple lowercase normalization
-                return dn.lower().replace(" ", "")
-            # Ensure lowercase for case-insensitive comparison
-            return normalized.lower()
-
-        def register_dn(self, dn: str, *, force: bool = False) -> str:
-            """Register DN and return its canonical case.
-
-            Args:
-                dn: Distinguished Name to register
-                force: If True, override existing canonical case
-
-            Returns:
-                Canonical case DN string
-
-            Example:
-                canonical = registry.register_dn("CN=Admin,DC=Com")
-
-            """
-            normalized = self._normalize_dn(dn)
-
-            if normalized not in self._case_variants:
-                self._case_variants[normalized] = set()
-            self._case_variants[normalized].add(dn)
-
-            if normalized not in self._registry or force:
-                self._registry[normalized] = dn
-
-            return self._registry[normalized]
-
-        def get_canonical_dn(self, dn: str) -> str | None:
-            """Get canonical case for a DN (case-insensitive lookup).
-
-            Args:
-                dn: Distinguished Name to lookup
-
-            Returns:
-                Canonical case DN string, or None if not registered
-
-            """
-            normalized = self._normalize_dn(dn)
-            return self._registry.get(normalized)
-
-        def has_dn(self, dn: str) -> bool:
-            """Check if DN is registered (case-insensitive).
-
-            Args:
-                dn: Distinguished Name to check
-
-            Returns:
-                True if DN is registered, False otherwise
-
-            """
-            normalized = self._normalize_dn(dn)
-            return normalized in self._registry
-
-        def get_case_variants(self, dn: str) -> set[str]:
-            """Get all case variants seen for a DN.
-
-            Args:
-                dn: Distinguished Name to get variants for
-
-            Returns:
-                Set of all case variants seen (including canonical)
-
-            """
-            normalized = self._normalize_dn(dn)
-            return self._case_variants.get(normalized, set())
-
-        def validate_oud_consistency(self) -> FlextResult[bool]:
-            """Validate DN case consistency for server conversion.
-
-            Returns:
-                FlextResult[bool]: True if consistent, False with warnings if not
-
-            """
-            inconsistencies: list[dict[str, object]] = []
-
-            for normalized_dn, variants in self._case_variants.items():
-                if len(variants) > 1:
-                    canonical = self._registry[normalized_dn]
-                    inconsistencies.append({
-                        "normalized_dn": normalized_dn,
-                        "canonical_case": canonical,
-                        "variants": list(variants),
-                        "variant_count": len(variants),
-                    })
-
-            if inconsistencies:
-                result = FlextResult[bool].ok(False)
-                result.metadata = {
-                    "inconsistencies": inconsistencies,
-                    "warning": f"Found {len(inconsistencies)} DNs with case inconsistencies",
-                }
-                return result
-
-            return FlextResult[bool].ok(True)
-
-        def normalize_dn_references(
-            self,
-            data: dict[str, object],
-            dn_fields: list[str] | None = None,
-        ) -> FlextResult[dict[str, object]]:
-            """Normalize DN references in data object to canonical case.
-
-            Args:
-                data: Dictionary containing DN references
-                dn_fields: List of field names containing DNs or DN lists.
-                          If None, uses default DN fields from FlextLdifConstants.
-
-            Returns:
-                FlextResult with normalized data dict
-
-            """
-            try:
-                # Use default DN-valued attributes if dn_fields not specified
-                if dn_fields is None:
-                    # Include 'dn' itself plus all DN-valued attributes
-                    dn_fields = ["dn"] + list(
-                        FlextLdifConstants.DnValuedAttributes.ALL_DN_VALUED,
-                    )
-
-                normalized_data = dict(data)
-
-                for field_name in dn_fields:
-                    if field_name not in normalized_data:
-                        continue
-
-                    field_value = normalized_data[field_name]
-
-                    # Delegate to helper based on type
-                    if isinstance(field_value, str):
-                        normalized_data[field_name] = self._normalize_single_dn(
-                            field_value,
-                        )
-                    elif isinstance(field_value, list):
-                        normalized_data[field_name] = self._normalize_dn_list(
-                            field_value,
-                        )
-
-                return FlextResult[dict[str, object]].ok(normalized_data)
-
-            except Exception as e:
-                return FlextResult[dict[str, object]].fail(
-                    f"Failed to normalize DN references: {e}",
-                )
-
-        def _normalize_single_dn(self, dn: str) -> str:
-            """Normalize a single DN string to canonical case.
-
-            Args:
-                dn: DN string to normalize
-
-            Returns:
-                Normalized DN string
-
-            """
-            canonical = self.get_canonical_dn(dn)
-            if canonical:
-                return canonical
-            # Not registered, use FlextLdifUtilities for proper RFC 4514 normalization
-            normalized_dn = FlextLdifUtilities.DN.norm(dn)
-            return normalized_dn or dn.lower()
-
-        def _normalize_dn_list(self, dn_list: list[object]) -> list[object]:
-            """Normalize a list of DN values, preserving non-string items.
-
-            Args:
-                dn_list: List that may contain DN strings and other items
-
-            Returns:
-                List with DN strings normalized
-
-            """
-            normalized_list: list[object] = []
-            for item in dn_list:
-                if isinstance(item, str):
-                    normalized_list.append(self._normalize_single_dn(item))
-                else:
-                    normalized_list.append(item)
-            return normalized_list
-
-        def clear(self) -> None:
-            """Clear all DN registrations."""
-            self._registry.clear()
-            self._case_variants.clear()
-
-        def get_stats(self) -> dict[str, int]:
-            """Get registry statistics.
-
-            Returns:
-                Dictionary with registry statistics
-
-            """
-            total_variants = sum(
-                len(variants) for variants in self._case_variants.values()
-            )
-            multiple_variants = sum(
-                1 for variants in self._case_variants.values() if len(variants) > 1
-            )
-
-            return {
-                "total_dns": len(self._registry),
-                "total_variants": total_variants,
-                "dns_with_multiple_variants": multiple_variants,
-            }
-
-    # ════════════════════════════════════════════════════════════════════════
-    # BACKWARD COMPATIBILITY ALIASES
-    # ════════════════════════════════════════════════════════════════════════
-
-    # Alias for old CaseRegistry name
-    CaseRegistry = Registry
+    # Alias for FlextLdifModels.DnRegistry for backwards compatibility
+    # COMMENTED OUT: Causes AttributeError during module initialization
+    # DnRegistry: ClassVar[type[FlextLdifModels.DnRegistry]] = FlextLdifModels.DnRegistry
 
 
 __all__ = ["FlextLdifDn"]
