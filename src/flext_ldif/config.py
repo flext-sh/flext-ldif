@@ -265,25 +265,28 @@ class FlextLdifConfig(FlextConfig):
             raise ValueError(msg) from e
         return v
 
-    @field_validator("server_type", mode="after")
+    @field_validator("server_type", mode="before")
     @classmethod
     def validate_server_type(cls, v: str, info: ValidationInfoProtocol) -> str:
         """Validate server_type is a recognized LDAP server.
 
         Ensures server_type is one of the supported server types defined in
-        FlextLdifConstants.ServerTypes.
+        FlextLdifConstants.ServerTypes. Accepts both canonical forms and common aliases.
 
         Args:
-            v: Server type string to validate
+            v: Server type string to validate (canonical or alias)
             info: Pydantic ValidationInfo context
 
         Returns:
-            Validated server type string
+            Normalized/validated server type string (canonical form)
 
         Raises:
             ValueError: If server_type is not recognized
 
         """
+        # Normalize aliases to canonical form (ad → active_directory, etc)
+        normalized = FlextLdifConstants.ServerTypes.normalize(v)
+
         valid_servers = [
             FlextLdifConstants.ServerTypes.RFC,
             FlextLdifConstants.ServerTypes.OID,
@@ -298,7 +301,7 @@ class FlextLdifConfig(FlextConfig):
             FlextLdifConstants.ServerTypes.RELAXED,
             FlextLdifConstants.ServerTypes.GENERIC,  # Use constant instead of hardcoded
         ]
-        if v not in valid_servers:
+        if normalized not in valid_servers:
             # Suggest most common/useful server types
             common_servers = [
                 FlextLdifConstants.ServerTypes.RFC,
@@ -312,7 +315,7 @@ class FlextLdifConfig(FlextConfig):
                 f"Common choices: {', '.join(common_servers)}"
             )
             raise ValueError(msg)
-        return v
+        return normalized  # Return normalized form
 
     @field_validator("ldif_line_separator", mode="after")
     @classmethod
@@ -391,6 +394,108 @@ class FlextLdifConfig(FlextConfig):
             )
             raise ValueError(msg) from e
 
+        return v
+
+    @field_validator("quirks_server_type", mode="before")
+    @classmethod
+    def validate_quirks_server_type(
+        cls, v: str | None, info: ValidationInfoProtocol
+    ) -> str | None:
+        """Validate quirks_server_type when specified is a recognized server.
+
+        Ensures quirks_server_type (when not None) is one of the supported
+        server types defined in FlextLdifConstants.ServerTypes.
+        Accepts both canonical forms and common aliases.
+
+        Args:
+            v: Server type string to validate (canonical or alias, or None)
+            info: Pydantic ValidationInfo context
+
+        Returns:
+            Normalized/validated server type string (canonical form) or None
+
+        Raises:
+            ValueError: If server_type is specified but not recognized
+
+        """
+        if v is None:
+            return v
+
+        # Normalize aliases to canonical form (ad → active_directory, etc)
+        normalized = FlextLdifConstants.ServerTypes.normalize(v)
+
+        # Use same validation logic as server_type field
+        valid_servers = [
+            FlextLdifConstants.ServerTypes.RFC,
+            FlextLdifConstants.ServerTypes.OID,
+            FlextLdifConstants.ServerTypes.OUD,
+            FlextLdifConstants.ServerTypes.OPENLDAP,
+            FlextLdifConstants.ServerTypes.OPENLDAP1,
+            FlextLdifConstants.ServerTypes.AD,
+            FlextLdifConstants.ServerTypes.DS_389,
+            FlextLdifConstants.ServerTypes.APACHE,
+            FlextLdifConstants.ServerTypes.NOVELL,
+            FlextLdifConstants.ServerTypes.IBM_TIVOLI,
+            FlextLdifConstants.ServerTypes.RELAXED,
+            FlextLdifConstants.ServerTypes.GENERIC,
+        ]
+        if normalized not in valid_servers:
+            common_servers = [
+                FlextLdifConstants.ServerTypes.RFC,
+                FlextLdifConstants.ServerTypes.OUD,
+                FlextLdifConstants.ServerTypes.OID,
+                FlextLdifConstants.ServerTypes.OPENLDAP,
+            ]
+            msg = (
+                f"Invalid quirks_server_type '{v}' in field '{info.field_name}'.\n"
+                f"Valid options: {', '.join(valid_servers)}\n"
+                f"Common choices: {', '.join(common_servers)}"
+            )
+            raise ValueError(msg)
+        return normalized  # Return normalized form
+
+    @field_validator("ldif_default_server_type", mode="after")
+    @classmethod
+    def validate_ldif_default_server_type(
+        cls, v: str, info: ValidationInfoProtocol
+    ) -> str:
+        """Validate ldif_default_server_type is a recognized server.
+
+        Ensures ldif_default_server_type is one of the supported server types.
+
+        Args:
+            v: Server type string to validate
+            info: Pydantic ValidationInfo context
+
+        Returns:
+            Validated server type string
+
+        Raises:
+            ValueError: If server_type is not recognized
+
+        """
+        # Use same validation logic as server_type field
+        valid_servers = [
+            FlextLdifConstants.ServerTypes.RFC,
+            FlextLdifConstants.ServerTypes.OID,
+            FlextLdifConstants.ServerTypes.OUD,
+            FlextLdifConstants.ServerTypes.OPENLDAP,
+            FlextLdifConstants.ServerTypes.OPENLDAP1,
+            FlextLdifConstants.ServerTypes.AD,
+            FlextLdifConstants.ServerTypes.DS_389,
+            FlextLdifConstants.ServerTypes.APACHE,
+            FlextLdifConstants.ServerTypes.NOVELL,
+            FlextLdifConstants.ServerTypes.IBM_TIVOLI,
+            FlextLdifConstants.ServerTypes.RELAXED,
+            FlextLdifConstants.ServerTypes.GENERIC,
+        ]
+        if v not in valid_servers:
+            msg = (
+                f"Invalid ldif_default_server_type '{v}' in field '{info.field_name}'.\n"
+                f"Valid options: {', '.join(valid_servers)}\n"
+                f"Suggestion: Use '{FlextLdifConstants.ServerTypes.RFC}' for RFC compliance"
+            )
+            raise ValueError(msg)
         return v
 
     # =========================================================================

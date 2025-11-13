@@ -36,7 +36,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
         PRIORITY: ClassVar[int] = 20
 
         CANONICAL_NAME: ClassVar[str] = "novell_edirectory"
-        ALIASES: ClassVar[frozenset[str]] = frozenset(["novell_edirectory", "novell"])
+        ALIASES: ClassVar[frozenset[str]] = frozenset(["novell", "novell_edirectory"])
         CAN_NORMALIZE_FROM: ClassVar[frozenset[str]] = frozenset(["novell_edirectory"])
         CAN_DENORMALIZE_TO: ClassVar[frozenset[str]] = frozenset(
             [

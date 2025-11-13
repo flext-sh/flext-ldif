@@ -19,14 +19,13 @@ from __future__ import annotations
 
 import time
 from collections.abc import Sequence
-from typing import ClassVar, Union, cast, override
+from typing import Any, ClassVar, Union, cast, override
 
 from flext_core import FlextLogger, FlextResult, FlextService
 from pydantic import Field
 
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
-from flext_ldif.servers.base import FlextLdifServersBase
 from flext_ldif.typings import FlextLdifTypes
 from flext_ldif.utilities import FlextLdifUtilities
 
@@ -116,8 +115,8 @@ class FlextLdifConversion(
 
     def convert(
         self,
-        source: FlextLdifServersBase,
-        target: FlextLdifServersBase,
+        source: Any,  # noqa: ANN401
+        target: Any,  # noqa: ANN401
         model_instance_or_data_type: FlextLdifTypes.ConvertibleModel | str,
         data: str | dict[str, object] | None = None,
     ) -> (
@@ -210,8 +209,8 @@ class FlextLdifConversion(
 
     def _convert_model(
         self,
-        source: FlextLdifServersBase,
-        target: FlextLdifServersBase,
+        source: Any,  # noqa: ANN401
+        target: Any,  # noqa: ANN401
         model_instance: FlextLdifTypes.ConvertibleModel,
     ) -> FlextResult[FlextLdifTypes.ConvertibleModel]:
         """Convert Entry model between source and target server formats with FlextLdifUtilities.
@@ -294,8 +293,8 @@ class FlextLdifConversion(
 
     def _convert_legacy(
         self,
-        source: FlextLdifServersBase,
-        target: FlextLdifServersBase,
+        source: Any,  # noqa: ANN401
+        target: Any,  # noqa: ANN401
         data_type: str,
         data: str | dict[str, object],
     ) -> FlextResult[
@@ -413,7 +412,7 @@ class FlextLdifConversion(
 
     def _write_attribute_to_rfc(
         self,
-        source: FlextLdifServersBase,
+        source: Any,  # noqa: ANN401
         source_attr: FlextLdifModels.SchemaAttribute | dict[str, object] | str,
     ) -> FlextResult[str | FlextLdifModels.SchemaAttribute | dict[str, object]]:
         """Write attribute to RFC string representation."""
@@ -445,8 +444,8 @@ class FlextLdifConversion(
 
     def _convert_attribute(
         self,
-        source: FlextLdifServersBase,
-        target: FlextLdifServersBase,
+        source: Any,  # noqa: ANN401
+        target: Any,  # noqa: ANN401
         data: str | dict[str, object],
     ) -> FlextResult[FlextLdifModels.SchemaAttribute | str | dict[str, object]]:
         """Convert attribute from source to target quirk via write→parse pipeline.
@@ -508,7 +507,7 @@ class FlextLdifConversion(
 
     def _write_objectclass_to_rfc(
         self,
-        source: FlextLdifServersBase,
+        source: Any,  # noqa: ANN401
         source_oc: FlextLdifModels.SchemaObjectClass | dict[str, object] | str,
     ) -> FlextResult[str | FlextLdifModels.SchemaObjectClass | dict[str, object]]:
         """Write objectClass to RFC string representation."""
@@ -542,8 +541,8 @@ class FlextLdifConversion(
 
     def _convert_objectclass(
         self,
-        source: FlextLdifServersBase,
-        target: FlextLdifServersBase,
+        source: Any,  # noqa: ANN401
+        target: Any,  # noqa: ANN401
         data: str | dict[str, object],
     ) -> FlextResult[FlextLdifModels.SchemaObjectClass | str | dict[str, object]]:
         """Convert objectClass from source to target quirk via write→parse pipeline.
@@ -600,8 +599,8 @@ class FlextLdifConversion(
 
     def _convert_acl(
         self,
-        source: FlextLdifServersBase,
-        target: FlextLdifServersBase,
+        source: Any,  # noqa: ANN401
+        target: Any,  # noqa: ANN401
         data: str,
     ) -> FlextResult[str]:
         """Convert ACL from source to target quirk.
@@ -697,8 +696,8 @@ class FlextLdifConversion(
 
     def batch_convert(
         self,
-        source: FlextLdifServersBase,
-        target: FlextLdifServersBase,
+        source: Any,  # noqa: ANN401
+        target: Any,  # noqa: ANN401
         data_type: str,
         data_list: Sequence[str | dict[str, object]],
     ) -> FlextResult[list[str | dict[str, object]]]:
@@ -867,7 +866,7 @@ class FlextLdifConversion(
         """
         self.dn_registry.clear()
 
-    def get_supported_conversions(self, quirk: FlextLdifServersBase) -> dict[str, bool]:
+    def get_supported_conversions(self, quirk: Any) -> dict[str, bool]:  # noqa: ANN401
         """Check which data types a quirk supports for conversion.
 
         Args:

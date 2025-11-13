@@ -50,7 +50,7 @@ class FlextLdifCategorization(FlextService[dict[str, list[FlextLdifModels.Entry]
 
         # Parse and categorize entries
         result = (
-            parser.parse_ldif_file(file_path, "oracle_oid")
+            parser.parse_ldif_file(file_path, "oid")
             .flat_map(service.validate_dns)
             .flat_map(service.categorize_entries)
             .flat_map(service.filter_by_base_dn(base_dn="dc=example,dc=com"))
@@ -215,12 +215,12 @@ class FlextLdifCategorization(FlextService[dict[str, list[FlextLdifModels.Entry]
         # Log sample rejected DNs for diagnostic purposes (track 289 missing entries)
         if self._rejection_tracker["invalid_dn_rfc4514"]:
             sample_rejected_dns = [
-                entry.dn.value[:80] if entry.dn and len(entry.dn.value) > 80 else (entry.dn.value if entry.dn else "")
+                entry.dn.value[: FlextLdifConstants.DN_LOG_PREVIEW_LENGTH]
+                if entry.dn and len(entry.dn.value) > FlextLdifConstants.DN_LOG_PREVIEW_LENGTH
+                else (entry.dn.value if entry.dn else "")
                 for entry in self._rejection_tracker["invalid_dn_rfc4514"][:5]
             ]
-            logger.debug(
-                f"Sample rejected DNs (first 5): {sample_rejected_dns}"
-            )
+            logger.debug(f"Sample rejected DNs (first 5): {sample_rejected_dns}")
 
         return FlextResult[list[FlextLdifModels.Entry]].ok(validated)
 
@@ -267,7 +267,7 @@ class FlextLdifCategorization(FlextService[dict[str, list[FlextLdifModels.Entry]
                 if entry.statistics:
                     entry.statistics.mark_rejected(
                         FlextLdifConstants.RejectionCategory.NO_CATEGORY_MATCH,
-                        reason,
+                        reason or "No category match",  # type: ignore[arg-type]
                     )
                 logger.debug(f"Entry rejected: {entry.dn}, reason: {reason}")
 

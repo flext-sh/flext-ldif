@@ -313,9 +313,9 @@ class TestQuirksConversionMatrixFacade:
         assert supported["attribute"] is True
         assert supported["objectClass"] is True
 
-        # ACL support is not available for this check
+        # ACL support is now available (implemented)
         # Entry support is available
-        assert supported["acl"] is False
+        assert supported["acl"] is True
         assert supported["entry"] is True
 
     def test_convert_attribute_oud_to_oid(

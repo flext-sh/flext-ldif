@@ -7,7 +7,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Literal, TypeVar, Union
+from typing import Literal, TypedDict as _TypedDict, TypeVar, Union
 
 from flext_core import FlextTypes
 
@@ -56,9 +56,6 @@ class FlextLdifTypes(FlextTypes):
     # =============================================================================
     # METADATA EXTENSIONS TYPE HINTS - TypedDict for metadata.extensions (FASE 6)
     # =============================================================================
-
-    # Import TypedDict only within class scope to avoid function detection
-    from typing import TypedDict as _TypedDict
 
     class ValidationMetadataExtensions(_TypedDict, total=False):
         """Type hints for Entry validation metadata in metadata.extensions.
@@ -172,3 +169,7 @@ class FlextLdifTypes(FlextTypes):
     # =========================================================================
 
     # Models class already defined above (line 91) - no need to redefine
+
+
+# Clean up namespace - remove internal imports
+del _TypedDict

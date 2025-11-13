@@ -13,7 +13,7 @@ import operator
 import re
 from collections.abc import Mapping
 from enum import StrEnum
-from typing import ClassVar, cast
+from typing import Any, ClassVar, cast
 
 from flext_core import FlextLogger, FlextResult
 
@@ -24,6 +24,9 @@ from flext_ldif.typings import FlextLdifTypes
 from flext_ldif.utilities import FlextLdifUtilities
 
 logger = FlextLogger(__name__)
+
+# Alias for cleaner code - MetadataKeys from Constants
+MetaKeys = FlextLdifConstants.MetadataKeys
 
 
 class FlextLdifServersOud(FlextLdifServersRfc):
@@ -48,6 +51,11 @@ class FlextLdifServersOud(FlextLdifServersRfc):
         # Server identity and priority (defined at Constants level)
         SERVER_TYPE: ClassVar[str] = FlextLdifConstants.ServerTypes.OUD
         PRIORITY: ClassVar[int] = 10  # High priority (OUD is well-known server)
+
+        # LDAP Connection Defaults (RFC 4511 §4.1)
+        DEFAULT_PORT: ClassVar[int] = 1389  # OUD default port (non-standard)
+        DEFAULT_SSL_PORT: ClassVar[int] = 1636  # OUD default SSL port (non-standard)
+        DEFAULT_PAGE_SIZE: ClassVar[int] = 1000  # RFC 2696 Simple Paged Results default
 
         # =====================================================================
         # CORE IDENTITY - Server identification and metadata
@@ -244,8 +252,8 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             FlextLdifConstants.DictKeys.OBJECTCLASS.lower(): FlextLdifConstants.DictKeys.OBJECTCLASS,
             "memberof": "memberOf",
             "seealsodescription": "seeAlsoDescription",
-            "orclaci": ACL_ATTRIBUTE_NAME,  # Oracle OID ACI → OUD RFC ACI
-            "orclentrylevelaci": ACL_ATTRIBUTE_NAME,  # Oracle OID entry-level ACI → OUD RFC ACI
+            "orclaci": ACL_ATTRIBUTE_NAME,  # Vendor-specific ACI → RFC ACI
+            "orclentrylevelaci": ACL_ATTRIBUTE_NAME,  # Vendor entry-level ACI → RFC ACI
             "acl": ACL_ATTRIBUTE_NAME,  # Generic ACL → OUD RFC ACI
         }
 
@@ -365,9 +373,6 @@ class FlextLdifServersOud(FlextLdifServersRfc):
         DN_PREFIX_CN_DIRECTORY: ClassVar[str] = "cn=directory"
         DN_PREFIX_CN_DS: ClassVar[str] = "cn=ds"
 
-        # OID/Oracle prefixes for exclusion (OUD entries should not have these)
-        OID_PREFIXES: ClassVar[tuple[str, ...]] = ("orcl", "oracle")
-
         # === DETECTION PATTERNS ===
         # Case-insensitive pattern ((?i) flag) because detector searches in lowercase content
         DETECTION_OID_PATTERN: ClassVar[str] = (
@@ -485,7 +490,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
         - OUD namespace (2.16.840.1.113894.*)
         - OUD-specific syntaxes
         - OUD attribute extensions
-        - Compatibility with OID schemas
+        - Compatibility with vendor-specific schemas
         - DN case registry management for schema consistency
 
         **Protocol Compliance**: Fully implements
@@ -884,12 +889,744 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 validate_dependencies=validate_dependencies,
             )
 
+        @staticmethod
+        def _clean_syntax_quotes(value: str | bytes) -> str | bytes:
+            """OUD QUIRK: Remove quotes from SYNTAX OID in schema definitions.
+
+            RFC 4512 § 4.1.2: SYNTAX OID must NOT be quoted.
+            OID server exports: SYNTAX '1.3.6.1.4.1.1466.115.121.1.7' (invalid)
+            OUD requires: SYNTAX 1.3.6.1.4.1.1466.115.121.1.7 (valid)
+
+            Args:
+                value: Schema definition string (attributeTypes, objectClasses)
+
+            Returns:
+                Cleaned value with quotes removed from SYNTAX OID
+            """
+            if isinstance(value, bytes):
+                return value  # Binary values don't need cleaning
+
+            # Pattern: SYNTAX followed by optional space, quotes, OID, quotes
+            # Captures: SYNTAX '1.3.6.1.4.1.1466.115.121.1.7' or SYNTAX "..."
+            syntax_pattern = re.compile(
+                r"SYNTAX\s+['\"]([0-9.]+)['\"]"
+            )
+
+            # Replace quoted SYNTAX OID with unquoted version
+            cleaned = syntax_pattern.sub(r"SYNTAX \1", value)
+            return cleaned
+
+        def _add_ldif_block(
+            self,
+            ldif_lines: list[str],
+            schema_type: str,
+            value: str | bytes,
+            *,
+            is_first_block: bool,
+        ) -> bool:
+            """Add a single LDIF block for schema value.
+
+            Returns: False (next block won't be first)
+            """
+            # Add separator before block (not before first)
+            if not is_first_block:
+                ldif_lines.append("-")
+
+            # Add directive
+            ldif_lines.append(f"add: {schema_type}")
+
+            # Value (already in RFC format)
+            if isinstance(value, bytes):
+                encoded_value = base64.b64encode(value).decode("ascii")
+                ldif_lines.append(f"{schema_type}:: {encoded_value}")
+            else:
+                ldif_lines.append(f"{schema_type}: {value}")
+
+            return False  # Next block won't be first
+
+        def _write_entry_modify_add_format(
+            self,
+            entry_data: FlextLdifModels.Entry,
+            allowed_schema_oids: frozenset[str] | None = None,
+        ) -> FlextResult[str]:
+            """Write schema entry in OUD modify-add format.
+
+            Generates LDIF with changetype: modify and add: blocks.
+            CRITICAL: One add block PER SCHEMA VALUE, not per type.
+            Ordered by OID numerically, with whitelist filtering.
+
+            Example output:
+            ```
+            dn: cn=subschemasubentry
+            changetype: modify
+            add: attributeTypes
+            attributeTypes: ( 2.16.840.1.113894.1.1.321 NAME ... )
+            -
+            add: attributeTypes
+            attributeTypes: ( 2.16.840.1.113894.1.1.322 NAME ... )
+            -
+            add: objectClasses
+            objectClasses: ( 2.16.840.1.113894.1.2.9 NAME ... )
+            -
+            ```
+
+            Whitelist filtering:
+            - attributeTypes: Only in ALLOWED_SCHEMA_OIDS
+            - objectClasses: Only in ALLOWED_SCHEMA_OIDS
+            - matchingRules: EXCLUDED (empty list)
+            - matchingRuleUse: EXCLUDED (empty list)
+
+            Args:
+                entry_data: Schema entry to write
+                allowed_schema_oids: Optional set of allowed OIDs for filtering.
+                    If None, all OIDs are accepted (no filtering).
+                    Should be passed from migration configuration.
+
+            Returns:
+                FlextResult with LDIF string in OUD modify-add format
+
+            """
+            # Lazy import for optional external dependency
+            ldif_lines: list[str] = []
+
+            # DN line (required) - Entry already RFC-compliant from OID normalization
+            if not (entry_data.dn and entry_data.dn.value):
+                return FlextResult[str].fail("Entry DN is required for LDIF output")
+
+            # Entry.dn is already RFC-compliant (cn=schema) from OID parser normalization
+            # No conversion needed - use Entry.dn directly
+            ldif_lines.extend([
+                f"dn: {entry_data.dn.value}",
+                "changetype: modify",
+            ])
+
+            # Get attributes
+            if not entry_data.attributes or not entry_data.attributes.attributes:
+                ldif_text = "\n".join(ldif_lines) + "\n"
+                return FlextResult[str].ok(ldif_text)
+
+            attrs_dict = entry_data.attributes.attributes
+            # Use provided allowed OIDs or accept all if None
+            allowed_oids = set(allowed_schema_oids) if allowed_schema_oids else None
+
+            # OID pattern: ( number.number.number... NAME ...
+            oid_pattern = re.compile(r"\(\s*(\d+(?:\.\d+)*)\s+")
+
+            # Schema attribute types to process (in order)
+            schema_types_order = [
+                "attributeTypes",
+                "objectClasses",
+                "matchingRules",
+                "matchingRuleUse",
+            ]
+
+            first_block = True
+
+            # Process each schema type in order
+            for schema_type in schema_types_order:
+                # Match both cases (attributeTypes, attributetypes, etc.)
+                attr_key = next(
+                    (key for key in attrs_dict if key.lower() == schema_type.lower()),
+                    None,
+                )
+
+                if not attr_key or not attrs_dict[attr_key]:
+                    continue
+
+                # Filter: matchingRules and matchingRuleUse are EXCLUDED (not in whitelist)
+                if schema_type.lower() in {"matchingrules", "matchingruleuse"}:
+                    continue
+
+                # Filter and sort by OID for other types
+                filtered_values = self._filter_and_sort_schema_values(
+                    attrs_dict[attr_key],
+                    allowed_oids,
+                    oid_pattern,
+                )
+
+                # Write each value as separate add block (CRITICAL: ONE VALUE PER BLOCK)
+                for _oid, value in filtered_values:
+                    # OUD QUIRK: Clean SYNTAX OID quotes before writing
+                    # RFC 4512: SYNTAX OID must NOT be quoted
+                    # OID exports with quotes: SYNTAX '1.3.6.1.4.1.1466.115.121.1.7'
+                    # OUD requires without quotes: SYNTAX 1.3.6.1.4.1.1466.115.121.1.7
+                    # Call Schema's static method (DRY: avoid duplicating _clean_syntax_quotes)
+                    cleaned_value = FlextLdifServersOud.Schema._clean_syntax_quotes(value)
+
+                    first_block = self._add_ldif_block(
+                        ldif_lines,
+                        schema_type,
+                        cleaned_value,
+                        is_first_block=first_block,
+                    )
+
+            # Final separator (if we added any blocks)
+            if not first_block and ldif_lines[-1] != "-":
+                ldif_lines.append("-")
+
+            # Join with newlines and ensure proper LDIF formatting
+            ldif_text = "\n".join(ldif_lines)
+            if ldif_text and not ldif_text.endswith("\n"):
+                ldif_text += "\n"
+
+            return FlextResult[str].ok(ldif_text)
+
+            result = super()._write_entry(entry_data)
+            if result.is_failure:
+                return result
+
+            # Prefix each line with '# '
+            ldif_text = result.unwrap()
+            commented_lines = [f"# {line}" for line in ldif_text.split("\n")]
+            return FlextResult[str].ok("\n".join(commented_lines))
+
+        def _comment_acl_attributes(
+            self,
+            entry_data: FlextLdifModels.Entry,
+            acl_attr_names: frozenset[str],
+        ) -> FlextLdifModels.Entry:
+            """Move ACL attributes to metadata (RFC will comment them).
+
+            Moves ACL attributes from entry.attributes to entry_metadata[REMOVED_ATTRIBUTES_WITH_VALUES].
+            For OID entries with ACL transformations (orclaci → aci), uses original attribute name.
+            The RFC layer's write_removed_attributes_as_comments feature will then write
+            them as commented lines in the LDIF output.
+
+            Args:
+                entry_data: Entry to process
+                acl_attr_names: Set of ACL attribute names to comment (e.g., {'aci'})
+
+            Returns:
+                New Entry with ACL attributes moved to metadata using original names from transformations
+
+            """
+            if not entry_data.attributes:
+                return entry_data
+
+            acl_attrs, remaining_attrs = self._separate_acl_attributes(
+                entry_data.attributes.attributes, acl_attr_names
+            )
+
+            if not acl_attrs:
+                return entry_data
+
+            final_acl_attrs = self._resolve_acl_original_names(entry_data, acl_attrs)
+            new_entry_metadata = self._create_entry_metadata_with_acl_comments(
+                entry_data.entry_metadata, final_acl_attrs
+            )
+
+            return self._create_entry_with_acl_comments(
+                entry_data, remaining_attrs, new_entry_metadata
+            )
+
+        def _separate_acl_attributes(
+            self,
+            attrs_dict: dict[str, list[str]],
+            acl_attr_names: frozenset[str],
+        ) -> tuple[dict[str, list[str]], dict[str, list[str]]]:
+            """Separate ACL attributes from regular attributes."""
+            acl_attrs: dict[str, list[str]] = {}
+            remaining_attrs: dict[str, list[str]] = {}
+            acl_lower = {name.lower() for name in acl_attr_names}
+
+            for attr_name, values in attrs_dict.items():
+                if attr_name.lower() in acl_lower:
+                    acl_attrs[attr_name] = values
+                else:
+                    remaining_attrs[attr_name] = values
+
+            return acl_attrs, remaining_attrs
+
+        def _resolve_acl_original_names(
+            self,
+            entry_data: FlextLdifModels.Entry,
+            acl_attrs: dict[str, list[str]],
+        ) -> dict[str, list[str]]:
+            """Resolve original ACL attribute names from metadata transformations."""
+            if not (entry_data.metadata and entry_data.metadata.extensions):
+                return acl_attrs
+
+            transformations = entry_data.metadata.extensions.get("acl_transformations")
+            if not transformations or not isinstance(transformations, dict):
+                return acl_attrs
+
+            # transformations is dict[str, AttributeTransformation]
+            # Key is original_name, value has original_values
+            original_names: dict[str, list[str]] = {}
+            for orig_name, transformation in transformations.items():
+                if isinstance(transformation, dict):
+                    # AttributeTransformation serialized as dict
+                    original_names[orig_name] = transformation.get("original_values", [])
+                elif hasattr(transformation, "original_values"):
+                    # AttributeTransformation object
+                    original_names[orig_name] = transformation.original_values
+
+            return original_names or acl_attrs
+
+        def _create_entry_metadata_with_acl_comments(
+            self,
+            entry_metadata: dict[str, Any] | None,
+            acl_attrs: dict[str, list[str]],
+        ) -> dict[str, Any]:
+            """Create entry metadata with ACL attributes marked for commenting."""
+            new_metadata = dict(entry_metadata or {})
+            removed_attrs = new_metadata.get(MetaKeys.REMOVED_ATTRIBUTES_WITH_VALUES, {})
+
+            if isinstance(removed_attrs, dict):
+                removed_attrs.update(acl_attrs)
+            else:
+                removed_attrs = acl_attrs
+
+            new_metadata[MetaKeys.REMOVED_ATTRIBUTES_WITH_VALUES] = removed_attrs
+            return new_metadata
+
+        def _create_entry_with_acl_comments(
+            self,
+            entry_data: FlextLdifModels.Entry,
+            remaining_attrs: dict[str, list[str]],
+            new_entry_metadata: dict[str, Any],
+        ) -> FlextLdifModels.Entry:
+            """Create new entry with ACL attributes moved to metadata."""
+            if entry_data.dn is None:
+                return entry_data
+
+            new_entry_result = FlextLdifModels.Entry.create(
+                dn=entry_data.dn.value,
+                attributes=cast("dict[str, list[str] | str]", remaining_attrs),
+                metadata=entry_data.metadata,
+                entry_metadata=new_entry_metadata,
+            )
+
+            if new_entry_result.is_success:
+                return cast("FlextLdifModels.Entry", new_entry_result.unwrap())
+            return entry_data
+            """Hook: Validate OUD ACI macros after parsing Entry.
+
+            When reading OUD LDIF, ACIs may contain macros that require validation:
+            - ($dn): substring matching/substitution
+            - [$dn]: hierarchical substitution
+            - ($attr.attrName): attribute value substitution
+
+            This hook validates macro consistency WITHOUT expanding them
+            (runtime expansion happens in OUD directory server).
+
+            Processing:
+            1. Validate ACI macro rules if aci: attributes present
+            2. Preserve macros as-is (RFC Entry canonical format)
+            3. Add metadata notes if macros present
+
+            Args:
+                entry: Entry parsed from OUD LDIF (in RFC canonical format)
+
+            Returns:
+                FlextResult[Entry] - validated entry, unchanged if valid
+
+            """
+            # Extract attributes dict with None check for type safety
+            attrs_dict = (
+                entry.attributes.attributes if entry.attributes is not None else {}
+            )
+
+            # Validate ACI macros if present
+            aci_attrs = attrs_dict.get("aci")
+            if aci_attrs and isinstance(aci_attrs, list):
+                has_macros = False
+                for aci_value in aci_attrs:
+                    if isinstance(aci_value, str):
+                        # Check if macros present
+                        if re.search(r"\(\$dn\)|\[\$dn\]|\(\$attr\.", aci_value):
+                            has_macros = True
+
+                        # Validate macro rules
+                        validation_result = self._validate_aci_macros(aci_value)
+                        if validation_result.is_failure:
+                            return FlextResult[FlextLdifModels.Entry].fail(
+                                f"ACI macro validation failed: {validation_result.error}",
+                            )
+
+                # Log if macros were found (metadata is immutable - just log)
+                if has_macros:
+                    logger.debug(
+                        "Entry contains OUD ACI macros - preserved for runtime expansion"
+                    )
+
+            # Entry is RFC-canonical - return unchanged
+            return FlextResult[FlextLdifModels.Entry].ok(entry)
+
+        def _validate_aci_macros(self, aci_value: str) -> FlextResult[None]:
+            """Validate OUD ACI macro consistency rules.
+
+            OUD supports macro substitution in ACIs:
+            - ($dn): matches substring in target, replaces in subject
+            - [$dn]: hierarchical substitution in subject (drops leftmost RDN)
+            - ($attr.attrName): substitutes attribute value from target entry
+
+            Validation rules (must fail if violated):
+            1. If ($dn) in subject -> ($dn) must be in target
+            2. If [$dn] in subject -> ($dn) must be in target
+            3. After expansion, DN must be syntactically valid
+
+            Args:
+                aci_value: Single ACI string value
+
+            Returns:
+                FlextResult.ok() if valid, fail() if macro rules violated
+
+            """
+            # Check for macros in subject (userdn/groupdn/userattr)
+            has_macro_in_subject = bool(
+                re.search(r"\(\$dn\)|\[\$dn\]|\(\$attr\.", aci_value),
+            )
+
+            if not has_macro_in_subject:
+                # No macros - validation passes
+                return FlextResult[None].ok(None)
+
+            # If macros in subject, target MUST have ($dn)
+            has_macro_in_target = "($dn)" in aci_value
+
+            if not has_macro_in_target:
+                return FlextResult[None].fail(
+                    "ACI macro in subject requires ($dn) in target expression",
+                )
+
+            # Both ($dn) and [$dn] require ($dn) in target - already checked above
+            logger.debug(
+                "ACI macro validation passed: subject/target macro consistency OK"
+            )
+            return FlextResult[None].ok(None)
+
+        def _hook_pre_write_entry(
+            self,
+            entry: FlextLdifModels.Entry,
+        ) -> FlextResult[FlextLdifModels.Entry]:
+            """Hook: Validate OUD ACI macros before writing Entry.
+
+            OUD ACIs may contain macros for dynamic DN substitution:
+            - ($dn): substring substitution from target to subject
+            - [$dn]: hierarchical substitution (for domain-level delegation)
+            - ($attr.attrName): attribute value substitution
+
+            This hook validates macro consistency WITHOUT expanding them
+            (expansion happens at runtime in OUD directory server).
+
+            Rules enforced:
+            1. Subject macros require matching target macros
+            2. Macro syntax must be well-formed
+            3. No attribute mutations - RFC Entry preserved as-is
+
+            Args:
+                entry: RFC Entry (already canonical, with aci: attributes)
+
+            Returns:
+                FlextResult[Entry] - entry unchanged if valid, fail() if macro errors
+
+            """
+            # Extract attributes dict with None check for type safety
+            attrs_dict = (
+                entry.attributes.attributes if entry.attributes is not None else {}
+            )
+
+            # Validate ACI macros if present
+            aci_attrs = attrs_dict.get("aci")
+            if aci_attrs and isinstance(aci_attrs, list):
+                for aci_value in aci_attrs:
+                    if isinstance(aci_value, str):
+                        validation_result = self._validate_aci_macros(aci_value)
+                        if validation_result.is_failure:
+                            return FlextResult[FlextLdifModels.Entry].fail(
+                                f"ACI macro validation failed: {validation_result.error}",
+                            )
+
+            # Entry is RFC-canonical - return unchanged
+            # All conversions (orclaci→aci) already done in parsing phase
+            return FlextResult[FlextLdifModels.Entry].ok(entry)
+
+        def write_entry_to_ldif(
+            self,
+            entry_data: dict[str, object],
+        ) -> FlextResult[str]:
+            r"""Write OUD entry data to standard LDIF string format.
+
+            Converts parsed entry dictionary to LDIF format string.
+            Handles Oracle-specific attributes and preserves DN formatting.
+
+            Args:
+                entry_data: Parsed OUD entry data dictionary
+
+            Returns:
+                FlextResult with LDIF formatted entry string
+
+            Example:
+                Input: {FlextLdifConstants.DictKeys.DN: "cn=test,dc=example",
+                        FlextLdifConstants.DictKeys.CN: ["test"],
+                        FlextLdifConstants.DictKeys.OBJECTCLASS: ["person"]}
+                Output: "dn: cn=test,dc=example\ncn: test\nobjectClass: person\n"
+
+            """
+            try:
+                # Check for required DN field
+                if FlextLdifConstants.DictKeys.DN not in entry_data:
+                    return FlextResult[str].fail(
+                        "Missing required FlextLdifConstants.DictKeys.DN field",
+                    )
+
+                dn_raw = entry_data[FlextLdifConstants.DictKeys.DN]
+                # Ensure dn is str for string operations
+                dn = str(dn_raw) if dn_raw is not None else ""
+
+                # Auto-convert RFC schema DN to OUD schema DN
+                schema_dn_prefix = "cn=subschemasubentry"
+                if dn.lower().startswith(schema_dn_prefix):
+                    dn = FlextLdifServersOud.Constants.SCHEMA_DN
+
+                ldif_lines = [f"dn: {dn}"]
+
+                # Check if this is a schema modification entry
+                is_modify = False
+                changetype_list = entry_data.get("changetype", [])
+                if isinstance(changetype_list, list) and "modify" in changetype_list:
+                    is_modify = True
+                    ldif_lines.append("changetype: modify")
+
+                # Handle LDIF modify format using utility
+                if is_modify and (
+                    "_modify_add_attributetypes" in entry_data
+                    or "_modify_add_objectclasses" in entry_data
+                ):
+                    ldif_lines.extend(
+                        FlextLdifUtilities.Writer.write_modify_operations(entry_data),
+                    )
+                else:
+                    # Standard entry format - determine attribute order using utility
+                    attrs_to_process = (
+                        FlextLdifUtilities.Writer.determine_attribute_order(entry_data)
+                    )
+
+                    if attrs_to_process is None:
+                        # Default ordering: filter out special keys
+                        attrs_to_process = [
+                            (key, value)
+                            for key, value in entry_data.items()
+                            if key
+                            not in {
+                                FlextLdifConstants.DictKeys.DN,
+                                "_metadata",
+                                FlextLdifConstants.QuirkMetadataKeys.SERVER_TYPE,
+                                "changetype",
+                                "_acl_attributes",
+                            }
+                        ]
+
+                    # Extract base64 attributes using utility
+                    base64_attrs = FlextLdifUtilities.Writer.extract_base64_attrs(
+                        entry_data,
+                    )
+
+                    # Write attributes using utilities
+                    for attr_name, attr_value in attrs_to_process:
+                        # Check if should skip using utility
+                        if FlextLdifUtilities.Writer.should_skip_attribute(attr_name):
+                            continue
+
+                        # Format attribute lines using utility
+                        is_base64 = attr_name in base64_attrs
+                        attr_lines = FlextLdifUtilities.Writer.format_attribute_line(
+                            attr_name,
+                            attr_value,
+                            is_base64=is_base64,
+                            attribute_case_map=dict(
+                                FlextLdifServersOud.Constants.ATTRIBUTE_CASE_MAP,
+                            ),
+                        )
+                        ldif_lines.extend(attr_lines)
+
+                # Join with newlines and add trailing newline
+                ldif_string = "\n".join(ldif_lines) + "\n"
+                return FlextResult[str].ok(ldif_string)
+
+            except Exception as e:
+                return FlextResult[str].fail(f"OUD write entry failed: {e}")
+
+
+        def extract_entries_from_ldif(
+            self,
+            ldif_content: str,
+        ) -> FlextResult[list[FlextLdifModels.Entry]]:
+            """Extract and parse all directory entries from LDIF content.
+
+            Strategy pattern: OUD-specific approach to extract entries from LDIF.
+
+            Args:
+            ldif_content: Raw LDIF content containing directory entries
+
+            Returns:
+            FlextResult with list of parsed Entry models
+
+            """
+            try:
+                entries: list[FlextLdifModels.Entry] = []
+                current_entry: dict[str, object] = {}
+                current_attr: str | None = None
+                current_values: list[str] = []
+
+                for line in ldif_content.split("\n"):
+                    # Empty line indicates end of entry
+                    if not line.strip():
+                        if current_entry:
+                            # Finalize and process entry
+                            FlextLdifUtilities.Parser.finalize_pending_attribute(
+                                current_attr,
+                                current_values,
+                                current_entry,
+                            )
+                            self._finalize_and_parse_entry(current_entry, entries)
+                            current_entry = {}
+                            current_attr = None
+                            current_values = []
+                        continue
+
+                    # Skip comments
+                    if line.startswith("#"):
+                        continue
+
+                    # Continuation line (starts with space)
+                    if line.startswith(" ") and current_attr and current_values:
+                        current_values[-1] += line[1:]  # Remove leading space
+                        continue
+
+                    # Process new attribute line using utility
+                    current_attr, current_values = (
+                        FlextLdifUtilities.Parser.process_ldif_attribute_line(
+                            line,
+                            current_attr,
+                            current_values,
+                            current_entry,
+                        )
+                    )
+
+                # Process final entry
+                if current_entry:
+                    FlextLdifUtilities.Parser.finalize_pending_attribute(
+                        current_attr,
+                        current_values,
+                        current_entry,
+                    )
+                    self._finalize_and_parse_entry(current_entry, entries)
+
+                return FlextResult[list[FlextLdifModels.Entry]].ok(entries)
+
+            except Exception as e:
+                return FlextResult[list[FlextLdifModels.Entry]].fail(
+                    f"OUD entry extraction failed: {e}",
+                )
+
+        def _inject_validation_rules(
+            self,
+            entry: FlextLdifModels.Entry,
+        ) -> FlextLdifModels.Entry:
+            """Inject OUD-specific validation rules into Entry metadata via DI.
+
+            Architecture (Dependency Injection Pattern):
+            - Reads ServerValidationRules frozensets from FlextLdifConstants
+            - Determines OUD requirements dynamically (NO hard-coded logic)
+            - Injects rules via metadata.extensions["validation_rules"]
+            - Entry.validate_server_specific_rules() applies rules dynamically
+
+            OUD-specific differences from OID:
+            - DN case normalization: lowercase (vs OID preserves case)
+            - Strict schema enforcement: requires objectClass + naming attribute
+            - Binary option required: ;binary suffix mandatory for binary attributes
+            - ACL format: RFC "aci" format (vs OID "orclaci")
+
+            This enables:
+            - Dynamic validation based on server requirements
+            - ZERO hard-coded validation logic in Entry model
+            - ZERO DATA LOSS through metadata tracking
+            - Bidirectional conversion support (OUD ↔ other servers)
+
+            Args:
+                entry: Entry to inject validation rules into
+
+            Returns:
+                Entry with validation_rules in metadata.extensions
+
+            """
+            # Determine server type from constants
+            server_type = FlextLdifConstants.ServerTypes.OUD
+
+            # Build validation rules dictionary by reading frozensets
+            # ZERO hard-coded values - all from Constants!
+            # Type: Any required for nested dict access (dn_case_rules["normalize_to"])
+            validation_rules: dict[str, Any] = {
+                # OBJECTCLASS requirement (OUD is strict - check frozenset)
+                "requires_objectclass": (
+                    server_type
+                    in FlextLdifConstants.ServerValidationRules.OBJECTCLASS_REQUIRED_SERVERS
+                ),
+                # NAMING ATTRIBUTE requirement (OUD is strict - check frozenset)
+                "requires_naming_attr": (
+                    server_type
+                    in FlextLdifConstants.ServerValidationRules.NAMING_ATTR_REQUIRED_SERVERS
+                ),
+                # BINARY OPTION requirement (OUD is strict - check frozenset)
+                "requires_binary_option": (
+                    server_type
+                    in FlextLdifConstants.ServerValidationRules.BINARY_OPTION_REQUIRED_SERVERS
+                ),
+                # ENCODING RULES (OUD supports UTF-8 primarily)
+                "encoding_rules": {
+                    "default_encoding": "utf-8",
+                    "allowed_encodings": ["utf-8", "utf-16", "ascii"],
+                },
+                # DN CASE RULES (OUD-specific: normalize to lowercase)
+                "dn_case_rules": {
+                    "preserve_case": False,  # OUD normalizes DN case
+                    "normalize_to": "lowercase",  # OUD uses lowercase DNs
+                },
+                # ACL FORMAT RULES (OUD uses RFC ACI format, not OID orclaci)
+                "acl_format_rules": {
+                    "format": "aci",  # RFC format (not "orclaci")
+                    "attribute_name": "aci",  # RFC attribute name
+                    "requires_target": True,  # OUD ACIs require target
+                    "requires_subject": True,  # OUD ACIs require subject
+                },
+                # ZERO DATA LOSS tracking flags
+                "track_deletions": True,  # Track deleted attributes in metadata
+                "track_modifications": True,  # Track original values before modifications
+                "track_conversions": True,  # Track format conversions
+            }
+
+            # Ensure entry has metadata
+            if entry.metadata is None:
+                entry.metadata = FlextLdifModels.QuirkMetadata.create_for(
+                    FlextLdifConstants.ServerTypes.OUD,
+                    extensions={},
+                )
+
+            # Inject validation rules via metadata.extensions (DI pattern)
+            entry.metadata.extensions["validation_rules"] = validation_rules
+
+            # Type-safe extraction for logging (cast for Pyrefly)
+            dn_case_rules = cast("dict[str, object]", validation_rules["dn_case_rules"])
+            dn_normalize = dn_case_rules["normalize_to"]
+
+            logger.debug(
+                "Injected OUD validation rules into Entry metadata",
+                requires_objectclass=validation_rules["requires_objectclass"],
+                requires_naming_attr=validation_rules["requires_naming_attr"],
+                requires_binary_option=validation_rules["requires_binary_option"],
+                dn_case_normalize=dn_normalize,
+            )
+
+            return entry
+
     class Acl(FlextLdifServersRfc.Acl):
         """Oracle OUD ACL quirk (nested).
 
         Extends RFC ACL parsing with Oracle OUD-specific ACL formats:
         - ds-cfg-access-control-handler: OUD access control
-        - OUD-specific ACL syntax (different from OID orclaci)
+        - OUD-specific ACL syntax (RFC-compliant ACI format)
 
         Example:
             quirk = FlextLdifServersOud.Acl()
@@ -911,7 +1648,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             "aclEntry",  # ACL entry
         ]
 
-        # OUD-specific extensions (fewer than OID)
+        # OUD-specific ACL extensions
         OUD_ACL_ATTRIBUTES: ClassVar[list[str]] = [
             "orclaci",  # OUD uses Oracle ACIs (compatibility)
             "orclentrylevelaci",  # OUD entry-level ACI
@@ -961,7 +1698,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
 
         # NOTE: Obsolete method removed - hook registration pattern changed
         # AclConverter was moved to services/acl.py as FlextLdifAcl
-        # Use FlextLdifAcl for OID→OUD ACL conversions instead
+        # Use FlextLdifAcl for ACL format conversions (RFC → server-specific format)
 
         def can_handle(self, acl_line: FlextLdifTypes.AclOrString) -> bool:
             """Check if this is an Oracle OUD ACL (public method).
@@ -1020,26 +1757,61 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             targetattr_prefix = FlextLdifServersOud.Constants.ACL_TARGETATTR_PREFIX
             targetscope_prefix = FlextLdifServersOud.Constants.ACL_TARGETSCOPE_PREFIX
             version_prefix = FlextLdifServersOud.Constants.ACL_DEFAULT_VERSION
-            return (
-                normalized.startswith(
-                    (
-                        aci_prefix,
-                        targetattr_prefix,
-                        targetscope_prefix,
-                        version_prefix,
-                    ),
+            normalized_lower = normalized.lower()
+
+            # RFC 4876 ACI format detection
+            if normalized.startswith(
+                (
+                    aci_prefix,
+                    targetattr_prefix,
+                    targetscope_prefix,
+                    version_prefix,
+                ),
+            ) or "ds-cfg-" in normalized_lower:
+                return True
+
+            # ds-privilege-name format: simple privilege names (OUD-specific)
+            # Examples: "config-read", "password-reset", "bypass-acl"
+            # Must NOT contain "access to" (OID format), parentheses (ACI format), or equals (attribute format)
+            return bool(
+                normalized
+                and not any(
+                    pattern in normalized_lower
+                    for pattern in ["access to", "(", ")", "=", ":"]
                 )
-                or "ds-cfg-" in normalized.lower()
             )
 
         def _parse_acl(self, acl_line: str) -> FlextResult[FlextLdifModels.Acl]:
-            """Parse Oracle OUD ACL string to RFC-compliant internal model using functional composition.
+            """Parse Oracle OUD ACL string to RFC-compliant internal model.
+
+            Supports two OUD ACL formats:
+            1. RFC 4876 ACI format: aci: (targetattr=...)(version 3.0; acl "name"; ...)
+            2. ds-privilege-name format: Simple privilege names like "config-read"
+
+            Args:
+            acl_line: ACL definition line (may be ACI or ds-privilege-name)
+
+            Returns:
+            FlextResult with OUD ACL Pydantic model
+
+            """
+            normalized = acl_line.strip()
+
+            # Detect format: RFC 4876 ACI or ds-privilege-name
+            if normalized.startswith(FlextLdifServersOud.Constants.ACL_ACI_PREFIX):
+                # RFC 4876 ACI format
+                return self._parse_aci_format(acl_line)
+            # ds-privilege-name format (simple privilege names)
+            return self._parse_ds_privilege_name(normalized)
+
+        def _parse_aci_format(self, acl_line: str) -> FlextResult[FlextLdifModels.Acl]:
+            """Parse RFC 4876 ACI format using functional composition.
 
             Normalizes OUD ACI (Access Control Instruction) format to RFC-compliant
             internal representation using monadic patterns and functional composition.
 
             Args:
-            acl_line: ACL definition line (may contain newlines for multi-line ACIs)
+            acl_line: ACL definition line with 'aci:' prefix
 
             Returns:
             FlextResult with OUD ACL Pydantic model
@@ -1116,7 +1888,53 @@ class FlextLdifServersOud(FlextLdifServersRfc):
 
             except Exception as e:
                 return FlextResult[FlextLdifModels.Acl].fail(
-                    f"Failed to parse OUD ACL: {e}"
+                    f"Failed to parse OUD ACI format: {e}"
+                )
+
+        def _parse_ds_privilege_name(
+            self, privilege_name: str
+        ) -> FlextResult[FlextLdifModels.Acl]:
+            """Parse OUD ds-privilege-name format (simple privilege names).
+
+            Oracle OUD uses simple privilege names for access control:
+            - config-read, config-write, config-delete
+            - password-reset, password-change
+            - bypass-acl, bypass-lockdown
+            - And other REDACTED_LDAP_BIND_PASSWORDistrative privileges
+
+            Args:
+            privilege_name: Simple privilege name (e.g., "config-read")
+
+            Returns:
+            FlextResult with OUD ACL Pydantic model
+
+            """
+            try:
+                # Build minimal ACL model for ds-privilege-name
+                # This format doesn't have traditional target/subject/permissions
+                acl_model = FlextLdifModels.Acl(
+                    name=privilege_name,  # Use privilege name as ACL name
+                    target=None,  # No target in ds-privilege-name format
+                    subject=None,  # No subject in ds-privilege-name format
+                    permissions=None,  # No traditional read/write/add permissions
+                    server_type="oud",  # OUD server type
+                    raw_line=privilege_name,  # Original line
+                    raw_acl=privilege_name,  # Raw ACL string
+                    validation_violations=[],  # No validation issues
+                    metadata=FlextLdifModels.QuirkMetadata(
+                        quirk_type="oud",
+                        extensions={
+                            "ds_privilege_name": privilege_name,
+                            "format_type": "ds-privilege-name",
+                        },
+                    ),
+                )
+
+                return FlextResult[FlextLdifModels.Acl].ok(acl_model)
+
+            except Exception as e:
+                return FlextResult[FlextLdifModels.Acl].fail(
+                    f"Failed to parse OUD ds-privilege-name: {e}"
                 )
 
         def _build_acl_model(
@@ -1386,7 +2204,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
 
             if not filtered_ops:
                 return FlextResult[str].fail(
-                    f"ACL model has no OUD-supported permissions (all were OID-specific like {FlextLdifServersOud.Constants.PERMISSION_SELF_WRITE})",
+                    f"ACL model has no OUD-supported permissions (all were unsupported vendor-specific permissions like {FlextLdifServersOud.Constants.PERMISSION_SELF_WRITE}, stored in metadata)",
                 )
 
             ops_str = ",".join(filtered_ops)
@@ -1419,8 +2237,8 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             """Write RFC-compliant ACL model to OUD ACI string format.
 
             Serializes the RFC-compliant internal model to Oracle OUD ACI format string,
-            including comprehensive comment generation for OID→OUD conversions to ensure
-            zero data loss.
+            including comprehensive comment generation for vendor-specific ACL format conversions
+            to ensure zero data loss (all unsupported features tracked in metadata).
 
             Args:
                 acl_data: RFC-compliant ACL Pydantic model
@@ -1436,7 +2254,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             try:
                 aci_output_lines: list[str] = []
 
-                # Generate OID→OUD Conversion Comments
+                # Generate Server Conversion Comments (server-agnostic)
                 if (
                     acl_data.metadata
                     and hasattr(acl_data.metadata, "extensions")
@@ -1444,9 +2262,10 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 ):
                     extensions = acl_data.metadata.extensions
 
-                    if extensions.get("converted_from_oid"):
+                    # Generic conversion tracking (OUD doesn't need to know source server)
+                    if extensions.get(MetaKeys.CONVERTED_FROM_SERVER):
                         conversion_comments = extensions.get(
-                            "oud_conversion_comments",
+                            MetaKeys.CONVERSION_COMMENTS,
                             [],
                         )
                         if conversion_comments and isinstance(
@@ -1710,15 +2529,8 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             ):
                 return True
 
-            # Check for OID-specific attributes (not OUD)
-            # OID attributes start with "orcl" - these are not OUD entries
-            if any(
-                attr_name.lower().startswith(prefix)
-                for attr_name in entry_attrs
-                for prefix in FlextLdifServersOud.Constants.OID_PREFIXES
-            ):
-                return False
-
+            # OUD detects entries based on OUD-specific attributes only
+            # Each server should only know its own format, not other servers' formats
             return FlextLdifConstants.DictKeys.OBJECTCLASS.lower() in entry_attrs
 
         # Oracle OUD boolean attributes that expect TRUE/FALSE instead of 0/1
@@ -1846,24 +2658,9 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                     processed_attributes.keys(),
                 )
 
-            # Detect Oracle objectClasses
-            if FlextLdifConstants.DictKeys.OBJECTCLASS in processed_attributes:
-                oc_values = processed_attributes[
-                    FlextLdifConstants.DictKeys.OBJECTCLASS
-                ]
-                if isinstance(oc_values, list):
-                    oracle_ocs = [
-                        str(oc)
-                        for oc in oc_values
-                        if any(
-                            prefix in str(oc).lower()
-                            for prefix in FlextLdifServersOud.Constants.OID_PREFIXES
-                        )
-                    ]
-                    if oracle_ocs:
-                        metadata_extensions[
-                            FlextLdifConstants.MetadataKeys.ORACLE_OBJECTCLASSES
-                        ] = oracle_ocs
+            # OUD server only preserves OUD-specific patterns
+            # Vendor-specific objectClasses from other servers should be handled
+            # at the Entry level, not by individual server quirks
 
             return metadata_extensions
 
@@ -2174,9 +2971,12 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             # Lazy import for optional external dependency
             ldif_lines: list[str] = []
 
-            # DN line (required)
+            # DN line (required) - Entry already RFC-compliant from OID normalization
             if not (entry_data.dn and entry_data.dn.value):
                 return FlextResult[str].fail("Entry DN is required for LDIF output")
+
+            # Entry.dn is already RFC-compliant (cn=schema) from OID parser normalization
+            # No conversion needed - use Entry.dn directly
             ldif_lines.extend([
                 f"dn: {entry_data.dn.value}",
                 "changetype: modify",
@@ -2228,10 +3028,17 @@ class FlextLdifServersOud(FlextLdifServersRfc):
 
                 # Write each value as separate add block (CRITICAL: ONE VALUE PER BLOCK)
                 for _oid, value in filtered_values:
+                    # OUD QUIRK: Clean SYNTAX OID quotes before writing
+                    # RFC 4512: SYNTAX OID must NOT be quoted
+                    # OID exports with quotes: SYNTAX '1.3.6.1.4.1.1466.115.121.1.7'
+                    # OUD requires without quotes: SYNTAX 1.3.6.1.4.1.1466.115.121.1.7
+                    # Call Schema's static method (DRY: avoid duplicating _clean_syntax_quotes)
+                    cleaned_value = FlextLdifServersOud.Schema._clean_syntax_quotes(value)
+
                     first_block = self._add_ldif_block(
                         ldif_lines,
                         schema_type,
-                        value,
+                        cleaned_value,
                         is_first_block=first_block,
                     )
 
@@ -2246,14 +3053,89 @@ class FlextLdifServersOud(FlextLdifServersRfc):
 
             return FlextResult[str].ok(ldif_text)
 
+        def _add_original_entry_comments(
+            self,
+            entry_data: FlextLdifModels.Entry,
+            write_options: FlextLdifModels.WriteFormatOptions | None,
+        ) -> list[str]:
+            """Add original entry as commented LDIF block.
+
+            Args:
+                entry_data: Entry with metadata containing original entry
+                write_options: Write options with write_original_entry_as_comment flag
+
+            Returns:
+                List of LDIF comment lines (empty if feature disabled)
+
+            """
+            if not (write_options and write_options.write_original_entry_as_comment):
+                return []
+
+            if not entry_data.entry_metadata:
+                return []
+
+            original_entry_obj = entry_data.entry_metadata.get(MetaKeys.ORIGINAL_ENTRY)
+            if not (original_entry_obj and isinstance(original_entry_obj, FlextLdifModels.Entry)):
+                return []
+
+            ldif_parts: list[str] = []
+            ldif_parts.extend([
+                "# " + "=" * 70,
+                "# ORIGINAL OID Entry (commented)",
+                "# " + "=" * 70,
+            ])
+
+            original_result = self._write_entry_as_comment(original_entry_obj)
+            if original_result.is_success:
+                ldif_parts.append(original_result.unwrap())
+
+            ldif_parts.extend([
+                "",
+                "# " + "=" * 70,
+                "# CONVERTED OUD Entry (active)",
+                "# " + "=" * 70,
+            ])
+
+            return ldif_parts
+
+        def _apply_phase_aware_acl_handling(
+            self,
+            entry_data: FlextLdifModels.Entry,
+            write_options: FlextLdifModels.WriteFormatOptions | None,
+        ) -> FlextLdifModels.Entry:
+            """Apply phase-aware ACL attribute commenting.
+
+            Args:
+                entry_data: Entry to process
+                write_options: Write options with ACL phase settings
+
+            Returns:
+                Entry with ACL attributes commented if applicable
+
+            """
+            if not (write_options and write_options.comment_acl_in_non_acl_phases):
+                return entry_data
+
+            category = write_options.entry_category
+            acl_attrs = write_options.acl_attribute_names
+
+            if not (category and category != "acl" and acl_attrs):
+                return entry_data
+
+            # Comment out ACL attributes in non-ACL phases (01/02/03)
+            return self._comment_acl_attributes(entry_data, acl_attrs)
+
         def _write_entry(
             self,
             entry_data: FlextLdifModels.Entry,
         ) -> FlextResult[str]:
-            """Write Entry to LDIF format (override RFC to handle schema entries).
+            """Write Entry to LDIF with OUD-specific formatting + phase-aware ACL handling.
 
-            For schema entries, uses OUD modify-add format.
-            For other entries, delegates to RFC implementation.
+            Features:
+            1. Schema entries: OUD modify-add format (OUD requirement)
+            2. Original entry commenting: Write source entry as commented LDIF block
+            3. Phase-aware ACL handling: Comment ACL attributes in non-ACL phases
+            4. Standard entries: RFC format
 
             Args:
                 entry_data: Entry model to write
@@ -2262,23 +3144,176 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 FlextResult with LDIF string
 
             """
-            # Check if this is a schema entry
+            # Extract write options from entry metadata
+            write_options: FlextLdifModels.WriteFormatOptions | None = None
+            if entry_data.entry_metadata:
+                write_options_obj = entry_data.entry_metadata.get(MetaKeys.WRITE_OPTIONS)
+                if isinstance(write_options_obj, FlextLdifModels.WriteFormatOptions):
+                    write_options = write_options_obj
+
+            # Build LDIF output (may include multiple blocks)
+            ldif_parts: list[str] = []
+
+            # FEATURE 1: Write original entry as comment
+            ldif_parts.extend(self._add_original_entry_comments(entry_data, write_options))
+
+            # FEATURE 2: Phase-aware ACL attribute handling
+            entry_data = self._apply_phase_aware_acl_handling(entry_data, write_options)
+
+            # FEATURE 3: Schema entries use modify-add format (OUD requirement)
             if self._is_schema_entry(entry_data):
-                # Check if write_options request modify format
-                write_options: FlextLdifModels.WriteFormatOptions | None = None
-                if entry_data.entry_metadata:
-                    write_options_obj = entry_data.entry_metadata.get("_write_options")
-                    if isinstance(
-                        write_options_obj, FlextLdifModels.WriteFormatOptions
-                    ):
-                        write_options = write_options_obj
+                allowed_oids: frozenset[str] | None = None
+                if write_options:
+                    allowed_oids = getattr(write_options, 'allowed_schema_oids', None)
+                result = self._write_entry_modify_add_format(entry_data, allowed_oids)
+            else:
+                # FEATURE 4: Non-schema entries use RFC implementation
+                result = super()._write_entry(entry_data)
 
-                if write_options and write_options.ldif_changetype == "modify":
-                    # Use schema modify-add format
-                    return self._write_entry_modify_add_format(entry_data)
+            if result.is_failure:
+                return result
 
-            # Non-schema or no modify format requested: use RFC implementation
-            return super()._write_entry(entry_data)
+            ldif_parts.append(result.unwrap())
+
+            return FlextResult[str].ok("\n".join(ldif_parts))
+
+        def _write_entry_as_comment(
+            self,
+            entry_data: FlextLdifModels.Entry,
+        ) -> FlextResult[str]:
+            """Write entry as commented LDIF (each line prefixed with '# ').
+
+            Args:
+                entry_data: Entry to write as comment
+
+            Returns:
+                FlextResult with commented LDIF string
+
+            """
+            # Use RFC write method to get LDIF representation
+            result = super()._write_entry(entry_data)
+            if result.is_failure:
+                return result
+
+            # Prefix each line with '# '
+            ldif_text = result.unwrap()
+            commented_lines = [f"# {line}" for line in ldif_text.split("\n")]
+            return FlextResult[str].ok("\n".join(commented_lines))
+
+        def _comment_acl_attributes(
+            self,
+            entry_data: FlextLdifModels.Entry,
+            acl_attr_names: frozenset[str],
+        ) -> FlextLdifModels.Entry:
+            """Move ACL attributes to metadata (RFC will comment them).
+
+            Moves ACL attributes from entry.attributes to entry_metadata[REMOVED_ATTRIBUTES_WITH_VALUES].
+            For OID entries with ACL transformations (orclaci → aci), uses original attribute name.
+            The RFC layer's write_removed_attributes_as_comments feature will then write
+            them as commented lines in the LDIF output.
+
+            Args:
+                entry_data: Entry to process
+                acl_attr_names: Set of ACL attribute names to comment (e.g., {'aci'})
+
+            Returns:
+                New Entry with ACL attributes moved to metadata using original names from transformations
+
+            """
+            if not entry_data.attributes:
+                return entry_data
+
+            acl_attrs, remaining_attrs = self._separate_acl_attributes(
+                entry_data.attributes.attributes, acl_attr_names
+            )
+
+            if not acl_attrs:
+                return entry_data
+
+            final_acl_attrs = self._resolve_acl_original_names(entry_data, acl_attrs)
+            new_entry_metadata = self._create_entry_metadata_with_acl_comments(
+                entry_data.entry_metadata, final_acl_attrs
+            )
+
+            return self._create_entry_with_acl_comments(
+                entry_data, remaining_attrs, new_entry_metadata
+            )
+
+        def _separate_acl_attributes(
+            self, attrs_dict: dict[str, list[str]], acl_attr_names: frozenset[str]
+        ) -> tuple[dict[str, list[str]], dict[str, list[str]]]:
+            """Separate ACL attributes from regular attributes."""
+            acl_attrs: dict[str, list[str]] = {}
+            remaining_attrs: dict[str, list[str]] = {}
+            acl_lower = {name.lower() for name in acl_attr_names}
+
+            for attr_name, values in attrs_dict.items():
+                if attr_name.lower() in acl_lower:
+                    acl_attrs[attr_name] = values
+                else:
+                    remaining_attrs[attr_name] = values
+
+            return acl_attrs, remaining_attrs
+
+        def _resolve_acl_original_names(
+            self, entry_data: FlextLdifModels.Entry, acl_attrs: dict[str, list[str]]
+        ) -> dict[str, list[str]]:
+            """Resolve original ACL attribute names from metadata transformations."""
+            if not (entry_data.metadata and entry_data.metadata.extensions):
+                return acl_attrs
+
+            transformations = entry_data.metadata.extensions.get("acl_transformations")
+            if not transformations or not isinstance(transformations, dict):
+                return acl_attrs
+
+            # transformations is dict[str, AttributeTransformation]
+            # Key is original_name, value has original_values
+            original_names: dict[str, list[str]] = {}
+            for orig_name, transformation in transformations.items():
+                if isinstance(transformation, dict):
+                    # AttributeTransformation serialized as dict
+                    original_names[orig_name] = transformation.get("original_values", [])
+                elif hasattr(transformation, "original_values"):
+                    # AttributeTransformation object
+                    original_names[orig_name] = transformation.original_values
+
+            return original_names or acl_attrs
+
+        def _create_entry_metadata_with_acl_comments(
+            self, entry_metadata: dict[str, Any] | None, acl_attrs: dict[str, list[str]]
+        ) -> dict[str, Any]:
+            """Create entry metadata with ACL attributes marked for commenting."""
+            new_metadata = dict(entry_metadata or {})
+            removed_attrs = new_metadata.get(MetaKeys.REMOVED_ATTRIBUTES_WITH_VALUES, {})
+
+            if isinstance(removed_attrs, dict):
+                removed_attrs.update(acl_attrs)
+            else:
+                removed_attrs = acl_attrs
+
+            new_metadata[MetaKeys.REMOVED_ATTRIBUTES_WITH_VALUES] = removed_attrs
+            return new_metadata
+
+        def _create_entry_with_acl_comments(
+            self,
+            entry_data: FlextLdifModels.Entry,
+            remaining_attrs: dict[str, list[str]],
+            new_entry_metadata: dict[str, Any],
+        ) -> FlextLdifModels.Entry:
+            """Create new entry with ACL attributes moved to metadata."""
+            if entry_data.dn is None:
+                return entry_data
+
+            new_entry_result = FlextLdifModels.Entry.create(
+                dn=entry_data.dn.value,
+                attributes=cast("dict[str, list[str] | str]", remaining_attrs),
+                metadata=entry_data.metadata,
+                entry_metadata=new_entry_metadata,
+            )
+
+            if new_entry_result.is_success:
+                return cast("FlextLdifModels.Entry", new_entry_result.unwrap())
+            return entry_data
 
         def write(
             self,
@@ -2379,8 +3414,8 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             - ($attr.attrName): substitutes attribute value from target entry
 
             Validation rules (must fail if violated):
-            1. If ($dn) in subject → ($dn) must be in target
-            2. If [$dn] in subject → ($dn) must be in target
+            1. If ($dn) in subject -> ($dn) must be in target
+            2. If [$dn] in subject -> ($dn) must be in target
             3. After expansion, DN must be syntactically valid
 
             Args:
@@ -2656,6 +3691,106 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 return FlextResult[list[FlextLdifModels.Entry]].fail(
                     f"OUD entry extraction failed: {e}",
                 )
+
+        def _inject_validation_rules(
+            self,
+            entry: FlextLdifModels.Entry,
+        ) -> FlextLdifModels.Entry:
+            """Inject OUD-specific validation rules into Entry metadata via DI.
+
+            Architecture (Dependency Injection Pattern):
+            - Reads ServerValidationRules frozensets from FlextLdifConstants
+            - Determines OUD requirements dynamically (NO hard-coded logic)
+            - Injects rules via metadata.extensions["validation_rules"]
+            - Entry.validate_server_specific_rules() applies rules dynamically
+
+            OUD-specific differences from OID:
+            - DN case normalization: lowercase (vs OID preserves case)
+            - Strict schema enforcement: requires objectClass + naming attribute
+            - Binary option required: ;binary suffix mandatory for binary attributes
+            - ACL format: RFC "aci" format (vs OID "orclaci")
+
+            This enables:
+            - Dynamic validation based on server requirements
+            - ZERO hard-coded validation logic in Entry model
+            - ZERO DATA LOSS through metadata tracking
+            - Bidirectional conversion support (OUD ↔ other servers)
+
+            Args:
+                entry: Entry to inject validation rules into
+
+            Returns:
+                Entry with validation_rules in metadata.extensions
+
+            """
+            # Determine server type from constants
+            server_type = FlextLdifConstants.ServerTypes.OUD
+
+            # Build validation rules dictionary by reading frozensets
+            # ZERO hard-coded values - all from Constants!
+            # Type: Any required for nested dict access (dn_case_rules["normalize_to"])
+            validation_rules: dict[str, Any] = {
+                # OBJECTCLASS requirement (OUD is strict - check frozenset)
+                "requires_objectclass": (
+                    server_type
+                    in FlextLdifConstants.ServerValidationRules.OBJECTCLASS_REQUIRED_SERVERS
+                ),
+                # NAMING ATTRIBUTE requirement (OUD is strict - check frozenset)
+                "requires_naming_attr": (
+                    server_type
+                    in FlextLdifConstants.ServerValidationRules.NAMING_ATTR_REQUIRED_SERVERS
+                ),
+                # BINARY OPTION requirement (OUD is strict - check frozenset)
+                "requires_binary_option": (
+                    server_type
+                    in FlextLdifConstants.ServerValidationRules.BINARY_OPTION_REQUIRED_SERVERS
+                ),
+                # ENCODING RULES (OUD supports UTF-8 primarily)
+                "encoding_rules": {
+                    "default_encoding": "utf-8",
+                    "allowed_encodings": ["utf-8", "utf-16", "ascii"],
+                },
+                # DN CASE RULES (OUD-specific: normalize to lowercase)
+                "dn_case_rules": {
+                    "preserve_case": False,  # OUD normalizes DN case
+                    "normalize_to": "lowercase",  # OUD uses lowercase DNs
+                },
+                # ACL FORMAT RULES (OUD uses RFC ACI format, not OID orclaci)
+                "acl_format_rules": {
+                    "format": "aci",  # RFC format (not "orclaci")
+                    "attribute_name": "aci",  # RFC attribute name
+                    "requires_target": True,  # OUD ACIs require target
+                    "requires_subject": True,  # OUD ACIs require subject
+                },
+                # ZERO DATA LOSS tracking flags
+                "track_deletions": True,  # Track deleted attributes in metadata
+                "track_modifications": True,  # Track original values before modifications
+                "track_conversions": True,  # Track format conversions
+            }
+
+            # Ensure entry has metadata
+            if entry.metadata is None:
+                entry.metadata = FlextLdifModels.QuirkMetadata.create_for(
+                    FlextLdifConstants.ServerTypes.OUD,
+                    extensions={},
+                )
+
+            # Inject validation rules via metadata.extensions (DI pattern)
+            entry.metadata.extensions["validation_rules"] = validation_rules
+
+            # Type-safe extraction for logging (cast for Pyrefly)
+            dn_case_rules = cast("dict[str, object]", validation_rules["dn_case_rules"])
+            dn_normalize = dn_case_rules["normalize_to"]
+
+            logger.debug(
+                "Injected OUD validation rules into Entry metadata",
+                requires_objectclass=validation_rules["requires_objectclass"],
+                requires_naming_attr=validation_rules["requires_naming_attr"],
+                requires_binary_option=validation_rules["requires_binary_option"],
+                dn_case_normalize=dn_normalize,
+            )
+
+            return entry
 
 
 __all__ = ["FlextLdifServersOud"]

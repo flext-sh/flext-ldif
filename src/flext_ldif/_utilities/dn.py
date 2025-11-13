@@ -9,7 +9,7 @@ from __future__ import annotations
 import re
 import string
 from collections.abc import Generator
-from typing import overload
+from typing import cast, overload
 
 from flext_core import FlextResult
 
@@ -266,7 +266,10 @@ class FlextLdifUtilitiesDN:
                     # OID Quirk: Exports DNs with TAB characters that need normalization
                     # UTF-8 starts at codepoint 128 (0x80)
                     utf8_start = 128
-                    if next_two[0] in ' \t\r\n,+"\\<>;=' or ord(next_two[0]) >= utf8_start:
+                    if (
+                        next_two[0] in ' \t\r\n,+"\\<>;='
+                        or ord(next_two[0]) >= utf8_start
+                    ):
                         # Valid special char escape or UTF-8 escape, skip backslash
                         i += 1
                         continue
@@ -364,18 +367,18 @@ class FlextLdifUtilitiesDN:
 
         """
         dn_str = FlextLdifUtilitiesDN.get_dn_value(dn)
+        if dn_str is None:
+            return None, None
         orig = original_dn or dn_str
 
-        normalized = FlextLdifUtilitiesDN.norm(dn)
+        normalized = FlextLdifUtilitiesDN.norm(dn_str)
         if normalized is None:
             return None, None
 
         # Track if normalization changed the DN
         transformations: list[str] = []
         if dn_str != normalized:
-            transformations.append(
-                FlextLdifConstants.TransformationType.DN_NORMALIZED
-            )
+            transformations.append(FlextLdifConstants.TransformationType.DN_NORMALIZED)
 
         # Create statistics
         stats = FlextLdifModels.DNStatistics.create_with_transformation(
@@ -385,7 +388,11 @@ class FlextLdifUtilitiesDN:
             transformations=transformations,
         )
 
-        return normalized, stats
+        # Type narrowing: normalized and stats are guaranteed non-None here
+        return cast(
+            "tuple[str, FlextLdifModels.DNStatistics]",
+            (normalized, stats),
+        )
 
     @overload
     @staticmethod
@@ -449,7 +456,7 @@ class FlextLdifUtilitiesDN:
     def clean_dn_with_statistics(
         dn: DnInput,
     ) -> tuple[str, FlextLdifModels.DNStatistics]:
-        """Clean DN and track all transformations with statistics.
+        r"""Clean DN and track all transformations with statistics.
 
         Returns both cleaned DN and complete transformation history
         for diagnostic and audit purposes.
@@ -472,13 +479,16 @@ class FlextLdifUtilitiesDN:
         """
         original_dn = FlextLdifUtilitiesDN.get_dn_value(dn)
         if not original_dn:
-            return original_dn, FlextLdifModels.DNStatistics.create_minimal(
-                original_dn
+            # Cast to public type (FlextLdifModels.DNStatistics inherits from FlextLdifModelsDomains.DNStatistics)
+            stats_minimal = cast(
+                "FlextLdifModels.DNStatistics",
+                FlextLdifModels.DNStatistics.create_minimal(original_dn),
             )
+            return original_dn, stats_minimal
 
         # Track transformations and flags
         transformations: list[str] = []
-        transformation_flags: dict[str, bool] = {}
+        transformation_flags: dict[str, bool | str | list[str]] = {}
 
         # Detect transformation needs BEFORE applying changes
         had_tab_chars = bool(re.search(r"[\t\r\n\x0b\x0c]", original_dn))
@@ -491,14 +501,10 @@ class FlextLdifUtilitiesDN:
             )
         )
         had_spaces_around_comma = bool(
-            re.search(
-                FlextLdifConstants.DnPatterns.DN_SPACES_AROUND_COMMA, original_dn
-            )
+            re.search(FlextLdifConstants.DnPatterns.DN_SPACES_AROUND_COMMA, original_dn)
         )
         had_unnecessary_escapes = bool(
-            re.search(
-                FlextLdifConstants.DnPatterns.DN_UNNECESSARY_ESCAPES, original_dn
-            )
+            re.search(FlextLdifConstants.DnPatterns.DN_UNNECESSARY_ESCAPES, original_dn)
         )
         had_multiple_spaces = bool(
             re.search(FlextLdifConstants.DnPatterns.DN_MULTIPLE_SPACES, original_dn)
@@ -516,17 +522,13 @@ class FlextLdifUtilitiesDN:
         # 2. Remove spaces before '='
         if had_spaces_before_equals:
             result = re.sub(r"\s+=", "=", result)
-            transformations.append(
-                FlextLdifConstants.TransformationType.SPACE_CLEANED
-            )
+            transformations.append(FlextLdifConstants.TransformationType.SPACE_CLEANED)
             transformation_flags["had_leading_spaces"] = True
 
         # 3. Remove spaces before commas
         if had_spaces_before_comma:
             result = re.sub(r"\s+,", ",", result)
-            transformations.append(
-                FlextLdifConstants.TransformationType.SPACE_CLEANED
-            )
+            transformations.append(FlextLdifConstants.TransformationType.SPACE_CLEANED)
             transformation_flags["had_trailing_spaces"] = True
 
         # 4. Fix trailing backslash+space
@@ -548,9 +550,7 @@ class FlextLdifUtilitiesDN:
                 FlextLdifConstants.DnPatterns.DN_COMMA,
                 result,
             )
-            transformations.append(
-                FlextLdifConstants.TransformationType.SPACE_CLEANED
-            )
+            transformations.append(FlextLdifConstants.TransformationType.SPACE_CLEANED)
 
         # 6. Remove unnecessary escapes
         if had_unnecessary_escapes:
@@ -566,21 +566,23 @@ class FlextLdifUtilitiesDN:
             result = re.sub(
                 FlextLdifConstants.DnPatterns.DN_MULTIPLE_SPACES, " ", result
             )
-            transformations.append(
-                FlextLdifConstants.TransformationType.SPACE_CLEANED
-            )
+            transformations.append(FlextLdifConstants.TransformationType.SPACE_CLEANED)
             transformation_flags["had_extra_spaces"] = True
 
         # Create statistics
+        # Cast to TypedDict for type-safe unpacking
+        flags_typed = cast("FlextLdifModelsDomains._DNStatisticsFlags", transformation_flags)  # noqa: SLF001
         stats = FlextLdifModels.DNStatistics.create_with_transformation(
             original_dn=original_dn,
             cleaned_dn=result,
             normalized_dn=result,  # Will be updated by norm() if called
             transformations=transformations,
-            **transformation_flags,
+            **flags_typed,
         )
 
-        return result, stats
+        # Cast to public type (FlextLdifModels.DNStatistics inherits from FlextLdifModelsDomains.DNStatistics)
+        stats_public = cast("FlextLdifModels.DNStatistics", stats)
+        return result, stats_public
 
     @staticmethod
     def esc(value: str) -> str:

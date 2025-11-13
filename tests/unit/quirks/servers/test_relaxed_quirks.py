@@ -108,7 +108,10 @@ class TestRelaxedSchemas:
         assert result.is_success
 
         parsed = result.unwrap()
-        assert parsed.metadata and parsed.metadata.extensions.get("original_format") == attr_def
+        assert (
+            parsed.metadata
+            and parsed.metadata.extensions.get("original_format") == attr_def
+        )
 
     def test_parse_objectclass_malformed(
         self,
@@ -603,7 +606,10 @@ class TestRelaxedQuirksParseAttribute:
         result = relaxed.parse(original)
         assert result.is_success
         parsed = result.unwrap()
-        assert parsed.metadata and parsed.metadata.extensions.get("original_format") == original
+        assert (
+            parsed.metadata
+            and parsed.metadata.extensions.get("original_format") == original
+        )
 
 
 class TestRelaxedQuirksParseObjectclass:

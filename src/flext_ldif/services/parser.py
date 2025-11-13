@@ -26,15 +26,13 @@ from __future__ import annotations
 # This is handled by the ldif3 library itself
 import time
 from pathlib import Path
-from typing import cast, override
+from typing import Any, cast, override
 
 from flext_core import FlextLogger, FlextResult, FlextService
 
 from flext_ldif.config import FlextLdifConfig
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
-from flext_ldif.servers.base import FlextLdifServersBase
-from flext_ldif.servers.oid import FlextLdifServersOid
 from flext_ldif.services.acl import FlextLdifAcl
 from flext_ldif.services.detector import FlextLdifDetector
 from flext_ldif.services.server import FlextLdifServer
@@ -384,8 +382,20 @@ class FlextLdifParser(FlextService[FlextLdifModels.ParseResponse]):
             if not has_schema:
                 return entry
 
-            # Apply OID matching rule normalization to attribute values
-            replacements = FlextLdifServersOid.Constants.MATCHING_RULE_REPLACEMENTS
+            # Get server quirk from registry to access constants dynamically
+            registry = FlextLdifServer.get_global_instance()
+            server_quirk = registry.get_base(server_type)
+
+            if server_quirk is None or not hasattr(server_quirk, "Constants"):
+                # No quirk registered or no Constants class, return entry unchanged
+                return entry
+
+            # Access matching rule replacements from server quirk constants
+            replacements = getattr(
+                server_quirk.Constants,
+                "MATCHING_RULE_TO_RFC",
+                {}
+            )
 
             # Create new attributes dict with normalized values
             new_attributes = {}
@@ -715,10 +725,10 @@ class FlextLdifParser(FlextService[FlextLdifModels.ParseResponse]):
         def parse_attribute_types(
             self,
             entry: FlextLdifModels.Entry,
-            schemas: list[FlextLdifServersBase],
+            schemas: list[Any]
         ) -> list[FlextLdifModels.SchemaAttribute]:
             """Parse attributeTypes from entry using schema quirks."""
-            schema_attributes = []
+            schema_attributes: list[FlextLdifModels.SchemaAttribute] = []
             if not entry.attributes:
                 return schema_attributes
 
@@ -739,10 +749,10 @@ class FlextLdifParser(FlextService[FlextLdifModels.ParseResponse]):
         def parse_objectclasses(
             self,
             entry: FlextLdifModels.Entry,
-            schemas: list[FlextLdifServersBase],
+            schemas: list[Any]
         ) -> list[FlextLdifModels.SchemaObjectClass]:
             """Parse objectClasses from entry using schema quirks."""
-            schema_objectclasses = []
+            schema_objectclasses: list[FlextLdifModels.SchemaObjectClass] = []
             if not entry.attributes:
                 return schema_objectclasses
 

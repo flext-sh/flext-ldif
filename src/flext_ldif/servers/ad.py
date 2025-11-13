@@ -48,9 +48,18 @@ class FlextLdifServersAd(FlextLdifServersRfc):
         SERVER_TYPE: ClassVar[str] = FlextLdifConstants.ServerTypes.AD
         PRIORITY: ClassVar[int] = 10
 
+        # LDAP Connection Defaults (RFC 4511 §4.1 - Standard LDAP ports)
+        DEFAULT_PORT: ClassVar[int] = 389  # Standard LDAP port
+        DEFAULT_SSL_PORT: ClassVar[int] = 636  # Standard LDAPS port (LDAP over SSL/TLS)
+        DEFAULT_PAGE_SIZE: ClassVar[int] = 1000  # RFC 2696 Simple Paged Results default
+
+        # Active Directory Global Catalog ports (AD-specific)
+        GLOBAL_CATALOG_PORT: ClassVar[int] = 3268  # Global Catalog LDAP port
+        GLOBAL_CATALOG_SSL_PORT: ClassVar[int] = 3269  # Global Catalog LDAPS port
+
         # === STANDARDIZED CONSTANTS (from FlextLdifServersRfc.Constants) ===
         CANONICAL_NAME: ClassVar[str] = "active_directory"
-        ALIASES: ClassVar[frozenset[str]] = frozenset(["active_directory", "ad"])
+        ALIASES: ClassVar[frozenset[str]] = frozenset(["ad", "active_directory"])
         CAN_NORMALIZE_FROM: ClassVar[frozenset[str]] = frozenset(["active_directory"])
         CAN_DENORMALIZE_TO: ClassVar[frozenset[str]] = frozenset(
             [

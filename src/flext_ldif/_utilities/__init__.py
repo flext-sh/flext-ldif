@@ -20,6 +20,7 @@ from flext_ldif._utilities.object_class import FlextLdifUtilitiesObjectClass
 from flext_ldif._utilities.oid import FlextLdifUtilitiesOID
 from flext_ldif._utilities.parser import FlextLdifUtilitiesParser
 from flext_ldif._utilities.schema import FlextLdifUtilitiesSchema
+from flext_ldif._utilities.validation import FlextLdifUtilitiesValidation
 from flext_ldif._utilities.writer import FlextLdifUtilitiesWriter
 
 __all__ = [
@@ -36,5 +37,6 @@ __all__ = [
     "FlextLdifUtilitiesObjectClass",
     "FlextLdifUtilitiesParser",
     "FlextLdifUtilitiesSchema",
+    "FlextLdifUtilitiesValidation",
     "FlextLdifUtilitiesWriter",
 ]

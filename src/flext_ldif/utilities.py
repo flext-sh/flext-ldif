@@ -24,6 +24,7 @@ from flext_ldif._utilities import (
     FlextLdifUtilitiesOID,
     FlextLdifUtilitiesParser,
     FlextLdifUtilitiesSchema,
+    FlextLdifUtilitiesValidation,
     FlextLdifUtilitiesWriter,
 )
 
@@ -45,6 +46,7 @@ class FlextLdifUtilities:
     OID = FlextLdifUtilitiesOID
     Parser = FlextLdifUtilitiesParser
     Schema = FlextLdifUtilitiesSchema
+    Validation = FlextLdifUtilitiesValidation
     Writer = FlextLdifUtilitiesWriter
 
 

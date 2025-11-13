@@ -622,9 +622,11 @@ class FlextLdifUtilitiesParser:
 
         syntax = syntax_match.group(1)
 
-        # Handle quoted syntax values if lenient parsing is enabled
-        if allow_syntax_quotes and syntax and syntax.startswith('"'):
-            syntax = syntax.strip('"')
+        # ARCHITECTURE: Parser ONLY captures data, does NOT transform
+        # Quirks are responsible for cleaning/normalizing syntax OIDs
+        # - OID quirk: removes quotes during parse (if allow_syntax_quotes=True)
+        # - OUD quirk: ensures no quotes during write
+        # Parser preserves raw syntax value from LDIF
 
         length = int(syntax_match.group(2)) if syntax_match.group(2) else None
 

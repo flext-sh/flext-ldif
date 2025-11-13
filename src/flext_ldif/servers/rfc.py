@@ -1,35 +1,17 @@
-"""Shared RFC 4512 parsing utilities for LDAP schema definitions.
+"""RFC 4512 Compliant Server Quirks - Base LDAP Schema/ACL/Entry Implementation.
 
-This module provides common RFC-compliant parsing functions used by all server quirks.
-Eliminates ~800+ lines of duplicated regex parsing code across 10 server implementations.
-
-Usage:
-    from flext_ldif.services.rfc_parsers import AttributeParser, RfcObjectClassParser
-
-    # Parse attribute
-    result = AttributeParser.parse_common(attr_definition)
-    if result.is_success:
-        parsed_data = result.unwrap()
-        # Add server-specific enhancements
-
-    # Parse objectClass
-    result = RfcObjectClassParser.parse_common(oc_definition)
+Provides RFC-compliant baseline implementations for LDAP directory operations.
+All server-specific quirks (OID, OUD, OpenLDAP, etc.) extend this RFC base.
 
 Architecture:
-    Server quirks use these as foundations and add server-specific enhancements:
-    1. Call AttributeParser.parse_common() or RfcObjectClassParser.parse_common()
-    2. If successful, unwrap result and add server-specific metadata
-    3. Return enhanced result with FlextResult pattern
-
-Benefits:
-    - Eliminates duplication across OID, OUD, OpenLDAP, AD, 389DS, etc.
-    - Consistent RFC compliance baseline for all servers
-    - Easy to maintain and extend RFC parsing logic
-    - Server quirks focus on server-specific enhancements only
+    - RFC baseline: Strict RFC 2849/4512 compliance
+    - Server quirks: Extend RFC with server-specific enhancements
+    - No cross-server dependencies: Each server is isolated
+    - Generic conversions: All via RFC intermediate format
 
 References:
+    - RFC 2849: LDIF Format Specification
     - RFC 4512: LDAP Directory Information Models
-    - Section 4.1: Schema Definitions
 
 """
 
@@ -151,6 +133,12 @@ class FlextLdifServersRfc(FlextLdifServersBase):
         # =====================================================================
         SERVER_TYPE: ClassVar[str] = FlextLdifConstants.ServerTypes.RFC
         PRIORITY: ClassVar[int] = 100  # Lowest priority - fallback only
+
+        # LDAP Connection Defaults (RFC 4511 §4.1 - Standard LDAP ports)
+        DEFAULT_PORT: ClassVar[int] = 389  # Standard LDAP port
+        DEFAULT_SSL_PORT: ClassVar[int] = 636  # Standard LDAPS port (LDAP over SSL/TLS)
+        DEFAULT_PAGE_SIZE: ClassVar[int] = 1000  # RFC 2696 Simple Paged Results default
+
         CANONICAL_NAME: ClassVar[str] = "rfc"
         ALIASES: ClassVar[frozenset[str]] = frozenset(["rfc", "generic"])
 
@@ -192,6 +180,11 @@ class FlextLdifServersRfc(FlextLdifServersBase):
         # =====================================================================
         # SCHEMA CONFIGURATION - Schema parsing and validation
         # =====================================================================
+        # RFC 4512 § 4.2 Subschema Subentries - Standard schema DN
+        # The subschema subentry for a server is conventionally named "cn=schema"
+        # or "cn=subschema". This is the RFC-compliant canonical form.
+        SCHEMA_DN: ClassVar[str] = "cn=schema"  # RFC 4512 standard schema DN
+
         SCHEMA_SUP_SEPARATOR: ClassVar[str] = "$"  # RFC 4512 standard SUP separator
 
         # Schema attribute fields that are server-specific (RFC is canonical - no special fields)
@@ -948,7 +941,8 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                         metadata={"original_format": "base64"},
                     )
                 else:
-                    dn_obj = cleaned_dn  # Entry.create will coerce to DistinguishedName
+                    # Entry.create will coerce string to DistinguishedName
+                    dn_obj = cast("FlextLdifModels.DistinguishedName", cleaned_dn)
 
                 # Create Entry model using Entry.create factory method
                 # This ensures proper validation and model construction

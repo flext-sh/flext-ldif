@@ -72,7 +72,9 @@ class TestDnCaseRegistry:
         """Test unknown DN returns None."""
         assert registry.get_canonical_dn("cn=unknown,dc=com") is None
 
-    def test_has_dn_case_insensitive(self, registry: FlextLdifModels.DnRegistry) -> None:
+    def test_has_dn_case_insensitive(
+        self, registry: FlextLdifModels.DnRegistry
+    ) -> None:
         """Test DN existence check is case-insensitive."""
         registry.register_dn("cn=REDACTED_LDAP_BIND_PASSWORD,dc=com")
 
