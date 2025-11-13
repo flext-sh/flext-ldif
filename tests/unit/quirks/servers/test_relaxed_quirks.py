@@ -108,7 +108,7 @@ class TestRelaxedSchemas:
         assert result.is_success
 
         parsed = result.unwrap()
-        assert parsed.metadata and parsed.metadata.original_format == attr_def
+        assert parsed.metadata and parsed.metadata.extensions.get("original_format") == attr_def
 
     def test_parse_objectclass_malformed(
         self,
@@ -603,7 +603,7 @@ class TestRelaxedQuirksParseAttribute:
         result = relaxed.parse(original)
         assert result.is_success
         parsed = result.unwrap()
-        assert parsed.metadata and parsed.metadata.original_format == original
+        assert parsed.metadata and parsed.metadata.extensions.get("original_format") == original
 
 
 class TestRelaxedQuirksParseObjectclass:
@@ -676,7 +676,7 @@ class TestRelaxedQuirksParseObjectclass:
         assert parsed.metadata and (
             FlextLdifServersRelaxed.Constants.METADATA_RELAXED_PARSED
             in (parsed.metadata.extensions or {})
-            or parsed.metadata.original_format is not None
+            or parsed.metadata.extensions.get("original_format") is not None
         )
 
     def test_parse_objectclass_with_sup_must_may(
@@ -814,7 +814,7 @@ class TestRelaxedQuirksErrorRecovery:
         assert result.is_success  # Should succeed if OID can be extracted
         parsed = result.unwrap()
         assert parsed.metadata and (
-            parsed.metadata.original_format is not None
+            parsed.metadata.extensions.get("original_format") is not None
             or FlextLdifServersRelaxed.Constants.METADATA_RELAXED_PARSED
             in (parsed.metadata.extensions or {})
         )
@@ -833,7 +833,7 @@ class TestRelaxedQuirksErrorRecovery:
         if result.is_success:
             parsed = result.unwrap()
             assert parsed.metadata and (
-                parsed.metadata.original_format is not None
+                parsed.metadata.extensions.get("original_format") is not None
                 or FlextLdifServersRelaxed.Constants.METADATA_RELAXED_PARSED
                 in (parsed.metadata.extensions or {})
             )

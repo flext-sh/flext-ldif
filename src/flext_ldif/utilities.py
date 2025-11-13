@@ -13,6 +13,7 @@ import logging
 
 from flext_ldif._utilities import (
     FlextLdifUtilitiesACL,
+    FlextLdifUtilitiesAttribute,
     FlextLdifUtilitiesDecorators,
     FlextLdifUtilitiesDetection,
     FlextLdifUtilitiesDN,
@@ -33,6 +34,7 @@ class FlextLdifUtilities:
     """Pure LDIF Utilities - RFC 4514 DN operations, string manipulation."""
 
     ACL = FlextLdifUtilitiesACL
+    Attribute = FlextLdifUtilitiesAttribute
     Decorators = FlextLdifUtilitiesDecorators
     Detection = FlextLdifUtilitiesDetection
     DN = FlextLdifUtilitiesDN

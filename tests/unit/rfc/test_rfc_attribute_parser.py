@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import pytest
 
+from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.servers.rfc import FlextLdifServersRfc
 
@@ -358,7 +359,11 @@ class TestSyntaxDefinitionIntegration:
             assert syntax.name == expected_name
 
     def test_syntax_definition_type_checking(self) -> None:
-        """Test that syntax_definition returns proper Syntax model type."""
+        """Test that syntax_definition returns proper Syntax model type.
+
+        NOTE: syntax_definition returns FlextLdifModelsDomains.Syntax (internal class),
+        not FlextLdifModels.Syntax (public subclass), to avoid circular dependencies.
+        """
         attr_def = "( 2.5.4.3 NAME 'cn' SYNTAX 1.3.6.1.4.1.1466.115.121.1.7 )"
         schema = FlextLdifServersRfc.Schema()
         result = schema.parse(attr_def)
@@ -367,7 +372,8 @@ class TestSyntaxDefinitionIntegration:
         attr = result.unwrap()
 
         syntax = attr.syntax_definition
-        assert isinstance(syntax, FlextLdifModels.Syntax)
+        # Verify against base class (internal) to avoid circular dependency issues
+        assert isinstance(syntax, FlextLdifModelsDomains.Syntax)
         assert hasattr(syntax, "oid")
         assert hasattr(syntax, "name")
         assert hasattr(syntax, "is_rfc4517_standard")

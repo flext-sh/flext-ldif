@@ -11,6 +11,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-# NO EXPORTS - Services are internal only
-# Use FlextLdif facade: from flext_ldif import FlextLdif
-__all__: list[str] = []
+from flext_ldif.services.dn import FlextLdifDn
+from flext_ldif.services.statistics import FlextLdifStatistics
+
+# Export services for internal testing only
+# External consumers should use FlextLdif facade: from flext_ldif import FlextLdif
+__all__: list[str] = [
+    "FlextLdifDn",
+    "FlextLdifStatistics",
+]

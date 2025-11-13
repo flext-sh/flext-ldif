@@ -178,7 +178,7 @@ class FlextLdifModelsResults:
             """Return the number of entries (makes EntryResult behave like a list)."""
             return len(self.get_all_entries())
 
-        def __iter__(self) -> Iterator[FlextLdifModelsDomains.Entry]:
+        def __iter__(self) -> Iterator[FlextLdifModelsDomains.Entry]:  # type: ignore[override]
             """Iterate over entries (makes EntryResult behave like a list)."""
             return iter(self.get_all_entries())
 

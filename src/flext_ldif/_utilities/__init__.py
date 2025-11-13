@@ -8,6 +8,7 @@ SPDX-License-Identifier: MIT
 """
 
 from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
+from flext_ldif._utilities.attribute import FlextLdifUtilitiesAttribute
 from flext_ldif._utilities.constants import FlextLdifUtilitiesConstants
 from flext_ldif._utilities.decorators import FlextLdifUtilitiesDecorators
 from flext_ldif._utilities.detection import FlextLdifUtilitiesDetection
@@ -23,6 +24,7 @@ from flext_ldif._utilities.writer import FlextLdifUtilitiesWriter
 
 __all__ = [
     "FlextLdifUtilitiesACL",
+    "FlextLdifUtilitiesAttribute",
     "FlextLdifUtilitiesConstants",
     "FlextLdifUtilitiesDN",
     "FlextLdifUtilitiesDecorators",

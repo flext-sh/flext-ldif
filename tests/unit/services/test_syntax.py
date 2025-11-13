@@ -74,9 +74,11 @@ class TestSyntaxModelCreation:
     def test_syntax_with_metadata(self) -> None:
         """Test creating syntax with quirk metadata."""
         metadata = FlextLdifModels.QuirkMetadata(
-            server_type="oid",
-            priority=50,
-            description="OID-specific syntax handling",
+            quirk_type="oid",
+            extensions={
+                "priority": 50,
+                "description": "OID-specific syntax handling",
+            },
         )
         syntax = FlextLdifModels.Syntax(
             oid="2.16.840.1.113894.1.1.1",
@@ -84,7 +86,7 @@ class TestSyntaxModelCreation:
             metadata=metadata,
         )
         assert syntax.metadata is not None
-        assert syntax.metadata.server_type == "oid"
+        assert syntax.metadata.quirk_type == "oid"
 
 
 class TestSyntaxComputedFields:

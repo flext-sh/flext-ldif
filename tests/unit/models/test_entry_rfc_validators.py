@@ -104,7 +104,11 @@ class TestEntryRfcComplianceValidator:
         """Entry with valid attributes passes validation."""
         entry_result = FlextLdifModels.Entry.create(
             dn="cn=test,dc=example,dc=com",
-            attributes={"cn": ["test"], "mail": ["test@example.com"]},
+            attributes={
+                "cn": ["test"],
+                "mail": ["test@example.com"],
+                "objectClass": ["person"],  # Required for RFC 4512 § 2.4.1
+            },
         )
 
         assert entry_result.is_success
@@ -126,6 +130,7 @@ class TestEntryRfcComplianceValidator:
                 "cn": ["test"],
                 "mail": ["test@example.com"],
                 "userPassword": ["secret"],
+                "objectClass": ["person"],  # Required for RFC 4512 § 2.4.1
             },
         )
 
@@ -140,7 +145,11 @@ class TestEntryRfcComplianceValidator:
         """Attribute names with hyphens are valid (RFC 4512 § 2.5)."""
         entry_result = FlextLdifModels.Entry.create(
             dn="cn=test,dc=example,dc=com",
-            attributes={"given-name": ["John"], "family-name": ["Doe"]},
+            attributes={
+                "given-name": ["John"],
+                "family-name": ["Doe"],
+                "objectClass": ["person"],  # Required for RFC 4512 § 2.4.1
+            },
         )
 
         assert entry_result.is_success
@@ -151,10 +160,19 @@ class TestEntryRfcComplianceValidator:
         )
 
     def test_attribute_name_with_digits_passes(self) -> None:
-        """Attribute names with digits are valid after first character."""
+        """Attribute names with digits are valid after first character.
+
+        RFC 4512 § 1.4: Attribute names can contain digits (e.g., test2attr).
+        RFC 4512 § 2.3: Entry SHOULD have naming attribute from RDN in attributes.
+        """
         entry_result = FlextLdifModels.Entry.create(
             dn="cn=test,dc=example,dc=com",
-            attributes={"attr1": ["value1"], "test2attr": ["value2"]},
+            attributes={
+                "cn": ["test"],  # RFC 4512 § 2.3: Naming attribute from RDN
+                "attr1": ["value1"],
+                "test2attr": ["value2"],  # RFC 4512 § 1.4: Digits allowed in attr names
+                "objectClass": ["person"],  # Required for RFC 4512 § 2.4.1
+            },
         )
 
         assert entry_result.is_success
@@ -316,7 +334,10 @@ class TestEntryRfcComplianceValidator:
         for name in valid_names:
             entry_result = FlextLdifModels.Entry.create(
                 dn="cn=test,dc=example,dc=com",
-                attributes={name: ["value"]},
+                attributes={
+                    name: ["value"],
+                    "objectClass": ["person"],  # Required for RFC 4512 § 2.4.1
+                },
             )
             assert entry_result.is_success
             entry = entry_result.unwrap()
@@ -331,6 +352,7 @@ class TestEntryRfcComplianceValidator:
                 attributes={
                     name: ["value"],
                     "cn": ["required"],
+                    "objectClass": ["person"],  # Required for RFC 4512 § 2.4.1
                 },  # Add valid attr to avoid empty attrs violation
             )
             assert entry_result.is_success
@@ -338,4 +360,7 @@ class TestEntryRfcComplianceValidator:
             assert entry.validation_metadata is not None, (
                 f"Invalid name '{name}' should have violations"
             )
-            assert "rfc_violations" in entry.validation_metadata
+            violations = entry.validation_metadata["rfc_violations"]
+            assert any(
+                name in v and "RFC 4512 § 2.5" in v for v in violations
+            ), f"Violation should mention invalid attribute name '{name}'"

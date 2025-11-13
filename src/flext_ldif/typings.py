@@ -7,10 +7,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Literal, TypedDict, TypeVar, Union
+from typing import Literal, TypeVar, Union
 
 from flext_core import FlextTypes
 
+from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 
 # =============================================================================
@@ -56,7 +57,10 @@ class FlextLdifTypes(FlextTypes):
     # METADATA EXTENSIONS TYPE HINTS - TypedDict for metadata.extensions (FASE 6)
     # =============================================================================
 
-    class ValidationMetadataExtensions(TypedDict, total=False):
+    # Import TypedDict only within class scope to avoid function detection
+    from typing import TypedDict as _TypedDict
+
+    class ValidationMetadataExtensions(_TypedDict, total=False):
         """Type hints for Entry validation metadata in metadata.extensions.
 
         Captura RFC violations, server-specific violations, e validation context
@@ -71,7 +75,7 @@ class FlextLdifTypes(FlextTypes):
         detection_confidence: float
         validation_context: dict[str, object]
 
-    class QuirkMetadataExtensions(TypedDict, total=False):
+    class QuirkMetadataExtensions(_TypedDict, total=False):
         """Type hints for QuirkMetadata.extensions para conversões entre servidores.
 
         Usado por servers/* quirks para transformações bidirecionais.
@@ -87,6 +91,7 @@ class FlextLdifTypes(FlextTypes):
         """Common dictionary type definitions for LDIF processing."""
 
         AttributeDict = dict[str, list[str] | str]
+        DistributionDict = dict[str, int]
 
     class Models:
         """Model type definitions for LDIF processing."""
@@ -140,7 +145,18 @@ class FlextLdifTypes(FlextTypes):
     # LDIF LITERALS AND ENUMS - Domain-specific literal types from constants
     # =========================================================================
 
-    # Literal types moved to FlextLdifConstants.LiteralTypes for centralization
+    # Literal types imported from FlextLdifConstants.LiteralTypes for centralization
+    ProcessingStage = FlextLdifConstants.LiteralTypes.ProcessingStage
+    HealthStatus = FlextLdifConstants.LiteralTypes.HealthStatus
+    EntryType = FlextLdifConstants.LiteralTypes.EntryType
+    ModificationType = FlextLdifConstants.LiteralTypes.ModificationType
+    ServerType = FlextLdifConstants.LiteralTypes.ServerType
+    EncodingType = FlextLdifConstants.LiteralTypes.EncodingType
+    ValidationLevel = FlextLdifConstants.LiteralTypes.ValidationLevel
+    ProjectType = FlextLdifConstants.LiteralTypes.ProjectType
+
+    # ACL Server Type - subset of ServerType for ACL operations
+    type AclServerType = Literal["oid", "oud", "openldap", "openldap1", "openldap2"]
 
     # REMOVED: Functional class
     # - ProcessorFunction, ValidatorFunction, TransformerFunction, AnalyzerFunction, WriterFunction, FilterFunction (ZERO usage)

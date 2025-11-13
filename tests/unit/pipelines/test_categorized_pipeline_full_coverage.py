@@ -62,13 +62,19 @@ class TestCategorizedPipelineBasicExecution:
 
     @pytest.fixture
     def categorization_rules(self) -> dict[str, list[str]]:
-        """Create standard categorization rules."""
+        """Create standard categorization rules for CategoryRules model.
+
+        CategoryRules expects specific field names:
+        - user_objectclasses, group_objectclasses, hierarchy_objectclasses
+        - user_dn_patterns, group_dn_patterns, hierarchy_dn_patterns, schema_dn_patterns
+        - acl_attributes
+        """
         return {
-            "schema": ["ldapSubentry", "attributeTypes", "objectClasses"],
-            "hierarchy": ["organization", "organizationalUnit", "domain"],
-            "users": ["person", "inetOrgPerson", "organizationalPerson"],
-            "groups": ["groupOfNames", "groupOfUniqueNames"],
-            "acl": ["aci"],
+            "schema_dn_patterns": ["cn=schema"],  # DN patterns for schema entries
+            "hierarchy_objectclasses": ["organization", "organizationalUnit", "domain"],
+            "user_objectclasses": ["person", "inetOrgPerson", "organizationalPerson"],
+            "group_objectclasses": ["groupOfNames", "groupOfUniqueNames"],
+            "acl_attributes": ["aci", "orclaci"],  # ACL attribute names
         }
 
     @pytest.mark.skip(reason="Categorized pipeline functionality was removed")
