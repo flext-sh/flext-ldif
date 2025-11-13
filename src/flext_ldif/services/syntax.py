@@ -380,7 +380,7 @@ class FlextLdifSyntax(FlextService[FlextLdifModels.SyntaxServiceStatus]):
         oid: str,
         name: str | None = None,
         desc: str | None = None,
-        _server_type: str = FlextLdifConstants.ServerTypes.RFC,
+        server_type: str = FlextLdifConstants.ServerTypes.RFC,
     ) -> FlextResult[FlextLdifModels.Syntax]:
         """Resolve OID to complete Syntax model with validation.
 
@@ -410,21 +410,23 @@ class FlextLdifSyntax(FlextService[FlextLdifModels.SyntaxServiceStatus]):
                 f"Invalid OID format: {oid}",
             )
 
-        # Create syntax using the public model constructor
+        # Use the static resolve_syntax_oid method which correctly
+        # looks up the name and determines type_category from constants
         try:
-            syntax = FlextLdifModels.Syntax(
+            syntax = FlextLdifModels.Syntax.resolve_syntax_oid(
                 oid=oid,
-                name=None,
-                desc=None,
-                max_length=None,
-                validation_pattern=None,
+                server_type=server_type,
             )
-        except Exception:
+            if syntax is None:
+                return FlextResult[FlextLdifModels.Syntax].fail(
+                    f"Failed to resolve syntax OID: {oid}",
+                )
+        except Exception as e:
             return FlextResult[FlextLdifModels.Syntax].fail(
-                f"Failed to create syntax: {oid}",
+                f"Failed to create syntax: {oid} - {e}",
             )
 
-        # Update with optional parameters
+        # Update with optional parameters (override defaults from resolve_syntax_oid)
         if name:
             syntax.name = name
         if desc:

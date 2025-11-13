@@ -388,9 +388,9 @@ class FlextLdifConstants(FlextConstants):
         MAX_VALUES_PER_ATTRIBUTE: Final[int] = 100
         MAX_ATTRIBUTE_VALUE_LENGTH: Final[int] = 10000
 
-        # Attribute name constraints (RFC 4512)
+        # Attribute name constraints (RFC 4512 - max 127 chars)
         MIN_ATTRIBUTE_NAME_LENGTH: Final[int] = 1
-        MAX_ATTRIBUTE_NAME_LENGTH: Final[int] = 255
+        MAX_ATTRIBUTE_NAME_LENGTH: Final[int] = 127
         ATTRIBUTE_NAME_PATTERN: Final[str] = r"^[a-zA-Z][a-zA-Z0-9-]*$"
 
         # URL validation constraints
@@ -692,6 +692,94 @@ class FlextLdifConstants(FlextConstants):
         ADD = "add"
         MODIFY = "modify"
         DELETE = "delete"
+        MODRDN = "modrdn"
+
+    # ═══════════════════════════════════════════════════════════════════════
+    # STATISTICS TRACKING ENUMS (For EntryStatistics & DNStatistics models)
+    # ═══════════════════════════════════════════════════════════════════════
+
+    class TransformationType(StrEnum):
+        """Types of transformations applied to entries.
+
+        Used in EntryStatistics to track what conversions were applied.
+        Follows FLEXT pattern of using constants instead of hard-coded strings.
+        """
+
+        # DN transformations
+        DN_CLEANED = "dn_cleaned"
+        DN_NORMALIZED = "dn_normalized"
+        TAB_NORMALIZED = "tab_normalized"
+        SPACE_CLEANED = "space_cleaned"
+        UTF8_DECODED = "utf8_decoded"
+        BASE64_DECODED = "base64_decoded"
+        TRAILING_SPACE_REMOVED = "trailing_space_removed"
+        ESCAPE_NORMALIZED = "escape_normalized"
+
+        # Attribute transformations
+        BOOLEAN_CONVERTED = "boolean_converted"
+        ACL_CONVERTED = "acl_converted"
+        ATTRIBUTE_REMOVED = "attribute_removed"
+        ATTRIBUTE_ADDED = "attribute_added"
+        ATTRIBUTE_RENAMED = "attribute_renamed"
+
+        # Schema transformations
+        MATCHING_RULE_REPLACED = "matching_rule_replaced"
+        SYNTAX_OID_REPLACED = "syntax_oid_replaced"
+        OBJECTCLASS_FILTERED = "objectclass_filtered"
+
+    class FilterType(StrEnum):
+        """Types of filters applied to entries.
+
+        Used in EntryStatistics to track filtering decisions.
+        """
+
+        BASE_DN_FILTER = "base_dn_filter"
+        SCHEMA_WHITELIST = "schema_whitelist"
+        FORBIDDEN_ATTRIBUTES = "forbidden_attributes"
+        FORBIDDEN_OBJECTCLASSES = "forbidden_objectclasses"
+        OPERATIONAL_ATTRIBUTES = "operational_attributes"
+        ACL_EXTRACTION = "acl_extraction"
+        SCHEMA_ENTRY = "schema_entry"
+
+    class ValidationStatus(StrEnum):
+        """Entry validation status levels.
+
+        Used in EntryStatistics to indicate validation result.
+        """
+
+        VALID = "valid"
+        WARNING = "warning"
+        ERROR = "error"
+        REJECTED = "rejected"
+
+    class RejectionCategory(StrEnum):
+        """Categories for entry rejection.
+
+        Used in EntryStatistics to classify why entry was rejected.
+        """
+
+        INVALID_DN = "invalid_dn"
+        BASE_DN_FILTER = "base_dn_filter"
+        SCHEMA_VIOLATION = "schema_violation"
+        FORBIDDEN_ATTRIBUTE = "forbidden_attribute"
+        FORBIDDEN_OBJECTCLASS = "forbidden_objectclass"
+        CATEGORIZATION_FAILED = "categorization_failed"
+        NO_CATEGORY_MATCH = "no_category_match"
+        PARSING_ERROR = "parsing_error"
+        CONVERSION_ERROR = "conversion_error"
+
+    class ErrorCategory(StrEnum):
+        """Categories of errors that can occur during processing.
+
+        Used in EntryStatistics to categorize errors.
+        """
+
+        PARSING = "parsing"
+        VALIDATION = "validation"
+        CONVERSION = "conversion"
+        SYNC = "sync"
+        SCHEMA = "schema"
+        ACL = "acl"
         MODRDN = "modrdn"
 
     # NOTE: ServerTypeEnum removed - use ServerTypes instead (canonical source)
@@ -1709,6 +1797,39 @@ class FlextLdifConstants(FlextConstants):
             normalized = FlextLdifConstants.ServerTypes.normalize(server_type)
             return normalized in canonical_types or server_type in canonical_types
 
+    class ServerValidationRules:
+        """Server-specific validation rules for Entry consistency checking.
+
+        Defines which RFC violations are allowed/forbidden per server type.
+        Used by Entry.validate_entry_consistency() @model_validator.
+
+        Architecture:
+        - LENIENT servers: Allow RFC violations (OID)
+        - STRICT servers: Require RFC compliance (OUD, AD)
+        - FLEXIBLE servers: Mixed rules (OpenLDAP)
+        """
+
+        # OID (Oracle Internet Directory) - LENIENT
+        OID_ALLOWS_MISSING_OBJECTCLASS: Final[bool] = True
+        OID_ALLOWS_MISSING_NAMING_ATTR: Final[bool] = True
+        OID_AUTO_DETECT_BINARY: Final[bool] = True  # Doesn't require ;binary
+
+        # OUD (Oracle Unified Directory) - STRICT
+        OUD_REQUIRES_OBJECTCLASS: Final[bool] = True
+        OUD_REQUIRES_NAMING_ATTR: Final[bool] = True
+        OUD_REQUIRES_BINARY_OPTION: Final[bool] = True  # Requires ;binary for binary attrs
+
+        # OpenLDAP - FLEXIBLE
+        OPENLDAP_FLEXIBLE_SCHEMA: Final[bool] = True
+        OPENLDAP_STRICT_BINARY: Final[bool] = True  # Requires ;binary
+
+        # Active Directory - STRICT
+        AD_REQUIRES_OBJECTCLASS: Final[bool] = True
+        AD_AUTO_DETECT_BINARY: Final[bool] = True  # Doesn't require ;binary
+
+        # RFC baseline - PURE RFC
+        RFC_STRICT_COMPLIANCE: Final[bool] = True
+
     # =============================================================================
     # OPERATION CONSTANTS - Filter types, modes, categories, data types
     # =============================================================================
@@ -1969,9 +2090,14 @@ class FlextLdifConstants(FlextConstants):
         # Object class name pattern (similar to attribute names but allowing uppercase)
         OBJECTCLASS_NAME: Final[str] = r"^[a-zA-Z][a-zA-Z0-9-]*$"
 
-        # Attribute name patterns (RFC 4512)
+        # Attribute name patterns (RFC 4512 § 2.5)
+        # Base attribute name: starts with letter, followed by letters/digits/hyphens
         ATTRIBUTE_NAME: Final[str] = r"^[a-zA-Z][a-zA-Z0-9-]*$"
-        ATTRIBUTE_OPTION: Final[str] = r";[a-zA-Z][a-zA-Z0-9-]*"
+        # RFC 4512 constraint: attribute names must not exceed 127 characters
+        MAX_ATTRIBUTE_NAME_LENGTH: Final[int] = 127
+        # Attribute option: RFC 4512 § 2.5 + RFC 3066 (language tags with underscore)
+        # Examples: lang-ar, binary, lang-es_es (es_ES = Spanish Spain)
+        ATTRIBUTE_OPTION: Final[str] = r";[a-zA-Z][a-zA-Z0-9-_]*"
 
         # OID patterns
         OID_NUMERIC: Final[str] = r"^\d+(\.\d+)*$"
@@ -2145,6 +2271,9 @@ class FlextLdifConstants(FlextConstants):
 
         Zero Tolerance: All validation logic constants MUST be defined here.
         NO hard-coded validation strings in validators.
+
+        NOTE: Server-specific validation rules belong in servers/* modules,
+        NOT here. This class contains only RFC-generic validation constants.
         """
 
         # String validation rules
@@ -2478,6 +2607,71 @@ class FlextLdifConstants(FlextConstants):
 
         # Minimum allowed line width
         MIN_LINE_WIDTH: Final[int] = 10
+
+    class CommentFormats:
+        """LDIF comment formatting constants for documentation.
+
+        Provides standardized comment formats for documenting entry modifications,
+        rejections, and transformations in LDIF output. These formats support
+        bidirectional conversion and audit trails.
+        """
+
+        # Comment separator lines
+        SEPARATOR_DOUBLE: Final[str] = "# " + ("═" * 51)
+        SEPARATOR_SINGLE: Final[str] = "# " + ("─" * 51)
+        SEPARATOR_EMPTY: Final[str] = "#"
+
+        # Comment headers
+        HEADER_REJECTION_REASON: Final[str] = "# REJECTION REASON"
+        HEADER_REMOVED_ATTRIBUTES: Final[str] = "# REMOVED ATTRIBUTES (Original Values)"
+
+        # Comment prefixes
+        PREFIX_COMMENT: Final[str] = "# "
+
+    class MigrationHeaders:
+        """Migration header templates for LDIF output.
+
+        Provides default templates for migration headers that can be customized
+        via WriteFormatOptions.migration_header_template.
+        """
+
+        # Default migration header template (Python f-string format)
+        DEFAULT_TEMPLATE: Final[str] = """# Migration Phase: {phase}
+# Timestamp: {timestamp}
+# Source Server: {source_server}
+# Target Server: {target_server}
+# Base DN: {base_dn}
+# Total Entries: {total_entries}
+# Processed: {processed_entries} ({processed_percentage:.1f}%)
+# Rejected: {rejected_entries} ({rejected_percentage:.1f}%)
+#
+"""
+
+        # Minimal header template
+        MINIMAL_TEMPLATE: Final[str] = """# Phase: {phase} | {timestamp} | Entries: {total_entries}
+#
+"""
+
+        # Detailed header template
+        DETAILED_TEMPLATE: Final[str] = """# ============================================================================
+# LDIF MIGRATION - {phase_name}
+# ============================================================================
+# Migration Phase: {phase}
+# Timestamp: {timestamp}
+#
+# SOURCE & TARGET:
+#   Source Server: {source_server}
+#   Target Server: {target_server}
+#   Base DN: {base_dn}
+#
+# STATISTICS:
+#   Total Entries: {total_entries}
+#   Processed: {processed_entries} ({processed_percentage:.1f}%)
+#   Rejected: {rejected_entries} ({rejected_percentage:.1f}%)
+#
+# ============================================================================
+#
+"""
 
     # =============================================================================
     # CONVERSION STRATEGY - RFC as Canonical Format (Adapter Pattern)

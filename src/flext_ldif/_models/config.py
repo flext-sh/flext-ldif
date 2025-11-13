@@ -372,6 +372,26 @@ class FlextLdifModelsConfig:
             default=False,
             description="If True, writes removed attributes as comments in LDIF output.",
         )
+        write_migration_header: bool = Field(
+            default=False,
+            description="If True, writes migration metadata header at the start of LDIF file.",
+        )
+        migration_header_template: str | None = Field(
+            default=None,
+            description="Jinja2 template string for migration header. If None, uses default template.",
+        )
+        write_rejection_reasons: bool = Field(
+            default=False,
+            description="If True, writes rejection reasons as comments for rejected entries.",
+        )
+        write_transformation_comments: bool = Field(
+            default=False,
+            description="If True, writes transformation details as comments (e.g., objectClass changes).",
+        )
+        include_removal_statistics: bool = Field(
+            default=False,
+            description="If True, includes statistics about removed attributes in headers.",
+        )
         ldif_changetype: str | None = Field(
             default=None,
             description="If set to 'modify', writes entries in LDIF modify add format (changetype: modify). Otherwise uses add format.",

@@ -236,6 +236,44 @@ class FlextLdifServersRfc(FlextLdifServersBase):
         )
 
         # =====================================================================
+        # CATEGORIZATION RULES - Entry categorization for filtering
+        # =====================================================================
+        # Category priority order (RFC baseline - standard LDAP)
+        CATEGORIZATION_PRIORITY: ClassVar[list[str]] = [
+            "users",  # User accounts (person, inetOrgPerson)
+            "hierarchy",  # Structural containers (organizationalUnit, organization)
+            "groups",  # Group entries (groupOfNames, groupOfUniqueNames)
+            "acl",  # ACL entries
+        ]
+
+        # ObjectClasses defining each category (RFC baseline - standard LDAP objectClasses)
+        CATEGORY_OBJECTCLASSES: ClassVar[dict[str, frozenset[str]]] = {
+            "users": frozenset([
+                "person",
+                "inetOrgPerson",
+                "organizationalPerson",
+                "residentialPerson",
+            ]),
+            "hierarchy": frozenset([
+                "organizationalUnit",
+                "organization",
+                "locality",
+                "country",
+            ]),
+            "groups": frozenset([
+                "groupOfNames",
+                "groupOfUniqueNames",
+                "posixGroup",
+            ]),
+        }
+
+        # ACL attributes for categorization (RFC 4876 + generic)
+        CATEGORIZATION_ACL_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset([
+            "aci",  # RFC 4876 ACI attribute
+            "acl",  # Generic ACL attribute (common in various LDAP servers)
+        ])
+
+        # =====================================================================
         # DETECTION PATTERNS - Server type detection rules
         # =====================================================================
         # Detection patterns (all server-specific, define in subclasses)

@@ -348,6 +348,45 @@ class FlextLdifUtilitiesDN:
         except Exception:
             return None
 
+    @staticmethod
+    def norm_with_statistics(
+        dn: DnInput,
+        original_dn: str | None = None,
+    ) -> tuple[str | None, FlextLdifModels.DNStatistics | None]:
+        """Normalize DN with statistics tracking.
+
+        Args:
+            dn: DN to normalize
+            original_dn: Original DN before any transformations (optional)
+
+        Returns:
+            Tuple of (normalized_dn, DNStatistics) or (None, None) if invalid
+
+        """
+        dn_str = FlextLdifUtilitiesDN.get_dn_value(dn)
+        orig = original_dn or dn_str
+
+        normalized = FlextLdifUtilitiesDN.norm(dn)
+        if normalized is None:
+            return None, None
+
+        # Track if normalization changed the DN
+        transformations: list[str] = []
+        if dn_str != normalized:
+            transformations.append(
+                FlextLdifConstants.TransformationType.DN_NORMALIZED
+            )
+
+        # Create statistics
+        stats = FlextLdifModels.DNStatistics.create_with_transformation(
+            original_dn=orig,
+            cleaned_dn=dn_str,
+            normalized_dn=normalized,
+            transformations=transformations,
+        )
+
+        return normalized, stats
+
     @overload
     @staticmethod
     def clean_dn(dn: str) -> str: ...
@@ -378,13 +417,14 @@ class FlextLdifUtilitiesDN:
             (r"[\t\r\n\x0b\x0c]", " "),
             # Remove spaces ONLY BEFORE '=' in each RDN component
             (r"\s+=", "="),
-            # Remove spaces BEFORE commas (OID quirk: "cn=user ,ou=..." -> "cn=user,ou=...")
-            (r"\s+,", ","),
             # Fix trailing backslash+space before commas
+            # MUST come BEFORE general space removal to handle escaped spaces correctly
             (
                 FlextLdifConstants.DnPatterns.DN_TRAILING_BACKSLASH_SPACE,
                 FlextLdifConstants.DnPatterns.DN_COMMA,
             ),
+            # Remove spaces BEFORE commas (OID quirk: "cn=user ,ou=..." -> "cn=user,ou=...")
+            (r"\s+,", ","),
             # Normalize spaces around commas: ", cn=..." -> ",cn=..."
             (
                 FlextLdifConstants.DnPatterns.DN_SPACES_AROUND_COMMA,
@@ -404,6 +444,143 @@ class FlextLdifUtilitiesDN:
             return result
         except Exception:
             return dn_str
+
+    @staticmethod
+    def clean_dn_with_statistics(
+        dn: DnInput,
+    ) -> tuple[str, FlextLdifModels.DNStatistics]:
+        """Clean DN and track all transformations with statistics.
+
+        Returns both cleaned DN and complete transformation history
+        for diagnostic and audit purposes.
+
+        Args:
+            dn: DN string or DistinguishedName object
+
+        Returns:
+            Tuple of (cleaned_dn, DNStatistics with transformation history)
+
+        Example:
+            cleaned_dn, stats = FlextLdifUtilitiesDN.clean_dn_with_statistics(
+                "cn=test  ,\tdc=example,dc=com"
+            )
+            # cleaned_dn: "cn=test,dc=example,dc=com"
+            # stats.had_extra_spaces: True
+            # stats.had_tab_chars: True
+            # stats.transformations: [TAB_NORMALIZED, SPACE_CLEANED]
+
+        """
+        original_dn = FlextLdifUtilitiesDN.get_dn_value(dn)
+        if not original_dn:
+            return original_dn, FlextLdifModels.DNStatistics.create_minimal(
+                original_dn
+            )
+
+        # Track transformations and flags
+        transformations: list[str] = []
+        transformation_flags: dict[str, bool] = {}
+
+        # Detect transformation needs BEFORE applying changes
+        had_tab_chars = bool(re.search(r"[\t\r\n\x0b\x0c]", original_dn))
+        had_spaces_before_equals = bool(re.search(r"\s+=", original_dn))
+        had_spaces_before_comma = bool(re.search(r"\s+,", original_dn))
+        had_trailing_backslash_space = bool(
+            re.search(
+                FlextLdifConstants.DnPatterns.DN_TRAILING_BACKSLASH_SPACE,
+                original_dn,
+            )
+        )
+        had_spaces_around_comma = bool(
+            re.search(
+                FlextLdifConstants.DnPatterns.DN_SPACES_AROUND_COMMA, original_dn
+            )
+        )
+        had_unnecessary_escapes = bool(
+            re.search(
+                FlextLdifConstants.DnPatterns.DN_UNNECESSARY_ESCAPES, original_dn
+            )
+        )
+        had_multiple_spaces = bool(
+            re.search(FlextLdifConstants.DnPatterns.DN_MULTIPLE_SPACES, original_dn)
+        )
+
+        # Apply transformations (same order as clean_dn)
+        result = original_dn
+
+        # 1. Normalize whitespace control characters (TAB, CR, LF)
+        if had_tab_chars:
+            result = re.sub(r"[\t\r\n\x0b\x0c]", " ", result)
+            transformations.append(FlextLdifConstants.TransformationType.TAB_NORMALIZED)
+            transformation_flags["had_tab_chars"] = True
+
+        # 2. Remove spaces before '='
+        if had_spaces_before_equals:
+            result = re.sub(r"\s+=", "=", result)
+            transformations.append(
+                FlextLdifConstants.TransformationType.SPACE_CLEANED
+            )
+            transformation_flags["had_leading_spaces"] = True
+
+        # 3. Remove spaces before commas
+        if had_spaces_before_comma:
+            result = re.sub(r"\s+,", ",", result)
+            transformations.append(
+                FlextLdifConstants.TransformationType.SPACE_CLEANED
+            )
+            transformation_flags["had_trailing_spaces"] = True
+
+        # 4. Fix trailing backslash+space
+        if had_trailing_backslash_space:
+            result = re.sub(
+                FlextLdifConstants.DnPatterns.DN_TRAILING_BACKSLASH_SPACE,
+                FlextLdifConstants.DnPatterns.DN_COMMA,
+                result,
+            )
+            transformations.append(
+                FlextLdifConstants.TransformationType.ESCAPE_NORMALIZED
+            )
+            transformation_flags["had_escape_sequences"] = True
+
+        # 5. Normalize spaces around commas
+        if had_spaces_around_comma:
+            result = re.sub(
+                FlextLdifConstants.DnPatterns.DN_SPACES_AROUND_COMMA,
+                FlextLdifConstants.DnPatterns.DN_COMMA,
+                result,
+            )
+            transformations.append(
+                FlextLdifConstants.TransformationType.SPACE_CLEANED
+            )
+
+        # 6. Remove unnecessary escapes
+        if had_unnecessary_escapes:
+            result = re.sub(
+                FlextLdifConstants.DnPatterns.DN_UNNECESSARY_ESCAPES, r"\1", result
+            )
+            transformations.append(
+                FlextLdifConstants.TransformationType.ESCAPE_NORMALIZED
+            )
+
+        # 7. Normalize multiple spaces
+        if had_multiple_spaces:
+            result = re.sub(
+                FlextLdifConstants.DnPatterns.DN_MULTIPLE_SPACES, " ", result
+            )
+            transformations.append(
+                FlextLdifConstants.TransformationType.SPACE_CLEANED
+            )
+            transformation_flags["had_extra_spaces"] = True
+
+        # Create statistics
+        stats = FlextLdifModels.DNStatistics.create_with_transformation(
+            original_dn=original_dn,
+            cleaned_dn=result,
+            normalized_dn=result,  # Will be updated by norm() if called
+            transformations=transformations,
+            **transformation_flags,
+        )
+
+        return result, stats
 
     @staticmethod
     def esc(value: str) -> str:

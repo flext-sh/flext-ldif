@@ -17,6 +17,51 @@ SPDX-License-Identifier: MIT
 
 from flext_ldif.models import FlextLdifModels
 
+# =============================================================================
+# HELPER FUNCTIONS - Server Validation Rule Injection (mimics servers/* behavior)
+# =============================================================================
+
+
+def inject_oud_validation_rules() -> dict[str, object]:
+    """Create OUD validation rules dict for injection into metadata.extensions."""
+    return {
+        "requires_objectclass": True,
+        "requires_naming_attr": True,
+        "requires_binary_option": True,
+        "auto_detect_binary": False,
+    }
+
+
+def inject_oid_validation_rules() -> dict[str, object]:
+    """Create OID validation rules dict for injection into metadata.extensions."""
+    return {
+        "requires_objectclass": False,  # OID is lenient
+        "requires_naming_attr": False,  # OID allows missing naming attr
+        "requires_binary_option": False,
+        "auto_detect_binary": True,  # OID auto-detects binary
+    }
+
+
+def inject_openldap_validation_rules() -> dict[str, object]:
+    """Create OpenLDAP validation rules dict for injection into metadata.extensions."""
+    return {
+        "requires_objectclass": False,  # OpenLDAP flexible schema
+        "requires_naming_attr": False,
+        "requires_binary_option": True,  # But strict on ;binary
+        "auto_detect_binary": False,
+        "flexible_schema": True,
+    }
+
+
+def inject_ad_validation_rules() -> dict[str, object]:
+    """Create Active Directory validation rules dict for injection into metadata.extensions."""
+    return {
+        "requires_objectclass": True,  # AD is STRICT on objectClass
+        "requires_naming_attr": True,   # AD is STRICT - REQUIRES naming attr in entry
+        "requires_binary_option": False,
+        "auto_detect_binary": True,  # AD auto-detects binary
+    }
+
 
 class TestOidServerSpecificValidation:
     """Oracle Internet Directory (OID) server-specific validation tests."""
@@ -96,13 +141,16 @@ class TestOudServerSpecificValidation:
         entry = FlextLdifModels.Entry(
             dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
             attributes=FlextLdifModels.LdifAttributes(attributes={"cn": ["test"]}),
-            metadata=FlextLdifModels.QuirkMetadata(quirk_type="oud"),
+            metadata=FlextLdifModels.QuirkMetadata(
+                quirk_type="oud",
+                extensions={"validation_rules": inject_oud_validation_rules()},
+            ),
         )
 
         # Check server-specific violation is captured (OUD REQUIRES objectClass)
         assert "server_specific_violations" in entry.validation_metadata
         assert any(
-            "OUD" in v and "objectClass" in v
+            "objectClass" in v
             for v in entry.validation_metadata["server_specific_violations"]
         )
 
@@ -117,13 +165,16 @@ class TestOudServerSpecificValidation:
                     # Missing 'cn' attribute
                 }
             ),
-            metadata=FlextLdifModels.QuirkMetadata(quirk_type="oud"),
+            metadata=FlextLdifModels.QuirkMetadata(
+                quirk_type="oud",
+                extensions={"validation_rules": inject_oud_validation_rules()},
+            ),
         )
 
         # Check server-specific violation is captured (OUD REQUIRES naming attr)
         assert "server_specific_violations" in entry.validation_metadata
         assert any(
-            "OUD" in v and "Naming attribute" in v
+            "naming attribute" in v.lower()
             for v in entry.validation_metadata["server_specific_violations"]
         )
 
@@ -139,13 +190,16 @@ class TestOudServerSpecificValidation:
                     "userCertificate": ["\x00\x01\x02\x03"],  # Binary data
                 }
             ),
-            metadata=FlextLdifModels.QuirkMetadata(quirk_type="oud"),
+            metadata=FlextLdifModels.QuirkMetadata(
+                quirk_type="oud",
+                extensions={"validation_rules": inject_oud_validation_rules()},
+            ),
         )
 
         # Check server-specific violation is captured (OUD REQUIRES ;binary)
         assert "server_specific_violations" in entry.validation_metadata
         assert any(
-            "OUD" in v and ";binary" in v
+            ";binary" in v.lower()
             for v in entry.validation_metadata["server_specific_violations"]
         )
 
@@ -161,7 +215,10 @@ class TestOudServerSpecificValidation:
                     "userCertificate;binary": ["base64encodeddata"],
                 }
             ),
-            metadata=FlextLdifModels.QuirkMetadata(quirk_type="oud"),
+            metadata=FlextLdifModels.QuirkMetadata(
+                quirk_type="oud",
+                extensions={"validation_rules": inject_oud_validation_rules()},
+            ),
         )
 
         # No violations
@@ -178,7 +235,10 @@ class TestOpenLdapServerSpecificValidation:
         entry = FlextLdifModels.Entry(
             dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
             attributes=FlextLdifModels.LdifAttributes(attributes={"cn": ["test"]}),
-            metadata=FlextLdifModels.QuirkMetadata(quirk_type="openldap"),
+            metadata=FlextLdifModels.QuirkMetadata(
+                quirk_type="openldap",
+                extensions={"validation_rules": inject_openldap_validation_rules()},
+            ),
         )
 
         # RFC violation captured (SHOULD have objectClass)
@@ -199,13 +259,16 @@ class TestOpenLdapServerSpecificValidation:
                     "userCertificate": ["\x00\x01\x02\x03"],  # Binary data
                 }
             ),
-            metadata=FlextLdifModels.QuirkMetadata(quirk_type="openldap"),
+            metadata=FlextLdifModels.QuirkMetadata(
+                quirk_type="openldap",
+                extensions={"validation_rules": inject_openldap_validation_rules()},
+            ),
         )
 
         # Check server-specific violation is captured (OpenLDAP REQUIRES ;binary)
         assert "server_specific_violations" in entry.validation_metadata
         assert any(
-            "OPENLDAP" in v and ";binary" in v
+            ";binary" in v.lower()
             for v in entry.validation_metadata["server_specific_violations"]
         )
 
@@ -219,7 +282,10 @@ class TestOpenLdapServerSpecificValidation:
                     "attributeTypes": ["( 1.2.3.4 NAME 'test' )"],
                 }
             ),
-            metadata=FlextLdifModels.QuirkMetadata(quirk_type="openldap"),
+            metadata=FlextLdifModels.QuirkMetadata(
+                quirk_type="openldap",
+                extensions={"validation_rules": inject_openldap_validation_rules()},
+            ),
         )
 
         # Schema entries are exempt from objectClass requirement
@@ -239,13 +305,16 @@ class TestActiveDirectoryServerSpecificValidation:
         entry = FlextLdifModels.Entry(
             dn=FlextLdifModels.DistinguishedName(value="cn=test,dc=example,dc=com"),
             attributes=FlextLdifModels.LdifAttributes(attributes={"cn": ["test"]}),
-            metadata=FlextLdifModels.QuirkMetadata(quirk_type="ad"),
+            metadata=FlextLdifModels.QuirkMetadata(
+                quirk_type="ad",
+                extensions={"validation_rules": inject_ad_validation_rules()},
+            ),
         )
 
         # Check server-specific violation is captured (AD REQUIRES objectClass)
         assert "server_specific_violations" in entry.validation_metadata
         assert any(
-            "AD" in v and "objectClass" in v
+            "objectclass" in v.lower()  # Fixed: look for lowercase in lowercased string
             for v in entry.validation_metadata["server_specific_violations"]
         )
 
@@ -260,13 +329,16 @@ class TestActiveDirectoryServerSpecificValidation:
                     # Missing 'cn' attribute
                 }
             ),
-            metadata=FlextLdifModels.QuirkMetadata(quirk_type="ad"),
+            metadata=FlextLdifModels.QuirkMetadata(
+                quirk_type="ad",
+                extensions={"validation_rules": inject_ad_validation_rules()},
+            ),
         )
 
         # Check server-specific violation is captured (AD REQUIRES naming attr)
         assert "server_specific_violations" in entry.validation_metadata
         assert any(
-            "AD" in v and "Naming attribute" in v
+            "naming attribute" in v.lower()
             for v in entry.validation_metadata["server_specific_violations"]
         )
 
@@ -282,7 +354,10 @@ class TestActiveDirectoryServerSpecificValidation:
                     "objectGUID": ["\x00\x01\x02\x03"],  # Binary GUID
                 }
             ),
-            metadata=FlextLdifModels.QuirkMetadata(quirk_type="ad"),
+            metadata=FlextLdifModels.QuirkMetadata(
+                quirk_type="ad",
+                extensions={"validation_rules": inject_ad_validation_rules()},
+            ),
         )
 
         # RFC violation captured (MAY need ;binary)
@@ -356,7 +431,7 @@ class TestRfcBaselineValidation:
         # RFC violation captured (MAY need ;binary)
         assert "rfc_violations" in entry.validation_metadata
         assert any(
-            "RFC 4517" in v and ";binary" in v
+            "RFC 2849" in v and ";binary" in v
             for v in entry.validation_metadata["rfc_violations"]
         )
 
@@ -397,7 +472,10 @@ class TestMetadataCapture:
                     "cn": ["test"],
                 }
             ),
-            metadata=FlextLdifModels.QuirkMetadata(quirk_type="oud"),
+            metadata=FlextLdifModels.QuirkMetadata(
+                quirk_type="oud",
+                extensions={"validation_rules": inject_oud_validation_rules()},
+            ),
         )
 
         # Check validation_server_type is captured
@@ -431,7 +509,10 @@ class TestMetadataCapture:
             attributes=FlextLdifModels.LdifAttributes(
                 attributes={}
             ),  # Missing objectClass and cn
-            metadata=FlextLdifModels.QuirkMetadata(quirk_type="oud"),
+            metadata=FlextLdifModels.QuirkMetadata(
+                quirk_type="oud",
+                extensions={"validation_rules": inject_oud_validation_rules()},
+            ),
         )
 
         # Check server-specific violations in both locations

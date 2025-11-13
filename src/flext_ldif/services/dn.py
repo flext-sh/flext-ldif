@@ -74,8 +74,8 @@ is_valid = result.unwrap()
 result = FlextLdifDn.norm(dn)
 normalized = result.unwrap()
 
-# Clean malformed DN
-cleaned = FlextLdifDn.clean_dn(dn)
+# Clean malformed DN (fix spacing/escaping)
+cleaned = FlextLdifDn.clean_dn("  cn = REDACTED_LDAP_BIND_PASSWORD , dc = example ")
 
 # Escape special chars
 escaped = FlextLdifDn.esc("Smith, John")
@@ -358,6 +358,23 @@ class FlextLdifDn(FlextService[str]):
 
         """
         return cls.Normalizer.normalize(dn)
+
+    @classmethod
+    def clean_dn(cls, dn: str) -> str:
+        """Clean DN string to fix spacing and escaping issues.
+
+        Args:
+            dn: Distinguished name to clean
+
+        Returns:
+            Cleaned DN string
+
+        Example:
+            cleaned = FlextLdifDn.clean_dn("  cn = REDACTED_LDAP_BIND_PASSWORD , dc = example ")
+            # Result: "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example"
+
+        """
+        return cls.Normalizer.clean_dn(dn)
 
     @classmethod
     def escape_dn_value(cls, value: str) -> str:

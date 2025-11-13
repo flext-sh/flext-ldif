@@ -241,6 +241,7 @@ class FlextLdifUtilitiesParser:
         - attr: value  → Regular value (text)
         - attr:: base64 → Base64-encoded value (UTF-8, binary, special chars)
         - attr:< URL   → URL-referenced value
+        - #comment     → Comment line (MUST be ignored)
 
         Previous Bug: line.partition(":") split on FIRST colon only.
         For "dn:: Y249...", it produced key="dn:", value=": Y249..." (extra colon!)
@@ -256,10 +257,15 @@ class FlextLdifUtilitiesParser:
             Tuple of (updated_dn, updated_attrs)
 
         """
+        # RFC 2849 § 2: Empty lines terminate current entry
         if not line:
             if current_dn is not None:
                 entries.append((current_dn, current_attrs))
             return None, {}
+
+        # RFC 2849 § 2: Lines starting with # are comments (MUST be ignored)
+        if line.startswith("#"):
+            return current_dn, current_attrs
 
         if _REGULAR_INDICATOR not in line:
             return current_dn, current_attrs

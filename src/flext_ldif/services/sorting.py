@@ -17,6 +17,7 @@ from __future__ import annotations
 import operator
 import re
 from collections.abc import Callable
+from typing import cast
 
 from flext_core import FlextResult, FlextService
 from pydantic import Field, field_validator, model_validator
@@ -1096,7 +1097,9 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
 
         # Create dict with explicit type annotation
         sorted_dict: dict[str, object] = dict(sorted_items)
-        sorted_attrs = FlextLdifModels.LdifAttributes(attributes=sorted_dict)
+        sorted_attrs = FlextLdifModels.LdifAttributes(
+            attributes=cast("dict[str, list[str]]", sorted_dict)
+        )
         return FlextResult[FlextLdifModels.Entry].ok(
             entry.model_copy(update={"attributes": sorted_attrs}),
         )

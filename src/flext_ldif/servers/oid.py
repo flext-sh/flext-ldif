@@ -315,9 +315,12 @@ class FlextLdifServersOid(FlextLdifServersRfc):
         ])
 
         # ACL attributes (reuse existing constant)
+        # NOTE: Includes BOTH pre-normalization (orclaci) AND post-normalization
+        # (aci) names because _normalize_attribute_name() transforms orclaci→aci
         CATEGORIZATION_ACL_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset([
-            "orclaci",
-            "orclentrylevelaci",
+            "aci",  # RFC standard (normalized from orclaci/orclentrylevelaci)
+            "orclaci",  # OID format (before normalization)
+            "orclentrylevelaci",  # OID entry-level format (before normalization)
         ])
 
         # =====================================================================
@@ -606,7 +609,7 @@ class FlextLdifServersOid(FlextLdifServersRfc):
         schema_class = getattr(type(self), "Schema", None)
         if not schema_class:
             return FlextResult[dict[str, object]].fail(
-                "Schema nested class not available"
+                "Schema nested class not available",
             )
 
         schema_quirk = schema_class()
@@ -738,7 +741,7 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                 # Attach timestamp metadata (previously done by decorator)
                 if schema_attr.metadata:
                     schema_attr.metadata.extensions["parsed_timestamp"] = datetime.now(
-                        UTC
+                        UTC,
                     ).isoformat()
 
                 return FlextResult[FlextLdifModels.SchemaAttribute].ok(schema_attr)
@@ -747,6 +750,85 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                 return FlextResult[FlextLdifModels.SchemaAttribute].fail(
                     f"OID attribute parsing failed: {e}",
                 )
+
+        def _write_attribute(
+            self,
+            schema_attr: FlextLdifModels.SchemaAttribute,
+        ) -> FlextResult[str]:
+            """Write Oracle OID attribute definition with RFC normalization.
+
+            Applies OID→RFC normalization transformations before writing:
+            - Remove ;binary suffix from attribute names (OID-specific)
+            - Replace underscores with hyphens in names (RFC compliance)
+            - Matching rule fixes (caseIgnoreSubStringsMatch → caseIgnoreSubstringsMatch)
+            - Syntax OID replacements for OUD compatibility
+
+            Args:
+                schema_attr: Parsed schema attribute model
+
+            Returns:
+                FlextResult with formatted LDIF attribute definition string
+
+            """
+            # Create a copy to avoid mutating the original
+            attr_copy = schema_attr.model_copy(deep=True)
+
+            # OID→RFC normalization: Remove ;binary suffix from attribute name
+            if attr_copy.name and ";binary" in attr_copy.name:
+                attr_copy.name = attr_copy.name.replace(";binary", "")
+
+            # RFC compliance: Replace underscores with hyphens in attribute name
+            if attr_copy.name and "_" in attr_copy.name:
+                attr_copy.name = attr_copy.name.replace("_", "-")
+
+            # Apply matching rule replacements before writing
+            if (
+                attr_copy.equality
+                and attr_copy.equality
+                in FlextLdifServersOid.Constants.MATCHING_RULE_REPLACEMENTS
+            ):
+                attr_copy.equality = (
+                    FlextLdifServersOid.Constants.MATCHING_RULE_REPLACEMENTS[
+                        attr_copy.equality
+                    ]
+                )
+
+            if (
+                attr_copy.substr
+                and attr_copy.substr
+                in FlextLdifServersOid.Constants.MATCHING_RULE_REPLACEMENTS
+            ):
+                attr_copy.substr = (
+                    FlextLdifServersOid.Constants.MATCHING_RULE_REPLACEMENTS[
+                        attr_copy.substr
+                    ]
+                )
+
+            if (
+                attr_copy.ordering
+                and attr_copy.ordering
+                in FlextLdifServersOid.Constants.MATCHING_RULE_REPLACEMENTS
+            ):
+                attr_copy.ordering = (
+                    FlextLdifServersOid.Constants.MATCHING_RULE_REPLACEMENTS[
+                        attr_copy.ordering
+                    ]
+                )
+
+            # Apply syntax OID replacements before writing
+            if (
+                attr_copy.syntax
+                and attr_copy.syntax
+                in FlextLdifServersOid.Constants.SYNTAX_OID_REPLACEMENTS
+            ):
+                attr_copy.syntax = (
+                    FlextLdifServersOid.Constants.SYNTAX_OID_REPLACEMENTS[
+                        attr_copy.syntax
+                    ]
+                )
+
+            # Use RFC baseline writer with corrected attribute
+            return FlextLdifUtilities.Writer.write_rfc_attribute(attr_copy)
 
         def _parse_objectclass(
             self,
@@ -793,7 +875,7 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                 # Attach timestamp metadata (previously done by decorator)
                 if schema_oc.metadata:
                     schema_oc.metadata.extensions["parsed_timestamp"] = datetime.now(
-                        UTC
+                        UTC,
                     ).isoformat()
 
                 return FlextResult[FlextLdifModels.SchemaObjectClass].ok(schema_oc)
@@ -802,6 +884,47 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                 return FlextResult[FlextLdifModels.SchemaObjectClass].fail(
                     f"OID objectClass parsing failed: {e}",
                 )
+
+        def _write_objectclass(
+            self,
+            schema_oc: FlextLdifModels.SchemaObjectClass,
+        ) -> FlextResult[str]:
+            """Write Oracle OID objectClass definition with X-ORIGIN.
+
+            Includes X-ORIGIN field from metadata if present, which is
+            important for OID schema export and OUD compatibility.
+
+            X-ORIGIN is a server-specific extension that tracks the origin
+            of objectClass definitions (e.g., "Oracle OID", "RFC 4519").
+
+            Args:
+                schema_oc: Parsed schema objectClass model
+
+            Returns:
+                FlextResult with formatted LDIF objectClass definition string
+
+            Example:
+                Input: SchemaObjectClass with metadata.x_origin = "Oracle OID"
+                Output: "( 2.5.6.6 NAME 'person' STRUCTURAL X-ORIGIN 'Oracle OID' )"
+
+            """
+            # Use RFC baseline writer
+            result = FlextLdifUtilities.Writer.write_rfc_objectclass(schema_oc)
+
+            if not result.is_success:
+                return result
+
+            rfc_str = result.unwrap()
+
+            # Add X-ORIGIN if present in metadata (stored as extra field with extra="allow")
+            if schema_oc.metadata:
+                x_origin = getattr(schema_oc.metadata, "x_origin", None)
+                if x_origin:
+                    # Insert X-ORIGIN before closing paren
+                    rfc_str = rfc_str.rstrip(" )")
+                    rfc_str += f" X-ORIGIN '{x_origin}' )"
+
+            return FlextResult[str].ok(rfc_str)
 
         def _transform_attribute_for_write(
             self,
@@ -1388,11 +1511,21 @@ class FlextLdifServersOid(FlextLdifServersRfc):
             # OID exports DNs with spaces (e.g., "cn=user ,ou=..." instead of "cn=user,ou=...")
             # and unescaped UTF-8 (e.g., "cn=josé" instead of "cn=jos\C3\A9")
             original_dn = entry_dn
-            cleaned_dn = FlextLdifUtilities.DN.clean_dn(entry_dn)
+            cleaned_dn, dn_stats = FlextLdifUtilities.DN.clean_dn_with_statistics(
+                entry_dn,
+            )
 
             # Step 1: Call RFC parser with CLEANED DN to create base Entry
             result = super()._parse_entry(cleaned_dn, entry_attrs)
             if result.is_failure:
+                # Log parser rejection with diagnostic details
+                # This helps track the 289 missing entries issue
+                self.logger.debug(
+                    "OID parser rejected entry during RFC parsing",
+                    original_dn=original_dn[:100] if len(original_dn) > 100 else original_dn,
+                    cleaned_dn=cleaned_dn[:100] if len(cleaned_dn) > 100 else cleaned_dn,
+                    error=str(result.error)[:200],
+                )
                 return result
 
             entry = result.unwrap()
@@ -1478,12 +1611,28 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                     metadata=dn_metadata,
                 )
 
-            # Create new Entry with converted attributes
+            # Create EntryStatistics with DN transformation tracking
+            entry_stats = FlextLdifModels.EntryStatistics.create_with_dn_stats(
+                dn_statistics=dn_stats,
+            )
+            entry_stats.was_parsed = True
+            entry_stats.was_validated = True
+
+            # Track attribute conversions
+            for attr_name in converted_attrs:
+                entry_stats.track_attribute_change(attr_name, "modified")
+
+            # Track quirk application
+            if dn_stats.was_transformed or converted_attrs:
+                entry_stats.apply_quirk(FlextLdifConstants.ServerTypes.OID)
+
+            # Create new Entry with converted attributes and statistics
             new_entry_result = FlextLdifModels.Entry.create(
                 dn=dn_to_use,
                 attributes=ldif_attrs,
                 server_type=FlextLdifConstants.ServerTypes.OID,
                 metadata=metadata,
+                statistics=entry_stats,
             )
 
             if new_entry_result.is_failure:

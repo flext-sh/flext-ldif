@@ -91,6 +91,7 @@ class FlextLdifCategorization(FlextService[dict[str, list[FlextLdifModels.Entry]
         forbidden_attributes: list[str] | None = None,
         forbidden_objectclasses: list[str] | None = None,
         base_dn: str | None = None,
+        server_type: str = "rfc",
     ) -> None:
         """Initialize categorization service.
 
@@ -100,6 +101,7 @@ class FlextLdifCategorization(FlextService[dict[str, list[FlextLdifModels.Entry]
             forbidden_attributes: Attributes to remove from all entries
             forbidden_objectclasses: ObjectClasses to remove
             base_dn: Base DN for filtering (optional, used by filter_by_base_dn)
+            server_type: LDAP server type (oid, oud, rfc, etc.) for server-specific categorization
 
         """
         super().__init__()
@@ -124,6 +126,7 @@ class FlextLdifCategorization(FlextService[dict[str, list[FlextLdifModels.Entry]
         self._forbidden_attributes = forbidden_attributes or []
         self._forbidden_objectclasses = forbidden_objectclasses or []
         self._base_dn = base_dn
+        self._server_type = server_type
         self._rejection_tracker: dict[str, list[FlextLdifModels.Entry]] = {
             "invalid_dn_rfc4514": [],
             "base_dn_filter": [],
@@ -181,6 +184,12 @@ class FlextLdifCategorization(FlextService[dict[str, list[FlextLdifModels.Entry]
 
             if not FlextLdifUtilities.DN.validate(dn_str):
                 self._rejection_tracker["invalid_dn_rfc4514"].append(entry)
+                # Track rejection in statistics
+                if entry.statistics:
+                    entry.statistics.mark_rejected(
+                        FlextLdifConstants.RejectionCategory.INVALID_DN,
+                        f"DN validation failed (RFC 4514): {dn_str[:80]}",
+                    )
                 # Use structured logging to avoid base64 encoding
                 logger.debug("Invalid DN (RFC 4514)", dn=dn_str)
                 continue
@@ -188,6 +197,12 @@ class FlextLdifCategorization(FlextService[dict[str, list[FlextLdifModels.Entry]
             normalized_dn = FlextLdifUtilities.DN.norm(dn_str)
             if normalized_dn is None:
                 self._rejection_tracker["invalid_dn_rfc4514"].append(entry)
+                # Track rejection in statistics
+                if entry.statistics:
+                    entry.statistics.mark_rejected(
+                        FlextLdifConstants.RejectionCategory.INVALID_DN,
+                        f"DN normalization failed: {dn_str[:80]}",
+                    )
                 continue
             entry.dn = FlextLdifModels.DistinguishedName(value=normalized_dn)
             validated.append(entry)
@@ -196,6 +211,16 @@ class FlextLdifCategorization(FlextService[dict[str, list[FlextLdifModels.Entry]
             f"Validated {len(validated)} entries, "
             f"rejected {len(self._rejection_tracker['invalid_dn_rfc4514'])} invalid DNs"
         )
+
+        # Log sample rejected DNs for diagnostic purposes (track 289 missing entries)
+        if self._rejection_tracker["invalid_dn_rfc4514"]:
+            sample_rejected_dns = [
+                entry.dn.value[:80] if entry.dn and len(entry.dn.value) > 80 else (entry.dn.value if entry.dn else "")
+                for entry in self._rejection_tracker["invalid_dn_rfc4514"][:5]
+            ]
+            logger.debug(
+                f"Sample rejected DNs (first 5): {sample_rejected_dns}"
+            )
 
         return FlextResult[list[FlextLdifModels.Entry]].ok(validated)
 
@@ -227,12 +252,23 @@ class FlextLdifCategorization(FlextService[dict[str, list[FlextLdifModels.Entry]
                 entry,
                 rules=self._categorization_rules,
                 whitelist_rules=self._schema_whitelist_rules,
+                server_type=self._server_type,
             )
 
             categories[category].append(entry)
 
+            # Track category assignment in statistics
+            if entry.statistics:
+                entry.statistics.category_assigned = category
+
             if category == FlextLdifConstants.Categories.REJECTED:
                 self._rejection_tracker["categorization_rejected"].append(entry)
+                # Track rejection in statistics
+                if entry.statistics:
+                    entry.statistics.mark_rejected(
+                        FlextLdifConstants.RejectionCategory.NO_CATEGORY_MATCH,
+                        reason,
+                    )
                 logger.debug(f"Entry rejected: {entry.dn}, reason: {reason}")
 
         for cat, cat_entries in categories.items():
@@ -276,6 +312,23 @@ class FlextLdifCategorization(FlextService[dict[str, list[FlextLdifModels.Entry]
                 included, excluded = FlextLdifFilters.by_base_dn(entries, self._base_dn)
                 filtered[category] = included
                 self._rejection_tracker["base_dn_filter"].extend(excluded)
+
+                # Track filter results in statistics
+                for entry in included:
+                    if entry.statistics:
+                        entry.statistics.mark_filtered(
+                            FlextLdifConstants.FilterType.BASE_DN_FILTER, passed=True
+                        )
+                for entry in excluded:
+                    if entry.statistics:
+                        entry.statistics.mark_filtered(
+                            FlextLdifConstants.FilterType.BASE_DN_FILTER, passed=False
+                        )
+                        entry.statistics.mark_rejected(
+                            FlextLdifConstants.RejectionCategory.BASE_DN_FILTER,
+                            f"DN not under base DN: {self._base_dn}",
+                        )
+
                 if excluded:
                     logger.info(
                         f"Base DN filter ({category}): {len(entries)} → "

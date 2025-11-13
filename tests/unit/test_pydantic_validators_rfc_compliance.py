@@ -10,7 +10,6 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
-import pytest
 
 from flext_ldif.models import FlextLdifModels
 
@@ -226,12 +225,19 @@ class TestDistinguishedNameRfcValidation:
         assert dn.value == "uid=test, ou=users, dc=example, dc=com"
         assert len(dn.components) == 4
 
-    def test_dn_invalid_format_raises_validation_error(self) -> None:
-        """Validate invalid DN format raises ValidationError from field_validator."""
-        from pydantic import ValidationError
+    def test_dn_invalid_format_preserved_for_server_quirks(self) -> None:
+        """Validate invalid DN format is PRESERVED (not rejected) for server quirks.
 
-        with pytest.raises(ValidationError):
-            FlextLdifModels.DistinguishedName(value="invalid-dn-without-equals")
+        DistinguishedName accepts ANY string to preserve server-specific DN formats.
+        RFC validation happens at Entry level, where violations are captured in metadata.
+        """
+        # Create DN with invalid format - should SUCCEED (lenient processing)
+        dn = FlextLdifModels.DistinguishedName(value="invalid-dn-without-equals")
+
+        # DN is accepted (preserves server quirks)
+        assert dn.value == "invalid-dn-without-equals"
+
+        # Entry-level validation will capture RFC violation in validation_metadata
 
     def test_dn_metadata_preserved_for_server_conversions(self) -> None:
         """Validate DN metadata is preserved for server conversions."""
@@ -252,23 +258,33 @@ class TestDistinguishedNameRfcValidation:
 class TestQuirkMetadataRfcViolations:
     """QuirkMetadata RFC violation tracking tests."""
 
-    def test_quirk_metadata_rfc_violations_field_exists(self) -> None:
-        """Validate QuirkMetadata has rfc_violations field."""
+    def test_quirk_metadata_rfc_violations_in_extensions(self) -> None:
+        """Validate QuirkMetadata stores rfc_violations in extensions dict."""
         metadata = FlextLdifModels.QuirkMetadata(
-            rfc_violations=[
-                "RFC 4512 § 2.4.1: Entry should have objectClass",
-                "RFC 2849 § 2: Line length exceeds 76 characters",
-            ],
-            attribute_name_violations=[
-                "ds-cfg-enabled",
-                "_internal_id",
-            ],
+            quirk_type="rfc",
+            extensions={
+                "rfc_violations": [
+                    "RFC 4512 § 2.4.1: Entry should have objectClass",
+                    "RFC 2849 § 2: Line length exceeds 76 characters",
+                ],
+                "attribute_name_violations": [
+                    "ds-cfg-enabled",
+                    "_internal_id",
+                ],
+            },
         )
 
-        assert len(metadata.rfc_violations) == 2
-        assert len(metadata.attribute_name_violations) == 2
-        assert "RFC 4512" in metadata.rfc_violations[0]
-        assert "ds-cfg-enabled" in metadata.attribute_name_violations
+        # Violations are stored in extensions dict
+        assert "rfc_violations" in metadata.extensions
+        assert "attribute_name_violations" in metadata.extensions
+
+        rfc_violations = metadata.extensions["rfc_violations"]
+        attr_violations = metadata.extensions["attribute_name_violations"]
+
+        assert len(rfc_violations) == 2
+        assert len(attr_violations) == 2
+        assert "RFC 4512" in rfc_violations[0]
+        assert "ds-cfg-enabled" in attr_violations
 
     def test_rfc_violations_preserved_in_entry_metadata(self) -> None:
         """Validate RFC violations are preserved in Entry.metadata for conversions."""

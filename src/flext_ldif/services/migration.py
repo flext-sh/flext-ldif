@@ -116,6 +116,7 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifModels.EntryResult]):
             forbidden_attributes=forbidden_attributes,
             forbidden_objectclasses=forbidden_objectclasses,
             base_dn=base_dn,
+            server_type=self._source_server,
         )
         self._parser = FlextLdifParser()
         self._writer = FlextLdifWriter()
@@ -173,7 +174,7 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifModels.EntryResult]):
         logger.info(f"Total parsed: {len(all_entries)}")
         return FlextResult[list[FlextLdifModels.Entry]].ok(all_entries)
 
-    def _apply_categorization(
+    def _apply_categorization(  # noqa: C901 - Acceptable complexity for filter orchestration
         self,
         entries: list[FlextLdifModels.Entry],
     ) -> FlextResult[dict[str, list[FlextLdifModels.Entry]]]:
@@ -201,11 +202,30 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifModels.EntryResult]):
             for category, cat_entries in categories.items():
                 # Don't modify rejected entries (audit trail)
                 if category != FlextLdifConstants.Categories.REJECTED:
+                    filtered_entries = []
                     for entry in cat_entries:
+                        filtered_entry = entry
+
+                        # Apply attribute filtering
                         if forbidden_attrs:
-                            FlextLdifFilters.remove_attributes(entry, forbidden_attrs)
+                            attr_result = FlextLdifFilters.remove_attributes(
+                                filtered_entry, forbidden_attrs
+                            )
+                            if attr_result.is_success:
+                                filtered_entry = attr_result.unwrap()
+
+                        # Apply objectClass filtering
                         if forbidden_ocs:
-                            FlextLdifFilters.remove_objectclasses(entry, forbidden_ocs)
+                            oc_result = FlextLdifFilters.remove_objectclasses(
+                                filtered_entry, forbidden_ocs
+                            )
+                            if oc_result.is_success:
+                                filtered_entry = oc_result.unwrap()
+
+                        filtered_entries.append(filtered_entry)
+
+                    # Replace category entries with filtered entries
+                    categories[category] = filtered_entries
 
         # Filter schema by OIDs if needed
         if FlextLdifConstants.Categories.SCHEMA in categories:
@@ -277,6 +297,16 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifModels.EntryResult]):
             logger.info(f"Wrote {len(all_output_entries)} entries to {output_path}")
         else:
             # Categorized mode: multiple files
+            # Map categories to phase numbers for migration headers
+            category_to_phase = {
+                FlextLdifConstants.Categories.SCHEMA: 0,
+                FlextLdifConstants.Categories.HIERARCHY: 1,
+                FlextLdifConstants.Categories.USERS: 2,
+                FlextLdifConstants.Categories.GROUPS: 3,
+                FlextLdifConstants.Categories.ACL: 4,
+                FlextLdifConstants.Categories.REJECTED: 5,
+            }
+
             for category, entries in categories.items():
                 if not entries:
                     continue
@@ -287,12 +317,32 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifModels.EntryResult]):
 
                 output_path = self._output_dir / output_filename
 
+                # Build template_data for migration headers
+                phase_num = category_to_phase.get(category, -1)
+                template_data = {
+                    "phase": phase_num,
+                    "phase_name": category.upper(),
+                    "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                    "source_server": self._source_server,
+                    "target_server": self._target_server,
+                    "base_dn": self._categorization._base_dn or "",  # noqa: SLF001
+                    "total_entries": len(entries),
+                    "processed_entries": len(entries),
+                    "rejected_entries": 0,
+                    "schema_whitelist_enabled": bool(
+                        self._categorization._schema_whitelist_rules  # noqa: SLF001
+                    ),
+                    "sort_entries_hierarchically": self._sort_hierarchically,
+                    "server_type": self._target_server,
+                }
+
                 write_result = self._writer.write(
                     entries=entries,
                     target_server_type=self._target_server,
                     output_target="file",
                     output_path=output_path,
                     format_options=self._write_opts,
+                    template_data=template_data,
                 )
 
                 if write_result.is_failure:

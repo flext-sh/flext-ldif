@@ -634,7 +634,7 @@ class FlextLdifFilters(FlextService[FlextLdifModels.EntryResult]):
             entry: FlextLdifModels.Entry,
             attributes: list[str],
         ) -> FlextResult[FlextLdifModels.Entry]:
-            """Remove attributes from entry."""
+            """Remove attributes from entry, preserving removed values in metadata."""
             try:
                 if entry.attributes is None:
                     return FlextResult[FlextLdifModels.Entry].fail(
@@ -642,6 +642,15 @@ class FlextLdifFilters(FlextService[FlextLdifModels.EntryResult]):
                     )
 
                 blocked_lower = {attr.lower() for attr in attributes}
+
+                # Store removed attributes with their values in metadata BEFORE filtering
+                removed_attrs_with_values = {
+                    key: value
+                    for key, value in entry.attributes.attributes.items()
+                    if key.lower() in blocked_lower
+                }
+
+                # Filter attributes
                 filtered_attrs_dict = {
                     key: value
                     for key, value in entry.attributes.attributes.items()
@@ -657,11 +666,38 @@ class FlextLdifFilters(FlextService[FlextLdifModels.EntryResult]):
                 if not entry.dn:
                     return FlextResult[FlextLdifModels.Entry].fail("Entry has no DN")
 
-                # Entry.create() already returns FlextResult, return directly
-                return FlextLdifModels.Entry.create(
+                # Create entry with removed attributes metadata
+                entry_result = FlextLdifModels.Entry.create(
                     dn=entry.dn,
                     attributes=new_attributes,
-                ).map(lambda e: cast("FlextLdifModels.Entry", e))
+                )
+
+                if entry_result.is_failure:
+                    return entry_result
+
+                new_entry = entry_result.unwrap()
+
+                # Store removed attributes with values using model_copy
+                if removed_attrs_with_values:
+                    # Preserve existing metadata and add removed attributes
+                    existing_metadata = new_entry.entry_metadata or {}
+                    updated_metadata = {
+                        **existing_metadata,
+                        "removed_attributes_with_values": removed_attrs_with_values,
+                    }
+
+                    # Use model_copy to create new entry with updated metadata
+                    new_entry = new_entry.model_copy(
+                        update={"entry_metadata": updated_metadata}
+                    )
+
+                    # Track in statistics (only names) if statistics exist
+                    if new_entry.statistics:
+                        for attr_name in removed_attrs_with_values:
+                            new_entry.statistics.track_attribute_change("removed", attr_name)
+
+                return FlextResult[FlextLdifModels.Entry].ok(new_entry)
+
             except Exception as e:
                 return FlextResult[FlextLdifModels.Entry].fail(
                     f"Failed to remove attributes: {e}",
@@ -707,11 +743,32 @@ class FlextLdifFilters(FlextService[FlextLdifModels.EntryResult]):
                 if not entry.dn:
                     return FlextResult[FlextLdifModels.Entry].fail("Entry has no DN")
 
-                # Entry.create() already returns FlextResult, return directly
-                return FlextLdifModels.Entry.create(
+                # Create entry and preserve metadata from original entry
+                entry_result = FlextLdifModels.Entry.create(
                     dn=entry.dn,
                     attributes=new_attributes,
-                ).map(lambda e: cast("FlextLdifModels.Entry", e))
+                )
+
+                if entry_result.is_failure:
+                    return entry_result
+
+                new_entry = entry_result.unwrap()
+
+                # CRITICAL: Preserve entry_metadata from original entry using model_copy
+                # This ensures metadata (including removed_attributes_with_values) is not lost
+                if entry.entry_metadata:
+                    new_entry = new_entry.model_copy(
+                        update={"entry_metadata": entry.entry_metadata}
+                    )
+
+                # Also preserve statistics if present
+                if entry.statistics:
+                    new_entry = new_entry.model_copy(
+                        update={"statistics": entry.statistics}
+                    )
+
+                return FlextResult[FlextLdifModels.Entry].ok(new_entry)
+
             except Exception as e:
                 return FlextResult[FlextLdifModels.Entry].fail(
                     f"Failed to remove objectClasses: {e}",
@@ -2063,11 +2120,22 @@ class FlextLdifFilters(FlextService[FlextLdifModels.EntryResult]):
         whitelist_rules: FlextLdifModels.WhitelistRules
         | Mapping[str, object]
         | None = None,
+        server_type: str = "rfc",
     ) -> tuple[str, str | None]:
         """Categorize entry into 6 categories.
 
         Uses type-safe Pydantic models instead of dict[str, Any].
         Delegates to FlextLdifFilters.categorize, with optional whitelist validation.
+
+        Args:
+            entry: Entry to categorize
+            rules: Categorization rules (model or dict)
+            whitelist_rules: Schema whitelist rules (optional)
+            server_type: LDAP server type (oid, oud, rfc, etc.) - defaults to "rfc"
+
+        Returns:
+            Tuple of (category, reason) where category is one of:
+                schema, hierarchy, users, groups, acl, rejected
         """
         rules_result = FlextLdifFilters._normalize_category_rules(rules)
         if rules_result.is_failure:
@@ -2082,16 +2150,17 @@ class FlextLdifFilters(FlextService[FlextLdifModels.EntryResult]):
         if is_blocked:
             return ("rejected", reason)
 
-        # Extract server_type from entry metadata quirk_type
-        server_type = (
-            entry.metadata.quirk_type
-            if entry.metadata and hasattr(entry.metadata, "quirk_type")
-            else "rfc"
-        )
+        # Use server_type parameter (passed from migration service) instead of
+        # extracting from entry metadata. This ensures correct server-specific
+        # constants are used even if entries don't have metadata set.
+        # Priority: parameter > entry.metadata.quirk_type > "rfc" fallback
+        effective_server_type = server_type
+        if entry.metadata and hasattr(entry.metadata, "quirk_type") and entry.metadata.quirk_type:
+            effective_server_type = entry.metadata.quirk_type
 
         # Delegate to FilterService for main categorization with server_type
         category, reason = FlextLdifFilters.categorize(
-            entry, normalized_rules, server_type
+            entry, normalized_rules, effective_server_type
         )
 
         # Validate DN patterns for category-specific matching using helper

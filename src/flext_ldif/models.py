@@ -45,8 +45,20 @@ class FlextLdifModels(FlextModels):
     class DistinguishedName(FlextLdifModelsDomains.DistinguishedName):
         """Distinguished Name value object."""
 
+    class AttributeTransformation(FlextLdifModelsDomains.AttributeTransformation):
+        """Detailed tracking of attribute transformation operations.
+
+        Records complete transformation history for LDIF attribute conversions.
+        """
+
     class QuirkMetadata(FlextLdifModelsDomains.QuirkMetadata):
         """Universal metadata container for quirk-specific data preservation."""
+
+    class DNStatistics(FlextLdifModelsDomains.DNStatistics):
+        """Statistics tracking for DN transformations and validation."""
+
+    class EntryStatistics(FlextLdifModelsDomains.EntryStatistics):
+        """Statistics tracking for entry-level transformations and validation."""
 
     class ErrorDetail(FlextLdifModelsDomains.ErrorDetail):
         """Error detail information for failed operations."""

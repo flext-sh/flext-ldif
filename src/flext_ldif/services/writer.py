@@ -249,7 +249,64 @@ class FlextLdifWriter(FlextService[FlextLdifModels.WriteResponse]):
             self.registry = registry
             self.post_processor = FlextLdifWriter.LdifPostProcessor()
 
-        def to_ldif_string(
+        @staticmethod
+        def _generate_entry_comments(
+            entry: FlextLdifModels.Entry,
+            format_options: FlextLdifModels.WriteFormatOptions,
+        ) -> str:
+            """Generate LDIF comments for removed attributes and rejection reasons.
+
+            Comments are written BEFORE the entry to document:
+            - Attributes that were removed during migration (with original values)
+            - Rejection reasons if entry was rejected
+
+            Args:
+                entry: Entry to generate comments for
+                format_options: Write format options controlling comment generation
+
+            Returns:
+                String containing comment lines (with trailing newline if non-empty)
+
+            """
+            comment_lines: list[str] = []
+
+            # Add rejection reason comments if enabled
+            if format_options.write_rejection_reasons and entry.statistics:
+                rejection_reason = entry.statistics.rejection_reason
+                if rejection_reason:
+                    comment_lines.extend([
+                        FlextLdifConstants.CommentFormats.SEPARATOR_DOUBLE,
+                        FlextLdifConstants.CommentFormats.HEADER_REJECTION_REASON,
+                        FlextLdifConstants.CommentFormats.SEPARATOR_DOUBLE,
+                        f"{FlextLdifConstants.CommentFormats.PREFIX_COMMENT}{rejection_reason}",
+                        FlextLdifConstants.CommentFormats.SEPARATOR_EMPTY,
+                    ])
+
+            # Add removed attributes comments if enabled
+            if format_options.write_removed_attributes_as_comments and entry.entry_metadata:
+                removed_attrs = entry.entry_metadata.get("removed_attributes_with_values", {})
+                if removed_attrs and isinstance(removed_attrs, dict):
+                    if comment_lines:  # Add separator if we already have rejection comments
+                        comment_lines.append(FlextLdifConstants.CommentFormats.SEPARATOR_EMPTY)
+                    comment_lines.extend([
+                        FlextLdifConstants.CommentFormats.SEPARATOR_SINGLE,
+                        FlextLdifConstants.CommentFormats.HEADER_REMOVED_ATTRIBUTES,
+                        FlextLdifConstants.CommentFormats.SEPARATOR_SINGLE,
+                    ])
+                    # Generate attribute comment lines with explicit type safety
+                    comment_lines.extend([
+                        f"{FlextLdifConstants.CommentFormats.PREFIX_COMMENT}{attr_name}: {value}"
+                        for attr_name, attr_values in removed_attrs.items()
+                        for value in (attr_values if isinstance(attr_values, list) else [attr_values])
+                    ])
+                    comment_lines.append(FlextLdifConstants.CommentFormats.SEPARATOR_EMPTY)
+
+            # Return comments with trailing newline if non-empty
+            if comment_lines:
+                return "\n".join(comment_lines) + "\n"
+            return ""
+
+        def to_ldif_string(  # noqa: C901 - Acceptable complexity for serialization logic
             self,
             entries: Sequence[FlextLdifModels.Entry],
             target_server_type: str,
@@ -293,6 +350,11 @@ class FlextLdifWriter(FlextService[FlextLdifModels.WriteResponse]):
                     if entry.entry_metadata is None:
                         entry.entry_metadata = {}
                     entry.entry_metadata["_write_options"] = format_options
+
+                    # Generate and write comments BEFORE the entry
+                    entry_comments = self._generate_entry_comments(entry, format_options)
+                    if entry_comments:
+                        output.write(entry_comments)
 
                     write_result = entry_quirk.write(entry)
                     if write_result.is_failure:
@@ -483,15 +545,52 @@ class FlextLdifWriter(FlextService[FlextLdifModels.WriteResponse]):
             entries: Sequence[FlextLdifModels.Entry],
             template: str | None,
             template_data: dict[str, Any] | None,
+            format_options: FlextLdifModels.WriteFormatOptions | None = None,
         ) -> FlextResult[str]:
-            """Build header from template."""
+            """Build header from template.
+
+            Args:
+                entries: List of entries being written
+                template: Optional explicit template (overrides format_options)
+                template_data: Data to populate template
+                format_options: WriteFormatOptions with migration_header_template
+
+            Returns:
+                FlextResult with generated header string
+
+            """
+            # Determine template source (explicit > format_options > none)
+            if not template and format_options:
+                if format_options.write_migration_header and format_options.migration_header_template:
+                    template = format_options.migration_header_template
+                elif format_options.write_migration_header:
+                    # Use default template from constants
+                    template = FlextLdifConstants.MigrationHeaders.DEFAULT_TEMPLATE
+
             if not template:
                 return FlextResult.ok("")
 
             try:
+                # Build template data with defaults
                 data = template_data or {}
                 data.setdefault("entry_count", len(entries))
+                data.setdefault("total_entries", len(entries))
                 data.setdefault("timestamp", datetime.now(UTC).isoformat())
+                data.setdefault("phase", "unknown")
+                data.setdefault("source_server", "unknown")
+                data.setdefault("target_server", "unknown")
+                data.setdefault("base_dn", "")
+                data.setdefault("processed_entries", len(entries))
+                data.setdefault("rejected_entries", 0)
+
+                # Calculate percentages
+                total = data.get("total_entries", len(entries))
+                if total > 0:
+                    data.setdefault("processed_percentage", (data.get("processed_entries", 0) / total) * 100)
+                    data.setdefault("rejected_percentage", (data.get("rejected_entries", 0) / total) * 100)
+                else:
+                    data.setdefault("processed_percentage", 0.0)
+                    data.setdefault("rejected_percentage", 0.0)
 
                 header = template.format(**data)
                 return FlextResult.ok(header + "\n" if header else "")
@@ -546,7 +645,7 @@ class FlextLdifWriter(FlextService[FlextLdifModels.WriteResponse]):
                 formatted_entries = entries
 
             header_result = header_builder.build(
-                formatted_entries, header_template, template_data
+                formatted_entries, header_template, template_data, options
             )
             if header_result.is_failure:
                 return header_result

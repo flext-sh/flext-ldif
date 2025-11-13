@@ -272,7 +272,7 @@ class FlextLdifConversion(
 
             # FASE 3: Preserve validation metadata from source entry to target entry
             converted_entry = parsed_entries[0]
-            converted_entry = FlextLdifUtilities.Metadata.preserve_validation_metadata(
+            converted_entry = FlextLdifUtilities.Metadata.preserve_validation_metadata(  # type: ignore[arg-type]
                 source_model=entry,
                 target_model=cast("FlextLdifModels.Entry", converted_entry),
                 transformation={
