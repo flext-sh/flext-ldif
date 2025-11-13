@@ -323,6 +323,9 @@ class FlextLdifWriter(FlextService[FlextLdifModels.WriteResponse]):
             try:
                 result = []
                 for entry in entries:
+                    if not entry.attributes:
+                        continue
+
                     dn_str = str(entry.dn)
                     attrs_dict = entry.attributes.attributes
                     result.append((dn_str, attrs_dict))
@@ -344,6 +347,10 @@ class FlextLdifWriter(FlextService[FlextLdifModels.WriteResponse]):
 
             processed = []
             for entry in entries:
+                if not entry.attributes:
+                    processed.append(entry)
+                    continue
+
                 new_attrs = {}
                 for attr_name, attr_values in entry.attributes.attributes.items():
                     normalized_name = (

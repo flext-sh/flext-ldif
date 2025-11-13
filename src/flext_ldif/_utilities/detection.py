@@ -46,7 +46,18 @@ from __future__ import annotations
 
 import re
 from collections.abc import Mapping
-from typing import Any, cast
+from typing import Any, Protocol, cast
+
+
+class ServerConstantsProtocol(Protocol):
+    """Protocol for server Constants classes used in detection mixins."""
+
+    # Optional detection attributes used by mixins
+    DETECTION_OID_PATTERN: str | None
+    DETECTION_ATTRIBUTE_PREFIXES: frozenset[str] | None
+    DETECTION_OBJECTCLASS_NAMES: frozenset[str] | None
+    DETECTION_DN_MARKERS: frozenset[str] | None
+    ACL_ATTRIBUTE_NAME: str | None
 
 
 class FlextLdifUtilitiesDetection:
@@ -58,7 +69,7 @@ class FlextLdifUtilitiesDetection:
         Eliminates duplications of _get_constants across all detection mixins.
         """
 
-        def _get_constants(self, required_attr: str | None = None) -> type[Any] | None:
+        def _get_constants(self, required_attr: str | None = None) -> type[ServerConstantsProtocol] | None:
             """Get Constants class from server class via MRO traversal.
 
             Args:
@@ -79,10 +90,10 @@ class FlextLdifUtilitiesDetection:
                     constants = cls.Constants
                     # If no required attribute specified, return any Constants class
                     if required_attr is None:
-                        return cast("type[Any]", constants)
+                        return cast("type[ServerConstantsProtocol]", constants)
                     # Otherwise check if it has the required attribute
                     if constants and hasattr(constants, required_attr):
-                        return cast("type[Any]", constants)
+                        return cast("type[ServerConstantsProtocol]", constants)
             return None
 
     class PatternDetectionMixin(BaseDetectionMixin):

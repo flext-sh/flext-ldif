@@ -24,7 +24,7 @@ from __future__ import annotations
 import re
 from collections.abc import Mapping
 from enum import StrEnum
-from typing import ClassVar
+from typing import ClassVar, cast
 
 from flext_core import FlextLogger, FlextResult
 
@@ -250,8 +250,8 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 if not attribute.metadata:
                     attribute.metadata = FlextLdifModels.QuirkMetadata(
                         quirk_type=self._get_server_type(),
-                        original_format=attr_definition.strip(),
                         extensions={
+                            "original_format": attr_definition.strip(),
                             FlextLdifServersRelaxed.Constants.METADATA_RELAXED_PARSED: True,
                             FlextLdifServersRelaxed.Constants.METADATA_RFC_PARSED: True,
                         },
@@ -264,8 +264,10 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                     ] = True
                     attribute.metadata.quirk_type = self._get_server_type()
                     # Ensure original_format is set
-                    if not attribute.metadata.original_format:
-                        attribute.metadata.original_format = attr_definition.strip()
+                    if not attribute.metadata.extensions.get("original_format"):
+                        attribute.metadata.extensions["original_format"] = (
+                            attr_definition.strip()
+                        )
                 return FlextResult[FlextLdifModels.SchemaAttribute].ok(attribute)
 
             # RFC parser failed - use minimal best-effort parsing (no fallback, proper parsing)
@@ -375,8 +377,10 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 ] = True
                 objectclass.metadata.quirk_type = self._get_server_type()
                 # Ensure original_format is set
-                if not objectclass.metadata.original_format:
-                    objectclass.metadata.original_format = original_definition.strip()
+                if not objectclass.metadata.extensions.get("original_format"):
+                    objectclass.metadata.extensions["original_format"] = (
+                        original_definition.strip()
+                    )
             return objectclass
 
         def _parse_objectclass_relaxed(
@@ -578,8 +582,14 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             if parent_result.is_success:
                 return parent_result
             # Use original format from metadata if available
-            if attr_data.metadata and attr_data.metadata.original_format:
-                return FlextResult[str].ok(attr_data.metadata.original_format)
+            if attr_data.metadata and attr_data.metadata.extensions.get(
+                "original_format"
+            ):
+                return FlextResult[str].ok(
+                    cast(
+                        "str", attr_data.metadata.extensions.get("original_format", "")
+                    )
+                )
             # Format from model data
             if not attr_data.oid:
                 return FlextResult[str].fail("Attribute OID is required for writing")
@@ -604,8 +614,10 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             if parent_result.is_success:
                 return parent_result
             # Use original format from metadata if available
-            if oc_data.metadata and oc_data.metadata.original_format:
-                return FlextResult[str].ok(oc_data.metadata.original_format)
+            if oc_data.metadata and oc_data.metadata.extensions.get("original_format"):
+                return FlextResult[str].ok(
+                    cast("str", oc_data.metadata.extensions.get("original_format", ""))
+                )
             # Format from model data
             if not oc_data.oid:
                 return FlextResult[str].fail("ObjectClass OID is required for writing")

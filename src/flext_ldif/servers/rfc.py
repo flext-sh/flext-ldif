@@ -419,8 +419,14 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 )
 
             # Check for original format in metadata (for perfect round-trip)
-            if attr_data.metadata and attr_data.metadata.original_format:
-                return FlextResult[str].ok(attr_data.metadata.original_format)
+            if attr_data.metadata and attr_data.metadata.extensions.get(
+                "original_format"
+            ):
+                return FlextResult[str].ok(
+                    cast(
+                        "str", attr_data.metadata.extensions.get("original_format", "")
+                    )
+                )
 
             # Transform attribute data using subclass hooks
             transformed_attr = self._transform_attribute_for_write(attr_data)
@@ -443,8 +449,13 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                     extras.append("SINGLE-VALUE")
 
                 # Add X-ORIGIN from metadata if available
-                if transformed_attr.metadata and transformed_attr.metadata.x_origin:
-                    extras.append(f"X-ORIGIN '{transformed_attr.metadata.x_origin}'")
+                if (
+                    transformed_attr.metadata
+                    and transformed_attr.metadata.extensions.get("x_origin")
+                ):
+                    extras.append(
+                        f"X-ORIGIN '{transformed_attr.metadata.extensions.get('x_origin')}'"
+                    )
 
                 # Insert all extras before closing paren
                 if extras and ")" in transformed_str:
@@ -476,8 +487,10 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 )
 
             # Check for original format in metadata (for perfect round-trip)
-            if oc_data.metadata and oc_data.metadata.original_format:
-                return FlextResult[str].ok(oc_data.metadata.original_format)
+            if oc_data.metadata and oc_data.metadata.extensions.get("original_format"):
+                return FlextResult[str].ok(
+                    cast("str", oc_data.metadata.extensions.get("original_format", ""))
+                )
 
             # Transform objectClass data using subclass hooks
             transformed_oc = self._transform_objectclass_for_write(oc_data)
@@ -493,11 +506,11 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 # Include extended attributes from metadata
                 if (
                     transformed_oc.metadata
-                    and transformed_oc.metadata.x_origin
+                    and transformed_oc.metadata.extensions.get("x_origin")
                     and ")" in transformed_str
                 ):
                     # Insert X-ORIGIN before closing paren
-                    x_origin_str = f" X-ORIGIN '{transformed_oc.metadata.x_origin}'"
+                    x_origin_str = f" X-ORIGIN '{transformed_oc.metadata.extensions.get('x_origin')}'"
                     transformed_str = transformed_str.rstrip(")") + x_origin_str + ")"
 
                 return FlextResult[str].ok(transformed_str)
@@ -913,15 +926,15 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             ldif_lines.append("# Entry Metadata:")
 
             # Add server type
-            if entry_data.metadata.server_type:
+            if entry_data.metadata.extensions.get("server_type"):
                 ldif_lines.append(
-                    f"# Server Type: {entry_data.metadata.server_type}",
+                    f"# Server Type: {entry_data.metadata.extensions.get('server_type')}",
                 )
 
             # Add parsed timestamp
-            if entry_data.metadata.parsed_timestamp:
+            if entry_data.metadata.extensions.get("parsed_timestamp"):
                 ldif_lines.append(
-                    f"# Parsed: {entry_data.metadata.parsed_timestamp}",
+                    f"# Parsed: {entry_data.metadata.extensions.get('parsed_timestamp')}",
                 )
 
             # Add source file if available in extensions
@@ -1147,7 +1160,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
 
             # RFC 2849: Only include changetype if entry has it
             # Content records (no changetype) vs Change records (with changetype)
-            if "changetype" in entry_data.attributes.attributes:
+            if entry_data.attributes and "changetype" in entry_data.attributes.attributes:
                 changetype_values = entry_data.attributes.attributes["changetype"]
                 if changetype_values:
                     ldif_lines.append(f"changetype: {changetype_values[0]}")

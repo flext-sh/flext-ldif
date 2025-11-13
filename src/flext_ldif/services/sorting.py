@@ -745,6 +745,11 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
         """Sort ACL attributes in all entries."""
         processed = []
         for entry in entries:
+            # Skip entries without attributes
+            if not entry.attributes:
+                processed.append(entry)
+                continue
+
             # Access the actual attributes dict
             attrs_dict = dict(entry.attributes.attributes)  # Create mutable copy
             modified = False
@@ -1036,6 +1041,10 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
         """Sort schema entries by OID."""
 
         def schema_key(entry: FlextLdifModels.Entry) -> tuple[int, str]:
+            if not entry.attributes:
+                # Entries without attributes go to the end
+                return (3, FlextLdifUtilities.DN.get_dn_value(entry.dn).lower())
+
             attrs = entry.attributes.model_dump()
 
             # Priority: attributetypes (1) before objectclasses (2)
@@ -1076,12 +1085,18 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
         case_sensitive: bool = False,
     ) -> FlextResult[FlextLdifModels.Entry]:
         """Sort entry attributes alphabetically."""
+        if not entry.attributes:
+            return FlextResult[FlextLdifModels.Entry].ok(entry)
+
         attrs_dict = entry.attributes.attributes  # Get the actual attributes dict
         if case_sensitive:
             sorted_items = sorted(attrs_dict.items(), key=operator.itemgetter(0))
         else:
             sorted_items = sorted(attrs_dict.items(), key=lambda x: x[0].lower())
-        sorted_attrs = FlextLdifModels.LdifAttributes(attributes=dict(sorted_items))
+
+        # Create dict with explicit type annotation
+        sorted_dict: dict[str, object] = dict(sorted_items)
+        sorted_attrs = FlextLdifModels.LdifAttributes(attributes=sorted_dict)
         return FlextResult[FlextLdifModels.Entry].ok(
             entry.model_copy(update={"attributes": sorted_attrs}),
         )
@@ -1093,6 +1108,10 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
         """Sort entry attributes by custom order."""
         if not self.attribute_order:
             return self._sort_entry_attributes_alphabetically(entry)
+
+        if not entry.attributes:
+            return FlextResult[FlextLdifModels.Entry].ok(entry)
+
         attrs_dict = entry.attributes.attributes  # Get the actual attributes dict
         order = self.attribute_order
         ordered = [(k, attrs_dict[k]) for k in order if k in attrs_dict]
@@ -1239,6 +1258,9 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
             Tuple of (priority=1, 0, attr_value) if found, None otherwise
 
         """
+        if not entry.attributes:
+            return None
+
         for attr_name, attr_values in entry.attributes.items():
             if attr_name.lower() == key.lower():
                 # Convert list to first value for sorting
@@ -1346,6 +1368,9 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
             List of group values, or ["__ungrouped__"] if not found
 
         """
+        if not entry.attributes:
+            return ["__ungrouped__"]
+
         for attr_name, attr_value in entry.attributes.items():
             if attr_name.lower() == group_by.lower():
                 if isinstance(attr_value, list):

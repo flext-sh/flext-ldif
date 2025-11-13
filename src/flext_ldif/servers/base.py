@@ -180,7 +180,9 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
         if parse_result.is_success:
             parse_response = parse_result.unwrap()
             # Extract entries from ParseResponse
-            return FlextResult[FlextLdifTypes.EntryOrString].ok(parse_response.entries)
+            return FlextResult[FlextLdifTypes.EntryOrString].ok(
+                cast("FlextLdifTypes.EntryOrString", parse_response.entries)
+            )
         error_msg: str = parse_result.error or "Parse failed"
         return FlextResult[FlextLdifTypes.EntryOrString].fail(error_msg)
 
@@ -249,7 +251,9 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
                 detected_server_type=detected_server,
             )
             # Extract entries from ParseResponse (empty list in this case)
-            return FlextResult[FlextLdifTypes.EntryOrString].ok(empty_response.entries)
+            return FlextResult[FlextLdifTypes.EntryOrString].ok(
+                cast("FlextLdifTypes.EntryOrString", empty_response.entries)
+            )
 
         # Use explicit operation if provided, otherwise auto-detect
         detected_operation: Literal["parse", "write"] | None = operation
@@ -510,7 +514,9 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
         # Use functional composition to write all entries
         def write_single_entry(entry_model: FlextLdifModels.Entry) -> FlextResult[str]:
             """Write single entry using entry quirk."""
-            return entry_quirk.write(entry_model)
+            if entry_quirk is not None:
+                return entry_quirk.write(entry_model)
+            return FlextResult[str].fail("No entry quirk found")
 
         # Process all entries with early return on first failure
         ldif_lines: list[str] = []
@@ -550,7 +556,10 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
 
         def extract_server_type(mro_cls: type[object]) -> str | None:
             """Extract server type if it's a valid string."""
-            server_type = mro_cls.Constants.SERVER_TYPE
+            constants = getattr(mro_cls, "Constants", None)
+            if constants is None:
+                return None
+            server_type = getattr(constants, "SERVER_TYPE", None)
             return server_type if isinstance(server_type, str) else None
 
         # Use functional composition: filter + map + first valid result
@@ -591,7 +600,10 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
 
         def extract_priority(mro_cls: type[object]) -> int | None:
             """Extract priority if it's a valid integer."""
-            priority = mro_cls.Constants.PRIORITY
+            constants = getattr(mro_cls, "Constants", None)
+            if constants is None:
+                return None
+            priority = getattr(constants, "PRIORITY", None)
             return priority if isinstance(priority, int) else None
 
         # Use functional composition: filter + map + first valid result
@@ -1924,12 +1936,11 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
 
                 # Return combined result
                 dk = FlextLdifConstants.DictKeys
-                return FlextResult[dict[str, list[str] | str]].ok(
-                    {
-                        dk.ATTRIBUTES: attributes_parsed,
-                        dk.OBJECTCLASS: objectclasses_parsed,
-                    },
-                )
+                schema_dict: dict[str, list[str] | str] = {
+                    dk.ATTRIBUTES: cast("list[str] | str", attributes_parsed),
+                    dk.OBJECTCLASS: cast("list[str] | str", objectclasses_parsed),
+                }
+                return FlextResult[dict[str, list[str] | str]].ok(schema_dict)
 
             except Exception as e:
                 return FlextResult[dict[str, list[str] | str]].fail(
@@ -2646,7 +2657,9 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
             parse_result = self._route_parse(ldif_text)
             if parse_result.is_success:
                 parsed_entries: list[FlextLdifModels.Entry] = parse_result.unwrap()
-                return FlextResult[FlextLdifTypes.EntryOrString].ok(parsed_entries)
+                return FlextResult[FlextLdifTypes.EntryOrString].ok(
+                    cast("FlextLdifTypes.EntryOrString", parsed_entries)
+                )
             error_msg: str = parse_result.error or "Parse failed"
             return FlextResult[FlextLdifTypes.EntryOrString].fail(error_msg)
 
@@ -2699,7 +2712,9 @@ class FlextLdifServersBase(FlextService[FlextLdifTypes.EntryOrString], ABC):
             # Health check: no data provided
             if data is None:
                 empty_list: list[FlextLdifModels.Entry] = []
-                return FlextResult[FlextLdifTypes.EntryOrString].ok(empty_list)
+                return FlextResult[FlextLdifTypes.EntryOrString].ok(
+                    cast("FlextLdifTypes.EntryOrString", empty_list)
+                )
 
             # Auto-detect operation from data type
             detected_operation = self._auto_detect_entry_operation(data, operation)

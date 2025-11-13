@@ -372,7 +372,10 @@ class FlextLdifParser(FlextService[FlextLdifModels.ParseResponse]):
                 "ldapsyntaxes",
             }
 
-            # Check if entry has schema attributes
+            # Check if entry has attributes and schema attributes
+            if not entry.attributes:
+                return entry
+
             has_schema = any(
                 attr_name.lower() in schema_attrs
                 for attr_name in entry.attributes.attributes
@@ -517,6 +520,8 @@ class FlextLdifParser(FlextService[FlextLdifModels.ParseResponse]):
         ) -> FlextLdifModels.Entry:
             """Normalize DN formatting to RFC 4514 standard."""
             try:
+                if not entry.dn:
+                    return entry
                 dn_str = str(entry.dn.value)
                 normalized_str = FlextLdifUtilities.DN.norm(dn_str)
 
@@ -537,6 +542,10 @@ class FlextLdifParser(FlextService[FlextLdifModels.ParseResponse]):
         ) -> FlextLdifModels.Entry:
             """Filter out operational attributes from entry."""
             try:
+                # Check if entry has attributes
+                if not entry.attributes:
+                    return entry
+
                 is_schema_entry = FlextLdifUtilities.Entry.is_schema_entry(
                     entry, strict=False
                 )
@@ -624,6 +633,11 @@ class FlextLdifParser(FlextService[FlextLdifModels.ParseResponse]):
             errors: list[str],
         ) -> None:
             """Validate entry has objectClass attribute."""
+            if not entry.attributes:
+                if strict:
+                    errors.append("Entry must have objectClass attribute")
+                return
+
             has_objectclass = any(
                 attr_name.lower() == FlextLdifConstants.DictKeys.OBJECTCLASS.lower()
                 for attr_name in entry.attributes.attributes
@@ -639,6 +653,9 @@ class FlextLdifParser(FlextService[FlextLdifModels.ParseResponse]):
             errors: list[str],
         ) -> None:
             """Validate entry attribute values."""
+            if not entry.attributes:
+                return
+
             for attr_name, attr_value in entry.attributes.attributes.items():
                 if isinstance(attr_value, list):
                     values = attr_value
@@ -695,6 +712,9 @@ class FlextLdifParser(FlextService[FlextLdifModels.ParseResponse]):
         ) -> list[FlextLdifModels.SchemaAttribute]:
             """Parse attributeTypes from entry using schema quirks."""
             schema_attributes = []
+            if not entry.attributes:
+                return schema_attributes
+
             attr_types = entry.attributes.get(
                 FlextLdifConstants.SchemaFields.ATTRIBUTE_TYPES,
                 [],
@@ -716,6 +736,9 @@ class FlextLdifParser(FlextService[FlextLdifModels.ParseResponse]):
         ) -> list[FlextLdifModels.SchemaObjectClass]:
             """Parse objectClasses from entry using schema quirks."""
             schema_objectclasses = []
+            if not entry.attributes:
+                return schema_objectclasses
+
             obj_classes = entry.attributes.get(
                 FlextLdifConstants.SchemaFields.OBJECT_CLASSES,
                 [],
@@ -805,24 +828,33 @@ class FlextLdifParser(FlextService[FlextLdifModels.ParseResponse]):
                         file_path=content,
                         entries_parsed=len(processed_entries),
                         parse_duration_ms=parse_duration_ms,
-                        error_details=failed_details if failed_count > 0 else None,
+                        error_details=cast(
+                            "list[object] | None",
+                            failed_details if failed_count > 0 else None,
+                        ),
                     )
                 elif input_source == "ldap3":
                     parse_event = FlextLdifModels.ParseEvent.for_ldap3(
                         connection_info=f"ldap3_{effective_type}",
                         entries_parsed=len(processed_entries),
                         parse_duration_ms=parse_duration_ms,
-                        error_details=failed_details if failed_count > 0 else None,
+                        error_details=cast(
+                            "list[object] | None",
+                            failed_details if failed_count > 0 else None,
+                        ),
                     )
                 else:  # string
                     parse_event = FlextLdifModels.ParseEvent.for_string(
                         content_length=len(content) if isinstance(content, str) else 0,
                         entries_parsed=len(processed_entries),
                         parse_duration_ms=parse_duration_ms,
-                        error_details=failed_details if failed_count > 0 else None,
+                        error_details=cast(
+                            "list[object] | None",
+                            failed_details if failed_count > 0 else None,
+                        ),
                     )
 
-                stats = stats.add_event(parse_event)
+                stats = cast("FlextLdifModels.Statistics", stats.add_event(parse_event))
 
             return stats
 

@@ -455,7 +455,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                 metadata = FlextLdifModels.QuirkMetadata.create_for(
                     self._get_server_type(),
                 )
-                metadata.original_format = acl_line.strip()
+                metadata.extensions["original_format"] = acl_line.strip()
 
                 # Build Acl model
                 acl_name = (
@@ -687,7 +687,9 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                 dn_lower = entry_dn.lower()
 
                 # Store metadata in extensions
-                metadata = entry.metadata or FlextLdifModels.QuirkMetadata()
+                metadata = entry.metadata or FlextLdifModels.QuirkMetadata(
+                    quirk_type="server_quirk"
+                )
                 metadata.extensions[
                     FlextLdifConstants.QuirkMetadataKeys.IS_CONFIG_ENTRY
                 ] = any(

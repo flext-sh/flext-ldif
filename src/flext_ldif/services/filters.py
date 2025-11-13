@@ -635,6 +635,11 @@ class FlextLdifFilters(FlextService[FlextLdifModels.EntryResult]):
         ) -> FlextResult[FlextLdifModels.Entry]:
             """Remove attributes from entry."""
             try:
+                if entry.attributes is None:
+                    return FlextResult[FlextLdifModels.Entry].fail(
+                        f"Entry {FlextLdifUtilities.DN.get_dn_value(entry.dn)} has no attributes"
+                    )
+
                 blocked_lower = {attr.lower() for attr in attributes}
                 filtered_attrs_dict = {
                     key: value
@@ -646,6 +651,10 @@ class FlextLdifFilters(FlextService[FlextLdifModels.EntryResult]):
                     attributes=filtered_attrs_dict,
                     metadata=entry.attributes.metadata,
                 )
+
+                # Check DN is not None before creating entry
+                if not entry.dn:
+                    return FlextResult[FlextLdifModels.Entry].fail("Entry has no DN")
 
                 # Entry.create() already returns FlextResult, return directly
                 return FlextLdifModels.Entry.create(
@@ -664,6 +673,11 @@ class FlextLdifFilters(FlextService[FlextLdifModels.EntryResult]):
         ) -> FlextResult[FlextLdifModels.Entry]:
             """Remove objectClasses from entry."""
             try:
+                if entry.attributes is None:
+                    return FlextResult[FlextLdifModels.Entry].fail(
+                        f"Entry {FlextLdifUtilities.DN.get_dn_value(entry.dn)} has no attributes"
+                    )
+
                 blocked_lower = {oc.lower() for oc in objectclasses}
 
                 oc_values = entry.get_attribute_values(
@@ -688,6 +702,10 @@ class FlextLdifFilters(FlextService[FlextLdifModels.EntryResult]):
                     metadata=entry.attributes.metadata,
                 )
 
+                # Check DN is not None before creating entry
+                if not entry.dn:
+                    return FlextResult[FlextLdifModels.Entry].fail("Entry has no DN")
+
                 # Entry.create() already returns FlextResult, return directly
                 return FlextLdifModels.Entry.create(
                     dn=entry.dn,
@@ -707,6 +725,11 @@ class FlextLdifFilters(FlextService[FlextLdifModels.EntryResult]):
             try:
                 if not attributes_to_remove:
                     return FlextResult[FlextLdifModels.Entry].ok(entry)
+
+                if entry.attributes is None:
+                    return FlextResult[FlextLdifModels.Entry].fail(
+                        f"Entry {FlextLdifUtilities.DN.get_dn_value(entry.dn)} has no attributes"
+                    )
 
                 # Create filtered attributes dict
                 attrs_lower = {attr.lower() for attr in attributes_to_remove}
@@ -756,6 +779,12 @@ class FlextLdifFilters(FlextService[FlextLdifModels.EntryResult]):
                 if not filtered_ocs:
                     return FlextResult[FlextLdifModels.Entry].fail(
                         "All objectClasses would be removed",
+                    )
+
+                # Check if entry has attributes
+                if not entry.attributes:
+                    return FlextResult[FlextLdifModels.Entry].fail(
+                        "Entry has no attributes",
                     )
 
                 # Create filtered attributes dict
@@ -819,6 +848,9 @@ class FlextLdifFilters(FlextService[FlextLdifModels.EntryResult]):
             if not attributes:
                 return False
 
+            if not entry.attributes:
+                return False
+
             # Type annotation to help pyrefly understand attr is str
             attrs_keys: list[str] = entry.attributes.keys()
             entry_attrs_lower = {attr.lower() for attr in attrs_keys}
@@ -877,17 +909,15 @@ class FlextLdifFilters(FlextService[FlextLdifModels.EntryResult]):
 
             if entry.metadata is None:
                 new_metadata = FlextLdifModels.QuirkMetadata(
+                    quirk_type="filter_excluded",
                     extensions={"exclusion_info": exclusion_info.model_dump()},
                 )
             else:
                 new_extensions = {**entry.metadata.extensions}
                 new_extensions["exclusion_info"] = exclusion_info.model_dump()
                 new_metadata = FlextLdifModels.QuirkMetadata(
-                    original_format=entry.metadata.original_format,
                     quirk_type=entry.metadata.quirk_type,
-                    parsed_timestamp=entry.metadata.parsed_timestamp,
                     extensions=new_extensions,
-                    custom_data=entry.metadata.custom_data,
                 )
 
             return entry.model_copy(update={"metadata": new_metadata})
@@ -1707,6 +1737,10 @@ class FlextLdifFilters(FlextService[FlextLdifModels.EntryResult]):
 
         filtered = []
         for entry in entries:
+            # Skip entries without attributes or DN
+            if not entry.attributes or not entry.dn:
+                continue
+
             attrs_copy = dict(entry.attributes.attributes)
 
             # Filter each schema type
