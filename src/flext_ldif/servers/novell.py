@@ -619,6 +619,9 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             entry: FlextLdifModels.Entry,
         ) -> FlextResult[FlextLdifModels.Entry]:
             """Normalise eDirectory entries and expose metadata."""
+            if not entry.attributes:
+                return FlextResult[FlextLdifModels.Entry].ok(entry)
+
             attributes = entry.attributes.attributes.copy()
             try:
                 # Get objectClasses (already list[str] in LdifAttributes)

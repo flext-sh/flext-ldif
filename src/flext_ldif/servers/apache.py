@@ -438,8 +438,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
                     raw_acl=acl_line,
                     metadata=FlextLdifModels.QuirkMetadata(
                         quirk_type=self._get_server_type(),
-                        original_format=acl_line.strip(),
-                        extensions={},
+                        extensions={"original_format": acl_line.strip()},
                     ),
                 )
 
@@ -513,6 +512,10 @@ class FlextLdifServersApache(FlextLdifServersRfc):
             entry = base_result.unwrap()
 
             try:
+                # Check if entry has DN
+                if not entry.dn:
+                    return FlextResult[FlextLdifModels.Entry].ok(entry)
+
                 # Store metadata in extensions
                 metadata = entry.metadata or FlextLdifModels.QuirkMetadata(
                     quirk_type=self._get_server_type(),

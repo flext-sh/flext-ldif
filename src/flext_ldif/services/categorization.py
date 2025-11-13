@@ -181,7 +181,8 @@ class FlextLdifCategorization(FlextService[dict[str, list[FlextLdifModels.Entry]
 
             if not FlextLdifUtilities.DN.validate(dn_str):
                 self._rejection_tracker["invalid_dn_rfc4514"].append(entry)
-                logger.warning(f"Invalid DN (RFC 4514): {dn_str}")
+                # Use structured logging to avoid base64 encoding
+                logger.debug("Invalid DN (RFC 4514)", dn=dn_str)
                 continue
 
             normalized_dn = FlextLdifUtilities.DN.norm(dn_str)

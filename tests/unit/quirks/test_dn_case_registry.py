@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import pytest
 
+from flext_ldif.models import FlextLdifModels
 from flext_ldif.services.dn import FlextLdifDn
 
 
@@ -20,7 +21,7 @@ class TestCaseRegistryInitialization:
 
     def test_registry_starts_empty(self) -> None:
         """Test that new registry has no DNs registered."""
-        registry = FlextLdifDn.CaseRegistry()
+        registry = FlextLdifModels.DnRegistry()
         stats = registry.get_stats()
         assert stats["total_dns"] == 0
         assert stats["total_variants"] == 0
@@ -28,7 +29,7 @@ class TestCaseRegistryInitialization:
 
     def test_registry_has_empty_internal_structures(self) -> None:
         """Test internal structures are initialized correctly."""
-        registry = FlextLdifDn.CaseRegistry()
+        registry = FlextLdifModels.DnRegistry()
         assert hasattr(registry, "_registry")
         assert hasattr(registry, "_case_variants")
         assert isinstance(registry._registry, dict)
@@ -43,7 +44,7 @@ class TestDnNormalization:
     @pytest.fixture
     def registry(self) -> FlextLdifDn.CaseRegistry:
         """Create fresh DN registry."""
-        return FlextLdifDn.CaseRegistry()
+        return FlextLdifModels.DnRegistry()
 
     def test_normalize_removes_spaces(self, registry: FlextLdifDn.CaseRegistry) -> None:
         """Test that DN normalization removes all spaces."""
@@ -98,7 +99,7 @@ class TestDnRegistration:
     @pytest.fixture
     def registry(self) -> FlextLdifDn.CaseRegistry:
         """Create fresh DN registry."""
-        return FlextLdifDn.CaseRegistry()
+        return FlextLdifModels.DnRegistry()
 
     def test_register_first_dn_becomes_canonical(
         self,
@@ -195,7 +196,7 @@ class TestCanonicalDnRetrieval:
     @pytest.fixture
     def registry(self) -> FlextLdifDn.CaseRegistry:
         """Create registry with some DNs."""
-        reg = FlextLdifDn.CaseRegistry()
+        reg = FlextLdifModels.DnRegistry()
         reg.register_dn("cn=admin,dc=example,dc=com")
         reg.register_dn("ou=users,dc=example,dc=com")
         return reg
@@ -234,7 +235,7 @@ class TestCanonicalDnRetrieval:
 
     def test_get_canonical_empty_registry(self) -> None:
         """Test getting canonical from empty registry returns None."""
-        registry = FlextLdifDn.CaseRegistry()
+        registry = FlextLdifModels.DnRegistry()
         canonical = registry.get_canonical_dn("cn=test,dc=com")
         assert canonical is None
 
@@ -245,7 +246,7 @@ class TestDnExistenceCheck:
     @pytest.fixture
     def registry(self) -> FlextLdifDn.CaseRegistry:
         """Create registry with some DNs."""
-        reg = FlextLdifDn.CaseRegistry()
+        reg = FlextLdifModels.DnRegistry()
         reg.register_dn("cn=admin,dc=com")
         reg.register_dn("ou=users,dc=com")
         return reg
@@ -276,7 +277,7 @@ class TestDnExistenceCheck:
 
     def test_has_dn_empty_registry(self) -> None:
         """Test has_dn on empty registry returns False."""
-        registry = FlextLdifDn.CaseRegistry()
+        registry = FlextLdifModels.DnRegistry()
         assert not registry.has_dn("cn=test,dc=com")
 
 
@@ -286,7 +287,7 @@ class TestCaseVariantsTracking:
     @pytest.fixture
     def registry(self) -> FlextLdifDn.CaseRegistry:
         """Create fresh DN registry."""
-        return FlextLdifDn.CaseRegistry()
+        return FlextLdifModels.DnRegistry()
 
     def test_get_case_variants_single_variant(
         self,
@@ -346,7 +347,7 @@ class TestOudConsistencyValidation:
     @pytest.fixture
     def registry(self) -> FlextLdifDn.CaseRegistry:
         """Create fresh DN registry."""
-        return FlextLdifDn.CaseRegistry()
+        return FlextLdifModels.DnRegistry()
 
     def test_validate_empty_registry_success(
         self,
@@ -444,7 +445,7 @@ class TestDnReferenceNormalization:
     @pytest.fixture
     def registry(self) -> FlextLdifDn.CaseRegistry:
         """Create registry with registered DNs."""
-        reg = FlextLdifDn.CaseRegistry()
+        reg = FlextLdifModels.DnRegistry()
         reg.register_dn("cn=admin,dc=com")
         reg.register_dn("cn=user1,dc=com")
         reg.register_dn("cn=user2,dc=com")
@@ -562,7 +563,7 @@ class TestRegistryClear:
 
     def test_clear_removes_all_dns(self) -> None:
         """Test that clear removes all registered DNs."""
-        registry = FlextLdifDn.CaseRegistry()
+        registry = FlextLdifModels.DnRegistry()
         registry.register_dn("cn=admin,dc=com")
         registry.register_dn("cn=user,dc=com")
 
@@ -576,7 +577,7 @@ class TestRegistryClear:
 
     def test_clear_resets_stats(self) -> None:
         """Test that clear resets statistics to zero."""
-        registry = FlextLdifDn.CaseRegistry()
+        registry = FlextLdifModels.DnRegistry()
         registry.register_dn("cn=admin,dc=com")
         registry.register_dn("CN=Admin,DC=Com")
 
@@ -592,7 +593,7 @@ class TestRegistryClear:
 
     def test_clear_allows_reregistration(self) -> None:
         """Test that DNs can be re-registered after clear."""
-        registry = FlextLdifDn.CaseRegistry()
+        registry = FlextLdifModels.DnRegistry()
         registry.register_dn("cn=admin,dc=com")
         registry.clear()
         registry.register_dn("CN=Admin,DC=Com")  # Different case
@@ -607,7 +608,7 @@ class TestRegistryStatistics:
 
     def test_stats_empty_registry(self) -> None:
         """Test statistics for empty registry."""
-        registry = FlextLdifDn.CaseRegistry()
+        registry = FlextLdifModels.DnRegistry()
         stats = registry.get_stats()
 
         assert stats["total_dns"] == 0
@@ -616,7 +617,7 @@ class TestRegistryStatistics:
 
     def test_stats_single_dn_single_case(self) -> None:
         """Test statistics with one DN, one case variant."""
-        registry = FlextLdifDn.CaseRegistry()
+        registry = FlextLdifModels.DnRegistry()
         registry.register_dn("cn=admin,dc=com")
 
         stats = registry.get_stats()
@@ -626,7 +627,7 @@ class TestRegistryStatistics:
 
     def test_stats_single_dn_multiple_cases(self) -> None:
         """Test statistics with one DN, multiple case variants."""
-        registry = FlextLdifDn.CaseRegistry()
+        registry = FlextLdifModels.DnRegistry()
         registry.register_dn("cn=admin,dc=com")
         registry.register_dn("CN=Admin,DC=Com")
         registry.register_dn("cn=ADMIN,dc=COM")
@@ -638,7 +639,7 @@ class TestRegistryStatistics:
 
     def test_stats_multiple_dns_mixed_variants(self) -> None:
         """Test statistics with multiple DNs, some with case variants."""
-        registry = FlextLdifDn.CaseRegistry()
+        registry = FlextLdifModels.DnRegistry()
         # DN 1 - multiple variants
         registry.register_dn("cn=admin,dc=com")
         registry.register_dn("CN=Admin,DC=Com")
@@ -662,14 +663,14 @@ class TestEdgeCases:
 
     def test_empty_dn_string(self) -> None:
         """Test handling of empty DN string."""
-        registry = FlextLdifDn.CaseRegistry()
+        registry = FlextLdifModels.DnRegistry()
         canonical = registry.register_dn("")
         assert not canonical  # Empty string is falsey
         assert registry.has_dn("")
 
     def test_dn_with_special_characters(self) -> None:
         """Test DN with special LDAP characters."""
-        registry = FlextLdifDn.CaseRegistry()
+        registry = FlextLdifModels.DnRegistry()
         dn = "cn=Test\\, User,dc=example,dc=com"
         canonical = registry.register_dn(dn)
         assert canonical == dn
@@ -677,7 +678,7 @@ class TestEdgeCases:
 
     def test_very_long_dn(self) -> None:
         """Test handling of very long DN."""
-        registry = FlextLdifDn.CaseRegistry()
+        registry = FlextLdifModels.DnRegistry()
         dn = "cn=test," + ",".join([f"ou=level{i}" for i in range(50)]) + ",dc=com"
         canonical = registry.register_dn(dn)
         assert canonical == dn
@@ -685,7 +686,7 @@ class TestEdgeCases:
 
     def test_dn_with_unicode_characters(self) -> None:
         """Test DN with unicode characters."""
-        registry = FlextLdifDn.CaseRegistry()
+        registry = FlextLdifModels.DnRegistry()
         dn = "cn=Tëst Üser,dc=example,dc=com"
         canonical = registry.register_dn(dn)
         assert canonical == dn
@@ -693,7 +694,7 @@ class TestEdgeCases:
 
     def test_normalize_dn_references_with_non_dict_data(self) -> None:
         """Test that normalizing non-dict data fails gracefully."""
-        registry = FlextLdifDn.CaseRegistry()
+        registry = FlextLdifModels.DnRegistry()
         # Pass empty dict[str, object] instead of None to avoid type error
         result = registry.normalize_dn_references({}, ["dn"])
         assert result.is_success  # Empty dict[str, object] succeeds
@@ -702,7 +703,7 @@ class TestEdgeCases:
         self,
     ) -> None:
         """Test normalization handles non-string, non-list values."""
-        registry = FlextLdifDn.CaseRegistry()
+        registry = FlextLdifModels.DnRegistry()
         registry.register_dn("cn=admin,dc=com")
         data: dict[str, object] = {"dn": "cn=admin,dc=com", "someField": 123}
         result = registry.normalize_dn_references(data, ["dn", "someField"])

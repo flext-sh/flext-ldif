@@ -64,7 +64,11 @@ class TestExclusionMetadataTypeGuards:
             {"cn": ["test"], "objectClass": ["person"]},
         )
         # Manually add metadata without exclusion_info
-        metadata = FlextLdifModels.QuirkMetadata(original_format="ldif", extensions={})
+        metadata = FlextLdifModels.QuirkMetadata(
+            quirk_type="test",
+            original_format="ldif",
+            extensions={},
+        )
         entry_with_metadata = entry.model_copy(update={"metadata": metadata})
 
         # Should return False (no exclusion_info)
@@ -78,6 +82,7 @@ class TestExclusionMetadataTypeGuards:
         )
         # Create metadata with non-dict exclusion_info
         metadata = FlextLdifModels.QuirkMetadata(
+            quirk_type="test",
             original_format="ldif",
             extensions={"exclusion_info": "not a dict"},  # Invalid: not a dict
         )
@@ -94,6 +99,7 @@ class TestExclusionMetadataTypeGuards:
         )
         # Create metadata with exclusion_info but missing 'excluded' field
         metadata = FlextLdifModels.QuirkMetadata(
+            quirk_type="test",
             original_format="ldif",
             extensions={
                 "exclusion_info": {
@@ -114,6 +120,7 @@ class TestExclusionMetadataTypeGuards:
         )
         # Create metadata with non-bool excluded value
         metadata = FlextLdifModels.QuirkMetadata(
+            quirk_type="test",
             original_format="ldif",
             extensions={
                 "exclusion_info": {
@@ -135,6 +142,7 @@ class TestExclusionMetadataTypeGuards:
         )
         # Create metadata with excluded=True
         metadata = FlextLdifModels.QuirkMetadata(
+            quirk_type="test",
             original_format="ldif",
             extensions={
                 "exclusion_info": {
@@ -164,7 +172,11 @@ class TestExclusionMetadataTypeGuards:
             {"cn": ["test"], "objectClass": ["person"]},
         )
         # Manually add metadata without exclusion_info
-        metadata = FlextLdifModels.QuirkMetadata(original_format="ldif", extensions={})
+        metadata = FlextLdifModels.QuirkMetadata(
+            quirk_type="test",
+            original_format="ldif",
+            extensions={},
+        )
         entry_with_metadata = entry.model_copy(update={"metadata": metadata})
 
         # Should return None
@@ -178,6 +190,7 @@ class TestExclusionMetadataTypeGuards:
         )
         # Create metadata with non-dict exclusion_info
         metadata = FlextLdifModels.QuirkMetadata(
+            quirk_type="test",
             original_format="ldif",
             extensions={"exclusion_info": "not a dict"},  # Invalid
         )
@@ -194,6 +207,7 @@ class TestExclusionMetadataTypeGuards:
         )
         # Create metadata with exclusion_info but missing reason
         metadata = FlextLdifModels.QuirkMetadata(
+            quirk_type="test",
             original_format="ldif",
             extensions={"exclusion_info": {"excluded": True}},  # Missing reason
         )
@@ -210,6 +224,7 @@ class TestExclusionMetadataTypeGuards:
         )
         # Create metadata with non-string reason
         metadata = FlextLdifModels.QuirkMetadata(
+            quirk_type="test",
             original_format="ldif",
             extensions={
                 "exclusion_info": {"excluded": True, "exclusion_reason": 123},
@@ -228,6 +243,7 @@ class TestExclusionMetadataTypeGuards:
         )
         # Create metadata with valid exclusion_info
         metadata = FlextLdifModels.QuirkMetadata(
+            quirk_type="test",
             original_format="ldif",
             extensions={
                 "exclusion_info": {
@@ -719,6 +735,9 @@ class TestCategorizeEntryComplex:
             "cn=container,dc=example",
             {"objectClass": ["orclContainer"], "orclACI": ["some acl"]},
         )
+        # Add metadata with quirk_type so categorization can determine server type
+        metadata = FlextLdifModels.QuirkMetadata(quirk_type="oid")
+        entry = entry.model_copy(update={"metadata": metadata})
 
         rules = FlextLdifModels.CategoryRules(
             hierarchy_objectclasses=["orclContainer"],
@@ -736,6 +755,9 @@ class TestCategorizeEntryComplex:
             "cn=user1,ou=users,dc=example,dc=com",
             {"objectClass": ["person"]},
         )
+        # Add metadata with quirk_type so categorization can determine server type
+        metadata = FlextLdifModels.QuirkMetadata(quirk_type="oud")
+        entry = entry.model_copy(update={"metadata": metadata})
 
         rules = FlextLdifModels.CategoryRules(
             user_objectclasses=["person"],
@@ -752,6 +774,9 @@ class TestCategorizeEntryComplex:
             "cn=user1,ou=admin,dc=example,dc=com",
             {"objectClass": ["person"]},
         )
+        # Add metadata with quirk_type so categorization can determine server type
+        metadata = FlextLdifModels.QuirkMetadata(quirk_type="oud")
+        entry = entry.model_copy(update={"metadata": metadata})
 
         rules = FlextLdifModels.CategoryRules(
             user_objectclasses=["person"],

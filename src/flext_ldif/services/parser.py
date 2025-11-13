@@ -454,11 +454,18 @@ class FlextLdifParser(FlextService[FlextLdifModels.ParseResponse]):
                     strict=options.strict_schema_validation,
                 )
                 if validation_result.is_failure:
+                    # Get readable DN value for logging
+                    dn_value = (
+                        processed_entry.dn.value if processed_entry.dn else "unknown"
+                    )
                     if options.strict_schema_validation:
-                        msg = f"Strict validation failed for entry {processed_entry.dn}: {validation_result.error}"
+                        msg = f"Strict validation failed for entry {dn_value}: {validation_result.error}"
                         raise ValueError(msg)
+                    # Use structured logging to avoid base64 encoding
                     self.logger.warning(
-                        f"Entry validation warning for {processed_entry.dn}: {validation_result.error}",
+                        "Entry validation warning",
+                        dn=dn_value,
+                        error=validation_result.error,
                     )
                     validation_errors.append(validation_result.error)
 

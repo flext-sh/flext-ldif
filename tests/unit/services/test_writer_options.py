@@ -73,6 +73,7 @@ class TestWriterFormatOptions:
     def entry_with_metadata(self) -> FlextLdifModels.Entry:
         """Create an entry with metadata for testing."""
         metadata = FlextLdifModels.QuirkMetadata(
+            quirk_type="rfc",
             server_type="rfc",
             extensions={
                 "attribute_order": [
@@ -350,7 +351,7 @@ class TestWriterFormatOptions:
 
         # Should contain metadata comments
         assert "# Entry Metadata:" in output
-        assert "# Server Type: rfc" in output
+        assert "# Quirk Type: rfc" in output
         assert "# Source File: test.ldif" in output
 
     def test_write_metadata_as_comments_disabled(

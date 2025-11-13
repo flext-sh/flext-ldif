@@ -24,6 +24,7 @@ class TestExtractOidFromSchemaObject:
             oid="2.16.840.1.113894.1.1.1",
             name="orclGUID",
             metadata=FlextLdifModels.QuirkMetadata(
+                quirk_type="oid",
                 original_format="( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' ... )",
             ),
         )
@@ -47,6 +48,7 @@ class TestExtractOidFromSchemaObject:
             oid="2.16.840.1.113894.1.1.5",
             name="orcldASObject",
             metadata=FlextLdifModels.QuirkMetadata(
+                quirk_type="oid",
                 original_format="( 2.16.840.1.113894.1.1.5 NAME 'orcldASObject' ... )",
             ),
         )
@@ -70,6 +72,7 @@ class TestExtractOidFromSchemaObject:
             oid="2.5.6.0",
             name="top",
             metadata=FlextLdifModels.QuirkMetadata(
+                quirk_type="oid",
                 original_format="(   2.5.6.0   NAME 'top' ... )",
             ),
         )

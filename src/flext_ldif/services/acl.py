@@ -28,6 +28,7 @@ from flext_core import FlextDecorators, FlextLogger, FlextResult, FlextService
 from flext_ldif.config import FlextLdifConfig
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
+from flext_ldif.protocols import FlextLdifProtocols
 from flext_ldif.services.server import FlextLdifServer
 from flext_ldif.utilities import FlextLdifUtilities
 
@@ -317,13 +318,17 @@ class FlextLdifAcl(FlextService[FlextLdifModels.AclResponse]):
             else:
                 # Use ACL quirk for the target server to convert RFC ACLs to ACI format
                 # ACL quirks handle the conversion from internal format to server-specific ACI format
-                target_acl = self._registry.find_acl(target_server, "")
-                if not target_acl:
+                target_acl_quirk = self._registry.find_acl(target_server, "")
+                if not target_acl_quirk:
                     return FlextResult[dict[str, object]].fail(
                         f"No ACL quirk available for target server {target_server}",
                     )
 
-                if hasattr(target_acl, "convert_rfc_acl_to_aci"):
+                # Cast to Protocol for type safety (hasattr check ensures method exists)
+                if hasattr(target_acl_quirk, "convert_rfc_acl_to_aci"):
+                    target_acl = cast(
+                        "FlextLdifProtocols.Quirks.AclProtocol", target_acl_quirk
+                    )
                     aci_result = target_acl.convert_rfc_acl_to_aci(
                         rfc_acl_attrs,
                         target_server,

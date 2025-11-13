@@ -10,6 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from pathlib import Path
 
 from flext_core import FlextModels
@@ -125,9 +126,11 @@ class FlextLdifModelsEvents:
             default=0.0,
             description="Duration in milliseconds",
         )
-        error_details: list[object] | None = Field(  # Can contain ErrorDetail or dict
-            default=None,
-            description="Error information for failed entries",
+        error_details: Sequence[object] | None = (
+            Field(  # Can contain ErrorDetail or dict
+                default=None,
+                description="Error information for failed entries",
+            )
         )
 
     class ConversionEventConfig(FlextModels.Value):
@@ -183,9 +186,11 @@ class FlextLdifModelsEvents:
             default=0.0,
             description="Duration in milliseconds",
         )
-        error_details: list[object] | None = Field(  # Can contain ErrorDetail or dict
-            default=None,
-            description="Error information for failed conversions",
+        error_details: Sequence[object] | None = (
+            Field(  # Can contain ErrorDetail or dict
+                default=None,
+                description="Error information for failed conversions",
+            )
         )
 
     # =========================================================================
@@ -255,7 +260,7 @@ class FlextLdifModelsEvents:
             default=0.0,
             description="Duration in milliseconds",
         )
-        error_details: list[object] | None = Field(
+        error_details: Sequence[object] | None = Field(
             default=None,
             description="Error information for failed entries",
         )
@@ -267,7 +272,7 @@ class FlextLdifModelsEvents:
             entries_parsed: int = 0,
             entries_failed: int = 0,
             parse_duration_ms: float = 0.0,
-            error_details: list[object] | None = None,
+            error_details: Sequence[object] | None = None,
         ) -> FlextLdifModelsEvents.ParseEvent:
             """Create ParseEvent for file parsing operation."""
             return cls(
@@ -288,7 +293,7 @@ class FlextLdifModelsEvents:
             entries_parsed: int = 0,
             entries_failed: int = 0,
             parse_duration_ms: float = 0.0,
-            error_details: list[object] | None = None,
+            error_details: Sequence[object] | None = None,
         ) -> FlextLdifModelsEvents.ParseEvent:
             """Create ParseEvent for LDAP3 parsing operation."""
             return cls(
@@ -309,7 +314,7 @@ class FlextLdifModelsEvents:
             entries_parsed: int = 0,
             entries_failed: int = 0,
             parse_duration_ms: float = 0.0,
-            error_details: list[object] | None = None,
+            error_details: Sequence[object] | None = None,
         ) -> FlextLdifModelsEvents.ParseEvent:
             """Create ParseEvent for string parsing operation."""
             return cls(
@@ -354,7 +359,7 @@ class FlextLdifModelsEvents:
             default=0.0,
             description="Duration in milliseconds",
         )
-        error_details: list[object] | None = Field(
+        error_details: Sequence[object] | None = Field(
             default=None,
             description="Error information for failed entries",
         )
@@ -418,7 +423,7 @@ class FlextLdifModelsEvents:
             default=0.0,
             description="Duration in milliseconds",
         )
-        error_details: list[object] | None = Field(
+        error_details: Sequence[object] | None = Field(
             default=None,
             description="Error information for failed ACLs",
         )
@@ -498,7 +503,7 @@ class FlextLdifModelsEvents:
             default=0.0,
             description="Duration in milliseconds",
         )
-        error_details: list[object] | None = Field(
+        error_details: Sequence[object] | None = Field(
             default=None,
             description="Error information for failed entries",
         )
@@ -546,7 +551,7 @@ class FlextLdifModelsEvents:
             default=0.0,
             description="Duration in milliseconds",
         )
-        error_details: list[object] | None = Field(
+        error_details: Sequence[object] | None = Field(
             default=None,
             description="Error information for failed conversions",
         )
@@ -590,7 +595,7 @@ class FlextLdifModelsEvents:
             default=0.0,
             description="Duration in milliseconds",
         )
-        error_details: list[object] | None = Field(
+        error_details: Sequence[object] | None = Field(
             default=None,
             description="Error information for failed schema items",
         )

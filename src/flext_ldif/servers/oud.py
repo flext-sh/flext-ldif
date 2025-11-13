@@ -310,6 +310,52 @@ class FlextLdifServersOud(FlextLdifServersRfc):
         }
 
         # =====================================================================
+        # CATEGORIZATION RULES - OUD-specific entry categorization
+        # =====================================================================
+        # OUD categorization uses standard RFC objectClasses
+        # Priority: users → hierarchy → groups → acl
+
+        # Categorization priority (standard RFC order)
+        CATEGORIZATION_PRIORITY: ClassVar[list[str]] = [
+            "users",  # User accounts first
+            "hierarchy",  # Structural containers (ou, o, dc)
+            "groups",  # Groups
+            "acl",  # ACL entries
+        ]
+
+        # ObjectClasses for each category (RFC-compliant)
+        CATEGORY_OBJECTCLASSES: ClassVar[dict[str, frozenset[str]]] = {
+            "users": frozenset([
+                "person",
+                "inetOrgPerson",
+                "organizationalPerson",
+            ]),
+            "hierarchy": frozenset([
+                "organizationalUnit",
+                "organization",
+                "domain",
+                "country",
+                "locality",
+            ]),
+            "groups": frozenset([
+                "groupOfNames",
+                "groupOfUniqueNames",
+            ]),
+        }
+
+        # OUD hierarchy priority (RFC standard containers)
+        HIERARCHY_PRIORITY_OBJECTCLASSES: ClassVar[frozenset[str]] = frozenset([
+            "organizationalUnit",
+            "organization",
+            "domain",
+        ])
+
+        # ACL attributes for OUD
+        CATEGORIZATION_ACL_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset([
+            "aci",  # RFC 4876 ACI
+        ])
+
+        # =====================================================================
         # DETECTION PATTERNS - Server type detection rules
         # =====================================================================
 
@@ -808,7 +854,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             ldif_content: str,
             *,
             validate_dependencies: bool = True,  # OUD defaults to True (needs validation)
-        ) -> FlextResult[dict[str, list[str] | str]]:
+        ) -> FlextResult[dict[str, object]]:
             """Extract and parse all schema definitions from LDIF content.
 
             OUD-specific implementation: Uses base template method with dependency
@@ -827,8 +873,8 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 validate_dependencies: Enable dependency validation (default: True for OUD)
 
             Returns:
-                FlextResult with dict containing ATTRIBUTES and
-                objectclasses lists (filtered only for Oracle internal classes)
+                FlextResult with dict containing schema data
+                (ATTRIBUTES and objectclasses lists)
 
             """
             # Use base template method with OUD's dependency validation

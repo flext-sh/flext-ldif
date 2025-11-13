@@ -10,11 +10,25 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import codecs
+from typing import Protocol
 
 from flext_core import FlextConfig, FlextConstants
-from pydantic import Field, ValidationInfo, field_validator, model_validator
+from pydantic import Field, field_validator, model_validator
 
 from flext_ldif.constants import FlextLdifConstants
+
+
+class ValidationInfoProtocol(Protocol):
+    """Protocol for Pydantic ValidationInfo to avoid explicit Any issues."""
+
+    @property
+    def field_name(self) -> str | None: ...
+
+    @property
+    def data(self) -> dict[str, object] | None: ...
+
+    @property
+    def mode(self) -> str: ...
 
 
 class FlextLdifConfig(FlextConfig):
@@ -222,7 +236,7 @@ class FlextLdifConfig(FlextConfig):
 
     @field_validator("ldif_encoding", mode="after")
     @classmethod
-    def validate_ldif_encoding(cls, v: str, info: ValidationInfo) -> str:
+    def validate_ldif_encoding(cls, v: str, info: ValidationInfoProtocol) -> str:
         """Validate ldif_encoding is a valid Python codec.
 
         RFC 2849 § 2: LDIF files SHOULD use UTF-8 encoding.
@@ -253,7 +267,7 @@ class FlextLdifConfig(FlextConfig):
 
     @field_validator("server_type", mode="after")
     @classmethod
-    def validate_server_type(cls, v: str, info: ValidationInfo) -> str:
+    def validate_server_type(cls, v: str, info: ValidationInfoProtocol) -> str:
         """Validate server_type is a recognized LDAP server.
 
         Ensures server_type is one of the supported server types defined in
@@ -302,7 +316,7 @@ class FlextLdifConfig(FlextConfig):
 
     @field_validator("ldif_line_separator", mode="after")
     @classmethod
-    def validate_ldif_line_separator(cls, v: str, info: ValidationInfo) -> str:
+    def validate_ldif_line_separator(cls, v: str, info: ValidationInfoProtocol) -> str:
         """Validate ldif_line_separator is RFC 2849 compliant.
 
         RFC 2849 § 2: Line separator can be LF, CRLF, or CR.
@@ -332,7 +346,7 @@ class FlextLdifConfig(FlextConfig):
 
     @field_validator("ldif_version_string", mode="after")
     @classmethod
-    def validate_ldif_version_string(cls, v: str, info: ValidationInfo) -> str:
+    def validate_ldif_version_string(cls, v: str, info: ValidationInfoProtocol) -> str:
         """Validate ldif_version_string is RFC 2849 compliant.
 
         RFC 2849 § 2: version-spec = "version:" FILL version-number

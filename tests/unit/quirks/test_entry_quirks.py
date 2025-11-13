@@ -13,6 +13,7 @@ from __future__ import annotations
 from flext_core import FlextResult
 
 from flext_ldif.models import FlextLdifModels
+from flext_ldif.services.dn import FlextLdifDn
 from flext_ldif.services.entry import FlextLdifEntry
 
 
@@ -42,10 +43,8 @@ class TestDnCleaning:
 
     def test_clean_dn_simple(self) -> None:
         """Test cleaning a simple DN."""
-        quirks = FlextLdifEntry()
-
         dn = "cn=test,dc=example,dc=com"
-        cleaned = quirks.clean_dn(dn)
+        cleaned = FlextLdifDn.Normalizer.clean_dn(dn)
 
         assert isinstance(cleaned, str)
         assert "cn=" in cleaned
@@ -53,10 +52,8 @@ class TestDnCleaning:
 
     def test_clean_dn_with_spaces(self) -> None:
         """Test cleaning DN with spaces around equals."""
-        quirks = FlextLdifEntry()
-
         dn = "cn = test , dc = example , dc = com"
-        cleaned = quirks.clean_dn(dn)
+        cleaned = FlextLdifDn.Normalizer.clean_dn(dn)
 
         # Should normalize spaces
         assert isinstance(cleaned, str)
@@ -66,10 +63,8 @@ class TestDnCleaning:
 
     def test_clean_dn_preserves_value(self) -> None:
         """Test that cleaning preserves DN values."""
-        quirks = FlextLdifEntry()
-
         dn = "cn=John Doe,ou=Users,dc=example,dc=com"
-        cleaned = quirks.clean_dn(dn)
+        cleaned = FlextLdifDn.Normalizer.clean_dn(dn)
 
         assert "john" in cleaned.lower()
         assert "doe" in cleaned.lower()

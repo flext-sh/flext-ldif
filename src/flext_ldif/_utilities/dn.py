@@ -227,10 +227,15 @@ class FlextLdifUtilitiesDN:
     def _validate_escape_sequences(dn_str: str) -> bool:
         r"""Validate escape sequences in DN string.
 
+        RFC 4514 Section 2.4: Implementations MUST allow UTF-8 characters
+        to appear in values (both in their UTF-8 form and in their escaped form).
+        This means UTF-8 bytes (> 127) are VALID and do NOT need escaping.
+
         Checks for:
         - Valid hex escapes: \XX where X is hex digit (0-9, A-F, a-f)
         - No incomplete hex escapes: \X or \
         - No invalid hex escapes: \ZZ
+        - UTF-8 characters (> 127) are ALLOWED without escaping
 
         Returns:
             True if all escape sequences are valid
@@ -256,14 +261,21 @@ class FlextLdifUtilitiesDN:
                         continue
                     # Check if it's a valid special char escape (not hex)
                     # RFC 4514 allows: \ escaping special chars like ,+=\<>#;
-                    if next_two[0] in ' ,+"\\<>;=':
-                        # Valid special char escape, skip backslash
+                    # Also allow escaping ANY character (including UTF-8)
+                    # RFC 2253 Section 2.3: Whitespace normalization (space, TAB, CR, LF)
+                    # OID Quirk: Exports DNs with TAB characters that need normalization
+                    # UTF-8 starts at codepoint 128 (0x80)
+                    utf8_start = 128
+                    if next_two[0] in ' \t\r\n,+"\\<>;=' or ord(next_two[0]) >= utf8_start:
+                        # Valid special char escape or UTF-8 escape, skip backslash
                         i += 1
                         continue
                     # Invalid hex escape
                     return False
                 # Incomplete escape
                 return False
+            # RFC 4514: UTF-8 characters (> 127) are VALID and do NOT require escaping
+            # Just skip UTF-8 bytes - they are allowed in DNs
             i += 1
         return True
 
@@ -360,8 +372,14 @@ class FlextLdifUtilitiesDN:
 
         # Define regex pipeline for DN cleaning
         patterns = [
+            # RFC 2253 Section 2.3: Normalize whitespace control characters
+            # OID Quirk: Exports DNs with TAB, CR, LF characters - normalize to space
+            # MUST be first to normalize before other space-removal patterns
+            (r"[\t\r\n\x0b\x0c]", " "),
             # Remove spaces ONLY BEFORE '=' in each RDN component
             (r"\s+=", "="),
+            # Remove spaces BEFORE commas (OID quirk: "cn=user ,ou=..." -> "cn=user,ou=...")
+            (r"\s+,", ","),
             # Fix trailing backslash+space before commas
             (
                 FlextLdifConstants.DnPatterns.DN_TRAILING_BACKSLASH_SPACE,

@@ -258,6 +258,23 @@ class FlextLdifProtocols(FlextProtocols):
                 """
                 ...
 
+            def convert_rfc_acl_to_aci(
+                self,
+                rfc_acl_attrs: dict[str, list[str]],
+                target_server: str,
+            ) -> FlextResult[dict[str, list[str]]]:
+                """Convert RFC ACL format to server-specific ACI format.
+
+                Args:
+                    rfc_acl_attrs: ACL attributes in RFC format
+                    target_server: Target server type identifier
+
+                Returns:
+                    FlextResult[dict[str, list[str]]] with server-specific ACL attributes
+
+                """
+                ...
+
         # =====================================================================
         # ENTRY QUIRK PROTOCOLS - For entry processing
         # =====================================================================

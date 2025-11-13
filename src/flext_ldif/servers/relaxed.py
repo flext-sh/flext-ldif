@@ -292,8 +292,8 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 # Return minimal attribute with relaxed metadata
                 metadata = FlextLdifModels.QuirkMetadata(
                     quirk_type=self._get_server_type(),
-                    original_format=attr_definition.strip(),
                     extensions={
+                        "original_format": attr_definition.strip(),
                         FlextLdifServersRelaxed.Constants.METADATA_RELAXED_PARSED: True,
                         FlextLdifServersRelaxed.Constants.METADATA_RFC_PARSED: False,
                     },
@@ -363,8 +363,8 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             if not objectclass.metadata:
                 objectclass.metadata = FlextLdifModels.QuirkMetadata(
                     quirk_type=self._get_server_type(),
-                    original_format=original_definition.strip(),
                     extensions={
+                        "original_format": original_definition.strip(),
                         FlextLdifServersRelaxed.Constants.METADATA_RELAXED_PARSED: True,
                         FlextLdifServersRelaxed.Constants.METADATA_RFC_PARSED: True,
                     },
@@ -507,10 +507,10 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             extensions = FlextLdifUtilities.Parser.extract_extensions(oc_definition)
             extensions[FlextLdifServersRelaxed.Constants.METADATA_RELAXED_PARSED] = True
             extensions[FlextLdifServersRelaxed.Constants.METADATA_RFC_PARSED] = False
+            extensions["original_format"] = oc_definition.strip()
 
             metadata = FlextLdifModels.QuirkMetadata(
                 quirk_type=self._get_server_type(),
-                original_format=oc_definition.strip(),
                 extensions=extensions,
             )
 
@@ -686,8 +686,8 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                     if not acl.metadata:
                         acl.metadata = FlextLdifModels.QuirkMetadata(
                             quirk_type=self._get_server_type(),
-                            original_format=acl_line.strip(),
                             extensions={
+                                "original_format": acl_line.strip(),
                                 FlextLdifServersRelaxed.Constants.METADATA_RELAXED_PARSED: True,
                                 FlextLdifServersRelaxed.Constants.METADATA_RFC_PARSED: True,
                             },
@@ -715,8 +715,8 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                     raw_acl=acl_line,
                     metadata=FlextLdifModels.QuirkMetadata(
                         quirk_type=self._get_server_type(),
-                        original_format=acl_line.strip(),
                         extensions={
+                            "original_format": acl_line.strip(),
                             FlextLdifServersRelaxed.Constants.METADATA_RELAXED_PARSED: True,
                             FlextLdifServersRelaxed.Constants.METADATA_RFC_PARSED: False,
                         },

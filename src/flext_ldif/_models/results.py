@@ -9,8 +9,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Iterator
-from typing import Union
+from collections.abc import Iterator, Sequence
+from typing import Union, overload
 
 from flext_core import FlextModels
 from pydantic import ConfigDict, Field, computed_field
@@ -181,6 +181,12 @@ class FlextLdifModelsResults:
         def __iter__(self) -> Iterator[FlextLdifModelsDomains.Entry]:
             """Iterate over entries (makes EntryResult behave like a list)."""
             return iter(self.get_all_entries())
+
+        @overload
+        def __getitem__(self, key: int) -> FlextLdifModelsDomains.Entry: ...
+
+        @overload
+        def __getitem__(self, key: slice) -> list[FlextLdifModelsDomains.Entry]: ...
 
         def __getitem__(
             self, key: int | slice
@@ -1354,7 +1360,7 @@ class FlextLdifModelsResults:
 
         model_config = ConfigDict(frozen=True, validate_default=True)
 
-        entries: list[FlextLdifModelsDomains.Entry] = Field(
+        entries: Sequence[FlextLdifModelsDomains.Entry] = Field(
             description="Parsed LDIF entries"
         )
         statistics: FlextLdifModelsResults.Statistics = Field(
@@ -1370,7 +1376,7 @@ class FlextLdifModelsResults:
 
         model_config = ConfigDict(frozen=True, validate_default=True)
 
-        acls: list[FlextLdifModelsDomains.Acl] = Field(
+        acls: Sequence[FlextLdifModelsDomains.Acl] = Field(
             description="Extracted ACL models"
         )
         statistics: FlextLdifModelsResults.Statistics = Field(
