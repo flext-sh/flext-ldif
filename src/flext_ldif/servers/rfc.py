@@ -19,7 +19,7 @@ from __future__ import annotations
 
 import base64
 from collections.abc import Mapping
-from typing import ClassVar, Literal, cast, overload
+from typing import ClassVar, Literal, Self, cast, overload
 
 from flext_core import FlextLogger, FlextResult
 
@@ -31,7 +31,7 @@ from flext_core import FlextLogger, FlextResult
 # type AttributeSet = frozenset[str]   # Set of LDAP attribute names
 # type PatternSet = frozenset[str]     # Set of regex/match patterns
 # type ReplacementMap = Mapping[str, str]  # Mapping for substitutions/normalization
-# type DetectionConfig = Mapping[str, str | int | frozenset[str]]  # Server detection config
+# type DetectionConfig = Mapping[str, str | int | frozenset[str]]  # Detection config
 # type AclConfig = Mapping[str, str | int | frozenset[str]]  # ACL format config
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
@@ -43,7 +43,9 @@ logger = FlextLogger(__name__)
 
 
 class FlextLdifServersRfc(FlextLdifServersBase):
-    """RFC 4512 Compliant Server Quirks - Base Implementation for LDAP Schema/ACL/Entry Parsing.
+    """RFC 4512 Compliant Server Quirks - Base Implementation.
+
+    LDAP Schema/ACL/Entry Parsing.
 
     Transforms RFC 4512 utility parsers into concrete quirks classes extending
     FlextLdifServersBase with nested Schema, Acl, and Entry quirk implementations.
@@ -110,7 +112,8 @@ class FlextLdifServersRfc(FlextLdifServersBase):
         - ClassVar annotations for explicit class-level state
 
         **Note**: SERVER_TYPE and PRIORITY are now at class level (not in Constants).
-        These are set once per server implementation for initialization via __init_subclass__.
+        These are set once per server implementation for initialization
+        via __init_subclass__.
 
         **Standard Fields** (inherited by all servers):
         - CANONICAL_NAME: Canonical name for display
@@ -132,7 +135,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
         # CORE IDENTITY - Server identification and metadata
         # =====================================================================
         SERVER_TYPE: ClassVar[str] = FlextLdifConstants.ServerTypes.RFC
-        PRIORITY: ClassVar[int] = 100  # Lowest priority - fallback only
+        PRIORITY: ClassVar[int] = 100
 
         # LDAP Connection Defaults (RFC 4511 §4.1 - Standard LDAP ports)
         DEFAULT_PORT: ClassVar[int] = 389  # Standard LDAP port
@@ -165,7 +168,8 @@ class FlextLdifServersRfc(FlextLdifServersBase):
         PERMISSION_COMPARE: ClassVar[str] = "compare"
 
         # === ACL SUPPORTED PERMISSIONS (Python 3.13 frozenset) ===
-        # Permissions that RFC supports (migrated from FlextLdifConstants.AclPermissionCompatibility)
+        # Permissions that RFC supports
+        # (migrated from FlextLdifConstants.AclPermissionCompatibility)
         SUPPORTED_PERMISSIONS: ClassVar[frozenset[str]] = frozenset(
             [
                 PERMISSION_READ,
@@ -187,7 +191,8 @@ class FlextLdifServersRfc(FlextLdifServersBase):
 
         SCHEMA_SUP_SEPARATOR: ClassVar[str] = "$"  # RFC 4512 standard SUP separator
 
-        # Schema attribute fields that are server-specific (RFC is canonical - no special fields)
+        # Schema attribute fields that are server-specific
+        # (RFC is canonical - no special fields)
         ATTRIBUTE_FIELDS: ClassVar[frozenset[str]] = frozenset([])
 
         # === OBJECTCLASS REQUIREMENTS (Python 3.13 mapping) ===
@@ -342,24 +347,17 @@ class FlextLdifServersRfc(FlextLdifServersBase):
         parse_result = self.parse(ldif_text)
         if parse_result.is_success:
             parse_response = parse_result.unwrap()
-            # Extract entries from ParseResponse
-            # parse_response.entries can be a list or a single Entry (for mocks)
-            # EntryOrString is Entry | str, so we need to return Entry or str
             entries = parse_response.entries
             if isinstance(entries, list):
-                # Real case: entries is a list
                 if entries and len(entries) > 0:
                     return FlextResult[FlextLdifTypes.EntryOrString].ok(
                         cast("FlextLdifTypes.EntryOrString", entries[0])
                     )
-                # Return empty string if no entries
                 return FlextResult[FlextLdifTypes.EntryOrString].ok("")
-            # Mock case: entries is a single Entry
             if isinstance(entries, FlextLdifModels.Entry):
                 return FlextResult[FlextLdifTypes.EntryOrString].ok(
                     cast("FlextLdifTypes.EntryOrString", entries)
                 )
-            # Fallback: return empty string
             return FlextResult[FlextLdifTypes.EntryOrString].ok("")
         error_msg: str = parse_result.error or "Parse failed"
         return FlextResult[FlextLdifTypes.EntryOrString].fail(error_msg)
@@ -689,7 +687,9 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                     and ")" in original_str
                     and "X-ORIGIN" not in original_str
                 ):
-                    x_origin_str = f" X-ORIGIN '{attr_data.metadata.extensions.get('x_origin')}'"
+                    x_origin_str = (
+                        f" X-ORIGIN '{attr_data.metadata.extensions.get('x_origin')}'"
+                    )
                     original_str = original_str.rstrip(")") + x_origin_str + ")"
                 return FlextResult[str].ok(original_str)
 
@@ -754,7 +754,9 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                     and ")" in original_str
                     and "X-ORIGIN" not in original_str
                 ):
-                    x_origin_str = f" X-ORIGIN '{oc_data.metadata.extensions.get('x_origin')}'"
+                    x_origin_str = (
+                        f" X-ORIGIN '{oc_data.metadata.extensions.get('x_origin')}'"
+                    )
                     original_str = original_str.rstrip(")") + x_origin_str + ")"
                 return FlextResult[str].ok(original_str)
 
@@ -1295,7 +1297,18 @@ class FlextLdifServersRfc(FlextLdifServersBase):
         ) -> Self:
             """Override __new__ to support auto-execute and processor instantiation."""
             instance = super().__new__(cls)
-            type(instance).__init__(instance, schema_service=schema_service, **kwargs)
+            # Remove auto-execute kwargs before passing to __init__
+            auto_execute_kwargs = {
+                "attr_definition",
+                "oc_definition",
+                "attr_model",
+                "oc_model",
+                "operation",
+            }
+            init_kwargs = {
+                k: v for k, v in kwargs.items() if k not in auto_execute_kwargs
+            }
+            type(instance).__init__(instance, schema_service=schema_service, **init_kwargs)  # type: ignore[call-arg]
 
             if cls.auto_execute:
                 attr_def = (
@@ -1669,7 +1682,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             server_type_value = self._get_server_type()
 
             # RFC passthrough: store the raw line in the model.
-            acl_model = FlextLdifModels.Acl(
+            acl_model = FlextLdifModels.Acl(  # type: ignore[call-arg]
                 raw_acl=acl_line,
                 server_type=cast(
                     "FlextLdifConstants.LiteralTypes.ServerType", server_type_value
@@ -1738,6 +1751,215 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 return FlextResult[str].ok(f"{acl_data.name}:")
             # No valid data to write
             return FlextResult[str].fail("ACL has no raw_acl or name to write")
+
+        # =====================================================================
+        # Automatic Routing Methods - Concrete implementations moved from base.py
+        # =====================================================================
+
+        def _route_parse(self, acl_line: str) -> FlextResult[FlextLdifModels.Acl]:
+            """Route ACL parsing to parse method.
+
+            Simplified wrapper for automatic routing.
+
+            Args:
+                acl_line: ACL line string.
+
+            Returns:
+                FlextResult with Acl model.
+
+            """
+            return self.parse(acl_line)
+
+        def _route_write(self, acl_model: FlextLdifModels.Acl) -> FlextResult[str]:
+            """Route ACL writing to write method.
+
+            Simplified wrapper for automatic routing.
+
+            Args:
+                acl_model: Acl model.
+
+            Returns:
+                FlextResult with string representation.
+
+            """
+            return self.write(acl_model)
+
+        def _handle_parse_acl(
+            self,
+            acl_line: str,
+        ) -> FlextResult[FlextLdifModels.Acl | str]:
+            """Handle parse operation for ACL quirk."""
+            parse_acl_result = self._route_parse(acl_line)
+            if parse_acl_result.is_success:
+                parsed_acl: FlextLdifModels.Acl = parse_acl_result.unwrap()
+                return FlextResult[FlextLdifModels.Acl | str].ok(parsed_acl)
+            error_msg: str = parse_acl_result.error or "Parse ACL failed"
+            return FlextResult[FlextLdifModels.Acl | str].fail(error_msg)
+
+        def _handle_write_acl(
+            self,
+            acl_model: FlextLdifModels.Acl,
+        ) -> FlextResult[FlextLdifModels.Acl | str]:
+            """Handle write operation for ACL quirk."""
+            write_result = self._route_write(acl_model)
+            if write_result.is_success:
+                written_text: str = write_result.unwrap()
+                return FlextResult[FlextLdifModels.Acl | str].ok(written_text)
+            error_msg: str = write_result.error or "Write ACL failed"
+            return FlextResult[FlextLdifModels.Acl | str].fail(error_msg)
+
+        def execute(
+            self,
+            data: str | FlextLdifModels.Acl | None = None,
+            operation: Literal["parse", "write"] | None = None,
+        ) -> FlextResult[FlextLdifModels.Acl | str]:
+            """Execute ACL quirk operation with automatic type detection and routing.
+
+            Fully automatic polymorphic dispatch based on data type:
+            - str (ACL line) -> parse_acl() -> Acl
+            - Acl (model) -> write_acl() -> str
+            - None -> health check
+
+            **V2 Usage - Maximum Automation:**
+                >>> acl = FlextLdifServersRfc.Acl()
+                >>> # Parse: pass ACL line string
+                >>> acl_model = acl.execute("(target=...)")  # -> Acl
+                >>> # Write: pass model
+                >>> acl_text = acl.execute(acl_model)  # -> str
+                >>> # Or use as callable processor
+                >>> acl_model = acl("(target=...)")  # Parse
+                >>> acl_text = acl(acl_model)  # Write
+
+            Args:
+                data: ACL line string OR Acl model
+                      (operation auto-detected from type)
+                operation: Force operation type (overrides auto-detection)
+
+            Returns:
+                FlextResult[Acl | str] depending on operation
+
+            """
+            # Health check: no data provided
+            if data is None:
+                empty_acl: FlextLdifModels.Acl = FlextLdifModels.Acl()
+                return FlextResult[FlextLdifModels.Acl | str].ok(empty_acl)
+
+            # Auto-detect operation from data type, unless overridden
+            detected_operation: Literal["parse", "write"] | None = operation
+
+            if detected_operation is None:
+                # Type-based auto-detection
+                detected_operation = "parse" if isinstance(data, str) else "write"
+
+            # Execute based on detected/forced operation
+            if detected_operation == "parse":
+                if not isinstance(data, str):
+                    return FlextResult[FlextLdifModels.Acl | str].fail(
+                        f"parse operation requires str, got {type(data).__name__}",
+                    )
+                # Route to parse_acl -> Acl
+                return self._handle_parse_acl(data)
+
+            # detected_operation == "write"
+            if not isinstance(data, FlextLdifModels.Acl):
+                return FlextResult[FlextLdifModels.Acl | str].fail(
+                    f"write operation requires Acl, got {type(data).__name__}",
+                )
+            # Route to write_acl -> str
+            return self._handle_write_acl(data)
+
+        @overload
+        def __call__(
+            self,
+            data: str,
+            *,
+            operation: Literal["parse"] | None = None,
+        ) -> FlextLdifModels.Acl: ...
+
+        @overload
+        def __call__(
+            self,
+            data: FlextLdifModels.Acl,
+            *,
+            operation: Literal["write"] | None = None,
+        ) -> str: ...
+
+        @overload
+        def __call__(
+            self,
+            data: str | FlextLdifModels.Acl | None = None,
+            *,
+            operation: Literal["parse", "write"] | None = None,
+        ) -> FlextLdifModels.Acl | str: ...
+
+        def __call__(
+            self,
+            data: str | FlextLdifModels.Acl | None = None,
+            *,
+            operation: Literal["parse", "write"] | None = None,
+        ) -> FlextLdifModels.Acl | str:
+            """Callable interface - automatic polymorphic processor.
+
+            Pass ACL line string for parsing or Acl model for writing.
+            Type auto-detection handles routing automatically.
+            """
+            result = self.execute(data=data, operation=operation)
+            return result.unwrap()
+
+        def __new__(cls, acl_service: object | None = None, **kwargs: object) -> Self:
+            """Override __new__ to support auto-execute and processor instantiation."""
+            instance = super().__new__(cls)
+            # Remove auto-execute kwargs before passing to __init__
+            auto_execute_kwargs = {"data", "operation"}
+            init_kwargs = {
+                k: v for k, v in kwargs.items() if k not in auto_execute_kwargs
+            }
+            type(instance).__init__(instance, acl_service=acl_service, **init_kwargs)  # type: ignore[call-arg]
+
+            if cls.auto_execute:
+                data = (
+                    cast("str | FlextLdifModels.Acl | None", kwargs.get("data"))
+                    if "data" in kwargs
+                    else None
+                )
+                op = (
+                    cast("Literal['parse', 'write'] | None", kwargs.get("operation"))
+                    if "operation" in kwargs
+                    else None
+                )
+                result = instance.execute(data=data, operation=op)
+                unwrapped: FlextLdifModels.Acl | str = result.unwrap()
+                return cast("Self", unwrapped)
+
+            return instance
+
+        def parse(self, acl_line: str) -> FlextResult[FlextLdifModels.Acl]:
+            """Parse ACL definition line.
+
+            Routes to _parse_acl() internally.
+
+            Args:
+                acl_line: ACL definition string
+
+            Returns:
+                FlextResult with Acl model
+
+            """
+            return self._parse_acl(acl_line)
+
+        def write(self, acl_data: FlextLdifModels.Acl) -> FlextResult[str]:
+            """Write ACL data to RFC-compliant string format.
+
+            Routes to _write_acl() internally.
+
+            Args:
+                acl_data: Acl model
+
+            Returns:
+                FlextResult with RFC-compliant ACL string
+
+            """
+            return self._write_acl(acl_data)
 
     class Entry(FlextLdifServersBase.Entry):
         """RFC 2849 Compliant Entry Quirk - Base Implementation."""
@@ -2234,6 +2456,374 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 return FlextResult[str].fail(
                     f"Failed to write entry to LDIF: {e}",
                 )
+
+        # =====================================================================
+        # Automatic Routing Methods - Concrete implementations moved from base.py
+        # =====================================================================
+
+        def parse(self, ldif_text: str) -> FlextResult[list[FlextLdifModels.Entry]]:
+            """Parse LDIF content string to Entry models.
+
+            Routes to _parse_content() internally.
+
+            Args:
+                ldif_text: LDIF content string
+
+            Returns:
+                FlextResult with list of Entry models
+
+            """
+            return self._parse_content(ldif_text)
+
+        def write(self, entry: FlextLdifModels.Entry) -> FlextResult[str]:
+            """Write single Entry model to LDIF string.
+
+            Routes to _write_entry() internally.
+
+            Args:
+                entry: Entry model to write
+
+            Returns:
+                FlextResult with LDIF string
+
+            """
+            return self._write_entry(entry)
+
+        def _route_parse(
+            self,
+            ldif_text: str,
+        ) -> FlextResult[list[FlextLdifModels.Entry]]:
+            """Route LDIF parsing to parse method.
+
+            Simplified wrapper for automatic routing.
+
+            Args:
+                ldif_text: LDIF content string.
+
+            Returns:
+                FlextResult with list of Entry models.
+
+            """
+            return self.parse(ldif_text)
+
+        def _route_write(self, entry: FlextLdifModels.Entry) -> FlextResult[str]:
+            """Route entry writing to write method.
+
+            Simplified wrapper for automatic routing.
+
+            Args:
+                entry: Entry model.
+
+            Returns:
+                FlextResult with string representation.
+
+            """
+            return self.write(entry)
+
+        def _route_write_many(
+            self,
+            entries: list[FlextLdifModels.Entry],
+        ) -> FlextResult[str]:
+            """Route multiple entries writing.
+
+            Writes each entry and combines results.
+
+            Args:
+                entries: List of Entry models.
+
+            Returns:
+                FlextResult with combined LDIF string.
+
+            """
+            ldif_lines: list[str] = []
+            for entry in entries:
+                result = self._route_write(entry)
+                if result.is_failure:
+                    return result
+                ldif_lines.append(result.unwrap())
+            ldif_text = "\n".join(ldif_lines)
+            if ldif_text and not ldif_text.endswith("\n"):
+                ldif_text += "\n"
+            return FlextResult.ok(ldif_text)
+
+        def _handle_parse_entry(
+            self,
+            ldif_text: str,
+        ) -> FlextResult[FlextLdifTypes.EntryOrString]:
+            """Handle parse operation for entry quirk."""
+            parse_result = self._route_parse(ldif_text)
+            if parse_result.is_success:
+                parsed_entries: list[FlextLdifModels.Entry] = parse_result.unwrap()
+                return FlextResult[FlextLdifTypes.EntryOrString].ok(
+                    cast("FlextLdifTypes.EntryOrString", parsed_entries)
+                )
+            error_msg: str = parse_result.error or "Parse failed"
+            return FlextResult[FlextLdifTypes.EntryOrString].fail(error_msg)
+
+        def _handle_write_entry(
+            self,
+            entries_to_write: list[FlextLdifModels.Entry],
+        ) -> FlextResult[FlextLdifTypes.EntryOrString]:
+            """Handle write operation for entry quirk."""
+            write_result = self._route_write_many(entries_to_write)
+            if write_result.is_success:
+                written_text: str = write_result.unwrap()
+                return FlextResult[FlextLdifTypes.EntryOrString].ok(written_text)
+            error_msg: str = write_result.error or "Write failed"
+            return FlextResult[FlextLdifTypes.EntryOrString].fail(error_msg)
+
+        def _auto_detect_entry_operation(
+            self,
+            data: str | list[FlextLdifModels.Entry],
+            operation: Literal["parse", "write"] | None,
+        ) -> Literal["parse", "write"] | FlextResult[FlextLdifTypes.EntryOrString]:
+            """Auto-detect entry operation from data type.
+
+            If operation is forced (not None), uses it. Otherwise detects from type:
+            - str -> "parse"
+            - list[Entry] -> "write"
+            - else -> error
+
+            """
+            if operation is not None:
+                return operation
+
+            if isinstance(data, str):
+                return "parse"
+
+            # isinstance narrowed to list by type checker (data: str | list[Entry])
+            if not data or all(
+                isinstance(item, FlextLdifModels.Entry) for item in data
+            ):
+                return "write"
+            return FlextResult[FlextLdifTypes.EntryOrString].fail(
+                f"list contains unknown types, not Entry models: {[type(item).__name__ for item in data[:3]]}",
+            )
+
+        def _route_entry_operation(
+            self,
+            data: str | list[FlextLdifModels.Entry],
+            operation: Literal["parse", "write"],
+        ) -> FlextResult[FlextLdifTypes.EntryOrString]:
+            """Route entry data to appropriate parse or write handler.
+
+            Validates data type matches operation, then delegates to handler.
+
+            """
+            if operation == "parse":
+                if not isinstance(data, str):
+                    return FlextResult[FlextLdifTypes.EntryOrString].fail(
+                        f"parse operation requires str, got {type(data).__name__}",
+                    )
+                return self._handle_parse_entry(data)
+
+            if operation == "write":
+                if not isinstance(data, list):
+                    return FlextResult[FlextLdifTypes.EntryOrString].fail(
+                        f"write operation requires list[Entry], got {type(data).__name__}",
+                    )
+                return self._handle_write_entry(data)
+
+            # Should not reach here (Literal type ensures only parse or write)
+            msg = f"Unknown operation: {operation}"
+            raise AssertionError(msg)
+
+        def execute(
+            self,
+            data: str | list[FlextLdifModels.Entry] | None = None,
+            operation: Literal["parse", "write"] | None = None,
+        ) -> FlextResult[FlextLdifTypes.EntryOrString]:
+            r"""Execute entry quirk operation with automatic type detection and routing.
+
+            Fully automatic polymorphic dispatch based on data type:
+            - str (LDIF content) -> parse_content() -> list[Entry]
+            - list[Entry] (models) -> write_entry() for each -> str (LDIF)
+            - None -> health check
+
+            **V2 Usage as Processor - Maximum Automation:**
+                >>> entry = FlextLdifServersRfc.Entry()
+                >>> # Parse: pass LDIF string
+                >>> entries = entry.execute("dn: cn=test\n...")
+                >>> # Write: pass Entry list
+                >>> ldif = entry.execute([entry1, entry2])
+                >>> # Or use as callable processor
+                >>> entries = entry("dn: cn=test\n...")  # Parse
+                >>> ldif = entry([entry1, entry2])  # Write
+
+            Args:
+                data: LDIF content string OR list of Entry models
+                      (operation auto-detected from type)
+                operation: Force operation type (overrides auto-detection)
+
+            Returns:
+                FlextResult[list[Entry] | str] depending on operation
+
+            Raises:
+                Returns fail() if data type is unknown or operation fails
+
+            """
+            # Health check: no data provided
+            if data is None:
+                empty_list: list[FlextLdifModels.Entry] = []
+                return FlextResult[FlextLdifTypes.EntryOrString].ok(
+                    cast("FlextLdifTypes.EntryOrString", empty_list)
+                )
+
+            # Auto-detect operation from data type
+            detected_operation = self._auto_detect_entry_operation(data, operation)
+            if isinstance(detected_operation, FlextResult):
+                return detected_operation
+
+            # Route to appropriate handler
+            return self._route_entry_operation(data, detected_operation)
+
+        @overload
+        def __call__(
+            self,
+            data: str,
+            *,
+            operation: Literal["parse"] | None = None,
+        ) -> FlextLdifTypes.EntryOrString: ...
+
+        @overload
+        def __call__(
+            self,
+            data: list[FlextLdifModels.Entry],
+            *,
+            operation: Literal["write"] | None = None,
+        ) -> str: ...
+
+        @overload
+        def __call__(
+            self,
+            data: str | list[FlextLdifModels.Entry] | None = None,
+            *,
+            operation: Literal["parse", "write"] | None = None,
+        ) -> FlextLdifTypes.EntryOrString: ...
+
+        def __call__(
+            self,
+            data: str | list[FlextLdifModels.Entry] | None = None,
+            *,
+            operation: Literal["parse", "write"] | None = None,
+        ) -> FlextLdifTypes.EntryOrString:
+            """Callable interface - automatic polymorphic processor.
+
+            Pass LDIF string for parsing or Entry list for writing.
+            Type auto-detection handles routing automatically.
+            """
+            result = self.execute(data=data, operation=operation)
+            return result.unwrap()
+
+        def __new__(cls, entry_service: object | None = None, **kwargs: object) -> Self:
+            """Override __new__ to support auto-execute and processor instantiation."""
+            instance = super().__new__(cls)
+            # Remove auto-execute kwargs before passing to __init__
+            auto_execute_kwargs = {"ldif_text", "entry", "entries", "operation"}
+            init_kwargs = {
+                k: v for k, v in kwargs.items() if k not in auto_execute_kwargs
+            }
+            type(instance).__init__(instance, entry_service=entry_service, **init_kwargs)  # type: ignore[call-arg]
+
+            if cls.auto_execute:
+                ldif_txt = (
+                    cast("str | None", kwargs.get("ldif_text"))
+                    if "ldif_text" in kwargs
+                    else None
+                )
+                ent = (
+                    cast("FlextLdifModels.Entry | None", kwargs.get("entry"))
+                    if "entry" in kwargs
+                    else None
+                )
+                ents = (
+                    cast("list[FlextLdifModels.Entry] | None", kwargs.get("entries"))
+                    if "entries" in kwargs
+                    else None
+                )
+                op = (
+                    cast("Literal['parse', 'write'] | None", kwargs.get("operation"))
+                    if "operation" in kwargs
+                    else None
+                )
+                # Entry.execute() expects 'data' parameter (str | list[Entry] | None)
+                data: str | list[FlextLdifModels.Entry] | None = None
+                if ldif_txt is not None:
+                    data = ldif_txt
+                elif ents is not None:
+                    data = ents
+                elif ent is not None:
+                    data = [ent]
+                result = instance.execute(data=data, operation=op)
+                unwrapped: FlextLdifTypes.EntryOrString = result.unwrap()
+                return cast("Self", unwrapped)
+
+            return instance
+
+        def parse_entry(
+            self,
+            entry_dn: str,
+            entry_attrs: Mapping[str, object],
+        ) -> FlextResult[FlextLdifModels.Entry]:
+            """🔴 REQUIRED: Parse individual LDIF entry into Entry model (internal).
+
+            Called by _parse_content() for each (dn, attrs) pair from ldif3.
+
+            **You must:**
+            1. Normalize DN (server-specific format)
+            2. Convert raw attributes (handle bytes vs str)
+            3. Create Entry model
+            4. Return FlextResult.ok(entry)
+
+            **IMPORTANT**: Do NOT call _hook_post_parse_entry() here!
+            That hook is called by _parse_content() after you return.
+
+            **Edge cases:**
+            - Null DN -> return fail("DN is None")
+            - Empty DN string -> return fail("DN is empty")
+            - Null attributes -> return fail("Attributes is None")
+            - Empty attributes dict -> return ok(entry) (valid!)
+            - Bytes in attributes -> convert to str
+            - Non-string values -> convert with str()
+
+            Args:
+                entry_dn: Raw DN string from LDIF parser
+                entry_attrs: Raw attributes mapping (may contain bytes like {b'mail': [b'user@example.com']})
+
+            Returns:
+                FlextResult with Entry model or fail(message)
+
+            """
+            # Default RFC-compliant implementation
+            # Servers can override for server-specific parsing logic
+            if not entry_dn:
+                return FlextResult[FlextLdifModels.Entry].fail("DN is None or empty")
+
+            # Convert attributes to FlextLdifModels.LdifAttributes
+            if entry_attrs is None:
+                entry_attrs = {}
+            attrs_result = FlextLdifModels.LdifAttributes.create(dict(entry_attrs))
+            if not attrs_result.is_success:
+                return FlextResult[FlextLdifModels.Entry].fail(
+                    f"Failed to create LdifAttributes: {attrs_result.error}",
+                )
+            converted_attrs = attrs_result.unwrap()
+
+            # Create DistinguishedName object from DN string
+            dn_obj = FlextLdifModels.DistinguishedName(value=entry_dn)
+
+            # Create Entry model with defaults
+            entry_result = FlextLdifModels.Entry.create(  # type: ignore[arg-type]
+                dn=dn_obj,
+                attributes=converted_attrs,
+            )
+            if entry_result.is_failure:
+                return FlextResult[FlextLdifModels.Entry].fail(
+                    f"Failed to create Entry: {entry_result.error}"
+                )
+            entry = entry_result.unwrap()
+
+            return FlextResult[FlextLdifModels.Entry].ok(cast(FlextLdifModels.Entry, entry))
 
         def _write_entry_add_format(
             self,

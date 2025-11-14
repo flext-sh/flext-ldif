@@ -890,7 +890,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             )
 
         @staticmethod
-        def _clean_syntax_quotes(value: str | bytes) -> str | bytes:
+        def clean_syntax_quotes(value: str | bytes) -> str | bytes:
             """OUD QUIRK: Remove quotes from SYNTAX OID in schema definitions.
 
             RFC 4512 § 4.1.2: SYNTAX OID must NOT be quoted.
@@ -1049,7 +1049,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                     # OID exports with quotes: SYNTAX '1.3.6.1.4.1.1466.115.121.1.7'
                     # OUD requires without quotes: SYNTAX 1.3.6.1.4.1.1466.115.121.1.7
                     # Call Schema's static method (DRY: avoid duplicating _clean_syntax_quotes)
-                    cleaned_value = FlextLdifServersOud.Schema._clean_syntax_quotes(
+                    cleaned_value = FlextLdifServersOud.Schema.clean_syntax_quotes(
                         value
                     )
 
@@ -1204,58 +1204,6 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             if new_entry_result.is_success:
                 return cast("FlextLdifModels.Entry", new_entry_result.unwrap())
             return entry_data
-            """Hook: Validate OUD ACI macros after parsing Entry.
-
-            When reading OUD LDIF, ACIs may contain macros that require validation:
-            - ($dn): substring matching/substitution
-            - [$dn]: hierarchical substitution
-            - ($attr.attrName): attribute value substitution
-
-            This hook validates macro consistency WITHOUT expanding them
-            (runtime expansion happens in OUD directory server).
-
-            Processing:
-            1. Validate ACI macro rules if aci: attributes present
-            2. Preserve macros as-is (RFC Entry canonical format)
-            3. Add metadata notes if macros present
-
-            Args:
-                entry: Entry parsed from OUD LDIF (in RFC canonical format)
-
-            Returns:
-                FlextResult[Entry] - validated entry, unchanged if valid
-
-            """
-            # Extract attributes dict with None check for type safety
-            attrs_dict = (
-                entry.attributes.attributes if entry.attributes is not None else {}
-            )
-
-            # Validate ACI macros if present
-            aci_attrs = attrs_dict.get("aci")
-            if aci_attrs and isinstance(aci_attrs, list):
-                has_macros = False
-                for aci_value in aci_attrs:
-                    if isinstance(aci_value, str):
-                        # Check if macros present
-                        if re.search(r"\(\$dn\)|\[\$dn\]|\(\$attr\.", aci_value):
-                            has_macros = True
-
-                        # Validate macro rules
-                        validation_result = self._validate_aci_macros(aci_value)
-                        if validation_result.is_failure:
-                            return FlextResult[FlextLdifModels.Entry].fail(
-                                f"ACI macro validation failed: {validation_result.error}",
-                            )
-
-                # Log if macros were found (metadata is immutable - just log)
-                if has_macros:
-                    logger.debug(
-                        "Entry contains OUD ACI macros - preserved for runtime expansion"
-                    )
-
-            # Entry is RFC-canonical - return unchanged
-            return FlextResult[FlextLdifModels.Entry].ok(entry)
 
         def _validate_aci_macros(self, aci_value: str) -> FlextResult[None]:
             """Validate OUD ACI macro consistency rules.
@@ -1451,6 +1399,79 @@ class FlextLdifServersOud(FlextLdifServersRfc):
 
             except Exception as e:
                 return FlextResult[str].fail(f"OUD write entry failed: {e}")
+
+        def _filter_and_sort_schema_values(
+            self,
+            values: list[str],
+            allowed_oids: set[str] | None,
+            oid_pattern: re.Pattern[str],
+        ) -> list[tuple[tuple[int, ...], str]]:
+            """Filter schema values by whitelist and sort by OID."""
+            filtered_values: list[tuple[tuple[int, ...], str]] = []
+
+            for value in values:
+                # Extract OID from RFC format: ( 1.2.3.4 NAME ...
+                match = oid_pattern.search(value)
+                if not match:
+                    continue
+
+                oid_str = match.group(1)
+
+                # Check if OID in whitelist
+                # Filter only if allowed_oids is provided
+                if allowed_oids is not None and oid_str not in allowed_oids:
+                    continue
+
+                # Parse OID for sorting (convert to tuple of ints)
+                try:
+                    oid_tuple = tuple(int(x) for x in oid_str.split("."))
+                except ValueError:
+                    continue
+
+                filtered_values.append((oid_tuple, value))
+
+            # Sort by OID numerically
+            filtered_values.sort(key=operator.itemgetter(0))
+            return filtered_values
+
+        def _finalize_and_parse_entry(
+            self,
+            entry_dict: dict[str, object],
+            entries_list: list[FlextLdifModels.Entry],
+        ) -> None:
+            """Finalize entry dict and parse into entries list.
+
+            Args:
+                entry_dict: Entry dictionary with DN and attributes
+                entries_list: Target list to append parsed Entry models
+
+            """
+            # Use Entry's parse method via instance
+            entry_instance = FlextLdifServersOud.Entry()
+            if FlextLdifConstants.DictKeys.DN not in entry_dict:
+                return
+
+            dn = str(entry_dict.pop(FlextLdifConstants.DictKeys.DN))
+            # Convert entry_dict to bytes format for parse_entry
+            attrs_bytes: dict[str, list[bytes]] = {}
+            for key, value in entry_dict.items():
+                if isinstance(value, list):
+                    attrs_bytes[key] = [
+                        v.encode("utf-8")
+                        if isinstance(v, str)
+                        else bytes(v)
+                        if isinstance(v, (bytes, bytearray))
+                        else str(v).encode("utf-8")
+                        for v in value
+                    ]
+                elif isinstance(value, str):
+                    attrs_bytes[key] = [value.encode("utf-8")]
+                elif isinstance(value, bytes):
+                    attrs_bytes[key] = [value]
+            # Use parse_entry public method
+            result = entry_instance.parse_entry(dn, attrs_bytes)
+            if result.is_success:
+                entries_list.append(result.unwrap())
 
         def extract_entries_from_ldif(
             self,
@@ -3039,7 +3060,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                     # OID exports with quotes: SYNTAX '1.3.6.1.4.1.1466.115.121.1.7'
                     # OUD requires without quotes: SYNTAX 1.3.6.1.4.1.1466.115.121.1.7
                     # Call Schema's static method (DRY: avoid duplicating _clean_syntax_quotes)
-                    cleaned_value = FlextLdifServersOud.Schema._clean_syntax_quotes(
+                    cleaned_value = FlextLdifServersOud.Schema.clean_syntax_quotes(
                         value
                     )
 

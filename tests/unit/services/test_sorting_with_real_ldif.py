@@ -171,7 +171,9 @@ class TestSortingWithRealOIDEntries:
         # Take first entry for testing
         entry = oid_entries[0]
 
-        result = FlextLdifSorting.v1(entries=[entry], sort_target="attributes").execute()
+        result = FlextLdifSorting.v1(
+            entries=[entry], sort_target="attributes"
+        ).execute()
 
         assert result.is_success
         sorted_entries = result.unwrap()
@@ -416,7 +418,11 @@ class TestEdgeCasesWithRealLDIF:
                 continue
             # Find corresponding sorted entry
             sorted_entry = next(
-                (e for e in sorted_entries if e.dn and e.dn.value == original_entry.dn.value),
+                (
+                    e
+                    for e in sorted_entries
+                    if e.dn and e.dn.value == original_entry.dn.value
+                ),
                 None,
             )
             assert sorted_entry is not None

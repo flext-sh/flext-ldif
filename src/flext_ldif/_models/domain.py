@@ -1199,8 +1199,8 @@ class FlextLdifModelsDomains:
 
             # Modify self in-place (Pydantic 2 best practice for mode="after")
             if violations:
-                # Use object.__setattr__() to modify even if model is frozen-like
-                object.__setattr__(self, "validation_violations", violations)
+                # Use setattr to bypass Pydantic validation and avoid recursion
+                self.validation_violations = violations
 
             # ALWAYS return self (not a copy) - Pydantic 2 requirement
             return self

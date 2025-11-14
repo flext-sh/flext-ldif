@@ -442,9 +442,7 @@ class TestFilterEntriesByDnException:
             {"cn": ["test"], "objectClass": ["person"]},
         )
 
-        # For this test, we'll test the exception path by mocking a bad state
-        # Since entries are immutable, we'll test with missing DN which causes attribute access
-        # This is hard to test without mocking, so we test the success path thoroughly
+        # Test with real entry data - success path validation
         entries = [entry]
         result = FlextLdifFilters.filter_entries_by_dn(
             entries,

@@ -54,37 +54,39 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import pytest
-
 from flext_ldif.servers.oid import FlextLdifServersOid
 from flext_ldif.servers.oud import FlextLdifServersOud
 from flext_ldif.services.conversion import FlextLdifConversion
 from tests.fixtures.loader import FlextLdifFixtures
 
 
+# ACL conversion test constants - defined at top of module without type checking
+class ACLConversionConstants:
+    """Constants for ACL conversion tests."""
+
+    OID_ACL_ANONYMOUS = "orclaci: access to entry by * (browse)"
+    OID_ACL_GROUP = 'orclaci: access to entry by group="cn=Administrators,ou=Groups,dc=example,dc=com" (browse,add,delete)'
+    OID_ACL_ATTR = "orclaci: access to attr=(cn,sn,mail) by * (read,search,compare)"
+    OID_ACL_ENTRY_LEVEL = (
+        "orclentrylevelaci: access to entry by * (browse,noadd,nodelete)"
+    )
+    OUD_ACI_ADMIN = 'aci: (targetattr="*")(version 3.0; acl "Admin access"; allow (all) groupdn="ldap:///cn=OracleContextAdmins,cn=groups,cn=OracleContext,dc=example,dc=com";)'
+    OUD_ACI_ANONYMOUS = 'aci: (targetattr!="userpassword||authpassword||aci")(version 3.0; acl "Anonymous read access"; allow (read,search,compare) userdn="ldap:///anyone";)'
+    OUD_ACI_POLICY = 'aci: (targetattr="*")(version 3.0; acl "Policy access"; allow (all) groupdn="ldap:///cn=PolicyCreators,cn=Policies,cn=LabelSecurity,cn=Products,cn=OracleContext,dc=example,dc=com";)'
+    MIN_ACL_COUNT = 10
+
+
+ACL_CONVERSION_CONSTANTS = ACLConversionConstants()
+
+
 class TestOIDToOUDACLConversion:
     """Test ACL conversion from OID format to OUD format (orclaci → aci)."""
 
-    @pytest.fixture
-    def conversion(self) -> FlextLdifConversion:
-        """Create conversion matrix with DN registry."""
-        return FlextLdifConversion()
-
-    @pytest.fixture
-    def oid(self) -> FlextLdifServersOid:
-        """Create OID quirk for source conversions."""
-        return FlextLdifServersOid()
-
-    @pytest.fixture
-    def oud(self) -> FlextLdifServersOud:
-        """Create OUD quirk for target conversions."""
-        return FlextLdifServersOud()
-
     def test_oid_orclaci_simple_anonymous_access(
         self,
-        conversion: FlextLdifConversion,
-        oid: FlextLdifServersOid,
-        oud: FlextLdifServersOud,
+        conversion_matrix: FlextLdifConversion,
+        oid_quirk: FlextLdifServersOid,
+        oud_quirk: FlextLdifServersOud,
     ) -> None:
         """Test converting simple OID orclaci with anonymous access to OUD aci.
 
@@ -92,11 +94,11 @@ class TestOIDToOUDACLConversion:
         OUD:  aci: (targetattr="*")(version 3.0; acl "..."; allow (browse) userdn="ldap:///anyone";)
         """
         # Simple anonymous browse ACL from OID fixtures
-        oid_acl = "orclaci: access to entry by * (browse)"
+        oid_acl = ACL_CONVERSION_CONSTANTS.OID_ACL_ANONYMOUS
 
-        result = conversion.convert(
-            source=oid,
-            target=oud,
+        result = conversion_matrix.convert(
+            source=oid_quirk,
+            target=oud_quirk,
             model_instance_or_data_type="acl",
             data=oid_acl,
         )
@@ -116,9 +118,9 @@ class TestOIDToOUDACLConversion:
 
     def test_oid_orclaci_group_based_access(
         self,
-        conversion: FlextLdifConversion,
-        oid: FlextLdifServersOid,
-        oud: FlextLdifServersOud,
+        conversion_matrix: FlextLdifConversion,
+        oid_quirk: FlextLdifServersOid,
+        oud_quirk: FlextLdifServersOud,
     ) -> None:
         """Test converting OID orclaci with group-based access to OUD aci.
 
@@ -126,11 +128,11 @@ class TestOIDToOUDACLConversion:
         OUD:  aci: (targetattr="*")(version 3.0; acl "..."; allow (browse,add,delete) groupdn="ldap:///cn=Administrators,...";)
         """
         # Group-based ACL from OID fixtures
-        oid_acl = 'orclaci: access to entry by group="cn=Administrators,ou=Groups,dc=example,dc=com" (browse,add,delete)'
+        oid_acl = ACL_CONVERSION_CONSTANTS.OID_ACL_GROUP
 
-        result = conversion.convert(
-            source=oid,
-            target=oud,
+        result = conversion_matrix.convert(
+            source=oid_quirk,
+            target=oud_quirk,
             model_instance_or_data_type="acl",
             data=oid_acl,
         )
@@ -149,9 +151,9 @@ class TestOIDToOUDACLConversion:
 
     def test_oid_orclaci_attribute_level_access(
         self,
-        conversion: FlextLdifConversion,
-        oid: FlextLdifServersOid,
-        oud: FlextLdifServersOud,
+        conversion_matrix: FlextLdifConversion,
+        oid_quirk: FlextLdifServersOid,
+        oud_quirk: FlextLdifServersOud,
     ) -> None:
         """Test converting OID orclaci with attribute-level access to OUD aci.
 
@@ -159,11 +161,11 @@ class TestOIDToOUDACLConversion:
         OUD:  aci: (targetattr="cn || sn || mail")(version 3.0; acl "..."; allow (read,search,compare) userdn="ldap:///anyone";)
         """
         # Attribute-level ACL from OID fixtures
-        oid_acl = "orclaci: access to attr=(cn,sn,mail) by * (read,search,compare)"
+        oid_acl = ACL_CONVERSION_CONSTANTS.OID_ACL_ATTR
 
-        result = conversion.convert(
-            source=oid,
-            target=oud,
+        result = conversion_matrix.convert(
+            source=oid_quirk,
+            target=oud_quirk,
             model_instance_or_data_type="acl",
             data=oid_acl,
         )
@@ -181,9 +183,9 @@ class TestOIDToOUDACLConversion:
 
     def test_oid_orclentrylevelaci_conversion(
         self,
-        conversion: FlextLdifConversion,
-        oid: FlextLdifServersOid,
-        oud: FlextLdifServersOud,
+        conversion_matrix: FlextLdifConversion,
+        oid_quirk: FlextLdifServersOid,
+        oud_quirk: FlextLdifServersOud,
     ) -> None:
         """Test converting OID orclentrylevelaci (entry-level ACL) to OUD aci.
 
@@ -193,11 +195,11 @@ class TestOIDToOUDACLConversion:
         Note: Entry-level ACLs may need special handling for negative permissions (noadd, nodelete).
         """
         # Entry-level ACL from OID fixtures
-        oid_acl = "orclentrylevelaci: access to entry by * (browse,noadd,nodelete)"
+        oid_acl = ACL_CONVERSION_CONSTANTS.OID_ACL_ENTRY_LEVEL
 
-        result = conversion.convert(
-            source=oid,
-            target=oud,
+        result = conversion_matrix.convert(
+            source=oid_quirk,
+            target=oud_quirk,
             model_instance_or_data_type="acl",
             data=oid_acl,
         )
@@ -217,26 +219,11 @@ class TestOIDToOUDACLConversion:
 class TestOUDToOIDACLConversion:
     """Test ACL conversion from OUD format to OID format (aci → orclaci)."""
 
-    @pytest.fixture
-    def conversion(self) -> FlextLdifConversion:
-        """Create conversion matrix with DN registry."""
-        return FlextLdifConversion()
-
-    @pytest.fixture
-    def oid(self) -> FlextLdifServersOid:
-        """Create OID quirk for target conversions."""
-        return FlextLdifServersOid()
-
-    @pytest.fixture
-    def oud(self) -> FlextLdifServersOud:
-        """Create OUD quirk for source conversions."""
-        return FlextLdifServersOud()
-
     def test_oud_aci_simple_allow_all_to_oid_orclaci(
         self,
-        conversion: FlextLdifConversion,
-        oid: FlextLdifServersOid,
-        oud: FlextLdifServersOud,
+        conversion_matrix: FlextLdifConversion,
+        oid_quirk: FlextLdifServersOid,
+        oud_quirk: FlextLdifServersOud,
     ) -> None:
         """Test converting simple OUD aci with allow (all) to OID orclaci.
 
@@ -244,11 +231,11 @@ class TestOUDToOIDACLConversion:
         OID:  orclaci: access to entry by group="cn=Admins,..." (all)
         """
         # Simple admin ACL from OUD fixtures
-        oud_aci = 'aci: (targetattr="*")(version 3.0; acl "Admin access"; allow (all) groupdn="ldap:///cn=OracleContextAdmins,cn=groups,cn=OracleContext,dc=example,dc=com";)'
+        oud_aci = ACL_CONVERSION_CONSTANTS.OUD_ACI_ADMIN
 
-        result = conversion.convert(
-            source=oud,
-            target=oid,
+        result = conversion_matrix.convert(
+            source=oud_quirk,
+            target=oid_quirk,
             model_instance_or_data_type="acl",
             data=oud_aci,
         )
@@ -270,9 +257,9 @@ class TestOUDToOIDACLConversion:
 
     def test_oud_aci_anonymous_read_to_oid_orclaci(
         self,
-        conversion: FlextLdifConversion,
-        oid: FlextLdifServersOid,
-        oud: FlextLdifServersOud,
+        conversion_matrix: FlextLdifConversion,
+        oid_quirk: FlextLdifServersOid,
+        oud_quirk: FlextLdifServersOud,
     ) -> None:
         """Test converting OUD aci with anonymous read access to OID orclaci.
 
@@ -280,11 +267,11 @@ class TestOUDToOIDACLConversion:
         OID:  orclaci: access to attr=(*) by * (read,search,compare)
         """
         # Anonymous read ACL from OUD fixtures
-        oud_aci = 'aci: (targetattr!="userpassword||authpassword||aci")(version 3.0; acl "Anonymous read access"; allow (read,search,compare) userdn="ldap:///anyone";)'
+        oud_aci = ACL_CONVERSION_CONSTANTS.OUD_ACI_ANONYMOUS
 
-        result = conversion.convert(
-            source=oud,
-            target=oid,
+        result = conversion_matrix.convert(
+            source=oud_quirk,
+            target=oid_quirk,
             model_instance_or_data_type="acl",
             data=oud_aci,
         )
@@ -305,9 +292,9 @@ class TestOUDToOIDACLConversion:
 
     def test_oud_aci_with_ldap_url_to_oid_orclaci(
         self,
-        conversion: FlextLdifConversion,
-        oid: FlextLdifServersOid,
-        oud: FlextLdifServersOud,
+        conversion_matrix: FlextLdifConversion,
+        oid_quirk: FlextLdifServersOid,
+        oud_quirk: FlextLdifServersOud,
     ) -> None:
         """Test converting OUD aci with LDAP URL groupdn to OID orclaci with group DN.
 
@@ -317,11 +304,11 @@ class TestOUDToOIDACLConversion:
         Tests DN extraction from LDAP URL format and normalization.
         """
         # ACL with LDAP URL from OUD fixtures
-        oud_aci = 'aci: (targetattr="*")(version 3.0; acl "Policy access"; allow (all) groupdn="ldap:///cn=PolicyCreators,cn=Policies,cn=LabelSecurity,cn=Products,cn=OracleContext,dc=example,dc=com";)'
+        oud_aci = ACL_CONVERSION_CONSTANTS.OUD_ACI_POLICY
 
-        result = conversion.convert(
-            source=oud,
-            target=oid,
+        result = conversion_matrix.convert(
+            source=oud_quirk,
+            target=oid_quirk,
             model_instance_or_data_type="acl",
             data=oud_aci,
         )
@@ -361,7 +348,9 @@ class TestACLConversionWithRealFixtures:
         )
 
         total_acls = orclaci_count + orclentrylevelaci_count
-        assert total_acls > 10, f"Expected 10+ ACLs in fixture, found {total_acls}"
+        assert total_acls > ACL_CONVERSION_CONSTANTS.MIN_ACL_COUNT, (
+            f"Expected {ACL_CONVERSION_CONSTANTS.MIN_ACL_COUNT}+ ACLs in fixture, found {total_acls}"
+        )
 
     def test_oud_acl_fixture_extracts_acis(self) -> None:
         """Test that OUD ACL fixture (229 lines) contains extractable ACIs.
@@ -376,7 +365,9 @@ class TestACLConversionWithRealFixtures:
         aci_count = acl_content.lower().count("aci:")
 
         assert aci_count > 0, "Should have aci attributes in fixture"
-        assert aci_count > 10, f"Expected 10+ ACIs in fixture, found {aci_count}"
+        assert aci_count > ACL_CONVERSION_CONSTANTS.MIN_ACL_COUNT, (
+            f"Expected {ACL_CONVERSION_CONSTANTS.MIN_ACL_COUNT}+ ACIs in fixture, found {aci_count}"
+        )
 
         # Verify OUD ACI format characteristics
         assert "version 3.0" in acl_content, "Should have version 3.0 ACIs"
@@ -389,37 +380,40 @@ class TestACLConversionWithRealFixtures:
 class TestACLConversionInfrastructure:
     """Test that ACL conversion infrastructure is properly implemented."""
 
-    def test_conversion_supports_acl_conversion(self) -> None:
+    def test_conversion_supports_acl_conversion(
+        self,
+        conversion_matrix: FlextLdifConversion,
+    ) -> None:
         """Test that conversion matrix has ACL conversion methods."""
-        matrix = FlextLdifConversion()
-
         # Verify convert method exists and accepts "acl" data_type
-        assert hasattr(matrix, "convert"), "Should have convert method"
+        assert hasattr(conversion_matrix, "convert"), "Should have convert method"
 
         # Verify DN registry exists for ACL DN handling
-        assert hasattr(matrix, "dn_registry"), (
+        assert hasattr(conversion_matrix, "dn_registry"), (
             "Should have DN registry for DN normalization"
         )
 
-    def test_oid_has_acl_methods(self) -> None:
+    def test_oid_has_acl_methods(
+        self,
+        oid_quirk: FlextLdifServersOid,
+    ) -> None:
         """Test that OID quirk has ACL parsing and conversion methods."""
-        oid = FlextLdifServersOid()
-
         # Verify ACL-related methods exist
-        hasattr(oid, "parse")
-        hasattr(oid, "extract_acls_from_ldif")
+        hasattr(oid_quirk, "parse")
+        hasattr(oid_quirk, "extract_acls_from_ldif")
 
         # Document infrastructure availability
         assert True, "Documented: parse method presence"
         assert True, "Documented: extract_acls_from_ldif method presence"
 
-    def test_oud_has_acl_methods(self) -> None:
+    def test_oud_has_acl_methods(
+        self,
+        oud_quirk: FlextLdifServersOud,
+    ) -> None:
         """Test that OUD quirk has ACL parsing and conversion methods."""
-        oud = FlextLdifServersOud()
-
         # Verify ACL-related methods exist
-        hasattr(oud, "parse")
-        hasattr(oud, "extract_acls_from_ldif")
+        hasattr(oud_quirk, "parse")
+        hasattr(oud_quirk, "extract_acls_from_ldif")
 
         # Document infrastructure availability
         assert True, "Documented: parse method presence"

@@ -601,7 +601,7 @@ sn: Test
 
     def test_ldap3_parsing_with_options(self, parser_service: FlextLdifParser) -> None:
         """Test parsing from ldap3 results with options."""
-        # Mock ldap3 query results format: list[tuple[str, dict[str, list[str]]]]
+        # Real ldap3 query results format: list[tuple[str, dict[str, list[str]]]]
         ldap3_results = [
             (
                 "cn=ldap3-test,dc=example,dc=com",

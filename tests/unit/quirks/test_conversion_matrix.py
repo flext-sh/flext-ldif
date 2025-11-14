@@ -10,7 +10,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import pytest
 from flext_core import FlextResult
 from pydantic import Field
 
@@ -19,9 +18,9 @@ from flext_ldif.servers.base import FlextLdifServersBase
 from flext_ldif.servers.oid import FlextLdifServersOid
 from flext_ldif.servers.oud import FlextLdifServersOud
 from flext_ldif.services.conversion import FlextLdifConversion
+from flext_ldif.typings import FlextLdifTypes
 
 from .servers.conftest import ConversionTestConstants
-
 
 # Conversion test constants - defined at top of module without type checking
 CONVERSION_TEST_CONSTANTS = ConversionTestConstants()
@@ -33,6 +32,7 @@ class FailingParseQuirk(FlextLdifServersBase.Schema):
 
     class Constants:
         """Constants for test quirk."""
+
         SERVER_TYPE: str = "test_failing_parse"
         PRIORITY: int = 100
 
@@ -48,6 +48,42 @@ class FailingParseQuirk(FlextLdifServersBase.Schema):
         super().__init__(schema_service=schema_service, **kwargs)
         object.__setattr__(self, "error_msg", error_msg)
         # schema_quirk is already set by parent __init__
+
+    def execute(
+        self,
+        data: (
+            str
+            | FlextLdifModels.SchemaAttribute
+            | FlextLdifModels.SchemaObjectClass
+            | None
+        ) = None,
+        operation: str | None = None,
+    ) -> FlextResult[
+        FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | str
+    ]:
+        """Execute schema quirk operation - delegate to parse_attribute/write_attribute."""
+        if data is None:
+            return FlextResult[FlextLdifTypes.SchemaModelOrString].ok("")
+
+        # Auto-detect operation
+        if operation is None:
+            operation = "parse" if isinstance(data, str) else "write"
+
+        if operation == "parse":
+            if isinstance(data, str):
+                return self.parse_attribute(data)
+            return FlextResult[FlextLdifTypes.SchemaModelOrString].fail(
+                "parse requires str"
+            )
+
+        # operation == "write"
+        if isinstance(data, FlextLdifModels.SchemaAttribute):
+            return self.write_attribute(data)
+        if isinstance(data, FlextLdifModels.SchemaObjectClass):
+            return self.write_objectclass(data)
+        return FlextResult[FlextLdifTypes.SchemaModelOrString].fail(
+            "write requires SchemaAttribute or SchemaObjectClass"
+        )
 
     def can_handle_attribute(
         self,
@@ -100,7 +136,11 @@ class FailingParseQuirk(FlextLdifServersBase.Schema):
     ):
         """Parse schema definition - always fails for testing."""
         # Try to detect if it's attribute or objectclass
-        if "NAME" in definition and ("SUP" in definition or "STRUCTURAL" in definition or "AUXILIARY" in definition):
+        if "NAME" in definition and (
+            "SUP" in definition
+            or "STRUCTURAL" in definition
+            or "AUXILIARY" in definition
+        ):
             return self._parse_objectclass(definition)
         return self._parse_attribute(definition)
 
@@ -110,12 +150,49 @@ class SuccessfulParseQuirk(FlextLdifServersBase.Schema):
 
     class Constants:
         """Constants for test quirk."""
+
         SERVER_TYPE: str = "test_successful_parse"
         PRIORITY: int = 100
 
     def __init__(self, schema_service: object | None = None, **kwargs: object) -> None:
         """Initialize quirk."""
         super().__init__(schema_service=schema_service, **kwargs)
+
+    def execute(
+        self,
+        data: (
+            str
+            | FlextLdifModels.SchemaAttribute
+            | FlextLdifModels.SchemaObjectClass
+            | None
+        ) = None,
+        operation: str | None = None,
+    ) -> FlextResult[
+        FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | str
+    ]:
+        """Execute schema quirk operation - delegate to parse_attribute/write_attribute."""
+        if data is None:
+            return FlextResult[FlextLdifTypes.SchemaModelOrString].ok("")
+
+        # Auto-detect operation
+        if operation is None:
+            operation = "parse" if isinstance(data, str) else "write"
+
+        if operation == "parse":
+            if isinstance(data, str):
+                return self.parse_attribute(data)
+            return FlextResult[FlextLdifTypes.SchemaModelOrString].fail(
+                "parse requires str"
+            )
+
+        # operation == "write"
+        if isinstance(data, FlextLdifModels.SchemaAttribute):
+            return self.write_attribute(data)
+        if isinstance(data, FlextLdifModels.SchemaObjectClass):
+            return self.write_objectclass(data)
+        return FlextResult[FlextLdifTypes.SchemaModelOrString].fail(
+            "write requires SchemaAttribute or SchemaObjectClass"
+        )
 
     def can_handle_attribute(
         self,
@@ -191,7 +268,11 @@ class SuccessfulParseQuirk(FlextLdifServersBase.Schema):
     ):
         """Parse schema definition."""
         # Try to detect if it's attribute or objectclass
-        if "NAME" in definition and ("SUP" in definition or "STRUCTURAL" in definition or "AUXILIARY" in definition):
+        if "NAME" in definition and (
+            "SUP" in definition
+            or "STRUCTURAL" in definition
+            or "AUXILIARY" in definition
+        ):
             return self._parse_objectclass(definition)
         return self._parse_attribute(definition)
 
@@ -201,6 +282,7 @@ class ConversionFailingQuirk(FlextLdifServersBase.Schema):
 
     class Constants:
         """Constants for test quirk."""
+
         SERVER_TYPE: str = "test_conversion_failing"
         PRIORITY: int = 100
 
@@ -216,6 +298,42 @@ class ConversionFailingQuirk(FlextLdifServersBase.Schema):
         super().__init__(schema_service=schema_service, **kwargs)
         object.__setattr__(self, "fail_on", fail_on)
         # schema_quirk is already set by parent __init__
+
+    def execute(
+        self,
+        data: (
+            str
+            | FlextLdifModels.SchemaAttribute
+            | FlextLdifModels.SchemaObjectClass
+            | None
+        ) = None,
+        operation: str | None = None,
+    ) -> FlextResult[
+        FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | str
+    ]:
+        """Execute schema quirk operation - delegate to parse_attribute/write_attribute."""
+        if data is None:
+            return FlextResult[FlextLdifTypes.SchemaModelOrString].ok("")
+
+        # Auto-detect operation
+        if operation is None:
+            operation = "parse" if isinstance(data, str) else "write"
+
+        if operation == "parse":
+            if isinstance(data, str):
+                return self.parse_attribute(data)
+            return FlextResult[FlextLdifTypes.SchemaModelOrString].fail(
+                "parse requires str"
+            )
+
+        # operation == "write"
+        if isinstance(data, FlextLdifModels.SchemaAttribute):
+            return self.write_attribute(data)
+        if isinstance(data, FlextLdifModels.SchemaObjectClass):
+            return self.write_objectclass(data)
+        return FlextResult[FlextLdifTypes.SchemaModelOrString].fail(
+            "write requires SchemaAttribute or SchemaObjectClass"
+        )
 
     def can_handle_attribute(
         self,
@@ -299,7 +417,11 @@ class ConversionFailingQuirk(FlextLdifServersBase.Schema):
     ):
         """Parse schema definition."""
         # Try to detect if it's attribute or objectclass
-        if "NAME" in definition and ("SUP" in definition or "STRUCTURAL" in definition or "AUXILIARY" in definition):
+        if "NAME" in definition and (
+            "SUP" in definition
+            or "STRUCTURAL" in definition
+            or "AUXILIARY" in definition
+        ):
             return self._parse_objectclass(definition)
         return self._parse_attribute(definition)
 
@@ -309,6 +431,7 @@ class ExceptionThrowingQuirk(FlextLdifServersBase.Schema):
 
     class Constants:
         """Constants for test quirk."""
+
         SERVER_TYPE: str = "test_exception_throwing"
         PRIORITY: int = 100
 
@@ -316,6 +439,22 @@ class ExceptionThrowingQuirk(FlextLdifServersBase.Schema):
         """Initialize quirk."""
         super().__init__(schema_service=schema_service, **kwargs)
         # schema_quirk is already set by parent __init__
+
+    def execute(
+        self,
+        data: (
+            str
+            | FlextLdifModels.SchemaAttribute
+            | FlextLdifModels.SchemaObjectClass
+            | None
+        ) = None,
+        operation: str | None = None,
+    ) -> FlextResult[
+        FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | str
+    ]:
+        """Execute schema quirk operation - always throws exception for testing."""
+        msg = "unexpected error"
+        raise RuntimeError(msg)
 
     def can_handle_attribute(
         self,
@@ -380,12 +519,49 @@ class MissingParseObjectClassQuirk(FlextLdifServersBase.Schema):
 
     class Constants:
         """Constants for test quirk."""
+
         SERVER_TYPE: str = "test_missing_parse_oc"
         PRIORITY: int = 100
 
     def __init__(self, schema_service: object | None = None, **kwargs: object) -> None:
         """Initialize quirk."""
         super().__init__(schema_service=schema_service, **kwargs)
+
+    def execute(
+        self,
+        data: (
+            str
+            | FlextLdifModels.SchemaAttribute
+            | FlextLdifModels.SchemaObjectClass
+            | None
+        ) = None,
+        operation: str | None = None,
+    ) -> FlextResult[
+        FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | str
+    ]:
+        """Execute schema quirk operation - delegate to parse_attribute/write_attribute."""
+        if data is None:
+            return FlextResult[FlextLdifTypes.SchemaModelOrString].ok("")
+
+        # Auto-detect operation
+        if operation is None:
+            operation = "parse" if isinstance(data, str) else "write"
+
+        if operation == "parse":
+            if isinstance(data, str):
+                return self.parse_attribute(data)
+            return FlextResult[FlextLdifTypes.SchemaModelOrString].fail(
+                "parse requires str"
+            )
+
+        # operation == "write"
+        if isinstance(data, FlextLdifModels.SchemaAttribute):
+            return self.write_attribute(data)
+        if isinstance(data, FlextLdifModels.SchemaObjectClass):
+            return self.write_objectclass(data)
+        return FlextResult[FlextLdifTypes.SchemaModelOrString].fail(
+            "write requires SchemaAttribute or SchemaObjectClass"
+        )
 
     def can_handle_attribute(
         self,
@@ -439,12 +615,49 @@ class ObjectClassParseOnlyQuirk(FlextLdifServersBase.Schema):
 
     class Constants:
         """Constants for test quirk."""
+
         SERVER_TYPE: str = "test_parse_only"
         PRIORITY: int = 100
 
     def __init__(self, schema_service: object | None = None, **kwargs: object) -> None:
         """Initialize quirk."""
         super().__init__(schema_service=schema_service, **kwargs)
+
+    def execute(
+        self,
+        data: (
+            str
+            | FlextLdifModels.SchemaAttribute
+            | FlextLdifModels.SchemaObjectClass
+            | None
+        ) = None,
+        operation: str | None = None,
+    ) -> FlextResult[
+        FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | str
+    ]:
+        """Execute schema quirk operation - delegate to parse_attribute/write_attribute."""
+        if data is None:
+            return FlextResult[FlextLdifTypes.SchemaModelOrString].ok("")
+
+        # Auto-detect operation
+        if operation is None:
+            operation = "parse" if isinstance(data, str) else "write"
+
+        if operation == "parse":
+            if isinstance(data, str):
+                return self.parse_attribute(data)
+            return FlextResult[FlextLdifTypes.SchemaModelOrString].fail(
+                "parse requires str"
+            )
+
+        # operation == "write"
+        if isinstance(data, FlextLdifModels.SchemaAttribute):
+            return self.write_attribute(data)
+        if isinstance(data, FlextLdifModels.SchemaObjectClass):
+            return self.write_objectclass(data)
+        return FlextResult[FlextLdifTypes.SchemaModelOrString].fail(
+            "write requires SchemaAttribute or SchemaObjectClass"
+        )
 
     def can_handle_attribute(
         self,
@@ -518,12 +731,49 @@ class MissingParseAcl(FlextLdifServersBase.Schema):
 
     class Constants:
         """Constants for test quirk."""
+
         SERVER_TYPE: str = "test_missing_parse"
         PRIORITY: int = 100
 
     def __init__(self, schema_service: object | None = None, **kwargs: object) -> None:
         """Initialize quirk."""
         super().__init__(schema_service=schema_service, **kwargs)
+
+    def execute(
+        self,
+        data: (
+            str
+            | FlextLdifModels.SchemaAttribute
+            | FlextLdifModels.SchemaObjectClass
+            | None
+        ) = None,
+        operation: str | None = None,
+    ) -> FlextResult[
+        FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | str
+    ]:
+        """Execute schema quirk operation - delegate to parse_attribute/write_attribute."""
+        if data is None:
+            return FlextResult[FlextLdifTypes.SchemaModelOrString].ok("")
+
+        # Auto-detect operation
+        if operation is None:
+            operation = "parse" if isinstance(data, str) else "write"
+
+        if operation == "parse":
+            if isinstance(data, str):
+                return self.parse_attribute(data)
+            return FlextResult[FlextLdifTypes.SchemaModelOrString].fail(
+                "parse requires str"
+            )
+
+        # operation == "write"
+        if isinstance(data, FlextLdifModels.SchemaAttribute):
+            return self.write_attribute(data)
+        if isinstance(data, FlextLdifModels.SchemaObjectClass):
+            return self.write_objectclass(data)
+        return FlextResult[FlextLdifTypes.SchemaModelOrString].fail(
+            "write requires SchemaAttribute or SchemaObjectClass"
+        )
 
     def can_handle_attribute(
         self,
@@ -573,12 +823,49 @@ class MissingWriteAcl(FlextLdifServersBase.Schema):
 
     class Constants:
         """Constants for test quirk."""
+
         SERVER_TYPE: str = "test_missing_write_acl"
         PRIORITY: int = 100
 
     def __init__(self, schema_service: object | None = None, **kwargs: object) -> None:
         """Initialize quirk."""
         super().__init__(schema_service=schema_service, **kwargs)
+
+    def execute(
+        self,
+        data: (
+            str
+            | FlextLdifModels.SchemaAttribute
+            | FlextLdifModels.SchemaObjectClass
+            | None
+        ) = None,
+        operation: str | None = None,
+    ) -> FlextResult[
+        FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | str
+    ]:
+        """Execute schema quirk operation - delegate to parse_attribute/write_attribute."""
+        if data is None:
+            return FlextResult[FlextLdifTypes.SchemaModelOrString].ok("")
+
+        # Auto-detect operation
+        if operation is None:
+            operation = "parse" if isinstance(data, str) else "write"
+
+        if operation == "parse":
+            if isinstance(data, str):
+                return self.parse_attribute(data)
+            return FlextResult[FlextLdifTypes.SchemaModelOrString].fail(
+                "parse requires str"
+            )
+
+        # operation == "write"
+        if isinstance(data, FlextLdifModels.SchemaAttribute):
+            return self.write_attribute(data)
+        if isinstance(data, FlextLdifModels.SchemaObjectClass):
+            return self.write_objectclass(data)
+        return FlextResult[FlextLdifTypes.SchemaModelOrString].fail(
+            "write requires SchemaAttribute or SchemaObjectClass"
+        )
 
     def can_handle_attribute(
         self,
@@ -628,6 +915,7 @@ class EntryConversionQuirk(FlextLdifServersBase.Schema):
 
     class Constants:
         """Constants for test quirk."""
+
         SERVER_TYPE: str = "test_entry_conversion"
         PRIORITY: int = 100
 
@@ -635,11 +923,48 @@ class EntryConversionQuirk(FlextLdifServersBase.Schema):
         """Initialize quirk."""
         super().__init__(schema_service=schema_service, **kwargs)
         # Create a minimal entry quirk for testing
+
         class MinimalEntryQuirk:
             def parse(self, ldif_text: str) -> FlextResult[list[FlextLdifModels.Entry]]:
                 return FlextResult.ok([])
 
-        self._entry_quirk = MinimalEntryQuirk()
+        object.__setattr__(self, "_entry_quirk", MinimalEntryQuirk())
+
+    def execute(
+        self,
+        data: (
+            str
+            | FlextLdifModels.SchemaAttribute
+            | FlextLdifModels.SchemaObjectClass
+            | None
+        ) = None,
+        operation: str | None = None,
+    ) -> FlextResult[
+        FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | str
+    ]:
+        """Execute schema quirk operation - delegate to parse_attribute/write_attribute."""
+        if data is None:
+            return FlextResult[FlextLdifTypes.SchemaModelOrString].ok("")
+
+        # Auto-detect operation
+        if operation is None:
+            operation = "parse" if isinstance(data, str) else "write"
+
+        if operation == "parse":
+            if isinstance(data, str):
+                return self.parse_attribute(data)
+            return FlextResult[FlextLdifTypes.SchemaModelOrString].fail(
+                "parse requires str"
+            )
+
+        # operation == "write"
+        if isinstance(data, FlextLdifModels.SchemaAttribute):
+            return self.write_attribute(data)
+        if isinstance(data, FlextLdifModels.SchemaObjectClass):
+            return self.write_objectclass(data)
+        return FlextResult[FlextLdifTypes.SchemaModelOrString].fail(
+            "write requires SchemaAttribute or SchemaObjectClass"
+        )
 
     def can_handle_attribute(
         self,
@@ -710,6 +1035,7 @@ class MinimalQuirk(FlextLdifServersBase.Schema):
 
     class Constants:
         """Constants for test quirk."""
+
         SERVER_TYPE: str = "test_minimal"
         PRIORITY: int = 100
 
@@ -728,17 +1054,11 @@ class MinimalQuirk(FlextLdifServersBase.Schema):
         ) = None,
         operation: str | None = None,
     ) -> FlextResult[
-        FlextLdifModels.SchemaAttribute
-        | FlextLdifModels.SchemaObjectClass
-        | str
+        FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | str
     ]:
         """Execute schema quirk operation - delegate to parse_attribute/write_attribute."""
-        from flext_ldif.typings import FlextLdifTypes
-
         if data is None:
-            return FlextResult[
-                FlextLdifTypes.SchemaModelOrString
-            ].ok("")
+            return FlextResult[FlextLdifTypes.SchemaModelOrString].ok("")
 
         # Auto-detect operation
         if operation is None:
@@ -747,18 +1067,18 @@ class MinimalQuirk(FlextLdifServersBase.Schema):
         if operation == "parse":
             if isinstance(data, str):
                 return self.parse_attribute(data)
-            return FlextResult[
-                FlextLdifTypes.SchemaModelOrString
-            ].fail("parse requires str")
+            return FlextResult[FlextLdifTypes.SchemaModelOrString].fail(
+                "parse requires str"
+            )
 
         # operation == "write"
         if isinstance(data, FlextLdifModels.SchemaAttribute):
             return self.write_attribute(data)
         if isinstance(data, FlextLdifModels.SchemaObjectClass):
             return self.write_objectclass(data)
-        return FlextResult[
-            FlextLdifTypes.SchemaModelOrString
-        ].fail("write requires SchemaAttribute or SchemaObjectClass")
+        return FlextResult[FlextLdifTypes.SchemaModelOrString].fail(
+            "write requires SchemaAttribute or SchemaObjectClass"
+        )
 
     def can_handle_attribute(
         self,
@@ -829,6 +1149,7 @@ class PartialAttributeQuirk(FlextLdifServersBase.Schema):
 
     class Constants:
         """Constants for test quirk."""
+
         SERVER_TYPE: str = "test_partial_attr"
         PRIORITY: int = 100
 
@@ -847,17 +1168,11 @@ class PartialAttributeQuirk(FlextLdifServersBase.Schema):
         ) = None,
         operation: str | None = None,
     ) -> FlextResult[
-        FlextLdifModels.SchemaAttribute
-        | FlextLdifModels.SchemaObjectClass
-        | str
+        FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | str
     ]:
         """Execute schema quirk operation - delegate to parse_attribute/write_attribute."""
-        from flext_ldif.typings import FlextLdifTypes
-
         if data is None:
-            return FlextResult[
-                FlextLdifTypes.SchemaModelOrString
-            ].ok("")
+            return FlextResult[FlextLdifTypes.SchemaModelOrString].ok("")
 
         # Auto-detect operation
         if operation is None:
@@ -866,18 +1181,18 @@ class PartialAttributeQuirk(FlextLdifServersBase.Schema):
         if operation == "parse":
             if isinstance(data, str):
                 return self.parse_attribute(data)
-            return FlextResult[
-                FlextLdifTypes.SchemaModelOrString
-            ].fail("parse requires str")
+            return FlextResult[FlextLdifTypes.SchemaModelOrString].fail(
+                "parse requires str"
+            )
 
         # operation == "write"
         if isinstance(data, FlextLdifModels.SchemaAttribute):
             return self.write_attribute(data)
         if isinstance(data, FlextLdifModels.SchemaObjectClass):
             return self.write_objectclass(data)
-        return FlextResult[
-            FlextLdifTypes.SchemaModelOrString
-        ].fail("write requires SchemaAttribute or SchemaObjectClass")
+        return FlextResult[FlextLdifTypes.SchemaModelOrString].fail(
+            "write requires SchemaAttribute or SchemaObjectClass"
+        )
 
     def can_handle_attribute(
         self,
@@ -961,6 +1276,7 @@ class AclOnlyQuirk(FlextLdifServersBase.Schema):
 
     class Constants:
         """Constants for test quirk."""
+
         SERVER_TYPE: str = "test_acl_only"
         PRIORITY: int = 100
 
@@ -982,17 +1298,11 @@ class AclOnlyQuirk(FlextLdifServersBase.Schema):
         ) = None,
         operation: str | None = None,
     ) -> FlextResult[
-        FlextLdifModels.SchemaAttribute
-        | FlextLdifModels.SchemaObjectClass
-        | str
+        FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | str
     ]:
         """Execute schema quirk operation - delegate to parse_attribute/write_attribute."""
-        from flext_ldif.typings import FlextLdifTypes
-
         if data is None:
-            return FlextResult[
-                FlextLdifTypes.SchemaModelOrString
-            ].ok("")
+            return FlextResult[FlextLdifTypes.SchemaModelOrString].ok("")
 
         # Auto-detect operation
         if operation is None:
@@ -1001,18 +1311,18 @@ class AclOnlyQuirk(FlextLdifServersBase.Schema):
         if operation == "parse":
             if isinstance(data, str):
                 return self.parse_attribute(data)
-            return FlextResult[
-                FlextLdifTypes.SchemaModelOrString
-            ].fail("parse requires str")
+            return FlextResult[FlextLdifTypes.SchemaModelOrString].fail(
+                "parse requires str"
+            )
 
         # operation == "write"
         if isinstance(data, FlextLdifModels.SchemaAttribute):
             return self.write_attribute(data)
         if isinstance(data, FlextLdifModels.SchemaObjectClass):
             return self.write_objectclass(data)
-        return FlextResult[
-            FlextLdifTypes.SchemaModelOrString
-        ].fail("write requires SchemaAttribute or SchemaObjectClass")
+        return FlextResult[FlextLdifTypes.SchemaModelOrString].fail(
+            "write requires SchemaAttribute or SchemaObjectClass"
+        )
 
     def can_handle_attribute(
         self,
@@ -1089,6 +1399,7 @@ class EntryOnlyQuirk(FlextLdifServersBase.Schema):
 
     class Constants:
         """Constants for test quirk."""
+
         SERVER_TYPE: str = "test_entry_only"
         PRIORITY: int = 100
 
@@ -1097,6 +1408,7 @@ class EntryOnlyQuirk(FlextLdifServersBase.Schema):
         super().__init__(schema_service=schema_service, **kwargs)
         # schema_quirk is already set by parent __init__
         # Create a minimal entry quirk for testing
+
         class MinimalEntryQuirk:
             def parse(self, ldif_text: str) -> FlextResult[list[FlextLdifModels.Entry]]:
                 return FlextResult.ok([])
@@ -1113,17 +1425,11 @@ class EntryOnlyQuirk(FlextLdifServersBase.Schema):
         ) = None,
         operation: str | None = None,
     ) -> FlextResult[
-        FlextLdifModels.SchemaAttribute
-        | FlextLdifModels.SchemaObjectClass
-        | str
+        FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass | str
     ]:
         """Execute schema quirk operation - delegate to parse_attribute/write_attribute."""
-        from flext_ldif.typings import FlextLdifTypes
-
         if data is None:
-            return FlextResult[
-                FlextLdifTypes.SchemaModelOrString
-            ].ok("")
+            return FlextResult[FlextLdifTypes.SchemaModelOrString].ok("")
 
         # Auto-detect operation
         if operation is None:
@@ -1132,18 +1438,18 @@ class EntryOnlyQuirk(FlextLdifServersBase.Schema):
         if operation == "parse":
             if isinstance(data, str):
                 return self.parse_attribute(data)
-            return FlextResult[
-                FlextLdifTypes.SchemaModelOrString
-            ].fail("parse requires str")
+            return FlextResult[FlextLdifTypes.SchemaModelOrString].fail(
+                "parse requires str"
+            )
 
         # operation == "write"
         if isinstance(data, FlextLdifModels.SchemaAttribute):
             return self.write_attribute(data)
         if isinstance(data, FlextLdifModels.SchemaObjectClass):
             return self.write_objectclass(data)
-        return FlextResult[
-            FlextLdifTypes.SchemaModelOrString
-        ].fail("write requires SchemaAttribute or SchemaObjectClass")
+        return FlextResult[FlextLdifTypes.SchemaModelOrString].fail(
+            "write requires SchemaAttribute or SchemaObjectClass"
+        )
 
     def can_handle_attribute(
         self,
@@ -1335,7 +1641,9 @@ class TestAttributeConversion:
         """Test that truly invalid attribute is passed through unchanged."""
         invalid_attr = conversion_constants.INVALID_ATTRIBUTE
 
-        result = conversion_matrix.convert(oud_quirk, oid_quirk, "attribute", invalid_attr)
+        result = conversion_matrix.convert(
+            oud_quirk, oid_quirk, "attribute", invalid_attr
+        )
 
         # Parser is permissive and passes invalid data through unchanged
         # This is by design to handle partial/malformed data gracefully
@@ -1419,7 +1727,9 @@ class TestBatchConversion:
             conversion_constants.OID_ATTRIBUTE_ORCLDBNAME,
         ]
 
-        result = conversion_matrix.batch_convert(oud_quirk, oid_quirk, "attribute", oud_attrs)
+        result = conversion_matrix.batch_convert(
+            oud_quirk, oid_quirk, "attribute", oud_attrs
+        )
 
         assert result.is_success, f"Batch conversion failed: {result.error}"
         oid_attrs = result.unwrap()
@@ -1440,7 +1750,9 @@ class TestBatchConversion:
             conversion_constants.OID_OBJECTCLASS_ORCLCONTAINER,
         ]
 
-        result = conversion_matrix.batch_convert(oud_quirk, oid_quirk, "objectClass", oud_ocs)
+        result = conversion_matrix.batch_convert(
+            oud_quirk, oid_quirk, "objectClass", oud_ocs
+        )
 
         assert result.is_success, f"Batch conversion failed: {result.error}"
         oid_ocs = result.unwrap()
@@ -1462,14 +1774,16 @@ class TestBatchConversion:
             conversion_constants.OID_ATTRIBUTE_ORCLDBNAME,
         ]
 
-        result = conversion_matrix.batch_convert(oud_quirk, oid_quirk, "attribute", mixed_attrs)
+        result = conversion_matrix.batch_convert(
+            oud_quirk, oid_quirk, "attribute", mixed_attrs
+        )
 
         # Permissive parser succeeds on all items, passing through malformed data unchanged
         assert result.is_success
         oid_attrs = result.unwrap()
         assert len(oid_attrs) == 3
         # Second item should be passed through as-is
-        assert oid_attrs[1] == "invalid attribute definition"
+        assert oid_attrs[1] == conversion_constants.INVALID_ATTRIBUTE
 
 
 class TestBidirectionalConversion:
@@ -1486,12 +1800,16 @@ class TestBidirectionalConversion:
         original = conversion_constants.OUD_ATTRIBUTE_ORCLGUID
 
         # OUD → OID
-        oid_result = conversion_matrix.convert(oud_quirk, oid_quirk, "attribute", original)
+        oid_result = conversion_matrix.convert(
+            oud_quirk, oid_quirk, "attribute", original
+        )
         assert oid_result.is_success
         oid_attr = oid_result.unwrap()
 
         # OID → OUD
-        oud_result = conversion_matrix.convert(oid_quirk, oud_quirk, "attribute", oid_attr)
+        oud_result = conversion_matrix.convert(
+            oid_quirk, oud_quirk, "attribute", oid_attr
+        )
         assert oud_result.is_success
         roundtrip = oud_result.unwrap()
 
@@ -1510,12 +1828,16 @@ class TestBidirectionalConversion:
         original = conversion_constants.OID_OBJECTCLASS_ORCLCONTEXT
 
         # OID → OUD
-        oud_result = conversion_matrix.convert(oid_quirk, oud_quirk, "objectClass", original)
+        oud_result = conversion_matrix.convert(
+            oid_quirk, oud_quirk, "objectClass", original
+        )
         assert oud_result.is_success
         oud_oc = oud_result.unwrap()
 
         # OUD → OID
-        oid_result = conversion_matrix.convert(oud_quirk, oid_quirk, "objectClass", oud_oc)
+        oid_result = conversion_matrix.convert(
+            oud_quirk, oid_quirk, "objectClass", oud_oc
+        )
         assert oid_result.is_success
         roundtrip = oid_result.unwrap()
 
@@ -1580,7 +1902,9 @@ class TestErrorHandling:
 class TestDnCaseRegistryIntegration:
     """Test DN case registry integration."""
 
-    def test_dn_registry_initialized(self, conversion_matrix: FlextLdifConversion) -> None:
+    def test_dn_registry_initialized(
+        self, conversion_matrix: FlextLdifConversion
+    ) -> None:
         """Test that DN registry is initialized."""
         assert hasattr(conversion_matrix, "dn_registry")
         assert conversion_matrix.dn_registry is not None
@@ -1597,7 +1921,9 @@ class TestDnCaseRegistryIntegration:
         # We can't directly test if it's empty, but reset should not raise
         assert True
 
-    def test_validate_oud_conversion(self, conversion_matrix: FlextLdifConversion) -> None:
+    def test_validate_oud_conversion(
+        self, conversion_matrix: FlextLdifConversion
+    ) -> None:
         """Test OUD conversion validation."""
         result = conversion_matrix.validate_oud_conversion()
 
@@ -1640,7 +1966,9 @@ class TestDnExtractionAndRegistration:
         # Test that DN registry exists and can be used
         assert conversion_matrix.dn_registry is not None
         # Register a DN to test the registry is functional
-        registered_dn = conversion_matrix.dn_registry.register_dn("cn=acl,dc=example,dc=com")
+        registered_dn = conversion_matrix.dn_registry.register_dn(
+            "cn=acl,dc=example,dc=com"
+        )
         assert registered_dn is not None
 
     def test_extract_and_register_dns_mixed_case(
@@ -1661,18 +1989,26 @@ class TestDnExtractionAndRegistration:
         conversion_matrix._extract_and_register_dns(data, "entry")
         # Empty data should not cause issues
 
-    def test_normalize_dns_in_data_success(self, conversion_matrix: FlextLdifConversion) -> None:
+    def test_normalize_dns_in_data_success(
+        self, conversion_matrix: FlextLdifConversion
+    ) -> None:
         """Test DN normalization with registered DNs."""
         # Register some DNs
-        canonical_dn1 = conversion_matrix.dn_registry.register_dn("cn=test,dc=example,dc=com")
-        canonical_dn2 = conversion_matrix.dn_registry.register_dn("cn=admin,dc=example,dc=com")
+        canonical_dn1 = conversion_matrix.dn_registry.register_dn(
+            "cn=test,dc=example,dc=com"
+        )
+        canonical_dn2 = conversion_matrix.dn_registry.register_dn(
+            "cn=admin,dc=example,dc=com"
+        )
 
         # Test that registered DNs can be retrieved
         assert canonical_dn1 is not None
         assert canonical_dn2 is not None
         assert "cn=test" in canonical_dn1
 
-    def test_normalize_dns_in_data_no_dns(self, conversion_matrix: FlextLdifConversion) -> None:
+    def test_normalize_dns_in_data_no_dns(
+        self, conversion_matrix: FlextLdifConversion
+    ) -> None:
         """Test DN registry with empty data."""
         # Test that DN registry exists even with empty data
         assert conversion_matrix.dn_registry is not None
@@ -1694,7 +2030,7 @@ class TestAttributeConversionErrorPaths:
         # Use SuccessfulParseQuirk which has parse_attribute
         # but may fail on write due to missing metadata
         source = SuccessfulParseQuirk()
-        target = oid_quirk_quirk
+        target = oid_quirk
 
         result = conversion_matrix.convert(source, target, "attribute", "(test)")
         # Conversion may fail due to implementation details of the test quirks
@@ -1718,7 +2054,9 @@ class TestAttributeConversionErrorPaths:
         # Use a quirk that should handle malformed input gracefully
         malformed_attr = "this is not a valid attribute definition"
 
-        result = conversion_matrix.convert(oud_quirk, oid_quirk, "attribute", malformed_attr)
+        result = conversion_matrix.convert(
+            oud_quirk, oid_quirk, "attribute", malformed_attr
+        )
         # Should succeed due to permissive parsing
         assert result.is_success
 
@@ -1762,7 +2100,9 @@ class TestAttributeConversionErrorPaths:
         if result.is_failure:
             assert result.error is not None
 
-    def test_convert_attribute_write_failure(self, conversion_matrix: FlextLdifConversion) -> None:
+    def test_convert_attribute_write_failure(
+        self, conversion_matrix: FlextLdifConversion
+    ) -> None:
         """Test attribute conversion handles target quirk write failures."""
         source = SuccessfulParseQuirk()
         target = ConversionFailingQuirk(fail_on="write")
@@ -1829,7 +2169,7 @@ sn: user"""
     ) -> None:
         """Test entry conversion fails when source quirk lacks entry support."""
         source = MinimalQuirk()
-        target = oid_quirk_quirk
+        target = oid_quirk
 
         entry_data: dict[str, object] = {"dn": "cn=test,dc=example,dc=com"}
         result = conversion_matrix.convert(source, target, "entry", entry_data)
@@ -1873,7 +2213,7 @@ class TestBatchConversionErrorHandling:
     ) -> None:
         """Test batch conversion with all failing parse quirk handles errors gracefully."""
         source = FailingParseQuirk()
-        target = oid_quirk_quirk
+        target = oid_quirk
 
         items = ["(test1)", "(test2)", "(test3)"]
         result = conversion_matrix.batch_convert(source, target, "attribute", items)
@@ -1896,7 +2236,7 @@ class TestBatchConversionErrorHandling:
     ) -> None:
         """Test batch conversion handles multiple errors with truncation."""
         source = FailingParseQuirk()
-        target = oid_quirk_quirk
+        target = oid_quirk
 
         # Create 8 items that will fail parsing
         items = [f"(test{i})" for i in range(8)]
@@ -1922,7 +2262,7 @@ class TestBatchConversionErrorHandling:
     ) -> None:
         """Test batch conversion handles unexpected exceptions."""
         source = ExceptionThrowingQuirk()
-        target = oid_quirk_quirk
+        target = oid_quirk
 
         items = ["(test1)", "(test2)"]
         result = conversion_matrix.batch_convert(source, target, "attribute", items)
@@ -1967,7 +2307,9 @@ class TestSupportCheckingEdgeCases:
         assert support["acl"] is False
         assert support["entry"] is False
 
-    def test_get_supported_conversions_acl(self, conversion_matrix: FlextLdifConversion) -> None:
+    def test_get_supported_conversions_acl(
+        self, conversion_matrix: FlextLdifConversion
+    ) -> None:
         """Test support checking for quirk with ACL support."""
         quirk = AclOnlyQuirk()
         support = conversion_matrix.get_supported_conversions(quirk)
@@ -1977,7 +2319,9 @@ class TestSupportCheckingEdgeCases:
         assert support["acl"] is True
         assert support["entry"] is False
 
-    def test_get_supported_conversions_entry(self, conversion_matrix: FlextLdifConversion) -> None:
+    def test_get_supported_conversions_entry(
+        self, conversion_matrix: FlextLdifConversion
+    ) -> None:
         """Test support checking for quirk with entry support."""
         quirk = EntryOnlyQuirk()
         support = conversion_matrix.get_supported_conversions(quirk)

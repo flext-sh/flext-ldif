@@ -20,6 +20,9 @@ from typing import TYPE_CHECKING
 import pytest
 
 from flext_ldif import FlextLdif
+from flext_ldif.servers.oid import FlextLdifServersOid
+from flext_ldif.servers.oud import FlextLdifServersOud
+from flext_ldif.services.conversion import FlextLdifConversion
 from flext_ldif.services.parser import FlextLdifParser
 from flext_ldif.services.writer import FlextLdifWriter
 
@@ -513,3 +516,56 @@ def _reset_api_singleton() -> None:
     """
     return
     # FlextLdif.reset_instance() if needed (check if API has this method)
+
+
+# ============================================================================
+# CONVERSION TEST FIXTURES
+# ============================================================================
+
+
+@pytest.fixture
+def conversion_matrix() -> FlextLdifConversion:
+    """Create FlextLdifConversion instance for conversion tests."""
+    from flext_ldif.services.conversion import FlextLdifConversion
+
+    return FlextLdifConversion()
+
+
+@pytest.fixture
+def oid_quirk() -> FlextLdifServersOid:
+    """Create OID quirk instance for conversion tests."""
+    from flext_ldif.servers.oid import FlextLdifServersOid
+
+    return FlextLdifServersOid()
+
+
+@pytest.fixture
+def oud_quirk() -> FlextLdifServersOud:
+    """Create OUD quirk instance for conversion tests."""
+    from flext_ldif.servers.oud import FlextLdifServersOud
+
+    return FlextLdifServersOud()
+
+
+@pytest.fixture
+def oid_schema_quirk(oid_quirk: FlextLdifServersOid) -> object:
+    """Create OID schema quirk instance for conversion tests."""
+    return oid_quirk.schema_quirk
+
+
+@pytest.fixture
+def oud_schema_quirk(oud_quirk: FlextLdifServersOud) -> object:
+    """Create OUD schema quirk instance for conversion tests."""
+    return oud_quirk.schema_quirk
+
+
+@pytest.fixture
+def oid_acl_quirk(oid_quirk: FlextLdifServersOid) -> object:
+    """Create OID ACL quirk instance for conversion tests."""
+    return oid_quirk.acl_quirk
+
+
+@pytest.fixture
+def oud_acl_quirk(oud_quirk: FlextLdifServersOud) -> object:
+    """Create OUD ACL quirk instance for conversion tests."""
+    return oud_quirk.acl_quirk

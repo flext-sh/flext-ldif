@@ -1,47 +1,43 @@
-"""Simple test quirk classes - no auto-registration."""
+"""Shared fixtures for quirks tests.
 
-from flext_core import FlextResult
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
-from flext_ldif.servers.base import FlextLdifServersBase
+from __future__ import annotations
 
+import pytest
 
-class ObjectClassParseOnlyQuirk(FlextLdifServersBase.Schema):
-    """Simple test quirk with parse and to_rfc only - NO AUTO-REGISTRATION."""
+from flext_ldif import FlextLdif
 
-    # NOTE: server_type and priority are now @property in base class
-    # They are accessed from parent Constants, so no need to define as fields here
-    # Remove Field definitions to avoid shadowing parent properties
-
-    def __init_subclass__(cls) -> None:
-        """Override to prevent auto-registration."""
-        # Do NOT call super() to avoid registration
-
-    def model_post_init(self, _context: object, /) -> None:
-        pass
-
-    def can_handle_attribute(self, attr_definition: str) -> bool:
-        return True
-
-    def can_handle_objectclass(self, oc_definition: str) -> bool:
-        return True
-
-    def can_handle(self, acl_definition: str) -> bool:
-        return True
-
-    def parse_attribute(self, data: str) -> FlextResult[dict[str, object]]:
-        return FlextResult.ok({})
-
-    def parse_objectclass(self, data: str) -> FlextResult[dict[str, object]]:
-        return FlextResult.ok({"name": "test"})
-
-    def parse(self, data: str) -> FlextResult[dict[str, object]]:
-        return FlextResult.ok({})
-
-    def write_attribute_to_rfc(self, data: dict[str, object]) -> FlextResult[str]:
-        return FlextResult.ok("(test)")
-
-    def write_objectclass_to_rfc(self, data: dict[str, object]) -> FlextResult[str]:
-        return FlextResult.ok("(test)")
+from .servers.conftest import (
+    ConversionTestConstants,
+    conversion_constants,
+    conversion_matrix,
+    oid_quirk,
+    oid_schema_quirk,
+    oud_quirk,
+    oud_schema_quirk,
+    real_parser_service,
+    real_writer_service,
+)
 
 
-# Create similar quirks for other test cases...
+@pytest.fixture
+def api() -> FlextLdif:
+    """Create FlextLdif API instance for testing."""
+    return FlextLdif.get_instance()
+
+
+__all__ = [
+    "ConversionTestConstants",
+    "api",
+    "conversion_constants",
+    "conversion_matrix",
+    "oid_quirk",
+    "oid_schema_quirk",
+    "oud_quirk",
+    "oud_schema_quirk",
+    "real_parser_service",
+    "real_writer_service",
+]

@@ -1694,7 +1694,7 @@ class FlextLdifFilters(FlextService[FlextLdifModels.EntryResult]):
         """
         try:
             # Import here to avoid circular dependency (services -> servers -> services)
-            from flext_ldif.services.server import FlextLdifServer
+            from flext_ldif.services.server import FlextLdifServer  # noqa: PLC0415
 
             registry = FlextLdifServer.get_global_instance()
             server_quirk = registry.quirk(server_type)

@@ -11,16 +11,16 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import logging
 import re
-from typing import cast, Any
-
-from ldap3 import Connection, LDAPAttributeError, LDAPObjectClassError
+from typing import cast
 
 from flext_core import FlextResult, FlextRuntime
+from flext_ldap.constants import FlextLdapConstants
+from ldap3 import Connection, LDAPAttributeError, LDAPObjectClassError
+
 from flext_ldif import FlextLdifModels
 from flext_ldif.services.validation import FlextLdifValidation
-
-from flext_ldap.constants import FlextLdapConstants
 
 
 class EntryManipulationServices:
@@ -46,6 +46,7 @@ class EntryManipulationServices:
 
         Returns:
             Attribute value or None if not found.
+
         """
         if not entry.attributes or not hasattr(entry.attributes, "attributes"):
             return None
@@ -63,6 +64,7 @@ class EntryManipulationServices:
 
         Returns:
             Normalized string value or None if invalid/empty.
+
         """
         if attr_value is None:
             return None
@@ -88,6 +90,7 @@ class EntryManipulationServices:
 
         Returns:
             Normalized string value or None if not found/invalid.
+
         """
         raw_value = EntryManipulationServices.get_entry_attribute(entry, attr_name)
         return EntryManipulationServices.normalize_attribute_value(raw_value)
@@ -105,6 +108,7 @@ class EntryManipulationServices:
 
         Returns:
             Formatted full name or None if insufficient parts.
+
         """
         if given_name and sn:
             return f"{given_name} {sn}"
@@ -120,6 +124,7 @@ class EntryManipulationServices:
 
         Returns:
             Ordered list of display name candidates (first non-None wins).
+
         """
         return [
             self.get_normalized_attribute(user, "displayName"),
@@ -139,6 +144,7 @@ class EntryManipulationServices:
 
         Returns:
             Formatted display name for user or UNKNOWN_USER fallback.
+
         """
         display_options = self.get_display_name_priority_list(user)
 
@@ -156,6 +162,7 @@ class EntryManipulationServices:
 
         Returns:
             Status string if locked/disabled, None if active.
+
         """
         lock_attrs = FlextLdapConstants.LockAttributes.ALL_LOCK_ATTRIBUTES
 
@@ -194,6 +201,7 @@ class EntryManipulationServices:
 
         Returns:
             True if password is considered expired (simplified check).
+
         """
         pwd_last_set = self.get_entry_attribute(
             user, FlextLdapConstants.ActiveDirectoryAttributes.PWD_LAST_SET
@@ -208,6 +216,7 @@ class EntryManipulationServices:
 
         Returns:
             User status string ("active", "locked", "disabled").
+
         """
         lock_status = self.check_lock_attributes(user)
         if lock_status:
@@ -231,6 +240,7 @@ class EntryManipulationServices:
 
         Returns:
             Error message if requirement not met, None if valid.
+
         """
         group_cn = self.get_normalized_attribute(group, "cn")
         user_email = self.get_normalized_attribute(user, "mail")
@@ -248,6 +258,7 @@ class EntryManipulationServices:
 
         Returns:
             True if user is active, False if locked.
+
         """
         lock_status = self.check_lock_attributes(user)
         return lock_status is None
@@ -265,6 +276,7 @@ class EntryManipulationServices:
 
         Returns:
             FlextResult indicating if membership is valid.
+
         """
         email_error = self.check_group_email_requirement(user, group)
         if email_error:
@@ -285,6 +297,7 @@ class EntryManipulationServices:
 
         Returns:
             FlextResult with normalized username or validation error.
+
         """
         if not base_name:
             return FlextResult[str].fail("Base name cannot be empty")
@@ -318,6 +331,7 @@ class EntryManipulationServices:
 
         Returns:
             Set of normalized existing UIDs.
+
         """
         existing_uids = set()
         for user in existing_users:
@@ -341,6 +355,7 @@ class EntryManipulationServices:
 
         Returns:
             FlextResult with unique username or failure.
+
         """
         if base_username not in existing_uids:
             return FlextResult[str].ok(base_username)
@@ -370,8 +385,11 @@ class EntryManipulationServices:
 
         Returns:
             FlextResult with generated unique username or error.
+
         """
-        normalized_result = self.normalize_username_base(base_name, validation_service or self._validation_service)
+        normalized_result = self.normalize_username_base(
+            base_name, validation_service or self._validation_service
+        )
         if normalized_result.is_failure:
             return normalized_result
 
@@ -390,7 +408,9 @@ class EntryManipulationServices:
         """Convert attributes to ldap3 format (dict with list values)."""
         attrs_dict: dict[str, str | list[str]]
         if isinstance(attributes, FlextLdifModels.LdifAttributes):
-            attrs_dict = attributes  # attributes.attributes is already dict[str, list[str]]
+            attrs_dict = (
+                attributes  # attributes.attributes is already dict[str, list[str]]
+            )
         else:
             attrs_dict = attributes
 
@@ -412,7 +432,7 @@ class EntryManipulationServices:
         dn: FlextLdifModels.DistinguishedName | str,
         attributes: FlextLdifModels.LdifAttributes | dict[str, str | list[str]],
         quirks_mode: FlextLdapConstants.Types.QuirksMode | None = None,
-        logger: Any | None = None,
+        logger: logging.Logger | None = None,
     ) -> FlextResult[bool]:
         """Add new LDAP entry - implements LdapModifyProtocol.
 
@@ -431,13 +451,13 @@ class EntryManipulationServices:
 
         """
         if logger is None:
-            import logging
-
             logger = logging.getLogger(__name__)
 
         try:
             # Determine effective quirks mode
-            effectives_mode = quirks_mode or FlextLdapConstants.Types.QuirksMode.AUTOMATIC # Default to AUTOMATIC if not provided
+            effectives_mode = (
+                quirks_mode or FlextLdapConstants.Types.QuirksMode.AUTOMATIC
+            )  # Default to AUTOMATIC if not provided
 
             # Convert attributes to ldap3 format
             ldap3_attributes = self.convert_ldif_attributes_to_ldap3_format(attributes)
@@ -536,13 +556,12 @@ class EntryManipulationServices:
         else:
             object_class = str(object_class_raw)
 
-        typed_conn = cast(
-            "FlextLdapTypes.Ldap3Protocols.Connection",
-            connection,
-        )
+        typed_conn = connection
         # Cast to dict[str, str | list[str]] for ldap3.add method signature
         attrs_for_add = cast("dict[str, str | list[str]]", attempted_attributes)
-        return typed_conn.add(dn_str, object_class=object_class, attributes=attrs_for_add)
+        return typed_conn.add(
+            dn_str, object_class=object_class, attributes=attrs_for_add
+        )
 
     def _extract_undefined_attribute_internal(
         self,
@@ -562,7 +581,7 @@ class EntryManipulationServices:
         connection: Connection,
         attempted_attributes: dict[str, list[str]],
         removed_attributes: list[str],
-        logger: Any,
+        logger: logging.Logger,
     ) -> bool:
         """Handle undefined attribute error by removing problematic attribute (internal helper)."""
         error_msg = str(connection.last_error).lower()

@@ -76,13 +76,15 @@ class TestOidServerSpecificValidation:
         )
 
         # Should validate without errors (OID is lenient)
+        assert entry.dn is not None
         assert entry.dn.value == "cn=test,dc=example,dc=com"
 
         # Check RFC violation is captured (not server-specific)
+        assert entry.validation_metadata is not None
         assert "rfc_violations" in entry.validation_metadata
-        assert any(
-            "objectClass" in v for v in entry.validation_metadata["rfc_violations"]
-        )
+        rfc_violations_obj = entry.validation_metadata["rfc_violations"]
+        assert isinstance(rfc_violations_obj, list)
+        assert any("objectClass" in v for v in rfc_violations_obj)
 
         # No server-specific violations (OID allows this)
         assert "server_specific_violations" not in entry.validation_metadata
@@ -102,10 +104,11 @@ class TestOidServerSpecificValidation:
         )
 
         # Check RFC violation is captured (SHOULD have naming attr)
+        assert entry.validation_metadata is not None
         assert "rfc_violations" in entry.validation_metadata
-        assert any(
-            "Naming attribute" in v for v in entry.validation_metadata["rfc_violations"]
-        )
+        rfc_violations_obj = entry.validation_metadata["rfc_violations"]
+        assert isinstance(rfc_violations_obj, list)
+        assert any("Naming attribute" in v for v in rfc_violations_obj)
 
         # No server-specific violations (OID allows this)
         assert "server_specific_violations" not in entry.validation_metadata
@@ -148,11 +151,11 @@ class TestOudServerSpecificValidation:
         )
 
         # Check server-specific violation is captured (OUD REQUIRES objectClass)
+        assert entry.validation_metadata is not None
         assert "server_specific_violations" in entry.validation_metadata
-        assert any(
-            "objectClass" in v
-            for v in entry.validation_metadata["server_specific_violations"]
-        )
+        violations_obj = entry.validation_metadata["server_specific_violations"]
+        assert isinstance(violations_obj, list)
+        assert any("objectClass" in v for v in violations_obj)
 
     def test_oud_requires_naming_attribute(self) -> None:
         """Validate OUD requires naming attribute from RDN (stricter than RFC)."""
@@ -172,11 +175,11 @@ class TestOudServerSpecificValidation:
         )
 
         # Check server-specific violation is captured (OUD REQUIRES naming attr)
+        assert entry.validation_metadata is not None
         assert "server_specific_violations" in entry.validation_metadata
-        assert any(
-            "naming attribute" in v.lower()
-            for v in entry.validation_metadata["server_specific_violations"]
-        )
+        violations_obj = entry.validation_metadata["server_specific_violations"]
+        assert isinstance(violations_obj, list)
+        assert any("naming attribute" in v.lower() for v in violations_obj)
 
     def test_oud_requires_binary_option(self) -> None:
         """Validate OUD requires ;binary option for binary attributes."""
@@ -197,11 +200,11 @@ class TestOudServerSpecificValidation:
         )
 
         # Check server-specific violation is captured (OUD REQUIRES ;binary)
+        assert entry.validation_metadata is not None
         assert "server_specific_violations" in entry.validation_metadata
-        assert any(
-            ";binary" in v.lower()
-            for v in entry.validation_metadata["server_specific_violations"]
-        )
+        violations_obj = entry.validation_metadata["server_specific_violations"]
+        assert isinstance(violations_obj, list)
+        assert any(";binary" in v.lower() for v in violations_obj)
 
     def test_oud_valid_entry_with_all_requirements(self) -> None:
         """Validate OUD accepts fully compliant entry."""
@@ -266,11 +269,11 @@ class TestOpenLdapServerSpecificValidation:
         )
 
         # Check server-specific violation is captured (OpenLDAP REQUIRES ;binary)
+        assert entry.validation_metadata is not None
         assert "server_specific_violations" in entry.validation_metadata
-        assert any(
-            ";binary" in v.lower()
-            for v in entry.validation_metadata["server_specific_violations"]
-        )
+        violations_obj = entry.validation_metadata["server_specific_violations"]
+        assert isinstance(violations_obj, list)
+        assert any(";binary" in v.lower() for v in violations_obj)
 
     def test_openldap_schema_entry_detection(self) -> None:
         """Validate OpenLDAP schema entry detection (cn=schema, cn=subschema)."""
@@ -312,11 +315,11 @@ class TestActiveDirectoryServerSpecificValidation:
         )
 
         # Check server-specific violation is captured (AD REQUIRES objectClass)
+        assert entry.validation_metadata is not None
         assert "server_specific_violations" in entry.validation_metadata
-        assert any(
-            "objectclass" in v.lower()  # Fixed: look for lowercase in lowercased string
-            for v in entry.validation_metadata["server_specific_violations"]
-        )
+        violations_obj = entry.validation_metadata["server_specific_violations"]
+        assert isinstance(violations_obj, list)
+        assert any("objectclass" in v.lower() for v in violations_obj)
 
     def test_ad_requires_naming_attribute(self) -> None:
         """Validate AD requires naming attribute from RDN."""
@@ -336,11 +339,11 @@ class TestActiveDirectoryServerSpecificValidation:
         )
 
         # Check server-specific violation is captured (AD REQUIRES naming attr)
+        assert entry.validation_metadata is not None
         assert "server_specific_violations" in entry.validation_metadata
-        assert any(
-            "naming attribute" in v.lower()
-            for v in entry.validation_metadata["server_specific_violations"]
-        )
+        violations_obj = entry.validation_metadata["server_specific_violations"]
+        assert isinstance(violations_obj, list)
+        assert any("naming attribute" in v.lower() for v in violations_obj)
 
     def test_ad_binary_attribute_without_option_allowed(self) -> None:
         """Validate AD allows binary attributes without ;binary (auto-detect)."""
@@ -380,11 +383,11 @@ class TestRfcBaselineValidation:
         )
 
         # RFC violation captured (SHOULD have objectClass)
+        assert entry.validation_metadata is not None
         assert "rfc_violations" in entry.validation_metadata
-        assert any(
-            "RFC 4512" in v and "objectClass" in v
-            for v in entry.validation_metadata["rfc_violations"]
-        )
+        rfc_violations_obj = entry.validation_metadata["rfc_violations"]
+        assert isinstance(rfc_violations_obj, list)
+        assert any("RFC 4512" in v and "objectClass" in v for v in rfc_violations_obj)
 
         # No server-specific violations (pure RFC mode)
         assert "server_specific_violations" not in entry.validation_metadata
@@ -405,10 +408,10 @@ class TestRfcBaselineValidation:
 
         # RFC violation captured (SHOULD have naming attr)
         assert "rfc_violations" in entry.validation_metadata
-        assert any(
-            "RFC 4512 § 2.3" in v and "Naming attribute" in v
-            for v in entry.validation_metadata["rfc_violations"]
-        )
+        assert entry.validation_metadata is not None
+        rfc_violations_obj = entry.validation_metadata.get("rfc_violations")
+        assert isinstance(rfc_violations_obj, list)
+        assert any("RFC 4512 § 2.3" in v and "Naming attribute" in v for v in rfc_violations_obj)
 
         # No server-specific violations (pure RFC mode)
         assert "server_specific_violations" not in entry.validation_metadata
@@ -430,10 +433,10 @@ class TestRfcBaselineValidation:
 
         # RFC violation captured (MAY need ;binary)
         assert "rfc_violations" in entry.validation_metadata
-        assert any(
-            "RFC 2849" in v and ";binary" in v
-            for v in entry.validation_metadata["rfc_violations"]
-        )
+        assert entry.validation_metadata is not None
+        rfc_violations_obj = entry.validation_metadata.get("rfc_violations")
+        assert isinstance(rfc_violations_obj, list)
+        assert any("RFC 2849" in v and ";binary" in v for v in rfc_violations_obj)
 
         # No server-specific violations (pure RFC mode)
         assert "server_specific_violations" not in entry.validation_metadata
@@ -479,6 +482,8 @@ class TestMetadataCapture:
         )
 
         # Check validation_server_type is captured
+        assert entry.metadata is not None
+        assert entry.metadata.extensions is not None
         assert "validation_server_type" in entry.metadata.extensions
         assert entry.metadata.extensions["validation_server_type"] == "oud"
 
@@ -494,12 +499,16 @@ class TestMetadataCapture:
         )
 
         # Check RFC violations in both locations
+        assert entry.validation_metadata is not None
+        assert entry.metadata is not None
+        assert entry.metadata.extensions is not None
         assert "rfc_violations" in entry.validation_metadata
         assert "rfc_violations" in entry.metadata.extensions
-        assert (
-            entry.validation_metadata["rfc_violations"]
-            == entry.metadata.extensions["rfc_violations"]
-        )
+        rfc_violations_validation = entry.validation_metadata["rfc_violations"]
+        rfc_violations_extensions = entry.metadata.extensions["rfc_violations"]
+        assert isinstance(rfc_violations_validation, list)
+        assert isinstance(rfc_violations_extensions, list)
+        assert rfc_violations_validation == rfc_violations_extensions
 
     def test_server_specific_violations_in_extensions(self) -> None:
         """Validate server-specific violations are preserved in metadata.extensions."""
@@ -516,12 +525,16 @@ class TestMetadataCapture:
         )
 
         # Check server-specific violations in both locations
+        assert entry.validation_metadata is not None
+        assert entry.metadata is not None
+        assert entry.metadata.extensions is not None
         assert "server_specific_violations" in entry.validation_metadata
         assert "server_specific_violations" in entry.metadata.extensions
-        assert (
-            entry.validation_metadata["server_specific_violations"]
-            == entry.metadata.extensions["server_specific_violations"]
-        )
+        server_violations_validation = entry.validation_metadata["server_specific_violations"]
+        server_violations_extensions = entry.metadata.extensions["server_specific_violations"]
+        assert isinstance(server_violations_validation, list)
+        assert isinstance(server_violations_extensions, list)
+        assert server_violations_validation == server_violations_extensions
 
 
 __all__ = [

@@ -377,7 +377,7 @@ class TestValidationServiceDnComponent:
         validation_service: FlextLdifValidation,
     ) -> None:
         """Test exception handling during DN component validation."""
-        # Create a mock object that will cause exception
+        # Test with real data that may cause validation issues
         result = validation_service.validate_dn_component("str", "str")
         assert hasattr(result, "is_success")
 

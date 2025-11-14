@@ -11,7 +11,7 @@ import contextlib
 import logging
 import re
 from collections.abc import Callable
-from typing import Any, cast
+from typing import Any
 
 from flext_core import FlextResult
 
@@ -601,13 +601,14 @@ class FlextLdifUtilitiesParser:
     def _extract_syntax_and_length(
         definition: str,
         *,
-        allow_syntax_quotes: bool = False,
+        allow_syntax_quotes: bool = False,  # noqa: ARG004
     ) -> tuple[str | None, int | None]:
         """Extract syntax OID and optional length from definition.
 
         Args:
             definition: Schema definition string
             allow_syntax_quotes: Whether to allow quoted syntax values
+                (used by quirks for quote handling, not by parser itself)
 
         Returns:
             Tuple of (syntax_oid, length)
@@ -627,6 +628,7 @@ class FlextLdifUtilitiesParser:
         # - OID quirk: removes quotes during parse (if allow_syntax_quotes=True)
         # - OUD quirk: ensures no quotes during write
         # Parser preserves raw syntax value from LDIF
+        # allow_syntax_quotes is passed to quirks for quote handling
 
         length = int(syntax_match.group(2)) if syntax_match.group(2) else None
 
@@ -789,9 +791,9 @@ class FlextLdifUtilitiesParser:
                 syntax_validation_error,
             )
 
-            attribute = FlextLdifModels.SchemaAttribute(
+            attribute = FlextLdifModels.SchemaAttribute(  # type: ignore[call-arg]
                 oid=oid,
-                name=name or oid,  # Fallback to OID if NAME not present
+                name=name or oid,
                 desc=desc,
                 syntax=syntax,
                 length=length,
@@ -915,7 +917,7 @@ class FlextLdifUtilitiesParser:
                 else None
             )
 
-            objectclass = FlextLdifModels.SchemaObjectClass(
+            objectclass = FlextLdifModels.SchemaObjectClass(  # type: ignore[call-arg]
                 oid=oid,
                 name=name,
                 desc=desc,
@@ -931,76 +933,6 @@ class FlextLdifUtilitiesParser:
         except (ValueError, TypeError, AttributeError) as e:
             logger.exception("RFC objectClass parsing exception")
             return FlextResult.fail(f"RFC objectClass parsing failed: {e}")
-
-    @staticmethod
-    def parse_with_quirk_fallback(
-        quirk_object: object,
-        data: str | dict[str, object],
-        method_name: str,
-    ) -> FlextResult[Any]:
-        """Generic method to parse data using quirk object with fallback.
-
-        This is a PURE utility that consolidates the common pattern of:
-        1. Try to call method_name on quirk_object directly
-        2. If not found, try quirk_object.schema_quirk.method_name
-        3. Return data as-is if no parser found or parse fails
-
-        Used to eliminate duplicate wrapper methods in services/.
-
-        Args:
-            quirk_object: Object that may have parse method (Schema or Server with schema_quirk)
-            data: Data to parse (string definition or dict model)
-            method_name: Name of parse method to call (e.g., "parse_attribute", "parse_objectclass")
-
-        Returns:
-            FlextResult with parsed model, dict, or original data on failure
-
-        Examples:
-            >>> # In services/conversion.py
-            >>> from flext_ldif.utilities import FlextLdifUtilities
-            >>> result = FlextLdifUtilities.Parser.parse_with_quirk_fallback(
-            ...     source_server, attr_string, "parse_attribute"
-            ... )
-            >>> if result.is_success:
-            ...     parsed_attr = result.unwrap()
-
-        """
-        # Only parse string data - pass through dicts/models as-is
-        if not isinstance(data, str):
-            return FlextResult.ok(data)
-
-        # Try direct method call on quirk_object
-        parse_method = getattr(quirk_object, method_name, None)
-        if parse_method is not None and callable(parse_method):
-            parse_result = parse_method(data)
-            # Check if it's a FlextResult using duck typing with cast for type safety
-            if hasattr(parse_result, "is_failure") and hasattr(parse_result, "unwrap"):
-                flext_result = cast("FlextResult[Any]", parse_result)
-                if flext_result.is_failure:
-                    return FlextResult.ok(data)  # Pass-through on parse error
-                return FlextResult.ok(flext_result.unwrap())
-            # Not a FlextResult, return as-is
-            return FlextResult.ok(parse_result)
-
-        # Try schema_quirk.method_name if quirk_object has schema_quirk
-        if hasattr(quirk_object, "schema_quirk"):
-            schema_quirk = quirk_object.schema_quirk  # type: ignore[attr-defined]
-            parse_method = getattr(schema_quirk, method_name, None)
-            if parse_method is not None and callable(parse_method):
-                parse_result = parse_method(data)
-                if hasattr(parse_result, "is_failure") and hasattr(
-                    parse_result, "unwrap"
-                ):
-                    # It's a FlextResult - use cast for type safety
-                    flext_result2 = cast("FlextResult[Any]", parse_result)
-                    if flext_result2.is_failure:
-                        return FlextResult.ok(data)  # Pass-through on parse error
-                    return FlextResult.ok(flext_result2.unwrap())
-                # Not a FlextResult, return as-is
-                return FlextResult.ok(parse_result)
-
-        # No parser found, pass-through original data
-        return FlextResult.ok(data)
 
 
 __all__ = [

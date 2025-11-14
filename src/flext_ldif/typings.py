@@ -37,7 +37,7 @@ class FlextLdifTypes(FlextTypes):
     # SERVICE RETURN TYPE ALIASES - Top-level types used by servers and services
     # =========================================================================
 
-    type EntryOrString = FlextLdifModels.Entry | str
+    type EntryOrString = FlextLdifModels.Entry | list[FlextLdifModels.Entry] | str
     type SchemaModel = (
         FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass
     )

@@ -36,7 +36,9 @@ class TestExtractOidFromSchemaObject:
             name="orclGUID",
             metadata=FlextLdifModels.QuirkMetadata(
                 quirk_type="oid",
-                extensions={"original_format": "( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' ... )"},
+                extensions={
+                    "original_format": "( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' ... )"
+                },
             ),
         )
 
@@ -60,7 +62,9 @@ class TestExtractOidFromSchemaObject:
             name="orcldASObject",
             metadata=FlextLdifModels.QuirkMetadata(
                 quirk_type="oid",
-                extensions={"original_format": "( 2.16.840.1.113894.1.1.5 NAME 'orcldASObject' ... )"},
+                extensions={
+                    "original_format": "( 2.16.840.1.113894.1.1.5 NAME 'orcldASObject' ... )"
+                },
             ),
         )
 
@@ -230,7 +234,9 @@ class TestExtractFromDefinition:
         assert result is None
 
         # Test with definition that has invalid OID format
-        result = FlextLdifUtilities.OID.extract_from_definition("( invalid.oid NAME 'cn' )")
+        result = FlextLdifUtilities.OID.extract_from_definition(
+            "( invalid.oid NAME 'cn' )"
+        )
         # Should return None or the invalid OID depending on implementation
         # The important thing is it doesn't crash
         assert result is None or isinstance(result, str)
@@ -260,7 +266,9 @@ class TestExtractFromSchemaObjectEdgeCases:
             name="cn",
             metadata=FlextLdifModels.QuirkMetadata(
                 quirk_type="oid",
-                extensions={"original_format": {"key": "value"}},  # Dict instead of string
+                extensions={
+                    "original_format": {"key": "value"}
+                },  # Dict instead of string
             ),
         )
         result = FlextLdifUtilities.OID.extract_from_schema_object(attr)
@@ -345,7 +353,9 @@ class TestExtractFromSchemaObjectEdgeCases:
             name="cn",
             metadata=FlextLdifModels.QuirkMetadata(
                 quirk_type="oid",
-                extensions={"original_format": "( NAME 'cn' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"},
+                extensions={
+                    "original_format": "( NAME 'cn' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
+                },
             ),
         )
         result = FlextLdifUtilities.OID.extract_from_schema_object(attr)

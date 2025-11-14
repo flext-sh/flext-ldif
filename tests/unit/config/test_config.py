@@ -7,6 +7,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 from pydantic import ValidationError
 
@@ -310,15 +312,15 @@ class TestFlextLdifConfig:
         # Test that invalid values are rejected (intentional type mismatches for validation testing)
         with pytest.raises(ValidationError):
             # Test validation with intentionally invalid types
-            FlextLdifConfig(ldif_max_line_length="invalid")
+            FlextLdifConfig(ldif_max_line_length="invalid")  # type: ignore[arg-type]
 
         with pytest.raises(ValidationError):
             # Test validation with intentionally invalid types
-            FlextLdifConfig(max_workers="invalid")
+            FlextLdifConfig(max_workers="invalid")  # type: ignore[arg-type]
 
         with pytest.raises(ValidationError):
             # Test validation with intentionally invalid types
-            FlextLdifConfig(ldif_encoding=123)
+            FlextLdifConfig(ldif_encoding=123)  # type: ignore[arg-type]
 
     # =========================================================================
     # VALIDATOR EDGE CASES - Complete coverage for all validators
@@ -327,7 +329,7 @@ class TestFlextLdifConfig:
     def test_validate_ldif_encoding_invalid(self) -> None:
         """Test encoding validator with invalid encoding."""
         with pytest.raises(ValidationError) as exc_info:
-            FlextLdifConfig(ldif_encoding="invalid-encoding")
+            FlextLdifConfig(ldif_encoding="invalid-encoding")  # type: ignore[arg-type]
         # Pydantic v2 error message format
         assert "Input should be" in str(exc_info.value) or "ldif_encoding" in str(
             exc_info.value,
@@ -351,7 +353,7 @@ class TestFlextLdifConfig:
         """Test validation_level validator with invalid value."""
         with pytest.raises(ValidationError) as exc_info:
             # Test validation with intentionally invalid enum value
-            FlextLdifConfig(validation_level="invalid")
+            FlextLdifConfig(validation_level="invalid")  # type: ignore[arg-type]
         # Pydantic v2 error message format
         assert "Input should be" in str(exc_info.value) or "validation_level" in str(
             exc_info.value,
@@ -361,7 +363,7 @@ class TestFlextLdifConfig:
         """Test server_type validator with invalid value."""
         with pytest.raises(ValidationError) as exc_info:
             # Test validation with intentionally invalid enum value
-            FlextLdifConfig(server_type="unknown_server")
+            FlextLdifConfig(server_type="unknown_server")  # type: ignore[arg-type]
         assert "Input should be" in str(exc_info.value) or "server_type" in str(
             exc_info.value,
         )
@@ -369,7 +371,7 @@ class TestFlextLdifConfig:
     def test_validate_analytics_detail_level_invalid(self) -> None:
         """Test analytics_detail_level validator with invalid value."""
         with pytest.raises(ValidationError) as exc_info:
-            FlextLdifConfig(analytics_detail_level="ultra")
+            FlextLdifConfig(analytics_detail_level="ultra")  # type: ignore[arg-type]
         # Pydantic v2 error message format
         assert "Input should be" in str(
             exc_info.value,
@@ -378,7 +380,7 @@ class TestFlextLdifConfig:
     def test_validate_error_recovery_mode_invalid(self) -> None:
         """Test error_recovery_mode validator with invalid value."""
         with pytest.raises(ValidationError) as exc_info:
-            FlextLdifConfig(error_recovery_mode="abort")
+            FlextLdifConfig(error_recovery_mode="abort")  # type: ignore[arg-type]
         # Pydantic v2 error message format
         assert "Input should be" in str(exc_info.value) or "error_recovery_mode" in str(
             exc_info.value,
@@ -636,7 +638,7 @@ class TestQuirksDetectionConfiguration:
         # All with relaxed parsing
         for detection_mode in ["auto", "disabled"]:
             config = FlextLdifConfig(
-                quirks_detection_mode=detection_mode,
+                quirks_detection_mode=detection_mode,  # type: ignore[arg-type]
                 enable_relaxed_parsing=True,
             )
             assert config.enable_relaxed_parsing is True
@@ -771,7 +773,8 @@ class TestDotEnvFileLoading:
     ) -> None:
         """Test .env file is automatically loaded."""
         # Create .env file
-        env_file = tmp_path / ".env"
+        tmp_dir = Path(str(tmp_path))
+        env_file = tmp_dir / ".env"
         env_file.write_text(
             """
 FLEXT_LDIF_ENCODING=utf-16
@@ -781,7 +784,7 @@ FLEXT_LDIF_SKIP_COMMENTS=true
         )
 
         # Change to temp directory
-        monkeypatch.chdir(tmp_path)
+        monkeypatch.chdir(str(tmp_dir))
 
         config = FlextLdifConfig()
 
@@ -797,10 +800,11 @@ FLEXT_LDIF_SKIP_COMMENTS=true
     ) -> None:
         """Test environment variables override .env file values."""
         # Create .env file
-        env_file = tmp_path / ".env"
+        tmp_dir = Path(str(tmp_path))
+        env_file = tmp_dir / ".env"
         env_file.write_text("FLEXT_LDIF_ENCODING=utf-16\n")
 
-        monkeypatch.chdir(tmp_path)
+        monkeypatch.chdir(str(tmp_dir))
 
         # Set environment variable (higher priority)
         monkeypatch.setenv("FLEXT_LDIF_ENCODING", "latin-1")
@@ -843,9 +847,10 @@ class TestOrderOfPrecedence:
         default_encoding = FlextLdifConstants.DEFAULT_ENCODING
 
         # 2. .env file (lower priority)
-        env_file = tmp_path / ".env"
+        tmp_dir = Path(str(tmp_path))
+        env_file = tmp_dir / ".env"
         env_file.write_text("FLEXT_LDIF_ENCODING=utf-16\n")
-        monkeypatch.chdir(tmp_path)
+        monkeypatch.chdir(str(tmp_dir))
 
         # 3. Environment variable (higher priority)
         monkeypatch.setenv("FLEXT_LDIF_ENCODING", "latin-1")
