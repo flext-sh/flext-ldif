@@ -110,6 +110,8 @@ photo:: UGhvdG8gZGF0YQ==
     BASE64_PHOTO_DATA = "UGhvdG8gZGF0YQ=="
 
     # ACL test constants
-    ACL_LINE_SAMPLE = '(targetattr="*")(version 3.0; acl "test"; allow (read) userdn="ldap:///self";)'
+    ACL_LINE_SAMPLE = (
+        '(targetattr="*")(version 3.0; acl "test"; allow (read) userdn="ldap:///self";)'
+    )
     ACL_LINE_EMPTY_OID = ""
     ACL_LINE_INVALID_OID = "invalid.oid.format"

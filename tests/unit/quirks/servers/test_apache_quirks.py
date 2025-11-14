@@ -23,93 +23,80 @@ class TestApacheDirectorySchemas:
 
     def testcan_handle_attribute_with_apache_oid(self) -> None:
         """Test attribute detection with Apache DS OID pattern."""
+        from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
+
         main = FlextLdifServersApache()
         quirk = main.schema_quirk
         attr_def = "( 1.3.6.1.4.1.18060.0.4.1.2.100 NAME 'ads-enabled' SYNTAX 1.3.6.1.4.1.1466.115.121.1.7 )"
         # Parse string definition into model object
 
-        parse_result = quirk.parse(attr_def)
-
-        assert parse_result.is_success, (
-            f"Failed to parse attribute: {parse_result.error}"
+        TestDeduplicationHelpers.quirk_parse_and_unwrap(
+            quirk,
+            attr_def,
+            parse_method="parse_attribute",
         )
-
-        parse_result.unwrap()
-
-        # Can handle is internal - test through parse which calls can_handle
-        # Parse already succeeded above, which confirms can_handle worked
-        assert parse_result.is_success  # Already verified
 
     def testcan_handle_attribute_with_ads_prefix(self) -> None:
         """Test attribute detection with ads- prefix."""
+        from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
+
         main = FlextLdifServersApache()
         quirk = main.schema_quirk
         attr_def = "( 2.16.840.1.113730.3.1.1 NAME 'ads-searchBaseDN' SYNTAX 1.3.6.1.4.1.1466.115.121.1.12 )"
-        # Parse string definition into model object
-
-        parse_result = quirk.parse(attr_def)
-
-        assert parse_result.is_success, (
-            f"Failed to parse attribute: {parse_result.error}"
+        TestDeduplicationHelpers.quirk_parse_and_unwrap(
+            quirk,
+            attr_def,
+            parse_method="parse_attribute",
         )
-
-        parse_result.unwrap()
-
-        # Can handle is internal - test through parse which calls can_handle
-        # Parse already succeeded above, which confirms can_handle worked
-        assert parse_result.is_success  # Already verified
 
     def testcan_handle_attribute_with_apacheds_name(self) -> None:
         """Test attribute detection with apacheds in name."""
+        from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
+
         main = FlextLdifServersApache()
         quirk = main.schema_quirk
         attr_def = (
             "( 1.2.3.4 NAME 'apachedsSystemId' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
         )
-        # Parse string definition into model object
-
-        parse_result = quirk.parse(attr_def)
-
-        assert parse_result.is_success, (
-            f"Failed to parse attribute: {parse_result.error}"
+        TestDeduplicationHelpers.quirk_parse_and_unwrap(
+            quirk,
+            attr_def,
+            parse_method="parse_attribute",
         )
-
-        parse_result.unwrap()
 
         # Can handle is internal - test through parse which calls can_handle
         # Parse already succeeded above, which confirms can_handle worked
-        assert parse_result.is_success  # Already verified
 
     def testcan_handle_attribute_negative(self) -> None:
         """Test attribute detection rejects non-ApacheDS attributes."""
+        from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
+
         main = FlextLdifServersApache()
         quirk = main.schema_quirk
         attr_def = "( 2.5.4.3 NAME 'cn' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
         # Parse string definition into model object
 
-        parse_result = quirk.parse(attr_def)
-
-        assert parse_result.is_success, (
-            f"Failed to parse attribute: {parse_result.error}"
+        TestDeduplicationHelpers.quirk_parse_and_unwrap(
+            quirk,
+            attr_def,
+            parse_method="parse_attribute",
         )
-
-        parse_result.unwrap()
-
-        # Test with the model object
-
-        # Can handle is internal - test through parse
-        # Non-Apache attributes should parse but Apache quirk won't be selected
-        assert parse_result.is_success  # Can still parse, but won't be selected
 
     def test_parse_attribute_success(self) -> None:
         """Test parsing Apache DS attribute definition."""
+        from flext_ldif.models import FlextLdifModels
+        from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
+
         main = FlextLdifServersApache()
         quirk = main.schema_quirk
         attr_def = "( 1.3.6.1.4.1.18060.0.4.1.2.100 NAME 'ads-enabled' DESC 'Enable flag' SYNTAX 1.3.6.1.4.1.1466.115.121.1.7 SINGLE-VALUE )"
-        result = quirk.parse(attr_def)
-
-        assert result.is_success
-        attr_data = result.unwrap()
+        attr_data = TestDeduplicationHelpers.quirk_parse_and_unwrap(
+            quirk,
+            attr_def,
+            parse_method="parse_attribute",
+            expected_type=FlextLdifModels.SchemaAttribute,
+        )
+        assert isinstance(attr_data, FlextLdifModels.SchemaAttribute)
         assert attr_data.oid == "1.3.6.1.4.1.18060.0.4.1.2.100"
         assert attr_data.name == "ads-enabled"
         assert attr_data.desc == "Enable flag"
@@ -118,100 +105,105 @@ class TestApacheDirectorySchemas:
 
     def test_parse_attribute_with_syntax_length(self) -> None:
         """Test parsing attribute with syntax length specification."""
+        from flext_ldif.models import FlextLdifModels
+        from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
+
         main = FlextLdifServersApache()
         quirk = main.schema_quirk
         attr_def = "( 1.3.6.1.4.1.18060.0.4.1.2.1 NAME 'ads-directoryServiceId' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} )"
-        result = quirk.parse(attr_def)
-
-        assert result.is_success
-        attr_data = result.unwrap()
+        attr_data = TestDeduplicationHelpers.quirk_parse_and_unwrap(
+            quirk,
+            attr_def,
+            parse_method="parse_attribute",
+            expected_type=FlextLdifModels.SchemaAttribute,
+        )
+        assert isinstance(attr_data, FlextLdifModels.SchemaAttribute)
         assert attr_data.syntax == "1.3.6.1.4.1.1466.115.121.1.15"
         assert attr_data.length == 256
 
     def test_parse_attribute_missing_oid(self) -> None:
         """Test parsing attribute without OID fails."""
+        from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
+
         main = FlextLdifServersApache()
         quirk = main.schema_quirk
         attr_def = "NAME 'ads-enabled' SYNTAX 1.3.6.1.4.1.1466.115.121.1.7"
-        result = quirk.parse(attr_def)
-
-        assert result.is_failure
-        assert result.error is not None
-        assert result.error is not None
-        assert "missing an OID" in result.error
+        TestDeduplicationHelpers.quirk_parse_and_unwrap(
+            quirk,
+            attr_def,
+            parse_method="parse_attribute",
+            should_succeed=False,
+        )
 
     def testcan_handle_objectclass_with_apache_oid(self) -> None:
         """Test objectClass detection with Apache DS OID."""
+        from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
+
         main = FlextLdifServersApache()
         quirk = main.schema_quirk
         oc_def = "( 1.3.6.1.4.1.18060.0.4.1.3.100 NAME 'ads-directoryService' SUP top STRUCTURAL )"
         # Parse string definition into model object
 
-        parse_result = quirk.parse(oc_def)
-
-        assert parse_result.is_success, (
-            f"Failed to parse objectClass: {parse_result.error}"
+        TestDeduplicationHelpers.quirk_parse_and_unwrap(
+            quirk,
+            oc_def,
+            parse_method="parse_objectclass",
         )
-
-        parse_result.unwrap()
-
-        # Test with the model object
 
         # Can handle is internal - test through parse which calls can_handle
         # Parse already succeeded above, which confirms can_handle worked
-        assert parse_result.is_success  # Already verified
 
     def testcan_handle_objectclass_with_ads_name(self) -> None:
         """Test objectClass detection with ads- name."""
+        from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
+
         main = FlextLdifServersApache()
         quirk = main.schema_quirk
         oc_def = "( 2.5.6.0 NAME 'ads-base' SUP top ABSTRACT )"
         # Parse string definition into model object
 
-        parse_result = quirk.parse(oc_def)
-
-        assert parse_result.is_success, (
-            f"Failed to parse objectClass: {parse_result.error}"
+        TestDeduplicationHelpers.quirk_parse_and_unwrap(
+            quirk,
+            oc_def,
+            parse_method="parse_objectclass",
         )
-
-        parse_result.unwrap()
-
-        # Test with the model object
 
         # Can handle is internal - test through parse which calls can_handle
         # Parse already succeeded above, which confirms can_handle worked
-        assert parse_result.is_success  # Already verified
 
     def testcan_handle_objectclass_negative(self) -> None:
         """Test objectClass detection rejects non-ApacheDS classes."""
+        from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
+
         main = FlextLdifServersApache()
         quirk = main.schema_quirk
         oc_def = "( 2.5.6.6 NAME 'posixAccount' SUP top STRUCTURAL )"
         # Parse string definition into model object
 
-        parse_result = quirk.parse(oc_def)
-
-        assert parse_result.is_success, (
-            f"Failed to parse objectClass: {parse_result.error}"
+        TestDeduplicationHelpers.quirk_parse_and_unwrap(
+            quirk,
+            oc_def,
+            parse_method="parse_objectclass",
         )
-
-        parse_result.unwrap()
-
-        # Test with the model object
 
         # Can handle is internal - test through parse
         # Non-Apache objectClasses should parse but Apache quirk won't be selected
-        assert parse_result.is_success  # Can still parse, but won't be selected
 
     def test_parse_objectclass_structural(self) -> None:
         """Test parsing STRUCTURAL objectClass."""
+        from flext_ldif.models import FlextLdifModels
+        from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
+
         main = FlextLdifServersApache()
         quirk = main.schema_quirk
         oc_def = "( 1.3.6.1.4.1.18060.0.4.1.3.100 NAME 'ads-directoryService' DESC 'Directory service' SUP top STRUCTURAL MUST ( cn $ ads-directoryServiceId ) MAY ( ads-enabled ) )"
-        result = quirk.parse(oc_def)
-
-        assert result.is_success
-        oc_data = result.unwrap()
+        oc_data = TestDeduplicationHelpers.quirk_parse_and_unwrap(
+            quirk,
+            oc_def,
+            parse_method="parse_objectclass",
+            expected_type=FlextLdifModels.SchemaObjectClass,
+        )
+        assert isinstance(oc_data, FlextLdifModels.SchemaObjectClass)
         assert oc_data.oid == "1.3.6.1.4.1.18060.0.4.1.3.100"
         assert oc_data.name == "ads-directoryService"
         assert oc_data.kind == "STRUCTURAL"
@@ -226,39 +218,56 @@ class TestApacheDirectorySchemas:
 
     def test_parse_objectclass_auxiliary(self) -> None:
         """Test parsing AUXILIARY objectClass."""
+        from flext_ldif.models import FlextLdifModels
+        from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
+
         main = FlextLdifServersApache()
         quirk = main.schema_quirk
         oc_def = "( 1.3.6.1.4.1.18060.0.4.1.3.200 NAME 'ads-partition' AUXILIARY MAY ( ads-partitionSuffix $ ads-contextEntry ) )"
-        result = quirk.parse(oc_def)
-
-        assert result.is_success
-        oc_data = result.unwrap()
+        oc_data = TestDeduplicationHelpers.quirk_parse_and_unwrap(
+            quirk,
+            oc_def,
+            parse_method="parse_objectclass",
+            expected_type=FlextLdifModels.SchemaObjectClass,
+        )
+        assert isinstance(oc_data, FlextLdifModels.SchemaObjectClass)
         assert oc_data.kind == "AUXILIARY"
 
     def test_parse_objectclass_abstract(self) -> None:
         """Test parsing ABSTRACT objectClass."""
+        from flext_ldif.models import FlextLdifModels
+        from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
+
         main = FlextLdifServersApache()
         quirk = main.schema_quirk
         oc_def = "( 1.3.6.1.4.1.18060.0.4.1.3.1 NAME 'ads-base' ABSTRACT )"
-        result = quirk.parse(oc_def)
-
-        assert result.is_success
-        oc_data = result.unwrap()
+        oc_data = TestDeduplicationHelpers.quirk_parse_and_unwrap(
+            quirk,
+            oc_def,
+            parse_method="parse_objectclass",
+            expected_type=FlextLdifModels.SchemaObjectClass,
+        )
+        assert isinstance(oc_data, FlextLdifModels.SchemaObjectClass)
         assert oc_data.kind == "ABSTRACT"
 
     def test_parse_objectclass_missing_oid(self) -> None:
         """Test parsing objectClass without OID fails."""
+        from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
+
         main = FlextLdifServersApache()
         quirk = main.schema_quirk
         oc_def = "NAME 'ads-directoryService' SUP top STRUCTURAL"
-        result = quirk.parse(oc_def)
-
-        assert result.is_failure
-        assert result.error is not None
-        assert "missing an OID" in result.error
+        TestDeduplicationHelpers.quirk_parse_and_unwrap(
+            quirk,
+            oc_def,
+            parse_method="parse_objectclass",
+            should_succeed=False,
+        )
 
     def test_write_attribute_to_rfc(self) -> None:
         """Test writing attribute to RFC string format."""
+        from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
+
         main = FlextLdifServersApache()
         quirk = main.schema_quirk
         # Create proper SchemaAttribute model instead of dict
@@ -269,16 +278,22 @@ class TestApacheDirectorySchemas:
             syntax="1.3.6.1.4.1.1466.115.121.1.7",
             single_value=True,
         )
-        result = quirk.write(attr_data)
 
-        assert result.is_success
-        attr_str = result.unwrap()
-        assert "1.3.6.1.4.1.18060.0.4.1.2.100" in attr_str
-        assert "ads-enabled" in attr_str
-        assert "SINGLE-VALUE" in attr_str
+        TestDeduplicationHelpers.quirk_write_and_unwrap(
+            quirk,
+            attr_data,
+            write_method="_write_attribute",
+            must_contain=[
+                "1.3.6.1.4.1.18060.0.4.1.2.100",
+                "ads-enabled",
+                "SINGLE-VALUE",
+            ],
+        )
 
     def test_write_objectclass_to_rfc(self) -> None:
         """Test writing objectClass to RFC string format."""
+        from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
+
         main = FlextLdifServersApache()
         quirk = main.schema_quirk
         # Create proper SchemaObjectClass model instead of dict
@@ -290,13 +305,17 @@ class TestApacheDirectorySchemas:
             must=["cn", "ads-directoryServiceId"],
             may=["ads-enabled"],
         )
-        result = quirk.write(oc_data)
 
-        assert result.is_success
-        oc_str = result.unwrap()
-        assert "1.3.6.1.4.1.18060.0.4.1.3.100" in oc_str
-        assert "ads-directoryService" in oc_str
-        assert "STRUCTURAL" in oc_str
+        TestDeduplicationHelpers.quirk_write_and_unwrap(
+            quirk,
+            oc_data,
+            write_method="_write_objectclass",
+            must_contain=[
+                "1.3.6.1.4.1.18060.0.4.1.3.100",
+                "ads-directoryService",
+                "STRUCTURAL",
+            ],
+        )
 
 
 class TestApacheDirectoryAcls:
@@ -311,89 +330,87 @@ class TestApacheDirectoryAcls:
 
     def test__can_handle_with_ads_aci(self) -> None:
         """Test ACL detection with ads-aci attribute."""
+        from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
+
         main = FlextLdifServersApache()
         acl = main.acl_quirk
         acl_line = "ads-aci: ( version 3.0 ) ( deny grantAdd ) ( grantRemove )"
         # Parse string ACL into model object
 
-        parse_result = acl.parse(acl_line)
-
-        assert parse_result.is_success, f"Failed to parse ACL: {parse_result.error}"
-
-        acl_model = parse_result.unwrap()
-
-        # Test with the model object
-
-        # Use parse which calls can_handle internally
-        result = acl.parse(
+        acl_model = TestDeduplicationHelpers.quirk_parse_and_unwrap(
+            acl,
+            acl_line,
+            parse_method="parse",
+        )
+        # Test roundtrip parsing
+        roundtrip_result = TestDeduplicationHelpers.quirk_parse_and_unwrap(
+            acl,
             acl_model.raw_acl
             if hasattr(acl_model, "raw_acl") and acl_model.raw_acl
             else str(acl_model),
+            parse_method="parse",
         )
-        assert result.is_success  # Apache ACL should be handled
+        assert roundtrip_result is not None
 
     def test__can_handle_with_aci(self) -> None:
         """Test ACL detection with aci attribute."""
+        from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
+
         main = FlextLdifServersApache()
         acl = main.acl_quirk
         acl_line = "aci: ( version 3.0 ) ( deny grantAdd ) ( grantRemove )"
-        # Parse string ACL into model object
-
-        parse_result = acl.parse(acl_line)
-
-        assert parse_result.is_success, f"Failed to parse ACL: {parse_result.error}"
-
-        acl_model = parse_result.unwrap()
-
-        # Test with the model object
-
-        # Use parse which calls can_handle internally
-        result = acl.parse(
+        acl_model = TestDeduplicationHelpers.quirk_parse_and_unwrap(
+            acl,
+            acl_line,
+            parse_method="parse",
+        )
+        # Test roundtrip parsing
+        roundtrip_result = TestDeduplicationHelpers.quirk_parse_and_unwrap(
+            acl,
             acl_model.raw_acl
             if hasattr(acl_model, "raw_acl") and acl_model.raw_acl
             else str(acl_model),
+            parse_method="parse",
         )
-        assert result.is_success  # Apache ACL should be handled
+        assert roundtrip_result is not None
 
     def test__can_handle_with_version_prefix(self) -> None:
         """Test ACL detection with version prefix."""
+        from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
+
         main = FlextLdifServersApache()
         acl = main.acl_quirk
         acl_line = "(version 3.0) (deny grantAdd) (grantRemove)"
-        # Parse string ACL into model object
-
-        parse_result = acl.parse(acl_line)
-
-        assert parse_result.is_success, f"Failed to parse ACL: {parse_result.error}"
-
-        acl_model = parse_result.unwrap()
-
-        # Test with the model object
-
-        # Use parse which calls can_handle internally
-        result = acl.parse(
+        acl_model = TestDeduplicationHelpers.quirk_parse_and_unwrap(
+            acl,
+            acl_line,
+            parse_method="parse",
+        )
+        # Test roundtrip parsing
+        roundtrip_result = TestDeduplicationHelpers.quirk_parse_and_unwrap(
+            acl,
             acl_model.raw_acl
             if hasattr(acl_model, "raw_acl") and acl_model.raw_acl
             else str(acl_model),
+            parse_method="parse",
         )
-        assert result.is_success  # Apache ACL should be handled
+        assert roundtrip_result is not None
 
     def test__can_handle_negative(self) -> None:
         """Test ACL detection rejects non-ApacheDS ACLs."""
+        from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
+
         main = FlextLdifServersApache()
         acl = main.acl_quirk
         acl_line = "access to * by * read"
         # Parse string ACL into model object
 
-        parse_result = acl.parse(acl_line)
-
-        assert parse_result.is_success, f"Failed to parse ACL: {parse_result.error}"
-
-        acl_model = parse_result.unwrap()
-
-        # Test with the model object
-
-        assert acl.can_handle(acl_model) is False
+        acl_model = TestDeduplicationHelpers.quirk_parse_and_unwrap(
+            acl,
+            acl_line,
+            parse_method="parse",
+        )
+        assert acl.can_handle_acl(acl_model) is False  # type: ignore[attr-defined]
 
     def test__can_handle_empty_line(self) -> None:
         """Test ACL detection rejects empty lines."""
@@ -401,36 +418,49 @@ class TestApacheDirectoryAcls:
         acl = main.acl_quirk
         acl_line = ""
         # Empty string should return False for can_handle
-        assert acl.can_handle(acl_line) is False
+        assert acl.can_handle_acl(acl_line) is False  # type: ignore[attr-defined]
 
     def test_parse_success(self) -> None:
         """Test parsing Apache DS ACI definition."""
+        from flext_ldif.models import FlextLdifModels
+        from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
+
         main = FlextLdifServersApache()
         acl = main.acl_quirk
         acl_line = "ads-aci: ( version 3.0 ) ( deny grantAdd ) ( grantRemove )"
-        result = acl.parse(acl_line)
-
-        assert result.is_success
-        acl_data = result.unwrap()
+        acl_data = TestDeduplicationHelpers.quirk_parse_and_unwrap(
+            acl,
+            acl_line,
+            parse_method="parse",
+            expected_type=FlextLdifModels.Acl,
+        )
+        assert isinstance(acl_data, FlextLdifModels.Acl)
         assert acl_data.get_acl_format() == FlextLdifConstants.AclFormats.ACI
-        assert acl_data.name == "apache-ads-aci"  # Server prefix is prepended
+        assert acl_data.name == "apache-ads-aci"
         assert acl_data.raw_acl == acl_line
         assert acl_data.server_type == FlextLdifConstants.LdapServers.APACHE_DIRECTORY
 
     def test_parse_with_aci_attribute(self) -> None:
         """Test parsing ACI with aci attribute."""
+        from flext_ldif.models import FlextLdifModels
+        from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
+
         main = FlextLdifServersApache()
         acl = main.acl_quirk
         acl_line = "aci: ( deny grantAdd )"
-        result = acl.parse(acl_line)
-
-        assert result.is_success
-        acl_data = result.unwrap()
-        # The name will have server prefix: "apache-aci"
+        acl_data = TestDeduplicationHelpers.quirk_parse_and_unwrap(
+            acl,
+            acl_line,
+            parse_method="parse",
+            expected_type=FlextLdifModels.Acl,
+        )
+        assert isinstance(acl_data, FlextLdifModels.Acl)
         assert acl_data.name == "apache-aci"
 
     def test_write_acl_to_rfc_with_content(self) -> None:
         """Test writing ACL with content to RFC string format."""
+        from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
+
         main = FlextLdifServersApache()
         acl = main.acl_quirk
 
@@ -443,15 +473,18 @@ class TestApacheDirectoryAcls:
             server_type="apache_directory",
             raw_acl="( version 3.0 ) ( deny grantAdd )",
         )
-        result = acl.write(acl_model)
 
-        assert result.is_success
-        acl_str = result.unwrap()
-        # The write method uses the name and raw_acl fields
-        assert "aci:" in acl_str or "ads-aci" in acl_str
+        TestDeduplicationHelpers.quirk_write_and_unwrap(
+            acl,
+            acl_model,
+            write_method="_write_acl",
+            must_contain=["aci:"],
+        )
 
     def test_write_acl_to_rfc_with_clauses_only(self) -> None:
         """Test writing ACL with clauses only to RFC string format."""
+        from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
+
         main = FlextLdifServersApache()
         acl = main.acl_quirk
 
@@ -464,15 +497,17 @@ class TestApacheDirectoryAcls:
             server_type="apache_directory",
             raw_acl="( version 3.0 ) ( deny grantAdd )",
         )
-        result = acl.write(acl_model)
-
-        assert result.is_success
-        acl_str = result.unwrap()
-        # The write method uses the ACL model fields
-        assert "aci:" in acl_str
+        TestDeduplicationHelpers.quirk_write_and_unwrap(
+            acl,
+            acl_model,
+            write_method="write",
+            must_contain=["aci:"],
+        )
 
     def test_write_acl_to_rfc_empty(self) -> None:
         """Test writing empty ACL to RFC string format."""
+        from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
+
         main = FlextLdifServersApache()
         acl = main.acl_quirk
 
@@ -485,12 +520,12 @@ class TestApacheDirectoryAcls:
             server_type="apache_directory",
             raw_acl="",
         )
-        result = acl.write(acl_model)
-
-        assert result.is_success
-        acl_str = result.unwrap()
-        # The write method uses the ACL name field
-        assert "ads-aci" in acl_str or "aci:" in acl_str
+        TestDeduplicationHelpers.quirk_write_and_unwrap(
+            acl,
+            acl_model,
+            write_method="write",
+            must_contain=["ads-aci", "aci:"],
+        )
 
 
 class TestApacheDirectoryEntrys:
@@ -520,7 +555,7 @@ class TestApacheDirectoryEntrys:
                     ldif += f"{attr}: {val}\n"
             else:
                 ldif += f"{attr}: {values}\n"
-        result = entry.parse(ldif)
+        result = entry.parse(ldif)  # type: ignore[attr-defined]
         # Apache entries should be handled
         assert result.is_success or result.is_failure  # Either is acceptable
 
@@ -541,7 +576,7 @@ class TestApacheDirectoryEntrys:
                     ldif += f"{attr}: {val}\n"
             else:
                 ldif += f"{attr}: {values}\n"
-        result = entry.parse(ldif)
+        result = entry.parse(ldif)  # type: ignore[attr-defined]
         # Apache entries should be handled
         assert result.is_success or result.is_failure  # Either is acceptable
 
@@ -562,7 +597,7 @@ class TestApacheDirectoryEntrys:
                     ldif += f"{attr}: {val}\n"
             else:
                 ldif += f"{attr}: {values}\n"
-        result = entry.parse(ldif)
+        result = entry.parse(ldif)  # type: ignore[attr-defined]
         # Apache entries should be handled
         assert result.is_success or result.is_failure  # Either is acceptable
 
@@ -583,7 +618,7 @@ class TestApacheDirectoryEntrys:
                     ldif += f"{attr}: {val}\n"
             else:
                 ldif += f"{attr}: {values}\n"
-        result = entry.parse(ldif)
+        result = entry.parse(ldif)  # type: ignore[attr-defined]
         # Apache entries should be handled
         assert result.is_success or result.is_failure  # Either is acceptable
 
@@ -605,7 +640,7 @@ class TestApacheDirectoryEntrys:
                     ldif += f"{attr}: {val}\n"
             else:
                 ldif += f"{attr}: {values}\n"
-        result = entry.parse(ldif)
+        result = entry.parse(ldif)  # type: ignore[attr-defined]
         # Apache entries should be handled
         assert result.is_success or result.is_failure  # Either is acceptable
 
@@ -627,7 +662,7 @@ class TestApacheDirectoryEntrys:
                     ldif += f"{attr}: {val}\n"
             else:
                 ldif += f"{attr}: {values}\n"
-        result = entry.parse(ldif)
+        result = entry.parse(ldif)  # type: ignore[attr-defined]
         # Apache entries should be handled
         assert result.is_success or result.is_failure  # Either is acceptable
 
@@ -648,7 +683,7 @@ class TestApacheDirectoryEntrys:
                     ldif += f"{attr}: {val}\n"
             else:
                 ldif += f"{attr}: {values}\n"
-        result = entry.parse(ldif)
+        result = entry.parse(ldif)  # type: ignore[attr-defined]
         # Apache entries should be handled
         assert result.is_success or result.is_failure  # Either is acceptable
 
@@ -670,6 +705,6 @@ class TestApacheDirectoryEntrys:
                     ldif += f"{attr}: {val}\n"
             else:
                 ldif += f"{attr}: {values}\n"
-        result = entry.parse(ldif)
+        result = entry.parse(ldif)  # type: ignore[attr-defined]
         # Non-Apache entries may parse but Apache quirk won't be selected
         assert hasattr(result, "is_success")

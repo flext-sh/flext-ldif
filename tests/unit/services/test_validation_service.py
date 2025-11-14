@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import pytest
 
+from flext_ldif.models import FlextLdifModels
 from flext_ldif.services.validation import FlextLdifValidation
 
 
@@ -395,13 +396,17 @@ class TestValidationServiceExecute:
         validation_service: FlextLdifValidation,
     ) -> None:
         """Test execute returns successful status."""
-        result = validation_service.execute()
-        assert result.is_success
-        status = result.unwrap()
-        assert status["service"] == "ValidationService"
-        assert status["status"] == "operational"
-        assert "RFC 2849" in status["rfc_compliance"]
-        assert len(status["validation_types"]) > 0
+        from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
+
+        TestDeduplicationHelpers.service_execute_and_assert_fields(
+            validation_service,
+            expected_fields={
+                "service": "ValidationService",
+                "status": "operational",
+            },
+            expected_type=FlextLdifModels.ValidationServiceStatus,
+            must_contain_in_fields={"rfc_compliance": "RFC 2849"},
+        )
 
 
 __all__ = [

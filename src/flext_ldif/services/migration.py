@@ -120,6 +120,8 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifModels.EntryResult]):
         )
         self._parser = FlextLdifParser()
         self._writer = FlextLdifWriter()
+        # Create DN registry for case normalization during migration
+        self._dn_registry = FlextLdifModels.DnRegistry()
 
     def _create_output_directory(self) -> FlextResult[None]:
         """Create output directory with proper error handling."""
@@ -168,6 +170,10 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifModels.EntryResult]):
                 if isinstance(parse_response, list)
                 else parse_response.entries
             )
+            # Register all DNs in registry for case normalization
+            for entry in entries:
+                if entry.dn and entry.dn.value:
+                    _ = self._dn_registry.register_dn(entry.dn.value)
             all_entries.extend(cast("list[FlextLdifModels.Entry]", entries))
             logger.info(f"Parsed {len(entries)} from {filename}")
 
@@ -373,6 +379,28 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifModels.EntryResult]):
                 category_write_opts = self._write_opts.model_copy(
                     update={"entry_category": category}
                 )
+
+                # For ACL category: add base_dn and dn_registry to entry metadata
+                if category == FlextLdifConstants.Categories.ACL:
+                    base_dn = self._categorization._base_dn  # noqa: SLF001
+                    # Add base_dn and dn_registry to entry metadata for ACL DN normalization
+                    entries_with_metadata = []
+                    for entry in entries:
+                        # Create or update entry metadata
+                        if not entry.entry_metadata:
+                            from flext_ldif.models import FlextLdifModels
+
+                            entry.entry_metadata = FlextLdifModels.EntryMetadata()
+                        if not hasattr(entry.entry_metadata, "extensions"):
+                            entry.entry_metadata.extensions = {}  # type: ignore[assignment]
+                        if base_dn:
+                            entry.entry_metadata.extensions["base_dn"] = base_dn  # type: ignore[index]
+                        # Add dn_registry for case normalization
+                        entry.entry_metadata.extensions["dn_registry"] = (
+                            self._dn_registry
+                        )  # type: ignore[index]
+                        entries_with_metadata.append(entry)
+                    entries = entries_with_metadata
 
                 write_result = self._writer.write(
                     entries=entries,

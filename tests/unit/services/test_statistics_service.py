@@ -505,16 +505,16 @@ class TestGenerateStatisticsErrorHandling:
         output_dir = Path("/tmp")
         output_files: dict[str, object] = {}
 
-        result = service.generate_statistics(
-            categorized=categorized,
-            written_counts=written_counts,
-            output_dir=output_dir,
-            output_files=output_files,
-        )
+        from tests.helpers.test_rfc_helpers import RfcTestHelpers
 
-        # Should succeed with empty statistics
-        assert result.is_success
-        stats = result.unwrap()
+        stats = RfcTestHelpers.test_result_success_and_unwrap(
+            service.generate_statistics(
+                categorized=categorized,
+                written_counts=written_counts,
+                output_dir=output_dir,
+                output_files=output_files,
+            ),
+        )
         assert stats.total_entries == 0
         assert stats.rejection_rate == 0.0
 

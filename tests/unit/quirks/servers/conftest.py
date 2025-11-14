@@ -9,8 +9,14 @@ from __future__ import annotations
 import pytest
 
 from flext_ldif.api import FlextLdif
+from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
+from flext_ldif.servers.oid import FlextLdifServersOid
+from flext_ldif.servers.oud import FlextLdifServersOud
 from flext_ldif.servers.rfc import FlextLdifServersRfc
+from flext_ldif.services.conversion import FlextLdifConversion
+from flext_ldif.services.parser import FlextLdifParser
+from flext_ldif.services.writer import FlextLdifWriter
 from tests.unit.quirks.servers.fixtures.general_constants import TestGeneralConstants
 from tests.unit.quirks.servers.fixtures.rfc_constants import TestsRfcConstants
 
@@ -84,8 +90,6 @@ def sample_schema_objectclass() -> FlextLdifModels.SchemaObjectClass:
 @pytest.fixture
 def sample_entry() -> FlextLdifModels.Entry:
     """Provides a sample Entry for tests."""
-    from flext_ldif.constants import FlextLdifConstants
-
     return FlextLdifModels.Entry.create(
         dn=TestGeneralConstants.SAMPLE_DN,
         attributes={
@@ -181,8 +185,6 @@ invalidAttribute: value without proper formatting
 @pytest.fixture
 def sample_entry_with_metadata() -> FlextLdifModels.Entry:
     """Provides a sample Entry with metadata for tests."""
-    from flext_ldif.constants import FlextLdifConstants
-
     return FlextLdifModels.Entry.create(
         dn=TestGeneralConstants.SAMPLE_DN,
         attributes={
@@ -201,24 +203,18 @@ def sample_entry_with_metadata() -> FlextLdifModels.Entry:
 @pytest.fixture
 def conversion_matrix() -> object:
     """Provides FlextLdifConversion instance for conversion tests."""
-    from flext_ldif.services.conversion import FlextLdifConversion
-
     return FlextLdifConversion()
 
 
 @pytest.fixture
 def oid_quirk() -> object:
     """Provides OID quirk instance for conversion tests."""
-    from flext_ldif.servers.oid import FlextLdifServersOid
-
     return FlextLdifServersOid()
 
 
 @pytest.fixture
 def oud_quirk() -> object:
     """Provides OUD quirk instance for conversion tests."""
-    from flext_ldif.servers.oud import FlextLdifServersOud
-
     return FlextLdifServersOud()
 
 
@@ -237,16 +233,12 @@ def oud_schema_quirk(oud_quirk: object) -> object:
 @pytest.fixture
 def real_writer_service() -> object:
     """Provides real writer service for conversion tests."""
-    from flext_ldif.services.writer import FlextLdifWriter
-
     return FlextLdifWriter()
 
 
 @pytest.fixture
 def real_parser_service() -> object:
     """Provides real parser service for conversion tests."""
-    from flext_ldif.services.parser import FlextLdifParser
-
     return FlextLdifParser()
 
 

@@ -9,13 +9,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
+from flext_ldif.models import FlextLdifModels
+from flext_ldif.servers.base import FlextLdifServersBase
 from tests.helpers.test_assertions import TestAssertions
-
-if TYPE_CHECKING:
-    from flext_ldif.models import FlextLdifModels
-    from flext_ldif.servers.base import FlextLdifServersBase
 
 
 class EntryTestHelpers:
@@ -25,6 +21,7 @@ class EntryTestHelpers:
     def test_write_entry_complete(
         entry_quirk: FlextLdifServersBase.Entry,
         entry: FlextLdifModels.Entry,
+        *,
         expected_dn_in_output: bool = True,
         expected_attributes: list[str] | None = None,
         must_contain: list[str] | None = None,
@@ -90,17 +87,14 @@ class EntryTestHelpers:
         if expected_format:
             format_lower = expected_format.lower()
             if format_lower == "add":
-                assert "changetype: add" in ldif.lower() or "changetype:" not in ldif.lower(), (
-                    "Expected add format (no changetype or changetype: add)"
-                )
+                assert (
+                    "changetype: add" in ldif.lower()
+                    or "changetype:" not in ldif.lower()
+                ), "Expected add format (no changetype or changetype: add)"
             elif format_lower == "modify":
-                assert "changetype: modify" in ldif.lower(), (
-                    "Expected modify format"
-                )
+                assert "changetype: modify" in ldif.lower(), "Expected modify format"
             elif format_lower == "delete":
-                assert "changetype: delete" in ldif.lower(), (
-                    "Expected delete format"
-                )
+                assert "changetype: delete" in ldif.lower(), "Expected delete format"
 
         return ldif
 
@@ -108,6 +102,7 @@ class EntryTestHelpers:
     def test_write_entry_modify_add_format_complete(
         entry_quirk: FlextLdifServersBase.Entry,
         entry: FlextLdifModels.Entry,
+        *,
         expected_attributes_in_output: list[str] | None = None,
         must_contain: list[str] | None = None,
         should_have_final_separator: bool = True,
@@ -142,7 +137,9 @@ class EntryTestHelpers:
 
         """
         result = entry_quirk._write_entry_modify_add_format(entry)
-        ldif = TestAssertions.assert_success(result, "Modify-add format write should succeed")
+        ldif = TestAssertions.assert_success(
+            result, "Modify-add format write should succeed"
+        )
         assert isinstance(ldif, str), "Write should return string"
 
         if expected_attributes_in_output:
@@ -200,7 +197,9 @@ class EntryTestHelpers:
 
         """
         result = entry_quirk._write_entry_modify_format(entry)
-        ldif = TestAssertions.assert_success(result, "Modify format write should succeed")
+        ldif = TestAssertions.assert_success(
+            result, "Modify format write should succeed"
+        )
         assert isinstance(ldif, str), "Write should return string"
 
         assert "changetype: modify" in ldif.lower(), (
@@ -231,13 +230,14 @@ class EntryTestHelpers:
     def test_parse_entry_complete(
         entry_quirk: FlextLdifServersBase.Entry,
         ldif_content: str,
+        *,
         expected_entry_count: int = 1,
         expected_dn: str | None = None,
         expected_attributes: list[str] | None = None,
         should_succeed: bool = True,
         expected_error: str | None = None,
     ) -> list[FlextLdifModels.Entry] | None:
-        """Complete entry parse test - replaces entire test function.
+        r"""Complete entry parse test - replaces entire test function.
 
         This method replaces 10-20 lines of duplicated test code:
         - Calls parse(ldif_content)
@@ -285,14 +285,14 @@ class EntryTestHelpers:
                     )
 
             return entries
-        else:
-            TestAssertions.assert_failure(result, expected_error)
-            return None
+        TestAssertions.assert_failure(result, expected_error)
+        return None
 
     @staticmethod
     def test_hook_pre_write_entry_complete(
         entry_quirk: FlextLdifServersBase.Entry,
         entry: FlextLdifModels.Entry,
+        *,
         should_succeed: bool = True,
         expected_error: str | None = None,
         validate_modified_entry: bool = False,
@@ -335,9 +335,8 @@ class EntryTestHelpers:
             if validate_modified_entry:
                 TestAssertions.assert_entry_valid(result_entry)
             return result_entry
-        else:
-            TestAssertions.assert_failure(result, expected_error)
-            return None
+        TestAssertions.assert_failure(result, expected_error)
+        return None
 
     @staticmethod
     def test_write_entry_with_format_options_complete(
@@ -386,6 +385,7 @@ class EntryTestHelpers:
         if write_options:
             if not entry.metadata:
                 from flext_ldif.models import FlextLdifModels
+
                 entry.metadata = FlextLdifModels.QuirkMetadata(
                     quirk_type="test",
                     extensions={},

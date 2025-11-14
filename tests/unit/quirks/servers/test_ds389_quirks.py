@@ -65,26 +65,30 @@ class TestDs389Schemas:
         """Test parsing 389 DS attribute definition."""
         quirk = FlextLdifServersDs389()
         attr_def = "( 2.16.840.1.113730.3.1.1 NAME 'nsslapd-suffix' DESC 'Directory suffix' SYNTAX 1.3.6.1.4.1.1466.115.121.1.12 SINGLE-VALUE )"
-        result = quirk.schema_quirk.parse(attr_def)
+        from tests.helpers.test_rfc_helpers import RfcTestHelpers
 
-        assert result.is_success
-        attr_data = result.unwrap()
-        assert attr_data.oid == "2.16.840.1.113730.3.1.1"
-        assert attr_data.name == "nsslapd-suffix"
-        assert attr_data.desc == "Directory suffix"
-        assert attr_data.syntax == "1.3.6.1.4.1.1466.115.121.1.12"
-        assert attr_data.single_value is True
+        RfcTestHelpers.test_quirk_schema_parse_and_assert_properties(
+            quirk.schema_quirk,
+            attr_def,
+            expected_oid="2.16.840.1.113730.3.1.1",
+            expected_name="nsslapd-suffix",
+            expected_desc="Directory suffix",
+            expected_syntax="1.3.6.1.4.1.1466.115.121.1.12",
+            expected_single_value=True,
+        )
 
     def test_parse_attribute_with_syntax_length(self) -> None:
         """Test parsing attribute with syntax length specification."""
         quirk = FlextLdifServersDs389()
         attr_def = "( 2.16.840.1.113730.3.1.2 NAME 'nsslapd-database' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} )"
-        result = quirk.schema_quirk.parse(attr_def)
+        from tests.helpers.test_rfc_helpers import RfcTestHelpers
 
-        assert result.is_success
-        attr_data = result.unwrap()
-        assert attr_data.syntax == "1.3.6.1.4.1.1466.115.121.1.15"
-        assert attr_data.length == 256
+        RfcTestHelpers.test_quirk_schema_parse_and_assert_properties(
+            quirk.schema_quirk,
+            attr_def,
+            expected_syntax="1.3.6.1.4.1.1466.115.121.1.15",
+            expected_length=256,
+        )
 
     def test_parse_attribute_missing_oid(self) -> None:
         """Test parsing attribute without OID fails."""
@@ -124,30 +128,30 @@ class TestDs389Schemas:
         """Test parsing STRUCTURAL objectClass."""
         quirk = FlextLdifServersDs389()
         oc_def = "( 2.16.840.1.113730.3.2.1 NAME 'nscontainer' DESC 'Container class' SUP top STRUCTURAL MUST ( cn ) MAY ( nsslapd-port ) )"
-        result = quirk.schema_quirk.parse(oc_def)
+        from tests.helpers.test_rfc_helpers import RfcTestHelpers
 
-        assert result.is_success
-        oc_data = result.unwrap()
-        assert oc_data.oid == "2.16.840.1.113730.3.2.1"
-        assert oc_data.name == "nscontainer"
-        assert oc_data.kind == "STRUCTURAL"
-        assert oc_data.sup == "top"
-        must_attrs = oc_data.must
-        assert isinstance(must_attrs, list)
-        assert "cn" in must_attrs
-        may_attrs = oc_data.may
-        assert isinstance(may_attrs, list)
-        assert "nsslapd-port" in may_attrs
+        RfcTestHelpers.test_quirk_schema_parse_and_assert_properties(
+            quirk.schema_quirk,
+            oc_def,
+            expected_oid="2.16.840.1.113730.3.2.1",
+            expected_name="nscontainer",
+            expected_kind="STRUCTURAL",
+            expected_sup="top",
+            expected_must=["cn"],
+            expected_may=["nsslapd-port"],
+        )
 
     def test_parse_objectclass_auxiliary(self) -> None:
         """Test parsing AUXILIARY objectClass."""
         quirk = FlextLdifServersDs389()
         oc_def = "( 2.16.840.1.113730.3.2.2 NAME 'nsds5replica' AUXILIARY MAY ( nsds5ReplicaId $ nsds5ReplicaRoot ) )"
-        result = quirk.schema_quirk.parse(oc_def)
+        from tests.helpers.test_rfc_helpers import RfcTestHelpers
 
-        assert result.is_success
-        oc_data = result.unwrap()
-        assert oc_data.kind == "AUXILIARY"
+        RfcTestHelpers.test_quirk_schema_parse_and_assert_properties(
+            quirk.schema_quirk,
+            oc_def,
+            expected_kind="AUXILIARY",
+        )
 
     def test_parse_objectclass_abstract(self) -> None:
         """Test parsing ABSTRACT objectClass."""

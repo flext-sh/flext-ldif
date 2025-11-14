@@ -13,6 +13,7 @@ from __future__ import annotations
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.servers.tivoli import FlextLdifServersTivoli
+from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
 
 
 class TestTivoliSchemas:
@@ -66,15 +67,18 @@ class TestTivoliSchemas:
             "EQUALITY caseIgnoreMatch "
             "SINGLE-VALUE )"
         )
-        result = quirk.parse(attr_def)
-        assert result.is_success
-        data = result.unwrap()
-        assert data.oid == "1.3.18.0.2.4.1"
-        assert data.name == "ibm-entryUUID"
-        assert data.desc == "Entry UUID"
-        assert data.syntax == "1.3.6.1.4.1.1466.115.121.1.15"
-        assert data.equality == "caseIgnoreMatch"
-        assert data.single_value is True
+        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+
+        data = RfcTestHelpers.test_quirk_schema_parse_and_assert_properties(
+            quirk,
+            attr_def,
+            expected_oid="1.3.18.0.2.4.1",
+            expected_name="ibm-entryUUID",
+            expected_desc="Entry UUID",
+            expected_syntax="1.3.6.1.4.1.1466.115.121.1.15",
+            expected_equality="caseIgnoreMatch",
+            expected_single_value=True,
+        )
         assert data.metadata is not None
         assert data.metadata.quirk_type == "ibm_tivoli"
 
@@ -97,10 +101,13 @@ class TestTivoliSchemas:
             "SYNTAX 1.3.6.1.4.1.1466.115.121.1.24 "
             "ORDERING generalizedTimeOrderingMatch )"
         )
-        result = quirk.parse(attr_def)
-        assert result.is_success
-        data = result.unwrap()
-        assert data.ordering == "generalizedTimeOrderingMatch"
+        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+
+        RfcTestHelpers.test_quirk_schema_parse_and_assert_properties(
+            quirk,
+            attr_def,
+            expected_ordering="generalizedTimeOrderingMatch",
+        )
 
     def test_parse_attribute_with_substr(self) -> None:
         """Test attribute parsing with SUBSTR matching rule."""
@@ -111,30 +118,39 @@ class TestTivoliSchemas:
             "SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 "
             "SUBSTR caseIgnoreSubstringsMatch )"
         )
-        result = quirk.parse(attr_def)
-        assert result.is_success
-        data = result.unwrap()
-        assert data.substr == "caseIgnoreSubstringsMatch"
+        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+
+        RfcTestHelpers.test_quirk_schema_parse_and_assert_properties(
+            quirk,
+            attr_def,
+            expected_substr="caseIgnoreSubstringsMatch",
+        )
 
     def test_parse_attribute_with_syntax_length(self) -> None:
         """Test attribute parsing with syntax length constraint."""
         server = FlextLdifServersTivoli()
         quirk = server.schema_quirk
         attr_def = "( 1.3.18.0.2.4.4 NAME 'ibm-code' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{128} )"
-        result = quirk.parse(attr_def)
-        assert result.is_success
-        data = result.unwrap()
-        assert data.length == 128
+        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+
+        RfcTestHelpers.test_quirk_schema_parse_and_assert_properties(
+            quirk,
+            attr_def,
+            expected_length=128,
+        )
 
     def test_parse_attribute_with_sup(self) -> None:
         """Test attribute parsing with SUP (superior) attribute."""
         server = FlextLdifServersTivoli()
         quirk = server.schema_quirk
         attr_def = "( 1.3.18.0.2.4.5 NAME 'ibm-specialAttr' SUP name )"
-        result = quirk.parse(attr_def)
-        assert result.is_success
-        data = result.unwrap()
-        assert data.sup == "name"
+        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+
+        RfcTestHelpers.test_quirk_schema_parse_and_assert_properties(
+            quirk,
+            attr_def,
+            expected_sup="name",
+        )
 
     def testcan_handle_objectclass_tivoli_oid(self) -> None:
         """Test Tivoli objectClass detection by OID pattern."""
@@ -168,17 +184,19 @@ class TestTivoliSchemas:
             "MUST ( cn $ ibm-serverVersion ) "
             "MAY ( ibm-serverPort $ description ) )"
         )
-        result = quirk.parse(oc_def)
-        assert result.is_success
-        data = result.unwrap()
-        assert data.oid == "1.3.18.0.2.6.1"
-        assert data.name == "ibm-ldapserver"
-        assert data.desc == "LDAP server configuration"
-        assert data.sup == "top"
-        assert data.kind == "STRUCTURAL"
-        assert data.must is not None and "cn" in data.must
-        assert data.must is not None and "ibm-serverVersion" in data.must
-        assert data.may is not None and "ibm-serverPort" in data.may
+        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+
+        data = RfcTestHelpers.test_quirk_schema_parse_and_assert_properties(
+            quirk,
+            oc_def,
+            expected_oid="1.3.18.0.2.6.1",
+            expected_name="ibm-ldapserver",
+            expected_desc="LDAP server configuration",
+            expected_sup="top",
+            expected_kind="STRUCTURAL",
+            expected_must=["cn", "ibm-serverVersion"],
+            expected_may=["ibm-serverPort"],
+        )
         assert data.metadata is not None
         assert data.metadata.quirk_type == "ibm_tivoli"
 
@@ -197,20 +215,26 @@ class TestTivoliSchemas:
         server = FlextLdifServersTivoli()
         quirk = server.schema_quirk
         oc_def = "( 1.3.18.0.2.6.2 NAME 'ibm-filterentry' AUXILIARY )"
-        result = quirk.parse(oc_def)
-        assert result.is_success
-        data = result.unwrap()
-        assert data.kind == "AUXILIARY"
+        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+
+        RfcTestHelpers.test_quirk_schema_parse_and_assert_properties(
+            quirk,
+            oc_def,
+            expected_kind="AUXILIARY",
+        )
 
     def test_parse_objectclass_abstract(self) -> None:
         """Test parsing ABSTRACT objectClass."""
         server = FlextLdifServersTivoli()
         quirk = server.schema_quirk
         oc_def = "( 1.3.18.0.2.6.3 NAME 'ibm-baseClass' ABSTRACT )"
-        result = quirk.parse(oc_def)
-        assert result.is_success
-        data = result.unwrap()
-        assert data.kind == "ABSTRACT"
+        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+
+        RfcTestHelpers.test_quirk_schema_parse_and_assert_properties(
+            quirk,
+            oc_def,
+            expected_kind="ABSTRACT",
+        )
 
     def test_write_attribute_to_rfc(self) -> None:
         """Test writing attribute to RFC string format."""
@@ -224,12 +248,13 @@ class TestTivoliSchemas:
             equality="caseIgnoreMatch",
             single_value=True,
         )
-        result = quirk.write(attr_data)
-        assert result.is_success
-        attr_str = result.unwrap()
-        assert "1.3.18.0.2.4.1" in attr_str
-        assert "ibm-entryUUID" in attr_str
-        assert "SINGLE-VALUE" in attr_str
+
+        TestDeduplicationHelpers.quirk_write_and_unwrap(
+            quirk,
+            attr_data,
+            write_method="_write_attribute",
+            must_contain=["1.3.18.0.2.4.1", "ibm-entryUUID", "SINGLE-VALUE"],
+        )
 
     def test_write_objectclass_to_rfc(self) -> None:
         """Test writing objectClass to RFC string format."""
@@ -244,14 +269,19 @@ class TestTivoliSchemas:
             must=["cn", "objectclass"],
             may=["description", "seeAlso"],
         )
-        result = quirk.write(oc_data)
-        assert result.is_success
-        oc_str = result.unwrap()
-        assert "1.3.18.0.2.6.1" in oc_str
-        assert "ibm-ldapserver" in oc_str
-        assert "STRUCTURAL" in oc_str
-        assert "MUST" in oc_str
-        assert "MAY" in oc_str
+
+        TestDeduplicationHelpers.quirk_write_and_unwrap(
+            quirk,
+            oc_data,
+            write_method="_write_objectclass",
+            must_contain=[
+                "1.3.18.0.2.6.1",
+                "ibm-ldapserver",
+                "STRUCTURAL",
+                "MUST",
+                "MAY",
+            ],
+        )
 
 
 class TestTivoliAcls:

@@ -11,28 +11,20 @@ class TestEntryResultHelpers:
 
     def test_from_entries_creates_entry_result(self) -> None:
         """Test EntryResult.from_entries() factory method."""
-        # Create sample entries using factory method
-        entry1_result = FlextLdifModels.Entry.create(
-            dn="cn=user1,dc=example,dc=com",
-            attributes={"cn": ["user1"], "objectClass": ["person"]},
+        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+
+        entry1 = RfcTestHelpers.test_entry_create_and_unwrap(
+            "cn=user1,dc=example,dc=com",
+            {"cn": ["user1"], "objectClass": ["person"]},
         )
-        assert entry1_result.is_success
-        entry1 = entry1_result.unwrap()
-
-        entry2_result = FlextLdifModels.Entry.create(
-            dn="cn=user2,dc=example,dc=com",
-            attributes={"cn": ["user2"], "objectClass": ["person"]},
+        entry2 = RfcTestHelpers.test_entry_create_and_unwrap(
+            "cn=user2,dc=example,dc=com",
+            {"cn": ["user2"], "objectClass": ["person"]},
         )
-        assert entry2_result.is_success
-        entry2 = entry2_result.unwrap()
-
-        entries = [entry1, entry2]
-
-        # Create EntryResult using factory
-        result = FlextLdifModels.EntryResult.from_entries(entries, category="users")
-
-        # Verify structure
-        assert result.entries_by_category == {"users": entries}
+        result = FlextLdifModels.EntryResult.from_entries(
+            [entry1, entry2], category="users"
+        )
+        assert result.entries_by_category == {"users": [entry1, entry2]}
         assert result.statistics.total_entries == 2
         assert len(result.get_all_entries()) == 2
 

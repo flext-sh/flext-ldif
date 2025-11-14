@@ -10,6 +10,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
+from flext_core import FlextConfig, FlextConstants
 from pydantic import ValidationError
 
 from flext_ldif.config import FlextLdifConfig
@@ -76,8 +77,6 @@ class TestFlextLdifConfig:
 
     def test_validation_max_workers(self) -> None:
         """Test max workers validation."""
-        from flext_core import FlextConstants
-
         # Valid values
         config = FlextLdifConfig(max_workers=1, enable_performance_optimizations=False)
         assert config.max_workers == 1
@@ -820,8 +819,6 @@ class TestConfigInheritance:
 
     def test_inherits_from_flext_config(self) -> None:
         """Test FlextLdifConfig inherits from FlextConfig."""
-        from flext_core import FlextConfig
-
         config = FlextLdifConfig()
 
         # Verify inheritance
@@ -841,8 +838,6 @@ class TestOrderOfPrecedence:
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Test complete order: direct > env var > .env file > defaults."""
-        from pathlib import Path
-
         # 1. Default from FlextLdifConstants
         default_encoding = FlextLdifConstants.DEFAULT_ENCODING
 

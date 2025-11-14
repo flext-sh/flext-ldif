@@ -39,8 +39,10 @@ def create_entry(
     attributes: dict[str, list[str]],
 ) -> FlextLdifModels.Entry:
     """Create test entry with DN and attributes."""
+    from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
+
     dn = FlextLdifModels.DistinguishedName(value=dn_str)
-    attrs = FlextLdifModels.LdifAttributes.create(attributes).unwrap()
+    attrs = TestDeduplicationHelpers.create_attributes_from_dict(attributes)
     return FlextLdifModels.Entry(dn=dn, attributes=attrs)
 
 
@@ -221,56 +223,54 @@ class TestPublicClassmethods:
 class TestExecutePattern:
     """Test execute() method for FlextService V1 pattern."""
 
-    def test_execute_remove_operational_attributes(
+    def test_execute_operations_batch(
         self,
         entries_batch: list[FlextLdifModels.Entry],
-    ) -> None:
-        """Test execute() with remove_operational_attributes operation."""
-        result = FlextLdifEntry(
-            entries=entries_batch,
-            operation="remove_operational_attributes",
-        ).execute()
-
-        assert result.is_success
-        cleaned_entries = result.unwrap()
-        assert len(cleaned_entries) == 3
-
-    def test_execute_remove_attributes(
-        self,
         simple_entry: FlextLdifModels.Entry,
     ) -> None:
-        """Test execute() with remove_attributes operation."""
-        result = FlextLdifEntry(
+        """Test execute() with various operations in batch."""
+        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+
+        service1 = FlextLdifEntry(
+            entries=entries_batch,
+            operation="remove_operational_attributes",
+        )
+        RfcTestHelpers.test_service_execute_and_assert(
+            service1,
+            expected_type=list,
+            expected_count=3,
+        )
+
+        service2 = FlextLdifEntry(
             entries=[simple_entry],
             operation="remove_attributes",
             attributes_to_remove=["mail"],
-        ).execute()
+        )
+        cleaned2 = RfcTestHelpers.test_service_execute_and_assert(
+            service2,
+            expected_type=list,
+        )
+        assert "mail" not in cleaned2[0].attributes.attributes
 
-        assert result.is_success
-        cleaned_entries = result.unwrap()
-        assert "mail" not in cleaned_entries[0].attributes.attributes
-
-    def test_execute_invalid_operation(
-        self,
-        simple_entry: FlextLdifModels.Entry,
-    ) -> None:
-        """Test execute() with invalid operation fails gracefully."""
-        result = FlextLdifEntry(
+        service3 = FlextLdifEntry(
             entries=[simple_entry],
             operation="invalid_operation",
-        ).execute()
+        )
+        RfcTestHelpers.test_service_execute_and_assert(
+            service3,
+            should_succeed=False,
+        )
 
-        assert result.is_failure
-
-    def test_execute_empty_entries(self) -> None:
-        """Test execute() with empty entries list."""
-        result = FlextLdifEntry(
+        service4 = FlextLdifEntry(
             entries=[],
             operation="remove_operational_attributes",
-        ).execute()
-
-        assert result.is_success
-        assert result.unwrap() == []
+        )
+        empty_result = RfcTestHelpers.test_service_execute_and_assert(
+            service4,
+            expected_type=list,
+            expected_count=0,
+        )
+        assert empty_result == []
 
 
 # ════════════════════════════════════════════════════════════════════════════

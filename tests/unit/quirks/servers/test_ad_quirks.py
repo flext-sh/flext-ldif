@@ -11,6 +11,7 @@ import pytest
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.servers.ad import FlextLdifServersAd
+from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
 
 
 class TestActiveDirectorySchemas:
@@ -96,10 +97,11 @@ class TestActiveDirectorySchemas:
             "DESC 'SAM Account Name' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 "
             "EQUALITY caseIgnoreMatch SINGLE-VALUE )"
         )
-        result = quirk.parse_attribute(attr_def)
+        from tests.helpers.test_rfc_helpers import RfcTestHelpers
 
-        assert result.is_success
-        attr_data = result.unwrap()
+        attr_data = RfcTestHelpers.test_result_success_and_unwrap(
+            quirk.parse_attribute(attr_def),
+        )
         assert attr_data.oid == "1.2.840.113556.1.4.221"
         assert attr_data.name == "sAMAccountName"
         assert attr_data.desc == "SAM Account Name"
@@ -199,11 +201,12 @@ class TestActiveDirectorySchemas:
         """Test parsing AUXILIARY objectClass."""
         quirk = ad_schema
 
-        oc_def = "( 1.2.840.113556.1.5.10 NAME 'adGroup' AUXILIARY )"
-        result = quirk.parse_objectclass(oc_def)
+        from tests.helpers.test_rfc_helpers import RfcTestHelpers
 
-        assert result.is_success
-        oc_data = result.unwrap()
+        oc_def = "( 1.2.840.113556.1.5.10 NAME 'adGroup' AUXILIARY )"
+        oc_data = RfcTestHelpers.test_result_success_and_unwrap(
+            quirk.parse_objectclass(oc_def),
+        )
         assert oc_data.kind == "AUXILIARY"
 
     def test_parse_objectclass_no_oid(
@@ -234,12 +237,14 @@ class TestActiveDirectorySchemas:
             single_value=True,
         )
 
-        result = quirk.write_attribute(attr_model)
-        assert result.is_success
-        attr_str = result.unwrap()
-        assert "( 1.2.840.113556.1.4.221" in attr_str
-        assert "NAME 'sAMAccountName'" in attr_str
-        assert "SINGLE-VALUE" in attr_str
+        from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
+
+        TestDeduplicationHelpers.quirk_write_and_unwrap(
+            quirk,
+            attr_model,
+            write_method="_write_attribute",
+            must_contain=["1.2.840.113556.1.4.221", "sAMAccountName", "SINGLE-VALUE"],
+        )
 
     def test_write_objectclass_to_rfc(
         self,
@@ -258,13 +263,19 @@ class TestActiveDirectorySchemas:
             may=["sAMAccountName"],
         )
 
-        result = quirk.write_objectclass(oc_model)
-        assert result.is_success
-        oc_str = result.unwrap()
-        assert "( 1.2.840.113556.1.5.9" in oc_str
-        assert "NAME 'user'" in oc_str
-        assert "STRUCTURAL" in oc_str
-        assert "MUST ( cn $ objectGUID )" in oc_str
+        from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
+
+        TestDeduplicationHelpers.quirk_write_and_unwrap(
+            quirk,
+            oc_model,
+            write_method="_write_objectclass",
+            must_contain=[
+                "1.2.840.113556.1.5.9",
+                "NAME 'user'",
+                "STRUCTURAL",
+                "MUST ( cn $ objectGUID )",
+            ],
+        )
 
 
 class TestActiveDirectoryAcls:
@@ -296,11 +307,7 @@ class TestActiveDirectoryAcls:
         acl_line = "nTSecurityDescriptor:: AQAEgBQAAAAkAAAAAAAAADAAAAABABQABAAAAA=="
         # Parse string ACL into model object
 
-        parse_result = acl.parse(acl_line)
-
-        assert parse_result.is_success, f"Failed to parse ACL: {parse_result.error}"
-
-        acl_model = parse_result.unwrap()
+        acl_model = TestDeduplicationHelpers.quirk_parse_and_unwrap(acl, acl_line)
 
         # Test with the model object
 
@@ -320,11 +327,7 @@ class TestActiveDirectoryAcls:
         acl_line = "O:BAG:BAD:S:"
         # Parse string ACL into model object
 
-        parse_result = acl.parse(acl_line)
-
-        assert parse_result.is_success, f"Failed to parse ACL: {parse_result.error}"
-
-        acl_model = parse_result.unwrap()
+        acl_model = TestDeduplicationHelpers.quirk_parse_and_unwrap(acl, acl_line)
 
         # Test with the model object
 
@@ -343,11 +346,7 @@ class TestActiveDirectoryAcls:
         acl_line = "olcAccess: to * by self write"
         # Parse string ACL into model object
 
-        parse_result = acl.parse(acl_line)
-
-        assert parse_result.is_success, f"Failed to parse ACL: {parse_result.error}"
-
-        acl_model = parse_result.unwrap()
+        acl_model = TestDeduplicationHelpers.quirk_parse_and_unwrap(acl, acl_line)
 
         # Test with the model object
 
@@ -417,11 +416,12 @@ class TestActiveDirectoryAcls:
             raw_acl="nTSecurityDescriptor: O:BAG:BAD:S:",
         )
 
-        result = acl.write(acl_model)
-        assert result.is_success
-        acl_str = result.unwrap()
-        assert "nTSecurityDescriptor:" in acl_str
-        assert "O:BAG:BAD:S:" in acl_str
+        TestDeduplicationHelpers.quirk_write_and_unwrap(
+            acl,
+            acl_model,
+            write_method="write",
+            must_contain=["nTSecurityDescriptor:", "O:BAG:BAD:S:"],
+        )
 
 
 class TestActiveDirectoryEntrys:
@@ -454,10 +454,8 @@ class TestActiveDirectoryEntrys:
 
         # Can handle is internal - test through parse which calls can_handle internally
         # Build LDIF format for testing
-        ldif = f"dn: {dn.value if hasattr(dn, 'value') else dn}\n"
-        for attr, values in (
-            attributes.attributes if hasattr(attributes, "attributes") else attributes
-        ).items():
+        ldif = f"dn: {dn}\n"
+        for attr, values in attributes.items():
             if isinstance(values, list):
                 for val in values:
                     ldif += f"{attr}: {val}\n"

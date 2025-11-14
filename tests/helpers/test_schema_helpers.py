@@ -9,15 +9,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
-from flext_core import FlextResult
-
+from flext_ldif.models import FlextLdifModels
+from flext_ldif.servers.base import FlextLdifServersBase
 from tests.helpers.test_assertions import TestAssertions
-
-if TYPE_CHECKING:
-    from flext_ldif.models import FlextLdifModels
-    from flext_ldif.servers.base import FlextLdifServersBase
 
 
 class SchemaTestHelpers:
@@ -158,13 +152,17 @@ class SchemaTestHelpers:
             )
 
         if expected_must is not None:
-            must_in_def = all(must_attr.upper() in oc_def.upper() for must_attr in expected_must)
+            must_in_def = all(
+                must_attr.upper() in oc_def.upper() for must_attr in expected_must
+            )
             assert must_in_def, (
                 f"Expected MUST attributes {expected_must} not all found in definition"
             )
 
         if expected_may is not None:
-            may_in_def = all(may_attr.upper() in oc_def.upper() for may_attr in expected_may)
+            may_in_def = all(
+                may_attr.upper() in oc_def.upper() for may_attr in expected_may
+            )
             assert may_in_def, (
                 f"Expected MAY attributes {expected_may} not all found in definition"
             )
@@ -214,7 +212,9 @@ class SchemaTestHelpers:
 
         if expected_content:
             for content in expected_content:
-                assert content in ldif, f"Expected content '{content}' not found in LDIF"
+                assert content in ldif, (
+                    f"Expected content '{content}' not found in LDIF"
+                )
 
         if must_contain:
             for content in must_contain:
@@ -271,7 +271,9 @@ class SchemaTestHelpers:
 
         if expected_content:
             for content in expected_content:
-                assert content in ldif, f"Expected content '{content}' not found in LDIF"
+                assert content in ldif, (
+                    f"Expected content '{content}' not found in LDIF"
+                )
 
         if must_contain:
             for content in must_contain:
@@ -289,6 +291,7 @@ class SchemaTestHelpers:
     def test_hook_post_parse_attribute_complete(
         schema_quirk: FlextLdifServersBase.Schema,
         attr: FlextLdifModels.SchemaAttribute,
+        *,
         should_succeed: bool = True,
         expected_error: str | None = None,
         validate_result: bool = True,
@@ -331,23 +334,21 @@ class SchemaTestHelpers:
         result = schema_quirk._hook_post_parse_attribute(attr)
 
         if should_succeed:
-            result_attr = TestAssertions.assert_success(
-                result, "Hook should succeed"
-            )
+            result_attr = TestAssertions.assert_success(result, "Hook should succeed")
             assert isinstance(result_attr, FlextLdifModels.SchemaAttribute), (
                 "Hook should return SchemaAttribute"
             )
             if validate_result:
                 TestAssertions.assert_schema_attribute_valid(result_attr)
             return result_attr
-        else:
-            error = TestAssertions.assert_failure(result, expected_error)
-            return None
+        TestAssertions.assert_failure(result, expected_error)
+        return None
 
     @staticmethod
     def test_hook_post_parse_objectclass_complete(
         schema_quirk: FlextLdifServersBase.Schema,
         oc: FlextLdifModels.SchemaObjectClass,
+        *,
         should_succeed: bool = True,
         expected_error: str | None = None,
         validate_result: bool = True,
@@ -389,9 +390,8 @@ class SchemaTestHelpers:
             if validate_result:
                 TestAssertions.assert_schema_objectclass_valid(result_oc)
             return result_oc
-        else:
-            TestAssertions.assert_failure(result, expected_error)
-            return None
+        TestAssertions.assert_failure(result, expected_error)
+        return None
 
     @staticmethod
     def test_parse_write_roundtrip_attribute(

@@ -475,27 +475,15 @@ class TestCrossServerFixtures:
 
     def test_fixture_entry_validation(self) -> None:
         """Test that all fixture entries validate successfully."""
+        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+
         servers = {
             "RFC": "tests/fixtures/rfc/rfc_entries_fixtures.ldif",
             "OID": "tests/fixtures/oid/oid_entries_fixtures.ldif",
             "OUD": "tests/fixtures/oud/oud_entries_fixtures.ldif",
             "OpenLDAP2": "tests/fixtures/openldap2/openldap2_entries_fixtures.ldif",
         }
-
-        for server_name, fixture_path in servers.items():
-            result = self.ldif.parse(Path(fixture_path))
-            assert result.is_success, f"{server_name} parse failed: {result.error}"
-
-            unwrapped = result.unwrap()
-            assert isinstance(unwrapped, list)
-            entries = unwrapped
-
-            # Check each entry is parsed correctly (validation removed)
-            for entry in entries:
-                assert entry.dn is not None, f"{server_name} entry missing DN"
-                assert entry.attributes is not None, (
-                    f"{server_name} entry missing attributes"
-                )
+        RfcTestHelpers.test_fixture_parse_and_validate_batch(self.ldif, servers)
 
 
 class TestFixtureEdgeCases:

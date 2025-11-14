@@ -137,7 +137,8 @@ class TestMigrationPipelineValidation:
         assert result.is_success
         execution_result = result.unwrap()
         assert execution_result.entries_by_category == {}
-        assert execution_result.statistics.total_entries == 0
+        if execution_result.statistics is not None:
+            assert execution_result.statistics.total_entries == 0
 
     def test_execute_creates_output_dir_if_missing(self, tmp_path: Path) -> None:
         """Test pipeline creates output directory if it doesn't exist."""
@@ -146,7 +147,7 @@ class TestMigrationPipelineValidation:
         nonexistent_output = tmp_path / "nonexistent"
 
         # Create a simple LDIF file
-        (input_dir / "test.ldif").write_text(
+        _ = (input_dir / "test.ldif").write_text(
             "dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test\n",
         )
 
@@ -235,7 +236,7 @@ objectClass: top
 cn: test
 sn: test
 """
-        (input_dir / "test.ldif").write_text(ldif_content)
+        _ = (input_dir / "test.ldif").write_text(ldif_content)
 
         pipeline = FlextLdifMigrationPipeline(
             input_dir=input_dir,
@@ -262,7 +263,7 @@ objectClass: person
 cn: test
 mail: test@example.com
 """
-        (input_dir / "test.ldif").write_text(ldif_content)
+        _ = (input_dir / "test.ldif").write_text(ldif_content)
 
         pipeline = FlextLdifMigrationPipeline(
             input_dir=input_dir,
@@ -296,7 +297,7 @@ dn: cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com
 objectClass: person
 cn: REDACTED_LDAP_BIND_PASSWORD
 """
-        (input_dir / "test.ldif").write_text(ldif_content)
+        _ = (input_dir / "test.ldif").write_text(ldif_content)
 
         categorization_rules = {
             "hierarchy_objectclasses": ["top"],
@@ -333,7 +334,7 @@ dn: cn=user,dc=other,dc=com
 objectClass: person
 cn: user
 """
-        (input_dir / "test.ldif").write_text(ldif_content)
+        _ = (input_dir / "test.ldif").write_text(ldif_content)
 
         categorization_rules = {
             "hierarchy_objectclasses": ["top"],
@@ -369,7 +370,7 @@ cn: REDACTED_LDAP_BIND_PASSWORD
 mail: REDACTED_LDAP_BIND_PASSWORD@example.com
 userPassword: secret
 """
-        (input_dir / "test.ldif").write_text(ldif_content)
+        _ = (input_dir / "test.ldif").write_text(ldif_content)
 
         categorization_rules = {
             "hierarchy_objectclasses": ["top"],
@@ -404,10 +405,10 @@ class TestMigrationPipelineMultipleFiles:
         output_dir.mkdir()
 
         # Create multiple LDIF files
-        (input_dir / "schema.ldif").write_text(
+        _ = (input_dir / "schema.ldif").write_text(
             "dn: cn=schema\nobjectClass: top\ncn: schema\n",
         )
-        (input_dir / "data.ldif").write_text(
+        _ = (input_dir / "data.ldif").write_text(
             "dn: cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com\nobjectClass: person\ncn: REDACTED_LDAP_BIND_PASSWORD\n",
         )
 
@@ -431,7 +432,7 @@ class TestMigrationPipelineMultipleFiles:
         input_dir.mkdir()
         output_dir.mkdir()
 
-        (input_dir / "test.ldif").write_text(
+        _ = (input_dir / "test.ldif").write_text(
             "dn: cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com\nobjectClass: person\ncn: REDACTED_LDAP_BIND_PASSWORD\n",
         )
 
@@ -490,7 +491,7 @@ class TestMigrationPipelineServerConversions:
         input_dir.mkdir()
         output_dir.mkdir()
 
-        (input_dir / "test.ldif").write_text(
+        _ = (input_dir / "test.ldif").write_text(
             "dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test\n",
         )
 

@@ -357,13 +357,13 @@ class TestComponentFactory:
         assert result.is_success
 
     def test_create_acl_components_with_invalid_data(self) -> None:
-        """Test create_acl_components with invalid data that causes real failure."""
-        # Use invalid server type that will cause real validation failure
+        """Test create_acl_components with invalid server type defaults to OpenLDAP."""
+        # Use invalid server type - function should default to OpenLDAP
         target = FlextLdifModels.AclTarget(target_dn="*")
         subject = FlextLdifModels.AclSubject(subject_type="*", subject_value="*")
         permissions = FlextLdifModels.AclPermissions(read=True)
 
-        # Use invalid server type to trigger real validation error
+        # Use invalid server type - should default to OpenLDAP
         result = create_unified_acl_helper(
             name="",
             target=target,
@@ -373,5 +373,7 @@ class TestComponentFactory:
             raw_acl="(access to *)",
         )
 
-        # Should fail with real validation error
-        assert result.is_failure
+        # Should succeed with default server_type (OpenLDAP)
+        assert result.is_success
+        acl = result.unwrap()
+        assert acl.server_type == FlextLdifConstants.LdapServers.OPENLDAP

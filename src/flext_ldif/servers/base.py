@@ -238,7 +238,7 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry | str], ABC):
         ldif_text: str | None = None,
         entries: list[FlextLdifModels.Entry] | None = None,
         operation: Literal["parse", "write"] | None = None,
-    ) -> FlextResult[FlextLdifTypes.EntryOrString]:
+    ) -> FlextResult[FlextLdifModels.Entry | str]:
         r"""Execute quirk operation with auto-detection and V2 modes.
 
         Auto-detects operation from parameters:
@@ -272,12 +272,12 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry | str], ABC):
             FlextResult[list[Entry] | str]
 
         """
-        # Health check: no parameters provided
-        if not ldif_text and not entries:
-            return self._execute_health_check()
-
         # Use explicit operation if provided, otherwise auto-detect
         detected_operation = self._detect_operation(ldif_text, entries, operation)
+
+        # Health check: no parameters provided and no explicit operation
+        if detected_operation is None and not ldif_text and not entries:
+            return self._execute_health_check()
 
         # Execute based on operation
         if detected_operation == "parse":
@@ -286,27 +286,15 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry | str], ABC):
             return self._execute_write(entries)
 
         # Should not reach here
-        return FlextResult[FlextLdifTypes.EntryOrString].fail(
+        return FlextResult[FlextLdifModels.Entry | str].fail(
             "No operation parameters provided",
         )
 
-    def _execute_health_check(self) -> FlextResult[FlextLdifTypes.EntryOrString]:
+    def _execute_health_check(self) -> FlextResult[FlextLdifModels.Entry | str]:
         """Execute health check operation."""
-        detected_server = getattr(self, "server_type", None)
-        statistics = FlextLdifModels.Statistics(
-            total_entries=0,
-            processed_entries=0,
-            detected_server_type=detected_server,
-        )
-        empty_response = FlextLdifModels.ParseResponse(
-            entries=[],
-            statistics=statistics,
-            detected_server_type=detected_server,
-        )
-        # Extract entries from ParseResponse (empty list in this case)
-        return FlextResult[FlextLdifTypes.EntryOrString].ok(
-            cast("FlextLdifTypes.EntryOrString", empty_response.entries)
-        )
+        # Health check returns empty string to indicate successful health check
+        # This matches the expected return type of Entry | str
+        return FlextResult[FlextLdifModels.Entry | str].ok("")
 
     def _detect_operation(
         self,
@@ -325,37 +313,40 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry | str], ABC):
 
     def _execute_parse(
         self, ldif_text: str | None
-    ) -> FlextResult[FlextLdifTypes.EntryOrString]:
+    ) -> FlextResult[FlextLdifModels.Entry | str]:
         """Execute parse operation."""
         if ldif_text is None:
-            return FlextResult[FlextLdifTypes.EntryOrString].fail(
+            return FlextResult[FlextLdifModels.Entry | str].fail(
                 "parse operation requires ldif_text",
             )
         # Delegate to concrete implementation (default in RFC)
         parse_result = self.parse(ldif_text)
         if parse_result.is_success:
             parse_response = parse_result.unwrap()
-            return FlextResult[FlextLdifTypes.EntryOrString].ok(
-                cast("FlextLdifTypes.EntryOrString", parse_response.entries)
-            )
+            # Return first entry if available, otherwise empty string
+            if parse_response.entries:
+                return FlextResult[FlextLdifModels.Entry | str].ok(
+                    cast("FlextLdifModels.Entry", parse_response.entries[0])
+                )
+            return FlextResult[FlextLdifModels.Entry | str].ok("")
         error_msg: str = parse_result.error or "Parse failed"
-        return FlextResult[FlextLdifTypes.EntryOrString].fail(error_msg)
+        return FlextResult[FlextLdifModels.Entry | str].fail(error_msg)
 
     def _execute_write(
         self, entries: list[FlextLdifModels.Entry] | None
-    ) -> FlextResult[FlextLdifTypes.EntryOrString]:
+    ) -> FlextResult[FlextLdifModels.Entry | str]:
         """Execute write operation."""
         if entries is None:
-            return FlextResult[FlextLdifTypes.EntryOrString].fail(
+            return FlextResult[FlextLdifModels.Entry | str].fail(
                 "write operation requires entries",
             )
         # Delegate to concrete implementation (default in RFC)
         write_result = self.write(entries)
         if write_result.is_success:
             written_text: str = write_result.unwrap()
-            return FlextResult[FlextLdifTypes.EntryOrString].ok(written_text)
+            return FlextResult[FlextLdifModels.Entry | str].ok(written_text)
         error_msg: str = write_result.error or "Write failed"
-        return FlextResult[FlextLdifTypes.EntryOrString].fail(error_msg)
+        return FlextResult[FlextLdifModels.Entry | str].fail(error_msg)
 
     @overload
     def __call__(

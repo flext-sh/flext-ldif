@@ -587,23 +587,69 @@ class FlextLdifUtilitiesACL:
         subject_type: str,
         subject_value: str,
         constants: object,  # Server-specific Constants class with ACL attributes
+        base_dn: str | None = None,  # Optional base DN for filtering DNs inside ACLs
     ) -> str:
         """Format ACL subject into ACI bind rule format.
 
+        Normalizes DNs in userdn and groupdn by:
+        - Removing spaces after commas (e.g., "cn=Group, cn=Sub" -> "cn=Group,cn=Sub")
+        - Preserving case (no lowercase conversion)
+        - Cleaning whitespace issues
+
         Args:
             subject_type: Type of subject (self, anonymous, group, etc.)
-            subject_value: Subject value
+            subject_value: Subject value (may contain DN with spacing issues)
             constants: Constants class with ACL format definitions
 
         Returns:
-            Formatted bind rule string
+            Formatted bind rule string with normalized DNs
 
         """
+        # Import here to avoid circular dependency at module level
+        from flext_ldif._utilities.dn import FlextLdifUtilitiesDN  # noqa: PLC0415
+
+        # Helper to normalize DN value (removes spaces after commas, preserves case)
+        def normalize_dn_value(value: str) -> str:
+            """Normalize DN by removing spaces after commas while preserving case.
+
+            Normalizes DNs that appear INSIDE ACL strings (userdn/groupdn values),
+            not the entry DN itself.
+
+            If base_dn is provided, filters DNs to only include those under base_dn.
+            """
+            if not value:
+                return value
+            # Remove LDAP URL prefix if present for normalization
+            prefix = getattr(constants, "ACL_LDAP_URL_PREFIX", "ldap:///")
+            has_prefix = value.startswith(prefix)
+            dn_part = value[len(prefix) :] if has_prefix else value
+
+            # Clean DN: remove spaces after commas (OID quirk fix)
+            # This fixes: "cn=Group, cn=Sub" -> "cn=Group,cn=Sub"
+            # But preserves case: "cn=GROUP" stays "cn=GROUP"
+            cleaned_dn = FlextLdifUtilitiesDN.clean_dn(dn_part)
+
+            # Filter by base_dn if provided (migrate responsibility)
+            if base_dn and cleaned_dn:
+                # Check if DN is under base_dn - if not, return empty to filter it out
+                if not FlextLdifUtilitiesDN.is_under_base(cleaned_dn, base_dn):
+                    # Return empty string to indicate DN should be filtered out
+                    # Caller should handle empty DNs appropriately
+                    return ""
+
+            # Restore prefix if it was present
+            return f"{prefix}{cleaned_dn}" if has_prefix else cleaned_dn
 
         # Helper to ensure LDAP URL format
         def ensure_ldap_url(value: str) -> str:
             prefix = getattr(constants, "ACL_LDAP_URL_PREFIX", "ldap:///")
-            return value if value.startswith(prefix) else f"{prefix}{value}"
+            normalized = normalize_dn_value(value)
+            # If normalized is empty (DN filtered out), return empty
+            if not normalized:
+                return ""
+            return (
+                normalized if normalized.startswith(prefix) else f"{prefix}{normalized}"
+            )
 
         # Strategy mapping for subject types (reduces 8 returns to 3)
         if subject_type == FlextLdifConstants.AclSubjectTypes.SELF:
@@ -614,23 +660,39 @@ class FlextLdifUtilitiesACL:
             acl_anon = getattr(constants, "ACL_ANONYMOUS_SUBJECT_ALT", "anyone")
             return f'userdn="{acl_anon}";)'
 
-        # Group handling (group, group_dn)
+        # Group handling (group, group_dn) - normalize DN
         if subject_type in {FlextLdifConstants.AclSubjectTypes.GROUP, "group_dn"}:
-            return f'groupdn="{ensure_ldap_url(subject_value)}";)'
+            normalized_value = ensure_ldap_url(subject_value)
+            # If DN was filtered out (empty), return empty string (caller should skip this ACL)
+            if not normalized_value:
+                return ""
+            return f'groupdn="{normalized_value}";)'
 
         # Attribute-based subjects (dn_attr, guid_attr, group_attr)
         if subject_type in {"dn_attr", "guid_attr", "group_attr"}:
             return f'userattr="{subject_value}";)'
 
-        # Bind rules (pass through)
+        # Bind rules (pass through) - may contain DNs, normalize them
         bind_rules_type = getattr(
             constants, "ACL_SUBJECT_TYPE_BIND_RULES", "bind_rules"
         )
         if subject_type == bind_rules_type:
-            return f"{subject_value};)"
+            # Bind rules may contain userdn/groupdn with DNs - normalize them
+            # Pattern: userdn="ldap:///DN" or groupdn="ldap:///DN"
+            # Normalize userdn="..." patterns
+            normalized_bind = re.sub(
+                r'(userdn|groupdn)="(ldap:///)?([^"]+)"',
+                lambda m: f'{m.group(1)}="{m.group(2) or ""}{normalize_dn_value(m.group(3))}"',
+                subject_value,
+            )
+            return f"{normalized_bind};)"
 
-        # Default: userdn with LDAP URL
-        return f'userdn="{ensure_ldap_url(subject_value)}";)'
+        # Default: userdn with LDAP URL - normalize DN
+        normalized_value = ensure_ldap_url(subject_value)
+        # If DN was filtered out (empty), return empty string (caller should skip this ACL)
+        if not normalized_value:
+            return ""
+        return f'userdn="{normalized_value}";)'
 
     @staticmethod
     def parse_novell_rights(
