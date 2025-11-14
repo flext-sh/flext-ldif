@@ -16,33 +16,13 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
+from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
 
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.services.filters import FlextLdifFilters
 
-
-def create_test_entry(
-    dn_str: str,
-    attributes: dict[str, list[str]],
-) -> FlextLdifModels.Entry:
-    """Helper function to create test entries with proper attribute wrapping.
-
-    Args:
-        dn_str: DN string for the entry
-        attributes: Dictionary mapping attribute names to value lists
-
-    Returns:
-        Properly constructed Entry instance
-
-    """
-    dn = FlextLdifModels.DistinguishedName(value=dn_str)
-
-    # Use modern API - pass raw dict directly to LdifAttributes.create()
-    attrs_result = FlextLdifModels.LdifAttributes.create(attributes)
-    assert attrs_result.is_success
-    attrs = attrs_result.unwrap()
-
-    return FlextLdifModels.Entry(dn=dn, attributes=attrs)
+# Use helper to eliminate duplication - replaces 8-12 lines per use
+create_test_entry = TestDeduplicationHelpers.create_entry_from_dict
 
 
 class TestExclusionMetadataTypeGuards:

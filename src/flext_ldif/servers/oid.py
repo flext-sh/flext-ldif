@@ -762,10 +762,52 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                         attr_data.syntax
                     ]
 
+                # OID→OUD QUIRK: caseIgnoreSubstringsMatch must be SUBSTR, not EQUALITY
+                # OUD requires SUBSTR for caseIgnoreSubstringsMatch, not EQUALITY
+                # Transform during parse so the model is correct from the start
+                # This ensures OUD quirks writer will have correct model
+                # Check both normalized and original forms (normalization happens before this check)
+                if attr_data.equality in {
+                    "caseIgnoreSubstringsMatch",
+                    "caseIgnoreSubStringsMatch",
+                }:
+                    logger.debug(
+                        "OID→OUD transform: Moving caseIgnoreSubstringsMatch from EQUALITY to SUBSTR during parse"
+                    )
+                    # Preserve original_format before transformation
+                    original_format = None
+                    if attr_data.metadata and attr_data.metadata.extensions.get(
+                        "original_format"
+                    ):
+                        original_format = attr_data.metadata.extensions.get(
+                            "original_format"
+                        )
+
+                    # Create new model with transformed values (Pydantic v2 requires model_copy for immutable models)
+                    attr_data = attr_data.model_copy(
+                        update={
+                            "substr": "caseIgnoreSubstringsMatch",
+                            "equality": None,  # Remove from equality
+                        }
+                    )
+
+                    # Restore original_format in metadata after transformation
+                    # This preserves the original format for reference, but the model is now correct
+                    if original_format and attr_data.metadata:
+                        attr_data.metadata.extensions["original_format"] = (
+                            original_format
+                        )
+
                 # Ensure metadata is preserved with OID-specific information
+                # Store original format in metadata for reference
                 if not attr_data.metadata:
                     attr_data.metadata = self.create_metadata(
                         attr_definition.strip(),
+                    )
+                # Ensure original_format is stored in metadata
+                elif not attr_data.metadata.extensions.get("original_format"):
+                    attr_data.metadata.extensions["original_format"] = (
+                        attr_definition.strip()
                     )
 
                 # Attach timestamp metadata (previously done by decorator)
@@ -887,10 +929,98 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                 FlextLdifUtilities.ObjectClass.ensure_sup_for_auxiliary(oc_data)
                 FlextLdifUtilities.ObjectClass.align_kind_with_superior(oc_data, None)
 
+                # OID→OUD QUIRK: Fix objectClass syntax issues for OUD compatibility
+                # OUD requires specific formats that OID doesn't enforce
+                # Transform during parse so the model is correct from the start
+
+                # Track if we need to update the model
+                updated_sup: str | list[str] | None = None
+                updated_kind: str | None = None
+
+                # Check original_format for SUP issues that parser might have missed
+                # Parser may return sup=None for SUP 'top' or SUP ( top ), so check original_format
+                original_format_str = ""
+                if oc_data.metadata and oc_data.metadata.extensions.get(
+                    "original_format"
+                ):
+                    original_format_str = str(
+                        oc_data.metadata.extensions.get("original_format", "")
+                    )
+
+                # Fix 1: SUP ( top ) → SUP top (remove parentheses)
+                # Fix 2: SUP 'top' → SUP top (remove quotes)
+                # Check both model and original_format since parser might not parse correctly
+                if oc_data.sup:
+                    if isinstance(oc_data.sup, str):
+                        sup_str = oc_data.sup.strip()
+                        if sup_str in {"( top )", "(top)"}:
+                            logger.debug("OID→OUD transform: SUP ( top ) → SUP top")
+                            updated_sup = "top"
+                        elif sup_str in {"'top'", '"top"'}:
+                            logger.debug("OID→OUD transform: SUP 'top' → SUP top")
+                            updated_sup = "top"
+                    elif isinstance(oc_data.sup, list):
+                        # Handle list case: ["( top )"] or ["'top'"] → ["top"]
+                        if len(oc_data.sup) == 1:
+                            sup_item = str(oc_data.sup[0]).strip()
+                            if sup_item in {"( top )", "(top)"}:
+                                logger.debug(
+                                    "OID→OUD transform: SUP ( top ) → SUP top (list)"
+                                )
+                                updated_sup = "top"
+                            elif sup_item in {"'top'", '"top"'}:
+                                logger.debug(
+                                    "OID→OUD transform: SUP 'top' → SUP top (list)"
+                                )
+                                updated_sup = "top"
+                elif original_format_str:
+                    # Parser returned sup=None, but original_format has SUP 'top' or SUP ( top )
+                    # Extract and fix from original_format
+                    if "SUP 'top'" in original_format_str:
+                        logger.debug(
+                            "OID→OUD transform: SUP 'top' → SUP top (from original_format)"
+                        )
+                        updated_sup = "top"
+                    elif (
+                        "SUP ( top )" in original_format_str
+                        or "SUP (top)" in original_format_str
+                    ):
+                        logger.debug(
+                            "OID→OUD transform: SUP ( top ) → SUP top (from original_format)"
+                        )
+                        updated_sup = "top"
+
+                # Fix 3: AUXILLARY → AUXILIARY (fix typo)
+                # Check both model and original_format
+                if hasattr(oc_data, "kind") and oc_data.kind:
+                    if oc_data.kind.upper() == "AUXILLARY":
+                        logger.debug("OID→OUD transform: AUXILLARY → AUXILIARY")
+                        updated_kind = "AUXILIARY"
+                elif original_format_str and "AUXILLARY" in original_format_str:
+                    logger.debug(
+                        "OID→OUD transform: AUXILLARY → AUXILIARY (from original_format)"
+                    )
+                    updated_kind = "AUXILIARY"
+
+                # Create new model with transformed values if needed (Pydantic v2 requires model_copy)
+                if updated_sup is not None or updated_kind is not None:
+                    update_dict: dict[str, object] = {}
+                    if updated_sup is not None:
+                        update_dict["sup"] = updated_sup
+                    if updated_kind is not None:
+                        update_dict["kind"] = updated_kind
+                    oc_data = oc_data.model_copy(update=update_dict)
+
                 # Ensure metadata is preserved with OID-specific information
+                # Store original format in metadata for reference
                 if not oc_data.metadata:
                     oc_data.metadata = self.create_metadata(
                         oc_definition.strip(),
+                    )
+                # Ensure original_format is stored in metadata
+                elif not oc_data.metadata.extensions.get("original_format"):
+                    oc_data.metadata.extensions["original_format"] = (
+                        oc_definition.strip()
                     )
 
                 # Attach timestamp metadata (previously done by decorator)
@@ -1633,6 +1763,8 @@ class FlextLdifServersOid(FlextLdifServersRfc):
 
             # Step 2.5: Detect RFC compliance issues (multiple structural objectClasses)
             # OID allows hybrid entries (e.g., domain+groupOfUniqueNames) which violates RFC 4512
+            # IMPORTANT: Do NOT remove or modify data - preserve all attributes and objectClasses
+            # OUD is configured to accept multiple structural classes - preserve via metadata
             # Detect and mark these conflicts in metadata - do NOT filter data
             rfc_violations: list[str] = []
             attribute_conflicts: list[dict[str, object]] = []
@@ -1642,6 +1774,7 @@ class FlextLdifServersOid(FlextLdifServersRfc):
             object_classes_lower = {oc.lower() for oc in object_classes}
 
             # Detect multiple structural objectClasses (RFC 4512 allows only ONE)
+            # NOTE: OUD accepts multiple structural classes - preserve all via metadata
             structural_classes = {
                 "domain",
                 "organization",
@@ -1663,6 +1796,7 @@ class FlextLdifServersOid(FlextLdifServersRfc):
             # Detect specific attribute conflicts with domain objectClass
             # RFC 4519: domain MUST have dc; MAY have associatedDomain, description, l, o,
             # searchGuide, seeAlso, userPassword - but NOT cn, uniqueMember, etc.
+            # NOTE: Do NOT remove attributes - preserve all via metadata for OUD compatibility
             if "domain" in object_classes_lower:
                 domain_invalid_attrs = {
                     "cn",
@@ -1712,13 +1846,14 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                 )
 
             # Add RFC compliance metadata if violations detected
+            # NOTE: All data is preserved - violations are tracked in metadata for OUD compatibility
             rfc_compliance_metadata: dict[str, object] = {}
             if rfc_violations or attribute_conflicts:
                 rfc_compliance_metadata["rfc_violations"] = rfc_violations
                 rfc_compliance_metadata["attribute_conflicts"] = attribute_conflicts
                 rfc_compliance_metadata["has_rfc_violations"] = True
                 logger.debug(
-                    "RFC compliance issues detected in OID entry: %s violations, %s attribute conflicts",
+                    "RFC compliance issues detected in OID entry (preserved for OUD compatibility): %s violations, %s attribute conflicts",
                     len(rfc_violations),
                     len(attribute_conflicts),
                 )

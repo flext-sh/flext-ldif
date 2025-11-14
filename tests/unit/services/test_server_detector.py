@@ -425,10 +425,13 @@ class TestServerDetectorExecute:
 
     def test_execute_returns_status(self, detector: FlextLdifDetector) -> None:
         """Test execute method returns service status."""
-        result = detector.execute()
-        assert result.is_success
-        status = result.unwrap()
-        assert status.status == "initialized"
+        from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
+
+        status = TestDeduplicationHelpers.service_execute_and_assert_fields(
+            detector,
+            expected_fields={"status": "initialized"},
+        )
+        # Additional assertions for nested dict fields
         assert status.config["service"] == "FlextLdifDetector"
         assert "detect_server_type" in status.services
 

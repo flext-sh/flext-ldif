@@ -493,10 +493,9 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             if result.is_failure:
                 return FlextResult.fail(result.error)
             text = result.unwrap()
-            if isinstance(text, str):
-                ldif_lines.extend(text.splitlines(keepends=False))
-                if text and not text.endswith("\n"):
-                    ldif_lines.append("")  # Add blank line between entries
+            ldif_lines.extend(text.splitlines(keepends=False))
+            if text and not text.endswith("\n"):
+                ldif_lines.append("")  # Add blank line between entries
         return FlextResult.ok(ldif_lines)
 
     # =========================================================================
@@ -545,16 +544,30 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             return FlextResult.ok([])
         if not entries:
             return FlextResult.ok([])
-        # All entries should be Entry models
-        if not all(isinstance(entry, FlextLdifModels.Entry) for entry in entries):
-            invalid = next(
-                e for e in entries if not isinstance(e, FlextLdifModels.Entry)
-            )
-            return FlextResult.fail(f"Invalid entry type: {type(invalid).__name__}")
+        # Validate that all entries are Entry models
+        for entry in entries:
+            if not isinstance(entry, FlextLdifModels.Entry):
+                return FlextResult[list[FlextLdifModels.Entry]].fail(
+                    f"Invalid entry type: expected Entry, got {type(entry).__name__}",
+                )
         return FlextResult.ok(entries)
 
     class Schema(FlextLdifServersBase.Schema):
         """RFC 4512 Compliant Schema Quirk - Base Implementation."""
+
+        def __init__(
+            self,
+            schema_service: object | None = None,
+            **kwargs: object,
+        ) -> None:
+            """Initialize RFC schema quirk service.
+
+            Args:
+                schema_service: Injected FlextLdifSchema service (optional)
+                **kwargs: Passed to parent class
+
+            """
+            super().__init__(schema_service=schema_service, **kwargs)
 
         def can_handle_attribute(
             self,
@@ -665,13 +678,10 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 FlextResult with RFC-compliant attribute string
 
             """
-            # Type check - ensure we got a proper model object
+            # Validate input type
             if not isinstance(attr_data, FlextLdifModels.SchemaAttribute):
                 return FlextResult[str].fail(
-                    (
-                        "write_attribute_to_rfc requires SchemaAttribute model, got "
-                        f"{type(attr_data).__name__}"
-                    ),
+                    f"Invalid attribute type: expected SchemaAttribute, got {type(attr_data).__name__}",
                 )
 
             # Check for original format in metadata (for perfect round-trip)
@@ -734,13 +744,10 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 FlextResult with RFC-compliant objectClass string
 
             """
-            # Type check - ensure we got a proper model object
+            # Validate input type
             if not isinstance(oc_data, FlextLdifModels.SchemaObjectClass):
                 return FlextResult[str].fail(
-                    (
-                        "write_objectclass_to_rfc requires SchemaObjectClass model, got "
-                        f"{type(oc_data).__name__}"
-                    ),
+                    f"Invalid objectClass type: expected SchemaObjectClass, got {type(oc_data).__name__}",
                 )
 
             # Check for original format in metadata (for perfect round-trip)
@@ -810,10 +817,8 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 return "attribute"
             if isinstance(definition, FlextLdifModels.SchemaObjectClass):
                 return "objectclass"
-            # Try to detect from string content
-            definition_str = (
-                definition if isinstance(definition, str) else str(definition)
-            )
+            # Try to detect from string content (definition is str at this point)
+            definition_str = str(definition)
             definition_lower = definition_str.lower()
 
             # Check for objectClass-specific keywords (RFC 4512)
@@ -1296,7 +1301,9 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             **kwargs: object,
         ) -> Self:
             """Override __new__ to support auto-execute and processor instantiation."""
-            instance = super().__new__(cls)
+            # Use object.__new__ to avoid calling parent's __new__ which also checks auto_execute
+            # This prevents recursion when child class has auto_execute=True
+            instance = object.__new__(cls)
             # Remove auto-execute kwargs before passing to __init__
             auto_execute_kwargs = {
                 "attr_definition",
@@ -1308,7 +1315,9 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             init_kwargs = {
                 k: v for k, v in kwargs.items() if k not in auto_execute_kwargs
             }
-            type(instance).__init__(instance, schema_service=schema_service, **init_kwargs)  # type: ignore[call-arg]
+            type(instance).__init__(
+                instance, schema_service=schema_service, **init_kwargs
+            )  # type: ignore[call-arg]
 
             if cls.auto_execute:
                 attr_def = (
@@ -1602,6 +1611,16 @@ class FlextLdifServersRfc(FlextLdifServersBase):
     class Acl(FlextLdifServersBase.Acl):
         """RFC 4516 Compliant ACL Quirk - Base Implementation."""
 
+        def __init__(self, acl_service: object | None = None, **kwargs: object) -> None:
+            """Initialize RFC ACL quirk service.
+
+            Args:
+                acl_service: Injected FlextLdifAcl service (optional)
+                **kwargs: Passed to parent class
+
+            """
+            super().__init__(acl_service=acl_service, **kwargs)
+
         def can_handle_acl(self, acl_line: FlextLdifTypes.AclOrString) -> bool:
             """Check if this quirk can handle the ACL definition.
 
@@ -1675,7 +1694,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 A FlextResult containing the Acl model.
 
             """
-            if not acl_line or not isinstance(acl_line, str) or not acl_line.strip():
+            if not acl_line or not acl_line.strip():
                 return FlextResult.fail("ACL line must be a non-empty string.")
 
             # Get server type from the actual server class (not hardcoded "rfc")
@@ -1963,6 +1982,20 @@ class FlextLdifServersRfc(FlextLdifServersBase):
 
     class Entry(FlextLdifServersBase.Entry):
         """RFC 2849 Compliant Entry Quirk - Base Implementation."""
+
+        def __init__(
+            self,
+            entry_service: object | None = None,
+            **kwargs: object,
+        ) -> None:
+            """Initialize RFC entry quirk service.
+
+            Args:
+                entry_service: Injected FlextLdifEntry service (optional)
+                **kwargs: Passed to parent class
+
+            """
+            super().__init__(entry_service=entry_service, **kwargs)
 
         def can_handle(
             self,
@@ -2362,7 +2395,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             base64_encode_binary option is enabled (default: True).
             """
             # Handle pre-encoded base64 values (from parsing with __BASE64__ marker)
-            if isinstance(value, str) and value.startswith("__BASE64__:"):
+            if value.startswith("__BASE64__:"):
                 base64_value = value[11:]  # Remove "__BASE64__:" marker
                 ldif_lines.append(f"{attr_name}:: {base64_value}")
                 return
@@ -2414,7 +2447,19 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                         )
                 elif attr_values:
                     # Single non-list value
-                    ldif_lines.append(f"{attr_name}: {attr_values}")
+                    # CORRECT: Ensure value is string for RFC 2849 compliance
+                    str_value = (
+                        str(attr_values)
+                        if not isinstance(attr_values, str)
+                        else attr_values
+                    )
+                    # Use _write_entry_attribute_value to ensure proper RFC 2849 encoding
+                    self._write_entry_attribute_value(
+                        ldif_lines,
+                        attr_name,
+                        str_value,
+                        write_options,
+                    )
 
         def _write_entry(
             self,
@@ -2446,7 +2491,15 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                         write_options = write_options_obj
 
                 # Check if LDIF modify format requested
-                if write_options and write_options.ldif_changetype == "modify":
+                # Also use modify format if entry has no attributes (RFC 2849 § 4)
+                use_modify_format = (
+                    write_options and write_options.ldif_changetype == "modify"
+                ) or (not entry_data.attributes or not entry_data.attributes.attributes)
+
+                if use_modify_format:
+                    # Create default write_options if not provided
+                    if write_options is None:
+                        write_options = FlextLdifModels.WriteFormatOptions()
                     return self._write_entry_modify_format(entry_data, write_options)
 
                 # Standard ADD format (RFC 2849 § 3)
@@ -2549,34 +2602,40 @@ class FlextLdifServersRfc(FlextLdifServersBase):
         def _handle_parse_entry(
             self,
             ldif_text: str,
-        ) -> FlextResult[FlextLdifTypes.EntryOrString]:
+        ) -> FlextResult[FlextLdifModels.Entry | str]:
             """Handle parse operation for entry quirk."""
             parse_result = self._route_parse(ldif_text)
             if parse_result.is_success:
                 parsed_entries: list[FlextLdifModels.Entry] = parse_result.unwrap()
-                return FlextResult[FlextLdifTypes.EntryOrString].ok(
-                    cast("FlextLdifTypes.EntryOrString", parsed_entries)
+                if len(parsed_entries) == 1:
+                    return FlextResult[FlextLdifModels.Entry | str].ok(
+                        parsed_entries[0]
+                    )
+                if len(parsed_entries) == 0:
+                    return FlextResult[FlextLdifModels.Entry | str].ok("")
+                return FlextResult[FlextLdifModels.Entry | str].fail(
+                    f"Parse returned {len(parsed_entries)} entries, but execute() can only return single Entry or str"
                 )
             error_msg: str = parse_result.error or "Parse failed"
-            return FlextResult[FlextLdifTypes.EntryOrString].fail(error_msg)
+            return FlextResult[FlextLdifModels.Entry | str].fail(error_msg)
 
         def _handle_write_entry(
             self,
             entries_to_write: list[FlextLdifModels.Entry],
-        ) -> FlextResult[FlextLdifTypes.EntryOrString]:
+        ) -> FlextResult[FlextLdifModels.Entry | str]:
             """Handle write operation for entry quirk."""
             write_result = self._route_write_many(entries_to_write)
             if write_result.is_success:
                 written_text: str = write_result.unwrap()
-                return FlextResult[FlextLdifTypes.EntryOrString].ok(written_text)
+                return FlextResult[FlextLdifModels.Entry | str].ok(written_text)
             error_msg: str = write_result.error or "Write failed"
-            return FlextResult[FlextLdifTypes.EntryOrString].fail(error_msg)
+            return FlextResult[FlextLdifModels.Entry | str].fail(error_msg)
 
         def _auto_detect_entry_operation(
             self,
             data: str | list[FlextLdifModels.Entry],
             operation: Literal["parse", "write"] | None,
-        ) -> Literal["parse", "write"] | FlextResult[FlextLdifTypes.EntryOrString]:
+        ) -> Literal["parse", "write"] | FlextResult[FlextLdifModels.Entry | str]:
             """Auto-detect entry operation from data type.
 
             If operation is forced (not None), uses it. Otherwise detects from type:
@@ -2591,20 +2650,24 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             if isinstance(data, str):
                 return "parse"
 
-            # isinstance narrowed to list by type checker (data: str | list[Entry])
-            if not data or all(
-                isinstance(item, FlextLdifModels.Entry) for item in data
-            ):
+            # data is list[Entry] at this point (type checker narrowed from str | list[Entry])
+            if not data:
                 return "write"
-            return FlextResult[FlextLdifTypes.EntryOrString].fail(
-                f"list contains unknown types, not Entry models: {[type(item).__name__ for item in data[:3]]}",
-            )
+
+            # Validate that all items in list are Entry models
+            for item in data:
+                if not isinstance(item, FlextLdifModels.Entry):
+                    return FlextResult[FlextLdifModels.Entry | str].fail(
+                        f"list contains unknown types, not Entry models: {[type(item).__name__ for item in data[:3]]}",
+                    )
+
+            return "write"
 
         def _route_entry_operation(
             self,
             data: str | list[FlextLdifModels.Entry],
             operation: Literal["parse", "write"],
-        ) -> FlextResult[FlextLdifTypes.EntryOrString]:
+        ) -> FlextResult[FlextLdifModels.Entry | str]:
             """Route entry data to appropriate parse or write handler.
 
             Validates data type matches operation, then delegates to handler.
@@ -2612,14 +2675,14 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             """
             if operation == "parse":
                 if not isinstance(data, str):
-                    return FlextResult[FlextLdifTypes.EntryOrString].fail(
+                    return FlextResult[FlextLdifModels.Entry | str].fail(
                         f"parse operation requires str, got {type(data).__name__}",
                     )
                 return self._handle_parse_entry(data)
 
             if operation == "write":
                 if not isinstance(data, list):
-                    return FlextResult[FlextLdifTypes.EntryOrString].fail(
+                    return FlextResult[FlextLdifModels.Entry | str].fail(
                         f"write operation requires list[Entry], got {type(data).__name__}",
                     )
                 return self._handle_write_entry(data)
@@ -2632,7 +2695,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             self,
             data: str | list[FlextLdifModels.Entry] | None = None,
             operation: Literal["parse", "write"] | None = None,
-        ) -> FlextResult[FlextLdifTypes.EntryOrString]:
+        ) -> FlextResult[FlextLdifModels.Entry | str | list[FlextLdifModels.Entry]]:
             r"""Execute entry quirk operation with automatic type detection and routing.
 
             Fully automatic polymorphic dispatch based on data type:
@@ -2657,6 +2720,9 @@ class FlextLdifServersRfc(FlextLdifServersBase):
 
             Returns:
                 FlextResult[list[Entry] | str] depending on operation
+                - When operation="parse": returns list[Entry]
+                - When operation="write": returns str
+                - When operation=None: auto-detects and returns appropriate type
 
             Raises:
                 Returns fail() if data type is unknown or operation fails
@@ -2664,15 +2730,29 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             """
             # Health check: no data provided
             if data is None:
-                empty_list: list[FlextLdifModels.Entry] = []
-                return FlextResult[FlextLdifTypes.EntryOrString].ok(
-                    cast("FlextLdifTypes.EntryOrString", empty_list)
-                )
+                return FlextResult[
+                    FlextLdifModels.Entry | str | list[FlextLdifModels.Entry]
+                ].ok("")
 
             # Auto-detect operation from data type
             detected_operation = self._auto_detect_entry_operation(data, operation)
             if isinstance(detected_operation, FlextResult):
                 return detected_operation
+
+            # When operation="parse" is explicitly specified, return list directly
+            if detected_operation == "parse" and operation == "parse":
+                if not isinstance(data, str):
+                    return FlextResult[
+                        FlextLdifModels.Entry | str | list[FlextLdifModels.Entry]
+                    ].fail(
+                        f"parse operation requires str, got {type(data).__name__}",
+                    )
+                parse_result = self._route_parse(data)
+                if parse_result.is_success:
+                    return FlextResult[
+                        FlextLdifModels.Entry | str | list[FlextLdifModels.Entry]
+                    ].ok(parse_result.unwrap())
+                return parse_result  # type: ignore[return-value]
 
             # Route to appropriate handler
             return self._route_entry_operation(data, detected_operation)
@@ -2723,7 +2803,9 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             init_kwargs = {
                 k: v for k, v in kwargs.items() if k not in auto_execute_kwargs
             }
-            type(instance).__init__(instance, entry_service=entry_service, **init_kwargs)  # type: ignore[call-arg]
+            type(instance).__init__(
+                instance, entry_service=entry_service, **init_kwargs
+            )  # type: ignore[call-arg]
 
             if cls.auto_execute:
                 ldif_txt = (
@@ -2800,8 +2882,6 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 return FlextResult[FlextLdifModels.Entry].fail("DN is None or empty")
 
             # Convert attributes to FlextLdifModels.LdifAttributes
-            if entry_attrs is None:
-                entry_attrs = {}
             attrs_result = FlextLdifModels.LdifAttributes.create(dict(entry_attrs))
             if not attrs_result.is_success:
                 return FlextResult[FlextLdifModels.Entry].fail(
@@ -2823,7 +2903,9 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 )
             entry = entry_result.unwrap()
 
-            return FlextResult[FlextLdifModels.Entry].ok(cast(FlextLdifModels.Entry, entry))
+            return FlextResult[FlextLdifModels.Entry].ok(
+                cast("FlextLdifModels.Entry", entry)
+            )
 
         def _write_entry_add_format(
             self,
@@ -2896,7 +2978,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
 
             return FlextResult[str].ok(ldif_text)
 
-        def _write_entry_modify_format(
+        def _write_entry_modify_format(  # noqa: C901
             self,
             entry_data: FlextLdifModels.Entry,
             _write_options: FlextLdifModels.WriteFormatOptions,
@@ -2963,13 +3045,45 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                     ldif_lines.append(f"replace: {attr_name}")
 
                     # Add attribute value(s) - handle bytes or str
+                    # Use _write_entry_attribute_value for proper base64 encoding
                     if isinstance(value, bytes):
+                        # Convert bytes to base64-encoded string
                         encoded_value = base64.b64encode(value).decode("ascii")
                         ldif_lines.append(f"{attr_name}:: {encoded_value}")
                     else:
-                        # Ensure value is str for type checker
-                        str_value = str(value)
-                        ldif_lines.append(f"{attr_name}: {str_value}")
+                        # CORRECT: Ensure value is str and valid UTF-8 for RFC 2849 compliance
+                        str_value = str(value) if not isinstance(value, str) else value
+
+                        # CORRECT: Ensure valid UTF-8 encoding (RFC 2849 requirement)
+                        try:
+                            str_value.encode("utf-8")
+                        except UnicodeEncodeError:
+                            # Invalid UTF-8 - encode with error handling
+                            str_value = str_value.encode(
+                                "utf-8", errors="replace"
+                            ).decode("utf-8", errors="replace")
+                            logger.debug(
+                                "RFC quirks: Corrected invalid UTF-8 in attribute '%s'",
+                                attr_name,
+                            )
+
+                        # Check if attribute is a known binary attribute (RFC 4522)
+                        # Binary attributes should always be base64-encoded
+                        is_binary_attr = (
+                            attr_name.lower()
+                            in FlextLdifConstants.RfcBinaryAttributes.BINARY_ATTRIBUTE_NAMES
+                        )
+                        # Check if value needs base64 encoding per RFC 2849
+                        needs_base64 = is_binary_attr or self._needs_base64_encoding(
+                            str_value
+                        )
+                        if needs_base64:
+                            encoded_value = base64.b64encode(
+                                str_value.encode("utf-8")
+                            ).decode("ascii")
+                            ldif_lines.append(f"{attr_name}:: {encoded_value}")
+                        else:
+                            ldif_lines.append(f"{attr_name}: {str_value}")
 
             # Final separator
             if ldif_lines[-1] != "-":

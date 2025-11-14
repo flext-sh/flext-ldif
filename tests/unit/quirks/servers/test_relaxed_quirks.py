@@ -17,6 +17,7 @@ import pytest
 
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.servers.relaxed import FlextLdifServersRelaxed
+from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
 
 
 class TestRelaxedSchemas:
@@ -43,7 +44,7 @@ class TestRelaxedSchemas:
         # Malformed attribute
         malformed = "( 2.5.4.3 NAME 'broken'"
         result = relaxed_schema.parse(malformed)
-        assert result.is_success
+        TestDeduplicationHelpers.assert_success_and_unwrap(result)
 
         # Empty string - should fail
         result = relaxed_schema.parse("")
@@ -62,10 +63,11 @@ class TestRelaxedSchemas:
         # Malformed attribute missing closing paren
         malformed = "( 2.5.4.3 NAME 'cn' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15"
 
-        result = relaxed_schema.parse(malformed)
-        assert result.is_success
+        from tests.helpers.test_rfc_helpers import RfcTestHelpers
 
-        parsed = result.unwrap()
+        parsed = RfcTestHelpers.test_result_success_and_unwrap(
+            relaxed_schema.parse(malformed),
+        )
         assert (
             parsed.metadata
             and parsed.metadata.extensions.get(
@@ -73,7 +75,6 @@ class TestRelaxedSchemas:
             )
             is True
         )
-        assert hasattr(parsed, "oid")
         assert parsed.oid == "2.5.4.3"
 
     def test_parse_attribute_with_unknown_oid_format(
@@ -85,10 +86,11 @@ class TestRelaxedSchemas:
         # But if it has a valid OID pattern, should work
         non_standard = "( 2.5.4.999 NAME 'attr' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
 
-        result = relaxed_schema.parse_attribute(non_standard)
-        assert result.is_success
+        from tests.helpers.test_rfc_helpers import RfcTestHelpers
 
-        parsed = result.unwrap()
+        parsed = RfcTestHelpers.test_result_success_and_unwrap(
+            relaxed_schema.parse_attribute(non_standard),
+        )
         assert (
             parsed.metadata
             and parsed.metadata.extensions.get(
@@ -104,10 +106,11 @@ class TestRelaxedSchemas:
         """Test that parsed attribute includes original definition."""
         attr_def = "( 2.5.4.3 NAME 'cn' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
 
-        result = relaxed_schema.parse_attribute(attr_def)
-        assert result.is_success
+        from tests.helpers.test_rfc_helpers import RfcTestHelpers
 
-        parsed = result.unwrap()
+        parsed = RfcTestHelpers.test_result_success_and_unwrap(
+            relaxed_schema.parse_attribute(attr_def),
+        )
         assert (
             parsed.metadata
             and parsed.metadata.extensions.get("original_format") == attr_def
@@ -121,10 +124,11 @@ class TestRelaxedSchemas:
         # Malformed objectClass
         malformed = "( 2.5.6.0 NAME 'top' ABSTRACT MUST objectClass"
 
-        result = relaxed_schema.parse(malformed)
-        assert result.is_success
+        from tests.helpers.test_rfc_helpers import RfcTestHelpers
 
-        parsed = result.unwrap()
+        parsed = RfcTestHelpers.test_result_success_and_unwrap(
+            relaxed_schema.parse(malformed),
+        )
         assert (
             parsed.metadata
             and parsed.metadata.extensions.get(
@@ -170,9 +174,7 @@ class TestRelaxedSchemas:
         )
 
         result = relaxed_schema.write_attribute(attr_data)
-        assert result.is_success
-
-        written = result.unwrap()
+        written = TestDeduplicationHelpers.assert_success_and_unwrap(result)
         assert isinstance(written, str) and len(written) > 0
 
 
@@ -201,7 +203,7 @@ class TestRelaxedAcls:
         # Valid ACL
         valid = '(targetentry="cn=admin,dc=example,dc=com")(version 3.0;acl "admin";allow(all)'
         result = relaxed_acl.parse(valid)
-        assert result.is_success
+        TestDeduplicationHelpers.assert_success_and_unwrap(result)
 
     def test_parse_malformed_acl(
         self,
@@ -246,9 +248,7 @@ class TestRelaxedAcls:
         )
 
         result = relaxed_acl.write(acl_data)
-        assert result.is_success
-
-        written = result.unwrap()
+        written = TestDeduplicationHelpers.assert_success_and_unwrap(result)
         assert written == raw_acl
 
 

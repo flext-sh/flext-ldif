@@ -825,6 +825,15 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             fixed_equality = attr_data.equality
             fixed_substr = attr_data.substr
 
+            # OUD QUIRK: caseIgnoreSubstringsMatch must be SUBSTR, not EQUALITY
+            # If equality is caseIgnoreSubstringsMatch, move it to substr
+            if fixed_equality == "caseIgnoreSubstringsMatch":
+                logger.debug(
+                    "Moving caseIgnoreSubstringsMatch from EQUALITY to SUBSTR for OUD compatibility"
+                )
+                fixed_substr = "caseIgnoreSubstringsMatch"
+                fixed_equality = None  # Remove from equality - must be explicitly None, not empty string
+
             # Check for invalid SUBSTR rules and apply INVALID_SUBSTR_RULES mappings
             invalid_substr_rules = FlextLdifServersOud.Constants.INVALID_SUBSTR_RULES
             if fixed_substr and fixed_substr in invalid_substr_rules:
@@ -853,6 +862,99 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                     "substr": fixed_substr,
                 },
             )
+
+        def _write_attribute(
+            self,
+            attr_data: FlextLdifModels.SchemaAttribute,
+        ) -> FlextResult[str]:
+            """Write attribute with OUD-specific transformations applied.
+
+            Overrides RFC implementation to ensure OUD quirks are applied even when
+            original_format is present in metadata. This is critical for fixing
+            issues like EQUALITY caseIgnoreSubstringsMatch → SUBSTR caseIgnoreSubstringsMatch.
+
+            Args:
+                attr_data: SchemaAttribute model
+
+            Returns:
+                FlextResult with OUD-compatible attribute string
+
+            """
+            # Always apply OUD transformations first, even if original_format exists
+            # This ensures OUD-specific fixes (like EQUALITY→SUBSTR conversion) are applied
+            transformed_attr = self._transform_attribute_for_write(attr_data)
+
+            # Remove original_format from metadata to force writing from transformed model
+            # The model is already correct (transformed during OID parse), so we don't need original_format
+            # This prevents RFC base from using the incorrect original_format
+            if transformed_attr.metadata and transformed_attr.metadata.extensions.get(
+                "original_format"
+            ):
+                # Create new extensions dict without original_format
+                new_extensions = {
+                    k: v
+                    for k, v in transformed_attr.metadata.extensions.items()
+                    if k != "original_format"
+                }
+                # Create new metadata without original_format using model_copy
+                new_metadata = transformed_attr.metadata.model_copy(
+                    update={"extensions": new_extensions}
+                )
+                # Create new attribute model without original_format in metadata
+                transformed_attr = transformed_attr.model_copy(
+                    update={"metadata": new_metadata}
+                )
+
+            # Always write from transformed model to ensure OUD quirks are applied
+            # This ensures EQUALITY→SUBSTR conversion and other OUD fixes are always applied
+            return super()._write_attribute(transformed_attr)
+
+        def _write_objectclass(
+            self,
+            oc_data: FlextLdifModels.SchemaObjectClass,
+        ) -> FlextResult[str]:
+            """Write objectClass with OUD-specific transformations applied.
+
+            Overrides RFC implementation to ensure OUD quirks are applied even when
+            original_format is present in metadata. This fixes:
+            - SUP ( top ) → SUP top (remove parentheses)
+            - SUP 'top' → SUP top (remove quotes)
+            - AUXILLARY → AUXILIARY (fix typo)
+
+            Args:
+                oc_data: SchemaObjectClass model
+
+            Returns:
+                FlextResult with OUD-compatible objectClass string
+
+            """
+            # Always apply OUD transformations first
+            transformed_oc = self._transform_objectclass_for_write(oc_data)
+
+            # Remove original_format from metadata to force writing from transformed model
+            # The model is already correct (transformed during OID parse), so we don't need original_format
+            # This prevents RFC base from using the incorrect original_format
+            if transformed_oc.metadata and transformed_oc.metadata.extensions.get(
+                "original_format"
+            ):
+                # Create new extensions dict without original_format
+                new_extensions = {
+                    k: v
+                    for k, v in transformed_oc.metadata.extensions.items()
+                    if k != "original_format"
+                }
+                # Create new metadata without original_format using model_copy
+                new_metadata = transformed_oc.metadata.model_copy(
+                    update={"extensions": new_extensions}
+                )
+                # Create new objectClass model without original_format in metadata
+                transformed_oc = transformed_oc.model_copy(
+                    update={"metadata": new_metadata}
+                )
+
+            # Always write from transformed model to ensure OUD quirks are applied
+            # This ensures SUP ( top ) → SUP top, SUP 'top' → SUP top, AUXILLARY → AUXILIARY fixes
+            return super()._write_objectclass(transformed_oc)
 
         def extract_schemas_from_ldif(
             self,
@@ -984,6 +1086,28 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 FlextResult with LDIF string in OUD modify-add format
 
             """
+            # INFO: Log entry to track method execution (use INFO so it appears in migration logs)
+            logger.info(
+                "OUD _write_entry_modify_add_format: Method called",
+                extra={
+                    "dn": entry_data.dn.value if entry_data.dn else None,
+                    "has_attributes": bool(
+                        entry_data.attributes and entry_data.attributes.attributes
+                    ),
+                    "class_name": type(self).__name__,
+                    "attribute_types_count": len(
+                        entry_data.attributes.attributes.get("attributeTypes", [])
+                    )
+                    if entry_data.attributes and entry_data.attributes.attributes
+                    else 0,
+                    "object_classes_count": len(
+                        entry_data.attributes.attributes.get("objectClasses", [])
+                    )
+                    if entry_data.attributes and entry_data.attributes.attributes
+                    else 0,
+                },
+            )
+
             # Lazy import for optional external dependency
             ldif_lines: list[str] = []
 
@@ -1044,14 +1168,158 @@ class FlextLdifServersOud(FlextLdifServersRfc):
 
                 # Write each value as separate add block (CRITICAL: ONE VALUE PER BLOCK)
                 for _oid, value in filtered_values:
-                    # OUD QUIRK: Clean SYNTAX OID quotes before writing
-                    # RFC 4512: SYNTAX OID must NOT be quoted
-                    # OID exports with quotes: SYNTAX '1.3.6.1.4.1.1466.115.121.1.7'
-                    # OUD requires without quotes: SYNTAX 1.3.6.1.4.1.1466.115.121.1.7
-                    # Call Schema's static method (DRY: avoid duplicating _clean_syntax_quotes)
-                    cleaned_value = FlextLdifServersOud.Schema.clean_syntax_quotes(
-                        value
+                    # CRITICAL: Parse and write using quirks to apply OUD transformations
+                    # The value is a string from Entry attributes, but we need to parse it
+                    # and write it using the quirks write methods to apply transformations
+                    # (e.g., EQUALITY caseIgnoreSubstringsMatch → SUBSTR caseIgnoreSubstringsMatch)
+
+                    # Parse the schema definition string using source quirks (OID)
+                    # This ensures the model is correctly transformed during parse
+                    # The value may have prefix "attributeTypes: " or "objectClasses: " - remove it
+                    value_to_parse = value.strip()
+                    if value_to_parse.startswith("attributeTypes:"):
+                        value_to_parse = value_to_parse[
+                            len("attributeTypes:") :
+                        ].strip()
+                    elif value_to_parse.startswith("objectClasses:"):
+                        value_to_parse = value_to_parse[len("objectClasses:") :].strip()
+
+                    # Track if this is a problematic value that needs transformation
+                    needs_transformation = (
+                        "EQUALITY caseIgnoreSubstringsMatch" in value_to_parse
+                        or "EQUALITY caseIgnoreSubStringsMatch" in value_to_parse
+                        or "SUP 'top'" in value_to_parse
+                        or "SUP ( top )" in value_to_parse
                     )
+
+                    # INFO: Log problematic values (use INFO so it appears in migration logs)
+                    if needs_transformation:
+                        logger.info(
+                            "OUD _write_entry_modify_add_format: Processing problematic value",
+                            extra={
+                                "schema_type": schema_type,
+                                "value_start": value_to_parse[:150],
+                                "has_equality_caseIgnore": "EQUALITY caseIgnoreSubstringsMatch"
+                                in value_to_parse
+                                or "EQUALITY caseIgnoreSubStringsMatch"
+                                in value_to_parse,
+                                "has_sup_quotes": "SUP 'top'" in value_to_parse,
+                                "has_sup_parens": "SUP ( top )" in value_to_parse,
+                            },
+                        )
+
+                    if schema_type.lower() == "attributetypes":
+                        # Parse as attribute using OID quirks (which applies transformations)
+                        from flext_ldif.servers.oid import FlextLdifServersOid
+
+                        oid_quirk = FlextLdifServersOid()
+                        parse_result = oid_quirk.schema_quirk.parse_attribute(
+                            value_to_parse
+                        )
+                        if parse_result.is_success:
+                            # Write using OUD quirks (which applies OUD-specific transformations)
+                            attr_model = parse_result.unwrap()
+                            # Access schema_quirk from parent OUD quirks instance
+                            # Use parent_quirk if available, otherwise create new instance
+                            if hasattr(self, "parent_quirk") and self.parent_quirk:
+                                oud_schema_quirk = self.parent_quirk.schema_quirk
+                            else:
+                                oud_schema_quirk = FlextLdifServersOud().schema_quirk
+                            write_result = oud_schema_quirk.write_attribute(attr_model)
+                            if write_result.is_success:
+                                cleaned_value = write_result.unwrap()
+                                if needs_transformation:
+                                    logger.info(
+                                        "OUD _write_entry_modify_add_format: Attribute transformation applied",
+                                        extra={
+                                            "original_has_equality": "EQUALITY caseIgnoreSubstringsMatch"
+                                            in value
+                                            or "EQUALITY caseIgnoreSubStringsMatch"
+                                            in value,
+                                            "result_has_substr": "SUBSTR caseIgnoreSubstringsMatch"
+                                            in cleaned_value,
+                                            "result_has_equality": "EQUALITY caseIgnoreSubstringsMatch"
+                                            in cleaned_value
+                                            or "EQUALITY caseIgnoreSubStringsMatch"
+                                            in cleaned_value,
+                                            "transformation_applied": cleaned_value
+                                            != value,
+                                        },
+                                    )
+                            else:
+                                # Fallback to original value if write fails
+                                logger.warning(
+                                    f"OUD _write_entry_modify_add_format: Write failed, using original: {write_result.error}"
+                                )
+                                cleaned_value = (
+                                    FlextLdifServersOud.Schema.clean_syntax_quotes(
+                                        value
+                                    )
+                                )
+                        else:
+                            # Fallback to original value if parse fails
+                            logger.warning(
+                                f"OUD _write_entry_modify_add_format: Parse failed, using original: {parse_result.error}"
+                            )
+                            cleaned_value = (
+                                FlextLdifServersOud.Schema.clean_syntax_quotes(value)
+                            )
+                    elif schema_type.lower() == "objectclasses":
+                        # Parse as objectClass using OID quirks (which applies transformations)
+                        from flext_ldif.servers.oid import FlextLdifServersOid
+
+                        oid_quirk = FlextLdifServersOid()
+                        parse_result = oid_quirk.schema_quirk.parse_objectclass(
+                            value_to_parse
+                        )
+                        if parse_result.is_success:
+                            # Write using OUD quirks (which applies OUD-specific transformations)
+                            oc_model = parse_result.unwrap()
+                            # Access schema_quirk from parent OUD quirks instance
+                            # Use parent_quirk if available, otherwise create new instance
+                            if hasattr(self, "parent_quirk") and self.parent_quirk:
+                                oud_schema_quirk = self.parent_quirk.schema_quirk
+                            else:
+                                oud_schema_quirk = FlextLdifServersOud().schema_quirk
+                            write_result = oud_schema_quirk.write_objectclass(oc_model)
+                            if write_result.is_success:
+                                cleaned_value = write_result.unwrap()
+                                is_problematic = cleaned_value != value
+                                if is_problematic:
+                                    logger.debug(
+                                        "OUD _write_entry_modify_add_format: ObjectClass transformation applied",
+                                        extra={
+                                            "original_has_sup_quotes": "SUP 'top'"
+                                            in value,
+                                            "result_has_sup_top": "SUP top"
+                                            in cleaned_value,
+                                            "result_has_sup_quotes": "SUP 'top'"
+                                            in cleaned_value,
+                                        },
+                                    )
+                            else:
+                                # Fallback to original value if write fails
+                                logger.warning(
+                                    f"OUD _write_entry_modify_add_format: Write failed, using original: {write_result.error}"
+                                )
+                                cleaned_value = (
+                                    FlextLdifServersOud.Schema.clean_syntax_quotes(
+                                        value
+                                    )
+                                )
+                        else:
+                            # Fallback to original value if parse fails
+                            logger.warning(
+                                f"OUD _write_entry_modify_add_format: Parse failed, using original: {parse_result.error}"
+                            )
+                            cleaned_value = (
+                                FlextLdifServersOud.Schema.clean_syntax_quotes(value)
+                            )
+                    else:
+                        # For other schema types (matchingRules, matchingRuleUse), use original cleaning
+                        cleaned_value = FlextLdifServersOud.Schema.clean_syntax_quotes(
+                            value
+                        )
 
                     first_block = self._add_ldif_block(
                         ldif_lines,
@@ -1248,38 +1516,107 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             )
             return FlextResult[None].ok(None)
 
+        def _correct_rfc_syntax_in_attributes(
+            self,
+            attrs_dict: dict[str, object],
+        ) -> FlextResult[dict[str, object]]:
+            """Correct RFC syntax issues in attribute values (syntax only, not structure).
+
+            Args:
+                attrs_dict: Dictionary of attributes to correct
+
+            Returns:
+                FlextResult with corrected_attributes and syntax_corrections list
+
+            """
+            corrected_attributes: dict[str, list[str]] = {}
+            syntax_corrections: list[str] = []
+
+            for attr_name, attr_values in attrs_dict.items():
+                # Handle both list and single value
+                # Type narrowing: attr_values is object, need to check if it's a list
+                if isinstance(attr_values, list):
+                    # Already a list, use as-is
+                    values_list: list[object] = attr_values
+                else:
+                    # Single value, wrap in list
+                    values_list = [attr_values]
+                corrected_values: list[str] = []
+
+                for value in values_list:
+                    if not isinstance(value, str):
+                        # CORRECT: Convert non-string to string (preserve data, fix syntax)
+                        str_value = str(value)
+                        corrected_values.append(str_value)
+                        if value != str_value:
+                            syntax_corrections.append(
+                                f"Converted {attr_name} value to string"
+                            )
+                        continue
+
+                    # CORRECT: Ensure valid UTF-8 encoding (RFC 2849 requirement)
+                    try:
+                        # Validate UTF-8 encoding
+                        value.encode("utf-8")
+                        # Value is valid UTF-8 - keep as-is
+                        corrected_values.append(value)
+                    except UnicodeEncodeError:
+                        # Invalid UTF-8 - encode with error handling (preserve data, fix syntax)
+                        corrected_value = value.encode(
+                            "utf-8", errors="replace"
+                        ).decode("utf-8", errors="replace")
+                        corrected_values.append(corrected_value)
+                        syntax_corrections.append(
+                            f"Fixed UTF-8 encoding for {attr_name}"
+                        )
+                        logger.debug(
+                            "OUD quirks: Corrected invalid UTF-8 in attribute '%s'",
+                            attr_name,
+                        )
+
+                corrected_attributes[attr_name] = corrected_values
+
+            # Return with proper type annotation for dict[str, object]
+            result_dict: dict[str, object] = {
+                "corrected_attributes": corrected_attributes,
+                "syntax_corrections": syntax_corrections,
+            }
+            return FlextResult[dict[str, object]].ok(result_dict)
+
         def _hook_pre_write_entry(
             self,
             entry: FlextLdifModels.Entry,
         ) -> FlextResult[FlextLdifModels.Entry]:
-            """Hook: Validate OUD ACI macros before writing Entry.
+            """Hook: Validate and CORRECT RFC syntax issues before writing Entry.
 
-            OUD ACIs may contain macros for dynamic DN substitution:
-            - ($dn): substring substitution from target to subject
-            - [$dn]: hierarchical substitution (for domain-level delegation)
-            - ($attr.attrName): attribute value substitution
+            This hook ensures that Entry data with RFC-valid syntax is properly
+            formatted for OUD LDIF output. It does NOT alter data structure
+            (attributes, objectClasses, etc.) - only corrects syntax/formatting.
 
-            This hook validates macro consistency WITHOUT expanding them
-            (expansion happens at runtime in OUD directory server).
+            Corrections applied:
+            1. Validate ACI macros (syntax validation)
+            2. Ensure attribute values are properly encoded (RFC 2849)
+            3. Normalize string values to valid UTF-8 (RFC 2849 requirement)
+            4. Ensure all values are strings (convert non-strings)
 
-            Rules enforced:
-            1. Subject macros require matching target macros
-            2. Macro syntax must be well-formed
-            3. No attribute mutations - RFC Entry preserved as-is
+            IMPORTANT: Does NOT remove attributes, objectClasses, or alter data structure.
+            All data is preserved - only syntax/formatting is corrected.
 
             Args:
                 entry: RFC Entry (already canonical, with aci: attributes)
 
             Returns:
-                FlextResult[Entry] - entry unchanged if valid, fail() if macro errors
+                FlextResult[Entry] - entry with corrected syntax, fail() if syntax errors
 
             """
             # Extract attributes dict with None check for type safety
-            attrs_dict = (
+            attrs_dict_raw = (
                 entry.attributes.attributes if entry.attributes is not None else {}
             )
+            # Cast to dict[str, object] for type compatibility with _correct_rfc_syntax_in_attributes
+            attrs_dict: dict[str, object] = dict(attrs_dict_raw.items())
 
-            # Validate ACI macros if present
+            # Step 1: Validate ACI macros if present (syntax validation)
             aci_attrs = attrs_dict.get("aci")
             if aci_attrs and isinstance(aci_attrs, list):
                 for aci_value in aci_attrs:
@@ -1290,7 +1627,42 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                                 f"ACI macro validation failed: {validation_result.error}",
                             )
 
-            # Entry is RFC-canonical - return unchanged
+            # Step 2: CORRECT RFC syntax issues in attribute values (syntax only, not structure)
+            # Ensure all string values are valid UTF-8 and properly formatted (RFC 2849)
+            corrected_result = self._correct_rfc_syntax_in_attributes(attrs_dict)
+            if corrected_result.is_failure:
+                return FlextResult[FlextLdifModels.Entry].fail(corrected_result.error)
+
+            corrected_data = corrected_result.unwrap()
+            # Type narrowing for syntax_corrections
+            syntax_corrections = corrected_data.get("syntax_corrections")
+            if (
+                syntax_corrections
+                and isinstance(syntax_corrections, list)
+                and len(syntax_corrections) > 0
+            ):
+                # Type narrowing for corrected_attributes
+                corrected_attrs = corrected_data.get("corrected_attributes")
+                if isinstance(corrected_attrs, dict):
+                    # Create new LdifAttributes with corrected values (preserve all attributes)
+                    # Cast to dict[str, object] for type compatibility
+                    attrs_for_model: dict[str, object] = dict(corrected_attrs.items())
+                    corrected_ldif_attrs = FlextLdifModels.LdifAttributes(
+                        attributes=attrs_for_model,
+                    )
+
+                    # Create new Entry with corrected attributes (preserve all metadata and structure)
+                    corrected_entry = entry.model_copy(
+                        update={"attributes": corrected_ldif_attrs},
+                    )
+
+                    logger.debug(
+                        "OUD quirks: Applied %s syntax corrections before writing (structure preserved)",
+                        len(syntax_corrections),
+                    )
+                    return FlextResult[FlextLdifModels.Entry].ok(corrected_entry)
+
+            # Entry is RFC-canonical with valid syntax - return unchanged
             # All conversions (orclaci→aci) already done in parsing phase
             return FlextResult[FlextLdifModels.Entry].ok(entry)
 
@@ -2246,18 +2618,28 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 acl_data: ACL model instance
 
             Returns:
-                Formatted bind rules string
+                Formatted bind rules string (empty if DN was filtered out by base_dn)
 
             """
             if not acl_data.subject:
                 # Default: allow for self
                 return f'userdn="{FlextLdifServersOud.Constants.ACL_SELF_SUBJECT}";)'
 
-            # Use utility to format subject
+            # Extract base_dn from metadata if available (set by migrate)
+            base_dn: str | None = None
+            if (
+                acl_data.metadata
+                and hasattr(acl_data.metadata, "extensions")
+                and acl_data.metadata.extensions
+            ):
+                base_dn = acl_data.metadata.extensions.get("base_dn")  # type: ignore[assignment]
+
+            # Use utility to format subject with base_dn filtering
             return FlextLdifUtilities.ACL.format_aci_subject(
                 acl_data.subject.subject_type,
                 acl_data.subject.subject_value,
                 FlextLdifServersOud.Constants,
+                base_dn=base_dn,
             )
 
         def write(self, acl_data: FlextLdifModels.Acl) -> FlextResult[str]:
@@ -2329,10 +2711,17 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                     return FlextResult[str].fail(perms_result.error)
 
                 # Add permissions and subject in one extend call
+                subject_str = self._build_aci_subject(acl_data)
+                # If subject is empty (DN filtered out by base_dn), skip this ACL
+                if not subject_str:
+                    return FlextResult[str].fail(
+                        "ACL subject DN was filtered out by base_dn"
+                    )
+
                 aci_parts.extend(
                     [
                         perms_result.unwrap(),
-                        self._build_aci_subject(acl_data),
+                        subject_str,
                     ],
                 )
 
@@ -2995,6 +3384,28 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 FlextResult with LDIF string in OUD modify-add format
 
             """
+            # INFO: Log entry to track method execution (use INFO so it appears in migration logs)
+            logger.info(
+                "OUD _write_entry_modify_add_format: Method called",
+                extra={
+                    "dn": entry_data.dn.value if entry_data.dn else None,
+                    "has_attributes": bool(
+                        entry_data.attributes and entry_data.attributes.attributes
+                    ),
+                    "class_name": type(self).__name__,
+                    "attribute_types_count": len(
+                        entry_data.attributes.attributes.get("attributeTypes", [])
+                    )
+                    if entry_data.attributes and entry_data.attributes.attributes
+                    else 0,
+                    "object_classes_count": len(
+                        entry_data.attributes.attributes.get("objectClasses", [])
+                    )
+                    if entry_data.attributes and entry_data.attributes.attributes
+                    else 0,
+                },
+            )
+
             # Lazy import for optional external dependency
             ldif_lines: list[str] = []
 
@@ -3055,14 +3466,158 @@ class FlextLdifServersOud(FlextLdifServersRfc):
 
                 # Write each value as separate add block (CRITICAL: ONE VALUE PER BLOCK)
                 for _oid, value in filtered_values:
-                    # OUD QUIRK: Clean SYNTAX OID quotes before writing
-                    # RFC 4512: SYNTAX OID must NOT be quoted
-                    # OID exports with quotes: SYNTAX '1.3.6.1.4.1.1466.115.121.1.7'
-                    # OUD requires without quotes: SYNTAX 1.3.6.1.4.1.1466.115.121.1.7
-                    # Call Schema's static method (DRY: avoid duplicating _clean_syntax_quotes)
-                    cleaned_value = FlextLdifServersOud.Schema.clean_syntax_quotes(
-                        value
+                    # CRITICAL: Parse and write using quirks to apply OUD transformations
+                    # The value is a string from Entry attributes, but we need to parse it
+                    # and write it using the quirks write methods to apply transformations
+                    # (e.g., EQUALITY caseIgnoreSubstringsMatch → SUBSTR caseIgnoreSubstringsMatch)
+
+                    # Parse the schema definition string using source quirks (OID)
+                    # This ensures the model is correctly transformed during parse
+                    # The value may have prefix "attributeTypes: " or "objectClasses: " - remove it
+                    value_to_parse = value.strip()
+                    if value_to_parse.startswith("attributeTypes:"):
+                        value_to_parse = value_to_parse[
+                            len("attributeTypes:") :
+                        ].strip()
+                    elif value_to_parse.startswith("objectClasses:"):
+                        value_to_parse = value_to_parse[len("objectClasses:") :].strip()
+
+                    # Track if this is a problematic value that needs transformation
+                    needs_transformation = (
+                        "EQUALITY caseIgnoreSubstringsMatch" in value_to_parse
+                        or "EQUALITY caseIgnoreSubStringsMatch" in value_to_parse
+                        or "SUP 'top'" in value_to_parse
+                        or "SUP ( top )" in value_to_parse
                     )
+
+                    # INFO: Log problematic values (use INFO so it appears in migration logs)
+                    if needs_transformation:
+                        logger.info(
+                            "OUD _write_entry_modify_add_format: Processing problematic value",
+                            extra={
+                                "schema_type": schema_type,
+                                "value_start": value_to_parse[:150],
+                                "has_equality_caseIgnore": "EQUALITY caseIgnoreSubstringsMatch"
+                                in value_to_parse
+                                or "EQUALITY caseIgnoreSubStringsMatch"
+                                in value_to_parse,
+                                "has_sup_quotes": "SUP 'top'" in value_to_parse,
+                                "has_sup_parens": "SUP ( top )" in value_to_parse,
+                            },
+                        )
+
+                    if schema_type.lower() == "attributetypes":
+                        # Parse as attribute using OID quirks (which applies transformations)
+                        from flext_ldif.servers.oid import FlextLdifServersOid
+
+                        oid_quirk = FlextLdifServersOid()
+                        parse_result = oid_quirk.schema_quirk.parse_attribute(
+                            value_to_parse
+                        )
+                        if parse_result.is_success:
+                            # Write using OUD quirks (which applies OUD-specific transformations)
+                            attr_model = parse_result.unwrap()
+                            # Access schema_quirk from parent OUD quirks instance
+                            # Use parent_quirk if available, otherwise create new instance
+                            if hasattr(self, "parent_quirk") and self.parent_quirk:
+                                oud_schema_quirk = self.parent_quirk.schema_quirk
+                            else:
+                                oud_schema_quirk = FlextLdifServersOud().schema_quirk
+                            write_result = oud_schema_quirk.write_attribute(attr_model)
+                            if write_result.is_success:
+                                cleaned_value = write_result.unwrap()
+                                if needs_transformation:
+                                    logger.info(
+                                        "OUD _write_entry_modify_add_format: Attribute transformation applied",
+                                        extra={
+                                            "original_has_equality": "EQUALITY caseIgnoreSubstringsMatch"
+                                            in value
+                                            or "EQUALITY caseIgnoreSubStringsMatch"
+                                            in value,
+                                            "result_has_substr": "SUBSTR caseIgnoreSubstringsMatch"
+                                            in cleaned_value,
+                                            "result_has_equality": "EQUALITY caseIgnoreSubstringsMatch"
+                                            in cleaned_value
+                                            or "EQUALITY caseIgnoreSubStringsMatch"
+                                            in cleaned_value,
+                                            "transformation_applied": cleaned_value
+                                            != value,
+                                        },
+                                    )
+                            else:
+                                # Fallback to original value if write fails
+                                logger.warning(
+                                    f"OUD _write_entry_modify_add_format: Write failed, using original: {write_result.error}"
+                                )
+                                cleaned_value = (
+                                    FlextLdifServersOud.Schema.clean_syntax_quotes(
+                                        value
+                                    )
+                                )
+                        else:
+                            # Fallback to original value if parse fails
+                            logger.warning(
+                                f"OUD _write_entry_modify_add_format: Parse failed, using original: {parse_result.error}"
+                            )
+                            cleaned_value = (
+                                FlextLdifServersOud.Schema.clean_syntax_quotes(value)
+                            )
+                    elif schema_type.lower() == "objectclasses":
+                        # Parse as objectClass using OID quirks (which applies transformations)
+                        from flext_ldif.servers.oid import FlextLdifServersOid
+
+                        oid_quirk = FlextLdifServersOid()
+                        parse_result = oid_quirk.schema_quirk.parse_objectclass(
+                            value_to_parse
+                        )
+                        if parse_result.is_success:
+                            # Write using OUD quirks (which applies OUD-specific transformations)
+                            oc_model = parse_result.unwrap()
+                            # Access schema_quirk from parent OUD quirks instance
+                            # Use parent_quirk if available, otherwise create new instance
+                            if hasattr(self, "parent_quirk") and self.parent_quirk:
+                                oud_schema_quirk = self.parent_quirk.schema_quirk
+                            else:
+                                oud_schema_quirk = FlextLdifServersOud().schema_quirk
+                            write_result = oud_schema_quirk.write_objectclass(oc_model)
+                            if write_result.is_success:
+                                cleaned_value = write_result.unwrap()
+                                is_problematic = cleaned_value != value
+                                if is_problematic:
+                                    logger.debug(
+                                        "OUD _write_entry_modify_add_format: ObjectClass transformation applied",
+                                        extra={
+                                            "original_has_sup_quotes": "SUP 'top'"
+                                            in value,
+                                            "result_has_sup_top": "SUP top"
+                                            in cleaned_value,
+                                            "result_has_sup_quotes": "SUP 'top'"
+                                            in cleaned_value,
+                                        },
+                                    )
+                            else:
+                                # Fallback to original value if write fails
+                                logger.warning(
+                                    f"OUD _write_entry_modify_add_format: Write failed, using original: {write_result.error}"
+                                )
+                                cleaned_value = (
+                                    FlextLdifServersOud.Schema.clean_syntax_quotes(
+                                        value
+                                    )
+                                )
+                        else:
+                            # Fallback to original value if parse fails
+                            logger.warning(
+                                f"OUD _write_entry_modify_add_format: Parse failed, using original: {parse_result.error}"
+                            )
+                            cleaned_value = (
+                                FlextLdifServersOud.Schema.clean_syntax_quotes(value)
+                            )
+                    else:
+                        # For other schema types (matchingRules, matchingRuleUse), use original cleaning
+                        cleaned_value = FlextLdifServersOud.Schema.clean_syntax_quotes(
+                            value
+                        )
 
                     first_block = self._add_ldif_block(
                         ldif_lines,
@@ -3157,6 +3712,165 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             # Comment out ACL attributes in non-ACL phases (01/02/03)
             return self._comment_acl_attributes(entry_data, acl_attrs)
 
+        def _normalize_acl_dns(
+            self,
+            entry_data: FlextLdifModels.Entry,
+        ) -> FlextLdifModels.Entry:
+            """Normalize and filter DNs in ACL attribute values (userdn/groupdn inside ACL strings).
+
+            Processes ACL values (aci attribute) to:
+            - Normalize DNs: remove spaces after commas, preserve case
+            - Filter DNs by base_dn if provided (from entry metadata)
+
+            Args:
+                entry_data: Entry with potential ACL attributes
+
+            Returns:
+                Entry with normalized/filtered ACL values
+
+            """
+            if not entry_data.attributes or not entry_data.attributes.attributes:
+                return entry_data
+
+            # Get base_dn and dn_registry from entry metadata (set by migrate for ACL category)
+            base_dn: str | None = None
+            dn_registry: FlextLdifModels.DnRegistry | None = None
+            if entry_data.entry_metadata:
+                base_dn = entry_data.entry_metadata.get("base_dn")  # type: ignore[assignment]
+                dn_registry = entry_data.entry_metadata.get("dn_registry")  # type: ignore[assignment]
+
+            # Process aci attribute values
+            attrs = entry_data.attributes.attributes
+            if "aci" not in attrs:
+                return entry_data
+
+            aci_values = attrs["aci"]
+            if not aci_values:
+                return entry_data
+
+            # Normalize each ACL value string
+            normalized_aci_values: list[str] = []
+            for aci_value in aci_values:
+                if not isinstance(aci_value, str):
+                    normalized_aci_values.append(str(aci_value))
+                    continue
+
+                # Normalize DNs in ACL string
+                # Support both formats:
+                # 1. RFC 4876 format: userdn="ldap:///DN" or groupdn="ldap:///DN"
+                # 2. OID legacy format: by group="DN" or by dn="DN"
+                # Track if any DN was filtered out (use list to allow mutation in nested function)
+                dn_was_filtered: list[bool] = [False]
+
+                def replace_dn_rfc(match: re.Match[str]) -> str:
+                    """Replace DN in RFC format ACL string."""
+                    result = self._normalize_dn_in_acl_string(
+                        match.group(1),
+                        match.group(2) or "",
+                        match.group(3),
+                        base_dn,
+                        dn_registry,
+                    )
+                    if not result:
+                        dn_was_filtered[0] = True
+                        return match.group(0)  # Keep original if filtered
+                    return result
+
+                def replace_dn_oid(match: re.Match[str]) -> str:
+                    """Replace DN in OID legacy format ACL string (by group="..." or by dn="...")."""
+                    from flext_ldif._utilities.dn import (
+                        FlextLdifUtilitiesDN,
+                    )
+
+                    dn_value = match.group(2)
+                    # Clean DN: remove spaces after commas (OID quirk fix)
+                    cleaned_dn = FlextLdifUtilitiesDN.clean_dn(dn_value)
+
+                    # Normalize case using dn_registry if available
+                    if dn_registry:
+                        canonical_dn = dn_registry.get_canonical_dn(cleaned_dn)
+                        if canonical_dn:
+                            cleaned_dn = canonical_dn
+
+                    # Filter by base_dn if provided (migrate responsibility)
+                    if base_dn and cleaned_dn:
+                        if not FlextLdifUtilitiesDN.is_under_base(cleaned_dn, base_dn):
+                            dn_was_filtered[0] = True
+                            return match.group(0)  # Keep original if filtered
+
+                    # Return normalized ACL bind rule (preserve OID format: by group="...")
+                    return f'by {match.group(1)}="{cleaned_dn}"'
+
+                # First normalize RFC format (userdn/groupdn with ldap:///)
+                normalized_aci = re.sub(
+                    r'(userdn|groupdn)="(ldap:///)?([^"]+)"',
+                    replace_dn_rfc,
+                    aci_value,
+                )
+
+                # Then normalize OID legacy format (by group="..." or by dn="...")
+                normalized_aci = re.sub(
+                    r'by\s+(group|dn)="([^"]+)"',
+                    replace_dn_oid,
+                    normalized_aci,
+                )
+
+                # Only add if no DN was filtered out (ACL is still valid)
+                # If any DN was filtered, skip this ACL entirely
+                if not dn_was_filtered[0] and normalized_aci:
+                    normalized_aci_values.append(normalized_aci)
+
+            # Update entry with normalized ACL values
+            if normalized_aci_values != aci_values:
+                new_attrs = dict(entry_data.attributes.attributes)
+                new_attrs["aci"] = normalized_aci_values
+                entry_data.attributes.attributes = new_attrs
+
+            return entry_data
+
+        def _normalize_dn_in_acl_string(
+            self,
+            acl_type: str,  # "userdn" or "groupdn"
+            prefix: str,  # "ldap:///" or ""
+            dn_value: str,  # DN value inside ACL
+            base_dn: str | None,  # Optional base_dn for filtering
+            dn_registry: FlextLdifModels.DnRegistry
+            | None = None,  # Optional DN registry for case normalization
+        ) -> str:
+            """Normalize and filter a single DN inside an ACL string.
+
+            Args:
+                acl_type: Type of ACL bind rule ("userdn" or "groupdn")
+                prefix: LDAP URL prefix ("ldap:///" or "")
+                dn_value: DN value to normalize/filter
+                base_dn: Optional base_dn for filtering
+                dn_registry: Optional DN registry for case normalization
+
+            Returns:
+                Normalized ACL bind rule string (empty if DN was filtered out)
+
+            """
+            from flext_ldif._utilities.dn import FlextLdifUtilitiesDN  # noqa: PLC0415
+
+            # Clean DN: remove spaces after commas (OID quirk fix)
+            # This fixes: "cn=Group, cn=Sub" -> "cn=Group,cn=Sub"
+            cleaned_dn = FlextLdifUtilitiesDN.clean_dn(dn_value)
+
+            # Normalize case using dn_registry if available
+            if dn_registry:
+                canonical_dn = dn_registry.get_canonical_dn(cleaned_dn)
+                if canonical_dn:
+                    cleaned_dn = canonical_dn
+
+            # Filter by base_dn if provided (migrate responsibility)
+            if base_dn and cleaned_dn:
+                if not FlextLdifUtilitiesDN.is_under_base(cleaned_dn, base_dn):
+                    # DN filtered out - return empty string to signal filtering
+                    return ""
+
+            # Return normalized ACL bind rule
+            return f'{acl_type}="{prefix}{cleaned_dn}"'
+
         def _write_entry(
             self,
             entry_data: FlextLdifModels.Entry,
@@ -3195,6 +3909,9 @@ class FlextLdifServersOud(FlextLdifServersRfc):
 
             # FEATURE 2: Phase-aware ACL attribute handling
             entry_data = self._apply_phase_aware_acl_handling(entry_data, write_options)
+
+            # FEATURE 2.5: Normalize and filter DNs in ACL values (userdn/groupdn inside ACL strings)
+            entry_data = self._normalize_acl_dns(entry_data)
 
             # FEATURE 3: Schema entries use modify-add format (OUD requirement)
             if self._is_schema_entry(entry_data):
@@ -3488,38 +4205,107 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             )
             return FlextResult[None].ok(None)
 
+        def _correct_rfc_syntax_in_attributes(
+            self,
+            attrs_dict: dict[str, object],
+        ) -> FlextResult[dict[str, object]]:
+            """Correct RFC syntax issues in attribute values (syntax only, not structure).
+
+            Args:
+                attrs_dict: Dictionary of attributes to correct
+
+            Returns:
+                FlextResult with corrected_attributes and syntax_corrections list
+
+            """
+            corrected_attributes: dict[str, list[str]] = {}
+            syntax_corrections: list[str] = []
+
+            for attr_name, attr_values in attrs_dict.items():
+                # Handle both list and single value
+                # Type narrowing: attr_values is object, need to check if it's a list
+                if isinstance(attr_values, list):
+                    # Already a list, use as-is
+                    values_list: list[object] = attr_values
+                else:
+                    # Single value, wrap in list
+                    values_list = [attr_values]
+                corrected_values: list[str] = []
+
+                for value in values_list:
+                    if not isinstance(value, str):
+                        # CORRECT: Convert non-string to string (preserve data, fix syntax)
+                        str_value = str(value)
+                        corrected_values.append(str_value)
+                        if value != str_value:
+                            syntax_corrections.append(
+                                f"Converted {attr_name} value to string"
+                            )
+                        continue
+
+                    # CORRECT: Ensure valid UTF-8 encoding (RFC 2849 requirement)
+                    try:
+                        # Validate UTF-8 encoding
+                        value.encode("utf-8")
+                        # Value is valid UTF-8 - keep as-is
+                        corrected_values.append(value)
+                    except UnicodeEncodeError:
+                        # Invalid UTF-8 - encode with error handling (preserve data, fix syntax)
+                        corrected_value = value.encode(
+                            "utf-8", errors="replace"
+                        ).decode("utf-8", errors="replace")
+                        corrected_values.append(corrected_value)
+                        syntax_corrections.append(
+                            f"Fixed UTF-8 encoding for {attr_name}"
+                        )
+                        logger.debug(
+                            "OUD quirks: Corrected invalid UTF-8 in attribute '%s'",
+                            attr_name,
+                        )
+
+                corrected_attributes[attr_name] = corrected_values
+
+            # Return with proper type annotation for dict[str, object]
+            result_dict: dict[str, object] = {
+                "corrected_attributes": corrected_attributes,
+                "syntax_corrections": syntax_corrections,
+            }
+            return FlextResult[dict[str, object]].ok(result_dict)
+
         def _hook_pre_write_entry(
             self,
             entry: FlextLdifModels.Entry,
         ) -> FlextResult[FlextLdifModels.Entry]:
-            """Hook: Validate OUD ACI macros before writing Entry.
+            """Hook: Validate and CORRECT RFC syntax issues before writing Entry.
 
-            OUD ACIs may contain macros for dynamic DN substitution:
-            - ($dn): substring substitution from target to subject
-            - [$dn]: hierarchical substitution (for domain-level delegation)
-            - ($attr.attrName): attribute value substitution
+            This hook ensures that Entry data with RFC-valid syntax is properly
+            formatted for OUD LDIF output. It does NOT alter data structure
+            (attributes, objectClasses, etc.) - only corrects syntax/formatting.
 
-            This hook validates macro consistency WITHOUT expanding them
-            (expansion happens at runtime in OUD directory server).
+            Corrections applied:
+            1. Validate ACI macros (syntax validation)
+            2. Ensure attribute values are properly encoded (RFC 2849)
+            3. Normalize string values to valid UTF-8 (RFC 2849 requirement)
+            4. Ensure all values are strings (convert non-strings)
 
-            Rules enforced:
-            1. Subject macros require matching target macros
-            2. Macro syntax must be well-formed
-            3. No attribute mutations - RFC Entry preserved as-is
+            IMPORTANT: Does NOT remove attributes, objectClasses, or alter data structure.
+            All data is preserved - only syntax/formatting is corrected.
 
             Args:
                 entry: RFC Entry (already canonical, with aci: attributes)
 
             Returns:
-                FlextResult[Entry] - entry unchanged if valid, fail() if macro errors
+                FlextResult[Entry] - entry with corrected syntax, fail() if syntax errors
 
             """
             # Extract attributes dict with None check for type safety
-            attrs_dict = (
+            attrs_dict_raw = (
                 entry.attributes.attributes if entry.attributes is not None else {}
             )
+            # Cast to dict[str, object] for type compatibility with _correct_rfc_syntax_in_attributes
+            attrs_dict: dict[str, object] = dict(attrs_dict_raw.items())
 
-            # Validate ACI macros if present
+            # Step 1: Validate ACI macros if present (syntax validation)
             aci_attrs = attrs_dict.get("aci")
             if aci_attrs and isinstance(aci_attrs, list):
                 for aci_value in aci_attrs:
@@ -3530,7 +4316,42 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                                 f"ACI macro validation failed: {validation_result.error}",
                             )
 
-            # Entry is RFC-canonical - return unchanged
+            # Step 2: CORRECT RFC syntax issues in attribute values (syntax only, not structure)
+            # Ensure all string values are valid UTF-8 and properly formatted (RFC 2849)
+            corrected_result = self._correct_rfc_syntax_in_attributes(attrs_dict)
+            if corrected_result.is_failure:
+                return FlextResult[FlextLdifModels.Entry].fail(corrected_result.error)
+
+            corrected_data = corrected_result.unwrap()
+            # Type narrowing for syntax_corrections
+            syntax_corrections = corrected_data.get("syntax_corrections")
+            if (
+                syntax_corrections
+                and isinstance(syntax_corrections, list)
+                and len(syntax_corrections) > 0
+            ):
+                # Type narrowing for corrected_attributes
+                corrected_attrs = corrected_data.get("corrected_attributes")
+                if isinstance(corrected_attrs, dict):
+                    # Create new LdifAttributes with corrected values (preserve all attributes)
+                    # Cast to dict[str, object] for type compatibility
+                    attrs_for_model: dict[str, object] = dict(corrected_attrs.items())
+                    corrected_ldif_attrs = FlextLdifModels.LdifAttributes(
+                        attributes=attrs_for_model,
+                    )
+
+                    # Create new Entry with corrected attributes (preserve all metadata and structure)
+                    corrected_entry = entry.model_copy(
+                        update={"attributes": corrected_ldif_attrs},
+                    )
+
+                    logger.debug(
+                        "OUD quirks: Applied %s syntax corrections before writing (structure preserved)",
+                        len(syntax_corrections),
+                    )
+                    return FlextResult[FlextLdifModels.Entry].ok(corrected_entry)
+
+            # Entry is RFC-canonical with valid syntax - return unchanged
             # All conversions (orclaci→aci) already done in parsing phase
             return FlextResult[FlextLdifModels.Entry].ok(entry)
 

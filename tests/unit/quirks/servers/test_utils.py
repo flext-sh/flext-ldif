@@ -13,6 +13,7 @@ from pathlib import Path
 
 from flext_ldif.api import FlextLdif
 from flext_ldif.models import FlextLdifModels
+from tests.helpers.test_assertions import TestAssertions
 
 
 class FlextLdifTestUtils:
@@ -97,6 +98,161 @@ class FlextLdifTestUtils:
             return parsed_data.entries
         msg = f"Unexpected parse result type: {type(parsed_data)}"
         raise TypeError(msg)
+
+    @staticmethod
+    def load_fixture_entries(
+        ldif_api: FlextLdif,
+        server_type: str,
+        fixture_filename: str,
+        expected_min_count: int | None = None,
+    ) -> list[FlextLdifModels.Entry]:
+        """Load fixture LDIF file and return parsed entries with validation.
+
+        Args:
+            ldif_api: FlextLdif API instance
+            server_type: Server type identifier
+            fixture_filename: Name of the fixture file
+            expected_min_count: Optional minimum expected entry count
+
+        Returns:
+            List of parsed entries
+
+        """
+        entries = FlextLdifTestUtils.load_fixture(
+            ldif_api,
+            server_type,
+            fixture_filename,
+        )
+
+        assert entries is not None, f"Failed to load fixture {fixture_filename}"
+        assert len(entries) > 0, f"Fixture {fixture_filename} has no entries"
+
+        if expected_min_count is not None:
+            assert len(entries) >= expected_min_count, (
+                f"Expected at least {expected_min_count} entries, got {len(entries)}"
+            )
+
+        TestAssertions.assert_entries_valid(entries)
+        return entries
+
+    @staticmethod
+    def load_fixture_and_validate_structure(
+        ldif_api: FlextLdif,
+        server_type: str,
+        fixture_filename: str,
+        *,
+        expected_has_dn: bool = True,
+        expected_has_attributes: bool = True,
+        expected_has_objectclass: bool | None = None,
+    ) -> list[FlextLdifModels.Entry]:
+        """Load fixture and validate entry structure.
+
+        Args:
+            ldif_api: FlextLdif API instance
+            server_type: Server type identifier
+            fixture_filename: Name of the fixture file
+            expected_has_dn: Whether entries should have DNs (default: True)
+            expected_has_attributes: Whether entries should have attributes (default: True)
+            expected_has_objectclass: Optional whether entries should have objectClass
+
+        Returns:
+            List of parsed entries
+
+        """
+        entries = FlextLdifTestUtils.load_fixture_entries(
+            ldif_api,
+            server_type,
+            fixture_filename,
+        )
+
+        for entry in entries:
+            if expected_has_dn:
+                assert entry.dn is not None, "Entry must have DN"
+                assert entry.dn.value, "Entry DN must not be empty"
+
+            if expected_has_attributes:
+                assert entry.attributes is not None, "Entry must have attributes"
+                assert len(entry.attributes.attributes) > 0, (
+                    "Entry must have at least one attribute"
+                )
+
+            if expected_has_objectclass is not None:
+                assert entry.attributes is not None
+                attr_names = {name.lower() for name in entry.attributes.attributes}
+                has_objectclass = "objectclass" in attr_names
+                assert has_objectclass == expected_has_objectclass, (
+                    f"Expected has_objectclass={expected_has_objectclass}, got {has_objectclass}"
+                )
+
+        return entries
+
+    @staticmethod
+    def run_fixture_roundtrip(
+        ldif_api: FlextLdif,
+        server_type: str,
+        fixture_filename: str,
+        tmp_path: Path,
+        *,
+        validate_identical: bool = True,
+    ) -> tuple[list[FlextLdifModels.Entry], list[FlextLdifModels.Entry], bool]:
+        """Run roundtrip test on fixture.
+
+        Args:
+            ldif_api: FlextLdif API instance
+            server_type: Server type identifier
+            fixture_filename: Name of the fixture file
+            tmp_path: Temporary path for written file
+            validate_identical: Whether to validate entries are identical (default: True)
+
+        Returns:
+            Tuple of (original_entries, roundtripped_entries, is_identical)
+
+        """
+        original_entries = FlextLdifTestUtils.load_fixture(
+            ldif_api,
+            server_type,
+            fixture_filename,
+        )
+
+        output_file = tmp_path / f"roundtrip_{fixture_filename}"
+        write_result = ldif_api.write(
+            original_entries,
+            output_path=output_file,
+            server_type=server_type,
+        )
+        TestAssertions.assert_success(write_result, "Write should succeed")
+
+        parse_result = ldif_api.parse(
+            output_file,
+            server_type=server_type,
+        )
+        TestAssertions.assert_success(parse_result, "Re-parse should succeed")
+
+        parsed_data = parse_result.unwrap()
+        if isinstance(parsed_data, list):
+            roundtripped_entries = parsed_data
+        elif hasattr(parsed_data, "entries"):
+            roundtripped_entries = parsed_data.entries
+        else:
+            msg = f"Unexpected parse result type: {type(parsed_data)}"
+            raise TypeError(msg)
+
+        is_identical = True
+        if validate_identical:
+            if len(original_entries) != len(roundtripped_entries):
+                is_identical = False
+            else:
+                for orig, rt in zip(
+                    original_entries, roundtripped_entries, strict=False
+                ):
+                    if orig.dn is None or rt.dn is None:
+                        is_identical = False
+                        break
+                    if orig.dn.value != rt.dn.value:
+                        is_identical = False
+                        break
+
+        return original_entries, roundtripped_entries, is_identical
 
     @staticmethod
     def run_roundtrip_test(

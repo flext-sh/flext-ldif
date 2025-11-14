@@ -319,39 +319,28 @@ class TestDnServiceBuilderPattern:
 class TestDnServiceExecutePattern:
     """Test execute pattern for DN service."""
 
-    def test_execute_normalize(self, dn_service: FlextLdifDn) -> None:
-        """Execute normalize operation."""
-        result = FlextLdifDn(
-            dn="CN=Admin,DC=Example,DC=Com",
-            operation="normalize",
-        ).execute()
-        assert result.is_success
-        assert result.unwrap()
+    def test_execute_operations_batch(self, dn_service: FlextLdifDn) -> None:
+        """Execute various DN operations in batch."""
+        from tests.helpers.test_rfc_helpers import RfcTestHelpers
 
-    def test_execute_validate_valid(self, dn_service: FlextLdifDn) -> None:
-        """Execute validate operation on valid DN."""
-        result = FlextLdifDn(
-            dn="cn=test,dc=example,dc=com",
-            operation="validate",
-        ).execute()
-        assert result.is_success
-        assert result.unwrap() == "True"
+        service1 = FlextLdifDn(dn="CN=Admin,DC=Example,DC=Com", operation="normalize")
+        RfcTestHelpers.test_service_execute_and_assert(service1)
 
-    def test_execute_validate_invalid(self, dn_service: FlextLdifDn) -> None:
-        """Execute validate operation on invalid DN."""
-        result = FlextLdifDn(dn="invalid dn", operation="validate").execute()
-        assert result.is_success
-        assert result.unwrap() == "False"
+        service2 = FlextLdifDn(dn="cn=test,dc=example,dc=com", operation="validate")
+        result2 = RfcTestHelpers.test_service_execute_and_assert(service2)
+        assert result2 == "True"
 
-    def test_execute_compare(self, dn_service: FlextLdifDn) -> None:
-        """Execute compare operation."""
-        result = FlextLdifDn(
+        service3 = FlextLdifDn(dn="invalid dn", operation="validate")
+        result3 = RfcTestHelpers.test_service_execute_and_assert(service3)
+        assert result3 == "False"
+
+        service4 = FlextLdifDn(
             dn="cn=admin,dc=example,dc=com",
             other_dn="CN=ADMIN,DC=EXAMPLE,DC=COM",
             operation="compare",
-        ).execute()
-        assert result.is_success
-        assert result.unwrap() == "0"  # Equal
+        )
+        result4 = RfcTestHelpers.test_service_execute_and_assert(service4)
+        assert result4 == "0"
 
 
 class TestCaseRegistry:
@@ -386,25 +375,27 @@ class TestCaseRegistry:
         variants = registry.get_case_variants("cn=admin,dc=example,dc=com")
         assert len(variants) == 3
 
-    def test_validate_oud_consistency_consistent(self, dn_service: FlextLdifDn) -> None:
-        """Validate OUD consistency when all variants are same case."""
-        registry = FlextLdifModels.DnRegistry()
-        registry.register_dn("cn=admin,dc=example,dc=com")
-        result = registry.validate_oud_consistency()
-        assert result.is_success
-        assert result.unwrap() is True
-
-    def test_validate_oud_consistency_inconsistent(
+    def test_validate_oud_consistency_batch(
         self,
         dn_service: FlextLdifDn,
     ) -> None:
-        """Validate OUD consistency with multiple case variants."""
-        registry = FlextLdifModels.DnRegistry()
-        registry.register_dn("CN=Admin,DC=Example,DC=Com")
-        registry.register_dn("cn=admin,dc=example,dc=com")  # Different case
-        result = registry.validate_oud_consistency()
-        assert result.is_success
-        assert result.unwrap() is False
+        """Validate OUD consistency in batch."""
+        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+
+        registry1 = FlextLdifModels.DnRegistry()
+        registry1.register_dn("cn=admin,dc=example,dc=com")
+        result1 = RfcTestHelpers.test_result_success_and_unwrap(
+            registry1.validate_oud_consistency(),
+        )
+        assert result1 is True
+
+        registry2 = FlextLdifModels.DnRegistry()
+        registry2.register_dn("CN=Admin,DC=Example,DC=Com")
+        registry2.register_dn("cn=admin,dc=example,dc=com")
+        result2 = RfcTestHelpers.test_result_success_and_unwrap(
+            registry2.validate_oud_consistency(),
+        )
+        assert result2 is False
 
     def test_registry_clear(self, dn_service: FlextLdifDn) -> None:
         """Clear registry."""

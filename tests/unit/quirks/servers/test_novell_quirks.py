@@ -7,6 +7,7 @@ import pytest
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.servers.novell import FlextLdifServersNovell
+from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
 
 
 class TestNovellSchemas:
@@ -33,15 +34,14 @@ class TestNovellSchemas:
         attr_def = "( 2.16.840.1.113719.1.1.4.1.501 NAME 'nspmPasswordPolicyDN' SYNTAX 1.3.6.1.4.1.1466.115.121.1.12 )"
 
         # Parse using public API (parse_attribute)
-        parse_result = quirk.parse_attribute(attr_def)
+        from tests.helpers.test_rfc_helpers import RfcTestHelpers
 
-        assert parse_result.is_success, (
-            f"Failed to parse attribute: {parse_result.error}"
+        RfcTestHelpers.test_quirk_schema_parse_and_assert_properties(
+            quirk,
+            attr_def,
+            expected_oid="2.16.840.1.113719.1.1.4.1.501",
+            expected_name="nspmPasswordPolicyDN",
         )
-
-        attr_data = parse_result.unwrap()
-        assert attr_data.oid == "2.16.840.1.113719.1.1.4.1.501"
-        assert attr_data.name == "nspmPasswordPolicyDN"
 
     def testcan_handle_attribute_with_nspm_prefix(self) -> None:
         """Test attribute detection with nspm prefix."""
@@ -51,14 +51,13 @@ class TestNovellSchemas:
         )
 
         # Parse using public API (parse_attribute)
-        parse_result = quirk.parse_attribute(attr_def)
+        from tests.helpers.test_rfc_helpers import RfcTestHelpers
 
-        assert parse_result.is_success, (
-            f"Failed to parse attribute: {parse_result.error}"
+        RfcTestHelpers.test_quirk_schema_parse_and_assert_properties(
+            quirk,
+            attr_def,
+            expected_name="nspmPasswordPolicy",
         )
-
-        attr_data = parse_result.unwrap()
-        assert attr_data.name == "nspmPasswordPolicy"
 
     def testcan_handle_attribute_with_login_prefix(self) -> None:
         """Test attribute detection with login prefix."""
@@ -68,14 +67,13 @@ class TestNovellSchemas:
         )
 
         # Parse using public API (parse_attribute)
-        parse_result = quirk.parse_attribute(attr_def)
+        from tests.helpers.test_rfc_helpers import RfcTestHelpers
 
-        assert parse_result.is_success, (
-            f"Failed to parse attribute: {parse_result.error}"
+        RfcTestHelpers.test_quirk_schema_parse_and_assert_properties(
+            quirk,
+            attr_def,
+            expected_name="loginDisabled",
         )
-
-        attr_data = parse_result.unwrap()
-        assert attr_data.name == "loginDisabled"
 
     def testcan_handle_attribute_with_dirxml_prefix(self) -> None:
         """Test attribute detection with dirxml- prefix."""
@@ -83,14 +81,13 @@ class TestNovellSchemas:
         attr_def = "( 1.2.3.4 NAME 'dirxml-associations' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
 
         # Parse using public API (parse_attribute)
-        parse_result = quirk.parse_attribute(attr_def)
+        from tests.helpers.test_rfc_helpers import RfcTestHelpers
 
-        assert parse_result.is_success, (
-            f"Failed to parse attribute: {parse_result.error}"
+        RfcTestHelpers.test_quirk_schema_parse_and_assert_properties(
+            quirk,
+            attr_def,
+            expected_name="dirxml-associations",
         )
-
-        attr_data = parse_result.unwrap()
-        assert attr_data.name == "dirxml-associations"
 
     def testcan_handle_attribute_negative(self) -> None:
         """Test attribute detection rejects non-Novell attributes."""
@@ -111,27 +108,30 @@ class TestNovellSchemas:
         """Test parsing Novell eDirectory attribute definition."""
         quirk = FlextLdifServersNovell.Schema()
         attr_def = "( 2.16.840.1.113719.1.1.4.1.501 NAME 'nspmPasswordPolicyDN' DESC 'Password Policy DN' SYNTAX 1.3.6.1.4.1.1466.115.121.1.12 SINGLE-VALUE )"
-        result = quirk.parse_attribute(attr_def)
+        from tests.helpers.test_rfc_helpers import RfcTestHelpers
 
-        assert result.is_success
-        attr_data = result.unwrap()
-        assert attr_data.oid == "2.16.840.1.113719.1.1.4.1.501"
-        assert attr_data.name == "nspmPasswordPolicyDN"
-        assert attr_data.desc == "Password Policy DN"
-        assert attr_data.syntax == "1.3.6.1.4.1.1466.115.121.1.12"
-        assert attr_data.single_value is True
+        RfcTestHelpers.test_quirk_schema_parse_and_assert_properties(
+            quirk,
+            attr_def,
+            expected_oid="2.16.840.1.113719.1.1.4.1.501",
+            expected_name="nspmPasswordPolicyDN",
+            expected_desc="Password Policy DN",
+            expected_syntax="1.3.6.1.4.1.1466.115.121.1.12",
+            expected_single_value=True,
+        )
 
     def test_parse_attribute_with_syntax_length(self) -> None:
         """Test parsing attribute with syntax length specification."""
         quirk = FlextLdifServersNovell.Schema()
         attr_def = "( 2.16.840.1.113719.1.1.4.1.1 NAME 'nspmAdminGroup' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} )"
-        result = quirk.parse_attribute(attr_def)
+        from tests.helpers.test_rfc_helpers import RfcTestHelpers
 
-        assert result.is_success
-        attr_data = result.unwrap()
-        assert attr_data.syntax == "1.3.6.1.4.1.1466.115.121.1.15"
-        # syntax_length is stored in the length field
-        assert attr_data.length == 256
+        RfcTestHelpers.test_quirk_schema_parse_and_assert_properties(
+            quirk,
+            attr_def,
+            expected_syntax="1.3.6.1.4.1.1466.115.121.1.15",
+            expected_length=256,
+        )
 
     def test_parse_attribute_missing_oid(self) -> None:
         """Test parsing attribute without OID fails."""
@@ -149,15 +149,14 @@ class TestNovellSchemas:
         oc_def = "( 2.16.840.1.113719.2.2.6.1 NAME 'ndsPerson' SUP top STRUCTURAL )"
 
         # Parse using public API (parse_objectclass)
-        parse_result = quirk.parse_objectclass(oc_def)
+        from tests.helpers.test_rfc_helpers import RfcTestHelpers
 
-        assert parse_result.is_success, (
-            f"Failed to parse objectClass: {parse_result.error}"
+        RfcTestHelpers.test_quirk_schema_parse_and_assert_properties(
+            quirk,
+            oc_def,
+            expected_oid="2.16.840.1.113719.2.2.6.1",
+            expected_name="ndsPerson",
         )
-
-        oc_data = parse_result.unwrap()
-        assert oc_data.oid == "2.16.840.1.113719.2.2.6.1"
-        assert oc_data.name == "ndsPerson"
 
     def testcan_handle_objectclass_with_nds_name(self) -> None:
         """Test objectClass detection with nds- name."""
@@ -165,71 +164,63 @@ class TestNovellSchemas:
         oc_def = "( 2.5.6.0 NAME 'ndsserver' SUP top STRUCTURAL )"
 
         # Parse using public API (parse_objectclass)
-        parse_result = quirk.parse_objectclass(oc_def)
+        from tests.helpers.test_rfc_helpers import RfcTestHelpers
 
-        assert parse_result.is_success, (
-            f"Failed to parse objectClass: {parse_result.error}"
+        RfcTestHelpers.test_quirk_schema_parse_and_assert_properties(
+            quirk,
+            oc_def,
+            expected_name="ndsserver",
         )
-
-        oc_data = parse_result.unwrap()
-        assert oc_data.name == "ndsserver"
 
     def testcan_handle_objectclass_negative(self) -> None:
         """Test objectClass detection rejects non-Novell classes."""
         quirk = FlextLdifServersNovell.Schema()
         oc_def = "( 2.5.6.6 NAME 'posixAccount' SUP top STRUCTURAL )"
         # Parse string definition into model object
-
-        parse_result = quirk.parse(oc_def)
-
-        assert parse_result.is_success, (
-            f"Failed to parse objectClass: {parse_result.error}"
-        )
-
-        parse_result.unwrap()
-
-        # Test with the model object
-
-        # Use parse_objectclass which calls can_handle internally
         # Non-Novell objectClasses should parse but Novell quirk won't be selected
+        parse_result = quirk.parse(oc_def)
         assert parse_result.is_success  # Can still parse, but won't be selected
 
     def test_parse_objectclass_structural(self) -> None:
         """Test parsing STRUCTURAL objectClass."""
         quirk = FlextLdifServersNovell.Schema()
         oc_def = "( 2.16.840.1.113719.2.2.6.1 NAME 'ndsPerson' DESC 'NDS Person' SUP top STRUCTURAL MUST ( cn ) MAY ( loginDisabled ) )"
-        result = quirk.parse_objectclass(oc_def)
+        from tests.helpers.test_rfc_helpers import RfcTestHelpers
 
-        assert result.is_success
-        oc_data = result.unwrap()
-        assert oc_data.oid == "2.16.840.1.113719.2.2.6.1"
-        assert oc_data.name == "ndsPerson"
-        assert oc_data.kind == "STRUCTURAL"
-        assert oc_data.sup == "top"
-        must_attrs = oc_data.must
-        may_attrs = oc_data.may
-        assert isinstance(must_attrs, list) and "cn" in must_attrs
-        assert isinstance(may_attrs, list) and "loginDisabled" in may_attrs
+        RfcTestHelpers.test_quirk_schema_parse_and_assert_properties(
+            quirk,
+            oc_def,
+            expected_oid="2.16.840.1.113719.2.2.6.1",
+            expected_name="ndsPerson",
+            expected_kind="STRUCTURAL",
+            expected_sup="top",
+            expected_must=["cn"],
+            expected_may=["loginDisabled"],
+        )
 
     def test_parse_objectclass_auxiliary(self) -> None:
         """Test parsing AUXILIARY objectClass."""
         quirk = FlextLdifServersNovell.Schema()
         oc_def = "( 2.16.840.1.113719.2.2.6.2 NAME 'nspmPasswordPolicy' AUXILIARY MAY ( nspmPasswordPolicyDN ) )"
-        result = quirk.parse_objectclass(oc_def)
+        from tests.helpers.test_rfc_helpers import RfcTestHelpers
 
-        assert result.is_success
-        oc_data = result.unwrap()
-        assert oc_data.kind == "AUXILIARY"
+        RfcTestHelpers.test_quirk_schema_parse_and_assert_properties(
+            quirk,
+            oc_def,
+            expected_kind="AUXILIARY",
+        )
 
     def test_parse_objectclass_abstract(self) -> None:
         """Test parsing ABSTRACT objectClass."""
         quirk = FlextLdifServersNovell.Schema()
         oc_def = "( 2.16.840.1.113719.2.2.6.3 NAME 'ndsbase' ABSTRACT )"
-        result = quirk.parse_objectclass(oc_def)
+        from tests.helpers.test_rfc_helpers import RfcTestHelpers
 
-        assert result.is_success
-        oc_data = result.unwrap()
-        assert oc_data.kind == "ABSTRACT"
+        RfcTestHelpers.test_quirk_schema_parse_and_assert_properties(
+            quirk,
+            oc_def,
+            expected_kind="ABSTRACT",
+        )
 
     def test_parse_objectclass_missing_oid(self) -> None:
         """Test parsing objectClass without OID fails."""
@@ -251,13 +242,18 @@ class TestNovellSchemas:
             syntax="1.3.6.1.4.1.1466.115.121.1.12",
             single_value=True,
         )
-        result = quirk.write_attribute(attr_data)
+        from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
 
-        assert result.is_success
-        attr_str = result.unwrap()
-        assert "2.16.840.1.113719.1.1.4.1.501" in attr_str
-        assert "nspmPasswordPolicyDN" in attr_str
-        assert "SINGLE-VALUE" in attr_str
+        TestDeduplicationHelpers.quirk_write_and_unwrap(
+            quirk,
+            attr_data,
+            write_method="_write_attribute",
+            must_contain=[
+                "2.16.840.1.113719.1.1.4.1.501",
+                "nspmPasswordPolicyDN",
+                "SINGLE-VALUE",
+            ],
+        )
 
     def test_write_objectclass_to_rfc(self) -> None:
         """Test writing objectClass to RFC string format."""
@@ -270,13 +266,14 @@ class TestNovellSchemas:
             must=["cn"],
             may=["loginDisabled"],
         )
-        result = quirk.write_objectclass(oc_data)
+        from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
 
-        assert result.is_success
-        oc_str = result.unwrap()
-        assert "2.16.840.1.113719.2.2.6.1" in oc_str
-        assert "ndsPerson" in oc_str
-        assert "STRUCTURAL" in oc_str
+        TestDeduplicationHelpers.quirk_write_and_unwrap(
+            quirk,
+            oc_data,
+            write_method="_write_objectclass",
+            must_contain=["2.16.840.1.113719.2.2.6.1", "ndsPerson", "STRUCTURAL"],
+        )
 
 
 class TestNovellAcls:
@@ -304,8 +301,9 @@ class TestNovellAcls:
         # Test with the model object
 
         # Use parse which calls can_handle internally
-        result = acl.parse(acl_line)
-        assert result.is_success  # Novell ACL should be handled
+        TestDeduplicationHelpers.quirk_parse_and_unwrap(
+            acl, acl_line, parse_method="parse"
+        )  # Novell ACL should be handled
 
     def test__can_handle_with_inheritedacl_attribute(self) -> None:
         """Test ACL detection with inheritedacl attribute."""
@@ -323,8 +321,9 @@ class TestNovellAcls:
         # Test with the model object
 
         # Use parse which calls can_handle internally
-        result = acl.parse(acl_line)
-        assert result.is_success  # Novell ACL should be handled
+        TestDeduplicationHelpers.quirk_parse_and_unwrap(
+            acl, acl_line, parse_method="parse"
+        )  # Novell ACL should be handled
 
     def test__can_handle_negative(self) -> None:
         """Test ACL detection rejects non-Novell ACLs."""
@@ -421,10 +420,9 @@ class TestNovellAcls:
             ),
             raw_acl="acl: [Entry Rights]#cn=Admin,o=Example#[BCDRSE]",
         )
-        result = acl.write(acl_data)
-
-        assert result.is_success
-        acl_str = result.unwrap()
+        acl_str = TestDeduplicationHelpers.quirk_write_and_unwrap(
+            acl, acl_data, write_method="write"
+        )
         assert "acl:" in acl_str or "[Entry Rights]" in acl_str
 
     def test_write_acl_to_rfc_with_segments(self) -> None:
@@ -446,10 +444,9 @@ class TestNovellAcls:
                 "novell_edirectory",
             ),
         )
-        result = acl.write(acl_data)
-
-        assert result.is_success
-        acl_str = result.unwrap()
+        acl_str = TestDeduplicationHelpers.quirk_write_and_unwrap(
+            acl, acl_data, write_method="write"
+        )
         assert isinstance(acl_str, str)
 
     def test_write_acl_to_rfc_from_fields(self) -> None:
@@ -473,10 +470,9 @@ class TestNovellAcls:
                 "novell_edirectory",
             ),
         )
-        result = acl.write(acl_data)
-
-        assert result.is_success
-        acl_str = result.unwrap()
+        acl_str = TestDeduplicationHelpers.quirk_write_and_unwrap(
+            acl, acl_data, write_method="write"
+        )
         assert "acl:" in acl_str
         assert "[Entry Rights]" in acl_str
         assert "#" in acl_str
@@ -500,10 +496,9 @@ class TestNovellAcls:
                 "novell_edirectory",
             ),
         )
-        result = acl.write(acl_data)
-
-        assert result.is_success
-        acl_str = result.unwrap()
+        acl_str = TestDeduplicationHelpers.quirk_write_and_unwrap(
+            acl, acl_data, write_method="write"
+        )
         assert isinstance(acl_str, str)
 
 

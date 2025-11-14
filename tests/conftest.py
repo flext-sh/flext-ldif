@@ -589,6 +589,28 @@ def pytest_configure(config: pytest.Config) -> None:
     config.addinivalue_line("markers", "flext_tests: Tests using FlextTests utilities")
 
 
+def pytest_collection_modifyitems(
+    config: pytest.Config, items: list[pytest.Item]
+) -> None:
+    """Filter out static methods that start with 'test_' in classes with __test__ = False.
+
+    This prevents pytest from discovering helper methods as tests.
+    """
+    filtered_items = []
+    for item in items:
+        # Check if this is a test method from a class
+        if hasattr(item, "parent") and hasattr(item.parent, "cls"):
+            test_class = item.parent.cls
+            # Check if class has __test__ = False
+            if test_class and getattr(test_class, "__test__", True) is False:
+                # Skip all methods from this class (they are helpers, not tests)
+                continue
+        filtered_items.append(item)
+
+    # Replace items list
+    items[:] = filtered_items
+
+
 # Common test constants using FlextTests patterns
 class LDIFTestConstants:
     """Constants for LDIF testing."""

@@ -664,8 +664,7 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
 
         # Execute conversion with fallback
         converter = format_dispatch.get(output_format, format_dispatch["model"])
-        result = converter()
-        return result
+        return converter()
 
     def _resolve_source_content(
         self,

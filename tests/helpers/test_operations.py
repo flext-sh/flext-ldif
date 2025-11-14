@@ -13,20 +13,18 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING
 
-from flext_core import FlextResult
-
+from flext_ldif import FlextLdif
+from flext_ldif.models import FlextLdifModels
+from flext_ldif.servers.base import FlextLdifServersBase
 from tests.helpers.test_assertions import TestAssertions
-
-if TYPE_CHECKING:
-    from flext_ldif import FlextLdif
-    from flext_ldif.models import FlextLdifModels
-    from flext_ldif.servers.base import FlextLdifServersBase
 
 
 class TestOperations:
     """Reusable operation helpers for tests."""
+
+    # Prevent pytest from collecting static methods as tests
+    __test__ = False
 
     @staticmethod
     def parse_and_validate(
@@ -49,19 +47,14 @@ class TestOperations:
 
         """
         if isinstance(ldif_content, Path):
-            if hasattr(parser, "parse"):
+            if isinstance(parser, FlextLdif):
                 result = parser.parse(ldif_content)
             else:
-                # Assume FlextLdif API
-                parser = parser  # type: ignore[assignment]
-                result = parser.parse(ldif_content)  # type: ignore[attr-defined]
+                result = parser.parse(ldif_content)
+        elif isinstance(parser, FlextLdif):
+            result = parser.parse(ldif_content)
         else:
-            if hasattr(parser, "parse"):
-                result = parser.parse(ldif_content)
-            else:
-                # Assume FlextLdif API
-                parser = parser  # type: ignore[assignment]
-                result = parser.parse(ldif_content)  # type: ignore[attr-defined]
+            result = parser.parse(ldif_content)
 
         return TestAssertions.assert_parse_success(result, expected_count)
 
@@ -86,19 +79,14 @@ class TestOperations:
 
         """
         if isinstance(entries, list):
-            if hasattr(writer, "write"):
+            if isinstance(writer, FlextLdif):
                 result = writer.write(entries)
             else:
-                # Assume FlextLdif API
-                writer = writer  # type: ignore[assignment]
-                result = writer.write(entries)  # type: ignore[attr-defined]
+                result = writer.write(entries)
+        elif isinstance(writer, FlextLdif):
+            result = writer.write([entries])
         else:
-            if hasattr(writer, "write"):
-                result = writer.write(entries)
-            else:
-                # Assume FlextLdif API
-                writer = writer  # type: ignore[assignment]
-                result = writer.write([entries])  # type: ignore[attr-defined]
+            result = writer.write([entries])
 
         return TestAssertions.assert_write_success(result, expected_content)
 
@@ -140,7 +128,9 @@ class TestOperations:
         )
 
         # Validate roundtrip preserves structure
-        TestAssertions.assert_roundtrip_preserves(original_entries, roundtripped_entries)
+        TestAssertions.assert_roundtrip_preserves(
+            original_entries, roundtripped_entries
+        )
 
         return (original_entries, roundtripped_entries)
 

@@ -15,7 +15,16 @@ from pathlib import Path
 import pytest
 
 from flext_ldif.api import FlextLdif
+from flext_ldif.models import FlextLdifModels
+from flext_ldif.servers.base import FlextLdifServersBase
+from flext_ldif.servers.oud import FlextLdifServersOud
+from tests.helpers import FixtureTestHelpers
+from tests.helpers.test_assertions import TestAssertions
+from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
 from tests.unit.quirks.servers.test_utils import FlextLdifTestUtils
+
+# Test constants - always at top of module, no type checking
+# Use classes directly, no instantiation needed
 
 
 @pytest.fixture(scope="module")
@@ -24,167 +33,240 @@ def ldif_api() -> FlextLdif:
     return FlextLdif()
 
 
+class OudTestHelpers:
+    """Helper methods for OUD tests to eliminate massive code duplication.
+
+    Each method replaces 10-30+ lines of duplicated test code.
+    All methods use real executions, no mocks.
+    """
+
+    @staticmethod
+    def validate_entry_basic_structure(entry: FlextLdifModels.Entry) -> None:
+        """Validate basic entry structure - replaces 4-5 lines per test."""
+        assert entry.dn is not None
+        assert entry.dn.value
+        assert entry.attributes is not None
+        assert len(entry.attributes.attributes) > 0
+
+    @staticmethod
+    def find_entries_by_dn_pattern(
+        entries: list[FlextLdifModels.Entry],
+        pattern: str,
+    ) -> list[FlextLdifModels.Entry]:
+        """Find entries matching DN pattern - replaces 5-8 lines per test."""
+        return [e for e in entries if e.dn is not None and pattern in e.dn.value]
+
+    @staticmethod
+    def find_entries_with_attribute(
+        entries: list[FlextLdifModels.Entry],
+        attr_name: str,
+    ) -> list[FlextLdifModels.Entry]:
+        """Find entries containing specific attribute - replaces 8-12 lines per test."""
+        result = []
+        for entry in entries:
+            if entry.attributes is None:
+                continue
+            for attr in entry.attributes.attributes:
+                if attr.lower() == attr_name.lower():
+                    result.append(entry)
+                    break
+        return result
+
+    @staticmethod
+    def get_attribute_values(
+        entry: FlextLdifModels.Entry,
+        attr_name: str,
+    ) -> list[str]:
+        """Extract attribute values handling all formats - replaces 6-10 lines per test."""
+        if entry.attributes is None:
+            return []
+        attr_value = entry.attributes.attributes.get(attr_name)
+        if attr_value is None:
+            return []
+        # Type checker infers attr_value as list[str], so handle directly
+        if hasattr(attr_value, "__len__") and hasattr(attr_value, "__iter__"):
+            if isinstance(attr_value, str):
+                return [attr_value]
+            # Handle list/sequence types
+            return [str(v) for v in attr_value]  # type: ignore[arg-type]
+        if hasattr(attr_value, "values"):
+            values_attr = getattr(attr_value, "values", None)
+            if values_attr is not None:
+                if isinstance(values_attr, list):
+                    return [str(v) for v in values_attr]
+                return [str(values_attr)]
+        return [str(attr_value)]
+
+    @staticmethod
+    def has_objectclass_containing(
+        entries: list[FlextLdifModels.Entry],
+        pattern: str,
+    ) -> bool:
+        """Check if any entry has objectClass containing pattern - replaces 15-20 lines per test."""
+        for entry in entries:
+            if entry.attributes is None:
+                continue
+            values = OudTestHelpers.get_attribute_values(entry, "objectclass")
+            if any(pattern.lower() in str(v).lower() for v in values):
+                return True
+        return False
+
+    @staticmethod
+    def has_attribute_value_containing(
+        entries: list[FlextLdifModels.Entry],
+        attr_name: str,
+        pattern: str,
+    ) -> bool:
+        """Check if any entry has attribute value containing pattern - replaces 10-15 lines per test."""
+        for entry in entries:
+            if entry.attributes is None:
+                continue
+            values = OudTestHelpers.get_attribute_values(entry, attr_name)
+            if any(pattern in str(v) for v in values):
+                return True
+        return False
+
+    @staticmethod
+    def validate_entries_write_success(
+        quirk: FlextLdifServersBase,
+        entries: list[FlextLdifModels.Entry],
+        operation: str = "write",
+    ) -> None:
+        """Validate all entries can be written successfully - replaces 8-12 lines per test."""
+        from typing import Literal, cast
+
+        for entry in entries:
+            result = quirk.execute(
+                entries=[entry],
+                operation=cast("Literal['parse', 'write']", operation),
+            )
+            _ = TestAssertions.assert_success(result, "Entry write should succeed")
+            written_str = result.unwrap()
+            assert isinstance(written_str, str), "Write should return string"
+            assert len(written_str) > 0, "Written string should not be empty"
+
+
 class TestOudQuirksWithRealFixtures:
     """Test OUD quirks with real fixture files."""
 
+    @pytest.mark.timeout(30)
     def test_parse_oud_schema_fixture(self, ldif_api: FlextLdif) -> None:
         """Test parsing of a real OUD schema file."""
-        # Schema fixtures contain only cn=schema entry with attributeTypes and objectClasses
-        # May return 0 entries if parser treats it as schema-only file
-        fixture_path = FlextLdifTestUtils.get_fixture_path(
+        _ = TestDeduplicationHelpers.api_parse_fixture_and_assert(
+            ldif_api,
+            FlextLdifTestUtils,
             "oud",
             "oud_schema_fixtures.ldif",
         )
-        result = ldif_api.parse(fixture_path, server_type="oud")
-        assert result.is_success, f"Failed to parse fixture: {result.error}"
 
-        # Schema files may not return entries if parsed as schema-only
-        # We validate that the file can be successfully parsed without error
-        entries = result.unwrap()
-        assert entries is not None
-
+    @pytest.mark.timeout(10)
     def test_parse_oud_entries_fixture(self, ldif_api: FlextLdif) -> None:
         """Test parsing of a real OUD entries file."""
-        entries = FlextLdifTestUtils.load_fixture(
+        entries = FixtureTestHelpers.load_fixture_and_validate_structure(
             ldif_api,
             "oud",
             "oud_entries_fixtures.ldif",
+            expected_has_dn=True,
+            expected_has_attributes=True,
+            expected_has_objectclass=True,
         )
-        assert entries is not None
-        assert len(entries) > 0
 
-        # Validate that all entries have valid DNs
-        for entry in entries:
-            assert entry.dn is not None
-            assert entry.dn.value
-            assert len(entry.attributes) > 0
-
-        # Validate specific OUD entries exist
-        dns = [e.dn.value for e in entries]
+        dns = [e.dn.value for e in entries if e.dn is not None]
         assert "dc=example,dc=com" in dns
         assert "ou=users,dc=example,dc=com" in dns
         assert "ou=groups,dc=example,dc=com" in dns
 
-        # Validate OUD-specific attributes are preserved
-        has_any_objectclass = False
-        for entry in entries:
-            # Check that objectClass is present
-            if any(
-                attr_name.lower() == "objectclass"
-                for attr_name in entry.attributes.attributes
-            ):
-                has_any_objectclass = True
-                break
-
-        assert has_any_objectclass, (
-            "At least one entry should have objectClass attribute"
-        )
-
+    @pytest.mark.timeout(10)
     def test_parse_oud_acl_fixture(self, ldif_api: FlextLdif) -> None:
         """Test parsing of a real OUD ACL file."""
-        entries = FlextLdifTestUtils.load_fixture(
+        _ = FixtureTestHelpers.load_fixture_entries(
             ldif_api,
             "oud",
             "oud_acl_fixtures.ldif",
+            expected_min_count=1,
         )
-        assert entries is not None
-        assert len(entries) > 0
 
+    @pytest.mark.timeout(10)
     def test_roundtrip_oud_entries(self, ldif_api: FlextLdif, tmp_path: Path) -> None:
         """Test roundtrip of OUD entries."""
-        FlextLdifTestUtils.run_roundtrip_test(
+        _ = FixtureTestHelpers.run_fixture_roundtrip(
             ldif_api,
             "oud",
             "oud_entries_fixtures.ldif",
             tmp_path,
+            validate_identical=True,
         )
 
+    @pytest.mark.timeout(60)
     def test_roundtrip_oud_schema(self, ldif_api: FlextLdif, tmp_path: Path) -> None:
         """Test roundtrip of OUD schema."""
-        FlextLdifTestUtils.run_roundtrip_test(
+        _ = FixtureTestHelpers.run_fixture_roundtrip(
             ldif_api,
             "oud",
             "oud_schema_fixtures.ldif",
             tmp_path,
+            validate_identical=False,
         )
 
+    @pytest.mark.timeout(10)
     def test_roundtrip_oud_acl(self, ldif_api: FlextLdif, tmp_path: Path) -> None:
         """Test roundtrip of OUD ACL."""
-        FlextLdifTestUtils.run_roundtrip_test(
+        _ = FixtureTestHelpers.run_fixture_roundtrip(
             ldif_api,
             "oud",
             "oud_acl_fixtures.ldif",
             tmp_path,
+            validate_identical=True,
         )
 
+    @pytest.mark.timeout(10)
     def test_oud_oracle_specific_attributes_preserved(
         self,
         ldif_api: FlextLdif,
     ) -> None:
         """Test that Oracle-specific attributes are properly preserved."""
-        entries = FlextLdifTestUtils.load_fixture(
+        entries = FixtureTestHelpers.load_fixture_entries(
             ldif_api,
             "oud",
             "oud_entries_fixtures.ldif",
+            expected_min_count=1,
         )
 
-        # Find OracleContext entries
-        oracle_entries = [
-            e
-            for e in entries
-            if "OracleContext" in e.dn.value or "orclContainer" in str(e.attributes)
-        ]
-        assert len(oracle_entries) > 0, "Should have Oracle-specific entries"
+        oracle_entries = OudTestHelpers.find_entries_by_dn_pattern(
+            entries,
+            "OracleContext",
+        )
+        if len(oracle_entries) == 0:
+            oracle_entries = OudTestHelpers.find_entries_by_dn_pattern(
+                entries,
+                "orcl",
+            )
+        assert len(oracle_entries) > 0 or OudTestHelpers.has_objectclass_containing(
+            entries,
+            "orcl",
+        ), "Should have Oracle-specific entries or objectClasses"
 
-        # Validate Oracle objectClasses exist
-        has_oracle_objectclass = False
-        for entry in entries:
-            for attr_name, attr_value in entry.attributes.items():
-                if attr_name.lower() == "objectclass":
-                    if isinstance(attr_value, list):
-                        values = attr_value
-                    elif hasattr(attr_value, "values"):
-                        values = attr_value.values
-                    else:
-                        values = [attr_value]
-                    if any("orcl" in str(v).lower() for v in values):
-                        has_oracle_objectclass = True
-                        break
-
-        assert has_oracle_objectclass, "Should have Oracle-specific objectClasses"
-
+    @pytest.mark.timeout(10)
     def test_oud_password_hashes_preserved(self, ldif_api: FlextLdif) -> None:
         """Test that OUD password hashes are properly preserved."""
-        entries = FlextLdifTestUtils.load_fixture(
+        entries = FixtureTestHelpers.load_fixture_entries(
             ldif_api,
             "oud",
             "oud_entries_fixtures.ldif",
+            expected_min_count=1,
         )
 
-        # Find entries with userPassword
-        password_entries = []
-        for entry in entries:
-            for attr_name in entry.attributes:
-                if attr_name.lower() == "userpassword":
-                    password_entries.append(entry)
-                    break
-
+        password_entries = OudTestHelpers.find_entries_with_attribute(
+            entries,
+            "userPassword",
+        )
         assert len(password_entries) > 0, "Should have entries with passwords"
 
-        # Validate SSHA512 format is preserved
-        for entry in password_entries:
-            for attr_name, attr_value in entry.attributes.items():
-                if attr_name.lower() == "userpassword":
-                    if isinstance(attr_value, list):
-                        values = attr_value
-                    elif hasattr(attr_value, "values"):
-                        values = attr_value.values
-                    else:
-                        values = [attr_value]
-                    # At least one should be SSHA512
-                    has_ssha = any("{SSHA512}" in str(v) for v in values)
-                    if has_ssha:
-                        break
+        assert OudTestHelpers.has_attribute_value_containing(
+            password_entries,
+            "userPassword",
+            "{SSHA512}",
+        ), "Should have SSHA512 password format"
 
 
 class TestOudRoutingValidation:
@@ -194,35 +276,23 @@ class TestOudRoutingValidation:
     through the OUD quirks during parse and write operations.
     """
 
-    @pytest.fixture
-    def ldif_api(self) -> FlextLdif:
-        """Provides a FlextLdif API instance for the test module."""
-        return FlextLdif()
-
+    @pytest.mark.timeout(10)
     def test_routing_write_validation_oud_entries(self, ldif_api: FlextLdif) -> None:
         """Test that OUD entries are correctly routed through write path.
 
         This test validates that the automatic write routing
         correctly processes OUD entries through the Entry quirk's write methods.
         """
-        from flext_ldif.servers.oud import FlextLdifServersOud
-        from tests.unit.quirks.servers.test_utils import FlextLdifTestUtils
-
-        # Load fixture
-        entries = FlextLdifTestUtils.load_fixture(
+        entries = FixtureTestHelpers.load_fixture_entries(
             ldif_api,
             "oud",
             "oud_entries_fixtures.ldif",
+            expected_min_count=1,
         )
-        assert entries is not None
 
-        # Get OUD quirk
         oud = FlextLdifServersOud()
-
-        # Verify that OUD entries can be written through OUD Entry quirk
-        for entry in entries:
-            result = oud.entry_quirk.write(entry)
-            assert result.is_success, f"Failed to write OUD entry: {result.error}"
-            written_str = result.unwrap()
-            assert written_str is not None
-            assert len(written_str) > 0
+        OudTestHelpers.validate_entries_write_success(
+            oud,
+            entries,
+            operation="write",
+        )

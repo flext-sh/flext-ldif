@@ -6,6 +6,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import cast
+
 import pytest
 
 from flext_ldif.models import FlextLdifModels
@@ -24,19 +26,19 @@ def rfc_quirk() -> FlextLdifServersRfc:
 @pytest.fixture
 def rfc_schema_quirk(rfc_quirk: FlextLdifServersRfc) -> FlextLdifServersRfc.Schema:
     """Provides RFC Schema quirk instance for tests."""
-    return rfc_quirk.schema_quirk
+    return cast("FlextLdifServersRfc.Schema", rfc_quirk.schema_quirk)
 
 
 @pytest.fixture
 def rfc_entry_quirk(rfc_quirk: FlextLdifServersRfc) -> FlextLdifServersRfc.Entry:
     """Provides RFC Entry quirk instance for tests."""
-    return rfc_quirk.entry_quirk
+    return cast("FlextLdifServersRfc.Entry", rfc_quirk.entry_quirk)
 
 
 @pytest.fixture
 def rfc_acl_quirk(rfc_quirk: FlextLdifServersRfc) -> FlextLdifServersRfc.Acl:
     """Provides RFC ACL quirk instance for tests."""
-    return rfc_quirk.acl_quirk
+    return cast("FlextLdifServersRfc.Acl", rfc_quirk.acl_quirk)
 
 
 @pytest.fixture
@@ -88,3 +90,34 @@ def real_parser_service() -> FlextLdifParser:
 def real_writer_service() -> FlextLdifWriter:
     """Provides real writer service for RFC tests."""
     return FlextLdifWriter()
+
+
+@pytest.fixture
+def sample_entry() -> FlextLdifModels.Entry:
+    """Provides a sample Entry for RFC tests."""
+    result = FlextLdifModels.Entry.create(
+        dn="cn=Test User,dc=example,dc=com",
+        attributes={
+            "cn": ["Test User"],
+            "sn": ["User"],
+            "objectclass": ["person", "organizationalPerson"],
+            "mail": ["test@example.com"],
+        },
+    )
+    return cast("FlextLdifModels.Entry", result.unwrap())
+
+
+@pytest.fixture
+def sample_entries(
+    sample_entry: FlextLdifModels.Entry,
+) -> list[FlextLdifModels.Entry]:
+    """Provides multiple sample entries for RFC tests."""
+    entry2_result = FlextLdifModels.Entry.create(
+        dn="cn=Another User,dc=example,dc=com",
+        attributes={
+            "cn": ["Another User"],
+            "sn": ["User"],
+            "objectclass": ["person"],
+        },
+    )
+    return [sample_entry, cast("FlextLdifModels.Entry", entry2_result.unwrap())]

@@ -411,7 +411,10 @@ class TestRfcBaselineValidation:
         assert entry.validation_metadata is not None
         rfc_violations_obj = entry.validation_metadata.get("rfc_violations")
         assert isinstance(rfc_violations_obj, list)
-        assert any("RFC 4512 § 2.3" in v and "Naming attribute" in v for v in rfc_violations_obj)
+        assert any(
+            "RFC 4512 § 2.3" in v and "Naming attribute" in v
+            for v in rfc_violations_obj
+        )
 
         # No server-specific violations (pure RFC mode)
         assert "server_specific_violations" not in entry.validation_metadata
@@ -530,8 +533,12 @@ class TestMetadataCapture:
         assert entry.metadata.extensions is not None
         assert "server_specific_violations" in entry.validation_metadata
         assert "server_specific_violations" in entry.metadata.extensions
-        server_violations_validation = entry.validation_metadata["server_specific_violations"]
-        server_violations_extensions = entry.metadata.extensions["server_specific_violations"]
+        server_violations_validation = entry.validation_metadata[
+            "server_specific_violations"
+        ]
+        server_violations_extensions = entry.metadata.extensions[
+            "server_specific_violations"
+        ]
         assert isinstance(server_violations_validation, list)
         assert isinstance(server_violations_extensions, list)
         assert server_violations_validation == server_violations_extensions

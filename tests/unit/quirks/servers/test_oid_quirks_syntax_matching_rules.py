@@ -10,6 +10,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import re
+
 import pytest
 
 from flext_ldif.servers.oid import FlextLdifServersOid
@@ -99,8 +101,6 @@ class TestOidSyntaxOidReplacements:
 
         # Verify replaced OID in output
         # Use word boundary check to avoid false positives from substring matching
-        import re
-
         # Check replaced OID appears (with word boundaries)
         assert re.search(r"\b1\.3\.6\.1\.4\.1\.1466\.115\.121\.1\.15\b", written), (
             f"Expected replaced OID 1.3.6.1.4.1.1466.115.121.1.15 not found in: {written}"

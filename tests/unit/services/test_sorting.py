@@ -21,30 +21,18 @@ from __future__ import annotations
 import operator
 
 import pytest
+from pydantic import ValidationError
 
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.services.sorting import FlextLdifSorting
+from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
 
 # ════════════════════════════════════════════════════════════════════════════
 # TEST FIXTURES
 # ════════════════════════════════════════════════════════════════════════════
 
-
-def create_entry(
-    dn_str: str,
-    attributes: dict[str, list[str]],
-) -> FlextLdifModels.Entry:
-    """Create test entry with DN and attributes."""
-    dn = FlextLdifModels.DistinguishedName(value=dn_str)
-    attrs_result = FlextLdifModels.LdifAttributes.create(attributes)
-    error_msg = attrs_result.error or "Unknown error"
-    assert attrs_result.is_success, f"Failed to create attributes: {error_msg}"
-    attrs = attrs_result.unwrap()
-    entry = FlextLdifModels.Entry(dn=dn, attributes=attrs)
-    # Validate entry was created correctly
-    assert entry.dn is not None
-    assert entry.attributes is not None
-    return entry
+# Use helper to eliminate duplication - replaces 8-10 lines per use
+create_entry = TestDeduplicationHelpers.create_entry_from_dict
 
 
 @pytest.fixture
@@ -322,44 +310,34 @@ class TestExecutePattern:
 class TestClassmethodSort:
     """Test sort() classmethod for composable/chainable operations."""
 
-    def test_sort_hierarchy(
+    def test_sort_operations_batch(
         self,
         hierarchy_entries: list[FlextLdifModels.Entry],
     ) -> None:
-        """Test sort() classmethod with hierarchy strategy."""
-        result = FlextLdifSorting.sort(hierarchy_entries, by="hierarchy")
+        """Test sort() operations in batch."""
+        from tests.helpers.test_rfc_helpers import RfcTestHelpers
 
-        assert result.is_success
-        sorted_entries = result.unwrap()
-        assert len(sorted_entries) == 5
+        RfcTestHelpers.test_result_success_and_unwrap(
+            FlextLdifSorting.sort(hierarchy_entries, by="hierarchy"),
+            expected_type=list,
+            expected_count=5,
+        )
 
-    def test_sort_with_chaining(
-        self,
-        hierarchy_entries: list[FlextLdifModels.Entry],
-    ) -> None:
-        """Test sort() with chainable map/and_then operations."""
-        result = (
+        RfcTestHelpers.test_result_success_and_unwrap(
             FlextLdifSorting.sort(hierarchy_entries, by="hierarchy").map(
                 operator.itemgetter(slice(3)),
-            )  # Take first 3
+            ),
+            expected_type=list,
+            expected_count=3,
         )
 
-        assert result.is_success
-        entries = result.unwrap()
-        assert len(entries) == 3
-
-    def test_sort_with_error_handling(
-        self,
-        hierarchy_entries: list[FlextLdifModels.Entry],
-    ) -> None:
-        """Test sort() with error handling."""
-        result = FlextLdifSorting.sort(
-            hierarchy_entries,
-            by="custom",
-            predicate=lambda e: e.dn.value if e.dn else "",
+        RfcTestHelpers.test_result_success_and_unwrap(
+            FlextLdifSorting.sort(
+                hierarchy_entries,
+                by="custom",
+                predicate=lambda e: e.dn.value if e.dn else "",
+            ),
         )
-
-        assert result.is_success
 
 
 # ════════════════════════════════════════════════════════════════════════════
@@ -733,8 +711,6 @@ class TestErrorCases:
         hierarchy_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test invalid sort_target is rejected by Pydantic."""
-        from pydantic import ValidationError
-
         with pytest.raises(ValidationError, match="Invalid sort_target"):
             _ = FlextLdifSorting(
                 entries=hierarchy_entries,
@@ -746,8 +722,6 @@ class TestErrorCases:
         hierarchy_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test invalid sort_by is rejected by Pydantic."""
-        from pydantic import ValidationError
-
         with pytest.raises(ValidationError, match="Invalid sort_by"):
             _ = FlextLdifSorting(
                 entries=hierarchy_entries,
@@ -759,8 +733,6 @@ class TestErrorCases:
         hierarchy_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test custom sort_by without predicate is rejected."""
-        from pydantic import ValidationError
-
         with pytest.raises(ValidationError, match="custom_predicate required"):
             _ = FlextLdifSorting(
                 entries=hierarchy_entries,

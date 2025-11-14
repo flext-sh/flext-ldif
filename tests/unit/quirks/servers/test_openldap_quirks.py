@@ -27,20 +27,17 @@ class TestOpenLdapFixtures:
 
     def test_parse_openldap_schema_fixture(self, ldif_api: FlextLdif) -> None:
         """Test parsing of OpenLDAP schema fixture in cn=config format."""
-        # Note: openldap_schema_fixtures.ldif is in cn=config format (olcAttributeTypes)
-        # which is OpenLDAP's internal schema storage format, not standard LDIF entries.
-        # This test verifies the file parses without error.
+        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+
         fixture_path = FlextLdifTestUtils.get_fixture_path(
             "openldap",
             "openldap_schema_fixtures.ldif",
         )
-        result = ldif_api.parse(
+        entries = RfcTestHelpers.test_api_parse_fixture_and_validate(
+            ldif_api,
             fixture_path,
             server_type="openldap",
         )
-        assert result.is_success, f"Failed to parse schema fixture: {result.error}"
-        # cn=config schema files don't parse as regular entries
-        entries = result.unwrap()
         assert entries is not None
 
     def test_parse_openldap_integration_fixture(self, ldif_api: FlextLdif) -> None:
@@ -102,14 +99,11 @@ class TestOpenLDAP2xSchemas:
         attr_def = "( 1.2.3.4 NAME 'test' DESC 'Test attribute' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
         assert quirk.can_handle_attribute(attr_def) is True
 
-        # Parse just the attribute definition part (without LDIF prefix)
-        parse_result = quirk.parse_attribute(attr_def)
+        from tests.helpers.test_rfc_helpers import RfcTestHelpers
 
-        assert parse_result.is_success, (
-            f"Failed to parse attribute: {parse_result.error}"
+        parsed_attr = RfcTestHelpers.test_result_success_and_unwrap(
+            quirk.parse_attribute(attr_def),
         )
-
-        parsed_attr = parse_result.unwrap()
         assert parsed_attr.oid == "1.2.3.4"
         assert parsed_attr.name == "test"
 
@@ -124,14 +118,11 @@ class TestOpenLDAP2xSchemas:
         # Test can_handle_attribute with plain RFC definition
         assert quirk.can_handle_attribute(attr_def) is True
 
-        # Parse the attribute
-        parse_result = quirk.parse_attribute(attr_def)
+        from tests.helpers.test_rfc_helpers import RfcTestHelpers
 
-        assert parse_result.is_success, (
-            f"Failed to parse attribute: {parse_result.error}"
+        parsed_attr = RfcTestHelpers.test_result_success_and_unwrap(
+            quirk.parse_attribute(attr_def),
         )
-
-        parsed_attr = parse_result.unwrap()
         assert parsed_attr.oid == "1.2.3.4"
         assert parsed_attr.name == "test"
 
@@ -140,17 +131,19 @@ class TestOpenLDAP2xSchemas:
         quirk: FlextLdifServersOpenldap.Schema,
     ) -> None:
         """Test successful attribute parsing."""
-        attr_def = "( 1.2.3.4 NAME 'testAttr' DESC 'Test attribute' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 EQUALITY caseIgnoreMatch SINGLE-VALUE )"
-        result = quirk.parse_attribute(attr_def)
+        from tests.helpers.test_rfc_helpers import RfcTestHelpers
 
-        assert result.is_success
-        attr_data = result.unwrap()
-        assert attr_data.oid == "1.2.3.4"
-        assert attr_data.name == "testAttr"
-        assert attr_data.desc == "Test attribute"
-        assert attr_data.syntax == "1.3.6.1.4.1.1466.115.121.1.15"
-        assert attr_data.equality == "caseIgnoreMatch"
-        assert attr_data.single_value is True
+        attr_def = "( 1.2.3.4 NAME 'testAttr' DESC 'Test attribute' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 EQUALITY caseIgnoreMatch SINGLE-VALUE )"
+        RfcTestHelpers.test_schema_quirk_parse_and_assert(
+            quirk,
+            attr_def,
+            expected_oid="1.2.3.4",
+            expected_name="testAttr",
+            expected_desc="Test attribute",
+            expected_syntax="1.3.6.1.4.1.1466.115.121.1.15",
+            expected_equality="caseIgnoreMatch",
+            expected_single_value=True,
+        )
 
     def test_parse_attribute_no_oid(
         self,
@@ -178,14 +171,11 @@ class TestOpenLDAP2xSchemas:
         oc_def = "( 1.2.3.4 NAME 'testClass' DESC 'Test class' SUP top STRUCTURAL MUST cn MAY description )"
         assert quirk.can_handle_objectclass(oc_def) is True
 
-        # Parse just the objectClass definition part (without LDIF prefix)
-        parse_result = quirk.parse_objectclass(oc_def)
+        from tests.helpers.test_rfc_helpers import RfcTestHelpers
 
-        assert parse_result.is_success, (
-            f"Failed to parse objectClass: {parse_result.error}"
+        parsed_oc = RfcTestHelpers.test_result_success_and_unwrap(
+            quirk.parse_objectclass(oc_def),
         )
-
-        parsed_oc = parse_result.unwrap()
         assert parsed_oc.oid == "1.2.3.4"
         assert parsed_oc.name == "testClass"
 
@@ -200,14 +190,11 @@ class TestOpenLDAP2xSchemas:
         # Test can_handle_objectclass with plain RFC definition
         assert quirk.can_handle_objectclass(oc_def) is True
 
-        # Parse the objectClass
-        parse_result = quirk.parse_objectclass(oc_def)
+        from tests.helpers.test_rfc_helpers import RfcTestHelpers
 
-        assert parse_result.is_success, (
-            f"Failed to parse objectClass: {parse_result.error}"
+        parsed_oc = RfcTestHelpers.test_result_success_and_unwrap(
+            quirk.parse_objectclass(oc_def),
         )
-
-        parsed_oc = parse_result.unwrap()
         assert parsed_oc.oid == "1.2.3.4"
         assert parsed_oc.name == "testClass"
 
@@ -216,48 +203,44 @@ class TestOpenLDAP2xSchemas:
         quirk: FlextLdifServersOpenldap.Schema,
     ) -> None:
         """Test successful objectClass parsing."""
+        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+
         oc_def = "( 1.2.3.4 NAME 'testClass' DESC 'Test class' SUP top STRUCTURAL MUST ( cn $ sn ) MAY ( description ) )"
-        result = quirk.parse_objectclass(oc_def)
+        oc_data = RfcTestHelpers.test_schema_quirk_parse_and_assert(
+            quirk,
+            oc_def,
+            expected_oid="1.2.3.4",
+            expected_name="testClass",
+            expected_desc="Test class",
+            expected_sup="top",
+            expected_kind="STRUCTURAL",
+        )
+        assert isinstance(oc_data.must, list)
+        assert "cn" in oc_data.must
+        assert "sn" in oc_data.must
+        assert isinstance(oc_data.may, list)
+        assert "description" in oc_data.may
 
-        assert result.is_success
-        oc_data = result.unwrap()
-        assert hasattr(oc_data, "name")
-        assert oc_data.oid == "1.2.3.4"
-        assert oc_data.name == "testClass"
-        assert oc_data.desc == "Test class"
-        assert oc_data.sup == "top"
-        assert oc_data.kind == "STRUCTURAL"
-        must_attr = oc_data.must
-        assert isinstance(must_attr, list)
-        assert "cn" in must_attr
-        assert "sn" in must_attr
-        may_attr = oc_data.may
-        assert isinstance(may_attr, list)
-        assert "description" in may_attr
-
-    def test_parse_objectclass_auxiliary(
+    def test_parse_objectclass_kinds_batch(
         self,
         quirk: FlextLdifServersOpenldap.Schema,
     ) -> None:
-        """Test parsing AUXILIARY objectClass."""
-        oc_def = "( 1.2.3.5 NAME 'auxClass' AUXILIARY )"
-        result = quirk.parse_objectclass(oc_def)
+        """Test parsing different objectClass kinds in batch."""
+        from tests.helpers.test_rfc_helpers import RfcTestHelpers
 
-        assert result.is_success
-        oc_data = result.unwrap()
-        assert oc_data.kind == "AUXILIARY"
+        oc_aux = "( 1.2.3.5 NAME 'auxClass' AUXILIARY )"
+        RfcTestHelpers.test_schema_quirk_parse_and_assert(
+            quirk,
+            oc_aux,
+            expected_kind="AUXILIARY",
+        )
 
-    def test_parse_objectclass_abstract(
-        self,
-        quirk: FlextLdifServersOpenldap.Schema,
-    ) -> None:
-        """Test parsing ABSTRACT objectClass."""
-        oc_def = "( 1.2.3.6 NAME 'absClass' ABSTRACT )"
-        result = quirk.parse_objectclass(oc_def)
-
-        assert result.is_success
-        oc_data = result.unwrap()
-        assert oc_data.kind == "ABSTRACT"
+        oc_abs = "( 1.2.3.6 NAME 'absClass' ABSTRACT )"
+        RfcTestHelpers.test_schema_quirk_parse_and_assert(
+            quirk,
+            oc_abs,
+            expected_kind="ABSTRACT",
+        )
 
     def test_parse_objectclass_no_oid(
         self,
@@ -278,50 +261,67 @@ class TestOpenLDAP2xSchemas:
         quirk: FlextLdifServersOpenldap.Schema,
     ) -> None:
         """Test writing attribute to RFC string format."""
-        attr_model = FlextLdifModels.SchemaAttribute(
-            oid="1.2.3.4",
-            name="testAttr",
-            desc="Test attribute",
-            syntax="1.3.6.1.4.1.1466.115.121.1.15",
-            equality="caseIgnoreMatch",
-            single_value=True,
-        )
+        from tests.helpers.test_rfc_helpers import RfcTestHelpers
 
-        result = quirk.write_attribute(attr_model)
-        assert result.is_success
-        attr_str = result.unwrap()
-        assert "( 1.2.3.4" in attr_str
-        assert "NAME 'testAttr'" in attr_str
-        assert "DESC 'Test attribute'" in attr_str
-        assert "SYNTAX 1.3.6.1.4.1.1466.115.121.1.15" in attr_str
-        assert "EQUALITY caseIgnoreMatch" in attr_str
-        assert "SINGLE-VALUE" in attr_str
-        assert ")" in attr_str
+        attr_model = RfcTestHelpers.test_create_schema_attribute_from_dict(
+            {
+                "oid": "1.2.3.4",
+                "name": "testAttr",
+                "desc": "Test attribute",
+                "syntax": "1.3.6.1.4.1.1466.115.121.1.15",
+                "equality": "caseIgnoreMatch",
+                "single_value": True,
+            },
+        )
+        from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
+
+        TestDeduplicationHelpers.quirk_write_and_unwrap(
+            quirk,
+            attr_model,
+            write_method="_write_attribute",
+            must_contain=[
+                "1.2.3.4",
+                "NAME 'testAttr'",
+                "DESC 'Test attribute'",
+                "SYNTAX 1.3.6.1.4.1.1466.115.121.1.15",
+                "EQUALITY caseIgnoreMatch",
+                "SINGLE-VALUE",
+            ],
+        )
 
     def test_write_objectclass_to_rfc(
         self,
         quirk: FlextLdifServersOpenldap.Schema,
     ) -> None:
         """Test writing objectClass to RFC string format."""
-        oc_model = FlextLdifModels.SchemaObjectClass(
-            oid="1.2.3.4",
-            name="testClass",
-            desc="Test class",
-            sup="top",
-            kind="STRUCTURAL",
-            must=["cn", "sn"],
-            may=["description"],
-        )
+        from tests.helpers.test_rfc_helpers import RfcTestHelpers
 
-        result = quirk.write_objectclass(oc_model)
-        assert result.is_success
-        oc_str = result.unwrap()
-        assert "( 1.2.3.4" in oc_str
-        assert "NAME 'testClass'" in oc_str
-        assert "SUP top" in oc_str
-        assert "STRUCTURAL" in oc_str
-        assert "MUST" in oc_str
-        assert "MAY" in oc_str
+        oc_model = RfcTestHelpers.test_create_schema_objectclass_from_dict(
+            {
+                "oid": "1.2.3.4",
+                "name": "testClass",
+                "desc": "Test class",
+                "sup": "top",
+                "kind": "STRUCTURAL",
+                "must": ["cn", "sn"],
+                "may": ["description"],
+            },
+        )
+        from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
+
+        TestDeduplicationHelpers.quirk_write_and_unwrap(
+            quirk,
+            oc_model,
+            write_method="_write_objectclass",
+            must_contain=[
+                "1.2.3.4",
+                "NAME 'testClass'",
+                "SUP top",
+                "STRUCTURAL",
+                "MUST",
+                "MAY",
+            ],
+        )
 
 
 class TestOpenLDAP2xAcls:
@@ -341,32 +341,19 @@ class TestOpenLDAP2xAcls:
         acl_line = "to attrs=userPassword by self write by anonymous auth by * none"
         # Parse string ACL into model object
 
-        parse_result = acl.parse(acl_line)
+        from tests.helpers.test_rfc_helpers import RfcTestHelpers
 
-        assert parse_result.is_success, f"Failed to parse ACL: {parse_result.error}"
-
-        parse_result.unwrap()
-
-        # Test with the model object
-
+        RfcTestHelpers.test_result_success_and_unwrap(acl.parse(acl_line))
         assert acl.can_handle(acl_line) is True
 
     def test__can_handle_with_olcaccess(self) -> None:
         """Test ACL detection with olcAccess prefix."""
+        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+
         openldap_server = FlextLdifServersOpenldap()
         acl = openldap_server.Acl()
-
         acl_line = "olcAccess: to * by * read"
-        # Parse string ACL into model object
-
-        parse_result = acl.parse(acl_line)
-
-        assert parse_result.is_success, f"Failed to parse ACL: {parse_result.error}"
-
-        parse_result.unwrap()
-
-        # Test with the model object
-
+        RfcTestHelpers.test_result_success_and_unwrap(acl.parse(acl_line))
         assert acl.can_handle(acl_line) is True
 
     def test__can_handle_negative(self) -> None:
@@ -374,17 +361,14 @@ class TestOpenLDAP2xAcls:
         openldap_server = FlextLdifServersOpenldap()
         acl = openldap_server.Acl()
 
-        acl_line = "random text"
-        # Parse string ACL into model object
-        parse_result = acl.parse(acl_line)
+        from tests.helpers.test_rfc_helpers import RfcTestHelpers
 
-        # For invalid ACL text, parsing may fail (which is expected)
-        # If parsing succeeds despite being invalid text, can_handle should return False
+        acl_line = "random text"
+        parse_result = acl.parse(acl_line)
         if parse_result.is_success:
-            parse_result.unwrap()
+            RfcTestHelpers.test_result_success_and_unwrap(parse_result)
             assert acl.can_handle(acl_line) is False
         else:
-            # Invalid ACL that fails to parse is also correctly rejected
             assert parse_result.is_success is False
 
     def test_parse_success(self) -> None:
@@ -393,11 +377,9 @@ class TestOpenLDAP2xAcls:
         acl = openldap_server.acl_quirk
 
         acl_line = "to attrs=userPassword by self write by * read"
-        result = acl.parse(acl_line)
+        from tests.helpers.test_rfc_helpers import RfcTestHelpers
 
-        assert result.is_success
-        acl_model = result.unwrap()
-        assert isinstance(acl_model, FlextLdifModels.Acl)
+        acl_model = RfcTestHelpers.test_quirk_parse_success_and_unwrap(acl, acl_line)
         assert acl_model.raw_acl == acl_line
         # name is optional, defaults to empty string
         assert acl_model.metadata is not None
@@ -409,10 +391,9 @@ class TestOpenLDAP2xAcls:
         acl = openldap_server.acl_quirk
 
         acl_line = "{0}to * by * read"
-        result = acl.parse(acl_line)
+        from tests.helpers.test_rfc_helpers import RfcTestHelpers
 
-        assert result.is_success
-        acl_model = result.unwrap()
+        acl_model = RfcTestHelpers.test_quirk_parse_success_and_unwrap(acl, acl_line)
         assert isinstance(acl_model, FlextLdifModels.Acl)
         assert acl_model.raw_acl == acl_line
 
@@ -422,11 +403,9 @@ class TestOpenLDAP2xAcls:
         acl = openldap_server.acl_quirk
 
         acl_line = 'olcAccess: to dn.base="" by * read'
-        result = acl.parse(acl_line)
+        from tests.helpers.test_rfc_helpers import RfcTestHelpers
 
-        assert result.is_success
-        acl_model = result.unwrap()
-        assert isinstance(acl_model, FlextLdifModels.Acl)
+        acl_model = RfcTestHelpers.test_quirk_parse_success_and_unwrap(acl, acl_line)
         assert acl_model.raw_acl == acl_line
 
     def test_parse_missing_to_clause(self) -> None:
@@ -437,11 +416,9 @@ class TestOpenLDAP2xAcls:
         # ACL parser accepts any non-empty string as a raw ACL
         # Validation of complete "to" clause is beyond parse scope
         acl_line = "by * read"
-        result = acl.parse(acl_line)
+        from tests.helpers.test_rfc_helpers import RfcTestHelpers
 
-        assert result.is_success
-        acl_model = result.unwrap()
-        assert isinstance(acl_model, FlextLdifModels.Acl)
+        acl_model = RfcTestHelpers.test_quirk_parse_success_and_unwrap(acl, acl_line)
         # Raw ACL stores the incomplete rule as-is
         assert acl_model.raw_acl == acl_line
 
@@ -709,19 +686,30 @@ class TestOpenldapSchemaWriteAttribute:
         openldap: FlextLdifServersOpenldap.Schema,
     ) -> None:
         """Test writing attribute to RFC format string."""
-        attr_data = FlextLdifModels.SchemaAttribute(
-            oid="2.5.4.3",
-            name="cn",
-            desc="common name",
-            syntax="1.3.6.1.4.1.1466.115.121.1.15",
-            single_value=False,
+        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+        from tests.unit.quirks.servers.fixtures.rfc_constants import TestsRfcConstants
+
+        attr_data = RfcTestHelpers.test_create_schema_attribute_from_dict(
+            {
+                "oid": TestsRfcConstants.ATTR_OID_CN,
+                "name": TestsRfcConstants.ATTR_NAME_CN,
+                "desc": "common name",
+                "syntax": "1.3.6.1.4.1.1466.115.121.1.15",
+                "single_value": False,
+            },
         )
-        result = openldap.write(attr_data)
-        assert hasattr(result, "is_success")
-        if result.is_success:
-            attr_str = result.unwrap()
-            assert isinstance(attr_str, str)
-            assert "2.5.4.3" in attr_str
+        from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
+
+        attr_str = TestDeduplicationHelpers.quirk_write_and_unwrap(
+            openldap,
+            attr_data,
+            write_method="write",
+            must_contain=[
+                TestsRfcConstants.ATTR_OID_CN,
+                TestsRfcConstants.ATTR_NAME_CN,
+            ],
+        )
+        assert isinstance(attr_str, str)
 
 
 class TestOpenldapSchemaWriteObjectClass:
@@ -737,20 +725,32 @@ class TestOpenldapSchemaWriteObjectClass:
         openldap: FlextLdifServersOpenldap.Schema,
     ) -> None:
         """Test writing objectClass to RFC format string."""
-        oc_data = FlextLdifModels.SchemaObjectClass(
-            oid="2.5.6.6",
-            name="person",
-            desc="RFC2256: person",
-            kind="STRUCTURAL",
-            must=["sn", "cn"],
-            may=["userPassword"],
+        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+        from tests.unit.quirks.servers.fixtures.rfc_constants import TestsRfcConstants
+
+        oc_data = RfcTestHelpers.test_create_schema_objectclass_from_dict(
+            {
+                "oid": TestsRfcConstants.OC_OID_PERSON,
+                "name": TestsRfcConstants.OC_NAME_PERSON,
+                "desc": "RFC2256: person",
+                "kind": "STRUCTURAL",
+                "must": ["sn", "cn"],
+                "may": ["userPassword"],
+            },
         )
-        result = openldap.write(oc_data)
-        assert hasattr(result, "is_success")
-        if result.is_success:
-            oc_str = result.unwrap()
-            assert isinstance(oc_str, str)
-            assert "2.5.6.6" in oc_str
+        from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
+
+        oc_str = TestDeduplicationHelpers.quirk_write_and_unwrap(
+            openldap,
+            oc_data,
+            write_method="_write_objectclass",
+            must_contain=[
+                TestsRfcConstants.OC_OID_PERSON,
+                TestsRfcConstants.OC_NAME_PERSON,
+                "STRUCTURAL",
+            ],
+        )
+        assert isinstance(oc_str, str)
 
 
 class TestOpenldapAclCanHandleAcl:

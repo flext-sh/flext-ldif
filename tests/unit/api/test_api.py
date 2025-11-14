@@ -32,6 +32,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
+from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
 
 from flext_ldif import FlextLdif, FlextLdifConfig, FlextLdifConstants, FlextLdifModels
 
@@ -72,14 +73,17 @@ mail: bob@example.com
         simple_ldif_content: str,
     ) -> None:
         """Test parse() with LDIF content string."""
-        result = api.parse(simple_ldif_content)
+        from tests.helpers.test_rfc_helpers import RfcTestHelpers
 
-        assert result.is_success, f"Parse failed: {result.error}"
-        entries = result.unwrap()
-        assert isinstance(entries, list)
-        assert len(entries) == 2
-        assert entries[0].dn.value == "cn=Alice Johnson,ou=People,dc=example,dc=com"
-        assert entries[1].dn.value == "cn=Bob Smith,ou=People,dc=example,dc=com"
+        RfcTestHelpers.test_api_parse_and_assert(
+            api,
+            simple_ldif_content,
+            expected_count=2,
+            expected_dns=[
+                "cn=Alice Johnson,ou=People,dc=example,dc=com",
+                "cn=Bob Smith,ou=People,dc=example,dc=com",
+            ],
+        )
 
     def test_parse_from_file_path_object(
         self,
@@ -88,15 +92,11 @@ mail: bob@example.com
         simple_ldif_content: str,
     ) -> None:
         """Test parse() with file Path object."""
+        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+
         ldif_file = tmp_path / "test.ldif"
         ldif_file.write_text(simple_ldif_content)
-
-        result = api.parse(ldif_file)
-
-        assert result.is_success, f"Parse failed: {result.error}"
-        entries = result.unwrap()
-        assert isinstance(entries, list)
-        assert len(entries) == 2
+        RfcTestHelpers.test_api_parse_and_assert(api, ldif_file, expected_count=2)
 
     def test_parse_from_file_path_string(
         self,
@@ -105,41 +105,35 @@ mail: bob@example.com
         simple_ldif_content: str,
     ) -> None:
         """Test parse() with file path as string."""
+        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+
         ldif_file = tmp_path / "test.ldif"
         ldif_file.write_text(simple_ldif_content)
-
-        result = api.parse(str(ldif_file))
-
-        assert result.is_success, f"Parse failed: {result.error}"
-        entries = result.unwrap()
-        assert isinstance(entries, list)
-        assert len(entries) == 2
+        RfcTestHelpers.test_api_parse_and_assert(api, str(ldif_file), expected_count=2)
 
     def test_parse_empty_content_returns_empty_list(self, api: FlextLdif) -> None:
         """Test parse() with empty content returns empty list."""
-        result = api.parse("")
-        assert result.is_success
-        entries = result.unwrap()
-        assert isinstance(entries, list)
-        assert len(entries) == 0
+        from tests.helpers.test_rfc_helpers import RfcTestHelpers
 
-    def test_parse_with_comments(self, api: FlextLdif) -> None:
-        """Test parse() correctly handles comments."""
-        content = """# This is a comment
+        RfcTestHelpers.test_api_parse_and_assert(api, "", expected_count=0)
+
+    def test_parse_variations_batch(self, api: FlextLdif) -> None:
+        """Test parse() with various LDIF variations in batch."""
+        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+
+        test_cases = [
+            (
+                """# This is a comment
 dn: cn=Test,dc=example,dc=com
 cn: Test
 # Another comment
 objectClass: person
-"""
-        result = api.parse(content)
-
-        assert result.is_success, f"Parse failed: {result.error}"
-        entries = result.unwrap()
-        assert len(entries) == 1
-
-    def test_parse_with_line_folding(self, api: FlextLdif) -> None:
-        """Test parse() correctly handles LDIF line folding."""
-        content = """dn: cn=Test User With Long Name,ou=People,dc=example,dc=com
+""",
+                1,
+                None,
+            ),
+            (
+                """dn: cn=Test User With Long Name,ou=People,dc=example,dc=com
 cn: Test User With Long Name
 sn: User
 objectClass: person
@@ -147,41 +141,40 @@ objectClass: inetOrgPerson
 description: This is a long description that
  continues on the next line with proper line folding
 mail: test@example.com
-"""
-        result = api.parse(content)
-
-        assert result.is_success, f"Parse failed: {result.error}"
-        entries = result.unwrap()
-        assert len(entries) == 1
-        assert "description" in entries[0].attributes
-
-    def test_parse_with_binary_attribute(self, api: FlextLdif) -> None:
-        """Test parse() correctly handles binary attributes in entries."""
-        # Binary data is typically present in LDAP entries
-        content = """dn: cn=Test,dc=example,dc=com
+""",
+                1,
+                ["description"],
+            ),
+            (
+                """dn: cn=Test,dc=example,dc=com
 cn: Test
 objectClass: person
-"""
-        result = api.parse(content)
-
-        assert result.is_success, f"Parse failed: {result.error}"
-        entries = result.unwrap()
-        assert len(entries) == 1
-
-    def test_parse_with_multivalued_attributes(self, api: FlextLdif) -> None:
-        """Test parse() correctly handles multivalued attributes."""
-        content = """dn: cn=Test,dc=example,dc=com
+""",
+                1,
+                None,
+            ),
+            (
+                """dn: cn=Test,dc=example,dc=com
 cn: Test
 mail: test1@example.com
 mail: test2@example.com
 mail: test3@example.com
 objectClass: person
-"""
-        result = api.parse(content)
-
-        assert result.is_success, f"Parse failed: {result.error}"
-        entries = result.unwrap()
-        assert len(entries) == 1
+""",
+                1,
+                None,
+            ),
+        ]
+        for content, expected_count, expected_attrs in test_cases:
+            entries = RfcTestHelpers.test_api_parse_and_assert(
+                api,
+                content,
+                expected_count=expected_count,
+            )
+            if expected_attrs:
+                assert entries[0].attributes is not None
+                for attr_name in expected_attrs:
+                    assert attr_name in entries[0].attributes.attributes
 
     def test_parse_nonexistent_file_path(self, api: FlextLdif) -> None:
         """Test parse() with nonexistent file path."""
@@ -190,12 +183,16 @@ objectClass: person
         assert result.is_failure
         assert result.error is not None
 
-    def test_parse_multiple_entries_separated_by_blank_lines(
+    def test_parse_multiple_entries_and_changetype(
         self,
         api: FlextLdif,
     ) -> None:
-        """Test parse() correctly separates entries by blank lines."""
-        content = """dn: cn=First,dc=example,dc=com
+        """Test parse() with multiple entries and changetype."""
+        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+
+        RfcTestHelpers.test_api_parse_and_assert(
+            api,
+            """dn: cn=First,dc=example,dc=com
 cn: First
 objectClass: person
 
@@ -206,16 +203,12 @@ objectClass: person
 dn: cn=Third,dc=example,dc=com
 cn: Third
 objectClass: person
-"""
-        result = api.parse(content)
-
-        assert result.is_success, f"Parse failed: {result.error}"
-        entries = result.unwrap()
-        assert len(entries) == 3
-
-    def test_parse_with_changetype(self, api: FlextLdif) -> None:
-        """Test parse() correctly handles entries with changetype."""
-        content = """dn: cn=Test,dc=example,dc=com
+""",
+            expected_count=3,
+        )
+        RfcTestHelpers.test_api_parse_and_assert(
+            api,
+            """dn: cn=Test,dc=example,dc=com
 changetype: add
 cn: Test
 objectClass: person
@@ -224,12 +217,9 @@ dn: cn=Other,dc=example,dc=com
 changetype: modify
 cn: Other
 objectClass: person
-"""
-        result = api.parse(content)
-
-        assert result.is_success, f"Parse failed: {result.error}"
-        entries = result.unwrap()
-        assert len(entries) == 2
+""",
+            expected_count=2,
+        )
 
 
 # ============================================================================
@@ -263,67 +253,45 @@ objectClass: person
 ds-sync-state: sync
 """
 
-    def test_parse_with_rfc_server_type(
+    def test_parse_with_server_types_batch(
         self,
         api: FlextLdif,
         oid_specific_content: str,
-    ) -> None:
-        """Test parse() with RFC server type (no quirks)."""
-        result = api.parse(oid_specific_content, server_type="rfc")
-
-        assert result.is_success, f"Parse failed: {result.error}"
-        entries = result.unwrap()
-        assert len(entries) == 1
-
-    def test_parse_with_oid_server_type(
-        self,
-        api: FlextLdif,
-        oid_specific_content: str,
-    ) -> None:
-        """Test parse() with OID server type applies OID quirks."""
-        result = api.parse(oid_specific_content, server_type="oid")
-
-        assert result.is_success, f"Parse failed: {result.error}"
-        entries = result.unwrap()
-        assert len(entries) == 1
-
-    def test_parse_with_oud_server_type(
-        self,
-        api: FlextLdif,
         oud_specific_content: str,
     ) -> None:
-        """Test parse() with OUD server type applies OUD quirks."""
-        result = api.parse(oud_specific_content, server_type="oud")
+        """Test parse() with various server types in batch."""
+        from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
 
-        assert result.is_success, f"Parse failed: {result.error}"
-        entries = result.unwrap()
-        assert len(entries) == 1
-
-    def test_parse_with_openldap_server_type(self, api: FlextLdif) -> None:
-        """Test parse() with OpenLDAP server type."""
-        content = """dn: cn=User,dc=example,dc=com
+        test_cases = [
+            {
+                "content": oid_specific_content,
+                "server_type": "rfc",
+                "expected_count": 1,
+            },
+            {
+                "content": oid_specific_content,
+                "server_type": "oid",
+                "expected_count": 1,
+            },
+            {
+                "content": oud_specific_content,
+                "server_type": "oud",
+                "expected_count": 1,
+            },
+            {
+                "content": """dn: cn=User,dc=example,dc=com
 cn: User
 objectClass: person
 olcSortVals: mail cn
-"""
-        result = api.parse(content, server_type="openldap")
-
-        assert result.is_success, f"Parse failed: {result.error}"
-        entries = result.unwrap()
-        assert len(entries) == 1
-
-    def test_parse_with_auto_server_type(
-        self,
-        api: FlextLdif,
-        oid_specific_content: str,
-    ) -> None:
-        """Test parse() with auto server type detection."""
-        # Auto-detection is enabled when server_type is None (default)
-        result = api.parse(oid_specific_content)
-
-        assert result.is_success, f"Parse failed: {result.error}"
-        entries = result.unwrap()
-        assert len(entries) == 1
+""",
+                "server_type": "openldap",
+                "expected_count": 1,
+            },
+            {"content": oid_specific_content, "server_type": None, "expected_count": 1},
+        ]
+        TestDeduplicationHelpers.api_parse_with_server_types_batch(
+            api, test_cases, validate_all=True
+        )
 
 
 # ============================================================================
@@ -349,12 +317,12 @@ objectClass: person"""
             for i in range(100)
         )
 
-        result = api.parse(entries_content)
+        from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
 
-        assert result.is_success, f"Parse failed: {result.error}"
-        entries = result.unwrap()
+        TestDeduplicationHelpers.api_parse_and_unwrap(
+            api, entries_content, expected_count=100
+        )
         # Should parse all entries
-        assert len(entries) == 100
 
 
 class TestAPIWriting:
@@ -368,33 +336,29 @@ class TestAPIWriting:
     @pytest.fixture
     def sample_entries(self) -> list[FlextLdifModels.Entry]:
         """Create sample entries for writing tests."""
-        entries = []
+        from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
 
-        # First entry
-        alice_result = FlextLdifModels.Entry.create(
-            dn="cn=Alice,ou=People,dc=example,dc=com",
-            attributes={
-                "cn": ["Alice"],
-                "objectClass": ["person", "inetOrgPerson"],
-                "mail": ["alice@example.com"],
+        entries_data = [
+            {
+                "dn": "cn=Alice,ou=People,dc=example,dc=com",
+                "attributes": {
+                    "cn": ["Alice"],
+                    "objectClass": ["person", "inetOrgPerson"],
+                    "mail": ["alice@example.com"],
+                },
             },
-        )
-        if alice_result.is_success:
-            entries.append(alice_result.unwrap())
-
-        # Second entry
-        bob_result = FlextLdifModels.Entry.create(
-            dn="cn=Bob,ou=People,dc=example,dc=com",
-            attributes={
-                "cn": ["Bob"],
-                "objectClass": ["person", "inetOrgPerson"],
-                "mail": ["bob@example.com"],
+            {
+                "dn": "cn=Bob,ou=People,dc=example,dc=com",
+                "attributes": {
+                    "cn": ["Bob"],
+                    "objectClass": ["person", "inetOrgPerson"],
+                    "mail": ["bob@example.com"],
+                },
             },
+        ]
+        return TestDeduplicationHelpers.create_entries_batch(
+            entries_data, validate_all=True
         )
-        if bob_result.is_success:
-            entries.append(bob_result.unwrap())
-
-        return entries
 
     def test_write_entries_to_string(
         self,
@@ -402,13 +366,12 @@ class TestAPIWriting:
         sample_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test write() returns LDIF string."""
-        result = api.write(sample_entries)
+        from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
 
-        assert result.is_success, f"Write failed: {result.error}"
-        ldif_string = result.unwrap()
+        ldif_string = TestDeduplicationHelpers.api_write_and_unwrap(
+            api, sample_entries, must_contain=["Alice", "Bob"]
+        )
         assert isinstance(ldif_string, str)
-        assert "Alice" in ldif_string
-        assert "Bob" in ldif_string
 
     def test_write_entries_to_file(
         self,
@@ -418,13 +381,12 @@ class TestAPIWriting:
     ) -> None:
         """Test write() saves entries to file."""
         output_file = tmp_path / "output.ldif"
-        result = api.write(sample_entries, output_path=output_file)
-
-        if result.is_success:
-            assert output_file.exists()
-            content = output_file.read_text()
-            assert "Alice" in content
-            assert "Bob" in content
+        TestDeduplicationHelpers.api_parse_write_file_and_assert(
+            api,
+            sample_entries,
+            output_file,
+            must_contain=["Alice", "Bob"],
+        )
 
     def test_write_single_entry(
         self,
@@ -433,11 +395,11 @@ class TestAPIWriting:
     ) -> None:
         """Test write() with single entry."""
         single_entry = sample_entries[:1]
-        result = api.write(single_entry)
-
-        assert result.is_success, f"Write failed: {result.error}"
-        ldif_string = result.unwrap()
-        assert "Alice" in ldif_string
+        TestDeduplicationHelpers.api_parse_write_string_and_assert(
+            api,
+            single_entry,
+            must_contain=["Alice"],
+        )
 
     def test_write_empty_entries_list(self, api: FlextLdif) -> None:
         """Test write() with empty entries list."""
@@ -785,12 +747,12 @@ class TestAPIValidationOperations:
 
     def test_validate_entries_with_empty_list(self, api: FlextLdif) -> None:
         """Test validate_entries() with empty list."""
-        result = api.validate_entries([])
+        from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
 
-        assert result.is_success
-        report = result.unwrap()
-        assert report.is_valid is True
-        assert report.total_entries == 0
+        TestDeduplicationHelpers.helper_result_and_assert_fields(
+            api.validate_entries([]),
+            expected_fields={"is_valid": True, "total_entries": 0},
+        )
 
     def test_validate_entries_returns_validation_report(
         self,
@@ -798,16 +760,19 @@ class TestAPIValidationOperations:
         sample_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test validate_entries() returns proper ValidationResult structure."""
-        result = api.validate_entries(sample_entries)
+        from tests.helpers.test_deduplication_helpers import TestDeduplicationHelpers
 
-        assert result.is_success
-        report = result.unwrap()
-        assert hasattr(report, "is_valid")
-        assert hasattr(report, "total_entries")
-        assert hasattr(report, "valid_entries")
-        assert hasattr(report, "invalid_entries")
-        assert hasattr(report, "errors")
-        assert hasattr(report, "success_rate")
+        TestDeduplicationHelpers.helper_result_and_assert_fields(
+            api.validate_entries(sample_entries),
+            must_have_attributes=[
+                "is_valid",
+                "total_entries",
+                "valid_entries",
+                "invalid_entries",
+                "errors",
+                "success_rate",
+            ],
+        )
 
 
 # ============================================================================
@@ -1163,14 +1128,17 @@ class TestAPIConversionOperations:
 
     def test_create_entry_from_dict(self, api: FlextLdif) -> None:
         """Test creating entry from attributes dict."""
+        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+
         attributes = {
             "cn": "Test",
             "objectClass": ["person"],
         }
         result = api.create_entry(dn="cn=Test,dc=example,dc=com", attributes=attributes)
-        assert result.is_success
-        entry = result.unwrap()
-        assert isinstance(entry, FlextLdifModels.Entry)
+        RfcTestHelpers.test_parse_result_unwrap_and_validate(
+            result,
+            expected_type=FlextLdifModels.Entry,
+        )
 
     def test_write_entries(
         self,
@@ -1178,23 +1146,23 @@ class TestAPIConversionOperations:
         sample_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test writing entries to LDIF string."""
-        result = api.write(entries=sample_entries)
-        assert result.is_success
-        ldif_str = result.unwrap()
-        assert isinstance(ldif_str, str)
-        # Verify it contains LDIF content
-        assert "dn:" in ldif_str or "version:" in ldif_str
+        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+
+        RfcTestHelpers.test_api_write_and_assert(
+            api,
+            sample_entries,
+            must_contain=["dn:", "version:"],
+        )
 
     def test_parse_ldif_string(self, api: FlextLdif) -> None:
         """Test parsing LDIF string."""
+        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+
         ldif_content = """dn: cn=Test,dc=example,dc=com
 cn: Test
 objectClass: person
 """
-        result = api.parse(ldif_content)
-        assert result.is_success
-        entries = result.unwrap()
-        assert isinstance(entries, list)
+        RfcTestHelpers.test_api_parse_and_assert(api, ldif_content, expected_count=1)
 
     def test_create_entry_validation(self, api: FlextLdif) -> None:
         """Test create_entry validates required parameters."""

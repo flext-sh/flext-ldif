@@ -78,36 +78,23 @@ mail: jane.smith@example.com
         complex_ldif_content: str,
     ) -> None:
         """Test basic parse -> write roundtrip."""
-        # Parse with default options
-        parse_result = parser_service.parse(
-            content=complex_ldif_content,
-            input_source="string",
-            server_type="rfc",
-        )
+        from tests.helpers.test_rfc_helpers import RfcTestHelpers
 
-        assert parse_result.is_success
-        parse_response = parse_result.unwrap()
-
-        # Write with explicit options to avoid base64 encoding for text values
         write_options = FlextLdifModels.WriteFormatOptions(
-            base64_encode_binary=False,  # Only encode actual binary data, not text
+            base64_encode_binary=False,
             include_version_header=True,
         )
-        write_result = writer_service.write(
-            entries=parse_response.entries,
-            target_server_type="rfc",
-            output_target="string",
-            format_options=write_options,
+        _, output_ldif = RfcTestHelpers.test_parse_write_roundtrip_with_options(
+            parser_service,
+            writer_service,
+            complex_ldif_content,
+            write_options=write_options,
+            must_contain=[
+                "dn: cn=John Doe,ou=people,dc=example,dc=com",
+                "dn: cn=Jane Smith,ou=people,dc=example,dc=com",
+                "objectClass",
+            ],
         )
-
-        assert write_result.is_success
-        output_ldif = write_result.unwrap()
-
-        # Verify essential content is preserved
-        assert "dn: cn=John Doe,ou=people,dc=example,dc=com" in output_ldif
-        assert "dn: cn=Jane Smith,ou=people,dc=example,dc=com" in output_ldif
-        # Check for objectClass (may be base64 encoded if the option was True)
-        assert "objectClass" in output_ldif
         assert "cn: John Doe" in output_ldif or "cn::" in output_ldif
 
     def test_roundtrip_with_attribute_order_preservation(
@@ -127,31 +114,19 @@ mail: test@example.com
 telephoneNumber: 123-456-7890
 """
 
-        # Parse with attribute order preservation
+        from tests.helpers.test_rfc_helpers import RfcTestHelpers
+
         parse_options = FlextLdifModels.ParseFormatOptions(
             preserve_attribute_order=True,
         )
-        parse_result = parser_service.parse(
-            content=ldif_content,
-            input_source="string",
-            server_type="rfc",
-            format_options=parse_options,
-        )
-
-        assert parse_result.is_success
-        entries = parse_result.unwrap().entries
-
-        # Write respecting the preserved order
         write_options = FlextLdifModels.WriteFormatOptions(respect_attribute_order=True)
-        write_result = writer_service.write(
-            entries=entries,
-            target_server_type="rfc",
-            output_target="string",
-            format_options=write_options,
+        _, output = RfcTestHelpers.test_parse_write_roundtrip_with_options(
+            parser_service,
+            writer_service,
+            ldif_content,
+            parse_options=parse_options,
+            write_options=write_options,
         )
-
-        assert write_result.is_success
-        output = write_result.unwrap()
 
         # Extract attribute order from output
         lines = [

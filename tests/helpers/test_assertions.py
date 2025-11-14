@@ -13,19 +13,28 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from collections.abc import Sequence
+from typing import cast
 
 from flext_core import FlextResult
 
-if TYPE_CHECKING:
-    from flext_ldif.models import FlextLdifModels
+from flext_ldif.models import FlextLdifModels
 
 
 class TestAssertions:
     """Reusable assertion helpers for tests."""
 
+    # Prevent pytest from collecting static methods as tests
+    __test__ = False
+
     @staticmethod
-    def assert_success(result: FlextResult[object], error_msg: str | None = None) -> object:
+    def assert_success(
+        result: FlextResult[object]
+        | FlextResult[str]
+        | FlextResult[list]
+        | FlextResult,
+        error_msg: str | None = None,  # type: ignore[type-arg]
+    ) -> object:
         """Assert result is success and return unwrapped value.
 
         Args:
@@ -39,13 +48,20 @@ class TestAssertions:
             AssertionError: If result is failure
 
         """
-        if not result.is_success:
-            msg = error_msg or f"Expected success but got failure: {result.error}"
+        cast_result = cast("FlextResult[object]", result)
+        if not cast_result.is_success:
+            msg = error_msg or f"Expected success but got failure: {cast_result.error}"
             raise AssertionError(msg)
-        return result.unwrap()
+        return cast_result.unwrap()
 
     @staticmethod
-    def assert_failure(result: FlextResult[object], expected_error: str | None = None) -> str:
+    def assert_failure(
+        result: FlextResult[object]
+        | FlextResult[str]
+        | FlextResult[list]
+        | FlextResult,
+        expected_error: str | None = None,  # type: ignore[type-arg]
+    ) -> str:
         """Assert result is failure and return error message.
 
         Args:
@@ -59,9 +75,15 @@ class TestAssertions:
             AssertionError: If result is success
 
         """
-        if result.is_success:
-            raise AssertionError(f"Expected failure but got success: {result.unwrap()}")
-        error = result.error
+        cast_result = cast("FlextResult[object]", result)
+        if cast_result.is_success:
+            raise AssertionError(
+                f"Expected failure but got success: {cast_result.unwrap()}"
+            )
+        error = cast_result.error
+        if error is None:
+            msg = "Expected error but got None"
+            raise AssertionError(msg)
         if expected_error and expected_error not in error:
             raise AssertionError(
                 f"Expected error containing '{expected_error}' but got: {error}"
@@ -85,11 +107,11 @@ class TestAssertions:
         assert len(entry.attributes) > 0, "Entry must have at least one attribute"
 
     @staticmethod
-    def assert_entries_valid(entries: list[FlextLdifModels.Entry]) -> None:
+    def assert_entries_valid(entries: Sequence[FlextLdifModels.Entry]) -> None:
         """Assert all entries are valid.
 
         Args:
-            entries: List of entries to validate
+            entries: Sequence of entries to validate
 
         Raises:
             AssertionError: If any entry is invalid
@@ -118,7 +140,9 @@ class TestAssertions:
         """
         assert attr.oid, "Attribute must have OID"
         if expected_oid:
-            assert attr.oid == expected_oid, f"Expected OID {expected_oid}, got {attr.oid}"
+            assert attr.oid == expected_oid, (
+                f"Expected OID {expected_oid}, got {attr.oid}"
+            )
         if expected_name:
             assert attr.name == expected_name, (
                 f"Expected name {expected_name}, got {attr.name}"
@@ -169,11 +193,32 @@ class TestAssertions:
         """
         unwrapped = TestAssertions.assert_success(result, "Parse should succeed")
         if isinstance(unwrapped, str):
-            raise AssertionError("Parse returned string instead of entries")
-        if isinstance(unwrapped, list):
-            entries = unwrapped
-        else:
+            msg = "Parse returned string instead of entries"
+            raise AssertionError(msg)
+        # Handle ParseResponse objects
+        entries: list[FlextLdifModels.Entry]
+        if hasattr(unwrapped, "entries"):
+            entries_raw = unwrapped.entries
+            if isinstance(entries_raw, list):
+                entries = [
+                    entry
+                    for entry in entries_raw
+                    if isinstance(entry, FlextLdifModels.Entry)
+                ]
+            elif isinstance(entries_raw, FlextLdifModels.Entry):
+                entries = [entries_raw]
+            else:
+                msg = "Parse returned unexpected entry type"
+                raise AssertionError(msg)
+        elif isinstance(unwrapped, list):
+            entries = [
+                entry for entry in unwrapped if isinstance(entry, FlextLdifModels.Entry)
+            ]
+        elif isinstance(unwrapped, FlextLdifModels.Entry):
             entries = [unwrapped]
+        else:
+            msg = "Parse returned unexpected type"
+            raise AssertionError(msg)
         if expected_count is not None:
             assert len(entries) == expected_count, (
                 f"Expected {expected_count} entries, got {len(entries)}"
@@ -230,6 +275,10 @@ class TestAssertions:
         for i, (original, roundtripped) in enumerate(
             zip(original_entries, roundtripped_entries, strict=True)
         ):
+            assert original.dn is not None, f"Entry {i} original DN should not be None"
+            assert roundtripped.dn is not None, (
+                f"Entry {i} roundtripped DN should not be None"
+            )
             assert original.dn.value == roundtripped.dn.value, (
                 f"Entry {i} DN should be preserved: "
                 f"original={original.dn.value}, "
