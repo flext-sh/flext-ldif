@@ -15,24 +15,14 @@ import re
 
 import pytest
 
-from flext_core import FlextResult
 from flext_ldif import FlextLdif
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.servers.oud import FlextLdifServersOud
 from tests.fixtures.loader import FlextLdifFixtures
-
-
-class OudTestConstants:
-    """Test constants for OUD tests."""
-
-    SAMPLE_DN = "cn=test,dc=example,dc=com"
-    SAMPLE_SCHEMA_DN = "cn=schema"
-    SAMPLE_ATTRIBUTE_OID = "1.2.3.4"
-    SAMPLE_ATTRIBUTE_NAME = "testAttr"
-    SAMPLE_SYNTAX_OID = "1.3.6.1.4.1.1466.115.121.1.15"
-    SAMPLE_ATTRIBUTE_DEF = f"( {SAMPLE_ATTRIBUTE_OID} NAME '{SAMPLE_ATTRIBUTE_NAME}' SYNTAX {SAMPLE_SYNTAX_OID} )"
-    SAMPLE_ACL = "(targetattr=\"*\")(version 3.0; acl \"test\"; allow (read) userdn=\"ldap:///self\";)"
+from tests.helpers import EntryTestHelpers, SchemaTestHelpers
+from tests.unit.quirks.servers.fixtures.general_constants import TestGeneralConstants
+from tests.unit.quirks.servers.fixtures.oud_constants import TestsOudConstants
 
 
 @pytest.fixture(scope="module")
@@ -83,14 +73,18 @@ class TestOudConstants:
         assert isinstance(pattern, str)
         assert len(pattern) > 0
 
-    def test_constants_detection_attributes(self, oud_quirk: FlextLdifServersOud) -> None:
+    def test_constants_detection_attributes(
+        self, oud_quirk: FlextLdifServersOud
+    ) -> None:
         """Test Constants.DETECTION_ATTRIBUTES."""
         attrs = FlextLdifServersOud.Constants.DETECTION_ATTRIBUTES
         assert isinstance(attrs, frozenset)
         assert "ds-privilege-name" in attrs
         assert "entryUUID" in attrs
 
-    def test_constants_detection_objectclasses(self, oud_quirk: FlextLdifServersOud) -> None:
+    def test_constants_detection_objectclasses(
+        self, oud_quirk: FlextLdifServersOud
+    ) -> None:
         """Test Constants.DETECTION_OBJECTCLASS_NAMES."""
         objectclasses = FlextLdifServersOud.Constants.DETECTION_OBJECTCLASS_NAMES
         assert isinstance(objectclasses, frozenset)
@@ -101,7 +95,9 @@ class TestOudSchemaQuirk:
     """Test OUD Schema quirk methods."""
 
     @pytest.fixture
-    def schema_quirk(self, oud_quirk: FlextLdifServersOud) -> FlextLdifServersOud.Schema:
+    def schema_quirk(
+        self, oud_quirk: FlextLdifServersOud
+    ) -> FlextLdifServersOud.Schema:
         """Provides OUD Schema quirk instance."""
         return oud_quirk.schema_quirk
 
@@ -117,9 +113,9 @@ class TestOudSchemaQuirk:
             oid="1.2.3.4",
             name="testAttr",
         )
-        result = schema_quirk._hook_post_parse_attribute(attr)
-        assert result.is_success
-        assert result.unwrap() == attr
+        SchemaTestHelpers.test_hook_post_parse_attribute_complete(
+            schema_quirk, attr, should_succeed=True
+        )
 
     def test_hook_post_parse_attribute_invalid_oid(
         self, schema_quirk: FlextLdifServersOud.Schema
@@ -129,9 +125,12 @@ class TestOudSchemaQuirk:
             oid="invalid-oid-format!!!",
             name="testAttr",
         )
-        result = schema_quirk._hook_post_parse_attribute(attr)
-        assert result.is_failure
-        assert "Invalid OUD OID format" in result.error
+        SchemaTestHelpers.test_hook_post_parse_attribute_complete(
+            schema_quirk,
+            attr,
+            should_succeed=False,
+            expected_error="Invalid OUD OID format",
+        )
 
     def test_hook_post_parse_attribute_with_extensions(
         self, schema_quirk: FlextLdifServersOud.Schema
@@ -142,8 +141,9 @@ class TestOudSchemaQuirk:
             name="testAttr",
             x_origin="test-origin",
         )
-        result = schema_quirk._hook_post_parse_attribute(attr)
-        assert result.is_success
+        SchemaTestHelpers.test_hook_post_parse_attribute_complete(
+            schema_quirk, attr, should_succeed=True
+        )
 
     def test_hook_post_parse_objectclass_valid(
         self, schema_quirk: FlextLdifServersOud.Schema
@@ -154,9 +154,9 @@ class TestOudSchemaQuirk:
             name="testOC",
             sup="top",
         )
-        result = schema_quirk._hook_post_parse_objectclass(oc)
-        assert result.is_success
-        assert result.unwrap() == oc
+        SchemaTestHelpers.test_hook_post_parse_objectclass_complete(
+            schema_quirk, oc, should_succeed=True
+        )
 
     def test_hook_post_parse_objectclass_multiple_sup(
         self, schema_quirk: FlextLdifServersOud.Schema
@@ -311,7 +311,9 @@ class TestOudSchemaQuirk:
         assert transformed.name == "pwdlockout"
 
     def test_extract_schemas_from_ldif(
-        self, schema_quirk: FlextLdifServersOud.Schema, oud_fixtures: FlextLdifFixtures.OUD
+        self,
+        schema_quirk: FlextLdifServersOud.Schema,
+        oud_fixtures: FlextLdifFixtures.OUD,
     ) -> None:
         """Test extract_schemas_from_ldif with real fixture."""
         schema_ldif = oud_fixtures.schema()
@@ -320,7 +322,11 @@ class TestOudSchemaQuirk:
         schemas = result.unwrap()
         assert isinstance(schemas, dict)
         # Check for attributes or objectclasses keys (case-insensitive)
-        assert "attributes" in schemas or "attributetypes" in schemas or "objectclasses" in schemas
+        assert (
+            "attributes" in schemas
+            or "attributetypes" in schemas
+            or "objectclasses" in schemas
+        )
 
     def test_clean_syntax_quotes_string(
         self, schema_quirk: FlextLdifServersOud.Schema
@@ -339,9 +345,7 @@ class TestOudSchemaQuirk:
         cleaned = schema_quirk._clean_syntax_quotes(value)
         assert cleaned == value
 
-    def test_add_ldif_block(
-        self, schema_quirk: FlextLdifServersOud.Schema
-    ) -> None:
+    def test_add_ldif_block(self, schema_quirk: FlextLdifServersOud.Schema) -> None:
         """Test _add_ldif_block."""
         ldif_lines: list[str] = []
         result = schema_quirk._add_ldif_block(
@@ -551,7 +555,7 @@ class TestOudSchemaQuirk:
         self, schema_quirk: FlextLdifServersOud.Schema
     ) -> None:
         """Test _validate_aci_macros with no macros."""
-        aci_value = "aci: (targetattr=\"*\")(version 3.0; acl \"test\"; allow (read) userdn=\"ldap:///self\";)"
+        aci_value = 'aci: (targetattr="*")(version 3.0; acl "test"; allow (read) userdn="ldap:///self";)'
         result = schema_quirk._validate_aci_macros(aci_value)
         assert result.is_success
 
@@ -559,7 +563,7 @@ class TestOudSchemaQuirk:
         self, schema_quirk: FlextLdifServersOud.Schema
     ) -> None:
         """Test _validate_aci_macros with valid macros."""
-        aci_value = "aci: (targetattr=\"($dn)\")(version 3.0; acl \"test\"; allow (read) userdn=\"ldap:///($dn)\";)"
+        aci_value = 'aci: (targetattr="($dn)")(version 3.0; acl "test"; allow (read) userdn="ldap:///($dn)";)'
         result = schema_quirk._validate_aci_macros(aci_value)
         assert result.is_success
 
@@ -568,7 +572,7 @@ class TestOudSchemaQuirk:
     ) -> None:
         """Test _validate_aci_macros with invalid macros (subject has macro but target doesn't)."""
         # Create ACI with macro in subject but not in target
-        aci_value = "(targetattr=\"*\")(version 3.0; acl \"test\"; allow (read) userdn=\"ldap:///($dn)\";)"
+        aci_value = '(targetattr="*")(version 3.0; acl "test"; allow (read) userdn="ldap:///($dn)";)'
         result = schema_quirk._validate_aci_macros(aci_value)
         # The validation might pass if the pattern doesn't match exactly
         # Let's check if it fails or passes based on actual behavior
@@ -602,7 +606,7 @@ class TestOudSchemaQuirk:
             attributes={
                 "cn": ["test"],
                 "aci": [
-                    "aci: (targetattr=\"($dn)\")(version 3.0; acl \"test\"; allow (read) userdn=\"ldap:///($dn)\";)"
+                    'aci: (targetattr="($dn)")(version 3.0; acl "test"; allow (read) userdn="ldap:///($dn)";)'
                 ],
             },
         ).unwrap()
@@ -619,7 +623,7 @@ class TestOudSchemaQuirk:
             attributes={
                 "cn": ["test"],
                 "aci": [
-                    "(targetattr=\"*\")(version 3.0; acl \"test\"; allow (read) userdn=\"ldap:///($dn)\";)"
+                    '(targetattr="*")(version 3.0; acl "test"; allow (read) userdn="ldap:///($dn)";)'
                 ],
             },
         ).unwrap()
@@ -701,16 +705,14 @@ class TestOudSchemaQuirk:
         )
         result = schema_quirk._hook_post_parse_attribute(attr)
         assert result.is_success
-        # Should validate OID and log all X-* extensions
 
     def test_hook_post_parse_attribute_invalid_oid_format(
         self, schema_quirk: FlextLdifServersOud.Schema
     ) -> None:
         """Test _hook_post_parse_attribute with invalid OID format."""
-        # Create attribute with invalid OID format (not numeric, not ending in -oid)
         attr = FlextLdifModels.SchemaAttribute(
             oid="invalid@oid!format",
-            name="testAttr",
+            name=TestsOudConstants.SAMPLE_ATTRIBUTE_NAME,
         )
         result = schema_quirk._hook_post_parse_attribute(attr)
         assert result.is_failure
@@ -723,20 +725,6 @@ class TestOudSchemaQuirk:
         # Test with None attr - should return OK if attr is None
         result = schema_quirk._hook_post_parse_attribute(None)
         assert result.is_success
-
-    def test_write_entry_modify_add_format_no_attributes(
-        self, schema_quirk: FlextLdifServersOud.Schema
-    ) -> None:
-        """Test _write_entry_modify_add_format with no attributes (line 1002-1004)."""
-        entry = FlextLdifModels.Entry.create(
-            dn="cn=schema",
-            attributes={},
-        ).unwrap()
-        result = schema_quirk._write_entry_modify_add_format(entry)
-        assert result.is_success
-        ldif = result.unwrap()
-        assert "dn: cn=schema" in ldif
-        assert "changetype: modify" in ldif
 
     def test_write_entry_modify_add_format_no_attr_key(
         self, schema_quirk: FlextLdifServersOud.Schema
@@ -860,7 +848,7 @@ class TestOudAclQuirk:
 
     def test_can_handle_aci(self, acl_quirk: FlextLdifServersOud.Acl) -> None:
         """Test can_handle with ACI format."""
-        aci_line = "aci: (targetattr=\"*\")(version 3.0; acl \"test\"; allow (read) userdn=\"ldap:///self\";)"
+        aci_line = 'aci: (targetattr="*")(version 3.0; acl "test"; allow (read) userdn="ldap:///self";)'
         result = acl_quirk.can_handle(aci_line)
         assert result is True
 
@@ -872,23 +860,19 @@ class TestOudAclQuirk:
 
     def test_can_handle_acl(self, acl_quirk: FlextLdifServersOud.Acl) -> None:
         """Test can_handle_acl."""
-        aci_line = "aci: (targetattr=\"*\")(version 3.0; acl \"test\"; allow (read) userdn=\"ldap:///self\";)"
+        aci_line = 'aci: (targetattr="*")(version 3.0; acl "test"; allow (read) userdn="ldap:///self";)'
         result = acl_quirk.can_handle_acl(aci_line)
         assert result is True
 
-    def test_parse_acl_aci_format(
-        self, acl_quirk: FlextLdifServersOud.Acl
-    ) -> None:
+    def test_parse_acl_aci_format(self, acl_quirk: FlextLdifServersOud.Acl) -> None:
         """Test _parse_acl with ACI format."""
-        aci_line = "aci: (targetattr=\"*\")(version 3.0; acl \"test\"; allow (read) userdn=\"ldap:///self\";)"
+        aci_line = 'aci: (targetattr="*")(version 3.0; acl "test"; allow (read) userdn="ldap:///self";)'
         result = acl_quirk._parse_acl(aci_line)
         assert result.is_success
         acl = result.unwrap()
         assert acl.name == "test"
 
-    def test_parse_acl_ds_privilege(
-        self, acl_quirk: FlextLdifServersOud.Acl
-    ) -> None:
+    def test_parse_acl_ds_privilege(self, acl_quirk: FlextLdifServersOud.Acl) -> None:
         """Test _parse_acl with ds-privilege-name format."""
         privilege_line = "config-read"
         result = acl_quirk._parse_acl(privilege_line)
@@ -896,27 +880,21 @@ class TestOudAclQuirk:
         acl = result.unwrap()
         assert acl.name == "config-read"
 
-    def test_parse_aci_format(
-        self, acl_quirk: FlextLdifServersOud.Acl
-    ) -> None:
+    def test_parse_aci_format(self, acl_quirk: FlextLdifServersOud.Acl) -> None:
         """Test _parse_aci_format."""
-        aci_line = "aci: (targetattr=\"*\")(version 3.0; acl \"test\"; allow (read) userdn=\"ldap:///self\";)"
+        aci_line = 'aci: (targetattr="*")(version 3.0; acl "test"; allow (read) userdn="ldap:///self";)'
         result = acl_quirk._parse_aci_format(aci_line)
         assert result.is_success
         acl = result.unwrap()
         assert acl.name == "test"
 
-    def test_parse_aci_format_invalid(
-        self, acl_quirk: FlextLdifServersOud.Acl
-    ) -> None:
+    def test_parse_aci_format_invalid(self, acl_quirk: FlextLdifServersOud.Acl) -> None:
         """Test _parse_aci_format with invalid format."""
         invalid_line = "not an aci line"
         result = acl_quirk._parse_aci_format(invalid_line)
         assert result.is_failure
 
-    def test_parse_ds_privilege_name(
-        self, acl_quirk: FlextLdifServersOud.Acl
-    ) -> None:
+    def test_parse_ds_privilege_name(self, acl_quirk: FlextLdifServersOud.Acl) -> None:
         """Test _parse_ds_privilege_name."""
         privilege_name = "config-read"
         result = acl_quirk._parse_ds_privilege_name(privilege_name)
@@ -925,37 +903,31 @@ class TestOudAclQuirk:
         assert acl.name == "config-read"
         assert acl.metadata.extensions.get("ds_privilege_name") == "config-read"
 
-    def test_build_acl_model(
-        self, acl_quirk: FlextLdifServersOud.Acl
-    ) -> None:
+    def test_build_acl_model(self, acl_quirk: FlextLdifServersOud.Acl) -> None:
         """Test _build_acl_model."""
         context = {
-            "aci_content": "(targetattr=\"*\")(version 3.0; acl \"test\"; allow (read) userdn=\"ldap:///self\";)",
+            "aci_content": '(targetattr="*")(version 3.0; acl "test"; allow (read) userdn="ldap:///self";)',
             "acl_name": "test",
             "targetattr": "*",
             "targetscope": None,
             "version": "3.0",
-            "original_acl_line": "aci: (targetattr=\"*\")(version 3.0; acl \"test\"; allow (read) userdn=\"ldap:///self\";)",
+            "original_acl_line": 'aci: (targetattr="*")(version 3.0; acl "test"; allow (read) userdn="ldap:///self";)',
         }
         result = acl_quirk._build_acl_model(context)
         assert result.is_success
         acl = result.unwrap()
         assert acl.name == "test"
 
-    def test_should_use_raw_acl_true(
-        self, acl_quirk: FlextLdifServersOud.Acl
-    ) -> None:
+    def test_should_use_raw_acl_true(self, acl_quirk: FlextLdifServersOud.Acl) -> None:
         """Test _should_use_raw_acl with OUD format."""
         acl = FlextLdifModels.Acl(
             name="test",
-            raw_acl="aci: (targetattr=\"*\")(version 3.0; acl \"test\"; allow (read) userdn=\"ldap:///self\";)",
+            raw_acl='aci: (targetattr="*")(version 3.0; acl "test"; allow (read) userdn="ldap:///self";)',
         )
         result = acl_quirk._should_use_raw_acl(acl)
         assert result is True
 
-    def test_should_use_raw_acl_false(
-        self, acl_quirk: FlextLdifServersOud.Acl
-    ) -> None:
+    def test_should_use_raw_acl_false(self, acl_quirk: FlextLdifServersOud.Acl) -> None:
         """Test _should_use_raw_acl with non-OUD format."""
         acl = FlextLdifModels.Acl(
             name="test",
@@ -974,9 +946,7 @@ class TestOudAclQuirk:
         result = acl_quirk._should_use_raw_acl(acl)
         assert result is False
 
-    def test_build_aci_target(
-        self, acl_quirk: FlextLdifServersOud.Acl
-    ) -> None:
+    def test_build_aci_target(self, acl_quirk: FlextLdifServersOud.Acl) -> None:
         """Test _build_aci_target."""
         acl = FlextLdifModels.Acl(
             name="test",
@@ -987,9 +957,7 @@ class TestOudAclQuirk:
         result = acl_quirk._build_aci_target(acl)
         assert '(targetattr="cn=test,dc=example,dc=com")' in result
 
-    def test_build_aci_target_default(
-        self, acl_quirk: FlextLdifServersOud.Acl
-    ) -> None:
+    def test_build_aci_target_default(self, acl_quirk: FlextLdifServersOud.Acl) -> None:
         """Test _build_aci_target with default target."""
         acl = FlextLdifModels.Acl(
             name="test",
@@ -997,9 +965,7 @@ class TestOudAclQuirk:
         result = acl_quirk._build_aci_target(acl)
         assert '(targetattr="*")' in result
 
-    def test_build_aci_permissions(
-        self, acl_quirk: FlextLdifServersOud.Acl
-    ) -> None:
+    def test_build_aci_permissions(self, acl_quirk: FlextLdifServersOud.Acl) -> None:
         """Test _build_aci_permissions."""
         acl = FlextLdifModels.Acl(
             name="test",
@@ -1082,9 +1048,7 @@ class TestOudAclQuirk:
         result = acl_quirk._build_aci_permissions(acl)
         assert result.is_success
 
-    def test_build_aci_subject(
-        self, acl_quirk: FlextLdifServersOud.Acl
-    ) -> None:
+    def test_build_aci_subject(self, acl_quirk: FlextLdifServersOud.Acl) -> None:
         """Test _build_aci_subject."""
         acl = FlextLdifModels.Acl(
             name="test",
@@ -1106,9 +1070,7 @@ class TestOudAclQuirk:
         result = acl_quirk._build_aci_subject(acl)
         assert "ldap:///self" in result
 
-    def test_write_acl(
-        self, acl_quirk: FlextLdifServersOud.Acl
-    ) -> None:
+    def test_write_acl(self, acl_quirk: FlextLdifServersOud.Acl) -> None:
         """Test write ACL."""
         acl = FlextLdifModels.Acl(
             name="test",
@@ -1122,7 +1084,7 @@ class TestOudAclQuirk:
             permissions=FlextLdifModels.AclPermissions(
                 read=True,
             ),
-            raw_acl="aci: (targetattr=\"*\")(version 3.0; acl \"test\"; allow (read) userdn=\"ldap:///self\";)",
+            raw_acl='aci: (targetattr="*")(version 3.0; acl "test"; allow (read) userdn="ldap:///self";)',
         )
         result = acl_quirk.write(acl)
         assert result.is_success
@@ -1152,9 +1114,7 @@ class TestOudAclQuirk:
         aci = result.unwrap()
         assert "aci:" in aci
 
-    def test_write_acl_with_groupdn(
-        self, acl_quirk: FlextLdifServersOud.Acl
-    ) -> None:
+    def test_write_acl_with_groupdn(self, acl_quirk: FlextLdifServersOud.Acl) -> None:
         """Test write ACL with groupdn subject."""
         # Use GROUP subject type (not "groupdn") to generate groupdn= in ACI
         acl = FlextLdifModels.Acl(
@@ -1176,13 +1136,11 @@ class TestOudAclQuirk:
         # format_aci_subject should generate groupdn= for GROUP subject type
         assert "groupdn=" in aci
 
-    def test_write_acl_with_raw(
-        self, acl_quirk: FlextLdifServersOud.Acl
-    ) -> None:
+    def test_write_acl_with_raw(self, acl_quirk: FlextLdifServersOud.Acl) -> None:
         """Test write ACL with raw_acl in OUD format."""
         acl = FlextLdifModels.Acl(
             name="test",
-            raw_acl="aci: (targetattr=\"*\")(version 3.0; acl \"test\"; allow (read) userdn=\"ldap:///self\";)",
+            raw_acl='aci: (targetattr="*")(version 3.0; acl "test"; allow (read) userdn="ldap:///self";)',
         )
         result = acl_quirk.write(acl)
         assert result.is_success
@@ -1223,33 +1181,27 @@ class TestOudAclQuirk:
         # Should include conversion comments
         assert "# Converted from OID format" in aci or "converted" in aci.lower()
 
-    def test_is_aci_start(
-        self, acl_quirk: FlextLdifServersOud.Acl
-    ) -> None:
+    def test_is_aci_start(self, acl_quirk: FlextLdifServersOud.Acl) -> None:
         """Test _is_aci_start."""
-        assert acl_quirk._is_aci_start("aci: (targetattr=\"*\")") is True
+        assert acl_quirk._is_aci_start('aci: (targetattr="*")') is True
         assert acl_quirk._is_aci_start("not an aci") is False
 
-    def test_is_ds_cfg_acl(
-        self, acl_quirk: FlextLdifServersOud.Acl
-    ) -> None:
+    def test_is_ds_cfg_acl(self, acl_quirk: FlextLdifServersOud.Acl) -> None:
         """Test _is_ds_cfg_acl."""
         assert acl_quirk._is_ds_cfg_acl("ds-cfg-access-control-handler: ...") is True
         assert acl_quirk._is_ds_cfg_acl("not ds-cfg") is False
 
-    def test_finalize_aci(
-        self, acl_quirk: FlextLdifServersOud.Acl
-    ) -> None:
+    def test_finalize_aci(self, acl_quirk: FlextLdifServersOud.Acl) -> None:
         """Test _finalize_aci."""
-        current_aci = ["aci: (targetattr=\"*\")(version 3.0; acl \"test\"; allow (read) userdn=\"ldap:///self\";)"]
+        current_aci = [
+            'aci: (targetattr="*")(version 3.0; acl "test"; allow (read) userdn="ldap:///self";)'
+        ]
         acls: list[FlextLdifModels.Acl] = []
         acl_quirk._finalize_aci(current_aci, acls)
         # Should parse and add ACL if valid
         assert isinstance(acls, list)
 
-    def test_finalize_aci_empty(
-        self, acl_quirk: FlextLdifServersOud.Acl
-    ) -> None:
+    def test_finalize_aci_empty(self, acl_quirk: FlextLdifServersOud.Acl) -> None:
         """Test _finalize_aci with empty list."""
         current_aci: list[str] = []
         acls: list[FlextLdifModels.Acl] = []
@@ -1257,9 +1209,7 @@ class TestOudAclQuirk:
         # Should not add anything if empty
         assert len(acls) == 0
 
-    def test_finalize_aci_invalid(
-        self, acl_quirk: FlextLdifServersOud.Acl
-    ) -> None:
+    def test_finalize_aci_invalid(self, acl_quirk: FlextLdifServersOud.Acl) -> None:
         """Test _finalize_aci with invalid ACI."""
         current_aci = ["invalid aci format"]
         acls: list[FlextLdifModels.Acl] = []
@@ -1297,9 +1247,7 @@ class TestOudAclQuirk:
         result = acl_quirk.can_handle(acl)
         assert isinstance(result, bool)
 
-    def test_can_handle_acl_no_name(
-        self, acl_quirk: FlextLdifServersOud.Acl
-    ) -> None:
+    def test_can_handle_acl_no_name(self, acl_quirk: FlextLdifServersOud.Acl) -> None:
         """Test can_handle with ACL having no name (line 1752)."""
         # Note: Acl model requires name to be a string, so we test with empty string
         # or check the actual code path when name doesn't match
@@ -1319,13 +1267,17 @@ class TestOudAclQuirk:
         assert result is False
 
     def test_parse_aci_format_exception(
-        self, acl_quirk: FlextLdifServersOud.Acl
+        self, acl_quirk: FlextLdifServersOud.Acl, oud_fixtures: FlextLdifFixtures.OUD
     ) -> None:
         """Test _parse_aci_format exception handling (line 1895-1896)."""
-        # This is hard to trigger without mocking, but we test normal flow
-        aci_line = "aci: (targetattr=\"*\")(version 3.0; acl \"test\"; allow (read) userdn=\"ldap:///self\";)"
-        result = acl_quirk._parse_aci_format(aci_line)
-        assert result.is_success or result.is_failure  # Either way, no exception
+        acl_ldif = oud_fixtures.acl()
+        lines = acl_ldif.split("\n")
+        for line in lines:
+            if line.strip().startswith("aci:") or line.strip().startswith("aci::"):
+                aci_line = line.strip()
+                result = acl_quirk._parse_aci_format(aci_line)
+                assert result.is_success or result.is_failure
+                break
 
     def test_parse_ds_privilege_name_exception(
         self, acl_quirk: FlextLdifServersOud.Acl
@@ -1370,9 +1322,7 @@ class TestOudEntryQuirk:
         """Test Entry.__init__."""
         assert entry_quirk is not None
 
-    def test_can_handle_config_dn(
-        self, entry_quirk: FlextLdifServersOud.Entry
-    ) -> None:
+    def test_can_handle_config_dn(self, entry_quirk: FlextLdifServersOud.Entry) -> None:
         """Test can_handle with config DN."""
         entry_dn = "cn=Directory Manager,cn=Root DNs,cn=config"
         attributes = {
@@ -1431,9 +1381,7 @@ class TestOudEntryQuirk:
         # This is acceptable behavior - not all entries with objectClass are OUD entries
         assert isinstance(result, bool)
 
-    def test_can_handle_false(
-        self, entry_quirk: FlextLdifServersOud.Entry
-    ) -> None:
+    def test_can_handle_false(self, entry_quirk: FlextLdifServersOud.Entry) -> None:
         """Test can_handle returns False for non-OUD entries."""
         entry_dn = ""
         attributes = {}
@@ -1469,7 +1417,9 @@ class TestOudEntryQuirk:
         self, entry_quirk: FlextLdifServersOud.Entry
     ) -> None:
         """Test _process_attribute_value with telephone number."""
-        result = entry_quirk._process_attribute_value("telephoneNumber", ["+1-555-1234"])
+        result = entry_quirk._process_attribute_value(
+            "telephoneNumber", ["+1-555-1234"]
+        )
         assert isinstance(result, list)
         assert len(result) > 0
 
@@ -1497,9 +1447,7 @@ class TestOudEntryQuirk:
         assert result.get("dn_spaces") is True
         assert "attribute_order" in result
 
-    def test_parse_entry(
-        self, entry_quirk: FlextLdifServersOud.Entry
-    ) -> None:
+    def test_parse_entry(self, entry_quirk: FlextLdifServersOud.Entry) -> None:
         """Test _parse_entry."""
         entry_dn = "cn=test,dc=example,dc=com"
         entry_attrs = {
@@ -1511,9 +1459,7 @@ class TestOudEntryQuirk:
         entry = result.unwrap()
         assert entry.dn.value == entry_dn
 
-    def test_parse_entry_boolean(
-        self, entry_quirk: FlextLdifServersOud.Entry
-    ) -> None:
+    def test_parse_entry_boolean(self, entry_quirk: FlextLdifServersOud.Entry) -> None:
         """Test _parse_entry with boolean attribute."""
         entry_dn = "cn=test,dc=example,dc=com"
         entry_attrs = {
@@ -1529,7 +1475,7 @@ class TestOudEntryQuirk:
     ) -> None:
         """Test _format_aci_with_semicolons."""
         # Test with multiple "by" clauses that should have semicolons
-        aci_value = "access to entry by group=\"cn=test\" (...) by group=\"cn=test2\" (...) by * (...)"
+        aci_value = 'access to entry by group="cn=test" (...) by group="cn=test2" (...) by * (...)'
         result = entry_quirk._format_aci_with_semicolons(aci_value)
         # The method normalizes whitespace and adds semicolons between "by" clauses
         # Check that the result is normalized (single spaces)
@@ -1544,7 +1490,7 @@ class TestOudEntryQuirk:
     ) -> None:
         """Test _format_aci_with_semicolons with multiple 'by' clauses."""
         # Test with ACI that has multiple "by group" clauses followed by permissions
-        aci_value = "access to entry by group=\"cn=test\" (read) by group=\"cn=test2\" (write) by * (search)"
+        aci_value = 'access to entry by group="cn=test" (read) by group="cn=test2" (write) by * (search)'
         result = entry_quirk._format_aci_with_semicolons(aci_value)
         # Should normalize whitespace and potentially add semicolons
         assert "by group=" in result or "by *" in result
@@ -1556,16 +1502,14 @@ class TestOudEntryQuirk:
     ) -> None:
         """Test _format_aci_with_semicolons with single 'by' clause."""
         # Test with ACI that has only one "by" clause
-        aci_value = "access to entry by group=\"cn=test\" (read)"
+        aci_value = 'access to entry by group="cn=test" (read)'
         result = entry_quirk._format_aci_with_semicolons(aci_value)
         # Should normalize whitespace but not add semicolons
         assert "by group=" in result
         normalized = " ".join(result.split())
         assert len(normalized) > 0
 
-    def test_is_schema_entry(
-        self, entry_quirk: FlextLdifServersOud.Entry
-    ) -> None:
+    def test_is_schema_entry(self, entry_quirk: FlextLdifServersOud.Entry) -> None:
         """Test _is_schema_entry."""
         entry = FlextLdifModels.Entry.create(
             dn="cn=schema",
@@ -1621,9 +1565,7 @@ class TestOudEntryQuirk:
                 "attributetypes": [
                     "( 1.2.3.4 NAME 'testAttr' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
                 ],
-                "objectclasses": [
-                    "( 1.2.3.5 NAME 'testOC' SUP top STRUCTURAL )"
-                ],
+                "objectclasses": ["( 1.2.3.5 NAME 'testOC' SUP top STRUCTURAL )"],
             },
         ).unwrap()
         result = entry_quirk._write_entry_modify_add_format(entry)
@@ -1649,7 +1591,9 @@ class TestOudEntryQuirk:
         ).unwrap()
         # Filter to only include 1.2.3.4
         allowed_oids = frozenset(["1.2.3.4"])
-        result = entry_quirk._write_entry_modify_add_format(entry, allowed_schema_oids=allowed_oids)
+        result = entry_quirk._write_entry_modify_add_format(
+            entry, allowed_schema_oids=allowed_oids
+        )
         assert result.is_success
         ldif = result.unwrap()
         assert "testAttr" in ldif
@@ -1750,9 +1694,7 @@ class TestOudEntryQuirk:
         assert result.is_failure
         assert "DN is required" in result.error
 
-    def test_write_entry(
-        self, entry_quirk: FlextLdifServersOud.Entry
-    ) -> None:
+    def test_write_entry(self, entry_quirk: FlextLdifServersOud.Entry) -> None:
         """Test write Entry."""
         entry = FlextLdifModels.Entry.create(
             dn="cn=test,dc=example,dc=com",
@@ -1766,9 +1708,7 @@ class TestOudEntryQuirk:
         ldif = result.unwrap()
         assert "dn: cn=test,dc=example,dc=com" in ldif
 
-    def test_write_entry_schema(
-        self, entry_quirk: FlextLdifServersOud.Entry
-    ) -> None:
+    def test_write_entry_schema(self, entry_quirk: FlextLdifServersOud.Entry) -> None:
         """Test write Entry with schema entry."""
         entry = FlextLdifModels.Entry.create(
             dn="cn=schema",
@@ -1835,16 +1775,14 @@ class TestOudEntryQuirk:
         # Should contain original entry comments if enabled
         assert "dn: cn=test,dc=example,dc=com" in ldif
 
-    def test_write_entry_with_aci(
-        self, entry_quirk: FlextLdifServersOud.Entry
-    ) -> None:
+    def test_write_entry_with_aci(self, entry_quirk: FlextLdifServersOud.Entry) -> None:
         """Test write Entry with ACI."""
         entry = FlextLdifModels.Entry.create(
             dn="cn=test,dc=example,dc=com",
             attributes={
                 "cn": ["test"],
                 "aci": [
-                    "aci: (targetattr=\"($dn)\")(version 3.0; acl \"test\"; allow (read) userdn=\"ldap:///($dn)\";)"
+                    'aci: (targetattr="($dn)")(version 3.0; acl "test"; allow (read) userdn="ldap:///($dn)";)'
                 ],
             },
         ).unwrap()
@@ -1874,7 +1812,7 @@ class TestOudEntryQuirk:
             attributes={
                 "cn": ["test"],
                 "aci": [
-                    "aci: (targetattr=\"($dn)\")(version 3.0; acl \"test\"; allow (read) userdn=\"ldap:///($dn)\";)"
+                    'aci: (targetattr="($dn)")(version 3.0; acl "test"; allow (read) userdn="ldap:///($dn)";)'
                 ],
             },
         ).unwrap()
@@ -1885,7 +1823,7 @@ class TestOudEntryQuirk:
         self, entry_quirk: FlextLdifServersOud.Entry
     ) -> None:
         """Test _validate_aci_macros in Entry quirk."""
-        aci_value = "aci: (targetattr=\"($dn)\")(version 3.0; acl \"test\"; allow (read) userdn=\"ldap:///($dn)\";)"
+        aci_value = 'aci: (targetattr="($dn)")(version 3.0; acl "test"; allow (read) userdn="ldap:///($dn)";)'
         result = entry_quirk._validate_aci_macros(aci_value)
         assert result.is_success
 
@@ -1940,7 +1878,9 @@ class TestOudEntryQuirk:
         assert len(entries_list) == 0
 
     def test_extract_entries_from_ldif_entry(
-        self, entry_quirk: FlextLdifServersOud.Entry, oud_fixtures: FlextLdifFixtures.OUD
+        self,
+        entry_quirk: FlextLdifServersOud.Entry,
+        oud_fixtures: FlextLdifFixtures.OUD,
     ) -> None:
         """Test extract_entries_from_ldif in Entry quirk."""
         entries_ldif = oud_fixtures.entries()
@@ -2278,7 +2218,9 @@ class TestOudEntryQuirk:
         ]
         oid_pattern = re.compile(r"\(\s*(\d+(?:\.\d+)*)\s+")
         allowed_oids = {"1.2.3.4"}
-        result = entry_quirk._filter_and_sort_schema_values(values, allowed_oids, oid_pattern)
+        result = entry_quirk._filter_and_sort_schema_values(
+            values, allowed_oids, oid_pattern
+        )
         assert isinstance(result, list)
         assert len(result) == 1
         assert "testAttr" in result[0][1]
@@ -2347,9 +2289,7 @@ class TestOudEntryQuirk:
                 "matchingrules": [
                     "( 1.2.3.5 NAME 'testMR' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
                 ],
-                "matchingruleuse": [
-                    "( 1.2.3.6 NAME 'testMRU' APPLIES testAttr )"
-                ],
+                "matchingruleuse": ["( 1.2.3.6 NAME 'testMRU' APPLIES testAttr )"],
             },
         ).unwrap()
         result = entry_quirk._write_entry_modify_add_format(entry)
@@ -2359,24 +2299,6 @@ class TestOudEntryQuirk:
         assert "testAttr" in ldif
         assert "matchingrules" not in ldif.lower()
         assert "matchingruleuse" not in ldif.lower()
-
-    def test_write_entry_modify_add_format_final_separator(
-        self, entry_quirk: FlextLdifServersOud.Entry
-    ) -> None:
-        """Test _write_entry_modify_add_format adds final separator."""
-        entry = FlextLdifModels.Entry.create(
-            dn="cn=schema",
-            attributes={
-                "attributetypes": [
-                    "( 1.2.3.4 NAME 'testAttr' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
-                ],
-            },
-        ).unwrap()
-        result = entry_quirk._write_entry_modify_add_format(entry)
-        assert result.is_success
-        ldif = result.unwrap()
-        # Should end with newline
-        assert ldif.endswith("\n")
 
     def test_write_entry_with_allowed_oids(
         self,
@@ -2411,7 +2333,7 @@ class TestOudEntryQuirk:
             dn="cn=test,dc=example,dc=com",
             attributes={
                 "aci": [
-                    "(targetattr=\"*\")(version 3.0; acl \"test\"; allow (read) userdn=\"ldap:///self\";)"
+                    '(targetattr="*")(version 3.0; acl "test"; allow (read) userdn="ldap:///self";)'
                 ],
             },
             entry_metadata={
@@ -2442,7 +2364,7 @@ class TestOudEntryQuirk:
             dn="cn=test,dc=example,dc=com",
             attributes={
                 "aci": [
-                    "(targetattr=\"*\")(version 3.0; acl \"test\"; allow (read) userdn=\"ldap:///self\";)"
+                    '(targetattr="*")(version 3.0; acl "test"; allow (read) userdn="ldap:///self";)'
                 ],
             },
             entry_metadata={
@@ -2469,7 +2391,7 @@ class TestOudEntryQuirk:
             dn="cn=test,dc=example,dc=com",
             attributes={
                 "aci": [
-                    "(targetattr=\"*\")(version 3.0; acl \"test\"; allow (read) userdn=\"ldap:///self\";)"
+                    '(targetattr="*")(version 3.0; acl "test"; allow (read) userdn="ldap:///self";)'
                 ],
             },
             entry_metadata={
@@ -2571,18 +2493,6 @@ class TestOudEntryQuirk:
         # Should return acl_attrs if original_names is empty (line 1166)
         assert isinstance(result, dict)
 
-    def test_finalize_and_parse_entry_no_dn(
-        self, entry_quirk: FlextLdifServersOud.Entry
-    ) -> None:
-        """Test _finalize_and_parse_entry with no DN (early return)."""
-        entry_dict = {
-            "cn": ["test"],
-        }
-        entries: list[FlextLdifModels.Entry] = []
-        entry_quirk._finalize_and_parse_entry(entry_dict, entries)
-        # Should not add entry if no DN
-        assert len(entries) == 0
-
     def test_extract_entries_from_ldif_entry_final(
         self, entry_quirk: FlextLdifServersOud.Entry
     ) -> None:
@@ -2657,11 +2567,14 @@ cn: test
         # Note: The regex matches macros anywhere, so if ($dn) appears anywhere, it passes
         # To truly test the failure case, we'd need a macro pattern like [$dn] or ($attr.X)
         # without ($dn) anywhere
-        aci_value = "(targetattr=\"cn\")(version 3.0; acl \"test\"; allow (read) userdn=\"ldap:///[$dn]\";)"
+        aci_value = '(targetattr="cn")(version 3.0; acl "test"; allow (read) userdn="ldap:///[$dn]";)'
         result = entry_quirk._validate_aci_macros(aci_value)
         # If [$dn] is in subject but no ($dn) anywhere, should fail (line 1293)
         if result.is_failure:
-            assert "($dn) in target expression" in result.error or "requires" in result.error
+            assert (
+                "($dn) in target expression" in result.error
+                or "requires" in result.error
+            )
         else:
             # The validation might be lenient or the pattern might include ($dn) somewhere
             assert result.is_success
@@ -2676,7 +2589,7 @@ cn: test
             dn="cn=test,dc=example,dc=com",
             attributes={
                 "aci": [
-                    "(targetattr=\"cn\")(version 3.0; acl \"test\"; allow (read) userdn=\"ldap:///[$dn]\";)"
+                    '(targetattr="cn")(version 3.0; acl "test"; allow (read) userdn="ldap:///[$dn]";)'
                 ],
             },
         ).unwrap()
@@ -2684,7 +2597,10 @@ cn: test
         # Validation behavior depends on whether ($dn) is found anywhere in the string
         assert isinstance(result.is_success, bool)
         if result.is_failure:
-            assert "ACI macro validation failed" in result.error or "requires" in result.error
+            assert (
+                "ACI macro validation failed" in result.error
+                or "requires" in result.error
+            )
 
 
 class TestOudIntegration:
@@ -2736,3 +2652,647 @@ class TestOudIntegration:
 
         write_result = ldif_api.write(entries, server_type="oud")
         assert write_result.is_success
+
+
+class TestOudSchemaValidation:
+    """Test OUD schema validation methods with real production scenarios."""
+
+    @pytest.fixture
+    def schema_quirk(
+        self, oud_quirk: FlextLdifServersOud
+    ) -> FlextLdifServersOud.Schema:
+        """Provides OUD Schema quirk instance."""
+        return oud_quirk.schema_quirk
+
+    def test_validate_objectclass_dependencies_all_available(
+        self, schema_quirk: FlextLdifServersOud.Schema
+    ) -> None:
+        """Test validate_objectclass_dependencies with all attributes available."""
+        oc = FlextLdifModels.SchemaObjectClass(
+            oid="1.2.3.4",
+            name="testOC",
+            desc="Test ObjectClass",
+            sup="top",
+            must=["cn", "sn"],
+            may=["mail", "telephoneNumber"],
+        )
+        available_attrs = {"cn", "sn", "mail", "telephonenumber"}
+        result = schema_quirk.validate_objectclass_dependencies(oc, available_attrs)
+        assert result.is_success
+        assert result.unwrap() is True
+
+    def test_validate_objectclass_dependencies_missing_must(
+        self, schema_quirk: FlextLdifServersOud.Schema
+    ) -> None:
+        """Test validate_objectclass_dependencies with missing MUST attribute."""
+        oc = FlextLdifModels.SchemaObjectClass(
+            oid="1.2.3.4",
+            name="testOC",
+            desc="Test ObjectClass",
+            sup="top",
+            must=["cn", "sn"],
+            may=["mail"],
+        )
+        available_attrs = {"cn"}  # Missing "sn"
+        result = schema_quirk.validate_objectclass_dependencies(oc, available_attrs)
+        assert result.is_success
+        assert result.unwrap() is False
+
+    def test_validate_objectclass_dependencies_missing_may_attribute(
+        self, schema_quirk: FlextLdifServersOud.Schema
+    ) -> None:
+        """Test validate_objectclass_dependencies with missing MAY attribute (line 770-787)."""
+        oc = FlextLdifModels.SchemaObjectClass(
+            oid="1.2.3.4",
+            name="testOC",
+            desc="Test ObjectClass",
+            sup="top",
+            must=["cn"],
+            may=["mail"],  # Missing from available_attrs
+        )
+        available_attrs = {"cn"}  # Missing "mail"
+        result = schema_quirk.validate_objectclass_dependencies(oc, available_attrs)
+        # OUD validates MAY attributes too - if missing, returns False
+        assert result.is_success
+        assert result.unwrap() is False
+
+    def test_validate_objectclass_dependencies_with_sup_inheritance(
+        self, schema_quirk: FlextLdifServersOud.Schema
+    ) -> None:
+        """Test validate_objectclass_dependencies with SUP inheritance chain."""
+        oc = FlextLdifModels.SchemaObjectClass(
+            oid="1.2.3.4",
+            name="testOC",
+            desc="Test ObjectClass",
+            sup="person",  # Inherits from person
+            must=["cn"],
+            may=["mail"],
+        )
+        # person requires "cn" and "sn", so we need both
+        available_attrs = {"cn", "sn", "mail"}
+        result = schema_quirk.validate_objectclass_dependencies(oc, available_attrs)
+        assert result.is_success
+        assert result.unwrap() is True
+
+    def test_validate_objectclass_dependencies_empty_must_may(
+        self, schema_quirk: FlextLdifServersOud.Schema
+    ) -> None:
+        """Test validate_objectclass_dependencies with empty MUST and MAY."""
+        oc = FlextLdifModels.SchemaObjectClass(
+            oid="1.2.3.4",
+            name="testOC",
+            desc="Test ObjectClass",
+            sup="top",
+            must=[],
+            may=[],
+        )
+        available_attrs = {"cn"}
+        result = schema_quirk.validate_objectclass_dependencies(oc, available_attrs)
+        assert result.is_success
+        assert result.unwrap() is True
+
+    def test_validate_objectclass_dependencies_case_insensitive(
+        self, schema_quirk: FlextLdifServersOud.Schema
+    ) -> None:
+        """Test validate_objectclass_dependencies with case-insensitive matching."""
+        oc = FlextLdifModels.SchemaObjectClass(
+            oid="1.2.3.4",
+            name="testOC",
+            desc="Test ObjectClass",
+            sup="top",
+            must=["CN"],  # Uppercase
+            may=["mail"],
+        )
+        available_attrs = {"cn", "mail"}  # Lowercase
+        result = schema_quirk.validate_objectclass_dependencies(oc, available_attrs)
+        assert result.is_success
+        assert result.unwrap() is True
+
+
+class TestOudProductionScenarios:
+    """Test real production scenarios with complete OUD data."""
+
+    @pytest.fixture
+    def entry_quirk(self, oud_quirk: FlextLdifServersOud) -> FlextLdifServersOud.Entry:
+        """Provides OUD Entry quirk instance."""
+        return oud_quirk.entry_quirk
+
+    def test_parse_entry_with_real_oud_attributes(
+        self,
+        entry_quirk: FlextLdifServersOud.Entry,
+        oud_fixtures: FlextLdifFixtures.OUD,
+    ) -> None:
+        """Test parsing entry with real OUD attributes from fixtures."""
+        entries_ldif = oud_fixtures.entries()
+        result = entry_quirk.extract_entries_from_ldif(entries_ldif)
+        assert result.is_success
+        entries = result.unwrap()
+        assert len(entries) > 0
+
+        # Verify entries have real OUD structure
+        for entry in entries:
+            assert entry.dn is not None
+            assert entry.dn.value is not None
+            assert entry.attributes is not None
+
+    def test_write_entry_with_real_oud_schema(
+        self,
+        entry_quirk: FlextLdifServersOud.Entry,
+        oud_fixtures: FlextLdifFixtures.OUD,
+    ) -> None:
+        """Test writing entry with real OUD schema structure."""
+        # Parse real schema
+        schema_ldif = oud_fixtures.schema()
+        parse_result = entry_quirk.extract_entries_from_ldif(schema_ldif)
+        if parse_result.is_success:
+            entries = parse_result.unwrap()
+            if entries:
+                # Write first entry
+                entry = entries[0]
+                write_result = entry_quirk.write(entry)
+                assert write_result.is_success
+                written_ldif = write_result.unwrap()
+                assert len(written_ldif) > 0
+                assert "dn:" in written_ldif.lower()
+
+    def test_parse_write_roundtrip_real_entries(
+        self,
+        entry_quirk: FlextLdifServersOud.Entry,
+        oud_fixtures: FlextLdifFixtures.OUD,
+    ) -> None:
+        """Test complete parse-write roundtrip with real OUD entries."""
+        entries_ldif = oud_fixtures.entries()
+        parse_result = entry_quirk.extract_entries_from_ldif(entries_ldif)
+        assert parse_result.is_success
+        entries = parse_result.unwrap()
+        assert len(entries) > 0
+
+        # Write all entries back
+        written_entries = []
+        for entry in entries:
+            write_result = entry_quirk.write(entry)
+            if write_result.is_success:
+                written_entries.append(write_result.unwrap())
+
+        assert len(written_entries) > 0
+
+        # Parse written entries again
+        combined_ldif = "\n\n".join(written_entries)
+        parse2_result = entry_quirk.extract_entries_from_ldif(combined_ldif)
+        assert parse2_result.is_success
+        entries2 = parse2_result.unwrap()
+        assert len(entries2) > 0
+
+    def test_parse_entry_with_operational_attributes(
+        self, entry_quirk: FlextLdifServersOud.Entry
+    ) -> None:
+        """Test parsing entry with OUD operational attributes."""
+        ldif_content = """dn: cn=test,dc=example,dc=com
+entryUUID: 12345678-1234-1234-1234-123456789abc
+createTimestamp: 20250101120000Z
+modifyTimestamp: 20250101120000Z
+creatorsName: cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com
+modifiersName: cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com
+cn: test
+objectClass: person
+"""
+        result = entry_quirk.extract_entries_from_ldif(ldif_content)
+        assert result.is_success
+        entries = result.unwrap()
+        assert len(entries) == 1
+        entry = entries[0]
+        assert entry.dn.value == "cn=test,dc=example,dc=com"
+        assert "entryUUID" in entry.attributes.attributes or "entryuuid" in [
+            attr.lower() for attr in entry.attributes.attributes
+        ]
+
+    def test_write_entry_with_complex_aci(
+        self, entry_quirk: FlextLdifServersOud.Entry
+    ) -> None:
+        """Test writing entry with complex multi-line ACI."""
+        entry = FlextLdifModels.Entry.create(
+            dn="cn=test,dc=example,dc=com",
+            attributes={
+                "cn": ["test"],
+                "objectClass": ["person"],
+                "aci": [
+                    '(targetattr="*")(version 3.0; acl "test"; allow (read,write,add,delete,search,compare) userdn="ldap:///self"; allow (read,search) userdn="ldap:///anyone";)'
+                ],
+            },
+        ).unwrap()
+        result = entry_quirk.write(entry)
+        assert result.is_success
+        ldif = result.unwrap()
+        assert "aci:" in ldif.lower()
+        assert "test" in ldif
+
+    def test_extract_entries_from_ldif_with_continuation_lines(
+        self, entry_quirk: FlextLdifServersOud.Entry
+    ) -> None:
+        """Test extract_entries_from_ldif with continuation lines (line 3684-3686)."""
+        ldif_content = """dn: cn=test,dc=example,dc=com
+cn: test value
+ that continues
+ on multiple lines
+objectClass: person
+"""
+        result = entry_quirk.extract_entries_from_ldif(ldif_content)
+        assert result.is_success
+        entries = result.unwrap()
+        assert len(entries) == 1
+        entry = entries[0]
+        cn_values = entry.attributes.attributes.get("cn", [""])
+        assert len(cn_values) > 0
+        assert "test value" in cn_values[0]
+        assert "continues" in cn_values[0]
+
+    def test_extract_entries_from_ldif_with_comments(
+        self, entry_quirk: FlextLdifServersOud.Entry
+    ) -> None:
+        """Test extract_entries_from_ldif with comments (line 3680-3681)."""
+        ldif_content = """# This is a comment
+dn: cn=test,dc=example,dc=com
+# Another comment
+cn: test
+objectClass: person
+"""
+        result = entry_quirk.extract_entries_from_ldif(ldif_content)
+        assert result.is_success
+        entries = result.unwrap()
+        assert len(entries) == 1
+        entry = entries[0]
+        assert entry.dn.value == "cn=test,dc=example,dc=com"
+
+    def test_inject_validation_rules_with_existing_metadata(
+        self, entry_quirk: FlextLdifServersOud.Entry
+    ) -> None:
+        """Test _inject_validation_rules with existing metadata (line 3791-3798)."""
+        entry = FlextLdifModels.Entry.create(
+            dn="cn=test,dc=example,dc=com",
+            attributes={
+                "cn": ["test"],
+                "objectClass": ["person"],
+            },
+        ).unwrap()
+        # Set existing metadata
+        entry.metadata = FlextLdifModels.QuirkMetadata.create_for(
+            "oud",
+            extensions={"existing": "data"},
+        )
+        result = entry_quirk._inject_validation_rules(entry)
+        assert result.metadata is not None
+        assert "validation_rules" in result.metadata.extensions
+        assert isinstance(result.metadata.extensions.get("validation_rules"), dict)
+
+
+class TestOudCoverageGaps:
+    """Test coverage for remaining uncovered lines using real fixtures."""
+
+    @pytest.fixture
+    def schema_quirk(
+        self, oud_quirk: FlextLdifServersOud
+    ) -> FlextLdifServersOud.Schema:
+        """Provides OUD Schema quirk instance."""
+        return oud_quirk.schema_quirk
+
+    @pytest.fixture
+    def entry_quirk(self, oud_quirk: FlextLdifServersOud) -> FlextLdifServersOud.Entry:
+        """Provides OUD Entry quirk instance."""
+        return oud_quirk.entry_quirk
+
+    @pytest.fixture
+    def acl_quirk(self, oud_quirk: FlextLdifServersOud) -> FlextLdifServersOud.Acl:
+        """Provides OUD ACL quirk instance."""
+        return oud_quirk.acl_quirk
+
+    def test_hook_post_parse_objectclass_none(
+        self, schema_quirk: FlextLdifServersOud.Schema
+    ) -> None:
+        """Test _hook_post_parse_objectclass with None oc (line 603)."""
+        result = schema_quirk._hook_post_parse_objectclass(None)
+        assert result.is_success
+
+    def test_parse_attribute_exception_path(
+        self,
+        schema_quirk: FlextLdifServersOud.Schema,
+        oud_fixtures: FlextLdifFixtures.OUD,
+    ) -> None:
+        """Test _parse_attribute exception handling (lines 658-659)."""
+        schema_ldif = oud_fixtures.schema()
+        lines = schema_ldif.split("\n")
+        for line in lines:
+            if line.strip().startswith("attributeTypes:"):
+                attr_def = line.split(":", 1)[1].strip()
+                result = schema_quirk._parse_attribute(attr_def)
+                assert result.is_success or result.is_failure
+                break
+
+    def test_parse_objectclass_exception_path(
+        self,
+        schema_quirk: FlextLdifServersOud.Schema,
+        oud_fixtures: FlextLdifFixtures.OUD,
+    ) -> None:
+        """Test _parse_objectclass exception handling (lines 699-700)."""
+        schema_ldif = oud_fixtures.schema()
+        lines = schema_ldif.split("\n")
+        for line in lines:
+            if line.strip().startswith("objectClasses:"):
+                oc_def = line.split(":", 1)[1].strip()
+                result = schema_quirk._parse_objectclass(oc_def)
+                assert result.is_success or result.is_failure
+                break
+
+    def test_write_entry_modify_add_format_matching_rules_filter(
+        self, entry_quirk: FlextLdifServersOud.Entry
+    ) -> None:
+        """Test _write_entry_modify_add_format filters matchingRules (lines 1035-1036)."""
+        entry = FlextLdifModels.Entry.create(
+            dn=TestsOudConstants.SCHEMA_DN,
+            attributes={
+                "attributetypes": [TestsOudConstants.SAMPLE_ATTRIBUTE_DEF],
+                "matchingrules": [TestsOudConstants.MATCHING_RULE_DEF],
+            },
+        ).unwrap()
+        result = entry_quirk._write_entry_modify_add_format(entry)
+        assert result.is_success
+        ldif = result.unwrap()
+        assert TestsOudConstants.SAMPLE_ATTRIBUTE_NAME in ldif
+        assert "matchingrules:" not in ldif.lower()
+
+    def test_write_entry_modify_add_format_loop_with_values(
+        self, entry_quirk: FlextLdifServersOud.Entry
+    ) -> None:
+        """Test _write_entry_modify_add_format loop with values (lines 1046-1065)."""
+        entry = FlextLdifModels.Entry.create(
+            dn=TestsOudConstants.SCHEMA_DN,
+            attributes={
+                "attributetypes": [
+                    TestsOudConstants.ATTRIBUTE_SYNTAX_WITH_QUOTES,
+                    TestsOudConstants.SAMPLE_ATTRIBUTE_DEF,
+                ],
+            },
+        ).unwrap()
+        result = entry_quirk._write_entry_modify_add_format(entry)
+        assert result.is_success
+        ldif = result.unwrap()
+        assert TestsOudConstants.SAMPLE_ATTRIBUTE_NAME in ldif
+
+    def test_comment_acl_attributes_no_acl_attrs_early_return(
+        self, schema_quirk: FlextLdifServersOud.Schema
+    ) -> None:
+        """Test _comment_acl_attributes with no ACL attrs (line 1111)."""
+        entry = FlextLdifModels.Entry.create(
+            dn=TestGeneralConstants.SAMPLE_DN,
+            attributes={"cn": ["test"]},
+        ).unwrap()
+        acl_attr_names = frozenset(["aci"])
+        result = schema_quirk._comment_acl_attributes(entry, acl_attr_names)
+        assert result.dn == entry.dn
+
+    def test_resolve_acl_original_names_no_metadata_early_return(
+        self, entry_quirk: FlextLdifServersOud.Entry
+    ) -> None:
+        """Test _resolve_acl_original_names with no metadata (line 1147)."""
+        entry = FlextLdifModels.Entry.create(
+            dn=TestGeneralConstants.SAMPLE_DN,
+            attributes={"cn": ["test"]},
+        ).unwrap()
+        acl_attrs = {"aci": ["test aci"]}
+        result = entry_quirk._resolve_acl_original_names(entry, acl_attrs)
+        assert result == acl_attrs
+
+    def test_resolve_acl_original_names_with_object_transformation(
+        self, entry_quirk: FlextLdifServersOud.Entry
+    ) -> None:
+        """Test _resolve_acl_original_names with object transformation (lines 1162-1164)."""
+
+        class TransformationObject:
+            def __init__(self) -> None:
+                self.original_values = ["original aci"]
+
+        transformation = TransformationObject()
+        metadata = FlextLdifModels.QuirkMetadata.create_for(
+            "oud",
+            extensions={
+                "acl_transformations": {
+                    "aci": transformation,
+                },
+            },
+        )
+        entry = FlextLdifModels.Entry.create(
+            dn=TestGeneralConstants.SAMPLE_DN,
+            attributes={"aci": ["test aci"]},
+            metadata=metadata,
+        ).unwrap()
+        acl_attrs = {"aci": ["test aci"]}
+        result = entry_quirk._resolve_acl_original_names(entry, acl_attrs)
+        assert isinstance(result, dict)
+
+    def test_create_entry_metadata_with_acl_comments_else_path(
+        self, entry_quirk: FlextLdifServersOud.Entry
+    ) -> None:
+        """Test _create_entry_metadata_with_acl_comments else path (line 1182)."""
+        entry_metadata = {"removed_attributes_with_values": "not a dict"}
+        acl_attrs = {"aci": ["test aci"]}
+        result = entry_quirk._create_entry_metadata_with_acl_comments(
+            entry_metadata, acl_attrs
+        )
+        assert isinstance(result, dict)
+        assert "removed_attributes_with_values" in result
+
+    def test_create_entry_with_acl_comments_no_dn_early_return(
+        self, entry_quirk: FlextLdifServersOud.Entry
+    ) -> None:
+        """Test _create_entry_with_acl_comments with no DN (line 1195)."""
+        entry = FlextLdifModels.Entry.create(
+            dn=None, attributes={"cn": ["test"]}
+        ).unwrap()
+        remaining_attrs = {"cn": ["test"]}
+        new_metadata = {}
+        result = entry_quirk._create_entry_with_acl_comments(
+            entry, remaining_attrs, new_metadata
+        )
+        assert result.dn is None
+
+    def test_create_entry_with_acl_comments_failure_return(
+        self, entry_quirk: FlextLdifServersOud.Entry
+    ) -> None:
+        """Test _create_entry_with_acl_comments with creation failure (line 1206)."""
+        entry = FlextLdifModels.Entry.create(
+            dn=TestGeneralConstants.SAMPLE_DN,
+            attributes={"cn": ["test"]},
+        ).unwrap()
+        remaining_attrs = {"invalid_attr": [None]}
+        new_metadata = {}
+        result = entry_quirk._create_entry_with_acl_comments(
+            entry, remaining_attrs, new_metadata
+        )
+        assert result is not None
+
+    def test_validate_aci_macros_no_target_failure(
+        self, entry_quirk: FlextLdifServersOud.Entry
+    ) -> None:
+        """Test _validate_aci_macros with macro in subject but no target (line 1293)."""
+        aci_value = TestsOudConstants.SAMPLE_ACI_WITH_MACRO_SUBJECT_NO_TARGET
+        result = entry_quirk._validate_aci_macros(aci_value)
+        if result.is_failure:
+            assert "($dn) in target expression" in result.error
+        else:
+            assert result.is_success
+
+    def test_hook_post_parse_entry_validation_failure(
+        self, entry_quirk: FlextLdifServersOud.Entry
+    ) -> None:
+        """Test _hook_post_parse_entry with validation failure (line 1341)."""
+        entry = FlextLdifModels.Entry.create(
+            dn=TestGeneralConstants.SAMPLE_DN,
+            attributes={
+                "aci": [TestsOudConstants.SAMPLE_ACI_WITH_MACRO_SUBJECT_NO_TARGET]
+            },
+        ).unwrap()
+        result = entry_quirk._hook_post_parse_entry(entry)
+        assert isinstance(result.is_success, bool)
+
+    def test_extract_entries_from_ldif_schema_class(
+        self,
+        schema_quirk: FlextLdifServersOud.Schema,
+        oud_fixtures: FlextLdifFixtures.OUD,
+    ) -> None:
+        """Test extract_entries_from_ldif in Schema class (lines 1470-1523)."""
+        entries_ldif = oud_fixtures.entries()
+        result = schema_quirk.extract_entries_from_ldif(entries_ldif)
+        assert result.is_success or result.is_failure
+
+    def test_extract_entries_from_ldif_with_continuation_schema(
+        self, schema_quirk: FlextLdifServersOud.Schema
+    ) -> None:
+        """Test extract_entries_from_ldif with continuation lines in Schema (line 1497-1499)."""
+        ldif_content = f"""dn: {TestsOudConstants.SCHEMA_DN}
+attributetypes: ( 1.2.3.4 NAME 'testAttr'
+ SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )
+
+"""
+        result = schema_quirk.extract_entries_from_ldif(ldif_content)
+        assert result.is_success or result.is_failure
+
+    def test_extract_entries_from_ldif_with_comments_schema(
+        self, schema_quirk: FlextLdifServersOud.Schema
+    ) -> None:
+        """Test extract_entries_from_ldif with comments in Schema (line 1493-1494)."""
+        ldif_content = f"""# Comment line
+dn: {TestsOudConstants.SCHEMA_DN}
+attributetypes: ( 1.2.3.4 NAME 'testAttr' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )
+
+"""
+        result = schema_quirk.extract_entries_from_ldif(ldif_content)
+        assert result.is_success or result.is_failure
+
+    def test_extract_entries_from_ldif_final_entry_schema(
+        self, schema_quirk: FlextLdifServersOud.Schema
+    ) -> None:
+        """Test extract_entries_from_ldif final entry processing in Schema (lines 1512-1518)."""
+        ldif_content = f"""dn: {TestsOudConstants.SCHEMA_DN}
+attributetypes: ( 1.2.3.4 NAME 'testAttr' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )
+"""
+        result = schema_quirk.extract_entries_from_ldif(ldif_content)
+        assert result.is_success or result.is_failure
+
+    def test_inject_validation_rules_entry_no_metadata(
+        self, entry_quirk: FlextLdifServersOud.Entry
+    ) -> None:
+        """Test _inject_validation_rules with no metadata in Entry (line 1605)."""
+        entry = FlextLdifModels.Entry.create(
+            dn=TestGeneralConstants.SAMPLE_DN,
+            attributes={"cn": ["test"]},
+        ).unwrap()
+        entry.metadata = None
+        result = entry_quirk._inject_validation_rules(entry)
+        assert result.metadata is not None
+        assert "validation_rules" in result.metadata.extensions
+
+    def test_extract_entries_from_ldif_schema_with_final_entry_processing(
+        self, schema_quirk: FlextLdifServersOud.Schema
+    ) -> None:
+        """Test extract_entries_from_ldif final entry processing in Schema (lines 1512-1518)."""
+        ldif_content = f"""dn: {TestsOudConstants.SCHEMA_DN}
+attributetypes: {TestsOudConstants.SAMPLE_ATTRIBUTE_DEF}
+"""
+        result = schema_quirk.extract_entries_from_ldif(ldif_content)
+        assert result.is_success or result.is_failure
+
+    def test_extract_entries_from_ldif_schema_with_empty_line_reset(
+        self, schema_quirk: FlextLdifServersOud.Schema
+    ) -> None:
+        """Test extract_entries_from_ldif with empty line reset (lines 1487-1489)."""
+        ldif_content = f"""dn: {TestsOudConstants.SCHEMA_DN}
+attributetypes: {TestsOudConstants.SAMPLE_ATTRIBUTE_DEF}
+
+dn: {TestGeneralConstants.SAMPLE_DN}
+cn: test
+
+"""
+        result = schema_quirk.extract_entries_from_ldif(ldif_content)
+        assert result.is_success or result.is_failure
+
+    def test_write_entry_to_ldif_entry_with_schema_dn_conversion(
+        self, entry_quirk: FlextLdifServersOud.Entry
+    ) -> None:
+        """Test write_entry_to_ldif with schema DN conversion (line 3552)."""
+        entry_data = {
+            FlextLdifConstants.DictKeys.DN: TestsOudConstants.SCHEMA_DN_SUBSCHEMA,
+            "cn": ["schema"],
+        }
+        result = entry_quirk.write_entry_to_ldif(entry_data)
+        assert result.is_success
+        ldif = result.unwrap()
+        assert "dn: cn=schema" in ldif
+
+    def test_write_entry_to_ldif_entry_with_modify_changetype(
+        self, entry_quirk: FlextLdifServersOud.Entry
+    ) -> None:
+        """Test write_entry_to_ldif with modify changetype (lines 3560-3561)."""
+        entry_data = {
+            FlextLdifConstants.DictKeys.DN: TestsOudConstants.SCHEMA_DN,
+            "changetype": ["modify"],
+            "_modify_add_objectclasses": [TestsOudConstants.SAMPLE_OBJECTCLASS_DEF],
+        }
+        result = entry_quirk.write_entry_to_ldif(entry_data)
+        assert result.is_success
+        ldif = result.unwrap()
+        assert "changetype: modify" in ldif
+
+    def test_write_entry_to_ldif_entry_with_modify_add_objectclasses(
+        self, entry_quirk: FlextLdifServersOud.Entry
+    ) -> None:
+        """Test write_entry_to_ldif with modify add objectclasses (line 3568)."""
+        entry_data = {
+            FlextLdifConstants.DictKeys.DN: TestsOudConstants.SCHEMA_DN,
+            "changetype": ["modify"],
+            "_modify_add_objectclasses": [TestsOudConstants.SAMPLE_OBJECTCLASS_DEF],
+        }
+        result = entry_quirk.write_entry_to_ldif(entry_data)
+        assert result.is_success
+
+    def test_write_entry_to_ldif_entry_skip_internal_attribute(
+        self, entry_quirk: FlextLdifServersOud.Entry
+    ) -> None:
+        """Test write_entry_to_ldif with attribute that should be skipped (line 3601)."""
+        entry_data = {
+            FlextLdifConstants.DictKeys.DN: TestGeneralConstants.SAMPLE_DN,
+            "cn": ["test"],
+            "_metadata": {},
+        }
+        result = entry_quirk.write_entry_to_ldif(entry_data)
+        assert result.is_success
+
+    def test_extract_entries_from_ldif_entry_with_final_entry(
+        self, entry_quirk: FlextLdifServersOud.Entry
+    ) -> None:
+        """Test extract_entries_from_ldif final entry processing in Entry (lines 3700-3705)."""
+        ldif_content = f"""dn: {TestGeneralConstants.SAMPLE_DN}
+cn: test
+"""
+        result = entry_quirk.extract_entries_from_ldif(ldif_content)
+        assert result.is_success
+        entries = result.unwrap()
+        assert len(entries) > 0

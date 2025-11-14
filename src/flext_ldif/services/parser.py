@@ -310,20 +310,18 @@ class FlextLdifParser(FlextService[FlextLdifModels.ParseResponse]):
                         if detect_result.is_success:
                             return detect_result
 
-                        self.logger.warning("Auto-detection failed, using RELAXED mode")
-                        return FlextResult.ok(FlextLdifConstants.ServerTypes.RELAXED)
+                        return FlextResult.fail(
+                            "Auto-detection failed. Please specify server_type explicitly or set quirks_server_type in configuration."
+                        )
 
-                # Default fallback
-                default = getattr(
-                    config,
-                    "ldif_default_server_type",
-                    FlextLdifConstants.ServerTypes.RELAXED,
+                # No fallback - return error if no server type can be determined
+                return FlextResult.fail(
+                    "Unable to determine server type. Please specify server_type explicitly or configure quirks_server_type."
                 )
-                return FlextResult.ok(default)
 
-            except (ValueError, TypeError, AttributeError):
+            except (ValueError, TypeError, AttributeError) as e:
                 self.logger.exception("Error resolving server type")
-                return FlextResult.ok(FlextLdifConstants.ServerTypes.RELAXED)
+                return FlextResult.fail(f"Error resolving server type: {e}")
 
     class EntryProcessor:
         """Handles entry processing - replaces _process_single_entry, _post_process_entries, _normalize_entry_dn, _filter_operational_attributes."""

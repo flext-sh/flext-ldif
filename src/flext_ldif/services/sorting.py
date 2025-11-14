@@ -757,7 +757,7 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
                 result = self._sort_entry_attributes_alphabetically(entry)
 
             if not result.is_success:
-                error_msg = result.error if result.error else "Unknown error"
+                error_msg = result.error or "Unknown error"
                 return FlextResult[list[FlextLdifModels.Entry]].fail(
                     f"Attribute sort failed: {error_msg}",
                 )
@@ -1293,10 +1293,7 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
         for attr_name, attr_values in entry.attributes.items():
             if attr_name.lower() == key.lower():
                 # Convert list to first value for sorting
-                if attr_values:
-                    val = str(attr_values[0])
-                else:
-                    val = ""
+                val = str(attr_values[0]) if attr_values else ""
                 return (1, 0, val if case_sensitive else val.lower())
         return None
 

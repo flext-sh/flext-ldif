@@ -12,13 +12,14 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-# Make sure we can import flext_ldif
-sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent / "src"))
-
 import pytest
+from pydantic import ValidationError
 
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.services.sorting import FlextLdifSorting
+
+# Make sure we can import flext_ldif
+sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent / "src"))
 
 
 def create_entry(
@@ -28,7 +29,7 @@ def create_entry(
     """Create test entry with DN and attributes."""
     dn = FlextLdifModels.DistinguishedName(value=dn_str)
     attrs_result = FlextLdifModels.LdifAttributes.create(attributes)
-    error_msg = attrs_result.error if attrs_result.error else "Unknown error"
+    error_msg = attrs_result.error or "Unknown error"
     assert attrs_result.is_success, f"Failed to create attributes: {error_msg}"
     attrs = attrs_result.unwrap()
     entry = FlextLdifModels.Entry(dn=dn, attributes=attrs)
@@ -103,7 +104,9 @@ def test_by_schema_exists_and_works() -> None:
     assert len(sorted_entries) == 2
     # attributeTypes should come before objectClasses
     # Check that first entry has attributeTypes
-    first_attrs = sorted_entries[0].attributes.attributes if sorted_entries[0].attributes else {}
+    first_attrs = (
+        sorted_entries[0].attributes.attributes if sorted_entries[0].attributes else {}
+    )
     assert "attributeTypes" in first_attrs or "objectClasses" in first_attrs
 
 
@@ -442,8 +445,6 @@ def test_unicode_dns() -> None:
 
 def test_invalid_sort_target() -> None:
     """Test invalid sort_target raises validation error."""
-    from pydantic import ValidationError
-
     entries = [create_entry("cn=test,dc=example,dc=com", {"cn": ["test"]})]
 
     with pytest.raises(ValidationError, match="Invalid sort_target"):
@@ -455,8 +456,6 @@ def test_invalid_sort_target() -> None:
 
 def test_invalid_sort_strategy() -> None:
     """Test invalid sort_by raises validation error."""
-    from pydantic import ValidationError
-
     entries = [create_entry("cn=test,dc=example,dc=com", {"cn": ["test"]})]
 
     with pytest.raises(ValidationError, match="Invalid sort_by"):
@@ -468,8 +467,6 @@ def test_invalid_sort_strategy() -> None:
 
 def test_custom_without_predicate() -> None:
     """Test custom sort_by without predicate raises validation error."""
-    from pydantic import ValidationError
-
     entries = [create_entry("cn=test,dc=example,dc=com", {"cn": ["test"]})]
 
     with pytest.raises(ValidationError, match="custom_predicate required"):

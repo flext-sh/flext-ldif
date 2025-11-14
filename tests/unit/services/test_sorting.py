@@ -37,7 +37,7 @@ def create_entry(
     """Create test entry with DN and attributes."""
     dn = FlextLdifModels.DistinguishedName(value=dn_str)
     attrs_result = FlextLdifModels.LdifAttributes.create(attributes)
-    error_msg = attrs_result.error if attrs_result.error else "Unknown error"
+    error_msg = attrs_result.error or "Unknown error"
     assert attrs_result.is_success, f"Failed to create attributes: {error_msg}"
     attrs = attrs_result.unwrap()
     entry = FlextLdifModels.Entry(dn=dn, attributes=attrs)
@@ -541,7 +541,9 @@ class TestAttributeSorting:
         """Test attributes are sorted alphabetically via execute()."""
         entry = hierarchy_entries[0]
 
-        result = FlextLdifSorting.v1(entries=[entry], sort_target="attributes").execute()
+        result = FlextLdifSorting.v1(
+            entries=[entry], sort_target="attributes"
+        ).execute()
         sorted_entries = result.unwrap()
 
         assert len(sorted_entries) == 1

@@ -23,18 +23,19 @@ class TestEntryRfcValidation:
         Violation is captured in validation_metadata['rfc_violations'], not rejected.
         """
         # Create entry without objectClass (RFC violation)
-        entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(value="uid=test,dc=example,dc=com"),
-            attributes=FlextLdifModels.LdifAttributes(
-                attributes={
-                    "uid": ["test"],
-                    "cn": ["Test User"],
-                    # NO objectClass - RFC 4512 § 2.4.1 violation
-                }
-            ),
+        entry_result = FlextLdifModels.Entry.create(
+            dn="uid=test,dc=example,dc=com",
+            attributes={
+                "uid": ["test"],
+                "cn": ["Test User"],
+                # NO objectClass - RFC 4512 § 2.4.1 violation
+            },
         )
+        assert entry_result.is_success
+        entry = entry_result.unwrap()
 
         # Entry creation SUCCEEDS (lenient processing)
+        assert entry.dn is not None
         assert entry.dn.value == "uid=test,dc=example,dc=com"
 
         # RFC violation CAPTURED in validation_metadata
@@ -57,18 +58,19 @@ class TestEntryRfcValidation:
 
     def test_entry_with_objectclass_no_rfc_violation(self) -> None:
         """Validate Entry WITH objectClass has NO RFC violations."""
-        entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(value="uid=test,dc=example,dc=com"),
-            attributes=FlextLdifModels.LdifAttributes(
-                attributes={
-                    "uid": ["test"],
-                    "cn": ["Test User"],
-                    "objectClass": ["person", "inetOrgPerson"],  # RFC compliant
-                }
-            ),
+        entry_result = FlextLdifModels.Entry.create(
+            dn="uid=test,dc=example,dc=com",
+            attributes={
+                "uid": ["test"],
+                "cn": ["Test User"],
+                "objectClass": ["person", "inetOrgPerson"],  # RFC compliant
+            },
         )
+        assert entry_result.is_success
+        entry = entry_result.unwrap()
 
         # Entry creation succeeds
+        assert entry.dn is not None
         assert entry.dn.value == "uid=test,dc=example,dc=com"
 
         # NO RFC violations
@@ -82,20 +84,21 @@ class TestEntryRfcValidation:
         RFC 4512 allows schema entries without objectClass.
         """
         # Create schema entry without objectClass
-        entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(value="cn=schema"),
-            attributes=FlextLdifModels.LdifAttributes(
-                attributes={
-                    "cn": ["schema"],
-                    "attributeTypes": [
-                        "( 2.5.4.3 NAME 'cn' EQUALITY caseIgnoreMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )",
-                    ],
-                    # NO objectClass - but schema entry is exempt
-                }
-            ),
+        entry_result = FlextLdifModels.Entry.create(
+            dn="cn=schema",
+            attributes={
+                "cn": ["schema"],
+                "attributeTypes": [
+                    "( 2.5.4.3 NAME 'cn' EQUALITY caseIgnoreMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )",
+                ],
+                # NO objectClass - but schema entry is exempt
+            },
         )
+        assert entry_result.is_success
+        entry = entry_result.unwrap()
 
         # Entry creation succeeds
+        assert entry.dn is not None
         assert entry.dn.value == "cn=schema"
 
         # NO RFC violations (schema entry exempt)
@@ -108,20 +111,21 @@ class TestEntryRfcValidation:
         Critical for server conversions: non-compliant data MUST be preserved
         in metadata for round-trip OID→OUD→OID conversions.
         """
-        entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(value="uid=test,dc=example,dc=com"),
-            attributes=FlextLdifModels.LdifAttributes(
-                attributes={
-                    "uid": ["test"],
-                    "ds-cfg-enabled": ["true"],  # OUD-specific (non-RFC)
-                    "orclGUID": ["12345678"],  # OID-specific (non-RFC)
-                    "_internal_id": ["999"],  # Non-RFC attribute name
-                    # NO objectClass
-                }
-            ),
+        entry_result = FlextLdifModels.Entry.create(
+            dn="uid=test,dc=example,dc=com",
+            attributes={
+                "uid": ["test"],
+                "ds-cfg-enabled": ["true"],  # OUD-specific (non-RFC)
+                "orclGUID": ["12345678"],  # OID-specific (non-RFC)
+                "_internal_id": ["999"],  # Non-RFC attribute name
+                # NO objectClass
+            },
         )
+        assert entry_result.is_success
+        entry = entry_result.unwrap()
 
         # All attributes preserved
+        assert entry.attributes is not None
         assert "uid" in entry.attributes.attributes
         assert "ds-cfg-enabled" in entry.attributes.attributes
         assert "orclGUID" in entry.attributes.attributes
@@ -210,7 +214,9 @@ class TestDistinguishedNameRfcValidation:
         )
 
         assert dn.value == "uid=test,ou=users,dc=example,dc=com"
-        assert len(dn.components) == 4
+        components = dn.components
+        assert isinstance(components, list)
+        assert len(components) == 4
 
     def test_dn_with_spaces_after_comma_passes(self) -> None:
         """Validate DN with spaces after comma passes (RFC 4514 allows).
@@ -222,7 +228,9 @@ class TestDistinguishedNameRfcValidation:
         )
 
         assert dn.value == "uid=test, ou=users, dc=example, dc=com"
-        assert len(dn.components) == 4
+        components = dn.components
+        assert isinstance(components, list)
+        assert len(components) == 4
 
     def test_dn_invalid_format_preserved_for_server_quirks(self) -> None:
         """Validate invalid DN format is PRESERVED (not rejected) for server quirks.
@@ -277,8 +285,13 @@ class TestQuirkMetadataRfcViolations:
         assert "rfc_violations" in metadata.extensions
         assert "attribute_name_violations" in metadata.extensions
 
-        rfc_violations = metadata.extensions["rfc_violations"]
-        attr_violations = metadata.extensions["attribute_name_violations"]
+        rfc_violations_obj = metadata.extensions["rfc_violations"]
+        attr_violations_obj = metadata.extensions["attribute_name_violations"]
+
+        assert isinstance(rfc_violations_obj, list)
+        assert isinstance(attr_violations_obj, list)
+        rfc_violations = rfc_violations_obj
+        attr_violations = attr_violations_obj
 
         assert len(rfc_violations) == 2
         assert len(attr_violations) == 2
@@ -287,15 +300,15 @@ class TestQuirkMetadataRfcViolations:
 
     def test_rfc_violations_preserved_in_entry_metadata(self) -> None:
         """Validate RFC violations are preserved in Entry.metadata for conversions."""
-        entry = FlextLdifModels.Entry(
-            dn=FlextLdifModels.DistinguishedName(value="uid=test,dc=example,dc=com"),
-            attributes=FlextLdifModels.LdifAttributes(
-                attributes={
-                    "uid": ["test"],
-                    # NO objectClass - RFC violation
-                }
-            ),
+        entry_result = FlextLdifModels.Entry.create(
+            dn="uid=test,dc=example,dc=com",
+            attributes={
+                "uid": ["test"],
+                # NO objectClass - RFC violation
+            },
         )
+        assert entry_result.is_success
+        entry = entry_result.unwrap()
 
         # RFC violations captured in both locations
         assert entry.validation_metadata is not None

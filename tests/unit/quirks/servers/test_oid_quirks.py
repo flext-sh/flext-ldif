@@ -17,10 +17,10 @@ from typing import cast
 import pytest
 
 from flext_ldif import FlextLdif
+from flext_ldif._utilities.oid import FlextLdifUtilitiesOID
 from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.servers.oid import FlextLdifServersOid
-from flext_ldif._utilities.oid import FlextLdifUtilitiesOID
 from tests.fixtures.loader import FlextLdifFixtures
 from tests.unit.quirks.servers.test_utils import FlextLdifTestUtils
 
@@ -69,8 +69,7 @@ class TestOidSchemas:
         )
 
         oracle_attr = (
-            f"( {oracle_oid} NAME 'orclguid' "
-            "SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
+            f"( {oracle_oid} NAME 'orclguid' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
         )
 
         # Use parse which calls can_handle internally
@@ -95,10 +94,7 @@ class TestOidSchemas:
             f"RFC OID {rfc_oid} should not match Oracle DETECTION_OID_PATTERN"
         )
 
-        rfc_attr = (
-            f"( {rfc_oid} NAME 'uid' "
-            "SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
-        )
+        rfc_attr = f"( {rfc_oid} NAME 'uid' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
         # RFC attributes should not be handled by OID quirk (lower priority)
         # But parse will still work if OID quirk is selected
         result = oid.parse(rfc_attr)
@@ -1390,8 +1386,6 @@ class TestOidAclFixtures:
         oid_fixtures: FlextLdifFixtures.OID,
     ) -> None:
         """Test parsing complete OID ACL fixture file."""
-        from flext_ldif import FlextLdif
-
         ldif = FlextLdif()
 
         # Load complete ACL fixture
@@ -1440,8 +1434,6 @@ class TestOidEntriesFixtures:
         oid_fixtures: FlextLdifFixtures.OID,
     ) -> None:
         """Test parsing complete OID entries fixture file."""
-        from flext_ldif import FlextLdif
-
         ldif = FlextLdif()
 
         # Load complete entries fixture
@@ -1468,8 +1460,6 @@ class TestOidEntriesFixtures:
         oid_fixtures: FlextLdifFixtures.OID,
     ) -> None:
         """Test that OID entries contain objectClass attributes."""
-        from flext_ldif import FlextLdif
-
         ldif = FlextLdif()
         entries_content = oid_fixtures.entries()
         result = ldif.parse(entries_content)
@@ -1497,8 +1487,6 @@ class TestOidIntegrationFixtures:
         oid_fixtures: FlextLdifFixtures.OID,
     ) -> None:
         """Test parsing complete OID integration fixture (mixed content)."""
-        from flext_ldif import FlextLdif
-
         ldif = FlextLdif()
 
         # Load complete integration fixture
@@ -2771,8 +2759,6 @@ class TestOidQuirksProperties:
         test_oid = "2.16.840.1.113894.1.1.1"
 
         # Access constants from the server class, not nested class
-        import re
-
         assert (
             re.search(FlextLdifServersOid.Constants.DETECTION_OID_PATTERN, test_oid)
             is not None
@@ -3148,13 +3134,17 @@ class TestOidQuirksWithRealFixtures:
 
         # Parse original entries
         parse_result = api.parse(entries_file, server_type="oid")
-        assert parse_result.is_success, f"Failed to parse OID entries: {parse_result.error}"
+        assert parse_result.is_success, (
+            f"Failed to parse OID entries: {parse_result.error}"
+        )
         original_entries = parse_result.unwrap()
         assert len(original_entries) > 0, "No entries parsed from fixture"
 
         # Write entries to LDIF string
         write_result = api.write(original_entries, server_type="oid")
-        assert write_result.is_success, f"Failed to write OID entries: {write_result.error}"
+        assert write_result.is_success, (
+            f"Failed to write OID entries: {write_result.error}"
+        )
         ldif_content = write_result.unwrap()
 
         # Parse the written LDIF content
@@ -3195,7 +3185,7 @@ class TestOidQuirksWithRealFixtures:
         # (some differences like attribute ordering may be acceptable)
         if not is_identical and differences:
             # Log first few differences for debugging
-            print(f"Roundtrip differences (first 5): {differences[:5]}")
+            pass
 
     def test_oid_server_type_detection(
         self,

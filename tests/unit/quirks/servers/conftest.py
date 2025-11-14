@@ -8,64 +8,92 @@ from __future__ import annotations
 
 import pytest
 
+from flext_ldif.api import FlextLdif
 from flext_ldif.models import FlextLdifModels
+from flext_ldif.servers.rfc import FlextLdifServersRfc
+from tests.unit.quirks.servers.fixtures.general_constants import TestGeneralConstants
+from tests.unit.quirks.servers.fixtures.rfc_constants import TestsRfcConstants
 
 
 @pytest.fixture(scope="module")
-def ldif_api():
+def ldif_api() -> FlextLdif:
     """Provides a FlextLdif API instance for the test module.
 
     Creates a FlextLdif instance using the singleton pattern.
     """
-    from flext_ldif.api import FlextLdif
-
     return FlextLdif.get_instance()
 
 
 @pytest.fixture
-def rfc_quirk() -> object:
+def rfc_quirk() -> FlextLdifServersRfc:
     """Provides RFC quirk instance for tests."""
-    from flext_ldif.servers.rfc import FlextLdifServersRfc
-
     return FlextLdifServersRfc()
 
 
 @pytest.fixture
-def rfc_schema_quirk(rfc_quirk: object) -> object:
+def rfc_schema_quirk(rfc_quirk: FlextLdifServersRfc) -> FlextLdifServersRfc.Schema:
     """Provides RFC Schema quirk instance for tests."""
     return rfc_quirk.schema_quirk
 
 
 @pytest.fixture
-def rfc_entry_quirk(rfc_quirk: object) -> object:
+def rfc_entry_quirk(rfc_quirk: FlextLdifServersRfc) -> FlextLdifServersRfc.Entry:
     """Provides RFC Entry quirk instance for tests."""
     return rfc_quirk.entry_quirk
 
 
 @pytest.fixture
-def rfc_acl_quirk(rfc_quirk: object) -> object:
+def rfc_acl_quirk(rfc_quirk: FlextLdifServersRfc) -> FlextLdifServersRfc.Acl:
     """Provides RFC ACL quirk instance for tests."""
     return rfc_quirk.acl_quirk
 
 
 @pytest.fixture
 def sample_schema_attribute() -> FlextLdifModels.SchemaAttribute:
-    """Provides a sample SchemaAttribute for tests."""
-    return FlextLdifModels.SchemaAttribute(oid="2.5.4.3", name="cn")
+    """Provides a sample SchemaAttribute for tests with all required parameters."""
+    return FlextLdifModels.SchemaAttribute(
+        oid=TestsRfcConstants.ATTR_OID_CN,
+        name=TestsRfcConstants.ATTR_NAME_CN,
+        desc=None,
+        sup=None,
+        equality=None,
+        ordering=None,
+        substr=None,
+        syntax=None,
+        length=None,
+        usage=None,
+        x_origin=None,
+        x_file_ref=None,
+        x_name=None,
+        x_alias=None,
+        x_oid=None,
+    )
 
 
 @pytest.fixture
 def sample_schema_objectclass() -> FlextLdifModels.SchemaObjectClass:
-    """Provides a sample SchemaObjectClass for tests."""
-    return FlextLdifModels.SchemaObjectClass(oid="2.5.6.6", name="person")
+    """Provides a sample SchemaObjectClass for tests with all required parameters."""
+    return FlextLdifModels.SchemaObjectClass(
+        oid=TestsRfcConstants.OC_OID_PERSON,
+        name=TestsRfcConstants.OC_NAME_PERSON,
+        desc=None,
+        sup=None,
+    )
 
 
 @pytest.fixture
 def sample_entry() -> FlextLdifModels.Entry:
     """Provides a sample Entry for tests."""
+    from flext_ldif.constants import FlextLdifConstants
+
     return FlextLdifModels.Entry.create(
-        dn="cn=test,dc=example,dc=com",
-        attributes={"objectClass": ["person"], "cn": ["test"]},
+        dn=TestGeneralConstants.SAMPLE_DN,
+        attributes={
+            FlextLdifConstants.DictKeys.OBJECTCLASS: [
+                TestGeneralConstants.OC_NAME_PERSON
+            ],
+            TestGeneralConstants.ATTR_NAME_CN: [TestGeneralConstants.ATTR_VALUE_TEST],
+        },
     ).unwrap()
 
 
@@ -76,76 +104,25 @@ def sample_acl() -> FlextLdifModels.Acl:
 
 
 @pytest.fixture
-def attribute_definition_string():
+def attribute_definition_string() -> str:
     """Provides a sample attribute definition string."""
-    return "( 2.5.4.3 NAME 'cn' EQUALITY caseIgnoreMatch )"
+    return TestsRfcConstants.ATTR_DEF_CN_FULL
 
 
 @pytest.fixture
-def objectclass_definition_string():
+def objectclass_definition_string() -> str:
     """Provides a sample objectclass definition string."""
-    return "( 2.5.6.6 NAME 'person' STRUCTURAL )"
+    return TestsRfcConstants.OC_DEF_PERSON
 
 
 @pytest.fixture
-def sample_ldif_content():
+def sample_ldif_content() -> str:
     """Provides sample LDIF content for schema extraction."""
-    return """dn: cn=schema
-attributeTypes: ( 2.5.4.3 NAME 'cn' )
-objectClasses: ( 2.5.6.6 NAME 'person' STRUCTURAL )
-"""
+    return TestsRfcConstants.SAMPLE_LDIF_CONTENT
 
 
-# Test constants and configurations (following OUD test pattern)
-class TestConstants:
-    """Test constants for server quirks tests."""
-
-    # Sample OIDs
-    SAMPLE_ATTRIBUTE_OID = "2.5.4.3"
-    SAMPLE_OBJECTCLASS_OID = "2.5.6.6"
-    SAMPLE_ORACLE_OID = "2.16.840.1.113894.1.1.1"
-
-    # Sample names
-    SAMPLE_ATTRIBUTE_NAME = "cn"
-    SAMPLE_OBJECTCLASS_NAME = "person"
-    SAMPLE_ORACLE_ATTRIBUTE_NAME = "orclGUID"
-
-    # Sample DNs
-    SAMPLE_DN = "cn=test,dc=example,dc=com"
-    SAMPLE_SCHEMA_DN = "cn=schema"
-    SAMPLE_USER_DN = "uid=testuser,ou=people,dc=example,dc=com"
-
-    # Sample attribute definitions
-    SAMPLE_ATTRIBUTE_DEF = "( 2.5.4.3 NAME 'cn' EQUALITY caseIgnoreMatch )"
-    SAMPLE_OBJECTCLASS_DEF = "( 2.5.6.6 NAME 'person' STRUCTURAL )"
-    SAMPLE_ORACLE_ATTRIBUTE_DEF = (
-        "( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
-    )
-
-    # Sample LDIF content
-    SAMPLE_LDIF_ENTRY = """dn: cn=test,dc=example,dc=com
-objectClass: person
-cn: test
-"""
-
-    SAMPLE_LDIF_SCHEMA = """dn: cn=schema
-attributeTypes: ( 2.5.4.3 NAME 'cn' )
-objectClasses: ( 2.5.6.6 NAME 'person' STRUCTURAL )
-"""
-
-    # Error messages for testing
-    WRITER_FAILED_MSG = "Writer failed"
-    PARSER_ERROR_MSG = "Parser error"
-    DN_ERROR_MSG = "DN error"
-    INVALID_ENTRY_MSG = "Invalid entry"
-    PARSE_FAILED_MSG = "Parse failed"
-    WRITE_FAILED_MSG = "Write failed"
-
-
-@pytest.fixture
-def test_constants() -> TestConstants:
-    """Provides test constants for server quirks tests."""
-    return TestConstants()
+# Test constants and configurations use centralized constants from fixtures
+# No duplication - use TestGeneralConstants and TestsRfcConstants directly
 
 
 @pytest.fixture
@@ -204,9 +181,16 @@ invalidAttribute: value without proper formatting
 @pytest.fixture
 def sample_entry_with_metadata() -> FlextLdifModels.Entry:
     """Provides a sample Entry with metadata for tests."""
+    from flext_ldif.constants import FlextLdifConstants
+
     return FlextLdifModels.Entry.create(
-        dn="cn=test,dc=example,dc=com",
-        attributes={"objectClass": ["person"], "cn": ["test"]},
+        dn=TestGeneralConstants.SAMPLE_DN,
+        attributes={
+            FlextLdifConstants.DictKeys.OBJECTCLASS: [
+                TestGeneralConstants.OC_NAME_PERSON
+            ],
+            TestGeneralConstants.ATTR_NAME_CN: [TestGeneralConstants.ATTR_VALUE_TEST],
+        },
         entry_metadata={
             "write_options": FlextLdifModels.WriteFormatOptions(),
         },
@@ -297,8 +281,7 @@ class ConversionTestConstants:
         "( 2.16.840.1.113894.1.2.1 NAME 'orclContext' SUP top STRUCTURAL MUST cn )"
     )
     OID_OBJECTCLASS_ORCLCONTAINER = (
-        "( 2.16.840.1.113894.1.2.2 NAME 'orclContainer' "
-        "SUP top STRUCTURAL MUST cn )"
+        "( 2.16.840.1.113894.1.2.2 NAME 'orclContainer' SUP top STRUCTURAL MUST cn )"
     )
     OID_OBJECTCLASS_ORCLCONTEXT_WITH_MAY = (
         "( 2.16.840.1.113894.1.2.1 NAME 'orclContext' "
@@ -312,25 +295,21 @@ class ConversionTestConstants:
         "( 2.16.840.1.113894.1.2.1 NAME 'orclContext' SUP top STRUCTURAL MUST cn )"
     )
 
-    # Invalid test data
-    INVALID_ATTRIBUTE = "this is not a valid attribute definition"
-    INVALID_DN = "invalid-dn-format"
-    INVALID_DATA_TYPE = "invalid_type"
+    # Invalid test data (use constants from general_constants - no duplication)
+    INVALID_ATTRIBUTE = TestGeneralConstants.INVALID_ATTRIBUTE
+    INVALID_DN = TestGeneralConstants.INVALID_DN
+    INVALID_DATA_TYPE = TestGeneralConstants.INVALID_DATA_TYPE
 
-    # Sample LDIF entries for conversion
-    SAMPLE_LDIF_ENTRY = """dn: cn=test,dc=example,dc=com
-objectClass: person
-cn: test
-sn: user
-"""
+    # Sample LDIF entries for conversion (use constants from general_constants)
+    SAMPLE_LDIF_ENTRY = TestGeneralConstants.SAMPLE_LDIF_ENTRY
 
-    # Error messages
-    WRITER_FAILED_MSG = "Writer failed"
-    PARSER_ERROR_MSG = "Parser error"
-    DN_ERROR_MSG = "DN error"
-    INVALID_ENTRY_MSG = "Invalid entry"
-    PARSE_FAILED_MSG = "Parse failed"
-    WRITE_FAILED_MSG = "Write failed"
+    # Error messages (use constants from general_constants - no duplication)
+    WRITER_FAILED_MSG = TestGeneralConstants.WRITER_FAILED_MSG
+    PARSER_ERROR_MSG = TestGeneralConstants.PARSER_ERROR_MSG
+    DN_ERROR_MSG = TestGeneralConstants.DN_ERROR_MSG
+    INVALID_ENTRY_MSG = TestGeneralConstants.INVALID_ENTRY_MSG
+    PARSE_FAILED_MSG = TestGeneralConstants.PARSE_FAILED_MSG
+    WRITE_FAILED_MSG = TestGeneralConstants.WRITE_FAILED_MSG
 
 
 @pytest.fixture

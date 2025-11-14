@@ -36,7 +36,7 @@ class TestFlextLdifConfigEncodingValidator:
     def test_invalid_encoding_raises_validation_error(self) -> None:
         """Validate invalid encoding raises ValidationError from field_validator."""
         with pytest.raises(Exception) as exc_info:  # Pydantic ValidationError
-            FlextLdifConfig(ldif_encoding="invalid-codec-xyz")
+            FlextLdifConfig(ldif_encoding="invalid-codec-xyz")  # type: ignore[arg-type]
 
         # Error should mention the invalid encoding
         error_str = str(exc_info.value)
@@ -112,7 +112,7 @@ class TestFlextLdifConfigServerTypeValidator:
     def test_invalid_server_type_raises_validation_error(self) -> None:
         """Validate invalid server_type raises ValidationError from field_validator."""
         with pytest.raises(Exception) as exc_info:  # Pydantic ValidationError
-            FlextLdifConfig(server_type="invalid-server-xyz")
+            FlextLdifConfig(server_type="invalid-server-xyz")  # type: ignore[arg-type]
 
         # Error should mention the invalid server type
         error_str = str(exc_info.value)

@@ -15,11 +15,26 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import pytest
-
 from flext_ldif.servers.oid import FlextLdifServersOid
 from flext_ldif.servers.oud import FlextLdifServersOud
 from flext_ldif.services.conversion import FlextLdifConversion
+
+
+# Cross-quirk conversion test constants - defined at top of module without type checking
+class CrossQuirkConversionConstants:
+    """Constants for cross-quirk conversion tests."""
+
+    OID_ATTRIBUTE_ORCLGUID = """( 2.16.840.1.113894.1.1.1 NAME 'orclguid' DESC 'Oracle GUID' EQUALITY caseIgnoreMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 SINGLE-VALUE )"""
+    OID_OBJECTCLASS_ORCLCONTAINER = """( 2.16.840.1.113894.2.1.1 NAME 'orclContainer' DESC 'Oracle Container' SUP top STRUCTURAL MUST cn MAY description )"""
+    OID_ACL_ANONYMOUS = """orclaci: access to entry by * (browse)"""
+    OUD_ACI_ANONYMOUS = """aci: (targetattr="*")(version 3.0; acl "Test ACL"; allow (read,search) userdn="ldap:///anyone";)"""
+    OUD_ATTRIBUTE_ORCLGUID = "( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' SYNTAX 1.3.6.1.4.1.1466.115.121.1.40 )"
+    OID_OBJECTCLASS_ORCLCONTEXT = (
+        "( 2.16.840.1.113894.1.2.1 NAME 'orclContext' SUP top STRUCTURAL MUST cn )"
+    )
+
+
+CROSS_QUIRK_CONVERSION_CONSTANTS = CrossQuirkConversionConstants()
 
 
 class TestOidToOudSchemaConversion:
@@ -30,27 +45,17 @@ class TestOidToOudSchemaConversion:
     - oud_schema_fixture: OUD schema LDIF content
     """
 
-    @pytest.fixture
-    def oid(self) -> FlextLdifServersOid.Schema:
-        """Create OID quirk instance."""
-        return FlextLdifServersOid.Schema()
-
-    @pytest.fixture
-    def oud(self) -> FlextLdifServersOud.Schema:
-        """Create OUD quirk instance."""
-        return FlextLdifServersOud.Schema()
-
     def test_convert_oid_attribute_to_oud(
         self,
-        oid: FlextLdifServersOid.Schema,
-        oud: FlextLdifServersOud.Schema,
+        oid_schema_quirk: object,
+        oud_schema_quirk: object,
     ) -> None:
         """Test converting OID attribute definition to OUD format."""
         # OID attribute definition
-        oid_attribute = """( 2.16.840.1.113894.1.1.1 NAME 'orclguid' DESC 'Oracle GUID' EQUALITY caseIgnoreMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 SINGLE-VALUE )"""
+        oid_attribute = CROSS_QUIRK_CONVERSION_CONSTANTS.OID_ATTRIBUTE_ORCLGUID
 
         # Parse with OID quirk
-        parse_result = oid.parse(oid_attribute)
+        parse_result = oid_schema_quirk.parse(oid_attribute)
         assert parse_result.is_success, f"OID parse failed: {parse_result.error}"
         parsed_data = parse_result.unwrap()
 
@@ -63,12 +68,12 @@ class TestOidToOudSchemaConversion:
         )  # Metadata preserved
 
         # Convert to RFC format using OID quirk
-        rfc_result = oid.write(parsed_data)
+        rfc_result = oid_schema_quirk.write(parsed_data)
         assert rfc_result.is_success, f"OID write failed: {rfc_result.error}"
         rfc_format = rfc_result.unwrap()
 
         # Parse RFC format with OUD quirk
-        oud_parse_result = oud.parse(rfc_format)
+        oud_parse_result = oud_schema_quirk.parse(rfc_format)
         assert oud_parse_result.is_success, (
             f"OUD parse failed: {oud_parse_result.error}"
         )
@@ -81,15 +86,15 @@ class TestOidToOudSchemaConversion:
 
     def test_convert_oid_objectclass_to_oud(
         self,
-        oid: FlextLdifServersOid.Schema,
-        oud: FlextLdifServersOud.Schema,
+        oid_schema_quirk: object,
+        oud_schema_quirk: object,
     ) -> None:
         """Test converting OID objectClass definition to OUD format."""
         # OID objectClass definition
-        oid_objectclass = """( 2.16.840.1.113894.2.1.1 NAME 'orclContainer' DESC 'Oracle Container' SUP top STRUCTURAL MUST cn MAY description )"""
+        oid_objectclass = CROSS_QUIRK_CONVERSION_CONSTANTS.OID_OBJECTCLASS_ORCLCONTAINER
 
         # Parse with OID quirk
-        parse_result = oid.parse(oid_objectclass)
+        parse_result = oid_schema_quirk.parse(oid_objectclass)
         assert parse_result.is_success, f"OID parse failed: {parse_result.error}"
         parsed_data = parse_result.unwrap()
 
@@ -100,12 +105,12 @@ class TestOidToOudSchemaConversion:
         assert hasattr(parsed_data, "_metadata") or hasattr(parsed_data, "metadata")
 
         # Convert to RFC format using OID quirk
-        rfc_result = oid.write(parsed_data)
+        rfc_result = oid_schema_quirk.write(parsed_data)
         assert rfc_result.is_success, f"OID write failed: {rfc_result.error}"
         rfc_format = rfc_result.unwrap()
 
         # Parse RFC format with OUD quirk
-        oud_parse_result = oud.parse(rfc_format)
+        oud_parse_result = oud_schema_quirk.parse(rfc_format)
         assert oud_parse_result.is_success, (
             f"OUD parse failed: {oud_parse_result.error}"
         )
@@ -129,23 +134,13 @@ class TestOidToOudAclConversion:
     For ACL comparison across quirks, use the FlextLdifDiff utility instead.
     """
 
-    @pytest.fixture
-    def oid_acl_quirk(self) -> FlextLdifServersOid.Acl:
-        """Create OID ACL quirk instance."""
-        return FlextLdifServersOid.Acl()
-
-    @pytest.fixture
-    def oud_acl(self) -> FlextLdifServersOud.Acl:
-        """Create OUD ACL quirk instance."""
-        return FlextLdifServersOud.Acl()
-
     def test_oid_acl_parsing_and_roundtrip(
         self,
-        oid_acl_quirk: FlextLdifServersOid.Acl,
+        oid_acl_quirk: object,
     ) -> None:
         """Test OID ACL parsing and round-trip within OID format."""
         # OID ACL definition
-        oid_acl_str = """orclaci: access to entry by * (browse)"""
+        oid_acl_str = CROSS_QUIRK_CONVERSION_CONSTANTS.OID_ACL_ANONYMOUS
 
         # Parse with OID ACL quirk
         # Note: parse internally converts OID format to RFC format
@@ -165,14 +160,14 @@ class TestOidToOudAclConversion:
 
     def test_oud_acl_parsing_and_roundtrip(
         self,
-        oud_acl: FlextLdifServersOud.Acl,
+        oud_acl_quirk: object,
     ) -> None:
         """Test OUD ACL parsing and round-trip within OUD format."""
         # OUD ACI format
-        oud_aci = """aci: (targetattr="*")(version 3.0; acl "Test ACL"; allow (read,search) userdn="ldap:///anyone";)"""
+        oud_aci = CROSS_QUIRK_CONVERSION_CONSTANTS.OUD_ACI_ANONYMOUS
 
         # Parse with OUD ACL quirk
-        parse_result = oud_acl.parse(oud_aci)
+        parse_result = oud_acl_quirk.parse(oud_aci)
         assert parse_result.is_success, f"OUD ACL parse failed: {parse_result.error}"
         parsed_data = parse_result.unwrap()
 
@@ -190,7 +185,7 @@ class TestOidToOudAclConversion:
         assert hasattr(parsed_data, "metadata")  # Has metadata field
 
         # Write back to OUD format for round-trip
-        write_result = oud_acl.write(parsed_data)
+        write_result = oud_acl_quirk.write(parsed_data)
         assert write_result.is_success, f"OUD ACL write failed: {write_result.error}"
         written_format = write_result.unwrap()
 
@@ -205,20 +200,10 @@ class TestOidToOudIntegrationConversion:
     - oid_schema_fixture: OID schema LDIF content
     """
 
-    @pytest.fixture
-    def oid(self) -> FlextLdifServersOid.Schema:
-        """Create OID quirk instance."""
-        return FlextLdifServersOid.Schema()
-
-    @pytest.fixture
-    def oud(self) -> FlextLdifServersOud.Schema:
-        """Create OUD quirk instance."""
-        return FlextLdifServersOud.Schema()
-
     def test_convert_oid_schema_fixture_to_oud(
         self,
-        oid: FlextLdifServersOid.Schema,
-        oud: FlextLdifServersOud.Schema,
+        oid_schema_quirk: object,
+        oud_schema_quirk: object,
         oid_schema_fixture: str,
     ) -> None:
         """Test converting OID schema fixture to OUD format.
@@ -254,18 +239,18 @@ class TestOidToOudIntegrationConversion:
                 attr_def = line.split(":", 1)[1].strip()
 
                 # Parse with OID quirk
-                parse_result = oid.parse(attr_def)
+                parse_result = oid_schema_quirk.parse(attr_def)
                 if not parse_result.is_success:
                     continue
 
                 parsed_data = parse_result.unwrap()
 
                 # Convert to RFC format
-                rfc_result = oid.write(parsed_data)
+                rfc_result = oid_schema_quirk.write(parsed_data)
                 assert rfc_result.is_success
 
                 # Parse with OUD quirk
-                oud_result = oud.parse(rfc_result.unwrap())
+                oud_result = oud_schema_quirk.parse(rfc_result.unwrap())
                 assert oud_result.is_success, (
                     "OUD quirk should parse converted attribute"
                 )
@@ -282,32 +267,17 @@ class TestOidToOudIntegrationConversion:
 class TestQuirksConversionMatrixFacade:
     """Test QuirksConversionMatrix facade for universal translation."""
 
-    @pytest.fixture
-    def matrix(self) -> FlextLdifConversion:
-        """Create conversion matrix instance."""
-        return FlextLdifConversion()
-
-    @pytest.fixture
-    def oud(self) -> FlextLdifServersOud:
-        """Create OUD quirk instance."""
-        return FlextLdifServersOud()
-
-    @pytest.fixture
-    def oid(self) -> FlextLdifServersOid:
-        """Create OID quirk instance."""
-        return FlextLdifServersOid()
-
-    def test_matrix_instantiation(self, matrix: FlextLdifConversion) -> None:
+    def test_matrix_instantiation(self, conversion_matrix: FlextLdifConversion) -> None:
         """Test that conversion matrix can be instantiated."""
-        assert matrix is not None
+        assert conversion_matrix is not None
 
     def test_get_supported_conversions(
         self,
-        matrix: FlextLdifConversion,
-        oud: FlextLdifServersOud,
+        conversion_matrix: FlextLdifConversion,
+        oud_quirk: FlextLdifServersOud,
     ) -> None:
         """Test checking supported conversions."""
-        supported = matrix.get_supported_conversions(oud)
+        supported = conversion_matrix.get_supported_conversions(oud_quirk)
 
         # Schema support should be detected
         assert supported["attribute"] is True
@@ -320,17 +290,14 @@ class TestQuirksConversionMatrixFacade:
 
     def test_convert_attribute_oud_to_oid(
         self,
-        matrix: FlextLdifConversion,
-        oud: FlextLdifServersOud,
-        oid: FlextLdifServersOid,
+        conversion_matrix: FlextLdifConversion,
+        oud_quirk: FlextLdifServersOud,
+        oid_quirk: FlextLdifServersOid,
     ) -> None:
         """Test converting attribute via matrix facade."""
-        oud_attr = (
-            "( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' "
-            "SYNTAX 1.3.6.1.4.1.1466.115.121.1.40 )"
-        )
+        oud_attr = CROSS_QUIRK_CONVERSION_CONSTANTS.OUD_ATTRIBUTE_ORCLGUID
 
-        result = matrix.convert(oud, oid, "attribute", oud_attr)
+        result = conversion_matrix.convert(oud_quirk, oid_quirk, "attribute", oud_attr)
 
         assert result.is_success, f"Conversion failed: {result.error}"
         oid_attr = result.unwrap()
@@ -339,16 +306,14 @@ class TestQuirksConversionMatrixFacade:
 
     def test_convert_objectclass_oid_to_oud(
         self,
-        matrix: FlextLdifConversion,
-        oud: FlextLdifServersOud,
-        oid: FlextLdifServersOid,
+        conversion_matrix: FlextLdifConversion,
+        oud_quirk: FlextLdifServersOud,
+        oid_quirk: FlextLdifServersOid,
     ) -> None:
         """Test converting objectClass via matrix facade."""
-        oid_oc = (
-            "( 2.16.840.1.113894.1.2.1 NAME 'orclContext' SUP top STRUCTURAL MUST cn )"
-        )
+        oid_oc = CROSS_QUIRK_CONVERSION_CONSTANTS.OID_OBJECTCLASS_ORCLCONTEXT
 
-        result = matrix.convert(oid, oud, "objectclass", oid_oc)
+        result = conversion_matrix.convert(oid_quirk, oud_quirk, "objectclass", oid_oc)
 
         assert result.is_success, f"Conversion failed: {result.error}"
         oud_oc = result.unwrap()
@@ -357,17 +322,19 @@ class TestQuirksConversionMatrixFacade:
 
     def test_batch_convert_attributes(
         self,
-        matrix: FlextLdifConversion,
-        oud: FlextLdifServersOud,
-        oid: FlextLdifServersOid,
+        conversion_matrix: FlextLdifConversion,
+        oud_quirk: FlextLdifServersOud,
+        oid_quirk: FlextLdifServersOid,
     ) -> None:
         """Test batch conversion via matrix facade."""
         oud_attrs = [
-            "( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' SYNTAX 1.3.6.1.4.1.1466.115.121.1.40 )",
+            CROSS_QUIRK_CONVERSION_CONSTANTS.OUD_ATTRIBUTE_ORCLGUID,
             "( 2.16.840.1.113894.1.1.2 NAME 'orclDBName' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )",
         ]
 
-        result = matrix.batch_convert(oud, oid, "attribute", oud_attrs)
+        result = conversion_matrix.batch_convert(
+            oud_quirk, oid_quirk, "attribute", oud_attrs
+        )
 
         assert result.is_success, f"Batch conversion failed: {result.error}"
         oid_attrs = result.unwrap()
@@ -377,23 +344,24 @@ class TestQuirksConversionMatrixFacade:
 
     def test_bidirectional_conversion(
         self,
-        matrix: FlextLdifConversion,
-        oud: FlextLdifServersOud,
-        oid: FlextLdifServersOid,
+        conversion_matrix: FlextLdifConversion,
+        oud_quirk: FlextLdifServersOud,
+        oid_quirk: FlextLdifServersOid,
     ) -> None:
         """Test bidirectional conversion OUD ↔ OID."""
-        original = (
-            "( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' "
-            "SYNTAX 1.3.6.1.4.1.1466.115.121.1.40 )"
-        )
+        original = CROSS_QUIRK_CONVERSION_CONSTANTS.OUD_ATTRIBUTE_ORCLGUID
 
         # OUD → OID
-        oid_result = matrix.convert(oud, oid, "attribute", original)
+        oid_result = conversion_matrix.convert(
+            oud_quirk, oid_quirk, "attribute", original
+        )
         assert oid_result.is_success
         oid_attr = oid_result.unwrap()
 
         # OID → OUD
-        oud_result = matrix.convert(oid, oud, "attribute", oid_attr)
+        oud_result = conversion_matrix.convert(
+            oid_quirk, oud_quirk, "attribute", oid_attr
+        )
         assert oud_result.is_success
         roundtrip = oud_result.unwrap()
 
@@ -403,15 +371,14 @@ class TestQuirksConversionMatrixFacade:
 
     def test_invalid_data_type(
         self,
-        matrix: FlextLdifConversion,
-        oud: FlextLdifServersOud,
-        oid: FlextLdifServersOid,
+        conversion_matrix: FlextLdifConversion,
+        oud_quirk: FlextLdifServersOud,
+        oid_quirk: FlextLdifServersOid,
     ) -> None:
         """Test error handling for invalid data type."""
-        result = matrix.convert(oud, oid, "DataType", "test")
+        result = conversion_matrix.convert(oud_quirk, oid_quirk, "DataType", "test")
 
         assert result.is_failure
-        assert result.error is not None
         assert result.error is not None
         assert "Invalid data_type" in result.error
 

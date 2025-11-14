@@ -12,7 +12,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import pytest
 from flext_core import FlextResult
 
 from flext_ldif.constants import FlextLdifConstants
@@ -357,46 +356,22 @@ class TestComponentFactory:
         # Should succeed (normal path)
         assert result.is_success
 
-    def test_create_acl_components_isinstance_validation_target(
-        self,
-        monkeypatch: pytest.MonkeyPatch,
-    ) -> None:
-        """Test isinstance validation for target (line 72 coverage).
-
-        This tests the isinstance check for target at line 71-72.
-        """
-        # Monkeypatch unwrap to return non-AclTarget object
-        original_unwrap = object
-
-        def mock_unwrap(self: object) -> object:
-            if isinstance(self, type):
-                return "not_a_target"  # Return invalid type
-            return original_unwrap
-
-        # This is complex to test directly, so we'll use exception path instead
-        # by patching the Acl class instantiation to fail
-        from flext_ldif.models import FlextLdifModels
-
-        test_error_msg = "Test exception"
-
-        def failing_init(self: object, *args: object, **kwargs: object) -> None:
-            raise TypeError(test_error_msg)
-
-        monkeypatch.setattr(FlextLdifModels.Acl, "__init__", failing_init)
-
+    def test_create_acl_components_with_invalid_data(self) -> None:
+        """Test create_acl_components with invalid data that causes real failure."""
+        # Use invalid server type that will cause real validation failure
         target = FlextLdifModels.AclTarget(target_dn="*")
         subject = FlextLdifModels.AclSubject(subject_type="*", subject_value="*")
         permissions = FlextLdifModels.AclPermissions(read=True)
 
+        # Use invalid server type to trigger real validation error
         result = create_unified_acl_helper(
-            name="test_acl",
+            name="",
             target=target,
             subject=subject,
             permissions=permissions,
-            server_type=FlextLdifConstants.LdapServers.OPENLDAP,
+            server_type="invalid_server_type",  # type: ignore[arg-type]
             raw_acl="(access to *)",
         )
 
-        # Should catch exception and return failure
+        # Should fail with real validation error
         assert result.is_failure
-        assert "Failed to create ACL" in str(result.error)

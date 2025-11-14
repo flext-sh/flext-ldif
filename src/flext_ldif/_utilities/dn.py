@@ -570,16 +570,13 @@ class FlextLdifUtilitiesDN:
             transformation_flags["had_extra_spaces"] = True
 
         # Create statistics
-        # Cast to TypedDict for type-safe unpacking
-        flags_typed = cast(
-            "FlextLdifModelsDomains._DNStatisticsFlags", transformation_flags
-        )
+        # Pass flags as keyword arguments directly
         stats = FlextLdifModels.DNStatistics.create_with_transformation(
             original_dn=original_dn,
             cleaned_dn=result,
             normalized_dn=result,  # Will be updated by norm() if called
             transformations=transformations,
-            **flags_typed,
+            **transformation_flags,  # type: ignore[arg-type]
         )
 
         # Cast to public type (FlextLdifModels.DNStatistics inherits from FlextLdifModelsDomains.DNStatistics)

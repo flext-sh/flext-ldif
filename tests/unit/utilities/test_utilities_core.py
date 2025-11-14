@@ -20,6 +20,7 @@ from __future__ import annotations
 import pytest
 
 from flext_ldif.constants import FlextLdifConstants
+from flext_ldif.models import FlextLdifModels
 from flext_ldif.utilities import FlextLdifUtilities
 
 
@@ -110,39 +111,40 @@ class TestDnObjectClassMethods:
 
     def test_fix_missing_sup(self) -> None:
         """Test fixing missing SUP in AUXILIARY classes."""
+        # Create real SchemaObjectClass with missing SUP
+        obj = FlextLdifModels.SchemaObjectClass(
+            oid="1.2.3.4",
+            name="orcldasattrcategory",
+            kind="AUXILIARY",
+            sup=None,
+        )
 
-        # Create simple mock object
-        class MockObjectClass:
-            def __init__(self) -> None:
-                self.sup: str | None = None
-                self.kind = "AUXILIARY"
-                self.name = "orcldasattrcategory"
-
-        obj = MockObjectClass()
         FlextLdifUtilities.ObjectClass.fix_missing_sup(obj)
         assert obj.sup == "top"
 
     def test_fix_kind_mismatch(self) -> None:
         """Test fixing kind mismatches."""
+        # Create real SchemaObjectClass with kind mismatch
+        obj = FlextLdifModels.SchemaObjectClass(
+            oid="1.2.3.4",
+            name="testOC",
+            sup="orclpwdverifierprofile",
+            kind="AUXILIARY",
+        )
 
-        class MockObjectClass:
-            def __init__(self) -> None:
-                self.sup = "orclpwdverifierprofile"
-                self.kind = "AUXILIARY"
-
-        obj = MockObjectClass()
         FlextLdifUtilities.ObjectClass.fix_kind_mismatch(obj)
         assert obj.kind == "STRUCTURAL"
 
     def test_ensure_sup_for_auxiliary(self) -> None:
         """Test ensuring AUXILIARY classes have SUP."""
+        # Create real SchemaObjectClass with missing SUP
+        obj = FlextLdifModels.SchemaObjectClass(
+            oid="1.2.3.4",
+            name="testOC",
+            kind="AUXILIARY",
+            sup=None,
+        )
 
-        class MockObjectClass:
-            def __init__(self) -> None:
-                self.sup: str | None = None
-                self.kind = "AUXILIARY"
-
-        obj = MockObjectClass()
         FlextLdifUtilities.ObjectClass.ensure_sup_for_auxiliary(obj)
         assert obj.sup == "top"
 
@@ -307,8 +309,6 @@ class TestObjectClassUtilities:
 
     def test_fix_missing_sup_auxiliary_without_sup(self) -> None:
         """Test fixing missing SUP for known AUXILIARY classes."""
-        from flext_ldif.models import FlextLdifModels
-
         # Create AUXILIARY class without SUP
         oc = FlextLdifModels.SchemaObjectClass(
             name="orcldAsAttrCategory",
@@ -324,8 +324,6 @@ class TestObjectClassUtilities:
 
     def test_fix_missing_sup_auxiliary_with_sup(self) -> None:
         """Test that AUXILIARY with SUP is not modified."""
-        from flext_ldif.models import FlextLdifModels
-
         oc = FlextLdifModels.SchemaObjectClass(
             name="testAuxiliary",
             oid="1.2.3.4.5",
@@ -339,8 +337,6 @@ class TestObjectClassUtilities:
 
     def test_fix_missing_sup_structural_ignored(self) -> None:
         """Test that STRUCTURAL classes are ignored."""
-        from flext_ldif.models import FlextLdifModels
-
         oc = FlextLdifModels.SchemaObjectClass(
             name="testStructural",
             oid="1.2.3.4.6",
@@ -354,8 +350,6 @@ class TestObjectClassUtilities:
 
     def test_ensure_sup_for_auxiliary_adds_sup(self) -> None:
         """Test ensure_sup_for_auxiliary adds SUP when missing."""
-        from flext_ldif.models import FlextLdifModels
-
         oc = FlextLdifModels.SchemaObjectClass(
             name="testAuxiliary",
             oid="1.2.3.4.7",
@@ -367,8 +361,6 @@ class TestObjectClassUtilities:
 
     def test_ensure_sup_for_auxiliary_custom_default(self) -> None:
         """Test ensure_sup_for_auxiliary with custom default SUP."""
-        from flext_ldif.models import FlextLdifModels
-
         oc = FlextLdifModels.SchemaObjectClass(
             name="testAuxiliary",
             oid="1.2.3.4.8",
@@ -383,8 +375,6 @@ class TestObjectClassUtilities:
 
     def test_fix_kind_mismatch_structural_superior(self) -> None:
         """Test fixing kind mismatch with STRUCTURAL superior."""
-        from flext_ldif.models import FlextLdifModels
-
         oc = FlextLdifModels.SchemaObjectClass(
             name="testClass",
             oid="1.2.3.4.9",
@@ -396,8 +386,6 @@ class TestObjectClassUtilities:
 
     def test_fix_kind_mismatch_auxiliary_superior(self) -> None:
         """Test fixing kind mismatch with AUXILIARY superior."""
-        from flext_ldif.models import FlextLdifModels
-
         oc = FlextLdifModels.SchemaObjectClass(
             name="testClass",
             oid="1.2.3.4.10",
@@ -409,8 +397,6 @@ class TestObjectClassUtilities:
 
     def test_align_kind_with_superior_structural(self) -> None:
         """Test aligning kind with STRUCTURAL superior."""
-        from flext_ldif.models import FlextLdifModels
-
         oc = FlextLdifModels.SchemaObjectClass(
             name="testClass",
             oid="1.2.3.4.11",
@@ -425,8 +411,6 @@ class TestObjectClassUtilities:
 
     def test_align_kind_with_superior_auxiliary(self) -> None:
         """Test aligning kind with AUXILIARY superior."""
-        from flext_ldif.models import FlextLdifModels
-
         oc = FlextLdifModels.SchemaObjectClass(
             name="testClass",
             oid="1.2.3.4.12",
@@ -441,8 +425,6 @@ class TestObjectClassUtilities:
 
     def test_align_kind_with_superior_no_conflict(self) -> None:
         """Test that matching kinds are not changed."""
-        from flext_ldif.models import FlextLdifModels
-
         oc = FlextLdifModels.SchemaObjectClass(
             name="testClass",
             oid="1.2.3.4.13",

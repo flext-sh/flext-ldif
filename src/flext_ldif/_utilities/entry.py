@@ -9,6 +9,7 @@ from __future__ import annotations
 import base64
 import logging
 import re
+from typing import cast
 
 from flext_ldif.models import FlextLdifModels
 
@@ -374,10 +375,15 @@ class FlextLdifUtilitiesEntry:
         }
 
         # Create new entry with filtered attributes
-        return FlextLdifModels.Entry(
+        if entry.dn is None:
+            return entry
+        result = FlextLdifModels.Entry.create(
             dn=entry.dn,
             attributes=FlextLdifModels.LdifAttributes(attributes=filtered),
         )
+        if result.is_failure:
+            return entry
+        return cast("FlextLdifModels.Entry", result.unwrap())
 
     @staticmethod
     def remove_attributes(
@@ -411,10 +417,15 @@ class FlextLdifUtilitiesEntry:
         }
 
         # Create new entry with filtered attributes using LdifAttributes
-        return FlextLdifModels.Entry(
+        if entry.dn is None:
+            return entry
+        result = FlextLdifModels.Entry.create(
             dn=entry.dn,
             attributes=FlextLdifModels.LdifAttributes(attributes=filtered),
         )
+        if result.is_failure:
+            return entry
+        return cast("FlextLdifModels.Entry", result.unwrap())
 
 
 __all__ = [

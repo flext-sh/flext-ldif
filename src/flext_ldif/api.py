@@ -264,65 +264,65 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
         """Register all services using advanced FlextUtilities patterns with metadata."""
         container = self.container
 
-        # Use service registration with dependency injection
-
-        # Register core services
-        def register_core_services() -> None:
-            """Register core infrastructure services."""
-            # Register quirk registry (check if already exists - container is global)
-            if not container.has("quirk_registry"):
-                quirk_registry = FlextLdifServer()
-                container.with_service("quirk_registry", quirk_registry)
-
-            # Register writer service with dependencies (check if already exists)
-            if not container.has("writer"):
-                # Get quirk_registry from container (may have been registered earlier)
-                quirk_registry_result = container.get("quirk_registry")
-                if quirk_registry_result.is_success:
-                    quirk_registry = quirk_registry_result.value
-                else:
-                    # Fallback: create new instance if not found
-                    quirk_registry = FlextLdifServer()
-                unified_writer = FlextLdifWriter(quirk_registry=quirk_registry)
-                container.with_service("writer", unified_writer)
-
-        def register_business_services() -> None:
-            """Register business logic services."""
-            # Register stateless business services using fluent interface
-            # Check each service individually since container is global singleton
-            if not container.has("filters"):
-                container.with_service("filters", FlextLdifFilters())
-            if not container.has("statistics"):
-                container.with_service("statistics", FlextLdifStatistics())
-            if not container.has("validation"):
-                container.with_service("validation", FlextLdifValidation())
-
-        def register_pipeline_services() -> None:
-            """Register complex pipeline services with factory pattern."""
-
-            def migration_pipeline_factory(
-                params: FlextLdifModels.MigrationPipelineParams,
-            ) -> FlextLdifMigrationPipeline:
-                """Factory for migration pipelines."""
-                return FlextLdifMigrationPipeline(
-                    input_dir=Path(params.input_dir),
-                    output_dir=Path(params.output_dir),
-                    source_server=params.source_server,
-                    target_server=params.target_server,
-                )
-
-            # Check if already registered (container is global singleton)
-            if not container.has("migration_pipeline"):
-                container.with_service("migration_pipeline", migration_pipeline_factory)
-
         # Execute service registration with functional composition and error handling
         try:
-            register_core_services()
-            register_business_services()
-            register_pipeline_services()
+            self._register_core_services(container)
+            self._register_business_services(container)
+            self._register_pipeline_services(container)
         except Exception:
             self.logger.exception("Failed to setup services")
             raise
+
+    def _register_core_services(self, container: FlextContainer) -> None:
+        """Register core infrastructure services."""
+        # Register quirk registry (check if already exists - container is global)
+        if not container.has("quirk_registry"):
+            quirk_registry = FlextLdifServer()
+            container.with_service("quirk_registry", quirk_registry)
+
+        # Register writer service with dependencies (check if already exists)
+        if not container.has("writer"):
+            # Get quirk_registry from container (may have been registered earlier)
+            quirk_registry_result = container.get("quirk_registry")
+            quirk_registry: FlextLdifServer | None = None
+            if quirk_registry_result.is_success:
+                value = quirk_registry_result.value
+                if isinstance(value, FlextLdifServer):
+                    quirk_registry = value
+            if quirk_registry is None:
+                # Fallback: create new instance if not found
+                quirk_registry = FlextLdifServer()
+            unified_writer = FlextLdifWriter(quirk_registry=quirk_registry)
+            container.with_service("writer", unified_writer)
+
+    def _register_business_services(self, container: FlextContainer) -> None:
+        """Register business logic services."""
+        # Register stateless business services using fluent interface
+        # Check each service individually since container is global singleton
+        if not container.has("filters"):
+            container.with_service("filters", FlextLdifFilters())
+        if not container.has("statistics"):
+            container.with_service("statistics", FlextLdifStatistics())
+        if not container.has("validation"):
+            container.with_service("validation", FlextLdifValidation())
+
+    def _register_pipeline_services(self, container: FlextContainer) -> None:
+        """Register complex pipeline services with factory pattern."""
+
+        def migration_pipeline_factory(
+            params: FlextLdifModels.MigrationPipelineParams,
+        ) -> FlextLdifMigrationPipeline:
+            """Factory for migration pipelines."""
+            return FlextLdifMigrationPipeline(
+                input_dir=Path(params.input_dir),
+                output_dir=Path(params.output_dir),
+                source_server=params.source_server,
+                target_server=params.target_server,
+            )
+
+        # Check if already registered (container is global singleton)
+        if not container.has("migration_pipeline"):
+            container.with_service("migration_pipeline", migration_pipeline_factory)
 
     def _get_service_typed(
         self,
@@ -665,10 +665,7 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
         # Execute conversion with fallback
         converter = format_dispatch.get(output_format, format_dispatch["model"])
         result = converter()
-        return cast(
-            "FlextResult[list[FlextLdifModels.Entry]] | FlextResult[list[dict[str, str | list[str]]]]",
-            result,
-        )
+        return result
 
     def _resolve_source_content(
         self,

@@ -108,7 +108,9 @@ class FixtureValidator:
                 for entry in entries
                 if isinstance(entry.get("dn"), str)
             ]
-            invalid_dns = [dn for dn in dns if not dn or "=" not in dn]
+            invalid_dns = [
+                dn for dn in dns if isinstance(dn, str) and (not dn or "=" not in dn)
+            ]
 
             stats: dict[str, object] = {
                 "entry_count": len(entries),
@@ -686,11 +688,17 @@ class RoundTripValidator:
                 if (not orig_values and not round_values) or sorted(
                     orig_values,
                 ) == sorted(round_values):
-                    attr_reports[attr_lower]["matches"] += 1
+                    matches = attr_reports[attr_lower].get("matches", 0)
+                    if isinstance(matches, int):
+                        attr_reports[attr_lower]["matches"] = matches + 1
                 else:
-                    attr_reports[attr_lower]["mismatches"] += 1
+                    mismatches = attr_reports[attr_lower].get("mismatches", 0)
+                    if isinstance(mismatches, int):
+                        attr_reports[attr_lower]["mismatches"] = mismatches + 1
                     if not round_values:
-                        attr_reports[attr_lower]["missing_roundtrip"] += 1
+                        missing = attr_reports[attr_lower].get("missing_roundtrip", 0)
+                        if isinstance(missing, int):
+                            attr_reports[attr_lower]["missing_roundtrip"] = missing + 1
 
         report: dict[str, object] = {
             "attribute_count": len(attr_reports),
@@ -702,8 +710,14 @@ class RoundTripValidator:
             "attribute_reports": attr_reports,
         }
 
-        total_perfect = report.get("perfectly_preserved", 0)
-        total_attrs = report.get("attribute_count", 0)
+        total_perfect_obj = report.get("perfectly_preserved", 0)
+        total_attrs_obj = report.get("attribute_count", 0)
+        total_perfect = (
+            int(total_perfect_obj) if isinstance(total_perfect_obj, (int, str)) else 0
+        )
+        total_attrs = (
+            int(total_attrs_obj) if isinstance(total_attrs_obj, (int, str)) else 0
+        )
 
         if total_perfect < total_attrs:
             error_msg = f"Attribute preservation failed: {total_perfect}/{total_attrs} attributes perfectly preserved"
@@ -732,14 +746,16 @@ class RfcComplianceValidator:
         validation = helpers.validate_ldif_rfc2849_format(content)
 
         if not validation.get("is_valid"):
-            error_parts = []
-            if validation.get("line_length_issues"):
+            error_parts: list[str] = []
+            line_length_issues = validation.get("line_length_issues")
+            if line_length_issues and isinstance(line_length_issues, list):
                 error_parts.append(
-                    f"{len(validation['line_length_issues'])} lines exceed 76 chars",
+                    f"{len(line_length_issues)} lines exceed 76 chars",
                 )
-            if validation.get("missing_dn_entries"):
+            missing_dn_entries = validation.get("missing_dn_entries")
+            if missing_dn_entries:
                 error_parts.append(
-                    f"{validation['missing_dn_entries']} entries missing DN",
+                    f"{missing_dn_entries} entries missing DN",
                 )
             error_msg = f"RFC 2849 compliance failed: {'; '.join(error_parts)}"
             return FlextResult.fail(error_msg, error_data=validation)
@@ -796,7 +812,7 @@ class RfcComplianceValidator:
         if not is_valid:
             return FlextResult.fail(
                 "RFC 4512 compliance failed: No attributeTypes or objectClasses found",
-                report,
+                error_data=report,
             )
 
         return FlextResult.ok(report)
@@ -815,7 +831,10 @@ class RfcComplianceValidator:
         validation = helpers.validate_dn_rfc4514_format(dn)
 
         if not validation.get("is_valid"):
-            errors = validation.get("errors", [])
+            errors_obj = validation.get("errors", [])
+            errors = (
+                [str(e) for e in errors_obj] if isinstance(errors_obj, list) else []
+            )
             error_msg = f"RFC 4514 compliance failed: {'; '.join(errors)}"
             return FlextResult.fail(error_msg, error_data=validation)
 

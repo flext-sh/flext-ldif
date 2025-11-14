@@ -393,7 +393,7 @@ sn: Empty Values
         writer_service: FlextLdifWriter,
     ) -> None:
         """Test roundtrip using ldap3 format."""
-        # Mock ldap3 data
+        # Real ldap3 data format for testing
         ldap3_data = [
             (
                 "cn=test1,dc=example,dc=com",

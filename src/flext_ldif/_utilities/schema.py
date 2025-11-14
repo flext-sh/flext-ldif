@@ -149,7 +149,8 @@ class FlextLdifUtilitiesSchema:
     def apply_transformations(
         schema_obj: FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass,
         *,
-        field_transforms: dict[str, str | list[str] | None] | None = None,
+        field_transforms: dict[str, Callable[[Any], Any] | str | list[str] | None]
+        | None = None,
     ) -> FlextResult[Any]:
         """Apply transformation pipeline to schema object.
 
