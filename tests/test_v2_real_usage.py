@@ -50,15 +50,12 @@ def create_test_entries() -> list[FlextLdifModels.Entry]:
 class TestFlextServiceV2Patterns:
     """Test FlextService V2 usage patterns."""
 
-    @pytest.mark.skip(
-        reason="V2 service pattern not yet implemented in FlextLdifSorting"
-    )
     def test_v2_manual_with_result_property(self) -> None:
-        """Test V2 MANUAL: Service().result returns value directly."""
+        """Test V2 MANUAL: Service.v1().result returns value directly."""
         entries = create_test_entries()
 
-        # V2 MANUAL: Use .result property (auto_execute = False by default)
-        service = FlextLdifSorting(entries=entries, sort_by="hierarchy")
+        # V2 MANUAL: Use .v1() to disable auto_execute, then .result property
+        service = FlextLdifSorting.v1(entries=entries, sort_by="hierarchy")
         sorted_entries = service.result
 
         # Should return list[Entry] directly, not FlextResult
@@ -69,14 +66,31 @@ class TestFlextServiceV2Patterns:
         # Verify hierarchy order (shallowest first)
         assert sorted_entries[0].dn.value == "dc=example,dc=com"
         assert sorted_entries[1].dn.value == "ou=users,dc=example,dc=com"
-        assert sorted_entries[2].dn.value == "cn=john,ou=users,dc=example,dc.com"
+        assert sorted_entries[2].dn.value == "cn=john,ou=users,dc=example,dc=com"
 
-    def test_v1_explicit_with_execute(self) -> None:
-        """Test V1 EXPLICIT: Service().execute() returns FlextResult."""
+    def test_v2_auto_with_direct_instantiation(self) -> None:
+        """Test V2 AUTO: Service() returns value directly (auto_execute=True)."""
         entries = create_test_entries()
 
-        # V1: Use .execute() explicitly for FlextResult
-        result = FlextLdifSorting(entries=entries, sort_by="hierarchy").execute()
+        # V2 AUTO: Direct instantiation returns sorted entries (auto_execute = True)
+        sorted_entries = FlextLdifSorting(entries=entries, sort_by="hierarchy")
+
+        # Should return list[Entry] directly, not FlextResult or service instance
+        assert isinstance(sorted_entries, list)
+        assert len(sorted_entries) == 3
+        assert all(isinstance(e, FlextLdifModels.Entry) for e in sorted_entries)
+
+        # Verify hierarchy order (shallowest first)
+        assert sorted_entries[0].dn.value == "dc=example,dc=com"
+        assert sorted_entries[1].dn.value == "ou=users,dc=example,dc=com"
+        assert sorted_entries[2].dn.value == "cn=john,ou=users,dc=example,dc=com"
+
+    def test_v1_explicit_with_execute(self) -> None:
+        """Test V1 EXPLICIT: Service.v1().execute() returns FlextResult."""
+        entries = create_test_entries()
+
+        # V1: Use .v1() to disable auto_execute, then .execute() explicitly for FlextResult
+        result = FlextLdifSorting.v1(entries=entries, sort_by="hierarchy").execute()
 
         # Should return FlextResult
         assert isinstance(result, FlextResult)
@@ -108,20 +122,17 @@ class TestFlextServiceV2Patterns:
         assert len(sorted_entries) == 3
         assert sorted_entries[0].dn.value == "dc=example,dc=com"
 
-    @pytest.mark.skip(
-        reason="FlextService V2 pattern not fully implemented in flext-ldif"
-    )
     def test_v2_result_property_vs_execute(self) -> None:
         """Compare V2 .result vs V1 .execute()."""
         entries = create_test_entries()
 
-        # V2 MANUAL: Returns value directly
-        v2_result = FlextLdifSorting(entries=entries, sort_by="hierarchy").result
+        # V2 MANUAL: Use .v1() to get service instance, then .result
+        v2_result = FlextLdifSorting.v1(entries=entries, sort_by="hierarchy").result
 
-        # V1 EXPLICIT: Returns FlextResult
-        v1_result = FlextLdifSorting(entries=entries, sort_by="hierarchy").execute()
+        # V1 EXPLICIT: Use .with_result() to get FlextResult
+        v1_result = FlextLdifSorting.with_result(entries=entries, sort_by="hierarchy")
 
-        # V2 returns value, V1 returns FlextResult
+        # V2 returns value directly, V1 returns FlextResult
         assert isinstance(v2_result, list)
         assert isinstance(v1_result, FlextResult)
 
@@ -190,43 +201,41 @@ class TestFlextServiceV2BuilderPattern:
 class TestFlextServiceV2Comparison:
     """Compare V1 vs V2 patterns - code reduction metrics."""
 
-    @pytest.mark.skip(
-        reason="FlextService V2 pattern not fully implemented in flext-ldif"
-    )
     def test_code_reduction_v2_vs_v1(self) -> None:
         """Demonstrate 68% code reduction with V2 .result pattern."""
         entries = create_test_entries()
 
         # V1 Pattern (verbose): 3 lines
-        service_v1 = FlextLdifSorting(entries=entries, sort_by="hierarchy")
+        service_v1 = FlextLdifSorting.v1(
+            entries=entries, sort_by="hierarchy"
+        )  # Disable auto_execute
         result_v1 = service_v1.execute()
         sorted_v1 = result_v1.unwrap()
 
         # V2 Pattern (concise): 1 line (68% reduction!)
-        sorted_v2 = FlextLdifSorting(entries=entries, sort_by="hierarchy").result
+        sorted_v2 = FlextLdifSorting.v1(entries=entries, sort_by="hierarchy").result
 
         # Both produce same result
         assert sorted_v1 == sorted_v2
         assert len(sorted_v2) == 3
 
-    @pytest.mark.skip(
-        reason="FlextService V2 pattern not fully implemented in flext-ldif"
-    )
     def test_type_safety_v2_vs_v1(self) -> None:
         """V2 .result has better type inference than V1."""
         entries = create_test_entries()
 
-        # V2: IDE knows type is list[Entry]
-        sorted_v2: list[FlextLdifModels.Entry] = FlextLdifSorting(
+        # V2: IDE knows type is list[Entry] (with .result)
+        sorted_v2: list[FlextLdifModels.Entry] = FlextLdifSorting.v1(
             entries=entries,
             sort_by="hierarchy",
         ).result
 
         # V1: IDE knows type is FlextResult[list[Entry]]
-        result_v1: FlextResult[list[FlextLdifModels.Entry]] = FlextLdifSorting(
-            entries=entries,
-            sort_by="hierarchy",
-        ).execute()
+        result_v1: FlextResult[list[FlextLdifModels.Entry]] = (
+            FlextLdifSorting.with_result(
+                entries=entries,
+                sort_by="hierarchy",
+            )
+        )
 
         # Both work, but V2 is more direct
         assert isinstance(sorted_v2, list)

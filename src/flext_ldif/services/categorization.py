@@ -216,7 +216,8 @@ class FlextLdifCategorization(FlextService[dict[str, list[FlextLdifModels.Entry]
         if self._rejection_tracker["invalid_dn_rfc4514"]:
             sample_rejected_dns = [
                 entry.dn.value[: FlextLdifConstants.DN_LOG_PREVIEW_LENGTH]
-                if entry.dn and len(entry.dn.value) > FlextLdifConstants.DN_LOG_PREVIEW_LENGTH
+                if entry.dn
+                and len(entry.dn.value) > FlextLdifConstants.DN_LOG_PREVIEW_LENGTH
                 else (entry.dn.value if entry.dn else "")
                 for entry in self._rejection_tracker["invalid_dn_rfc4514"][:5]
             ]

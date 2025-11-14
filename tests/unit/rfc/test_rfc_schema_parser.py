@@ -248,3 +248,67 @@ attributeTypes: ( 2.5.4.3 NAME 'cn' DESC 'Common Name - this is a very long desc
         entries = parse_response.entries
         assert len(entries) > 0
         assert "attributeTypes" in entries[0].attributes.attributes
+
+
+class TestRfcSchemaQuirkDirectUsage:
+    """Test direct usage of RFC Schema quirk methods."""
+
+    def test_schema_parse_attribute_direct(self) -> None:
+        """Test Schema.parse with attribute definition."""
+        from flext_ldif.servers.rfc import FlextLdifServersRfc
+
+        schema = FlextLdifServersRfc.Schema()
+        attr_def = "( 2.5.4.3 NAME 'cn' DESC 'Common Name' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
+
+        result = schema.parse(attr_def)
+        assert result.is_success
+        attr = result.unwrap()
+        assert attr.oid == "2.5.4.3"
+        assert attr.name == "cn"
+
+    def test_schema_parse_objectclass_direct(self) -> None:
+        """Test Schema.parse with objectClass definition."""
+        from flext_ldif.servers.rfc import FlextLdifServersRfc
+
+        schema = FlextLdifServersRfc.Schema()
+        oc_def = "( 2.5.6.6 NAME 'person' DESC 'RFC2256: a person' SUP top STRUCTURAL )"
+
+        result = schema.parse(oc_def)
+        assert result.is_success
+        oc = result.unwrap()
+        assert oc.oid == "2.5.6.6"
+        assert oc.name == "person"
+
+    def test_schema_can_handle_all_attributes(self) -> None:
+        """Test Schema.can_handle_attribute always returns True."""
+        from flext_ldif.servers.rfc import FlextLdifServersRfc
+
+        schema = FlextLdifServersRfc.Schema()
+        assert schema.can_handle_attribute("any attribute definition") is True
+        assert schema.can_handle_attribute("( 2.5.4.3 NAME 'cn' )") is True
+
+    def test_schema_can_handle_all_objectclasses(self) -> None:
+        """Test Schema.can_handle_objectclass always returns True."""
+        from flext_ldif.servers.rfc import FlextLdifServersRfc
+
+        schema = FlextLdifServersRfc.Schema()
+        assert schema.can_handle_objectclass("any objectclass definition") is True
+        assert schema.can_handle_objectclass("( 2.5.6.6 NAME 'person' )") is True
+
+    def test_schema_should_not_filter_attributes(self) -> None:
+        """Test Schema.should_filter_out_attribute always returns False."""
+        from flext_ldif.servers.rfc import FlextLdifServersRfc
+        from flext_ldif.models import FlextLdifModels
+
+        schema = FlextLdifServersRfc.Schema()
+        attr = FlextLdifModels.SchemaAttribute(oid="2.5.4.3", name="cn")
+        assert schema.should_filter_out_attribute(attr) is False
+
+    def test_schema_should_not_filter_objectclasses(self) -> None:
+        """Test Schema.should_filter_out_objectclass always returns False."""
+        from flext_ldif.servers.rfc import FlextLdifServersRfc
+        from flext_ldif.models import FlextLdifModels
+
+        schema = FlextLdifServersRfc.Schema()
+        oc = FlextLdifModels.SchemaObjectClass(oid="2.5.6.6", name="person")
+        assert schema.should_filter_out_objectclass(oc) is False

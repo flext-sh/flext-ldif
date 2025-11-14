@@ -86,9 +86,7 @@ class FlextLdifUtilitiesValidation:
         base64_pattern = re.compile(r"^[A-Za-z0-9+/]*={0,2}$")
 
         if not base64_pattern.match(value):
-            violations.append(
-                "Value contains invalid base64 characters (RFC 4648 § 4)"
-            )
+            violations.append("Value contains invalid base64 characters (RFC 4648 § 4)")
 
         # Check padding (RFC 4648 § 4: padding with =)
         if "=" in value:
@@ -191,7 +189,9 @@ class FlextLdifUtilitiesValidation:
         # Examples: +1-555-1234, (555) 123-4567, +33 1 23 45 67 89
 
         # Remove common separators
-        cleaned = value.replace(" ", "").replace("-", "").replace("(", "").replace(")", "")
+        cleaned = (
+            value.replace(" ", "").replace("-", "").replace("(", "").replace(")", "")
+        )
 
         # Must start with + for international or digit for local
         if not cleaned:

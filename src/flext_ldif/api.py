@@ -269,20 +269,33 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
         # Register core services
         def register_core_services() -> None:
             """Register core infrastructure services."""
-            # Register quirk registry
-            quirk_registry = FlextLdifServer()
-            container.register("quirk_registry", quirk_registry)
+            # Register quirk registry (check if already exists - container is global)
+            if not container.has("quirk_registry"):
+                quirk_registry = FlextLdifServer()
+                container.with_service("quirk_registry", quirk_registry)
 
-            # Register writer service with dependencies
-            unified_writer = FlextLdifWriter(quirk_registry=quirk_registry)
-            container.register("writer", unified_writer)
+            # Register writer service with dependencies (check if already exists)
+            if not container.has("writer"):
+                # Get quirk_registry from container (may have been registered earlier)
+                quirk_registry_result = container.get("quirk_registry")
+                if quirk_registry_result.is_success:
+                    quirk_registry = quirk_registry_result.value
+                else:
+                    # Fallback: create new instance if not found
+                    quirk_registry = FlextLdifServer()
+                unified_writer = FlextLdifWriter(quirk_registry=quirk_registry)
+                container.with_service("writer", unified_writer)
 
         def register_business_services() -> None:
             """Register business logic services."""
-            # Register stateless business services
-            container.register("filters", FlextLdifFilters())
-            container.register("statistics", FlextLdifStatistics())
-            container.register("validation", FlextLdifValidation())
+            # Register stateless business services using fluent interface
+            # Check each service individually since container is global singleton
+            if not container.has("filters"):
+                container.with_service("filters", FlextLdifFilters())
+            if not container.has("statistics"):
+                container.with_service("statistics", FlextLdifStatistics())
+            if not container.has("validation"):
+                container.with_service("validation", FlextLdifValidation())
 
         def register_pipeline_services() -> None:
             """Register complex pipeline services with factory pattern."""
@@ -298,7 +311,9 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
                     target_server=params.target_server,
                 )
 
-            container.register("migration_pipeline", migration_pipeline_factory)
+            # Check if already registered (container is global singleton)
+            if not container.has("migration_pipeline"):
+                container.with_service("migration_pipeline", migration_pipeline_factory)
 
         # Execute service registration with functional composition and error handling
         try:

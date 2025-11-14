@@ -571,7 +571,9 @@ class FlextLdifUtilitiesDN:
 
         # Create statistics
         # Cast to TypedDict for type-safe unpacking
-        flags_typed = cast("FlextLdifModelsDomains._DNStatisticsFlags", transformation_flags)  # noqa: SLF001
+        flags_typed = cast(
+            "FlextLdifModelsDomains._DNStatisticsFlags", transformation_flags
+        )
         stats = FlextLdifModels.DNStatistics.create_with_transformation(
             original_dn=original_dn,
             cleaned_dn=result,

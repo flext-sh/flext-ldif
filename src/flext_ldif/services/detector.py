@@ -378,7 +378,9 @@ class FlextLdifDetector(FlextService[FlextLdifModels.ClientStatus]):
         ds389_constants = self._get_server_constants(
             FlextLdifConstants.ServerTypes.DS_389
         )
-        if ds389_constants and re.search(ds389_constants.DETECTION_PATTERN, content_lower):
+        if ds389_constants and re.search(
+            ds389_constants.DETECTION_PATTERN, content_lower
+        ):
             scores[FlextLdifConstants.ServerTypes.DS_389] += (
                 ds389_constants.DETECTION_WEIGHT
             )

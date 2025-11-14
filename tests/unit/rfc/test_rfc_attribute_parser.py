@@ -801,5 +801,181 @@ class TestTypeSpecificValidators:
             assert attr.syntax_definition.oid == "2.5.5.5"
 
 
+class TestRfcSchemaQuirkIntegration:
+    """Test RFC Schema quirk integration methods (can_handle, should_filter, write)."""
+
+    def test_can_handle_attribute_string(self) -> None:
+        """Test Schema.can_handle_attribute with string input."""
+        schema = FlextLdifServersRfc.Schema()
+        attr_def = "( 2.5.4.3 NAME 'cn' DESC 'Common Name' )"
+        assert schema.can_handle_attribute(attr_def) is True
+
+    def test_can_handle_attribute_model(self) -> None:
+        """Test Schema.can_handle_attribute with SchemaAttribute model."""
+        schema = FlextLdifServersRfc.Schema()
+        attr_def = "( 2.5.4.3 NAME 'cn' DESC 'Common Name' )"
+        parse_result = schema.parse(attr_def)
+        assert parse_result.is_success
+        attr_model = parse_result.unwrap()
+        assert schema.can_handle_attribute(attr_model) is True
+
+    def test_can_handle_objectclass_string(self) -> None:
+        """Test Schema.can_handle_objectclass with string input."""
+        schema = FlextLdifServersRfc.Schema()
+        oc_def = "( 2.5.6.6 NAME 'person' DESC 'RFC2256: a person' SUP top STRUCTURAL )"
+        assert schema.can_handle_objectclass(oc_def) is True
+
+    def test_should_filter_out_attribute(self) -> None:
+        """Test Schema.should_filter_out_attribute always returns False."""
+        schema = FlextLdifServersRfc.Schema()
+        attr_def = "( 2.5.4.3 NAME 'cn' DESC 'Common Name' )"
+        parse_result = schema.parse(attr_def)
+        assert parse_result.is_success
+        attr_model = parse_result.unwrap()
+        assert schema.should_filter_out_attribute(attr_model) is False
+
+    def test_should_filter_out_objectclass(self) -> None:
+        """Test Schema.should_filter_out_objectclass always returns False."""
+        schema = FlextLdifServersRfc.Schema()
+        oc_def = "( 2.5.6.6 NAME 'person' DESC 'RFC2256: a person' SUP top STRUCTURAL )"
+        parse_result = schema.parse(oc_def)
+        assert parse_result.is_success
+        oc_model = parse_result.unwrap()
+        assert schema.should_filter_out_objectclass(oc_model) is False
+
+    def test_write_attribute_roundtrip(self) -> None:
+        """Test Schema._write_attribute roundtrip."""
+        schema = FlextLdifServersRfc.Schema()
+        original = "( 2.5.4.3 NAME 'cn' DESC 'Common Name' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
+        parse_result = schema.parse(original)
+        assert parse_result.is_success
+        attr_model = parse_result.unwrap()
+
+        write_result = schema._write_attribute(attr_model)
+        assert write_result.is_success
+        written = write_result.unwrap()
+        assert "2.5.4.3" in written
+        assert "cn" in written or "CN" in written
+
+    def test_write_attribute_with_flags(self) -> None:
+        """Test Schema._write_attribute with SINGLE-VALUE and NO-USER-MODIFICATION."""
+        schema = FlextLdifServersRfc.Schema()
+        original = (
+            "( 2.5.4.3 NAME 'cn' DESC 'Common Name' "
+            "SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 "
+            "SINGLE-VALUE NO-USER-MODIFICATION )"
+        )
+        parse_result = schema.parse(original)
+        assert parse_result.is_success
+        attr_model = parse_result.unwrap()
+
+        write_result = schema._write_attribute(attr_model)
+        assert write_result.is_success
+        written = write_result.unwrap()
+        assert "SINGLE-VALUE" in written
+        assert "NO-USER-MODIFICATION" in written
+
+    def test_write_attribute_with_x_origin(self) -> None:
+        """Test Schema._write_attribute with X-ORIGIN metadata."""
+        schema = FlextLdifServersRfc.Schema()
+        # Use attribute with flags so closing paren is present
+        original = "( 2.5.4.3 NAME 'cn' DESC 'Common Name' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 SINGLE-VALUE )"
+        parse_result = schema.parse(original)
+        assert parse_result.is_success
+        attr_model = parse_result.unwrap()
+
+        # Add X-ORIGIN to metadata
+        if not attr_model.metadata:
+            from flext_ldif.models import FlextLdifModels
+            attr_model.metadata = FlextLdifModels.QuirkMetadata(
+                quirk_type="rfc",
+                extensions={},
+            )
+        attr_model.metadata.extensions["x_origin"] = "test.ldif"
+
+        write_result = schema._write_attribute(attr_model)
+        assert write_result.is_success
+        written = write_result.unwrap()
+        # X-ORIGIN is only added if closing paren exists AND there are extras (flags)
+        # The writer formats the attribute, and X-ORIGIN may be included in the extras
+        # Verify the write succeeded and the attribute is valid
+        assert ")" in written, "Written attribute should have closing paren"
+        assert "SINGLE-VALUE" in written, "SINGLE-VALUE flag should be in written string"
+        # X-ORIGIN should be in written string when flags present
+        assert "X-ORIGIN" in written, f"X-ORIGIN should be in written string when flags present: {written}"
+        assert "test.ldif" in written, f"X-ORIGIN value should be in written string: {written}"
+        assert "2.5.4.3" in written
+
+    def test_write_objectclass_roundtrip(self) -> None:
+        """Test Schema._write_objectclass roundtrip."""
+        schema = FlextLdifServersRfc.Schema()
+        original = "( 2.5.6.6 NAME 'person' DESC 'RFC2256: a person' SUP top STRUCTURAL )"
+        parse_result = schema.parse(original)
+        assert parse_result.is_success
+        oc_model = parse_result.unwrap()
+
+        write_result = schema._write_objectclass(oc_model)
+        assert write_result.is_success
+        written = write_result.unwrap()
+        assert "2.5.6.6" in written
+        assert "person" in written or "PERSON" in written
+
+    def test_write_objectclass_with_x_origin(self) -> None:
+        """Test Schema._write_objectclass with X-ORIGIN metadata."""
+        schema = FlextLdifServersRfc.Schema()
+        original = "( 2.5.6.6 NAME 'person' DESC 'RFC2256: a person' SUP top STRUCTURAL )"
+        parse_result = schema.parse(original)
+        assert parse_result.is_success
+        oc_model = parse_result.unwrap()
+
+        # Add X-ORIGIN to metadata
+        if not oc_model.metadata:
+            from flext_ldif.models import FlextLdifModels
+            oc_model.metadata = FlextLdifModels.QuirkMetadata(
+                quirk_type="rfc",
+                extensions={},
+            )
+        oc_model.metadata.extensions["x_origin"] = "schema.ldif"
+
+        write_result = schema._write_objectclass(oc_model)
+        assert write_result.is_success
+        written = write_result.unwrap()
+        # X-ORIGIN is only added if closing paren exists in written string
+        assert ")" in written, "Written objectclass should have closing paren"
+        # X-ORIGIN should be added when closing paren exists
+        assert "X-ORIGIN" in written, f"X-ORIGIN should be in written string: {written}"
+        assert "schema.ldif" in written, f"X-ORIGIN value should be in written string: {written}"
+        assert "2.5.6.6" in written
+        assert "person" in written or "PERSON" in written
+
+    def test_transform_hooks_no_op(self) -> None:
+        """Test that RFC transform hooks are no-ops (return unchanged)."""
+        schema = FlextLdifServersRfc.Schema()
+        attr_def = "( 2.5.4.3 NAME 'cn' DESC 'Common Name' )"
+        parse_result = schema.parse(attr_def)
+        assert parse_result.is_success
+        attr_model = parse_result.unwrap()
+
+        # Transform hooks should return unchanged
+        transformed_attr = schema._transform_attribute_for_write(attr_model)
+        assert transformed_attr is attr_model
+
+        written_str = "( 2.5.4.3 NAME 'cn' DESC 'Common Name' )"
+        post_written = schema._post_write_attribute(written_str)
+        assert post_written == written_str
+
+        oc_def = "( 2.5.6.6 NAME 'person' DESC 'RFC2256: a person' SUP top STRUCTURAL )"
+        oc_parse_result = schema.parse(oc_def)
+        assert oc_parse_result.is_success
+        oc_model = oc_parse_result.unwrap()
+
+        transformed_oc = schema._transform_objectclass_for_write(oc_model)
+        assert transformed_oc is oc_model
+
+        oc_written_str = "( 2.5.6.6 NAME 'person' DESC 'RFC2256: a person' SUP top STRUCTURAL )"
+        post_oc_written = schema._post_write_objectclass(oc_written_str)
+        assert post_oc_written == oc_written_str
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
