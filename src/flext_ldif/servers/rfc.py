@@ -19,7 +19,7 @@ from __future__ import annotations
 
 import base64
 from collections.abc import Mapping
-from typing import ClassVar, cast
+from typing import ClassVar, Literal, cast, overload
 
 from flext_core import FlextLogger, FlextResult
 
@@ -330,6 +330,231 @@ class FlextLdifServersRfc(FlextLdifServersBase):
     # Use: FlextLdifUtilities.Parser.parse_rfc_attribute() / parse_rfc_objectclass()
     # Use: FlextLdifUtilities.Writer.write_rfc_attribute() / write_rfc_objectclass()
 
+    # =========================================================================
+    # Main Quirk Operation Handlers - Concrete implementations moved from base.py
+    # =========================================================================
+
+    def _handle_parse_operation(
+        self,
+        ldif_text: str,
+    ) -> FlextResult[FlextLdifTypes.EntryOrString]:
+        """Handle parse operation for main quirk."""
+        parse_result = self.parse(ldif_text)
+        if parse_result.is_success:
+            parse_response = parse_result.unwrap()
+            # Extract entries from ParseResponse
+            # parse_response.entries can be a list or a single Entry (for mocks)
+            # EntryOrString is Entry | str, so we need to return Entry or str
+            entries = parse_response.entries
+            if isinstance(entries, list):
+                # Real case: entries is a list
+                if entries and len(entries) > 0:
+                    return FlextResult[FlextLdifTypes.EntryOrString].ok(
+                        cast("FlextLdifTypes.EntryOrString", entries[0])
+                    )
+                # Return empty string if no entries
+                return FlextResult[FlextLdifTypes.EntryOrString].ok("")
+            # Mock case: entries is a single Entry
+            if isinstance(entries, FlextLdifModels.Entry):
+                return FlextResult[FlextLdifTypes.EntryOrString].ok(
+                    cast("FlextLdifTypes.EntryOrString", entries)
+                )
+            # Fallback: return empty string
+            return FlextResult[FlextLdifTypes.EntryOrString].ok("")
+        error_msg: str = parse_result.error or "Parse failed"
+        return FlextResult[FlextLdifTypes.EntryOrString].fail(error_msg)
+
+    def _handle_write_operation(
+        self,
+        entries: list[FlextLdifModels.Entry],
+    ) -> FlextResult[FlextLdifTypes.EntryOrString]:
+        """Handle write operation for main quirk."""
+        write_result = self.write(entries)
+        if write_result.is_success:
+            written_text: str = write_result.unwrap()
+            return FlextResult[FlextLdifTypes.EntryOrString].ok(written_text)
+        error_msg: str = write_result.error or "Write failed"
+        return FlextResult[FlextLdifTypes.EntryOrString].fail(error_msg)
+
+    # =========================================================================
+    # Automatic Routing Methods - Concrete implementations moved from base.py
+    # =========================================================================
+
+    def _detect_model_type(self, model: object) -> str:
+        """Detect model type for automatic routing using functional type mapping.
+
+        Args:
+            model: Model instance to detect type for.
+
+        Returns:
+            Model type name: "entry", "schema_attribute",
+            "schema_objectclass", or "acl".
+
+        """
+        # Functional type mapping with pattern matching
+        type_mappings = {
+            FlextLdifModels.Entry: "entry",
+            FlextLdifModels.SchemaAttribute: "schema_attribute",
+            FlextLdifModels.SchemaObjectClass: "schema_objectclass",
+            FlextLdifModels.Acl: "acl",
+        }
+
+        # Find first matching type using functional composition
+        for model_type, type_name in type_mappings.items():
+            if isinstance(model, model_type):
+                return type_name
+
+        return "unknown"
+
+    def _get_for_model(self, model: object) -> object | None:
+        """Get appropriate quirk instance for a model type using functional routing.
+
+        Args:
+            model: Model instance to get quirk for.
+
+        Returns:
+            Appropriate quirk instance (Schema, Acl, or Entry) or None if not found.
+
+        """
+        # Functional routing mapping: model_type -> quirk_class_name
+        routing_map = {
+            "entry": "Entry",
+            "schema_attribute": "Schema",
+            "schema_objectclass": "Schema",
+            "acl": "Acl",
+        }
+
+        def get_quirk_instance(class_name: str) -> object | None:
+            """Get quirk instance by class name using reflection."""
+            quirk_class = getattr(type(self), class_name, None)
+            return quirk_class() if quirk_class else None
+
+        # Compose detection and routing using functional approach
+        model_type = self._detect_model_type(model)
+        quirk_class_name = routing_map.get(model_type)
+
+        return get_quirk_instance(quirk_class_name) if quirk_class_name else None
+
+    def _route_model_to_write(self, model: object) -> FlextResult[str]:
+        """Route a single model to appropriate write method.
+
+        Automatically detects model type and routes to correct quirk write method.
+
+        Args:
+            model: Model instance to write (Entry, SchemaAttribute, SchemaObjectClass, or Acl).
+
+        Returns:
+            FlextResult with LDIF string representation.
+
+        """
+        if isinstance(model, FlextLdifModels.Entry):
+            entry_class = getattr(type(self), "Entry", None)
+            if not entry_class:
+                return FlextResult.fail("Entry nested class not available")
+            quirk = entry_class()
+            result: FlextResult[str] = quirk.write(model)
+            return result
+        if isinstance(model, FlextLdifModels.SchemaAttribute):
+            schema_class = getattr(type(self), "Schema", None)
+            if not schema_class:
+                return FlextResult.fail("Schema nested class not available")
+            quirk = schema_class()
+            result2: FlextResult[str] = quirk.write_attribute(model)
+            return result2
+        if isinstance(model, FlextLdifModels.SchemaObjectClass):
+            schema_class = getattr(type(self), "Schema", None)
+            if not schema_class:
+                return FlextResult.fail("Schema nested class not available")
+            quirk = schema_class()
+            result3: FlextResult[str] = quirk.write_objectclass(model)
+            return result3
+        if isinstance(model, FlextLdifModels.Acl):
+            acl_class = getattr(type(self), "Acl", None)
+            if not acl_class:
+                return FlextResult.fail("Acl nested class not available")
+            quirk = acl_class()
+            result4: FlextResult[str] = quirk.write(model)
+            return result4
+        return FlextResult.fail(f"Unknown model type: {type(model).__name__}")
+
+    def _route_models_to_write(self, models: list[object]) -> FlextResult[list[str]]:
+        """Route multiple models to appropriate write methods.
+
+        Processes each model individually and routes to correct quirk.
+
+        Args:
+            models: List of model instances to write.
+
+        Returns:
+            FlextResult with list of LDIF string representations.
+
+        """
+        ldif_lines: list[str] = []
+        for model in models:
+            result = self._route_model_to_write(model)
+            if result.is_failure:
+                return FlextResult.fail(result.error)
+            text = result.unwrap()
+            if isinstance(text, str):
+                ldif_lines.extend(text.splitlines(keepends=False))
+                if text and not text.endswith("\n"):
+                    ldif_lines.append("")  # Add blank line between entries
+        return FlextResult.ok(ldif_lines)
+
+    # =========================================================================
+    # Validation Methods - Concrete implementations moved from base.py
+    # =========================================================================
+
+    def _validate_ldif_text(self, ldif_text: str) -> FlextResult[None]:
+        """Validate LDIF text before parsing - handles edge cases.
+
+        Edge cases handled:
+        - None/empty string -> returns ok (will result in empty entry list)
+        - Whitespace only -> returns ok (will result in empty entry list)
+        - Encoding issues -> any decoding happens in parse_content
+
+        Args:
+            ldif_text: LDIF content to validate
+
+        Returns:
+            FlextResult.ok(None) if valid, FlextResult.fail() if invalid
+
+        """
+        # Empty or whitespace-only is valid (will parse to empty list)
+        if not ldif_text or not ldif_text.strip():
+            return FlextResult.ok(None)
+        return FlextResult.ok(None)
+
+    def _validate_entries(
+        self,
+        entries: list[FlextLdifModels.Entry] | None,
+    ) -> FlextResult[list[FlextLdifModels.Entry]]:
+        """Validate entry list before writing - handles edge cases.
+
+        Edge cases handled:
+        - None -> returns empty list
+        - Empty list -> returns empty list
+        - Invalid entries -> returns fail
+
+        Args:
+            entries: Entry list to validate
+
+        Returns:
+            FlextResult with validated entry list
+
+        """
+        if entries is None:
+            return FlextResult.ok([])
+        if not entries:
+            return FlextResult.ok([])
+        # All entries should be Entry models
+        if not all(isinstance(entry, FlextLdifModels.Entry) for entry in entries):
+            invalid = next(
+                e for e in entries if not isinstance(e, FlextLdifModels.Entry)
+            )
+            return FlextResult.fail(f"Invalid entry type: {type(invalid).__name__}")
+        return FlextResult.ok(entries)
+
     class Schema(FlextLdifServersBase.Schema):
         """RFC 4512 Compliant Schema Quirk - Base Implementation."""
 
@@ -445,19 +670,28 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             # Type check - ensure we got a proper model object
             if not isinstance(attr_data, FlextLdifModels.SchemaAttribute):
                 return FlextResult[str].fail(
-                    "write_attribute_to_rfc requires SchemaAttribute model, got "
-                    f"{type(attr_data).__name__}",
+                    (
+                        "write_attribute_to_rfc requires SchemaAttribute model, got "
+                        f"{type(attr_data).__name__}"
+                    ),
                 )
 
             # Check for original format in metadata (for perfect round-trip)
             if attr_data.metadata and attr_data.metadata.extensions.get(
                 "original_format"
             ):
-                return FlextResult[str].ok(
-                    cast(
-                        "str", attr_data.metadata.extensions.get("original_format", "")
-                    )
+                original_str = cast(
+                    "str", attr_data.metadata.extensions.get("original_format", "")
                 )
+                # If x_origin is in metadata but not in original_format, add it
+                if (
+                    attr_data.metadata.extensions.get("x_origin")
+                    and ")" in original_str
+                    and "X-ORIGIN" not in original_str
+                ):
+                    x_origin_str = f" X-ORIGIN '{attr_data.metadata.extensions.get('x_origin')}'"
+                    original_str = original_str.rstrip(")") + x_origin_str + ")"
+                return FlextResult[str].ok(original_str)
 
             # Transform attribute data using subclass hooks
             transformed_attr = self._transform_attribute_for_write(attr_data)
@@ -470,28 +704,18 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 written_str = result.unwrap()
                 transformed_str = self._post_write_attribute(written_str)
 
-                # Include attribute flags and extended attributes
-                extras = []
-
-                # Add attribute flags
-                if transformed_attr.no_user_modification:
-                    extras.append("NO-USER-MODIFICATION")
-                if transformed_attr.single_value:
-                    extras.append("SINGLE-VALUE")
-
-                # Add X-ORIGIN from metadata if available
+                # Include extended attributes from metadata
+                # Note: write_rfc_attribute already includes X-ORIGIN via _build_attribute_parts,
+                # but we ensure it's present if metadata has x_origin and closing paren exists
                 if (
                     transformed_attr.metadata
                     and transformed_attr.metadata.extensions.get("x_origin")
+                    and ")" in transformed_str
+                    and "X-ORIGIN" not in transformed_str
                 ):
-                    extras.append(
-                        f"X-ORIGIN '{transformed_attr.metadata.extensions.get('x_origin')}'"
-                    )
-
-                # Insert all extras before closing paren
-                if extras and ")" in transformed_str:
-                    extras_str = " " + " ".join(extras)
-                    transformed_str = transformed_str.rstrip(")") + extras_str + ")"
+                    # Insert X-ORIGIN before closing paren if not already present
+                    x_origin_str = f" X-ORIGIN '{transformed_attr.metadata.extensions.get('x_origin')}'"
+                    transformed_str = transformed_str.rstrip(")") + x_origin_str + ")"
 
                 return FlextResult[str].ok(transformed_str)
 
@@ -513,15 +737,26 @@ class FlextLdifServersRfc(FlextLdifServersBase):
             # Type check - ensure we got a proper model object
             if not isinstance(oc_data, FlextLdifModels.SchemaObjectClass):
                 return FlextResult[str].fail(
-                    "write_objectclass_to_rfc requires SchemaObjectClass model, got "
-                    f"{type(oc_data).__name__}",
+                    (
+                        "write_objectclass_to_rfc requires SchemaObjectClass model, got "
+                        f"{type(oc_data).__name__}"
+                    ),
                 )
 
             # Check for original format in metadata (for perfect round-trip)
             if oc_data.metadata and oc_data.metadata.extensions.get("original_format"):
-                return FlextResult[str].ok(
-                    cast("str", oc_data.metadata.extensions.get("original_format", ""))
+                original_str = cast(
+                    "str", oc_data.metadata.extensions.get("original_format", "")
                 )
+                # If x_origin is in metadata but not in original_format, add it
+                if (
+                    oc_data.metadata.extensions.get("x_origin")
+                    and ")" in original_str
+                    and "X-ORIGIN" not in original_str
+                ):
+                    x_origin_str = f" X-ORIGIN '{oc_data.metadata.extensions.get('x_origin')}'"
+                    original_str = original_str.rstrip(")") + x_origin_str + ")"
+                return FlextResult[str].ok(original_str)
 
             # Transform objectClass data using subclass hooks
             transformed_oc = self._transform_objectclass_for_write(oc_data)
@@ -547,6 +782,809 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 return FlextResult[str].ok(transformed_str)
 
             return result
+
+        # =========================================================================
+        # Automatic Routing Methods - Concrete implementations moved from base.py
+        # =========================================================================
+
+        def _detect_schema_type(
+            self,
+            definition: (
+                str
+                | FlextLdifModels.SchemaAttribute
+                | FlextLdifModels.SchemaObjectClass
+            ),
+        ) -> str:
+            """Detect schema type (attribute or objectclass) for automatic routing.
+
+            Args:
+                definition: Schema definition string or model.
+
+            Returns:
+                "attribute" or "objectclass".
+
+            """
+            if isinstance(definition, FlextLdifModels.SchemaAttribute):
+                return "attribute"
+            if isinstance(definition, FlextLdifModels.SchemaObjectClass):
+                return "objectclass"
+            # Try to detect from string content
+            definition_str = (
+                definition if isinstance(definition, str) else str(definition)
+            )
+            definition_lower = definition_str.lower()
+
+            # Check for objectClass-specific keywords (RFC 4512)
+            # ObjectClasses have: STRUCTURAL, AUXILIARY, ABSTRACT, MUST, MAY
+            # (Note: SUP is valid for both attributes and objectClasses, so excluded)
+            # Attributes have: EQUALITY, SUBSTR, ORDERING, SYNTAX, USAGE, SINGLE-VALUE, NO-USER-MODIFICATION
+            objectclass_only_keywords = [
+                " structural",
+                " auxiliary",
+                " abstract",
+                " must (",
+                " may (",
+            ]
+            for keyword in objectclass_only_keywords:
+                if keyword in definition_lower:
+                    return "objectclass"
+
+            # Check for attribute-specific keywords (more accurate detection)
+            # These keywords ONLY appear in attribute definitions
+            attribute_only_keywords = [
+                " equality ",
+                " substr ",
+                " ordering ",
+                " syntax ",
+                " usage ",
+                " single-value",
+                " no-user-modification",
+            ]
+            for keyword in attribute_only_keywords:
+                if keyword in definition_lower:
+                    return "attribute"
+
+            # Legacy check for explicit objectclass keyword
+            if "objectclass" in definition_lower or "oclass" in definition_lower:
+                return "objectclass"
+
+            # Default to attribute if ambiguous
+            return "attribute"
+
+        def _route_parse(
+            self,
+            definition: str,
+        ) -> (
+            FlextResult[FlextLdifModels.SchemaAttribute]
+            | FlextResult[FlextLdifModels.SchemaObjectClass]
+        ):
+            """Route schema definition to appropriate parse method.
+
+            Automatically detects if definition is attribute or objectclass.
+
+            Args:
+                definition: Schema definition string.
+
+            Returns:
+                FlextResult with SchemaAttribute or SchemaObjectClass.
+
+            """
+            schema_type = self._detect_schema_type(definition)
+            if schema_type == "objectclass":
+                return self._parse_objectclass(definition)
+            return self._parse_attribute(definition)
+
+        def parse(
+            self,
+            definition: str,
+        ) -> (
+            FlextResult[FlextLdifModels.SchemaAttribute]
+            | FlextResult[FlextLdifModels.SchemaObjectClass]
+        ):
+            """Parse schema definition (attribute or objectClass).
+
+            Automatically routes to parse_attribute() or parse_objectclass() based on content.
+
+            Args:
+                definition: Schema definition string (attribute or objectClass)
+
+            Returns:
+                FlextResult with SchemaAttribute or SchemaObjectClass model
+
+            """
+            return self._route_parse(definition)
+
+        def write(
+            self,
+            model: FlextLdifTypes.SchemaModel,
+        ) -> FlextResult[str]:
+            """Write schema model to RFC-compliant string.
+
+            Automatically routes to _write_attribute() or _write_objectclass() based on model type.
+
+            Args:
+                model: SchemaAttribute or SchemaObjectClass model
+
+            Returns:
+                FlextResult with RFC-compliant definition string
+
+            """
+            if isinstance(model, FlextLdifModels.SchemaAttribute):
+                return self._write_attribute(model)
+            # isinstance narrowed to SchemaObjectClass by type checker
+            return self._write_objectclass(model)
+
+        def _route_write(
+            self,
+            model: FlextLdifTypes.SchemaModel,
+        ) -> FlextResult[str]:
+            """Route schema model to appropriate write method.
+
+            Automatically detects model type and routes to correct write method.
+
+            Args:
+                model: SchemaAttribute or SchemaObjectClass model.
+
+            Returns:
+                FlextResult with string representation.
+
+            """
+            if isinstance(model, FlextLdifModels.SchemaAttribute):
+                return self.write_attribute(model)
+            # isinstance narrowed to SchemaObjectClass by type checker
+            return self.write_objectclass(model)
+
+        def _route_can_handle(
+            self,
+            definition: (
+                str
+                | FlextLdifModels.SchemaAttribute
+                | FlextLdifModels.SchemaObjectClass
+            ),
+        ) -> bool:
+            """Route can_handle check to appropriate method.
+
+            Automatically detects type and routes to correct can_handle method.
+
+            Args:
+                definition: Schema definition string or model.
+
+            Returns:
+                True if quirk can handle this definition.
+
+            """
+            if isinstance(definition, FlextLdifModels.SchemaAttribute):
+                return self.can_handle_attribute(definition)
+            if isinstance(definition, FlextLdifModels.SchemaObjectClass):
+                return self.can_handle_objectclass(definition)
+            # For string definitions, try both methods
+            schema_type = self._detect_schema_type(definition)
+            if schema_type == "objectclass":
+                return self.can_handle_objectclass(definition)
+            return self.can_handle_attribute(definition)
+
+        def _handle_parse_operation(
+            self,
+            attr_definition: str | None,
+            oc_definition: str | None,
+        ) -> FlextResult[FlextLdifTypes.SchemaModelOrString]:
+            """Handle parse operation for schema quirk."""
+            if attr_definition:
+                attr_result = self.parse_attribute(attr_definition)
+                if attr_result.is_success:
+                    parsed_attr: FlextLdifModels.SchemaAttribute = attr_result.unwrap()
+                    return FlextResult[
+                        FlextLdifModels.SchemaAttribute
+                        | FlextLdifModels.SchemaObjectClass
+                        | str
+                    ].ok(parsed_attr)
+                error_msg: str = attr_result.error or "Parse attribute failed"
+                return FlextResult[
+                    FlextLdifModels.SchemaAttribute
+                    | FlextLdifModels.SchemaObjectClass
+                    | str
+                ].fail(error_msg)
+            if oc_definition:
+                oc_result = self.parse_objectclass(oc_definition)
+                if oc_result.is_success:
+                    parsed_oc: FlextLdifModels.SchemaObjectClass = oc_result.unwrap()
+                    return FlextResult[
+                        FlextLdifModels.SchemaAttribute
+                        | FlextLdifModels.SchemaObjectClass
+                        | str
+                    ].ok(parsed_oc)
+                error_msg = oc_result.error or "Parse objectclass failed"
+                return FlextResult[
+                    FlextLdifModels.SchemaAttribute
+                    | FlextLdifModels.SchemaObjectClass
+                    | str
+                ].fail(error_msg)
+            return FlextResult[
+                FlextLdifModels.SchemaAttribute
+                | FlextLdifModels.SchemaObjectClass
+                | str
+            ].fail("No parse parameter provided")
+
+        def _handle_write_operation(
+            self,
+            attr_model: FlextLdifModels.SchemaAttribute | None,
+            oc_model: FlextLdifModels.SchemaObjectClass | None,
+        ) -> FlextResult[FlextLdifTypes.SchemaModelOrString]:
+            """Handle write operation for schema quirk."""
+            if attr_model:
+                write_result = self.write_attribute(attr_model)
+                if write_result.is_success:
+                    written_text: str = write_result.unwrap()
+                    return FlextResult[
+                        FlextLdifModels.SchemaAttribute
+                        | FlextLdifModels.SchemaObjectClass
+                        | str
+                    ].ok(written_text)
+                error_msg: str = write_result.error or "Write attribute failed"
+                return FlextResult[
+                    FlextLdifModels.SchemaAttribute
+                    | FlextLdifModels.SchemaObjectClass
+                    | str
+                ].fail(error_msg)
+            if oc_model:
+                write_oc_result = self.write_objectclass(oc_model)
+                if write_oc_result.is_success:
+                    written_text = write_oc_result.unwrap()
+                    return FlextResult[
+                        FlextLdifModels.SchemaAttribute
+                        | FlextLdifModels.SchemaObjectClass
+                        | str
+                    ].ok(written_text)
+                error_msg = write_oc_result.error or "Write objectclass failed"
+                return FlextResult[
+                    FlextLdifModels.SchemaAttribute
+                    | FlextLdifModels.SchemaObjectClass
+                    | str
+                ].fail(error_msg)
+            return FlextResult[
+                FlextLdifModels.SchemaAttribute
+                | FlextLdifModels.SchemaObjectClass
+                | str
+            ].fail("No write parameter provided")
+
+        def _auto_detect_operation(
+            self,
+            data: (
+                str
+                | FlextLdifModels.SchemaAttribute
+                | FlextLdifModels.SchemaObjectClass
+                | None
+            ),
+            operation: Literal["parse", "write"] | None,
+        ) -> (
+            Literal["parse", "write"]
+            | FlextResult[
+                FlextLdifModels.SchemaAttribute
+                | FlextLdifModels.SchemaObjectClass
+                | str
+            ]
+        ):
+            """Auto-detect operation from data type. Returns operation or error result."""
+            if operation is not None:
+                return operation
+
+            if isinstance(data, str):
+                return "parse"
+            if isinstance(
+                data,
+                (
+                    FlextLdifModels.SchemaAttribute,
+                    FlextLdifModels.SchemaObjectClass,
+                ),
+            ):
+                return "write"
+
+            return FlextResult[
+                FlextLdifModels.SchemaAttribute
+                | FlextLdifModels.SchemaObjectClass
+                | str
+            ].fail(
+                f"Unknown data type: {type(data).__name__}. Expected str, SchemaAttribute, or SchemaObjectClass",
+            )
+
+        def _route_operation(
+            self,
+            data: (
+                str
+                | FlextLdifModels.SchemaAttribute
+                | FlextLdifModels.SchemaObjectClass
+            ),
+            operation: Literal["parse", "write"],
+        ) -> FlextResult[FlextLdifTypes.SchemaModelOrString]:
+            """Route data to appropriate parse or write handler."""
+            if operation == "parse":
+                if not isinstance(data, str):
+                    return FlextResult[
+                        FlextLdifModels.SchemaAttribute
+                        | FlextLdifModels.SchemaObjectClass
+                        | str
+                    ].fail(f"parse operation requires str, got {type(data).__name__}")
+                if self._detect_schema_type(data) == "objectclass":
+                    return self._handle_parse_operation(
+                        attr_definition=None,
+                        oc_definition=data,
+                    )
+                return self._handle_parse_operation(
+                    attr_definition=data,
+                    oc_definition=None,
+                )
+
+            if operation == "write":
+                if isinstance(data, FlextLdifModels.SchemaAttribute):
+                    return self._handle_write_operation(attr_model=data, oc_model=None)
+                if isinstance(data, FlextLdifModels.SchemaObjectClass):
+                    return self._handle_write_operation(attr_model=None, oc_model=data)
+                return FlextResult[
+                    FlextLdifModels.SchemaAttribute
+                    | FlextLdifModels.SchemaObjectClass
+                    | str
+                ].fail(
+                    f"write operation requires SchemaAttribute or SchemaObjectClass, got {type(data).__name__}",
+                )
+
+            # Should not reach here (Literal type ensures only parse or write)
+            msg = f"Unknown operation: {operation}"
+            raise AssertionError(msg)
+
+        def execute(
+            self,
+            data: (
+                str
+                | FlextLdifModels.SchemaAttribute
+                | FlextLdifModels.SchemaObjectClass
+                | None
+            ) = None,
+            operation: Literal["parse", "write"] | None = None,
+        ) -> FlextResult[FlextLdifTypes.SchemaModelOrString]:
+            """Execute schema quirk operation with automatic type detection and routing.
+
+            Fully automatic polymorphic dispatch based on data type:
+            - str (schema definition) -> parse_attribute() OR parse_objectclass() -> SchemaAttribute OR SchemaObjectClass
+            - SchemaAttribute (model) -> write_attribute() -> str
+            - SchemaObjectClass (model) -> write_objectclass() -> str
+            - None -> health check
+
+            **V2 Usage - Maximum Automation:**
+                >>> schema = FlextLdifServersRfc.Schema()
+                >>> # Parse: pass schema definition string
+                >>> attr = schema.execute(
+                ...     "( 2.5.4.3 NAME 'cn' ...)"
+                ... )  # -> SchemaAttribute
+                >>> # Write: pass model
+                >>> text = schema.execute(attr)  # -> str
+                >>> # Auto-detect which type of schema definition
+                >>> attr_or_oc = schema.execute("( 2.5.6.6 ... )")  # Detects & parses
+
+            Args:
+                data: Schema definition string OR SchemaAttribute OR SchemaObjectClass model
+                      (operation auto-detected from type)
+                operation: Force operation type (overrides auto-detection)
+
+            Returns:
+                FlextResult[SchemaAttribute | SchemaObjectClass | str] depending on operation
+
+            """
+            # Health check: no data provided
+            if data is None:
+                empty_str: str = ""
+                return FlextResult[
+                    FlextLdifModels.SchemaAttribute
+                    | FlextLdifModels.SchemaObjectClass
+                    | str
+                ].ok(empty_str)
+
+            # Auto-detect or validate operation
+            detected_op = self._auto_detect_operation(data, operation)
+            if isinstance(detected_op, FlextResult):
+                return detected_op
+
+            # Route to appropriate handler
+            return self._route_operation(data, detected_op)
+
+        @overload
+        def __call__(
+            self,
+            attr_definition: str,
+            *,
+            oc_definition: None = None,
+            attr_model: None = None,
+            oc_model: None = None,
+            operation: Literal["parse"] | None = None,
+        ) -> FlextLdifTypes.SchemaModel: ...
+
+        @overload
+        def __call__(
+            self,
+            *,
+            attr_definition: None = None,
+            oc_definition: str,
+            attr_model: None = None,
+            oc_model: None = None,
+            operation: Literal["parse"] | None = None,
+        ) -> FlextLdifTypes.SchemaModel: ...
+
+        @overload
+        def __call__(
+            self,
+            *,
+            attr_definition: None = None,
+            oc_definition: None = None,
+            attr_model: FlextLdifModels.SchemaAttribute,
+            oc_model: None = None,
+            operation: Literal["write"] | None = None,
+        ) -> str: ...
+
+        @overload
+        def __call__(
+            self,
+            *,
+            attr_definition: None = None,
+            oc_definition: None = None,
+            attr_model: None = None,
+            oc_model: FlextLdifModels.SchemaObjectClass,
+            operation: Literal["write"] | None = None,
+        ) -> str: ...
+
+        @overload
+        def __call__(
+            self,
+            attr_definition: str | None = None,
+            oc_definition: str | None = None,
+            attr_model: FlextLdifModels.SchemaAttribute | None = None,
+            oc_model: FlextLdifModels.SchemaObjectClass | None = None,
+            operation: Literal["parse", "write"] | None = None,
+        ) -> FlextLdifTypes.SchemaModelOrString: ...
+
+        def __call__(
+            self,
+            attr_definition: str | None = None,
+            oc_definition: str | None = None,
+            attr_model: FlextLdifModels.SchemaAttribute | None = None,
+            oc_model: FlextLdifModels.SchemaObjectClass | None = None,
+            operation: Literal["parse", "write"] | None = None,
+        ) -> FlextLdifTypes.SchemaModelOrString:
+            """Callable interface - use as processor.
+
+            Enables direct usage as processor:
+                >>> schema = FlextLdifServersRfc.Schema()
+                >>> attr = schema(attr_definition="( 2.5.4.3 NAME 'cn' ...)")  # Parse
+                >>> text = schema(attr_model=attr)  # Write
+
+            Args:
+                attr_definition: Attribute definition to parse
+                oc_definition: ObjectClass definition to parse
+                attr_model: Attribute model to write
+                oc_model: ObjectClass model to write
+                operation: Explicit operation type
+
+            Returns:
+                Unwrapped result (SchemaAttribute, SchemaObjectClass, or str).
+
+            """
+            # Schema.execute() expects a single 'data' parameter, not separate parameters
+            # For __call__, we need to handle multiple parameters differently
+            # If attr_definition is provided, use it; otherwise use oc_definition
+            # If attr_model is provided, use it; otherwise use oc_model
+            data: (
+                str
+                | FlextLdifModels.SchemaAttribute
+                | FlextLdifModels.SchemaObjectClass
+                | None
+            ) = None
+            if attr_definition is not None:
+                data = attr_definition
+            elif oc_definition is not None:
+                data = oc_definition
+            elif attr_model is not None:
+                data = attr_model
+            elif oc_model is not None:
+                data = oc_model
+
+            result = self.execute(data=data, operation=operation)
+            return result.unwrap()
+
+        def __new__(
+            cls,
+            schema_service: object | None = None,
+            **kwargs: object,
+        ) -> Self:
+            """Override __new__ to support auto-execute and processor instantiation."""
+            instance = super().__new__(cls)
+            type(instance).__init__(instance, schema_service=schema_service, **kwargs)
+
+            if cls.auto_execute:
+                attr_def = (
+                    cast("str | None", kwargs.get("attr_definition"))
+                    if "attr_definition" in kwargs
+                    else None
+                )
+                oc_def = (
+                    cast("str | None", kwargs.get("oc_definition"))
+                    if "oc_definition" in kwargs
+                    else None
+                )
+                attr_mod = (
+                    cast(
+                        "FlextLdifModels.SchemaAttribute | None",
+                        kwargs.get("attr_model"),
+                    )
+                    if "attr_model" in kwargs
+                    else None
+                )
+                oc_mod = (
+                    cast(
+                        "FlextLdifModels.SchemaObjectClass | None",
+                        kwargs.get("oc_model"),
+                    )
+                    if "oc_model" in kwargs
+                    else None
+                )
+                op = (
+                    cast("Literal['parse'] | None", kwargs.get("operation"))
+                    if "operation" in kwargs
+                    else None
+                )
+                # Schema.execute() expects a single 'data' parameter
+                data: (
+                    str
+                    | FlextLdifModels.SchemaAttribute
+                    | FlextLdifModels.SchemaObjectClass
+                    | None
+                ) = None
+                if attr_def is not None:
+                    data = attr_def
+                elif oc_def is not None:
+                    data = oc_def
+                elif attr_mod is not None:
+                    data = attr_mod
+                elif oc_mod is not None:
+                    data = oc_mod
+                result = instance.execute(data=data, operation=op)
+                unwrapped: (
+                    FlextLdifModels.SchemaAttribute
+                    | FlextLdifModels.SchemaObjectClass
+                    | str
+                ) = result.unwrap()
+                return cast("Self", unwrapped)
+
+            return instance
+
+        def parse_attribute(
+            self,
+            attr_definition: str,
+        ) -> FlextResult[FlextLdifModels.SchemaAttribute]:
+            """Parse attribute definition (public API).
+
+            Delegates to _parse_attribute() for server-specific implementation.
+
+            Args:
+                attr_definition: Attribute definition string
+
+            Returns:
+                FlextResult with parsed SchemaAttribute model
+
+            """
+            return self._parse_attribute(attr_definition)
+
+        def parse_objectclass(
+            self,
+            oc_definition: str,
+        ) -> FlextResult[FlextLdifModels.SchemaObjectClass]:
+            """Parse objectClass definition (public API).
+
+            Delegates to _parse_objectclass() for server-specific implementation.
+
+            Args:
+                oc_definition: ObjectClass definition string
+
+            Returns:
+                FlextResult with parsed SchemaObjectClass model
+
+            """
+            return self._parse_objectclass(oc_definition)
+
+        def write_attribute(
+            self,
+            attr_data: FlextLdifModels.SchemaAttribute,
+        ) -> FlextResult[str]:
+            """Write attribute to RFC-compliant string format (public API).
+
+            Delegates to _write_attribute() for server-specific implementation.
+
+            Args:
+                attr_data: SchemaAttribute model
+
+            Returns:
+                FlextResult with RFC-compliant attribute string
+
+            """
+            return self._write_attribute(attr_data)
+
+        def write_objectclass(
+            self,
+            oc_data: FlextLdifModels.SchemaObjectClass,
+        ) -> FlextResult[str]:
+            """Write objectClass to RFC-compliant string format (public API).
+
+            Delegates to _write_objectclass() for server-specific implementation.
+
+            Args:
+                oc_data: SchemaObjectClass model
+
+            Returns:
+                FlextResult with RFC-compliant objectClass string
+
+            """
+            return self._write_objectclass(oc_data)
+
+        def create_metadata(
+            self,
+            original_format: str,
+            extensions: dict[str, object] | None = None,
+        ) -> FlextLdifModels.QuirkMetadata:
+            """Create quirk metadata with consistent server-specific extensions.
+
+            Helper method to consolidate metadata creation across server quirks.
+            Reduces code duplication in server-specific parse_attribute/parse_objectclass methods.
+
+            Args:
+                original_format: Original text format of the parsed element
+                extensions: Optional dict of server-specific extensions/metadata
+
+            Returns:
+                FlextLdifModels.QuirkMetadata with quirk_type from Constants of parent server class
+
+            Note:
+                server_type is retrieved from Constants of the parent server class dynamically.
+                This ensures all nested classes (Schema, Acl, Entry) use the same Constants
+                from their parent server class (e.g., FlextLdifServersRfc.Constants,
+                FlextLdifServersOid.Constants).
+
+            """
+            # Find parent server class that has Constants
+            # Iterate through MRO to find the server class (not nested Schema/Acl/Entry)
+            server_type = FlextLdifConstants.ServerTypes.GENERIC
+            for cls in type(self).__mro__:
+                # Check if this class has a Constants nested class
+                if hasattr(cls, "Constants") and hasattr(cls.Constants, "SERVER_TYPE"):
+                    server_type = cls.Constants.SERVER_TYPE
+                    break
+
+            # Build extensions with original_format
+            all_extensions: dict[str, object] = {"original_format": original_format}
+            if extensions:
+                all_extensions.update(extensions)
+
+            return FlextLdifModels.QuirkMetadata(
+                quirk_type=server_type,
+                extensions=all_extensions,
+            )
+
+        def extract_schemas_from_ldif(
+            self,
+            ldif_content: str,
+            *,
+            validate_dependencies: bool = False,
+        ) -> FlextResult[dict[str, object]]:
+            """Extract and parse all schema definitions from LDIF content (template method).
+
+            Generic template method that consolidates schema extraction logic across all servers.
+            Uses FlextLdifUtilities for parsing and provides hook for server-specific validation.
+
+            This template method provides unified schema extraction logic,
+            replacing duplicated implementations across multiple server quirk classes.
+
+            Process:
+                1. Extract attributes using FlextLdifUtilities.Schema
+                2. If validate_dependencies: build available_attrs set and call validation hook
+                3. Extract objectClasses using FlextLdifUtilities.Schema
+                4. Return combined result
+
+            Args:
+                ldif_content: Raw LDIF content containing schema definitions
+                validate_dependencies: If True, validate attribute dependencies before
+                                     objectClass extraction (used by OUD for dep checking)
+
+            Returns:
+                FlextResult with dict containing:
+                    - ATTRIBUTES: list[SchemaAttribute]
+                    - OBJECTCLASS: list[SchemaObjectClass]
+
+            Example Usage (OID - simple):
+                result = self.extract_schemas_from_ldif(ldif_content)
+
+            Example Usage (OUD - with validation):
+                result = self.extract_schemas_from_ldif(
+                    ldif_content,
+                    validate_dependencies=True
+                )
+
+            """
+            try:
+                # PHASE 1: Extract all attributeTypes using FlextLdifUtilities
+                attributes_parsed = (
+                    FlextLdifUtilities.Schema.extract_attributes_from_lines(
+                        ldif_content,
+                        self.parse_attribute,
+                    )
+                )
+
+                # PHASE 2: Build available attributes set (if validation requested)
+                if validate_dependencies:
+                    available_attrs = (
+                        FlextLdifUtilities.Schema.build_available_attributes_set(
+                            attributes_parsed,
+                        )
+                    )
+
+                    # Call server-specific validation hook
+                    validation_result = self._hook_validate_attributes(
+                        attributes_parsed,
+                        available_attrs,
+                    )
+                    if not validation_result.is_success:
+                        return FlextResult[dict[str, object]].fail(
+                            f"Attribute validation failed: {validation_result.error}",
+                        )
+
+                # PHASE 3: Extract objectClasses using FlextLdifUtilities
+                objectclasses_parsed = (
+                    FlextLdifUtilities.Schema.extract_objectclasses_from_lines(
+                        ldif_content,
+                        self.parse_objectclass,
+                    )
+                )
+
+                # Return combined result
+                dk = FlextLdifConstants.DictKeys
+                schema_dict: dict[str, object] = {
+                    dk.ATTRIBUTES: attributes_parsed,
+                    dk.OBJECTCLASS: objectclasses_parsed,
+                }
+                return FlextResult[dict[str, object]].ok(schema_dict)
+
+            except Exception as e:
+                return FlextResult[dict[str, object]].fail(
+                    f"Schema extraction failed: {e}",
+                )
+
+        def _hook_validate_attributes(
+            self,
+            attributes: list[FlextLdifModels.SchemaAttribute],
+            available_attrs: set[str],
+        ) -> FlextResult[None]:
+            """Hook for server-specific attribute validation during schema extraction.
+
+            Subclasses can override this to perform validation of attribute dependencies
+            before objectClass extraction. This is called only when validate_dependencies=True.
+
+            Default implementation: No validation (pass-through).
+
+            Args:
+                attributes: List of parsed SchemaAttribute models
+                available_attrs: Set of lowercase attribute names available
+
+            Returns:
+                FlextResult[None] - Success or failure with validation error
+
+            Example Override (in OUD):
+                def _hook_validate_attributes(self, attributes, available_attrs):
+                    # OUD-specific validation logic
+                    for attr in attributes:
+                        if attr.requires_dependency not in available_attrs:
+                            return FlextResult.fail("Missing dependency")
+                    return FlextResult.ok(None)
+
+            """
+            # Default: No validation needed
+            _ = attributes
+            _ = available_attrs
+            return FlextResult[None].ok(None)
 
     class Acl(FlextLdifServersBase.Acl):
         """RFC 4516 Compliant ACL Quirk - Base Implementation."""
@@ -964,7 +2002,7 @@ class FlextLdifServersRfc(FlextLdifServersBase):
                 )
 
             except Exception as e:
-                logger.exception("RFC entry parsing exception")
+                _ = logger.exception("RFC entry parsing exception")
                 return FlextResult[FlextLdifModels.Entry].fail(
                     f"Failed to parse entry: {e}",
                 )

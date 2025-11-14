@@ -30,17 +30,13 @@ from flext_ldif.utilities import FlextLdifUtilities
 class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
     """LDIF Sorting Service - Universal Sorting Engine.
 
-    ╔══════════════════════════════════════════════════════════════════════╗
-    ║  FLEXIBLE SORTING FOR LDIF ENTRIES, ATTRIBUTES, ACL & SCHEMAS        ║
-    ╠══════════════════════════════════════════════════════════════════════╣
-    ║  ✅ Sort entries by hierarchy, DN, custom predicate, or schema OID   ║
-    ║  ✅ Sort attributes within entries (alphabetical or custom order)    ║
-    ║  ✅ Sort ACL values (acl, aci, olcAccess attributes)                ║
-    ║  ✅ Combined sorting: entries + attributes + ACL in one operation    ║
-    ║  ✅ Multiple usage patterns: execute(), classmethod, builder         ║
-    ║  ✅ 100% type-safe with Pydantic v2 validation                       ║
-    ║  ✅ RFC 4514 DN normalization via FlextLdifUtilities                 ║
-    ╚══════════════════════════════════════════════════════════════════════╝
+    Supports V2 patterns: auto_execute=True enables direct result access.
+    """
+
+    auto_execute = True  # Enable V2 auto-execution pattern
+
+    """Flexible sorting for LDIF entries, attributes, ACL & schemas.
+    Supports hierarchy, DN, custom predicate, and schema OID sorting.
 
     DN Handling (RFC 4514 Compliance):
     - Hierarchical sorting uses FlextLdifUtilities.DN.norm() for DN normalization
@@ -48,9 +44,7 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
     - Alphabetical DN sorting uses RFC 4514 normalized form for canonical ordering
     - All DN comparisons are case-insensitive and RFC 4514 compliant
 
-    ═══════════════════════════════════════════════════════════════════════
     WHAT IT SORTS (sort_target parameter)
-    ═══════════════════════════════════════════════════════════════════════
 
     "entries"      - Sort the entry list itself by DN/hierarchy/custom
     "attributes"   - Sort attributes WITHIN each entry (no entry reordering)
@@ -58,9 +52,7 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
     "schema"       - Sort schema entries by OID (for schema exports)
     "combined"     - Sort everything at once (entries + attrs + ACL)
 
-    ═══════════════════════════════════════════════════════════════════════
     HOW IT SORTS ENTRIES (sort_by parameter)
-    ═══════════════════════════════════════════════════════════════════════
 
     "hierarchy"     - Depth-first: shallow entries first, then alphabetical
                      Order: dc=com, ou=users,dc=com, cn=john,ou=users,...
@@ -73,9 +65,7 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
 
     "custom"        - Use custom_predicate function to extract sort key
 
-    ═══════════════════════════════════════════════════════════════════════
     REAL USAGE EXAMPLES
-    ═══════════════════════════════════════════════════════════════════════
 
     # PATTERN 1: Execute Method (V1 Style)
     ────────────────────────────────────────
@@ -121,20 +111,18 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
     )
 
     # Sort attributes in entries
-    result = FlextLdifSorting.sort_attributes(
+    result = FlextLdifSorting.sort_attributes_in_entries(
         my_entries,
         order=["cn", "sn", "mail"]
     )
 
     # Sort ACL values in entries
-    result = FlextLdifSorting.sort_acl(my_entries)
+    result = FlextLdifSorting.sort_acl_in_entries(my_entries)
 
     # Sort schema entries by OID
     result = FlextLdifSorting.by_schema(schema_entries)
 
-    ═══════════════════════════════════════════════════════════════════════
     ATTRIBUTE & ACL SORTING OPTIONS
-    ═══════════════════════════════════════════════════════════════════════
 
     When sort_target="attributes":
         sort_attributes=True       - Sort alphabetically (default)
@@ -145,9 +133,7 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
         acl_attributes=[...]       - Which attrs to sort (default:
                                     ["acl", "aci", "olcAccess"])
 
-    ═══════════════════════════════════════════════════════════════════════
     COMPLEX SORTING EXAMPLES
-    ═══════════════════════════════════════════════════════════════════════
 
     # Sort ONLY attributes, preserving entry order
     sorted_entries = FlextLdifSorting(
@@ -184,37 +170,33 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
         lambda e: e.attributes.attributes.get("cn", [""])[0].lower()
     )
 
-    ═══════════════════════════════════════════════════════════════════════
     PUBLIC CLASSMETHOD API
-    ═══════════════════════════════════════════════════════════════════════
 
     sort(entries, target=..., by=..., predicate=...)
-        → FlextResult[list[Entry]] for chaining
+        -> FlextResult[list[Entry]] for chaining
 
     by_hierarchy(entries)
-        → FlextResult[list[Entry]] (depth-first + alphabetical)
+        -> FlextResult[list[Entry]] (depth-first + alphabetical)
 
     by_dn(entries)
-        → FlextResult[list[Entry]] (alphabetical by full DN)
+        -> FlextResult[list[Entry]] (alphabetical by full DN)
 
     by_schema(entries)
-        → FlextResult[list[Entry]] (schema entries by OID)
+        -> FlextResult[list[Entry]] (schema entries by OID)
 
     by_custom(entries, predicate)
-        → FlextResult[list[Entry]] (custom sort function)
+        -> FlextResult[list[Entry]] (custom sort function)
 
-    sort_attributes(entries, order=None)
-        → FlextResult[list[Entry]] (sort attrs within entries)
+    sort_attributes_in_entries(entries, order=None)
+        -> FlextResult[list[Entry]] (sort attrs within entries)
 
-    sort_acl(entries, acl_attrs=None)
-        → FlextResult[list[Entry]] (sort ACL values)
+    sort_acl_in_entries(entries, acl_attrs=None)
+        -> FlextResult[list[Entry]] (sort ACL values)
 
     builder()
-        → FlextLdifSorting (fluent builder, terminal: .build())
+        -> FlextLdifSorting (fluent builder, terminal: .build())
 
-    ═══════════════════════════════════════════════════════════════════════
     QUICK REFERENCE
-    ═══════════════════════════════════════════════════════════════════════
 
     Most Common Use Cases:
 
@@ -241,9 +223,7 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
 
     """
 
-    # ════════════════════════════════════════════════════════════════════════
     # PYDANTIC FIELDS
-    # ════════════════════════════════════════════════════════════════════════
 
     # ──────────────────────────────────────────────────────────────────────
     # DATA FIELDS
@@ -309,9 +289,7 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
         description="Hierarchy traversal mode: depth-first|level-order",
     )
 
-    # ════════════════════════════════════════════════════════════════════════
     # PYDANTIC VALIDATORS
-    # ════════════════════════════════════════════════════════════════════════
 
     @field_validator("sort_target")
     @classmethod
@@ -356,9 +334,7 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
             raise ValueError(msg)
         return self
 
-    # ════════════════════════════════════════════════════════════════════════
     # CORE EXECUTION (V2 Universal Engine)
-    # ════════════════════════════════════════════════════════════════════════
 
     def execute(self) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Execute sorting based on sort_target (ultra parametrized dispatch)."""
@@ -382,9 +358,7 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
                     f"Unknown sort_target: {self.sort_target}",
                 )
 
-    # ════════════════════════════════════════════════════════════════════════
     # PUBLIC API - MINIMAL ESSENTIALS
-    # ════════════════════════════════════════════════════════════════════════
 
     @classmethod
     def sort(
@@ -421,7 +395,7 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
             # Simple sort with default depth-first traversal
             sorted = Service.sort(entries, by="hierarchy").unwrap()
 
-            # Explicit depth-first traversal (proper parent→child order)
+            # Explicit depth-first traversal (proper parent->child order)
             sorted = Service.sort(entries, by="hierarchy", traversal="depth-first").unwrap()
 
             # Level-order traversal (backward compatibility)
@@ -439,7 +413,7 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
 
         """
         strategy = by.value if isinstance(by, FlextLdifConstants.SortStrategy) else by
-        return cls(
+        return cls.v1(
             entries=entries,
             sort_target=target,
             sort_by=strategy,
@@ -465,7 +439,7 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
                 .build())
 
         """
-        return cls(entries=[])
+        return cls.v1(entries=[])
 
     def with_entries(self, entries: list[FlextLdifModels.Entry]) -> FlextLdifSorting:
         """Set entries to sort (fluent builder)."""
@@ -557,9 +531,7 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
         """Execute and return unwrapped result (fluent terminal)."""
         return self.execute().unwrap()
 
-    # ════════════════════════════════════════════════════════════════════════
     # PUBLIC CLASSMETHOD HELPERS (Direct Entry Points)
-    # ════════════════════════════════════════════════════════════════════════
 
     @classmethod
     def by_hierarchy(
@@ -579,11 +551,11 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
             sorted_entries = result.unwrap()
 
         """
-        return cls(
+        return cls.with_result(
             entries=entries,
             sort_target="entries",
             sort_by="hierarchy",
-        ).execute()
+        )
 
     @classmethod
     def by_dn(
@@ -603,7 +575,7 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
             sorted_entries = result.unwrap()
 
         """
-        return cls(entries=entries, sort_target="entries", sort_by="dn").execute()
+        return cls.with_result(entries=entries, sort_target="entries", sort_by="dn")
 
     @classmethod
     def by_schema(
@@ -623,7 +595,7 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
             sorted_entries = result.unwrap()
 
         """
-        return cls(entries=entries, sort_target="schema", sort_by="schema").execute()
+        return cls.with_result(entries=entries, sort_target="schema", sort_by="schema")
 
     @classmethod
     def by_custom(
@@ -649,16 +621,69 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
             sorted_entries = result.unwrap()
 
         """
-        return cls(
+        return cls.with_result(
             entries=entries,
             sort_target="entries",
             sort_by="custom",
             custom_predicate=predicate,
-        ).execute()
+        )
 
-    # ════════════════════════════════════════════════════════════════════════
+    @classmethod
+    def sort_attributes_in_entries(
+        cls,
+        entries: list[FlextLdifModels.Entry],
+        order: list[str] | None = None,
+    ) -> FlextResult[list[FlextLdifModels.Entry]]:
+        """Sort attributes within entries.
+
+        Args:
+            entries: LDIF entries to process
+            order: Custom attribute order list (optional)
+
+        Returns:
+            FlextResult with entries having sorted attributes
+
+        Example:
+            result = FlextLdifSorting.sort_attributes_in_entries(
+                entries,
+                order=["cn", "sn", "mail"]
+            )
+            sorted_entries = result.unwrap()
+
+        """
+        return cls.with_result(
+            entries=entries,
+            sort_target="attributes",
+            attribute_order=order,
+        )
+
+    @classmethod
+    def sort_acl_in_entries(
+        cls,
+        entries: list[FlextLdifModels.Entry],
+        acl_attrs: list[str] | None = None,
+    ) -> FlextResult[list[FlextLdifModels.Entry]]:
+        """Sort ACL attribute values within entries.
+
+        Args:
+            entries: LDIF entries to process
+            acl_attrs: ACL attribute names to sort (default: ["acl", "aci", "olcAccess"])
+
+        Returns:
+            FlextResult with entries having sorted ACL values
+
+        Example:
+            result = FlextLdifSorting.sort_acl_in_entries(entries)
+            sorted_entries = result.unwrap()
+
+        """
+        return cls.with_result(
+            entries=entries,
+            sort_target="acl",
+            acl_attributes=acl_attrs or ["acl", "aci", "olcAccess"],
+        )
+
     # PRIVATE IMPLEMENTATION (DRY Core)
-    # ════════════════════════════════════════════════════════════════════════
 
     def _sort_entries(self) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Universal entry sorting engine."""
@@ -732,8 +757,9 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
                 result = self._sort_entry_attributes_alphabetically(entry)
 
             if not result.is_success:
+                error_msg = result.error if result.error else "Unknown error"
                 return FlextResult[list[FlextLdifModels.Entry]].fail(
-                    f"Attribute sort failed: {result.error}",
+                    f"Attribute sort failed: {error_msg}",
                 )
             processed.append(result.unwrap())
 
@@ -759,7 +785,7 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
             for acl_attr in self.acl_attributes:
                 if acl_attr in attrs_dict:
                     acl_values = attrs_dict[acl_attr]
-                    if isinstance(acl_values, list) and len(acl_values) > 1:
+                    if len(acl_values) > 1:
                         attrs_dict[acl_attr] = sorted(
                             acl_values,
                             key=lambda x: str(x).lower(),
@@ -848,8 +874,8 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
 
         Args:
             dn: Current DN to visit
-            parent_to_children: Tree structure mapping parent→children
-            dn_to_entries: Mapping DN→list of Entry objects (supports duplicates)
+            parent_to_children: Tree structure mapping parent->children
+            dn_to_entries: Mapping DN->list of Entry objects (supports duplicates)
             visited: Set of already visited DNs (prevents infinite loops)
 
         Returns:
@@ -880,7 +906,7 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
         """Identify root DNs (entries whose parents are not in the list).
 
         Args:
-            dn_to_entries: Mapping DN→list of Entry objects
+            dn_to_entries: Mapping DN->list of Entry objects
 
         Returns:
             List of root DNs sorted by depth (shallowest first), then alphabetically
@@ -954,7 +980,7 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
 
         Traversal Modes:
             depth-first (default):
-                - Proper parent→child ordering
+                - Proper parent->child ordering
                 - Each parent immediately followed by ALL its descendants
                 - Ensures LDAP sync works (parents added before children)
                 - Example order: dc=com, ou=users,dc=com, cn=john,ou=users,dc=com
@@ -1188,7 +1214,7 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
 
         Args:
             entries: List of entries to sort
-            reverse: If True, sort in reverse hierarchical order (leaf → root)
+            reverse: If True, sort in reverse hierarchical order (leaf -> root)
 
         Returns:
             FlextResult with hierarchically sorted entries
@@ -1267,10 +1293,10 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
         for attr_name, attr_values in entry.attributes.items():
             if attr_name.lower() == key.lower():
                 # Convert list to first value for sorting
-                if isinstance(attr_values, list) and attr_values:
+                if attr_values:
                     val = str(attr_values[0])
                 else:
-                    val = str(attr_values) if attr_values else ""
+                    val = ""
                 return (1, 0, val if case_sensitive else val.lower())
         return None
 
@@ -1376,9 +1402,7 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
 
         for attr_name, attr_value in entry.attributes.items():
             if attr_name.lower() == group_by.lower():
-                if isinstance(attr_value, list):
-                    return [str(v) for v in attr_value]
-                return [str(attr_value)]
+                return [str(v) for v in attr_value]
         return ["__ungrouped__"]
 
     @classmethod

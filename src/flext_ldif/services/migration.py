@@ -240,7 +240,9 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifModels.EntryResult]):
         # DUPLICATE entries with ACL attributes to ACL category
         # Entries categorized as hierarchy/users/groups that have ACL attributes
         # must appear in BOTH their primary category (without ACL) AND acl category (with ACL)
-        acl_attr_names = {"aci"}  # Normalized ACL attribute names (orclaci→aci already transformed)
+        acl_attr_names = {
+            "aci"
+        }  # Normalized ACL attribute names (orclaci→aci already transformed)
         for category in [
             FlextLdifConstants.Categories.HIERARCHY,
             FlextLdifConstants.Categories.USERS,
@@ -254,8 +256,7 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifModels.EntryResult]):
                 if entry.attributes:
                     attrs_dict = entry.attributes.attributes
                     has_acl = any(
-                        attr_name.lower() in acl_attr_names
-                        for attr_name in attrs_dict
+                        attr_name.lower() in acl_attr_names for attr_name in attrs_dict
                     )
 
                     if has_acl:

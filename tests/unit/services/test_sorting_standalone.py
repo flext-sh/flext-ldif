@@ -27,8 +27,15 @@ def create_entry(
 ) -> FlextLdifModels.Entry:
     """Create test entry with DN and attributes."""
     dn = FlextLdifModels.DistinguishedName(value=dn_str)
-    attrs = FlextLdifModels.LdifAttributes.create(attributes).unwrap()
-    return FlextLdifModels.Entry(dn=dn, attributes=attrs)
+    attrs_result = FlextLdifModels.LdifAttributes.create(attributes)
+    error_msg = attrs_result.error if attrs_result.error else "Unknown error"
+    assert attrs_result.is_success, f"Failed to create attributes: {error_msg}"
+    attrs = attrs_result.unwrap()
+    entry = FlextLdifModels.Entry(dn=dn, attributes=attrs)
+    # Validate entry was created correctly
+    assert entry.dn is not None
+    assert entry.attributes is not None
+    return entry
 
 
 # ════════════════════════════════════════════════════════════════════════════
@@ -48,9 +55,16 @@ def test_by_hierarchy_exists_and_works() -> None:
     assert result.is_success
     sorted_entries = result.unwrap()
 
-    # Should be shallowest first
+    # Should be shallowest first (depth-first traversal)
+    assert len(sorted_entries) == 3
+    # Root should be first
+    assert sorted_entries[0].dn is not None
     assert sorted_entries[0].dn.value == "dc=example,dc=com"
+    # Level 1 should be second
+    assert sorted_entries[1].dn is not None
     assert sorted_entries[1].dn.value == "ou=level1,dc=example,dc=com"
+    # Level 2 should be third
+    assert sorted_entries[2].dn is not None
     assert sorted_entries[2].dn.value == "cn=deep,ou=level2,dc=example,dc=com"
 
 
@@ -66,7 +80,7 @@ def test_by_dn_exists_and_works() -> None:
     assert result.is_success
     sorted_entries = result.unwrap()
 
-    dns = [e.dn.value.lower() for e in sorted_entries]
+    dns = [e.dn.value.lower() if e.dn else "" for e in sorted_entries]
     assert dns == sorted(dns)
 
 
@@ -87,6 +101,10 @@ def test_by_schema_exists_and_works() -> None:
     assert result.is_success
     sorted_entries = result.unwrap()
     assert len(sorted_entries) == 2
+    # attributeTypes should come before objectClasses
+    # Check that first entry has attributeTypes
+    first_attrs = sorted_entries[0].attributes.attributes if sorted_entries[0].attributes else {}
+    assert "attributeTypes" in first_attrs or "objectClasses" in first_attrs
 
 
 def test_by_custom_exists_and_works() -> None:
@@ -98,15 +116,18 @@ def test_by_custom_exists_and_works() -> None:
     ]
 
     def depth_pred(e: FlextLdifModels.Entry) -> int:
-        return e.dn.value.count(",")
+        return e.dn.value.count(",") if e.dn else 0
 
     result = FlextLdifSorting.by_custom(entries, depth_pred)
     assert result.is_success
     sorted_entries = result.unwrap()
 
     # Should be sorted by depth
+    assert sorted_entries[0].dn is not None
     assert sorted_entries[0].dn.value == "dc=example,dc=com"
+    assert sorted_entries[1].dn is not None
     assert sorted_entries[1].dn.value == "ou=b,dc=example,dc=com"
+    assert sorted_entries[2].dn is not None
     assert sorted_entries[2].dn.value == "cn=aaa,ou=b,dc=example,dc=com"
 
 
@@ -132,7 +153,7 @@ def test_execute_hierarchy() -> None:
         ),
     ]
 
-    result = FlextLdifSorting(
+    result = FlextLdifSorting.v1(
         entries=entries,
         sort_target="entries",
         sort_by="hierarchy",
@@ -140,6 +161,7 @@ def test_execute_hierarchy() -> None:
 
     assert result.is_success
     sorted_entries = result.unwrap()
+    assert sorted_entries[0].dn is not None
     assert sorted_entries[0].dn.value == "dc=example,dc=com"
 
 
@@ -151,7 +173,7 @@ def test_execute_alphabetical() -> None:
         create_entry("cn=mmm,dc=example,dc=com", {"cn": ["mmm"]}),
     ]
 
-    result = FlextLdifSorting(
+    result = FlextLdifSorting.v1(
         entries=entries,
         sort_target="entries",
         sort_by="alphabetical",
@@ -159,7 +181,7 @@ def test_execute_alphabetical() -> None:
 
     assert result.is_success
     sorted_entries = result.unwrap()
-    dns = [e.dn.value.lower() for e in sorted_entries]
+    dns = [e.dn.value.lower() if e.dn else "" for e in sorted_entries]
     assert dns == sorted(dns)
 
 
@@ -167,14 +189,14 @@ def test_execute_custom() -> None:
     """Test execute() with custom sorting."""
 
     def custom_pred(e: FlextLdifModels.Entry) -> str:
-        return e.dn.value.lower()
+        return e.dn.value.lower() if e.dn else ""
 
     entries = [
         create_entry("cn=zzz,dc=example,dc=com", {"cn": ["zzz"]}),
         create_entry("cn=aaa,dc=example,dc=com", {"cn": ["aaa"]}),
     ]
 
-    result = FlextLdifSorting(
+    result = FlextLdifSorting.v1(
         entries=entries,
         sort_target="entries",
         sort_by="custom",
@@ -182,6 +204,10 @@ def test_execute_custom() -> None:
     ).execute()
 
     assert result.is_success
+    sorted_entries = result.unwrap()
+    assert len(sorted_entries) == 2
+    assert sorted_entries[0].dn is not None
+    assert sorted_entries[0].dn.value == "cn=aaa,dc=example,dc=com"
 
 
 def test_execute_attributes_target() -> None:
@@ -191,13 +217,18 @@ def test_execute_attributes_target() -> None:
         {"zzz": ["z"], "aaa": ["a"], "cn": ["test"]},
     )
 
-    result = FlextLdifSorting(entries=[entry], sort_target="attributes").execute()
+    result = FlextLdifSorting.v1(entries=[entry], sort_target="attributes").execute()
 
     assert result.is_success
     sorted_entries = result.unwrap()
+    assert len(sorted_entries) == 1
     # Verify entry still has attributes
+    assert sorted_entries[0].attributes is not None
     attrs = sorted_entries[0].attributes.attributes
     assert len(attrs) == 3
+    # Verify attributes are sorted alphabetically
+    attr_names = list(attrs.keys())
+    assert attr_names == sorted(attr_names, key=str.lower)
 
 
 def test_execute_acl_target() -> None:
@@ -207,11 +238,17 @@ def test_execute_acl_target() -> None:
         {"cn": ["test"], "acl": ["zzz-rule", "aaa-rule"]},
     )
 
-    result = FlextLdifSorting(entries=[entry], sort_target="acl").execute()
+    result = FlextLdifSorting.v1(entries=[entry], sort_target="acl").execute()
 
     assert result.is_success
     sorted_entries = result.unwrap()
     assert len(sorted_entries) == 1
+    # Verify ACL values are sorted
+    assert sorted_entries[0].attributes is not None
+    acl_values = sorted_entries[0].attributes.attributes.get("acl", [])
+    assert len(acl_values) == 2
+    # Verify ACL values are sorted alphabetically
+    assert acl_values == sorted(acl_values, key=str.lower)
 
 
 def test_execute_combined_target() -> None:
@@ -227,7 +264,7 @@ def test_execute_combined_target() -> None:
         ),
     ]
 
-    result = FlextLdifSorting(
+    result = FlextLdifSorting.v1(
         entries=entries,
         sort_target="combined",
         sort_by="hierarchy",
@@ -254,6 +291,7 @@ def test_sort_classmethod() -> None:
     result = FlextLdifSorting.sort(entries, by="alphabetical")
     assert result.is_success
     sorted_entries = result.unwrap()
+    assert sorted_entries[0].dn is not None
     assert sorted_entries[0].dn.value == "cn=aaa,dc=example,dc=com"
 
 
@@ -266,13 +304,13 @@ def test_sort_classmethod_with_custom() -> None:
     ]
 
     def length_pred(e: FlextLdifModels.Entry) -> int:
-        return len(e.dn.value)
+        return len(e.dn.value) if e.dn else 0
 
     result = FlextLdifSorting.sort(entries, by="custom", predicate=length_pred)
     assert result.is_success
     sorted_entries = result.unwrap()
 
-    lengths = [len(e.dn.value) for e in sorted_entries]
+    lengths = [len(e.dn.value) if e.dn else 0 for e in sorted_entries]
     assert lengths == sorted(lengths)
 
 
@@ -309,14 +347,19 @@ def test_builder_with_attribute_sorting() -> None:
         FlextLdifSorting.builder()
         .with_entries(entries)
         .with_strategy("hierarchy")
+        .with_target("combined")
         .with_attribute_sorting(alphabetical=True)
         .build()
     )
 
     assert len(sorted_entries) == 1
+    assert sorted_entries[0].attributes is not None
     attrs = sorted_entries[0].attributes.attributes
     # Verify attributes are still present
     assert len(attrs) == 2
+    # Verify attributes are sorted alphabetically
+    attr_names = list(attrs.keys())
+    assert attr_names == sorted(attr_names, key=str.lower)
 
 
 def test_builder_with_attribute_order() -> None:
@@ -332,15 +375,22 @@ def test_builder_with_attribute_order() -> None:
         FlextLdifSorting.builder()
         .with_entries(entries)
         .with_strategy("hierarchy")
+        .with_target("combined")
         .with_attribute_sorting(order=["cn", "zzz"])
         .build()
     )
 
     assert len(sorted_entries) == 1
+    assert sorted_entries[0].attributes is not None
     attrs = sorted_entries[0].attributes.attributes
-    # First two attrs should be cn and zzz (in some order from those specified)
+    # First two attrs should be cn and zzz (in order specified)
     attr_names = list(attrs.keys())
     assert len(attr_names) == 3
+    # First two should be cn and zzz in that order
+    assert attr_names[0] == "cn"
+    assert attr_names[1] == "zzz"
+    # Last should be aaa (alphabetically sorted)
+    assert attr_names[2] == "aaa"
 
 
 # ════════════════════════════════════════════════════════════════════════════
@@ -397,7 +447,7 @@ def test_invalid_sort_target() -> None:
     entries = [create_entry("cn=test,dc=example,dc=com", {"cn": ["test"]})]
 
     with pytest.raises(ValidationError, match="Invalid sort_target"):
-        FlextLdifSorting(
+        _ = FlextLdifSorting(
             entries=entries,
             sort_target="invalid_target",
         )
@@ -410,7 +460,7 @@ def test_invalid_sort_strategy() -> None:
     entries = [create_entry("cn=test,dc=example,dc=com", {"cn": ["test"]})]
 
     with pytest.raises(ValidationError, match="Invalid sort_by"):
-        FlextLdifSorting(
+        _ = FlextLdifSorting(
             entries=entries,
             sort_by="invalid_strategy",
         )
@@ -423,7 +473,7 @@ def test_custom_without_predicate() -> None:
     entries = [create_entry("cn=test,dc=example,dc=com", {"cn": ["test"]})]
 
     with pytest.raises(ValidationError, match="custom_predicate required"):
-        FlextLdifSorting(
+        _ = FlextLdifSorting(
             entries=entries,
             sort_by="custom",
             custom_predicate=None,
@@ -431,4 +481,4 @@ def test_custom_without_predicate() -> None:
 
 
 if __name__ == "__main__":
-    pytest.main([__file__, "-v", "--tb=short"])
+    _ = pytest.main([__file__, "-v", "--tb=short"])

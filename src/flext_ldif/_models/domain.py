@@ -18,7 +18,7 @@ import logging
 import re
 from collections.abc import Callable, Iterator, Mapping
 from datetime import UTC, datetime
-from typing import ClassVar, TypedDict, Unpack, cast
+from typing import ClassVar, Self, TypedDict, Unpack, cast
 
 from flext_core import (
     FlextLogger,
@@ -1158,8 +1158,15 @@ class FlextLdifModelsDomains:
         )
 
         @model_validator(mode="after")
-        def validate_acl_format(self) -> FlextLdifModelsDomains.Acl:
-            """Validate ACL format - capture violations in metadata, DON'T reject."""
+        def validate_acl_format(self) -> Self:
+            """Validate ACL format - capture violations in metadata, DON'T reject.
+
+            IMPORTANT: Pydantic 2 requires model validators with mode="after" to return
+            `self` (not a copy) when validating via __init__. We modify self in-place
+            using object.__setattr__() to respect immutability patterns.
+
+            See: https://docs.pydantic.dev/latest/concepts/validators/#model-validators
+            """
             violations: list[str] = []
 
             valid_server_types = {
@@ -1190,9 +1197,12 @@ class FlextLdifModelsDomains:
                     "ACL is defined (has target/subject/permissions) but raw_acl is empty"
                 )
 
+            # Modify self in-place (Pydantic 2 best practice for mode="after")
             if violations:
-                return self.model_copy(update={"validation_violations": violations})
+                # Use object.__setattr__() to modify even if model is frozen-like
+                object.__setattr__(self, "validation_violations", violations)
 
+            # ALWAYS return self (not a copy) - Pydantic 2 requirement
             return self
 
         def get_acl_format(self) -> str:
@@ -1462,7 +1472,10 @@ class FlextLdifModelsDomains:
                         if isinstance(value, str):
                             # Detect binary: any char < ASCII_SPACE_CHAR (except tab/LF/CR) or > ASCII_TILDE_CHAR
                             has_binary = any(
-                                (ord(c) < FlextLdifConstants.ASCII_SPACE_CHAR and c not in "\t\n\r")
+                                (
+                                    ord(c) < FlextLdifConstants.ASCII_SPACE_CHAR
+                                    and c not in "\t\n\r"
+                                )
                                 or ord(c) > FlextLdifConstants.ASCII_TILDE_CHAR
                                 for c in value
                             )

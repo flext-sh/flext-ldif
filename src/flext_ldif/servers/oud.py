@@ -902,19 +902,17 @@ class FlextLdifServersOud(FlextLdifServersRfc):
 
             Returns:
                 Cleaned value with quotes removed from SYNTAX OID
+
             """
             if isinstance(value, bytes):
                 return value  # Binary values don't need cleaning
 
             # Pattern: SYNTAX followed by optional space, quotes, OID, quotes
             # Captures: SYNTAX '1.3.6.1.4.1.1466.115.121.1.7' or SYNTAX "..."
-            syntax_pattern = re.compile(
-                r"SYNTAX\s+['\"]([0-9.]+)['\"]"
-            )
+            syntax_pattern = re.compile(r"SYNTAX\s+['\"]([0-9.]+)['\"]")
 
             # Replace quoted SYNTAX OID with unquoted version
-            cleaned = syntax_pattern.sub(r"SYNTAX \1", value)
-            return cleaned
+            return syntax_pattern.sub(r"SYNTAX \1", value)
 
         def _add_ldif_block(
             self,
@@ -1051,7 +1049,9 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                     # OID exports with quotes: SYNTAX '1.3.6.1.4.1.1466.115.121.1.7'
                     # OUD requires without quotes: SYNTAX 1.3.6.1.4.1.1466.115.121.1.7
                     # Call Schema's static method (DRY: avoid duplicating _clean_syntax_quotes)
-                    cleaned_value = FlextLdifServersOud.Schema._clean_syntax_quotes(value)
+                    cleaned_value = FlextLdifServersOud.Schema._clean_syntax_quotes(
+                        value
+                    )
 
                     first_block = self._add_ldif_block(
                         ldif_lines,
@@ -1156,7 +1156,9 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             for orig_name, transformation in transformations.items():
                 if isinstance(transformation, dict):
                     # AttributeTransformation serialized as dict
-                    original_names[orig_name] = transformation.get("original_values", [])
+                    original_names[orig_name] = transformation.get(
+                        "original_values", []
+                    )
                 elif hasattr(transformation, "original_values"):
                     # AttributeTransformation object
                     original_names[orig_name] = transformation.original_values
@@ -1170,7 +1172,9 @@ class FlextLdifServersOud(FlextLdifServersRfc):
         ) -> dict[str, Any]:
             """Create entry metadata with ACL attributes marked for commenting."""
             new_metadata = dict(entry_metadata or {})
-            removed_attrs = new_metadata.get(MetaKeys.REMOVED_ATTRIBUTES_WITH_VALUES, {})
+            removed_attrs = new_metadata.get(
+                MetaKeys.REMOVED_ATTRIBUTES_WITH_VALUES, {}
+            )
 
             if isinstance(removed_attrs, dict):
                 removed_attrs.update(acl_attrs)
@@ -1447,7 +1451,6 @@ class FlextLdifServersOud(FlextLdifServersRfc):
 
             except Exception as e:
                 return FlextResult[str].fail(f"OUD write entry failed: {e}")
-
 
         def extract_entries_from_ldif(
             self,
@@ -1760,14 +1763,17 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             normalized_lower = normalized.lower()
 
             # RFC 4876 ACI format detection
-            if normalized.startswith(
-                (
-                    aci_prefix,
-                    targetattr_prefix,
-                    targetscope_prefix,
-                    version_prefix,
-                ),
-            ) or "ds-cfg-" in normalized_lower:
+            if (
+                normalized.startswith(
+                    (
+                        aci_prefix,
+                        targetattr_prefix,
+                        targetscope_prefix,
+                        version_prefix,
+                    ),
+                )
+                or "ds-cfg-" in normalized_lower
+            ):
                 return True
 
             # ds-privilege-name format: simple privilege names (OUD-specific)
@@ -3033,7 +3039,9 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                     # OID exports with quotes: SYNTAX '1.3.6.1.4.1.1466.115.121.1.7'
                     # OUD requires without quotes: SYNTAX 1.3.6.1.4.1.1466.115.121.1.7
                     # Call Schema's static method (DRY: avoid duplicating _clean_syntax_quotes)
-                    cleaned_value = FlextLdifServersOud.Schema._clean_syntax_quotes(value)
+                    cleaned_value = FlextLdifServersOud.Schema._clean_syntax_quotes(
+                        value
+                    )
 
                     first_block = self._add_ldif_block(
                         ldif_lines,
@@ -3075,7 +3083,10 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 return []
 
             original_entry_obj = entry_data.entry_metadata.get(MetaKeys.ORIGINAL_ENTRY)
-            if not (original_entry_obj and isinstance(original_entry_obj, FlextLdifModels.Entry)):
+            if not (
+                original_entry_obj
+                and isinstance(original_entry_obj, FlextLdifModels.Entry)
+            ):
                 return []
 
             ldif_parts: list[str] = []
@@ -3147,7 +3158,9 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             # Extract write options from entry metadata
             write_options: FlextLdifModels.WriteFormatOptions | None = None
             if entry_data.entry_metadata:
-                write_options_obj = entry_data.entry_metadata.get(MetaKeys.WRITE_OPTIONS)
+                write_options_obj = entry_data.entry_metadata.get(
+                    MetaKeys.WRITE_OPTIONS
+                )
                 if isinstance(write_options_obj, FlextLdifModels.WriteFormatOptions):
                     write_options = write_options_obj
 
@@ -3155,7 +3168,9 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             ldif_parts: list[str] = []
 
             # FEATURE 1: Write original entry as comment
-            ldif_parts.extend(self._add_original_entry_comments(entry_data, write_options))
+            ldif_parts.extend(
+                self._add_original_entry_comments(entry_data, write_options)
+            )
 
             # FEATURE 2: Phase-aware ACL attribute handling
             entry_data = self._apply_phase_aware_acl_handling(entry_data, write_options)
@@ -3164,7 +3179,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             if self._is_schema_entry(entry_data):
                 allowed_oids: frozenset[str] | None = None
                 if write_options:
-                    allowed_oids = getattr(write_options, 'allowed_schema_oids', None)
+                    allowed_oids = getattr(write_options, "allowed_schema_oids", None)
                 result = self._write_entry_modify_add_format(entry_data, allowed_oids)
             else:
                 # FEATURE 4: Non-schema entries use RFC implementation
@@ -3272,7 +3287,9 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             for orig_name, transformation in transformations.items():
                 if isinstance(transformation, dict):
                     # AttributeTransformation serialized as dict
-                    original_names[orig_name] = transformation.get("original_values", [])
+                    original_names[orig_name] = transformation.get(
+                        "original_values", []
+                    )
                 elif hasattr(transformation, "original_values"):
                     # AttributeTransformation object
                     original_names[orig_name] = transformation.original_values
@@ -3284,7 +3301,9 @@ class FlextLdifServersOud(FlextLdifServersRfc):
         ) -> dict[str, Any]:
             """Create entry metadata with ACL attributes marked for commenting."""
             new_metadata = dict(entry_metadata or {})
-            removed_attrs = new_metadata.get(MetaKeys.REMOVED_ATTRIBUTES_WITH_VALUES, {})
+            removed_attrs = new_metadata.get(
+                MetaKeys.REMOVED_ATTRIBUTES_WITH_VALUES, {}
+            )
 
             if isinstance(removed_attrs, dict):
                 removed_attrs.update(acl_attrs)

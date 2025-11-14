@@ -897,19 +897,70 @@ class FlextLdifConversion(
         )
 
         # Test attribute support via parse() - if parse succeeds, quirk supports attributes
+        # Handle both cases: quirk is a Schema instance directly, or has schema_quirk attribute
+        quirk_schema = None
         if hasattr(quirk, "schema_quirk"):
             quirk_schema = quirk.schema_quirk
-            attr_result = quirk_schema.parse(test_attr_def)
-            if attr_result.is_success:
-                support["attribute"] = True
+        elif hasattr(quirk, "parse_attribute") or hasattr(quirk, "can_handle_attribute"):
+            # Quirk is a Schema instance directly (has parse_attribute or can_handle_attribute)
+            quirk_schema = quirk
+        elif hasattr(quirk, "parse") and hasattr(quirk, "can_handle_attribute"):
+            # Quirk is a Schema instance directly (fallback for quirks with parse method)
+            quirk_schema = quirk
 
-            # Test objectClass support via parse() - if parse succeeds, quirk supports objectClasses
-            oc_result = quirk_schema.parse(test_oc_def)
-            if oc_result.is_success:
-                support[FlextLdifConstants.DictKeys.OBJECTCLASS] = True
+        if quirk_schema:
+            # Check can_handle first - if it returns False, quirk doesn't support it
+            # Use parse_attribute() instead of parse() for Schema quirks
+            if hasattr(quirk_schema, "can_handle_attribute"):
+                if quirk_schema.can_handle_attribute(test_attr_def):
+                    if hasattr(quirk_schema, "parse_attribute"):
+                        attr_result = quirk_schema.parse_attribute(test_attr_def)
+                        if attr_result.is_success:
+                            support["attribute"] = True
+                    elif hasattr(quirk_schema, "parse"):
+                        # Fallback: try parse() if parse_attribute not available
+                        attr_result = quirk_schema.parse(test_attr_def)
+                        if attr_result.is_success:
+                            support["attribute"] = True
+            else:
+                # Fallback: try parse_attribute or parse if can_handle not available
+                if hasattr(quirk_schema, "parse_attribute"):
+                    attr_result = quirk_schema.parse_attribute(test_attr_def)
+                    if attr_result.is_success:
+                        support["attribute"] = True
+                elif hasattr(quirk_schema, "parse"):
+                    attr_result = quirk_schema.parse(test_attr_def)
+                    if attr_result.is_success:
+                        support["attribute"] = True
+
+            # Test objectClass support via parse_objectclass() - if parse succeeds, quirk supports objectClasses
+            if hasattr(quirk_schema, "can_handle_objectclass"):
+                if quirk_schema.can_handle_objectclass(test_oc_def):
+                    if hasattr(quirk_schema, "parse_objectclass"):
+                        oc_result = quirk_schema.parse_objectclass(test_oc_def)
+                        if oc_result.is_success:
+                            support[FlextLdifConstants.DictKeys.OBJECTCLASS] = True
+                    elif hasattr(quirk_schema, "parse"):
+                        # Fallback: try parse() if parse_objectclass not available
+                        oc_result = quirk_schema.parse(test_oc_def)
+                        if oc_result.is_success:
+                            support[FlextLdifConstants.DictKeys.OBJECTCLASS] = True
+            else:
+                # Fallback: try parse_objectclass or parse if can_handle not available
+                if hasattr(quirk_schema, "parse_objectclass"):
+                    oc_result = quirk_schema.parse_objectclass(test_oc_def)
+                    if oc_result.is_success:
+                        support[FlextLdifConstants.DictKeys.OBJECTCLASS] = True
+                elif hasattr(quirk_schema, "parse"):
+                    oc_result = quirk_schema.parse(test_oc_def)
+                    if oc_result.is_success:
+                        support[FlextLdifConstants.DictKeys.OBJECTCLASS] = True
 
         # Check ACL support
+        # Try both acl_quirk (public property) and _acl_quirk (private attribute)
         acl = getattr(quirk, "acl_quirk", None)
+        if not acl:
+            acl = getattr(quirk, "_acl_quirk", None)
         test_acl_def = 'targetattr="*" (version 3.0; acl "test"; allow (read) userdn="ldap:///self";)'
         if acl and callable(getattr(acl, "parse", None)):
             acl_result = acl.parse(test_acl_def)
@@ -917,7 +968,14 @@ class FlextLdifConversion(
                 support["acl"] = True
 
         # Check Entry support - use entry_quirk attribute (not entry)
+        # Handle both cases: quirk has entry_quirk attribute, or is an Entry instance directly
+        # Try both entry_quirk (public property) and _entry_quirk (private attribute)
         entry = getattr(quirk, "entry_quirk", None)
+        if not entry:
+            entry = getattr(quirk, "_entry_quirk", None)
+        if not entry and hasattr(quirk, "parse") and hasattr(quirk, "can_handle_entry"):
+            # Quirk is an Entry instance directly
+            entry = quirk
         if entry and callable(getattr(entry, "parse", None)):
             support["entry"] = True
 

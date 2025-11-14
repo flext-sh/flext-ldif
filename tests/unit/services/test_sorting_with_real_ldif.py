@@ -118,14 +118,15 @@ class TestSortingWithRealOIDEntries:
         assert len(sorted_entries) == len(oid_entries)
 
         # Verify entries are sorted by depth
-        depths = [e.dn.value.count(",") for e in sorted_entries]
+        depths = [e.dn.value.count(",") if e.dn else 0 for e in sorted_entries]
         for i in range(len(depths) - 1):
             # Within same depth, should be alphabetical
             if depths[i] == depths[i + 1]:
-                assert (
-                    sorted_entries[i].dn.value.lower()
-                    <= sorted_entries[i + 1].dn.value.lower()
-                )
+                entry1_dn = sorted_entries[i].dn
+                entry2_dn = sorted_entries[i + 1].dn
+                assert entry1_dn is not None
+                assert entry2_dn is not None
+                assert entry1_dn.value.lower() <= entry2_dn.value.lower()
 
     def test_by_dn_real_ldif(self, oid_entries: list[FlextLdifModels.Entry]) -> None:
         """Test by_dn with real OID LDIF data."""
@@ -138,7 +139,7 @@ class TestSortingWithRealOIDEntries:
         sorted_entries = result.unwrap()
 
         # Verify alphabetical sorting
-        dns = [e.dn.value.lower() for e in sorted_entries]
+        dns = [e.dn.value.lower() if e.dn else "" for e in sorted_entries]
         assert dns == sorted(dns)
 
     def test_execute_hierarchy_real_ldif(
@@ -149,7 +150,7 @@ class TestSortingWithRealOIDEntries:
         if not oid_entries:
             pytest.skip("No OID entries loaded")
 
-        result = FlextLdifSorting(
+        result = FlextLdifSorting.v1(
             entries=oid_entries,
             sort_target="entries",
             sort_by="hierarchy",
@@ -170,13 +171,14 @@ class TestSortingWithRealOIDEntries:
         # Take first entry for testing
         entry = oid_entries[0]
 
-        result = FlextLdifSorting(entries=[entry], sort_target="attributes").execute()
+        result = FlextLdifSorting.v1(entries=[entry], sort_target="attributes").execute()
 
         assert result.is_success
         sorted_entries = result.unwrap()
         assert len(sorted_entries) == 1
 
         # Verify attributes are present
+        assert sorted_entries[0].attributes is not None
         attrs = sorted_entries[0].attributes.attributes
         assert len(attrs) > 0
 
@@ -192,7 +194,7 @@ class TestSortingWithRealOIDEntries:
         if not oid_entries:
             pytest.skip("No OID entries loaded")
 
-        result = FlextLdifSorting(
+        result = FlextLdifSorting.v1(
             entries=oid_entries,
             sort_target="combined",
             sort_by="hierarchy",
@@ -205,6 +207,7 @@ class TestSortingWithRealOIDEntries:
 
         # Verify each entry has attributes
         for entry in sorted_entries:
+            assert entry.attributes is not None
             assert len(entry.attributes.attributes) > 0
 
 
@@ -235,7 +238,7 @@ class TestSortingWithRealOIDSchema:
         if not oid_schema:
             pytest.skip("No OID schema loaded")
 
-        result = FlextLdifSorting(
+        result = FlextLdifSorting.v1(
             entries=oid_schema,
             sort_target="schema",
             sort_by="schema",
@@ -262,7 +265,7 @@ class TestSortingWithRealOIDACL:
         if not oid_acl:
             pytest.skip("No OID ACL loaded")
 
-        result = FlextLdifSorting(entries=oid_acl, sort_target="acl").execute()
+        result = FlextLdifSorting.v1(entries=oid_acl, sort_target="acl").execute()
 
         assert result.is_success
         sorted_entries = result.unwrap()
@@ -296,7 +299,7 @@ class TestRealWorldSortingPipelines:
         entries_by_hierarchy = result1.unwrap()
 
         # Stage 2: Sort attributes within those entries
-        result2 = FlextLdifSorting(
+        result2 = FlextLdifSorting.v1(
             entries=entries_by_hierarchy,
             sort_target="attributes",
         ).execute()
@@ -307,6 +310,7 @@ class TestRealWorldSortingPipelines:
         assert len(final_entries) == len(oid_entries)
         for entry in final_entries:
             assert entry.dn is not None
+            assert entry.attributes is not None
             assert len(entry.attributes.attributes) > 0
 
     def test_custom_sorting_by_dn_length(
@@ -318,6 +322,8 @@ class TestRealWorldSortingPipelines:
             pytest.skip("No OID entries loaded")
 
         def dn_length(entry: FlextLdifModels.Entry) -> int:
+            if not entry.dn:
+                return 0
             return len(entry.dn.value)
 
         result = FlextLdifSorting.by_custom(oid_entries, dn_length)
@@ -326,7 +332,7 @@ class TestRealWorldSortingPipelines:
         sorted_entries = result.unwrap()
 
         # Verify sorting by DN length
-        lengths = [len(e.dn.value) for e in sorted_entries]
+        lengths = [len(e.dn.value) if e.dn else 0 for e in sorted_entries]
         assert lengths == sorted(lengths)
 
     def test_custom_sorting_by_dn_depth(
@@ -338,6 +344,8 @@ class TestRealWorldSortingPipelines:
             pytest.skip("No OID entries loaded")
 
         def dn_depth(entry: FlextLdifModels.Entry) -> int:
+            if not entry.dn:
+                return 0
             return entry.dn.value.count(",")
 
         result = FlextLdifSorting.by_custom(oid_entries, dn_depth)
@@ -346,7 +354,7 @@ class TestRealWorldSortingPipelines:
         sorted_entries = result.unwrap()
 
         # Verify sorting by depth
-        depths = [e.dn.value.count(",") for e in sorted_entries]
+        depths = [e.dn.value.count(",") if e.dn else 0 for e in sorted_entries]
         assert depths == sorted(depths)
 
     def test_multiple_custom_sorts_via_classmethod(
@@ -357,10 +365,13 @@ class TestRealWorldSortingPipelines:
         if not oid_entries:
             pytest.skip("No OID entries loaded")
 
+        def length_key(e: FlextLdifModels.Entry) -> int:
+            return len(e.dn.value) if e.dn else 0
+
         strategies = [
-            ("hierarchy", lambda e: (e.dn.value.count(","), e.dn.value.lower())),
-            ("dn", lambda e: e.dn.value.lower()),
-            ("length", lambda e: len(e.dn.value)),
+            ("hierarchy", None),  # Use by_hierarchy method
+            ("dn", None),  # Use by_dn method
+            ("length", length_key),
         ]
 
         for name, key_func in strategies:
@@ -369,6 +380,7 @@ class TestRealWorldSortingPipelines:
             elif name == "dn":
                 result = FlextLdifSorting.by_dn(oid_entries)
             else:
+                assert key_func is not None
                 result = FlextLdifSorting.by_custom(oid_entries, key_func)
 
             assert result.is_success, f"Failed for strategy: {name}"
@@ -394,18 +406,21 @@ class TestEdgeCasesWithRealLDIF:
         sorted_entries = result.unwrap()
 
         # All DNs should still be present
-        original_dns = {e.dn.value for e in oid_entries}
-        sorted_dns = {e.dn.value for e in sorted_entries}
+        original_dns = {e.dn.value for e in oid_entries if e.dn}
+        sorted_dns = {e.dn.value for e in sorted_entries if e.dn}
         assert original_dns == sorted_dns
 
         # All entries should still have their attributes
         for original_entry in oid_entries:
+            if not original_entry.dn:
+                continue
             # Find corresponding sorted entry
             sorted_entry = next(
-                (e for e in sorted_entries if e.dn.value == original_entry.dn.value),
+                (e for e in sorted_entries if e.dn and e.dn.value == original_entry.dn.value),
                 None,
             )
             assert sorted_entry is not None
+            assert sorted_entry.attributes is not None
             assert len(sorted_entry.attributes.attributes) > 0
 
     def test_sorting_large_entry_set(
@@ -484,7 +499,7 @@ class TestComprehensiveAPIUsage:
         targets = ["entries", "attributes", "acl", "combined"]
 
         for target in targets:
-            result = FlextLdifSorting(
+            result = FlextLdifSorting.v1(
                 entries=oid_entries,
                 sort_target=target,
                 sort_by="hierarchy",
@@ -531,4 +546,4 @@ class TestComprehensiveAPIUsage:
 
 
 if __name__ == "__main__":
-    pytest.main([__file__, "-v", "--tb=short"])
+    _ = pytest.main([__file__, "-v", "--tb=short"])

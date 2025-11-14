@@ -391,11 +391,7 @@ class FlextLdifParser(FlextService[FlextLdifModels.ParseResponse]):
                 return entry
 
             # Access matching rule replacements from server quirk constants
-            replacements = getattr(
-                server_quirk.Constants,
-                "MATCHING_RULE_TO_RFC",
-                {}
-            )
+            replacements = getattr(server_quirk.Constants, "MATCHING_RULE_TO_RFC", {})
 
             # Create new attributes dict with normalized values
             new_attributes = {}
@@ -723,9 +719,7 @@ class FlextLdifParser(FlextService[FlextLdifModels.ParseResponse]):
                 return entry
 
         def parse_attribute_types(
-            self,
-            entry: FlextLdifModels.Entry,
-            schemas: list[Any]
+            self, entry: FlextLdifModels.Entry, schemas: list[Any]
         ) -> list[FlextLdifModels.SchemaAttribute]:
             """Parse attributeTypes from entry using schema quirks."""
             schema_attributes: list[FlextLdifModels.SchemaAttribute] = []
@@ -747,9 +741,7 @@ class FlextLdifParser(FlextService[FlextLdifModels.ParseResponse]):
             return schema_attributes
 
         def parse_objectclasses(
-            self,
-            entry: FlextLdifModels.Entry,
-            schemas: list[Any]
+            self, entry: FlextLdifModels.Entry, schemas: list[Any]
         ) -> list[FlextLdifModels.SchemaObjectClass]:
             """Parse objectClasses from entry using schema quirks."""
             schema_objectclasses: list[FlextLdifModels.SchemaObjectClass] = []

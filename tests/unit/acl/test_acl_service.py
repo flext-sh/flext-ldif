@@ -28,7 +28,10 @@ class TestFlextLdifAclWithRealFixtures:
         """Get path to OID ACL fixture."""
         # Fixtures are in tests/fixtures/ not tests/unit/fixtures/
         return (
-            Path(__file__).parent.parent.parent / "fixtures" / "oid" / "oid_acl_fixtures.ldif"
+            Path(__file__).parent.parent.parent
+            / "fixtures"
+            / "oid"
+            / "oid_acl_fixtures.ldif"
         )
 
     @pytest.fixture
@@ -36,7 +39,10 @@ class TestFlextLdifAclWithRealFixtures:
         """Get path to OUD ACL fixture."""
         # Fixtures are in tests/fixtures/ not tests/unit/fixtures/
         return (
-            Path(__file__).parent.parent.parent / "fixtures" / "oud" / "oud_acl_fixtures.ldif"
+            Path(__file__).parent.parent.parent
+            / "fixtures"
+            / "oud"
+            / "oud_acl_fixtures.ldif"
         )
 
     def test_acl_service_initialization(self) -> None:

@@ -758,11 +758,9 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                     and attr_data.syntax
                     in FlextLdifServersOid.Constants.SYNTAX_OID_TO_RFC
                 ):
-                    attr_data.syntax = (
-                        FlextLdifServersOid.Constants.SYNTAX_OID_TO_RFC[
-                            attr_data.syntax
-                        ]
-                    )
+                    attr_data.syntax = FlextLdifServersOid.Constants.SYNTAX_OID_TO_RFC[
+                        attr_data.syntax
+                    ]
 
                 # Ensure metadata is preserved with OID-specific information
                 if not attr_data.metadata:
@@ -819,45 +817,36 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                 and attr_copy.equality
                 in FlextLdifServersOid.Constants.MATCHING_RULE_TO_RFC
             ):
-                attr_copy.equality = (
-                    FlextLdifServersOid.Constants.MATCHING_RULE_TO_RFC[
-                        attr_copy.equality
-                    ]
-                )
+                attr_copy.equality = FlextLdifServersOid.Constants.MATCHING_RULE_TO_RFC[
+                    attr_copy.equality
+                ]
 
             if (
                 attr_copy.substr
                 and attr_copy.substr
                 in FlextLdifServersOid.Constants.MATCHING_RULE_TO_RFC
             ):
-                attr_copy.substr = (
-                    FlextLdifServersOid.Constants.MATCHING_RULE_TO_RFC[
-                        attr_copy.substr
-                    ]
-                )
+                attr_copy.substr = FlextLdifServersOid.Constants.MATCHING_RULE_TO_RFC[
+                    attr_copy.substr
+                ]
 
             if (
                 attr_copy.ordering
                 and attr_copy.ordering
                 in FlextLdifServersOid.Constants.MATCHING_RULE_TO_RFC
             ):
-                attr_copy.ordering = (
-                    FlextLdifServersOid.Constants.MATCHING_RULE_TO_RFC[
-                        attr_copy.ordering
-                    ]
-                )
+                attr_copy.ordering = FlextLdifServersOid.Constants.MATCHING_RULE_TO_RFC[
+                    attr_copy.ordering
+                ]
 
             # Apply syntax OID replacements before writing
             if (
                 attr_copy.syntax
-                and attr_copy.syntax
-                in FlextLdifServersOid.Constants.SYNTAX_OID_TO_RFC
+                and attr_copy.syntax in FlextLdifServersOid.Constants.SYNTAX_OID_TO_RFC
             ):
-                attr_copy.syntax = (
-                    FlextLdifServersOid.Constants.SYNTAX_OID_TO_RFC[
-                        attr_copy.syntax
-                    ]
-                )
+                attr_copy.syntax = FlextLdifServersOid.Constants.SYNTAX_OID_TO_RFC[
+                    attr_copy.syntax
+                ]
 
             # Use RFC baseline writer with corrected attribute
             return FlextLdifUtilities.Writer.write_rfc_attribute(attr_copy)
@@ -1654,9 +1643,16 @@ class FlextLdifServersOid(FlextLdifServersRfc):
 
             # Detect multiple structural objectClasses (RFC 4512 allows only ONE)
             structural_classes = {
-                "domain", "organization", "organizationalunit", "person",
-                "groupofuniquenames", "groupofnames", "orclsubscriber",
-                "orclgroup", "customsistemas", "customuser"
+                "domain",
+                "organization",
+                "organizationalunit",
+                "person",
+                "groupofuniquenames",
+                "groupofnames",
+                "orclsubscriber",
+                "orclgroup",
+                "customsistemas",
+                "customuser",
             }
             found_structural = object_classes_lower & structural_classes
             if len(found_structural) > 1:
@@ -1669,15 +1665,23 @@ class FlextLdifServersOid(FlextLdifServersRfc):
             # searchGuide, seeAlso, userPassword - but NOT cn, uniqueMember, etc.
             if "domain" in object_classes_lower:
                 domain_invalid_attrs = {
-                    "cn", "uniquemember", "member", "orclsubscriberfullname",
-                    "orclversion", "orclgroupcreatedate"
+                    "cn",
+                    "uniquemember",
+                    "member",
+                    "orclsubscriberfullname",
+                    "orclversion",
+                    "orclgroupcreatedate",
                 }
-                attribute_conflicts.extend({
-                            "attribute": attr_name,
-                            "values": converted_attributes[attr_name],
-                            "reason": f"Attribute '{attr_name}' not allowed by RFC 4519 domain objectClass",
-                            "conflicting_objectclass": "domain",
-                        } for attr_name in converted_attributes if attr_name.lower() in domain_invalid_attrs)
+                attribute_conflicts.extend(
+                    {
+                        "attribute": attr_name,
+                        "values": converted_attributes[attr_name],
+                        "reason": f"Attribute '{attr_name}' not allowed by RFC 4519 domain objectClass",
+                        "conflicting_objectclass": "domain",
+                    }
+                    for attr_name in converted_attributes
+                    if attr_name.lower() in domain_invalid_attrs
+                )
 
             # Step 3: Create new Entry with converted attributes and metadata
             ldif_attrs = FlextLdifModels.LdifAttributes(
@@ -1749,7 +1753,9 @@ class FlextLdifServersOid(FlextLdifServersRfc):
             # Normalize OID schema DN quirk to RFC standard
             # OID uses "cn=subschemasubentry" but RFC 4512 standard is "cn=schema"
             # Store original quirk DN in metadata for round-trip conversions
-            if entry.dn.value.lower().startswith(FlextLdifServersOid.Constants.SCHEMA_DN_QUIRK.lower()):
+            if entry.dn.value.lower().startswith(
+                FlextLdifServersOid.Constants.SCHEMA_DN_QUIRK.lower()
+            ):
                 # Store original OID quirk DN in metadata
                 schema_dn_metadata = {
                     "original_schema_dn": entry.dn.value,  # OID quirk: cn=subschemasubentry
