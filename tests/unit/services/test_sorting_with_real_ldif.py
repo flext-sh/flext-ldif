@@ -150,14 +150,11 @@ class TestSortingWithRealOIDEntries:
         if not oid_entries:
             pytest.skip("No OID entries loaded")
 
-        result = FlextLdifSorting.v1(
+        sorted_entries = FlextLdifSorting(
             entries=oid_entries,
             sort_target="entries",
             sort_by="hierarchy",
-        ).execute()
-
-        assert result.is_success
-        sorted_entries = result.unwrap()
+        )
         assert len(sorted_entries) == len(oid_entries)
 
     def test_execute_attributes_sorting_real_ldif(
@@ -171,12 +168,7 @@ class TestSortingWithRealOIDEntries:
         # Take first entry for testing
         entry = oid_entries[0]
 
-        result = FlextLdifSorting.v1(
-            entries=[entry], sort_target="attributes"
-        ).execute()
-
-        assert result.is_success
-        sorted_entries = result.unwrap()
+        sorted_entries = FlextLdifSorting(entries=[entry], sort_target="attributes")
         assert len(sorted_entries) == 1
 
         # Verify attributes are present
@@ -196,15 +188,12 @@ class TestSortingWithRealOIDEntries:
         if not oid_entries:
             pytest.skip("No OID entries loaded")
 
-        result = FlextLdifSorting.v1(
+        sorted_entries = FlextLdifSorting(
             entries=oid_entries,
             sort_target="combined",
             sort_by="hierarchy",
             sort_attributes=True,
-        ).execute()
-
-        assert result.is_success
-        sorted_entries = result.unwrap()
+        )
         assert len(sorted_entries) == len(oid_entries)
 
         # Verify each entry has attributes
@@ -240,14 +229,11 @@ class TestSortingWithRealOIDSchema:
         if not oid_schema:
             pytest.skip("No OID schema loaded")
 
-        result = FlextLdifSorting.v1(
+        sorted_entries = FlextLdifSorting(
             entries=oid_schema,
             sort_target="schema",
             sort_by="schema",
-        ).execute()
-
-        assert result.is_success
-        sorted_entries = result.unwrap()
+        )
         assert len(sorted_entries) == len(oid_schema)
 
 
@@ -267,10 +253,7 @@ class TestSortingWithRealOIDACL:
         if not oid_acl:
             pytest.skip("No OID ACL loaded")
 
-        result = FlextLdifSorting.v1(entries=oid_acl, sort_target="acl").execute()
-
-        assert result.is_success
-        sorted_entries = result.unwrap()
+        sorted_entries = FlextLdifSorting(entries=oid_acl, sort_target="acl")
         assert len(sorted_entries) == len(oid_acl)
 
         # Verify entries are still valid
@@ -301,12 +284,11 @@ class TestRealWorldSortingPipelines:
         entries_by_hierarchy = result1.unwrap()
 
         # Stage 2: Sort attributes within those entries
-        result2 = FlextLdifSorting.v1(
+        # With auto_execute=True, FlextLdifSorting returns list directly
+        final_entries = FlextLdifSorting(
             entries=entries_by_hierarchy,
             sort_target="attributes",
-        ).execute()
-        assert result2.is_success
-        final_entries = result2.unwrap()
+        )
 
         # Verify all entries are present and valid
         assert len(final_entries) == len(oid_entries)
@@ -505,13 +487,14 @@ class TestComprehensiveAPIUsage:
         targets = ["entries", "attributes", "acl", "combined"]
 
         for target in targets:
-            result = FlextLdifSorting.v1(
+            # With auto_execute=True, instantiation returns list directly
+            sorted_entries = FlextLdifSorting(
                 entries=oid_entries,
                 sort_target=target,
                 sort_by="hierarchy",
-            ).execute()
+            )
 
-            assert result.is_success, f"Failed for target: {target}"
+            assert isinstance(sorted_entries, list), f"Failed for target: {target}"
 
     def test_builder_pattern_with_real_data(
         self,

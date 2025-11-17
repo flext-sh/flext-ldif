@@ -342,10 +342,12 @@ class FlextLdifUtilitiesDN:
         dn_str = FlextLdifUtilitiesDN.get_dn_value(dn)
         try:
             if not dn_str:
-                return FlextResult[str].fail("DN string is empty")
+                return FlextResult[str].fail(
+                    "Failed to normalize DN: DN string is empty"
+                )
             if "=" not in dn_str:
                 return FlextResult[str].fail(
-                    f"Invalid DN format: missing '=' separator in '{dn_str}'"
+                    f"Failed to normalize DN: Invalid DN format: missing '=' separator in '{dn_str}'"
                 )
 
             components = FlextLdifUtilitiesDN.split(dn_str)
@@ -690,14 +692,14 @@ class FlextLdifUtilitiesDN:
             norm1_result = FlextLdifUtilitiesDN.norm(dn1)
             if not norm1_result.is_success:
                 return FlextResult[int].fail(
-                    f"Failed to normalize first DN: {norm1_result.error}"
+                    f"Comparison failed (RFC 4514): Failed to normalize first DN: {norm1_result.error}"
                 )
             norm1 = norm1_result.unwrap()
 
             norm2_result = FlextLdifUtilitiesDN.norm(dn2)
             if not norm2_result.is_success:
                 return FlextResult[int].fail(
-                    f"Failed to normalize second DN: {norm2_result.error}"
+                    f"Comparison failed (RFC 4514): Failed to normalize second DN: {norm2_result.error}"
                 )
             norm2 = norm2_result.unwrap()
 

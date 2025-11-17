@@ -548,6 +548,20 @@ class FlextLdifModels(FlextModels):
 
         """
 
+    class StatisticsServiceStatus(FlextLdifModelsResults.StatisticsServiceStatus):
+        """Statistics service status with capability metadata.
+
+        Extended status model for FlextLdifStatistics service including
+        operational status and available capabilities.
+
+        Attributes:
+            service: Service name identifier
+            status: Operational status (e.g., "operational", "degraded")
+            capabilities: List of available statistical operations
+            version: Service version
+
+        """
+
     class SyntaxLookupResult(FlextLdifModelsResults.SyntaxLookupResult):
         """Result of syntax OID/name lookup operations.
 

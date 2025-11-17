@@ -8294,51 +8294,82 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         must_contain_in_roundtrip: str | list[str] | None = None,
         validate_equivalence: bool = True,
     ) -> str | dict[str, object]:
-        """Complete roundtrip conversion test - replaces 15-25 lines.
+        """Complete roundtrip conversion test - uses NEW model-based API.
 
-        Common pattern (appears 10+ times):
-            # Forward conversion
-            result1 = conversion_matrix.convert(source, target, "attribute", original)
-            assert result1.is_success
-            converted = result1.unwrap()
-            # Backward conversion
-            result2 = conversion_matrix.convert(target, source, "attribute", converted)
-            assert result2.is_success
-            roundtrip = result2.unwrap()
-            # Validate semantic equivalence
-            assert "string1" in roundtrip
-            assert "string2" in roundtrip
+        NEW API: Uses parse→convert→write pipeline for roundtrip testing.
+        1. Parse original_data to model
+        2. Convert model forward (source → target)
+        3. Convert model backward (target → source)
+        4. Write back to string for comparison
 
         Args:
             conversion_matrix: Conversion matrix instance
             source: Source quirk or server type
             target: Target quirk or server type
             data_type: Data type ("attribute", "objectClass", "acl", "entry")
-            original_data: Original data to convert
+            original_data: Original data string to convert
             must_contain_in_roundtrip: Strings that must be in roundtrip result
             validate_equivalence: Whether to validate semantic equivalence (default: True)
 
         Returns:
-            Roundtrip result
+            Roundtrip result as string
 
         """
-        # Forward conversion: source → target
-        forward_result = conversion_matrix.convert(
-            source, target, data_type, original_data
-        )
-        forward_converted = cast(
-            "str | dict[str, object]",
-            TestAssertions.assert_success(
-                forward_result, "Forward conversion should succeed"
-            ),
+        # Resolve source quirk for parsing
+        if isinstance(source, str):
+            from flext_ldif.services.server import FlextLdifServer
+
+            server = FlextLdifServer()
+            source_quirk = server.quirk(source)
+            if source_quirk is None:
+                raise ValueError(f"Unknown server type: {source}")
+        else:
+            source_quirk = source
+
+        # Parse string to model
+        if not isinstance(original_data, str):
+            msg = "Roundtrip test requires string input"
+            raise ValueError(msg)
+
+        if data_type.lower() == "attribute":
+            parse_result = source_quirk.schema_quirk.parse_attribute(original_data)
+        elif data_type.lower() in {"objectclass", "objectclasses"}:
+            parse_result = source_quirk.schema_quirk.parse_objectclass(original_data)
+        elif data_type.lower() == "acl":
+            parse_result = source_quirk.acl_quirk.parse(original_data)
+        else:
+            raise ValueError(f"Unsupported data_type for roundtrip: {data_type}")
+
+        original_model = TestAssertions.assert_success(
+            parse_result, f"Failed to parse original {data_type}"
         )
 
-        # Backward conversion: target → source
-        backward_result = conversion_matrix.convert(
-            target, source, data_type, forward_converted
+        # Forward conversion: source model → target model
+        forward_result = conversion_matrix.convert(source, target, original_model)
+        forward_model = TestAssertions.assert_success(
+            forward_result, "Forward conversion should succeed"
         )
-        roundtrip = TestAssertions.assert_success(
+
+        # Backward conversion: target model → source model
+        backward_result = conversion_matrix.convert(target, source, forward_model)
+        roundtrip_model = TestAssertions.assert_success(
             backward_result, "Backward conversion should succeed"
+        )
+
+        # Write roundtrip model back to string
+        if isinstance(roundtrip_model, FlextLdifModels.SchemaAttribute):
+            write_result = source_quirk.schema_quirk.write_attribute(roundtrip_model)
+        elif isinstance(roundtrip_model, FlextLdifModels.SchemaObjectClass):
+            write_result = source_quirk.schema_quirk.write_objectclass(roundtrip_model)
+        elif isinstance(roundtrip_model, FlextLdifModels.Acl):
+            write_result = source_quirk.acl_quirk.write(roundtrip_model)
+        else:
+            raise ValueError(
+                f"Unexpected roundtrip model type: {type(roundtrip_model).__name__}"
+            )
+
+        roundtrip = TestAssertions.assert_success(
+            write_result, f"Failed to write roundtrip {data_type}"
         )
 
         if (

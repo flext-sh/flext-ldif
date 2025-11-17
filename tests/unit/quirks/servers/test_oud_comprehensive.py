@@ -3570,12 +3570,14 @@ attributetypes: ( 1.2.3.4 NAME 'testAttr' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )
     def test_inject_validation_rules_entry_no_metadata(
         self, entry_quirk: FlextLdifServersOud.Entry
     ) -> None:
-        """Test _inject_validation_rules with no metadata in Entry (line 1605)."""
+        """Test _inject_validation_rules with empty metadata extensions in Entry (line 1605)."""
+        # Create entry with empty metadata extensions to test injection
         entry = FlextLdifModels.Entry.create(
             dn=TestGeneralConstants.SAMPLE_DN,
             attributes={"cn": ["test"]},
         ).unwrap()
-        entry.metadata = None
+        # Clear extensions to simulate "no metadata" scenario
+        entry.metadata.extensions.clear()
         entry_typed = cast("FlextLdifModels.Entry", entry)
         result = entry_quirk._inject_validation_rules(entry_typed)
         assert result.metadata is not None

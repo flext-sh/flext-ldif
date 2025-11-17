@@ -20,7 +20,7 @@ from flext_ldif.constants import FlextLdifConstants
 from flext_ldif.models import FlextLdifModels
 
 
-class FlextLdifStatistics(FlextService[FlextLdifModels.StatisticsResult]):
+class FlextLdifStatistics(FlextService[FlextLdifModels.StatisticsServiceStatus]):
     """Statistics service for LDIF processing pipeline.
 
     Provides methods for generating comprehensive statistics about
@@ -51,15 +51,15 @@ class FlextLdifStatistics(FlextService[FlextLdifModels.StatisticsResult]):
     @override
     @FlextDecorators.log_operation("statistics_service_check")
     @FlextDecorators.track_performance()
-    def execute(self) -> FlextResult[FlextLdifModels.StatisticsResult]:
+    def execute(self) -> FlextResult[FlextLdifModels.StatisticsServiceStatus]:
         """Execute statistics service self-check.
 
         Returns:
-            FlextResult containing empty statistics (service health check)
+            FlextResult containing service status (health check)
 
         """
-        # Return service status for health check - create StatisticsResult directly
-        status_result = FlextLdifModels.StatisticsResult(
+        # Return service status for health check
+        status_result = FlextLdifModels.StatisticsServiceStatus(
             service="StatisticsService",
             status="operational",
             capabilities=[
@@ -69,7 +69,7 @@ class FlextLdifStatistics(FlextService[FlextLdifModels.StatisticsResult]):
             ],
             version="1.0.0",
         )
-        return FlextResult[FlextLdifModels.StatisticsResult].ok(status_result)
+        return FlextResult[FlextLdifModels.StatisticsServiceStatus].ok(status_result)
 
     # ════════════════════════════════════════════════════════════════════════
     # FLUENT BUILDER PATTERN

@@ -208,18 +208,17 @@ class FlextLdifModelsResults:
 
             Args:
                 category: Category name to retrieve
-                default: Default value if category not found
+                default: Default value if category not found (defaults to empty list)
 
             Returns:
                 List of entries in the category, or default if not found.
 
             """
-            if default is not None:
-                return self.entries_by_category.get(category, default)
+            # If category exists, return it
             if category in self.entries_by_category:
                 return self.entries_by_category[category]
-            error_msg = f"Category '{category}' not found and no default provided"
-            raise KeyError(error_msg)
+            # Otherwise return the default (None defaults to empty list)
+            return default if default is not None else []
 
         @classmethod
         def from_entries(
@@ -673,7 +672,9 @@ class FlextLdifModelsResults:
                 schema_attributes=schema_attributes,
                 schema_objectclasses=schema_objectclasses,
                 processing_duration=processing_duration,
-                rejection_reasons=(rejection_reasons if rejection_reasons is not None else {}),
+                rejection_reasons=(
+                    rejection_reasons if rejection_reasons is not None else {}
+                ),
             )
 
         @classmethod
@@ -1201,6 +1202,10 @@ class FlextLdifModelsResults:
                 return getattr(self, key)
             raise KeyError(key)
 
+        def __contains__(self, key: str) -> bool:
+            """Check if attribute exists (dict-style membership test)."""
+            return hasattr(self, key)
+
         def get(self, key: str, default: object | None = None) -> object | None:
             """Get attribute value with optional default (dict-style access)."""
             return getattr(self, key, default)
@@ -1298,6 +1303,33 @@ class FlextLdifModelsResults:
         )
         common_syntaxes: int = Field(
             description="Number of commonly used syntax OIDs",
+        )
+
+    class StatisticsServiceStatus(DictAccessibleValue):
+        """Statistics service status with capability metadata.
+
+        Extended status model for FlextLdifStatistics service including
+        operational status and available capabilities.
+
+        Attributes:
+            service: Service name identifier
+            status: Operational status (e.g., "operational", "degraded")
+            capabilities: List of available statistical operations
+            version: Service version
+
+        """
+
+        service: str = Field(
+            description="Service name identifier",
+        )
+        status: str = Field(
+            description="Operational status",
+        )
+        capabilities: list[str] = Field(
+            description="List of available statistical operations",
+        )
+        version: str = Field(
+            description="Service version",
         )
 
     class SyntaxLookupResult(FlextModels.Value):

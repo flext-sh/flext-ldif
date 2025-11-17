@@ -41,6 +41,7 @@ from typing import (
     Self,
     cast,
     overload,
+    override,
 )
 
 from flext_core import FlextLogger, FlextResult, FlextService
@@ -248,6 +249,12 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
     # Control auto-execution
     auto_execute: ClassVar[bool] = False
 
+    # NOTE: This method signature differs from FlextService.execute() intentionally.
+    # The protocol (FlextLdifProtocols.Quirks.EntryProtocol) allows parameters,
+    # but FlextService base class doesn't. This is a design decision to support
+    # polymorphic dispatch in quirks while maintaining FlextService compatibility.
+    # We use @override with type: ignore to document this intentional signature difference.
+    @override  # type: ignore[override]  # Intentional signature difference for protocol support
     def execute(
         self,
         ldif_text: str | None = None,
@@ -439,16 +446,12 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
             type-annotate with the domain result type for auto_execute services.
 
         """
-        # Call super().__new__ which may return unwrapped result if auto_execute=True
-        instance_or_result = super().__new__(cls)
-
-        # If super().__new__ already returned unwrapped result (auto_execute in FlextService),
-        # just return it. Check by seeing if it's an instance of the class.
-        if not isinstance(instance_or_result, cls):
-            return cast("Self", instance_or_result)
+        # Use object.__new__ directly to avoid FlextService.__new__ calling execute() without params
+        # This allows us to control when execute() is called with proper parameters
+        instance = object.__new__(cls)
 
         # Initialize the instance
-        type(instance_or_result).__init__(instance_or_result, **kwargs)
+        type(instance).__init__(instance, **kwargs)
 
         if cls.auto_execute:
             # Extract operation parameters from kwargs
@@ -470,7 +473,7 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
                 else None
             )
             # Auto-execute and return unwrapped result (cast for type safety)
-            result = instance_or_result.execute(
+            result = instance.execute(
                 ldif_text=ldif_text,
                 entries=entries,
                 operation=operation,
@@ -478,7 +481,7 @@ class FlextLdifServersBase(FlextService[FlextLdifModels.Entry], ABC):
             unwrapped: FlextLdifTypes.EntryOrString = result.unwrap()
             return cast("Self", unwrapped)
 
-        return instance_or_result
+        return instance
 
     def _initialize_nested_classes(self) -> None:
         """Initialize nested Schema, Acl, and Entry classes with server_type.

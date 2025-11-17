@@ -605,6 +605,14 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
                 format_options,
             )
 
+        except FileNotFoundError as e:
+            return FlextResult[list[FlextLdifModels.Entry]].fail(
+                f"File not found: {e}",
+            )
+        except (OSError, UnicodeDecodeError) as e:
+            return FlextResult[list[FlextLdifModels.Entry]].fail(
+                f"Failed to read file: {e}",
+            )
         except Exception as e:
             return FlextResult[list[FlextLdifModels.Entry]].fail(
                 f"Failed to parse LDIF: {e}",
@@ -613,9 +621,10 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
     def _get_source_content(self, source: str | Path) -> str:
         """Get LDIF content from source (Path or string).
 
-        Explicit handling:
+        Intelligent handling:
         - Path objects: Read file content
-        - Strings: Treat as LDIF content directly (no heuristic guessing)
+        - Strings with file-like patterns: Treat as file path and validate existence
+        - Strings without file patterns: Treat as LDIF content
 
         Args:
             source: Either a Path to LDIF file or string containing LDIF data
@@ -624,17 +633,51 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
             LDIF content string
 
         Raises:
-            OSError: If file cannot be read
+            OSError: If file path is detected but file cannot be read
             UnicodeDecodeError: If file has encoding issues
+            FileNotFoundError: If file path is detected but file doesn't exist
 
         """
-        # Explicit Case 1: Path object - read file
+        # Case 1: Path object - read file
         if isinstance(source, Path):
             return source.read_text(encoding=self.config.ldif_encoding)
 
-        # Explicit Case 2: String - treat as LDIF content directly
-        # No heuristics, no fallbacks, no guessing if it's a file path
+        # Case 2: String - detect if it's a file path or LDIF content
         if isinstance(source, str):
+            # Heuristic: Check if string looks like LDIF content first
+            # LDIF content indicators: starts with "dn:" or contains LDIF patterns
+            is_ldif_content = (
+                source.strip().startswith("dn:")
+                or source.strip().startswith("#")
+                or "\ndn:" in source
+                or "\r\ndn:" in source
+            )
+
+            # Heuristic: Check if string looks like a file path
+            # Indicators: ends with .ldif, looks like absolute path, or short string that exists as file
+            is_file_path = (
+                source.endswith((".ldif", ".LDIF"))
+                or (
+                    len(source) < 260 and Path(source).exists()
+                )  # Windows MAX_PATH limit
+            )
+
+            # If it looks like LDIF content, treat as content (even if it contains /)
+            if is_ldif_content:
+                return source
+
+            # If it looks like a file path, validate and read
+            if is_file_path:
+                file_path = Path(source)
+                if not file_path.exists():
+                    error_msg = f"File not found: {source}"
+                    raise FileNotFoundError(error_msg)
+                if not file_path.is_file():
+                    error_msg = f"Path is not a file: {source}"
+                    raise OSError(error_msg)
+                return file_path.read_text(encoding=self.config.ldif_encoding)
+
+            # Default: treat as LDIF content if ambiguous
             return source
 
         # Should not reach here due to type annotation, but fail-safe
@@ -744,10 +787,11 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
             if string_result.is_success:
                 unwrapped = string_result.unwrap()
                 # Type narrowing: when output_target="string", result is always str
-                if isinstance(unwrapped, str):
-                    return FlextResult[str].ok(unwrapped)
-                # Fallback: convert to string if needed
-                return FlextResult[str].ok(str(unwrapped))
+                if not isinstance(unwrapped, str):
+                    return FlextResult[str].fail(
+                        f"Write operation returned non-string result: {type(unwrapped).__name__}"
+                    )
+                return FlextResult[str].ok(unwrapped)
             return FlextResult[str].fail(string_result.error)
 
         except (ValueError, TypeError, AttributeError) as e:
@@ -1013,24 +1057,21 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
 
         """
         try:
-            # First try to get objectClass from attributes
+            # Get objectClass from attributes
             attrs_result = self.get_entry_attributes(entry)
-            if attrs_result.is_success:
-                attrs = attrs_result.unwrap()
-                # objectClass might be stored as "objectClass" or "objectclass"
-                oc_values = attrs.get("objectClass") or attrs.get("objectclass")
-                if oc_values:
-                    # Normalize to list (get_entry_attributes returns str | list[str])
-                    if isinstance(oc_values, str):
-                        return FlextResult[list[str]].ok([oc_values])
-                    return FlextResult[list[str]].ok(oc_values)
+            if attrs_result.is_failure:
+                return FlextResult[list[str]].fail(
+                    f"Failed to get entry attributes: {attrs_result.error}"
+                )
 
-            # Fallback: try direct access to object_classes attribute (LDAP entries)
-            oc_attr = getattr(entry, "object_classes", None)
-            if oc_attr is not None:
-                if isinstance(oc_attr, list):
-                    return FlextResult[list[str]].ok([str(v) for v in oc_attr])
-                return FlextResult[list[str]].ok([str(oc_attr)])
+            attrs = attrs_result.unwrap()
+            # objectClass might be stored as "objectClass" or "objectclass"
+            oc_values = attrs.get("objectClass") or attrs.get("objectclass")
+            if oc_values:
+                # Normalize to list (get_entry_attributes returns str | list[str])
+                if isinstance(oc_values, str):
+                    return FlextResult[list[str]].ok([oc_values])
+                return FlextResult[list[str]].ok(oc_values)
 
             return FlextResult[list[str]].fail("Entry missing objectClass attribute")
 
@@ -1310,12 +1351,15 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
             opts = options or FlextLdifModels.MigrateOptions()
 
             # Convert dict to MigrationConfig model if needed (FlextResult-based)
-            config_result = self._normalize_migration_config(opts.migration_config)
-            if config_result.is_failure:
-                return FlextResult[FlextLdifModels.EntryResult].fail(
-                    f"Invalid migration config: {config_result.error}"
-                )
-            config_model = config_result.unwrap()
+            # Allow None migration_config when using categorization_rules
+            config_model: FlextLdifModels.MigrationConfig | None = None
+            if opts.migration_config is not None:
+                config_result = self._normalize_migration_config(opts.migration_config)
+                if config_result.is_failure:
+                    return FlextResult[FlextLdifModels.EntryResult].fail(
+                        f"Invalid migration config: {config_result.error}"
+                    )
+                config_model = config_result.unwrap()
 
             # Auto-detect mode and create write options
             mode = self._detect_migration_mode(config_model, opts.categorization_rules)
@@ -1538,22 +1582,13 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
         errors: list[str] = []
         is_entry_valid = True
 
-        # Validate DN
-        if not entry.dn:
-            errors.append("Entry has no DN")
+        # Validate DN (dn is required, cannot be None)
+        dn_str = entry.dn.value
+        if not dn_str or not isinstance(dn_str, str):
+            errors.append(f"Entry has invalid DN: {entry.dn}")
             is_entry_valid = False
-            dn_str = "unknown"
-        else:
-            dn_str = entry.dn.value
-            if not dn_str or not isinstance(dn_str, str):
-                errors.append(f"Entry has invalid DN: {entry.dn}")
-                is_entry_valid = False
 
-        # Validate each attribute name
-        if not entry.attributes:
-            errors.append(f"Entry {dn_str} has no attributes")
-            is_entry_valid = False
-            return (is_entry_valid, errors)
+        # Validate each attribute name (attributes is required, cannot be None)
 
         for attr_name in entry.attributes.attributes:
             attr_result = validation_service.validate_attribute_name(attr_name)
@@ -1649,7 +1684,7 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
 
         """
         # Check if entry has any ACL attributes
-        if not entry.attributes or not entry.attributes.attributes:
+        if not entry.attributes.attributes:
             return FlextResult[FlextLdifModels.Entry].ok(entry)
 
         attrs = entry.attributes.attributes
@@ -1671,7 +1706,7 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
 
         if acls_result.is_failure:
             # No ACL transformation available for this server pair
-            dn_str = entry.dn.value if entry.dn else "unknown"
+            dn_str = entry.dn.value
             self.logger.debug(
                 "ACL quirks not available for %s→%s, passing entry unchanged: %s - %s",
                 source_type,
@@ -1686,7 +1721,7 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
         # ACL transformation between different server types is complex and requires
         # server-specific semantics. Currently not implemented - return failure to prevent
         # silent data loss from ACL transformations.
-        dn_value = entry.dn.value if entry.dn is not None else "unknown"
+        dn_value = entry.dn.value
         return FlextResult[FlextLdifModels.Entry].fail(
             f"ACL transformation not yet supported for {source_type}→{target_type}: "
             f"entry with ACLs requires manual validation (DN: {dn_value})"
@@ -1984,14 +2019,14 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
                     if transform_result.is_success:
                         transformed_entries.append(transform_result.unwrap())
                     else:
-                        dn_str = entry.dn.value if entry.dn else "unknown"
+                        dn_str = entry.dn.value
                         transformation_errors.append((
                             dn_str,
                             f"Transformation failed: {transform_result.error}",
                         ))
 
                 except (ValueError, TypeError, AttributeError, KeyError) as e:
-                    dn_str = entry.dn.value if entry.dn else "unknown"
+                    dn_str = entry.dn.value
                     transformation_errors.append((
                         dn_str,
                         f"Transformation error: {e!s}",
@@ -2050,8 +2085,8 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
         def _transform_func(entry: FlextLdifModels.Entry) -> dict[str, object]:
             # Build dict directly from Entry fields without model_dump()
             result: dict[str, object] = {
-                "dn": entry.dn.value if entry.dn else "",
-                "attributes": entry.attributes.attributes if entry.attributes else {},
+                "dn": entry.dn.value,
+                "attributes": entry.attributes.attributes,
             }
             if entry.metadata:
                 result["metadata"] = entry.metadata
@@ -2074,26 +2109,12 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
 
         def _validate_func(entry: FlextLdifModels.Entry) -> dict[str, object]:
             # Basic validation: entry has DN and attributes - fast fail if None
-            if not entry.dn:
-                return {
-                    "dn": "",
-                    "valid": False,
-                    "attribute_count": 0,
-                    "error": "Entry DN is required",
-                }
-            if not entry.attributes:
-                return {
-                    "dn": entry.dn.value,
-                    "valid": False,
-                    "attribute_count": 0,
-                    "error": "Entry attributes are required",
-                }
-
+            # dn and attributes are required, cannot be None
             dn_value = entry.dn.value
             attrs_dict = entry.attributes.attributes
             return {
                 "dn": dn_value,
-                "valid": bool(dn_value and entry.attributes),
+                "valid": bool(dn_value and attrs_dict),
                 "attribute_count": len(attrs_dict),
             }
 
@@ -2144,9 +2165,7 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
                 future_to_entry = {
                     executor.submit(processor_func, entry): entry for entry in entries
                 }
-                results = [
-                    future.result() for future in as_completed(future_to_entry)
-                ]
+                results = [future.result() for future in as_completed(future_to_entry)]
             return FlextResult[list[dict[str, object]]].ok(results)
         except (ValueError, TypeError, AttributeError) as e:
             return FlextResult[list[dict[str, object]]].fail(
@@ -2234,9 +2253,7 @@ class FlextLdif(FlextService[FlextLdifTypes.Models.ServiceResponseTypes]):
                 return self._execute_parallel_processing(
                     entries, processor_func, max_workers
                 )
-            return self._execute_batch_processing(
-                entries, processor_func, batch_size
-            )
+            return self._execute_batch_processing(entries, processor_func, batch_size)
 
         except (ValueError, TypeError, AttributeError) as e:
             mode = "Parallel" if parallel else "Batch"

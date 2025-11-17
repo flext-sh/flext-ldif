@@ -822,7 +822,11 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
 
             # Metadata is guaranteed to be non-None after creation above
             # Type narrowing: entry.metadata is non-None after model_copy
-            assert entry.metadata is not None, "Metadata must be created above"
+            # Defensive check with proper error instead of assert
+            if entry.metadata is None:
+                return FlextResult.fail(
+                    "Internal error: metadata creation failed in OpenLDAP entry parser"
+                )
             # Inject validation rules via metadata.extensions (DI pattern)
             entry.metadata.extensions["validation_rules"] = validation_rules
 

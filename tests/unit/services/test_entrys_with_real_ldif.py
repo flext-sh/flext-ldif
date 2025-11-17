@@ -46,9 +46,9 @@ class RealLdifLoader:
     def load_oid_entries() -> list[FlextLdifModels.Entry]:
         """Load real OID LDIF entries from fixtures."""
         fixture_path = FIXTURES_ROOT / "oid" / "oid_entries_fixtures.ldif"
-        ldif_content = fixture_path.read_text(encoding="utf-8")
         ldif = FlextLdif()
-        result = ldif.parse(ldif_content)
+        # Pass Path directly to avoid string path detection issues
+        result = ldif.parse(fixture_path)
         if result.is_success:
             return result.unwrap()
         raise ValueError(f"Failed to parse OID fixtures: {result.error}")
@@ -57,9 +57,9 @@ class RealLdifLoader:
     def load_oud_entries() -> list[FlextLdifModels.Entry]:
         """Load real OUD LDIF entries from fixtures."""
         fixture_path = FIXTURES_ROOT / "oud" / "oud_entries_fixtures.ldif"
-        ldif_content = fixture_path.read_text(encoding="utf-8")
         ldif = FlextLdif()
-        result = ldif.parse(ldif_content)
+        # Pass Path directly to avoid string path detection issues
+        result = ldif.parse(fixture_path)
         if result.is_success:
             return result.unwrap()
         raise ValueError(f"Failed to parse OUD fixtures: {result.error}")
@@ -68,9 +68,9 @@ class RealLdifLoader:
     def load_openldap2_entries() -> list[FlextLdifModels.Entry]:
         """Load real OpenLDAP2 LDIF entries from fixtures."""
         fixture_path = FIXTURES_ROOT / "openldap2" / "openldap2_entries_fixtures.ldif"
-        ldif_content = fixture_path.read_text(encoding="utf-8")
         ldif = FlextLdif()
-        result = ldif.parse(ldif_content)
+        # Pass Path directly to avoid string path detection issues
+        result = ldif.parse(fixture_path)
         if result.is_success:
             return result.unwrap()
         raise ValueError(f"Failed to parse OpenLDAP2 fixtures: {result.error}")
@@ -79,9 +79,9 @@ class RealLdifLoader:
     def load_rfc_entries() -> list[FlextLdifModels.Entry]:
         """Load real RFC LDIF entries from fixtures."""
         fixture_path = FIXTURES_ROOT / "rfc" / "rfc_entries_fixtures.ldif"
-        ldif_content = fixture_path.read_text(encoding="utf-8")
         ldif = FlextLdif()
-        result = ldif.parse(ldif_content)
+        # Pass Path directly to avoid string path detection issues
+        result = ldif.parse(fixture_path)
         if result.is_success:
             return result.unwrap()
         raise ValueError(f"Failed to parse RFC fixtures: {result.error}")

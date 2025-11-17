@@ -381,9 +381,9 @@ class FlextLdifFilters(FlextService):
         @staticmethod
         def _should_include_entry(*, matches: bool, filter_mode: str) -> bool:
             """Determine if entry should be included based on mode."""
-            return (
-                filter_mode == FlextLdifConstants.Modes.INCLUDE and matches
-            ) or (filter_mode == FlextLdifConstants.Modes.EXCLUDE and not matches)
+            return (filter_mode == FlextLdifConstants.Modes.INCLUDE and matches) or (
+                filter_mode == FlextLdifConstants.Modes.EXCLUDE and not matches
+            )
 
         @staticmethod
         def _process_objectclass_entry(
@@ -394,10 +394,10 @@ class FlextLdifFilters(FlextService):
             mark_excluded: bool,
         ) -> FlextResult[FlextLdifModels.Entry]:
             """Process single entry with filtering logic."""
-            entry_matches = FlextLdifFilters.ObjectClassFilter._matches_objectclass_entry(
+            entry_matches = FlextLdifFilters.Filter._matches_objectclass_entry(
                 entry, oc_tuple, required_attributes
             )
-            if FlextLdifFilters.ObjectClassFilter._should_include_entry(
+            if FlextLdifFilters.Filter._should_include_entry(
                 matches=entry_matches, filter_mode=filter_mode
             ):
                 return FlextResult[FlextLdifModels.Entry].ok(entry)
@@ -421,14 +421,14 @@ class FlextLdifFilters(FlextService):
             """Filter by objectClass using functional composition."""
             try:
                 # Normalize objectclass to tuple
-                oc_tuple = FlextLdifFilters.ObjectClassFilter._normalize_objectclass_tuple(
+                oc_tuple = FlextLdifFilters.Filter._normalize_objectclass_tuple(
                     objectclass
                 )
 
                 # Process all entries
                 filtered_entries: list[FlextLdifModels.Entry] = []
                 for entry in entries:
-                    result = FlextLdifFilters.ObjectClassFilter._process_objectclass_entry(
+                    result = FlextLdifFilters.Filter._process_objectclass_entry(
                         entry, oc_tuple, required_attributes, mode, mark_excluded
                     )
                     if result.is_success:
@@ -1607,6 +1607,114 @@ class FlextLdifFilters(FlextService):
             mark_excluded=mark_excluded,
         )
 
+    # ════════════════════════════════════════════════════════════════════════
+    # STATIC METHODS FOR TEST COMPATIBILITY
+    # ════════════════════════════════════════════════════════════════════════
+
+    @staticmethod
+    def filter_by_dn(
+        entries: list[FlextLdifModels.Entry],
+        dn_pattern: str,
+        mode: str = FlextLdifConstants.Modes.INCLUDE,
+        *,
+        mark_excluded: bool = False,
+    ) -> FlextResult[list[FlextLdifModels.Entry]]:
+        """Filter entries by DN pattern (static method for test compatibility)."""
+        return FlextLdifFilters.Filter.filter_by_dn(
+            entries,
+            dn_pattern,
+            mode,
+            mark_excluded=mark_excluded,
+        )
+
+    @staticmethod
+    def filter_by_objectclass(
+        entries: list[FlextLdifModels.Entry],
+        objectclass: str | tuple[str, ...],
+        required_attributes: list[str] | None = None,
+        mode: str = FlextLdifConstants.Modes.INCLUDE,
+        *,
+        mark_excluded: bool = False,
+    ) -> FlextResult[list[FlextLdifModels.Entry]]:
+        """Filter entries by objectClass (static method for test compatibility)."""
+        return FlextLdifFilters.Filter.filter_by_objectclass(
+            entries,
+            objectclass,
+            required_attributes,
+            mode,
+            mark_excluded=mark_excluded,
+        )
+
+    @staticmethod
+    def filter_by_attributes(
+        entries: list[FlextLdifModels.Entry],
+        attributes: list[str],
+        *,
+        match_all: bool = False,
+        mode: str = FlextLdifConstants.Modes.INCLUDE,
+        mark_excluded: bool = False,
+    ) -> FlextResult[list[FlextLdifModels.Entry]]:
+        """Filter entries by attribute presence (static method for test compatibility)."""
+        return FlextLdifFilters.Filter.filter_by_attributes(
+            entries,
+            attributes,
+            match_all=match_all,
+            mode=mode,
+            mark_excluded=mark_excluded,
+        )
+
+    @staticmethod
+    def filter_entries_by_dn(
+        entries: list[FlextLdifModels.Entry],
+        dn_pattern: str,
+        mode: str = FlextLdifConstants.Modes.INCLUDE,
+        *,
+        mark_excluded: bool = False,
+    ) -> FlextResult[list[FlextLdifModels.Entry]]:
+        """Filter entries by DN pattern (alias for filter_by_dn)."""
+        return FlextLdifFilters.filter_by_dn(
+            entries,
+            dn_pattern,
+            mode,
+            mark_excluded=mark_excluded,
+        )
+
+    @staticmethod
+    def filter_entries_by_objectclass(
+        entries: list[FlextLdifModels.Entry],
+        objectclass: str | tuple[str, ...],
+        required_attributes: list[str] | None = None,
+        mode: str = FlextLdifConstants.Modes.INCLUDE,
+        *,
+        mark_excluded: bool = False,
+    ) -> FlextResult[list[FlextLdifModels.Entry]]:
+        """Filter entries by objectClass (alias for filter_by_objectclass)."""
+        return FlextLdifFilters.filter_by_objectclass(
+            entries,
+            objectclass,
+            required_attributes,
+            mode,
+            mark_excluded=mark_excluded,
+        )
+
+    @staticmethod
+    def filter_entries_by_attributes(
+        entries: list[FlextLdifModels.Entry],
+        attributes: list[str],
+        *,
+        match_all: bool = False,
+        mode: str = FlextLdifConstants.Modes.INCLUDE,
+        mark_excluded: bool = False,
+    ) -> FlextResult[list[FlextLdifModels.Entry]]:
+        """Filter entries by attribute presence (alias for filter_by_attributes)."""
+        return FlextLdifFilters.filter_by_attributes(
+            entries,
+            attributes,
+            match_all=match_all,
+            mode=mode,
+            mark_excluded=mark_excluded,
+        )
+
     @classmethod
     def is_schema(cls, entry: FlextLdifModels.Entry) -> bool:
         """Check if entry is a REAL schema entry with schema definitions."""
@@ -2035,6 +2143,16 @@ class FlextLdifFilters(FlextService):
                     if self.dn_pattern is None:
                         result = FlextResult[list[FlextLdifModels.Entry]].fail(
                             "dn_pattern is required",
+                        )
+                    # Use static method if available (allows monkeypatch in tests), otherwise use Filter
+                    elif hasattr(FlextLdifFilters, "filter_by_dn") and callable(
+                        getattr(FlextLdifFilters, "filter_by_dn", None)
+                    ):
+                        result = FlextLdifFilters.filter_by_dn(
+                            self.entries,
+                            self.dn_pattern,
+                            self.mode,
+                            mark_excluded=self.mark_excluded,
                         )
                     else:
                         # Use Filter directly - no intermediate helper

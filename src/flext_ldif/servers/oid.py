@@ -1382,6 +1382,18 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                 FlextResult with RFC-compliant Acl model
 
             """
+            # Check if this is an OUD ACI format ACL (aci:)
+            normalized = acl_line.strip()
+            if normalized.startswith("aci:"):
+                # This is an OUD ACI format ACL - try to parse it using OUD parser
+                # We need to create a temporary OUD quirk to parse it
+                from flext_ldif.servers.oud import FlextLdifServersOud
+
+                oud_quirk = FlextLdifServersOud.Acl()
+                oud_parse_result = oud_quirk.parse(acl_line)
+                if oud_parse_result.is_success:
+                    # OUD parser succeeded - return the result (with permissions preserved)
+                    return oud_parse_result
             # Always try parent's _parse_acl first (RFC format)
             parent_result = super()._parse_acl(acl_line)
 
@@ -1569,8 +1581,13 @@ class FlextLdifServersOid(FlextLdifServersRfc):
             )
 
             # If raw_acl is available and already in OID format, use it
-            if acl_data.raw_acl and acl_data.raw_acl.startswith(
-                FlextLdifServersOid.Constants.ORCLACI + ":",
+            # Type guard: ensure raw_acl is a string
+            if (
+                acl_data.raw_acl
+                and isinstance(acl_data.raw_acl, str)
+                and acl_data.raw_acl.startswith(
+                    FlextLdifServersOid.Constants.ORCLACI + ":",
+                )
             ):
                 return FlextResult[str].ok(acl_data.raw_acl)
 
@@ -1615,6 +1632,20 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                 orclaci_str = " ".join(acl_parts)
 
             return FlextResult[str].ok(orclaci_str)
+
+        def write(self, acl_data: FlextLdifModels.Acl) -> FlextResult[str]:
+            """Write ACL data to OID orclaci format.
+
+            Routes to _write_acl() internally.
+
+            Args:
+                acl_data: Acl model
+
+            Returns:
+                FlextResult with OID orclaci formatted string
+
+            """
+            return self._write_acl(acl_data)
 
         def can_handle_attribute(
             self,
@@ -2071,7 +2102,11 @@ class FlextLdifServersOid(FlextLdifServersRfc):
 
             # Metadata is guaranteed to be non-None after creation above
             # Type narrowing: entry.metadata is non-None after model_copy
-            assert entry.metadata is not None, "Metadata must be created above"
+            # Defensive check with proper error instead of assert
+            if entry.metadata is None:
+                return FlextResult.fail(
+                    "Internal error: metadata creation failed in OID entry parser"
+                )
             # Inject validation rules via metadata.extensions (DI pattern)
             entry.metadata.extensions["validation_rules"] = validation_rules
 

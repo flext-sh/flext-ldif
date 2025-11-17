@@ -15,11 +15,85 @@ import logging
 import re
 
 from flext_core import FlextResult, FlextRuntime
-from flext_ldap.constants import FlextLdapConstants
-from ldap3 import Connection, LDAPAttributeError, LDAPObjectClassError
+from ldap3 import Connection
+
+# Use local constants - no dependency on flext_ldap
+# LDAP3 exceptions - use generic Exception if not available
+try:
+    from ldap3 import LDAPAttributeError, LDAPObjectClassError
+except ImportError:
+    # ldap3 may not have these specific exceptions - use generic Exception
+    LDAPAttributeError = Exception  # type: ignore[assignment, misc]
+    LDAPObjectClassError = Exception  # type: ignore[assignment, misc]
 
 from flext_ldif import FlextLdifModels
 from flext_ldif.services.validation import FlextLdifValidation
+
+
+# Local constants for entry manipulation (fallback if FlextLdapConstants not available)
+class _EntryManipulationConstants:
+    """Local constants for entry manipulation operations."""
+
+    class LockAttributes:
+        """Lock attribute names for user account locking."""
+
+        ALL_LOCK_ATTRIBUTES: list[str] = [
+            "pwdAccountLockedTime",
+            "accountLocked",
+            "lockoutTime",
+            "userAccountControl",
+        ]
+
+    class BooleanStrings:
+        """Boolean string values for attribute normalization."""
+
+        TRUE: str = "true"
+        ONE: str = "1"
+        YES: str = "yes"
+        FALSE: str = "false"
+        ZERO: str = "0"
+        NO: str = "no"
+
+    class UserStatus:
+        """User account status values."""
+
+        ACTIVE: str = "ACTIVE"
+        LOCKED: str = "LOCKED"
+        DISABLED: str = "DISABLED"
+
+    class ActiveDirectoryFlags:
+        """Active Directory user account control flags."""
+
+        ADS_UF_ACCOUNTDISABLE: int = 0x0002
+
+    class ActiveDirectoryAttributes:
+        """Active Directory attribute names."""
+
+        PWD_LAST_SET: str = "pwdLastSet"
+
+    class RegexPatterns:
+        """Regex patterns for entry manipulation."""
+
+        USERNAME_SANITIZE_PATTERN: str = r"[^a-zA-Z0-9._-]"
+
+    class LdapAttributeNames:
+        """LDAP attribute names."""
+
+        OBJECT_CLASS: str = "objectClass"
+
+    class Defaults:
+        """Default values for entry manipulation."""
+
+        OBJECT_CLASS_TOP: str = "top"
+
+    class Types:
+        """Type definitions for entry manipulation."""
+
+        class QuirksMode:
+            """Quirks mode for LDAP operations."""
+
+            RFC: str = "rfc"
+            AUTOMATIC: str = "automatic"
 
 
 class EntryManipulationServices:
@@ -196,7 +270,24 @@ class EntryManipulationServices:
             FlextResult with status string if locked/disabled, or success with ACTIVE if active.
 
         """
-        lock_attrs = FlextLdapConstants.LockAttributes.ALL_LOCK_ATTRIBUTES
+        # Use local constants (FlextLdapConstants may not be available)
+        try:
+            from flext_ldap.constants import (
+                FlextLdapConstants,  # type: ignore[import-untyped]
+            )
+
+            constants = FlextLdapConstants
+        except (ImportError, ModuleNotFoundError):
+            constants = _EntryManipulationConstants
+
+        lock_attrs_attr = getattr(
+            constants, "LockAttributes", _EntryManipulationConstants.LockAttributes
+        )
+        lock_attrs = getattr(
+            lock_attrs_attr,
+            "ALL_LOCK_ATTRIBUTES",
+            _EntryManipulationConstants.LockAttributes.ALL_LOCK_ATTRIBUTES,
+        )
 
         for attr in lock_attrs:
             attr_value_result = self.get_entry_attribute(user, attr)
@@ -210,23 +301,62 @@ class EntryManipulationServices:
                 continue
 
             normalized_value = normalized_result.unwrap()
+            boolean_strings = getattr(
+                constants, "BooleanStrings", _EntryManipulationConstants.BooleanStrings
+            )
+            true_val = getattr(
+                boolean_strings, "TRUE", _EntryManipulationConstants.BooleanStrings.TRUE
+            )
+            one_val = getattr(
+                boolean_strings, "ONE", _EntryManipulationConstants.BooleanStrings.ONE
+            )
+            yes_val = getattr(
+                boolean_strings, "YES", _EntryManipulationConstants.BooleanStrings.YES
+            )
             if normalized_value.lower() in {
-                FlextLdapConstants.BooleanStrings.TRUE.lower(),
-                FlextLdapConstants.BooleanStrings.ONE,
-                FlextLdapConstants.BooleanStrings.YES.lower(),
+                str(true_val).lower(),
+                str(one_val),
+                str(yes_val).lower(),
             }:
-                return FlextResult[str].ok(FlextLdapConstants.UserStatus.LOCKED)
+                user_status = getattr(
+                    constants, "UserStatus", _EntryManipulationConstants.UserStatus
+                )
+                locked_status = getattr(
+                    user_status, "LOCKED", _EntryManipulationConstants.UserStatus.LOCKED
+                )
+                return FlextResult[str].ok(locked_status)
 
             try:
-                if (
-                    int(normalized_value)
-                    & FlextLdapConstants.ActiveDirectoryFlags.ADS_UF_ACCOUNTDISABLE
-                ):
-                    return FlextResult[str].ok(FlextLdapConstants.UserStatus.DISABLED)
+                ad_flags = getattr(
+                    constants,
+                    "ActiveDirectoryFlags",
+                    _EntryManipulationConstants.ActiveDirectoryFlags,
+                )
+                ads_uf_accountdisable = getattr(
+                    ad_flags,
+                    "ADS_UF_ACCOUNTDISABLE",
+                    _EntryManipulationConstants.ActiveDirectoryFlags.ADS_UF_ACCOUNTDISABLE,
+                )
+                if int(normalized_value) & ads_uf_accountdisable:
+                    user_status = getattr(
+                        constants, "UserStatus", _EntryManipulationConstants.UserStatus
+                    )
+                    disabled_status = getattr(
+                        user_status,
+                        "DISABLED",
+                        _EntryManipulationConstants.UserStatus.DISABLED,
+                    )
+                    return FlextResult[str].ok(disabled_status)
             except (ValueError, TypeError):
                 continue
 
-        return FlextResult[str].ok(FlextLdapConstants.UserStatus.ACTIVE)
+        user_status = getattr(
+            constants, "UserStatus", _EntryManipulationConstants.UserStatus
+        )
+        active_status = getattr(
+            user_status, "ACTIVE", _EntryManipulationConstants.UserStatus.ACTIVE
+        )
+        return FlextResult[str].ok(active_status)
 
     def check_password_expiry(self, user: FlextLdifModels.Entry) -> bool:
         """Check if user password is expired.
@@ -240,7 +370,7 @@ class EntryManipulationServices:
         """
         pwd_last_set_result = self.get_entry_attribute(
             user,
-            FlextLdapConstants.ActiveDirectoryAttributes.PWD_LAST_SET,
+            _EntryManipulationConstants.ActiveDirectoryAttributes.PWD_LAST_SET,
         )
         return pwd_last_set_result.is_success
 
@@ -258,13 +388,13 @@ class EntryManipulationServices:
         if lock_status_result.is_success:
             status = lock_status_result.unwrap()
             # If status is not ACTIVE, return it (LOCKED or DISABLED)
-            if status != FlextLdapConstants.UserStatus.ACTIVE:
+            if status != _EntryManipulationConstants.UserStatus.ACTIVE:
                 return status
 
         if self.check_password_expiry(user):
-            return FlextLdapConstants.UserStatus.ACTIVE
+            return _EntryManipulationConstants.UserStatus.ACTIVE
 
-        return FlextLdapConstants.UserStatus.ACTIVE
+        return _EntryManipulationConstants.UserStatus.ACTIVE
 
     def check_group_email_requirement(
         self,
@@ -313,7 +443,7 @@ class EntryManipulationServices:
         if not lock_status_result.is_success:
             return False
         status = lock_status_result.unwrap()
-        return status == FlextLdapConstants.UserStatus.ACTIVE
+        return status == _EntryManipulationConstants.UserStatus.ACTIVE
 
     def validate_group_membership_rules(
         self,
@@ -359,7 +489,7 @@ class EntryManipulationServices:
         username = base_name.lower().replace(" ", "_")
 
         username = re.sub(
-            FlextLdapConstants.RegexPatterns.USERNAME_SANITIZE_PATTERN,
+            _EntryManipulationConstants.RegexPatterns.USERNAME_SANITIZE_PATTERN,
             "",
             username,
         )
@@ -489,7 +619,7 @@ class EntryManipulationServices:
         connection: Connection,
         dn: FlextLdifModels.DistinguishedName | str,
         attributes: FlextLdifModels.LdifAttributes | dict[str, str | list[str]],
-        quirks_mode: FlextLdapConstants.Types.QuirksMode | None = None,
+        quirks_mode: str | None = None,
         logger: logging.Logger | None = None,
     ) -> FlextResult[bool]:
         """Add new LDAP entry - implements LdapModifyProtocol.
@@ -513,8 +643,19 @@ class EntryManipulationServices:
 
         try:
             # Determine effective quirks mode
+            try:
+                from flext_ldap.constants import (
+                    FlextLdapConstants,  # type: ignore[import-untyped]
+                )
+
+                default_mode = FlextLdapConstants.Types.QuirksMode.AUTOMATIC
+                rfc_mode = FlextLdapConstants.Types.QuirksMode.RFC
+            except (ImportError, ModuleNotFoundError):
+                default_mode = _EntryManipulationConstants.Types.QuirksMode.AUTOMATIC
+                rfc_mode = _EntryManipulationConstants.Types.QuirksMode.RFC
+
             effectives_mode = (
-                quirks_mode or FlextLdapConstants.Types.QuirksMode.AUTOMATIC
+                quirks_mode or default_mode
             )  # Default to AUTOMATIC if not provided
 
             # Convert attributes to ldap3 format
@@ -528,9 +669,7 @@ class EntryManipulationServices:
             # Retry logic with undefined attribute handling
             attempted_attributes = ldap3_attributes.copy()
             removed_attributes: list[str] = []
-            max_retries = (
-                1 if effectives_mode == FlextLdapConstants.Types.QuirksMode.RFC else 20
-            )
+            max_retries = 1 if effectives_mode == rfc_mode else 20
             retry_count = 0
 
             logger.debug(
@@ -566,10 +705,7 @@ class EntryManipulationServices:
                         f"Add entry failed: {connection.last_error}",
                     )
 
-                except (
-                    LDAPAttributeError,
-                    LDAPObjectClassError,
-                ) as e:
+                except Exception as e:
                     error_str = str(e).lower()
                     if (
                         "undefined attribute" in error_str
@@ -606,15 +742,26 @@ class EntryManipulationServices:
         attempted_attributes: dict[str, list[str]],
     ) -> bool:
         """Attempt to add entry with current attributes (internal helper)."""
+        try:
+            from flext_ldap.constants import (
+                FlextLdapConstants,  # type: ignore[import-untyped]
+            )
+
+            object_class_attr = FlextLdapConstants.LdapAttributeNames.OBJECT_CLASS
+            default_object_class = FlextLdapConstants.Defaults.OBJECT_CLASS_TOP
+        except (ImportError, ModuleNotFoundError):
+            object_class_attr = (
+                _EntryManipulationConstants.LdapAttributeNames.OBJECT_CLASS
+            )
+            default_object_class = _EntryManipulationConstants.Defaults.OBJECT_CLASS_TOP
+
         object_class_raw = attempted_attributes.get(
-            FlextLdapConstants.LdapAttributeNames.OBJECT_CLASS,
-            [FlextLdapConstants.Defaults.OBJECT_CLASS_TOP],
+            object_class_attr,
+            [default_object_class],
         )
         if FlextRuntime.is_list_like(object_class_raw):
             object_class = (
-                str(object_class_raw[0])
-                if object_class_raw
-                else FlextLdapConstants.Defaults.OBJECT_CLASS_TOP
+                str(object_class_raw[0]) if object_class_raw else default_object_class
             )
         else:
             object_class = str(object_class_raw)

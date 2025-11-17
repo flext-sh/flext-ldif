@@ -1105,8 +1105,8 @@ class FlextLdifServersOud(FlextLdifServersRfc):
         ) -> FlextResult[str]:
             """Write schema entry in OUD modify-add format.
 
-            Generates LDIF with changetype: modify and add: blocks.
-            CRITICAL: One add block PER SCHEMA VALUE, not per type.
+            Generates LDIF with ONE modify operation PER schema element.
+            CRITICAL: Each schema value gets its OWN complete entry.
             Ordered by OID numerically, with whitelist filtering.
 
             Example output:
@@ -1115,13 +1115,16 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             changetype: modify
             add: attributeTypes
             attributeTypes: ( 2.16.840.1.113894.1.1.321 NAME ... )
-            -
+
+            dn: cn=subschemasubentry
+            changetype: modify
             add: attributeTypes
             attributeTypes: ( 2.16.840.1.113894.1.1.322 NAME ... )
-            -
+
+            dn: cn=subschemasubentry
+            changetype: modify
             add: objectClasses
             objectClasses: ( 2.16.840.1.113894.1.2.9 NAME ... )
-            -
             ```
 
             Whitelist filtering:
@@ -1137,7 +1140,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                     Should be passed from migration configuration.
 
             Returns:
-                FlextResult with LDIF string in OUD modify-add format
+                FlextResult with LDIF string (multiple entries, one per schema element)
 
             """
             # INFO: Log entry to track method execution (use INFO so it appears in migration logs)
@@ -1162,23 +1165,14 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 },
             )
 
-            # Lazy import for optional external dependency
-            ldif_lines: list[str] = []
-
             # DN line (required) - Entry already RFC-compliant from OID normalization
             if not (entry_data.dn and entry_data.dn.value):
                 return FlextResult[str].fail("Entry DN is required for LDIF output")
 
-            # Entry.dn is already RFC-compliant (cn=schema) from OID parser normalization
-            # No conversion needed - use Entry.dn directly
-            ldif_lines.extend([
-                f"dn: {entry_data.dn.value}",
-                "changetype: modify",
-            ])
-
             # Get attributes
             if not entry_data.attributes or not entry_data.attributes.attributes:
-                ldif_text = "\n".join(ldif_lines) + "\n"
+                # Empty entry - create minimal LDIF
+                ldif_text = f"dn: {entry_data.dn.value}\nchangetype: modify\n\n"
                 return FlextResult[str].ok(ldif_text)
 
             attrs_dict = entry_data.attributes.attributes
@@ -1196,7 +1190,8 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 "matchingRuleUse",
             ]
 
-            first_block = True
+            # Collect all entries (one per schema element)
+            all_entries: list[str] = []
 
             # Process each schema type in order
             for schema_type in schema_types_order:
@@ -1380,19 +1375,22 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                             value,
                         )
 
-                    first_block = self._add_ldif_block(
-                        ldif_lines,
-                        schema_type,
-                        cleaned_value,
-                        is_first_block=first_block,
+                    # Create complete entry for this schema element
+                    entry_text = (
+                        f"dn: {entry_data.dn.value}\n"
+                        "changetype: modify\n"
+                        f"add: {schema_type}\n"
+                        f"{schema_type}: {cleaned_value}\n"
                     )
+                    all_entries.append(entry_text)
 
-            # Final separator (if we added any blocks)
-            if not first_block and ldif_lines[-1] != "-":
-                ldif_lines.append("-")
+            # If no entries were created, return empty modify entry
+            if not all_entries:
+                ldif_text = f"dn: {entry_data.dn.value}\nchangetype: modify\n\n"
+                return FlextResult[str].ok(ldif_text)
 
-            # Join with newlines and ensure proper LDIF formatting
-            ldif_text = "\n".join(ldif_lines)
+            # Join all entries with blank line separator
+            ldif_text = "\n".join(all_entries)
             if ldif_text and not ldif_text.endswith("\n"):
                 ldif_text += "\n"
 
@@ -1598,12 +1596,21 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             for attr_name, attr_values in attrs_dict.items():
                 # Handle both list and single value
                 # Type narrowing: attr_values is object, need to check if it's a list
+                # Convert to list[str] - handle bytes conversion
+                values_list: list[str]
                 if isinstance(attr_values, list):
-                    # Already a list, use as-is
-                    values_list: list[object] = attr_values
+                    # Convert bytes to str if needed
+                    values_list = [
+                        v.decode("utf-8", errors="replace")
+                        if isinstance(v, bytes)
+                        else str(v)
+                        for v in attr_values
+                    ]
+                # Single value - convert bytes to str if needed
+                elif isinstance(attr_values, bytes):
+                    values_list = [attr_values.decode("utf-8", errors="replace")]
                 else:
-                    # Single value, wrap in list
-                    values_list = [attr_values]
+                    values_list = [str(attr_values)]
                 corrected_values: list[str] = []
 
                 for value in values_list:
@@ -2264,13 +2271,35 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             FlextResult with OUD ACL Pydantic model
 
             """
+            # Type guard: ensure acl_line is a string
+            if not isinstance(acl_line, str):
+                return FlextResult[FlextLdifModels.Acl].fail(
+                    f"ACL line must be a string, got {type(acl_line).__name__}"
+                )
             normalized = acl_line.strip()
 
             # Detect format: RFC 4876 ACI or ds-privilege-name
             if normalized.startswith(FlextLdifServersOud.Constants.ACL_ACI_PREFIX):
                 # RFC 4876 ACI format
                 return self._parse_aci_format(acl_line)
-            # ds-privilege-name format (simple privilege names)
+            # Check if this is an OID format ACL (orclaci: or orclentrylevelaci:)
+            if normalized.startswith(("orclaci:", "orclentrylevelaci:")):
+                # This is an OID format ACL - try to parse it using OID parser
+                # We need to create a temporary OID quirk to parse it
+                from flext_ldif.servers.oid import FlextLdifServersOid
+
+                oid_quirk = FlextLdifServersOid.Acl()
+                oid_parse_result = oid_quirk.parse(acl_line)
+                if oid_parse_result.is_success:
+                    # OID parser succeeded - return the result (with permissions preserved)
+                    return oid_parse_result
+            # Try RFC parser first for other non-ACI formats
+            # This handles cases where other formats are written and need to be parsed
+            rfc_result = super()._parse_acl(acl_line)
+            if rfc_result.is_success:
+                # RFC parser succeeded - return the result
+                return rfc_result
+            # If RFC parser fails, try ds-privilege-name format (simple privilege names)
             return self._parse_ds_privilege_name(normalized)
 
         def _parse_aci_format(self, acl_line: str) -> FlextResult[FlextLdifModels.Acl]:
@@ -2289,11 +2318,22 @@ class FlextLdifServersOud(FlextLdifServersRfc):
 
             def validate_aci_format(acl_line: str) -> FlextResult[str]:
                 """Validate and extract ACI content using monadic validation."""
-                if not acl_line.startswith(
+                # Handle multiline ACI: check if first line starts with aci:
+                first_line = acl_line.split("\n", maxsplit=1)[0].strip()
+                if not first_line.startswith(
                     FlextLdifServersOud.Constants.ACL_ACI_PREFIX,
                 ):
                     return FlextResult[str].fail("Not an OUD ACI format")
-                aci_content = acl_line.split(":", 1)[1].strip()
+                # Preserve multiline format: remove "aci:" prefix but keep newlines
+                if "\n" in acl_line:
+                    # Multiline ACI: remove "aci:" from first line only, preserve rest
+                    lines = acl_line.split("\n")
+                    first_line_content = lines[0].split(":", 1)[1].strip()
+                    # Reconstruct with preserved newlines
+                    aci_content = first_line_content + "\n" + "\n".join(lines[1:])
+                else:
+                    # Single line ACI
+                    aci_content = acl_line.split(":", 1)[1].strip()
                 return FlextResult[str].ok(aci_content)
 
             def initialize_parse_context() -> dict[str, object]:
@@ -2313,6 +2353,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 """Extract all ACI components using functional composition."""
                 # Store aci_content in context for later use
                 context["aci_content"] = aci_content
+                # Preserve original acl_line (may be multiline) for raw_acl
                 context["original_acl_line"] = acl_line
 
                 # Extract target attributes
@@ -2388,12 +2429,12 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                     target=None,  # No target in ds-privilege-name format
                     subject=None,  # No subject in ds-privilege-name format
                     permissions=None,  # No traditional read/write/add permissions
-                    server_type="oud",  # OUD server type
+                    server_type=FlextLdifServersOud.Constants.SERVER_TYPE,  # OUD server type from Constants
                     raw_line=privilege_name,  # Original line
                     raw_acl=privilege_name,  # Raw ACL string
                     validation_violations=[],  # No validation issues
                     metadata=FlextLdifModels.QuirkMetadata(
-                        quirk_type="oud",
+                        quirk_type=FlextLdifServersOud.Constants.SERVER_TYPE,  # OUD quirk type from Constants
                         extensions={
                             "ds_privilege_name": privilege_name,
                             "format_type": "ds-privilege-name",
@@ -2573,11 +2614,29 @@ class FlextLdifServersOud(FlextLdifServersRfc):
 
                 # Create ACL model using functional composition
                 acl_line = context.get("original_acl_line", "")
+                
+                # Parse targetattr: split by "||" separator if present, otherwise use as single attribute
+                targetattr_str = cast("str", context["targetattr"])
+                if targetattr_str and "||" in targetattr_str:
+                    # Multiple attributes: "cn || sn || mail" -> ["cn", "sn", "mail"]
+                    target_attributes = [
+                        attr.strip() for attr in targetattr_str.split("||") if attr.strip()
+                    ]
+                    target_dn = "*"  # Multiple attributes means entry-level, not DN-specific
+                elif targetattr_str and targetattr_str != "*":
+                    # Single attribute: "cn" -> ["cn"]
+                    target_attributes = [targetattr_str.strip()]
+                    target_dn = "*"
+                else:
+                    # Wildcard: "*" -> []
+                    target_attributes = []
+                    target_dn = "*"
+                
                 acl = FlextLdifModels.Acl(
                     name=cast("str", context["acl_name"]),
                     target=FlextLdifModels.AclTarget(
-                        target_dn=cast("str", context["targetattr"]),
-                        attributes=[],
+                        target_dn=target_dn,
+                        attributes=target_attributes,
                     ),
                     subject=FlextLdifModels.AclSubject(
                         subject_type=subject_type,
@@ -2630,12 +2689,23 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 Formatted target attributes string
 
             """
-            if acl_data.target and acl_data.target.target_dn:
+            if not acl_data.target:
+                return '(targetattr="*")'
+            
+            # Use attributes list if available (from OID conversion or multi-attribute ACI)
+            if acl_data.target.attributes:
+                # Multiple attributes: join with " || " separator
+                target_attr_str = " || ".join(acl_data.target.attributes)
+                return f'(targetattr="{target_attr_str}")'
+            
+            # Fallback to target_dn if no attributes list
+            if acl_data.target.target_dn and acl_data.target.target_dn != "*":
+                # Single attribute or DN stored in target_dn
                 target = acl_data.target.target_dn
-            else:
-                target = "*"
-
-            return f'(targetattr="{target}")'
+                return f'(targetattr="{target}")'
+            
+            # Default: wildcard
+            return '(targetattr="*")'
 
         def _build_aci_permissions(
             self,
@@ -3095,28 +3165,51 @@ class FlextLdifServersOud(FlextLdifServersRfc):
 
             # Convert boolean attributes (0/1 → TRUE/FALSE)
             if attr_lower in FlextLdifServersOud.Constants.BOOLEAN_ATTRIBUTES:
-                attr_dict = {
-                    attr_name: (
-                        attr_values
-                        if isinstance(attr_values, list)
-                        else [str(attr_values)]
-                    ),
+                # Convert to list[str] - fast-fail if cannot convert
+                values_list: list[str]
+                if isinstance(attr_values, list):
+                    # Convert bytes to str if needed
+                    values_list = [
+                        v.decode("utf-8", errors="replace")
+                        if isinstance(v, bytes)
+                        else str(v)
+                        for v in attr_values
+                    ]
+                # Single value - convert bytes to str if needed
+                elif isinstance(attr_values, bytes):
+                    values_list = [attr_values.decode("utf-8", errors="replace")]
+                else:
+                    values_list = [str(attr_values)]
+
+                # Type annotation matches function signature - values_list is list[str]
+                # Function accepts dict[str, list[str] | list[bytes] | bytes | str]
+                # Convert to compatible type
+                attr_dict: dict[str, list[str] | list[bytes] | bytes | str] = {
+                    attr_name: values_list
                 }
                 converted_dict = FlextLdifUtilities.Entry.convert_boolean_attributes(
                     attr_dict,
                     set(FlextLdifServersOud.Constants.BOOLEAN_ATTRIBUTES),
                 )
-                return converted_dict.get(attr_name, attr_dict[attr_name])
+                return converted_dict.get(attr_name, values_list)
 
             # Validate telephone numbers (using Constants to avoid hard-coding)
             if (
                 attr_lower == "telephonenumber"
             ):  # Note: this is a standard RFC attribute name
-                # Ensure attr_values is list[str] for validation
-                values_list: list[object] = (
-                    attr_values if isinstance(attr_values, list) else [attr_values]
-                )
-                telephone_values = [str(v) for v in values_list]
+                # Ensure attr_values is list[str] for validation - convert bytes to str
+                if isinstance(attr_values, list):
+                    telephone_values = [
+                        v.decode("utf-8", errors="replace")
+                        if isinstance(v, bytes)
+                        else str(v)
+                        for v in attr_values
+                    ]
+                # Single value - convert bytes to str if needed
+                elif isinstance(attr_values, bytes):
+                    telephone_values = [attr_values.decode("utf-8", errors="replace")]
+                else:
+                    telephone_values = [str(attr_values)]
                 valid_numbers = FlextLdifUtilities.Entry.validate_telephone_numbers(
                     telephone_values,
                 )
@@ -3436,8 +3529,8 @@ class FlextLdifServersOud(FlextLdifServersRfc):
         ) -> FlextResult[str]:
             """Write schema entry in OUD modify-add format.
 
-            Generates LDIF with changetype: modify and add: blocks.
-            CRITICAL: One add block PER SCHEMA VALUE, not per type.
+            Generates LDIF with ONE modify operation PER schema element.
+            CRITICAL: Each schema value gets its OWN complete entry.
             Ordered by OID numerically, with whitelist filtering.
 
             Example output:
@@ -3446,13 +3539,16 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             changetype: modify
             add: attributeTypes
             attributeTypes: ( 2.16.840.1.113894.1.1.321 NAME ... )
-            -
+
+            dn: cn=subschemasubentry
+            changetype: modify
             add: attributeTypes
             attributeTypes: ( 2.16.840.1.113894.1.1.322 NAME ... )
-            -
+
+            dn: cn=subschemasubentry
+            changetype: modify
             add: objectClasses
             objectClasses: ( 2.16.840.1.113894.1.2.9 NAME ... )
-            -
             ```
 
             Whitelist filtering:
@@ -3468,7 +3564,7 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                     Should be passed from migration configuration.
 
             Returns:
-                FlextResult with LDIF string in OUD modify-add format
+                FlextResult with LDIF string (multiple entries, one per schema element)
 
             """
             # INFO: Log entry to track method execution (use INFO so it appears in migration logs)
@@ -3493,23 +3589,14 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 },
             )
 
-            # Lazy import for optional external dependency
-            ldif_lines: list[str] = []
-
             # DN line (required) - Entry already RFC-compliant from OID normalization
             if not (entry_data.dn and entry_data.dn.value):
                 return FlextResult[str].fail("Entry DN is required for LDIF output")
 
-            # Entry.dn is already RFC-compliant (cn=schema) from OID parser normalization
-            # No conversion needed - use Entry.dn directly
-            ldif_lines.extend([
-                f"dn: {entry_data.dn.value}",
-                "changetype: modify",
-            ])
-
             # Get attributes
             if not entry_data.attributes or not entry_data.attributes.attributes:
-                ldif_text = "\n".join(ldif_lines) + "\n"
+                # Empty entry - create minimal LDIF
+                ldif_text = f"dn: {entry_data.dn.value}\nchangetype: modify\n\n"
                 return FlextResult[str].ok(ldif_text)
 
             attrs_dict = entry_data.attributes.attributes
@@ -3527,7 +3614,8 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                 "matchingRuleUse",
             ]
 
-            first_block = True
+            # Collect all entries (one per schema element)
+            all_entries: list[str] = []
 
             # Process each schema type in order
             for schema_type in schema_types_order:
@@ -3711,19 +3799,22 @@ class FlextLdifServersOud(FlextLdifServersRfc):
                             value,
                         )
 
-                    first_block = self._add_ldif_block(
-                        ldif_lines,
-                        schema_type,
-                        cleaned_value,
-                        is_first_block=first_block,
+                    # Create complete entry for this schema element
+                    entry_text = (
+                        f"dn: {entry_data.dn.value}\n"
+                        "changetype: modify\n"
+                        f"add: {schema_type}\n"
+                        f"{schema_type}: {cleaned_value}\n"
                     )
+                    all_entries.append(entry_text)
 
-            # Final separator (if we added any blocks)
-            if not first_block and ldif_lines[-1] != "-":
-                ldif_lines.append("-")
+            # If no entries were created, return empty modify entry
+            if not all_entries:
+                ldif_text = f"dn: {entry_data.dn.value}\nchangetype: modify\n\n"
+                return FlextResult[str].ok(ldif_text)
 
-            # Join with newlines and ensure proper LDIF formatting
-            ldif_text = "\n".join(ldif_lines)
+            # Join all entries with blank line separator
+            ldif_text = "\n".join(all_entries)
             if ldif_text and not ldif_text.endswith("\n"):
                 ldif_text += "\n"
 
@@ -4357,12 +4448,21 @@ class FlextLdifServersOud(FlextLdifServersRfc):
             for attr_name, attr_values in attrs_dict.items():
                 # Handle both list and single value
                 # Type narrowing: attr_values is object, need to check if it's a list
+                # Convert to list[str] - handle bytes conversion
+                values_list: list[str]
                 if isinstance(attr_values, list):
-                    # Already a list, use as-is
-                    values_list: list[object] = attr_values
+                    # Convert bytes to str if needed
+                    values_list = [
+                        v.decode("utf-8", errors="replace")
+                        if isinstance(v, bytes)
+                        else str(v)
+                        for v in attr_values
+                    ]
+                # Single value - convert bytes to str if needed
+                elif isinstance(attr_values, bytes):
+                    values_list = [attr_values.decode("utf-8", errors="replace")]
                 else:
-                    # Single value, wrap in list
-                    values_list = [attr_values]
+                    values_list = [str(attr_values)]
                 corrected_values: list[str] = []
 
                 for value in values_list:

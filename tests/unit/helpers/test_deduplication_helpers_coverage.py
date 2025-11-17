@@ -9,13 +9,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from unittest.mock import MagicMock
-
 import pytest
 from flext_core import FlextResult
 from tests.helpers.test_deduplication_helpers import DeduplicationHelpers
 
 from flext_ldif import FlextLdifModels
+from flext_ldif.services.schema import FlextLdifSchema
 
 
 class TestBasicAssertions:
@@ -361,25 +360,25 @@ class TestServiceExecution:
 
     def test_service_execute_and_unwrap(self) -> None:
         """Test service_execute_and_unwrap."""
-        service = MagicMock()
-        service.execute.return_value = FlextResult[str].ok("result")
+        # Use real schema service instead of mock
+        service = FlextLdifSchema(server_type="rfc")
         result = DeduplicationHelpers.service_execute_and_unwrap(service)
-        assert result == "result"
+        # Schema service returns SchemaServiceStatus
+        assert result is not None
+        assert hasattr(result, "service")
+        assert result.service == "SchemaService"
 
     def test_service_execute_and_assert_fields(self) -> None:
         """Test service_execute_and_assert_fields."""
-        service = MagicMock()
-        status = MagicMock()
-        status.service = "TestService"
-        status.status = "operational"
-        service.execute.return_value = FlextResult.ok(status)
-
+        # Use real schema service instead of mock
+        service = FlextLdifSchema(server_type="rfc")
         result = DeduplicationHelpers.service_execute_and_assert_fields(
             service,
-            expected_fields={"service": "TestService", "status": "operational"},
-            expected_type=type(status),
+            expected_fields={"service": "SchemaService", "status": "operational"},
+            expected_type=FlextLdifModels.SchemaServiceStatus,
         )
-        assert result.service == "TestService"
+        assert result.service == "SchemaService"
+        assert result.status == "operational"
 
 
 class TestMetadataAssertions:
