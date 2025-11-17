@@ -469,8 +469,10 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                     ),
                     subject=FlextLdifModels.AclSubject(
                         subject_type=FlextLdifServersNovell.Constants.ACL_DEFAULT_SUBJECT_TYPE,
-                        subject_value=trustee
-                        or FlextLdifServersNovell.Constants.ACL_DEFAULT_SUBJECT_VALUE_UNKNOWN,
+                        subject_value=(
+                            trustee
+                            or FlextLdifServersNovell.Constants.ACL_DEFAULT_SUBJECT_VALUE_UNKNOWN
+                        ),
                     ),
                     permissions=FlextLdifModels.AclPermissions(
                         **FlextLdifUtilities.ACL.build_novell_permissions(

@@ -449,7 +449,13 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 oc_definition,
             )
             if sup_match:
-                sup_value = (sup_match.group(1) or sup_match.group(2)).strip()
+                # Check which group matched - no fallback with or
+                if sup_match.group(1):
+                    sup_value = sup_match.group(1).strip()
+                elif sup_match.group(2):
+                    sup_value = sup_match.group(2).strip()
+                else:
+                    sup_value = ""
                 sup = (
                     next(
                         s.strip()
@@ -481,7 +487,13 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 oc_definition,
             )
             if must_match:
-                must_value = (must_match.group(1) or must_match.group(2)).strip()
+                # Check which group matched - no fallback with or
+                if must_match.group(1):
+                    must_value = must_match.group(1).strip()
+                elif must_match.group(2):
+                    must_value = must_match.group(2).strip()
+                else:
+                    must_value = ""
                 must = [
                     m.strip()
                     for m in must_value.split(
@@ -495,7 +507,13 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 oc_definition,
             )
             if may_match:
-                may_value = (may_match.group(1) or may_match.group(2)).strip()
+                # Check which group matched - no fallback with or
+                if may_match.group(1):
+                    may_value = may_match.group(1).strip()
+                elif may_match.group(2):
+                    may_value = may_match.group(2).strip()
+                else:
+                    may_value = ""
                 may = [
                     m.strip()
                     for m in may_value.split(
@@ -514,9 +532,11 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 extensions=extensions,
             )
 
+            # Use name if available, otherwise use OID - no fallback with or
+            objectclass_name = name or oid
             return FlextResult[FlextLdifModels.SchemaObjectClass].ok(
                 FlextLdifModels.SchemaObjectClass(
-                    name=name or oid,
+                    name=objectclass_name,
                     oid=oid,
                     desc=desc,
                     sup=sup,
@@ -583,18 +603,20 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 return parent_result
             # Use original format from metadata if available
             if attr_data.metadata and attr_data.metadata.extensions.get(
-                "original_format"
+                "original_format",
             ):
                 return FlextResult[str].ok(
                     cast(
-                        "str", attr_data.metadata.extensions.get("original_format", "")
-                    )
+                        "str",
+                        attr_data.metadata.extensions.get("original_format", ""),
+                    ),
                 )
             # Format from model data
             if not attr_data.oid:
                 return FlextResult[str].fail("Attribute OID is required for writing")
-            name = attr_data.name or attr_data.oid
-            return FlextResult[str].ok(f"( {attr_data.oid} NAME '{name}' )")
+            # Use name if available, otherwise use OID - no fallback with or
+            attr_name = attr_data.name or attr_data.oid
+            return FlextResult[str].ok(f"( {attr_data.oid} NAME '{attr_name}' )")
 
         def _write_objectclass(
             self,
@@ -616,14 +638,16 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             # Use original format from metadata if available
             if oc_data.metadata and oc_data.metadata.extensions.get("original_format"):
                 return FlextResult[str].ok(
-                    cast("str", oc_data.metadata.extensions.get("original_format", ""))
+                    cast("str", oc_data.metadata.extensions.get("original_format", "")),
                 )
             # Format from model data
             if not oc_data.oid:
                 return FlextResult[str].fail("ObjectClass OID is required for writing")
-            name: str = oc_data.name or oc_data.oid
-            kind = oc_data.kind or FlextLdifConstants.Schema.STRUCTURAL
-            return FlextResult[str].ok(f"( {oc_data.oid} NAME '{name}' {kind} )")
+            # Use name if available, otherwise use OID - no fallback with or
+            oc_name: str = oc_data.name or oc_data.oid
+            # Use kind if available, otherwise use STRUCTURAL - no fallback with or
+            oc_kind = oc_data.kind or FlextLdifConstants.Schema.STRUCTURAL
+            return FlextResult[str].ok(f"( {oc_data.oid} NAME '{oc_name}' {oc_kind} )")
 
         # OVERRIDDEN METHODS (from FlextLdifServersBase.Acl)
         # These methods override the base class with relaxed/lenient logic:
@@ -746,9 +770,12 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             # Use raw_acl field from Acl model if available
             if acl_data.raw_acl and isinstance(acl_data.raw_acl, str):
                 return FlextResult[str].ok(acl_data.raw_acl)
-            # Format minimal ACL string
+            # Format minimal ACL string - use name if available, otherwise default
+            acl_name = (
+                acl_data.name or FlextLdifServersRelaxed.Constants.ACL_DEFAULT_NAME
+            )
             return FlextResult[str].ok(
-                f"{FlextLdifServersRelaxed.Constants.ACL_WRITE_PREFIX}{acl_data.name or FlextLdifServersRelaxed.Constants.ACL_DEFAULT_NAME}",
+                f"{FlextLdifServersRelaxed.Constants.ACL_WRITE_PREFIX}{acl_name}",
             )
 
         def can_handle_attribute(
@@ -1076,11 +1103,13 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 return FlextResult[str].fail("DN cannot be empty")
             try:
                 # Use RFC 4514 compliant utility normalization
-                normalized = FlextLdifUtilities.DN.norm(dn)
-                if normalized:
-                    return FlextResult[str].ok(normalized)
+                norm_result = FlextLdifUtilities.DN.norm(dn)
+                if norm_result.is_success:
+                    return FlextResult[str].ok(norm_result.unwrap())
                 # No fallback - return error if normalization fails
-                return FlextResult[str].fail(f"DN normalization failed for DN: {dn}")
+                return FlextResult[str].fail(
+                    f"DN normalization failed for DN: {dn}: {norm_result.error}"
+                )
             except Exception as e:
                 logger.debug("DN normalization exception: %s", e)
                 return FlextResult[str].fail(f"DN normalization failed: {e}")

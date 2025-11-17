@@ -15,6 +15,7 @@ from pathlib import Path
 import pytest
 from flext_core import FlextConstants, FlextResult
 
+from flext_ldif.api import FlextLdif
 from flext_ldif.services.parser import FlextLdifParser
 from flext_ldif.services.server import FlextLdifServer
 from flext_ldif.services.writer import FlextLdifWriter
@@ -201,6 +202,16 @@ def quirk_registry() -> FlextLdifServer:
     """Provide quirk registry for RFC-first testing (MANDATORY)."""
     # Registry auto-discovers and registers all standard quirks
     return FlextLdifServer()
+
+
+# FlextLdif API fixture
+@pytest.fixture(scope="module")
+def ldif_api() -> FlextLdif:
+    """Provides a FlextLdif API instance for the test module.
+
+    Creates a FlextLdif instance using the singleton pattern.
+    """
+    return FlextLdif.get_instance()
 
 
 # Real service fixtures for functional testing

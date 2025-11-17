@@ -140,14 +140,12 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         if isinstance(unwrapped, list):
             # Ensure all entries are FlextLdifModels.Entry instances
             entries = [
-                cast("FlextLdifModels.Entry", entry)
-                for entry in unwrapped
-                if isinstance(entry, FlextLdifModels.Entry)
+                entry for entry in unwrapped if isinstance(entry, FlextLdifModels.Entry)
             ]
         elif hasattr(unwrapped, "entries"):
             parse_response = cast("FlextLdifModels.ParseResponse", unwrapped)
             entries = [
-                cast("FlextLdifModels.Entry", entry)
+                entry
                 for entry in parse_response.entries
                 if isinstance(entry, FlextLdifModels.Entry)
             ]
@@ -211,24 +209,22 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         if output_target == "file" and output_path:
             assert output_path.exists(), "Output file should exist"
             content = output_path.read_text(encoding="utf-8")
-        else:
-            assert isinstance(output, str), "String output should be str"
-            content = output
-
+            if must_contain:
+                for text in must_contain:
+                    assert text in content, f"Must contain '{text}' not found"
+            if must_not_contain:
+                for text in must_not_contain:
+                    assert text not in content, f"Must not contain '{text}' found"
+            return output_path
+        assert isinstance(output, str), "String output should be str"
+        content = output
         if must_contain:
             for text in must_contain:
                 assert text in content, f"Must contain '{text}' not found"
-
         if must_not_contain:
             for text in must_not_contain:
                 assert text not in content, f"Must not contain '{text}' found"
-
-        if isinstance(output, str):
-            return output
-        if output_path is not None:
-            return output_path
-        msg = "No output returned"
-        raise AssertionError(msg)
+        return output
 
     @staticmethod
     def roundtrip_and_assert(
@@ -268,16 +264,14 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
             roundtripped_entries_raw = roundtrip_data
         elif hasattr(roundtrip_data, "entries"):
             parse_response = cast("FlextLdifModels.ParseResponse", roundtrip_data)
-            roundtripped_entries_raw = [
-                cast("FlextLdifModels.Entry", entry) for entry in parse_response.entries
-            ]
+            roundtripped_entries_raw = list(parse_response.entries)
         else:
             msg = "Roundtrip parse returned unexpected type"
             raise AssertionError(msg)
 
         # Cast to ensure type consistency
         roundtripped_entries: list[FlextLdifModels.Entry] = [
-            cast("FlextLdifModels.Entry", entry)
+            entry
             for entry in roundtripped_entries_raw
             if isinstance(entry, FlextLdifModels.Entry)
         ]
@@ -732,7 +726,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         if validate_entries:
             # Cast to ensure type consistency for assert_entries_valid
             original_entries_cast: list[FlextLdifModels.Entry] = [
-                cast("FlextLdifModels.Entry", entry)
+                entry
                 for entry in original_entries
                 if isinstance(entry, FlextLdifModels.Entry)
             ]
@@ -753,16 +747,14 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
             roundtripped_entries_raw = roundtrip_data
         elif hasattr(roundtrip_data, "entries"):
             parse_response = cast("FlextLdifModels.ParseResponse", roundtrip_data)
-            roundtripped_entries_raw = [
-                cast("FlextLdifModels.Entry", entry) for entry in parse_response.entries
-            ]
+            roundtripped_entries_raw = list(parse_response.entries)
         else:
             msg = "Roundtrip parse returned unexpected type"
             raise AssertionError(msg)
 
         # Cast to ensure type consistency
         roundtripped_entries: list[FlextLdifModels.Entry] = [
-            cast("FlextLdifModels.Entry", entry)
+            entry
             for entry in roundtripped_entries_raw
             if isinstance(entry, FlextLdifModels.Entry)
         ]
@@ -964,7 +956,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
     @staticmethod
     def file_operations_roundtrip(
-        api: Any,
+        api: Any,  # noqa: ANN401
         ldif_content: str,
         tmp_path: Path,
         *,
@@ -1015,7 +1007,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         if validate_entries:
             # Cast to ensure type consistency for assert_entries_valid
             original_entries_cast: list[FlextLdifModels.Entry] = [
-                cast("FlextLdifModels.Entry", entry)
+                entry
                 for entry in original_entries
                 if isinstance(entry, FlextLdifModels.Entry)
             ]
@@ -1036,16 +1028,14 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
             roundtripped_entries_raw = roundtrip_data
         elif hasattr(roundtrip_data, "entries"):
             parse_response = cast("FlextLdifModels.ParseResponse", roundtrip_data)
-            roundtripped_entries_raw = [
-                cast("FlextLdifModels.Entry", entry) for entry in parse_response.entries
-            ]
+            roundtripped_entries_raw = list(parse_response.entries)
         else:
             msg = "Roundtrip parse returned unexpected type"
             raise AssertionError(msg)
 
         # Cast to ensure type consistency
         roundtripped_entries: list[FlextLdifModels.Entry] = [
-            cast("FlextLdifModels.Entry", entry)
+            entry
             for entry in roundtripped_entries_raw
             if isinstance(entry, FlextLdifModels.Entry)
         ]
@@ -1140,9 +1130,14 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
         """
         unwrapped = TestAssertions.assert_success(result, error_msg)
+        entry: FlextLdifModels.Entry
         if isinstance(unwrapped, list):
             assert len(unwrapped) == 1, "Expected single entry, got list"
-            entry = unwrapped[0]
+            entry_item = unwrapped[0]
+            if not isinstance(entry_item, FlextLdifModels.Entry):
+                msg = f"Expected Entry, got {type(entry_item)}"
+                raise AssertionError(msg)
+            entry = entry_item
         elif isinstance(unwrapped, FlextLdifModels.Entry):
             entry = unwrapped
         else:
@@ -1996,7 +1991,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
             if validate_all:
                 # Cast to ensure type consistency for assert_entries_valid
                 entries_cast: list[FlextLdifModels.Entry] = [
-                    cast("FlextLdifModels.Entry", entry)
+                    entry
                     for entry in entries
                     if isinstance(entry, FlextLdifModels.Entry)
                 ]
@@ -4439,13 +4434,11 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 
         # Cast to ensure type consistency
         entries: list[FlextLdifModels.Entry] = [
-            cast("FlextLdifModels.Entry", entry)
-            for entry in entries_raw
-            if isinstance(entry, FlextLdifModels.Entry)
+            entry for entry in entries_raw if isinstance(entry, FlextLdifModels.Entry)
         ]
 
         assert len(entries) == 1, f"Expected 1 entry, got {len(entries)}"
-        parsed = cast("FlextLdifModels.Entry", entries[0])
+        parsed = entries[0]
 
         # Write
         write_result = entry_quirk.write(parsed)
@@ -6503,9 +6496,7 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
         assert isinstance(entries, list), f"Expected list, got {type(entries)}"
         # Cast to ensure type consistency
         entries_cast: list[FlextLdifModels.Entry] = [
-            cast("FlextLdifModels.Entry", entry)
-            for entry in entries
-            if isinstance(entry, FlextLdifModels.Entry)
+            entry for entry in entries if isinstance(entry, FlextLdifModels.Entry)
         ]
         if expected_count is not None:
             assert len(entries_cast) == expected_count, (
@@ -7713,50 +7704,138 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
     @staticmethod
     def helper_convert_and_assert_strings(
         conversion_matrix: FlextLdifConversion,
-        source: Any,
-        target: Any,
+        source: FlextLdifServersBase | str,
+        target: FlextLdifServersBase | str,
         data_type: str,
-        data: str | dict[str, object],
+        data: str | dict[str, object] | FlextLdifModels.Entry,
         *,
         must_contain: str | list[str] | None = None,
         must_not_contain: str | list[str] | None = None,
         expected_type: type | None = None,
         should_succeed: bool = True,
     ) -> str | dict[str, object]:
-        """Complete conversion test with string assertions - replaces 8-15 lines.
+        """Complete conversion test with string assertions - uses model-based conversion.
 
-        Common pattern (appears 20+ times):
-            result = conversion_matrix.convert(source, target, "attribute", data)
-            assert result.is_success, f"Conversion failed: {result.error}"
-            converted = result.unwrap()
-            assert isinstance(converted, str)
-            assert "string1" in converted
-            assert "string2" in converted
+        Refactored to use model-based conversion API:
+        1. Parse string to model (if needed)
+        2. Convert model using new API
+        3. Write converted model to string for validation
 
         Args:
             conversion_matrix: Conversion matrix instance
             source: Source quirk or server type
             target: Target quirk or server type
             data_type: Data type ("attribute", "objectClass", "acl", "entry")
-            data: Data to convert
+            data: Data to convert (string, dict, or Entry model)
             must_contain: String or list of strings that must be in result
             must_not_contain: String or list of strings that must NOT be in result
             expected_type: Expected type of result (default: str)
             should_succeed: Whether conversion should succeed (default: True)
 
         Returns:
-            Converted data
+            Converted data as string (for validation)
 
         """
-        result = conversion_matrix.convert(source, target, data_type, data)
+        # Resolve source quirk for parsing
+        if isinstance(source, str):
+            from flext_ldif.services.server import FlextLdifServer
+
+            server = FlextLdifServer()
+            source_quirk = server.quirk(source)
+            if source_quirk is None:
+                raise ValueError(f"Unknown server type: {source}")
+        else:
+            source_quirk = source
+
+        # Parse string to model if needed
+        model: (
+            FlextLdifModels.SchemaAttribute
+            | FlextLdifModels.SchemaObjectClass
+            | FlextLdifModels.Acl
+            | FlextLdifModels.Entry
+        )
+        if isinstance(data, FlextLdifModels.Entry):
+            model = data
+        elif isinstance(data, str):
+            # Parse string to model based on data_type
+            if data_type.lower() == "attribute":
+                parse_result = source_quirk.schema_quirk.parse_attribute(data)
+                if parse_result.is_failure:
+                    if should_succeed:
+                        raise AssertionError(
+                            f"Failed to parse attribute: {parse_result.error}"
+                        )
+                    return ""
+                model = parse_result.unwrap()
+            elif data_type.lower() in {"objectclass", "objectclasses"}:
+                parse_result = source_quirk.schema_quirk.parse_objectclass(data)
+                if parse_result.is_failure:
+                    if should_succeed:
+                        raise AssertionError(
+                            f"Failed to parse objectClass: {parse_result.error}"
+                        )
+                    return ""
+                model = parse_result.unwrap()
+            elif data_type.lower() == "acl":
+                parse_result = source_quirk.acl_quirk.parse(data)
+                if parse_result.is_failure:
+                    if should_succeed:
+                        raise AssertionError(
+                            f"Failed to parse ACL: {parse_result.error}"
+                        )
+                    return ""
+                model = parse_result.unwrap()
+            else:
+                raise ValueError(
+                    f"Unsupported data_type for string parsing: {data_type}"
+                )
+        else:
+            raise ValueError(
+                f"Unsupported data type: {type(data).__name__}. "
+                "Expected str, Entry model, or dict[str, object]"
+            )
+
+        # Convert model using new API
+        result = conversion_matrix.convert(source, target, model)
 
         if should_succeed:
-            converted = TestAssertions.assert_success(
+            converted_model = TestAssertions.assert_success(
                 result, f"Conversion failed: {result.error}"
             )
         else:
             _ = TestAssertions.assert_failure(result)
             return "" if expected_type is str else {}
+
+        # Resolve target quirk for writing
+        if isinstance(target, str):
+            from flext_ldif.services.server import FlextLdifServer
+
+            server = FlextLdifServer()
+            target_quirk = server.quirk(target)
+            if target_quirk is None:
+                raise ValueError(f"Unknown server type: {target}")
+        else:
+            target_quirk = target
+
+        # Write converted model to string for validation
+        if isinstance(converted_model, FlextLdifModels.SchemaAttribute):
+            write_result = target_quirk.schema_quirk.write_attribute(converted_model)
+        elif isinstance(converted_model, FlextLdifModels.SchemaObjectClass):
+            write_result = target_quirk.schema_quirk.write_objectclass(converted_model)
+        elif isinstance(converted_model, FlextLdifModels.Acl):
+            write_result = target_quirk.acl_quirk.write(converted_model)
+        elif isinstance(converted_model, FlextLdifModels.Entry):
+            write_result = target_quirk.entry_quirk.write(converted_model)
+        else:
+            raise ValueError(
+                f"Unexpected converted model type: {type(converted_model).__name__}"
+            )
+
+        if write_result.is_failure:
+            raise AssertionError(
+                f"Failed to write converted model: {write_result.error}"
+            )
+        converted = write_result.unwrap()
 
         if expected_type is not None:
             assert isinstance(converted, expected_type), (
@@ -7780,64 +7859,147 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
                 for text in not_contains_list:
                     assert text not in converted, f"Result must NOT contain '{text}'"
 
-        return cast("str | dict[str, object]", converted)
+        return converted
 
     @staticmethod
     def helper_batch_convert_and_assert(
         conversion_matrix: FlextLdifConversion,
-        source: Any,
-        target: Any,
+        source: FlextLdifServersBase | str,
+        target: FlextLdifServersBase | str,
         data_type: str,
-        items: list[str | dict[str, object]],
+        items: list[str | dict[str, object] | FlextLdifModels.Entry],
         *,
         expected_count: int | None = None,
         should_succeed: bool = True,
         allow_partial: bool = False,
     ) -> list[str | dict[str, object]]:
-        """Batch conversion test with assertions - replaces 10-20 lines.
+        """Batch conversion test with assertions - uses model-based conversion.
 
-        Common pattern (appears 10+ times):
-            result = conversion_matrix.batch_convert(source, target, "attribute", items)
-            assert result.is_success, f"Batch conversion failed: {result.error}"
-            converted = result.unwrap()
-            assert len(converted) == expected_count
-            assert "string1" in converted[0]
+        Refactored to use model-based batch conversion API.
 
         Args:
             conversion_matrix: Conversion matrix instance
             source: Source quirk or server type
             target: Target quirk or server type
             data_type: Data type ("attribute", "objectClass", "acl", "entry")
-            items: List of items to convert
+            items: List of items to convert (strings, dicts, or Entry models)
             expected_count: Optional expected count of converted items
             should_succeed: Whether conversion should succeed (default: True)
             allow_partial: Allow partial success (default: False)
 
         Returns:
-            List of converted items
+            List of converted items as strings (for validation)
 
         """
-        result = conversion_matrix.batch_convert(source, target, data_type, items)
+        # Resolve source quirk for parsing
+        if isinstance(source, str):
+            from flext_ldif.services.server import FlextLdifServer
+
+            server = FlextLdifServer()
+            source_quirk = server.quirk(source)
+            if source_quirk is None:
+                raise ValueError(f"Unknown server type: {source}")
+        else:
+            source_quirk = source
+
+        # Parse all items to models
+        models: list[
+            FlextLdifModels.SchemaAttribute
+            | FlextLdifModels.SchemaObjectClass
+            | FlextLdifModels.Acl
+            | FlextLdifModels.Entry
+        ] = []
+        for item in items:
+            if isinstance(item, FlextLdifModels.Entry):
+                models.append(item)
+            elif isinstance(item, str):
+                # Parse string to model based on data_type
+                if data_type.lower() == "attribute":
+                    parse_result = source_quirk.schema_quirk.parse_attribute(item)
+                    if parse_result.is_failure:
+                        if should_succeed and not allow_partial:
+                            raise AssertionError(
+                                f"Failed to parse attribute: {parse_result.error}"
+                            )
+                        continue
+                    models.append(parse_result.unwrap())
+                elif data_type.lower() in {"objectclass", "objectclasses"}:
+                    parse_result = source_quirk.schema_quirk.parse_objectclass(item)
+                    if parse_result.is_failure:
+                        if should_succeed and not allow_partial:
+                            raise AssertionError(
+                                f"Failed to parse objectClass: {parse_result.error}"
+                            )
+                        continue
+                    models.append(parse_result.unwrap())
+                elif data_type.lower() == "acl":
+                    parse_result = source_quirk.acl_quirk.parse(item)
+                    if parse_result.is_failure:
+                        if should_succeed and not allow_partial:
+                            raise AssertionError(
+                                f"Failed to parse ACL: {parse_result.error}"
+                            )
+                        continue
+                    models.append(parse_result.unwrap())
+                else:
+                    raise ValueError(
+                        f"Unsupported data_type for string parsing: {data_type}"
+                    )
+            else:
+                raise ValueError(
+                    f"Unsupported item type: {type(item).__name__}. "
+                    "Expected str, Entry model, or dict[str, object]"
+                )
+
+        # Convert models using new batch API
+        result = conversion_matrix.batch_convert(source, target, models)
 
         if should_succeed:
             if allow_partial:
                 # For partial failures, just check result is not None
                 assert result is not None, "Batch conversion returned None"
-                if result.is_success:
-                    converted = cast("list[str | dict[str, object]]", result.unwrap())
-                else:
-                    converted_list: list[str | dict[str, object]] = []
-                    converted = converted_list
+                converted_models = result.unwrap() if result.is_success else []
             else:
-                converted = cast(
-                    "list[str | dict[str, object]]",
-                    TestAssertions.assert_success(
-                        result, f"Batch conversion failed: {result.error}"
-                    ),
+                converted_models = TestAssertions.assert_success(
+                    result, f"Batch conversion failed: {result.error}"
                 )
         else:
             _ = TestAssertions.assert_failure(result)
             return []
+
+        # Resolve target quirk for writing
+        if isinstance(target, str):
+            from flext_ldif.services.server import FlextLdifServer
+
+            server = FlextLdifServer()
+            target_quirk = server.quirk(target)
+            if target_quirk is None:
+                raise ValueError(f"Unknown server type: {target}")
+        else:
+            target_quirk = target
+
+        # Write converted models to strings for validation
+        converted: list[str] = []
+        for model in converted_models:
+            if isinstance(model, FlextLdifModels.SchemaAttribute):
+                write_result = target_quirk.schema_quirk.write_attribute(model)
+            elif isinstance(model, FlextLdifModels.SchemaObjectClass):
+                write_result = target_quirk.schema_quirk.write_objectclass(model)
+            elif isinstance(model, FlextLdifModels.Acl):
+                write_result = target_quirk.acl_quirk.write(model)
+            elif isinstance(model, FlextLdifModels.Entry):
+                write_result = target_quirk.entry_quirk.write(model)
+            else:
+                raise ValueError(
+                    f"Unexpected converted model type: {type(model).__name__}"
+                )
+
+            if write_result.is_success:
+                converted.append(write_result.unwrap())
+            elif not allow_partial:
+                raise AssertionError(
+                    f"Failed to write converted model: {write_result.error}"
+                )
 
         if expected_count is not None:
             assert len(converted) == expected_count, (
@@ -10169,16 +10331,16 @@ class DeduplicationHelpers:  # Renamed to avoid pytest collection
 # Backward compatibility alias
 # Set __test__ = False to prevent pytest from collecting this as a test class
 TestDeduplicationHelpers = DeduplicationHelpers
-TestDeduplicationHelpers.__test__ = False  # type: ignore[attr-defined] # Prevent pytest collection
+TestDeduplicationHelpers.__test__ = False  # Prevent pytest collection
 
 # Add method aliases for backward compatibility
-TestDeduplicationHelpers.api_parse_and_unwrap = (  # type: ignore[attr-defined]
+TestDeduplicationHelpers.api_parse_and_unwrap = (
     DeduplicationHelpers.helper_api_parse_and_unwrap
 )
-TestDeduplicationHelpers.api_write_and_unwrap = (  # type: ignore[attr-defined]
+TestDeduplicationHelpers.api_write_and_unwrap = (
     DeduplicationHelpers.helper_api_write_and_unwrap
 )
-TestDeduplicationHelpers.test_service_execute_and_assert_fields = (  # type: ignore[attr-defined]
+TestDeduplicationHelpers.test_service_execute_and_assert_fields = (
     DeduplicationHelpers.service_execute_and_assert_fields
 )
 

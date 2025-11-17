@@ -384,8 +384,8 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
                 desc = oc_data.desc
                 sup = oc_data.sup
                 kind = oc_data.kind or "STRUCTURAL"
-                must = oc_data.must or []
-                may = oc_data.may or []
+                must = oc_data.must if oc_data.must is not None else []
+                may = oc_data.may if oc_data.may is not None else []
 
                 # Build objectClass string (objectclass prefix for OpenLDAP 1.x)
                 oc_str = f"objectclass ( {oid}"
@@ -692,7 +692,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
             try:
                 # OpenLDAP 1.x entries are RFC-compliant
                 metadata = entry.metadata or FlextLdifModels.QuirkMetadata(
-                    quirk_type="openldap1"
+                    quirk_type="openldap1",
                 )
                 metadata.extensions[
                     FlextLdifConstants.QuirkMetadataKeys.IS_TRADITIONAL_DIT

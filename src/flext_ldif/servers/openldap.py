@@ -446,7 +446,9 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
 
             """
             if isinstance(acl_line, FlextLdifModels.Acl):
-                acl_line = acl_line.raw_acl or ""
+                if not acl_line.raw_acl:
+                    return False
+                acl_line = acl_line.raw_acl
             if not isinstance(acl_line, str) or not acl_line:
                 return False
             # Remove "olcAccess: " prefix if present
@@ -809,11 +811,18 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
 
             # Ensure entry has metadata
             if entry.metadata is None:
-                entry.metadata = FlextLdifModels.QuirkMetadata.create_for(
-                    FlextLdifConstants.ServerTypes.OPENLDAP,
-                    extensions={},
+                entry = entry.model_copy(
+                    update={
+                        "metadata": FlextLdifModels.QuirkMetadata.create_for(
+                            FlextLdifConstants.ServerTypes.OPENLDAP,
+                            extensions={},
+                        ),
+                    },
                 )
 
+            # Metadata is guaranteed to be non-None after creation above
+            # Type narrowing: entry.metadata is non-None after model_copy
+            assert entry.metadata is not None, "Metadata must be created above"
             # Inject validation rules via metadata.extensions (DI pattern)
             entry.metadata.extensions["validation_rules"] = validation_rules
 

@@ -616,7 +616,8 @@ class FlextLdifModelsEvents:
         items_succeeded: int = Field(default=0, description="Items succeeded")
         items_failed: int = Field(default=0, description="Items failed")
         operation_duration_ms: float = Field(
-            default=0.0, description="Duration in milliseconds"
+            default=0.0,
+            description="Duration in milliseconds",
         )
         server_type: str = Field(description="Server type")
         schema_type: str = Field(default="generic", description="Schema type")

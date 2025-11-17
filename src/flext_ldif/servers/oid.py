@@ -47,7 +47,9 @@ class FlextLdifServersOid(FlextLdifServersRfc):
     **Validation**: Verify protocol compliance with:
         from flext_ldif.protocols import FlextLdifProtocols
         quirk = FlextLdifServersOid()
-        assert isinstance(quirk, FlextLdifProtocols.Quirks.SchemaProtocol)
+        # Protocol compliance verified via structural typing
+        if not isinstance(quirk, FlextLdifProtocols.Quirks.SchemaProtocol):
+            raise TypeError("Quirk does not satisfy SchemaProtocol")
 
     Example:
         quirk = FlextLdifServersOid()
@@ -88,21 +90,25 @@ class FlextLdifServersOid(FlextLdifServersRfc):
 
         # Matching rule normalizations (OID proprietary → RFC 4517 standard)
         MATCHING_RULE_TO_RFC: ClassVar[dict[str, str]] = {
-            "caseIgnoreSubStringsMatch": "caseIgnoreSubstringsMatch",  # Fix RFC capitalization (uppercase S → lowercase s)
-            "accessDirectiveMatch": "caseIgnoreMatch",  # OID proprietary → RFC 4517 standard
+            # Fix RFC capitalization (uppercase S → lowercase s)
+            "caseIgnoreSubStringsMatch": "caseIgnoreSubstringsMatch",
+            # OID proprietary → RFC 4517 standard
+            "accessDirectiveMatch": "caseIgnoreMatch",
         }
 
         # Syntax OID normalizations (OID proprietary → RFC 4517 standard)
         SYNTAX_OID_TO_RFC: ClassVar[dict[str, str]] = {
-            "1.3.6.1.4.1.1466.115.121.1.1": "1.3.6.1.4.1.1466.115.121.1.15",  # OID ACI List Syntax → RFC 4517 Directory String
+            # OID ACI List Syntax → RFC 4517 Directory String
+            "1.3.6.1.4.1.1466.115.121.1.1": ("1.3.6.1.4.1.1466.115.121.1.15"),
         }
 
         # Aliases for backward compatibility with test suites
         SYNTAX_OID_REPLACEMENTS: ClassVar[dict[str, str]] = SYNTAX_OID_TO_RFC
         MATCHING_RULE_REPLACEMENTS: ClassVar[dict[str, str]] = MATCHING_RULE_TO_RFC
 
-        # Note: ATTRIBUTE_TRANSFORMATION_OID_TO_RFC and ATTRIBUTE_TRANSFORMATION_RFC_TO_OID
-        # are defined further below in the Constants class (line ~550)
+        # Note: ATTRIBUTE_TRANSFORMATION_OID_TO_RFC and
+        # ATTRIBUTE_TRANSFORMATION_RFC_TO_OID are defined further below
+        # in the Constants class (line ~550)
 
         # OID extends RFC operational attributes with Oracle-specific ones
         OPERATIONAL_ATTRIBUTES: ClassVar[frozenset[str]] = (
@@ -123,9 +129,8 @@ class FlextLdifServersOid(FlextLdifServersRfc):
         # NOTE: PRESERVE_ON_MIGRATION inherited from RFC.Constants
 
         # Detection constants (server-specific)
-        DETECTION_OID_PATTERN: ClassVar[str] = (
-            r"(?i)(2\.16\.840\.1\.113894\.|orcl)"  # Match Oracle OIDs OR orcl* attributes (case-insensitive)
-        )
+        # Match Oracle OIDs OR orcl* attributes (case-insensitive)
+        DETECTION_OID_PATTERN: ClassVar[str] = r"(?i)(2\.16\.840\.1\.113894\.|orcl)"
         DETECTION_ATTRIBUTE_PREFIXES: ClassVar[frozenset[str]] = frozenset(
             [
                 "orcl",
@@ -137,7 +142,8 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                 "orcldirectory",
                 "orcldomain",
                 "orcldirectoryserverconfig",
-                "orclcontainer",  # Oracle OID container objectClass (case-insensitive match)
+                # Oracle OID container objectClass (case-insensitive match)
+                "orclcontainer",
             ],
         )
         DETECTION_DN_MARKERS: ClassVar[frozenset[str]] = frozenset(
@@ -772,15 +778,19 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                     "caseIgnoreSubStringsMatch",
                 }:
                     logger.debug(
-                        "OID→OUD transform: Moving caseIgnoreSubstringsMatch from EQUALITY to SUBSTR during parse"
+                        "OID→OUD transform: Moving caseIgnoreSubstringsMatch from EQUALITY to SUBSTR during parse",
                     )
                     # Preserve original_format before transformation
-                    original_format = None
-                    if attr_data.metadata and attr_data.metadata.extensions.get(
-                        "original_format"
+                    # Fast-fail: metadata and extensions must exist to access original_format
+                    original_format: str | None = None
+                    if (
+                        attr_data.metadata
+                        and attr_data.metadata.extensions
+                        and "original_format" in attr_data.metadata.extensions
                     ):
-                        original_format = attr_data.metadata.extensions.get(
-                            "original_format"
+                        original_format = cast(
+                            "str | None",
+                            attr_data.metadata.extensions.get("original_format"),
                         )
 
                     # Create new model with transformed values (Pydantic v2 requires model_copy for immutable models)
@@ -788,7 +798,7 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                         update={
                             "substr": "caseIgnoreSubstringsMatch",
                             "equality": None,  # Remove from equality
-                        }
+                        },
                     )
 
                     # Restore original_format in metadata after transformation
@@ -941,10 +951,10 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                 # Parser may return sup=None for SUP 'top' or SUP ( top ), so check original_format
                 original_format_str = ""
                 if oc_data.metadata and oc_data.metadata.extensions.get(
-                    "original_format"
+                    "original_format",
                 ):
                     original_format_str = str(
-                        oc_data.metadata.extensions.get("original_format", "")
+                        oc_data.metadata.extensions.get("original_format", ""),
                     )
 
                 # Fix 1: SUP ( top ) → SUP top (remove parentheses)
@@ -965,12 +975,12 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                             sup_item = str(oc_data.sup[0]).strip()
                             if sup_item in {"( top )", "(top)"}:
                                 logger.debug(
-                                    "OID→OUD transform: SUP ( top ) → SUP top (list)"
+                                    "OID→OUD transform: SUP ( top ) → SUP top (list)",
                                 )
                                 updated_sup = "top"
                             elif sup_item in {"'top'", '"top"'}:
                                 logger.debug(
-                                    "OID→OUD transform: SUP 'top' → SUP top (list)"
+                                    "OID→OUD transform: SUP 'top' → SUP top (list)",
                                 )
                                 updated_sup = "top"
                 elif original_format_str:
@@ -978,7 +988,7 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                     # Extract and fix from original_format
                     if "SUP 'top'" in original_format_str:
                         logger.debug(
-                            "OID→OUD transform: SUP 'top' → SUP top (from original_format)"
+                            "OID→OUD transform: SUP 'top' → SUP top (from original_format)",
                         )
                         updated_sup = "top"
                     elif (
@@ -986,7 +996,7 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                         or "SUP (top)" in original_format_str
                     ):
                         logger.debug(
-                            "OID→OUD transform: SUP ( top ) → SUP top (from original_format)"
+                            "OID→OUD transform: SUP ( top ) → SUP top (from original_format)",
                         )
                         updated_sup = "top"
 
@@ -998,7 +1008,7 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                         updated_kind = "AUXILIARY"
                 elif original_format_str and "AUXILLARY" in original_format_str:
                     logger.debug(
-                        "OID→OUD transform: AUXILLARY → AUXILIARY (from original_format)"
+                        "OID→OUD transform: AUXILLARY → AUXILIARY (from original_format)",
                     )
                     updated_kind = "AUXILIARY"
 
@@ -1147,11 +1157,21 @@ class FlextLdifServersOid(FlextLdifServersRfc):
 
             # Create new attribute model with fixed values
             # Extract x_origin from metadata.extensions if available
-            x_origin_value = (
-                attr_data.metadata.extensions.get("x_origin")
-                if attr_data.metadata and attr_data.metadata.extensions
-                else None
-            )
+            # Fast-fail: metadata and extensions must exist to access x_origin
+            x_origin_value: str | None = None
+            if attr_data.metadata and attr_data.metadata.extensions:
+                x_origin_raw = attr_data.metadata.extensions.get("x_origin")
+                if isinstance(x_origin_raw, str):
+                    x_origin_value = x_origin_raw
+                elif x_origin_raw is None:
+                    x_origin_value = None
+                else:
+                    # Fast-fail: x_origin must be str or None
+                    logger.warning(
+                        "x_origin extension is not a string, ignoring",
+                        extra={"x_origin_type": type(x_origin_raw).__name__},
+                    )
+                    x_origin_value = None
 
             return FlextLdifModels.SchemaAttribute(
                 oid=attr_data.oid,
@@ -1167,7 +1187,7 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                 single_value=attr_data.single_value,
                 no_user_modification=attr_data.no_user_modification,
                 metadata=attr_data.metadata,
-                x_origin=cast("str | None", x_origin_value),
+                x_origin=x_origin_value,
                 x_file_ref=attr_data.x_file_ref,
                 x_name=attr_data.x_name,
                 x_alias=attr_data.x_alias,
@@ -1435,7 +1455,7 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                     name=FlextLdifServersOid.Constants.ACL_NAME,
                     target=FlextLdifModels.AclTarget(
                         target_dn=target_dn,
-                        attributes=target_attrs or [],
+                        attributes=target_attrs if target_attrs is not None else [],
                     ),
                     subject=FlextLdifModels.AclSubject(
                         subject_type=subject_type,
@@ -1540,9 +1560,13 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                 FlextResult with OID orclaci formatted string
 
             """
-            # Get default format if not provided
-            if format_option is None:
-                format_option = FlextLdifServersOid.Constants.ACL_FORMAT_DEFAULT
+            # Use default format from Constants if not provided
+            # Fast-fail: format_option must be provided or use default from Constants
+            effective_format = (
+                format_option
+                if format_option is not None
+                else FlextLdifServersOid.Constants.ACL_FORMAT_DEFAULT
+            )
 
             # If raw_acl is available and already in OID format, use it
             if acl_data.raw_acl and acl_data.raw_acl.startswith(
@@ -1557,7 +1581,13 @@ class FlextLdifServersOid(FlextLdifServersRfc):
             ]
 
             # Format target clause using DRY utility
-            target_str = FlextLdifUtilities.ACL.format_oid_target(acl_data.target)
+            # Type narrowing: acl_data.target is AclTarget | None, cast to expected type
+            target: FlextLdifModels.AclTarget | None = (
+                cast("FlextLdifModels.AclTarget", acl_data.target)
+                if acl_data.target is not None
+                else None
+            )
+            target_str = FlextLdifUtilities.ACL.format_oid_target(target)
             acl_parts.append(target_str)
 
             # Format subject clause using DRY utility
@@ -1577,7 +1607,7 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                 acl_parts.append(perms_str)
 
             # Join parts based on formatting option
-            if format_option == FlextLdifServersOid.Constants.ACL_FORMAT_ONELINE:
+            if effective_format == FlextLdifServersOid.Constants.ACL_FORMAT_ONELINE:
                 # Single line with no breaks
                 orclaci_str = " ".join(acl_parts)
             else:
@@ -1635,15 +1665,19 @@ class FlextLdifServersOid(FlextLdifServersRfc):
             attr_lower = attr_name.lower()
 
             # OID ACL attributes → RFC ACI (Phase 1: Parsing transformation)
-            if attr_lower == "orclaci":
-                return "aci"  # Oracle OID ACL → RFC standard ACI
-            if attr_lower == "orclentrylevelaci":
-                return "aci"  # Oracle OID entry-level ACI → RFC standard ACI
+            # Use Constants instead of hardcoded strings
+            # Constants is in parent class FlextLdifServersOid, not Entry
+            # RFC standard ACI attribute name from parent Constants
+            rfc_aci_name = FlextLdifServersRfc.Constants.ACL_ATTRIBUTE_NAME
+            if attr_lower == FlextLdifServersOid.Constants.ORCLACI.lower():
+                return rfc_aci_name  # Oracle OID ACL → RFC standard ACI
+            if attr_lower == FlextLdifServersOid.Constants.ORCLENTRYLEVELACI.lower():
+                return rfc_aci_name  # Oracle OID entry-level ACI → RFC standard ACI
 
             # Delegate to RFC for standard normalization (objectclass, etc.)
             return super()._normalize_attribute_name(attr_name)
 
-        def _parse_entry(  # noqa: C901
+        def _parse_entry(
             self,
             entry_dn: str,
             entry_attrs: Mapping[str, object],
@@ -1729,11 +1763,16 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                     converted_values: list[str] = []
                     for value in attr_values:
                         value_lower = value.lower()
-                        # Map OID values to RFC format
-                        if value_lower in {"1", "true"}:
+                        # Map OID values to RFC format using Constants
+                        # Constants is in parent class FlextLdifServersOid, not Entry
+                        oid_true_values = FlextLdifServersOid.Constants.OID_TRUE_VALUES
+                        oid_false_values = (
+                            FlextLdifServersOid.Constants.OID_FALSE_VALUES
+                        )
+                        if value_lower in oid_true_values:
                             converted_values.append("TRUE")
                             converted_attrs.add(attr_name)
-                        elif value_lower in {"0", "false"}:
+                        elif value_lower in oid_false_values:
                             converted_values.append("FALSE")
                             converted_attrs.add(attr_name)
                         else:
@@ -1790,7 +1829,7 @@ class FlextLdifServersOid(FlextLdifServersRfc):
             found_structural = object_classes_lower & structural_classes
             if len(found_structural) > 1:
                 rfc_violations.append(
-                    f"Multiple structural objectClasses: {', '.join(sorted(found_structural))}"
+                    f"Multiple structural objectClasses: {', '.join(sorted(found_structural))}",
                 )
 
             # Detect specific attribute conflicts with domain objectClass
@@ -1859,7 +1898,7 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                 )
 
             metadata = FlextLdifModels.QuirkMetadata.create_for(
-                FlextLdifConstants.ServerTypes.OID,
+                self._get_server_type(),
                 extensions={
                     **conversion_metadata,
                     **dn_metadata,
@@ -1889,13 +1928,13 @@ class FlextLdifServersOid(FlextLdifServersRfc):
             # OID uses "cn=subschemasubentry" but RFC 4512 standard is "cn=schema"
             # Store original quirk DN in metadata for round-trip conversions
             if entry.dn.value.lower().startswith(
-                FlextLdifServersOid.Constants.SCHEMA_DN_QUIRK.lower()
+                FlextLdifServersOid.Constants.SCHEMA_DN_QUIRK.lower(),
             ):
                 # Store original OID quirk DN in metadata
                 schema_dn_metadata = {
                     "original_schema_dn": entry.dn.value,  # OID quirk: cn=subschemasubentry
                     "schema_dn_normalized": True,
-                    "normalized_from_server": FlextLdifConstants.ServerTypes.OID,
+                    "normalized_from_server": self._get_server_type(),
                 }
                 # Use RFC standard schema DN (inherited from parent)
                 rfc_schema_dn = FlextLdifServersRfc.Constants.SCHEMA_DN  # "cn=schema"
@@ -1925,13 +1964,13 @@ class FlextLdifServersOid(FlextLdifServersRfc):
 
             # Track quirk application
             if dn_stats.was_transformed or converted_attrs:
-                entry_stats.apply_quirk(FlextLdifConstants.ServerTypes.OID)
+                entry_stats.apply_quirk(self._get_server_type())
 
             # Create new Entry with converted attributes and statistics
             new_entry_result = FlextLdifModels.Entry.create(
                 dn=dn_to_use,
                 attributes=ldif_attrs,
-                server_type=FlextLdifConstants.ServerTypes.OID,
+                server_type=self._get_server_type(),
                 metadata=metadata,
                 statistics=entry_stats,
             )
@@ -1969,7 +2008,7 @@ class FlextLdifServersOid(FlextLdifServersRfc):
 
             """
             # Determine server type from constants
-            server_type = FlextLdifConstants.ServerTypes.OID
+            server_type = self._get_server_type()
 
             # Build validation rules dictionary by reading frozensets
             # ZERO hard-coded values - all from Constants!
@@ -2018,13 +2057,21 @@ class FlextLdifServersOid(FlextLdifServersRfc):
                 "track_conversions": True,  # Track format conversions (boolean, etc.)
             }
 
-            # Ensure entry has metadata
+            # Ensure entry has metadata - always create if missing
+            # Fast-fail: metadata must exist for validation rules injection
             if entry.metadata is None:
-                entry.metadata = FlextLdifModels.QuirkMetadata.create_for(
-                    FlextLdifConstants.ServerTypes.OID,
-                    extensions={},
+                entry = entry.model_copy(
+                    update={
+                        "metadata": FlextLdifModels.QuirkMetadata.create_for(
+                            self._get_server_type(),
+                            extensions={},
+                        ),
+                    },
                 )
 
+            # Metadata is guaranteed to be non-None after creation above
+            # Type narrowing: entry.metadata is non-None after model_copy
+            assert entry.metadata is not None, "Metadata must be created above"
             # Inject validation rules via metadata.extensions (DI pattern)
             entry.metadata.extensions["validation_rules"] = validation_rules
 

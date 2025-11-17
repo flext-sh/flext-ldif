@@ -550,7 +550,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
                     ),
                     subject=FlextLdifModels.AclSubject(
                         subject_type=FlextLdifServersAd.Constants.ACL_SUBJECT_TYPE_SDDL,
-                        subject_value=decoded_sddl or raw_value or "",
+                        subject_value=(decoded_sddl or (raw_value or "")),
                     ),
                     permissions=FlextLdifModels.AclPermissions(),
                     metadata=FlextLdifModels.QuirkMetadata.create_for(
@@ -580,8 +580,12 @@ class FlextLdifServersAd(FlextLdifServersRfc):
 
             """
             try:
-                # Get the raw ACL value
-                raw_value = acl_data.raw_acl or ""
+                # Get the raw ACL value - fail if missing
+                if not acl_data.raw_acl:
+                    return FlextResult[str].fail(
+                        "Active Directory ACL write requires raw_acl value",
+                    )
+                raw_value = acl_data.raw_acl
                 acl_attribute = FlextLdifServersAd.Constants.ACL_ATTRIBUTE_NAME
 
                 # Use the raw ACL value

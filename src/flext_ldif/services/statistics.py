@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from pathlib import Path
-from typing import cast, override
+from typing import override
 
 from flext_core import FlextDecorators, FlextResult, FlextService
 
@@ -58,20 +58,18 @@ class FlextLdifStatistics(FlextService[FlextLdifModels.StatisticsResult]):
             FlextResult containing empty statistics (service health check)
 
         """
-        # Return service status for health check (cast to StatisticsResult)
-        return cast(
-            "FlextResult[FlextLdifModels.StatisticsResult]",
-            FlextResult[dict[str, object]].ok({
-                "service": "StatisticsService",
-                "status": "operational",
-                "capabilities": [
-                    "generate_statistics",
-                    "count_entries",
-                    "analyze_rejections",
-                ],
-                "version": "1.0.0",
-            }),
+        # Return service status for health check - create StatisticsResult directly
+        status_result = FlextLdifModels.StatisticsResult(
+            service="StatisticsService",
+            status="operational",
+            capabilities=[
+                "generate_statistics",
+                "count_entries",
+                "analyze_rejections",
+            ],
+            version="1.0.0",
         )
+        return FlextResult[FlextLdifModels.StatisticsResult].ok(status_result)
 
     # ════════════════════════════════════════════════════════════════════════
     # FLUENT BUILDER PATTERN
@@ -117,28 +115,36 @@ class FlextLdifStatistics(FlextService[FlextLdifModels.StatisticsResult]):
         self.output_files = output_files
         return self
 
-    def build(self) -> FlextLdifModels.StatisticsResult | None:
-        """Execute statistics generation and return unwrapped result (fluent terminal).
+    def build(self) -> FlextResult[FlextLdifModels.StatisticsResult]:
+        """Execute statistics generation and return result (fluent terminal).
 
         Returns:
-            StatisticsResult model or None if data incomplete
+            FlextResult[StatisticsResult] - fails fast if data incomplete
 
         """
-        if (
-            self.categorized is None
-            or self.written_counts is None
-            or self.output_dir is None
-            or self.output_files is None
-        ):
-            return None
+        if self.categorized is None:
+            return FlextResult[FlextLdifModels.StatisticsResult].fail(
+                "Statistics generation requires categorized data",
+            )
+        if self.written_counts is None:
+            return FlextResult[FlextLdifModels.StatisticsResult].fail(
+                "Statistics generation requires written_counts data",
+            )
+        if self.output_dir is None:
+            return FlextResult[FlextLdifModels.StatisticsResult].fail(
+                "Statistics generation requires output_dir",
+            )
+        if self.output_files is None:
+            return FlextResult[FlextLdifModels.StatisticsResult].fail(
+                "Statistics generation requires output_files data",
+            )
 
-        result = self.generate_statistics(
+        return self.generate_statistics(
             categorized=self.categorized,
             written_counts=self.written_counts,
             output_dir=self.output_dir,
             output_files=self.output_files,
         )
-        return result.unwrap() if result.is_success else None
 
     def generate_statistics(
         self,
@@ -209,7 +215,7 @@ class FlextLdifStatistics(FlextService[FlextLdifModels.StatisticsResult]):
                     rejection_reasons=rejection_reasons,
                     written_counts=written_counts,
                     output_files=output_files_info,
-                )
+                ),
             )
         except (ValueError, TypeError, AttributeError) as e:
             return FlextResult[FlextLdifModels.StatisticsResult].fail(
@@ -254,11 +260,11 @@ class FlextLdifStatistics(FlextService[FlextLdifModels.StatisticsResult]):
                     total_entries=total_entries,
                     object_class_distribution=object_class_distribution,
                     server_type_distribution=server_type_distribution,
-                )
+                ),
             )
         except Exception as e:
             return FlextResult[FlextLdifModels.EntriesStatistics].fail(
-                f"Failed to calculate statistics for entries: {e}"
+                f"Failed to calculate statistics for entries: {e}",
             )
 
 

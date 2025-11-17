@@ -13,7 +13,6 @@ from __future__ import annotations
 
 import logging
 import re
-from typing import cast
 
 from flext_core import FlextResult, FlextRuntime
 from flext_ldap.constants import FlextLdapConstants
@@ -36,8 +35,9 @@ class EntryManipulationServices:
 
     @staticmethod
     def get_entry_attribute(
-        entry: FlextLdifModels.Entry, attr_name: str
-    ) -> object | None:
+        entry: FlextLdifModels.Entry,
+        attr_name: str,
+    ) -> FlextResult[object]:
         """Safely get attribute value from LDAP entry.
 
         Args:
@@ -45,43 +45,56 @@ class EntryManipulationServices:
             attr_name: Name of the attribute to retrieve.
 
         Returns:
-            Attribute value or None if not found.
+            FlextResult with attribute value or failure if not found.
 
         """
         if not entry.attributes or not hasattr(entry.attributes, "attributes"):
-            return None
+            return FlextResult[object].fail(
+                f"Entry has no attributes dictionary for attribute '{attr_name}'"
+            )
         attr_dict = entry.attributes.attributes
         if not isinstance(attr_dict, dict):
-            return None
-        return attr_dict.get(attr_name)
+            return FlextResult[object].fail(
+                f"Entry attributes is not a dictionary for attribute '{attr_name}'"
+            )
+        if attr_name not in attr_dict:
+            return FlextResult[object].fail(
+                f"Attribute '{attr_name}' not found in entry"
+            )
+        return FlextResult[object].ok(attr_dict[attr_name])
 
     @staticmethod
-    def normalize_attribute_value(attr_value: object | None) -> str | None:
+    def normalize_attribute_value(attr_value: object | None) -> FlextResult[str]:
         """Normalize LDAP attribute value to string.
 
         Args:
             attr_value: Raw LDAP attribute value (list or single value).
 
         Returns:
-            Normalized string value or None if invalid/empty.
+            FlextResult with normalized string value or failure if invalid/empty.
 
         """
         if attr_value is None:
-            return None
+            return FlextResult[str].fail("Attribute value is None")
 
         if FlextRuntime.is_list_like(attr_value) and len(attr_value) > 0:
-            return str(attr_value[0])
+            return FlextResult[str].ok(str(attr_value[0]))
 
         try:
             str_value = str(attr_value).strip()
-            return str_value or None
-        except (TypeError, AttributeError):
-            return None
+            if not str_value:
+                return FlextResult[str].fail(
+                    "Attribute value is empty after normalization"
+                )
+            return FlextResult[str].ok(str_value)
+        except (TypeError, AttributeError) as e:
+            return FlextResult[str].fail(f"Failed to normalize attribute value: {e}")
 
     @staticmethod
     def get_normalized_attribute(
-        entry: FlextLdifModels.Entry, attr_name: str
-    ) -> str | None:
+        entry: FlextLdifModels.Entry,
+        attr_name: str,
+    ) -> FlextResult[str]:
         """Get and normalize LDAP attribute value.
 
         Args:
@@ -89,17 +102,25 @@ class EntryManipulationServices:
             attr_name: Name of the attribute to retrieve and normalize.
 
         Returns:
-            Normalized string value or None if not found/invalid.
+            FlextResult with normalized string value or failure if not found/invalid.
 
         """
-        raw_value = EntryManipulationServices.get_entry_attribute(entry, attr_name)
-        return EntryManipulationServices.normalize_attribute_value(raw_value)
+        raw_value_result = EntryManipulationServices.get_entry_attribute(
+            entry, attr_name
+        )
+        if not raw_value_result.is_success:
+            return FlextResult[str].fail(
+                f"Failed to get attribute '{attr_name}': {raw_value_result.error}"
+            )
+        return EntryManipulationServices.normalize_attribute_value(
+            raw_value_result.unwrap()
+        )
 
     @staticmethod
     def build_display_name_from_parts(
         given_name: str | None,
         sn: str | None,
-    ) -> str | None:
+    ) -> FlextResult[str]:
         """Build display name from given name and surname parts.
 
         Args:
@@ -107,31 +128,42 @@ class EntryManipulationServices:
             sn: User's surname/last name.
 
         Returns:
-            Formatted full name or None if insufficient parts.
+            FlextResult with formatted full name or failure if insufficient parts.
 
         """
-        if given_name and sn:
-            return f"{given_name} {sn}"
-        return None
+        if not given_name or not sn:
+            return FlextResult[str].fail(
+                "Insufficient name parts: both given_name and sn are required"
+            )
+        return FlextResult[str].ok(f"{given_name} {sn}")
 
     def get_display_name_priority_list(
-        self, user: FlextLdifModels.Entry
-    ) -> list[str | None]:
+        self,
+        user: FlextLdifModels.Entry,
+    ) -> list[FlextResult[str]]:
         """Get prioritized list of display name candidates.
 
         Args:
             user: LDAP user entry.
 
         Returns:
-            Ordered list of display name candidates (first non-None wins).
+            Ordered list of FlextResult[str] for display name candidates (first success wins).
 
         """
+        given_name_result = self.get_normalized_attribute(user, "givenName")
+        sn_result = self.get_normalized_attribute(user, "sn")
+
+        # Build display name from parts if both are available
+        if given_name_result.is_success and sn_result.is_success:
+            display_name_result = self.build_display_name_from_parts(
+                given_name_result.unwrap(), sn_result.unwrap()
+            )
+        else:
+            display_name_result = FlextResult[str].fail("Insufficient name parts")
+
         return [
             self.get_normalized_attribute(user, "displayName"),
-            self.build_display_name_from_parts(
-                self.get_normalized_attribute(user, "givenName"),
-                self.get_normalized_attribute(user, "sn"),
-            ),
+            display_name_result,
             self.get_normalized_attribute(user, "cn"),
             self.get_normalized_attribute(user, "uid"),
         ]
@@ -148,50 +180,53 @@ class EntryManipulationServices:
         """
         display_options = self.get_display_name_priority_list(user)
 
-        for option in display_options:
-            if option:
-                return option
+        for option_result in display_options:
+            if option_result.is_success:
+                return option_result.unwrap()
 
-        return FlextLdapConstants.ErrorStrings.UNKNOWN_USER
+        return "UNKNOWN_USER"
 
-    def check_lock_attributes(self, user: FlextLdifModels.Entry) -> str | None:
+    def check_lock_attributes(self, user: FlextLdifModels.Entry) -> FlextResult[str]:
         """Check user lock attributes.
 
         Args:
             user: LDAP user entry to check.
 
         Returns:
-            Status string if locked/disabled, None if active.
+            FlextResult with status string if locked/disabled, or success with ACTIVE if active.
 
         """
         lock_attrs = FlextLdapConstants.LockAttributes.ALL_LOCK_ATTRIBUTES
 
         for attr in lock_attrs:
-            attr_value = self.get_entry_attribute(user, attr)
-            if attr_value is None:
+            attr_value_result = self.get_entry_attribute(user, attr)
+            if not attr_value_result.is_success:
                 continue
 
-            normalized_value = self.normalize_attribute_value(attr_value)
-            if not normalized_value:
+            normalized_result = self.normalize_attribute_value(
+                attr_value_result.unwrap()
+            )
+            if normalized_result.is_failure:
                 continue
 
+            normalized_value = normalized_result.unwrap()
             if normalized_value.lower() in {
                 FlextLdapConstants.BooleanStrings.TRUE.lower(),
                 FlextLdapConstants.BooleanStrings.ONE,
                 FlextLdapConstants.BooleanStrings.YES.lower(),
             }:
-                return FlextLdapConstants.UserStatus.LOCKED
+                return FlextResult[str].ok(FlextLdapConstants.UserStatus.LOCKED)
 
             try:
                 if (
                     int(normalized_value)
                     & FlextLdapConstants.ActiveDirectoryFlags.ADS_UF_ACCOUNTDISABLE
                 ):
-                    return FlextLdapConstants.UserStatus.DISABLED
+                    return FlextResult[str].ok(FlextLdapConstants.UserStatus.DISABLED)
             except (ValueError, TypeError):
                 continue
 
-        return None
+        return FlextResult[str].ok(FlextLdapConstants.UserStatus.ACTIVE)
 
     def check_password_expiry(self, user: FlextLdifModels.Entry) -> bool:
         """Check if user password is expired.
@@ -203,10 +238,11 @@ class EntryManipulationServices:
             True if password is considered expired (simplified check).
 
         """
-        pwd_last_set = self.get_entry_attribute(
-            user, FlextLdapConstants.ActiveDirectoryAttributes.PWD_LAST_SET
+        pwd_last_set_result = self.get_entry_attribute(
+            user,
+            FlextLdapConstants.ActiveDirectoryAttributes.PWD_LAST_SET,
         )
-        return pwd_last_set is not None
+        return pwd_last_set_result.is_success
 
     def determine_user_status(self, user: FlextLdifModels.Entry) -> str:
         """Determine user status based on LDAP attributes.
@@ -218,9 +254,12 @@ class EntryManipulationServices:
             User status string ("active", "locked", "disabled").
 
         """
-        lock_status = self.check_lock_attributes(user)
-        if lock_status:
-            return lock_status
+        lock_status_result = self.check_lock_attributes(user)
+        if lock_status_result.is_success:
+            status = lock_status_result.unwrap()
+            # If status is not ACTIVE, return it (LOCKED or DISABLED)
+            if status != FlextLdapConstants.UserStatus.ACTIVE:
+                return status
 
         if self.check_password_expiry(user):
             return FlextLdapConstants.UserStatus.ACTIVE
@@ -231,7 +270,7 @@ class EntryManipulationServices:
         self,
         user: FlextLdifModels.Entry,
         group: FlextLdifModels.Entry,
-    ) -> str | None:
+    ) -> FlextResult[bool]:
         """Check if group requires email membership.
 
         Args:
@@ -239,16 +278,26 @@ class EntryManipulationServices:
             group: LDAP group entry.
 
         Returns:
-            Error message if requirement not met, None if valid.
+            FlextResult[bool]: Success if requirement met, failure with error message if not.
 
         """
-        group_cn = self.get_normalized_attribute(group, "cn")
-        user_email = self.get_normalized_attribute(user, "mail")
+        group_cn_result = self.get_normalized_attribute(group, "cn")
+        user_email_result = self.get_normalized_attribute(user, "mail")
 
-        if group_cn and "admin" in group_cn.lower() and not user_email:
-            return "Admin group members must have email addresses"
+        if not group_cn_result.is_success:
+            return FlextResult[bool].ok(True)  # No group CN, no requirement
 
-        return None
+        group_cn = group_cn_result.unwrap()
+        user_email = (
+            user_email_result.unwrap() if user_email_result.is_success else None
+        )
+
+        if "admin" in group_cn.lower() and not user_email:
+            return FlextResult[bool].fail(
+                "Admin group members must have email addresses"
+            )
+
+        return FlextResult[bool].ok(True)
 
     def check_user_active_status(self, user: FlextLdifModels.Entry) -> bool:
         """Check if user is active (not locked).
@@ -260,8 +309,11 @@ class EntryManipulationServices:
             True if user is active, False if locked.
 
         """
-        lock_status = self.check_lock_attributes(user)
-        return lock_status is None
+        lock_status_result = self.check_lock_attributes(user)
+        if not lock_status_result.is_success:
+            return False
+        status = lock_status_result.unwrap()
+        return status == FlextLdapConstants.UserStatus.ACTIVE
 
     def validate_group_membership_rules(
         self,
@@ -278,9 +330,9 @@ class EntryManipulationServices:
             FlextResult indicating if membership is valid.
 
         """
-        email_error = self.check_group_email_requirement(user, group)
-        if email_error:
-            return FlextResult[bool].fail(email_error)
+        email_check_result = self.check_group_email_requirement(user, group)
+        if not email_check_result.is_success:
+            return email_check_result
 
         if not self.check_user_active_status(user):
             return FlextResult[bool].fail("Inactive users cannot be added to groups")
@@ -288,7 +340,9 @@ class EntryManipulationServices:
         return FlextResult[bool].ok(True)
 
     def normalize_username_base(
-        self, base_name: str, validation_service: FlextLdifValidation
+        self,
+        base_name: str,
+        validation_service: FlextLdifValidation,
     ) -> FlextResult[str]:
         """Normalize username base using domain rules and validation.
 
@@ -316,13 +370,14 @@ class EntryManipulationServices:
         validation_result = validation_service.validate_attribute_name(username)
         if validation_result.is_failure or not validation_result.unwrap():
             return FlextResult[str].fail(
-                f"Generated username '{username}' does not meet LDAP attribute name requirements"
+                f"Generated username '{username}' does not meet LDAP attribute name requirements",
             )
 
         return FlextResult[str].ok(username)
 
     def collect_existing_uids(
-        self, existing_users: list[FlextLdifModels.Entry]
+        self,
+        existing_users: list[FlextLdifModels.Entry],
     ) -> set[str]:
         """Collect existing UIDs from user entries.
 
@@ -335,9 +390,9 @@ class EntryManipulationServices:
         """
         existing_uids = set()
         for user in existing_users:
-            uid_value = self.get_normalized_attribute(user, "uid")
-            if uid_value:
-                existing_uids.add(uid_value)
+            uid_result = self.get_normalized_attribute(user, "uid")
+            if uid_result.is_success:
+                existing_uids.add(uid_result.unwrap())
         return existing_uids
 
     def generate_username_with_suffix(
@@ -366,7 +421,7 @@ class EntryManipulationServices:
                 return FlextResult[str].ok(candidate)
 
         return FlextResult[str].fail(
-            f"Could not generate unique username after {max_attempts} attempts"
+            f"Could not generate unique username after {max_attempts} attempts",
         )
 
     def generate_unique_username(
@@ -388,7 +443,8 @@ class EntryManipulationServices:
 
         """
         normalized_result = self.normalize_username_base(
-            base_name, validation_service or self._validation_service
+            base_name,
+            validation_service or self._validation_service,
         )
         if normalized_result.is_failure:
             return normalized_result
@@ -398,7 +454,9 @@ class EntryManipulationServices:
         existing_uids = self.collect_existing_uids(existing_users)
 
         return self.generate_username_with_suffix(
-            base_username, existing_uids, max_attempts
+            base_username,
+            existing_uids,
+            max_attempts,
         )
 
     @staticmethod
@@ -484,7 +542,9 @@ class EntryManipulationServices:
             while retry_count < max_retries:
                 try:
                     success = self._attempt_add_entry_internal(
-                        connection, dn_str, attempted_attributes
+                        connection,
+                        dn_str,
+                        attempted_attributes,
                     )
                     if success:
                         if removed_attributes:
@@ -515,11 +575,14 @@ class EntryManipulationServices:
                         "undefined attribute" in error_str
                         or "invalid attribute" in error_str
                     ):
-                        problem_attr = self._extract_undefined_attribute_internal(
-                            str(e),
-                            attempted_attributes,
+                        problem_attr_result = (
+                            self._extract_undefined_attribute_internal(
+                                str(e),
+                                attempted_attributes,
+                            )
                         )
-                        if problem_attr:
+                        if problem_attr_result.is_success:
+                            problem_attr = problem_attr_result.unwrap()
                             logger.debug("Exception on undefined '%s'", problem_attr)
                             del attempted_attributes[problem_attr]
                             removed_attributes.append(problem_attr)
@@ -556,25 +619,30 @@ class EntryManipulationServices:
         else:
             object_class = str(object_class_raw)
 
-        typed_conn = connection
-        # Cast to dict[str, str | list[str]] for ldap3.add method signature
-        attrs_for_add = cast("dict[str, str | list[str]]", attempted_attributes)
-        return typed_conn.add(
-            dn_str, object_class=object_class, attributes=attrs_for_add
+        # Convert dict[str, list[str]] to dict[str, str | list[str]] for ldap3.add
+        # ldap3.add accepts dict[str, str | list[str]], and we have dict[str, list[str]]
+        # which is compatible (list[str] is a subtype of str | list[str])
+        return connection.add(
+            dn_str,
+            object_class=object_class,
+            attributes=attempted_attributes,
         )
 
     def _extract_undefined_attribute_internal(
         self,
         error_msg: str,
         attempted_attributes: dict[str, list[str]],
-    ) -> str | None:
+    ) -> FlextResult[str]:
         """Extract attribute name from undefined attribute error (internal helper)."""
         error_parts = error_msg.split()
-        if len(error_parts) > 0:
-            problem_attr = error_parts[-1].strip()
-            if problem_attr in attempted_attributes:
-                return problem_attr
-        return None
+        if len(error_parts) == 0:
+            return FlextResult[str].fail("Empty error message")
+        problem_attr = error_parts[-1].strip()
+        if problem_attr not in attempted_attributes:
+            return FlextResult[str].fail(
+                f"Attribute '{problem_attr}' not found in attempted attributes"
+            )
+        return FlextResult[str].ok(problem_attr)
 
     def _handle_undefined_attribute_error_internal(
         self,
@@ -591,11 +659,12 @@ class EntryManipulationServices:
         ):
             return False
 
-        problem_attr = self._extract_undefined_attribute_internal(
+        problem_attr_result = self._extract_undefined_attribute_internal(
             str(connection.last_error),
             attempted_attributes,
         )
-        if problem_attr:
+        if problem_attr_result.is_success:
+            problem_attr = problem_attr_result.unwrap()
             logger.debug("Removing undefined '%s'", problem_attr)
             del attempted_attributes[problem_attr]  # This modifies the dict in place
             removed_attributes.append(problem_attr)  # Track removed attribute

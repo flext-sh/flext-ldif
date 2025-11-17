@@ -135,7 +135,7 @@ class TestOudSchemaQuirk:
             x_alias=None,
             x_oid=None,
         )
-        QuirkTestHelpers.test_schema_hook_post_parse_attribute_complete(
+        _ = QuirkTestHelpers.test_schema_hook_post_parse_attribute_complete(
             schema_quirk, attr, should_succeed=True
         )
 
@@ -188,7 +188,7 @@ class TestOudSchemaQuirk:
             x_alias=None,
             x_oid=None,
         )
-        QuirkTestHelpers.test_schema_hook_post_parse_attribute_complete(
+        _ = QuirkTestHelpers.test_schema_hook_post_parse_attribute_complete(
             schema_quirk, attr, should_succeed=True
         )
 
@@ -219,7 +219,7 @@ class TestOudSchemaQuirk:
             sup="top$person",  # Multiple SUPs separated by $
         )
         result = schema_quirk._hook_post_parse_objectclass(oc)
-        TestAssertions.assert_failure(result)
+        _ = TestAssertions.assert_failure(result)
         assert result.error is not None
         assert "multiple SUPs" in result.error
 
@@ -252,7 +252,7 @@ class TestOudSchemaQuirk:
         """Test _parse_attribute with invalid attribute definition."""
         attr_def = "invalid attribute definition"
         result = schema_quirk._parse_attribute(attr_def)
-        TestAssertions.assert_failure(result)
+        _ = TestAssertions.assert_failure(result)
 
     @pytest.mark.timeout(5)
     def test_parse_objectclass_valid(
@@ -290,7 +290,7 @@ class TestOudSchemaQuirk:
         """Test _parse_objectclass with invalid objectClass definition."""
         oc_def = "invalid objectClass definition"
         result = schema_quirk._parse_objectclass(oc_def)
-        TestAssertions.assert_failure(result)
+        _ = TestAssertions.assert_failure(result)
 
     def test_validate_objectclass_dependencies_valid(
         self, schema_quirk: FlextLdifServersOud.Schema
@@ -351,7 +351,7 @@ class TestOudSchemaQuirk:
         )
         available_attrs = {"cn"}
         result = schema_quirk.validate_objectclass_dependencies(oc, available_attrs)
-        TestAssertions.assert_failure(result)
+        _ = TestAssertions.assert_failure(result)
         assert result.error is not None
         assert "name is required" in result.error
 
@@ -367,7 +367,7 @@ class TestOudSchemaQuirk:
         )
         available_attrs = {"cn"}
         result = schema_quirk.validate_objectclass_dependencies(oc, available_attrs)
-        TestAssertions.assert_failure(result)
+        _ = TestAssertions.assert_failure(result)
         assert result.error is not None
         assert "OID is required" in result.error
 
@@ -461,7 +461,7 @@ class TestOudSchemaQuirk:
     ) -> None:
         """Test _add_ldif_block with is_first_block=False."""
         ldif_lines: list[str] = []
-        schema_quirk._add_ldif_block(
+        _ = schema_quirk._add_ldif_block(
             ldif_lines, "attributetypes", "test value", is_first_block=True
         )
         result = schema_quirk._add_ldif_block(
@@ -505,7 +505,7 @@ class TestOudSchemaQuirk:
             ),
         )
         result = schema_quirk._write_entry_modify_add_format(entry)
-        TestAssertions.assert_failure(result)
+        _ = TestAssertions.assert_failure(result)
         assert result.error is not None
         assert "DN is required" in result.error
 
@@ -708,7 +708,7 @@ class TestOudSchemaQuirk:
         """Test _validate_aci_macros with no macros."""
         aci_value = 'aci: (targetattr="*")(version 3.0; acl "test"; allow (read) userdn="ldap:///self";)'
         result = schema_quirk._validate_aci_macros(aci_value)
-        TestAssertions.assert_success(result, "Validation should succeed")
+        _ = TestAssertions.assert_success(result, "Validation should succeed")
 
     def test_validate_aci_macros_with_macros_valid(
         self, schema_quirk: FlextLdifServersOud.Schema
@@ -716,7 +716,7 @@ class TestOudSchemaQuirk:
         """Test _validate_aci_macros with valid macros."""
         aci_value = 'aci: (targetattr="($dn)")(version 3.0; acl "test"; allow (read) userdn="ldap:///($dn)";)'
         result = schema_quirk._validate_aci_macros(aci_value)
-        TestAssertions.assert_success(result, "Validation should succeed")
+        _ = TestAssertions.assert_success(result, "Validation should succeed")
 
     def test_validate_aci_macros_with_macros_invalid(
         self, schema_quirk: FlextLdifServersOud.Schema
@@ -773,7 +773,7 @@ class TestOudSchemaQuirk:
             },
         )
         entry_typed = cast("FlextLdifModels.Entry", entry)
-        RfcTestHelpers.test_result_success_and_unwrap(
+        _ = RfcTestHelpers.test_result_success_and_unwrap(
             schema_quirk._hook_pre_write_entry(entry_typed),
         )
 
@@ -827,7 +827,7 @@ class TestOudSchemaQuirk:
             "cn": ["test"],
         }
         result = schema_quirk.write_entry_to_ldif(entry_data)
-        TestAssertions.assert_failure(result)
+        _ = TestAssertions.assert_failure(result)
         assert result.error is not None
         assert "Missing required" in result.error
 
@@ -909,7 +909,7 @@ class TestOudSchemaQuirk:
             x_oid=None,
         )
         result = schema_quirk._hook_post_parse_attribute(attr)
-        TestAssertions.assert_failure(result)
+        _ = TestAssertions.assert_failure(result)
         assert result.error is not None
         assert "Invalid OUD OID format" in result.error
 
@@ -949,7 +949,7 @@ class TestOudSchemaQuirk:
             "cn": ["test"],
         }
         result = schema_quirk.write_entry_to_ldif(entry_data)
-        TestAssertions.assert_failure(result)
+        _ = TestAssertions.assert_failure(result)
         assert result.error is not None
         assert "Missing required" in result.error and "DN" in result.error
 
@@ -1100,7 +1100,7 @@ class TestOudAclQuirk:
         """Test _parse_aci_format with invalid format."""
         invalid_line = "not an aci line"
         result = acl_quirk._parse_aci_format(invalid_line)
-        TestAssertions.assert_failure(result)
+        _ = TestAssertions.assert_failure(result)
 
     def test_parse_ds_privilege_name(self, acl_quirk: FlextLdifServersOud.Acl) -> None:
         """Test _parse_ds_privilege_name."""
@@ -1197,7 +1197,7 @@ class TestOudAclQuirk:
             name="test",
         )
         result = acl_quirk._build_aci_permissions(acl)
-        TestAssertions.assert_failure(result)
+        _ = TestAssertions.assert_failure(result)
         assert result.error is not None
         assert "no permissions object" in result.error
 
@@ -1868,7 +1868,7 @@ class TestOudEntryQuirk:
     ) -> None:
         """Test _add_ldif_block with is_first_block=False in Entry class."""
         ldif_lines: list[str] = []
-        entry_quirk._add_ldif_block(
+        _ = entry_quirk._add_ldif_block(
             ldif_lines, "attributetypes", "test value", is_first_block=True
         )
         result = entry_quirk._add_ldif_block(
@@ -1921,7 +1921,7 @@ class TestOudEntryQuirk:
         ).unwrap()
         entry_typed = cast("FlextLdifModels.Entry", entry)
         result = entry_quirk._write_entry_modify_add_format(entry_typed)
-        TestAssertions.assert_failure(result)
+        _ = TestAssertions.assert_failure(result)
         assert result.error is not None
         assert "DN is required" in result.error
 
@@ -3318,16 +3318,12 @@ class TestOudCoverageGaps:
     def test_hook_post_parse_objectclass_none(
         self, schema_quirk: FlextLdifServersOud.Schema
     ) -> None:
-        """Test _hook_post_parse_objectclass with None oc (line 603)."""
-        # Create a minimal objectclass instead of None to avoid type error
-        oc = FlextLdifModels.SchemaObjectClass(
-            name="testOC",
-            oid="1.2.3.4",
-            desc=None,
-            sup=None,
-        )
-        result = schema_quirk._hook_post_parse_objectclass(oc)
-        assert result.is_success
+        """Test _hook_post_parse_objectclass with None oc (line 605)."""
+        # Test with None to cover early return in line 605
+        # When oc is None, should fail (not return FlextResult[None])
+        result = schema_quirk._hook_post_parse_objectclass(None)  # type: ignore[arg-type]
+        assert result.is_failure
+        assert "ObjectClass is None or empty" in result.error
 
     def test_parse_attribute_exception_path(
         self,
@@ -3691,7 +3687,11 @@ cn: test
                 ],
             },
         )
-        result = entry_quirk._normalize_acl_dns(entry)
+        entry_unwrapped_raw = entry.unwrap()
+        entry_unwrapped: FlextLdifModels.Entry = cast(
+            "FlextLdifModels.Entry", entry_unwrapped_raw
+        )
+        result = entry_quirk._normalize_acl_dns(entry_unwrapped)
         assert result.attributes
         aci_values = result.attributes.attributes.get("aci", [])
         assert len(aci_values) == 1

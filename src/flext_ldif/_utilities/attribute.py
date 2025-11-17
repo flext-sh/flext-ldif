@@ -31,10 +31,10 @@ class FlextLdifUtilitiesAttribute:
 
     # Compiled patterns (compile once at class level for performance)
     _ATTRIBUTE_NAME_PATTERN: Final[re.Pattern[str]] = re.compile(
-        FlextLdifConstants.LdifPatterns.ATTRIBUTE_NAME
+        FlextLdifConstants.LdifPatterns.ATTRIBUTE_NAME,
     )
     _ATTRIBUTE_OPTION_PATTERN: Final[re.Pattern[str]] = re.compile(
-        FlextLdifConstants.LdifPatterns.ATTRIBUTE_OPTION
+        FlextLdifConstants.LdifPatterns.ATTRIBUTE_OPTION,
     )
 
     @staticmethod
@@ -52,6 +52,9 @@ class FlextLdifUtilitiesAttribute:
         Returns:
             Tuple of (base_attribute, [options])
 
+        Raises:
+            ValueError: If attribute_description is empty or None
+
         Examples:
             >>> split_attribute_description("displayname")
             ('displayname', [])
@@ -64,7 +67,8 @@ class FlextLdifUtilitiesAttribute:
 
         """
         if not attribute_description:
-            return "", []
+            msg = "attribute_description cannot be empty or None"
+            raise ValueError(msg)
 
         # Split on semicolon to separate base attribute from options
         parts = attribute_description.split(";")
@@ -203,7 +207,7 @@ class FlextLdifUtilitiesAttribute:
         if not cls.validate_attribute_name(base_attr):
             violations.append(
                 f"Invalid base attribute '{base_attr}' - "
-                f"must start with letter and contain only letters, digits, hyphens"
+                f"must start with letter and contain only letters, digits, hyphens",
             )
 
         # Validate each option

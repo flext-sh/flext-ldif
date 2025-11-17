@@ -399,7 +399,9 @@ class FlextLdifConfig(FlextConfig):
     @field_validator("quirks_server_type", mode="before")
     @classmethod
     def validate_quirks_server_type(
-        cls, v: str | None, info: ValidationInfoProtocol
+        cls,
+        v: str | None,
+        info: ValidationInfoProtocol,
     ) -> str | None:
         """Validate quirks_server_type when specified is a recognized server.
 
@@ -457,7 +459,9 @@ class FlextLdifConfig(FlextConfig):
     @field_validator("ldif_default_server_type", mode="after")
     @classmethod
     def validate_ldif_default_server_type(
-        cls, v: str, info: ValidationInfoProtocol
+        cls,
+        v: str,
+        info: ValidationInfoProtocol,
     ) -> str:
         """Validate ldif_default_server_type is a recognized server.
 

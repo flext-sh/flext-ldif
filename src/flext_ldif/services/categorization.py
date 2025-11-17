@@ -108,7 +108,7 @@ class FlextLdifCategorization(FlextService[dict[str, list[FlextLdifModels.Entry]
         # Convert dict to model if needed (backward compatibility)
         if isinstance(categorization_rules, dict):
             self._categorization_rules = FlextLdifModels.CategoryRules(
-                **categorization_rules
+                **categorization_rules,
             )
         elif categorization_rules is None:
             self._categorization_rules = FlextLdifModels.CategoryRules()
@@ -117,14 +117,18 @@ class FlextLdifCategorization(FlextService[dict[str, list[FlextLdifModels.Entry]
 
         if isinstance(schema_whitelist_rules, dict):
             self._schema_whitelist_rules = FlextLdifModels.WhitelistRules(
-                **schema_whitelist_rules
+                **schema_whitelist_rules,
             )
         elif schema_whitelist_rules is None:
             self._schema_whitelist_rules = FlextLdifModels.WhitelistRules()
         else:
             self._schema_whitelist_rules = schema_whitelist_rules
-        self._forbidden_attributes = forbidden_attributes or []
-        self._forbidden_objectclasses = forbidden_objectclasses or []
+        self._forbidden_attributes = (
+            forbidden_attributes if forbidden_attributes is not None else []
+        )
+        self._forbidden_objectclasses = (
+            forbidden_objectclasses if forbidden_objectclasses is not None else []
+        )
         self._base_dn = base_dn
         self._server_type = server_type
         self._rejection_tracker: dict[str, list[FlextLdifModels.Entry]] = {
@@ -164,7 +168,8 @@ class FlextLdifCategorization(FlextService[dict[str, list[FlextLdifModels.Entry]
         return self._forbidden_objectclasses
 
     def validate_dns(
-        self, entries: list[FlextLdifModels.Entry]
+        self,
+        entries: list[FlextLdifModels.Entry],
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Validate and normalize all DNs to RFC 4514.
 
@@ -194,22 +199,23 @@ class FlextLdifCategorization(FlextService[dict[str, list[FlextLdifModels.Entry]
                 logger.debug("Invalid DN (RFC 4514)", dn=dn_str)
                 continue
 
-            normalized_dn = FlextLdifUtilities.DN.norm(dn_str)
-            if normalized_dn is None:
+            norm_result = FlextLdifUtilities.DN.norm(dn_str)
+            if not norm_result.is_success:
                 self._rejection_tracker["invalid_dn_rfc4514"].append(entry)
                 # Track rejection in statistics
                 if entry.statistics:
                     entry.statistics.mark_rejected(
                         FlextLdifConstants.RejectionCategory.INVALID_DN,
-                        f"DN normalization failed: {dn_str[:80]}",
+                        f"DN normalization failed: {norm_result.error or 'Unknown error'}",
                     )
                 continue
+            normalized_dn = norm_result.unwrap()
             entry.dn = FlextLdifModels.DistinguishedName(value=normalized_dn)
             validated.append(entry)
 
         logger.info(
             f"Validated {len(validated)} entries, "
-            f"rejected {len(self._rejection_tracker['invalid_dn_rfc4514'])} invalid DNs"
+            f"rejected {len(self._rejection_tracker['invalid_dn_rfc4514'])} invalid DNs",
         )
 
         # Log sample rejected DNs for diagnostic purposes (track 289 missing entries)
@@ -221,12 +227,13 @@ class FlextLdifCategorization(FlextService[dict[str, list[FlextLdifModels.Entry]
                 else (entry.dn.value if entry.dn else "")
                 for entry in self._rejection_tracker["invalid_dn_rfc4514"][:5]
             ]
-            logger.debug(f"Sample rejected DNs (first 5): {sample_rejected_dns}")
+            logger.debug("Sample rejected DNs (first 5): %s", sample_rejected_dns)
 
         return FlextResult[list[FlextLdifModels.Entry]].ok(validated)
 
     def categorize_entries(
-        self, entries: list[FlextLdifModels.Entry]
+        self,
+        entries: list[FlextLdifModels.Entry],
     ) -> FlextResult[dict[str, list[FlextLdifModels.Entry]]]:
         """Categorize entries into 6 categories using FlextLdifFilters.
 
@@ -266,9 +273,12 @@ class FlextLdifCategorization(FlextService[dict[str, list[FlextLdifModels.Entry]
                 self._rejection_tracker["categorization_rejected"].append(entry)
                 # Track rejection in statistics
                 if entry.statistics:
+                    rejection_reason = (
+                        reason if reason is not None else "No category match"
+                    )
                     entry.statistics.mark_rejected(
                         FlextLdifConstants.RejectionCategory.NO_CATEGORY_MATCH,
-                        reason or "No category match",  # type: ignore[arg-type]
+                        rejection_reason,
                     )
                 logger.debug(f"Entry rejected: {entry.dn}, reason: {reason}")
 
@@ -279,7 +289,8 @@ class FlextLdifCategorization(FlextService[dict[str, list[FlextLdifModels.Entry]
         return FlextResult[dict[str, list[FlextLdifModels.Entry]]].ok(categories)
 
     def filter_by_base_dn(
-        self, categories: dict[str, list[FlextLdifModels.Entry]]
+        self,
+        categories: dict[str, list[FlextLdifModels.Entry]],
     ) -> dict[str, list[FlextLdifModels.Entry]]:
         """Filter entries by base DN (if configured).
 
@@ -318,12 +329,14 @@ class FlextLdifCategorization(FlextService[dict[str, list[FlextLdifModels.Entry]
                 for entry in included:
                     if entry.statistics:
                         entry.statistics.mark_filtered(
-                            FlextLdifConstants.FilterType.BASE_DN_FILTER, passed=True
+                            FlextLdifConstants.FilterType.BASE_DN_FILTER,
+                            passed=True,
                         )
                 for entry in excluded:
                     if entry.statistics:
                         entry.statistics.mark_filtered(
-                            FlextLdifConstants.FilterType.BASE_DN_FILTER, passed=False
+                            FlextLdifConstants.FilterType.BASE_DN_FILTER,
+                            passed=False,
                         )
                         entry.statistics.mark_rejected(
                             FlextLdifConstants.RejectionCategory.BASE_DN_FILTER,
@@ -333,7 +346,7 @@ class FlextLdifCategorization(FlextService[dict[str, list[FlextLdifModels.Entry]
                 if excluded:
                     logger.info(
                         f"Base DN filter ({category}): {len(entries)} → "
-                        f"{len(included)} kept, {len(excluded)} rejected"
+                        f"{len(included)} kept, {len(excluded)} rejected",
                     )
             else:
                 filtered[category] = entries
@@ -341,7 +354,8 @@ class FlextLdifCategorization(FlextService[dict[str, list[FlextLdifModels.Entry]
         return filtered
 
     def filter_schema_by_oids(
-        self, schema_entries: list[FlextLdifModels.Entry]
+        self,
+        schema_entries: list[FlextLdifModels.Entry],
     ) -> FlextResult[list[FlextLdifModels.Entry]]:
         """Filter schema entries by OID whitelist.
 
@@ -357,16 +371,22 @@ class FlextLdifCategorization(FlextService[dict[str, list[FlextLdifModels.Entry]
         if not self._schema_whitelist_rules:
             return FlextResult[list[FlextLdifModels.Entry]].ok(schema_entries)
 
-        # Convert WhitelistRules model to dict for filter_schema_by_oids
+        # Build dict from WhitelistRules model fields for filter_schema_by_oids
+        allowed_oids = {
+            "allowed_attribute_oids": self._schema_whitelist_rules.allowed_attribute_oids,
+            "allowed_objectclass_oids": self._schema_whitelist_rules.allowed_objectclass_oids,
+            "allowed_matchingrule_oids": self._schema_whitelist_rules.allowed_matchingrule_oids,
+            "allowed_matchingruleuse_oids": self._schema_whitelist_rules.allowed_matchingruleuse_oids,
+        }
         result = FlextLdifFilters.filter_schema_by_oids(
             entries=schema_entries,
-            allowed_oids=self._schema_whitelist_rules.model_dump(),
+            allowed_oids=allowed_oids,
         )
 
         if result.is_success:
             filtered = result.unwrap()
             logger.info(
-                f"Schema OID filter: {len(schema_entries)} → {len(filtered)} entries"
+                f"Schema OID filter: {len(schema_entries)} → {len(filtered)} entries",
             )
 
         return result

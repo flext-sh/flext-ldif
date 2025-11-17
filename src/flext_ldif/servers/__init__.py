@@ -39,41 +39,6 @@ from flext_ldif.typings import FlextLdifTypes
 FlextLdifServer = FlextLdifServersBase
 
 
-def get_server_quirk(server_type: str) -> type[FlextLdifServersBase]:
-    """Get server-specific quirk class by server type.
-
-    Args:
-        server_type: Server type identifier ("oid", "oud", "rfc", etc.)
-
-    Returns:
-        Server quirk class
-
-    Raises:
-        ValueError: If server_type is unknown
-
-    """
-    server_map = {
-        "oid": FlextLdifServersOid,
-        "oud": FlextLdifServersOud,
-        "rfc": FlextLdifServersRfc,
-        "openldap": FlextLdifServersOpenldap,
-        "openldap1": FlextLdifServersOpenldap1,
-        "relaxed": FlextLdifServersRelaxed,
-        "ad": FlextLdifServersAd,
-        "apache": FlextLdifServersApache,
-        "ds389": FlextLdifServersDs389,
-        "novell": FlextLdifServersNovell,
-        "tivoli": FlextLdifServersTivoli,
-    }
-
-    quirk_class = server_map.get(server_type.lower())
-    if not quirk_class:
-        msg = f"Unknown server type: {server_type}"
-        raise ValueError(msg)
-
-    return quirk_class
-
-
 __all__ = [
     "FlextLdifServer",  # Compatibility alias
     "FlextLdifServersAd",
@@ -89,5 +54,4 @@ __all__ = [
     "FlextLdifServersRfc",
     "FlextLdifServersTivoli",
     "FlextLdifTypes",
-    "get_server_quirk",
 ]

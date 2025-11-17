@@ -534,10 +534,7 @@ class FlextLdifDn(FlextService[str]):
         @staticmethod
         def parse_components(dn: str) -> FlextResult[list[tuple[str, str]]]:
             """Parse DN into RFC 4514 compliant components."""
-            components = FlextLdifUtilities.DN.parse(dn)
-            if components is None:
-                return FlextResult[list[tuple[str, str]]].fail("Invalid DN format")
-            return FlextResult[list[tuple[str, str]]].ok(components)
+            return FlextLdifUtilities.DN.parse(dn)
 
         @staticmethod
         def validate_format(dn: str) -> FlextResult[bool]:
@@ -548,18 +545,12 @@ class FlextLdifDn(FlextService[str]):
         @staticmethod
         def parse_rdn(rdn: str) -> FlextResult[list[tuple[str, str]]]:
             """Parse a single RDN component."""
-            pairs = FlextLdifUtilities.DN.parse_rdn(rdn)
-            if pairs is None:
-                return FlextResult[list[tuple[str, str]]].fail("RDN parse failed")
-            return FlextResult[list[tuple[str, str]]].ok(pairs)
+            return FlextLdifUtilities.DN.parse_rdn(rdn)
 
         @staticmethod
         def compare_dns(dn1: str, dn2: str) -> FlextResult[int]:
             """Compare two DNs per RFC 4514 (case-insensitive)."""
-            comparison = FlextLdifUtilities.DN.compare_dns(dn1, dn2)
-            if comparison is None:
-                return FlextResult[int].fail("RFC 4514 comparison failed")
-            return FlextResult[int].ok(comparison)
+            return FlextLdifUtilities.DN.compare_dns(dn1, dn2)
 
         @staticmethod
         def parse_operation(dn: str) -> FlextResult[str]:
@@ -616,10 +607,7 @@ class FlextLdifDn(FlextService[str]):
         @staticmethod
         def normalize(dn: str) -> FlextResult[str]:
             """Normalize DN per RFC 4514."""
-            normalized = FlextLdifUtilities.DN.norm(dn)
-            if normalized is None:
-                return FlextResult[str].fail("Failed to normalize DN")
-            return FlextResult[str].ok(normalized)
+            return FlextLdifUtilities.DN.norm(dn)
 
         @staticmethod
         def clean_dn(dn: str) -> str:

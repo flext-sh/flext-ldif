@@ -13,11 +13,42 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Protocol
+
+from flext_core import FlextResult
 
 from flext_ldif import FlextLdif
 from flext_ldif.models import FlextLdifModels
 from flext_ldif.servers.base import FlextLdifServersBase
 from tests.helpers.test_assertions import TestAssertions
+
+
+class HasParseMethod(Protocol):
+    """Protocol for objects with parse method."""
+
+    def parse(
+        self, ldif_input: str | Path, server_type: str | None = None
+    ) -> FlextResult[list[FlextLdifModels.Entry]]:
+        """Parse LDIF content."""
+        ...
+
+
+class HasWriteMethod(Protocol):
+    """Protocol for objects with write method."""
+
+    def write(
+        self, entries: list[FlextLdifModels.Entry] | FlextLdifModels.Entry
+    ) -> FlextResult[str]:
+        """Write entries to LDIF."""
+        ...
+
+
+class HasEntryWriteMethod(Protocol):
+    """Protocol for entry quirk instances with write method."""
+
+    def write(self, entries: list[FlextLdifModels.Entry]) -> FlextResult[str]:
+        """Write entries to LDIF."""
+        ...
 
 
 class TestOperations:
@@ -28,7 +59,7 @@ class TestOperations:
 
     @staticmethod
     def parse_and_validate(
-        parser: object,
+        parser: HasParseMethod | FlextLdif,
         ldif_content: str | Path,
         expected_count: int | None = None,
     ) -> list[FlextLdifModels.Entry]:
@@ -56,11 +87,12 @@ class TestOperations:
         else:
             result = parser.parse(ldif_content)
 
-        return TestAssertions.assert_parse_success(result, expected_count)
+        # Type narrowing: result is FlextResult[list[Entry]], but assert_parse_success accepts broader type
+        return TestAssertions.assert_parse_success(result, expected_count)  # type: ignore[arg-type]
 
     @staticmethod
     def write_and_validate(
-        writer: object,
+        writer: HasWriteMethod | FlextLdif,
         entries: list[FlextLdifModels.Entry] | FlextLdifModels.Entry,
         expected_content: str | None = None,
     ) -> str:
@@ -196,7 +228,7 @@ class TestOperations:
 
     @staticmethod
     def write_entry_and_validate(
-        entry_quirk: FlextLdifServersBase.Entry,
+        entry_quirk: HasEntryWriteMethod,
         entry: FlextLdifModels.Entry,
         expected_content: str | None = None,
     ) -> str:
@@ -214,7 +246,9 @@ class TestOperations:
             AssertionError: If write fails or validation fails
 
         """
-        result = entry_quirk.write(entry)
+        # entry_quirk is an instance of FlextLdifServersBase.Entry (quirk class)
+        # which has a write method that takes a list of entries
+        result = entry_quirk.write([entry])
         return TestAssertions.assert_write_success(result, expected_content)
 
 

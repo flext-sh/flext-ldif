@@ -60,7 +60,7 @@ class FlextLdifUtilitiesValidation:
 
         if not valid_encoding_found:
             violations.append(
-                f"Value cannot be encoded with allowed encodings: {allowed_encodings}"
+                f"Value cannot be encoded with allowed encodings: {allowed_encodings}",
             )
 
         return (len(violations) == 0, violations)
@@ -97,7 +97,7 @@ class FlextLdifUtilitiesValidation:
             # Check if padding is correct (length % 4 == 0 after padding)
             if len(value) % 4 != 0:
                 violations.append(
-                    f"Invalid base64 padding: length {len(value)} is not multiple of 4"
+                    f"Invalid base64 padding: length {len(value)} is not multiple of 4",
                 )
 
         # Try to decode to verify validity
@@ -127,7 +127,7 @@ class FlextLdifUtilitiesValidation:
         # local-part@domain
         # Allow common characters, no full RFC 5322 complexity
         email_pattern = re.compile(
-            r"^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$"
+            r"^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$",
         )
 
         return bool(email_pattern.match(value))

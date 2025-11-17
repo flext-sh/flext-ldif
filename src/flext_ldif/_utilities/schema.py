@@ -146,26 +146,92 @@ class FlextLdifUtilitiesSchema:
         return result
 
     @staticmethod
+    def _apply_field_transformation(
+        transformed: object,
+        field_name: str,
+        transform_fn: object,
+    ) -> FlextResult[object]:
+        """Apply single field transformation with monadic error handling."""
+        if not callable(transform_fn):
+            return FlextResult.ok(transformed)
+
+        try:
+            old_value = getattr(transformed, field_name, None)
+            new_value = transform_fn(old_value)
+
+            # Handle both direct values and FlextResult returns
+            if isinstance(new_value, FlextResult):
+                if new_value.is_failure:
+                    return FlextResult.fail(
+                        f"Transformation of '{field_name}' failed: {new_value.error}"
+                    )
+                setattr(transformed, field_name, new_value.unwrap())
+            else:
+                setattr(transformed, field_name, new_value)
+
+            return FlextResult.ok(transformed)
+        except Exception as e:
+            return FlextResult.fail(f"Transformation of '{field_name}' error: {e}")
+
+    @staticmethod
+    def _return_result(
+        transformed: object,
+        original_type: FlextLdifModels.SchemaAttribute
+        | FlextLdifModels.SchemaObjectClass,
+    ) -> (
+        FlextResult[FlextLdifModels.SchemaAttribute]
+        | FlextResult[FlextLdifModels.SchemaObjectClass]
+    ):
+        """Wrap transformation result with proper type."""
+        if isinstance(transformed, FlextLdifModels.SchemaAttribute):
+            return FlextResult[FlextLdifModels.SchemaAttribute].ok(transformed)
+        if isinstance(transformed, FlextLdifModels.SchemaObjectClass):
+            return FlextResult[FlextLdifModels.SchemaObjectClass].ok(transformed)
+        # Fallback for unknown types
+        if isinstance(original_type, FlextLdifModels.SchemaAttribute):
+            return FlextResult.fail(
+                f"Unknown schema object type: {type(transformed).__name__}"
+            )
+        return FlextResult.fail(
+            f"Unknown schema object type: {type(transformed).__name__}"
+        )
+
+    @staticmethod
     def apply_transformations(
         schema_obj: FlextLdifModels.SchemaAttribute | FlextLdifModels.SchemaObjectClass,
         *,
-        field_transforms: dict[str, Callable[[Any], Any] | str | list[str] | None]
-        | None = None,
-    ) -> FlextResult[Any]:
+        field_transforms: (
+            dict[
+                str,
+                Callable[
+                    [object],
+                    object,
+                ]
+                | str
+                | list[str]
+                | None,
+            ]
+            | None
+        ) = None,
+    ) -> (
+        FlextResult[FlextLdifModels.SchemaAttribute]
+        | FlextResult[FlextLdifModels.SchemaObjectClass]
+    ):
         """Apply transformation pipeline to schema object.
 
         Generic transformation pipeline accepting optional transformer callables.
 
         Args:
-            schema_obj: SchemaAttribute or SchemaObjectClass
+            schema_obj: SchemaAttribute or SchemaObjectClass (required, not optional)
             field_transforms: Dict of {field_name: transform_callable}
 
         Returns:
-            FlextResult with transformed schema object
+            FlextResult with transformed schema object or error if schema_obj is None
 
         """
-        if not schema_obj:
-            return FlextResult[Any].ok(schema_obj)
+        # Fast fail if None - no fallback
+        if schema_obj is None:
+            return FlextResult.fail("Schema object cannot be None")
 
         try:
             # Create copy using model_copy if available
@@ -174,20 +240,26 @@ class FlextLdifUtilitiesSchema:
             else:
                 transformed = copy.copy(schema_obj)
 
-            # Apply transformations
+            # Apply transformations with monadic chaining
             if field_transforms:
                 for field_name, transform_fn in field_transforms.items():
                     if hasattr(transformed, field_name):
-                        old_value = getattr(transformed, field_name, None)
-                        if callable(transform_fn):
-                            # Apply transformation even if old_value is None
-                            # Some transformations need to set values that were None
-                            new_value = transform_fn(old_value)
-                            setattr(transformed, field_name, new_value)
+                        result = FlextLdifUtilitiesSchema._apply_field_transformation(
+                            transformed, field_name, transform_fn
+                        )
+                        if result.is_failure:
+                            if isinstance(schema_obj, FlextLdifModels.SchemaAttribute):
+                                return FlextResult.fail(result.error)
+                            return FlextResult.fail(result.error)
+                        transformed = result.unwrap()
 
-            return FlextResult[Any].ok(transformed)
+            # Return with proper type based on input
+            return FlextLdifUtilitiesSchema._return_result(transformed, schema_obj)
         except Exception as e:
-            return FlextResult[Any].fail(f"Failed to apply transformations: {e}")
+            # Return error with proper type based on input
+            if isinstance(schema_obj, FlextLdifModels.SchemaAttribute):
+                return FlextResult.fail(f"Failed to apply transformations: {e}")
+            return FlextResult.fail(f"Failed to apply transformations: {e}")
 
     @staticmethod
     def set_server_type(
@@ -210,7 +282,7 @@ class FlextLdifUtilitiesSchema:
 
         """
         if not model_instance:
-            return FlextResult[Any].ok(model_instance)
+            return FlextResult.ok(model_instance)
 
         try:
             # Create copy
@@ -227,9 +299,9 @@ class FlextLdifUtilitiesSchema:
             ):
                 result.metadata.extensions["server_type"] = server_type
 
-            return FlextResult[Any].ok(result)
+            return FlextResult.ok(result)
         except Exception as e:
-            return FlextResult[Any].fail(f"Failed to set server type: {e}")
+            return FlextResult.fail(f"Failed to set server type: {e}")
 
     @staticmethod
     def _extract_schema_items_from_lines(
@@ -287,7 +359,9 @@ class FlextLdifUtilitiesSchema:
 
         """
         return FlextLdifUtilitiesSchema._extract_schema_items_from_lines(
-            ldif_content, parse_callback, "attributetypes:"
+            ldif_content,
+            parse_callback,
+            "attributetypes:",
         )
 
     @staticmethod
@@ -308,7 +382,9 @@ class FlextLdifUtilitiesSchema:
 
         """
         return FlextLdifUtilitiesSchema._extract_schema_items_from_lines(
-            ldif_content, parse_callback, "objectclasses:"
+            ldif_content,
+            parse_callback,
+            "objectclasses:",
         )
 
     @staticmethod

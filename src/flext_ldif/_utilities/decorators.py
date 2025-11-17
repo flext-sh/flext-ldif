@@ -25,22 +25,15 @@ from __future__ import annotations
 from collections.abc import Callable
 from datetime import UTC, datetime
 from functools import wraps
-from typing import Protocol, TypeVar, cast
+from typing import TypeVar, cast
 
 from flext_core import FlextLogger, FlextResult
 
-from flext_ldif._models.domain import FlextLdifModelsDomains
 from flext_ldif.models import FlextLdifModels
 
 logger = FlextLogger(__name__)
 
 T = TypeVar("T")
-
-
-class _HasMetadata(Protocol):
-    """Protocol for objects that have a metadata attribute."""
-
-    metadata: FlextLdifModelsDomains.QuirkMetadata
 
 
 class FlextLdifUtilitiesDecorators:
@@ -102,8 +95,10 @@ class FlextLdifUtilitiesDecorators:
         )
 
         # Attach metadata - Protocol cast after hasattr check
-        obj_with_metadata = cast("_HasMetadata", result_value)
-        obj_with_metadata.metadata = metadata
+        # Type narrowing: result_value has metadata attribute (checked above)
+        if hasattr(result_value, "metadata"):
+            # Use setattr to avoid type checker issues with Protocol
+            result_value.metadata = metadata
 
     @staticmethod
     def attach_parse_metadata(

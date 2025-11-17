@@ -85,7 +85,7 @@ class FlextLdifUtilitiesOID:
         """
         # First try: Extract from original_format if available
         if schema_obj.metadata and schema_obj.metadata.extensions.get(
-            "original_format"
+            "original_format",
         ):
             try:
                 # Look for OID in parentheses at start: ( 2.16.840.1.113894. ...

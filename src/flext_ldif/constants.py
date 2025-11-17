@@ -2909,7 +2909,9 @@ class FlextLdifConstants(FlextConstants):
 
         @classmethod
         def is_acl_attribute(
-            cls, attribute_name: str, server_type: str | None = None
+            cls,
+            attribute_name: str,
+            server_type: str | None = None,
         ) -> bool:
             """Check if attribute is an ACL attribute for given server."""
             acl_attrs = cls.get_acl_attributes(server_type)

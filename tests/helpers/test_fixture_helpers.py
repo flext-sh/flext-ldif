@@ -9,10 +9,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from flext_ldif import FlextLdif
+    from flext_ldif.models import FlextLdifModels
+
 from pathlib import Path
 
-from flext_ldif import FlextLdif
-from flext_ldif.models import FlextLdifModels
 from tests.helpers.test_assertions import TestAssertions
 
 
@@ -26,7 +30,9 @@ class FixtureTestHelpers:
         fixture_filename: str,
         expected_min_count: int | None = None,
     ) -> list[FlextLdifModels.Entry]:
-        """Load fixture LDIF file and return parsed entries - replaces entire test function.
+        """Load fixture LDIF file and return parsed entries.
+
+        Replaces entire test function.
 
         This method replaces 8-15 lines of duplicated test code:
         - Loads fixture file
@@ -37,7 +43,7 @@ class FixtureTestHelpers:
         Args:
             ldif_api: FlextLdif API instance
             server_type: Server type identifier (e.g., 'rfc', 'oud', 'oid')
-            fixture_filename: Name of the fixture file (e.g., 'rfc_schema_fixtures.ldif')
+            fixture_filename: Name of fixture file (e.g., 'rfc_schema_fixtures.ldif')
             expected_min_count: Optional minimum expected entry count
 
         Returns:
@@ -96,7 +102,8 @@ class FixtureTestHelpers:
             server_type: Server type identifier
             fixture_filename: Name of the fixture file
             expected_has_dn: Whether entries should have DNs (default: True)
-            expected_has_attributes: Whether entries should have attributes (default: True)
+            expected_has_attributes: Whether entries should have attributes
+                (default: True)
             expected_has_objectclass: Optional whether entries should have objectClass
 
         Returns:
@@ -134,7 +141,8 @@ class FixtureTestHelpers:
                 attr_names = {name.lower() for name in entry.attributes}
                 has_objectclass = "objectclass" in attr_names
                 assert has_objectclass == expected_has_objectclass, (
-                    f"Expected has_objectclass={expected_has_objectclass}, got {has_objectclass}"
+                    f"Expected has_objectclass={expected_has_objectclass}, "
+                    f"got {has_objectclass}"
                 )
 
         return entries
