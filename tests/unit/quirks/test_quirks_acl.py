@@ -44,6 +44,7 @@ from __future__ import annotations
 
 import pytest
 
+from flext_ldif import FlextLdifModels
 from flext_ldif.servers.oid import FlextLdifServersOid
 from flext_ldif.servers.oud import FlextLdifServersOud
 from flext_ldif.services.conversion import FlextLdifConversion
@@ -80,14 +81,26 @@ class TestOIDSubjectTypesConversion:
         """
         oid_acl = "orclaci: access to attr=(userPassword) by self (write)"
 
+        # Parse ACL string to model first
+        oid_acl_handler = FlextLdifServersOid.Acl()
+        parse_result = oid_acl_handler.parse(oid_acl)
+        assert parse_result.is_success, f"ACL parsing failed: {parse_result.error}"
+        acl_model = parse_result.unwrap()
+
         result = conversion.convert(
             source=oid,
             target=oud,
-            model_instance=oid_acl,
+            model_instance=acl_model,
         )
 
         assert result.is_success, f"Conversion failed: {result.error}"
-        oud_aci = result.unwrap()
+        converted_acl_model = result.unwrap()
+        assert isinstance(converted_acl_model, FlextLdifModels.Acl)
+
+        # Write converted ACL model to string format
+        write_result = FlextLdifServersOud.Acl().write(converted_acl_model)
+        assert write_result.is_success, f"ACL write failed: {write_result.error}"
+        oud_aci = write_result.unwrap()
         assert isinstance(oud_aci, str)
         assert "userdn=" in oud_aci.lower()
         assert "self" in oud_aci.lower()
@@ -105,15 +118,26 @@ class TestOIDSubjectTypesConversion:
         """
         oid_acl = "orclaci: access to entry by dnattr=(manager) (read,search)"
 
+        # Parse ACL string to model first
+        oid_acl_handler = FlextLdifServersOid.Acl()
+        parse_result = oid_acl_handler.parse(oid_acl)
+        assert parse_result.is_success, f"ACL parsing failed: {parse_result.error}"
+        acl_model = parse_result.unwrap()
+
         result = conversion.convert(
             source=oid,
             target=oud,
-            model_instance_or_data_type="acl",
-            data=oid_acl,
+            model_instance=acl_model,
         )
 
         assert result.is_success, f"Conversion failed: {result.error}"
-        oud_aci = result.unwrap()
+        converted_acl_model = result.unwrap()
+        assert isinstance(converted_acl_model, FlextLdifModels.Acl)
+
+        # Write converted ACL model to string format
+        write_result = FlextLdifServersOud.Acl().write(converted_acl_model)
+        assert write_result.is_success, f"ACL write failed: {write_result.error}"
+        oud_aci = write_result.unwrap()
         assert isinstance(oud_aci, str)
         assert "userattr=" in oud_aci.lower()
         assert "manager" in oud_aci.lower()
@@ -132,15 +156,26 @@ class TestOIDSubjectTypesConversion:
         """
         oid_acl = "orclaci: access to entry by guidattr=(orclguid) (browse)"
 
+        # Parse ACL string to model first
+        oid_acl_handler = FlextLdifServersOid.Acl()
+        parse_result = oid_acl_handler.parse(oid_acl)
+        assert parse_result.is_success, f"ACL parsing failed: {parse_result.error}"
+        acl_model = parse_result.unwrap()
+
         result = conversion.convert(
             source=oid,
             target=oud,
-            model_instance_or_data_type="acl",
-            data=oid_acl,
+            model_instance=acl_model,
         )
 
         assert result.is_success, f"Conversion failed: {result.error}"
-        oud_aci = result.unwrap()
+        converted_acl_model = result.unwrap()
+        assert isinstance(converted_acl_model, FlextLdifModels.Acl)
+
+        # Write converted ACL model to string format
+        write_result = FlextLdifServersOud.Acl().write(converted_acl_model)
+        assert write_result.is_success, f"ACL write failed: {write_result.error}"
+        oud_aci = write_result.unwrap()
         assert isinstance(oud_aci, str)
         assert "userattr=" in oud_aci.lower()
         assert "orclguid" in oud_aci.lower()
@@ -159,15 +194,26 @@ class TestOIDSubjectTypesConversion:
         """
         oid_acl = "orclaci: access to entry by groupattr=(uniqueMember) (read,write)"
 
+        # Parse ACL string to model first
+        oid_acl_handler = FlextLdifServersOid.Acl()
+        parse_result = oid_acl_handler.parse(oid_acl)
+        assert parse_result.is_success, f"ACL parsing failed: {parse_result.error}"
+        acl_model = parse_result.unwrap()
+
         result = conversion.convert(
             source=oid,
             target=oud,
-            model_instance_or_data_type="acl",
-            data=oid_acl,
+            model_instance=acl_model,
         )
 
         assert result.is_success, f"Conversion failed: {result.error}"
-        oud_aci = result.unwrap()
+        converted_acl_model = result.unwrap()
+        assert isinstance(converted_acl_model, FlextLdifModels.Acl)
+
+        # Write converted ACL model to string format
+        write_result = FlextLdifServersOud.Acl().write(converted_acl_model)
+        assert write_result.is_success, f"ACL write failed: {write_result.error}"
+        oud_aci = write_result.unwrap()
         assert isinstance(oud_aci, str)
         assert "userattr=" in oud_aci.lower()
         assert "uniqueMember" in oud_aci or "uniquemember" in oud_aci.lower()
@@ -186,11 +232,16 @@ class TestOIDSubjectTypesConversion:
         """
         oid_acl = 'orclaci: access to entry by "cn=admin,dc=example,dc=com" (all)'
 
+        # Parse ACL string to model first
+        oid_acl_handler = FlextLdifServersOid.Acl()
+        parse_result = oid_acl_handler.parse(oid_acl)
+        assert parse_result.is_success, f"ACL parsing failed: {parse_result.error}"
+        acl_model = parse_result.unwrap()
+
         result = conversion.convert(
             source=oid,
             target=oud,
-            model_instance_or_data_type="acl",
-            data=oid_acl,
+            model_instance=acl_model,
         )
 
         # Note: This may fail if parser doesn't support quoted DN subjects
@@ -231,15 +282,26 @@ class TestOIDPermissionsConversion:
         """
         oid_acl = "orclaci: access to attr=(description) by self (selfwrite)"
 
+        # Parse ACL string to model first
+        oid_acl_handler = FlextLdifServersOid.Acl()
+        parse_result = oid_acl_handler.parse(oid_acl)
+        assert parse_result.is_success, f"ACL parsing failed: {parse_result.error}"
+        acl_model = parse_result.unwrap()
+
         result = conversion.convert(
             source=oid,
             target=oud,
-            model_instance_or_data_type="acl",
-            data=oid_acl,
+            model_instance=acl_model,
         )
 
         assert result.is_success, f"Conversion failed: {result.error}"
-        oud_aci = result.unwrap()
+        converted_acl_model = result.unwrap()
+        assert isinstance(converted_acl_model, FlextLdifModels.Acl)
+
+        # Write converted ACL model to string format
+        write_result = FlextLdifServersOud.Acl().write(converted_acl_model)
+        assert write_result.is_success, f"ACL write failed: {write_result.error}"
+        oud_aci = write_result.unwrap()
         assert isinstance(oud_aci, str)
         assert "write" in oud_aci.lower()
 
@@ -258,15 +320,26 @@ class TestOIDPermissionsConversion:
         """
         oid_acl = "orclaci: access to entry by * (browse)"
 
+        # Parse ACL string to model first
+        oid_acl_handler = FlextLdifServersOid.Acl()
+        parse_result = oid_acl_handler.parse(oid_acl)
+        assert parse_result.is_success, f"ACL parsing failed: {parse_result.error}"
+        acl_model = parse_result.unwrap()
+
         result = conversion.convert(
             source=oid,
             target=oud,
-            model_instance_or_data_type="acl",
-            data=oid_acl,
+            model_instance=acl_model,
         )
 
         assert result.is_success, f"Conversion failed: {result.error}"
-        oud_aci = result.unwrap()
+        converted_acl_model = result.unwrap()
+        assert isinstance(converted_acl_model, FlextLdifModels.Acl)
+
+        # Write converted ACL model to string format
+        write_result = FlextLdifServersOud.Acl().write(converted_acl_model)
+        assert write_result.is_success, f"ACL write failed: {write_result.error}"
+        oud_aci = write_result.unwrap()
         assert isinstance(oud_aci, str)
         # Should have both read and search
         assert "read" in oud_aci.lower()
@@ -287,15 +360,26 @@ class TestOIDPermissionsConversion:
         """
         oid_acl = "orclentrylevelaci: access to entry by * (browse,noadd,nodelete)"
 
+        # Parse ACL string to model first
+        oid_acl_handler = FlextLdifServersOid.Acl()
+        parse_result = oid_acl_handler.parse(oid_acl)
+        assert parse_result.is_success, f"ACL parsing failed: {parse_result.error}"
+        acl_model = parse_result.unwrap()
+
         result = conversion.convert(
             source=oid,
             target=oud,
-            model_instance_or_data_type="acl",
-            data=oid_acl,
+            model_instance=acl_model,
         )
 
         assert result.is_success, f"Conversion failed: {result.error}"
-        oud_aci = result.unwrap()
+        converted_acl_model = result.unwrap()
+        assert isinstance(converted_acl_model, FlextLdifModels.Acl)
+
+        # Write converted ACL model to string format
+        write_result = FlextLdifServersOud.Acl().write(converted_acl_model)
+        assert write_result.is_success, f"ACL write failed: {write_result.error}"
+        oud_aci = write_result.unwrap()
         assert isinstance(oud_aci, str)
         # Should have deny rules or absence of add/delete permissions
         # Implementation may vary - verify it converts (check for OUD format or deny rules)
@@ -337,18 +421,29 @@ class TestOIDAdvancedFeaturesConversion:
         """
         oid_acl = "orclaci: access to entry filter=(objectClass=person) by * (browse)"
 
+        # Parse ACL string to model first
+        oid_acl_handler = FlextLdifServersOid.Acl()
+        parse_result = oid_acl_handler.parse(oid_acl)
+        assert parse_result.is_success, f"ACL parsing failed: {parse_result.error}"
+        acl_model = parse_result.unwrap()
+
         result = conversion.convert(
             source=oid,
             target=oud,
-            model_instance_or_data_type="acl",
-            data=oid_acl,
+            model_instance=acl_model,
         )
 
         # Infrastructure test - verify conversion attempts
         assert result.is_success or result.is_failure, "Should return FlextResult"
         if result.is_success:
-            oud_aci = result.unwrap()
-            assert isinstance(oud_aci, str)
+            converted_acl_model = result.unwrap()
+            assert isinstance(converted_acl_model, FlextLdifModels.Acl)
+
+            # Write converted ACL model to string format
+            write_result = FlextLdifServersOid.Acl().write(converted_acl_model)
+            assert write_result.is_success, f"ACL write failed: {write_result.error}"
+            oid_acl = write_result.unwrap()
+            assert isinstance(oid_acl, str)
 
     def test_oid_orclentrylevelaci_with_constraint_to_oud(
         self,
@@ -365,18 +460,29 @@ class TestOIDAdvancedFeaturesConversion:
         """
         oid_acl = "orclentrylevelaci: access to entry by * added_object_constraint=(objectClass=person) (browse)"
 
+        # Parse ACL string to model first
+        oid_acl_handler = FlextLdifServersOid.Acl()
+        parse_result = oid_acl_handler.parse(oid_acl)
+        assert parse_result.is_success, f"ACL parsing failed: {parse_result.error}"
+        acl_model = parse_result.unwrap()
+
         result = conversion.convert(
             source=oid,
             target=oud,
-            model_instance_or_data_type="acl",
-            data=oid_acl,
+            model_instance=acl_model,
         )
 
         # Infrastructure test - verify conversion attempts
         assert result.is_success or result.is_failure, "Should return FlextResult"
         if result.is_success:
-            oud_aci = result.unwrap()
-            assert isinstance(oud_aci, str)
+            converted_acl_model = result.unwrap()
+            assert isinstance(converted_acl_model, FlextLdifModels.Acl)
+
+            # Write converted ACL model to string format
+            write_result = FlextLdifServersOid.Acl().write(converted_acl_model)
+            assert write_result.is_success, f"ACL write failed: {write_result.error}"
+            oid_acl = write_result.unwrap()
+            assert isinstance(oid_acl, str)
 
     def test_oid_multiple_by_clauses_to_oud(
         self,
@@ -393,18 +499,29 @@ class TestOIDAdvancedFeaturesConversion:
         """
         oid_acl = 'orclaci: access to entry by group="cn=Admins,dc=example,dc=com" (all) by * (browse)'
 
+        # Parse ACL string to model first
+        oid_acl_handler = FlextLdifServersOid.Acl()
+        parse_result = oid_acl_handler.parse(oid_acl)
+        assert parse_result.is_success, f"ACL parsing failed: {parse_result.error}"
+        acl_model = parse_result.unwrap()
+
         result = conversion.convert(
             source=oid,
             target=oud,
-            model_instance_or_data_type="acl",
-            data=oid_acl,
+            model_instance=acl_model,
         )
 
         # Infrastructure test - verify conversion attempts
         assert result.is_success or result.is_failure, "Should return FlextResult"
         if result.is_success:
-            oud_aci = result.unwrap()
-            assert isinstance(oud_aci, str)
+            converted_acl_model = result.unwrap()
+            assert isinstance(converted_acl_model, FlextLdifModels.Acl)
+
+            # Write converted ACL model to string format
+            write_result = FlextLdifServersOid.Acl().write(converted_acl_model)
+            assert write_result.is_success, f"ACL write failed: {write_result.error}"
+            oid_acl = write_result.unwrap()
+            assert isinstance(oid_acl, str)
 
     def test_oid_attribute_target_to_oud(
         self,
@@ -426,15 +543,26 @@ class TestOIDAdvancedFeaturesConversion:
         """
         oid_acl = "orclaci: access to attr=(cn,sn,mail) by * (read,search,compare)"
 
+        # Parse ACL string to model first
+        oid_acl_handler = FlextLdifServersOid.Acl()
+        parse_result = oid_acl_handler.parse(oid_acl)
+        assert parse_result.is_success, f"ACL parsing failed: {parse_result.error}"
+        acl_model = parse_result.unwrap()
+
         result = conversion.convert(
             source=oid,
             target=oud,
-            model_instance_or_data_type="acl",
-            data=oid_acl,
+            model_instance=acl_model,
         )
 
         assert result.is_success, f"Conversion failed: {result.error}"
-        oud_aci = result.unwrap()
+        converted_acl_model = result.unwrap()
+        assert isinstance(converted_acl_model, FlextLdifModels.Acl)
+
+        # Write converted ACL model to string format
+        write_result = FlextLdifServersOud.Acl().write(converted_acl_model)
+        assert write_result.is_success, f"ACL write failed: {write_result.error}"
+        oud_aci = write_result.unwrap()
         assert isinstance(oud_aci, str)
         # After removing fallback, OUD properly converts to its own format
         assert "aci:" in oud_aci.lower(), "Should have OUD aci: prefix"
@@ -472,15 +600,26 @@ class TestOUDSubjectTypesConversion:
         """
         oud_aci = 'aci: (targetattr="userPassword")(version 3.0; acl "Self write"; allow (write) userdn="ldap:///self";)'
 
+        # Parse ACL string to model first
+        oud_acl_handler = FlextLdifServersOud.Acl()
+        parse_result = oud_acl_handler.parse(oud_aci)
+        assert parse_result.is_success, f"ACL parsing failed: {parse_result.error}"
+        acl_model = parse_result.unwrap()
+
         result = conversion.convert(
             source=oud,
             target=oid,
-            model_instance_or_data_type="acl",
-            data=oud_aci,
+            model_instance=acl_model,
         )
 
         assert result.is_success, f"Conversion failed: {result.error}"
-        oid_acl = result.unwrap()
+        converted_acl_model = result.unwrap()
+        assert isinstance(converted_acl_model, FlextLdifModels.Acl)
+
+        # Write converted ACL model to string format
+        write_result = FlextLdifServersOid.Acl().write(converted_acl_model)
+        assert write_result.is_success, f"ACL write failed: {write_result.error}"
+        oid_acl = write_result.unwrap()
         assert isinstance(oid_acl, str)
         assert "orclaci:" in oid_acl.lower()
         assert "self" in oid_acl.lower()
@@ -501,17 +640,28 @@ class TestOUDSubjectTypesConversion:
         """
         oud_aci = 'aci: (targetattr="*")(version 3.0; acl "Manager access"; allow (read,search) userattr="manager#LDAPURL";)'
 
+        # Parse ACL string to model first
+        oud_acl_handler = FlextLdifServersOud.Acl()
+        parse_result = oud_acl_handler.parse(oud_aci)
+        assert parse_result.is_success, f"ACL parsing failed: {parse_result.error}"
+        acl_model = parse_result.unwrap()
+
         result = conversion.convert(
             source=oud,
             target=oid,
-            model_instance_or_data_type="acl",
-            data=oud_aci,
+            model_instance=acl_model,
         )
 
         # Infrastructure test - verify conversion attempts
         assert result.is_success or result.is_failure, "Should return FlextResult"
         if result.is_success:
-            oid_acl = result.unwrap()
+            converted_acl_model = result.unwrap()
+            assert isinstance(converted_acl_model, FlextLdifModels.Acl)
+
+            # Write converted ACL model to string format
+            write_result = FlextLdifServersOid.Acl().write(converted_acl_model)
+            assert write_result.is_success, f"ACL write failed: {write_result.error}"
+            oid_acl = write_result.unwrap()
             assert isinstance(oid_acl, str)
             assert "orclaci:" in oid_acl.lower()
 
@@ -549,17 +699,28 @@ class TestOUDAdvancedFeaturesConversion:
         """
         oud_aci = 'aci: (targetattr="*")(targetscope="base")(version 3.0; acl "Base scope"; allow (read) userdn="ldap:///*";)'
 
+        # Parse ACL string to model first
+        oud_acl_handler = FlextLdifServersOud.Acl()
+        parse_result = oud_acl_handler.parse(oud_aci)
+        assert parse_result.is_success, f"ACL parsing failed: {parse_result.error}"
+        acl_model = parse_result.unwrap()
+
         result = conversion.convert(
             source=oud,
             target=oid,
-            model_instance_or_data_type="acl",
-            data=oud_aci,
+            model_instance=acl_model,
         )
 
         # Infrastructure test - verify conversion attempts
         assert result.is_success or result.is_failure, "Should return FlextResult"
         if result.is_success:
-            oid_acl = result.unwrap()
+            converted_acl_model = result.unwrap()
+            assert isinstance(converted_acl_model, FlextLdifModels.Acl)
+
+            # Write converted ACL model to string format
+            write_result = FlextLdifServersOid.Acl().write(converted_acl_model)
+            assert write_result.is_success, f"ACL write failed: {write_result.error}"
+            oid_acl = write_result.unwrap()
             assert isinstance(oid_acl, str)
             assert "orclaci:" in oid_acl.lower()
 
@@ -578,17 +739,28 @@ class TestOUDAdvancedFeaturesConversion:
         """
         oud_aci = 'aci: (targetattr="*")(version 3.0; acl "Deny write"; deny (write) userdn="ldap:///*";)'
 
+        # Parse ACL string to model first
+        oud_acl_handler = FlextLdifServersOud.Acl()
+        parse_result = oud_acl_handler.parse(oud_aci)
+        assert parse_result.is_success, f"ACL parsing failed: {parse_result.error}"
+        acl_model = parse_result.unwrap()
+
         result = conversion.convert(
             source=oud,
             target=oid,
-            model_instance_or_data_type="acl",
-            data=oud_aci,
+            model_instance=acl_model,
         )
 
         # Infrastructure test - verify conversion attempts
         assert result.is_success or result.is_failure, "Should return FlextResult"
         if result.is_success:
-            oid_acl = result.unwrap()
+            converted_acl_model = result.unwrap()
+            assert isinstance(converted_acl_model, FlextLdifModels.Acl)
+
+            # Write converted ACL model to string format
+            write_result = FlextLdifServersOid.Acl().write(converted_acl_model)
+            assert write_result.is_success, f"ACL write failed: {write_result.error}"
+            oid_acl = write_result.unwrap()
             assert isinstance(oid_acl, str)
 
     def test_oud_targetattr_negation_to_oid(
@@ -606,17 +778,28 @@ class TestOUDAdvancedFeaturesConversion:
         """
         oud_aci = 'aci: (targetattr!="userPassword")(version 3.0; acl "All except password"; allow (read,search) userdn="ldap:///*";)'
 
+        # Parse ACL string to model first
+        oud_acl_handler = FlextLdifServersOud.Acl()
+        parse_result = oud_acl_handler.parse(oud_aci)
+        assert parse_result.is_success, f"ACL parsing failed: {parse_result.error}"
+        acl_model = parse_result.unwrap()
+
         result = conversion.convert(
             source=oud,
             target=oid,
-            model_instance_or_data_type="acl",
-            data=oud_aci,
+            model_instance=acl_model,
         )
 
         # Infrastructure test - verify conversion attempts
         assert result.is_success or result.is_failure, "Should return FlextResult"
         if result.is_success:
-            oid_acl = result.unwrap()
+            converted_acl_model = result.unwrap()
+            assert isinstance(converted_acl_model, FlextLdifModels.Acl)
+
+            # Write converted ACL model to string format
+            write_result = FlextLdifServersOid.Acl().write(converted_acl_model)
+            assert write_result.is_success, f"ACL write failed: {write_result.error}"
+            oid_acl = write_result.unwrap()
             assert isinstance(oid_acl, str)
 
 

@@ -11,6 +11,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import ClassVar
+
 import pytest
 from flext_core import FlextResult
 
@@ -51,11 +53,14 @@ class TestFlextServiceV2Patterns:
     """Test FlextService V2 usage patterns."""
 
     def test_v2_manual_with_result_property(self) -> None:
-        """Test V2 MANUAL: Service.v1().result returns value directly."""
+        """Test V2 MANUAL: Service with auto_execute=False, then .result property."""
         entries = create_test_entries()
 
-        # V2 MANUAL: Use .v1() to disable auto_execute, then .result property
-        service = FlextLdifSorting.v1(entries=entries, sort_by="hierarchy")
+        # V2 MANUAL: Create subclass with auto_execute=False, then .result property
+        class ManualSorting(FlextLdifSorting):
+            auto_execute: ClassVar[bool] = False
+
+        service = ManualSorting(entries=entries, sort_by="hierarchy")
         sorted_entries = service.result
 
         # Should return list[Entry] directly, not FlextResult
@@ -86,11 +91,14 @@ class TestFlextServiceV2Patterns:
         assert sorted_entries[2].dn.value == "cn=john,ou=users,dc=example,dc=com"
 
     def test_v1_explicit_with_execute(self) -> None:
-        """Test V1 EXPLICIT: Service.v1().execute() returns FlextResult."""
+        """Test V1 EXPLICIT: Service with auto_execute=False, then .execute() returns FlextResult."""
         entries = create_test_entries()
 
-        # V1: Use .v1() to disable auto_execute, then .execute() explicitly for FlextResult
-        result = FlextLdifSorting.v1(entries=entries, sort_by="hierarchy").execute()
+        # V1: Create subclass with auto_execute=False, then .execute() explicitly for FlextResult
+        class ManualSorting(FlextLdifSorting):
+            auto_execute: ClassVar[bool] = False
+
+        result = ManualSorting(entries=entries, sort_by="hierarchy").execute()
 
         # Should return FlextResult
         assert isinstance(result, FlextResult)
@@ -126,8 +134,11 @@ class TestFlextServiceV2Patterns:
         """Compare V2 .result vs V1 .execute()."""
         entries = create_test_entries()
 
-        # V2 MANUAL: Use .v1() to get service instance, then .result
-        v2_result = FlextLdifSorting.v1(entries=entries, sort_by="hierarchy").result
+        # V2 MANUAL: Create subclass with auto_execute=False, then .result
+        class ManualSorting(FlextLdifSorting):
+            auto_execute: ClassVar[bool] = False
+
+        v2_result = ManualSorting(entries=entries, sort_by="hierarchy").result
 
         # V1 EXPLICIT: Use .with_result() to get FlextResult
         v1_result = FlextLdifSorting.with_result(entries=entries, sort_by="hierarchy")
@@ -206,14 +217,15 @@ class TestFlextServiceV2Comparison:
         entries = create_test_entries()
 
         # V1 Pattern (verbose): 3 lines
-        service_v1 = FlextLdifSorting.v1(
-            entries=entries, sort_by="hierarchy"
-        )  # Disable auto_execute
+        class ManualSorting(FlextLdifSorting):
+            auto_execute: ClassVar[bool] = False
+
+        service_v1 = ManualSorting(entries=entries, sort_by="hierarchy")
         result_v1 = service_v1.execute()
         sorted_v1 = result_v1.unwrap()
 
         # V2 Pattern (concise): 1 line (68% reduction!)
-        sorted_v2 = FlextLdifSorting.v1(entries=entries, sort_by="hierarchy").result
+        sorted_v2 = ManualSorting(entries=entries, sort_by="hierarchy").result
 
         # Both produce same result
         assert sorted_v1 == sorted_v2
@@ -224,7 +236,10 @@ class TestFlextServiceV2Comparison:
         entries = create_test_entries()
 
         # V2: IDE knows type is list[Entry] (with .result)
-        sorted_v2: list[FlextLdifModels.Entry] = FlextLdifSorting.v1(
+        class ManualSorting(FlextLdifSorting):
+            auto_execute: ClassVar[bool] = False
+
+        sorted_v2: list[FlextLdifModels.Entry] = ManualSorting(
             entries=entries,
             sort_by="hierarchy",
         ).result

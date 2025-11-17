@@ -93,22 +93,32 @@ class TestOIDToOUDACLConversion:
         OID:  orclaci: access to entry by * (browse)
         OUD:  aci: (targetattr="*")(version 3.0; acl "..."; allow (browse) userdn="ldap:///anyone";)
         """
-        # Simple anonymous browse ACL from OID fixtures
-        oid_acl = ACL_CONVERSION_CONSTANTS.OID_ACL_ANONYMOUS
+        # NEW API: Parse ACL string to model first, then convert
+        oid_acl_string = ACL_CONVERSION_CONSTANTS.OID_ACL_ANONYMOUS
 
-        result = conversion_matrix.convert(
-            source=oid_quirk,
-            target=oud_quirk,
-            model_instance_or_data_type="acl",
-            data=oid_acl,
-        )
+        # Get source quirk's nested Acl class
+        source_acl = type(oid_quirk).Acl()
+        parse_result = source_acl.parse(oid_acl_string)
+        assert parse_result.is_success, f"Failed to parse OID ACL: {parse_result.error}"
+        acl_model = parse_result.unwrap()
+
+        # Now convert the model using NEW API
+        result = conversion_matrix.convert(oid_quirk, oud_quirk, acl_model)
 
         # Infrastructure test: Verify conversion attempts were made
         assert hasattr(result, "is_success"), "Should return FlextResult"
 
         # If conversion succeeds, validate OUD ACI format
         if result.is_success:
-            oud_aci = result.unwrap()
+            converted_acl = result.unwrap()
+            # Write converted model to string for validation
+            target_acl = type(oud_quirk).Acl()
+            write_result = target_acl.write(converted_acl)
+            assert write_result.is_success, (
+                f"Failed to write OUD ACI: {write_result.error}"
+            )
+            oud_aci = write_result.unwrap()
+
             assert isinstance(oud_aci, str), "Should return string ACI"
             assert "aci:" in oud_aci.lower(), "Should have 'aci:' prefix"
             assert "version 3.0" in oud_aci, "Should have version 3.0"
@@ -127,22 +137,29 @@ class TestOIDToOUDACLConversion:
         OID:  orclaci: access to entry by group="cn=Administrators,ou=Groups,dc=example,dc=com" (browse,add,delete)
         OUD:  aci: (targetattr="*")(version 3.0; acl "..."; allow (browse,add,delete) groupdn="ldap:///cn=Administrators,...";)
         """
-        # Group-based ACL from OID fixtures
-        oid_acl = ACL_CONVERSION_CONSTANTS.OID_ACL_GROUP
+        # NEW API: Parse ACL string to model first, then convert
+        oid_acl_string = ACL_CONVERSION_CONSTANTS.OID_ACL_GROUP
 
-        result = conversion_matrix.convert(
-            source=oid_quirk,
-            target=oud_quirk,
-            model_instance_or_data_type="acl",
-            data=oid_acl,
-        )
+        source_acl = type(oid_quirk).Acl()
+        parse_result = source_acl.parse(oid_acl_string)
+        assert parse_result.is_success, f"Failed to parse OID ACL: {parse_result.error}"
+        acl_model = parse_result.unwrap()
+
+        result = conversion_matrix.convert(oid_quirk, oud_quirk, acl_model)
 
         # Infrastructure test: Verify conversion attempts were made
         assert hasattr(result, "is_success"), "Should return FlextResult"
 
         # If conversion succeeds, validate OUD ACI format with groupdn
         if result.is_success:
-            oud_aci = result.unwrap()
+            converted_acl = result.unwrap()
+            target_acl = type(oud_quirk).Acl()
+            write_result = target_acl.write(converted_acl)
+            assert write_result.is_success, (
+                f"Failed to write OUD ACI: {write_result.error}"
+            )
+            oud_aci = write_result.unwrap()
+
             assert isinstance(oud_aci, str), "Should return string ACI"
             assert "aci:" in oud_aci.lower(), "Should have 'aci:' prefix"
             assert "groupdn=" in oud_aci.lower(), "Should use groupdn for group access"
@@ -160,22 +177,29 @@ class TestOIDToOUDACLConversion:
         OID:  orclaci: access to attr=(cn,sn,mail) by * (read,search,compare)
         OUD:  aci: (targetattr="cn || sn || mail")(version 3.0; acl "..."; allow (read,search,compare) userdn="ldap:///anyone";)
         """
-        # Attribute-level ACL from OID fixtures
-        oid_acl = ACL_CONVERSION_CONSTANTS.OID_ACL_ATTR
+        # NEW API: Parse ACL string to model first, then convert
+        oid_acl_string = ACL_CONVERSION_CONSTANTS.OID_ACL_ATTR
 
-        result = conversion_matrix.convert(
-            source=oid_quirk,
-            target=oud_quirk,
-            model_instance_or_data_type="acl",
-            data=oid_acl,
-        )
+        source_acl = type(oid_quirk).Acl()
+        parse_result = source_acl.parse(oid_acl_string)
+        assert parse_result.is_success, f"Failed to parse OID ACL: {parse_result.error}"
+        acl_model = parse_result.unwrap()
+
+        result = conversion_matrix.convert(oid_quirk, oud_quirk, acl_model)
 
         # Infrastructure test: Verify conversion attempts were made
         assert hasattr(result, "is_success"), "Should return FlextResult"
 
         # If conversion succeeds, validate attribute targeting
         if result.is_success:
-            oud_aci = result.unwrap()
+            converted_acl = result.unwrap()
+            target_acl = type(oud_quirk).Acl()
+            write_result = target_acl.write(converted_acl)
+            assert write_result.is_success, (
+                f"Failed to write OUD ACI: {write_result.error}"
+            )
+            oud_aci = write_result.unwrap()
+
             assert isinstance(oud_aci, str), "Should return string ACI"
             assert "targetattr" in oud_aci.lower(), "Should have targetattr"
             # Should specify exact attributes or "*"
@@ -194,22 +218,29 @@ class TestOIDToOUDACLConversion:
 
         Note: Entry-level ACLs may need special handling for negative permissions (noadd, nodelete).
         """
-        # Entry-level ACL from OID fixtures
-        oid_acl = ACL_CONVERSION_CONSTANTS.OID_ACL_ENTRY_LEVEL
+        # NEW API: Parse ACL string to model first, then convert
+        oid_acl_string = ACL_CONVERSION_CONSTANTS.OID_ACL_ENTRY_LEVEL
 
-        result = conversion_matrix.convert(
-            source=oid_quirk,
-            target=oud_quirk,
-            model_instance_or_data_type="acl",
-            data=oid_acl,
-        )
+        source_acl = type(oid_quirk).Acl()
+        parse_result = source_acl.parse(oid_acl_string)
+        assert parse_result.is_success, f"Failed to parse OID ACL: {parse_result.error}"
+        acl_model = parse_result.unwrap()
+
+        result = conversion_matrix.convert(oid_quirk, oud_quirk, acl_model)
 
         # Infrastructure test: Verify conversion attempts were made
         assert hasattr(result, "is_success"), "Should return FlextResult"
 
         # If conversion succeeds, validate OUD ACI format
         if result.is_success:
-            oud_aci = result.unwrap()
+            converted_acl = result.unwrap()
+            target_acl = type(oud_quirk).Acl()
+            write_result = target_acl.write(converted_acl)
+            assert write_result.is_success, (
+                f"Failed to write OUD ACI: {write_result.error}"
+            )
+            oud_aci = write_result.unwrap()
+
             assert isinstance(oud_aci, str), "Should return string ACI"
             assert "aci:" in oud_aci.lower(), "Should have 'aci:' prefix"
             # Entry-level ACLs are challenging - just verify basic structure
@@ -230,22 +261,29 @@ class TestOUDToOIDACLConversion:
         OUD:  aci: (targetattr="*")(version 3.0; acl "Admin access"; allow (all) groupdn="ldap:///cn=Admins,...";)
         OID:  orclaci: access to entry by group="cn=Admins,..." (all)
         """
-        # Simple admin ACL from OUD fixtures
-        oud_aci = ACL_CONVERSION_CONSTANTS.OUD_ACI_ADMIN
+        # NEW API: Parse ACL string to model first, then convert
+        oud_aci_string = ACL_CONVERSION_CONSTANTS.OUD_ACI_ADMIN
 
-        result = conversion_matrix.convert(
-            source=oud_quirk,
-            target=oid_quirk,
-            model_instance_or_data_type="acl",
-            data=oud_aci,
-        )
+        source_acl = type(oud_quirk).Acl()
+        parse_result = source_acl.parse(oud_aci_string)
+        assert parse_result.is_success, f"Failed to parse OUD ACI: {parse_result.error}"
+        acl_model = parse_result.unwrap()
+
+        result = conversion_matrix.convert(oud_quirk, oid_quirk, acl_model)
 
         # Infrastructure test: Verify conversion attempts were made
         assert hasattr(result, "is_success"), "Should return FlextResult"
 
         # If conversion succeeds, validate OID orclaci format
         if result.is_success:
-            oid_acl = result.unwrap()
+            converted_acl = result.unwrap()
+            target_acl = type(oid_quirk).Acl()
+            write_result = target_acl.write(converted_acl)
+            assert write_result.is_success, (
+                f"Failed to write OID ACL: {write_result.error}"
+            )
+            oid_acl = write_result.unwrap()
+
             assert isinstance(oid_acl, str), "Should return string ACL"
             assert (
                 "orclaci:" in oid_acl.lower() or "orclentrylevelaci:" in oid_acl.lower()
@@ -266,22 +304,29 @@ class TestOUDToOIDACLConversion:
         OUD:  aci: (targetattr!="userpassword")(version 3.0; acl "Anonymous read"; allow (read,search,compare) userdn="ldap:///anyone";)
         OID:  orclaci: access to attr=(*) by * (read,search,compare)
         """
-        # Anonymous read ACL from OUD fixtures
-        oud_aci = ACL_CONVERSION_CONSTANTS.OUD_ACI_ANONYMOUS
+        # NEW API: Parse ACL string to model first, then convert
+        oud_aci_string = ACL_CONVERSION_CONSTANTS.OUD_ACI_ANONYMOUS
 
-        result = conversion_matrix.convert(
-            source=oud_quirk,
-            target=oid_quirk,
-            model_instance_or_data_type="acl",
-            data=oud_aci,
-        )
+        source_acl = type(oud_quirk).Acl()
+        parse_result = source_acl.parse(oud_aci_string)
+        assert parse_result.is_success, f"Failed to parse OUD ACI: {parse_result.error}"
+        acl_model = parse_result.unwrap()
+
+        result = conversion_matrix.convert(oud_quirk, oid_quirk, acl_model)
 
         # Infrastructure test: Verify conversion attempts were made
         assert hasattr(result, "is_success"), "Should return FlextResult"
 
         # If conversion succeeds, validate OID orclaci format with anonymous access
         if result.is_success:
-            oid_acl = result.unwrap()
+            converted_acl = result.unwrap()
+            target_acl = type(oid_quirk).Acl()
+            write_result = target_acl.write(converted_acl)
+            assert write_result.is_success, (
+                f"Failed to write OID ACL: {write_result.error}"
+            )
+            oid_acl = write_result.unwrap()
+
             assert isinstance(oid_acl, str), "Should return string ACL"
             assert (
                 "orclaci:" in oid_acl.lower() or "orclentrylevelaci:" in oid_acl.lower()
@@ -303,22 +348,29 @@ class TestOUDToOIDACLConversion:
 
         Tests DN extraction from LDAP URL format and normalization.
         """
-        # ACL with LDAP URL from OUD fixtures
-        oud_aci = ACL_CONVERSION_CONSTANTS.OUD_ACI_POLICY
+        # NEW API: Parse ACL string to model first, then convert
+        oud_aci_string = ACL_CONVERSION_CONSTANTS.OUD_ACI_POLICY
 
-        result = conversion_matrix.convert(
-            source=oud_quirk,
-            target=oid_quirk,
-            model_instance_or_data_type="acl",
-            data=oud_aci,
-        )
+        source_acl = type(oud_quirk).Acl()
+        parse_result = source_acl.parse(oud_aci_string)
+        assert parse_result.is_success, f"Failed to parse OUD ACI: {parse_result.error}"
+        acl_model = parse_result.unwrap()
+
+        result = conversion_matrix.convert(oud_quirk, oid_quirk, acl_model)
 
         # Infrastructure test: Verify conversion attempts were made
         assert hasattr(result, "is_success"), "Should return FlextResult"
 
         # If conversion succeeds, validate DN extraction and format
         if result.is_success:
-            oid_acl = result.unwrap()
+            converted_acl = result.unwrap()
+            target_acl = type(oid_quirk).Acl()
+            write_result = target_acl.write(converted_acl)
+            assert write_result.is_success, (
+                f"Failed to write OID ACL: {write_result.error}"
+            )
+            oid_acl = write_result.unwrap()
+
             assert isinstance(oid_acl, str), "Should return string ACL"
             # OID format uses group="dn" not ldap:/// URLs
             assert "group=" in oid_acl.lower(), "Should have group= clause"

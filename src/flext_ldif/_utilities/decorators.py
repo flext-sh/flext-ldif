@@ -94,10 +94,16 @@ class FlextLdifUtilitiesDecorators:
             },
         )
 
-        # Attach metadata - Protocol cast after hasattr check
-        # Type narrowing: result_value has metadata attribute (checked above)
-        if hasattr(result_value, "metadata"):
-            # Use setattr to avoid type checker issues with Protocol
+        # Attach metadata using type narrowing with isinstance check
+        # Type narrowing confirmed by isinstance check
+        if isinstance(
+            result_value,
+            (
+                FlextLdifModels.Entry,
+                FlextLdifModels.SchemaAttribute,
+                FlextLdifModels.SchemaObjectClass,
+            ),
+        ):
             result_value.metadata = metadata
 
     @staticmethod
@@ -235,7 +241,9 @@ class FlextLdifUtilitiesDecorators:
                     return func(self, *args, **kwargs)
                 except Exception as e:
                     error_msg = f"{operation_name} failed: {e}"
-                    logger.exception(error_msg)
+                    logger.exception(
+                        error_msg
+                    )  # Log exception with traceback and message
                     return FlextResult.fail(error_msg)
 
             return wrapper

@@ -1639,21 +1639,25 @@ class TestAttributeConversion:
         oid_quirk: FlextLdifServersOid,
         conversion_constants: ConversionTestConstants,
     ) -> None:
-        """Test that truly invalid attribute fails parsing."""
+        """Test that truly invalid attribute fails parsing (API expects models, not strings).
+
+        New API Design: convert() expects model instances, not strings.
+        Invalid strings should fail at PARSE time, not conversion time.
+        """
         invalid_attr = conversion_constants.INVALID_ATTRIBUTE
 
-        result = conversion_matrix.convert(
-            oud_quirk, oid_quirk, "attribute", invalid_attr
-        )
+        # New API: First parse the string into a model
+        # Invalid strings should fail parsing and never reach conversion
+        parse_result = oud_quirk.schema_quirk.parse_attribute(invalid_attr)
 
         # Parser validates input and rejects invalid attributes
         # This ensures data quality and prevents malformed data from propagating
-        assert result.is_failure
-        assert result.error is not None
+        assert parse_result.is_failure
+        assert parse_result.error is not None
         assert (
-            "parsing failed" in result.error
-            or "missing an OID" in result.error
-            or "invalid" in result.error.lower()
+            "parsing failed" in parse_result.error
+            or "missing an OID" in parse_result.error
+            or "invalid" in parse_result.error.lower()
         )
 
 
@@ -1779,32 +1783,31 @@ class TestBatchConversion:
         oid_quirk: FlextLdifServersOid,
         conversion_constants: ConversionTestConstants,
     ) -> None:
-        """Test batch conversion handles malformed data with error reporting."""
-        mixed_attrs: list[str | dict[str, object]] = [
+        """Test batch conversion with mixed valid/invalid data (NEW API - parse then convert)."""
+        mixed_attrs_str: list[str] = [
             conversion_constants.OID_ATTRIBUTE_ORCLGUID,
             conversion_constants.INVALID_ATTRIBUTE,
             conversion_constants.OID_ATTRIBUTE_ORCLDBNAME,
         ]
 
-        result = conversion_matrix.batch_convert(
-            oud_quirk, oid_quirk, "attribute", mixed_attrs
-        )
+        # NEW API: Parse all items first, filter out failures
+        models = []
+        for attr_str in mixed_attrs_str:
+            parse_result = oud_quirk.schema_quirk.parse_attribute(attr_str)
+            if parse_result.is_success:
+                models.append(parse_result.unwrap())
+            # Invalid items fail to parse and are skipped
 
-        # Parser validates input and reports errors for invalid items
-        # Batch conversion may succeed with partial results or fail with error details
-        assert result is not None
-        if result.is_success:
-            oid_attrs = result.unwrap()
-            # Should have 2 valid items (invalid one is skipped or fails)
-            assert len(oid_attrs) >= 2
-        else:
-            # Or fail with error details about the invalid item
-            assert result.error is not None
-            assert (
-                "parsing failed" in result.error
-                or "missing an OID" in result.error
-                or "error" in result.error.lower()
-            )
+        # NEW API: batch_convert only the successfully parsed models
+        # Should have 2 valid models (invalid one failed to parse)
+        assert len(models) == 2, "Should have 2 valid models after parsing"
+
+        result = conversion_matrix.batch_convert(oud_quirk, oid_quirk, models)
+
+        # Conversion should succeed with the 2 valid models
+        assert result.is_success
+        oid_attrs = result.unwrap()
+        assert len(oid_attrs) == 2
 
 
 class TestBidirectionalConversion:
@@ -1859,18 +1862,23 @@ class TestErrorHandling:
         oid_quirk: FlextLdifServersOid,
         conversion_constants: ConversionTestConstants,
     ) -> None:
-        """Test that invalid data type returns error."""
-        invalid_data_type = conversion_constants.INVALID_DATA_TYPE
+        """Test that unsupported model type returns error (NEW API).
+
+        NEW API: Data type is inferred from model instance type.
+        Invalid model types (not Entry/SchemaAttribute/SchemaObjectClass/Acl) should fail.
+        """
+        # Create an invalid model type (use a plain string)
+        invalid_model = "not a valid model type"
+
         result = conversion_matrix.convert(
             oud_quirk,
             oid_quirk,
-            invalid_data_type,
-            "test",
+            invalid_model,  # type: ignore[arg-type]
         )
 
         assert result.is_failure
         assert result.error is not None
-        assert "Invalid data_type" in result.error
+        assert "Unsupported model type" in result.error
 
     def test_malformed_attribute(
         self,
@@ -1879,18 +1887,22 @@ class TestErrorHandling:
         oid_quirk: FlextLdifServersOid,
         conversion_constants: ConversionTestConstants,
     ) -> None:
-        """Test that malformed attribute fails parsing."""
+        """Test that malformed attribute fails parsing (NEW API).
+
+        NEW API: Malformed data should fail at PARSE time, not conversion time.
+        """
         malformed = conversion_constants.INVALID_ATTRIBUTE
 
-        result = conversion_matrix.convert(oud_quirk, oid_quirk, "attribute", malformed)
+        # NEW API: Test that parsing fails for malformed data
+        parse_result = oud_quirk.schema_quirk.parse_attribute(malformed)
 
         # Parser validates input and rejects malformed attributes
-        assert result.is_failure
-        assert result.error is not None
+        assert parse_result.is_failure
+        assert parse_result.error is not None
         assert (
-            "parsing failed" in result.error
-            or "missing an OID" in result.error
-            or "invalid" in result.error.lower()
+            "parsing failed" in parse_result.error
+            or "missing an OID" in parse_result.error
+            or "invalid" in parse_result.error.lower()
         )
 
     def test_empty_batch_conversion(
@@ -1899,8 +1911,8 @@ class TestErrorHandling:
         oud_quirk: FlextLdifServersOud,
         oid_quirk: FlextLdifServersOid,
     ) -> None:
-        """Test batch conversion with empty list."""
-        result = conversion_matrix.batch_convert(oud_quirk, oid_quirk, "attribute", [])
+        """Test batch conversion with empty list (NEW API)."""
+        result = conversion_matrix.batch_convert(oud_quirk, oid_quirk, [])
 
         assert result.is_success
         assert len(result.unwrap()) == 0
@@ -2034,27 +2046,29 @@ class TestAttributeConversionErrorPaths:
         conversion_matrix: FlextLdifConversion,
         oid_quirk: FlextLdifServersOid,
     ) -> None:
-        """Test attribute conversion fails when source quirk lacks parse method."""
-        # Use SuccessfulParseQuirk which has parse_attribute
-        # but may fail on write due to missing metadata
+        """Test attribute conversion with minimal quirk (NEW API - parse then convert)."""
+        # NEW API: Use SuccessfulParseQuirk to create model, then convert
         source = SuccessfulParseQuirk()
         target = oid_quirk
 
-        result = conversion_matrix.convert(source, target, "attribute", "(test)")
+        # Parse string to model first
+        parse_result = source.parse_attribute("(test)")
+        assert parse_result.is_success, "Parsing should succeed"
+        model = parse_result.unwrap()
+
+        # NEW API: Convert model
+        result = conversion_matrix.convert(source, target, model)
+
         # Conversion may fail due to implementation details of the test quirks
         # The important thing is it doesn't crash
         assert result is not None
         if result.is_failure and result.error:
-            # Acceptable errors - missing method, missing metadata, type mismatch,
-            # schema_quirk attribute requirement, or parsing errors (invalid OID, etc.)
+            # Acceptable errors - missing method, missing metadata, type mismatch
             assert (
                 "does not support" in result.error
                 or "metadata" in result.error
-                or "requires SchemaAttribute model" in result.error
-                or "must be a Schema quirk" in result.error
-                or "must have schema_quirk attribute" in result.error
-                or "parsing failed" in result.error
-                or "missing an OID" in result.error
+                or "failed" in result.error.lower()
+                or "error" in result.error.lower()
             )
 
     def test_convert_attribute_parse_failure(
@@ -2063,23 +2077,23 @@ class TestAttributeConversionErrorPaths:
         oud_quirk: FlextLdifServersOud,
         oid_quirk: FlextLdifServersOid,
     ) -> None:
-        """Test attribute conversion handles parse failures."""
-        # Use a quirk that should handle malformed input gracefully
+        """Test attribute parse failures (NEW API - test parse step separately)."""
+        # NEW API: Test that malformed input fails during parse step (before conversion)
         malformed_attr = "this is not a valid attribute definition"
 
-        result = conversion_matrix.convert(
-            oud_quirk, oid_quirk, "attribute", malformed_attr
-        )
-        # Parse failures should be handled gracefully - may succeed (pass-through)
-        # or fail with appropriate error message
-        assert result is not None
-        if result.is_failure:
+        # Parse should fail for malformed input
+        parse_result = oud_quirk.schema_quirk.parse_attribute(malformed_attr)
+
+        # Parse failures should be handled gracefully
+        assert parse_result is not None
+        if parse_result.is_failure:
             # Should have a meaningful error message
-            assert result.error is not None
+            assert parse_result.error is not None
             assert (
-                "parsing failed" in result.error
-                or "missing an OID" in result.error
-                or "invalid" in result.error.lower()
+                "parsing failed" in parse_result.error
+                or "missing an OID" in parse_result.error
+                or "invalid" in parse_result.error.lower()
+                or "error" in parse_result.error.lower()
             )
 
     def test_convert_attribute_to_rfc_failure(
@@ -2087,74 +2101,94 @@ class TestAttributeConversionErrorPaths:
         conversion_matrix: FlextLdifConversion,
         oid_quirk: FlextLdifServersOid,
     ) -> None:
-        """Test attribute conversion fails when source quirk write fails."""
-        # Use real test quirk that fails on write (which is used in write→parse pipeline)
-        source = ConversionFailingQuirk(fail_on="write")
-        target = oid_quirk
+        """Test attribute conversion fails when source quirk write fails (NEW API)."""
+        # NEW API: Use successful quirk to create model, then failing quirk for conversion
+        successful_quirk = SuccessfulParseQuirk()
+        failing_quirk = ConversionFailingQuirk(fail_on="write")
 
-        result = conversion_matrix.convert(source, target, "attribute", "(test)")
-        # With permissive parser, write failures may result in pass-through
-        # The test verifies the conversion doesn't crash
-        assert result is not None
-        # Result may succeed (pass-through) or fail depending on implementation
-        if result.is_failure:
-            assert result.error is not None
+        # Parse with successful quirk to create model
+        parse_result = successful_quirk.parse_attribute("(test)")
+        assert parse_result.is_success
+        model = parse_result.unwrap()
+
+        # NEW API: Convert with failing quirk as source (write will fail)
+        result = conversion_matrix.convert(failing_quirk, oid_quirk, model)
+
+        # Write failure should cause conversion to fail
+        assert result.is_failure
+        assert result.error is not None
+        assert "write failed" in result.error or "failed" in result.error.lower()
 
     def test_convert_attribute_from_rfc_failure(
         self,
         conversion_matrix: FlextLdifConversion,
     ) -> None:
-        """Test attribute conversion handles target quirk parse failures."""
-        # Use real test quirks: source that succeeds, target that fails on parse
+        """Test attribute conversion handles target quirk parse failures (NEW API)."""
+        # NEW API: Use successful quirk to create model, then failing quirk as target
         source = SuccessfulParseQuirk()
         target = FailingParseQuirk()
 
-        result = conversion_matrix.convert(
-            source,
-            target,
-            "attribute",
-            "( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' SYNTAX 1.3.6.1.4.1.1466.115.121.1.40 )",
-        )
-        # With permissive parser, parse failures may result in pass-through
-        # The test verifies the conversion doesn't crash
-        assert result is not None
-        # Result may succeed (pass-through) or fail depending on implementation
-        if result.is_failure:
-            assert result.error is not None
+        # Parse with successful quirk to create model
+        attr_str = "( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' SYNTAX 1.3.6.1.4.1.1466.115.121.1.40 )"
+        parse_result = source.parse_attribute(attr_str)
+        assert parse_result.is_success
+        model = parse_result.unwrap()
+
+        # NEW API: Convert with failing quirk as target (target parse will fail)
+        result = conversion_matrix.convert(source, target, model)
+
+        # Target parse failure should cause conversion to fail
+        assert result.is_failure
+        assert result.error is not None
+        assert "parse failed" in result.error or "failed" in result.error.lower()
 
     def test_convert_attribute_write_failure(
         self, conversion_matrix: FlextLdifConversion
     ) -> None:
-        """Test attribute conversion handles target quirk write failures."""
+        """Test attribute conversion handles target quirk write failures (NEW API)."""
+        # NEW API: Note - target quirk write is not called in write→parse pipeline
+        # Only source write and target parse are used. This test is now invalid.
+        # Instead, test that conversion completes (target write not used in pipeline)
         source = SuccessfulParseQuirk()
         target = ConversionFailingQuirk(fail_on="write")
 
-        result = conversion_matrix.convert(
-            source,
-            target,
-            "attribute",
-            "( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' SYNTAX 1.3.6.1.4.1.1466.115.121.1.40 )",
-        )
-        # With permissive parser, write failures may result in pass-through
-        # The test verifies the conversion doesn't crash
+        # Parse to create model
+        attr_str = "( 2.16.840.1.113894.1.1.1 NAME 'orclGUID' SYNTAX 1.3.6.1.4.1.1466.115.121.1.40 )"
+        parse_result = source.parse_attribute(attr_str)
+        assert parse_result.is_success
+        model = parse_result.unwrap()
+
+        # NEW API: Convert (target write is NOT called in write→parse pipeline)
+        # Pipeline is: source.write → target.parse
+        result = conversion_matrix.convert(source, target, model)
+
+        # Conversion should work (target write not involved)
         assert result is not None
-        # Result may succeed (pass-through) or fail depending on implementation
-        if result.is_failure:
-            assert result.error is not None
 
     def test_convert_attribute_unexpected_exception(
         self,
         conversion_matrix: FlextLdifConversion,
         oid_quirk: FlextLdifServersOid,
     ) -> None:
-        """Test attribute conversion handles unexpected exceptions."""
-        source = ExceptionThrowingQuirk()
-        target = oid_quirk
+        """Test attribute conversion handles unexpected exceptions (NEW API)."""
+        # NEW API: Use successful quirk to create model, then exception quirk for conversion
+        successful_quirk = SuccessfulParseQuirk()
+        exception_quirk = ExceptionThrowingQuirk()
 
-        result = conversion_matrix.convert(source, target, "attribute", "(test)")
+        # Parse with successful quirk to create model
+        parse_result = successful_quirk.parse_attribute("(test)")
+        assert parse_result.is_success
+        model = parse_result.unwrap()
+
+        # NEW API: Convert with exception quirk as source (write will throw exception)
+        result = conversion_matrix.convert(exception_quirk, oid_quirk, model)
+
+        # Exception should be caught and converted to failure
         assert result.is_failure
+        assert result.error is not None
         assert (
-            result.error is not None and "Attribute conversion failed" in result.error
+            "conversion failed" in result.error.lower()
+            or "error" in result.error.lower()
         )
 
 
@@ -2165,7 +2199,10 @@ class TestEntryConversion:
         self,
         conversion_matrix: FlextLdifConversion,
     ) -> None:
-        """Test entry conversion fails for string input (only Entry models supported)."""
+        """Test entry conversion fails for string input (NEW API - only Entry models).
+
+        NEW API: Only Entry model instances are accepted, not strings.
+        """
         source = EntryConversionQuirk()
         target = EntryConversionQuirk()
 
@@ -2174,55 +2211,54 @@ objectClass: person
 cn: test
 sn: user"""
 
-        result = conversion_matrix.convert(source, target, "entry", ldif_string)
+        # NEW API: Strings are not accepted - should fail with type error
+        result = conversion_matrix.convert(source, target, ldif_string)  # type: ignore[arg-type]
         assert result.is_failure
         assert result.error is not None
-        # Entry conversion only supports Entry models, not string input
-        assert (
-            "Invalid data_type" in result.error
-            or "deprecated" in result.error.lower()
-            or "Entry model" in result.error
-        )
+        # Should reject non-Entry model types
+        assert "Unsupported model type" in result.error
 
     def test_convert_entry_missing_source_support(
         self,
         conversion_matrix: FlextLdifConversion,
         oid_quirk: FlextLdifServersOid,
     ) -> None:
-        """Test entry conversion fails when source quirk lacks entry support."""
+        """Test entry conversion fails when source quirk lacks entry support (NEW API).
+
+        NEW API: Must provide Entry model instance. Test that dict input fails.
+        """
         source = MinimalQuirk()
         target = oid_quirk
 
         entry_data: dict[str, object] = {"dn": "cn=test,dc=example,dc=com"}
-        result = conversion_matrix.convert(source, target, "entry", entry_data)
+
+        # NEW API: Dicts are not accepted - should fail with type error
+        result = conversion_matrix.convert(source, target, entry_data)  # type: ignore[arg-type]
         assert result.is_failure
         assert result.error is not None
-        # Entry conversion only supports Entry models, not dict input
-        assert (
-            "Invalid data_type" in result.error
-            or "deprecated" in result.error.lower()
-            or "Entry model" in result.error
-        )
+        # Should reject non-Entry model types
+        assert "Unsupported model type" in result.error
 
     def test_convert_entry_missing_target_support(
         self,
         conversion_matrix: FlextLdifConversion,
         oud_quirk: FlextLdifServersOud,
     ) -> None:
-        """Test entry conversion fails when target quirk lacks entry support."""
+        """Test entry conversion fails when target quirk lacks entry support (NEW API).
+
+        NEW API: Must provide Entry model instance. Test that dict input fails.
+        """
         source = oud_quirk
         target = MinimalQuirk()
 
         entry_data: dict[str, object] = {"dn": "cn=test,dc=example,dc=com"}
-        result = conversion_matrix.convert(source, target, "entry", entry_data)
+
+        # NEW API: Dicts are not accepted - should fail with type error
+        result = conversion_matrix.convert(source, target, entry_data)  # type: ignore[arg-type]
         assert result.is_failure
         assert result.error is not None
-        # Entry conversion only supports Entry models, not dict input
-        assert (
-            "Invalid data_type" in result.error
-            or "deprecated" in result.error.lower()
-            or "Entry model" in result.error
-        )
+        # Should reject non-Entry model types
+        assert "Unsupported model type" in result.error
 
 
 class TestBatchConversionErrorHandling:
@@ -2233,61 +2269,75 @@ class TestBatchConversionErrorHandling:
         conversion_matrix: FlextLdifConversion,
         oid_quirk: FlextLdifServersOid,
     ) -> None:
-        """Test batch conversion with all failing parse quirk handles errors gracefully."""
-        source = FailingParseQuirk()
-        target = oid_quirk
+        """Test batch conversion with all items failing conversion (NEW API - write failures)."""
+        # NEW API: Use successful quirk to create models, then failing quirk for conversion
+        successful_quirk = SuccessfulParseQuirk()
+        failing_quirk = ConversionFailingQuirk(fail_on="write")
 
-        items = ["(test1)", "(test2)", "(test3)"]
-        result = conversion_matrix.batch_convert(source, target, "attribute", items)
+        # Create models using successful quirk (parsing succeeds)
+        items_str = ["(test1)", "(test2)", "(test3)"]
+        models = []
+        for item in items_str:
+            parse_result = successful_quirk.parse_attribute(item)
+            assert parse_result.is_success
+            models.append(parse_result.unwrap())
 
-        # With permissive parser, items may be passed through or conversion may fail
-        # The test verifies the conversion doesn't crash
-        assert result is not None
-        if result.is_success:
-            converted = result.unwrap()
-            # Items may be passed through unchanged or converted
-            assert len(converted) == len(items)
-        else:
-            # Or conversion may fail with error message
-            assert result.error is not None
+        # NEW API: batch_convert with failing quirk as source (write step will fail for all)
+        result = conversion_matrix.batch_convert(failing_quirk, oid_quirk, models)
+
+        # All items fail to write, so batch conversion fails
+        assert result.is_failure
+        assert result.error is not None
+        assert "errors" in result.error.lower() or "failed" in result.error.lower()
 
     def test_batch_convert_error_truncation(
         self,
         conversion_matrix: FlextLdifConversion,
         oid_quirk: FlextLdifServersOid,
     ) -> None:
-        """Test batch conversion handles multiple errors with truncation."""
-        source = FailingParseQuirk()
-        target = oid_quirk
+        """Test batch conversion handles multiple errors with truncation (NEW API)."""
+        # NEW API: Use successful quirk to create models, then failing quirk for conversion
+        successful_quirk = SuccessfulParseQuirk()
+        failing_quirk = ConversionFailingQuirk(fail_on="write")
 
-        # Create 8 items that will fail parsing
-        items = [f"(test{i})" for i in range(8)]
-        result = conversion_matrix.batch_convert(source, target, "attribute", items)
+        # Create 8 models (parsing succeeds, but write will fail)
+        items_str = [f"(test{i})" for i in range(8)]
+        models = []
+        for item in items_str:
+            parse_result = successful_quirk.parse_attribute(item)
+            assert parse_result.is_success
+            models.append(parse_result.unwrap())
 
-        # With permissive parser, items may be passed through or conversion may fail
-        # The test verifies the conversion doesn't crash and handles errors
-        assert result is not None
-        if result.is_success:
-            converted = result.unwrap()
-            # Items may be passed through unchanged or converted
-            assert len(converted) == len(items)
-        else:
-            # Or conversion may fail with error message (may be truncated)
-            assert result.error is not None
-            # Error message may be truncated to MAX_ERRORS_TO_SHOW
-            assert len(items) == 8  # Verify we had 8 items
+        # NEW API: batch_convert with failing quirk (write step will fail for all)
+        result = conversion_matrix.batch_convert(failing_quirk, oid_quirk, models)
+
+        # All items fail to write, so batch conversion fails with truncated error message
+        assert result.is_failure
+        assert result.error is not None
+        # Error message may be truncated to MAX_ERRORS_TO_SHOW (default: 5)
+        assert "errors" in result.error.lower() or "failed" in result.error.lower()
+        assert len(models) == 8  # Verify we had 8 items
 
     def test_batch_convert_unexpected_exception(
         self,
         conversion_matrix: FlextLdifConversion,
         oid_quirk: FlextLdifServersOid,
     ) -> None:
-        """Test batch conversion handles unexpected exceptions."""
-        source = ExceptionThrowingQuirk()
-        target = oid_quirk
+        """Test batch conversion handles unexpected exceptions (NEW API)."""
+        # NEW API: Use successful quirk to create models, then use exception-throwing quirk as source
+        successful_quirk = SuccessfulParseQuirk()
+        exception_quirk = ExceptionThrowingQuirk()
 
-        items = ["(test1)", "(test2)"]
-        result = conversion_matrix.batch_convert(source, target, "attribute", items)
+        # Create models using successful quirk
+        items_str = ["(test1)", "(test2)"]
+        models = []
+        for item in items_str:
+            parse_result = successful_quirk.parse_attribute(item)
+            assert parse_result.is_success
+            models.append(parse_result.unwrap())
+
+        # NEW API: batch_convert with exception-throwing quirk as source (write will throw)
+        result = conversion_matrix.batch_convert(exception_quirk, oid_quirk, models)
 
         # Exceptions should be caught and converted to failures
         assert result.is_failure

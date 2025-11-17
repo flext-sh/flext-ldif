@@ -753,22 +753,28 @@ class TestFlextLdifSyntax:
         assert result.is_success
 
     def test_lookup_syntax_name(self) -> None:
-        """Test looking up syntax name by OID."""
-        from flext_ldif.services.syntax import FlextLdifSyntax
-
-        syntax = FlextLdifSyntax()
-        result = syntax.lookup_name("1.3.6.1.4.1.1466.115.121.1.7")
-        assert result.is_success
-        # Name lookup depends on constants table
-
-    def test_lookup_syntax_oid(self) -> None:
         """Test looking up OID by syntax name."""
         from flext_ldif.services.syntax import FlextLdifSyntax
 
         syntax = FlextLdifSyntax()
-        result = syntax.lookup_oid("Boolean")
+        # Try with lowercase name (as stored in constants)
+        result = syntax.lookup_name("boolean")
+        if not result.is_success:
+            # Try with capitalized name
+            result = syntax.lookup_name("Boolean")
         assert result.is_success
-        # OID lookup depends on constants table
+        oid = result.unwrap()
+        assert oid == "1.3.6.1.4.1.1466.115.121.1.7"
+
+    def test_lookup_syntax_oid(self) -> None:
+        """Test looking up syntax name by OID."""
+        from flext_ldif.services.syntax import FlextLdifSyntax
+
+        syntax = FlextLdifSyntax()
+        result = syntax.lookup_oid("1.3.6.1.4.1.1466.115.121.1.7")
+        assert result.is_success
+        name = result.unwrap()
+        assert name.lower() == "boolean"
 
     def test_resolve_syntax_oid(self) -> None:
         """Test resolving OID to Syntax model."""

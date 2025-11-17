@@ -62,11 +62,15 @@ class TestEntryRfcComplianceValidator:
 
     def test_entry_with_none_dn_captured(self) -> None:
         """None DN should be captured (edge case)."""
-        # Direct instantiation to bypass create() validation
-        entry = FlextLdifModels.Entry(
+        # Use model_construct to create entry with None DN for testing validation
+        entry = FlextLdifModels.Entry.model_construct(
             dn=None,
-            attributes=FlextLdifModels.LdifAttributes(attributes={"cn": ["test"]}),
+            attributes=FlextLdifModels.LdifAttributes.model_construct(
+                attributes={"cn": ["test"]}
+            ),
         )
+        # Trigger validation by accessing validation_metadata
+        _ = entry.validation_metadata
 
         assert entry.validation_metadata is not None
         violations = entry.validation_metadata["rfc_violations"]
@@ -91,10 +95,15 @@ class TestEntryRfcComplianceValidator:
 
     def test_entry_with_none_attributes_captures_violation(self) -> None:
         """Entry with None attributes should be captured."""
-        entry = FlextLdifModels.Entry(
-            dn="cn=test,dc=example,dc=com",
+        # Use model_construct to create entry with None attributes for testing validation
+        entry = FlextLdifModels.Entry.model_construct(
+            dn=FlextLdifModels.DistinguishedName.model_construct(
+                value="cn=test,dc=example,dc=com"
+            ),
             attributes=None,
         )
+        # Trigger validation by accessing validation_metadata
+        _ = entry.validation_metadata
 
         assert entry.validation_metadata is not None
         violations = entry.validation_metadata["rfc_violations"]

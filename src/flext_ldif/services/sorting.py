@@ -17,6 +17,7 @@ from __future__ import annotations
 import operator
 import re
 from collections.abc import Callable
+from typing import ClassVar
 
 from flext_core import FlextResult, FlextService
 from pydantic import Field, field_validator, model_validator
@@ -32,7 +33,7 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
     Supports V2 patterns: auto_execute=True enables direct result access.
     """
 
-    auto_execute = True  # Enable V2 auto-execution pattern
+    auto_execute: ClassVar[bool] = True  # Enable V2 auto-execution pattern
 
     """Flexible sorting for LDIF entries, attributes, ACL & schemas.
     Supports hierarchy, DN, custom predicate, and schema OID sorting.
@@ -425,7 +426,10 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
         }
         if acl_attributes is not None:
             kwargs["acl_attributes"] = acl_attributes
-        return cls.v1(**kwargs).execute()
+        # With auto_execute=True, instantiation returns unwrapped list
+        # Wrap in FlextResult since this method returns FlextResult[list[Entry]]
+        sorted_list = cls(**kwargs)
+        return FlextResult[list[FlextLdifModels.Entry]].ok(sorted_list)
 
     @classmethod
     def builder(cls) -> FlextLdifSorting:
@@ -441,7 +445,11 @@ class FlextLdifSorting(FlextService[list[FlextLdifModels.Entry]]):
                 .build())
 
         """
-        return cls.v1(entries=[])
+        # Create instance using object.__new__ to bypass auto_execute
+        instance = object.__new__(cls)
+        # Initialize instance with default parameters
+        type(instance).__init__(instance, entries=[])
+        return instance
 
     def with_entries(self, entries: list[FlextLdifModels.Entry]) -> FlextLdifSorting:
         """Set entries to sort (fluent builder)."""

@@ -98,20 +98,6 @@ mail: bob@example.com
         ldif_file.write_text(simple_ldif_content)
         RfcTestHelpers.test_api_parse_and_assert(api, ldif_file, expected_count=2)
 
-    def test_parse_from_file_path_object(
-        self,
-        api: FlextLdif,
-        tmp_path: Path,
-        simple_ldif_content: str,
-    ) -> None:
-        """Test parse() with file path as Path object."""
-        from tests.helpers.test_rfc_helpers import RfcTestHelpers
-
-        ldif_file = tmp_path / "test.ldif"
-        ldif_file.write_text(simple_ldif_content)
-        # Use Path object directly - strings are treated as LDIF content, not file paths
-        RfcTestHelpers.test_api_parse_and_assert(api, ldif_file, expected_count=2)
-
     def test_parse_empty_content_returns_empty_list(self, api: FlextLdif) -> None:
         """Test parse() with empty content returns empty list."""
         from tests.helpers.test_rfc_helpers import RfcTestHelpers

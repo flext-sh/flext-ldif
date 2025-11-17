@@ -167,24 +167,23 @@ class TestExecutePattern:
 
     def test_execute_empty_entries(self) -> None:
         """Test execute() with empty entries list."""
-        result = FlextLdifSorting.v1(entries=[], sort_by="hierarchy").execute()
+        # With auto_execute=True, instantiation returns list directly
+        sorted_entries = FlextLdifSorting(entries=[], sort_by="hierarchy")
 
-        assert result.is_success
-        assert result.unwrap() == []
+        assert isinstance(sorted_entries, list)
+        assert sorted_entries == []
 
     def test_execute_hierarchy(
         self,
         hierarchy_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test execute() routes to hierarchy sorting correctly."""
-        result = FlextLdifSorting.v1(
+        # With auto_execute=True, instantiation returns list directly
+        sorted_entries = FlextLdifSorting(
             entries=hierarchy_entries,
             sort_target="entries",
             sort_by="hierarchy",
-        ).execute()
-
-        assert result.is_success
-        sorted_entries = result.unwrap()
+        )
         assert len(sorted_entries) == 5
         assert sorted_entries[0].dn is not None
         assert sorted_entries[0].dn.value == "dc=example,dc=com"
@@ -194,14 +193,11 @@ class TestExecutePattern:
         hierarchy_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test execute() with DN sorting."""
-        result = FlextLdifSorting.v1(
+        sorted_entries = FlextLdifSorting(
             entries=hierarchy_entries,
             sort_target="entries",
             sort_by="dn",
-        ).execute()
-
-        assert result.is_success
-        sorted_entries = result.unwrap()
+        )
         dns = [e.dn.value.lower() if e.dn else "" for e in sorted_entries]
         assert dns == sorted(dns)
 
@@ -210,14 +206,11 @@ class TestExecutePattern:
         hierarchy_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test execute() with alphabetical as alias for dn."""
-        result = FlextLdifSorting.v1(
+        sorted_entries = FlextLdifSorting(
             entries=hierarchy_entries,
             sort_target="entries",
             sort_by="alphabetical",
-        ).execute()
-
-        assert result.is_success
-        sorted_entries = result.unwrap()
+        )
         dns = [e.dn.value.lower() if e.dn else "" for e in sorted_entries]
         assert dns == sorted(dns)
 
@@ -230,28 +223,27 @@ class TestExecutePattern:
         def custom_pred(entry: FlextLdifModels.Entry) -> str:
             return entry.dn.value.lower() if entry.dn else ""
 
-        result = FlextLdifSorting.v1(
+        # With auto_execute=True, instantiation returns list directly
+        sorted_entries = FlextLdifSorting(
             entries=hierarchy_entries,
             sort_target="entries",
             sort_by="custom",
             custom_predicate=custom_pred,
-        ).execute()
+        )
 
-        assert result.is_success
-        assert len(result.unwrap()) == 5
+        assert isinstance(sorted_entries, list)
+        assert len(sorted_entries) == 5
 
     def test_execute_attributes_target(
         self,
         hierarchy_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test execute() with attributes as sort target."""
-        result = FlextLdifSorting.v1(
+        # With auto_execute=True, instantiation returns list directly
+        sorted_entries = FlextLdifSorting(
             entries=hierarchy_entries,
             sort_target="attributes",
-        ).execute()
-
-        assert result.is_success
-        sorted_entries = result.unwrap()
+        )
         # Entry count should remain same
         assert len(sorted_entries) == len(hierarchy_entries)
 
@@ -260,13 +252,10 @@ class TestExecutePattern:
         hierarchy_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test execute() with acl as sort target."""
-        result = FlextLdifSorting.v1(
+        sorted_entries = FlextLdifSorting(
             entries=hierarchy_entries,
             sort_target="acl",
-        ).execute()
-
-        assert result.is_success
-        sorted_entries = result.unwrap()
+        )
         assert len(sorted_entries) == len(hierarchy_entries)
 
     def test_execute_schema_target(
@@ -274,14 +263,11 @@ class TestExecutePattern:
         schema_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test execute() with schema as sort target."""
-        result = FlextLdifSorting.v1(
+        sorted_entries = FlextLdifSorting(
             entries=schema_entries,
             sort_target="schema",
             sort_by="schema",
-        ).execute()
-
-        assert result.is_success
-        sorted_entries = result.unwrap()
+        )
         assert len(sorted_entries) == 2
 
     def test_execute_combined_target(
@@ -289,16 +275,13 @@ class TestExecutePattern:
         hierarchy_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test execute() with combined as sort target."""
-        result = FlextLdifSorting.v1(
+        sorted_entries = FlextLdifSorting(
             entries=hierarchy_entries,
             sort_target="combined",
             sort_by="hierarchy",
             sort_attributes=True,
             sort_acl=True,
-        ).execute()
-
-        assert result.is_success
-        sorted_entries = result.unwrap()
+        )
         assert len(sorted_entries) == len(hierarchy_entries)
 
 
@@ -519,10 +502,8 @@ class TestAttributeSorting:
         """Test attributes are sorted alphabetically via execute()."""
         entry = hierarchy_entries[0]
 
-        result = FlextLdifSorting.v1(
-            entries=[entry], sort_target="attributes"
-        ).execute()
-        sorted_entries = result.unwrap()
+        # With auto_execute=True, instantiation returns list directly
+        sorted_entries = FlextLdifSorting(entries=[entry], sort_target="attributes")
 
         assert len(sorted_entries) == 1
         assert sorted_entries[0].attributes is not None
@@ -539,12 +520,12 @@ class TestAttributeSorting:
         """Test attributes respect custom order via execute()."""
         order = ["objectClass", "uid", "cn"]
 
-        result = FlextLdifSorting.v1(
+        # With auto_execute=True, instantiation returns list directly
+        sorted_entries = FlextLdifSorting(
             entries=hierarchy_entries,
             sort_target="attributes",
             attribute_order=order,
-        ).execute()
-        sorted_entries = result.unwrap()
+        )
 
         # Entry order should not change
         assert len(sorted_entries) == len(hierarchy_entries)
@@ -568,8 +549,8 @@ class TestAclSorting:
             },
         )
 
-        result = FlextLdifSorting.v1(entries=[entry], sort_target="acl").execute()
-        sorted_entries = result.unwrap()
+        # With auto_execute=True, FlextLdifSorting returns list directly
+        sorted_entries = FlextLdifSorting(entries=[entry], sort_target="acl")
 
         assert len(sorted_entries) == 1
         assert sorted_entries[0].attributes is not None
@@ -620,16 +601,13 @@ class TestCombinedSorting:
         hierarchy_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test combined sorting with all options enabled."""
-        result = FlextLdifSorting.v1(
+        sorted_entries = FlextLdifSorting(
             entries=hierarchy_entries,
             sort_target="combined",
             sort_by="hierarchy",
             sort_attributes=True,
             sort_acl=True,
-        ).execute()
-
-        assert result.is_success
-        sorted_entries = result.unwrap()
+        )
         # All entries should be present
         assert len(sorted_entries) == len(hierarchy_entries)
         # First should be root
@@ -768,20 +746,18 @@ class TestIntegration:
         hierarchy_entries: list[FlextLdifModels.Entry],
     ) -> None:
         """Test multi-stage sorting pipeline."""
-        # Stage 1: Sort by hierarchy
+        # Stage 1: Sort by hierarchy (classmethod returns FlextResult)
         result = FlextLdifSorting.sort(hierarchy_entries, by="hierarchy")
         assert result.is_success
 
         sorted_by_hierarchy = result.unwrap()
 
-        # Stage 2: Sort attributes
-        result2 = FlextLdifSorting.v1(
+        # Stage 2: Sort attributes (with auto_execute, instantiation returns list)
+        sorted_entries = FlextLdifSorting(
             entries=sorted_by_hierarchy,
             sort_target="attributes",
-        ).execute()
-        assert result2.is_success
+        )
 
-        sorted_entries = result2.unwrap()
         assert len(sorted_entries) == 5
 
 

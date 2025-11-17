@@ -342,8 +342,8 @@ class FlextLdifUtilitiesEvents:
         # Create event
         event = FlextLdifUtilitiesEvents.create_dn_event(config)
 
-        # Build log context with event data (type inferred from values)
-        log_context = {
+        # Build log context with event data (explicit type annotation for compatibility)
+        log_context: dict[str, object] = {
             "aggregate_id": event.aggregate_id,
             "dn_operation": config.dn_operation,
             "input_dn": config.input_dn,
@@ -440,7 +440,7 @@ class FlextLdifUtilitiesEvents:
         event = FlextLdifUtilitiesEvents.create_migration_event(config)
 
         # Build log context with event data + computed metrics
-        log_context = {
+        log_context: dict[str, object] = {
             "aggregate_id": event.aggregate_id,
             "migration_operation": config.migration_operation,
             "source_server": config.source_server,
@@ -507,7 +507,7 @@ class FlextLdifUtilitiesEvents:
         event = FlextLdifUtilitiesEvents.create_conversion_event(config)
 
         # Build log context with event data + computed metrics
-        log_context = {
+        log_context: dict[str, object] = {
             "aggregate_id": event.aggregate_id,
             "conversion_operation": config.conversion_operation,
             "source_format": config.source_format,
@@ -572,8 +572,8 @@ class FlextLdifUtilitiesEvents:
         # Create event
         event = FlextLdifUtilitiesEvents.create_schema_event(config)
 
-        # Build log context with event data + computed metrics (type inferred from values)
-        log_context = {
+        # Build log context with event data + computed metrics (explicit type annotation)
+        log_context: dict[str, object] = {
             "aggregate_id": event.aggregate_id,
             "schema_operation": config.schema_operation,
             "items_processed": config.items_processed,

@@ -692,7 +692,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
             try:
                 # OpenLDAP 1.x entries are RFC-compliant
                 metadata = entry.metadata or FlextLdifModels.QuirkMetadata(
-                    quirk_type="openldap1",
+                    quirk_type=FlextLdifServersOpenldap1.Constants.SERVER_TYPE,
                 )
                 metadata.extensions[
                     FlextLdifConstants.QuirkMetadataKeys.IS_TRADITIONAL_DIT

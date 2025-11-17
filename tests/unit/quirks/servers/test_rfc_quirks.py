@@ -3268,12 +3268,16 @@ objectClasses: ( 1.2.3.5 NAME 'testOC' MUST testAttr )
         rfc_quirk: FlextLdifServersRfc,
     ) -> None:
         """Test _handle_write_operation with failure."""
-        # Use invalid entries that will cause write to fail
-        # Create entries with invalid structure that will fail validation
+        # Create entry with empty DN value that will fail write validation
+        # Use model_construct to bypass Pydantic validation for testing error paths
         invalid_entries = [
-            FlextLdifModels.Entry(
-                dn=None,  # type: ignore[arg-type]
-                attributes=None,  # type: ignore[arg-type]
+            FlextLdifModels.Entry.model_construct(
+                dn=FlextLdifModels.DistinguishedName.model_construct(
+                    value=""
+                ),  # Empty DN will fail
+                attributes=FlextLdifModels.LdifAttributes.model_construct(
+                    attributes={}
+                ),
             )
         ]
         result = rfc_quirk._handle_write_operation(invalid_entries)
@@ -3324,11 +3328,16 @@ objectClasses: ( 1.2.3.5 NAME 'testOC' MUST testAttr )
     ) -> None:
         """Test _route_models_to_write with failure."""
         # Use invalid models that will cause write to fail
-        # Create entries with invalid structure that will fail validation
+        # Create entry with empty DN value that will fail write validation
+        # Use model_construct to bypass Pydantic validation for testing error paths
         invalid_models: list[object] = [
-            FlextLdifModels.Entry(
-                dn=None,  # type: ignore[arg-type]
-                attributes=None,  # type: ignore[arg-type]
+            FlextLdifModels.Entry.model_construct(
+                dn=FlextLdifModels.DistinguishedName.model_construct(
+                    value=""
+                ),  # Empty DN will fail
+                attributes=FlextLdifModels.LdifAttributes.model_construct(
+                    attributes={}
+                ),
             )
         ]
         result = rfc_quirk._route_models_to_write(invalid_models)
@@ -3447,10 +3456,13 @@ objectClasses: ( 1.2.3.5 NAME 'testOC' MUST testAttr )
         rfc_entry_quirk: FlextLdifServersRfc.Entry,
     ) -> None:
         """Test Entry.write with entries that cause exception."""
-        # Create entry with invalid structure that will cause write to fail
-        invalid_entry = FlextLdifModels.Entry(
-            dn=None,  # type: ignore[arg-type]
-            attributes=None,  # type: ignore[arg-type]
+        # Create entry with empty DN value that will fail write validation
+        # Use model_construct to bypass Pydantic validation for testing error paths
+        invalid_entry = FlextLdifModels.Entry.model_construct(
+            dn=FlextLdifModels.DistinguishedName.model_construct(
+                value=""
+            ),  # Empty DN will fail
+            attributes=FlextLdifModels.LdifAttributes.model_construct(attributes={}),
         )
         result = rfc_entry_quirk.write(invalid_entry)
         assert result.is_failure
@@ -3668,10 +3680,13 @@ class TestRfcCoverage100Percent:
         sample_entry: FlextLdifModels.Entry,
     ) -> None:
         """Test Entry._route_write_many with failure in one entry."""
-        # Create entries where one will fail
-        invalid_entry = FlextLdifModels.Entry(
-            dn=None,  # type: ignore[arg-type]
-            attributes=None,  # type: ignore[arg-type]
+        # Create entry with empty DN value that will fail write validation
+        # Use model_construct to bypass Pydantic validation for testing error paths
+        invalid_entry = FlextLdifModels.Entry.model_construct(
+            dn=FlextLdifModels.DistinguishedName.model_construct(
+                value=""
+            ),  # Empty DN will fail
+            attributes=FlextLdifModels.LdifAttributes.model_construct(attributes={}),
         )
         result = rfc_entry_quirk._route_write_many([sample_entry, invalid_entry])  # type: ignore[attr-defined]
         # Should handle failure gracefully
@@ -3717,10 +3732,13 @@ class TestRfcCoverage100Percent:
         rfc_entry_quirk: FlextLdifServersRfc.Entry,
     ) -> None:
         """Test Entry._handle_write_entry with write failure."""
-        # Use invalid entries that will cause write to fail
-        invalid_entry = FlextLdifModels.Entry(
-            dn=None,  # type: ignore[arg-type]
-            attributes=None,  # type: ignore[arg-type]
+        # Create entry with empty DN value that will fail write validation
+        # Use model_construct to bypass Pydantic validation for testing error paths
+        invalid_entry = FlextLdifModels.Entry.model_construct(
+            dn=FlextLdifModels.DistinguishedName.model_construct(
+                value=""
+            ),  # Empty DN will fail
+            attributes=FlextLdifModels.LdifAttributes.model_construct(attributes={}),
         )
         result = rfc_entry_quirk._handle_write_entry([invalid_entry])  # type: ignore[attr-defined]
         assert isinstance(result, FlextResult)

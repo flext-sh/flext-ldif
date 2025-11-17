@@ -2172,8 +2172,8 @@ class TestTransformerEdgeCases:
             "cn=test,dc=x",
             {"cn": ["test"], "objectClass": ["top", "person"]},
         )
-        # Break attributes to cause exception
-        entry.attributes = None  # type: ignore[assignment]
+        # Break attributes to cause exception - use object.__setattr__ to bypass Pydantic validation
+        object.__setattr__(entry, "attributes", None)
         result = FlextLdifFilters.remove_objectclasses(entry, ["person"])
         # Should catch exception
         assert result.is_failure

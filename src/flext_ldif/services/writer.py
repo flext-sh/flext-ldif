@@ -353,9 +353,7 @@ class FlextLdifWriter(FlextService[FlextLdifModels.WriteResponse]):
                 output.write(f"# Generated on: {timestamp}\n")
                 output.write(f"# Total entries: {entry_count}\n\n")
 
-        def _get_entry_quirk(
-            self, target_server_type: str
-        ) -> FlextResult[object]:
+        def _get_entry_quirk(self, target_server_type: str) -> FlextResult[object]:
             """Get entry quirk for target server type.
 
             Args:
@@ -674,7 +672,9 @@ class FlextLdifWriter(FlextService[FlextLdifModels.WriteResponse]):
             try:
                 # Build template data with defaults
                 # No fallback - use empty dict only if template_data is explicitly None
-                data: dict[str, object] = template_data if template_data is not None else {}
+                data: dict[str, object] = (
+                    template_data if template_data is not None else {}
+                )
                 data.setdefault("entry_count", len(entries))
                 data.setdefault("total_entries", len(entries))
                 data.setdefault("timestamp", datetime.now(UTC).isoformat())

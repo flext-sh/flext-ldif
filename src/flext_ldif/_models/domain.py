@@ -44,6 +44,16 @@ logger = FlextLogger(__name__)
 # Type aliases removed - use FlextLdifModelsDomains.Entry from models.py
 
 
+def _create_default_quirk_metadata() -> FlextLdifModelsDomains.QuirkMetadata:
+    """Create default QuirkMetadata instance for Field default_factory.
+
+    This function is defined at module level to avoid forward reference issues
+    when used in Field default_factory before the class is fully defined.
+    """
+    # Access the class after it's defined (at runtime, not class definition time)
+    return FlextLdifModelsDomains.QuirkMetadata.create_for()
+
+
 class FlextLdifModelsDomains:
     """LDIF domain models container class.
 
@@ -66,8 +76,8 @@ class FlextLdifModelsDomains:
             description="DN string value (lenient processing - no max_length)",
             # max_length removed for lenient processing - validation at Entry level
         )
-        metadata: dict[str, object] | None = Field(
-            default=None,
+        metadata: dict[str, object] = Field(
+            default_factory=dict,
             description="Quirk-specific metadata for preserving original format",
         )
 
@@ -609,21 +619,18 @@ class FlextLdifModelsDomains:
 
             Args:
                 key: Attribute name
-                default: Default list if not found (must be provided explicitly)
+                default: Default list if not found (defaults to empty list if not provided)
 
             Returns:
-                List of values or default
-
-            Raises:
-                KeyError: If key not found and no default provided
+                List of values or default (empty list if not found and no default)
 
             """
             if default is not None:
                 return self.attributes.get(key, default)
             if key in self.attributes:
                 return self.attributes[key]
-            error_msg = f"Attribute '{key}' not found and no default provided"
-            raise KeyError(error_msg)
+            # Return empty list by default (lenient processing)
+            return []
 
         def get_values(self, key: str, default: list[str] | None = None) -> list[str]:
             """Get attribute values as a list (same as get()).
@@ -1160,7 +1167,7 @@ class FlextLdifModelsDomains:
             description="ACL permissions",
         )
         server_type: str = Field(
-            default="rfc",
+            default=FlextLdifConstants.ServerTypes.RFC,
             description="LDAP server type (openldap, openldap2, openldap1, oid, oud, 389ds)",
         )
         raw_line: str = Field(default="", description="Original raw ACL line from LDIF")
@@ -1252,32 +1259,32 @@ class FlextLdifModelsDomains:
             extra="allow",  # Allow dynamic fields from conversions and transformations
         )
 
-        dn: FlextLdifModelsDomains.DistinguishedName | None = Field(
-            default=None,
-            description="Distinguished Name of the entry (Optional to capture None violations)",
+        dn: FlextLdifModelsDomains.DistinguishedName = Field(
+            ...,
+            description="Distinguished Name of the entry (required per RFC 2849 § 2)",
         )
-        attributes: FlextLdifModelsDomains.LdifAttributes | None = Field(
-            default=None,
-            description="Entry attributes container (Optional to capture None violations)",
+        attributes: FlextLdifModelsDomains.LdifAttributes = Field(
+            ...,
+            description="Entry attributes container (required per RFC 2849 § 2)",
         )
-        metadata: FlextLdifModelsDomains.QuirkMetadata | None = Field(
-            default=None,
+        metadata: FlextLdifModelsDomains.QuirkMetadata = Field(
+            default_factory=_create_default_quirk_metadata,
             description="Quirk-specific metadata for preserving original entry format and server-specific data",
         )
-        acls: list[FlextLdifModelsDomains.Acl] | None = Field(
-            default=None,
+        acls: list[FlextLdifModelsDomains.Acl] = Field(
+            default_factory=list,
             description="Access Control Lists extracted from entry attributes",
         )
-        objectclasses: list[FlextLdifModelsDomains.SchemaObjectClass] | None = Field(
-            default=None,
+        objectclasses: list[FlextLdifModelsDomains.SchemaObjectClass] = Field(
+            default_factory=list,
             description="ObjectClass definitions for schema validation",
         )
-        attributes_schema: list[FlextLdifModelsDomains.SchemaAttribute] | None = Field(
-            default=None,
+        attributes_schema: list[FlextLdifModelsDomains.SchemaAttribute] = Field(
+            default_factory=list,
             description="AttributeType definitions for schema validation",
         )
-        entry_metadata: dict[str, object] | None = Field(
-            default=None,
+        entry_metadata: dict[str, object] = Field(
+            default_factory=dict,
             description="Entry-level metadata (changetype, modifyTimestamp, etc.)",
         )
         validation_metadata: dict[str, object] | None = Field(
@@ -1294,7 +1301,7 @@ class FlextLdifModelsDomains:
         def coerce_dn_from_string(
             cls,
             value: object,
-        ) -> FlextLdifModelsDomains.DistinguishedName | None:
+        ) -> FlextLdifModelsDomains.DistinguishedName:
             """Convert string DN to DistinguishedName instance with base64 detection.
 
             Pydantic v2 Advanced Pattern: Emergency base64 decode at model level.
@@ -1306,16 +1313,20 @@ class FlextLdifModelsDomains:
             This validator provides a safety net for data quality issues.
 
             Args:
-                value: DN value (str, DistinguishedName, or None)
+                value: DN value (str or DistinguishedName)
 
             Returns:
-                DistinguishedName instance or None
+                DistinguishedName instance
+
+            Raises:
+                ValueError: If value is None or cannot be converted
 
             """
-            if value is None or isinstance(
-                value,
-                FlextLdifModelsDomains.DistinguishedName,
-            ):
+            if value is None:
+                msg = "DN cannot be None (required per RFC 2849 § 2)"
+                raise ValueError(msg)
+
+            if isinstance(value, FlextLdifModelsDomains.DistinguishedName):
                 return value
 
             if isinstance(value, str):
@@ -1336,7 +1347,9 @@ class FlextLdifModelsDomains:
                         )
 
                 return FlextLdifModelsDomains.DistinguishedName(value=value)
-            return None
+
+            msg = f"DN must be str or DistinguishedName, got {type(value).__name__}"
+            raise ValueError(msg)
 
         @model_validator(mode="after")
         def validate_entry_consistency(self) -> FlextLdifModelsDomains.Entry:
@@ -1365,7 +1378,9 @@ class FlextLdifModelsDomains:
             if dn_value is None:
                 violations.append("RFC 2849 § 2: DN is required (received None)")
             elif not dn_value or not dn_value.strip():
-                violations.append("RFC 2849 § 2: DN is required (empty or whitespace DN)")
+                violations.append(
+                    "RFC 2849 § 2: DN is required (empty or whitespace DN)"
+                )
             else:
                 components = [
                     comp.strip() for comp in dn_value.split(",") if comp.strip()
@@ -1452,7 +1467,9 @@ class FlextLdifModelsDomains:
                 for attr_name in self.attributes.attributes
             )
             if not has_objectclass:
-                violations.append("RFC 4512 § 2.4.1: Entry SHOULD have objectClass")
+                violations.append(
+                    f"RFC 4512 § 2.4.1: Entry SHOULD have objectClass (DN: {dn_value})"
+                )
             return violations
 
         def _validate_naming_attribute(self, dn_value: str | None) -> list[str]:
@@ -1462,9 +1479,7 @@ class FlextLdifModelsDomains:
                 return violations
 
             first_rdn = (
-                dn_value.split(",")[0].strip()
-                if "," in dn_value
-                else dn_value.strip()
+                dn_value.split(",")[0].strip() if "," in dn_value else dn_value.strip()
             )
             if "=" not in first_rdn:
                 return violations
@@ -1491,8 +1506,10 @@ class FlextLdifModelsDomains:
                     continue
                 for value in attr_values:
                     has_binary = any(
-                        (ord(c) < FlextLdifConstants.ASCII_SPACE_CHAR
-                         and c not in "\t\n\r")
+                        (
+                            ord(c) < FlextLdifConstants.ASCII_SPACE_CHAR
+                            and c not in "\t\n\r"
+                        )
                         or ord(c) > FlextLdifConstants.ASCII_TILDE_CHAR
                         for c in value
                     )
@@ -1515,9 +1532,7 @@ class FlextLdifModelsDomains:
                 base_name = parts[0]
 
                 if not attr_name_pattern.match(base_name):
-                    violations.append(
-                        f"RFC 4512 § 2.5.1: '{base_name}' invalid syntax"
-                    )
+                    violations.append(f"RFC 4512 § 2.5.1: '{base_name}' invalid syntax")
 
                 if len(parts) > 1:
                     invalid_options = [
@@ -1540,9 +1555,7 @@ class FlextLdifModelsDomains:
 
             valid_changetypes = {"add", "delete", "modify", "moddn", "modrdn"}
             if str(changetype).lower() not in valid_changetypes:
-                violations.append(
-                    f"RFC 2849 § 5.7: changetype '{changetype}' invalid"
-                )
+                violations.append(f"RFC 2849 § 5.7: changetype '{changetype}' invalid")
             return violations
 
         @model_validator(mode="after")
@@ -1586,14 +1599,8 @@ class FlextLdifModelsDomains:
                 }
 
                 # ALSO store violations in metadata.extensions for server conversions
-                if self.metadata is None:
-                    self.metadata = FlextLdifModelsDomains.QuirkMetadata(
-                        quirk_type="rfc",
-                        extensions={},
-                    )
-                # Metadata is guaranteed to be non-None after creation above
-                if self.metadata:
-                    self.metadata.extensions["rfc_violations"] = violations
+                # Metadata is always initialized via default_factory, so it's never None
+                self.metadata.extensions["rfc_violations"] = violations
 
             return self
 
@@ -1648,9 +1655,7 @@ class FlextLdifModelsDomains:
                 for attr_name in self.attributes.attributes
             )
             if not has_naming_attr:
-                violations.append(
-                    f"Server requires naming attribute '{naming_attr}'"
-                )
+                violations.append(f"Server requires naming attribute '{naming_attr}'")
             return violations
 
         def _check_binary_option_rule(
@@ -1917,9 +1922,20 @@ class FlextLdifModelsDomains:
             Returns:
                 DistinguishedName object (validated by Pydantic)
 
+            Note:
+                Lenient processing: Empty DN is accepted and will be captured
+                in validation_metadata as RFC violation.
+
             """
+            if dn is None:
+                msg = "DN cannot be None (required per RFC 2849 § 2)"
+                raise ValueError(msg)
+
             if isinstance(dn, str):
+                # Lenient processing: Accept empty DN (violation captured in validation_metadata)
+                # Empty string is valid DistinguishedName value (Pydantic allows it)
                 return FlextLdifModelsDomains.DistinguishedName(value=dn)
+
             return dn
 
         @classmethod
@@ -1937,8 +1953,18 @@ class FlextLdifModelsDomains:
             Returns:
                 LdifAttributes object with normalized values
 
+            Note:
+                Lenient processing: Empty attributes dict is accepted and will be captured
+                in validation_metadata as RFC violation.
+
             """
+            if attributes is None:
+                msg = "Attributes cannot be None (required per RFC 2849 § 2)"
+                raise ValueError(msg)
+
             if isinstance(attributes, dict):
+                # Lenient processing: Accept empty dict (violation captured in validation_metadata)
+                # Empty dict is valid LdifAttributes (Pydantic allows it)
                 attrs_dict: dict[str, list[str]] = {}
                 for attr_name, attr_values in attributes.items():
                     # Normalize to list if string
@@ -1951,6 +1977,7 @@ class FlextLdifModelsDomains:
                 return FlextLdifModelsDomains.LdifAttributes(
                     attributes=attrs_dict,
                 )
+
             return attributes
 
         @classmethod
@@ -1996,7 +2023,9 @@ class FlextLdifModelsDomains:
                 if source_entry:
                     metadata.extensions["source_entry"] = source_entry
                 if unconverted_attributes:
-                    metadata.extensions["unconverted_attributes"] = unconverted_attributes
+                    metadata.extensions["unconverted_attributes"] = (
+                        unconverted_attributes
+                    )
 
             return metadata
 
@@ -2053,18 +2082,30 @@ class FlextLdifModelsDomains:
                 )
 
                 # Use model_validate to ensure Pydantic handles
-                # default_factory fields. Entity fields have defaults.
-                entry_data = {
+                # default_factory fields. Only include non-None fields to let Pydantic
+                # use default_factory for omitted fields.
+                entry_data: dict[str, object] = {
                     FlextLdifConstants.DictKeys.DN: dn_obj,
                     FlextLdifConstants.DictKeys.ATTRIBUTES: attrs_obj,
-                    "metadata": metadata,
-                    "acls": acls,
-                    "objectclasses": objectclasses,
-                    "attributes_schema": attributes_schema,
-                    "entry_metadata": entry_metadata,
-                    "validation_metadata": validation_metadata,
-                    "statistics": statistics,
                 }
+
+                # Only add optional fields if they are not None
+                # This allows Pydantic to use default_factory for omitted fields
+                if metadata is not None:
+                    entry_data["metadata"] = metadata
+                if acls is not None:
+                    entry_data["acls"] = acls
+                if objectclasses is not None:
+                    entry_data["objectclasses"] = objectclasses
+                if attributes_schema is not None:
+                    entry_data["attributes_schema"] = attributes_schema
+                if entry_metadata is not None:
+                    entry_data["entry_metadata"] = entry_metadata
+                if validation_metadata is not None:
+                    entry_data["validation_metadata"] = validation_metadata
+                if statistics is not None:
+                    entry_data["statistics"] = statistics
+
                 return FlextResult[FlextLdifModelsDomains.Entry].ok(
                     cls.model_validate(entry_data),
                 )
@@ -2463,16 +2504,31 @@ class FlextLdifModelsDomains:
         @classmethod
         def create_for(
             cls,
-            quirk_type: str,
+            quirk_type: str | None = None,
             extensions: dict[str, object] | None = None,
         ) -> FlextLdifModelsDomains.QuirkMetadata:
-            """Factory method to create QuirkMetadata with extensions."""
+            """Factory method to create QuirkMetadata with extensions.
+
+            Args:
+                quirk_type: Quirk type identifier. Defaults to RFC if not provided.
+                extensions: Extensions dictionary. Defaults to empty dict if not provided.
+
+            Returns:
+                QuirkMetadata instance with defaults from Constants.
+
+            """
+            # Use Constants default for quirk_type if not provided
+            default_quirk_type = (
+                quirk_type
+                if quirk_type is not None
+                else FlextLdifConstants.ServerTypes.RFC
+            )
             # Use empty dict as default value, not fallback
             extensions_dict: dict[str, object] = (
                 extensions if extensions is not None else {}
             )
             return cls(
-                quirk_type=quirk_type,
+                quirk_type=default_quirk_type,
                 extensions=extensions_dict,
             )
 

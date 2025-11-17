@@ -282,9 +282,6 @@ class FlextLdifMigrationPipeline(FlextService[FlextLdifModels.EntryResult]):
                         if FlextLdifConstants.Categories.ACL not in categories:
                             categories[FlextLdifConstants.Categories.ACL] = []
                         categories[FlextLdifConstants.Categories.ACL].append(acl_copy)
-                        logger.info(
-                            f"Duplicated entry with ACL to acl category: {entry.dn.value if entry.dn else 'unknown'}",
-                        )
 
         return FlextResult[dict[str, list[FlextLdifModels.Entry]]].ok(categories)
 

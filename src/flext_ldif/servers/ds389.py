@@ -692,7 +692,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
 
                 # Store metadata in extensions
                 metadata = entry.metadata or FlextLdifModels.QuirkMetadata(
-                    quirk_type="server_quirk",
+                    quirk_type=FlextLdifServersDs389.Constants.SERVER_TYPE,
                 )
                 metadata.extensions[
                     FlextLdifConstants.QuirkMetadataKeys.IS_CONFIG_ENTRY

@@ -58,12 +58,12 @@ class FlextLdifUtilitiesEntry:
         """Convert all boolean values in an attribute's value list.
 
         Args:
-            values: List of attribute values
+            values: List of attribute values as strings (bytes already converted)
             source_format: Input format ("0/1" or "TRUE/FALSE")
             target_format: Output format ("0/1" or "TRUE/FALSE")
 
         Returns:
-            List of converted boolean values
+            List of converted boolean values as strings
 
         """
         return [
@@ -77,7 +77,7 @@ class FlextLdifUtilitiesEntry:
 
     @staticmethod
     def convert_boolean_attributes(
-        attributes: dict[str, list[str]],
+        attributes: dict[str, list[str] | list[bytes] | bytes | str],
         boolean_attr_names: set[str],
         *,
         source_format: str = "0/1",
@@ -86,27 +86,64 @@ class FlextLdifUtilitiesEntry:
         """Convert boolean attribute values between formats.
 
         Args:
-            attributes: Entry attributes {attr_name: [values]}
+            attributes: Entry attributes {attr_name: [values]} - values can be str, bytes, or list
             boolean_attr_names: Set of attribute names (lowercase) to convert
             source_format: Input format ("0/1" or "TRUE/FALSE")
             target_format: Output format ("0/1" or "TRUE/FALSE")
 
         Returns:
-            New attributes dict with converted boolean values
+            New attributes dict with converted boolean values as strings
 
         """
         if not attributes or not boolean_attr_names:
-            return attributes
+            # Convert bytes to str in return value - fast-fail if attributes is empty
+            if not attributes:
+                return {}
+            result: dict[str, list[str]] = {}
+            for attr_name, values in attributes.items():
+                # Normalize to list[str] - handle all input types
+                if isinstance(values, list):
+                    result[attr_name] = [
+                        v.decode("utf-8", errors="replace")
+                        if isinstance(v, bytes)
+                        else str(v)
+                        for v in values
+                    ]
+                elif isinstance(values, bytes):
+                    result[attr_name] = [values.decode("utf-8", errors="replace")]
+                else:
+                    result[attr_name] = [str(values)]
+            return result
 
-        result = dict(attributes)
+        result: dict[str, list[str]] = {}
 
-        for attr_name, values in result.items():
+        for attr_name, values in attributes.items():
+            # Normalize values to list[str] first - convert bytes to str immediately
+            str_values: list[str]
+            if isinstance(values, list):
+                # Convert bytes to str if needed
+                str_values = [
+                    v.decode("utf-8", errors="replace")
+                    if isinstance(v, bytes)
+                    else str(v)
+                    for v in values
+                ]
+            # Single value - convert bytes to str if needed, then wrap in list
+            elif isinstance(values, bytes):
+                str_values = [values.decode("utf-8", errors="replace")]
+            else:
+                str_values = [str(values)]
+
             if attr_name.lower() in boolean_attr_names:
+                # Convert boolean values
                 result[attr_name] = FlextLdifUtilitiesEntry._convert_attribute_values(
-                    values,
+                    str_values,
                     source_format,
                     target_format,
                 )
+            else:
+                # Keep non-boolean attributes as-is (already converted to str)
+                result[attr_name] = str_values
 
         return result
 

@@ -102,6 +102,10 @@ class FlextLdifAcl(FlextService[FlextLdifModels.AclResponse]):
                 ),
             )
 
+        # Validate entry is not None
+        if entry is None:
+            return FlextResult[FlextLdifModels.AclResponse].fail("Entry cannot be None")
+
         acl_values: list[str] = entry.get_attribute_values(acl_attribute)
 
         if not acl_values:
@@ -203,9 +207,7 @@ class FlextLdifAcl(FlextService[FlextLdifModels.AclResponse]):
         except (AttributeError, TypeError, ValueError) as e:
             # Error occurred - return failure
             self._logger.exception(
-                "Failed to get ACL attribute for server type %s",
-                server_type,
-                exception=e,
+                f"Failed to get ACL attribute for server type {server_type}",
             )
             return FlextResult[str].fail(
                 f"Error retrieving ACL attribute for {server_type}: {e}",
@@ -265,7 +267,12 @@ class FlextLdifAcl(FlextService[FlextLdifModels.AclResponse]):
 
             # Delegate to quirk for parsing - NO FALLBACK
             # If the quirk can't parse it, the parsing fails
-            return acl.parse(acl_string)
+            # Type guard: registry returns RFC.Acl which has parse method
+            if hasattr(acl, "parse"):
+                return acl.parse(acl_string)  # type: ignore[attr-defined]
+            return FlextResult[FlextLdifModels.Acl].fail(
+                f"ACL quirk for {server_type} does not implement parse method"
+            )
 
         except (ValueError, TypeError, AttributeError) as e:
             return FlextResult[FlextLdifModels.Acl].fail(
